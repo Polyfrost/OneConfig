@@ -5,6 +5,8 @@ import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.util.ResourceLocation;
 
+import java.awt.*;
+
 public class Renderer extends Gui {
     private static final Minecraft mc = Minecraft.getMinecraft();
     private static final FontRenderer fr = mc.fontRendererObj;
@@ -34,6 +36,14 @@ public class Renderer extends Gui {
         } else {
             return goal;
         }
+    }
+
+    public static Color getColorFromInt(int color) {
+        float f = (float)(color >> 16 & 255) / 255.0F;
+        float f1 = (float)(color >> 8 & 255) / 255.0F;
+        float f2 = (float)(color & 255) / 255.0F;
+        float f3 = (float)(color >> 24 & 255) / 255.0F;
+        return new Color(f, f1, f2, f3);
     }
 
 }

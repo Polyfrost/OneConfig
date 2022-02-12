@@ -34,8 +34,7 @@ public class Window extends GuiScreen {
     }
 
     public void drawWindow() {
-        Renderer.drawScaledImage(location, 10, 10, 64 ,64);
-        Renderer.drawRoundRectangle(50,50,100,100,10,-1);
+
     }
 
     public static Window getWindow() {
