@@ -10,6 +10,7 @@ import java.lang.annotation.Target;
 public @interface Slider {
     String name();
     String description() default "";
-    int min();
-    int max();
+    float min();
+    float max();
+    float precision();
 }

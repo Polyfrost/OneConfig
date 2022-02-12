@@ -2,12 +2,14 @@ package io.polyfrost.oneconfig.gui.elements.config;
 
 import io.polyfrost.oneconfig.interfaces.Option;
 
-import java.lang.reflect.Field;
+import java.util.List;
 
-public class OConfigSwitch extends Option {
+public class OConfigCategory extends Option {
+    public final List<Option> options;
 
-    public OConfigSwitch(Field field, String name, String description) {
-        super(field, name, description);
+    public OConfigCategory(String name, String description, List<Option> options) {
+        super(null, name, description);
+        this.options = options;
     }
 
     @Override

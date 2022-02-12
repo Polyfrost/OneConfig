@@ -30,12 +30,10 @@ final class OneConfigTypeAdapter<T> extends TypeAdapter<Class<T>> {
             for (Field field : value.getFields()) {
                 out.name(field.getName());
                 field.setAccessible(true);
-                final Object fieldValue = field.get(null);
                 final TypeAdapter<Object> adapter = (TypeAdapter) gson.getAdapter(field.getType());
-                adapter.write(out, fieldValue);
+                adapter.write(out, field.get(null));
             }
             for (Class<?> clazz : value.getClasses()) {
-                System.out.println(clazz.toString());
                 out.name(clazz.getSimpleName());
                 final TypeAdapter<JsonElement> adapter = gson.getAdapter(JsonElement.class);
                 adapter.write(out, parser.parse(gson.toJson(clazz)));
