@@ -1,14 +1,17 @@
 package io.polyfrost.oneconfig.command;
 
 import io.polyfrost.oneconfig.gui.Window;
+import io.polyfrost.oneconfig.themes.Themes;
 import io.polyfrost.oneconfig.utils.TickDelay;
 import net.minecraft.client.Minecraft;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommand;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.util.BlockPos;
+import net.minecraft.util.ChatComponentText;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,6 +44,10 @@ public class OneConfigCommand implements ICommand {
     @Override
     public void processCommand(ICommandSender sender, String[] args) throws CommandException {
         new TickDelay(() -> mc.displayGuiScreen(new Window()), 1);
+        if(args != null) {
+            mc.thePlayer.addChatMessage(new ChatComponentText("hi"));
+            Themes.openTheme(new File("C:\\Users\\Harry\\Documents\\Coding\\Minecraft\\Forge1.8.9\\OneConfig\\run\\OneConfig\\Themes\\one.zip"));
+        }
     }
 
     @Override

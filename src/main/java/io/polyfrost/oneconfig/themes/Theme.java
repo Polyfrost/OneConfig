@@ -4,11 +4,16 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.polyfrost.oneconfig.renderer.Renderer;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.client.resources.FileResourcePack;
+import net.minecraft.util.ResourceLocation;
 
+import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @SuppressWarnings("unused")
 public class Theme extends FileResourcePack {
@@ -17,6 +22,20 @@ public class Theme extends FileResourcePack {
     private static final Minecraft mc = Minecraft.getMinecraft();
     private final JsonObject packMetadata;
     private final JsonObject packConfig;
+    private final Color accentColor;
+    private final Color elementColor;
+    private final Color titleBarColor;
+    private final Color baseColor;
+    private final Color hoverColor;
+    private final Color clickColor;
+    private final Color closeColor;
+    private final Color titleColor;
+    private final Color subTitleColor;
+    private final boolean roundCorners;
+    private final String description;
+    private final String title;
+    private final int version;
+    private final ResourceLocation iconsLoc;
 
     /**
      * Create a new theme instance for the window.
@@ -35,6 +54,34 @@ public class Theme extends FileResourcePack {
             unpackConfig();
         }
         packConfig = new JsonParser().parse(new FileReader(themeConfigFile)).getAsJsonObject();
+        JsonObject colors = packConfig.getAsJsonObject("colors");
+        accentColor = Renderer.getColorFromInt(colors.get("accent_color").getAsInt());
+        baseColor = Renderer.getColorFromInt(colors.get("base_color").getAsInt());
+        titleBarColor = Renderer.getColorFromInt(colors.get("title_bar").getAsInt());
+        elementColor = Renderer.getColorFromInt(colors.get("element_color").getAsInt());
+        clickColor = Renderer.getColorFromInt(colors.get("click_color").getAsInt());
+        closeColor = Renderer.getColorFromInt(colors.get("close_color").getAsInt());
+        titleColor = Renderer.getColorFromInt(colors.get("title_color").getAsInt());
+        hoverColor = Renderer.getColorFromInt(colors.get("hover_color").getAsInt());
+        subTitleColor = Renderer.getColorFromInt(colors.get("subtitle_color").getAsInt());
+        roundCorners = packConfig.get("round_corners").getAsBoolean();
+        String title, description;
+        int version;
+        try {
+            title = packMetadata.get("name").getAsString();
+            description = packMetadata.get("description").getAsString();
+            version = packMetadata.get("version").getAsInt();
+        } catch (Exception e) {
+            title = "null";
+            description = "no valid pack.json found!";
+            version = -1;
+            Themes.themeLog.error("pack has invalid metadata! Using default values.");
+        }
+        this.title = title;
+        this.description = description;
+        this.version = version;
+
+        iconsLoc = createIconAtlas();
     }
 
     /**
@@ -55,75 +102,101 @@ public class Theme extends FileResourcePack {
 
     }
 
+    // TIME CALC
+    // long start = System.nanoTime();
+    // System.out.println(((float) (System.nanoTime() - start)) / 1000000f + "ms");
+
+    /**
+     * Create the large icon atlas from this theme.
+     */
+    private ResourceLocation createIconAtlas() {        // TODO finish for all atlases
+        try {
+            List<BufferedImage> icons = new ArrayList<>();
+            BufferedImage out = new BufferedImage(128, 1152, BufferedImage.TYPE_INT_ARGB);
+            Graphics2D graphics2D = out.createGraphics();
+            int i = 0;
+            icons.add(ImageIO.read(getResource("textures/icons/discord.png")));
+            icons.add(ImageIO.read(getResource("textures/icons/docs.png")));
+            icons.add(ImageIO.read(getResource("textures/icons/feedback.png")));
+            icons.add(ImageIO.read(getResource("textures/icons/guide.png")));
+            icons.add(ImageIO.read(getResource("textures/icons/hudsettings.png")));
+            icons.add(ImageIO.read(getResource("textures/icons/modsettings.png")));
+            icons.add(ImageIO.read(getResource("textures/icons/store.png")));
+            icons.add(ImageIO.read(getResource("textures/icons/themes.png")));
+            icons.add(ImageIO.read(getResource("textures/icons/update.png")));
+            for (BufferedImage img : icons) {
+                graphics2D.drawImage(img, null, 0, i);
+                i += 128;
+            }
+            graphics2D.dispose();
+            return mc.getTextureManager().getDynamicTextureLocation("OneConfigIconAtlas", new DynamicTexture(out));
+        } catch (Exception e) {
+            Themes.themeLog.error("Failed to create large icon atlas", e);
+            return null;
+        }
+    }
+
+
+
     /**
      * Get the accent color for the window, used on separators, lines, etc.
      */
     public Color getAccentColor() {
-        JsonObject colors = packConfig.getAsJsonObject("colors");
-        int accentColor = colors.get("accent_color").getAsInt();
-        return Renderer.getColorFromInt(accentColor);
+        return accentColor;
     }
     /**
      * Get the base color for the window, used for the main background.
      */
     public Color getBaseColor() {
-        JsonObject colors = packConfig.getAsJsonObject("colors");
-        int accentColor = colors.get("base_color").getAsInt();
-        return Renderer.getColorFromInt(accentColor);
+        return baseColor;
+    }
+    /**
+     * Get the color used for the title bar.
+     */
+    public Color getTitleBarColor() {
+        return titleBarColor;
     }
     /**
      * Get the base color for the buttons, items, and most elements.
      */
     public Color getElementColor() {
-        JsonObject colors = packConfig.getAsJsonObject("colors");
-        int accentColor = colors.get("element_color").getAsInt();
-        return Renderer.getColorFromInt(accentColor);
+        return elementColor;
     }
     /**
      * Get the accent color for elements when they are hovered.
      */
     public Color getHoverColor() {
-        JsonObject colors = packConfig.getAsJsonObject("colors");
-        int accentColor = colors.get("hover_color").getAsInt();
-        return Renderer.getColorFromInt(accentColor);
+        return hoverColor;
     }
     /**
      * Get the accent color for elements when they are clicked.
      */
     public Color getClickColor() {
-        JsonObject colors = packConfig.getAsJsonObject("colors");
-        int accentColor = colors.get("click_color").getAsInt();
-        return Renderer.getColorFromInt(accentColor);
+        return clickColor;
     }
     /**
      * Get the color for the close/destroy buttons.
      */
     public Color getCloseColor() {
-        JsonObject colors = packConfig.getAsJsonObject("colors");
-        int accentColor = colors.get("base_color").getAsInt();
-        return Renderer.getColorFromInt(accentColor);
+        return closeColor;
     }
     /**
      * Get the color for the main text, like titles, config element items, etc.
      */
     public Color getTextColor() {
-        JsonObject colors = packConfig.getAsJsonObject("colors");
-        int accentColor = colors.get("title_color").getAsInt();
-        return Renderer.getColorFromInt(accentColor);
+        return titleColor;
     }
     /**
      * Get the accent color for the text, used for subtitles, etc.
      */
     public Color getAccentTextColor() {
-        JsonObject colors = packConfig.getAsJsonObject("colors");
-        int accentColor = colors.get("subtitle_color").getAsInt();
-        return Renderer.getColorFromInt(accentColor);
+        return subTitleColor;
     }
     /**
      * Weather or not to round off the corners of pretty much every element.
      */
     public boolean shouldRoundCorners() {
-        return packConfig.get("round_corners").getAsBoolean();
+        return roundCorners;
     }
 
 
@@ -154,24 +227,14 @@ public class Theme extends FileResourcePack {
      * Get the pack's description.
      */
     public String getDescription() {
-        try {
-            return packMetadata.get("description").getAsString();
-        } catch (Exception e) {
-            Themes.themeLog.error("Failed to get pack name. Defaulting to 'error occurred', is pack invalid??");
-        }
-        return "Couldn't get description!";
+        return description;
     }
 
     /**
      * Get the friendly name of the pack.
      */
     public String getName() {
-        try {
-            return packMetadata.get("name").getAsString();
-        } catch (Exception e) {
-            Themes.themeLog.error("Failed to get pack name. Defaulting to 'null', is pack invalid??");
-        }
-        return "null";
+        return title;
 
     }
 
@@ -189,15 +252,17 @@ public class Theme extends FileResourcePack {
     }
 
     /**
+     * Get the large icon atlas.
+     */
+    public ResourceLocation getIcons() {
+        return iconsLoc;
+    }
+
+    /**
      * Get the pack's version. Not used yet, but will be when more features are added for theme compatability.
      */
     public int getVersion() {
-        try {
-            return packMetadata.get("version").getAsInt();
-        } catch (Exception e) {
-            Themes.themeLog.error("Failed to get pack version. Is pack invalid?");
-        }
-        return 0;
+        return version;
     }
 
     /**

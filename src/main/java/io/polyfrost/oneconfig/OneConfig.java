@@ -1,6 +1,7 @@
 package io.polyfrost.oneconfig;
 
 import io.polyfrost.oneconfig.command.OneConfigCommand;
+import io.polyfrost.oneconfig.themes.Themes;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.common.MinecraftForge;
@@ -29,5 +30,6 @@ public class OneConfig {
     public void onFMLInitialization(FMLInitializationEvent event) {
         ClientCommandHandler.instance.registerCommand(new OneConfigCommand());
         MinecraftForge.EVENT_BUS.register(this);
+        Themes.openTheme(new File("C:\\Users\\Harry\\Documents\\Coding\\Minecraft\\Forge1.8.9\\OneConfig\\run\\OneConfig\\Themes\\one.zip"));
     }
 }

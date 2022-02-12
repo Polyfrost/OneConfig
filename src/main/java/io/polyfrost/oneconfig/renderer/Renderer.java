@@ -3,6 +3,7 @@ package io.polyfrost.oneconfig.renderer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.Gui;
+import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.util.ResourceLocation;
 
 import java.awt.*;
@@ -15,12 +16,16 @@ public class Renderer extends Gui {
         Gui.drawRect(left, top, right, bottom, color);
     }
 
-    public static void drawString(String text, int x, int y, int color, boolean shadow) {
-        fr.drawString(text, x, y, color, shadow);
+    public static void drawTextScale(String text, float x, float y, int color, boolean shadow, float scale) {
+        GlStateManager.pushMatrix();
+        GlStateManager.scale(scale, scale, 1);
+        mc.fontRendererObj.drawString(text, x * (1 / scale), y * (1 / scale), color, shadow);
+        GlStateManager.popMatrix();
     }
 
     public static void drawScaledImage(ResourceLocation location, int x, int y, int targetX, int targetY) {
-        //GlStateManager.color(1f, 1f, 1f, 1f);
+        GlStateManager.enableBlend();
+        GlStateManager.color(1f, 1f, 1f, 1f);
         mc.getTextureManager().bindTexture(location);
         Gui.drawScaledCustomSizeModalRect(x, y, 0, 0, targetX, targetY, targetX, targetY, targetX, targetY);
     }
@@ -29,6 +34,9 @@ public class Renderer extends Gui {
 
     }
 
+    public static float clamp(float number) {
+        return number < (float) 0.0 ? (float) 0.0 : Math.min(number, (float) 1.0);
+    }
 
     public static float easeOut(float current, float goal) {
         if (Math.floor(Math.abs(goal - current) / (float) 0.01) > 0) {
