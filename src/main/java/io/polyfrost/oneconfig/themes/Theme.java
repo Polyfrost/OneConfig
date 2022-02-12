@@ -7,6 +7,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.client.resources.FileResourcePack;
 import net.minecraft.util.ResourceLocation;
+import org.jetbrains.annotations.NotNull;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -36,6 +37,12 @@ public class Theme extends FileResourcePack {
     private final String title;
     private final int version;
     private final ResourceLocation iconsLoc;
+    private final ResourceLocation modIconsLoc;
+    private final ResourceLocation smallIconsLoc;
+    private final ResourceLocation logoLoc;
+    private final ResourceLocation logoLocSmall;
+
+
 
     /**
      * Create a new theme instance for the window.
@@ -44,6 +51,7 @@ public class Theme extends FileResourcePack {
      */
     protected Theme(File themePack) throws IOException {
         super(themePack);
+        long start = System.nanoTime();
         themeFile = themePack;
         themeConfigFile = new File(themeFile.getPath() + ".json");
         packMetadata = new JsonParser().parse(new InputStreamReader(getInputStreamByName("pack.json"))).getAsJsonObject();
@@ -81,7 +89,13 @@ public class Theme extends FileResourcePack {
         this.description = description;
         this.version = version;
 
-        iconsLoc = createIconAtlas();
+        iconsLoc = createLargeIconAtlas();
+        smallIconsLoc = createSmallIconAtlas();
+        modIconsLoc = createModIconsAtlas();
+        logoLoc = getLocationFromName("textures/logos/logo.png");
+        logoLocSmall = getLocationFromName("textures/logos/logo_small.png");
+        Themes.themeLog.info("Successfully loaded theme and created atlases in " + ((float) (System.nanoTime() - start)) / 1000000f + "ms");
+
     }
 
     /**
@@ -102,19 +116,12 @@ public class Theme extends FileResourcePack {
 
     }
 
-    // TIME CALC
-    // long start = System.nanoTime();
-    // System.out.println(((float) (System.nanoTime() - start)) / 1000000f + "ms");
-
     /**
      * Create the large icon atlas from this theme.
      */
-    private ResourceLocation createIconAtlas() {        // TODO finish for all atlases
+    private ResourceLocation createLargeIconAtlas() {
         try {
             List<BufferedImage> icons = new ArrayList<>();
-            BufferedImage out = new BufferedImage(128, 1152, BufferedImage.TYPE_INT_ARGB);
-            Graphics2D graphics2D = out.createGraphics();
-            int i = 0;
             icons.add(ImageIO.read(getResource("textures/icons/discord.png")));
             icons.add(ImageIO.read(getResource("textures/icons/docs.png")));
             icons.add(ImageIO.read(getResource("textures/icons/feedback.png")));
@@ -124,16 +131,81 @@ public class Theme extends FileResourcePack {
             icons.add(ImageIO.read(getResource("textures/icons/store.png")));
             icons.add(ImageIO.read(getResource("textures/icons/themes.png")));
             icons.add(ImageIO.read(getResource("textures/icons/update.png")));
-            for (BufferedImage img : icons) {
-                graphics2D.drawImage(img, null, 0, i);
-                i += 128;
-            }
-            graphics2D.dispose();
-            return mc.getTextureManager().getDynamicTextureLocation("OneConfigIconAtlas", new DynamicTexture(out));
+            return createAtlasFromList(icons, 128);
         } catch (Exception e) {
-            Themes.themeLog.error("Failed to create large icon atlas", e);
+            Themes.themeLog.error("Failed to create large icon atlas, is pack invalid?", e);
             return null;
         }
+    }
+
+    /**
+     * Create the small icon atlas for this theme.
+     */
+    private ResourceLocation createSmallIconAtlas() {
+        try {
+            List<BufferedImage> icons = new ArrayList<>();
+            icons.add(ImageIO.read(getResource("textures/smallicons/backarrow.png")));
+            icons.add(ImageIO.read(getResource("textures/smallicons/close.png")));
+            icons.add(ImageIO.read(getResource("textures/smallicons/forward.png")));
+            icons.add(ImageIO.read(getResource("textures/smallicons/home.png")));
+            icons.add(ImageIO.read(getResource("textures/smallicons/magnify.png")));
+            icons.add(ImageIO.read(getResource("textures/smallicons/minimize.png")));
+            icons.add(ImageIO.read(getResource("textures/smallicons/search.png")));
+            return createAtlasFromList(icons, 32);
+        } catch (Exception e) {
+            Themes.themeLog.error("Failed to create small icon atlas, is pack invalid?", e);
+            return null;
+        }
+    }
+
+    /**
+     * Create mod icon atlas for this theme.
+     */
+    private ResourceLocation createModIconsAtlas() {
+        try {
+            List<BufferedImage> icons = new ArrayList<>();
+            icons.add(ImageIO.read(getResource("textures/mod/allmods.png")));
+            icons.add(ImageIO.read(getResource("textures/mod/hudmods.png")));
+            icons.add(ImageIO.read(getResource("textures/mod/hypixel.png")));
+            icons.add(ImageIO.read(getResource("textures/mod/performance.png")));
+            icons.add(ImageIO.read(getResource("textures/mod/pvp.png")));
+            icons.add(ImageIO.read(getResource("textures/mod/qolmods.png")));
+            icons.add(ImageIO.read(getResource("textures/mod/skyblock.png")));
+            icons.add(ImageIO.read(getResource("textures/mod/utilities.png")));
+            return createAtlasFromList(icons, 32);
+        } catch (Exception e) {
+            Themes.themeLog.error("Failed to create mod icon atlas, is pack invalid?", e);
+            return null;
+        }
+    }
+
+
+    /**
+     * Create a texture atlas from the given list of images, vertically stacked.
+     * @param images List of BufferedImages to use
+     * @param imageSize image size in pixels (note: images must be square)
+     * @return ResourceLocation of the atlas
+     */
+    public static ResourceLocation createAtlasFromList(@NotNull List<BufferedImage> images, int imageSize) {
+        BufferedImage out = new BufferedImage(imageSize, (images.size() * imageSize), BufferedImage.TYPE_INT_ARGB);
+        Graphics2D graphics2D = out.createGraphics();
+        int i = 0;
+        for (BufferedImage img : images) {
+            graphics2D.drawImage(img, null, 0, i);
+            i += imageSize;
+        }
+        graphics2D.dispose();
+        return mc.getTextureManager().getDynamicTextureLocation(String.valueOf(i), new DynamicTexture(out));
+    }
+
+
+    /**
+     * get a ResourceLocation of an image in the current theme.
+     * @param name path of the resource (e.g. textures/logos/logo.png)
+     * @throws IOException if the item cannot be located or pack is corrupt.
+     */
+    public ResourceLocation getLocationFromName(String name) throws IOException {
+        return mc.getTextureManager().getDynamicTextureLocation(name, new DynamicTexture(ImageIO.read(getInputStreamByName(name))));
     }
 
 
@@ -235,7 +307,6 @@ public class Theme extends FileResourcePack {
      */
     public String getName() {
         return title;
-
     }
 
     /**
@@ -252,13 +323,6 @@ public class Theme extends FileResourcePack {
     }
 
     /**
-     * Get the large icon atlas.
-     */
-    public ResourceLocation getIcons() {
-        return iconsLoc;
-    }
-
-    /**
      * Get the pack's version. Not used yet, but will be when more features are added for theme compatability.
      */
     public int getVersion() {
@@ -272,5 +336,39 @@ public class Theme extends FileResourcePack {
         return themeFile;
     }
 
+    /**
+     * Get the large icon atlas.
+     */
+    public ResourceLocation getLargeIconAtlas() {
+        return iconsLoc;
+    }
+
+    /**
+     * Get the small icon atlas.
+     */
+    public ResourceLocation getSmallIconAtlas() {
+        return smallIconsLoc;
+    }
+
+    /**
+     * Get the mod icon atlas.
+     */
+    public ResourceLocation getModIconsAtlas() {
+        return modIconsLoc;
+    }
+
+    /**
+     * Get the logo for OneConfig as specified by this theme.
+     */
+    public ResourceLocation getOneConfigLogo() {
+        return logoLoc;
+    }
+
+    /**
+     * Get the small logo for OneConfig as specified by this theme.
+     */
+    public ResourceLocation getSmallOneConfigLogo() {
+        return logoLocSmall;
+    }
 
 }

@@ -50,7 +50,7 @@ public class Window extends GuiScreen {
         Gui.drawRect(left, top + 100, right, top + 101, testingColor.getRGB());
 
         //ResourceLocation location = mc.getRenderManager().renderEngine.getDynamicTextureLocation("oneconfig",new DynamicTexture(ImageIO.read(t.getResource("assets/textures/icons/hudsettings128.png"))));
-        Renderer.drawScaledImage(t.getIcons(), left + 10, top + 10, 128, 1152);
+        Renderer.drawScaledImage(t.getLargeIconAtlas(), left + 10, top + 10, 128, 1152);
     }
 
     public static Window getWindow() {
