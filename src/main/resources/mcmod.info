@@ -1,0 +1,19 @@
+[
+  {
+    "modid": "oneconfig",
+    "name": "OneConfig",
+    "description": "OneConfig",
+    "version": "${version}",
+    "mcversion": "${mcversion}",
+    "url": "",
+    "updateUrl": "",
+    "authorList": [
+      "MoonTidez",
+      "DeDiamondPro"
+    ],
+    "credits": "",
+    "logoFile": "",
+    "screenshots": [],
+    "dependencies": []
+  }
+]
