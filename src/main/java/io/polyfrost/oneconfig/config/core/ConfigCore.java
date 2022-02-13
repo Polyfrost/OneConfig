@@ -1,7 +1,7 @@
-package io.polyfrost.oneconfig.core;
+package io.polyfrost.oneconfig.config.core;
 
-import io.polyfrost.oneconfig.data.ModData;
-import io.polyfrost.oneconfig.interfaces.Option;
+import io.polyfrost.oneconfig.config.data.ModData;
+import io.polyfrost.oneconfig.config.interfaces.Option;
 
 import java.util.ArrayList;
 import java.util.HashMap;

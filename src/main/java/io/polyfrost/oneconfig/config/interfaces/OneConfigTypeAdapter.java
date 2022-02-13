@@ -1,4 +1,4 @@
-package io.polyfrost.oneconfig.interfaces;
+package io.polyfrost.oneconfig.config.interfaces;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;

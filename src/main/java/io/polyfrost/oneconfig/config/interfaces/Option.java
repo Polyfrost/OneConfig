@@ -1,4 +1,4 @@
-package io.polyfrost.oneconfig.interfaces;
+package io.polyfrost.oneconfig.config.interfaces;
 
 import java.lang.reflect.Field;
 

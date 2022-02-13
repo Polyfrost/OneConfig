@@ -1,7 +1,7 @@
 package io.polyfrost.oneconfig.gui;
 
-import io.polyfrost.oneconfig.renderer.Renderer;
 import io.polyfrost.oneconfig.themes.Theme;
+import io.polyfrost.oneconfig.themes.ThemeElement;
 import io.polyfrost.oneconfig.themes.Themes;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiScreen;
@@ -49,8 +49,7 @@ public class Window extends GuiScreen {
         Gui.drawRect(left, top, right, top + 100, t.getTitleBarColor().getRGB());
         Gui.drawRect(left, top + 100, right, top + 101, testingColor.getRGB());
 
-        //ResourceLocation location = mc.getRenderManager().renderEngine.getDynamicTextureLocation("oneconfig",new DynamicTexture(ImageIO.read(t.getResource("assets/textures/icons/hudsettings128.png"))));
-        Renderer.drawScaledImage(t.getLargeIconAtlas(), left + 10, top + 10, 128, 1152);
+        t.getTextureManager().draw(ThemeElement.ALL_MODS, 10, 10, 32, 32);
     }
 
     public static Window getWindow() {

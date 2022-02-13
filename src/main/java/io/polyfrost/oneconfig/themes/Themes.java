@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Objects;
 
 public class Themes {
+    public static final int VERSION = 0;
     public static Theme activeTheme;
     public static final Logger themeLog = LogManager.getLogger("OneConfig Themes");
 

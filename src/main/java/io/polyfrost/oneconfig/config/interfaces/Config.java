@@ -1,9 +1,9 @@
-package io.polyfrost.oneconfig.interfaces;
+package io.polyfrost.oneconfig.config.interfaces;
 
 import com.google.gson.*;
-import io.polyfrost.oneconfig.annotations.*;
-import io.polyfrost.oneconfig.core.ConfigCore;
-import io.polyfrost.oneconfig.data.ModData;
+import io.polyfrost.oneconfig.config.annotations.*;
+import io.polyfrost.oneconfig.config.core.ConfigCore;
+import io.polyfrost.oneconfig.config.data.ModData;
 import io.polyfrost.oneconfig.gui.elements.config.*;
 
 import java.io.*;

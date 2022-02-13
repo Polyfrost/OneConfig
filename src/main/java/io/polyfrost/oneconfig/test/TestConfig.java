@@ -1,11 +1,11 @@
 package io.polyfrost.oneconfig.test;
 
-import io.polyfrost.oneconfig.annotations.Category;
-import io.polyfrost.oneconfig.annotations.Switch;
-import io.polyfrost.oneconfig.annotations.TextField;
-import io.polyfrost.oneconfig.data.ModData;
-import io.polyfrost.oneconfig.data.ModType;
-import io.polyfrost.oneconfig.interfaces.Config;
+import io.polyfrost.oneconfig.config.annotations.Category;
+import io.polyfrost.oneconfig.config.annotations.Switch;
+import io.polyfrost.oneconfig.config.annotations.TextField;
+import io.polyfrost.oneconfig.config.data.ModData;
+import io.polyfrost.oneconfig.config.data.ModType;
+import io.polyfrost.oneconfig.config.interfaces.Config;
 
 import java.io.File;
 

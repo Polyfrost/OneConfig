@@ -1,4 +1,4 @@
-package io.polyfrost.oneconfig.interfaces;
+package io.polyfrost.oneconfig.config.interfaces;
 
 import com.google.gson.Gson;
 import com.google.gson.TypeAdapter;
@@ -7,7 +7,7 @@ import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
 
-import static io.polyfrost.oneconfig.interfaces.OneConfigTypeAdapter.getStaticTypeAdapter;
+import static io.polyfrost.oneconfig.config.interfaces.OneConfigTypeAdapter.getStaticTypeAdapter;
 
 public class OneConfigTypeAdapterFactory implements TypeAdapterFactory {
 

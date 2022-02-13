@@ -1,6 +1,6 @@
 package io.polyfrost.oneconfig.gui.elements.config;
 
-import io.polyfrost.oneconfig.interfaces.Option;
+import io.polyfrost.oneconfig.config.interfaces.Option;
 
 import java.util.List;
 

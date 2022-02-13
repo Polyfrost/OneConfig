@@ -1,4 +1,4 @@
-package io.polyfrost.oneconfig.annotations;
+package io.polyfrost.oneconfig.config.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -7,8 +7,9 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
-public @interface Button {
+public @interface TextField {
     String name();
     String description() default "";
-    String text() default "Button";
+    String placeholder() default "";
+    boolean hideText() default false;
 }

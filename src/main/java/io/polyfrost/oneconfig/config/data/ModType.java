@@ -1,4 +1,4 @@
-package io.polyfrost.oneconfig.data;
+package io.polyfrost.oneconfig.config.data;
 
 public enum ModType {
     PVP,

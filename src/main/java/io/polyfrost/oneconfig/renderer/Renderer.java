@@ -5,10 +5,13 @@ import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.util.ResourceLocation;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.awt.*;
 
 public class Renderer extends Gui {
+    public static final Logger renderLog = LogManager.getLogger("OneConfig Renderer");
     private static final Minecraft mc = Minecraft.getMinecraft();
     private static final FontRenderer fr = mc.fontRendererObj;
 

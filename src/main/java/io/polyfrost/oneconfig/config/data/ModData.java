@@ -1,6 +1,6 @@
-package io.polyfrost.oneconfig.data;
+package io.polyfrost.oneconfig.config.data;
 
-import io.polyfrost.oneconfig.interfaces.Config;
+import io.polyfrost.oneconfig.config.interfaces.Config;
 
 public class ModData {
     public final String name;
