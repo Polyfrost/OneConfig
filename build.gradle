@@ -5,7 +5,7 @@ plugins {
     id "org.jetbrains.kotlin.jvm" version "1.5.31"
 }
 
-group "io.github.dediamondpro"
+group "io.polyfrost"
 version "1.0-SNAPSHOT"
 archivesBaseName = "OneConfig"
 
@@ -24,12 +24,9 @@ configurations {
 }
 
 repositories {
-    maven { url "https://repo.sk1er.club/repository/maven-public" }
-    maven { url 'https://jitpack.io' }
 }
 
 dependencies {
-
 }
 
 /**

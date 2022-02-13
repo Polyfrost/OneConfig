@@ -3,6 +3,7 @@ package io.polyfrost.oneconfig.gui;
 import io.polyfrost.oneconfig.themes.Theme;
 import io.polyfrost.oneconfig.themes.ThemeElement;
 import io.polyfrost.oneconfig.themes.Themes;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiScreen;
 
@@ -15,10 +16,13 @@ public class Window extends GuiScreen {
     private float currentProgress = 0f;
     public static Window currentWindow;
     private final Theme t = Themes.getActiveTheme();
+    private int guiScaleToRestore = -1;
 
     public Window() {
         super.initGui();
         currentWindow = this;
+        guiScaleToRestore = Minecraft.getMinecraft().gameSettings.guiScale;
+        Minecraft.getMinecraft().gameSettings.guiScale = 1;
     }
 
     public boolean doesGuiPauseGame() {
@@ -43,8 +47,8 @@ public class Window extends GuiScreen {
         int right = (int) (left + 1200 * currentProgress);
         int top = middleY - 350;
         int bottom = (int) (top + 700 * currentProgress);
-        Gui.drawRect(left -1, top - 1, right + 1, bottom + 1, testingColor.getRGB());
-        Gui.drawRect(left,top,right,bottom,t.getBaseColor().getRGB());
+        Gui.drawRect(left - 1, top - 1, right + 1, bottom + 1, testingColor.getRGB());
+        Gui.drawRect(left, top, right, bottom, t.getBaseColor().getRGB());
 
         Gui.drawRect(left, top, right, top + 100, t.getTitleBarColor().getRGB());
         Gui.drawRect(left, top + 100, right, top + 101, testingColor.getRGB());
@@ -56,5 +60,10 @@ public class Window extends GuiScreen {
         return currentWindow;
     }
 
-
+    @Override
+    public void onGuiClosed() {
+        if (guiScaleToRestore != -1) {
+            Minecraft.getMinecraft().gameSettings.guiScale = guiScaleToRestore;
+        }
+    }
 }

@@ -31,6 +31,6 @@ public class OneConfig {
     public void onFMLInitialization(FMLInitializationEvent event) {
         ClientCommandHandler.instance.registerCommand(new OneConfigCommand());
         MinecraftForge.EVENT_BUS.register(this);
-        Themes.openTheme(new File("C:\\Users\\Harry\\Documents\\Coding\\Minecraft\\Forge1.8.9\\OneConfig\\run\\OneConfig\\Themes\\one.zip"));
+        Themes.openTheme(new File("OneConfig/themes/one.zip").getAbsoluteFile());
     }
 }

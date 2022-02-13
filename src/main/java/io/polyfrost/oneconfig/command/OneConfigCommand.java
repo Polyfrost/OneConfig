@@ -46,7 +46,7 @@ public class OneConfigCommand implements ICommand {
         new TickDelay(() -> mc.displayGuiScreen(new Window()), 1);
         if(args.length != 0) {
             mc.thePlayer.addChatMessage(new ChatComponentText("reloading theme!"));
-            Themes.openTheme(new File("C:\\Users\\Harry\\Documents\\Coding\\Minecraft\\Forge1.8.9\\OneConfig\\run\\OneConfig\\Themes\\one.zip"));
+            Themes.openTheme(new File("OneConfig/themes/one.zip").getAbsoluteFile());
         }
     }
 

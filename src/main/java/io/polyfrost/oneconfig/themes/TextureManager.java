@@ -1,6 +1,5 @@
 package io.polyfrost.oneconfig.themes;
 
-import javafx.util.Pair;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.renderer.GlStateManager;
@@ -10,6 +9,7 @@ import net.minecraft.util.ResourceLocation;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import static io.polyfrost.oneconfig.themes.Themes.themeLog;
@@ -18,7 +18,7 @@ public class TextureManager {
     private static final Minecraft mc = Minecraft.getMinecraft();
     private final List<ResourceLocation> resources = new ArrayList<>();
     private final List<ThemeElement> tickableTextureLocations = new ArrayList<>();
-    private final List<Pair<Integer, Integer>> tickableTextures = new ArrayList<>();
+    private final HashMap<Integer, Integer> tickableTextures = new HashMap<>();
     private int tick = 0;
 
     /**
@@ -42,7 +42,7 @@ public class TextureManager {
             if(img.getWidth() != img.getHeight()) {
                 themeLog.info("found tickable animated texture (" + element.name() + "). Loading texture");
                 tickableTextureLocations.add(element);
-                tickableTextures.add(new Pair<>(img.getWidth(), img.getHeight()));
+                tickableTextures.put(img.getWidth(), img.getHeight());
             }
         }
     }
@@ -62,8 +62,8 @@ public class TextureManager {
         mc.getTextureManager().bindTexture(location);
         try {
             if(tickableTextureLocations.contains(element)) {
-                int texWidth = tickableTextures.get(0).getKey();        // TODO unsure if this works safe
-                int texHeight = tickableTextures.get(0).getValue();
+                int texWidth = tickableTextures.keySet().stream().findFirst().get();       // TODO unsure if this works safe
+                int texHeight = tickableTextures.values().stream().findFirst().get();
                 int frames = texHeight / texWidth;
                 while(tick < frames) {
                     Gui.drawModalRectWithCustomSizedTexture(x, y, 0, (tick * texWidth), texWidth, texWidth, texWidth, texWidth);
