@@ -1,5 +1,7 @@
 package io.polyfrost.oneconfig.renderer;
 
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.GlStateManager;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.glu.GLU;
@@ -262,14 +264,18 @@ public class TrueTypeFont {
         float RenderWidth = (SrcWidth / textureWidth);
         float RenderHeight = (SrcHeight / textureHeight);
 
-        GL11.glTexCoord2f(TextureSrcX, TextureSrcY);
-        GL11.glVertex2f(drawX, drawY);
-        GL11.glTexCoord2f(TextureSrcX, TextureSrcY + RenderHeight);
-        GL11.glVertex2f(drawX, drawY + DrawHeight);
-        GL11.glTexCoord2f(TextureSrcX + RenderWidth, TextureSrcY + RenderHeight);
-        GL11.glVertex2f(drawX + DrawWidth, drawY + DrawHeight);
-        GL11.glTexCoord2f(TextureSrcX + RenderWidth, TextureSrcY);
-        GL11.glVertex2f(drawX + DrawWidth, drawY);
+        GlStateManager.bindTexture(fontTextureID);
+
+        GL11.glBegin(GL11.GL_TRIANGLE_STRIP);
+        GL11.glTexCoord2f(TextureSrcX + RenderWidth, TextureSrcY); // 2
+        GL11.glVertex2f(drawX + DrawWidth, drawY + DrawHeight); // 1
+        GL11.glTexCoord2f(TextureSrcX, TextureSrcY); // 1
+        GL11.glVertex2f(drawX, drawY + DrawHeight); // 2
+        GL11.glTexCoord2f(TextureSrcX + RenderWidth, TextureSrcY + RenderHeight); // 4
+        GL11.glVertex2f(drawX + DrawWidth, drawY); // 3
+        GL11.glTexCoord2f(TextureSrcX, TextureSrcY + RenderHeight); // 3
+        GL11.glVertex2f(drawX, drawY); // 4
+        GL11.glEnd();
     }
 
     public int getWidth(String whatchars) {
@@ -362,9 +368,7 @@ public class TrueTypeFont {
 
         }
 
-        GL11.glEnable(GL11.GL_TEXTURE_2D);
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, fontTextureID);
-        GL11.glBegin(GL11.GL_QUADS);
+        //GlStateManager.enableTexture2D();
 
         while (i >= startIndex && i <= endIndex) {
 
@@ -406,8 +410,7 @@ public class TrueTypeFont {
 
             }
         }
-        GL11.glDisable(GL11.GL_TEXTURE_2D);
-        GL11.glEnd();
+        //GlStateManager.disableTexture2D();
     }
 
     public static int loadImage(BufferedImage bufferedImage) {

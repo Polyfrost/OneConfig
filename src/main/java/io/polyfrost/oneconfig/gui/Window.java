@@ -22,7 +22,7 @@ public class Window extends GuiScreen {
     TrueTypeFont font;
 
     public Window() {
-        font = new TrueTypeFont(new Font("FreeSerif", Font.PLAIN, 30), true);
+        font = new TrueTypeFont(new Font("FreeSerif", Font.PLAIN, 40), true);
         super.initGui();
         currentWindow = this;
         guiScaleToRestore = Minecraft.getMinecraft().gameSettings.guiScale;
@@ -39,8 +39,8 @@ public class Window extends GuiScreen {
         int alphaVal = (int) (50 * currentProgress);
         drawGradientRect(0, 0, super.width, super.height, new Color(80, 80, 80, alphaVal).getRGB(), new Color(80, 80, 80, alphaVal + 10).getRGB());
         //drawWindow();
-        GL11.glTranslatef(0, 0, 3000);
-        font.drawString(50, 50, "e", 1, 1);
+        //Minecraft.getMinecraft().fontRendererObj.drawString()
+        font.drawString(50, 50, "Test", 1, 1);
     }
 
     public void drawWindow() {
@@ -59,8 +59,6 @@ public class Window extends GuiScreen {
         Gui.drawRect(left, top + 100, right, top + 101, testingColor.getRGB());
 
         t.getTextureManager().draw(ThemeElement.ALL_MODS, 10, 10, 32, 32);
-
-
     }
 
     public static Window getWindow() {
