@@ -1,11 +1,13 @@
 package io.polyfrost.oneconfig.gui;
 
+import io.polyfrost.oneconfig.renderer.TrueTypeFont;
 import io.polyfrost.oneconfig.themes.Theme;
 import io.polyfrost.oneconfig.themes.ThemeElement;
 import io.polyfrost.oneconfig.themes.Themes;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiScreen;
+import org.lwjgl.opengl.GL11;
 
 import java.awt.*;
 
@@ -17,8 +19,10 @@ public class Window extends GuiScreen {
     public static Window currentWindow;
     private final Theme t = Themes.getActiveTheme();
     private int guiScaleToRestore = -1;
+    TrueTypeFont font;
 
     public Window() {
+        font = new TrueTypeFont(new Font("FreeSerif", Font.PLAIN, 30), true);
         super.initGui();
         currentWindow = this;
         guiScaleToRestore = Minecraft.getMinecraft().gameSettings.guiScale;
@@ -34,8 +38,9 @@ public class Window extends GuiScreen {
         currentProgress = clamp(easeOut(currentProgress, 1f));
         int alphaVal = (int) (50 * currentProgress);
         drawGradientRect(0, 0, super.width, super.height, new Color(80, 80, 80, alphaVal).getRGB(), new Color(80, 80, 80, alphaVal + 10).getRGB());
-        drawWindow();
-
+        //drawWindow();
+        GL11.glTranslatef(0, 0, 3000);
+        font.drawString(50, 50, "e", 1, 1);
     }
 
     public void drawWindow() {
@@ -54,6 +59,8 @@ public class Window extends GuiScreen {
         Gui.drawRect(left, top + 100, right, top + 101, testingColor.getRGB());
 
         t.getTextureManager().draw(ThemeElement.ALL_MODS, 10, 10, 32, 32);
+
+
     }
 
     public static Window getWindow() {
