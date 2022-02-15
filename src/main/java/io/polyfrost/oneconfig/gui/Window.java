@@ -7,9 +7,9 @@ import io.polyfrost.oneconfig.themes.Themes;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiScreen;
-import org.lwjgl.opengl.GL11;
 
 import java.awt.*;
+import java.io.IOException;
 
 import static io.polyfrost.oneconfig.renderer.Renderer.clamp;
 import static io.polyfrost.oneconfig.renderer.Renderer.easeOut;
@@ -18,11 +18,16 @@ public class Window extends GuiScreen {
     private float currentProgress = 0f;
     public static Window currentWindow;
     private final Theme t = Themes.getActiveTheme();
-    private int guiScaleToRestore = -1;
+    private final int guiScaleToRestore;
     TrueTypeFont font;
 
     public Window() {
-        font = new TrueTypeFont(new Font("FreeSerif", Font.PLAIN, 40), true);
+        try {
+            Font tempFont = Font.createFont(Font.TRUETYPE_FONT, Window.class.getResourceAsStream("/assets/oneconfig/fonts/font.ttf"));
+            font = new TrueTypeFont(tempFont.deriveFont(30f), true);
+        } catch (FontFormatException | IOException e) {
+            e.printStackTrace();
+        }
         super.initGui();
         currentWindow = this;
         guiScaleToRestore = Minecraft.getMinecraft().gameSettings.guiScale;
@@ -38,9 +43,7 @@ public class Window extends GuiScreen {
         currentProgress = clamp(easeOut(currentProgress, 1f));
         int alphaVal = (int) (50 * currentProgress);
         drawGradientRect(0, 0, super.width, super.height, new Color(80, 80, 80, alphaVal).getRGB(), new Color(80, 80, 80, alphaVal + 10).getRGB());
-        //drawWindow();
-        //Minecraft.getMinecraft().fontRendererObj.drawString()
-        font.drawString(50, 50, "Test", 1, 1);
+        drawWindow();
     }
 
     public void drawWindow() {
@@ -59,6 +62,8 @@ public class Window extends GuiScreen {
         Gui.drawRect(left, top + 100, right, top + 101, testingColor.getRGB());
 
         t.getTextureManager().draw(ThemeElement.ALL_MODS, 10, 10, 32, 32);
+
+        font.drawString("OneConfig is pog!\nWow, this font renderer actually works :D", 50, 50, 1, 1);
     }
 
     public static Window getWindow() {
@@ -67,8 +72,7 @@ public class Window extends GuiScreen {
 
     @Override
     public void onGuiClosed() {
-        if (guiScaleToRestore != -1) {
-            Minecraft.getMinecraft().gameSettings.guiScale = guiScaleToRestore;
-        }
+        Minecraft.getMinecraft().gameSettings.guiScale = guiScaleToRestore;
+        font.destroy();
     }
 }
