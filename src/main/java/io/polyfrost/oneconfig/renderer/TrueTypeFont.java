@@ -216,8 +216,7 @@ public class TrueTypeFont {
 
             fontTextureID = loadImage(imgTemp);
 
-            ImageIO.write(imgTemp, "png", new File("./OneConfig/bitmap.png"));
-
+            //ImageIO.write(imgTemp, "png", new File("./OneConfig/bitmap.png"));
         } catch (Exception e) {
             System.err.println("Failed to create font.");
             e.printStackTrace();
