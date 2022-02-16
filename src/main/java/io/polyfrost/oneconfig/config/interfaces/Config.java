@@ -15,8 +15,7 @@ import java.util.Map;
 
 public class Config {
     private final File configFile;
-
-    Gson gson = new GsonBuilder().excludeFieldsWithModifiers(Modifier.TRANSIENT).setPrettyPrinting()
+    private final Gson gson = new GsonBuilder().excludeFieldsWithModifiers(Modifier.TRANSIENT).setPrettyPrinting()
             .registerTypeAdapterFactory(OneConfigTypeAdapterFactory.getStaticTypeAdapterFactory()).create();
 
     /**
@@ -88,9 +87,17 @@ public class Config {
             } else if (field.isAnnotationPresent(TextField.class)) {
                 TextField textField = field.getAnnotation(TextField.class);
                 options.add(new OConfigText(field, textField.name(), textField.description(), textField.placeholder(), textField.hideText()));
-            }
+            } else loadCustomType(field);
         }
         return options;
+    }
+
+    /**
+     * Overwrite this method to add your own custom option types
+     *
+     * @param field target field
+     */
+    protected void loadCustomType(Field field) {
     }
 
     /**
