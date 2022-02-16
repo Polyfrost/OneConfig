@@ -1,6 +1,7 @@
 package io.polyfrost.oneconfig;
 
 import io.polyfrost.oneconfig.command.OneConfigCommand;
+import io.polyfrost.oneconfig.renderer.Renderer;
 import io.polyfrost.oneconfig.test.TestConfig;
 import io.polyfrost.oneconfig.themes.Themes;
 import net.minecraft.client.Minecraft;
