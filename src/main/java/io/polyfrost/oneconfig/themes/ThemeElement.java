@@ -29,7 +29,13 @@ public enum ThemeElement {
     UTILITIES("textures/mod/utilities.png", 32),
 
     LOGO("textures/logos/logo.png", 128),
-    SMALL_LOGO("textures/logos/logo_small.png", 32);
+    SMALL_LOGO("textures/logos/logo_small.png", 64),
+
+    BUTTON_OFF("textures/window/button_off.png", 512),
+    BUTTON_HOVER("textures/window/button_hover.png", 512),
+    BUTTON_CLICK("textures/window/button_click.png", 512),
+
+    BACKGROUND("textures/window/background.png", 1600);
 
 
     public final String location;

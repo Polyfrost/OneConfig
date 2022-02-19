@@ -3,9 +3,12 @@ package io.polyfrost.oneconfig.themes;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.polyfrost.oneconfig.renderer.Renderer;
+import io.polyfrost.oneconfig.renderer.TrueTypeFont;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.client.resources.FileResourcePack;
+import net.minecraft.crash.CrashReport;
+import net.minecraft.util.ReportedException;
 import net.minecraft.util.ResourceLocation;
 
 import javax.imageio.ImageIO;
@@ -34,6 +37,8 @@ public class Theme extends FileResourcePack {
     private final String title;
     private final int version;
     private final TextureManager manager;
+    private final TrueTypeFont boldFont;
+    private final TrueTypeFont normalFont;
 
 
 
@@ -81,7 +86,24 @@ public class Theme extends FileResourcePack {
         this.title = title;
         this.description = description;
         this.version = version;
-
+        TrueTypeFont normalFontTemp;
+        TrueTypeFont boldFontTemp;
+        try {
+            boldFontTemp = new TrueTypeFont(Font.createFont(Font.TRUETYPE_FONT, getResource("textures/fonts/font_bold.ttf")).deriveFont(30f), true);
+            normalFontTemp = new TrueTypeFont(Font.createFont(Font.TRUETYPE_FONT, getResource("textures/fonts/font.ttf")).deriveFont(12f), true);
+        } catch (FontFormatException e) {
+            Themes.themeLog.error("failed to derive fonts, is theme invalid?",e);
+            e.printStackTrace();
+            try {
+                normalFontTemp = new TrueTypeFont(Font.createFont(Font.TRUETYPE_FONT, mc.getResourceManager().getResource(new ResourceLocation("oneconfig", "textures/fonts/font.ttf")).getInputStream()).deriveFont(12f), true);
+                boldFontTemp = new TrueTypeFont(Font.createFont(Font.TRUETYPE_FONT, mc.getResourceManager().getResource(new ResourceLocation("oneconfig", "textures/fonts/font_bold.ttf")).getInputStream()).deriveFont(30f), true);
+            } catch (FontFormatException ex) {
+                ex.printStackTrace();
+                throw new ReportedException(new CrashReport("Failed to get fallback fonts! game will crash :(", ex));
+            }
+        }
+        normalFont = normalFontTemp;
+        boldFont = boldFontTemp;
         manager = new TextureManager(this);
         if(Themes.VERSION != version) {
             Themes.themeLog.warn("Theme was made for a different version of OneConfig! This may cause issues in the GUI.");
@@ -251,6 +273,20 @@ public class Theme extends FileResourcePack {
      */
     public TextureManager getTextureManager() {
         return manager;
+    }
+
+    /**
+     * Get the font from this theme.
+     */
+    public TrueTypeFont getFont() {
+        return normalFont;
+    }
+
+    /**
+     * Get the bold, larger font from this theme.
+     */
+    public TrueTypeFont getBoldFont() {
+        return boldFont;
     }
 
 }
