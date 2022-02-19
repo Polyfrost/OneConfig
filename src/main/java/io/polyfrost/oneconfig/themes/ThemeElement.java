@@ -12,12 +12,12 @@ public enum ThemeElement {
     UPDATE("textures/icons/update.png", 128),
 
     BACK_ARROW("textures/smallicons/backarrow.png", 32),
-    CLOSE("textures/smallicons/close.png", 32),
     FORWARD_ARROW("textures/smallicons/forward.png", 32),
     HOME("textures/smallicons/home.png", 32),
-    MAGNIFY("textures/smallicons/magnify.png", 32),
-    MINIMIZE("textures/smallicons/minimize.png", 32),
     SEARCH("textures/smallicons/search.png", 32),
+    MAGNIFY("textures/smallicons/magnify.png", 64),
+    MINIMIZE("textures/smallicons/minimize.png", 64),
+    CLOSE("textures/smallicons/close.png", 64),
 
     ALL_MODS("textures/mod/allmods.png", 32),
     HUD_MODS("textures/mod/hudmods.png", 32),

@@ -1,17 +1,13 @@
 package io.polyfrost.oneconfig.gui;
 
-import io.polyfrost.oneconfig.renderer.Renderer;
-import io.polyfrost.oneconfig.renderer.TrueTypeFont;
+import io.polyfrost.oneconfig.gui.elements.OCBlock;
 import io.polyfrost.oneconfig.themes.Theme;
 import io.polyfrost.oneconfig.themes.ThemeElement;
 import io.polyfrost.oneconfig.themes.Themes;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiScreen;
 
 import java.awt.*;
-import java.io.IOException;
-import java.util.Objects;
 
 import static io.polyfrost.oneconfig.renderer.Renderer.clamp;
 import static io.polyfrost.oneconfig.renderer.Renderer.easeOut;
@@ -21,6 +17,7 @@ public class Window extends GuiScreen {
     public static Window currentWindow;
     private final Theme t = Themes.getActiveTheme();
     private final int guiScaleToRestore;
+    OCBlock block = new OCBlock(-1, 100, 200);
 
     public Window() {
         super.initGui();
@@ -59,6 +56,7 @@ public class Window extends GuiScreen {
         t.getTextureManager().draw(ThemeElement.BUTTON_OFF, left + 1504, top + 32, 64, 64);
         t.getTextureManager().draw(ThemeElement.BUTTON_OFF, left + 1424, top + 32, 64, 64);
         t.getTextureManager().draw(ThemeElement.BUTTON_OFF, left + 1344, top + 32, 64, 64);
+        block.draw(200, 300);
         //t.getTextureManager().draw(ThemeElement.CLOSE, left + 1504, top + 32, 64, 64);
         //t.getTextureManager().draw(ThemeElement.BUTTON_OFF, left + 100, top + 100, 296, 64);
         //t.getTextureManager().draw(ThemeElement.CLOSE);
