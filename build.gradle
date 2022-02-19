@@ -25,15 +25,9 @@ configurations {
 }
 
 repositories {
-    mavenCentral()
-    maven { url "https://repo.sk1er.club/repository/maven-public" }
 }
 
 dependencies {
-    shade ("gg.essential:universalcraft-1.8.9-forge:177") {
-        exclude module: "kotlin-stdlib-jdk8"
-    }
-    shade "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
 }
 
 /**
