@@ -54,7 +54,11 @@ public class TextureManager {
                     }
                 }
             } else {
-
+                if(element.ordinal() < 29) {
+                    if(img.getHeight() != 144 || img.getWidth() != 758) {
+                        themeLog.warn("found badly sized button texture " + element.location);
+                    }
+                }
             }
         }
     }

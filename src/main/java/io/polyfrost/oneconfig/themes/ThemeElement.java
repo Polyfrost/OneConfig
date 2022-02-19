@@ -17,7 +17,7 @@ public enum ThemeElement {
     HOME("textures/smallicons/home.png", 32),
     MAGNIFY("textures/smallicons/magnify.png", 32),
     MINIMIZE("textures/smallicons/minimize.png", 32),
-    SEARCH("textures/smallicons/backarrow.png", 32),
+    SEARCH("textures/smallicons/search.png", 32),
 
     ALL_MODS("textures/mod/allmods.png", 32),
     HUD_MODS("textures/mod/hudmods.png", 32),
@@ -31,9 +31,9 @@ public enum ThemeElement {
     LOGO("textures/logos/logo.png", 128),
     SMALL_LOGO("textures/logos/logo_small.png", 64),
 
-    BUTTON_OFF("textures/window/button_off.png", 512),
-    BUTTON_HOVER("textures/window/button_hover.png", 512),
-    BUTTON_CLICK("textures/window/button_click.png", 512),
+    BUTTON_OFF("textures/window/button_off.png", 758),
+    BUTTON_HOVER("textures/window/button_hover.png", 758),
+    BUTTON_CLICK("textures/window/button_click.png", 758),
 
     BACKGROUND("textures/window/background.png", 1600);
 

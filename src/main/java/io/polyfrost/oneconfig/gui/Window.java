@@ -21,15 +21,8 @@ public class Window extends GuiScreen {
     public static Window currentWindow;
     private final Theme t = Themes.getActiveTheme();
     private final int guiScaleToRestore;
-    TrueTypeFont font;
 
     public Window() {
-        try {
-            Font tempFont = Font.createFont(Font.TRUETYPE_FONT, Objects.requireNonNull(Window.class.getResourceAsStream("/assets/oneconfig/fonts/font.ttf")));
-            font = new TrueTypeFont(tempFont.deriveFont(30f), true);
-        } catch (FontFormatException | IOException e) {
-            e.printStackTrace();
-        }
         super.initGui();
         currentWindow = this;
         guiScaleToRestore = Minecraft.getMinecraft().gameSettings.guiScale;
@@ -59,10 +52,21 @@ public class Window extends GuiScreen {
         int bottom = (int) (1024 * currentProgress);
         //Gui.drawRect(left - 1, top - 1, right + 1, bottom + 1, testingColor.getRGB());
         //new Color(16, 17, 19, 255).getRGB()
-        Renderer.drawRoundRect(left,top,right,bottom,30, testingColor.getRGB());
-        Renderer.drawRoundRect(left + 1,top + 1,right - 2,bottom - 2,30, t.getBaseColor().getRGB());
-        t.getTextureManager().draw(ThemeElement.LOGO, left + 24, top + 24, 64, 64);     // 0.875
-        font.drawString("OneConfig", left + 93f, top + 25, 1f,1f);
+        t.getTextureManager().draw(ThemeElement.BACKGROUND, left, top, right, bottom);
+        t.getTextureManager().draw(ThemeElement.BUTTON_OFF, left + 480, top + 40, 640, 48);
+        t.getTextureManager().draw(ThemeElement.SEARCH, left + 504, top + 48, 32, 32);
+        t.getFont().drawString("Search all of OneConfig", left + 548, top + 48, 1.1f, 1f, new Color(242,242,242,255).getRGB());
+        t.getTextureManager().draw(ThemeElement.BUTTON_OFF, left + 1504, top + 32, 64, 64);
+        t.getTextureManager().draw(ThemeElement.BUTTON_OFF, left + 1424, top + 32, 64, 64);
+        t.getTextureManager().draw(ThemeElement.BUTTON_OFF, left + 1344, top + 32, 64, 64);
+        //t.getTextureManager().draw(ThemeElement.CLOSE, left + 1504, top + 32, 64, 64);
+        //t.getTextureManager().draw(ThemeElement.BUTTON_OFF, left + 100, top + 100, 296, 64);
+        //t.getTextureManager().draw(ThemeElement.CLOSE);
+
+        //Renderer.drawRoundRect(left,top,right,bottom,30, testingColor.getRGB());
+        //Renderer.drawRoundRect(left + 1,top + 1,right - 2,bottom - 2,30, t.getBaseColor().getRGB());
+        //t.getTextureManager().draw(ThemeElement.LOGO, left + 24, top + 24, 64, 64);     // 0.875
+        //t.getBoldFont().drawString("OneConfig", left + 93f, top + 25, 1f,1f);
         //Gui.drawRect(left, top, right, bottom, t.getBaseColor().getRGB());
 
         //Gui.drawRect(left, top, right, top + 100, t.getTitleBarColor().getRGB());
@@ -79,6 +83,5 @@ public class Window extends GuiScreen {
     @Override
     public void onGuiClosed() {
         Minecraft.getMinecraft().gameSettings.guiScale = guiScaleToRestore;
-        font.destroy();
     }
 }

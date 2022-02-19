@@ -5,13 +5,11 @@ import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.glu.GLU;
 
-import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferByte;
 import java.awt.image.DataBufferInt;
-import java.io.File;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
@@ -270,12 +268,16 @@ public class TrueTypeFont {
         return fontHeight;
     }
 
-    public void drawString(String text, float x, float y, float scaleX, float scaleY) {
-        drawString(text, x, y, scaleX, scaleY, ALIGN_LEFT);
+    public void drawString(String text, float x, float y, float scaleX, float scaleY, int color) {
+        drawString(text, x, y, scaleX, scaleY, ALIGN_LEFT, color);
     }
 
 
-    public void drawString(String text, float x, float y, float scaleX, float scaleY, int format) {
+    public void drawString(String text, float x, float y, float scaleX, float scaleY, int format, int color) {
+        float f = (float) (color >> 16 & 255) / 255.0F;
+        float f1 = (float) (color >> 8 & 255) / 255.0F;
+        float f3 = (float) (color >> 24 & 255) / 255.0F;
+        float f2 = (float) (color & 255) / 255.0F;
         int startIndex = 0;
         int endIndex = text.length() - 1;
         IntObject intObject;
@@ -322,6 +324,7 @@ public class TrueTypeFont {
         GlStateManager.enableAlpha();
         GlStateManager.enableBlend();
 
+        GlStateManager.color(f, f1, f2, f3);
         while (i >= startIndex && i <= endIndex) {
             charCurrent = text.charAt(i);
             if (charCurrent < 256) {
@@ -358,6 +361,7 @@ public class TrueTypeFont {
             i += d;
         }
         GlStateManager.disableBlend();
+        GlStateManager.color(1f,1f,1f,1f);
     }
 
     public static int loadImage(BufferedImage bufferedImage) {
@@ -397,7 +401,7 @@ public class TrueTypeFont {
             int internalFormat = GL11.GL_RGBA8,
                     format = GL11.GL_RGBA;
             IntBuffer textureId = BufferUtils.createIntBuffer(1);
-            ;
+
             GL11.glGenTextures(textureId);
             GL11.glBindTexture(GL11.GL_TEXTURE_2D, textureId.get(0));
 

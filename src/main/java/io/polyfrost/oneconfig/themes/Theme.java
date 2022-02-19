@@ -90,7 +90,7 @@ public class Theme extends FileResourcePack {
         TrueTypeFont boldFontTemp;
         try {
             boldFontTemp = new TrueTypeFont(Font.createFont(Font.TRUETYPE_FONT, getResource("textures/fonts/font_bold.ttf")).deriveFont(30f), true);
-            normalFontTemp = new TrueTypeFont(Font.createFont(Font.TRUETYPE_FONT, getResource("textures/fonts/font.ttf")).deriveFont(12f), true);
+            normalFontTemp = new TrueTypeFont(Font.createFont(Font.TRUETYPE_FONT, getResource("textures/fonts/font.ttf")).deriveFont(18f), true);
         } catch (FontFormatException e) {
             Themes.themeLog.error("failed to derive fonts, is theme invalid?",e);
             e.printStackTrace();
