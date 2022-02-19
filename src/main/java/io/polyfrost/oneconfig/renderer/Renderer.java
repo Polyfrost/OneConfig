@@ -1,6 +1,5 @@
 package io.polyfrost.oneconfig.renderer;
 
-import gg.essential.universal.UGraphics;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.Gui;
