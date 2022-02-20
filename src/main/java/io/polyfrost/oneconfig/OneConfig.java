@@ -1,7 +1,9 @@
 package io.polyfrost.oneconfig;
 
 import io.polyfrost.oneconfig.command.OneConfigCommand;
-import io.polyfrost.oneconfig.renderer.Renderer;
+import io.polyfrost.oneconfig.config.OneConfigConfig;
+import io.polyfrost.oneconfig.config.core.ConfigCore;
+import io.polyfrost.oneconfig.config.profiles.Profiles;
 import io.polyfrost.oneconfig.test.TestConfig;
 import io.polyfrost.oneconfig.themes.Themes;
 import net.minecraft.client.Minecraft;
@@ -19,17 +21,20 @@ public class OneConfig {
     public static File jarFile;
     public static File oneConfigDir = new File(mc.mcDataDir, "OneConfig/");
     public static File themesDir = new File(oneConfigDir, "themes/");
-    public static TestConfig config = new TestConfig();
+    public static OneConfigConfig config;
+    public static TestConfig testConfig;
 
     @Mod.EventHandler
     public void onPreFMLInit(FMLPreInitializationEvent event) {
         jarFile = event.getSourceFile();
         oneConfigDir.mkdirs();
         themesDir.mkdirs();
+        config = new OneConfigConfig();
     }
 
     @Mod.EventHandler
     public void onFMLInitialization(FMLInitializationEvent event) {
+        testConfig = new TestConfig();
         ClientCommandHandler.instance.registerCommand(new OneConfigCommand());
         MinecraftForge.EVENT_BUS.register(this);
         Themes.openTheme(new File("OneConfig/themes/one.zip").getAbsoluteFile());
