@@ -1,13 +1,20 @@
 package io.polyfrost.oneconfig.gui;
 
 import io.polyfrost.oneconfig.gui.elements.OCBlock;
+import io.polyfrost.oneconfig.gui.elements.OCStoreBlock;
 import io.polyfrost.oneconfig.themes.Theme;
-import io.polyfrost.oneconfig.themes.ThemeElement;
+import io.polyfrost.oneconfig.themes.textures.ThemeElement;
 import io.polyfrost.oneconfig.themes.Themes;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
+import net.minecraft.client.gui.ScaledResolution;
+import net.minecraft.client.renderer.texture.DynamicTexture;
+import net.minecraft.util.ResourceLocation;
 
+import javax.imageio.ImageIO;
 import java.awt.*;
+import java.io.IOException;
+import java.net.URL;
 
 import static io.polyfrost.oneconfig.renderer.Renderer.clamp;
 import static io.polyfrost.oneconfig.renderer.Renderer.easeOut;
@@ -18,6 +25,9 @@ public class Window extends GuiScreen {
     private final Theme t = Themes.getActiveTheme();
     private final int guiScaleToRestore;
     OCBlock block = new OCBlock(-1, 100, 200);
+    ResourceLocation example = new ResourceLocation("oneconfig", "textures/hudsettings.png");
+    OCStoreBlock storeBlock = new OCStoreBlock("OneConfig Theme", "OneConfig default theme with the default look you love.", example, new Color(27,27,27,255).getRGB());
+    public static ScaledResolution resolution = new ScaledResolution(Minecraft.getMinecraft());
 
     public Window() {
         super.initGui();
@@ -31,6 +41,7 @@ public class Window extends GuiScreen {
     }
 
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
+        resolution = new ScaledResolution(Minecraft.getMinecraft());
         super.drawScreen(mouseX, mouseY, partialTicks);
         currentProgress = clamp(easeOut(currentProgress, 1f));
         int alphaVal = (int) (50 * currentProgress);
@@ -57,6 +68,7 @@ public class Window extends GuiScreen {
         t.getTextureManager().draw(ThemeElement.BUTTON_OFF, left + 1424, top + 32, 64, 64);
         t.getTextureManager().draw(ThemeElement.BUTTON_OFF, left + 1344, top + 32, 64, 64);
         block.draw(200, 300);
+        storeBlock.draw(500,300);
         //t.getTextureManager().draw(ThemeElement.CLOSE, left + 1504, top + 32, 64, 64);
         //t.getTextureManager().draw(ThemeElement.BUTTON_OFF, left + 100, top + 100, 296, 64);
         //t.getTextureManager().draw(ThemeElement.CLOSE);

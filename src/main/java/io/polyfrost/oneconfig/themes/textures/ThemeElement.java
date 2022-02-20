@@ -1,4 +1,4 @@
-package io.polyfrost.oneconfig.themes;
+package io.polyfrost.oneconfig.themes.textures;
 
 public enum ThemeElement {
     DISCORD("textures/icons/discord.png", 128),

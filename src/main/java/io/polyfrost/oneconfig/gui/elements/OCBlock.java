@@ -2,7 +2,7 @@ package io.polyfrost.oneconfig.gui.elements;
 
 import io.polyfrost.oneconfig.renderer.Renderer;
 import io.polyfrost.oneconfig.themes.Theme;
-import io.polyfrost.oneconfig.themes.ThemeElement;
+import io.polyfrost.oneconfig.themes.textures.ThemeElement;
 import io.polyfrost.oneconfig.themes.Themes;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
@@ -14,15 +14,16 @@ import org.lwjgl.input.Mouse;
 
 import java.awt.*;
 
+import static io.polyfrost.oneconfig.gui.Window.resolution;
+
 @SuppressWarnings("unused")
 public class OCBlock {
-    private static final Theme theme = Themes.getActiveTheme();
+    public static final Theme theme = Themes.getActiveTheme();
     private static final Minecraft mc = Minecraft.getMinecraft();
-    public static ScaledResolution resolution = new ScaledResolution(mc);
     private Color color;
     private String text;
     private final boolean bold;
-    private int width, height;
+    protected int width, height;
     private ThemeElement element;
     private boolean clicked = false;
     private boolean rightClicked = false;
@@ -103,7 +104,7 @@ public class OCBlock {
     }
 
     /**
-     * Update this elements click, key and hover status. Call this method at the end of your 'draw' function, if overrided.
+     * Update this elements click, key and hover status. Call this method at the end of your 'draw' function, if overridden.
      */
     public void update() {
         resolution = new ScaledResolution(mc);

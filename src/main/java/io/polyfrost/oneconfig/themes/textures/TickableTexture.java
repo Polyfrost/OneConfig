@@ -1,7 +1,8 @@
-package io.polyfrost.oneconfig.themes;
+package io.polyfrost.oneconfig.themes.textures;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import io.polyfrost.oneconfig.themes.textures.ThemeElement;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.renderer.GlStateManager;

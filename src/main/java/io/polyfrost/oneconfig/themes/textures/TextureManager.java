@@ -1,5 +1,6 @@
-package io.polyfrost.oneconfig.themes;
+package io.polyfrost.oneconfig.themes.textures;
 
+import io.polyfrost.oneconfig.themes.Theme;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.renderer.GlStateManager;

@@ -13,7 +13,9 @@ import java.awt.image.DataBufferInt;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 
@@ -248,8 +250,8 @@ public class TrueTypeFont {
 
     public int getWidth(String text) {
         int totalWidth = 0;
-        IntObject intObject = null;
-        int currentChar = 0;
+        IntObject intObject;
+        int currentChar;
         for (int i = 0; i < text.length(); i++) {
             currentChar = text.charAt(i);
             if (currentChar < 256) {
@@ -271,6 +273,40 @@ public class TrueTypeFont {
     public void drawString(String text, float x, float y, float scaleX, float scaleY, int color) {
         drawString(text, x, y, scaleX, scaleY, ALIGN_LEFT, color);
     }
+
+    public void drawSplitString(String text, float x, float y, int wrapWidth, int color) {
+        try {           // time taken: 0.035ms to do complete cycle
+            wrapWidth += 140;       // it needs this extra to work properly (why?)
+            List<String> splitString = new ArrayList<>();
+            String[] words = text.split("\\W+");
+            int totalWidth = 0;
+            String line = "";
+            for(String word : words) {
+                int width = getWidth(word);
+                word += " ";            // add the space
+                totalWidth += width;
+                line += word;
+                if(totalWidth >= wrapWidth) {           // wrap line if it is too long
+                    splitString.add(line);
+                    totalWidth = 0;
+                    line = "";
+                }
+            }
+            if(!line.equals("")) {          // add extra if there is any (last line)
+                splitString.add(line);
+            }
+            int i1 = 0;
+            for (String string : splitString) {
+                drawString(string, x, y + i1, 1f, 1f, color);           // draw it
+                i1 += getHeight();
+            }
+        } catch (Exception e) {         // be safe kids
+            e.printStackTrace();
+        }
+    }
+
+
+
 
 
     public void drawString(String text, float x, float y, float scaleX, float scaleY, int format, int color) {

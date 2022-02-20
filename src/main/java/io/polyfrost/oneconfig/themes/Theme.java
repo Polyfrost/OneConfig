@@ -4,6 +4,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.polyfrost.oneconfig.renderer.Renderer;
 import io.polyfrost.oneconfig.renderer.TrueTypeFont;
+import io.polyfrost.oneconfig.themes.textures.TextureManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.client.resources.FileResourcePack;
