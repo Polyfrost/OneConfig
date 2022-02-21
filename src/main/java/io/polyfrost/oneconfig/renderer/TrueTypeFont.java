@@ -310,10 +310,6 @@ public class TrueTypeFont {
 
 
     public void drawString(String text, float x, float y, float scaleX, float scaleY, int format, int color) {
-        float f = (float) (color >> 16 & 255) / 255.0F;
-        float f1 = (float) (color >> 8 & 255) / 255.0F;
-        float f3 = (float) (color >> 24 & 255) / 255.0F;
-        float f2 = (float) (color & 255) / 255.0F;
         int startIndex = 0;
         int endIndex = text.length() - 1;
         IntObject intObject;
@@ -360,7 +356,7 @@ public class TrueTypeFont {
         GlStateManager.enableAlpha();
         GlStateManager.enableBlend();
 
-        GlStateManager.color(f, f1, f2, f3);
+        Renderer.setGlColor(color);
         while (i >= startIndex && i <= endIndex) {
             charCurrent = text.charAt(i);
             if (charCurrent < 256) {

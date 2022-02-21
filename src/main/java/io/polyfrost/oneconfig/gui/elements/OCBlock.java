@@ -2,11 +2,10 @@ package io.polyfrost.oneconfig.gui.elements;
 
 import io.polyfrost.oneconfig.renderer.Renderer;
 import io.polyfrost.oneconfig.themes.Theme;
-import io.polyfrost.oneconfig.themes.textures.ThemeElement;
 import io.polyfrost.oneconfig.themes.Themes;
+import io.polyfrost.oneconfig.themes.textures.ThemeElement;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
-import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.GlStateManager;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.input.Keyboard;
@@ -16,6 +15,9 @@ import java.awt.*;
 
 import static io.polyfrost.oneconfig.gui.Window.resolution;
 
+/**
+ * Default simple block for all the GUI elements. If you are making custom ones, your class should extend this one.
+ */
 @SuppressWarnings("unused")
 public class OCBlock {
     public static final Theme theme = Themes.getActiveTheme();
@@ -23,13 +25,26 @@ public class OCBlock {
     private Color color;
     private String text;
     private final boolean bold;
-    protected int width, height;
+    /**
+     * Width of the element in pixels.
+     */
+    public int width;
+    /**
+     * Height of the element in pixels.
+     */
+    public int height;
     private ThemeElement element;
     private boolean clicked = false;
     private boolean rightClicked = false;
     private int mouseX, mouseY;
     private boolean hovered;
-    private int x, y;
+
+    /**
+     * Create a basic element with nothing. Used for extended classes.
+     */
+    public OCBlock(int width, int height) {
+        this(null, false, -1, width, height);
+    }
 
     /**
      * Create a new basic element.
@@ -82,8 +97,7 @@ public class OCBlock {
      * Draw the element at the specified coordinates.
      */
     public void draw(int x, int y) {
-        this.x = x;
-        this.y = y;
+        update(x, y);
         if(element != null) {
             Gui.drawRect(x, y, x + width, y + height, color.getRGB());
             GlStateManager.color(color.getRed() / 255f, color.getGreen() / 255f, color.getBlue() / 255f, color.getAlpha() / 255f);
@@ -106,8 +120,7 @@ public class OCBlock {
     /**
      * Update this elements click, key and hover status. Call this method at the end of your 'draw' function, if overridden.
      */
-    public void update() {
-        resolution = new ScaledResolution(mc);
+    public void update(int x, int y) {
         int mouseX = Mouse.getX() / resolution.getScaleFactor();
         int mouseY = Math.abs((Mouse.getY() / resolution.getScaleFactor()) - resolution.getScaledHeight());
         hovered = mouseX > x && mouseY > y && mouseX < x + width && mouseY < y + height;
@@ -124,6 +137,7 @@ public class OCBlock {
             rightClicked = Mouse.isButtonDown(1);
             onKeyPress(Keyboard.getEventKey());
         }
+        if(!hovered && clicked) clicked = false;
     }
 
     /**

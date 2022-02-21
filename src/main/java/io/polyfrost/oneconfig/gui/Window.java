@@ -1,6 +1,7 @@
 package io.polyfrost.oneconfig.gui;
 
 import io.polyfrost.oneconfig.gui.elements.OCBlock;
+import io.polyfrost.oneconfig.gui.elements.OCButton;
 import io.polyfrost.oneconfig.gui.elements.OCStoreBlock;
 import io.polyfrost.oneconfig.themes.Theme;
 import io.polyfrost.oneconfig.themes.textures.ThemeElement;
@@ -8,13 +9,9 @@ import io.polyfrost.oneconfig.themes.Themes;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.ScaledResolution;
-import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.util.ResourceLocation;
 
-import javax.imageio.ImageIO;
 import java.awt.*;
-import java.io.IOException;
-import java.net.URL;
 
 import static io.polyfrost.oneconfig.renderer.Renderer.clamp;
 import static io.polyfrost.oneconfig.renderer.Renderer.easeOut;
@@ -24,9 +21,13 @@ public class Window extends GuiScreen {
     public static Window currentWindow;
     private final Theme t = Themes.getActiveTheme();
     private final int guiScaleToRestore;
+    long secondCounter = System.currentTimeMillis();
+    long prevTime = System.currentTimeMillis();
+    int frames = 0;
     OCBlock block = new OCBlock(-1, 100, 200);
     ResourceLocation example = new ResourceLocation("oneconfig", "textures/hudsettings.png");
     OCStoreBlock storeBlock = new OCStoreBlock("OneConfig Theme", "OneConfig default theme with the default look you love.", example, new Color(27,27,27,255).getRGB());
+    OCButton button = new OCButton("Mod Settings","Configure all supported mods",ThemeElement.MOD_SETTINGS,false,758, 144);
     public static ScaledResolution resolution = new ScaledResolution(Minecraft.getMinecraft());
 
     public Window() {
@@ -46,6 +47,19 @@ public class Window extends GuiScreen {
         currentProgress = clamp(easeOut(currentProgress, 1f));
         int alphaVal = (int) (50 * currentProgress);
         drawGradientRect(0, 0, super.width, super.height, new Color(80, 80, 80, alphaVal).getRGB(), new Color(80, 80, 80, alphaVal + 10).getRGB());
+        long secondDelta = System.currentTimeMillis() - secondCounter;
+        long deltaTime = System.currentTimeMillis() - prevTime;
+        //if(deltaTime >= 15) {
+        //    prevTime = System.currentTimeMillis();
+        //    frames++;
+        //    drawWindow();
+        //}
+        if(secondDelta >= 1000) {
+            secondCounter = System.currentTimeMillis();
+            //System.out.println(frames + "FPS");
+            //Minecraft.getMinecraft().thePlayer.sendChatMessage(frames + "FPS");
+            frames = 0;
+        }
         drawWindow();
     }
 
@@ -61,14 +75,14 @@ public class Window extends GuiScreen {
         //Gui.drawRect(left - 1, top - 1, right + 1, bottom + 1, testingColor.getRGB());
         //new Color(16, 17, 19, 255).getRGB()
         t.getTextureManager().draw(ThemeElement.BACKGROUND, left, top, right, bottom);
-        t.getTextureManager().draw(ThemeElement.BUTTON_OFF, left + 480, top + 40, 640, 48);
+        //t.getTextureManager().draw(ThemeElement.BUTTON_OFF, left + 480, top + 40, 640, 48);
         t.getTextureManager().draw(ThemeElement.SEARCH, left + 504, top + 48, 32, 32);
         t.getFont().drawString("Search all of OneConfig", left + 548, top + 48, 1.1f, 1f, new Color(242,242,242,255).getRGB());
-        t.getTextureManager().draw(ThemeElement.BUTTON_OFF, left + 1504, top + 32, 64, 64);
-        t.getTextureManager().draw(ThemeElement.BUTTON_OFF, left + 1424, top + 32, 64, 64);
-        t.getTextureManager().draw(ThemeElement.BUTTON_OFF, left + 1344, top + 32, 64, 64);
-        block.draw(200, 300);
-        storeBlock.draw(500,300);
+        //t.getTextureManager().draw(ThemeElement.BUTTON_OFF, left + 1504, top + 32, 64, 64);
+        //t.getTextureManager().draw(ThemeElement.BUTTON_OFF, left + 1424, top + 32, 64, 64);
+        //t.getTextureManager().draw(ThemeElement.BUTTON_OFF, left + 1344, top + 32, 64, 64);
+        //block.draw(200, 300);
+        button.draw(500,300);
         //t.getTextureManager().draw(ThemeElement.CLOSE, left + 1504, top + 32, 64, 64);
         //t.getTextureManager().draw(ThemeElement.BUTTON_OFF, left + 100, top + 100, 296, 64);
         //t.getTextureManager().draw(ThemeElement.CLOSE);

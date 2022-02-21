@@ -8,6 +8,7 @@ import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.crash.CrashReport;
 import net.minecraft.util.ReportedException;
 import net.minecraft.util.ResourceLocation;
+import org.jetbrains.annotations.NotNull;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -15,6 +16,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import static io.polyfrost.oneconfig.themes.Themes.activeTheme;
 import static io.polyfrost.oneconfig.themes.Themes.themeLog;
 
 public class TextureManager {
@@ -73,26 +75,28 @@ public class TextureManager {
      * @param width   width of the image
      * @param height  height of the image
      */
-    public void draw(ThemeElement element, int x, int y, int width, int height) {
-        GlStateManager.enableBlend();
-        GlStateManager.color(1f, 1f, 1f, 1f);
-        ResourceLocation location = resources.get(element.ordinal());
-        mc.getTextureManager().bindTexture(location);
-        try {
-            if(!tickableTextures.isEmpty()) {
-                for (TickableTexture texture : tickableTextures) {
-                    if (texture.getElement().equals(element)) {
-                        texture.draw(x, y);
-                    } else {
-                        Gui.drawScaledCustomSizeModalRect(x, y, 0, 0, width, height, width, height, width, height);
+    public void draw(@NotNull ThemeElement element, int x, int y, int width, int height) {
+        if (activeTheme.isReady()) {
+            ResourceLocation location = resources.get(element.ordinal());
+            mc.getTextureManager().bindTexture(location);
+            GlStateManager.enableBlend();
+            try {
+                if (!tickableTextures.isEmpty()) {
+                    for (TickableTexture texture : tickableTextures) {
+                        if (texture.getElement().equals(element)) {
+                            texture.draw(x, y);
+                        } else {
+                            Gui.drawScaledCustomSizeModalRect(x, y, 0, 0, width, height, width, height, width, height);
+                        }
                     }
+                } else {
+                    Gui.drawScaledCustomSizeModalRect(x, y, 0, 0, width, height, width, height, width, height);
                 }
-            } else {
-                Gui.drawScaledCustomSizeModalRect(x, y, 0, 0, width, height, width, height, width, height);
+                GlStateManager.disableBlend();
+                GlStateManager.color(1f, 1f, 1f, 1f);
+            } catch (Exception e) {
+                themeLog.error("Error occurred drawing texture " + element.name() + ", is theme invalid?", e);
             }
-            GlStateManager.disableBlend();
-        } catch (Exception e) {
-            themeLog.error("Error occurred drawing texture " + element.name() + ", is theme invalid?", e);
         }
     }
 }

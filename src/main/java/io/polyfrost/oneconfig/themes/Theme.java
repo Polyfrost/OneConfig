@@ -22,6 +22,7 @@ public class Theme extends FileResourcePack {
     private final File themeFile;
     private final File themeConfigFile;
     private static final Minecraft mc = Minecraft.getMinecraft();
+    private final long loadedTime = System.currentTimeMillis();
     private final JsonObject packMetadata;
     private final JsonObject packConfig;
     private final Color accentColor;
@@ -40,6 +41,7 @@ public class Theme extends FileResourcePack {
     private final TextureManager manager;
     private final TrueTypeFont boldFont;
     private final TrueTypeFont normalFont;
+    private boolean ready;
 
 
 
@@ -50,6 +52,7 @@ public class Theme extends FileResourcePack {
      */
     protected Theme(File themePack) throws IOException {
         super(themePack);
+        ready = false;
         long start = System.nanoTime();
         themeFile = themePack;
         themeConfigFile = new File(themeFile.getPath() + ".json");
@@ -110,6 +113,7 @@ public class Theme extends FileResourcePack {
             Themes.themeLog.warn("Theme was made for a different version of OneConfig! This may cause issues in the GUI.");
         }
         Themes.themeLog.info("Successfully loaded theme in " + ((float) (System.nanoTime() - start)) / 1000000f + "ms");
+        ready = true;
 
     }
 
@@ -290,4 +294,17 @@ public class Theme extends FileResourcePack {
         return boldFont;
     }
 
+    /**
+     * Get the time this theme was loaded. (used for debugging)
+     */
+    public long getLoadedTime() {
+        return loadedTime;
+    }
+
+    /**
+     * Check if the theme is fully loaded or not.
+     */
+    public boolean isReady() {
+        return ready;
+    }
 }

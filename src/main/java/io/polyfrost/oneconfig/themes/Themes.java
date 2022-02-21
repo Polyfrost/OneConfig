@@ -45,4 +45,9 @@ public class Themes {
         // TODO restart gui
     }
 
+
+    public String toString() {
+        return "OneConfig Theme {loaded=" + activeTheme.getLoadedTime() + ", name=" + activeTheme.getName() + ", desc=" + activeTheme.getDescription() + ", ready=" + activeTheme.isReady() + "}";
+    }
+
 }

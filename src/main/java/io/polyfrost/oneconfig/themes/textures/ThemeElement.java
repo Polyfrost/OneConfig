@@ -31,7 +31,7 @@ public enum ThemeElement {
     LOGO("textures/logos/logo.png", 128),
     SMALL_LOGO("textures/logos/logo_small.png", 64),
 
-    BUTTON_OFF("textures/window/button_off.png", 758),
+    BUTTON("textures/window/button.png", 758),
     BUTTON_HOVER("textures/window/button_hover.png", 758),
     BUTTON_CLICK("textures/window/button_click.png", 758),
 

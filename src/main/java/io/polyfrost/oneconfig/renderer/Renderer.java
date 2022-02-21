@@ -41,13 +41,8 @@ public class Renderer extends Gui {
     }
 
     public static void drawRegularPolygon(double x, double y, int radius, int sides, int color, double lowerAngle, double upperAngle) {
-        float f3 = (float) (color >> 24 & 255) / 255.0F;
-        float f = (float) (color >> 16 & 255) / 255.0F;
-        float f1 = (float) (color >> 8 & 255) / 255.0F;
-        float f2 = (float) (color & 255) / 255.0F;
-
         GL11.glDisable(GL11.GL_TEXTURE_2D);
-        GlStateManager.color(f, f1, f2, f3);
+        setGlColor(color);
         GlStateManager.enableBlend();
         GlStateManager.disableAlpha();
         worldRenderer.begin(GL11.GL_POLYGON, DefaultVertexFormats.POSITION);
@@ -119,6 +114,24 @@ public class Renderer extends Gui {
         float f2 = (float) (color & 255) / 255.0F;
         float f3 = (float) (color >> 24 & 255) / 255.0F;
         return new Color(f, f1, f2, f3);
+    }
+
+    /**
+     * Set GL color from the given Color variable.
+     */
+    public static void setGlColor(Color color) {
+        GlStateManager.color(color.getRed() / 255f, color.getGreen() / 255f, color.getBlue() / 255f, color.getAlpha() / 255f);
+    }
+
+    /**
+     * Set GL color from the given color as an Integer.
+     */
+    public static void setGlColor(int color) {
+        float f1 = (float) (color >> 8 & 255) / 255.0F;
+        float f = (float) (color >> 16 & 255) / 255.0F;
+        float f2 = (float) (color & 255) / 255.0F;
+        float f3 = (float) (color >> 24 & 255) / 255.0F;
+        GlStateManager.color(f,f1,f2,f3);
     }
 
 }
