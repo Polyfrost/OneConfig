@@ -8,4 +8,18 @@ import java.util.HashMap;
 
 public class ConfigCore {
     public static HashMap<ModData, ArrayList<Option>> settings = new HashMap<>();
+
+    public static void saveAll () {
+        for (ModData modData : settings.keySet()) {
+            modData.config.save();
+        }
+    }
+
+    public static void reInitAll () {
+        ArrayList<ModData> data = new ArrayList<>(settings.keySet());
+        settings.clear();
+        for (ModData modData : data) {
+            modData.config.init(modData);
+        }
+    }
 }

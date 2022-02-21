@@ -7,8 +7,6 @@ import io.polyfrost.oneconfig.config.data.ModData;
 import io.polyfrost.oneconfig.config.data.ModType;
 import io.polyfrost.oneconfig.config.interfaces.Config;
 
-import java.io.File;
-
 public class TestConfig extends Config {
 
     @Switch(name = "Cool Switch")
@@ -21,6 +19,6 @@ public class TestConfig extends Config {
     }
 
     public TestConfig() {
-        super(new ModData("hacks", ModType.QOL, "ShadyDev", "1.0"), new File("./config/hacksConfig.json"));
+        super(new ModData("hacks", ModType.QOL, "ShadyDev", "1.0"), "hacksConfig.json");
     }
 }

@@ -4,6 +4,7 @@ import com.google.gson.*;
 import io.polyfrost.oneconfig.config.annotations.*;
 import io.polyfrost.oneconfig.config.core.ConfigCore;
 import io.polyfrost.oneconfig.config.data.ModData;
+import io.polyfrost.oneconfig.config.profiles.Profiles;
 import io.polyfrost.oneconfig.gui.elements.config.*;
 
 import java.io.*;
@@ -11,20 +12,26 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Map;
+import java.util.Optional;
 
 public class Config {
-    private final File configFile;
-    private final Gson gson = new GsonBuilder().excludeFieldsWithModifiers(Modifier.TRANSIENT).setPrettyPrinting()
+    protected final String configFile;
+    protected final Gson gson = new GsonBuilder().excludeFieldsWithModifiers(Modifier.TRANSIENT).setPrettyPrinting()
             .registerTypeAdapterFactory(OneConfigTypeAdapterFactory.getStaticTypeAdapterFactory()).create();
 
     /**
      * @param modData    information about the mod
      * @param configFile file where config is stored
      */
-    public Config(ModData modData, File configFile) {
+    public Config(ModData modData, String configFile) {
         this.configFile = configFile;
-        if (configFile.exists())
+        init(modData);
+    }
+
+    public void init(ModData modData) {
+        if (Profiles.getProfileFile(configFile).exists())
             load();
         else
             save();
@@ -36,7 +43,7 @@ public class Config {
      * Save current config to file
      */
     public void save() {
-        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(configFile), StandardCharsets.UTF_8))) {
+        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(Profiles.getProfileFile(configFile)), StandardCharsets.UTF_8))) {
             writer.write(gson.toJson(this.getClass()));
         } catch (IOException e) {
             e.printStackTrace();
@@ -47,7 +54,7 @@ public class Config {
      * Load file and overwrite current values
      */
     public void load() {
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(configFile), StandardCharsets.UTF_8))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(Profiles.getProfileFile(configFile)), StandardCharsets.UTF_8))) {
             deserializePart(new JsonParser().parse(reader).getAsJsonObject(), this.getClass());
         } catch (IOException e) {
             e.printStackTrace();
@@ -60,7 +67,7 @@ public class Config {
      * @param clazz target class
      * @return list of options
      */
-    private ArrayList<Option> generateOptionList(Class<?> clazz) {
+    protected ArrayList<Option> generateOptionList(Class<?> clazz) {
         ArrayList<Option> options = new ArrayList<>();
         for (Class<?> innerClass : clazz.getClasses()) {
             if (innerClass.isAnnotationPresent(Category.class)) {
@@ -87,7 +94,11 @@ public class Config {
             } else if (field.isAnnotationPresent(TextField.class)) {
                 TextField textField = field.getAnnotation(TextField.class);
                 options.add(new OConfigText(field, textField.name(), textField.description(), textField.placeholder(), textField.hideText()));
-            } else loadCustomType(field);
+            } else {
+                Option customOption = processCustomOption(field);
+                if (customOption != null)
+                    options.add(customOption);
+            }
         }
         return options;
     }
@@ -96,8 +107,10 @@ public class Config {
      * Overwrite this method to add your own custom option types
      *
      * @param field target field
+     * @return custom option
      */
-    protected void loadCustomType(Field field) {
+    protected Option processCustomOption(Field field) {
+        return null;
     }
 
     /**
@@ -106,27 +119,25 @@ public class Config {
      * @param json  json to deserialize
      * @param clazz target class
      */
-    private void deserializePart(JsonObject json, Class<?> clazz) {
+    protected void deserializePart(JsonObject json, Class<?> clazz) {
         for (Map.Entry<String, JsonElement> element : json.entrySet()) {
             String name = element.getKey();
             JsonElement value = element.getValue();
             if (value.isJsonObject()) {
-                for (Class<?> innerClass : clazz.getClasses()) {
-                    if (innerClass.getSimpleName().equals(name)) {
-                        deserializePart(value.getAsJsonObject(), innerClass);
-                        break;
-                    }
+                Optional<Class<?>> innerClass = Arrays.stream(clazz.getClasses()).filter(aClass -> aClass.getSimpleName().equals(name)).findFirst();
+                if (innerClass.isPresent()) {
+                    deserializePart(value.getAsJsonObject(), innerClass.get());
+                    continue;
                 }
-            } else {
-                try {
-                    Field field = clazz.getField(name);
-                    TypeAdapter<?> adapter = gson.getAdapter(field.getType());
-                    Object object = adapter.fromJsonTree(value);
-                    field.setAccessible(true);
-                    field.set(null, object);
-                } catch (NoSuchFieldException | IllegalAccessException e) {
-                    e.printStackTrace();
-                }
+            }
+            try {
+                Field field = clazz.getField(name);
+                TypeAdapter<?> adapter = gson.getAdapter(field.getType());
+                Object object = adapter.fromJsonTree(value);
+                field.setAccessible(true);
+                field.set(null, object);
+            } catch (NoSuchFieldException | IllegalAccessException e) {
+                e.printStackTrace();
             }
         }
     }
