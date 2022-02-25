@@ -38,5 +38,5 @@ public class OneConfigConfig extends Config {
         }
     }
 
-    public static String currentProfile;
+    public static String currentProfile = "Default Profile";
 }

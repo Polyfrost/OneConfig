@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 public class Profiles {
-    private static ArrayList<String> profiles;
+    public static ArrayList<String> profiles;
     private static final File profileDir = new File("OneConfig/profiles");
 
     public static String getCurrentProfile() {
