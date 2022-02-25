@@ -136,8 +136,7 @@ public class Config {
                 Object object = adapter.fromJsonTree(value);
                 field.setAccessible(true);
                 field.set(null, object);
-            } catch (NoSuchFieldException | IllegalAccessException e) {
-                e.printStackTrace();
+            } catch (NoSuchFieldException | IllegalAccessException ignored) {
             }
         }
     }

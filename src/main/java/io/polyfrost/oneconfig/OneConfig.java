@@ -2,8 +2,6 @@ package io.polyfrost.oneconfig;
 
 import io.polyfrost.oneconfig.command.OneConfigCommand;
 import io.polyfrost.oneconfig.config.OneConfigConfig;
-import io.polyfrost.oneconfig.config.core.ConfigCore;
-import io.polyfrost.oneconfig.config.profiles.Profiles;
 import io.polyfrost.oneconfig.test.TestConfig;
 import io.polyfrost.oneconfig.themes.Themes;
 import net.minecraft.client.Minecraft;

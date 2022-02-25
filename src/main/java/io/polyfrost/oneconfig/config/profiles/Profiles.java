@@ -7,39 +7,48 @@ import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 public class Profiles {
-    public static Map.Entry<String, String> getCurrentProfile() {
-        if (OneConfigConfig.currentProfile == null) {
-            OneConfigConfig.currentProfile = createProfile("Default Profile").getKey();
-            OneConfig.config.save();
-        }
-        return getProfile(OneConfigConfig.currentProfile);
-    }
+    private static ArrayList<String> profiles;
+    private static final File profileDir = new File("OneConfig/profiles");
 
-    public static Map.Entry<String, String> createProfile(String name) {
-        File profileDir = new File("OneConfig/profiles");
+    public static String getCurrentProfile() {
         if (!profileDir.exists() && !profileDir.mkdir()) {
             System.out.println("Could not create profiles folder");
             return null;
         }
+        if (profiles == null) {
+            String[] profilesArray = new File("OneConfig/profiles").list((file, s) -> file.isDirectory());
+            if (profilesArray != null)
+                profiles = new ArrayList<>(Arrays.asList(profilesArray));
+        }
+        if (!getProfileDir(OneConfigConfig.currentProfile).exists()) {
+            createProfile(OneConfigConfig.currentProfile);
+        }
+        return OneConfigConfig.currentProfile;
+    }
+
+    public static void createProfile(String name) {
         File folder = new File(profileDir, name);
         if (!folder.exists() && !folder.mkdir()) {
             System.out.println("Could not create profile folder");
-            return null;
+            return;
         }
-        OneConfigConfig.profiles.put(name, folder.getAbsolutePath());
-        OneConfig.config.save();
-        return getProfile(name);
+        profiles.add(name);
     }
 
-    public static Map.Entry<String, String> getProfile(String name) {
-        return OneConfigConfig.profiles.entrySet().stream().filter(entry -> entry.getKey().equals(name)).findFirst().get();
+    public static File getProfileDir() {
+        return getProfileDir(getCurrentProfile());
+    }
+
+    public static File getProfileDir(String profile) {
+        return new File(new File("OneConfig/profiles"), profile);
     }
 
     public static File getProfileFile(String file) {
-        return new File(new File(getCurrentProfile().getValue()), file);
+        return new File(getProfileDir(), file);
     }
 
     public static void loadProfile(String profile) {
@@ -51,32 +60,28 @@ public class Profiles {
 
     public static void renameProfile(String name, String newName) {
         try {
-            Map.Entry<String, String> profile = getProfile(name);
             File newFile = new File(new File("OneConfig/profiles"), newName);
-            FileUtils.moveDirectory(new File(profile.getValue()), newFile);
+            FileUtils.moveDirectory(getProfileDir(name), newFile);
             if (OneConfigConfig.currentProfile.equals(name))
                 OneConfigConfig.currentProfile = newName;
-            OneConfigConfig.profiles.remove(name);
-            OneConfigConfig.profiles.put(newName, newFile.getAbsolutePath());
-            OneConfig.config.save();
+            profiles.remove(name);
+            profiles.add(newName);
         } catch (IOException e) {
             System.out.println("Failed to rename profile");
         }
     }
 
     public static void deleteProfile(String name) {
-        Map.Entry<String, String> profile = getProfile(name);
-        if (profile.equals(getCurrentProfile())) {
-            if (OneConfigConfig.profiles.size() == 1) {
+        if (name.equals(getCurrentProfile())) {
+            if (profiles.size() == 1) {
                 System.out.println("Cannot delete only profile!");
                 return;
             }
-            loadProfile(OneConfigConfig.profiles.entrySet().stream().filter(entry -> !entry.getKey().equals(name)).findFirst().get().getKey());
+            loadProfile(profiles.stream().filter(entry -> !entry.equals(name)).findFirst().get());
         }
         try {
-            FileUtils.deleteDirectory(new File(profile.getValue()));
-            OneConfigConfig.profiles.remove(name);
-            OneConfig.config.save();
+            FileUtils.deleteDirectory(getProfileDir(name));
+            profiles.remove(name);
         } catch (IOException e) {
             System.out.println("Failed to delete profile");
         }

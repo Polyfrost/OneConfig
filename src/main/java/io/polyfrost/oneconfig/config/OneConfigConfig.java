@@ -6,7 +6,6 @@ import io.polyfrost.oneconfig.config.interfaces.Config;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
 
 public class OneConfigConfig extends Config {
     public OneConfigConfig() {
@@ -39,6 +38,5 @@ public class OneConfigConfig extends Config {
         }
     }
 
-    public static HashMap<String, String> profiles = new HashMap<>();
     public static String currentProfile;
 }
