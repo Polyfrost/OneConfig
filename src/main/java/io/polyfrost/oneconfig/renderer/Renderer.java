@@ -18,8 +18,8 @@ public class Renderer extends Gui {
     public static final Logger renderLog = LogManager.getLogger("OneConfig Renderer");
     private static final Minecraft mc = Minecraft.getMinecraft();
     private static final FontRenderer fr = mc.fontRendererObj;
-    private static Tessellator tessellator = Tessellator.getInstance();
-    private static WorldRenderer worldRenderer = tessellator.getWorldRenderer();
+    private static final Tessellator tessellator = Tessellator.getInstance();
+    private static final WorldRenderer worldRenderer = tessellator.getWorldRenderer();
 
 
     public static void drawRectangle(int left, int top, int right, int bottom, int color) {
@@ -40,7 +40,7 @@ public class Renderer extends Gui {
         Gui.drawScaledCustomSizeModalRect(x, y, 0, 0, targetX, targetY, targetX, targetY, targetX, targetY);
     }
 
-    public static void drawRegularPolygon(double x, double y, int radius, int sides, int color, double lowerAngle, double upperAngle) {
+    public static void drawRegularPolygon(double x, double y, float radius, int sides, int color, double lowerAngle, double upperAngle) {
         GL11.glDisable(GL11.GL_TEXTURE_2D);
         setGlColor(color);
         GlStateManager.enableBlend();
@@ -68,27 +68,28 @@ public class Renderer extends Gui {
         GL11.glEnable(GL11.GL_TEXTURE_2D);
     }
 
-    public static void drawRegularPolygon(double x, double y, int radius, int sides, int color) {
+    public static void drawRegularPolygon(double x, double y, float radius, int sides, int color) {
         drawRegularPolygon(x, y, radius, sides, color, 0d, 10000d);
     }
 
     /**
      * Draw a round rectangle at the given coordinates.
+     *
      * @param radius radius of the corners
-     * @param color color as a rgba integer
+     * @param color  color as a rgba integer
      */
-    public static void drawRoundRect(double x, double y, double width, double height, int radius, int color) {
+    public static void drawRoundRect(double x, double y, double width, double height, float radius, int color) {
         GL11.glEnable(GL11.GL_BLEND);
         //GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE);
-        Gui.drawRect((int) x + radius, (int) y, (int) (x + width - radius), (int) (y + radius), color);                          // top
-        Gui.drawRect((int) x + radius, (int) (y + height - radius), (int) (x + width - radius), (int) (y + height), color);      // bottom
-        Gui.drawRect((int) x, (int) y + radius, (int) (x + width), (int) (y + height - radius), color);                          // main
-        drawRegularPolygon(x + radius, y + radius, radius, 80, color, 0d, 4.75d);                    // top left
-        drawRegularPolygon(x + width - radius, y + radius, radius, 80, color, 7.8d, 10d);            // top right
-        drawRegularPolygon(x + radius, y + height - radius, radius, 80, color, 4.7d, 6.3d);          // bottom left
-        drawRegularPolygon(x + width - radius, y + height - radius, radius, 80, color, 6.25d, 7.9d); // bottom right
+        Gui.drawRect((int) (x + radius), (int) y, (int) (x + width - radius), (int) (y + radius), color);                          // top
+        Gui.drawRect((int) (x + radius), (int) (y + height - radius), (int) (x + width - radius), (int) (y + height), color);      // bottom
+        Gui.drawRect((int) x, (int) (y + radius), (int) (x + width), (int) (y + height - radius), color);                          // main
+        drawRegularPolygon(x + radius - 0.5, y + radius - 0.5, radius, 80, color, 0d, 4.75d);                    // top left
+        drawRegularPolygon(x + width - radius - 0.5, y + radius - 0.5, radius, 80, color, 7.8d, 10d);            // top right
+        drawRegularPolygon(x + radius - 0.5, y + height - radius - 0.5, radius, 80, color, 4.7d, 6.3d);          // bottom left
+        drawRegularPolygon(x + width - radius - 0.5, y + height - radius - 0.5, radius, 80, color, 6.25d, 7.9d); // bottom right
         GL11.glDisable(GL11.GL_BLEND);
-        GL11.glColor4f(1f,1f,1f,1f);
+        GL11.glColor4f(1f, 1f, 1f, 1f);
     }
 
     public static float clamp(float number) {
@@ -131,7 +132,7 @@ public class Renderer extends Gui {
         float f = (float) (color >> 16 & 255) / 255.0F;
         float f2 = (float) (color & 255) / 255.0F;
         float f3 = (float) (color >> 24 & 255) / 255.0F;
-        GlStateManager.color(f,f1,f2,f3);
+        GlStateManager.color(f, f1, f2, f3);
     }
 
 }

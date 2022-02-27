@@ -1,6 +1,7 @@
 package io.polyfrost.oneconfig.test;
 
 import io.polyfrost.oneconfig.config.annotations.Category;
+import io.polyfrost.oneconfig.config.annotations.HudComponent;
 import io.polyfrost.oneconfig.config.annotations.Switch;
 import io.polyfrost.oneconfig.config.annotations.TextField;
 import io.polyfrost.oneconfig.config.data.ModData;
@@ -17,6 +18,9 @@ public class TestConfig extends Config {
         @TextField(name = "Cool text field")
         public static String text = "Very cool text";
     }
+
+    @HudComponent(name = "text hud")
+    public static TestHud testTextHud = new TestHud();
 
     public TestConfig() {
         super(new ModData("hacks", ModType.QOL, "ShadyDev", "1.0"), "hacksConfig.json");

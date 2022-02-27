@@ -6,6 +6,8 @@ import io.polyfrost.oneconfig.config.core.ConfigCore;
 import io.polyfrost.oneconfig.config.data.ModData;
 import io.polyfrost.oneconfig.config.profiles.Profiles;
 import io.polyfrost.oneconfig.gui.elements.config.*;
+import io.polyfrost.oneconfig.hud.HudCore;
+import io.polyfrost.oneconfig.hud.interfaces.BasicHud;
 
 import java.io.*;
 import java.lang.reflect.Field;
@@ -94,6 +96,17 @@ public class Config {
             } else if (field.isAnnotationPresent(TextField.class)) {
                 TextField textField = field.getAnnotation(TextField.class);
                 options.add(new OConfigText(field, textField.name(), textField.description(), textField.placeholder(), textField.hideText()));
+            } else if (field.isAnnotationPresent(HudComponent.class)) {
+                HudComponent hudComponent = field.getAnnotation(HudComponent.class);
+                options.add(new OConfigHud(field, hudComponent.name(), hudComponent.description()));
+                try {
+                    Object hud = field.get(BasicHud.class);
+                    HudCore.huds.add((BasicHud) hud);
+                    System.out.println("here");
+                    System.out.println(HudCore.huds.size());
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
+                }
             } else {
                 Option customOption = processCustomOption(field);
                 if (customOption != null)
