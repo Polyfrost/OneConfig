@@ -2,6 +2,7 @@ package io.polyfrost.oneconfig.config.core;
 
 import io.polyfrost.oneconfig.config.data.ModData;
 import io.polyfrost.oneconfig.config.interfaces.Option;
+import io.polyfrost.oneconfig.hud.HudCore;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -18,6 +19,7 @@ public class ConfigCore {
     public static void reInitAll () {
         ArrayList<ModData> data = new ArrayList<>(settings.keySet());
         settings.clear();
+        HudCore.huds.clear();
         for (ModData modData : data) {
             modData.config.init(modData);
         }

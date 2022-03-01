@@ -2,7 +2,6 @@ plugins {
     id "java"
     id "com.github.johnrengelman.shadow" version "6.1.0"
     id "net.minecraftforge.gradle.forge" version "6f53277"
-    id "org.jetbrains.kotlin.jvm" version "1.5.31"
 }
 
 group "io.polyfrost"
@@ -25,9 +24,11 @@ configurations {
 }
 
 repositories {
+mavenCentral()
 }
 
 dependencies {
+implementation 'org.jetbrains:annotations:22.0.0'
 }
 
 /**
@@ -69,12 +70,6 @@ shadowJar {
     archiveClassifier.set('dep')
     configurations = [project.configurations.shade]
     duplicatesStrategy DuplicatesStrategy.EXCLUDE
-}
-
-compileKotlin {
-    kotlinOptions {
-        jvmTarget = "1.8"
-    }
 }
 
 reobf { shadowJar { mappingType = "SEARGE" } }

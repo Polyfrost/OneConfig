@@ -40,7 +40,7 @@ public class Renderer extends Gui {
         Gui.drawScaledCustomSizeModalRect(x, y, 0, 0, targetX, targetY, targetX, targetY, targetX, targetY);
     }
 
-    public static void drawRegularPolygon(double x, double y, float radius, int sides, int color, double lowerAngle, double upperAngle) {
+    public static void drawRegularPolygon(double x, double y, int radius, int sides, int color, double lowerAngle, double upperAngle) {
         GL11.glDisable(GL11.GL_TEXTURE_2D);
         setGlColor(color);
         GlStateManager.enableBlend();
@@ -68,7 +68,7 @@ public class Renderer extends Gui {
         GL11.glEnable(GL11.GL_TEXTURE_2D);
     }
 
-    public static void drawRegularPolygon(double x, double y, float radius, int sides, int color) {
+    public static void drawRegularPolygon(double x, double y, int radius, int sides, int color) {
         drawRegularPolygon(x, y, radius, sides, color, 0d, 10000d);
     }
 
@@ -78,16 +78,16 @@ public class Renderer extends Gui {
      * @param radius radius of the corners
      * @param color  color as a rgba integer
      */
-    public static void drawRoundRect(double x, double y, double width, double height, float radius, int color) {
+    public static void drawRoundRect(int x, int y, int width, int height, int radius, int color) {
         GL11.glEnable(GL11.GL_BLEND);
         //GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE);
-        Gui.drawRect((int) (x + radius), (int) y, (int) (x + width - radius), (int) (y + radius), color);                          // top
-        Gui.drawRect((int) (x + radius), (int) (y + height - radius), (int) (x + width - radius), (int) (y + height), color);      // bottom
-        Gui.drawRect((int) x, (int) (y + radius), (int) (x + width), (int) (y + height - radius), color);                          // main
-        drawRegularPolygon(x + radius - 0.5, y + radius - 0.5, radius, 80, color, 0d, 4.75d);                    // top left
-        drawRegularPolygon(x + width - radius - 0.5, y + radius - 0.5, radius, 80, color, 7.8d, 10d);            // top right
-        drawRegularPolygon(x + radius - 0.5, y + height - radius - 0.5, radius, 80, color, 4.7d, 6.3d);          // bottom left
-        drawRegularPolygon(x + width - radius - 0.5, y + height - radius - 0.5, radius, 80, color, 6.25d, 7.9d); // bottom right
+        Gui.drawRect(x + radius, y, (x + width - radius), (y + radius), color);                                                  // top
+        Gui.drawRect(x + radius, (y + height - radius), (x + width - radius), (y + height), color);                              // bottom
+        Gui.drawRect(x, (y + radius), (x + width), (y + height - radius), color);                                                    // main
+        drawRegularPolygon(x + radius, y + radius, radius, 80, color, 0d, 4.75d);                    // top left
+        drawRegularPolygon(x + width - radius, y + radius, radius, 80, color, 7.8d, 10d);            // top right
+        drawRegularPolygon(x + radius, y + height - radius, radius, 80, color, 4.7d, 6.3d);          // bottom left
+        drawRegularPolygon(x + width - radius, y + height - radius, radius, 80, color, 6.25d, 7.9d); // bottom right
         GL11.glDisable(GL11.GL_BLEND);
         GL11.glColor4f(1f, 1f, 1f, 1f);
     }
@@ -135,4 +135,34 @@ public class Renderer extends Gui {
         GlStateManager.color(f, f1, f2, f3);
     }
 
+    public static void drawLine(float sx, float sy, float ex, float ey, int width, int color) {
+        float f = (float) (color >> 24 & 255) / 255.0F;
+        float f1 = (float) (color >> 16 & 255) / 255.0F;
+        float f2 = (float) (color >> 8 & 255) / 255.0F;
+        float f3 = (float) (color & 255) / 255.0F;
+        GlStateManager.pushMatrix();
+        GlStateManager.disableTexture2D();
+        GlStateManager.enableBlend();
+        GlStateManager.disableAlpha();
+        GlStateManager.tryBlendFuncSeparate(770, 771, 1, 0);
+        GlStateManager.color(f1, f2, f3, f);
+        GL11.glLineWidth(width);
+        GL11.glBegin(GL11.GL_LINES);
+        GL11.glVertex2d(sx, sy);
+        GL11.glVertex2d(ex, ey);
+        GL11.glEnd();
+        GlStateManager.disableBlend();
+        GlStateManager.enableAlpha();
+        GlStateManager.enableTexture2D();
+        GlStateManager.popMatrix();
+    }
+
+    public static void drawDottedLine(float sx, float sy, float ex, float ey, int width, int factor, int color) {
+        GlStateManager.pushMatrix();
+        GL11.glLineStipple(factor, (short) 0xAAAA);
+        GL11.glEnable(GL11.GL_LINE_STIPPLE);
+        drawLine(sx, sy, ex, ey, width, color);
+        GL11.glDisable(GL11.GL_LINE_STIPPLE);
+        GlStateManager.popMatrix();
+    }
 }

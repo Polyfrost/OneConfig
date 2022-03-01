@@ -1,10 +1,10 @@
 package io.polyfrost.oneconfig.command;
 
 import io.polyfrost.oneconfig.gui.Window;
+import io.polyfrost.oneconfig.hud.gui.HudGui;
 import io.polyfrost.oneconfig.themes.Themes;
 import io.polyfrost.oneconfig.utils.TickDelay;
 import net.minecraft.client.Minecraft;
-import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommand;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.util.BlockPos;
@@ -17,14 +17,7 @@ import java.util.List;
 
 public class OneConfigCommand implements ICommand {
 
-    private final List<String> aliases;
     private static final Minecraft mc = Minecraft.getMinecraft();
-
-    public OneConfigCommand() {
-        aliases = new ArrayList<>();
-        aliases.add("oneconfig");
-        aliases.add("ocfg");
-    }
 
     @Override
     public String getCommandName() {
@@ -38,15 +31,26 @@ public class OneConfigCommand implements ICommand {
 
     @Override
     public List<String> getCommandAliases() {
-        return this.aliases;
+        return new ArrayList<String>() {{
+            add("oneconfig");
+            add("ocfg");
+        }};
     }
 
     @Override
-    public void processCommand(ICommandSender sender, String[] args) throws CommandException {
-        new TickDelay(() -> mc.displayGuiScreen(new Window()), 1);
-        if(args.length != 0) {
-            mc.thePlayer.addChatMessage(new ChatComponentText("reloading theme!"));
-            Themes.openTheme(new File("OneConfig/themes/one.zip").getAbsoluteFile());
+    public void processCommand(ICommandSender sender, String[] args) {
+        if (args.length == 0)
+            new TickDelay(() -> mc.displayGuiScreen(new Window()), 1);
+        else {
+            switch (args[0]) {
+                case "hud":
+                    new TickDelay(() -> mc.displayGuiScreen(new HudGui()), 1);
+                    break;
+                case "theme":
+                    mc.thePlayer.addChatMessage(new ChatComponentText("reloading theme!"));
+                    Themes.openTheme(new File("OneConfig/themes/one.zip").getAbsoluteFile());
+                    break;
+            }
         }
     }
 
