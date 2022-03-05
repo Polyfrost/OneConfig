@@ -21,6 +21,8 @@ public class TestConfig extends Config {
 
     @HudComponent(name = "text hud")
     public static TestHud testTextHud = new TestHud();
+    @HudComponent(name = "text hud v2")
+    public static TestHud testTextHud2 = new TestHud();
 
     public TestConfig() {
         super(new ModData("hacks", ModType.QOL, "ShadyDev", "1.0"), "hacksConfig.json");
