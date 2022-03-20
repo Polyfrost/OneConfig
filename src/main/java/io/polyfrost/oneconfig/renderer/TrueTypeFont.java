@@ -29,10 +29,7 @@ import java.util.Map;
  * @author version edited by David Aaron Muhar (bobjob) (modified in Bobjob's Engine)
  */
 public class TrueTypeFont {
-    public final static int
-            ALIGN_LEFT = 0,
-            ALIGN_RIGHT = 1,
-            ALIGN_CENTER = 2;
+    public final static int ALIGN_LEFT = 0, ALIGN_RIGHT = 1, ALIGN_CENTER = 2;
     /**
      * Array that holds necessary information about the font characters
      */
@@ -52,54 +49,26 @@ public class TrueTypeFont {
      * Font's size
      */
     private final int fontSize;
-
-    /**
-     * Font's height
-     */
-    private int fontHeight = 0;
-
-    /**
-     * Texture used to cache the font 0-255 characters
-     */
-    private int fontTextureID;
-
     /**
      * Default font texture width
      */
     private final int textureWidth = 512;
-
     /**
      * Default font texture height
      */
     private final int textureHeight = 512;
-
     /**
      * A reference to Java's AWT Font that we create our font texture from
      */
     private final Font font;
-
-
-    private static class IntObject {
-        /**
-         * Character's width
-         */
-        public int width;
-
-        /**
-         * Character's height
-         */
-        public int height;
-
-        /**
-         * Character's stored x position
-         */
-        public int storedX;
-
-        /**
-         * Character's stored y position
-         */
-        public int storedY;
-    }
+    /**
+     * Font's height
+     */
+    private int fontHeight = 0;
+    /**
+     * Texture used to cache the font 0-255 characters
+     */
+    private int fontTextureID;
 
 
     public TrueTypeFont(Font font, boolean antiAlias, char[] additionalChars) {
@@ -113,18 +82,86 @@ public class TrueTypeFont {
         if (fontHeight <= 0) fontHeight = 1;
     }
 
+
     public TrueTypeFont(Font font, boolean antiAlias) {
         this(font, antiAlias, null);
     }
 
+    public static int loadImage(BufferedImage bufferedImage) {
+        try {
+            short width = (short) bufferedImage.getWidth();
+            short height = (short) bufferedImage.getHeight();
+            //textureLoader.bpp = bufferedImage.getColorModel().hasAlpha() ? (byte)32 : (byte)24;
+            int bpp = (byte) bufferedImage.getColorModel().getPixelSize();
+            ByteBuffer byteBuffer;
+            DataBuffer db = bufferedImage.getData().getDataBuffer();
+            if (db instanceof DataBufferInt) {
+                int[] intI = ((DataBufferInt) (bufferedImage.getData().getDataBuffer())).getData();
+                byte[] newI = new byte[intI.length * 4];
+                for (int i = 0; i < intI.length; i++) {
+                    byte[] b = intToByteArray(intI[i]);
+                    int newIndex = i * 4;
+
+                    newI[newIndex] = b[1];
+                    newI[newIndex + 1] = b[2];
+                    newI[newIndex + 2] = b[3];
+                    newI[newIndex + 3] = b[0];
+                }
+
+                byteBuffer = ByteBuffer.allocateDirect(width * height * (bpp / 8)).order(ByteOrder.nativeOrder()).put(newI);
+            } else {
+                byteBuffer = ByteBuffer.allocateDirect(width * height * (bpp / 8)).order(ByteOrder.nativeOrder()).put(((DataBufferByte) (bufferedImage.getData().getDataBuffer())).getData());
+            }
+            byteBuffer.flip();
+
+
+            int internalFormat = GL11.GL_RGBA8, format = GL11.GL_RGBA;
+            IntBuffer textureId = BufferUtils.createIntBuffer(1);
+
+            GL11.glGenTextures(textureId);
+            GL11.glBindTexture(GL11.GL_TEXTURE_2D, textureId.get(0));
+
+
+            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, GL11.GL_CLAMP);
+            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, GL11.GL_CLAMP);
+
+            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);
+            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR);
+
+            GL11.glTexEnvf(GL11.GL_TEXTURE_ENV, GL11.GL_TEXTURE_ENV_MODE, GL11.GL_MODULATE);
+
+
+            GLU.gluBuild2DMipmaps(GL11.GL_TEXTURE_2D, internalFormat, width, height, format, GL11.GL_UNSIGNED_BYTE, byteBuffer);
+            return textureId.get(0);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return -1;
+    }
+
+    public static boolean isSupported(String fontname) {
+        Font[] font = getFonts();
+        for (int i = font.length - 1; i >= 0; i--) {
+            if (font[i].getName().equalsIgnoreCase(fontname)) return true;
+        }
+        return false;
+    }
+
+    public static Font[] getFonts() {
+        return GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts();
+    }
+
+    public static byte[] intToByteArray(int value) {
+        return new byte[]{(byte) (value >>> 24), (byte) (value >>> 16), (byte) (value >>> 8), (byte) value};
+    }
+
     private BufferedImage getFontImage(char ch) {
         // Create a temporary image to extract the character's size
-        BufferedImage tempfontImage = new BufferedImage(1, 1,
-                BufferedImage.TYPE_INT_ARGB);
+        BufferedImage tempfontImage = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = (Graphics2D) tempfontImage.getGraphics();
         if (antiAlias) {
-            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                    RenderingHints.VALUE_ANTIALIAS_ON);
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         }
         g.setFont(font);
         FontMetrics fontMetrics = g.getFontMetrics();
@@ -140,20 +177,17 @@ public class TrueTypeFont {
 
         // Create another image holding the character we are creating
         BufferedImage fontImage;
-        fontImage = new BufferedImage(charwidth, charheight,
-                BufferedImage.TYPE_INT_ARGB);
+        fontImage = new BufferedImage(charwidth, charheight, BufferedImage.TYPE_INT_ARGB);
         Graphics2D gt = (Graphics2D) fontImage.getGraphics();
         if (antiAlias) {
-            gt.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                    RenderingHints.VALUE_ANTIALIAS_ON);
+            gt.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         }
         gt.setFont(font);
 
         gt.setColor(Color.WHITE);
         int charx = 3;
         int chary = 1;
-        gt.drawString(String.valueOf(ch), (charx), (chary)
-                + fontMetrics.getAscent());
+        gt.drawString(String.valueOf(ch), (charx), (chary) + fontMetrics.getAscent());
 
         return fontImage;
 
@@ -223,8 +257,7 @@ public class TrueTypeFont {
         }
     }
 
-    private void drawQuad(float drawX, float drawY, float drawX2, float drawY2,
-                          float srcX, float srcY, float srcX2, float srcY2) {
+    private void drawQuad(float drawX, float drawY, float drawX2, float drawY2, float srcX, float srcY, float srcX2, float srcY2) {
         float DrawWidth = drawX2 - drawX;
         float DrawHeight = drawY2 - drawY;
         float TextureSrcX = srcX / textureWidth;
@@ -260,8 +293,7 @@ public class TrueTypeFont {
                 intObject = customChars.get((char) currentChar);
             }
 
-            if (intObject != null)
-                totalWidth += intObject.width;
+            if (intObject != null) totalWidth += intObject.width;
         }
         return totalWidth;
     }
@@ -281,18 +313,18 @@ public class TrueTypeFont {
             String[] words = text.split("\\W+");
             int totalWidth = 0;
             String line = "";
-            for(String word : words) {
+            for (String word : words) {
                 int width = getWidth(word);
                 word += " ";            // add the space
                 totalWidth += width;
                 line += word;
-                if(totalWidth >= wrapWidth) {           // wrap line if it is too long
+                if (totalWidth >= wrapWidth) {           // wrap line if it is too long
                     splitString.add(line);
                     totalWidth = 0;
                     line = "";
                 }
             }
-            if(!line.equals("")) {          // add extra if there is any (last line)
+            if (!line.equals("")) {          // add extra if there is any (last line)
                 splitString.add(line);
             }
             int i1 = 0;
@@ -304,10 +336,6 @@ public class TrueTypeFont {
             e.printStackTrace();
         }
     }
-
-
-
-
 
     public void drawString(String text, float x, float y, float scaleX, float scaleY, int format, int color) {
         int startIndex = 0;
@@ -367,11 +395,7 @@ public class TrueTypeFont {
 
             if (intObject != null) {
                 if (d < 0) totalWidth += (intObject.width - c) * d;
-                drawQuad((totalWidth + intObject.width) * scaleX + x, startY * scaleY + y,
-                        totalWidth * scaleX + x,
-                        (startY + intObject.height) * scaleY + y, intObject.storedX + intObject.width,
-                        intObject.storedY + intObject.height, intObject.storedX,
-                        intObject.storedY);
+                drawQuad((totalWidth + intObject.width) * scaleX + x, startY * scaleY + y, totalWidth * scaleX + x, (startY + intObject.height) * scaleY + y, intObject.storedX + intObject.width, intObject.storedY + intObject.height, intObject.storedX, intObject.storedY);
                 if (d > 0) totalWidth += (intObject.width - c) * d;
             } else if (charCurrent == '\n') {
                 startY += fontHeight * d;
@@ -393,94 +417,7 @@ public class TrueTypeFont {
             i += d;
         }
         GlStateManager.disableBlend();
-        GlStateManager.color(1f,1f,1f,1f);
-    }
-
-    public static int loadImage(BufferedImage bufferedImage) {
-        try {
-            short width = (short) bufferedImage.getWidth();
-            short height = (short) bufferedImage.getHeight();
-            //textureLoader.bpp = bufferedImage.getColorModel().hasAlpha() ? (byte)32 : (byte)24;
-            int bpp = (byte) bufferedImage.getColorModel().getPixelSize();
-            ByteBuffer byteBuffer;
-            DataBuffer db = bufferedImage.getData().getDataBuffer();
-            if (db instanceof DataBufferInt) {
-                int[] intI = ((DataBufferInt) (bufferedImage.getData().getDataBuffer())).getData();
-                byte[] newI = new byte[intI.length * 4];
-                for (int i = 0; i < intI.length; i++) {
-                    byte[] b = intToByteArray(intI[i]);
-                    int newIndex = i * 4;
-
-                    newI[newIndex] = b[1];
-                    newI[newIndex + 1] = b[2];
-                    newI[newIndex + 2] = b[3];
-                    newI[newIndex + 3] = b[0];
-                }
-
-                byteBuffer = ByteBuffer.allocateDirect(
-                                width * height * (bpp / 8))
-                        .order(ByteOrder.nativeOrder())
-                        .put(newI);
-            } else {
-                byteBuffer = ByteBuffer.allocateDirect(
-                                width * height * (bpp / 8))
-                        .order(ByteOrder.nativeOrder())
-                        .put(((DataBufferByte) (bufferedImage.getData().getDataBuffer())).getData());
-            }
-            byteBuffer.flip();
-
-
-            int internalFormat = GL11.GL_RGBA8,
-                    format = GL11.GL_RGBA;
-            IntBuffer textureId = BufferUtils.createIntBuffer(1);
-
-            GL11.glGenTextures(textureId);
-            GL11.glBindTexture(GL11.GL_TEXTURE_2D, textureId.get(0));
-
-
-            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, GL11.GL_CLAMP);
-            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, GL11.GL_CLAMP);
-
-            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);
-            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR);
-
-            GL11.glTexEnvf(GL11.GL_TEXTURE_ENV, GL11.GL_TEXTURE_ENV_MODE, GL11.GL_MODULATE);
-
-
-            GLU.gluBuild2DMipmaps(GL11.GL_TEXTURE_2D,
-                    internalFormat,
-                    width,
-                    height,
-                    format,
-                    GL11.GL_UNSIGNED_BYTE,
-                    byteBuffer);
-            return textureId.get(0);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return -1;
-    }
-
-    public static boolean isSupported(String fontname) {
-        Font[] font = getFonts();
-        for (int i = font.length - 1; i >= 0; i--) {
-            if (font[i].getName().equalsIgnoreCase(fontname))
-                return true;
-        }
-        return false;
-    }
-
-    public static Font[] getFonts() {
-        return GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts();
-    }
-
-    public static byte[] intToByteArray(int value) {
-        return new byte[]{
-                (byte) (value >>> 24),
-                (byte) (value >>> 16),
-                (byte) (value >>> 8),
-                (byte) value};
+        GlStateManager.color(1f, 1f, 1f, 1f);
     }
 
     public void destroy() {
@@ -488,5 +425,27 @@ public class TrueTypeFont {
         scratch.put(0, fontTextureID);
         GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
         GL11.glDeleteTextures(scratch);
+    }
+
+    private static class IntObject {
+        /**
+         * Character's width
+         */
+        public int width;
+
+        /**
+         * Character's height
+         */
+        public int height;
+
+        /**
+         * Character's stored x position
+         */
+        public int storedX;
+
+        /**
+         * Character's stored y position
+         */
+        public int storedY;
     }
 }

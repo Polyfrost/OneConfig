@@ -14,7 +14,7 @@ import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 
 import java.io.File;
 
-@Mod(modid = "oneconfig", name = "OneConfig", version = "${version}")
+@Mod(modid = "@ID@", name = "@NAME@", version = "@VER@")
 public class OneConfig {
     private static final Minecraft mc = Minecraft.getMinecraft();
     public static File jarFile;

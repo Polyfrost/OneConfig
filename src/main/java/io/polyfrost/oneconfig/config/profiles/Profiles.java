@@ -11,8 +11,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 public class Profiles {
-    public static ArrayList<String> profiles;
     private static final File profileDir = new File("OneConfig/profiles");
+    public static ArrayList<String> profiles;
 
     public static String getCurrentProfile() {
         if (!profileDir.exists() && !profileDir.mkdir()) {
@@ -21,8 +21,7 @@ public class Profiles {
         }
         if (profiles == null) {
             String[] profilesArray = new File("OneConfig/profiles").list((file, s) -> file.isDirectory());
-            if (profilesArray != null)
-                profiles = new ArrayList<>(Arrays.asList(profilesArray));
+            if (profilesArray != null) profiles = new ArrayList<>(Arrays.asList(profilesArray));
         }
         if (!getProfileDir(OneConfigConfig.currentProfile).exists()) {
             createProfile(OneConfigConfig.currentProfile);
@@ -62,8 +61,7 @@ public class Profiles {
         try {
             File newFile = new File(new File("OneConfig/profiles"), newName);
             FileUtils.moveDirectory(getProfileDir(name), newFile);
-            if (OneConfigConfig.currentProfile.equals(name))
-                OneConfigConfig.currentProfile = newName;
+            if (OneConfigConfig.currentProfile.equals(name)) OneConfigConfig.currentProfile = newName;
             profiles.remove(name);
             profiles.add(newName);
         } catch (IOException e) {

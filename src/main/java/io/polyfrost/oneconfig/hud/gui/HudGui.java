@@ -44,10 +44,8 @@ public class HudGui extends GuiScreen {
                 float pos = getXSnapping(mouseX, true);
                 float newWidth = pos - xFloat;
                 float newScale = newWidth / ((hud.getWidth(hud.scale) + hud.paddingX * hud.scale) / hud.scale);
-                if (newScale > 20)
-                    newScale = 20;
-                else if (newScale < 0.3)
-                    newScale = 0.3f;
+                if (newScale > 20) newScale = 20;
+                else if (newScale < 0.3) newScale = 0.3f;
                 hud.scale = newScale;
 
                 if (xFloat / this.width > 0.5)
@@ -65,8 +63,7 @@ public class HudGui extends GuiScreen {
             int color = new Color(215, 224, 235).getRGB();
             if (editingHud == hud) {
                 color = new Color(43, 159, 235).getRGB();
-                if (isDragging)
-                    Gui.drawRect(x, y, x + width, y + height, new Color(108, 176, 255, 60).getRGB());
+                if (isDragging) Gui.drawRect(x, y, x + width, y + height, new Color(108, 176, 255, 60).getRGB());
             }
             Renderer.drawLine(x - 2 / 4f, y, x + width + 2 / 4f, y, 2, color);
             Renderer.drawLine(x, y, x, y + height, 2, color);
@@ -84,28 +81,20 @@ public class HudGui extends GuiScreen {
         float width = editingHud.getWidth(editingHud.scale) + editingHud.paddingX * editingHud.scale;
         float height = editingHud.getHeight(editingHud.scale) + editingHud.paddingY * editingHud.scale;
 
-        if (newX < 0)
-            newX = 0;
-        else if (newX + width > this.width)
-            newX = this.width - width;
-        if (newY < 0)
-            newY = 0;
-        else if (newY + height > this.height)
-            newY = this.height - height;
+        if (newX < 0) newX = 0;
+        else if (newX + width > this.width) newX = this.width - width;
+        if (newY < 0) newY = 0;
+        else if (newY + height > this.height) newY = this.height - height;
 
         if (snap) {
             newX = getXSnapping(newX, false);
             newY = getYSnapping(newY);
         }
 
-        if (newX / this.width <= 0.5)
-            editingHud.xUnscaled = newX / (double) this.width;
-        else
-            editingHud.xUnscaled = (newX + width) / (double) this.width;
-        if (newY / this.height <= 0.5)
-            editingHud.yUnscaled = newY / (double) this.height;
-        else
-            editingHud.yUnscaled = (newY + height) / (double) this.height;
+        if (newX / this.width <= 0.5) editingHud.xUnscaled = newX / (double) this.width;
+        else editingHud.xUnscaled = (newX + width) / (double) this.width;
+        if (newY / this.height <= 0.5) editingHud.yUnscaled = newY / (double) this.height;
+        else editingHud.yUnscaled = (newY + height) / (double) this.height;
     }
 
     private float getXSnapping(float pos, boolean rightOnly) {

@@ -2,7 +2,6 @@ package io.polyfrost.oneconfig.themes.textures;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import io.polyfrost.oneconfig.themes.textures.ThemeElement;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.renderer.GlStateManager;
@@ -23,10 +22,10 @@ public class TickableTexture {
     private final int framesToSkip;
     private final BufferedImage image;
     private final int sizeX, sizeY, frames;
-    private int tick;
-    private int tick2;
     private final ThemeElement thisElement;
     private final ResourceLocation location;
+    private int tick;
+    private int tick2;
 
     public TickableTexture(ThemeElement element) throws IOException {
         thisElement = element;
@@ -53,7 +52,7 @@ public class TickableTexture {
 
     public void draw(int x, int y) {
         GlStateManager.enableBlend();
-        GlStateManager.color(1f,1f,1f,1f);
+        GlStateManager.color(1f, 1f, 1f, 1f);
         Minecraft.getMinecraft().getTextureManager().bindTexture(location);
         if (tick < frames) {
             Gui.drawModalRectWithCustomSizedTexture(x, y, 0, (tick * sizeX), sizeX, sizeX, sizeX, sizeX);
