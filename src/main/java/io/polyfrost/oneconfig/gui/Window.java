@@ -1,10 +1,8 @@
 package io.polyfrost.oneconfig.gui;
 
 import io.polyfrost.oneconfig.gui.elements.OCBlock;
-import io.polyfrost.oneconfig.gui.elements.OCButton;
 import io.polyfrost.oneconfig.gui.elements.OCStoreBlock;
 import io.polyfrost.oneconfig.themes.Theme;
-import io.polyfrost.oneconfig.themes.textures.ThemeElement;
 import io.polyfrost.oneconfig.themes.Themes;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
@@ -24,10 +22,11 @@ public class Window extends GuiScreen {
     long secondCounter = System.currentTimeMillis();
     long prevTime = System.currentTimeMillis();
     int frames = 0;
-    OCBlock block = new OCBlock(-1, 100, 200);
+    OCBlock block = new OCBlock(() -> {
+        t.getFont().drawString("hi", 10, 10, 1f, 1f, -1);
+    },750, 144);
     ResourceLocation example = new ResourceLocation("oneconfig", "textures/hudsettings.png");
     OCStoreBlock storeBlock = new OCStoreBlock("OneConfig Theme", "OneConfig default theme with the default look you love.", example, new Color(27,27,27,255).getRGB());
-    OCButton button = new OCButton("Mod Settings","Configure all supported mods",ThemeElement.MOD_SETTINGS,false,758, 144);
     public static ScaledResolution resolution = new ScaledResolution(Minecraft.getMinecraft());
 
     public Window() {
@@ -74,15 +73,16 @@ public class Window extends GuiScreen {
         int bottom = (int) (1024 * currentProgress);
         //Gui.drawRect(left - 1, top - 1, right + 1, bottom + 1, testingColor.getRGB());
         //new Color(16, 17, 19, 255).getRGB()
-        t.getTextureManager().draw(ThemeElement.BACKGROUND, left, top, right, bottom);
+        //t.getTextureManager().draw(ThemeElement.BACKGROUND, left, top, right, bottom);
         //t.getTextureManager().draw(ThemeElement.BUTTON_OFF, left + 480, top + 40, 640, 48);
-        t.getTextureManager().draw(ThemeElement.SEARCH, left + 504, top + 48, 32, 32);
-        t.getFont().drawString("Search all of OneConfig", left + 548, top + 48, 1.1f, 1f, new Color(242,242,242,255).getRGB());
+        //t.getTextureManager().draw(ThemeElement.SEARCH, left + 504, top + 48, 32, 32);
+        //t.getFont().drawString("Search all of OneConfig", left + 548, top + 48, 1.1f, 1f, new Color(242,242,242,255).getRGB());
+
         //t.getTextureManager().draw(ThemeElement.BUTTON_OFF, left + 1504, top + 32, 64, 64);
         //t.getTextureManager().draw(ThemeElement.BUTTON_OFF, left + 1424, top + 32, 64, 64);
         //t.getTextureManager().draw(ThemeElement.BUTTON_OFF, left + 1344, top + 32, 64, 64);
         //block.draw(200, 300);
-        button.draw(500,300);
+        block.draw(100,200);
         //t.getTextureManager().draw(ThemeElement.CLOSE, left + 1504, top + 32, 64, 64);
         //t.getTextureManager().draw(ThemeElement.BUTTON_OFF, left + 100, top + 100, 296, 64);
         //t.getTextureManager().draw(ThemeElement.CLOSE);

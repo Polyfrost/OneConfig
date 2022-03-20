@@ -1,5 +1,7 @@
 package io.polyfrost.oneconfig.renderer;
 
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonParser;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.Gui;
@@ -22,11 +24,33 @@ public class Renderer extends Gui {
     private static final WorldRenderer worldRenderer = tessellator.getWorldRenderer();
 
 
-    public static void drawRectangle(int left, int top, int right, int bottom, int color) {
-        Gui.drawRect(left, top, right, bottom, color);
+
+    /**
+     * Draw a basic rectangle. Please note that this is to be used WITH a {@link net.minecraft.client.renderer.GlStateManager#color(float, float, float)} before to color it.
+     */
+    public static void drawRectangle(int x, int y, int width, int height) {
+        int right = x + width;
+        int bottom = y + height;
+        if (x < right) {
+            x = right;
+        }
+        if (y < bottom) {
+            y = bottom;
+        }
+        GlStateManager.enableBlend();
+        GlStateManager.disableTexture2D();
+        GlStateManager.tryBlendFuncSeparate(770, 771, 1, 0);
+        worldRenderer.begin(7, DefaultVertexFormats.POSITION);
+        worldRenderer.pos(x, bottom, 0.0D).endVertex();
+        worldRenderer.pos(right, bottom, 0.0D).endVertex();
+        worldRenderer.pos(right, y, 0.0D).endVertex();
+        worldRenderer.pos(x, y, 0.0D).endVertex();
+        tessellator.draw();
+        GlStateManager.enableTexture2D();
+        GlStateManager.disableBlend();
     }
 
-    public static void drawTextScale(String text, float x, float y, int color, boolean shadow, float scale) {
+    public static void drawScaledString(String text, float x, float y, int color, boolean shadow, float scale) {
         GlStateManager.pushMatrix();
         GlStateManager.scale(scale, scale, 1);
         mc.fontRendererObj.drawString(text, x * (1 / scale), y * (1 / scale), color, shadow);
@@ -42,7 +66,7 @@ public class Renderer extends Gui {
 
     public static void drawRegularPolygon(double x, double y, int radius, int sides, int color, double lowerAngle, double upperAngle) {
         GL11.glDisable(GL11.GL_TEXTURE_2D);
-        setGlColor(color);
+        color(color);
         GlStateManager.enableBlend();
         GlStateManager.disableAlpha();
         worldRenderer.begin(GL11.GL_POLYGON, DefaultVertexFormats.POSITION);
@@ -120,14 +144,14 @@ public class Renderer extends Gui {
     /**
      * Set GL color from the given Color variable.
      */
-    public static void setGlColor(Color color) {
+    public static void color(Color color) {
         GlStateManager.color(color.getRed() / 255f, color.getGreen() / 255f, color.getBlue() / 255f, color.getAlpha() / 255f);
     }
 
     /**
      * Set GL color from the given color as an Integer.
      */
-    public static void setGlColor(int color) {
+    public static void color(int color) {
         float f1 = (float) (color >> 8 & 255) / 255.0F;
         float f = (float) (color >> 16 & 255) / 255.0F;
         float f2 = (float) (color & 255) / 255.0F;

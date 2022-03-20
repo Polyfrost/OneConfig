@@ -72,7 +72,7 @@ public class TextHud extends BasicHud {
 
     private void drawText(List<String> lines, int x, int y, float scale) {
         for (int i = 0; i < lines.size(); i++) {
-            Renderer.drawTextScale(lines.get(i), x, y + i * 12, 0xffffff, shadow, scale);
+            Renderer.drawScaledString(lines.get(i), x, y + i * 12, 0xffffff, shadow, scale);
         }
     }
 

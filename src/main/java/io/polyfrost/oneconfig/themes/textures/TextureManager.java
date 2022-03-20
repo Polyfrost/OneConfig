@@ -67,7 +67,7 @@ public class TextureManager {
     }
 
     /**
-     * Draw the specified icon at the coordinates, scaled to the width and height.
+     * Draw the specified {@link ThemeElement} at the coordinates, scaled to the width and height.
      *
      * @param element element to draw
      * @param x       x coordinate (top left)
@@ -98,5 +98,15 @@ public class TextureManager {
                 themeLog.error("Error occurred drawing texture " + element.name() + ", is theme invalid?", e);
             }
         }
+    }
+
+    /**
+     * Draw the specified {@link ThemeElement} at the coordinates, using its recommended width and height.
+     * @param element element to draw
+     * @param x x coordinate (top left)
+     * @param y y coordinate (top left)
+     */
+    public void draw(@NotNull ThemeElement element, int x, int y) {
+        this.draw(element, x, y, element.size, element.size);
     }
 }

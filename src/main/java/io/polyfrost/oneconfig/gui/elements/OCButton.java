@@ -63,7 +63,7 @@ public class OCButton extends OCBlock {
         }
         GlStateManager.color(percentHoveredRed, percentHoveredGreen, percentHoveredBlue, percentHoveredAlpha);
         if(isClicked()) {
-            Renderer.setGlColor(theme.getClickColor());
+            //Renderer.setGlColor(theme.getClickColor());
         }
 
         theme.getTextureManager().draw(ThemeElement.BUTTON, x, y, width, height);

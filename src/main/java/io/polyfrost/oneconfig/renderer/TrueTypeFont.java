@@ -356,7 +356,7 @@ public class TrueTypeFont {
         GlStateManager.enableAlpha();
         GlStateManager.enableBlend();
 
-        Renderer.setGlColor(color);
+        Renderer.color(color);
         while (i >= startIndex && i <= endIndex) {
             charCurrent = text.charAt(i);
             if (charCurrent < 256) {

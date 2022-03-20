@@ -42,7 +42,7 @@ public class TickableTexture {
             frametime = jsonObject.get("frametime").getAsInt();
             if (frametime == 0) {
                 frametime = 1;
-                themeLog.warn("You cannot have a frame tick time of 0. This will mean there is no animation as it will happen way too fast. Defaulting to 1, as we assume you wanted it fast.");
+                themeLog.warn("You cannot have a frame tick time of 0. This will mean there is no animation as it will happen impossibly fast. Defaulting to 1, as we assume you wanted it fast.");
             }
         } catch (Exception e) {
             themeLog.error("failed to load metadata for tickable texture (" + element.location + "). Setting default (5)");

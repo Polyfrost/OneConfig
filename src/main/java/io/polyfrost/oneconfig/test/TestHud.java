@@ -18,6 +18,6 @@ public class TestHud extends BasicHud {
 
     @Override
     public void draw(int x, int y, float scale) {
-        Renderer.drawTextScale("FPS: " + Minecraft.getDebugFPS(), x, y, 0xffffff, false, scale);
+        Renderer.drawScaledString("FPS: " + Minecraft.getDebugFPS(), x, y, 0xffffff, false, scale);
     }
 }
