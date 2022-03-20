@@ -4,7 +4,7 @@
 plugins {
     id "dev.architectury.architectury-pack200" version "0.1.3"
     id "com.github.johnrengelman.shadow" version "7.1.0"
-    id "cc.woverflow.loom" version "0.10.1"
+    id "cc.woverflow.loom" version "0.10.6"
     id "net.kyori.blossom" version "1.3.0"
     id "java"
 }
