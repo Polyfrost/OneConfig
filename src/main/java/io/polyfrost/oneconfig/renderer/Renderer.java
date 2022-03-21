@@ -1,7 +1,5 @@
 package io.polyfrost.oneconfig.renderer;
 
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonParser;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.Gui;
@@ -12,7 +10,7 @@ import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.util.ResourceLocation;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.lwjgl.opengl.*;
+import org.lwjgl.opengl.GL11;
 
 import java.awt.*;
 
@@ -22,7 +20,6 @@ public class Renderer extends Gui {
     private static final FontRenderer fr = mc.fontRendererObj;
     private static final Tessellator tessellator = Tessellator.getInstance();
     private static final WorldRenderer worldRenderer = tessellator.getWorldRenderer();
-
 
 
     /**

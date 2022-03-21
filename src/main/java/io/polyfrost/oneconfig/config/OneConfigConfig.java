@@ -8,16 +8,16 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 
 public class OneConfigConfig extends Config {
+    public static String currentProfile = "Default Profile";
+
     public OneConfigConfig() {
         super(null, "OneConfig.json");
     }
 
     @Override
     public void init(ModData modData) {
-        if (new File("OneConfig/" + configFile).exists())
-            load();
-        else
-            save();
+        if (new File("OneConfig/" + configFile).exists()) load();
+        else save();
     }
 
     @Override
@@ -37,6 +37,4 @@ public class OneConfigConfig extends Config {
             e.printStackTrace();
         }
     }
-
-    public static String currentProfile = "Default Profile";
 }

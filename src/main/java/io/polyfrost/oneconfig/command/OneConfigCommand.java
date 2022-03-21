@@ -39,8 +39,7 @@ public class OneConfigCommand implements ICommand {
 
     @Override
     public void processCommand(ICommandSender sender, String[] args) {
-        if (args.length == 0)
-            new TickDelay(() -> mc.displayGuiScreen(new Window()), 1);
+        if (args.length == 0) new TickDelay(() -> mc.displayGuiScreen(new Window()), 1);
         else {
             switch (args[0]) {
                 case "hud":

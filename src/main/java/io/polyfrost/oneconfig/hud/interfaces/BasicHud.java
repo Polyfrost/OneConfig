@@ -42,9 +42,7 @@ public abstract class BasicHud {
     }
 
     private void drawBackground(float x, float y, float scale) {
-        Renderer.drawRoundRect((int) x, (int) y,
-                (int) (getWidth(scale) + paddingX * scale), (int) (getHeight(scale) + paddingY * scale),
-                (int) (2 * scale), new Color(0, 0, 0, 120).getRGB());
+        Renderer.drawRoundRect((int) x, (int) y, (int) (getWidth(scale) + paddingX * scale), (int) (getHeight(scale) + paddingY * scale), (int) (2 * scale), new Color(0, 0, 0, 120).getRGB());
     }
 
     public float getXScaled(int screenWidth) {

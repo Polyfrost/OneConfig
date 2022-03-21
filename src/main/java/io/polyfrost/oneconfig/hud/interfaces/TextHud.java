@@ -14,10 +14,10 @@ public class TextHud extends BasicHud {
      */
     private final FontRenderer fb = Minecraft.getMinecraft().fontRendererObj;
     boolean shadow = false;
+    boolean doExample = false;
     private List<String> cachedLines;
     private int cachedWidth;
     private int cachedHeight;
-    boolean doExample = false;
     private List<String> cachedExampleLines;
     private int cachedExampleWidth;
     private int cachedExampleHeight;
@@ -35,8 +35,7 @@ public class TextHud extends BasicHud {
             cachedWidth = 0;
             for (String line : cachedLines) {
                 int width = fb.getStringWidth(line);
-                if (width > cachedWidth)
-                    cachedWidth = width;
+                if (width > cachedWidth) cachedWidth = width;
             }
         }
         if (doExample) {
@@ -46,8 +45,7 @@ public class TextHud extends BasicHud {
                 cachedExampleWidth = 0;
                 for (String line : cachedExampleLines) {
                     int width = fb.getStringWidth(line);
-                    if (width > cachedExampleWidth)
-                        cachedExampleWidth = width;
+                    if (width > cachedExampleWidth) cachedExampleWidth = width;
                 }
             }
         }
@@ -59,15 +57,13 @@ public class TextHud extends BasicHud {
 
     @Override
     public void draw(int x, int y, float scale) {
-        if (cachedLines != null)
-            drawText(cachedLines, x, y, scale);
+        if (cachedLines != null) drawText(cachedLines, x, y, scale);
     }
 
     @Override
     public void drawExample(int x, int y, float scale) {
         doExample = true;
-        if (cachedExampleLines != null)
-            drawText(cachedExampleLines, x, y, scale);
+        if (cachedExampleLines != null) drawText(cachedExampleLines, x, y, scale);
     }
 
     private void drawText(List<String> lines, int x, int y, float scale) {

@@ -20,8 +20,7 @@ import java.util.Optional;
 
 public class Config {
     protected final String configFile;
-    protected final Gson gson = new GsonBuilder().excludeFieldsWithModifiers(Modifier.TRANSIENT).setPrettyPrinting()
-            .registerTypeAdapterFactory(OneConfigTypeAdapterFactory.getStaticTypeAdapterFactory()).create();
+    protected final Gson gson = new GsonBuilder().excludeFieldsWithModifiers(Modifier.TRANSIENT).setPrettyPrinting().registerTypeAdapterFactory(OneConfigTypeAdapterFactory.getStaticTypeAdapterFactory()).create();
 
     /**
      * @param modData    information about the mod
@@ -33,10 +32,8 @@ public class Config {
     }
 
     public void init(ModData modData) {
-        if (Profiles.getProfileFile(configFile).exists())
-            load();
-        else
-            save();
+        if (Profiles.getProfileFile(configFile).exists()) load();
+        else save();
         modData.config = this;
         ConfigCore.settings.put(modData, generateOptionList(this.getClass()));
     }
@@ -109,8 +106,7 @@ public class Config {
                 }
             } else {
                 Option customOption = processCustomOption(field);
-                if (customOption != null)
-                    options.add(customOption);
+                if (customOption != null) options.add(customOption);
             }
         }
         return options;

@@ -1,16 +1,15 @@
 package io.polyfrost.oneconfig.gui.elements;
 
 import io.polyfrost.oneconfig.renderer.Renderer;
-import io.polyfrost.oneconfig.themes.textures.ThemeElement;
-import net.minecraft.client.gui.Gui;
 import net.minecraft.util.ResourceLocation;
 
 import java.awt.*;
 
 public class OCStoreBlock extends OCBlock {
-    private ResourceLocation image;
-    private String description, title;
-    private Color color;
+    private final ResourceLocation image;
+    private final String description;
+    private final String title;
+    private final Color color;
 
     public OCStoreBlock(String title, String description, ResourceLocation image, int color) {
         super(color, 300, 400);
@@ -31,6 +30,6 @@ public class OCStoreBlock extends OCBlock {
     }
 
     public void draw(int x, int y, int width, int height) {
-        draw(x,y);
+        draw(x, y);
     }
 }
