@@ -46,7 +46,7 @@ public class TextureManager {
             if (img.getWidth() != element.size) {
                 themeLog.warn("Theme element " + element.name() + " with size " + img.getWidth() + "px is not recommended, expected " + element.size + "px. Continuing anyway.");
             }
-            if(element.ordinal() < 26) {
+            if (element.ordinal() < 26) {
                 if (img.getWidth() != img.getHeight()) {
                     themeLog.info("found tickable animated texture (" + element.name() + "). Loading texture");
                     try {
@@ -57,8 +57,8 @@ public class TextureManager {
                     }
                 }
             } else {
-                if(element.ordinal() < 29) {
-                    if(img.getHeight() != 144 || img.getWidth() != 758) {
+                if (element.ordinal() < 29) {
+                    if (img.getHeight() != 144 || img.getWidth() != 758) {
                         themeLog.warn("found badly sized button texture " + element.location);
                     }
                 }
@@ -67,7 +67,7 @@ public class TextureManager {
     }
 
     /**
-     * Draw the specified icon at the coordinates, scaled to the width and height.
+     * Draw the specified {@link ThemeElement} at the coordinates, scaled to the width and height.
      *
      * @param element element to draw
      * @param x       x coordinate (top left)
@@ -98,5 +98,16 @@ public class TextureManager {
                 themeLog.error("Error occurred drawing texture " + element.name() + ", is theme invalid?", e);
             }
         }
+    }
+
+    /**
+     * Draw the specified {@link ThemeElement} at the coordinates, using its recommended width and height.
+     *
+     * @param element element to draw
+     * @param x       x coordinate (top left)
+     * @param y       y coordinate (top left)
+     */
+    public void draw(@NotNull ThemeElement element, int x, int y) {
+        this.draw(element, x, y, element.size, element.size);
     }
 }

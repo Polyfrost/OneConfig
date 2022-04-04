@@ -8,13 +8,13 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 
 public class OCButton extends OCBlock {
+    private final Color elementColor = theme.getElementColor();
+    private final Color hoverColor = theme.getHoverColor();
     private float percentHoveredRed = 0f;
     private float percentHoveredGreen = 0f;
     private float percentHoveredBlue = 0f;
     private float percentHoveredAlpha = 0f;
     private float percentDescription = 0f;
-    private final Color elementColor = theme.getElementColor();
-    private final Color hoverColor = theme.getHoverColor();
     private ThemeElement element;
     private boolean alwaysShowDesc = true;
     private String title, description;
@@ -58,27 +58,27 @@ public class OCButton extends OCBlock {
         percentHoveredGreen = smooth(percentHoveredGreen, elementColor.getGreen() / 255f, hoverColor.getGreen() / 255f);
         percentHoveredBlue = smooth(percentHoveredBlue, elementColor.getBlue() / 255f, hoverColor.getBlue() / 255f);
         percentHoveredAlpha = smooth(percentHoveredAlpha, elementColor.getAlpha() / 255f, hoverColor.getAlpha() / 255f);
-        if(!alwaysShowDesc) {
+        if (!alwaysShowDesc) {
             percentDescription = Renderer.clamp(Renderer.easeOut(percentDescription, isHovered() ? 1f : 0f));
         }
         GlStateManager.color(percentHoveredRed, percentHoveredGreen, percentHoveredBlue, percentHoveredAlpha);
-        if(isClicked()) {
-            Renderer.setGlColor(theme.getClickColor());
+        if (isClicked()) {
+            //Renderer.setGlColor(theme.getClickColor());
         }
 
         theme.getTextureManager().draw(ThemeElement.BUTTON, x, y, width, height);
-        if(element != null) {
-            GlStateManager.color(1f,1f,1f, isClicked() ? 0.6f : 1f);
+        if (element != null) {
+            GlStateManager.color(1f, 1f, 1f, isClicked() ? 0.6f : 1f);
             theme.getTextureManager().draw(element, x + 19, y + 8, element.size, element.size);
-            if(title != null) {
-                if(alwaysShowDesc) {
+            if (title != null) {
+                if (alwaysShowDesc) {
                     theme.getBoldFont().drawString(title, x + element.size + 25, y + 30, 1.2f, 1.2f, isClicked() ? theme.getTextColor().darker().getRGB() : theme.getTextColor().getRGB());
                     theme.getFont().drawString(description, x + element.size + 25, y + theme.getBoldFont().getHeight() + 37, 1.2f, 1.2f, isClicked() ? theme.getAccentTextColor().darker().getRGB() : theme.getAccentTextColor().getRGB());
                 } else {
                     int titleY = y + 48;
                     titleY -= (int) (percentDescription * 18);
                     Color targetColor = theme.getAccentTextColor();
-                    Color currentColor = isClicked() ?  targetColor.darker() : new Color(targetColor.getRed(), targetColor.getGreen(), targetColor.getBlue(), (int) (targetColor.getAlpha() * percentDescription));
+                    Color currentColor = isClicked() ? targetColor.darker() : new Color(targetColor.getRed(), targetColor.getGreen(), targetColor.getBlue(), (int) (targetColor.getAlpha() * percentDescription));
                     theme.getFont().drawString(description, x + element.size + 25, y + theme.getBoldFont().getHeight() + 37, 1.2f, 1.2f, currentColor.getRGB());
                     theme.getBoldFont().drawString(title, x + element.size + 25, titleY, 1.2f, 1.2f, isClicked() ? theme.getTextColor().darker().getRGB() : theme.getTextColor().getRGB());
                 }
@@ -89,11 +89,11 @@ public class OCButton extends OCBlock {
 
     private float smooth(float current, float min, float max) {
         current = Renderer.easeOut(current, isHovered() ? 1f : 0f);
-        if(current <= min) {
+        if (current <= min) {
             current = min;
         }
 
-        if(current >= max) {
+        if (current >= max) {
             current = max;
         }
         return current;

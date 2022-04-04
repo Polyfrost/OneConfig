@@ -19,8 +19,7 @@ public abstract class Option {
         this.field = field;
         this.name = name;
         this.description = description;
-        if (field != null)
-            field.setAccessible(true);
+        if (field != null) field.setAccessible(true);
     }
 
     /**
