@@ -3,6 +3,7 @@ package io.polyfrost.oneconfig.hud.gui;
 import io.polyfrost.oneconfig.hud.HudCore;
 import io.polyfrost.oneconfig.hud.interfaces.BasicHud;
 import io.polyfrost.oneconfig.renderer.Renderer;
+import io.polyfrost.oneconfig.test.TestHud;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiScreen;
@@ -20,13 +21,15 @@ public class HudGui extends GuiScreen {
     private boolean isScaling;
     private int xOffset;
     private int yOffset;
-    private boolean wereKeypressesEnabled;
 
     @Override
     public void initGui() {
         HudCore.editing = true;
-        wereKeypressesEnabled = Keyboard.areRepeatEventsEnabled();
         Keyboard.enableRepeatEvents(true);
+        for (BasicHud hud : HudCore.huds) {
+            hud.childRight = new TestHud();
+            hud.childRight.parent = hud;
+        }
     }
 
     @Override
@@ -56,8 +59,8 @@ public class HudGui extends GuiScreen {
                     editingHud.yUnscaled = (yFloat + (hud.getHeight(hud.scale) + hud.paddingY * hud.scale)) / (double) this.height;
             }
 
-            int width = (int) (hud.getWidth(hud.scale) + hud.paddingX * hud.scale);
-            int height = (int) (hud.getHeight(hud.scale) + hud.paddingY * hud.scale);
+            int width = (int) (hud.getTotalWidth(hud.scale) + hud.paddingX * hud.scale);
+            int height = (int) (hud.getTotalHeight(hud.scale) + hud.paddingY * hud.scale);
             int x = (int) hud.getXScaled(this.width);
             int y = (int) hud.getYScaled(this.height);
 
@@ -232,7 +235,7 @@ public class HudGui extends GuiScreen {
     @Override
     public void onGuiClosed() {
         HudCore.editing = false;
-        Keyboard.enableRepeatEvents(wereKeypressesEnabled);
+        Keyboard.enableRepeatEvents(false);
     }
 
     @Override
