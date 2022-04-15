@@ -14,6 +14,7 @@ import java.nio.file.Paths;
 import static org.lwjgl.BufferUtils.createByteBuffer;
 import static org.lwjgl.system.MemoryUtil.memSlice;
 
+@SuppressWarnings("RedundantCast")
 final class IOUtil {
 
     private IOUtil() {
@@ -21,7 +22,7 @@ final class IOUtil {
 
     private static ByteBuffer resizeBuffer(ByteBuffer buffer, int newCapacity) {
         ByteBuffer newBuffer = createByteBuffer(newCapacity);
-        buffer.flip();
+        ((Buffer) buffer).flip();
         newBuffer.put(buffer);
         return newBuffer;
     }
@@ -57,7 +58,6 @@ final class IOUtil {
             }
         }
 
-        //noinspection RedundantCast
         ((Buffer) buffer).flip();
         return memSlice(buffer);
     }

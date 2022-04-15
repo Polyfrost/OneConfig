@@ -6,14 +6,13 @@ import net.minecraft.client.shader.Framebuffer;
 import org.lwjgl.nanovg.NVGColor;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.GL11;
-import org.lwjgl.system.MemoryStack;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.function.LongConsumer;
 
 import static org.lwjgl.nanovg.NanoVG.*;
-import static org.lwjgl.nanovg.NanoVGGL2.*;
+import static org.lwjgl.nanovg.NanoVGGL2.NVG_ANTIALIAS;
+import static org.lwjgl.nanovg.NanoVGGL2.nvgCreate;
 
 public final class NanoVGUtils {
     private NanoVGUtils() {
@@ -31,7 +30,7 @@ public final class NanoVGUtils {
         }
         if (font == -1) {
             try {
-                font = nvgCreateFontMem(vg, "custom-font", IOUtil.resourceToByteBuffer("/assets/oneconfig/font/Roboto-Regular.ttf", 150 * 1024), 0);
+                font = nvgCreateFontMem(vg, "custom-font", IOUtil.resourceToByteBuffer("/assets/oneconfig/font/Inter-Bold.ttf", 200 * 1024), 0);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -80,15 +79,10 @@ public final class NanoVGUtils {
         nvgBeginPath(vg);
         nvgFontSize(vg, size);
         nvgFontFace(vg, "custom-font");
-        nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
-        try (MemoryStack stack = MemoryStack.stackPush()) {
-            ByteBuffer textByte = stack.ASCII(text, false);
-            nvgFontBlur(vg, 0);
-            color(vg, color);
-            nvgText(vg, x, y, textByte);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
+        color(vg, color);
+        nvgText(vg, x, y, text);
+        nvgFill(vg);
     }
 
     public static void color(long vg, int color) {
