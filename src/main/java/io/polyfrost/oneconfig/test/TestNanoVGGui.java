@@ -15,6 +15,7 @@ public class TestNanoVGGui extends GuiScreen {
             NanoVGUtils.drawRect(vg, 0, 0, 300, 300, Color.BLUE.getRGB());
             NanoVGUtils.drawRoundedRect(vg, 305, 305, 100, 100, Color.YELLOW.getRGB(), 8);
             NanoVGUtils.drawString(vg, "Hello!", 500, 500, Color.WHITE.getRGB(), 50);
+            NanoVGUtils.drawImage(vg, "/assets/oneconfig/textures/hudsettings.png", 10, 10, 400, 400);
         });
     }
 }

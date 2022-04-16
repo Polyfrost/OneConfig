@@ -1,13 +1,18 @@
 package io.polyfrost.oneconfig.lwjgl;
 
+import io.polyfrost.oneconfig.lwjgl.image.Image;
+import io.polyfrost.oneconfig.lwjgl.image.ImageLoader;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.shader.Framebuffer;
 import org.lwjgl.nanovg.NVGColor;
+import org.lwjgl.nanovg.NVGPaint;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.GL11;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.function.LongConsumer;
 
 import static org.lwjgl.nanovg.NanoVG.*;
@@ -20,6 +25,7 @@ public final class NanoVGUtils {
     }
     private static long vg = -1;
     private static int font = -1;
+    private static final ArrayList<ByteBuffer> fontBuffers = new ArrayList<>();
 
     public static void setupAndDraw(LongConsumer consumer) {
         if (vg == -1) {
@@ -30,7 +36,9 @@ public final class NanoVGUtils {
         }
         if (font == -1) {
             try {
-                font = nvgCreateFontMem(vg, "custom-font", IOUtil.resourceToByteBuffer("/assets/oneconfig/font/Inter-Bold.ttf", 200 * 1024), 0);
+                ByteBuffer buffer = IOUtil.resourceToByteBuffer("/assets/oneconfig/font/Inter-Bold.ttf");
+                font = nvgCreateFontMem(vg, "custom-font", buffer, 0);
+                fontBuffers.add(buffer);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -57,22 +65,26 @@ public final class NanoVGUtils {
     public static void drawRect(long vg, float x, float y, float width, float height, int color) {
         nvgBeginPath(vg);
         nvgRect(vg, x, y, width, height);
-        color(vg, color);
+        NVGColor nvgColor = color(vg, color);
         nvgFill(vg);
+        nvgColor.free();
     }
 
     public static void drawRoundedRect(long vg, float x, float y, float width, float height, int color, float radius) {
         nvgBeginPath(vg);
         nvgRoundedRect(vg, x, y, width, height, radius);
         color(vg, color);
+        NVGColor nvgColor = color(vg, color);
         nvgFill(vg);
+        nvgColor.free();
     }
 
     public static void drawCircle(long vg, float x, float y, float radius, int color) {
         nvgBeginPath(vg);
         nvgCircle(vg, x, y, radius);
-        color(vg, color);
+        NVGColor nvgColor = color(vg, color);
         nvgFill(vg);
+        nvgColor.free();
     }
 
     public static void drawString(long vg, String text, float x, float y, int color, float size) {
@@ -80,14 +92,29 @@ public final class NanoVGUtils {
         nvgFontSize(vg, size);
         nvgFontFace(vg, "custom-font");
         nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
-        color(vg, color);
+        NVGColor nvgColor = color(vg, color);
         nvgText(vg, x, y, text);
         nvgFill(vg);
+        nvgColor.free();
     }
 
-    public static void color(long vg, int color) {
-        NVGColor nvgColor = NVGColor.create();
+    public static void drawImage(long vg, String fileName, float x, float y, float width, float height) {
+        if (ImageLoader.INSTANCE.loadImage(vg, fileName)) {
+            NVGPaint imagePaint = NVGPaint.calloc();
+            Image image = ImageLoader.INSTANCE.getImage(fileName);
+            nvgBeginPath(vg);
+            nvgImagePattern(vg, x, y, width, height, 0, image.getReference(), 1, imagePaint);
+            nvgRect(vg, x, y, width, height);
+            nvgFillPaint(vg, imagePaint);
+            nvgFill(vg);
+            imagePaint.free();
+        }
+    }
+
+    public static NVGColor color(long vg, int color) {
+        NVGColor nvgColor = NVGColor.calloc();
         nvgRGBA((byte) (color >> 16 & 0xFF), (byte) (color >> 8 & 0xFF), (byte) (color & 0xFF), (byte) (color >> 24 & 0xFF), nvgColor);
         nvgFillColor(vg, nvgColor);
+        return nvgColor;
     }
 }
