@@ -1,6 +1,6 @@
 package io.polyfrost.oneconfig.hud.interfaces;
 
-import io.polyfrost.oneconfig.renderer.Renderer;
+import io.polyfrost.oneconfig.lwjgl.RenderManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -68,7 +68,7 @@ public class TextHud extends BasicHud {
 
     private void drawText(List<String> lines, int x, int y, float scale) {
         for (int i = 0; i < lines.size(); i++) {
-            Renderer.drawScaledString(lines.get(i), x, y + i * 12, 0xffffff, shadow, scale);
+            RenderManager.drawScaledString(lines.get(i), x, y + i * 12, 0xffffff, shadow, scale);
         }
     }
 

@@ -2,12 +2,10 @@ package io.polyfrost.oneconfig.hud.gui;
 
 import io.polyfrost.oneconfig.hud.HudCore;
 import io.polyfrost.oneconfig.hud.interfaces.BasicHud;
-import io.polyfrost.oneconfig.renderer.Renderer;
+import io.polyfrost.oneconfig.lwjgl.RenderManager;
 import io.polyfrost.oneconfig.test.TestHud;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.gui.ScaledResolution;
 import org.lwjgl.input.Keyboard;
 
 import java.awt.*;
@@ -15,7 +13,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 public class HudGui extends GuiScreen {
-    private final ScaledResolution sr = new ScaledResolution(Minecraft.getMinecraft());
     private BasicHud editingHud;
     private boolean isDragging;
     private boolean isScaling;
@@ -68,10 +65,13 @@ public class HudGui extends GuiScreen {
                 color = new Color(43, 159, 235).getRGB();
                 if (isDragging) Gui.drawRect(x, y, x + width, y + height, new Color(108, 176, 255, 60).getRGB());
             }
-            Renderer.drawLine(x - 2 / 4f, y, x + width + 2 / 4f, y, 2, color);
-            Renderer.drawLine(x, y, x, y + height, 2, color);
-            Renderer.drawLine(x + width, y, x + width, y + height, 2, color);
-            Renderer.drawLine(x - 2 / 4f, y + height, x + width + 2 / 4f, y + height, 2, color);
+            int finalColor = color;
+            RenderManager.setupAndDraw(true, (vg) -> {
+                RenderManager.drawLine(vg, x - 2 / 4f, y, x + width + 2 / 4f, y, 2, finalColor);
+                RenderManager.drawLine(vg, x, y, x, y + height, 2, finalColor);
+                RenderManager.drawLine(vg, x + width, y, x + width, y + height, 2, finalColor);
+                RenderManager.drawLine(vg, x - 2 / 4f, y + height, x + width + 2 / 4f, y + height, 2, finalColor);
+            });
 
             if (hud == editingHud && !isDragging) {
                 Gui.drawRect(x + width - 3, y + height - 3, x + width + 3, y + height + 3, new Color(43, 159, 235).getRGB());
@@ -125,7 +125,7 @@ public class HudGui extends GuiScreen {
             }
         }
         if (smallestDiff != -1) {
-            Renderer.drawDottedLine(smallestLine, 0, smallestLine, this.height, 2, 12, new Color(255, 255, 255).getRGB());
+            RenderManager.drawDottedLine(smallestLine, 0, smallestLine, this.height, 2, 12, new Color(255, 255, 255).getRGB());
             return smallestLine - smallestOffset;
         }
         return pos;
@@ -156,7 +156,7 @@ public class HudGui extends GuiScreen {
             }
         }
         if (smallestDiff != -1) {
-            Renderer.drawDottedLine(0, smallestLine, this.width, smallestLine, 2, 12, new Color(255, 255, 255).getRGB());
+            RenderManager.drawDottedLine(0, smallestLine, this.width, smallestLine, 2, 12, new Color(255, 255, 255).getRGB());
             return smallestLine - smallestOffset;
         }
         return pos;
