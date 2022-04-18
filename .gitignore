@@ -21,3 +21,5 @@ build
 eclipse
 run
 build - Copy.gradle
+.vscode
+.devauth

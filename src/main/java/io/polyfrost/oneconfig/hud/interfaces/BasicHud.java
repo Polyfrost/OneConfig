@@ -12,11 +12,9 @@ public abstract class BasicHud {
     public int paddingY = 5;
     public boolean background = true;
     public boolean rounded = false;
-    public BasicHud childLeft;
+    public BasicHud parent;
     public BasicHud childRight;
     public BasicHud childBottom;
-    public BasicHud childTop;
-    public BasicHud parent;
 
     public abstract int getWidth(float scale);
 
@@ -33,29 +31,23 @@ public abstract class BasicHud {
     }
 
     public void drawAll(float x, float y, float scale) {
-        if (parent == null) drawBackground(x, y, scale);
+        drawBackground(x, y, getWidth(scale), getHeight(scale), scale);
         draw((int) (x + paddingX * scale / 2f), (int) (y + paddingY * scale / 2f), scale);
-        if (childLeft != null)
-            childLeft.drawAll((int) (x + paddingX * scale / 2f)  - childRight.getWidth(scale), (int) (y + paddingY * scale / 2f), scale);
-        if (childRight != null)
-            childRight.drawAll((int) (x + paddingX * scale / 2f) + getWidth(scale), (int) (y + paddingY * scale / 2f), scale);
     }
 
     public void drawExampleAll(float x, float y, float scale) {
-        if (parent == null) drawBackground(x, y, scale);
+        drawBackground(x, y, getExampleWidth(scale), getExampleHeight(scale), scale);
         drawExample((int) (x + paddingX * scale / 2f), (int) (y + paddingY * scale / 2f), scale);
-        if (childLeft != null)
-            childLeft.drawExampleAll((int) (x + paddingX * scale / 2f) - childRight.getWidth(scale), (int) (y + paddingY * scale / 2f), scale);
-        if (childRight != null)
-            childRight.drawExampleAll((int) (x + paddingX * scale / 2f) + getWidth(scale), (int) (y + paddingY * scale / 2f), scale);
     }
 
     public void drawExample(int x, int y, float scale) {
         draw(x, y, scale);
     }
 
-    private void drawBackground(float x, float y, float scale) {
-        Renderer.drawRoundRect((int) x, (int) y, (int) (getTotalWidth(scale) + paddingX * scale), (int) (getTotalHeight(scale) + paddingY * scale), (int) (2 * scale), new Color(0, 0, 0, 120).getRGB());
+    private void drawBackground(float x, float y, float width, float height, float scale) {
+        Renderer.drawRoundRect((int) x, (int) y,
+                (int) (width + paddingX * scale), (int) (height + paddingY * scale),
+                (int) (2 * scale), new Color(0, 0, 0, 120).getRGB());
     }
 
     public float getXScaled(int screenWidth) {
@@ -72,17 +64,7 @@ public abstract class BasicHud {
         return (float) (screenHeight - (1d - yUnscaled) * screenHeight - (getHeight(scale) + paddingY * scale));
     }
 
-    public int getTotalWidth(float scale) {
-        int width = getWidth(scale);
-        if (childLeft != null) width += childLeft.getWidth(scale);
-        if (childRight != null) width += childRight.getWidth(scale);
-        return width;
-    }
+    public float getTotalWidth(float scale) {
 
-    public int getTotalHeight(float scale) {
-        int height = getHeight(scale);
-        if (childBottom != null) height += childBottom.getHeight(scale);
-        if (childTop != null) height += childTop.getHeight(scale);
-        return height;
     }
 }
