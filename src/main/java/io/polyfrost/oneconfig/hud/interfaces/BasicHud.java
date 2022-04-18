@@ -31,13 +31,17 @@ public abstract class BasicHud {
     }
 
     public void drawAll(float x, float y, float scale) {
-        drawBackground(x, y, getWidth(scale), getHeight(scale), scale);
+        drawBackground(x, y, getTotalWidth(scale), getTotalHeight(scale), scale);
         draw((int) (x + paddingX * scale / 2f), (int) (y + paddingY * scale / 2f), scale);
+        if (childRight != null) childRight.draw((int) x, (int) y, scale);
+        if (childBottom != null) childBottom.draw((int) x, (int) y, scale);
     }
 
     public void drawExampleAll(float x, float y, float scale) {
-        drawBackground(x, y, getExampleWidth(scale), getExampleHeight(scale), scale);
+        drawBackground(x, y, getTotalExampleWidth(scale), getTotalHeight(scale), scale);
         drawExample((int) (x + paddingX * scale / 2f), (int) (y + paddingY * scale / 2f), scale);
+        if (childRight != null) childRight.drawExample((int) x, (int) y, scale);
+        if (childBottom != null) childBottom.drawExample((int) x, (int) y, scale);
     }
 
     public void drawExample(int x, int y, float scale) {
@@ -64,6 +68,30 @@ public abstract class BasicHud {
     }
 
     public float getTotalWidth(float scale) {
-        return 0;
+        float width = getWidth(scale);
+        if (childBottom != null) width += childBottom.getTotalWidth(scale);
+        if (childRight != null) width += childRight.getTotalWidth(scale);
+        return width;
+    }
+
+    public float getTotalHeight(float scale) {
+        float height = getHeight(scale);
+        if (childBottom != null) height += childBottom.getTotalHeight(scale);
+        if (childRight != null) height += childRight.getTotalHeight(scale);
+        return height;
+    }
+
+    public float getTotalExampleWidth(float scale) {
+        float width = getExampleWidth(scale);
+        if (childBottom != null) width += childBottom.getTotalExampleWidth(scale);
+        if (childRight != null) width += childRight.getTotalExampleWidth(scale);
+        return width;
+    }
+
+    public float getTotalExampleHeight(float scale) {
+        float height = getExampleHeight(scale);
+        if (childBottom != null) height += childBottom.getTotalExampleHeight(scale);
+        if (childRight != null) height += childRight.getTotalExampleHeight(scale);
+        return height;
     }
 }
