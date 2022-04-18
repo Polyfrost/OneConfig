@@ -15,8 +15,9 @@ public class HudCore {
     @SubscribeEvent
     public void onRender(RenderGameOverlayEvent.Post event) {
         if (event.type != RenderGameOverlayEvent.ElementType.ALL || editing) return;
+        ScaledResolution sr = new ScaledResolution(Minecraft.getMinecraft());
         for (BasicHud hud : huds) {
-            hud.drawAll(hud.getXScaled(Minecraft.getMinecraft().displayWidth), hud.getYScaled(Minecraft.getMinecraft().displayHeight), hud.scale);
+            hud.drawAll(hud.getXScaled(sr.getScaledWidth()), hud.getYScaled(sr.getScaledHeight()), hud.scale, true);
         }
     }
 }

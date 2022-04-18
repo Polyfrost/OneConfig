@@ -4,6 +4,7 @@ import io.polyfrost.oneconfig.hud.HudCore;
 import io.polyfrost.oneconfig.hud.interfaces.BasicHud;
 import io.polyfrost.oneconfig.lwjgl.RenderManager;
 import io.polyfrost.oneconfig.test.TestHud;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiScreen;
 import org.lwjgl.input.Keyboard;
@@ -26,6 +27,8 @@ public class HudGui extends GuiScreen {
         for (BasicHud hud : HudCore.huds) {
             hud.childBottom = new TestHud();
             hud.childBottom.parent = hud;
+            hud.childRight = new TestHud();
+            hud.childRight.parent = hud;
         }
     }
 
@@ -61,7 +64,7 @@ public class HudGui extends GuiScreen {
             int x = (int) hud.getXScaled(this.width);
             int y = (int) hud.getYScaled(this.height);
 
-            hud.drawExampleAll(x, y, hud.scale);
+            hud.drawExampleAll(x, y, hud.scale, true);
             int color = new Color(215, 224, 235).getRGB();
             if (editingHud == hud) {
                 color = new Color(43, 159, 235).getRGB();
@@ -70,10 +73,10 @@ public class HudGui extends GuiScreen {
             }
             int finalColor = color;
             RenderManager.setupAndDraw(true, (vg) -> {
-                RenderManager.drawLine(vg, x - 2 / 4f, y, x + width + 2 / 4f, y, 2, finalColor);
-                RenderManager.drawLine(vg, x, y, x, y + height, 2, finalColor);
-                RenderManager.drawLine(vg, x + width, y, x + width, y + height, 2, finalColor);
-                RenderManager.drawLine(vg, x - 2 / 4f, y + height, x + width + 2 / 4f, y + height, 2, finalColor);
+                RenderManager.drawLine(vg, x - 2 / 4f, y, x + width + 2 / 4f, y, 1, finalColor);
+                RenderManager.drawLine(vg, x, y, x, y + height, 1, finalColor);
+                RenderManager.drawLine(vg, x + width, y, x + width, y + height, 1, finalColor);
+                RenderManager.drawLine(vg, x - 2 / 4f, y + height, x + width + 2 / 4f, y + height, 1, finalColor);
             });
 
             if (hud == editingHud && !isDragging) {
