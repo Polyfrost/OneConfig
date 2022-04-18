@@ -4,7 +4,6 @@ import io.polyfrost.oneconfig.command.OneConfigCommand;
 import io.polyfrost.oneconfig.config.OneConfigConfig;
 import io.polyfrost.oneconfig.hud.HudCore;
 import io.polyfrost.oneconfig.test.TestConfig;
-import io.polyfrost.oneconfig.themes.Themes;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.common.MinecraftForge;
@@ -37,6 +36,5 @@ public class OneConfig {
         ClientCommandHandler.instance.registerCommand(new OneConfigCommand());
         MinecraftForge.EVENT_BUS.register(this);
         MinecraftForge.EVENT_BUS.register(new HudCore());
-        Themes.openTheme(new File("OneConfig/themes/one.zip").getAbsoluteFile());
     }
 }

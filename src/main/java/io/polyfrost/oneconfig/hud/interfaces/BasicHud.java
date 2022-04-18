@@ -1,6 +1,6 @@
 package io.polyfrost.oneconfig.hud.interfaces;
 
-import io.polyfrost.oneconfig.renderer.Renderer;
+import io.polyfrost.oneconfig.lwjgl.RenderManager;
 
 import java.awt.*;
 
@@ -55,7 +55,7 @@ public abstract class BasicHud {
     }
 
     private void drawBackground(float x, float y, float scale) {
-        Renderer.drawRoundRect((int) x, (int) y, (int) (getTotalWidth(scale) + paddingX * scale), (int) (getTotalHeight(scale) + paddingY * scale), (int) (2 * scale), new Color(0, 0, 0, 120).getRGB());
+        RenderManager.setupAndDraw((vg) -> RenderManager.drawRoundedRect(vg, x, y, getTotalWidth(scale) + paddingX * scale, getTotalHeight(scale) + paddingY * scale, new Color(0, 0, 0, 120).getRGB(), 2 * scale));
     }
 
     public float getXScaled(int screenWidth) {
