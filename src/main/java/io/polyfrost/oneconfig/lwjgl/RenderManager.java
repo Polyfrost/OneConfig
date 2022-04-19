@@ -13,6 +13,7 @@ import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.GL11;
 
 import java.awt.*;
+import java.nio.FloatBuffer;
 import java.util.function.LongConsumer;
 
 import static org.lwjgl.nanovg.NanoSVG.NSVG_FLAGS_VISIBLE;
@@ -132,34 +133,42 @@ public final class RenderManager {
 
     public static void drawSVGImage(long vg, String fileName, float x, float y, float width, float height) {
         if (ImageLoader.INSTANCE.loadSVGImage(fileName)) {
-            NSVGImage image = ImageLoader.INSTANCE.getSVG(fileName);
-            NSVGShape shape;
-            NSVGPath path;
-            int i;
-            for(shape = image.shapes(); shape != null; shape.next()) {              // throws npe
-                if (!(shape.flags() == NSVG_FLAGS_VISIBLE)) {
-                    continue;
-                }
+            try {
+                NSVGImage image = ImageLoader.INSTANCE.getSVG(fileName);
+                NSVGShape shape;
+                NSVGPath path;
+                int i;
+                for (shape = image.shapes(); shape != null; shape.next()) {
+                    //if ((shape.flags() == NSVG_FLAGS_VISIBLE)) {
+                    //    continue;
+                    //}
 
-                nvgFillColor(vg, color(vg, shape.fill().color()));
-                nvgStrokeColor(vg, color(vg, shape.stroke().color()));
-                nvgStrokeWidth(vg, shape.strokeWidth());
+                    nvgFillColor(vg, color(vg, shape.fill().color()));
+                    nvgStrokeColor(vg, color(vg, shape.stroke().color()));
+                    nvgStrokeWidth(vg, shape.strokeWidth());
 
-                for(path = shape.paths(); path != null; path.next()) {
-                    nvgBeginPath(vg);
-                    nvgMoveTo(vg, path.pts().get(0), path.pts().get(1));
-                    for(i = 0; i < path.npts() - 1; i += 3) {
-                        float[] p = new float[100];                 // INSta CRASH POGGERS
-                        path.pts().get(p, i * 2, 100);
-                        nvgBezierTo(vg, p[2], p[3], p[4], p[5], p[6], p[7]);
-                    } //hello       imma add the svg i got from wikipedia
-                    if(path.closed() == 1) {
-                        nvgLineTo(vg, path.pts().get(0), path.pts().get(1));
+                    for (path = shape.paths(); path != null; path.next()) {
+                        nvgBeginPath(vg);
+                        FloatBuffer points = path.pts();
+                        nvgMoveTo(vg, points.get(0), points.get(1));
+                        for (i = 0; i < path.npts() - 1; i += 3) {
+                            float[] p = new float[10];
+                            for (int j = 0; j < i * 2 + 3; j++) {           // THIS WONT WORK WHy why why why
+                                p[j] = points.get(j);
+                                System.out.println(j + " " + p[j]);
+                            }
+                            nvgBezierTo(vg, p[2], p[3], p[4], p[5], p[6], p[7]);
+                        }
+                        if (path.closed() == 1) {
+                            nvgLineTo(vg, points.get(0), points.get(1));
+                        }
+                        nvgStroke(vg);
                     }
-                    nvgStroke(vg);
+
+
                 }
-
-
+            } catch (Exception e ) {
+                //e.printStackTrace();
             }
         }
     }

@@ -18,7 +18,7 @@ public class TestNanoVGGui extends GuiScreen {
             RenderManager.drawString(vg, "Hello!", 80, 20, Color.WHITE.getRGB(), 50, "mc-regular");
             RenderManager.drawString(vg, "Hello!", 100, 100, Color.WHITE.getRGB(), 50, "inter-bold");
             RenderManager.drawImage(vg, "/assets/oneconfig/textures/hudsettings.png", 10, 10, 400, 400);
-            RenderManager.drawSVGImage(vg, "/assets/oneconfig/textures/pc.svg", 1000, 1000, 500, 500);
+            RenderManager.drawSVGImage(vg, "textures/pc.svg", 1000, 1000, 500, 500);
             RenderManager.drawLine(vg, 0, 0, 100, 100, 7, Color.PINK.getRGB());
             RenderManager.drawCircle(vg, 200, 200, 50, Color.WHITE.getRGB());
             RenderManager.drawString(vg, (float) (System.nanoTime() - startTime) / 1000000f + "ms", 500, 500, Color.WHITE.getRGB(), 100, "inter-bold");

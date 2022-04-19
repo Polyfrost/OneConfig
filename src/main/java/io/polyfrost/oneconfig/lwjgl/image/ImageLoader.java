@@ -1,12 +1,19 @@
 package io.polyfrost.oneconfig.lwjgl.image;
 
 import io.polyfrost.oneconfig.lwjgl.IOUtil;
+import net.minecraft.client.Minecraft;
+import net.minecraft.util.ResourceLocation;
 import org.lwjgl.nanovg.NSVGImage;
 import org.lwjgl.nanovg.NanoSVG;
 import org.lwjgl.nanovg.NanoVG;
 import org.lwjgl.stb.STBImage;
+import org.lwjgl.system.MemoryStack;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 
 public class ImageLoader {
@@ -39,9 +46,14 @@ public class ImageLoader {
     public boolean loadSVGImage(String fileName) {
         if(!NSVGImageHashMap.containsKey(fileName)) {
             try {
-                NSVGImageHashMap.put(fileName, NanoSVG.nsvgParseFromFile(fileName, "px", 96f));
+                CharSequence s = new BufferedReader(new InputStreamReader(Minecraft.getMinecraft().getResourceManager().getResource(new ResourceLocation("oneconfig", fileName)).getInputStream())).readLine();
+                System.out.println(s);
+                NSVGImage image = NanoSVG.nsvgParse(s, "px", 96f);
+                NSVGImageHashMap.put(fileName, image);
+                System.out.println("Loaded SVG: " + fileName);
             } catch (Exception e) {             // just in case
                 System.err.println("Failed to parse SVG file");
+                e.printStackTrace();
                 return false;
             }
             return true;
