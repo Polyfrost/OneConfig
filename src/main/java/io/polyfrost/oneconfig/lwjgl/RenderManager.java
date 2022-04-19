@@ -8,14 +8,14 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.shader.Framebuffer;
-import org.lwjgl.nanovg.NVGColor;
-import org.lwjgl.nanovg.NVGPaint;
+import org.lwjgl.nanovg.*;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.GL11;
 
 import java.awt.*;
 import java.util.function.LongConsumer;
 
+import static org.lwjgl.nanovg.NanoSVG.NSVG_FLAGS_VISIBLE;
 import static org.lwjgl.nanovg.NanoVG.*;
 import static org.lwjgl.nanovg.NanoVGGL2.NVG_ANTIALIAS;
 import static org.lwjgl.nanovg.NanoVGGL2.nvgCreate;
@@ -127,6 +127,40 @@ public final class RenderManager {
             nvgFillPaint(vg, imagePaint);
             nvgFill(vg);
             imagePaint.free();
+        }
+    }
+
+    public static void drawSVGImage(long vg, String fileName, float x, float y, float width, float height) {
+        if (ImageLoader.INSTANCE.loadSVGImage(fileName)) {
+            NSVGImage image = ImageLoader.INSTANCE.getSVG(fileName);
+            NSVGShape shape;
+            NSVGPath path;
+            int i;
+            for(shape = image.shapes(); shape != null; shape.next()) {              // throws npe
+                if (!(shape.flags() == NSVG_FLAGS_VISIBLE)) {
+                    continue;
+                }
+
+                nvgFillColor(vg, color(vg, shape.fill().color()));
+                nvgStrokeColor(vg, color(vg, shape.stroke().color()));
+                nvgStrokeWidth(vg, shape.strokeWidth());
+
+                for(path = shape.paths(); path != null; path.next()) {
+                    nvgBeginPath(vg);
+                    nvgMoveTo(vg, path.pts().get(0), path.pts().get(1));
+                    for(i = 0; i < path.npts() - 1; i += 3) {
+                        float[] p = new float[100];                 // INSta CRASH POGGERS
+                        path.pts().get(p, i * 2, 100);
+                        nvgBezierTo(vg, p[2], p[3], p[4], p[5], p[6], p[7]);
+                    } //hello       imma add the svg i got from wikipedia
+                    if(path.closed() == 1) {
+                        nvgLineTo(vg, path.pts().get(0), path.pts().get(1));
+                    }
+                    nvgStroke(vg);
+                }
+
+
+            }
         }
     }
 

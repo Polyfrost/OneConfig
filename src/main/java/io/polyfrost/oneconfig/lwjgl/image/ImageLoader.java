@@ -1,6 +1,8 @@
 package io.polyfrost.oneconfig.lwjgl.image;
 
 import io.polyfrost.oneconfig.lwjgl.IOUtil;
+import org.lwjgl.nanovg.NSVGImage;
+import org.lwjgl.nanovg.NanoSVG;
 import org.lwjgl.nanovg.NanoVG;
 import org.lwjgl.stb.STBImage;
 
@@ -9,6 +11,7 @@ import java.util.HashMap;
 
 public class ImageLoader {
     private final HashMap<String, Image> imageHashMap = new HashMap<>();
+    private final HashMap<String, NSVGImage> NSVGImageHashMap = new HashMap<>();
     public static ImageLoader INSTANCE = new ImageLoader();
 
     public boolean loadImage(long vg, String fileName) {
@@ -33,7 +36,24 @@ public class ImageLoader {
         return true;
     }
 
+    public boolean loadSVGImage(String fileName) {
+        if(!NSVGImageHashMap.containsKey(fileName)) {
+            try {
+                NSVGImageHashMap.put(fileName, NanoSVG.nsvgParseFromFile(fileName, "px", 96f));
+            } catch (Exception e) {             // just in case
+                System.err.println("Failed to parse SVG file");
+                return false;
+            }
+            return true;
+        }
+        return true;
+    }
+
     public Image getImage(String fileName) {
         return imageHashMap.get(fileName);
+    }
+
+    public NSVGImage getSVG(String fileName) {
+        return NSVGImageHashMap.get(fileName);
     }
 }
