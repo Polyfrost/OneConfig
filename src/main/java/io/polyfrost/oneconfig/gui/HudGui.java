@@ -1,4 +1,4 @@
-package io.polyfrost.oneconfig.hud.gui;
+package io.polyfrost.oneconfig.gui;
 
 import io.polyfrost.oneconfig.hud.HudCore;
 import io.polyfrost.oneconfig.hud.interfaces.BasicHud;

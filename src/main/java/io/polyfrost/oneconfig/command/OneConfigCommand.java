@@ -1,6 +1,7 @@
 package io.polyfrost.oneconfig.command;
 
-import io.polyfrost.oneconfig.hud.gui.HudGui;
+import io.polyfrost.oneconfig.gui.HudGui;
+import io.polyfrost.oneconfig.gui.OneConfigGui;
 import io.polyfrost.oneconfig.test.TestNanoVGGui;
 import io.polyfrost.oneconfig.utils.TickDelay;
 import net.minecraft.client.Minecraft;
@@ -34,7 +35,7 @@ public class OneConfigCommand extends CommandBase {
 
     @Override
     public void processCommand(ICommandSender sender, String[] args) {
-        if (args.length == 0) ; //new TickDelay(() -> mc.displayGuiScreen(new Window()), 1);
+        if (args.length == 0) new TickDelay(() -> mc.displayGuiScreen(new OneConfigGui()), 1);
         else {
             switch (args[0]) {
                 case "hud":

@@ -1,5 +1,6 @@
 package io.polyfrost.oneconfig.lwjgl;
 
+import io.polyfrost.oneconfig.config.OneConfigConfig;
 import io.polyfrost.oneconfig.lwjgl.font.Font;
 import io.polyfrost.oneconfig.lwjgl.font.FontManager;
 import io.polyfrost.oneconfig.lwjgl.image.Image;
@@ -61,6 +62,48 @@ public final class RenderManager {
         nvgEndFrame(vg);
 
         GlStateManager.popAttrib();
+    }
+
+    public static void drawRectangle(long vg, float x, float y, float width, float height, int color) {
+        if(OneConfigConfig.ROUNDED_CORNERS) {
+            drawRoundedRect(vg, x, y, width, height, color, OneConfigConfig.CORNER_RADIUS);
+        } else {
+            drawRect(vg, x, y, width, height, color);
+        }
+    }
+
+    public static void drawGradientRectangle(long vg, float x, float y, float width, float height, int color1, int color2) {
+        if(OneConfigConfig.ROUNDED_CORNERS) {
+            drawGradientRoundedRect(vg, x, y, width, height, color1, color2, OneConfigConfig.CORNER_RADIUS);
+        } else {
+            drawGradientRect(vg, x, y, width, height, color1, color2);
+        }
+    }
+
+    public static void drawGradientRoundedRect(long vg, float x, float y, float width, float height, int color, int color2, float radius) {
+        NVGPaint bg = NVGPaint.create();
+        nvgBeginPath(vg);
+        nvgRoundedRect(vg, x, y, width, height, radius);
+        NVGColor nvgColor = color(vg, color);
+        NVGColor nvgColor2 = color(vg, color2);
+        nvgFillPaint(vg, nvgLinearGradient(vg, x, y + height, x + width, y, nvgColor, nvgColor2, bg));      // like the gradient is blocky
+        nvgFillPaint(vg, bg);
+        nvgFill(vg);
+        nvgColor.free();
+        nvgColor2.free();
+    }
+
+    public static void drawGradientRect(long vg, float x, float y, float width, float height, int color, int color2) {
+        NVGPaint bg = NVGPaint.create();
+        nvgBeginPath(vg);
+        nvgRect(vg, x, y, width, height);
+        NVGColor nvgColor = color(vg, color);
+        NVGColor nvgColor2 = color(vg, color2);
+        nvgFillPaint(vg, nvgLinearGradient(vg, x, y + height, x + width, y, nvgColor, nvgColor2, bg));      // like the gradient is blocky
+        nvgFillPaint(vg, bg);
+        nvgFill(vg);
+        nvgColor.free();
+        nvgColor2.free();
     }
 
     public static void drawRect(long vg, float x, float y, float width, float height, int color) {
@@ -183,6 +226,7 @@ public final class RenderManager {
         nvgStroke(vg);
         nvgColor.free();
     }
+
 
     public static NVGColor color(long vg, int color) {
         NVGColor nvgColor = NVGColor.calloc();

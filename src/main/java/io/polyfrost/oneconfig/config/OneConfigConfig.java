@@ -4,11 +4,46 @@ import com.google.gson.JsonParser;
 import io.polyfrost.oneconfig.config.data.ModData;
 import io.polyfrost.oneconfig.config.interfaces.Config;
 
+import java.awt.*;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 public class OneConfigConfig extends Config {
     public static String currentProfile = "Default Profile";
+
+    // TODO i dont know how this works so this is just gonna be here for now
+    public static int TRANSPARENT = new Color(0,0,0,0).getRGB();                // Transparent      // button sidebar normal
+
+    public static int GRAY_900 = new Color(13, 14, 15, 255).getRGB();           // Gray 900
+    public static int GRAY_900_80 = new Color(13, 14, 15, 204).getRGB();         // Gray 900 80%
+    // im waiting for u to say the gray button colors
+    public static int GRAY_800 = new Color(21, 22, 23, 255).getRGB();           // Gray 800
+    public static int GRAY_700 = new Color(34, 35, 38, 255).getRGB();           // Gray 700
+    public static int GRAY_600 = new Color(42, 44, 48, 255).getRGB();           // Gray 600
+    public static int GRAY_500 = new Color(49, 51, 56, 255).getRGB();           // Gray 500         // button sidebar hover, button gray normal
+    public static int GRAY_500_80 = new Color(49, 51, 56, 204).getRGB();        // Gray 500 80%     // button sidebar pressed
+
+    public static int GRAY_400 = new Color(55, 59, 69, 255).getRGB();           // Gray 400         // button gray hover
+    public static int GRAY_400_80 = new Color(55, 59, 69, 204).getRGB();        // Gray 400 80%     // button gray pressed
+    public static int BLUE_700 = new Color(18, 71, 178, 255).getRGB();          // Blue 700         // button blue normal
+    public static int BLUE_600 = new Color(20, 82, 204, 255).getRGB();          // Blue 600
+    public static int BLUE_500 = new Color(25, 103, 255, 255).getRGB();         // Blue 500
+    public static int WHITE_60 = new Color(255, 255, 255, 153).getRGB();        // White 60%
+    public static int WHITE_90 = new Color(255, 255, 255, 229).getRGB();        // White 90%
+    public static int WHITE = new Color(255, 255, 255, 255).getRGB();           // White 100%
+
+    public static boolean ROUNDED_CORNERS = true;
+    public static float CORNER_RADIUS_WIN = 20f;
+    public static float CORNER_RADIUS = 12f;
+
+
+
+
+
+
+
 
     public OneConfigConfig() {
         super(null, "OneConfig.json");
@@ -22,7 +57,7 @@ public class OneConfigConfig extends Config {
 
     @Override
     public void save() {
-        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("OneConfig/" + configFile), StandardCharsets.UTF_8))) {
+        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(Files.newOutputStream(Paths.get("OneConfig/" + configFile)), StandardCharsets.UTF_8))) {
             writer.write(gson.toJson(this.getClass()));
         } catch (IOException e) {
             e.printStackTrace();
@@ -31,7 +66,7 @@ public class OneConfigConfig extends Config {
 
     @Override
     public void load() {
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream("OneConfig/" + configFile), StandardCharsets.UTF_8))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(Files.newInputStream(Paths.get("OneConfig/" + configFile)), StandardCharsets.UTF_8))) {
             deserializePart(new JsonParser().parse(reader).getAsJsonObject(), this.getClass());
         } catch (IOException e) {
             e.printStackTrace();

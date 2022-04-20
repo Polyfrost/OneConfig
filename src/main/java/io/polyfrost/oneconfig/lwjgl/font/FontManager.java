@@ -14,6 +14,8 @@ public class FontManager {
 
     public void initialize(long vg) {
         fonts.add(new Font("inter-bold", "/assets/oneconfig/font/Inter-Bold.ttf"));
+        fonts.add(new Font("inter-regular", "/assets/oneconfig/font/Inter-Regular.otf"));
+        fonts.add(new Font("inter-semibold", "/assets/oneconfig/font/Inter-SemiBold.otf"));
         fonts.add(new Font("mc-regular", "/assets/oneconfig/font/Minecraft-Regular.otf"));
         for (Font font : fonts) {
             int loaded = -1;
