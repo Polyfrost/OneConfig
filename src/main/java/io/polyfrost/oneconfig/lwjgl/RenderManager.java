@@ -3,6 +3,7 @@ package io.polyfrost.oneconfig.lwjgl;
 import io.polyfrost.oneconfig.config.OneConfigConfig;
 import io.polyfrost.oneconfig.lwjgl.font.Font;
 import io.polyfrost.oneconfig.lwjgl.font.FontManager;
+import io.polyfrost.oneconfig.lwjgl.font.Fonts;
 import io.polyfrost.oneconfig.lwjgl.image.Image;
 import io.polyfrost.oneconfig.lwjgl.image.ImageLoader;
 import net.minecraft.client.Minecraft;
@@ -131,14 +132,11 @@ public final class RenderManager {
         nvgColor.free();
     }
 
-    public static void drawString(long vg, String text, float x, float y, int color, float size, Font font) {
-        drawString(vg, text, x, y, color, size, font.getName());
-    }
 
-    public static void drawString(long vg, String text, float x, float y, int color, float size, String fontName) {
+    public static void drawString(long vg, String text, float x, float y, int color, float size, Fonts font) {
         nvgBeginPath(vg);
         nvgFontSize(vg, size);
-        nvgFontFace(vg, fontName);
+        nvgFontFace(vg, font.font.getName());
         nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
         NVGColor nvgColor = color(vg, color);
         nvgText(vg, x, y, text);
@@ -214,6 +212,11 @@ public final class RenderManager {
                 //e.printStackTrace();
             }
         }
+    }
+
+    public static float getTextWidth(long vg, String text, float fontSize) {
+        float[] bounds = new float[4];
+        return (nvgTextBounds(vg, 0, 0, text, bounds) / 12) * fontSize;
     }
 
     public static void drawLine(long vg, float x, float y, float endX, float endY, float width, int color) {

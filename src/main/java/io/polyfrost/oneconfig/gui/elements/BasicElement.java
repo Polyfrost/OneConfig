@@ -6,19 +6,14 @@ import net.minecraft.client.Minecraft;
 import org.lwjgl.input.Mouse;
 
 public class BasicElement {
-    private int width;
-    private int height;
-    private int colorPalette;
-
-    private int hitBoxX, hitBoxY;
-
-    private final boolean hoverFx;
-
-    private boolean hovered = false;
-    private boolean clicked = false;
-    private boolean toggled = false;
-
-    private int currentColor;
+    protected int width, height;
+    protected int colorPalette;
+    protected int hitBoxX, hitBoxY;
+    protected final boolean hoverFx;
+    protected boolean hovered = false;
+    protected boolean clicked = false;
+    protected boolean toggled = false;
+    protected int currentColor;
 
     public BasicElement(int width, int height, int colorPalette, boolean hoverFx) {
         this.height = height;
@@ -37,6 +32,14 @@ public class BasicElement {
 
     public void draw(long vg, int x, int y) {
         RenderManager.drawRectangle(vg, x, y, width, height, currentColor);
+
+        update(x, y);
+        if (hoverFx) {
+            currentColor = ColorUtils.getColor(currentColor, colorPalette, hovered, clicked);
+        }
+    }
+
+    public void update(int x, int y) {
         int mouseX = Mouse.getX();
         int mouseY = Minecraft.getMinecraft().displayHeight - Math.abs(Mouse.getY());
         int buttonRight = x + width;
@@ -47,10 +50,6 @@ public class BasicElement {
             toggled = !toggled;
         }
         clicked = Mouse.isButtonDown(0) && hovered;
-
-        if (hoverFx) {
-            currentColor = ColorUtils.getColor(currentColor, colorPalette, hovered, clicked);
-        }
     }
 
 

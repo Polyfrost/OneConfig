@@ -4,20 +4,15 @@ import io.polyfrost.oneconfig.lwjgl.IOUtil;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 
 import static org.lwjgl.nanovg.NanoVG.nvgCreateFontMem;
 
 public class FontManager {
     public static FontManager INSTANCE = new FontManager();
-    private final ArrayList<Font> fonts = new ArrayList<>();
 
     public void initialize(long vg) {
-        fonts.add(new Font("inter-bold", "/assets/oneconfig/font/Inter-Bold.ttf"));
-        fonts.add(new Font("inter-regular", "/assets/oneconfig/font/Inter-Regular.otf"));
-        fonts.add(new Font("inter-semibold", "/assets/oneconfig/font/Inter-SemiBold.otf"));
-        fonts.add(new Font("mc-regular", "/assets/oneconfig/font/Minecraft-Regular.otf"));
-        for (Font font : fonts) {
+        for (Fonts fonts : Fonts.values()) {
+            Font font = fonts.font;
             int loaded = -1;
             try {
                 ByteBuffer buffer = IOUtil.resourceToByteBuffer(font.getFileName());
