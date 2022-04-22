@@ -66,7 +66,7 @@ public final class RenderManager {
     }
 
     public static void drawRectangle(long vg, float x, float y, float width, float height, int color) {
-        if(OneConfigConfig.ROUNDED_CORNERS) {
+        if (OneConfigConfig.ROUNDED_CORNERS) {
             drawRoundedRect(vg, x, y, width, height, color, OneConfigConfig.CORNER_RADIUS);
         } else {
             drawRect(vg, x, y, width, height, color);
@@ -74,7 +74,7 @@ public final class RenderManager {
     }
 
     public static void drawGradientRectangle(long vg, float x, float y, float width, float height, int color1, int color2) {
-        if(OneConfigConfig.ROUNDED_CORNERS) {
+        if (OneConfigConfig.ROUNDED_CORNERS) {
             drawGradientRoundedRect(vg, x, y, width, height, color1, color2, OneConfigConfig.CORNER_RADIUS);
         } else {
             drawGradientRect(vg, x, y, width, height, color1, color2);
@@ -121,6 +121,18 @@ public final class RenderManager {
         color(vg, color);
         NVGColor nvgColor = color(vg, color);
         nvgFill(vg);
+        nvgColor.free();
+    }
+
+    public static void drawHollowRoundRect(long vg, float x, float y, float width, float height, int color, float radius, float thickness) {
+        nvgBeginPath(vg);
+        nvgRoundedRect(vg, x + thickness, y + thickness, width - thickness, height - thickness, radius);
+        nvgStrokeWidth(vg, thickness);
+        nvgPathWinding(vg, NVG_HOLE);
+        color(vg, color);
+        NVGColor nvgColor = color(vg, color);
+        nvgStrokeColor(vg, nvgColor);
+        nvgStroke(vg);
         nvgColor.free();
     }
 
@@ -208,7 +220,7 @@ public final class RenderManager {
 
 
                 }
-            } catch (Exception e ) {
+            } catch (Exception e) {
                 //e.printStackTrace();
             }
         }
@@ -216,7 +228,8 @@ public final class RenderManager {
 
     public static float getTextWidth(long vg, String text, float fontSize) {
         float[] bounds = new float[4];
-        return (nvgTextBounds(vg, 0, 0, text, bounds) / 12) * fontSize;
+        nvgFontSize(vg, fontSize);
+        return nvgTextBounds(vg, 0, 0, text, bounds);
     }
 
     public static void drawLine(long vg, float x, float y, float endX, float endY, float width, int color) {
@@ -228,6 +241,25 @@ public final class RenderManager {
         nvgStrokeWidth(vg, width);
         nvgStroke(vg);
         nvgColor.free();
+    }
+
+    public static void drawDropShadow(long vg, float x, float y, float w, float h, float cornerRadius, float spread, int color) {       // TODO broken
+        NVGColor color1 = NVGColor.calloc();
+        NVGColor color2 = NVGColor.calloc();
+        NVGPaint shadowPaint = NVGPaint.calloc();
+        nvgRGBA((byte) 0, (byte) 0, (byte) 0, (byte) 128, color1);
+        nvgRGBA((byte) 0, (byte) 0, (byte) 0, (byte) 0, color2);
+        nvgBoxGradient(vg, x, y + 2, w, h, cornerRadius * 2, 10f, color2, color1, shadowPaint);
+        nvgBeginPath(vg);
+        nvgRect(vg, x - 10, y - 10, w + 20, h + 30);
+        nvgRoundedRect(vg, x, y, w, h, cornerRadius);
+        nvgPathWinding(vg, NVG_HOLE);
+        nvgFillPaint(vg, shadowPaint);
+        nvgFill(vg);
+        shadowPaint.free();
+        color1.free();
+        color2.free();
+
     }
 
 

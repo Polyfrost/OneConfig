@@ -8,13 +8,20 @@ import io.polyfrost.oneconfig.lwjgl.RenderManager;
 import io.polyfrost.oneconfig.lwjgl.font.Fonts;
 import net.minecraft.client.gui.GuiScreen;
 import org.lwjgl.input.Keyboard;
+import org.lwjgl.nanovg.NVGColor;
+import org.lwjgl.nanovg.NanoVG;
 
 public class OneConfigGui extends GuiScreen {
     public static OneConfigGui INSTANCE;
     private final BasicElement element = new BasicElement(200, 200, 1, true);
 
+    public final int x = 320;
+    public final int y = 140;
+
+    private final SideBar sideBar = new SideBar();
+
     private final TextInputField textInputField = new TextInputField(776, 32, "Search all of OneConfig...", false, false);
-    private final BasicButton btn = new BasicButton(184, 36, "Socials", "/assets/oneconfig/textures/share.png", "/assets/oneconfig/textures/share2.png", 1, true);
+    private final BasicButton btn = new BasicButton(184, 36, "Socials", "/assets/oneconfig/textures/share.png", "/assets/oneconfig/textures/share2.png", 1, BasicButton.ALIGNMENT_CENTER);
 
     public OneConfigGui() {
         INSTANCE = this;
@@ -27,6 +34,7 @@ public class OneConfigGui extends GuiScreen {
                 RenderManager.drawRoundedRect(vg, 544, 140, 1056, 800, OneConfigConfig.GRAY_800, OneConfigConfig.CORNER_RADIUS_WIN);
                 RenderManager.drawRoundedRect(vg, 320, 140, 244, 800, OneConfigConfig.GRAY_900_80, OneConfigConfig.CORNER_RADIUS_WIN);
                 RenderManager.drawRect(vg, 544, 140, 20, 800, OneConfigConfig.GRAY_800);
+                //RenderManager.drawDropShadow(vg, 544, 140, 1056, 800, 20f, 32f, OneConfigConfig.GRAY_800);
             } else {
                 // L;
             }
@@ -34,10 +42,12 @@ public class OneConfigGui extends GuiScreen {
             RenderManager.drawLine(vg, 544, 212, 1600, 212, 1,  OneConfigConfig.GRAY_700);
             RenderManager.drawLine(vg, 544, 140, 544, 940, 1, OneConfigConfig.GRAY_700);
 
-            RenderManager.drawString(vg, "OneConfig", 389, 163, OneConfigConfig.WHITE, 18f, Fonts.INTER_BOLD);
+            RenderManager.drawImage(vg, "/assets/oneconfig/textures/icon.png", x + 19, y + 19, 42, 42);
+            RenderManager.drawString(vg, "OneConfig", x + 69, y + 23, OneConfigConfig.WHITE, 18f, Fonts.INTER_BOLD);
             RenderManager.drawString(vg, "By Polyfrost", 389, 183, OneConfigConfig.WHITE, 12f, Fonts.INTER_REGULAR);
             //element.setColorPalette(0);
             try {
+                sideBar.draw(vg, x, y);
                 //element.draw(vg, 0, 0);
                 textInputField.draw(vg, 792, 548);
                 btn.draw(vg, 976, 870);
