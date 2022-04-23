@@ -99,8 +99,6 @@ public class Config {
                 try {
                     Object hud = field.get(BasicHud.class);
                     HudCore.huds.add((BasicHud) hud);
-                    System.out.println("here");
-                    System.out.println(HudCore.huds.size());
                 } catch (IllegalAccessException e) {
                     e.printStackTrace();
                 }

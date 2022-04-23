@@ -53,7 +53,7 @@ public final class RenderManager {
 
         if (mcScaling) {
             ScaledResolution resolution = new ScaledResolution(Minecraft.getMinecraft());
-            nvgBeginFrame(vg, (float) resolution.getScaledWidth_double(), (float) resolution.getScaledHeight_double(), 1);
+            nvgBeginFrame(vg, (float) resolution.getScaledWidth_double(), (float) resolution.getScaledHeight_double(), resolution.getScaleFactor());
         } else {
             nvgBeginFrame(vg, Display.getWidth(), Display.getHeight(), 1);
         }

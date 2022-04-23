@@ -80,8 +80,9 @@ public class HudGui extends GuiScreen {
             });
 
             if (hud == editingHud && !isDragging) {
-                Gui.drawRect(x + width - 3, y + height - 3, x + width + 3, y + height + 3, new Color(43, 159, 235).getRGB());
-                Gui.drawRect(x + width - 2, y + height - 2, x + width + 2, y + height + 2, new Color(252, 252, 252).getRGB());
+                RenderManager.setupAndDraw(true, (vg) -> {
+                    RenderManager.drawCircle(vg, x + width, y + height, 3, new Color(43, 159, 235).getRGB());
+                });
             }
         }
     }
