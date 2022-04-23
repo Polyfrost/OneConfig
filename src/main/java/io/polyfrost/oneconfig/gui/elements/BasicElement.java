@@ -3,7 +3,12 @@ package io.polyfrost.oneconfig.gui.elements;
 import io.polyfrost.oneconfig.lwjgl.RenderManager;
 import io.polyfrost.oneconfig.utils.ColorUtils;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Gui;
+import net.minecraft.util.ChatComponentText;
 import org.lwjgl.input.Mouse;
+
+import java.lang.reflect.Method;
+import java.util.function.Consumer;
 
 public class BasicElement {
     protected int width, height;
@@ -46,12 +51,19 @@ public class BasicElement {
         int buttonBottom = y + height;
 
         hovered = mouseX > x - hitBoxX && mouseY > y - hitBoxY && mouseX < buttonRight + hitBoxX && mouseY < buttonBottom + hitBoxY;
-        if (Mouse.isButtonDown(0) && clicked) {
-            toggled = !toggled;
+        if (hovered) {
+            if (Mouse.isButtonDown(0) && !clicked) {
+                toggled = !toggled;
+                onClick();
+            }
+            clicked = Mouse.isButtonDown(0);
         }
-        clicked = Mouse.isButtonDown(0) && hovered;
     }
 
+
+    public void onClick() {
+
+    }
 
     public void setCustomHitbox(int x, int y) {
         hitBoxX = x;

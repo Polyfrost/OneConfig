@@ -2,6 +2,8 @@ package io.polyfrost.oneconfig.gui;
 
 import io.polyfrost.oneconfig.config.OneConfigConfig;
 import io.polyfrost.oneconfig.gui.elements.BasicButton;
+import io.polyfrost.oneconfig.gui.pages.HomePage;
+import io.polyfrost.oneconfig.gui.pages.ModsPage;
 import io.polyfrost.oneconfig.lwjgl.RenderManager;
 import io.polyfrost.oneconfig.lwjgl.font.Fonts;
 import io.polyfrost.oneconfig.utils.MathUtils;
@@ -15,17 +17,17 @@ public class SideBar {
     private float targetY = 0, currentY = 0;
 
     public SideBar() {
-        btnList.add(new BasicButton(192, 36, "Dashboard", "/assets/oneconfig/textures/share.png", null, -3, BasicButton.ALIGNMENT_LEFT));
+        btnList.add(new BasicButton(192, 36, "Dashboard", "/assets/oneconfig/textures/share.png", null, -3, BasicButton.ALIGNMENT_LEFT, new HomePage()));
         btnList.add(new BasicButton(192, 36, "Global Search", "/assets/oneconfig/textures/share.png", null, -3, BasicButton.ALIGNMENT_LEFT));
-        btnList.add(new BasicButton(192, 36, "Mods", "/assets/oneconfig/textures/share.png", null, -3, BasicButton.ALIGNMENT_LEFT));
+        btnList.add(new BasicButton(192, 36, "Mods", "/assets/oneconfig/textures/share.png", null, -3, BasicButton.ALIGNMENT_LEFT, new ModsPage()));
         btnList.add(new BasicButton(192, 36, "Performance", "/assets/oneconfig/textures/share.png", null, -3, BasicButton.ALIGNMENT_LEFT));
         btnList.add(new BasicButton(192, 36, "Profiles", "/assets/oneconfig/textures/share.png", null, -3, BasicButton.ALIGNMENT_LEFT));
         btnList.add(new BasicButton(192, 36, "Updates", "/assets/oneconfig/textures/share.png", null, -3, BasicButton.ALIGNMENT_LEFT));
         btnList.add(new BasicButton(192, 36, "Screenshots", "/assets/oneconfig/textures/share.png", null, -3, BasicButton.ALIGNMENT_LEFT));
         btnList.add(new BasicButton(192, 36, "HUD Settings", "/assets/oneconfig/textures/share.png", null, -3, BasicButton.ALIGNMENT_LEFT));
         btnList.add(new BasicButton(192, 36, "General", "/assets/oneconfig/textures/share.png", null, -3, BasicButton.ALIGNMENT_LEFT));
-        btnList.add(new BasicButton(192, 36, "Close", "/assets/oneconfig/textures/share.png", null, -3, BasicButton.ALIGNMENT_LEFT));
-        btnList.add(new BasicButton(192, 36, "Minimize", "/assets/oneconfig/textures/share.png", null, -3, BasicButton.ALIGNMENT_LEFT));
+        btnList.add(new BasicButton(192, 36, "Close", "/assets/oneconfig/textures/share.png", null, -1, BasicButton.ALIGNMENT_LEFT));
+        btnList.add(new BasicButton(192, 36, "Minimize", "/assets/oneconfig/textures/share.png", null, -1, BasicButton.ALIGNMENT_LEFT));
         btnList.add(new BasicButton(192, 36, "Edit HUD", "/assets/oneconfig/textures/share.png", null, 0, BasicButton.ALIGNMENT_LEFT));
     }
 
@@ -36,7 +38,7 @@ public class SideBar {
         RenderManager.drawRoundedRect(vg, x + 16, currentY, 192, 36, OneConfigConfig.BLUE_600, OneConfigConfig.CORNER_RADIUS);
         int i = 0;
         if (targetY == 0) {
-            targetY = x + 16;
+            targetY = y + 96;
             currentY = targetY;
         }
         for (BasicButton btn : btnList) {
@@ -55,7 +57,7 @@ public class SideBar {
             }
 
             if (btn.isClicked()) {
-                targetY = btn.y;
+                if(i < 520) targetY = btn.y;
             }
         }
 

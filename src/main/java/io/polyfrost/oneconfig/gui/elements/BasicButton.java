@@ -1,13 +1,13 @@
 package io.polyfrost.oneconfig.gui.elements;
 
 import io.polyfrost.oneconfig.config.OneConfigConfig;
+import io.polyfrost.oneconfig.gui.OneConfigGui;
+import io.polyfrost.oneconfig.gui.pages.Page;
 import io.polyfrost.oneconfig.lwjgl.RenderManager;
 import io.polyfrost.oneconfig.lwjgl.font.Fonts;
 import io.polyfrost.oneconfig.utils.ColorUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import static org.lwjgl.nanovg.NanoVG.nvgTextBounds;
 
 public class BasicButton extends BasicElement {
 
@@ -20,6 +20,10 @@ public class BasicButton extends BasicElement {
     public int x, y;
     public static final int ALIGNMENT_LEFT = 0;
     public static final int ALIGNMENT_CENTER = 1;
+
+    private boolean toggleable;
+
+    private Page page;
 
     /**
      * Create a new basic button. Used mostly on the homepage and the sidebar. Note: The button will not be drawn until you call {@link #draw(long, int, int)}.
@@ -44,6 +48,17 @@ public class BasicButton extends BasicElement {
             this.colorPalette = colorPalette;
         }
     }
+
+    public BasicButton(int width, int height, @NotNull String text, @Nullable String fileNameLeftIco, @Nullable String fileNameRightIco, int colorPalette, int alignment, Page page) {
+        this(width, height, text, fileNameLeftIco, fileNameRightIco, colorPalette, alignment);
+        this.page = page;
+    }
+
+    public BasicButton(int width, int height, @NotNull String text, @Nullable String fileNameLeftIco, @Nullable String fileNameRightIco, int colorPalette, int alignment, boolean toggleable) {
+        this(width, height, text, fileNameLeftIco, fileNameRightIco, colorPalette, alignment);
+        this.toggleable = toggleable;
+    }
+
 
 
     @Override
@@ -94,9 +109,18 @@ public class BasicButton extends BasicElement {
                 return;
             }
             currentColor = ColorUtils.getColor(currentColor, colorPalette, hovered, clicked);
+            if(toggleable && toggled) {
+                currentColor = OneConfigConfig.BLUE_600;
+            }
 
         }
     }
 
 
+    @Override
+    public void onClick() {
+        if(this.page != null) {
+            OneConfigGui.INSTANCE.openPage(page);
+        }
+    }
 }
