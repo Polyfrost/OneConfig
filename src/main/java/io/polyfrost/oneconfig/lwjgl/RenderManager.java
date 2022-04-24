@@ -18,7 +18,6 @@ import java.awt.*;
 import java.nio.FloatBuffer;
 import java.util.function.LongConsumer;
 
-import static org.lwjgl.nanovg.NanoSVG.NSVG_FLAGS_VISIBLE;
 import static org.lwjgl.nanovg.NanoVG.*;
 import static org.lwjgl.nanovg.NanoVGGL2.NVG_ANTIALIAS;
 import static org.lwjgl.nanovg.NanoVGGL2.nvgCreate;
@@ -55,6 +54,7 @@ public final class RenderManager {
             ScaledResolution resolution = new ScaledResolution(Minecraft.getMinecraft());
             nvgBeginFrame(vg, (float) resolution.getScaledWidth_double(), (float) resolution.getScaledHeight_double(), resolution.getScaleFactor());
         } else {
+            // If we get blurry problems with high DPI monitors, 1 might need to be  replaced with Display.getPixelScaleFactor()
             nvgBeginFrame(vg, Display.getWidth(), Display.getHeight(), 1);
         }
 

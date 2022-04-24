@@ -4,7 +4,6 @@ import io.polyfrost.oneconfig.hud.HudCore;
 import io.polyfrost.oneconfig.hud.interfaces.BasicHud;
 import io.polyfrost.oneconfig.lwjgl.RenderManager;
 import io.polyfrost.oneconfig.test.TestHud;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiScreen;
 import org.lwjgl.input.Keyboard;
@@ -24,12 +23,11 @@ public class HudGui extends GuiScreen {
     public void initGui() {
         HudCore.editing = true;
         Keyboard.enableRepeatEvents(true);
-        for (BasicHud hud : HudCore.huds) {
-            hud.childBottom = new TestHud();
-            hud.childBottom.parent = hud;
-            hud.childRight = new TestHud();
-            hud.childRight.parent = hud;
-        }
+        HudCore.huds.add(new TestHud());
+        HudCore.huds.add(new TestHud());
+        HudCore.huds.add(new TestHud());
+        HudCore.huds.add(new TestHud());
+        HudCore.huds.add(new TestHud());
     }
 
     @Override
@@ -41,55 +39,86 @@ public class HudGui extends GuiScreen {
         }
 
         for (BasicHud hud : HudCore.huds) {
-            if (hud == editingHud && isScaling) {
-                float xFloat = hud.getXScaled(this.width);
-                float yFloat = hud.getYScaled(this.height);
-                float pos = getXSnapping(mouseX, true);
-                float newWidth = pos - xFloat;
-                float newScale = newWidth / ((hud.getWidth(hud.scale) + hud.paddingX * hud.scale) / hud.scale);
-                if (newScale > 20)
-                    newScale = 20;
-                else if (newScale < 0.3)
-                    newScale = 0.3f;
-                hud.scale = newScale;
+            processHud(hud, mouseX);
+        }
+    }
 
-                if (xFloat / this.width > 0.5)
-                    editingHud.xUnscaled = (xFloat + (hud.getWidth(hud.scale) + hud.paddingX * hud.scale)) / (double) this.width;
-                if (yFloat / this.height > 0.5)
-                    editingHud.yUnscaled = (yFloat + (hud.getHeight(hud.scale) + hud.paddingY * hud.scale)) / (double) this.height;
-            }
+    private void processHud(BasicHud hud, int mouseX) {
+        if (hud == editingHud && isScaling) {
+            float xFloat = hud.getXScaled(this.width);
+            float yFloat = hud.getYScaled(this.height);
+            float pos = getXSnapping(mouseX, true);
+            float newWidth = pos - xFloat;
+            float newScale = newWidth / ((hud.getWidth(hud.scale) + hud.paddingX * hud.scale) / hud.scale);
+            if (newScale > 20)
+                newScale = 20;
+            else if (newScale < 0.3)
+                newScale = 0.3f;
+            hud.scale = newScale;
+
+            if (xFloat / this.width > 0.5)
+                editingHud.xUnscaled = (xFloat + (hud.getWidth(hud.scale) + hud.paddingX * hud.scale)) / (double) this.width;
+            if (yFloat / this.height > 0.5)
+                editingHud.yUnscaled = (yFloat + (hud.getHeight(hud.scale) + hud.paddingY * hud.scale)) / (double) this.height;
+        }
 
             int width = (int) (hud.getWidth(hud.scale) + hud.paddingX * hud.scale);
             int height = (int) (hud.getHeight(hud.scale) + hud.paddingY * hud.scale);
             int x = (int) hud.getXScaled(this.width);
             int y = (int) hud.getYScaled(this.height);
 
+        if (hud.parent == null)
             hud.drawExampleAll(x, y, hud.scale, true);
-            int color = new Color(215, 224, 235).getRGB();
-            if (editingHud == hud) {
-                color = new Color(43, 159, 235).getRGB();
-                if (isDragging)
-                    Gui.drawRect(x, y, x + width, y + height, new Color(108, 176, 255, 60).getRGB());
-            }
-            int finalColor = color;
-            RenderManager.setupAndDraw(true, (vg) -> {
-                RenderManager.drawLine(vg, x - 2 / 4f, y, x + width + 2 / 4f, y, 1, finalColor);
-                RenderManager.drawLine(vg, x, y, x, y + height, 1, finalColor);
-                RenderManager.drawLine(vg, x + width, y, x + width, y + height, 1, finalColor);
-                RenderManager.drawLine(vg, x - 2 / 4f, y + height, x + width + 2 / 4f, y + height, 1, finalColor);
-            });
-
-            if (hud == editingHud && !isDragging) {
-                RenderManager.setupAndDraw(true, (vg) -> {
-                    RenderManager.drawCircle(vg, x + width, y + height, 3, new Color(43, 159, 235).getRGB());
-                });
-            }
+        int color = new Color(215, 224, 235).getRGB();
+        if (editingHud == hud) {
+            color = new Color(43, 159, 235).getRGB();
+            if (isDragging)
+                Gui.drawRect(x, y, x + width, y + height, new Color(108, 176, 255, 60).getRGB());
         }
+        int finalColor = color;
+        int boxX = x + (int) (hud.paddingX * hud.scale / 2f);
+        int boxY = y + (int) (hud.paddingY * hud.scale / 2f);
+        int boxWidth = width - (int) (hud.paddingX * hud.scale);
+        int boxHeight = height - (int) (hud.paddingY * hud.scale);
+        RenderManager.setupAndDraw(true, (vg) -> {
+            RenderManager.drawLine(vg, boxX - 2 / 4f, boxY, boxX + boxWidth + 2 / 4f, boxY, 1, finalColor);
+            RenderManager.drawLine(vg, boxX, boxY, boxX, boxY + boxHeight, 1, finalColor);
+            RenderManager.drawLine(vg, boxX + boxWidth, boxY, boxX + boxWidth, boxY + boxHeight, 1, finalColor);
+            RenderManager.drawLine(vg, boxX - 2 / 4f, boxY + boxHeight, boxX + boxWidth + 2 / 4f, boxY + boxHeight, 1, finalColor);
+        });
+
+        if (hud == editingHud && !isDragging) {
+            RenderManager.setupAndDraw(true, (vg) -> {
+                RenderManager.drawCircle(vg, boxX + boxWidth, boxY + boxHeight, 3, new Color(43, 159, 235).getRGB());
+            });
+        }
+
+        if (hud.childBottom != null) processHud(hud.childBottom, mouseX);
+        if (hud.childRight != null) processHud(hud.childRight, mouseX);
     }
 
     private void setPosition(float newX, float newY, boolean snap) {
         float width = editingHud.getWidth(editingHud.scale) + editingHud.paddingX * editingHud.scale;
         float height = editingHud.getHeight(editingHud.scale) + editingHud.paddingY * editingHud.scale;
+
+        if (editingHud.childRight != null) {
+            HudCore.huds.add(editingHud.childRight);
+            editingHud.childRight.parent = null;
+            editingHud.childRight = null;
+        }
+        if (editingHud.childBottom != null) {
+            HudCore.huds.add(editingHud.childBottom);
+            editingHud.childBottom.parent = null;
+            editingHud.childBottom = null;
+        }
+        if (editingHud.parent != null) {
+            HudCore.huds.add(editingHud);
+            if (editingHud.parent.childBottom == editingHud)
+                editingHud.parent.childBottom = null;
+            else if (editingHud.parent.childRight == editingHud)
+                editingHud.parent.childRight = null;
+            editingHud.parent = null;
+        }
 
         if (newX < 0)
             newX = 0;
@@ -101,8 +130,16 @@ public class HudGui extends GuiScreen {
             newY = this.height - height;
 
         if (snap) {
-            newX = getXSnapping(newX, false);
-            newY = getYSnapping(newY);
+            float snapX = getXSnapping(newX, false);
+            float snapY = getYSnapping(newY);
+            if (snapX != newX || snapY != newY) {
+                newX = snapX;
+                newY = snapY;
+                for (BasicHud hud : HudCore.huds) {
+                    if (findParent(hud, snapX, snapY))
+                        break;
+                }
+            }
         }
 
         if (newX / this.width <= 0.5)
@@ -115,17 +152,31 @@ public class HudGui extends GuiScreen {
             editingHud.yUnscaled = (newY + height) / (double) this.height;
     }
 
+    private boolean findParent(BasicHud hud, float snapX, float snapY) {
+        int hudWidth = (int) (hud.getWidth(hud.scale) + hud.paddingX * hud.scale);
+        int hudX = (int) hud.getXScaled(this.width);
+        int hudHeight = (int) (hud.getHeight(hud.scale) + hud.paddingY * hud.scale);
+        int hudY = (int) hud.getYScaled(this.height);
+        if (hudX + hudWidth == snapX && hudY == snapY && hud.childRight == null) {
+            editingHud.parent = hud;
+            hud.childRight = editingHud;
+            HudCore.huds.remove(editingHud);
+            return true;
+        } else if (hudX == snapX && hudY + hudHeight == snapY && hud.childBottom == null) {
+            editingHud.parent = hud;
+            hud.childBottom = editingHud;
+            HudCore.huds.remove(editingHud);
+            return true;
+        }
+        return hud.childRight != null && findParent(hud.childRight, snapX, snapY) || hud.childBottom != null && findParent(hud.childBottom, snapX, snapY);
+    }
+
     private float getXSnapping(float pos, boolean rightOnly) {
         float width = editingHud.getWidth(editingHud.scale) + editingHud.paddingX * editingHud.scale;
         ArrayList<Float> verticalLines = new ArrayList<>();
         verticalLines.add(this.width / 2f);
         for (BasicHud hud : HudCore.huds) {
-            if (hud == editingHud) continue;
-            int hudWidth = (int) (hud.getWidth(hud.scale) + hud.paddingX * hud.scale);
-            int hudX = (int) hud.getXScaled(this.width);
-            verticalLines.add((float) hudX);
-            verticalLines.add((float) (hudX + hudWidth));
-            verticalLines.add(hudX + hudWidth / 2f);
+            verticalLines.addAll(getXSnappingHud(hud));
         }
         float smallestDiff = -1;
         float smallestLine = 0;
@@ -146,17 +197,23 @@ public class HudGui extends GuiScreen {
         return pos;
     }
 
+    private ArrayList<Float> getXSnappingHud(BasicHud hud) {
+        ArrayList<Float> verticalLines = new ArrayList<>();
+        if (hud == editingHud) return verticalLines;
+        if (hud.childRight != null) verticalLines.addAll(getXSnappingHud(hud.childRight));
+        int hudWidth = (int) (hud.getWidth(hud.scale) + hud.paddingX * hud.scale);
+        int hudX = (int) hud.getXScaled(this.width);
+        verticalLines.add((float) hudX);
+        verticalLines.add((float) (hudX + hudWidth));
+        return verticalLines;
+    }
+
     private float getYSnapping(float pos) {
         float height = editingHud.getHeight(editingHud.scale) + editingHud.paddingY * editingHud.scale;
         ArrayList<Float> horizontalLines = new ArrayList<>();
         horizontalLines.add(this.height / 2f);
         for (BasicHud hud : HudCore.huds) {
-            if (hud == editingHud) continue;
-            int hudHeight = (int) (hud.getHeight(hud.scale) + hud.paddingY * hud.scale);
-            int hudY = (int) hud.getYScaled(this.height);
-            horizontalLines.add((float) hudY);
-            horizontalLines.add((float) (hudY + hudHeight));
-            horizontalLines.add(hudY + hudHeight / 2f);
+            horizontalLines.addAll(getYSnappingHud(hud));
         }
         float smallestDiff = -1;
         float smallestLine = 0;
@@ -177,6 +234,17 @@ public class HudGui extends GuiScreen {
         return pos;
     }
 
+    private ArrayList<Float> getYSnappingHud(BasicHud hud) {
+        ArrayList<Float> horizontalLines = new ArrayList<>();
+        if (hud == editingHud) return horizontalLines;
+        if (hud.childBottom != null) horizontalLines.addAll(getYSnappingHud(hud.childBottom));
+        int hudHeight = (int) (hud.getHeight(hud.scale) + hud.paddingY * hud.scale);
+        int hudY = (int) hud.getYScaled(this.height);
+        horizontalLines.add((float) hudY);
+        horizontalLines.add((float) (hudY + hudHeight));
+        return horizontalLines;
+    }
+
     @Override
     protected void mouseClicked(int mouseX, int mouseY, int mouseButton) {
         if (mouseButton == 0) {
@@ -192,19 +260,25 @@ public class HudGui extends GuiScreen {
             }
             editingHud = null;
             for (BasicHud hud : HudCore.huds) {
-                int width = (int) (hud.getWidth(hud.scale) + hud.paddingX * hud.scale);
-                int height = (int) (hud.getHeight(hud.scale) + hud.paddingY * hud.scale);
-                float x = hud.getXScaled(this.width);
-                float y = hud.getYScaled(this.height);
-                if (mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= y + height) {
-                    editingHud = hud;
-                    xOffset = (int) (mouseX - x);
-                    yOffset = (int) (mouseY - y);
-                    isDragging = true;
+                if (mouseClickedHud(hud, mouseX, mouseY))
                     break;
-                }
             }
         }
+    }
+
+    private boolean mouseClickedHud(BasicHud hud, int mouseX, int mouseY) {
+        int width = (int) (hud.getWidth(hud.scale) + hud.paddingX * hud.scale);
+        int height = (int) (hud.getHeight(hud.scale) + hud.paddingY * hud.scale);
+        float x = hud.getXScaled(this.width);
+        float y = hud.getYScaled(this.height);
+        if (mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= y + height) {
+            editingHud = hud;
+            xOffset = (int) (mouseX - x);
+            yOffset = (int) (mouseY - y);
+            isDragging = true;
+            return true;
+        }
+        return hud.childBottom != null && mouseClickedHud(hud.childBottom, mouseX, mouseY) || hud.childRight != null && mouseClickedHud(hud.childRight, mouseX, mouseY);
     }
 
     @Override

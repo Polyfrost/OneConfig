@@ -58,6 +58,11 @@ public abstract class BasicHud {
     }
 
     public float getXScaled(int screenWidth) {
+        if (parent != null && parent.childRight == this) {
+            return parent.getXScaled(screenWidth) + parent.getWidth(parent.scale) + parent.paddingX * parent.scale / 2f;
+        } else if (parent != null) {
+            return parent.getXScaled(screenWidth);
+        }
         if (xUnscaled <= 0.5) {
             return (int) (screenWidth * xUnscaled);
         }
@@ -65,6 +70,11 @@ public abstract class BasicHud {
     }
 
     public float getYScaled(int screenHeight) {
+        if (parent != null && parent.childBottom == this) {
+            return parent.getYScaled(screenHeight) + parent.getHeight(parent.scale) + parent.paddingY * parent.scale / 2f;
+        } else if (parent != null) {
+            return parent.getYScaled(screenHeight);
+        }
         if (yUnscaled <= 0.5) {
             return (int) (screenHeight * yUnscaled);
         }
