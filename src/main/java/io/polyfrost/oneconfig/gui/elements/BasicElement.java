@@ -2,13 +2,8 @@ package io.polyfrost.oneconfig.gui.elements;
 
 import io.polyfrost.oneconfig.lwjgl.RenderManager;
 import io.polyfrost.oneconfig.utils.ColorUtils;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Gui;
-import net.minecraft.util.ChatComponentText;
+import io.polyfrost.oneconfig.utils.InputUtils;
 import org.lwjgl.input.Mouse;
-
-import java.lang.reflect.Method;
-import java.util.function.Consumer;
 
 public class BasicElement {
     protected int width, height;
@@ -45,12 +40,8 @@ public class BasicElement {
     }
 
     public void update(int x, int y) {
-        int mouseX = Mouse.getX();
-        int mouseY = Minecraft.getMinecraft().displayHeight - Math.abs(Mouse.getY());
-        int buttonRight = x + width;
-        int buttonBottom = y + height;
+        hovered = InputUtils.isAreaHovered(x - hitBoxX, y - hitBoxY, width + hitBoxX, height + hitBoxY);
 
-        hovered = mouseX > x - hitBoxX && mouseY > y - hitBoxY && mouseX < buttonRight + hitBoxX && mouseY < buttonBottom + hitBoxY;
         if (hovered) {
             if (Mouse.isButtonDown(0) && !clicked) {
                 toggled = !toggled;

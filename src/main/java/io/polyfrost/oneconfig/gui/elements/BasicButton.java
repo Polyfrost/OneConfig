@@ -83,7 +83,7 @@ public class BasicButton extends BasicElement {
 
         if(thisAlignment == ALIGNMENT_CENTER) {
             int middle = x + this.width / 2;
-            RenderManager.drawString(vg, text, middle - contentWidth / 2 + (fileNameLeftIco != null ? 28 : 0), y + ((float) height / 2), textColor, fontSize, Fonts.INTER_MEDIUM);
+            RenderManager.drawString(vg, text, middle - contentWidth / 2 + (fileNameLeftIco != null ? 28 : 0), y + ((float) height / 2) + 1, textColor, fontSize, Fonts.INTER_MEDIUM);
             if (fileNameLeftIco != null) {
                 RenderManager.drawImage(vg, fileNameLeftIco, middle - contentWidth / 2, y + 8, 20, 20);
             }
@@ -94,9 +94,9 @@ public class BasicButton extends BasicElement {
         if(thisAlignment == ALIGNMENT_LEFT) {
             if(fileNameLeftIco != null) {
                 RenderManager.drawImage(vg, fileNameLeftIco, x + 12, y + 8, 20, 20);
-                RenderManager.drawString(vg, text, x + 40, y + ((float) height / 2), textColor, fontSize, Fonts.INTER_MEDIUM);
+                RenderManager.drawString(vg, text, x + 40, y + ((float) height / 2) + 1, textColor, fontSize, Fonts.INTER_MEDIUM);
             } else {
-                RenderManager.drawString(vg, text, x + 12, y + ((float) height / 2), textColor, fontSize, Fonts.INTER_MEDIUM);
+                RenderManager.drawString(vg, text, x + 12, y + ((float) height / 2) + 1, textColor, fontSize, Fonts.INTER_MEDIUM);
             }
             if(fileNameRightIco != null) {
                 RenderManager.drawImage(vg, fileNameRightIco, x + width - 28, y + 8, 20, 20);
@@ -108,11 +108,13 @@ public class BasicButton extends BasicElement {
                 currentColor = OneConfigConfig.TRANSPARENT;
                 return;
             }
-            currentColor = ColorUtils.getColor(currentColor, colorPalette, hovered, clicked);
-            if(toggleable && toggled) {
-                currentColor = OneConfigConfig.BLUE_600;
+            if(!toggleable) {
+                currentColor = ColorUtils.getColor(currentColor, colorPalette, hovered, clicked);
+            } else {
+                if (toggled) {
+                    currentColor = ColorUtils.smoothColor(currentColor, OneConfigConfig.GRAY_500, OneConfigConfig.BLUE_600, true, 30f);
+                } else currentColor = ColorUtils.getColor(currentColor, colorPalette, hovered, clicked);
             }
-
         }
     }
 

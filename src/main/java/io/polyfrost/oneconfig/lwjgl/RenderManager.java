@@ -124,6 +124,15 @@ public final class RenderManager {
         nvgColor.free();
     }
 
+    public static void drawRoundedRectVaried(long vg, float x, float y, float width, float height, int color, float radiusTL, float radiusTR, float radiusBR, float radiusBL) {
+        nvgBeginPath(vg);
+        nvgRoundedRectVarying(vg, x, y, width, height, radiusTL, radiusTR, radiusBR, radiusBL);
+        color(vg, color);
+        NVGColor nvgColor = color(vg, color);
+        nvgFill(vg);
+        nvgColor.free();
+    }
+
     public static void drawHollowRoundRect(long vg, float x, float y, float width, float height, int color, float radius, float thickness) {
         nvgBeginPath(vg);
         nvgRoundedRect(vg, x + thickness, y + thickness, width - thickness, height - thickness, radius);

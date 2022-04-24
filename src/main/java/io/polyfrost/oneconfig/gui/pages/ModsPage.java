@@ -1,10 +1,12 @@
 package io.polyfrost.oneconfig.gui.pages;
 
-import io.polyfrost.oneconfig.config.OneConfigConfig;
+import io.polyfrost.oneconfig.OneConfig;
+import io.polyfrost.oneconfig.config.data.ModData;
 import io.polyfrost.oneconfig.gui.elements.BasicButton;
 import io.polyfrost.oneconfig.gui.elements.ModCard;
-import io.polyfrost.oneconfig.lwjgl.RenderManager;
-import io.polyfrost.oneconfig.lwjgl.font.Fonts;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class ModsPage extends Page {
     private final BasicButton allBtn = new BasicButton(49, 40, "All", null, null, 0, BasicButton.ALIGNMENT_CENTER, true);
@@ -16,10 +18,13 @@ public class ModsPage extends Page {
     private final BasicButton utilBtn = new BasicButton(104, 40, "Utility", null, null, 0, BasicButton.ALIGNMENT_CENTER, true);
     private final BasicButton customBtn = new BasicButton(104, 40, "Custom", null, null, 0, BasicButton.ALIGNMENT_CENTER, true);
 
-    private final ModCard exCard = new ModCard("Placeholder Mod Name", null, true, false, false);
+    private final List<ModCard> modCards = new ArrayList<>();
 
     public ModsPage() {
         super("Mods");
+        for(ModData modData : OneConfig.loadedMods) {
+            modCards.add(new ModCard(modData, null, true, false, false));
+        }
     }
 
     public void draw(long vg, int x, int y) {
@@ -32,7 +37,16 @@ public class ModsPage extends Page {
         utilBtn.draw(vg, x + 632, y + 16);
         customBtn.draw(vg, x + 748, y + 16);
 
-        exCard.draw(vg, x + 16, y + 72);
+        int iX = x + 16;
+        int iY = y + 72;
+        for(ModCard modCard : modCards) {
+            modCard.draw(vg, iX, iY);
+            iX += 260;
+            if(iX > x + 796) {
+                iX = x + 16;
+                iY += 135;
+            }
+        }
 
     }
 }
