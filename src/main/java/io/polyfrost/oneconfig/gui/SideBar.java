@@ -7,6 +7,9 @@ import io.polyfrost.oneconfig.gui.pages.ModsPage;
 import io.polyfrost.oneconfig.lwjgl.RenderManager;
 import io.polyfrost.oneconfig.lwjgl.font.Fonts;
 import io.polyfrost.oneconfig.utils.MathUtils;
+import io.polyfrost.oneconfig.utils.TickDelay;
+import net.minecraft.client.Minecraft;
+import scala.collection.parallel.ParIterableLike;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,9 +29,9 @@ public class SideBar {
         btnList.add(new BasicButton(192, 36, "Screenshots", "/assets/oneconfig/textures/share.png", null, -3, BasicButton.ALIGNMENT_LEFT));
         btnList.add(new BasicButton(192, 36, "HUD Settings", "/assets/oneconfig/textures/share.png", null, -3, BasicButton.ALIGNMENT_LEFT));
         btnList.add(new BasicButton(192, 36, "General", "/assets/oneconfig/textures/share.png", null, -3, BasicButton.ALIGNMENT_LEFT));
-        btnList.add(new BasicButton(192, 36, "Close", "/assets/oneconfig/textures/share.png", null, -1, BasicButton.ALIGNMENT_LEFT));
+        btnList.add(new BasicButton(192, 36, "Close", "/assets/oneconfig/textures/share.png", null, -1, BasicButton.ALIGNMENT_LEFT, () -> Minecraft.getMinecraft().displayGuiScreen(null)));
         btnList.add(new BasicButton(192, 36, "Minimize", "/assets/oneconfig/textures/share.png", null, -1, BasicButton.ALIGNMENT_LEFT));
-        btnList.add(new BasicButton(192, 36, "Edit HUD", "/assets/oneconfig/textures/share.png", null, 0, BasicButton.ALIGNMENT_LEFT));
+        btnList.add(new BasicButton(192, 36, "Edit HUD", "/assets/oneconfig/textures/share.png", null, 0, BasicButton.ALIGNMENT_LEFT, () -> Minecraft.getMinecraft().displayGuiScreen(new HudGui())));
     }
 
     public void draw(long vg, int x, int y) {

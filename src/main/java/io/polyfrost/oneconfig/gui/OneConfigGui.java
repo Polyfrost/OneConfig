@@ -102,5 +102,4 @@ public class OneConfigGui extends GuiScreen {
     public boolean doesGuiPauseGame() {
         return false;
     }
-
 }
