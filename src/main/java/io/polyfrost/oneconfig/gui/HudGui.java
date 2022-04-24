@@ -23,11 +23,6 @@ public class HudGui extends GuiScreen {
     public void initGui() {
         HudCore.editing = true;
         Keyboard.enableRepeatEvents(true);
-        HudCore.huds.add(new TestHud());
-        HudCore.huds.add(new TestHud());
-        HudCore.huds.add(new TestHud());
-        HudCore.huds.add(new TestHud());
-        HudCore.huds.add(new TestHud());
     }
 
     @Override
@@ -62,10 +57,10 @@ public class HudGui extends GuiScreen {
                 editingHud.yUnscaled = (yFloat + (hud.getHeight(hud.scale) + hud.paddingY * hud.scale)) / (double) this.height;
         }
 
-            int width = (int) (hud.getWidth(hud.scale) + hud.paddingX * hud.scale);
-            int height = (int) (hud.getHeight(hud.scale) + hud.paddingY * hud.scale);
-            int x = (int) hud.getXScaled(this.width);
-            int y = (int) hud.getYScaled(this.height);
+        int width = (int) (hud.getWidth(hud.scale) + hud.paddingX * hud.scale);
+        int height = (int) (hud.getHeight(hud.scale) + hud.paddingY * hud.scale);
+        int x = (int) hud.getXScaled(this.width);
+        int y = (int) hud.getYScaled(this.height);
 
         if (hud.parent == null)
             hud.drawExampleAll(x, y, hud.scale, true);
@@ -76,20 +71,16 @@ public class HudGui extends GuiScreen {
                 Gui.drawRect(x, y, x + width, y + height, new Color(108, 176, 255, 60).getRGB());
         }
         int finalColor = color;
-        int boxX = x + (int) (hud.paddingX * hud.scale / 2f);
-        int boxY = y + (int) (hud.paddingY * hud.scale / 2f);
-        int boxWidth = width - (int) (hud.paddingX * hud.scale);
-        int boxHeight = height - (int) (hud.paddingY * hud.scale);
         RenderManager.setupAndDraw(true, (vg) -> {
-            RenderManager.drawLine(vg, boxX - 2 / 4f, boxY, boxX + boxWidth + 2 / 4f, boxY, 1, finalColor);
-            RenderManager.drawLine(vg, boxX, boxY, boxX, boxY + boxHeight, 1, finalColor);
-            RenderManager.drawLine(vg, boxX + boxWidth, boxY, boxX + boxWidth, boxY + boxHeight, 1, finalColor);
-            RenderManager.drawLine(vg, boxX - 2 / 4f, boxY + boxHeight, boxX + boxWidth + 2 / 4f, boxY + boxHeight, 1, finalColor);
+            RenderManager.drawLine(vg, x - 2 / 4f, y, x + width + 2 / 4f, y, 1, finalColor);
+            RenderManager.drawLine(vg, x, y, x, y + height, 1, finalColor);
+            RenderManager.drawLine(vg, x + width, y, x + width, y + height, 1, finalColor);
+            RenderManager.drawLine(vg, x - 2 / 4f, y + height, x + width + 2 / 4f, y + height, 1, finalColor);
         });
 
         if (hud == editingHud && !isDragging) {
             RenderManager.setupAndDraw(true, (vg) -> {
-                RenderManager.drawCircle(vg, boxX + boxWidth, boxY + boxHeight, 3, new Color(43, 159, 235).getRGB());
+                RenderManager.drawCircle(vg, x + width, y + height, 3, new Color(43, 159, 235).getRGB());
             });
         }
 
@@ -174,10 +165,11 @@ public class HudGui extends GuiScreen {
     private float getXSnapping(float pos, boolean rightOnly) {
         float width = editingHud.getWidth(editingHud.scale) + editingHud.paddingX * editingHud.scale;
         ArrayList<Float> verticalLines = new ArrayList<>();
-        verticalLines.add(this.width / 2f);
         for (BasicHud hud : HudCore.huds) {
             verticalLines.addAll(getXSnappingHud(hud));
         }
+        getSpaceSnapping(verticalLines);
+        verticalLines.add(this.width / 2f);
         float smallestDiff = -1;
         float smallestLine = 0;
         float smallestOffset = 0;
@@ -211,10 +203,11 @@ public class HudGui extends GuiScreen {
     private float getYSnapping(float pos) {
         float height = editingHud.getHeight(editingHud.scale) + editingHud.paddingY * editingHud.scale;
         ArrayList<Float> horizontalLines = new ArrayList<>();
-        horizontalLines.add(this.height / 2f);
         for (BasicHud hud : HudCore.huds) {
             horizontalLines.addAll(getYSnappingHud(hud));
         }
+        getSpaceSnapping(horizontalLines);
+        horizontalLines.add(this.height / 2f);
         float smallestDiff = -1;
         float smallestLine = 0;
         float smallestOffset = 0;
@@ -243,6 +236,17 @@ public class HudGui extends GuiScreen {
         horizontalLines.add((float) hudY);
         horizontalLines.add((float) (hudY + hudHeight));
         return horizontalLines;
+    }
+
+    private void getSpaceSnapping(ArrayList<Float> lines) {
+        ArrayList<Float> newLines = new ArrayList<>();
+        for (int i = 0; i < lines.size(); i++) {
+            for (int l = i + 1; l < lines.size(); l++) {
+                newLines.add(Math.max(lines.get(i), lines.get(l)) + Math.abs(lines.get(i) - lines.get(l)));
+                newLines.add(Math.min(lines.get(i), lines.get(l)) - Math.abs(lines.get(i) - lines.get(l)));
+            }
+        }
+        lines.addAll(newLines);
     }
 
     @Override
