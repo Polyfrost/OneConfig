@@ -10,6 +10,7 @@ import org.lwjgl.stb.STBImage;
 import org.lwjgl.system.MemoryStack;
 
 import java.io.BufferedReader;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
@@ -46,7 +47,16 @@ public class ImageLoader {
     public boolean loadSVGImage(String fileName) {
         if(!NSVGImageHashMap.containsKey(fileName)) {
             try {
-                CharSequence s = new BufferedReader(new InputStreamReader(Minecraft.getMinecraft().getResourceManager().getResource(new ResourceLocation("oneconfig", fileName)).getInputStream())).readLine();
+                InputStream inputStream = Minecraft.getMinecraft().getResourceManager().getResource(new ResourceLocation("oneconfig", fileName)).getInputStream();
+                StringBuilder resultStringBuilder = new StringBuilder();
+                try (BufferedReader br
+                             = new BufferedReader(new InputStreamReader(inputStream))) {
+                    String line;
+                    while ((line = br.readLine()) != null) {
+                        resultStringBuilder.append(line);
+                    }
+                }
+                CharSequence s = resultStringBuilder.toString();
                 System.out.println(s);
                 NSVGImage image = NanoSVG.nsvgParse(s, "px", 96f);
                 NSVGImageHashMap.put(fileName, image);

@@ -1,13 +1,13 @@
 package io.polyfrost.oneconfig.gui.elements;
 
 import io.polyfrost.oneconfig.config.OneConfigConfig;
+import io.polyfrost.oneconfig.gui.OneConfigGui;
+import io.polyfrost.oneconfig.gui.pages.Page;
 import io.polyfrost.oneconfig.lwjgl.RenderManager;
 import io.polyfrost.oneconfig.lwjgl.font.Fonts;
 import io.polyfrost.oneconfig.utils.ColorUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import static org.lwjgl.nanovg.NanoVG.nvgTextBounds;
 
 public class BasicButton extends BasicElement {
 
@@ -20,6 +20,10 @@ public class BasicButton extends BasicElement {
     public int x, y;
     public static final int ALIGNMENT_LEFT = 0;
     public static final int ALIGNMENT_CENTER = 1;
+
+    private boolean toggleable;
+
+    private Page page;
 
     /**
      * Create a new basic button. Used mostly on the homepage and the sidebar. Note: The button will not be drawn until you call {@link #draw(long, int, int)}.
@@ -45,6 +49,17 @@ public class BasicButton extends BasicElement {
         }
     }
 
+    public BasicButton(int width, int height, @NotNull String text, @Nullable String fileNameLeftIco, @Nullable String fileNameRightIco, int colorPalette, int alignment, Page page) {
+        this(width, height, text, fileNameLeftIco, fileNameRightIco, colorPalette, alignment);
+        this.page = page;
+    }
+
+    public BasicButton(int width, int height, @NotNull String text, @Nullable String fileNameLeftIco, @Nullable String fileNameRightIco, int colorPalette, int alignment, boolean toggleable) {
+        this(width, height, text, fileNameLeftIco, fileNameRightIco, colorPalette, alignment);
+        this.toggleable = toggleable;
+    }
+
+
 
     @Override
     public void draw(long vg, int x, int y) {
@@ -68,7 +83,7 @@ public class BasicButton extends BasicElement {
 
         if(thisAlignment == ALIGNMENT_CENTER) {
             int middle = x + this.width / 2;
-            RenderManager.drawString(vg, text, middle - contentWidth / 2 + (fileNameLeftIco != null ? 28 : 0), y + ((float) height / 2), textColor, fontSize, Fonts.INTER_MEDIUM);
+            RenderManager.drawString(vg, text, middle - contentWidth / 2 + (fileNameLeftIco != null ? 28 : 0), y + ((float) height / 2) + 1, textColor, fontSize, Fonts.INTER_MEDIUM);
             if (fileNameLeftIco != null) {
                 RenderManager.drawImage(vg, fileNameLeftIco, middle - contentWidth / 2, y + 8, 20, 20);
             }
@@ -79,9 +94,9 @@ public class BasicButton extends BasicElement {
         if(thisAlignment == ALIGNMENT_LEFT) {
             if(fileNameLeftIco != null) {
                 RenderManager.drawImage(vg, fileNameLeftIco, x + 12, y + 8, 20, 20);
-                RenderManager.drawString(vg, text, x + 40, y + ((float) height / 2), textColor, fontSize, Fonts.INTER_MEDIUM);
+                RenderManager.drawString(vg, text, x + 40, y + ((float) height / 2) + 1, textColor, fontSize, Fonts.INTER_MEDIUM);
             } else {
-                RenderManager.drawString(vg, text, x + 12, y + ((float) height / 2), textColor, fontSize, Fonts.INTER_MEDIUM);
+                RenderManager.drawString(vg, text, x + 12, y + ((float) height / 2) + 1, textColor, fontSize, Fonts.INTER_MEDIUM);
             }
             if(fileNameRightIco != null) {
                 RenderManager.drawImage(vg, fileNameRightIco, x + width - 28, y + 8, 20, 20);
@@ -93,10 +108,21 @@ public class BasicButton extends BasicElement {
                 currentColor = OneConfigConfig.TRANSPARENT;
                 return;
             }
-            currentColor = ColorUtils.getColor(currentColor, colorPalette, hovered, clicked);
-
+            if(!toggleable) {
+                currentColor = ColorUtils.getColor(currentColor, colorPalette, hovered, clicked);
+            } else {
+                if (toggled) {
+                    currentColor = ColorUtils.smoothColor(currentColor, OneConfigConfig.GRAY_500, OneConfigConfig.BLUE_600, true, 30f);
+                } else currentColor = ColorUtils.getColor(currentColor, colorPalette, hovered, clicked);
+            }
         }
     }
 
 
+    @Override
+    public void onClick() {
+        if(this.page != null) {
+            OneConfigGui.INSTANCE.openPage(page);
+        }
+    }
 }

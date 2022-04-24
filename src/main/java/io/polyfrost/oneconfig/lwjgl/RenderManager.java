@@ -124,6 +124,15 @@ public final class RenderManager {
         nvgColor.free();
     }
 
+    public static void drawRoundedRectVaried(long vg, float x, float y, float width, float height, int color, float radiusTL, float radiusTR, float radiusBR, float radiusBL) {
+        nvgBeginPath(vg);
+        nvgRoundedRectVarying(vg, x, y, width, height, radiusTL, radiusTR, radiusBR, radiusBL);
+        color(vg, color);
+        NVGColor nvgColor = color(vg, color);
+        nvgFill(vg);
+        nvgColor.free();
+    }
+
     public static void drawHollowRoundRect(long vg, float x, float y, float width, float height, int color, float radius, float thickness) {
         nvgBeginPath(vg);
         nvgRoundedRect(vg, x + thickness, y + thickness, width - thickness, height - thickness, radius);
@@ -192,9 +201,9 @@ public final class RenderManager {
                 NSVGPath path;
                 int i;
                 for (shape = image.shapes(); shape != null; shape.next()) {
-                    //if ((shape.flags() == NSVG_FLAGS_VISIBLE)) {
-                    //    continue;
-                    //}
+                    if ((shape.flags() == NSVG_FLAGS_VISIBLE)) {
+                        continue;
+                    }
 
                     nvgFillColor(vg, color(vg, shape.fill().color()));
                     nvgStrokeColor(vg, color(vg, shape.stroke().color()));
@@ -204,21 +213,15 @@ public final class RenderManager {
                         nvgBeginPath(vg);
                         FloatBuffer points = path.pts();
                         nvgMoveTo(vg, points.get(0), points.get(1));
-                        for (i = 0; i < path.npts() - 1; i += 3) {
-                            float[] p = new float[10];
-                            for (int j = 0; j < i * 2 + 3; j++) {           // THIS WONT WORK WHy why why why
-                                p[j] = points.get(j);
-                                System.out.println(j + " " + p[j]);
-                            }
-                            nvgBezierTo(vg, p[2], p[3], p[4], p[5], p[6], p[7]);
+                        for (i = 1; i < path.npts() - 1; i += 3) {
+                            int b = i * 2;
+                            nvgBezierTo(vg, points.get(b), points.get(b + 1), points.get(b + 2), points.get(b + 3), points.get(b + 4), points.get(b + 5));
                         }
                         if (path.closed() == 1) {
                             nvgLineTo(vg, points.get(0), points.get(1));
                         }
                         nvgStroke(vg);
                     }
-
-
                 }
             } catch (Exception e) {
                 //e.printStackTrace();

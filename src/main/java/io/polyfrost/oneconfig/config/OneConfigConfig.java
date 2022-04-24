@@ -25,7 +25,9 @@ public class OneConfigConfig extends Config {
     public static final int GRAY_500 = new Color(49, 51, 56, 255).getRGB();           // Gray 500         // button sidebar hover, button gray normal
     public static final int GRAY_500_80 = new Color(49, 51, 56, 204).getRGB();        // Gray 500 80%     // button sidebar pressed
 
-    public static final int GRAY_400 = new Color(55, 59, 69, 255).getRGB();           // Gray 400         // button gray hover
+    public static final int GRAY_400 = new Color(55, 59, 69, 255).getRGB();           // Gray 400
+    public static final int GRAY_300 = new Color(73, 79, 92, 255).getRGB();           // Gray 300         // button gray hover
+    public static final int GRAY_200 = new Color(100, 107, 125, 255).getRGB();        // Gray 200
     public static final int GRAY_400_80 = new Color(55, 59, 69, 204).getRGB();        // Gray 400 80%     // button gray pressed
     public static final int BLUE_700 = new Color(18, 71, 178, 255).getRGB();          // Blue 700
     public static final int BLUE_600 = new Color(20, 82, 204, 255).getRGB();          // Blue 600         // button blue normal
