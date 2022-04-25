@@ -52,17 +52,21 @@ public class OneConfig {
 
     @Mod.EventHandler
     public void onPostFMLInit(FMLPostInitializationEvent event) {
+        reloadModsList();
+    }
+
+    public static void reloadModsList() {
         loadedMods.addAll(ConfigCore.settings.keySet());
         LinkedHashSet<ModData> modData = new LinkedHashSet<>(ConfigCore.settings.keySet());
-        for(ModContainer mod : Loader.instance().getActiveModList()) {
+        for (ModContainer mod : Loader.instance().getActiveModList()) {
             ModMetadata metadata = mod.getMetadata();
             loadedOtherMods.add(metadata);
             String author = metadata.authorList.size() > 0 ? metadata.authorList.get(0) : "";
             ModData newMod = new ModData(metadata.name, ModType.OTHER, author, metadata.version);
-            if(newMod.name.equals("OneConfig") || newMod.name.equals("Minecraft Coder Pack") || newMod.name.equals("Forge Mod Loader") || newMod.name.equals("Minecraft Forge")) {
+            if (newMod.name.equals("Minecraft Coder Pack") || newMod.name.equals("Forge Mod Loader") || newMod.name.equals("Minecraft Forge")) {     // TODO add oneconfig
                 continue;
             }
-            if(modData.add(newMod)) loadedMods.add(newMod);     // anti duplicate fix
+            if (modData.add(newMod)) loadedMods.add(newMod);     // anti duplicate fix
         }
     }
 }

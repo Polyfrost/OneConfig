@@ -3,7 +3,6 @@ package io.polyfrost.oneconfig.gui;
 import io.polyfrost.oneconfig.hud.HudCore;
 import io.polyfrost.oneconfig.hud.interfaces.BasicHud;
 import io.polyfrost.oneconfig.lwjgl.RenderManager;
-import io.polyfrost.oneconfig.test.TestHud;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiScreen;
 import org.lwjgl.input.Keyboard;

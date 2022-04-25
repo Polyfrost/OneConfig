@@ -13,6 +13,7 @@ import java.io.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Map;
@@ -42,7 +43,7 @@ public class Config {
      * Save current config to file
      */
     public void save() {
-        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(Profiles.getProfileFile(configFile)), StandardCharsets.UTF_8))) {
+        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(Files.newOutputStream(Profiles.getProfileFile(configFile).toPath()), StandardCharsets.UTF_8))) {
             writer.write(gson.toJson(this.getClass()));
         } catch (IOException e) {
             e.printStackTrace();
@@ -53,7 +54,7 @@ public class Config {
      * Load file and overwrite current values
      */
     public void load() {
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(Profiles.getProfileFile(configFile)), StandardCharsets.UTF_8))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(Files.newInputStream(Profiles.getProfileFile(configFile).toPath()), StandardCharsets.UTF_8))) {
             deserializePart(new JsonParser().parse(reader).getAsJsonObject(), this.getClass());
         } catch (IOException e) {
             e.printStackTrace();
@@ -71,31 +72,31 @@ public class Config {
         for (Class<?> innerClass : clazz.getClasses()) {
             if (innerClass.isAnnotationPresent(Category.class)) {
                 Category category = innerClass.getAnnotation(Category.class);
-                options.add(new OConfigCategory(category.name(), category.description(), generateOptionList(innerClass)));
+                options.add(new OConfigCategory(category.name(), category.description(), generateOptionList(innerClass), category.size()));
             }
         }
         for (Field field : clazz.getFields()) {
             if (field.isAnnotationPresent(Button.class)) {
                 Button button = field.getAnnotation(Button.class);
-                options.add(new OConfigButton(field, button.name(), button.description(), button.text()));
+                options.add(new OConfigButton(field, button.name(), button.description(), button.text(), button.size()));
             } else if (field.isAnnotationPresent(ColorPicker.class)) {
                 ColorPicker colorPicker = field.getAnnotation(ColorPicker.class);
-                options.add(new OConfigColor(field, colorPicker.name(), colorPicker.description(), colorPicker.allowAlpha()));
+                options.add(new OConfigColor(field, colorPicker.name(), colorPicker.description(), colorPicker.allowAlpha(), colorPicker.size()));
             } else if (field.isAnnotationPresent(Selector.class)) {
                 Selector selector = field.getAnnotation(Selector.class);
-                options.add(new OConfigSelector(field, selector.name(), selector.description(), selector.options(), selector.defaultSelection()));
+                options.add(new OConfigSelector(field, selector.name(), selector.description(), selector.options(), selector.defaultSelection(), selector.size()));
             } else if (field.isAnnotationPresent(Slider.class)) {
                 Slider slider = field.getAnnotation(Slider.class);
-                options.add(new OConfigSlider(field, slider.name(), slider.description(), slider.min(), slider.max(), slider.precision()));
+                options.add(new OConfigSlider(field, slider.name(), slider.description(), slider.min(), slider.max(), slider.precision(), slider.size()));
             } else if (field.isAnnotationPresent(Switch.class)) {
                 Switch aSwitch = field.getAnnotation(Switch.class);
-                options.add(new OConfigSwitch(field, aSwitch.name(), aSwitch.description()));
+                options.add(new OConfigSwitch(field, aSwitch.name(), aSwitch.description(), aSwitch.size()));
             } else if (field.isAnnotationPresent(TextField.class)) {
                 TextField textField = field.getAnnotation(TextField.class);
-                options.add(new OConfigText(field, textField.name(), textField.description(), textField.placeholder(), textField.hideText()));
+                options.add(new OConfigText(field, textField.name(), textField.description(), textField.placeholder(), textField.hideText(), textField.size()));
             } else if (field.isAnnotationPresent(HudComponent.class)) {
                 HudComponent hudComponent = field.getAnnotation(HudComponent.class);
-                options.add(new OConfigHud(field, hudComponent.name(), hudComponent.description()));
+                options.add(new OConfigHud(field, hudComponent.name(), hudComponent.description(), hudComponent.size()));
                 try {
                     Object hud = field.get(BasicHud.class);
                     HudCore.huds.add((BasicHud) hud);

@@ -8,7 +8,7 @@ import java.nio.ByteBuffer;
 
 /**
  * Taken from LWJGLTwoPointFive under The Unlicense
- * https://github.com/DJtheRedstoner/LWJGLTwoPointFive/blob/master/LICENSE/
+ * <a href="https://github.com/DJtheRedstoner/LWJGLTwoPointFive/blob/master/LICENSE/">https://github.com/DJtheRedstoner/LWJGLTwoPointFive/blob/master/LICENSE/</a>
  */
 public class Lwjgl2FunctionProvider implements FunctionProvider {
 

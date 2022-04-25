@@ -4,12 +4,11 @@ import io.polyfrost.oneconfig.config.OneConfigConfig;
 import io.polyfrost.oneconfig.gui.elements.BasicButton;
 import io.polyfrost.oneconfig.gui.pages.HomePage;
 import io.polyfrost.oneconfig.gui.pages.ModsPage;
+import io.polyfrost.oneconfig.gui.pages.PerformanceModsPage;
 import io.polyfrost.oneconfig.lwjgl.RenderManager;
 import io.polyfrost.oneconfig.lwjgl.font.Fonts;
 import io.polyfrost.oneconfig.utils.MathUtils;
-import io.polyfrost.oneconfig.utils.TickDelay;
 import net.minecraft.client.Minecraft;
-import scala.collection.parallel.ParIterableLike;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,7 +22,7 @@ public class SideBar {
         btnList.add(new BasicButton(192, 36, "Dashboard", "/assets/oneconfig/textures/share.png", null, -3, BasicButton.ALIGNMENT_LEFT, new HomePage()));
         btnList.add(new BasicButton(192, 36, "Global Search", "/assets/oneconfig/textures/share.png", null, -3, BasicButton.ALIGNMENT_LEFT));
         btnList.add(new BasicButton(192, 36, "Mods", "/assets/oneconfig/textures/share.png", null, -3, BasicButton.ALIGNMENT_LEFT, new ModsPage()));
-        btnList.add(new BasicButton(192, 36, "Performance", "/assets/oneconfig/textures/share.png", null, -3, BasicButton.ALIGNMENT_LEFT));
+        btnList.add(new BasicButton(192, 36, "Performance Mods", "/assets/oneconfig/textures/share.png", null, -3, BasicButton.ALIGNMENT_LEFT, new PerformanceModsPage()));
         btnList.add(new BasicButton(192, 36, "Profiles", "/assets/oneconfig/textures/share.png", null, -3, BasicButton.ALIGNMENT_LEFT));
         btnList.add(new BasicButton(192, 36, "Updates", "/assets/oneconfig/textures/share.png", null, -3, BasicButton.ALIGNMENT_LEFT));
         btnList.add(new BasicButton(192, 36, "Screenshots", "/assets/oneconfig/textures/share.png", null, -3, BasicButton.ALIGNMENT_LEFT));
@@ -60,12 +59,9 @@ public class SideBar {
             }
 
             if (btn.isClicked()) {
-                if(i < 520) targetY = btn.y;
+                if (i < 520) targetY = btn.y;
             }
         }
-
-
-
 
 
     }

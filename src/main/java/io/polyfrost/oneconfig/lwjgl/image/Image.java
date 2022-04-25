@@ -5,6 +5,7 @@ import java.nio.ByteBuffer;
 public class Image {
     private final int reference;
     private final ByteBuffer buffer;
+
     public Image(int reference, ByteBuffer buffer) {
         this.reference = reference;
         this.buffer = buffer;

@@ -9,8 +9,14 @@ import java.lang.annotation.Target;
 @Target(ElementType.FIELD)
 public @interface Slider {
     String name();
+
     String description() default "";
+
     float min();
+
     float max();
+
     float precision();
+
+    int size() default 1;
 }

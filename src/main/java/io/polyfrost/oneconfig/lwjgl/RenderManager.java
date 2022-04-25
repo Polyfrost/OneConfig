@@ -88,8 +88,7 @@ public final class RenderManager {
         nvgRoundedRect(vg, x, y, width, height, radius);
         NVGColor nvgColor = color(vg, color);
         NVGColor nvgColor2 = color(vg, color2);
-        nvgFillPaint(vg, nvgLinearGradient(vg, x, y + height, x + width, y, nvgColor, nvgColor2, bg));      // like the gradient is blocky
-        nvgFillPaint(vg, bg);
+        nvgFillPaint(vg, nvgLinearGradient(vg, x, y + height, x + width, y, nvgColor, nvgColor2, bg));
         nvgFill(vg);
         nvgColor.free();
         nvgColor2.free();
@@ -101,7 +100,7 @@ public final class RenderManager {
         nvgRect(vg, x, y, width, height);
         NVGColor nvgColor = color(vg, color);
         NVGColor nvgColor2 = color(vg, color2);
-        nvgFillPaint(vg, nvgLinearGradient(vg, x, y + height, x + width, y, nvgColor, nvgColor2, bg));      // like the gradient is blocky
+        nvgFillPaint(vg, nvgLinearGradient(vg, x, y + height, x + width, y, nvgColor, nvgColor2, bg));
         nvgFillPaint(vg, bg);
         nvgFill(vg);
         nvgColor.free();

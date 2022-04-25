@@ -9,9 +9,6 @@ import io.polyfrost.oneconfig.utils.ColorUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.function.Consumer;
-import java.util.function.Supplier;
-
 public class BasicButton extends BasicElement {
 
     protected String text;
@@ -134,5 +131,13 @@ public class BasicButton extends BasicElement {
         } else if (this.runnable != null) {
             runnable.run();
         }
+    }
+
+    public void setToggled(boolean state) {
+        this.toggled = state;
+    }
+
+    public String getText() {
+        return text;
     }
 }

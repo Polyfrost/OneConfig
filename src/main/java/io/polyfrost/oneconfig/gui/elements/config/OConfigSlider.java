@@ -9,8 +9,8 @@ public class OConfigSlider extends Option {
     private final float max;
     private final float precision;
 
-    public OConfigSlider(Field field, String name, String description, float min, float max, float precision) {
-        super(field, name, description);
+    public OConfigSlider(Field field, String name, String description, float min, float max, float precision, int size) {
+        super(field, name, description, size);
         this.min = min;
         this.max = max;
         this.precision = precision;
@@ -22,7 +22,7 @@ public class OConfigSlider extends Option {
     }
 
     @Override
-    public void draw(int x, int y, int width, int mouseX, int mouseY) {
+    public void draw(long vg, int x, int y, int mouseX, int mouseY) {
 
     }
 }

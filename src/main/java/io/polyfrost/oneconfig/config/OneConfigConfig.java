@@ -14,7 +14,7 @@ public class OneConfigConfig extends Config {
     public static String currentProfile = "Default Profile";
 
     // TODO i dont know how this works so this is just gonna be here for now
-    public static final int TRANSPARENT = new Color(0,0,0,0).getRGB();                // Transparent      // button sidebar normal
+    public static final int TRANSPARENT = new Color(0, 0, 0, 0).getRGB();                // Transparent      // button sidebar normal
 
     public static final int GRAY_900 = new Color(13, 14, 15, 255).getRGB();           // Gray 900
     public static final int GRAY_900_80 = new Color(13, 14, 15, 204).getRGB();         // Gray 900 80%
@@ -41,12 +41,6 @@ public class OneConfigConfig extends Config {
     public static boolean ROUNDED_CORNERS = true;
     public static float CORNER_RADIUS_WIN = 20f;
     public static float CORNER_RADIUS = 12f;
-
-
-
-
-
-
 
 
     public OneConfigConfig() {

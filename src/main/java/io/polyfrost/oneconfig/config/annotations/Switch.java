@@ -9,5 +9,8 @@ import java.lang.annotation.Target;
 @Target(ElementType.FIELD)
 public @interface Switch {
     String name();
+
     String description() default "";
+
+    int size() default 1;
 }

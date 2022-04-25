@@ -9,7 +9,12 @@ import java.lang.annotation.Target;
 @Target(ElementType.FIELD)
 public @interface Selector {
     String name();
+
     String description() default "";
+
     String[] options();
+
     int defaultSelection() default 0;
+
+    int size() default 1;
 }

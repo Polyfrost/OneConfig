@@ -9,7 +9,12 @@ import java.lang.annotation.Target;
 @Target(ElementType.FIELD)
 public @interface TextField {
     String name();
+
     String description() default "";
+
     String placeholder() default "";
+
     boolean hideText() default false;
+
+    int size() default 1;
 }

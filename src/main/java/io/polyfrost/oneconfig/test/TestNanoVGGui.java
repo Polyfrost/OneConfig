@@ -1,7 +1,6 @@
 package io.polyfrost.oneconfig.test;
 
 import io.polyfrost.oneconfig.lwjgl.RenderManager;
-import io.polyfrost.oneconfig.lwjgl.font.Fonts;
 import net.minecraft.client.gui.GuiScreen;
 
 import java.awt.*;
@@ -18,7 +17,6 @@ public class TestNanoVGGui extends GuiScreen {
             //RenderManager.drawRoundedRect(vg, 305, 305, 100, 100, Color.YELLOW.getRGB(), 8);
             //RenderManager.drawString(vg, "Hello!", 80, 20, Color.WHITE.getRGB(), 50, Fonts.MC_REGULAR);
             //RenderManager.drawString(vg, "Hello!", 100, 100, Color.WHITE.getRGB(), 50, Fonts.INTER_BOLD);
-            //RenderManager.drawImage(vg, "/assets/oneconfig/textures/hudsettings.png", 10, 10, 400, 400);
             RenderManager.drawSVGImage(vg, "icons/TestIcon.svg", 10, 10, 100, 100);
             //RenderManager.drawLine(vg, 0, 0, 100, 100, 7, Color.PINK.getRGB());
             //RenderManager.drawCircle(vg, 200, 200, 50, Color.WHITE.getRGB());

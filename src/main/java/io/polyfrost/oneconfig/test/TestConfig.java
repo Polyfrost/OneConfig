@@ -25,6 +25,6 @@ public class TestConfig extends Config {
     public static TestHud testTextHud2 = new TestHud();
 
     public TestConfig() {
-        super(new ModData("hacks", ModType.QOL, "ShadyDev", "1.0"), "hacksConfig.json");
+        super(new ModData("hacks", ModType.UTIL_QOL, "ShadyDev", "1.0"), "hacksConfig.json");
     }
 }

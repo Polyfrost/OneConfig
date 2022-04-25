@@ -6,8 +6,8 @@ import java.lang.reflect.Field;
 
 public class OConfigSwitch extends Option {
 
-    public OConfigSwitch(Field field, String name, String description) {
-        super(field, name, description);
+    public OConfigSwitch(Field field, String name, String description, int size) {
+        super(field, name, description, size);
     }
 
     @Override
@@ -16,7 +16,7 @@ public class OConfigSwitch extends Option {
     }
 
     @Override
-    public void draw(int x, int y, int width, int mouseX, int mouseY) {
+    public void draw(long vg, int x, int y, int mouseX, int mouseY) {
 
     }
 }

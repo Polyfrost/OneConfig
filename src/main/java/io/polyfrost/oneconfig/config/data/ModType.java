@@ -1,10 +1,11 @@
 package io.polyfrost.oneconfig.config.data;
 
 public enum ModType {
-    PVP,
     PERFORMANCE,
+    PVP,
     HUD,
-    QOL,
+    UTIL_QOL,
     HYPIXEL,
+    SKYBLOCK,
     OTHER
 }

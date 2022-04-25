@@ -7,14 +7,11 @@ import org.lwjgl.nanovg.NSVGImage;
 import org.lwjgl.nanovg.NanoSVG;
 import org.lwjgl.nanovg.NanoVG;
 import org.lwjgl.stb.STBImage;
-import org.lwjgl.system.MemoryStack;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 
 public class ImageLoader {
@@ -45,7 +42,7 @@ public class ImageLoader {
     }
 
     public boolean loadSVGImage(String fileName) {
-        if(!NSVGImageHashMap.containsKey(fileName)) {
+        if (!NSVGImageHashMap.containsKey(fileName)) {
             try {
                 InputStream inputStream = Minecraft.getMinecraft().getResourceManager().getResource(new ResourceLocation("oneconfig", fileName)).getInputStream();
                 StringBuilder resultStringBuilder = new StringBuilder();

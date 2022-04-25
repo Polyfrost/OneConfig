@@ -7,6 +7,7 @@ public abstract class Option {
     protected final Field field;
     protected final String name;
     protected final String description;
+    public final int size;
 
     /**
      * Initialize option
@@ -14,11 +15,13 @@ public abstract class Option {
      * @param field       variable attached to option (null for category)
      * @param name        name of option
      * @param description description of option
+     * @param size        size of option, 0 for single column, 1 for double.
      */
-    public Option(Field field, String name, String description) {
+    public Option(Field field, String name, String description, int size) {
         this.field = field;
         this.name = name;
         this.description = description;
+        this.size = size;
         if (field != null) field.setAccessible(true);
     }
 
@@ -46,13 +49,13 @@ public abstract class Option {
     /**
      * Function that gets called when drawing option
      *
+     * @param vg     NanoVG context
      * @param x      x position
      * @param y      y position
-     * @param width  width of menu
      * @param mouseX x position of mouse
      * @param mouseY y position of mouse
      */
-    public abstract void draw(int x, int y, int width, int mouseX, int mouseY);
+    public abstract void draw(long vg, int x, int y, int mouseX, int mouseY);
 
     /**
      * Function that gets called when mouse is clicked

@@ -7,6 +7,7 @@ import io.polyfrost.oneconfig.lwjgl.font.Fonts;
 
 public class HomePage extends Page {
     private final BasicButton btn = new BasicButton(184, 36, "Socials", "/assets/oneconfig/textures/share.png", "/assets/oneconfig/textures/share2.png", 1, BasicButton.ALIGNMENT_CENTER);
+
     public HomePage() {
         super("Home Dashboard");
     }

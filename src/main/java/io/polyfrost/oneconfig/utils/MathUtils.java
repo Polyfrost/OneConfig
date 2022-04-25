@@ -18,7 +18,9 @@ public class MathUtils {
         return current * current;
     }
 
-    /** taken from <a href="https://github.com/jesusgollonet/processing-penner-easing">https://github.com/jesusgollonet/processing-penner-easing</a> */
+    /**
+     * taken from <a href="https://github.com/jesusgollonet/processing-penner-easing">https://github.com/jesusgollonet/processing-penner-easing</a>
+     */
     public static float easeInOutCirc(float t, float b, float c, float d) {
         if ((t /= d / 2) < 1) return -c / 2 * ((float) Math.sqrt(1 - t * t) - 1) + b;
         return c / 2 * ((float) Math.sqrt(1 - (t -= 2) * t) + 1) + b;

@@ -8,8 +8,8 @@ public class OConfigSelector extends Option {
     private final String[] options;
     private final int defaultSelection;
 
-    public OConfigSelector(Field field, String name, String description, String[] options, int defaultSelection) {
-        super(field, name, description);
+    public OConfigSelector(Field field, String name, String description, String[] options, int defaultSelection, int size) {
+        super(field, name, description, size);
         this.options = options;
         this.defaultSelection = defaultSelection;
     }
@@ -20,7 +20,7 @@ public class OConfigSelector extends Option {
     }
 
     @Override
-    public void draw(int x, int y, int width, int mouseX, int mouseY) {
+    public void draw(long vg, int x, int y, int mouseX, int mouseY) {
 
     }
 }

@@ -9,6 +9,10 @@ import java.lang.annotation.Target;
 @Target(ElementType.FIELD)
 public @interface Button {
     String name();
+
     String description() default "";
+
     String text() default "Button";
+
+    int size() default 1;
 }

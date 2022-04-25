@@ -1,6 +1,6 @@
 package io.polyfrost.oneconfig.gui.elements;
 
-public class SearchField extends TextInputField{
+public class SearchField extends TextInputField {
 
     public SearchField(int width, int height, String defaultText, boolean multiLine, boolean password) {
         super(width, height, defaultText, multiLine, password);

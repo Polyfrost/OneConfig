@@ -7,6 +7,7 @@ import java.net.URL;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.file.Files;
 
 public final class IOUtil {
 
@@ -15,7 +16,7 @@ public final class IOUtil {
 
     /**
      * Taken from legui under MIT License
-     * https://github.com/SpinyOwl/legui/blob/develop/LICENSE
+     * <a href="https://github.com/SpinyOwl/legui/blob/develop/LICENSE">https://github.com/SpinyOwl/legui/blob/develop/LICENSE</a>
      */
     @SuppressWarnings("RedundantCast")
     public static ByteBuffer resourceToByteBuffer(String path) throws IOException {
@@ -27,7 +28,7 @@ public final class IOUtil {
             InputStream stream;
             File file = new File(path);
             if (file.exists() && file.isFile()) {
-                stream = new FileInputStream(file);
+                stream = Files.newInputStream(file.toPath());
             } else {
                 stream = IOUtil.class.getResourceAsStream(path);
             }

@@ -8,8 +8,8 @@ public class OConfigText extends Option {
     private final String placeholder;
     private final boolean hideText;
 
-    public OConfigText(Field field, String name, String description, String placeholder, boolean hideText) {
-        super(field, name, description);
+    public OConfigText(Field field, String name, String description, String placeholder, boolean hideText, int size) {
+        super(field, name, description, size);
         this.placeholder = placeholder;
         this.hideText = hideText;
     }
@@ -20,7 +20,7 @@ public class OConfigText extends Option {
     }
 
     @Override
-    public void draw(int x, int y, int width, int mouseX, int mouseY) {
+    public void draw(long vg, int x, int y, int mouseX, int mouseY) {
 
     }
 }

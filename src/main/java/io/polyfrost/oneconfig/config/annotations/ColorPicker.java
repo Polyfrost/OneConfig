@@ -9,6 +9,10 @@ import java.lang.annotation.Target;
 @Target(ElementType.FIELD)
 public @interface ColorPicker {
     String name();
+
     String description() default "";
+
     boolean allowAlpha() default true;
+
+    int size() default 1;
 }
