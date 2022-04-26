@@ -68,6 +68,10 @@ public class ImageLoader {
         return true;
     }
 
+    public void removeImage(String fileName) {
+        imageHashMap.remove(fileName);
+    }
+
     public Image getImage(String fileName) {
         return imageHashMap.get(fileName);
     }
