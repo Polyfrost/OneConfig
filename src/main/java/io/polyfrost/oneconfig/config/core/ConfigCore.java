@@ -1,26 +1,24 @@
 package io.polyfrost.oneconfig.config.core;
 
-import io.polyfrost.oneconfig.config.data.ModData;
-import io.polyfrost.oneconfig.config.interfaces.Option;
+import io.polyfrost.oneconfig.config.data.Mod;
 import io.polyfrost.oneconfig.hud.HudCore;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 
 public class ConfigCore {
-    public static HashMap<ModData, ArrayList<Option>> settings = new HashMap<>();
+    public static ArrayList<Mod> OneConfigMods = new ArrayList<>();
 
     public static void saveAll() {
-        for (ModData modData : settings.keySet()) {
+        for (Mod modData : OneConfigMods) {
             modData.config.save();
         }
     }
 
     public static void reInitAll() {
-        ArrayList<ModData> data = new ArrayList<>(settings.keySet());
-        settings.clear();
+        ArrayList<Mod> data = new ArrayList<>(OneConfigMods);
+        OneConfigMods.clear();
         HudCore.huds.clear();
-        for (ModData modData : data) {
+        for (Mod modData : data) {
             modData.config.init(modData);
         }
     }

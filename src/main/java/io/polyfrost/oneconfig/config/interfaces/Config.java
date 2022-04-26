@@ -1,23 +1,20 @@
 package io.polyfrost.oneconfig.config.interfaces;
 
 import com.google.gson.*;
-import io.polyfrost.oneconfig.config.annotations.*;
-import io.polyfrost.oneconfig.config.core.ConfigCore;
-import io.polyfrost.oneconfig.config.data.ModData;
+import io.polyfrost.oneconfig.config.annotations.Option;
+import io.polyfrost.oneconfig.config.data.Mod;
+import io.polyfrost.oneconfig.config.data.OptionPage;
 import io.polyfrost.oneconfig.config.profiles.Profiles;
-import io.polyfrost.oneconfig.gui.elements.config.*;
-import io.polyfrost.oneconfig.hud.HudCore;
-import io.polyfrost.oneconfig.hud.interfaces.BasicHud;
+import io.polyfrost.oneconfig.gui.elements.config.ConfigPage;
+import io.polyfrost.oneconfig.gui.elements.config.ConfigSwitch;
+import io.polyfrost.oneconfig.test.TestConfig;
 
 import java.io.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 public class Config {
     protected final String configFile;
@@ -27,16 +24,16 @@ public class Config {
      * @param modData    information about the mod
      * @param configFile file where config is stored
      */
-    public Config(ModData modData, String configFile) {
+    public Config(Mod modData, String configFile) {
         this.configFile = configFile;
         init(modData);
     }
 
-    public void init(ModData modData) {
+    public void init(Mod mod) {
         if (Profiles.getProfileFile(configFile).exists()) load();
         else save();
-        modData.config = this;
-        ConfigCore.settings.put(modData, generateOptionList(this.getClass()));
+        mod.config = this;
+        generateOptionList(this.getClass(), mod.defaultPage);
     }
 
     /**
@@ -62,63 +59,51 @@ public class Config {
     }
 
     /**
-     * Generate the option list for internal use only
+     * Generate the option list, for internal use only
      *
      * @param clazz target class
-     * @return list of options
+     * @param page  page to add options too
      */
-    protected ArrayList<Option> generateOptionList(Class<?> clazz) {
-        ArrayList<Option> options = new ArrayList<>();
-        for (Class<?> innerClass : clazz.getClasses()) {
-            if (innerClass.isAnnotationPresent(Category.class)) {
-                Category category = innerClass.getAnnotation(Category.class);
-                options.add(new OConfigCategory(category.name(), category.description(), generateOptionList(innerClass), category.size()));
+    protected void generateOptionList(Class<?> clazz, OptionPage page) {
+        for (Field field : clazz.getDeclaredFields()) {
+            System.out.println(field);
+            if (!field.isAnnotationPresent(Option.class)) {
+                processCustomOption(field, page);
+                continue;
+            }
+            Option option = field.getAnnotation(Option.class);
+            if (!page.categories.containsKey(option.category()))
+                page.categories.put(option.category(), new HashMap<>());
+            if (!page.categories.get(option.category()).containsKey(option.subcategory()))
+                page.categories.get(option.category()).put(option.subcategory(), new ArrayList<>());
+            ArrayList<BasicOption> options = page.categories.get(option.category()).get(option.subcategory());
+            switch (option.type()) {
+                case PAGE:
+                    OptionPage newPage = new OptionPage(option.name());
+                    try {
+                        field.setAccessible(true);
+                        Object object = field.get(clazz);
+                        generateOptionList(object.getClass(), newPage);
+                        System.out.println(newPage.categories);
+                        options.add(new ConfigPage(field, option.name(), option.description(), option.size(), newPage));
+                    } catch (IllegalAccessException e) {
+                        continue;
+                    }
+                    break;
+                case SWITCH:
+                    options.add(new ConfigSwitch(field, option.name(), option.description(), option.size()));
+                    break;
             }
         }
-        for (Field field : clazz.getFields()) {
-            if (field.isAnnotationPresent(Button.class)) {
-                Button button = field.getAnnotation(Button.class);
-                options.add(new OConfigButton(field, button.name(), button.description(), button.text(), button.size()));
-            } else if (field.isAnnotationPresent(ColorPicker.class)) {
-                ColorPicker colorPicker = field.getAnnotation(ColorPicker.class);
-                options.add(new OConfigColor(field, colorPicker.name(), colorPicker.description(), colorPicker.allowAlpha(), colorPicker.size()));
-            } else if (field.isAnnotationPresent(Selector.class)) {
-                Selector selector = field.getAnnotation(Selector.class);
-                options.add(new OConfigSelector(field, selector.name(), selector.description(), selector.options(), selector.defaultSelection(), selector.size()));
-            } else if (field.isAnnotationPresent(Slider.class)) {
-                Slider slider = field.getAnnotation(Slider.class);
-                options.add(new OConfigSlider(field, slider.name(), slider.description(), slider.min(), slider.max(), slider.precision(), slider.size()));
-            } else if (field.isAnnotationPresent(Switch.class)) {
-                Switch aSwitch = field.getAnnotation(Switch.class);
-                options.add(new OConfigSwitch(field, aSwitch.name(), aSwitch.description(), aSwitch.size()));
-            } else if (field.isAnnotationPresent(TextField.class)) {
-                TextField textField = field.getAnnotation(TextField.class);
-                options.add(new OConfigText(field, textField.name(), textField.description(), textField.placeholder(), textField.hideText(), textField.size()));
-            } else if (field.isAnnotationPresent(HudComponent.class)) {
-                HudComponent hudComponent = field.getAnnotation(HudComponent.class);
-                options.add(new OConfigHud(field, hudComponent.name(), hudComponent.description(), hudComponent.size()));
-                try {
-                    Object hud = field.get(BasicHud.class);
-                    HudCore.huds.add((BasicHud) hud);
-                } catch (IllegalAccessException e) {
-                    e.printStackTrace();
-                }
-            } else {
-                Option customOption = processCustomOption(field);
-                if (customOption != null) options.add(customOption);
-            }
-        }
-        return options;
     }
 
     /**
      * Overwrite this method to add your own custom option types
      *
      * @param field target field
-     * @return custom option
+     * @param page  page to add options too
      */
-    protected Option processCustomOption(Field field) {
-        return null;
+    protected void processCustomOption(Field field, OptionPage page) {
     }
 
     /**

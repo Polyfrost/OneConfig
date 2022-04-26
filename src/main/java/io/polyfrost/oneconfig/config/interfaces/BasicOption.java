@@ -3,7 +3,7 @@ package io.polyfrost.oneconfig.config.interfaces;
 import java.lang.reflect.Field;
 
 @SuppressWarnings({"unused"})
-public abstract class Option {
+public abstract class BasicOption {
     protected final Field field;
     protected final String name;
     protected final String description;
@@ -17,7 +17,7 @@ public abstract class Option {
      * @param description description of option
      * @param size        size of option, 0 for single column, 1 for double.
      */
-    public Option(Field field, String name, String description, int size) {
+    public BasicOption(Field field, String name, String description, int size) {
         this.field = field;
         this.name = name;
         this.description = description;

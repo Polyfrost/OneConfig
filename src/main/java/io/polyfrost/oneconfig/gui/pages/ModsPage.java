@@ -2,7 +2,7 @@ package io.polyfrost.oneconfig.gui.pages;
 
 import io.polyfrost.oneconfig.OneConfig;
 import io.polyfrost.oneconfig.config.OneConfigConfig;
-import io.polyfrost.oneconfig.config.data.ModData;
+import io.polyfrost.oneconfig.config.data.Mod;
 import io.polyfrost.oneconfig.config.data.ModType;
 import io.polyfrost.oneconfig.gui.elements.BasicButton;
 import io.polyfrost.oneconfig.gui.elements.ModCard;
@@ -19,7 +19,7 @@ public class ModsPage extends Page {
 
     public ModsPage() {
         super("Mods");
-        for (ModData modData : OneConfig.loadedMods) {
+        for (Mod modData : OneConfig.loadedMods) {
             modCards.add(new ModCard(modData, null, true, false, false));
         }
         for (ModCard card : modCards) {

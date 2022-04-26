@@ -1,7 +1,7 @@
 package io.polyfrost.oneconfig.config;
 
 import com.google.gson.JsonParser;
-import io.polyfrost.oneconfig.config.data.ModData;
+import io.polyfrost.oneconfig.config.data.Mod;
 import io.polyfrost.oneconfig.config.interfaces.Config;
 
 import java.awt.*;
@@ -48,7 +48,7 @@ public class OneConfigConfig extends Config {
     }
 
     @Override
-    public void init(ModData modData) {
+    public void init(Mod mod) {
         if (new File("OneConfig/" + configFile).exists()) load();
         else save();
     }

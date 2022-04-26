@@ -2,7 +2,7 @@ package io.polyfrost.oneconfig.gui.elements;
 
 import io.polyfrost.oneconfig.OneConfig;
 import io.polyfrost.oneconfig.config.OneConfigConfig;
-import io.polyfrost.oneconfig.config.data.ModData;
+import io.polyfrost.oneconfig.config.data.Mod;
 import io.polyfrost.oneconfig.config.data.ModType;
 import io.polyfrost.oneconfig.gui.OneConfigGui;
 import io.polyfrost.oneconfig.gui.pages.ModConfigPage;
@@ -19,14 +19,14 @@ import org.lwjgl.nanovg.NanoVG;
 
 public class ModCard extends BasicElement {
     private final String iconPath;
-    private final ModData modData;
+    private final Mod modData;
     private final BasicElement favoriteHitbox = new BasicElement(32, 32, -2, true);
     private boolean active, disabled, favorite;
     private int colorGray = OneConfigConfig.GRAY_600;
     private int colorPrimary = OneConfigConfig.BLUE_600;
     private boolean isHoveredMain = false;
 
-    public ModCard(@NotNull ModData mod, @Nullable String iconPath, boolean active, boolean disabled, boolean favorite) {
+    public ModCard(@NotNull Mod mod, @Nullable String iconPath, boolean active, boolean disabled, boolean favorite) {
         super(244, 119, false);
         this.modData = mod;
         this.iconPath = iconPath;
@@ -83,7 +83,7 @@ public class ModCard extends BasicElement {
 
     public void onClick() {
         if (isHoveredMain) {
-            for (ModData data : OneConfig.loadedMods) {
+            for (Mod data : OneConfig.loadedMods) {
                 if (data.modType != ModType.OTHER) {
                     if (data.name.equalsIgnoreCase(modData.name)) {
                         OneConfigGui.INSTANCE.openPage(new ModConfigPage(data));
@@ -113,7 +113,7 @@ public class ModCard extends BasicElement {
         }
     }
 
-    public ModData getModData() {
+    public Mod getModData() {
         return modData;
     }
 

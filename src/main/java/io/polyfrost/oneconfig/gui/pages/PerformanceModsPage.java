@@ -2,7 +2,7 @@ package io.polyfrost.oneconfig.gui.pages;
 
 import io.polyfrost.oneconfig.OneConfig;
 import io.polyfrost.oneconfig.config.OneConfigConfig;
-import io.polyfrost.oneconfig.config.data.ModData;
+import io.polyfrost.oneconfig.config.data.Mod;
 import io.polyfrost.oneconfig.config.data.ModType;
 import io.polyfrost.oneconfig.gui.elements.ModCard;
 import io.polyfrost.oneconfig.lwjgl.RenderManager;
@@ -16,7 +16,7 @@ public class PerformanceModsPage extends Page {
 
     public PerformanceModsPage() {
         super("Performance Mods");
-        for (ModData mod : OneConfig.loadedMods) {
+        for (Mod mod : OneConfig.loadedMods) {
             if (mod.modType == ModType.PERFORMANCE) {
                 modCards.add(new ModCard(mod, null, true, false, false));
             }
