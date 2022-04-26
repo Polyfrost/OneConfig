@@ -90,7 +90,7 @@ dependencies {
     lwjglNative "org.lwjgl:lwjgl-stb:3.3.0:natives-macos"
     lwjglNative "org.lwjgl:lwjgl-tinyfd:3.3.0:natives-macos"
     lwjglNative "org.lwjgl:lwjgl-nanovg:3.3.0:natives-macos"
-    implementation lwjglJar.outputs.files
+    include lwjglJar.outputs.files
 }
 
 processResources {
