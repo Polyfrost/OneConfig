@@ -28,7 +28,7 @@ public class OneConfigGui extends GuiScreen {
     protected Page prevPage;
     private float pageProgress = -224f;
 
-    private final TextInputField textInputField = new TextInputField(776, 32, "Search all of OneConfig...", false, false);
+    private final TextInputField textInputField = new TextInputField(248, 40, "Search all of OneConfig...", false, false);
 
 
     public OneConfigGui() {
@@ -57,7 +57,7 @@ public class OneConfigGui extends GuiScreen {
             RenderManager.drawImage(vg, "/assets/oneconfig/textures/icon.png", x + 19, y + 19, 42, 42);
             RenderManager.drawString(vg, "OneConfig", x + 69, y + 32, OneConfigConfig.WHITE, 18f, Fonts.INTER_BOLD);        // added half line height to center text
             RenderManager.drawString(vg, "By Polyfrost", x + 69, y + 51, OneConfigConfig.WHITE, 12f, Fonts.INTER_REGULAR);
-            textInputField.draw(vg, x + 400, y + 200);
+            textInputField.draw(vg, x + 1020, y + 16);
             //element.setColorPalette(0);
             sideBar.draw(vg, x, y);
             nvgScissor(vg, x + 224, y + 72, 1056, 728);

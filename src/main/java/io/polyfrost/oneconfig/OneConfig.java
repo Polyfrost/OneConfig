@@ -55,8 +55,8 @@ public class OneConfig {
     }
 
     public static void reloadModsList() {
-        loadedMods.addAll(ConfigCore.settings.keySet());
-        LinkedHashSet<Mod> modData = new LinkedHashSet<>(ConfigCore.settings.keySet());
+        loadedMods.addAll(ConfigCore.oneConfigMods);
+        LinkedHashSet<Mod> modData = new LinkedHashSet<>(ConfigCore.oneConfigMods);
         for (ModContainer mod : Loader.instance().getActiveModList()) {
             ModMetadata metadata = mod.getMetadata();
             loadedOtherMods.add(metadata);

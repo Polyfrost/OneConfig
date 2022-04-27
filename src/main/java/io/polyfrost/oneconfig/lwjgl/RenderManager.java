@@ -193,6 +193,20 @@ public final class RenderManager {
         }
     }
 
+    public static void drawImage(long vg, String fileName, float x, float y, float width, float height, int color) {
+        if (ImageLoader.INSTANCE.loadImage(vg, fileName)) {
+            NVGPaint imagePaint = NVGPaint.calloc();
+            Image image = ImageLoader.INSTANCE.getImage(fileName);
+            nvgBeginPath(vg);
+            nvgImagePattern(vg, x, y, width, height, 0, image.getReference(), 1, imagePaint);
+            nvgRGBA((byte) (color >> 16 & 0xFF), (byte) (color >> 8 & 0xFF), (byte) (color & 0xFF), (byte) (color >> 24 & 0xFF), imagePaint.innerColor());
+            nvgRect(vg, x, y, width, height);
+            nvgFillPaint(vg, imagePaint);
+            nvgFill(vg);
+            imagePaint.free();
+        }
+    }
+
     public static void drawSVGImage(long vg, String fileName, float x, float y, float width, float height) {
         if (ImageLoader.INSTANCE.loadSVGImage(fileName)) {
             try {

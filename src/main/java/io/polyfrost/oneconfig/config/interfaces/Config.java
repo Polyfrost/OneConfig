@@ -2,6 +2,7 @@ package io.polyfrost.oneconfig.config.interfaces;
 
 import com.google.gson.*;
 import io.polyfrost.oneconfig.config.annotations.Option;
+import io.polyfrost.oneconfig.config.core.ConfigCore;
 import io.polyfrost.oneconfig.config.data.Mod;
 import io.polyfrost.oneconfig.config.data.OptionPage;
 import io.polyfrost.oneconfig.config.profiles.Profiles;
@@ -34,6 +35,7 @@ public class Config {
         else save();
         mod.config = this;
         generateOptionList(this.getClass(), mod.defaultPage);
+        ConfigCore.oneConfigMods.add(mod);
     }
 
     /**

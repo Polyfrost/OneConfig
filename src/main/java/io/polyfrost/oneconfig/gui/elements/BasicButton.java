@@ -16,13 +16,10 @@ public class BasicButton extends BasicElement {
     private final int thisAlignment;
     private final float fontSize;
     private final int colorPalette;
-
     public int x, y;
     public static final int ALIGNMENT_LEFT = 0;
     public static final int ALIGNMENT_CENTER = 1;
-
     private boolean toggleable;
-
     private Page page;
     private Runnable runnable;
 
@@ -66,6 +63,11 @@ public class BasicButton extends BasicElement {
         this.runnable = runnable;
     }
 
+    public BasicButton(int width, int height, @NotNull String text, @Nullable String fileNameLeftIco, @Nullable String fileNameRightIco, int colorPalette, int alignment, boolean toggleable, Runnable runnable) {
+        this(width, height, text, fileNameLeftIco, fileNameRightIco, colorPalette, alignment, runnable);
+        this.toggleable = toggleable;
+    }
+
     @Override
     public void draw(long vg, int x, int y) {
         this.x = x;
@@ -84,6 +86,7 @@ public class BasicButton extends BasicElement {
             textColor = OneConfigConfig.WHITE_80;
             if (hovered) textColor = OneConfigConfig.WHITE;
             if (clicked) textColor = OneConfigConfig.WHITE_80;
+            if (page == null) textColor = OneConfigConfig.WHITE_50;
         }
 
         if (thisAlignment == ALIGNMENT_CENTER) {
@@ -98,7 +101,7 @@ public class BasicButton extends BasicElement {
         }
         if (thisAlignment == ALIGNMENT_LEFT) {
             if (fileNameLeftIco != null) {
-                RenderManager.drawImage(vg, fileNameLeftIco, x + 12, y + 8, 20, 20);
+                RenderManager.drawImage(vg, fileNameLeftIco, x + 12, y + 8, 20, 20, textColor);
                 RenderManager.drawString(vg, text, x + 40, y + ((float) height / 2) + 1, textColor, fontSize, Fonts.INTER_MEDIUM);
             } else {
                 RenderManager.drawString(vg, text, x + 12, y + ((float) height / 2) + 1, textColor, fontSize, Fonts.INTER_MEDIUM);
@@ -133,8 +136,18 @@ public class BasicButton extends BasicElement {
         }
     }
 
+    @Override
+    public void update(int x, int y) {
+        if (toggleable && toggled) return;
+        super.update(x, y);
+    }
+
     public void setToggled(boolean state) {
         this.toggled = state;
+    }
+
+    public Page getPage() {
+        return page;
     }
 
     public String getText() {

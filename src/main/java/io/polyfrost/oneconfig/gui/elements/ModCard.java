@@ -11,6 +11,8 @@ import io.polyfrost.oneconfig.lwjgl.font.Fonts;
 import io.polyfrost.oneconfig.utils.ColorUtils;
 import io.polyfrost.oneconfig.utils.InputUtils;
 import net.minecraft.client.Minecraft;
+import net.minecraft.command.CommandException;
+import net.minecraft.command.ICommandSender;
 import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.fml.common.ModMetadata;
 import org.jetbrains.annotations.NotNull;
@@ -94,15 +96,12 @@ public class ModCard extends BasicElement {
                 if (mod.name.equalsIgnoreCase(modData.name)) {
                     System.out.println("Attempting to run command for a mod that isn't OneConfig: " + mod.name);
                     for (String commands : ClientCommandHandler.instance.getCommands().keySet()) {
-                        if (commands.equalsIgnoreCase(mod.name)) {
-                            System.out.println("Found command for mod: /" + commands);
-                            Minecraft.getMinecraft().thePlayer.sendChatMessage("/" + commands);
-                            //Minecraft.getMinecraft().thePlayer.sendChatMessage("/" + mod.name.toLowerCase());
-                            break;
-                        }
-                        if (commands.equalsIgnoreCase(mod.modId)) {
-                            System.out.println("Found command for mod: /" + commands);
-                            Minecraft.getMinecraft().thePlayer.sendChatMessage("/" + commands);
+                        if (commands.equalsIgnoreCase(mod.name) || commands.equalsIgnoreCase(mod.modId)) {
+                            try {
+                                ClientCommandHandler.instance.getCommands().get(commands).processCommand(Minecraft.getMinecraft().thePlayer, new String[]{});
+                            } catch (CommandException e) {
+                                throw new RuntimeException(e);
+                            }
                             break;
                         }
                     }
