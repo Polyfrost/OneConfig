@@ -8,7 +8,7 @@ public class Mod {
     public final String creator;
     public final String version;
     public Config config;
-    public OptionPage defaultPage = new OptionPage("");
+    public OptionPage defaultPage = new OptionPage("", this);
 
     /**
      * @param name    Friendly name of the mod

@@ -1,12 +1,13 @@
 package io.polyfrost.oneconfig.config.interfaces;
 
+import io.polyfrost.oneconfig.gui.elements.BasicElement;
+
 import java.lang.reflect.Field;
 
 @SuppressWarnings({"unused"})
 public abstract class BasicOption {
     protected final Field field;
     protected final String name;
-    protected final String description;
     public final int size;
 
     /**
@@ -14,13 +15,11 @@ public abstract class BasicOption {
      *
      * @param field       variable attached to option (null for category)
      * @param name        name of option
-     * @param description description of option
      * @param size        size of option, 0 for single column, 1 for double.
      */
-    public BasicOption(Field field, String name, String description, int size) {
+    public BasicOption(Field field, String name, int size) {
         this.field = field;
         this.name = name;
-        this.description = description;
         this.size = size;
         if (field != null) field.setAccessible(true);
     }
@@ -52,10 +51,8 @@ public abstract class BasicOption {
      * @param vg     NanoVG context
      * @param x      x position
      * @param y      y position
-     * @param mouseX x position of mouse
-     * @param mouseY y position of mouse
      */
-    public abstract void draw(long vg, int x, int y, int mouseX, int mouseY);
+    public abstract void draw(long vg, int x, int y);
 
     /**
      * Function that gets called when mouse is clicked
@@ -74,5 +71,12 @@ public abstract class BasicOption {
      * @param keyCode   code of key
      */
     protected void keyTyped(char typedChar, int keyCode) {
+    }
+
+    /**
+     * @return If the component has an option to render at half size
+     */
+    public boolean hasHalfSize() {
+        return true;
     }
 }

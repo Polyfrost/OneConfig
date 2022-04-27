@@ -88,7 +88,7 @@ public class ModCard extends BasicElement {
             for (Mod data : OneConfig.loadedMods) {
                 if (data.modType != ModType.OTHER) {
                     if (data.name.equalsIgnoreCase(modData.name)) {
-                        OneConfigGui.INSTANCE.openPage(new ModConfigPage(data));
+                        OneConfigGui.INSTANCE.openPage(new ModConfigPage(data.defaultPage));
                     }
                 }
             }

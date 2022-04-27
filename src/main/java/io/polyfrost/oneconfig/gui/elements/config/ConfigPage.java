@@ -7,20 +7,26 @@ import java.lang.reflect.Field;
 
 public class ConfigPage extends BasicOption {
     public final OptionPage page;
+    public final String description;
 
     public ConfigPage(Field field, String name, String description, int size, OptionPage page) {
-        super(field, name, description, size);
+        super(field, name, size);
+        this.description = description;
         this.page = page;
     }
 
-
     @Override
-    public void draw(long vg, int x, int y, int mouseX, int mouseY) {
+    public void draw(long vg, int x, int y) {
 
     }
 
     @Override
     public int getHeight() {
-        return 0;
+        return description.equals("") ? 64 : 96;
+    }
+
+    @Override
+    public boolean hasHalfSize() {
+        return false;
     }
 }

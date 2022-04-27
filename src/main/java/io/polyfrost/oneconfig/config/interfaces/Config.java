@@ -34,7 +34,7 @@ public class Config {
         if (Profiles.getProfileFile(configFile).exists()) load();
         else save();
         mod.config = this;
-        generateOptionList(this.getClass(), mod.defaultPage);
+        generateOptionList(this.getClass(), mod.defaultPage, mod);
         ConfigCore.oneConfigMods.add(mod);
     }
 
@@ -66,7 +66,7 @@ public class Config {
      * @param clazz target class
      * @param page  page to add options too
      */
-    protected void generateOptionList(Class<?> clazz, OptionPage page) {
+    protected void generateOptionList(Class<?> clazz, OptionPage page, Mod mod) {
         for (Field field : clazz.getDeclaredFields()) {
             System.out.println(field);
             if (!field.isAnnotationPresent(Option.class)) {
@@ -81,11 +81,11 @@ public class Config {
             ArrayList<BasicOption> options = page.categories.get(option.category()).get(option.subcategory());
             switch (option.type()) {
                 case PAGE:
-                    OptionPage newPage = new OptionPage(option.name());
+                    OptionPage newPage = new OptionPage(option.name(), mod);
                     try {
                         field.setAccessible(true);
                         Object object = field.get(clazz);
-                        generateOptionList(object.getClass(), newPage);
+                        generateOptionList(object.getClass(), newPage, mod);
                         System.out.println(newPage.categories);
                         options.add(new ConfigPage(field, option.name(), option.description(), option.size(), newPage));
                     } catch (IllegalAccessException e) {
@@ -93,7 +93,7 @@ public class Config {
                     }
                     break;
                 case SWITCH:
-                    options.add(new ConfigSwitch(field, option.name(), option.description(), option.size()));
+                    options.add(new ConfigSwitch(field, option.name(), option.size()));
                     break;
             }
         }
