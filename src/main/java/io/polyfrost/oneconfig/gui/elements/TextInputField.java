@@ -3,11 +3,16 @@ package io.polyfrost.oneconfig.gui.elements;
 import io.polyfrost.oneconfig.config.OneConfigConfig;
 import io.polyfrost.oneconfig.lwjgl.RenderManager;
 import io.polyfrost.oneconfig.lwjgl.font.Fonts;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
+import net.minecraft.util.ChatComponentText;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
-import org.lwjgl.nanovg.NanoVG;
+
+import java.awt.*;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.StringSelection;
 
 import static org.lwjgl.nanovg.NanoVG.nvgResetScissor;
 import static org.lwjgl.nanovg.NanoVG.nvgScissor;
@@ -15,14 +20,15 @@ import static org.lwjgl.nanovg.NanoVG.nvgScissor;
 public class TextInputField extends BasicElement {
 
     protected final String defaultText;
-    protected String input;
+    protected String input, selectedText;
     protected final boolean multiLine;
     protected boolean password;
 
     protected int caretPos;
     protected int x, y;
+    protected float start, end;
+    private long clickTimeD1;
     protected long vg;
-    protected int deltaX;
     protected int prevCaret = 0;
 
     public TextInputField(int width, int height, String defaultText, boolean multiLine, boolean password) {
@@ -65,50 +71,89 @@ public class TextInputField extends BasicElement {
             width = RenderManager.getTextWidth(vg, s.substring(0, caretPos), 14f);
         }
         nvgScissor(vg, x, y, this.width, height);
-        if (clicked) {
-            NanoVG.nvgGlobalAlpha(vg, 0.3f);
-            int point = (Mouse.getX() - x) - deltaX;
-            if (Mouse.getX() - x - 12 < 0) {
-                RenderManager.drawRect(vg, x + offset + width, y + 2, -width, height - 4, OneConfigConfig.BLUE_600);
-            } else if (!(Mouse.getX() - x > RenderManager.getTextWidth(vg, input, 14f) + 12)) {
-                RenderManager.drawRect(vg, x + offset + width, y + 2, point, height - 4, OneConfigConfig.BLUE_600);
+
+
+        while (Mouse.next()) {
+            if (Mouse.getEventButtonState()) {
+                if (Mouse.getEventButton() == 0) {
+                    prevCaret = calculatePos(Mouse.getEventX());
+                    if(System.currentTimeMillis() - clickTimeD1 < 250) {
+                        onDoubleClick();
+                    }
+                    clickTimeD1 = System.currentTimeMillis();
+                }
             } else {
-                RenderManager.drawRect(vg, x + offset + width, y + 2, RenderManager.getTextWidth(vg, input, 14f) - width, height - 4, OneConfigConfig.BLUE_600);
+                if (Mouse.getEventButton() == 0) {
+                    long clickTimeU = System.currentTimeMillis();
+                    if (clickTimeU - clickTimeD1 < 200) {
+                        start = 0;
+                        end = 0;
+                        prevCaret = caretPos;
+                    }
+
+                }
             }
-            //System.out.println(offset + width);
-            //System.out.println(point);
-            prevCaret = calculatePos((int) (offset + width));
-            NanoVG.nvgGlobalAlpha(vg, 1f);
         }
-        try {
-            //System.out.println("prevCaret: " + prevCaret + " caretPos: " + caretPos);
-            //RenderManager.drawRect(vg, (int) x + RenderManager.getTextWidth(vg, input.substring(0, caretPos), 14f), y, (int) RenderManager.getTextWidth(vg, input.substring(caretPos, prevCaret), 14f), height, OneConfigConfig.GRAY_300);
-        } catch (Exception e) {
-            e.printStackTrace();
+        if (start != 0f && end != 0f) {
+            RenderManager.drawRect(vg, start, y + 9, end, 20, OneConfigConfig.GRAY_300);
+        }
+
+        if (Mouse.isButtonDown(0)) {
+            caretPos = calculatePos(Mouse.getX());
+
+            if (caretPos > prevCaret) {
+                start = x + offset + RenderManager.getTextWidth(vg, input.substring(0, prevCaret), 14f);
+                end = RenderManager.getTextWidth(vg, input.substring(prevCaret, caretPos), 14f);
+                selectedText = input.substring(prevCaret, caretPos);
+            } else {
+                start = x + offset + RenderManager.getTextWidth(vg, input.substring(0, prevCaret), 14f);
+                end = -RenderManager.getTextWidth(vg, input.substring(caretPos, prevCaret), 14f);
+                selectedText = input.substring(caretPos, prevCaret);
+            }
+
+
         }
 
 
         if (toggled) {
-            RenderManager.drawLine(vg, x + width + 12, (float) y + 7, x + width + 12, (float) y + height - 7, 1, OneConfigConfig.WHITE);
+            RenderManager.drawLine(vg, x + width + 12, (float) y + height / 2f - 10, x + width + 12, (float) y + height / 2f + 10, 1, OneConfigConfig.WHITE);
         }
 
 
         if (input.equals("")) {
-            RenderManager.drawString(vg, defaultText, x + 12, y + 17, color, 14f, Fonts.INTER_REGULAR);
+            RenderManager.drawString(vg, defaultText, x + 12, y + height / 2f + 1, color, 14f, Fonts.INTER_REGULAR);
         }
 
         if (!password) {
-            RenderManager.drawString(vg, input, x + offset, y + 17, color, 14f, Fonts.INTER_REGULAR);
+            RenderManager.drawString(vg, input, x + offset, y + height / 2f, color, 14f, Fonts.INTER_REGULAR);
         } else {
-            RenderManager.drawString(vg, s.toString(), x + offset, y + 17, color, 14f, Fonts.INTER_REGULAR);
+            RenderManager.drawString(vg, s.toString(), x + offset, y + height / 2f, color, 14f, Fonts.INTER_REGULAR);
         }
         nvgResetScissor(vg);
     }
 
     public void keyTyped(char c, int key) {
         if (toggled) {
+            if (GuiScreen.isKeyComboCtrlC(key)) {
+                if(selectedText != null && start != 0f && end != 0f) {
+                    Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(selectedText), null);
+                }
+                return;
+            }
+            if(GuiScreen.isKeyComboCtrlV(key)) {
+                try {
+                    String clip = Toolkit.getDefaultToolkit().getSystemClipboard().getContents(null).getTransferData(DataFlavor.stringFlavor).toString();
+                    input = input.substring(0, caretPos) + clip + input.substring(caretPos);
+                    caretPos = caretPos + clip.length();
+                    return;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+
+
             if (GuiScreen.isCtrlKeyDown()) {
-                if (key == Keyboard.KEY_BACK) {
+                if (key == Keyboard.KEY_BACK && !GuiScreen.isKeyComboCtrlX(key)) {
                     try {
                         input = input.substring(0, input.lastIndexOf(" "));
                         caretPos = input.length();
@@ -116,11 +161,36 @@ public class TextInputField extends BasicElement {
                         input = "";
                         caretPos = 0;
                     }
+                    return;
                 }
-                return;
+                if(GuiScreen.isKeyComboCtrlA(key)) {
+                    prevCaret = 0;
+                    caretPos = input.length();
+                    start = x + 12;
+                    end = RenderManager.getTextWidth(vg, input, 14f);
+                    return;
+                }
+                if(GuiScreen.isKeyComboCtrlX(key)) {
+                    if(selectedText != null && start != 0f && end != 0f) {
+                        Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(selectedText), null);
+                        key = Keyboard.KEY_BACK;
+                    } else return;
+                }
+
             }
             if (key == Keyboard.KEY_BACK) {
                 if (input.length() > 0) {
+                    if(start != 0f && end != 0f) {
+                        start = 0f; end = 0f;
+                        if(caretPos > prevCaret) {
+                            input = input.substring(0, prevCaret) + input.substring(caretPos);
+                            caretPos = prevCaret;
+                        }
+                        if(caretPos < prevCaret) {
+                            input = input.substring(0, caretPos) + input.substring(prevCaret);
+                        }
+                        return;
+                    }
                     if (caretPos == input.length()) {
                         input = input.substring(0, input.length() - 1);
                     } else {
@@ -150,6 +220,14 @@ public class TextInputField extends BasicElement {
                 }
                 return;
             }
+            if(key == Keyboard.KEY_UP) {
+                caretPos = 0;
+                return;
+            }
+            if(key == Keyboard.KEY_DOWN) {
+                caretPos = input.length();
+                return;
+            }
 
 
             if (key == Keyboard.KEY_RETURN) {
@@ -159,8 +237,14 @@ public class TextInputField extends BasicElement {
             if (key == Keyboard.KEY_LCONTROL || key == Keyboard.KEY_RCONTROL || key == Keyboard.KEY_LMENU || key == Keyboard.KEY_RMENU || key == Keyboard.KEY_LMETA || key == Keyboard.KEY_RMETA || key == Keyboard.KEY_LSHIFT || key == Keyboard.KEY_RSHIFT || key == Keyboard.KEY_RETURN || key == Keyboard.KEY_CAPITAL || key == 221) {
                 return;
             }
+            if(!Character.isDefined(key)) return;
+            if(!Character.isDefined(c)) return;
             input = addCharAtPoint(caretPos, c);
             caretPos++;
+            if(start != 0f && end != 0f) {
+                start = 0f; end = 0f;
+            }
+
         }
     }
 
@@ -170,9 +254,12 @@ public class TextInputField extends BasicElement {
 
     @Override
     public void onClick() {
-        deltaX = Mouse.getX() - x;
         toggled = true;
-        caretPos = calculatePos(Mouse.getX());
+
+    }
+
+    private void onDoubleClick() {
+        Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText("hi"));
     }
 
     private int calculatePos(int pos) {
@@ -183,7 +270,6 @@ public class TextInputField extends BasicElement {
                 return 0;
             }
             if (pos - x - 12 > RenderManager.getTextWidth(vg, input, 14f)) {
-                deltaX = (int) RenderManager.getTextWidth(vg, input, 14f) + 12;
                 return input.length();
             }
             s1 += c;
