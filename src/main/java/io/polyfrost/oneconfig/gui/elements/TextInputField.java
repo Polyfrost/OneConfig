@@ -9,7 +9,6 @@ import net.minecraft.util.ChatAllowedCharacters;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
-import org.lwjgl.nanovg.NanoVG;
 
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
