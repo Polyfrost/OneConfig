@@ -6,9 +6,10 @@ import io.polyfrost.oneconfig.config.core.ConfigCore;
 import io.polyfrost.oneconfig.config.data.Mod;
 import io.polyfrost.oneconfig.config.data.OptionPage;
 import io.polyfrost.oneconfig.config.profiles.Profiles;
+import io.polyfrost.oneconfig.gui.elements.config.ConfigCheckbox;
 import io.polyfrost.oneconfig.gui.elements.config.ConfigPage;
 import io.polyfrost.oneconfig.gui.elements.config.ConfigSwitch;
-import io.polyfrost.oneconfig.test.TestConfig;
+import io.polyfrost.oneconfig.gui.elements.config.ConfigTextBox;
 
 import java.io.*;
 import java.lang.reflect.Field;
@@ -93,6 +94,11 @@ public class Config {
                 case SWITCH:
                     options.add(new ConfigSwitch(field, option.name(), option.size()));
                     break;
+                case CHECKBOX:
+                    options.add(new ConfigCheckbox(field, option.name(), option.size()));
+                    break;
+                case TEXT:
+                    options.add(new ConfigTextBox(field, option.name(), option.size(), option.placeholder(), option.secure(), option.multiLine()));
             }
         }
     }

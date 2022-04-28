@@ -1,7 +1,6 @@
 package io.polyfrost.oneconfig.gui.pages;
 
 import io.polyfrost.oneconfig.config.OneConfigConfig;
-import io.polyfrost.oneconfig.config.data.Mod;
 import io.polyfrost.oneconfig.config.data.OptionPage;
 import io.polyfrost.oneconfig.config.interfaces.BasicOption;
 import io.polyfrost.oneconfig.lwjgl.RenderManager;
@@ -55,6 +54,7 @@ public class ModConfigPage extends Page {
                 }
                 optionY += option.getHeight() + 16;
             }
+            optionY += 8;
         }
     }
 

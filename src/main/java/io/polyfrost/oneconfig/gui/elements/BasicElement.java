@@ -41,13 +41,13 @@ public class BasicElement {
 
     public void update(int x, int y) {
         hovered = InputUtils.isAreaHovered(x - hitBoxX, y - hitBoxY, width + hitBoxX, height + hitBoxY);
+        clicked = InputUtils.isClicked();
 
         if (hovered) {
-            if (Mouse.isButtonDown(0) && !clicked) {
+            if (clicked) {
                 toggled = !toggled;
                 onClick();
             }
-            clicked = Mouse.isButtonDown(0);
         }
     }
 
@@ -92,5 +92,4 @@ public class BasicElement {
     public boolean isToggled() {
         return toggled;
     }
-
 }

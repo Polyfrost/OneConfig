@@ -1,5 +1,6 @@
 package io.polyfrost.oneconfig.utils;
 
+import io.polyfrost.oneconfig.gui.OneConfigGui;
 import net.minecraft.client.Minecraft;
 import org.lwjgl.input.Mouse;
 
@@ -15,8 +16,12 @@ public class InputUtils {
         return mouseX > x && mouseY > y && mouseX < x + width && mouseY < y + height;       // TODO add scaling info
     }
 
-    public static boolean isClicked(int x, int y, int width, int height) {
-        return isAreaHovered(x, y, width, height) && Mouse.isButtonDown(0);        // TODO make actually do what its meant to do (only 1 event)
+    public static boolean isAreaClicked(int x, int y, int width, int height) {
+        return isAreaHovered(x, y, width, height) && isClicked();
+    }
+
+    public static boolean isClicked() {
+        return OneConfigGui.INSTANCE.mouseDown && !Mouse.isButtonDown(0);
     }
 
     public static int mouseX() {

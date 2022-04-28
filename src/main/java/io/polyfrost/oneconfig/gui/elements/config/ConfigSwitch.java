@@ -7,10 +7,6 @@ import io.polyfrost.oneconfig.lwjgl.font.Fonts;
 import io.polyfrost.oneconfig.utils.ColorUtils;
 import io.polyfrost.oneconfig.utils.InputUtils;
 import io.polyfrost.oneconfig.utils.MathUtils;
-import net.minecraft.client.Minecraft;
-import net.minecraft.util.ChatComponentText;
-import org.lwjgl.input.Cursor;
-import org.lwjgl.input.Mouse;
 
 import java.lang.reflect.Field;
 
@@ -20,7 +16,6 @@ import static org.lwjgl.nanovg.NanoVG.nvgScissor;
 public class ConfigSwitch extends BasicOption {
     private int color;
     private float percentOn = 0f;
-    private boolean clicked = false;
     private boolean toggled ;
 
     public ConfigSwitch(Field field, String name, int size) {
@@ -34,8 +29,7 @@ public class ConfigSwitch extends BasicOption {
 
     @Override
     public void draw(long vg, int x, int y) {
-        nvgScissor(vg, x, y, size == 0 ? 480 : 992, 32);
-        boolean hovered = InputUtils.isAreaHovered(x, y, size == 0 ? 480 : 992, 32);
+        nvgScissor(vg, x, y, size == 1 ? 480 : 992, 32);
         int x2 = x + 19 + (int) (percentOn * 18);
         color = ColorUtils.smoothColor(color, OneConfigConfig.GRAY_400, OneConfigConfig.BLUE_500, toggled, 20f);
         if(color == -15123643) {
@@ -45,7 +39,7 @@ public class ConfigSwitch extends BasicOption {
         RenderManager.drawRoundedRect(vg, x2, y + 7, 18, 18, OneConfigConfig.WHITE, 9f);
         RenderManager.drawString(vg, name, x + 66, y + 17, OneConfigConfig.WHITE, 18f, Fonts.INTER_MEDIUM);
 
-        if (InputUtils.isClicked(x, y, size == 0 ? 480 : 992, 32) && !this.clicked && hovered)
+        if (InputUtils.isAreaClicked(x + 16, y, 42, 32))
         {
             toggled = !toggled;
             try {
@@ -55,12 +49,8 @@ public class ConfigSwitch extends BasicOption {
                 e.printStackTrace();
             }
         }
-        this.clicked = InputUtils.isClicked(x, y, size == 0 ? 480 : 992, 32) && hovered;
         percentOn = MathUtils.clamp(MathUtils.easeOut(percentOn, toggled ? 1f : 0f, 10));
         nvgResetScissor(vg);
-
-
-
     }
 
     @Override

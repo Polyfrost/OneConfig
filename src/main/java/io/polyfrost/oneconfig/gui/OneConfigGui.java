@@ -11,6 +11,7 @@ import io.polyfrost.oneconfig.utils.MathUtils;
 import net.minecraft.client.gui.GuiScreen;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.input.Keyboard;
+import org.lwjgl.input.Mouse;
 
 import static org.lwjgl.nanovg.NanoVG.nvgResetScissor;
 import static org.lwjgl.nanovg.NanoVG.nvgScissor;
@@ -30,6 +31,7 @@ public class OneConfigGui extends GuiScreen {
 
     private final TextInputField textInputField = new TextInputField(248, 40, "Search all of OneConfig...", false, false);
 
+    public boolean mouseDown;
 
     public OneConfigGui() {
         INSTANCE = this;
@@ -47,8 +49,6 @@ public class OneConfigGui extends GuiScreen {
                 RenderManager.drawRoundedRect(vg, 320, 140, 244, 800, OneConfigConfig.GRAY_900_80, OneConfigConfig.CORNER_RADIUS_WIN);
                 RenderManager.drawRect(vg, 544, 140, 20, 800, OneConfigConfig.GRAY_800);
                 //RenderManager.drawDropShadow(vg, 544, 140, 1056, 800, 20f, 32f, OneConfigConfig.GRAY_800);
-            } else {
-                // L;
             }
 
             RenderManager.drawLine(vg, 544, 212, 1600, 212, 1, OneConfigConfig.GRAY_700);
@@ -78,15 +78,8 @@ public class OneConfigGui extends GuiScreen {
             String s = (" draw: " + end / 1000000f + "ms");
             RenderManager.drawString(vg, currentPage.getTitle(), x + 336, y + 36, OneConfigConfig.WHITE_90, 32f, Fonts.INTER_SEMIBOLD);
             RenderManager.drawString(vg, s, x + 1170, y + 790, OneConfigConfig.GRAY_300, 10f, Fonts.INTER_MEDIUM);
-
-
-            //textInputField.draw(vg, 792, 548);
-            //btn.draw(vg, 976, 870);
-
-            //RenderManager.drawGradientRoundedRect(vg, 100, 100, 500, 100, OneConfigConfig.BLUE_600, OneConfigConfig.BLUE_500, OneConfigConfig.CORNER_RADIUS_WIN);
-
         });
-
+        mouseDown = Mouse.isButtonDown(0) && prevPage == null;
     }
 
     protected void keyTyped(char key, int keyCode) {
@@ -111,5 +104,10 @@ public class OneConfigGui extends GuiScreen {
     @Override
     public boolean doesGuiPauseGame() {
         return false;
+    }
+
+    @Override
+    public void onGuiClosed() {
+        currentPage.finishUpAndClose();
     }
 }

@@ -17,6 +17,31 @@ public class TestConfig extends Config {
     public static boolean switchTest;
 
     @Option(
+            name = "Test switch",
+            description = "Best description",
+            subcategory = "Test",
+            type = OptionType.SWITCH
+    )
+    public static boolean switchTest1;
+
+    @Option(
+            name = "Test switch",
+            description = "Best description",
+            subcategory = "Test",
+            type = OptionType.SWITCH,
+            size = 2
+    )
+    public static boolean switchTest2;
+
+    @Option(
+            name = "Test switch",
+            description = "Best description",
+            subcategory = "Test",
+            type = OptionType.SWITCH
+    )
+    public static boolean switchTest3;
+
+    @Option(
             name = "Test Page",
             type = OptionType.PAGE,
             subcategory = "Test"
@@ -30,6 +55,30 @@ public class TestConfig extends Config {
             description = "The best page to have ever existed"
     )
     public static TestPage testPage2 = new TestPage();
+
+    @Option(
+            name = "Test switch",
+            description = "Best description",
+            subcategory = "Other subcategory",
+            type = OptionType.SWITCH
+    )
+    public static boolean switchTest4;
+
+    @Option(
+            name = "Test switch",
+            description = "Best description",
+            subcategory = "Other subcategory",
+            type = OptionType.SWITCH
+    )
+    public static boolean switchTest5;
+
+    @Option(
+            name = "Test switch",
+            description = "Best description",
+            subcategory = "Other subcategory",
+            type = OptionType.SWITCH
+    )
+    public static boolean switchTest6;
 
     public TestConfig() {
         super(new Mod("hacks", ModType.UTIL_QOL, "ShadyDev", "1.0"), "hacksConfig.json");
