@@ -23,6 +23,14 @@ public class TestConfig extends Config {
     )
     public static TestPage testPage = new TestPage();
 
+    @Option(
+            name = "Test Page But better",
+            type = OptionType.PAGE,
+            subcategory = "Test",
+            description = "The best page to have ever existed"
+    )
+    public static TestPage testPage2 = new TestPage();
+
     public TestConfig() {
         super(new Mod("hacks", ModType.UTIL_QOL, "ShadyDev", "1.0"), "hacksConfig.json");
     }

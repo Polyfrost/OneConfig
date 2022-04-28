@@ -68,7 +68,6 @@ public class Config {
      */
     protected void generateOptionList(Class<?> clazz, OptionPage page, Mod mod) {
         for (Field field : clazz.getDeclaredFields()) {
-            System.out.println(field);
             if (!field.isAnnotationPresent(Option.class)) {
                 processCustomOption(field, page);
                 continue;
@@ -86,7 +85,6 @@ public class Config {
                         field.setAccessible(true);
                         Object object = field.get(clazz);
                         generateOptionList(object.getClass(), newPage, mod);
-                        System.out.println(newPage.categories);
                         options.add(new ConfigPage(field, option.name(), option.description(), option.size(), newPage));
                     } catch (IllegalAccessException e) {
                         continue;
