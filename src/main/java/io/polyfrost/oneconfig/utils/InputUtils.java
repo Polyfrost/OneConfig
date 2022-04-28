@@ -14,4 +14,16 @@ public class InputUtils {
         int mouseY = Minecraft.getMinecraft().displayHeight - Math.abs(Mouse.getY());
         return mouseX > x && mouseY > y && mouseX < x + width && mouseY < y + height;       // TODO add scaling info
     }
+
+    public static boolean isClicked(int x, int y, int width, int height) {
+        return isAreaHovered(x, y, width, height) && Mouse.isButtonDown(0);        // TODO make actually do what its meant to do (only 1 event)
+    }
+
+    public static int mouseX() {
+        return Mouse.getX();
+    }
+
+    public static int mouseY() {
+        return Minecraft.getMinecraft().displayHeight - Math.abs(Mouse.getY());
+    }
 }
