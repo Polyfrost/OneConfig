@@ -40,8 +40,6 @@ public class ConfigPage extends BasicOption {
             RenderManager.drawString(vg, name, x + 24, y + 70, OneConfigConfig.WHITE, 14, Fonts.INTER_MEDIUM);
         RenderManager.drawImage(vg, "/assets/oneconfig/textures/arrow.png", x + 995f, y + (description.equals("") ? 20f : 36f), 13, 22);
 
-        RenderManager.drawRect(vg, x, y, 1024, 20, OneConfigConfig.WHITE);
-        RenderManager.drawRect(vg, x, y + 64 - 20, 1024, 20, OneConfigConfig.WHITE);
 
         if (clicked)
             OneConfigGui.INSTANCE.openPage(new ModConfigPage(page));
