@@ -18,6 +18,7 @@ public class ConfigPage extends BasicOption {
     public final OptionPage page;
     public final String description;
     private int backgroundColor = OneConfigConfig.GRAY_500;
+    private boolean pressed = false;
 
     public ConfigPage(Field field, String name, String description, int size, OptionPage page) {
         super(field, name, size);
@@ -28,11 +29,11 @@ public class ConfigPage extends BasicOption {
     @Override
     public void draw(long vg, int x, int y) {
         boolean hovered = InputUtils.isAreaHovered(x - 2, y, 1023, description.equals("") ? 64 : 96);
-        boolean clicked = hovered && Mouse.isButtonDown(0);
+        boolean clicked = pressed && !Mouse.isButtonDown(0);
+        pressed = hovered && Mouse.isButtonDown(0);
         backgroundColor = ColorUtils.smoothColor(backgroundColor, OneConfigConfig.GRAY_500, OneConfigConfig.GRAY_400, hovered, 100);
 
-        if (clicked)
-            NanoVG.nvgGlobalAlpha(vg, 0.8f);
+        if (clicked) NanoVG.nvgGlobalAlpha(vg, 0.8f);
 
         RenderManager.drawRoundedRect(vg, x - 2, y, 1024, description.equals("") ? 64 : 96, backgroundColor, 20);
         RenderManager.drawString(vg, name, x + 24, y + 32, OneConfigConfig.WHITE, 24, Fonts.INTER_MEDIUM);
@@ -43,8 +44,7 @@ public class ConfigPage extends BasicOption {
         RenderManager.drawRect(vg, x, y, 1024, 20, OneConfigConfig.WHITE);
         RenderManager.drawRect(vg, x, y + 64 - 20, 1024, 20, OneConfigConfig.WHITE);
 
-        if (clicked)
-            OneConfigGui.INSTANCE.openPage(new ModConfigPage(page));
+        if (clicked) OneConfigGui.INSTANCE.openPage(new ModConfigPage(page));
         NanoVG.nvgGlobalAlpha(vg, 1f);
     }
 
