@@ -41,7 +41,7 @@ public class BasicElement {
 
     public void update(int x, int y) {
         hovered = InputUtils.isAreaHovered(x - hitBoxX, y - hitBoxY, width + hitBoxX, height + hitBoxY);
-        clicked = InputUtils.isClicked();
+        clicked = InputUtils.isClicked() && hovered;
 
         if (hovered) {
             if (clicked) {

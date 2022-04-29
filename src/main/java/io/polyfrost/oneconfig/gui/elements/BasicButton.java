@@ -74,7 +74,7 @@ public class BasicButton extends BasicElement {
         this.y = y;
         int textColor = -1;
         RenderManager.drawRectangle(vg, x, y, this.width, this.height, this.currentColor);
-        float contentWidth = RenderManager.getTextWidth(vg, text, fontSize);
+        float contentWidth = RenderManager.getTextWidth(vg, text, fontSize, Fonts.INTER_MEDIUM);
         if (fileNameLeftIco != null) {
             contentWidth += 28;
         }

@@ -79,7 +79,7 @@ public class OneConfigGui extends GuiScreen {
             RenderManager.drawString(vg, currentPage.getTitle(), x + 336, y + 36, OneConfigConfig.WHITE_90, 32f, Fonts.INTER_SEMIBOLD);
             RenderManager.drawString(vg, s, x + 1170, y + 790, OneConfigConfig.GRAY_300, 10f, Fonts.INTER_MEDIUM);
         });
-        mouseDown = Mouse.isButtonDown(0) && prevPage == null;
+        mouseDown = Mouse.isButtonDown(0);
     }
 
     protected void keyTyped(char key, int keyCode) {

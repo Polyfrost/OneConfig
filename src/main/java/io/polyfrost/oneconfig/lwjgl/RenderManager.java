@@ -243,9 +243,10 @@ public final class RenderManager {
         }
     }
 
-    public static float getTextWidth(long vg, String text, float fontSize) {
+    public static float getTextWidth(long vg, String text, float fontSize, Fonts font) {
         float[] bounds = new float[4];
         nvgFontSize(vg, fontSize);
+        nvgFontFace(vg, font.font.getName());
         return nvgTextBounds(vg, 0, 0, text, bounds);
     }
 
