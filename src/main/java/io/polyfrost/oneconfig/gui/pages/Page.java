@@ -24,4 +24,7 @@ public abstract class Page {
     public String getTitle() {
         return title;
     }
+
+    public void keyTyped(char key, int keyCode) {
+    }
 }

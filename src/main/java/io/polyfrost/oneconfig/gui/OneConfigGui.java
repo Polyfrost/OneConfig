@@ -87,6 +87,7 @@ public class OneConfigGui extends GuiScreen {
         try {
             super.keyTyped(key, keyCode);
             textInputField.keyTyped(key, keyCode);
+            currentPage.keyTyped(key, keyCode);
         } catch (Exception e) {
             System.out.println("this should literally never happen");
         }

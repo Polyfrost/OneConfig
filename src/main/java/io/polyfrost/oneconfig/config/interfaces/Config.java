@@ -98,7 +98,7 @@ public class Config {
                     options.add(new ConfigCheckbox(field, option.name(), option.size()));
                     break;
                 case TEXT:
-                    options.add(new ConfigTextBox(field, option.name(), option.size(), option.placeholder(), option.secure(), option.multiLine()));
+                    options.add(new ConfigTextBox(field, option.name(), option.size(), option.secure(), option.multiLine()));
             }
         }
     }

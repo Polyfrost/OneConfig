@@ -18,7 +18,7 @@ public class ModConfigPage extends Page {
     public void draw(long vg, int x, int y) {
         if (page.categories.size() == 0) return;
         String selectedCategory = page.categories.keySet().stream().findFirst().get();
-        int optionX = x + 16;
+        int optionX = x + 30;
         int optionY = y + (page.categories.size() == 1 ? 32 : 72);
         for (String subCategory : page.categories.get(selectedCategory).keySet()) {
             RenderManager.drawString(vg, subCategory, x + 18, optionY, OneConfigConfig.WHITE, 24f, Fonts.INTER_MEDIUM);
@@ -46,7 +46,7 @@ public class ModConfigPage extends Page {
                 if (i + 1 < page.categories.get(selectedCategory).get(subCategory).size()) {
                     BasicOption nextOption = page.categories.get(selectedCategory).get(subCategory).get(i + 1);
                     if (option.size == 1 && option.hasHalfSize() && nextOption.size == 1 && nextOption.hasHalfSize()) {
-                        nextOption.draw(vg, optionX + 464, optionY);
+                        nextOption.draw(vg, optionX + 528, optionY);
                         optionY += Math.max(option.getHeight(), nextOption.getHeight()) + 16;
                         i++;
                         continue;
@@ -60,6 +60,17 @@ public class ModConfigPage extends Page {
 
     @Override
     public void finishUpAndClose() {
-        page.mod.config.save();      // TODO
+        page.mod.config.save();
+    }
+
+    @Override
+    public void keyTyped(char key, int keyCode) {
+        if (page.categories.size() == 0) return;
+        String selectedCategory = page.categories.keySet().stream().findFirst().get();
+        for (String subCategory : page.categories.get(selectedCategory).keySet()) {
+            for (int i = 0; i < page.categories.get(selectedCategory).get(subCategory).size(); i++) {
+                page.categories.get(selectedCategory).get(subCategory).get(i).keyTyped(key, keyCode);
+            }
+        }
     }
 }

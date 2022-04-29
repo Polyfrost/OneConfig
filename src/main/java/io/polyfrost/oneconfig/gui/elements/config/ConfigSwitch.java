@@ -16,31 +16,30 @@ import static org.lwjgl.nanovg.NanoVG.nvgScissor;
 public class ConfigSwitch extends BasicOption {
     private int color;
     private float percentOn = 0f;
-    private boolean toggled ;
 
     public ConfigSwitch(Field field, String name, int size) {
-        super(field, name,  size);
-        try {
-            toggled = (boolean) get();
-        } catch (IllegalAccessException e) {
-            System.err.println("failed to get config value: class=" + this + " fieldWatching=" + field);
-        }
+        super(field, name, size);
+
     }
 
     @Override
     public void draw(long vg, int x, int y) {
+        boolean toggled = false;
+        try {
+            toggled = (boolean) get();
+        } catch (IllegalAccessException ignored) {
+        }
         nvgScissor(vg, x, y, size == 1 ? 480 : 992, 32);
         int x2 = x + 19 + (int) (percentOn * 18);
         color = ColorUtils.smoothColor(color, OneConfigConfig.GRAY_400, OneConfigConfig.BLUE_500, toggled, 20f);
-        if(color == -15123643) {
+        if (color == -15123643) {
             color = OneConfigConfig.GRAY_400;
         }
         RenderManager.drawRoundedRect(vg, x + 16, y + 4, 42, 24, color, 12f);
         RenderManager.drawRoundedRect(vg, x2, y + 7, 18, 18, OneConfigConfig.WHITE, 9f);
         RenderManager.drawString(vg, name, x + 66, y + 17, OneConfigConfig.WHITE, 18f, Fonts.INTER_MEDIUM);
 
-        if (InputUtils.isAreaClicked(x + 16, y, 42, 32))
-        {
+        if (InputUtils.isAreaClicked(x + 16, y, 42, 32)) {
             toggled = !toggled;
             try {
                 set(toggled);

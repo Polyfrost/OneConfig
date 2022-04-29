@@ -42,11 +42,6 @@ public @interface Option {
     int size() default 1;
 
     /**
-     * The placeholder for the text box if there is no text inside
-     */
-    String placeholder() default "";
-
-    /**
      * If the text field is secure or not
      */
     boolean secure() default false;

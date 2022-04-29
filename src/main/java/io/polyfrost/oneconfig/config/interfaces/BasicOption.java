@@ -55,22 +55,12 @@ public abstract class BasicOption {
     public abstract void draw(long vg, int x, int y);
 
     /**
-     * Function that gets called when mouse is clicked
-     *
-     * @param mouseX      x position of mouse
-     * @param mouseY      y position of mouse
-     * @param mouseButton button that got pressed
-     */
-    protected void onMouseClicked(int mouseX, int mouseY, int mouseButton) {
-    }
-
-    /**
      * Function that gets called when a key is typed
      *
-     * @param typedChar char that has been typed
+     * @param key char that has been typed
      * @param keyCode   code of key
      */
-    protected void keyTyped(char typedChar, int keyCode) {
+    public void keyTyped(char key, int keyCode) {
     }
 
     /**
