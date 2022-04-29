@@ -52,6 +52,10 @@ public class TextInputField extends BasicElement {
         this.password = password;
     }
 
+    public boolean getPassword() {
+        return password;
+    }
+
     @Override
     public void draw(long vg, int x, int y) {
         this.x = x;

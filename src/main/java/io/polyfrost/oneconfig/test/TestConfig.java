@@ -9,35 +9,35 @@ import io.polyfrost.oneconfig.config.interfaces.Config;
 public class TestConfig extends Config {
 
     @Option(
-            name = "Test switch",
+            name = "Test checkbox",
             description = "Best description",
             subcategory = "Test",
-            type = OptionType.SWITCH
+            type = OptionType.CHECKBOX
     )
     public static boolean switchTest;
 
     @Option(
-            name = "Test switch",
+            name = "Test checkbox",
             description = "Best description",
             subcategory = "Test",
-            type = OptionType.SWITCH
+            type = OptionType.CHECKBOX
     )
     public static boolean switchTest1;
 
     @Option(
-            name = "Test switch",
+            name = "Test checkbox",
             description = "Best description",
             subcategory = "Test",
-            type = OptionType.SWITCH,
+            type = OptionType.CHECKBOX,
             size = 2
     )
     public static boolean switchTest2;
 
     @Option(
-            name = "Test switch",
+            name = "Test checkbox",
             description = "Best description",
             subcategory = "Test",
-            type = OptionType.SWITCH
+            type = OptionType.CHECKBOX
     )
     public static boolean switchTest3;
 
@@ -47,14 +47,6 @@ public class TestConfig extends Config {
             subcategory = "Test"
     )
     public static TestPage testPage = new TestPage();
-
-    @Option(
-            name = "Test Page But better",
-            type = OptionType.PAGE,
-            subcategory = "Test",
-            description = "The best page to have ever existed"
-    )
-    public static TestPage testPage2 = new TestPage();
 
     @Option(
             name = "Test switch",

@@ -5,6 +5,7 @@ import io.polyfrost.oneconfig.config.interfaces.BasicOption;
 import io.polyfrost.oneconfig.gui.elements.TextInputField;
 import io.polyfrost.oneconfig.lwjgl.RenderManager;
 import io.polyfrost.oneconfig.lwjgl.font.Fonts;
+import io.polyfrost.oneconfig.utils.InputUtils;
 import org.lwjgl.nanovg.NanoVG;
 
 import java.lang.reflect.Field;
@@ -34,11 +35,18 @@ public class ConfigTextBox extends BasicOption {
         NanoVG.nvgResetScissor(vg);
 
         textField.draw(vg, x + (size == 1 && hasHalfSize() ? 224 : 352), y);
+
+        if (secure) RenderManager.drawImage(vg, "/assets/oneconfig/textures/eye.png", x + 967, y + 7, 18, 18);
+        if (secure && InputUtils.isAreaClicked(x + 967, y + 7, 18, 18)) textField.setPassword(!textField.getPassword());
     }
 
     @Override
     public void keyTyped(char key, int keyCode) {
         textField.keyTyped(key, keyCode);
+        try {
+            set(textField.getInput());
+        } catch (IllegalAccessException ignored) {
+        }
     }
 
     @Override

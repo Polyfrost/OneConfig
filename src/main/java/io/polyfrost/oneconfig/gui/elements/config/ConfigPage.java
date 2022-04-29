@@ -27,18 +27,18 @@ public class ConfigPage extends BasicOption {
     @Override
     public void draw(long vg, int x, int y) {
         int height = description.equals("") ? 64 : 96;
-        NanoVG.nvgScissor(vg, x - 2, y, 1024, height);
+        NanoVG.nvgScissor(vg, x - 16, y, 1024, height);
         boolean hovered = InputUtils.isAreaHovered(x - 2, y, 1024, height);
         boolean clicked = InputUtils.isAreaClicked(x - 2, y, 1024, height);
         backgroundColor = ColorUtils.smoothColor(backgroundColor, OneConfigConfig.GRAY_500, OneConfigConfig.GRAY_400, hovered, 100);
 
         if (clicked) NanoVG.nvgGlobalAlpha(vg, 0.8f);
 
-        RenderManager.drawRoundedRect(vg, x - 2, y, 1024, height, backgroundColor, 20);
-        RenderManager.drawString(vg, name, x + 24, y + 32, OneConfigConfig.WHITE, 24, Fonts.INTER_MEDIUM);
+        RenderManager.drawRoundedRect(vg, x - 16, y, 1024, height, backgroundColor, 20);
+        RenderManager.drawString(vg, name, x + 10, y + 32, OneConfigConfig.WHITE, 24, Fonts.INTER_MEDIUM);
         if (!description.equals(""))
-            RenderManager.drawString(vg, name, x + 24, y + 70, OneConfigConfig.WHITE, 14, Fonts.INTER_MEDIUM);
-        RenderManager.drawImage(vg, "/assets/oneconfig/textures/arrow.png", x + 995f, y + (description.equals("") ? 20f : 36f), 13, 22);
+            RenderManager.drawString(vg, name, x + 10, y + 70, OneConfigConfig.WHITE, 14, Fonts.INTER_MEDIUM);
+        RenderManager.drawImage(vg, "/assets/oneconfig/textures/arrow.png", x + 981f, y + (description.equals("") ? 20f : 36f), 13, 22);
 
         if (clicked) OneConfigGui.INSTANCE.openPage(new ModConfigPage(page));
         NanoVG.nvgGlobalAlpha(vg, 1f);
