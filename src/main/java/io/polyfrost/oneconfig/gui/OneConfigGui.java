@@ -65,7 +65,7 @@ public class OneConfigGui extends GuiScreen {
                 prevPage.draw(vg, (int) (x - pageProgress), y + 72);
                 RenderManager.drawLine(vg, (int) (x - pageProgress + 1055), y + 72, (int) (x - pageProgress + 1057), y + 800, 2, OneConfigConfig.GRAY_700);     // TODO might remove this
                 currentPage.draw(vg, (int) (x - pageProgress + 1056), y + 72);
-                if (pageProgress > 828f) {
+                if (pageProgress > 830f) {      // this number is the 'snap' point of the page
                     prevPage = null;
                     pageProgress = -224f;
                 }

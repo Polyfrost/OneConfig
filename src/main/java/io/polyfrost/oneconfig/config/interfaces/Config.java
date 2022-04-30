@@ -6,10 +6,7 @@ import io.polyfrost.oneconfig.config.core.ConfigCore;
 import io.polyfrost.oneconfig.config.data.Mod;
 import io.polyfrost.oneconfig.config.data.OptionPage;
 import io.polyfrost.oneconfig.config.profiles.Profiles;
-import io.polyfrost.oneconfig.gui.elements.config.ConfigCheckbox;
-import io.polyfrost.oneconfig.gui.elements.config.ConfigPage;
-import io.polyfrost.oneconfig.gui.elements.config.ConfigSwitch;
-import io.polyfrost.oneconfig.gui.elements.config.ConfigTextBox;
+import io.polyfrost.oneconfig.gui.elements.config.*;
 
 import java.io.*;
 import java.lang.reflect.Field;
@@ -99,6 +96,13 @@ public class Config {
                     break;
                 case TEXT:
                     options.add(new ConfigTextBox(field, option.name(), option.size(), option.secure(), option.multiLine()));
+                    break;
+                case DUAL_OPTION:
+                    options.add(new ConfigDualOption(field, option.name(), option.size(), option.optionLeft(), option.optionRight()));
+                    break;
+                case UNI_SELECTOR:
+                    options.add(new ConfigUniSelector(field, option.name(), option.size(), option.options()));
+                    break;
             }
         }
     }

@@ -36,6 +36,15 @@ public @interface Option {
      */
     String subcategory();
 
+    /** The name shown on the Left option of a DualOption slider. */
+    String optionLeft() default "Option 1";
+
+    /** The name shown on the Right option of a DualOption slider. */
+    String optionRight() default "Option 2";
+
+    /** A String array of all the possible values for the UniSelector, dropdownList, and ComboBox */
+    String[] options() default {};
+
     /**
      * The width of the option (1 = half width, 2 = full width)
      */

@@ -9,37 +9,41 @@ import io.polyfrost.oneconfig.config.interfaces.Config;
 public class TestConfig extends Config {
 
     @Option(
-            name = "Test checkbox",
+            name = "Test dual thing",
             description = "Best description",
             subcategory = "Test",
-            type = OptionType.CHECKBOX
+            optionLeft = "FUNNY", optionRight = "not funny",
+            type = OptionType.DUAL_OPTION
     )
     public static boolean switchTest;
 
     @Option(
-            name = "Test checkbox",
+            name = "Test string",
             description = "Best description",
             subcategory = "Test",
-            type = OptionType.CHECKBOX
+            optionLeft = "HI", optionRight = "BYE",
+            type = OptionType.DUAL_OPTION
     )
     public static boolean switchTest1;
 
     @Option(
-            name = "Test checkbox",
+            name = "Test dual option",
             description = "Best description",
             subcategory = "Test",
-            type = OptionType.CHECKBOX,
+            optionRight = "cool", optionLeft = "not cool",
+            type = OptionType.DUAL_OPTION,
             size = 2
     )
     public static boolean switchTest2;
 
     @Option(
-            name = "Test checkbox",
+            name = "Test option",
             description = "Best description",
             subcategory = "Test",
-            type = OptionType.CHECKBOX
+            options = {"Hello", "World", "Fish", "Cat"},
+            type = OptionType.UNI_SELECTOR
     )
-    public static boolean switchTest3;
+    public static int switchTest3;
 
     @Option(
             name = "Test Page",
@@ -65,10 +69,10 @@ public class TestConfig extends Config {
     public static boolean switchTest5;
 
     @Option(
-            name = "Test switch",
+            name = "Test check",
             description = "Best description",
             subcategory = "Other subcategory",
-            type = OptionType.SWITCH
+            type = OptionType.CHECKBOX
     )
     public static boolean switchTest6;
 
