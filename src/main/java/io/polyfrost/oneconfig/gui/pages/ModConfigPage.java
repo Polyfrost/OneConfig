@@ -22,11 +22,13 @@ public class ModConfigPage extends Page {
         int optionX = x + 30;
         int optionY = y + (page.categories.size() == 1 ? 16 : 64);
 
+        // Top page buttons
         for (ConfigPageButton page : page.categories.get(selectedCategory).topPages) {
             page.draw(vg, optionX, optionY);
             optionY += page.getHeight() + 16;
         }
 
+        // Background
         int backgroundSize = 48;
         for (String subCategory : page.categories.get(selectedCategory).subcategories.keySet()) {
             backgroundSize += 32;
@@ -45,7 +47,9 @@ public class ModConfigPage extends Page {
         }
         RenderManager.drawRoundedRect(vg, x + 14, optionY, 1024, backgroundSize, OneConfigConfig.GRAY_900, 20);
 
+        // draw options
         optionY += 16;
+        int optionLastY = optionX;
         for (String subCategory : page.categories.get(selectedCategory).subcategories.keySet()) {
             RenderManager.drawString(vg, subCategory, optionX, optionY + 16, OneConfigConfig.WHITE_90, 24f, Fonts.INTER_MEDIUM);
             optionY += 48;
@@ -66,9 +70,29 @@ public class ModConfigPage extends Page {
         }
         optionY += 16;
 
+        // Bottom page buttons
         for (ConfigPageButton page : page.categories.get(selectedCategory).bottomPages) {
             page.draw(vg, optionX, optionY);
             optionY += page.getHeight() + 16;
+        }
+
+        // Draw last options
+        for (String subCategory : page.categories.get(selectedCategory).subcategories.keySet()) {
+            optionLastY += 48;
+            for (int i = 0; i < page.categories.get(selectedCategory).subcategories.get(subCategory).size(); i++) {
+                BasicOption option = page.categories.get(selectedCategory).subcategories.get(subCategory).get(i);
+                option.drawLast(vg, optionX, optionLastY);
+                if (i + 1 < page.categories.get(selectedCategory).subcategories.get(subCategory).size()) {
+                    BasicOption nextOption = page.categories.get(selectedCategory).subcategories.get(subCategory).get(i + 1);
+                    if (option.size == 1 && option.hasHalfSize() && nextOption.size == 1 && nextOption.hasHalfSize()) {
+                        nextOption.drawLast(vg, optionX + 512, optionLastY);
+                        optionLastY += Math.max(option.getHeight(), nextOption.getHeight()) + 16;
+                        i++;
+                        continue;
+                    }
+                }
+                optionLastY += option.getHeight() + 16;
+            }
         }
     }
 

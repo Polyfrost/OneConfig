@@ -55,6 +55,18 @@ public abstract class BasicOption {
     public abstract void draw(long vg, int x, int y);
 
     /**
+     * Function that gets called last drawing option,
+     * should be used for things that draw above other options
+     *
+     * @param vg     NanoVG context
+     * @param x      x position
+     * @param y      y position
+     */
+    public void drawLast(long vg, int x, int y) {
+
+    }
+
+    /**
      * Function that gets called when a key is typed
      *
      * @param key char that has been typed
