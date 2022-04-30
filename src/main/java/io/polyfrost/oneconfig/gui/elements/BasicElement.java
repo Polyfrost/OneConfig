@@ -3,7 +3,6 @@ package io.polyfrost.oneconfig.gui.elements;
 import io.polyfrost.oneconfig.lwjgl.RenderManager;
 import io.polyfrost.oneconfig.utils.ColorUtils;
 import io.polyfrost.oneconfig.utils.InputUtils;
-import org.lwjgl.input.Mouse;
 
 public class BasicElement {
     protected int width, height;
