@@ -18,7 +18,6 @@ public class ModConfigPage extends Page {
     @Override
     public void draw(long vg, int x, int y) {
         if (page.categories.size() == 0) return;
-        NanoVG.nvgScissor(vg, x + 14, y, 1056, 800);
         String selectedCategory = page.categories.keySet().stream().findFirst().get();
         int optionX = x + 30;
         int optionY = y + (page.categories.size() == 1 ? 32 : 72);
@@ -58,7 +57,6 @@ public class ModConfigPage extends Page {
             }
             optionY += 28;
         }
-        NanoVG.nvgResetScissor(vg);
     }
 
     @Override

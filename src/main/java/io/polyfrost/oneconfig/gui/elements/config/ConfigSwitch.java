@@ -10,9 +10,6 @@ import io.polyfrost.oneconfig.utils.MathUtils;
 
 import java.lang.reflect.Field;
 
-import static org.lwjgl.nanovg.NanoVG.nvgResetScissor;
-import static org.lwjgl.nanovg.NanoVG.nvgScissor;
-
 public class ConfigSwitch extends BasicOption {
     private int color;
     private float percentOn = 0f;
@@ -29,7 +26,6 @@ public class ConfigSwitch extends BasicOption {
             toggled = (boolean) get();
         } catch (IllegalAccessException ignored) {
         }
-        nvgScissor(vg, x, y, size == 1 ? 480 : 992, 32);
         int x2 = x + 19 + (int) (percentOn * 18);
         color = ColorUtils.smoothColor(color, OneConfigConfig.GRAY_400, OneConfigConfig.BLUE_500, toggled, 20f);
         if (color == -15123643) {
@@ -49,7 +45,6 @@ public class ConfigSwitch extends BasicOption {
             }
         }
         percentOn = MathUtils.clamp(MathUtils.easeOut(percentOn, toggled ? 1f : 0f, 10));
-        nvgResetScissor(vg);
     }
 
     @Override

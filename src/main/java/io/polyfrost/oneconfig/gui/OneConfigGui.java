@@ -18,7 +18,6 @@ import static org.lwjgl.nanovg.NanoVG.nvgScissor;
 
 public class OneConfigGui extends GuiScreen {
     public static OneConfigGui INSTANCE;
-    private final BasicElement element = new BasicElement(200, 200, 1, true);
 
     public final int x = 320;
     public final int y = 140;

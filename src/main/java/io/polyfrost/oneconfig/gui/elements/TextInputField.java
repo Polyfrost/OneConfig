@@ -14,9 +14,6 @@ import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 
-import static org.lwjgl.nanovg.NanoVG.nvgResetScissor;
-import static org.lwjgl.nanovg.NanoVG.nvgScissor;
-
 public class TextInputField extends BasicElement {
 
     protected final String defaultText;
@@ -78,7 +75,6 @@ public class TextInputField extends BasicElement {
                 }
                 width = RenderManager.getTextWidth(vg, s.substring(0, caretPos), 14f, Fonts.INTER_REGULAR);
             }
-            nvgScissor(vg, x, y, this.width, height);
             if(hovered) {
                 while (Mouse.next()) {
                     if (Mouse.getEventButtonState()) {
@@ -139,7 +135,6 @@ public class TextInputField extends BasicElement {
             } else {
                 RenderManager.drawString(vg, s.toString(), x + 12, y + height / 2f + 1, color, 14f, Fonts.INTER_REGULAR);
             }
-            nvgResetScissor(vg);
         } catch (Exception e) {
             e.printStackTrace();
         }
