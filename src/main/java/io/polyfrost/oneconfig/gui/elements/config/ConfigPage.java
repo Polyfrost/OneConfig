@@ -27,7 +27,6 @@ public class ConfigPage extends BasicOption {
     @Override
     public void draw(long vg, int x, int y) {
         int height = description.equals("") ? 64 : 96;
-        NanoVG.nvgScissor(vg, x - 16, y, 1024, height);
         boolean hovered = InputUtils.isAreaHovered(x - 2, y, 1024, height);
         boolean clicked = InputUtils.isAreaClicked(x - 2, y, 1024, height);
         backgroundColor = ColorUtils.smoothColor(backgroundColor, OneConfigConfig.GRAY_500, OneConfigConfig.GRAY_400, hovered, 100);
@@ -42,7 +41,6 @@ public class ConfigPage extends BasicOption {
 
         if (clicked) OneConfigGui.INSTANCE.openPage(new ModConfigPage(page));
         NanoVG.nvgGlobalAlpha(vg, 1f);
-        NanoVG.nvgResetScissor(vg);
     }
 
     @Override

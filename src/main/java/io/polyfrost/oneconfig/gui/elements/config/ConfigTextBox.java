@@ -30,9 +30,7 @@ public class ConfigTextBox extends BasicOption {
 
     @Override
     public void draw(long vg, int x, int y) {
-        NanoVG.nvgScissor(vg, x, y, size == 1 && !secure && !multiLine ? 216 : 344, 32);
         RenderManager.drawString(vg, name, x, y + 16, OneConfigConfig.WHITE, 14, Fonts.INTER_MEDIUM);
-        NanoVG.nvgResetScissor(vg);
 
         textField.draw(vg, x + (size == 1 && hasHalfSize() ? 224 : 352), y);
 
