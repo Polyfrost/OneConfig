@@ -14,7 +14,6 @@ import java.lang.reflect.Field;
 public class ConfigCheckbox extends BasicOption {
     private int color;
     private float percentOn = 0f;
-    private boolean toggled = false;
 
     public ConfigCheckbox(Field field, String name, int size) {
         super(field, name, size);
@@ -22,11 +21,22 @@ public class ConfigCheckbox extends BasicOption {
 
     @Override
     public void draw(long vg, int x, int y) {
+        boolean toggled = false;
+        try {
+            toggled = (boolean) get();
+        } catch (IllegalAccessException ignored) {
+        }
         boolean hover = InputUtils.isAreaHovered(x, y, 24, 24);
 
         boolean clicked = InputUtils.isClicked() && hover;
         if(clicked) {
             toggled = !toggled;
+            try {
+                set(toggled);
+            } catch (IllegalAccessException e) {
+                System.err.println("failed to write config value: class=" + this + " fieldWatching=" + field + " valueWrite=" + toggled);
+                e.printStackTrace();
+            }
         }
         if(percentOn != 1f) {       // performance
             RenderManager.drawRoundedRect(vg, x, y, 24, 24, color, 6f);

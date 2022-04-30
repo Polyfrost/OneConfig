@@ -2,10 +2,6 @@ package io.polyfrost.oneconfig.config.data;
 
 public enum OptionType {
     /**
-     * Type: class
-     */
-    PAGE,
-    /**
      * Type: boolean
      */
     SWITCH,

@@ -17,11 +17,6 @@ public @interface Option {
     String name();
 
     /**
-     * The description of the page that will be displayed to the user
-     */
-    String description() default "";
-
-    /**
      * The type of the option
      */
     OptionType type();
@@ -49,6 +44,11 @@ public @interface Option {
      * The width of the option (1 = half width, 2 = full width)
      */
     int size() default 1;
+
+    /**
+     * The placeholder in the text field
+     */
+    String placeholder() default "";
 
     /**
      * If the text field is secure or not

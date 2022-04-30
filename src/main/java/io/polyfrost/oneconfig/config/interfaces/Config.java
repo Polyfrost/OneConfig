@@ -1,9 +1,11 @@
 package io.polyfrost.oneconfig.config.interfaces;
 
 import com.google.gson.*;
+import io.polyfrost.oneconfig.config.annotations.ConfigPage;
 import io.polyfrost.oneconfig.config.annotations.Option;
 import io.polyfrost.oneconfig.config.core.ConfigCore;
 import io.polyfrost.oneconfig.config.data.Mod;
+import io.polyfrost.oneconfig.config.data.OptionCategory;
 import io.polyfrost.oneconfig.config.data.OptionPage;
 import io.polyfrost.oneconfig.config.profiles.Profiles;
 import io.polyfrost.oneconfig.gui.elements.config.*;
@@ -66,28 +68,38 @@ public class Config {
      */
     protected void generateOptionList(Class<?> clazz, OptionPage page, Mod mod) {
         for (Field field : clazz.getDeclaredFields()) {
-            if (!field.isAnnotationPresent(Option.class)) {
+            if (!field.isAnnotationPresent(Option.class) && !field.isAnnotationPresent(ConfigPage.class)) {
                 processCustomOption(field, page);
+                continue;
+            } else if (field.isAnnotationPresent(ConfigPage.class)) {
+                ConfigPage option = field.getAnnotation(ConfigPage.class);
+                if (!page.categories.containsKey(option.category()))
+                    page.categories.put(option.category(), new OptionCategory());
+                OptionPage newPage = new OptionPage(option.name(), mod);
+                try {
+                    field.setAccessible(true);
+                    Object object = field.get(clazz);
+                    generateOptionList(object.getClass(), newPage, mod);
+                    switch (option.location()) {
+                        case TOP:
+                            page.categories.get(option.category()).topPages.add(new ConfigPageButton(field, option.name(), option.description(), newPage));
+                            break;
+                        case BOTTOM:
+                            page.categories.get(option.category()).bottomPages.add(new ConfigPageButton(field, option.name(), option.description(), newPage));
+                            break;
+                    }
+                } catch (IllegalAccessException e) {
+                    continue;
+                }
                 continue;
             }
             Option option = field.getAnnotation(Option.class);
             if (!page.categories.containsKey(option.category()))
-                page.categories.put(option.category(), new HashMap<>());
-            if (!page.categories.get(option.category()).containsKey(option.subcategory()))
-                page.categories.get(option.category()).put(option.subcategory(), new ArrayList<>());
-            ArrayList<BasicOption> options = page.categories.get(option.category()).get(option.subcategory());
+                page.categories.put(option.category(), new OptionCategory());
+            if (!page.categories.get(option.category()).subcategories.containsKey(option.subcategory()))
+                page.categories.get(option.category()).subcategories.put(option.subcategory(), new ArrayList<>());
+            ArrayList<BasicOption> options = page.categories.get(option.category()).subcategories.get(option.subcategory());
             switch (option.type()) {
-                case PAGE:
-                    OptionPage newPage = new OptionPage(option.name(), mod);
-                    try {
-                        field.setAccessible(true);
-                        Object object = field.get(clazz);
-                        generateOptionList(object.getClass(), newPage, mod);
-                        options.add(new ConfigPage(field, option.name(), option.description(), option.size(), newPage));
-                    } catch (IllegalAccessException e) {
-                        continue;
-                    }
-                    break;
                 case SWITCH:
                     options.add(new ConfigSwitch(field, option.name(), option.size()));
                     break;
@@ -95,7 +107,7 @@ public class Config {
                     options.add(new ConfigCheckbox(field, option.name(), option.size()));
                     break;
                 case TEXT:
-                    options.add(new ConfigTextBox(field, option.name(), option.size(), option.secure(), option.multiLine()));
+                    options.add(new ConfigTextBox(field, option.name(), option.size(), option.placeholder(), option.secure(), option.multiLine()));
                     break;
                 case DUAL_OPTION:
                     options.add(new ConfigDualOption(field, option.name(), option.size(), option.optionLeft(), option.optionRight()));

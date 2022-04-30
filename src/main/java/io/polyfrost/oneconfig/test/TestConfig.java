@@ -1,16 +1,17 @@
 package io.polyfrost.oneconfig.test;
 
+import io.polyfrost.oneconfig.config.annotations.ConfigPage;
 import io.polyfrost.oneconfig.config.annotations.Option;
 import io.polyfrost.oneconfig.config.data.Mod;
 import io.polyfrost.oneconfig.config.data.ModType;
 import io.polyfrost.oneconfig.config.data.OptionType;
+import io.polyfrost.oneconfig.config.data.PageLocation;
 import io.polyfrost.oneconfig.config.interfaces.Config;
 
 public class TestConfig extends Config {
 
     @Option(
             name = "Test dual thing",
-            description = "Best description",
             subcategory = "Test",
             optionLeft = "FUNNY", optionRight = "not funny",
             type = OptionType.DUAL_OPTION
@@ -19,7 +20,6 @@ public class TestConfig extends Config {
 
     @Option(
             name = "Test string",
-            description = "Best description",
             subcategory = "Test",
             optionLeft = "HI", optionRight = "BYE",
             type = OptionType.DUAL_OPTION
@@ -28,7 +28,6 @@ public class TestConfig extends Config {
 
     @Option(
             name = "Test dual option",
-            description = "Best description",
             subcategory = "Test",
             optionRight = "cool", optionLeft = "not cool",
             type = OptionType.DUAL_OPTION,
@@ -38,23 +37,27 @@ public class TestConfig extends Config {
 
     @Option(
             name = "Test option",
-            description = "Best description",
             subcategory = "Test",
             options = {"Hello", "World", "Fish", "Cat"},
             type = OptionType.UNI_SELECTOR
     )
     public static int switchTest3;
 
-    @Option(
+    @ConfigPage(
             name = "Test Page",
-            type = OptionType.PAGE,
-            subcategory = "Test"
+            location = PageLocation.TOP
     )
     public static TestPage testPage = new TestPage();
 
+    @ConfigPage(
+            name = "Test Page width description",
+            description = "Wow, an epic description",
+            location = PageLocation.BOTTOM
+    )
+    public static TestPage testPage2 = new TestPage();
+
     @Option(
             name = "Test switch",
-            description = "Best description",
             subcategory = "Other subcategory",
             type = OptionType.SWITCH
     )
@@ -62,7 +65,6 @@ public class TestConfig extends Config {
 
     @Option(
             name = "Test switch",
-            description = "Best description",
             subcategory = "Other subcategory",
             type = OptionType.SWITCH
     )
@@ -70,7 +72,6 @@ public class TestConfig extends Config {
 
     @Option(
             name = "Test check",
-            description = "Best description",
             subcategory = "Other subcategory",
             type = OptionType.CHECKBOX
     )
