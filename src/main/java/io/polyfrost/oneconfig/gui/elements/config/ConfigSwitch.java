@@ -26,16 +26,16 @@ public class ConfigSwitch extends BasicOption {
             toggled = (boolean) get();
         } catch (IllegalAccessException ignored) {
         }
-        int x2 = x + 19 + (int) (percentOn * 18);
+        int x2 = x + 3 + (int) (percentOn * 18);
         color = ColorUtils.smoothColor(color, OneConfigConfig.GRAY_400, OneConfigConfig.BLUE_500, toggled, 20f);
         if (color == -15123643) {
             color = OneConfigConfig.GRAY_400;
         }
-        RenderManager.drawRoundedRect(vg, x + 16, y + 4, 42, 24, color, 12f);
+        RenderManager.drawRoundedRect(vg, x, y + 4, 42, 24, color, 12f);
         RenderManager.drawRoundedRect(vg, x2, y + 7, 18, 18, OneConfigConfig.WHITE, 9f);
-        RenderManager.drawString(vg, name, x + 66, y + 17, OneConfigConfig.WHITE, 18f, Fonts.INTER_MEDIUM);
+        RenderManager.drawString(vg, name, x + 50, y + 17, OneConfigConfig.WHITE, 18f, Fonts.INTER_MEDIUM);
 
-        if (InputUtils.isAreaClicked(x + 16, y, 42, 32)) {
+        if (InputUtils.isAreaClicked(x, y, 42, 32)) {
             toggled = !toggled;
             try {
                 set(toggled);
