@@ -5,15 +5,27 @@ import io.polyfrost.oneconfig.hud.HudCore;
 
 import java.util.ArrayList;
 
+/**
+ * The Core Config class.
+ */
 public class ConfigCore {
+    /**
+     * The Array of all registered OneConfig Mods.
+     */
     public static ArrayList<Mod> oneConfigMods = new ArrayList<>();
 
+    /**
+     * Saves all registered OneConfig Mods.
+     */
     public static void saveAll() {
         for (Mod modData : oneConfigMods) {
             modData.config.save();
         }
     }
 
+    /**
+     * Initialize all registered OneConfig Mods.
+     */
     public static void reInitAll() {
         ArrayList<Mod> data = new ArrayList<>(oneConfigMods);
         oneConfigMods.clear();

@@ -22,14 +22,18 @@ public class Config {
     protected final Gson gson = new GsonBuilder().excludeFieldsWithModifiers(Modifier.TRANSIENT).setPrettyPrinting().registerTypeAdapterFactory(OneConfigTypeAdapterFactory.getStaticTypeAdapterFactory()).create();
 
     /**
-     * @param modData    information about the mod
-     * @param configFile file where config is stored
+     * @param modData Data about the mod in a Mod class
+     * @param configFile The path to the config file.
      */
     public Config(Mod modData, String configFile) {
         this.configFile = configFile;
         init(modData);
     }
 
+    /**
+     * Initialize a Mod
+     * @param mod The mod to initialize
+     */
     public void init(Mod mod) {
         if (Profiles.getProfileFile(configFile).exists()) load();
         else save();
