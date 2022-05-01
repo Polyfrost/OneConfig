@@ -120,6 +120,9 @@ public class Config {
                 case UNI_SELECTOR:
                     options.add(new ConfigUniSelector(field, option.name(), option.size(), option.options()));
                     break;
+                case DROPDOWN:
+                    options.add(new ConfigDropdown(field, option.name(), option.size(), option.options()));
+                    break;
             }
         }
     }

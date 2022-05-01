@@ -24,6 +24,9 @@ public enum OptionType {
     TEXT,
     SLIDER,
     COLOR,
+    /**
+     * Type: int
+     */
     DROPDOWN,
     MULTI_DROPDOWN,
     INFO

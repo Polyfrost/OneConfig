@@ -71,12 +71,32 @@ public class TestConfig extends Config {
     public static boolean switchTest5;
 
     @Option(
-            name = "Test check",
-            subcategory = "Other subcategory",
-            type = OptionType.CHECKBOX,
-            category = "Test category"
+            name = "Favorite food",
+            subcategory = "Dropdowns",
+            type = OptionType.DROPDOWN,
+            category = "Dropdowns",
+            options = {"Taco", "Pizza", "Hamburger", "Paimon"}
     )
-    public static boolean switchTest6;
+    public static int dropdown1;
+
+    @Option(
+            name = "Favorite food",
+            subcategory = "Dropdowns",
+            type = OptionType.DROPDOWN,
+            category = "Dropdowns",
+            options = {"Taco", "Pizza", "Hamburger", "Paimon"}
+    )
+    public static int dropdown2;
+
+    @Option(
+            name = "Favorite food",
+            subcategory = "Dropdowns",
+            type = OptionType.DROPDOWN,
+            category = "Dropdowns",
+            size = 2,
+            options = {"Taco", "Pizza", "Hamburger", "Paimon"}
+    )
+    public static int dropdown3;
 
     public TestConfig() {
         super(new Mod("hacks", ModType.UTIL_QOL, "ShadyDev", "1.0"), "hacksConfig.json");

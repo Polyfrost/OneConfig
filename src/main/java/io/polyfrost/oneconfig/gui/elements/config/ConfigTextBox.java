@@ -32,7 +32,6 @@ public class ConfigTextBox extends BasicOption {
         } catch (IllegalAccessException ignored) {
         }
 
-
         textField.draw(vg, x + (size == 1 && hasHalfSize() ? 224 : 352), y);
 
         if (secure) RenderManager.drawImage(vg, "/assets/oneconfig/textures/eye.png", x + 967, y + 7, 18, 18, new Color(196,196,196).getRGB());
