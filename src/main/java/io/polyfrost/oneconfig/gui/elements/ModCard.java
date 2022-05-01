@@ -11,6 +11,7 @@ import io.polyfrost.oneconfig.lwjgl.font.Fonts;
 import io.polyfrost.oneconfig.utils.ColorUtils;
 import io.polyfrost.oneconfig.utils.InputUtils;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.resources.I18n;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
 import net.minecraftforge.client.ClientCommandHandler;
@@ -18,6 +19,8 @@ import net.minecraftforge.fml.common.ModMetadata;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.nanovg.NanoVG;
+
+import java.util.ArrayList;
 
 public class ModCard extends BasicElement {
     private final String iconPath;
@@ -94,11 +97,21 @@ public class ModCard extends BasicElement {
             }
             for (ModMetadata mod : OneConfig.loadedOtherMods) {
                 if (mod.name.equalsIgnoreCase(modData.name)) {
-                    System.out.println("Attempting to run command for a mod that isn't OneConfig: " + mod.name);
-                    for (String commands : ClientCommandHandler.instance.getCommands().keySet()) {
-                        if (commands.equalsIgnoreCase(mod.name) || commands.equalsIgnoreCase(mod.modId)) {
+                    ArrayList<String> possibleCommands = new ArrayList<>();
+                    possibleCommands.add(mod.name.toLowerCase().replace(" ", ""));
+                    possibleCommands.add(mod.modId.toLowerCase().replaceAll("[ -_]", ""));
+                    if (mod.name.split(" ").length > 1) {
+                        StringBuilder result = new StringBuilder();
+                        for (String word : mod.name.split(" ")) {
+                            if (word.length() == 0) continue;
+                            result.append(word.charAt(0));
+                        }
+                        possibleCommands.add(result.toString().toLowerCase());
+                    }
+                    for (String command : ClientCommandHandler.instance.getCommands().keySet()) {
+                        if (possibleCommands.contains(command)) {
                             try {
-                                ClientCommandHandler.instance.getCommands().get(commands).processCommand(Minecraft.getMinecraft().thePlayer, new String[]{});
+                                ClientCommandHandler.instance.getCommands().get(command).processCommand(Minecraft.getMinecraft().thePlayer, new String[]{});
                             } catch (CommandException e) {
                                 throw new RuntimeException(e);
                             }

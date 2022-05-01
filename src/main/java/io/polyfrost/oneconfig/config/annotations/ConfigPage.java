@@ -28,5 +28,5 @@ public @interface ConfigPage {
     /**
      * The category of the page
      */
-    String category() default "general";
+    String category() default "General";
 }

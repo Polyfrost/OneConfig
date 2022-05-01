@@ -1,7 +1,6 @@
 package io.polyfrost.oneconfig.gui;
 
 import io.polyfrost.oneconfig.config.OneConfigConfig;
-import io.polyfrost.oneconfig.gui.elements.BasicElement;
 import io.polyfrost.oneconfig.gui.elements.TextInputField;
 import io.polyfrost.oneconfig.gui.pages.HomePage;
 import io.polyfrost.oneconfig.gui.pages.Page;
@@ -34,6 +33,11 @@ public class OneConfigGui extends GuiScreen {
 
     public OneConfigGui() {
         INSTANCE = this;
+    }
+
+    public OneConfigGui(Page page) {
+        INSTANCE = this;
+        currentPage = page;
     }
 
     @Override

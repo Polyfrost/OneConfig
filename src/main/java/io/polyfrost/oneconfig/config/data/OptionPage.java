@@ -1,7 +1,6 @@
 package io.polyfrost.oneconfig.config.data;
 
-
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 public class OptionPage {
     public final String name;
@@ -11,7 +10,7 @@ public class OptionPage {
      * Depth 2 = subcategories
      * Depth 3 = list of options
      */
-    public final HashMap<String, OptionCategory> categories = new HashMap<>();
+    public final LinkedHashMap<String, OptionCategory> categories = new LinkedHashMap<>();
 
     public OptionPage(String name, Mod mod) {
         this.name = name;
