@@ -6,6 +6,8 @@ import io.polyfrost.oneconfig.config.core.ConfigCore;
 import io.polyfrost.oneconfig.config.data.Mod;
 import io.polyfrost.oneconfig.config.data.ModType;
 import io.polyfrost.oneconfig.hud.HudCore;
+import io.polyfrost.oneconfig.lwjgl.RenderManager;
+import io.polyfrost.oneconfig.lwjgl.font.Fonts;
 import io.polyfrost.oneconfig.test.TestConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.client.ClientCommandHandler;
@@ -47,6 +49,11 @@ public class OneConfig {
         ClientCommandHandler.instance.registerCommand(new OneConfigCommand());
         MinecraftForge.EVENT_BUS.register(this);
         MinecraftForge.EVENT_BUS.register(new HudCore());
+        RenderManager.setupAndDraw((vg) -> {
+            RenderManager.drawRoundedRect(vg, -100, -100, 50, 50, -1, 12f);
+            RenderManager.drawString(vg, "OneConfig loading...", -100, -100, -1, 12f, Fonts.INTER_MEDIUM);
+            RenderManager.drawImage(vg, "/assets/oneconfig/textures/icon.png", -100, -100, 50, 50);
+        });
     }
 
     @net.minecraftforge.fml.common.Mod.EventHandler
