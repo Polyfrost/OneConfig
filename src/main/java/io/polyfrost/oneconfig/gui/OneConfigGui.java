@@ -97,6 +97,7 @@ public class OneConfigGui extends GuiScreen {
     }
 
     public void openPage(@NotNull Page page) {
+        if(page == currentPage) return;
         currentPage.finishUpAndClose();
         if (prevPage == null) {
             prevPage = currentPage;

@@ -13,15 +13,15 @@ public class TestConfig extends Config {
     @Option(
             name = "Test dual thing",
             subcategory = "Test",
-            optionLeft = "FUNNY", optionRight = "not funny",
-            type = OptionType.DUAL_OPTION
+            min = 3f, max = 127f,
+            type = OptionType.SLIDER
     )
-    public static boolean switchTest;
+    public static float sliderText;
 
     @Option(
             name = "Test string",
             subcategory = "Test",
-            optionLeft = "HI", optionRight = "BYE",
+            options = {"NO", "YES"},
             type = OptionType.DUAL_OPTION
     )
     public static boolean switchTest1;
@@ -29,11 +29,11 @@ public class TestConfig extends Config {
     @Option(
             name = "Test dual option",
             subcategory = "Test",
-            optionRight = "cool", optionLeft = "not cool",
-            type = OptionType.DUAL_OPTION,
-            size = 2
+            options = {"HI", "BYE"},
+            type = OptionType.DUAL_OPTION
     )
     public static boolean switchTest2;
+
 
     @Option(
             name = "Test option",

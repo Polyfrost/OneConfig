@@ -17,6 +17,7 @@ public class ColorUtils {
                 case -1:
                     return OneConfigConfig.GRAY_500_80;
                 default:
+                case 2:
                 case 0:
                     return OneConfigConfig.GRAY_400_80;
                 case 1:
@@ -34,6 +35,8 @@ public class ColorUtils {
                 return getColorComponents(color, splitColor(OneConfigConfig.GRAY_600), splitColor(OneConfigConfig.GRAY_300), hover, 25f);
             case 1:
                 return getColorComponents(color, splitColor(OneConfigConfig.BLUE_600), splitColor(OneConfigConfig.BLUE_500), hover, 150f);
+            case 2:
+                return getColorComponents(color, splitColor(OneConfigConfig.GRAY_500), splitColor(OneConfigConfig.GRAY_300), hover, 50f);
 
         }
 

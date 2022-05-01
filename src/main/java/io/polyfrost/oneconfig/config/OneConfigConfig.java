@@ -19,7 +19,6 @@ public class OneConfigConfig extends Config {
 
     public static final int GRAY_900 = new Color(13, 14, 15, 255).getRGB();           // Gray 900
     public static final int GRAY_900_80 = new Color(13, 14, 15, 204).getRGB();         // Gray 900 80%
-    // im waiting for u to say the gray button colors
     public static final int GRAY_800 = new Color(21, 22, 23, 255).getRGB();           // Gray 800
     public static final int GRAY_700 = new Color(34, 35, 38, 255).getRGB();           // Gray 700
     public static final int GRAY_600 = new Color(42, 44, 48, 255).getRGB();           // Gray 600
@@ -41,6 +40,8 @@ public class OneConfigConfig extends Config {
     public static final int WHITE_80 = new Color(255, 255, 255, 204).getRGB();        // White 80%
     public static final int WHITE_90 = new Color(255, 255, 255, 229).getRGB();        // White 90%
     public static final int WHITE = new Color(255, 255, 255, 255).getRGB();           // White 100%
+
+    public static final int ERROR_700 = new Color(180, 24, 24, 255).getRGB();         // Red 700
 
     public static boolean ROUNDED_CORNERS = true;
     public static float CORNER_RADIUS_WIN = 20f;
