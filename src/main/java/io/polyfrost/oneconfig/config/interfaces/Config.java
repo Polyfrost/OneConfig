@@ -110,11 +110,13 @@ public class Config {
                     options.add(new ConfigTextBox(field, option.name(), option.size(), option.placeholder(), option.secure(), option.multiLine()));
                     break;
                 case DUAL_OPTION:
-                    options.add(new ConfigDualOption(field, option.name(), option.size(), option.optionLeft(), option.optionRight()));
+                    options.add(new ConfigDualOption(field, option.name(), option.size(), option.options()));
                     break;
                 case UNI_SELECTOR:
                     options.add(new ConfigUniSelector(field, option.name(), option.size(), option.options()));
                     break;
+                case SLIDER:
+                    options.add(new ConfigSlider(field, option.name(), option.size(), option.min(), option.max(), option.step()));
             }
         }
     }

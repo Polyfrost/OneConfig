@@ -28,6 +28,9 @@ public class TextInputField extends BasicElement {
     protected long vg;
     protected int prevCaret = 0;
     protected boolean isDoubleClick = false;
+    protected boolean onlyNums = false;
+    protected boolean errored = false;
+    protected boolean centered = false;
 
     public TextInputField(int width, int height, String defaultText, boolean multiLine, boolean password) {
         super(width, height, false);
@@ -35,6 +38,10 @@ public class TextInputField extends BasicElement {
         this.defaultText = defaultText;
         this.password = password;
         this.input = "";
+    }
+
+    public void onlyAcceptNumbers(boolean state) {
+        onlyNums = state;
     }
 
     public void setInput(String input) {
@@ -53,18 +60,32 @@ public class TextInputField extends BasicElement {
         return password;
     }
 
+    public void setErrored(boolean errored) {
+        this.errored = errored;
+    }
+
+    public void setCentered(boolean centered) {
+        this.centered = centered;
+    }
+
+    public boolean isErrored() {
+        return errored;
+    }
+
     @Override
     public void draw(long vg, int x, int y) {
         this.x = x;
         this.y = y;
         this.vg = vg;
         try {
-            RenderManager.drawHollowRoundRect(vg, x, y, width, height, OneConfigConfig.GRAY_700, 12f, 2f);
+            int colorOutline = errored ? OneConfigConfig.ERROR_700 : OneConfigConfig.GRAY_700;
+            RenderManager.drawHollowRoundRect(vg, x, y, width, height, colorOutline, 12f, 2f);
             super.update(x, y);
             if (Mouse.isButtonDown(0) && !InputUtils.isAreaHovered(x - 40, y - 20, width + 90, height + 20)) {
                 toggled = false;
             }
             int color = toggled ? OneConfigConfig.WHITE : OneConfigConfig.WHITE_60;
+            if(!toggled) caretPos = input.length();
             float width;
             StringBuilder s = new StringBuilder();
             if (!password) {
@@ -102,6 +123,7 @@ public class TextInputField extends BasicElement {
                     }
                 }
             }
+            float halfTextWidth = this.getTextWidth(vg, input) / 2f;
             if (start != 0f && end != 0f && toggled) {
                 RenderManager.drawRect(vg, start, y + height / 2f - 10, end, 20, OneConfigConfig.GRAY_300);
             }
@@ -109,11 +131,13 @@ public class TextInputField extends BasicElement {
                 if (Mouse.isButtonDown(0) && !isDoubleClick) {
                     caretPos = calculatePos(Mouse.getX());
                     if (caretPos > prevCaret) {
-                        start = x + 12 + this.getTextWidth(vg, input.substring(0, prevCaret));
+                        if(!centered) start = x + 12 + this.getTextWidth(vg, input.substring(0, prevCaret));
+                        else start = x + this.width / 2f - halfTextWidth + this.getTextWidth(vg, input.substring(0, prevCaret));
                         end = this.getTextWidth(vg, input.substring(prevCaret, caretPos));
                         selectedText = input.substring(prevCaret, caretPos);
                     } else {
-                        start = x + 12 + this.getTextWidth(vg, input.substring(0, prevCaret));
+                        if(!centered) start = x + 12 + this.getTextWidth(vg, input.substring(0, prevCaret));
+                        else start = x + this.width / 2f - halfTextWidth + this.getTextWidth(vg, input.substring(0, prevCaret));
                         end = -this.getTextWidth(vg, input.substring(caretPos, prevCaret));
                         selectedText = input.substring(caretPos, prevCaret);
                     }
@@ -122,16 +146,28 @@ public class TextInputField extends BasicElement {
 
 
             if (toggled) {
-                RenderManager.drawLine(vg, x + width + 12, (float) y + height / 2f - 10, x + width + 12, (float) y + height / 2f + 10, 1, OneConfigConfig.WHITE);
+                if(!centered) {
+                    RenderManager.drawLine(vg, x + width + 12, (float) y + height / 2f - 10, x + width + 12, (float) y + height / 2f + 10, 1, OneConfigConfig.WHITE);
+                } else {
+                    RenderManager.drawLine(vg, x + this.width / 2f - halfTextWidth + width, (float) y + height / 2f - 10, x + this.width / 2f - halfTextWidth + width, (float) y + height / 2f + 10, 1, OneConfigConfig.WHITE);
+                }
             }
 
 
             if (input.equals("")) {
-                RenderManager.drawString(vg, defaultText, x + 12, y + height / 2f + 1, color, 14f, Fonts.INTER_REGULAR);
+                if(!centered) {
+                    RenderManager.drawString(vg, defaultText, x + 12, y + height / 2f + 1, color, 14f, Fonts.INTER_REGULAR);
+                } else {
+                    RenderManager.drawString(vg, defaultText, x + this.width / 2f - halfTextWidth, y + height / 2f + 1, color, 14f, Fonts.INTER_REGULAR);
+                }
             }
 
             if (!password) {
-                RenderManager.drawString(vg, input, x + 12, y + height / 2f + 1, color, 14f, Fonts.INTER_REGULAR);
+                if(!centered) {
+                    RenderManager.drawString(vg, input, x + 12, y + height / 2f + 1, color, 14f, Fonts.INTER_REGULAR);
+                } else {
+                    RenderManager.drawString(vg, input, x + this.width / 2f - halfTextWidth, y + height / 2f + 1, color, 14f, Fonts.INTER_REGULAR);
+                }
             } else {
                 RenderManager.drawString(vg, s.toString(), x + 12, y + height / 2f + 1, color, 14f, Fonts.INTER_REGULAR);
             }
@@ -178,7 +214,7 @@ public class TextInputField extends BasicElement {
                     if (GuiScreen.isKeyComboCtrlA(key)) {
                         prevCaret = 0;
                         caretPos = input.length();
-                        start = x + 12;
+                        start = !centered ? x + 12 : x + this.width / 2f - this.getTextWidth(vg, input) / 2f;
                         selectedText = input;
                         end = this.getTextWidth(vg, input);
                         return;
@@ -222,6 +258,7 @@ public class TextInputField extends BasicElement {
                     return;
                 }
                 if (key == Keyboard.KEY_TAB) {
+                    if(onlyNums) return;
                     input += "    ";
                     caretPos += 4;
                     return;
@@ -282,6 +319,9 @@ public class TextInputField extends BasicElement {
                 if (key == Keyboard.KEY_LCONTROL || key == Keyboard.KEY_RCONTROL || key == Keyboard.KEY_LMENU || key == Keyboard.KEY_RMENU || key == Keyboard.KEY_LMETA || key == Keyboard.KEY_RMETA || key == Keyboard.KEY_LSHIFT || key == Keyboard.KEY_RSHIFT || key == Keyboard.KEY_RETURN || key == Keyboard.KEY_CAPITAL || key == 221 || key == Keyboard.KEY_HOME) {
                     return;
                 }
+                if(onlyNums) {
+                    if(!Character.isDigit(c) && key != 52) return;
+                }
                 if (!Character.isDefined(key)) return;
                 if (!Character.isDefined(c)) return;
                 if(GuiScreen.isCtrlKeyDown()) return;
@@ -329,11 +369,13 @@ public class TextInputField extends BasicElement {
         caretPos = input.indexOf(' ', caretPos);
         if(caretPos == -1) caretPos = input.length();
         selectedText = input.substring(prevCaret, caretPos);
-        start = x + 12 + this.getTextWidth(vg, input.substring(0, prevCaret));
+        if(!centered) start = x + 12 + this.getTextWidth(vg, input.substring(0, prevCaret));
+        else start = x + this.width / 2f - this.getTextWidth(vg, input) / 2f + this.getTextWidth(vg, input.substring(0, prevCaret));
         end = this.getTextWidth(vg, input.substring(prevCaret, caretPos));
     }
 
     private int calculatePos(int pos) {
+        if(centered) pos -= 12;
         String s1 = "";
         int i;
         for (char c : input.toCharArray()) {
