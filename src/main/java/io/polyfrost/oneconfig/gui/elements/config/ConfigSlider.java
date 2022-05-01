@@ -20,17 +20,20 @@ public class ConfigSlider extends BasicOption {
     private final BasicElement upArrow = new BasicElement(12, 14, false);
     private final BasicElement downArrow = new BasicElement(12, 14, false);
     private final float min, max;
-    private final int step;
+    private int steps = 0;
     private int colorTop, colorBottom;
     private boolean isFloat = true;
     private Float prevAsNum = null;
+    private int step;
 
     public ConfigSlider(Field field, String name, int size, float min, float max, int step) {
         super(field, name, size);
         this.min = min;
         this.max = max;
-        if (step > 0) this.step = step - 1;       // it adds one more step than actual
-        else this.step = 0;
+        this.step = step;
+        if (step > 0) {
+            steps = (int) ((max - min) / step);
+        }
         slideYBoi.setCustomHitbox(28, 8);
         inputField.onlyAcceptNumbers(true);
         inputField.setCentered(true);
@@ -54,34 +57,8 @@ public class ConfigSlider extends BasicOption {
         } catch (IllegalAccessException ignored) {
         }
         float current = MathUtils.clamp((value - min) / (max - min));
-        RenderManager.drawString(vg, name, x, y + 15, OneConfigConfig.WHITE_90, 18f, Fonts.INTER_MEDIUM);
-        RenderManager.drawRoundedRect(vg, x + 352, y + 13, 512, 6, OneConfigConfig.GRAY_300, 4f);
-        slideYBoi.update(x + 340 + (int) (current * 512), y + 4);
-        if (step != 0) {
-            for (float i = 0; i <= 1.005f; i += 1f / step) {         // sometimes it's just more than 1, so we add a little
-                int color = current > i ? OneConfigConfig.BLUE_500 : OneConfigConfig.GRAY_300;
-                RenderManager.drawRoundedRect(vg, x + 351 + (int) (i * 512), y + 9, 4, 14, color, 2f);
-            }
-        }
-        RenderManager.drawRoundedRect(vg, x + 352, y + 13, (int) (current * 512), 6, OneConfigConfig.BLUE_500, 4f);
-        if (step == 0)
-            RenderManager.drawRoundedRect(vg, x + 340 + (int) (current * 512), y + 4, 24, 24, OneConfigConfig.WHITE, 12f);
-        else
-            RenderManager.drawRoundedRect(vg, x + 346 + (int) (current * 512), y + 4, 8, 24, OneConfigConfig.WHITE, 4f);
 
-        int mouseX = InputUtils.mouseX() - (x + 352);
-        if (InputUtils.isAreaClicked(x + 332, y + 9, 542, 10) && !slideYBoi.isHovered()) {
-            if (step == 0) {
-                current = MathUtils.clamp(mouseX / 512f);
-            } else current = MathUtils.clamp(toNearestStep(mouseX / 512f));
-        }
-        if (slideYBoi.isHovered() && Mouse.isButtonDown(0)) {
-            if (step == 0) {
-                current = MathUtils.clamp(mouseX / 512f);
-            } else current = MathUtils.clamp(toNearestStep(mouseX / 512f));
-        }
         float currentAsNum = current * (max - min) + min;
-
         if (!inputField.isToggled()) inputField.setInput(String.format("%.01f", currentAsNum));
         inputField.setErrored(false);
         if (inputField.isToggled()) {
@@ -95,7 +72,7 @@ public class ConfigSlider extends BasicOption {
                     inputField.setErrored(true);
                     input = max;
                 }
-                if (step == 0) {
+                if (steps == 0) {
                     current = MathUtils.clamp((input - min) / (max - min));
                 } else {
                     current = toNearestStep(MathUtils.clamp((input - min) / (max - min)));
@@ -106,6 +83,34 @@ public class ConfigSlider extends BasicOption {
         }
         inputField.draw(vg, x + 892, y);
 
+        RenderManager.drawString(vg, name, x, y + 15, OneConfigConfig.WHITE_90, 18f, Fonts.INTER_MEDIUM);
+        RenderManager.drawRoundedRect(vg, x + 352, y + 13, 512, 6, OneConfigConfig.GRAY_300, 4f);
+        slideYBoi.update(x + 340 + (int) (current * 512), y + 4);
+        if (steps != 0) {
+            for (float i = 0; i <= 1.005f; i += 1f / steps) {         // sometimes it's just more than 1, so we add a little
+                int color = current > i ? OneConfigConfig.BLUE_500 : OneConfigConfig.GRAY_300;
+                RenderManager.drawRoundedRect(vg, x + 351 + (int) (i * 512), y + 9, 4, 14, color, 2f);
+            }
+        }
+        RenderManager.drawRoundedRect(vg, x + 352, y + 13, (int) (current * 512), 6, OneConfigConfig.BLUE_500, 4f);
+        if (steps == 0)
+            RenderManager.drawRoundedRect(vg, x + 340 + (int) (current * 512), y + 4, 24, 24, OneConfigConfig.WHITE, 12f);
+        else
+            RenderManager.drawRoundedRect(vg, x + 346 + (int) (current * 512), y + 4, 8, 24, OneConfigConfig.WHITE, 4f);
+
+        int mouseX = InputUtils.mouseX() - (x + 352);
+        if (InputUtils.isAreaClicked(x + 332, y + 9, 542, 10) && !slideYBoi.isHovered()) {
+            if (steps == 0) {
+                current = MathUtils.clamp(mouseX / 512f);
+            } else current = MathUtils.clamp(toNearestStep(mouseX / 512f));
+        }
+        if (slideYBoi.isHovered() && Mouse.isButtonDown(0)) {
+            if (steps == 0) {
+                current = MathUtils.clamp(mouseX / 512f);
+            } else current = MathUtils.clamp(toNearestStep(mouseX / 512f));
+        }
+        currentAsNum = current * (max - min) + min;
+
         RenderManager.drawRoundedRect(vg, x + 980, y, 12, 28, OneConfigConfig.GRAY_500, 6f);
         upArrow.update(x + 980, y);
         downArrow.update(x + 980, y + 14);
@@ -114,30 +119,12 @@ public class ConfigSlider extends BasicOption {
         colorTop = ColorUtils.getColor(colorTop, 2, upArrow.isHovered(), upArrow.isClicked());
         colorBottom = ColorUtils.getColor(colorBottom, 2, downArrow.isHovered(), downArrow.isClicked());
         if (upArrow.isClicked()) {
-            if (step == 0) {
-                currentAsNum += 1;
-                current = MathUtils.clamp((currentAsNum - min) / (max - min));
-            } else {
-                for (float i1 = 0f; i1 <= 1f; i1 += 1f / step) {
-                    if (i1 > current) {
-                        current = i1;
-                        break;
-                    }
-                }
-            }
+            currentAsNum += step == 0 ? 1 : step;
+            current = MathUtils.clamp((currentAsNum - min) / (max - min));
         }
         if (downArrow.isClicked()) {
-            if (step == 0) {
-                currentAsNum -= 1;
-                current = MathUtils.clamp((currentAsNum - min) / (max - min));
-            } else {
-                for (float i1 = 1f; i1 >= 0f; i1 -= 1f / step) {
-                    if (i1 < current) {
-                        current = i1;
-                        break;
-                    }
-                }
-            }
+            currentAsNum -= step == 0 ? 1 : step;
+            current = MathUtils.clamp((currentAsNum - min) / (max - min));
         }
         if (current == 1f) NanoVG.nvgGlobalAlpha(vg, 0.3f);
         RenderManager.drawRoundedRectVaried(vg, x + 980, y, 12, 14, colorTop, 6f, 6f, 0f, 0f);
@@ -155,7 +142,7 @@ public class ConfigSlider extends BasicOption {
         if (currentAsNum != prevAsNum) {
             try {
                 if (isFloat) set(currentAsNum);
-                else set((int) currentAsNum);
+                else set(Math.round(currentAsNum));
             } catch (IllegalAccessException ignored) {
             }
             prevAsNum = currentAsNum;
@@ -163,7 +150,7 @@ public class ConfigSlider extends BasicOption {
     }
 
     private float toNearestStep(float input) {
-        float stepF = 1f / step;
+        float stepF = 1f / steps;
         float stepAbove = 1f, stepBelow = 0f;
         for (float a = 0f; a <= 1f; a += stepF) {
             if (a > input) {

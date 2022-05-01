@@ -107,7 +107,7 @@ public class TestConfig extends Config {
             min = 0,
             max = 25
     )
-    public static float slider1;
+    public static int slider1;
     @Option(
             name = "Stepped Slider",
             subcategory = "Sliders",
@@ -118,7 +118,7 @@ public class TestConfig extends Config {
             max = 30,
             step = 2
     )
-    public static int slider2;
+    public static float slider2;
 
 
     public TestConfig() {

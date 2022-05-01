@@ -9,6 +9,7 @@ import io.polyfrost.oneconfig.lwjgl.RenderManager;
 import io.polyfrost.oneconfig.lwjgl.font.Fonts;
 import io.polyfrost.oneconfig.utils.ColorUtils;
 import io.polyfrost.oneconfig.utils.InputUtils;
+import org.lwjgl.input.Mouse;
 import org.lwjgl.nanovg.NanoVG;
 
 import java.lang.reflect.Field;
@@ -31,7 +32,7 @@ public class ConfigPageButton extends BasicOption {
         boolean clicked = InputUtils.isAreaClicked(x - 2, y, 1024, height);
         backgroundColor = ColorUtils.smoothColor(backgroundColor, OneConfigConfig.GRAY_500, OneConfigConfig.GRAY_400, hovered, 100);
 
-        if (clicked) NanoVG.nvgGlobalAlpha(vg, 0.8f);
+        if (hovered && Mouse.isButtonDown(0)) NanoVG.nvgGlobalAlpha(vg, 0.8f);
 
         RenderManager.drawRoundedRect(vg, x - 16, y, 1024, height, backgroundColor, 20);
         RenderManager.drawString(vg, name, x + 10, y + 32, OneConfigConfig.WHITE_90, 24, Fonts.INTER_MEDIUM);
