@@ -28,7 +28,8 @@ public class ConfigSlider extends BasicOption {
         super(field, name, size);
         this.min = min;
         this.max = max;
-        this.step = step - 1;       // it adds one more step than actual
+        if(step > 0) this.step = step - 1;       // it adds one more step than actual
+        else this.step = 0;
         slideYBoi.setCustomHitbox(28, 8);
         inputField.onlyAcceptNumbers(true);
         inputField.setCentered(true);
