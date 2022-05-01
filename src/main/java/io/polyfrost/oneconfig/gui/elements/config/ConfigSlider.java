@@ -21,23 +21,19 @@ public class ConfigSlider extends BasicOption {
     private final BasicElement downArrow = new BasicElement(12, 14, false);
     private final float min, max;
     private final int step;
-    private float current;
     private int colorTop, colorBottom;
+    private boolean isFloat = true;
+    private Float prevAsNum = null;
 
     public ConfigSlider(Field field, String name, int size, float min, float max, int step) {
         super(field, name, size);
         this.min = min;
         this.max = max;
-        if(step > 0) this.step = step - 1;       // it adds one more step than actual
+        if (step > 0) this.step = step - 1;       // it adds one more step than actual
         else this.step = 0;
         slideYBoi.setCustomHitbox(28, 8);
         inputField.onlyAcceptNumbers(true);
         inputField.setCentered(true);
-        try {
-            inputField.setInput(String.valueOf(get()));
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     @Override
@@ -47,47 +43,59 @@ public class ConfigSlider extends BasicOption {
 
     @Override
     public void draw(long vg, int x, int y) {
+        float value = 0;
+        try {
+            Object object = get();
+            if (object instanceof Integer)
+                isFloat = false;
+            if (isFloat) value = (float) object;
+            else value = (int) object;
+            if (prevAsNum == null) prevAsNum = value;
+        } catch (IllegalAccessException ignored) {
+        }
+        float current = MathUtils.clamp((value - min) / (max - min));
         RenderManager.drawString(vg, name, x, y + 15, OneConfigConfig.WHITE_90, 18f, Fonts.INTER_MEDIUM);
         RenderManager.drawRoundedRect(vg, x + 352, y + 13, 512, 6, OneConfigConfig.GRAY_300, 4f);
         slideYBoi.update(x + 340 + (int) (current * 512), y + 4);
-        if(step != 0) {
-            for(float i = 0; i <= 1.005f; i += 1f / step) {         // sometimes it's just more than 1, so we add a little
+        if (step != 0) {
+            for (float i = 0; i <= 1.005f; i += 1f / step) {         // sometimes it's just more than 1, so we add a little
                 int color = current > i ? OneConfigConfig.BLUE_500 : OneConfigConfig.GRAY_300;
                 RenderManager.drawRoundedRect(vg, x + 351 + (int) (i * 512), y + 9, 4, 14, color, 2f);
             }
         }
         RenderManager.drawRoundedRect(vg, x + 352, y + 13, (int) (current * 512), 6, OneConfigConfig.BLUE_500, 4f);
-        if(step == 0) RenderManager.drawRoundedRect(vg, x + 340 + (int) (current * 512), y + 4, 24, 24, OneConfigConfig.WHITE, 12f);
-        else RenderManager.drawRoundedRect(vg, x + 346 + (int) (current * 512), y + 4, 8, 24, OneConfigConfig.WHITE, 4f);
-
+        if (step == 0)
+            RenderManager.drawRoundedRect(vg, x + 340 + (int) (current * 512), y + 4, 24, 24, OneConfigConfig.WHITE, 12f);
+        else
+            RenderManager.drawRoundedRect(vg, x + 346 + (int) (current * 512), y + 4, 8, 24, OneConfigConfig.WHITE, 4f);
 
         int mouseX = InputUtils.mouseX() - (x + 352);
-        if(InputUtils.isAreaClicked(x + 332, y + 9, 542, 10) && !slideYBoi.isHovered()) {
-            if(step == 0) {
+        if (InputUtils.isAreaClicked(x + 332, y + 9, 542, 10) && !slideYBoi.isHovered()) {
+            if (step == 0) {
                 current = MathUtils.clamp(mouseX / 512f);
             } else current = MathUtils.clamp(toNearestStep(mouseX / 512f));
         }
-        if(slideYBoi.isHovered() && Mouse.isButtonDown(0)) {
-            if(step == 0) {
+        if (slideYBoi.isHovered() && Mouse.isButtonDown(0)) {
+            if (step == 0) {
                 current = MathUtils.clamp(mouseX / 512f);
             } else current = MathUtils.clamp(toNearestStep(mouseX / 512f));
         }
         float currentAsNum = current * (max - min) + min;
 
-        if(!inputField.isToggled()) inputField.setInput(String.format("%.01f", currentAsNum));
+        if (!inputField.isToggled()) inputField.setInput(String.format("%.01f", currentAsNum));
         inputField.setErrored(false);
-        if(inputField.isToggled()) {
+        if (inputField.isToggled()) {
             try {
                 float input = Float.parseFloat(inputField.getInput());
-                if(input < min) {
+                if (input < min) {
                     inputField.setErrored(true);
                     input = min;
                 }
-                if(input > max) {
+                if (input > max) {
                     inputField.setErrored(true);
                     input = max;
                 }
-                if(step == 0) {
+                if (step == 0) {
                     current = MathUtils.clamp((input - min) / (max - min));
                 } else {
                     current = toNearestStep(MathUtils.clamp((input - min) / (max - min)));
@@ -101,66 +109,75 @@ public class ConfigSlider extends BasicOption {
         RenderManager.drawRoundedRect(vg, x + 980, y, 12, 28, OneConfigConfig.GRAY_500, 6f);
         upArrow.update(x + 980, y);
         downArrow.update(x + 980, y + 14);
-        if(current == 1f) colorTop = OneConfigConfig.GRAY_500_80;
-        if(current == 0f) colorBottom = OneConfigConfig.GRAY_500_80;
+        if (current == 1f) colorTop = OneConfigConfig.GRAY_500_80;
+        if (current == 0f) colorBottom = OneConfigConfig.GRAY_500_80;
         colorTop = ColorUtils.getColor(colorTop, 2, upArrow.isHovered(), upArrow.isClicked());
         colorBottom = ColorUtils.getColor(colorBottom, 2, downArrow.isHovered(), downArrow.isClicked());
-        if(upArrow.isClicked()) {
-            if(step == 0) {
+        if (upArrow.isClicked()) {
+            if (step == 0) {
                 currentAsNum += 1;
                 current = MathUtils.clamp((currentAsNum - min) / (max - min));
             } else {
-                for(float i1 = 0f; i1 <= 1f; i1 += 1f / step) {
-                    if(i1 > current) {
+                for (float i1 = 0f; i1 <= 1f; i1 += 1f / step) {
+                    if (i1 > current) {
                         current = i1;
                         break;
                     }
                 }
             }
         }
-        if(downArrow.isClicked()) {
-            if(step == 0) {
+        if (downArrow.isClicked()) {
+            if (step == 0) {
                 currentAsNum -= 1;
                 current = MathUtils.clamp((currentAsNum - min) / (max - min));
             } else {
-                for(float i1 = 1f; i1 >= 0f; i1 -= 1f / step) {
-                    if(i1 < current) {
+                for (float i1 = 1f; i1 >= 0f; i1 -= 1f / step) {
+                    if (i1 < current) {
                         current = i1;
                         break;
                     }
                 }
             }
         }
-        if(current == 1f) NanoVG.nvgGlobalAlpha(vg, 0.3f);
-        RenderManager.drawRoundedRectVaried(vg, x + 980, y, 12, 14, colorTop,6f, 6f, 0f, 0f);
+        if (current == 1f) NanoVG.nvgGlobalAlpha(vg, 0.3f);
+        RenderManager.drawRoundedRectVaried(vg, x + 980, y, 12, 14, colorTop, 6f, 6f, 0f, 0f);
         RenderManager.drawImage(vg, "/assets/oneconfig/textures/smallUpArrow.png", x + 981, y + 2, 10, 10);
-        if(current == 1f) NanoVG.nvgGlobalAlpha(vg, 1f);
+        if (current == 1f) NanoVG.nvgGlobalAlpha(vg, 1f);
 
-        if(current == 0f) NanoVG.nvgGlobalAlpha(vg, 0.3f);
-        RenderManager.drawRoundedRectVaried(vg, x + 980, y + 14, 12, 14, colorBottom,0f, 0f, 6f, 6f);
+        if (current == 0f) NanoVG.nvgGlobalAlpha(vg, 0.3f);
+        RenderManager.drawRoundedRectVaried(vg, x + 980, y + 14, 12, 14, colorBottom, 0f, 0f, 6f, 6f);
         NanoVG.nvgTranslate(vg, x + 991, y + 25);
         NanoVG.nvgRotate(vg, (float) Math.toRadians(180));
         RenderManager.drawImage(vg, "/assets/oneconfig/textures/smallUpArrow.png", 0, 0, 10, 10);
         NanoVG.nvgResetTransform(vg);
         NanoVG.nvgGlobalAlpha(vg, 1f);
+
+        if (currentAsNum != prevAsNum) {
+            try {
+                if (isFloat) set(currentAsNum);
+                else set((int) currentAsNum);
+            } catch (IllegalAccessException ignored) {
+            }
+            prevAsNum = currentAsNum;
+        }
     }
 
     private float toNearestStep(float input) {
         float stepF = 1f / step;
         float stepAbove = 1f, stepBelow = 0f;
-        for(float a = 0f; a <= 1f; a += stepF) {
-            if(a > input) {
+        for (float a = 0f; a <= 1f; a += stepF) {
+            if (a > input) {
                 stepAbove = a;
                 break;
             }
         }
-        for(float a = 1f; a >= 0f; a -= stepF) {
-            if(a <= input) {
+        for (float a = 1f; a >= 0f; a -= stepF) {
+            if (a <= input) {
                 stepBelow = a;
                 break;
             }
         }
-        if(stepAbove - input > input - stepBelow) {
+        if (stepAbove - input > input - stepBelow) {
             return stepBelow;
         } else {
             return stepAbove;

@@ -98,6 +98,29 @@ public class TestConfig extends Config {
     )
     public static int dropdown3;
 
+    @Option(
+            name = "Slider",
+            subcategory = "Sliders",
+            type = OptionType.SLIDER,
+            category = "Sliders",
+            size = 2,
+            min = 0,
+            max = 25
+    )
+    public static float slider1;
+    @Option(
+            name = "Stepped Slider",
+            subcategory = "Sliders",
+            type = OptionType.SLIDER,
+            category = "Sliders",
+            size = 2,
+            min = 0,
+            max = 30,
+            step = 2
+    )
+    public static int slider2;
+
+
     public TestConfig() {
         super(new Mod("hacks", ModType.UTIL_QOL, "ShadyDev", "1.0"), "hacksConfig.json");
     }

@@ -4,6 +4,7 @@ import io.polyfrost.oneconfig.config.OneConfigConfig;
 import io.polyfrost.oneconfig.config.interfaces.BasicOption;
 import io.polyfrost.oneconfig.lwjgl.RenderManager;
 import io.polyfrost.oneconfig.lwjgl.font.Fonts;
+import io.polyfrost.oneconfig.utils.InputUtils;
 import org.lwjgl.nanovg.NanoVG;
 
 import java.lang.reflect.Field;
@@ -22,6 +23,7 @@ public class ConfigDropdown extends BasicOption {
 
     @Override
     public void drawLast(long vg, int x, int y) {
+        boolean hovered;
         int selected = 0;
         try {
             selected = (int) get();

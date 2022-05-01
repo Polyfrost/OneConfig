@@ -22,6 +22,9 @@ public enum OptionType {
      * Normal: 1x and 2x, Secure and Mutliline: 2x only
      */
     TEXT,
+    /**
+     * Type: int or float
+     */
     SLIDER,
     COLOR,
     /**
