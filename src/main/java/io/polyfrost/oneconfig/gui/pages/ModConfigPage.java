@@ -3,24 +3,45 @@ package io.polyfrost.oneconfig.gui.pages;
 import io.polyfrost.oneconfig.config.OneConfigConfig;
 import io.polyfrost.oneconfig.config.data.OptionPage;
 import io.polyfrost.oneconfig.config.interfaces.BasicOption;
+import io.polyfrost.oneconfig.gui.elements.BasicButton;
 import io.polyfrost.oneconfig.gui.elements.config.ConfigPageButton;
 import io.polyfrost.oneconfig.lwjgl.RenderManager;
 import io.polyfrost.oneconfig.lwjgl.font.Fonts;
 
+import java.util.ArrayList;
+
 public class ModConfigPage extends Page {
     private final OptionPage page;
+    private final ArrayList<BasicButton> categories = new ArrayList<>();
+    private String selectedCategory;
 
     public ModConfigPage(OptionPage page) {
         super("Mod: " + page.mod.name);
         this.page = page;
+        if (page.categories.size() == 0) return;
+        selectedCategory = page.categories.keySet().stream().findFirst().get();
+        if (page.categories.size() < 2) return;
+        for (String category : page.categories.keySet()) {
+            BasicButton button = new BasicButton(0, 32, category, null, null, 0, BasicButton.ALIGNMENT_CENTER, true, () -> switchCategory(category));
+            if (category.equals(selectedCategory)) button.setToggled(true);
+            categories.add(button);
+        }
     }
 
     @Override
     public void draw(long vg, int x, int y) {
         if (page.categories.size() == 0) return;
-        String selectedCategory = page.categories.keySet().stream().findFirst().get();
         int optionX = x + 30;
         int optionY = y + (page.categories.size() == 1 ? 16 : 64);
+
+        // Category buttons
+        int buttonX = x + 16;
+        for (BasicButton button : categories) {
+            if (button.getWidth() == 0)
+                button.setWidth((int) (Math.ceil(RenderManager.getTextWidth(vg, button.getText(), 14f, Fonts.INTER_MEDIUM) / 8f) * 8 + 16));
+            button.draw(vg, buttonX, y + 16);
+            buttonX += button.getWidth() + 16;
+        }
 
         // Top page buttons
         for (ConfigPageButton page : page.categories.get(selectedCategory).topPages) {
@@ -29,9 +50,9 @@ public class ModConfigPage extends Page {
         }
 
         // Background
-        int backgroundSize = 48;
+        int backgroundSize = 16;
         for (String subCategory : page.categories.get(selectedCategory).subcategories.keySet()) {
-            backgroundSize += 32;
+            backgroundSize += 48;
             for (int i = 0; i < page.categories.get(selectedCategory).subcategories.get(subCategory).size(); i++) {
                 BasicOption option = page.categories.get(selectedCategory).subcategories.get(subCategory).get(i);
                 if (i + 1 < page.categories.get(selectedCategory).subcategories.get(subCategory).size()) {
@@ -49,7 +70,7 @@ public class ModConfigPage extends Page {
 
         // draw options
         optionY += 16;
-        int optionLastY = optionX;
+        int optionLastY = optionY;
         for (String subCategory : page.categories.get(selectedCategory).subcategories.keySet()) {
             RenderManager.drawString(vg, subCategory, optionX, optionY + 16, OneConfigConfig.WHITE_90, 24f, Fonts.INTER_MEDIUM);
             optionY += 48;
@@ -104,11 +125,19 @@ public class ModConfigPage extends Page {
     @Override
     public void keyTyped(char key, int keyCode) {
         if (page.categories.size() == 0) return;
-        String selectedCategory = page.categories.keySet().stream().findFirst().get();
         for (String subCategory : page.categories.get(selectedCategory).subcategories.keySet()) {
             for (int i = 0; i < page.categories.get(selectedCategory).subcategories.get(subCategory).size(); i++) {
                 page.categories.get(selectedCategory).subcategories.get(subCategory).get(i).keyTyped(key, keyCode);
             }
+        }
+    }
+
+    public void switchCategory(String newCategory) {
+        if (!page.categories.containsKey(newCategory)) return;
+        selectedCategory = newCategory;
+        for (BasicButton button : categories) {
+            if (button.getText().equals(newCategory)) continue;
+            button.setToggled(false);
         }
     }
 }

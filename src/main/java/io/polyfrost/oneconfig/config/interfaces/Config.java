@@ -8,7 +8,10 @@ import io.polyfrost.oneconfig.config.data.Mod;
 import io.polyfrost.oneconfig.config.data.OptionCategory;
 import io.polyfrost.oneconfig.config.data.OptionPage;
 import io.polyfrost.oneconfig.config.profiles.Profiles;
+import io.polyfrost.oneconfig.gui.OneConfigGui;
 import io.polyfrost.oneconfig.gui.elements.config.*;
+import io.polyfrost.oneconfig.gui.pages.ModConfigPage;
+import net.minecraft.client.Minecraft;
 
 import java.io.*;
 import java.lang.reflect.Field;
@@ -20,6 +23,7 @@ import java.util.*;
 public class Config {
     protected final String configFile;
     protected final Gson gson = new GsonBuilder().excludeFieldsWithModifiers(Modifier.TRANSIENT).setPrettyPrinting().registerTypeAdapterFactory(OneConfigTypeAdapterFactory.getStaticTypeAdapterFactory()).create();
+    private static Mod mod;
 
     /**
      * @param modData    information about the mod
@@ -36,6 +40,7 @@ public class Config {
         mod.config = this;
         generateOptionList(this.getClass(), mod.defaultPage, mod);
         ConfigCore.oneConfigMods.add(mod);
+        this.mod = mod;
     }
 
     /**
@@ -154,5 +159,13 @@ public class Config {
             } catch (NoSuchFieldException | IllegalAccessException ignored) {
             }
         }
+    }
+
+    /**
+     * Function to open the gui of this mod
+     */
+    public void openGui() {
+        if (mod == null) return;
+        Minecraft.getMinecraft().displayGuiScreen(new OneConfigGui(new ModConfigPage(mod.defaultPage)));
     }
 }

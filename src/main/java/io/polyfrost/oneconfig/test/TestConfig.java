@@ -73,7 +73,8 @@ public class TestConfig extends Config {
     @Option(
             name = "Test check",
             subcategory = "Other subcategory",
-            type = OptionType.CHECKBOX
+            type = OptionType.CHECKBOX,
+            category = "Test category"
     )
     public static boolean switchTest6;
 

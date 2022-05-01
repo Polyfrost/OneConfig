@@ -24,7 +24,7 @@ public @interface Option {
     /**
      * The category of the component
      */
-    String category() default "general";
+    String category() default "General";
 
     /**
      * The subcategory of the component (displayed as header)

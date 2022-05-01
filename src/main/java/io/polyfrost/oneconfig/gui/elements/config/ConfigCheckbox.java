@@ -26,10 +26,10 @@ public class ConfigCheckbox extends BasicOption {
             toggled = (boolean) get();
         } catch (IllegalAccessException ignored) {
         }
-        boolean hover = InputUtils.isAreaHovered(x, y, 24, 24);
+        boolean hover = InputUtils.isAreaHovered(x, y + 4, 24, 24);
 
         boolean clicked = InputUtils.isClicked() && hover;
-        if(clicked) {
+        if (clicked) {
             toggled = !toggled;
             try {
                 set(toggled);
@@ -38,18 +38,18 @@ public class ConfigCheckbox extends BasicOption {
                 e.printStackTrace();
             }
         }
-        if(percentOn != 1f) {       // performance
-            RenderManager.drawRoundedRect(vg, x, y, 24, 24, color, 6f);
-            RenderManager.drawHollowRoundRect(vg, x, y, 23.5f, 23.5f, OneConfigConfig.GRAY_300, 6f, 1f);        // the 0.5f is to make it look better ok
+        if (percentOn != 1f) {       // performance
+            RenderManager.drawRoundedRect(vg, x, y + 4, 24, 24, color, 6f);
+            RenderManager.drawHollowRoundRect(vg, x, y + 4, 23.5f, 23.5f, OneConfigConfig.GRAY_300, 6f, 1f);        // the 0.5f is to make it look better ok
         }
         color = ColorUtils.smoothColor(color, OneConfigConfig.GRAY_600, OneConfigConfig.GRAY_400, hover, 40f);
-        RenderManager.drawString(vg, name, x + 32, y + 14, OneConfigConfig.WHITE_90, 18f, Fonts.INTER_MEDIUM);
+        RenderManager.drawString(vg, name, x + 32, y + 17, OneConfigConfig.WHITE_90, 18f, Fonts.INTER_MEDIUM);
         percentOn = MathUtils.clamp(MathUtils.easeOut(percentOn, toggled ? 1f : 0f, 5f));
-        if(percentOn == 0f) return;
-        if(percentOn != 1f) {
-            RenderManager.drawImage(vg, "/assets/oneconfig/textures/check.png", x, y, 24, 24, new Color(1f, 1f, 1f, percentOn).getRGB());
+        if (percentOn == 0f) return;
+        if (percentOn != 1f) {
+            RenderManager.drawImage(vg, "/assets/oneconfig/textures/check.png", x, y + 4, 24, 24, new Color(1f, 1f, 1f, percentOn).getRGB());
         } else {       // performance, that color could cause havoc am I right definitely
-            RenderManager.drawImage(vg, "/assets/oneconfig/textures/check.png", x, y, 24, 24);
+            RenderManager.drawImage(vg, "/assets/oneconfig/textures/check.png", x, y + 4, 24, 24);
         }
     }
 

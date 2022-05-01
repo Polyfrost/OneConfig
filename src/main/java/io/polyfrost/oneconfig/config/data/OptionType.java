@@ -9,7 +9,13 @@ public enum OptionType {
      * Type: boolean
      */
     CHECKBOX,
+    /**
+     * Type: boolean
+     */
     DUAL_OPTION,
+    /**
+     * Type: int
+     */
     UNI_SELECTOR,
     /**
      * Type: String
