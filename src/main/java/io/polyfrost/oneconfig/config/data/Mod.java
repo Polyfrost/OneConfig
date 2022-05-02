@@ -2,6 +2,10 @@ package io.polyfrost.oneconfig.config.data;
 
 import io.polyfrost.oneconfig.config.interfaces.Config;
 
+/**
+ * The Mod data Object.
+ * Used for Configuration
+ */
 public class Mod {
     public final String name;
     public final ModType modType;
