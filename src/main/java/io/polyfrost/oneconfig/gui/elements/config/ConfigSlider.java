@@ -6,6 +6,7 @@ import io.polyfrost.oneconfig.gui.elements.BasicElement;
 import io.polyfrost.oneconfig.gui.elements.TextInputField;
 import io.polyfrost.oneconfig.lwjgl.RenderManager;
 import io.polyfrost.oneconfig.lwjgl.font.Fonts;
+import io.polyfrost.oneconfig.lwjgl.image.Images;
 import io.polyfrost.oneconfig.utils.ColorUtils;
 import io.polyfrost.oneconfig.utils.InputUtils;
 import io.polyfrost.oneconfig.utils.MathUtils;
@@ -24,7 +25,7 @@ public class ConfigSlider extends BasicOption {
     private int colorTop, colorBottom;
     private boolean isFloat = true;
     private Float prevAsNum = null;
-    private int step;
+    private final int step;
 
     public ConfigSlider(Field field, String name, int size, float min, float max, int step) {
         super(field, name, size);
@@ -128,14 +129,14 @@ public class ConfigSlider extends BasicOption {
         }
         if (current == 1f) NanoVG.nvgGlobalAlpha(vg, 0.3f);
         RenderManager.drawRoundedRectVaried(vg, x + 980, y, 12, 14, colorTop, 6f, 6f, 0f, 0f);
-        RenderManager.drawImage(vg, "/assets/oneconfig/textures/smallUpArrow.png", x + 981, y + 2, 10, 10);
+        RenderManager.drawImage(vg, Images.UP_ARROW, x + 981, y + 2, 10, 10);
         if (current == 1f) NanoVG.nvgGlobalAlpha(vg, 1f);
 
         if (current == 0f) NanoVG.nvgGlobalAlpha(vg, 0.3f);
         RenderManager.drawRoundedRectVaried(vg, x + 980, y + 14, 12, 14, colorBottom, 0f, 0f, 6f, 6f);
         NanoVG.nvgTranslate(vg, x + 991, y + 25);
         NanoVG.nvgRotate(vg, (float) Math.toRadians(180));
-        RenderManager.drawImage(vg, "/assets/oneconfig/textures/smallUpArrow.png", 0, 0, 10, 10);
+        RenderManager.drawImage(vg, Images.UP_ARROW, 0, 0, 10, 10);
         NanoVG.nvgResetTransform(vg);
         NanoVG.nvgGlobalAlpha(vg, 1f);
 

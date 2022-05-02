@@ -1,7 +1,5 @@
 package io.polyfrost.oneconfig.config.interfaces;
 
-import io.polyfrost.oneconfig.gui.elements.BasicElement;
-
 import java.lang.reflect.Field;
 
 @SuppressWarnings({"unused"})
@@ -13,9 +11,9 @@ public abstract class BasicOption {
     /**
      * Initialize option
      *
-     * @param field       variable attached to option (null for category)
-     * @param name        name of option
-     * @param size        size of option, 0 for single column, 1 for double.
+     * @param field variable attached to option (null for category)
+     * @param name  name of option
+     * @param size  size of option, 0 for single column, 1 for double.
      */
     public BasicOption(Field field, String name, int size) {
         this.field = field;
@@ -48,9 +46,9 @@ public abstract class BasicOption {
     /**
      * Function that gets called when drawing option
      *
-     * @param vg     NanoVG context
-     * @param x      x position
-     * @param y      y position
+     * @param vg NanoVG context
+     * @param x  x position
+     * @param y  y position
      */
     public abstract void draw(long vg, int x, int y);
 
@@ -58,9 +56,9 @@ public abstract class BasicOption {
      * Function that gets called last drawing option,
      * should be used for things that draw above other options
      *
-     * @param vg     NanoVG context
-     * @param x      x position
-     * @param y      y position
+     * @param vg NanoVG context
+     * @param x  x position
+     * @param y  y position
      */
     public void drawLast(long vg, int x, int y) {
 
@@ -69,8 +67,8 @@ public abstract class BasicOption {
     /**
      * Function that gets called when a key is typed
      *
-     * @param key char that has been typed
-     * @param keyCode   code of key
+     * @param key     char that has been typed
+     * @param keyCode code of key
      */
     public void keyTyped(char key, int keyCode) {
     }

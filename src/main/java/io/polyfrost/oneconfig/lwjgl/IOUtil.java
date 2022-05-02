@@ -2,7 +2,10 @@ package io.polyfrost.oneconfig.lwjgl;
 
 import org.apache.commons.io.IOUtils;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;

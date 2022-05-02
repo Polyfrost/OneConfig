@@ -1,10 +1,10 @@
 package io.polyfrost.oneconfig.gui.elements.config;
 
-import io.polyfrost.oneconfig.OneConfig;
 import io.polyfrost.oneconfig.config.OneConfigConfig;
 import io.polyfrost.oneconfig.config.interfaces.BasicOption;
 import io.polyfrost.oneconfig.lwjgl.RenderManager;
 import io.polyfrost.oneconfig.lwjgl.font.Fonts;
+import io.polyfrost.oneconfig.lwjgl.image.Images;
 import io.polyfrost.oneconfig.utils.ColorUtils;
 import io.polyfrost.oneconfig.utils.InputUtils;
 import org.lwjgl.input.Mouse;
@@ -50,17 +50,17 @@ public class ConfigDropdown extends BasicOption {
             RenderManager.drawRoundedRect(vg, x + 224, y, 256, 32, backgroundColor, 12);
             RenderManager.drawString(vg, options[selected], x + 236, y + 16, OneConfigConfig.WHITE_80, 14f, Fonts.INTER_MEDIUM);
             RenderManager.drawRoundedRect(vg, x + 452, y + 4, 24, 24, OneConfigConfig.BLUE_600, 8);
-            RenderManager.drawImage(vg, "/assets/oneconfig/textures/dropdown_arrow.png", x + 459, y + 8, 10, 6);
+            RenderManager.drawImage(vg, Images.DROPDOWN_ARROW, x + 459, y + 8, 10, 6);
             NanoVG.nvgTranslate(vg, x + 469, y + 24);
         } else {
             RenderManager.drawRoundedRect(vg, x + 352, y, 640, 32, backgroundColor, 12);
             RenderManager.drawString(vg, options[selected], x + 364, y + 16, OneConfigConfig.WHITE_80, 14f, Fonts.INTER_MEDIUM);
             RenderManager.drawRoundedRect(vg, x + 964, y + 4, 24, 24, OneConfigConfig.BLUE_600, 8);
-            RenderManager.drawImage(vg, "/assets/oneconfig/textures/dropdown_arrow.png", x + 971, y + 8, 10, 6);
+            RenderManager.drawImage(vg, Images.DROPDOWN_ARROW, x + 971, y + 8, 10, 6);
             NanoVG.nvgTranslate(vg, x + 981, y + 24);
         }
         NanoVG.nvgRotate(vg, (float) Math.toRadians(180));
-        RenderManager.drawImage(vg, "/assets/oneconfig/textures/dropdown_arrow.png", 0, 0, 10, 6);
+        RenderManager.drawImage(vg, Images.DROPDOWN_ARROW, 0, 0, 10, 6);
         NanoVG.nvgResetTransform(vg);
         NanoVG.nvgGlobalAlpha(vg, 1f);
     }
@@ -114,7 +114,7 @@ public class ConfigDropdown extends BasicOption {
 
             if (hovered && Mouse.isButtonDown(0)) NanoVG.nvgGlobalAlpha(vg, 0.8f);
             RenderManager.drawRoundedRect(vg, x + 452, y + 4, 24, 24, OneConfigConfig.BLUE_600, 8);
-            RenderManager.drawImage(vg, "/assets/oneconfig/textures/dropdown_arrow.png", x + 459, y + 8, 10, 6);
+            RenderManager.drawImage(vg, Images.DROPDOWN_ARROW, x + 459, y + 8, 10, 6);
             NanoVG.nvgTranslate(vg, x + 469, y + 24);
         } else {
             RenderManager.drawRoundedRect(vg, x + 352, y, 640, 32, backgroundColor, 12);
@@ -149,11 +149,11 @@ public class ConfigDropdown extends BasicOption {
 
             if (hovered && Mouse.isButtonDown(0)) NanoVG.nvgGlobalAlpha(vg, 0.8f);
             RenderManager.drawRoundedRect(vg, x + 964, y + 4, 24, 24, OneConfigConfig.BLUE_600, 8);
-            RenderManager.drawImage(vg, "/assets/oneconfig/textures/dropdown_arrow.png", x + 971, y + 8, 10, 6);
+            RenderManager.drawImage(vg, Images.DROPDOWN_ARROW, x + 971, y + 8, 10, 6);
             NanoVG.nvgTranslate(vg, x + 981, y + 24);
         }
         NanoVG.nvgRotate(vg, (float) Math.toRadians(180));
-        RenderManager.drawImage(vg, "/assets/oneconfig/textures/dropdown_arrow.png", 0, 0, 10, 6);
+        RenderManager.drawImage(vg, Images.DROPDOWN_ARROW, 0, 0, 10, 6);
         NanoVG.nvgResetTransform(vg);
         NanoVG.nvgGlobalAlpha(vg, 1f);
     }

@@ -57,7 +57,7 @@ public class OneConfigGui extends GuiScreen {
             RenderManager.drawLine(vg, 544, 212, 1600, 212, 1, OneConfigConfig.GRAY_700);
             RenderManager.drawLine(vg, 544, 140, 544, 940, 1, OneConfigConfig.GRAY_700);
 
-            RenderManager.drawImage(vg, "/assets/oneconfig/textures/icon.png", x + 19, y + 19, 42, 42);
+            RenderManager.drawImage(vg, "/assets/oneconfig/textures/gui/general/logo.png", x + 19, y + 19, 42, 42);
             RenderManager.drawString(vg, "OneConfig", x + 69, y + 32, OneConfigConfig.WHITE, 18f, Fonts.INTER_BOLD);        // added half line height to center text
             RenderManager.drawString(vg, "By Polyfrost", x + 69, y + 51, OneConfigConfig.WHITE, 12f, Fonts.INTER_REGULAR);
             textInputField.draw(vg, x + 1020, y + 16);
@@ -97,7 +97,7 @@ public class OneConfigGui extends GuiScreen {
     }
 
     public void openPage(@NotNull Page page) {
-        if(page == currentPage) return;
+        if (page == currentPage) return;
         currentPage.finishUpAndClose();
         if (prevPage == null) {
             prevPage = currentPage;
