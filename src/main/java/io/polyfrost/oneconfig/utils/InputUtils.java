@@ -21,7 +21,7 @@ public class InputUtils {
     }
 
     public static boolean isClicked() {
-        return OneConfigGui.INSTANCE.mouseDown && !Mouse.isButtonDown(0);
+        return OneConfigGui.INSTANCE != null && OneConfigGui.INSTANCE.mouseDown && !Mouse.isButtonDown(0);
     }
 
     public static int mouseX() {

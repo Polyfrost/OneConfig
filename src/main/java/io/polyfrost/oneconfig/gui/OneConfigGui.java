@@ -227,5 +227,6 @@ public class OneConfigGui extends GuiScreen {
     @Override
     public void onGuiClosed() {
         currentPage.finishUpAndClose();
+        INSTANCE = null;
     }
 }

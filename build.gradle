@@ -74,22 +74,22 @@ dependencies {
     mappings("de.oceanlabs.mcp:mcp_stable:22-1.8.9")
     forge("net.minecraftforge:forge:1.8.9-11.15.1.2318-1.8.9")
 
-    lwjgl "org.lwjgl:lwjgl:3.3.0"
-    lwjgl "org.lwjgl:lwjgl-stb:3.3.0"
-    lwjgl "org.lwjgl:lwjgl-tinyfd:3.3.0"
-    lwjgl "org.lwjgl:lwjgl-nanovg:3.3.0"
-    lwjglNative "org.lwjgl:lwjgl:3.3.0:natives-windows"
-    lwjglNative "org.lwjgl:lwjgl-stb:3.3.0:natives-windows"
-    lwjglNative "org.lwjgl:lwjgl-tinyfd:3.3.0:natives-windows"
-    lwjglNative "org.lwjgl:lwjgl-nanovg:3.3.0:natives-windows"
-    lwjglNative "org.lwjgl:lwjgl:3.3.0:natives-linux"
-    lwjglNative "org.lwjgl:lwjgl-stb:3.3.0:natives-linux"
-    lwjglNative "org.lwjgl:lwjgl-tinyfd:3.3.0:natives-linux"
-    lwjglNative "org.lwjgl:lwjgl-nanovg:3.3.0:natives-linux"
-    lwjglNative "org.lwjgl:lwjgl:3.3.0:natives-macos"
-    lwjglNative "org.lwjgl:lwjgl-stb:3.3.0:natives-macos"
-    lwjglNative "org.lwjgl:lwjgl-tinyfd:3.3.0:natives-macos"
-    lwjglNative "org.lwjgl:lwjgl-nanovg:3.3.0:natives-macos"
+    lwjgl "org.lwjgl:lwjgl:3.3.1"
+    lwjgl "org.lwjgl:lwjgl-stb:3.3.1"
+    lwjgl "org.lwjgl:lwjgl-tinyfd:3.3.1"
+    lwjgl "org.lwjgl:lwjgl-nanovg:3.3.1"
+    lwjglNative "org.lwjgl:lwjgl:3.3.1:natives-windows"
+    lwjglNative "org.lwjgl:lwjgl-stb:3.3.1:natives-windows"
+    lwjglNative "org.lwjgl:lwjgl-tinyfd:3.3.1:natives-windows"
+    lwjglNative "org.lwjgl:lwjgl-nanovg:3.3.1:natives-windows"
+    lwjglNative "org.lwjgl:lwjgl:3.3.1:natives-linux"
+    lwjglNative "org.lwjgl:lwjgl-stb:3.3.1:natives-linux"
+    lwjglNative "org.lwjgl:lwjgl-tinyfd:3.3.1:natives-linux"
+    lwjglNative "org.lwjgl:lwjgl-nanovg:3.3.1:natives-linux"
+    lwjglNative "org.lwjgl:lwjgl:3.3.1:natives-macos"
+    lwjglNative "org.lwjgl:lwjgl-stb:3.3.1:natives-macos"
+    lwjglNative "org.lwjgl:lwjgl-tinyfd:3.3.1:natives-macos"
+    lwjglNative "org.lwjgl:lwjgl-nanovg:3.3.1:natives-macos"
     include lwjglJar.outputs.files
 }
 
