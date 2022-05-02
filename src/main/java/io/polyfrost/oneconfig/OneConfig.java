@@ -8,6 +8,7 @@ import io.polyfrost.oneconfig.config.data.ModType;
 import io.polyfrost.oneconfig.hud.HudCore;
 import io.polyfrost.oneconfig.lwjgl.RenderManager;
 import io.polyfrost.oneconfig.lwjgl.font.Fonts;
+import io.polyfrost.oneconfig.lwjgl.image.Images;
 import io.polyfrost.oneconfig.test.TestConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.client.ClientCommandHandler;
@@ -52,7 +53,7 @@ public class OneConfig {
         RenderManager.setupAndDraw((vg) -> {
             RenderManager.drawRoundedRect(vg, -100, -100, 50, 50, -1, 12f);
             RenderManager.drawString(vg, "OneConfig loading...", -100, -100, -1, 12f, Fonts.INTER_MEDIUM);
-            RenderManager.drawImage(vg, "/assets/oneconfig/textures/icon.png", -100, -100, 50, 50);
+            RenderManager.drawImage(vg, Images.LOGO, -100, -100, 50, 50);
         });
     }
 

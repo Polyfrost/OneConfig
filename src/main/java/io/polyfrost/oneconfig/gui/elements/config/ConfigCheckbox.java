@@ -4,6 +4,7 @@ import io.polyfrost.oneconfig.config.OneConfigConfig;
 import io.polyfrost.oneconfig.config.interfaces.BasicOption;
 import io.polyfrost.oneconfig.lwjgl.RenderManager;
 import io.polyfrost.oneconfig.lwjgl.font.Fonts;
+import io.polyfrost.oneconfig.lwjgl.image.Images;
 import io.polyfrost.oneconfig.utils.ColorUtils;
 import io.polyfrost.oneconfig.utils.InputUtils;
 import io.polyfrost.oneconfig.utils.MathUtils;
@@ -47,9 +48,9 @@ public class ConfigCheckbox extends BasicOption {
         percentOn = MathUtils.clamp(MathUtils.easeOut(percentOn, toggled ? 1f : 0f, 5f));
         if (percentOn == 0f) return;
         if (percentOn != 1f) {
-            RenderManager.drawImage(vg, "/assets/oneconfig/textures/check.png", x, y + 4, 24, 24, new Color(1f, 1f, 1f, percentOn).getRGB());
+            RenderManager.drawImage(vg, Images.CHECKMARK, x, y + 4, 24, 24, new Color(1f, 1f, 1f, percentOn).getRGB());
         } else {       // performance, that color could cause havoc am I right definitely
-            RenderManager.drawImage(vg, "/assets/oneconfig/textures/check.png", x, y + 4, 24, 24);
+            RenderManager.drawImage(vg, Images.CHECKMARK, x, y + 4, 24, 24);
         }
     }
 

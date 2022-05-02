@@ -5,6 +5,7 @@ import io.polyfrost.oneconfig.config.interfaces.BasicOption;
 import io.polyfrost.oneconfig.gui.elements.TextInputField;
 import io.polyfrost.oneconfig.lwjgl.RenderManager;
 import io.polyfrost.oneconfig.lwjgl.font.Fonts;
+import io.polyfrost.oneconfig.lwjgl.image.Images;
 import io.polyfrost.oneconfig.utils.InputUtils;
 
 import java.awt.*;
@@ -28,13 +29,14 @@ public class ConfigTextBox extends BasicOption {
 
         try {
             String value = (String) get();
-           textField.setInput(value == null ? "" : value);
+            textField.setInput(value == null ? "" : value);
         } catch (IllegalAccessException ignored) {
         }
 
         textField.draw(vg, x + (size == 1 && hasHalfSize() ? 224 : 352), y);
 
-        if (secure) RenderManager.drawImage(vg, "/assets/oneconfig/textures/eye.png", x + 967, y + 7, 18, 18, new Color(196,196,196).getRGB());
+        if (secure)
+            RenderManager.drawImage(vg, Images.HIDE_EYE, x + 967, y + 7, 18, 18, new Color(196, 196, 196).getRGB());
         if (secure && InputUtils.isAreaClicked(x + 967, y + 7, 18, 18)) textField.setPassword(!textField.getPassword());
     }
 

@@ -32,10 +32,11 @@ public @interface Option {
     String subcategory();
 
 
-    /** A String array of all the possible values for the UniSelector, dropdownList, and ComboBox.
+    /**
+     * A String array of all the possible values for the UniSelector, dropdownList, and ComboBox.
      * Also used in the DualOption slider, index 0 is the left, index 1 is the right; for example:
      * {"Option 1", "Option 2"}
-     * */
+     */
     String[] options() default {};
 
     /**
@@ -62,10 +63,12 @@ public @interface Option {
      * Steps of slider (0 for no steps)
      */
     int step() default 0;
+
     /**
      * Minimum value of slider
      */
     float min() default 0;
+
     /**
      * The maximum value of the slider
      */

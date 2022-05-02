@@ -12,6 +12,7 @@ public class BasicElement {
     protected boolean hovered = false;
     protected boolean clicked = false;
     protected boolean toggled = false;
+    protected boolean disabled = false;
     protected int currentColor;
 
     public BasicElement(int width, int height, int colorPalette, boolean hoverFx) {
@@ -39,6 +40,11 @@ public class BasicElement {
     }
 
     public void update(int x, int y) {
+        if(disabled) {
+            hovered = false;
+            clicked = false;
+            return;
+        }
         hovered = InputUtils.isAreaHovered(x - hitBoxX, y - hitBoxY, width + hitBoxX, height + hitBoxY);
         clicked = InputUtils.isClicked() && hovered;
 
@@ -90,5 +96,12 @@ public class BasicElement {
 
     public boolean isToggled() {
         return toggled;
+    }
+
+    public boolean isDisabled() {
+        return disabled;
+    }
+    public void disable(boolean state) {
+        disabled = state;
     }
 }

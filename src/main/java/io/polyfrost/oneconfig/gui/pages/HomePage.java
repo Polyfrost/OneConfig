@@ -4,9 +4,10 @@ import io.polyfrost.oneconfig.config.OneConfigConfig;
 import io.polyfrost.oneconfig.gui.elements.BasicButton;
 import io.polyfrost.oneconfig.lwjgl.RenderManager;
 import io.polyfrost.oneconfig.lwjgl.font.Fonts;
+import io.polyfrost.oneconfig.lwjgl.image.Images;
 
 public class HomePage extends Page {
-    private final BasicButton btn = new BasicButton(184, 36, "Socials", "/assets/oneconfig/textures/share.png", "/assets/oneconfig/textures/share2.png", 1, BasicButton.ALIGNMENT_CENTER);
+    private final BasicButton btn = new BasicButton(184, 36, "Socials", Images.SHARE, Images.LAUNCH, 1, BasicButton.ALIGNMENT_CENTER);
 
     public HomePage() {
         super("Home Dashboard");

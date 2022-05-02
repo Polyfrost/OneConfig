@@ -5,6 +5,7 @@ import io.polyfrost.oneconfig.gui.OneConfigGui;
 import io.polyfrost.oneconfig.gui.pages.Page;
 import io.polyfrost.oneconfig.lwjgl.RenderManager;
 import io.polyfrost.oneconfig.lwjgl.font.Fonts;
+import io.polyfrost.oneconfig.lwjgl.image.Images;
 import io.polyfrost.oneconfig.utils.ColorUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 public class BasicButton extends BasicElement {
 
     protected String text;
-    protected String fileNameLeftIco, fileNameRightIco;
+    protected Images fileNameLeftIco, fileNameRightIco;
     private final int thisAlignment;
     private final float fontSize;
     private final int colorPalette;
@@ -33,11 +34,11 @@ public class BasicButton extends BasicElement {
      * @param colorPalette     color palette to use. see {@link io.polyfrost.oneconfig.utils.ColorUtils} for more info. Can support color palette of -2, which is larger font and icons. Also supports -3, which is just the text changing color.
      * @param alignment        alignment of the button. ALIGNMENT_LEFT or ALIGNMENT_CENTER.
      */
-    public BasicButton(int width, int height, @NotNull String text, @Nullable String fileNameLeftIco, @Nullable String fileNameRightIco, int colorPalette, int alignment) {
+    public BasicButton(int width, int height, @NotNull String text, @Nullable Images fileNameLeftIco, @Nullable Images fileNameRightIco, int colorPalette, int alignment) {
         super(width, height, colorPalette, true);
         this.text = text;
-        this.fileNameLeftIco = fileNameLeftIco;
-        this.fileNameRightIco = fileNameRightIco;
+        if (fileNameLeftIco != null) this.fileNameLeftIco = fileNameLeftIco;
+        if (fileNameRightIco != null) this.fileNameRightIco = fileNameRightIco;
         this.thisAlignment = alignment;
         if (colorPalette == -2) {
             fontSize = 24f;
@@ -48,22 +49,22 @@ public class BasicButton extends BasicElement {
         }
     }
 
-    public BasicButton(int width, int height, @NotNull String text, @Nullable String fileNameLeftIco, @Nullable String fileNameRightIco, int colorPalette, int alignment, Page page) {
+    public BasicButton(int width, int height, @NotNull String text, @Nullable Images fileNameLeftIco, @Nullable Images fileNameRightIco, int colorPalette, int alignment, Page page) {
         this(width, height, text, fileNameLeftIco, fileNameRightIco, colorPalette, alignment);
         this.page = page;
     }
 
-    public BasicButton(int width, int height, @NotNull String text, @Nullable String fileNameLeftIco, @Nullable String fileNameRightIco, int colorPalette, int alignment, boolean toggleable) {
+    public BasicButton(int width, int height, @NotNull String text, @Nullable Images fileNameLeftIco, @Nullable Images fileNameRightIco, int colorPalette, int alignment, boolean toggleable) {
         this(width, height, text, fileNameLeftIco, fileNameRightIco, colorPalette, alignment);
         this.toggleable = toggleable;
     }
 
-    public BasicButton(int width, int height, @NotNull String text, @Nullable String fileNameLeftIco, @Nullable String fileNameRightIco, int colorPalette, int alignment, Runnable runnable) {
+    public BasicButton(int width, int height, @NotNull String text, @Nullable Images fileNameLeftIco, @Nullable Images fileNameRightIco, int colorPalette, int alignment, Runnable runnable) {
         this(width, height, text, fileNameLeftIco, fileNameRightIco, colorPalette, alignment);
         this.runnable = runnable;
     }
 
-    public BasicButton(int width, int height, @NotNull String text, @Nullable String fileNameLeftIco, @Nullable String fileNameRightIco, int colorPalette, int alignment, boolean toggleable, Runnable runnable) {
+    public BasicButton(int width, int height, @NotNull String text, @Nullable Images fileNameLeftIco, @Nullable Images fileNameRightIco, int colorPalette, int alignment, boolean toggleable, Runnable runnable) {
         this(width, height, text, fileNameLeftIco, fileNameRightIco, colorPalette, alignment, runnable);
         this.toggleable = toggleable;
     }

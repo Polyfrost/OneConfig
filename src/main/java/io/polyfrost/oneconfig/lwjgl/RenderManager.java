@@ -1,24 +1,23 @@
 package io.polyfrost.oneconfig.lwjgl;
 
 import io.polyfrost.oneconfig.config.OneConfigConfig;
-import io.polyfrost.oneconfig.lwjgl.font.Font;
 import io.polyfrost.oneconfig.lwjgl.font.FontManager;
 import io.polyfrost.oneconfig.lwjgl.font.Fonts;
 import io.polyfrost.oneconfig.lwjgl.image.Image;
 import io.polyfrost.oneconfig.lwjgl.image.ImageLoader;
+import io.polyfrost.oneconfig.lwjgl.image.Images;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.shader.Framebuffer;
-import org.lwjgl.nanovg.*;
+import org.lwjgl.nanovg.NVGColor;
+import org.lwjgl.nanovg.NVGPaint;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.GL11;
 
 import java.awt.*;
-import java.nio.FloatBuffer;
 import java.util.function.LongConsumer;
 
-import static org.lwjgl.nanovg.NanoSVG.NSVG_FLAGS_VISIBLE;
 import static org.lwjgl.nanovg.NanoVG.*;
 import static org.lwjgl.nanovg.NanoVGGL2.NVG_ANTIALIAS;
 import static org.lwjgl.nanovg.NanoVGGL2.nvgCreate;
@@ -66,7 +65,7 @@ public final class RenderManager {
         GlStateManager.popAttrib();
     }
 
-    public static void drawRectangle(long vg, float x, float y, float width, float height, int color) {
+    public static void drawRectangle(long vg, float x, float y, float width, float height, int color) {     // TODO make everything use this one day
         if (OneConfigConfig.ROUNDED_CORNERS) {
             drawRoundedRect(vg, x, y, width, height, color, OneConfigConfig.CORNER_RADIUS);
         } else {
@@ -74,13 +73,6 @@ public final class RenderManager {
         }
     }
 
-    public static void drawGradientRectangle(long vg, float x, float y, float width, float height, int color1, int color2) {
-        if (OneConfigConfig.ROUNDED_CORNERS) {
-            drawGradientRoundedRect(vg, x, y, width, height, color1, color2, OneConfigConfig.CORNER_RADIUS);
-        } else {
-            drawGradientRect(vg, x, y, width, height, color1, color2);
-        }
-    }
 
     public static void drawGradientRoundedRect(long vg, float x, float y, float width, float height, int color, int color2, float radius) {
         NVGPaint bg = NVGPaint.create();
@@ -165,14 +157,22 @@ public final class RenderManager {
         nvgColor.free();
     }
 
-    public static void drawWrappedString(long vg, String text, float x, float y, float width, int color, float size, Font font) {
-        drawWrappedString(vg, text, x, y, width, color, size, font.getName());
-    }
-
-    public static void drawWrappedString(long vg, String text, float x, float y, float width, int color, float size, String fontName) {
+    public static void drawString(long vg, String text, float x, float y, int color, float size, int lineHeight, Fonts font) {
         nvgBeginPath(vg);
         nvgFontSize(vg, size);
-        nvgFontFace(vg, fontName);
+        nvgFontFace(vg, font.font.getName());
+        nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
+        nvgTextLineHeight(vg, lineHeight);
+        NVGColor nvgColor = color(vg, color);
+        nvgText(vg, x, y, text);
+        nvgFill(vg);
+        nvgColor.free();
+    }
+
+    public static void drawWrappedString(long vg, String text, float x, float y, float width, int color, float size, Fonts font) {
+        nvgBeginPath(vg);
+        nvgFontSize(vg, size);
+        nvgFontFace(vg, font.font.getName());
         nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
         NVGColor nvgColor = color(vg, color);
         nvgTextBox(vg, x, y, width, text);
@@ -180,10 +180,10 @@ public final class RenderManager {
         nvgColor.free();
     }
 
-    public static void drawImage(long vg, String fileName, float x, float y, float width, float height) {
-        if (ImageLoader.INSTANCE.loadImage(vg, fileName)) {
+    public static void drawImage(long vg, String filePath, float x, float y, float width, float height) {
+        if (ImageLoader.INSTANCE.loadImage(vg, filePath)) {
             NVGPaint imagePaint = NVGPaint.calloc();
-            Image image = ImageLoader.INSTANCE.getImage(fileName);
+            Image image = ImageLoader.INSTANCE.getImage(filePath);
             nvgBeginPath(vg);
             nvgImagePattern(vg, x, y, width, height, 0, image.getReference(), 1, imagePaint);
             nvgRect(vg, x, y, width, height);
@@ -193,10 +193,10 @@ public final class RenderManager {
         }
     }
 
-    public static void drawImage(long vg, String fileName, float x, float y, float width, float height, int color) {
-        if (ImageLoader.INSTANCE.loadImage(vg, fileName)) {
+    public static void drawImage(long vg, String filePath, float x, float y, float width, float height, int color) {
+        if (ImageLoader.INSTANCE.loadImage(vg, filePath)) {
             NVGPaint imagePaint = NVGPaint.calloc();
-            Image image = ImageLoader.INSTANCE.getImage(fileName);
+            Image image = ImageLoader.INSTANCE.getImage(filePath);
             nvgBeginPath(vg);
             nvgImagePattern(vg, x, y, width, height, 0, image.getReference(), 1, imagePaint);
             nvgRGBA((byte) (color >> 16 & 0xFF), (byte) (color >> 8 & 0xFF), (byte) (color & 0xFF), (byte) (color >> 24 & 0xFF), imagePaint.innerColor());
@@ -207,41 +207,14 @@ public final class RenderManager {
         }
     }
 
-    public static void drawSVGImage(long vg, String fileName, float x, float y, float width, float height) {
-        if (ImageLoader.INSTANCE.loadSVGImage(fileName)) {
-            try {
-                NSVGImage image = ImageLoader.INSTANCE.getSVG(fileName);
-                NSVGShape shape;
-                NSVGPath path;
-                int i;
-                for (shape = image.shapes(); shape != null; shape.next()) {
-                    if ((shape.flags() == NSVG_FLAGS_VISIBLE)) {
-                        continue;
-                    }
-
-                    nvgFillColor(vg, color(vg, shape.fill().color()));
-                    nvgStrokeColor(vg, color(vg, shape.stroke().color()));
-                    nvgStrokeWidth(vg, shape.strokeWidth());
-
-                    for (path = shape.paths(); path != null; path.next()) {
-                        nvgBeginPath(vg);
-                        FloatBuffer points = path.pts();
-                        nvgMoveTo(vg, points.get(0), points.get(1));
-                        for (i = 1; i < path.npts() - 1; i += 3) {
-                            int b = i * 2;
-                            nvgBezierTo(vg, points.get(b), points.get(b + 1), points.get(b + 2), points.get(b + 3), points.get(b + 4), points.get(b + 5));
-                        }
-                        if (path.closed() == 1) {
-                            nvgLineTo(vg, points.get(0), points.get(1));
-                        }
-                        nvgStroke(vg);
-                    }
-                }
-            } catch (Exception e) {
-                //e.printStackTrace();
-            }
-        }
+    public static void drawImage(long vg, Images filePath, float x, float y, float width, float height) {
+        drawImage(vg, filePath.filePath, x, y, width, height);
     }
+
+    public static void drawImage(long vg, Images filePath, float x, float y, float width, float height, int color) {
+        drawImage(vg, filePath.filePath, x, y, width, height, color);
+    }
+
 
     public static float getTextWidth(long vg, String text, float fontSize, Fonts font) {
         float[] bounds = new float[4];
@@ -277,7 +250,6 @@ public final class RenderManager {
         shadowPaint.free();
         color1.free();
         color2.free();
-
     }
 
 
@@ -288,7 +260,11 @@ public final class RenderManager {
         return nvgColor;
     }
 
-    //gl
+
+    // gl
+    public static void glColor(Color color) {
+        glColor(color.getRGB());
+    }
 
     public static void drawScaledString(String text, float x, float y, int color, boolean shadow, float scale) {
         GlStateManager.pushMatrix();
@@ -297,11 +273,7 @@ public final class RenderManager {
         GlStateManager.popMatrix();
     }
 
-    public static void color(Color color) {
-        color(color.getRGB());
-    }
-
-    public static void color(int color) {
+    public static void glColor(int color) {
         float f = (float) (color >> 24 & 255) / 255.0F;
         float f1 = (float) (color >> 16 & 255) / 255.0F;
         float f2 = (float) (color >> 8 & 255) / 255.0F;
@@ -318,7 +290,7 @@ public final class RenderManager {
         GlStateManager.enableBlend();
         GlStateManager.disableAlpha();
         GlStateManager.tryBlendFuncSeparate(770, 771, 1, 0);
-        color(color);
+        glColor(color);
         GL11.glLineWidth(width);
         GL11.glBegin(GL11.GL_LINES);
         GL11.glVertex2d(sx, sy);

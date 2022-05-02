@@ -4,6 +4,7 @@ import io.polyfrost.oneconfig.config.OneConfigConfig;
 import io.polyfrost.oneconfig.config.interfaces.BasicOption;
 import io.polyfrost.oneconfig.lwjgl.RenderManager;
 import io.polyfrost.oneconfig.lwjgl.font.Fonts;
+import io.polyfrost.oneconfig.lwjgl.image.Images;
 import io.polyfrost.oneconfig.utils.InputUtils;
 import io.polyfrost.oneconfig.utils.MathUtils;
 import org.lwjgl.nanovg.NanoVG;
@@ -49,9 +50,9 @@ public class ConfigUniSelector extends BasicOption {
         // actual coordinates: 240, 7
         NanoVG.nvgTranslate(vg, x + 248, y + 21);
         NanoVG.nvgRotate(vg, (float) Math.toRadians(180));
-        RenderManager.drawImage(vg, "/assets/oneconfig/textures/arrow.png", 0, 0, 8, 14, OneConfigConfig.BLUE_400);
+        RenderManager.drawImage(vg, Images.CHEVRON_ARROW, 0, 0, 8, 14, OneConfigConfig.BLUE_400);
         NanoVG.nvgResetTransform(vg);
-        RenderManager.drawImage(vg, "/assets/oneconfig/textures/arrow.png", x + 456, y + 7, 8, 14, OneConfigConfig.BLUE_400);
+        RenderManager.drawImage(vg, Images.CHEVRON_ARROW, x + 456, y + 7, 8, 14, OneConfigConfig.BLUE_400);
 
         if (InputUtils.isAreaClicked(x + 235, y + 5, 18, 18) && selected > 0) {
             previous = selected;

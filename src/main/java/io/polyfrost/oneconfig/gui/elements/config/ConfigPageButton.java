@@ -7,6 +7,7 @@ import io.polyfrost.oneconfig.gui.OneConfigGui;
 import io.polyfrost.oneconfig.gui.pages.ModConfigPage;
 import io.polyfrost.oneconfig.lwjgl.RenderManager;
 import io.polyfrost.oneconfig.lwjgl.font.Fonts;
+import io.polyfrost.oneconfig.lwjgl.image.Images;
 import io.polyfrost.oneconfig.utils.ColorUtils;
 import io.polyfrost.oneconfig.utils.InputUtils;
 import org.lwjgl.input.Mouse;
@@ -38,7 +39,7 @@ public class ConfigPageButton extends BasicOption {
         RenderManager.drawString(vg, name, x + 10, y + 32, OneConfigConfig.WHITE_90, 24, Fonts.INTER_MEDIUM);
         if (!description.equals(""))
             RenderManager.drawString(vg, name, x + 10, y + 70, OneConfigConfig.WHITE_90, 14, Fonts.INTER_MEDIUM);
-        RenderManager.drawImage(vg, "/assets/oneconfig/textures/arrow.png", x + 981f, y + (description.equals("") ? 20f : 36f), 13, 22);
+        RenderManager.drawImage(vg, Images.CHEVRON_ARROW, x + 981f, y + (description.equals("") ? 20f : 36f), 13, 22);
 
         if (clicked) OneConfigGui.INSTANCE.openPage(new ModConfigPage(page));
         NanoVG.nvgGlobalAlpha(vg, 1f);
