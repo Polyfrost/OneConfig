@@ -8,7 +8,7 @@ public class Mod {
     public final String creator;
     public final String version;
     public Config config;
-    public OptionPage defaultPage = new OptionPage("", this);
+    public final OptionPage defaultPage;
 
     /**
      * @param name    Friendly name of the mod
@@ -21,5 +21,6 @@ public class Mod {
         this.modType = modType;
         this.creator = creator;
         this.version = version;
+        this.defaultPage = new OptionPage(name, this);
     }
 }

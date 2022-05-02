@@ -68,4 +68,9 @@ public class ModsPage extends Page {
             modCategories.get(i).setToggled(false);
         }
     }
+
+    @Override
+    public boolean isBase() {
+        return true;
+    }
 }

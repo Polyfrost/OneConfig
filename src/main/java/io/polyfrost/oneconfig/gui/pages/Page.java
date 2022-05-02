@@ -13,12 +13,9 @@ public abstract class Page {
         this.title = title;
     }
 
-    public void draw(long vg, int x, int y) {
-        RenderManager.drawString(vg, "Doesn't appear there is any content to this page :(", x + 12, y + 18, -1, 24f, Fonts.INTER_BOLD);
-    }
+    public abstract void draw(long vg, int x, int y);
 
     public void finishUpAndClose() {
-
     }
 
     public String getTitle() {
@@ -26,5 +23,12 @@ public abstract class Page {
     }
 
     public void keyTyped(char key, int keyCode) {
+    }
+
+    /**
+     * Overwrite this method and make it return true if you want this to always be the base in breadcrumbs
+     */
+    public boolean isBase() {
+        return false;
     }
 }

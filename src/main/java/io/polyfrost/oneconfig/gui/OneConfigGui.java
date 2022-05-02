@@ -9,6 +9,7 @@ import io.polyfrost.oneconfig.gui.pages.Page;
 import io.polyfrost.oneconfig.lwjgl.RenderManager;
 import io.polyfrost.oneconfig.lwjgl.font.Fonts;
 import io.polyfrost.oneconfig.lwjgl.image.Images;
+import io.polyfrost.oneconfig.utils.InputUtils;
 import io.polyfrost.oneconfig.utils.MathUtils;
 import net.minecraft.client.gui.GuiScreen;
 import org.jetbrains.annotations.NotNull;
@@ -24,24 +25,19 @@ import static org.lwjgl.nanovg.NanoVG.nvgScissor;
 
 public class OneConfigGui extends GuiScreen {
     public static OneConfigGui INSTANCE;
-
     public final int x = 320;
     public final int y = 140;
-
     private final SideBar sideBar = new SideBar();
-
     protected Page currentPage;
     protected Page prevPage;
     private float pageProgress = -224f;
-
     private final TextInputField textInputField = new TextInputField(248, 40, "Search all of OneConfig...", false, false);
-    private final ArrayList<Page> pageHistory = new ArrayList<>();
-    private int currentPageIndex = 0;
-    private final BasicElement backArrow = new BasicElement(40, 40, -1, true);
-    private final BasicElement forwardArrow = new BasicElement(40, 40, -1, true);
-
+    private final ArrayList<Page> previousPages = new ArrayList<>();
+    private final ArrayList<Page> nextPages = new ArrayList<>();
+    private final BasicElement backArrow = new BasicElement(40, 40, -1, false);
+    private final BasicElement forwardArrow = new BasicElement(40, 40, -1, false);
+    private final ArrayList<Page> parents = new ArrayList<>();
     private ColorSelector currentColorSelector;
-
     public boolean mouseDown;
 
     public OneConfigGui() {
@@ -58,7 +54,10 @@ public class OneConfigGui extends GuiScreen {
         super.drawScreen(mouseX, mouseY, partialTicks);
         long start = System.nanoTime();
         RenderManager.setupAndDraw((vg) -> {
-            if (currentPage == null) currentPage = new HomePage();
+            if (currentPage == null) {
+                currentPage = new HomePage();
+                parents.add(currentPage);
+            }
             //nvgScale(vg, 0.5f, 0.5f);
             if (OneConfigConfig.ROUNDED_CORNERS) {
                 RenderManager.drawRoundedRect(vg, 544, 140, 1056, 800, OneConfigConfig.GRAY_800, OneConfigConfig.CORNER_RADIUS_WIN);
@@ -78,34 +77,43 @@ public class OneConfigGui extends GuiScreen {
             backArrow.draw(vg, x + 240, y + 16);
             forwardArrow.draw(vg, x + 280, y + 16);
 
-            if (currentPageIndex <= 0) {
+            if (previousPages.size() == 0) {
                 backArrow.disable(true);
                 NanoVG.nvgGlobalAlpha(vg, 0.5f);
-            } else backArrow.disable(false);
-            RenderManager.drawImage(vg, Images.ARROW_LEFT, x + 250, y + 26, 20, 20);
+            } else {
+                backArrow.disable(false);
+                if (!backArrow.isHovered() || Mouse.isButtonDown(0)) NanoVG.nvgGlobalAlpha(vg, 0.8f);
+            }
+            NanoVG.nvgTranslate(vg, x + 271, y + 47);
+            NanoVG.nvgRotate(vg, (float) Math.toRadians(180));
+            RenderManager.drawImage(vg, Images.CIRCLE_ARROW, 0, 0, 22, 22);
+            NanoVG.nvgResetTransform(vg);
             NanoVG.nvgGlobalAlpha(vg, 1f);
-            if (currentPageIndex > pageHistory.size() - 1) {
+            if (nextPages.size() == 0) {
                 forwardArrow.disable(true);
                 NanoVG.nvgGlobalAlpha(vg, 0.5f);
-            } else forwardArrow.disable(false);
-            RenderManager.drawImage(vg, Images.ARROW_RIGHT, x + 290, y + 26, 20, 20);
+            } else {
+                forwardArrow.disable(false);
+                if (!forwardArrow.isHovered() || Mouse.isButtonDown(0)) NanoVG.nvgGlobalAlpha(vg, 0.8f);
+            }
+            RenderManager.drawImage(vg, Images.CIRCLE_ARROW, x + 289, y + 25, 22, 22);
             NanoVG.nvgGlobalAlpha(vg, 1f);
 
-            /*if (backArrow.isClicked()) {      // TODO
+            if (backArrow.isClicked() && previousPages.size() > 0) {
                 try {
-                    openPage(pageHistory.get(currentPageIndex--));
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-            if (forwardArrow.isClicked()) {
-                try {
-                    pageHistory.add(currentPage);
-                    openPage(pageHistory.get(currentPageIndex++));
+                    nextPages.add(0, currentPage);
+                    openPage(previousPages.get(0), false);
+                    previousPages.remove(0);
                 } catch (Exception ignored) {
                 }
-            }*/
-
+            } else if (forwardArrow.isClicked() && nextPages.size() > 0) {
+                try {
+                    previousPages.add(0, currentPage);
+                    openPage(nextPages.get(0), false);
+                    nextPages.remove(0);
+                } catch (Exception ignored) {
+                }
+            }
 
             nvgScissor(vg, x + 224, y + 72, 1056, 728);
             if (prevPage != null) {
@@ -121,12 +129,29 @@ public class OneConfigGui extends GuiScreen {
                 currentPage.draw(vg, (int) (x - pageProgress), y + 72);
             }
             nvgResetScissor(vg);
-            if(currentColorSelector != null) {
+            if (currentColorSelector != null) {
                 currentColorSelector.draw(vg);
             }
+
+            float breadcrumbX = x + 336;
+            for (int i = 0; i < parents.size(); i++) {
+                String title = parents.get(i).getTitle();
+                float width = RenderManager.getTextWidth(vg, title, 24f, Fonts.INTER_SEMIBOLD);
+                boolean hovered = InputUtils.isAreaHovered((int) breadcrumbX, y + 24, (int) width, 36);
+                int color = OneConfigConfig.WHITE_60;
+                if (i == parents.size() - 1) color = OneConfigConfig.WHITE_95;
+                else if (hovered && !Mouse.isButtonDown(0)) color = OneConfigConfig.WHITE_80;
+                RenderManager.drawString(vg, title, breadcrumbX, y + 38, color, 24f, Fonts.INTER_SEMIBOLD);
+                if (i != 0)
+                    RenderManager.drawImage(vg, Images.CHEVRON_ARROW, breadcrumbX - 22, y + 26, 13, 22, color);
+                if (hovered && i != parents.size() - 1)
+                    RenderManager.drawLine(vg, breadcrumbX, y + 48, breadcrumbX + width, y + 48, 2, color);
+                if (hovered && InputUtils.isClicked()) openPage(parents.get(i));
+                breadcrumbX += width + 32;
+            }
+
             long end = System.nanoTime() - start;
             String s = (" draw: " + end / 1000000f + "ms");
-            RenderManager.drawString(vg, currentPage.getTitle(), x + 336, y + 36, OneConfigConfig.WHITE_90, 32f, Fonts.INTER_SEMIBOLD);
             RenderManager.drawString(vg, s, x + 1170, y + 790, OneConfigConfig.GRAY_300, 10f, Fonts.INTER_MEDIUM);
         });
         mouseDown = Mouse.isButtonDown(0);
@@ -144,8 +169,31 @@ public class OneConfigGui extends GuiScreen {
     }
 
     public void openPage(@NotNull Page page) {
+        openPage(page, true);
+    }
+
+    public void openPage(@NotNull Page page, boolean addToPrevious) {
         if (page == currentPage) return;
         currentPage.finishUpAndClose();
+        if (!page.isBase()) {
+            boolean alreadyInParents = false;
+            for (int i = 0; i < parents.size(); i++) {
+                Page parent = parents.get(i);
+                if (parent == page) {
+                    alreadyInParents = true;
+                    parents.subList(i + 1, parents.size()).clear();
+                    break;
+                }
+            }
+            if (!alreadyInParents) parents.add(page);
+        } else {
+            parents.clear();
+            parents.add(page);
+        }
+        if (addToPrevious) {
+            previousPages.add(0, currentPage);
+            nextPages.clear();
+        }
         if (prevPage == null) {
             prevPage = currentPage;
         }
@@ -154,13 +202,15 @@ public class OneConfigGui extends GuiScreen {
 
     /**
      * initialize a new ColorSelector and add it to the draw script. This method is used to make sure it is always rendered on top.
+     *
      * @implNote Correct usage: <code>OneConfigGui.INSTANCE.initColorSelector(new ColorSelector(color, InputUtils.mouseX(), InputUtils.mouseY()));</code>
      */
     public void initColorSelector(ColorSelector colorSelector) {
         currentColorSelector = colorSelector;
     }
 
-    /** Close the current color selector and return the color it had when it closed.
+    /**
+     * Close the current color selector and return the color it had when it closed.
      */
     public Color closeColorSelector() {
         Color color = currentColorSelector.getColor();

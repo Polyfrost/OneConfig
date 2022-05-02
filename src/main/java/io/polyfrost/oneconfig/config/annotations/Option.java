@@ -31,6 +31,10 @@ public @interface Option {
      */
     String subcategory();
 
+    /**
+     * The width of the option (1 = half width, 2 = full width)
+     */
+    int size() default 1;
 
     /**
      * A String array of all the possible values for the UniSelector, dropdownList, and ComboBox.
@@ -40,9 +44,9 @@ public @interface Option {
     String[] options() default {};
 
     /**
-     * The width of the option (1 = half width, 2 = full width)
+     * The places you want dividers to be in a dropdown
      */
-    int size() default 1;
+    int[] dividers() default {};
 
     /**
      * The placeholder in the text field
@@ -60,11 +64,6 @@ public @interface Option {
     boolean multiLine() default false;
 
     /**
-     * Steps of slider (0 for no steps)
-     */
-    int step() default 0;
-
-    /**
      * Minimum value of slider
      */
     float min() default 0;
@@ -73,6 +72,11 @@ public @interface Option {
      * The maximum value of the slider
      */
     float max() default 0;
+
+    /**
+     * Steps of slider (0 for no steps)
+     */
+    int step() default 0;
 
     /**
      * Option for info option type

@@ -44,7 +44,7 @@ public class ConfigCheckbox extends BasicOption {
             RenderManager.drawHollowRoundRect(vg, x, y + 4, 23.5f, 23.5f, OneConfigConfig.GRAY_300, 6f, 1f);        // the 0.5f is to make it look better ok
         }
         color = ColorUtils.smoothColor(color, OneConfigConfig.GRAY_600, OneConfigConfig.GRAY_400, hover, 40f);
-        RenderManager.drawString(vg, name, x + 32, y + 17, OneConfigConfig.WHITE_90, 18f, Fonts.INTER_MEDIUM);
+        RenderManager.drawString(vg, name, x + 32, y + 17, OneConfigConfig.WHITE_90, 14f, Fonts.INTER_MEDIUM);
         percentOn = MathUtils.clamp(MathUtils.easeOut(percentOn, toggled ? 1f : 0f, 5f));
         if (percentOn == 0f) return;
         if (percentOn != 1f) {

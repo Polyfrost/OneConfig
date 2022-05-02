@@ -16,7 +16,7 @@ public class ModConfigPage extends Page {
     private String selectedCategory;
 
     public ModConfigPage(OptionPage page) {
-        super("Mod: " + page.mod.name);
+        super(page.name);
         this.page = page;
         if (page.categories.size() == 0) return;
         for (String category : page.categories.keySet()) {

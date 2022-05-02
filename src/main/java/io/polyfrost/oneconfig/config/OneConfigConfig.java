@@ -41,6 +41,7 @@ public class OneConfigConfig extends Config {
     public static final int WHITE_60 = new Color(255, 255, 255, 153).getRGB();        // White 60%
     public static final int WHITE_80 = new Color(255, 255, 255, 204).getRGB();        // White 80%
     public static final int WHITE_90 = new Color(255, 255, 255, 229).getRGB();        // White 90%
+    public static final int WHITE_95 = new Color(255, 255, 255, 242).getRGB();        // White 90%
     public static final int WHITE = new Color(255, 255, 255, 255).getRGB();           // White 100%
 
     public static final int ERROR_700 = new Color(180, 24, 24, 255).getRGB();         // Red 700

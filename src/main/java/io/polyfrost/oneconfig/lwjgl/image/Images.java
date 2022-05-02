@@ -4,8 +4,7 @@ public enum Images {
     CHEVRON_ARROW("/assets/oneconfig/textures/gui/general/arrows/chevron.png"),
     DROPDOWN_ARROW("/assets/oneconfig/textures/gui/general/arrows/dropdown_arrow.png"),
     UP_ARROW("/assets/oneconfig/textures/gui/general/arrows/up_arrow.png"),
-    ARROW_RIGHT("/assets/oneconfig/textures/gui/general/arrows/arrow_right.png"),
-    ARROW_LEFT("/assets/oneconfig/textures/gui/general/arrows/arrow_left.png"),
+    CIRCLE_ARROW("/assets/oneconfig/textures/gui/general/arrows/circle_arrow.png"),
 
     CHECKMARK("/assets/oneconfig/textures/gui/general/configs/checkmark.png"),
     FAVORITE("/assets/oneconfig/textures/gui/general/configs/favorite_active.png"),

@@ -124,7 +124,7 @@ public class Config {
                     options.add(new ConfigUniSelector(field, option.name(), option.size(), option.options()));
                     break;
                 case DROPDOWN:
-                    options.add(new ConfigDropdown(field, option.name(), option.size(), option.options()));
+                    options.add(new ConfigDropdown(field, option.name(), option.size(), option.options(), option.dividers()));
                     break;
                 case SLIDER:
                     options.add(new ConfigSlider(field, option.name(), option.size(), option.min(), option.max(), option.step()));

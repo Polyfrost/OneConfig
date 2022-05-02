@@ -34,15 +34,15 @@ public class ConfigUniSelector extends BasicOption {
         } catch (IllegalAccessException ignored) {
         }
         String option = options[selected] + " " + (selected + 1) + "/" + options.length;
-        RenderManager.drawString(vg, name, x, y + 16, OneConfigConfig.WHITE_90, 18f, Fonts.INTER_MEDIUM);
+        RenderManager.drawString(vg, name, x, y + 16, OneConfigConfig.WHITE_90, 14f, Fonts.INTER_MEDIUM);
 
         if (previous == -1) {
-            RenderManager.drawString(vg, option, x + 352 - RenderManager.getTextWidth(vg, option, 14f, Fonts.INTER_MEDIUM) / 2f, y + 15, OneConfigConfig.WHITE_90, 14f, Fonts.INTER_MEDIUM);
+            RenderManager.drawString(vg, option, x + 352 - RenderManager.getTextWidth(vg, option, 12f, Fonts.INTER_MEDIUM) / 2f, y + 15, OneConfigConfig.WHITE_90, 12f, Fonts.INTER_MEDIUM);
         } else {
             String prevOption = options[previous] + " " + (previous + 1) + "/" + options.length;
             NanoVG.nvgScissor(vg, x + 256, y, 192, 32);
-            RenderManager.drawString(vg, selected < previous ? prevOption : option, x + 352 - RenderManager.getTextWidth(vg, selected < previous ? prevOption : option, 14f, Fonts.INTER_MEDIUM) / 2f + 192 * percentMove, y + 15, OneConfigConfig.WHITE_90, 14f, Fonts.INTER_MEDIUM);
-            RenderManager.drawString(vg, selected < previous ? option : prevOption, x + 352 - RenderManager.getTextWidth(vg, selected < previous ? option : prevOption, 14f, Fonts.INTER_MEDIUM) / 2f - 192 * (1 - percentMove), y + 15, OneConfigConfig.WHITE_90, 14f, Fonts.INTER_MEDIUM);
+            RenderManager.drawString(vg, selected < previous ? prevOption : option, x + 352 - RenderManager.getTextWidth(vg, selected < previous ? prevOption : option, 12f, Fonts.INTER_MEDIUM) / 2f + 192 * percentMove, y + 15, OneConfigConfig.WHITE_90, 12f, Fonts.INTER_MEDIUM);
+            RenderManager.drawString(vg, selected < previous ? option : prevOption, x + 352 - RenderManager.getTextWidth(vg, selected < previous ? option : prevOption, 12f, Fonts.INTER_MEDIUM) / 2f - 192 * (1 - percentMove), y + 15, OneConfigConfig.WHITE_90, 12f, Fonts.INTER_MEDIUM);
 
             NanoVG.nvgResetScissor(vg);
         }

@@ -20,4 +20,9 @@ public class HomePage extends Page {
         //RenderManager.drawRoundedRect(vg);
         btn.draw(vg, x + 432, y + 658);
     }
+
+    @Override
+    public boolean isBase() {
+        return true;
+    }
 }

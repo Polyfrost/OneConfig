@@ -61,7 +61,6 @@ public abstract class BasicOption {
      * @param y  y position
      */
     public void drawLast(long vg, int x, int y) {
-
     }
 
     /**

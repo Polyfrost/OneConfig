@@ -84,7 +84,7 @@ public class ConfigSlider extends BasicOption {
         }
         inputField.draw(vg, x + 892, y);
 
-        RenderManager.drawString(vg, name, x, y + 15, OneConfigConfig.WHITE_90, 18f, Fonts.INTER_MEDIUM);
+        RenderManager.drawString(vg, name, x, y + 17, OneConfigConfig.WHITE_90, 14f, Fonts.INTER_MEDIUM);
         RenderManager.drawRoundedRect(vg, x + 352, y + 13, 512, 6, OneConfigConfig.GRAY_300, 4f);
         slideYBoi.update(x + 340 + (int) (current * 512), y + 4);
         if (steps != 0) {

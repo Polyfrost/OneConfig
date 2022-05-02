@@ -64,9 +64,9 @@ public class TestConfig extends Config {
     public static boolean switchTest4;
 
     @Option(
-            name = "Test switch",
+            name = "Test checkbox",
             subcategory = "Other subcategory",
-            type = OptionType.SWITCH
+            type = OptionType.CHECKBOX
     )
     public static boolean switchTest5;
 
