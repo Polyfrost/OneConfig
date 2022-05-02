@@ -4,13 +4,18 @@ public enum Images {
     CHEVRON_ARROW("/assets/oneconfig/textures/gui/general/arrows/chevron.png"),
     DROPDOWN_ARROW("/assets/oneconfig/textures/gui/general/arrows/dropdown_arrow.png"),
     UP_ARROW("/assets/oneconfig/textures/gui/general/arrows/up_arrow.png"),
+    ARROW_RIGHT("/assets/oneconfig/textures/gui/general/arrows/arrow_right.png"),
+    ARROW_LEFT("/assets/oneconfig/textures/gui/general/arrows/arrow_left.png"),
 
     CHECKMARK("/assets/oneconfig/textures/gui/general/configs/checkmark.png"),
     FAVORITE("/assets/oneconfig/textures/gui/general/configs/favorite_active.png"),
     FAVORITE_OFF("/assets/oneconfig/textures/gui/general/configs/favorite_inactive.png"),
     HIDE_EYE("/assets/oneconfig/textures/gui/general/configs/hide_eye.png"),
+    HIDE_EYE_OFF("/assets/oneconfig/textures/gui/general/configs/hide_eye_off.png"),
 
     // TODO color picker ones
+    COLOR_BASE("/assets/oneconfig/textures/gui/general/color/color_base.png"),
+
 
     SHARE("/assets/oneconfig/textures/gui/general/nav/share.png"),
     LAUNCH("/assets/oneconfig/textures/gui/general/nav/launch.png"),

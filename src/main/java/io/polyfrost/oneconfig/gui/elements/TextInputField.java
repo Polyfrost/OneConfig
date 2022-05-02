@@ -40,6 +40,12 @@ public class TextInputField extends BasicElement {
         this.input = "";
     }
 
+    public TextInputField(int width, int height, boolean centered, boolean onlyNums, String defaultText) {
+        this(width, height, defaultText, false, false);
+        this.centered = centered;
+        this.onlyNums = onlyNums;
+    }
+
     public void onlyAcceptNumbers(boolean state) {
         onlyNums = state;
     }

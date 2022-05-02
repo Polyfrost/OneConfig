@@ -157,6 +157,18 @@ public final class RenderManager {
         nvgColor.free();
     }
 
+    public static void drawString(long vg, String text, float x, float y, int color, float size, int lineHeight, Fonts font) {
+        nvgBeginPath(vg);
+        nvgFontSize(vg, size);
+        nvgFontFace(vg, font.font.getName());
+        nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
+        nvgTextLineHeight(vg, lineHeight);
+        NVGColor nvgColor = color(vg, color);
+        nvgText(vg, x, y, text);
+        nvgFill(vg);
+        nvgColor.free();
+    }
+
     public static void drawWrappedString(long vg, String text, float x, float y, float width, int color, float size, Fonts font) {
         nvgBeginPath(vg);
         nvgFontSize(vg, size);
