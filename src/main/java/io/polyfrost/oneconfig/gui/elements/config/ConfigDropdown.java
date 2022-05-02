@@ -14,7 +14,7 @@ import java.awt.*;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 
-public class ConfigDropdown extends BasicOption {
+public class ConfigDropdown extends BasicOption { // TODO: chose where dividers are somehow idfk please send help
     private final String[] options;
     private int backgroundColor = OneConfigConfig.GRAY_500;
     private boolean opened = false;
