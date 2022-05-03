@@ -7,6 +7,8 @@ import io.polyfrost.oneconfig.gui.elements.TextInputField;
 import io.polyfrost.oneconfig.gui.pages.HomePage;
 import io.polyfrost.oneconfig.gui.pages.Page;
 import io.polyfrost.oneconfig.lwjgl.RenderManager;
+import io.polyfrost.oneconfig.lwjgl.Scissor;
+import io.polyfrost.oneconfig.lwjgl.ScissorManager;
 import io.polyfrost.oneconfig.lwjgl.font.Fonts;
 import io.polyfrost.oneconfig.lwjgl.image.Images;
 import io.polyfrost.oneconfig.utils.InputUtils;
@@ -115,7 +117,7 @@ public class OneConfigGui extends GuiScreen {
                 }
             }
 
-            nvgScissor(vg, x + 224, y + 72, 1056, 728);
+            Scissor scissor = ScissorManager.scissor(vg, x + 224, y + 72, 1056, 728);
             if (prevPage != null) {
                 pageProgress = MathUtils.easeInOutCirc(50, pageProgress, 832 - pageProgress, 220);
                 prevPage.draw(vg, (int) (x - pageProgress), y + 72);
@@ -128,7 +130,7 @@ public class OneConfigGui extends GuiScreen {
             } else {
                 currentPage.draw(vg, (int) (x - pageProgress), y + 72);
             }
-            nvgResetScissor(vg);
+            ScissorManager.resetScissor(vg, scissor);
             if (currentColorSelector != null) {
                 currentColorSelector.draw(vg);
             }

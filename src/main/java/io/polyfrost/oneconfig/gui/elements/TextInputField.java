@@ -2,6 +2,8 @@ package io.polyfrost.oneconfig.gui.elements;
 
 import io.polyfrost.oneconfig.config.OneConfigConfig;
 import io.polyfrost.oneconfig.lwjgl.RenderManager;
+import io.polyfrost.oneconfig.lwjgl.Scissor;
+import io.polyfrost.oneconfig.lwjgl.ScissorManager;
 import io.polyfrost.oneconfig.lwjgl.font.Fonts;
 import io.polyfrost.oneconfig.utils.InputUtils;
 import net.minecraft.client.gui.GuiScreen;
@@ -84,6 +86,7 @@ public class TextInputField extends BasicElement {
         this.y = y;
         this.vg = vg;
         try {
+            Scissor scissor = ScissorManager.scissor(vg, x, y, width, height);
             int colorOutline = errored ? OneConfigConfig.ERROR_700 : OneConfigConfig.GRAY_700;
             RenderManager.drawHollowRoundRect(vg, x, y, width, height, colorOutline, 12f, 2f);
             super.update(x, y);
@@ -179,6 +182,7 @@ public class TextInputField extends BasicElement {
             } else {
                 RenderManager.drawString(vg, s.toString(), x + 12, y + height / 2f + 1, color, 14f, Fonts.INTER_REGULAR);
             }
+            ScissorManager.resetScissor(vg, scissor);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -334,9 +338,6 @@ public class TextInputField extends BasicElement {
                 if (!Character.isDefined(c)) return;
                 if (GuiScreen.isCtrlKeyDown()) return;
                 if (ChatAllowedCharacters.isAllowedCharacter(c)) {
-                    if (getTextWidth(vg, input) + 22 > width) {     // over typing is banned
-                        return;
-                    }
                     if (selectedText != null) {
                         if (caretPos > prevCaret) {
                             input = input.substring(0, prevCaret) + input.substring(prevCaret, caretPos);
