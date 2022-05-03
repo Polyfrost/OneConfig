@@ -6,6 +6,7 @@ import io.polyfrost.oneconfig.config.core.ConfigCore;
 import io.polyfrost.oneconfig.config.data.Mod;
 import io.polyfrost.oneconfig.config.data.ModType;
 import io.polyfrost.oneconfig.hud.HudCore;
+import io.polyfrost.oneconfig.lwjgl.BlurHandler;
 import io.polyfrost.oneconfig.lwjgl.RenderManager;
 import io.polyfrost.oneconfig.lwjgl.font.Fonts;
 import io.polyfrost.oneconfig.lwjgl.image.Images;
@@ -46,6 +47,7 @@ public class OneConfig {
 
     @net.minecraftforge.fml.common.Mod.EventHandler
     public void onFMLInitialization(FMLInitializationEvent event) {
+        BlurHandler.INSTANCE.load();
         testConfig = new TestConfig();
         ClientCommandHandler.instance.registerCommand(new OneConfigCommand());
         MinecraftForge.EVENT_BUS.register(this);

@@ -1,13 +1,12 @@
 package io.polyfrost.oneconfig.utils;
 
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
 public class TickDelay {
-    int delay;
-    Runnable function;
+    private int delay;
+    private final Runnable function;
 
     public TickDelay(Runnable functionName, int ticks) {
         register();
@@ -27,12 +26,10 @@ public class TickDelay {
         }
     }
 
-    @EventHandler()
     private void destroy() {
         MinecraftForge.EVENT_BUS.unregister(this);
     }
 
-    @EventHandler()
     private void register() {
         MinecraftForge.EVENT_BUS.register(this);
     }

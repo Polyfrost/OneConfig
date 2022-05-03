@@ -37,6 +37,7 @@ loom {
         }
     }
     forge {
+        accessTransformer(file("src/main/resources/oneconfig_at.cfg"))
         pack200Provider = new dev.architectury.pack200.java.Pack200Adapter()
     }
 }
@@ -112,7 +113,7 @@ processResources {
 
 sourceSets {
     main {
-        output.resourcesDir = java.classesDirectory
+        output.resourcesDir = java.outputDir
     }
 }
 

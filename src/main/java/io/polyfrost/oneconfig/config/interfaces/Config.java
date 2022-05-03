@@ -43,7 +43,7 @@ public class Config {
         mod.config = this;
         generateOptionList(this.getClass(), mod.defaultPage, mod);
         ConfigCore.oneConfigMods.add(mod);
-        this.mod = mod;
+        Config.mod = mod;
     }
 
     /**
