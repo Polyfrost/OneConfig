@@ -1,12 +1,12 @@
 package cc.polyfrost.oneconfig.lwjgl;
 
 public class Scissor {
-    public int x;
-    public int y;
-    public int width;
-    public int height;
+    public float x;
+    public float y;
+    public float width;
+    public float height;
 
-    public Scissor(int x, int y, int width, int height) {
+    public Scissor(float x, float y, float width, float height) {
         this.x = x;
         this.y = y;
         this.width = width;
