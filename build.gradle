@@ -12,11 +12,11 @@ plugins {
 }
 
 version = mod_version
-group = "io.polyfrost"
+group = "cc.polyfrost"
 archivesBaseName = mod_name
 
 blossom {
-    String className = "src/main/java/io/polyfrost/oneconfig/OneConfig.java"
+    String className = "src/main/java/cc/polyfrost/oneconfig/OneConfig.java"
     replaceToken("@VER@", project.version, className)
     replaceToken("@NAME@", mod_name, className)
     replaceToken("@ID@", mod_id, className)
@@ -28,7 +28,7 @@ compileJava.options.encoding = 'UTF-8'
 loom {
     launchConfigs {
         client {
-            property("fml.coreMods.load", "io.polyfrost.oneconfig.lwjgl.plugin.LoadingPlugin")
+            property("fml.coreMods.load", "cc.polyfrost.oneconfig.lwjgl.plugin.LoadingPlugin")
         }
     }
     runConfigs {
@@ -133,7 +133,7 @@ jar {
             'ModSide': 'CLIENT',
             'ForceLoadAsMod': true,
             "TweakOrder": "0",
-            "FMLCorePlugin": "io.polyfrost.oneconfig.lwjgl.plugin.LoadingPlugin",
+            "FMLCorePlugin": "cc.polyfrost.oneconfig.lwjgl.plugin.LoadingPlugin",
             "FMLCorePluginContainsFMLMod": "lol"
     )
     enabled = false
