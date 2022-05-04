@@ -1,6 +1,4 @@
-package cc.polyfrost.oneconfig.lwjgl;
-
-import org.apache.commons.io.IOUtils;
+package cc.polyfrost.oneconfig.utils;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -12,9 +10,9 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.file.Files;
 
-public final class IOUtil {
+public final class IOUtils {
 
-    private IOUtil() {
+    private IOUtils() {
     }
 
     /**
@@ -25,19 +23,19 @@ public final class IOUtil {
         byte[] bytes;
         path = path.trim();
         if (path.startsWith("http")) {
-            bytes = IOUtils.toByteArray(new URL(path));
+            bytes = org.apache.commons.io.IOUtils.toByteArray(new URL(path));
         } else {
             InputStream stream;
             File file = new File(path);
             if (file.exists() && file.isFile()) {
                 stream = Files.newInputStream(file.toPath());
             } else {
-                stream = IOUtil.class.getResourceAsStream(path);
+                stream = IOUtils.class.getResourceAsStream(path);
             }
             if (stream == null) {
                 throw new FileNotFoundException(path);
             }
-            bytes = IOUtils.toByteArray(stream);
+            bytes = org.apache.commons.io.IOUtils.toByteArray(stream);
         }
         ByteBuffer data = ByteBuffer.allocateDirect(bytes.length).order(ByteOrder.nativeOrder())
                 .put(bytes);

@@ -2,8 +2,8 @@ package cc.polyfrost.oneconfig.gui.elements;
 
 import cc.polyfrost.oneconfig.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
-import cc.polyfrost.oneconfig.lwjgl.Scissor;
-import cc.polyfrost.oneconfig.lwjgl.ScissorManager;
+import cc.polyfrost.oneconfig.lwjgl.scissor.Scissor;
+import cc.polyfrost.oneconfig.lwjgl.scissor.ScissorManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import net.minecraft.client.gui.GuiScreen;

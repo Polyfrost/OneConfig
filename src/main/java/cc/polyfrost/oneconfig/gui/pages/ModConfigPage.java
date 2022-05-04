@@ -149,4 +149,9 @@ public class ModConfigPage extends Page {
             button.setToggled(false);
         }
     }
+
+    @Override
+    public int getMaxScrollHeight() {
+        return 1600;
+    }
 }

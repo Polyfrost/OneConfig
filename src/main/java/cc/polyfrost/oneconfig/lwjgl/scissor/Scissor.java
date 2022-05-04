@@ -1,4 +1,4 @@
-package cc.polyfrost.oneconfig.lwjgl;
+package cc.polyfrost.oneconfig.lwjgl.scissor;
 
 public class Scissor {
     public float x;

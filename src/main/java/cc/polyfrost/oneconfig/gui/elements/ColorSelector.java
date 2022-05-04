@@ -9,6 +9,22 @@ import java.awt.*;
 import java.util.ArrayList;
 
 public class ColorSelector {
+
+    public ColorSelector(Color color, int mouseX, int mouseY) {
+
+    }
+
+    public void draw(long vg) {
+
+    }
+
+    public Color getColor() {
+
+        return null;
+    }
+}
+
+/*public class ColorSelector {
     private Color color;
     private final int x, y;
     private final int width = 416;
@@ -147,7 +163,7 @@ public class ColorSelector {
         public abstract void drawBox(long vg, int x, int y);
 
         /** draw the color selector contents, including the box, and the input fields. If it is clicked, getColorAtPos is called. updateElements is also called to update all the input fields. */
-        public void draw(long vg, int x, int y) {
+        /*public void draw(long vg, int x, int y) {
             drawBox(vg, x + 16, y + 120);
             if(InputUtils.isAreaHovered(x + 16, y + 120, 384, 288) && Mouse.isButtonDown(0)) {
                 selectedX = InputUtils.mouseX() - x - 16;
@@ -170,18 +186,18 @@ public class ColorSelector {
             RenderManager.drawRoundedRect(vg, x + 16, y + 488, 384, 40, color1.getRGB(), 12f);
         }
 
-        /** called to set the color of the color selector box based on the values of the input fields. */
+        /** called to set the color of the color selector box based on the values of the input fields. */ /*
         public abstract void setColor(Color color);
 
-        /** return an array of two ints of the start color of the gradient and the end color of the gradient. */
+        /** return an array of two ints of the start color of the gradient and the end color of the gradient. */ /*
         public abstract int[] drawTopSlider();
-        /** return an array of two ints of the start color of the gradient and the end color of the gradient. */
+        /** return an array of two ints of the start color of the gradient and the end color of the gradient. */ /*
         public abstract int[] drawBottomSlider();
 
         /**
          * This method is called when the color selector is clicked. It needs to return color at the clicked position.
          * @return color at the clicked position as a <code>float[] rgba.</code>
-         */
+         */ /*
         public abstract float[] getColorAtPos(int clickX, int clickY);
 
         public float getRed() {
@@ -246,5 +262,5 @@ public class ColorSelector {
         }
     }
 }
-
+*/
 

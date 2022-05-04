@@ -23,11 +23,11 @@ public class ClassTransformer implements IClassTransformer {
                     InsnList list = new InsnList();
 
                     list.add(new VarInsnNode(Opcodes.LLOAD, 0));
-                    list.add(new TypeInsnNode(Opcodes.NEW, "cc/polyfrost/oneconfig/lwjgl/Lwjgl2FunctionProvider"));
+                    list.add(new TypeInsnNode(Opcodes.NEW, "cc/polyfrost/oneconfig/lwjgl/plugin/Lwjgl2FunctionProvider"));
                     list.add(new InsnNode(Opcodes.DUP));
                     list.add(new MethodInsnNode(
                             Opcodes.INVOKESPECIAL,
-                            "cc/polyfrost/oneconfig/lwjgl/Lwjgl2FunctionProvider",
+                            "cc/polyfrost/oneconfig/lwjgl/plugin/Lwjgl2FunctionProvider",
                             "<init>",
                             "()V",
                             false

@@ -1,4 +1,4 @@
-package cc.polyfrost.oneconfig.lwjgl;
+package cc.polyfrost.oneconfig.lwjgl.plugin;
 
 import org.lwjgl.opengl.GLContext;
 import org.lwjgl.system.FunctionProvider;

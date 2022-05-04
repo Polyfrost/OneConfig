@@ -1,6 +1,6 @@
 package cc.polyfrost.oneconfig.lwjgl.font;
 
-import cc.polyfrost.oneconfig.lwjgl.IOUtil;
+import cc.polyfrost.oneconfig.utils.IOUtils;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -15,7 +15,7 @@ public class FontManager {
             Font font = fonts.font;
             int loaded = -1;
             try {
-                ByteBuffer buffer = IOUtil.resourceToByteBuffer(font.getFileName());
+                ByteBuffer buffer = IOUtils.resourceToByteBuffer(font.getFileName());
                 loaded = nvgCreateFontMem(vg, font.getName(), buffer, 0);
                 font.setBuffer(buffer);
             } catch (IOException e) {

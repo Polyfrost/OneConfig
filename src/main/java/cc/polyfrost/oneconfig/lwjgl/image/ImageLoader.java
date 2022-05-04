@@ -1,6 +1,6 @@
 package cc.polyfrost.oneconfig.lwjgl.image;
 
-import cc.polyfrost.oneconfig.lwjgl.IOUtil;
+import cc.polyfrost.oneconfig.utils.IOUtils;
 import org.lwjgl.nanovg.NanoVG;
 import org.lwjgl.stb.STBImage;
 
@@ -17,7 +17,7 @@ public class ImageLoader {
             int[] height = {0};
             int[] channels = {0};
 
-            ByteBuffer image = IOUtil.resourceToByteBufferNullable(fileName);
+            ByteBuffer image = IOUtils.resourceToByteBufferNullable(fileName);
             if (image == null) {
                 return false;
             }
