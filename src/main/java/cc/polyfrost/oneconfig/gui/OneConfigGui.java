@@ -30,6 +30,7 @@ public class OneConfigGui extends GuiScreen {
     protected Page currentPage;
     protected Page prevPage;
     private float pageProgress = -224f;
+    private float scissorExclusionHeight = 0f;
     private final TextInputField textInputField = new TextInputField(248, 40, "Search all of OneConfig...", false, false);
     private final ArrayList<Page> previousPages = new ArrayList<>();
     private final ArrayList<Page> nextPages = new ArrayList<>();
@@ -70,7 +71,12 @@ public class OneConfigGui extends GuiScreen {
 
             RenderManager.drawImage(vg, Images.LOGO, x + 19, y + 19, 42, 42);
             RenderManager.drawString(vg, "OneConfig", x + 69, y + 32, OneConfigConfig.WHITE, 18f, Fonts.INTER_BOLD);        // added half line height to center text
-            RenderManager.drawString(vg, "By Polyfrost", x + 69, y + 51, OneConfigConfig.WHITE, 12f, Fonts.INTER_REGULAR);
+            RenderManager.drawString(vg, "ALPHA - By Polyfrost", x + 69, y + 51, OneConfigConfig.WHITE, 12f, Fonts.INTER_REGULAR);
+
+            //RenderManager.drawRect(vg, x + 300, y + 500, 400, 12, OneConfigConfig.ERROR_700);
+            //RenderManager.drawString(vg, "MoonTidez is Annoyinhg here is an f |||", x + 300, y + 500, OneConfigConfig.WHITE, 14f, 14,Fonts.INTER_REGULAR);
+
+
             textInputField.draw(vg, x + 1020, y + 16);
             sideBar.draw(vg, x, y);
             backArrow.draw(vg, x + 240, y + 16);
@@ -114,7 +120,7 @@ public class OneConfigGui extends GuiScreen {
                 }
             }
 
-            Scissor scissor = ScissorManager.scissor(vg, x + 224, y + 72, 1056, 728);
+            Scissor scissor = ScissorManager.scissor(vg, x + 224, y + 88, 1056, 698);
             if (prevPage != null) {
                 pageProgress = MathUtils.easeInOutCirc(50, pageProgress, 832 - pageProgress, 220);
                 prevPage.draw(vg, (int) (x - pageProgress), y + 72);
@@ -127,7 +133,13 @@ public class OneConfigGui extends GuiScreen {
             } else {
                 if(currentPage.getMaxScrollHeight() == 728) {
                     currentPage.draw(vg, (int) (x - pageProgress), y + 72);
-                } else currentPage.scrollWithDraw(vg, (int) (x - pageProgress), y + 72);
+                } else {
+                    ScissorManager.resetScissor(vg, scissor);
+                    scissorExclusionHeight = currentPage.drawStatic(vg, (int) (x - pageProgress), y + 72);
+                    Scissor scissor1 = ScissorManager.scissor(vg, x + 224, y + 72 + scissorExclusionHeight, 1056, 698 - scissorExclusionHeight);
+                    currentPage.scrollWithDraw(vg, (int) (x - pageProgress), y + 72);
+                    ScissorManager.resetScissor(vg, scissor1);
+                }
 
             }
             ScissorManager.resetScissor(vg, scissor);

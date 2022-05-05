@@ -1,5 +1,6 @@
 package cc.polyfrost.oneconfig.gui.pages;
 
+import cc.polyfrost.oneconfig.OneConfig;
 import cc.polyfrost.oneconfig.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.config.data.OptionPage;
 import cc.polyfrost.oneconfig.config.interfaces.BasicOption;
@@ -36,15 +37,6 @@ public class ModConfigPage extends Page {
         if (page.categories.size() == 0) return;
         int optionX = x + 30;
         int optionY = y + (page.categories.size() == 1 ? 16 : 64);
-
-        // Category buttons
-        int buttonX = x + 16;
-        for (BasicButton button : categories) {
-            if (button.getWidth() == 0)
-                button.setWidth((int) (Math.ceil(RenderManager.getTextWidth(vg, button.getText(), 14f, Fonts.INTER_MEDIUM) / 8f) * 8 + 16));
-            button.draw(vg, buttonX, y + 16);
-            buttonX += button.getWidth() + 16;
-        }
 
         // Top page buttons
         for (ConfigPageButton page : page.categories.get(selectedCategory).topPages) {
@@ -124,6 +116,20 @@ public class ModConfigPage extends Page {
                 }
             }
         }
+        RenderManager.drawRoundedRect(vg, x, y + 1500, 500, 100, OneConfigConfig.WHITE_90, 16);
+    }
+
+    @Override
+    public int drawStatic(long vg, int x, int y) {
+        // Category buttons
+        int buttonX = x + 16;
+        for (BasicButton button : categories) {
+            if (button.getWidth() == 0)
+                button.setWidth((int) (Math.ceil(RenderManager.getTextWidth(vg, button.getText(), 14f, Fonts.INTER_MEDIUM) / 8f) * 8 + 16));
+            button.draw(vg, buttonX, y + 16);
+            buttonX += button.getWidth() + 16;
+        }
+        return 60;
     }
 
     @Override

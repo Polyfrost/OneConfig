@@ -92,7 +92,7 @@ public final class RenderManager {
         nvgRect(vg, x, y, width, height);
         NVGColor nvgColor = color(vg, color);
         NVGColor nvgColor2 = color(vg, color2);
-        nvgFillPaint(vg, nvgLinearGradient(vg, x, y + height, x + width, y, nvgColor, nvgColor2, bg));
+        nvgFillPaint(vg, nvgLinearGradient(vg, x + height, y + height, x + height, y, nvgColor, nvgColor2, bg));
         nvgFillPaint(vg, bg);
         nvgFill(vg);
         nvgColor.free();
@@ -162,7 +162,7 @@ public final class RenderManager {
         nvgFontSize(vg, size);
         nvgFontFace(vg, font.font.getName());
         nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
-        nvgTextLineHeight(vg, lineHeight);
+        nvgTextMetrics(vg, new float[]{10f}, new float[]{10f}, new float[]{lineHeight});
         NVGColor nvgColor = color(vg, color);
         nvgText(vg, x, y, text);
         nvgFill(vg);
