@@ -123,24 +123,15 @@ public class OneConfigGui extends GuiScreen {
             Scissor scissor = ScissorManager.scissor(vg, x + 224, y + 88, 1056, 698);
             if (prevPage != null) {
                 pageProgress = MathUtils.easeInOutCirc(50, pageProgress, 832 - pageProgress, 220);
-                prevPage.draw(vg, (int) (x - pageProgress), y + 72);
+                prevPage.scrollWithDraw(vg, (int) (x - pageProgress), y + 72);
                 RenderManager.drawLine(vg, (int) (x - pageProgress + 1055), y + 72, (int) (x - pageProgress + 1057), y + 800, 2, OneConfigConfig.GRAY_700);     // TODO might remove this
-                currentPage.draw(vg, (int) (x - pageProgress + 1056), y + 72);
+                currentPage.scrollWithDraw(vg, (int) (x - pageProgress + 1056), y + 72);
                 if (pageProgress > 830f) {      // this number is the 'snap' point of the page
                     prevPage = null;
                     pageProgress = -224f;
                 }
             } else {
-                if(currentPage.getMaxScrollHeight() == 728) {
-                    currentPage.draw(vg, (int) (x - pageProgress), y + 72);
-                } else {
-                    ScissorManager.resetScissor(vg, scissor);
-                    scissorExclusionHeight = currentPage.drawStatic(vg, (int) (x - pageProgress), y + 72);
-                    Scissor scissor1 = ScissorManager.scissor(vg, x + 224, y + 72 + scissorExclusionHeight, 1056, 698 - scissorExclusionHeight);
-                    currentPage.scrollWithDraw(vg, (int) (x - pageProgress), y + 72);
-                    ScissorManager.resetScissor(vg, scissor1);
-                }
-
+                currentPage.scrollWithDraw(vg, (int) (x - pageProgress), y + 72);
             }
             ScissorManager.resetScissor(vg, scissor);
             if (currentColorSelector != null) {

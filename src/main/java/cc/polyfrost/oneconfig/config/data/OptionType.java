@@ -31,6 +31,9 @@ public enum OptionType {
      * Type: int
      */
     DROPDOWN,
-    MULTI_DROPDOWN,
+    //MULTI_DROPDOWN,
+    /**
+     * Type: String
+     */
     INFO
 }

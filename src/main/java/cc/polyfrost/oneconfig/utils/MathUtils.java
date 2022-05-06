@@ -6,7 +6,7 @@ public class MathUtils {
     }
 
     public static float easeOut(float current, float goal, float speed) {
-        if (Math.floor(Math.abs(goal - current) / (float) 0.01) > 0) {
+        if (Math.floor(Math.abs(goal - current) * Math.abs(current - goal) * 3) > 0) {
             return current + (goal - current) / speed;
         } else {
             return goal;

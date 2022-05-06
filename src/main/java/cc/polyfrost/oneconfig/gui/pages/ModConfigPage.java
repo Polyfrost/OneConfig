@@ -1,20 +1,21 @@
 package cc.polyfrost.oneconfig.gui.pages;
 
-import cc.polyfrost.oneconfig.OneConfig;
 import cc.polyfrost.oneconfig.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.config.data.OptionPage;
 import cc.polyfrost.oneconfig.config.interfaces.BasicOption;
 import cc.polyfrost.oneconfig.gui.elements.BasicButton;
-import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.gui.elements.config.ConfigPageButton;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
+import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class ModConfigPage extends Page {
     private final OptionPage page;
     private final ArrayList<BasicButton> categories = new ArrayList<>();
     private String selectedCategory;
+    private int totalSize = 724;
 
     public ModConfigPage(OptionPage page) {
         super(page.name);
@@ -95,6 +96,7 @@ public class ModConfigPage extends Page {
             page.draw(vg, optionX, optionY);
             optionY += page.getHeight() + 16;
         }
+        totalSize = optionY - y;
 
         // Draw last options
         if (page.categories.get(selectedCategory).subcategories.keySet().size() > 0) {
@@ -116,12 +118,12 @@ public class ModConfigPage extends Page {
                 }
             }
         }
-        RenderManager.drawRoundedRect(vg, x, y + 1500, 500, 100, OneConfigConfig.WHITE_90, 16);
     }
 
     @Override
     public int drawStatic(long vg, int x, int y) {
         // Category buttons
+        if(categories.size() <= 1) return 0;
         int buttonX = x + 16;
         for (BasicButton button : categories) {
             if (button.getWidth() == 0)
@@ -158,6 +160,6 @@ public class ModConfigPage extends Page {
 
     @Override
     public int getMaxScrollHeight() {
-        return 1600;
+        return totalSize;
     }
 }
