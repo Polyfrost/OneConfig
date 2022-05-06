@@ -40,7 +40,7 @@ public class BasicElement {
     }
 
     public void update(int x, int y) {
-        if(disabled) {
+        if (disabled) {
             hovered = false;
             clicked = false;
             return;
@@ -48,11 +48,9 @@ public class BasicElement {
         hovered = InputUtils.isAreaHovered(x - hitBoxX, y - hitBoxY, width + hitBoxX, height + hitBoxY);
         clicked = InputUtils.isClicked() && hovered;
 
-        if (hovered) {
-            if (clicked) {
-                toggled = !toggled;
-                onClick();
-            }
+        if (clicked) {
+            toggled = !toggled;
+            onClick();
         }
     }
 
@@ -101,6 +99,7 @@ public class BasicElement {
     public boolean isDisabled() {
         return disabled;
     }
+
     public void disable(boolean state) {
         disabled = state;
     }
