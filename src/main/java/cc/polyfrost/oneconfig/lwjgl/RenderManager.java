@@ -145,10 +145,16 @@ public final class RenderManager {
         nvgColor.free();
     }
 
+    public static float fontSizeToNVGFontSize(float fontSize) {
+        int dpi = 72;
+        float pixelsPerFUnit = (fontSize * dpi) / (72f * 2816f);
+        return 2728f * pixelsPerFUnit - (-680 * pixelsPerFUnit);
+    }
+
 
     public static void drawString(long vg, String text, float x, float y, int color, float size, Fonts font) {
         nvgBeginPath(vg);
-        nvgFontSize(vg, size);
+        nvgFontSize(vg, fontSizeToNVGFontSize(size));
         nvgFontFace(vg, font.font.getName());
         nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
         NVGColor nvgColor = color(vg, color);
@@ -159,7 +165,7 @@ public final class RenderManager {
 
     public static void drawString(long vg, String text, float x, float y, int color, float size, int lineHeight, Fonts font) {
         nvgBeginPath(vg);
-        nvgFontSize(vg, size);
+        nvgFontSize(vg, fontSizeToNVGFontSize(size));
         nvgFontFace(vg, font.font.getName());
         nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
         nvgTextMetrics(vg, new float[]{10f}, new float[]{10f}, new float[]{lineHeight});
@@ -171,7 +177,7 @@ public final class RenderManager {
 
     public static void drawWrappedString(long vg, String text, float x, float y, float width, int color, float size, Fonts font) {
         nvgBeginPath(vg);
-        nvgFontSize(vg, size);
+        nvgFontSize(vg, fontSizeToNVGFontSize(size));
         nvgFontFace(vg, font.font.getName());
         nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
         NVGColor nvgColor = color(vg, color);
@@ -218,7 +224,7 @@ public final class RenderManager {
 
     public static float getTextWidth(long vg, String text, float fontSize, Fonts font) {
         float[] bounds = new float[4];
-        nvgFontSize(vg, fontSize);
+        nvgFontSize(vg, fontSizeToNVGFontSize(fontSize));
         nvgFontFace(vg, font.font.getName());
         return nvgTextBounds(vg, 0, 0, text, bounds);
     }

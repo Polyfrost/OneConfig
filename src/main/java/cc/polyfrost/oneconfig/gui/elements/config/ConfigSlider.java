@@ -70,8 +70,7 @@ public class ConfigSlider extends BasicOption {
                 RenderManager.drawRoundedRect(vg, i - 2, y + 9, 4, 14, color, 2f);
             }
         }
-        if (step == 0)
-            RenderManager.drawRoundedRect(vg, xCoordinate - 12, y + 4, 24, 24, OneConfigConfig.WHITE, 12f);
+        if (step == 0) RenderManager.drawRoundedRect(vg, xCoordinate - 12, y + 4, 24, 24, OneConfigConfig.WHITE, 12f);
         else RenderManager.drawRoundedRect(vg, xCoordinate - 4, y + 4, 8, 24, OneConfigConfig.WHITE, 4f);
         inputField.draw(vg, x + 892, y);
     }
