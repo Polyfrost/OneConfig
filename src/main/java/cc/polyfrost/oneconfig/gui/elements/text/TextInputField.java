@@ -1,6 +1,7 @@
-package cc.polyfrost.oneconfig.gui.elements;
+package cc.polyfrost.oneconfig.gui.elements.text;
 
 import cc.polyfrost.oneconfig.config.OneConfigConfig;
+import cc.polyfrost.oneconfig.gui.elements.BasicElement;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.scissor.Scissor;
 import cc.polyfrost.oneconfig.lwjgl.scissor.ScissorManager;
@@ -42,10 +43,9 @@ public class TextInputField extends BasicElement {
         this.input = "";
     }
 
-    public TextInputField(int width, int height, boolean centered, boolean onlyNums, String defaultText) {
+    public TextInputField(int width, int height, boolean centered, String defaultText) {
         this(width, height, defaultText, false, false);
         this.centered = centered;
-        this.onlyNums = onlyNums;
     }
 
     public void onlyAcceptNumbers(boolean state) {
@@ -91,6 +91,7 @@ public class TextInputField extends BasicElement {
             RenderManager.drawHollowRoundRect(vg, x, y, width, height, colorOutline, 12f, 2f);
             super.update(x, y);
             if (Mouse.isButtonDown(0) && !InputUtils.isAreaHovered(x - 40, y - 20, width + 90, height + 20)) {
+                onClose();
                 toggled = false;
             }
             int color = toggled ? OneConfigConfig.WHITE : OneConfigConfig.WHITE_60;
@@ -317,6 +318,7 @@ public class TextInputField extends BasicElement {
 
 
                 if (key == Keyboard.KEY_RETURN) {
+                    onClose();
                     toggled = false;
                     if (start != 0f && end != 0f) {
                         start = 0f;
@@ -324,6 +326,7 @@ public class TextInputField extends BasicElement {
                     }
                 }
                 if (key == Keyboard.KEY_END) {
+                    onClose();
                     toggled = false;
                 }
 
@@ -402,6 +405,10 @@ public class TextInputField extends BasicElement {
             }
         }
         return 0;
+    }
+
+    public void onClose() {
+
     }
 
     private float getTextWidth(long vg, String s) {

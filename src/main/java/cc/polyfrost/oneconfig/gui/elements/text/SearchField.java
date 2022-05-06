@@ -1,4 +1,4 @@
-package cc.polyfrost.oneconfig.gui.elements;
+package cc.polyfrost.oneconfig.gui.elements.text;
 
 public class SearchField extends TextInputField {
 

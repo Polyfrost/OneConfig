@@ -3,7 +3,8 @@ package cc.polyfrost.oneconfig.gui;
 import cc.polyfrost.oneconfig.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.gui.elements.BasicElement;
 import cc.polyfrost.oneconfig.gui.elements.ColorSelector;
-import cc.polyfrost.oneconfig.gui.elements.TextInputField;
+import cc.polyfrost.oneconfig.gui.elements.text.NumberInputField;
+import cc.polyfrost.oneconfig.gui.elements.text.TextInputField;
 import cc.polyfrost.oneconfig.gui.pages.HomePage;
 import cc.polyfrost.oneconfig.gui.pages.Page;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
@@ -30,7 +31,6 @@ public class OneConfigGui extends GuiScreen {
     protected Page currentPage;
     protected Page prevPage;
     private float pageProgress = -224f;
-    private float scissorExclusionHeight = 0f;
     private final TextInputField textInputField = new TextInputField(248, 40, "Search all of OneConfig...", false, false);
     private final ArrayList<Page> previousPages = new ArrayList<>();
     private final ArrayList<Page> nextPages = new ArrayList<>();
@@ -65,7 +65,6 @@ public class OneConfigGui extends GuiScreen {
                 RenderManager.drawRect(vg, 544, 140, 20, 800, OneConfigConfig.GRAY_800);
                 //RenderManager.drawDropShadow(vg, 544, 140, 1056, 800, 20f, 32f, OneConfigConfig.GRAY_800);
             }
-
             RenderManager.drawLine(vg, 544, 212, 1600, 212, 1, OneConfigConfig.GRAY_700);
             RenderManager.drawLine(vg, 544, 140, 544, 940, 1, OneConfigConfig.GRAY_700);
 
@@ -73,9 +72,9 @@ public class OneConfigGui extends GuiScreen {
             RenderManager.drawString(vg, "OneConfig", x + 69, y + 32, OneConfigConfig.WHITE, 18f, Fonts.INTER_BOLD);        // added half line height to center text
             RenderManager.drawString(vg, "ALPHA - By Polyfrost", x + 69, y + 51, OneConfigConfig.WHITE, 12f, Fonts.INTER_REGULAR);
 
+
             //RenderManager.drawRect(vg, x + 300, y + 500, 400, 12, OneConfigConfig.ERROR_700);
             //RenderManager.drawString(vg, "MoonTidez is Annoyinhg here is an f |||", x + 300, y + 500, OneConfigConfig.WHITE, 14f, 14,Fonts.INTER_REGULAR);
-
 
             textInputField.draw(vg, x + 1020, y + 16);
             sideBar.draw(vg, x, y);

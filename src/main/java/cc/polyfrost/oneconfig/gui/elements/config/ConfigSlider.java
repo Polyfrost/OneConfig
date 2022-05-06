@@ -2,27 +2,21 @@ package cc.polyfrost.oneconfig.gui.elements.config;
 
 import cc.polyfrost.oneconfig.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.config.interfaces.BasicOption;
+import cc.polyfrost.oneconfig.gui.elements.BasicElement;
+import cc.polyfrost.oneconfig.gui.elements.text.TextInputField;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
-import cc.polyfrost.oneconfig.lwjgl.image.Images;
-import cc.polyfrost.oneconfig.utils.ColorUtils;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import cc.polyfrost.oneconfig.utils.MathUtils;
-import cc.polyfrost.oneconfig.gui.elements.BasicElement;
-import cc.polyfrost.oneconfig.gui.elements.TextInputField;
 import org.lwjgl.input.Mouse;
-import org.lwjgl.nanovg.NanoVG;
 
 import java.lang.reflect.Field;
 
 public class ConfigSlider extends BasicOption {
     private final BasicElement slideYBoi = new BasicElement(24, 24, false);
     private final TextInputField inputField = new TextInputField(84, 24, "", false, false);
-    private final BasicElement upArrow = new BasicElement(12, 14, false);
-    private final BasicElement downArrow = new BasicElement(12, 14, false);
     private final float min, max;
     private int steps = 0;
-    private int colorTop, colorBottom;
     private boolean isFloat = true;
     private Float prevAsNum = null;
     private final int step;
@@ -112,33 +106,6 @@ public class ConfigSlider extends BasicOption {
         }
         currentAsNum = current * (max - min) + min;
 
-        RenderManager.drawRoundedRect(vg, x + 980, y, 12, 28, OneConfigConfig.GRAY_500, 6f);
-        upArrow.update(x + 980, y);
-        downArrow.update(x + 980, y + 14);
-        if (current == 1f) colorTop = OneConfigConfig.GRAY_500_80;
-        if (current == 0f) colorBottom = OneConfigConfig.GRAY_500_80;
-        colorTop = ColorUtils.getColor(colorTop, 2, upArrow.isHovered(), upArrow.isClicked());
-        colorBottom = ColorUtils.getColor(colorBottom, 2, downArrow.isHovered(), downArrow.isClicked());
-        if (upArrow.isClicked()) {
-            currentAsNum += step == 0 ? 1 : step;
-            current = MathUtils.clamp((currentAsNum - min) / (max - min));
-        }
-        if (downArrow.isClicked()) {
-            currentAsNum -= step == 0 ? 1 : step;
-            current = MathUtils.clamp((currentAsNum - min) / (max - min));
-        }
-        if (current == 1f) NanoVG.nvgGlobalAlpha(vg, 0.3f);
-        RenderManager.drawRoundedRectVaried(vg, x + 980, y, 12, 14, colorTop, 6f, 6f, 0f, 0f);
-        RenderManager.drawImage(vg, Images.UP_ARROW, x + 981, y + 2, 10, 10);
-        if (current == 1f) NanoVG.nvgGlobalAlpha(vg, 1f);
-
-        if (current == 0f) NanoVG.nvgGlobalAlpha(vg, 0.3f);
-        RenderManager.drawRoundedRectVaried(vg, x + 980, y + 14, 12, 14, colorBottom, 0f, 0f, 6f, 6f);
-        NanoVG.nvgTranslate(vg, x + 991, y + 25);
-        NanoVG.nvgRotate(vg, (float) Math.toRadians(180));
-        RenderManager.drawImage(vg, Images.UP_ARROW, 0, 0, 10, 10);
-        NanoVG.nvgResetTransform(vg);
-        NanoVG.nvgGlobalAlpha(vg, 1f);
 
         if (currentAsNum != prevAsNum) {
             try {
@@ -171,6 +138,8 @@ public class ConfigSlider extends BasicOption {
             return stepAbove;
         }
     }
+
+
 
     @Override
     public boolean hasHalfSize() {
