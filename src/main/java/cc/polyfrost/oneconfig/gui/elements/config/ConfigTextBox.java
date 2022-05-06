@@ -6,7 +6,7 @@ import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.Images;
 import cc.polyfrost.oneconfig.utils.InputUtils;
-import cc.polyfrost.oneconfig.gui.elements.TextInputField;
+import cc.polyfrost.oneconfig.gui.elements.text.TextInputField;
 
 import java.awt.*;
 import java.lang.reflect.Field;

@@ -2,23 +2,18 @@ package cc.polyfrost.oneconfig.gui.elements.config;
 
 import cc.polyfrost.oneconfig.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.config.interfaces.BasicOption;
+import cc.polyfrost.oneconfig.gui.elements.BasicElement;
+import cc.polyfrost.oneconfig.gui.elements.text.TextInputField;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
-import cc.polyfrost.oneconfig.lwjgl.image.Images;
-import cc.polyfrost.oneconfig.utils.ColorUtils;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import cc.polyfrost.oneconfig.utils.MathUtils;
-import cc.polyfrost.oneconfig.gui.elements.BasicElement;
-import cc.polyfrost.oneconfig.gui.elements.TextInputField;
 import org.lwjgl.input.Mouse;
-import org.lwjgl.nanovg.NanoVG;
 
 import java.lang.reflect.Field;
 
 public class ConfigSlider extends BasicOption {
     private final TextInputField inputField = new TextInputField(84, 24, "", false, false);
-    private final BasicElement upArrow = new BasicElement(12, 14, false);
-    private final BasicElement downArrow = new BasicElement(12, 14, false);
     private final float min, max;
     private boolean isFloat = true;
     private final int step;
@@ -71,30 +66,7 @@ public class ConfigSlider extends BasicOption {
         if (step == 0)
             RenderManager.drawRoundedRect(vg, xCoordinate - 12, y + 4, 24, 24, OneConfigConfig.WHITE, 12f);
         else RenderManager.drawRoundedRect(vg, xCoordinate - 4, y + 4, 8, 24, OneConfigConfig.WHITE, 4f);
-        upArrow.update(x + 980, y);
-        downArrow.update(x + 980, y + 14);
         inputField.draw(vg, x + 892, y);
-
-        upArrow.update(x + 980, y);
-        downArrow.update(x + 980, y + 14);
-        if (xCoordinate == x + 864) colorTop = OneConfigConfig.GRAY_500_80;
-        if (xCoordinate == x + 452) colorBottom = OneConfigConfig.GRAY_500_80;
-        colorTop = ColorUtils.getColor(colorTop, 2, upArrow.isHovered(), upArrow.isClicked());
-        colorBottom = ColorUtils.getColor(colorBottom, 2, downArrow.isHovered(), downArrow.isClicked());
-        if (upArrow.isClicked()) setValue(MathUtils.clamp(value + (step > 0 ? 1 : step), min, max));
-        if (downArrow.isClicked()) setValue(MathUtils.clamp(value - (step > 0 ? 1 : step), min, max));
-        //if (current == 1f) NanoVG.nvgGlobalAlpha(vg, 0.3f);
-        RenderManager.drawRoundedRectVaried(vg, x + 980, y, 12, 14, colorTop, 6f, 6f, 0f, 0f);
-        RenderManager.drawImage(vg, Images.UP_ARROW, x + 981, y + 2, 10, 10);
-        //if (current == 1f) NanoVG.nvgGlobalAlpha(vg, 1f);
-
-        //if (current == 0f) NanoVG.nvgGlobalAlpha(vg, 0.3f);
-        RenderManager.drawRoundedRectVaried(vg, x + 980, y + 14, 12, 14, colorBottom, 0f, 0f, 6f, 6f);
-        NanoVG.nvgTranslate(vg, x + 991, y + 25);
-        NanoVG.nvgRotate(vg, (float) Math.toRadians(180));
-        RenderManager.drawImage(vg, Images.UP_ARROW, 0, 0, 10, 10);
-        NanoVG.nvgResetTransform(vg);
-        NanoVG.nvgGlobalAlpha(vg, 1f);
     }
 
     private int getStepCoordinate(int xCoordinate, int x) {
