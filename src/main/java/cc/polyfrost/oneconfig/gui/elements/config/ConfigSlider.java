@@ -2,8 +2,7 @@ package cc.polyfrost.oneconfig.gui.elements.config;
 
 import cc.polyfrost.oneconfig.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.config.interfaces.BasicOption;
-import cc.polyfrost.oneconfig.gui.elements.BasicElement;
-import cc.polyfrost.oneconfig.gui.elements.text.TextInputField;
+import cc.polyfrost.oneconfig.gui.elements.text.NumberInputField;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.utils.InputUtils;
@@ -13,36 +12,43 @@ import org.lwjgl.input.Mouse;
 import java.lang.reflect.Field;
 
 public class ConfigSlider extends BasicOption {
-    private final TextInputField inputField = new TextInputField(84, 24, "", false, false);
+    private final NumberInputField inputField;
     private final float min, max;
     private boolean isFloat = true;
     private final int step;
     private boolean dragging = false;
-    private int colorTop, colorBottom;
 
     public ConfigSlider(Field field, String name, int size, float min, float max, int step) {
         super(field, name, size);
         this.min = min;
         this.max = max;
         this.step = step;
-        inputField.onlyAcceptNumbers(true);
-        inputField.setCentered(true);
+        inputField = new NumberInputField(84, 24, 0, min, max, step);
     }
 
     @Override
     public void draw(long vg, int x, int y) {
         int xCoordinate = 0;
+        float value = 0;
         boolean hovered = InputUtils.isAreaHovered(x + 352, y, 512, 32);
         if (hovered && Mouse.isButtonDown(0)) dragging = true;
-        if (dragging) xCoordinate = (int) MathUtils.clamp(InputUtils.mouseX(), x + 352, x + 864);
-        if (dragging && InputUtils.isClicked()) {
+        if (dragging) {
+            xCoordinate = (int) MathUtils.clamp(InputUtils.mouseX(), x + 352, x + 864);
+            value = MathUtils.map(xCoordinate, x + 352, x + 864, min, max);
+        } else if (inputField.isToggled()) {
+            value = inputField.getCurrentValue();
+            xCoordinate = (int) MathUtils.map(value, min, max, x + 352, x + 864);
+        }
+        if (dragging && InputUtils.isClicked() || inputField.isToggled()) {
             dragging = false;
-            if (step > 0) xCoordinate = getStepCoordinate(xCoordinate, x);
-            setValue(MathUtils.map(xCoordinate, x + 352, x + 864, min, max));
+            if (step > 0) {
+                xCoordinate = getStepCoordinate(xCoordinate, x);
+                value = MathUtils.map(xCoordinate, x + 352, x + 864, min, max);
+            }
+            setValue(value);
         }
 
-        float value = 0;
-        if (!dragging) {
+        if (!dragging && !inputField.isToggled()) {
             try {
                 Object object = get();
                 if (object instanceof Integer)
@@ -53,6 +59,7 @@ public class ConfigSlider extends BasicOption {
             } catch (IllegalAccessException ignored) {
             }
         }
+        if (!inputField.isToggled()) inputField.setCurrentValue(value);
 
         RenderManager.drawString(vg, name, x, y + 17, OneConfigConfig.WHITE_90, 14f, Fonts.INTER_MEDIUM);
         RenderManager.drawRoundedRect(vg, x + 352, y + 13, 512, 6, OneConfigConfig.GRAY_300, 4f);
