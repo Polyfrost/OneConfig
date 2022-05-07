@@ -1,4 +1,4 @@
-package cc.polyfrost.oneconfig.hud.interfaces;
+package cc.polyfrost.oneconfig.hud;
 
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 

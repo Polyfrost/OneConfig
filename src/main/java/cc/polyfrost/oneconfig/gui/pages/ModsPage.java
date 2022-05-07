@@ -48,7 +48,7 @@ public class ModsPage extends Page {
         int iX = x + 16;
         int iY = y + 72;
         for (ModCard modCard : modCards) {
-            if (modCategories.get(0).isToggled() || (modCategories.get(1).isToggled() && modCard.getModData().modType == ModType.PVP) || (modCategories.get(2).isToggled() && modCard.getModData().modType == ModType.HUD) || (modCategories.get(3).isToggled() && modCard.getModData().modType == ModType.UTIL_QOL) || (modCategories.get(4).isToggled() && modCard.getModData().modType == ModType.HYPIXEL) || (modCategories.get(5).isToggled() && modCard.getModData().modType == ModType.SKYBLOCK) || (modCategories.get(6).isToggled() && modCard.getModData().modType == ModType.OTHER)) {
+            if (modCategories.get(0).isToggled() && (OneConfigConfig.thirdPartyAll || modCard.getModData().modType != ModType.OTHER) || (modCategories.get(1).isToggled() && modCard.getModData().modType == ModType.PVP) || (modCategories.get(2).isToggled() && modCard.getModData().modType == ModType.HUD) || (modCategories.get(3).isToggled() && modCard.getModData().modType == ModType.UTIL_QOL) || (modCategories.get(4).isToggled() && modCard.getModData().modType == ModType.HYPIXEL) || (modCategories.get(5).isToggled() && modCard.getModData().modType == ModType.SKYBLOCK) || (modCategories.get(6).isToggled() && modCard.getModData().modType == ModType.OTHER)) {
                 modCard.draw(vg, iX, iY);
                 iX += 260;
                 if (iX > x + 796) {

@@ -72,9 +72,8 @@ public class OneConfig {
             loadedOtherMods.add(metadata);
             String author = metadata.authorList.size() > 0 ? metadata.authorList.get(0) : "";
             Mod newMod = new Mod(metadata.name, ModType.OTHER, author, metadata.version);
-            if (newMod.name.equals("Minecraft Coder Pack") || newMod.name.equals("Forge Mod Loader") || newMod.name.equals("Minecraft Forge")) {     // TODO add oneconfig
+            if (newMod.name.equals("Minecraft Coder Pack") || newMod.name.equals("Forge Mod Loader") || newMod.name.equals("Minecraft Forge") || newMod.name.equals("OneConfig"))
                 continue;
-            }
             if (modData.add(newMod)) loadedMods.add(newMod);     // anti duplicate fix
         }
     }

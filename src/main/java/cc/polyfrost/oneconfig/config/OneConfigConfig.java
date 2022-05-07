@@ -14,7 +14,6 @@ public class OneConfigConfig extends Config {
 
     public static String currentProfile = "Default Profile";
 
-    // TODO i dont know how this works so this is just gonna be here for now
     public static final int TRANSPARENT = new Color(0, 0, 0, 0).getRGB();                // Transparent      // button sidebar normal
 
     public static final int BLACK = new Color(0,0,0,255).getRGB();                     // Black
@@ -51,6 +50,7 @@ public class OneConfigConfig extends Config {
     public static float CORNER_RADIUS_WIN = 20f;
     public static float CORNER_RADIUS = 12f;
 
+    public static boolean thirdPartyAll = false;
 
     public OneConfigConfig() {
         super(null, "OneConfig.json");

@@ -1,6 +1,6 @@
 package cc.polyfrost.oneconfig.test;
 
-import cc.polyfrost.oneconfig.hud.interfaces.BasicHud;
+import cc.polyfrost.oneconfig.hud.BasicHud;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import net.minecraft.client.Minecraft;
 

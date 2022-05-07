@@ -1,7 +1,7 @@
 package cc.polyfrost.oneconfig.gui;
 
 import cc.polyfrost.oneconfig.hud.HudCore;
-import cc.polyfrost.oneconfig.hud.interfaces.BasicHud;
+import cc.polyfrost.oneconfig.hud.BasicHud;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiScreen;
