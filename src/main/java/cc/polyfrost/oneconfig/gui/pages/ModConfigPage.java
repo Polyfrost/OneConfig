@@ -125,8 +125,7 @@ public class ModConfigPage extends Page {
         if(categories.size() <= 1) return 0;
         int buttonX = x + 16;
         for (BasicButton button : categories) {
-            if (button.getWidth() == 0)
-                button.setWidth((int) (Math.ceil(RenderManager.getTextWidth(vg, button.getText(), 14f, Fonts.MEDIUM) / 8f) * 8 + 16));
+            if (button.getWidth() == 0) button.setWidth((int) (Math.ceil(RenderManager.getTextWidth(vg, button.getText(), 12f, Fonts.MEDIUM) / 8f) * 8 + 16));
             button.draw(vg, buttonX, y + 16);
             buttonX += button.getWidth() + 16;
         }

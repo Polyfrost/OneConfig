@@ -10,6 +10,8 @@ import cc.polyfrost.oneconfig.utils.ColorUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
+
 public class BasicButton extends BasicElement {
 
     protected String text;
@@ -44,7 +46,8 @@ public class BasicButton extends BasicElement {
             fontSize = 24f;
             this.colorPalette = -1;
         } else {
-            fontSize = 14f;
+            if (colorPalette == 0) fontSize = 12;
+            else fontSize = 14f;
             this.colorPalette = colorPalette;
         }
     }
