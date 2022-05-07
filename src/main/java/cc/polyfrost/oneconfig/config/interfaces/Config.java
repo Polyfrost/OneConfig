@@ -131,6 +131,10 @@ public class Config {
                     break;
                 case INFO:
                     options.add(new ConfigInfo(field, option.name(), option.size(), option.infoType()));
+                    break;
+                case COLOR:
+                    options.add(new ConfigColorElement(field, option.name(), option.size()));
+                    break;
             }
         }
     }

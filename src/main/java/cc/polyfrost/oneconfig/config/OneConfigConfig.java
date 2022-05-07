@@ -9,10 +9,12 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 
 public class OneConfigConfig extends Config {
 
     public static String currentProfile = "Default Profile";
+    public static ArrayList<String> favoriteMods = new ArrayList<>();
 
     public static final int TRANSPARENT = new Color(0, 0, 0, 0).getRGB();                // Transparent      // button sidebar normal
 

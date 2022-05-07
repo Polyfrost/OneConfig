@@ -17,6 +17,14 @@ public class TestConfig extends Config {
     public static boolean ignored;
 
     @Option(
+            name = "Test color selector",
+            subcategory = "Test",
+            type = OptionType.COLOR,
+            size = 2
+    )
+    public static int color;
+
+    @Option(
             name = "Test dual thing",
             subcategory = "Test",
             min = 3f, max = 127f,

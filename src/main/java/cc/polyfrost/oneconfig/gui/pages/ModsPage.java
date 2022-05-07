@@ -16,11 +16,12 @@ public class ModsPage extends Page {
 
     private final List<ModCard> modCards = new ArrayList<>();
     private final List<BasicButton> modCategories = new ArrayList<>();
+    private int size;
 
     public ModsPage() {
         super("Mods");
         for (Mod modData : OneConfig.loadedMods) {
-            modCards.add(new ModCard(modData, null, true, false, false));
+            modCards.add(new ModCard(modData, null, true, false, OneConfigConfig.favoriteMods.contains(modData.name)));
         }
         for (ModCard card : modCards) {
             if (card.isFavorite()) {
@@ -39,12 +40,6 @@ public class ModsPage extends Page {
     }
 
     public void draw(long vg, int x, int y) {
-        int iXCat = x + 16;
-        for (BasicButton btn : modCategories) {
-            btn.draw(vg, iXCat, y + 16);
-            iXCat += btn.getWidth() + 8;
-        }
-
         int iX = x + 16;
         int iY = y + 72;
         for (ModCard modCard : modCards) {
@@ -57,9 +52,20 @@ public class ModsPage extends Page {
                 }
             }
         }
+        size = iY + 119;
         if (iX == x + 16 && iY == y + 72) {
             RenderManager.drawString(vg, "Looks like there is nothing here. Try another category?", x + 16, y + 72, OneConfigConfig.WHITE_60, 14f, Fonts.MEDIUM);
         }
+    }
+
+    @Override
+    public int drawStatic(long vg, int x, int y) {
+        int iXCat = x + 16;
+        for (BasicButton btn : modCategories) {
+            btn.draw(vg, iXCat, y + 16);
+            iXCat += btn.getWidth() + 8;
+        }
+        return 60;
     }
 
     private void unselect(int index) {
@@ -67,6 +73,19 @@ public class ModsPage extends Page {
             if (index == i) continue;
             modCategories.get(i).setToggled(false);
         }
+    }
+
+    @Override
+    public void finishUpAndClose() {
+        OneConfigConfig.favoriteMods.clear();
+        for (ModCard modCard : modCards) {
+            if (modCard.isFavorite()) OneConfigConfig.favoriteMods.add(modCard.getModData().name);
+        }
+    }
+
+    @Override
+    public int getMaxScrollHeight() {
+        return size;
     }
 
     @Override
