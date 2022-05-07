@@ -117,4 +117,8 @@ public class NumberInputField extends TextInputField {
     public void setMin(float min) {
         this.min = min;
     }
+
+    public boolean arrowsClicked() {
+        return upArrow.isClicked() || downArrow.isClicked();
+    }
 }

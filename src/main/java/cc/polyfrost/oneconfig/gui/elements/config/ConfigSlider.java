@@ -23,7 +23,7 @@ public class ConfigSlider extends BasicOption {
         this.min = min;
         this.max = max;
         this.step = step;
-        inputField = new NumberInputField(84, 24, 0, min, max, step);
+        inputField = new NumberInputField(84, 24, 0, min, max, step == 0 ? 1 : step);
     }
 
     @Override
@@ -35,11 +35,11 @@ public class ConfigSlider extends BasicOption {
         if (dragging) {
             xCoordinate = (int) MathUtils.clamp(InputUtils.mouseX(), x + 352, x + 864);
             value = MathUtils.map(xCoordinate, x + 352, x + 864, min, max);
-        } else if (inputField.isToggled()) {
+        } else if (inputField.isToggled() || inputField.arrowsClicked()) {
             value = inputField.getCurrentValue();
             xCoordinate = (int) MathUtils.map(value, min, max, x + 352, x + 864);
         }
-        if (dragging && InputUtils.isClicked() || inputField.isToggled()) {
+        if (dragging && InputUtils.isClicked() || inputField.isToggled() || inputField.arrowsClicked()) {
             dragging = false;
             if (step > 0) {
                 xCoordinate = getStepCoordinate(xCoordinate, x);
