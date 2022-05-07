@@ -107,9 +107,9 @@ public class TestConfig extends Config {
     public static int uniSelector7;
 
     @Option(
-            name = "Test option",
+            name = "Arrow Uniselect (1x)",
             subcategory = "Test",
-            options = {"Hello", "World", "Fish", "Cat"},
+            options = {"Option", "World", "Fish"},
             type = OptionType.UNI_SELECTOR,
             size = 2
     )

@@ -152,15 +152,9 @@ public final class RenderManager {
         nvgColor.free();
     }
 
-    public static float fontSizeToNVGFontSize(float fontSize, Font font) {
-        float pixelsPerFUnit = (fontSize * 72f) / (72f * font.getUnitsPerEm());
-        return font.getAscender() * pixelsPerFUnit - (font.getDescender() * pixelsPerFUnit);
-    }
-
-
     public static void drawString(long vg, String text, float x, float y, int color, float size, Fonts font) {
         nvgBeginPath(vg);
-        nvgFontSize(vg, fontSizeToNVGFontSize(size, font.font));
+        nvgFontSize(vg, size);
         nvgFontFace(vg, font.font.getName());
         nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
         NVGColor nvgColor = color(vg, color);
@@ -171,7 +165,7 @@ public final class RenderManager {
 
     public static void drawString(long vg, String text, float x, float y, int color, float size, int lineHeight, Fonts font) {
         nvgBeginPath(vg);
-        nvgFontSize(vg, fontSizeToNVGFontSize(size, font.font));
+        nvgFontSize(vg, size);
         nvgFontFace(vg, font.font.getName());
         nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
         nvgTextMetrics(vg, new float[]{10f}, new float[]{10f}, new float[]{lineHeight});
@@ -183,7 +177,7 @@ public final class RenderManager {
 
     public static void drawWrappedString(long vg, String text, float x, float y, float width, int color, float size, Fonts font) {
         nvgBeginPath(vg);
-        nvgFontSize(vg, fontSizeToNVGFontSize(size, font.font));
+        nvgFontSize(vg, size);
         nvgFontFace(vg, font.font.getName());
         nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
         NVGColor nvgColor = color(vg, color);
@@ -230,7 +224,7 @@ public final class RenderManager {
 
     public static float getTextWidth(long vg, String text, float fontSize, Fonts font) {
         float[] bounds = new float[4];
-        nvgFontSize(vg, fontSizeToNVGFontSize(fontSize, font.font));
+        nvgFontSize(vg, fontSize);
         nvgFontFace(vg, font.font.getName());
         return nvgTextBounds(vg, 0, 0, text, bounds);
     }
