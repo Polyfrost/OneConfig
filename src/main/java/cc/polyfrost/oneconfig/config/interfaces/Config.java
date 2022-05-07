@@ -129,6 +129,8 @@ public class Config {
                 case SLIDER:
                     options.add(new ConfigSlider(field, option.name(), option.size(), option.min(), option.max(), option.step()));
                     break;
+                case INFO:
+                    options.add(new ConfigInfo(field, option.name(), option.size(), option.infoType()));
             }
         }
     }

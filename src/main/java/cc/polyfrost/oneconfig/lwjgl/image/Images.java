@@ -18,6 +18,10 @@ public enum Images {
     COLOR_BASE_LARGE("/assets/oneconfig/textures/gui/general/color/color_base_large.png"),
     COLOR_WHEEL("/assets/oneconfig/textures/gui/general/color/color_wheel.png"),
 
+    INFO("/assets/oneconfig/textures/gui/icons/alert/info.png"),
+    SUCCESS("/assets/oneconfig/textures/gui/icons/alert/success.png"),
+    WARNING("/assets/oneconfig/textures/gui/icons/alert/warning.png"),
+    ERROR("/assets/oneconfig/textures/gui/icons/alert/error.png"),
 
     SHARE("/assets/oneconfig/textures/gui/general/nav/share.png"),
     LAUNCH("/assets/oneconfig/textures/gui/general/nav/launch.png"),

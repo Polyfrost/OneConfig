@@ -109,7 +109,7 @@ public class BlurHandler {
                 su.set(progress);
             }
         } catch (IllegalArgumentException  ex) {
-            this.logger.error("An error occurred while updating OneConfig's blur. Please report this!", ex);
+            this.logger.error("An error.png occurred while updating OneConfig's blur. Please report this!", ex);
         }
 
         this.mc.mcProfiler.endSection();

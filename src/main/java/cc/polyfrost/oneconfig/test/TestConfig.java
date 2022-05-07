@@ -2,13 +2,19 @@ package cc.polyfrost.oneconfig.test;
 
 import cc.polyfrost.oneconfig.config.annotations.ConfigPage;
 import cc.polyfrost.oneconfig.config.annotations.Option;
-import cc.polyfrost.oneconfig.config.data.Mod;
-import cc.polyfrost.oneconfig.config.data.ModType;
-import cc.polyfrost.oneconfig.config.data.OptionType;
-import cc.polyfrost.oneconfig.config.data.PageLocation;
+import cc.polyfrost.oneconfig.config.data.*;
 import cc.polyfrost.oneconfig.config.interfaces.Config;
 
 public class TestConfig extends Config {
+
+    @Option(
+            name = "This is all still in beta",
+            subcategory = "Test",
+            type = OptionType.INFO,
+            infoType = InfoType.INFO,
+            size = 2
+    )
+    public static boolean ignored;
 
     @Option(
             name = "Test dual thing",
