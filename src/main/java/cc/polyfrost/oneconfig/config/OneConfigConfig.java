@@ -67,7 +67,7 @@ public class OneConfigConfig extends Config {
     @Override
     public void save() {
         try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(Files.newOutputStream(Paths.get("OneConfig/" + configFile)), StandardCharsets.UTF_8))) {
-            writer.write(gson.toJson(this.getClass()));
+            writer.write(gson.toJson(this));
         } catch (IOException e) {
             e.printStackTrace();
         }

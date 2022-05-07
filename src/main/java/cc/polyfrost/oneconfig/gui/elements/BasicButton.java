@@ -146,10 +146,6 @@ public class BasicButton extends BasicElement {
         super.update(x, y);
     }
 
-    public void setToggled(boolean state) {
-        this.toggled = state;
-    }
-
     public Page getPage() {
         return page;
     }

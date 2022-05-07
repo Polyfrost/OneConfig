@@ -96,6 +96,10 @@ public class BasicElement {
         return toggled;
     }
 
+    public void setToggled(boolean toggled) {
+        this.toggled = toggled;
+    }
+
     public boolean isDisabled() {
         return disabled;
     }

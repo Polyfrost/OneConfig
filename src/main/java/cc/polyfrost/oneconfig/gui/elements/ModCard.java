@@ -38,6 +38,8 @@ public class ModCard extends BasicElement {
         toggled = active;
         this.disabled = disabled;
         this.favorite = favorite;
+        favoriteHitbox.setToggled(true);
+        toggled = active;
     }
 
     @Override
@@ -76,10 +78,6 @@ public class ModCard extends BasicElement {
         if (clicked && favoriteHitbox.hovered) toggled = false;
         if (clicked && !isHoveredSecondary && active) toggled = true;
         if (!active & disabled) toggled = false;
-        //RenderManager.drawString(vg, "active=" + active, x + 150, y + 92, OneConfigConfig.WHITE, 10f, Fonts.INTER_MEDIUM);        // debug stuff
-        //RenderManager.drawString(vg, "disabled=" + disabled, x + 150, y + 103, OneConfigConfig.WHITE, 10f, Fonts.INTER_MEDIUM);
-        //RenderManager.drawString(vg, "favorite=" + favorite, x + 150, y + 114, OneConfigConfig.WHITE, 10f, Fonts.INTER_MEDIUM);
-
 
         active = toggled;
         NanoVG.nvgGlobalAlpha(vg, 1f);

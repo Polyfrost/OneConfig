@@ -168,6 +168,7 @@ public class OneConfigGui extends GuiScreen {
             if(currentColorSelector != null) currentColorSelector.keyTyped(key, keyCode);
             currentPage.keyTyped(key, keyCode);
         } catch (Exception e) {
+            e.printStackTrace();
             System.out.println("this should literally never happen");
         }
     }

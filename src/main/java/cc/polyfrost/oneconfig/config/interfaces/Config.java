@@ -1,7 +1,5 @@
 package cc.polyfrost.oneconfig.config.interfaces;
 
-import cc.polyfrost.oneconfig.gui.elements.config.*;
-import com.google.gson.*;
 import cc.polyfrost.oneconfig.config.annotations.ConfigPage;
 import cc.polyfrost.oneconfig.config.annotations.Option;
 import cc.polyfrost.oneconfig.config.core.ConfigCore;
@@ -10,7 +8,9 @@ import cc.polyfrost.oneconfig.config.data.OptionCategory;
 import cc.polyfrost.oneconfig.config.data.OptionPage;
 import cc.polyfrost.oneconfig.config.profiles.Profiles;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
+import cc.polyfrost.oneconfig.gui.elements.config.*;
 import cc.polyfrost.oneconfig.gui.pages.ModConfigPage;
+import com.google.gson.*;
 import net.minecraft.client.Minecraft;
 
 import java.io.*;
@@ -24,9 +24,10 @@ import java.util.Map;
 import java.util.Optional;
 
 public class Config {
-    protected final String configFile;
-    protected final Gson gson = new GsonBuilder().excludeFieldsWithModifiers(Modifier.TRANSIENT).setPrettyPrinting().registerTypeAdapterFactory(OneConfigTypeAdapterFactory.getStaticTypeAdapterFactory()).create();
-    private static Mod mod;
+    transient protected final String configFile;
+    transient protected final Gson gson = new GsonBuilder().excludeFieldsWithModifiers(Modifier.TRANSIENT).setPrettyPrinting().create();
+    transient private Mod mod;
+    public boolean enabled = true;
 
     /**
      * @param modData    information about the mod
@@ -43,7 +44,7 @@ public class Config {
         mod.config = this;
         generateOptionList(this.getClass(), mod.defaultPage, mod);
         ConfigCore.oneConfigMods.add(mod);
-        Config.mod = mod;
+        this.mod = mod;
     }
 
     /**
@@ -51,7 +52,7 @@ public class Config {
      */
     public void save() {
         try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(Files.newOutputStream(Profiles.getProfileFile(configFile).toPath()), StandardCharsets.UTF_8))) {
-            writer.write(gson.toJson(this.getClass()));
+            writer.write(gson.toJson(this));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -170,7 +171,7 @@ public class Config {
                 TypeAdapter<?> adapter = gson.getAdapter(field.getType());
                 Object object = adapter.fromJsonTree(value);
                 field.setAccessible(true);
-                field.set(null, object);
+                field.set(this, object);
             } catch (NoSuchFieldException | IllegalAccessException ignored) {
             }
         }

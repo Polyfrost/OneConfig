@@ -21,7 +21,7 @@ public class ModsPage extends Page {
     public ModsPage() {
         super("Mods");
         for (Mod modData : OneConfig.loadedMods) {
-            modCards.add(new ModCard(modData, null, true, false, OneConfigConfig.favoriteMods.contains(modData.name)));
+            modCards.add(new ModCard(modData, null, modData.config == null || modData.config.enabled, false, OneConfigConfig.favoriteMods.contains(modData.name)));
         }
         for (ModCard card : modCards) {
             if (card.isFavorite()) {
@@ -80,7 +80,12 @@ public class ModsPage extends Page {
         OneConfigConfig.favoriteMods.clear();
         for (ModCard modCard : modCards) {
             if (modCard.isFavorite()) OneConfigConfig.favoriteMods.add(modCard.getModData().name);
+            if (modCard.getModData().config != null && modCard.getModData().config.enabled != modCard.isActive()){
+                modCard.getModData().config.enabled = modCard.isActive();
+                modCard.getModData().config.save();
+            }
         }
+        OneConfig.config.save();
     }
 
     @Override
