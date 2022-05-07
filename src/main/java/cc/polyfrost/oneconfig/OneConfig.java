@@ -54,7 +54,7 @@ public class OneConfig {
         MinecraftForge.EVENT_BUS.register(new HudCore());
         RenderManager.setupAndDraw((vg) -> {
             RenderManager.drawRoundedRect(vg, -100, -100, 50, 50, -1, 12f);
-            RenderManager.drawString(vg, "OneConfig loading...", -100, -100, -1, 12f, Fonts.INTER_MEDIUM);
+            RenderManager.drawString(vg, "OneConfig loading...", -100, -100, -1, 12f, Fonts.MEDIUM);
             RenderManager.drawImage(vg, Images.LOGO, -100, -100, 50, 50);
         });
     }

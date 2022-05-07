@@ -39,7 +39,7 @@ public class ConfigColorElement extends BasicOption {
 
     @Override
     public void draw(long vg, int x, int y) {
-        RenderManager.drawString(vg, name, x, y + 15, OneConfigConfig.WHITE_90, 18f, Fonts.INTER_MEDIUM);
+        RenderManager.drawString(vg, name, x, y + 15, OneConfigConfig.WHITE_90, 18f, Fonts.MEDIUM);
         hexField.draw(vg, x + 240, y);
 
         if (!alphaField.isToggled()) alphaField.setInput(String.format("%.01f", alpha * 100f) + "%");

@@ -75,7 +75,7 @@ public class BasicButton extends BasicElement {
         this.y = y;
         int textColor = -1;
         RenderManager.drawRectangle(vg, x, y, this.width, this.height, this.currentColor);
-        float contentWidth = RenderManager.getTextWidth(vg, text, fontSize, Fonts.INTER_MEDIUM);
+        float contentWidth = RenderManager.getTextWidth(vg, text, fontSize, Fonts.MEDIUM);
         if (fileNameLeftIco != null) {
             contentWidth += 28;
         }
@@ -92,7 +92,7 @@ public class BasicButton extends BasicElement {
 
         if (thisAlignment == ALIGNMENT_CENTER) {
             int middle = x + this.width / 2;
-            RenderManager.drawString(vg, text, middle - contentWidth / 2 + (fileNameLeftIco != null ? 28 : 0), y + ((float) height / 2) + 1, textColor, fontSize, Fonts.INTER_MEDIUM);
+            RenderManager.drawString(vg, text, middle - contentWidth / 2 + (fileNameLeftIco != null ? 28 : 0), y + ((float) height / 2) + 1, textColor, fontSize, Fonts.MEDIUM);
             if (fileNameLeftIco != null) {
                 RenderManager.drawImage(vg, fileNameLeftIco, middle - contentWidth / 2, y + 8, 20, 20);
             }
@@ -103,9 +103,9 @@ public class BasicButton extends BasicElement {
         if (thisAlignment == ALIGNMENT_LEFT) {
             if (fileNameLeftIco != null) {
                 RenderManager.drawImage(vg, fileNameLeftIco, x + 12, y + 8, 20, 20, textColor);
-                RenderManager.drawString(vg, text, x + 40, y + ((float) height / 2) + 1, textColor, fontSize, Fonts.INTER_MEDIUM);
+                RenderManager.drawString(vg, text, x + 40, y + ((float) height / 2) + 1, textColor, fontSize, Fonts.MEDIUM);
             } else {
-                RenderManager.drawString(vg, text, x + 12, y + ((float) height / 2) + 1, textColor, fontSize, Fonts.INTER_MEDIUM);
+                RenderManager.drawString(vg, text, x + 12, y + ((float) height / 2) + 1, textColor, fontSize, Fonts.MEDIUM);
             }
             if (fileNameRightIco != null) {
                 RenderManager.drawImage(vg, fileNameRightIco, x + width - 28, y + 8, 20, 20);

@@ -9,7 +9,6 @@ import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 
 public class ModConfigPage extends Page {
     private final OptionPage page;
@@ -71,7 +70,7 @@ public class ModConfigPage extends Page {
         if (page.categories.get(selectedCategory).subcategories.keySet().size() > 0) {
             optionY += 16;
             for (String subCategory : page.categories.get(selectedCategory).subcategories.keySet()) {
-                RenderManager.drawString(vg, subCategory, optionX, optionY + 16, OneConfigConfig.WHITE_90, 24f, Fonts.INTER_MEDIUM);
+                RenderManager.drawString(vg, subCategory, optionX, optionY + 16, OneConfigConfig.WHITE_90, 24f, Fonts.MEDIUM);
                 optionY += 48;
                 for (int i = 0; i < page.categories.get(selectedCategory).subcategories.get(subCategory).size(); i++) {
                     BasicOption option = page.categories.get(selectedCategory).subcategories.get(subCategory).get(i);
@@ -127,7 +126,7 @@ public class ModConfigPage extends Page {
         int buttonX = x + 16;
         for (BasicButton button : categories) {
             if (button.getWidth() == 0)
-                button.setWidth((int) (Math.ceil(RenderManager.getTextWidth(vg, button.getText(), 14f, Fonts.INTER_MEDIUM) / 8f) * 8 + 16));
+                button.setWidth((int) (Math.ceil(RenderManager.getTextWidth(vg, button.getText(), 14f, Fonts.MEDIUM) / 8f) * 8 + 16));
             button.draw(vg, buttonX, y + 16);
             buttonX += button.getWidth() + 16;
         }

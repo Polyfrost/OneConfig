@@ -33,7 +33,7 @@ public class ConfigSwitch extends BasicOption {
         }
         RenderManager.drawRoundedRect(vg, x, y + 4, 42, 24, color, 12f);
         RenderManager.drawRoundedRect(vg, x2, y + 7, 18, 18, OneConfigConfig.WHITE, 9f);
-        RenderManager.drawString(vg, name, x + 50, y + 17, OneConfigConfig.WHITE, 14f, Fonts.INTER_MEDIUM);
+        RenderManager.drawString(vg, name, x + 50, y + 17, OneConfigConfig.WHITE, 14f, Fonts.MEDIUM);
 
         if (InputUtils.isAreaClicked(x, y, 42, 32)) {
             toggled = !toggled;

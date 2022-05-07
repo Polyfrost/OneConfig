@@ -32,12 +32,12 @@ public class ConfigDualOption extends BasicOption {
             toggled = (boolean) get();
         } catch (IllegalAccessException ignored) {
         }
-        RenderManager.drawString(vg, name, x, y + 16, OneConfigConfig.WHITE_90, 14f, Fonts.INTER_MEDIUM);
+        RenderManager.drawString(vg, name, x, y + 16, OneConfigConfig.WHITE_90, 14f, Fonts.MEDIUM);
         RenderManager.drawRoundedRect(vg, x + 226, y, 256, 32, OneConfigConfig.GRAY_500, 12f);
         int x1 = (int) (x + 228 + (percentMove * 128));
         RenderManager.drawRoundedRect(vg, x1, y + 2, 124, 28, OneConfigConfig.BLUE_600, 10f);
-        RenderManager.drawString(vg, left, x + 290 - RenderManager.getTextWidth(vg, left, 12f, Fonts.INTER_MEDIUM) / 2, y + 17, OneConfigConfig.WHITE_90, 12f, Fonts.INTER_MEDIUM);
-        RenderManager.drawString(vg, right, x + 418 - RenderManager.getTextWidth(vg, right, 12f, Fonts.INTER_MEDIUM) / 2, y + 17, OneConfigConfig.WHITE_90, 12f, Fonts.INTER_MEDIUM);
+        RenderManager.drawString(vg, left, x + 290 - RenderManager.getTextWidth(vg, left, 12f, Fonts.MEDIUM) / 2, y + 17, OneConfigConfig.WHITE_90, 12f, Fonts.MEDIUM);
+        RenderManager.drawString(vg, right, x + 418 - RenderManager.getTextWidth(vg, right, 12f, Fonts.MEDIUM) / 2, y + 17, OneConfigConfig.WHITE_90, 12f, Fonts.MEDIUM);
 
         if (InputUtils.isAreaClicked(x + 226, y, 256, 32)) {
             toggled = !toggled;

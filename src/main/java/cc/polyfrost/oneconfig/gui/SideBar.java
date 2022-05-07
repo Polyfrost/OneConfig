@@ -48,11 +48,11 @@ public class SideBar {
             btn.draw(vg, x + 16, y + 96 + i);
             i += 44;
             if (i == 88) { // +88
-                RenderManager.drawString(vg, "MOD CONFIG", x + 16, y + 200, OneConfigConfig.WHITE_90, 12f, Fonts.INTER_SEMIBOLD);
+                RenderManager.drawString(vg, "MOD CONFIG", x + 16, y + 200, OneConfigConfig.WHITE_90, 12f, Fonts.SEMIBOLD);
                 i = 122;
             }
             if (i == 298) {
-                RenderManager.drawString(vg, "PERSONALIZATION", x + 16, y + 420, OneConfigConfig.WHITE_90, 12f, Fonts.INTER_SEMIBOLD);
+                RenderManager.drawString(vg, "PERSONALIZATION", x + 16, y + 420, OneConfigConfig.WHITE_90, 12f, Fonts.SEMIBOLD);
                 i = 342;
             }
             if (i == 518) {

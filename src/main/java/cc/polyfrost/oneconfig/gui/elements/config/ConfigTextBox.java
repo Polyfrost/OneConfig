@@ -25,7 +25,7 @@ public class ConfigTextBox extends BasicOption {
 
     @Override
     public void draw(long vg, int x, int y) {
-        RenderManager.drawString(vg, name, x, y + 16, OneConfigConfig.WHITE_90, 14, Fonts.INTER_MEDIUM);
+        RenderManager.drawString(vg, name, x, y + 16, OneConfigConfig.WHITE_90, 14, Fonts.MEDIUM);
 
         try {
             String value = (String) get();

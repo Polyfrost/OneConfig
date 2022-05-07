@@ -100,12 +100,12 @@ public class TextInputField extends BasicElement {
             float width;
             StringBuilder s = new StringBuilder();
             if (!password) {
-                width = RenderManager.getTextWidth(vg, input.substring(0, caretPos), 14f, Fonts.INTER_REGULAR);
+                width = RenderManager.getTextWidth(vg, input.substring(0, caretPos), 14f, Fonts.REGULAR);
             } else {
                 for (int i = 0; i < input.length(); i++) {
                     s.append("*");
                 }
-                width = RenderManager.getTextWidth(vg, s.substring(0, caretPos), 14f, Fonts.INTER_REGULAR);
+                width = RenderManager.getTextWidth(vg, s.substring(0, caretPos), 14f, Fonts.REGULAR);
             }
             if (hovered) {
                 while (Mouse.next()) {
@@ -169,20 +169,20 @@ public class TextInputField extends BasicElement {
 
             if (input.equals("")) {
                 if (!centered) {
-                    RenderManager.drawString(vg, defaultText, x + 12, y + height / 2f + 1, color, 14f, Fonts.INTER_REGULAR);
+                    RenderManager.drawString(vg, defaultText, x + 12, y + height / 2f + 1, color, 14f, Fonts.REGULAR);
                 } else {
-                    RenderManager.drawString(vg, defaultText, x + this.width / 2f - halfTextWidth, y + height / 2f + 1, color, 14f, Fonts.INTER_REGULAR);
+                    RenderManager.drawString(vg, defaultText, x + this.width / 2f - halfTextWidth, y + height / 2f + 1, color, 14f, Fonts.REGULAR);
                 }
             }
 
             if (!password) {
                 if (!centered) {
-                    RenderManager.drawString(vg, input, x + 12, y + height / 2f + 1, color, 14f, Fonts.INTER_REGULAR);
+                    RenderManager.drawString(vg, input, x + 12, y + height / 2f + 1, color, 14f, Fonts.REGULAR);
                 } else {
-                    RenderManager.drawString(vg, input, x + this.width / 2f - halfTextWidth, y + height / 2f + 1, color, 14f, Fonts.INTER_REGULAR);
+                    RenderManager.drawString(vg, input, x + this.width / 2f - halfTextWidth, y + height / 2f + 1, color, 14f, Fonts.REGULAR);
                 }
             } else {
-                RenderManager.drawString(vg, s.toString(), x + 12, y + height / 2f + 1, color, 14f, Fonts.INTER_REGULAR);
+                RenderManager.drawString(vg, s.toString(), x + 12, y + height / 2f + 1, color, 14f, Fonts.REGULAR);
             }
             ScissorManager.resetScissor(vg, scissor);
         } catch (Exception e) {
@@ -418,9 +418,9 @@ public class TextInputField extends BasicElement {
             while (s1.length() < s.length()) {
                 s1.append('*');
             }
-            return RenderManager.getTextWidth(vg, s1.toString(), 14.0f, Fonts.INTER_REGULAR);
+            return RenderManager.getTextWidth(vg, s1.toString(), 14.0f, Fonts.REGULAR);
         } else {
-            return RenderManager.getTextWidth(vg, s, 14.0f, Fonts.INTER_REGULAR);
+            return RenderManager.getTextWidth(vg, s, 14.0f, Fonts.REGULAR);
         }
     }
 }

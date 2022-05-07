@@ -58,7 +58,7 @@ public class ModsPage extends Page {
             }
         }
         if (iX == x + 16 && iY == y + 72) {
-            RenderManager.drawString(vg, "Looks like there is nothing here. Try another category?", x + 16, y + 72, OneConfigConfig.WHITE_60, 14f, Fonts.INTER_MEDIUM);
+            RenderManager.drawString(vg, "Looks like there is nothing here. Try another category?", x + 16, y + 72, OneConfigConfig.WHITE_60, 14f, Fonts.MEDIUM);
         }
     }
 

@@ -1,6 +1,7 @@
 package cc.polyfrost.oneconfig.lwjgl;
 
 import cc.polyfrost.oneconfig.config.OneConfigConfig;
+import cc.polyfrost.oneconfig.lwjgl.font.Font;
 import cc.polyfrost.oneconfig.lwjgl.font.FontManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.Image;
@@ -14,8 +15,14 @@ import org.lwjgl.nanovg.NVGColor;
 import org.lwjgl.nanovg.NVGPaint;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.GL11;
+import sun.font.Font2D;
+import sun.font.FontManagerFactory;
+import sun.font.StrikeMetrics;
+import sun.font.TrueTypeFont;
 
 import java.awt.*;
+import java.io.File;
+import java.util.Arrays;
 import java.util.function.LongConsumer;
 
 import static org.lwjgl.nanovg.NanoVG.*;
@@ -145,16 +152,15 @@ public final class RenderManager {
         nvgColor.free();
     }
 
-    public static float fontSizeToNVGFontSize(float fontSize) {
-        int dpi = 72;
-        float pixelsPerFUnit = (fontSize * dpi) / (72f * 2816f);
-        return 2728f * pixelsPerFUnit - (-680 * pixelsPerFUnit);
+    public static float fontSizeToNVGFontSize(float fontSize, Font font) {
+        float pixelsPerFUnit = (fontSize * 72f) / (72f * font.getUnitsPerEm());
+        return font.getAscender() * pixelsPerFUnit - (font.getDescender() * pixelsPerFUnit);
     }
 
 
     public static void drawString(long vg, String text, float x, float y, int color, float size, Fonts font) {
         nvgBeginPath(vg);
-        nvgFontSize(vg, fontSizeToNVGFontSize(size));
+        nvgFontSize(vg, fontSizeToNVGFontSize(size, font.font));
         nvgFontFace(vg, font.font.getName());
         nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
         NVGColor nvgColor = color(vg, color);
@@ -165,7 +171,7 @@ public final class RenderManager {
 
     public static void drawString(long vg, String text, float x, float y, int color, float size, int lineHeight, Fonts font) {
         nvgBeginPath(vg);
-        nvgFontSize(vg, fontSizeToNVGFontSize(size));
+        nvgFontSize(vg, fontSizeToNVGFontSize(size, font.font));
         nvgFontFace(vg, font.font.getName());
         nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
         nvgTextMetrics(vg, new float[]{10f}, new float[]{10f}, new float[]{lineHeight});
@@ -177,7 +183,7 @@ public final class RenderManager {
 
     public static void drawWrappedString(long vg, String text, float x, float y, float width, int color, float size, Fonts font) {
         nvgBeginPath(vg);
-        nvgFontSize(vg, fontSizeToNVGFontSize(size));
+        nvgFontSize(vg, fontSizeToNVGFontSize(size, font.font));
         nvgFontFace(vg, font.font.getName());
         nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
         NVGColor nvgColor = color(vg, color);
@@ -224,7 +230,7 @@ public final class RenderManager {
 
     public static float getTextWidth(long vg, String text, float fontSize, Fonts font) {
         float[] bounds = new float[4];
-        nvgFontSize(vg, fontSizeToNVGFontSize(fontSize));
+        nvgFontSize(vg, fontSizeToNVGFontSize(fontSize, font.font));
         nvgFontFace(vg, font.font.getName());
         return nvgTextBounds(vg, 0, 0, text, bounds);
     }

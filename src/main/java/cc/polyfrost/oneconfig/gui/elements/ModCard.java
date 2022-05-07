@@ -55,7 +55,7 @@ public class ModCard extends BasicElement {
         favoriteHitbox.currentColor = ColorUtils.getColor(favoriteHitbox.currentColor, favoriteHitbox.colorPalette, favoriteHitbox.hovered, favoriteHitbox.clicked);
         RenderManager.drawRoundedRectVaried(vg, x + 212, y + 87, 32, 32, favoriteHitbox.currentColor, 0f, 0f, 12f, 0f);
         favorite = favoriteHitbox.isToggled();
-        RenderManager.drawString(vg, modData.name, x + 12, y + 103, OneConfigConfig.WHITE, 14f, Fonts.INTER_MEDIUM);
+        RenderManager.drawString(vg, modData.name, x + 12, y + 103, OneConfigConfig.WHITE, 14f, Fonts.MEDIUM);
         if (favorite) {
             RenderManager.drawImage(vg, Images.FAVORITE, x + 220, y + 95, 16, 16);
         } else {

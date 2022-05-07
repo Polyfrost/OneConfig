@@ -36,9 +36,9 @@ public class ConfigPageButton extends BasicOption {
         if (hovered && Mouse.isButtonDown(0)) NanoVG.nvgGlobalAlpha(vg, 0.8f);
 
         RenderManager.drawRoundedRect(vg, x - 16, y, 1024, height, backgroundColor, 20);
-        RenderManager.drawString(vg, name, x + 10, y + 32, OneConfigConfig.WHITE_90, 24, Fonts.INTER_MEDIUM);
+        RenderManager.drawString(vg, name, x + 10, y + 32, OneConfigConfig.WHITE_90, 24, Fonts.MEDIUM);
         if (!description.equals(""))
-            RenderManager.drawString(vg, name, x + 10, y + 70, OneConfigConfig.WHITE_90, 14, Fonts.INTER_MEDIUM);
+            RenderManager.drawString(vg, name, x + 10, y + 70, OneConfigConfig.WHITE_90, 14, Fonts.MEDIUM);
         RenderManager.drawImage(vg, Images.CHEVRON_ARROW, x + 981f, y + (description.equals("") ? 20f : 36f), 13, 22);
 
         if (clicked) OneConfigGui.INSTANCE.openPage(new ModConfigPage(page));

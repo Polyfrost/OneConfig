@@ -3,7 +3,6 @@ package cc.polyfrost.oneconfig.gui;
 import cc.polyfrost.oneconfig.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.gui.elements.BasicElement;
 import cc.polyfrost.oneconfig.gui.elements.ColorSelector;
-import cc.polyfrost.oneconfig.gui.elements.text.NumberInputField;
 import cc.polyfrost.oneconfig.gui.elements.text.TextInputField;
 import cc.polyfrost.oneconfig.gui.pages.HomePage;
 import cc.polyfrost.oneconfig.gui.pages.Page;
@@ -69,8 +68,8 @@ public class OneConfigGui extends GuiScreen {
             RenderManager.drawLine(vg, 544, 140, 544, 940, 1, OneConfigConfig.GRAY_700);
 
             RenderManager.drawImage(vg, Images.LOGO, x + 19, y + 19, 42, 42);
-            RenderManager.drawString(vg, "OneConfig", x + 69, y + 32, OneConfigConfig.WHITE, 18f, Fonts.INTER_BOLD);        // added half line height to center text
-            RenderManager.drawString(vg, "ALPHA - By Polyfrost", x + 69, y + 51, OneConfigConfig.WHITE, 12f, Fonts.INTER_REGULAR);
+            RenderManager.drawString(vg, "OneConfig", x + 69, y + 32, OneConfigConfig.WHITE, 18f, Fonts.BOLD);        // added half line height to center text
+            RenderManager.drawString(vg, "ALPHA - By Polyfrost", x + 69, y + 51, OneConfigConfig.WHITE, 12f, Fonts.REGULAR);
 
 
             //RenderManager.drawRect(vg, x + 300, y + 500, 400, 12, OneConfigConfig.ERROR_700);
@@ -140,12 +139,12 @@ public class OneConfigGui extends GuiScreen {
             float breadcrumbX = x + 336;
             for (int i = 0; i < parents.size(); i++) {
                 String title = parents.get(i).getTitle();
-                float width = RenderManager.getTextWidth(vg, title, 24f, Fonts.INTER_SEMIBOLD);
+                float width = RenderManager.getTextWidth(vg, title, 24f, Fonts.SEMIBOLD);
                 boolean hovered = InputUtils.isAreaHovered((int) breadcrumbX, y + 24, (int) width, 36);
                 int color = OneConfigConfig.WHITE_60;
                 if (i == parents.size() - 1) color = OneConfigConfig.WHITE_95;
                 else if (hovered && !Mouse.isButtonDown(0)) color = OneConfigConfig.WHITE_80;
-                RenderManager.drawString(vg, title, breadcrumbX, y + 38, color, 24f, Fonts.INTER_SEMIBOLD);
+                RenderManager.drawString(vg, title, breadcrumbX, y + 38, color, 24f, Fonts.SEMIBOLD);
                 if (i != 0)
                     RenderManager.drawImage(vg, Images.CHEVRON_ARROW, breadcrumbX - 22, y + 26, 13, 22, color);
                 if (hovered && i != parents.size() - 1)
@@ -156,7 +155,7 @@ public class OneConfigGui extends GuiScreen {
 
             long end = System.nanoTime() - start;
             String s = (" draw: " + end / 1000000f + "ms");
-            RenderManager.drawString(vg, s, x + 1170, y + 790, OneConfigConfig.GRAY_300, 10f, Fonts.INTER_MEDIUM);
+            RenderManager.drawString(vg, s, x + 1170, y + 790, OneConfigConfig.GRAY_300, 10f, Fonts.MEDIUM);
         });
         mouseDown = Mouse.isButtonDown(0);
     }
