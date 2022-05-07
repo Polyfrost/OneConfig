@@ -88,7 +88,7 @@ public class TextInputField extends BasicElement {
         try {
             Scissor scissor = ScissorManager.scissor(vg, x, y, width, height);
             int colorOutline = errored ? OneConfigConfig.ERROR_700 : OneConfigConfig.GRAY_700;
-            RenderManager.drawHollowRoundRect(vg, x, y, width, height, colorOutline, 12f, 2f);
+            RenderManager.drawHollowRoundRect(vg, x, y, width - 0.5f, height - 0.5f, colorOutline, 12f, 2f);
             super.update(x, y);
             if (Mouse.isButtonDown(0) && !InputUtils.isAreaHovered(x - 40, y - 20, width + 90, height + 20)) {
                 onClose();

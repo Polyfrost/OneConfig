@@ -1,53 +1,135 @@
 package cc.polyfrost.oneconfig.gui.elements;
 
 import cc.polyfrost.oneconfig.config.OneConfigConfig;
+import cc.polyfrost.oneconfig.gui.OneConfigGui;
+import cc.polyfrost.oneconfig.gui.elements.text.NumberInputField;
+import cc.polyfrost.oneconfig.gui.elements.text.TextInputField;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
-import cc.polyfrost.oneconfig.utils.InputUtils;
-import org.lwjgl.input.Mouse;
+import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
+import cc.polyfrost.oneconfig.lwjgl.image.Images;
+import cc.polyfrost.oneconfig.utils.MathUtils;
 
 import java.awt.*;
-import java.util.ArrayList;
 
 public class ColorSelector {
-
-    public ColorSelector(Color color, int mouseX, int mouseY) {
-
-    }
-
-    public void draw(long vg) {
-
-    }
-
-    public Color getColor() {
-
-        return null;
-    }
-}
-
-/*public class ColorSelector {
+    private final int x;
+    private final int y;
     private Color color;
-    private final int x, y;
-    private final int width = 416;
-    private final int height = 768;
+    private float percentMove = 0f;
+    private final BasicElement hsbBtn = new BasicElement(124, 28, 2,true);
+    private final BasicElement rgbBtn = new BasicElement(124, 28, 2,true);
+    private final BasicElement chromaBtn = new BasicElement(124, 28, 2,true);
+    private final BasicElement closeBtn = new BasicElement(32, 32, true);
 
-    private final BasicElement HSBButton = new BasicElement(128, 32, -1, true);
-    private final BasicElement RGBButton = new BasicElement(128, 32, -1, true);
-    private final BasicElement ChromaButton = new BasicElement(128, 32, -1, true);
+    private final BasicElement copyBtn = new BasicElement(32, 32, 2,true);
+    private final BasicElement pasteBtn = new BasicElement(32, 32, 2,true);
+    private final BasicButton guideBtn = new BasicButton(112, 32, "Guide", null, null, 0, BasicButton.ALIGNMENT_CENTER);
 
-    private final ArrayList<BasicElement> faves = new ArrayList<>();
-    private final ArrayList<BasicElement> history = new ArrayList<>();
-    private final BasicElement closeButton = new BasicElement(32, 32, -1, true);
+    private final NumberInputField hueInput = new NumberInputField(90, 32, 0, 0, 255, 1);
+    private final NumberInputField saturationInput = new NumberInputField(90, 32, 0, 0, 255, 1);
+    private final NumberInputField brightnessInput = new NumberInputField(90, 32, 0, 0, 100, 1);
+    private final NumberInputField alphaInput = new NumberInputField(90, 32, 0, 0, 100, 1);
+    private final TextInputField hexInput = new TextInputField(88, 32, true, "");
+
+    private final ColorSlider topSlider = new ColorSlider(384, 0, 255, 127);
+    private final ColorSlider bottomSlider = new ColorSlider(384, 0, 255, 127);
+    private final Slider speedSlider = new Slider(384, 1, 60, 20);
+
 
 
     public ColorSelector(Color color, int mouseX, int mouseY) {
         this.color = color;
-        this.y = mouseY - 768;
         this.x = mouseX - 208;
-
+        this.y = mouseY - 776;
     }
 
     public void draw(long vg) {
+        int width = 416;
+        int height = 768;
+        int mode = 1;
+
+        RenderManager.drawHollowRoundRect(vg, x - 3, y - 3, width + 4, height + 4, new Color(204, 204, 204, 77).getRGB(), 20f, 2f);
         RenderManager.drawRoundedRect(vg, x, y, width, height, OneConfigConfig.GRAY_800, 20f);
+        RenderManager.drawString(vg, "Color Selector", x + 16, y + 32, OneConfigConfig.WHITE_90, 18f, Fonts.SEMIBOLD);
+        closeBtn.draw(vg, x + 368, y + 16);
+        RenderManager.drawImage(vg, Images.CLOSE, x + 369, y + 17, 30, 30);
+        if(closeBtn.isClicked()) {
+            OneConfigGui.INSTANCE.closeColorSelector();
+        }
+
+        RenderManager.drawRoundedRect(vg, x + 16, y + 64, 384, 32, OneConfigConfig.GRAY_500, 12f);
+        RenderManager.drawRoundedRect(vg, x + 18 + (percentMove * 128), y + 66, 124, 28, OneConfigConfig.BLUE_600, 10f);
+        percentMove = MathUtils.easeOut(percentMove, mode, 20f);
+        hsbBtn.draw(vg, x + 18, y + 66);
+        rgbBtn.draw(vg, x + 146, y + 66);
+        chromaBtn.draw(vg, x + 274, y + 66);
+        RenderManager.drawString(vg, "HSB Box", x + 55, y + 81, OneConfigConfig.WHITE, 12f, Fonts.MEDIUM);
+        RenderManager.drawString(vg, "Color Wheel", x + 165, y + 81, OneConfigConfig.WHITE, 12f, Fonts.MEDIUM);
+        RenderManager.drawString(vg, "Chroma", x + 307, y + 81, OneConfigConfig.WHITE, 12f, Fonts.MEDIUM);
+
+        RenderManager.drawString(vg, "Saturation", x + 224, y + 560, OneConfigConfig.WHITE_80, 12f, Fonts.MEDIUM);
+        saturationInput.draw(vg, x + 312, y + 544);
+        RenderManager.drawString(vg, "Brightness", x + 16, y + 599, OneConfigConfig.WHITE_80, 12f, Fonts.MEDIUM);
+        brightnessInput.draw(vg, x + 104, y + 584);
+        RenderManager.drawString(vg, "Alpha (%)", x + 224, y + 599, OneConfigConfig.WHITE_80, 12f, Fonts.MEDIUM);
+        alphaInput.draw(vg, x + 312, y + 584);
+        RenderManager.drawString(vg, "Hex (RGBA)", x + 16, y + 641, OneConfigConfig.WHITE_80, 12f, Fonts.MEDIUM);
+        hexInput.draw(vg, x + 104, y + 624);
+
+        copyBtn.draw(vg, x + 204, y + 624);
+        pasteBtn.draw(vg, x + 244, y + 624);
+        RenderManager.drawImage(vg, Images.COPY, x + 211, y + 631, 18, 18);
+        RenderManager.drawImage(vg, Images.PASTE, x + 251, y + 631, 18, 18);
+
+        guideBtn.draw(vg, x + 288, y + 624);
+        RenderManager.drawImage(vg, Images.HELP, x + 301, y + 631, 18, 18);
+        RenderManager.drawImage(vg, Images.LAUNCH, x + 369, y + 631, 18, 18);
+
+
+
+
+        switch (mode) {
+            default:
+            case 0:
+                break;
+            case 1:
+                RenderManager.drawRoundedRect(vg, x + 64, y + 120, 288, 288, OneConfigConfig.WHITE, 144f);
+
+                RenderManager.drawString(vg, "Hue", x + 16, y + 560, OneConfigConfig.WHITE_80, 12f, Fonts.MEDIUM);
+                hueInput.draw(vg, x + 104, y + 544);
+
+                Color colorMax = new Color(color.getRed(), color.getGreen(), color.getBlue(), 255);
+                float[] hsbColor = new float[3];
+                Color.RGBtoHSB(colorMax.getRed(), colorMax.getGreen(), colorMax.getBlue(), hsbColor);
+                hsbColor[2] = topSlider.getValue() / 255f;
+                color = new Color(Color.HSBtoRGB(hsbColor[0], hsbColor[1], hsbColor[2]), true);
+                bottomSlider.setGradient(new Color(color.getRed(), color.getGreen(), color.getBlue(), 25), colorMax);
+                topSlider.setGradient(Color.BLACK, colorMax);
+                color = new Color(color.getRed(), color.getGreen(), color.getBlue(), (int) bottomSlider.getValue());
+
+                //RenderManager.drawRoundedRect(vg, bottomSlider.currentDragPoint - 8, y + 456, 16, 16, color.getRGB(), 16f);
+
+                topSlider.draw(vg, x + 16, y + 424);
+                RenderManager.drawImage(vg, Images.COLOR_BASE_LONG, x + 16, y + 456, 384, 16);
+                bottomSlider.draw(vg, x + 16, y + 456);
+                break;
+            case 2:
+                break;
+        }
+
+        float[] hsbColor = new float[3];
+        Color.RGBtoHSB(color.getRed(), color.getGreen(), color.getBlue(), hsbColor);
+        hueInput.setInput(String.format("%.01f", hsbColor[0] * 360f));
+        saturationInput.setInput(String.format("%.01f", hsbColor[1] * 100f));
+        brightnessInput.setInput(String.format("%.01f", hsbColor[2] * 100f));
+        alphaInput.setInput(String.format("%.01f", color.getAlpha() / 255f * 100f));
+
+
+        RenderManager.drawHollowRoundRect(vg, x + 15, y + 487, 384, 40, OneConfigConfig.GRAY_300, 12f, 2f);
+        RenderManager.drawImage(vg, Images.COLOR_BASE_LARGE, x + 20, y + 492, 376, 32);
+        RenderManager.drawRoundedRect(vg, x + 20, y + 492, 376, 32, color.getRGB(), 8f);
+
+
 
     }
 
@@ -55,212 +137,37 @@ public class ColorSelector {
         return color;
     }
 
-
-
-    private class HSBSelector extends ColorSelectorBase {
-
-
-        public HSBSelector(Color color) {
-            super(color);
-        }
-
-        @Override
-        public void drawBox(long vg, int x, int y) {
-
-        }
-
-        @Override
-        public void setColor(Color color) {
-
-        }
-
-        @Override
-        public int[] drawTopSlider() {
-            return new int[0];
-        }
-
-        @Override
-        public int[] drawBottomSlider() {
-            return new int[0];
-        }
-
-        @Override
-        public float[] getColorAtPos(int clickX, int clickY) {
-            return new float[0];
-        }
-    }
-
-
-    private class RGBSelector extends ColorSelectorBase {
-
-        public RGBSelector(Color color) {
-            super(color);
-        }
-
-        @Override
-        public void drawBox(long vg, int x, int y) {
-
-        }
-
-        @Override
-        public void setColor(Color color) {
-
-        }
-
-        @Override
-        public int[] drawTopSlider() {
-            return new int[0];
-        }
-
-        @Override
-        public int[] drawBottomSlider() {
-            return new int[0];
-        }
-
-
-        @Override
-        public float[] getColorAtPos(int clickX, int clickY) {
-            return new float[0];
-        }
+    public void keyTyped(char typedChar, int keyCode) {
+        hexInput.keyTyped(typedChar, keyCode);
+        saturationInput.keyTyped(typedChar, keyCode);
+        brightnessInput.keyTyped(typedChar, keyCode);
+        alphaInput.keyTyped(typedChar, keyCode);
+        hueInput.keyTyped(typedChar, keyCode);
     }
 
 
 
-    private abstract class ColorSelectorBase {
 
-        private int selectedX;
-        private int selectedY;
-        private float[] hsb = new float[3];
-        private float[] rgba;
-        private final TextInputFieldNumber hueField = new TextInputFieldNumber(72, 32, "", 0, 100);
-        private final TextInputFieldNumber saturationField = new TextInputFieldNumber(72, 32, "", 0, 100);
-        private final TextInputFieldNumber brightnessField = new TextInputFieldNumber(72, 32, "", 0, 100);
-        private final TextInputFieldNumber alphaField = new TextInputFieldNumber(72, 32, "", 0, 100);
+    private static class ColorSlider extends Slider {
+        protected Color gradColorStart, gradColorEnd;
 
-        private final TextInputField hexField = new TextInputField(107, 32, true, false, "");
-        private final TextInputFieldNumber redField = new TextInputFieldNumber(44, 32, "", 0, 255);
-        private final TextInputFieldNumber greenField = new TextInputFieldNumber(44, 32, "", 0, 255);
-        private final TextInputFieldNumber blueField = new TextInputFieldNumber(44, 32, "", 0, 255);
-
-        private final Slider sliderTop = new Slider(0);
-        private final Slider sliderBottom = new Slider(0);
-
-        public ColorSelectorBase(Color color) {
-            rgba = new float[]{color.getRed() / 255f, color.getGreen() / 255f, color.getBlue() / 255f, color.getAlpha() / 255f};
-        }
-
-        public void updateElements(float[] rgba) {
-            this.rgba = rgba;
-            hsb = Color.RGBtoHSB((int) (rgba[0] * 255), (int) (rgba[1] * 255), (int) (rgba[2] * 255), hsb);
-            hueField.setInput(String.valueOf(hsb[0]));
-            saturationField.setInput(String.valueOf(hsb[1]));
-            brightnessField.setInput(String.valueOf(hsb[2]));
-            alphaField.setInput(String.valueOf(rgba[3]));
-            redField.setInput(String.valueOf(rgba[0]));
-            greenField.setInput(String.valueOf(rgba[1]));
-            blueField.setInput(String.valueOf(rgba[2]));
-        }
-        public abstract void drawBox(long vg, int x, int y);
-
-        /** draw the color selector contents, including the box, and the input fields. If it is clicked, getColorAtPos is called. updateElements is also called to update all the input fields. */
-        /*public void draw(long vg, int x, int y) {
-            drawBox(vg, x + 16, y + 120);
-            if(InputUtils.isAreaHovered(x + 16, y + 120, 384, 288) && Mouse.isButtonDown(0)) {
-                selectedX = InputUtils.mouseX() - x - 16;
-                selectedY = InputUtils.mouseY() - y - 120;
-                rgba = getColorAtPos(selectedX, selectedY);
-            }           // TODO all of this
-            hueField.draw(vg, x + 104, y + 544);
-            saturationField.draw(vg, x + 312, y + 544);
-            brightnessField.draw(vg, x + 103, y + 584);
-            alphaField.draw(vg, x + 103, y + 584);
-            hexField.draw(vg, x + 96, y + 624);
-            redField.draw(vg, x + 228, y + 624);
-            greenField.draw(vg, x + 292, y + 664);
-            blueField.draw(vg, x + 356, y + 664);
-            sliderTop.draw(vg, x + 16, y + 424, drawTopSlider()[0], drawTopSlider()[1]);
-            sliderBottom.draw(vg, x + 16, y + 576, drawBottomSlider()[0], drawBottomSlider()[1]);
-            updateElements(rgba);
-            Color color1 = new Color(rgba[0], rgba[1], rgba[2], rgba[3]);
-            setColor(color1);
-            RenderManager.drawRoundedRect(vg, x + 16, y + 488, 384, 40, color1.getRGB(), 12f);
-        }
-
-        /** called to set the color of the color selector box based on the values of the input fields. */ /*
-        public abstract void setColor(Color color);
-
-        /** return an array of two ints of the start color of the gradient and the end color of the gradient. */ /*
-        public abstract int[] drawTopSlider();
-        /** return an array of two ints of the start color of the gradient and the end color of the gradient. */ /*
-        public abstract int[] drawBottomSlider();
-
-        /**
-         * This method is called when the color selector is clicked. It needs to return color at the clicked position.
-         * @return color at the clicked position as a <code>float[] rgba.</code>
-         */ /*
-        public abstract float[] getColorAtPos(int clickX, int clickY);
-
-        public float getRed() {
-            return rgba[0];
-        }
-        public float getGreen(){
-            return rgba[1];
-        }
-        public float getBlue(){
-            return rgba[2];
-        }
-        public float getAlpha(){
-            return rgba[3];
-        }
-
-        public float getHue(){
-            return hsb[0];
-        }
-
-        public float getSaturation(){
-            return hsb[1];
-        }
-
-        public float getBrightness(){
-            return hsb[2];
-        }
-
-        public String getHex() {
-            return null;
-        };
-
-        public Color getColor() {
-            return new Color(rgba[0], rgba[1], rgba[2], rgba[3]);
-        }
-
-    }
-
-    private class TextInputFieldNumber extends TextInputField {
-        private final float min, max;
-        public TextInputFieldNumber(int width, int height, String defaultValue, float min, float max) {
-            super(width, height, true, true, defaultValue);
-            this.min = min;
-            this.max = max;
+        public ColorSlider(int length, float min, float max, float startValue) {
+            super(length, min, max, startValue);
+            super.height = 16;
         }
 
         @Override
         public void draw(long vg, int x, int y) {
-            super.draw(vg, x, y);
-
-        }
-    }
-
-    private class Slider {
-        private final int style;
-
-        public Slider(int style) {
-            this.style = style;
+            update(x, y);
+            RenderManager.drawHollowRoundRect(vg, x - 1.5f, y - 1.5f, width + 2, height + 2, new Color(204, 204, 204, 77).getRGB(), 8f, 1f);
+            RenderManager.drawGradientRoundedRect(vg, x, y, width, height, gradColorStart.getRGB(), gradColorEnd.getRGB(), 8f);
+            RenderManager.drawHollowRoundRect(vg, currentDragPoint - 9, y - 2, 18, 18, OneConfigConfig.WHITE, 7f, 1f);
         }
 
-        public void draw(long vg, int x, int y, int color1, int color2) {
-
+        public void setGradient(Color start, Color end) {
+            gradColorStart = start;
+            gradColorEnd = end;
         }
     }
 }
-*/
 

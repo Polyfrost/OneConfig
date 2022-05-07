@@ -132,9 +132,6 @@ public class OneConfigGui extends GuiScreen {
                 currentPage.scrollWithDraw(vg, (int) (x - pageProgress), y + 72);
             }
             ScissorManager.resetScissor(vg, scissor);
-            if (currentColorSelector != null) {
-                currentColorSelector.draw(vg);
-            }
 
             float breadcrumbX = x + 336;
             for (int i = 0; i < parents.size(); i++) {
@@ -156,6 +153,9 @@ public class OneConfigGui extends GuiScreen {
             long end = System.nanoTime() - start;
             String s = (" draw: " + end / 1000000f + "ms");
             RenderManager.drawString(vg, s, x + 1170, y + 790, OneConfigConfig.GRAY_300, 10f, Fonts.MEDIUM);
+            if (currentColorSelector != null) {
+                currentColorSelector.draw(vg);
+            }
         });
         mouseDown = Mouse.isButtonDown(0);
     }
@@ -165,6 +165,7 @@ public class OneConfigGui extends GuiScreen {
         try {
             super.keyTyped(key, keyCode);
             textInputField.keyTyped(key, keyCode);
+            if(currentColorSelector != null) currentColorSelector.keyTyped(key, keyCode);
             currentPage.keyTyped(key, keyCode);
         } catch (Exception e) {
             System.out.println("this should literally never happen");

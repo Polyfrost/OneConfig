@@ -15,14 +15,8 @@ import org.lwjgl.nanovg.NVGColor;
 import org.lwjgl.nanovg.NVGPaint;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.GL11;
-import sun.font.Font2D;
-import sun.font.FontManagerFactory;
-import sun.font.StrikeMetrics;
-import sun.font.TrueTypeFont;
 
 import java.awt.*;
-import java.io.File;
-import java.util.Arrays;
 import java.util.function.LongConsumer;
 
 import static org.lwjgl.nanovg.NanoVG.*;
@@ -87,7 +81,7 @@ public final class RenderManager {
         nvgRoundedRect(vg, x, y, width, height, radius);
         NVGColor nvgColor = color(vg, color);
         NVGColor nvgColor2 = color(vg, color2);
-        nvgFillPaint(vg, nvgLinearGradient(vg, x, y + height, x + width, y, nvgColor, nvgColor2, bg));
+        nvgFillPaint(vg, nvgLinearGradient(vg, x, y, x + width, y, nvgColor, nvgColor2, bg));
         nvgFill(vg);
         nvgColor.free();
         nvgColor2.free();
@@ -99,7 +93,7 @@ public final class RenderManager {
         nvgRect(vg, x, y, width, height);
         NVGColor nvgColor = color(vg, color);
         NVGColor nvgColor2 = color(vg, color2);
-        nvgFillPaint(vg, nvgLinearGradient(vg, x + height, y + height, x + height, y, nvgColor, nvgColor2, bg));
+        nvgFillPaint(vg, nvgLinearGradient(vg, x, y, x, y + width, nvgColor, nvgColor2, bg));
         nvgFillPaint(vg, bg);
         nvgFill(vg);
         nvgColor.free();
@@ -191,6 +185,7 @@ public final class RenderManager {
             NVGPaint imagePaint = NVGPaint.calloc();
             cc.polyfrost.oneconfig.lwjgl.image.Image image = ImageLoader.INSTANCE.getImage(filePath);
             nvgBeginPath(vg);
+
             nvgImagePattern(vg, x, y, width, height, 0, image.getReference(), 1, imagePaint);
             nvgRect(vg, x, y, width, height);
             nvgFillPaint(vg, imagePaint);

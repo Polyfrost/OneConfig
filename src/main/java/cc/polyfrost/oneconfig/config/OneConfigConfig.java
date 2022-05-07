@@ -17,6 +17,7 @@ public class OneConfigConfig extends Config {
     // TODO i dont know how this works so this is just gonna be here for now
     public static final int TRANSPARENT = new Color(0, 0, 0, 0).getRGB();                // Transparent      // button sidebar normal
 
+    public static final int BLACK = new Color(0,0,0,255).getRGB();                     // Black
     public static final int GRAY_900 = new Color(13, 14, 15, 255).getRGB();           // Gray 900
     public static final int GRAY_900_80 = new Color(13, 14, 15, 204).getRGB();         // Gray 900 80%
     public static final int GRAY_800 = new Color(21, 22, 23, 255).getRGB();           // Gray 800

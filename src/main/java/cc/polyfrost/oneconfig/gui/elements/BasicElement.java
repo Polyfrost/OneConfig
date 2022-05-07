@@ -8,7 +8,7 @@ public class BasicElement {
     protected int width, height;
     protected int colorPalette;
     protected int hitBoxX, hitBoxY;
-    protected final boolean hoverFx;
+    protected boolean hoverFx;
     protected boolean hovered = false;
     protected boolean clicked = false;
     protected boolean toggled = false;

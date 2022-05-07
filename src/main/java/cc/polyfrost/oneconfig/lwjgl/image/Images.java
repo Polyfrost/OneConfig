@@ -14,6 +14,9 @@ public enum Images {
 
     // TODO color picker ones
     COLOR_BASE("/assets/oneconfig/textures/gui/general/color/color_base.png"),
+    COLOR_BASE_LONG("/assets/oneconfig/textures/gui/general/color/color_base_long.png"),
+    COLOR_BASE_LARGE("/assets/oneconfig/textures/gui/general/color/color_base_large.png"),
+    COLOR_WHEEL("/assets/oneconfig/textures/gui/general/color/color_wheel.png"),
 
 
     SHARE("/assets/oneconfig/textures/gui/general/nav/share.png"),
@@ -21,6 +24,9 @@ public enum Images {
     SEARCH("/assets/oneconfig/textures/gui/general/nav/search.png"),
     MINIMIZE("/assets/oneconfig/textures/gui/general/nav/minimize.png"),
     CLOSE("/assets/oneconfig/textures/gui/general/nav/close.png"),
+    HELP("/assets/oneconfig/textures/gui/general/nav/help.png"),
+    COPY("/assets/oneconfig/textures/gui/general/nav/copy.png"),
+    PASTE("/assets/oneconfig/textures/gui/general/nav/paste.png"),
 
     LOGO("/assets/oneconfig/textures/gui/general/logo.png"),
 
