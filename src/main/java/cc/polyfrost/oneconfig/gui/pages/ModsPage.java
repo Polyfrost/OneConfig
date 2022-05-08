@@ -4,6 +4,7 @@ import cc.polyfrost.oneconfig.OneConfig;
 import cc.polyfrost.oneconfig.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.config.data.Mod;
 import cc.polyfrost.oneconfig.config.data.ModType;
+import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.elements.BasicButton;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.gui.elements.ModCard;
@@ -40,10 +41,11 @@ public class ModsPage extends Page {
     }
 
     public void draw(long vg, int x, int y) {
+        String filter = OneConfigGui.INSTANCE.getSearchValue().toLowerCase().trim();
         int iX = x + 16;
         int iY = y + 72;
         for (ModCard modCard : modCards) {
-            if (modCategories.get(0).isToggled() && (OneConfigConfig.thirdPartyAll || modCard.getModData().modType != ModType.OTHER) || (modCategories.get(1).isToggled() && modCard.getModData().modType == ModType.PVP) || (modCategories.get(2).isToggled() && modCard.getModData().modType == ModType.HUD) || (modCategories.get(3).isToggled() && modCard.getModData().modType == ModType.UTIL_QOL) || (modCategories.get(4).isToggled() && modCard.getModData().modType == ModType.HYPIXEL) || (modCategories.get(5).isToggled() && modCard.getModData().modType == ModType.SKYBLOCK) || (modCategories.get(6).isToggled() && modCard.getModData().modType == ModType.OTHER)) {
+            if (inSelection(modCard) && (filter.equals("") || modCard.getModData().name.toLowerCase().contains(filter))) {
                 modCard.draw(vg, iX, iY);
                 iX += 260;
                 if (iX > x + 796) {
@@ -86,6 +88,10 @@ public class ModsPage extends Page {
             }
         }
         OneConfig.config.save();
+    }
+
+    private boolean inSelection(ModCard modCard) {
+        return modCategories.get(0).isToggled() && (OneConfigConfig.thirdPartyAll || modCard.getModData().modType != ModType.OTHER) || (modCategories.get(1).isToggled() && modCard.getModData().modType == ModType.PVP) || (modCategories.get(2).isToggled() && modCard.getModData().modType == ModType.HUD) || (modCategories.get(3).isToggled() && modCard.getModData().modType == ModType.UTIL_QOL) || (modCategories.get(4).isToggled() && modCard.getModData().modType == ModType.HYPIXEL) || (modCategories.get(5).isToggled() && modCard.getModData().modType == ModType.SKYBLOCK) || (modCategories.get(6).isToggled() && modCard.getModData().modType == ModType.OTHER);
     }
 
     @Override

@@ -40,13 +40,24 @@ public class ModConfigPage extends Page {
     public void draw(long vg, int x, int y) {
         if (page.categories.size() == 0) return;
         String filter = OneConfigGui.INSTANCE.getSearchValue().toLowerCase().trim();
-        LinkedHashMap<String, ArrayList<BasicOption>> filteredSubcategories = page.categories.get(selectedCategory).subcategories;
+        LinkedHashMap<String, ArrayList<BasicOption>> filteredSubcategories = new LinkedHashMap<>(page.categories.get(selectedCategory).subcategories);
         if (!filter.equals("")) {
-
+            filteredSubcategories.clear();
+            for (String subCategory : page.categories.get(selectedCategory).subcategories.keySet()) {
+                if (subCategory.toLowerCase().contains(filter)) {
+                    filteredSubcategories.put(subCategory, page.categories.get(selectedCategory).subcategories.get(subCategory));
+                    continue;
+                }
+                for (BasicOption option : page.categories.get(selectedCategory).subcategories.get(subCategory)) {
+                    if (!option.getName().toLowerCase().contains(filter)) continue;
+                    if (!filteredSubcategories.containsKey(subCategory))
+                        filteredSubcategories.put(subCategory, new ArrayList<>());
+                    filteredSubcategories.get(subCategory).add(option);
+                }
+            }
         }
         int optionX = x + 30;
         int optionY = y + (page.categories.size() == 1 ? 16 : 64);
-        //  if (!option.getName().toLowerCase().contains(filter)) continue;
 
         // Top page buttons
         for (ConfigPageButton page : page.categories.get(selectedCategory).topPages) {
@@ -57,14 +68,14 @@ public class ModConfigPage extends Page {
         }
 
         // Background
-        if (page.categories.get(selectedCategory).subcategories.keySet().size() > 0) {
+        if (filteredSubcategories.keySet().size() > 0) {
             int backgroundSize = 16;
-            for (String subCategory : page.categories.get(selectedCategory).subcategories.keySet()) {
+            for (String subCategory : filteredSubcategories.keySet()) {
                 backgroundSize += 48;
-                for (int i = 0; i < page.categories.get(selectedCategory).subcategories.get(subCategory).size(); i++) {
-                    BasicOption option = page.categories.get(selectedCategory).subcategories.get(subCategory).get(i);
-                    if (i + 1 < page.categories.get(selectedCategory).subcategories.get(subCategory).size()) {
-                        BasicOption nextOption = page.categories.get(selectedCategory).subcategories.get(subCategory).get(i + 1);
+                for (int i = 0; i < filteredSubcategories.get(subCategory).size(); i++) {
+                    BasicOption option = filteredSubcategories.get(subCategory).get(i);
+                    if (i + 1 < filteredSubcategories.get(subCategory).size()) {
+                        BasicOption nextOption = filteredSubcategories.get(subCategory).get(i + 1);
                         if (option.size == 1 && option.hasHalfSize() && nextOption.size == 1 && nextOption.hasHalfSize()) {
                             backgroundSize += Math.max(option.getHeight(), nextOption.getHeight()) + 16;
                             i++;
@@ -79,16 +90,16 @@ public class ModConfigPage extends Page {
 
         // draw options
         int optionLastY = optionY + 16;
-        if (page.categories.get(selectedCategory).subcategories.keySet().size() > 0) {
+        if (filteredSubcategories.keySet().size() > 0) {
             optionY += 16;
-            for (String subCategory : page.categories.get(selectedCategory).subcategories.keySet()) {
+            for (String subCategory : filteredSubcategories.keySet()) {
                 RenderManager.drawString(vg, subCategory, optionX, optionY + 16, OneConfigConfig.WHITE_90, 24f, Fonts.MEDIUM);
                 optionY += 48;
-                for (int i = 0; i < page.categories.get(selectedCategory).subcategories.get(subCategory).size(); i++) {
-                    BasicOption option = page.categories.get(selectedCategory).subcategories.get(subCategory).get(i);
+                for (int i = 0; i < filteredSubcategories.get(subCategory).size(); i++) {
+                    BasicOption option = filteredSubcategories.get(subCategory).get(i);
                     option.draw(vg, optionX, optionY);
-                    if (i + 1 < page.categories.get(selectedCategory).subcategories.get(subCategory).size()) {
-                        BasicOption nextOption = page.categories.get(selectedCategory).subcategories.get(subCategory).get(i + 1);
+                    if (i + 1 < filteredSubcategories.get(subCategory).size()) {
+                        BasicOption nextOption = filteredSubcategories.get(subCategory).get(i + 1);
                         if (option.size == 1 && option.hasHalfSize() && nextOption.size == 1 && nextOption.hasHalfSize()) {
                             nextOption.draw(vg, optionX + 512, optionY);
                             optionY += Math.max(option.getHeight(), nextOption.getHeight()) + 16;
@@ -112,14 +123,14 @@ public class ModConfigPage extends Page {
         totalSize = optionY - y;
 
         // Draw last options
-        if (page.categories.get(selectedCategory).subcategories.keySet().size() > 0) {
-            for (String subCategory : page.categories.get(selectedCategory).subcategories.keySet()) {
+        if (filteredSubcategories.keySet().size() > 0) {
+            for (String subCategory : filteredSubcategories.keySet()) {
                 optionLastY += 48;
-                for (int i = 0; i < page.categories.get(selectedCategory).subcategories.get(subCategory).size(); i++) {
-                    BasicOption option = page.categories.get(selectedCategory).subcategories.get(subCategory).get(i);
+                for (int i = 0; i < filteredSubcategories.get(subCategory).size(); i++) {
+                    BasicOption option = filteredSubcategories.get(subCategory).get(i);
                     option.drawLast(vg, optionX, optionLastY);
-                    if (i + 1 < page.categories.get(selectedCategory).subcategories.get(subCategory).size()) {
-                        BasicOption nextOption = page.categories.get(selectedCategory).subcategories.get(subCategory).get(i + 1);
+                    if (i + 1 < filteredSubcategories.get(subCategory).size()) {
+                        BasicOption nextOption = filteredSubcategories.get(subCategory).get(i + 1);
                         if (option.size == 1 && option.hasHalfSize() && nextOption.size == 1 && nextOption.hasHalfSize()) {
                             nextOption.drawLast(vg, optionX + 512, optionLastY);
                             optionLastY += Math.max(option.getHeight(), nextOption.getHeight()) + 16;
