@@ -147,7 +147,6 @@ public class OneColor {
     public byte[] RGBAtoHSBA(int rgba) {
         byte[] hsb = new byte[4];
         float[] hsbArray = Color.RGBtoHSB((rgba >> 16 & 255), (rgba >> 8 & 255), (rgba & 255), null);
-        System.out.println(Arrays.toString(hsbArray));
         hsb[0] = (byte) (hsbArray[0] * 360);
         hsb[1] = (byte) (hsbArray[1] * 100);
         hsb[2] = (byte) (hsbArray[2] * 100);
