@@ -3,22 +3,21 @@ package cc.polyfrost.oneconfig.lwjgl;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
-import java.util.Arrays;
 
 /**
  * OneColor is a class for storing Colors in HSBA format. This format is used to allow the color selectors to work correctly.
  * <p>
  * <code>
- * byte[0] = hue (0-360)
- * byte[1] = saturation (0-100)
- * byte[2] = brightness (0-100)
- * byte[3] = alpha (0-100)
+ * short[0] = hue (0-360)
+ * short[1] = saturation (0-100)
+ * short[2] = brightness (0-100)
+ * short[3] = alpha (0-100)
  * </code>
  */
 @SuppressWarnings("unused")
 public class OneColor {
     transient private int rgba;
-    private final byte[] hsba;
+    private short[] hsba;
     private int chroma = -1;
 
     // rgb constructors
@@ -59,7 +58,7 @@ public class OneColor {
      * Create a new OneColor from the given HSBA values.
      */
     public OneColor(float hue, float saturation, float brightness, float alpha) {
-        this.hsba = new byte[]{(byte) hue, (byte) saturation, (byte) brightness, (byte) alpha};
+        this.hsba = new short[]{(short) hue, (short) saturation, (short) brightness, (short) alpha};
         this.rgba = HSBAtoRGBA(this.hsba[0], this.hsba[1], this.hsba[2], this.hsba[3]);
 
     }
@@ -80,11 +79,11 @@ public class OneColor {
     // internal constructor
     public OneColor(int hue, int saturation, int brightness, int alpha, int chromaSpeed) {
         if (chromaSpeed == -1) {
-            this.hsba = new byte[]{(byte) hue, (byte) saturation, (byte) brightness, (byte) alpha};
+            this.hsba = new short[]{(short) hue, (short) saturation, (short) brightness, (short) alpha};
             this.rgba = HSBAtoRGBA(this.hsba[0], this.hsba[1], this.hsba[2], this.hsba[3]);
         } else {
             this.chroma = chromaSpeed;
-            this.hsba = new byte[]{(byte) hue, (byte) saturation, (byte) brightness, (byte) alpha};
+            this.hsba = new short[]{(short) hue, (short) saturation, (short) brightness, (short) alpha};
         }
     }
 
@@ -102,20 +101,28 @@ public class OneColor {
         return rgba & 255;
     }
 
-    public float getHue() {
+    public int getHue() {
         return hsba[0];
     }
 
-    public float getSaturation() {
+    public int getSaturation() {
         return hsba[1];
     }
 
-    public float getBrightness() {
+    public int getBrightness() {
         return hsba[2];
     }
 
     public int getAlpha() {
         return hsba[3];
+    }
+
+    public void setHSBA(int hue, int saturation, int brightness, int alpha) {
+        this.hsba[0] = (short) hue;
+        this.hsba[1] = (short) saturation;
+        this.hsba[2] = (short) brightness;
+        this.hsba[3] = (short) alpha;
+        this.rgba = HSBAtoRGBA(this.hsba[0], this.hsba[1], this.hsba[2], this.hsba[3]);
     }
 
     /**
@@ -133,24 +140,45 @@ public class OneColor {
         }
     }
 
+    /** return the current color without its alpha. Internal method. */
+    public int getRGBNoAlpha() {
+        return new Color(rgba, false).getRGB();
+    }
+
+    /**
+     * Return the color as if it had maximum saturation and brightness. Internal method.
+     */
+    public int getRGBMax() {
+        return HSBAtoRGBA(hsba[0], 100, 100, 255);
+    }
+
     /**
      * Get the RGBA color from the HSB color, and apply the alpha.
      */
-    public int HSBAtoRGBA(float hue, float saturation, float brightness, float alpha) {
+    public int HSBAtoRGBA(float hue, float saturation, float brightness, int alpha) {
         int temp = Color.HSBtoRGB(hue / 360f, saturation / 100f, brightness / 100f);
-        return temp | (int) (alpha * 255) << 24; // trusting copilot on this
+        return ((temp & 0x00ffffff) | (alpha << 24));
     }
 
     /**
      * Get the HSBA color from the RGBA color.
      */
-    public byte[] RGBAtoHSBA(int rgba) {
-        byte[] hsb = new byte[4];
+    public short[] RGBAtoHSBA(int rgba) {
+        short[] hsb = new short[4];
         float[] hsbArray = Color.RGBtoHSB((rgba >> 16 & 255), (rgba >> 8 & 255), (rgba & 255), null);
-        hsb[0] = (byte) (hsbArray[0] * 360);
-        hsb[1] = (byte) (hsbArray[1] * 100);
-        hsb[2] = (byte) (hsbArray[2] * 100);
-        hsb[3] = (byte) (rgba >> 24 & 255);
+        hsb[0] = (short) (hsbArray[0] * 360);
+        hsb[1] = (short) (hsbArray[1] * 100);
+        hsb[2] = (short) (hsbArray[2] * 100);
+        hsb[3] = (short) (rgba >> 24 & 255);
         return hsb;
+    }
+
+    public String getHex() {
+        return Integer.toHexString(rgba).toUpperCase();
+    }
+
+    public void setColorFromHex(String hex) {
+        rgba = Integer.parseInt(hex, 16);
+        hsba = RGBAtoHSBA(rgba);
     }
 }

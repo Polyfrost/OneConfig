@@ -6,6 +6,7 @@ import cc.polyfrost.oneconfig.gui.elements.ColorSelector;
 import cc.polyfrost.oneconfig.gui.elements.text.TextInputField;
 import cc.polyfrost.oneconfig.gui.pages.HomePage;
 import cc.polyfrost.oneconfig.gui.pages.Page;
+import cc.polyfrost.oneconfig.lwjgl.OneColor;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.scissor.Scissor;
 import cc.polyfrost.oneconfig.lwjgl.scissor.ScissorManager;
@@ -217,8 +218,8 @@ public class OneConfigGui extends GuiScreen {
     /**
      * Close the current color selector and return the color it had when it closed.
      */
-    public Color closeColorSelector() {
-        Color color = currentColorSelector.getColor();
+    public OneColor closeColorSelector() {
+        OneColor color = currentColorSelector.getColor();
         currentColorSelector = null;
         return color;
     }

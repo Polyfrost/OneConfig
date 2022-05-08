@@ -87,6 +87,34 @@ public final class RenderManager {
         nvgColor2.free();
     }
 
+    public static void drawHSBBox(long vg, float x, float y, float width, float height, int colorTarget) {
+
+        drawRoundedRect(vg, x, y, width, height, colorTarget, 8f);
+
+        NVGPaint bg = NVGPaint.create();
+        nvgBeginPath(vg);
+        nvgRoundedRect(vg, x, y, width, height, 8f);
+        NVGColor nvgColor = color(vg, OneConfigConfig.WHITE);
+        NVGColor nvgColor2 = color(vg, OneConfigConfig.TRANSPARENT_25);
+        nvgFillPaint(vg, nvgLinearGradient(vg, x, y, x + width, y, nvgColor, nvgColor2, bg));
+        nvgFill(vg);
+        nvgColor.free();
+        nvgColor2.free();
+
+        NVGPaint bg2 = NVGPaint.create();
+        nvgBeginPath(vg);
+        nvgRoundedRect(vg, x, y, width, height, 8f);
+        NVGColor nvgColor3 = color(vg, OneConfigConfig.TRANSPARENT_25);
+        NVGColor nvgColor4 = color(vg, OneConfigConfig.BLACK);
+        nvgFillPaint(vg, nvgLinearGradient(vg, x, y, x, y + height, nvgColor3, nvgColor4, bg2));
+        nvgFill(vg);
+        nvgColor3.free();
+        nvgColor4.free();
+
+        //drawHollowRoundRect(vg, x - 0.5f, y - 0.5f, width, height, new Color(77,77,77,255).getRGB(), 8f, 1f);
+
+    }
+
     public static void drawGradientRect(long vg, float x, float y, float width, float height, int color, int color2) {
         NVGPaint bg = NVGPaint.create();
         nvgBeginPath(vg);
@@ -206,6 +234,24 @@ public final class RenderManager {
             nvgFill(vg);
             imagePaint.free();
         }
+    }
+
+    public static void drawRoundImage(long vg, String filePath, float x, float y, float width, float height, float radius) {
+        if (ImageLoader.INSTANCE.loadImage(vg, filePath)) {
+            NVGPaint imagePaint = NVGPaint.calloc();
+            cc.polyfrost.oneconfig.lwjgl.image.Image image = ImageLoader.INSTANCE.getImage(filePath);
+            nvgBeginPath(vg);
+            nvgImagePattern(vg, x, y, width, height, 0, image.getReference(), 1, imagePaint);
+            nvgRoundedRect(vg, x, y, width, height, radius);
+            nvgFillPaint(vg, imagePaint);
+            nvgFill(vg);
+            imagePaint.free();
+        }
+
+    }
+
+    public static void drawRoundImage(long vg, Images filePath, float x, float y, float width, float height, float radius) {
+        drawRoundImage(vg, filePath.filePath, x, y, width, height, radius);
     }
 
     public static void drawImage(long vg, Images filePath, float x, float y, float width, float height) {

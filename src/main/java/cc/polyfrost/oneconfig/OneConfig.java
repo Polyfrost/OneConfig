@@ -6,6 +6,7 @@ import cc.polyfrost.oneconfig.config.core.ConfigCore;
 import cc.polyfrost.oneconfig.config.data.Mod;
 import cc.polyfrost.oneconfig.config.data.ModType;
 import cc.polyfrost.oneconfig.lwjgl.BlurHandler;
+import cc.polyfrost.oneconfig.lwjgl.OneColor;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.hud.HudCore;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;

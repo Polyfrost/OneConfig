@@ -4,6 +4,7 @@ import cc.polyfrost.oneconfig.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.elements.BasicButton;
 import cc.polyfrost.oneconfig.gui.elements.ColorSelector;
+import cc.polyfrost.oneconfig.lwjgl.OneColor;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.Images;
@@ -27,7 +28,7 @@ public class HomePage extends Page {
         //RenderManager.drawRoundedRect(vg);
         btn.draw(vg, x + 432, y + 658);
         if(btn.isClicked()) {
-            OneConfigGui.INSTANCE.initColorSelector(new ColorSelector(new Color(255, 228, 155), InputUtils.mouseX(), InputUtils.mouseY()));
+            OneConfigGui.INSTANCE.initColorSelector(new ColorSelector(new OneColor(255, 228, 155), InputUtils.mouseX(), InputUtils.mouseY()));
         }
     }
 

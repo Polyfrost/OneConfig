@@ -97,6 +97,9 @@ public class TextInputField extends BasicElement {
             int color = toggled ? OneConfigConfig.WHITE : OneConfigConfig.WHITE_60;
             if (!toggled) caretPos = input.length();
             if (caretPos > input.length()) caretPos = input.length();
+            if (prevCaret > input.length()) prevCaret = input.length();
+            if (caretPos < 0) caretPos = 0;
+            if (prevCaret < 0) prevCaret = 0;
             float width;
             StringBuilder s = new StringBuilder();
             if (!password) {

@@ -6,6 +6,7 @@ import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.elements.BasicElement;
 import cc.polyfrost.oneconfig.gui.elements.ColorSelector;
 import cc.polyfrost.oneconfig.gui.elements.text.TextInputField;
+import cc.polyfrost.oneconfig.lwjgl.OneColor;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.Images;
@@ -16,7 +17,7 @@ import java.lang.reflect.Field;
 
 public class ConfigColorElement extends BasicOption {
     private float alpha;
-    private Color color = Color.BLUE;
+    private OneColor color = new OneColor(Color.BLUE);
     private String hex;
 
     private final TextInputField hexField = new TextInputField(104, 32, "", false, false);
@@ -79,7 +80,7 @@ public class ConfigColorElement extends BasicOption {
         RenderManager.drawRoundedRect(vg, x + 432, y, 64, 32, OneConfigConfig.GRAY_300, 12f);
         RenderManager.drawImage(vg, Images.COLOR_BASE, x + 948, y + 4, 56, 24, color.getRGB());
         if (element.isClicked() && !element.isToggled()) {
-            OneConfigGui.INSTANCE.initColorSelector(new ColorSelector(color, InputUtils.mouseX(), InputUtils.mouseY()));
+            OneConfigGui.INSTANCE.initColorSelector(new ColorSelector(new OneColor(40, 30, 20), InputUtils.mouseX(), InputUtils.mouseY()));
         }
         if (element.isToggled() && element.isClicked()) {
             color = OneConfigGui.INSTANCE.closeColorSelector();
@@ -91,16 +92,16 @@ public class ConfigColorElement extends BasicOption {
     }
 
     // thanks stack overflow
-    public static Color HexToColor(String hex) throws NumberFormatException {
+    public static OneColor HexToColor(String hex) throws NumberFormatException {
         hex = hex.replace("#", "");
         switch (hex.length()) {
             case 6:
-                return new Color(
+                return new OneColor(
                         Integer.valueOf(hex.substring(0, 2), 16),
                         Integer.valueOf(hex.substring(2, 4), 16),
                         Integer.valueOf(hex.substring(4, 6), 16));
             case 8:
-                return new Color(
+                return new OneColor(
                         Integer.valueOf(hex.substring(0, 2), 16),
                         Integer.valueOf(hex.substring(2, 4), 16),
                         Integer.valueOf(hex.substring(4, 6), 16),
