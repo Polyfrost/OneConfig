@@ -4,6 +4,7 @@ import cc.polyfrost.oneconfig.config.annotations.ConfigPage;
 import cc.polyfrost.oneconfig.config.annotations.Option;
 import cc.polyfrost.oneconfig.config.data.*;
 import cc.polyfrost.oneconfig.config.interfaces.Config;
+import cc.polyfrost.oneconfig.lwjgl.OneColor;
 
 public class TestConfig extends Config {
 
@@ -22,7 +23,7 @@ public class TestConfig extends Config {
             type = OptionType.COLOR,
             size = 2
     )
-    public static int color;
+    public static OneColor colorTest = new OneColor(126, 137, 42);
 
     @Option(
             name = "Test dual thing",

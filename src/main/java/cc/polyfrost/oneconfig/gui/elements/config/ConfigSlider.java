@@ -23,7 +23,7 @@ public class ConfigSlider extends BasicOption {
         this.min = min;
         this.max = max;
         this.step = step;
-        inputField = new NumberInputField(84, 24, 0, min, max, step == 0 ? 1 : step);
+        inputField = new NumberInputField(84, 32, 0, min, max, step == 0 ? 1 : step);
     }
 
     @Override

@@ -29,7 +29,7 @@ public class ConfigColorElement extends BasicOption {
         alphaField.setCentered(true);
         alphaField.onlyAcceptNumbers(true);
         String buf = Integer.toHexString(color.getRGB());
-        hex = "#"+buf.substring(buf.length()-6);
+        hex = "#" + buf.substring(buf.length() - 6);
     }
 
     @Override
@@ -44,7 +44,7 @@ public class ConfigColorElement extends BasicOption {
 
         if (!alphaField.isToggled()) alphaField.setInput(String.format("%.01f", alpha * 100f) + "%");
         alphaField.setErrored(false);
-        if(alphaField.isToggled()) {
+        if (alphaField.isToggled()) {
             try {
                 float input = Float.parseFloat(alphaField.getInput());
                 if (input < 0f) {
@@ -62,15 +62,13 @@ public class ConfigColorElement extends BasicOption {
         }
         alphaField.draw(vg, x + 352, y);
 
-
-
         if (!hexField.isToggled()) hexField.setInput(hex);
         hexField.setErrored(false);
-        if(hexField.isToggled()) {
+        if (hexField.isToggled()) {
             try {
                 color = HexToColor(hexField.getInput());
                 String buf = Integer.toHexString(color.getRGB());
-                hex = "#"+buf.substring(buf.length()-6);
+                hex = "#" + buf.substring(buf.length() - 6);
             } catch (NumberFormatException e) {
                 hexField.setErrored(true);
             }
@@ -80,14 +78,14 @@ public class ConfigColorElement extends BasicOption {
         element.update(x + 432, y);
         RenderManager.drawRoundedRect(vg, x + 432, y, 64, 32, OneConfigConfig.GRAY_300, 12f);
         RenderManager.drawImage(vg, Images.COLOR_BASE, x + 948, y + 4, 56, 24, color.getRGB());
-        if(element.isClicked() && !element.isToggled()) {
+        if (element.isClicked() && !element.isToggled()) {
             OneConfigGui.INSTANCE.initColorSelector(new ColorSelector(color, InputUtils.mouseX(), InputUtils.mouseY()));
         }
-        if(element.isToggled() && element.isClicked()) {
+        if (element.isToggled() && element.isClicked()) {
             color = OneConfigGui.INSTANCE.closeColorSelector();
             alpha = color.getAlpha() / 255f;
             String buf = Integer.toHexString(color.getRGB());
-            hex = "#"+buf.substring(buf.length()-6);
+            hex = "#" + buf.substring(buf.length() - 6);
         }
 
     }
@@ -110,6 +108,4 @@ public class ConfigColorElement extends BasicOption {
         }
         throw new NumberFormatException("Invalid hex string: " + hex);
     }
-
-
 }

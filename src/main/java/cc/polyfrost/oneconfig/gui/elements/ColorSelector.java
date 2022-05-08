@@ -16,13 +16,13 @@ public class ColorSelector {
     private final int y;
     private Color color;
     private float percentMove = 0f;
-    private final BasicElement hsbBtn = new BasicElement(124, 28, 2,true);
-    private final BasicElement rgbBtn = new BasicElement(124, 28, 2,true);
-    private final BasicElement chromaBtn = new BasicElement(124, 28, 2,true);
+    private final BasicElement hsbBtn = new BasicElement(124, 28, 2, true);
+    private final BasicElement rgbBtn = new BasicElement(124, 28, 2, true);
+    private final BasicElement chromaBtn = new BasicElement(124, 28, 2, true);
     private final BasicElement closeBtn = new BasicElement(32, 32, true);
 
-    private final BasicElement copyBtn = new BasicElement(32, 32, 2,true);
-    private final BasicElement pasteBtn = new BasicElement(32, 32, 2,true);
+    private final BasicElement copyBtn = new BasicElement(32, 32, 2, true);
+    private final BasicElement pasteBtn = new BasicElement(32, 32, 2, true);
     private final BasicButton guideBtn = new BasicButton(112, 32, "Guide", null, null, 0, BasicButton.ALIGNMENT_CENTER);
 
     private final NumberInputField hueInput = new NumberInputField(90, 32, 0, 0, 255, 1);
@@ -34,7 +34,6 @@ public class ColorSelector {
     private final ColorSlider topSlider = new ColorSlider(384, 0, 255, 127);
     private final ColorSlider bottomSlider = new ColorSlider(384, 0, 255, 127);
     private final Slider speedSlider = new Slider(384, 1, 60, 20);
-
 
 
     public ColorSelector(Color color, int mouseX, int mouseY) {
@@ -53,7 +52,7 @@ public class ColorSelector {
         RenderManager.drawString(vg, "Color Selector", x + 16, y + 32, OneConfigConfig.WHITE_90, 18f, Fonts.SEMIBOLD);
         closeBtn.draw(vg, x + 368, y + 16);
         RenderManager.drawImage(vg, Images.CLOSE, x + 369, y + 17, 30, 30);
-        if(closeBtn.isClicked()) {
+        if (closeBtn.isClicked()) {
             OneConfigGui.INSTANCE.closeColorSelector();
         }
 
@@ -84,9 +83,6 @@ public class ColorSelector {
         guideBtn.draw(vg, x + 288, y + 624);
         RenderManager.drawImage(vg, Images.HELP, x + 301, y + 631, 18, 18);
         RenderManager.drawImage(vg, Images.LAUNCH, x + 369, y + 631, 18, 18);
-
-
-
 
         switch (mode) {
             default:
@@ -128,9 +124,6 @@ public class ColorSelector {
         RenderManager.drawHollowRoundRect(vg, x + 15, y + 487, 384, 40, OneConfigConfig.GRAY_300, 12f, 2f);
         RenderManager.drawImage(vg, Images.COLOR_BASE_LARGE, x + 20, y + 492, 376, 32);
         RenderManager.drawRoundedRect(vg, x + 20, y + 492, 376, 32, color.getRGB(), 8f);
-
-
-
     }
 
     public Color getColor() {
@@ -144,8 +137,6 @@ public class ColorSelector {
         alphaInput.keyTyped(typedChar, keyCode);
         hueInput.keyTyped(typedChar, keyCode);
     }
-
-
 
 
     private static class ColorSlider extends Slider {

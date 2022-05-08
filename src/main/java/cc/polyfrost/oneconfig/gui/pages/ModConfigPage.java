@@ -3,12 +3,16 @@ package cc.polyfrost.oneconfig.gui.pages;
 import cc.polyfrost.oneconfig.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.config.data.OptionPage;
 import cc.polyfrost.oneconfig.config.interfaces.BasicOption;
+import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.elements.BasicButton;
 import cc.polyfrost.oneconfig.gui.elements.config.ConfigPageButton;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 
+import java.awt.*;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 public class ModConfigPage extends Page {
     private final OptionPage page;
@@ -35,11 +39,19 @@ public class ModConfigPage extends Page {
     @Override
     public void draw(long vg, int x, int y) {
         if (page.categories.size() == 0) return;
+        String filter = OneConfigGui.INSTANCE.getSearchValue().toLowerCase().trim();
+        LinkedHashMap<String, ArrayList<BasicOption>> filteredSubcategories = page.categories.get(selectedCategory).subcategories;
+        if (!filter.equals("")) {
+
+        }
         int optionX = x + 30;
         int optionY = y + (page.categories.size() == 1 ? 16 : 64);
+        //  if (!option.getName().toLowerCase().contains(filter)) continue;
 
         // Top page buttons
         for (ConfigPageButton page : page.categories.get(selectedCategory).topPages) {
+            if (!page.getName().toLowerCase().contains(filter) && !page.description.toLowerCase().contains(filter))
+                continue;
             page.draw(vg, optionX, optionY);
             optionY += page.getHeight() + 16;
         }
@@ -92,6 +104,8 @@ public class ModConfigPage extends Page {
 
         // Bottom page buttons
         for (ConfigPageButton page : page.categories.get(selectedCategory).bottomPages) {
+            if (!page.getName().toLowerCase().contains(filter) && !page.description.toLowerCase().contains(filter))
+                continue;
             page.draw(vg, optionX, optionY);
             optionY += page.getHeight() + 16;
         }
@@ -122,10 +136,11 @@ public class ModConfigPage extends Page {
     @Override
     public int drawStatic(long vg, int x, int y) {
         // Category buttons
-        if(categories.size() <= 1) return 0;
+        if (categories.size() <= 1) return 0;
         int buttonX = x + 16;
         for (BasicButton button : categories) {
-            if (button.getWidth() == 0) button.setWidth((int) (Math.ceil(RenderManager.getTextWidth(vg, button.getText(), 12f, Fonts.MEDIUM) / 8f) * 8 + 16));
+            if (button.getWidth() == 0)
+                button.setWidth((int) (Math.ceil(RenderManager.getTextWidth(vg, button.getText(), 12f, Fonts.MEDIUM) / 8f) * 8 + 16));
             button.draw(vg, buttonX, y + 16);
             buttonX += button.getWidth() + 16;
         }

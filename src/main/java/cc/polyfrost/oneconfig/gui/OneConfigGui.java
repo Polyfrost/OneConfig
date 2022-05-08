@@ -30,7 +30,7 @@ public class OneConfigGui extends GuiScreen {
     protected Page currentPage;
     protected Page prevPage;
     private float pageProgress = -224f;
-    private final TextInputField textInputField = new TextInputField(248, 40, "Search all of OneConfig...", false, false);
+    private final TextInputField textInputField = new TextInputField(248, 40, "Search...", false, false);
     private final ArrayList<Page> previousPages = new ArrayList<>();
     private final ArrayList<Page> nextPages = new ArrayList<>();
     private final BasicElement backArrow = new BasicElement(40, 40, -1, false);
@@ -223,6 +223,9 @@ public class OneConfigGui extends GuiScreen {
         return color;
     }
 
+    public String getSearchValue() {
+        return textInputField.getInput();
+    }
 
     @Override
     public boolean doesGuiPauseGame() {

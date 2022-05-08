@@ -78,4 +78,8 @@ public abstract class BasicOption {
     public boolean hasHalfSize() {
         return true;
     }
+
+    public String getName() {
+        return name;
+    }
 }
