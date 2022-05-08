@@ -30,7 +30,10 @@ public class SideBar {
         btnList.add(new BasicButton(192, 36, "HUD Settings", Images.HUD_SETTINGS, null, -3, BasicButton.ALIGNMENT_LEFT));
         btnList.add(new BasicButton(192, 36, "Preferences", Images.PREFERENCES, null, -3, BasicButton.ALIGNMENT_LEFT));
         btnList.add(new BasicButton(192, 36, "Close", Images.CLOSE, null, -1, BasicButton.ALIGNMENT_LEFT, () -> Minecraft.getMinecraft().displayGuiScreen(null)));
-        btnList.add(new BasicButton(192, 36, "Minimize", Images.MINIMIZE, null, -1, BasicButton.ALIGNMENT_LEFT));
+        btnList.add(new BasicButton(192, 36, "Minimize", Images.MINIMIZE, null, -1, BasicButton.ALIGNMENT_LEFT, () -> {
+            OneConfigGui.instanceToRestore = OneConfigGui.INSTANCE;
+            Minecraft.getMinecraft().displayGuiScreen(null);
+        }));
         btnList.add(new BasicButton(192, 36, "Edit HUD", Images.HUD, null, 0, BasicButton.ALIGNMENT_LEFT, () -> Minecraft.getMinecraft().displayGuiScreen(new HudGui())));
     }
 

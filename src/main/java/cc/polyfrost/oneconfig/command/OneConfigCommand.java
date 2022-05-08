@@ -35,7 +35,7 @@ public class OneConfigCommand extends CommandBase {
 
     @Override
     public void processCommand(ICommandSender sender, String[] args) {
-        if (args.length == 0) new TickDelay(() -> mc.displayGuiScreen(new OneConfigGui()), 1);
+        if (args.length == 0) new TickDelay(() -> mc.displayGuiScreen(OneConfigGui.create()), 1);
         else {
             switch (args[0]) {
                 case "hud":

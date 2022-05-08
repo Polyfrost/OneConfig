@@ -41,14 +41,25 @@ public class OneConfigGui extends GuiScreen {
     private ColorSelector currentColorSelector;
     public boolean mouseDown;
     private float scale = 1f;
+    public static OneConfigGui instanceToRestore = null;
 
     public OneConfigGui() {
         INSTANCE = this;
+        instanceToRestore = null;
     }
 
     public OneConfigGui(Page page) {
         INSTANCE = this;
+        instanceToRestore = null;
         currentPage = page;
+    }
+
+    public static OneConfigGui create() {
+        try {
+            return instanceToRestore == null ? new OneConfigGui() : instanceToRestore;
+        } finally {
+            instanceToRestore = null;
+        }
     }
 
     @Override
@@ -166,7 +177,7 @@ public class OneConfigGui extends GuiScreen {
         try {
             super.keyTyped(key, keyCode);
             textInputField.keyTyped(key, keyCode);
-            if(currentColorSelector != null) currentColorSelector.keyTyped(key, keyCode);
+            if (currentColorSelector != null) currentColorSelector.keyTyped(key, keyCode);
             currentPage.keyTyped(key, keyCode);
         } catch (Exception e) {
             e.printStackTrace();
