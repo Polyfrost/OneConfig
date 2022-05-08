@@ -4,69 +4,76 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
+/**
+ * OneColor is a class for storing Colors in HSBA format. This format is used to allow the color selectors to work correctly.
+ * <p>
+ * <code>
+ * byte[0] = hue (0-360)
+ * byte[1] = saturation (0-100)
+ * byte[2] = brightness (0-100)
+ * byte[3] = alpha (0-100)
+ * </code>
+ */
 @SuppressWarnings("unused")
 public class OneColor {
-    private byte[] rgb = new byte[3];
-    private byte alpha;
     private int rgba;
-    private final float[] hsb;
+    private final byte[] hsba;
     private int chroma = -1;
 
 
     // rgb constructors
+    /** Create a new OneColor, converting the RGBA color to HSBA. */
     public OneColor(int rgba) {
         this.rgba = rgba;
-        this.rgb = splitColor(rgba);
-        this.alpha = (byte) (rgba >> 24 & 255);
-        hsb = Color.RGBtoHSB(this.rgb[0], this.rgb[1], this.rgb[2], null);
+        this.hsba = RGBAtoHSBA(this.rgba);
     }
 
+    /** Create a new OneColor from the given RGBA values. */
     public OneColor(int r, int g, int b, int a) {
         this.rgba = (a << 24) | (r << 16) | (g << 8) | b;       // trusting copilot on this
-        this.rgb = splitColor(rgba);
-        this.alpha = (byte) a;
-        hsb = Color.RGBtoHSB(this.rgb[0], this.rgb[1], this.rgb[2], null);
+        this.hsba = RGBAtoHSBA(this.rgba);
     }
 
+    /** Create a new OneColor, converting the RGB color to HSBA. */
     public OneColor(int r, int g, int b) {
         this(r, g, b, 255);
     }
 
+    /** Convert the java.awt.Color to an OneColor (HSBA format). */
     public OneColor(@NotNull Color c) {
-        this(c.getRed(), c.getGreen(), c.getBlue(), c.getAlpha());
+        this(c.getRGB());
     }
 
 
 
     // hsb constructors
+    /** Create a new OneColor from the given HSBA values. */
     public OneColor(float hue, float saturation, float brightness, float alpha) {
-        this.hsb = new float[]{hue, saturation, brightness};
-        this.alpha = (byte) (alpha * 255);
-        this.rgba = getRGBAFromHSB(this.hsb[0], this.hsb[1], this.hsb[2]);
+        this.hsba = new byte[]{(byte) hue, (byte) saturation, (byte) brightness, (byte) alpha};
+        this.rgba = HSBAtoRGBA(this.hsba[0], this.hsba[1], this.hsba[2], this.hsba[3]);
 
     }
 
+    /** Create a new OneColor from the given HSB values. (alpha is set to max)*/
     public OneColor(float hue, float saturation, float brightness) {
         this(hue, saturation, brightness, 1.0f);
     }
 
     // chroma constructors
-    public OneColor(float saturation, float brightness, float alpha, int chromaSpeed) {
-        this(System.currentTimeMillis() % chromaSpeed / (float) chromaSpeed, saturation, brightness, alpha);
-        this.chroma = chromaSpeed;
+    public OneColor(int saturation, int brightness, int alpha, float chromaSpeed) {
+        this(System.currentTimeMillis() % (int) chromaSpeed / chromaSpeed, saturation, brightness, alpha);
+        this.chroma = (int) chromaSpeed;
     }
 
 
     // internal constructor
-    public OneColor(float hue, float saturation, float brightness, float alpha, int chromaSpeed) {
+    public OneColor(int hue, int saturation, int brightness, int alpha, int chromaSpeed) {
         if(chromaSpeed == -1) {
-            this.hsb = new float[]{hue, saturation, brightness};
-            this.alpha = (byte) (alpha * 255);
-            this.rgba = getRGBAFromHSB(this.hsb[0], this.hsb[1], this.hsb[2]);
+            this.hsba = new byte[]{(byte) hue, (byte) saturation, (byte) brightness, (byte) alpha};
+            this.rgba = HSBAtoRGBA(this.hsba[0], this.hsba[1], this.hsba[2], this.hsba[3]);
         } else {
             this.chroma = chromaSpeed;
-            this.hsb = new float[]{hue, saturation, brightness};
-            this.alpha = (byte) (alpha * 255);
+            this.hsba = new byte[]{(byte) hue, (byte) saturation, (byte) brightness, (byte) alpha};
         }
     }
 
@@ -76,64 +83,58 @@ public class OneColor {
 
     // accessors
     public int getRed() {
-        return rgb[0];
+        return rgba >> 16 & 255;
     }
     public int getGreen() {
-        return rgb[1];
+        return rgba >> 8 & 255;
     }
     public int getBlue() {
-        return rgb[2];
-    }
-    public int getAlpha() {
-        return alpha;
+        return rgba & 255;
     }
 
+
     public float getHue() {
-        return hsb[0];
+        return hsba[0];
     }
     public float getSaturation() {
-        return hsb[1];
+        return hsba[1];
     }
     public float getBrightness() {
-        return hsb[2];
+        return hsba[2];
+    }
+    public int getAlpha() {
+        return hsba[3];
     }
 
     /**
      * Return the current color in RGBA format. This is the format used by LWJGL and Minecraft.
      * This method WILL return the color as a chroma, at the specified speed, if it is set.
      * Otherwise, it will just return the current color.
+     * @return the current color in RGBA format (equivalent to getRGB of java.awt.Color)
      */
     public int getRGB() {
         if(chroma == -1) {
             return rgba;
         } else {
-            return getRGBAFromHSB(System.currentTimeMillis() % chroma / (float) chroma, hsb[1], hsb[2]);
+            return HSBAtoRGBA(System.currentTimeMillis() % chroma / (float) chroma, hsba[1], hsba[2], hsba[3]);
         }
     }
 
-
-
-    private byte[] splitColor(int rgb) {
-        byte r = (byte) (rgb >> 16 & 255);
-        byte g = (byte) (rgb >> 8 & 255);
-        byte b = (byte) (rgb & 255);
-        return new byte[]{r, g, b};
-    }
-
-    /** set the current chroma speed. Set to -1 to disable chroma. */
-    public void setChromaSpeed(int speed) {
-        this.chroma = speed;
-    }
-
-    public void setAlpha(int alpha) {
-        this.alpha = (byte) alpha;
-    }
-
     /** Get the RGBA color from the HSB color, and apply the alpha. */
-    public int getRGBAFromHSB(float hue, float saturation, float brightness) {
+    public int HSBAtoRGBA(float hue, float saturation, float brightness, float alpha) {
         int temp = Color.HSBtoRGB(hue, saturation, brightness);
-        this.rgba = (this.alpha << 24) | (temp >> 16 & 255) << 16 | (temp >> 8 & 255) << 8 | temp & 255;        // trusting copilot on this
-        return rgba;
+        return temp | (int) (alpha * 255) << 24; // trusting copilot on this
+    }
+
+    /** Get the HSBA color from the RGBA color. */
+    public byte[] RGBAtoHSBA(int rgba) {
+        byte[] hsb = new byte[4];
+        float[] hsbArray = Color.RGBtoHSB((rgba >> 16 & 255), (rgba >> 8 & 255), (rgba & 255), null);
+        hsb[0] = (byte) hsbArray[0];
+        hsb[1] = (byte) hsbArray[1];
+        hsb[2] = (byte) hsbArray[2];
+        hsb[3] = (byte) (rgba >> 24 & 255);
+        return hsb;
     }
 
 }
