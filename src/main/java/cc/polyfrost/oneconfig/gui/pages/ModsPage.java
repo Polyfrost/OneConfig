@@ -41,7 +41,7 @@ public class ModsPage extends Page {
     }
 
     public void draw(long vg, int x, int y) {
-        String filter = OneConfigGui.INSTANCE.getSearchValue().toLowerCase().trim();
+        String filter = OneConfigGui.INSTANCE == null ? "" : OneConfigGui.INSTANCE.getSearchValue().toLowerCase().trim();
         int iX = x + 16;
         int iY = y + 72;
         for (ModCard modCard : modCards) {

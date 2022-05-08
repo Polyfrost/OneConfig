@@ -39,7 +39,7 @@ public class ModConfigPage extends Page {
     @Override
     public void draw(long vg, int x, int y) {
         if (page.categories.size() == 0) return;
-        String filter = OneConfigGui.INSTANCE.getSearchValue().toLowerCase().trim();
+        String filter = OneConfigGui.INSTANCE == null ? "" : OneConfigGui.INSTANCE.getSearchValue().toLowerCase().trim();
         LinkedHashMap<String, ArrayList<BasicOption>> filteredSubcategories = new LinkedHashMap<>(page.categories.get(selectedCategory).subcategories);
         if (!filter.equals("")) {
             filteredSubcategories.clear();
