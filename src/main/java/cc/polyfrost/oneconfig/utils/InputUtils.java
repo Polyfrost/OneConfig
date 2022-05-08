@@ -25,10 +25,12 @@ public class InputUtils {
     }
 
     public static int mouseX() {
+        if (OneConfigGui.INSTANCE == null) return Mouse.getX();
         return (int) (Mouse.getX() / OneConfigGui.INSTANCE.getScaleFactor());
     }
 
     public static int mouseY() {
+        if (OneConfigGui.INSTANCE == null) return Minecraft.getMinecraft().displayHeight - Math.abs(Mouse.getY());
         return (int) ((Minecraft.getMinecraft().displayHeight - Math.abs(Mouse.getY())) / OneConfigGui.INSTANCE.getScaleFactor());
     }
 }
