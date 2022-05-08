@@ -208,6 +208,9 @@ public class TestConfig extends Config {
     public static float slider2;
 
 
+    TestHud testHud = new TestHud();
+
+
     public TestConfig() {
         super(new Mod("hacks", ModType.UTIL_QOL, "ShadyDev", "1.0"), "hacksConfig.json");
     }

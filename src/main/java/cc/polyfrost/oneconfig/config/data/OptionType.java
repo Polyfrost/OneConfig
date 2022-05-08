@@ -26,6 +26,9 @@ public enum OptionType {
      * Type: int or float
      */
     SLIDER,
+    /**
+     * Type: OneColor
+     */
     COLOR,
     /**
      * Type: int
@@ -35,5 +38,9 @@ public enum OptionType {
     /**
      * Type: String
      */
-    INFO
+    INFO,
+    /**
+     * Type: class that extends BasicHud
+     */
+    HUD
 }
