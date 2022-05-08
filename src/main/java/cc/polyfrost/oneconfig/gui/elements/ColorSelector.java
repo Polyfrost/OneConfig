@@ -57,7 +57,7 @@ public class ColorSelector {
         RenderManager.drawRoundedRect(vg, x, y, width, height, OneConfigConfig.GRAY_800, 20f);
         RenderManager.drawString(vg, "Color Selector", x + 16, y + 32, OneConfigConfig.WHITE_90, 18f, Fonts.SEMIBOLD);
         closeBtn.draw(vg, x + 368, y + 16);
-        RenderManager.drawImage(vg, Images.CLOSE, x + 369, y + 17, 30, 30);
+        RenderManager.drawImage(vg, Images.CLOSE_COLOR, x + 369, y + 17, 32, 32);
         if (closeBtn.isClicked()) {
             OneConfigGui.INSTANCE.closeColorSelector();
         }
