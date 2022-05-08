@@ -11,8 +11,8 @@ public class InputUtils {
      * @return true if mouse is over region, false if not.
      */
     public static boolean isAreaHovered(int x, int y, int width, int height) {
-        int mouseX = Mouse.getX();
-        int mouseY = Minecraft.getMinecraft().displayHeight - Math.abs(Mouse.getY());
+        int mouseX = mouseX();
+        int mouseY = mouseY();
         return mouseX > x && mouseY > y && mouseX < x + width && mouseY < y + height;       // TODO add scaling info
     }
 
@@ -25,10 +25,10 @@ public class InputUtils {
     }
 
     public static int mouseX() {
-        return Mouse.getX();
+        return (int) (Mouse.getX() / OneConfigGui.INSTANCE.getScaleFactor());
     }
 
     public static int mouseY() {
-        return Minecraft.getMinecraft().displayHeight - Math.abs(Mouse.getY());
+        return (int) ((Minecraft.getMinecraft().displayHeight - Math.abs(Mouse.getY())) / OneConfigGui.INSTANCE.getScaleFactor());
     }
 }

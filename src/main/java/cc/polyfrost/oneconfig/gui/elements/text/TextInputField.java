@@ -111,7 +111,7 @@ public class TextInputField extends BasicElement {
                 while (Mouse.next()) {
                     if (Mouse.getEventButtonState()) {
                         if (Mouse.getEventButton() == 0) {
-                            prevCaret = calculatePos(Mouse.getX());
+                            prevCaret = calculatePos(InputUtils.mouseX());
                             if (System.currentTimeMillis() - clickTimeD1 < 300) {
                                 onDoubleClick();
                                 isDoubleClick = true;
@@ -140,7 +140,7 @@ public class TextInputField extends BasicElement {
             }
             if (hovered) {
                 if (Mouse.isButtonDown(0) && !isDoubleClick) {
-                    caretPos = calculatePos(Mouse.getX());
+                    caretPos = calculatePos(InputUtils.mouseX());
                     if (caretPos > prevCaret) {
                         if (!centered) start = x + 12 + this.getTextWidth(vg, input.substring(0, prevCaret));
                         else

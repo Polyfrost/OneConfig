@@ -13,6 +13,7 @@ import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.Images;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import cc.polyfrost.oneconfig.utils.MathUtils;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.input.Keyboard;
@@ -38,6 +39,7 @@ public class OneConfigGui extends GuiScreen {
     private final ArrayList<Page> parents = new ArrayList<>();
     private ColorSelector currentColorSelector;
     public boolean mouseDown;
+    private float scale = 1f;
 
     public OneConfigGui() {
         INSTANCE = this;
@@ -57,7 +59,8 @@ public class OneConfigGui extends GuiScreen {
                 currentPage = new HomePage();
                 parents.add(currentPage);
             }
-            //nvgScale(vg, 0.5f, 0.5f);
+            scale = Minecraft.getMinecraft().displayWidth / 1920f;
+            NanoVG.nvgScale(vg, scale, scale);
             if (OneConfigConfig.ROUNDED_CORNERS) {
                 RenderManager.drawRoundedRect(vg, 544, 140, 1056, 800, OneConfigConfig.GRAY_800, OneConfigConfig.CORNER_RADIUS_WIN);
                 RenderManager.drawRoundedRect(vg, 320, 140, 244, 800, OneConfigConfig.GRAY_900_80, OneConfigConfig.CORNER_RADIUS_WIN);
@@ -218,6 +221,10 @@ public class OneConfigGui extends GuiScreen {
         Color color = currentColorSelector.getColor();
         currentColorSelector = null;
         return color;
+    }
+
+    public float getScaleFactor() {
+        return scale;
     }
 
     public String getSearchValue() {
