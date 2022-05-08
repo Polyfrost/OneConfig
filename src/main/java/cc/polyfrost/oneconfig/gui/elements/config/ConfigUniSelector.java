@@ -48,11 +48,7 @@ public class ConfigUniSelector extends BasicOption {
         }
         ScissorManager.resetScissor(vg, scissor);
 
-        // actual coordinates: 240, 7
-        NanoVG.nvgTranslate(vg, x + 248, y + 21);
-        NanoVG.nvgRotate(vg, (float) Math.toRadians(180));
-        RenderManager.drawImage(vg, Images.CHEVRON_ARROW, 0, 0, 8, 14, OneConfigConfig.BLUE_400);
-        NanoVG.nvgResetTransform(vg);
+        RenderManager.drawImage(vg, Images.CHEVRON_ARROW, x + 248, y + 7, -8, 14, OneConfigConfig.BLUE_400);
         RenderManager.drawImage(vg, Images.CHEVRON_ARROW, x + 456, y + 7, 8, 14, OneConfigConfig.BLUE_400);
 
         if (InputUtils.isAreaClicked(x + 235, y + 5, 18, 18) && selected > 0) {

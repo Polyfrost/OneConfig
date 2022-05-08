@@ -71,10 +71,7 @@ public class NumberInputField extends TextInputField {
             downArrow.disable(true);
         }
         RenderManager.drawRoundedRectVaried(vg, x + width + 4, y + 14, 12, 14, colorBottom, 0f, 0f, 6f, 6f);
-        NanoVG.nvgTranslate(vg, x + width + 15, y + 25);
-        NanoVG.nvgRotate(vg, (float) Math.toRadians(180));
-        RenderManager.drawImage(vg, Images.UP_ARROW, 0, 0, 10, 10);
-        NanoVG.nvgResetTransform(vg);
+        RenderManager.drawImage(vg, Images.UP_ARROW, x + width + 5, y + 25, 10, -10);
         NanoVG.nvgGlobalAlpha(vg, 1f);
 
         try {

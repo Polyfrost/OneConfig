@@ -6,9 +6,9 @@ import cc.polyfrost.oneconfig.config.data.Mod;
 import cc.polyfrost.oneconfig.config.data.ModType;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.elements.BasicButton;
-import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.gui.elements.ModCard;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
+import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 
 import java.util.ArrayList;
 import java.util.List;

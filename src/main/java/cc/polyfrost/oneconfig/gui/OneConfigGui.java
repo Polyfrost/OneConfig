@@ -87,10 +87,7 @@ public class OneConfigGui extends GuiScreen {
                 backArrow.disable(false);
                 if (!backArrow.isHovered() || Mouse.isButtonDown(0)) NanoVG.nvgGlobalAlpha(vg, 0.8f);
             }
-            NanoVG.nvgTranslate(vg, x + 271, y + 47);
-            NanoVG.nvgRotate(vg, (float) Math.toRadians(180));
-            RenderManager.drawImage(vg, Images.CIRCLE_ARROW, 0, 0, 22, 22);
-            NanoVG.nvgResetTransform(vg);
+            RenderManager.drawImage(vg, Images.CIRCLE_ARROW, x + 271, y + 25, -22, 22);
             NanoVG.nvgGlobalAlpha(vg, 1f);
             if (nextPages.size() == 0) {
                 forwardArrow.disable(true);
