@@ -34,7 +34,7 @@ public class ColorSelector {
     private final NumberInputField hueInput = new NumberInputField(90, 32, 0, 0, 360, 1);
     private final NumberInputField saturationInput = new NumberInputField(90, 32, 100, 0, 100, 1);
     private final NumberInputField brightnessInput = new NumberInputField(90, 32, 100, 0, 100, 1);
-    private final NumberInputField alphaInput = new NumberInputField(90, 32, 0, 100, 100, 1);
+    private final NumberInputField alphaInput = new NumberInputField(90, 32, 0, 0, 100, 1);
     private final TextInputField hexInput = new TextInputField(88, 32, true, "");
 
     private final ColorSlider topSlider = new ColorSlider(384, 0, 360, 127);
@@ -44,14 +44,23 @@ public class ColorSelector {
 
     public ColorSelector(OneColor color, int mouseX, int mouseY) {
         this.color = color;
+        hueInput.setCurrentValue(color.getHue());
+        saturationInput.setCurrentValue(color.getSaturation());
+        brightnessInput.setCurrentValue(color.getBrightness());
+        alphaInput.setCurrentValue(color.getAlpha() / 255f * 100f);
+        topSlider.setValue(color.getHue());
+        topSlider.setColor(color);
+        bottomSlider.setValue(color.getAlpha() / 255f * 100f);
         this.x = mouseX - 208;
         this.y = mouseY - 776;
+
+        topSlider.setImage(Images.HUE_GRADIENT);
     }
 
     public void draw(long vg) {
         int width = 416;
         int height = 768;
-        int mode = 0;
+        int mode = 1;
 
         RenderManager.drawHollowRoundRect(vg, x - 3, y - 3, width + 4, height + 4, new Color(204, 204, 204, 77).getRGB(), 20f, 2f);
         RenderManager.drawRoundedRect(vg, x, y, width, height, OneConfigConfig.GRAY_800, 20f);
@@ -91,29 +100,27 @@ public class ColorSelector {
         RenderManager.drawImage(vg, Images.LAUNCH, x + 369, y + 631, 18, 18);
 
 
-
+        boolean drag;
         switch (mode) {
             default:
             case 0:
-                if(mouseX < x + 16 || mouseY < y + 120){
-                    mouseX = x + 16;
-                    mouseY = y + 120;
+                hsbBtn.currentColor = OneConfigConfig.TRANSPARENT;
+                if(mouseX < x + 16 && mouseY < y + 120) {
+                    this.mouseX = (int) (color.getSaturation() / 100f * 384 + x + 16);
+                    this.mouseY = (int) (Math.abs(color.getBrightness() / 100f - 1f) * 288 + y + 120);
                 }
-                boolean drag = Mouse.isButtonDown(0) && InputUtils.isAreaHovered(x + 16, y + 120, 384, 288);
+                RenderManager.drawHSBBox(vg, x + 16, y + 120, 384, 288, color.getRGBMax());
+                drag = Mouse.isButtonDown(0) && InputUtils.isAreaHovered(x + 16, y + 120, 384, 288);
                 if(drag) {
                     mouseX = InputUtils.mouseX();
                     mouseY = InputUtils.mouseY();
                 }
                 float progressX = (mouseX - x - 16f) / 384f;
                 float progressY = Math.abs((mouseY - y - 120f) / 288f - 1f);
-                RenderManager.drawHSBBox(vg, x + 16, y + 120, 384, 288, color.getRGBMax());
-                RenderManager.drawRoundedRect(vg, mouseX - 6, mouseY - 6, 12, 12, OneConfigConfig.BLUE_600, 12f);
-
-                topSlider.setImage(Images.HUE_GRADIENT);
                 color.setHSBA((int) topSlider.getValue(), Math.round(progressX * 100), Math.round(progressY * 100), (int) ((bottomSlider.getValue() / 100f) * 255));
 
+                topSlider.setColor(color);
                 topSlider.draw(vg, x + 16, y + 424);
-
                 RenderManager.drawString(vg, "Hue", x + 16, y + 560, OneConfigConfig.WHITE_80, 12f, Fonts.MEDIUM);
                 hueInput.draw(vg, x + 104, y + 544);
                 bottomSlider.setGradient(OneConfigConfig.TRANSPARENT_25, color.getRGBNoAlpha());
@@ -121,27 +128,33 @@ public class ColorSelector {
                 bottomSlider.draw(vg, x + 16, y + 456);
                 break;
             case 1:
-                RenderManager.drawRoundedRect(vg, x + 64, y + 120, 288, 288, OneConfigConfig.WHITE, 144f);
+                rgbBtn.currentColor = OneConfigConfig.TRANSPARENT;
+                RenderManager.drawRoundImage(vg, Images.COLOR_WHEEL, x + 64, y + 120, 288, 288, 144f);
+                drag = Mouse.isButtonDown(0) && InputUtils.isAreaHovered(x + 64, y + 120, 384, 288);
+                if(drag) {
+                    mouseX = InputUtils.mouseX();
+                    mouseY = InputUtils.mouseY();
+                }
 
                 RenderManager.drawString(vg, "Hue", x + 16, y + 560, OneConfigConfig.WHITE_80, 12f, Fonts.MEDIUM);
                 hueInput.draw(vg, x + 104, y + 544);
-
-
-
-                //RenderManager.drawRoundedRect(vg, bottomSlider.currentDragPoint - 8, y + 456, 16, 16, color.getRGB(), 16f);
-
-                topSlider.draw(vg, x + 16, y + 424);
                 RenderManager.drawImage(vg, Images.COLOR_BASE_LONG, x + 16, y + 456, 384, 16);
                 bottomSlider.draw(vg, x + 16, y + 456);
                 break;
             case 2:
                 break;
         }
+        RenderManager.drawRoundedRect(vg, mouseX - 6, mouseY - 6, 12, 12, OneConfigConfig.WHITE, 12f);
+        RenderManager.drawRoundedRect(vg, mouseX - 5, mouseY - 5, 10, 10, color.getRGBNoAlpha(), 10f);
 
+        // deal with the input fields
         if(hueInput.isToggled() || saturationInput.isToggled() || brightnessInput.isToggled() || alphaInput.isToggled() || hueInput.arrowsClicked() || saturationInput.arrowsClicked() || brightnessInput.arrowsClicked() || alphaInput.arrowsClicked()) {
             color.setHSBA((int) hueInput.getCurrentValue(), (int) saturationInput.getCurrentValue(), (int) brightnessInput.getCurrentValue(), (int) ((alphaInput.getCurrentValue() / 100f) * 255f));
             topSlider.setValue(color.getHue());
             bottomSlider.setValue(color.getAlpha() / 255f * 100f);
+            mouseX = (int) (saturationInput.getCurrentValue() / 100f * 384 + x + 16);
+            mouseY = (int) (Math.abs(brightnessInput.getCurrentValue() / 100f - 1f) * 288 + y + 120);
+
         }
         else if(OneConfigGui.INSTANCE.mouseDown) {
             hueInput.setInput(String.valueOf(color.getHue()));
@@ -152,10 +165,13 @@ public class ColorSelector {
         }
 
 
+        // draw the color preview
         RenderManager.drawHollowRoundRect(vg, x + 15, y + 487, 384, 40, OneConfigConfig.GRAY_300, 12f, 2f);
         RenderManager.drawImage(vg, Images.COLOR_BASE_LARGE, x + 20, y + 492, 376, 32);
         RenderManager.drawRoundedRect(vg, x + 20, y + 492, 376, 32, color.getRGB(), 8f);
 
+
+        // hex parser
         hexInput.setErrored(false);
         if(hexInput.isToggled()) {
             try {
@@ -192,6 +208,7 @@ public class ColorSelector {
     private static class ColorSlider extends Slider {
         protected int gradColorStart, gradColorEnd;
         protected Images image;
+        protected OneColor color;
 
         public ColorSlider(int length, float min, float max, float startValue) {
             super(length, min, max, startValue);
@@ -210,11 +227,18 @@ public class ColorSelector {
 
             RenderManager.drawHollowRoundRect(vg, x - 1.5f, y - 1.5f, width + 2, height + 2, new Color(204, 204, 204, 77).getRGB(), 8f, 1f);
             RenderManager.drawHollowRoundRect(vg, currentDragPoint - 9, y - 2, 18, 18, OneConfigConfig.WHITE, 7f, 1f);
+            if(color != null) {
+                RenderManager.drawRoundedRect(vg, currentDragPoint - 7, y, 15, 15, color.getRGBNoAlpha(), 7.5f);
+            }
         }
 
         public void setGradient(int start, int end) {
             gradColorStart = start;
             gradColorEnd = end;
+        }
+
+        public void setColor(OneColor color) {
+            this.color = color;
         }
 
         public void setImage(Images image) {

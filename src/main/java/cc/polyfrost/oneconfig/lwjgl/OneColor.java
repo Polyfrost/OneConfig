@@ -142,7 +142,7 @@ public class OneColor {
 
     /** return the current color without its alpha. Internal method. */
     public int getRGBNoAlpha() {
-        return new Color(rgba, false).getRGB();
+        return 0xff000000 | rgba;
     }
 
     /**

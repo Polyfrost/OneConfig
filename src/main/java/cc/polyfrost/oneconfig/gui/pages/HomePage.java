@@ -28,7 +28,7 @@ public class HomePage extends Page {
         //RenderManager.drawRoundedRect(vg);
         btn.draw(vg, x + 432, y + 658);
         if(btn.isClicked()) {
-            OneConfigGui.INSTANCE.initColorSelector(new ColorSelector(new OneColor(255, 228, 155), InputUtils.mouseX(), InputUtils.mouseY()));
+            OneConfigGui.INSTANCE.initColorSelector(new ColorSelector(new OneColor(new Color(255, 0, 255, 127)), InputUtils.mouseX(), InputUtils.mouseY()));
         }
     }
 

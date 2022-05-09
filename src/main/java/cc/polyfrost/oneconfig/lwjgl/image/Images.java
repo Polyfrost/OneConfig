@@ -16,7 +16,7 @@ public enum Images {
     COLOR_BASE("/assets/oneconfig/textures/gui/general/color/color_base.png"),
     COLOR_BASE_LONG("/assets/oneconfig/textures/gui/general/color/color_base_long.png"),
     COLOR_BASE_LARGE("/assets/oneconfig/textures/gui/general/color/color_base_large.png"),
-    COLOR_WHEEL("/assets/oneconfig/textures/gui/general/color/color_wheel.png"),
+    COLOR_WHEEL("/assets/oneconfig/textures/gui/general/color/colorwheel.png"),
     HUE_GRADIENT("/assets/oneconfig/textures/gui/general/color/huegradient.png"),
     CLOSE_COLOR("/assets/oneconfig/textures/gui/general/color/close_color.png"),
 
