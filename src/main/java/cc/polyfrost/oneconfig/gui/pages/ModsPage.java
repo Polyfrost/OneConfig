@@ -22,13 +22,7 @@ public class ModsPage extends Page {
     public ModsPage() {
         super("Mods");
         for (Mod modData : OneConfig.loadedMods) {
-            modCards.add(new ModCard(modData, null, modData.config == null || modData.config.enabled, false, OneConfigConfig.favoriteMods.contains(modData.name)));
-        }
-        for (ModCard card : modCards) {
-            if (card.isFavorite()) {
-                modCards.remove(card);
-                modCards.add(0, card);
-            }
+            modCards.add(OneConfigConfig.favoriteMods.contains(modData.name) ? 0 : modCards.size(), new ModCard(modData, null, modData.config == null || modData.config.enabled, false, OneConfigConfig.favoriteMods.contains(modData.name)));
         }
         modCategories.add(new BasicButton(64, 32, "All", null, null, 0, BasicButton.ALIGNMENT_CENTER, true, () -> unselect(0)));
         modCategories.add(new BasicButton(80, 32, "Combat", null, null, 0, BasicButton.ALIGNMENT_CENTER, true, () -> unselect(1)));

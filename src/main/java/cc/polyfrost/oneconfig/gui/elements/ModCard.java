@@ -38,7 +38,7 @@ public class ModCard extends BasicElement {
         toggled = active;
         this.disabled = disabled;
         this.favorite = favorite;
-        favoriteHitbox.setToggled(true);
+        favoriteHitbox.setToggled(favorite);
         toggled = active;
     }
 
