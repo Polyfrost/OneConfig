@@ -5,6 +5,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.renderer.EntityRenderer;
 import net.minecraft.client.shader.Shader;
+import net.minecraft.client.shader.ShaderGroup;
 import net.minecraft.client.shader.ShaderUniform;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.event.GuiOpenEvent;
@@ -14,18 +15,19 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.lang.reflect.Field;
 import java.util.List;
 
 /**
  * An implementation of the BlurMC mod by tterrag1098.
- *
+ * <p>
  * For the original source see https://github.com/tterrag1098/Blur/blob/1.8.9/src/main/java/com/tterrag/blur/Blur.java
  * For the public license, see https://github.com/tterrag1098/Blur/blob/1.8.9/LICENSE
- *
+ * <p>
  * License available under https://github.com/boomboompower/ToggleChat/blob/master/src/main/resources/licenses/BlurMC-License.txt
  *
  * @author tterrag1098, boomboompower
- *
+ * <p>
  * Taken from ToggleChat
  * https://github.com/boomboompower/ToggleChat/blob/master/LICENSE
  */
@@ -33,6 +35,7 @@ public class BlurHandler {
     private final ResourceLocation blurShader = new ResourceLocation("shaders/post/fade_in_blur.json");
     private final Logger logger = LogManager.getLogger("OneConfig - Blur");
     private final Minecraft mc = Minecraft.getMinecraft();
+    private Field shaderList = null;
 
     private long start;
     private float lastProgress = 0;
@@ -89,7 +92,7 @@ public class BlurHandler {
         // Why is this being computed every tick? Surely there is a better way?
         // This needs to be optimized.
         try {
-            final List<Shader> listShaders = this.mc.entityRenderer.getShaderGroup().listShaders;
+            final List<Shader> listShaders = getShaderList();
 
             // Should not happen. Something bad happened.
             if (listShaders == null) {
@@ -108,7 +111,7 @@ public class BlurHandler {
                 // All this for this.
                 su.set(progress);
             }
-        } catch (IllegalArgumentException  ex) {
+        } catch (IllegalArgumentException ex) {
             this.logger.error("An error.png occurred while updating OneConfig's blur. Please report this!", ex);
         }
 
@@ -132,6 +135,11 @@ public class BlurHandler {
         // a one of ours, we should load our own blur!
         if (!er.isShaderActive() && gui instanceof OneConfigGui) {
             this.mc.entityRenderer.loadShader(this.blurShader);
+            try {
+                shaderList = ShaderGroup.class.getDeclaredField("listShaders");
+                shaderList.setAccessible(true);
+            } catch (NoSuchFieldException ignored) {
+            }
 
             this.start = System.currentTimeMillis();
 
@@ -145,15 +153,25 @@ public class BlurHandler {
             }
 
             er.stopUseShader();
+            shaderList = null;
         }
     }
 
     /**
      * Returns the strength of the blur as determined by the duration the effect of the blur.
-     *
+     * <p>
      * The strength of the blur does not go below 5.0F.
      */
     private float getBlurStrengthProgress() {
         return Math.min((System.currentTimeMillis() - this.start) / 50F, 5.0F);
+    }
+
+    private List<Shader> getShaderList() {
+        if (shaderList == null) return null;
+        try {
+            return (List<Shader>) shaderList.get(this.mc.entityRenderer.getShaderGroup());
+        } catch (IllegalAccessException ignored) {
+            return null;
+        }
     }
 }

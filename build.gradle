@@ -37,7 +37,6 @@ loom {
         }
     }
     forge {
-        accessTransformer(file("src/main/resources/oneconfig_at.cfg"))
         pack200Provider = new dev.architectury.pack200.java.Pack200Adapter()
     }
 }
