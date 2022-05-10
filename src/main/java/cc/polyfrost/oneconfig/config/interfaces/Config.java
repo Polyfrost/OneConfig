@@ -145,6 +145,9 @@ public class Config {
                 case HEADER:
                     options.add(new ConfigHeader(field, option.name(), option.size()));
                     break;
+                case BUTTON:
+                    options.add(new ConfigButton(field, option.name(), option.size(), option.buttonText()));
+                    break;
             }
         }
     }

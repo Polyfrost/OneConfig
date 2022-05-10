@@ -43,4 +43,8 @@ public enum OptionType {
      * Type: doesn't matter
      */
     HEADER,
+    /**
+     * Type: runnable
+     */
+    BUTTON
 }

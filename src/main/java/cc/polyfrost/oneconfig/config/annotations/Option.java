@@ -82,4 +82,9 @@ public @interface Option {
      * Option for info option type
      */
     InfoType infoType() default InfoType.INFO;
+
+    /**
+     * Text displayed inside button
+     */
+    String buttonText() default "Activate";
 }

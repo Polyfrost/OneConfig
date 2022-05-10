@@ -5,6 +5,7 @@ import cc.polyfrost.oneconfig.config.annotations.Option;
 import cc.polyfrost.oneconfig.config.data.*;
 import cc.polyfrost.oneconfig.config.interfaces.Config;
 import cc.polyfrost.oneconfig.lwjgl.OneColor;
+import net.minecraftforge.fml.common.FMLCommonHandler;
 
 public class TestConfig extends Config {
 
@@ -16,6 +17,23 @@ public class TestConfig extends Config {
             size = 2
     )
     public static boolean ignored;
+
+    @Option(
+            name = "Crash game",
+            subcategory = "Test",
+            type = OptionType.BUTTON,
+            buttonText = "Crash!"
+    )
+    public static Runnable runnable = () -> FMLCommonHandler.instance().exitJava(69, false);
+
+    @Option(
+            name = "Crash game",
+            subcategory = "Test",
+            type = OptionType.BUTTON,
+            size = 2,
+            buttonText = "Crash!"
+    )
+    public static Runnable runnable2 = () -> FMLCommonHandler.instance().exitJava(69, false);
 
     @Option(
             name = "Test color selector",
