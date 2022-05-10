@@ -74,7 +74,7 @@ public final class RenderManager {
         }
     }
 
-// Can be removed or atleast marked out since it is no longer used - MoonTidez
+    // Can be removed or atleast marked out since it is no longer used - MoonTidez
     public static void drawGradientRoundedRect(long vg, float x, float y, float width, float height, int color, int color2, float radius) {
         NVGPaint bg = NVGPaint.create();
         nvgBeginPath(vg);
@@ -88,34 +88,30 @@ public final class RenderManager {
     }
 
     public static void drawHSBBox(long vg, float x, float y, float width, float height, int colorTarget) {
-
         drawRoundedRect(vg, x, y, width, height, colorTarget, 8f);
 
         NVGPaint bg = NVGPaint.create();
         nvgBeginPath(vg);
         nvgRoundedRect(vg, x, y, width, height, 8f);
         NVGColor nvgColor = color(vg, OneConfigConfig.WHITE); // Do not use OneConfigConfig colors for this, use rgba code - MoonTidez
-        NVGColor nvgColor2 = color(vg, OneConfigConfig.TRANSPARENT_25); // Why is this Transparent_25?? - MoonTidez
+        NVGColor nvgColor2 = color(vg, OneConfigConfig.TRANSPARENT_25);
         nvgFillPaint(vg, nvgLinearGradient(vg, x, y, x + width, y, nvgColor, nvgColor2, bg));
         nvgFill(vg);
-        nvgColor.free(); // Can you please give these proper color names :wahh: so unprofeshunal smh - MoonTidez
+        nvgColor.free();
         nvgColor2.free();
 
         NVGPaint bg2 = NVGPaint.create();
         nvgBeginPath(vg);
         nvgRoundedRect(vg, x, y, width, height, 8f);
-        NVGColor nvgColor3 = color(vg, OneConfigConfig.TRANSPARENT_25); // Why is this Transparent_25?? [v2] - MoonTidez
+        NVGColor nvgColor3 = color(vg, OneConfigConfig.TRANSPARENT_25);
         NVGColor nvgColor4 = color(vg, OneConfigConfig.BLACK); // Do not use OneConfigConfig colors for this, use rgba code - MoonTidez
         nvgFillPaint(vg, nvgLinearGradient(vg, x, y, x, y + height, nvgColor3, nvgColor4, bg2));
         nvgFill(vg);
-        nvgColor3.free(); // Can you please give these proper color names :wahh: so unprofeshunal smh [v2] - MoonTidez
-        nvgColor4.free(); 
-
-        //drawHollowRoundRect(vg, x - 0.5f, y - 0.5f, width, height, new Color(77,77,77,255).getRGB(), 8f, 1f);
-
+        nvgColor3.free();
+        nvgColor4.free();
     }
 
-// Can be removed or atleast marked out since it is no longer used - MoonTidez
+    /*
     public static void drawGradientRect(long vg, float x, float y, float width, float height, int color, int color2) {
         NVGPaint bg = NVGPaint.create();
         nvgBeginPath(vg);
@@ -128,8 +124,8 @@ public final class RenderManager {
         nvgColor.free();
         nvgColor2.free();
     }
+    */
 
-// I stopped reviewing code here, I'll review the rest later - MoonTidez
     public static void drawRect(long vg, float x, float y, float width, float height, int color) {
         nvgBeginPath(vg);
         nvgRect(vg, x, y, width, height);
