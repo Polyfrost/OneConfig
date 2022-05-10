@@ -29,7 +29,7 @@ public @interface Option {
     /**
      * The subcategory of the component (displayed as header)
      */
-    String subcategory();
+    String subcategory() default "";
 
     /**
      * The width of the option (1 = half width, 2 = full width)
@@ -82,4 +82,9 @@ public @interface Option {
      * Option for info option type
      */
     InfoType infoType() default InfoType.INFO;
+
+    /**
+     * Text displayed inside button
+     */
+    String buttonText() default "Activate";
 }

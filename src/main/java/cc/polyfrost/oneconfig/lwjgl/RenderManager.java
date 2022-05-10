@@ -7,14 +7,15 @@ import cc.polyfrost.oneconfig.lwjgl.image.Image;
 import cc.polyfrost.oneconfig.lwjgl.image.ImageLoader;
 import cc.polyfrost.oneconfig.lwjgl.image.Images;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.ScaledResolution;
-import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.shader.Framebuffer;
 import org.lwjgl.nanovg.NVGColor;
 import org.lwjgl.nanovg.NVGPaint;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL14;
 
 import java.awt.*;
 import java.util.function.LongConsumer;
@@ -74,7 +75,7 @@ public final class RenderManager {
         }
     }
 
-
+    // Can be removed or atleast marked out since it is no longer used - MoonTidez
     public static void drawGradientRoundedRect(long vg, float x, float y, float width, float height, int color, int color2, float radius) {
         NVGPaint bg = NVGPaint.create();
         nvgBeginPath(vg);
@@ -88,13 +89,12 @@ public final class RenderManager {
     }
 
     public static void drawHSBBox(long vg, float x, float y, float width, float height, int colorTarget) {
-
         drawRoundedRect(vg, x, y, width, height, colorTarget, 8f);
 
         NVGPaint bg = NVGPaint.create();
         nvgBeginPath(vg);
         nvgRoundedRect(vg, x, y, width, height, 8f);
-        NVGColor nvgColor = color(vg, OneConfigConfig.WHITE);
+        NVGColor nvgColor = color(vg, OneConfigConfig.WHITE); // Do not use OneConfigConfig colors for this, use rgba code - MoonTidez
         NVGColor nvgColor2 = color(vg, OneConfigConfig.TRANSPARENT_25);
         nvgFillPaint(vg, nvgLinearGradient(vg, x, y, x + width, y, nvgColor, nvgColor2, bg));
         nvgFill(vg);
@@ -105,16 +105,14 @@ public final class RenderManager {
         nvgBeginPath(vg);
         nvgRoundedRect(vg, x, y, width, height, 8f);
         NVGColor nvgColor3 = color(vg, OneConfigConfig.TRANSPARENT_25);
-        NVGColor nvgColor4 = color(vg, OneConfigConfig.BLACK);
+        NVGColor nvgColor4 = color(vg, OneConfigConfig.BLACK); // Do not use OneConfigConfig colors for this, use rgba code - MoonTidez
         nvgFillPaint(vg, nvgLinearGradient(vg, x, y, x, y + height, nvgColor3, nvgColor4, bg2));
         nvgFill(vg);
         nvgColor3.free();
         nvgColor4.free();
-
-        //drawHollowRoundRect(vg, x - 0.5f, y - 0.5f, width, height, new Color(77,77,77,255).getRGB(), 8f, 1f);
-
     }
 
+    /*
     public static void drawGradientRect(long vg, float x, float y, float width, float height, int color, int color2) {
         NVGPaint bg = NVGPaint.create();
         nvgBeginPath(vg);
@@ -127,6 +125,7 @@ public final class RenderManager {
         nvgColor.free();
         nvgColor2.free();
     }
+    */
 
     public static void drawRect(long vg, float x, float y, float width, float height, int color) {
         nvgBeginPath(vg);
@@ -336,7 +335,7 @@ public final class RenderManager {
         GL11.glDisable(GL11.GL_TEXTURE_2D);
         GL11.glEnable(GL11.GL_BLEND);
         GL11.glDisable(GL11.GL_ALPHA);
-        OpenGlHelper.glBlendFunc(770, 771, 1, 0);
+        GL14.glBlendFuncSeparate(770, 771, 1, 0);           // this should never fail because it's a GL14 call, and we import GL31
         glColor(color);
         GL11.glLineWidth(width);
         GL11.glBegin(GL11.GL_LINES);
@@ -349,6 +348,10 @@ public final class RenderManager {
         GL11.glPopMatrix();
         GL11.glDisable(GL11.GL_LINE_STIPPLE);
         GL11.glPopMatrix();
+    }
+
+    public static void drawGlRect(int x, int y, int width, int height, int color) {
+        Gui.drawRect(x, y, x + width, y + height, color);
     }
 
 

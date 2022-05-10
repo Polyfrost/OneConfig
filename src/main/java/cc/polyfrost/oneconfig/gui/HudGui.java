@@ -3,7 +3,6 @@ package cc.polyfrost.oneconfig.gui;
 import cc.polyfrost.oneconfig.hud.HudCore;
 import cc.polyfrost.oneconfig.hud.BasicHud;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
-import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiScreen;
 import org.lwjgl.input.Keyboard;
 
@@ -26,7 +25,7 @@ public class HudGui extends GuiScreen {
 
     @Override
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
-        Gui.drawRect(0, 0, this.width, this.height, new Color(80, 80, 80, 50).getRGB());
+        RenderManager.drawGlRect(0, 0, this.width, this.height, new Color(80, 80, 80, 50).getRGB());
 
         if (isDragging) {
             setPosition(mouseX - xOffset, mouseY - yOffset, true);
@@ -67,7 +66,7 @@ public class HudGui extends GuiScreen {
         if (editingHud == hud) {
             color = new Color(43, 159, 235).getRGB();
             if (isDragging)
-                Gui.drawRect(x, y, x + width, y + height, new Color(108, 176, 255, 60).getRGB());
+                RenderManager.drawGlRect(x, y, width, height, new Color(108, 176, 255, 60).getRGB());
         }
         int finalColor = color;
         RenderManager.setupAndDraw(true, (vg) -> {

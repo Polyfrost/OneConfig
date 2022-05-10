@@ -5,6 +5,7 @@ import cc.polyfrost.oneconfig.config.annotations.Option;
 import cc.polyfrost.oneconfig.config.data.*;
 import cc.polyfrost.oneconfig.config.interfaces.Config;
 import cc.polyfrost.oneconfig.lwjgl.OneColor;
+import net.minecraftforge.fml.common.FMLCommonHandler;
 
 public class TestConfig extends Config {
 
@@ -16,6 +17,23 @@ public class TestConfig extends Config {
             size = 2
     )
     public static boolean ignored;
+
+    @Option(
+            name = "Crash game",
+            subcategory = "Test",
+            type = OptionType.BUTTON,
+            buttonText = "Crash!"
+    )
+    public static Runnable runnable = () -> FMLCommonHandler.instance().exitJava(69, false);
+
+    @Option(
+            name = "Crash game",
+            subcategory = "Test",
+            type = OptionType.BUTTON,
+            size = 2,
+            buttonText = "Crash!"
+    )
+    public static Runnable runnable2 = () -> FMLCommonHandler.instance().exitJava(69, false);
 
     @Option(
             name = "Test color selector",
@@ -195,6 +213,7 @@ public class TestConfig extends Config {
             max = 25
     )
     public static int slider1;
+
     @Option(
             name = "Stepped Slider",
             subcategory = "Sliders",
@@ -207,8 +226,78 @@ public class TestConfig extends Config {
     )
     public static float slider2;
 
+    @Option(
+            name = "Slider",
+            type = OptionType.SLIDER,
+            category = "subcategory test",
+            min = 5,
+            max = 3287
+    )
+    public static float slider = 26;
 
-    TestHud testHud = new TestHud();
+    @Option(
+            name = "Slider",
+            type = OptionType.SLIDER,
+            category = "subcategory test",
+            min = 5,
+            max = 3287
+    )
+    public static float slider10 = 26;
+
+    @Option(
+            name = "Slider",
+            type = OptionType.SLIDER,
+            category = "subcategory test",
+            min = 5,
+            max = 3287,
+            subcategory = "Second subcategory"
+    )
+    public static float slider11 = 26;
+
+    @Option(
+            name = "Header Test",
+            type = OptionType.HEADER,
+            category = "subcategory test",
+            subcategory = "Second subcategory",
+            size = 2
+    )
+    public static boolean somethingHere;
+
+
+    @Option(
+            name = "Slider",
+            type = OptionType.SLIDER,
+            category = "subcategory test",
+            min = 5,
+            max = 3287,
+            subcategory = "Second subcategory"
+    )
+    public static float slider12 = 26;
+
+    @ConfigPage(
+            name = "Test page",
+            location = PageLocation.TOP,
+            category = "subcategory test",
+            subcategory = "Second subcategory"
+    )
+    public static TestPage testPage23 = new TestPage();
+
+    @ConfigPage(
+            name = "Test page",
+            location = PageLocation.BOTTOM,
+            category = "subcategory test",
+            subcategory = "Second subcategory"
+    )
+    public static TestPage testPage24 = new TestPage();
+
+    @Option(
+            name = "Slider",
+            type = OptionType.SLIDER,
+            category = "subcategory test",
+            min = 5,
+            max = 3287
+    )
+    public static float slider13 = 26;
 
 
     public TestConfig() {

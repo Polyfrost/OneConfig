@@ -12,7 +12,6 @@ import cc.polyfrost.oneconfig.lwjgl.image.Images;
 import cc.polyfrost.oneconfig.utils.ColorUtils;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import net.minecraft.client.Minecraft;
-import net.minecraft.command.CommandException;
 import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.fml.common.ModMetadata;
 import org.jetbrains.annotations.NotNull;
@@ -109,7 +108,7 @@ public class ModCard extends BasicElement {
                         if (possibleCommands.contains(command)) {
                             try {
                                 ClientCommandHandler.instance.getCommands().get(command).processCommand(Minecraft.getMinecraft().thePlayer, new String[]{});
-                            } catch (CommandException e) {
+                            } catch (Exception e) {
                                 throw new RuntimeException(e);
                             }
                             break;
