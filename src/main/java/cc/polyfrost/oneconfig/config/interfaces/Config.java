@@ -184,7 +184,7 @@ public class Config {
                 Object object = adapter.fromJsonTree(value);
                 field.setAccessible(true);
                 field.set(this, object);
-            } catch (NoSuchFieldException | IllegalAccessException ignored) {
+            } catch (Exception ignored) {
             }
         }
     }
