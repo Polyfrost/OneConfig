@@ -52,11 +52,11 @@ public class SideBar {
             if (i >= 562) i += 44;
             else i += 36;
             if (i == 144) {
-                RenderManager.drawString(vg, "MOD CONFIG", x + 16, y + 266, OneConfigConfig.WHITE_90, 12f, Fonts.SEMIBOLD);
+                RenderManager.drawString(vg, "MOD CONFIG", x + 16, y + 266, OneConfigConfig.WHITE_80, 12f, Fonts.SEMIBOLD);
                 i = 180;
             }
             if (i == 324) {
-                RenderManager.drawString(vg, "PERSONALIZATION", x + 16, y + 446, OneConfigConfig.WHITE_90, 12f, Fonts.SEMIBOLD);
+                RenderManager.drawString(vg, "PERSONALIZATION", x + 16, y + 446, OneConfigConfig.WHITE_80, 12f, Fonts.SEMIBOLD);
                 i = 360;
             }
             if (i == 504) {
