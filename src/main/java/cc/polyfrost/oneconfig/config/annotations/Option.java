@@ -29,7 +29,7 @@ public @interface Option {
     /**
      * The subcategory of the component (displayed as header)
      */
-    String subcategory();
+    String subcategory() default "";
 
     /**
      * The width of the option (1 = half width, 2 = full width)

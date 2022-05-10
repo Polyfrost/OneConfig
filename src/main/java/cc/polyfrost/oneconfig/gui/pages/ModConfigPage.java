@@ -2,6 +2,7 @@ package cc.polyfrost.oneconfig.gui.pages;
 
 import cc.polyfrost.oneconfig.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.config.data.OptionPage;
+import cc.polyfrost.oneconfig.config.data.OptionSubcategory;
 import cc.polyfrost.oneconfig.config.interfaces.BasicOption;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.elements.BasicButton;
@@ -38,7 +39,7 @@ public class ModConfigPage extends Page {
 
     @Override
     public void draw(long vg, int x, int y) {
-        if (page.categories.size() == 0) return;
+        /*
         String filter = OneConfigGui.INSTANCE == null ? "" : OneConfigGui.INSTANCE.getSearchValue().toLowerCase().trim();
         LinkedHashMap<String, ArrayList<BasicOption>> filteredSubcategories = new LinkedHashMap<>(page.categories.get(selectedCategory).subcategories);
         if (!filter.equals("")) {
@@ -141,7 +142,14 @@ public class ModConfigPage extends Page {
                     optionLastY += option.getHeight() + 16;
                 }
             }
+        }*/
+
+        if (page.categories.size() == 0) return;
+        int optionY = y + (page.categories.size() == 1 ? 16 : 64);
+        for (OptionSubcategory subCategory : page.categories.get(selectedCategory).subcategories) {
+            optionY += subCategory.draw(vg, x + 30, optionY);
         }
+        totalSize = optionY - y;
     }
 
     @Override
@@ -166,9 +174,9 @@ public class ModConfigPage extends Page {
     @Override
     public void keyTyped(char key, int keyCode) {
         if (page.categories.size() == 0) return;
-        for (String subCategory : page.categories.get(selectedCategory).subcategories.keySet()) {
-            for (int i = 0; i < page.categories.get(selectedCategory).subcategories.get(subCategory).size(); i++) {
-                page.categories.get(selectedCategory).subcategories.get(subCategory).get(i).keyTyped(key, keyCode);
+        for (OptionSubcategory subCategory : page.categories.get(selectedCategory).subcategories) {
+            for (BasicOption option : subCategory.options) {
+                option.keyTyped(key, keyCode);
             }
         }
     }

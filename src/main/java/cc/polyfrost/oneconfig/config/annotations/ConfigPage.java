@@ -29,4 +29,9 @@ public @interface ConfigPage {
      * The category of the page
      */
     String category() default "General";
+
+    /**
+     * The subcategory of the page
+     */
+    String subcategory() default "";
 }

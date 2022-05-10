@@ -6,6 +6,7 @@ import cc.polyfrost.oneconfig.config.core.ConfigCore;
 import cc.polyfrost.oneconfig.config.data.Mod;
 import cc.polyfrost.oneconfig.config.data.OptionCategory;
 import cc.polyfrost.oneconfig.config.data.OptionPage;
+import cc.polyfrost.oneconfig.config.data.OptionSubcategory;
 import cc.polyfrost.oneconfig.config.profiles.Profiles;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.elements.config.*;
@@ -84,6 +85,10 @@ public class Config {
                 ConfigPage option = field.getAnnotation(ConfigPage.class);
                 if (!page.categories.containsKey(option.category()))
                     page.categories.put(option.category(), new OptionCategory());
+                OptionCategory category = page.categories.get(option.category());
+                if (category.subcategories.size() == 0 || !category.subcategories.get(category.subcategories.size() - 1).getName().equals(option.subcategory()))
+                    category.subcategories.add(new OptionSubcategory(option.subcategory()));
+                OptionSubcategory subcategory = category.subcategories.get(category.subcategories.size() - 1);
                 OptionPage newPage = new OptionPage(option.name(), mod);
                 try {
                     field.setAccessible(true);
@@ -91,10 +96,10 @@ public class Config {
                     generateOptionList(object.getClass(), newPage, mod);
                     switch (option.location()) {
                         case TOP:
-                            page.categories.get(option.category()).topPages.add(new ConfigPageButton(field, option.name(), option.description(), newPage));
+                            subcategory.topButtons.add(new ConfigPageButton(field, option.name(), option.description(), newPage));
                             break;
                         case BOTTOM:
-                            page.categories.get(option.category()).bottomPages.add(new ConfigPageButton(field, option.name(), option.description(), newPage));
+                            subcategory.bottomButtons.add(new ConfigPageButton(field, option.name(), option.description(), newPage));
                             break;
                     }
                 } catch (IllegalAccessException e) {
@@ -105,9 +110,10 @@ public class Config {
             Option option = field.getAnnotation(Option.class);
             if (!page.categories.containsKey(option.category()))
                 page.categories.put(option.category(), new OptionCategory());
-            if (!page.categories.get(option.category()).subcategories.containsKey(option.subcategory()))
-                page.categories.get(option.category()).subcategories.put(option.subcategory(), new ArrayList<>());
-            ArrayList<BasicOption> options = page.categories.get(option.category()).subcategories.get(option.subcategory());
+            OptionCategory category = page.categories.get(option.category());
+            if (category.subcategories.size() == 0 || !category.subcategories.get(category.subcategories.size() - 1).getName().equals(option.subcategory()))
+                category.subcategories.add(new OptionSubcategory(option.subcategory()));
+            ArrayList<BasicOption> options = category.subcategories.get(category.subcategories.size() - 1).options;
             switch (option.type()) {
                 case SWITCH:
                     options.add(new ConfigSwitch(field, option.name(), option.size()));
@@ -135,6 +141,9 @@ public class Config {
                     break;
                 case COLOR:
                     options.add(new ConfigColorElement(field, option.name(), option.size()));
+                    break;
+                case HEADER:
+                    options.add(new ConfigHeader(field, option.name(), option.size()));
                     break;
             }
         }

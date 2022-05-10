@@ -36,11 +36,11 @@ public enum OptionType {
     DROPDOWN,
     //MULTI_DROPDOWN,
     /**
-     * Type: String
+     * Type: doesn't matter
      */
     INFO,
     /**
-     * Type: class that extends BasicHud
+     * Type: doesn't matter
      */
-    HUD
+    HEADER,
 }
