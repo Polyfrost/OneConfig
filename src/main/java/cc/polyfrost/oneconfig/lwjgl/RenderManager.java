@@ -75,7 +75,6 @@ public final class RenderManager {
         }
     }
 
-    // Can be removed or atleast marked out since it is no longer used - MoonTidez
     public static void drawGradientRoundedRect(long vg, float x, float y, float width, float height, int color, int color2, float radius) {
         NVGPaint bg = NVGPaint.create();
         nvgBeginPath(vg);
@@ -112,7 +111,6 @@ public final class RenderManager {
         nvgColor4.free();
     }
 
-    /*
     public static void drawGradientRect(long vg, float x, float y, float width, float height, int color, int color2) {
         NVGPaint bg = NVGPaint.create();
         nvgBeginPath(vg);
@@ -125,7 +123,6 @@ public final class RenderManager {
         nvgColor.free();
         nvgColor2.free();
     }
-    */
 
     public static void drawRect(long vg, float x, float y, float width, float height, int color) {
         nvgBeginPath(vg);
