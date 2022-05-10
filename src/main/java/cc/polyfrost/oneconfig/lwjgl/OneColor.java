@@ -155,7 +155,7 @@ public class OneColor {
     /**
      * Get the RGBA color from the HSB color, and apply the alpha.
      */
-    public int HSBAtoRGBA(float hue, float saturation, float brightness, int alpha) {
+    public static int HSBAtoRGBA(float hue, float saturation, float brightness, int alpha) {
         int temp = Color.HSBtoRGB(hue / 360f, saturation / 100f, brightness / 100f);
         return ((temp & 0x00ffffff) | (alpha << 24));
     }
@@ -163,7 +163,7 @@ public class OneColor {
     /**
      * Get the HSBA color from the RGBA color.
      */
-    public short[] RGBAtoHSBA(int rgba) {
+    public static short[] RGBAtoHSBA(int rgba) {
         short[] hsb = new short[4];
         float[] hsbArray = Color.RGBtoHSB((rgba >> 16 & 255), (rgba >> 8 & 255), (rgba & 255), null);
         hsb[0] = (short) (hsbArray[0] * 360);
@@ -180,5 +180,10 @@ public class OneColor {
     public void setColorFromHex(String hex) {
         rgba = Integer.parseInt(hex, 16);
         hsba = RGBAtoHSBA(rgba);
+    }
+
+    @Override
+    public String toString() {
+        return "OneColor{rgba=[r=" + getRed() + ", g=" + getGreen() + ", b=" + getBlue() + ", a=" + getAlpha() + "], hsba=[h=" + getHue() + ", s=" + getSaturation() + ", b=" + getBrightness() + ", a=" + getAlpha() + "], hex=" + getHex() + "}";
     }
 }

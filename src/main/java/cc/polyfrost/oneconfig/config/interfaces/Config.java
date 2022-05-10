@@ -10,8 +10,8 @@ import cc.polyfrost.oneconfig.config.profiles.Profiles;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.elements.config.*;
 import cc.polyfrost.oneconfig.gui.pages.ModConfigPage;
+import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import com.google.gson.*;
-import net.minecraft.client.Minecraft;
 
 import java.io.*;
 import java.lang.reflect.Field;
@@ -182,6 +182,6 @@ public class Config {
      */
     public void openGui() {
         if (mod == null) return;
-        Minecraft.getMinecraft().displayGuiScreen(new OneConfigGui(new ModConfigPage(mod.defaultPage)));
+        RenderManager.displayGuiScreen(new OneConfigGui(new ModConfigPage(mod.defaultPage)));
     }
 }

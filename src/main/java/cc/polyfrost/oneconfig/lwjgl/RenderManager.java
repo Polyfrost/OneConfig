@@ -1,15 +1,15 @@
 package cc.polyfrost.oneconfig.lwjgl;
 
 import cc.polyfrost.oneconfig.config.OneConfigConfig;
-import cc.polyfrost.oneconfig.lwjgl.font.Font;
 import cc.polyfrost.oneconfig.lwjgl.font.FontManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.Image;
 import cc.polyfrost.oneconfig.lwjgl.image.ImageLoader;
 import cc.polyfrost.oneconfig.lwjgl.image.Images;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.ScaledResolution;
-import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.shader.Framebuffer;
 import org.lwjgl.nanovg.NVGColor;
 import org.lwjgl.nanovg.NVGPaint;
@@ -63,7 +63,7 @@ public final class RenderManager {
 
         nvgEndFrame(vg);
 
-        GlStateManager.popAttrib();
+        GL11.glPopAttrib();
     }
 
     public static void drawRectangle(long vg, float x, float y, float width, float height, int color) {     // TODO make everything use this one day
@@ -314,10 +314,10 @@ public final class RenderManager {
     }
 
     public static void drawScaledString(String text, float x, float y, int color, boolean shadow, float scale) {
-        GlStateManager.pushMatrix();
-        GlStateManager.scale(scale, scale, 1);
+        GL11.glPushMatrix();
+        GL11.glScalef(scale, scale, 1);
         Minecraft.getMinecraft().fontRendererObj.drawString(text, x * (1 / scale), y * (1 / scale), color, shadow);
-        GlStateManager.popMatrix();
+        GL11.glPopMatrix();
     }
 
     public static void glColor(int color) {
@@ -325,29 +325,36 @@ public final class RenderManager {
         float f1 = (float) (color >> 16 & 255) / 255.0F;
         float f2 = (float) (color >> 8 & 255) / 255.0F;
         float f3 = (float) (color & 255) / 255.0F;
-        GlStateManager.color(f1, f2, f3, f);
+        GL11.glColor4f(f1, f2, f3, f);
     }
 
     public static void drawDottedLine(float sx, float sy, float ex, float ey, int width, int factor, int color) {
-        GlStateManager.pushMatrix();
+        GL11.glPushMatrix();
         GL11.glLineStipple(factor, (short) 0xAAAA);
         GL11.glEnable(GL11.GL_LINE_STIPPLE);
-        GlStateManager.pushMatrix();
-        GlStateManager.disableTexture2D();
-        GlStateManager.enableBlend();
-        GlStateManager.disableAlpha();
-        GlStateManager.tryBlendFuncSeparate(770, 771, 1, 0);
+        GL11.glPushMatrix();
+        GL11.glDisable(GL11.GL_TEXTURE_2D);
+        GL11.glEnable(GL11.GL_BLEND);
+        GL11.glDisable(GL11.GL_ALPHA);
+        OpenGlHelper.glBlendFunc(770, 771, 1, 0);
         glColor(color);
         GL11.glLineWidth(width);
         GL11.glBegin(GL11.GL_LINES);
         GL11.glVertex2d(sx, sy);
         GL11.glVertex2d(ex, ey);
         GL11.glEnd();
-        GlStateManager.disableBlend();
-        GlStateManager.enableAlpha();
-        GlStateManager.enableTexture2D();
-        GlStateManager.popMatrix();
+        GL11.glDisable(GL11.GL_BLEND);
+        GL11.glEnable(GL11.GL_ALPHA);
+        GL11.glEnable(GL11.GL_TEXTURE_2D);
+        GL11.glPopMatrix();
         GL11.glDisable(GL11.GL_LINE_STIPPLE);
-        GlStateManager.popMatrix();
+        GL11.glPopMatrix();
+    }
+
+
+
+    // other minecraft functions
+    public static void displayGuiScreen(GuiScreen guiScreen) {
+        Minecraft.getMinecraft().displayGuiScreen(guiScreen);
     }
 }
