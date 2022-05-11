@@ -8,6 +8,7 @@ import cc.polyfrost.oneconfig.lwjgl.image.Images;
 import cc.polyfrost.oneconfig.utils.ColorUtils;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import cc.polyfrost.oneconfig.utils.MathUtils;
+import org.lwjgl.nanovg.NanoVG;
 
 import java.awt.*;
 import java.lang.reflect.Field;
@@ -22,6 +23,7 @@ public class ConfigCheckbox extends BasicOption {
 
     @Override
     public void draw(long vg, int x, int y) {
+        if (!isEnabled()) NanoVG.nvgGlobalAlpha(vg, 0.5f);
         boolean toggled = false;
         try {
             toggled = (boolean) get();
@@ -30,7 +32,7 @@ public class ConfigCheckbox extends BasicOption {
         boolean hover = InputUtils.isAreaHovered(x, y + 4, 24, 24);
 
         boolean clicked = InputUtils.isClicked() && hover;
-        if (clicked) {
+        if (clicked && isEnabled()) {
             toggled = !toggled;
             try {
                 set(toggled);
@@ -46,12 +48,12 @@ public class ConfigCheckbox extends BasicOption {
         color = ColorUtils.smoothColor(color, OneConfigConfig.GRAY_600, OneConfigConfig.GRAY_400, hover, 40f);
         RenderManager.drawString(vg, name, x + 32, y + 17, OneConfigConfig.WHITE_90, 14f, Fonts.MEDIUM);
         percentOn = MathUtils.clamp(MathUtils.easeOut(percentOn, toggled ? 1f : 0f, 5f));
-        if (percentOn == 0f) return;
-        if (percentOn != 1f) {
+        if (percentOn != 0 && percentOn != 1f) {
             RenderManager.drawImage(vg, Images.CHECKMARK, x, y + 4, 24, 24, new Color(1f, 1f, 1f, percentOn).getRGB());
-        } else {       // performance, that color could cause havoc am I right definitely
+        } else if (percentOn != 0) {
             RenderManager.drawImage(vg, Images.CHECKMARK, x, y + 4, 24, 24);
         }
+        NanoVG.nvgGlobalAlpha(vg, 1f);
     }
 
     @Override

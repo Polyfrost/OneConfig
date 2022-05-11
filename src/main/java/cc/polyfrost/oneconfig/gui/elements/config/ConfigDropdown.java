@@ -28,11 +28,12 @@ public class ConfigDropdown extends BasicOption { // TODO: chose where dividers 
 
     @Override
     public void draw(long vg, int x, int y) {
+        if (!isEnabled()) NanoVG.nvgGlobalAlpha(vg, 0.5f);
         RenderManager.drawString(vg, name, x, y + 16, OneConfigConfig.WHITE_90, 14f, Fonts.MEDIUM);
 
         boolean hovered;
-        if (size == 1) hovered = InputUtils.isAreaHovered(x + 224, y, 256, 32);
-        else hovered = InputUtils.isAreaHovered(x + 352, y, 640, 32);
+        if (size == 1) hovered = InputUtils.isAreaHovered(x + 224, y, 256, 32) && isEnabled();
+        else hovered = InputUtils.isAreaHovered(x + 352, y, 640, 32) && isEnabled();
 
         if (hovered && InputUtils.isClicked() || opened && InputUtils.isClicked() &&
                 (size == 1 && !InputUtils.isAreaHovered(x + 224, y + 40, 256, options.length * 32 + 4) ||

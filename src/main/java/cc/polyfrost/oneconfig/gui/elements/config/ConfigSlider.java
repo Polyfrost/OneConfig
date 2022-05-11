@@ -8,6 +8,7 @@ import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import cc.polyfrost.oneconfig.utils.MathUtils;
 import org.lwjgl.input.Mouse;
+import org.lwjgl.nanovg.NanoVG;
 
 import java.lang.reflect.Field;
 
@@ -30,7 +31,8 @@ public class ConfigSlider extends BasicOption {
     public void draw(long vg, int x, int y) {
         int xCoordinate = 0;
         float value = 0;
-        boolean hovered = InputUtils.isAreaHovered(x + 352, y, 512, 32);
+        boolean hovered = InputUtils.isAreaHovered(x + 352, y, 512, 32) && isEnabled();
+        if (!isEnabled()) NanoVG.nvgGlobalAlpha(vg, 0.5f);
         if (hovered && Mouse.isButtonDown(0)) dragging = true;
         if (dragging) {
             xCoordinate = (int) MathUtils.clamp(InputUtils.mouseX(), x + 352, x + 864);
@@ -73,6 +75,7 @@ public class ConfigSlider extends BasicOption {
         if (step == 0) RenderManager.drawRoundedRect(vg, xCoordinate - 12, y + 4, 24, 24, OneConfigConfig.WHITE, 12f);
         else RenderManager.drawRoundedRect(vg, xCoordinate - 4, y + 4, 8, 24, OneConfigConfig.WHITE, 4f);
         inputField.draw(vg, x + 892, y);
+        NanoVG.nvgGlobalAlpha(vg, 1f);
     }
 
     private int getStepCoordinate(int xCoordinate, int x) {

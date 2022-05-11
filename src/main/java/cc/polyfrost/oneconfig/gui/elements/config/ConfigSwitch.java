@@ -7,6 +7,7 @@ import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.utils.ColorUtils;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import cc.polyfrost.oneconfig.utils.MathUtils;
+import org.lwjgl.nanovg.NanoVG;
 
 import java.lang.reflect.Field;
 
@@ -31,11 +32,12 @@ public class ConfigSwitch extends BasicOption {
         if (color == -15123643) {
             color = OneConfigConfig.GRAY_400;
         }
+        if (!isEnabled()) NanoVG.nvgGlobalAlpha(vg, 0.5f);
         RenderManager.drawRoundedRect(vg, x, y + 4, 42, 24, color, 12f);
         RenderManager.drawRoundedRect(vg, x2, y + 7, 18, 18, OneConfigConfig.WHITE, 9f);
         RenderManager.drawString(vg, name, x + 50, y + 17, OneConfigConfig.WHITE, 14f, Fonts.MEDIUM);
 
-        if (InputUtils.isAreaClicked(x, y, 42, 32)) {
+        if (InputUtils.isAreaClicked(x, y, 42, 32) && isEnabled()) {
             toggled = !toggled;
             try {
                 set(toggled);
@@ -45,6 +47,7 @@ public class ConfigSwitch extends BasicOption {
             }
         }
         percentOn = MathUtils.clamp(MathUtils.easeOut(percentOn, toggled ? 1f : 0f, 10));
+        NanoVG.nvgGlobalAlpha(vg, 1f);
     }
 
     @Override

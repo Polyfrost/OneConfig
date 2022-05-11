@@ -35,6 +35,7 @@ public class ConfigUniSelector extends BasicOption {
             selected = (int) get();
         } catch (IllegalAccessException ignored) {
         }
+        if (!isEnabled()) NanoVG.nvgGlobalAlpha(vg, 0.5f);
         String option = options[selected] + " " + (selected + 1) + "/" + options.length;
         RenderManager.drawString(vg, name, x, y + 16, OneConfigConfig.WHITE_90, 14f, Fonts.MEDIUM);
 
@@ -51,7 +52,7 @@ public class ConfigUniSelector extends BasicOption {
         RenderManager.drawImage(vg, Images.CHEVRON_ARROW, x + 248, y + 7, -8, 14, OneConfigConfig.BLUE_400);
         RenderManager.drawImage(vg, Images.CHEVRON_ARROW, x + 456, y + 7, 8, 14, OneConfigConfig.BLUE_400);
 
-        if (InputUtils.isAreaClicked(x + 235, y + 5, 18, 18) && selected > 0) {
+        if (InputUtils.isAreaClicked(x + 235, y + 5, 18, 18) && selected > 0 && isEnabled()) {
             previous = selected;
             selected -= 1;
             try {
@@ -59,7 +60,7 @@ public class ConfigUniSelector extends BasicOption {
             } catch (IllegalAccessException ignored) {
             }
             percentMove = selected < previous ? 0f : 1f;
-        } else if (InputUtils.isAreaClicked(x + 451, y + 5, 18, 18) && selected < options.length - 1) {
+        } else if (InputUtils.isAreaClicked(x + 451, y + 5, 18, 18) && selected < options.length - 1 && isEnabled()) {
             previous = selected;
             selected += 1;
             try {
@@ -70,5 +71,6 @@ public class ConfigUniSelector extends BasicOption {
         }
         if (previous != -1) percentMove = MathUtils.easeOut(percentMove, selected < previous ? 1f : 0f, 10);
         if ((selected < previous ? 1f : 0f) == percentMove) previous = -1;
+        NanoVG.nvgGlobalAlpha(vg, 1f);
     }
 }

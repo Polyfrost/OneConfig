@@ -6,6 +6,7 @@ import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import cc.polyfrost.oneconfig.utils.MathUtils;
+import org.lwjgl.nanovg.NanoVG;
 
 import java.lang.reflect.Field;
 
@@ -32,6 +33,7 @@ public class ConfigDualOption extends BasicOption {
             toggled = (boolean) get();
         } catch (IllegalAccessException ignored) {
         }
+        if (!isEnabled()) NanoVG.nvgGlobalAlpha(vg, 0.5f);
         RenderManager.drawString(vg, name, x, y + 16, OneConfigConfig.WHITE_90, 14f, Fonts.MEDIUM);
         RenderManager.drawRoundedRect(vg, x + 226, y, 256, 32, OneConfigConfig.GRAY_500, 12f);
         int x1 = (int) (x + 228 + (percentMove * 128));
@@ -39,7 +41,8 @@ public class ConfigDualOption extends BasicOption {
         RenderManager.drawString(vg, left, x + 290 - RenderManager.getTextWidth(vg, left, 12f, Fonts.MEDIUM) / 2, y + 17, OneConfigConfig.WHITE_90, 12f, Fonts.MEDIUM);
         RenderManager.drawString(vg, right, x + 418 - RenderManager.getTextWidth(vg, right, 12f, Fonts.MEDIUM) / 2, y + 17, OneConfigConfig.WHITE_90, 12f, Fonts.MEDIUM);
 
-        if (InputUtils.isAreaClicked(x + 226, y, 256, 32)) {
+        NanoVG.nvgGlobalAlpha(vg, 1);
+        if (InputUtils.isAreaClicked(x + 226, y, 256, 32) && isEnabled()) {
             toggled = !toggled;
             try {
                 set(toggled);

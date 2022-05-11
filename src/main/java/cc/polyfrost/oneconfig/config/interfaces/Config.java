@@ -19,15 +19,14 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.function.Supplier;
 
 public class Config {
     transient protected final String configFile;
     transient protected final Gson gson = new GsonBuilder().excludeFieldsWithModifiers(Modifier.TRANSIENT).setPrettyPrinting().create();
     transient private Mod mod;
+    final transient private HashMap<String, BasicOption> optionNames = new HashMap<>();
     public boolean enabled = true;
 
     /**
@@ -78,6 +77,7 @@ public class Config {
      */
     protected void generateOptionList(Class<?> clazz, OptionPage page, Mod mod) {
         for (Field field : clazz.getDeclaredFields()) {
+            String pagePrefix = page.equals(mod.defaultPage) ? "" : page.name + ".";
             if (!field.isAnnotationPresent(Option.class) && !field.isAnnotationPresent(ConfigPage.class)) {
                 processCustomOption(field, page);
                 continue;
@@ -94,16 +94,17 @@ public class Config {
                     field.setAccessible(true);
                     Object object = field.get(clazz);
                     generateOptionList(object.getClass(), newPage, mod);
+                    ConfigPageButton configPageButton = new ConfigPageButton(field, option.name(), option.description(), newPage);
                     switch (option.location()) {
                         case TOP:
-                            subcategory.topButtons.add(new ConfigPageButton(field, option.name(), option.description(), newPage));
+                            subcategory.topButtons.add(configPageButton);
                             break;
                         case BOTTOM:
-                            subcategory.bottomButtons.add(new ConfigPageButton(field, option.name(), option.description(), newPage));
+                            subcategory.bottomButtons.add(configPageButton);
                             break;
                     }
-                } catch (IllegalAccessException e) {
-                    continue;
+                    optionNames.put(pagePrefix + field.getName(), configPageButton);
+                } catch (IllegalAccessException ignored) {
                 }
                 continue;
             }
@@ -152,6 +153,7 @@ public class Config {
                     options.add(new ConfigKeyBind(field, option.name(), option.size()));
                     break;
             }
+            optionNames.put(pagePrefix + field.getName(), options.get(options.size() - 1));
         }
     }
 
@@ -198,5 +200,16 @@ public class Config {
     public void openGui() {
         if (mod == null) return;
         RenderManager.displayGuiScreen(new OneConfigGui(new ModConfigPage(mod.defaultPage)));
+    }
+
+    /**
+     * Disable an option if a certain condition is not met
+     *
+     * @param option    The name of the field, or if the field is in a page "pageName.fieldName"
+     * @param condition The condition that has to be met for the option to be enabled
+     */
+    protected void addDependency(String option, Supplier<Boolean> condition) {
+        if (!optionNames.containsKey(option)) return;
+        optionNames.get(option).setDependency(condition);
     }
 }

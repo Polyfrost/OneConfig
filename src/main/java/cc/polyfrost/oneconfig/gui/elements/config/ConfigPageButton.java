@@ -29,11 +29,12 @@ public class ConfigPageButton extends BasicOption {
     @Override
     public void draw(long vg, int x, int y) {
         int height = description.equals("") ? 64 : 96;
-        boolean hovered = InputUtils.isAreaHovered(x - 2, y, 1024, height);
-        boolean clicked = InputUtils.isAreaClicked(x - 2, y, 1024, height);
+        boolean hovered = InputUtils.isAreaHovered(x - 2, y, 1024, height) && isEnabled();
+        boolean clicked = hovered && InputUtils.isClicked();
         backgroundColor = ColorUtils.smoothColor(backgroundColor, OneConfigConfig.GRAY_500, OneConfigConfig.GRAY_400, hovered, 100);
 
         if (hovered && Mouse.isButtonDown(0)) NanoVG.nvgGlobalAlpha(vg, 0.8f);
+        if (!isEnabled()) NanoVG.nvgGlobalAlpha(vg, 0.5f);
 
         RenderManager.drawRoundedRect(vg, x - 16, y, 1024, height, backgroundColor, 20);
         RenderManager.drawString(vg, name, x + 10, y + 32, OneConfigConfig.WHITE_90, 24, Fonts.MEDIUM);

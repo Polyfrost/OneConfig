@@ -5,6 +5,7 @@ import cc.polyfrost.oneconfig.config.interfaces.BasicOption;
 import cc.polyfrost.oneconfig.gui.elements.BasicButton;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
+import org.lwjgl.nanovg.NanoVG;
 
 import java.lang.reflect.Field;
 
@@ -25,8 +26,11 @@ public class ConfigButton extends BasicOption {
 
     @Override
     public void draw(long vg, int x, int y) {
+        button.disable(!isEnabled());
+        NanoVG.nvgGlobalAlpha(vg, 0.5f);
         RenderManager.drawString(vg, name, x, y + 17, OneConfigConfig.WHITE, 14f, Fonts.MEDIUM);
         button.draw(vg, x + (size == 1 ? 352 : 736), y);
+        NanoVG.nvgGlobalAlpha(vg, 1f);
     }
 
     @Override

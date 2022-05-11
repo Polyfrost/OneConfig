@@ -9,6 +9,7 @@ import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.Images;
 import org.lwjgl.input.Keyboard;
+import org.lwjgl.nanovg.NanoVG;
 
 import java.lang.reflect.Field;
 
@@ -24,9 +25,11 @@ public class ConfigKeyBind extends BasicOption {
 
     @Override
     public void draw(long vg, int x, int y) {
+        if (!isEnabled()) NanoVG.nvgGlobalAlpha(vg, 0.5f);
         RenderManager.drawString(vg, name, x, y + 17, OneConfigConfig.WHITE, 14f, Fonts.MEDIUM);
         OneKeyBind keyBind = getKeyBind();
         String text = keyBind.getDisplay();
+        button.disable(!isEnabled());
         if (button.isToggled()) {
             if (text.equals("")) text = "Recording... (ESC to clear)";
             if (!clicked) {
@@ -43,6 +46,7 @@ public class ConfigKeyBind extends BasicOption {
         } else if (text.equals("")) text = "None";
         button.setText(text);
         button.draw(vg, x + (size == 1 ? 224 : 736), y);
+        NanoVG.nvgGlobalAlpha(vg, 1f);
     }
 
     @Override

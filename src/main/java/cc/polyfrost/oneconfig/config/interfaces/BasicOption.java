@@ -1,12 +1,14 @@
 package cc.polyfrost.oneconfig.config.interfaces;
 
 import java.lang.reflect.Field;
+import java.util.function.Supplier;
 
 @SuppressWarnings({"unused"})
 public abstract class BasicOption {
     protected final Field field;
     protected final String name;
     public final int size;
+    private Supplier<Boolean> dependency;
 
     /**
      * Initialize option
@@ -81,5 +83,13 @@ public abstract class BasicOption {
 
     public String getName() {
         return name;
+    }
+
+    public void setDependency(Supplier<Boolean> supplier) {
+        this.dependency = supplier;
+    }
+
+    protected boolean isEnabled() {
+        return dependency == null || dependency.get();
     }
 }

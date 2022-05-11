@@ -8,6 +8,8 @@ import cc.polyfrost.oneconfig.config.interfaces.Config;
 import cc.polyfrost.oneconfig.lwjgl.OneColor;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 
+import java.lang.reflect.Field;
+
 public class TestConfig extends Config {
 
     @Option(
@@ -318,6 +320,8 @@ public class TestConfig extends Config {
 
     public TestConfig() {
         super(new Mod("hacks", ModType.UTIL_QOL, "ShadyDev", "1.0"), "hacksConfig.json");
+        addDependency("switchTest5", () -> switchTest4);
+        addDependency("Test page.testDescription", () -> false);
     }
 }
 
