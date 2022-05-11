@@ -9,6 +9,7 @@ public class Mod {
     public final String version;
     public Config config;
     public final OptionPage defaultPage;
+    public boolean isShortCut = false;
 
     /**
      * @param name    Friendly name of the mod

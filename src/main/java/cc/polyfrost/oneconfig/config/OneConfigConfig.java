@@ -53,7 +53,7 @@ public class OneConfigConfig extends Config {
     public static float CORNER_RADIUS_WIN = 20f;
     public static float CORNER_RADIUS = 12f;
 
-    public static boolean thirdPartyAll = false;
+    public static boolean allShowShortCut = false;
 
     public OneConfigConfig() {
         super(null, "OneConfig.json");

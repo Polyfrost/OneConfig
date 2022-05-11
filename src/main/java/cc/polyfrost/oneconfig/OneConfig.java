@@ -5,11 +5,10 @@ import cc.polyfrost.oneconfig.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.config.core.ConfigCore;
 import cc.polyfrost.oneconfig.config.data.Mod;
 import cc.polyfrost.oneconfig.config.data.ModType;
-import cc.polyfrost.oneconfig.lwjgl.BlurHandler;
-import cc.polyfrost.oneconfig.lwjgl.OneColor;
-import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.hud.HudCore;
+import cc.polyfrost.oneconfig.lwjgl.BlurHandler;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
+import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.Images;
 import cc.polyfrost.oneconfig.test.TestConfig;
 import net.minecraft.client.Minecraft;
@@ -72,10 +71,11 @@ public class OneConfig {
             ModMetadata metadata = mod.getMetadata();
             loadedOtherMods.add(metadata);
             String author = metadata.authorList.size() > 0 ? metadata.authorList.get(0) : "";
-            Mod newMod = new Mod(metadata.name, ModType.OTHER, author, metadata.version);
+            Mod newMod = new Mod(metadata.name, ModType.THIRD_PARTY, author, metadata.version);
+            newMod.isShortCut = true;
             if (newMod.name.equals("Minecraft Coder Pack") || newMod.name.equals("Forge Mod Loader") || newMod.name.equals("Minecraft Forge") || newMod.name.equals("OneConfig"))
                 continue;
-            if (modData.add(newMod)) loadedMods.add(newMod);     // anti duplicate fix
+            if (modData.add(newMod)) loadedMods.add(newMod);
         }
     }
 }

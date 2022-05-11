@@ -6,5 +6,5 @@ public enum ModType {
     UTIL_QOL,
     HYPIXEL,
     SKYBLOCK,
-    OTHER
+    THIRD_PARTY
 }
