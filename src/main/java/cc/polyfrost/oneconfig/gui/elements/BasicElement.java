@@ -14,24 +14,27 @@ public class BasicElement {
     protected boolean toggled = false;
     protected boolean disabled = false;
     protected int currentColor;
+    protected final float radius;
 
     public BasicElement(int width, int height, int colorPalette, boolean hoverFx) {
+        this(width, height, colorPalette, hoverFx, 12f);
+    }
+
+    public BasicElement(int width, int height, int colorPalette, boolean hoverFx, float radius) {
         this.height = height;
         this.width = width;
         this.colorPalette = colorPalette;
         this.hoverFx = hoverFx;
+        this.radius = radius;
     }
 
     public BasicElement(int width, int height, boolean hoverFx) {
-        this.height = height;
-        this.width = width;
-        this.colorPalette = -1;
-        this.hoverFx = hoverFx;
+        this(width, height, -1, hoverFx, 12f);
     }
 
 
     public void draw(long vg, int x, int y) {
-        RenderManager.drawRectangle(vg, x, y, width, height, currentColor);
+        RenderManager.drawRoundedRect(vg, x, y, width, height, currentColor, radius);
 
         update(x, y);
         if (hoverFx) {

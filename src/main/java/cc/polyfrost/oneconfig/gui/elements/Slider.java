@@ -9,6 +9,7 @@ public class Slider extends BasicElement {
     private final float min, max;
     protected float value;
     protected float currentDragPoint;
+    protected float dragPointerSize = 8f;
 
     public Slider(int length, float min, float max, float startValue) {
         super(length, 8, false);
@@ -22,20 +23,20 @@ public class Slider extends BasicElement {
         update(x, y);
         RenderManager.drawRoundedRect(vg, x, y + 2, width, height - 4, OneConfigConfig.GRAY_300, 3f);
         RenderManager.drawRoundedRect(vg, x, y + 2, width * value, height - 4, OneConfigConfig.BLUE_500, 3f);
-        RenderManager.drawRoundedRect(vg, currentDragPoint - 12, y - 8, 24, 24, OneConfigConfig.WHITE, 12f);
+        RenderManager.drawRoundedRect(vg, currentDragPoint - dragPointerSize / 2, y - 8, 24, 24, OneConfigConfig.WHITE, 12f);
 
 
     }
 
     public void update(int x, int y) {
         super.update(x, y);
-        if (InputUtils.isAreaHovered((int) ((x + width * value) - 8f), y - 12, 32, 32)) {
+        if (InputUtils.isAreaHovered((int) ((x + width * value)), y - 12, 32, 32)) {
             boolean drag = Mouse.isButtonDown(0);
             if (drag) {
                 value = ((float) InputUtils.mouseX() - x) / width;
             }
         } else if (InputUtils.isAreaHovered(x - 20, y - 4, width + 40, height + 8)) {
-            if (InputUtils.isClicked()) {
+            if (Mouse.isButtonDown(0)) {
                 value = ((float) InputUtils.mouseX() - x) / width;
             }
         }
@@ -43,7 +44,7 @@ public class Slider extends BasicElement {
         if (value < 0) value = 0;
         if (value > 1) value = 1;
 
-        currentDragPoint = x + width * value;
+        currentDragPoint = x + (width - dragPointerSize) * value;
 
     }
 

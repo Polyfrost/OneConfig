@@ -32,7 +32,7 @@ public abstract class Page {
     public void finishUpAndClose() {
     }
 
-    public void scrollWithDraw(long vg, int x, int y) {
+    public void scrollWithDraw(long vg, int x, int y) {     // TODO scroll bar
         int maxScroll = getMaxScrollHeight();
         int scissorOffset = drawStatic(vg, x, y);
         Scissor scissor = ScissorManager.scissor(vg, x, y + scissorOffset, x + 1056, y + 728 - scissorOffset);

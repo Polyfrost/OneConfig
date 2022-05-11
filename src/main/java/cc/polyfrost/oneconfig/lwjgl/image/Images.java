@@ -13,7 +13,6 @@ public enum Images {
     HIDE_EYE_OFF("/assets/oneconfig/icons/hide_eye_off.png"),
     KEYSTROKE("/assets/oneconfig/icons/keystroke.png"),
 
-    // TODO color picker ones
     COLOR_BASE("/assets/oneconfig/colorui/color_base.png"),
     COLOR_BASE_LONG("/assets/oneconfig/colorui/color_base_long.png"),
     COLOR_BASE_LARGE("/assets/oneconfig/colorui/color_base_large.png"),

@@ -16,6 +16,8 @@ public class OneConfigConfig extends Config {
     public static String currentProfile = "Default Profile";
     public static ArrayList<String> favoriteMods = new ArrayList<>();
 
+
+    // the color library
     public static final int TRANSPARENT = new Color(0, 0, 0, 0).getRGB();                // Transparent
     public static final int TRANSPARENT_25 = new Color(0, 0, 0, 25).getRGB();         // Transparent 25% (used because of NanoVG culling)
 
