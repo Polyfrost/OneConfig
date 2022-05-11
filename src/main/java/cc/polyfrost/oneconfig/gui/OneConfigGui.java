@@ -41,6 +41,7 @@ public class OneConfigGui extends GuiScreen {
     public boolean mouseDown;
     private float scale = 1f;
     public static OneConfigGui instanceToRestore = null;
+    public boolean allowClose = true;
 
     public OneConfigGui() {
         INSTANCE = this;
@@ -174,7 +175,7 @@ public class OneConfigGui extends GuiScreen {
     protected void keyTyped(char key, int keyCode) {
         Keyboard.enableRepeatEvents(true);
         try {
-            super.keyTyped(key, keyCode);
+            if (allowClose) super.keyTyped(key, keyCode);
             textInputField.keyTyped(key, keyCode);
             if (currentColorSelector != null) currentColorSelector.keyTyped(key, keyCode);
             currentPage.keyTyped(key, keyCode);

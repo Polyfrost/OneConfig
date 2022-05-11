@@ -10,8 +10,6 @@ import cc.polyfrost.oneconfig.utils.ColorUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
-
 public class BasicButton extends BasicElement {
 
     protected String text;
@@ -25,6 +23,7 @@ public class BasicButton extends BasicElement {
     private boolean toggleable;
     private Page page;
     private Runnable runnable;
+    private boolean alignIconLeft = false;
 
     /**
      * Create a new basic button. Used mostly on the homepage and the sidebar. Note: The button will not be drawn until you call {@link #draw(long, int, int)}.
@@ -79,7 +78,7 @@ public class BasicButton extends BasicElement {
         int textColor = -1;
         RenderManager.drawRectangle(vg, x, y, this.width, this.height, this.currentColor);
         float contentWidth = RenderManager.getTextWidth(vg, text, fontSize, Fonts.MEDIUM);
-        if (fileNameLeftIco != null) {
+        if (fileNameLeftIco != null && !alignIconLeft) {
             contentWidth += 28;
         }
         if (fileNameRightIco != null) {
@@ -95,9 +94,13 @@ public class BasicButton extends BasicElement {
 
         if (thisAlignment == ALIGNMENT_CENTER) {
             int middle = x + this.width / 2;
-            RenderManager.drawString(vg, text, middle - contentWidth / 2 + (fileNameLeftIco != null ? 28 : 0), y + ((float) height / 2) + 1, textColor, fontSize, Fonts.MEDIUM);
+            if (alignIconLeft)
+                RenderManager.drawString(vg, text, middle - contentWidth / 2, y + ((float) height / 2) + 1, textColor, fontSize, Fonts.MEDIUM);
+            else
+                RenderManager.drawString(vg, text, middle - contentWidth / 2 + (fileNameLeftIco != null ? 28 : 0), y + ((float) height / 2) + 1, textColor, fontSize, Fonts.MEDIUM);
             if (fileNameLeftIco != null) {
-                RenderManager.drawImage(vg, fileNameLeftIco, middle - contentWidth / 2, y + 8, 20, 20);
+                if (alignIconLeft) RenderManager.drawImage(vg, fileNameLeftIco, x + 12, y + height / 2f - 10, 20, 20);
+                else RenderManager.drawImage(vg, fileNameLeftIco, middle - contentWidth / 2, y + 8, 20, 20);
             }
             if (fileNameRightIco != null) {
                 RenderManager.drawImage(vg, fileNameRightIco, middle + contentWidth / 2 - (fileNameLeftIco != null ? 20 : 24), y + 8, 20, 20);
@@ -152,5 +155,13 @@ public class BasicButton extends BasicElement {
 
     public String getText() {
         return text;
+    }
+
+    public void setText(String text) {
+        this.text = text;
+    }
+
+    public void alignIconLeft(boolean value) {
+        alignIconLeft = value;
     }
 }

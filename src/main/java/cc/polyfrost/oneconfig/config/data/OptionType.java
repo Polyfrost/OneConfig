@@ -34,7 +34,6 @@ public enum OptionType {
      * Type: int
      */
     DROPDOWN,
-    //MULTI_DROPDOWN,
     /**
      * Type: doesn't matter
      */
@@ -46,5 +45,9 @@ public enum OptionType {
     /**
      * Type: runnable
      */
-    BUTTON
+    BUTTON,
+    /**
+     * Type: OneKeyBind
+      */
+    KEYBIND,
 }

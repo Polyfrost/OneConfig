@@ -11,6 +11,7 @@ public enum Images {
     FAVORITE_OFF("/assets/oneconfig/icons/favorite_inactive.png"),
     HIDE_EYE("/assets/oneconfig/icons/hide_eye.png"),
     HIDE_EYE_OFF("/assets/oneconfig/icons/hide_eye_off.png"),
+    KEYSTROKE("/assets/oneconfig/icons/keystroke.png"),
 
     // TODO color picker ones
     COLOR_BASE("/assets/oneconfig/colorui/color_base.png"),

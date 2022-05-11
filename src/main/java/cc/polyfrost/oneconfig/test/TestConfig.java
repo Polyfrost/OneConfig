@@ -2,6 +2,7 @@ package cc.polyfrost.oneconfig.test;
 
 import cc.polyfrost.oneconfig.config.annotations.ConfigPage;
 import cc.polyfrost.oneconfig.config.annotations.Option;
+import cc.polyfrost.oneconfig.config.core.OneKeyBind;
 import cc.polyfrost.oneconfig.config.data.*;
 import cc.polyfrost.oneconfig.config.interfaces.Config;
 import cc.polyfrost.oneconfig.lwjgl.OneColor;
@@ -17,6 +18,21 @@ public class TestConfig extends Config {
             size = 2
     )
     public static boolean ignored;
+
+    @Option(
+            name = "Keybind (1x)",
+            subcategory = "Test",
+            type = OptionType.KEYBIND
+    )
+    public static OneKeyBind oneKeyBind = new OneKeyBind( 18, 80);
+
+    @Option(
+            name = "Keybind (2x)",
+            subcategory = "Test",
+            type = OptionType.KEYBIND,
+            size = 2
+    )
+    public static OneKeyBind oneKeyBind2 = new OneKeyBind(27, 80);
 
     @Option(
             name = "Crash game",

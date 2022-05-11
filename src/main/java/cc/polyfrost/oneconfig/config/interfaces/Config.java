@@ -148,6 +148,9 @@ public class Config {
                 case BUTTON:
                     options.add(new ConfigButton(field, option.name(), option.size(), option.buttonText()));
                     break;
+                case KEYBIND:
+                    options.add(new ConfigKeyBind(field, option.name(), option.size()));
+                    break;
             }
         }
     }
