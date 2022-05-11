@@ -8,7 +8,6 @@ import cc.polyfrost.oneconfig.lwjgl.scissor.ScissorManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.util.ChatAllowedCharacters;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
@@ -344,7 +343,7 @@ public class TextInputField extends BasicElement {
                 if (!Character.isDefined(key)) return;
                 if (!Character.isDefined(c)) return;
                 if (GuiScreen.isCtrlKeyDown()) return;
-                if (ChatAllowedCharacters.isAllowedCharacter(c)) {
+                if (isAllowedCharacter(c)) {
                     if (selectedText != null) {
                         if (caretPos > prevCaret) {
                             input = input.substring(0, prevCaret) + input.substring(prevCaret, caretPos);
@@ -425,5 +424,9 @@ public class TextInputField extends BasicElement {
         } else {
             return RenderManager.getTextWidth(vg, s, 14.0f, Fonts.REGULAR);
         }
+    }
+
+    public static boolean isAllowedCharacter(char character) {
+        return character != 167 && character >= ' ' && character != 127;
     }
 }

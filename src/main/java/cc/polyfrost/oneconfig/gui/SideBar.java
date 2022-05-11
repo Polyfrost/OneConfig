@@ -8,7 +8,6 @@ import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.Images;
 import cc.polyfrost.oneconfig.utils.MathUtils;
-import net.minecraft.client.Minecraft;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,12 +30,12 @@ public class SideBar {
         btnList.add(new BasicButton(192, 36, "Themes Browser", Images.SEARCH, null, -3, BasicButton.ALIGNMENT_LEFT));
         btnList.add(new BasicButton(192, 36, "Packs Library", Images.MOD_BOX, null, -3, BasicButton.ALIGNMENT_LEFT));
         btnList.add(new BasicButton(192, 36, "Packs Browser", Images.SEARCH, null, -3, BasicButton.ALIGNMENT_LEFT));
-        btnList.add(new BasicButton(192, 36, "Close", Images.CLOSE, null, -1, BasicButton.ALIGNMENT_LEFT, () -> Minecraft.getMinecraft().displayGuiScreen(null)));
+        btnList.add(new BasicButton(192, 36, "Close", Images.CLOSE, null, -1, BasicButton.ALIGNMENT_LEFT, () -> RenderManager.displayGuiScreen(null)));
         btnList.add(new BasicButton(192, 36, "Minimize", Images.MINIMIZE, null, -1, BasicButton.ALIGNMENT_LEFT, () -> {
             OneConfigGui.instanceToRestore = OneConfigGui.INSTANCE;
-            Minecraft.getMinecraft().displayGuiScreen(null);
+            RenderManager.displayGuiScreen(null);
         }));
-        btnList.add(new BasicButton(192, 36, "Edit HUD", Images.HUD, null, 0, BasicButton.ALIGNMENT_LEFT, () -> Minecraft.getMinecraft().displayGuiScreen(new HudGui())));
+        btnList.add(new BasicButton(192, 36, "Edit HUD", Images.HUD, null, 0, BasicButton.ALIGNMENT_LEFT, () -> RenderManager.displayGuiScreen(new HudGui())));
     }
 
     public void draw(long vg, int x, int y) {

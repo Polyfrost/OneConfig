@@ -1,5 +1,6 @@
 package cc.polyfrost.oneconfig.gui;
 
+import cc.polyfrost.oneconfig.OneConfig;
 import cc.polyfrost.oneconfig.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.gui.elements.BasicElement;
 import cc.polyfrost.oneconfig.gui.elements.ColorSelector;
@@ -14,14 +15,12 @@ import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.Images;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import cc.polyfrost.oneconfig.utils.MathUtils;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.nanovg.NanoVG;
 
-import java.awt.*;
 import java.util.ArrayList;
 
 public class OneConfigGui extends GuiScreen {
@@ -71,7 +70,7 @@ public class OneConfigGui extends GuiScreen {
                 currentPage = new HomePage();
                 parents.add(currentPage);
             }
-            scale = Minecraft.getMinecraft().displayWidth / 1920f;
+            scale = OneConfig.getDisplayWidth() / 1920f;
             NanoVG.nvgScale(vg, scale, scale);
             if (OneConfigConfig.ROUNDED_CORNERS) {
                 RenderManager.drawRoundedRect(vg, x + 224, y, 1056, 800, OneConfigConfig.GRAY_800, OneConfigConfig.CORNER_RADIUS_WIN);

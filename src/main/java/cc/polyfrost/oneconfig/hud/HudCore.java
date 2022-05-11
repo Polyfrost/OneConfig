@@ -1,7 +1,6 @@
 package cc.polyfrost.oneconfig.hud;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.ScaledResolution;
+import cc.polyfrost.oneconfig.OneConfig;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
@@ -14,9 +13,9 @@ public class HudCore {
     @SubscribeEvent
     public void onRender(RenderGameOverlayEvent.Post event) {
         if (event.type != RenderGameOverlayEvent.ElementType.ALL || editing) return;
-        ScaledResolution sr = new ScaledResolution(Minecraft.getMinecraft());
+        int[] sr = OneConfig.getScaledResolution();
         for (BasicHud hud : huds) {
-            hud.drawAll(hud.getXScaled(sr.getScaledWidth()), hud.getYScaled(sr.getScaledHeight()), hud.scale, true);
+            hud.drawAll(hud.getXScaled(sr[0]), hud.getYScaled(sr[1]), hud.scale, true);
         }
     }
 }

@@ -12,6 +12,7 @@ import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.Images;
 import cc.polyfrost.oneconfig.test.TestConfig;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.ScaledResolution;
 import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Loader;
@@ -77,5 +78,18 @@ public class OneConfig {
                 continue;
             if (modData.add(newMod)) loadedMods.add(newMod);
         }
+    }
+
+    public static int[] getScaledResolution() {
+        ScaledResolution resolution = new ScaledResolution(mc);
+        return new int[]{resolution.getScaledWidth(), resolution.getScaledHeight()};
+    }
+
+    public static int getDisplayWidth() {
+        return mc.displayWidth;
+    }
+
+    public static int getDisplayHeight() {
+        return mc.displayHeight;
     }
 }
