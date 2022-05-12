@@ -14,8 +14,8 @@ import java.lang.reflect.Field;
 public class ConfigInfo extends BasicOption {
     private Images image;
 
-    public ConfigInfo(Field field, String name, int size, InfoType type) {
-        super(field, name, size);
+    public ConfigInfo(Field field, Object parent, String name, int size, InfoType type) {
+        super(field, parent, name, size);
         switch (type) {
             case INFO:
                 image = Images.INFO;

@@ -324,29 +324,6 @@ public final class RenderManager {
         GL11.glColor4f(f1, f2, f3, f);
     }
 
-    public static void drawDottedLine(float sx, float sy, float ex, float ey, int width, int factor, int color) {
-        GL11.glPushMatrix();
-        GL11.glLineStipple(factor, (short) 0xAAAA);
-        GL11.glEnable(GL11.GL_LINE_STIPPLE);
-        GL11.glPushMatrix();
-        GL11.glDisable(GL11.GL_TEXTURE_2D);
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glDisable(GL11.GL_ALPHA);
-        GL14.glBlendFuncSeparate(770, 771, 1, 0);           // this should never fail because it's a GL14 call, and we import GL31
-        glColor(color);
-        GL11.glLineWidth(width);
-        GL11.glBegin(GL11.GL_LINES);
-        GL11.glVertex2d(sx, sy);
-        GL11.glVertex2d(ex, ey);
-        GL11.glEnd();
-        GL11.glDisable(GL11.GL_BLEND);
-        GL11.glEnable(GL11.GL_ALPHA);
-        GL11.glEnable(GL11.GL_TEXTURE_2D);
-        GL11.glPopMatrix();
-        GL11.glDisable(GL11.GL_LINE_STIPPLE);
-        GL11.glPopMatrix();
-    }
-
     public static void drawGlRect(int x, int y, int width, int height, int color) {
         Gui.drawRect(x, y, x + width, y + height, color);
     }

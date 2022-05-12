@@ -15,7 +15,7 @@ public class HudCore {
         if (event.type != RenderGameOverlayEvent.ElementType.ALL || editing) return;
         int[] sr = OneConfig.getScaledResolution();
         for (BasicHud hud : huds) {
-            hud.drawAll(hud.getXScaled(sr[0]), hud.getYScaled(sr[1]), hud.scale, true);
+            if(hud.enabled) hud.drawAll(hud.getXScaled(sr[0]), hud.getYScaled(sr[1]), hud.scale, true);
         }
     }
 }

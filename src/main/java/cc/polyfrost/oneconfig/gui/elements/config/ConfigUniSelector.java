@@ -18,8 +18,8 @@ public class ConfigUniSelector extends BasicOption {
     private float percentMove = 1f;
     private int previous = -1;
 
-    public ConfigUniSelector(Field field, String name, int size, String[] options) {
-        super(field, name, size);
+    public ConfigUniSelector(Field field, Object parent, String name, int size, String[] options) {
+        super(field, parent, name, size);
         this.options = options;
     }
 

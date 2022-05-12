@@ -3,14 +3,13 @@ package cc.polyfrost.oneconfig.config.interfaces;
 import cc.polyfrost.oneconfig.config.annotations.ConfigPage;
 import cc.polyfrost.oneconfig.config.annotations.Option;
 import cc.polyfrost.oneconfig.config.core.ConfigCore;
-import cc.polyfrost.oneconfig.config.data.Mod;
-import cc.polyfrost.oneconfig.config.data.OptionCategory;
-import cc.polyfrost.oneconfig.config.data.OptionPage;
-import cc.polyfrost.oneconfig.config.data.OptionSubcategory;
+import cc.polyfrost.oneconfig.config.data.*;
 import cc.polyfrost.oneconfig.config.profiles.Profiles;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.elements.config.*;
 import cc.polyfrost.oneconfig.gui.pages.ModConfigPage;
+import cc.polyfrost.oneconfig.hud.BasicHud;
+import cc.polyfrost.oneconfig.hud.HudCore;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import com.google.gson.*;
 
@@ -20,6 +19,7 @@ import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class Config {
@@ -42,7 +42,7 @@ public class Config {
         if (Profiles.getProfileFile(configFile).exists()) load();
         else save();
         mod.config = this;
-        generateOptionList(this.getClass(), mod.defaultPage, mod);
+        generateOptionList(this, mod.defaultPage, mod);
         ConfigCore.oneConfigMods.add(mod);
         this.mod = mod;
     }
@@ -63,7 +63,7 @@ public class Config {
      */
     public void load() {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(Files.newInputStream(Profiles.getProfileFile(configFile).toPath()), StandardCharsets.UTF_8))) {
-            deserializePart(new JsonParser().parse(reader).getAsJsonObject(), this.getClass());
+            deserializePart(new JsonParser().parse(reader).getAsJsonObject(), this);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -72,10 +72,12 @@ public class Config {
     /**
      * Generate the option list, for internal use only
      *
-     * @param clazz target class
-     * @param page  page to add options too
+     * @param instance instance of target class
+     * @param page     page to add options too
+     * @param mod      data about the mod
      */
-    protected void generateOptionList(Class<?> clazz, OptionPage page, Mod mod) {
+    protected void generateOptionList(Object instance, OptionPage page, Mod mod) {
+        Class<?> clazz = instance.getClass();
         for (Field field : clazz.getDeclaredFields()) {
             String pagePrefix = page.equals(mod.defaultPage) ? "" : page.name + ".";
             if (!field.isAnnotationPresent(Option.class) && !field.isAnnotationPresent(ConfigPage.class)) {
@@ -93,8 +95,8 @@ public class Config {
                 try {
                     field.setAccessible(true);
                     Object object = field.get(clazz);
-                    generateOptionList(object.getClass(), newPage, mod);
-                    ConfigPageButton configPageButton = new ConfigPageButton(field, option.name(), option.description(), newPage);
+                    generateOptionList(object, newPage, mod);
+                    ConfigPageButton configPageButton = new ConfigPageButton(field, instance, option.name(), option.description(), newPage);
                     switch (option.location()) {
                         case TOP:
                             subcategory.topButtons.add(configPageButton);
@@ -117,43 +119,71 @@ public class Config {
             ArrayList<BasicOption> options = category.subcategories.get(category.subcategories.size() - 1).options;
             switch (option.type()) {
                 case SWITCH:
-                    options.add(new ConfigSwitch(field, option.name(), option.size()));
+                    options.add(new ConfigSwitch(field, instance, option.name(), option.size()));
                     break;
                 case CHECKBOX:
-                    options.add(new ConfigCheckbox(field, option.name(), option.size()));
+                    options.add(new ConfigCheckbox(field, instance, option.name(), option.size()));
                     break;
                 case TEXT:
-                    options.add(new ConfigTextBox(field, option.name(), option.size(), option.placeholder(), option.secure(), option.multiLine()));
+                    options.add(new ConfigTextBox(field, instance, option.name(), option.size(), option.placeholder(), option.secure(), option.multiLine()));
                     break;
                 case DUAL_OPTION:
-                    options.add(new ConfigDualOption(field, option.name(), option.size(), option.options()));
+                    options.add(new ConfigDualOption(field, instance, option.name(), option.size(), option.options()));
                     break;
                 case UNI_SELECTOR:
-                    options.add(new ConfigUniSelector(field, option.name(), option.size(), option.options()));
+                    options.add(new ConfigUniSelector(field, instance, option.name(), option.size(), option.options()));
                     break;
                 case DROPDOWN:
-                    options.add(new ConfigDropdown(field, option.name(), option.size(), option.options(), option.dividers()));
+                    options.add(new ConfigDropdown(field, instance, option.name(), option.size(), option.options(), option.dividers()));
                     break;
                 case SLIDER:
-                    options.add(new ConfigSlider(field, option.name(), option.size(), option.min(), option.max(), option.step()));
+                    options.add(new ConfigSlider(field, instance, option.name(), option.size(), option.min(), option.max(), option.step()));
                     break;
                 case INFO:
-                    options.add(new ConfigInfo(field, option.name(), option.size(), option.infoType()));
+                    options.add(new ConfigInfo(field, instance, option.name(), option.size(), option.infoType()));
                     break;
                 case COLOR:
-                    options.add(new ConfigColorElement(field, option.name(), option.size()));
+                    options.add(new ConfigColorElement(field, instance, option.name(), option.size()));
                     break;
                 case HEADER:
-                    options.add(new ConfigHeader(field, option.name(), option.size()));
+                    options.add(new ConfigHeader(field, instance, option.name(), option.size()));
                     break;
                 case BUTTON:
-                    options.add(new ConfigButton(field, option.name(), option.size(), option.buttonText()));
+                    options.add(new ConfigButton(field, instance, option.name(), option.size(), option.buttonText()));
                     break;
                 case KEYBIND:
-                    options.add(new ConfigKeyBind(field, option.name(), option.size()));
+                    options.add(new ConfigKeyBind(field, instance, option.name(), option.size()));
+                    break;
+                case HUD:
+                    try {
+                        field.setAccessible(true);
+                        BasicHud hud = (BasicHud) field.get(instance);
+                        HudCore.huds.add(hud);
+                        options.add(new ConfigHeader(field, hud, option.name(), 1));
+                        options.add(new ConfigSwitch(hud.getClass().getField("enabled"), hud, "Enabled", 1));
+                        options.add(new ConfigCheckbox(hud.getClass().getField("rounded"), hud, "Rounded corners", 1));
+                        options.get(options.size() - 1).setDependency(() -> hud.enabled);
+                        options.add(new ConfigCheckbox(hud.getClass().getField("border"), hud, "Outline/border", 1));
+                        options.get(options.size() - 1).setDependency(() -> hud.enabled);
+                        options.add(new ConfigColorElement(hud.getClass().getField("bgColor"), hud, "Background color:", 1));
+                        options.get(options.size() - 1).setDependency(() -> hud.enabled);
+                        options.add(new ConfigColorElement(hud.getClass().getField("borderColor"), hud, "Border color:", 1));
+                        options.get(options.size() - 1).setDependency(() -> hud.enabled && hud.border);
+                        options.add(new ConfigSlider(hud.getClass().getField("cornerRadius"), hud, "Corner radius:", 2, 0, 10, 0));
+                        options.get(options.size() - 1).setDependency(() -> hud.enabled && hud.rounded);
+                        options.add(new ConfigSlider(hud.getClass().getField("borderSize"), hud, "Border thickness:", 2, 0, 10, 0));
+                        options.get(options.size() - 1).setDependency(() -> hud.enabled && hud.border);
+                        options.add(new ConfigSlider(hud.getClass().getField("paddingX"), hud, "X-Padding", 2, 0, 50, 0));
+                        options.get(options.size() - 1).setDependency(() -> hud.enabled);
+                        options.add(new ConfigSlider(hud.getClass().getField("paddingY"), hud, "Y-Padding", 2, 0, 50, 0));
+                        options.get(options.size() - 1).setDependency(() -> hud.enabled);
+                    } catch (IllegalAccessException | NoSuchFieldException e) {
+                        e.printStackTrace();
+                    }
                     break;
             }
-            optionNames.put(pagePrefix + field.getName(), options.get(options.size() - 1));
+            if (!option.type().equals(OptionType.HUD))
+                optionNames.put(pagePrefix + field.getName(), options.get(options.size() - 1));
         }
     }
 
@@ -169,10 +199,11 @@ public class Config {
     /**
      * Deserialize part of config and load values
      *
-     * @param json  json to deserialize
-     * @param clazz target class
+     * @param json     json to deserialize
+     * @param instance instance of target class
      */
-    protected void deserializePart(JsonObject json, Class<?> clazz) {
+    protected void deserializePart(JsonObject json, Object instance) {
+        Class<?> clazz = instance.getClass();
         for (Map.Entry<String, JsonElement> element : json.entrySet()) {
             String name = element.getKey();
             JsonElement value = element.getValue();
@@ -188,7 +219,7 @@ public class Config {
                 TypeAdapter<?> adapter = gson.getAdapter(field.getType());
                 Object object = adapter.fromJsonTree(value);
                 field.setAccessible(true);
-                field.set(this, object);
+                field.set(instance, object);
             } catch (Exception ignored) {
             }
         }

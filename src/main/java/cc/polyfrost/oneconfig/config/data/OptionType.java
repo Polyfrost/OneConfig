@@ -50,4 +50,8 @@ public enum OptionType {
      * Type: OneKeyBind
       */
     KEYBIND,
+    /**
+     * Type: ? extends BasicHud
+     */
+    HUD,
 }

@@ -20,8 +20,8 @@ public class ConfigDropdown extends BasicOption { // TODO: chose where dividers 
     private boolean opened = false;
     private int[] dividers;
 
-    public ConfigDropdown(Field field, String name, int size, String[] options, int [] dividers) {
-        super(field, name, size);
+    public ConfigDropdown(Field field, Object parent, String name, int size, String[] options, int [] dividers) {
+        super(field, parent, name, size);
         this.options = options;
         this.dividers = dividers;
     }

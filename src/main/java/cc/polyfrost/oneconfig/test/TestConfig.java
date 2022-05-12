@@ -8,9 +8,15 @@ import cc.polyfrost.oneconfig.config.interfaces.Config;
 import cc.polyfrost.oneconfig.lwjgl.OneColor;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 
-import java.lang.reflect.Field;
-
 public class TestConfig extends Config {
+
+    @Option(
+            name = "Very cool HUD",
+            subcategory = "Test",
+            type = OptionType.HUD,
+            size = 2
+    )
+    public static TestHud TestHud = new TestHud();
 
     @Option(
             name = "This is all still in beta",

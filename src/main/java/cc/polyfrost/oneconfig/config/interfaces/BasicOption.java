@@ -9,16 +9,19 @@ public abstract class BasicOption {
     protected final String name;
     public final int size;
     private Supplier<Boolean> dependency;
+    protected final Object parent;
 
     /**
      * Initialize option
      *
-     * @param field variable attached to option (null for category)
-     * @param name  name of option
-     * @param size  size of option, 0 for single column, 1 for double.
+     * @param field  variable attached to option (null for category)
+     * @param parent the parent object of the field, used for getting and setting the variable
+     * @param name   name of option
+     * @param size   size of option, 0 for single column, 1 for double.
      */
-    public BasicOption(Field field, String name, int size) {
+    public BasicOption(Field field, Object parent, String name, int size) {
         this.field = field;
+        this.parent = parent;
         this.name = name;
         this.size = size;
         if (field != null) field.setAccessible(true);
@@ -29,7 +32,7 @@ public abstract class BasicOption {
      */
     protected void set(Object object) throws IllegalAccessException {
         if (field == null) return;
-        field.set(null, object);
+        field.set(parent, object);
     }
 
     /**
@@ -37,7 +40,7 @@ public abstract class BasicOption {
      */
     protected Object get() throws IllegalAccessException {
         if (field == null) return null;
-        return field.get(null);
+        return field.get(parent);
     }
 
     /**

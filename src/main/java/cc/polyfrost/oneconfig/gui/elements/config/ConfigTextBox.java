@@ -17,8 +17,8 @@ public class ConfigTextBox extends BasicOption {
     private final boolean multiLine;
     private final TextInputField textField;
 
-    public ConfigTextBox(Field field, String name, int size, String placeholder, boolean secure, boolean multiLine) {
-        super(field, name, size);
+    public ConfigTextBox(Field field, Object parent, String name, int size, String placeholder, boolean secure, boolean multiLine) {
+        super(field, parent, name, size);
         this.secure = secure;
         this.multiLine = multiLine;
         this.textField = new TextInputField(size == 1 && hasHalfSize() ? 256 : 640, multiLine ? 64 : 32, placeholder, multiLine, secure);

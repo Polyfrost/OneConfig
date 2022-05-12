@@ -1,17 +1,23 @@
 package cc.polyfrost.oneconfig.hud;
 
+import cc.polyfrost.oneconfig.lwjgl.OneColor;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 
 import java.awt.*;
 
 public abstract class BasicHud {
+    public boolean enabled = true;
+    public boolean rounded = false;
+    public boolean border = false;
+    public OneColor bgColor = new OneColor(0, 0, 0, 120);
+    public OneColor borderColor = new OneColor(0, 0, 0);
+    public float cornerRadius = 2;
+    public float borderSize = 2;
     public double xUnscaled = 0;
     public double yUnscaled = 0;
     public float scale = 1;
-    public int paddingX = 5;
-    public int paddingY = 5;
-    public boolean background = true;
-    public boolean rounded = false;
+    public float paddingX = 5;
+    public float paddingY = 5;
     public BasicHud parent;
     public BasicHud childRight;
     public BasicHud childBottom;
@@ -53,8 +59,15 @@ public abstract class BasicHud {
     }
 
     private void drawBackground(float x, float y, float width, float height, float scale) {
-        RenderManager.setupAndDraw(true, (vg) -> RenderManager.drawRoundedRect(vg, x, y, (width + paddingX * scale),
-                (height + paddingY * scale), new Color(0, 0, 0, 120).getRGB(), 2 * scale));
+        RenderManager.setupAndDraw(true, (vg) -> {
+            if (rounded) {
+                RenderManager.drawRoundedRect(vg, x, y, (width + paddingX * scale), (height + paddingY * scale), bgColor.getRGB(), cornerRadius * scale);
+                if (border) RenderManager.drawHollowRoundRect(vg, x - borderSize * scale, y - borderSize * scale, (width + paddingX * scale) + borderSize * scale, (height + paddingY * scale) + borderSize * scale, borderColor.getRGB(), cornerRadius * scale, borderSize * scale);
+            } else {
+                RenderManager.drawRect(vg, x, y, (width + paddingX * scale), (height + paddingY * scale), bgColor.getRGB());
+                if (border) RenderManager.drawHollowRoundRect(vg, x - borderSize * scale, y - borderSize * scale, (width + paddingX * scale) + borderSize * scale, (height + paddingY * scale) + borderSize * scale, borderColor.getRGB(), 0, borderSize * scale);
+            }
+        });
     }
 
     public float getXScaled(int screenWidth) {

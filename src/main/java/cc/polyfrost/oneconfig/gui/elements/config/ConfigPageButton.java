@@ -20,8 +20,8 @@ public class ConfigPageButton extends BasicOption {
     public final String description;
     private int backgroundColor = OneConfigConfig.GRAY_500;
 
-    public ConfigPageButton(Field field, String name, String description, OptionPage page) {
-        super(field, name, 2);
+    public ConfigPageButton(Field field, Object parent, String name, String description, OptionPage page) {
+        super(field, parent, name, 2);
         this.description = description;
         this.page = page;
     }

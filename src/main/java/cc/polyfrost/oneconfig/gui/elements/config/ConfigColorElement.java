@@ -24,8 +24,8 @@ public class ConfigColorElement extends BasicOption {
     private final TextInputField alphaField = new TextInputField(72, 32, "", false, false);
     private final BasicElement element = new BasicElement(64, 32, false);
 
-    public ConfigColorElement(Field field, String name, int size) {
-        super(field, name, size);
+    public ConfigColorElement(Field field, Object parent, String name, int size) {
+        super(field, parent, name, size);
         hexField.setCentered(true);
         alphaField.setCentered(true);
         alphaField.onlyAcceptNumbers(true);

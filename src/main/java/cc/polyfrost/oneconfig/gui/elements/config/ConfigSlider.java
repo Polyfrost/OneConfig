@@ -19,8 +19,8 @@ public class ConfigSlider extends BasicOption {
     private final int step;
     private boolean dragging = false;
 
-    public ConfigSlider(Field field, String name, int size, float min, float max, int step) {
-        super(field, name, size);
+    public ConfigSlider(Field field, Object parent, String name, int size, float min, float max, int step) {
+        super(field, parent, name, size);
         this.min = min;
         this.max = max;
         this.step = step;
@@ -32,6 +32,7 @@ public class ConfigSlider extends BasicOption {
         int xCoordinate = 0;
         float value = 0;
         boolean hovered = InputUtils.isAreaHovered(x + 352, y, 512, 32) && isEnabled();
+        inputField.disable(!isEnabled());
         if (!isEnabled()) NanoVG.nvgGlobalAlpha(vg, 0.5f);
         if (hovered && Mouse.isButtonDown(0)) dragging = true;
         if (dragging) {

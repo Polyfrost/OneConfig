@@ -15,8 +15,8 @@ public class ConfigSwitch extends BasicOption {
     private int color;
     private float percentOn = 0f;
 
-    public ConfigSwitch(Field field, String name, int size) {
-        super(field, name, size);
+    public ConfigSwitch(Field field, Object parent, String name, int size) {
+        super(field, parent, name, size);
 
     }
 

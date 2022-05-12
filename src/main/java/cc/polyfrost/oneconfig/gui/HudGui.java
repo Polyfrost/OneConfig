@@ -1,5 +1,6 @@
 package cc.polyfrost.oneconfig.gui;
 
+import cc.polyfrost.oneconfig.config.core.ConfigCore;
 import cc.polyfrost.oneconfig.hud.HudCore;
 import cc.polyfrost.oneconfig.hud.BasicHud;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
@@ -90,6 +91,7 @@ public class HudGui extends GuiScreen {
         float width = editingHud.getWidth(editingHud.scale) + editingHud.paddingX * editingHud.scale;
         float height = editingHud.getHeight(editingHud.scale) + editingHud.paddingY * editingHud.scale;
 
+        /* Childing disabled since it still needs some extra work
         if (editingHud.childRight != null) {
             HudCore.huds.add(editingHud.childRight);
             editingHud.childRight.parent = null;
@@ -107,7 +109,7 @@ public class HudGui extends GuiScreen {
             else if (editingHud.parent.childRight == editingHud)
                 editingHud.parent.childRight = null;
             editingHud.parent = null;
-        }
+        }*/
 
         if (newX < 0)
             newX = 0;
@@ -181,7 +183,8 @@ public class HudGui extends GuiScreen {
             }
         }
         if (smallestDiff != -1) {
-            RenderManager.drawDottedLine(smallestLine, 0, smallestLine, this.height, 2, 12, new Color(255, 255, 255).getRGB());
+            float finalSmallestLine = smallestLine;
+            RenderManager.setupAndDraw(true, (vg) -> RenderManager.drawLine(vg, finalSmallestLine, 0, finalSmallestLine, this.height, 1, new Color(255, 255, 255).getRGB()));
             return smallestLine - smallestOffset;
         }
         return pos;
@@ -219,7 +222,8 @@ public class HudGui extends GuiScreen {
             }
         }
         if (smallestDiff != -1) {
-            RenderManager.drawDottedLine(0, smallestLine, this.width, smallestLine, 2, 12, new Color(255, 255, 255).getRGB());
+            float finalSmallestLine = smallestLine;
+            RenderManager.setupAndDraw(true, (vg) -> RenderManager.drawLine(vg, 0, finalSmallestLine, this.width, finalSmallestLine, 1, new Color(255, 255, 255).getRGB()));
             return smallestLine - smallestOffset;
         }
         return pos;
@@ -316,6 +320,7 @@ public class HudGui extends GuiScreen {
     public void onGuiClosed() {
         HudCore.editing = false;
         Keyboard.enableRepeatEvents(false);
+        ConfigCore.saveAll();
     }
 
     @Override

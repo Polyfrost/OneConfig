@@ -12,8 +12,8 @@ import java.lang.reflect.Field;
 public class ConfigButton extends BasicOption {
     private final BasicButton button;
 
-    public ConfigButton(Field field, String name, int size, String text) {
-        super(field, name, size);
+    public ConfigButton(Field field, Object parent, String name, int size, String text) {
+        super(field, parent, name, size);
         Runnable runnable = () -> {
         };
         try {
@@ -27,7 +27,7 @@ public class ConfigButton extends BasicOption {
     @Override
     public void draw(long vg, int x, int y) {
         button.disable(!isEnabled());
-        NanoVG.nvgGlobalAlpha(vg, 0.5f);
+        if(!isEnabled()) NanoVG.nvgGlobalAlpha(vg, 0.5f);
         RenderManager.drawString(vg, name, x, y + 17, OneConfigConfig.WHITE, 14f, Fonts.MEDIUM);
         button.draw(vg, x + (size == 1 ? 352 : 736), y);
         NanoVG.nvgGlobalAlpha(vg, 1f);

@@ -14,8 +14,8 @@ public class ConfigDualOption extends BasicOption {
     private float percentMove = 0f;
     private final String left, right;
 
-    public ConfigDualOption(Field field, String name, int size, String[] options) {
-        super(field, name, size);
+    public ConfigDualOption(Field field, Object parent, String name, int size, String[] options) {
+        super(field, parent, name, size);
         this.left = options[0];
         this.right = options[1];
 

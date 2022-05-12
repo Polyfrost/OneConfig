@@ -11,8 +11,8 @@ import java.lang.reflect.Field;
 
 public class ConfigHeader extends BasicOption {
 
-    public ConfigHeader(Field field, String name, int size) {
-        super(field, name, size);
+    public ConfigHeader(Field field, Object parent, String name, int size) {
+        super(field, parent, name, size);
     }
 
     @Override

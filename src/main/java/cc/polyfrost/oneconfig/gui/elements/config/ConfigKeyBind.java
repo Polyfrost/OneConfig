@@ -17,8 +17,8 @@ public class ConfigKeyBind extends BasicOption {
     private final BasicButton button;
     private boolean clicked = false;
 
-    public ConfigKeyBind(Field field, String name, int size) {
-        super(field, name, size);
+    public ConfigKeyBind(Field field, Object parent, String name, int size) {
+        super(field, parent, name, size);
         button = new BasicButton(256, 32, "", Images.KEYSTROKE, null, 0, BasicButton.ALIGNMENT_CENTER, true);
         button.alignIconLeft(true);
     }

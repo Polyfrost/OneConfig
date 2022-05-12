@@ -16,7 +16,7 @@ import java.awt.*;
  */
 @SuppressWarnings("unused")
 public class OneColor {
-    transient private int rgba;
+    transient private Integer rgba = null;
     private short[] hsba;
     private int chroma = -1;
 
@@ -134,13 +134,17 @@ public class OneColor {
      */
     public int getRGB() {
         if (chroma == -1) {
+            // fix for when rgba is not set because of deserializing not calling constructor
+            if (rgba == null) rgba = HSBAtoRGBA(this.hsba[0], this.hsba[1], this.hsba[2], this.hsba[3]);
             return rgba;
         } else {
             return HSBAtoRGBA(System.currentTimeMillis() % chroma / (float) chroma, hsba[1], hsba[2], hsba[3]);
         }
     }
 
-    /** return the current color without its alpha. Internal method. */
+    /**
+     * return the current color without its alpha. Internal method.
+     */
     public int getRGBNoAlpha() {
         return 0xff000000 | rgba;
     }
