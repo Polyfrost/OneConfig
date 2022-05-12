@@ -230,6 +230,7 @@ public class OneConfigGui extends GuiScreen {
      * Close the current color selector and return the color it had when it closed.
      */
     public OneColor closeColorSelector() {
+        currentColorSelector.onClose();
         OneColor color = currentColorSelector.getColor();
         currentColorSelector = null;
         return color;

@@ -1,6 +1,7 @@
 package cc.polyfrost.oneconfig.config;
 
 import cc.polyfrost.oneconfig.config.interfaces.Config;
+import cc.polyfrost.oneconfig.lwjgl.OneColor;
 import com.google.gson.JsonParser;
 import cc.polyfrost.oneconfig.config.data.Mod;
 
@@ -15,6 +16,8 @@ public class OneConfigConfig extends Config {
 
     public static String currentProfile = "Default Profile";
     public static ArrayList<String> favoriteMods = new ArrayList<>();
+    public static ArrayList<OneColor> favoriteColors = new ArrayList<>();
+    public static ArrayList<OneColor> recentColors = new ArrayList<>();
 
 
     // the color library

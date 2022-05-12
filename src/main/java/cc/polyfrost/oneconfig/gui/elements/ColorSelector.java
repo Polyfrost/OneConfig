@@ -35,10 +35,12 @@ public class ColorSelector {
     private final NumberInputField brightnessInput = new NumberInputField(90, 32, 100, 0, 100, 1);
     private final NumberInputField alphaInput = new NumberInputField(90, 32, 0, 0, 100, 1);
     private final TextInputField hexInput = new TextInputField(88, 32, true, "");
+    private final ArrayList<ColorBox> favoriteColors = new ArrayList<>();
+    private final ArrayList<ColorBox> recentColors = new ArrayList<>();
 
     private final ColorSlider topSlider = new ColorSlider(384, 0, 360, 127);
     private final ColorSlider bottomSlider = new ColorSlider(384, 0, 100, 100);
-    private final Slider speedSlider = new Slider(384, 1, 60, 20);
+    private final Slider speedSlider = new Slider(296, 1, 30, 20);
     private int mode = 0;
 
 
@@ -51,11 +53,18 @@ public class ColorSelector {
         saturationInput.setCurrentValue(color.getSaturation());
         brightnessInput.setCurrentValue(color.getBrightness());
         alphaInput.setCurrentValue(color.getAlpha() / 255f * 100f);
+        speedSlider.setValue(color.getChroma());
         topSlider.setValue(color.getHue());
         topSlider.setColor(color);
         bottomSlider.setValue(color.getAlpha() / 255f * 100f);
         this.x = mouseX - 208;
         this.y = mouseY - 776;
+        for(OneColor color1 : OneConfigConfig.recentColors) {
+            recentColors.add(new ColorBox(color1));
+        }
+        for(OneColor color1 : OneConfigConfig.favoriteColors) {
+            favoriteColors.add(new ColorBox(color1));
+        }
 
         topSlider.setImage(Images.HUE_GRADIENT);
     }
@@ -73,6 +82,28 @@ public class ColorSelector {
             OneConfigGui.INSTANCE.closeColorSelector();
         }
 
+        // hex parser
+        if(copyBtn.isClicked()) {
+            Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(color.getHex()), null);
+        }
+        if(pasteBtn.isClicked()) {
+            try {
+                color.setColorFromHex(Toolkit.getDefaultToolkit().getSystemClipboard().getContents(null).getTransferData(DataFlavor.stringFlavor).toString());
+            } catch (Exception ignored) {
+            }
+        }
+        hexInput.setErrored(false);
+        if(hexInput.isToggled()) {          // TODO fix this
+            try {
+                color.setColorFromHex(hexInput.getInput());
+            } catch (Exception e) {
+                hexInput.setErrored(true);
+                e.printStackTrace();
+            }
+        }
+
+        // TODO favorite stuff
+
         RenderManager.drawRoundedRect(vg, x + 16, y + 64, 384, 32, OneConfigConfig.GRAY_500, 12f);
         RenderManager.drawRoundedRect(vg, x + 18 + (percentMove * 128), y + 66, 124, 28, OneConfigConfig.BLUE_600, 10f);
         int i = 18;
@@ -80,14 +111,27 @@ public class ColorSelector {
             button.draw(vg, x + i, y + 66);
             if(button.isClicked()) {
                 mode = buttons.indexOf(button);
+                if(mode == 1) {
+                    mouseX = (int) (Math.sin(Math.toRadians(-color.getHue()) + 1.5708) * (saturationInput.getCurrentValue() / 100 * 144) + x + 208);
+                    mouseY = (int) (Math.cos(Math.toRadians(-color.getHue()) + 1.5708) * (saturationInput.getCurrentValue() / 100 * 144) + y + 264);
+                    topSlider.setValue(color.getBrightness() / 100f * 360f);
+                }
+                if(mode == 0 || mode == 2) {
+                    topSlider.setValue(color.getHue());
+                    mouseX = (int) (saturationInput.getCurrentValue() / 100f * 384 + x + 16);
+                    mouseY = (int) (Math.abs(brightnessInput.getCurrentValue() / 100f - 1f) * 288 + y + 120);
+                }
+            }
+            if(percentMove != mode) {
+                button.currentColor = OneConfigConfig.TRANSPARENT;
             }
             i += 128;
         }
-        percentMove = MathUtils.easeOut(percentMove, mode, 20f);
+        percentMove = MathUtils.easeOut(percentMove, mode, 18f);
 
         RenderManager.drawString(vg, "HSB Box", x + 55, y + 81, OneConfigConfig.WHITE, 12f, Fonts.MEDIUM);
         RenderManager.drawString(vg, "Color Wheel", x + 172.5f, y + 81, OneConfigConfig.WHITE, 12f, Fonts.MEDIUM);
-        RenderManager.drawString(vg, "Chroma", x + 307, y + 81, OneConfigConfig.WHITE, 12f, Fonts.MEDIUM);
+        RenderManager.drawString(vg, "Chroma", x + 313, y + 81, OneConfigConfig.WHITE, 12f, Fonts.MEDIUM);
 
         RenderManager.drawString(vg, "Saturation", x + 224, y + 560, OneConfigConfig.WHITE_80, 12f, Fonts.MEDIUM);
         saturationInput.draw(vg, x + 312, y + 544);
@@ -95,7 +139,7 @@ public class ColorSelector {
         brightnessInput.draw(vg, x + 104, y + 584);
         RenderManager.drawString(vg, "Alpha (%)", x + 224, y + 599, OneConfigConfig.WHITE_80, 12f, Fonts.MEDIUM);
         alphaInput.draw(vg, x + 312, y + 584);
-        RenderManager.drawString(vg, "Hex (ARGB)", x + 16, y + 641, OneConfigConfig.WHITE_80, 12f, Fonts.MEDIUM);
+        RenderManager.drawString(vg, color.getChroma() == -1 ? "Hex (RGB)" : "Chroma Speed", x + 16, y + 641, OneConfigConfig.WHITE_80, 12f, Fonts.MEDIUM);
         hexInput.draw(vg, x + 104, y + 624);
 
         copyBtn.draw(vg, x + 204, y + 624);
@@ -109,15 +153,17 @@ public class ColorSelector {
 
 
         boolean drag;
+        if(mode != 2) color.setChromaSpeed(-1);
         switch (mode) {
             default:
             case 0:
-                buttons.get(0).currentColor = OneConfigConfig.TRANSPARENT;
-                if(mouseX < x + 16 && mouseY < y + 120) {   // TODO make this work for switching between modes
+            case 2:
+                buttons.get(mode).currentColor = OneConfigConfig.TRANSPARENT;
+                if(mouseX < x + 16 && mouseY < y + 120) {
                     this.mouseX = (int) (color.getSaturation() / 100f * 384 + x + 16);
                     this.mouseY = (int) (Math.abs(color.getBrightness() / 100f - 1f) * 288 + y + 120);
                 }
-                RenderManager.drawHSBBox(vg, x + 16, y + 120, 384, 288, color.getRGBMax());
+                RenderManager.drawHSBBox(vg, x + 16, y + 120, 384, 288, color.getRGBMax(false));
                 drag = Mouse.isButtonDown(0) && InputUtils.isAreaHovered(x + 16, y + 120, 384, 288);
                 if(drag) {
                     mouseX = InputUtils.mouseX();
@@ -126,14 +172,20 @@ public class ColorSelector {
                 float progressX = (mouseX - x - 16f) / 384f;
                 float progressY = Math.abs((mouseY - y - 120f) / 288f - 1f);
                 color.setHSBA((int) topSlider.getValue(), Math.round(progressX * 100), Math.round(progressY * 100), (int) ((bottomSlider.getValue() / 100f) * 255));
-
-                topSlider.setColor(color);
-                topSlider.draw(vg, x + 16, y + 424);
-                RenderManager.drawString(vg, "Hue", x + 16, y + 560, OneConfigConfig.WHITE_80, 12f, Fonts.MEDIUM);
-                hueInput.draw(vg, x + 104, y + 544);
-                bottomSlider.setGradient(OneConfigConfig.TRANSPARENT_25, color.getRGBNoAlpha());
-                RenderManager.drawImage(vg, Images.COLOR_BASE_LONG, x + 16, y + 456, 384, 16);
-                bottomSlider.draw(vg, x + 16, y + 456);
+                if(mode == 0) {
+                    topSlider.setColor(color);
+                    topSlider.draw(vg, x + 16, y + 424);
+                    RenderManager.drawString(vg, "Hue", x + 16, y + 560, OneConfigConfig.WHITE_80, 12f, Fonts.MEDIUM);
+                    hueInput.draw(vg, x + 104, y + 544);
+                }
+                if(mode == 2) {
+                    speedSlider.draw(vg, x + 60, y + 424);
+                    RenderManager.drawString(vg, "SLOW", x + 16, y + 429, OneConfigConfig.WHITE_80, 12f, Fonts.REGULAR);
+                    RenderManager.drawString(vg, "FAST", x + 370, y + 429, OneConfigConfig.WHITE_80, 12f, Fonts.REGULAR);
+                    RenderManager.drawString(vg, "Speed (s)", x + 16, y + 560, OneConfigConfig.WHITE_80, 12f, Fonts.MEDIUM);
+                    hueInput.draw(vg, x + 104, y + 544);
+                    color.setChromaSpeed((int) speedSlider.getValue());
+                }
                 break;
             case 1:
                 buttons.get(1).currentColor = OneConfigConfig.TRANSPARENT;
@@ -154,41 +206,60 @@ public class ColorSelector {
 
                 }
                 color.setHSBA(drag ? angle : color.getHue(), drag ? (int) (squareDist / (144 * 144) * 100) : color.getSaturation(), (int) (topSlider.getValue() / 360 * 100), (int) ((bottomSlider.getValue() / 100f) * 255));
-                topSlider.setGradient(OneConfigConfig.BLACK, color.getRGBMax());
+                topSlider.setGradient(OneConfigConfig.BLACK, color.getRGBMax(true));
                 topSlider.setImage(null);
                 RenderManager.drawString(vg, "Hue", x + 16, y + 560, OneConfigConfig.WHITE_80, 12f, Fonts.MEDIUM);
                 hueInput.draw(vg, x + 104, y + 544);
                 topSlider.draw(vg, x + 16, y + 424);
-                bottomSlider.setGradient(OneConfigConfig.TRANSPARENT_25, color.getRGBNoAlpha());
-                RenderManager.drawImage(vg, Images.COLOR_BASE_LONG, x + 16, y + 456, 384, 16);
-                bottomSlider.draw(vg, x + 16, y + 456);
-                break;
-            case 2:
-                buttons.get(2).currentColor = OneConfigConfig.TRANSPARENT;
                 break;
         }
+        bottomSlider.setGradient(OneConfigConfig.TRANSPARENT_25, color.getRGBNoAlpha());
+        RenderManager.drawImage(vg, Images.COLOR_BASE_LONG, x + 16, y + 456, 384, 16);
+        bottomSlider.draw(vg, x + 16, y + 456);
+
         RenderManager.drawRoundedRect(vg, mouseX - 6, mouseY - 6, 12, 12, OneConfigConfig.WHITE, 12f);
         RenderManager.drawRoundedRect(vg, mouseX - 5, mouseY - 5, 10, 10, color.getRGBNoAlpha(), 10f);
 
         // deal with the input fields
         if(hueInput.isToggled() || saturationInput.isToggled() || brightnessInput.isToggled() || alphaInput.isToggled() || hueInput.arrowsClicked() || saturationInput.arrowsClicked() || brightnessInput.arrowsClicked() || alphaInput.arrowsClicked()) {
-            color.setHSBA((int) hueInput.getCurrentValue(), (int) saturationInput.getCurrentValue(), (int) brightnessInput.getCurrentValue(), (int) ((alphaInput.getCurrentValue() / 100f) * 255f));
-            topSlider.setValue(color.getHue());
+            if(mode != 2) {
+                color.setHSBA((int) hueInput.getCurrentValue(), (int) saturationInput.getCurrentValue(), (int) brightnessInput.getCurrentValue(), (int) ((alphaInput.getCurrentValue() / 100f) * 255f));
+            }
+            if(mode == 2) {
+                color.setHSBA(color.getHue(), (int) saturationInput.getCurrentValue(), (int) brightnessInput.getCurrentValue(), (int) ((alphaInput.getCurrentValue() / 100f) * 255f));
+                color.setChromaSpeed((int) (hueInput.getCurrentValue() / 360f * 30f));
+            }
             bottomSlider.setValue(color.getAlpha() / 255f * 100f);
             if(mode == 0 || mode == 2) {
                 mouseX = (int) (saturationInput.getCurrentValue() / 100f * 384 + x + 16);
                 mouseY = (int) (Math.abs(brightnessInput.getCurrentValue() / 100f - 1f) * 288 + y + 120);
             } else {
-                // TODO
+                topSlider.setValue(color.getBrightness() / 100f * 360f);
+                mouseX = (int) (Math.sin(Math.toRadians(-color.getHue()) + 1.5708) * (saturationInput.getCurrentValue() / 100 * 144) + x + 208);
+                mouseY = (int) (Math.cos(Math.toRadians(-color.getHue()) + 1.5708) * (saturationInput.getCurrentValue() / 100 * 144) + y + 264);
             }
-
+            if(mode == 0) {
+                topSlider.setValue(color.getHue());
+            }
+            if(mode == 2) {
+                speedSlider.setValue(hueInput.getCurrentValue() / 360f * 30f);
+            }
         }
         else if(OneConfigGui.INSTANCE.mouseDown) {
-            hueInput.setInput(String.valueOf(color.getHue()));
-            saturationInput.setInput(String.valueOf(color.getSaturation()));
-            brightnessInput.setInput(String.valueOf(color.getBrightness()));
+            if(mode != 2) {
+                hueInput.setInput(String.format("%.01f", (float) color.getHue()));
+                hexInput.setInput("#" + color.getHex());
+            } else {
+                hueInput.setInput(String.format("%.01f", (float) color.getChroma()));
+                hexInput.setInput("Z" + color.getChroma());
+            }
+            saturationInput.setInput(String.format("%.01f", (float) color.getSaturation()));
+            brightnessInput.setInput(String.format("%.01f", (float) color.getBrightness()));
             alphaInput.setInput(String.format("%.01f", color.getAlpha() / 255f * 100f));
-            hexInput.setInput(color.getHex());
+        }
+        if(mode != 2 && !hexInput.isToggled()) {
+            hueInput.setInput(String.format("%.01f", (float) color.getHue()));
+            hexInput.setInput("#" + color.getHex());
         }
 
 
@@ -196,27 +267,6 @@ public class ColorSelector {
         RenderManager.drawHollowRoundRect(vg, x + 15, y + 487, 384, 40, OneConfigConfig.GRAY_300, 12f, 2f);
         RenderManager.drawImage(vg, Images.COLOR_BASE_LARGE, x + 20, y + 492, 376, 32);
         RenderManager.drawRoundedRect(vg, x + 20, y + 492, 376, 32, color.getRGB(), 8f);
-
-
-        // hex parser
-        hexInput.setErrored(false);
-        if(hexInput.isToggled()) {
-            try {
-                color.setColorFromHex(hexInput.getInput());
-            } catch (Exception e) {
-                hexInput.setErrored(true);
-            }
-        }
-
-        if(copyBtn.isClicked()) {
-            Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(color.getHex()), null);
-        }
-        if(pasteBtn.isClicked()) {
-            try {
-                color.setColorFromHex(Toolkit.getDefaultToolkit().getSystemClipboard().getContents(null).getTransferData(DataFlavor.stringFlavor).toString());
-            } catch (Exception ignored) {
-            }
-        }
     }
 
     public OneColor getColor() {
@@ -229,6 +279,26 @@ public class ColorSelector {
         brightnessInput.keyTyped(typedChar, keyCode);
         alphaInput.keyTyped(typedChar, keyCode);
         hueInput.keyTyped(typedChar, keyCode);
+    }
+
+    public void onClose() {
+        for(int i = 0; i < OneConfigConfig.recentColors.size(); i++) {
+            OneColor color1 = OneConfigConfig.recentColors.get(i);
+            if(color1.getRGB() == color.getRGB()) {
+                OneConfigConfig.recentColors.get(i).setFromOneColor(color1);
+                return;
+            }
+        }
+        OneConfigConfig.recentColors.add(color);
+    }
+
+    public void setFavorite(int index) {
+        if(index < 0 || index >= OneConfigConfig.favoriteColors.size()) {
+            return;
+        }
+        OneConfigConfig.favoriteColors.add(index, color);
+        this.favoriteColors.add(index, new ColorBox(color));
+        this.favoriteColors.get(index).setToggled(true);
     }
 
 
@@ -271,6 +341,29 @@ public class ColorSelector {
 
         public void setImage(Images image) {
             this.image = image;
+        }
+    }
+
+    private static class ColorBox extends BasicElement {
+        protected OneColor color;
+        public ColorBox(OneColor color) {
+            super(32, 32, false);
+            this.color = color;
+        }
+
+        @Override
+        public void draw(long vg, int x, int y) {
+            RenderManager.drawRoundedRect(vg, x, y, 32, 32, toggled ? OneConfigConfig.BLUE_600 : OneConfigConfig.GRAY_300, 12f);
+            RenderManager.drawRoundedRect(vg, x + 2, y + 2, 28, 28, OneConfigConfig.GRAY_800, 8f);
+            RenderManager.drawRoundedRect(vg, x + 4, y + 4, 24, 24, color.getRGB(), 8f);
+        }
+
+        public void setColor(OneColor color) {
+            this.color = color;
+        }
+
+        public OneColor getColor() {
+            return color;
         }
     }
 }

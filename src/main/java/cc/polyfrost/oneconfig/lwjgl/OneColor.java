@@ -71,8 +71,11 @@ public class OneColor {
     }
 
     // chroma constructors
+    /** Create a new Chroma OneColor. The speed should be a max of 30s and a min of 1s. */
     public OneColor(int saturation, int brightness, int alpha, float chromaSpeed) {
         this(System.currentTimeMillis() % (int) chromaSpeed / chromaSpeed, saturation, brightness, alpha);
+        if(chromaSpeed < 1) chromaSpeed = 1;
+        if(chromaSpeed > 30) chromaSpeed = 30;
         this.chroma = (int) chromaSpeed;
     }
 
@@ -89,34 +92,58 @@ public class OneColor {
 
 
     // accessors
+    /** Get the red value of the color (0-255). */
     public int getRed() {
         return rgba >> 16 & 255;
     }
 
+    /** Get the green value of the color (0-255). */
     public int getGreen() {
         return rgba >> 8 & 255;
     }
 
+    /** Get the blue value of the color (0-255). */
     public int getBlue() {
         return rgba & 255;
     }
 
+    /** Get the hue value of the color (0-360). */
     public int getHue() {
         return hsba[0];
     }
 
+    /** Get the saturation value of the color (0-100). */
     public int getSaturation() {
         return hsba[1];
     }
 
+    /** Get the brightness value of the color (0-100). */
     public int getBrightness() {
         return hsba[2];
     }
 
+    /** Get the alpha value of the color (0-255). */
     public int getAlpha() {
         return hsba[3];
     }
 
+    /** Get the chroma speed of the color (1s-30s). */
+    public int getChroma() {
+        return chroma == -1 ? -1 : chroma / 1000;
+    }
+
+    /** Set the current chroma speed of the color. -1 to disable. */
+    public void setChromaSpeed(int speed) {
+        if(speed == -1) {
+            this.chroma = -1;
+            return;
+        }
+        if(speed < 1) speed = 1;
+        if(speed > 30) speed = 30;
+        this.chroma = speed * 1000;
+    }
+
+    /** Set the HSBA values of the color. */
     public void setHSBA(int hue, int saturation, int brightness, int alpha) {
         this.hsba[0] = (short) hue;
         this.hsba[1] = (short) saturation;
@@ -125,8 +152,12 @@ public class OneColor {
         this.rgba = HSBAtoRGBA(this.hsba[0], this.hsba[1], this.hsba[2], this.hsba[3]);
     }
 
+    public void setFromOneColor(OneColor color) {
+        setHSBA(color.hsba[0], color.hsba[1], color.hsba[2], color.hsba[3]);
+    }
+
     /**
-     * Return the current color in RGBA format. This is the format used by LWJGL and Minecraft.
+     * Return the current color in ARGB format. This is the format used by LWJGL and Minecraft.
      * This method WILL return the color as a chroma, at the specified speed, if it is set.
      * Otherwise, it will just return the current color.
      *
@@ -138,7 +169,9 @@ public class OneColor {
             if (rgba == null) rgba = HSBAtoRGBA(this.hsba[0], this.hsba[1], this.hsba[2], this.hsba[3]);
             return rgba;
         } else {
-            return HSBAtoRGBA(System.currentTimeMillis() % chroma / (float) chroma, hsba[1], hsba[2], hsba[3]);
+            int temp = Color.HSBtoRGB(System.currentTimeMillis() % chroma / (float) chroma, hsba[1] / 100f, hsba[2] / 100f);
+            hsba[0] = (short) ((System.currentTimeMillis() % chroma / (float) chroma) * 360);
+            return ((temp & 0x00ffffff) | (hsba[3] << 24));
         }
     }
 
@@ -146,14 +179,14 @@ public class OneColor {
      * return the current color without its alpha. Internal method.
      */
     public int getRGBNoAlpha() {
-        return 0xff000000 | rgba;
+        return 0xff000000 | getRGB();
     }
 
     /**
      * Return the color as if it had maximum saturation and brightness. Internal method.
      */
-    public int getRGBMax() {
-        return HSBAtoRGBA(hsba[0], hsba[1], 100, 255);
+    public int getRGBMax(boolean maxBrightness) {
+        return HSBAtoRGBA(hsba[0], maxBrightness ? hsba[1] : 100, 100, 255);
     }
 
     /**
@@ -178,12 +211,30 @@ public class OneColor {
     }
 
     public String getHex() {
-        return Integer.toHexString(rgba).toUpperCase();
+        return Integer.toHexString(0xff000000 | getRGB()).toUpperCase().substring(2);
     }
 
     public void setColorFromHex(String hex) {
+        hex = hex.replaceAll("#", "");
+        if(hex.length() == 3) {
+            hex = charsToString(hex.charAt(0), hex.charAt(0), hex.charAt(1), hex.charAt(1), hex.charAt(2), hex.charAt(2));
+        }
+        if(hex.length() == 1) {
+            hex = charsToString(hex.charAt(0), hex.charAt(0), hex.charAt(0), hex.charAt(0), hex.charAt(0), hex.charAt(0));
+        }
+        if(hex.length() == 2 && hex.charAt(1) == hex.charAt(0)) {
+            hex = charsToString(hex.charAt(0), hex.charAt(0), hex.charAt(0), hex.charAt(0), hex.charAt(0), hex.charAt(0));
+        }
         rgba = Integer.parseInt(hex, 16);
-        hsba = RGBAtoHSBA(rgba);
+        hsba = RGBAtoHSBA(0xff000000 | rgba);
+    }
+
+    private String charsToString(char... chars) {
+        StringBuilder sb = new StringBuilder();
+        for(char c : chars) {
+            sb.append(c);
+        }
+        return sb.toString();
     }
 
     @Override
