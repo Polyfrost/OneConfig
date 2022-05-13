@@ -56,7 +56,7 @@ public class OneConfig {
         RenderManager.setupAndDraw((vg) -> {
             RenderManager.drawRoundedRect(vg, -100, -100, 50, 50, -1, 12f);
             RenderManager.drawString(vg, "OneConfig loading...", -100, -100, -1, 12f, Fonts.MEDIUM);
-            RenderManager.drawImage(vg, Images.LOGO, -100, -100, 50, 50);
+            RenderManager.drawImage(vg, Images.ONECONFIG, -100, -100, 50, 50);
         });
     }
 

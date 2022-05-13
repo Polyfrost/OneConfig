@@ -39,7 +39,7 @@ public class ConfigTextBox extends BasicOption {
         textField.draw(vg, x + (size == 1 && hasHalfSize() ? 224 : 352), y);
 
         if (secure)
-            RenderManager.drawImage(vg, Images.HIDE_EYE, x + 967, y + 7, 18, 18, new Color(196, 196, 196).getRGB());
+            RenderManager.drawImage(vg, Images.EYE, x + 967, y + 7, 18, 18, new Color(196, 196, 196).getRGB());
         if (secure && InputUtils.isAreaClicked(x + 967, y + 7, 18, 18)) textField.setPassword(!textField.getPassword());
         NanoVG.nvgGlobalAlpha(vg, 1f);
     }

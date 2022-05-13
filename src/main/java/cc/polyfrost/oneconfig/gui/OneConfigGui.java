@@ -82,7 +82,7 @@ public class OneConfigGui extends GuiScreen {
             RenderManager.drawLine(vg, x + 224, y + 72, x + 1280, y + 72, 1, OneConfigConfig.GRAY_700);
             RenderManager.drawLine(vg, x + 224, y, x + 222, y + 800, 1, OneConfigConfig.GRAY_700);
 
-            RenderManager.drawImage(vg, Images.LOGO, x + 19, y + 19, 42, 42);
+            RenderManager.drawImage(vg, Images.ONECONFIG, x + 19, y + 19, 42, 42);
             RenderManager.drawString(vg, "OneConfig", x + 69, y + 32, OneConfigConfig.WHITE, 18f, Fonts.BOLD);        // added half line height to center text
             RenderManager.drawString(vg, "ALPHA - By Polyfrost", x + 69, y + 51, OneConfigConfig.WHITE, 12f, Fonts.REGULAR);
 
@@ -102,7 +102,7 @@ public class OneConfigGui extends GuiScreen {
                 backArrow.disable(false);
                 if (!backArrow.isHovered() || Mouse.isButtonDown(0)) NanoVG.nvgGlobalAlpha(vg, 0.8f);
             }
-            RenderManager.drawImage(vg, Images.CIRCLE_ARROW, x + 271, y + 25, -22, 22);
+            RenderManager.drawImage(vg, Images.ARROW_CIRCLE_LEFT, x + 271, y + 25, 22, 22);
             NanoVG.nvgGlobalAlpha(vg, 1f);
             if (nextPages.size() == 0) {
                 forwardArrow.disable(true);
@@ -111,7 +111,7 @@ public class OneConfigGui extends GuiScreen {
                 forwardArrow.disable(false);
                 if (!forwardArrow.isHovered() || Mouse.isButtonDown(0)) NanoVG.nvgGlobalAlpha(vg, 0.8f);
             }
-            RenderManager.drawImage(vg, Images.CIRCLE_ARROW, x + 289, y + 25, 22, 22);
+            RenderManager.drawImage(vg, Images.ARROW_CIRCLE_RIGHT, x + 289, y + 25, 22, 22);
             NanoVG.nvgGlobalAlpha(vg, 1f);
 
             if (backArrow.isClicked() && previousPages.size() > 0) {
@@ -155,7 +155,7 @@ public class OneConfigGui extends GuiScreen {
                 else if (hovered && !Mouse.isButtonDown(0)) color = OneConfigConfig.WHITE_80;
                 RenderManager.drawString(vg, title, breadcrumbX, y + 38, color, 24f, Fonts.SEMIBOLD);
                 if (i != 0)
-                    RenderManager.drawImage(vg, Images.CHEVRON_ARROW, breadcrumbX - 22, y + 26, 13, 22, color);
+                    RenderManager.drawImage(vg, Images.CHEVRON_RIGHT, breadcrumbX - 22, y + 26, 13, 22, color);
                 if (hovered && i != parents.size() - 1)
                     RenderManager.drawLine(vg, breadcrumbX, y + 48, breadcrumbX + width, y + 48, 2, color);
                 if (hovered && InputUtils.isClicked()) openPage(parents.get(i));

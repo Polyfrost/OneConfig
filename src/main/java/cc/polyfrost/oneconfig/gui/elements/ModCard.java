@@ -50,7 +50,7 @@ public class ModCard extends BasicElement {
         if (iconPath != null) {
             RenderManager.drawImage(vg, iconPath, x, y, width, 87);
         } else {
-            RenderManager.drawImage(vg, Images.MOD_BOX, x + 98, y + 19, 48, 48);
+            RenderManager.drawImage(vg, Images.BOX, x + 98, y + 19, 48, 48);
         }
         favoriteHitbox.update(x + 212, y + 87);
         favoriteHitbox.currentColor = ColorUtils.getColor(favoriteHitbox.currentColor, favoriteHitbox.colorPalette, favoriteHitbox.hovered, favoriteHitbox.clicked);
@@ -58,9 +58,9 @@ public class ModCard extends BasicElement {
         favorite = favoriteHitbox.isToggled();
         RenderManager.drawString(vg, modData.name, x + 12, y + 103, OneConfigConfig.WHITE, 14f, Fonts.MEDIUM);
         if (favorite) {
-            RenderManager.drawImage(vg, Images.FAVORITE, x + 220, y + 95, 16, 16);
+            RenderManager.drawImage(vg, Images.HEART_FILL, x + 220, y + 95, 16, 16);
         } else {
-            RenderManager.drawImage(vg, Images.FAVORITE_OFF, x + 220, y + 95, 16, 16);
+            RenderManager.drawImage(vg, Images.HEART_OUTLINE, x + 220, y + 95, 16, 16);
         }
         super.update(x, y);
         isHoveredMain = InputUtils.isAreaHovered(x, y, width, 87);

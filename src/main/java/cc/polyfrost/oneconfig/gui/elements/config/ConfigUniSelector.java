@@ -49,8 +49,8 @@ public class ConfigUniSelector extends BasicOption {
         }
         ScissorManager.resetScissor(vg, scissor);
 
-        RenderManager.drawImage(vg, Images.CHEVRON_ARROW, x + 248, y + 7, -8, 14, OneConfigConfig.BLUE_400);
-        RenderManager.drawImage(vg, Images.CHEVRON_ARROW, x + 456, y + 7, 8, 14, OneConfigConfig.BLUE_400);
+        RenderManager.drawImage(vg, Images.CHEVRON_LEFT, x + 248, y + 7, 8, 14, OneConfigConfig.BLUE_400);
+        RenderManager.drawImage(vg, Images.CHEVRON_RIGHT, x + 456, y + 7, 8, 14, OneConfigConfig.BLUE_400);
 
         if (InputUtils.isAreaClicked(x + 235, y + 5, 18, 18) && selected > 0 && isEnabled()) {
             previous = selected;

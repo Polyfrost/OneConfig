@@ -18,10 +18,10 @@ public class ConfigInfo extends BasicOption {
         super(field, parent, name, size);
         switch (type) {
             case INFO:
-                image = Images.INFO;
+                image = Images.INFO_CIRCLE;
                 break;
             case SUCCESS:
-                image = Images.SUCCESS;
+                image = Images.CHECK_CIRCLE;
                 break;
             case WARNING:
                 image = Images.WARNING;

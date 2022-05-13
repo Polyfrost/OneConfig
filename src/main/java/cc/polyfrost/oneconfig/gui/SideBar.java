@@ -20,18 +20,18 @@ public class SideBar {
     public SideBar() {
         btnList.add(new BasicButton(192, 36, "Dashboard", Images.DASHBOARD, null, -3, BasicButton.ALIGNMENT_LEFT, new HomePage()));
         btnList.add(new BasicButton(192, 36, "Global Search", Images.SEARCH, null, -3, BasicButton.ALIGNMENT_LEFT));
-        btnList.add(new BasicButton(192, 36, "Screenshots", Images.SCREENSHOT, null, -3, BasicButton.ALIGNMENT_LEFT));
-        btnList.add(new BasicButton(192, 36, "Preferences", Images.PREFERENCES, null, -3, BasicButton.ALIGNMENT_LEFT));
+        btnList.add(new BasicButton(192, 36, "Screenshots", Images.IMAGE, null, -3, BasicButton.ALIGNMENT_LEFT));
+        btnList.add(new BasicButton(192, 36, "Preferences", Images.SETTINGS, null, -3, BasicButton.ALIGNMENT_LEFT));
         btnList.add(new BasicButton(192, 36, "Mods", Images.MODS, null, -3, BasicButton.ALIGNMENT_LEFT, new ModsPage()));
         btnList.add(new BasicButton(192, 36, "Performance", Images.PERFORMANCE, null, -3, BasicButton.ALIGNMENT_LEFT));
         btnList.add(new BasicButton(192, 36, "Profiles", Images.PROFILES, null, -3, BasicButton.ALIGNMENT_LEFT));
-        btnList.add(new BasicButton(192, 36, "Updates", Images.UPDATES, null, -3, BasicButton.ALIGNMENT_LEFT));
-        btnList.add(new BasicButton(192, 36, "Themes Library", Images.THEMES, null, -3, BasicButton.ALIGNMENT_LEFT));
+        btnList.add(new BasicButton(192, 36, "Updates", Images.UPDATE, null, -3, BasicButton.ALIGNMENT_LEFT));
+        btnList.add(new BasicButton(192, 36, "Themes Library", Images.THEME, null, -3, BasicButton.ALIGNMENT_LEFT));
         btnList.add(new BasicButton(192, 36, "Themes Browser", Images.SEARCH, null, -3, BasicButton.ALIGNMENT_LEFT));
-        btnList.add(new BasicButton(192, 36, "Packs Library", Images.MOD_BOX, null, -3, BasicButton.ALIGNMENT_LEFT));
+        btnList.add(new BasicButton(192, 36, "Packs Library", Images.BOX, null, -3, BasicButton.ALIGNMENT_LEFT));
         btnList.add(new BasicButton(192, 36, "Packs Browser", Images.SEARCH, null, -3, BasicButton.ALIGNMENT_LEFT));
-        btnList.add(new BasicButton(192, 36, "Close", Images.CLOSE, null, -1, BasicButton.ALIGNMENT_LEFT, () -> RenderManager.displayGuiScreen(null)));
-        btnList.add(new BasicButton(192, 36, "Minimize", Images.MINIMIZE, null, -1, BasicButton.ALIGNMENT_LEFT, () -> {
+        btnList.add(new BasicButton(192, 36, "Close", Images.X_CIRCLE, null, -1, BasicButton.ALIGNMENT_LEFT, () -> RenderManager.displayGuiScreen(null)));
+        btnList.add(new BasicButton(192, 36, "Minimize", Images.MINIMISE, null, -1, BasicButton.ALIGNMENT_LEFT, () -> {
             OneConfigGui.instanceToRestore = OneConfigGui.INSTANCE;
             RenderManager.displayGuiScreen(null);
         }));

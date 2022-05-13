@@ -73,7 +73,7 @@ public enum Images {
     ITEM_LINKED("/assets/oneconfig/icons/ItemLinked.png"),
     KEYSTROKE("/assets/oneconfig/icons/Keystroke.png"),
     LAUNCH_PROFILES("/assets/oneconfig/icons/LaunchProfiles.png"),
-    LINK_DIAGONAL("/assets/oneconfig/icons/LinkDiag.png"),
+    LINK_DIAGONAL("/assets/oneconfig/icons/LinkDiagonal.png"),
     LINK_HORIZONTAL("/assets/oneconfig/icons/LinkHorizontal.png"),
     LOCATION_POINT("/assets/oneconfig/icons/LocationPoint.png"),
     MAXIMISE("/assets/oneconfig/icons/Maximise.png"),
@@ -122,7 +122,11 @@ public enum Images {
     X_CIRCLE("/assets/oneconfig/icons/XCircle.png"),
     X_CROSS("/assets/oneconfig/icons/XCross.png"),
     ZOOM_IN("/assets/oneconfig/icons/ZoomIn.png"),
-    ZOOM_OUT("/assets/oneconfig/icons/ZoomOut.png");
+    ZOOM_OUT("/assets/oneconfig/icons/ZoomOut.png"),
+    HUE_GRADIENT("/assets/oneconfig/colorui/huegradient.png"),
+    COLOR_WHEEL("/assets/oneconfig/colorui/colorwheel.png"),
+    HSB_GRADIENT("/assets/oneconfig/colorui/hsbgradient.png"),
+    ALPHA_GRID("/assets/oneconfig/colorui/alphagrid.png");
 
     public final String filePath;
 

@@ -49,9 +49,9 @@ public class ConfigCheckbox extends BasicOption {
         RenderManager.drawString(vg, name, x + 32, y + 17, OneConfigConfig.WHITE_90, 14f, Fonts.MEDIUM);
         percentOn = MathUtils.clamp(MathUtils.easeOut(percentOn, toggled ? 1f : 0f, 5f));
         if (percentOn != 0 && percentOn != 1f) {
-            RenderManager.drawImage(vg, Images.CHECKMARK, x, y + 4, 24, 24, new Color(1f, 1f, 1f, percentOn).getRGB());
+            RenderManager.drawImage(vg, Images.CHECKBOX_TICK, x, y + 4, 24, 24, new Color(1f, 1f, 1f, percentOn).getRGB());
         } else if (percentOn != 0) {
-            RenderManager.drawImage(vg, Images.CHECKMARK, x, y + 4, 24, 24);
+            RenderManager.drawImage(vg, Images.CHECKBOX_TICK, x, y + 4, 24, 24);
         }
         NanoVG.nvgGlobalAlpha(vg, 1f);
     }

@@ -40,7 +40,7 @@ public class ConfigPageButton extends BasicOption {
         RenderManager.drawString(vg, name, x + 10, y + 32, OneConfigConfig.WHITE_90, 24, Fonts.MEDIUM);
         if (!description.equals(""))
             RenderManager.drawString(vg, name, x + 10, y + 70, OneConfigConfig.WHITE_90, 14, Fonts.MEDIUM);
-        RenderManager.drawImage(vg, Images.CHEVRON_ARROW, x + 981f, y + (description.equals("") ? 20f : 36f), 13, 22);
+        RenderManager.drawImage(vg, Images.CHEVRON_RIGHT, x + 981f, y + (description.equals("") ? 20f : 36f), 13, 22);
 
         if (clicked) OneConfigGui.INSTANCE.openPage(new ModConfigPage(page));
         NanoVG.nvgGlobalAlpha(vg, 1f);

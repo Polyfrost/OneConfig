@@ -77,7 +77,7 @@ public class ColorSelector {
         RenderManager.drawRoundedRect(vg, x, y, width, height, OneConfigConfig.GRAY_800, 20f);
         RenderManager.drawString(vg, "Color Selector", x + 16, y + 32, OneConfigConfig.WHITE_90, 18f, Fonts.SEMIBOLD);
         closeBtn.draw(vg, x + 368, y + 16);
-        RenderManager.drawImage(vg, Images.CLOSE_COLOR, x + 369, y + 17, 32, 32);
+        RenderManager.drawImage(vg, Images.X_CIRCLE, x + 369, y + 17, 32, 32);
         if (closeBtn.isClicked()) {
             OneConfigGui.INSTANCE.closeColorSelector();
         }
@@ -148,8 +148,8 @@ public class ColorSelector {
         RenderManager.drawImage(vg, Images.PASTE, x + 251, y + 631, 18, 18);
 
         guideBtn.draw(vg, x + 288, y + 624);
-        RenderManager.drawImage(vg, Images.HELP, x + 301, y + 631, 18, 18);
-        RenderManager.drawImage(vg, Images.LAUNCH, x + 369, y + 631, 18, 18);
+        RenderManager.drawImage(vg, Images.HELP_CIRCLE, x + 301, y + 631, 18, 18);
+        RenderManager.drawImage(vg, Images.POP_OUT, x + 369, y + 631, 18, 18);
 
 
         boolean drag;
@@ -214,7 +214,7 @@ public class ColorSelector {
                 break;
         }
         bottomSlider.setGradient(OneConfigConfig.TRANSPARENT_25, color.getRGBNoAlpha());
-        RenderManager.drawImage(vg, Images.COLOR_BASE_LONG, x + 16, y + 456, 384, 16);
+        RenderManager.drawImage(vg, Images.ALPHA_GRID, x + 16, y + 456, 384, 16);
         bottomSlider.draw(vg, x + 16, y + 456);
 
         RenderManager.drawRoundedRect(vg, mouseX - 6, mouseY - 6, 12, 12, OneConfigConfig.WHITE, 12f);
@@ -265,7 +265,7 @@ public class ColorSelector {
 
         // draw the color preview
         RenderManager.drawHollowRoundRect(vg, x + 15, y + 487, 384, 40, OneConfigConfig.GRAY_300, 12f, 2f);
-        RenderManager.drawImage(vg, Images.COLOR_BASE_LARGE, x + 20, y + 492, 376, 32);
+        RenderManager.drawImage(vg, Images.ALPHA_GRID, x + 20, y + 492, 376, 32);
         RenderManager.drawRoundedRect(vg, x + 20, y + 492, 376, 32, color.getRGB(), 8f);
     }
 

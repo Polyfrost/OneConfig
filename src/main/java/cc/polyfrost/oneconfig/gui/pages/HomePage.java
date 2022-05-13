@@ -13,7 +13,7 @@ import cc.polyfrost.oneconfig.utils.InputUtils;
 import java.awt.*;
 
 public class HomePage extends Page {
-    private final BasicButton btn = new BasicButton(184, 36, "Socials", Images.SHARE, Images.LAUNCH, 1, BasicButton.ALIGNMENT_CENTER);
+    private final BasicButton btn = new BasicButton(184, 36, "Socials", Images.SHARE, Images.POP_OUT, 1, BasicButton.ALIGNMENT_CENTER);
 
     public HomePage() {
         super("Home Dashboard");

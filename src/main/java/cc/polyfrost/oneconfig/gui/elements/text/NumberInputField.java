@@ -63,7 +63,7 @@ public class NumberInputField extends TextInputField {
             upArrow.disable(true);
         }
         RenderManager.drawRoundedRectVaried(vg, x + width + 4, y, 12, 14, colorTop, 6f, 6f, 0f, 0f);
-        RenderManager.drawImage(vg, Images.UP_ARROW, x + width + 5, y + 2, 10, 10);
+        RenderManager.drawImage(vg, Images.CHEVRON_UP, x + width + 5, y + 2, 10, 10);
         if (current >= max) NanoVG.nvgGlobalAlpha(vg, 1f);
 
         if (current <= min) {
@@ -71,7 +71,7 @@ public class NumberInputField extends TextInputField {
             downArrow.disable(true);
         }
         RenderManager.drawRoundedRectVaried(vg, x + width + 4, y + 14, 12, 14, colorBottom, 0f, 0f, 6f, 6f);
-        RenderManager.drawImage(vg, Images.UP_ARROW, x + width + 5, y + 25, 10, -10);
+        RenderManager.drawImage(vg, Images.CHEVRON_DOWN, x + width + 5, y + 25, 10, 10);
         NanoVG.nvgGlobalAlpha(vg, 1f);
 
         try {
