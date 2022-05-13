@@ -5,6 +5,9 @@ import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import net.minecraft.client.Minecraft;
 
 public class TestHud extends BasicHud {
+    public TestHud(boolean enabled, int x, int y) {
+        super(enabled, x, y);
+    }
 
     @Override
     public int getWidth(float scale) {
