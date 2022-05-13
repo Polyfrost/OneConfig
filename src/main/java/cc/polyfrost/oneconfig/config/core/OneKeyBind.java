@@ -1,9 +1,6 @@
 package cc.polyfrost.oneconfig.config.core;
 
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.gameevent.InputEvent;
-import org.lwjgl.input.Keyboard;
+import gg.essential.universal.UKeyboard;
 
 import java.util.ArrayList;
 
@@ -19,7 +16,7 @@ public class OneKeyBind {
     public boolean isActive() {
         if (keyBinds.size() == 0) return false;
         for (int keyBind : keyBinds) {
-            if (!Keyboard.isKeyDown(keyBind)) return false;
+            if (!UKeyboard.isKeyDown(keyBind)) return false;
         }
         return true;
     }
@@ -28,7 +25,7 @@ public class OneKeyBind {
         StringBuilder sb = new StringBuilder();
         for (int keyBind : keyBinds) {
             if (sb.length() != 0) sb.append(" + ");
-            sb.append(Keyboard.getKeyName(keyBind));
+            sb.append(UKeyboard.getKeyName(keyBind, -1));
         }
         return sb.toString().trim();
     }

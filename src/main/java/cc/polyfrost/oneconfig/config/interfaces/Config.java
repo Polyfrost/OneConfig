@@ -12,6 +12,7 @@ import cc.polyfrost.oneconfig.hud.BasicHud;
 import cc.polyfrost.oneconfig.hud.HudCore;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import com.google.gson.*;
+import gg.essential.universal.UScreen;
 
 import java.io.*;
 import java.lang.reflect.Field;
@@ -230,7 +231,7 @@ public class Config {
      */
     public void openGui() {
         if (mod == null) return;
-        RenderManager.displayGuiScreen(new OneConfigGui(new ModConfigPage(mod.defaultPage)));
+        UScreen.displayScreen(new OneConfigGui(new ModConfigPage(mod.defaultPage)));
     }
 
     /**

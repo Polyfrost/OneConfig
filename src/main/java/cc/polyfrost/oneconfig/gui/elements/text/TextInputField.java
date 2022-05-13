@@ -3,11 +3,11 @@ package cc.polyfrost.oneconfig.gui.elements.text;
 import cc.polyfrost.oneconfig.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.gui.elements.BasicElement;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
+import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.scissor.Scissor;
 import cc.polyfrost.oneconfig.lwjgl.scissor.ScissorManager;
-import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.utils.InputUtils;
-import net.minecraft.client.gui.GuiScreen;
+import gg.essential.universal.UKeyboard;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
@@ -195,13 +195,13 @@ public class TextInputField extends BasicElement {
     public void keyTyped(char c, int key) {
         try {
             if (toggled) {
-                if (GuiScreen.isKeyComboCtrlC(key)) {
+                if (UKeyboard.isKeyComboCtrlC(key)) {
                     if (selectedText != null && start != 0f && end != 0f) {
                         Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(selectedText), null);
                     }
                     return;
                 }
-                if (GuiScreen.isKeyComboCtrlV(key) || key == Keyboard.KEY_INSERT) {
+                if (UKeyboard.isKeyComboCtrlV(key) || key == Keyboard.KEY_INSERT) { //todo find the UKeyboard equivalent for insert
                     try {
                         String clip = Toolkit.getDefaultToolkit().getSystemClipboard().getContents(null).getTransferData(DataFlavor.stringFlavor).toString();
                         input = input.substring(0, caretPos) + clip + input.substring(caretPos);
@@ -211,13 +211,13 @@ public class TextInputField extends BasicElement {
                         e.printStackTrace();
                     }
                 }
-                if (key == Keyboard.KEY_DELETE) {
+                if (key == UKeyboard.KEY_DELETE) {
                     input = "";
                 }
 
 
-                if (GuiScreen.isCtrlKeyDown()) {
-                    if (key == Keyboard.KEY_BACK && !GuiScreen.isKeyComboCtrlX(key)) {
+                if (UKeyboard.isCtrlKeyDown()) {
+                    if (key == UKeyboard.KEY_BACKSPACE && !UKeyboard.isKeyComboCtrlX(key)) {
                         try {
                             input = input.substring(0, input.lastIndexOf(" "));
                             caretPos = input.length();
@@ -227,7 +227,7 @@ public class TextInputField extends BasicElement {
                         }
                         return;
                     }
-                    if (GuiScreen.isKeyComboCtrlA(key)) {
+                    if (UKeyboard.isKeyComboCtrlA(key)) {
                         prevCaret = 0;
                         caretPos = input.length();
                         start = !centered ? x + 12 : x + this.width / 2f - this.getTextWidth(vg, input) / 2f;
@@ -235,22 +235,22 @@ public class TextInputField extends BasicElement {
                         end = this.getTextWidth(vg, input);
                         return;
                     }
-                    if (GuiScreen.isKeyComboCtrlX(key)) {
+                    if (UKeyboard.isKeyComboCtrlX(key)) {
                         if (selectedText != null && start != 0f && end != 0f) {
                             Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(selectedText), null);
-                            key = Keyboard.KEY_BACK;
+                            key = UKeyboard.KEY_BACKSPACE;
                         } else return;
                     }
-                    if (key == Keyboard.KEY_LEFT) {
+                    if (key == UKeyboard.KEY_LEFT) {
                         caretPos = input.substring(0, caretPos).lastIndexOf(' ') + 1;
                     }
-                    if (key == Keyboard.KEY_RIGHT) {
+                    if (key == UKeyboard.KEY_RIGHT) {
                         caretPos = input.indexOf(' ', caretPos);
                         if (caretPos == -1) caretPos = input.length();
                     }
 
                 }
-                if (key == Keyboard.KEY_BACK) {
+                if (key == UKeyboard.KEY_BACKSPACE) {
                     if (input.length() > 0) {
                         if (start != 0f && end != 0f) {
                             start = 0f;
@@ -273,14 +273,14 @@ public class TextInputField extends BasicElement {
                     }
                     return;
                 }
-                if (key == Keyboard.KEY_TAB) {
+                if (key == UKeyboard.KEY_TAB) {
                     if (onlyNums) return;
                     input += "    ";
                     caretPos += 4;
                     return;
                 }
 
-                if (key == Keyboard.KEY_RIGHT) {
+                if (key == UKeyboard.KEY_RIGHT) {
                     caretPos++;
                     if (caretPos > input.length()) {
                         caretPos = input.length();
@@ -291,7 +291,7 @@ public class TextInputField extends BasicElement {
                     }
                     return;
                 }
-                if (key == Keyboard.KEY_LEFT) {
+                if (key == UKeyboard.KEY_LEFT) {
                     caretPos--;
                     if (caretPos < 0) {
                         caretPos = 0;
@@ -302,7 +302,7 @@ public class TextInputField extends BasicElement {
                     }
                     return;
                 }
-                if (key == Keyboard.KEY_UP || key == 201) { // 201 = page up
+                if (key == UKeyboard.KEY_UP || key == 201) { // 201 = page up
                     caretPos = 0;
                     if (start != 0f && end != 0f) {
                         start = 0f;
@@ -310,7 +310,7 @@ public class TextInputField extends BasicElement {
                     }
                     return;
                 }
-                if (key == Keyboard.KEY_DOWN || key == 209) {     // 209 = page down
+                if (key == UKeyboard.KEY_DOWN || key == 209) {     // 209 = page down
                     caretPos = input.length();
                     if (start != 0f && end != 0f) {
                         start = 0f;
@@ -320,7 +320,7 @@ public class TextInputField extends BasicElement {
                 }
 
 
-                if (key == Keyboard.KEY_RETURN) {
+                if (key == UKeyboard.KEY_ENTER) {
                     onClose();
                     toggled = false;
                     if (start != 0f && end != 0f) {
@@ -328,13 +328,13 @@ public class TextInputField extends BasicElement {
                         end = 0f;
                     }
                 }
-                if (key == Keyboard.KEY_END) {
+                if (key == UKeyboard.KEY_END) {
                     onClose();
                     toggled = false;
                 }
 
 
-                if (key == Keyboard.KEY_LCONTROL || key == Keyboard.KEY_RCONTROL || key == Keyboard.KEY_LMENU || key == Keyboard.KEY_RMENU || key == Keyboard.KEY_LMETA || key == Keyboard.KEY_RMETA || key == Keyboard.KEY_LSHIFT || key == Keyboard.KEY_RSHIFT || key == Keyboard.KEY_RETURN || key == Keyboard.KEY_CAPITAL || key == 221 || key == Keyboard.KEY_HOME) {
+                if (key == UKeyboard.KEY_LCONTROL || key == UKeyboard.KEY_RCONTROL || key == UKeyboard.KEY_LMENU || key == UKeyboard.KEY_RMENU || key == UKeyboard.KEY_LMETA || key == UKeyboard.KEY_RMETA || key == UKeyboard.KEY_LSHIFT || key == UKeyboard.KEY_RSHIFT || key == UKeyboard.KEY_ENTER || key == UKeyboard.KEY_CAPITAL || key == 221 || key == UKeyboard.KEY_HOME) {
                     return;
                 }
                 if (onlyNums) {
@@ -342,7 +342,7 @@ public class TextInputField extends BasicElement {
                 }
                 if (!Character.isDefined(key)) return;
                 if (!Character.isDefined(c)) return;
-                if (GuiScreen.isCtrlKeyDown()) return;
+                if (UKeyboard.isCtrlKeyDown()) return;
                 if (isAllowedCharacter(c)) {
                     if (selectedText != null) {
                         if (caretPos > prevCaret) {

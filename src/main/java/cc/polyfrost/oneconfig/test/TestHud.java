@@ -2,6 +2,7 @@ package cc.polyfrost.oneconfig.test;
 
 import cc.polyfrost.oneconfig.hud.BasicHud;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
+import gg.essential.universal.UMinecraft;
 import net.minecraft.client.Minecraft;
 
 public class TestHud extends BasicHud {
@@ -11,7 +12,7 @@ public class TestHud extends BasicHud {
 
     @Override
     public int getWidth(float scale) {
-        return (int) (Minecraft.getMinecraft().fontRendererObj.getStringWidth("FPS: " + Minecraft.getDebugFPS()) * scale);
+        return (int) (UMinecraft.getFontRenderer().getStringWidth("FPS: " + Minecraft.getDebugFPS()) * scale);
     }
 
     @Override

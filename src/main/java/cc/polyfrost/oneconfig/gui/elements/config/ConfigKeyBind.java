@@ -8,7 +8,7 @@ import cc.polyfrost.oneconfig.gui.elements.BasicButton;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.Images;
-import org.lwjgl.input.Keyboard;
+import gg.essential.universal.UKeyboard;
 import org.lwjgl.nanovg.NanoVG;
 
 import java.lang.reflect.Field;
@@ -53,7 +53,7 @@ public class ConfigKeyBind extends BasicOption {
     public void keyTyped(char key, int keyCode) {
         if (!button.isToggled()) return;
         OneKeyBind keyBind = getKeyBind();
-        if (keyCode == Keyboard.KEY_ESCAPE) {
+        if (keyCode == UKeyboard.KEY_ESCAPE) {
             keyBind.clearKeys();
             button.setToggled(false);
             OneConfigGui.INSTANCE.allowClose = true;
