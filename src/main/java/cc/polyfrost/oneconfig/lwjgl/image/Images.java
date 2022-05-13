@@ -46,7 +46,7 @@ public enum Images {
     DELETE("/assets/oneconfig/icons/Delete.png"),
     DOLLAR("/assets/oneconfig/icons/Dollar.png"),
     DOLLAR_CIRCLE("/assets/oneconfig/icons/DollarCircle.png"),
-    DROPDOWN_LIST("/assets/oneconfig/icons/DropdownList.png"),
+    DROPDOWN_LIST("/assets/oneconfig/icons/DropdownList.png"),      // TODO: old usage is DROPDOWN_ARROW, needs some work from developer side
     EARTH("/assets/oneconfig/icons/Earth.png"),
     EDIT("/assets/oneconfig/icons/Edit.png"),
     ERROR("/assets/oneconfig/icons/Error.png"),
