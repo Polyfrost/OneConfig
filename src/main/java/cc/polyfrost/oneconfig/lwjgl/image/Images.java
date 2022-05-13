@@ -33,6 +33,10 @@ public enum Images {
     CHEVRON_LEFT("/assets/oneconfig/icons/ChevronLeft.png"),
     CHEVRON_RIGHT("/assets/oneconfig/icons/ChevronRight.png"),
     CHEVRON_UP("/assets/oneconfig/icons/ChevronUp.png"),
+    CLOCK("/assets/oneconfig/icons/Clock.png"),
+    CODE("/assets/oneconfig/icons/Code.png"),
+    COMBO_BOX_UP("/assets/oneconfig/icons/ComboBoxUp.png"),
+    COMBO_BOX_DOWN("/assets/oneconfig/icons/ComboBoxDown.png"),
     CONTENT("/assets/oneconfig/icons/Content.png"),
     COPY("/assets/oneconfig/icons/Copy.png"),
     CREDIT_CARD("/assets/oneconfig/icons/CreditCard.png"),
@@ -76,13 +80,16 @@ public enum Images {
     MIC("/assets/oneconfig/icons/Mic.png"),
     MIC_OFF("/assets/oneconfig/icons/MicOff.png"),
     MICROSOFT_ICON("/assets/oneconfig/icons/MicrosoftIcon.png"),
+    MINIMISE("/assets/oneconfig/icons/Minimise.png"),
+    MINUS_CIRCLE("/assets/oneconfig/icons/MinusCircle.png"),
     MODS("/assets/oneconfig/icons/Mods.png"),
     MOVE("/assets/oneconfig/icons/Move.png"),
-    NAVIGATION("/assets/oneconfig/icons/Minimise.png"),
+    NAVIGATION("/assets/oneconfig/icons/Navigation.png"),
     ONECONFIG("/assets/oneconfig/icons/OneConfig.png"),
     ONECONFIG_OFF("/assets/oneconfig/icons/OneConfigOff.png"),
     PASTE("/assets/oneconfig/icons/Paste.png"),
     PERFORMANCE("/assets/oneconfig/icons/Performance.png"),
+    PLUS_CIRCLE("/assets/oneconfig/icons/PlusCircle.png"),
     POP_OUT("/assets/oneconfig/icons/PopOut.png"),
     PROFILES("/assets/oneconfig/icons/Profiles.png"),
     RESET("/assets/oneconfig/icons/Reset.png"),
@@ -115,9 +122,8 @@ public enum Images {
     X_CIRCLE("/assets/oneconfig/icons/XCircle.png"),
     X_CROSS("/assets/oneconfig/icons/XCross.png"),
     ZOOM_IN("/assets/oneconfig/icons/ZoomIn.png"),
-    ZOOM_OUT("/assets/oneconfig/icons/ZoomOut.png"),
-    ;
-        
+    ZOOM_OUT("/assets/oneconfig/icons/ZoomOut.png");
+
     public final String filePath;
 
     Images(String filePath) {
