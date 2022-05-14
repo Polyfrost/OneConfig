@@ -33,7 +33,7 @@ public class HudGui extends GuiScreen {
         }
 
         for (BasicHud hud : HudCore.huds) {
-            processHud(hud, mouseX);
+            if (hud.enabled) processHud(hud, mouseX);
         }
     }
 
@@ -127,6 +127,7 @@ public class HudGui extends GuiScreen {
                 newX = snapX;
                 newY = snapY;
                 for (BasicHud hud : HudCore.huds) {
+                    if (!hud.enabled) continue;
                     if (findParent(hud, snapX, snapY))
                         break;
                 }
@@ -166,6 +167,7 @@ public class HudGui extends GuiScreen {
         float width = editingHud.getWidth(editingHud.scale) + editingHud.paddingX * editingHud.scale;
         ArrayList<Float> verticalLines = new ArrayList<>();
         for (BasicHud hud : HudCore.huds) {
+            if (!hud.enabled) continue;
             verticalLines.addAll(getXSnappingHud(hud));
         }
         getSpaceSnapping(verticalLines);
@@ -205,6 +207,7 @@ public class HudGui extends GuiScreen {
         float height = editingHud.getHeight(editingHud.scale) + editingHud.paddingY * editingHud.scale;
         ArrayList<Float> horizontalLines = new ArrayList<>();
         for (BasicHud hud : HudCore.huds) {
+            if (!hud.enabled) continue;
             horizontalLines.addAll(getYSnappingHud(hud));
         }
         getSpaceSnapping(horizontalLines);
@@ -266,6 +269,7 @@ public class HudGui extends GuiScreen {
             }
             editingHud = null;
             for (BasicHud hud : HudCore.huds) {
+                if (!hud.enabled) continue;
                 if (mouseClickedHud(hud, mouseX, mouseY))
                     break;
             }

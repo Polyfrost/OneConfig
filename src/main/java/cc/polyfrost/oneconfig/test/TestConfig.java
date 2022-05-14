@@ -16,7 +16,7 @@ public class TestConfig extends Config {
             type = OptionType.HUD,
             size = 2
     )
-    public static TestHud TestHud = new TestHud();
+    public static TestHud TestHud = new TestHud(true, 500, 500);
 
     @Option(
             name = "This is all still in beta",
