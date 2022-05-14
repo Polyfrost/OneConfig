@@ -1,17 +1,19 @@
 package cc.polyfrost.oneconfig.gui;
 
 import cc.polyfrost.oneconfig.config.core.ConfigCore;
-import cc.polyfrost.oneconfig.hud.HudCore;
 import cc.polyfrost.oneconfig.hud.BasicHud;
+import cc.polyfrost.oneconfig.hud.HudCore;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
-import net.minecraft.client.gui.GuiScreen;
-import org.lwjgl.input.Keyboard;
+import gg.essential.universal.UKeyboard;
+import gg.essential.universal.UMatrixStack;
+import gg.essential.universal.UScreen;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.io.IOException;
 import java.util.ArrayList;
 
-public class HudGui extends GuiScreen {
+public class HudGui extends UScreen {
     private BasicHud editingHud;
     private boolean isDragging;
     private boolean isScaling;
@@ -19,13 +21,14 @@ public class HudGui extends GuiScreen {
     private int yOffset;
 
     @Override
-    public void initGui() {
+    public void initScreen(int width, int height) {
         HudCore.editing = true;
-        Keyboard.enableRepeatEvents(true);
+        UKeyboard.allowRepeatEvents(true);
+        super.initScreen(width, height);
     }
 
     @Override
-    public void drawScreen(int mouseX, int mouseY, float partialTicks) {
+    public void onDrawScreen(@NotNull UMatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
         RenderManager.drawGlRect(0, 0, this.width, this.height, new Color(80, 80, 80, 50).getRGB());
 
         if (isDragging) {
@@ -78,9 +81,7 @@ public class HudGui extends GuiScreen {
         });
 
         if (hud == editingHud && !isDragging) {
-            RenderManager.setupAndDraw(true, (vg) -> {
-                RenderManager.drawCircle(vg, x + width, y + height, 3, new Color(43, 159, 235).getRGB());
-            });
+            RenderManager.setupAndDraw(true, (vg) -> RenderManager.drawCircle(vg, x + width, y + height, 3, new Color(43, 159, 235).getRGB()));
         }
 
         if (hud.childBottom != null) processHud(hud.childBottom, mouseX);
@@ -255,7 +256,8 @@ public class HudGui extends GuiScreen {
     }
 
     @Override
-    protected void mouseClicked(int mouseX, int mouseY, int mouseButton) {
+    public void onMouseClicked(double mouseX, double mouseY, int mouseButton) {
+        super.onMouseClicked(mouseX, mouseY, mouseButton);
         if (mouseButton == 0) {
             if (editingHud != null) {
                 int width = (int) (editingHud.getWidth(editingHud.scale) + editingHud.paddingX * editingHud.scale);
@@ -270,7 +272,7 @@ public class HudGui extends GuiScreen {
             editingHud = null;
             for (BasicHud hud : HudCore.huds) {
                 if (!hud.enabled) continue;
-                if (mouseClickedHud(hud, mouseX, mouseY))
+                if (mouseClickedHud(hud, (int) mouseX, (int) mouseY))
                     break;
             }
         }
@@ -292,38 +294,40 @@ public class HudGui extends GuiScreen {
     }
 
     @Override
-    protected void mouseReleased(int mouseX, int mouseY, int state) {
+    public void onMouseReleased(double mouseX, double mouseY, int state) {
+        super.onMouseReleased(mouseX, mouseY, state);
         isDragging = false;
         isScaling = false;
     }
 
     @Override
-    protected void keyTyped(char typedChar, int keyCode) throws IOException {
+    public void onKeyPressed(int keyCode, char typedChar, @Nullable UKeyboard.Modifiers modifiers) {
         if (editingHud != null) {
             float x = editingHud.getXScaled(this.width);
             float y = editingHud.getYScaled(this.height);
             switch (keyCode) {
-                case Keyboard.KEY_UP:
+                case UKeyboard.KEY_UP:
                     setPosition(x, y - 1, false);
                     break;
-                case Keyboard.KEY_DOWN:
+                case UKeyboard.KEY_DOWN:
                     setPosition(x, y + 1, false);
                     break;
-                case Keyboard.KEY_LEFT:
+                case UKeyboard.KEY_LEFT:
                     setPosition(x - 1, y, false);
                     break;
-                case Keyboard.KEY_RIGHT:
+                case UKeyboard.KEY_RIGHT:
                     setPosition(x + 1, y, false);
                     break;
             }
         }
-        super.keyTyped(typedChar, keyCode);
+        super.onKeyPressed(keyCode, typedChar, modifiers);
     }
 
     @Override
-    public void onGuiClosed() {
+    public void onScreenClose() {
+        super.onScreenClose();
         HudCore.editing = false;
-        Keyboard.enableRepeatEvents(false);
+        UKeyboard.allowRepeatEvents(false);
         ConfigCore.saveAll();
     }
 

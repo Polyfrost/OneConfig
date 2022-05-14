@@ -6,24 +6,19 @@ import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.Image;
 import cc.polyfrost.oneconfig.lwjgl.image.ImageLoader;
 import cc.polyfrost.oneconfig.lwjgl.image.Images;
-import net.minecraft.client.Minecraft;
+import gg.essential.universal.UGraphics;
+import gg.essential.universal.UMinecraft;
+import gg.essential.universal.UResolution;
 import net.minecraft.client.gui.Gui;
-import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.gui.ScaledResolution;
-import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.shader.Framebuffer;
-import net.minecraft.util.ResourceLocation;
 import org.lwjgl.nanovg.*;
-import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.GL11;
 
 import java.awt.*;
-import java.nio.BufferUnderflowException;
 import java.nio.FloatBuffer;
 import java.util.function.LongConsumer;
 
 import static org.lwjgl.nanovg.NanoVG.*;
-import static org.lwjgl.nanovg.NanoSVG.*;
 import static org.lwjgl.nanovg.NanoVGGL2.NVG_ANTIALIAS;
 import static org.lwjgl.nanovg.NanoVGGL2.nvgCreate;
 
@@ -49,18 +44,17 @@ public final class RenderManager {
             FontManager.INSTANCE.initialize(vg);
         }
 
-        Framebuffer fb = Minecraft.getMinecraft().getFramebuffer();
+        Framebuffer fb = UMinecraft.getMinecraft().getFramebuffer();
         if (!fb.isStencilEnabled()) {
             fb.enableStencil();
         }
         GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
 
         if (mcScaling) {
-            ScaledResolution resolution = new ScaledResolution(Minecraft.getMinecraft());
-            nvgBeginFrame(vg, (float) resolution.getScaledWidth_double(), (float) resolution.getScaledHeight_double(), resolution.getScaleFactor());
+            nvgBeginFrame(vg, (float) UResolution.getScaledWidth(), (float) UResolution.getScaledHeight(), (float) UResolution.getScaleFactor());
         } else {
             // If we get blurry problems with high DPI monitors, 1 might need to be  replaced with Display.getPixelScaleFactor()
-            nvgBeginFrame(vg, Display.getWidth(), Display.getHeight(), 1);
+            nvgBeginFrame(vg, UResolution.getWindowWidth(), UResolution.getWindowHeight(), 1);
         }
 
         consumer.accept(vg);
@@ -341,32 +335,15 @@ public final class RenderManager {
     }
 
     // gl
-    public static void glColor(Color color) {
-        glColor(color.getRGB());
-    }
 
-    public static void drawScaledString(String text, float x, float y, int color, boolean shadow, float scale) {
-        GL11.glPushMatrix();
-        GL11.glScalef(scale, scale, 1);
-        Minecraft.getMinecraft().fontRendererObj.drawString(text, x * (1 / scale), y * (1 / scale), color, shadow);
-        GL11.glPopMatrix();
-    }
-
-    public static void glColor(int color) {
-        float f = (float) (color >> 24 & 255) / 255.0F;
-        float f1 = (float) (color >> 16 & 255) / 255.0F;
-        float f2 = (float) (color >> 8 & 255) / 255.0F;
-        float f3 = (float) (color & 255) / 255.0F;
-        GL11.glColor4f(f1, f2, f3, f);
+    public static void drawScaledString(String text, float x, float y, int color, boolean shadow, float scale) { //todo replace eventually with either nanovg or UMatrixStack
+        UGraphics.GL.pushMatrix();
+        UGraphics.GL.scale(scale, scale, 1);
+        UMinecraft.getFontRenderer().drawString(text, x * (1 / scale), y * (1 / scale), color, shadow);
+        UGraphics.GL.popMatrix();
     }
 
     public static void drawGlRect(int x, int y, int width, int height, int color) {
         Gui.drawRect(x, y, x + width, y + height, color);
-    }
-
-
-    // other minecraft functions
-    public static void displayGuiScreen(GuiScreen guiScreen) {
-        Minecraft.getMinecraft().displayGuiScreen(guiScreen);
     }
 }

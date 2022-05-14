@@ -1,6 +1,5 @@
 package cc.polyfrost.oneconfig.gui;
 
-import cc.polyfrost.oneconfig.OneConfig;
 import cc.polyfrost.oneconfig.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.gui.elements.BasicElement;
 import cc.polyfrost.oneconfig.gui.elements.ColorSelector;
@@ -9,21 +8,24 @@ import cc.polyfrost.oneconfig.gui.pages.HomePage;
 import cc.polyfrost.oneconfig.gui.pages.Page;
 import cc.polyfrost.oneconfig.lwjgl.OneColor;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
-import cc.polyfrost.oneconfig.lwjgl.scissor.Scissor;
-import cc.polyfrost.oneconfig.lwjgl.scissor.ScissorManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.Images;
+import cc.polyfrost.oneconfig.lwjgl.scissor.Scissor;
+import cc.polyfrost.oneconfig.lwjgl.scissor.ScissorManager;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import cc.polyfrost.oneconfig.utils.MathUtils;
-import net.minecraft.client.gui.GuiScreen;
+import gg.essential.universal.UKeyboard;
+import gg.essential.universal.UMatrixStack;
+import gg.essential.universal.UResolution;
+import gg.essential.universal.UScreen;
 import org.jetbrains.annotations.NotNull;
-import org.lwjgl.input.Keyboard;
+import org.jetbrains.annotations.Nullable;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.nanovg.NanoVG;
 
 import java.util.ArrayList;
 
-public class OneConfigGui extends GuiScreen {
+public class OneConfigGui extends UScreen {
     public static OneConfigGui INSTANCE;
     public final int x = 320;
     public final int y = 140;
@@ -63,15 +65,15 @@ public class OneConfigGui extends GuiScreen {
     }
 
     @Override
-    public void drawScreen(int mouseX, int mouseY, float partialTicks) {
-        super.drawScreen(mouseX, mouseY, partialTicks);
+    public void onDrawScreen(@NotNull UMatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
+        super.onDrawScreen(matrixStack, mouseX, mouseY, partialTicks);
         long start = System.nanoTime();
         RenderManager.setupAndDraw((vg) -> {
             if (currentPage == null) {
                 currentPage = new HomePage();
                 parents.add(currentPage);
             }
-            scale = OneConfig.getDisplayWidth() / 1920f;
+            scale = UResolution.getWindowWidth() / 1920f;
             NanoVG.nvgScale(vg, scale, scale);
             if (OneConfigConfig.ROUNDED_CORNERS) {
                 RenderManager.drawRoundedRect(vg, x + 224, y, 1056, 800, OneConfigConfig.GRAY_800, OneConfigConfig.CORNER_RADIUS_WIN);
@@ -172,13 +174,14 @@ public class OneConfigGui extends GuiScreen {
         mouseDown = Mouse.isButtonDown(0);
     }
 
-    protected void keyTyped(char key, int keyCode) {
-        Keyboard.enableRepeatEvents(true);
+    @Override
+    public void onKeyPressed(int keyCode, char typedChar, @Nullable UKeyboard.Modifiers modifiers) {
+        UKeyboard.allowRepeatEvents(true);
         try {
-            if (allowClose) super.keyTyped(key, keyCode);
-            textInputField.keyTyped(key, keyCode);
-            if (currentColorSelector != null) currentColorSelector.keyTyped(key, keyCode);
-            currentPage.keyTyped(key, keyCode);
+            if (allowClose) super.onKeyPressed(keyCode, typedChar, modifiers);
+            textInputField.keyTyped(typedChar, keyCode);
+            if (currentColorSelector != null) currentColorSelector.keyTyped(typedChar, keyCode);
+            currentPage.keyTyped(typedChar, keyCode);
         } catch (Exception e) {
             e.printStackTrace();
             System.out.println("this should literally never happen");
@@ -250,8 +253,9 @@ public class OneConfigGui extends GuiScreen {
     }
 
     @Override
-    public void onGuiClosed() {
+    public void onScreenClose() {
         currentPage.finishUpAndClose();
         INSTANCE = null;
+        super.onScreenClose();
     }
 }

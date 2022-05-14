@@ -8,6 +8,7 @@ import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.Images;
 import cc.polyfrost.oneconfig.utils.MathUtils;
+import gg.essential.universal.UScreen;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,12 +31,12 @@ public class SideBar {
         btnList.add(new BasicButton(192, 36, "Themes Browser", Images.SEARCH, null, -3, BasicButton.ALIGNMENT_LEFT));
         btnList.add(new BasicButton(192, 36, "Packs Library", Images.BOX, null, -3, BasicButton.ALIGNMENT_LEFT));
         btnList.add(new BasicButton(192, 36, "Packs Browser", Images.SEARCH, null, -3, BasicButton.ALIGNMENT_LEFT));
-        btnList.add(new BasicButton(192, 36, "Close", Images.X_CIRCLE, null, -1, BasicButton.ALIGNMENT_LEFT, () -> RenderManager.displayGuiScreen(null)));
+        btnList.add(new BasicButton(192, 36, "Close", Images.X_CIRCLE, null, -1, BasicButton.ALIGNMENT_LEFT, () -> UScreen.displayScreen(null)));
         btnList.add(new BasicButton(192, 36, "Minimize", Images.MINIMISE, null, -1, BasicButton.ALIGNMENT_LEFT, () -> {
             OneConfigGui.instanceToRestore = OneConfigGui.INSTANCE;
-            RenderManager.displayGuiScreen(null);
+            UScreen.displayScreen(null);
         }));
-        btnList.add(new BasicButton(192, 36, "Edit HUD", Images.HUD, null, 0, BasicButton.ALIGNMENT_LEFT, () -> RenderManager.displayGuiScreen(new HudGui())));
+        btnList.add(new BasicButton(192, 36, "Edit HUD", Images.HUD, null, 0, BasicButton.ALIGNMENT_LEFT, () -> UScreen.displayScreen(new HudGui())));
     }
 
     public void draw(long vg, int x, int y) {
