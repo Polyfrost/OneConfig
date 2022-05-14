@@ -1,5 +1,6 @@
 package cc.polyfrost.oneconfig.lwjgl.plugin;
 
+import cc.polyfrost.oneconfig.init.OneConfigInit;
 import net.minecraft.launchwrapper.Launch;
 import net.minecraft.launchwrapper.LaunchClassLoader;
 import net.minecraftforge.fml.relauncher.IFMLLoadingPlugin;
@@ -20,6 +21,7 @@ public class LoadingPlugin implements IFMLLoadingPlugin {
             f_exceptions.setAccessible(true);
             Set<String> exceptions = (Set<String>) f_exceptions.get(Launch.classLoader);
             exceptions.remove("org.lwjgl.");
+            OneConfigInit.initialize(new String[]{});
         } catch (Exception e) {
             throw new RuntimeException("e");
         }

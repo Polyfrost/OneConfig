@@ -1,11 +1,12 @@
 package cc.polyfrost.oneconfig.lwjgl;
 
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
+import cc.polyfrost.oneconfig.mixin.ShaderGroupAccessor;
 import gg.essential.universal.UMinecraft;
 import gg.essential.universal.UScreen;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.shader.Shader;
-import net.minecraft.client.shader.ShaderGroup;
 import net.minecraft.client.shader.ShaderUniform;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.event.GuiOpenEvent;
@@ -15,7 +16,6 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.lang.reflect.Field;
 import java.util.List;
 
 /**
@@ -34,7 +34,6 @@ import java.util.List;
 public class BlurHandler {
     private final ResourceLocation blurShader = new ResourceLocation("shaders/post/fade_in_blur.json");
     private final Logger logger = LogManager.getLogger("OneConfig - Blur");
-    private Field shaderList = null;
 
     private long start;
     private float lastProgress = 0;
@@ -85,7 +84,7 @@ public class BlurHandler {
         // Why is this being computed every tick? Surely there is a better way?
         // This needs to be optimized.
         try {
-            final List<Shader> listShaders = getShaderList();
+            final List<Shader> listShaders = ((ShaderGroupAccessor) Minecraft.getMinecraft().entityRenderer.getShaderGroup()).getListShaders();
 
             // Should not happen. Something bad happened.
             if (listShaders == null) {
@@ -123,11 +122,6 @@ public class BlurHandler {
         // a one of ours, we should load our own blur!
         if (!UMinecraft.getMinecraft().entityRenderer.isShaderActive() && gui instanceof OneConfigGui) {
             UMinecraft.getMinecraft().entityRenderer.loadShader(this.blurShader);
-            try {
-                shaderList = ShaderGroup.class.getDeclaredField("listShaders");
-                shaderList.setAccessible(true);
-            } catch (NoSuchFieldException ignored) {
-            }
 
             this.start = System.currentTimeMillis();
 
@@ -141,7 +135,6 @@ public class BlurHandler {
             }
 
             UMinecraft.getMinecraft().entityRenderer.stopUseShader();
-            shaderList = null;
         }
     }
 
@@ -152,14 +145,5 @@ public class BlurHandler {
      */
     private float getBlurStrengthProgress() {
         return Math.min((System.currentTimeMillis() - this.start) / 50F, 5.0F);
-    }
-
-    private List<Shader> getShaderList() {
-        if (shaderList == null) return null;
-        try {
-            return (List<Shader>) shaderList.get(UMinecraft.getMinecraft().entityRenderer.getShaderGroup());
-        } catch (IllegalAccessException ignored) {
-            return null;
-        }
     }
 }

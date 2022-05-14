@@ -1,0 +1,13 @@
+{
+  "compatibilityLevel": "JAVA_8",
+  "minVersion": "0.7",
+  "package": "cc.polyfrost.oneconfig.mixin",
+  "refmap": "mixins.oneconfig.refmap.json",
+  "injectors": {
+    "maxShiftBy": 5
+  },
+  "client": [
+    "ShaderGroupAccessor"
+  ],
+  "verbose": true
+}
