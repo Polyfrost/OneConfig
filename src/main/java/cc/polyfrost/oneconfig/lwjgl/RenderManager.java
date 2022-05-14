@@ -15,7 +15,6 @@ import org.lwjgl.nanovg.NVGColor;
 import org.lwjgl.nanovg.NVGPaint;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL14;
 
 import java.awt.*;
 import java.util.function.LongConsumer;
@@ -243,7 +242,6 @@ public final class RenderManager {
             nvgFill(vg);
             imagePaint.free();
         }
-
     }
 
     public static void drawRoundImage(long vg, Images filePath, float x, float y, float width, float height, float radius) {
@@ -303,6 +301,9 @@ public final class RenderManager {
         return nvgColor;
     }
 
+    public static void drawSvg() {
+
+    }
 
     // gl
     public static void glColor(Color color) {
@@ -327,7 +328,6 @@ public final class RenderManager {
     public static void drawGlRect(int x, int y, int width, int height, int color) {
         Gui.drawRect(x, y, x + width, y + height, color);
     }
-
 
 
     // other minecraft functions
