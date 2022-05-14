@@ -10,16 +10,20 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.ScaledResolution;
+import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.shader.Framebuffer;
-import org.lwjgl.nanovg.NVGColor;
-import org.lwjgl.nanovg.NVGPaint;
+import net.minecraft.util.ResourceLocation;
+import org.lwjgl.nanovg.*;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.GL11;
 
 import java.awt.*;
+import java.nio.BufferUnderflowException;
+import java.nio.FloatBuffer;
 import java.util.function.LongConsumer;
 
 import static org.lwjgl.nanovg.NanoVG.*;
+import static org.lwjgl.nanovg.NanoSVG.*;
 import static org.lwjgl.nanovg.NanoVGGL2.NVG_ANTIALIAS;
 import static org.lwjgl.nanovg.NanoVGGL2.nvgCreate;
 
@@ -301,8 +305,39 @@ public final class RenderManager {
         return nvgColor;
     }
 
-    public static void drawSvg() {
-
+    public static void drawSvg(long vg, String filename) {
+        if (ImageLoader.INSTANCE.loadSVGImage(filename)) {
+            try {
+                NSVGImage image = ImageLoader.INSTANCE.getSVG(filename);
+                NSVGShape shape = image.shapes();
+                NSVGPath path = shape.paths();
+                while (shape.address() != 0) {
+                    while (path.address() != 0) {
+                        nvgBeginPath(vg);
+                        NVGColor color = color(vg, new Color(255, 255, 255).getRGB());
+                        FloatBuffer points = path.pts();
+                        nvgMoveTo(vg, points.get(), points.get());
+                        while (points.remaining() >= 6){
+                            nvgBezierTo(vg, points.get(), points.get(), points.get(), points.get(), points.get(), points.get());
+                        }
+                        if (path.closed() == 1) {
+                            nvgLineTo(vg, points.get(), points.get());
+                        }
+                        nvgStroke(vg);
+                        nvgFillColor(vg, color(vg, new Color(255, 255, 255).getRGB()));
+                        nvgStrokeColor(vg, color(vg, new Color(255, 255, 255).getRGB()));
+                        nvgStrokeWidth(vg, shape.strokeWidth());
+                        nvgClosePath(vg);
+                        path = path.next();
+                    }
+                    shape = shape.next();
+                }
+                path.free();
+                shape.free();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     // gl

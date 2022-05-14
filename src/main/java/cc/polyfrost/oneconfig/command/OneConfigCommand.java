@@ -3,6 +3,7 @@ package cc.polyfrost.oneconfig.command;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.HudGui;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
+import cc.polyfrost.oneconfig.test.SVGTestPage;
 import cc.polyfrost.oneconfig.test.TestNanoVGGui;
 import cc.polyfrost.oneconfig.utils.TickDelay;
 import net.minecraft.command.CommandBase;
@@ -41,6 +42,9 @@ public class OneConfigCommand extends CommandBase {
                     break;
                 case "lwjgl":
                     new TickDelay(() -> RenderManager.displayGuiScreen(new TestNanoVGGui()), 1);
+                    break;
+                case "svg":
+                    new TickDelay(() -> RenderManager.displayGuiScreen(new SVGTestPage()), 1);
                     break;
             }
         }
