@@ -1,7 +1,7 @@
 package cc.polyfrost.oneconfig.utils;
 
-import cc.polyfrost.oneconfig.OneConfig;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
+import gg.essential.universal.UResolution;
 import org.lwjgl.input.Mouse;
 
 public class InputUtils {
@@ -30,7 +30,7 @@ public class InputUtils {
     }
 
     public static int mouseY() {
-        if (OneConfigGui.INSTANCE == null) return OneConfig.getDisplayHeight() - Math.abs(Mouse.getY());
-        return (int) ((OneConfig.getDisplayHeight() - Math.abs(Mouse.getY())) / OneConfigGui.INSTANCE.getScaleFactor());
+        if (OneConfigGui.INSTANCE == null) return UResolution.getWindowHeight() - Math.abs(Mouse.getY());
+        return (int) ((UResolution.getWindowHeight() - Math.abs(Mouse.getY())) / OneConfigGui.INSTANCE.getScaleFactor());
     }
 }

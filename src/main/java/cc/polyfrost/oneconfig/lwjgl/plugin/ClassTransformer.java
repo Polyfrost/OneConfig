@@ -10,6 +10,7 @@ import org.objectweb.asm.tree.*;
  * Taken from LWJGLTwoPointFive under The Unlicense
  * <a href="https://github.com/DJtheRedstoner/LWJGLTwoPointFive/blob/master/LICENSE/">https://github.com/DJtheRedstoner/LWJGLTwoPointFive/blob/master/LICENSE/</a>
  */
+@SuppressWarnings("unused")
 public class ClassTransformer implements IClassTransformer {
     @Override
     public byte[] transform(String name, String transformedName, byte[] basicClass) {

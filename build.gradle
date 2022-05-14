@@ -29,6 +29,7 @@ loom {
     launchConfigs {
         client {
             property("fml.coreMods.load", "cc.polyfrost.oneconfig.lwjgl.plugin.LoadingPlugin")
+            property("mixin.debug.export", "true")
         }
     }
     runConfigs {
@@ -38,6 +39,8 @@ loom {
     }
     forge {
         pack200Provider = new dev.architectury.pack200.java.Pack200Adapter()
+        mixinConfig("mixins.oneconfig.json")
+        mixin.defaultRefmapName.set("mixins.oneconfig.refmap.json")
     }
 }
 
@@ -73,6 +76,26 @@ dependencies {
     minecraft("com.mojang:minecraft:1.8.9")
     mappings("de.oceanlabs.mcp:mcp_stable:22-1.8.9")
     forge("net.minecraftforge:forge:1.8.9-11.15.1.2318-1.8.9")
+
+    include("gg.essential:universalcraft-1.8.9-forge:209") {
+        transitive = false
+    }
+
+    // for other mods and universalcraft
+    include("org.jetbrains.kotlin:kotlin-stdlib:1.6.21")
+    include("org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.6.21")
+    include("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.21")
+    include("org.jetbrains.kotlin:kotlin-reflect:1.6.21")
+    include("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.1")
+    include("org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.6.1")
+    include("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.6.1")
+    include("org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.3.2")
+    include("org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.3.2")
+    include("org.jetbrains.kotlinx:kotlinx-serialization-cbor-jvm:1.3.2")
+
+    include("org.spongepowered:mixin:0.7.11-SNAPSHOT") {
+        transitive = false
+    }
 
     lwjgl "org.lwjgl:lwjgl:3.3.1"
     lwjgl "org.lwjgl:lwjgl-stb:3.3.1"
@@ -120,6 +143,8 @@ shadowJar {
     archiveClassifier.set('dev')
     configurations = [project.configurations.include, project.configurations.lwjglNative]
     duplicatesStrategy DuplicatesStrategy.EXCLUDE
+
+    relocate("gg.essential.universalcraft", "cc.polyfrost.oneconfig.libs.universalcraft")
 }
 
 remapJar {
@@ -132,6 +157,7 @@ jar {
             'ModSide': 'CLIENT',
             'ForceLoadAsMod': true,
             "TweakOrder": "0",
+            "MixinConfigs": "mixins.oneconfig.json",
             "FMLCorePlugin": "cc.polyfrost.oneconfig.lwjgl.plugin.LoadingPlugin",
             "FMLCorePluginContainsFMLMod": "lol"
     )
