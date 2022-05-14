@@ -29,7 +29,6 @@ loom {
     launchConfigs {
         client {
             property("fml.coreMods.load", "cc.polyfrost.oneconfig.lwjgl.plugin.LoadingPlugin")
-            property("onecore.mixin", "mixins.redaction.json")
             property("mixin.debug.export", "true")
         }
     }
