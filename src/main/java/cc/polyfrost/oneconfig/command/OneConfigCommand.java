@@ -2,7 +2,6 @@ package cc.polyfrost.oneconfig.command;
 
 import cc.polyfrost.oneconfig.gui.HudGui;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
-import cc.polyfrost.oneconfig.test.SVGTestPage;
 import cc.polyfrost.oneconfig.test.TestNanoVGGui;
 import cc.polyfrost.oneconfig.utils.TickDelay;
 import gg.essential.universal.UScreen;
@@ -42,9 +41,6 @@ public class OneConfigCommand extends CommandBase {
                     break;
                 case "lwjgl":
                     new TickDelay(() -> UScreen.displayScreen(new TestNanoVGGui()), 1);
-                    break;
-                case "svg":
-                    new TickDelay(() -> UScreen.displayScreen(new SVGTestPage()), 1);
                     break;
             }
         }

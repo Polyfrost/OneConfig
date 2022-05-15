@@ -9,6 +9,7 @@ import cc.polyfrost.oneconfig.gui.pages.ModConfigPage;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.Images;
+import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
 import cc.polyfrost.oneconfig.utils.ColorUtils;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import gg.essential.universal.wrappers.UPlayer;
@@ -50,7 +51,7 @@ public class ModCard extends BasicElement {
         if (iconPath != null) {
             RenderManager.drawImage(vg, iconPath, x, y, width, 87);
         } else {
-            RenderManager.drawImage(vg, Images.BOX, x + 98, y + 19, 48, 48);
+            RenderManager.drawSvg(vg, SVGs.BOX, x + 98, y + 19, 48, 48);
         }
         favoriteHitbox.update(x + 212, y + 87);
         favoriteHitbox.currentColor = ColorUtils.getColor(favoriteHitbox.currentColor, favoriteHitbox.colorPalette, favoriteHitbox.hovered, favoriteHitbox.clicked);
@@ -58,9 +59,9 @@ public class ModCard extends BasicElement {
         favorite = favoriteHitbox.isToggled();
         RenderManager.drawString(vg, modData.name, x + 12, y + 103, OneConfigConfig.WHITE, 14f, Fonts.MEDIUM);
         if (favorite) {
-            RenderManager.drawImage(vg, Images.HEART_FILL, x + 220, y + 95, 16, 16);
+            RenderManager.drawSvg(vg, SVGs.HEART_FILL, x + 220, y + 95, 16, 16);
         } else {
-            RenderManager.drawImage(vg, Images.HEART_OUTLINE, x + 220, y + 95, 16, 16);
+            RenderManager.drawSvg(vg, SVGs.HEART_OUTLINE, x + 220, y + 95, 16, 16);
         }
         super.update(x, y);
         isHoveredMain = InputUtils.isAreaHovered(x, y, width, 87);

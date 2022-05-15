@@ -5,6 +5,7 @@ import cc.polyfrost.oneconfig.config.interfaces.BasicOption;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.Images;
+import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import cc.polyfrost.oneconfig.gui.elements.text.TextInputField;
 import org.lwjgl.nanovg.NanoVG;
@@ -39,7 +40,7 @@ public class ConfigTextBox extends BasicOption {
         textField.draw(vg, x + (size == 1 && hasHalfSize() ? 224 : 352), y);
 
         if (secure)
-            RenderManager.drawImage(vg, Images.EYE, x + 967, y + 7, 18, 18, new Color(196, 196, 196).getRGB());
+            RenderManager.drawSvg(vg, SVGs.EYE, x + 967, y + 7, 18, 18, new Color(196, 196, 196).getRGB());
         if (secure && InputUtils.isAreaClicked(x + 967, y + 7, 18, 18)) textField.setPassword(!textField.getPassword());
         NanoVG.nvgGlobalAlpha(vg, 1f);
     }

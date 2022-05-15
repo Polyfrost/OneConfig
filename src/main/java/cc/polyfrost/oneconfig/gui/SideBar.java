@@ -7,6 +7,7 @@ import cc.polyfrost.oneconfig.gui.pages.ModsPage;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.Images;
+import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
 import cc.polyfrost.oneconfig.utils.MathUtils;
 import gg.essential.universal.UScreen;
 
@@ -19,24 +20,24 @@ public class SideBar {
     private float targetY = 0, currentY = 0;
 
     public SideBar() {
-        btnList.add(new BasicButton(192, 36, "Dashboard", Images.DASHBOARD, null, -3, BasicButton.ALIGNMENT_LEFT, new HomePage()));
-        btnList.add(new BasicButton(192, 36, "Global Search", Images.SEARCH, null, -3, BasicButton.ALIGNMENT_LEFT));
-        btnList.add(new BasicButton(192, 36, "Screenshots", Images.IMAGE, null, -3, BasicButton.ALIGNMENT_LEFT));
-        btnList.add(new BasicButton(192, 36, "Preferences", Images.SETTINGS, null, -3, BasicButton.ALIGNMENT_LEFT));
-        btnList.add(new BasicButton(192, 36, "Mods", Images.MODS, null, -3, BasicButton.ALIGNMENT_LEFT, new ModsPage()));
-        btnList.add(new BasicButton(192, 36, "Performance", Images.PERFORMANCE, null, -3, BasicButton.ALIGNMENT_LEFT));
-        btnList.add(new BasicButton(192, 36, "Profiles", Images.PROFILES, null, -3, BasicButton.ALIGNMENT_LEFT));
-        btnList.add(new BasicButton(192, 36, "Updates", Images.UPDATE, null, -3, BasicButton.ALIGNMENT_LEFT));
-        btnList.add(new BasicButton(192, 36, "Themes Library", Images.THEME, null, -3, BasicButton.ALIGNMENT_LEFT));
-        btnList.add(new BasicButton(192, 36, "Themes Browser", Images.SEARCH, null, -3, BasicButton.ALIGNMENT_LEFT));
-        btnList.add(new BasicButton(192, 36, "Packs Library", Images.BOX, null, -3, BasicButton.ALIGNMENT_LEFT));
-        btnList.add(new BasicButton(192, 36, "Packs Browser", Images.SEARCH, null, -3, BasicButton.ALIGNMENT_LEFT));
-        btnList.add(new BasicButton(192, 36, "Close", Images.X_CIRCLE, null, -1, BasicButton.ALIGNMENT_LEFT, () -> UScreen.displayScreen(null)));
-        btnList.add(new BasicButton(192, 36, "Minimize", Images.MINIMISE, null, -1, BasicButton.ALIGNMENT_LEFT, () -> {
+        btnList.add(new BasicButton(192, 36, "Dashboard", SVGs.DASHBOARD, null, -3, BasicButton.ALIGNMENT_LEFT, new HomePage()));
+        btnList.add(new BasicButton(192, 36, "Global Search", SVGs.SEARCH, null, -3, BasicButton.ALIGNMENT_LEFT));
+        btnList.add(new BasicButton(192, 36, "Screenshots", SVGs.IMAGE, null, -3, BasicButton.ALIGNMENT_LEFT));
+        btnList.add(new BasicButton(192, 36, "Preferences", SVGs.SETTINGS, null, -3, BasicButton.ALIGNMENT_LEFT));
+        btnList.add(new BasicButton(192, 36, "Mods", SVGs.MODS, null, -3, BasicButton.ALIGNMENT_LEFT, new ModsPage()));
+        btnList.add(new BasicButton(192, 36, "Performance", SVGs.PERFORMANCE, null, -3, BasicButton.ALIGNMENT_LEFT));
+        btnList.add(new BasicButton(192, 36, "Profiles", SVGs.PROFILES, null, -3, BasicButton.ALIGNMENT_LEFT));
+        btnList.add(new BasicButton(192, 36, "Updates", SVGs.UPDATE, null, -3, BasicButton.ALIGNMENT_LEFT));
+        btnList.add(new BasicButton(192, 36, "Themes Library", SVGs.THEME, null, -3, BasicButton.ALIGNMENT_LEFT));
+        btnList.add(new BasicButton(192, 36, "Themes Browser", SVGs.SEARCH, null, -3, BasicButton.ALIGNMENT_LEFT));
+        btnList.add(new BasicButton(192, 36, "Packs Library", SVGs.BOX, null, -3, BasicButton.ALIGNMENT_LEFT));
+        btnList.add(new BasicButton(192, 36, "Packs Browser", SVGs.SEARCH, null, -3, BasicButton.ALIGNMENT_LEFT));
+        btnList.add(new BasicButton(192, 36, "Close", SVGs.X_CIRCLE, null, -1, BasicButton.ALIGNMENT_LEFT, () -> UScreen.displayScreen(null)));
+        btnList.add(new BasicButton(192, 36, "Minimize", SVGs.MINIMISE, null, -1, BasicButton.ALIGNMENT_LEFT, () -> {
             OneConfigGui.instanceToRestore = OneConfigGui.INSTANCE;
             UScreen.displayScreen(null);
         }));
-        btnList.add(new BasicButton(192, 36, "Edit HUD", Images.HUD, null, 0, BasicButton.ALIGNMENT_LEFT, () -> UScreen.displayScreen(new HudGui())));
+        btnList.add(new BasicButton(192, 36, "Edit HUD", SVGs.HUD, null, 0, BasicButton.ALIGNMENT_LEFT, () -> UScreen.displayScreen(new HudGui())));
     }
 
     public void draw(long vg, int x, int y) {

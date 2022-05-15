@@ -8,6 +8,7 @@ import cc.polyfrost.oneconfig.gui.elements.BasicButton;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.Images;
+import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
 import gg.essential.universal.UKeyboard;
 import org.lwjgl.nanovg.NanoVG;
 
@@ -19,7 +20,7 @@ public class ConfigKeyBind extends BasicOption {
 
     public ConfigKeyBind(Field field, Object parent, String name, int size) {
         super(field, parent, name, size);
-        button = new BasicButton(256, 32, "", Images.KEYSTROKE, null, 0, BasicButton.ALIGNMENT_CENTER, true);
+        button = new BasicButton(256, 32, "", SVGs.KEYSTROKE, null, 0, BasicButton.ALIGNMENT_CENTER, true);
         button.alignIconLeft(true);
     }
 

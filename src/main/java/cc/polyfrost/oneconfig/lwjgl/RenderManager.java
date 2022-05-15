@@ -1,11 +1,12 @@
 package cc.polyfrost.oneconfig.lwjgl;
 
 import cc.polyfrost.oneconfig.config.OneConfigConfig;
+import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.lwjgl.font.FontManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
-import cc.polyfrost.oneconfig.lwjgl.image.Image;
 import cc.polyfrost.oneconfig.lwjgl.image.ImageLoader;
 import cc.polyfrost.oneconfig.lwjgl.image.Images;
+import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
 import gg.essential.universal.UGraphics;
 import gg.essential.universal.UMinecraft;
 import gg.essential.universal.UResolution;
@@ -14,8 +15,6 @@ import net.minecraft.client.shader.Framebuffer;
 import org.lwjgl.nanovg.*;
 import org.lwjgl.opengl.GL11;
 
-import java.awt.*;
-import java.nio.FloatBuffer;
 import java.util.function.LongConsumer;
 
 import static org.lwjgl.nanovg.NanoVG.*;
@@ -204,10 +203,9 @@ public final class RenderManager {
     public static void drawImage(long vg, String filePath, float x, float y, float width, float height) {
         if (ImageLoader.INSTANCE.loadImage(vg, filePath)) {
             NVGPaint imagePaint = NVGPaint.calloc();
-            cc.polyfrost.oneconfig.lwjgl.image.Image image = ImageLoader.INSTANCE.getImage(filePath);
+            int image = ImageLoader.INSTANCE.getImage(filePath);
             nvgBeginPath(vg);
-
-            nvgImagePattern(vg, x, y, width, height, 0, image.getReference(), 1, imagePaint);
+            nvgImagePattern(vg, x, y, width, height, 0, image, 1, imagePaint);
             nvgRect(vg, x, y, width, height);
             nvgFillPaint(vg, imagePaint);
             nvgFill(vg);
@@ -218,9 +216,9 @@ public final class RenderManager {
     public static void drawImage(long vg, String filePath, float x, float y, float width, float height, int color) {
         if (ImageLoader.INSTANCE.loadImage(vg, filePath)) {
             NVGPaint imagePaint = NVGPaint.calloc();
-            Image image = ImageLoader.INSTANCE.getImage(filePath);
+            int image = ImageLoader.INSTANCE.getImage(filePath);
             nvgBeginPath(vg);
-            nvgImagePattern(vg, x, y, width, height, 0, image.getReference(), 1, imagePaint);
+            nvgImagePattern(vg, x, y, width, height, 0, image, 1, imagePaint);
             nvgRGBA((byte) (color >> 16 & 0xFF), (byte) (color >> 8 & 0xFF), (byte) (color & 0xFF), (byte) (color >> 24 & 0xFF), imagePaint.innerColor());
             nvgRect(vg, x, y, width, height);
             nvgFillPaint(vg, imagePaint);
@@ -232,9 +230,9 @@ public final class RenderManager {
     public static void drawRoundImage(long vg, String filePath, float x, float y, float width, float height, float radius) {
         if (ImageLoader.INSTANCE.loadImage(vg, filePath)) {
             NVGPaint imagePaint = NVGPaint.calloc();
-            cc.polyfrost.oneconfig.lwjgl.image.Image image = ImageLoader.INSTANCE.getImage(filePath);
+            int image = ImageLoader.INSTANCE.getImage(filePath);
             nvgBeginPath(vg);
-            nvgImagePattern(vg, x, y, width, height, 0, image.getReference(), 1, imagePaint);
+            nvgImagePattern(vg, x, y, width, height, 0, image, 1, imagePaint);
             nvgRoundedRect(vg, x, y, width, height, radius);
             nvgFillPaint(vg, imagePaint);
             nvgFill(vg);
@@ -299,7 +297,54 @@ public final class RenderManager {
         return nvgColor;
     }
 
-    public static void drawSvg(long vg, String filename) {
+    public static void drawSvg(long vg, String filePath, float x, float y, float width, float height) {
+        float w = width;
+        float h = height;
+        if (OneConfigGui.INSTANCE != null) {
+            w *= OneConfigGui.INSTANCE.getScaleFactor();
+            h *= OneConfigGui.INSTANCE.getScaleFactor();
+        }
+        if (ImageLoader.INSTANCE.loadSVG(vg, filePath, w, h)) {
+            NVGPaint imagePaint = NVGPaint.calloc();
+            int image = ImageLoader.INSTANCE.getSVG(filePath, w, h);
+            nvgBeginPath(vg);
+            nvgImagePattern(vg, x, y, width, height, 0, image, 1, imagePaint);
+            nvgRect(vg, x, y, width, height);
+            nvgFillPaint(vg, imagePaint);
+            nvgFill(vg);
+            imagePaint.free();
+        }
+    }
+
+    public static void drawSvg(long vg, String filePath, float x, float y, float width, float height, int color) {
+        float w = width;
+        float h = height;
+        if (OneConfigGui.INSTANCE != null) {
+            w *= OneConfigGui.INSTANCE.getScaleFactor();
+            h *= OneConfigGui.INSTANCE.getScaleFactor();
+        }
+        if (ImageLoader.INSTANCE.loadSVG(vg, filePath, w, h)) {
+            NVGPaint imagePaint = NVGPaint.calloc();
+            int image = ImageLoader.INSTANCE.getSVG(filePath, w, h);
+            nvgBeginPath(vg);
+            nvgImagePattern(vg, x, y, width, height, 0, image, 1, imagePaint);
+            nvgRGBA((byte) (color >> 16 & 0xFF), (byte) (color >> 8 & 0xFF), (byte) (color & 0xFF), (byte) (color >> 24 & 0xFF), imagePaint.innerColor());
+            nvgRect(vg, x, y, width, height);
+            nvgFillPaint(vg, imagePaint);
+            nvgFill(vg);
+            imagePaint.free();
+        }
+    }
+
+    public static void drawSvg(long vg, SVGs svg, float x, float y, float width, float height) {
+        drawSvg(vg, svg.filePath, x, y, width, height);
+    }
+
+    public static void drawSvg(long vg, SVGs svg, float x, float y, float width, float height, int color) {
+        drawSvg(vg, svg.filePath, x, y, width, height, color);
+    }
+
+    /*public static void drawSvg(long vg, String filename) {
         if (ImageLoader.INSTANCE.loadSVGImage(filename)) {
             try {
                 NSVGImage image = ImageLoader.INSTANCE.getSVG(filename);
@@ -308,19 +353,18 @@ public final class RenderManager {
                 while (shape.address() != 0) {
                     while (path.address() != 0) {
                         nvgBeginPath(vg);
-                        NVGColor color = color(vg, new Color(255, 255, 255).getRGB());
+                        nvgFillColor(vg, color(vg, new Color(255, 255, 255).getRGB()));
+                        nvgStrokeColor(vg, color(vg, new Color(255, 255, 255).getRGB()));
+                        nvgStrokeWidth(vg, shape.strokeWidth());
                         FloatBuffer points = path.pts();
                         nvgMoveTo(vg, points.get(), points.get());
                         while (points.remaining() >= 6){
                             nvgBezierTo(vg, points.get(), points.get(), points.get(), points.get(), points.get(), points.get());
                         }
                         if (path.closed() == 1) {
-                            nvgLineTo(vg, points.get(), points.get());
+                            nvgLineTo(vg, points.get(0), points.get(1));
                         }
                         nvgStroke(vg);
-                        nvgFillColor(vg, color(vg, new Color(255, 255, 255).getRGB()));
-                        nvgStrokeColor(vg, color(vg, new Color(255, 255, 255).getRGB()));
-                        nvgStrokeWidth(vg, shape.strokeWidth());
                         nvgClosePath(vg);
                         path = path.next();
                     }
@@ -332,7 +376,7 @@ public final class RenderManager {
                 e.printStackTrace();
             }
         }
-    }
+    }*/
 
     // gl
 
