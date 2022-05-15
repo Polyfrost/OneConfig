@@ -1,6 +1,7 @@
 package cc.polyfrost.oneconfig.lwjgl;
 
 import cc.polyfrost.oneconfig.config.OneConfigConfig;
+import cc.polyfrost.oneconfig.config.data.InfoType;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.lwjgl.font.FontManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
@@ -342,6 +343,40 @@ public final class RenderManager {
 
     public static void drawSvg(long vg, SVGs svg, float x, float y, float width, float height, int color) {
         drawSvg(vg, svg.filePath, x, y, width, height, color);
+    }
+
+    public static void drawInfo(long vg, InfoType type, float x, float y, float size) {
+        SVGs icon = null;
+        int colorOuter = 0;
+        int colorInner = 0;
+        switch (type) {
+            case INFO:
+                icon = SVGs.INFO_CIRCLE;
+                colorOuter = OneConfigConfig.GRAY_400;
+                colorInner = OneConfigConfig.GRAY_300;
+                break;
+            case SUCCESS:
+                icon = SVGs.CHECK_CIRCLE;
+                colorOuter = OneConfigConfig.SUCCESS_700;
+                colorInner = OneConfigConfig.SUCCESS_600;
+                break;
+            case WARNING:
+                icon = SVGs.WARNING;
+                colorOuter = OneConfigConfig.WARNING_600;
+                colorInner = OneConfigConfig.WARNING_500;
+                break;
+            case ERROR:
+                icon = SVGs.ERROR;
+                colorOuter = OneConfigConfig.ERROR_700;
+                colorInner = OneConfigConfig.ERROR_600;
+                break;
+        }
+        float centerX = x + size / 2f;
+        float centerY = y + size / 2f;
+        drawCircle(vg, centerX, centerY, size / 2, colorOuter);
+        drawCircle(vg, centerX, centerY, size / 2 - size / 12, colorInner);
+        float iconSize = size / 1.75f;
+        drawSvg(vg, icon, centerX - iconSize / 2f, centerY - iconSize / 2f, iconSize, iconSize);
     }
 
     /*public static void drawSvg(long vg, String filename) {

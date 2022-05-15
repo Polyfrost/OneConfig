@@ -9,7 +9,6 @@ import cc.polyfrost.oneconfig.gui.pages.Page;
 import cc.polyfrost.oneconfig.lwjgl.OneColor;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
-import cc.polyfrost.oneconfig.lwjgl.image.Images;
 import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
 import cc.polyfrost.oneconfig.lwjgl.scissor.Scissor;
 import cc.polyfrost.oneconfig.lwjgl.scissor.ScissorManager;
@@ -28,8 +27,6 @@ import java.util.ArrayList;
 
 public class OneConfigGui extends UScreen {
     public static OneConfigGui INSTANCE;
-    public final int x = 320;
-    public final int y = 140;
     private final SideBar sideBar = new SideBar();
     protected Page currentPage;
     protected Page prevPage;
@@ -61,6 +58,7 @@ public class OneConfigGui extends UScreen {
         try {
             return instanceToRestore == null ? new OneConfigGui() : instanceToRestore;
         } finally {
+            if (instanceToRestore != null) INSTANCE = instanceToRestore;
             instanceToRestore = null;
         }
     }
@@ -74,7 +72,11 @@ public class OneConfigGui extends UScreen {
                 currentPage = new HomePage();
                 parents.add(currentPage);
             }
-            scale = UResolution.getWindowWidth() / 1920f;
+            scale = Math.min(UResolution.getWindowWidth() / 1920f, UResolution.getWindowHeight() / 1080f);
+            if (scale < 1)
+                scale = Math.min(Math.min(1f, UResolution.getWindowWidth() / 1280f), Math.min(1f, UResolution.getWindowHeight() / 800f));
+            int x = (int) ((UResolution.getWindowWidth() - 1280 * scale) / 2f / scale);
+            int y = (int) ((UResolution.getWindowHeight() - 800 * scale) / 2f / scale);
             NanoVG.nvgScale(vg, scale, scale);
             if (OneConfigConfig.ROUNDED_CORNERS) {
                 RenderManager.drawRoundedRect(vg, x + 224, y, 1056, 800, OneConfigConfig.GRAY_800, OneConfigConfig.CORNER_RADIUS_WIN);
@@ -88,10 +90,6 @@ public class OneConfigGui extends UScreen {
             RenderManager.drawSvg(vg, SVGs.ONECONFIG, x + 19, y + 19, 42, 42);
             RenderManager.drawString(vg, "OneConfig", x + 69, y + 32, OneConfigConfig.WHITE, 18f, Fonts.BOLD);        // added half line height to center text
             RenderManager.drawString(vg, "ALPHA - By Polyfrost", x + 69, y + 51, OneConfigConfig.WHITE, 12f, Fonts.REGULAR);
-
-
-            //RenderManager.drawRect(vg, x + 300, y + 500, 400, 12, OneConfigConfig.ERROR_700);
-            //RenderManager.drawString(vg, "MoonTidez is Annoyinhg here is an f |||", x + 300, y + 500, OneConfigConfig.WHITE, 14f, 14,Fonts.INTER_REGULAR);
 
             textInputField.draw(vg, x + 1020, y + 16);
             sideBar.draw(vg, x, y);
@@ -254,6 +252,7 @@ public class OneConfigGui extends UScreen {
     @Override
     public void onScreenClose() {
         currentPage.finishUpAndClose();
+        instanceToRestore = this;
         INSTANCE = null;
         super.onScreenClose();
     }

@@ -42,10 +42,10 @@ public class SideBar {
 
     public void draw(long vg, int x, int y) {
         currentY = MathUtils.easeInOutCirc(50, currentY, targetY - currentY, 120);
-        RenderManager.drawRoundedRect(vg, x + 16, currentY, 192, 36, OneConfigConfig.BLUE_600, OneConfigConfig.CORNER_RADIUS);
+        RenderManager.drawRoundedRect(vg, x + 16, y + currentY, 192, 36, OneConfigConfig.BLUE_600, OneConfigConfig.CORNER_RADIUS);
         int i = 0;
         if (targetY == 0) {
-            targetY = y + 96;
+            targetY = 96;
             currentY = targetY;
         }
         for (BasicButton btn : btnList) {
@@ -65,7 +65,7 @@ public class SideBar {
             }
 
             if (btn.isClicked() && btn.getPage() != null) {
-                if (i < 520) targetY = btn.y;
+                if (i < 520) targetY = btn.y - y;
             }
         }
     }

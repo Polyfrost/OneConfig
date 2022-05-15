@@ -52,7 +52,14 @@ public class OneConfigConfig extends Config {
     public static final int WHITE_95 = new Color(255, 255, 255, 242).getRGB();        // White 90%
     public static final int WHITE = new Color(255, 255, 255, 255).getRGB();           // White 100%
 
-    public static final int ERROR_700 = new Color(180, 24, 24, 255).getRGB();         // Red 700
+    public static final int SUCCESS_600 = new Color(3, 152, 85).getRGB();
+    public static final int SUCCESS_700 = new Color(2, 121, 72).getRGB();
+
+    public static final int WARNING_500 = new Color(247, 144, 9).getRGB();
+    public static final int WARNING_600 = new Color(220, 104, 3).getRGB();
+
+    public static final int ERROR_600 = new Color(217, 32, 32).getRGB();
+    public static final int ERROR_700 = new Color(180, 24, 24).getRGB();         // Red 700
 
     public static boolean ROUNDED_CORNERS = true;
     public static float CORNER_RADIUS_WIN = 20f;
