@@ -145,6 +145,21 @@ shadowJar {
     duplicatesStrategy DuplicatesStrategy.EXCLUDE
 
     relocate("gg.essential.universalcraft", "cc.polyfrost.oneconfig.libs.universalcraft")
+    exclude(
+            "**/LICENSE.md",
+            "**/LICENSE.txt",
+            "**/LICENSE",
+            "**/NOTICE",
+            "**/NOTICE.txt",
+            "pack.mcmeta",
+            "dummyThing",
+            "**/module-info.class",
+            "META-INF/proguard/**",
+            "META-INF/maven/**",
+            "META-INF/versions/**",
+            "META-INF/com.android.tools/**",
+            "fabric.mod.json"
+    )
 }
 
 remapJar {
@@ -159,6 +174,7 @@ jar {
             "TweakOrder": "0",
             "MixinConfigs": "mixins.oneconfig.json",
             "FMLCorePlugin": "cc.polyfrost.oneconfig.lwjgl.plugin.LoadingPlugin",
+            'TweakClass': 'org.spongepowered.asm.launch.MixinTweaker',
             "FMLCorePluginContainsFMLMod": "lol"
     )
     enabled = false
