@@ -50,10 +50,10 @@ public class ConfigUniSelector extends BasicOption {
         }
         ScissorManager.resetScissor(vg, scissor);
 
-        RenderManager.drawSvg(vg, SVGs.CHEVRON_LEFT, x + 248, y + 7, 8, 14, OneConfigConfig.BLUE_400);
-        RenderManager.drawSvg(vg, SVGs.CHEVRON_RIGHT, x + 456, y + 7, 8, 14, OneConfigConfig.BLUE_400);
+        RenderManager.drawSvg(vg, SVGs.CHEVRON_LEFT, x + 231, y + 7, 18, 18, OneConfigConfig.BLUE_400);
+        RenderManager.drawSvg(vg, SVGs.CHEVRON_RIGHT, x + 455, y + 7, 18, 18, OneConfigConfig.BLUE_400);
 
-        if (InputUtils.isAreaClicked(x + 235, y + 5, 18, 18) && selected > 0 && isEnabled()) {
+        if (InputUtils.isAreaClicked(x + 231, y + 7, 18, 18) && selected > 0 && isEnabled()) {
             previous = selected;
             selected -= 1;
             try {
@@ -61,7 +61,7 @@ public class ConfigUniSelector extends BasicOption {
             } catch (IllegalAccessException ignored) {
             }
             percentMove = selected < previous ? 0f : 1f;
-        } else if (InputUtils.isAreaClicked(x + 451, y + 5, 18, 18) && selected < options.length - 1 && isEnabled()) {
+        } else if (InputUtils.isAreaClicked(x + 455, y + 7, 18, 18) && selected < options.length - 1 && isEnabled()) {
             previous = selected;
             selected += 1;
             try {

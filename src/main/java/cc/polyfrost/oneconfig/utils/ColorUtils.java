@@ -84,4 +84,8 @@ public class ColorUtils {
         }
         return current;
     }
+
+    public static int setAlpha(int color, int alpha) {
+        return  ( alpha << 24 ) | ( color & 0x00ffffff );
+    }
 }

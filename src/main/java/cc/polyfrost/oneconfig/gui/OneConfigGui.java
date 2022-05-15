@@ -158,9 +158,7 @@ public class OneConfigGui extends UScreen {
                 else if (hovered && !Mouse.isButtonDown(0)) color = OneConfigConfig.WHITE_80;
                 RenderManager.drawString(vg, title, breadcrumbX, y + 38, color, 24f, Fonts.SEMIBOLD);
                 if (i != 0)
-                    RenderManager.drawSvg(vg, SVGs.CHEVRON_RIGHT, breadcrumbX - 22, y + 26, 13, 22, color);
-                if (hovered && i != parents.size() - 1)
-                    RenderManager.drawLine(vg, breadcrumbX, y + 48, breadcrumbX + width, y + 48, 2, color);
+                    RenderManager.drawSvg(vg, SVGs.CHEVRON_RIGHT, breadcrumbX - 28, y + 25, 24, 24, color);
                 if (hovered && InputUtils.isClicked()) openPage(parents.get(i));
                 breadcrumbX += width + 32;
             }
