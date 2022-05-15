@@ -78,7 +78,7 @@ public class ConfigColorElement extends BasicOption {
 
         element.update(x + 432, y);
         RenderManager.drawRoundedRect(vg, x + 432, y, 64, 32, OneConfigConfig.GRAY_300, 12f);
-        RenderManager.drawImage(vg, Images.COLOR_BASE, x + 948, y + 4, 56, 24, color.getRGB());
+        RenderManager.drawImage(vg, Images.ALPHA_GRID, x + 948, y + 4, 56, 24, color.getRGB());
         if (element.isClicked() && !element.isToggled()) {
             OneConfigGui.INSTANCE.initColorSelector(new ColorSelector(new OneColor(40, 30, 20), InputUtils.mouseX(), InputUtils.mouseY()));
         }

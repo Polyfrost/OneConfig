@@ -6,6 +6,7 @@ import cc.polyfrost.oneconfig.gui.pages.Page;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.Images;
+import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
 import cc.polyfrost.oneconfig.utils.ColorUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 public class BasicButton extends BasicElement {
 
     protected String text;
-    protected Images fileNameLeftIco, fileNameRightIco;
+    protected SVGs fileNameLeftIco, fileNameRightIco;
     private final int thisAlignment;
     private final float fontSize;
     private final int colorPalette;
@@ -35,7 +36,7 @@ public class BasicButton extends BasicElement {
      * @param colorPalette     color palette to use. see {@link ColorUtils} for more info. Can support color palette of -2, which is larger font and icons. Also supports -3, which is just the text changing color.
      * @param alignment        alignment of the button. ALIGNMENT_LEFT or ALIGNMENT_CENTER.
      */
-    public BasicButton(int width, int height, @NotNull String text, @Nullable Images fileNameLeftIco, @Nullable Images fileNameRightIco, int colorPalette, int alignment) {
+    public BasicButton(int width, int height, @NotNull String text, @Nullable SVGs fileNameLeftIco, @Nullable SVGs fileNameRightIco, int colorPalette, int alignment) {
         super(width, height, colorPalette, true);
         this.text = text;
         if (fileNameLeftIco != null) this.fileNameLeftIco = fileNameLeftIco;
@@ -51,22 +52,22 @@ public class BasicButton extends BasicElement {
         }
     }
 
-    public BasicButton(int width, int height, @NotNull String text, @Nullable Images fileNameLeftIco, @Nullable Images fileNameRightIco, int colorPalette, int alignment, Page page) {
+    public BasicButton(int width, int height, @NotNull String text, @Nullable SVGs fileNameLeftIco, @Nullable SVGs fileNameRightIco, int colorPalette, int alignment, Page page) {
         this(width, height, text, fileNameLeftIco, fileNameRightIco, colorPalette, alignment);
         this.page = page;
     }
 
-    public BasicButton(int width, int height, @NotNull String text, @Nullable Images fileNameLeftIco, @Nullable Images fileNameRightIco, int colorPalette, int alignment, boolean toggleable) {
+    public BasicButton(int width, int height, @NotNull String text, @Nullable SVGs fileNameLeftIco, @Nullable SVGs fileNameRightIco, int colorPalette, int alignment, boolean toggleable) {
         this(width, height, text, fileNameLeftIco, fileNameRightIco, colorPalette, alignment);
         this.toggleable = toggleable;
     }
 
-    public BasicButton(int width, int height, @NotNull String text, @Nullable Images fileNameLeftIco, @Nullable Images fileNameRightIco, int colorPalette, int alignment, Runnable runnable) {
+    public BasicButton(int width, int height, @NotNull String text, @Nullable SVGs fileNameLeftIco, @Nullable SVGs fileNameRightIco, int colorPalette, int alignment, Runnable runnable) {
         this(width, height, text, fileNameLeftIco, fileNameRightIco, colorPalette, alignment);
         this.runnable = runnable;
     }
 
-    public BasicButton(int width, int height, @NotNull String text, @Nullable Images fileNameLeftIco, @Nullable Images fileNameRightIco, int colorPalette, int alignment, boolean toggleable, Runnable runnable) {
+    public BasicButton(int width, int height, @NotNull String text, @Nullable SVGs fileNameLeftIco, @Nullable SVGs fileNameRightIco, int colorPalette, int alignment, boolean toggleable, Runnable runnable) {
         this(width, height, text, fileNameLeftIco, fileNameRightIco, colorPalette, alignment, runnable);
         this.toggleable = toggleable;
     }
@@ -99,22 +100,22 @@ public class BasicButton extends BasicElement {
             else
                 RenderManager.drawString(vg, text, middle - contentWidth / 2 + (fileNameLeftIco != null ? 28 : 0), y + ((float) height / 2) + 1, textColor, fontSize, Fonts.MEDIUM);
             if (fileNameLeftIco != null) {
-                if (alignIconLeft) RenderManager.drawImage(vg, fileNameLeftIco, x + 12, y + height / 2f - 10, 20, 20);
-                else RenderManager.drawImage(vg, fileNameLeftIco, middle - contentWidth / 2, y + 8, 20, 20);
+                if (alignIconLeft) RenderManager.drawSvg(vg, fileNameLeftIco, x + 12, y + height / 2f - 10, 20, 20);
+                else RenderManager.drawSvg(vg, fileNameLeftIco, middle - contentWidth / 2, y + 8, 20, 20);
             }
             if (fileNameRightIco != null) {
-                RenderManager.drawImage(vg, fileNameRightIco, middle + contentWidth / 2 - (fileNameLeftIco != null ? 20 : 24), y + 8, 20, 20);
+                RenderManager.drawSvg(vg, fileNameRightIco, middle + contentWidth / 2 - (fileNameLeftIco != null ? 20 : 24), y + 8, 20, 20);
             }
         }
         if (thisAlignment == ALIGNMENT_LEFT) {
             if (fileNameLeftIco != null) {
-                RenderManager.drawImage(vg, fileNameLeftIco, x + 12, y + 8, 20, 20, textColor);
+                RenderManager.drawSvg(vg, fileNameLeftIco, x + 12, y + 8, 20, 20, textColor);
                 RenderManager.drawString(vg, text, x + 40, y + ((float) height / 2) + 1, textColor, fontSize, Fonts.MEDIUM);
             } else {
                 RenderManager.drawString(vg, text, x + 12, y + ((float) height / 2) + 1, textColor, fontSize, Fonts.MEDIUM);
             }
             if (fileNameRightIco != null) {
-                RenderManager.drawImage(vg, fileNameRightIco, x + width - 28, y + 8, 20, 20);
+                RenderManager.drawSvg(vg, fileNameRightIco, x + width - 28, y + 8, 20, 20);
             }
         }
         this.update(x, y);

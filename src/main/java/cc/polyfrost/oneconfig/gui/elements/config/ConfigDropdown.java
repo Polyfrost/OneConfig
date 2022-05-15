@@ -5,6 +5,7 @@ import cc.polyfrost.oneconfig.config.interfaces.BasicOption;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.Images;
+import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
 import cc.polyfrost.oneconfig.utils.ColorUtils;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import org.lwjgl.input.Mouse;
@@ -53,14 +54,12 @@ public class ConfigDropdown extends BasicOption { // TODO: chose where dividers 
             RenderManager.drawRoundedRect(vg, x + 224, y, 256, 32, backgroundColor, 12);
             RenderManager.drawString(vg, options[selected], x + 236, y + 16, OneConfigConfig.WHITE_80, 14f, Fonts.MEDIUM);
             RenderManager.drawRoundedRect(vg, x + 452, y + 4, 24, 24, OneConfigConfig.BLUE_600, 8);
-            RenderManager.drawImage(vg, Images.DROPDOWN_ARROW, x + 459, y + 8, 10, 6);
-            RenderManager.drawImage(vg, Images.DROPDOWN_ARROW, x + 459, y + 24, 10, -6);
+            RenderManager.drawSvg(vg, SVGs.DROPDOWN_LIST, x + 452, y + 4, 24, 24);
         } else {
             RenderManager.drawRoundedRect(vg, x + 352, y, 640, 32, backgroundColor, 12);
             RenderManager.drawString(vg, options[selected], x + 364, y + 16, OneConfigConfig.WHITE_80, 14f, Fonts.MEDIUM);
             RenderManager.drawRoundedRect(vg, x + 964, y + 4, 24, 24, OneConfigConfig.BLUE_600, 8);
-            RenderManager.drawImage(vg, Images.DROPDOWN_ARROW, x + 971, y + 8, 10, 6);
-            RenderManager.drawImage(vg, Images.DROPDOWN_ARROW, x + 971, y + 24, 10, -6);
+            RenderManager.drawSvg(vg, SVGs.DROPDOWN_LIST, x + 964, y + 4, 24, 24);
         }
         NanoVG.nvgGlobalAlpha(vg, 1f);
     }
@@ -114,8 +113,7 @@ public class ConfigDropdown extends BasicOption { // TODO: chose where dividers 
 
             if (hovered && Mouse.isButtonDown(0)) NanoVG.nvgGlobalAlpha(vg, 0.8f);
             RenderManager.drawRoundedRect(vg, x + 452, y + 4, 24, 24, OneConfigConfig.BLUE_600, 8);
-            RenderManager.drawImage(vg, Images.DROPDOWN_ARROW, x + 459, y + 8, 10, 6);
-            RenderManager.drawImage(vg, Images.DROPDOWN_ARROW, x + 459, y + 24, 10, -6);
+            RenderManager.drawSvg(vg, SVGs.DROPDOWN_LIST, x + 452, y + 4, 24, 24);
         } else {
             RenderManager.drawRoundedRect(vg, x + 352, y, 640, 32, backgroundColor, 12);
             RenderManager.drawString(vg, options[selected], x + 364, y + 16, OneConfigConfig.WHITE_80, 14f, Fonts.MEDIUM);
@@ -149,8 +147,7 @@ public class ConfigDropdown extends BasicOption { // TODO: chose where dividers 
 
             if (hovered && Mouse.isButtonDown(0)) NanoVG.nvgGlobalAlpha(vg, 0.8f);
             RenderManager.drawRoundedRect(vg, x + 964, y + 4, 24, 24, OneConfigConfig.BLUE_600, 8);
-            RenderManager.drawImage(vg, Images.DROPDOWN_ARROW, x + 971, y + 8, 10, 6);
-            RenderManager.drawImage(vg, Images.DROPDOWN_ARROW, x + 971, y + 24, 10, -6);
+            RenderManager.drawSvg(vg, SVGs.DROPDOWN_LIST, x + 964, y + 4, 24, 24);
         }
         NanoVG.nvgGlobalAlpha(vg, 1f);
     }

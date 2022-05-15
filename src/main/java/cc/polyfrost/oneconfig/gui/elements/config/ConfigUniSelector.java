@@ -3,6 +3,7 @@ package cc.polyfrost.oneconfig.gui.elements.config;
 import cc.polyfrost.oneconfig.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.config.interfaces.BasicOption;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
+import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
 import cc.polyfrost.oneconfig.lwjgl.scissor.Scissor;
 import cc.polyfrost.oneconfig.lwjgl.scissor.ScissorManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
@@ -49,10 +50,10 @@ public class ConfigUniSelector extends BasicOption {
         }
         ScissorManager.resetScissor(vg, scissor);
 
-        RenderManager.drawImage(vg, Images.CHEVRON_ARROW, x + 248, y + 7, -8, 14, OneConfigConfig.BLUE_400);
-        RenderManager.drawImage(vg, Images.CHEVRON_ARROW, x + 456, y + 7, 8, 14, OneConfigConfig.BLUE_400);
+        RenderManager.drawSvg(vg, SVGs.CHEVRON_LEFT, x + 231, y + 7, 18, 18, OneConfigConfig.BLUE_400);
+        RenderManager.drawSvg(vg, SVGs.CHEVRON_RIGHT, x + 455, y + 7, 18, 18, OneConfigConfig.BLUE_400);
 
-        if (InputUtils.isAreaClicked(x + 235, y + 5, 18, 18) && selected > 0 && isEnabled()) {
+        if (InputUtils.isAreaClicked(x + 231, y + 7, 18, 18) && selected > 0 && isEnabled()) {
             previous = selected;
             selected -= 1;
             try {
@@ -60,7 +61,7 @@ public class ConfigUniSelector extends BasicOption {
             } catch (IllegalAccessException ignored) {
             }
             percentMove = selected < previous ? 0f : 1f;
-        } else if (InputUtils.isAreaClicked(x + 451, y + 5, 18, 18) && selected < options.length - 1 && isEnabled()) {
+        } else if (InputUtils.isAreaClicked(x + 455, y + 7, 18, 18) && selected < options.length - 1 && isEnabled()) {
             previous = selected;
             selected += 1;
             try {

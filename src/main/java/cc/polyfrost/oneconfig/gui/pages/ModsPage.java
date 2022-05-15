@@ -90,7 +90,8 @@ public class ModsPage extends Page {
 
     @Override
     public int getMaxScrollHeight() {
-        return size;
+        //return size;
+        return 3298046;
     }
 
     @Override
