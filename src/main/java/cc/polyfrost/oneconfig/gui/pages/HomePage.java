@@ -8,12 +8,13 @@ import cc.polyfrost.oneconfig.lwjgl.OneColor;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.Images;
+import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 
 import java.awt.*;
 
 public class HomePage extends Page {
-    private final BasicButton btn = new BasicButton(184, 36, "Socials", Images.SHARE, Images.LAUNCH, 1, BasicButton.ALIGNMENT_CENTER);
+    private final BasicButton btn = new BasicButton(184, 36, "Socials", SVGs.SHARE, SVGs.POP_OUT, 1, BasicButton.ALIGNMENT_CENTER);
 
     public HomePage() {
         super("Home Dashboard");

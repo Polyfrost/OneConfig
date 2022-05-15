@@ -4,6 +4,7 @@ import cc.polyfrost.oneconfig.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.gui.elements.BasicElement;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.image.Images;
+import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
 import cc.polyfrost.oneconfig.utils.ColorUtils;
 import org.lwjgl.nanovg.NanoVG;
 
@@ -29,6 +30,8 @@ public class NumberInputField extends TextInputField {
     public void draw(long vg, int x, int y) {
         super.errored = false;
         RenderManager.drawRoundedRect(vg, x + width + 4, y, 12, 28, OneConfigConfig.GRAY_500, 6f);
+        upArrow.disable(disabled);
+        downArrow.disable(disabled);
         upArrow.update(x + width + 4, y);
         downArrow.update(x + width + 4, y + 14);
         try {
@@ -58,20 +61,20 @@ public class NumberInputField extends TextInputField {
             if (current < min) current = min;
             setCurrentValue(current);
         }
-        if (current >= max) {
+        if (current >= max && !disabled) {
             NanoVG.nvgGlobalAlpha(vg, 0.3f);
             upArrow.disable(true);
         }
         RenderManager.drawRoundedRectVaried(vg, x + width + 4, y, 12, 14, colorTop, 6f, 6f, 0f, 0f);
-        RenderManager.drawImage(vg, Images.UP_ARROW, x + width + 5, y + 2, 10, 10);
-        if (current >= max) NanoVG.nvgGlobalAlpha(vg, 1f);
+        RenderManager.drawSvg(vg, SVGs.CHEVRON_UP, x + width + 5, y + 2, 10, 10);
+        if (current >= max && !disabled) NanoVG.nvgGlobalAlpha(vg, 1f);
 
-        if (current <= min) {
+        if (current <= min && !disabled) {
             NanoVG.nvgGlobalAlpha(vg, 0.3f);
             downArrow.disable(true);
         }
         RenderManager.drawRoundedRectVaried(vg, x + width + 4, y + 14, 12, 14, colorBottom, 0f, 0f, 6f, 6f);
-        RenderManager.drawImage(vg, Images.UP_ARROW, x + width + 5, y + 25, 10, -10);
+        RenderManager.drawSvg(vg, SVGs.CHEVRON_DOWN, x + width + 5, y + 15, 10, 10);
         NanoVG.nvgGlobalAlpha(vg, 1f);
 
         try {
