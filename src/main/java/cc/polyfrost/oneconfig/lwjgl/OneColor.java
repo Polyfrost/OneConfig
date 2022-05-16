@@ -11,7 +11,7 @@ import java.awt.*;
  * short[0] = hue (0-360)
  * short[1] = saturation (0-100)
  * short[2] = brightness (0-100)
- * short[3] = alpha (0-100)
+ * short[3] = alpha (0-255)
  * </code>
  */
 @SuppressWarnings("unused")
@@ -215,7 +215,7 @@ public class OneColor {
     }
 
     public void setColorFromHex(String hex) {
-        hex = hex.replaceAll("#", "");
+        hex = hex.replace("#", "");
         if(hex.length() == 3) {
             hex = charsToString(hex.charAt(0), hex.charAt(0), hex.charAt(1), hex.charAt(1), hex.charAt(2), hex.charAt(2));
         }
@@ -227,6 +227,11 @@ public class OneColor {
         }
         rgba = Integer.parseInt(hex, 16);
         hsba = RGBAtoHSBA(0xff000000 | rgba);
+    }
+
+    public void setAlpha(int alpha) {
+        this.hsba[3] = (short) alpha;
+        rgba = HSBAtoRGBA(this.hsba[0], this.hsba[1], this.hsba[2], this.hsba[3]);
     }
 
     private String charsToString(char... chars) {

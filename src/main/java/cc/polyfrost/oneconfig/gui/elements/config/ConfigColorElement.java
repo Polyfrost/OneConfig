@@ -11,9 +11,7 @@ import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.Images;
 import cc.polyfrost.oneconfig.utils.InputUtils;
-import gg.essential.universal.UResolution;
 
-import java.awt.*;
 import java.lang.reflect.Field;
 
 public class ConfigColorElement extends BasicOption {
@@ -37,17 +35,26 @@ public class ConfigColorElement extends BasicOption {
         } catch (IllegalAccessException e) {
             return;
         }
-        String buf1 = Integer.toHexString(color.getRGB());
-        String hex = "#" + buf1.substring(buf1.length() - 6);
-        hexField.setInput(hex);
         RenderManager.drawString(vg, name, x, y + 16, OneConfigConfig.WHITE_90, 14f, Fonts.MEDIUM);
+        if (!hexField.isToggled()) hexField.setInput("#" + color.getHex());
+        hexField.setErrored(false);
+        if (hexField.isToggled()) {
+            try {
+                int alpha = color.getAlpha();
+                color.setColorFromHex(hexField.getInput());
+                color.setAlpha(alpha);
+                setColor(color);
+            } catch (NumberFormatException e) {
+                hexField.setErrored(true);
+            }
+        }
         hexField.draw(vg, x1 + 224, y);
 
-        if (!alphaField.isToggled()) alphaField.setInput(String.valueOf((color.getAlpha())));
+        if (!alphaField.isToggled()) alphaField.setInput(Math.round(color.getAlpha() / 2.55f) + "%");
         alphaField.setErrored(false);
         if (alphaField.isToggled()) {
             try {
-                float input = Float.parseFloat(alphaField.getInput());
+                float input = Float.parseFloat(alphaField.getInput().replace("%", ""));
                 if (input < 0f) {
                     alphaField.setErrored(true);
                     input = 100f;
@@ -56,6 +63,8 @@ public class ConfigColorElement extends BasicOption {
                     alphaField.setErrored(true);
                     input = 100f;
                 }
+                color = new OneColor((float) color.getHue(), color.getSaturation(), color.getBrightness(), Math.round(input * 2.55f));
+                setColor(color);
             } catch (NumberFormatException e) {
                 alphaField.setErrored(true);
             }
@@ -65,29 +74,23 @@ public class ConfigColorElement extends BasicOption {
         element.update(x1 + 416, y);
         RenderManager.drawRoundImage(vg, Images.ALPHA_GRID, x1 + 416, y, 64, 32, 12f);
         RenderManager.drawRoundedRect(vg, x1 + 416, y, 64, 32, color.getRGB(), 12f);
-        RenderManager.drawHollowRoundRect(vg, x1 + 416, y, 64, 32, OneConfigConfig.GRAY_300, 12f, 2f);
+        RenderManager.drawHollowRoundRect(vg, x1 + 415, y - 1, 64, 32, OneConfigConfig.GRAY_300, 12f, 2f);
         if (element.isClicked() && !element.isToggled()) {
             OneConfigGui.INSTANCE.initColorSelector(new ColorSelector(new OneColor(40, 30, 20), InputUtils.mouseX(), InputUtils.mouseY()));
         }
     }
 
-    // thanks stack overflow
-    public static OneColor HexToColor(String hex) throws NumberFormatException {
-        hex = hex.replace("#", "");
-        switch (hex.length()) {
-            case 6:
-                return new OneColor(
-                        Integer.valueOf(hex.substring(0, 2), 16),
-                        Integer.valueOf(hex.substring(2, 4), 16),
-                        Integer.valueOf(hex.substring(4, 6), 16));
-            case 8:
-                return new OneColor(
-                        Integer.valueOf(hex.substring(0, 2), 16),
-                        Integer.valueOf(hex.substring(2, 4), 16),
-                        Integer.valueOf(hex.substring(4, 6), 16),
-                        Integer.valueOf(hex.substring(6, 8), 16));
+    @Override
+    public void keyTyped(char key, int keyCode) {
+        alphaField.keyTyped(key, keyCode);
+        hexField.keyTyped(key, keyCode);
+    }
+
+    private void setColor(OneColor color) {
+        try {
+            set(color);
+        } catch (IllegalAccessException ignored) {
         }
-        throw new NumberFormatException("Invalid hex string: " + hex);
     }
 
     @Override
