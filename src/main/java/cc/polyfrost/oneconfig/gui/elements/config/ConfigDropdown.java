@@ -36,10 +36,12 @@ public class ConfigDropdown extends BasicOption { // TODO: chose where dividers 
         if (size == 1) hovered = InputUtils.isAreaHovered(x + 224, y, 256, 32) && isEnabled();
         else hovered = InputUtils.isAreaHovered(x + 352, y, 640, 32) && isEnabled();
 
-        if (hovered && InputUtils.isClicked() || opened && InputUtils.isClicked() &&
+        if (hovered && InputUtils.isClicked() || opened && InputUtils.isClicked(true) &&
                 (size == 1 && !InputUtils.isAreaHovered(x + 224, y + 40, 256, options.length * 32 + 4) ||
-                        size == 2 && !InputUtils.isAreaHovered(x + 352, y + 40, 640, options.length * 32 + 4)))
+                        size == 2 && !InputUtils.isAreaHovered(x + 352, y + 40, 640, options.length * 32 + 4))) {
             opened = !opened;
+            InputUtils.blockClicks(opened);
+        }
         if (opened) return;
 
         backgroundColor = ColorUtils.smoothColor(backgroundColor, OneConfigConfig.GRAY_500, OneConfigConfig.GRAY_400, hovered, 100);
@@ -97,12 +99,13 @@ public class ConfigDropdown extends BasicOption { // TODO: chose where dividers 
                     RenderManager.drawRoundedRect(vg, x + 228, optionY - 12, 248, 28, OneConfigConfig.BLUE_700, 8);
                     color = OneConfigConfig.WHITE;
                 }
-                if (optionHovered && InputUtils.isClicked()) {
+                if (optionHovered && InputUtils.isClicked(true)) {
                     try {
                         set(Arrays.asList(options).indexOf(option));
                     } catch (IllegalAccessException ignored) {
                     }
                     opened = false;
+                    InputUtils.blockClicks(false);
                 }
 
                 RenderManager.drawString(vg, option, x + 240, optionY + 4, color, 14, Fonts.MEDIUM);
@@ -135,12 +138,13 @@ public class ConfigDropdown extends BasicOption { // TODO: chose where dividers 
                 if (!options[options.length - 1].equals(option))
                     RenderManager.drawLine(vg, x + 360, optionY + 18, x + 984, optionY + 18, 1, new Color(204, 204, 204, 77).getRGB());
 
-                if (optionHovered && InputUtils.isClicked()) {
+                if (optionHovered && InputUtils.isClicked(true)) {
                     try {
                         set(Arrays.asList(options).indexOf(option));
                     } catch (IllegalAccessException ignored) {
                     }
                     opened = false;
+                    InputUtils.blockClicks(false);
                 }
                 optionY += 32;
             }

@@ -18,6 +18,7 @@ public class ConfigSlider extends BasicOption {
     private boolean isFloat = true;
     private final int step;
     private boolean dragging = false;
+    private boolean mouseWasDown = false;
 
     public ConfigSlider(Field field, Object parent, String name, int size, float min, float max, int step) {
         super(field, parent, name, size);
@@ -34,9 +35,12 @@ public class ConfigSlider extends BasicOption {
         boolean hovered = InputUtils.isAreaHovered(x + 352, y, 512, 32) && isEnabled();
         inputField.disable(!isEnabled());
         if (!isEnabled()) NanoVG.nvgGlobalAlpha(vg, 0.5f);
-        if (hovered && Mouse.isButtonDown(0)) dragging = true;
+        boolean isMouseDown = Mouse.isButtonDown(0);
+        if (hovered && isMouseDown && !mouseWasDown) dragging = true;
+        mouseWasDown = isMouseDown;
         if (dragging) {
             xCoordinate = (int) MathUtils.clamp(InputUtils.mouseX(), x + 352, x + 864);
+            if (step > 0) xCoordinate = getStepCoordinate(xCoordinate, x);
             value = MathUtils.map(xCoordinate, x + 352, x + 864, min, max);
         } else if (inputField.isToggled() || inputField.arrowsClicked()) {
             value = inputField.getCurrentValue();

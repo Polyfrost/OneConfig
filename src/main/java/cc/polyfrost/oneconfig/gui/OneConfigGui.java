@@ -261,7 +261,7 @@ public class OneConfigGui extends UScreen {
     @Override
     public void onScreenClose() {
         currentPage.finishUpAndClose();
-        //instanceToRestore = this;
+        instanceToRestore = this;
         INSTANCE = null;
         super.onScreenClose();
     }
