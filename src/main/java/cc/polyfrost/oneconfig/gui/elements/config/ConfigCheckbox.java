@@ -42,11 +42,11 @@ public class ConfigCheckbox extends BasicOption {
                 e.printStackTrace();
             }
         }
+        color = ColorUtils.smoothColor(color, OneConfigConfig.GRAY_600, OneConfigConfig.GRAY_400, hover, 40f);
         if (percentOn != 1f) {       // performance
             RenderManager.drawRoundedRect(vg, x, y + 4, 24, 24, color, 6f);
             RenderManager.drawHollowRoundRect(vg, x, y + 4, 23.5f, 23.5f, OneConfigConfig.GRAY_300, 6f, 1f);        // the 0.5f is to make it look better ok
         }
-        color = ColorUtils.smoothColor(color, OneConfigConfig.GRAY_600, OneConfigConfig.GRAY_400, hover, 40f);
         RenderManager.drawString(vg, name, x + 32, y + 17, OneConfigConfig.WHITE_90, 14f, Fonts.MEDIUM);
         percentOn = MathUtils.clamp(MathUtils.easeOut(percentOn, toggled ? 1f : 0f, 50f));
         if (percentOn != 0 && percentOn != 1f) {
@@ -56,6 +56,7 @@ public class ConfigCheckbox extends BasicOption {
             RenderManager.drawRoundedRect(vg, x, y + 4, 24, 24, OneConfigConfig.BLUE_500, 6f);
             RenderManager.drawSvg(vg, SVGs.CHECKBOX_TICK, x, y + 4, 24, 24);
         }
+        if(percentOn != 0 && hover) RenderManager.drawHollowRoundRect(vg, x - 1, y + 3, 24, 24, OneConfigConfig.BLUE_600, 6f, 2f);
         NanoVG.nvgGlobalAlpha(vg, 1f);
     }
 

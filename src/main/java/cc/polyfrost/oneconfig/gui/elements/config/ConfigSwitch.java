@@ -12,7 +12,8 @@ import org.lwjgl.nanovg.NanoVG;
 import java.lang.reflect.Field;
 
 public class ConfigSwitch extends BasicOption {
-    private int color;
+    private int colorEnabled;
+    private int colorDisabled;
     private float percentOn = 0f;
 
     public ConfigSwitch(Field field, Object parent, String name, int size) {
@@ -28,12 +29,13 @@ public class ConfigSwitch extends BasicOption {
         } catch (IllegalAccessException ignored) {
         }
         int x2 = x + 3 + (int) (percentOn * 18);
-        color = ColorUtils.smoothColor(color, OneConfigConfig.GRAY_400, OneConfigConfig.BLUE_500, toggled, 20f);
-        if (color == -15123643) {
-            color = OneConfigConfig.GRAY_400;
-        }
+        boolean hovered = InputUtils.isAreaHovered(x, y, 42, 32);
+        colorDisabled = ColorUtils.smoothColor(colorDisabled, OneConfigConfig.GRAY_400, OneConfigConfig.GRAY_300, hovered, 40f);
+        colorEnabled = ColorUtils.smoothColor(colorEnabled, OneConfigConfig.BLUE_600, OneConfigConfig.BLUE_500, !hovered, 40f);
         if (!isEnabled()) NanoVG.nvgGlobalAlpha(vg, 0.5f);
-        RenderManager.drawRoundedRect(vg, x, y + 4, 42, 24, color, 12f);
+        RenderManager.drawRoundedRect(vg, x, y + 4, 42, 24, colorDisabled, 12f);
+        if (percentOn != 0)
+            RenderManager.drawRoundedRect(vg, x, y + 4, 42, 24, ColorUtils.setAlpha(colorEnabled, (int) (255 * percentOn)), 12f);
         RenderManager.drawRoundedRect(vg, x2, y + 7, 18, 18, OneConfigConfig.WHITE, 9f);
         RenderManager.drawString(vg, name, x + 50, y + 17, OneConfigConfig.WHITE, 14f, Fonts.MEDIUM);
 
