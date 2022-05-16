@@ -59,7 +59,7 @@ public class ColorSelector {
         topSlider.setColor(color);
         bottomSlider.setValue(color.getAlpha() / 255f * 100f);
         this.x = mouseX - 208;
-        this.y = mouseY - 776;
+        this.y = Math.max(0, mouseY - 776);
         for(OneColor color1 : OneConfigConfig.recentColors) {
             recentColors.add(new ColorBox(color1));
         }

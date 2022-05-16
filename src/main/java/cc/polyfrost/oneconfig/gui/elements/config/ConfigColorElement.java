@@ -11,15 +11,12 @@ import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.Images;
 import cc.polyfrost.oneconfig.utils.InputUtils;
+import gg.essential.universal.UResolution;
 
 import java.awt.*;
 import java.lang.reflect.Field;
 
 public class ConfigColorElement extends BasicOption {
-    private float alpha;
-    private OneColor color = new OneColor(Color.BLUE);
-    private String hex;
-
     private final TextInputField hexField = new TextInputField(104, 32, "", false, false);
     private final TextInputField alphaField = new TextInputField(72, 32, "", false, false);
     private final BasicElement element = new BasicElement(64, 32, false);
@@ -29,21 +26,24 @@ public class ConfigColorElement extends BasicOption {
         hexField.setCentered(true);
         alphaField.setCentered(true);
         alphaField.onlyAcceptNumbers(true);
-        String buf = Integer.toHexString(color.getRGB());
-        hex = "#" + buf.substring(buf.length() - 6);
-    }
-
-    @Override
-    public int getHeight() {
-        return 32;
     }
 
     @Override
     public void draw(long vg, int x, int y) {
-        RenderManager.drawString(vg, name, x, y + 15, OneConfigConfig.WHITE_90, 18f, Fonts.MEDIUM);
-        hexField.draw(vg, x + 240, y);
+        int x1 = size == 1 ? x : x + 512;
+        OneColor color;
+        try {
+            color = (OneColor) get();
+        } catch (IllegalAccessException e) {
+            return;
+        }
+        String buf1 = Integer.toHexString(color.getRGB());
+        String hex = "#" + buf1.substring(buf1.length() - 6);
+        hexField.setInput(hex);
+        RenderManager.drawString(vg, name, x, y + 16, OneConfigConfig.WHITE_90, 14f, Fonts.MEDIUM);
+        hexField.draw(vg, x1 + 224, y);
 
-        if (!alphaField.isToggled()) alphaField.setInput(String.format("%.01f", alpha * 100f) + "%");
+        if (!alphaField.isToggled()) alphaField.setInput(String.valueOf((color.getAlpha())));
         alphaField.setErrored(false);
         if (alphaField.isToggled()) {
             try {
@@ -56,39 +56,19 @@ public class ConfigColorElement extends BasicOption {
                     alphaField.setErrored(true);
                     input = 100f;
                 }
-                alpha = input / 100f;
             } catch (NumberFormatException e) {
                 alphaField.setErrored(true);
             }
         }
-        alphaField.draw(vg, x + 352, y);
+        alphaField.draw(vg, x1 + 336, y);
 
-        if (!hexField.isToggled()) hexField.setInput(hex);
-        hexField.setErrored(false);
-        if (hexField.isToggled()) {
-            try {
-                color = HexToColor(hexField.getInput());
-                String buf = Integer.toHexString(color.getRGB());
-                hex = "#" + buf.substring(buf.length() - 6);
-            } catch (NumberFormatException e) {
-                hexField.setErrored(true);
-            }
-        }
-        hexField.draw(vg, x + 352, y);
-
-        element.update(x + 432, y);
-        RenderManager.drawRoundedRect(vg, x + 432, y, 64, 32, OneConfigConfig.GRAY_300, 12f);
-        RenderManager.drawImage(vg, Images.ALPHA_GRID, x + 948, y + 4, 56, 24, color.getRGB());
+        element.update(x1 + 416, y);
+        RenderManager.drawRoundImage(vg, Images.ALPHA_GRID, x1 + 416, y, 64, 32, 12f);
+        RenderManager.drawRoundedRect(vg, x1 + 416, y, 64, 32, color.getRGB(), 12f);
+        RenderManager.drawHollowRoundRect(vg, x1 + 416, y, 64, 32, OneConfigConfig.GRAY_300, 12f, 2f);
         if (element.isClicked() && !element.isToggled()) {
             OneConfigGui.INSTANCE.initColorSelector(new ColorSelector(new OneColor(40, 30, 20), InputUtils.mouseX(), InputUtils.mouseY()));
         }
-        if (element.isToggled() && element.isClicked()) {
-            color = OneConfigGui.INSTANCE.closeColorSelector();
-            alpha = color.getAlpha() / 255f;
-            String buf = Integer.toHexString(color.getRGB());
-            hex = "#" + buf.substring(buf.length() - 6);
-        }
-
     }
 
     // thanks stack overflow
@@ -108,5 +88,10 @@ public class ConfigColorElement extends BasicOption {
                         Integer.valueOf(hex.substring(6, 8), 16));
         }
         throw new NumberFormatException("Invalid hex string: " + hex);
+    }
+
+    @Override
+    public int getHeight() {
+        return 32;
     }
 }
