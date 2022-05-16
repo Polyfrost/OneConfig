@@ -51,6 +51,6 @@ public class ConfigDualOption extends BasicOption {
                 e.printStackTrace();
             }
         }
-        percentMove = MathUtils.clamp(MathUtils.easeOut(percentMove, toggled ? 1f : 0f, 10));
+        percentMove = MathUtils.clamp(MathUtils.easeOut(percentMove, toggled ? 1f : 0f, 75));
     }
 }

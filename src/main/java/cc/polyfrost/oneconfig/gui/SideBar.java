@@ -33,15 +33,12 @@ public class SideBar {
         btnList.add(new BasicButton(192, 36, "Packs Library", SVGs.BOX, null, -3, BasicButton.ALIGNMENT_LEFT));
         btnList.add(new BasicButton(192, 36, "Packs Browser", SVGs.SEARCH, null, -3, BasicButton.ALIGNMENT_LEFT));
         btnList.add(new BasicButton(192, 36, "Close", SVGs.X_CIRCLE, null, -1, BasicButton.ALIGNMENT_LEFT, () -> UScreen.displayScreen(null)));
-        btnList.add(new BasicButton(192, 36, "Minimize", SVGs.MINIMISE, null, -1, BasicButton.ALIGNMENT_LEFT, () -> {
-            OneConfigGui.instanceToRestore = OneConfigGui.INSTANCE;
-            UScreen.displayScreen(null);
-        }));
+        btnList.add(new BasicButton(192, 36, "Minimize", SVGs.MINIMISE, null, -1, BasicButton.ALIGNMENT_LEFT, () -> UScreen.displayScreen(null)));
         btnList.add(new BasicButton(192, 36, "Edit HUD", SVGs.HUD, null, 0, BasicButton.ALIGNMENT_LEFT, () -> UScreen.displayScreen(new HudGui())));
     }
 
     public void draw(long vg, int x, int y) {
-        currentY = MathUtils.easeInOutCirc(50, currentY, targetY - currentY, 120);
+        currentY = MathUtils.easeInOutCirc(50, currentY, targetY - currentY, 400);
         RenderManager.drawRoundedRect(vg, x + 16, y + currentY, 192, 36, OneConfigConfig.BLUE_600, OneConfigConfig.CORNER_RADIUS);
         int i = 0;
         if (targetY == 0) {

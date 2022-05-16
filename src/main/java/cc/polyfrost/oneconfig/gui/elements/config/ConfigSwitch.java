@@ -46,7 +46,7 @@ public class ConfigSwitch extends BasicOption {
                 e.printStackTrace();
             }
         }
-        percentOn = MathUtils.clamp(MathUtils.easeOut(percentOn, toggled ? 1f : 0f, 10));
+        percentOn = MathUtils.clamp(MathUtils.easeOut(percentOn, toggled ? 1f : 0f, 75));
         NanoVG.nvgGlobalAlpha(vg, 1f);
     }
 

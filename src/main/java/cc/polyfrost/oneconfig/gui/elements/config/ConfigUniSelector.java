@@ -70,7 +70,7 @@ public class ConfigUniSelector extends BasicOption {
             }
             percentMove = selected < previous ? 0f : 1f;
         }
-        if (previous != -1) percentMove = MathUtils.easeOut(percentMove, selected < previous ? 1f : 0f, 10);
+        if (previous != -1) percentMove = MathUtils.easeOut(percentMove, selected < previous ? 1f : 0f, 75);
         if ((selected < previous ? 1f : 0f) == percentMove) previous = -1;
         NanoVG.nvgGlobalAlpha(vg, 1f);
     }

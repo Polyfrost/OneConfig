@@ -48,7 +48,7 @@ public abstract class Page {
         if (scrollTarget > 0f) scrollTarget = 0f;
         else if (scrollTarget < -maxScroll + 728) scrollTarget = -maxScroll + 728;
 
-        currentScroll = MathUtils.easeOut(currentScroll, scrollTarget, 10f);
+        currentScroll = MathUtils.easeOut(currentScroll, scrollTarget, 50f);
         ScissorManager.resetScissor(vg, scissor);
     }
 

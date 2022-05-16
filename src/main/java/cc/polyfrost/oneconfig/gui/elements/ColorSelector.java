@@ -128,7 +128,7 @@ public class ColorSelector {
             }
             i += 128;
         }
-        percentMove = MathUtils.easeOut(percentMove, mode, 18f);
+        percentMove = MathUtils.easeOut(percentMove, mode, 100f);
 
         RenderManager.drawString(vg, "HSB Box", x + 55, y + 81, OneConfigConfig.WHITE, 12f, Fonts.MEDIUM);
         RenderManager.drawString(vg, "Color Wheel", x + 172.5f, y + 81, OneConfigConfig.WHITE, 12f, Fonts.MEDIUM);

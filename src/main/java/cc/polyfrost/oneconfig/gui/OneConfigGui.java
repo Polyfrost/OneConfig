@@ -14,10 +14,7 @@ import cc.polyfrost.oneconfig.lwjgl.scissor.Scissor;
 import cc.polyfrost.oneconfig.lwjgl.scissor.ScissorManager;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import cc.polyfrost.oneconfig.utils.MathUtils;
-import gg.essential.universal.UKeyboard;
-import gg.essential.universal.UMatrixStack;
-import gg.essential.universal.UResolution;
-import gg.essential.universal.UScreen;
+import gg.essential.universal.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.input.Mouse;
@@ -40,7 +37,9 @@ public class OneConfigGui extends UScreen {
     private ColorSelector currentColorSelector;
     public boolean mouseDown;
     private float scale = 1f;
-    public static OneConfigGui instanceToRestore = null;
+    private static OneConfigGui instanceToRestore = null;
+    private long time = -1L;
+    private long deltaTime = 17L;
     public boolean allowClose = true;
 
     public OneConfigGui() {
@@ -71,6 +70,12 @@ public class OneConfigGui extends UScreen {
             if (currentPage == null) {
                 currentPage = new HomePage();
                 parents.add(currentPage);
+            }
+            if (time == -1) time = UMinecraft.getTime();
+            else {
+                long currentTime = UMinecraft.getTime();
+                deltaTime = currentTime - time;
+                time = currentTime;
             }
             scale = Math.min(UResolution.getWindowWidth() / 1920f, UResolution.getWindowHeight() / 1080f);
             if (scale < 1)
@@ -133,7 +138,7 @@ public class OneConfigGui extends UScreen {
 
             Scissor scissor = ScissorManager.scissor(vg, x + 224, y + 88, 1056, 698);
             if (prevPage != null) {
-                pageProgress = MathUtils.easeInOutCirc(50, pageProgress, 832 - pageProgress, 220);
+                pageProgress = MathUtils.easeInOutCirc(50, pageProgress, 832 - pageProgress, 600);
                 prevPage.scrollWithDraw(vg, (int) (x - pageProgress), y + 72);
                 RenderManager.drawLine(vg, (int) (x - pageProgress + 1055), y + 72, (int) (x - pageProgress + 1057), y + 800, 2, OneConfigConfig.GRAY_700);     // TODO might remove this
                 currentPage.scrollWithDraw(vg, (int) (x - pageProgress + 1056), y + 72);
@@ -244,6 +249,10 @@ public class OneConfigGui extends UScreen {
         return textInputField.getInput();
     }
 
+    public long getDeltaTime() {
+        return deltaTime;
+    }
+
     @Override
     public boolean doesGuiPauseGame() {
         return false;
@@ -252,7 +261,7 @@ public class OneConfigGui extends UScreen {
     @Override
     public void onScreenClose() {
         currentPage.finishUpAndClose();
-        instanceToRestore = this;
+        //instanceToRestore = this;
         INSTANCE = null;
         super.onScreenClose();
     }
