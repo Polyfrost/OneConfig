@@ -15,7 +15,7 @@ import java.awt.*;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 
-public class ConfigDropdown extends BasicOption { // TODO: chose where dividers are somehow idfk please send help
+public class ConfigDropdown extends BasicOption { // TODO: remove dividers and fix corners
     private final String[] options;
     private int backgroundColor = OneConfigConfig.GRAY_500;
     private boolean opened = false;
@@ -37,8 +37,8 @@ public class ConfigDropdown extends BasicOption { // TODO: chose where dividers 
         else hovered = InputUtils.isAreaHovered(x + 352, y, 640, 32) && isEnabled();
 
         if (hovered && InputUtils.isClicked() || opened && InputUtils.isClicked(true) &&
-                (size == 1 && !InputUtils.isAreaHovered(x + 224, y + 40, 256, options.length * 32 + 4) ||
-                        size == 2 && !InputUtils.isAreaHovered(x + 352, y + 40, 640, options.length * 32 + 4))) {
+                (size == 1 && !InputUtils.isAreaHovered(x + 224, y + 40, 256, options.length * 36) ||
+                        size == 2 && !InputUtils.isAreaHovered(x + 352, y + 40, 640, options.length * 36))) {
             opened = !opened;
             InputUtils.blockClicks(opened);
         }
@@ -85,58 +85,61 @@ public class ConfigDropdown extends BasicOption { // TODO: chose where dividers 
         if (size == 1) {
             RenderManager.drawRoundedRect(vg, x + 224, y, 256, 32, backgroundColor, 12);
             RenderManager.drawString(vg, options[selected], x + 236, y + 16, OneConfigConfig.WHITE_80, 14f, Fonts.MEDIUM);
-
-            NanoVG.nvgGlobalAlpha(vg, 1f);
-            RenderManager.drawRoundedRect(vg, x + 224, y + 40, 256, options.length * 32 + 4, OneConfigConfig.GRAY_700, 12);
-            RenderManager.drawHollowRoundRect(vg, x + 224, y + 40, 256, options.length * 32 + 4, new Color(204, 204, 204, 77).getRGB(), 8, 1);
-            int optionY = y + 56;
-            for (String option : options) {
-                int color = OneConfigConfig.WHITE_80;
-                boolean optionHovered = InputUtils.isAreaHovered(x + 224, optionY - 16, 252, 32);
-                if (optionHovered && Mouse.isButtonDown(0)) {
-                    RenderManager.drawRoundedRect(vg, x + 228, optionY - 12, 248, 28, OneConfigConfig.BLUE_700_80, 8);
-                } else if (optionHovered) {
-                    RenderManager.drawRoundedRect(vg, x + 228, optionY - 12, 248, 28, OneConfigConfig.BLUE_700, 8);
-                    color = OneConfigConfig.WHITE;
-                }
-                if (optionHovered && InputUtils.isClicked(true)) {
-                    try {
-                        set(Arrays.asList(options).indexOf(option));
-                    } catch (IllegalAccessException ignored) {
-                    }
-                    opened = false;
-                    InputUtils.blockClicks(false);
-                }
-
-                RenderManager.drawString(vg, option, x + 240, optionY + 4, color, 14, Fonts.MEDIUM);
-                if (!options[options.length - 1].equals(option))
-                    RenderManager.drawLine(vg, x + 232, optionY + 18, x + 472, optionY + 18, 1, new Color(204, 204, 204, 77).getRGB());
-                optionY += 32;
-            }
-
             if (hovered && Mouse.isButtonDown(0)) NanoVG.nvgGlobalAlpha(vg, 0.8f);
             RenderManager.drawRoundedRect(vg, x + 452, y + 4, 24, 24, OneConfigConfig.BLUE_600, 8);
             RenderManager.drawSvg(vg, SVGs.DROPDOWN_LIST, x + 452, y + 4, 24, 24);
+
+            NanoVG.nvgGlobalAlpha(vg, 1f);
+            RenderManager.drawRoundedRect(vg, x + 224, y + 48, 256, options.length * 36, OneConfigConfig.GRAY_700, 12);
+            RenderManager.drawHollowRoundRect(vg, x + 223, y + 47, 258, options.length * 36 + 2, new Color(204, 204, 204, 77).getRGB(), 11, 1);
+            int optionY = y + 48;
+            for (String option : options) {
+                int color = OneConfigConfig.WHITE_80;
+                boolean optionHovered = InputUtils.isAreaHovered(x + 224, optionY, 252, 36);
+                if (optionHovered && Mouse.isButtonDown(0)) {
+                    RenderManager.drawRoundedRect(vg, x + 228, optionY + 4, 248, 28, OneConfigConfig.BLUE_700_80, 8);
+                } else if (optionHovered) {
+                    RenderManager.drawRoundedRect(vg, x + 228, optionY + 4, 248, 28, OneConfigConfig.BLUE_700, 8);
+                    color = OneConfigConfig.WHITE;
+                }
+                if (optionHovered && InputUtils.isClicked(true)) {
+                    try {
+                        set(Arrays.asList(options).indexOf(option));
+                    } catch (IllegalAccessException ignored) {
+                    }
+                    opened = false;
+                    InputUtils.blockClicks(false);
+                }
+
+                RenderManager.drawString(vg, option, x + 240, optionY + 20, color, 14, Fonts.MEDIUM);
+                if (!options[options.length - 1].equals(option))
+                    RenderManager.drawLine(vg, x + 232, optionY + 36, x + 472, optionY + 36, 1, new Color(204, 204, 204, 77).getRGB());
+                optionY += 36;
+            }
         } else {
             RenderManager.drawRoundedRect(vg, x + 352, y, 640, 32, backgroundColor, 12);
             RenderManager.drawString(vg, options[selected], x + 364, y + 16, OneConfigConfig.WHITE_80, 14f, Fonts.MEDIUM);
+            if (hovered && Mouse.isButtonDown(0)) NanoVG.nvgGlobalAlpha(vg, 0.8f);
+            RenderManager.drawRoundedRect(vg, x + 964, y + 4, 24, 24, OneConfigConfig.BLUE_600, 8);
+            RenderManager.drawSvg(vg, SVGs.DROPDOWN_LIST, x + 964, y + 4, 24, 24);
 
-            RenderManager.drawRoundedRect(vg, x + 352, y + 40, 640, options.length * 32 + 4, OneConfigConfig.GRAY_700, 12);
-            RenderManager.drawHollowRoundRect(vg, x + 352, y + 40, 640, options.length * 32 + 4, new Color(204, 204, 204, 77).getRGB(), 8, 1);
-            int optionY = y + 56;
+            NanoVG.nvgGlobalAlpha(vg, 1f);
+            RenderManager.drawRoundedRect(vg, x + 352, y + 48, 640, options.length * 36, OneConfigConfig.GRAY_700, 12);
+            RenderManager.drawHollowRoundRect(vg, x + 351, y + 47, 642, options.length * 36 + 2, new Color(204, 204, 204, 77).getRGB(), 10, 1);
+            int optionY = y + 48;
             for (String option : options) {
                 int color = OneConfigConfig.WHITE_80;
-                boolean optionHovered = InputUtils.isAreaHovered(x + 352, optionY - 16, 640, 32);
+                boolean optionHovered = InputUtils.isAreaHovered(x + 352, optionY, 640, 36);
                 if (optionHovered && Mouse.isButtonDown(0)) {
-                    RenderManager.drawRoundedRect(vg, x + 356, optionY - 12, 632, 28, OneConfigConfig.BLUE_700_80, 8);
+                    RenderManager.drawRoundedRect(vg, x + 356, optionY + 4, 632, 28, OneConfigConfig.BLUE_700_80, 8);
                 } else if (optionHovered) {
-                    RenderManager.drawRoundedRect(vg, x + 356, optionY - 12, 632, 28, OneConfigConfig.BLUE_700, 8);
+                    RenderManager.drawRoundedRect(vg, x + 356, optionY + 4, 632, 28, OneConfigConfig.BLUE_700, 8);
                     color = OneConfigConfig.WHITE;
                 }
 
-                RenderManager.drawString(vg, option, x + 368, optionY + 4, color, 14, Fonts.MEDIUM);
+                RenderManager.drawString(vg, option, x + 368, optionY + 20, color, 14, Fonts.MEDIUM);
                 if (!options[options.length - 1].equals(option))
-                    RenderManager.drawLine(vg, x + 360, optionY + 18, x + 984, optionY + 18, 1, new Color(204, 204, 204, 77).getRGB());
+                    RenderManager.drawLine(vg, x + 360, optionY + 36, x + 984, optionY + 36, 1, new Color(204, 204, 204, 77).getRGB());
 
                 if (optionHovered && InputUtils.isClicked(true)) {
                     try {
@@ -146,12 +149,8 @@ public class ConfigDropdown extends BasicOption { // TODO: chose where dividers 
                     opened = false;
                     InputUtils.blockClicks(false);
                 }
-                optionY += 32;
+                optionY += 36;
             }
-
-            if (hovered && Mouse.isButtonDown(0)) NanoVG.nvgGlobalAlpha(vg, 0.8f);
-            RenderManager.drawRoundedRect(vg, x + 964, y + 4, 24, 24, OneConfigConfig.BLUE_600, 8);
-            RenderManager.drawSvg(vg, SVGs.DROPDOWN_LIST, x + 964, y + 4, 24, 24);
         }
         NanoVG.nvgGlobalAlpha(vg, 1f);
     }
