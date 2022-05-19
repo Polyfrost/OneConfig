@@ -19,12 +19,10 @@ public class ConfigDropdown extends BasicOption { // TODO: remove dividers and f
     private final String[] options;
     private int backgroundColor = OneConfigConfig.GRAY_500;
     private boolean opened = false;
-    private int[] dividers;
 
-    public ConfigDropdown(Field field, Object parent, String name, int size, String[] options, int [] dividers) {
+    public ConfigDropdown(Field field, Object parent, String name, int size, String[] options) {
         super(field, parent, name, size);
         this.options = options;
-        this.dividers = dividers;
     }
 
     @Override

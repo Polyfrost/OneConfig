@@ -44,11 +44,6 @@ public @interface Option {
     String[] options() default {};
 
     /**
-     * The places you want dividers to be in a dropdown
-     */
-    int[] dividers() default {};
-
-    /**
      * The placeholder in the text field
      */
     String placeholder() default "";
