@@ -6,5 +6,6 @@ public enum ModType {
     UTIL_QOL,
     HYPIXEL,
     SKYBLOCK,
+    VIGILANCE,
     THIRD_PARTY
 }

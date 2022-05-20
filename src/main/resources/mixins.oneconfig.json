@@ -3,10 +3,11 @@
   "minVersion": "0.7",
   "package": "cc.polyfrost.oneconfig.mixin",
   "refmap": "mixins.oneconfig.refmap.json",
+  "plugin": "cc.polyfrost.oneconfig.plugin.OneConfigMixinPlugin",
   "injectors": {
     "maxShiftBy": 5
   },
-  "client": [
+  "mixins": [
     "ShaderGroupAccessor"
   ],
   "verbose": true

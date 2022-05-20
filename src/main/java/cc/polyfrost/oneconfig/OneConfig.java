@@ -59,6 +59,7 @@ public class OneConfig {
             RenderManager.drawString(vg, "OneConfig loading...", -100, -100, -1, 12f, Fonts.MEDIUM);
             RenderManager.drawImage(vg, Images.HUE_GRADIENT, -100, -100, 50, 50);
         });
+
     }
 
     @net.minecraftforge.fml.common.Mod.EventHandler

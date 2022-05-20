@@ -12,16 +12,14 @@ import java.lang.reflect.Field;
 public class ConfigButton extends BasicOption {
     private final BasicButton button;
 
+    public ConfigButton(Runnable runnable, Object parent, String name, int size, String text) {
+        super(null, parent, name, size);
+        this.button = new BasicButton(size == 1 ? 128 : 256, 32, text, null, null, 1, BasicButton.ALIGNMENT_CENTER, runnable);
+    }
+
     public ConfigButton(Field field, Object parent, String name, int size, String text) {
         super(field, parent, name, size);
-        Runnable runnable = () -> {
-        };
-        try {
-            runnable = (Runnable) get();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        }
-        this.button = new BasicButton(size == 1 ? 128 : 256, 32, text, null, null, 1, BasicButton.ALIGNMENT_CENTER, runnable);
+        this.button = new BasicButton(size == 1 ? 128 : 256, 32, text, null, null, 1, BasicButton.ALIGNMENT_CENTER, getRunnableFromField(field, parent));
     }
 
     @Override
@@ -36,5 +34,15 @@ public class ConfigButton extends BasicOption {
     @Override
     public int getHeight() {
         return 32;
+    }
+
+    private static Runnable getRunnableFromField(Field field, Object parent) {
+        Runnable runnable = () -> {};
+        try {
+            runnable = (Runnable) field.get(parent);
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
+        return runnable;
     }
 }
