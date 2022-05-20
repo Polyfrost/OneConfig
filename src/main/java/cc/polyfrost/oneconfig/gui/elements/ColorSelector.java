@@ -43,6 +43,7 @@ public class ColorSelector {
     private final ColorSlider bottomSlider = new ColorSlider(384, 0, 100, 100);
     private final Slider speedSlider = new Slider(296, 1, 30, 20);
     private int mode = 0;
+    private boolean dragging, mouseWasDown;
 
 
     public ColorSelector(OneColor color, int mouseX, int mouseY) {
@@ -153,23 +154,26 @@ public class ColorSelector {
         RenderManager.drawSvg(vg, SVGs.POP_OUT, x + 369, y + 631, 18, 18);
 
 
-        boolean drag;
+        boolean isMouseDown = Mouse.isButtonDown(0);
+        boolean hovered = Mouse.isButtonDown(0) && InputUtils.isAreaHovered(x + 16, y + 120, 384, 288);
+        if (hovered && isMouseDown && !mouseWasDown) dragging = true;
+        mouseWasDown = isMouseDown;
         if(mode != 2) color.setChromaSpeed(-1);
         switch (mode) {
             default:
             case 0:
             case 2:
                 buttons.get(mode).currentColor = OneConfigConfig.TRANSPARENT;
-                if(mouseX < x + 16 && mouseY < y + 120) {
-                    this.mouseX = (int) (color.getSaturation() / 100f * 384 + x + 16);
-                    this.mouseY = (int) (Math.abs(color.getBrightness() / 100f - 1f) * 288 + y + 120);
-                }
+                topSlider.setImage(Images.HUE_GRADIENT);
                 RenderManager.drawHSBBox(vg, x + 16, y + 120, 384, 288, color.getRGBMax(false));
-                drag = Mouse.isButtonDown(0) && InputUtils.isAreaHovered(x + 16, y + 120, 384, 288);
-                if(drag) {
+                if(dragging) {
                     mouseX = InputUtils.mouseX();
                     mouseY = InputUtils.mouseY();
                 }
+                if(mouseX < x + 16) mouseX = x + 16;
+                if(mouseY < y + 120) mouseY = y + 120;
+                if(mouseX > x + 400) mouseX = x + 400;
+                if(mouseY > y + 408) mouseY = y + 408;
                 float progressX = (mouseX - x - 16f) / 384f;
                 float progressY = Math.abs((mouseY - y - 120f) / 288f - 1f);
                 color.setHSBA((int) topSlider.getValue(), Math.round(progressX * 100), Math.round(progressY * 100), (int) ((bottomSlider.getValue() / 100f) * 255));
@@ -190,29 +194,34 @@ public class ColorSelector {
                 break;
             case 1:
                 buttons.get(1).currentColor = OneConfigConfig.TRANSPARENT;
+                topSlider.setImage(null);
                 RenderManager.drawRoundImage(vg, Images.COLOR_WHEEL, x + 64, y + 120, 288, 288, 144f);
                 int circleCenterX = x + 208;
                 int circleCenterY = y + 264;
-                drag = false;
                 double squareDist = Math.pow((circleCenterX - InputUtils.mouseX()), 2) + Math.pow((circleCenterY - InputUtils.mouseY()), 2);
-                if( squareDist < 144 * 144) {
-                    drag = Mouse.isButtonDown(0);
-                }
+                hovered = squareDist < 144 * 144 && Mouse.isButtonDown(0);
+                isMouseDown = Mouse.isButtonDown(0);
+                if (hovered && isMouseDown && !mouseWasDown) dragging = true;
+                mouseWasDown = isMouseDown;
+
                 int angle = 0;
-                if(drag) {
+                if(dragging) {
+                    //if(!(squareDist / (144 * 144) > 1f)
                     mouseX = InputUtils.mouseX();
                     mouseY = InputUtils.mouseY();
                     angle = (int) Math.toDegrees(Math.atan2(mouseY - circleCenterY, mouseX - circleCenterX));
                     if(angle < 0) angle += 360;
-
                 }
-                color.setHSBA(drag ? angle : color.getHue(), drag ? (int) (squareDist / (144 * 144) * 100) : color.getSaturation(), (int) (topSlider.getValue() / 360 * 100), (int) ((bottomSlider.getValue() / 100f) * 255));
+                color.setHSBA(dragging ? angle : color.getHue(), dragging ? (int) (squareDist / (144 * 144) * 100) : color.getSaturation(), (int) (topSlider.getValue() / 360 * 100), (int) ((bottomSlider.getValue() / 100f) * 255));
                 topSlider.setGradient(OneConfigConfig.BLACK, color.getRGBMax(true));
                 topSlider.setImage(null);
                 RenderManager.drawString(vg, "Hue", x + 16, y + 560, OneConfigConfig.WHITE_80, 12f, Fonts.MEDIUM);
                 hueInput.draw(vg, x + 104, y + 544);
                 topSlider.draw(vg, x + 16, y + 424);
                 break;
+        }
+        if(dragging && InputUtils.isClicked()) {
+            dragging = false;
         }
         bottomSlider.setGradient(OneConfigConfig.TRANSPARENT_25, color.getRGBNoAlpha());
         RenderManager.drawImage(vg, Images.ALPHA_GRID, x + 16, y + 456, 384, 16);
@@ -229,6 +238,7 @@ public class ColorSelector {
             if(mode == 2) {
                 color.setHSBA(color.getHue(), (int) saturationInput.getCurrentValue(), (int) brightnessInput.getCurrentValue(), (int) ((alphaInput.getCurrentValue() / 100f) * 255f));
                 color.setChromaSpeed((int) (hueInput.getCurrentValue() / 360f * 30f));
+                speedSlider.setValue(hueInput.getCurrentValue() / 360f * 30f);
             }
             bottomSlider.setValue(color.getAlpha() / 255f * 100f);
             if(mode == 0 || mode == 2) {
@@ -241,9 +251,6 @@ public class ColorSelector {
             }
             if(mode == 0) {
                 topSlider.setValue(color.getHue());
-            }
-            if(mode == 2) {
-                speedSlider.setValue(hueInput.getCurrentValue() / 360f * 30f);
             }
         }
         else if(OneConfigGui.INSTANCE.mouseDown) {
