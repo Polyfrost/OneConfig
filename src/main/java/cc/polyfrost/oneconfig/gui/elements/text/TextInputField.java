@@ -4,10 +4,13 @@ import cc.polyfrost.oneconfig.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.gui.elements.BasicElement;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
+import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
 import cc.polyfrost.oneconfig.lwjgl.scissor.Scissor;
 import cc.polyfrost.oneconfig.lwjgl.scissor.ScissorManager;
 import cc.polyfrost.oneconfig.utils.InputUtils;
+import cc.polyfrost.oneconfig.utils.TextUtils;
 import gg.essential.universal.UKeyboard;
+import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
@@ -15,6 +18,8 @@ import org.lwjgl.input.Mouse;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
+import java.util.ArrayList;
+import java.util.Map;
 
 public class TextInputField extends BasicElement {
 
@@ -33,17 +38,25 @@ public class TextInputField extends BasicElement {
     protected boolean onlyNums = false;
     protected boolean errored = false;
     protected boolean centered = false;
+    private int lines = 1;
+    protected SVGs icon;
+    protected ArrayList<String> wrappedText = null;
 
-    public TextInputField(int width, int height, String defaultText, boolean multiLine, boolean password) {
+    public TextInputField(int width, int height, String defaultText, boolean multiLine, boolean password, SVGs icon) {
         super(width, height, false);
         this.multiLine = multiLine;
         this.defaultText = defaultText;
         this.password = password;
         this.input = "";
+        this.icon = icon;
+    }
+
+    public TextInputField(int width, int height, String defaultText, boolean multiLine, boolean password) {
+        this(width, height, defaultText, multiLine, password, null);
     }
 
     public TextInputField(int width, int height, boolean centered, String defaultText) {
-        this(width, height, defaultText, false, false);
+        this(width, height, defaultText, false, false, null);
         this.centered = centered;
     }
 
@@ -99,9 +112,20 @@ public class TextInputField extends BasicElement {
             if (prevCaret > input.length()) prevCaret = input.length();
             if (caretPos < 0) caretPos = 0;
             if (prevCaret < 0) prevCaret = 0;
+            if (icon != null) {
+                RenderManager.drawSvg(vg, icon, x + 12, y + height / 2f - 12f, 24, 24, color);
+                x += 32;
+                this.x = x;
+            }
             float width;
             StringBuilder s = new StringBuilder();
-            if (!password) {
+            if (multiLine) {
+                wrappedText = TextUtils.wrapText(vg, input, this.width - 24, 14f, Fonts.REGULAR);
+                lines = wrappedText.size();
+                if (!toggled) caretPos = wrappedText.get(wrappedText.size() - 1).length();
+                int caretLine = getCaretLine(caretPos);
+                width = RenderManager.getTextWidth(vg, wrappedText.get(caretLine).substring(0, getLineCaret(caretPos, caretLine)), 14f, Fonts.REGULAR);
+            } else if (!password) {
                 width = RenderManager.getTextWidth(vg, input.substring(0, caretPos), 14f, Fonts.REGULAR);
             } else {
                 for (int i = 0; i < input.length(); i++) {
@@ -113,7 +137,10 @@ public class TextInputField extends BasicElement {
                 while (Mouse.next()) {
                     if (Mouse.getEventButtonState()) {
                         if (Mouse.getEventButton() == 0) {
-                            prevCaret = calculatePos(InputUtils.mouseX());
+                            if (multiLine) {
+                                int caretLine = Math.max(0, Math.min(wrappedText.size() - 1, (int) Math.floor((InputUtils.mouseY() - y - 10) / 24f)));
+                                caretPos = calculatePos(InputUtils.mouseX(), wrappedText.get(caretLine));
+                            } else prevCaret = calculatePos(InputUtils.mouseX(), input);
                             if (System.currentTimeMillis() - clickTimeD1 < 300) {
                                 onDoubleClick();
                                 isDoubleClick = true;
@@ -142,7 +169,10 @@ public class TextInputField extends BasicElement {
             }
             if (hovered) {
                 if (Mouse.isButtonDown(0) && !isDoubleClick) {
-                    caretPos = calculatePos(InputUtils.mouseX());
+                    if (multiLine) {
+                        int caretLine = Math.max(0, Math.min(wrappedText.size() - 1, (int) Math.floor((InputUtils.mouseY() - y - 10) / 24f)));
+                        caretPos = calculatePos(InputUtils.mouseX(), wrappedText.get(caretLine));
+                    } else caretPos = calculatePos(InputUtils.mouseX(), input);
                     if (caretPos > prevCaret) {
                         if (!centered) start = x + 12 + this.getTextWidth(vg, input.substring(0, prevCaret));
                         else
@@ -161,7 +191,10 @@ public class TextInputField extends BasicElement {
 
 
             if (toggled) {
-                if (!centered) {
+                if (multiLine) {
+                    int lineY = y + 20 + getCaretLine(caretPos) * 24;
+                    RenderManager.drawLine(vg, x + width + 12, lineY - 10, x + width + 12, lineY + 10, 1, OneConfigConfig.WHITE);
+                } else if (!centered) {
                     RenderManager.drawLine(vg, x + width + 12, (float) y + height / 2f - 10, x + width + 12, (float) y + height / 2f + 10, 1, OneConfigConfig.WHITE);
                 } else {
                     RenderManager.drawLine(vg, x + this.width / 2f - halfTextWidth + width, (float) y + height / 2f - 10, x + this.width / 2f - halfTextWidth + width, (float) y + height / 2f + 10, 1, OneConfigConfig.WHITE);
@@ -170,7 +203,9 @@ public class TextInputField extends BasicElement {
 
 
             if (input.equals("")) {
-                if (!centered) {
+                if (multiLine) {
+                    RenderManager.drawString(vg, defaultText, x + 12, y + 16, color, 14f, Fonts.REGULAR);
+                } else if (!centered) {
                     RenderManager.drawString(vg, defaultText, x + 12, y + height / 2f + 1, color, 14f, Fonts.REGULAR);
                 } else {
                     RenderManager.drawString(vg, defaultText, x + this.width / 2f - halfTextWidth, y + height / 2f + 1, color, 14f, Fonts.REGULAR);
@@ -178,7 +213,13 @@ public class TextInputField extends BasicElement {
             }
 
             if (!password) {
-                if (!centered) {
+                if (multiLine) {
+                    int textY = y + 20;
+                    for (String line : wrappedText) {
+                        RenderManager.drawString(vg, line, x + 12, textY, color, 14f, Fonts.REGULAR);
+                        textY += 24;
+                    }
+                } else if (!centered) {
                     RenderManager.drawString(vg, input, x + 12, y + height / 2f + 1, color, 14f, Fonts.REGULAR);
                 } else {
                     RenderManager.drawString(vg, input, x + this.width / 2f - halfTextWidth, y + height / 2f + 1, color, 14f, Fonts.REGULAR);
@@ -190,6 +231,7 @@ public class TextInputField extends BasicElement {
         } catch (Exception e) {
             e.printStackTrace();
         }
+
     }
 
     public void keyTyped(char c, int key) {
@@ -345,12 +387,7 @@ public class TextInputField extends BasicElement {
                 if (UKeyboard.isCtrlKeyDown()) return;
                 if (isAllowedCharacter(c)) {
                     if (selectedText != null) {
-                        if (caretPos > prevCaret) {
-                            input = input.substring(0, prevCaret) + input.substring(prevCaret, caretPos);
-                            caretPos = prevCaret;
-                        } else {
-                            input = input.substring(0, caretPos) + input.substring(caretPos, prevCaret);
-                        }
+                        if (caretPos > prevCaret) caretPos = prevCaret;
                         if (selectedText.equals(input)) {
                             input = "";
                         }
@@ -390,16 +427,16 @@ public class TextInputField extends BasicElement {
         end = this.getTextWidth(vg, input.substring(prevCaret, caretPos));
     }
 
-    private int calculatePos(int pos) {
+    private int calculatePos(int pos, String string) {
         if (centered) pos -= 12;
         String s1 = "";
         int i;
-        for (char c : input.toCharArray()) {
+        for (char c : string.toCharArray()) {
             if (pos - x - 12 < 0) {
                 return 0;
             }
-            if (pos - x - 12 > this.getTextWidth(vg, input)) {
-                return input.length();
+            if (pos - x - 12 > this.getTextWidth(vg, string)) {
+                return string.length();
             }
             s1 += c;
             i = (int) this.getTextWidth(vg, s1);
@@ -411,7 +448,6 @@ public class TextInputField extends BasicElement {
     }
 
     public void onClose() {
-
     }
 
     private float getTextWidth(long vg, String s) {
@@ -426,7 +462,49 @@ public class TextInputField extends BasicElement {
         }
     }
 
+    private int getCaretLine(int caret) {
+        int pos = 0;
+        for (int i = 0; i < wrappedText.size(); i++) {
+            String text = wrappedText.get(i);
+            float length = RenderManager.getTextWidth(vg, text, 14.0f, Fonts.REGULAR);
+            pos += length;
+            if (pos < caret) continue;
+            return i;
+        }
+        return 0;
+    }
+
+    private float getCaretX(int caret) {
+        int pos = 0;
+        for (String text : wrappedText) {
+            float length = RenderManager.getTextWidth(vg, text, 14.0f, Fonts.REGULAR);
+            if (pos + length < caret) {
+                pos += length;
+                continue;
+            }
+            return RenderManager.getTextWidth(vg, text.substring(0, caret - pos), 14.0f, Fonts.REGULAR);
+        }
+        return 0;
+    }
+
+    private int getLineCaret(int caret, int line) {
+        int pos = 0;
+        for (String text : wrappedText) {
+            float length = RenderManager.getTextWidth(vg, text, 14.0f, Fonts.REGULAR);
+            if (pos + length < caret) {
+                pos += length;
+                continue;
+            }
+            return caret - pos;
+        }
+        return 0;
+    }
+
     public static boolean isAllowedCharacter(char character) {
         return character != 167 && character >= ' ' && character != 127;
+    }
+
+    public int getLines() {
+        return lines;
     }
 }

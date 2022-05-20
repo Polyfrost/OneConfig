@@ -2,12 +2,12 @@ package cc.polyfrost.oneconfig.gui.elements.config;
 
 import cc.polyfrost.oneconfig.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.config.interfaces.BasicOption;
+import cc.polyfrost.oneconfig.gui.elements.text.TextInputField;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
-import cc.polyfrost.oneconfig.lwjgl.image.Images;
 import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
 import cc.polyfrost.oneconfig.utils.InputUtils;
-import cc.polyfrost.oneconfig.gui.elements.text.TextInputField;
+import org.lwjgl.input.Mouse;
 import org.lwjgl.nanovg.NanoVG;
 
 import java.awt.*;
@@ -37,11 +37,18 @@ public class ConfigTextBox extends BasicOption {
         } catch (IllegalAccessException ignored) {
         }
 
+        if (multiLine && textField.getLines() > 2) textField.setHeight(64 + 24 * (textField.getLines() - 2));
+        else if (multiLine) textField.setHeight(64);
         textField.draw(vg, x + (size == 1 && hasHalfSize() ? 224 : 352), y);
 
-        if (secure)
-            RenderManager.drawSvg(vg, SVGs.EYE, x + 967, y + 7, 18, 18, new Color(196, 196, 196).getRGB());
-        if (secure && InputUtils.isAreaClicked(x + 967, y + 7, 18, 18)) textField.setPassword(!textField.getPassword());
+        if (secure) {
+            SVGs icon = textField.getPassword() ? SVGs.EYE_OFF : SVGs.EYE;
+            boolean hovered = InputUtils.isAreaHovered(x + 967, y + 7, 18, 18) && isEnabled();
+            int color = hovered ? OneConfigConfig.WHITE : OneConfigConfig.WHITE_80;
+            if (hovered && InputUtils.isClicked()) textField.setPassword(!textField.getPassword());
+            if (hovered && Mouse.isButtonDown(0)) NanoVG.nvgGlobalAlpha(vg, 0.5f);
+            RenderManager.drawSvg(vg, icon, x + 967, y + 7, 18, 18, color);
+        }
         NanoVG.nvgGlobalAlpha(vg, 1f);
     }
 
@@ -57,7 +64,7 @@ public class ConfigTextBox extends BasicOption {
 
     @Override
     public int getHeight() {
-        return multiLine ? 64 : 32;
+        return multiLine ? textField.getHeight() : 32;
     }
 
     @Override

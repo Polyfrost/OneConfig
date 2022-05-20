@@ -379,43 +379,9 @@ public final class RenderManager {
         drawSvg(vg, icon, centerX - iconSize / 2f, centerY - iconSize / 2f, iconSize, iconSize);
     }
 
-    /*public static void drawSvg(long vg, String filename) {
-        if (ImageLoader.INSTANCE.loadSVGImage(filename)) {
-            try {
-                NSVGImage image = ImageLoader.INSTANCE.getSVG(filename);
-                NSVGShape shape = image.shapes();
-                NSVGPath path = shape.paths();
-                while (shape.address() != 0) {
-                    while (path.address() != 0) {
-                        nvgBeginPath(vg);
-                        nvgFillColor(vg, color(vg, new Color(255, 255, 255).getRGB()));
-                        nvgStrokeColor(vg, color(vg, new Color(255, 255, 255).getRGB()));
-                        nvgStrokeWidth(vg, shape.strokeWidth());
-                        FloatBuffer points = path.pts();
-                        nvgMoveTo(vg, points.get(), points.get());
-                        while (points.remaining() >= 6){
-                            nvgBezierTo(vg, points.get(), points.get(), points.get(), points.get(), points.get(), points.get());
-                        }
-                        if (path.closed() == 1) {
-                            nvgLineTo(vg, points.get(0), points.get(1));
-                        }
-                        nvgStroke(vg);
-                        nvgClosePath(vg);
-                        path = path.next();
-                    }
-                    shape = shape.next();
-                }
-                path.free();
-                shape.free();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }*/
-
     // gl
 
-    public static void drawScaledString(String text, float x, float y, int color, boolean shadow, float scale) { //todo replace eventually with either nanovg or UMatrixStack
+    public static void drawScaledString(String text, float x, float y, int color, boolean shadow, float scale) {
         UGraphics.GL.pushMatrix();
         UGraphics.GL.scale(scale, scale, 1);
         UMinecraft.getFontRenderer().drawString(text, x * (1 / scale), y * (1 / scale), color, shadow);
