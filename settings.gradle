@@ -3,6 +3,15 @@ pluginManagement {
         gradlePluginPortal()
         maven { url = "https://repo.woverflow.cc" }
     }
+    resolutionStrategy {
+        eachPlugin {
+            switch (requested.id.id) {
+                case 'gg.essential.loom':
+                    useModule "gg.essential:architectury-loom:${requested.version}"
+                    break
+            }
+        }
+    }
 }
 
 rootProject.name = mod_name
