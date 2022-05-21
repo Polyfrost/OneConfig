@@ -41,7 +41,7 @@ public class ConfigCheckbox extends BasicOption {
                 e.printStackTrace();
             }
         }
-        color = ColorUtils.smoothColor(color, OneConfigConfig.GRAY_600, OneConfigConfig.GRAY_400, hover, 40f, OneConfigGui.INSTANCE.getDeltaTime());
+        color = ColorUtils.smoothColor(color, OneConfigConfig.GRAY_600, OneConfigConfig.GRAY_400, hover, 40f);
         if (percentOn != 1f) {       // performance
             RenderManager.drawRoundedRect(vg, x, y + 4, 24, 24, color, 6f);
             RenderManager.drawHollowRoundRect(vg, x, y + 4, 23.5f, 23.5f, OneConfigConfig.GRAY_300, 6f, 1f);        // the 0.5f is to make it look better ok

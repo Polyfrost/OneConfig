@@ -41,7 +41,7 @@ public class ConfigDropdown extends BasicOption { // TODO: remove dividers and f
         }
         if (opened) return;
 
-        backgroundColor = ColorUtils.smoothColor(backgroundColor, OneConfigConfig.GRAY_500, OneConfigConfig.GRAY_400, hovered, 100, OneConfigGui.INSTANCE.getDeltaTime());
+        backgroundColor = ColorUtils.smoothColor(backgroundColor, OneConfigConfig.GRAY_500, OneConfigConfig.GRAY_400, hovered, 100);
         int selected = 0;
         try {
             selected = (int) get();
@@ -71,7 +71,7 @@ public class ConfigDropdown extends BasicOption { // TODO: remove dividers and f
         if (size == 1) hovered = InputUtils.isAreaHovered(x + 224, y, 256, 32);
         else hovered = InputUtils.isAreaHovered(x + 352, y, 640, 32);
 
-        backgroundColor = ColorUtils.smoothColor(backgroundColor, OneConfigConfig.BLUE_800, OneConfigConfig.BLUE_700, hovered, 100, OneConfigGui.INSTANCE.getDeltaTime());
+        backgroundColor = ColorUtils.smoothColor(backgroundColor, OneConfigConfig.BLUE_800, OneConfigConfig.BLUE_700, hovered, 100);
         int selected = 0;
         try {
             selected = (int) get();

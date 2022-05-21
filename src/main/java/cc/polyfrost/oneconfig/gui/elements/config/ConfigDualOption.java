@@ -38,8 +38,8 @@ public class ConfigDualOption extends BasicOption {
         }
         if (!isEnabled()) RenderManager.withAlpha(vg, 0.5f);
         boolean hovered = InputUtils.isAreaHovered(x + 226, y, 256, 32) && isEnabled();
-        colorSelected = ColorUtils.smoothColor(colorSelected, OneConfigConfig.BLUE_600, OneConfigConfig.BLUE_500, hovered, 40f, OneConfigGui.INSTANCE.getDeltaTime());
-        colorUnselected = ColorUtils.smoothColor(colorUnselected, OneConfigConfig.GRAY_500, OneConfigConfig.GRAY_400, hovered, 40f, OneConfigGui.INSTANCE.getDeltaTime());
+        colorSelected = ColorUtils.smoothColor(colorSelected, OneConfigConfig.BLUE_600, OneConfigConfig.BLUE_500, hovered, 40f);
+        colorUnselected = ColorUtils.smoothColor(colorUnselected, OneConfigConfig.GRAY_500, OneConfigConfig.GRAY_400, hovered, 40f);
         RenderManager.drawString(vg, name, x, y + 16, OneConfigConfig.WHITE_90, 14f, Fonts.MEDIUM);
         RenderManager.drawRoundedRect(vg, x + 226, y, 256, 32, colorUnselected, 12f);
         int x1 = (int) (x + 228 + (percentMove * 128));

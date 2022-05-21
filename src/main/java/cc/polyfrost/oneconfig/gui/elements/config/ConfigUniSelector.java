@@ -54,8 +54,8 @@ public class ConfigUniSelector extends BasicOption {
 
         boolean hoveredLeft = InputUtils.isAreaHovered(x + 231, y + 7, 18, 18) && selected > 0 && isEnabled();
         boolean hoveredRight = InputUtils.isAreaHovered(x + 455, y + 7, 18, 18) && selected < options.length - 1 && isEnabled();
-        colorLeft = ColorUtils.smoothColor(colorLeft, OneConfigConfig.BLUE_500, OneConfigConfig.BLUE_400, hoveredLeft, 40f, OneConfigGui.INSTANCE.getDeltaTime());
-        colorRight = ColorUtils.smoothColor(colorRight, OneConfigConfig.BLUE_500, OneConfigConfig.BLUE_400, hoveredRight, 40f, OneConfigGui.INSTANCE.getDeltaTime());
+        colorLeft = ColorUtils.smoothColor(colorLeft, OneConfigConfig.BLUE_500, OneConfigConfig.BLUE_400, hoveredLeft, 40f);
+        colorRight = ColorUtils.smoothColor(colorRight, OneConfigConfig.BLUE_500, OneConfigConfig.BLUE_400, hoveredRight, 40f);
 
         if (selected <= 0 && isEnabled()) RenderManager.withAlpha(vg, 0.5f);
         RenderManager.drawSvg(vg, SVGs.CHEVRON_LEFT, x + 231, y + 7, 18, 18, colorLeft);

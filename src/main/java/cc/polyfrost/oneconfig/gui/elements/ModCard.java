@@ -68,7 +68,7 @@ public class ModCard extends BasicElement {
         if (active && !disabled) {
             colorPrimary = ColorUtils.getColor(colorPrimary, 1, isHoveredSecondary, clicked && isHoveredSecondary);
         } else
-            colorPrimary = ColorUtils.smoothColor(colorPrimary, OneConfigConfig.GRAY_500, OneConfigConfig.GRAY_400, isHoveredSecondary, 20f, OneConfigGui.INSTANCE.getDeltaTime());
+            colorPrimary = ColorUtils.smoothColor(colorPrimary, OneConfigConfig.GRAY_500, OneConfigConfig.GRAY_400, isHoveredSecondary, 20f);
 
         if (clicked && isHoveredMain) {
             if (!active) toggled = false;

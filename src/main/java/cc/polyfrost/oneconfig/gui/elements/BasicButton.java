@@ -128,7 +128,7 @@ public class BasicButton extends BasicElement {
                 currentColor = ColorUtils.getColor(currentColor, colorPalette, hovered, clicked);
             } else {
                 if (toggled) {
-                    currentColor = ColorUtils.smoothColor(currentColor, OneConfigConfig.GRAY_500, OneConfigConfig.BLUE_600, true, 30f, OneConfigGui.INSTANCE.getDeltaTime());
+                    currentColor = ColorUtils.smoothColor(currentColor, OneConfigConfig.GRAY_500, OneConfigConfig.BLUE_600, true, 30f);
                 } else currentColor = ColorUtils.getColor(currentColor, colorPalette, hovered, clicked);
             }
         }
