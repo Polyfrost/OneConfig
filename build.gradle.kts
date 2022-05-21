@@ -125,9 +125,9 @@ dependencies {
     shade("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.1")
     shade("org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.6.1")
     shade("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.6.1")
-    shade("org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.3.2")
-    shade("org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.3.2")
-    shade("org.jetbrains.kotlinx:kotlinx-serialization-cbor-jvm:1.3.2")
+    shade("org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.3.3")
+    shade("org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.3.3")
+    shade("org.jetbrains.kotlinx:kotlinx-serialization-cbor-jvm:1.3.3")
 
     shade("org.spongepowered:mixin:0.7.11-SNAPSHOT") {
         isTransitive = false
@@ -207,7 +207,7 @@ tasks {
     }
     named<ShadowJar>("shadowJar") {
         archiveClassifier.set("dev")
-        configurations = listOf(shade)
+        configurations = listOf(shade, lwjglNative)
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     }
     remapJar {
