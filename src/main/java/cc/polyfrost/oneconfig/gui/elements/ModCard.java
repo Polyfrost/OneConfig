@@ -11,7 +11,7 @@ import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
 import cc.polyfrost.oneconfig.utils.ColorUtils;
 import cc.polyfrost.oneconfig.utils.InputUtils;
-import gg.essential.universal.wrappers.UPlayer;
+import cc.polyfrost.oneconfig.libs.universal.wrappers.UPlayer;
 import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.fml.common.ModMetadata;
 import org.jetbrains.annotations.NotNull;

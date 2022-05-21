@@ -4,7 +4,7 @@ import cc.polyfrost.oneconfig.gui.HudGui;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.test.TestNanoVGGui;
 import cc.polyfrost.oneconfig.utils.TickDelay;
-import gg.essential.universal.UScreen;
+import cc.polyfrost.oneconfig.libs.universal.UScreen;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
 

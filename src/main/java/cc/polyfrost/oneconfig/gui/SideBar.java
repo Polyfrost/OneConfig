@@ -8,7 +8,7 @@ import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
 import cc.polyfrost.oneconfig.utils.MathUtils;
-import gg.essential.universal.UScreen;
+import cc.polyfrost.oneconfig.libs.universal.UScreen;
 
 import java.util.ArrayList;
 import java.util.List;

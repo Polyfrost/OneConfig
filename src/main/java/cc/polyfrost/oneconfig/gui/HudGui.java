@@ -4,9 +4,9 @@ import cc.polyfrost.oneconfig.config.core.ConfigCore;
 import cc.polyfrost.oneconfig.hud.BasicHud;
 import cc.polyfrost.oneconfig.hud.HudCore;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
-import gg.essential.universal.UKeyboard;
-import gg.essential.universal.UMatrixStack;
-import gg.essential.universal.UScreen;
+import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
+import cc.polyfrost.oneconfig.libs.universal.UMatrixStack;
+import cc.polyfrost.oneconfig.libs.universal.UScreen;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

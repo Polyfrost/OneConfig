@@ -14,7 +14,7 @@ import cc.polyfrost.oneconfig.lwjgl.scissor.Scissor;
 import cc.polyfrost.oneconfig.lwjgl.scissor.ScissorManager;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import cc.polyfrost.oneconfig.utils.MathUtils;
-import gg.essential.universal.*;
+import cc.polyfrost.oneconfig.libs.universal.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.input.Mouse;

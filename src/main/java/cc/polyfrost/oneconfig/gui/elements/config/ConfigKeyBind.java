@@ -8,7 +8,7 @@ import cc.polyfrost.oneconfig.gui.elements.BasicButton;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
-import gg.essential.universal.UKeyboard;
+import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
 
 import java.lang.reflect.Field;
 
