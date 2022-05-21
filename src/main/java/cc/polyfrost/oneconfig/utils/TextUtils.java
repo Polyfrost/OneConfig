@@ -4,28 +4,29 @@ import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 public class TextUtils {
 
     public static ArrayList<String> wrapText(long vg, String text, float maxWidth, float fontSize, Fonts font) {
         ArrayList<String> wrappedText = new ArrayList<>();
-        List<String> split = Arrays.asList(text.split(" "));
-        for (int i = split.size(); i >= 0; i--) {
-            String textPart = String.join(" ", split.subList(0, i));
+        text += " ";
+        int prevIndex = 0;
+        for (int i = text.indexOf(" "); i >= 0; i = text.indexOf(" ", i + 1)) {
+            String textPart = text.substring(0, i);
             float textWidth = RenderManager.getTextWidth(vg, textPart, fontSize, font);
-            if (textWidth > maxWidth) continue;
-            wrappedText.add(textPart);
-            if (i != split.size())
-                wrappedText.addAll(wrapText(vg, String.join(" ", split.subList(i, split.size())), maxWidth, fontSize, font));
+            if (textWidth < maxWidth) {
+                prevIndex = i;
+                continue;
+            }
+            wrappedText.add(text.substring(0, prevIndex) + " ");
+            wrappedText.addAll(wrapText(vg, text.substring(prevIndex + 1), maxWidth, fontSize, font));
             break;
         }
-        if (text.endsWith(" ")) {
-            String lastLine = wrappedText.get(wrappedText.size() - 1);
-            lastLine += " ";
+        if (wrappedText.size() == 0) wrappedText.add(text);
+        String temp = wrappedText.get(wrappedText.size() - 1);
+        if (temp.length() != 0) {
             wrappedText.remove(wrappedText.size() - 1);
-            wrappedText.add(lastLine);
+            wrappedText.add(temp.substring(0, temp.length() - 1));
         }
         return wrappedText;
     }

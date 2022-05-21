@@ -10,7 +10,6 @@ import cc.polyfrost.oneconfig.lwjgl.OneColor;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
-import cc.polyfrost.oneconfig.lwjgl.scissor.Scissor;
 import cc.polyfrost.oneconfig.lwjgl.scissor.ScissorManager;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import cc.polyfrost.oneconfig.utils.MathUtils;
@@ -102,22 +101,22 @@ public class OneConfigGui extends UScreen {
 
             if (previousPages.size() == 0) {
                 backArrow.disable(true);
-                RenderManager.withAlpha(vg, 0.5f);
+                RenderManager.setAlpha(vg, 0.5f);
             } else {
                 backArrow.disable(false);
-                if (!backArrow.isHovered() || Mouse.isButtonDown(0)) RenderManager.withAlpha(vg, 0.8f);
+                if (!backArrow.isHovered() || Mouse.isButtonDown(0)) RenderManager.setAlpha(vg, 0.8f);
             }
             RenderManager.drawSvg(vg, SVGs.ARROW_CIRCLE_LEFT, x + 249, y + 25, 22, 22);
-            RenderManager.withAlpha(vg, 1f);
+            RenderManager.setAlpha(vg, 1f);
             if (nextPages.size() == 0) {
                 forwardArrow.disable(true);
-                RenderManager.withAlpha(vg, 0.5f);
+                RenderManager.setAlpha(vg, 0.5f);
             } else {
                 forwardArrow.disable(false);
-                if (!forwardArrow.isHovered() || Mouse.isButtonDown(0)) RenderManager.withAlpha(vg, 0.8f);
+                if (!forwardArrow.isHovered() || Mouse.isButtonDown(0)) RenderManager.setAlpha(vg, 0.8f);
             }
             RenderManager.drawSvg(vg, SVGs.ARROW_CIRCLE_RIGHT, x + 289, y + 25, 22, 22);
-            RenderManager.withAlpha(vg, 1f);
+            RenderManager.setAlpha(vg, 1f);
 
             if (backArrow.isClicked() && previousPages.size() > 0) {
                 try {
@@ -135,7 +134,7 @@ public class OneConfigGui extends UScreen {
                 }
             }
 
-            Scissor scissor = ScissorManager.scissor(vg, x + 224, y + 88, 1056, 698);
+            ScissorManager.scissor(vg, x + 224, y + 88, 1056, 698);
             if (prevPage != null) {
                 pageProgress = MathUtils.easeInOutCirc(50, pageProgress, 832 - pageProgress, 600);
                 prevPage.scrollWithDraw(vg, (int) (x - pageProgress), y + 72);
@@ -148,7 +147,7 @@ public class OneConfigGui extends UScreen {
             } else {
                 currentPage.scrollWithDraw(vg, (int) (x - pageProgress), y + 72);
             }
-            ScissorManager.resetScissor(vg, scissor);
+            ScissorManager.clearScissors(vg);
 
             float breadcrumbX = x + 336;
             for (int i = 0; i < parents.size(); i++) {

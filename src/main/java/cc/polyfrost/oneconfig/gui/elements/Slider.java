@@ -24,7 +24,7 @@ public class Slider extends BasicElement {
     public void draw(long vg, int x, int y) {
         update(x, y);
         RenderManager.drawRoundedRect(vg, x, y + 2, width, height - 4, OneConfigConfig.GRAY_300, 3f);
-        RenderManager.drawRoundedRect(vg, x, y + 2, width * value, height - 4, OneConfigConfig.BLUE_500, 3f);
+        RenderManager.drawRoundedRect(vg, x, y + 2, width * value, height - 4, OneConfigConfig.PRIMARY_500, 3f);
         RenderManager.drawRoundedRect(vg, currentDragPoint - dragPointerSize / 2, y - 8, 24, 24, OneConfigConfig.WHITE, 12f);
 
 

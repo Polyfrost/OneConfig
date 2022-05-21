@@ -22,6 +22,11 @@ public class ScissorManager {
         }
     }
 
+    public static void clearScissors(long vg) {
+        scissors.clear();
+        NanoVG.nvgResetScissor(vg);
+    }
+
     private static void applyScissors(long vg) {
         NanoVG.nvgResetScissor(vg);
         if (scissors.size() <= 0) return;

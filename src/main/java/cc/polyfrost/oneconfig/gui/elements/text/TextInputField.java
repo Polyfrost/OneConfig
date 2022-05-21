@@ -8,9 +8,9 @@ import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
 import cc.polyfrost.oneconfig.lwjgl.scissor.Scissor;
 import cc.polyfrost.oneconfig.lwjgl.scissor.ScissorManager;
 import cc.polyfrost.oneconfig.utils.InputUtils;
+import cc.polyfrost.oneconfig.utils.MathUtils;
 import cc.polyfrost.oneconfig.utils.TextUtils;
 import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
-import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
@@ -19,7 +19,6 @@ import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.util.ArrayList;
-import java.util.Map;
 
 public class TextInputField extends BasicElement {
 
@@ -31,6 +30,7 @@ public class TextInputField extends BasicElement {
     protected int caretPos;
     protected int x, y;
     protected float start, end;
+    protected int startLine, endLine;
     private long clickTimeD1;
     protected long vg;
     protected int prevCaret = 0;
@@ -98,9 +98,16 @@ public class TextInputField extends BasicElement {
         this.y = y;
         this.vg = vg;
         try {
-            Scissor scissor = ScissorManager.scissor(vg, x, y, width, height);
             int colorOutline = errored ? OneConfigConfig.ERROR_700 : OneConfigConfig.GRAY_700;
-            RenderManager.drawHollowRoundRect(vg, x, y, width - 0.5f, height - 0.5f, colorOutline, 12f, 2f);
+            if (!toggled)
+                RenderManager.drawHollowRoundRect(vg, x, y, width - 0.5f, height - 0.5f, colorOutline, 12f, 2f);
+            else {
+                RenderManager.setAlpha(vg, 0.15f);
+                RenderManager.drawRoundedRect(vg, x - 4, y - 4, width + 8, height + 8, OneConfigConfig.PRIMARY_600, 16);
+                RenderManager.setAlpha(vg, 1f);
+                RenderManager.drawHollowRoundRect(vg, x, y, width - 0.5f, height - 0.5f, OneConfigConfig.PRIMARY_600, 12f, 2f);
+            }
+            Scissor scissor = ScissorManager.scissor(vg, x, y, width, height);
             super.update(x, y);
             if (Mouse.isButtonDown(0) && !InputUtils.isAreaHovered(x - 40, y - 20, width + 90, height + 20)) {
                 onClose();
@@ -123,7 +130,7 @@ public class TextInputField extends BasicElement {
                 wrappedText = TextUtils.wrapText(vg, input, this.width - 24, 14f, Fonts.REGULAR);
                 lines = wrappedText.size();
                 if (!toggled) caretPos = wrappedText.get(wrappedText.size() - 1).length();
-                int caretLine = getCaretLine(caretPos);
+                int caretLine = (int) MathUtils.clamp(getCaretLine(caretPos), 0, wrappedText.size() - 1);
                 width = RenderManager.getTextWidth(vg, wrappedText.get(caretLine).substring(0, getLineCaret(caretPos, caretLine)), 14f, Fonts.REGULAR);
             } else if (!password) {
                 width = RenderManager.getTextWidth(vg, input.substring(0, caretPos), 14f, Fonts.REGULAR);
@@ -165,13 +172,24 @@ public class TextInputField extends BasicElement {
             }
             float halfTextWidth = this.getTextWidth(vg, input) / 2f;
             if (start != 0f && end != 0f && toggled) {
-                RenderManager.drawRect(vg, start, y + height / 2f - 10, end, 20, OneConfigConfig.GRAY_300);
+                if (!multiLine) {
+                    RenderManager.drawRect(vg, start, y + height / 2f - 10, end, 20, OneConfigConfig.GRAY_300);
+                } else if (startLine == endLine) {
+                    RenderManager.drawRect(vg, start, y + 10 + 24 * startLine, end, 20, OneConfigConfig.GRAY_300);
+                } else {
+                    RenderManager.drawRect(vg, start, y + 10 + 24 * startLine, this.width - 24, 20, OneConfigConfig.GRAY_300);
+                    for (int i = startLine + 1; i < endLine; i++) {
+                        RenderManager.drawRect(vg, x + 12, y + 10 + 24 * i, this.width - 24, 20, OneConfigConfig.GRAY_300);
+                    }
+                    RenderManager.drawRect(vg, x + 12, y + 10 + 24 * endLine, end, 20, OneConfigConfig.GRAY_300);
+                }
             }
             if (hovered) {
                 if (Mouse.isButtonDown(0) && !isDoubleClick) {
                     if (multiLine) {
                         int caretLine = Math.max(0, Math.min(wrappedText.size() - 1, (int) Math.floor((InputUtils.mouseY() - y - 10) / 24f)));
                         caretPos = calculatePos(InputUtils.mouseX(), wrappedText.get(caretLine));
+                        for (int i = 0; i < caretLine; i++) caretPos += wrappedText.get(i).length();
                     } else caretPos = calculatePos(InputUtils.mouseX(), input);
                     if (caretPos > prevCaret) {
                         if (!centered) start = x + 12 + this.getTextWidth(vg, input.substring(0, prevCaret));
@@ -228,7 +246,8 @@ public class TextInputField extends BasicElement {
                 RenderManager.drawString(vg, s.toString(), x + 12, y + height / 2f + 1, color, 14f, Fonts.REGULAR);
             }
             ScissorManager.resetScissor(vg, scissor);
-        } catch (Exception e) {
+        } catch (
+                Exception e) {
             e.printStackTrace();
         }
 
@@ -243,7 +262,7 @@ public class TextInputField extends BasicElement {
                     }
                     return;
                 }
-                if (UKeyboard.isKeyComboCtrlV(key) || key == Keyboard.KEY_INSERT) { //todo find the UKeyboard equivalent for insert
+                if (UKeyboard.isKeyComboCtrlV(key) || key == Keyboard.KEY_INSERT) { // TODO: find the UKeyboard equivalent for insert
                     try {
                         String clip = Toolkit.getDefaultToolkit().getSystemClipboard().getContents(null).getTransferData(DataFlavor.stringFlavor).toString();
                         input = input.substring(0, caretPos) + clip + input.substring(caretPos);
@@ -274,7 +293,12 @@ public class TextInputField extends BasicElement {
                         caretPos = input.length();
                         start = !centered ? x + 12 : x + this.width / 2f - this.getTextWidth(vg, input) / 2f;
                         selectedText = input;
-                        end = this.getTextWidth(vg, input);
+                        if (!multiLine) end = this.getTextWidth(vg, input);
+                        if (multiLine) {
+                            end = this.getTextWidth(vg, wrappedText.get(wrappedText.size() - 1));
+                            startLine = 0;
+                            endLine = wrappedText.size() - 1;
+                        }
                         return;
                     }
                     if (UKeyboard.isKeyComboCtrlX(key)) {
@@ -421,10 +445,17 @@ public class TextInputField extends BasicElement {
         caretPos = input.indexOf(' ', caretPos);
         if (caretPos == -1) caretPos = input.length();
         selectedText = input.substring(prevCaret, caretPos);
-        if (!centered) start = x + 12 + this.getTextWidth(vg, input.substring(0, prevCaret));
-        else
-            start = x + this.width / 2f - this.getTextWidth(vg, input) / 2f + this.getTextWidth(vg, input.substring(0, prevCaret));
-        end = this.getTextWidth(vg, input.substring(prevCaret, caretPos));
+        if (multiLine) {
+            int caretLine = Math.max(0, Math.min(wrappedText.size() - 1, (int) Math.floor((InputUtils.mouseY() - y - 10) / 24f)));
+            startLine = caretLine;
+            endLine = caretLine;
+            start = x + 12 + this.getTextWidth(vg, wrappedText.get(caretLine).substring(0, getLineCaret(prevCaret, startLine)));
+            end = this.getTextWidth(vg, wrappedText.get(caretLine).substring(getLineCaret(prevCaret, startLine), getLineCaret(caretPos, startLine)));
+            System.out.println(wrappedText.get(caretLine).substring(getLineCaret(prevCaret, startLine), getLineCaret(caretPos, startLine)));
+        } else {
+            start = x + 12 + this.getTextWidth(vg, input.substring(0, prevCaret));
+            end = this.getTextWidth(vg, input.substring(prevCaret, caretPos));
+        }
     }
 
     private int calculatePos(int pos, String string) {
@@ -465,10 +496,8 @@ public class TextInputField extends BasicElement {
     private int getCaretLine(int caret) {
         int pos = 0;
         for (int i = 0; i < wrappedText.size(); i++) {
-            String text = wrappedText.get(i);
-            float length = RenderManager.getTextWidth(vg, text, 14.0f, Fonts.REGULAR);
-            pos += length;
-            if (pos < caret) continue;
+            pos += wrappedText.get(i).length();
+            if (pos < caret - 1) continue;
             return i;
         }
         return 0;
@@ -490,8 +519,8 @@ public class TextInputField extends BasicElement {
     private int getLineCaret(int caret, int line) {
         int pos = 0;
         for (String text : wrappedText) {
-            float length = RenderManager.getTextWidth(vg, text, 14.0f, Fonts.REGULAR);
-            if (pos + length < caret) {
+            int length = text.length();
+            if (pos + length < caret - 1) {
                 pos += length;
                 continue;
             }

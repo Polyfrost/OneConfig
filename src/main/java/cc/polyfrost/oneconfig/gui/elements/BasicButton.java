@@ -5,7 +5,6 @@ import cc.polyfrost.oneconfig.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.gui.pages.Page;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
-import cc.polyfrost.oneconfig.lwjgl.image.Images;
 import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
 import cc.polyfrost.oneconfig.utils.ColorUtils;
 import org.jetbrains.annotations.NotNull;
@@ -128,7 +127,7 @@ public class BasicButton extends BasicElement {
                 currentColor = ColorUtils.getColor(currentColor, colorPalette, hovered, clicked);
             } else {
                 if (toggled) {
-                    currentColor = ColorUtils.smoothColor(currentColor, OneConfigConfig.GRAY_500, OneConfigConfig.BLUE_600, true, 30f);
+                    currentColor = ColorUtils.smoothColor(currentColor, OneConfigConfig.GRAY_500, OneConfigConfig.PRIMARY_600, true, 30f);
                 } else currentColor = ColorUtils.getColor(currentColor, colorPalette, hovered, clicked);
             }
         }

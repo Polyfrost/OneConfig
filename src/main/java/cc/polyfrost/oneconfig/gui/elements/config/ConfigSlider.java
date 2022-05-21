@@ -33,7 +33,7 @@ public class ConfigSlider extends BasicOption {
         float value = 0;
         boolean hovered = InputUtils.isAreaHovered(x + 352, y, 512, 32) && isEnabled();
         inputField.disable(!isEnabled());
-        if (!isEnabled()) RenderManager.withAlpha(vg, 0.5f);
+        if (!isEnabled()) RenderManager.setAlpha(vg, 0.5f);
         boolean isMouseDown = Mouse.isButtonDown(0);
         if (hovered && isMouseDown && !mouseWasDown) dragging = true;
         mouseWasDown = isMouseDown;
@@ -69,17 +69,17 @@ public class ConfigSlider extends BasicOption {
 
         RenderManager.drawString(vg, name, x, y + 17, OneConfigConfig.WHITE_90, 14f, Fonts.MEDIUM);
         RenderManager.drawRoundedRect(vg, x + 352, y + 13, 512, 6, OneConfigConfig.GRAY_300, 4f);
-        RenderManager.drawRoundedRect(vg, x + 352, y + 13, xCoordinate - x - 352, 6, OneConfigConfig.BLUE_500, 4f);
+        RenderManager.drawRoundedRect(vg, x + 352, y + 13, xCoordinate - x - 352, 6, OneConfigConfig.PRIMARY_500, 4f);
         if (step > 0) {
             for (float i = x + 352; i <= x + 864; i += 512 / ((max - min) / step)) {
-                int color = xCoordinate > i - 2 ? OneConfigConfig.BLUE_500 : OneConfigConfig.GRAY_300;
+                int color = xCoordinate > i - 2 ? OneConfigConfig.PRIMARY_500 : OneConfigConfig.GRAY_300;
                 RenderManager.drawRoundedRect(vg, i - 2, y + 9, 4, 14, color, 2f);
             }
         }
         if (step == 0) RenderManager.drawRoundedRect(vg, xCoordinate - 12, y + 4, 24, 24, OneConfigConfig.WHITE, 12f);
         else RenderManager.drawRoundedRect(vg, xCoordinate - 4, y + 4, 8, 24, OneConfigConfig.WHITE, 4f);
         inputField.draw(vg, x + 892, y);
-        RenderManager.withAlpha(vg, 1f);
+        RenderManager.setAlpha(vg, 1f);
     }
 
     private int getStepCoordinate(int xCoordinate, int x) {

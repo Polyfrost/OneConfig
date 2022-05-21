@@ -24,7 +24,7 @@ public class ConfigKeyBind extends BasicOption {
 
     @Override
     public void draw(long vg, int x, int y) {
-        if (!isEnabled()) RenderManager.withAlpha(vg, 0.5f);
+        if (!isEnabled()) RenderManager.setAlpha(vg, 0.5f);
         RenderManager.drawString(vg, name, x, y + 17, OneConfigConfig.WHITE, 14f, Fonts.MEDIUM);
         OneKeyBind keyBind = getKeyBind();
         String text = keyBind.getDisplay();
@@ -45,7 +45,7 @@ public class ConfigKeyBind extends BasicOption {
         } else if (text.equals("")) text = "None";
         button.setText(text);
         button.draw(vg, x + (size == 1 ? 224 : 736), y);
-        RenderManager.withAlpha(vg, 1f);
+        RenderManager.setAlpha(vg, 1f);
     }
 
     @Override

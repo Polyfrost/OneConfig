@@ -2,7 +2,6 @@ package cc.polyfrost.oneconfig.gui.elements.config;
 
 import cc.polyfrost.oneconfig.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.config.interfaces.BasicOption;
-import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
@@ -23,7 +22,7 @@ public class ConfigCheckbox extends BasicOption {
 
     @Override
     public void draw(long vg, int x, int y) {
-        if (!isEnabled()) RenderManager.withAlpha(vg, 0.5f);
+        if (!isEnabled()) RenderManager.setAlpha(vg, 0.5f);
         boolean toggled = false;
         try {
             toggled = (boolean) get();
@@ -49,14 +48,14 @@ public class ConfigCheckbox extends BasicOption {
         RenderManager.drawString(vg, name, x + 32, y + 17, OneConfigConfig.WHITE_90, 14f, Fonts.MEDIUM);
         percentOn = MathUtils.clamp(MathUtils.easeOut(percentOn, toggled ? 1f : 0f, 50f));
         if (percentOn != 0 && percentOn != 1f) {
-            RenderManager.drawRoundedRect(vg, x, y + 4, 24, 24, ColorUtils.setAlpha(OneConfigConfig.BLUE_500, (int) (percentOn * 255)), 6f);
+            RenderManager.drawRoundedRect(vg, x, y + 4, 24, 24, ColorUtils.setAlpha(OneConfigConfig.PRIMARY_500, (int) (percentOn * 255)), 6f);
             RenderManager.drawSvg(vg, SVGs.CHECKBOX_TICK, x, y + 4, 24, 24, new Color(1f, 1f, 1f, percentOn).getRGB());
         } else if (percentOn != 0) {
-            RenderManager.drawRoundedRect(vg, x, y + 4, 24, 24, OneConfigConfig.BLUE_500, 6f);
+            RenderManager.drawRoundedRect(vg, x, y + 4, 24, 24, OneConfigConfig.PRIMARY_500, 6f);
             RenderManager.drawSvg(vg, SVGs.CHECKBOX_TICK, x, y + 4, 24, 24);
         }
-        if(percentOn != 0 && hover) RenderManager.drawHollowRoundRect(vg, x - 1, y + 3, 24, 24, OneConfigConfig.BLUE_600, 6f, 2f);
-        RenderManager.withAlpha(vg, 1f);
+        if(percentOn != 0 && hover) RenderManager.drawHollowRoundRect(vg, x - 1, y + 3, 24, 24, OneConfigConfig.PRIMARY_600, 6f, 2f);
+        RenderManager.setAlpha(vg, 1f);
     }
 
     @Override

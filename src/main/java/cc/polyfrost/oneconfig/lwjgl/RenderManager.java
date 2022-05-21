@@ -302,7 +302,7 @@ public final class RenderManager {
         nvgScale(vg, x, y);
     }
 
-    public static void withAlpha(long vg, float alpha) {
+    public static void setAlpha(long vg, float alpha) {
         nvgGlobalAlpha(vg, alpha);
     }
 

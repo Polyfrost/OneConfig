@@ -3,7 +3,6 @@ package cc.polyfrost.oneconfig.gui.elements;
 import cc.polyfrost.oneconfig.OneConfig;
 import cc.polyfrost.oneconfig.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.config.data.Mod;
-import cc.polyfrost.oneconfig.config.data.ModType;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.pages.ModConfigPage;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
@@ -25,7 +24,7 @@ public class ModCard extends BasicElement {
     private final BasicElement favoriteHitbox = new BasicElement(32, 32, -2, true);
     private boolean active, disabled, favorite;
     private int colorGray = OneConfigConfig.GRAY_600;
-    private int colorPrimary = OneConfigConfig.BLUE_600;
+    private int colorPrimary = OneConfigConfig.PRIMARY_600;
     private boolean isHoveredMain = false;
 
     public ModCard(@NotNull Mod mod, @Nullable String iconPath, boolean active, boolean disabled, boolean favorite) {
@@ -42,7 +41,7 @@ public class ModCard extends BasicElement {
 
     @Override
     public void draw(long vg, int x, int y) {
-        if (disabled) RenderManager.withAlpha(vg, 0.5f);
+        if (disabled) RenderManager.setAlpha(vg, 0.5f);
         RenderManager.drawRoundedRectVaried(vg, x, y, width, 87, colorGray, 12f, 12f, 0f, 0f);
         RenderManager.drawRoundedRectVaried(vg, x, y + 87, width, 32, colorPrimary, 0f, 0f, 12f, 12f);
         RenderManager.drawLine(vg, x, y + 86, x + width, y + 86, 2, OneConfigConfig.GRAY_300);
@@ -78,7 +77,7 @@ public class ModCard extends BasicElement {
         if (!active & disabled) toggled = false;
 
         active = toggled;
-        RenderManager.withAlpha(vg, 1f);
+        RenderManager.setAlpha(vg, 1f);
     }
 
     public void onClick() {

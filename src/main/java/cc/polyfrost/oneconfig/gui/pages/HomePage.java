@@ -7,7 +7,6 @@ import cc.polyfrost.oneconfig.gui.elements.ColorSelector;
 import cc.polyfrost.oneconfig.lwjgl.OneColor;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
-import cc.polyfrost.oneconfig.lwjgl.image.Images;
 import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 
@@ -23,7 +22,7 @@ public class HomePage extends Page {
     public void draw(long vg, int x, int y) {
         RenderManager.drawRoundedRect(vg, x, y, 184, 36, -1, 12f);
         RenderManager.drawString(vg, "This is a cool string to test pages", x + 32, y + 72, -1, 36f, Fonts.BOLD);
-        RenderManager.drawRoundedRect(vg, x + 350, y + 310, 300, 200, OneConfigConfig.BLUE_600, 14f);
+        RenderManager.drawRoundedRect(vg, x + 350, y + 310, 300, 200, OneConfigConfig.PRIMARY_600, 14f);
         //RenderManager.drawRoundedRect(vg);
         btn.draw(vg, x + 432, y + 658);
         if(btn.isClicked()) {

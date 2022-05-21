@@ -19,7 +19,7 @@ public class ColorUtils {
                 case 0:
                     return OneConfigConfig.GRAY_400_80;
                 case 1:
-                    return OneConfigConfig.BLUE_600_80;
+                    return OneConfigConfig.PRIMARY_600_80;
             }
         }
 
@@ -32,7 +32,7 @@ public class ColorUtils {
             case 0:
                 return getColorComponents(color, splitColor(OneConfigConfig.GRAY_600), splitColor(OneConfigConfig.GRAY_300), hover, 25f);
             case 1:
-                return getColorComponents(color, splitColor(OneConfigConfig.BLUE_600), splitColor(OneConfigConfig.BLUE_500), hover, 150f);
+                return getColorComponents(color, splitColor(OneConfigConfig.PRIMARY_600), splitColor(OneConfigConfig.PRIMARY_500), hover, 150f);
             case 2:
                 return getColorComponents(color, splitColor(OneConfigConfig.GRAY_500), splitColor(OneConfigConfig.GRAY_300), hover, 50f);
             case 3:

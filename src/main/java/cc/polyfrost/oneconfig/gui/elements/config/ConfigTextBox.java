@@ -9,7 +9,6 @@ import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import org.lwjgl.input.Mouse;
 
-import java.awt.*;
 import java.lang.reflect.Field;
 
 public class ConfigTextBox extends BasicOption {
@@ -26,7 +25,7 @@ public class ConfigTextBox extends BasicOption {
 
     @Override
     public void draw(long vg, int x, int y) {
-        if (!isEnabled()) RenderManager.withAlpha(vg, 0.5f);
+        if (!isEnabled()) RenderManager.setAlpha(vg, 0.5f);
         textField.disable(!isEnabled());
         RenderManager.drawString(vg, name, x, y + 16, OneConfigConfig.WHITE_90, 14, Fonts.MEDIUM);
 
@@ -45,10 +44,10 @@ public class ConfigTextBox extends BasicOption {
             boolean hovered = InputUtils.isAreaHovered(x + 967, y + 7, 18, 18) && isEnabled();
             int color = hovered ? OneConfigConfig.WHITE : OneConfigConfig.WHITE_80;
             if (hovered && InputUtils.isClicked()) textField.setPassword(!textField.getPassword());
-            if (hovered && Mouse.isButtonDown(0)) RenderManager.withAlpha(vg, 0.5f);
+            if (hovered && Mouse.isButtonDown(0)) RenderManager.setAlpha(vg, 0.5f);
             RenderManager.drawSvg(vg, icon, x + 967, y + 7, 18, 18, color);
         }
-        RenderManager.withAlpha(vg, 1f);
+        RenderManager.setAlpha(vg, 1f);
     }
 
     @Override

@@ -2,7 +2,6 @@ package cc.polyfrost.oneconfig.gui.elements.config;
 
 import cc.polyfrost.oneconfig.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.config.interfaces.BasicOption;
-import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.utils.ColorUtils;
@@ -31,8 +30,8 @@ public class ConfigSwitch extends BasicOption {
         int x2 = x + 3 + (int) (percentOn * 18);
         boolean hovered = InputUtils.isAreaHovered(x, y, 42, 32);
         colorDisabled = ColorUtils.smoothColor(colorDisabled, OneConfigConfig.GRAY_400, OneConfigConfig.GRAY_300, hovered, 40f);
-        colorEnabled = ColorUtils.smoothColor(colorEnabled, OneConfigConfig.BLUE_600, OneConfigConfig.BLUE_500, hovered, 40f);
-        if (!isEnabled()) RenderManager.withAlpha(vg, 0.5f);
+        colorEnabled = ColorUtils.smoothColor(colorEnabled, OneConfigConfig.PRIMARY_600, OneConfigConfig.PRIMARY_500, hovered, 40f);
+        if (!isEnabled()) RenderManager.setAlpha(vg, 0.5f);
         RenderManager.drawRoundedRect(vg, x, y + 4, 42, 24, colorDisabled, 12f);
         if (percentOn != 0)
             RenderManager.drawRoundedRect(vg, x, y + 4, 42, 24, ColorUtils.setAlpha(colorEnabled, (int) (255 * percentOn)), 12f);
@@ -49,7 +48,7 @@ public class ConfigSwitch extends BasicOption {
             }
         }
         percentOn = MathUtils.clamp(MathUtils.easeOut(percentOn, toggled ? 1f : 0f, 75));
-        RenderManager.withAlpha(vg, 1f);
+        RenderManager.setAlpha(vg, 1f);
     }
 
     @Override

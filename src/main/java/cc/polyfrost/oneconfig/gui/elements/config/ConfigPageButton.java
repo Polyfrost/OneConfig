@@ -32,8 +32,8 @@ public class ConfigPageButton extends BasicOption {
         boolean clicked = hovered && InputUtils.isClicked();
         backgroundColor = ColorUtils.smoothColor(backgroundColor, OneConfigConfig.GRAY_500, OneConfigConfig.GRAY_400, hovered, 100);
 
-        if (hovered && Mouse.isButtonDown(0)) RenderManager.withAlpha(vg, 0.8f);
-        if (!isEnabled()) RenderManager.withAlpha(vg, 0.5f);
+        if (hovered && Mouse.isButtonDown(0)) RenderManager.setAlpha(vg, 0.8f);
+        if (!isEnabled()) RenderManager.setAlpha(vg, 0.5f);
 
         RenderManager.drawRoundedRect(vg, x - 16, y, 1024, height, backgroundColor, 20);
         RenderManager.drawString(vg, name, x + 10, y + 32, OneConfigConfig.WHITE_90, 24, Fonts.MEDIUM);
@@ -42,7 +42,7 @@ public class ConfigPageButton extends BasicOption {
         RenderManager.drawSvg(vg, SVGs.CHEVRON_RIGHT, x + 981f, y + (description.equals("") ? 20f : 36f), 13, 22);
 
         if (clicked) OneConfigGui.INSTANCE.openPage(new ModConfigPage(page));
-        RenderManager.withAlpha(vg, 1f);
+        RenderManager.setAlpha(vg, 1f);
     }
 
     @Override

@@ -1,7 +1,6 @@
 package cc.polyfrost.oneconfig.gui.elements.text;
 
 import cc.polyfrost.oneconfig.config.OneConfigConfig;
-import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.elements.BasicElement;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
@@ -61,20 +60,20 @@ public class NumberInputField extends TextInputField {
             setCurrentValue(current);
         }
         if (current >= max && !disabled) {
-            RenderManager.withAlpha(vg, 0.3f);
+            RenderManager.setAlpha(vg, 0.3f);
             upArrow.disable(true);
         }
         RenderManager.drawRoundedRectVaried(vg, x + width + 4, y, 12, 14, colorTop, 6f, 6f, 0f, 0f);
         RenderManager.drawSvg(vg, SVGs.CHEVRON_UP, x + width + 5, y + 2, 10, 10);
-        if (current >= max && !disabled) RenderManager.withAlpha(vg, 1f);
+        if (current >= max && !disabled) RenderManager.setAlpha(vg, 1f);
 
         if (current <= min && !disabled) {
-            RenderManager.withAlpha(vg, 0.3f);
+            RenderManager.setAlpha(vg, 0.3f);
             downArrow.disable(true);
         }
         RenderManager.drawRoundedRectVaried(vg, x + width + 4, y + 14, 12, 14, colorBottom, 0f, 0f, 6f, 6f);
         RenderManager.drawSvg(vg, SVGs.CHEVRON_DOWN, x + width + 5, y + 15, 10, 10);
-        RenderManager.withAlpha(vg, 1f);
+        RenderManager.setAlpha(vg, 1f);
 
         try {
             super.draw(vg, x, y - 2);

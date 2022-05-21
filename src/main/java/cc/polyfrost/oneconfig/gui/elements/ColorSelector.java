@@ -107,7 +107,7 @@ public class ColorSelector {
         // TODO favorite stuff
 
         RenderManager.drawRoundedRect(vg, x + 16, y + 64, 384, 32, OneConfigConfig.GRAY_500, 12f);
-        RenderManager.drawRoundedRect(vg, x + 18 + (percentMove * 128), y + 66, 124, 28, OneConfigConfig.BLUE_600, 10f);
+        RenderManager.drawRoundedRect(vg, x + 18 + (percentMove * 128), y + 66, 124, 28, OneConfigConfig.PRIMARY_600, 10f);
         int i = 18;
         for(BasicElement button : buttons) {
             button.draw(vg, x + i, y + 66);
@@ -361,7 +361,7 @@ public class ColorSelector {
 
         @Override
         public void draw(long vg, int x, int y) {
-            RenderManager.drawRoundedRect(vg, x, y, 32, 32, toggled ? OneConfigConfig.BLUE_600 : OneConfigConfig.GRAY_300, 12f);
+            RenderManager.drawRoundedRect(vg, x, y, 32, 32, toggled ? OneConfigConfig.PRIMARY_600 : OneConfigConfig.GRAY_300, 12f);
             RenderManager.drawRoundedRect(vg, x + 2, y + 2, 28, 28, OneConfigConfig.GRAY_800, 8f);
             RenderManager.drawRoundedRect(vg, x + 4, y + 4, 24, 24, color.getRGB(), 8f);
         }
