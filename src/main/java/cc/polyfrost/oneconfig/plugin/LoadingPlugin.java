@@ -1,4 +1,4 @@
-package cc.polyfrost.oneconfig.lwjgl.plugin;
+package cc.polyfrost.oneconfig.plugin;
 
 import cc.polyfrost.oneconfig.init.OneConfigInit;
 import net.minecraft.launchwrapper.Launch;
@@ -9,12 +9,12 @@ import java.lang.reflect.Field;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Taken from LWJGLTwoPointFive under The Unlicense
- * <a href="https://github.com/DJtheRedstoner/LWJGLTwoPointFive/blob/master/LICENSE/">https://github.com/DJtheRedstoner/LWJGLTwoPointFive/blob/master/LICENSE/</a>
- */
 public class LoadingPlugin implements IFMLLoadingPlugin {
 
+    /**
+     * Taken from LWJGLTwoPointFive under The Unlicense
+     * <a href="https://github.com/DJtheRedstoner/LWJGLTwoPointFive/blob/master/LICENSE/">https://github.com/DJtheRedstoner/LWJGLTwoPointFive/blob/master/LICENSE/</a>
+     */
     public LoadingPlugin() {
         try {
             Field f_exceptions = LaunchClassLoader.class.getDeclaredField("classLoaderExceptions");
@@ -29,7 +29,7 @@ public class LoadingPlugin implements IFMLLoadingPlugin {
 
     @Override
     public String[] getASMTransformerClass() {
-        return new String[]{"cc.polyfrost.oneconfig.lwjgl.plugin.ClassTransformer"};
+        return new String[]{"cc.polyfrost.oneconfig.plugin.asm.ClassTransformer"};
     }
 
     @Override

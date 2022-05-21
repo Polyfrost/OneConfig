@@ -6,10 +6,9 @@ import cc.polyfrost.oneconfig.gui.pages.HomePage;
 import cc.polyfrost.oneconfig.gui.pages.ModsPage;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
-import cc.polyfrost.oneconfig.lwjgl.image.Images;
 import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
 import cc.polyfrost.oneconfig.utils.MathUtils;
-import gg.essential.universal.UScreen;
+import cc.polyfrost.oneconfig.libs.universal.UScreen;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,7 +37,7 @@ public class SideBar {
     }
 
     public void draw(long vg, int x, int y) {
-        currentY = MathUtils.easeInOutCirc(50, currentY, targetY - currentY, 400);
+        currentY = MathUtils.easeInOutCirc(50, currentY, targetY - currentY, 400, OneConfigGui.INSTANCE.getDeltaTime());
         RenderManager.drawRoundedRect(vg, x + 16, y + currentY, 192, 36, OneConfigConfig.BLUE_600, OneConfigConfig.CORNER_RADIUS);
         int i = 0;
         if (targetY == 0) {

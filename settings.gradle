@@ -1,8 +1,0 @@
-pluginManagement {
-    repositories {
-        gradlePluginPortal()
-        maven { url = "https://repo.woverflow.cc" }
-    }
-}
-
-rootProject.name = mod_name

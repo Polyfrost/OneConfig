@@ -1,8 +1,7 @@
 package cc.polyfrost.oneconfig.utils;
 
 import cc.polyfrost.oneconfig.config.OneConfigConfig;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
+import cc.polyfrost.oneconfig.gui.OneConfigGui;
 
 import java.awt.*;
 
@@ -49,7 +48,6 @@ public class ColorUtils {
      * @param currentColor the current color (also the one you want to change)
      * @param direction    false to move towards initColor, true to move towards finalColor
      * @param speed        speed of the transition
-     * @return currentColor but with the new color
      */
     public static int smoothColor(int currentColor, int initColor, int finalColor, boolean direction, float speed) {
         float[] init = splitColor(initColor);
@@ -58,8 +56,7 @@ public class ColorUtils {
         return getColorComponents(current, init, finalC, direction, speed);
     }
 
-    @Contract(value = "_ -> new", pure = true)
-    private static float @NotNull [] splitColor(int color) {
+    private static float[] splitColor(int color) {
         return new float[]{(color >> 16 & 255) / 255f, (color >> 8 & 255) / 255f, (color & 255) / 255f, (color >> 24 & 255) / 255f};
     }
 
@@ -74,7 +71,8 @@ public class ColorUtils {
     }
 
     private static float smooth(float current, float min, float max, boolean moveToFinal, float speed) {
-        current = MathUtils.easeOut(current, moveToFinal ? 1f : 0f, speed);
+        float deltaTime = OneConfigGui.INSTANCE == null ? 16 : OneConfigGui.INSTANCE.getDeltaTime();
+        current = MathUtils.easeOut(current, moveToFinal ? 1f : 0f, speed, deltaTime);
         if (current <= min) {
             current = min;
         }

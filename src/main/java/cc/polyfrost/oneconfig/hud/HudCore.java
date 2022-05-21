@@ -1,6 +1,6 @@
 package cc.polyfrost.oneconfig.hud;
 
-import gg.essential.universal.UResolution;
+import cc.polyfrost.oneconfig.libs.universal.UResolution;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 

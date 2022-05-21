@@ -2,8 +2,8 @@ package cc.polyfrost.oneconfig.test;
 
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
-import gg.essential.universal.UMatrixStack;
-import gg.essential.universal.UScreen;
+import cc.polyfrost.oneconfig.libs.universal.UMatrixStack;
+import cc.polyfrost.oneconfig.libs.universal.UScreen;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;

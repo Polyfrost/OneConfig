@@ -8,9 +8,9 @@ import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.ImageLoader;
 import cc.polyfrost.oneconfig.lwjgl.image.Images;
 import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
-import gg.essential.universal.UGraphics;
-import gg.essential.universal.UMinecraft;
-import gg.essential.universal.UResolution;
+import cc.polyfrost.oneconfig.libs.universal.UGraphics;
+import cc.polyfrost.oneconfig.libs.universal.UMinecraft;
+import cc.polyfrost.oneconfig.libs.universal.UResolution;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.shader.Framebuffer;
 import org.lwjgl.nanovg.*;
@@ -296,6 +296,14 @@ public final class RenderManager {
         nvgRGBA((byte) (color >> 16 & 0xFF), (byte) (color >> 8 & 0xFF), (byte) (color & 0xFF), (byte) (color >> 24 & 0xFF), nvgColor);
         nvgFillColor(vg, nvgColor);
         return nvgColor;
+    }
+
+    public static void scale(long vg, float x, float y) {
+        nvgScale(vg, x, y);
+    }
+
+    public static void withAlpha(long vg, float alpha) {
+        nvgGlobalAlpha(vg, alpha);
     }
 
     public static void drawSvg(long vg, String filePath, float x, float y, float width, float height) {

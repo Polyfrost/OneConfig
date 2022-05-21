@@ -89,7 +89,7 @@ public class OneConfigConfig extends Config {
     @Override
     public void load() {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(Files.newInputStream(Paths.get("OneConfig/" + configFile)), StandardCharsets.UTF_8))) {
-            deserializePart(new JsonParser().parse(reader).getAsJsonObject(), this.getClass());
+            deserializePart(new JsonParser().parse(reader).getAsJsonObject(), this);
         } catch (IOException e) {
             e.printStackTrace();
         }

@@ -8,16 +8,14 @@ import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.pages.ModConfigPage;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
-import cc.polyfrost.oneconfig.lwjgl.image.Images;
 import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
 import cc.polyfrost.oneconfig.utils.ColorUtils;
 import cc.polyfrost.oneconfig.utils.InputUtils;
-import gg.essential.universal.wrappers.UPlayer;
+import cc.polyfrost.oneconfig.libs.universal.wrappers.UPlayer;
 import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.fml.common.ModMetadata;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.lwjgl.nanovg.NanoVG;
 
 import java.util.ArrayList;
 
@@ -44,7 +42,7 @@ public class ModCard extends BasicElement {
 
     @Override
     public void draw(long vg, int x, int y) {
-        if (disabled) NanoVG.nvgGlobalAlpha(vg, 0.5f);
+        if (disabled) RenderManager.withAlpha(vg, 0.5f);
         RenderManager.drawRoundedRectVaried(vg, x, y, width, 87, colorGray, 12f, 12f, 0f, 0f);
         RenderManager.drawRoundedRectVaried(vg, x, y + 87, width, 32, colorPrimary, 0f, 0f, 12f, 12f);
         RenderManager.drawLine(vg, x, y + 86, x + width, y + 86, 2, OneConfigConfig.GRAY_300);
@@ -80,15 +78,16 @@ public class ModCard extends BasicElement {
         if (!active & disabled) toggled = false;
 
         active = toggled;
-        NanoVG.nvgGlobalAlpha(vg, 1f);
+        RenderManager.withAlpha(vg, 1f);
     }
 
     public void onClick() {
         if (isHoveredMain) {
             for (Mod data : OneConfig.loadedMods) {
-                if (data.modType != ModType.THIRD_PARTY) {
+                if (!data.isShortCut) {
                     if (data.name.equalsIgnoreCase(modData.name)) {
                         OneConfigGui.INSTANCE.openPage(new ModConfigPage(data.defaultPage));
+                        return;
                     }
                 }
             }

@@ -2,7 +2,7 @@ package cc.polyfrost.oneconfig.test;
 
 import cc.polyfrost.oneconfig.hud.BasicHud;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
-import gg.essential.universal.UMinecraft;
+import cc.polyfrost.oneconfig.libs.universal.UMinecraft;
 import net.minecraft.client.Minecraft;
 
 public class TestHud extends BasicHud {

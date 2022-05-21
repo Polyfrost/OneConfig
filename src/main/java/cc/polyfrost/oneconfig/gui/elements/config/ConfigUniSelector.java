@@ -2,16 +2,15 @@ package cc.polyfrost.oneconfig.gui.elements.config;
 
 import cc.polyfrost.oneconfig.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.config.interfaces.BasicOption;
+import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
+import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
 import cc.polyfrost.oneconfig.lwjgl.scissor.Scissor;
 import cc.polyfrost.oneconfig.lwjgl.scissor.ScissorManager;
-import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
-import cc.polyfrost.oneconfig.lwjgl.image.Images;
 import cc.polyfrost.oneconfig.utils.ColorUtils;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import cc.polyfrost.oneconfig.utils.MathUtils;
-import org.lwjgl.nanovg.NanoVG;
 
 import java.lang.reflect.Field;
 
@@ -39,7 +38,7 @@ public class ConfigUniSelector extends BasicOption {
             selected = (int) get();
         } catch (IllegalAccessException ignored) {
         }
-        if (!isEnabled()) NanoVG.nvgGlobalAlpha(vg, 0.5f);
+        if (!isEnabled()) RenderManager.withAlpha(vg, 0.5f);
         String option = options[selected] + " " + (selected + 1) + "/" + options.length;
         RenderManager.drawString(vg, name, x, y + 16, OneConfigConfig.WHITE_90, 14f, Fonts.MEDIUM);
 
@@ -58,11 +57,11 @@ public class ConfigUniSelector extends BasicOption {
         colorLeft = ColorUtils.smoothColor(colorLeft, OneConfigConfig.BLUE_500, OneConfigConfig.BLUE_400, hoveredLeft, 40f);
         colorRight = ColorUtils.smoothColor(colorRight, OneConfigConfig.BLUE_500, OneConfigConfig.BLUE_400, hoveredRight, 40f);
 
-        if (selected <= 0 && isEnabled()) NanoVG.nvgGlobalAlpha(vg, 0.5f);
+        if (selected <= 0 && isEnabled()) RenderManager.withAlpha(vg, 0.5f);
         RenderManager.drawSvg(vg, SVGs.CHEVRON_LEFT, x + 231, y + 7, 18, 18, colorLeft);
-        if (isEnabled()) NanoVG.nvgGlobalAlpha(vg, selected >= options.length - 1 ? 0.5f : 1f);
+        if (isEnabled()) RenderManager.withAlpha(vg, selected >= options.length - 1 ? 0.5f : 1f);
         RenderManager.drawSvg(vg, SVGs.CHEVRON_RIGHT, x + 455, y + 7, 18, 18, colorRight);
-        if (isEnabled()) NanoVG.nvgGlobalAlpha(vg, 1f);
+        if (isEnabled()) RenderManager.withAlpha(vg, 1f);
 
         if (hoveredLeft && InputUtils.isClicked()) {
             previous = selected;
@@ -81,8 +80,8 @@ public class ConfigUniSelector extends BasicOption {
             }
             percentMove = selected < previous ? 0f : 1f;
         }
-        if (previous != -1) percentMove = MathUtils.easeOut(percentMove, selected < previous ? 1f : 0f, 75);
+        if (previous != -1) percentMove = MathUtils.easeOut(percentMove, selected < previous ? 1f : 0f, 75, OneConfigGui.INSTANCE.getDeltaTime());
         if ((selected < previous ? 1f : 0f) == percentMove) previous = -1;
-        NanoVG.nvgGlobalAlpha(vg, 1f);
+        RenderManager.withAlpha(vg, 1f);
     }
 }

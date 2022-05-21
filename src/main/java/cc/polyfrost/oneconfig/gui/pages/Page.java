@@ -1,5 +1,6 @@
 package cc.polyfrost.oneconfig.gui.pages;
 
+import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.lwjgl.scissor.Scissor;
 import cc.polyfrost.oneconfig.lwjgl.scissor.ScissorManager;
 import cc.polyfrost.oneconfig.utils.MathUtils;
@@ -48,7 +49,7 @@ public abstract class Page {
         if (scrollTarget > 0f) scrollTarget = 0f;
         else if (scrollTarget < -maxScroll + 728) scrollTarget = -maxScroll + 728;
 
-        currentScroll = MathUtils.easeOut(currentScroll, scrollTarget, 50f);
+        currentScroll = MathUtils.easeOut(currentScroll, scrollTarget, 50f, OneConfigGui.INSTANCE.getDeltaTime());
         ScissorManager.resetScissor(vg, scissor);
     }
 

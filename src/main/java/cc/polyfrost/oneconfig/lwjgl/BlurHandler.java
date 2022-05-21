@@ -1,9 +1,9 @@
 package cc.polyfrost.oneconfig.lwjgl;
 
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
+import cc.polyfrost.oneconfig.libs.universal.UMinecraft;
+import cc.polyfrost.oneconfig.libs.universal.UScreen;
 import cc.polyfrost.oneconfig.mixin.ShaderGroupAccessor;
-import gg.essential.universal.UMinecraft;
-import gg.essential.universal.UScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.shader.Shader;

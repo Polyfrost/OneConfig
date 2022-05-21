@@ -1,7 +1,7 @@
 package cc.polyfrost.oneconfig.utils;
 
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
-import gg.essential.universal.UResolution;
+import cc.polyfrost.oneconfig.libs.universal.UResolution;
 import org.lwjgl.input.Mouse;
 
 public class InputUtils {

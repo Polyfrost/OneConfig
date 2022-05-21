@@ -15,7 +15,7 @@ import java.awt.*;
  * </code>
  */
 @SuppressWarnings("unused")
-public class OneColor {
+public final class OneColor {
     transient private Integer rgba = null;
     private short[] hsba;
     private int chroma = -1;

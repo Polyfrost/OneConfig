@@ -10,9 +10,8 @@ import cc.polyfrost.oneconfig.gui.elements.config.*;
 import cc.polyfrost.oneconfig.gui.pages.ModConfigPage;
 import cc.polyfrost.oneconfig.hud.BasicHud;
 import cc.polyfrost.oneconfig.hud.HudCore;
-import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import com.google.gson.*;
-import gg.essential.universal.UScreen;
+import cc.polyfrost.oneconfig.libs.universal.UScreen;
 
 import java.io.*;
 import java.lang.reflect.Field;
@@ -20,14 +19,13 @@ import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.*;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class Config {
     transient protected final String configFile;
     transient protected final Gson gson = new GsonBuilder().excludeFieldsWithModifiers(Modifier.TRANSIENT).setPrettyPrinting().create();
-    transient private Mod mod;
-    final transient private HashMap<String, BasicOption> optionNames = new HashMap<>();
+    transient public Mod mod;
+    public final transient HashMap<String, BasicOption> optionNames = new HashMap<>();
     public boolean enabled = true;
 
     /**
@@ -35,8 +33,17 @@ public class Config {
      * @param configFile file where config is stored
      */
     public Config(Mod modData, String configFile) {
+        this(modData, configFile, true);
+    }
+
+    /**
+     * @param modData    information about the mod
+     * @param configFile file where config is stored
+     * @param initialize whether to load the config immediately or not
+     */
+    public Config(Mod modData, String configFile, boolean initialize) {
         this.configFile = configFile;
-        init(modData);
+        if (initialize) init(modData);
     }
 
     public void init(Mod mod) {
