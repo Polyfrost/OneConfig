@@ -1,6 +1,7 @@
 package cc.polyfrost.oneconfig.plugin.asm.tweakers;
 
 import cc.polyfrost.oneconfig.config.compatibility.VigilanceConfig;
+import cc.polyfrost.oneconfig.config.core.ConfigCore;
 import cc.polyfrost.oneconfig.config.data.Mod;
 import cc.polyfrost.oneconfig.config.data.ModType;
 import cc.polyfrost.oneconfig.plugin.asm.ITransformer;
@@ -91,7 +92,12 @@ public class VigilantTransformer implements ITransformer {
     @SuppressWarnings("unused")
     public static VigilanceConfig returnNewConfig(Vigilant vigilant, File file) {
         if (vigilant != null && Minecraft.getMinecraft().isCallingFromMinecraftThread()) {
-            return new VigilanceConfig(new Mod(!vigilant.getGuiTitle().equals("Settings") ? vigilant.getGuiTitle() : Loader.instance().activeModContainer() == null ? "Unknown" : Loader.instance().activeModContainer().getName(), ModType.THIRD_PARTY, Loader.instance().activeModContainer() == null ? "Unknown" : Loader.instance().activeModContainer().getName(), Loader.instance().activeModContainer() == null ? "1.0.0" : Loader.instance().activeModContainer().getVersion()), file.getAbsolutePath(), vigilant);
+            String name = !vigilant.getGuiTitle().equals("Settings") ? vigilant.getGuiTitle() : Loader.instance().activeModContainer() == null ? "Unknown" : Loader.instance().activeModContainer().getName();
+            if (name.equals("OneConfig")) name = "Essential";
+            String finalName = name;
+            // duplicate fix
+            if (ConfigCore.oneConfigMods.stream().anyMatch(mod -> mod.name.equals(finalName))) return null;
+            return new VigilanceConfig(new Mod(name, ModType.THIRD_PARTY, Loader.instance().activeModContainer() == null ? "Unknown" : Loader.instance().activeModContainer().getName(), Loader.instance().activeModContainer() == null ? "1.0.0" : Loader.instance().activeModContainer().getVersion()), file.getAbsolutePath(), vigilant);
         } else {
             return null;
         }

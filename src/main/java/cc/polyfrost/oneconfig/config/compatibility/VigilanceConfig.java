@@ -50,6 +50,7 @@ public class VigilanceConfig extends Config {
     private void generateOptionsList(OptionPage page) {
         for (PropertyData option : ((VigilantAccessor) vigilant).getPropertyCollector().getProperties()) {
             PropertyAttributesExt attributes = option.getAttributesExt();
+            if (attributes.getHidden()) continue;
             if (!page.categories.containsKey(attributes.getCategory()))
                 page.categories.put(attributes.getCategory(), new OptionCategory());
             OptionCategory category = page.categories.get(attributes.getCategory());
@@ -58,32 +59,32 @@ public class VigilanceConfig extends Config {
             ArrayList<BasicOption> options = category.subcategories.get(category.subcategories.size() - 1).options;
             switch (attributes.getType()) {
                 case SWITCH:
-                    options.add(new ConfigSwitch(getFieldOfProperty(option), option.getInstance(), attributes.getName(), 1));
+                    options.add(new ConfigSwitch(getFieldOfProperty(option), option.getInstance(), attributes.getName(), 2));
                     break;
                 case CHECKBOX:
-                    options.add(new ConfigCheckbox(getFieldOfProperty(option), option.getInstance(), attributes.getName(), 1));
+                    options.add(new ConfigCheckbox(getFieldOfProperty(option), option.getInstance(), attributes.getName(), 2));
                     break;
                 case PARAGRAPH:
                 case TEXT:
-                    options.add(new ConfigTextBox(getFieldOfProperty(option), option.getInstance(), attributes.getName(), 1, attributes.getPlaceholder(), attributes.getProtected(), attributes.getType() == PropertyType.PARAGRAPH));
+                    options.add(new ConfigTextBox(getFieldOfProperty(option), option.getInstance(), attributes.getName(), 2, attributes.getPlaceholder(), attributes.getProtected(), attributes.getType() == PropertyType.PARAGRAPH));
                     break;
                 case SELECTOR:
-                    options.add(new ConfigUniSelector(getFieldOfProperty(option), option.getInstance(), attributes.getName(), 1, attributes.getOptions().toArray(new String[0])));
+                    options.add(new ConfigDropdown(getFieldOfProperty(option), option.getInstance(), attributes.getName(), 2, attributes.getOptions().toArray(new String[0])));
                     break;
                 case PERCENT_SLIDER:
-                    options.add(new ConfigSlider(getFieldOfProperty(option), option.getInstance(), attributes.getName(), 1, 0, 1, 0));
+                    options.add(new ConfigSlider(getFieldOfProperty(option), option.getInstance(), attributes.getName(), 2, 0, 1, 0));
                     break;
                 case DECIMAL_SLIDER:
-                    options.add(new ConfigSlider(getFieldOfProperty(option), option.getInstance(), attributes.getName(), 1, attributes.getMinF(), attributes.getMaxF(), 0));
+                    options.add(new ConfigSlider(getFieldOfProperty(option), option.getInstance(), attributes.getName(), 2, attributes.getMinF(), attributes.getMaxF(), 0));
                     break;
                 case SLIDER:
-                    options.add(new ConfigSlider(getFieldOfProperty(option), option.getInstance(), attributes.getName(), 1, attributes.getMin(), attributes.getMax(), 0));
+                    options.add(new ConfigSlider(getFieldOfProperty(option), option.getInstance(), attributes.getName(), 2, attributes.getMin(), attributes.getMax(), 0));
                     break;
-                case COLOR:
-                    options.add(new ConfigColorElement(getFieldOfProperty(option), option.getInstance(), attributes.getName(), 1));
-                    break;
+                /*case COLOR: TODO: find a way to go from Color to OneColor
+                    options.add(new ConfigColorElement(getFieldOfProperty(option), option.getInstance(), attributes.getName(), 2));
+                    break;*/
                 case BUTTON:
-                    options.add(new ConfigButton(() -> ((CallablePropertyValue) option.getValue()).invoke(option.getInstance()), option.getInstance(), attributes.getName(), 1, attributes.getPlaceholder()));
+                    options.add(new ConfigButton(() -> ((CallablePropertyValue) option.getValue()).invoke(option.getInstance()), option.getInstance(), attributes.getName(), 2, attributes.getPlaceholder()));
                     break;
             }
             if (attributes.getType() == PropertyType.SWITCH || attributes.getType() == PropertyType.CHECKBOX) {

@@ -1,12 +1,14 @@
 package cc.polyfrost.oneconfig.utils;
 
 import cc.polyfrost.oneconfig.config.OneConfigConfig;
+import cc.polyfrost.oneconfig.gui.OneConfigGui;
 
 import java.awt.*;
 
 public class ColorUtils {
 
-    public static int getColor(int currentColor, int colorPalette, boolean hover, boolean click, float deltaTime) {
+    public static int getColor(int currentColor, int colorPalette, boolean hover, boolean click) {
+        float deltaTime = OneConfigGui.INSTANCE == null ? 16 : OneConfigGui.create().getDeltaTime();
         float[] color = splitColor(currentColor);
         if (click) {
             switch (colorPalette) {

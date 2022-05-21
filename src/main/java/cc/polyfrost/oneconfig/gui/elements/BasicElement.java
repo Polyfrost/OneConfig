@@ -39,7 +39,7 @@ public class BasicElement {
 
         update(x, y);
         if (hoverFx) {
-            currentColor = ColorUtils.getColor(currentColor, colorPalette, hovered, clicked, OneConfigGui.INSTANCE.getDeltaTime());
+            currentColor = ColorUtils.getColor(currentColor, colorPalette, hovered, clicked);
         }
     }
 

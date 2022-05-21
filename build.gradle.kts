@@ -61,7 +61,6 @@ repositories {
 
 val relocated = registerRelocationAttribute("relocate") {
     relocate("gg.essential", "cc.polyfrost.oneconfig.libs")
-    relocate("com.google", "cc.polyfrost.oneconfig.libs")
 }
 
 val shadeRelocated: Configuration by configurations.creating {
@@ -114,8 +113,6 @@ dependencies {
     shadeRelocated("gg.essential:universalcraft-1.8.9-forge:209") {
         isTransitive = false
     }
-
-    shadeRelocated("com.google.code.gson:gson:2.9.0")
 
     // for other mods and universalcraft
     shade("org.jetbrains.kotlin:kotlin-stdlib:1.6.21")

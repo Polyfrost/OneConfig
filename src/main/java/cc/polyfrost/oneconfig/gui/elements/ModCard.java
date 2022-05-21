@@ -52,7 +52,7 @@ public class ModCard extends BasicElement {
             RenderManager.drawSvg(vg, SVGs.BOX, x + 98, y + 19, 48, 48);
         }
         favoriteHitbox.update(x + 212, y + 87);
-        favoriteHitbox.currentColor = ColorUtils.getColor(favoriteHitbox.currentColor, favoriteHitbox.colorPalette, favoriteHitbox.hovered, favoriteHitbox.clicked, OneConfigGui.INSTANCE.getDeltaTime());
+        favoriteHitbox.currentColor = ColorUtils.getColor(favoriteHitbox.currentColor, favoriteHitbox.colorPalette, favoriteHitbox.hovered, favoriteHitbox.clicked);
         RenderManager.drawRoundedRectVaried(vg, x + 212, y + 87, 32, 32, favoriteHitbox.currentColor, 0f, 0f, 12f, 0f);
         favorite = favoriteHitbox.isToggled();
         RenderManager.drawString(vg, modData.name, x + 12, y + 103, OneConfigConfig.WHITE, 14f, Fonts.MEDIUM);
@@ -64,9 +64,9 @@ public class ModCard extends BasicElement {
         super.update(x, y);
         isHoveredMain = InputUtils.isAreaHovered(x, y, width, 87);
         boolean isHoveredSecondary = InputUtils.isAreaHovered(x, y + 87, width - 32, 32) && !disabled;
-        colorGray = ColorUtils.getColor(colorGray, 0, isHoveredMain, clicked && isHoveredMain, OneConfigGui.INSTANCE.getDeltaTime());
+        colorGray = ColorUtils.getColor(colorGray, 0, isHoveredMain, clicked && isHoveredMain);
         if (active && !disabled) {
-            colorPrimary = ColorUtils.getColor(colorPrimary, 1, isHoveredSecondary, clicked && isHoveredSecondary, OneConfigGui.INSTANCE.getDeltaTime());
+            colorPrimary = ColorUtils.getColor(colorPrimary, 1, isHoveredSecondary, clicked && isHoveredSecondary);
         } else
             colorPrimary = ColorUtils.smoothColor(colorPrimary, OneConfigConfig.GRAY_500, OneConfigConfig.GRAY_400, isHoveredSecondary, 20f, OneConfigGui.INSTANCE.getDeltaTime());
 
@@ -84,7 +84,7 @@ public class ModCard extends BasicElement {
     public void onClick() {
         if (isHoveredMain) {
             for (Mod data : OneConfig.loadedMods) {
-                if (data.modType != ModType.THIRD_PARTY) {
+                if (!data.isShortCut) {
                     if (data.name.equalsIgnoreCase(modData.name)) {
                         OneConfigGui.INSTANCE.openPage(new ModConfigPage(data.defaultPage));
                         return;

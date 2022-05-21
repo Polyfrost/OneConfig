@@ -10,7 +10,7 @@ import cc.polyfrost.oneconfig.gui.elements.config.*;
 import cc.polyfrost.oneconfig.gui.pages.ModConfigPage;
 import cc.polyfrost.oneconfig.hud.BasicHud;
 import cc.polyfrost.oneconfig.hud.HudCore;
-import cc.polyfrost.oneconfig.libs.gson.*;
+import com.google.gson.*;
 import cc.polyfrost.oneconfig.libs.universal.UScreen;
 
 import java.io.*;
@@ -71,7 +71,7 @@ public class Config {
      */
     public void load() {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(Files.newInputStream(Profiles.getProfileFile(configFile).toPath()), StandardCharsets.UTF_8))) {
-            deserializePart(JsonParser.parseReader(reader).getAsJsonObject(), this);
+            deserializePart(new JsonParser().parse(reader).getAsJsonObject(), this);
         } catch (IOException e) {
             e.printStackTrace();
         }

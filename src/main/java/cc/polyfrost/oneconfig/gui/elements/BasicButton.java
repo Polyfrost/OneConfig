@@ -125,11 +125,11 @@ public class BasicButton extends BasicElement {
                 return;
             }
             if (!toggleable) {
-                currentColor = ColorUtils.getColor(currentColor, colorPalette, hovered, clicked, OneConfigGui.INSTANCE.getDeltaTime());
+                currentColor = ColorUtils.getColor(currentColor, colorPalette, hovered, clicked);
             } else {
                 if (toggled) {
                     currentColor = ColorUtils.smoothColor(currentColor, OneConfigConfig.GRAY_500, OneConfigConfig.BLUE_600, true, 30f, OneConfigGui.INSTANCE.getDeltaTime());
-                } else currentColor = ColorUtils.getColor(currentColor, colorPalette, hovered, clicked, OneConfigGui.INSTANCE.getDeltaTime());
+                } else currentColor = ColorUtils.getColor(currentColor, colorPalette, hovered, clicked);
             }
         }
     }

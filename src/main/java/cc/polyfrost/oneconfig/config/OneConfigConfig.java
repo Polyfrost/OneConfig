@@ -2,7 +2,7 @@ package cc.polyfrost.oneconfig.config;
 
 import cc.polyfrost.oneconfig.config.interfaces.Config;
 import cc.polyfrost.oneconfig.lwjgl.OneColor;
-import cc.polyfrost.oneconfig.libs.gson.JsonParser;
+import com.google.gson.JsonParser;
 import cc.polyfrost.oneconfig.config.data.Mod;
 
 import java.awt.*;
@@ -89,7 +89,7 @@ public class OneConfigConfig extends Config {
     @Override
     public void load() {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(Files.newInputStream(Paths.get("OneConfig/" + configFile)), StandardCharsets.UTF_8))) {
-            deserializePart(JsonParser.parseReader(reader).getAsJsonObject(), this.getClass());
+            deserializePart(new JsonParser().parse(reader).getAsJsonObject(), this);
         } catch (IOException e) {
             e.printStackTrace();
         }
