@@ -48,7 +48,7 @@ public class ConfigSwitch extends BasicOption {
                 e.printStackTrace();
             }
         }
-        percentOn = MathUtils.clamp(MathUtils.easeOut(percentOn, toggled ? 1f : 0f, 75, OneConfigGui.INSTANCE.getDeltaTime()));
+        percentOn = MathUtils.clamp(MathUtils.easeOut(percentOn, toggled ? 1f : 0f, 75));
         RenderManager.withAlpha(vg, 1f);
     }
 

@@ -37,7 +37,7 @@ public class SideBar {
     }
 
     public void draw(long vg, int x, int y) {
-        currentY = MathUtils.easeInOutCirc(50, currentY, targetY - currentY, 400, OneConfigGui.INSTANCE.getDeltaTime());
+        currentY = MathUtils.easeInOutCirc(50, currentY, targetY - currentY, 400);
         RenderManager.drawRoundedRect(vg, x + 16, y + currentY, 192, 36, OneConfigConfig.BLUE_600, OneConfigConfig.CORNER_RADIUS);
         int i = 0;
         if (targetY == 0) {

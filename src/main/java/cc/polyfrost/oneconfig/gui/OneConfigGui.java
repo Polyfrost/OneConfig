@@ -137,7 +137,7 @@ public class OneConfigGui extends UScreen {
 
             Scissor scissor = ScissorManager.scissor(vg, x + 224, y + 88, 1056, 698);
             if (prevPage != null) {
-                pageProgress = MathUtils.easeInOutCirc(50, pageProgress, 832 - pageProgress, 600, deltaTime);
+                pageProgress = MathUtils.easeInOutCirc(50, pageProgress, 832 - pageProgress, 600);
                 prevPage.scrollWithDraw(vg, (int) (x - pageProgress), y + 72);
                 RenderManager.drawLine(vg, (int) (x - pageProgress + 1055), y + 72, (int) (x - pageProgress + 1057), y + 800, 2, OneConfigConfig.GRAY_700);     // TODO might remove this
                 currentPage.scrollWithDraw(vg, (int) (x - pageProgress + 1056), y + 72);

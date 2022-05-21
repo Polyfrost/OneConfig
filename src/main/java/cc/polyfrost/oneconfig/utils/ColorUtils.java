@@ -1,7 +1,6 @@
 package cc.polyfrost.oneconfig.utils;
 
 import cc.polyfrost.oneconfig.config.OneConfigConfig;
-import cc.polyfrost.oneconfig.gui.OneConfigGui;
 
 import java.awt.*;
 
@@ -71,8 +70,7 @@ public class ColorUtils {
     }
 
     private static float smooth(float current, float min, float max, boolean moveToFinal, float speed) {
-        float deltaTime = OneConfigGui.INSTANCE == null ? 16 : OneConfigGui.INSTANCE.getDeltaTime();
-        current = MathUtils.easeOut(current, moveToFinal ? 1f : 0f, speed, deltaTime);
+        current = MathUtils.easeOut(current, moveToFinal ? 1f : 0f, speed);
         if (current <= min) {
             current = min;
         }
