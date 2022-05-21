@@ -8,7 +8,6 @@ import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.pages.ModConfigPage;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
-import cc.polyfrost.oneconfig.lwjgl.image.Images;
 import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
 import cc.polyfrost.oneconfig.utils.ColorUtils;
 import cc.polyfrost.oneconfig.utils.InputUtils;
@@ -17,7 +16,6 @@ import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.fml.common.ModMetadata;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.lwjgl.nanovg.NanoVG;
 
 import java.util.ArrayList;
 
@@ -44,7 +42,7 @@ public class ModCard extends BasicElement {
 
     @Override
     public void draw(long vg, int x, int y) {
-        if (disabled) NanoVG.nvgGlobalAlpha(vg, 0.5f);
+        if (disabled) RenderManager.withAlpha(vg, 0.5f);
         RenderManager.drawRoundedRectVaried(vg, x, y, width, 87, colorGray, 12f, 12f, 0f, 0f);
         RenderManager.drawRoundedRectVaried(vg, x, y + 87, width, 32, colorPrimary, 0f, 0f, 12f, 12f);
         RenderManager.drawLine(vg, x, y + 86, x + width, y + 86, 2, OneConfigConfig.GRAY_300);
@@ -54,7 +52,7 @@ public class ModCard extends BasicElement {
             RenderManager.drawSvg(vg, SVGs.BOX, x + 98, y + 19, 48, 48);
         }
         favoriteHitbox.update(x + 212, y + 87);
-        favoriteHitbox.currentColor = ColorUtils.getColor(favoriteHitbox.currentColor, favoriteHitbox.colorPalette, favoriteHitbox.hovered, favoriteHitbox.clicked);
+        favoriteHitbox.currentColor = ColorUtils.getColor(favoriteHitbox.currentColor, favoriteHitbox.colorPalette, favoriteHitbox.hovered, favoriteHitbox.clicked, OneConfigGui.INSTANCE.getDeltaTime());
         RenderManager.drawRoundedRectVaried(vg, x + 212, y + 87, 32, 32, favoriteHitbox.currentColor, 0f, 0f, 12f, 0f);
         favorite = favoriteHitbox.isToggled();
         RenderManager.drawString(vg, modData.name, x + 12, y + 103, OneConfigConfig.WHITE, 14f, Fonts.MEDIUM);
@@ -66,11 +64,11 @@ public class ModCard extends BasicElement {
         super.update(x, y);
         isHoveredMain = InputUtils.isAreaHovered(x, y, width, 87);
         boolean isHoveredSecondary = InputUtils.isAreaHovered(x, y + 87, width - 32, 32) && !disabled;
-        colorGray = ColorUtils.getColor(colorGray, 0, isHoveredMain, clicked && isHoveredMain);
+        colorGray = ColorUtils.getColor(colorGray, 0, isHoveredMain, clicked && isHoveredMain, OneConfigGui.INSTANCE.getDeltaTime());
         if (active && !disabled) {
-            colorPrimary = ColorUtils.getColor(colorPrimary, 1, isHoveredSecondary, clicked && isHoveredSecondary);
+            colorPrimary = ColorUtils.getColor(colorPrimary, 1, isHoveredSecondary, clicked && isHoveredSecondary, OneConfigGui.INSTANCE.getDeltaTime());
         } else
-            colorPrimary = ColorUtils.smoothColor(colorPrimary, OneConfigConfig.GRAY_500, OneConfigConfig.GRAY_400, isHoveredSecondary, 20f);
+            colorPrimary = ColorUtils.smoothColor(colorPrimary, OneConfigConfig.GRAY_500, OneConfigConfig.GRAY_400, isHoveredSecondary, 20f, OneConfigGui.INSTANCE.getDeltaTime());
 
         if (clicked && isHoveredMain) {
             if (!active) toggled = false;
@@ -80,7 +78,7 @@ public class ModCard extends BasicElement {
         if (!active & disabled) toggled = false;
 
         active = toggled;
-        NanoVG.nvgGlobalAlpha(vg, 1f);
+        RenderManager.withAlpha(vg, 1f);
     }
 
     public void onClick() {

@@ -298,6 +298,14 @@ public final class RenderManager {
         return nvgColor;
     }
 
+    public static void scale(long vg, float x, float y) {
+        nvgScale(vg, x, y);
+    }
+
+    public static void withAlpha(long vg, float alpha) {
+        nvgGlobalAlpha(vg, alpha);
+    }
+
     public static void drawSvg(long vg, String filePath, float x, float y, float width, float height) {
         float w = width;
         float h = height;

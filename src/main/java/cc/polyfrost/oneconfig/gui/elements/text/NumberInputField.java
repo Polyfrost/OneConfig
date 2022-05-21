@@ -1,12 +1,11 @@
 package cc.polyfrost.oneconfig.gui.elements.text;
 
 import cc.polyfrost.oneconfig.config.OneConfigConfig;
+import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.elements.BasicElement;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
-import cc.polyfrost.oneconfig.lwjgl.image.Images;
 import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
 import cc.polyfrost.oneconfig.utils.ColorUtils;
-import org.lwjgl.nanovg.NanoVG;
 
 public class NumberInputField extends TextInputField {
     private final BasicElement upArrow = new BasicElement(12, 14, false);
@@ -49,8 +48,8 @@ public class NumberInputField extends TextInputField {
         if (current == max) colorTop = OneConfigConfig.GRAY_500_80;
         if (current == min) colorBottom = OneConfigConfig.GRAY_500_80;
 
-        colorTop = ColorUtils.getColor(colorTop, 2, upArrow.isHovered(), upArrow.isClicked());
-        colorBottom = ColorUtils.getColor(colorBottom, 2, downArrow.isHovered(), downArrow.isClicked());
+        colorTop = ColorUtils.getColor(colorTop, 2, upArrow.isHovered(), upArrow.isClicked(), OneConfigGui.INSTANCE.getDeltaTime());
+        colorBottom = ColorUtils.getColor(colorBottom, 2, downArrow.isHovered(), downArrow.isClicked(), OneConfigGui.INSTANCE.getDeltaTime());
         if (upArrow.isClicked()) {
             current += step;
             if (current > max) current = max;
@@ -62,20 +61,20 @@ public class NumberInputField extends TextInputField {
             setCurrentValue(current);
         }
         if (current >= max && !disabled) {
-            NanoVG.nvgGlobalAlpha(vg, 0.3f);
+            RenderManager.withAlpha(vg, 0.3f);
             upArrow.disable(true);
         }
         RenderManager.drawRoundedRectVaried(vg, x + width + 4, y, 12, 14, colorTop, 6f, 6f, 0f, 0f);
         RenderManager.drawSvg(vg, SVGs.CHEVRON_UP, x + width + 5, y + 2, 10, 10);
-        if (current >= max && !disabled) NanoVG.nvgGlobalAlpha(vg, 1f);
+        if (current >= max && !disabled) RenderManager.withAlpha(vg, 1f);
 
         if (current <= min && !disabled) {
-            NanoVG.nvgGlobalAlpha(vg, 0.3f);
+            RenderManager.withAlpha(vg, 0.3f);
             downArrow.disable(true);
         }
         RenderManager.drawRoundedRectVaried(vg, x + width + 4, y + 14, 12, 14, colorBottom, 0f, 0f, 6f, 6f);
         RenderManager.drawSvg(vg, SVGs.CHEVRON_DOWN, x + width + 5, y + 15, 10, 10);
-        NanoVG.nvgGlobalAlpha(vg, 1f);
+        RenderManager.withAlpha(vg, 1f);
 
         try {
             super.draw(vg, x, y - 2);

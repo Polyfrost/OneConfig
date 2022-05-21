@@ -19,6 +19,7 @@ public final class IOUtils {
      * Taken from legui under MIT License
      * <a href="https://github.com/SpinyOwl/legui/blob/develop/LICENSE">https://github.com/SpinyOwl/legui/blob/develop/LICENSE</a>
      */
+    @SuppressWarnings("RedundantCast")
     public static ByteBuffer resourceToByteBuffer(String path) throws IOException {
         byte[] bytes;
         path = path.trim();

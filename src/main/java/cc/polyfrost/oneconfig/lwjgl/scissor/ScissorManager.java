@@ -1,6 +1,5 @@
 package cc.polyfrost.oneconfig.lwjgl.scissor;
 
-import cc.polyfrost.oneconfig.lwjgl.scissor.Scissor;
 import org.lwjgl.nanovg.NanoVG;
 
 import java.util.ArrayList;

@@ -1,7 +1,5 @@
 package cc.polyfrost.oneconfig.lwjgl.font;
 
-import org.lwjgl.nanovg.NanoVG;
-
 import java.nio.ByteBuffer;
 
 public class Font {

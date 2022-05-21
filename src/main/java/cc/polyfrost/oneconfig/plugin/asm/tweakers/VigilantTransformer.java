@@ -6,6 +6,7 @@ import cc.polyfrost.oneconfig.config.data.ModType;
 import cc.polyfrost.oneconfig.plugin.asm.ITransformer;
 import gg.essential.vigilance.Vigilant;
 import gg.essential.vigilance.data.PropertyCollector;
+import net.minecraft.client.Minecraft;
 import net.minecraftforge.fml.common.Loader;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -89,7 +90,7 @@ public class VigilantTransformer implements ITransformer {
 
     @SuppressWarnings("unused")
     public static VigilanceConfig returnNewConfig(Vigilant vigilant, File file) {
-        if (vigilant != null) {
+        if (vigilant != null && Minecraft.getMinecraft().isCallingFromMinecraftThread()) {
             return new VigilanceConfig(new Mod(!vigilant.getGuiTitle().equals("Settings") ? vigilant.getGuiTitle() : Loader.instance().activeModContainer() == null ? "Unknown" : Loader.instance().activeModContainer().getName(), ModType.VIGILANCE, Loader.instance().activeModContainer() == null ? "Unknown" : Loader.instance().activeModContainer().getName(), Loader.instance().activeModContainer() == null ? "1.0.0" : Loader.instance().activeModContainer().getVersion()), file.getAbsolutePath(), vigilant);
         } else {
             return null;

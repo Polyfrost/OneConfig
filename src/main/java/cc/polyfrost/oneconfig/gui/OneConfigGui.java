@@ -18,7 +18,6 @@ import gg.essential.universal.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.input.Mouse;
-import org.lwjgl.nanovg.NanoVG;
 
 import java.util.ArrayList;
 
@@ -82,7 +81,7 @@ public class OneConfigGui extends UScreen {
                 scale = Math.min(Math.min(1f, UResolution.getWindowWidth() / 1280f), Math.min(1f, UResolution.getWindowHeight() / 800f));
             int x = (int) ((UResolution.getWindowWidth() - 1280 * scale) / 2f / scale);
             int y = (int) ((UResolution.getWindowHeight() - 800 * scale) / 2f / scale);
-            NanoVG.nvgScale(vg, scale, scale);
+            RenderManager.scale(vg, scale, scale);
             if (OneConfigConfig.ROUNDED_CORNERS) {
                 RenderManager.drawRoundedRect(vg, x + 224, y, 1056, 800, OneConfigConfig.GRAY_800, OneConfigConfig.CORNER_RADIUS_WIN);
                 RenderManager.drawRoundedRect(vg, x, y, 244, 800, OneConfigConfig.GRAY_900_80, OneConfigConfig.CORNER_RADIUS_WIN);
@@ -103,22 +102,22 @@ public class OneConfigGui extends UScreen {
 
             if (previousPages.size() == 0) {
                 backArrow.disable(true);
-                NanoVG.nvgGlobalAlpha(vg, 0.5f);
+                RenderManager.withAlpha(vg, 0.5f);
             } else {
                 backArrow.disable(false);
-                if (!backArrow.isHovered() || Mouse.isButtonDown(0)) NanoVG.nvgGlobalAlpha(vg, 0.8f);
+                if (!backArrow.isHovered() || Mouse.isButtonDown(0)) RenderManager.withAlpha(vg, 0.8f);
             }
             RenderManager.drawSvg(vg, SVGs.ARROW_CIRCLE_LEFT, x + 249, y + 25, 22, 22);
-            NanoVG.nvgGlobalAlpha(vg, 1f);
+            RenderManager.withAlpha(vg, 1f);
             if (nextPages.size() == 0) {
                 forwardArrow.disable(true);
-                NanoVG.nvgGlobalAlpha(vg, 0.5f);
+                RenderManager.withAlpha(vg, 0.5f);
             } else {
                 forwardArrow.disable(false);
-                if (!forwardArrow.isHovered() || Mouse.isButtonDown(0)) NanoVG.nvgGlobalAlpha(vg, 0.8f);
+                if (!forwardArrow.isHovered() || Mouse.isButtonDown(0)) RenderManager.withAlpha(vg, 0.8f);
             }
             RenderManager.drawSvg(vg, SVGs.ARROW_CIRCLE_RIGHT, x + 289, y + 25, 22, 22);
-            NanoVG.nvgGlobalAlpha(vg, 1f);
+            RenderManager.withAlpha(vg, 1f);
 
             if (backArrow.isClicked() && previousPages.size() > 0) {
                 try {
@@ -138,7 +137,7 @@ public class OneConfigGui extends UScreen {
 
             Scissor scissor = ScissorManager.scissor(vg, x + 224, y + 88, 1056, 698);
             if (prevPage != null) {
-                pageProgress = MathUtils.easeInOutCirc(50, pageProgress, 832 - pageProgress, 600);
+                pageProgress = MathUtils.easeInOutCirc(50, pageProgress, 832 - pageProgress, 600, deltaTime);
                 prevPage.scrollWithDraw(vg, (int) (x - pageProgress), y + 72);
                 RenderManager.drawLine(vg, (int) (x - pageProgress + 1055), y + 72, (int) (x - pageProgress + 1057), y + 800, 2, OneConfigConfig.GRAY_700);     // TODO might remove this
                 currentPage.scrollWithDraw(vg, (int) (x - pageProgress + 1056), y + 72);
@@ -225,7 +224,7 @@ public class OneConfigGui extends UScreen {
     /**
      * initialize a new ColorSelector and add it to the draw script. This method is used to make sure it is always rendered on top.
      *
-     * @implNote Correct usage: <code>OneConfigGui.INSTANCE.initColorSelector(new ColorSelector(color, InputUtils.mouseX(), InputUtils.mouseY()));</code>
+     * Correct usage: <code>OneConfigGui.INSTANCE.initColorSelector(new ColorSelector(color, InputUtils.mouseX(), InputUtils.mouseY()));</code>
      */
     public void initColorSelector(ColorSelector colorSelector) {
         currentColorSelector = colorSelector;

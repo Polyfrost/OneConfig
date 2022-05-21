@@ -15,7 +15,7 @@ import java.util.HashMap;
 
 public class ImageLoader {
     private final HashMap<String, Integer> imageHashMap = new HashMap<>();
-    private final HashMap<String, Integer> SVGHashMap = new HashMap<>();
+    private final HashMap<String, Integer> svgHashMap = new HashMap<>();
     public static ImageLoader INSTANCE = new ImageLoader();
 
     public boolean loadImage(long vg, String fileName) {
@@ -42,7 +42,7 @@ public class ImageLoader {
 
     public boolean loadSVG(long vg, String fileName, float SVGWidth, float SVGHeight) {
         String name = fileName + "-" + SVGWidth + "-" + SVGHeight;
-        if (!SVGHashMap.containsKey(name)) {
+        if (!svgHashMap.containsKey(name)) {
             try {
                 InputStream inputStream = this.getClass().getResourceAsStream(fileName);
                 if (inputStream == null) return false;
@@ -70,7 +70,7 @@ public class ImageLoader {
                 NanoSVG.nsvgDeleteRasterizer(rasterizer);
                 NanoSVG.nsvgDelete(svg);
 
-                SVGHashMap.put(name, NanoVG.nvgCreateImageRGBA(vg, w, h, NanoVG.NVG_IMAGE_REPEATX | NanoVG.NVG_IMAGE_REPEATY | NanoVG.NVG_IMAGE_GENERATE_MIPMAPS, image));
+                svgHashMap.put(name, NanoVG.nvgCreateImageRGBA(vg, w, h, NanoVG.NVG_IMAGE_REPEATX | NanoVG.NVG_IMAGE_REPEATY | NanoVG.NVG_IMAGE_GENERATE_MIPMAPS, image));
                 return true;
             } catch (Exception e) {
                 System.err.println("Failed to parse SVG file");
@@ -100,20 +100,20 @@ public class ImageLoader {
 
     public int getSVG( String fileName, float width, float height) {
         String name = fileName + "-" + width + "-" + height;
-        return SVGHashMap.get(name);
+        return svgHashMap.get(name);
     }
 
     public void removeSVG(long vg, String fileName, float width, float height) {
         String name = fileName + "-" + width + "-" + height;
         NanoVG.nvgDeleteImage(vg, imageHashMap.get(name));
-        SVGHashMap.remove(name);
+        svgHashMap.remove(name);
     }
 
     public void clearSVGs(long vg) {
-        HashMap<String, Integer> temp = new HashMap<>(SVGHashMap);
+        HashMap<String, Integer> temp = new HashMap<>(svgHashMap);
         for (String image : temp.keySet()) {
-            NanoVG.nvgDeleteImage(vg, SVGHashMap.get(image));
-            SVGHashMap.remove(image);
+            NanoVG.nvgDeleteImage(vg, svgHashMap.get(image));
+            svgHashMap.remove(image);
         }
     }
 }

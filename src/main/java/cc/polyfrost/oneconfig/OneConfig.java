@@ -28,8 +28,8 @@ import java.util.List;
 @net.minecraftforge.fml.common.Mod(modid = "@ID@", name = "@NAME@", version = "@VER@")
 public class OneConfig {
     public static File jarFile;
-    public static File oneConfigDir = new File("./OneConfig/");
-    public static File themesDir = new File(oneConfigDir, "themes/");
+    public static File oneConfigDir = new File("./OneConfig");
+    public static File themesDir = new File(oneConfigDir, "themes");
     public static OneConfigConfig config;
     public static TestConfig testConfig;
     public static List<Mod> loadedMods = new ArrayList<>();

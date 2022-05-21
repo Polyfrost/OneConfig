@@ -2,13 +2,11 @@ package cc.polyfrost.oneconfig.gui.elements.config;
 
 import cc.polyfrost.oneconfig.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.config.interfaces.BasicOption;
+import cc.polyfrost.oneconfig.gui.elements.text.TextInputField;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
-import cc.polyfrost.oneconfig.lwjgl.image.Images;
 import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
 import cc.polyfrost.oneconfig.utils.InputUtils;
-import cc.polyfrost.oneconfig.gui.elements.text.TextInputField;
-import org.lwjgl.nanovg.NanoVG;
 
 import java.awt.*;
 import java.lang.reflect.Field;
@@ -27,7 +25,7 @@ public class ConfigTextBox extends BasicOption {
 
     @Override
     public void draw(long vg, int x, int y) {
-        if (!isEnabled()) NanoVG.nvgGlobalAlpha(vg, 0.5f);
+        if (!isEnabled()) RenderManager.withAlpha(vg, 0.5f);
         textField.disable(!isEnabled());
         RenderManager.drawString(vg, name, x, y + 16, OneConfigConfig.WHITE_90, 14, Fonts.MEDIUM);
 
@@ -42,7 +40,7 @@ public class ConfigTextBox extends BasicOption {
         if (secure)
             RenderManager.drawSvg(vg, SVGs.EYE, x + 967, y + 7, 18, 18, new Color(196, 196, 196).getRGB());
         if (secure && InputUtils.isAreaClicked(x + 967, y + 7, 18, 18)) textField.setPassword(!textField.getPassword());
-        NanoVG.nvgGlobalAlpha(vg, 1f);
+        RenderManager.withAlpha(vg, 1f);
     }
 
     @Override

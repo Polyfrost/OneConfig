@@ -1,5 +1,6 @@
 package cc.polyfrost.oneconfig.gui.elements;
 
+import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.utils.ColorUtils;
 import cc.polyfrost.oneconfig.utils.InputUtils;
@@ -38,7 +39,7 @@ public class BasicElement {
 
         update(x, y);
         if (hoverFx) {
-            currentColor = ColorUtils.getColor(currentColor, colorPalette, hovered, clicked);
+            currentColor = ColorUtils.getColor(currentColor, colorPalette, hovered, clicked, OneConfigGui.INSTANCE.getDeltaTime());
         }
     }
 

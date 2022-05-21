@@ -7,10 +7,8 @@ import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.elements.BasicButton;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
-import cc.polyfrost.oneconfig.lwjgl.image.Images;
 import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
 import gg.essential.universal.UKeyboard;
-import org.lwjgl.nanovg.NanoVG;
 
 import java.lang.reflect.Field;
 
@@ -26,7 +24,7 @@ public class ConfigKeyBind extends BasicOption {
 
     @Override
     public void draw(long vg, int x, int y) {
-        if (!isEnabled()) NanoVG.nvgGlobalAlpha(vg, 0.5f);
+        if (!isEnabled()) RenderManager.withAlpha(vg, 0.5f);
         RenderManager.drawString(vg, name, x, y + 17, OneConfigConfig.WHITE, 14f, Fonts.MEDIUM);
         OneKeyBind keyBind = getKeyBind();
         String text = keyBind.getDisplay();
@@ -47,7 +45,7 @@ public class ConfigKeyBind extends BasicOption {
         } else if (text.equals("")) text = "None";
         button.setText(text);
         button.draw(vg, x + (size == 1 ? 224 : 736), y);
-        NanoVG.nvgGlobalAlpha(vg, 1f);
+        RenderManager.withAlpha(vg, 1f);
     }
 
     @Override

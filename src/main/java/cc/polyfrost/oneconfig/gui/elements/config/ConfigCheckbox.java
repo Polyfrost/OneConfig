@@ -2,14 +2,13 @@ package cc.polyfrost.oneconfig.gui.elements.config;
 
 import cc.polyfrost.oneconfig.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.config.interfaces.BasicOption;
+import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
-import cc.polyfrost.oneconfig.lwjgl.image.Images;
 import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
 import cc.polyfrost.oneconfig.utils.ColorUtils;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import cc.polyfrost.oneconfig.utils.MathUtils;
-import org.lwjgl.nanovg.NanoVG;
 
 import java.awt.*;
 import java.lang.reflect.Field;
@@ -24,7 +23,7 @@ public class ConfigCheckbox extends BasicOption {
 
     @Override
     public void draw(long vg, int x, int y) {
-        if (!isEnabled()) NanoVG.nvgGlobalAlpha(vg, 0.5f);
+        if (!isEnabled()) RenderManager.withAlpha(vg, 0.5f);
         boolean toggled = false;
         try {
             toggled = (boolean) get();
@@ -42,13 +41,13 @@ public class ConfigCheckbox extends BasicOption {
                 e.printStackTrace();
             }
         }
-        color = ColorUtils.smoothColor(color, OneConfigConfig.GRAY_600, OneConfigConfig.GRAY_400, hover, 40f);
+        color = ColorUtils.smoothColor(color, OneConfigConfig.GRAY_600, OneConfigConfig.GRAY_400, hover, 40f, OneConfigGui.INSTANCE.getDeltaTime());
         if (percentOn != 1f) {       // performance
             RenderManager.drawRoundedRect(vg, x, y + 4, 24, 24, color, 6f);
             RenderManager.drawHollowRoundRect(vg, x, y + 4, 23.5f, 23.5f, OneConfigConfig.GRAY_300, 6f, 1f);        // the 0.5f is to make it look better ok
         }
         RenderManager.drawString(vg, name, x + 32, y + 17, OneConfigConfig.WHITE_90, 14f, Fonts.MEDIUM);
-        percentOn = MathUtils.clamp(MathUtils.easeOut(percentOn, toggled ? 1f : 0f, 50f));
+        percentOn = MathUtils.clamp(MathUtils.easeOut(percentOn, toggled ? 1f : 0f, 50f, OneConfigGui.INSTANCE.getDeltaTime()));
         if (percentOn != 0 && percentOn != 1f) {
             RenderManager.drawRoundedRect(vg, x, y + 4, 24, 24, ColorUtils.setAlpha(OneConfigConfig.BLUE_500, (int) (percentOn * 255)), 6f);
             RenderManager.drawSvg(vg, SVGs.CHECKBOX_TICK, x, y + 4, 24, 24, new Color(1f, 1f, 1f, percentOn).getRGB());
@@ -57,7 +56,7 @@ public class ConfigCheckbox extends BasicOption {
             RenderManager.drawSvg(vg, SVGs.CHECKBOX_TICK, x, y + 4, 24, 24);
         }
         if(percentOn != 0 && hover) RenderManager.drawHollowRoundRect(vg, x - 1, y + 3, 24, 24, OneConfigConfig.BLUE_600, 6f, 2f);
-        NanoVG.nvgGlobalAlpha(vg, 1f);
+        RenderManager.withAlpha(vg, 1f);
     }
 
     @Override
