@@ -54,7 +54,6 @@ public class ClassTransformer implements IClassTransformer {
 
         ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
         try {
-            // write™
             node.accept(cw);
         } catch (Throwable t) {
             logger.error("Exception when transforming " + transformedName + " : " + t.getClass().getSimpleName());

@@ -1,6 +1,6 @@
 package cc.polyfrost.oneconfig.plugin.asm.tweakers;
 
-import cc.polyfrost.oneconfig.compat.VigilanceConfig;
+import cc.polyfrost.oneconfig.config.compatibility.VigilanceConfig;
 import cc.polyfrost.oneconfig.config.data.Mod;
 import cc.polyfrost.oneconfig.config.data.ModType;
 import cc.polyfrost.oneconfig.plugin.asm.ITransformer;
@@ -25,7 +25,7 @@ public class VigilantTransformer implements ITransformer {
         node.fields.add(new FieldNode(Opcodes.ACC_PUBLIC, "oneconfig$config", Type.getDescriptor(VigilanceConfig.class), null, null));
         node.fields.add(new FieldNode(Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL, "oneconfig$file", Type.getDescriptor(File.class), null, null));
 
-        node.interfaces.add("cc/polyfrost/oneconfig/compat/VigilantAccessor");
+        node.interfaces.add("cc/polyfrost/oneconfig/config/compatibility/VigilantAccessor");
         MethodNode methodNode = new MethodNode(Opcodes.ACC_PUBLIC, "getPropertyCollector", "()Lgg/essential/vigilance/data/PropertyCollector;", null, null);
         LabelNode labelNode = new LabelNode();
         methodNode.instructions.add(labelNode);
@@ -66,7 +66,7 @@ public class VigilantTransformer implements ITransformer {
                 list.add(new VarInsnNode(Opcodes.ALOAD, 0));
                 list.add(new VarInsnNode(Opcodes.ALOAD, 0));
                 list.add(new FieldInsnNode(Opcodes.GETFIELD, "gg/essential/vigilance/Vigilant", "oneconfig$file", Type.getDescriptor(File.class)));
-                list.add(new MethodInsnNode(Opcodes.INVOKESTATIC, Type.getInternalName(getClass()), "returnNewConfig", "(Lgg/essential/vigilance/Vigilant;Ljava/io/File;)Lcc/polyfrost/oneconfig/compat/VigilanceConfig;", false));
+                list.add(new MethodInsnNode(Opcodes.INVOKESTATIC, Type.getInternalName(getClass()), "returnNewConfig", "(Lgg/essential/vigilance/Vigilant;Ljava/io/File;)Lcc/polyfrost/oneconfig/config/compatibility/VigilanceConfig;", false));
                 list.add(new FieldInsnNode(Opcodes.PUTFIELD, "gg/essential/vigilance/Vigilant", "oneconfig$config", Type.getDescriptor(VigilanceConfig.class)));
                 method.instructions.insertBefore(method.instructions.getLast().getPrevious(), list);
             } else if (method.name.equals("addDependency") && method.desc.equals("(Lgg/essential/vigilance/data/PropertyData;Lgg/essential/vigilance/data/PropertyData;)V")) {
@@ -91,7 +91,7 @@ public class VigilantTransformer implements ITransformer {
     @SuppressWarnings("unused")
     public static VigilanceConfig returnNewConfig(Vigilant vigilant, File file) {
         if (vigilant != null && Minecraft.getMinecraft().isCallingFromMinecraftThread()) {
-            return new VigilanceConfig(new Mod(!vigilant.getGuiTitle().equals("Settings") ? vigilant.getGuiTitle() : Loader.instance().activeModContainer() == null ? "Unknown" : Loader.instance().activeModContainer().getName(), ModType.VIGILANCE, Loader.instance().activeModContainer() == null ? "Unknown" : Loader.instance().activeModContainer().getName(), Loader.instance().activeModContainer() == null ? "1.0.0" : Loader.instance().activeModContainer().getVersion()), file.getAbsolutePath(), vigilant);
+            return new VigilanceConfig(new Mod(!vigilant.getGuiTitle().equals("Settings") ? vigilant.getGuiTitle() : Loader.instance().activeModContainer() == null ? "Unknown" : Loader.instance().activeModContainer().getName(), ModType.THIRD_PARTY, Loader.instance().activeModContainer() == null ? "Unknown" : Loader.instance().activeModContainer().getName(), Loader.instance().activeModContainer() == null ? "1.0.0" : Loader.instance().activeModContainer().getVersion()), file.getAbsolutePath(), vigilant);
         } else {
             return null;
         }
