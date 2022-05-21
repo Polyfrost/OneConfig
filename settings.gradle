@@ -9,6 +9,9 @@ pluginManagement {
                 case 'gg.essential.loom':
                     useModule "gg.essential:architectury-loom:${requested.version}"
                     break
+                case 'io.github.juuxel.loom-quiltflower-mini':
+                    useModule "com.github.wyvest:loom-quiltflower-mini:${requested.version}"
+                    break
             }
         }
     }

@@ -5,6 +5,7 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 plugins {
     id "dev.architectury.architectury-pack200" version "0.1.3"
+    id "io.github.juuxel.loom-quiltflower-mini" version "171a6e2e49"
     id "com.github.johnrengelman.shadow" version "7.1.2"
     id "gg.essential.loom" version "0.10.0.3"
     id "net.kyori.blossom" version "1.3.0"
@@ -191,3 +192,25 @@ jar {
     enabled = false
 }
 jar.dependsOn(shadowJar)
+
+project.afterEvaluate {
+    def checkFile = file(".gradle/loom-cache/SETUP")
+    task lwjglJarDelayed {
+        dependsOn lwjglJar
+    }
+
+    task setupGradle {
+        dependsOn lwjglJarDelayed
+        dependsOn genSourcesWithQuiltflower
+        genSourcesWithQuiltflower.mustRunAfter lwjglJarDelayed
+        doLast {
+            checkFile.parentFile.mkdirs()
+            checkFile.createNewFile()
+        }
+    }
+    if (!checkFile.exists()) {
+        logger.error("--------------")
+        logger.error("PLEASE RUN THE `setupGradle` TASK, OR ELSE UNEXPECTED THING MAY HAPPEN!")
+        logger.error("--------------")
+    }
+}
