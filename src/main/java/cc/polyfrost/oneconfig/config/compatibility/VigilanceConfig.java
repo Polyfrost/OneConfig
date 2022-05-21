@@ -1,4 +1,4 @@
-package cc.polyfrost.oneconfig.compat;
+package cc.polyfrost.oneconfig.config.compatibility;
 
 import cc.polyfrost.oneconfig.config.core.ConfigCore;
 import cc.polyfrost.oneconfig.config.data.Mod;
