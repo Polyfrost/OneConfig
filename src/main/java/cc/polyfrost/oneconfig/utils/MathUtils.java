@@ -28,10 +28,18 @@ public class MathUtils {
      * taken from <a href="https://github.com/jesusgollonet/processing-penner-easing">https://github.com/jesusgollonet/processing-penner-easing</a>
      */
     public static float easeInOutCirc(float t, float b, float c, float d) {
-        float deltaTime = OneConfigGui.INSTANCE == null ? 16 : OneConfigGui.INSTANCE.getDeltaTime();
-        c *= deltaTime;
+        c *= OneConfigGui.INSTANCE == null ? 16 : OneConfigGui.INSTANCE.getDeltaTime();
         if ((t /= d / 2) < 1) return -c / 2 * ((float) Math.sqrt(1 - t * t) - 1) + b;
         return c / 2 * ((float) Math.sqrt(1 - (t -= 2) * t) + 1) + b;
+    }
+
+    /**
+     * taken from <a href="https://github.com/jesusgollonet/processing-penner-easing">https://github.com/jesusgollonet/processing-penner-easing</a>
+     */
+    public static float easeInOutQuad(float t,float b , float c, float d) {
+        c *= OneConfigGui.INSTANCE == null ? 16 : OneConfigGui.INSTANCE.getDeltaTime();
+        if ((t/=d/2) < 1) return c/2*t*t + b;
+        return -c/2 * ((--t)*(t-2) - 1) + b;
     }
 
     public static float map(float value, float start1, float stop1, float start2, float stop2) {

@@ -64,6 +64,8 @@ public class OneConfigGui extends UScreen {
     public void onDrawScreen(@NotNull UMatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
         super.onDrawScreen(matrixStack, mouseX, mouseY, partialTicks);
         long start = System.nanoTime();
+        int x2 = 0;
+        int y2 = 0;
         RenderManager.setupAndDraw((vg) -> {
             if (currentPage == null) {
                 currentPage = new HomePage();
@@ -82,10 +84,11 @@ public class OneConfigGui extends UScreen {
             int y = (int) ((UResolution.getWindowHeight() - 800 * scale) / 2f / scale);
             RenderManager.scale(vg, scale, scale);
             if (OneConfigConfig.ROUNDED_CORNERS) {
+                // TODO: Fix issue with white surroundings, related to font rendering
+                RenderManager.drawDropShadow(vg, x, y, 1280, 800, 32, 16, 20);
                 RenderManager.drawRoundedRect(vg, x + 224, y, 1056, 800, OneConfigConfig.GRAY_800, OneConfigConfig.CORNER_RADIUS_WIN);
                 RenderManager.drawRoundedRect(vg, x, y, 244, 800, OneConfigConfig.GRAY_900_80, OneConfigConfig.CORNER_RADIUS_WIN);
                 RenderManager.drawRect(vg, x + 224, y, 20, 800, OneConfigConfig.GRAY_800);
-                //RenderManager.drawDropShadow(vg, 544, 140, 1056, 800, 20f, 32f, OneConfigConfig.GRAY_800);
             }
             RenderManager.drawLine(vg, x + 224, y + 72, x + 1280, y + 72, 1, OneConfigConfig.GRAY_700);
             RenderManager.drawLine(vg, x + 224, y, x + 222, y + 800, 1, OneConfigConfig.GRAY_700);
@@ -222,7 +225,7 @@ public class OneConfigGui extends UScreen {
 
     /**
      * initialize a new ColorSelector and add it to the draw script. This method is used to make sure it is always rendered on top.
-     *
+     * <p>
      * Correct usage: <code>OneConfigGui.INSTANCE.initColorSelector(new ColorSelector(color, InputUtils.mouseX(), InputUtils.mouseY()));</code>
      */
     public void initColorSelector(ColorSelector colorSelector) {

@@ -272,22 +272,46 @@ public final class RenderManager {
         nvgColor.free();
     }
 
-    public static void drawDropShadow(long vg, float x, float y, float w, float h, float cornerRadius, float spread, int color) {       // TODO broken
-        NVGColor color1 = NVGColor.calloc();
-        NVGColor color2 = NVGColor.calloc();
-        NVGPaint shadowPaint = NVGPaint.calloc();
-        nvgRGBA((byte) 0, (byte) 0, (byte) 0, (byte) 128, color1);
-        nvgRGBA((byte) 0, (byte) 0, (byte) 0, (byte) 0, color2);
-        nvgBoxGradient(vg, x, y + 2, w, h, cornerRadius * 2, 10f, color2, color1, shadowPaint);
-        nvgBeginPath(vg);
-        nvgRect(vg, x - 10, y - 10, w + 20, h + 30);
-        nvgRoundedRect(vg, x, y, w, h, cornerRadius);
-        nvgPathWinding(vg, NVG_HOLE);
-        nvgFillPaint(vg, shadowPaint);
-        nvgFill(vg);
-        shadowPaint.free();
-        color1.free();
-        color2.free();
+    public static void drawDropShadow(long vg, float x, float y, float w, float h, float blur, float spread, float cornerRadius) {
+        try (
+                NVGPaint shadowPaint = NVGPaint.calloc();  // allocating memory to pass color to nanovg wrapper
+                NVGColor firstColor = NVGColor.calloc();  // allocating memory to pass color to nanovg wrapper
+                NVGColor secondColor = NVGColor.calloc()  // allocating memory to pass color to nanovg wrapper
+        ) {
+            fillNvgColorWithRGBA(0, 0, 0, 0.5f, firstColor); // filling allocated memory
+            fillNvgColorWithRGBA(0, 0, 0, 0, secondColor); // filling allocated memory
+
+            // creating gradient and put it to shadowPaint
+            nvgBoxGradient(vg,
+                    x - spread,
+                    y - spread,
+                    w + 2 * spread,
+                    h + 2 * spread,
+                    cornerRadius + spread,
+                    blur,
+                    firstColor,
+                    secondColor,
+                    shadowPaint);
+            nvgBeginPath(vg);
+            nvgRoundedRect(vg,
+                    x - spread - blur,
+                    y - spread - blur,
+                    w + 2 * spread + 2 * blur,
+                    h + 2 * spread + 2 * blur,
+                    cornerRadius + spread
+            );
+            nvgRoundedRect(vg, x, y, w, h, cornerRadius);
+            nvgPathWinding(vg, NVG_HOLE);
+            nvgFillPaint(vg, shadowPaint);
+            nvgFill(vg);
+        }
+    }
+
+    public static void fillNvgColorWithRGBA(float r, float g, float b, float a, NVGColor color) {
+        color.r(r);
+        color.g(g);
+        color.b(b);
+        color.a(a);
     }
 
 
