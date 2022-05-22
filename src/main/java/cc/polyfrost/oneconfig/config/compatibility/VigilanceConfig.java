@@ -13,6 +13,7 @@ import gg.essential.vigilance.Vigilant;
 import gg.essential.vigilance.data.*;
 import kotlin.reflect.KMutableProperty0;
 import kotlin.reflect.jvm.ReflectJvmMapping;
+import net.minecraft.client.resources.I18n;
 
 import java.awt.*;
 import java.lang.reflect.Field;
@@ -53,40 +54,40 @@ public class VigilanceConfig extends Config {
         for (PropertyData option : ((VigilantAccessor) vigilant).getPropertyCollector().getProperties()) {
             PropertyAttributesExt attributes = option.getAttributesExt();
             if (attributes.getHidden()) continue;
-            if (!page.categories.containsKey(attributes.getCategory()))
-                page.categories.put(attributes.getCategory(), new OptionCategory());
-            OptionCategory category = page.categories.get(attributes.getCategory());
-            if (category.subcategories.size() == 0 || !category.subcategories.get(category.subcategories.size() - 1).getName().equals(attributes.getSubcategory()))
-                category.subcategories.add(new OptionSubcategory(attributes.getSubcategory()));
+            if (!page.categories.containsKey(getCategory(attributes)))
+                page.categories.put(getCategory(attributes), new OptionCategory());
+            OptionCategory category = page.categories.get(getCategory(attributes));
+            if (category.subcategories.size() == 0 || !category.subcategories.get(category.subcategories.size() - 1).getName().equals(getSubcategory(attributes)))
+                category.subcategories.add(new OptionSubcategory(getSubcategory(attributes)));
             ArrayList<BasicOption> options = category.subcategories.get(category.subcategories.size() - 1).options;
             switch (attributes.getType()) {
                 case SWITCH:
-                    options.add(new ConfigSwitch(getFieldOfProperty(option), option.getInstance(), attributes.getName(), 2));
+                    options.add(new ConfigSwitch(getFieldOfProperty(option), option.getInstance(), getName(attributes), 2));
                     break;
                 case CHECKBOX:
-                    options.add(new ConfigCheckbox(getFieldOfProperty(option), option.getInstance(), attributes.getName(), 2));
+                    options.add(new ConfigCheckbox(getFieldOfProperty(option), option.getInstance(), getName(attributes), 2));
                     break;
                 case PARAGRAPH:
                 case TEXT:
-                    options.add(new ConfigTextBox(getFieldOfProperty(option), option.getInstance(), attributes.getName(), 2, attributes.getPlaceholder(), attributes.getProtected(), attributes.getType() == PropertyType.PARAGRAPH));
+                    options.add(new ConfigTextBox(getFieldOfProperty(option), option.getInstance(), getName(attributes), 2, attributes.getPlaceholder(), attributes.getProtected(), attributes.getType() == PropertyType.PARAGRAPH));
                     break;
                 case SELECTOR:
-                    options.add(new ConfigDropdown(getFieldOfProperty(option), option.getInstance(), attributes.getName(), 2, attributes.getOptions().toArray(new String[0])));
+                    options.add(new ConfigDropdown(getFieldOfProperty(option), option.getInstance(), getName(attributes), 2, attributes.getOptions().toArray(new String[0])));
                     break;
                 case PERCENT_SLIDER:
-                    options.add(new ConfigSlider(getFieldOfProperty(option), option.getInstance(), attributes.getName(), 2, 0, 1, 0));
+                    options.add(new ConfigSlider(getFieldOfProperty(option), option.getInstance(), getName(attributes), 2, 0, 1, 0));
                     break;
                 case DECIMAL_SLIDER:
-                    options.add(new ConfigSlider(getFieldOfProperty(option), option.getInstance(), attributes.getName(), 2, attributes.getMinF(), attributes.getMaxF(), 0));
+                    options.add(new ConfigSlider(getFieldOfProperty(option), option.getInstance(), getName(attributes), 2, attributes.getMinF(), attributes.getMaxF(), 0));
                     break;
                 case SLIDER:
-                    options.add(new ConfigSlider(getFieldOfProperty(option), option.getInstance(), attributes.getName(), 2, attributes.getMin(), attributes.getMax(), 0));
+                    options.add(new ConfigSlider(getFieldOfProperty(option), option.getInstance(), getName(attributes), 2, attributes.getMin(), attributes.getMax(), 0));
                     break;
                 case COLOR:
-                    options.add(new CompatConfigColorElement(getFieldOfProperty(option), option.getInstance(), attributes.getName(), 2));
+                    options.add(new CompatConfigColorElement(getFieldOfProperty(option), option.getInstance(), getName(attributes), 2));
                     break;
                 case BUTTON:
-                    options.add(new ConfigButton(() -> ((CallablePropertyValue) option.getValue()).invoke(option.getInstance()), option.getInstance(), attributes.getName(), 2, attributes.getPlaceholder()));
+                    options.add(new ConfigButton(() -> ((CallablePropertyValue) option.getValue()).invoke(option.getInstance()), option.getInstance(), getName(attributes), 2, attributes.getPlaceholder()));
                     break;
             }
             if (attributes.getType() == PropertyType.SWITCH || attributes.getType() == PropertyType.CHECKBOX) {
@@ -125,6 +126,30 @@ public class VigilanceConfig extends Config {
                 throw new RuntimeException(e);
             }
         } else throw new RuntimeException("Unknown property value type: " + data.getValue().getClass());
+    }
+
+    private String getName(PropertyAttributesExt ext) {
+        try {
+            return I18n.format((String) PropertyAttributesExt.class.getDeclaredField("i18nName").get(ext));
+        } catch (IllegalAccessException | NoSuchFieldException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private String getCategory(PropertyAttributesExt ext) {
+        try {
+            return I18n.format((String) PropertyAttributesExt.class.getDeclaredField("i18nCategory").get(ext));
+        } catch (IllegalAccessException | NoSuchFieldException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private String getSubcategory(PropertyAttributesExt ext) {
+        try {
+            return I18n.format((String) PropertyAttributesExt.class.getDeclaredField("i18nSubcategory").get(ext));
+        } catch (IllegalAccessException | NoSuchFieldException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @SuppressWarnings("unused")

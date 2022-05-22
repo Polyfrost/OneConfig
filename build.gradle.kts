@@ -38,9 +38,8 @@ group = "cc.polyfrost"
 base {
     archivesName.set(mod_name)
 }
-
-loom.noServerRunConfigs()
 loom {
+    noServerRunConfigs()
     if (project.platform.isLegacyForge) {
         launchConfigs.named("client") {
             property("fml.coreMods.load", "cc.polyfrost.oneconfig.plugin.LoadingPlugin")
