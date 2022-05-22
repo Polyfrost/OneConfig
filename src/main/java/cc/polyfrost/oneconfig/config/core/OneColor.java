@@ -1,4 +1,4 @@
-package cc.polyfrost.oneconfig.lwjgl;
+package cc.polyfrost.oneconfig.config.core;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -18,7 +18,7 @@ import java.awt.*;
 public final class OneColor {
     transient private Integer rgba = null;
     private short[] hsba;
-    private int chroma = -1;
+    private int dataBit = -1;
 
     // rgb constructors
 
@@ -76,7 +76,7 @@ public final class OneColor {
         this(System.currentTimeMillis() % (int) chromaSpeed / chromaSpeed, saturation, brightness, alpha);
         if(chromaSpeed < 1) chromaSpeed = 1;
         if(chromaSpeed > 30) chromaSpeed = 30;
-        this.chroma = (int) chromaSpeed;
+        this.dataBit = (int) chromaSpeed;
     }
 
     // internal constructor
@@ -85,7 +85,7 @@ public final class OneColor {
             this.hsba = new short[]{(short) hue, (short) saturation, (short) brightness, (short) alpha};
             this.rgba = HSBAtoRGBA(this.hsba[0], this.hsba[1], this.hsba[2], this.hsba[3]);
         } else {
-            this.chroma = chromaSpeed;
+            this.dataBit = chromaSpeed;
             this.hsba = new short[]{(short) hue, (short) saturation, (short) brightness, (short) alpha};
         }
     }
@@ -128,19 +128,19 @@ public final class OneColor {
     }
 
     /** Get the chroma speed of the color (1s-30s). */
-    public int getChroma() {
-        return chroma == -1 ? -1 : chroma / 1000;
+    public int getDataBit() {
+        return dataBit == -1 ? -1 : dataBit / 1000;
     }
 
     /** Set the current chroma speed of the color. -1 to disable. */
     public void setChromaSpeed(int speed) {
         if(speed == -1) {
-            this.chroma = -1;
+            this.dataBit = -1;
             return;
         }
         if(speed < 1) speed = 1;
         if(speed > 30) speed = 30;
-        this.chroma = speed * 1000;
+        this.dataBit = speed * 1000;
     }
 
     /** Set the HSBA values of the color. */
@@ -164,13 +164,14 @@ public final class OneColor {
      * @return the current color in RGBA format (equivalent to getRGB of java.awt.Color)
      */
     public int getRGB() {
-        if (chroma == -1) {
+        if (dataBit == 0) dataBit = -1;
+        if (dataBit == -1) {
             // fix for when rgba is not set because of deserializing not calling constructor
             if (rgba == null) rgba = HSBAtoRGBA(this.hsba[0], this.hsba[1], this.hsba[2], this.hsba[3]);
             return rgba;
         } else {
-            int temp = Color.HSBtoRGB(System.currentTimeMillis() % chroma / (float) chroma, hsba[1] / 100f, hsba[2] / 100f);
-            hsba[0] = (short) ((System.currentTimeMillis() % chroma / (float) chroma) * 360);
+            int temp = Color.HSBtoRGB(System.currentTimeMillis() % dataBit / (float) dataBit, hsba[1] / 100f, hsba[2] / 100f);
+            hsba[0] = (short) ((System.currentTimeMillis() % dataBit / (float) dataBit) * 360);
             return ((temp & 0x00ffffff) | (hsba[3] << 24));
         }
     }
@@ -216,6 +217,9 @@ public final class OneColor {
 
     public void setColorFromHex(String hex) {
         hex = hex.replace("#", "");
+        if(hex.length() > 6) {
+            hex = hex.substring(0, 6);
+        }
         if(hex.length() == 3) {
             hex = charsToString(hex.charAt(0), hex.charAt(0), hex.charAt(1), hex.charAt(1), hex.charAt(2), hex.charAt(2));
         }
@@ -225,8 +229,17 @@ public final class OneColor {
         if(hex.length() == 2 && hex.charAt(1) == hex.charAt(0)) {
             hex = charsToString(hex.charAt(0), hex.charAt(0), hex.charAt(0), hex.charAt(0), hex.charAt(0), hex.charAt(0));
         }
-        rgba = Integer.parseInt(hex, 16);
-        hsba = RGBAtoHSBA(0xff000000 | rgba);
+        StringBuilder hexBuilder = new StringBuilder(hex);
+        while (hexBuilder.length() < 6) {
+            hexBuilder.append("0");
+        }
+        hex = hexBuilder.toString();
+        //System.out.println(hex);
+        int r = Integer.valueOf(hex.substring( 0, 2 ), 16);
+        int g = Integer.valueOf( hex.substring( 2, 4 ), 16);
+        int b = Integer.valueOf( hex.substring( 4, 6 ), 16);
+        this.rgba = ((getAlpha() & 0xFF) << 24) | ((r & 0xFF) << 16) | ((g & 0xFF) << 8) | ((b & 0xFF));
+        hsba = RGBAtoHSBA(rgba);
     }
 
     public void setAlpha(int alpha) {

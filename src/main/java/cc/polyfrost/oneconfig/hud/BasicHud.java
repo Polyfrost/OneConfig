@@ -1,6 +1,6 @@
 package cc.polyfrost.oneconfig.hud;
 
-import cc.polyfrost.oneconfig.lwjgl.OneColor;
+import cc.polyfrost.oneconfig.config.core.OneColor;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 
 public abstract class BasicHud {

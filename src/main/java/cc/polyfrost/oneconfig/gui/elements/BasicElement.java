@@ -16,6 +16,7 @@ public class BasicElement {
     protected boolean disabled = false;
     protected int currentColor;
     protected final float radius;
+    private boolean block = false;
 
     public BasicElement(int width, int height, int colorPalette, boolean hoverFx) {
         this(width, height, colorPalette, hoverFx, 12f);
@@ -50,12 +51,16 @@ public class BasicElement {
             return;
         }
         hovered = InputUtils.isAreaHovered(x - hitBoxX, y - hitBoxY, width + hitBoxX, height + hitBoxY);
-        clicked = InputUtils.isClicked() && hovered;
+        clicked = InputUtils.isClicked(block) && hovered;
 
         if (clicked) {
             toggled = !toggled;
             onClick();
         }
+    }
+
+    public void ignoreBlockedTouches(boolean state) {
+        block = state;
     }
 
 

@@ -49,6 +49,7 @@ public final class RenderManager {
             fb.enableStencil();
         }
         GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
+        GL11.glDisable(GL11.GL_ALPHA_TEST);
 
         if (mcScaling) {
             nvgBeginFrame(vg, (float) UResolution.getScaledWidth(), (float) UResolution.getScaledHeight(), (float) UResolution.getScaleFactor());
@@ -150,7 +151,7 @@ public final class RenderManager {
     public static void drawHollowRoundRect(long vg, float x, float y, float width, float height, int color, float radius, float thickness) {
         nvgBeginPath(vg);
         nvgRoundedRect(vg, x + thickness, y + thickness, width - thickness, height - thickness, radius);
-        nvgStrokeWidth(vg, thickness);
+        nvgStrokeWidth(vg, thickness + 0.5f);
         nvgPathWinding(vg, NVG_HOLE);
         color(vg, color);
         NVGColor nvgColor = color(vg, color);

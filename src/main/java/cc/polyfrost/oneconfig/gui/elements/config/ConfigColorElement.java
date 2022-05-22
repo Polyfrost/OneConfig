@@ -6,7 +6,7 @@ import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.elements.BasicElement;
 import cc.polyfrost.oneconfig.gui.elements.ColorSelector;
 import cc.polyfrost.oneconfig.gui.elements.text.TextInputField;
-import cc.polyfrost.oneconfig.lwjgl.OneColor;
+import cc.polyfrost.oneconfig.config.core.OneColor;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.Images;
@@ -40,10 +40,7 @@ public class ConfigColorElement extends BasicOption {
         hexField.setErrored(false);
         if (hexField.isToggled()) {
             try {
-                int alpha = color.getAlpha();
                 color.setColorFromHex(hexField.getInput());
-                color.setAlpha(alpha);
-                setColor(color);
             } catch (NumberFormatException e) {
                 hexField.setErrored(true);
             }
@@ -64,7 +61,6 @@ public class ConfigColorElement extends BasicOption {
                     input = 100f;
                 }
                 color = new OneColor((float) color.getHue(), color.getSaturation(), color.getBrightness(), Math.round(input * 2.55f));
-                setColor(color);
             } catch (NumberFormatException e) {
                 alphaField.setErrored(true);
             }
@@ -72,12 +68,16 @@ public class ConfigColorElement extends BasicOption {
         alphaField.draw(vg, x1 + 336, y);
 
         element.update(x1 + 416, y);
-        RenderManager.drawRoundImage(vg, Images.ALPHA_GRID, x1 + 416, y, 64, 32, 12f);
-        RenderManager.drawRoundedRect(vg, x1 + 416, y, 64, 32, color.getRGB(), 12f);
         RenderManager.drawHollowRoundRect(vg, x1 + 415, y - 1, 64, 32, OneConfigConfig.GRAY_300, 12f, 2f);
+        RenderManager.drawRoundImage(vg, Images.ALPHA_GRID, x1 + 420, y + 4, 56, 24, 8f);
+        RenderManager.drawRoundedRect(vg, x1 + 420, y + 4, 56, 24, color.getRGB(), 8f);
         if (element.isClicked() && !element.isToggled()) {
-            OneConfigGui.INSTANCE.initColorSelector(new ColorSelector(new OneColor(40, 30, 20), InputUtils.mouseX(), InputUtils.mouseY()));
+            OneConfigGui.INSTANCE.initColorSelector(new ColorSelector(color, InputUtils.mouseX(), InputUtils.mouseY()));
         }
+        if(OneConfigGui.INSTANCE.currentColorSelector != null) {
+            color = (OneConfigGui.INSTANCE.getColor());
+        }
+        setColor(color);
     }
 
     @Override

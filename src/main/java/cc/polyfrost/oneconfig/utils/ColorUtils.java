@@ -25,18 +25,18 @@ public class ColorUtils {
 
         switch (colorPalette) {
             case -2:
-                return getColorComponents(color, splitColor(OneConfigConfig.TRANSPARENT), new float[]{0.9f, 0.9f, 0.9f, 0.3f}, hover, 20f);
+                return getColorComponents(color, splitColor(OneConfigConfig.TRANSPARENT), new float[]{0.9f, 0.9f, 0.9f, 0.3f}, hover, 50f);
             case -1:
-                return getColorComponents(color, splitColor(OneConfigConfig.TRANSPARENT), splitColor(OneConfigConfig.GRAY_500), hover, 10f);
+                return getColorComponents(color, splitColor(OneConfigConfig.TRANSPARENT), splitColor(OneConfigConfig.GRAY_500), hover, 50f);
             default:
             case 0:
-                return getColorComponents(color, splitColor(OneConfigConfig.GRAY_600), splitColor(OneConfigConfig.GRAY_300), hover, 25f);
+                return getColorComponents(color, splitColor(OneConfigConfig.GRAY_600), splitColor(OneConfigConfig.GRAY_300), hover, 50f);
             case 1:
                 return getColorComponents(color, splitColor(OneConfigConfig.PRIMARY_600), splitColor(OneConfigConfig.PRIMARY_500), hover, 150f);
             case 2:
                 return getColorComponents(color, splitColor(OneConfigConfig.GRAY_500), splitColor(OneConfigConfig.GRAY_300), hover, 50f);
             case 3:
-                return getColorComponents(color, splitColor(OneConfigConfig.GRAY_500), splitColor(OneConfigConfig.GRAY_300), hover, 25f);
+                return getColorComponents(color, splitColor(OneConfigConfig.GRAY_500), splitColor(OneConfigConfig.GRAY_300), hover, 150f);
         }
 
     }
@@ -52,7 +52,7 @@ public class ColorUtils {
         float[] init = splitColor(initColor);
         float[] finalC = splitColor(finalColor);
         float[] current = splitColor(currentColor);
-        return getColorComponents(current, init, finalC, direction, speed);
+        return getColorComponents(current, init, finalC, direction, speed + 100f);
     }
 
     private static float[] splitColor(int color) {
@@ -65,7 +65,10 @@ public class ColorUtils {
         currentColor[2] = smooth(currentColor[2], initColor[2], finalColor[2], hover, speed);
         currentColor[3] = smooth(currentColor[3], initColor[3], finalColor[3], hover, speed);
 
-        return new Color(currentColor[0], currentColor[1], currentColor[2], currentColor[3]).getRGB();
+        return ((int) (currentColor[3] * 255) << 24) |
+                ((int) (currentColor[0] * 255) << 16) |
+                ((int) (currentColor[1] * 255) << 8)  |
+                ((int) (currentColor[2] * 255));
 
     }
 

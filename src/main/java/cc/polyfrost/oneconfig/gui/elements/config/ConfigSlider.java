@@ -35,7 +35,7 @@ public class ConfigSlider extends BasicOption {
         inputField.disable(!isEnabled());
         if (!isEnabled()) RenderManager.setAlpha(vg, 0.5f);
         boolean isMouseDown = Mouse.isButtonDown(0);
-        if (hovered && isMouseDown && !mouseWasDown) dragging = true;
+        if (hovered && isMouseDown && !mouseWasDown && !InputUtils.isBlockingClicks()) dragging = true;
         mouseWasDown = isMouseDown;
         if (dragging) {
             xCoordinate = (int) MathUtils.clamp(InputUtils.mouseX(), x + 352, x + 864);

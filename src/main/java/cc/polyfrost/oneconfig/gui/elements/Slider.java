@@ -39,7 +39,7 @@ public class Slider extends BasicElement {
         if (dragging) {
             value = ((float) InputUtils.mouseX() - x) / width;
         }
-        if (dragging && InputUtils.isClicked()) {
+        if (dragging && InputUtils.isClicked(true)) {
             dragging = false;
             value = ((float) InputUtils.mouseX() - x) / width;
         }

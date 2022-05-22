@@ -6,7 +6,7 @@ import cc.polyfrost.oneconfig.gui.elements.ColorSelector;
 import cc.polyfrost.oneconfig.gui.elements.text.TextInputField;
 import cc.polyfrost.oneconfig.gui.pages.HomePage;
 import cc.polyfrost.oneconfig.gui.pages.Page;
-import cc.polyfrost.oneconfig.lwjgl.OneColor;
+import cc.polyfrost.oneconfig.config.core.OneColor;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
@@ -32,7 +32,7 @@ public class OneConfigGui extends UScreen {
     private final BasicElement backArrow = new BasicElement(40, 40, -1, false);
     private final BasicElement forwardArrow = new BasicElement(40, 40, -1, false);
     private final ArrayList<Page> parents = new ArrayList<>();
-    private ColorSelector currentColorSelector;
+    public ColorSelector currentColorSelector;
     public boolean mouseDown;
     private float scale = 1f;
     private static OneConfigGui instanceToRestore = null;
@@ -229,6 +229,7 @@ public class OneConfigGui extends UScreen {
      * Correct usage: <code>OneConfigGui.INSTANCE.initColorSelector(new ColorSelector(color, InputUtils.mouseX(), InputUtils.mouseY()));</code>
      */
     public void initColorSelector(ColorSelector colorSelector) {
+        InputUtils.blockClicks(true);
         currentColorSelector = colorSelector;
     }
 
@@ -240,6 +241,11 @@ public class OneConfigGui extends UScreen {
         OneColor color = currentColorSelector.getColor();
         currentColorSelector = null;
         return color;
+    }
+
+    public OneColor getColor() {
+        if(currentColorSelector == null) return null;
+        return currentColorSelector.getColor();
     }
 
     public float getScaleFactor() {

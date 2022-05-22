@@ -1,7 +1,7 @@
 package cc.polyfrost.oneconfig.config;
 
 import cc.polyfrost.oneconfig.config.interfaces.Config;
-import cc.polyfrost.oneconfig.lwjgl.OneColor;
+import cc.polyfrost.oneconfig.config.core.OneColor;
 import com.google.gson.JsonParser;
 import cc.polyfrost.oneconfig.config.data.Mod;
 
