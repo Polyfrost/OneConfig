@@ -1,12 +1,12 @@
 package cc.polyfrost.oneconfig.gui.elements.config;
 
 import cc.polyfrost.oneconfig.config.OneConfigConfig;
+import cc.polyfrost.oneconfig.config.core.OneColor;
 import cc.polyfrost.oneconfig.config.interfaces.BasicOption;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.elements.BasicElement;
 import cc.polyfrost.oneconfig.gui.elements.ColorSelector;
 import cc.polyfrost.oneconfig.gui.elements.text.TextInputField;
-import cc.polyfrost.oneconfig.config.core.OneColor;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.Images;
@@ -86,7 +86,7 @@ public class ConfigColorElement extends BasicOption {
         hexField.keyTyped(key, keyCode);
     }
 
-    private void setColor(OneColor color) {
+    protected void setColor(OneColor color) {
         try {
             set(color);
         } catch (IllegalAccessException ignored) {

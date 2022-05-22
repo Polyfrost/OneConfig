@@ -1,6 +1,7 @@
 package cc.polyfrost.oneconfig.config.compatibility;
 
 import cc.polyfrost.oneconfig.config.core.ConfigCore;
+import cc.polyfrost.oneconfig.config.core.OneColor;
 import cc.polyfrost.oneconfig.config.data.Mod;
 import cc.polyfrost.oneconfig.config.data.OptionCategory;
 import cc.polyfrost.oneconfig.config.data.OptionPage;
@@ -13,6 +14,7 @@ import gg.essential.vigilance.data.*;
 import kotlin.reflect.KMutableProperty0;
 import kotlin.reflect.jvm.ReflectJvmMapping;
 
+import java.awt.*;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Objects;
@@ -80,9 +82,9 @@ public class VigilanceConfig extends Config {
                 case SLIDER:
                     options.add(new ConfigSlider(getFieldOfProperty(option), option.getInstance(), attributes.getName(), 2, attributes.getMin(), attributes.getMax(), 0));
                     break;
-                /*case COLOR: TODO: find a way to go from Color to OneColor
-                    options.add(new ConfigColorElement(getFieldOfProperty(option), option.getInstance(), attributes.getName(), 2));
-                    break;*/
+                case COLOR:
+                    options.add(new CompatConfigColorElement(getFieldOfProperty(option), option.getInstance(), attributes.getName(), 2));
+                    break;
                 case BUTTON:
                     options.add(new ConfigButton(() -> ((CallablePropertyValue) option.getValue()).invoke(option.getInstance()), option.getInstance(), attributes.getName(), 2, attributes.getPlaceholder()));
                     break;
@@ -130,6 +132,39 @@ public class VigilanceConfig extends Config {
         BasicOption option = optionNames.get(PropertyKt.fullPropertyPath(property.getAttributesExt()));
         if (option != null) {
             option.setDependency(() -> Objects.equals(dependency.getValue().getValue(vigilant), true));
+        }
+    }
+
+    private static class CompatConfigColorElement extends ConfigColorElement {
+        private Color prevColor = null;
+        private final Field color;
+        private OneColor cachedColor = null;
+
+        public CompatConfigColorElement(Field color, Vigilant parent, String name, int size) {
+            super(null, parent, name, size);
+            this.color = color;
+        }
+
+        @Override
+        protected Object get() throws IllegalAccessException {
+            Color currentColor = (Color) color.get(parent);
+            if (cachedColor == null || prevColor != color.get(parent)) {
+                cachedColor = new OneColor(currentColor);
+            }
+            prevColor = currentColor;
+            return cachedColor;
+        }
+
+        @Override
+        protected void setColor(OneColor color) {
+            if (cachedColor != color) {
+                Color newColor = new Color(color.getRGB(), true);
+                try {
+                    this.color.set(parent, newColor);
+                } catch (IllegalAccessException ignored) {
+
+                }
+            }
         }
     }
 }

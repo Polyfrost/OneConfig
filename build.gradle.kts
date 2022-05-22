@@ -239,6 +239,8 @@ afterEvaluate {
 
     @Suppress("UNUSED_VARIABLE")
     val setupGradle by tasks.creating {
+        group = "loom"
+        description = "Setup OneConfig"
         dependsOn(lwjglJarDelayed)
         val genSourcesWithQuiltflower = tasks.named("genSourcesWithQuiltflower").get()
         dependsOn(genSourcesWithQuiltflower)
@@ -252,6 +254,7 @@ afterEvaluate {
     if (!checkFile.exists()) {
         logger.error("--------------")
         logger.error("PLEASE RUN THE `setupGradle` TASK, OR ELSE UNEXPECTED THING MAY HAPPEN!")
+        logger.error("`setupGradle` is in the loom category of your gradle project.")
         logger.error("--------------")
     }
 }
