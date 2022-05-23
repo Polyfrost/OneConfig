@@ -130,25 +130,28 @@ public class VigilanceConfig extends Config {
 
     private String getName(PropertyAttributesExt ext) {
         try {
+            PropertyAttributesExt.class.getDeclaredField("i18nName").setAccessible(true);
             return I18n.format((String) PropertyAttributesExt.class.getDeclaredField("i18nName").get(ext));
         } catch (IllegalAccessException | NoSuchFieldException e) {
-            throw new RuntimeException(e);
+           return ext.getName();
         }
     }
 
     private String getCategory(PropertyAttributesExt ext) {
         try {
+            PropertyAttributesExt.class.getDeclaredField("i18nCategory").setAccessible(true);
             return I18n.format((String) PropertyAttributesExt.class.getDeclaredField("i18nCategory").get(ext));
         } catch (IllegalAccessException | NoSuchFieldException e) {
-            throw new RuntimeException(e);
+            return ext.getCategory();
         }
     }
 
     private String getSubcategory(PropertyAttributesExt ext) {
         try {
+            PropertyAttributesExt.class.getDeclaredField("i18nSubcategory").setAccessible(true);
             return I18n.format((String) PropertyAttributesExt.class.getDeclaredField("i18nSubcategory").get(ext));
         } catch (IllegalAccessException | NoSuchFieldException e) {
-            throw new RuntimeException(e);
+           return ext.getSubcategory();
         }
     }
 

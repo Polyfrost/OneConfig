@@ -6,6 +6,7 @@ import cc.polyfrost.oneconfig.config.core.OneKeyBind;
 import cc.polyfrost.oneconfig.config.data.*;
 import cc.polyfrost.oneconfig.config.interfaces.Config;
 import cc.polyfrost.oneconfig.config.core.OneColor;
+import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 
 public class TestConfig extends Config {
@@ -325,7 +326,7 @@ public class TestConfig extends Config {
 
 
     public TestConfig() {
-        super(new Mod("hacks", ModType.UTIL_QOL, "ShadyDev", "1.0"), "hacksConfig.json");
+        super(new Mod("hacks", ModType.UTIL_QOL, SVGs.CASH_DOLLAR.filePath), "hacksConfig.json");
         addDependency("switchTest5", () -> switchTest4);
         addDependency("Test page.testDescription", () -> false);
     }

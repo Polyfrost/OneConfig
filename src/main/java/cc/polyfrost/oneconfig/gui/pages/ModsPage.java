@@ -22,7 +22,7 @@ public class ModsPage extends Page {
     public ModsPage() {
         super("Mods");
         for (Mod modData : OneConfig.loadedMods) {
-            modCards.add(OneConfigConfig.favoriteMods.contains(modData.name) ? 0 : modCards.size(), new ModCard(modData, null, modData.config == null || modData.config.enabled, false, OneConfigConfig.favoriteMods.contains(modData.name)));
+            modCards.add(OneConfigConfig.favoriteMods.contains(modData.name) ? 0 : modCards.size(), new ModCard(modData, modData.config == null || modData.config.enabled, false, OneConfigConfig.favoriteMods.contains(modData.name)));
         }
         modCategories.add(new BasicButton(64, 32, "All", null, null, 0, BasicButton.ALIGNMENT_CENTER, true, () -> unselect(0)));
         modCategories.add(new BasicButton(80, 32, "Combat", null, null, 0, BasicButton.ALIGNMENT_CENTER, true, () -> unselect(1)));
@@ -30,7 +30,7 @@ public class ModsPage extends Page {
         modCategories.add(new BasicButton(104, 32, "Utility & QoL", null, null, 0, BasicButton.ALIGNMENT_CENTER, true, () -> unselect(3)));
         modCategories.add(new BasicButton(80, 32, "Hypixel", null, null, 0, BasicButton.ALIGNMENT_CENTER, true, () -> unselect(4)));
         modCategories.add(new BasicButton(80, 32, "Skyblock", null, null, 0, BasicButton.ALIGNMENT_CENTER, true, () -> unselect(5)));
-        modCategories.add(new BasicButton(88, 32, "3rd Party", null, null, 0, BasicButton.ALIGNMENT_CENTER, true, () -> unselect(7)));
+        modCategories.add(new BasicButton(88, 32, "3rd Party", null, null, 0, BasicButton.ALIGNMENT_CENTER, true, () -> unselect(6)));
         modCategories.get(0).setToggled(true);
     }
 

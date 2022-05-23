@@ -74,7 +74,7 @@ public class ConfigColorElement extends BasicOption {
         if (element.isClicked() && !element.isToggled()) {
             OneConfigGui.INSTANCE.initColorSelector(new ColorSelector(color, InputUtils.mouseX(), InputUtils.mouseY()));
         }
-        if(OneConfigGui.INSTANCE.currentColorSelector != null) {
+        if (OneConfigGui.INSTANCE != null && OneConfigGui.INSTANCE.currentColorSelector != null) {
             color = (OneConfigGui.INSTANCE.getColor());
         }
         setColor(color);

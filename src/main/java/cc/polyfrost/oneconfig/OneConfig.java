@@ -72,11 +72,10 @@ public class OneConfig {
         for (ModContainer mod : Loader.instance().getActiveModList()) {
             ModMetadata metadata = mod.getMetadata();
             loadedOtherMods.add(metadata);
-            String author = metadata.authorList.size() > 0 ? metadata.authorList.get(0) : "";
-            Mod newMod = new Mod(metadata.name, ModType.THIRD_PARTY, author, metadata.version);
+            String imageName = Loader.instance().activeModContainer() == null || Loader.instance().activeModContainer().getMetadata().logoFile.trim().equals("") ? null : "/" + Loader.instance().activeModContainer().getMetadata().logoFile;
+            Mod newMod = new Mod(metadata.name, ModType.THIRD_PARTY, imageName);
             newMod.isShortCut = true;
-            if (mod instanceof DummyModContainer || newMod.name.equals("OneConfig"))
-                continue;
+            if (mod instanceof DummyModContainer || newMod.name.equals("OneConfig")) continue;
             if (modData.add(newMod)) loadedMods.add(newMod);
         }
     }

@@ -19,7 +19,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 
 public class ModCard extends BasicElement {
-    private final String iconPath;
     private final Mod modData;
     private final BasicElement favoriteHitbox = new BasicElement(32, 32, -2, true);
     private boolean active, disabled, favorite;
@@ -27,10 +26,9 @@ public class ModCard extends BasicElement {
     private int colorPrimary = OneConfigConfig.PRIMARY_600;
     private boolean isHoveredMain = false;
 
-    public ModCard(@NotNull Mod mod, @Nullable String iconPath, boolean active, boolean disabled, boolean favorite) {
+    public ModCard(@NotNull Mod mod, boolean active, boolean disabled, boolean favorite) {
         super(244, 119, false);
         this.modData = mod;
-        this.iconPath = iconPath;
         this.active = active;
         toggled = active;
         this.disabled = disabled;
@@ -45,8 +43,10 @@ public class ModCard extends BasicElement {
         RenderManager.drawRoundedRectVaried(vg, x, y, width, 87, colorGray, 12f, 12f, 0f, 0f);
         RenderManager.drawRoundedRectVaried(vg, x, y + 87, width, 32, colorPrimary, 0f, 0f, 12f, 12f);
         RenderManager.drawLine(vg, x, y + 86, x + width, y + 86, 2, OneConfigConfig.GRAY_300);
-        if (iconPath != null) {
-            RenderManager.drawImage(vg, iconPath, x, y, width, 87);
+        if (modData.modIcon != null) {
+            if (modData.modIcon.toLowerCase().endsWith(".svg"))
+                RenderManager.drawSvg(vg, modData.modIcon, x + 98, y + 19, 48, 48);
+            else RenderManager.drawImage(vg, modData.modIcon, x + 98, y + 19, 48, 48);
         } else {
             RenderManager.drawSvg(vg, SVGs.BOX, x + 98, y + 19, 48, 48);
         }

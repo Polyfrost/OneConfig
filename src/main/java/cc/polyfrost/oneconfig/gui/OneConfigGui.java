@@ -84,7 +84,6 @@ public class OneConfigGui extends UScreen {
             int y = (int) ((UResolution.getWindowHeight() - 800 * scale) / 2f / scale);
             RenderManager.scale(vg, scale, scale);
             if (OneConfigConfig.ROUNDED_CORNERS) {
-                // TODO: Fix issue with white surroundings, related to font rendering
                 RenderManager.drawDropShadow(vg, x, y, 1280, 800, 32, 16, 20);
                 RenderManager.drawRoundedRect(vg, x + 224, y, 1056, 800, OneConfigConfig.GRAY_800, OneConfigConfig.CORNER_RADIUS_WIN);
                 RenderManager.drawRoundedRect(vg, x, y, 244, 800, OneConfigConfig.GRAY_900_80, OneConfigConfig.CORNER_RADIUS_WIN);

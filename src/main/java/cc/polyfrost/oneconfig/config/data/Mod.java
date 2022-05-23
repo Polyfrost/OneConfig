@@ -1,38 +1,36 @@
 package cc.polyfrost.oneconfig.config.data;
 
 import cc.polyfrost.oneconfig.config.interfaces.Config;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
 public class Mod {
     public final String name;
     public final ModType modType;
-    public final String creator;
-    public final String version;
+    public final String modIcon;
     public Config config;
     public final OptionPage defaultPage;
     public boolean isShortCut = false;
-    private static final ArrayList<Mod> mods = new ArrayList<>();
 
     /**
      * @param name    Friendly name of the mod
      * @param modType Type of the mod (for example ModType.QOL)
-     * @param creator Creator of the mod
-     * @param version Version of the mod
+     * @param modIcon path to icon of the mod (png or svg format)
      */
-    public Mod(String name, ModType modType, String creator, String version) {
-        int i = 1;
-        for (Mod mod : mods) {
-            if (mod.name.startsWith(name)) {
-                ++i;
-                name = name + " " + i;
-            }
-        }
+    public Mod(String name, ModType modType, @Nullable String modIcon) {
         this.name = name;
         this.modType = modType;
-        this.creator = creator;
-        this.version = version;
+        this.modIcon = modIcon;
         this.defaultPage = new OptionPage(name, this);
-        mods.add(this);
+    }
+
+    /**
+     * @param name    Friendly name of the mod
+     * @param modType Type of the mod (for example ModType.QOL)
+     */
+    public Mod(String name, ModType modType) {
+        this(name, modType, null);
     }
 }
