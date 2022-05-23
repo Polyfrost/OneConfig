@@ -109,7 +109,7 @@ dependencies {
         isTransitive = false
     }
 
-    shadeRelocated("gg.essential:universalcraft-1.8.9-forge:209") {
+    shadeRelocated("gg.essential:universalcraft-1.8.9-forge:211") {
         isTransitive = false
     }
 
