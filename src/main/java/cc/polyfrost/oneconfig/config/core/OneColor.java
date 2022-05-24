@@ -187,7 +187,7 @@ public final class OneColor {
      * Return the color as if it had maximum saturation and brightness. Internal method.
      */
     public int getRGBMax(boolean maxBrightness) {
-        return HSBAtoRGBA(hsba[0], maxBrightness ? hsba[1] : 100, 100, 255);
+        return HSBAtoRGBA(hsba[0], 100, maxBrightness ? 100 : hsba[2], 255);
     }
 
     /**
