@@ -6,6 +6,7 @@ import cc.polyfrost.oneconfig.config.core.OneKeyBind;
 import cc.polyfrost.oneconfig.config.data.*;
 import cc.polyfrost.oneconfig.config.interfaces.Config;
 import cc.polyfrost.oneconfig.config.core.OneColor;
+import cc.polyfrost.oneconfig.config.migration.VigilanceMigrator;
 import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 
@@ -33,7 +34,7 @@ public class TestConfig extends Config {
             subcategory = "Test",
             type = OptionType.KEYBIND
     )
-    public static OneKeyBind oneKeyBind = new OneKeyBind( 18, 80);
+    public static OneKeyBind oneKeyBind = new OneKeyBind(18, 80);
 
     @Option(
             name = "Keybind (2x)",
@@ -324,9 +325,44 @@ public class TestConfig extends Config {
     )
     public static float slider13 = 26;
 
+    @Option(
+            name = "Int test",
+            type = OptionType.SLIDER,
+            category = "Migrator",
+            subcategory = "Test",
+            min = 5,
+            max = 3287
+    )
+    public static int testInt = 5;
+
+    @Option(
+            name = "Float test",
+            type = OptionType.SLIDER,
+            category = "Migrator",
+            subcategory = "Test",
+            min = 5,
+            max = 3287
+    )
+    public static float floatTest = 5f;
+
+    @Option(
+            name = "Boolean test",
+            type = OptionType.SWITCH,
+            category = "Migrator",
+            subcategory = "Test"
+    )
+    public static boolean booleanTest = false;
+
+    @Option(
+            name = "String test",
+            type = OptionType.TEXT,
+            category = "Migrator",
+            subcategory = "Test"
+    )
+    public static String stringTest123 = "text";
 
     public TestConfig() {
-        super(new Mod("hacks", ModType.UTIL_QOL, SVGs.CASH_DOLLAR.filePath), "hacksConfig.json");
+        super(new Mod("hacks", ModType.UTIL_QOL, SVGs.CASH_DOLLAR.filePath, new VigilanceMigrator("./config/testConfig.toml")), "hacksConfig.json");
         addDependency("switchTest5", () -> switchTest4);
         addDependency("Test page.testDescription", () -> false);
     }

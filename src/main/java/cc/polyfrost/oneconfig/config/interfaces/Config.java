@@ -4,6 +4,7 @@ import cc.polyfrost.oneconfig.config.annotations.ConfigPage;
 import cc.polyfrost.oneconfig.config.annotations.Option;
 import cc.polyfrost.oneconfig.config.core.ConfigCore;
 import cc.polyfrost.oneconfig.config.data.*;
+import cc.polyfrost.oneconfig.config.migration.Migrator;
 import cc.polyfrost.oneconfig.config.profiles.Profiles;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.elements.config.*;
@@ -26,6 +27,7 @@ public class Config {
     transient protected final Gson gson = new GsonBuilder().excludeFieldsWithModifiers(Modifier.TRANSIENT).setPrettyPrinting().create();
     transient public Mod mod;
     public final transient HashMap<String, BasicOption> optionNames = new HashMap<>();
+    public transient boolean hasBeenInitialized = false;
     public boolean enabled = true;
 
     /**
@@ -33,26 +35,21 @@ public class Config {
      * @param configFile file where config is stored
      */
     public Config(Mod modData, String configFile) {
-        this(modData, configFile, true);
-    }
-
-    /**
-     * @param modData    information about the mod
-     * @param configFile file where config is stored
-     * @param initialize whether to load the config immediately or not
-     */
-    public Config(Mod modData, String configFile, boolean initialize) {
         this.configFile = configFile;
-        if (initialize) init(modData);
+        init(modData);
     }
 
     public void init(Mod mod) {
+        boolean migrate = false;
         if (Profiles.getProfileFile(configFile).exists()) load();
+        else if (!hasBeenInitialized && mod.migrator != null) migrate = true;
         else save();
         mod.config = this;
-        generateOptionList(this, mod.defaultPage, mod);
+        generateOptionList(this, mod.defaultPage, mod, migrate);
+        if (migrate) save();
         ConfigCore.oneConfigMods.add(mod);
         this.mod = mod;
+        hasBeenInitialized = true;
     }
 
     /**
@@ -83,8 +80,9 @@ public class Config {
      * @param instance instance of target class
      * @param page     page to add options too
      * @param mod      data about the mod
+     * @param migrate  whether the migrator should be run
      */
-    protected void generateOptionList(Object instance, OptionPage page, Mod mod) {
+    protected void generateOptionList(Object instance, OptionPage page, Mod mod, boolean migrate) {
         Class<?> clazz = instance.getClass();
         for (Field field : clazz.getDeclaredFields()) {
             String pagePrefix = page.equals(mod.defaultPage) ? "" : page.name + ".";
@@ -103,7 +101,7 @@ public class Config {
                 try {
                     field.setAccessible(true);
                     Object object = field.get(clazz);
-                    generateOptionList(object, newPage, mod);
+                    generateOptionList(object, newPage, mod, migrate);
                     ConfigPageButton configPageButton = new ConfigPageButton(field, instance, option.name(), option.description(), newPage);
                     switch (option.location()) {
                         case TOP:
@@ -124,6 +122,17 @@ public class Config {
             OptionCategory category = page.categories.get(option.category());
             if (category.subcategories.size() == 0 || !category.subcategories.get(category.subcategories.size() - 1).getName().equals(option.subcategory()))
                 category.subcategories.add(new OptionSubcategory(option.subcategory()));
+            if (migrate) {
+                try {
+                    Object value = mod.migrator.getValue(field, option.name(), option.category(), option.subcategory());
+                    if (value != null) {
+                        field.setAccessible(true);
+                        field.set(instance, value);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
             ArrayList<BasicOption> options = category.subcategories.get(category.subcategories.size() - 1).options;
             switch (option.type()) {
                 case SWITCH:

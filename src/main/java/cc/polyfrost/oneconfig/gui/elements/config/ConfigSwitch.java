@@ -17,7 +17,6 @@ public class ConfigSwitch extends BasicOption {
 
     public ConfigSwitch(Field field, Object parent, String name, int size) {
         super(field, parent, name, size);
-
     }
 
     @Override
