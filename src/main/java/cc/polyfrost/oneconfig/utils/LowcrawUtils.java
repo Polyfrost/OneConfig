@@ -1,2 +1,4 @@
-package cc.polyfrost.oneconfig.utils;public class HypixelLowcrawUtils {
+package cc.polyfrost.oneconfig.utils;
+
+public class LowcrawUtils {
 }
