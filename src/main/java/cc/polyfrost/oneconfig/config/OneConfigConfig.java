@@ -22,7 +22,6 @@ public class OneConfigConfig extends Config {
 
     // the color library
     public static final int TRANSPARENT = new Color(0, 0, 0, 0).getRGB();                // Transparent
-    public static final int TRANSPARENT_25 = new Color(0, 0, 0, 25).getRGB();         // Transparent 25% (used because of NanoVG culling)
 
     public static final int BLACK = new Color(0,0,0,255).getRGB();                     // Black
     public static final int GRAY_900 = new Color(13, 14, 15, 255).getRGB();           // Gray 900

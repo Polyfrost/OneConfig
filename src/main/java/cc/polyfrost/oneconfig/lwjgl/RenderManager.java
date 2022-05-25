@@ -91,8 +91,8 @@ public final class RenderManager {
         NVGPaint bg = NVGPaint.create();
         nvgBeginPath(vg);
         nvgRoundedRect(vg, x, y, width, height, 8f);
-        NVGColor nvgColor = color(vg, OneConfigConfig.WHITE); // Do not use OneConfigConfig colors for this, use rgba code - MoonTidez
-        NVGColor nvgColor2 = color(vg, OneConfigConfig.TRANSPARENT_25);
+        NVGColor nvgColor = color(vg, -1);
+        NVGColor nvgColor2 = color(vg, OneConfigConfig.TRANSPARENT);
         nvgFillPaint(vg, nvgLinearGradient(vg, x, y, x + width, y, nvgColor, nvgColor2, bg));
         nvgFill(vg);
         nvgColor.free();
@@ -101,8 +101,8 @@ public final class RenderManager {
         NVGPaint bg2 = NVGPaint.create();
         nvgBeginPath(vg);
         nvgRoundedRect(vg, x, y, width, height, 8f);
-        NVGColor nvgColor3 = color(vg, OneConfigConfig.TRANSPARENT_25);
-        NVGColor nvgColor4 = color(vg, OneConfigConfig.BLACK); // Do not use OneConfigConfig colors for this, use rgba code - MoonTidez
+        NVGColor nvgColor3 = color(vg, OneConfigConfig.TRANSPARENT);
+        NVGColor nvgColor4 = color(vg, OneConfigConfig.BLACK);
         nvgFillPaint(vg, nvgLinearGradient(vg, x, y, x, y + height, nvgColor3, nvgColor4, bg2));
         nvgFill(vg);
         nvgColor3.free();

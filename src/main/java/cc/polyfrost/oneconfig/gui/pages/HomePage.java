@@ -8,21 +8,35 @@ import cc.polyfrost.oneconfig.config.core.OneColor;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
-import cc.polyfrost.oneconfig.utils.IOUtils;
 import cc.polyfrost.oneconfig.utils.InputUtils;
+import cc.polyfrost.oneconfig.utils.InternetUtils;
 
 import java.awt.*;
 
 public class HomePage extends Page {
-    private final BasicButton socialsBtn = new BasicButton(184, 36, "Socials", SVGs.SHARE, SVGs.POP_OUT, 1, BasicButton.ALIGNMENT_CENTER, () -> IOUtils.browseLink("https://twitter.com/polyfrost"));
-    private final BasicButton discordBtn = new BasicButton(184, 36, "Discord", SVGs.WEBSITE, SVGs.LINK_DIAGONAL, 1, BasicButton.ALIGNMENT_CENTER, () -> IOUtils.browseLink("https://discord.gg/4BdUuGpMdf"));
-    private final BasicButton webBtn = new BasicButton(184, 36, "Website", SVGs.WEBSITE, null, 1, BasicButton.ALIGNMENT_CENTER, () -> IOUtils.browseLink("https://polyfrost.cc"));
-    private final BasicButton creditsBtn = new BasicButton(184, 36, "Credits", SVGs.AUDIO_PLAY, SVGs.LINK_DIAGONAL, 0, BasicButton.ALIGNMENT_CENTER, () -> OneConfigGui.INSTANCE.openPage(new CreditsPage()));
-    private final BasicButton guideBtn = new BasicButton(184, 36, "Online Guide", SVGs.HELP_CIRCLE, null, 0, BasicButton.ALIGNMENT_CENTER, () -> IOUtils.browseLink("https://www.youtube.com/watch?v=dQw4w9WgXcQ"));
+    private final BasicButton socialsBtn = new BasicButton(184, 36, "Socials", SVGs.SHARE, SVGs.POP_OUT, BasicButton.ALIGNMENT_CENTER, 1);
+    private final BasicButton discordBtn = new BasicButton(184, 36, "Discord", SVGs.WEBSITE, SVGs.LINK_DIAGONAL, BasicButton.ALIGNMENT_CENTER, 1);
+    private final BasicButton webBtn = new BasicButton(184, 36, "Website", SVGs.WEBSITE, null, BasicButton.ALIGNMENT_CENTER, 1);
+    private final BasicButton creditsBtn = new BasicButton(184, 36, "Credits", SVGs.AUDIO_PLAY, SVGs.LINK_DIAGONAL, BasicButton.ALIGNMENT_CENTER, 0);
+    private final BasicButton guideBtn = new BasicButton(184, 36, "Online Guide", SVGs.HELP_CIRCLE, null, BasicButton.ALIGNMENT_CENTER, 0);
+    private final BasicButton button1 = new BasicButton(184, BasicButton.SIZE_32, "HELLO", SVGs.MICROSOFT_ICON, SVGs.AUDIO_PLAY, BasicButton.ALIGNMENT_CENTER, 1);
+    private final BasicButton button2 = new BasicButton(184, BasicButton.SIZE_36, "TESTING", SVGs.MICROSOFT_ICON, null, BasicButton.ALIGNMENT_LEFT, 1);
+    private final BasicButton button3 = new BasicButton(184, BasicButton.SIZE_40, "BOBFISH", SVGs.MICROSOFT_ICON, null, BasicButton.ALIGNMENT_CENTER, -2);
+    private final BasicButton button4 = new BasicButton(184, BasicButton.SIZE_48, "THIS is cool", null, SVGs.AUDIO_PLAY, BasicButton.ALIGNMENT_CENTER, 1);
+    private final BasicButton button5 = new BasicButton(184, BasicButton.SIZE_36, "dhwuai", SVGs.MICROSOFT_ICON, SVGs.AUDIO_PLAY, BasicButton.ALIGNMENT_JUSTIFIED, 1);
+    private final BasicButton button6 = new BasicButton(184, BasicButton.SIZE_32, "yes", SVGs.MICROSOFT_ICON, SVGs.AUDIO_PLAY, BasicButton.ALIGNMENT_RIGHT, 1);
+    private final BasicButton button7 = new BasicButton(184, BasicButton.SIZE_32, "HELLO", SVGs.MICROSOFT_ICON, SVGs.AUDIO_PLAY, BasicButton.ALIGNMENT_CENTER, 1);
+    private final BasicButton button8 = new BasicButton(184, BasicButton.SIZE_40, "HELLO", SVGs.MICROSOFT_ICON, SVGs.AUDIO_PLAY, BasicButton.ALIGNMENT_CENTER, 1);
 
 
     public HomePage() {
         super("Home Dashboard");
+        socialsBtn.setClickAction(() -> InternetUtils.browseLink("https://twitter.com/polyfrost"));
+        discordBtn.setClickAction(() -> InternetUtils.browseLink("https://discord.gg/4BdUuGpMdf"));
+        webBtn.setClickAction(() -> InternetUtils.browseLink("https://polyfrost.cc"));
+        creditsBtn.setClickAction(new CreditsPage());
+        guideBtn.setClickAction(() -> InternetUtils.browseLink("https://www.youtube.com/watch?v=dQw4w9WgXcQ"));
+
     }
 
     public void draw(long vg, int x, int y) {
@@ -41,6 +55,15 @@ public class HomePage extends Page {
         if(socialsBtn.isClicked()) {
             OneConfigGui.INSTANCE.initColorSelector(new ColorSelector(new OneColor(new Color(255, 0, 255, 127)), InputUtils.mouseX(), InputUtils.mouseY()));
         }
+
+        button1.draw(vg, x + 100, y + 100);
+        button2.draw(vg, x + 100, y + 150);
+        button3.draw(vg, x + 100, y + 250);
+        button4.draw(vg, x + 100, y + 400);
+        button5.draw(vg, x + 100, y + 600);
+        button6.draw(vg, x + 350, y + 100);
+        button7.draw(vg, x + 350, y + 300);
+        button8.draw(vg, x + 350, y + 450);
     }
 
     @Override
