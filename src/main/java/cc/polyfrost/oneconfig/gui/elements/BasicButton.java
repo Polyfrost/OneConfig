@@ -8,7 +8,6 @@ import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
 import cc.polyfrost.oneconfig.utils.ColorUtils;
 
-import java.util.zip.ZipEntry;
 
 public class BasicButton extends BasicElement {
 
@@ -34,7 +33,7 @@ public class BasicButton extends BasicElement {
     private Runnable runnable;
 
     public BasicButton(int width, int size, String text, int align, int colorPalette) {
-        this(width, size, text, null, null, colorPalette, align);
+        this(width, size, text, null, null, align, colorPalette);
     }
 
     public BasicButton(int width, int size, String text, SVGs icon1, SVGs icon2, int align, int colorPalette) {
