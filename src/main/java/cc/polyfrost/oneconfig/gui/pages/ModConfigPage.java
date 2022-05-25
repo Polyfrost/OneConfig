@@ -9,6 +9,8 @@ import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 
 import java.util.ArrayList;
 
+import static cc.polyfrost.oneconfig.gui.elements.BasicButton.SIZE_32;
+
 public class ModConfigPage extends Page {
     private final OptionPage page;
     private final ArrayList<BasicButton> categories = new ArrayList<>();
@@ -25,7 +27,9 @@ public class ModConfigPage extends Page {
         }
         if (page.categories.size() < 2) return;
         for (String category : page.categories.keySet()) {
-            BasicButton button = new BasicButton(0, 32, category, null, null, 0, BasicButton.ALIGNMENT_CENTER, true, () -> switchCategory(category));
+            BasicButton button = new BasicButton(0, SIZE_32, category, BasicButton.ALIGNMENT_CENTER, 0);
+            button.setClickAction(() -> switchCategory(category));
+            button.setToggleable(true);
             if (category.equals(selectedCategory)) button.setToggled(true);
             categories.add(button);
         }

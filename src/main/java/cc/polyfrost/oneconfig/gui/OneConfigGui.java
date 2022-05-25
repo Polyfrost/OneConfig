@@ -35,7 +35,7 @@ public class OneConfigGui extends UScreen {
     public ColorSelector currentColorSelector;
     public boolean mouseDown;
     private float scale = 1f;
-    private static OneConfigGui instanceToRestore = null;
+    public static OneConfigGui instanceToRestore = null;
     private long time = -1L;
     private long deltaTime = 17L;
     public boolean allowClose = true;

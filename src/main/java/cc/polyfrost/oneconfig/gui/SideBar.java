@@ -13,27 +13,34 @@ import cc.polyfrost.oneconfig.libs.universal.UScreen;
 import java.util.ArrayList;
 import java.util.List;
 
+import static cc.polyfrost.oneconfig.gui.elements.BasicButton.*;
+
 public class SideBar {
     private final List<BasicButton> btnList = new ArrayList<>();
 
     private float targetY = 0, currentY = 0;
 
     public SideBar() {
-        btnList.add(new BasicButton(192, 36, "Dashboard", SVGs.DASHBOARD, null, -3, BasicButton.ALIGNMENT_LEFT, new HomePage()));
-        btnList.add(new BasicButton(192, 36, "Global Search", SVGs.SEARCH, null, -3, BasicButton.ALIGNMENT_LEFT));
-        btnList.add(new BasicButton(192, 36, "Screenshots", SVGs.IMAGE, null, -3, BasicButton.ALIGNMENT_LEFT));
-        btnList.add(new BasicButton(192, 36, "Preferences", SVGs.SETTINGS, null, -3, BasicButton.ALIGNMENT_LEFT));
-        btnList.add(new BasicButton(192, 36, "Mods", SVGs.MODS, null, -3, BasicButton.ALIGNMENT_LEFT, new ModsPage()));
-        btnList.add(new BasicButton(192, 36, "Performance", SVGs.PERFORMANCE, null, -3, BasicButton.ALIGNMENT_LEFT));
-        btnList.add(new BasicButton(192, 36, "Profiles", SVGs.PROFILES, null, -3, BasicButton.ALIGNMENT_LEFT));
-        btnList.add(new BasicButton(192, 36, "Updates", SVGs.UPDATE, null, -3, BasicButton.ALIGNMENT_LEFT));
-        btnList.add(new BasicButton(192, 36, "Themes Library", SVGs.THEME, null, -3, BasicButton.ALIGNMENT_LEFT));
-        btnList.add(new BasicButton(192, 36, "Themes Browser", SVGs.SEARCH, null, -3, BasicButton.ALIGNMENT_LEFT));
-        btnList.add(new BasicButton(192, 36, "Packs Library", SVGs.BOX, null, -3, BasicButton.ALIGNMENT_LEFT));
-        btnList.add(new BasicButton(192, 36, "Packs Browser", SVGs.SEARCH, null, -3, BasicButton.ALIGNMENT_LEFT));
-        btnList.add(new BasicButton(192, 36, "Close", SVGs.X_CIRCLE, null, -1, BasicButton.ALIGNMENT_LEFT, () -> UScreen.displayScreen(null)));
-        btnList.add(new BasicButton(192, 36, "Minimize", SVGs.MINIMISE, null, -1, BasicButton.ALIGNMENT_LEFT, () -> UScreen.displayScreen(null)));
-        btnList.add(new BasicButton(192, 36, "Edit HUD", SVGs.HUD, null, 0, BasicButton.ALIGNMENT_LEFT, () -> UScreen.displayScreen(new HudGui())));
+        btnList.add(new BasicButton(192, SIZE_36, "Dashboard", SVGs.DASHBOARD, null, ALIGNMENT_LEFT, -2));
+        btnList.get(0).setClickAction(new HomePage());
+        btnList.add(new BasicButton(192, SIZE_36, "Global Search", SVGs.SEARCH, null, ALIGNMENT_LEFT, -2));
+        btnList.add(new BasicButton(192, SIZE_36, "Screenshots", SVGs.IMAGE, null, ALIGNMENT_LEFT, -2));
+        btnList.add(new BasicButton(192, SIZE_36, "Preferences", SVGs.SETTINGS, null, ALIGNMENT_LEFT, -2));
+        btnList.add(new BasicButton(192, 36, "Mods", SVGs.MODS, null, ALIGNMENT_LEFT, -2));
+        btnList.get(4).setClickAction(new ModsPage());
+        btnList.add(new BasicButton(192, SIZE_36, "Performance", SVGs.PERFORMANCE, null, ALIGNMENT_LEFT, -2));
+        btnList.add(new BasicButton(192, SIZE_36, "Profiles", SVGs.PROFILES, null, ALIGNMENT_LEFT, -2));
+        btnList.add(new BasicButton(192, SIZE_36, "Updates", SVGs.UPDATE, null, ALIGNMENT_LEFT, -2));
+        btnList.add(new BasicButton(192, SIZE_36, "Themes Library", SVGs.THEME, null, ALIGNMENT_LEFT, -2));
+        btnList.add(new BasicButton(192, SIZE_36, "Themes Browser", SVGs.SEARCH, null, ALIGNMENT_LEFT, -2));
+        btnList.add(new BasicButton(192, SIZE_36, "Packs Library", SVGs.BOX, null, ALIGNMENT_LEFT, -2));
+        btnList.add(new BasicButton(192, SIZE_36, "Packs Browser", SVGs.SEARCH, null, ALIGNMENT_LEFT, -2));
+        btnList.add(new BasicButton(192, SIZE_36, "Close", SVGs.X_CIRCLE, null, ALIGNMENT_LEFT, -1));
+        btnList.get(12).setClickAction(() -> UScreen.displayScreen(null));
+        btnList.add(new BasicButton(192, SIZE_36, "Minimize", SVGs.MINIMISE, null, ALIGNMENT_LEFT, -1));
+        btnList.get(13).setClickAction(() -> UScreen.displayScreen(null));
+        btnList.add(new BasicButton(192, SIZE_36, "Edit HUD", SVGs.HUD, null, ALIGNMENT_LEFT, -1));
+        btnList.get(14).setClickAction(() -> UScreen.displayScreen(new HudGui()));
     }
 
     public void draw(long vg, int x, int y) {

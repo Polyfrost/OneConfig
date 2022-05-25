@@ -9,8 +9,8 @@ import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.Images;
 import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
-import cc.polyfrost.oneconfig.utils.IOUtils;
 import cc.polyfrost.oneconfig.utils.InputUtils;
+import cc.polyfrost.oneconfig.utils.InternetUtils;
 import cc.polyfrost.oneconfig.utils.MathUtils;
 import org.lwjgl.input.Mouse;
 
@@ -322,7 +322,7 @@ public class ColorSelector {
             hueInput.setInput(String.format("%.01f", (float) color.getHue()));
             hexInput.setInput("#" + color.getHex());
         }
-        if(guideBtn.isClicked()) IOUtils.browseLink("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+        if(guideBtn.isClicked()) InternetUtils.browseLink("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
 
 
         // draw the color preview

@@ -3,8 +3,10 @@ package cc.polyfrost.oneconfig.utils;
 import com.google.gson.JsonElement;
 import org.apache.commons.io.IOUtils;
 
+import java.awt.*;
 import java.io.*;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -82,5 +84,25 @@ public class InternetUtils {
                     .substring(1));
         }
         return stringBuffer.toString();
+    }
+
+    public static void browseLink(String uri) {
+        try {
+            browseLink(new URI(uri));
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.err.println("Invalid URI: " + uri);
+        }
+    }
+
+    public static void browseLink(URI uri) {
+        if(Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+            try {
+                Desktop.getDesktop().browse(uri);
+            } catch (IOException e) {
+                e.printStackTrace();
+                System.err.println("Failed to open URL in browser: " + uri);
+            }
+        }
     }
 }
