@@ -9,8 +9,8 @@ import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.Images;
 import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
-import cc.polyfrost.oneconfig.utils.IOUtils;
 import cc.polyfrost.oneconfig.utils.InputUtils;
+import cc.polyfrost.oneconfig.utils.InternetUtils;
 import cc.polyfrost.oneconfig.utils.MathUtils;
 import org.lwjgl.input.Mouse;
 
@@ -105,11 +105,9 @@ public class ColorSelector {
         RenderManager.drawHollowRoundRect(vg, x - 3, y - 3, width + 4, height + 4, new Color(204, 204, 204, 77).getRGB(), 20f, 2f);
         RenderManager.drawRoundedRect(vg, x, y, width, height, OneConfigConfig.GRAY_800, 20f);
         RenderManager.drawString(vg, "Color Selector", x + 16, y + 32, OneConfigConfig.WHITE_90, 18f, Fonts.SEMIBOLD);
-        RenderManager.setAlpha(vg, 0.8f);
-        if (closeBtn.isHovered()) RenderManager.setAlpha(vg, 1f);
-        if (closeBtn.isClicked()) RenderManager.setAlpha(vg, 0.5f);
+        if(!closeBtn.isHovered()) RenderManager.setAlpha(vg, 0.8f);
         closeBtn.draw(vg, x + 368, y + 16);
-        RenderManager.drawSvg(vg, SVGs.X_CIRCLE, x + 368, y + 16, 32, 32);
+        RenderManager.drawSvg(vg, SVGs.X_CIRCLE, x + 368, y + 16, 32, 32, closeBtn.isHovered() ? OneConfigConfig.ERROR_600 : -1);
         RenderManager.setAlpha(vg, 1f);
 
         // hex parser
@@ -209,7 +207,7 @@ public class ColorSelector {
             case 2:
                 buttons.get(mode).currentColor = OneConfigConfig.TRANSPARENT;
                 topSlider.setImage(Images.HUE_GRADIENT);
-                RenderManager.drawHSBBox(vg, x + 16, y + 120, 384, 288, color.getRGBMax(false));
+                RenderManager.drawHSBBox(vg, x + 16, y + 120, 384, 288, color.getRGBMax(true));
                 if (dragging) {
                     mouseX = InputUtils.mouseX();
                     mouseY = InputUtils.mouseY();
@@ -276,11 +274,12 @@ public class ColorSelector {
         if (dragging && InputUtils.isClicked(true)) {
             dragging = false;
         }
-        bottomSlider.setGradient(OneConfigConfig.TRANSPARENT_25, color.getRGBNoAlpha());
-        RenderManager.drawImage(vg, Images.ALPHA_GRID, x + 16, y + 456, 384, 16);
+        bottomSlider.setGradient(OneConfigConfig.TRANSPARENT, color.getRGBNoAlpha());
+        RenderManager.drawRoundImage(vg, Images.ALPHA_GRID, x + 16, y + 456, 384, 16, 8f);
         bottomSlider.draw(vg, x + 16, y + 456);
 
-        RenderManager.drawRoundedRect(vg, mouseX - 6, mouseY - 6, 12, 12, OneConfigConfig.WHITE, 12f);
+        RenderManager.drawRoundedRect(vg, mouseX - 7, mouseY - 7, 14, 14, OneConfigConfig.WHITE, 14f);
+        RenderManager.drawRoundedRect(vg, mouseX - 6, mouseY - 6, 12, 12, OneConfigConfig.BLACK, 12f);
         RenderManager.drawRoundedRect(vg, mouseX - 5, mouseY - 5, 10, 10, color.getRGBNoAlpha(), 10f);
 
         // deal with the input fields
@@ -323,12 +322,12 @@ public class ColorSelector {
             hueInput.setInput(String.format("%.01f", (float) color.getHue()));
             hexInput.setInput("#" + color.getHex());
         }
-        if(guideBtn.isClicked()) IOUtils.browseLink("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+        if(guideBtn.isClicked()) InternetUtils.browseLink("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
 
 
         // draw the color preview
         RenderManager.drawHollowRoundRect(vg, x + 15, y + 487, 384, 40, OneConfigConfig.GRAY_300, 12f, 2f);
-        RenderManager.drawImage(vg, Images.ALPHA_GRID, x + 20, y + 492, 376, 32);
+        RenderManager.drawRoundImage(vg, Images.ALPHA_GRID, x + 20, y + 492, 376, 32, 8f);
         RenderManager.drawRoundedRect(vg, x + 20, y + 492, 376, 32, color.getRGB(), 8f);
         InputUtils.blockClicks(true);
         if (closeBtn.isClicked()) {
@@ -395,7 +394,7 @@ public class ColorSelector {
             RenderManager.drawHollowRoundRect(vg, currentDragPoint - 1, y - 1, 18, 18, OneConfigConfig.WHITE, 9f, 1f);
             RenderManager.drawHollowRoundRect(vg,  currentDragPoint, y, 16, 16, OneConfigConfig.BLACK, 8f, 1f);
             if (color != null) {
-                RenderManager.drawRoundedRect(vg, currentDragPoint + 1.5f, y + 1.5f, 14, 14, color.getRGBNoAlpha(), 7f);
+                RenderManager.drawRoundedRect(vg, currentDragPoint + 1.5f, y + 1.5f, 14, 14, color.getRGBMax(true), 7f);
             }
         }
 

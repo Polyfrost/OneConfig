@@ -24,14 +24,21 @@ public class ModsPage extends Page {
         for (Mod modData : OneConfig.loadedMods) {
             modCards.add(OneConfigConfig.favoriteMods.contains(modData.name) ? 0 : modCards.size(), new ModCard(modData, modData.config == null || modData.config.enabled, false, OneConfigConfig.favoriteMods.contains(modData.name)));
         }
-        modCategories.add(new BasicButton(64, 32, "All", null, null, 0, BasicButton.ALIGNMENT_CENTER, true, () -> unselect(0)));
-        modCategories.add(new BasicButton(80, 32, "Combat", null, null, 0, BasicButton.ALIGNMENT_CENTER, true, () -> unselect(1)));
-        modCategories.add(new BasicButton(64, 32, "HUD", null, null, 0, BasicButton.ALIGNMENT_CENTER, true, () -> unselect(2)));
-        modCategories.add(new BasicButton(104, 32, "Utility & QoL", null, null, 0, BasicButton.ALIGNMENT_CENTER, true, () -> unselect(3)));
-        modCategories.add(new BasicButton(80, 32, "Hypixel", null, null, 0, BasicButton.ALIGNMENT_CENTER, true, () -> unselect(4)));
-        modCategories.add(new BasicButton(80, 32, "Skyblock", null, null, 0, BasicButton.ALIGNMENT_CENTER, true, () -> unselect(5)));
-        modCategories.add(new BasicButton(88, 32, "3rd Party", null, null, 0, BasicButton.ALIGNMENT_CENTER, true, () -> unselect(6)));
+        modCategories.add(new BasicButton(64, 32, "All", BasicButton.ALIGNMENT_CENTER, 0));
+        modCategories.add(new BasicButton(80, 32, "Combat", BasicButton.ALIGNMENT_CENTER, 0));
+        modCategories.add(new BasicButton(64, 32, "HUD", BasicButton.ALIGNMENT_CENTER, 0));
+        modCategories.add(new BasicButton(104, 32, "Utility & QoL", BasicButton.ALIGNMENT_CENTER, 0));
+        modCategories.add(new BasicButton(80, 32, "Hypixel", BasicButton.ALIGNMENT_CENTER, 0));
+        modCategories.add(new BasicButton(80, 32, "Skyblock", BasicButton.ALIGNMENT_CENTER, 0));
+        modCategories.add(new BasicButton(88, 32, "3rd Party", BasicButton.ALIGNMENT_CENTER, 0));
         modCategories.get(0).setToggled(true);
+        int i = 0;
+        for(BasicButton button : modCategories) {
+            button.setToggleable(true);
+            int finalI = i;
+            button.setClickAction(() -> unselect(finalI));
+            i++;
+        }
     }
 
     public void draw(long vg, int x, int y) {

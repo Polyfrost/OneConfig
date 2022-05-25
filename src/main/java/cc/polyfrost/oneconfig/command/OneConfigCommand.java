@@ -42,6 +42,9 @@ public class OneConfigCommand extends CommandBase {
                 case "lwjgl":
                     new TickDelay(() -> UScreen.displayScreen(new TestNanoVGGui()), 1);
                     break;
+                case "destroy":
+                    OneConfigGui.instanceToRestore = null;
+                    break;
             }
         }
     }

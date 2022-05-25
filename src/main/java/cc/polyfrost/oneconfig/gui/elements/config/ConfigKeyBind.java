@@ -18,8 +18,8 @@ public class ConfigKeyBind extends BasicOption {
 
     public ConfigKeyBind(Field field, Object parent, String name, int size) {
         super(field, parent, name, size);
-        button = new BasicButton(256, 32, "", SVGs.KEYSTROKE, null, 0, BasicButton.ALIGNMENT_CENTER, true);
-        button.alignIconLeft(true);
+        button = new BasicButton(256, 32, "", SVGs.KEYSTROKE, null, BasicButton.ALIGNMENT_LEFT, 0);
+        button.setToggleable(true);
     }
 
     @Override
