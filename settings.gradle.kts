@@ -30,5 +30,4 @@ listOf(
         projectDir = file("versions/$version")
         buildFileName = "../../build.gradle.kts"
     }
-
 }

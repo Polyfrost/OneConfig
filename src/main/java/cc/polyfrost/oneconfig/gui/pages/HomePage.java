@@ -10,7 +10,7 @@ import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
 import cc.polyfrost.oneconfig.utils.ColorUtils;
 import cc.polyfrost.oneconfig.utils.InputUtils;
-import cc.polyfrost.oneconfig.utils.InternetUtils;
+import cc.polyfrost.oneconfig.utils.NetworkUtils;
 
 import java.awt.*;
 
@@ -32,11 +32,11 @@ public class HomePage extends Page {
 
     public HomePage() {
         super("Home Dashboard");
-        socialsBtn.setClickAction(() -> InternetUtils.browseLink("https://twitter.com/polyfrost"));
-        discordBtn.setClickAction(() -> InternetUtils.browseLink("https://discord.gg/4BdUuGpMdf"));
-        webBtn.setClickAction(() -> InternetUtils.browseLink("https://polyfrost.cc"));
+        socialsBtn.setClickAction(() -> NetworkUtils.browseLink("https://twitter.com/polyfrost"));
+        discordBtn.setClickAction(() -> NetworkUtils.browseLink("https://discord.gg/4BdUuGpMdf"));
+        webBtn.setClickAction(() -> NetworkUtils.browseLink("https://polyfrost.cc"));
         creditsBtn.setClickAction(new CreditsPage());
-        guideBtn.setClickAction(() -> InternetUtils.browseLink("https://www.youtube.com/watch?v=dQw4w9WgXcQ"));
+        guideBtn.setClickAction(() -> NetworkUtils.browseLink("https://www.youtube.com/watch?v=dQw4w9WgXcQ"));
 
     }
 

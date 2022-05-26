@@ -11,6 +11,8 @@ plugins {
     id("com.github.johnrengelman.shadow")
     id("net.kyori.blossom") version "1.3.0"
     id("io.github.juuxel.loom-quiltflower-mini")
+    id("maven-publish")
+    id("signing")
     java
 }
 
@@ -95,12 +97,12 @@ val lwjglJar by tasks.registering(ShadowJar::class) {
     group = "shadow"
     archiveClassifier.set("lwjgl")
     configurations = listOf(lwjgl)
-    exclude ("META-INF/versions/**")
-    exclude ("**/module-info.class")
-    exclude ("**/package-info.class")
+    exclude("META-INF/versions/**")
+    exclude("**/module-info.class")
+    exclude("**/package-info.class")
     relocate("org.lwjgl", "org.lwjgl3") {
-        include ("org.lwjgl.PointerBuffer")
-        include ("org.lwjgl.BufferUtils")
+        include("org.lwjgl.PointerBuffer")
+        include("org.lwjgl.BufferUtils")
     }
 }
 
@@ -129,22 +131,22 @@ dependencies {
         isTransitive = false
     }
 
-    lwjgl ("org.lwjgl:lwjgl:3.3.1")
-    lwjgl ("org.lwjgl:lwjgl-stb:3.3.1")
-    lwjgl ("org.lwjgl:lwjgl-tinyfd:3.3.1")
-    lwjgl ("org.lwjgl:lwjgl-nanovg:3.3.1")
-    lwjglNative ("org.lwjgl:lwjgl:3.3.1:natives-windows")
-    lwjglNative ("org.lwjgl:lwjgl-stb:3.3.1:natives-windows")
-    lwjglNative ("org.lwjgl:lwjgl-tinyfd:3.3.1:natives-windows")
-    lwjglNative ("org.lwjgl:lwjgl-nanovg:3.3.1:natives-windows")
-    lwjglNative ("org.lwjgl:lwjgl:3.3.1:natives-linux")
-    lwjglNative ("org.lwjgl:lwjgl-stb:3.3.1:natives-linux")
-    lwjglNative ("org.lwjgl:lwjgl-tinyfd:3.3.1:natives-linux")
-    lwjglNative ("org.lwjgl:lwjgl-nanovg:3.3.1:natives-linux")
-    lwjglNative ("org.lwjgl:lwjgl:3.3.1:natives-macos")
-    lwjglNative ("org.lwjgl:lwjgl-stb:3.3.1:natives-macos")
-    lwjglNative ("org.lwjgl:lwjgl-tinyfd:3.3.1:natives-macos")
-    lwjglNative ("org.lwjgl:lwjgl-nanovg:3.3.1:natives-macos")
+    lwjgl("org.lwjgl:lwjgl:3.3.1")
+    lwjgl("org.lwjgl:lwjgl-stb:3.3.1")
+    lwjgl("org.lwjgl:lwjgl-tinyfd:3.3.1")
+    lwjgl("org.lwjgl:lwjgl-nanovg:3.3.1")
+    lwjglNative("org.lwjgl:lwjgl:3.3.1:natives-windows")
+    lwjglNative("org.lwjgl:lwjgl-stb:3.3.1:natives-windows")
+    lwjglNative("org.lwjgl:lwjgl-tinyfd:3.3.1:natives-windows")
+    lwjglNative("org.lwjgl:lwjgl-nanovg:3.3.1:natives-windows")
+    lwjglNative("org.lwjgl:lwjgl:3.3.1:natives-linux")
+    lwjglNative("org.lwjgl:lwjgl-stb:3.3.1:natives-linux")
+    lwjglNative("org.lwjgl:lwjgl-tinyfd:3.3.1:natives-linux")
+    lwjglNative("org.lwjgl:lwjgl-nanovg:3.3.1:natives-linux")
+    lwjglNative("org.lwjgl:lwjgl:3.3.1:natives-macos")
+    lwjglNative("org.lwjgl:lwjgl-stb:3.3.1:natives-macos")
+    lwjglNative("org.lwjgl:lwjgl-tinyfd:3.3.1:natives-macos")
+    lwjglNative("org.lwjgl:lwjgl-nanovg:3.3.1:natives-macos")
     shade(lwjglJar.get().outputs.files)
     shade(prebundle(shadeRelocated))
 }
@@ -255,5 +257,44 @@ afterEvaluate {
         logger.error("PLEASE RUN THE `setupGradle` TASK, OR ELSE UNEXPECTED THING MAY HAPPEN!")
         logger.error("`setupGradle` is in the loom category of your gradle project.")
         logger.error("--------------")
+    }
+}
+
+publishing {
+    publications {
+        register<MavenPublication>("oneconfig-1.8.9-forge") {
+            groupId = "cc.polyfrost"
+            artifactId = "oneconfig-1.8.9-forge"
+
+            from(components["java"])
+            artifact(tasks["remapJar"])
+        }
+    }
+
+    repositories {
+        maven {
+            name = "releases"
+            url = uri("https://repo.polyfrost.cc/releases")
+            credentials(PasswordCredentials::class)
+            authentication {
+                create<BasicAuthentication>("basic")
+            }
+        }
+        maven {
+            name = "snapshots"
+            url = uri("https://repo.polyfrost.cc/snapshots")
+            credentials(PasswordCredentials::class)
+            authentication {
+                create<BasicAuthentication>("basic")
+            }
+        }
+        maven {
+            name = "private"
+            url = uri("https://repo.polyfrost.cc/private")
+            credentials(PasswordCredentials::class)
+            authentication {
+                create<BasicAuthentication>("basic")
+            }
+        }
     }
 }

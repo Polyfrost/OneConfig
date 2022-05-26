@@ -11,7 +11,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 
-public class InternetUtils {
+public class NetworkUtils {
     private static InputStream setupConnection(String url, String userAgent, int timeout, boolean useCaches) throws IOException {
         HttpURLConnection connection = ((HttpURLConnection) new URL(url).openConnection());
         connection.setRequestMethod("GET");
