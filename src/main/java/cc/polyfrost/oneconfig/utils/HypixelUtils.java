@@ -1,11 +1,18 @@
 package cc.polyfrost.oneconfig.utils;
 
+import cc.polyfrost.oneconfig.libs.universal.UMinecraft;
+import cc.polyfrost.oneconfig.libs.universal.wrappers.UPlayer;
+import cc.polyfrost.oneconfig.utils.hypixel.HypixelLowcraw;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.entity.EntityPlayerSP;
 
 import java.util.Locale;
 
 public class HypixelUtils {
-    private final Minecraft mc = Minecraft.getMinecraft();
+    private static final Minecraft mc = UMinecraft.getMinecraft();
+
+    public HypixelLowcraw lowcraw;
+
 
     /**
      * Returns if the player is on Hypixel.
@@ -13,12 +20,13 @@ public class HypixelUtils {
      * @author jade#5000
      */
     public boolean isHypixel() {
-        if (mc.theWorld == null || mc.thePlayer == null ) return false;
+        if (mc.theWorld == null || mc.thePlayer == null || mc.isSingleplayer()) return false;
 
-        // String serverBrand = mc.thePlayer.getServerBrand();
-        // if (serverBrand == null) return false;
+        EntityPlayerSP player = UPlayer.getPlayer();
+        String serverBrand = player.getServerBrand();
 
-        // return serverBrand.toLowerCase(Locale.ENGLISH).contains("hypixel");
-        return true;
+        if (serverBrand == null) return false;
+
+        return serverBrand.toLowerCase(Locale.ENGLISH).contains("hypixel");
     }
 }
