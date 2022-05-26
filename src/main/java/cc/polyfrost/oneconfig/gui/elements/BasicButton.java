@@ -1,7 +1,7 @@
 package cc.polyfrost.oneconfig.gui.elements;
 
-import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.config.OneConfigConfig;
+import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.pages.Page;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
@@ -38,14 +38,14 @@ public class BasicButton extends BasicElement {
 
     public BasicButton(int width, int size, String text, SVGs icon1, SVGs icon2, int align, int colorPalette) {
         super(width, 32, colorPalette, true);
-        if(text != null) this.text = text;
+        if (text != null) this.text = text;
         if (icon1 != null) this.icon1 = icon1;
         if (icon2 != null) this.icon2 = icon2;
         this.colorPalette = colorPalette;
         this.alignment = align;
         this.cornerRadius = size == SIZE_48 ? 16f : 12f;
         this.xSpacing = size == SIZE_48 ? 12 : 8;
-        if(size == SIZE_36 || size == SIZE_40) {
+        if (size == SIZE_36 || size == SIZE_40) {
             this.xPadding = 16;
         } else this.xPadding = size == SIZE_48 ? 20 : 12;
         this.height = size;
@@ -79,8 +79,8 @@ public class BasicButton extends BasicElement {
         final float middle = x + width / 2f;
         final float middleYIcon = y + height / 2f - iconSize / 2f;
         final float middleYText = y + height / 2f + fontSize / 8f;
-        if(this.text != null) {
-            if (this.colorPalette == -2) {
+        if (this.text != null) {
+            if (this.colorPalette == ColorUtils.TERTIARY) {
                 textColor = OneConfigConfig.WHITE_80;
                 if (hovered) textColor = OneConfigConfig.WHITE;
                 if (clicked) textColor = OneConfigConfig.WHITE_80;
@@ -88,67 +88,72 @@ public class BasicButton extends BasicElement {
             }
             contentWidth += RenderManager.getTextWidth(vg, text, fontSize, Fonts.MEDIUM);
         }
-        if(alignment == ALIGNMENT_CENTER) {
-                if (icon1 != null) {
-                    contentWidth += iconSize + xSpacing;
-                }
-                if (icon2 != null) {
-                    contentWidth += iconSize + xSpacing;
-                }
-                if(text != null) {
-                    RenderManager.drawString(vg, text, middle - contentWidth / 2 + (icon1 == null ? 0 : iconSize + xSpacing), middleYText, textColor, fontSize, Fonts.MEDIUM);
-                }
-                if(icon1 != null) {
-                    RenderManager.drawSvg(vg, icon1, middle - contentWidth / 2, middleYIcon, iconSize, iconSize);
-                }
-                if(icon2 != null) {
-                    RenderManager.drawSvg(vg, icon2, middle + contentWidth / 2 - iconSize, middleYIcon, iconSize, iconSize);
-                }
+        if (alignment == ALIGNMENT_CENTER) {
+            if(icon1 != null && icon2 == null && text == null) {
+                RenderManager.drawSvg(vg, icon1, middle - iconSize / 2f, middleYIcon, iconSize, iconSize);
+                this.update(x, y);
+                return;
+            }
+            if (icon1 != null) {
+                contentWidth += iconSize + xSpacing;
+            }
+            if (icon2 != null) {
+                contentWidth += iconSize + xSpacing;
+            }
+            if (text != null) {
+                RenderManager.drawString(vg, text, middle - contentWidth / 2 + (icon1 == null ? 0 : iconSize + xSpacing), middleYText, textColor, fontSize, Fonts.MEDIUM);
+            }
+            if (icon1 != null) {
+                RenderManager.drawSvg(vg, icon1, middle - contentWidth / 2, middleYIcon, iconSize, iconSize);
+            }
+            if (icon2 != null) {
+                RenderManager.drawSvg(vg, icon2, middle + contentWidth / 2 - iconSize, middleYIcon, iconSize, iconSize);
+            }
             this.update(x, y);
             return;
         }
-        if(alignment == ALIGNMENT_JUSTIFIED) {
-            if(text != null) {
+        if (alignment == ALIGNMENT_JUSTIFIED) {
+            if (text != null) {
                 RenderManager.drawString(vg, text, middle - contentWidth / 2, middleYText, textColor, fontSize, Fonts.MEDIUM);
             }
-            if(icon1 != null) {
+            if (icon1 != null) {
                 RenderManager.drawSvg(vg, icon1, x + xSpacing, middleYIcon, iconSize, iconSize);
             }
-            if(icon2 != null) {
+            if (icon2 != null) {
                 RenderManager.drawSvg(vg, icon2, x + width - xSpacing - iconSize, middleYIcon, iconSize, iconSize);
             }
             this.update(x, y);
             return;
         }
-        if(alignment == ALIGNMENT_LEFT) {
+        if (alignment == ALIGNMENT_LEFT) {
             contentWidth = xSpacing;
-            if(icon1 != null) {
+            if (icon1 != null) {
                 RenderManager.drawSvg(vg, icon1, x + contentWidth, middleYIcon, iconSize, iconSize);
                 contentWidth += iconSize + xSpacing;
             }
-            if(text != null) {
+            if (text != null) {
                 RenderManager.drawString(vg, text, x + contentWidth, middleYText, textColor, fontSize, Fonts.MEDIUM);
                 contentWidth += RenderManager.getTextWidth(vg, text, fontSize, Fonts.MEDIUM) + xSpacing;
             }
-            if(icon2 != null) {
+            if (icon2 != null) {
                 RenderManager.drawSvg(vg, icon2, x + contentWidth, middleYIcon, iconSize, iconSize);
             }
             this.update(x, y);
             return;
         }
-        if(alignment == ALIGNMENT_RIGHT) {
+        if (alignment == ALIGNMENT_RIGHT) {
             contentWidth = width - xSpacing;
-            if(icon2 != null) {
+            if (icon2 != null) {
                 contentWidth -= iconSize;
                 RenderManager.drawSvg(vg, icon2, x + contentWidth, middleYIcon, iconSize, iconSize);
                 contentWidth -= xSpacing;
             }
-            if(text != null) {
+            if (text != null) {
                 contentWidth -= RenderManager.getTextWidth(vg, text, fontSize, Fonts.MEDIUM);
                 RenderManager.drawString(vg, text, x + contentWidth, middleYText, textColor, fontSize, Fonts.MEDIUM);
                 contentWidth -= xSpacing;
             }
-            if(icon1 != null) {
+            if (icon1 != null) {
                 contentWidth -= iconSize;
                 RenderManager.drawSvg(vg, icon1, x + contentWidth, middleYIcon, iconSize, iconSize);
             }
@@ -171,7 +176,7 @@ public class BasicButton extends BasicElement {
     public void update(int x, int y) {
         super.update(x, y);
         if (hoverFx) {
-            if (colorPalette == -2) {
+            if (colorPalette == ColorUtils.TERTIARY) {
                 currentColor = OneConfigConfig.TRANSPARENT;
                 return;
             }

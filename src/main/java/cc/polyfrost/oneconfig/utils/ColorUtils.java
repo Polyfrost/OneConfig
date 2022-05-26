@@ -8,38 +8,68 @@ import java.awt.*;
  * A class to help with color manipulation.
  */
 public class ColorUtils {
+    /** Always returns transparent. */
+    public static final int TRANSPARENT = -10;
+    /** <h1>Primary Color Scheme</h1> Normal: Primary 600,<br> Hover: Primary 700,<br> Clicked: Primary 700 (80%) */
+    public static final int PRIMARY = 1;
+    /** <h1>Secondary Color Scheme</h1> Normal: Gray 500,<br> Hover: Gray 400,<br> Clicked: Gray 400 (80%) */
+    public static final int SECONDARY = 2;
+    /** <h1>Secondary (Transparent) Color Scheme</h1> Normal: Transparent,<br> Hover: Gray rgba(229, 229, 229, 77),<br> Clicked: Gray rgba(229, 229, 229, 51) */
+    public static final int SECONDARY_TRANSPARENT = 0;
+    /** <h1>Tertiary Color Scheme</h1> Normal: Transparent (Text=White 90%),<br> Hover: Transparent (Text=White 100%),<br> Clicked: Transparent (Text=White 80%)
+     * <h2>NOTICE this returns the text colors as it is always transparent.</h2>*/
+    public static final int TERTIARY = 3;
+    /** <h1>Primary Destructive Color Scheme</h1> Normal: Error 700,<br> Hover: Error 600,<br> Clicked: Error 600 (80%) */
+    public static final int PRIMARY_DESTRUCTIVE = -1;
+    /** <h1>Secondary Destructive Color Scheme</h1> Normal: Gray 500,<br> Hover: Error 800,<br> Clicked: Error 800 (80%) */
+    public static final int SECONDARY_DESTRUCTIVE = -2;
+    /** <h1>Tertiary Destructive Color Scheme</h1> Normal: Transparent (Text=White 90%),<br> Hover: Transparent (Text=Error 300),<br> Clicked: Transparent (Text=Error 300 80%)
+     * <h2>NOTICE this returns the text colors as it is always transparent.</h2>*/
+    public static final int TERTIARY_DESTRUCTIVE = -3;
+
 
     public static int getColor(int currentColor, int colorPalette, boolean hover, boolean click) {
         float[] color = splitColor(currentColor);
+        if(colorPalette == TRANSPARENT) {
+            return OneConfigConfig.TRANSPARENT;
+        }
         if (click) {
             switch (colorPalette) {
-                case -2:
-                    return new Color(0.9f, 0.9f, 0.9f, 0.2f).getRGB();
-                case -1:
-                    return OneConfigConfig.GRAY_500_80;
+                case PRIMARY_DESTRUCTIVE:
+                    return OneConfigConfig.ERROR_600_80;
+                case SECONDARY_DESTRUCTIVE:
+                    return OneConfigConfig.ERROR_800_80;
+                case TERTIARY_DESTRUCTIVE:
+                    return OneConfigConfig.ERROR_300_80;
+                case TERTIARY:
+                    return OneConfigConfig.WHITE_80;
                 default:
-                case 2:
-                case 0:
+                case SECONDARY:
                     return OneConfigConfig.GRAY_400_80;
-                case 1:
-                    return OneConfigConfig.PRIMARY_600_80;
+                case SECONDARY_TRANSPARENT:
+                    return new Color(0.9f, 0.9f, 0.9f, 0.2f).getRGB();
+                case PRIMARY:
+                    return OneConfigConfig.PRIMARY_700_80;
             }
         }
 
         switch (colorPalette) {
-            case -2:
-                return getColorComponents(color, splitColor(OneConfigConfig.TRANSPARENT), new float[]{0.9f, 0.9f, 0.9f, 0.3f}, hover, 50f);
-            case -1:
-                return getColorComponents(color, splitColor(OneConfigConfig.TRANSPARENT), splitColor(OneConfigConfig.GRAY_500), hover, 50f);
+            case SECONDARY_TRANSPARENT:         // Formally -2
+                return getColorComponents(color, new float[]{0f,0f,0f,0f}, new float[]{0.9f, 0.9f, 0.9f, 0.3f}, hover, 50f);
+            case PRIMARY:       // Formally 1
+                return hover ? OneConfigConfig.PRIMARY_700 : OneConfigConfig.PRIMARY_600;
+                //return getColorComponents(color, splitColor(OneConfigConfig.PRIMARY_600), splitColor(OneConfigConfig.PRIMARY_700), hover, 100f);
             default:
-            case 0:
-                return getColorComponents(color, splitColor(OneConfigConfig.GRAY_600), splitColor(OneConfigConfig.GRAY_300), hover, 50f);
-            case 1:
-                return getColorComponents(color, splitColor(OneConfigConfig.PRIMARY_600), splitColor(OneConfigConfig.PRIMARY_500), hover, 150f);
-            case 2:
-                return getColorComponents(color, splitColor(OneConfigConfig.GRAY_500), splitColor(OneConfigConfig.GRAY_300), hover, 50f);
-            case 3:
-                return getColorComponents(color, splitColor(OneConfigConfig.GRAY_500), splitColor(OneConfigConfig.GRAY_300), hover, 150f);
+            case SECONDARY:     // Formally 0
+                return getColorComponents(color, splitColor(OneConfigConfig.GRAY_500), splitColor(OneConfigConfig.GRAY_400), hover, 100f);
+            case TERTIARY:
+                return getColorComponents(color, splitColor(OneConfigConfig.WHITE_90), splitColor(OneConfigConfig.WHITE), hover, 150f);
+            case PRIMARY_DESTRUCTIVE:
+                return getColorComponents(color, splitColor(OneConfigConfig.ERROR_700), splitColor(OneConfigConfig.ERROR_600), hover, 100f);
+            case SECONDARY_DESTRUCTIVE:
+                return getColorComponents(color, splitColor(OneConfigConfig.GRAY_500), splitColor(OneConfigConfig.ERROR_800), hover, 100f);
+            case TERTIARY_DESTRUCTIVE:
+                return getColorComponents(color, splitColor(OneConfigConfig.WHITE_90), splitColor(OneConfigConfig.ERROR_300), hover, 100f);
         }
 
     }

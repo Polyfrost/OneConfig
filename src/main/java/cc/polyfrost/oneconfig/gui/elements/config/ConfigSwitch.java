@@ -28,7 +28,7 @@ public class ConfigSwitch extends BasicOption {
         }
         int x2 = x + 3 + (int) (percentOn * 18);
         boolean hovered = InputUtils.isAreaHovered(x, y, 42, 32);
-        colorDisabled = ColorUtils.smoothColor(colorDisabled, OneConfigConfig.GRAY_400, OneConfigConfig.GRAY_300, hovered, 40f);
+        colorDisabled = ColorUtils.getColor(colorDisabled, ColorUtils.SECONDARY, hovered, false);
         colorEnabled = ColorUtils.smoothColor(colorEnabled, OneConfigConfig.PRIMARY_600, OneConfigConfig.PRIMARY_500, hovered, 40f);
         if (!isEnabled()) RenderManager.setAlpha(vg, 0.5f);
         RenderManager.drawRoundedRect(vg, x, y + 4, 42, 24, colorDisabled, 12f);

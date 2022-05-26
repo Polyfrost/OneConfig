@@ -7,6 +7,7 @@ import cc.polyfrost.oneconfig.gui.pages.ModsPage;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
+import cc.polyfrost.oneconfig.utils.ColorUtils;
 import cc.polyfrost.oneconfig.utils.MathUtils;
 import cc.polyfrost.oneconfig.libs.universal.UScreen;
 
@@ -21,25 +22,25 @@ public class SideBar {
     private float targetY = 0, currentY = 0;
 
     public SideBar() {
-        btnList.add(new BasicButton(192, SIZE_36, "Dashboard", SVGs.DASHBOARD, null, ALIGNMENT_LEFT, -2));
+        btnList.add(new BasicButton(192, SIZE_36, "Dashboard", SVGs.DASHBOARD, null, ALIGNMENT_LEFT, ColorUtils.TERTIARY));
         btnList.get(0).setClickAction(new HomePage());
-        btnList.add(new BasicButton(192, SIZE_36, "Global Search", SVGs.SEARCH, null, ALIGNMENT_LEFT, -2));
-        btnList.add(new BasicButton(192, SIZE_36, "Screenshots", SVGs.IMAGE, null, ALIGNMENT_LEFT, -2));
-        btnList.add(new BasicButton(192, SIZE_36, "Preferences", SVGs.SETTINGS, null, ALIGNMENT_LEFT, -2));
-        btnList.add(new BasicButton(192, 36, "Mods", SVGs.MODS, null, ALIGNMENT_LEFT, -2));
+        btnList.add(new BasicButton(192, SIZE_36, "Global Search", SVGs.SEARCH, null, ALIGNMENT_LEFT, ColorUtils.TERTIARY));
+        btnList.add(new BasicButton(192, SIZE_36, "Screenshots", SVGs.IMAGE, null, ALIGNMENT_LEFT, ColorUtils.TERTIARY));
+        btnList.add(new BasicButton(192, SIZE_36, "Preferences", SVGs.SETTINGS, null, ALIGNMENT_LEFT, ColorUtils.TERTIARY));
+        btnList.add(new BasicButton(192, 36, "Mods", SVGs.MODS, null, ALIGNMENT_LEFT, ColorUtils.TERTIARY));
         btnList.get(4).setClickAction(new ModsPage());
-        btnList.add(new BasicButton(192, SIZE_36, "Performance", SVGs.PERFORMANCE, null, ALIGNMENT_LEFT, -2));
-        btnList.add(new BasicButton(192, SIZE_36, "Profiles", SVGs.PROFILES, null, ALIGNMENT_LEFT, -2));
-        btnList.add(new BasicButton(192, SIZE_36, "Updates", SVGs.UPDATE, null, ALIGNMENT_LEFT, -2));
-        btnList.add(new BasicButton(192, SIZE_36, "Themes Library", SVGs.THEME, null, ALIGNMENT_LEFT, -2));
-        btnList.add(new BasicButton(192, SIZE_36, "Themes Browser", SVGs.SEARCH, null, ALIGNMENT_LEFT, -2));
-        btnList.add(new BasicButton(192, SIZE_36, "Packs Library", SVGs.BOX, null, ALIGNMENT_LEFT, -2));
-        btnList.add(new BasicButton(192, SIZE_36, "Packs Browser", SVGs.SEARCH, null, ALIGNMENT_LEFT, -2));
-        btnList.add(new BasicButton(192, SIZE_36, "Close", SVGs.X_CIRCLE, null, ALIGNMENT_LEFT, -1));
+        btnList.add(new BasicButton(192, SIZE_36, "Performance", SVGs.PERFORMANCE, null, ALIGNMENT_LEFT, ColorUtils.TERTIARY));
+        btnList.add(new BasicButton(192, SIZE_36, "Profiles", SVGs.PROFILES, null, ALIGNMENT_LEFT, ColorUtils.TERTIARY));
+        btnList.add(new BasicButton(192, SIZE_36, "Updates", SVGs.UPDATE, null, ALIGNMENT_LEFT, ColorUtils.TERTIARY));
+        btnList.add(new BasicButton(192, SIZE_36, "Themes Library", SVGs.THEME, null, ALIGNMENT_LEFT, ColorUtils.TERTIARY));
+        btnList.add(new BasicButton(192, SIZE_36, "Themes Browser", SVGs.SEARCH, null, ALIGNMENT_LEFT, ColorUtils.TERTIARY));
+        btnList.add(new BasicButton(192, SIZE_36, "Packs Library", SVGs.BOX, null, ALIGNMENT_LEFT, ColorUtils.TERTIARY));
+        btnList.add(new BasicButton(192, SIZE_36, "Packs Browser", SVGs.SEARCH, null, ALIGNMENT_LEFT, ColorUtils.TERTIARY));
+        btnList.add(new BasicButton(192, SIZE_36, "Close", SVGs.X_CIRCLE, null, ALIGNMENT_LEFT, ColorUtils.SECONDARY_TRANSPARENT));
         btnList.get(12).setClickAction(() -> UScreen.displayScreen(null));
-        btnList.add(new BasicButton(192, SIZE_36, "Minimize", SVGs.MINIMISE, null, ALIGNMENT_LEFT, -1));
+        btnList.add(new BasicButton(192, SIZE_36, "Minimize", SVGs.MINIMISE, null, ALIGNMENT_LEFT, ColorUtils.SECONDARY_TRANSPARENT));
         btnList.get(13).setClickAction(() -> UScreen.displayScreen(null));
-        btnList.add(new BasicButton(192, SIZE_36, "Edit HUD", SVGs.HUD, null, ALIGNMENT_LEFT, -1));
+        btnList.add(new BasicButton(192, SIZE_36, "Edit HUD", SVGs.HUD, null, ALIGNMENT_LEFT, ColorUtils.SECONDARY_TRANSPARENT));
         btnList.get(14).setClickAction(() -> UScreen.displayScreen(new HudGui()));
     }
 

@@ -31,7 +31,7 @@ public class BasicElement {
     }
 
     public BasicElement(int width, int height, boolean hoverFx) {
-        this(width, height, -1, hoverFx, 12f);
+        this(width, height, ColorUtils.TRANSPARENT, hoverFx, 12f);
     }
 
 

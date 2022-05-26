@@ -9,6 +9,7 @@ import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.Images;
 import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
+import cc.polyfrost.oneconfig.utils.ColorUtils;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import cc.polyfrost.oneconfig.utils.InternetUtils;
 import cc.polyfrost.oneconfig.utils.MathUtils;
@@ -28,11 +29,11 @@ public class ColorSelector {
     private final ArrayList<BasicElement> buttons = new ArrayList<>();
     private final BasicElement closeBtn = new BasicElement(32, 32, false);
 
-    private final BasicElement copyBtn = new BasicElement(32, 32, 2, true);
-    private final BasicElement pasteBtn = new BasicElement(32, 32, 2, true);
-    private final BasicButton guideBtn = new BasicButton(112, 32, "Guide", null, null, 0, BasicButton.ALIGNMENT_CENTER);
-    private final BasicElement faveBtn = new BasicElement(32, 32, 2, true);
-    private final BasicElement recentBtn = new BasicElement(32, 32, 2, true);
+    private final BasicButton copyBtn = new BasicButton(32, 32, SVGs.COPY, BasicButton.ALIGNMENT_CENTER, ColorUtils.SECONDARY);
+    private final BasicButton pasteBtn = new BasicButton(32, 32, SVGs.PASTE, BasicButton.ALIGNMENT_CENTER, ColorUtils.SECONDARY);
+    private final BasicButton guideBtn = new BasicButton(112, 32, "Guide", SVGs.HELP_CIRCLE, SVGs.POP_OUT, BasicButton.ALIGNMENT_CENTER, ColorUtils.SECONDARY);
+    private final BasicButton faveBtn = new BasicButton(32, 32, SVGs.HEART_OUTLINE, BasicButton.ALIGNMENT_CENTER, ColorUtils.SECONDARY);
+    private final BasicButton recentBtn = new BasicButton(32, 32, SVGs.HISTORY, BasicButton.ALIGNMENT_CENTER, ColorUtils.SECONDARY);
 
     private final NumberInputField hueInput = new NumberInputField(90, 32, 0, 0, 360, 1);
     private final NumberInputField saturationInput = new NumberInputField(90, 32, 100, 0, 100, 1);
@@ -51,9 +52,9 @@ public class ColorSelector {
 
     public ColorSelector(OneColor color, int mouseX, int mouseY) {
         this.color = color;
-        buttons.add(new BasicElement(124, 28, 2, true, 10f));
-        buttons.add(new BasicElement(124, 28, 2, true, 10f));
-        buttons.add(new BasicElement(124, 28, 2, true, 10f));
+        buttons.add(new BasicElement(124, 28, ColorUtils.SECONDARY, true, 10f));
+        buttons.add(new BasicElement(124, 28, ColorUtils.SECONDARY, true, 10f));
+        buttons.add(new BasicElement(124, 28, ColorUtils.SECONDARY, true, 10f));
         hueInput.setCurrentValue(color.getHue());
         saturationInput.setCurrentValue(color.getSaturation());
         brightnessInput.setCurrentValue(color.getBrightness());
@@ -138,9 +139,7 @@ public class ColorSelector {
 
         // TODO favorite stuff
         faveBtn.draw(vg, x + 16, y + 672);
-        RenderManager.drawSvg(vg, SVGs.HEART_OUTLINE, x + 23, y + 679, 18, 18);
         recentBtn.draw(vg, x + 16, y + 720);
-        RenderManager.drawSvg(vg, SVGs.HISTORY, x + 23, y + 727, 18, 18);
         for(int i = 0; i < 7; i++) {
             favoriteColors.get(i).draw(vg, x + 104 + i * 44, y + 672);
         }
@@ -188,12 +187,9 @@ public class ColorSelector {
 
         copyBtn.draw(vg, x + 204, y + 624);
         pasteBtn.draw(vg, x + 244, y + 624);
-        RenderManager.drawSvg(vg, SVGs.COPY, x + 211, y + 631, 18, 18);
-        RenderManager.drawSvg(vg, SVGs.PASTE, x + 251, y + 631, 18, 18);
+
 
         guideBtn.draw(vg, x + 288, y + 624);
-        RenderManager.drawSvg(vg, SVGs.HELP_CIRCLE, x + 301, y + 631, 18, 18);
-        RenderManager.drawSvg(vg, SVGs.POP_OUT, x + 369, y + 631, 18, 18);
 
 
         boolean isMouseDown = Mouse.isButtonDown(0);

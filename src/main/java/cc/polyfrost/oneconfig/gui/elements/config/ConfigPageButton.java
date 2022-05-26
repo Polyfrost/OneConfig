@@ -30,7 +30,7 @@ public class ConfigPageButton extends BasicOption {
         int height = description.equals("") ? 64 : 96;
         boolean hovered = InputUtils.isAreaHovered(x - 2, y, 1024, height) && isEnabled();
         boolean clicked = hovered && InputUtils.isClicked();
-        backgroundColor = ColorUtils.smoothColor(backgroundColor, OneConfigConfig.GRAY_500, OneConfigConfig.GRAY_400, hovered, 100);
+        backgroundColor = ColorUtils.getColor(backgroundColor, ColorUtils.SECONDARY, hovered, false);
 
         if (hovered && Mouse.isButtonDown(0)) RenderManager.setAlpha(vg, 0.8f);
         if (!isEnabled()) RenderManager.setAlpha(vg, 0.5f);

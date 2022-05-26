@@ -47,8 +47,8 @@ public class NumberInputField extends TextInputField {
         if (current == max) colorTop = OneConfigConfig.GRAY_500_80;
         if (current == min) colorBottom = OneConfigConfig.GRAY_500_80;
 
-        colorTop = ColorUtils.getColor(colorTop, 2, upArrow.isHovered(), upArrow.isClicked());
-        colorBottom = ColorUtils.getColor(colorBottom, 2, downArrow.isHovered(), downArrow.isClicked());
+        colorTop = ColorUtils.getColor(colorTop, ColorUtils.SECONDARY, upArrow.isHovered(), upArrow.isClicked());
+        colorBottom = ColorUtils.getColor(colorBottom, ColorUtils.SECONDARY, downArrow.isHovered(), downArrow.isClicked());
         if (upArrow.isClicked()) {
             current += step;
             if (current > max) current = max;

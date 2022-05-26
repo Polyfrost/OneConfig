@@ -63,12 +63,12 @@ public class ModCard extends BasicElement {
         super.update(x, y);
         isHoveredMain = InputUtils.isAreaHovered(x, y, width, 87);
         boolean isHoveredSecondary = InputUtils.isAreaHovered(x, y + 87, width - 32, 32) && !disabled;
-        colorGray = ColorUtils.getColor(colorGray, 0, isHoveredMain, clicked && isHoveredMain);
+        colorGray = ColorUtils.getColor(colorGray, ColorUtils.SECONDARY, isHoveredMain, clicked && isHoveredMain);
         if (active && !disabled) {
-            colorPrimary = ColorUtils.getColor(colorPrimary, 1, isHoveredSecondary, clicked && isHoveredSecondary);
-        } else
-            colorPrimary = ColorUtils.smoothColor(colorPrimary, OneConfigConfig.GRAY_500, OneConfigConfig.GRAY_400, isHoveredSecondary, 20f);
-
+            colorPrimary = ColorUtils.getColor(colorPrimary, ColorUtils.PRIMARY, isHoveredSecondary, clicked && isHoveredSecondary);
+        } else {
+            colorPrimary = ColorUtils.getColor(colorPrimary, ColorUtils.SECONDARY, isHoveredSecondary, false);
+        }
         if (clicked && isHoveredMain) {
             if (!active) toggled = false;
         }

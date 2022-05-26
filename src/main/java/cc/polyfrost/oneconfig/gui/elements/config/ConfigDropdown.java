@@ -40,7 +40,7 @@ public class ConfigDropdown extends BasicOption { // TODO: remove dividers and f
         }
         if (opened) return;
 
-        backgroundColor = ColorUtils.smoothColor(backgroundColor, OneConfigConfig.GRAY_500, OneConfigConfig.GRAY_400, hovered, 100);
+        backgroundColor = ColorUtils.getColor(backgroundColor, ColorUtils.SECONDARY, hovered, false);
         int selected = 0;
         try {
             selected = (int) get();
