@@ -48,6 +48,8 @@ public class HomePage extends Page {
         RenderManager.drawString(vg, "Info", x + 52, y + 618, OneConfigConfig.WHITE_90, 24f, Fonts.MEDIUM);
         RenderManager.drawRoundedRect(vg, x + 16, y + 644, 1024, 64, OneConfigConfig.GRAY_700, 20f);
 
+        RenderManager.drawURL(vg, "https://www.youtube.com/watch?v=dQw4w9WgXcQ", x + 100, y + 205, 24, Fonts.MEDIUM);
+
         discordBtn.draw(vg, x + 32, y + 658);
         webBtn.draw(vg, x + 232, y + 658);
         socialsBtn.draw(vg, x + 432, y + 658);

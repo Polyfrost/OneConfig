@@ -11,6 +11,8 @@ import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
 import cc.polyfrost.oneconfig.libs.universal.UGraphics;
 import cc.polyfrost.oneconfig.libs.universal.UMinecraft;
 import cc.polyfrost.oneconfig.libs.universal.UResolution;
+import cc.polyfrost.oneconfig.utils.InputUtils;
+import cc.polyfrost.oneconfig.utils.InternetUtils;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.shader.Framebuffer;
 import org.lwjgl.nanovg.*;
@@ -189,6 +191,16 @@ public final class RenderManager {
         nvgText(vg, x, y, text);
         nvgFill(vg);
         nvgColor.free();
+    }
+
+    /** Draw a formatted URL (a string in blue with an underline) that when clicked, opens the given text. */
+    public static void drawURL(long vg, String url, float x, float y, float size, Fonts font) {
+        drawString(vg, url, x, y, OneConfigConfig.PRIMARY_500, size, font);
+        float length = getTextWidth(vg, url, size, font);
+        drawRectangle(vg, x, y + size / 2, length, 1, OneConfigConfig.PRIMARY_500);
+        if(InputUtils.isAreaClicked((int) (x - 2), (int) (y - 1), (int) (length + 4), (int) (size / 2 + 3))) {
+            InternetUtils.browseLink(url);
+        }
     }
 
     public static void drawWrappedString(long vg, String text, float x, float y, float width, int color, float size, Fonts font) {
