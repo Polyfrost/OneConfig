@@ -4,6 +4,7 @@ import gg.essential.gradle.util.RelocationTransform.Companion.registerRelocation
 import gg.essential.gradle.util.prebundle
 
 plugins {
+    kotlin("jvm")
     id("gg.essential.multi-version")
     id("gg.essential.defaults.repo")
     id("gg.essential.defaults.java")
@@ -11,6 +12,7 @@ plugins {
     id("com.github.johnrengelman.shadow")
     id("net.kyori.blossom") version "1.3.0"
     id("io.github.juuxel.loom-quiltflower-mini")
+    id("org.jetbrains.dokka") version "1.6.20"
     id("maven-publish")
     id("signing")
     java
@@ -149,6 +151,8 @@ dependencies {
     lwjglNative("org.lwjgl:lwjgl-nanovg:3.3.1:natives-macos")
     shade(lwjglJar.get().outputs.files)
     shade(prebundle(shadeRelocated))
+
+    dokkaHtmlPlugin("org.jetbrains.dokka:kotlin-as-java-plugin:1.6.20")
 }
 
 tasks.processResources {
@@ -229,6 +233,14 @@ tasks {
         dependsOn(shadowJar)
         archiveClassifier.set("")
         enabled = false
+    }
+    dokkaHtml.configure {
+        outputDirectory.set(buildDir.resolve("dokka"))
+        dokkaSourceSets {
+            configureEach {
+                jdkVersion.set(8)
+            }
+        }
     }
 }
 
