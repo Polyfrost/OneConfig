@@ -91,7 +91,7 @@ public class VigilanceConfig extends Config {
                     options.add(new CompatConfigColorElement(getFieldOfProperty(option), option.getInstance(), getName(attributes), 2));
                     break;
                 case BUTTON:
-                    options.add(new ConfigButton(() -> ((CallablePropertyValue) option.getValue()).invoke(option.getInstance()), option.getInstance(), getName(attributes), 2, attributes.getPlaceholder()));
+                    options.add(new ConfigButton(() -> ((CallablePropertyValue) option.getValue()).invoke(option.getInstance()), option.getInstance(), getName(attributes), 2, attributes.getPlaceholder().isEmpty() ? "Activate" : attributes.getPlaceholder()));
                     break;
             }
             if (attributes.getType() == PropertyType.SWITCH || attributes.getType() == PropertyType.CHECKBOX) {

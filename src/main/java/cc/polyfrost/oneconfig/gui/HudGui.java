@@ -305,19 +305,14 @@ public class HudGui extends UScreen {
         if (editingHud != null) {
             float x = editingHud.getXScaled(this.width);
             float y = editingHud.getYScaled(this.height);
-            switch (keyCode) {
-                case UKeyboard.KEY_UP:
-                    setPosition(x, y - 1, false);
-                    break;
-                case UKeyboard.KEY_DOWN:
-                    setPosition(x, y + 1, false);
-                    break;
-                case UKeyboard.KEY_LEFT:
-                    setPosition(x - 1, y, false);
-                    break;
-                case UKeyboard.KEY_RIGHT:
-                    setPosition(x + 1, y, false);
-                    break;
+            if (keyCode == UKeyboard.KEY_UP) {
+                setPosition(x, y - 1, false);
+            } else if (keyCode == UKeyboard.KEY_DOWN) {
+                setPosition(x, y + 1, false);
+            } else if (keyCode == UKeyboard.KEY_LEFT) {
+                setPosition(x - 1, y, false);
+            } else if (keyCode == UKeyboard.KEY_RIGHT) {
+                setPosition(x + 1, y, false);
             }
         }
         super.onKeyPressed(keyCode, typedChar, modifiers);
