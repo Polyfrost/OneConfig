@@ -19,7 +19,7 @@ public class TickDelay {
         if (event.phase == TickEvent.Phase.START) {
             // Delay expired
             if (delay < 1) {
-                run();
+                function.run();
                 destroy();
             }
             delay--;
@@ -32,9 +32,5 @@ public class TickDelay {
 
     private void register() {
         MinecraftForge.EVENT_BUS.register(this);
-    }
-
-    private void run() {
-        function.run();
     }
 }

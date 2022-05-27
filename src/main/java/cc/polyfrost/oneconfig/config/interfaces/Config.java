@@ -4,15 +4,14 @@ import cc.polyfrost.oneconfig.config.annotations.ConfigPage;
 import cc.polyfrost.oneconfig.config.annotations.Option;
 import cc.polyfrost.oneconfig.config.core.ConfigCore;
 import cc.polyfrost.oneconfig.config.data.*;
-import cc.polyfrost.oneconfig.config.migration.Migrator;
 import cc.polyfrost.oneconfig.config.profiles.Profiles;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.elements.config.*;
 import cc.polyfrost.oneconfig.gui.pages.ModConfigPage;
 import cc.polyfrost.oneconfig.hud.BasicHud;
 import cc.polyfrost.oneconfig.hud.HudCore;
+import cc.polyfrost.oneconfig.utils.GuiUtils;
 import com.google.gson.*;
-import cc.polyfrost.oneconfig.libs.universal.UScreen;
 
 import java.io.*;
 import java.lang.reflect.Field;
@@ -247,7 +246,7 @@ public class Config {
      */
     public void openGui() {
         if (mod == null) return;
-        UScreen.displayScreen(new OneConfigGui(new ModConfigPage(mod.defaultPage)));
+        GuiUtils.displayScreen(new OneConfigGui(new ModConfigPage(mod.defaultPage)));
     }
 
     /**

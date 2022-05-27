@@ -6,10 +6,11 @@ import net.minecraft.client.gui.GuiScreen;
 /**
  * A class containing utility methods for working with GuiScreens.
  */
-public class GuiUtils {
+public final class GuiUtils {
 
     /**
      * Displays a screen after a tick, preventing mouse sync issues.
+     *
      * @param screen the screen to display.
      */
     public static void displayScreen(GuiScreen screen) {

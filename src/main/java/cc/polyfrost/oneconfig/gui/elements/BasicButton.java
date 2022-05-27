@@ -89,7 +89,7 @@ public class BasicButton extends BasicElement {
             contentWidth += RenderManager.getTextWidth(vg, text, fontSize, Fonts.MEDIUM);
         }
         if (alignment == ALIGNMENT_CENTER) {
-            if(icon1 != null && icon2 == null && text == null) {
+            if (icon1 != null && icon2 == null && text == null) {
                 RenderManager.drawSvg(vg, icon1, middle - iconSize / 2f, middleYIcon, iconSize, iconSize);
                 this.update(x, y);
                 return;

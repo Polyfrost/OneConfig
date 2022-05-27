@@ -9,6 +9,8 @@ import java.lang.annotation.Target;
 @Target(ElementType.FIELD)
 public @interface VigilanceName {
     String name();
+
     String category();
+
     String subcategory();
 }

@@ -1,6 +1,5 @@
 package cc.polyfrost.oneconfig.gui.pages;
 
-import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.lwjgl.scissor.Scissor;
 import cc.polyfrost.oneconfig.lwjgl.scissor.ScissorManager;
 import cc.polyfrost.oneconfig.utils.MathUtils;

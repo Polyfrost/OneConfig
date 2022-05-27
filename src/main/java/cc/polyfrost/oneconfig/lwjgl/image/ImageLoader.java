@@ -13,11 +13,27 @@ import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 
-public class ImageLoader {
+/**
+ * Loads images and SVGs from resources into NanoVG.
+ *
+ * @see cc.polyfrost.oneconfig.lwjgl.RenderManager
+ * @see Images
+ * @see SVGs
+ */
+public final class ImageLoader {
+    private ImageLoader() {
+
+    }
     private final HashMap<String, Integer> imageHashMap = new HashMap<>();
     private final HashMap<String, Integer> svgHashMap = new HashMap<>();
     public static ImageLoader INSTANCE = new ImageLoader();
 
+    /**
+     * Loads an image from resources.
+     * @param vg The NanoVG context.
+     * @param fileName The name of the file to load.
+     * @return Whether the image was loaded successfully.
+     */
     public boolean loadImage(long vg, String fileName) {
         if (!imageHashMap.containsKey(fileName)) {
             int[] width = {0};
@@ -40,8 +56,16 @@ public class ImageLoader {
         return true;
     }
 
-    public boolean loadSVG(long vg, String fileName, float SVGWidth, float SVGHeight) {
-        String name = fileName + "-" + SVGWidth + "-" + SVGHeight;
+    /**
+     * Loads an SVG from resources.
+     * @param vg The NanoVG context.
+     * @param fileName The name of the file to load.
+     * @param width The width of the SVG.
+     * @param height The height of the SVG.
+     * @return Whether the SVG was loaded successfully.
+     */
+    public boolean loadSVG(long vg, String fileName, float width, float height) {
+        String name = fileName + "-" + width + "-" + height;
         if (!svgHashMap.containsKey(name)) {
             try {
                 InputStream inputStream = this.getClass().getResourceAsStream(fileName);
@@ -60,7 +84,7 @@ public class ImageLoader {
 
                 int w = (int) svg.width();
                 int h = (int) svg.height();
-                float scale = Math.max(SVGWidth / w, SVGHeight / h);
+                float scale = Math.max(width / w, height / h);
                 w = (int) (w * scale);
                 h = (int) (h * scale);
 
@@ -81,34 +105,80 @@ public class ImageLoader {
         return true;
     }
 
+    /**
+     * Get a loaded image from the cache.
+     * <p><b>Requires the image to have been loaded first.</b></p>
+     *
+     * @param fileName The name of the file to load.
+     * @return The image
+     * @see ImageLoader#loadImage(long, String)
+     */
     public int getImage(String fileName) {
         return imageHashMap.get(fileName);
     }
 
+    /**
+     * Remove an image from the cache, allowing the image to be garbage collected.
+     * Should be used when the GUI rendering the image is closed.
+     *
+     * @param vg The NanoVG context.
+     * @param fileName The name of the file to remove.
+     *
+     * @see ImageLoader#loadImage(long, String)
+     */
     public void removeImage(long vg, String fileName) {
         NanoVG.nvgDeleteImage(vg, imageHashMap.get(fileName));
         imageHashMap.remove(fileName);
     }
 
+    /**
+     * Clears all images from the cache, allowing the images cleared to be garbage collected.
+     * Should be used when the GUI rendering loaded images are closed.
+     *
+     * @param vg The NanoVG context.
+     */
     public void clearImages(long vg) {
         HashMap<String, Integer> temp = new HashMap<>(imageHashMap);
         for (String image : temp.keySet()) {
             NanoVG.nvgDeleteImage(vg, imageHashMap.get(image));
             imageHashMap.remove(image);
         }
-     }
+    }
 
-    public int getSVG( String fileName, float width, float height) {
+    /**
+     * Get a loaded SVG from the cache.
+     * <p><b>Requires the SVG to have been loaded first.</b></p>
+     *
+     * @param fileName The name of the file to load.
+     * @return The SVG
+     * @see ImageLoader#loadSVG(long, String, float, float)
+     */
+    public int getSVG(String fileName, float width, float height) {
         String name = fileName + "-" + width + "-" + height;
         return svgHashMap.get(name);
     }
 
+    /**
+     * Remove a SVG from the cache, allowing the SVG to be garbage collected.
+     * Should be used when the GUI rendering the SVG is closed.
+     *
+     * @param vg The NanoVG context.
+     * @param fileName The name of the file to remove.
+     *
+     * @see ImageLoader#loadSVG(long, String, float, float)
+     */
     public void removeSVG(long vg, String fileName, float width, float height) {
         String name = fileName + "-" + width + "-" + height;
         NanoVG.nvgDeleteImage(vg, imageHashMap.get(name));
         svgHashMap.remove(name);
     }
 
+    /**
+     * Clears all SVGs from the cache, allowing the SVGs cleared to be garbage collected.
+     * Should be used when the GUI rendering loaded SVGs are closed.
+     *
+     * @param vg The NanoVG context.
+     */
     public void clearSVGs(long vg) {
         HashMap<String, Integer> temp = new HashMap<>(svgHashMap);
         for (String image : temp.keySet()) {

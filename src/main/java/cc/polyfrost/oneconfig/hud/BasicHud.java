@@ -79,6 +79,7 @@ public abstract class BasicHud {
 
     /**
      * Function called when drawing the hud
+     *
      * @param x     Top left x-coordinate of the hud
      * @param y     Top left y-coordinate of the hud
      * @param scale Scale of the hud
@@ -88,6 +89,7 @@ public abstract class BasicHud {
     /**
      * Function called when drawing the example version of the hud.
      * This is used in for example, the hud editor gui.
+     *
      * @param x     Top left x-coordinate of the hud
      * @param y     Top left y-coordinate of the hud
      * @param scale Scale of the hud
@@ -126,6 +128,7 @@ public abstract class BasicHud {
 
     /**
      * Draw the background, the hud and all childed huds, used by HudCore
+     *
      * @param x          X-coordinate
      * @param y          Y-coordinate
      * @param scale      Scale of the hud
@@ -142,6 +145,7 @@ public abstract class BasicHud {
 
     /**
      * Draw example version of the background, the hud and all childed huds, used by HudGui
+     *
      * @param x          X-coordinate
      * @param y          Y-coordinate
      * @param scale      Scale of the hud
@@ -158,6 +162,7 @@ public abstract class BasicHud {
 
     /**
      * Draw example version of the background, the hud and all childed huds, used by HudGui
+     *
      * @param x      X-coordinate
      * @param y      Y-coordinate
      * @param width  Width of the hud
@@ -168,10 +173,12 @@ public abstract class BasicHud {
         RenderManager.setupAndDraw(true, (vg) -> {
             if (rounded) {
                 RenderManager.drawRoundedRect(vg, x, y, (width + paddingX * scale), (height + paddingY * scale), bgColor.getRGB(), cornerRadius * scale);
-                if (border) RenderManager.drawHollowRoundRect(vg, x - borderSize * scale, y - borderSize * scale, (width + paddingX * scale) + borderSize * scale, (height + paddingY * scale) + borderSize * scale, borderColor.getRGB(), cornerRadius * scale, borderSize * scale);
+                if (border)
+                    RenderManager.drawHollowRoundRect(vg, x - borderSize * scale, y - borderSize * scale, (width + paddingX * scale) + borderSize * scale, (height + paddingY * scale) + borderSize * scale, borderColor.getRGB(), cornerRadius * scale, borderSize * scale);
             } else {
                 RenderManager.drawRect(vg, x, y, (width + paddingX * scale), (height + paddingY * scale), bgColor.getRGB());
-                if (border) RenderManager.drawHollowRoundRect(vg, x - borderSize * scale, y - borderSize * scale, (width + paddingX * scale) + borderSize * scale, (height + paddingY * scale) + borderSize * scale, borderColor.getRGB(), 0, borderSize * scale);
+                if (border)
+                    RenderManager.drawHollowRoundRect(vg, x - borderSize * scale, y - borderSize * scale, (width + paddingX * scale) + borderSize * scale, (height + paddingY * scale) + borderSize * scale, borderColor.getRGB(), 0, borderSize * scale);
             }
         });
     }

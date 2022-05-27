@@ -20,6 +20,10 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Objects;
 
+/**
+ * This class is used to convert the Vigilance config to the new config system.
+ * It is not meant to be used outside the config system.
+ */
 public class VigilanceConfig extends Config {
     public final Vigilant vigilant;
 
@@ -133,7 +137,7 @@ public class VigilanceConfig extends Config {
             PropertyAttributesExt.class.getDeclaredField("i18nName").setAccessible(true);
             return I18n.format((String) PropertyAttributesExt.class.getDeclaredField("i18nName").get(ext));
         } catch (IllegalAccessException | NoSuchFieldException e) {
-           return ext.getName();
+            return ext.getName();
         }
     }
 
@@ -151,7 +155,7 @@ public class VigilanceConfig extends Config {
             PropertyAttributesExt.class.getDeclaredField("i18nSubcategory").setAccessible(true);
             return I18n.format((String) PropertyAttributesExt.class.getDeclaredField("i18nSubcategory").get(ext));
         } catch (IllegalAccessException | NoSuchFieldException e) {
-           return ext.getSubcategory();
+            return ext.getSubcategory();
         }
     }
 

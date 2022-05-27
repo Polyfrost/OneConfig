@@ -34,7 +34,7 @@ public class ModsPage extends Page {
         modCategories.add(new BasicButton(88, 32, "3rd Party", BasicButton.ALIGNMENT_CENTER, ColorUtils.SECONDARY));
         modCategories.get(0).setToggled(true);
         int i = 0;
-        for(BasicButton button : modCategories) {
+        for (BasicButton button : modCategories) {
             button.setToggleable(true);
             int finalI = i;
             button.setClickAction(() -> unselect(finalI));
@@ -84,7 +84,7 @@ public class ModsPage extends Page {
         OneConfigConfig.favoriteMods.clear();
         for (ModCard modCard : modCards) {
             if (modCard.isFavorite()) OneConfigConfig.favoriteMods.add(modCard.getModData().name);
-            if (modCard.getModData().config != null && modCard.getModData().config.enabled != modCard.isActive()){
+            if (modCard.getModData().config != null && modCard.getModData().config.enabled != modCard.isActive()) {
                 modCard.getModData().config.enabled = modCard.isActive();
                 modCard.getModData().config.save();
             }
@@ -93,7 +93,7 @@ public class ModsPage extends Page {
     }
 
     private boolean inSelection(ModCard modCard) {
-        return modCategories.get(0).isToggled() && (OneConfigConfig.allShowShortCut || !modCard.getModData().isShortCut) || (modCategories.get(1).isToggled() && modCard.getModData().modType == ModType.PVP) || (modCategories.get(2).isToggled() && modCard.getModData().modType == ModType.HUD) || (modCategories.get(3).isToggled() && modCard.getModData().modType == ModType.UTIL_QOL) || (modCategories.get(4).isToggled() && modCard.getModData().modType == ModType.HYPIXEL) || (modCategories.get(5).isToggled() && modCard.getModData().modType == ModType.SKYBLOCK)  || (modCategories.get(6).isToggled() && modCard.getModData().modType == ModType.THIRD_PARTY);
+        return modCategories.get(0).isToggled() && (OneConfigConfig.allShowShortCut || !modCard.getModData().isShortCut) || (modCategories.get(1).isToggled() && modCard.getModData().modType == ModType.PVP) || (modCategories.get(2).isToggled() && modCard.getModData().modType == ModType.HUD) || (modCategories.get(3).isToggled() && modCard.getModData().modType == ModType.UTIL_QOL) || (modCategories.get(4).isToggled() && modCard.getModData().modType == ModType.HYPIXEL) || (modCategories.get(5).isToggled() && modCard.getModData().modType == ModType.SKYBLOCK) || (modCategories.get(6).isToggled() && modCard.getModData().modType == ModType.THIRD_PARTY);
     }
 
     @Override

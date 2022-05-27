@@ -1,5 +1,10 @@
 package cc.polyfrost.oneconfig.lwjgl.scissor;
 
+/**
+ * A class that represents a scissor rectangle.
+ *
+ * @see ScissorManager
+ */
 public class Scissor {
     public float x;
     public float y;

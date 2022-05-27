@@ -3,14 +3,14 @@ package cc.polyfrost.oneconfig.lwjgl;
 import cc.polyfrost.oneconfig.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.config.data.InfoType;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
+import cc.polyfrost.oneconfig.libs.universal.UGraphics;
+import cc.polyfrost.oneconfig.libs.universal.UMinecraft;
+import cc.polyfrost.oneconfig.libs.universal.UResolution;
 import cc.polyfrost.oneconfig.lwjgl.font.FontManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.ImageLoader;
 import cc.polyfrost.oneconfig.lwjgl.image.Images;
 import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
-import cc.polyfrost.oneconfig.libs.universal.UGraphics;
-import cc.polyfrost.oneconfig.libs.universal.UMinecraft;
-import cc.polyfrost.oneconfig.libs.universal.UResolution;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import cc.polyfrost.oneconfig.utils.NetworkUtils;
 import net.minecraft.client.gui.Gui;
@@ -24,6 +24,9 @@ import static org.lwjgl.nanovg.NanoVG.*;
 import static org.lwjgl.nanovg.NanoVGGL2.NVG_ANTIALIAS;
 import static org.lwjgl.nanovg.NanoVGGL2.nvgCreate;
 
+/**
+ * Handles NanoVG rendering and wraps it in a more convenient interface.
+ */
 public final class RenderManager {
     private RenderManager() {
 
@@ -33,10 +36,22 @@ public final class RenderManager {
 
     private static long vg = -1;
 
+    /**
+     * Sets up rendering, calls the consumer with the NanoVG context, and then cleans up.
+     *
+     * @see RenderManager#setupAndDraw(boolean, LongConsumer)
+     * @param consumer The consumer to call.
+     */
     public static void setupAndDraw(LongConsumer consumer) {
         setupAndDraw(false, consumer);
     }
 
+    /**
+     * Sets up rendering, calls the consumer with the NanoVG context, and then cleans up.
+     *
+     * @param mcScaling Whether to render with Minecraft's scaling.
+     * @param consumer The consumer to call.
+     */
     public static void setupAndDraw(boolean mcScaling, LongConsumer consumer) {
         if (vg == -1) {
             vg = nvgCreate(NVG_ANTIALIAS);
@@ -67,6 +82,16 @@ public final class RenderManager {
         GL11.glPopAttrib();
     }
 
+    /**
+     * Draws a rectangle with the given parameters.
+     *
+     * @param vg The NanoVG context.
+     * @param x The x position.
+     * @param y The y position.
+     * @param width The width.
+     * @param height The height.
+     * @param color The color.
+     */
     public static void drawRectangle(long vg, float x, float y, float width, float height, int color) {     // TODO make everything use this one day
         if (OneConfigConfig.ROUNDED_CORNERS) {
             drawRoundedRect(vg, x, y, width, height, color, OneConfigConfig.CORNER_RADIUS);
@@ -75,6 +100,18 @@ public final class RenderManager {
         }
     }
 
+    /**
+     * Draws a rounded gradient rectangle with the given parameters.
+     *
+     * @param vg The NanoVG context.
+     * @param x The x position.
+     * @param y The y position.
+     * @param width The width.
+     * @param height The height.
+     * @param color The first color of the gradient.
+     * @param color2 The second color of the gradient.
+     * @param radius The corner radius.
+     */
     public static void drawGradientRoundedRect(long vg, float x, float y, float width, float height, int color, int color2, float radius) {
         NVGPaint bg = NVGPaint.create();
         nvgBeginPath(vg);
@@ -87,6 +124,7 @@ public final class RenderManager {
         nvgColor2.free();
     }
 
+    //todo wtf does this do                         - wyvest, 2022
     public static void drawHSBBox(long vg, float x, float y, float width, float height, int colorTarget) {
         drawRoundedRect(vg, x, y, width, height, colorTarget, 8f);
 
@@ -111,6 +149,17 @@ public final class RenderManager {
         nvgColor4.free();
     }
 
+    /**
+     * Draws a gradient rectangle with the given parameters.
+     *
+     * @param vg The NanoVG context.
+     * @param x The x position.
+     * @param y The y position.
+     * @param width The width.
+     * @param height The height.
+     * @param color The first color of the gradient.
+     * @param color2 The second color of the gradient.
+     */
     public static void drawGradientRect(long vg, float x, float y, float width, float height, int color, int color2) {
         NVGPaint bg = NVGPaint.create();
         nvgBeginPath(vg);
@@ -124,6 +173,16 @@ public final class RenderManager {
         nvgColor2.free();
     }
 
+    /**
+     * Draws a rectangle with the given parameters.
+     *
+     * @param vg The NanoVG context.
+     * @param x The x position.
+     * @param y The y position.
+     * @param width The width.
+     * @param height The height.
+     * @param color The color.
+     */
     public static void drawRect(long vg, float x, float y, float width, float height, int color) {
         nvgBeginPath(vg);
         nvgRect(vg, x, y, width, height);
@@ -132,6 +191,17 @@ public final class RenderManager {
         nvgColor.free();
     }
 
+    /**
+     * Draws a rounded rectangle with the given parameters.
+     *
+     * @param vg The NanoVG context.
+     * @param x The x position.
+     * @param y The y position.
+     * @param width The width.
+     * @param height The height.
+     * @param color The color.
+     * @param radius The radius.
+     */
     public static void drawRoundedRect(long vg, float x, float y, float width, float height, int color, float radius) {
         nvgBeginPath(vg);
         nvgRoundedRect(vg, x, y, width, height, radius);
@@ -141,6 +211,7 @@ public final class RenderManager {
         nvgColor.free();
     }
 
+    //todo wtf does this do                         - wyvest, 2022
     public static void drawRoundedRectVaried(long vg, float x, float y, float width, float height, int color, float radiusTL, float radiusTR, float radiusBR, float radiusBL) {
         nvgBeginPath(vg);
         nvgRoundedRectVarying(vg, x, y, width, height, radiusTL, radiusTR, radiusBR, radiusBL);
@@ -150,6 +221,18 @@ public final class RenderManager {
         nvgColor.free();
     }
 
+    /**
+     * Draws a hollow rounded rectangle with the given parameters.
+     *
+     * @param vg The NanoVG context.
+     * @param x The x position.
+     * @param y The y position.
+     * @param width The width.
+     * @param height The height.
+     * @param color The color.
+     * @param radius The radius.
+     * @param thickness The thickness.
+     */
     public static void drawHollowRoundRect(long vg, float x, float y, float width, float height, int color, float radius, float thickness) {
         nvgBeginPath(vg);
         nvgRoundedRect(vg, x + thickness, y + thickness, width - thickness, height - thickness, radius);
@@ -162,6 +245,14 @@ public final class RenderManager {
         nvgColor.free();
     }
 
+    /**
+     * Draws a circle with the given parameters.
+     * @param vg The NanoVG context.
+     * @param x The x position.
+     * @param y The y position.
+     * @param radius The radius.
+     * @param color The color.
+     */
     public static void drawCircle(long vg, float x, float y, float radius, int color) {
         nvgBeginPath(vg);
         nvgCircle(vg, x, y, radius);
@@ -170,6 +261,18 @@ public final class RenderManager {
         nvgColor.free();
     }
 
+    /**
+     * Draws a String with the given parameters.
+     * @param vg The NanoVG context.
+     * @param text The text.
+     * @param x The x position.
+     * @param y The y position.
+     * @param color The color.
+     * @param size The size.
+     * @param font The font.
+     *
+     * @see cc.polyfrost.oneconfig.lwjgl.font.Font
+     */
     public static void drawString(long vg, String text, float x, float y, int color, float size, Fonts font) {
         nvgBeginPath(vg);
         nvgFontSize(vg, size);
@@ -181,6 +284,7 @@ public final class RenderManager {
         nvgColor.free();
     }
 
+    //todo wtf does this do                         - wyvest, 2022
     public static void drawString(long vg, String text, float x, float y, int color, float size, int lineHeight, Fonts font) {
         nvgBeginPath(vg);
         nvgFontSize(vg, size);
@@ -193,16 +297,34 @@ public final class RenderManager {
         nvgColor.free();
     }
 
-    /** Draw a formatted URL (a string in blue with an underline) that when clicked, opens the given text. */
+    /**
+     * Draw a formatted URL (a string in blue with an underline) that when clicked, opens the given text.
+     *
+     * <p><b>This does NOT scale to Minecraft's GUI scale!</b></p>
+     *
+     * @see RenderManager#drawString(long, String, float, float, int, float, Fonts)
+     * @see InputUtils#isAreaClicked(int, int, int, int)
+     */
     public static void drawURL(long vg, String url, float x, float y, float size, Fonts font) {
         drawString(vg, url, x, y, OneConfigConfig.PRIMARY_500, size, font);
         float length = getTextWidth(vg, url, size, font);
         drawRectangle(vg, x, y + size / 2, length, 1, OneConfigConfig.PRIMARY_500);
-        if(InputUtils.isAreaClicked((int) (x - 2), (int) (y - 1), (int) (length + 4), (int) (size / 2 + 3))) {
+        if (InputUtils.isAreaClicked((int) (x - 2), (int) (y - 1), (int) (length + 4), (int) (size / 2 + 3))) {
             NetworkUtils.browseLink(url);
         }
     }
 
+    /**
+     * Draws a String wrapped at the given width, with the given parameters.
+     * @param vg The NanoVG context.
+     * @param text The text.
+     * @param x The x position.
+     * @param y The y position.
+     * @param width The width.
+     * @param color The color.
+     * @param size The size.
+     * @param font The font.
+     */
     public static void drawWrappedString(long vg, String text, float x, float y, float width, int color, float size, Fonts font) {
         nvgBeginPath(vg);
         nvgFontSize(vg, size);
@@ -214,6 +336,17 @@ public final class RenderManager {
         nvgColor.free();
     }
 
+    /**
+     * Draws an image with the provided file path.
+     * @param vg The NanoVG context.
+     * @param filePath The file path.
+     * @param x The x position.
+     * @param y The y position.
+     * @param width The width.
+     * @param height The height.
+     *
+     * @see RenderManager#drawImage(long, String, float, float, float, float, int)
+     */
     public static void drawImage(long vg, String filePath, float x, float y, float width, float height) {
         if (ImageLoader.INSTANCE.loadImage(vg, filePath)) {
             NVGPaint imagePaint = NVGPaint.calloc();
@@ -227,6 +360,16 @@ public final class RenderManager {
         }
     }
 
+    /**
+     * Draws an image with the provided file path.
+     * @param vg The NanoVG context.
+     * @param filePath The file path.
+     * @param x The x position.
+     * @param y The y position.
+     * @param width The width.
+     * @param height The height.
+     * @param color The color.
+     */
     public static void drawImage(long vg, String filePath, float x, float y, float width, float height, int color) {
         if (ImageLoader.INSTANCE.loadImage(vg, filePath)) {
             NVGPaint imagePaint = NVGPaint.calloc();
@@ -241,6 +384,16 @@ public final class RenderManager {
         }
     }
 
+    /**
+     * Draws a rounded image with the provided file path and parameters.
+     * @param vg The NanoVG context.
+     * @param filePath The file path.
+     * @param x The x position.
+     * @param y The y position.
+     * @param width The width.
+     * @param height The height.
+     * @param radius The radius.
+     */
     public static void drawRoundImage(long vg, String filePath, float x, float y, float width, float height, float radius) {
         if (ImageLoader.INSTANCE.loadImage(vg, filePath)) {
             NVGPaint imagePaint = NVGPaint.calloc();
@@ -254,19 +407,41 @@ public final class RenderManager {
         }
     }
 
+    /**
+     * Draws a rounded image with the provided file path and parameters.
+     *
+     * @see RenderManager#drawRoundImage(long, String, float, float, float, float, float)
+     */
     public static void drawRoundImage(long vg, Images filePath, float x, float y, float width, float height, float radius) {
         drawRoundImage(vg, filePath.filePath, x, y, width, height, radius);
     }
 
+    /**
+     * Draws an image with the provided file path and parameters.
+     *
+     * @see RenderManager#drawImage(long, String, float, float, float, float)
+     */
     public static void drawImage(long vg, Images filePath, float x, float y, float width, float height) {
         drawImage(vg, filePath.filePath, x, y, width, height);
     }
 
+    /**
+     * Draws an image with the provided file path and parameters.
+     *
+     * @see RenderManager#drawImage(long, String, float, float, float, float, int)
+     */
     public static void drawImage(long vg, Images filePath, float x, float y, float width, float height, int color) {
         drawImage(vg, filePath.filePath, x, y, width, height, color);
     }
 
-
+    /**
+     * Get the width of the provided String.
+     * @param vg The NanoVG context.
+     * @param text The text.
+     * @param fontSize The font size.
+     * @param font The font.
+     * @return The width of the text.
+     */
     public static float getTextWidth(long vg, String text, float fontSize, Fonts font) {
         float[] bounds = new float[4];
         nvgFontSize(vg, fontSize);
@@ -274,6 +449,16 @@ public final class RenderManager {
         return nvgTextBounds(vg, 0, 0, text, bounds);
     }
 
+    /**
+     * Draws a line with the provided parameters.
+     * @param vg The NanoVG context.
+     * @param x The x position.
+     * @param y The y position.
+     * @param endX The end x position.
+     * @param endY The end y position.
+     * @param width The width.
+     * @param color The color.
+     */
     public static void drawLine(long vg, float x, float y, float endX, float endY, float width, int color) {
         nvgBeginPath(vg);
         nvgMoveTo(vg, x, y);
@@ -285,6 +470,7 @@ public final class RenderManager {
         nvgColor.free();
     }
 
+    //todo i know what this does but diamond knows what it does in detail so diamond needs to javadoc this
     public static void drawDropShadow(long vg, float x, float y, float w, float h, float blur, float spread, float cornerRadius) {
         try (
                 NVGPaint shadowPaint = NVGPaint.calloc();  // allocating memory to pass color to nanovg wrapper
@@ -320,6 +506,14 @@ public final class RenderManager {
         }
     }
 
+    /**
+     * Fills the provided {@link NVGColor} with the provided RGBA values.
+     * @param r The red value.
+     * @param g The green value.
+     * @param b The blue value.
+     * @param a The alpha value.
+     * @param color The {@link NVGColor} to fill.
+     */
     public static void fillNvgColorWithRGBA(float r, float g, float b, float a, NVGColor color) {
         color.r(r);
         color.g(g);
@@ -327,7 +521,13 @@ public final class RenderManager {
         color.a(a);
     }
 
-
+    /**
+     * Create a {@link NVGColor} from the provided RGBA values.
+     *
+     * @param vg The NanoVG context.
+     * @param color The color.
+     * @return The {@link NVGColor} created.
+     */
     public static NVGColor color(long vg, int color) {
         NVGColor nvgColor = NVGColor.calloc();
         nvgRGBA((byte) (color >> 16 & 0xFF), (byte) (color >> 8 & 0xFF), (byte) (color & 0xFF), (byte) (color >> 24 & 0xFF), nvgColor);
@@ -335,14 +535,36 @@ public final class RenderManager {
         return nvgColor;
     }
 
+    /**
+     * Scales all rendering by the provided scale.
+     * @param vg The NanoVG context.
+     * @param x The x scale.
+     * @param y The y scale.
+     */
     public static void scale(long vg, float x, float y) {
         nvgScale(vg, x, y);
     }
 
+    /**
+     * Sets the global alpha value to render with.
+     *
+     * @param vg The NanoVG context.
+     * @param alpha The alpha value.
+     */
     public static void setAlpha(long vg, float alpha) {
         nvgGlobalAlpha(vg, alpha);
     }
 
+    /**
+     * Draws a SVG with the provided file path and parameters.
+     *
+     * @param vg The NanoVG context.
+     * @param filePath The file path.
+     * @param x The x position.
+     * @param y The y position.
+     * @param width The width.
+     * @param height The height.
+     */
     public static void drawSvg(long vg, String filePath, float x, float y, float width, float height) {
         float w = width;
         float h = height;
@@ -362,6 +584,17 @@ public final class RenderManager {
         }
     }
 
+    /**
+     * Draws a SVG with the provided file path and parameters.
+     *
+     * @param vg The NanoVG context.
+     * @param filePath The file path.
+     * @param x The x position.
+     * @param y The y position.
+     * @param width The width.
+     * @param height The height.
+     * @param color The color.
+     */
     public static void drawSvg(long vg, String filePath, float x, float y, float width, float height, int color) {
         float w = width;
         float h = height;
@@ -382,14 +615,25 @@ public final class RenderManager {
         }
     }
 
+    /**
+     * Draws an SVG with the provided file path and parameters.
+     *
+     * @see RenderManager#drawSvg(long, String, float, float, float, float)
+     */
     public static void drawSvg(long vg, SVGs svg, float x, float y, float width, float height) {
         drawSvg(vg, svg.filePath, x, y, width, height);
     }
 
+    /**
+     * Draws an SVG with the provided file path and parameters.
+     *
+     * @see RenderManager#drawSvg(long, String, float, float, float, float, int)
+     */
     public static void drawSvg(long vg, SVGs svg, float x, float y, float width, float height, int color) {
         drawSvg(vg, svg.filePath, x, y, width, height, color);
     }
 
+    //todo diamond come here and write javadocs please
     public static void drawInfo(long vg, InfoType type, float x, float y, float size) {
         SVGs icon = null;
         int colorOuter = 0;

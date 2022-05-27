@@ -4,7 +4,14 @@ import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.libs.universal.UResolution;
 import org.lwjgl.input.Mouse;
 
-public class InputUtils {
+/**
+ * Various utility methods for input.
+ * <p>
+ * All values returned from this class are not scaled to Minecraft's GUI scale.
+ * For scaled values, see {@link cc.polyfrost.oneconfig.libs.universal.UMouse}.
+ * </p>
+ */
+public final class InputUtils {
     private static boolean blockClicks = false;
 
     /**

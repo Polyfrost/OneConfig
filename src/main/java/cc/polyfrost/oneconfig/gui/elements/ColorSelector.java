@@ -11,8 +11,8 @@ import cc.polyfrost.oneconfig.lwjgl.image.Images;
 import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
 import cc.polyfrost.oneconfig.utils.ColorUtils;
 import cc.polyfrost.oneconfig.utils.InputUtils;
-import cc.polyfrost.oneconfig.utils.NetworkUtils;
 import cc.polyfrost.oneconfig.utils.MathUtils;
+import cc.polyfrost.oneconfig.utils.NetworkUtils;
 import org.lwjgl.input.Mouse;
 
 import java.awt.*;
@@ -23,7 +23,7 @@ import java.util.ArrayList;
 public class ColorSelector {
     private int x;
     private int y;
-    private OneColor color;
+    private final OneColor color;
     private float percentMove = 0f;
     private int mouseX, mouseY;
     private final ArrayList<BasicElement> buttons = new ArrayList<>();
@@ -66,7 +66,7 @@ public class ColorSelector {
         hexInput.setInput(color.getHex());
         this.x = mouseX - 208;
         this.y = Math.max(0, mouseY - 776);
-        if(color.getDataBit() != -1) mode = 2;
+        if (color.getDataBit() != -1) mode = 2;
         if (mode == 0 || mode == 2) {
             this.mouseX = (int) (color.getSaturation() / 100f * 384 + x + 16);
             this.mouseY = (int) (Math.abs(color.getBrightness() / 100f - 1f) * 288 + y + 120);
@@ -106,7 +106,7 @@ public class ColorSelector {
         RenderManager.drawHollowRoundRect(vg, x - 3, y - 3, width + 4, height + 4, new Color(204, 204, 204, 77).getRGB(), 20f, 2f);
         RenderManager.drawRoundedRect(vg, x, y, width, height, OneConfigConfig.GRAY_800, 20f);
         RenderManager.drawString(vg, "Color Selector", x + 16, y + 32, OneConfigConfig.WHITE_90, 18f, Fonts.SEMIBOLD);
-        if(!closeBtn.isHovered()) RenderManager.setAlpha(vg, 0.8f);
+        if (!closeBtn.isHovered()) RenderManager.setAlpha(vg, 0.8f);
         closeBtn.draw(vg, x + 368, y + 16);
         RenderManager.drawSvg(vg, SVGs.X_CIRCLE, x + 368, y + 16, 32, 32, closeBtn.isHovered() ? OneConfigConfig.ERROR_600 : -1);
         RenderManager.setAlpha(vg, 1f);
@@ -140,10 +140,10 @@ public class ColorSelector {
         // TODO favorite stuff
         faveBtn.draw(vg, x + 16, y + 672);
         recentBtn.draw(vg, x + 16, y + 720);
-        for(int i = 0; i < 7; i++) {
+        for (int i = 0; i < 7; i++) {
             favoriteColors.get(i).draw(vg, x + 104 + i * 44, y + 672);
         }
-        for(int i = 0; i < 7; i++) {
+        for (int i = 0; i < 7; i++) {
             recentColors.get(i).draw(vg, x + 104 + i * 44, y + 720);
         }
 
@@ -318,7 +318,7 @@ public class ColorSelector {
             hueInput.setInput(String.format("%.01f", (float) color.getHue()));
             hexInput.setInput("#" + color.getHex());
         }
-        if(guideBtn.isClicked()) NetworkUtils.browseLink("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+        if (guideBtn.isClicked()) NetworkUtils.browseLink("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
 
 
         // draw the color preview
@@ -388,7 +388,7 @@ public class ColorSelector {
 
             RenderManager.drawHollowRoundRect(vg, x - 0.5f, y - 0.5f, width, height, new Color(204, 204, 204, 80).getRGB(), 8f, 1f);
             RenderManager.drawHollowRoundRect(vg, currentDragPoint - 1, y - 1, 18, 18, OneConfigConfig.WHITE, 9f, 1f);
-            RenderManager.drawHollowRoundRect(vg,  currentDragPoint, y, 16, 16, OneConfigConfig.BLACK, 8f, 1f);
+            RenderManager.drawHollowRoundRect(vg, currentDragPoint, y, 16, 16, OneConfigConfig.BLACK, 8f, 1f);
             if (color != null) {
                 RenderManager.drawRoundedRect(vg, currentDragPoint + 1.5f, y + 1.5f, 14, 14, color.getRGBMax(true), 7f);
             }

@@ -9,6 +9,7 @@ import java.util.Set;
 
 public class OneConfigMixinPlugin implements IMixinConfigPlugin {
     public static boolean isVigilance = false;
+
     @Override
     public void onLoad(String mixinPackage) {
         try {

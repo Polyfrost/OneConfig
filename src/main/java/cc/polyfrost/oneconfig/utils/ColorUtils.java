@@ -7,30 +7,46 @@ import java.awt.*;
 /**
  * A class to help with color manipulation.
  */
-public class ColorUtils {
-    /** Always returns transparent. */
+public final class ColorUtils {
+    /**
+     * Always returns transparent.
+     */
     public static final int TRANSPARENT = -10;
-    /** <h1>Primary Color Scheme</h1> Normal: Primary 600,<br> Hover: Primary 700,<br> Clicked: Primary 700 (80%) */
+    /**
+     * <h1>Primary Color Scheme</h1> Normal: Primary 600,<br> Hover: Primary 700,<br> Clicked: Primary 700 (80%)
+     */
     public static final int PRIMARY = 1;
-    /** <h1>Secondary Color Scheme</h1> Normal: Gray 500,<br> Hover: Gray 400,<br> Clicked: Gray 400 (80%) */
+    /**
+     * <h1>Secondary Color Scheme</h1> Normal: Gray 500,<br> Hover: Gray 400,<br> Clicked: Gray 400 (80%)
+     */
     public static final int SECONDARY = 2;
-    /** <h1>Secondary (Transparent) Color Scheme</h1> Normal: Transparent,<br> Hover: Gray rgba(229, 229, 229, 77),<br> Clicked: Gray rgba(229, 229, 229, 51) */
+    /**
+     * <h1>Secondary (Transparent) Color Scheme</h1> Normal: Transparent,<br> Hover: Gray rgba(229, 229, 229, 77),<br> Clicked: Gray rgba(229, 229, 229, 51)
+     */
     public static final int SECONDARY_TRANSPARENT = 0;
-    /** <h1>Tertiary Color Scheme</h1> Normal: Transparent (Text=White 90%),<br> Hover: Transparent (Text=White 100%),<br> Clicked: Transparent (Text=White 80%)
-     * <h2>NOTICE this returns the text colors as it is always transparent.</h2>*/
+    /**
+     * <h1>Tertiary Color Scheme</h1> Normal: Transparent (Text=White 90%),<br> Hover: Transparent (Text=White 100%),<br> Clicked: Transparent (Text=White 80%)
+     * <h2>NOTICE this returns the text colors as it is always transparent.</h2>
+     */
     public static final int TERTIARY = 3;
-    /** <h1>Primary Destructive Color Scheme</h1> Normal: Error 700,<br> Hover: Error 600,<br> Clicked: Error 600 (80%) */
+    /**
+     * <h1>Primary Destructive Color Scheme</h1> Normal: Error 700,<br> Hover: Error 600,<br> Clicked: Error 600 (80%)
+     */
     public static final int PRIMARY_DESTRUCTIVE = -1;
-    /** <h1>Secondary Destructive Color Scheme</h1> Normal: Gray 500,<br> Hover: Error 800,<br> Clicked: Error 800 (80%) */
+    /**
+     * <h1>Secondary Destructive Color Scheme</h1> Normal: Gray 500,<br> Hover: Error 800,<br> Clicked: Error 800 (80%)
+     */
     public static final int SECONDARY_DESTRUCTIVE = -2;
-    /** <h1>Tertiary Destructive Color Scheme</h1> Normal: Transparent (Text=White 90%),<br> Hover: Transparent (Text=Error 300),<br> Clicked: Transparent (Text=Error 300 80%)
-     * <h2>NOTICE this returns the text colors as it is always transparent.</h2>*/
+    /**
+     * <h1>Tertiary Destructive Color Scheme</h1> Normal: Transparent (Text=White 90%),<br> Hover: Transparent (Text=Error 300),<br> Clicked: Transparent (Text=Error 300 80%)
+     * <h2>NOTICE this returns the text colors as it is always transparent.</h2>
+     */
     public static final int TERTIARY_DESTRUCTIVE = -3;
 
 
     public static int getColor(int currentColor, int colorPalette, boolean hover, boolean click) {
         float[] color = splitColor(currentColor);
-        if(colorPalette == TRANSPARENT) {
+        if (colorPalette == TRANSPARENT) {
             return OneConfigConfig.TRANSPARENT;
         }
         if (click) {
@@ -55,10 +71,10 @@ public class ColorUtils {
 
         switch (colorPalette) {
             case SECONDARY_TRANSPARENT:         // Formally -2
-                return getColorComponents(color, new float[]{0f,0f,0f,0f}, new float[]{0.9f, 0.9f, 0.9f, 0.3f}, hover, 50f);
+                return getColorComponents(color, new float[]{0f, 0f, 0f, 0f}, new float[]{0.9f, 0.9f, 0.9f, 0.3f}, hover, 50f);
             case PRIMARY:       // Formally 1
                 return hover ? OneConfigConfig.PRIMARY_700 : OneConfigConfig.PRIMARY_600;
-                //return getColorComponents(color, splitColor(OneConfigConfig.PRIMARY_600), splitColor(OneConfigConfig.PRIMARY_700), hover, 100f);
+            //return getColorComponents(color, splitColor(OneConfigConfig.PRIMARY_600), splitColor(OneConfigConfig.PRIMARY_700), hover, 100f);
             default:
             case SECONDARY:     // Formally 0
                 return getColorComponents(color, splitColor(OneConfigConfig.GRAY_500), splitColor(OneConfigConfig.GRAY_400), hover, 100f);
@@ -100,7 +116,7 @@ public class ColorUtils {
 
         return ((int) (currentColor[3] * 255) << 24) |
                 ((int) (currentColor[0] * 255) << 16) |
-                ((int) (currentColor[1] * 255) << 8)  |
+                ((int) (currentColor[1] * 255) << 8) |
                 ((int) (currentColor[2] * 255));
 
     }
@@ -119,6 +135,7 @@ public class ColorUtils {
 
     /**
      * Get the red component of an RGB color.
+     *
      * @param color the color.
      * @return the red component.
      */
@@ -128,6 +145,7 @@ public class ColorUtils {
 
     /**
      * Get the green component of an RGB color.
+     *
      * @param color the color.
      * @return the green component.
      */
@@ -137,6 +155,7 @@ public class ColorUtils {
 
     /**
      * Get the blue component of an RGB color.
+     *
      * @param color the color.
      * @return the blue component.
      */
@@ -146,6 +165,7 @@ public class ColorUtils {
 
     /**
      * Get the alpha component of an ARGB color.
+     *
      * @param color the color.
      * @return the alpha component.
      */
@@ -155,9 +175,10 @@ public class ColorUtils {
 
     /**
      * Get the RGB color from the given color components.
-     * @param red the red component.
+     *
+     * @param red   the red component.
      * @param green the green component.
-     * @param blue the blue component.
+     * @param blue  the blue component.
      * @param alpha the alpha component.
      * @return the RGB color.
      */
@@ -167,9 +188,10 @@ public class ColorUtils {
 
     /**
      * Get the RGB color from the given color components.
-     * @param red the red component.
+     *
+     * @param red   the red component.
      * @param green the green component.
-     * @param blue the blue component.
+     * @param blue  the blue component.
      * @return the RGB color.
      */
     public static int getColor(int red, int green, int blue) {
@@ -178,9 +200,10 @@ public class ColorUtils {
 
     /**
      * Get the RGB color from the given color components.
-     * @param red the red component.
+     *
+     * @param red   the red component.
      * @param green the green component.
-     * @param blue the blue component.
+     * @param blue  the blue component.
      * @param alpha the alpha component.
      * @return the RGB color.
      */
@@ -190,8 +213,9 @@ public class ColorUtils {
 
     /**
      * Return the color with the given red component.
+     *
      * @param color the color.
-     * @param red the red component.
+     * @param red   the red component.
      * @return the color with the given red component.
      */
     public static int setRed(int color, int red) {
@@ -200,6 +224,7 @@ public class ColorUtils {
 
     /**
      * Return the color with the given green component.
+     *
      * @param color the color.
      * @param green the green component.
      * @return the color with the given green component.
@@ -210,8 +235,9 @@ public class ColorUtils {
 
     /**
      * Return the color with the given blue component.
+     *
      * @param color the color.
-     * @param blue the blue component.
+     * @param blue  the blue component.
      * @return the color with the given blue component.
      */
     public static int setBlue(int color, int blue) {
@@ -220,6 +246,7 @@ public class ColorUtils {
 
     /**
      * Return the color with the given alpha component.
+     *
      * @param color the color.
      * @param alpha the alpha component.
      * @return the color with the given alpha component.

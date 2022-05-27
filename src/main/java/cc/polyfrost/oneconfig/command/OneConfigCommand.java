@@ -3,8 +3,7 @@ package cc.polyfrost.oneconfig.command;
 import cc.polyfrost.oneconfig.gui.HudGui;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.test.TestNanoVGGui;
-import cc.polyfrost.oneconfig.utils.TickDelay;
-import cc.polyfrost.oneconfig.libs.universal.UScreen;
+import cc.polyfrost.oneconfig.utils.GuiUtils;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
 
@@ -33,14 +32,14 @@ public class OneConfigCommand extends CommandBase {
 
     @Override
     public void processCommand(ICommandSender sender, String[] args) {
-        if (args.length == 0) new TickDelay(() -> UScreen.displayScreen(OneConfigGui.create()), 1);
+        if (args.length == 0) GuiUtils.displayScreen(OneConfigGui.create());
         else {
             switch (args[0]) {
                 case "hud":
-                    new TickDelay(() -> UScreen.displayScreen(new HudGui()), 1);
+                    GuiUtils.displayScreen(new HudGui());
                     break;
                 case "lwjgl":
-                    new TickDelay(() -> UScreen.displayScreen(new TestNanoVGGui()), 1);
+                    GuiUtils.displayScreen(new TestNanoVGGui());
                     break;
                 case "destroy":
                     OneConfigGui.instanceToRestore = null;

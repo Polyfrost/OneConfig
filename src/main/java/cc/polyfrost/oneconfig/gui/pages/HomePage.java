@@ -1,10 +1,10 @@
 package cc.polyfrost.oneconfig.gui.pages;
 
 import cc.polyfrost.oneconfig.config.OneConfigConfig;
+import cc.polyfrost.oneconfig.config.core.OneColor;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.elements.BasicButton;
 import cc.polyfrost.oneconfig.gui.elements.ColorSelector;
-import cc.polyfrost.oneconfig.config.core.OneColor;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
@@ -55,7 +55,7 @@ public class HomePage extends Page {
         socialsBtn.draw(vg, x + 432, y + 658);
         creditsBtn.draw(vg, x + 632, y + 658);
         guideBtn.draw(vg, x + 832, y + 658);
-        if(socialsBtn.isClicked()) {
+        if (socialsBtn.isClicked()) {
             OneConfigGui.INSTANCE.initColorSelector(new ColorSelector(new OneColor(new Color(255, 0, 255, 127)), InputUtils.mouseX(), InputUtils.mouseY()));
         }
 

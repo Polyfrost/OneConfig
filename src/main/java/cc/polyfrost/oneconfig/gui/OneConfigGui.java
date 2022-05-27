@@ -1,19 +1,19 @@
 package cc.polyfrost.oneconfig.gui;
 
 import cc.polyfrost.oneconfig.config.OneConfigConfig;
+import cc.polyfrost.oneconfig.config.core.OneColor;
 import cc.polyfrost.oneconfig.gui.elements.BasicElement;
 import cc.polyfrost.oneconfig.gui.elements.ColorSelector;
 import cc.polyfrost.oneconfig.gui.elements.text.TextInputField;
 import cc.polyfrost.oneconfig.gui.pages.HomePage;
 import cc.polyfrost.oneconfig.gui.pages.Page;
-import cc.polyfrost.oneconfig.config.core.OneColor;
+import cc.polyfrost.oneconfig.libs.universal.*;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
 import cc.polyfrost.oneconfig.lwjgl.scissor.ScissorManager;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import cc.polyfrost.oneconfig.utils.MathUtils;
-import cc.polyfrost.oneconfig.libs.universal.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.input.Mouse;
@@ -243,7 +243,7 @@ public class OneConfigGui extends UScreen {
     }
 
     public OneColor getColor() {
-        if(currentColorSelector == null) return null;
+        if (currentColorSelector == null) return null;
         return currentColorSelector.getColor();
     }
 

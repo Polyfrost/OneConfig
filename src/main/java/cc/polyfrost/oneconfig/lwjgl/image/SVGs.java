@@ -1,5 +1,11 @@
 package cc.polyfrost.oneconfig.lwjgl.image;
 
+/**
+ * An enum of SVGs used in OneConfig.
+ *
+ * @see cc.polyfrost.oneconfig.lwjgl.RenderManager#drawSvg(long, String, float, float, float, float, int)
+ * @see ImageLoader
+ */
 public enum SVGs {
     ALIGN_H_CENTER("/assets/oneconfig/icons/AlignHCenter.svg"),
     ALIGN_H_LEFT("/assets/oneconfig/icons/AlignHLeft.svg"),

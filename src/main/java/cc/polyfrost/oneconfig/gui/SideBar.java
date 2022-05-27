@@ -8,13 +8,14 @@ import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
 import cc.polyfrost.oneconfig.utils.ColorUtils;
+import cc.polyfrost.oneconfig.utils.GuiUtils;
 import cc.polyfrost.oneconfig.utils.MathUtils;
-import cc.polyfrost.oneconfig.libs.universal.UScreen;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static cc.polyfrost.oneconfig.gui.elements.BasicButton.*;
+import static cc.polyfrost.oneconfig.gui.elements.BasicButton.ALIGNMENT_LEFT;
+import static cc.polyfrost.oneconfig.gui.elements.BasicButton.SIZE_36;
 
 public class SideBar {
     private final List<BasicButton> btnList = new ArrayList<>();
@@ -37,11 +38,11 @@ public class SideBar {
         btnList.add(new BasicButton(192, SIZE_36, "Packs Library", SVGs.BOX, null, ALIGNMENT_LEFT, ColorUtils.TERTIARY));
         btnList.add(new BasicButton(192, SIZE_36, "Packs Browser", SVGs.SEARCH, null, ALIGNMENT_LEFT, ColorUtils.TERTIARY));
         btnList.add(new BasicButton(192, SIZE_36, "Close", SVGs.X_CIRCLE, null, ALIGNMENT_LEFT, ColorUtils.SECONDARY_TRANSPARENT));
-        btnList.get(12).setClickAction(() -> UScreen.displayScreen(null));
+        btnList.get(12).setClickAction(() -> GuiUtils.displayScreen(null));
         btnList.add(new BasicButton(192, SIZE_36, "Minimize", SVGs.MINIMISE, null, ALIGNMENT_LEFT, ColorUtils.SECONDARY_TRANSPARENT));
-        btnList.get(13).setClickAction(() -> UScreen.displayScreen(null));
+        btnList.get(13).setClickAction(() -> GuiUtils.displayScreen(null));
         btnList.add(new BasicButton(192, SIZE_36, "Edit HUD", SVGs.HUD, null, ALIGNMENT_LEFT, ColorUtils.SECONDARY_TRANSPARENT));
-        btnList.get(14).setClickAction(() -> UScreen.displayScreen(new HudGui()));
+        btnList.get(14).setClickAction(() -> GuiUtils.displayScreen(new HudGui()));
     }
 
     public void draw(long vg, int x, int y) {

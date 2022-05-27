@@ -48,7 +48,7 @@ public enum OptionType {
     BUTTON,
     /**
      * Type: OneKeyBind
-      */
+     */
     KEYBIND,
     /**
      * Type: ? extends BasicHud

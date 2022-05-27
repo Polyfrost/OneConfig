@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 
 /**
- * OneColor is a class for storing Colors in HSBA format. This format is used to allow the color selectors to work correctly.
+ * OneColor is a class for storing colors in HSBA format. This format is used to allow the color selectors to work correctly.
  * <p>
  * <code>
  * short[0] = hue (0-360)
@@ -71,11 +71,14 @@ public final class OneColor {
     }
 
     // chroma constructors
-    /** Create a new Chroma OneColor. The speed should be a max of 30s and a min of 1s. */
+
+    /**
+     * Create a new Chroma OneColor. The speed should be a max of 30s and a min of 1s.
+     */
     public OneColor(int saturation, int brightness, int alpha, float chromaSpeed) {
         this(System.currentTimeMillis() % (int) chromaSpeed / chromaSpeed, saturation, brightness, alpha);
-        if(chromaSpeed < 1) chromaSpeed = 1;
-        if(chromaSpeed > 30) chromaSpeed = 30;
+        if (chromaSpeed < 1) chromaSpeed = 1;
+        if (chromaSpeed > 30) chromaSpeed = 30;
         this.dataBit = (int) chromaSpeed;
     }
 
@@ -92,58 +95,79 @@ public final class OneColor {
 
 
     // accessors
-    /** Get the red value of the color (0-255). */
+
+    /**
+     * Get the red value of the color (0-255).
+     */
     public int getRed() {
         return rgba >> 16 & 255;
     }
 
-    /** Get the green value of the color (0-255). */
+    /**
+     * Get the green value of the color (0-255).
+     */
     public int getGreen() {
         return rgba >> 8 & 255;
     }
 
-    /** Get the blue value of the color (0-255). */
+    /**
+     * Get the blue value of the color (0-255).
+     */
     public int getBlue() {
         return rgba & 255;
     }
 
-    /** Get the hue value of the color (0-360). */
+    /**
+     * Get the hue value of the color (0-360).
+     */
     public int getHue() {
         return hsba[0];
     }
 
-    /** Get the saturation value of the color (0-100). */
+    /**
+     * Get the saturation value of the color (0-100).
+     */
     public int getSaturation() {
         return hsba[1];
     }
 
-    /** Get the brightness value of the color (0-100). */
+    /**
+     * Get the brightness value of the color (0-100).
+     */
     public int getBrightness() {
         return hsba[2];
     }
 
-    /** Get the alpha value of the color (0-255). */
+    /**
+     * Get the alpha value of the color (0-255).
+     */
     public int getAlpha() {
         return hsba[3];
     }
 
-    /** Get the chroma speed of the color (1s-30s). */
+    /**
+     * Get the chroma speed of the color (1s-30s).
+     */
     public int getDataBit() {
         return dataBit == -1 ? -1 : dataBit / 1000;
     }
 
-    /** Set the current chroma speed of the color. -1 to disable. */
+    /**
+     * Set the current chroma speed of the color. -1 to disable.
+     */
     public void setChromaSpeed(int speed) {
-        if(speed == -1) {
+        if (speed == -1) {
             this.dataBit = -1;
             return;
         }
-        if(speed < 1) speed = 1;
-        if(speed > 30) speed = 30;
+        if (speed < 1) speed = 1;
+        if (speed > 30) speed = 30;
         this.dataBit = speed * 1000;
     }
 
-    /** Set the HSBA values of the color. */
+    /**
+     * Set the HSBA values of the color.
+     */
     public void setHSBA(int hue, int saturation, int brightness, int alpha) {
         this.hsba[0] = (short) hue;
         this.hsba[1] = (short) saturation;
@@ -217,16 +241,16 @@ public final class OneColor {
 
     public void setColorFromHex(String hex) {
         hex = hex.replace("#", "");
-        if(hex.length() > 6) {
+        if (hex.length() > 6) {
             hex = hex.substring(0, 6);
         }
-        if(hex.length() == 3) {
+        if (hex.length() == 3) {
             hex = charsToString(hex.charAt(0), hex.charAt(0), hex.charAt(1), hex.charAt(1), hex.charAt(2), hex.charAt(2));
         }
-        if(hex.length() == 1) {
+        if (hex.length() == 1) {
             hex = charsToString(hex.charAt(0), hex.charAt(0), hex.charAt(0), hex.charAt(0), hex.charAt(0), hex.charAt(0));
         }
-        if(hex.length() == 2 && hex.charAt(1) == hex.charAt(0)) {
+        if (hex.length() == 2 && hex.charAt(1) == hex.charAt(0)) {
             hex = charsToString(hex.charAt(0), hex.charAt(0), hex.charAt(0), hex.charAt(0), hex.charAt(0), hex.charAt(0));
         }
         StringBuilder hexBuilder = new StringBuilder(hex);
@@ -235,9 +259,9 @@ public final class OneColor {
         }
         hex = hexBuilder.toString();
         //System.out.println(hex);
-        int r = Integer.valueOf(hex.substring( 0, 2 ), 16);
-        int g = Integer.valueOf( hex.substring( 2, 4 ), 16);
-        int b = Integer.valueOf( hex.substring( 4, 6 ), 16);
+        int r = Integer.valueOf(hex.substring(0, 2), 16);
+        int g = Integer.valueOf(hex.substring(2, 4), 16);
+        int b = Integer.valueOf(hex.substring(4, 6), 16);
         this.rgba = ((getAlpha() & 0xFF) << 24) | ((r & 0xFF) << 16) | ((g & 0xFF) << 8) | ((b & 0xFF));
         hsba = RGBAtoHSBA(rgba);
     }
@@ -249,7 +273,7 @@ public final class OneColor {
 
     private String charsToString(char... chars) {
         StringBuilder sb = new StringBuilder();
-        for(char c : chars) {
+        for (char c : chars) {
             sb.append(c);
         }
         return sb.toString();

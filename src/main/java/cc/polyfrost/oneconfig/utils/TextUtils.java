@@ -5,8 +5,7 @@ import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 
 import java.util.ArrayList;
 
-public class TextUtils {
-
+public final class TextUtils {
     public static ArrayList<String> wrapText(long vg, String text, float maxWidth, float fontSize, Fonts font) {
         ArrayList<String> wrappedText = new ArrayList<>();
         text += " ";

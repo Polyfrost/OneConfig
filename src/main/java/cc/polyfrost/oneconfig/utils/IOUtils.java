@@ -12,9 +12,6 @@ import java.nio.file.Files;
 
 public final class IOUtils {
 
-    private IOUtils() {
-    }
-
     /**
      * Taken from legui under MIT License
      * <a href="https://github.com/SpinyOwl/legui/blob/develop/LICENSE">https://github.com/SpinyOwl/legui/blob/develop/LICENSE</a>

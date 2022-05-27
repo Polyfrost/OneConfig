@@ -2,7 +2,7 @@ package cc.polyfrost.oneconfig.utils;
 
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 
-public class MathUtils {
+public final class MathUtils {
     public static float clamp(float number) {
         return number < 0f ? 0f : Math.min(number, 1f);
     }
@@ -36,10 +36,10 @@ public class MathUtils {
     /**
      * taken from <a href="https://github.com/jesusgollonet/processing-penner-easing">https://github.com/jesusgollonet/processing-penner-easing</a>
      */
-    public static float easeInOutQuad(float t,float b , float c, float d) {
+    public static float easeInOutQuad(float t, float b, float c, float d) {
         c *= OneConfigGui.INSTANCE == null ? 16 : OneConfigGui.INSTANCE.getDeltaTime();
-        if ((t/=d/2) < 1) return c/2*t*t + b;
-        return -c/2 * ((--t)*(t-2) - 1) + b;
+        if ((t /= d / 2) < 1) return c / 2 * t * t + b;
+        return -c / 2 * ((--t) * (t - 2) - 1) + b;
     }
 
     public static float map(float value, float start1, float stop1, float start2, float stop2) {

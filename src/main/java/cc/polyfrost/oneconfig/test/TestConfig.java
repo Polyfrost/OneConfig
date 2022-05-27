@@ -2,10 +2,10 @@ package cc.polyfrost.oneconfig.test;
 
 import cc.polyfrost.oneconfig.config.annotations.ConfigPage;
 import cc.polyfrost.oneconfig.config.annotations.Option;
+import cc.polyfrost.oneconfig.config.core.OneColor;
 import cc.polyfrost.oneconfig.config.core.OneKeyBind;
 import cc.polyfrost.oneconfig.config.data.*;
 import cc.polyfrost.oneconfig.config.interfaces.Config;
-import cc.polyfrost.oneconfig.config.core.OneColor;
 import cc.polyfrost.oneconfig.config.migration.VigilanceMigrator;
 import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
 import net.minecraftforge.fml.common.FMLCommonHandler;
