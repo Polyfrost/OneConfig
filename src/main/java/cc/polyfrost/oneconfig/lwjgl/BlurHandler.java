@@ -1,6 +1,11 @@
 package cc.polyfrost.oneconfig.lwjgl;
 
+import cc.polyfrost.oneconfig.events.EventManager;
+import cc.polyfrost.oneconfig.events.event.RenderEvent;
+import cc.polyfrost.oneconfig.events.event.ScreenOpenEvent;
+import cc.polyfrost.oneconfig.events.event.Stage;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
+import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
 import cc.polyfrost.oneconfig.libs.universal.UMinecraft;
 import cc.polyfrost.oneconfig.libs.universal.UScreen;
 import cc.polyfrost.oneconfig.mixin.ShaderGroupAccessor;
@@ -9,10 +14,6 @@ import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.shader.Shader;
 import net.minecraft.client.shader.ShaderUniform;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.client.event.GuiOpenEvent;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.gameevent.TickEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -44,17 +45,17 @@ public class BlurHandler {
      * Simply initializes the blur mod so events are properly handled by forge.
      */
     public void load() {
-        MinecraftForge.EVENT_BUS.register(this);
+        EventManager.INSTANCE.getEventBus().register(this);
     }
 
-    @SubscribeEvent
-    public void onGuiChange(GuiOpenEvent event) {
-        reloadBlur(event.gui);
+    @Subscribe
+    public void onGuiChange(ScreenOpenEvent event) {
+        reloadBlur(event.screen);
     }
 
-    @SubscribeEvent
-    public void onRenderTick(final TickEvent.RenderTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) {
+    @Subscribe
+    public void onRenderTick(RenderEvent event) {
+        if (event.stage != Stage.END) {
             return;
         }
 

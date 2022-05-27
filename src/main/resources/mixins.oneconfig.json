@@ -7,8 +7,10 @@
   "injectors": {
     "maxShiftBy": 5
   },
-  "mixins": [
+  "verbose": true,
+  "client": [
+    "GuiIngameForgeMixin",
+    "MinecraftMixin",
     "ShaderGroupAccessor"
-  ],
-  "verbose": true
+  ]
 }

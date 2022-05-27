@@ -64,6 +64,8 @@ repositories {
 
 val relocated = registerRelocationAttribute("relocate") {
     relocate("gg.essential", "cc.polyfrost.oneconfig.libs")
+    relocate("me.kbrewster", "cc.polyfrost.oneconfig.libs")
+    relocate("com.llamalad7", "cc.polyfrost.oneconfig.libs")
 }
 
 val shadeRelocated: Configuration by configurations.creating {
@@ -116,6 +118,12 @@ dependencies {
     shadeRelocated("gg.essential:universalcraft-1.8.9-forge:211") {
         isTransitive = false
     }
+
+    shadeRelocated("com.github.KevinPriv:keventbus:c52e0a2ea0") {
+        isTransitive = false
+    }
+
+    annotationProcessor(shadeRelocated("com.github.LlamaLad7:MixinExtras:0.0.10")!!)
 
     // for other mods and universalcraft
     shade("org.jetbrains.kotlin:kotlin-stdlib:1.6.21")
