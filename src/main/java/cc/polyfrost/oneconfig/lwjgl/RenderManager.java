@@ -124,7 +124,16 @@ public final class RenderManager {
         nvgColor2.free();
     }
 
-    //todo wtf does this do                         - wyvest, 2022
+    /**
+     * Draw a HSB box
+     *
+     * @param vg The NanoVG context.
+     * @param x The x coordinate.
+     * @param y The y coordinate
+     * @param width The width.
+     * @param height The height.
+     * @param colorTarget Hue color
+     */
     public static void drawHSBBox(long vg, float x, float y, float width, float height, int colorTarget) {
         drawRoundedRect(vg, x, y, width, height, colorTarget, 8f);
 
@@ -211,7 +220,20 @@ public final class RenderManager {
         nvgColor.free();
     }
 
-    //todo wtf does this do                         - wyvest, 2022
+    /**
+     * Draw a rounded rectangle where every corner has a different radius
+     *
+     * @param vg The NanoVG context
+     * @param x The x position.
+     * @param y The y position.
+     * @param width The width.
+     * @param height The height.
+     * @param color The color.
+     * @param radiusTL Top left corner radius.
+     * @param radiusTR Top right corner radius.
+     * @param radiusBR Bottom right corner radius.
+     * @param radiusBL Bottom left corner radius
+     */
     public static void drawRoundedRectVaried(long vg, float x, float y, float width, float height, int color, float radiusTL, float radiusTR, float radiusBR, float radiusBL) {
         nvgBeginPath(vg);
         nvgRoundedRectVarying(vg, x, y, width, height, radiusTL, radiusTR, radiusBR, radiusBL);
@@ -278,19 +300,6 @@ public final class RenderManager {
         nvgFontSize(vg, size);
         nvgFontFace(vg, font.font.getName());
         nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
-        NVGColor nvgColor = color(vg, color);
-        nvgText(vg, x, y, text);
-        nvgFill(vg);
-        nvgColor.free();
-    }
-
-    //todo wtf does this do                         - wyvest, 2022
-    public static void drawString(long vg, String text, float x, float y, int color, float size, int lineHeight, Fonts font) {
-        nvgBeginPath(vg);
-        nvgFontSize(vg, size);
-        nvgFontFace(vg, font.font.getName());
-        nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
-        nvgTextMetrics(vg, new float[]{10f}, new float[]{10f}, new float[]{lineHeight});
         NVGColor nvgColor = color(vg, color);
         nvgText(vg, x, y, text);
         nvgFill(vg);
@@ -470,7 +479,20 @@ public final class RenderManager {
         nvgColor.free();
     }
 
-    //todo i know what this does but diamond knows what it does in detail so diamond needs to javadoc this
+    /**
+     * Draw a drop shadow.
+     *
+     * <a href="https://github.com/SpinyOwl/legui/blob/develop/LICENSE">Adapted from legui under MIT license</a>
+     *
+     * @param vg The NanoVG context.
+     * @param x The x coordinate.
+     * @param y The y coordinate.
+     * @param w The width.
+     * @param h The height.
+     * @param blur The blur (feather).
+     * @param spread The spread.
+     * @param cornerRadius The radius of the corner
+     */
     public static void drawDropShadow(long vg, float x, float y, float w, float h, float blur, float spread, float cornerRadius) {
         try (
                 NVGPaint shadowPaint = NVGPaint.calloc();  // allocating memory to pass color to nanovg wrapper
@@ -633,7 +655,15 @@ public final class RenderManager {
         drawSvg(vg, svg.filePath, x, y, width, height, color);
     }
 
-    //todo diamond come here and write javadocs please
+    /**
+     * Draw a circle with an info icon inside of it
+     *
+     * @param vg The NanoVG context.
+     * @param type The icon type.
+     * @param x The x position.
+     * @param y The y position.
+     * @param size The diameter.
+     */
     public static void drawInfo(long vg, InfoType type, float x, float y, float size) {
         SVGs icon = null;
         int colorOuter = 0;
