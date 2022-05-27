@@ -127,7 +127,7 @@ dependencies {
     shade("org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.3.3")
     shade("org.jetbrains.kotlinx:kotlinx-serialization-cbor-jvm:1.3.3")
 
-    shade("org.spongepowered:mixin:0.7.11-SNAPSHOT") {
+    shade("org.spongepowered:mixin:0.8.5") {
         isTransitive = false
     }
 
