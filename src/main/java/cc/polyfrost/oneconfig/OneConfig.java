@@ -49,7 +49,7 @@ public class OneConfig {
     public void onFMLInitialization(net.minecraftforge.fml.common.event.FMLInitializationEvent event) {
         BlurHandler.INSTANCE.load();
         testConfig = new TestConfig();
-        CommandManager.registerCommand(new OneConfigCommand());
+        CommandManager.INSTANCE.registerCommand(new OneConfigCommand());
         EventManager.INSTANCE.register(new HudCore());
         EventManager.INSTANCE.register(HypixelUtils.INSTANCE);
         RenderManager.setupAndDraw((vg) -> {
