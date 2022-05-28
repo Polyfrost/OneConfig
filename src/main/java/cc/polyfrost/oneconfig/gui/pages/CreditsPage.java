@@ -29,7 +29,8 @@ public class CreditsPage extends Page {
         RenderManager.drawString(vg, " - NanoVG (memononen) - NanoVG Library", x + 20, y + 370, -1, 12, Fonts.REGULAR);
         RenderManager.drawString(vg, " - UniversalCraft (Sk1er LLC) - Multiversioning bindings", x + 20, y + 385, -1, 12, Fonts.REGULAR);
         RenderManager.drawString(vg, " - Easing Functions (jesusgollonet)", x + 20, y + 400, -1, 12, Fonts.REGULAR);
-        RenderManager.drawString(vg, " - Quiltflower (W-OVERFLOW) - Gradle toolkit", x + 20, y + 415, -1, 12, Fonts.REGULAR);
+        RenderManager.drawString(vg, " - Quiltflower (Quilt Team) - Gradle decompiler", x + 20, y + 415, -1, 12, Fonts.REGULAR);
+        RenderManager.drawString(vg, " - Seraph (Scherso) - Locraw and Multithreading utilities", x + 20, y + 430, -1, 12, Fonts.REGULAR);
 
         RenderManager.drawString(vg, "Terms Of Service & Licensing", x + 20, y + 517, -1, 24, Fonts.SEMIBOLD);
         RenderManager.drawString(vg, " - License Summary goes here", x + 20, y + 540, -1, 12, Fonts.REGULAR);

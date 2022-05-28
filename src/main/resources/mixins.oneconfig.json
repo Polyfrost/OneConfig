@@ -11,6 +11,8 @@
   "client": [
     "GuiIngameForgeMixin",
     "MinecraftMixin",
-    "ShaderGroupAccessor"
+    "NetHandlerPlayClientMixin",
+    "ShaderGroupAccessor",
+    "WorldClientMixin"
   ]
 }

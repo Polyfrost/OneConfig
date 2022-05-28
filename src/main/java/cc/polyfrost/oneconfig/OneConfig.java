@@ -12,6 +12,7 @@ import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.Images;
 import cc.polyfrost.oneconfig.test.TestConfig;
+import cc.polyfrost.oneconfig.utils.hypixel.HypixelUtils;
 import net.minecraft.launchwrapper.Launch;
 import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.fml.common.DummyModContainer;
@@ -50,7 +51,8 @@ public class OneConfig {
         BlurHandler.INSTANCE.load();
         testConfig = new TestConfig();
         ClientCommandHandler.instance.registerCommand(new OneConfigCommand());
-        EventManager.INSTANCE.getEventBus().register(new HudCore());
+        EventManager.INSTANCE.register(new HudCore());
+        EventManager.INSTANCE.register(HypixelUtils.INSTANCE);
         RenderManager.setupAndDraw((vg) -> {
             RenderManager.drawRoundedRect(vg, -100, -100, 50, 50, -1, 12f);
             RenderManager.drawString(vg, "OneConfig loading...", -100, -100, -1, 12f, Fonts.MEDIUM);
