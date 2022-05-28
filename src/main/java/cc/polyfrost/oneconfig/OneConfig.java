@@ -11,7 +11,9 @@ import cc.polyfrost.oneconfig.lwjgl.BlurHandler;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.Images;
+import cc.polyfrost.oneconfig.test.TestCommand;
 import cc.polyfrost.oneconfig.test.TestConfig;
+import cc.polyfrost.oneconfig.utils.commands.CommandManager;
 import cc.polyfrost.oneconfig.utils.hypixel.HypixelUtils;
 import net.minecraft.launchwrapper.Launch;
 import net.minecraftforge.client.ClientCommandHandler;
@@ -50,6 +52,7 @@ public class OneConfig {
     public void onFMLInitialization(net.minecraftforge.fml.common.event.FMLInitializationEvent event) {
         BlurHandler.INSTANCE.load();
         testConfig = new TestConfig();
+        CommandManager.registerCommand(new TestCommand());
         ClientCommandHandler.instance.registerCommand(new OneConfigCommand());
         EventManager.INSTANCE.register(new HudCore());
         EventManager.INSTANCE.register(HypixelUtils.INSTANCE);
