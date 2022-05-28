@@ -7,7 +7,7 @@ import cc.polyfrost.oneconfig.utils.commands.annotations.Name;
 import cc.polyfrost.oneconfig.utils.commands.annotations.SubCommand;
 
 @Command(value = "test", aliases = {"t"})
-public class TestCommand {
+public class TestCommand_Test {
 
     @Main
     private static void main() {  // /test

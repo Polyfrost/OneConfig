@@ -80,7 +80,7 @@ import java.lang.annotation.Target;
  * Note: if you're viewing this in IntelliJ or just see the @literal tag everywhere, please ignore that.
  * </p>
  *
- * @see cc.polyfrost.oneconfig.test.TestCommand
+ * @see cc.polyfrost.oneconfig.command.OneConfigCommand
  * @see Main
  * @see CommandManager
  */

@@ -213,6 +213,10 @@ tasks {
                 exclude("mcmod.info")
             }
         }
+        if (!name.contains("sourcesjar", ignoreCase = true) || !name.contains("dokka", ignoreCase = true)) {
+            exclude("**/**_Test.**")
+            exclude("**/**_Test$**.**")
+        }
     }
     named<ShadowJar>("shadowJar") {
         archiveClassifier.set("dev")
@@ -246,6 +250,7 @@ tasks {
         dokkaSourceSets {
             configureEach {
                 jdkVersion.set(8)
+                //reportUndocumented.set(true)
             }
         }
         doLast {

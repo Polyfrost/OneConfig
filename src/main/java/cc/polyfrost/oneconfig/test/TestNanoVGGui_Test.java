@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
-public class TestNanoVGGui extends UScreen {
+public class TestNanoVGGui_Test extends UScreen {
 
     @Override
     public void onDrawScreen(@NotNull UMatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
