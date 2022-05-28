@@ -40,7 +40,7 @@ blossom {
 version = mod_version
 group = "cc.polyfrost"
 base {
-    archivesName.set("$mod_name-$platform")
+    archivesName.set("$mod_id-$platform")
 }
 loom {
     noServerRunConfigs()
@@ -244,6 +244,8 @@ tasks {
     }
     dokkaHtml.configure {
         outputDirectory.set(buildDir.resolve("dokka"))
+        moduleName.set("OneConfig $platform")
+        moduleVersion.set(mod_version)
         dokkaSourceSets {
             configureEach {
                 jdkVersion.set(8)
