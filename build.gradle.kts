@@ -19,7 +19,6 @@ plugins {
 }
 
 java {
-    withJavadocJar()
     withSourcesJar()
 }
 
@@ -251,6 +250,14 @@ tasks {
                 jdkVersion.set(8)
             }
         }
+        doLast {
+            val outputFile = outputDirectory.get().resolve("images/logo-icon.svg")
+            if (outputFile.exists()) {
+                outputFile.delete()
+            }
+            val inputFile = project.rootDir.resolve("src/main/resources/assets/oneconfig/icons/OneConfig.svg")
+            inputFile.copyTo(outputFile)
+        }
     }
     val dokkaJar = create("dokkaJar", Jar::class.java) {
         archiveClassifier.set("dokka")
@@ -258,7 +265,7 @@ tasks {
         dependsOn(dokkaHtml)
         from(layout.buildDirectory.dir("dokka"))
     }
-    named("javadocJar").get().dependsOn(dokkaJar)
+    named("sourcesJar").get().dependsOn(dokkaJar)
 }
 
 afterEvaluate {
