@@ -10,6 +10,9 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.file.Files;
 
+/**
+ * Utility class for I/O operations.
+ */
 public final class IOUtils {
 
     /**

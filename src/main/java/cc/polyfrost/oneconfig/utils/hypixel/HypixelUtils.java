@@ -35,7 +35,7 @@ public class HypixelUtils {
     private boolean inGame;
 
     private LocrawInfo locraw;
-    private LocrawInfo lastLocraw;
+    private LocrawInfo previousLocraw;
 
     /**
      * Checks whether the player is on Hypixel.
@@ -55,6 +55,11 @@ public class HypixelUtils {
         return serverBrand.toLowerCase(Locale.ENGLISH).contains("hypixel");
     }
 
+    /**
+     * Queues a locraw update after the specified interval.
+     *
+     * @param interval The interval in milliseconds.
+     */
     public void queueUpdate(long interval) {
         sendPermitted = true;
         Multithreading.schedule(() -> {
@@ -115,7 +120,7 @@ public class HypixelUtils {
                 if (parsed.getGameMode().equals("lobby")) {
                     inGame = false; // If your gamemode returns "lobby", boolean inGame is false.
                 } else {
-                    lastLocraw = parsed;
+                    previousLocraw = parsed;
                     inGame = true; // If your gamemode does not return "lobby", boolean inGame is true.
                 }
                 EventManager.INSTANCE.post(new LocrawEvent(locraw));
@@ -126,15 +131,29 @@ public class HypixelUtils {
         }
     }
 
+    /**
+     * Returns whether the player is in game.
+     * @return Whether the player is in game.
+     */
     public boolean isInGame() {
         return this.inGame;
     }
 
+    /**
+     * Returns the current {@link LocrawInfo}.
+     * @return The current {@link LocrawInfo}.
+     * @see LocrawInfo
+     */
     public LocrawInfo getLocrawInfo() {
         return this.locraw;
     }
 
-    public LocrawInfo getLastLocrawInfo() {
-        return this.lastLocraw;
+    /**
+     * Returns the previous {@link LocrawInfo}.
+     * @return The previous {@link LocrawInfo}.
+     * @see LocrawInfo
+     */
+    public LocrawInfo getPreviousLocraw() {
+        return this.previousLocraw;
     }
 }

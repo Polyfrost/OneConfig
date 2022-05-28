@@ -49,12 +49,12 @@ public class BlurHandler {
     }
 
     @Subscribe
-    public void onGuiChange(ScreenOpenEvent event) {
+    private void onGuiChange(ScreenOpenEvent event) {
         reloadBlur(event.screen);
     }
 
     @Subscribe
-    public void onRenderTick(RenderEvent event) {
+    private void onRenderTick(RenderEvent event) {
         if (event.stage != Stage.END) {
             return;
         }
@@ -113,7 +113,7 @@ public class BlurHandler {
      * one of many conditions are met, such as no current other shader
      * is being used, we actually have the blur setting enabled
      */
-    public void reloadBlur(GuiScreen gui) {
+    private void reloadBlur(GuiScreen gui) {
         // Don't do anything if no world is loaded
         if (UMinecraft.getWorld() == null) {
             return;
