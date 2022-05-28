@@ -93,12 +93,11 @@ public class VigilantTransformer implements ITransformer {
     public static VigilanceConfig returnNewConfig(Vigilant vigilant, File file) {
         if (vigilant != null && Minecraft.getMinecraft().isCallingFromMinecraftThread()) {
             String name = !vigilant.getGuiTitle().equals("Settings") ? vigilant.getGuiTitle() : Loader.instance().activeModContainer() == null ? "Unknown" : Loader.instance().activeModContainer().getName();
-            String imageName = Loader.instance().activeModContainer() == null || Loader.instance().activeModContainer().getMetadata().logoFile.trim().equals("") ? null : "/" + Loader.instance().activeModContainer().getMetadata().logoFile;
             if (name.equals("OneConfig")) name = "Essential";
             String finalName = name;
             // duplicate fix
             if (ConfigCore.oneConfigMods.stream().anyMatch(mod -> mod.name.equals(finalName))) return null;
-            return new VigilanceConfig(new Mod(name, ModType.THIRD_PARTY, imageName), file.getAbsolutePath(), vigilant);
+            return new VigilanceConfig(new Mod(name, ModType.THIRD_PARTY), file.getAbsolutePath(), vigilant);
         } else {
             return null;
         }

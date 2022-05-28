@@ -45,7 +45,7 @@ public class BlurHandler {
      * Simply initializes the blur mod so events are properly handled by forge.
      */
     public void load() {
-        EventManager.INSTANCE.getEventBus().register(this);
+        EventManager.INSTANCE.register(this);
     }
 
     @Subscribe

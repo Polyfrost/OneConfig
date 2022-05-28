@@ -19,30 +19,30 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class MinecraftMixin {
     @Shadow private Timer timer;
 
-    @Inject(method = "runGameLoop", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/FMLCommonHandler;onRenderTickStart(F)V", shift = At.Shift.AFTER))
+    @Inject(method = "runGameLoop", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/FMLCommonHandler;onRenderTickStart(F)V", shift = At.Shift.AFTER, remap = false), remap = true)
     private void onRenderTickStart(CallbackInfo ci) {
-        EventManager.INSTANCE.getEventBus().post(new RenderEvent(Stage.START, timer.renderPartialTicks));
+        EventManager.INSTANCE.post(new RenderEvent(Stage.START, timer.renderPartialTicks));
     }
 
-    @Inject(method = "runGameLoop", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/FMLCommonHandler;onRenderTickEnd(F)V", shift = At.Shift.AFTER))
+    @Inject(method = "runGameLoop", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/FMLCommonHandler;onRenderTickEnd(F)V", shift = At.Shift.AFTER, remap = false), remap = true)
     private void onRenderTickEnd(CallbackInfo ci) {
-        EventManager.INSTANCE.getEventBus().post(new RenderEvent(Stage.END, timer.renderPartialTicks));
+        EventManager.INSTANCE.post(new RenderEvent(Stage.END, timer.renderPartialTicks));
     }
 
-    @Inject(method = "runTick", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/FMLCommonHandler;onPreClientTick()V", shift = At.Shift.AFTER))
+    @Inject(method = "runTick", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/FMLCommonHandler;onPreClientTick()V", shift = At.Shift.AFTER, remap = false), remap = true)
     private void onClientTickStart(CallbackInfo ci) {
-        EventManager.INSTANCE.getEventBus().post(new TickEvent(Stage.START));
+        EventManager.INSTANCE.post(new TickEvent(Stage.START));
     }
 
-    @Inject(method = "runTick", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/FMLCommonHandler;onPostClientTick()V", shift = At.Shift.AFTER))
+    @Inject(method = "runTick", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/FMLCommonHandler;onPostClientTick()V", shift = At.Shift.AFTER, remap = false), remap = true)
     private void onClientTickEnd(CallbackInfo ci) {
-        EventManager.INSTANCE.getEventBus().post(new TickEvent(Stage.END));
+        EventManager.INSTANCE.post(new TickEvent(Stage.END));
     }
 
-    @ModifyExpressionValue(method = "displayGuiScreen", at = @At(value = "NEW", target = "Lnet/minecraftforge/client/event/GuiOpenEvent;<init>(Lnet/minecraft/client/gui/GuiScreen;)V"))
+    @ModifyExpressionValue(method = "displayGuiScreen", at = @At(value = "NEW", target = "Lnet/minecraftforge/client/event/GuiOpenEvent;<init>(Lnet/minecraft/client/gui/GuiScreen;)V", remap = false), remap = true)
     private GuiOpenEvent onGuiOpenEvent(GuiOpenEvent screen) {
         ScreenOpenEvent event = new ScreenOpenEvent(screen.gui);
-        EventManager.INSTANCE.getEventBus().post(event);
+        EventManager.INSTANCE.post(event);
         if (event.isCancelled) {
             screen.setCanceled(true);
         }

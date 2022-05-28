@@ -14,4 +14,16 @@ public final class EventManager {
     public EventBus getEventBus() {
         return eventBus;
     }
+
+    public void register(Object object) {
+        eventBus.register(object);
+    }
+
+    public void unregister(Object object) {
+        eventBus.unregister(object);
+    }
+
+    public void post(Object event) {
+        eventBus.post(event);
+    }
 }
