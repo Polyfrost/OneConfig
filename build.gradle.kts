@@ -40,7 +40,7 @@ blossom {
 version = mod_version
 group = "cc.polyfrost"
 base {
-    archivesName.set(mod_name)
+    archivesName.set("$mod_name-$platform")
 }
 loom {
     noServerRunConfigs()
@@ -111,11 +111,11 @@ val lwjglJar by tasks.registering(ShadowJar::class) {
 }
 
 dependencies {
-    dummyImpl("gg.essential:vigilance-1.8.9-forge:222") {
+    dummyImpl("gg.essential:vigilance-$platform:222") {
         isTransitive = false
     }
 
-    shadeRelocated("gg.essential:universalcraft-1.8.9-forge:211") {
+    shadeRelocated("gg.essential:universalcraft-$platform:211") {
         isTransitive = false
     }
 
@@ -250,6 +250,13 @@ tasks {
             }
         }
     }
+    val dokkaJar = create("dokkaJar", Jar::class.java) {
+        archiveClassifier.set("dokka")
+        group = "build"
+        dependsOn(dokkaHtml)
+        from(layout.buildDirectory.dir("dokka"))
+    }
+    named("javadocJar").get().dependsOn(dokkaJar)
 }
 
 afterEvaluate {
@@ -282,12 +289,13 @@ afterEvaluate {
 
 publishing {
     publications {
-        register<MavenPublication>("oneconfig-1.8.9-forge") {
+        register<MavenPublication>("oneconfig-$platform") {
             groupId = "cc.polyfrost"
-            artifactId = "oneconfig-1.8.9-forge"
+            artifactId = base.archivesName.get()
 
             from(components["java"])
             artifact(tasks["remapJar"])
+            artifact(tasks["dokkaJar"])
         }
     }
 
