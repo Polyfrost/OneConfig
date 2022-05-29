@@ -26,7 +26,7 @@ public class ConfigDropdown extends BasicOption { // TODO: remove dividers and f
     @Override
     public void draw(long vg, int x, int y) {
         if (!isEnabled()) RenderManager.setAlpha(vg, 0.5f);
-        RenderManager.drawString(vg, name, x, y + 16, OneConfigConfig.WHITE_90, 14f, Fonts.MEDIUM);
+        RenderManager.drawText(vg, name, x, y + 16, OneConfigConfig.WHITE_90, 14f, Fonts.MEDIUM);
 
         boolean hovered;
         if (size == 1) hovered = InputUtils.isAreaHovered(x + 224, y, 256, 32) && isEnabled();
@@ -50,12 +50,12 @@ public class ConfigDropdown extends BasicOption { // TODO: remove dividers and f
         if (hovered && Mouse.isButtonDown(0)) RenderManager.setAlpha(vg, 0.8f);
         if (size == 1) {
             RenderManager.drawRoundedRect(vg, x + 224, y, 256, 32, backgroundColor, 12);
-            RenderManager.drawString(vg, options[selected], x + 236, y + 16, OneConfigConfig.WHITE_80, 14f, Fonts.MEDIUM);
+            RenderManager.drawText(vg, options[selected], x + 236, y + 16, OneConfigConfig.WHITE_80, 14f, Fonts.MEDIUM);
             RenderManager.drawRoundedRect(vg, x + 452, y + 4, 24, 24, OneConfigConfig.PRIMARY_600, 8);
             RenderManager.drawSvg(vg, SVGs.DROPDOWN_LIST, x + 452, y + 4, 24, 24);
         } else {
             RenderManager.drawRoundedRect(vg, x + 352, y, 640, 32, backgroundColor, 12);
-            RenderManager.drawString(vg, options[selected], x + 364, y + 16, OneConfigConfig.WHITE_80, 14f, Fonts.MEDIUM);
+            RenderManager.drawText(vg, options[selected], x + 364, y + 16, OneConfigConfig.WHITE_80, 14f, Fonts.MEDIUM);
             RenderManager.drawRoundedRect(vg, x + 964, y + 4, 24, 24, OneConfigConfig.PRIMARY_600, 8);
             RenderManager.drawSvg(vg, SVGs.DROPDOWN_LIST, x + 964, y + 4, 24, 24);
         }
@@ -80,7 +80,7 @@ public class ConfigDropdown extends BasicOption { // TODO: remove dividers and f
         if (hovered && Mouse.isButtonDown(0)) RenderManager.setAlpha(vg, 0.8f);
         if (size == 1) {
             RenderManager.drawRoundedRect(vg, x + 224, y, 256, 32, backgroundColor, 12);
-            RenderManager.drawString(vg, options[selected], x + 236, y + 16, OneConfigConfig.WHITE_80, 14f, Fonts.MEDIUM);
+            RenderManager.drawText(vg, options[selected], x + 236, y + 16, OneConfigConfig.WHITE_80, 14f, Fonts.MEDIUM);
             if (hovered && Mouse.isButtonDown(0)) RenderManager.setAlpha(vg, 0.8f);
             RenderManager.drawRoundedRect(vg, x + 452, y + 4, 24, 24, OneConfigConfig.PRIMARY_600, 8);
             RenderManager.drawSvg(vg, SVGs.DROPDOWN_LIST, x + 452, y + 4, 24, 24);
@@ -107,12 +107,12 @@ public class ConfigDropdown extends BasicOption { // TODO: remove dividers and f
                     InputUtils.blockClicks(false);
                 }
 
-                RenderManager.drawString(vg, option, x + 240, optionY + 18, color, 14, Fonts.MEDIUM);
+                RenderManager.drawText(vg, option, x + 240, optionY + 18, color, 14, Fonts.MEDIUM);
                 optionY += 32;
             }
         } else {
             RenderManager.drawRoundedRect(vg, x + 352, y, 640, 32, backgroundColor, 12);
-            RenderManager.drawString(vg, options[selected], x + 364, y + 16, OneConfigConfig.WHITE_80, 14f, Fonts.MEDIUM);
+            RenderManager.drawText(vg, options[selected], x + 364, y + 16, OneConfigConfig.WHITE_80, 14f, Fonts.MEDIUM);
             if (hovered && Mouse.isButtonDown(0)) RenderManager.setAlpha(vg, 0.8f);
             RenderManager.drawRoundedRect(vg, x + 964, y + 4, 24, 24, OneConfigConfig.PRIMARY_600, 8);
             RenderManager.drawSvg(vg, SVGs.DROPDOWN_LIST, x + 964, y + 4, 24, 24);
@@ -131,7 +131,7 @@ public class ConfigDropdown extends BasicOption { // TODO: remove dividers and f
                     color = OneConfigConfig.WHITE;
                 }
 
-                RenderManager.drawString(vg, option, x + 368, optionY + 18, color, 14, Fonts.MEDIUM);
+                RenderManager.drawText(vg, option, x + 368, optionY + 18, color, 14, Fonts.MEDIUM);
 
                 if (optionHovered && InputUtils.isClicked(true)) {
                     try {

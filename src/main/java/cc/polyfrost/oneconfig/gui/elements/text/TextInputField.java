@@ -127,18 +127,18 @@ public class TextInputField extends BasicElement {
             float width;
             StringBuilder s = new StringBuilder();
             if (multiLine) {
-                wrappedText = TextUtils.wrapText(vg, input, this.width - 24, 14f, Fonts.REGULAR);
+                wrappedText = TextUtils.wrapText(vg, input, this.width - 24, 14f, Fonts.REGULAR.font);
                 lines = wrappedText.size();
                 if (!toggled) caretPos = wrappedText.get(wrappedText.size() - 1).length();
                 int caretLine = (int) MathUtils.clamp(getCaretLine(caretPos), 0, wrappedText.size() - 1);
-                width = RenderManager.getTextWidth(vg, wrappedText.get(caretLine).substring(0, getLineCaret(caretPos, caretLine)), 14f, Fonts.REGULAR);
+                width = RenderManager.getTextWidth(vg, wrappedText.get(caretLine).substring(0, getLineCaret(caretPos, caretLine)), 14f, Fonts.REGULAR.font);
             } else if (!password) {
-                width = RenderManager.getTextWidth(vg, input.substring(0, caretPos), 14f, Fonts.REGULAR);
+                width = RenderManager.getTextWidth(vg, input.substring(0, caretPos), 14f, Fonts.REGULAR.font);
             } else {
                 for (int i = 0; i < input.length(); i++) {
                     s.append("*");
                 }
-                width = RenderManager.getTextWidth(vg, s.substring(0, caretPos), 14f, Fonts.REGULAR);
+                width = RenderManager.getTextWidth(vg, s.substring(0, caretPos), 14f, Fonts.REGULAR.font);
             }
             if (hovered) {
                 while (Mouse.next()) {
@@ -222,11 +222,11 @@ public class TextInputField extends BasicElement {
 
             if (input.equals("")) {
                 if (multiLine) {
-                    RenderManager.drawString(vg, defaultText, x + 12, y + 16, color, 14f, Fonts.REGULAR);
+                    RenderManager.drawText(vg, defaultText, x + 12, y + 16, color, 14f, Fonts.REGULAR);
                 } else if (!centered) {
-                    RenderManager.drawString(vg, defaultText, x + 12, y + height / 2f + 1, color, 14f, Fonts.REGULAR);
+                    RenderManager.drawText(vg, defaultText, x + 12, y + height / 2f + 1, color, 14f, Fonts.REGULAR);
                 } else {
-                    RenderManager.drawString(vg, defaultText, x + this.width / 2f - halfTextWidth, y + height / 2f + 1, color, 14f, Fonts.REGULAR);
+                    RenderManager.drawText(vg, defaultText, x + this.width / 2f - halfTextWidth, y + height / 2f + 1, color, 14f, Fonts.REGULAR);
                 }
             }
 
@@ -234,16 +234,16 @@ public class TextInputField extends BasicElement {
                 if (multiLine) {
                     int textY = y + 20;
                     for (String line : wrappedText) {
-                        RenderManager.drawString(vg, line, x + 12, textY, color, 14f, Fonts.REGULAR);
+                        RenderManager.drawText(vg, line, x + 12, textY, color, 14f, Fonts.REGULAR);
                         textY += 24;
                     }
                 } else if (!centered) {
-                    RenderManager.drawString(vg, input, x + 12, y + height / 2f + 1, color, 14f, Fonts.REGULAR);
+                    RenderManager.drawText(vg, input, x + 12, y + height / 2f + 1, color, 14f, Fonts.REGULAR);
                 } else {
-                    RenderManager.drawString(vg, input, x + this.width / 2f - halfTextWidth, y + height / 2f + 1, color, 14f, Fonts.REGULAR);
+                    RenderManager.drawText(vg, input, x + this.width / 2f - halfTextWidth, y + height / 2f + 1, color, 14f, Fonts.REGULAR);
                 }
             } else {
-                RenderManager.drawString(vg, s.toString(), x + 12, y + height / 2f + 1, color, 14f, Fonts.REGULAR);
+                RenderManager.drawText(vg, s.toString(), x + 12, y + height / 2f + 1, color, 14f, Fonts.REGULAR);
             }
             ScissorManager.resetScissor(vg, scissor);
         } catch (

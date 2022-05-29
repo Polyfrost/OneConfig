@@ -11,12 +11,10 @@ import cc.polyfrost.oneconfig.lwjgl.BlurHandler;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.Images;
-import cc.polyfrost.oneconfig.test.TestCommand;
 import cc.polyfrost.oneconfig.test.TestConfig;
 import cc.polyfrost.oneconfig.utils.commands.CommandManager;
 import cc.polyfrost.oneconfig.utils.hypixel.HypixelUtils;
 import net.minecraft.launchwrapper.Launch;
-import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.fml.common.DummyModContainer;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.ModContainer;
@@ -27,24 +25,23 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 
+/**
+ * The main class of OneConfig.
+ */
 @net.minecraftforge.fml.common.Mod(modid = "@ID@", name = "@NAME@", version = "@VER@")
 public class OneConfig {
-    public static File jarFile;
-    public static File oneConfigDir = new File("./OneConfig");
-    public static File themesDir = new File(oneConfigDir, "themes");
+    public static final File oneConfigDir = new File("./OneConfig");
     public static OneConfigConfig config;
     public static TestConfig testConfig;
-    public static List<Mod> loadedMods = new ArrayList<>();
-    public static List<ModMetadata> loadedOtherMods = new ArrayList<>();
+    public static final List<Mod> loadedMods = new ArrayList<>();
+    public static final List<ModMetadata> loadedOtherMods = new ArrayList<>();
 
     @net.minecraftforge.fml.common.Mod.EventHandler
     public void onPreFMLInit(net.minecraftforge.fml.common.event.FMLPreInitializationEvent event) {
         if (!Launch.blackboard.containsKey("oneconfig.initialized")) {
             throw new RuntimeException("OneConfig has not been initialized! Please add the OneConfig tweaker or call OneConfigInit via an ITweaker or a FMLLoadingPlugin!");
         }
-        jarFile = event.getSourceFile();
         oneConfigDir.mkdirs();
-        themesDir.mkdirs();
         config = new OneConfigConfig();
     }
 
@@ -52,13 +49,12 @@ public class OneConfig {
     public void onFMLInitialization(net.minecraftforge.fml.common.event.FMLInitializationEvent event) {
         BlurHandler.INSTANCE.load();
         testConfig = new TestConfig();
-        CommandManager.registerCommand(new TestCommand());
-        ClientCommandHandler.instance.registerCommand(new OneConfigCommand());
+        CommandManager.INSTANCE.registerCommand(new OneConfigCommand());
         EventManager.INSTANCE.register(new HudCore());
         EventManager.INSTANCE.register(HypixelUtils.INSTANCE);
         RenderManager.setupAndDraw((vg) -> {
             RenderManager.drawRoundedRect(vg, -100, -100, 50, 50, -1, 12f);
-            RenderManager.drawString(vg, "OneConfig loading...", -100, -100, -1, 12f, Fonts.MEDIUM);
+            RenderManager.drawText(vg, "OneConfig loading...", -100, -100, -1, 12f, Fonts.MEDIUM);
             RenderManager.drawImage(vg, Images.HUE_GRADIENT, -100, -100, 50, 50);
         });
     }

@@ -36,9 +36,9 @@ public class ConfigPageButton extends BasicOption {
         if (!isEnabled()) RenderManager.setAlpha(vg, 0.5f);
 
         RenderManager.drawRoundedRect(vg, x - 16, y, 1024, height, backgroundColor, 20);
-        RenderManager.drawString(vg, name, x + 10, y + 32, OneConfigConfig.WHITE_90, 24, Fonts.MEDIUM);
+        RenderManager.drawText(vg, name, x + 10, y + 32, OneConfigConfig.WHITE_90, 24, Fonts.MEDIUM);
         if (!description.equals(""))
-            RenderManager.drawString(vg, name, x + 10, y + 70, OneConfigConfig.WHITE_90, 14, Fonts.MEDIUM);
+            RenderManager.drawText(vg, name, x + 10, y + 70, OneConfigConfig.WHITE_90, 14, Fonts.MEDIUM);
         RenderManager.drawSvg(vg, SVGs.CHEVRON_RIGHT, x + 981f, y + (description.equals("") ? 20f : 36f), 13, 22);
 
         if (clicked) OneConfigGui.INSTANCE.openPage(new ModConfigPage(page));

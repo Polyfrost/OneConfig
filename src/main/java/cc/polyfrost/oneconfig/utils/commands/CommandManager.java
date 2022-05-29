@@ -21,29 +21,12 @@ import java.util.stream.Collectors;
  * @see Command
  */
 public class CommandManager {
-    private static final HashMap<Class<?>, ArgumentParser<?>> parsers = new HashMap<>();
+    public static final CommandManager INSTANCE = new CommandManager();
+    private final HashMap<Class<?>, ArgumentParser<?>> parsers = new HashMap<>();
     private static final String NOT_FOUND_TEXT = "Command not found! Type /@ROOT_COMMAND@ help for help.";
     private static final String METHOD_RUN_ERROR = "Error while running @ROOT_COMMAND@ method! Please report this to the developer.";
 
-    /**
-     * Adds a parser to the parsers map.
-     *
-     * @param parser The parser to add.
-     * @param clazz The class of the parser.
-     */
-    public static void addParser(ArgumentParser<?> parser, Class<?> clazz) {
-        parsers.put(clazz, parser);
-    }
-
-    /**
-     * Adds a parser to the parsers map.
-     * @param parser The parser to add.
-     */
-    public static void addParser(ArgumentParser<?> parser) {
-        addParser(parser, parser.typeClass);
-    }
-
-    static {
+    private CommandManager() {
         addParser(new StringParser());
         addParser(new IntegerParser());
         addParser(new IntegerParser(), int.class);
@@ -56,11 +39,29 @@ public class CommandManager {
     }
 
     /**
+     * Adds a parser to the parsers map.
+     *
+     * @param parser The parser to add.
+     * @param clazz The class of the parser.
+     */
+    public void addParser(ArgumentParser<?> parser, Class<?> clazz) {
+        parsers.put(clazz, parser);
+    }
+
+    /**
+     * Adds a parser to the parsers map.
+     * @param parser The parser to add.
+     */
+    public void addParser(ArgumentParser<?> parser) {
+        addParser(parser, parser.typeClass);
+    }
+
+    /**
      * Registers the provided command.
      *
      * @param command The command to register.
      */
-    public static void registerCommand(Object command) {
+    public void registerCommand(Object command) {
         Class<?> clazz = command.getClass();
         if (clazz.isAnnotationPresent(Command.class)) {
             final Command annotation = clazz.getAnnotation(Command.class);
@@ -122,7 +123,7 @@ public class CommandManager {
         }
     }
 
-    private static String sendHelpCommand(InternalCommand root) {
+    private String sendHelpCommand(InternalCommand root) {
         StringBuilder builder = new StringBuilder();
         builder.append(ChatColor.GOLD.toString() + "Help for " + ChatColor.BOLD + root.name + ChatColor.RESET + ChatColor.GOLD + ":\n");
         builder.append("\n");
@@ -139,7 +140,7 @@ public class CommandManager {
         return builder.toString();
     }
 
-    private static void runThroughCommandsHelp(String append, InternalCommand command, StringBuilder builder) {
+    private void runThroughCommandsHelp(String append, InternalCommand command, StringBuilder builder) {
         for (InternalCommand.InternalCommandInvoker invoker : command.invokers) {
             builder.append("\n" + ChatColor.GOLD + "/" + append + " " + command.name);
             for (Parameter parameter : invoker.method.getParameters()) {
@@ -158,7 +159,7 @@ public class CommandManager {
         }
     }
 
-    private static String runThroughCommands(InternalCommand command, int layer, String[] args) {
+    private String runThroughCommands(InternalCommand command, int layer, String[] args) {
         int newLayer = layer + 1;
         if (command.isEqual(args[layer]) && !command.invokers.isEmpty()) {
             Set<InternalCommand.InternalCommandInvoker> invokers = command.invokers.stream().filter(invoker -> newLayer == args.length - invoker.parameterTypes.length).sorted(Comparator.comparingInt((a) -> a.method.getAnnotation(Main.class).priority())).collect(Collectors.toSet());
@@ -189,7 +190,7 @@ public class CommandManager {
         return NOT_FOUND_TEXT;
     }
 
-    private static String tryInvoker(InternalCommand.InternalCommandInvoker invoker, int newLayer, String[] args) {
+    private String tryInvoker(InternalCommand.InternalCommandInvoker invoker, int newLayer, String[] args) {
         try {
             ArrayList<Object> params = new ArrayList<>();
             int processed = newLayer;
@@ -228,7 +229,7 @@ public class CommandManager {
         }
     }
 
-    private static void addToInvokers(Class<?>[] classes, InternalCommand parent) {
+    private void addToInvokers(Class<?>[] classes, InternalCommand parent) {
         for (Class<?> clazz : classes) {
             if (clazz.isAnnotationPresent(SubCommand.class)) {
                 SubCommand annotation = clazz.getAnnotation(SubCommand.class);

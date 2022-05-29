@@ -10,6 +10,11 @@ import org.spongepowered.asm.mixin.Mixins;
  */
 @SuppressWarnings("unused")
 public class OneConfigInit {
+
+    /**
+     * Initializes the OneConfig mod.
+     * @param args The arguments passed to the mod.
+     */
     public static void initialize(String[] args) {
         Launch.blackboard.put("oneconfig.initialized", true);
         MixinBootstrap.init();
