@@ -14,6 +14,8 @@ public class OptionSubcategory {
     public ArrayList<BasicOption> options = new ArrayList<>();
     public ArrayList<ConfigPageButton> topButtons = new ArrayList<>();
     public ArrayList<ConfigPageButton> bottomButtons = new ArrayList<>();
+    private ArrayList<BasicOption> filteredOptions = new ArrayList<>();
+    private int drawLastY;
 
     public OptionSubcategory(String name) {
         this.name = name;
@@ -21,7 +23,7 @@ public class OptionSubcategory {
 
     public int draw(long vg, int x, int y) {
         String filter = OneConfigGui.INSTANCE == null ? "" : OneConfigGui.INSTANCE.getSearchValue().toLowerCase().trim();
-        ArrayList<BasicOption> filteredOptions = new ArrayList<>(options);
+        filteredOptions = new ArrayList<>(options);
         ArrayList<ConfigPageButton> filteredTop = new ArrayList<>(topButtons);
         ArrayList<ConfigPageButton> filteredBottom = new ArrayList<>(bottomButtons);
         if (!filter.equals("") && !name.toLowerCase().contains(filter)) {
@@ -70,7 +72,7 @@ public class OptionSubcategory {
             optionY += 16;
         }
 
-        int drawLastY = optionY;
+        drawLastY = optionY;
         if (filteredOptions.size() > 0) {
             for (int i = 0; i < filteredOptions.size(); i++) {
                 BasicOption option = filteredOptions.get(i);
@@ -94,6 +96,10 @@ public class OptionSubcategory {
             optionY += page.getHeight() + 16;
         }
 
+        return optionY - y;
+    }
+
+    public void drawLast(long vg, int x) {
         for (int i = 0; i < filteredOptions.size(); i++) {
             BasicOption option = filteredOptions.get(i);
             option.drawLast(vg, x, drawLastY);
@@ -108,8 +114,6 @@ public class OptionSubcategory {
             }
             drawLastY += option.getHeight() + 16;
         }
-
-        return optionY - y;
     }
 
     public String getName() {

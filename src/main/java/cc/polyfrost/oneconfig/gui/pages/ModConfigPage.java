@@ -43,6 +43,9 @@ public class ModConfigPage extends Page {
         for (OptionSubcategory subCategory : page.categories.get(selectedCategory).subcategories) {
             optionY += subCategory.draw(vg, x + 30, optionY);
         }
+        for (OptionSubcategory subCategory : page.categories.get(selectedCategory).subcategories) {
+            subCategory.drawLast(vg, x + 30);
+        }
         totalSize = optionY - y;
     }
 
