@@ -35,7 +35,7 @@ public class ConfigSwitch extends BasicOption {
         if (percentOn != 0)
             RenderManager.drawRoundedRect(vg, x, y + 4, 42, 24, ColorUtils.setAlpha(colorEnabled, (int) (255 * percentOn)), 12f);
         RenderManager.drawRoundedRect(vg, x2, y + 7, 18, 18, OneConfigConfig.WHITE, 9f);
-        RenderManager.drawString(vg, name, x + 50, y + 17, OneConfigConfig.WHITE, 14f, Fonts.MEDIUM);
+        RenderManager.drawText(vg, name, x + 50, y + 17, OneConfigConfig.WHITE, 14f, Fonts.MEDIUM);
 
         if (InputUtils.isAreaClicked(x, y, 42, 32) && isEnabled()) {
             toggled = !toggled;

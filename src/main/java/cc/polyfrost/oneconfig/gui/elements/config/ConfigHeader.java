@@ -18,7 +18,7 @@ public class ConfigHeader extends BasicOption {
     @Override
     public void draw(long vg, int x, int y) {
         Scissor scissor = ScissorManager.scissor(vg, x, y, size == 1 ? 480 : 992, 32);
-        RenderManager.drawString(vg, name, x, y + 17, OneConfigConfig.WHITE_90, 24, Fonts.MEDIUM);
+        RenderManager.drawText(vg, name, x, y + 17, OneConfigConfig.WHITE_90, 24, Fonts.MEDIUM);
         ScissorManager.resetScissor(vg, scissor);
     }
 

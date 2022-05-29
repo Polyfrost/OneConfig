@@ -1,6 +1,7 @@
 package cc.polyfrost.oneconfig.utils;
 
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
+import cc.polyfrost.oneconfig.lwjgl.font.Font;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 
 import java.util.ArrayList;
@@ -20,6 +21,19 @@ public final class TextUtils {
      * @return The array of lines.
      */
     public static ArrayList<String> wrapText(long vg, String text, float maxWidth, float fontSize, Fonts font) {
+        return wrapText(vg, text, maxWidth, fontSize, font.font);
+    }
+
+    /**
+     * Wraps a string into an array of lines.
+     * @param vg The NanoVG context.
+     * @param text The text to wrap.
+     * @param maxWidth The maximum width of each line.
+     * @param fontSize The font size.
+     * @param font The font to use.
+     * @return The array of lines.
+     */
+    public static ArrayList<String> wrapText(long vg, String text, float maxWidth, float fontSize, Font font) {
         ArrayList<String> wrappedText = new ArrayList<>();
         text += " ";
         int prevIndex = 0;

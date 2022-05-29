@@ -54,7 +54,7 @@ public class OneConfig {
         EventManager.INSTANCE.register(HypixelUtils.INSTANCE);
         RenderManager.setupAndDraw((vg) -> {
             RenderManager.drawRoundedRect(vg, -100, -100, 50, 50, -1, 12f);
-            RenderManager.drawString(vg, "OneConfig loading...", -100, -100, -1, 12f, Fonts.MEDIUM);
+            RenderManager.drawText(vg, "OneConfig loading...", -100, -100, -1, 12f, Fonts.MEDIUM);
             RenderManager.drawImage(vg, Images.HUE_GRADIENT, -100, -100, 50, 50);
         });
     }

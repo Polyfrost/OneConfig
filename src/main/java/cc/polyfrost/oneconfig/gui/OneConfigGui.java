@@ -93,8 +93,8 @@ public class OneConfigGui extends UScreen {
             RenderManager.drawLine(vg, x + 224, y, x + 222, y + 800, 1, OneConfigConfig.GRAY_700);
 
             RenderManager.drawSvg(vg, SVGs.ONECONFIG, x + 19, y + 19, 42, 42);
-            RenderManager.drawString(vg, "OneConfig", x + 69, y + 32, OneConfigConfig.WHITE, 18f, Fonts.BOLD);        // added half line height to center text
-            RenderManager.drawString(vg, "ALPHA - By Polyfrost", x + 69, y + 51, OneConfigConfig.WHITE, 12f, Fonts.REGULAR);
+            RenderManager.drawText(vg, "OneConfig", x + 69, y + 32, OneConfigConfig.WHITE, 18f, Fonts.BOLD);        // added half line height to center text
+            RenderManager.drawText(vg, "ALPHA - By Polyfrost", x + 69, y + 51, OneConfigConfig.WHITE, 12f, Fonts.REGULAR);
 
             textInputField.draw(vg, x + 1020, y + 16);
             sideBar.draw(vg, x, y);
@@ -159,7 +159,7 @@ public class OneConfigGui extends UScreen {
                 int color = OneConfigConfig.WHITE_60;
                 if (i == parents.size() - 1) color = OneConfigConfig.WHITE_95;
                 else if (hovered && !Mouse.isButtonDown(0)) color = OneConfigConfig.WHITE_80;
-                RenderManager.drawString(vg, title, breadcrumbX, y + 38, color, 24f, Fonts.SEMIBOLD);
+                RenderManager.drawText(vg, title, breadcrumbX, y + 38, color, 24f, Fonts.SEMIBOLD);
                 if (i != 0)
                     RenderManager.drawSvg(vg, SVGs.CHEVRON_RIGHT, breadcrumbX - 28, y + 25, 24, 24, color);
                 if (hovered && InputUtils.isClicked()) openPage(parents.get(i));
@@ -168,7 +168,7 @@ public class OneConfigGui extends UScreen {
 
             long end = System.nanoTime() - start;
             String s = (" draw: " + end / 1000000f + "ms");
-            RenderManager.drawString(vg, s, x + 1170, y + 790, OneConfigConfig.GRAY_300, 10f, Fonts.MEDIUM);
+            RenderManager.drawText(vg, s, x + 1170, y + 790, OneConfigConfig.GRAY_300, 10f, Fonts.MEDIUM);
             if (currentColorSelector != null) {
                 currentColorSelector.draw(vg);
             }

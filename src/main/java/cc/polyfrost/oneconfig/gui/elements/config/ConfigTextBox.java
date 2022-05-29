@@ -27,7 +27,7 @@ public class ConfigTextBox extends BasicOption {
     public void draw(long vg, int x, int y) {
         if (!isEnabled()) RenderManager.setAlpha(vg, 0.5f);
         textField.disable(!isEnabled());
-        RenderManager.drawString(vg, name, x, y + 16, OneConfigConfig.WHITE_90, 14, Fonts.MEDIUM);
+        RenderManager.drawText(vg, name, x, y + 16, OneConfigConfig.WHITE_90, 14, Fonts.MEDIUM);
 
         try {
             String value = (String) get();

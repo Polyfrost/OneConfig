@@ -10,7 +10,7 @@ package cc.polyfrost.oneconfig.utils.commands;
 public abstract class CommandHelper {
 
     public CommandHelper() {
-        CommandManager.registerCommand(this);
+        CommandManager.INSTANCE.registerCommand(this);
     }
 
     public void preload() {

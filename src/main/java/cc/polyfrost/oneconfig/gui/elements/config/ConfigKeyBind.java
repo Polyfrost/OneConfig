@@ -26,7 +26,7 @@ public class ConfigKeyBind extends BasicOption {
     @Override
     public void draw(long vg, int x, int y) {
         if (!isEnabled()) RenderManager.setAlpha(vg, 0.5f);
-        RenderManager.drawString(vg, name, x, y + 17, OneConfigConfig.WHITE, 14f, Fonts.MEDIUM);
+        RenderManager.drawText(vg, name, x, y + 17, OneConfigConfig.WHITE, 14f, Fonts.MEDIUM);
         OneKeyBind keyBind = getKeyBind();
         String text = keyBind.getDisplay();
         button.disable(!isEnabled());

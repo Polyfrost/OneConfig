@@ -43,7 +43,7 @@ public class OptionSubcategory {
         if (filteredOptions.size() == 0 && filteredTop.size() == 0 && filteredBottom.size() == 0) return 0;
         int optionY = y;
         if (!name.equals("")) {
-            RenderManager.drawString(vg, name, x, y + 12, OneConfigConfig.WHITE_90, 24, Fonts.MEDIUM);
+            RenderManager.drawText(vg, name, x, y + 12, OneConfigConfig.WHITE_90, 24, Fonts.MEDIUM);
             optionY += 36;
         }
 

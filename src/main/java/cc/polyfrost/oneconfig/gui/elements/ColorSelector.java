@@ -105,7 +105,7 @@ public class ColorSelector {
         int height = 768;
         RenderManager.drawHollowRoundRect(vg, x - 3, y - 3, width + 4, height + 4, new Color(204, 204, 204, 77).getRGB(), 20f, 2f);
         RenderManager.drawRoundedRect(vg, x, y, width, height, OneConfigConfig.GRAY_800, 20f);
-        RenderManager.drawString(vg, "Color Selector", x + 16, y + 32, OneConfigConfig.WHITE_90, 18f, Fonts.SEMIBOLD);
+        RenderManager.drawText(vg, "Color Selector", x + 16, y + 32, OneConfigConfig.WHITE_90, 18f, Fonts.SEMIBOLD);
         if (!closeBtn.isHovered()) RenderManager.setAlpha(vg, 0.8f);
         closeBtn.draw(vg, x + 368, y + 16);
         RenderManager.drawSvg(vg, SVGs.X_CIRCLE, x + 368, y + 16, 32, 32, closeBtn.isHovered() ? OneConfigConfig.ERROR_600 : -1);
@@ -172,17 +172,17 @@ public class ColorSelector {
         }
         percentMove = MathUtils.easeOut(percentMove, mode, 100f);
 
-        RenderManager.drawString(vg, "HSB Box", x + 55, y + 81, OneConfigConfig.WHITE, 12f, Fonts.MEDIUM);
-        RenderManager.drawString(vg, "Color Wheel", x + 172.5f, y + 81, OneConfigConfig.WHITE, 12f, Fonts.MEDIUM);
-        RenderManager.drawString(vg, "Chroma", x + 313, y + 81, OneConfigConfig.WHITE, 12f, Fonts.MEDIUM);
+        RenderManager.drawText(vg, "HSB Box", x + 55, y + 81, OneConfigConfig.WHITE, 12f, Fonts.MEDIUM);
+        RenderManager.drawText(vg, "Color Wheel", x + 172.5f, y + 81, OneConfigConfig.WHITE, 12f, Fonts.MEDIUM);
+        RenderManager.drawText(vg, "Chroma", x + 313, y + 81, OneConfigConfig.WHITE, 12f, Fonts.MEDIUM);
 
-        RenderManager.drawString(vg, "Saturation", x + 224, y + 560, OneConfigConfig.WHITE_80, 12f, Fonts.MEDIUM);
+        RenderManager.drawText(vg, "Saturation", x + 224, y + 560, OneConfigConfig.WHITE_80, 12f, Fonts.MEDIUM);
         saturationInput.draw(vg, x + 312, y + 544);
-        RenderManager.drawString(vg, "Brightness", x + 16, y + 599, OneConfigConfig.WHITE_80, 12f, Fonts.MEDIUM);
+        RenderManager.drawText(vg, "Brightness", x + 16, y + 599, OneConfigConfig.WHITE_80, 12f, Fonts.MEDIUM);
         brightnessInput.draw(vg, x + 104, y + 584);
-        RenderManager.drawString(vg, "Alpha (%)", x + 224, y + 599, OneConfigConfig.WHITE_80, 12f, Fonts.MEDIUM);
+        RenderManager.drawText(vg, "Alpha (%)", x + 224, y + 599, OneConfigConfig.WHITE_80, 12f, Fonts.MEDIUM);
         alphaInput.draw(vg, x + 312, y + 584);
-        RenderManager.drawString(vg, color.getDataBit() == -1 ? "Hex (RGB):" : "Color Code:", x + 16, y + 641, OneConfigConfig.WHITE_80, 12f, Fonts.MEDIUM);
+        RenderManager.drawText(vg, color.getDataBit() == -1 ? "Hex (RGB):" : "Color Code:", x + 16, y + 641, OneConfigConfig.WHITE_80, 12f, Fonts.MEDIUM);
         hexInput.draw(vg, x + 104, y + 624);
 
         copyBtn.draw(vg, x + 204, y + 624);
@@ -218,14 +218,14 @@ public class ColorSelector {
                 if (mode == 0) {
                     topSlider.setColor(color);
                     topSlider.draw(vg, x + 16, y + 424);
-                    RenderManager.drawString(vg, "Hue", x + 16, y + 560, OneConfigConfig.WHITE_80, 12f, Fonts.MEDIUM);
+                    RenderManager.drawText(vg, "Hue", x + 16, y + 560, OneConfigConfig.WHITE_80, 12f, Fonts.MEDIUM);
                     hueInput.draw(vg, x + 104, y + 544);
                 }
                 if (mode == 2) {
                     speedSlider.draw(vg, x + 60, y + 424);
-                    RenderManager.drawString(vg, "SLOW", x + 16, y + 429, OneConfigConfig.WHITE_80, 12f, Fonts.REGULAR);
-                    RenderManager.drawString(vg, "FAST", x + 370, y + 429, OneConfigConfig.WHITE_80, 12f, Fonts.REGULAR);
-                    RenderManager.drawString(vg, "Speed (s)", x + 16, y + 560, OneConfigConfig.WHITE_80, 12f, Fonts.MEDIUM);
+                    RenderManager.drawText(vg, "SLOW", x + 16, y + 429, OneConfigConfig.WHITE_80, 12f, Fonts.REGULAR);
+                    RenderManager.drawText(vg, "FAST", x + 370, y + 429, OneConfigConfig.WHITE_80, 12f, Fonts.REGULAR);
+                    RenderManager.drawText(vg, "Speed (s)", x + 16, y + 560, OneConfigConfig.WHITE_80, 12f, Fonts.MEDIUM);
                     hueInput.draw(vg, x + 104, y + 544);
                     if (!speedSlider.isDragging()) {
                         color.setChromaSpeed((int) Math.abs(speedSlider.getValue() - 29));
@@ -262,7 +262,7 @@ public class ColorSelector {
                 color.setHSBA(dragging ? angle : color.getHue(), saturation, (int) (topSlider.getValue() / 360 * 100), (int) ((bottomSlider.getValue() / 100f) * 255));
                 topSlider.setGradient(OneConfigConfig.BLACK, color.getRGBMax(true));
                 topSlider.setImage(null);
-                RenderManager.drawString(vg, "Hue", x + 16, y + 560, OneConfigConfig.WHITE_80, 12f, Fonts.MEDIUM);
+                RenderManager.drawText(vg, "Hue", x + 16, y + 560, OneConfigConfig.WHITE_80, 12f, Fonts.MEDIUM);
                 hueInput.draw(vg, x + 104, y + 544);
                 topSlider.draw(vg, x + 16, y + 424);
                 break;

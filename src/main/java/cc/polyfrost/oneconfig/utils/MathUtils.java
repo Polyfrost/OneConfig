@@ -4,7 +4,7 @@ import cc.polyfrost.oneconfig.gui.OneConfigGui;
 
 public final class MathUtils {
     public static float clamp(float number) {
-        return number < 0f ? 0f : Math.min(number, 1f);
+        return clamp(number, 0, 1);
     }
 
     public static float clamp(float number, float min, float max) {

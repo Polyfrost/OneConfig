@@ -101,7 +101,7 @@ public class BasicButton extends BasicElement {
                 contentWidth += iconSize + xSpacing;
             }
             if (text != null) {
-                RenderManager.drawString(vg, text, middle - contentWidth / 2 + (icon1 == null ? 0 : iconSize + xSpacing), middleYText, textColor, fontSize, Fonts.MEDIUM);
+                RenderManager.drawText(vg, text, middle - contentWidth / 2 + (icon1 == null ? 0 : iconSize + xSpacing), middleYText, textColor, fontSize, Fonts.MEDIUM);
             }
             if (icon1 != null) {
                 RenderManager.drawSvg(vg, icon1, middle - contentWidth / 2, middleYIcon, iconSize, iconSize);
@@ -114,7 +114,7 @@ public class BasicButton extends BasicElement {
         }
         if (alignment == ALIGNMENT_JUSTIFIED) {
             if (text != null) {
-                RenderManager.drawString(vg, text, middle - contentWidth / 2, middleYText, textColor, fontSize, Fonts.MEDIUM);
+                RenderManager.drawText(vg, text, middle - contentWidth / 2, middleYText, textColor, fontSize, Fonts.MEDIUM);
             }
             if (icon1 != null) {
                 RenderManager.drawSvg(vg, icon1, x + xSpacing, middleYIcon, iconSize, iconSize);
@@ -132,7 +132,7 @@ public class BasicButton extends BasicElement {
                 contentWidth += iconSize + xSpacing;
             }
             if (text != null) {
-                RenderManager.drawString(vg, text, x + contentWidth, middleYText, textColor, fontSize, Fonts.MEDIUM);
+                RenderManager.drawText(vg, text, x + contentWidth, middleYText, textColor, fontSize, Fonts.MEDIUM);
                 contentWidth += RenderManager.getTextWidth(vg, text, fontSize, Fonts.MEDIUM) + xSpacing;
             }
             if (icon2 != null) {
@@ -150,7 +150,7 @@ public class BasicButton extends BasicElement {
             }
             if (text != null) {
                 contentWidth -= RenderManager.getTextWidth(vg, text, fontSize, Fonts.MEDIUM);
-                RenderManager.drawString(vg, text, x + contentWidth, middleYText, textColor, fontSize, Fonts.MEDIUM);
+                RenderManager.drawText(vg, text, x + contentWidth, middleYText, textColor, fontSize, Fonts.MEDIUM);
                 contentWidth -= xSpacing;
             }
             if (icon1 != null) {
