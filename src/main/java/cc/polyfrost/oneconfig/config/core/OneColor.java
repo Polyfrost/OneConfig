@@ -211,7 +211,14 @@ public final class OneColor {
      * Return the color as if it had maximum saturation and brightness. Internal method.
      */
     public int getRGBMax(boolean maxBrightness) {
-        return HSBAtoRGBA(hsba[0], 100, maxBrightness ? 100 : hsba[2], 255);
+        if (dataBit == 0) dataBit = -1;
+        if (dataBit == -1) {
+            return HSBAtoRGBA(this.hsba[0], 100, maxBrightness ? 100 : 0, this.hsba[3]);
+        } else {
+            int temp = Color.HSBtoRGB(System.currentTimeMillis() % dataBit / (float) dataBit, 1, maxBrightness ? 1 : 0);
+            hsba[0] = (short) ((System.currentTimeMillis() % dataBit / (float) dataBit) * 360);
+            return ((temp & 0x00ffffff) | (hsba[3] << 24));
+        }
     }
 
     /**

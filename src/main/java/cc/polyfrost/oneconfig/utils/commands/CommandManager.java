@@ -6,6 +6,7 @@ import cc.polyfrost.oneconfig.utils.commands.annotations.*;
 import cc.polyfrost.oneconfig.utils.commands.arguments.*;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
+import net.minecraft.util.BlockPos;
 import net.minecraftforge.client.ClientCommandHandler;
 
 import java.lang.reflect.InvocationTargetException;
@@ -42,7 +43,7 @@ public class CommandManager {
      * Adds a parser to the parsers map.
      *
      * @param parser The parser to add.
-     * @param clazz The class of the parser.
+     * @param clazz  The class of the parser.
      */
     public void addParser(ArgumentParser<?> parser, Class<?> clazz) {
         parsers.put(clazz, parser);
@@ -50,6 +51,7 @@ public class CommandManager {
 
     /**
      * Adds a parser to the parsers map.
+     *
      * @param parser The parser to add.
      */
     public void addParser(ArgumentParser<?> parser) {
@@ -93,7 +95,8 @@ public class CommandManager {
                         if (!root.invokers.isEmpty()) {
                             try {
                                 root.invokers.stream().findFirst().get().method.invoke(null);
-                            } catch (IllegalAccessException | InvocationTargetException | IllegalArgumentException | ExceptionInInitializerError e) {
+                            } catch (IllegalAccessException | InvocationTargetException | IllegalArgumentException |
+                                     ExceptionInInitializerError e) {
                                 UChat.chat(ChatColor.RED.toString() + ChatColor.BOLD + METHOD_RUN_ERROR);
                             }
                         }
@@ -224,7 +227,8 @@ public class CommandManager {
             }
             invoker.method.invoke(null, params.toArray());
             return null;
-        } catch (IllegalAccessException | InvocationTargetException | IllegalArgumentException | ExceptionInInitializerError e) {
+        } catch (IllegalAccessException | InvocationTargetException | IllegalArgumentException |
+                 ExceptionInInitializerError e) {
             return ChatColor.RED.toString() + ChatColor.BOLD + METHOD_RUN_ERROR;
         }
     }

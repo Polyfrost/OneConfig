@@ -54,7 +54,7 @@ public class ConfigCheckbox extends BasicOption {
             RenderManager.drawRoundedRect(vg, x, y + 4, 24, 24, OneConfigConfig.PRIMARY_500, 6f);
             RenderManager.drawSvg(vg, SVGs.CHECKBOX_TICK, x, y + 4, 24, 24);
         }
-        if (percentOn != 0 && hover)
+        if (toggled && hover)
             RenderManager.drawHollowRoundRect(vg, x - 1, y + 3, 24, 24, OneConfigConfig.PRIMARY_600, 6f, 2f);
         RenderManager.setAlpha(vg, 1f);
     }

@@ -18,6 +18,7 @@ public class ConfigColorElement extends BasicOption {
     private final TextInputField hexField = new TextInputField(104, 32, "", false, false);
     private final TextInputField alphaField = new TextInputField(72, 32, "", false, false);
     private final BasicElement element = new BasicElement(64, 32, false);
+    private boolean open = false;
 
     public ConfigColorElement(Field field, Object parent, String name, int size) {
         super(field, parent, name, size);
@@ -72,9 +73,11 @@ public class ConfigColorElement extends BasicOption {
         RenderManager.drawRoundImage(vg, Images.ALPHA_GRID, x1 + 420, y + 4, 56, 24, 8f);
         RenderManager.drawRoundedRect(vg, x1 + 420, y + 4, 56, 24, color.getRGB(), 8f);
         if (element.isClicked() && !element.isToggled()) {
+            open = !open;
             OneConfigGui.INSTANCE.initColorSelector(new ColorSelector(color, InputUtils.mouseX(), InputUtils.mouseY()));
         }
-        if (OneConfigGui.INSTANCE != null && OneConfigGui.INSTANCE.currentColorSelector != null) {
+        if(OneConfigGui.INSTANCE.currentColorSelector == null) open = false;
+        if (OneConfigGui.INSTANCE.currentColorSelector != null && open) {
             color = (OneConfigGui.INSTANCE.getColor());
         }
         setColor(color);
