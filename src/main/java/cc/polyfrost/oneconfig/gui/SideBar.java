@@ -1,77 +1,51 @@
 package cc.polyfrost.oneconfig.gui;
 
-import cc.polyfrost.oneconfig.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.gui.elements.BasicButton;
-import cc.polyfrost.oneconfig.gui.pages.HomePage;
+import cc.polyfrost.oneconfig.gui.pages.CreditsPage;
 import cc.polyfrost.oneconfig.gui.pages.ModsPage;
-import cc.polyfrost.oneconfig.lwjgl.RenderManager;
-import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
-import cc.polyfrost.oneconfig.utils.ColorUtils;
 import cc.polyfrost.oneconfig.utils.GuiUtils;
-import cc.polyfrost.oneconfig.utils.MathUtils;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import static cc.polyfrost.oneconfig.gui.elements.BasicButton.ALIGNMENT_LEFT;
 import static cc.polyfrost.oneconfig.gui.elements.BasicButton.SIZE_36;
+import static cc.polyfrost.oneconfig.utils.ColorUtils.*;
 
 public class SideBar {
-    private final List<BasicButton> btnList = new ArrayList<>();
-
-    private float targetY = 0, currentY = 0;
+    private final ArrayList<BasicButton> buttons = new ArrayList<BasicButton>() {{
+        add(new BasicButton(192, SIZE_36, "Credits", SVGs.COPYRIGHT_FILL, null, ALIGNMENT_LEFT, TERTIARY));
+        add(new BasicButton(192, SIZE_36, "Global Search", SVGs.MAGNIFYING_GLASS_BOLD, null, ALIGNMENT_LEFT, TERTIARY));
+        add(new BasicButton(192, SIZE_36, "Mods", SVGs.FADERS_HORIZONTAL_BOLD, null, ALIGNMENT_LEFT, PRIMARY));
+        add(new BasicButton(192, SIZE_36, "Profiles", SVGs.USER_SWITCH_FILL, null, ALIGNMENT_LEFT, TERTIARY));
+        add(new BasicButton(192, SIZE_36, "Performance", SVGs.GAUGE_FILL, null, ALIGNMENT_LEFT, TERTIARY));
+        add(new BasicButton(192, SIZE_36, "Updates", SVGs.ARROWS_CLOCKWISE_BOLD, null, ALIGNMENT_LEFT, TERTIARY));
+        add(new BasicButton(192, SIZE_36, "Themes", SVGs.PAINT_BRUSH_BROAD_FILL, null, ALIGNMENT_LEFT, TERTIARY));
+        add(new BasicButton(192, SIZE_36, "Screenshots", SVGs.APERTURE_FILL, null, ALIGNMENT_LEFT, TERTIARY));
+        add(new BasicButton(192, SIZE_36, "Preferences", SVGs.GEAR_SIX_FILL, null, ALIGNMENT_LEFT, TERTIARY));
+    }};
+    private final BasicButton HUDButton = new BasicButton(192, SIZE_36, "Edit HUD", SVGs.NOTE_PENCIL_BOLD, null, ALIGNMENT_LEFT, SECONDARY);
+    private final BasicButton CloseButton = new BasicButton(192, SIZE_36, "Close", SVGs.X_CIRCLE_BOLD, null, ALIGNMENT_LEFT, SECONDARY_DESTRUCTIVE);
 
     public SideBar() {
-        btnList.add(new BasicButton(192, SIZE_36, "Dashboard", SVGs.DASHBOARD, null, ALIGNMENT_LEFT, ColorUtils.TERTIARY));
-        btnList.get(0).setClickAction(new HomePage());
-        btnList.add(new BasicButton(192, SIZE_36, "Global Search", SVGs.SEARCH, null, ALIGNMENT_LEFT, ColorUtils.TERTIARY));
-        btnList.add(new BasicButton(192, SIZE_36, "Screenshots", SVGs.IMAGE, null, ALIGNMENT_LEFT, ColorUtils.TERTIARY));
-        btnList.add(new BasicButton(192, SIZE_36, "Preferences", SVGs.SETTINGS, null, ALIGNMENT_LEFT, ColorUtils.TERTIARY));
-        btnList.add(new BasicButton(192, 36, "Mods", SVGs.MODS, null, ALIGNMENT_LEFT, ColorUtils.TERTIARY));
-        btnList.get(4).setClickAction(new ModsPage());
-        btnList.add(new BasicButton(192, SIZE_36, "Performance", SVGs.PERFORMANCE, null, ALIGNMENT_LEFT, ColorUtils.TERTIARY));
-        btnList.add(new BasicButton(192, SIZE_36, "Profiles", SVGs.PROFILES, null, ALIGNMENT_LEFT, ColorUtils.TERTIARY));
-        btnList.add(new BasicButton(192, SIZE_36, "Updates", SVGs.UPDATE, null, ALIGNMENT_LEFT, ColorUtils.TERTIARY));
-        btnList.add(new BasicButton(192, SIZE_36, "Themes Library", SVGs.THEME, null, ALIGNMENT_LEFT, ColorUtils.TERTIARY));
-        btnList.add(new BasicButton(192, SIZE_36, "Themes Browser", SVGs.SEARCH, null, ALIGNMENT_LEFT, ColorUtils.TERTIARY));
-        btnList.add(new BasicButton(192, SIZE_36, "Packs Library", SVGs.BOX, null, ALIGNMENT_LEFT, ColorUtils.TERTIARY));
-        btnList.add(new BasicButton(192, SIZE_36, "Packs Browser", SVGs.SEARCH, null, ALIGNMENT_LEFT, ColorUtils.TERTIARY));
-        btnList.add(new BasicButton(192, SIZE_36, "Close", SVGs.X_CIRCLE, null, ALIGNMENT_LEFT, ColorUtils.SECONDARY_TRANSPARENT));
-        btnList.get(12).setClickAction(() -> GuiUtils.displayScreen(null));
-        btnList.add(new BasicButton(192, SIZE_36, "Minimize", SVGs.MINIMISE, null, ALIGNMENT_LEFT, ColorUtils.SECONDARY_TRANSPARENT));
-        btnList.get(13).setClickAction(() -> GuiUtils.displayScreen(null));
-        btnList.add(new BasicButton(192, SIZE_36, "Edit HUD", SVGs.HUD, null, ALIGNMENT_LEFT, ColorUtils.SECONDARY_TRANSPARENT));
-        btnList.get(14).setClickAction(() -> GuiUtils.displayScreen(new HudGui()));
+        buttons.get(0).setClickAction(new CreditsPage());
+        buttons.get(2).setClickAction(new ModsPage());
+        HUDButton.setClickAction(() -> GuiUtils.displayScreen(new HudGui()));
+        CloseButton.setClickAction(GuiUtils::closeScreen);
+        for (BasicButton button : buttons) button.setToggleable(true);
     }
 
     public void draw(long vg, int x, int y) {
-        currentY = MathUtils.easeInOutCirc(50, currentY, targetY - currentY, 400);
-        RenderManager.drawRoundedRect(vg, x + 16, y + currentY, 192, 36, OneConfigConfig.PRIMARY_600, OneConfigConfig.CORNER_RADIUS);
-        int i = 0;
-        if (targetY == 0) {
-            targetY = 96;
-            currentY = targetY;
-        }
-        for (BasicButton btn : btnList) {
-            btn.draw(vg, x + 16, y + 96 + i);
-            if (i >= 562) i += 44;
-            else i += 36;
-            if (i == 144) {
-                RenderManager.drawText(vg, "MOD CONFIG", x + 16, y + 266, OneConfigConfig.WHITE_80, 12f, Fonts.SEMIBOLD);
-                i = 180;
-            }
-            if (i == 324) {
-                RenderManager.drawText(vg, "PERSONALIZATION", x + 16, y + 446, OneConfigConfig.WHITE_80, 12f, Fonts.SEMIBOLD);
-                i = 360;
-            }
-            if (i == 504) {
-                i = 562;
-            }
-
-            if (btn.isClicked() && btn.getPage() != null) {
-                if (i < 520) targetY = btn.y - y;
-            }
-        }
+        buttons.get(0).draw(vg, x + 16, y + 80);
+        buttons.get(1).draw(vg, x + 16, y + 116);
+        buttons.get(2).draw(vg, x + 16, y + 192);
+        buttons.get(3).draw(vg, x + 16, y + 228);
+        buttons.get(4).draw(vg, x + 16, y + 264);
+        buttons.get(5).draw(vg, x + 16, y + 300);
+        buttons.get(6).draw(vg, x + 16, y + 376);
+        buttons.get(7).draw(vg, x + 16, y + 412);
+        buttons.get(8).draw(vg, x + 16, y + 448);
+        HUDButton.draw(vg, x + 16, y + 704);
+        CloseButton.draw(vg, x + 16, y + 748);
     }
 }

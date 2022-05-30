@@ -73,8 +73,7 @@ public final class ColorUtils {
             case SECONDARY_TRANSPARENT:         // Formally -2
                 return getColorComponents(color, new float[]{0f, 0f, 0f, 0f}, new float[]{0.9f, 0.9f, 0.9f, 0.3f}, hover, 50f);
             case PRIMARY:       // Formally 1
-                return hover ? OneConfigConfig.PRIMARY_700 : OneConfigConfig.PRIMARY_600;
-            //return getColorComponents(color, splitColor(OneConfigConfig.PRIMARY_600), splitColor(OneConfigConfig.PRIMARY_700), hover, 100f);
+                return getColorComponents(color, splitColor(OneConfigConfig.PRIMARY_700), splitColor(OneConfigConfig.PRIMARY_600), hover, 100f);
             default:
             case SECONDARY:     // Formally 0
                 return getColorComponents(color, splitColor(OneConfigConfig.GRAY_500), splitColor(OneConfigConfig.GRAY_400), hover, 100f);
@@ -87,7 +86,6 @@ public final class ColorUtils {
             case TERTIARY_DESTRUCTIVE:
                 return getColorComponents(color, splitColor(OneConfigConfig.WHITE_90), splitColor(OneConfigConfig.ERROR_300), hover, 100f);
         }
-
     }
 
     /**

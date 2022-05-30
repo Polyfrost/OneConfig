@@ -6,6 +6,7 @@ import cc.polyfrost.oneconfig.gui.elements.BasicElement;
 import cc.polyfrost.oneconfig.gui.elements.ColorSelector;
 import cc.polyfrost.oneconfig.gui.elements.text.TextInputField;
 import cc.polyfrost.oneconfig.gui.pages.HomePage;
+import cc.polyfrost.oneconfig.gui.pages.ModsPage;
 import cc.polyfrost.oneconfig.gui.pages.Page;
 import cc.polyfrost.oneconfig.libs.universal.*;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
@@ -26,7 +27,7 @@ public class OneConfigGui extends UScreen {
     protected Page currentPage;
     protected Page prevPage;
     private float pageProgress = -224f;
-    private final TextInputField textInputField = new TextInputField(248, 40, "Search...", false, false, SVGs.SEARCH);
+    private final TextInputField textInputField = new TextInputField(248, 40, "Search...", false, false, SVGs.MAGNIFYING_GLASS_BOLD);
     private final ArrayList<Page> previousPages = new ArrayList<>();
     private final ArrayList<Page> nextPages = new ArrayList<>();
     private final BasicElement backArrow = new BasicElement(40, 40, -1, false);
@@ -68,7 +69,7 @@ public class OneConfigGui extends UScreen {
         int y2 = 0;
         RenderManager.setupAndDraw((vg) -> {
             if (currentPage == null) {
-                currentPage = new HomePage();
+                currentPage = new ModsPage();
                 parents.add(currentPage);
             }
             if (time == -1) time = UMinecraft.getTime();
@@ -94,7 +95,7 @@ public class OneConfigGui extends UScreen {
 
             RenderManager.drawSvg(vg, SVGs.ONECONFIG, x + 19, y + 19, 42, 42);
             RenderManager.drawText(vg, "OneConfig", x + 69, y + 32, OneConfigConfig.WHITE, 18f, Fonts.BOLD);        // added half line height to center text
-            RenderManager.drawText(vg, "ALPHA - By Polyfrost", x + 69, y + 51, OneConfigConfig.WHITE, 12f, Fonts.REGULAR);
+            RenderManager.drawText(vg, "By Polyfrost", x + 69, y + 51, OneConfigConfig.WHITE, 12f, Fonts.REGULAR);
 
             textInputField.draw(vg, x + 1020, y + 16);
             sideBar.draw(vg, x, y);

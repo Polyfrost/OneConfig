@@ -5,7 +5,7 @@ import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
 
 public class CreditsPage extends Page {
-    CreditsPage() {
+    public CreditsPage() {
         super("Credits");
     }
 

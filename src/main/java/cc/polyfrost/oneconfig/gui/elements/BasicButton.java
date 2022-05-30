@@ -75,16 +75,16 @@ public class BasicButton extends BasicElement {
         this.y = y;
         RenderManager.drawRoundedRect(vg, x, y, this.width, this.height, currentColor, this.cornerRadius);
         float contentWidth = 0f;
-        int textColor = -1;
+        int color = -1;
         final float middle = x + width / 2f;
         final float middleYIcon = y + height / 2f - iconSize / 2f;
         final float middleYText = y + height / 2f + fontSize / 8f;
         if (this.text != null) {
             if (this.colorPalette == ColorUtils.TERTIARY) {
-                textColor = OneConfigConfig.WHITE_80;
-                if (hovered) textColor = OneConfigConfig.WHITE;
-                if (clicked) textColor = OneConfigConfig.WHITE_80;
-                if (page == null) textColor = OneConfigConfig.WHITE_50;
+                color = OneConfigConfig.WHITE_80;
+                if (hovered) color = OneConfigConfig.WHITE;
+                if (clicked) color = OneConfigConfig.WHITE_80;
+                if (page == null) color = OneConfigConfig.WHITE_50;
             }
             contentWidth += RenderManager.getTextWidth(vg, text, fontSize, Fonts.MEDIUM);
         }
@@ -101,48 +101,48 @@ public class BasicButton extends BasicElement {
                 contentWidth += iconSize + xSpacing;
             }
             if (text != null) {
-                RenderManager.drawText(vg, text, middle - contentWidth / 2 + (icon1 == null ? 0 : iconSize + xSpacing), middleYText, textColor, fontSize, Fonts.MEDIUM);
+                RenderManager.drawText(vg, text, middle - contentWidth / 2 + (icon1 == null ? 0 : iconSize + xSpacing), middleYText, color, fontSize, Fonts.MEDIUM);
             }
             if (icon1 != null) {
-                RenderManager.drawSvg(vg, icon1, middle - contentWidth / 2, middleYIcon, iconSize, iconSize);
+                RenderManager.drawSvg(vg, icon1, middle - contentWidth / 2, middleYIcon, iconSize, iconSize, color);
             }
             if (icon2 != null) {
-                RenderManager.drawSvg(vg, icon2, middle + contentWidth / 2 - iconSize, middleYIcon, iconSize, iconSize);
+                RenderManager.drawSvg(vg, icon2, middle + contentWidth / 2 - iconSize, middleYIcon, iconSize, iconSize, color);
             }
             this.update(x, y);
             return;
         }
         if (alignment == ALIGNMENT_JUSTIFIED) {
             if (text != null) {
-                RenderManager.drawText(vg, text, middle - contentWidth / 2, middleYText, textColor, fontSize, Fonts.MEDIUM);
+                RenderManager.drawText(vg, text, middle - contentWidth / 2, middleYText, color, fontSize, Fonts.MEDIUM);
             }
             if (icon1 != null) {
-                RenderManager.drawSvg(vg, icon1, x + xSpacing, middleYIcon, iconSize, iconSize);
+                RenderManager.drawSvg(vg, icon1, x + xSpacing, middleYIcon, iconSize, iconSize, color);
             }
             if (icon2 != null) {
-                RenderManager.drawSvg(vg, icon2, x + width - xSpacing - iconSize, middleYIcon, iconSize, iconSize);
+                RenderManager.drawSvg(vg, icon2, x + width - xSpacing - iconSize, middleYIcon, iconSize, iconSize, color);
             }
             this.update(x, y);
             return;
         }
         if (alignment == ALIGNMENT_LEFT) {
-            contentWidth = xSpacing;
+            contentWidth = xPadding;
             if (icon1 != null) {
-                RenderManager.drawSvg(vg, icon1, x + contentWidth, middleYIcon, iconSize, iconSize);
+                RenderManager.drawSvg(vg, icon1, x + contentWidth, middleYIcon, iconSize, iconSize, color);
                 contentWidth += iconSize + xSpacing;
             }
             if (text != null) {
-                RenderManager.drawText(vg, text, x + contentWidth, middleYText, textColor, fontSize, Fonts.MEDIUM);
+                RenderManager.drawText(vg, text, x + contentWidth, middleYText, color, fontSize, Fonts.MEDIUM);
                 contentWidth += RenderManager.getTextWidth(vg, text, fontSize, Fonts.MEDIUM) + xSpacing;
             }
             if (icon2 != null) {
-                RenderManager.drawSvg(vg, icon2, x + contentWidth, middleYIcon, iconSize, iconSize);
+                RenderManager.drawSvg(vg, icon2, x + contentWidth, middleYIcon, iconSize, iconSize, color);
             }
             this.update(x, y);
             return;
         }
         if (alignment == ALIGNMENT_RIGHT) {
-            contentWidth = width - xSpacing;
+            contentWidth = width - xPadding;
             if (icon2 != null) {
                 contentWidth -= iconSize;
                 RenderManager.drawSvg(vg, icon2, x + contentWidth, middleYIcon, iconSize, iconSize);
@@ -150,7 +150,7 @@ public class BasicButton extends BasicElement {
             }
             if (text != null) {
                 contentWidth -= RenderManager.getTextWidth(vg, text, fontSize, Fonts.MEDIUM);
-                RenderManager.drawText(vg, text, x + contentWidth, middleYText, textColor, fontSize, Fonts.MEDIUM);
+                RenderManager.drawText(vg, text, x + contentWidth, middleYText, color, fontSize, Fonts.MEDIUM);
                 contentWidth -= xSpacing;
             }
             if (icon1 != null) {
