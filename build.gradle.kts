@@ -159,7 +159,7 @@ dependencies {
     shade(lwjglJar.get().outputs.files)
     shade(prebundle(shadeRelocated))
 
-    dokkaHtmlPlugin("org.jetbrains.dokka:kotlin-as-java-plugin:1.6.20")
+    dokkaHtmlPlugin("org.jetbrains.dokka:kotlin-as-java-plugin:1.6.21")
 }
 
 tasks.processResources {
