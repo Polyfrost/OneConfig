@@ -16,4 +16,9 @@ public final class GuiUtils {
     public static void displayScreen(GuiScreen screen) {
         new TickDelay(() -> UScreen.displayScreen(screen), 1);
     }
+
+    /** Close the current open GUI screen. */
+    public static void closeScreen() {
+        UScreen.displayScreen(null);
+    }
 }
