@@ -103,9 +103,9 @@ public class TextInputField extends BasicElement {
                 RenderManager.drawHollowRoundRect(vg, x, y, width - 0.5f, height - 0.5f, colorOutline, 12f, 2f);
             else {
                 RenderManager.setAlpha(vg, 0.15f);
-                RenderManager.drawRoundedRect(vg, x - 4, y - 4, width + 8, height + 8, OneConfigConfig.PRIMARY_600, 16);
+                RenderManager.drawRoundedRect(vg, x - 4, y - 4, width + 8, height + 8, errored ? OneConfigConfig.ERROR_600 : OneConfigConfig.PRIMARY_600, 16);
                 RenderManager.setAlpha(vg, 1f);
-                RenderManager.drawHollowRoundRect(vg, x, y, width - 0.5f, height - 0.5f, OneConfigConfig.PRIMARY_600, 12f, 2f);
+                RenderManager.drawHollowRoundRect(vg, x, y, width - 0.5f, height - 0.5f, errored ? OneConfigConfig.ERROR_600 : OneConfigConfig.PRIMARY_600, 12f, 2f);
             }
             Scissor scissor = ScissorManager.scissor(vg, x, y, width, height);
             super.update(x, y);

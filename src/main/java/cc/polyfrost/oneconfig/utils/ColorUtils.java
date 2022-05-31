@@ -73,18 +73,18 @@ public final class ColorUtils {
             case SECONDARY_TRANSPARENT:         // Formally -2
                 return getColorComponents(color, new float[]{0f, 0f, 0f, 0f}, new float[]{0.9f, 0.9f, 0.9f, 0.3f}, hover, 50f);
             case PRIMARY:       // Formally 1
-                return getColorComponents(color, splitColor(OneConfigConfig.PRIMARY_700), splitColor(OneConfigConfig.PRIMARY_600), hover, 100f);
+                return getColorComponents(color, splitColor(OneConfigConfig.PRIMARY_700), splitColor(OneConfigConfig.PRIMARY_600), hover, 20f);
             default:
             case SECONDARY:     // Formally 0
-                return getColorComponents(color, splitColor(OneConfigConfig.GRAY_500), splitColor(OneConfigConfig.GRAY_400), hover, 100f);
+                return getColorComponents(color, splitColor(OneConfigConfig.GRAY_500), splitColor(OneConfigConfig.GRAY_400), hover, 20f);
             case TERTIARY:
-                return getColorComponents(color, splitColor(OneConfigConfig.WHITE_90), splitColor(OneConfigConfig.WHITE), hover, 150f);
+                return getColorComponents(color, splitColor(OneConfigConfig.WHITE_90), splitColor(OneConfigConfig.WHITE), hover, 20f);
             case PRIMARY_DESTRUCTIVE:
-                return getColorComponents(color, splitColor(OneConfigConfig.ERROR_700), splitColor(OneConfigConfig.ERROR_600), hover, 100f);
+                return getColorComponents(color, splitColor(OneConfigConfig.ERROR_700), splitColor(OneConfigConfig.ERROR_600), hover, 20f);
             case SECONDARY_DESTRUCTIVE:
-                return getColorComponents(color, splitColor(OneConfigConfig.ERROR_800), splitColor(OneConfigConfig.GRAY_500), !hover, 100f);
+                return getColorComponents(color, splitColor(OneConfigConfig.ERROR_800), splitColor(OneConfigConfig.GRAY_500), !hover, 20f);
             case TERTIARY_DESTRUCTIVE:
-                return getColorComponents(color, splitColor(OneConfigConfig.WHITE_90), splitColor(OneConfigConfig.ERROR_300), hover, 100f);
+                return getColorComponents(color, splitColor(OneConfigConfig.WHITE_90), splitColor(OneConfigConfig.ERROR_300), hover, 20f);
         }
     }
 
@@ -99,7 +99,7 @@ public final class ColorUtils {
         float[] init = splitColor(initColor);
         float[] finalC = splitColor(finalColor);
         float[] current = splitColor(currentColor);
-        return getColorComponents(current, init, finalC, direction, speed + 100f);
+        return getColorComponents(current, init, finalC, direction, speed);
     }
 
     private static float[] splitColor(int color) {
@@ -120,12 +120,13 @@ public final class ColorUtils {
     }
 
     private static float smooth(float current, float min, float max, boolean moveToFinal, float speed) {
-        current = MathUtils.easeOut(current, moveToFinal ? 1f : 0f, speed);
-        if (current <= min) {
+        if(min > max) System.out.println(min * 255 + " " + max * 255);
+        current = MathUtils.easeOut(current, moveToFinal ? max : min, speed);
+        if (current < min) {
             current = min;
         }
 
-        if (current >= max) {
+        if (current > max) {
             current = max;
         }
         return current;

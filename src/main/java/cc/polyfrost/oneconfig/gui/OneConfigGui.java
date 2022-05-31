@@ -169,7 +169,7 @@ public class OneConfigGui extends UScreen {
 
             long end = System.nanoTime() - start;
             String s = (" draw: " + end / 1000000f + "ms");
-            RenderManager.drawText(vg, s, x + 1170, y + 790, OneConfigConfig.GRAY_300, 10f, Fonts.MEDIUM);
+            RenderManager.drawText(vg, s, x + 1170, y + 792, OneConfigConfig.GRAY_300, 10f, Fonts.MEDIUM);
             if (currentColorSelector != null) {
                 currentColorSelector.draw(vg);
             }
