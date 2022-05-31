@@ -82,7 +82,7 @@ public final class ColorUtils {
             case PRIMARY_DESTRUCTIVE:
                 return getColorComponents(color, splitColor(OneConfigConfig.ERROR_700), splitColor(OneConfigConfig.ERROR_600), hover, 100f);
             case SECONDARY_DESTRUCTIVE:
-                return getColorComponents(color, splitColor(OneConfigConfig.GRAY_500), splitColor(OneConfigConfig.ERROR_800), hover, 100f);
+                return getColorComponents(color, splitColor(OneConfigConfig.ERROR_800), splitColor(OneConfigConfig.GRAY_500), !hover, 100f);
             case TERTIARY_DESTRUCTIVE:
                 return getColorComponents(color, splitColor(OneConfigConfig.WHITE_90), splitColor(OneConfigConfig.ERROR_300), hover, 100f);
         }

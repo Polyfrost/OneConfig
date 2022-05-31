@@ -7,6 +7,7 @@ import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
 import cc.polyfrost.oneconfig.utils.ColorUtils;
+import org.lwjgl.input.Mouse;
 
 
 public class BasicButton extends BasicElement {
@@ -181,11 +182,11 @@ public class BasicButton extends BasicElement {
                 return;
             }
             if (!toggleable) {
-                currentColor = ColorUtils.getColor(currentColor, colorPalette, hovered, clicked);
+                currentColor = ColorUtils.getColor(currentColor, colorPalette, hovered, hovered && Mouse.isButtonDown(0));
             } else {
                 if (toggled) {
                     currentColor = ColorUtils.smoothColor(currentColor, OneConfigConfig.GRAY_500, OneConfigConfig.PRIMARY_600, true, 30f);
-                } else currentColor = ColorUtils.getColor(currentColor, colorPalette, hovered, clicked);
+                } else currentColor = ColorUtils.getColor(currentColor, colorPalette, hovered, hovered && Mouse.isButtonDown(0));
             }
         }
 

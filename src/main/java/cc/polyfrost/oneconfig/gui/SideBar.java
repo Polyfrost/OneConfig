@@ -1,8 +1,11 @@
 package cc.polyfrost.oneconfig.gui;
 
+import cc.polyfrost.oneconfig.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.gui.elements.BasicButton;
 import cc.polyfrost.oneconfig.gui.pages.CreditsPage;
 import cc.polyfrost.oneconfig.gui.pages.ModsPage;
+import cc.polyfrost.oneconfig.lwjgl.RenderManager;
+import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
 import cc.polyfrost.oneconfig.utils.GuiUtils;
 
@@ -32,12 +35,12 @@ public class SideBar {
         buttons.get(2).setClickAction(new ModsPage());
         HUDButton.setClickAction(() -> GuiUtils.displayScreen(new HudGui()));
         CloseButton.setClickAction(GuiUtils::closeScreen);
-        for (BasicButton button : buttons) button.setToggleable(true);
     }
 
     public void draw(long vg, int x, int y) {
         buttons.get(0).draw(vg, x + 16, y + 80);
         buttons.get(1).draw(vg, x + 16, y + 116);
+        RenderManager.drawText(vg, "MOD CONFIG", x + 16, y + 178, OneConfigConfig.WHITE, 12, Fonts.SEMIBOLD);
         buttons.get(2).draw(vg, x + 16, y + 192);
         buttons.get(3).draw(vg, x + 16, y + 228);
         buttons.get(4).draw(vg, x + 16, y + 264);
@@ -47,5 +50,16 @@ public class SideBar {
         buttons.get(8).draw(vg, x + 16, y + 448);
         HUDButton.draw(vg, x + 16, y + 704);
         CloseButton.draw(vg, x + 16, y + 748);
+
+        for (BasicButton button : buttons) {
+            if (button.isClicked()) {
+                button.setColorPalette(PRIMARY);
+                for (BasicButton button1 : buttons) {
+                    if (button.equals(button1)) continue;
+                    button1.setColorPalette(TERTIARY);
+                }
+                break;
+            }
+        }
     }
 }
