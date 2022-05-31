@@ -12,7 +12,7 @@ plugins {
     id("com.github.johnrengelman.shadow")
     id("net.kyori.blossom") version "1.3.0"
     id("io.github.juuxel.loom-quiltflower-mini")
-    id("org.jetbrains.dokka") version "1.6.20"
+    id("org.jetbrains.dokka") version "1.6.21"
     id("maven-publish")
     id("signing")
     java
@@ -159,7 +159,7 @@ dependencies {
     shade(lwjglJar.get().outputs.files)
     shade(prebundle(shadeRelocated))
 
-    dokkaHtmlPlugin("org.jetbrains.dokka:kotlin-as-java-plugin:1.6.20")
+    dokkaHtmlPlugin("org.jetbrains.dokka:kotlin-as-java-plugin:1.6.21")
 }
 
 tasks.processResources {

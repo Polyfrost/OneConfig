@@ -7,9 +7,9 @@ package cc.polyfrost.oneconfig.lwjgl.image;
  * @see ImageLoader
  */
 public enum Images {
-    HUE_GRADIENT("/assets/oneconfig/colorui/huegradient.png"),
-    COLOR_WHEEL("/assets/oneconfig/colorui/colorwheel.png"),
-    ALPHA_GRID("/assets/oneconfig/colorui/alphagrid.png");
+    HUE_GRADIENT("/assets/oneconfig/options/HueGradient.png"),
+    COLOR_WHEEL("/assets/oneconfig/options/ColorWheel.png"),
+    ALPHA_GRID("/assets/oneconfig/options/AlphaGrid.png");
 
     public final String filePath;
 
