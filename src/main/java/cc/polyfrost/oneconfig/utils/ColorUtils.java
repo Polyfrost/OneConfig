@@ -120,7 +120,6 @@ public final class ColorUtils {
     }
 
     private static float smooth(float current, float min, float max, boolean moveToFinal, float speed) {
-        if(min > max) System.out.println(min * 255 + " " + max * 255);
         current = MathUtils.easeOut(current, moveToFinal ? max : min, speed);
         if (current < min) {
             current = min;

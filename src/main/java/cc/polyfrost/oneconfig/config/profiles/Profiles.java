@@ -43,9 +43,7 @@ public class Profiles {
     }
 
     public static File getProfileDir(String profile) {
-        File folder = new File("OneConfig/profiles");
-        folder.mkdirs();
-        return new File(folder, profile);
+        return new File(new File("OneConfig/profiles"), profile);
     }
 
     public static File getProfileFile(String file) {

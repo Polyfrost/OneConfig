@@ -45,6 +45,7 @@ public class SideBar {
         buttons.get(3).draw(vg, x + 16, y + 228);
         buttons.get(4).draw(vg, x + 16, y + 264);
         buttons.get(5).draw(vg, x + 16, y + 300);
+        RenderManager.drawText(vg, "PERSONALIZATION", x + 16, y + 362, OneConfigConfig.WHITE, 12, Fonts.SEMIBOLD);
         buttons.get(6).draw(vg, x + 16, y + 376);
         buttons.get(7).draw(vg, x + 16, y + 412);
         buttons.get(8).draw(vg, x + 16, y + 448);
