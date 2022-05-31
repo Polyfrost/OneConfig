@@ -19,7 +19,7 @@ import java.util.ArrayList;
 
 public class ModCard extends BasicElement {
     private final Mod modData;
-    private final BasicElement favoriteHitbox = new BasicElement(32, 32, -2, true);
+    private final BasicElement favoriteHitbox = new BasicElement(32, 32, ColorUtils.PRIMARY, true);
     private boolean active, disabled, favorite;
     private int colorGray = OneConfigConfig.GRAY_600;
     private int colorPrimary = OneConfigConfig.PRIMARY_600;

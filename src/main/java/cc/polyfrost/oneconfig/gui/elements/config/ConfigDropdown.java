@@ -51,12 +51,12 @@ public class ConfigDropdown extends BasicOption { // TODO: remove dividers and f
         if (size == 1) {
             RenderManager.drawRoundedRect(vg, x + 224, y, 256, 32, backgroundColor, 12);
             RenderManager.drawText(vg, options[selected], x + 236, y + 16, OneConfigConfig.WHITE_80, 14f, Fonts.MEDIUM);
-            RenderManager.drawRoundedRect(vg, x + 452, y + 4, 24, 24, OneConfigConfig.PRIMARY_600, 8);
+            RenderManager.drawRoundedRect(vg, x + 452, y + 4, 24, 24, hovered ? OneConfigConfig.PRIMARY_500 : OneConfigConfig.PRIMARY_600, 8);
             RenderManager.drawSvg(vg, SVGs.DROPDOWN_LIST, x + 452, y + 4, 24, 24);
         } else {
             RenderManager.drawRoundedRect(vg, x + 352, y, 640, 32, backgroundColor, 12);
             RenderManager.drawText(vg, options[selected], x + 364, y + 16, OneConfigConfig.WHITE_80, 14f, Fonts.MEDIUM);
-            RenderManager.drawRoundedRect(vg, x + 964, y + 4, 24, 24, OneConfigConfig.PRIMARY_600, 8);
+            RenderManager.drawRoundedRect(vg, x + 964, y + 4, 24, 24, hovered ? OneConfigConfig.PRIMARY_500 : OneConfigConfig.PRIMARY_600, 8);
             RenderManager.drawSvg(vg, SVGs.DROPDOWN_LIST, x + 964, y + 4, 24, 24);
         }
         RenderManager.setAlpha(vg, 1f);
@@ -82,13 +82,13 @@ public class ConfigDropdown extends BasicOption { // TODO: remove dividers and f
             RenderManager.drawRoundedRect(vg, x + 224, y, 256, 32, backgroundColor, 12);
             RenderManager.drawText(vg, options[selected], x + 236, y + 16, OneConfigConfig.WHITE_80, 14f, Fonts.MEDIUM);
             if (hovered && Mouse.isButtonDown(0)) RenderManager.setAlpha(vg, 0.8f);
-            RenderManager.drawRoundedRect(vg, x + 452, y + 4, 24, 24, OneConfigConfig.PRIMARY_600, 8);
+            RenderManager.drawRoundedRect(vg, x + 452, y + 4, 24, 24, hovered ? OneConfigConfig.PRIMARY_500 : OneConfigConfig.PRIMARY_600, 8);
             RenderManager.drawSvg(vg, SVGs.DROPDOWN_LIST, x + 452, y + 4, 24, 24);
 
             RenderManager.setAlpha(vg, 1f);
-            RenderManager.drawRoundedRect(vg, x + 224, y + 48, 256, options.length * 32 + 8, OneConfigConfig.GRAY_700, 12);
-            RenderManager.drawHollowRoundRect(vg, x + 223, y + 47, 258, options.length * 32 + 10, new Color(204, 204, 204, 77).getRGB(), 12, 1);
-            int optionY = y + 52;
+            RenderManager.drawRoundedRect(vg, x + 224, y + 40, 256, options.length * 32 + 8, OneConfigConfig.GRAY_700, 12);
+            RenderManager.drawHollowRoundRect(vg, x + 223, y + 39, 258, options.length * 32 + 10, new Color(204, 204, 204, 77).getRGB(), 12, 1);
+            int optionY = y + 44;
             for (String option : options) {
                 int color = OneConfigConfig.WHITE_80;
                 boolean optionHovered = InputUtils.isAreaHovered(x + 224, optionY, 252, 32);
@@ -114,13 +114,13 @@ public class ConfigDropdown extends BasicOption { // TODO: remove dividers and f
             RenderManager.drawRoundedRect(vg, x + 352, y, 640, 32, backgroundColor, 12);
             RenderManager.drawText(vg, options[selected], x + 364, y + 16, OneConfigConfig.WHITE_80, 14f, Fonts.MEDIUM);
             if (hovered && Mouse.isButtonDown(0)) RenderManager.setAlpha(vg, 0.8f);
-            RenderManager.drawRoundedRect(vg, x + 964, y + 4, 24, 24, OneConfigConfig.PRIMARY_600, 8);
+            RenderManager.drawRoundedRect(vg, x + 964, y + 4, 24, 24, hovered ? OneConfigConfig.PRIMARY_500 : OneConfigConfig.PRIMARY_600, 8);
             RenderManager.drawSvg(vg, SVGs.DROPDOWN_LIST, x + 964, y + 4, 24, 24);
 
             RenderManager.setAlpha(vg, 1f);
-            RenderManager.drawRoundedRect(vg, x + 352, y + 48, 640, options.length * 32 + 8, OneConfigConfig.GRAY_700, 12);
-            RenderManager.drawHollowRoundRect(vg, x + 351, y + 47, 642, options.length * 32 + 10, new Color(204, 204, 204, 77).getRGB(), 12, 1);
-            int optionY = y + 52;
+            RenderManager.drawRoundedRect(vg, x + 352, y + 40, 640, options.length * 32 + 8, OneConfigConfig.GRAY_700, 12);
+            RenderManager.drawHollowRoundRect(vg, x + 351, y + 39, 642, options.length * 32 + 10, new Color(204, 204, 204, 77).getRGB(), 12, 1);
+            int optionY = y + 44;
             for (String option : options) {
                 int color = OneConfigConfig.WHITE_80;
                 boolean optionHovered = InputUtils.isAreaHovered(x + 352, optionY, 640, 36);

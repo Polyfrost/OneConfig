@@ -42,6 +42,7 @@ public class OneConfig {
             throw new RuntimeException("OneConfig has not been initialized! Please add the OneConfig tweaker or call OneConfigInit via an ITweaker or a FMLLoadingPlugin!");
         }
         oneConfigDir.mkdirs();
+        new File(oneConfigDir, "profiles").mkdirs();
         config = new OneConfigConfig();
     }
 
