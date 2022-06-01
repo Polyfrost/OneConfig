@@ -16,9 +16,13 @@ public abstract class Animation {
      */
     public Animation(float duration, float start, float end, boolean reverse) {
         this.duration = duration;
+        if (reverse) {
+            float temp = start;
+            start = end;
+            end = temp;
+        }
         this.start = start;
-        if (!reverse) this.change = end - start;
-        else this.change = start - end;
+        this.change = end - start;
     }
 
     /**

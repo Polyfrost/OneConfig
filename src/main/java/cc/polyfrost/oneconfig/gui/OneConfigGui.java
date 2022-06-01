@@ -127,14 +127,14 @@ public class OneConfigGui extends UScreen {
             if (backArrow.isClicked() && previousPages.size() > 0) {
                 try {
                     nextPages.add(0, currentPage);
-                    openPage(previousPages.get(0), new EaseInOutQuad(300, 224, 2128, false), true);
+                    openPage(previousPages.get(0), false);
                     previousPages.remove(0);
                 } catch (Exception ignored) {
                 }
             } else if (forwardArrow.isClicked() && nextPages.size() > 0) {
                 try {
                     previousPages.add(0, currentPage);
-                    openPage(nextPages.get(0), false);
+                    openPage(nextPages.get(0), new EaseInOutQuad(300, 224, 2128, true), false);
                     nextPages.remove(0);
                 } catch (Exception ignored) {
                 }
