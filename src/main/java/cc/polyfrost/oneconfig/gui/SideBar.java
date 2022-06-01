@@ -1,6 +1,8 @@
 package cc.polyfrost.oneconfig.gui;
 
 import cc.polyfrost.oneconfig.config.OneConfigConfig;
+import cc.polyfrost.oneconfig.gui.animations.Animation;
+import cc.polyfrost.oneconfig.gui.animations.EaseInOutQuart;
 import cc.polyfrost.oneconfig.gui.elements.BasicButton;
 import cc.polyfrost.oneconfig.gui.pages.CreditsPage;
 import cc.polyfrost.oneconfig.gui.pages.ModsPage;
@@ -30,14 +32,36 @@ public class SideBar {
     private final BasicButton HUDButton = new BasicButton(192, SIZE_36, "Edit HUD", SVGs.NOTE_PENCIL_BOLD, null, ALIGNMENT_LEFT, ColorPalette.SECONDARY);
     private final BasicButton CloseButton = new BasicButton(192, SIZE_36, "Close", SVGs.X_CIRCLE_BOLD, null, ALIGNMENT_LEFT, ColorPalette.SECONDARY_DESTRUCTIVE);
 
+    private int selected = 2;
+    private Animation moveAnimation = null;
+
     public SideBar() {
         buttons.get(0).setClickAction(new CreditsPage());
         buttons.get(2).setClickAction(new ModsPage());
         HUDButton.setClickAction(() -> GuiUtils.displayScreen(new HudGui()));
         CloseButton.setClickAction(GuiUtils::closeScreen);
+        for (int i = 0; i < buttons.size(); i++) {
+            if (i == 0 || i == 2) continue;
+            buttons.get(i).disable(true);
+        }
     }
 
     public void draw(long vg, int x, int y) {
+        for (BasicButton button : buttons) {
+            if (!button.isClicked()) continue;
+            if (button.equals(buttons.get(selected))) break;
+            buttons.get(selected).setColorPalette(ColorPalette.TERTIARY);
+            moveAnimation = new EaseInOutQuart(300, buttons.get(selected).x, button.x, false);
+            selected = buttons.indexOf(button);
+        }
+        if (moveAnimation != null) {
+            RenderManager.drawRoundedRect(vg, x + 16, moveAnimation.get(), 192, 36, OneConfigConfig.PRIMARY_600, 12);
+            if (moveAnimation.isFinished()) {
+                moveAnimation = null;
+                buttons.get(selected).setColorPalette(ColorPalette.PRIMARY);
+            }
+        }
+
         buttons.get(0).draw(vg, x + 16, y + 80);
         buttons.get(1).draw(vg, x + 16, y + 116);
         RenderManager.drawText(vg, "MOD CONFIG", x + 16, y + 178, OneConfigConfig.WHITE, 12, Fonts.SEMIBOLD);
@@ -51,16 +75,5 @@ public class SideBar {
         buttons.get(8).draw(vg, x + 16, y + 448);
         HUDButton.draw(vg, x + 16, y + 704);
         CloseButton.draw(vg, x + 16, y + 748);
-
-        for (BasicButton button : buttons) {
-            if (button.isClicked()) {
-                button.setColorPalette(ColorPalette.PRIMARY);
-                for (BasicButton button1 : buttons) {
-                    if (button.equals(button1)) continue;
-                    button1.setColorPalette(ColorPalette.TERTIARY);
-                }
-                break;
-            }
-        }
     }
 }

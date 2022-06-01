@@ -2,6 +2,8 @@ package cc.polyfrost.oneconfig.gui;
 
 import cc.polyfrost.oneconfig.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.config.core.OneColor;
+import cc.polyfrost.oneconfig.gui.animations.Animation;
+import cc.polyfrost.oneconfig.gui.animations.EaseInOutQuad;
 import cc.polyfrost.oneconfig.gui.elements.BasicElement;
 import cc.polyfrost.oneconfig.gui.elements.ColorSelector;
 import cc.polyfrost.oneconfig.gui.elements.text.TextInputField;
@@ -26,7 +28,6 @@ public class OneConfigGui extends UScreen {
     private final SideBar sideBar = new SideBar();
     protected Page currentPage;
     protected Page prevPage;
-    private float pageProgress = -224f;
     private final TextInputField textInputField = new TextInputField(248, 40, "Search...", false, false, SVGs.MAGNIFYING_GLASS_BOLD);
     private final ArrayList<Page> previousPages = new ArrayList<>();
     private final ArrayList<Page> nextPages = new ArrayList<>();
@@ -40,6 +41,7 @@ public class OneConfigGui extends UScreen {
     private long time = -1L;
     private long deltaTime = 17L;
     public boolean allowClose = true;
+    private Animation animation;
 
     public OneConfigGui() {
         INSTANCE = this;
@@ -54,9 +56,10 @@ public class OneConfigGui extends UScreen {
 
     public static OneConfigGui create() {
         try {
-            return instanceToRestore == null ? new OneConfigGui() : instanceToRestore;
+            //return instanceToRestore == null ? new OneConfigGui() : instanceToRestore;
+            return new OneConfigGui();
         } finally {
-            if (instanceToRestore != null) INSTANCE = instanceToRestore;
+            //if (instanceToRestore != null) INSTANCE = instanceToRestore;
             instanceToRestore = null;
         }
     }
@@ -138,17 +141,15 @@ public class OneConfigGui extends UScreen {
             }
 
             ScissorManager.scissor(vg, x + 224, y + 88, 1056, 698);
-            if (prevPage != null) {
-                pageProgress = MathUtils.easeInOutCirc(50, pageProgress, 832 - pageProgress, 600);
-                prevPage.scrollWithDraw(vg, (int) (x - pageProgress), y + 72);
-                RenderManager.drawLine(vg, (int) (x - pageProgress + 1055), y + 72, (int) (x - pageProgress + 1057), y + 800, 2, OneConfigConfig.GRAY_700);     // TODO might remove this
-                currentPage.scrollWithDraw(vg, (int) (x - pageProgress + 1056), y + 72);
-                if (pageProgress > 830f) {      // this number is the 'snap' point of the page
+            if (prevPage != null && animation != null) {
+                float pageProgress = animation.get(deltaTime);
+                prevPage.scrollWithDraw(vg, (int) (x + pageProgress), y + 72);
+                currentPage.scrollWithDraw(vg, (int) (x - 1904 + pageProgress), y + 72);
+                if (animation.isFinished()) {
                     prevPage = null;
-                    pageProgress = -224f;
                 }
             } else {
-                currentPage.scrollWithDraw(vg, (int) (x - pageProgress), y + 72);
+                currentPage.scrollWithDraw(vg, x + 224, y + 72);
             }
             ScissorManager.clearScissors(vg);
 
@@ -196,6 +197,9 @@ public class OneConfigGui extends UScreen {
     }
 
     public void openPage(@NotNull Page page, boolean addToPrevious) {
+        openPage(page, new EaseInOutQuad(300, 224, 2128, false), true);
+    }
+    public void openPage(@NotNull Page page, Animation animation, boolean addToPrevious) {
         if (page == currentPage) return;
         currentPage.finishUpAndClose();
         if (!page.isBase()) {
@@ -221,6 +225,7 @@ public class OneConfigGui extends UScreen {
             prevPage = currentPage;
         }
         currentPage = page;
+        this.animation = animation;
     }
 
     /**
@@ -255,11 +260,13 @@ public class OneConfigGui extends UScreen {
     public String getSearchValue() {
         return textInputField.getInput();
     }
-
     public long getDeltaTime() {
         return deltaTime;
     }
 
+    public static long getDeltaTimeNullSafe() {
+        return OneConfigGui.INSTANCE == null ? 17 : OneConfigGui.INSTANCE.getDeltaTime();
+    }
     @Override
     public boolean doesGuiPauseGame() {
         return false;
