@@ -51,7 +51,7 @@ public class SideBar {
             if (!button.isClicked()) continue;
             if (button.equals(buttons.get(selected))) break;
             buttons.get(selected).setColorPalette(ColorPalette.TERTIARY);
-            moveAnimation = new EaseInOutQuart(300, buttons.get(selected).x, button.x, false);
+            moveAnimation = new EaseInOutQuart(300, buttons.get(selected).y, button.y, false);
             selected = buttons.indexOf(button);
         }
         if (moveAnimation != null) {

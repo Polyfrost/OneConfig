@@ -28,7 +28,9 @@ public abstract class Animation {
     public float get(long deltaTime) {
         timePassed += deltaTime;
         if (timePassed >= duration) return start + change;
-        return animate(timePassed, duration, start, change);
+        float value = animate(timePassed, duration, start, change);
+        System.out.println(value);
+        return value;
     }
 
     /**

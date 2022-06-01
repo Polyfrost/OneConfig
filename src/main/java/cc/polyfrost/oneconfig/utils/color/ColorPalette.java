@@ -44,85 +44,77 @@ public class ColorPalette {
      */
     public static final ColorPalette TERTIARY_DESTRUCTIVE = new ColorPalette(WHITE_90, ERROR_300, ERROR_300_80);
 
-
-
-
     private final int colorNormal;
     private final int colorHovered;
     private final int colorPressed;
-    private final int colorDisabled;
     private final float[] colorNormalf;
     private final float[] colorHoveredf;
     private final float[] colorPressedf;
-    private final float[] colorDisabledf;
 
-    /** <h1>Create a new ColorPalette.</h1>
+    /**
+     * <h1>Create a new ColorPalette.</h1>
      * This color palette is used with animations, and the elements like BasicButton, BasicElement, and more.
      * <br> This method takes integers in ARGB format, like many other classes, such as {@link OneColor} and {@link Color}.
-     * @param colorNormal the color of the element when it is not hovered or pressed.
+     *
+     * @param colorNormal  the color of the element when it is not hovered or pressed.
      * @param colorHovered the color of the element when it is hovered.
      * @param colorPressed the color of the element when it is pressed.
      */
     public ColorPalette(int colorNormal, int colorHovered, int colorPressed) {
-        this(colorNormal, colorHovered, colorPressed, colorPressed);
-    }
-
-    /** <h1>Create a new ColorPalette.</h1>
-     * This color palette is used with animations, and the elements like BasicButton, BasicElement, and more.
-     * <br> This method takes integers in ARGB format, like many other classes, such as {@link OneColor} and {@link Color}.
-     * @param colorNormal the color of the element when it is not hovered or pressed.
-     * @param colorHovered the color of the element when it is hovered.
-     * @param colorPressed the color of the element when it is pressed.
-     * @param colorDisabled the color of the element when it is disabled.
-     */
-    public ColorPalette(int colorNormal, int colorHovered, int colorPressed, int colorDisabled) {
         this.colorNormal = colorNormal;
         this.colorHovered = colorHovered;
         this.colorPressed = colorPressed;
-        this.colorDisabled = colorDisabled;
         this.colorNormalf = new float[]{ColorUtils.getRed(colorNormal) / 255f, ColorUtils.getGreen(colorNormal) / 255f, ColorUtils.getBlue(colorNormal) / 255f, ColorUtils.getAlpha(colorNormal) / 255f};
         this.colorHoveredf = new float[]{ColorUtils.getRed(colorHovered) / 255f, ColorUtils.getGreen(colorHovered) / 255f, ColorUtils.getBlue(colorHovered) / 255f, ColorUtils.getAlpha(colorHovered) / 255f};
         this.colorPressedf = new float[]{ColorUtils.getRed(colorPressed) / 255f, ColorUtils.getGreen(colorPressed) / 255f, ColorUtils.getBlue(colorPressed) / 255f, ColorUtils.getAlpha(colorPressed) / 255f};
-        this.colorDisabledf = new float[]{ColorUtils.getRed(colorDisabled) / 255f, ColorUtils.getGreen(colorDisabled) / 255f, ColorUtils.getBlue(colorDisabled) / 255f, ColorUtils.getAlpha(colorDisabled) / 255f};
     }
-    /** <h1>Create a new ColorPalette.</h1>
+
+    /**
+     * <h1>Create a new ColorPalette.</h1>
      * This color palette is used with animations, and the elements like BasicButton, BasicElement, and more.
      * <br> This method takes {@link OneColor} in ARGB format.
-     * @param colorNormal the color of the element when it is not hovered or pressed.
+     *
+     * @param colorNormal  the color of the element when it is not hovered or pressed.
      * @param colorHovered the color of the element when it is hovered.
      * @param colorPressed the color of the element when it is pressed.
      */
     public ColorPalette(OneColor colorNormal, OneColor colorHovered, OneColor colorPressed) {
-        this(colorNormal.getRGB(), colorHovered.getRGB(), colorPressed.getRGB(), colorPressed.getRGB());
+        this(colorNormal.getRGB(), colorHovered.getRGB(), colorPressed.getRGB());
     }
 
-    /** <h1>Create a new ColorPalette.</h1>
+    /**
+     * <h1>Create a new ColorPalette.</h1>
      * This color palette is used with animations, and the elements like BasicButton, BasicElement, and more.
      * <br> This method takes {@link Color} in ARGB format. Disabled color is made from a darker version of the clicked color.
-     * @param colorNormal the color of the element when it is not hovered or pressed.
+     *
+     * @param colorNormal  the color of the element when it is not hovered or pressed.
      * @param colorHovered the color of the element when it is hovered.
      * @param colorPressed the color of the element when it is pressed.
      */
     public ColorPalette(Color colorNormal, Color colorHovered, Color colorPressed) {
-        this(colorNormal.getRGB(), colorHovered.getRGB(), colorPressed.getRGB(), colorPressed.darker().getRGB());
+        this(colorNormal.getRGB(), colorHovered.getRGB(), colorPressed.getRGB());
     }
 
-    /** <h1>Create a new ColorPalette.</h1>
+    /**
+     * <h1>Create a new ColorPalette.</h1>
      * This color palette is used with animations, and the elements like BasicButton, BasicElement, and more.
      * <br> This method takes {@link Color} in ARGB format.
-     * @param colorNormal the color of the element when it is not hovered or pressed.
-     * @param colorHovered the color of the element when it is hovered.
-     * @param colorPressed the color of the element when it is pressed.
+     *
+     * @param colorNormal   the color of the element when it is not hovered or pressed.
+     * @param colorHovered  the color of the element when it is hovered.
+     * @param colorPressed  the color of the element when it is pressed.
      * @param colorDisabled the color of the element when it is disabled.
      */
     public ColorPalette(Color colorNormal, Color colorHovered, Color colorPressed, Color colorDisabled) {
-        this(colorNormal.getRGB(), colorHovered.getRGB(), colorPressed.getRGB(), colorDisabled.getRGB());
+        this(colorNormal.getRGB(), colorHovered.getRGB(), colorPressed.getRGB());
     }
 
-    /** <h1>Create a new ColorPalette.</h1>
+    /**
+     * <h1>Create a new ColorPalette.</h1>
      * This color palette is used with animations, and the elements like BasicButton, BasicElement, and more.
      * <br> This method takes float arrays of the color between 0f and 1f, in [R, G, B, A] format.
-     * @param colorNormal the color of the element when it is not hovered or pressed.
+     *
+     * @param colorNormal  the color of the element when it is not hovered or pressed.
      * @param colorHovered the color of the element when it is hovered.
      * @param colorPressed the color of the element when it is pressed.
      */
@@ -130,51 +122,51 @@ public class ColorPalette {
         this.colorNormalf = colorNormal;
         this.colorHoveredf = colorHovered;
         this.colorPressedf = colorPressed;
-        this.colorDisabledf = colorDisabled;
         this.colorNormal = ColorUtils.getColor(colorNormal[0], colorNormal[1], colorNormal[2], colorNormal[3]);
         this.colorHovered = ColorUtils.getColor(colorHovered[0], colorHovered[1], colorHovered[2], colorHovered[3]);
         this.colorPressed = ColorUtils.getColor(colorPressed[0], colorPressed[1], colorPressed[2], colorPressed[3]);
-        this.colorDisabled = ColorUtils.getColor(colorDisabled[0], colorDisabled[1], colorDisabled[2], colorDisabled[3]);
     }
 
-    /** Return the color of the element when it is not hovered or pressed in ARGB format. */
+    /**
+     * Return the color of the element when it is not hovered or pressed in ARGB format.
+     */
     public int getNormalColor() {
         return colorNormal;
     }
 
-    /** Return the color of the element when it is hovered in ARGB format. */
+    /**
+     * Return the color of the element when it is hovered in ARGB format.
+     */
     public int getHoveredColor() {
         return colorHovered;
     }
 
-    /** Return the color of the element when it is pressed in ARGB format. */
-    public int getDisabledColor() {
-        return colorDisabled;
-    }
 
-    /** Return the color of the element when it is pressed in ARGB format. */
+    /**
+     * Return the color of the element when it is pressed in ARGB format.
+     */
     public int getPressedColor() {
         return colorPressed;
     }
 
-    /** Return the color of the element when it is not hovered or pressed in a float array (r,g,b,a). */
+    /**
+     * Return the color of the element when it is not hovered or pressed in a float array (r,g,b,a).
+     */
     public float[] getNormalColorf() {
         return colorNormalf;
     }
 
-    /** Return the color of the element when it is hovered in a float array (r,g,b,a). */
+    /**
+     * Return the color of the element when it is hovered in a float array (r,g,b,a).
+     */
     public float[] getHoveredColorf() {
         return colorHoveredf;
     }
 
-    /** Return the color of the element when it is pressed in a float array (r,g,b,a). */
+    /**
+     * Return the color of the element when it is pressed in a float array (r,g,b,a).
+     */
     public float[] getPressedColorf() {
         return colorPressedf;
     }
-
-    /** Return the color of the element when it is disabled in a float array (r,g,b,a). */
-    public float[] getDisabledColorf() {
-        return colorDisabledf;
-    }
-
 }
