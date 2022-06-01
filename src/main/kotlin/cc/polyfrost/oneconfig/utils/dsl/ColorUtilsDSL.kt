@@ -1,7 +1,7 @@
 package cc.polyfrost.oneconfig.utils.dsl
 
 import cc.polyfrost.oneconfig.config.core.OneColor
-import cc.polyfrost.oneconfig.utils.ColorUtils
+import cc.polyfrost.oneconfig.utils.color.ColorUtils
 
 /**
  * Creates a new [OneColor] from the given RGBA integer.

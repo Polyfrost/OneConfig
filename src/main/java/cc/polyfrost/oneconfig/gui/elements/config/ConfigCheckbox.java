@@ -5,7 +5,8 @@ import cc.polyfrost.oneconfig.config.interfaces.BasicOption;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
-import cc.polyfrost.oneconfig.utils.ColorUtils;
+import cc.polyfrost.oneconfig.utils.color.ColorPalette;
+import cc.polyfrost.oneconfig.utils.color.ColorUtils;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import cc.polyfrost.oneconfig.utils.MathUtils;
 
@@ -40,7 +41,7 @@ public class ConfigCheckbox extends BasicOption {
                 e.printStackTrace();
             }
         }
-        color = ColorUtils.getColor(color, ColorUtils.SECONDARY, hover, false);
+        color = ColorUtils.getColor(color, ColorPalette.SECONDARY, hover, false);
         if (percentOn != 1f) {       // performance
             RenderManager.drawRoundedRect(vg, x, y + 4, 24, 24, color, 6f);
             RenderManager.drawHollowRoundRect(vg, x, y + 4, 23.5f, 23.5f, OneConfigConfig.GRAY_300, 6f, 1f);        // the 0.5f is to make it look better ok

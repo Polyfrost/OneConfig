@@ -9,7 +9,7 @@ import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
-import cc.polyfrost.oneconfig.utils.ColorUtils;
+import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 
 import java.lang.reflect.Field;
 
@@ -19,7 +19,7 @@ public class ConfigKeyBind extends BasicOption {
 
     public ConfigKeyBind(Field field, Object parent, String name, int size) {
         super(field, parent, name, size);
-        button = new BasicButton(256, 32, "", SVGs.KEYSTROKE, null, BasicButton.ALIGNMENT_LEFT, ColorUtils.SECONDARY);
+        button = new BasicButton(256, 32, "", SVGs.KEYSTROKE, null, BasicButton.ALIGNMENT_LEFT, ColorPalette.SECONDARY);
         button.setToggleable(true);
     }
 

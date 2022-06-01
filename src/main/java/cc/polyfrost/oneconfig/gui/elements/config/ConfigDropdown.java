@@ -5,7 +5,8 @@ import cc.polyfrost.oneconfig.config.interfaces.BasicOption;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
-import cc.polyfrost.oneconfig.utils.ColorUtils;
+import cc.polyfrost.oneconfig.utils.color.ColorPalette;
+import cc.polyfrost.oneconfig.utils.color.ColorUtils;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import org.lwjgl.input.Mouse;
 
@@ -40,7 +41,7 @@ public class ConfigDropdown extends BasicOption { // TODO: remove dividers and f
         }
         if (opened) return;
 
-        backgroundColor = ColorUtils.getColor(backgroundColor, ColorUtils.SECONDARY, hovered, false);
+        backgroundColor = ColorUtils.getColor(backgroundColor, ColorPalette.SECONDARY, hovered, false);
         int selected = 0;
         try {
             selected = (int) get();

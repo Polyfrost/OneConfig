@@ -9,7 +9,8 @@ import cc.polyfrost.oneconfig.libs.universal.wrappers.UPlayer;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
-import cc.polyfrost.oneconfig.utils.ColorUtils;
+import cc.polyfrost.oneconfig.utils.color.ColorPalette;
+import cc.polyfrost.oneconfig.utils.color.ColorUtils;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.fml.common.ModMetadata;
@@ -19,7 +20,7 @@ import java.util.ArrayList;
 
 public class ModCard extends BasicElement {
     private final Mod modData;
-    private final BasicElement favoriteHitbox = new BasicElement(32, 32, ColorUtils.PRIMARY, true);
+    private final BasicElement favoriteHitbox = new BasicElement(32, 32, ColorPalette.PRIMARY, true);
     private boolean active, disabled, favorite;
     private int colorGray = OneConfigConfig.GRAY_600;
     private int colorPrimary = OneConfigConfig.PRIMARY_600;
@@ -62,11 +63,11 @@ public class ModCard extends BasicElement {
         super.update(x, y);
         isHoveredMain = InputUtils.isAreaHovered(x, y, width, 87);
         boolean isHoveredSecondary = InputUtils.isAreaHovered(x, y + 87, width - 32, 32) && !disabled;
-        colorGray = ColorUtils.getColor(colorGray, ColorUtils.SECONDARY, isHoveredMain, clicked && isHoveredMain);
+        colorGray = ColorUtils.getColor(colorGray, ColorPalette.SECONDARY, isHoveredMain, clicked && isHoveredMain);
         if (active && !disabled) {
-            colorPrimary = ColorUtils.getColor(colorPrimary, ColorUtils.PRIMARY, isHoveredSecondary, clicked && isHoveredSecondary);
+            colorPrimary = ColorUtils.getColor(colorPrimary, ColorPalette.PRIMARY, isHoveredSecondary, clicked && isHoveredSecondary);
         } else {
-            colorPrimary = ColorUtils.getColor(colorPrimary, ColorUtils.SECONDARY, isHoveredSecondary, false);
+            colorPrimary = ColorUtils.getColor(colorPrimary, ColorPalette.SECONDARY, isHoveredSecondary, false);
         }
         if (clicked && isHoveredMain) {
             if (!active) toggled = false;
