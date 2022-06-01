@@ -75,6 +75,7 @@ public class BasicButton extends BasicElement {
     public void draw(long vg, int x, int y) {
         this.x = x;
         this.y = y;
+        this.update(x, y);
         if (disabled) RenderManager.setAlpha(vg, 0.5f);
         RenderManager.drawRoundedRect(vg, x, y, this.width, this.height, colorPalette == ColorPalette.TERTIARY || colorPalette == ColorPalette.TERTIARY_DESTRUCTIVE ? OneConfigConfig.TRANSPARENT : currentColor, this.cornerRadius);
         float contentWidth = 0f;
@@ -123,7 +124,6 @@ public class BasicButton extends BasicElement {
             if (icon2 != null)
                 RenderManager.drawSvg(vg, icon2, x + contentWidth, middleYIcon, iconSize, iconSize, color);
         }
-        this.update(x, y);
         if (disabled) RenderManager.setAlpha(vg, 1f);
     }
 

@@ -3,6 +3,7 @@ package cc.polyfrost.oneconfig.gui;
 import cc.polyfrost.oneconfig.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.gui.animations.Animation;
 import cc.polyfrost.oneconfig.gui.animations.EaseInOutQuart;
+import cc.polyfrost.oneconfig.gui.animations.EaseInQuartReversed;
 import cc.polyfrost.oneconfig.gui.elements.BasicButton;
 import cc.polyfrost.oneconfig.gui.pages.CreditsPage;
 import cc.polyfrost.oneconfig.gui.pages.ModsPage;
@@ -34,6 +35,7 @@ public class SideBar {
 
     private int selected = 2;
     private Animation moveAnimation = null;
+    private Animation sizeAnimation = null;
 
     public SideBar() {
         buttons.get(0).setClickAction(new CreditsPage());
@@ -52,10 +54,11 @@ public class SideBar {
             if (button.equals(buttons.get(selected))) break;
             buttons.get(selected).setColorPalette(ColorPalette.TERTIARY);
             moveAnimation = new EaseInOutQuart(300, buttons.get(selected).y, button.y, false);
+            sizeAnimation = new EaseInQuartReversed(300, 36, 54, false);
             selected = buttons.indexOf(button);
         }
         if (moveAnimation != null) {
-            RenderManager.drawRoundedRect(vg, x + 16, moveAnimation.get(), 192, 36, OneConfigConfig.PRIMARY_600, 12);
+            RenderManager.drawRoundedRect(vg, x + 16, moveAnimation.get(), 192, sizeAnimation.get(), OneConfigConfig.PRIMARY_600, 12);
             if (moveAnimation.isFinished()) {
                 moveAnimation = null;
                 buttons.get(selected).setColorPalette(ColorPalette.PRIMARY);

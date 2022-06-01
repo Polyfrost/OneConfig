@@ -90,7 +90,7 @@ public class OneConfigGui extends UScreen {
             if (OneConfigConfig.ROUNDED_CORNERS) {
                 RenderManager.drawDropShadow(vg, x, y, 1280, 800, 32, 0, 20);
                 RenderManager.drawRoundedRect(vg, x + 224, y, 1056, 800, OneConfigConfig.GRAY_800, OneConfigConfig.CORNER_RADIUS_WIN);
-                RenderManager.drawRoundedRect(vg, x, y, 244, 800, OneConfigConfig.GRAY_900_80, OneConfigConfig.CORNER_RADIUS_WIN);
+                RenderManager.drawRoundedRect(vg, x, y, 244, 800, OneConfigConfig.GRAY_800_95, OneConfigConfig.CORNER_RADIUS_WIN);
                 RenderManager.drawRect(vg, x + 224, y, 20, 800, OneConfigConfig.GRAY_800);
             }
             RenderManager.drawLine(vg, x + 224, y + 72, x + 1280, y + 72, 1, OneConfigConfig.GRAY_700);
@@ -127,7 +127,7 @@ public class OneConfigGui extends UScreen {
             if (backArrow.isClicked() && previousPages.size() > 0) {
                 try {
                     nextPages.add(0, currentPage);
-                    openPage(previousPages.get(0), false);
+                    openPage(previousPages.get(0), new EaseInOutQuad(300, 224, 2128, false), true);
                     previousPages.remove(0);
                 } catch (Exception ignored) {
                 }
@@ -197,7 +197,7 @@ public class OneConfigGui extends UScreen {
     }
 
     public void openPage(@NotNull Page page, boolean addToPrevious) {
-        openPage(page, new EaseInOutQuad(300, 224, 2128, false), true);
+        openPage(page, new EaseInOutQuad(300, 224, 2128, false), addToPrevious);
     }
     public void openPage(@NotNull Page page, Animation animation, boolean addToPrevious) {
         if (page == currentPage) return;
