@@ -40,6 +40,10 @@ public class SideBar {
         buttons.get(2).setClickAction(new ModsPage());
         HUDButton.setClickAction(() -> GuiUtils.displayScreen(new HudGui()));
         CloseButton.setClickAction(GuiUtils::closeScreen);
+        for (int i = 0; i < buttons.size(); i++) {
+            if (i == 0 || i == 2) continue;
+            buttons.get(i).disable(true);
+        }
     }
 
     public void draw(long vg, int x, int y) {
