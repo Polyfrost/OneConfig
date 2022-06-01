@@ -1,4 +1,5 @@
 package cc.polyfrost.oneconfig.accessibility;
 
-public class ScreenReaderSupport {
+public class NarratorSupport {
+
 }

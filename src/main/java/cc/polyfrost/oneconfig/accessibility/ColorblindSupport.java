@@ -1,2 +1,4 @@
-package cc.polyfrost.oneconfig.accessibility;public class ColorblindSupport {
+package cc.polyfrost.oneconfig.accessibility;
+
+public class ColorblindSupport {
 }

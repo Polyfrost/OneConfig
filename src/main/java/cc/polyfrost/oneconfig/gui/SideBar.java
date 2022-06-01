@@ -22,6 +22,7 @@ public class SideBar {
         add(new BasicButton(192, SIZE_36, "Mods", SVGs.FADERS_HORIZONTAL_BOLD, null, ALIGNMENT_LEFT, PRIMARY));
         add(new BasicButton(192, SIZE_36, "Profiles", SVGs.USER_SWITCH_FILL, null, ALIGNMENT_LEFT, TERTIARY));
         add(new BasicButton(192, SIZE_36, "Performance", SVGs.GAUGE_FILL, null, ALIGNMENT_LEFT, TERTIARY));
+        add(new BasicButton(192, SIZE_36, "Accessibility", SVGs.CHECK_CIRCLE, null, ALIGNMENT_LEFT, TERTIARY));
         add(new BasicButton(192, SIZE_36, "Updates", SVGs.ARROWS_CLOCKWISE_BOLD, null, ALIGNMENT_LEFT, TERTIARY));
         add(new BasicButton(192, SIZE_36, "Themes", SVGs.PAINT_BRUSH_BROAD_FILL, null, ALIGNMENT_LEFT, TERTIARY));
         add(new BasicButton(192, SIZE_36, "Screenshots", SVGs.APERTURE_FILL, null, ALIGNMENT_LEFT, TERTIARY));

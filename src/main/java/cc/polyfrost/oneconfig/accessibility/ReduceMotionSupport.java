@@ -1,2 +1,4 @@
-package cc.polyfrost.oneconfig.accessibility;public class ReduceMotionSupport {
+package cc.polyfrost.oneconfig.accessibility;
+
+public class ReduceMotionSupport {
 }
