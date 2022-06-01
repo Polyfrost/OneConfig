@@ -1,27 +1,29 @@
 package cc.polyfrost.oneconfig.gui.elements;
 
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
-import cc.polyfrost.oneconfig.utils.ColorUtils;
+import cc.polyfrost.oneconfig.utils.color.ColorPalette;
+import cc.polyfrost.oneconfig.utils.color.ColorUtils;
 import cc.polyfrost.oneconfig.utils.InputUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class BasicElement {
     protected int width, height;
-    protected int colorPalette;
+    protected ColorPalette colorPalette;
     protected int hitBoxX, hitBoxY;
     protected boolean hoverFx;
     protected boolean hovered = false;
     protected boolean clicked = false;
     protected boolean toggled = false;
     protected boolean disabled = false;
-    protected int currentColor;
+    public int currentColor;
     protected final float radius;
     private boolean block = false;
 
-    public BasicElement(int width, int height, int colorPalette, boolean hoverFx) {
+    public BasicElement(int width, int height, @NotNull ColorPalette colorPalette, boolean hoverFx) {
         this(width, height, colorPalette, hoverFx, 12f);
     }
 
-    public BasicElement(int width, int height, int colorPalette, boolean hoverFx, float radius) {
+    public BasicElement(int width, int height, @NotNull ColorPalette colorPalette, boolean hoverFx, float radius) {
         this.height = height;
         this.width = width;
         this.colorPalette = colorPalette;
@@ -30,7 +32,7 @@ public class BasicElement {
     }
 
     public BasicElement(int width, int height, boolean hoverFx) {
-        this(width, height, ColorUtils.TRANSPARENT, hoverFx, 12f);
+        this(width, height, ColorPalette.TRANSPARENT, hoverFx, 12f);
     }
 
 
@@ -80,7 +82,7 @@ public class BasicElement {
         this.height = height;
     }
 
-    public void setColorPalette(int colorPalette) {
+    public void setColorPalette(ColorPalette colorPalette) {
         this.colorPalette = colorPalette;
     }
 

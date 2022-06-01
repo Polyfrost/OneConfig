@@ -4,7 +4,8 @@ import cc.polyfrost.oneconfig.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.config.interfaces.BasicOption;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
-import cc.polyfrost.oneconfig.utils.ColorUtils;
+import cc.polyfrost.oneconfig.utils.color.ColorPalette;
+import cc.polyfrost.oneconfig.utils.color.ColorUtils;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import cc.polyfrost.oneconfig.utils.MathUtils;
 
@@ -28,7 +29,7 @@ public class ConfigSwitch extends BasicOption {
         }
         int x2 = x + 3 + (int) (percentOn * 18);
         boolean hovered = InputUtils.isAreaHovered(x, y, 42, 32);
-        colorDisabled = ColorUtils.getColor(colorDisabled, ColorUtils.SECONDARY, hovered, false);
+        colorDisabled = ColorUtils.getColor(colorDisabled, ColorPalette.SECONDARY, hovered, false);
         colorEnabled = ColorUtils.smoothColor(colorEnabled, OneConfigConfig.PRIMARY_600, OneConfigConfig.PRIMARY_500, hovered, 40f);
         if (!isEnabled()) RenderManager.setAlpha(vg, 0.5f);
         RenderManager.drawRoundedRect(vg, x, y + 4, 42, 24, colorDisabled, 12f);

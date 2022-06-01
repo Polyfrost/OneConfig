@@ -11,7 +11,7 @@ import cc.polyfrost.oneconfig.lwjgl.image.Images;
 import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
 import cc.polyfrost.oneconfig.lwjgl.scissor.Scissor;
 import cc.polyfrost.oneconfig.lwjgl.scissor.ScissorManager;
-import cc.polyfrost.oneconfig.utils.ColorUtils;
+import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import cc.polyfrost.oneconfig.utils.MathUtils;
 import cc.polyfrost.oneconfig.utils.NetworkUtils;
@@ -31,11 +31,11 @@ public class ColorSelector {
     private final ArrayList<BasicElement> buttons = new ArrayList<>();
     private final BasicElement closeBtn = new BasicElement(32, 32, false);
 
-    private final BasicButton copyBtn = new BasicButton(32, 32, SVGs.COPY, BasicButton.ALIGNMENT_CENTER, ColorUtils.SECONDARY);
-    private final BasicButton pasteBtn = new BasicButton(32, 32, SVGs.PASTE, BasicButton.ALIGNMENT_CENTER, ColorUtils.SECONDARY);
-    private final BasicButton guideBtn = new BasicButton(112, 32, "Guide", SVGs.HELP_CIRCLE, SVGs.POP_OUT, BasicButton.ALIGNMENT_CENTER, ColorUtils.SECONDARY);
-    private final BasicButton faveBtn = new BasicButton(32, 32, SVGs.HEART_OUTLINE, BasicButton.ALIGNMENT_CENTER, ColorUtils.SECONDARY);
-    private final BasicButton recentBtn = new BasicButton(32, 32, SVGs.HISTORY, BasicButton.ALIGNMENT_CENTER, ColorUtils.SECONDARY);
+    private final BasicButton copyBtn = new BasicButton(32, 32, SVGs.COPY, BasicButton.ALIGNMENT_CENTER, ColorPalette.SECONDARY);
+    private final BasicButton pasteBtn = new BasicButton(32, 32, SVGs.PASTE, BasicButton.ALIGNMENT_CENTER, ColorPalette.SECONDARY);
+    private final BasicButton guideBtn = new BasicButton(112, 32, "Guide", SVGs.HELP_CIRCLE, SVGs.POP_OUT, BasicButton.ALIGNMENT_CENTER, ColorPalette.SECONDARY);
+    private final BasicButton faveBtn = new BasicButton(32, 32, SVGs.HEART_OUTLINE, BasicButton.ALIGNMENT_CENTER, ColorPalette.SECONDARY);
+    private final BasicButton recentBtn = new BasicButton(32, 32, SVGs.HISTORY, BasicButton.ALIGNMENT_CENTER, ColorPalette.SECONDARY);
 
     private final NumberInputField hueInput = new NumberInputField(90, 32, 0, 0, 360, 1);
     private final NumberInputField saturationInput = new NumberInputField(90, 32, 100, 0, 100, 1);
@@ -56,9 +56,9 @@ public class ColorSelector {
 
     public ColorSelector(OneColor color, int mouseX, int mouseY) {
         this.color = color;
-        buttons.add(new BasicElement(124, 28, ColorUtils.SECONDARY, true, 10f));
-        buttons.add(new BasicElement(124, 28, ColorUtils.SECONDARY, true, 10f));
-        buttons.add(new BasicElement(124, 28, ColorUtils.SECONDARY, true, 10f));
+        buttons.add(new BasicElement(124, 28, ColorPalette.SECONDARY, true, 10f));
+        buttons.add(new BasicElement(124, 28, ColorPalette.SECONDARY, true, 10f));
+        buttons.add(new BasicElement(124, 28, ColorPalette.SECONDARY, true, 10f));
         hueInput.setCurrentValue(color.getHue());
         saturationInput.setCurrentValue(color.getSaturation());
         brightnessInput.setCurrentValue(color.getBrightness());

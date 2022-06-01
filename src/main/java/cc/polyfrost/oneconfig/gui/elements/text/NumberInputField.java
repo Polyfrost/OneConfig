@@ -4,7 +4,8 @@ import cc.polyfrost.oneconfig.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.gui.elements.BasicElement;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
-import cc.polyfrost.oneconfig.utils.ColorUtils;
+import cc.polyfrost.oneconfig.utils.color.ColorPalette;
+import cc.polyfrost.oneconfig.utils.color.ColorUtils;
 
 public class NumberInputField extends TextInputField {
     private final BasicElement upArrow = new BasicElement(12, 14, false);
@@ -47,8 +48,8 @@ public class NumberInputField extends TextInputField {
         if (current == max) colorTop = OneConfigConfig.GRAY_500_80;
         if (current == min) colorBottom = OneConfigConfig.GRAY_500_80;
 
-        colorTop = ColorUtils.getColor(colorTop, ColorUtils.SECONDARY, upArrow.isHovered(), upArrow.isClicked());
-        colorBottom = ColorUtils.getColor(colorBottom, ColorUtils.SECONDARY, downArrow.isHovered(), downArrow.isClicked());
+        colorTop = ColorUtils.getColor(colorTop, ColorPalette.SECONDARY, upArrow.isHovered(), upArrow.isClicked());
+        colorBottom = ColorUtils.getColor(colorBottom, ColorPalette.SECONDARY, downArrow.isHovered(), downArrow.isClicked());
         if (upArrow.isClicked()) {
             current += step;
             if (current > max) current = max;

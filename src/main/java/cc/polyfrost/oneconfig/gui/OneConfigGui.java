@@ -7,7 +7,6 @@ import cc.polyfrost.oneconfig.gui.animations.EaseInOutQuad;
 import cc.polyfrost.oneconfig.gui.elements.BasicElement;
 import cc.polyfrost.oneconfig.gui.elements.ColorSelector;
 import cc.polyfrost.oneconfig.gui.elements.text.TextInputField;
-import cc.polyfrost.oneconfig.gui.pages.HomePage;
 import cc.polyfrost.oneconfig.gui.pages.ModsPage;
 import cc.polyfrost.oneconfig.gui.pages.Page;
 import cc.polyfrost.oneconfig.libs.universal.*;
@@ -15,6 +14,7 @@ import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
 import cc.polyfrost.oneconfig.lwjgl.scissor.ScissorManager;
+import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import cc.polyfrost.oneconfig.utils.MathUtils;
 import org.jetbrains.annotations.NotNull;
@@ -31,8 +31,8 @@ public class OneConfigGui extends UScreen {
     private final TextInputField textInputField = new TextInputField(248, 40, "Search...", false, false, SVGs.MAGNIFYING_GLASS_BOLD);
     private final ArrayList<Page> previousPages = new ArrayList<>();
     private final ArrayList<Page> nextPages = new ArrayList<>();
-    private final BasicElement backArrow = new BasicElement(40, 40, -1, false);
-    private final BasicElement forwardArrow = new BasicElement(40, 40, -1, false);
+    private final BasicElement backArrow = new BasicElement(40, 40, new ColorPalette(OneConfigConfig.GRAY_700, OneConfigConfig.GRAY_500, OneConfigConfig.GRAY_500_80), true);
+    private final BasicElement forwardArrow = new BasicElement(40, 40, new ColorPalette(OneConfigConfig.GRAY_700, OneConfigConfig.GRAY_500, OneConfigConfig.GRAY_500_80), true);
     private final ArrayList<Page> parents = new ArrayList<>();
     public ColorSelector currentColorSelector;
     public boolean mouseDown;
@@ -103,7 +103,7 @@ public class OneConfigGui extends UScreen {
             textInputField.draw(vg, x + 1020, y + 16);
             sideBar.draw(vg, x, y);
             backArrow.draw(vg, x + 240, y + 16);
-            forwardArrow.draw(vg, x + 280, y + 16);
+            forwardArrow.draw(vg, x + 288, y + 16);
 
             if (previousPages.size() == 0) {
                 backArrow.disable(true);
@@ -112,7 +112,7 @@ public class OneConfigGui extends UScreen {
                 backArrow.disable(false);
                 if (!backArrow.isHovered() || Mouse.isButtonDown(0)) RenderManager.setAlpha(vg, 0.8f);
             }
-            RenderManager.drawSvg(vg, SVGs.ARROW_CIRCLE_LEFT, x + 249, y + 25, 22, 22);
+            RenderManager.drawSvg(vg, SVGs.CHEVRON_LEFT, x + 246, y + 22, 28, 28);
             RenderManager.setAlpha(vg, 1f);
             if (nextPages.size() == 0) {
                 forwardArrow.disable(true);
@@ -121,7 +121,7 @@ public class OneConfigGui extends UScreen {
                 forwardArrow.disable(false);
                 if (!forwardArrow.isHovered() || Mouse.isButtonDown(0)) RenderManager.setAlpha(vg, 0.8f);
             }
-            RenderManager.drawSvg(vg, SVGs.ARROW_CIRCLE_RIGHT, x + 289, y + 25, 22, 22);
+            RenderManager.drawSvg(vg, SVGs.CHEVRON_RIGHT, x + 294, y + 22, 28, 28);
             RenderManager.setAlpha(vg, 1f);
 
             if (backArrow.isClicked() && previousPages.size() > 0) {
@@ -153,13 +153,13 @@ public class OneConfigGui extends UScreen {
             }
             ScissorManager.clearScissors(vg);
 
-            float breadcrumbX = x + 336;
+            float breadcrumbX = x + 352;
             for (int i = 0; i < parents.size(); i++) {
                 String title = parents.get(i).getTitle();
                 float width = RenderManager.getTextWidth(vg, title, 24f, Fonts.SEMIBOLD);
                 boolean hovered = InputUtils.isAreaHovered((int) breadcrumbX, y + 24, (int) width, 36);
                 int color = OneConfigConfig.WHITE_60;
-                if (i == parents.size() - 1) color = OneConfigConfig.WHITE_95;
+                if (i == parents.size() - 1) color = OneConfigConfig.WHITE;
                 else if (hovered && !Mouse.isButtonDown(0)) color = OneConfigConfig.WHITE_80;
                 RenderManager.drawText(vg, title, breadcrumbX, y + 38, color, 24f, Fonts.SEMIBOLD);
                 if (i != 0)

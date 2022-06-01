@@ -5,7 +5,7 @@ import cc.polyfrost.oneconfig.config.interfaces.BasicOption;
 import cc.polyfrost.oneconfig.gui.elements.BasicButton;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
-import cc.polyfrost.oneconfig.utils.ColorUtils;
+import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 
 import java.lang.reflect.Field;
 
@@ -14,13 +14,13 @@ public class ConfigButton extends BasicOption {
 
     public ConfigButton(Runnable runnable, Object parent, String name, int size, String text) {
         super(null, parent, name, size);
-        this.button = new BasicButton(size == 1 ? 128 : 256, 32, text, BasicButton.ALIGNMENT_CENTER, ColorUtils.PRIMARY);
+        this.button = new BasicButton(size == 1 ? 128 : 256, 32, text, BasicButton.ALIGNMENT_CENTER, ColorPalette.PRIMARY);
         this.button.setClickAction(runnable);
     }
 
     public ConfigButton(Field field, Object parent, String name, int size, String text) {
         super(field, parent, name, size);
-        this.button = new BasicButton(size == 1 ? 128 : 256, 32, text, BasicButton.ALIGNMENT_CENTER, ColorUtils.PRIMARY);
+        this.button = new BasicButton(size == 1 ? 128 : 256, 32, text, BasicButton.ALIGNMENT_CENTER, ColorPalette.PRIMARY);
         this.button.setClickAction(getRunnableFromField(field, parent));
     }
 

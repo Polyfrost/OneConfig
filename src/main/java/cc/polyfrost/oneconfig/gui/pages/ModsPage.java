@@ -9,7 +9,7 @@ import cc.polyfrost.oneconfig.gui.elements.BasicButton;
 import cc.polyfrost.oneconfig.gui.elements.ModCard;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
-import cc.polyfrost.oneconfig.utils.ColorUtils;
+import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,13 +25,13 @@ public class ModsPage extends Page {
         for (Mod modData : OneConfig.loadedMods) {
             modCards.add(OneConfigConfig.favoriteMods.contains(modData.name) ? 0 : modCards.size(), new ModCard(modData, modData.config == null || modData.config.enabled, false, OneConfigConfig.favoriteMods.contains(modData.name)));
         }
-        modCategories.add(new BasicButton(64, 32, "All", BasicButton.ALIGNMENT_CENTER, ColorUtils.SECONDARY));
-        modCategories.add(new BasicButton(80, 32, "Combat", BasicButton.ALIGNMENT_CENTER, ColorUtils.SECONDARY));
-        modCategories.add(new BasicButton(64, 32, "HUD", BasicButton.ALIGNMENT_CENTER, ColorUtils.SECONDARY));
-        modCategories.add(new BasicButton(104, 32, "Utility & QoL", BasicButton.ALIGNMENT_CENTER, ColorUtils.SECONDARY));
-        modCategories.add(new BasicButton(80, 32, "Hypixel", BasicButton.ALIGNMENT_CENTER, ColorUtils.SECONDARY));
-        modCategories.add(new BasicButton(80, 32, "Skyblock", BasicButton.ALIGNMENT_CENTER, ColorUtils.SECONDARY));
-        modCategories.add(new BasicButton(88, 32, "3rd Party", BasicButton.ALIGNMENT_CENTER, ColorUtils.SECONDARY));
+        modCategories.add(new BasicButton(64, 32, "All", BasicButton.ALIGNMENT_CENTER, ColorPalette.SECONDARY));
+        modCategories.add(new BasicButton(80, 32, "Combat", BasicButton.ALIGNMENT_CENTER, ColorPalette.SECONDARY));
+        modCategories.add(new BasicButton(64, 32, "HUD", BasicButton.ALIGNMENT_CENTER, ColorPalette.SECONDARY));
+        modCategories.add(new BasicButton(104, 32, "Utility & QoL", BasicButton.ALIGNMENT_CENTER, ColorPalette.SECONDARY));
+        modCategories.add(new BasicButton(80, 32, "Hypixel", BasicButton.ALIGNMENT_CENTER, ColorPalette.SECONDARY));
+        modCategories.add(new BasicButton(80, 32, "Skyblock", BasicButton.ALIGNMENT_CENTER, ColorPalette.SECONDARY));
+        modCategories.add(new BasicButton(88, 32, "3rd Party", BasicButton.ALIGNMENT_CENTER, ColorPalette.SECONDARY));
         modCategories.get(0).setToggled(true);
         int i = 0;
         for (BasicButton button : modCategories) {

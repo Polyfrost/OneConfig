@@ -6,7 +6,9 @@ import cc.polyfrost.oneconfig.gui.pages.Page;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
-import cc.polyfrost.oneconfig.utils.ColorUtils;
+import cc.polyfrost.oneconfig.utils.color.ColorPalette;
+import cc.polyfrost.oneconfig.utils.color.ColorUtils;
+import org.jetbrains.annotations.NotNull;
 import org.lwjgl.input.Mouse;
 
 
@@ -14,7 +16,7 @@ public class BasicButton extends BasicElement {
 
     protected String text;
     protected SVGs icon1, icon2;
-    private final int alignment, colorPalette;
+    private final int alignment;
     private final float fontSize, cornerRadius;
     private final int xSpacing, xPadding;
     private final int iconSize;
@@ -29,15 +31,17 @@ public class BasicButton extends BasicElement {
     public static final int SIZE_36 = 36;
     public static final int SIZE_40 = 40;
     public static final int SIZE_48 = 48;
+
+    public static final int CUSTOM_COLOR = -100;
     private boolean toggleable = false;
     private Page page;
     private Runnable runnable;
 
-    public BasicButton(int width, int size, String text, int align, int colorPalette) {
+    public BasicButton(int width, int size, String text, int align, @NotNull ColorPalette colorPalette) {
         this(width, size, text, null, null, align, colorPalette);
     }
 
-    public BasicButton(int width, int size, String text, SVGs icon1, SVGs icon2, int align, int colorPalette) {
+    public BasicButton(int width, int size, String text, SVGs icon1, SVGs icon2, int align, @NotNull ColorPalette colorPalette) {
         super(width, 32, colorPalette, true);
         if (text != null) this.text = text;
         if (icon1 != null) this.icon1 = icon1;
@@ -54,7 +58,7 @@ public class BasicButton extends BasicElement {
         this.fontSize = size == SIZE_48 ? 20 : (float) (size / 2 - 4);
     }
 
-    public BasicButton(int width, int size, SVGs icon, int align, int colorPalette) {
+    public BasicButton(int width, int size, SVGs icon, int align, @NotNull ColorPalette colorPalette) {
         this(width, size, null, icon, null, align, colorPalette);
     }
 
@@ -74,19 +78,16 @@ public class BasicButton extends BasicElement {
     public void draw(long vg, int x, int y) {
         this.x = x;
         this.y = y;
-        RenderManager.drawRoundedRect(vg, x, y, this.width, this.height, currentColor, this.cornerRadius);
+        RenderManager.drawRoundedRect(vg, x, y, this.width, this.height, colorPalette == ColorPalette.TERTIARY || colorPalette == ColorPalette.TERTIARY_DESTRUCTIVE ? OneConfigConfig.TRANSPARENT : currentColor, this.cornerRadius);
         float contentWidth = 0f;
         int color = -1;
+        if(colorPalette == ColorPalette.TERTIARY || colorPalette == ColorPalette.TERTIARY_DESTRUCTIVE) {
+            color = currentColor;
+        }
         final float middle = x + width / 2f;
         final float middleYIcon = y + height / 2f - iconSize / 2f;
         final float middleYText = y + height / 2f + fontSize / 8f;
         if (this.text != null) {
-            if (this.colorPalette == ColorUtils.TERTIARY) {
-                color = OneConfigConfig.WHITE_80;
-                if (hovered) color = OneConfigConfig.WHITE;
-                if (clicked) color = OneConfigConfig.WHITE_80;
-                if (page == null) color = OneConfigConfig.WHITE_50;
-            }
             contentWidth += RenderManager.getTextWidth(vg, text, fontSize, Fonts.MEDIUM);
         }
         if (alignment == ALIGNMENT_CENTER) {
@@ -177,10 +178,6 @@ public class BasicButton extends BasicElement {
     public void update(int x, int y) {
         super.update(x, y);
         if (hoverFx) {
-            if (colorPalette == ColorUtils.TERTIARY) {
-                currentColor = OneConfigConfig.TRANSPARENT;
-                return;
-            }
             if (!toggleable) {
                 currentColor = ColorUtils.getColor(currentColor, colorPalette, hovered, hovered && Mouse.isButtonDown(0));
             } else {

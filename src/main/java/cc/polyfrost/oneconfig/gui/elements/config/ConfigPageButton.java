@@ -8,7 +8,8 @@ import cc.polyfrost.oneconfig.gui.pages.ModConfigPage;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
-import cc.polyfrost.oneconfig.utils.ColorUtils;
+import cc.polyfrost.oneconfig.utils.color.ColorPalette;
+import cc.polyfrost.oneconfig.utils.color.ColorUtils;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import org.lwjgl.input.Mouse;
 
@@ -30,7 +31,7 @@ public class ConfigPageButton extends BasicOption {
         int height = description.equals("") ? 64 : 96;
         boolean hovered = InputUtils.isAreaHovered(x - 2, y, 1024, height) && isEnabled();
         boolean clicked = hovered && InputUtils.isClicked();
-        backgroundColor = ColorUtils.getColor(backgroundColor, ColorUtils.SECONDARY, hovered, false);
+        backgroundColor = ColorUtils.getColor(backgroundColor, ColorPalette.SECONDARY, hovered, false);
 
         if (hovered && Mouse.isButtonDown(0)) RenderManager.setAlpha(vg, 0.8f);
         if (!isEnabled()) RenderManager.setAlpha(vg, 0.5f);

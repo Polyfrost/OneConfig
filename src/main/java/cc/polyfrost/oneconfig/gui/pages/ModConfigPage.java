@@ -6,7 +6,7 @@ import cc.polyfrost.oneconfig.config.interfaces.BasicOption;
 import cc.polyfrost.oneconfig.gui.elements.BasicButton;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
-import cc.polyfrost.oneconfig.utils.ColorUtils;
+import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 
 import java.util.ArrayList;
 
@@ -28,7 +28,7 @@ public class ModConfigPage extends Page {
         }
         if (page.categories.size() < 2) return;
         for (String category : page.categories.keySet()) {
-            BasicButton button = new BasicButton(0, SIZE_32, category, BasicButton.ALIGNMENT_CENTER, ColorUtils.SECONDARY);
+            BasicButton button = new BasicButton(0, SIZE_32, category, BasicButton.ALIGNMENT_CENTER, ColorPalette.SECONDARY);
             button.setClickAction(() -> switchCategory(category));
             button.setToggleable(true);
             if (category.equals(selectedCategory)) button.setToggled(true);
