@@ -2,8 +2,8 @@
 We recommend the use of an IDE, specifically [IntelliJ IDEA](https://www.jetbrains.com/idea/). This guide will be based on IntelliJ and might be slightly different for other IDE's.
 
 ### Prerequisites
-- A Java 17 or up JDK. We reccomend [Adoptium 17](https://adoptium.net/temurin/releases?version=17)
-- A Java 8 JDK. We reccomend [Adoptium 8](https://adoptium.net/temurin/releases?version=8)
+- A Java 17 or up JDK.
+- A Java 8 JDK.
 
 ### Setting up your IDE
 
@@ -19,7 +19,7 @@ This will allow you to run Minecraft with your ide and use the debugger.
 To login in to your Minecraft account while in your development enviroment, we recommend the use of [DevAuth](https://github.com/DJtheRedstoner/DevAuth)
 
 # Pull Requests
-To contribute to OneConfig, please open a pull request. We guide you through making a pull request using a template, but these are the basic guidelines.
+To contribute to OneConfig, please open a pull request. Here are the basic guidelines.
 
 Guidelines for pull requests:
 - **Clear description**: Make sure you document **what** was changed and **why** the change was needed.
