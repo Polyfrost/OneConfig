@@ -5,7 +5,7 @@
 <!-- List the issue(s) this PR solves -->
 
 ## Checklist
-- [ ] I proved a clear description of what was change
+- [ ] I made a clear description of what was change
 - [ ] I stated why this change was necessary
 - [ ] I updated documentation or said what needs to be updated
 - [ ] I made sure this change is backwards compatible
