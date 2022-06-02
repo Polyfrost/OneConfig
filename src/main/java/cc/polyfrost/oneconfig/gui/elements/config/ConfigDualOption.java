@@ -2,6 +2,10 @@ package cc.polyfrost.oneconfig.gui.elements.config;
 
 import cc.polyfrost.oneconfig.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.config.interfaces.BasicOption;
+import cc.polyfrost.oneconfig.gui.animations.Animation;
+import cc.polyfrost.oneconfig.gui.animations.DummyAnimation;
+import cc.polyfrost.oneconfig.gui.animations.EaseInOutQuart;
+import cc.polyfrost.oneconfig.gui.animations.EaseInQuartReversed;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.utils.InputUtils;
@@ -10,7 +14,8 @@ import cc.polyfrost.oneconfig.utils.MathUtils;
 import java.lang.reflect.Field;
 
 public class ConfigDualOption extends BasicOption {
-    private float percentMove = 0f;
+    private Animation posAnimation;
+    private Animation sizeAnimation;
     private final String left, right;
 
     public ConfigDualOption(Field field, Object parent, String name, int size, String[] options) {
@@ -30,6 +35,10 @@ public class ConfigDualOption extends BasicOption {
         boolean toggled = false;
         try {
             toggled = (boolean) get();
+            if (posAnimation == null) {
+                posAnimation = new EaseInOutQuart(1, 228, 356, !toggled);
+                sizeAnimation = new EaseInQuartReversed(1, 124, 186, false);
+            }
         } catch (IllegalAccessException ignored) {
         }
         if (!isEnabled()) RenderManager.setAlpha(vg, 0.5f);
@@ -37,8 +46,7 @@ public class ConfigDualOption extends BasicOption {
         boolean hoveredRight = InputUtils.isAreaHovered(x + 354, y, 128, 32) && isEnabled();
         RenderManager.drawText(vg, name, x, y + 16, OneConfigConfig.WHITE_90, 14f, Fonts.MEDIUM);
         RenderManager.drawRoundedRect(vg, x + 226, y, 256, 32, OneConfigConfig.GRAY_600, 12f);
-        int x1 = (int) (x + 228 + (percentMove * 128));
-        RenderManager.drawRoundedRect(vg, x1, y + 2, 124, 28, OneConfigConfig.PRIMARY_600, 10f);
+        RenderManager.drawRoundedRect(vg, x + posAnimation.get(), y + 2, sizeAnimation.get(), 28, OneConfigConfig.PRIMARY_600, 10f);
         if (!hoveredLeft && isEnabled()) RenderManager.setAlpha(vg, 0.8f);
         RenderManager.drawText(vg, left, x + 290 - RenderManager.getTextWidth(vg, left, 12f, Fonts.MEDIUM) / 2, y + 17, OneConfigConfig.WHITE, 12f, Fonts.MEDIUM);
         if (isEnabled()) RenderManager.setAlpha(vg, 1f);
@@ -48,6 +56,8 @@ public class ConfigDualOption extends BasicOption {
         RenderManager.setAlpha(vg, 1);
         if ((hoveredLeft && toggled || hoveredRight && !toggled) && InputUtils.isClicked()) {
             toggled = !toggled;
+            posAnimation = new EaseInOutQuart(200, 228, 356, !toggled);
+            sizeAnimation = new EaseInQuartReversed(200, 124, 186, false);
             try {
                 set(toggled);
             } catch (IllegalAccessException e) {
@@ -55,6 +65,5 @@ public class ConfigDualOption extends BasicOption {
                 e.printStackTrace();
             }
         }
-        percentMove = MathUtils.clamp(MathUtils.easeOut(percentMove, toggled ? 1f : 0f, 75));
     }
 }

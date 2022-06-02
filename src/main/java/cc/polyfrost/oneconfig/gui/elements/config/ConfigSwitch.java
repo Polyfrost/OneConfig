@@ -2,6 +2,9 @@ package cc.polyfrost.oneconfig.gui.elements.config;
 
 import cc.polyfrost.oneconfig.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.config.interfaces.BasicOption;
+import cc.polyfrost.oneconfig.gui.animations.Animation;
+import cc.polyfrost.oneconfig.gui.animations.DummyAnimation;
+import cc.polyfrost.oneconfig.gui.animations.EaseInOutQuad;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
@@ -14,7 +17,7 @@ import java.lang.reflect.Field;
 public class ConfigSwitch extends BasicOption {
     private int colorEnabled;
     private int colorDisabled;
-    private float percentOn = 0f;
+    private Animation animation;
 
     public ConfigSwitch(Field field, Object parent, String name, int size) {
         super(field, parent, name, size);
@@ -25,8 +28,10 @@ public class ConfigSwitch extends BasicOption {
         boolean toggled = false;
         try {
             toggled = (boolean) get();
+            if (animation == null) animation = new DummyAnimation(toggled ? 0 : 1);
         } catch (IllegalAccessException ignored) {
         }
+        float percentOn = animation.get();
         int x2 = x + 3 + (int) (percentOn * 18);
         boolean hovered = InputUtils.isAreaHovered(x, y, 42, 32);
         colorDisabled = ColorUtils.getColor(colorDisabled, ColorPalette.SECONDARY, hovered, false);
@@ -40,6 +45,7 @@ public class ConfigSwitch extends BasicOption {
 
         if (InputUtils.isAreaClicked(x, y, 42, 32) && isEnabled()) {
             toggled = !toggled;
+            animation = new EaseInOutQuad(200, 0, 1, !toggled);
             try {
                 set(toggled);
             } catch (IllegalAccessException e) {
@@ -47,7 +53,6 @@ public class ConfigSwitch extends BasicOption {
                 e.printStackTrace();
             }
         }
-        percentOn = MathUtils.clamp(MathUtils.easeOut(percentOn, toggled ? 1f : 0f, 75));
         RenderManager.setAlpha(vg, 1f);
     }
 

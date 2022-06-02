@@ -43,7 +43,7 @@ public class ConfigSlider extends BasicOption {
             value = MathUtils.map(xCoordinate, x + 352, x + 864, min, max);
         } else if (inputField.isToggled() || inputField.arrowsClicked()) {
             value = inputField.getCurrentValue();
-            xCoordinate = (int) MathUtils.map(value, min, max, x + 352, x + 864);
+            xCoordinate = (int) MathUtils.clamp(MathUtils.map(value, min, max, x + 352, x + 864), x + 352, x + 864);
         }
         if (dragging && InputUtils.isClicked() || inputField.isToggled() || inputField.arrowsClicked()) {
             dragging = false;
@@ -61,7 +61,7 @@ public class ConfigSlider extends BasicOption {
                     isFloat = false;
                 if (isFloat) value = (float) object;
                 else value = (int) object;
-                xCoordinate = (int) MathUtils.map(value, min, max, x + 352, x + 864);
+                xCoordinate = (int) MathUtils.clamp(MathUtils.map(value, min, max, x + 352, x + 864), x + 352, x + 864);
             } catch (IllegalAccessException ignored) {
             }
         }

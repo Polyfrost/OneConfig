@@ -16,11 +16,6 @@ public enum OptionType {
     /**
      * Type: int
      */
-    UNI_SELECTOR,
-    /**
-     * Type: String
-     * Normal: 1x and 2x, Secure and Mutliline: 2x only
-     */
     TEXT,
     /**
      * Type: int or float

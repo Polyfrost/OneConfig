@@ -146,9 +146,6 @@ public class Config {
                 case DUAL_OPTION:
                     options.add(new ConfigDualOption(field, instance, option.name(), option.size(), option.options()));
                     break;
-                case UNI_SELECTOR:
-                    options.add(new ConfigUniSelector(field, instance, option.name(), option.size(), option.options()));
-                    break;
                 case DROPDOWN:
                     options.add(new ConfigDropdown(field, instance, option.name(), option.size(), option.options()));
                     break;

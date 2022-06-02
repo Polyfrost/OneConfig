@@ -7,6 +7,7 @@ public abstract class Animation {
     private final float start;
     private final float change;
     private float timePassed = 0;
+    protected final boolean reverse;
 
     /**
      * @param duration The duration of the animation
@@ -23,6 +24,7 @@ public abstract class Animation {
         }
         this.start = start;
         this.change = end - start;
+        this.reverse = reverse;
     }
 
     /**
@@ -47,6 +49,13 @@ public abstract class Animation {
      */
     public boolean isFinished() {
         return timePassed >= duration;
+    }
+
+    /**
+     * @return If the animation is reversed
+     */
+    public boolean isReversed() {
+        return reverse;
     }
 
     protected abstract float animate(float timePassed, float duration, float start, float change);

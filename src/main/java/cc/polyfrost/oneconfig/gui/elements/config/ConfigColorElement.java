@@ -29,6 +29,11 @@ public class ConfigColorElement extends BasicOption {
 
     @Override
     public void draw(long vg, int x, int y) {
+        if(!isEnabled()) RenderManager.setAlpha(vg, 0.5f);
+        hexField.disable(!isEnabled());
+        alphaField.disable(!isEnabled());
+        element.disable(!isEnabled());
+
         int x1 = size == 1 ? x : x + 512;
         OneColor color;
         try {
@@ -81,6 +86,7 @@ public class ConfigColorElement extends BasicOption {
             color = (OneConfigGui.INSTANCE.getColor());
         }
         setColor(color);
+        RenderManager.setAlpha(vg, 1f);
     }
 
     @Override

@@ -11,6 +11,7 @@ public final class MathUtils {
         return number < min ? min : Math.min(number, max);
     }
 
+    @Deprecated
     public static float easeOut(float current, float goal, float speed) {
         float deltaTime = OneConfigGui.INSTANCE == null ? 16 : OneConfigGui.INSTANCE.getDeltaTime();
         if (Math.round(Math.abs(goal - current) * 100) > 0) {
@@ -18,18 +19,6 @@ public final class MathUtils {
         } else {
             return goal;
         }
-    }
-
-    public static float easeInQuad(float current) {
-        return current * current;
-    }
-
-    /**
-     * Adapted from <a href="https://github.com/jesusgollonet/processing-penner-easing">https://github.com/jesusgollonet/processing-penner-easing</a>
-     */
-    public static float easeInOutCirc(float time, float beginning, float change, float duration) {
-        if ((time /= duration / 2) < 1) return -change / 2 * ((float) Math.sqrt(1 - time * time) - 1) + beginning;
-        return change / 2 * ((float) Math.sqrt(1 - (time -= 2) * time) + 1) + beginning;
     }
 
     public static float map(float value, float start1, float stop1, float start2, float stop2) {

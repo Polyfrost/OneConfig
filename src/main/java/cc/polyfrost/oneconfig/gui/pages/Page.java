@@ -1,5 +1,8 @@
 package cc.polyfrost.oneconfig.gui.pages;
 
+import cc.polyfrost.oneconfig.gui.animations.Animation;
+import cc.polyfrost.oneconfig.gui.animations.EaseInOutQuad;
+import cc.polyfrost.oneconfig.gui.animations.EaseOutQuad;
 import cc.polyfrost.oneconfig.lwjgl.scissor.Scissor;
 import cc.polyfrost.oneconfig.lwjgl.scissor.ScissorManager;
 import cc.polyfrost.oneconfig.utils.MathUtils;
@@ -9,7 +12,7 @@ import org.lwjgl.input.Mouse;
  * A page is a 1056x728 rectangle of the GUI. It is the main content of the gui, and can be switched back and forwards easily. All the content of OneConfig is in a page.
  */
 public abstract class Page {
-    private float currentScroll = 0f;
+    private Animation scrollAnimation;
     private float scrollTarget;
 
     protected final String title;
@@ -35,20 +38,24 @@ public abstract class Page {
     public void scrollWithDraw(long vg, int x, int y) {     // TODO scroll bar
         int maxScroll = getMaxScrollHeight();
         int scissorOffset = drawStatic(vg, x, y);
+        float scroll = scrollAnimation == null ? scrollTarget : scrollAnimation.get();
         Scissor scissor = ScissorManager.scissor(vg, x, y + scissorOffset, x + 1056, y + 728 - scissorOffset);
+        int dWheel = Mouse.getDWheel();
+        if (dWheel != 0) {
+            scrollTarget += dWheel;
+
+            if (scrollTarget > 0f) scrollTarget = 0f;
+            else if (scrollTarget < -maxScroll + 728) scrollTarget = -maxScroll + 728;
+
+            scrollAnimation = new EaseOutQuad(150, scroll, scrollTarget, false);
+        } else if (scrollAnimation != null && scrollAnimation.isFinished()) scrollAnimation = null;
         if (maxScroll <= 728) {
             draw(vg, x, y);
             ScissorManager.resetScissor(vg, scissor);
             return;
         }
-        draw(vg, x, (int) (y + currentScroll));
-        int dWheel = Mouse.getDWheel();
-        scrollTarget += dWheel;
+        draw(vg, x, (int) (y + scroll));
 
-        if (scrollTarget > 0f) scrollTarget = 0f;
-        else if (scrollTarget < -maxScroll + 728) scrollTarget = -maxScroll + 728;
-
-        currentScroll = MathUtils.easeOut(currentScroll, scrollTarget, 50f);
         ScissorManager.resetScissor(vg, scissor);
     }
 

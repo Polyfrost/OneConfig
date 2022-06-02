@@ -59,8 +59,9 @@ public class SideBar {
         }
         if (moveAnimation != null) {
             RenderManager.drawRoundedRect(vg, x + 16, moveAnimation.get(), 192, sizeAnimation.get(), OneConfigConfig.PRIMARY_600, 12);
-            if (moveAnimation.isFinished()) {
+            if (moveAnimation.isFinished() && sizeAnimation.isFinished()) {
                 moveAnimation = null;
+                sizeAnimation = null;
                 buttons.get(selected).setColorPalette(ColorPalette.PRIMARY);
             }
         }

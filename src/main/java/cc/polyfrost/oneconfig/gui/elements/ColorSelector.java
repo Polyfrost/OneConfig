@@ -3,6 +3,7 @@ package cc.polyfrost.oneconfig.gui.elements;
 import cc.polyfrost.oneconfig.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.config.core.OneColor;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
+import cc.polyfrost.oneconfig.gui.animations.*;
 import cc.polyfrost.oneconfig.gui.elements.text.NumberInputField;
 import cc.polyfrost.oneconfig.gui.elements.text.TextInputField;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
@@ -26,7 +27,9 @@ public class ColorSelector {
     private int x;
     private int y;
     private final OneColor color;
-    private float percentMove = 0f;
+    private Animation barMoveAnimation = new DummyAnimation(18);
+    private Animation barSizeAnimation = new DummyAnimation(124);
+    private Animation moveAnimation = new DummyAnimation(1);
     private int mouseX, mouseY;
     private final ArrayList<BasicElement> buttons = new ArrayList<>();
     private final BasicElement closeBtn = new BasicElement(32, 32, false);
@@ -50,7 +53,6 @@ public class ColorSelector {
     private final ColorSlider bottomSlider = new ColorSlider(384, 0, 255, 100);
     private final Slider speedSlider = new Slider(296, 1, 32, 0);
     private int mode = 0, prevMode = 0;
-    private float percentMoveMain = 1f;
     private boolean dragging, mouseWasDown;
 
 
@@ -124,8 +126,6 @@ public class ColorSelector {
             recentColors.get(i).draw(vg, x + 104 + i * 44, y + 720);
         }
 
-        RenderManager.drawRoundedRect(vg, x + 16, y + 64, 384, 32, OneConfigConfig.GRAY_500, 12f);
-        RenderManager.drawRoundedRect(vg, x + 18 + (percentMove * 128), y + 66, 124, 28, OneConfigConfig.PRIMARY_600, 10f);
         int i = 18;
         for (BasicElement button : buttons) {
             button.draw(vg, x + i, y + 66);
@@ -133,16 +133,16 @@ public class ColorSelector {
                 prevMode = mode;
                 mode = buttons.indexOf(button);
                 setXYFromColor();
-                percentMoveMain = 0f;
-            }
-            if (percentMove != mode) {
-                button.currentColor = OneConfigConfig.TRANSPARENT;
-                drawColorSelector(vg, prevMode, (int) (x + (width * percentMoveMain)), y);
+                barMoveAnimation = new EaseInOutQuart(200, 18 + prevMode * 128, 18 + mode * 128, false);
+                barSizeAnimation = new EaseInQuartReversed(200, 124, 186, false);
+                moveAnimation = new EaseInOutQuad(200, 0, 1, false);
             }
             i += 128;
         }
-        percentMove = MathUtils.easeOut(percentMove, mode, 100f);
-        percentMoveMain = MathUtils.clamp(MathUtils.easeOut(percentMoveMain, 1f, 100f));
+        float percentMoveMain = moveAnimation.get();
+
+        RenderManager.drawRoundedRect(vg, x + 16, y + 64, 384, 32, OneConfigConfig.GRAY_500, 12f);
+        RenderManager.drawRoundedRect(vg, x + barMoveAnimation.get(), y + 66, barSizeAnimation.get(), 28, OneConfigConfig.PRIMARY_600, 10f);
 
         RenderManager.drawText(vg, "HSB Box", x + 55, y + 81, OneConfigConfig.WHITE, 12f, Fonts.MEDIUM);
         RenderManager.drawText(vg, "Color Wheel", x + 172.5f, y + 81, OneConfigConfig.WHITE, 12f, Fonts.MEDIUM);
