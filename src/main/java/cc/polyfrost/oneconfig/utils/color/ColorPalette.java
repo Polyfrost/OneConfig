@@ -29,7 +29,7 @@ public class ColorPalette {
      * <h1>Tertiary Color Scheme</h1> Normal: Transparent (Text=White 90%),<br> Hover: Transparent (Text=White 100%),<br> Clicked: Transparent (Text=White 80%)
      * <h2>NOTICE this returns the text colors as it is always transparent.</h2>
      */
-    public static final ColorPalette TERTIARY = new ColorPalette(WHITE_90, WHITE, WHITE_80);
+    public static final ColorPalette TERTIARY = new ColorPalette(WHITE_80, WHITE, WHITE_80);
     /**
      * <h1>Primary Destructive Color Scheme</h1> Normal: Error 700,<br> Hover: Error 600,<br> Clicked: Error 600 (80%)
      */

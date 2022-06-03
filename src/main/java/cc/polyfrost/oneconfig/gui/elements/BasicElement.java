@@ -1,10 +1,10 @@
 package cc.polyfrost.oneconfig.gui.elements;
 
-import cc.polyfrost.oneconfig.lwjgl.RenderManager;
-import cc.polyfrost.oneconfig.utils.color.ColorPalette;
-import cc.polyfrost.oneconfig.utils.color.ColorUtils;
+import cc.polyfrost.oneconfig.gui.animations.ColorAnimation;
 import cc.polyfrost.oneconfig.utils.InputUtils;
+import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 import org.jetbrains.annotations.NotNull;
+import org.lwjgl.input.Mouse;
 
 public class BasicElement {
     protected int width, height;
@@ -12,12 +12,14 @@ public class BasicElement {
     protected int hitBoxX, hitBoxY;
     protected boolean hoverFx;
     protected boolean hovered = false;
+    protected boolean pressed = false;
     protected boolean clicked = false;
     protected boolean toggled = false;
     protected boolean disabled = false;
     public int currentColor;
     protected final float radius;
     private boolean block = false;
+    protected ColorAnimation colorAnimation;
 
     public BasicElement(int width, int height, @NotNull ColorPalette colorPalette, boolean hoverFx) {
         this(width, height, colorPalette, hoverFx, 12f);
@@ -29,6 +31,7 @@ public class BasicElement {
         this.colorPalette = colorPalette;
         this.hoverFx = hoverFx;
         this.radius = radius;
+        this.colorAnimation = new ColorAnimation(colorPalette);
     }
 
     public BasicElement(int width, int height, boolean hoverFx) {
@@ -37,22 +40,21 @@ public class BasicElement {
 
 
     public void draw(long vg, int x, int y) {
-        RenderManager.drawRoundedRect(vg, x, y, width, height, currentColor, radius);
-
-        update(x, y);
-        if (hoverFx) {
-            currentColor = ColorUtils.getColor(currentColor, colorPalette, hovered, clicked);
-        }
     }
 
     public void update(int x, int y) {
         if (disabled) {
             hovered = false;
+            pressed = false;
             clicked = false;
             return;
         }
         hovered = InputUtils.isAreaHovered(x - hitBoxX, y - hitBoxY, width + hitBoxX, height + hitBoxY);
+        pressed = hovered && Mouse.isButtonDown(0);
         clicked = InputUtils.isClicked(block) && hovered;
+
+        if (hoverFx) currentColor = colorAnimation.getColor(hovered, pressed);
+        else currentColor = colorAnimation.getColor(false, false);
 
         if (clicked) {
             toggled = !toggled;
@@ -84,6 +86,7 @@ public class BasicElement {
 
     public void setColorPalette(ColorPalette colorPalette) {
         this.colorPalette = colorPalette;
+        this.colorAnimation.setPalette(colorPalette);
     }
 
     public int getWidth() {

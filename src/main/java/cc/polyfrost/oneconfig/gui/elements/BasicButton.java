@@ -2,14 +2,13 @@ package cc.polyfrost.oneconfig.gui.elements;
 
 import cc.polyfrost.oneconfig.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
+import cc.polyfrost.oneconfig.gui.animations.ColorAnimation;
 import cc.polyfrost.oneconfig.gui.pages.Page;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
-import cc.polyfrost.oneconfig.utils.color.ColorUtils;
 import org.jetbrains.annotations.NotNull;
-import org.lwjgl.input.Mouse;
 
 public class BasicButton extends BasicElement {
 
@@ -34,10 +33,6 @@ public class BasicButton extends BasicElement {
     private Page page;
     private Runnable runnable;
 
-    public BasicButton(int width, int size, String text, int align, @NotNull ColorPalette colorPalette) {
-        this(width, size, text, null, null, align, colorPalette);
-    }
-
     public BasicButton(int width, int size, String text, SVGs icon1, SVGs icon2, int align, @NotNull ColorPalette colorPalette) {
         super(width, 32, colorPalette, true);
         if (text != null) this.text = text;
@@ -59,16 +54,8 @@ public class BasicButton extends BasicElement {
         this(width, size, null, icon, null, align, colorPalette);
     }
 
-    public void setToggleable(boolean state) {
-        this.toggleable = state;
-    }
-
-    public void setClickAction(Page page) {
-        this.page = page;
-    }
-
-    public void setClickAction(Runnable runnable) {
-        this.runnable = runnable;
+    public BasicButton(int width, int size, String text, int align, @NotNull ColorPalette colorPalette) {
+        this(width, size, text, null, null, align, colorPalette);
     }
 
     @Override
@@ -130,14 +117,16 @@ public class BasicButton extends BasicElement {
 
     @Override
     public void onClick() {
-        if (this.page != null) {
+        if (this.page != null && OneConfigGui.INSTANCE != null) {
             OneConfigGui.INSTANCE.openPage(page);
         } else if (this.runnable != null) {
             runnable.run();
         }
+        if (toggleable && toggled) colorPalette = ColorPalette.PRIMARY;
+        else if (toggleable) colorPalette = ColorPalette.SECONDARY;
     }
 
-    @Override
+    /*@Override
     public void update(int x, int y) {
         super.update(x, y);
         if (hoverFx && !disabled) {
@@ -152,6 +141,18 @@ public class BasicButton extends BasicElement {
         } else if (hoverFx) {
             currentColor = colorPalette.getNormalColor();
         }
+    }*/
+
+    public void setToggleable(boolean state) {
+        this.toggleable = state;
+    }
+
+    public void setClickAction(Page page) {
+        this.page = page;
+    }
+
+    public void setClickAction(Runnable runnable) {
+        this.runnable = runnable;
     }
 
     public Page getPage() {

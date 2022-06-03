@@ -15,7 +15,7 @@ import java.lang.reflect.Field;
 
 public class ConfigDualOption extends BasicOption {
     private Animation posAnimation;
-    private Animation sizeAnimation;
+    private Animation sizeAnimation = new DummyAnimation(124);
     private final String left, right;
 
     public ConfigDualOption(Field field, Object parent, String name, int size, String[] options) {
@@ -35,10 +35,7 @@ public class ConfigDualOption extends BasicOption {
         boolean toggled = false;
         try {
             toggled = (boolean) get();
-            if (posAnimation == null) {
-                posAnimation = new EaseInOutQuart(1, 228, 356, !toggled);
-                sizeAnimation = new EaseInQuartReversed(1, 124, 186, false);
-            }
+            if (posAnimation == null) posAnimation = new DummyAnimation(toggled ? 356 : 228);
         } catch (IllegalAccessException ignored) {
         }
         if (!isEnabled()) RenderManager.setAlpha(vg, 0.5f);

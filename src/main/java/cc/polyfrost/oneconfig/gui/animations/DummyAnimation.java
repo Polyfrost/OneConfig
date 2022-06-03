@@ -10,6 +10,6 @@ public class DummyAnimation extends Animation{
 
     @Override
     protected float animate(float timePassed, float duration, float start, float change) {
-        return change;
+        return start;
     }
 }

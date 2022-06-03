@@ -207,7 +207,7 @@ public class ColorSelector {
             default:
             case 0:
             case 2:
-                buttons.get(mode).currentColor = OneConfigConfig.TRANSPARENT;
+                //buttons.get(mode).currentColor = OneConfigConfig.TRANSPARENT;
                 topSlider.setImage(Images.HUE_GRADIENT);
                 RenderManager.drawHSBBox(vg, x + 16, y + 120, 384, 288, color.getRGBMax(true));
 
@@ -222,7 +222,7 @@ public class ColorSelector {
                 }
                 break;
             case 1:
-                buttons.get(1).currentColor = OneConfigConfig.TRANSPARENT;
+                //buttons.get(1).currentColor = OneConfigConfig.TRANSPARENT;
                 topSlider.setImage(null);
                 RenderManager.drawRoundImage(vg, Images.COLOR_WHEEL, x + 64, y + 120, 288, 288, 144f);
 
