@@ -122,8 +122,8 @@ public class BasicButton extends BasicElement {
         } else if (this.runnable != null) {
             runnable.run();
         }
-        if (toggleable && toggled) colorPalette = ColorPalette.PRIMARY;
-        else if (toggleable) colorPalette = ColorPalette.SECONDARY;
+        if (toggleable && toggled) setColorPalette(ColorPalette.PRIMARY);
+        else if (toggleable) setColorPalette(ColorPalette.SECONDARY);
     }
 
     /*@Override

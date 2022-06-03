@@ -46,4 +46,11 @@ public class ColorAnimation {
         this.palette = palette;
         prevState = 3;
     }
+
+    public void setColors(float[] colors) {
+        redAnimation = new DummyAnimation(colors[0]);
+        greenAnimation = new DummyAnimation(colors[1]);
+        blueAnimation = new DummyAnimation(colors[2]);
+        alphaAnimation = new DummyAnimation(colors[3]);
+    }
 }

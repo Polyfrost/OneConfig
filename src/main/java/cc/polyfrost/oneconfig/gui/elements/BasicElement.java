@@ -47,19 +47,19 @@ public class BasicElement {
             hovered = false;
             pressed = false;
             clicked = false;
-            return;
+        } else {
+            hovered = InputUtils.isAreaHovered(x - hitBoxX, y - hitBoxY, width + hitBoxX, height + hitBoxY);
+            pressed = hovered && Mouse.isButtonDown(0);
+            clicked = InputUtils.isClicked(block) && hovered;
+
+            if (clicked) {
+                toggled = !toggled;
+                onClick();
+            }
         }
-        hovered = InputUtils.isAreaHovered(x - hitBoxX, y - hitBoxY, width + hitBoxX, height + hitBoxY);
-        pressed = hovered && Mouse.isButtonDown(0);
-        clicked = InputUtils.isClicked(block) && hovered;
 
         if (hoverFx) currentColor = colorAnimation.getColor(hovered, pressed);
         else currentColor = colorAnimation.getColor(false, false);
-
-        if (clicked) {
-            toggled = !toggled;
-            onClick();
-        }
     }
 
     public void ignoreBlockedTouches(boolean state) {
@@ -85,6 +85,8 @@ public class BasicElement {
     }
 
     public void setColorPalette(ColorPalette colorPalette) {
+        if (this.colorPalette.equals(ColorPalette.TERTIARY) || this.colorPalette.equals(ColorPalette.TERTIARY_DESTRUCTIVE))
+            this.colorAnimation.setColors(colorPalette.getNormalColorf());
         this.colorPalette = colorPalette;
         this.colorAnimation.setPalette(colorPalette);
     }
