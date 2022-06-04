@@ -12,6 +12,7 @@
     "GuiIngameForgeMixin",
     "MinecraftMixin",
     "NetHandlerPlayClientMixin",
+    "NetworkManagerMixin",
     "ShaderGroupAccessor",
     "WorldClientMixin"
   ]
