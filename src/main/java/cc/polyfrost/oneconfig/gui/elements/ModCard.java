@@ -11,7 +11,6 @@ import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
-import cc.polyfrost.oneconfig.utils.color.ColorUtils;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.fml.common.ModMetadata;
@@ -24,8 +23,8 @@ public class ModCard extends BasicElement {
     private final Mod modData;
     private final BasicButton favoriteButton = new BasicButton(32, 32, SVGs.HEART_OUTLINE, BasicButton.ALIGNMENT_CENTER, ColorPalette.TERTIARY);
     private boolean active, disabled, favorite;
-    private final ColorAnimation colorGray = new ColorAnimation(ColorPalette.SECONDARY);
-    private final ColorAnimation colorPrimary = new ColorAnimation(ColorPalette.PRIMARY);
+    private final ColorAnimation colorFrame = new ColorAnimation(ColorPalette.SECONDARY);
+    private final ColorAnimation colorToggle = new ColorAnimation(ColorPalette.PRIMARY);
     private boolean isHoveredMain = false;
 
     public ModCard(@NotNull Mod mod, boolean active, boolean disabled, boolean favorite) {
@@ -45,15 +44,15 @@ public class ModCard extends BasicElement {
         isHoveredMain = InputUtils.isAreaHovered(x, y, width, 87);
         boolean isHoveredSecondary = InputUtils.isAreaHovered(x, y + 87, width - 32, 32) && !disabled;
         if (disabled) RenderManager.setAlpha(vg, 0.5f);
-        RenderManager.drawRoundedRectVaried(vg, x, y, width, 87, colorGray.getColor(isHoveredMain, isHoveredMain && Mouse.isButtonDown(0)), 12f, 12f, 0f, 0f);
-        RenderManager.drawRoundedRectVaried(vg, x, y + 87, width, 32, colorPrimary.getColor(isHoveredSecondary, isHoveredSecondary && Mouse.isButtonDown(0)), 0f, 0f, 12f, 12f);
+        RenderManager.drawRoundedRectVaried(vg, x, y, width, 87, colorFrame.getColor(isHoveredMain, isHoveredMain && Mouse.isButtonDown(0)), 12f, 12f, 0f, 0f);
+        RenderManager.drawRoundedRectVaried(vg, x, y + 87, width, 32, colorToggle.getColor(isHoveredSecondary, isHoveredSecondary && Mouse.isButtonDown(0)), 0f, 0f, 12f, 12f);
         RenderManager.drawLine(vg, x, y + 86, x + width, y + 86, 2, OneConfigConfig.GRAY_300);
         if (modData.modIcon != null) {
             if (modData.modIcon.toLowerCase().endsWith(".svg"))
                 RenderManager.drawSvg(vg, modData.modIcon, x + 98, y + 19, 48, 48);
             else RenderManager.drawImage(vg, modData.modIcon, x + 98, y + 19, 48, 48);
         } else {
-            RenderManager.drawSvg(vg, SVGs.BOX, x + 98, y + 19, 48, 48);
+            RenderManager.drawText(vg, modData.name, x + 122 - RenderManager.getTextWidth(vg, modData.name, 24, Fonts.MINECRAFT) / 2f, y + 44, OneConfigConfig.WHITE, 24, Fonts.MINECRAFT);
         }
         favoriteButton.draw(vg, x + 212, y + 87);
         favorite = favoriteButton.isToggled();
@@ -69,6 +68,7 @@ public class ModCard extends BasicElement {
         if (!active & disabled) toggled = false;
 
         active = toggled;
+        colorToggle.setPalette(active ? ColorPalette.PRIMARY : ColorPalette.SECONDARY);
         RenderManager.setAlpha(vg, 1f);
     }
 
