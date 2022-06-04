@@ -4,26 +4,27 @@ import cc.polyfrost.oneconfig.OneConfig;
 import cc.polyfrost.oneconfig.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.config.data.Mod;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
+import cc.polyfrost.oneconfig.gui.animations.ColorAnimation;
 import cc.polyfrost.oneconfig.gui.pages.ModConfigPage;
 import cc.polyfrost.oneconfig.libs.universal.wrappers.UPlayer;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
-import cc.polyfrost.oneconfig.utils.color.ColorUtils;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.fml.common.ModMetadata;
 import org.jetbrains.annotations.NotNull;
+import org.lwjgl.input.Mouse;
 
 import java.util.ArrayList;
 
 public class ModCard extends BasicElement {
     private final Mod modData;
-    private final BasicElement favoriteHitbox = new BasicElement(32, 32, ColorPalette.PRIMARY, true);
+    private final BasicButton favoriteButton = new BasicButton(32, 32, SVGs.HEART_OUTLINE, BasicButton.ALIGNMENT_CENTER, ColorPalette.TERTIARY);
     private boolean active, disabled, favorite;
-    private int colorGray = OneConfigConfig.GRAY_600;
-    private int colorPrimary = OneConfigConfig.PRIMARY_600;
+    private final ColorAnimation colorFrame = new ColorAnimation(ColorPalette.SECONDARY);
+    private final ColorAnimation colorToggle = new ColorAnimation(ColorPalette.PRIMARY);
     private boolean isHoveredMain = false;
 
     public ModCard(@NotNull Mod mod, boolean active, boolean disabled, boolean favorite) {
@@ -33,50 +34,41 @@ public class ModCard extends BasicElement {
         toggled = active;
         this.disabled = disabled;
         this.favorite = favorite;
-        favoriteHitbox.setToggled(favorite);
+        favoriteButton.setToggled(favorite);
         toggled = active;
     }
 
     @Override
     public void draw(long vg, int x, int y) {
+        super.update(x, y);
+        isHoveredMain = InputUtils.isAreaHovered(x, y, width, 87);
+        boolean isHoveredSecondary = InputUtils.isAreaHovered(x, y + 87, width - 32, 32) && !disabled;
         if (disabled) RenderManager.setAlpha(vg, 0.5f);
-        RenderManager.drawRoundedRectVaried(vg, x, y, width, 87, colorGray, 12f, 12f, 0f, 0f);
-        RenderManager.drawRoundedRectVaried(vg, x, y + 87, width, 32, colorPrimary, 0f, 0f, 12f, 12f);
+        RenderManager.drawRoundedRectVaried(vg, x, y, width, 87, colorFrame.getColor(isHoveredMain, isHoveredMain && Mouse.isButtonDown(0)), 12f, 12f, 0f, 0f);
+        RenderManager.drawRoundedRectVaried(vg, x, y + 87, width, 32, colorToggle.getColor(isHoveredSecondary, isHoveredSecondary && Mouse.isButtonDown(0)), 0f, 0f, 12f, 12f);
         RenderManager.drawLine(vg, x, y + 86, x + width, y + 86, 2, OneConfigConfig.GRAY_300);
         if (modData.modIcon != null) {
             if (modData.modIcon.toLowerCase().endsWith(".svg"))
                 RenderManager.drawSvg(vg, modData.modIcon, x + 98, y + 19, 48, 48);
             else RenderManager.drawImage(vg, modData.modIcon, x + 98, y + 19, 48, 48);
         } else {
-            RenderManager.drawSvg(vg, SVGs.BOX, x + 98, y + 19, 48, 48);
+            RenderManager.drawText(vg, modData.name, x + 122 - RenderManager.getTextWidth(vg, modData.name, 24, Fonts.MINECRAFT) / 2f, y + 44, OneConfigConfig.WHITE, 24, Fonts.MINECRAFT);
         }
-        favoriteHitbox.update(x + 212, y + 87);
-        //favoriteHitbox.currentColor = ColorUtils.getColor(favoriteHitbox.currentColor, favoriteHitbox.colorPalette, favoriteHitbox.hovered, favoriteHitbox.clicked);
-        //RenderManager.drawRoundedRectVaried(vg, x + 212, y + 87, 32, 32, favoriteHitbox.currentColor, 0f, 0f, 12f, 0f);
-        favorite = favoriteHitbox.isToggled();
+        favoriteButton.draw(vg, x + 212, y + 87);
+        favorite = favoriteButton.isToggled();
         RenderManager.drawText(vg, modData.name, x + 12, y + 103, OneConfigConfig.WHITE, 14f, Fonts.MEDIUM);
-        if (favorite) {
-            RenderManager.drawSvg(vg, SVGs.HEART_FILL, x + 220, y + 95, 16, 16);
-        } else {
-            RenderManager.drawSvg(vg, SVGs.HEART_OUTLINE, x + 220, y + 95, 16, 16);
-        }
-        super.update(x, y);
-        isHoveredMain = InputUtils.isAreaHovered(x, y, width, 87);
-        boolean isHoveredSecondary = InputUtils.isAreaHovered(x, y + 87, width - 32, 32) && !disabled;
-        colorGray = ColorUtils.getColor(colorGray, ColorPalette.SECONDARY, isHoveredMain, clicked && isHoveredMain);
-        if (active && !disabled) {
-            colorPrimary = ColorUtils.getColor(colorPrimary, ColorPalette.PRIMARY, isHoveredSecondary, clicked && isHoveredSecondary);
-        } else {
-            colorPrimary = ColorUtils.getColor(colorPrimary, ColorPalette.SECONDARY, isHoveredSecondary, false);
-        }
+        if (favorite) favoriteButton.setLeftIcon(SVGs.HEART_FILL);
+        else favoriteButton.setLeftIcon(SVGs.HEART_OUTLINE);
+
         if (clicked && isHoveredMain) {
             if (!active) toggled = false;
         }
-        if (clicked && favoriteHitbox.hovered) toggled = false;
+        if (clicked && favoriteButton.hovered) toggled = false;
         if (clicked && !isHoveredSecondary && active) toggled = true;
         if (!active & disabled) toggled = false;
 
         active = toggled;
+        colorToggle.setPalette(active ? ColorPalette.PRIMARY : ColorPalette.SECONDARY);
         RenderManager.setAlpha(vg, 1f);
     }
 

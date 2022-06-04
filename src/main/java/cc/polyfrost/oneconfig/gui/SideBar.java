@@ -2,14 +2,15 @@ package cc.polyfrost.oneconfig.gui;
 
 import cc.polyfrost.oneconfig.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.gui.animations.Animation;
+import cc.polyfrost.oneconfig.gui.animations.DummyAnimation;
 import cc.polyfrost.oneconfig.gui.animations.EaseInOutQuart;
-import cc.polyfrost.oneconfig.gui.animations.EaseInQuartReversed;
 import cc.polyfrost.oneconfig.gui.elements.BasicButton;
 import cc.polyfrost.oneconfig.gui.pages.CreditsPage;
 import cc.polyfrost.oneconfig.gui.pages.ModsPage;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
+import cc.polyfrost.oneconfig.test.ButtonTestPage;
 import cc.polyfrost.oneconfig.utils.GuiUtils;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 
@@ -40,11 +41,12 @@ public class SideBar {
     public SideBar() {
         buttons.get(0).setClickAction(new CreditsPage());
         buttons.get(2).setClickAction(new ModsPage());
+        buttons.get(8).setClickAction(new ButtonTestPage());
         HUDButton.setClickAction(() -> GuiUtils.displayScreen(new HudGui()));
         CloseButton.setClickAction(GuiUtils::closeScreen);
-        for (int i = 0; i < buttons.size(); i++) {
-            if (i == 0 || i == 2) continue;
-            buttons.get(i).disable(true);
+        for (BasicButton button : buttons) {
+            if (button.hasClickAction()) continue;
+            button.disable(true);
         }
     }
 
@@ -54,11 +56,11 @@ public class SideBar {
             if (button.equals(buttons.get(selected))) break;
             buttons.get(selected).setColorPalette(ColorPalette.TERTIARY);
             moveAnimation = new EaseInOutQuart(300, buttons.get(selected).y, button.y, false);
-            sizeAnimation = new EaseInQuartReversed(300, 36, 72, false);
+            sizeAnimation = new DummyAnimation(36);
             selected = buttons.indexOf(button);
         }
         if (moveAnimation != null) {
-            RenderManager.drawRoundedRect(vg, x + 16, moveAnimation.get(), 192, sizeAnimation.get(), OneConfigConfig.PRIMARY_600, 12);
+            RenderManager.drawRoundedRect(vg, x + 16, moveAnimation.get() - (sizeAnimation.get() - 36) / 2f, 192, sizeAnimation.get(0), OneConfigConfig.PRIMARY_600, 12);
             if (moveAnimation.isFinished() && sizeAnimation.isFinished()) {
                 moveAnimation = null;
                 sizeAnimation = null;

@@ -3,6 +3,7 @@ package cc.polyfrost.oneconfig.command;
 import cc.polyfrost.oneconfig.gui.HudGui;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.utils.GuiUtils;
+import cc.polyfrost.oneconfig.utils.InputUtils;
 import cc.polyfrost.oneconfig.utils.commands.annotations.Command;
 import cc.polyfrost.oneconfig.utils.commands.annotations.Main;
 import cc.polyfrost.oneconfig.utils.commands.annotations.SubCommand;
@@ -26,11 +27,12 @@ public class OneConfigCommand {
         }
     }
 
-    @SubCommand(value = "destory", description = "Destroy the cached OneConfig GUI.")
+    @SubCommand(value = "destroy", description = "Destroy the cached OneConfig GUI.")
     private static class DestroySubCommand {
         @Main
         private static void main() {
             OneConfigGui.instanceToRestore = null;
+            InputUtils.blockClicks(false);
         }
     }
 }

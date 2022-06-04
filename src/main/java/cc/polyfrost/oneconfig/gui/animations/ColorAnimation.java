@@ -1,6 +1,7 @@
 package cc.polyfrost.oneconfig.gui.animations;
 
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
+import cc.polyfrost.oneconfig.utils.color.ColorUtils;
 
 public class ColorAnimation {
     private ColorPalette palette;
@@ -33,7 +34,6 @@ public class ColorAnimation {
             blueAnimation = new EaseInOutQuad(100, blueAnimation.get(), newColors[2], false);
             alphaAnimation = new EaseInOutQuad(100, alphaAnimation.get(), newColors[3], false);
             prevState = state;
-            return ((int) (alphaAnimation.get(0) * 255) << 24) | ((int) (redAnimation.get(0) * 255) << 16) | ((int) (greenAnimation.get(0) * 255) << 8) | ((int) (blueAnimation.get(0) * 255));
         }
         return ((int) (alphaAnimation.get() * 255) << 24) | ((int) (redAnimation.get() * 255) << 16) | ((int) (greenAnimation.get() * 255) << 8) | ((int) (blueAnimation.get() * 255));
     }
@@ -43,6 +43,7 @@ public class ColorAnimation {
     }
 
     public void setPalette(ColorPalette palette) {
+        if (this.palette.equals(palette)) return;
         this.palette = palette;
         prevState = 3;
     }

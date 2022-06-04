@@ -12,10 +12,9 @@ import cc.polyfrost.oneconfig.lwjgl.image.Images;
 import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
 import cc.polyfrost.oneconfig.lwjgl.scissor.Scissor;
 import cc.polyfrost.oneconfig.lwjgl.scissor.ScissorManager;
-import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 import cc.polyfrost.oneconfig.utils.InputUtils;
-import cc.polyfrost.oneconfig.utils.MathUtils;
 import cc.polyfrost.oneconfig.utils.NetworkUtils;
+import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 import org.lwjgl.input.Mouse;
 
 import java.awt.*;
@@ -28,7 +27,6 @@ public class ColorSelector {
     private int y;
     private final OneColor color;
     private Animation barMoveAnimation = new DummyAnimation(18);
-    private Animation barSizeAnimation = new DummyAnimation(124);
     private Animation moveAnimation = new DummyAnimation(1);
     private int mouseX, mouseY;
     private final ArrayList<BasicElement> buttons = new ArrayList<>();
@@ -58,9 +56,9 @@ public class ColorSelector {
 
     public ColorSelector(OneColor color, int mouseX, int mouseY) {
         this.color = color;
-        buttons.add(new BasicElement(124, 28, ColorPalette.SECONDARY, true, 10f));
-        buttons.add(new BasicElement(124, 28, ColorPalette.SECONDARY, true, 10f));
-        buttons.add(new BasicElement(124, 28, ColorPalette.SECONDARY, true, 10f));
+        buttons.add(new BasicButton(124, 28, "HSB Box", BasicButton.ALIGNMENT_CENTER, ColorPalette.TERTIARY));
+        buttons.add(new BasicButton(124, 28, "Color Wheel", BasicButton.ALIGNMENT_CENTER, ColorPalette.TERTIARY));
+        buttons.add(new BasicButton(124, 28, "Chroma", BasicButton.ALIGNMENT_CENTER, ColorPalette.TERTIARY));
         hueInput.setCurrentValue(color.getHue());
         saturationInput.setCurrentValue(color.getSaturation());
         brightnessInput.setCurrentValue(color.getBrightness());
@@ -112,7 +110,7 @@ public class ColorSelector {
         RenderManager.setAlpha(vg, 1f);
 
         // hex parser
-        if(hexInput.isToggled()) {
+        if (hexInput.isToggled()) {
             parseHex();
         }
 
@@ -126,6 +124,11 @@ public class ColorSelector {
             recentColors.get(i).draw(vg, x + 104 + i * 44, y + 720);
         }
 
+        RenderManager.drawRoundedRect(vg, x + 16, y + 64, 384, 32, OneConfigConfig.GRAY_500, 12f);
+        if (!barMoveAnimation.isFinished())
+            RenderManager.drawRoundedRect(vg, x + barMoveAnimation.get(), y + 66, 124, 28, OneConfigConfig.PRIMARY_600, 10f);
+        else buttons.get(mode).setColorPalette(ColorPalette.PRIMARY);
+
         int i = 18;
         for (BasicElement button : buttons) {
             button.draw(vg, x + i, y + 66);
@@ -133,20 +136,13 @@ public class ColorSelector {
                 prevMode = mode;
                 mode = buttons.indexOf(button);
                 setXYFromColor();
-                barMoveAnimation = new EaseInOutQuart(200, 18 + prevMode * 128, 18 + mode * 128, false);
-                barSizeAnimation = new EaseInQuartReversed(200, 124, 186, false);
-                moveAnimation = new EaseInOutQuad(200, 0, 1, false);
+                barMoveAnimation = new EaseInOutCubic(175, 18 + prevMode * 128, 18 + mode * 128, false);
+                moveAnimation = new EaseInOutQuad(300, 0, 1, false);
+                for (BasicElement button1 : buttons) button1.setColorPalette(ColorPalette.TERTIARY);
             }
             i += 128;
         }
         float percentMoveMain = moveAnimation.get();
-
-        RenderManager.drawRoundedRect(vg, x + 16, y + 64, 384, 32, OneConfigConfig.GRAY_500, 12f);
-        RenderManager.drawRoundedRect(vg, x + barMoveAnimation.get(), y + 66, barSizeAnimation.get(), 28, OneConfigConfig.PRIMARY_600, 10f);
-
-        RenderManager.drawText(vg, "HSB Box", x + 55, y + 81, OneConfigConfig.WHITE, 12f, Fonts.MEDIUM);
-        RenderManager.drawText(vg, "Color Wheel", x + 172.5f, y + 81, OneConfigConfig.WHITE, 12f, Fonts.MEDIUM);
-        RenderManager.drawText(vg, "Chroma", x + 313, y + 81, OneConfigConfig.WHITE, 12f, Fonts.MEDIUM);
 
         RenderManager.drawText(vg, "Saturation", x + 224, y + 560, OneConfigConfig.WHITE_80, 12f, Fonts.MEDIUM);
         saturationInput.draw(vg, x + 312, y + 544);
@@ -159,7 +155,7 @@ public class ColorSelector {
 
         copyBtn.draw(vg, x + 204, y + 624);
         pasteBtn.draw(vg, x + 244, y + 624);
-        if(mode != 2) {
+        if (mode != 2) {
             RenderManager.drawText(vg, "Hue", x + 16, y + 560, OneConfigConfig.WHITE_80, 12f, Fonts.MEDIUM);
             hueInput.draw(vg, x + 104, y + 544);
         } else {
@@ -180,7 +176,7 @@ public class ColorSelector {
         RenderManager.drawRoundImage(vg, Images.ALPHA_GRID, x + 16, y + 456, 384, 16, 8f);
         bottomSlider.draw(vg, x + 16, y + 456);
 
-        if(percentMoveMain > 0.96f) {
+        if (percentMoveMain > 0.96f) {
             RenderManager.drawRoundedRect(vg, mouseX - 7, mouseY - 7, 14, 14, OneConfigConfig.WHITE, 14f);
             RenderManager.drawRoundedRect(vg, mouseX - 6, mouseY - 6, 12, 12, OneConfigConfig.BLACK, 12f);
             RenderManager.drawRoundedRect(vg, mouseX - 5, mouseY - 5, 10, 10, color.getRGBMax(true), 10f);
@@ -207,7 +203,7 @@ public class ColorSelector {
             default:
             case 0:
             case 2:
-                //buttons.get(mode).currentColor = OneConfigConfig.TRANSPARENT;
+                //buttons.get(mode).colorAnimation.setPalette(ColorPalette.TERTIARY);
                 topSlider.setImage(Images.HUE_GRADIENT);
                 RenderManager.drawHSBBox(vg, x + 16, y + 120, 384, 288, color.getRGBMax(true));
 
@@ -222,7 +218,7 @@ public class ColorSelector {
                 }
                 break;
             case 1:
-                //buttons.get(1).currentColor = OneConfigConfig.TRANSPARENT;
+                //buttons.get(1).colorAnimation.setPalette(ColorPalette.TERTIARY);
                 topSlider.setImage(null);
                 RenderManager.drawRoundImage(vg, Images.COLOR_WHEEL, x + 64, y + 120, 288, 288, 144f);
 
@@ -235,8 +231,8 @@ public class ColorSelector {
 
     private void doDrag() {
         if (InputUtils.isAreaHovered(x, y, 368, 64) && Mouse.isButtonDown(0) && !dragging) {
-            int dx = Mouse.getDX();
-            int dy = Mouse.getDY();
+            int dx = (int) (Mouse.getDX() / (OneConfigGui.INSTANCE == null ? 1 : OneConfigGui.INSTANCE.getScaleFactor()));
+            int dy = (int) (Mouse.getDY() / (OneConfigGui.INSTANCE == null ? 1 : OneConfigGui.INSTANCE.getScaleFactor()));
             x += dx;
             mouseX += dx;
             y -= dy;
@@ -263,9 +259,9 @@ public class ColorSelector {
                 float progressX = (mouseX - x - 16f) / 384f;
                 float progressY = Math.abs((mouseY - y - 120f) / 288f - 1f);
                 color.setHSBA((int) topSlider.getValue(), Math.round(progressX * 100), Math.round(progressY * 100), (int) bottomSlider.getValue());
-                if(mode == 2) {
+                if (mode == 2) {
                     if (!speedSlider.isDragging()) {
-                        if(!speedInput.isToggled()) {
+                        if (!speedInput.isToggled()) {
                             color.setChromaSpeed((int) Math.abs(speedSlider.getValue() - 31));
                             speedInput.setCurrentValue(color.getDataBit());
                         }
@@ -328,7 +324,7 @@ public class ColorSelector {
         } else if (OneConfigGui.INSTANCE.mouseDown) {
             saturationInput.setInput(String.format("%.01f", (float) color.getSaturation()));
             brightnessInput.setInput(String.format("%.01f", (float) color.getBrightness()));
-            if(!alphaInput.arrowsClicked()) {
+            if (!alphaInput.arrowsClicked()) {
                 alphaInput.setInput(String.format("%.01f", color.getAlpha() / 255f * 100f));
             }
             if (hexInput.isToggled()) return;
@@ -433,7 +429,7 @@ public class ColorSelector {
             RenderManager.drawHollowRoundRect(vg, x - 0.5f, y - 0.5f, width, height, new Color(204, 204, 204, 80).getRGB(), 8f, 1f);
             RenderManager.drawHollowRoundRect(vg, currentDragPoint - 1, y - 1, 18, 18, OneConfigConfig.WHITE, 9f, 1f);
             RenderManager.drawHollowRoundRect(vg, currentDragPoint, y, 16, 16, OneConfigConfig.BLACK, 8f, 1f);
-                RenderManager.drawRoundedRect(vg, currentDragPoint + 1.5f, y + 1.5f, 14, 14, color, 7f);
+            RenderManager.drawRoundedRect(vg, currentDragPoint + 1.5f, y + 1.5f, 14, 14, color, 7f);
         }
 
         public void setGradient(int start, int end) {

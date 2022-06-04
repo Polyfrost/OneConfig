@@ -16,7 +16,6 @@ import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
 import cc.polyfrost.oneconfig.lwjgl.scissor.ScissorManager;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 import cc.polyfrost.oneconfig.utils.InputUtils;
-import cc.polyfrost.oneconfig.utils.MathUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.input.Mouse;
@@ -56,11 +55,9 @@ public class OneConfigGui extends UScreen {
 
     public static OneConfigGui create() {
         try {
-            //return instanceToRestore == null ? new OneConfigGui() : instanceToRestore;
-            return new OneConfigGui();
+            return instanceToRestore == null ? new OneConfigGui() : instanceToRestore;
         } finally {
-            //if (instanceToRestore != null) INSTANCE = instanceToRestore;
-            instanceToRestore = null;
+            if (instanceToRestore != null) INSTANCE = instanceToRestore;
         }
     }
 
@@ -112,7 +109,7 @@ public class OneConfigGui extends UScreen {
                 backArrow.disable(false);
                 if (!backArrow.isHovered() || Mouse.isButtonDown(0)) RenderManager.setAlpha(vg, 0.8f);
             }
-            RenderManager.drawSvg(vg, SVGs.CHEVRON_LEFT, x + 246, y + 22, 28, 28);
+            RenderManager.drawSvg(vg, SVGs.CARET_LEFT, x + 246, y + 22, 28, 28);
             RenderManager.setAlpha(vg, 1f);
             if (nextPages.size() == 0) {
                 forwardArrow.disable(true);
@@ -121,7 +118,7 @@ public class OneConfigGui extends UScreen {
                 forwardArrow.disable(false);
                 if (!forwardArrow.isHovered() || Mouse.isButtonDown(0)) RenderManager.setAlpha(vg, 0.8f);
             }
-            RenderManager.drawSvg(vg, SVGs.CHEVRON_RIGHT, x + 294, y + 22, 28, 28);
+            RenderManager.drawSvg(vg, SVGs.CARET_RIGHT, x + 294, y + 22, 28, 28);
             RenderManager.setAlpha(vg, 1f);
 
             if (backArrow.isClicked() && previousPages.size() > 0) {
@@ -143,8 +140,13 @@ public class OneConfigGui extends UScreen {
             ScissorManager.scissor(vg, x + 224, y + 88, 1056, 698);
             if (prevPage != null && animation != null) {
                 float pageProgress = animation.get(deltaTime);
-                prevPage.scrollWithDraw(vg, (int) (x + pageProgress), y + 72);
-                currentPage.scrollWithDraw(vg, (int) (x - 1904 + pageProgress), y + 72);
+                if (!animation.isReversed()) {
+                    prevPage.scrollWithDraw(vg, (int) (x + pageProgress), y + 72);
+                    currentPage.scrollWithDraw(vg, (int) (x - 1904 + pageProgress), y + 72);
+                } else {
+                    prevPage.scrollWithDraw(vg, (int) (x - 1904 + pageProgress), y + 72);
+                    currentPage.scrollWithDraw(vg, (int) (x + pageProgress), y + 72);
+                }
                 if (animation.isFinished()) {
                     prevPage = null;
                 }
@@ -163,7 +165,7 @@ public class OneConfigGui extends UScreen {
                 else if (hovered && !Mouse.isButtonDown(0)) color = OneConfigConfig.WHITE_80;
                 RenderManager.drawText(vg, title, breadcrumbX, y + 38, color, 24f, Fonts.SEMIBOLD);
                 if (i != 0)
-                    RenderManager.drawSvg(vg, SVGs.CHEVRON_RIGHT, breadcrumbX - 28, y + 25, 24, 24, color);
+                    RenderManager.drawSvg(vg, SVGs.CARET_RIGHT, breadcrumbX - 28, y + 25, 24, 24, color);
                 if (hovered && InputUtils.isClicked()) openPage(parents.get(i));
                 breadcrumbX += width + 32;
             }
@@ -199,6 +201,7 @@ public class OneConfigGui extends UScreen {
     public void openPage(@NotNull Page page, boolean addToPrevious) {
         openPage(page, new EaseInOutQuad(300, 224, 2128, false), addToPrevious);
     }
+
     public void openPage(@NotNull Page page, Animation animation, boolean addToPrevious) {
         if (page == currentPage) return;
         currentPage.finishUpAndClose();
@@ -260,6 +263,7 @@ public class OneConfigGui extends UScreen {
     public String getSearchValue() {
         return textInputField.getInput();
     }
+
     public long getDeltaTime() {
         return deltaTime;
     }
@@ -267,6 +271,7 @@ public class OneConfigGui extends UScreen {
     public static long getDeltaTimeNullSafe() {
         return OneConfigGui.INSTANCE == null ? 17 : OneConfigGui.INSTANCE.getDeltaTime();
     }
+
     @Override
     public boolean doesGuiPauseGame() {
         return false;

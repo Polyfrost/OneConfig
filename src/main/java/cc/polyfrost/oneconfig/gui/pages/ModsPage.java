@@ -32,14 +32,12 @@ public class ModsPage extends Page {
         modCategories.add(new BasicButton(80, 32, "Hypixel", BasicButton.ALIGNMENT_CENTER, ColorPalette.SECONDARY));
         modCategories.add(new BasicButton(80, 32, "Skyblock", BasicButton.ALIGNMENT_CENTER, ColorPalette.SECONDARY));
         modCategories.add(new BasicButton(88, 32, "3rd Party", BasicButton.ALIGNMENT_CENTER, ColorPalette.SECONDARY));
-        modCategories.get(0).setToggled(true);
-        int i = 0;
-        for (BasicButton button : modCategories) {
-            button.setToggleable(true);
+        for (int i = 0; i < modCategories.size(); i++) {
+            modCategories.get(i).setToggleable(true);
             int finalI = i;
-            button.setClickAction(() -> unselect(finalI));
-            i++;
+            modCategories.get(i).setClickAction(() -> unselect(finalI));
         }
+        modCategories.get(0).setToggled(true);
     }
 
     public void draw(long vg, int x, int y) {

@@ -22,10 +22,6 @@ public class ColorPalette {
      */
     public static final ColorPalette SECONDARY = new ColorPalette(OneConfigConfig.GRAY_500, OneConfigConfig.GRAY_400, OneConfigConfig.GRAY_400_80);
     /**
-     * <h1>Secondary (Transparent) Color Scheme</h1> Normal: Transparent,<br> Hover: Gray rgba(229, 229, 229, 77),<br> Clicked: Gray rgba(229, 229, 229, 51)
-     */
-    public static final ColorPalette SECONDARY_TRANSPARENT = new ColorPalette(OneConfigConfig.TRANSPARENT, new Color(229, 229, 229, 77).getRGB(), new Color(229, 229, 229, 51).getRGB());
-    /**
      * <h1>Tertiary Color Scheme</h1> Normal: Transparent (Text=White 90%),<br> Hover: Transparent (Text=White 100%),<br> Clicked: Transparent (Text=White 80%)
      * <h2>NOTICE this returns the text colors as it is always transparent.</h2>
      */

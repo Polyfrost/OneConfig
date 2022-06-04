@@ -17,7 +17,7 @@ public abstract class Page {
 
     protected final String title;
 
-    Page(String title) {
+    protected Page(String title) {
         this.title = title;
     }
 
