@@ -40,6 +40,7 @@ public class BasicElement {
 
 
     public void draw(long vg, int x, int y) {
+        this.update(x, y);
     }
 
     public void update(int x, int y) {
@@ -101,6 +102,10 @@ public class BasicElement {
 
     public boolean isHovered() {
         return hovered;
+    }
+
+    public boolean isPressed() {
+        return pressed;
     }
 
     public boolean isClicked() {

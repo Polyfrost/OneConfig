@@ -54,11 +54,11 @@ public class SideBar {
             if (button.equals(buttons.get(selected))) break;
             buttons.get(selected).setColorPalette(ColorPalette.TERTIARY);
             moveAnimation = new EaseInOutQuart(300, buttons.get(selected).y, button.y, false);
-            sizeAnimation = new EaseInQuartReversed(300, 36, 72, false);
+            sizeAnimation = new EaseInQuartReversed(300, 36, 54, false);
             selected = buttons.indexOf(button);
         }
         if (moveAnimation != null) {
-            RenderManager.drawRoundedRect(vg, x + 16, moveAnimation.get(), 192, sizeAnimation.get(), OneConfigConfig.PRIMARY_600, 12);
+            RenderManager.drawRoundedRect(vg, x + 16, moveAnimation.get() - (sizeAnimation.get() - 36) / 2f, 192, sizeAnimation.get(0), OneConfigConfig.PRIMARY_600, 12);
             if (moveAnimation.isFinished() && sizeAnimation.isFinished()) {
                 moveAnimation = null;
                 sizeAnimation = null;

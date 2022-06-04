@@ -2,7 +2,6 @@ package cc.polyfrost.oneconfig.gui.elements;
 
 import cc.polyfrost.oneconfig.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
-import cc.polyfrost.oneconfig.gui.animations.ColorAnimation;
 import cc.polyfrost.oneconfig.gui.pages.Page;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
@@ -78,7 +77,7 @@ public class BasicButton extends BasicElement {
         }
         if (alignment == ALIGNMENT_CENTER) {
             if (icon1 != null && icon2 == null && text == null) {
-                RenderManager.drawSvg(vg, icon1, middle - iconSize / 2f, middleYIcon, iconSize, iconSize);
+                RenderManager.drawSvg(vg, icon1, middle - iconSize / 2f, middleYIcon, iconSize, iconSize, color);
             } else {
                 if (icon1 != null)
                     contentWidth += iconSize + xSpacing;
@@ -95,9 +94,9 @@ public class BasicButton extends BasicElement {
             if (text != null)
                 RenderManager.drawText(vg, text, middle - contentWidth / 2, middleYText, color, fontSize, Fonts.MEDIUM);
             if (icon1 != null)
-                RenderManager.drawSvg(vg, icon1, x + xSpacing, middleYIcon, iconSize, iconSize, color);
+                RenderManager.drawSvg(vg, icon1, x + xPadding, middleYIcon, iconSize, iconSize, color);
             if (icon2 != null)
-                RenderManager.drawSvg(vg, icon2, x + width - xSpacing - iconSize, middleYIcon, iconSize, iconSize, color);
+                RenderManager.drawSvg(vg, icon2, x + width - xPadding - iconSize, middleYIcon, iconSize, iconSize, color);
         } else if (alignment == ALIGNMENT_LEFT) {
             contentWidth = xPadding;
             if (icon1 != null) {
@@ -126,22 +125,12 @@ public class BasicButton extends BasicElement {
         else if (toggleable) setColorPalette(ColorPalette.SECONDARY);
     }
 
-    /*@Override
-    public void update(int x, int y) {
-        super.update(x, y);
-        if (hoverFx && !disabled) {
-            if (!toggleable) {
-                currentColor = ColorUtils.getColor(currentColor, colorPalette, hovered, hovered && Mouse.isButtonDown(0));
-            } else {
-                if (toggled)
-                    currentColor = ColorUtils.smoothColor(currentColor, OneConfigConfig.GRAY_500, OneConfigConfig.PRIMARY_600, true, 30f);
-                else
-                    currentColor = ColorUtils.getColor(currentColor, colorPalette, hovered, hovered && Mouse.isButtonDown(0));
-            }
-        } else if (hoverFx) {
-            currentColor = colorPalette.getNormalColor();
-        }
-    }*/
+    @Override
+    public void setToggled(boolean toggled) {
+        this.toggled = toggled;
+        if (toggled && toggleable) setColorPalette(ColorPalette.PRIMARY);
+        else if (toggleable) setColorPalette(ColorPalette.SECONDARY);
+    }
 
     public void setToggleable(boolean state) {
         this.toggleable = state;
@@ -165,5 +154,13 @@ public class BasicButton extends BasicElement {
 
     public void setText(String text) {
         this.text = text;
+    }
+
+    public void setLeftIcon(SVGs icon) {
+        icon1 = icon;
+    }
+
+    public void setRightIcon(SVGs icon) {
+        icon2 = icon;
     }
 }

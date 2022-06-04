@@ -43,7 +43,7 @@ public class ConfigDualOption extends BasicOption {
         boolean hoveredRight = InputUtils.isAreaHovered(x + 354, y, 128, 32) && isEnabled();
         RenderManager.drawText(vg, name, x, y + 16, OneConfigConfig.WHITE_90, 14f, Fonts.MEDIUM);
         RenderManager.drawRoundedRect(vg, x + 226, y, 256, 32, OneConfigConfig.GRAY_600, 12f);
-        RenderManager.drawRoundedRect(vg, x + posAnimation.get(), y + 2, sizeAnimation.get(), 28, OneConfigConfig.PRIMARY_600, 10f);
+        RenderManager.drawRoundedRect(vg, x + posAnimation.get() - (sizeAnimation.get() - 124) / 2f, y + 2, sizeAnimation.get(0), 28, OneConfigConfig.PRIMARY_600, 10f);
         if (!hoveredLeft && isEnabled()) RenderManager.setAlpha(vg, 0.8f);
         RenderManager.drawText(vg, left, x + 290 - RenderManager.getTextWidth(vg, left, 12f, Fonts.MEDIUM) / 2, y + 17, OneConfigConfig.WHITE, 12f, Fonts.MEDIUM);
         if (isEnabled()) RenderManager.setAlpha(vg, 1f);
@@ -53,8 +53,8 @@ public class ConfigDualOption extends BasicOption {
         RenderManager.setAlpha(vg, 1);
         if ((hoveredLeft && toggled || hoveredRight && !toggled) && InputUtils.isClicked()) {
             toggled = !toggled;
-            posAnimation = new EaseInOutQuart(200, 228, 356, !toggled);
-            sizeAnimation = new EaseInQuartReversed(200, 124, 186, false);
+            posAnimation = new EaseInOutQuart(300, 228, 356, !toggled);
+            sizeAnimation = new EaseInQuartReversed(300, 124, 186, false);
             try {
                 set(toggled);
             } catch (IllegalAccessException e) {

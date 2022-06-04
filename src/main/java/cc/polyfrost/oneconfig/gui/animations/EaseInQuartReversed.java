@@ -14,7 +14,8 @@ public class EaseInQuartReversed extends Animation {
     @Override
     protected float animate(float timePassed, float duration, float start, float change) {
         float x = timePassed / duration;
-        if (x < 0.5f) return (float) (16 * Math.pow(x, 4) * change + start);
-        return (float) (Math.pow(2 * x - 2, 4) * change + start);
+        if (x < 0.25f) return (float) (128 * Math.pow(x, 4) * change + start);
+        if (x < 0.75f) return (float) ((-128 * Math.pow(x - 0.5, 4) + 1) * change + start);
+        return (float) (128 * Math.pow(x - 1, 4) * change + start);
     }
 }

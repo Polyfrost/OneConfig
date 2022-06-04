@@ -1,6 +1,7 @@
 package cc.polyfrost.oneconfig.gui.elements.text;
 
 import cc.polyfrost.oneconfig.config.OneConfigConfig;
+import cc.polyfrost.oneconfig.gui.animations.ColorAnimation;
 import cc.polyfrost.oneconfig.gui.elements.BasicElement;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
@@ -13,7 +14,8 @@ public class NumberInputField extends TextInputField {
     private float min;
     private float max;
     private float step;
-    private int colorTop, colorBottom;
+    private final ColorAnimation colorTop = new ColorAnimation(ColorPalette.SECONDARY);
+    private final ColorAnimation colorBottom  = new ColorAnimation(ColorPalette.SECONDARY);
     private float current;
 
     public NumberInputField(int width, int height, float defaultValue, float min, float max, float step) {
@@ -45,11 +47,7 @@ public class NumberInputField extends TextInputField {
             upArrow.disable(false);
             downArrow.disable(false);
         }
-        if (current == max) colorTop = OneConfigConfig.GRAY_500_80;
-        if (current == min) colorBottom = OneConfigConfig.GRAY_500_80;
 
-        colorTop = ColorUtils.getColor(colorTop, ColorPalette.SECONDARY, upArrow.isHovered(), upArrow.isClicked());
-        colorBottom = ColorUtils.getColor(colorBottom, ColorPalette.SECONDARY, downArrow.isHovered(), downArrow.isClicked());
         if (upArrow.isClicked()) {
             current += step;
             if (current > max) current = max;
@@ -64,7 +62,7 @@ public class NumberInputField extends TextInputField {
             RenderManager.setAlpha(vg, 0.3f);
             upArrow.disable(true);
         }
-        RenderManager.drawRoundedRectVaried(vg, x + width + 4, y, 12, 14, colorTop, 6f, 6f, 0f, 0f);
+        RenderManager.drawRoundedRectVaried(vg, x + width + 4, y, 12, 14, colorTop.getColor(upArrow.isHovered(), upArrow.isPressed()), 6f, 6f, 0f, 0f);
         RenderManager.drawSvg(vg, SVGs.CHEVRON_UP, x + width + 5, y + 2, 10, 10);
         if (current >= max && !disabled) RenderManager.setAlpha(vg, 1f);
 
@@ -72,7 +70,7 @@ public class NumberInputField extends TextInputField {
             RenderManager.setAlpha(vg, 0.3f);
             downArrow.disable(true);
         }
-        RenderManager.drawRoundedRectVaried(vg, x + width + 4, y + 14, 12, 14, colorBottom, 0f, 0f, 6f, 6f);
+        RenderManager.drawRoundedRectVaried(vg, x + width + 4, y + 14, 12, 14, colorBottom.getColor(downArrow.isHovered(), downArrow.isPressed()), 0f, 0f, 6f, 6f);
         RenderManager.drawSvg(vg, SVGs.CHEVRON_DOWN, x + width + 5, y + 15, 10, 10);
         RenderManager.setAlpha(vg, 1f);
 
