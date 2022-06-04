@@ -10,6 +10,7 @@ import cc.polyfrost.oneconfig.gui.pages.ModsPage;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
+import cc.polyfrost.oneconfig.test.ButtonTestPage;
 import cc.polyfrost.oneconfig.utils.GuiUtils;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 
@@ -40,11 +41,12 @@ public class SideBar {
     public SideBar() {
         buttons.get(0).setClickAction(new CreditsPage());
         buttons.get(2).setClickAction(new ModsPage());
+        buttons.get(8).setClickAction(new ButtonTestPage());
         HUDButton.setClickAction(() -> GuiUtils.displayScreen(new HudGui()));
         CloseButton.setClickAction(GuiUtils::closeScreen);
-        for (int i = 0; i < buttons.size(); i++) {
-            if (i == 0 || i == 2) continue;
-            buttons.get(i).disable(true);
+        for (BasicButton button : buttons) {
+            if (button.hasClickAction()) continue;
+            button.disable(true);
         }
     }
 

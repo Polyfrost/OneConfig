@@ -63,12 +63,13 @@ public class BasicButton extends BasicElement {
         this.y = y;
         this.update(x, y);
         if (disabled) RenderManager.setAlpha(vg, 0.5f);
-        RenderManager.drawRoundedRect(vg, x, y, this.width, this.height, colorPalette == ColorPalette.TERTIARY || colorPalette == ColorPalette.TERTIARY_DESTRUCTIVE ? OneConfigConfig.TRANSPARENT : currentColor, this.cornerRadius);
         float contentWidth = 0f;
         int color = -1;
-        if (colorPalette == ColorPalette.TERTIARY || colorPalette == ColorPalette.TERTIARY_DESTRUCTIVE) {
+        if (colorPalette == ColorPalette.TERTIARY || colorPalette == ColorPalette.TERTIARY_DESTRUCTIVE)
             color = currentColor;
-        }
+        else
+            RenderManager.drawRoundedRect(vg, x, y, this.width, this.height, currentColor, this.cornerRadius);
+
         final float middle = x + width / 2f;
         final float middleYIcon = y + height / 2f - iconSize / 2f;
         final float middleYText = y + height / 2f + fontSize / 8f;
@@ -162,5 +163,9 @@ public class BasicButton extends BasicElement {
 
     public void setRightIcon(SVGs icon) {
         icon2 = icon;
+    }
+
+    public boolean hasClickAction() {
+        return page != null || runnable != null;
     }
 }
