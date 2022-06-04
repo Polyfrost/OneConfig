@@ -10,7 +10,6 @@ import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
-import cc.polyfrost.oneconfig.utils.color.ColorUtils;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import org.lwjgl.input.Mouse;
 
@@ -39,7 +38,7 @@ public class ConfigPageButton extends BasicOption {
         RenderManager.drawText(vg, name, x + 10, y + 32, OneConfigConfig.WHITE_90, 24, Fonts.MEDIUM);
         if (!description.equals(""))
             RenderManager.drawText(vg, name, x + 10, y + 70, OneConfigConfig.WHITE_90, 14, Fonts.MEDIUM);
-        RenderManager.drawSvg(vg, SVGs.CHEVRON_RIGHT, x + 981f, y + (description.equals("") ? 20f : 36f), 13, 22);
+        RenderManager.drawSvg(vg, SVGs.CARET_RIGHT, x + 981f, y + (description.equals("") ? 20f : 36f), 13, 22);
 
         if (clicked) OneConfigGui.INSTANCE.openPage(new ModConfigPage(page));
         RenderManager.setAlpha(vg, 1f);

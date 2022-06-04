@@ -16,7 +16,6 @@ import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
 import cc.polyfrost.oneconfig.lwjgl.scissor.ScissorManager;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 import cc.polyfrost.oneconfig.utils.InputUtils;
-import cc.polyfrost.oneconfig.utils.MathUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.input.Mouse;
@@ -110,7 +109,7 @@ public class OneConfigGui extends UScreen {
                 backArrow.disable(false);
                 if (!backArrow.isHovered() || Mouse.isButtonDown(0)) RenderManager.setAlpha(vg, 0.8f);
             }
-            RenderManager.drawSvg(vg, SVGs.CHEVRON_LEFT, x + 246, y + 22, 28, 28);
+            RenderManager.drawSvg(vg, SVGs.CARET_LEFT, x + 246, y + 22, 28, 28);
             RenderManager.setAlpha(vg, 1f);
             if (nextPages.size() == 0) {
                 forwardArrow.disable(true);
@@ -119,7 +118,7 @@ public class OneConfigGui extends UScreen {
                 forwardArrow.disable(false);
                 if (!forwardArrow.isHovered() || Mouse.isButtonDown(0)) RenderManager.setAlpha(vg, 0.8f);
             }
-            RenderManager.drawSvg(vg, SVGs.CHEVRON_RIGHT, x + 294, y + 22, 28, 28);
+            RenderManager.drawSvg(vg, SVGs.CARET_RIGHT, x + 294, y + 22, 28, 28);
             RenderManager.setAlpha(vg, 1f);
 
             if (backArrow.isClicked() && previousPages.size() > 0) {
@@ -166,7 +165,7 @@ public class OneConfigGui extends UScreen {
                 else if (hovered && !Mouse.isButtonDown(0)) color = OneConfigConfig.WHITE_80;
                 RenderManager.drawText(vg, title, breadcrumbX, y + 38, color, 24f, Fonts.SEMIBOLD);
                 if (i != 0)
-                    RenderManager.drawSvg(vg, SVGs.CHEVRON_RIGHT, breadcrumbX - 28, y + 25, 24, 24, color);
+                    RenderManager.drawSvg(vg, SVGs.CARET_RIGHT, breadcrumbX - 28, y + 25, 24, 24, color);
                 if (hovered && InputUtils.isClicked()) openPage(parents.get(i));
                 breadcrumbX += width + 32;
             }

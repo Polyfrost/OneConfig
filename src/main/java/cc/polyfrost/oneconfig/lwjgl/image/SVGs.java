@@ -20,16 +20,14 @@ public enum SVGs {
     PAINT_BRUSH_BROAD_FILL("/assets/oneconfig/icons/PaintBrushBroadFill.svg"),
     USER_SWITCH_FILL("/assets/oneconfig/icons/UserSwitchFill.svg"),
     X_CIRCLE_BOLD("/assets/oneconfig/icons/XCircleBold.svg"),
+    CARET_LEFT("/assets/oneconfig/icons/CaretLeftBold.svg"),
+    CARET_RIGHT("/assets/oneconfig/icons/CaretRightBold.svg"),
 
     // OLD ICONS
-    ARROW_CIRCLE_LEFT("/assets/oneconfig/old-icons/ArrowCircleLeft.svg"),
-    ARROW_CIRCLE_RIGHT("/assets/oneconfig/old-icons/ArrowCircleRight.svg"),
     BOX("/assets/oneconfig/old-icons/Box.svg"),
     CHECKBOX_TICK("/assets/oneconfig/old-icons/CheckboxTick.svg"),
     CHECK_CIRCLE("/assets/oneconfig/old-icons/CheckCircle.svg"),
     CHEVRON_DOWN("/assets/oneconfig/old-icons/ChevronDown.svg"),
-    CHEVRON_LEFT("/assets/oneconfig/old-icons/ChevronLeft.svg"),
-    CHEVRON_RIGHT("/assets/oneconfig/old-icons/ChevronRight.svg"),
     CHEVRON_UP("/assets/oneconfig/old-icons/ChevronUp.svg"),
     COPY("/assets/oneconfig/old-icons/Copy.svg"),
     DROPDOWN_LIST("/assets/oneconfig/old-icons/DropdownList.svg"),
