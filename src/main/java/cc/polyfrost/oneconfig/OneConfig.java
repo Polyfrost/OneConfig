@@ -9,6 +9,7 @@ import cc.polyfrost.oneconfig.events.EventManager;
 import cc.polyfrost.oneconfig.hud.HudCore;
 import cc.polyfrost.oneconfig.lwjgl.BlurHandler;
 import cc.polyfrost.oneconfig.test.TestConfig;
+import cc.polyfrost.oneconfig.utils.GuiUtils;
 import cc.polyfrost.oneconfig.utils.commands.CommandManager;
 import cc.polyfrost.oneconfig.utils.hypixel.HypixelUtils;
 import net.minecraftforge.fml.common.DummyModContainer;
@@ -53,8 +54,10 @@ public class OneConfig {
      * Called after mods are loaded.
      * <p><b>SHOULD NOT BE CALLED!</b></p>
      */
+    @SuppressWarnings("ResultOfMethodCallIgnored")
     public static void init() {
         if (initialized) return;
+        GuiUtils.getDeltaTime(); // called to make sure static initializer is called
         BlurHandler.INSTANCE.load();
         testConfig = new TestConfig();
         CommandManager.INSTANCE.registerCommand(new OneConfigCommand());

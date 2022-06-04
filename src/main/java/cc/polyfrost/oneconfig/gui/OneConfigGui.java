@@ -14,6 +14,7 @@ import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
 import cc.polyfrost.oneconfig.lwjgl.scissor.ScissorManager;
+import cc.polyfrost.oneconfig.utils.GuiUtils;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import org.jetbrains.annotations.NotNull;
@@ -37,8 +38,6 @@ public class OneConfigGui extends UScreen {
     public boolean mouseDown;
     private float scale = 1f;
     public static OneConfigGui instanceToRestore = null;
-    private long time = -1L;
-    private long deltaTime = 17L;
     public boolean allowClose = true;
     private Animation animation;
 
@@ -71,12 +70,6 @@ public class OneConfigGui extends UScreen {
             if (currentPage == null) {
                 currentPage = new ModsPage();
                 parents.add(currentPage);
-            }
-            if (time == -1) time = UMinecraft.getTime();
-            else {
-                long currentTime = UMinecraft.getTime();
-                deltaTime = currentTime - time;
-                time = currentTime;
             }
             scale = Math.min(UResolution.getWindowWidth() / 1920f, UResolution.getWindowHeight() / 1080f);
             if (scale < 1)
@@ -139,7 +132,7 @@ public class OneConfigGui extends UScreen {
 
             ScissorManager.scissor(vg, x + 224, y + 88, 1056, 698);
             if (prevPage != null && animation != null) {
-                float pageProgress = animation.get(deltaTime);
+                float pageProgress = animation.get(GuiUtils.getDeltaTime());
                 if (!animation.isReversed()) {
                     prevPage.scrollWithDraw(vg, (int) (x + pageProgress), y + 72);
                     currentPage.scrollWithDraw(vg, (int) (x - 1904 + pageProgress), y + 72);
@@ -262,14 +255,6 @@ public class OneConfigGui extends UScreen {
 
     public String getSearchValue() {
         return textInputField.getInput();
-    }
-
-    public long getDeltaTime() {
-        return deltaTime;
-    }
-
-    public static long getDeltaTimeNullSafe() {
-        return OneConfigGui.INSTANCE == null ? 17 : OneConfigGui.INSTANCE.getDeltaTime();
     }
 
     @Override
