@@ -1,6 +1,6 @@
 package cc.polyfrost.oneconfig.gui.animations;
 
-import cc.polyfrost.oneconfig.gui.OneConfigGui;
+import cc.polyfrost.oneconfig.utils.GuiUtils;
 
 public abstract class Animation {
     private final float duration;
@@ -41,7 +41,7 @@ public abstract class Animation {
      * @return The new value
      */
     public float get() {
-        return get(OneConfigGui.getDeltaTimeNullSafe());
+        return get(GuiUtils.getDeltaTime());
     }
 
     /**
