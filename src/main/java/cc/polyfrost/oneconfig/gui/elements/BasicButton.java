@@ -109,7 +109,7 @@ public class BasicButton extends BasicElement {
                 contentWidth += RenderManager.getTextWidth(vg, text, fontSize, Fonts.MEDIUM) + xSpacing;
             }
             if (icon2 != null)
-                RenderManager.drawSvg(vg, icon2, x + contentWidth, middleYIcon, iconSize, iconSize, color);
+                RenderManager.drawSvg(vg, icon2, x + width - xPadding - iconSize, middleYIcon, iconSize, iconSize, color);
         }
         if (disabled) RenderManager.setAlpha(vg, 1f);
     }
