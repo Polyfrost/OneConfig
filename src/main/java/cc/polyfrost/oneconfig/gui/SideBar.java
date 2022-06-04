@@ -2,8 +2,8 @@ package cc.polyfrost.oneconfig.gui;
 
 import cc.polyfrost.oneconfig.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.gui.animations.Animation;
+import cc.polyfrost.oneconfig.gui.animations.DummyAnimation;
 import cc.polyfrost.oneconfig.gui.animations.EaseInOutQuart;
-import cc.polyfrost.oneconfig.gui.animations.EaseInQuartReversed;
 import cc.polyfrost.oneconfig.gui.elements.BasicButton;
 import cc.polyfrost.oneconfig.gui.pages.CreditsPage;
 import cc.polyfrost.oneconfig.gui.pages.ModsPage;
@@ -56,7 +56,7 @@ public class SideBar {
             if (button.equals(buttons.get(selected))) break;
             buttons.get(selected).setColorPalette(ColorPalette.TERTIARY);
             moveAnimation = new EaseInOutQuart(300, buttons.get(selected).y, button.y, false);
-            sizeAnimation = new EaseInQuartReversed(300, 36, 54, false);
+            sizeAnimation = new DummyAnimation(36);
             selected = buttons.indexOf(button);
         }
         if (moveAnimation != null) {

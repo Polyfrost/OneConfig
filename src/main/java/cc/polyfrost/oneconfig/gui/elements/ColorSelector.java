@@ -27,7 +27,6 @@ public class ColorSelector {
     private int y;
     private final OneColor color;
     private Animation barMoveAnimation = new DummyAnimation(18);
-    private Animation barSizeAnimation = new DummyAnimation(124);
     private Animation moveAnimation = new DummyAnimation(1);
     private int mouseX, mouseY;
     private final ArrayList<BasicElement> buttons = new ArrayList<>();
@@ -127,7 +126,7 @@ public class ColorSelector {
 
         RenderManager.drawRoundedRect(vg, x + 16, y + 64, 384, 32, OneConfigConfig.GRAY_500, 12f);
         if (!barMoveAnimation.isFinished())
-            RenderManager.drawRoundedRect(vg, x + barMoveAnimation.get() - (barSizeAnimation.get() - 124) / 2, y + 66, barSizeAnimation.get(0), 28, OneConfigConfig.PRIMARY_600, 10f);
+            RenderManager.drawRoundedRect(vg, x + barMoveAnimation.get(), y + 66, 124, 28, OneConfigConfig.PRIMARY_600, 10f);
         else buttons.get(mode).setColorPalette(ColorPalette.PRIMARY);
 
         int i = 18;
@@ -137,8 +136,7 @@ public class ColorSelector {
                 prevMode = mode;
                 mode = buttons.indexOf(button);
                 setXYFromColor();
-                barMoveAnimation = new EaseInOutQuart(300, 18 + prevMode * 128, 18 + mode * 128, false);
-                barSizeAnimation = new EaseInQuartReversed(300, 124, 186, false);
+                barMoveAnimation = new EaseInOutCubic(175, 18 + prevMode * 128, 18 + mode * 128, false);
                 moveAnimation = new EaseInOutQuad(300, 0, 1, false);
                 for (BasicElement button1 : buttons) button1.setColorPalette(ColorPalette.TERTIARY);
             }
