@@ -23,7 +23,7 @@ public class LoadingPlugin implements IFMLLoadingPlugin {
             exceptions.remove("org.lwjgl.");
             OneConfigInit.initialize(new String[]{});
         } catch (Exception e) {
-            throw new RuntimeException("e");
+            throw new RuntimeException(e);
         }
     }
 
