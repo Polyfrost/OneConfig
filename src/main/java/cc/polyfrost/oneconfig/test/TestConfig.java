@@ -280,7 +280,7 @@ public class TestConfig extends Config {
     public static String stringTest123 = "text";
 
     public TestConfig() {
-        super(new Mod("hacks", ModType.UTIL_QOL, new VigilanceMigrator("./config/testConfig.toml")), "hacksConfig.json");
+        super(new Mod("Test Mod", ModType.UTIL_QOL, new VigilanceMigrator("./config/testConfig.toml")), "hacksConfig.json");
         addDependency("switchTest5", () -> switchTest4);
         addDependency("Test page.testDescription", () -> false);
     }

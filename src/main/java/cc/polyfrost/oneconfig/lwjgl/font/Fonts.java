@@ -5,7 +5,8 @@ public enum Fonts {
     SEMIBOLD(new Font("inter-semibold", "/assets/oneconfig/font/SemiBold.otf")),
     MEDIUM(new Font("inter-medium", "/assets/oneconfig/font/Medium.otf")),
     REGULAR(new Font("inter-regular", "/assets/oneconfig/font/Regular.otf")),
-    MINECRAFT(new Font("mc-regular", "/assets/oneconfig/font/Minecraft.otf"));
+    MINECRAFT_REGULAR(new Font("mc-regular", "/assets/oneconfig/font/Minecraft-Regular.otf")),
+    MINECRAFT_BOLD(new Font("mc-bold", "/assets/oneconfig/font/Minecraft-Bold.otf"));
     public final Font font;
 
     Fonts(Font font) {

@@ -9,8 +9,11 @@ import cc.polyfrost.oneconfig.gui.pages.ModConfigPage;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
+import cc.polyfrost.oneconfig.lwjgl.scissor.Scissor;
+import cc.polyfrost.oneconfig.lwjgl.scissor.ScissorManager;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
+import cc.polyfrost.oneconfig.utils.color.ColorUtils;
 import gg.essential.universal.wrappers.UPlayer;
 import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.fml.common.ModMetadata;
@@ -41,6 +44,8 @@ public class ModCard extends BasicElement {
     @Override
     public void draw(long vg, int x, int y) {
         super.update(x, y);
+        Scissor scissor = ScissorManager.scissor(vg, x, y, width, height);
+
         isHoveredMain = InputUtils.isAreaHovered(x, y, width, 87);
         boolean isHoveredSecondary = InputUtils.isAreaHovered(x, y + 87, width - 32, 32) && !disabled;
         if (disabled) RenderManager.setAlpha(vg, 0.5f);
@@ -52,11 +57,11 @@ public class ModCard extends BasicElement {
                 RenderManager.drawSvg(vg, modData.modIcon, x + 98, y + 19, 48, 48);
             else RenderManager.drawImage(vg, modData.modIcon, x + 98, y + 19, 48, 48);
         } else {
-            RenderManager.drawText(vg, modData.name, x + 122 - RenderManager.getTextWidth(vg, modData.name, 24, Fonts.MINECRAFT) / 2f, y + 44, OneConfigConfig.WHITE, 24, Fonts.MINECRAFT);
+            RenderManager.drawText(vg, modData.name, x + 122 - RenderManager.getTextWidth(vg, modData.name, 24, Fonts.MINECRAFT_BOLD) / 2f, y + 44, ColorUtils.setAlpha(OneConfigConfig.WHITE, (int) (colorFrame.getAlpha() * 255)), 24, Fonts.MINECRAFT_BOLD);
         }
         favoriteButton.draw(vg, x + 212, y + 87);
         favorite = favoriteButton.isToggled();
-        RenderManager.drawText(vg, modData.name, x + 12, y + 103, OneConfigConfig.WHITE, 14f, Fonts.MEDIUM);
+        RenderManager.drawText(vg, modData.name, x + 12, y + 103, ColorUtils.setAlpha(OneConfigConfig.WHITE, (int) (colorToggle.getAlpha() * 255)), 14f, Fonts.MEDIUM);
         if (favorite) favoriteButton.setLeftIcon(SVGs.HEART_FILL);
         else favoriteButton.setLeftIcon(SVGs.HEART_OUTLINE);
 
@@ -70,6 +75,7 @@ public class ModCard extends BasicElement {
         active = toggled;
         colorToggle.setPalette(active ? ColorPalette.PRIMARY : ColorPalette.SECONDARY);
         RenderManager.setAlpha(vg, 1f);
+        ScissorManager.resetScissor(vg, scissor);
     }
 
     public void onClick() {
