@@ -2,17 +2,17 @@ package cc.polyfrost.oneconfig.utils.hypixel;
 
 import cc.polyfrost.oneconfig.events.EventManager;
 import cc.polyfrost.oneconfig.events.event.*;
-import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
-import cc.polyfrost.oneconfig.libs.universal.UChat;
-import cc.polyfrost.oneconfig.libs.universal.UMinecraft;
-import cc.polyfrost.oneconfig.libs.universal.wrappers.UPlayer;
-import cc.polyfrost.oneconfig.libs.universal.wrappers.message.UTextComponent;
 import cc.polyfrost.oneconfig.utils.JsonUtils;
 import cc.polyfrost.oneconfig.utils.Multithreading;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import gg.essential.universal.UChat;
+import gg.essential.universal.UMinecraft;
+import gg.essential.universal.wrappers.UPlayer;
+import gg.essential.universal.wrappers.message.UTextComponent;
+import me.kbrewster.eventbus.Subscribe;
 
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;

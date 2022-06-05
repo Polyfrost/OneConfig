@@ -3,7 +3,7 @@ package cc.polyfrost.oneconfig.utils;
 import cc.polyfrost.oneconfig.events.EventManager;
 import cc.polyfrost.oneconfig.events.event.Stage;
 import cc.polyfrost.oneconfig.events.event.TickEvent;
-import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
+import me.kbrewster.eventbus.Subscribe;
 
 /**
  * Schedules a Runnable to be called after a certain amount of ticks.

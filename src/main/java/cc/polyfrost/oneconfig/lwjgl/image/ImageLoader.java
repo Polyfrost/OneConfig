@@ -24,6 +24,7 @@ public final class ImageLoader {
     public static ImageLoader INSTANCE = new ImageLoader();
     private final HashMap<String, Integer> imageHashMap = new HashMap<>();
     private final HashMap<String, Integer> svgHashMap = new HashMap<>();
+
     private ImageLoader() {
 
     }

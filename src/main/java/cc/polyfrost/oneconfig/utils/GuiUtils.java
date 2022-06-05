@@ -3,9 +3,9 @@ package cc.polyfrost.oneconfig.utils;
 import cc.polyfrost.oneconfig.events.EventManager;
 import cc.polyfrost.oneconfig.events.event.RenderEvent;
 import cc.polyfrost.oneconfig.events.event.Stage;
-import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
-import cc.polyfrost.oneconfig.libs.universal.UMinecraft;
-import cc.polyfrost.oneconfig.libs.universal.UScreen;
+import gg.essential.universal.UMinecraft;
+import gg.essential.universal.UScreen;
+import me.kbrewster.eventbus.Subscribe;
 import net.minecraft.client.gui.GuiScreen;
 
 /**

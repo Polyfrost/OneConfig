@@ -1,9 +1,9 @@
 package cc.polyfrost.oneconfig.utils.dsl
 
-import cc.polyfrost.oneconfig.libs.universal.UMinecraft
+import gg.essential.universal.UMinecraft
 
 /**
  * Gets the current [net.minecraft.client.Minecraft] instance.
  */
 val mc
-get() = UMinecraft.getMinecraft()
+    get() = UMinecraft.getMinecraft()
