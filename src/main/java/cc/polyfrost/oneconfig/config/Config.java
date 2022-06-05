@@ -137,67 +137,35 @@ public class Config {
                 }
             }
             ArrayList<BasicOption> options = category.subcategories.get(category.subcategories.size() - 1).options;
-            switch (option.type()) {
-                case SWITCH:
-                    options.add(new ConfigSwitch(field, instance, option.name(), option.size()));
-                    break;
-                case CHECKBOX:
-                    options.add(new ConfigCheckbox(field, instance, option.name(), option.size()));
-                    break;
-                case TEXT:
-                    options.add(new ConfigTextBox(field, instance, option.name(), option.size(), option.placeholder(), option.secure(), option.multiLine()));
-                    break;
-                case DUAL_OPTION:
-                    options.add(new ConfigDualOption(field, instance, option.name(), option.size(), option.options()));
-                    break;
-                case DROPDOWN:
-                    options.add(new ConfigDropdown(field, instance, option.name(), option.size(), option.options()));
-                    break;
-                case SLIDER:
-                    options.add(new ConfigSlider(field, instance, option.name(), option.size(), option.min(), option.max(), option.step()));
-                    break;
-                case INFO:
-                    options.add(new ConfigInfo(field, instance, option.name(), option.size(), option.infoType()));
-                    break;
-                case COLOR:
-                    options.add(new ConfigColorElement(field, instance, option.name(), option.size()));
-                    break;
-                case HEADER:
-                    options.add(new ConfigHeader(field, instance, option.name(), option.size()));
-                    break;
-                case BUTTON:
-                    options.add(new ConfigButton(field, instance, option.name(), option.size(), option.buttonText()));
-                    break;
-                case KEYBIND:
-                    options.add(new ConfigKeyBind(field, instance, option.name(), option.size()));
-                    break;
-                case HUD:
-                    try {
-                        field.setAccessible(true);
-                        BasicHud hud = (BasicHud) field.get(instance);
-                        HudCore.huds.add(hud);
-                        options.add(new ConfigHeader(field, hud, option.name(), 1));
-                        options.add(new ConfigSwitch(hud.getClass().getField("enabled"), hud, "Enabled", 1));
-                        options.add(new ConfigCheckbox(hud.getClass().getField("rounded"), hud, "Rounded corners", 1));
-                        options.get(options.size() - 1).setDependency(() -> hud.enabled);
-                        options.add(new ConfigCheckbox(hud.getClass().getField("border"), hud, "Outline/border", 1));
-                        options.get(options.size() - 1).setDependency(() -> hud.enabled);
-                        options.add(new ConfigColorElement(hud.getClass().getField("bgColor"), hud, "Background color:", 1));
-                        options.get(options.size() - 1).setDependency(() -> hud.enabled);
-                        options.add(new ConfigColorElement(hud.getClass().getField("borderColor"), hud, "Border color:", 1));
-                        options.get(options.size() - 1).setDependency(() -> hud.enabled && hud.border);
-                        options.add(new ConfigSlider(hud.getClass().getField("cornerRadius"), hud, "Corner radius:", 2, 0, 10, 0));
-                        options.get(options.size() - 1).setDependency(() -> hud.enabled && hud.rounded);
-                        options.add(new ConfigSlider(hud.getClass().getField("borderSize"), hud, "Border thickness:", 2, 0, 10, 0));
-                        options.get(options.size() - 1).setDependency(() -> hud.enabled && hud.border);
-                        options.add(new ConfigSlider(hud.getClass().getField("paddingX"), hud, "X-Padding", 2, 0, 50, 0));
-                        options.get(options.size() - 1).setDependency(() -> hud.enabled);
-                        options.add(new ConfigSlider(hud.getClass().getField("paddingY"), hud, "Y-Padding", 2, 0, 50, 0));
-                        options.get(options.size() - 1).setDependency(() -> hud.enabled);
-                    } catch (IllegalAccessException | NoSuchFieldException e) {
-                        e.printStackTrace();
-                    }
-                    break;
+            if (option.type() == OptionType.HUD) {
+                try {
+                    field.setAccessible(true);
+                    BasicHud hud = (BasicHud) field.get(instance);
+                    HudCore.huds.add(hud);
+                    options.add(new ConfigHeader(field, hud, option.name(), 1));
+                    options.add(new ConfigSwitch(hud.getClass().getField("enabled"), hud, "Enabled", 1));
+                    options.addAll(ConfigCore.getClassOptions(hud));
+                    options.add(new ConfigCheckbox(hud.getClass().getField("rounded"), hud, "Rounded corners", 1));
+                    options.get(options.size() - 1).setDependency(() -> hud.enabled);
+                    options.add(new ConfigCheckbox(hud.getClass().getField("border"), hud, "Outline/border", 1));
+                    options.get(options.size() - 1).setDependency(() -> hud.enabled);
+                    options.add(new ConfigColorElement(hud.getClass().getField("bgColor"), hud, "Background color:", 1));
+                    options.get(options.size() - 1).setDependency(() -> hud.enabled);
+                    options.add(new ConfigColorElement(hud.getClass().getField("borderColor"), hud, "Border color:", 1));
+                    options.get(options.size() - 1).setDependency(() -> hud.enabled && hud.border);
+                    options.add(new ConfigSlider(hud.getClass().getField("cornerRadius"), hud, "Corner radius:", 2, 0, 10, 0));
+                    options.get(options.size() - 1).setDependency(() -> hud.enabled && hud.rounded);
+                    options.add(new ConfigSlider(hud.getClass().getField("borderSize"), hud, "Border thickness:", 2, 0, 10, 0));
+                    options.get(options.size() - 1).setDependency(() -> hud.enabled && hud.border);
+                    options.add(new ConfigSlider(hud.getClass().getField("paddingX"), hud, "X-Padding", 2, 0, 50, 0));
+                    options.get(options.size() - 1).setDependency(() -> hud.enabled);
+                    options.add(new ConfigSlider(hud.getClass().getField("paddingY"), hud, "Y-Padding", 2, 0, 50, 0));
+                    options.get(options.size() - 1).setDependency(() -> hud.enabled);
+                } catch (IllegalAccessException | NoSuchFieldException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                options.add(ConfigCore.getOption(option, field, instance));
             }
             if (!option.type().equals(OptionType.HUD))
                 optionNames.put(pagePrefix + field.getName(), options.get(options.size() - 1));
