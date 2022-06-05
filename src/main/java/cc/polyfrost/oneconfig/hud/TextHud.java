@@ -31,7 +31,7 @@ public abstract class TextHud extends BasicHud {
             width = Math.max(width, UMinecraft.getFontRenderer().getStringWidth(line));
             textY += 12 * scale;
         }
-        height = (int) ((textY - y) / scale);
+        height = (int) ((textY - y) / scale - 3);
     }
 
     public abstract List<String> getLines();
