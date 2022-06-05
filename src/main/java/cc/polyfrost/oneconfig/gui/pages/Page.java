@@ -10,10 +10,9 @@ import org.lwjgl.input.Mouse;
  * A page is a 1056x728 rectangle of the GUI. It is the main content of the gui, and can be switched back and forwards easily. All the content of OneConfig is in a page.
  */
 public abstract class Page {
+    protected final String title;
     private Animation scrollAnimation;
     private float scrollTarget;
-
-    protected final String title;
 
     protected Page(String title) {
         this.title = title;

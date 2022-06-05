@@ -1,7 +1,7 @@
 package cc.polyfrost.oneconfig.utils.dsl
 
-import cc.polyfrost.oneconfig.libs.universal.UDesktop
 import cc.polyfrost.oneconfig.utils.NetworkUtils
+import gg.essential.universal.UDesktop
 import java.io.File
 
 /**

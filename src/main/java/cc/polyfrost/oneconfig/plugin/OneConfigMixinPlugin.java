@@ -1,6 +1,5 @@
 package cc.polyfrost.oneconfig.plugin;
 
-import cc.polyfrost.oneconfig.libs.mixinextras.MixinExtrasBootstrap;
 import org.spongepowered.asm.lib.tree.ClassNode;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
@@ -13,7 +12,6 @@ public class OneConfigMixinPlugin implements IMixinConfigPlugin {
 
     @Override
     public void onLoad(String mixinPackage) {
-        MixinExtrasBootstrap.init();
         try {
             Class.forName("gg.essential.vigilance.Vigilant");
             isVigilance = true;

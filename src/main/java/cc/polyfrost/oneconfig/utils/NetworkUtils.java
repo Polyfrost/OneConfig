@@ -1,7 +1,7 @@
 package cc.polyfrost.oneconfig.utils;
 
-import cc.polyfrost.oneconfig.libs.universal.UDesktop;
 import com.google.gson.JsonElement;
+import gg.essential.universal.UDesktop;
 import org.apache.commons.io.IOUtils;
 
 import java.io.*;

@@ -3,14 +3,14 @@ package cc.polyfrost.oneconfig.utils;
 import cc.polyfrost.oneconfig.events.EventManager;
 import cc.polyfrost.oneconfig.events.event.Stage;
 import cc.polyfrost.oneconfig.events.event.TickEvent;
-import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
+import me.kbrewster.eventbus.Subscribe;
 
 /**
  * Schedules a Runnable to be called after a certain amount of ticks.
  */
 public class TickDelay {
-    private int delay;
     private final Runnable function;
+    private int delay;
 
     public TickDelay(Runnable functionName, int ticks) {
         EventManager.INSTANCE.register(this);

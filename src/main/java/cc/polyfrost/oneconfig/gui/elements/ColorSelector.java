@@ -26,21 +26,14 @@ import java.awt.datatransfer.StringSelection;
 import java.util.ArrayList;
 
 public class ColorSelector {
-    private int x;
-    private int y;
     private final OneColor color;
-    private Animation barMoveAnimation = new DummyAnimation(18);
-    private Animation moveAnimation = new DummyAnimation(1);
-    private int mouseX, mouseY;
     private final ArrayList<BasicElement> buttons = new ArrayList<>();
     private final BasicElement closeBtn = new BasicElement(32, 32, false);
-
     private final BasicButton copyBtn = new BasicButton(32, 32, SVGs.COPY, BasicButton.ALIGNMENT_CENTER, ColorPalette.SECONDARY);
     private final BasicButton pasteBtn = new BasicButton(32, 32, SVGs.PASTE, BasicButton.ALIGNMENT_CENTER, ColorPalette.SECONDARY);
     private final BasicButton guideBtn = new BasicButton(112, 32, "Guide", SVGs.HELP_CIRCLE, SVGs.POP_OUT, BasicButton.ALIGNMENT_CENTER, ColorPalette.SECONDARY);
     private final BasicButton faveBtn = new BasicButton(32, 32, SVGs.HEART_OUTLINE, BasicButton.ALIGNMENT_CENTER, ColorPalette.SECONDARY);
     private final BasicButton recentBtn = new BasicButton(32, 32, SVGs.HISTORY, BasicButton.ALIGNMENT_CENTER, ColorPalette.SECONDARY);
-
     private final NumberInputField hueInput = new NumberInputField(90, 32, 0, 0, 360, 1);
     private final NumberInputField saturationInput = new NumberInputField(90, 32, 100, 0, 100, 1);
     private final NumberInputField brightnessInput = new NumberInputField(90, 32, 100, 0, 100, 1);
@@ -49,10 +42,14 @@ public class ColorSelector {
     private final TextInputField hexInput = new TextInputField(88, 32, true, "");
     private final ArrayList<ColorBox> favoriteColors = new ArrayList<>();
     private final ArrayList<ColorBox> recentColors = new ArrayList<>();
-
     private final ColorSlider topSlider = new ColorSlider(384, 0, 360, 127);
     private final ColorSlider bottomSlider = new ColorSlider(384, 0, 255, 100);
     private final Slider speedSlider = new Slider(296, 1, 32, 0);
+    private int x;
+    private int y;
+    private Animation barMoveAnimation = new DummyAnimation(18);
+    private Animation moveAnimation = new DummyAnimation(1);
+    private int mouseX, mouseY;
     private int mode = 0, prevMode = 0;
     private boolean dragging, mouseWasDown;
 
@@ -465,12 +462,12 @@ public class ColorSelector {
             update(x, y);
         }
 
-        public void setColor(OneColor color) {
-            this.color = color;
-        }
-
         public OneColor getColor() {
             return color;
+        }
+
+        public void setColor(OneColor color) {
+            this.color = color;
         }
     }
 }

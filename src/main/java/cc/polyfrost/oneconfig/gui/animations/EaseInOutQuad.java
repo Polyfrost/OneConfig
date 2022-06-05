@@ -18,7 +18,6 @@ public class EaseInOutQuad extends Animation {
     @Override
     protected float animate(float timePassed, float duration, float start, float change) {
         if ((timePassed /= duration / 2) < 1) return change / 2 * timePassed * timePassed + start;
-        ;
         return -change / 2 * ((--timePassed) * (timePassed - 2) - 1) + start;
     }
 }

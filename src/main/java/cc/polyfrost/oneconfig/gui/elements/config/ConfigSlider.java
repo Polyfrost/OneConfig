@@ -14,8 +14,8 @@ import java.lang.reflect.Field;
 public class ConfigSlider extends BasicOption {
     private final NumberInputField inputField;
     private final float min, max;
-    private boolean isFloat = true;
     private final int step;
+    private boolean isFloat = true;
     private boolean dragging = false;
     private boolean mouseWasDown = false;
 

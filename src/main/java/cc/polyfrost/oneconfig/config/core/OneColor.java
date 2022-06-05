@@ -97,6 +97,27 @@ public final class OneColor {
     // accessors
 
     /**
+     * Get the RGBA color from the HSB color, and apply the alpha.
+     */
+    public static int HSBAtoRGBA(float hue, float saturation, float brightness, int alpha) {
+        int temp = Color.HSBtoRGB(hue / 360f, saturation / 100f, brightness / 100f);
+        return ((temp & 0x00ffffff) | (alpha << 24));
+    }
+
+    /**
+     * Get the HSBA color from the RGBA color.
+     */
+    public static short[] RGBAtoHSBA(int rgba) {
+        short[] hsb = new short[4];
+        float[] hsbArray = Color.RGBtoHSB((rgba >> 16 & 255), (rgba >> 8 & 255), (rgba & 255), null);
+        hsb[0] = (short) (hsbArray[0] * 360);
+        hsb[1] = (short) (hsbArray[1] * 100);
+        hsb[2] = (short) (hsbArray[2] * 100);
+        hsb[3] = (short) (rgba >> 24 & 255);
+        return hsb;
+    }
+
+    /**
      * Get the red value of the color (0-255).
      */
     public int getRed() {
@@ -143,6 +164,11 @@ public final class OneColor {
      */
     public int getAlpha() {
         return hsba[3];
+    }
+
+    public void setAlpha(int alpha) {
+        this.hsba[3] = (short) alpha;
+        rgba = HSBAtoRGBA(this.hsba[0], this.hsba[1], this.hsba[2], this.hsba[3]);
     }
 
     /**
@@ -221,27 +247,6 @@ public final class OneColor {
         }
     }
 
-    /**
-     * Get the RGBA color from the HSB color, and apply the alpha.
-     */
-    public static int HSBAtoRGBA(float hue, float saturation, float brightness, int alpha) {
-        int temp = Color.HSBtoRGB(hue / 360f, saturation / 100f, brightness / 100f);
-        return ((temp & 0x00ffffff) | (alpha << 24));
-    }
-
-    /**
-     * Get the HSBA color from the RGBA color.
-     */
-    public static short[] RGBAtoHSBA(int rgba) {
-        short[] hsb = new short[4];
-        float[] hsbArray = Color.RGBtoHSB((rgba >> 16 & 255), (rgba >> 8 & 255), (rgba & 255), null);
-        hsb[0] = (short) (hsbArray[0] * 360);
-        hsb[1] = (short) (hsbArray[1] * 100);
-        hsb[2] = (short) (hsbArray[2] * 100);
-        hsb[3] = (short) (rgba >> 24 & 255);
-        return hsb;
-    }
-
     public String getHex() {
         return Integer.toHexString(0xff000000 | getRGB()).toUpperCase().substring(2);
     }
@@ -271,11 +276,6 @@ public final class OneColor {
         int b = Integer.valueOf(hex.substring(4, 6), 16);
         this.rgba = ((getAlpha() & 0xFF) << 24) | ((r & 0xFF) << 16) | ((g & 0xFF) << 8) | ((b & 0xFF));
         hsba = RGBAtoHSBA(rgba);
-    }
-
-    public void setAlpha(int alpha) {
-        this.hsba[3] = (short) alpha;
-        rgba = HSBAtoRGBA(this.hsba[0], this.hsba[1], this.hsba[2], this.hsba[3]);
     }
 
     private String charsToString(char... chars) {

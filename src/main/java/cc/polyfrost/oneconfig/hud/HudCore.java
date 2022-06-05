@@ -1,8 +1,8 @@
 package cc.polyfrost.oneconfig.hud;
 
 import cc.polyfrost.oneconfig.events.event.HudRenderEvent;
-import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
-import cc.polyfrost.oneconfig.libs.universal.UResolution;
+import gg.essential.universal.UResolution;
+import me.kbrewster.eventbus.Subscribe;
 
 import java.util.ArrayList;
 

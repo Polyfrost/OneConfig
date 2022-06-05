@@ -8,6 +8,7 @@ import cc.polyfrost.oneconfig.config.data.ModType;
 import cc.polyfrost.oneconfig.events.EventManager;
 import cc.polyfrost.oneconfig.hud.HudCore;
 import cc.polyfrost.oneconfig.lwjgl.BlurHandler;
+import cc.polyfrost.oneconfig.test.TestCommand;
 import cc.polyfrost.oneconfig.test.TestConfig;
 import cc.polyfrost.oneconfig.utils.GuiUtils;
 import cc.polyfrost.oneconfig.utils.commands.CommandManager;
@@ -28,10 +29,10 @@ import java.util.List;
 @net.minecraftforge.fml.common.Mod(modid = "@ID@", name = "@NAME@", version = "@VER@")
 public class OneConfig {
     public static final File oneConfigDir = new File("./OneConfig");
-    public static OneConfigConfig config;
-    public static TestConfig testConfig;
     public static final List<Mod> loadedMods = new ArrayList<>();
     public static final List<ModMetadata> loadedOtherMods = new ArrayList<>();
+    public static OneConfigConfig config;
+    public static TestConfig testConfig;
     private static boolean preLaunched = false;
     private static boolean initialized = false;
 
@@ -60,7 +61,8 @@ public class OneConfig {
         GuiUtils.getDeltaTime(); // called to make sure static initializer is called
         BlurHandler.INSTANCE.load();
         testConfig = new TestConfig();
-        CommandManager.INSTANCE.registerCommand(new OneConfigCommand());
+        CommandManager.INSTANCE.registerCommand(OneConfigCommand.class);
+        CommandManager.INSTANCE.registerCommand(TestCommand.class);
         EventManager.INSTANCE.register(new HudCore());
         EventManager.INSTANCE.register(HypixelUtils.INSTANCE);
         reloadModsList();

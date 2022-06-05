@@ -18,7 +18,7 @@ import java.lang.reflect.Field;
 public class ConfigPageButton extends BasicOption {
     public final OptionPage page;
     public final String description;
-    private ColorAnimation backgroundColor = new ColorAnimation(ColorPalette.SECONDARY);
+    private final ColorAnimation backgroundColor = new ColorAnimation(ColorPalette.SECONDARY);
 
     public ConfigPageButton(Field field, Object parent, String name, String description, OptionPage page) {
         super(field, parent, name, 2);

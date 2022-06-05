@@ -14,8 +14,8 @@ public class VigilanceMigrator implements Migrator {
     private static final Pattern booleanPattern = Pattern.compile("\"?(?<name>[^\\s\"]+)\"? = (?<value>true|false)");
     private static final Pattern numberPattern = Pattern.compile("\"?(?<name>[^\\s\"]+)\"? = (?<value>[\\d.]+)");
     private static final Pattern stringPattern = Pattern.compile("\"?(?<name>[^\\s\"]+)\"? = \"(?<value>.+)\"");
-    protected HashMap<String, HashMap<String, HashMap<String, Object>>> values = null;
     protected final String filePath;
+    protected HashMap<String, HashMap<String, HashMap<String, Object>>> values = null;
 
     public VigilanceMigrator(String filePath) {
         this.filePath = filePath;

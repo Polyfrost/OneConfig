@@ -12,8 +12,8 @@ import cc.polyfrost.oneconfig.utils.InputUtils;
 import java.lang.reflect.Field;
 
 public class ConfigDualOption extends BasicOption {
-    private Animation posAnimation;
     private final String left, right;
+    private Animation posAnimation;
 
     public ConfigDualOption(Field field, Object parent, String name, int size, String[] options) {
         super(field, parent, name, size);

@@ -1,6 +1,5 @@
 package cc.polyfrost.oneconfig.utils.commands.annotations;
 
-import cc.polyfrost.oneconfig.utils.commands.CommandHelper;
 import cc.polyfrost.oneconfig.utils.commands.CommandManager;
 import cc.polyfrost.oneconfig.utils.commands.arguments.ArgumentParser;
 
@@ -73,8 +72,7 @@ import java.lang.annotation.Target;
  *     }</pre>
  * </p>
  * <p>
- * To register commands, either extend {@link CommandHelper} and run {@link CommandHelper#preload()} (which does nothing,
- * just makes loading look nicer lol), or use {@link CommandManager#registerCommand(Object)}.
+ * To register commands, use {@link CommandManager#registerCommand(Class)}.
  *
  * <p>
  * Note: if you're viewing this in IntelliJ or just see the @literal tag everywhere, please ignore that.
