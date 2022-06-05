@@ -6,9 +6,8 @@ import cc.polyfrost.oneconfig.gui.animations.ColorAnimation;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
-import cc.polyfrost.oneconfig.utils.color.ColorPalette;
-import cc.polyfrost.oneconfig.utils.color.ColorUtils;
 import cc.polyfrost.oneconfig.utils.InputUtils;
+import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 import org.lwjgl.input.Mouse;
 
 import java.awt.*;
@@ -18,7 +17,7 @@ import java.util.Arrays;
 public class ConfigDropdown extends BasicOption {
     private final String[] options;
     private final ColorAnimation backgroundColor = new ColorAnimation(ColorPalette.SECONDARY);
-    private final ColorAnimation atomColor = new ColorAnimation(new ColorPalette(OneConfigConfig.PRIMARY_600, OneConfigConfig.PRIMARY_500,  OneConfigConfig.PRIMARY_500));
+    private final ColorAnimation atomColor = new ColorAnimation(new ColorPalette(OneConfigConfig.PRIMARY_600, OneConfigConfig.PRIMARY_500, OneConfigConfig.PRIMARY_500));
     private boolean opened = false;
 
     public ConfigDropdown(Field field, Object parent, String name, int size, String[] options) {

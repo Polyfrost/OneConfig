@@ -9,17 +9,47 @@ import org.lwjgl.input.Mouse;
 
 public class BasicElement {
     protected int width, height;
+    /**
+     * The color palette used for this element.
+     */
     protected ColorPalette colorPalette;
+    /**
+     * hitBoxX and hitBoxY are integer variables to determine (in pixels) how far past the boundaries of this button it is still able to be interacted with.
+     */
     protected int hitBoxX, hitBoxY;
     protected boolean hoverFx;
+    /**
+     * Whether the element is currently being hovered over
+     */
     protected boolean hovered = false;
+    /**
+     * Whether the mouse is actively being held down on the element.
+     */
     protected boolean pressed = false;
+    /**
+     * Whether the element is clicked.
+     */
     protected boolean clicked = false;
+    /**
+     * The toggle state of the button. Its false, then if it is clicked, it becomes true, and if clicked again, it becomes false.
+     */
     protected boolean toggled = false;
+    /**
+     * Whether the element is currently disabled.
+     */
     protected boolean disabled = false;
+    /**
+     * The ARGB color of this element.
+     */
     public int currentColor;
     protected final float radius;
+    /**
+     * Boolean to determine if this element is allowed to be clicked when {@link InputUtils#isBlockingClicks()} is true.
+     */
     private boolean block = false;
+    /**
+     * The color animation used by this element.
+     */
     protected ColorAnimation colorAnimation;
 
     public BasicElement(int width, int height, @NotNull ColorPalette colorPalette, boolean hoverFx) {
@@ -40,11 +70,22 @@ public class BasicElement {
     }
 
 
+    /**
+     * Draw script for the element.
+     * <br> <b>Make sure to call {@link #update(int x, int y)} to update the elements states!</b>
+     *
+     * @param vg NanoVG context (see {@link RenderManager})
+     * @param x  x position of the element
+     * @param y  y position of the element
+     */
     public void draw(long vg, int x, int y) {
         this.update(x, y);
         RenderManager.drawRoundedRect(vg, x, y, width, height, currentColor, radius);
     }
 
+    /**
+     * Update this element's clicked, hovered, toggled, and pressed states, invoke any necessary methods, and update the color animation.
+     */
     public void update(int x, int y) {
         if (disabled) {
             hovered = false;

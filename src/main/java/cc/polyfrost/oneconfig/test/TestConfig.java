@@ -7,7 +7,6 @@ import cc.polyfrost.oneconfig.config.core.OneKeyBind;
 import cc.polyfrost.oneconfig.config.data.*;
 import cc.polyfrost.oneconfig.config.interfaces.Config;
 import cc.polyfrost.oneconfig.config.migration.VigilanceMigrator;
-import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 
 public class TestConfig extends Config {

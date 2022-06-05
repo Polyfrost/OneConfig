@@ -1,7 +1,6 @@
 package cc.polyfrost.oneconfig.gui.animations;
 
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
-import cc.polyfrost.oneconfig.utils.color.ColorUtils;
 
 public class ColorAnimation {
     private ColorPalette palette;
@@ -25,6 +24,13 @@ public class ColorAnimation {
         alphaAnimation = new DummyAnimation(palette.getNormalColorf()[3]);
     }
 
+    /**
+     * Return the current color at the current time, according to a EaseInOut quadratic animation.
+     *
+     * @param hovered the hover state of the element
+     * @param pressed the pressed state of the element
+     * @return the current color
+     */
     public int getColor(boolean hovered, boolean pressed) {
         int state = pressed ? 2 : hovered ? 1 : 0;
         if (state != prevState) {
@@ -36,6 +42,13 @@ public class ColorAnimation {
             prevState = state;
         }
         return ((int) (alphaAnimation.get() * 255) << 24) | ((int) (redAnimation.get() * 255) << 16) | ((int) (greenAnimation.get() * 255) << 8) | ((int) (blueAnimation.get() * 255));
+    }
+
+    /**
+     * Return the current alpha of the color. This method is used to get the alpha of pressed buttons that have text/icons on them, so they also darken accordingly.
+     */
+    public float getAlpha() {
+        return alphaAnimation.get(0);
     }
 
     public ColorPalette getPalette() {

@@ -1,6 +1,6 @@
 package cc.polyfrost.oneconfig.gui.animations;
 
-public class DummyAnimation extends Animation{
+public class DummyAnimation extends Animation {
     /**
      * @param value The value that is returned
      */

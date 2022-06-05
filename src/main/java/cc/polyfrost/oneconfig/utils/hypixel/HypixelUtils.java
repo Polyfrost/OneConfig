@@ -133,6 +133,7 @@ public class HypixelUtils {
 
     /**
      * Returns whether the player is in game.
+     *
      * @return Whether the player is in game.
      */
     public boolean isInGame() {
@@ -141,6 +142,7 @@ public class HypixelUtils {
 
     /**
      * Returns the current {@link LocrawInfo}.
+     *
      * @return The current {@link LocrawInfo}.
      * @see LocrawInfo
      */
@@ -150,6 +152,7 @@ public class HypixelUtils {
 
     /**
      * Returns the previous {@link LocrawInfo}.
+     *
      * @return The previous {@link LocrawInfo}.
      * @see LocrawInfo
      */

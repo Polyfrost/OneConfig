@@ -54,7 +54,7 @@ public final class ColorUtils {
      * @return the RGB color.
      */
     public static int getColor(float red, float green, float blue, float alpha) {
-        return getColor((int) red * 255, (int) green * 255, (int) blue * 255, (int) alpha * 255);
+        return getColor((int) (red * 255f), (int) (green * 255f), (int) (blue * 255f), (int) (alpha * 255f));
     }
 
     /**

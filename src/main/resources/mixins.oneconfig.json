@@ -9,6 +9,7 @@
   },
   "verbose": true,
   "client": [
+    "FontRendererMixin",
     "GuiIngameForgeMixin",
     "MinecraftMixin",
     "NetHandlerPlayClientMixin",
