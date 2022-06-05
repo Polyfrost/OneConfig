@@ -1,10 +1,10 @@
 package cc.polyfrost.oneconfig.gui.elements.text;
 
-import cc.polyfrost.oneconfig.config.OneConfigConfig;
+import cc.polyfrost.oneconfig.gui.Colors;
 import cc.polyfrost.oneconfig.gui.animations.ColorAnimation;
 import cc.polyfrost.oneconfig.gui.elements.BasicElement;
-import cc.polyfrost.oneconfig.lwjgl.RenderManager;
-import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
+import cc.polyfrost.oneconfig.renderer.RenderManager;
+import cc.polyfrost.oneconfig.renderer.image.SVGs;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 
 public class NumberInputField extends TextInputField {
@@ -29,7 +29,7 @@ public class NumberInputField extends TextInputField {
     @Override
     public void draw(long vg, int x, int y) {
         super.errored = false;
-        RenderManager.drawRoundedRect(vg, x + width + 4, y, 12, 28, OneConfigConfig.GRAY_500, 6f);
+        RenderManager.drawRoundedRect(vg, x + width + 4, y, 12, 28, Colors.GRAY_500, 6f);
         upArrow.disable(disabled);
         downArrow.disable(disabled);
         upArrow.update(x + width + 4, y);

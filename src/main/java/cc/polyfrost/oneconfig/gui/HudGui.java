@@ -3,7 +3,7 @@ package cc.polyfrost.oneconfig.gui;
 import cc.polyfrost.oneconfig.config.core.ConfigCore;
 import cc.polyfrost.oneconfig.hud.BasicHud;
 import cc.polyfrost.oneconfig.hud.HudCore;
-import cc.polyfrost.oneconfig.lwjgl.RenderManager;
+import cc.polyfrost.oneconfig.renderer.RenderManager;
 import gg.essential.universal.UKeyboard;
 import gg.essential.universal.UMatrixStack;
 import gg.essential.universal.UScreen;

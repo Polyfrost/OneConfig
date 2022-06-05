@@ -1,7 +1,7 @@
 package cc.polyfrost.oneconfig.test;
 
-import cc.polyfrost.oneconfig.lwjgl.RenderManager;
-import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
+import cc.polyfrost.oneconfig.renderer.RenderManager;
+import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import gg.essential.universal.UMatrixStack;
 import gg.essential.universal.UScreen;
 import org.jetbrains.annotations.NotNull;

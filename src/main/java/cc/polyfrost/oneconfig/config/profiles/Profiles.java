@@ -1,8 +1,8 @@
 package cc.polyfrost.oneconfig.config.profiles;
 
-import cc.polyfrost.oneconfig.OneConfig;
-import cc.polyfrost.oneconfig.config.OneConfigConfig;
+import cc.polyfrost.oneconfig.internal.OneConfig;
 import cc.polyfrost.oneconfig.config.core.ConfigCore;
+import cc.polyfrost.oneconfig.internal.config.OneConfigConfig;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;

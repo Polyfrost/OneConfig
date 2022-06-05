@@ -1,7 +1,7 @@
 package cc.polyfrost.oneconfig.gui.elements;
 
-import cc.polyfrost.oneconfig.config.OneConfigConfig;
-import cc.polyfrost.oneconfig.lwjgl.RenderManager;
+import cc.polyfrost.oneconfig.gui.Colors;
+import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import org.lwjgl.input.Mouse;
 
@@ -23,9 +23,9 @@ public class Slider extends BasicElement {
     @Override
     public void draw(long vg, int x, int y) {
         update(x, y);
-        RenderManager.drawRoundedRect(vg, x, y + 2, width, height - 4, OneConfigConfig.GRAY_300, 3f);
-        RenderManager.drawRoundedRect(vg, x, y + 2, width * value, height - 4, OneConfigConfig.PRIMARY_500, 3f);
-        RenderManager.drawRoundedRect(vg, currentDragPoint - dragPointerSize / 2, y - 8, 24, 24, OneConfigConfig.WHITE, 12f);
+        RenderManager.drawRoundedRect(vg, x, y + 2, width, height - 4, Colors.GRAY_300, 3f);
+        RenderManager.drawRoundedRect(vg, x, y + 2, width * value, height - 4, Colors.PRIMARY_500, 3f);
+        RenderManager.drawRoundedRect(vg, currentDragPoint - dragPointerSize / 2, y - 8, 24, 24, Colors.WHITE, 12f);
 
 
     }

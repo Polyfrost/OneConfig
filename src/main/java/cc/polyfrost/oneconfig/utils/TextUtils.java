@@ -1,8 +1,8 @@
 package cc.polyfrost.oneconfig.utils;
 
-import cc.polyfrost.oneconfig.lwjgl.RenderManager;
-import cc.polyfrost.oneconfig.lwjgl.font.Font;
-import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
+import cc.polyfrost.oneconfig.renderer.RenderManager;
+import cc.polyfrost.oneconfig.renderer.font.Font;
+import cc.polyfrost.oneconfig.renderer.font.Fonts;
 
 import java.util.ArrayList;
 

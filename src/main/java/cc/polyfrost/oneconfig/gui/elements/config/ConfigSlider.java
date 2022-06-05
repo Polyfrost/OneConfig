@@ -1,10 +1,10 @@
 package cc.polyfrost.oneconfig.gui.elements.config;
 
-import cc.polyfrost.oneconfig.config.OneConfigConfig;
-import cc.polyfrost.oneconfig.config.interfaces.BasicOption;
+import cc.polyfrost.oneconfig.gui.Colors;
+import cc.polyfrost.oneconfig.config.elements.BasicOption;
 import cc.polyfrost.oneconfig.gui.elements.text.NumberInputField;
-import cc.polyfrost.oneconfig.lwjgl.RenderManager;
-import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
+import cc.polyfrost.oneconfig.renderer.RenderManager;
+import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import cc.polyfrost.oneconfig.utils.MathUtils;
 import org.lwjgl.input.Mouse;
@@ -67,17 +67,17 @@ public class ConfigSlider extends BasicOption {
         }
         if (!inputField.isToggled()) inputField.setCurrentValue(value);
 
-        RenderManager.drawText(vg, name, x, y + 17, OneConfigConfig.WHITE_90, 14f, Fonts.MEDIUM);
-        RenderManager.drawRoundedRect(vg, x + 352, y + 13, 512, 6, OneConfigConfig.GRAY_300, 4f);
-        RenderManager.drawRoundedRect(vg, x + 352, y + 13, xCoordinate - x - 352, 6, OneConfigConfig.PRIMARY_500, 4f);
+        RenderManager.drawText(vg, name, x, y + 17, Colors.WHITE_90, 14f, Fonts.MEDIUM);
+        RenderManager.drawRoundedRect(vg, x + 352, y + 13, 512, 6, Colors.GRAY_300, 4f);
+        RenderManager.drawRoundedRect(vg, x + 352, y + 13, xCoordinate - x - 352, 6, Colors.PRIMARY_500, 4f);
         if (step > 0) {
             for (float i = x + 352; i <= x + 864; i += 512 / ((max - min) / step)) {
-                int color = xCoordinate > i - 2 ? OneConfigConfig.PRIMARY_500 : OneConfigConfig.GRAY_300;
+                int color = xCoordinate > i - 2 ? Colors.PRIMARY_500 : Colors.GRAY_300;
                 RenderManager.drawRoundedRect(vg, i - 2, y + 9, 4, 14, color, 2f);
             }
         }
-        if (step == 0) RenderManager.drawRoundedRect(vg, xCoordinate - 12, y + 4, 24, 24, OneConfigConfig.WHITE, 12f);
-        else RenderManager.drawRoundedRect(vg, xCoordinate - 4, y + 4, 8, 24, OneConfigConfig.WHITE, 4f);
+        if (step == 0) RenderManager.drawRoundedRect(vg, xCoordinate - 12, y + 4, 24, 24, Colors.WHITE, 12f);
+        else RenderManager.drawRoundedRect(vg, xCoordinate - 4, y + 4, 8, 24, Colors.WHITE, 4f);
         inputField.draw(vg, x + 892, y);
         RenderManager.setAlpha(vg, 1f);
     }

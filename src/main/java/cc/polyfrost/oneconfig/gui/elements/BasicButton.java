@@ -1,11 +1,11 @@
 package cc.polyfrost.oneconfig.gui.elements;
 
-import cc.polyfrost.oneconfig.config.OneConfigConfig;
+import cc.polyfrost.oneconfig.gui.Colors;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.pages.Page;
-import cc.polyfrost.oneconfig.lwjgl.RenderManager;
-import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
-import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
+import cc.polyfrost.oneconfig.renderer.RenderManager;
+import cc.polyfrost.oneconfig.renderer.font.Fonts;
+import cc.polyfrost.oneconfig.renderer.image.SVGs;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 import cc.polyfrost.oneconfig.utils.color.ColorUtils;
 import org.jetbrains.annotations.NotNull;
@@ -68,7 +68,7 @@ public class BasicButton extends BasicElement {
             color = currentColor;
         } else {
             RenderManager.drawRoundedRect(vg, x, y, this.width, this.height, currentColor, this.cornerRadius);
-            color = ColorUtils.setAlpha(OneConfigConfig.WHITE, (int) (colorAnimation.getAlpha() * 255));
+            color = ColorUtils.setAlpha(Colors.WHITE, (int) (colorAnimation.getAlpha() * 255));
         }
         final float middle = x + width / 2f;
         final float middleYIcon = y + height / 2f - iconSize / 2f;

@@ -1,9 +1,9 @@
 package cc.polyfrost.oneconfig.gui.pages;
 
-import cc.polyfrost.oneconfig.config.OneConfigConfig;
-import cc.polyfrost.oneconfig.lwjgl.RenderManager;
-import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
-import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
+import cc.polyfrost.oneconfig.gui.Colors;
+import cc.polyfrost.oneconfig.renderer.RenderManager;
+import cc.polyfrost.oneconfig.renderer.font.Fonts;
+import cc.polyfrost.oneconfig.renderer.image.SVGs;
 
 public class HomePage extends Page {
     /*private final BasicButton socialsBtn = new BasicButton(184, 36, "Socials", SVGs.SHARE, SVGs.POP_OUT, BasicButton.ALIGNMENT_CENTER, ColorUtils.PRIMARY);
@@ -34,10 +34,10 @@ public class HomePage extends Page {
     public void draw(long vg, int x, int y) {
         RenderManager.drawRoundedRect(vg, x, y, 184, 36, -1, 12f);
         RenderManager.drawText(vg, "This is a cool string to test pages", x + 32, y + 72, -1, 36f, Fonts.BOLD);
-        RenderManager.drawRoundedRect(vg, x + 350, y + 310, 300, 200, OneConfigConfig.PRIMARY_600, 14f);
+        RenderManager.drawRoundedRect(vg, x + 350, y + 310, 300, 200, Colors.PRIMARY_600, 14f);
         RenderManager.drawSvg(vg, SVGs.INFO_CIRCLE, x + 20, y + 604, 24, 24);
-        RenderManager.drawText(vg, "Info", x + 52, y + 618, OneConfigConfig.WHITE_90, 24f, Fonts.MEDIUM);
-        RenderManager.drawRoundedRect(vg, x + 16, y + 644, 1024, 64, OneConfigConfig.GRAY_700, 20f);
+        RenderManager.drawText(vg, "Info", x + 52, y + 618, Colors.WHITE_90, 24f, Fonts.MEDIUM);
+        RenderManager.drawRoundedRect(vg, x + 16, y + 644, 1024, 64, Colors.GRAY_700, 20f);
 
         RenderManager.drawURL(vg, "https://www.youtube.com/watch?v=dQw4w9WgXcQ", x + 100, y + 205, 24, Fonts.MEDIUM);
 

@@ -1,6 +1,6 @@
 package cc.polyfrost.oneconfig.utils.dsl
 
-import cc.polyfrost.oneconfig.utils.GuiUtils
+import cc.polyfrost.oneconfig.utils.gui.GuiUtils
 import net.minecraft.client.gui.GuiScreen
 
 /**

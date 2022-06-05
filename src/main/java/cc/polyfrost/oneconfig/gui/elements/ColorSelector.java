@@ -1,6 +1,6 @@
 package cc.polyfrost.oneconfig.gui.elements;
 
-import cc.polyfrost.oneconfig.config.OneConfigConfig;
+import cc.polyfrost.oneconfig.gui.Colors;
 import cc.polyfrost.oneconfig.config.core.OneColor;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.animations.Animation;
@@ -9,12 +9,13 @@ import cc.polyfrost.oneconfig.gui.animations.EaseInOutCubic;
 import cc.polyfrost.oneconfig.gui.animations.EaseInOutQuad;
 import cc.polyfrost.oneconfig.gui.elements.text.NumberInputField;
 import cc.polyfrost.oneconfig.gui.elements.text.TextInputField;
-import cc.polyfrost.oneconfig.lwjgl.RenderManager;
-import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
-import cc.polyfrost.oneconfig.lwjgl.image.Images;
-import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
-import cc.polyfrost.oneconfig.lwjgl.scissor.Scissor;
-import cc.polyfrost.oneconfig.lwjgl.scissor.ScissorManager;
+import cc.polyfrost.oneconfig.internal.config.OneConfigConfig;
+import cc.polyfrost.oneconfig.renderer.RenderManager;
+import cc.polyfrost.oneconfig.renderer.font.Fonts;
+import cc.polyfrost.oneconfig.renderer.image.Images;
+import cc.polyfrost.oneconfig.renderer.image.SVGs;
+import cc.polyfrost.oneconfig.renderer.scissor.Scissor;
+import cc.polyfrost.oneconfig.renderer.scissor.ScissorManager;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import cc.polyfrost.oneconfig.utils.NetworkUtils;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
@@ -102,11 +103,11 @@ public class ColorSelector {
         int height = 768;
         Scissor scissor = ScissorManager.scissor(vg, x - 3, y - 3, width + 6, height + 6);
         RenderManager.drawHollowRoundRect(vg, x - 3, y - 3, width + 4, height + 4, new Color(204, 204, 204, 77).getRGB(), 20f, 2f);
-        RenderManager.drawRoundedRect(vg, x, y, width, height, OneConfigConfig.GRAY_800, 20f);
-        RenderManager.drawText(vg, "Color Selector", x + 16, y + 32, OneConfigConfig.WHITE_90, 18f, Fonts.SEMIBOLD);
+        RenderManager.drawRoundedRect(vg, x, y, width, height, Colors.GRAY_800, 20f);
+        RenderManager.drawText(vg, "Color Selector", x + 16, y + 32, Colors.WHITE_90, 18f, Fonts.SEMIBOLD);
         if (!closeBtn.isHovered()) RenderManager.setAlpha(vg, 0.8f);
         closeBtn.draw(vg, x + 368, y + 16);
-        RenderManager.drawSvg(vg, SVGs.X_CIRCLE_BOLD, x + 368, y + 16, 32, 32, closeBtn.isHovered() ? OneConfigConfig.ERROR_600 : -1);
+        RenderManager.drawSvg(vg, SVGs.X_CIRCLE_BOLD, x + 368, y + 16, 32, 32, closeBtn.isHovered() ? Colors.ERROR_600 : -1);
         RenderManager.setAlpha(vg, 1f);
 
         // hex parser
@@ -124,9 +125,9 @@ public class ColorSelector {
             recentColors.get(i).draw(vg, x + 104 + i * 44, y + 720);
         }
 
-        RenderManager.drawRoundedRect(vg, x + 16, y + 64, 384, 32, OneConfigConfig.GRAY_500, 12f);
+        RenderManager.drawRoundedRect(vg, x + 16, y + 64, 384, 32, Colors.GRAY_500, 12f);
         if (!barMoveAnimation.isFinished())
-            RenderManager.drawRoundedRect(vg, x + barMoveAnimation.get(), y + 66, 124, 28, OneConfigConfig.PRIMARY_600, 10f);
+            RenderManager.drawRoundedRect(vg, x + barMoveAnimation.get(), y + 66, 124, 28, Colors.PRIMARY_600, 10f);
         else buttons.get(mode).setColorPalette(ColorPalette.PRIMARY);
 
         int i = 18;
@@ -144,22 +145,22 @@ public class ColorSelector {
         }
         float percentMoveMain = moveAnimation.get();
 
-        RenderManager.drawText(vg, "Saturation", x + 224, y + 560, OneConfigConfig.WHITE_80, 12f, Fonts.MEDIUM);
+        RenderManager.drawText(vg, "Saturation", x + 224, y + 560, Colors.WHITE_80, 12f, Fonts.MEDIUM);
         saturationInput.draw(vg, x + 312, y + 544);
-        RenderManager.drawText(vg, "Brightness", x + 16, y + 599, OneConfigConfig.WHITE_80, 12f, Fonts.MEDIUM);
+        RenderManager.drawText(vg, "Brightness", x + 16, y + 599, Colors.WHITE_80, 12f, Fonts.MEDIUM);
         brightnessInput.draw(vg, x + 104, y + 584);
-        RenderManager.drawText(vg, "Alpha (%)", x + 224, y + 599, OneConfigConfig.WHITE_80, 12f, Fonts.MEDIUM);
+        RenderManager.drawText(vg, "Alpha (%)", x + 224, y + 599, Colors.WHITE_80, 12f, Fonts.MEDIUM);
         alphaInput.draw(vg, x + 312, y + 584);
-        RenderManager.drawText(vg, color.getDataBit() == -1 ? "Hex (RGB):" : "Color Code:", x + 16, y + 641, OneConfigConfig.WHITE_80, 12f, Fonts.MEDIUM);
+        RenderManager.drawText(vg, color.getDataBit() == -1 ? "Hex (RGB):" : "Color Code:", x + 16, y + 641, Colors.WHITE_80, 12f, Fonts.MEDIUM);
         hexInput.draw(vg, x + 104, y + 624);
 
         copyBtn.draw(vg, x + 204, y + 624);
         pasteBtn.draw(vg, x + 244, y + 624);
         if (mode != 2) {
-            RenderManager.drawText(vg, "Hue", x + 16, y + 560, OneConfigConfig.WHITE_80, 12f, Fonts.MEDIUM);
+            RenderManager.drawText(vg, "Hue", x + 16, y + 560, Colors.WHITE_80, 12f, Fonts.MEDIUM);
             hueInput.draw(vg, x + 104, y + 544);
         } else {
-            RenderManager.drawText(vg, "Speed (s)", x + 16, y + 560, OneConfigConfig.WHITE_80, 12f, Fonts.MEDIUM);
+            RenderManager.drawText(vg, "Speed (s)", x + 16, y + 560, Colors.WHITE_80, 12f, Fonts.MEDIUM);
             speedInput.draw(vg, x + 104, y + 544);
         }
 
@@ -172,13 +173,13 @@ public class ColorSelector {
         if (dragging && InputUtils.isClicked(true)) {
             dragging = false;
         }
-        bottomSlider.setGradient(OneConfigConfig.TRANSPARENT, color.getRGBNoAlpha());
+        bottomSlider.setGradient(Colors.TRANSPARENT, color.getRGBNoAlpha());
         RenderManager.drawRoundImage(vg, Images.ALPHA_GRID, x + 16, y + 456, 384, 16, 8f);
         bottomSlider.draw(vg, x + 16, y + 456);
 
         if (percentMoveMain > 0.96f) {
-            RenderManager.drawRoundedRect(vg, mouseX - 7, mouseY - 7, 14, 14, OneConfigConfig.WHITE, 14f);
-            RenderManager.drawRoundedRect(vg, mouseX - 6, mouseY - 6, 12, 12, OneConfigConfig.BLACK, 12f);
+            RenderManager.drawRoundedRect(vg, mouseX - 7, mouseY - 7, 14, 14, Colors.WHITE, 14f);
+            RenderManager.drawRoundedRect(vg, mouseX - 6, mouseY - 6, 12, 12, Colors.BLACK, 12f);
             RenderManager.drawRoundedRect(vg, mouseX - 5, mouseY - 5, 10, 10, color.getRGBMax(true), 10f);
         }
 
@@ -188,7 +189,7 @@ public class ColorSelector {
 
 
         // draw the color preview
-        RenderManager.drawHollowRoundRect(vg, x + 15, y + 487, 384, 40, OneConfigConfig.GRAY_300, 12f, 2f);
+        RenderManager.drawHollowRoundRect(vg, x + 15, y + 487, 384, 40, Colors.GRAY_300, 12f, 2f);
         RenderManager.drawRoundImage(vg, Images.ALPHA_GRID, x + 20, y + 492, 376, 32, 8f);
         RenderManager.drawRoundedRect(vg, x + 20, y + 492, 376, 32, color.getRGB(), 8f);
         InputUtils.blockClicks(true);
@@ -213,8 +214,8 @@ public class ColorSelector {
                 }
                 if (mode == 2) {
                     speedSlider.draw(vg, x + 60, y + 424);
-                    RenderManager.drawText(vg, "SLOW", x + 16, y + 429, OneConfigConfig.WHITE_80, 12f, Fonts.REGULAR);
-                    RenderManager.drawText(vg, "FAST", x + 370, y + 429, OneConfigConfig.WHITE_80, 12f, Fonts.REGULAR);
+                    RenderManager.drawText(vg, "SLOW", x + 16, y + 429, Colors.WHITE_80, 12f, Fonts.REGULAR);
+                    RenderManager.drawText(vg, "FAST", x + 370, y + 429, Colors.WHITE_80, 12f, Fonts.REGULAR);
                 }
                 break;
             case 1:
@@ -222,7 +223,7 @@ public class ColorSelector {
                 topSlider.setImage(null);
                 RenderManager.drawRoundImage(vg, Images.COLOR_WHEEL, x + 64, y + 120, 288, 288, 144f);
 
-                topSlider.setGradient(OneConfigConfig.BLACK, color.getRGBMax(true));
+                topSlider.setGradient(Colors.BLACK, color.getRGBMax(true));
                 topSlider.setImage(null);
                 topSlider.draw(vg, x + 16, y + 424);
                 break;
@@ -427,8 +428,8 @@ public class ColorSelector {
             }
 
             RenderManager.drawHollowRoundRect(vg, x - 0.5f, y - 0.5f, width, height, new Color(204, 204, 204, 80).getRGB(), 8f, 1f);
-            RenderManager.drawHollowRoundRect(vg, currentDragPoint - 1, y - 1, 18, 18, OneConfigConfig.WHITE, 9f, 1f);
-            RenderManager.drawHollowRoundRect(vg, currentDragPoint, y, 16, 16, OneConfigConfig.BLACK, 8f, 1f);
+            RenderManager.drawHollowRoundRect(vg, currentDragPoint - 1, y - 1, 18, 18, Colors.WHITE, 9f, 1f);
+            RenderManager.drawHollowRoundRect(vg, currentDragPoint, y, 16, 16, Colors.BLACK, 8f, 1f);
             RenderManager.drawRoundedRect(vg, currentDragPoint + 1.5f, y + 1.5f, 14, 14, color, 7f);
         }
 
@@ -456,8 +457,8 @@ public class ColorSelector {
 
         @Override
         public void draw(long vg, int x, int y) {
-            RenderManager.drawRoundedRect(vg, x, y, 32, 32, toggled ? OneConfigConfig.PRIMARY_600 : OneConfigConfig.GRAY_300, 12f);
-            RenderManager.drawRoundedRect(vg, x + 2, y + 2, 28, 28, OneConfigConfig.GRAY_800, 10f);
+            RenderManager.drawRoundedRect(vg, x, y, 32, 32, toggled ? Colors.PRIMARY_600 : Colors.GRAY_300, 12f);
+            RenderManager.drawRoundedRect(vg, x + 2, y + 2, 28, 28, Colors.GRAY_800, 10f);
             RenderManager.drawRoundedRect(vg, x + 4, y + 4, 24, 24, color.getRGB(), 8f);
             update(x, y);
         }

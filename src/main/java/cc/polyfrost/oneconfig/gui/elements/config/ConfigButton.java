@@ -1,10 +1,10 @@
 package cc.polyfrost.oneconfig.gui.elements.config;
 
-import cc.polyfrost.oneconfig.config.OneConfigConfig;
-import cc.polyfrost.oneconfig.config.interfaces.BasicOption;
+import cc.polyfrost.oneconfig.gui.Colors;
+import cc.polyfrost.oneconfig.config.elements.BasicOption;
 import cc.polyfrost.oneconfig.gui.elements.BasicButton;
-import cc.polyfrost.oneconfig.lwjgl.RenderManager;
-import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
+import cc.polyfrost.oneconfig.renderer.RenderManager;
+import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 
 import java.lang.reflect.Field;
@@ -39,7 +39,7 @@ public class ConfigButton extends BasicOption {
     public void draw(long vg, int x, int y) {
         button.disable(!isEnabled());
         if (!isEnabled()) RenderManager.setAlpha(vg, 0.5f);
-        RenderManager.drawText(vg, name, x, y + 17, OneConfigConfig.WHITE, 14f, Fonts.MEDIUM);
+        RenderManager.drawText(vg, name, x, y + 17, Colors.WHITE, 14f, Fonts.MEDIUM);
         button.draw(vg, x + (size == 1 ? 352 : 736), y);
         RenderManager.setAlpha(vg, 1f);
     }
