@@ -37,7 +37,7 @@ public class TextInputField extends BasicElement {
     protected boolean onlyNums = false;
     protected boolean errored = false;
     protected boolean centered = false;
-    protected SVGs icon;
+    protected final SVGs icon;
     protected ArrayList<String> wrappedText = null;
     private long clickTimeD1;
     private int lines = 1;

@@ -1,6 +1,6 @@
 package cc.polyfrost.oneconfig.gui.animations;
 
-import cc.polyfrost.oneconfig.utils.GuiUtils;
+import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 
 public abstract class Animation {
     protected final boolean reverse;

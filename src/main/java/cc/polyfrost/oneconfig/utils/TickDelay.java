@@ -1,8 +1,8 @@
 package cc.polyfrost.oneconfig.utils;
 
-import cc.polyfrost.oneconfig.events.EventManager;
-import cc.polyfrost.oneconfig.events.event.Stage;
-import cc.polyfrost.oneconfig.events.event.TickEvent;
+import cc.polyfrost.oneconfig.api.events.EventManager;
+import cc.polyfrost.oneconfig.api.events.event.Stage;
+import cc.polyfrost.oneconfig.api.events.event.TickEvent;
 import me.kbrewster.eventbus.Subscribe;
 
 /**

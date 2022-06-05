@@ -20,6 +20,7 @@ import java.util.HashMap;
  * @see Images
  * @see SVGs
  */
+@SuppressWarnings("GrazieInspection")
 public final class ImageLoader {
     private ImageLoader() {
 
@@ -27,7 +28,7 @@ public final class ImageLoader {
 
     private final HashMap<String, Integer> imageHashMap = new HashMap<>();
     private final HashMap<String, Integer> svgHashMap = new HashMap<>();
-    public static ImageLoader INSTANCE = new ImageLoader();
+    public static final ImageLoader INSTANCE = new ImageLoader();
 
     /**
      * Loads an image from resources.
@@ -161,7 +162,7 @@ public final class ImageLoader {
     }
 
     /**
-     * Remove a SVG from the cache, allowing the SVG to be garbage collected.
+     * Remove an SVG from the cache, allowing the SVG to be garbage collected.
      * Should be used when the GUI rendering the SVG is closed.
      *
      * @param vg       The NanoVG context.

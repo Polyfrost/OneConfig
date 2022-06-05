@@ -1,7 +1,7 @@
 package cc.polyfrost.oneconfig.utils.hypixel;
 
-import cc.polyfrost.oneconfig.events.EventManager;
-import cc.polyfrost.oneconfig.events.event.*;
+import cc.polyfrost.oneconfig.api.events.EventManager;
+import cc.polyfrost.oneconfig.api.events.event.*;
 import cc.polyfrost.oneconfig.utils.JsonUtils;
 import cc.polyfrost.oneconfig.utils.Multithreading;
 import com.google.gson.Gson;

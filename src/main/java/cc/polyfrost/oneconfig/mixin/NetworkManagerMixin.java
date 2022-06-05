@@ -1,7 +1,7 @@
 package cc.polyfrost.oneconfig.mixin;
 
-import cc.polyfrost.oneconfig.events.EventManager;
-import cc.polyfrost.oneconfig.events.event.ReceivePacketEvent;
+import cc.polyfrost.oneconfig.api.events.EventManager;
+import cc.polyfrost.oneconfig.api.events.event.ReceivePacketEvent;
 import io.netty.channel.ChannelHandlerContext;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.Packet;

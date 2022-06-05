@@ -1,6 +1,6 @@
 package cc.polyfrost.oneconfig.config;
 
-import cc.polyfrost.oneconfig.config.core.OneColor;
+import cc.polyfrost.oneconfig.api.OneColor;
 import cc.polyfrost.oneconfig.config.data.Mod;
 import cc.polyfrost.oneconfig.config.interfaces.Config;
 import com.google.gson.JsonParser;

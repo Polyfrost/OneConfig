@@ -6,7 +6,7 @@ import cc.polyfrost.oneconfig.hud.HudCore;
 import java.util.ArrayList;
 
 public class ConfigCore {
-    public static ArrayList<Mod> oneConfigMods = new ArrayList<>();
+    public static final ArrayList<Mod> oneConfigMods = new ArrayList<>();
 
     public static void saveAll() {
         for (Mod modData : oneConfigMods) {

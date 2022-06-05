@@ -1,7 +1,7 @@
 package cc.polyfrost.oneconfig.test;
 
 import cc.polyfrost.oneconfig.config.annotations.Option;
-import cc.polyfrost.oneconfig.config.data.OptionType;
+import cc.polyfrost.oneconfig.config.data.type.OptionType;
 
 public class TestPage {
     @Option(

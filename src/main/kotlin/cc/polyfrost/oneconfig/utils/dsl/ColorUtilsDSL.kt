@@ -1,6 +1,6 @@
 package cc.polyfrost.oneconfig.utils.dsl
 
-import cc.polyfrost.oneconfig.config.core.OneColor
+import cc.polyfrost.oneconfig.api.OneColor
 import cc.polyfrost.oneconfig.utils.color.ColorUtils
 
 /**

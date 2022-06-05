@@ -1,7 +1,7 @@
 package cc.polyfrost.oneconfig.mixin;
 
-import cc.polyfrost.oneconfig.events.EventManager;
-import cc.polyfrost.oneconfig.events.event.WorldLoadEvent;
+import cc.polyfrost.oneconfig.api.events.EventManager;
+import cc.polyfrost.oneconfig.api.events.event.WorldLoadEvent;
 import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.client.network.NetHandlerPlayClient;
 import net.minecraft.profiler.Profiler;

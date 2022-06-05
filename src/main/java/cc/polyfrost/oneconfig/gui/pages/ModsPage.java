@@ -3,7 +3,7 @@ package cc.polyfrost.oneconfig.gui.pages;
 import cc.polyfrost.oneconfig.OneConfig;
 import cc.polyfrost.oneconfig.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.config.data.Mod;
-import cc.polyfrost.oneconfig.config.data.ModType;
+import cc.polyfrost.oneconfig.config.data.type.ModType;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.elements.BasicButton;
 import cc.polyfrost.oneconfig.gui.elements.ModCard;
@@ -18,7 +18,6 @@ public class ModsPage extends Page {
 
     private final List<ModCard> modCards = new ArrayList<>();
     private final List<BasicButton> modCategories = new ArrayList<>();
-    private int size;
 
     public ModsPage() {
         super("Mods");
@@ -54,7 +53,7 @@ public class ModsPage extends Page {
                 }
             }
         }
-        size = iY + 119;
+        int size = iY + 119;
         if (iX == x + 16 && iY == y + 72) {
             RenderManager.drawText(vg, "Looks like there is nothing here. Try another category?", x + 16, y + 72, OneConfigConfig.WHITE_60, 14f, Fonts.MEDIUM);
         }

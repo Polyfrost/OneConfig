@@ -1,9 +1,9 @@
 package cc.polyfrost.oneconfig.test;
 
-import cc.polyfrost.oneconfig.utils.commands.annotations.Command;
-import cc.polyfrost.oneconfig.utils.commands.annotations.Main;
-import cc.polyfrost.oneconfig.utils.commands.annotations.Name;
-import cc.polyfrost.oneconfig.utils.commands.annotations.SubCommand;
+import cc.polyfrost.oneconfig.api.commands.annotations.Command;
+import cc.polyfrost.oneconfig.api.commands.annotations.Main;
+import cc.polyfrost.oneconfig.api.commands.annotations.Name;
+import cc.polyfrost.oneconfig.api.commands.annotations.SubCommand;
 import gg.essential.universal.UChat;
 
 @Command(value = "test", aliases = {"t"})

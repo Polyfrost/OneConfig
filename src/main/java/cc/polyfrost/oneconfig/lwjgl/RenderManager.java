@@ -1,7 +1,7 @@
 package cc.polyfrost.oneconfig.lwjgl;
 
 import cc.polyfrost.oneconfig.config.OneConfigConfig;
-import cc.polyfrost.oneconfig.config.data.InfoType;
+import cc.polyfrost.oneconfig.config.data.type.InfoType;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.lwjgl.font.Font;
 import cc.polyfrost.oneconfig.lwjgl.font.FontManager;
@@ -537,7 +537,7 @@ public final class RenderManager {
 
     /**
      * Draw a drop shadow.
-     *
+     * <p>
      * <a href="https://github.com/SpinyOwl/legui/blob/develop/LICENSE">Adapted from legui under MIT license</a>
      *
      * @param vg           The NanoVG context.
@@ -620,7 +620,7 @@ public final class RenderManager {
     }
 
     /**
-     * Draws a SVG with the provided file path and parameters.
+     * Draws an SVG with the provided file path and parameters.
      *
      * @param vg       The NanoVG context.
      * @param filePath The file path.
@@ -649,7 +649,7 @@ public final class RenderManager {
     }
 
     /**
-     * Draws a SVG with the provided file path and parameters.
+     * Draws an SVG with the provided file path and parameters.
      *
      * @param vg       The NanoVG context.
      * @param filePath The file path.
@@ -698,7 +698,7 @@ public final class RenderManager {
     }
 
     /**
-     * Draw a circle with an info icon inside of it
+     * Draw a circle with an info icon inside it.
      *
      * @param vg   The NanoVG context.
      * @param type The icon type.

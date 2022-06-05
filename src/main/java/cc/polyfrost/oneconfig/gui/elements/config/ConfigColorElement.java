@@ -1,7 +1,7 @@
 package cc.polyfrost.oneconfig.gui.elements.config;
 
 import cc.polyfrost.oneconfig.config.OneConfigConfig;
-import cc.polyfrost.oneconfig.config.core.OneColor;
+import cc.polyfrost.oneconfig.api.OneColor;
 import cc.polyfrost.oneconfig.config.interfaces.BasicOption;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.elements.BasicElement;

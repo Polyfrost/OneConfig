@@ -103,7 +103,7 @@ public final class InputUtils {
     }
 
     /**
-     * Should be used if there is something above other components and you don't want it clicking trough
+     * Should be used if there is something above other components, and you don't want it clicking trough.
      */
     public static void blockClicks(boolean value) {
         blockClicks = value;

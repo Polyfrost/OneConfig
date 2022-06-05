@@ -2,9 +2,12 @@ package cc.polyfrost.oneconfig.test;
 
 import cc.polyfrost.oneconfig.config.annotations.ConfigPage;
 import cc.polyfrost.oneconfig.config.annotations.Option;
-import cc.polyfrost.oneconfig.config.core.OneColor;
-import cc.polyfrost.oneconfig.config.core.OneKeyBind;
+import cc.polyfrost.oneconfig.api.OneColor;
+import cc.polyfrost.oneconfig.api.OneKeyBind;
 import cc.polyfrost.oneconfig.config.data.*;
+import cc.polyfrost.oneconfig.config.data.type.InfoType;
+import cc.polyfrost.oneconfig.config.data.type.ModType;
+import cc.polyfrost.oneconfig.config.data.type.OptionType;
 import cc.polyfrost.oneconfig.config.interfaces.Config;
 import cc.polyfrost.oneconfig.config.migration.VigilanceMigrator;
 import net.minecraftforge.fml.common.FMLCommonHandler;
@@ -153,7 +156,6 @@ public class TestConfig extends Config {
             type = OptionType.SLIDER,
             category = "Sliders",
             size = 2,
-            min = 0,
             max = 25
     )
     public static int slider1;
@@ -164,7 +166,6 @@ public class TestConfig extends Config {
             type = OptionType.SLIDER,
             category = "Sliders",
             size = 2,
-            min = 0,
             max = 30,
             step = 2
     )

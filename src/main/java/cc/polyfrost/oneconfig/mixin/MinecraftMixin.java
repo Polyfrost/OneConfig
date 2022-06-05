@@ -1,8 +1,8 @@
 package cc.polyfrost.oneconfig.mixin;
 
 import cc.polyfrost.oneconfig.OneConfig;
-import cc.polyfrost.oneconfig.events.EventManager;
-import cc.polyfrost.oneconfig.events.event.*;
+import cc.polyfrost.oneconfig.api.events.EventManager;
+import cc.polyfrost.oneconfig.api.events.event.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Timer;
 import net.minecraftforge.client.event.GuiOpenEvent;
@@ -20,37 +20,37 @@ public class MinecraftMixin {
     @Shadow
     private Timer timer;
 
-    @Inject(method = "startGame", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/client/FMLClientHandler;beginMinecraftLoading(Lnet/minecraft/client/Minecraft;Ljava/util/List;Lnet/minecraft/client/resources/IReloadableResourceManager;)V", remap = false), remap = true)
+    @Inject(method = "startGame", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/client/FMLClientHandler;beginMinecraftLoading(Lnet/minecraft/client/Minecraft;Ljava/util/List;Lnet/minecraft/client/resources/IReloadableResourceManager;)V", remap = false))
     private void onPreLaunch(CallbackInfo ci) {
         OneConfig.preLaunch();
     }
 
-    @Inject(method = "startGame", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/client/FMLClientHandler;onInitializationComplete()V", shift = At.Shift.AFTER, remap = false), remap = true)
+    @Inject(method = "startGame", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/client/FMLClientHandler;onInitializationComplete()V", shift = At.Shift.AFTER, remap = false))
     private void onInit(CallbackInfo ci) {
         OneConfig.init();
     }
 
-    @Inject(method = "runGameLoop", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/FMLCommonHandler;onRenderTickStart(F)V", shift = At.Shift.AFTER, remap = false), remap = true)
+    @Inject(method = "runGameLoop", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/FMLCommonHandler;onRenderTickStart(F)V", shift = At.Shift.AFTER, remap = false))
     private void onRenderTickStart(CallbackInfo ci) {
         EventManager.INSTANCE.post(new RenderEvent(Stage.START, timer.renderPartialTicks));
     }
 
-    @Inject(method = "runGameLoop", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/FMLCommonHandler;onRenderTickEnd(F)V", shift = At.Shift.AFTER, remap = false), remap = true)
+    @Inject(method = "runGameLoop", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/FMLCommonHandler;onRenderTickEnd(F)V", shift = At.Shift.AFTER, remap = false))
     private void onRenderTickEnd(CallbackInfo ci) {
         EventManager.INSTANCE.post(new RenderEvent(Stage.END, timer.renderPartialTicks));
     }
 
-    @Inject(method = "runTick", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/FMLCommonHandler;onPreClientTick()V", shift = At.Shift.AFTER, remap = false), remap = true)
+    @Inject(method = "runTick", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/FMLCommonHandler;onPreClientTick()V", shift = At.Shift.AFTER, remap = false))
     private void onClientTickStart(CallbackInfo ci) {
         EventManager.INSTANCE.post(new TickEvent(Stage.START));
     }
 
-    @Inject(method = "runTick", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/FMLCommonHandler;onPostClientTick()V", shift = At.Shift.AFTER, remap = false), remap = true)
+    @Inject(method = "runTick", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/FMLCommonHandler;onPostClientTick()V", shift = At.Shift.AFTER, remap = false))
     private void onClientTickEnd(CallbackInfo ci) {
         EventManager.INSTANCE.post(new TickEvent(Stage.END));
     }
 
-    @ModifyArg(method = "displayGuiScreen", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/eventhandler/EventBus;post(Lnet/minecraftforge/fml/common/eventhandler/Event;)Z", remap = false), remap = true)
+    @ModifyArg(method = "displayGuiScreen", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/eventhandler/EventBus;post(Lnet/minecraftforge/fml/common/eventhandler/Event;)Z", remap = false))
     private Event onGuiOpenEvent(Event a) {
         if (a instanceof GuiOpenEvent) {
             GuiOpenEvent forgeEvent = (GuiOpenEvent) a;

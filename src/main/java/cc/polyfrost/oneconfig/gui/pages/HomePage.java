@@ -6,20 +6,6 @@ import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
 
 public class HomePage extends Page {
-    /*private final BasicButton socialsBtn = new BasicButton(184, 36, "Socials", SVGs.SHARE, SVGs.POP_OUT, BasicButton.ALIGNMENT_CENTER, ColorUtils.PRIMARY);
-    private final BasicButton discordBtn = new BasicButton(184, 36, "Discord", SVGs.WEBSITE, SVGs.LINK_DIAGONAL, BasicButton.ALIGNMENT_CENTER, ColorUtils.PRIMARY);
-    private final BasicButton webBtn = new BasicButton(184, 36, "Website", SVGs.WEBSITE, null, BasicButton.ALIGNMENT_CENTER, ColorUtils.PRIMARY);
-    private final BasicButton creditsBtn = new BasicButton(184, 36, "Credits", SVGs.AUDIO_PLAY, SVGs.LINK_DIAGONAL, BasicButton.ALIGNMENT_CENTER, ColorUtils.SECONDARY);
-    private final BasicButton guideBtn = new BasicButton(184, 36, "Online Guide", SVGs.HELP_CIRCLE, null, BasicButton.ALIGNMENT_CENTER, ColorUtils.SECONDARY);
-    private final BasicButton button1 = new BasicButton(184, BasicButton.SIZE_32, "HELLO", SVGs.MICROSOFT_ICON, SVGs.AUDIO_PLAY, BasicButton.ALIGNMENT_CENTER, ColorUtils.SECONDARY_TRANSPARENT);
-    private final BasicButton button2 = new BasicButton(184, BasicButton.SIZE_36, "TESTING", SVGs.MICROSOFT_ICON, null, BasicButton.ALIGNMENT_LEFT, ColorUtils.PRIMARY_DESTRUCTIVE);
-    private final BasicButton button3 = new BasicButton(184, BasicButton.SIZE_40, "BOBFISH", SVGs.MICROSOFT_ICON, null, BasicButton.ALIGNMENT_CENTER, ColorUtils.SECONDARY_DESTRUCTIVE);
-    private final BasicButton button4 = new BasicButton(184, BasicButton.SIZE_48, "THIS is cool", null, SVGs.AUDIO_PLAY, BasicButton.ALIGNMENT_CENTER, 1);
-    private final BasicButton button5 = new BasicButton(184, BasicButton.SIZE_36, "dhwuai", SVGs.MICROSOFT_ICON, SVGs.AUDIO_PLAY, BasicButton.ALIGNMENT_JUSTIFIED, 1);
-    private final BasicButton button6 = new BasicButton(184, BasicButton.SIZE_32, "yes", SVGs.MICROSOFT_ICON, SVGs.AUDIO_PLAY, BasicButton.ALIGNMENT_RIGHT, 1);
-    private final BasicButton button7 = new BasicButton(184, BasicButton.SIZE_32, "HELLO", SVGs.MICROSOFT_ICON, SVGs.AUDIO_PLAY, BasicButton.ALIGNMENT_CENTER, 1);
-    private final BasicButton button8 = new BasicButton(184, BasicButton.SIZE_40, "HELLO", SVGs.MICROSOFT_ICON, SVGs.AUDIO_PLAY, BasicButton.ALIGNMENT_CENTER, ColorUtils.SECONDARY_DESTRUCTIVE);*/
-
 
     public HomePage() {
         super("Home Dashboard");

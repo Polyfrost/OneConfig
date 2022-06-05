@@ -1,7 +1,7 @@
 package cc.polyfrost.oneconfig.config.annotations;
 
-import cc.polyfrost.oneconfig.config.data.InfoType;
-import cc.polyfrost.oneconfig.config.data.OptionType;
+import cc.polyfrost.oneconfig.config.data.type.InfoType;
+import cc.polyfrost.oneconfig.config.data.type.OptionType;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

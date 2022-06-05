@@ -1,6 +1,5 @@
 package cc.polyfrost.oneconfig.plugin;
 
-import cc.polyfrost.oneconfig.init.OneConfigInit;
 import net.minecraft.launchwrapper.Launch;
 import net.minecraft.launchwrapper.LaunchClassLoader;
 import net.minecraftforge.fml.relauncher.IFMLLoadingPlugin;

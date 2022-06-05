@@ -1,7 +1,7 @@
 package cc.polyfrost.oneconfig.gui.elements;
 
 import cc.polyfrost.oneconfig.config.OneConfigConfig;
-import cc.polyfrost.oneconfig.config.core.OneColor;
+import cc.polyfrost.oneconfig.api.OneColor;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.animations.Animation;
 import cc.polyfrost.oneconfig.gui.animations.DummyAnimation;
@@ -50,7 +50,7 @@ public class ColorSelector {
     private Animation barMoveAnimation = new DummyAnimation(18);
     private Animation moveAnimation = new DummyAnimation(1);
     private int mouseX, mouseY;
-    private int mode = 0, prevMode = 0;
+    private int mode = 0;
     private boolean dragging, mouseWasDown;
 
 
@@ -133,7 +133,7 @@ public class ColorSelector {
         for (BasicElement button : buttons) {
             button.draw(vg, x + i, y + 66);
             if (button.isClicked()) {
-                prevMode = mode;
+                int prevMode = mode;
                 mode = buttons.indexOf(button);
                 setXYFromColor();
                 barMoveAnimation = new EaseInOutCubic(175, 18 + prevMode * 128, 18 + mode * 128, false);

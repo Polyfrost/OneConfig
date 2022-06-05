@@ -1,5 +1,6 @@
 package cc.polyfrost.oneconfig.config.data;
 
+import cc.polyfrost.oneconfig.config.data.type.ModType;
 import cc.polyfrost.oneconfig.config.interfaces.Config;
 import cc.polyfrost.oneconfig.config.migration.Migrator;
 import org.jetbrains.annotations.Nullable;

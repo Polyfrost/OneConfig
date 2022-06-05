@@ -4,13 +4,14 @@ import cc.polyfrost.oneconfig.config.annotations.ConfigPage;
 import cc.polyfrost.oneconfig.config.annotations.Option;
 import cc.polyfrost.oneconfig.config.core.ConfigCore;
 import cc.polyfrost.oneconfig.config.data.*;
+import cc.polyfrost.oneconfig.config.data.type.OptionType;
 import cc.polyfrost.oneconfig.config.profiles.Profiles;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.elements.config.*;
 import cc.polyfrost.oneconfig.gui.pages.ModConfigPage;
 import cc.polyfrost.oneconfig.hud.BasicHud;
 import cc.polyfrost.oneconfig.hud.HudCore;
-import cc.polyfrost.oneconfig.utils.GuiUtils;
+import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 import com.google.gson.*;
 
 import java.io.*;
@@ -206,6 +207,7 @@ public class Config {
      * @param field target field
      * @param page  page to add options too
      */
+    @SuppressWarnings("EmptyMethod")
     protected void processCustomOption(Field field, OptionPage page) {
     }
 

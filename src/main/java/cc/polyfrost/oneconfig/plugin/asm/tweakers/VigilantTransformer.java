@@ -1,9 +1,9 @@
 package cc.polyfrost.oneconfig.plugin.asm.tweakers;
 
-import cc.polyfrost.oneconfig.config.compatibility.VigilanceConfig;
+import cc.polyfrost.oneconfig.config.compatibility.vcal.VigilanceConfig;
 import cc.polyfrost.oneconfig.config.core.ConfigCore;
 import cc.polyfrost.oneconfig.config.data.Mod;
-import cc.polyfrost.oneconfig.config.data.ModType;
+import cc.polyfrost.oneconfig.config.data.type.ModType;
 import cc.polyfrost.oneconfig.plugin.asm.ITransformer;
 import gg.essential.vigilance.Vigilant;
 import gg.essential.vigilance.data.PropertyCollector;

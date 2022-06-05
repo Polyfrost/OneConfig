@@ -1,9 +1,9 @@
 package cc.polyfrost.oneconfig.lwjgl;
 
-import cc.polyfrost.oneconfig.events.EventManager;
-import cc.polyfrost.oneconfig.events.event.RenderEvent;
-import cc.polyfrost.oneconfig.events.event.ScreenOpenEvent;
-import cc.polyfrost.oneconfig.events.event.Stage;
+import cc.polyfrost.oneconfig.api.events.EventManager;
+import cc.polyfrost.oneconfig.api.events.event.RenderEvent;
+import cc.polyfrost.oneconfig.api.events.event.ScreenOpenEvent;
+import cc.polyfrost.oneconfig.api.events.event.Stage;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.mixin.ShaderGroupAccessor;
 import gg.essential.universal.UMinecraft;
@@ -22,18 +22,18 @@ import java.util.List;
 /**
  * An implementation of the BlurMC mod by tterrag1098.
  * <p>
- * For the original source see https://github.com/tterrag1098/Blur/blob/1.8.9/src/main/java/com/tterrag/blur/Blur.java
- * For the public license, see https://github.com/tterrag1098/Blur/blob/1.8.9/LICENSE
- * <p>
- * License available under https://github.com/boomboompower/ToggleChat/blob/master/src/main/resources/licenses/BlurMC-License.txt
+ * For the original source see <a href="https://github.com/tterrag1098/Blur/blob/1.8.9/src/main/java/com/tterrag/blur/Blur.java">...</a>
+ * For the pu<a href="blic">license, see https://github.com/tterrag1098/Blur/</a>blob/1.8.9/LICENSE
+ *<a href=" <p>
+ * License available under https://github.com/boomboompower/ToggleChat/blob/master/src/main/resou">...</a>rces/licenses/BlurMC-License.txt
  *
- * @author tterrag1098, boomboompower
- * <p>
+ * @author tterrag1098, <a href = " boomboompower
+        * < p>
  * Taken from ToggleChat
- * https://github.com/boomboompower/ToggleChat/blob/master/LICENSE
+ * https://githu">...</a>b.com/boomboompower/ToggleChat/blob/master/LICENSE
  */
 public class BlurHandler {
-    public static BlurHandler INSTANCE = new BlurHandler();
+    public static final BlurHandler INSTANCE = new BlurHandler();
     private final ResourceLocation blurShader = new ResourceLocation("shaders/post/fade_in_blur.json");
     private final Logger logger = LogManager.getLogger("OneConfig - Blur");
     private long start;
@@ -124,7 +124,7 @@ public class BlurHandler {
 
             this.start = System.currentTimeMillis();
 
-            // If a shader is active and the incoming UI is null or we have blur disabled, stop using the shader.
+            // If a shader is active and the incoming UI is null, or we have blur disabled, stop using the shader.
         } else if (UMinecraft.getMinecraft().entityRenderer.isShaderActive() && (gui == null)) {
             String name = UMinecraft.getMinecraft().entityRenderer.getShaderGroup().getShaderGroupName();
 

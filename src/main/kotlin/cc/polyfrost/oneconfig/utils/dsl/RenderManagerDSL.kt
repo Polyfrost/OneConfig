@@ -1,6 +1,6 @@
 package cc.polyfrost.oneconfig.utils.dsl
 
-import cc.polyfrost.oneconfig.config.data.InfoType
+import cc.polyfrost.oneconfig.config.data.type.InfoType
 import cc.polyfrost.oneconfig.lwjgl.RenderManager
 import cc.polyfrost.oneconfig.lwjgl.font.Font
 import cc.polyfrost.oneconfig.lwjgl.image.Images

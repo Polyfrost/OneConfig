@@ -1,6 +1,6 @@
 package cc.polyfrost.oneconfig.test;
 
-import cc.polyfrost.oneconfig.hud.TextHud;
+import cc.polyfrost.oneconfig.hud.elements.TextHud;
 import net.minecraft.client.Minecraft;
 
 public class TestHud extends TextHud {
