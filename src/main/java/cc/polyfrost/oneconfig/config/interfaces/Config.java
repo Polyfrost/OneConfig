@@ -22,10 +22,10 @@ import java.util.*;
 import java.util.function.Supplier;
 
 public class Config {
+    public final transient HashMap<String, BasicOption> optionNames = new HashMap<>();
     transient protected final String configFile;
     transient protected final Gson gson = new GsonBuilder().excludeFieldsWithModifiers(Modifier.TRANSIENT).setPrettyPrinting().create();
     transient public Mod mod;
-    public final transient HashMap<String, BasicOption> optionNames = new HashMap<>();
     public transient boolean hasBeenInitialized = false;
     public boolean enabled = true;
 

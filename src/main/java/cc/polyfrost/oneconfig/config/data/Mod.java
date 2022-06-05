@@ -9,8 +9,8 @@ public class Mod {
     public final ModType modType;
     public final String modIcon;
     public final Migrator migrator;
-    public Config config;
     public final OptionPage defaultPage;
+    public Config config;
     public boolean isShortCut = false;
 
     /**

@@ -9,8 +9,8 @@ import cc.polyfrost.oneconfig.gui.pages.ModConfigPage;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
-import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 import cc.polyfrost.oneconfig.utils.InputUtils;
+import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 import org.lwjgl.input.Mouse;
 
 import java.lang.reflect.Field;
@@ -18,7 +18,7 @@ import java.lang.reflect.Field;
 public class ConfigPageButton extends BasicOption {
     public final OptionPage page;
     public final String description;
-    private ColorAnimation backgroundColor = new ColorAnimation(ColorPalette.SECONDARY);
+    private final ColorAnimation backgroundColor = new ColorAnimation(ColorPalette.SECONDARY);
 
     public ConfigPageButton(Field field, Object parent, String name, String description, OptionPage page) {
         super(field, parent, name, 2);

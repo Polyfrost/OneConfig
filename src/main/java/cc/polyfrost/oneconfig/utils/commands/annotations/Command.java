@@ -72,7 +72,7 @@ import java.lang.annotation.Target;
  *     }
  *     }</pre>
  * </p>
- *
+ * <p>
  * To register commands, either extend {@link CommandHelper} and run {@link CommandHelper#preload()} (which does nothing,
  * just makes loading look nicer lol), or use {@link CommandManager#registerCommand(Object)}.
  *

@@ -29,7 +29,7 @@ public class ConfigColorElement extends BasicOption {
 
     @Override
     public void draw(long vg, int x, int y) {
-        if(!isEnabled()) RenderManager.setAlpha(vg, 0.5f);
+        if (!isEnabled()) RenderManager.setAlpha(vg, 0.5f);
         hexField.disable(!isEnabled());
         alphaField.disable(!isEnabled());
         element.disable(!isEnabled());
@@ -81,7 +81,7 @@ public class ConfigColorElement extends BasicOption {
             open = !open;
             OneConfigGui.INSTANCE.initColorSelector(new ColorSelector(color, InputUtils.mouseX(), InputUtils.mouseY()));
         }
-        if(OneConfigGui.INSTANCE.currentColorSelector == null) open = false;
+        if (OneConfigGui.INSTANCE.currentColorSelector == null) open = false;
         if (OneConfigGui.INSTANCE.currentColorSelector != null && open) {
             color = (OneConfigGui.INSTANCE.getColor());
         }

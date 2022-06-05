@@ -28,10 +28,10 @@ public final class InputUtils {
     /**
      * Checks whether the mouse is currently over a specific region and clicked.
      *
-     * @param x the x position of the region
-     * @param y the y position of the region
-     * @param width the width of the region
-     * @param height the height of the region
+     * @param x           the x position of the region
+     * @param y           the y position of the region
+     * @param width       the width of the region
+     * @param height      the height of the region
      * @param ignoreBlock if true, will ignore {@link InputUtils#blockClicks(boolean)}
      * @return true if the mouse is clicked and is over the region, false if not
      * @see InputUtils#isAreaHovered(int, int, int, int)
@@ -43,9 +43,9 @@ public final class InputUtils {
     /**
      * Checks whether the mouse is currently over a specific region and clicked.
      *
-     * @param x the x position of the region
-     * @param y the y position of the region
-     * @param width the width of the region
+     * @param x      the x position of the region
+     * @param y      the y position of the region
+     * @param width  the width of the region
      * @param height the height of the region
      * @return true if the mouse is clicked and is over the region, false if not
      * @see InputUtils#isAreaClicked(int, int, int, int, boolean)
@@ -111,6 +111,7 @@ public final class InputUtils {
 
     /**
      * Whether clicks are blocked
+     *
      * @return true if clicks are blocked, false if not
      */
     public static boolean isBlockingClicks() {

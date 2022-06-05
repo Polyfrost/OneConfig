@@ -13,6 +13,7 @@ public class OneConfigInit {
 
     /**
      * Initializes the OneConfig mod.
+     *
      * @param args The arguments passed to the mod.
      */
     public static void initialize(String[] args) {

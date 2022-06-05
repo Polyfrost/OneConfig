@@ -1,6 +1,5 @@
 package cc.polyfrost.oneconfig.gui.elements;
 
-import cc.polyfrost.oneconfig.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.pages.Page;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
@@ -11,23 +10,21 @@ import org.jetbrains.annotations.NotNull;
 
 public class BasicButton extends BasicElement {
 
-    protected String text;
-    protected SVGs icon1, icon2;
+    public static final int ALIGNMENT_LEFT = 0;
+    public static final int ALIGNMENT_CENTER = 2;
+    public static final int ALIGNMENT_JUSTIFIED = 3;
+    public static final int SIZE_32 = 32;
+    public static final int SIZE_36 = 36;
+    public static final int SIZE_40 = 40;
+    public static final int SIZE_48 = 48;
+    public static final int CUSTOM_COLOR = -100;
     private final int alignment;
     private final float fontSize, cornerRadius;
     private final int xSpacing, xPadding;
     private final int iconSize;
     public int x, y;
-    public static final int ALIGNMENT_LEFT = 0;
-    public static final int ALIGNMENT_CENTER = 2;
-    public static final int ALIGNMENT_JUSTIFIED = 3;
-
-    public static final int SIZE_32 = 32;
-    public static final int SIZE_36 = 36;
-    public static final int SIZE_40 = 40;
-    public static final int SIZE_48 = 48;
-
-    public static final int CUSTOM_COLOR = -100;
+    protected String text;
+    protected SVGs icon1, icon2;
     private boolean toggleable = false;
     private Page page;
     private Runnable runnable;

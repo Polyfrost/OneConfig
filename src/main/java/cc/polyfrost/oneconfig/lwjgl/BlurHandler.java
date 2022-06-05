@@ -33,13 +33,11 @@ import java.util.List;
  * https://github.com/boomboompower/ToggleChat/blob/master/LICENSE
  */
 public class BlurHandler {
+    public static BlurHandler INSTANCE = new BlurHandler();
     private final ResourceLocation blurShader = new ResourceLocation("shaders/post/fade_in_blur.json");
     private final Logger logger = LogManager.getLogger("OneConfig - Blur");
-
     private long start;
     private float lastProgress = 0;
-
-    public static BlurHandler INSTANCE = new BlurHandler();
 
     /**
      * Simply initializes the blur mod so events are properly handled by forge.

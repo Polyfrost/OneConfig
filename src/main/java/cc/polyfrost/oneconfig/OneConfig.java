@@ -28,10 +28,10 @@ import java.util.List;
 @net.minecraftforge.fml.common.Mod(modid = "@ID@", name = "@NAME@", version = "@VER@")
 public class OneConfig {
     public static final File oneConfigDir = new File("./OneConfig");
-    public static OneConfigConfig config;
-    public static TestConfig testConfig;
     public static final List<Mod> loadedMods = new ArrayList<>();
     public static final List<ModMetadata> loadedOtherMods = new ArrayList<>();
+    public static OneConfigConfig config;
+    public static TestConfig testConfig;
     private static boolean preLaunched = false;
     private static boolean initialized = false;
 

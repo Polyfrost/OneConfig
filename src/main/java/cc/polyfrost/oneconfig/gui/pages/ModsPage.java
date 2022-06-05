@@ -67,9 +67,9 @@ public class ModsPage extends Page {
         for (BasicButton btn : modCategories) {
             btn.draw(vg, iXCat, y + 16);
             iXCat += btn.getWidth() + 8;
-            if(btn.isToggled()) selected = true;
+            if (btn.isToggled()) selected = true;
         }
-        if(!selected) modCategories.get(0).setToggled(true);
+        if (!selected) modCategories.get(0).setToggled(true);
         return 60;
     }
 

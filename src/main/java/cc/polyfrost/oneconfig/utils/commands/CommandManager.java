@@ -6,7 +6,6 @@ import cc.polyfrost.oneconfig.utils.commands.annotations.*;
 import cc.polyfrost.oneconfig.utils.commands.arguments.*;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
-import net.minecraft.util.BlockPos;
 import net.minecraftforge.client.ClientCommandHandler;
 
 import java.lang.reflect.InvocationTargetException;
@@ -23,9 +22,9 @@ import java.util.stream.Collectors;
  */
 public class CommandManager {
     public static final CommandManager INSTANCE = new CommandManager();
-    private final HashMap<Class<?>, ArgumentParser<?>> parsers = new HashMap<>();
     private static final String NOT_FOUND_TEXT = "Command not found! Type /@ROOT_COMMAND@ help for help.";
     private static final String METHOD_RUN_ERROR = "Error while running @ROOT_COMMAND@ method! Please report this to the developer.";
+    private final HashMap<Class<?>, ArgumentParser<?>> parsers = new HashMap<>();
 
     private CommandManager() {
         addParser(new StringParser());
@@ -128,7 +127,7 @@ public class CommandManager {
 
     private String sendHelpCommand(InternalCommand root) {
         StringBuilder builder = new StringBuilder();
-        builder.append(ChatColor.GOLD.toString() + "Help for " + ChatColor.BOLD + root.name + ChatColor.RESET + ChatColor.GOLD + ":\n");
+        builder.append(ChatColor.GOLD + "Help for " + ChatColor.BOLD + root.name + ChatColor.RESET + ChatColor.GOLD + ":\n");
         builder.append("\n");
         for (InternalCommand command : root.children) {
             runThroughCommandsHelp(root.name, root, builder);

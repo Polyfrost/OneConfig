@@ -5,11 +5,11 @@ import java.util.function.Supplier;
 
 @SuppressWarnings({"unused"})
 public abstract class BasicOption {
+    public final int size;
     protected final Field field;
     protected final String name;
-    public final int size;
-    private Supplier<Boolean> dependency;
     protected final Object parent;
+    private Supplier<Boolean> dependency;
 
     /**
      * Initialize option

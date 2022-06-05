@@ -16,7 +16,7 @@ public final class JsonUtils {
     /**
      * Parses a string into a {@link JsonElement}.
      *
-     * @param string The string to parse.
+     * @param string          The string to parse.
      * @param catchExceptions Whether to catch exceptions.
      * @return The {@link JsonElement}.
      * @see JsonParser#parse(String)

@@ -10,8 +10,8 @@ import cc.polyfrost.oneconfig.libs.universal.wrappers.UPlayer;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
-import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 import cc.polyfrost.oneconfig.utils.InputUtils;
+import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.fml.common.ModMetadata;
 import org.jetbrains.annotations.NotNull;
@@ -22,9 +22,9 @@ import java.util.ArrayList;
 public class ModCard extends BasicElement {
     private final Mod modData;
     private final BasicButton favoriteButton = new BasicButton(32, 32, SVGs.HEART_OUTLINE, BasicButton.ALIGNMENT_CENTER, ColorPalette.TERTIARY);
-    private boolean active, disabled, favorite;
     private final ColorAnimation colorFrame = new ColorAnimation(ColorPalette.SECONDARY);
     private final ColorAnimation colorToggle = new ColorAnimation(ColorPalette.PRIMARY);
+    private boolean active, disabled, favorite;
     private boolean isHoveredMain = false;
 
     public ModCard(@NotNull Mod mod, boolean active, boolean disabled, boolean favorite) {
@@ -120,12 +120,12 @@ public class ModCard extends BasicElement {
         return disabled;
     }
 
-    public boolean isActive() {
-        return active;
-    }
-
     public void setDisabled(boolean disabled) {
         this.disabled = disabled;
+    }
+
+    public boolean isActive() {
+        return active;
     }
 
     public boolean isFavorite() {

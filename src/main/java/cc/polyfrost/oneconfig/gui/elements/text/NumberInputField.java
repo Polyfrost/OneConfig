@@ -6,16 +6,15 @@ import cc.polyfrost.oneconfig.gui.elements.BasicElement;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
-import cc.polyfrost.oneconfig.utils.color.ColorUtils;
 
 public class NumberInputField extends TextInputField {
     private final BasicElement upArrow = new BasicElement(12, 14, false);
     private final BasicElement downArrow = new BasicElement(12, 14, false);
+    private final ColorAnimation colorTop = new ColorAnimation(ColorPalette.SECONDARY);
+    private final ColorAnimation colorBottom = new ColorAnimation(ColorPalette.SECONDARY);
     private float min;
     private float max;
     private float step;
-    private final ColorAnimation colorTop = new ColorAnimation(ColorPalette.SECONDARY);
-    private final ColorAnimation colorBottom  = new ColorAnimation(ColorPalette.SECONDARY);
     private float current;
 
     public NumberInputField(int width, int height, float defaultValue, float min, float max, float step) {

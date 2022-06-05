@@ -8,6 +8,8 @@ import org.jetbrains.annotations.NotNull;
 import org.lwjgl.input.Mouse;
 
 public class BasicElement {
+    protected final float radius;
+    public int currentColor;
     protected int width, height;
     protected ColorPalette colorPalette;
     protected int hitBoxX, hitBoxY;
@@ -17,10 +19,8 @@ public class BasicElement {
     protected boolean clicked = false;
     protected boolean toggled = false;
     protected boolean disabled = false;
-    public int currentColor;
-    protected final float radius;
-    private boolean block = false;
     protected ColorAnimation colorAnimation;
+    private boolean block = false;
 
     public BasicElement(int width, int height, @NotNull ColorPalette colorPalette, boolean hoverFx) {
         this(width, height, colorPalette, hoverFx, 12f);
@@ -79,14 +79,6 @@ public class BasicElement {
         hitBoxY = y;
     }
 
-    public void setWidth(int width) {
-        this.width = width;
-    }
-
-    public void setHeight(int height) {
-        this.height = height;
-    }
-
     public void setColorPalette(ColorPalette colorPalette) {
         if (this.colorPalette.equals(ColorPalette.TERTIARY) || this.colorPalette.equals(ColorPalette.TERTIARY_DESTRUCTIVE))
             this.colorAnimation.setColors(colorPalette.getNormalColorf());
@@ -98,8 +90,16 @@ public class BasicElement {
         return width;
     }
 
+    public void setWidth(int width) {
+        this.width = width;
+    }
+
     public int getHeight() {
         return height;
+    }
+
+    public void setHeight(int height) {
+        this.height = height;
     }
 
     public boolean isHovered() {

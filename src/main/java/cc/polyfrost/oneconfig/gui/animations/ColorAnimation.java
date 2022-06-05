@@ -1,7 +1,6 @@
 package cc.polyfrost.oneconfig.gui.animations;
 
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
-import cc.polyfrost.oneconfig.utils.color.ColorUtils;
 
 public class ColorAnimation {
     private ColorPalette palette;

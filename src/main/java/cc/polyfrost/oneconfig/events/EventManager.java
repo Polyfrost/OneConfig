@@ -7,15 +7,14 @@ import cc.polyfrost.oneconfig.libs.eventbus.invokers.LMFInvoker;
  * Manages all events from OneConfig.
  */
 public final class EventManager {
-    private EventManager() {
-
-    }
-
     /**
      * The instance of the {@link EventManager}.
      */
     public static final EventManager INSTANCE = new EventManager();
     private final EventBus eventBus = new EventBus(new LMFInvoker(), Throwable::printStackTrace);
+    private EventManager() {
+
+    }
 
     /**
      * Returns the {@link EventBus} instance.

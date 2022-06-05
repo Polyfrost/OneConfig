@@ -168,8 +168,8 @@ public class VigilanceConfig extends Config {
     }
 
     private static class CompatConfigColorElement extends ConfigColorElement {
-        private Color prevColor = null;
         private final Field color;
+        private Color prevColor = null;
         private OneColor cachedColor = null;
 
         public CompatConfigColorElement(Field color, Vigilant parent, String name, int size) {
