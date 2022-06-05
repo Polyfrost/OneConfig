@@ -1,14 +1,14 @@
 package cc.polyfrost.oneconfig.gui.elements.config;
 
-import cc.polyfrost.oneconfig.config.OneConfigConfig;
-import cc.polyfrost.oneconfig.config.data.OptionPage;
-import cc.polyfrost.oneconfig.config.interfaces.BasicOption;
+import cc.polyfrost.oneconfig.gui.Colors;
+import cc.polyfrost.oneconfig.config.elements.OptionPage;
+import cc.polyfrost.oneconfig.config.elements.BasicOption;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.animations.ColorAnimation;
 import cc.polyfrost.oneconfig.gui.pages.ModConfigPage;
-import cc.polyfrost.oneconfig.lwjgl.RenderManager;
-import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
-import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
+import cc.polyfrost.oneconfig.renderer.RenderManager;
+import cc.polyfrost.oneconfig.renderer.font.Fonts;
+import cc.polyfrost.oneconfig.renderer.image.SVGs;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 import org.lwjgl.input.Mouse;
@@ -35,9 +35,9 @@ public class ConfigPageButton extends BasicOption {
         if (!isEnabled()) RenderManager.setAlpha(vg, 0.5f);
 
         RenderManager.drawRoundedRect(vg, x - 16, y, 1024, height, backgroundColor.getColor(hovered, hovered && Mouse.isButtonDown(0)), 20);
-        RenderManager.drawText(vg, name, x + 10, y + 32, OneConfigConfig.WHITE_90, 24, Fonts.MEDIUM);
+        RenderManager.drawText(vg, name, x + 10, y + 32, Colors.WHITE_90, 24, Fonts.MEDIUM);
         if (!description.equals(""))
-            RenderManager.drawText(vg, name, x + 10, y + 70, OneConfigConfig.WHITE_90, 14, Fonts.MEDIUM);
+            RenderManager.drawText(vg, name, x + 10, y + 70, Colors.WHITE_90, 14, Fonts.MEDIUM);
         RenderManager.drawSvg(vg, SVGs.CARET_RIGHT, x + 981f, y + (description.equals("") ? 20f : 36f), 13, 22);
 
         if (clicked) OneConfigGui.INSTANCE.openPage(new ModConfigPage(page));

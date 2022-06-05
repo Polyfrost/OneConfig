@@ -5,8 +5,9 @@ import cc.polyfrost.oneconfig.config.annotations.Option;
 import cc.polyfrost.oneconfig.config.core.OneColor;
 import cc.polyfrost.oneconfig.config.core.OneKeyBind;
 import cc.polyfrost.oneconfig.config.data.*;
-import cc.polyfrost.oneconfig.config.interfaces.Config;
-import cc.polyfrost.oneconfig.config.migration.VigilanceMigrator;
+import cc.polyfrost.oneconfig.config.Config;
+import cc.polyfrost.oneconfig.config.data.ModType;
+import cc.polyfrost.oneconfig.config.migration.vigilance.VigilanceMigrator;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 
 public class TestConfig extends Config {

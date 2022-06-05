@@ -1,7 +1,7 @@
 package cc.polyfrost.oneconfig.hud;
 
 import cc.polyfrost.oneconfig.config.core.OneColor;
-import cc.polyfrost.oneconfig.lwjgl.RenderManager;
+import cc.polyfrost.oneconfig.renderer.RenderManager;
 
 public abstract class BasicHud {
     public boolean enabled;

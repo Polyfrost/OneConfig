@@ -1,10 +1,10 @@
 package cc.polyfrost.oneconfig.utils.dsl
 
 import cc.polyfrost.oneconfig.config.data.InfoType
-import cc.polyfrost.oneconfig.lwjgl.RenderManager
-import cc.polyfrost.oneconfig.lwjgl.font.Font
-import cc.polyfrost.oneconfig.lwjgl.image.Images
-import cc.polyfrost.oneconfig.lwjgl.image.SVGs
+import cc.polyfrost.oneconfig.renderer.RenderManager
+import cc.polyfrost.oneconfig.renderer.font.Font
+import cc.polyfrost.oneconfig.renderer.image.Images
+import cc.polyfrost.oneconfig.renderer.image.SVGs
 import cc.polyfrost.oneconfig.utils.color.ColorUtils
 import org.lwjgl.nanovg.NVGColor
 

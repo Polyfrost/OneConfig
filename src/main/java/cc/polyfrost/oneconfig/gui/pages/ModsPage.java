@@ -1,14 +1,15 @@
 package cc.polyfrost.oneconfig.gui.pages;
 
-import cc.polyfrost.oneconfig.OneConfig;
-import cc.polyfrost.oneconfig.config.OneConfigConfig;
+import cc.polyfrost.oneconfig.internal.OneConfig;
+import cc.polyfrost.oneconfig.gui.Colors;
 import cc.polyfrost.oneconfig.config.data.Mod;
 import cc.polyfrost.oneconfig.config.data.ModType;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.elements.BasicButton;
 import cc.polyfrost.oneconfig.gui.elements.ModCard;
-import cc.polyfrost.oneconfig.lwjgl.RenderManager;
-import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
+import cc.polyfrost.oneconfig.internal.config.OneConfigConfig;
+import cc.polyfrost.oneconfig.renderer.RenderManager;
+import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 
 import java.util.ArrayList;
@@ -56,7 +57,7 @@ public class ModsPage extends Page {
         }
         size = iY + 119;
         if (iX == x + 16 && iY == y + 72) {
-            RenderManager.drawText(vg, "Looks like there is nothing here. Try another category?", x + 16, y + 72, OneConfigConfig.WHITE_60, 14f, Fonts.MEDIUM);
+            RenderManager.drawText(vg, "Looks like there is nothing here. Try another category?", x + 16, y + 72, Colors.WHITE_60, 14f, Fonts.MEDIUM);
         }
     }
 

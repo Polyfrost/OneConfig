@@ -1,6 +1,6 @@
 package cc.polyfrost.oneconfig.hud;
 
-import cc.polyfrost.oneconfig.lwjgl.RenderManager;
+import cc.polyfrost.oneconfig.renderer.RenderManager;
 import gg.essential.universal.UMinecraft;
 
 public abstract class TextHud extends BasicHud {

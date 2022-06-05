@@ -1,15 +1,15 @@
 package cc.polyfrost.oneconfig.gui.elements.config;
 
-import cc.polyfrost.oneconfig.config.OneConfigConfig;
+import cc.polyfrost.oneconfig.gui.Colors;
 import cc.polyfrost.oneconfig.config.core.OneColor;
-import cc.polyfrost.oneconfig.config.interfaces.BasicOption;
+import cc.polyfrost.oneconfig.config.elements.BasicOption;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.elements.BasicElement;
 import cc.polyfrost.oneconfig.gui.elements.ColorSelector;
 import cc.polyfrost.oneconfig.gui.elements.text.TextInputField;
-import cc.polyfrost.oneconfig.lwjgl.RenderManager;
-import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
-import cc.polyfrost.oneconfig.lwjgl.image.Images;
+import cc.polyfrost.oneconfig.renderer.RenderManager;
+import cc.polyfrost.oneconfig.renderer.font.Fonts;
+import cc.polyfrost.oneconfig.renderer.image.Images;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 
 import java.lang.reflect.Field;
@@ -41,7 +41,7 @@ public class ConfigColorElement extends BasicOption {
         } catch (IllegalAccessException e) {
             return;
         }
-        RenderManager.drawText(vg, name, x, y + 16, OneConfigConfig.WHITE_90, 14f, Fonts.MEDIUM);
+        RenderManager.drawText(vg, name, x, y + 16, Colors.WHITE_90, 14f, Fonts.MEDIUM);
         if (!hexField.isToggled()) hexField.setInput("#" + color.getHex());
         hexField.setErrored(false);
         if (hexField.isToggled()) {
@@ -74,7 +74,7 @@ public class ConfigColorElement extends BasicOption {
         alphaField.draw(vg, x1 + 336, y);
 
         element.update(x1 + 416, y);
-        RenderManager.drawHollowRoundRect(vg, x1 + 415, y - 1, 64, 32, OneConfigConfig.GRAY_300, 12f, 2f);
+        RenderManager.drawHollowRoundRect(vg, x1 + 415, y - 1, 64, 32, Colors.GRAY_300, 12f, 2f);
         RenderManager.drawRoundImage(vg, Images.ALPHA_GRID, x1 + 420, y + 4, 56, 24, 8f);
         RenderManager.drawRoundedRect(vg, x1 + 420, y + 4, 56, 24, color.getRGB(), 8f);
         if (element.isClicked() && !element.isToggled()) {

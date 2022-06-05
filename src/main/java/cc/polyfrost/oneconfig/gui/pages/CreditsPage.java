@@ -1,8 +1,8 @@
 package cc.polyfrost.oneconfig.gui.pages;
 
-import cc.polyfrost.oneconfig.lwjgl.RenderManager;
-import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
-import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
+import cc.polyfrost.oneconfig.renderer.RenderManager;
+import cc.polyfrost.oneconfig.renderer.font.Fonts;
+import cc.polyfrost.oneconfig.renderer.image.SVGs;
 
 public class CreditsPage extends Page {
     public CreditsPage() {

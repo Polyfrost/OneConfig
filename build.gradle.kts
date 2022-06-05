@@ -43,7 +43,7 @@ loom {
     noServerRunConfigs()
     if (project.platform.isLegacyForge) {
         launchConfigs.named("client") {
-            property("fml.coreMods.load", "cc.polyfrost.oneconfig.plugin.LoadingPlugin")
+            property("fml.coreMods.load", "cc.polyfrost.oneconfig.internal.plugin.LoadingPlugin")
             property("mixin.debug.export", "true")
         }
     }
@@ -215,7 +215,7 @@ tasks {
                     "ForceLoadAsMod" to true,
                     "TweakOrder" to "0",
                     "MixinConfigs" to "mixins.oneconfig.json",
-                    "FMLCorePlugin" to "cc.polyfrost.oneconfig.plugin.LoadingPlugin",
+                    "FMLCorePlugin" to "cc.polyfrost.oneconfig.internal.plugin.LoadingPlugin",
                     "TweakClass" to "org.spongepowered.asm.launch.MixinTweaker",
                     "FMLCorePluginContainsFMLMod" to "lol"
                 )

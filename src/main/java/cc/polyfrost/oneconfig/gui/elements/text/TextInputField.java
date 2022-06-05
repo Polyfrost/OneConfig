@@ -1,12 +1,12 @@
 package cc.polyfrost.oneconfig.gui.elements.text;
 
-import cc.polyfrost.oneconfig.config.OneConfigConfig;
+import cc.polyfrost.oneconfig.gui.Colors;
 import cc.polyfrost.oneconfig.gui.elements.BasicElement;
-import cc.polyfrost.oneconfig.lwjgl.RenderManager;
-import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
-import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
-import cc.polyfrost.oneconfig.lwjgl.scissor.Scissor;
-import cc.polyfrost.oneconfig.lwjgl.scissor.ScissorManager;
+import cc.polyfrost.oneconfig.renderer.RenderManager;
+import cc.polyfrost.oneconfig.renderer.font.Fonts;
+import cc.polyfrost.oneconfig.renderer.image.SVGs;
+import cc.polyfrost.oneconfig.renderer.scissor.Scissor;
+import cc.polyfrost.oneconfig.renderer.scissor.ScissorManager;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import cc.polyfrost.oneconfig.utils.MathUtils;
 import cc.polyfrost.oneconfig.utils.TextUtils;
@@ -102,14 +102,14 @@ public class TextInputField extends BasicElement {
         this.y = y;
         this.vg = vg;
         try {
-            int colorOutline = errored ? OneConfigConfig.ERROR_700 : OneConfigConfig.GRAY_700;
+            int colorOutline = errored ? Colors.ERROR_700 : Colors.GRAY_700;
             if (!toggled)
                 RenderManager.drawHollowRoundRect(vg, x, y, width - 0.5f, height - 0.5f, colorOutline, 12f, 2f);
             else {
                 RenderManager.setAlpha(vg, 0.15f);
-                RenderManager.drawRoundedRect(vg, x - 4, y - 4, width + 8, height + 8, errored ? OneConfigConfig.ERROR_600 : OneConfigConfig.PRIMARY_600, 16);
+                RenderManager.drawRoundedRect(vg, x - 4, y - 4, width + 8, height + 8, errored ? Colors.ERROR_600 : Colors.PRIMARY_600, 16);
                 RenderManager.setAlpha(vg, 1f);
-                RenderManager.drawHollowRoundRect(vg, x, y, width - 0.5f, height - 0.5f, errored ? OneConfigConfig.ERROR_600 : OneConfigConfig.PRIMARY_600, 12f, 2f);
+                RenderManager.drawHollowRoundRect(vg, x, y, width - 0.5f, height - 0.5f, errored ? Colors.ERROR_600 : Colors.PRIMARY_600, 12f, 2f);
             }
             Scissor scissor = ScissorManager.scissor(vg, x, y, width, height);
             super.update(x, y);
@@ -117,7 +117,7 @@ public class TextInputField extends BasicElement {
                 onClose();
                 toggled = false;
             }
-            int color = toggled ? OneConfigConfig.WHITE : OneConfigConfig.WHITE_60;
+            int color = toggled ? Colors.WHITE : Colors.WHITE_60;
             if (!toggled) caretPos = input.length();
             if (caretPos > input.length()) caretPos = input.length();
             if (prevCaret > input.length()) prevCaret = input.length();
@@ -177,15 +177,15 @@ public class TextInputField extends BasicElement {
             float halfTextWidth = this.getTextWidth(vg, input) / 2f;
             if (start != 0f && end != 0f && toggled) {
                 if (!multiLine) {
-                    RenderManager.drawRect(vg, start, y + height / 2f - 10, end, 20, OneConfigConfig.GRAY_300);
+                    RenderManager.drawRect(vg, start, y + height / 2f - 10, end, 20, Colors.GRAY_300);
                 } else if (startLine == endLine) {
-                    RenderManager.drawRect(vg, start, y + 10 + 24 * startLine, end, 20, OneConfigConfig.GRAY_300);
+                    RenderManager.drawRect(vg, start, y + 10 + 24 * startLine, end, 20, Colors.GRAY_300);
                 } else {
-                    RenderManager.drawRect(vg, start, y + 10 + 24 * startLine, this.width - 24, 20, OneConfigConfig.GRAY_300);
+                    RenderManager.drawRect(vg, start, y + 10 + 24 * startLine, this.width - 24, 20, Colors.GRAY_300);
                     for (int i = startLine + 1; i < endLine; i++) {
-                        RenderManager.drawRect(vg, x + 12, y + 10 + 24 * i, this.width - 24, 20, OneConfigConfig.GRAY_300);
+                        RenderManager.drawRect(vg, x + 12, y + 10 + 24 * i, this.width - 24, 20, Colors.GRAY_300);
                     }
-                    RenderManager.drawRect(vg, x + 12, y + 10 + 24 * endLine, end, 20, OneConfigConfig.GRAY_300);
+                    RenderManager.drawRect(vg, x + 12, y + 10 + 24 * endLine, end, 20, Colors.GRAY_300);
                 }
             }
             if (hovered) {
@@ -215,11 +215,11 @@ public class TextInputField extends BasicElement {
             if (toggled) {
                 if (multiLine) {
                     int lineY = y + 20 + getCaretLine(caretPos) * 24;
-                    RenderManager.drawLine(vg, x + width + 12, lineY - 10, x + width + 12, lineY + 10, 1, OneConfigConfig.WHITE);
+                    RenderManager.drawLine(vg, x + width + 12, lineY - 10, x + width + 12, lineY + 10, 1, Colors.WHITE);
                 } else if (!centered) {
-                    RenderManager.drawLine(vg, x + width + 12, (float) y + height / 2f - 10, x + width + 12, (float) y + height / 2f + 10, 1, OneConfigConfig.WHITE);
+                    RenderManager.drawLine(vg, x + width + 12, (float) y + height / 2f - 10, x + width + 12, (float) y + height / 2f + 10, 1, Colors.WHITE);
                 } else {
-                    RenderManager.drawLine(vg, x + this.width / 2f - halfTextWidth + width, (float) y + height / 2f - 10, x + this.width / 2f - halfTextWidth + width, (float) y + height / 2f + 10, 1, OneConfigConfig.WHITE);
+                    RenderManager.drawLine(vg, x + this.width / 2f - halfTextWidth + width, (float) y + height / 2f - 10, x + this.width / 2f - halfTextWidth + width, (float) y + height / 2f + 10, 1, Colors.WHITE);
                 }
             }
 

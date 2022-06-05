@@ -1,6 +1,5 @@
 package cc.polyfrost.oneconfig.gui;
 
-import cc.polyfrost.oneconfig.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.config.core.OneColor;
 import cc.polyfrost.oneconfig.gui.animations.Animation;
 import cc.polyfrost.oneconfig.gui.animations.EaseInOutQuad;
@@ -9,10 +8,10 @@ import cc.polyfrost.oneconfig.gui.elements.ColorSelector;
 import cc.polyfrost.oneconfig.gui.elements.text.TextInputField;
 import cc.polyfrost.oneconfig.gui.pages.ModsPage;
 import cc.polyfrost.oneconfig.gui.pages.Page;
-import cc.polyfrost.oneconfig.lwjgl.RenderManager;
-import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
-import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
-import cc.polyfrost.oneconfig.lwjgl.scissor.ScissorManager;
+import cc.polyfrost.oneconfig.renderer.RenderManager;
+import cc.polyfrost.oneconfig.renderer.font.Fonts;
+import cc.polyfrost.oneconfig.renderer.image.SVGs;
+import cc.polyfrost.oneconfig.renderer.scissor.ScissorManager;
 import cc.polyfrost.oneconfig.utils.GuiUtils;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
@@ -33,8 +32,8 @@ public class OneConfigGui extends UScreen {
     private final TextInputField textInputField = new TextInputField(248, 40, "Search...", false, false, SVGs.MAGNIFYING_GLASS_BOLD);
     private final ArrayList<Page> previousPages = new ArrayList<>();
     private final ArrayList<Page> nextPages = new ArrayList<>();
-    private final BasicElement backArrow = new BasicElement(40, 40, new ColorPalette(OneConfigConfig.GRAY_700, OneConfigConfig.GRAY_500, OneConfigConfig.GRAY_500_80), true);
-    private final BasicElement forwardArrow = new BasicElement(40, 40, new ColorPalette(OneConfigConfig.GRAY_700, OneConfigConfig.GRAY_500, OneConfigConfig.GRAY_500_80), true);
+    private final BasicElement backArrow = new BasicElement(40, 40, new ColorPalette(Colors.GRAY_700, Colors.GRAY_500, Colors.GRAY_500_80), true);
+    private final BasicElement forwardArrow = new BasicElement(40, 40, new ColorPalette(Colors.GRAY_700, Colors.GRAY_500, Colors.GRAY_500_80), true);
     private final ArrayList<Page> parents = new ArrayList<>();
     public ColorSelector currentColorSelector;
     public boolean mouseDown;
@@ -80,18 +79,18 @@ public class OneConfigGui extends UScreen {
             int x = (int) ((UResolution.getWindowWidth() - 1280 * scale) / 2f / scale);
             int y = (int) ((UResolution.getWindowHeight() - 800 * scale) / 2f / scale);
             RenderManager.scale(vg, scale, scale);
-            if (OneConfigConfig.ROUNDED_CORNERS) {
+            if (Colors.ROUNDED_CORNERS) {
                 RenderManager.drawDropShadow(vg, x, y, 1280, 800, 32, 0, 20);
-                RenderManager.drawRoundedRect(vg, x + 224, y, 1056, 800, OneConfigConfig.GRAY_800, OneConfigConfig.CORNER_RADIUS_WIN);
-                RenderManager.drawRoundedRect(vg, x, y, 244, 800, OneConfigConfig.GRAY_800_95, OneConfigConfig.CORNER_RADIUS_WIN);
-                RenderManager.drawRect(vg, x + 224, y, 20, 800, OneConfigConfig.GRAY_800);
+                RenderManager.drawRoundedRect(vg, x + 224, y, 1056, 800, Colors.GRAY_800, Colors.CORNER_RADIUS_WIN);
+                RenderManager.drawRoundedRect(vg, x, y, 244, 800, Colors.GRAY_800_95, Colors.CORNER_RADIUS_WIN);
+                RenderManager.drawRect(vg, x + 224, y, 20, 800, Colors.GRAY_800);
             }
-            RenderManager.drawLine(vg, x + 224, y + 72, x + 1280, y + 72, 1, OneConfigConfig.GRAY_700);
-            RenderManager.drawLine(vg, x + 224, y, x + 222, y + 800, 1, OneConfigConfig.GRAY_700);
+            RenderManager.drawLine(vg, x + 224, y + 72, x + 1280, y + 72, 1, Colors.GRAY_700);
+            RenderManager.drawLine(vg, x + 224, y, x + 222, y + 800, 1, Colors.GRAY_700);
 
             RenderManager.drawSvg(vg, SVGs.ONECONFIG, x + 19, y + 19, 42, 42);
-            RenderManager.drawText(vg, "OneConfig", x + 69, y + 32, OneConfigConfig.WHITE, 18f, Fonts.BOLD);        // added half line height to center text
-            RenderManager.drawText(vg, "By Polyfrost", x + 69, y + 51, OneConfigConfig.WHITE, 12f, Fonts.REGULAR);
+            RenderManager.drawText(vg, "OneConfig", x + 69, y + 32, Colors.WHITE, 18f, Fonts.BOLD);        // added half line height to center text
+            RenderManager.drawText(vg, "By Polyfrost", x + 69, y + 51, Colors.WHITE, 12f, Fonts.REGULAR);
 
             textInputField.draw(vg, x + 1020, y + 16);
             sideBar.draw(vg, x, y);
@@ -156,9 +155,9 @@ public class OneConfigGui extends UScreen {
                 String title = parents.get(i).getTitle();
                 float width = RenderManager.getTextWidth(vg, title, 24f, Fonts.SEMIBOLD);
                 boolean hovered = InputUtils.isAreaHovered((int) breadcrumbX, y + 24, (int) width, 36);
-                int color = OneConfigConfig.WHITE_60;
-                if (i == parents.size() - 1) color = OneConfigConfig.WHITE;
-                else if (hovered && !Mouse.isButtonDown(0)) color = OneConfigConfig.WHITE_80;
+                int color = Colors.WHITE_60;
+                if (i == parents.size() - 1) color = Colors.WHITE;
+                else if (hovered && !Mouse.isButtonDown(0)) color = Colors.WHITE_80;
                 RenderManager.drawText(vg, title, breadcrumbX, y + 38, color, 24f, Fonts.SEMIBOLD);
                 if (i != 0)
                     RenderManager.drawSvg(vg, SVGs.CARET_RIGHT, breadcrumbX - 28, y + 25, 24, 24, color);
@@ -168,7 +167,7 @@ public class OneConfigGui extends UScreen {
 
             long end = System.nanoTime() - start;
             String s = (" draw: " + end / 1000000f + "ms");
-            RenderManager.drawText(vg, s, x + 1170, y + 792, OneConfigConfig.GRAY_300, 10f, Fonts.MEDIUM);
+            RenderManager.drawText(vg, s, x + 1170, y + 792, Colors.GRAY_300, 10f, Fonts.MEDIUM);
             if (currentColorSelector != null) {
                 currentColorSelector.draw(vg);
             }

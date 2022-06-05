@@ -1,6 +1,6 @@
 package cc.polyfrost.oneconfig.utils;
 
-import cc.polyfrost.oneconfig.lwjgl.RenderManager;
+import cc.polyfrost.oneconfig.renderer.RenderManager;
 import gg.essential.universal.UMatrixStack;
 import gg.essential.universal.UScreen;
 import net.minecraft.client.gui.GuiScreen;

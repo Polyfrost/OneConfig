@@ -2,7 +2,7 @@ package cc.polyfrost.oneconfig.test;
 
 import cc.polyfrost.oneconfig.gui.elements.BasicButton;
 import cc.polyfrost.oneconfig.gui.pages.Page;
-import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
+import cc.polyfrost.oneconfig.renderer.image.SVGs;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 
 import java.util.ArrayList;

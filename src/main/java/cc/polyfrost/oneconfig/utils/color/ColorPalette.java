@@ -1,18 +1,18 @@
 package cc.polyfrost.oneconfig.utils.color;
 
 
-import cc.polyfrost.oneconfig.config.OneConfigConfig;
+import cc.polyfrost.oneconfig.gui.Colors;
 import cc.polyfrost.oneconfig.config.core.OneColor;
 
 import java.awt.*;
 
-import static cc.polyfrost.oneconfig.config.OneConfigConfig.*;
+import static cc.polyfrost.oneconfig.gui.Colors.*;
 
 public class ColorPalette {
     /**
      * Always returns transparent.
      */
-    public static final ColorPalette TRANSPARENT = new ColorPalette(OneConfigConfig.TRANSPARENT, OneConfigConfig.TRANSPARENT, OneConfigConfig.TRANSPARENT);
+    public static final ColorPalette TRANSPARENT = new ColorPalette(Colors.TRANSPARENT, Colors.TRANSPARENT, Colors.TRANSPARENT);
     /**
      * <h1>Primary Color Scheme</h1> Normal: Primary 600,<br> Hover: Primary 700,<br> Clicked: Primary 700 (80%)
      */
@@ -20,7 +20,7 @@ public class ColorPalette {
     /**
      * <h1>Secondary Color Scheme</h1> Normal: Gray 500,<br> Hover: Gray 400,<br> Clicked: Gray 400 (80%)
      */
-    public static final ColorPalette SECONDARY = new ColorPalette(OneConfigConfig.GRAY_500, OneConfigConfig.GRAY_400, OneConfigConfig.GRAY_400_80);
+    public static final ColorPalette SECONDARY = new ColorPalette(Colors.GRAY_500, Colors.GRAY_400, Colors.GRAY_400_80);
     /**
      * <h1>Tertiary Color Scheme</h1> Normal: Transparent (Text=White 90%),<br> Hover: Transparent (Text=White 100%),<br> Clicked: Transparent (Text=White 80%)
      * <h2>NOTICE this returns the text colors as it is always transparent.</h2>
@@ -33,7 +33,7 @@ public class ColorPalette {
     /**
      * <h1>Secondary Destructive Color Scheme</h1> Normal: Gray 500,<br> Hover: Error 800,<br> Clicked: Error 800 (80%)
      */
-    public static final ColorPalette SECONDARY_DESTRUCTIVE = new ColorPalette(OneConfigConfig.GRAY_500, ERROR_800, ERROR_800_80);
+    public static final ColorPalette SECONDARY_DESTRUCTIVE = new ColorPalette(Colors.GRAY_500, ERROR_800, ERROR_800_80);
     /**
      * <h1>Tertiary Destructive Color Scheme</h1> Normal: Transparent (Text=White 90%),<br> Hover: Transparent (Text=Error 300),<br> Clicked: Transparent (Text=Error 300 80%)
      * <h2>NOTICE this returns the text colors as it is always transparent.</h2>

@@ -1,7 +1,8 @@
 package cc.polyfrost.oneconfig.config.data;
 
-import cc.polyfrost.oneconfig.config.interfaces.Config;
-import cc.polyfrost.oneconfig.config.migration.Migrator;
+import cc.polyfrost.oneconfig.config.Config;
+import cc.polyfrost.oneconfig.config.elements.OptionPage;
+import cc.polyfrost.oneconfig.config.migration.vigilance.Migrator;
 import org.jetbrains.annotations.Nullable;
 
 public class Mod {

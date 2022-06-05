@@ -2,8 +2,8 @@ package cc.polyfrost.oneconfig.gui.pages;
 
 import cc.polyfrost.oneconfig.gui.animations.Animation;
 import cc.polyfrost.oneconfig.gui.animations.EaseOutQuad;
-import cc.polyfrost.oneconfig.lwjgl.scissor.Scissor;
-import cc.polyfrost.oneconfig.lwjgl.scissor.ScissorManager;
+import cc.polyfrost.oneconfig.renderer.scissor.Scissor;
+import cc.polyfrost.oneconfig.renderer.scissor.ScissorManager;
 import org.lwjgl.input.Mouse;
 
 /**

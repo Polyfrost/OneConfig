@@ -1,6 +1,6 @@
 package cc.polyfrost.oneconfig.utils.dsl
 
-import cc.polyfrost.oneconfig.lwjgl.font.Font
+import cc.polyfrost.oneconfig.renderer.font.Font
 import cc.polyfrost.oneconfig.utils.TextUtils
 
 /**
