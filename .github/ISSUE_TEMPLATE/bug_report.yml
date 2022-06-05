@@ -4,7 +4,7 @@ labels: "bug"
 body:
 - type: markdown
   attributes:
-    value: Before raising an issue, please search for existing issues to avoid creating duplicates. For questions and support please use [Discord](https://polyfrost.cc/discord).
+    value: Before raising an issue, please search for existing issues to avoid creating duplicates. For questions, please use [Discord](https://polyfrost.cc/chat).
 - type: textarea
   id: bug-description
   attributes:
@@ -12,9 +12,6 @@ body:
     description: Summarize the bug encountered concisely
   validations:
     required: true
-- type: textarea
-  id: version-data
-  description: The version data e.g: Minecraft 2.10.2, OneConfig v0.1-alpha, Windows 12, etc.
 - type: textarea
   id: steps-to-reproduce
   attributes:
@@ -27,11 +24,6 @@ body:
   attributes:
     label: Expected behavior
     description: Describe what you should see instead
-- type: textarea
-  id: example-repository
-  attributes:
-    label: Example repository
-    description: If possible, please create an [minimal, reproducible example](https://stackoverflow.com/help/minimal-reproducible-example) of the bug and link it here in the bug report
 - type: textarea
   id: anything-else
   attributes:
