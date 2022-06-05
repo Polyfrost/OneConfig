@@ -1,5 +1,3 @@
 # OneConfig
 
-oneconfig (real) 
-
-Coming Soon :tm:
+I was told to change this
