@@ -25,6 +25,7 @@ public abstract class TextHud extends BasicHud {
     @Override
     public void draw(int x, int y, float scale) {
         int textY = y;
+        width = 0;
         for (String line : getLines()) {
             RenderManager.drawScaledString(line, x, textY, 0xffffff, false, scale);
             width = Math.max(width, UMinecraft.getFontRenderer().getStringWidth(line));
