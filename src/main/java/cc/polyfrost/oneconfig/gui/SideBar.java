@@ -10,7 +10,7 @@ import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.renderer.image.SVGs;
 import cc.polyfrost.oneconfig.test.ButtonTestPage;
-import cc.polyfrost.oneconfig.utils.GuiUtils;
+import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 
 import java.util.ArrayList;

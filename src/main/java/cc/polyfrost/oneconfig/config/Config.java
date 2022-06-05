@@ -14,7 +14,7 @@ import cc.polyfrost.oneconfig.gui.elements.config.*;
 import cc.polyfrost.oneconfig.gui.pages.ModConfigPage;
 import cc.polyfrost.oneconfig.hud.BasicHud;
 import cc.polyfrost.oneconfig.hud.HudCore;
-import cc.polyfrost.oneconfig.utils.GuiUtils;
+import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 import com.google.gson.*;
 
 import java.io.*;

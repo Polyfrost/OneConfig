@@ -1,8 +1,9 @@
-package cc.polyfrost.oneconfig.utils;
+package cc.polyfrost.oneconfig.utils.gui;
 
 import cc.polyfrost.oneconfig.events.EventManager;
 import cc.polyfrost.oneconfig.events.event.RenderEvent;
 import cc.polyfrost.oneconfig.events.event.Stage;
+import cc.polyfrost.oneconfig.utils.TickDelay;
 import gg.essential.universal.UMinecraft;
 import gg.essential.universal.UScreen;
 import me.kbrewster.eventbus.Subscribe;

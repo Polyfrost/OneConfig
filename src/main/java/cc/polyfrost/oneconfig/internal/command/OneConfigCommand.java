@@ -2,7 +2,7 @@ package cc.polyfrost.oneconfig.internal.command;
 
 import cc.polyfrost.oneconfig.gui.HudGui;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
-import cc.polyfrost.oneconfig.utils.GuiUtils;
+import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import cc.polyfrost.oneconfig.utils.commands.annotations.Command;
 import cc.polyfrost.oneconfig.utils.commands.annotations.Main;

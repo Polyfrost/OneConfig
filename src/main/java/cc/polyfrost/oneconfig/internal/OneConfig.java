@@ -10,7 +10,7 @@ import cc.polyfrost.oneconfig.internal.command.OneConfigCommand;
 import cc.polyfrost.oneconfig.internal.gui.BlurHandler;
 import cc.polyfrost.oneconfig.test.TestCommand;
 import cc.polyfrost.oneconfig.test.TestConfig;
-import cc.polyfrost.oneconfig.utils.GuiUtils;
+import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 import cc.polyfrost.oneconfig.utils.commands.CommandManager;
 import cc.polyfrost.oneconfig.utils.hypixel.HypixelUtils;
 import net.minecraftforge.fml.common.DummyModContainer;

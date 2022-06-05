@@ -12,7 +12,7 @@ import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.renderer.image.SVGs;
 import cc.polyfrost.oneconfig.renderer.scissor.ScissorManager;
-import cc.polyfrost.oneconfig.utils.GuiUtils;
+import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 import gg.essential.universal.UKeyboard;
