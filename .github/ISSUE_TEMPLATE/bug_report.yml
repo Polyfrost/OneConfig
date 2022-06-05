@@ -14,7 +14,7 @@ body:
     required: true
 - type: textarea
   id: version-data
-  description: The version data e.g: Minecraft 2.10.2, OneConfig v0.1-alpha, Windows 12, etc.
+  description: The version data e.g Minecraft 2.10.2, OneConfig v0.1-alpha, Windows 12, etc.
 - type: textarea
   id: steps-to-reproduce
   attributes:
