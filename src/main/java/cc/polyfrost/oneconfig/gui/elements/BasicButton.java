@@ -1,5 +1,6 @@
 package cc.polyfrost.oneconfig.gui.elements;
 
+import cc.polyfrost.oneconfig.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.pages.Page;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
@@ -15,7 +16,6 @@ public class BasicButton extends BasicElement {
     protected SVGs icon1, icon2;
     private final int alignment;
     private final float fontSize, cornerRadius;
-    private float alpha;
     private final int xSpacing, xPadding;
     private final int iconSize;
     public int x, y;
@@ -63,12 +63,12 @@ public class BasicButton extends BasicElement {
         this.update(x, y);
         if (disabled) RenderManager.setAlpha(vg, 0.5f);
         float contentWidth = 0f;
-        int color = -1;
+        int color;
         if (colorPalette == ColorPalette.TERTIARY || colorPalette == ColorPalette.TERTIARY_DESTRUCTIVE) {
             color = currentColor;
         } else {
             RenderManager.drawRoundedRect(vg, x, y, this.width, this.height, currentColor, this.cornerRadius);
-            color = ColorUtils.getColor(1f, 1f, 1f, alpha);
+            color = ColorUtils.setAlpha(OneConfigConfig.WHITE, (int) (colorAnimation.getAlpha() * 255));
         }
         final float middle = x + width / 2f;
         final float middleYIcon = y + height / 2f - iconSize / 2f;
@@ -111,12 +111,6 @@ public class BasicButton extends BasicElement {
                 RenderManager.drawSvg(vg, icon2, x + width - xPadding - iconSize, middleYIcon, iconSize, iconSize, color);
         }
         if (disabled) RenderManager.setAlpha(vg, 1f);
-    }
-
-    @Override
-    public void update(int x, int y) {
-        super.update(x, y);
-        this.alpha = colorAnimation.getAlpha();
     }
 
     @Override
