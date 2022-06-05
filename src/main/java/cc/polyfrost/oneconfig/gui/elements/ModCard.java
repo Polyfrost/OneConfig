@@ -57,7 +57,7 @@ public class ModCard extends BasicElement {
                 RenderManager.drawSvg(vg, modData.modIcon, x + 98, y + 19, 48, 48);
             else RenderManager.drawImage(vg, modData.modIcon, x + 98, y + 19, 48, 48);
         } else {
-            RenderManager.drawText(vg, modData.name, x + 122 - RenderManager.getTextWidth(vg, modData.name, 24, Fonts.MINECRAFT_BOLD) / 2f, y + 44, ColorUtils.setAlpha(OneConfigConfig.WHITE, (int) (colorFrame.getAlpha() * 255)), 24, Fonts.MINECRAFT_BOLD);
+            RenderManager.drawText(vg, modData.name, x + 122 - RenderManager.getTextWidth(vg, modData.name, 16, Fonts.MINECRAFT_BOLD) / 2f, y + 44, ColorUtils.setAlpha(OneConfigConfig.WHITE, (int) (colorFrame.getAlpha() * 255)), 16, Fonts.MINECRAFT_BOLD);
         }
         favoriteButton.draw(vg, x + 212, y + 87);
         favorite = favoriteButton.isToggled();
