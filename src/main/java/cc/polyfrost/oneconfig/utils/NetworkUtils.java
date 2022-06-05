@@ -1,7 +1,7 @@
 package cc.polyfrost.oneconfig.utils;
 
-import cc.polyfrost.oneconfig.libs.universal.UDesktop;
 import com.google.gson.JsonElement;
+import gg.essential.universal.UDesktop;
 import org.apache.commons.io.IOUtils;
 
 import java.io.*;
@@ -18,9 +18,10 @@ public final class NetworkUtils {
 
     /**
      * Gets the contents of a URL as a String.
-     * @param url The URL to read.
+     *
+     * @param url       The URL to read.
      * @param userAgent The user agent to use.
-     * @param timeout The timeout in milliseconds.
+     * @param timeout   The timeout in milliseconds.
      * @param useCaches Whether to use caches.
      * @return The contents of the URL.
      */
@@ -47,9 +48,9 @@ public final class NetworkUtils {
     /**
      * Gets the contents of a URL as a JsonElement.
      *
-     * @param url The URL to read.
+     * @param url       The URL to read.
      * @param userAgent The user agent to use.
-     * @param timeout The timeout in milliseconds.
+     * @param timeout   The timeout in milliseconds.
      * @param useCaches Whether to use caches.
      * @return The contents of the URL.
      * @see NetworkUtils#getString(String, String, int, boolean)
@@ -72,10 +73,11 @@ public final class NetworkUtils {
 
     /**
      * Downloads a file from a URL.
-     * @param url The URL to download from.
-     * @param file The file to download to.
+     *
+     * @param url       The URL to download from.
+     * @param file      The file to download to.
      * @param userAgent The user agent to use.
-     * @param timeout The timeout in milliseconds.
+     * @param timeout   The timeout in milliseconds.
      * @param useCaches Whether to use caches.
      * @return Whether the download was successful.
      */
@@ -92,7 +94,8 @@ public final class NetworkUtils {
 
     /**
      * Downloads a file from a URL.
-     * @param url The URL to download from.
+     *
+     * @param url  The URL to download from.
      * @param file The file to download to.
      * @return Whether the download was successful.
      * @see NetworkUtils#downloadFile(String, File, String, int, boolean)
@@ -103,6 +106,7 @@ public final class NetworkUtils {
 
     /**
      * Gets the SHA-256 hash of a file.
+     *
      * @param file The file to hash.
      * @return The SHA-256 hash of the file.
      */

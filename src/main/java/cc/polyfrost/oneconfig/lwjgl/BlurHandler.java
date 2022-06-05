@@ -5,10 +5,10 @@ import cc.polyfrost.oneconfig.events.event.RenderEvent;
 import cc.polyfrost.oneconfig.events.event.ScreenOpenEvent;
 import cc.polyfrost.oneconfig.events.event.Stage;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
-import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
-import cc.polyfrost.oneconfig.libs.universal.UMinecraft;
-import cc.polyfrost.oneconfig.libs.universal.UScreen;
 import cc.polyfrost.oneconfig.mixin.ShaderGroupAccessor;
+import gg.essential.universal.UMinecraft;
+import gg.essential.universal.UScreen;
+import me.kbrewster.eventbus.Subscribe;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.shader.Shader;
@@ -33,13 +33,11 @@ import java.util.List;
  * https://github.com/boomboompower/ToggleChat/blob/master/LICENSE
  */
 public class BlurHandler {
+    public static BlurHandler INSTANCE = new BlurHandler();
     private final ResourceLocation blurShader = new ResourceLocation("shaders/post/fade_in_blur.json");
     private final Logger logger = LogManager.getLogger("OneConfig - Blur");
-
     private long start;
     private float lastProgress = 0;
-
-    public static BlurHandler INSTANCE = new BlurHandler();
 
     /**
      * Simply initializes the blur mod so events are properly handled by forge.

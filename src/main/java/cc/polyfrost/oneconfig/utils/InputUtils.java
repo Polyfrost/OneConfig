@@ -1,14 +1,14 @@
 package cc.polyfrost.oneconfig.utils;
 
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
-import cc.polyfrost.oneconfig.libs.universal.UResolution;
+import gg.essential.universal.UResolution;
 import org.lwjgl.input.Mouse;
 
 /**
  * Various utility methods for input.
  * <p>
  * All values returned from this class are not scaled to Minecraft's GUI scale.
- * For scaled values, see {@link cc.polyfrost.oneconfig.libs.universal.UMouse}.
+ * For scaled values, see {@link gg.essential.universal.UMouse}.
  * </p>
  */
 public final class InputUtils {
@@ -28,10 +28,10 @@ public final class InputUtils {
     /**
      * Checks whether the mouse is currently over a specific region and clicked.
      *
-     * @param x the x position of the region
-     * @param y the y position of the region
-     * @param width the width of the region
-     * @param height the height of the region
+     * @param x           the x position of the region
+     * @param y           the y position of the region
+     * @param width       the width of the region
+     * @param height      the height of the region
      * @param ignoreBlock if true, will ignore {@link InputUtils#blockClicks(boolean)}
      * @return true if the mouse is clicked and is over the region, false if not
      * @see InputUtils#isAreaHovered(int, int, int, int)
@@ -43,9 +43,9 @@ public final class InputUtils {
     /**
      * Checks whether the mouse is currently over a specific region and clicked.
      *
-     * @param x the x position of the region
-     * @param y the y position of the region
-     * @param width the width of the region
+     * @param x      the x position of the region
+     * @param y      the y position of the region
+     * @param width  the width of the region
      * @param height the height of the region
      * @return true if the mouse is clicked and is over the region, false if not
      * @see InputUtils#isAreaClicked(int, int, int, int, boolean)
@@ -78,7 +78,7 @@ public final class InputUtils {
      * Gets the current mouse X position.
      * <p>
      * All values returned from this class are not scaled to Minecraft's GUI scale.
-     * For scaled values, see {@link cc.polyfrost.oneconfig.libs.universal.UMouse}.
+     * For scaled values, see {@link gg.essential.universal.UMouse}.
      * </p>
      *
      * @return the current mouse X position
@@ -92,7 +92,7 @@ public final class InputUtils {
      * Gets the current mouse Y position.
      * <p>
      * All values returned from this class are not scaled to Minecraft's GUI scale.
-     * For scaled values, see {@link cc.polyfrost.oneconfig.libs.universal.UMouse}.
+     * For scaled values, see {@link gg.essential.universal.UMouse}.
      * </p>
      *
      * @return the current mouse Y position
@@ -111,6 +111,7 @@ public final class InputUtils {
 
     /**
      * Whether clicks are blocked
+     *
      * @return true if clicks are blocked, false if not
      */
     public static boolean isBlockingClicks() {

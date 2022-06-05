@@ -24,6 +24,17 @@ public class ConfigButton extends BasicOption {
         this.button.setClickAction(getRunnableFromField(field, parent));
     }
 
+    private static Runnable getRunnableFromField(Field field, Object parent) {
+        Runnable runnable = () -> {
+        };
+        try {
+            runnable = (Runnable) field.get(parent);
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
+        return runnable;
+    }
+
     @Override
     public void draw(long vg, int x, int y) {
         button.disable(!isEnabled());
@@ -36,16 +47,5 @@ public class ConfigButton extends BasicOption {
     @Override
     public int getHeight() {
         return 32;
-    }
-
-    private static Runnable getRunnableFromField(Field field, Object parent) {
-        Runnable runnable = () -> {
-        };
-        try {
-            runnable = (Runnable) field.get(parent);
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        }
-        return runnable;
     }
 }

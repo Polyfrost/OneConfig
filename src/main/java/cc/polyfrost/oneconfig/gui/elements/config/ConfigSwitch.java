@@ -8,10 +8,8 @@ import cc.polyfrost.oneconfig.gui.animations.DummyAnimation;
 import cc.polyfrost.oneconfig.gui.animations.EaseInOutQuad;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
-import cc.polyfrost.oneconfig.utils.color.ColorPalette;
-import cc.polyfrost.oneconfig.utils.color.ColorUtils;
 import cc.polyfrost.oneconfig.utils.InputUtils;
-import cc.polyfrost.oneconfig.utils.MathUtils;
+import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 import org.lwjgl.input.Mouse;
 
 import java.lang.reflect.Field;

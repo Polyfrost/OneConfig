@@ -3,11 +3,11 @@ package cc.polyfrost.oneconfig.gui.animations;
 import cc.polyfrost.oneconfig.utils.GuiUtils;
 
 public abstract class Animation {
+    protected final boolean reverse;
     private final float duration;
     private final float start;
     private final float change;
     private float timePassed = 0;
-    protected final boolean reverse;
 
     /**
      * @param duration The duration of the animation

@@ -12,10 +12,11 @@ public class ScissorManager {
 
     /**
      * Adds and applies a scissor rectangle to the list of scissor rectangles.
-     * @param vg The NanoVG context.
-     * @param x The x coordinate of the scissor rectangle.
-     * @param y The y coordinate of the scissor rectangle.
-     * @param width The width of the scissor rectangle.
+     *
+     * @param vg     The NanoVG context.
+     * @param x      The x coordinate of the scissor rectangle.
+     * @param y      The y coordinate of the scissor rectangle.
+     * @param width  The width of the scissor rectangle.
      * @param height The height of the scissor rectangle.
      * @return The scissor rectangle.
      */
@@ -29,7 +30,8 @@ public class ScissorManager {
 
     /**
      * Resets the scissor rectangle provided.
-     * @param vg The NanoVG context.
+     *
+     * @param vg      The NanoVG context.
      * @param scissor The scissor rectangle to reset.
      */
     public static void resetScissor(long vg, Scissor scissor) {
@@ -41,6 +43,7 @@ public class ScissorManager {
 
     /**
      * Clear all scissor rectangles.
+     *
      * @param vg The NanoVG context.
      */
     public static void clearScissors(long vg) {

@@ -61,16 +61,6 @@ repositories {
     maven("https://repo.woverflow.cc/")
 }
 
-val relocated = registerRelocationAttribute("relocate") {
-    relocate("gg.essential", "cc.polyfrost.oneconfig.libs")
-    relocate("me.kbrewster", "cc.polyfrost.oneconfig.libs")
-    relocate("com.llamalad7", "cc.polyfrost.oneconfig.libs")
-}
-
-val shadeRelocated: Configuration by configurations.creating {
-    attributes { attribute(relocated, true) }
-}
-
 val shade: Configuration by configurations.creating {
     configurations.implementation.get().extendsFrom(this)
 }
@@ -114,15 +104,13 @@ dependencies {
         isTransitive = false
     }
 
-    shadeRelocated("gg.essential:universalcraft-$platform:211") {
+    shade("gg.essential:universalcraft-$platform:211") {
         isTransitive = false
     }
 
-    shadeRelocated("com.github.KevinPriv:keventbus:c52e0a2ea0") {
+    shade("com.github.KevinPriv:keventbus:c52e0a2ea0") {
         isTransitive = false
     }
-
-    annotationProcessor(shadeRelocated("com.github.LlamaLad7:MixinExtras:0.0.10")!!)
 
     // for other mods and universalcraft
     shade("org.jetbrains.kotlin:kotlin-stdlib:1.6.21")
@@ -157,7 +145,6 @@ dependencies {
     lwjglNative("org.lwjgl:lwjgl-tinyfd:3.3.1:natives-macos")
     lwjglNative("org.lwjgl:lwjgl-nanovg:3.3.1:natives-macos")
     shade(lwjglJar.get().outputs.files)
-    shade(prebundle(shadeRelocated))
 
     dokkaHtmlPlugin("org.jetbrains.dokka:kotlin-as-java-plugin:1.6.21")
 }
@@ -222,6 +209,9 @@ tasks {
         archiveClassifier.set("dev")
         configurations = listOf(shade, lwjglNative)
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+        relocate("gg.essential", "cc.polyfrost.oneconfig.libs")
+        relocate("me.kbrewster", "cc.polyfrost.oneconfig.libs")
     }
     remapJar {
         input.set(shadowJar.get().archiveFile)

@@ -21,16 +21,18 @@ import java.util.HashMap;
  * @see SVGs
  */
 public final class ImageLoader {
+    public static ImageLoader INSTANCE = new ImageLoader();
+    private final HashMap<String, Integer> imageHashMap = new HashMap<>();
+    private final HashMap<String, Integer> svgHashMap = new HashMap<>();
+
     private ImageLoader() {
 
     }
-    private final HashMap<String, Integer> imageHashMap = new HashMap<>();
-    private final HashMap<String, Integer> svgHashMap = new HashMap<>();
-    public static ImageLoader INSTANCE = new ImageLoader();
 
     /**
      * Loads an image from resources.
-     * @param vg The NanoVG context.
+     *
+     * @param vg       The NanoVG context.
      * @param fileName The name of the file to load.
      * @return Whether the image was loaded successfully.
      */
@@ -58,10 +60,11 @@ public final class ImageLoader {
 
     /**
      * Loads an SVG from resources.
-     * @param vg The NanoVG context.
+     *
+     * @param vg       The NanoVG context.
      * @param fileName The name of the file to load.
-     * @param width The width of the SVG.
-     * @param height The height of the SVG.
+     * @param width    The width of the SVG.
+     * @param height   The height of the SVG.
      * @return Whether the SVG was loaded successfully.
      */
     public boolean loadSVG(long vg, String fileName, float width, float height) {
@@ -121,9 +124,8 @@ public final class ImageLoader {
      * Remove an image from the cache, allowing the image to be garbage collected.
      * Should be used when the GUI rendering the image is closed.
      *
-     * @param vg The NanoVG context.
+     * @param vg       The NanoVG context.
      * @param fileName The name of the file to remove.
-     *
      * @see ImageLoader#loadImage(long, String)
      */
     public void removeImage(long vg, String fileName) {
@@ -162,9 +164,8 @@ public final class ImageLoader {
      * Remove a SVG from the cache, allowing the SVG to be garbage collected.
      * Should be used when the GUI rendering the SVG is closed.
      *
-     * @param vg The NanoVG context.
+     * @param vg       The NanoVG context.
      * @param fileName The name of the file to remove.
-     *
      * @see ImageLoader#loadSVG(long, String, float, float)
      */
     public void removeSVG(long vg, String fileName, float width, float height) {

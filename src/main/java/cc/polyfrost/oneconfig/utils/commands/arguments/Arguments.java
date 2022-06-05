@@ -1,9 +1,9 @@
 package cc.polyfrost.oneconfig.utils.commands.arguments;
 
 public class Arguments {
-    private int position = 0;
     public final String[] args;
     public final boolean greedy;
+    private int position = 0;
 
     public Arguments(String[] args, boolean greedy) {
         this.args = args;

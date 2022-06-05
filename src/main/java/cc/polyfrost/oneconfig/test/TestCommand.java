@@ -1,13 +1,13 @@
 package cc.polyfrost.oneconfig.test;
 
-import cc.polyfrost.oneconfig.libs.universal.UChat;
 import cc.polyfrost.oneconfig.utils.commands.annotations.Command;
 import cc.polyfrost.oneconfig.utils.commands.annotations.Main;
 import cc.polyfrost.oneconfig.utils.commands.annotations.Name;
 import cc.polyfrost.oneconfig.utils.commands.annotations.SubCommand;
+import gg.essential.universal.UChat;
 
 @Command(value = "test", aliases = {"t"})
-public class TestCommand_Test {
+public class TestCommand {
 
     @Main
     private static void main() {  // /test

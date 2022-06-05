@@ -3,20 +3,22 @@ package cc.polyfrost.oneconfig.mixin;
 import cc.polyfrost.oneconfig.OneConfig;
 import cc.polyfrost.oneconfig.events.EventManager;
 import cc.polyfrost.oneconfig.events.event.*;
-import cc.polyfrost.oneconfig.libs.mixinextras.injector.ModifyExpressionValue;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Timer;
 import net.minecraftforge.client.event.GuiOpenEvent;
+import net.minecraftforge.fml.common.eventhandler.Event;
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(Minecraft.class)
 public class MinecraftMixin {
-    @Shadow private Timer timer;
+    @Shadow
+    private Timer timer;
 
     @Inject(method = "startGame", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/client/FMLClientHandler;beginMinecraftLoading(Lnet/minecraft/client/Minecraft;Ljava/util/List;Lnet/minecraft/client/resources/IReloadableResourceManager;)V", remap = false), remap = true)
     private void onPreLaunch(CallbackInfo ci) {
@@ -48,14 +50,18 @@ public class MinecraftMixin {
         EventManager.INSTANCE.post(new TickEvent(Stage.END));
     }
 
-    @ModifyExpressionValue(method = "displayGuiScreen", at = @At(value = "NEW", target = "Lnet/minecraftforge/client/event/GuiOpenEvent;<init>(Lnet/minecraft/client/gui/GuiScreen;)V", remap = false), remap = true)
-    private GuiOpenEvent onGuiOpenEvent(GuiOpenEvent screen) {
-        ScreenOpenEvent event = new ScreenOpenEvent(screen.gui);
-        EventManager.INSTANCE.post(event);
-        if (event.isCancelled) {
-            screen.setCanceled(true);
+    @ModifyArg(method = "displayGuiScreen", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/eventhandler/EventBus;post(Lnet/minecraftforge/fml/common/eventhandler/Event;)Z", remap = false), remap = true)
+    private Event onGuiOpenEvent(Event a) {
+        if (a instanceof GuiOpenEvent) {
+            GuiOpenEvent forgeEvent = (GuiOpenEvent) a;
+            ScreenOpenEvent event = new ScreenOpenEvent(forgeEvent.gui);
+            EventManager.INSTANCE.post(event);
+            if (event.isCancelled) {
+                forgeEvent.setCanceled(true);
+            }
+            return forgeEvent;
         }
-        return screen;
+        return a;
     }
 
     @Inject(method = "runGameLoop", at = @At(value = "FIELD", target = "Lnet/minecraft/util/Timer;renderPartialTicks:F", opcode = Opcodes.PUTFIELD, shift = At.Shift.AFTER))

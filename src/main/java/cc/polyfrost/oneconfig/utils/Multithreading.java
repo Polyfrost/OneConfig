@@ -52,7 +52,7 @@ public class Multithreading {
      * Schedules the runnable to run asynchronously after the specified delay.
      *
      * @param runnable The runnable to run.
-     * @param delay The delay before the runnable is run.
+     * @param delay    The delay before the runnable is run.
      * @param timeUnit The {@link TimeUnit} of the delay.
      * @see Multithreading#submitScheduled(Runnable, long, TimeUnit)
      */
@@ -64,7 +64,7 @@ public class Multithreading {
      * Submits the Runnable to the executor after a delay, making it run asynchronously.
      *
      * @param runnable The runnable to run.
-     * @param delay The delay before the runnable is run.
+     * @param delay    The delay before the runnable is run.
      * @param timeUnit The {@link TimeUnit} of the delay.
      * @return The future representing the submitted runnable.
      * @see ScheduledExecutorService#schedule(Runnable, long, TimeUnit)

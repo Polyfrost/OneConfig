@@ -16,18 +16,21 @@ import java.lang.annotation.Target;
 public @interface SubCommand {
     /**
      * The name of the command.
+     *
      * @return The name of the command.
      */
     String value();
 
     /**
      * The aliases of the command.
+     *
      * @return The aliases of the command.
      */
     String[] aliases() default {};
 
     /**
      * The description of the command.
+     *
      * @return The description of the command.
      */
     String description() default "";

@@ -14,18 +14,10 @@ import java.util.ArrayList;
 
 public class OneConfigConfig extends Config {
 
-    public static String currentProfile = "Default Profile";
-    public static ArrayList<String> favoriteMods = new ArrayList<>();
-    public static ArrayList<OneColor> favoriteColors = new ArrayList<>();
-    public static ArrayList<OneColor> recentColors = new ArrayList<>();
-
-
     // the color library
     public static final int TRANSPARENT = new Color(0, 0, 0, 0).getRGB();                // Transparent
-
     public static final int BLACK = new Color(0, 0, 0, 255).getRGB();                     // Black
     public static final int GRAY_900 = new Color(13, 14, 15, 255).getRGB();           // Gray 900
-
     public static final int GRAY_900_80 = new Color(13, 14, 15, 204).getRGB();         // Gray 900 80%
     public static final int GRAY_800 = new Color(21, 22, 23, 255).getRGB();           // Gray 800
     public static final int GRAY_800_95 = new Color(21, 22, 23, 242).getRGB();
@@ -59,8 +51,10 @@ public class OneConfigConfig extends Config {
     public static final int ERROR_800_80 = new Color(145, 24, 24, 204).getRGB();         // Red 800
     public static final int ERROR_300 = new Color(253, 155, 155).getRGB();
     public static final int ERROR_300_80 = new Color(253, 155, 155, 204).getRGB();
-
-
+    public static String currentProfile = "Default Profile";
+    public static ArrayList<String> favoriteMods = new ArrayList<>();
+    public static ArrayList<OneColor> favoriteColors = new ArrayList<>();
+    public static ArrayList<OneColor> recentColors = new ArrayList<>();
     public static boolean ROUNDED_CORNERS = true;
     public static float CORNER_RADIUS_WIN = 20f;
     public static float CORNER_RADIUS = 12f;

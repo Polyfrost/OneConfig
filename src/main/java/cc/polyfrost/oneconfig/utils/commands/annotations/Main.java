@@ -16,5 +16,6 @@ import java.lang.annotation.Target;
 @Target({ElementType.METHOD})
 public @interface Main {
     String description() default "";
+
     int priority() default 1000;
 }

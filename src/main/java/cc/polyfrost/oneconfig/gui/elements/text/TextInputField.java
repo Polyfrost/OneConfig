@@ -2,7 +2,6 @@ package cc.polyfrost.oneconfig.gui.elements.text;
 
 import cc.polyfrost.oneconfig.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.gui.elements.BasicElement;
-import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
 import cc.polyfrost.oneconfig.lwjgl.RenderManager;
 import cc.polyfrost.oneconfig.lwjgl.font.Fonts;
 import cc.polyfrost.oneconfig.lwjgl.image.SVGs;
@@ -11,6 +10,7 @@ import cc.polyfrost.oneconfig.lwjgl.scissor.ScissorManager;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import cc.polyfrost.oneconfig.utils.MathUtils;
 import cc.polyfrost.oneconfig.utils.TextUtils;
+import gg.essential.universal.UKeyboard;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
@@ -23,24 +23,24 @@ import java.util.ArrayList;
 public class TextInputField extends BasicElement {
 
     protected final String defaultText;
-    protected String input, selectedText;
     protected final boolean multiLine;
+    protected String input, selectedText;
     protected boolean password;
 
     protected int caretPos;
     protected int x, y;
     protected float start, end;
     protected int startLine, endLine;
-    private long clickTimeD1;
     protected long vg;
     protected int prevCaret = 0;
     protected boolean isDoubleClick = false;
     protected boolean onlyNums = false;
     protected boolean errored = false;
     protected boolean centered = false;
-    private int lines = 1;
     protected SVGs icon;
     protected ArrayList<String> wrappedText = null;
+    private long clickTimeD1;
+    private int lines = 1;
 
     public TextInputField(int width, int height, String defaultText, boolean multiLine, boolean password, SVGs icon) {
         super(width, height, false);
@@ -60,28 +60,28 @@ public class TextInputField extends BasicElement {
         this.centered = centered;
     }
 
-    public void onlyAcceptNumbers(boolean state) {
-        onlyNums = state;
+    public static boolean isAllowedCharacter(char character) {
+        return character != 167 && character >= ' ' && character != 127;
     }
 
-    public void setInput(String input) {
-        this.input = input;
+    public void onlyAcceptNumbers(boolean state) {
+        onlyNums = state;
     }
 
     public String getInput() {
         return input;
     }
 
-    public void setPassword(boolean password) {
-        this.password = password;
+    public void setInput(String input) {
+        this.input = input;
     }
 
     public boolean getPassword() {
         return password;
     }
 
-    public void setErrored(boolean errored) {
-        this.errored = errored;
+    public void setPassword(boolean password) {
+        this.password = password;
     }
 
     public void setCentered(boolean centered) {
@@ -90,6 +90,10 @@ public class TextInputField extends BasicElement {
 
     public boolean isErrored() {
         return errored;
+    }
+
+    public void setErrored(boolean errored) {
+        this.errored = errored;
     }
 
     @Override
@@ -527,10 +531,6 @@ public class TextInputField extends BasicElement {
             return caret - pos;
         }
         return 0;
-    }
-
-    public static boolean isAllowedCharacter(char character) {
-        return character != 167 && character >= ' ' && character != 127;
     }
 
     public int getLines() {

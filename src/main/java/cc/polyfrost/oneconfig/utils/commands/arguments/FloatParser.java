@@ -6,6 +6,10 @@ public class FloatParser extends ArgumentParser<Float> {
 
     @Override
     public @Nullable Float parse(Arguments arguments) {
-        return Float.parseFloat(arguments.poll());
+        try {
+            return Float.parseFloat(arguments.poll());
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 }
