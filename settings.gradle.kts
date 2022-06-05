@@ -2,7 +2,8 @@ pluginManagement {
     repositories {
         gradlePluginPortal()
         mavenCentral()
-        maven("https://repo.woverflow.cc")
+        maven("https://repo.polyfrost.cc/releases")
+        maven("https://maven.architectury.dev/")
     }
     plugins {
         val egtVersion = "0.1.7"

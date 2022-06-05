@@ -1,7 +1,5 @@
-import gg.essential.gradle.util.noServerRunConfigs
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
-import gg.essential.gradle.util.RelocationTransform.Companion.registerRelocationAttribute
-import gg.essential.gradle.util.prebundle
+import gg.essential.gradle.util.noServerRunConfigs
 
 plugins {
     kotlin("jvm")
@@ -58,7 +56,7 @@ loom {
 }
 
 repositories {
-    maven("https://repo.woverflow.cc/")
+    maven("https://repo.polyfrost.cc/releases")
 }
 
 val shade: Configuration by configurations.creating {
@@ -71,16 +69,8 @@ val lwjglNative: Configuration by configurations.creating {
     isTransitive = false
 }
 
-val dummyImpl: Configuration by configurations.creating {
-    configurations.implementation.get().extendsFrom(this)
-}
-
 sourceSets {
-    val dummy by creating {
-        compileClasspath += dummyImpl
-    }
     main {
-        compileClasspath += dummy.output
         runtimeClasspath += lwjglNative
         output.setResourcesDir(java.classesDirectory)
     }
@@ -100,7 +90,7 @@ val lwjglJar by tasks.registering(ShadowJar::class) {
 }
 
 dependencies {
-    dummyImpl("gg.essential:vigilance-$platform:222") {
+    compileOnly("gg.essential:vigilance-$platform:222") {
         isTransitive = false
     }
 
