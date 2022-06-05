@@ -40,7 +40,7 @@ public class VigilantTransformer implements ITransformer {
         node.fields.add(new FieldNode(Opcodes.ACC_PUBLIC, "oneconfig$config", Type.getDescriptor(VigilanceConfig.class), null, null));
         node.fields.add(new FieldNode(Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL, "oneconfig$file", Type.getDescriptor(File.class), null, null));
 
-        node.interfaces.add("cc/polyfrost/oneconfig/config/compatibility/VigilantAccessor");
+        node.interfaces.add("cc/polyfrost/oneconfig/config/compatibility/vigilance/VigilantAccessor");
         MethodNode methodNode = new MethodNode(Opcodes.ACC_PUBLIC, "getPropertyCollector", "()Lgg/essential/vigilance/data/PropertyCollector;", null, null);
         LabelNode labelNode = new LabelNode();
         methodNode.instructions.add(labelNode);
@@ -81,7 +81,7 @@ public class VigilantTransformer implements ITransformer {
                 list.add(new VarInsnNode(Opcodes.ALOAD, 0));
                 list.add(new VarInsnNode(Opcodes.ALOAD, 0));
                 list.add(new FieldInsnNode(Opcodes.GETFIELD, "gg/essential/vigilance/Vigilant", "oneconfig$file", Type.getDescriptor(File.class)));
-                list.add(new MethodInsnNode(Opcodes.INVOKESTATIC, Type.getInternalName(getClass()), "returnNewConfig", "(Lgg/essential/vigilance/Vigilant;Ljava/io/File;)Lcc/polyfrost/oneconfig/config/compatibility/VigilanceConfig;", false));
+                list.add(new MethodInsnNode(Opcodes.INVOKESTATIC, Type.getInternalName(getClass()), "returnNewConfig", "(Lgg/essential/vigilance/Vigilant;Ljava/io/File;)Lcc/polyfrost/oneconfig/config/compatibility/vigilance/VigilanceConfig;", false));
                 list.add(new FieldInsnNode(Opcodes.PUTFIELD, "gg/essential/vigilance/Vigilant", "oneconfig$config", Type.getDescriptor(VigilanceConfig.class)));
                 method.instructions.insertBefore(method.instructions.getLast().getPrevious(), list);
             } else if (method.name.equals("addDependency") && method.desc.equals("(Lgg/essential/vigilance/data/PropertyData;Lgg/essential/vigilance/data/PropertyData;)V")) {
