@@ -20,7 +20,7 @@ public class LoadingPlugin implements IFMLLoadingPlugin {
             Field f_exceptions = LaunchClassLoader.class.getDeclaredField("classLoaderExceptions");
             f_exceptions.setAccessible(true);
             Set<String> exceptions = (Set<String>) f_exceptions.get(Launch.classLoader);
-            exceptions.remove("org.renderer.");
+            exceptions.remove("org.lwjgl.");
             OneConfigInit.initialize(new String[]{});
         } catch (Exception e) {
             throw new RuntimeException("e");
