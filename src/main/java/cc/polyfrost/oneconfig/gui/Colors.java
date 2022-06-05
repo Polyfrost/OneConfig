@@ -41,6 +41,6 @@ public class Colors {
     public static final int ERROR_300 = new Color(253, 155, 155).getRGB();
     public static final int ERROR_300_80 = new Color(253, 155, 155, 204).getRGB();
     public static boolean ROUNDED_CORNERS = true;
-    public static float CORNER_RADIUS_WIN = 20f;
-    public static float CORNER_RADIUS = 12f;
+    public static final float CORNER_RADIUS_WIN = 20f;
+    public static final float CORNER_RADIUS = 12f;
 }
