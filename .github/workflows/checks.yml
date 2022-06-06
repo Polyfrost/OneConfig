@@ -39,10 +39,11 @@ jobs:
       run: chmod +x ./gradlew
 
     - name: "Setup Gradle"
-      run: ./gradlew setupGradle
+      if: hashFiles('.gradle/loom-cache/SETUP') != ''
+      run: ./gradlew setupGradle --no-daemon
 
     - name: "Build"
-      run: ./gradlew build
+      run: ./gradlew build --no-daemon
 
     - name: "Upload Build Artifacts"
       uses: actions/upload-artifact@v2
