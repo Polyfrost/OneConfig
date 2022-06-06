@@ -52,9 +52,3 @@ jobs:
 
     - name: Build
       run: ./gradlew build --no-daemon
-
-    - name: Upload Build Artifacts
-      uses: actions/upload-artifact@v2
-      with:
-        name: ${{ matrix.version }} Artifacts
-        path: versions/${{ matrix.version }}/build/libs/
