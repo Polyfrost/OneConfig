@@ -46,9 +46,5 @@ jobs:
     - name: Chmod Gradle
       run: chmod +x ./gradlew
 
-    - name: Setup Gradle
-      if: steps.cache.outputs.cache-hit != 'true'
-      run: ./gradlew setupGradle --no-daemon
-
     - name: Build
       run: ./gradlew build --no-daemon
