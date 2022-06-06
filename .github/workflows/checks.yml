@@ -1,0 +1,60 @@
+# Build Workflow
+
+name: Build
+
+on: 
+  - pull_request 
+  - workflow_dispatch
+  - push
+
+concurrency:
+  group: ${{ github.head_ref || format('{0}-{1}', github.ref, github.run_number) }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build
+
+    strategy:
+      matrix:
+        version:
+          - 1.8.9-forge
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v2
+      with:
+        java-version: 17
+        distribution: temurin
+        cache: gradle
+        
+    - name: Cache Loom
+      id: cache
+      uses: actions/cache@v2
+      with:
+        path: |
+         ./.gradle/loom-cache
+        key: ${{ runner.os }}-loom-cache-jdk17-${{ hashFiles('./build.gradle.kts') }}
+
+    - name: Chmod Gradle
+      run: chmod +x ./gradlew
+
+    - name: Setup Gradle
+      if: steps.cache.outputs.cache-hit != 'true'
+      run: ./gradlew setupGradle --no-daemon
+
+    - name: Build
+      run: ./gradlew build --no-daemon
+
+    - name: Upload Build Artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: ${{ matrix.version }} Artifacts
+        path: versions/${{ matrix.version }}/build/libs/
