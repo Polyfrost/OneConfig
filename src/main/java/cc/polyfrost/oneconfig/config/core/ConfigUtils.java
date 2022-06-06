@@ -1,32 +1,13 @@
 package cc.polyfrost.oneconfig.config.core;
 
 import cc.polyfrost.oneconfig.config.annotations.Option;
-import cc.polyfrost.oneconfig.config.data.Mod;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
 import cc.polyfrost.oneconfig.gui.elements.config.*;
-import cc.polyfrost.oneconfig.hud.HudCore;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 
-public class ConfigCore {
-    public static ArrayList<Mod> oneConfigMods = new ArrayList<>();
-
-    public static void saveAll() {
-        for (Mod modData : oneConfigMods) {
-            modData.config.save();
-        }
-    }
-
-    public static void reInitAll() {
-        ArrayList<Mod> data = new ArrayList<>(oneConfigMods);
-        oneConfigMods.clear();
-        HudCore.huds.clear();
-        for (Mod modData : data) {
-            modData.config.init(modData);
-        }
-    }
-
+public class ConfigUtils {
     public static BasicOption getOption(Option option, Field field, Object instance) {
         switch (option.type()) {
             case SWITCH:

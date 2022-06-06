@@ -1,7 +1,7 @@
 package cc.polyfrost.oneconfig.internal.plugin.asm.tweakers;
 
 import cc.polyfrost.oneconfig.config.compatibility.vigilance.VigilanceConfig;
-import cc.polyfrost.oneconfig.config.core.ConfigCore;
+import cc.polyfrost.oneconfig.internal.config.ConfigCore;
 import cc.polyfrost.oneconfig.config.data.Mod;
 import cc.polyfrost.oneconfig.config.data.ModType;
 import cc.polyfrost.oneconfig.internal.plugin.asm.ITransformer;

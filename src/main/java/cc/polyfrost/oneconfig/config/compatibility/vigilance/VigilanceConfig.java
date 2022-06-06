@@ -1,6 +1,6 @@
 package cc.polyfrost.oneconfig.config.compatibility.vigilance;
 
-import cc.polyfrost.oneconfig.config.core.ConfigCore;
+import cc.polyfrost.oneconfig.internal.config.ConfigCore;
 import cc.polyfrost.oneconfig.config.core.OneColor;
 import cc.polyfrost.oneconfig.config.data.Mod;
 import cc.polyfrost.oneconfig.config.elements.OptionCategory;

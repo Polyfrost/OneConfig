@@ -1,6 +1,7 @@
-package cc.polyfrost.oneconfig.hud;
+package cc.polyfrost.oneconfig.internal.hud;
 
 import cc.polyfrost.oneconfig.events.event.HudRenderEvent;
+import cc.polyfrost.oneconfig.hud.BasicHud;
 import gg.essential.universal.UResolution;
 import me.kbrewster.eventbus.Subscribe;
 

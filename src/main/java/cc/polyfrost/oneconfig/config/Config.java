@@ -2,7 +2,8 @@ package cc.polyfrost.oneconfig.config;
 
 import cc.polyfrost.oneconfig.config.annotations.ConfigPage;
 import cc.polyfrost.oneconfig.config.annotations.Option;
-import cc.polyfrost.oneconfig.config.core.ConfigCore;
+import cc.polyfrost.oneconfig.config.core.ConfigUtils;
+import cc.polyfrost.oneconfig.internal.config.ConfigCore;
 import cc.polyfrost.oneconfig.config.data.*;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
 import cc.polyfrost.oneconfig.config.elements.OptionCategory;
@@ -13,7 +14,7 @@ import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.elements.config.*;
 import cc.polyfrost.oneconfig.gui.pages.ModConfigPage;
 import cc.polyfrost.oneconfig.hud.BasicHud;
-import cc.polyfrost.oneconfig.hud.HudCore;
+import cc.polyfrost.oneconfig.internal.hud.HudCore;
 import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 import com.google.gson.*;
 
@@ -144,7 +145,7 @@ public class Config {
                     HudCore.huds.add(hud);
                     options.add(new ConfigHeader(field, hud, option.name(), 1));
                     options.add(new ConfigSwitch(hud.getClass().getField("enabled"), hud, "Enabled", 1));
-                    options.addAll(ConfigCore.getClassOptions(hud));
+                    options.addAll(ConfigUtils.getClassOptions(hud));
                     options.add(new ConfigCheckbox(hud.getClass().getField("rounded"), hud, "Rounded corners", 1));
                     options.get(options.size() - 1).setDependency(() -> hud.enabled);
                     options.add(new ConfigCheckbox(hud.getClass().getField("border"), hud, "Outline/border", 1));
@@ -165,7 +166,7 @@ public class Config {
                     e.printStackTrace();
                 }
             } else {
-                options.add(ConfigCore.getOption(option, field, instance));
+                options.add(ConfigUtils.getOption(option, field, instance));
             }
             if (!option.type().equals(OptionType.HUD))
                 optionNames.put(pagePrefix + field.getName(), options.get(options.size() - 1));
