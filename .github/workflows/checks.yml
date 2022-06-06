@@ -39,7 +39,7 @@ jobs:
       run: chmod +x ./gradlew
 
     - name: "Setup Gradle"
-      if: hashFiles('.gradle/loom-cache/SETUP') != ''
+      if: hashFiles('.gradle/loom-cache/SETUP') == ''
       run: ./gradlew setupGradle --no-daemon
 
     - name: "Build"
