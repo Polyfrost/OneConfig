@@ -20,7 +20,7 @@ jobs:
         version:
           - 1.8.9-forge
 
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
     - name: Checkout
