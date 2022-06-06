@@ -1,12 +1,12 @@
 package cc.polyfrost.oneconfig.utils.color;
 
 
-import cc.polyfrost.oneconfig.gui.Colors;
+import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.config.core.OneColor;
 
 import java.awt.*;
 
-import static cc.polyfrost.oneconfig.gui.Colors.*;
+import static cc.polyfrost.oneconfig.internal.assets.Colors.*;
 
 public class ColorPalette {
     /**

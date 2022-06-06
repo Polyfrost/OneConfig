@@ -1,6 +1,7 @@
 package cc.polyfrost.oneconfig.gui.elements.config;
 
-import cc.polyfrost.oneconfig.gui.Colors;
+import cc.polyfrost.oneconfig.config.annotations.Color;
+import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.config.core.OneColor;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
@@ -9,7 +10,7 @@ import cc.polyfrost.oneconfig.gui.elements.ColorSelector;
 import cc.polyfrost.oneconfig.gui.elements.text.TextInputField;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
-import cc.polyfrost.oneconfig.renderer.image.Images;
+import cc.polyfrost.oneconfig.internal.assets.Images;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 
 import java.lang.reflect.Field;
@@ -20,11 +21,16 @@ public class ConfigColorElement extends BasicOption {
     private final BasicElement element = new BasicElement(64, 32, false);
     private boolean open = false;
 
-    public ConfigColorElement(Field field, Object parent, String name, int size) {
-        super(field, parent, name, size);
+    public ConfigColorElement(Field field, Object parent, String name, String category, String subcategory, int size) {
+        super(field, parent, name, category, subcategory, size);
         hexField.setCentered(true);
         alphaField.setCentered(true);
         alphaField.onlyAcceptNumbers(true);
+    }
+
+    public static ConfigColorElement create(Field field, Object parent) {
+        Color color = field.getAnnotation(Color.class);
+        return new ConfigColorElement(field, parent, color.name(), color.category(), color.subcategory(), color.size());
     }
 
     @Override

@@ -1,7 +1,5 @@
 package cc.polyfrost.oneconfig.test;
 
-import cc.polyfrost.oneconfig.config.annotations.Option;
-import cc.polyfrost.oneconfig.config.data.OptionType;
 import cc.polyfrost.oneconfig.hud.TextHud;
 import net.minecraft.client.Minecraft;
 
@@ -21,15 +19,7 @@ public class TestHud extends TextHud {
         return lines;
     }
 
-    @Option(
-            name = "Enable Second Line",
-            type = OptionType.SWITCH
-    )
     public boolean hasSecondLine = false;
 
-    @Option(
-            name = "Second Line Text",
-            type = OptionType.TEXT
-    )
     public String secondLine = "Epic text";
 }

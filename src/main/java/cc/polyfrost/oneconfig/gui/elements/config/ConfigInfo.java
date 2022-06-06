@@ -1,6 +1,7 @@
 package cc.polyfrost.oneconfig.gui.elements.config;
 
-import cc.polyfrost.oneconfig.gui.Colors;
+import cc.polyfrost.oneconfig.config.annotations.Info;
+import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.config.data.InfoType;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
@@ -13,9 +14,14 @@ import java.lang.reflect.Field;
 public class ConfigInfo extends BasicOption {
     private final InfoType type;
 
-    public ConfigInfo(Field field, Object parent, String name, int size, InfoType type) {
-        super(field, parent, name, size);
+    public ConfigInfo(Field field, Object parent, String name, String category, String subcategory, int size, InfoType type) {
+        super(field, parent, name, category, subcategory, size);
         this.type = type;
+    }
+
+    public static ConfigInfo create(Field field, Object parent) {
+        Info info = field.getAnnotation(Info.class);
+        return new ConfigInfo(field, parent, info.text(), info.category(), info.subcategory(), info.size(), info.type());
     }
 
     @Override

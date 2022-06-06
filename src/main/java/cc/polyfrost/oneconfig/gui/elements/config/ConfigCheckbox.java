@@ -1,6 +1,7 @@
 package cc.polyfrost.oneconfig.gui.elements.config;
 
-import cc.polyfrost.oneconfig.gui.Colors;
+import cc.polyfrost.oneconfig.config.annotations.Checkbox;
+import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
 import cc.polyfrost.oneconfig.gui.animations.Animation;
 import cc.polyfrost.oneconfig.gui.animations.ColorAnimation;
@@ -8,7 +9,7 @@ import cc.polyfrost.oneconfig.gui.animations.DummyAnimation;
 import cc.polyfrost.oneconfig.gui.animations.EaseInOutQuad;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
-import cc.polyfrost.oneconfig.renderer.image.SVGs;
+import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 import cc.polyfrost.oneconfig.utils.color.ColorUtils;
@@ -21,8 +22,13 @@ public class ConfigCheckbox extends BasicOption {
     private final ColorAnimation color = new ColorAnimation(ColorPalette.SECONDARY);
     private Animation animation;
 
-    public ConfigCheckbox(Field field, Object parent, String name, int size) {
-        super(field, parent, name, size);
+    public ConfigCheckbox(Field field, Object parent, String name, String category, String subcategory, int size) {
+        super(field, parent, name, category, subcategory, size);
+    }
+
+    public static ConfigCheckbox create(Field field, Object parent) {
+        Checkbox checkbox = field.getAnnotation(Checkbox.class);
+        return new ConfigCheckbox(field, parent, checkbox.name(), checkbox.category(), checkbox.subcategory(), checkbox.size());
     }
 
     @Override

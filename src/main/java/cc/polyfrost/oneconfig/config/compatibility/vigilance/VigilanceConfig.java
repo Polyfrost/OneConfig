@@ -1,6 +1,6 @@
 package cc.polyfrost.oneconfig.config.compatibility.vigilance;
 
-import cc.polyfrost.oneconfig.internal.config.ConfigCore;
+import cc.polyfrost.oneconfig.internal.config.core.ConfigCore;
 import cc.polyfrost.oneconfig.config.core.OneColor;
 import cc.polyfrost.oneconfig.config.data.Mod;
 import cc.polyfrost.oneconfig.config.elements.OptionCategory;
@@ -55,7 +55,7 @@ public class VigilanceConfig extends Config {
     }
 
     private void generateOptionsList(OptionPage page) {
-        for (PropertyData option : ((VigilantAccessor) vigilant).getPropertyCollector().getProperties()) {
+        /*for (PropertyData option : ((VigilantAccessor) vigilant).getPropertyCollector().getProperties()) {
             PropertyAttributesExt attributes = option.getAttributesExt();
             if (attributes.getHidden()) continue;
             if (!page.categories.containsKey(getCategory(attributes)))
@@ -66,7 +66,7 @@ public class VigilanceConfig extends Config {
             ArrayList<BasicOption> options = category.subcategories.get(category.subcategories.size() - 1).options;
             switch (attributes.getType()) {
                 case SWITCH:
-                    options.add(new ConfigSwitch(getFieldOfProperty(option), option.getInstance(), getName(attributes), 2));
+                    options.add(new ConfigSwitch(getFieldOfProperty(option), option.getInstance(), getName(attributes), "", "", 2));
                     break;
                 case CHECKBOX:
                     options.add(new ConfigCheckbox(getFieldOfProperty(option), option.getInstance(), getName(attributes), 2));
@@ -97,7 +97,7 @@ public class VigilanceConfig extends Config {
             if (attributes.getType() == PropertyType.SWITCH || attributes.getType() == PropertyType.CHECKBOX) {
                 optionNames.put(PropertyKt.fullPropertyPath(option.getAttributesExt()), options.get(options.size() - 1));
             }
-        }
+        }*/
     }
 
     private Field getFieldOfProperty(PropertyData data) {
@@ -163,11 +163,11 @@ public class VigilanceConfig extends Config {
     public void addDependency(PropertyData property, PropertyData dependency) {
         BasicOption option = optionNames.get(PropertyKt.fullPropertyPath(property.getAttributesExt()));
         if (option != null) {
-            option.setDependency(() -> Objects.equals(dependency.getValue().getValue(vigilant), true));
+            option.addDependency(() -> Objects.equals(dependency.getValue().getValue(vigilant), true));
         }
     }
 
-    private static class CompatConfigColorElement extends ConfigColorElement {
+    /*private static class CompatConfigColorElement extends ConfigColorElement {
         private final Field color;
         private Color prevColor = null;
         private OneColor cachedColor = null;
@@ -198,5 +198,5 @@ public class VigilanceConfig extends Config {
                 }
             }
         }
-    }
+    }*/
 }

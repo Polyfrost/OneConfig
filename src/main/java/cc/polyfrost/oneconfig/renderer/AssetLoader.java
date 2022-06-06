@@ -1,5 +1,7 @@
-package cc.polyfrost.oneconfig.renderer.image;
+package cc.polyfrost.oneconfig.renderer;
 
+import cc.polyfrost.oneconfig.internal.assets.Images;
+import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.utils.IOUtils;
 import org.lwjgl.nanovg.NSVGImage;
 import org.lwjgl.nanovg.NanoSVG;
@@ -20,21 +22,21 @@ import java.util.HashMap;
  * @see Images
  * @see SVGs
  */
-public final class ImageLoader {
-    private ImageLoader() {
+public final class AssetLoader {
+    private AssetLoader() {
 
     }
 
     private final HashMap<String, Integer> imageHashMap = new HashMap<>();
     private final HashMap<String, Integer> svgHashMap = new HashMap<>();
-    public static ImageLoader INSTANCE = new ImageLoader();
+    public static AssetLoader INSTANCE = new AssetLoader();
 
     /**
-     * Loads an image from resources.
+     * Loads an assets from resources.
      *
      * @param vg       The NanoVG context.
      * @param fileName The name of the file to load.
-     * @return Whether the image was loaded successfully.
+     * @return Whether the assets was loaded successfully.
      */
     public boolean loadImage(long vg, String fileName) {
         if (!imageHashMap.containsKey(fileName)) {
@@ -109,24 +111,24 @@ public final class ImageLoader {
     }
 
     /**
-     * Get a loaded image from the cache.
-     * <p><b>Requires the image to have been loaded first.</b></p>
+     * Get a loaded assets from the cache.
+     * <p><b>Requires the assets to have been loaded first.</b></p>
      *
      * @param fileName The name of the file to load.
-     * @return The image
-     * @see ImageLoader#loadImage(long, String)
+     * @return The assets
+     * @see AssetLoader#loadImage(long, String)
      */
     public int getImage(String fileName) {
         return imageHashMap.get(fileName);
     }
 
     /**
-     * Remove an image from the cache, allowing the image to be garbage collected.
-     * Should be used when the GUI rendering the image is closed.
+     * Remove an assets from the cache, allowing the assets to be garbage collected.
+     * Should be used when the GUI rendering the assets is closed.
      *
      * @param vg       The NanoVG context.
      * @param fileName The name of the file to remove.
-     * @see ImageLoader#loadImage(long, String)
+     * @see AssetLoader#loadImage(long, String)
      */
     public void removeImage(long vg, String fileName) {
         NanoVG.nvgDeleteImage(vg, imageHashMap.get(fileName));
@@ -153,7 +155,7 @@ public final class ImageLoader {
      *
      * @param fileName The name of the file to load.
      * @return The SVG
-     * @see ImageLoader#loadSVG(long, String, float, float)
+     * @see AssetLoader#loadSVG(long, String, float, float)
      */
     public int getSVG(String fileName, float width, float height) {
         String name = fileName + "-" + width + "-" + height;
@@ -161,12 +163,12 @@ public final class ImageLoader {
     }
 
     /**
-     * Remove a SVG from the cache, allowing the SVG to be garbage collected.
+     * Remove an SVG from the cache, allowing the SVG to be garbage collected.
      * Should be used when the GUI rendering the SVG is closed.
      *
      * @param vg       The NanoVG context.
      * @param fileName The name of the file to remove.
-     * @see ImageLoader#loadSVG(long, String, float, float)
+     * @see AssetLoader#loadSVG(long, String, float, float)
      */
     public void removeSVG(long vg, String fileName, float width, float height) {
         String name = fileName + "-" + width + "-" + height;

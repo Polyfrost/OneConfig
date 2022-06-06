@@ -1,11 +1,12 @@
 package cc.polyfrost.oneconfig.gui.elements.config;
 
-import cc.polyfrost.oneconfig.gui.Colors;
+import cc.polyfrost.oneconfig.config.annotations.Text;
+import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
 import cc.polyfrost.oneconfig.gui.elements.text.TextInputField;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
-import cc.polyfrost.oneconfig.renderer.image.SVGs;
+import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import org.lwjgl.input.Mouse;
 
@@ -16,11 +17,16 @@ public class ConfigTextBox extends BasicOption {
     private final boolean multiLine;
     private final TextInputField textField;
 
-    public ConfigTextBox(Field field, Object parent, String name, int size, String placeholder, boolean secure, boolean multiLine) {
-        super(field, parent, name, size);
+    public ConfigTextBox(Field field, Object parent, String name, String category, String subcategory, int size, String placeholder, boolean secure, boolean multiLine) {
+        super(field, parent, name, category, subcategory, size);
         this.secure = secure;
         this.multiLine = multiLine;
-        this.textField = new TextInputField(size == 1 && hasHalfSize() ? 256 : 640, multiLine ? 64 : 32, placeholder, multiLine, secure);
+        this.textField = new TextInputField(size == 1 ? 256 : 640, multiLine ? 64 : 32, placeholder, multiLine, secure);
+    }
+
+    public static ConfigTextBox create(Field field, Object parent) {
+        Text text = field.getAnnotation(Text.class);
+        return new ConfigTextBox(field, parent, text.name(), text.category(), text.subcategory(), text.secure() || text.multiline() ? 2 : text.size(), text.placeholder(), text.secure(), text.multiline());
     }
 
     @Override
@@ -37,7 +43,7 @@ public class ConfigTextBox extends BasicOption {
 
         if (multiLine && textField.getLines() > 2) textField.setHeight(64 + 24 * (textField.getLines() - 2));
         else if (multiLine) textField.setHeight(64);
-        textField.draw(vg, x + (size == 1 && hasHalfSize() ? 224 : 352), y);
+        textField.draw(vg, x + (size == 1 ? 224 : 352), y);
 
         if (secure) {
             SVGs icon = textField.getPassword() ? SVGs.EYE_OFF : SVGs.EYE;
@@ -63,10 +69,5 @@ public class ConfigTextBox extends BasicOption {
     @Override
     public int getHeight() {
         return multiLine ? textField.getHeight() : 32;
-    }
-
-    @Override
-    public boolean hasHalfSize() {
-        return !secure && !multiLine;
     }
 }

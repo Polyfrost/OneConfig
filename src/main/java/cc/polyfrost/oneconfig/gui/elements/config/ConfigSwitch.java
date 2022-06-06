@@ -1,6 +1,7 @@
 package cc.polyfrost.oneconfig.gui.elements.config;
 
-import cc.polyfrost.oneconfig.gui.Colors;
+import cc.polyfrost.oneconfig.config.annotations.Switch;
+import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
 import cc.polyfrost.oneconfig.gui.animations.Animation;
 import cc.polyfrost.oneconfig.gui.animations.ColorAnimation;
@@ -18,8 +19,13 @@ public class ConfigSwitch extends BasicOption {
     private ColorAnimation color;
     private Animation animation;
 
-    public ConfigSwitch(Field field, Object parent, String name, int size) {
-        super(field, parent, name, size);
+    public ConfigSwitch(Field field, Object parent, String name, String category, String subcategory, int size) {
+        super(field, parent, name, category, subcategory, size);
+    }
+
+    public static ConfigSwitch create(Field field, Object parent) {
+        Switch options = field.getAnnotation(Switch.class);
+        return new ConfigSwitch(field, parent, options.name(), options.category(), options.subcategory(), options.size());
     }
 
     @Override

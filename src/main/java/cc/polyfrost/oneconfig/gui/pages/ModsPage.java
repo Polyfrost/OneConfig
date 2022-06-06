@@ -1,7 +1,7 @@
 package cc.polyfrost.oneconfig.gui.pages;
 
 import cc.polyfrost.oneconfig.internal.OneConfig;
-import cc.polyfrost.oneconfig.gui.Colors;
+import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.config.data.Mod;
 import cc.polyfrost.oneconfig.config.data.ModType;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;

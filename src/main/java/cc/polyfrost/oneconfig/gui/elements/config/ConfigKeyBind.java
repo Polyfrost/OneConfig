@@ -1,13 +1,14 @@
 package cc.polyfrost.oneconfig.gui.elements.config;
 
-import cc.polyfrost.oneconfig.gui.Colors;
+import cc.polyfrost.oneconfig.config.annotations.KeyBind;
+import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.config.core.OneKeyBind;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.elements.BasicButton;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
-import cc.polyfrost.oneconfig.renderer.image.SVGs;
+import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 import gg.essential.universal.UKeyboard;
 
@@ -17,10 +18,15 @@ public class ConfigKeyBind extends BasicOption {
     private final BasicButton button;
     private boolean clicked = false;
 
-    public ConfigKeyBind(Field field, Object parent, String name, int size) {
-        super(field, parent, name, size);
+    public ConfigKeyBind(Field field, Object parent, String name, String category, String subcategory, int size) {
+        super(field, parent, name, category, subcategory, size);
         button = new BasicButton(256, 32, "", SVGs.KEYSTROKE, null, BasicButton.ALIGNMENT_JUSTIFIED, ColorPalette.SECONDARY);
         button.setToggleable(true);
+    }
+
+    public static ConfigKeyBind create(Field field, Object parent) {
+        KeyBind keyBind = field.getAnnotation(KeyBind.class);
+        return new ConfigKeyBind(field, parent, keyBind.name(), keyBind.category(), keyBind.subcategory(), keyBind.size());
     }
 
     @Override
