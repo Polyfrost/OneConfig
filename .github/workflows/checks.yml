@@ -46,15 +46,5 @@ jobs:
     - name: Chmod Gradle
       run: chmod +x ./gradlew
 
-    - name: Setup Gradle
-      if: steps.cache.outputs.cache-hit != 'true'
-      run: ./gradlew setupGradle --no-daemon
-
     - name: Build
       run: ./gradlew build --no-daemon
-
-    - name: Upload Build Artifacts
-      uses: actions/upload-artifact@v2
-      with:
-        name: ${{ matrix.version }} Artifacts
-        path: versions/${{ matrix.version }}/build/libs/
