@@ -13,14 +13,14 @@ concurrency:
 
 jobs:
   build:
-    name: "Build"
+    name: Build
 
     strategy:
       matrix:
         version:
           - 1.8.9-forge
 
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
 
     steps:
     - name: Checkout
@@ -34,6 +34,13 @@ jobs:
         java-version: 17
         distribution: temurin
         cache: gradle
+        
+    - name: "Cache Loom"
+      uses: actions/cache@v2
+      with:
+        path: |
+         ./gradle/loom-cache
+        key: ${{ runner.os }}-loom-cache-oneconfig-jdk17-${{ hashFiles('./build.gradle.kts') }}
 
     - name: "Chmod Gradle"
       run: chmod +x ./gradlew
