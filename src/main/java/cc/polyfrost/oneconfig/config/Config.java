@@ -1,24 +1,19 @@
 package cc.polyfrost.oneconfig.config;
 
-import cc.polyfrost.oneconfig.config.annotations.ConfigPage;
-import cc.polyfrost.oneconfig.config.annotations.Option;
+import cc.polyfrost.oneconfig.internal.config.annotations.Option;
 import cc.polyfrost.oneconfig.config.core.ConfigUtils;
-import cc.polyfrost.oneconfig.internal.config.ConfigCore;
+import cc.polyfrost.oneconfig.internal.config.core.ConfigCore;
 import cc.polyfrost.oneconfig.config.data.*;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
-import cc.polyfrost.oneconfig.config.elements.OptionCategory;
 import cc.polyfrost.oneconfig.config.elements.OptionPage;
-import cc.polyfrost.oneconfig.config.elements.OptionSubcategory;
 import cc.polyfrost.oneconfig.config.profiles.Profiles;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
-import cc.polyfrost.oneconfig.gui.elements.config.*;
 import cc.polyfrost.oneconfig.gui.pages.ModConfigPage;
-import cc.polyfrost.oneconfig.hud.BasicHud;
-import cc.polyfrost.oneconfig.internal.hud.HudCore;
 import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 import com.google.gson.*;
 
 import java.io.*;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
@@ -87,89 +82,11 @@ public class Config {
      * @param migrate  whether the migrator should be run
      */
     protected void generateOptionList(Object instance, OptionPage page, Mod mod, boolean migrate) {
-        Class<?> clazz = instance.getClass();
-        for (Field field : clazz.getDeclaredFields()) {
-            String pagePrefix = page.equals(mod.defaultPage) ? "" : page.name + ".";
-            if (!field.isAnnotationPresent(Option.class) && !field.isAnnotationPresent(ConfigPage.class)) {
-                processCustomOption(field, page);
-                continue;
-            } else if (field.isAnnotationPresent(ConfigPage.class)) {
-                ConfigPage option = field.getAnnotation(ConfigPage.class);
-                if (!page.categories.containsKey(option.category()))
-                    page.categories.put(option.category(), new OptionCategory());
-                OptionCategory category = page.categories.get(option.category());
-                if (category.subcategories.size() == 0 || !category.subcategories.get(category.subcategories.size() - 1).getName().equals(option.subcategory()))
-                    category.subcategories.add(new OptionSubcategory(option.subcategory()));
-                OptionSubcategory subcategory = category.subcategories.get(category.subcategories.size() - 1);
-                OptionPage newPage = new OptionPage(option.name(), mod);
-                try {
-                    field.setAccessible(true);
-                    Object object = field.get(clazz);
-                    generateOptionList(object, newPage, mod, migrate);
-                    ConfigPageButton configPageButton = new ConfigPageButton(field, instance, option.name(), option.description(), newPage);
-                    switch (option.location()) {
-                        case TOP:
-                            subcategory.topButtons.add(configPageButton);
-                            break;
-                        case BOTTOM:
-                            subcategory.bottomButtons.add(configPageButton);
-                            break;
-                    }
-                    optionNames.put(pagePrefix + field.getName(), configPageButton);
-                } catch (IllegalAccessException ignored) {
-                }
-                continue;
-            }
-            Option option = field.getAnnotation(Option.class);
-            if (!page.categories.containsKey(option.category()))
-                page.categories.put(option.category(), new OptionCategory());
-            OptionCategory category = page.categories.get(option.category());
-            if (category.subcategories.size() == 0 || !category.subcategories.get(category.subcategories.size() - 1).getName().equals(option.subcategory()))
-                category.subcategories.add(new OptionSubcategory(option.subcategory()));
-            if (migrate) {
-                try {
-                    Object value = mod.migrator.getValue(field, option.name(), option.category(), option.subcategory());
-                    if (value != null) {
-                        field.setAccessible(true);
-                        field.set(instance, value);
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-            ArrayList<BasicOption> options = category.subcategories.get(category.subcategories.size() - 1).options;
-            if (option.type() == OptionType.HUD) {
-                try {
-                    field.setAccessible(true);
-                    BasicHud hud = (BasicHud) field.get(instance);
-                    HudCore.huds.add(hud);
-                    options.add(new ConfigHeader(field, hud, option.name(), 1));
-                    options.add(new ConfigSwitch(hud.getClass().getField("enabled"), hud, "Enabled", 1));
-                    options.addAll(ConfigUtils.getClassOptions(hud));
-                    options.add(new ConfigCheckbox(hud.getClass().getField("rounded"), hud, "Rounded corners", 1));
-                    options.get(options.size() - 1).setDependency(() -> hud.enabled);
-                    options.add(new ConfigCheckbox(hud.getClass().getField("border"), hud, "Outline/border", 1));
-                    options.get(options.size() - 1).setDependency(() -> hud.enabled);
-                    options.add(new ConfigColorElement(hud.getClass().getField("bgColor"), hud, "Background color:", 1));
-                    options.get(options.size() - 1).setDependency(() -> hud.enabled);
-                    options.add(new ConfigColorElement(hud.getClass().getField("borderColor"), hud, "Border color:", 1));
-                    options.get(options.size() - 1).setDependency(() -> hud.enabled && hud.border);
-                    options.add(new ConfigSlider(hud.getClass().getField("cornerRadius"), hud, "Corner radius:", 2, 0, 10, 0));
-                    options.get(options.size() - 1).setDependency(() -> hud.enabled && hud.rounded);
-                    options.add(new ConfigSlider(hud.getClass().getField("borderSize"), hud, "Border thickness:", 2, 0, 10, 0));
-                    options.get(options.size() - 1).setDependency(() -> hud.enabled && hud.border);
-                    options.add(new ConfigSlider(hud.getClass().getField("paddingX"), hud, "X-Padding", 2, 0, 50, 0));
-                    options.get(options.size() - 1).setDependency(() -> hud.enabled);
-                    options.add(new ConfigSlider(hud.getClass().getField("paddingY"), hud, "Y-Padding", 2, 0, 50, 0));
-                    options.get(options.size() - 1).setDependency(() -> hud.enabled);
-                } catch (IllegalAccessException | NoSuchFieldException e) {
-                    e.printStackTrace();
-                }
-            } else {
-                options.add(ConfigUtils.getOption(option, field, instance));
-            }
-            if (!option.type().equals(OptionType.HUD))
-                optionNames.put(pagePrefix + field.getName(), options.get(options.size() - 1));
+        for (Field field : instance.getClass().getDeclaredFields()) {
+            Option option = ConfigUtils.findAnnotation(field, Option.class);
+            if (option != null)
+                ConfigUtils.addOptionToPage(page, option, field, instance, migrate ? mod.migrator : null);
+            // TODO: Make dependencies work, pages, hud
         }
     }
 
@@ -227,6 +144,6 @@ public class Config {
      */
     protected void addDependency(String option, Supplier<Boolean> condition) {
         if (!optionNames.containsKey(option)) return;
-        optionNames.get(option).setDependency(condition);
+        optionNames.get(option).addDependency(condition);
     }
 }

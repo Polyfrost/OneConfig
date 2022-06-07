@@ -1,11 +1,12 @@
 package cc.polyfrost.oneconfig.gui.elements.config;
 
-import cc.polyfrost.oneconfig.gui.Colors;
+import cc.polyfrost.oneconfig.config.annotations.Dropdown;
+import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
 import cc.polyfrost.oneconfig.gui.animations.ColorAnimation;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
-import cc.polyfrost.oneconfig.renderer.image.SVGs;
+import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 import org.lwjgl.input.Mouse;
@@ -20,9 +21,14 @@ public class ConfigDropdown extends BasicOption {
     private final ColorAnimation atomColor = new ColorAnimation(new ColorPalette(Colors.PRIMARY_600, Colors.PRIMARY_500, Colors.PRIMARY_500));
     private boolean opened = false;
 
-    public ConfigDropdown(Field field, Object parent, String name, int size, String[] options) {
-        super(field, parent, name, size);
+    public ConfigDropdown(Field field, Object parent, String name, String category, String subcategory, int size, String[] options) {
+        super(field, parent, name, category, subcategory, size);
         this.options = options;
+    }
+
+    public static ConfigDropdown create(Field field, Object parent) {
+        Dropdown dropdown = field.getAnnotation(Dropdown.class);
+        return new ConfigDropdown(field, parent, dropdown.name(), dropdown.category(), dropdown.subcategory(), dropdown.size(), dropdown.options());
     }
 
     @Override

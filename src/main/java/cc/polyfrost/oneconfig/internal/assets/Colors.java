@@ -1,4 +1,4 @@
-package cc.polyfrost.oneconfig.gui;
+package cc.polyfrost.oneconfig.internal.assets;
 
 import java.awt.*;
 

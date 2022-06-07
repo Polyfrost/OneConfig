@@ -1,4 +1,4 @@
-package cc.polyfrost.oneconfig.config.migration.vigilance;
+package cc.polyfrost.oneconfig.config.migration;
 
 import java.lang.reflect.Field;
 

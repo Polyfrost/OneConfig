@@ -1,6 +1,7 @@
 package cc.polyfrost.oneconfig.gui.elements.config;
 
-import cc.polyfrost.oneconfig.gui.Colors;
+import cc.polyfrost.oneconfig.config.annotations.Slider;
+import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
 import cc.polyfrost.oneconfig.gui.elements.text.NumberInputField;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
@@ -19,12 +20,17 @@ public class ConfigSlider extends BasicOption {
     private boolean dragging = false;
     private boolean mouseWasDown = false;
 
-    public ConfigSlider(Field field, Object parent, String name, int size, float min, float max, int step) {
-        super(field, parent, name, size);
+    public ConfigSlider(Field field, Object parent, String name, String category, String subcategory, int size, float min, float max, int step) {
+        super(field, parent, name,category, subcategory, size);
         this.min = min;
         this.max = max;
         this.step = step;
         inputField = new NumberInputField(84, 32, 0, min, max, step == 0 ? 1 : step);
+    }
+
+    public static ConfigSlider create(Field field, Object parent) {
+        Slider slider = field.getAnnotation(Slider.class);
+        return new ConfigSlider(field, parent, slider.name(), slider.category(), slider.subcategory(), 2, slider.min(), slider.max(), slider.step());
     }
 
     @Override
@@ -106,10 +112,5 @@ public class ConfigSlider extends BasicOption {
     @Override
     public int getHeight() {
         return 32;
-    }
-
-    @Override
-    public boolean hasHalfSize() {
-        return false;
     }
 }

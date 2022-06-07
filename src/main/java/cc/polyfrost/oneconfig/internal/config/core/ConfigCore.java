@@ -1,4 +1,4 @@
-package cc.polyfrost.oneconfig.internal.config;
+package cc.polyfrost.oneconfig.internal.config.core;
 
 import cc.polyfrost.oneconfig.config.data.Mod;
 import cc.polyfrost.oneconfig.internal.hud.HudCore;

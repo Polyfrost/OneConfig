@@ -1,6 +1,6 @@
 package cc.polyfrost.oneconfig.gui.elements.config;
 
-import cc.polyfrost.oneconfig.gui.Colors;
+import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.config.elements.OptionPage;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
@@ -8,7 +8,7 @@ import cc.polyfrost.oneconfig.gui.animations.ColorAnimation;
 import cc.polyfrost.oneconfig.gui.pages.ModConfigPage;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
-import cc.polyfrost.oneconfig.renderer.image.SVGs;
+import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 import org.lwjgl.input.Mouse;
@@ -21,7 +21,7 @@ public class ConfigPageButton extends BasicOption {
     private final ColorAnimation backgroundColor = new ColorAnimation(ColorPalette.SECONDARY);
 
     public ConfigPageButton(Field field, Object parent, String name, String description, OptionPage page) {
-        super(field, parent, name, 2);
+        super(field, parent, name, "", "", 2);
         this.description = description;
         this.page = page;
     }
@@ -47,10 +47,5 @@ public class ConfigPageButton extends BasicOption {
     @Override
     public int getHeight() {
         return description.equals("") ? 64 : 96;
-    }
-
-    @Override
-    public boolean hasHalfSize() {
-        return false;
     }
 }

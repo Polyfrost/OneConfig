@@ -1,6 +1,6 @@
 package cc.polyfrost.oneconfig.internal;
 
-import cc.polyfrost.oneconfig.internal.config.ConfigCore;
+import cc.polyfrost.oneconfig.internal.config.core.ConfigCore;
 import cc.polyfrost.oneconfig.config.data.Mod;
 import cc.polyfrost.oneconfig.config.data.ModType;
 import cc.polyfrost.oneconfig.events.EventManager;

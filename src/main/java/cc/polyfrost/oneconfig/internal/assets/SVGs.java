@@ -1,10 +1,12 @@
-package cc.polyfrost.oneconfig.renderer.image;
+package cc.polyfrost.oneconfig.internal.assets;
+
+import cc.polyfrost.oneconfig.renderer.AssetLoader;
 
 /**
  * An enum of SVGs used in OneConfig.
  *
  * @see cc.polyfrost.oneconfig.renderer.RenderManager#drawSvg(long, String, float, float, float, float, int)
- * @see ImageLoader
+ * @see AssetLoader
  */
 public enum SVGs {
     ONECONFIG("/assets/oneconfig/icons/OneConfig.svg"),

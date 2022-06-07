@@ -1,6 +1,6 @@
 package cc.polyfrost.oneconfig.gui;
 
-import cc.polyfrost.oneconfig.internal.config.ConfigCore;
+import cc.polyfrost.oneconfig.internal.config.core.ConfigCore;
 import cc.polyfrost.oneconfig.hud.BasicHud;
 import cc.polyfrost.oneconfig.internal.hud.HudCore;
 import cc.polyfrost.oneconfig.renderer.RenderManager;

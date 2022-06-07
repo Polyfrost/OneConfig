@@ -1,14 +1,13 @@
 package cc.polyfrost.oneconfig.renderer;
 
-import cc.polyfrost.oneconfig.gui.Colors;
+import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.config.data.InfoType;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.renderer.font.Font;
 import cc.polyfrost.oneconfig.renderer.font.FontManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
-import cc.polyfrost.oneconfig.renderer.image.ImageLoader;
-import cc.polyfrost.oneconfig.renderer.image.Images;
-import cc.polyfrost.oneconfig.renderer.image.SVGs;
+import cc.polyfrost.oneconfig.internal.assets.Images;
+import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import cc.polyfrost.oneconfig.utils.NetworkUtils;
 import gg.essential.universal.UGraphics;
@@ -405,9 +404,9 @@ public final class RenderManager {
      * @see RenderManager#drawImage(long, String, float, float, float, float, int)
      */
     public static void drawImage(long vg, String filePath, float x, float y, float width, float height) {
-        if (ImageLoader.INSTANCE.loadImage(vg, filePath)) {
+        if (AssetLoader.INSTANCE.loadImage(vg, filePath)) {
             NVGPaint imagePaint = NVGPaint.calloc();
-            int image = ImageLoader.INSTANCE.getImage(filePath);
+            int image = AssetLoader.INSTANCE.getImage(filePath);
             nvgBeginPath(vg);
             nvgImagePattern(vg, x, y, width, height, 0, image, 1, imagePaint);
             nvgRect(vg, x, y, width, height);
@@ -429,9 +428,9 @@ public final class RenderManager {
      * @param color    The color.
      */
     public static void drawImage(long vg, String filePath, float x, float y, float width, float height, int color) {
-        if (ImageLoader.INSTANCE.loadImage(vg, filePath)) {
+        if (AssetLoader.INSTANCE.loadImage(vg, filePath)) {
             NVGPaint imagePaint = NVGPaint.calloc();
-            int image = ImageLoader.INSTANCE.getImage(filePath);
+            int image = AssetLoader.INSTANCE.getImage(filePath);
             nvgBeginPath(vg);
             nvgImagePattern(vg, x, y, width, height, 0, image, 1, imagePaint);
             nvgRGBA((byte) (color >> 16 & 0xFF), (byte) (color >> 8 & 0xFF), (byte) (color & 0xFF), (byte) (color >> 24 & 0xFF), imagePaint.innerColor());
@@ -472,9 +471,9 @@ public final class RenderManager {
      * @param radius   The radius.
      */
     public static void drawRoundImage(long vg, String filePath, float x, float y, float width, float height, float radius) {
-        if (ImageLoader.INSTANCE.loadImage(vg, filePath)) {
+        if (AssetLoader.INSTANCE.loadImage(vg, filePath)) {
             NVGPaint imagePaint = NVGPaint.calloc();
-            int image = ImageLoader.INSTANCE.getImage(filePath);
+            int image = AssetLoader.INSTANCE.getImage(filePath);
             nvgBeginPath(vg);
             nvgImagePattern(vg, x, y, width, height, 0, image, 1, imagePaint);
             nvgRoundedRect(vg, x, y, width, height, radius);
@@ -636,9 +635,9 @@ public final class RenderManager {
             w *= OneConfigGui.INSTANCE.getScaleFactor();
             h *= OneConfigGui.INSTANCE.getScaleFactor();
         }
-        if (ImageLoader.INSTANCE.loadSVG(vg, filePath, w, h)) {
+        if (AssetLoader.INSTANCE.loadSVG(vg, filePath, w, h)) {
             NVGPaint imagePaint = NVGPaint.calloc();
-            int image = ImageLoader.INSTANCE.getSVG(filePath, w, h);
+            int image = AssetLoader.INSTANCE.getSVG(filePath, w, h);
             nvgBeginPath(vg);
             nvgImagePattern(vg, x, y, width, height, 0, image, 1, imagePaint);
             nvgRect(vg, x, y, width, height);
@@ -666,9 +665,9 @@ public final class RenderManager {
             w *= OneConfigGui.INSTANCE.getScaleFactor();
             h *= OneConfigGui.INSTANCE.getScaleFactor();
         }
-        if (ImageLoader.INSTANCE.loadSVG(vg, filePath, w, h)) {
+        if (AssetLoader.INSTANCE.loadSVG(vg, filePath, w, h)) {
             NVGPaint imagePaint = NVGPaint.calloc();
-            int image = ImageLoader.INSTANCE.getSVG(filePath, w, h);
+            int image = AssetLoader.INSTANCE.getSVG(filePath, w, h);
             nvgBeginPath(vg);
             nvgImagePattern(vg, x, y, width, height, 0, image, 1, imagePaint);
             nvgRGBA((byte) (color >> 16 & 0xFF), (byte) (color >> 8 & 0xFF), (byte) (color & 0xFF), (byte) (color >> 24 & 0xFF), imagePaint.innerColor());
