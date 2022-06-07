@@ -34,17 +34,15 @@ jobs:
         java-version: 17
         distribution: temurin
         cache: gradle
-        
-    - name: Cache Loom
-      id: cache
-      uses: actions/cache@v2
-      with:
-        path: |
-         ./.gradle/loom-cache
-        key: ${{ runner.os }}-loom-cache-jdk17-${{ hashFiles('./build.gradle.kts') }}
 
     - name: Chmod Gradle
       run: chmod +x ./gradlew
 
     - name: Build
       run: ./gradlew build --no-daemon
+
+    - name: Upload Build Artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: ${{ matrix.version }} Artifacts
+        path: versions/${{ matrix.version }}/build/libs/
