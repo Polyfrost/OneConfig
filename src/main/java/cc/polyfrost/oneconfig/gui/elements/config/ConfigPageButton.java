@@ -20,8 +20,8 @@ public class ConfigPageButton extends BasicOption {
     public final String description;
     private final ColorAnimation backgroundColor = new ColorAnimation(ColorPalette.SECONDARY);
 
-    public ConfigPageButton(Field field, Object parent, String name, String description, OptionPage page) {
-        super(field, parent, name, "", "", 2);
+    public ConfigPageButton(Field field, Object parent, String name, String description, String category, String subcategory, OptionPage page) {
+        super(field, parent, name, category, subcategory, 2);
         this.description = description;
         this.page = page;
     }

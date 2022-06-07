@@ -9,6 +9,7 @@ import cc.polyfrost.oneconfig.gui.elements.text.TextInputField;
 import cc.polyfrost.oneconfig.gui.pages.ModsPage;
 import cc.polyfrost.oneconfig.gui.pages.Page;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
+import cc.polyfrost.oneconfig.internal.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
@@ -23,6 +24,7 @@ import gg.essential.universal.UScreen;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.input.Mouse;
+import org.lwjgl.nanovg.NanoVG;
 
 import java.util.ArrayList;
 
@@ -73,6 +75,10 @@ public class OneConfigGui extends UScreen {
             if (currentPage == null) {
                 currentPage = new ModsPage();
                 parents.add(currentPage);
+            }
+            if (OneConfigConfig.australia) {
+                NanoVG.nvgTranslate(vg, UResolution.getWindowWidth(), UResolution.getWindowHeight());
+                NanoVG.nvgRotate(vg, (float) Math.toRadians(180));
             }
             scale = Math.min(UResolution.getWindowWidth() / 1920f, UResolution.getWindowHeight() / 1080f);
             if (scale < 1)

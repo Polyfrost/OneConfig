@@ -16,13 +16,13 @@ public class TestConfig extends Config {
             name = "Test Switch",
             size = 2
     )
-    boolean testSwitch = false;
+    public boolean testSwitch = false;
 
     @Checkbox(
             name = "Check box",
             size = 2
     )
-    boolean testCheckBox = true;
+    public static boolean testCheckBox = true;
 
     @Info(
             text = "Test Info",
@@ -42,11 +42,11 @@ public class TestConfig extends Config {
             options = {"option1", "option2", "option3"},
             size = 2
     )
-    int testDropdown = 0;
+    private int testDropdown = 0;
 
     @Color(
             name = "Test Color",
-            size =  2
+            size = 2
     )
     OneColor testColor = new OneColor(0, 255, 255);
 
@@ -54,7 +54,7 @@ public class TestConfig extends Config {
             name = "Test Text",
             size = 2
     )
-    String testText = "Epic Text";
+    private static String testText = "Epic Text";
 
     @Button(
             name = "Test Button",
@@ -83,6 +83,21 @@ public class TestConfig extends Config {
     )
     boolean testDualOption = false;
 
+    @Page(
+            name = "Test Page",
+            location = PageLocation.TOP
+
+    )
+    public TestPage testPage = new TestPage();
+
+    @Page(
+            name = "Test Page",
+            description = "Test Description",
+            location = PageLocation.BOTTOM
+
+    )
+    public TestPage testPage2 = new TestPage();
+
     @Switch(
             name = "Test Switch",
             size = 2,
@@ -98,6 +113,11 @@ public class TestConfig extends Config {
     )
     boolean testSwitch2 = false;
 
+    @HUD(
+            name = "Test HUD",
+            category = "HUD"
+    )
+    public TestHud hud = new TestHud(false, 0, 0);
 
     public TestConfig() {
         super(new Mod("Test Mod", ModType.UTIL_QOL, new VigilanceMigrator("./config/testConfig.toml")), "hacksConfig.json");

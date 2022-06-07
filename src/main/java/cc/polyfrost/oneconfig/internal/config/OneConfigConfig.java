@@ -17,6 +17,7 @@ public class OneConfigConfig extends Config {
     public static ArrayList<OneColor> favoriteColors = new ArrayList<>();
     public static ArrayList<OneColor> recentColors = new ArrayList<>();
     public static boolean allShowShortCut = false;
+    public static boolean australia = false;
 
     public OneConfigConfig() {
         super(null, "OneConfig.json");

@@ -9,7 +9,7 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
-public @interface ConfigPage {
+public @interface Page {
     /**
      * The name of the page that will be displayed to the user
      */

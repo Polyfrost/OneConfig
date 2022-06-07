@@ -52,27 +52,23 @@ public class ConfigUtils {
         return options;
     }
 
-    public static void addOptionToPage(OptionPage page, Option option, Field field, Object instance, @Nullable Migrator migrator) {
+    public static BasicOption addOptionToPage(OptionPage page, Option option, Field field, Object instance, @Nullable Migrator migrator) {
         BasicOption configOption = getOption(option, field, instance);
-        if (configOption == null) return;
+        if (configOption == null) return null;
         if (migrator != null) {
             Object value = migrator.getValue(field, configOption.name, configOption.category, configOption.subcategory);
-            if (value != null) {
-                try {
-                    field.set(instance, value);
-                } catch (IllegalAccessException ignored) {
-                }
-            }
+            if (value != null) setField(field, value, instance);
         }
-        getOptions(page, configOption.category, configOption.subcategory).add(configOption);
+        getSubCategory(page, configOption.category, configOption.subcategory).options.add(configOption);
+        return configOption;
     }
 
-    public static ArrayList<BasicOption> getOptions(OptionPage page, String categoryName, String subcategoryName) {
+    public static OptionSubcategory getSubCategory(OptionPage page, String categoryName, String subcategoryName) {
         if (!page.categories.containsKey(categoryName)) page.categories.put(categoryName, new OptionCategory());
         OptionCategory category = page.categories.get(categoryName);
         if (category.subcategories.size() == 0 || !category.subcategories.get(category.subcategories.size() - 1).getName().equals(subcategoryName))
             category.subcategories.add(new OptionSubcategory(subcategoryName));
-        return category.subcategories.get(category.subcategories.size() - 1).options;
+        return category.subcategories.get(category.subcategories.size() - 1);
     }
 
     public static <T extends Annotation> T findAnnotation(Field field, Class<T> annotationType) {
@@ -81,5 +77,22 @@ public class ConfigUtils {
                 return ann.annotationType().getAnnotation(annotationType);
         }
         return null;
+    }
+
+    public static Object getField(Field field, Object parent) {
+        try {
+            field.setAccessible(true);
+            return field.get(parent);
+        } catch (IllegalAccessException ignored) {
+            return null;
+        }
+    }
+
+    public static void setField(Field field, Object value, Object parent) {
+        try {
+            field.setAccessible(true);
+            field.set(parent, value);
+        } catch (IllegalAccessException ignored) {
+        }
     }
 }

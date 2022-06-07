@@ -1,5 +1,7 @@
 package cc.polyfrost.oneconfig.test;
 
+import cc.polyfrost.oneconfig.config.annotations.Switch;
+import cc.polyfrost.oneconfig.config.annotations.Text;
 import cc.polyfrost.oneconfig.hud.TextHud;
 import net.minecraft.client.Minecraft;
 
@@ -19,7 +21,13 @@ public class TestHud extends TextHud {
         return lines;
     }
 
+    @Switch(
+            name = "Has Second Line"
+    )
     public boolean hasSecondLine = false;
 
+    @Text(
+            name = "Second Line Text"
+    )
     public String secondLine = "Epic text";
 }
