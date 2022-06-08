@@ -1,5 +1,6 @@
 package cc.polyfrost.oneconfig.config.compatibility.vigilance;
 
+import cc.polyfrost.oneconfig.config.core.ConfigUtils;
 import cc.polyfrost.oneconfig.internal.config.core.ConfigCore;
 import cc.polyfrost.oneconfig.config.core.OneColor;
 import cc.polyfrost.oneconfig.config.data.Mod;
@@ -55,49 +56,44 @@ public class VigilanceConfig extends Config {
     }
 
     private void generateOptionsList(OptionPage page) {
-        /*for (PropertyData option : ((VigilantAccessor) vigilant).getPropertyCollector().getProperties()) {
+        for (PropertyData option : ((VigilantAccessor) vigilant).getPropertyCollector().getProperties()) {
             PropertyAttributesExt attributes = option.getAttributesExt();
             if (attributes.getHidden()) continue;
-            if (!page.categories.containsKey(getCategory(attributes)))
-                page.categories.put(getCategory(attributes), new OptionCategory());
-            OptionCategory category = page.categories.get(getCategory(attributes));
-            if (category.subcategories.size() == 0 || !category.subcategories.get(category.subcategories.size() - 1).getName().equals(getSubcategory(attributes)))
-                category.subcategories.add(new OptionSubcategory(getSubcategory(attributes)));
-            ArrayList<BasicOption> options = category.subcategories.get(category.subcategories.size() - 1).options;
+            ArrayList<BasicOption> options = ConfigUtils.getSubCategory(page, getCategory(attributes), getSubcategory(attributes)).options;
             switch (attributes.getType()) {
                 case SWITCH:
-                    options.add(new ConfigSwitch(getFieldOfProperty(option), option.getInstance(), getName(attributes), "", "", 2));
+                    options.add(new ConfigSwitch(getFieldOfProperty(option), option.getInstance(), getName(attributes), getCategory(attributes), getSubcategory(attributes), 2));
                     break;
                 case CHECKBOX:
-                    options.add(new ConfigCheckbox(getFieldOfProperty(option), option.getInstance(), getName(attributes), 2));
+                    options.add(new ConfigCheckbox(getFieldOfProperty(option), option.getInstance(), getName(attributes),getCategory(attributes), getSubcategory(attributes), 2));
                     break;
                 case PARAGRAPH:
                 case TEXT:
-                    options.add(new ConfigTextBox(getFieldOfProperty(option), option.getInstance(), getName(attributes), 2, attributes.getPlaceholder(), attributes.getProtected(), attributes.getType() == PropertyType.PARAGRAPH));
+                    options.add(new ConfigTextBox(getFieldOfProperty(option), option.getInstance(), getName(attributes), getCategory(attributes), getSubcategory(attributes), 2, attributes.getPlaceholder(), attributes.getProtected(), attributes.getType() == PropertyType.PARAGRAPH));
                     break;
                 case SELECTOR:
-                    options.add(new ConfigDropdown(getFieldOfProperty(option), option.getInstance(), getName(attributes), 2, attributes.getOptions().toArray(new String[0])));
+                    options.add(new ConfigDropdown(getFieldOfProperty(option), option.getInstance(), getName(attributes), getCategory(attributes), getSubcategory(attributes), 2, attributes.getOptions().toArray(new String[0])));
                     break;
                 case PERCENT_SLIDER:
-                    options.add(new ConfigSlider(getFieldOfProperty(option), option.getInstance(), getName(attributes), 2, 0, 1, 0));
+                    options.add(new ConfigSlider(getFieldOfProperty(option), option.getInstance(), getName(attributes), getCategory(attributes), getSubcategory(attributes), 0, 1, 0));
                     break;
                 case DECIMAL_SLIDER:
-                    options.add(new ConfigSlider(getFieldOfProperty(option), option.getInstance(), getName(attributes), 2, attributes.getMinF(), attributes.getMaxF(), 0));
+                    options.add(new ConfigSlider(getFieldOfProperty(option), option.getInstance(), getName(attributes), getCategory(attributes), getSubcategory(attributes), attributes.getMinF(), attributes.getMaxF(), 0));
                     break;
                 case SLIDER:
-                    options.add(new ConfigSlider(getFieldOfProperty(option), option.getInstance(), getName(attributes), 2, attributes.getMin(), attributes.getMax(), 0));
+                    options.add(new ConfigSlider(getFieldOfProperty(option), option.getInstance(), getName(attributes), getCategory(attributes), getSubcategory(attributes), attributes.getMin(), attributes.getMax(), 0));
                     break;
                 case COLOR:
-                    options.add(new CompatConfigColorElement(getFieldOfProperty(option), option.getInstance(), getName(attributes), 2));
+                    options.add(new CompatConfigColorElement(getFieldOfProperty(option), option.getInstance(), getCategory(attributes), getSubcategory(attributes), getName(attributes), 2));
                     break;
                 case BUTTON:
-                    options.add(new ConfigButton(() -> ((CallablePropertyValue) option.getValue()).invoke(option.getInstance()), option.getInstance(), getName(attributes), 2, attributes.getPlaceholder().isEmpty() ? "Activate" : attributes.getPlaceholder()));
+                    options.add(new ConfigButton(() -> ((CallablePropertyValue) option.getValue()).invoke(option.getInstance()), option.getInstance(), getName(attributes), getCategory(attributes), getSubcategory(attributes), 2, attributes.getPlaceholder().isEmpty() ? "Activate" : attributes.getPlaceholder()));
                     break;
             }
             if (attributes.getType() == PropertyType.SWITCH || attributes.getType() == PropertyType.CHECKBOX) {
                 optionNames.put(PropertyKt.fullPropertyPath(option.getAttributesExt()), options.get(options.size() - 1));
             }
-        }*/
+        }
     }
 
     private Field getFieldOfProperty(PropertyData data) {
@@ -167,13 +163,13 @@ public class VigilanceConfig extends Config {
         }
     }
 
-    /*private static class CompatConfigColorElement extends ConfigColorElement {
+    private static class CompatConfigColorElement extends ConfigColorElement {
         private final Field color;
         private Color prevColor = null;
         private OneColor cachedColor = null;
 
-        public CompatConfigColorElement(Field color, Vigilant parent, String name, int size) {
-            super(null, parent, name, size);
+        public CompatConfigColorElement(Field color, Vigilant parent, String name, String category, String subcategory, int size) {
+            super(null, parent, name, category, subcategory, size);
             this.color = color;
         }
 
@@ -198,5 +194,5 @@ public class VigilanceConfig extends Config {
                 }
             }
         }
-    }*/
+    }
 }

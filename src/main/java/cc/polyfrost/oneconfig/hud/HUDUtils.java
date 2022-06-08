@@ -31,13 +31,13 @@ public class HUDUtils {
             options.get(options.size() - 1).addDependency(() -> hud.enabled);
             options.add(new ConfigColorElement(hud.getClass().getField("borderColor"), hud, "Border color:", category, subcategory, 1));
             options.get(options.size() - 1).addDependency(() -> hud.enabled && hud.border);
-            options.add(new ConfigSlider(hud.getClass().getField("cornerRadius"), hud, "Corner radius:", category, subcategory, 2, 0, 10, 0));
+            options.add(new ConfigSlider(hud.getClass().getField("cornerRadius"), hud, "Corner radius:", category, subcategory, 0, 10, 0));
             options.get(options.size() - 1).addDependency(() -> hud.enabled && hud.rounded);
-            options.add(new ConfigSlider(hud.getClass().getField("borderSize"), hud, "Border thickness:", category, subcategory, 2, 0, 10, 0));
+            options.add(new ConfigSlider(hud.getClass().getField("borderSize"), hud, "Border thickness:", category, subcategory, 0, 10, 0));
             options.get(options.size() - 1).addDependency(() -> hud.enabled && hud.border);
-            options.add(new ConfigSlider(hud.getClass().getField("paddingX"), hud, "X-Padding", category, subcategory, 2, 0, 50, 0));
+            options.add(new ConfigSlider(hud.getClass().getField("paddingX"), hud, "X-Padding", category, subcategory, 0, 50, 0));
             options.get(options.size() - 1).addDependency(() -> hud.enabled);
-            options.add(new ConfigSlider(hud.getClass().getField("paddingY"), hud, "Y-Padding", category, subcategory, 2, 0, 50, 0));
+            options.add(new ConfigSlider(hud.getClass().getField("paddingY"), hud, "Y-Padding", category, subcategory, 0, 50, 0));
             options.get(options.size() - 1).addDependency(() -> hud.enabled);
         } catch (NoSuchFieldException ignored) {
         }
