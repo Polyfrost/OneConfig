@@ -10,8 +10,12 @@ public final class EventManager {
     /**
      * The instance of the {@link EventManager}.
      */
-    public static final EventManager INSTANCE = new EventManager();
+    private static final EventManager INSTANCE = new EventManager();
     private final EventBus eventBus = new EventBus(new LMFInvoker(), Throwable::printStackTrace);
+
+    public static EventManager getEventManager() {
+        return INSTANCE;
+    }
 
     private EventManager() {
 
