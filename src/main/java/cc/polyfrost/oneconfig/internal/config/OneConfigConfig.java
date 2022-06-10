@@ -13,6 +13,12 @@ import java.util.ArrayList;
 
 public class OneConfigConfig extends Config {
     public static String currentProfile = "Default Profile";
+    public static boolean autoUpdate = true;
+    /**
+     * 0 = Releases
+     * 1 = Pre-Releases
+     */
+    public static int updateChannel = 0;
     public static ArrayList<String> favoriteMods = new ArrayList<>();
     public static ArrayList<OneColor> favoriteColors = new ArrayList<>();
     public static ArrayList<OneColor> recentColors = new ArrayList<>();
