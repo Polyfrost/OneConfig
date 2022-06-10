@@ -174,7 +174,7 @@ public class VigilanceConfig extends Config {
         }
 
         @Override
-        protected Object get() throws IllegalAccessException {
+        public Object get() throws IllegalAccessException {
             Color currentColor = (Color) color.get(parent);
             if (cachedColor == null || prevColor != color.get(parent)) {
                 cachedColor = new OneColor(currentColor);
