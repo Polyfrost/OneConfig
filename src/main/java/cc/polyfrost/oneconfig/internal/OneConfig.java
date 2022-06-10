@@ -63,8 +63,8 @@ public class OneConfig {
         testConfig = new TestConfig();
         CommandManager.INSTANCE.registerCommand(OneConfigCommand.class);
         CommandManager.INSTANCE.registerCommand(TestCommand.class);
-        EventManager.INSTANCE.register(new HudCore());
-        EventManager.INSTANCE.register(HypixelUtils.INSTANCE);
+        EventManager.getEventManager().register(new HudCore());
+        EventManager.getEventManager().register(HypixelUtils.INSTANCE);
         reloadModsList();
         initialized = true;
     }

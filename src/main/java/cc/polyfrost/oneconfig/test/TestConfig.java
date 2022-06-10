@@ -14,45 +14,45 @@ public class TestConfig extends Config {
 
     @Switch(
             name = "Test Switch",
-            size = 2
+            size = OptionSize.DUAL
     )
     public boolean testSwitch = false;
 
     @Checkbox(
             name = "Check box",
-            size = 2
+            size = OptionSize.DUAL
     )
     public static boolean testCheckBox = true;
 
     @Info(
             text = "Test Info",
             type = InfoType.ERROR,
-            size = 2
+            size = OptionSize.DUAL
     )
     boolean ignored;
 
     @Header(
             text = "Test Header",
-            size = 2
+            size = OptionSize.DUAL
     )
     boolean ignored1;
 
     @Dropdown(
             name = "Test Dropdown",
             options = {"option1", "option2", "option3"},
-            size = 2
+            size = OptionSize.DUAL
     )
     private int testDropdown = 0;
 
     @Color(
             name = "Test Color",
-            size = 2
+            size = OptionSize.DUAL
     )
     OneColor testColor = new OneColor(0, 255, 255);
 
     @Text(
             name = "Test Text",
-            size = 2
+            size = OptionSize.DUAL
     )
     private static String testText = "Epic Text";
 
@@ -71,7 +71,7 @@ public class TestConfig extends Config {
 
     @KeyBind(
             name = "Test KeyBind",
-            size = 2
+            size = OptionSize.DUAL
     )
     OneKeyBind testKeyBind = new OneKeyBind(UKeyboard.KEY_LSHIFT, UKeyboard.KEY_S);
 
@@ -79,7 +79,7 @@ public class TestConfig extends Config {
             name = "Test Dual Option",
             left = "YES",
             right = "NO",
-            size = 2
+            size = OptionSize.DUAL
     )
     boolean testDualOption = false;
 
@@ -100,14 +100,14 @@ public class TestConfig extends Config {
 
     @Switch(
             name = "Test Switch",
-            size = 2,
+            size = OptionSize.DUAL,
             category = "Category 2"
     )
     boolean testSwitch1 = false;
 
     @Switch(
             name = "Test Switch",
-            size = 2,
+            size = OptionSize.DUAL,
             category = "Category 2",
             subcategory = "Test Subcategory"
     )

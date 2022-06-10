@@ -12,6 +12,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class GuiIngameForgeMixin {
     @Inject(method = "renderGameOverlay", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/client/GuiIngameForge;post(Lnet/minecraftforge/client/event/RenderGameOverlayEvent$ElementType;)V", shift = At.Shift.AFTER, remap = false), remap = true)
     private void onRenderGameOverlay(float partialTicks, CallbackInfo ci) {
-        EventManager.INSTANCE.post(new HudRenderEvent(partialTicks));
+        EventManager.getEventManager().post(new HudRenderEvent(partialTicks));
     }
 }

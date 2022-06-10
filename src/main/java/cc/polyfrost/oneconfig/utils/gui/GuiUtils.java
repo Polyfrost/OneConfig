@@ -17,7 +17,7 @@ public final class GuiUtils {
     private static long deltaTime = 17L;
 
     static {
-        EventManager.INSTANCE.register(new GuiUtils());
+        EventManager.getEventManager().register(new GuiUtils());
     }
 
     /**

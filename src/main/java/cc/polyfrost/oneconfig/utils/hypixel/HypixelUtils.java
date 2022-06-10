@@ -123,7 +123,7 @@ public class HypixelUtils {
                     previousLocraw = parsed;
                     inGame = true; // If your gamemode does not return "lobby", boolean inGame is true.
                 }
-                EventManager.INSTANCE.post(new LocrawEvent(locraw));
+                EventManager.getEventManager().post(new LocrawEvent(locraw));
                 event.isCancelled = true;
             }
         } catch (Exception ex) {

@@ -22,15 +22,15 @@ import java.util.List;
 /**
  * An implementation of the BlurMC mod by tterrag1098.
  * <p>
- * For the original source see https://github.com/tterrag1098/Blur/blob/1.8.9/src/main/java/com/tterrag/blur/Blur.java
- * For the public license, see https://github.com/tterrag1098/Blur/blob/1.8.9/LICENSE
+ * For the original source see <a href="https://github.com/tterrag1098/Blur/blob/1.8.9/src/main/java/com/tterrag/blur/Blur.java">...</a>
+ * For the public license, see <a href="https://github.com/tterrag1098/Blur/blob/1.8.9/LICENSE">...</a>
  * <p>
- * License available under https://github.com/boomboompower/ToggleChat/blob/master/src/main/resources/licenses/BlurMC-License.txt
+ * License available under <a href="https://github.com/boomboompower/ToggleChat/blob/master/src/main/resources/licenses/BlurMC-License.txt">...</a>
  *
  * @author tterrag1098, boomboompower
  * <p>
  * Taken from ToggleChat
- * https://github.com/boomboompower/ToggleChat/blob/master/LICENSE
+ * <a href="https://github.com/boomboompower/ToggleChat/blob/master/LICENSE">...</a>
  */
 public class BlurHandler {
     public static BlurHandler INSTANCE = new BlurHandler();
@@ -43,7 +43,7 @@ public class BlurHandler {
      * Simply initializes the blur mod so events are properly handled by forge.
      */
     public void load() {
-        EventManager.INSTANCE.register(this);
+        EventManager.getEventManager().register(this);
     }
 
     @Subscribe
