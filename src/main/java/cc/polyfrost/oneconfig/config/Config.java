@@ -177,6 +177,34 @@ public class Config {
     }
 
     /**
+     * Disable an option if a certain condition is not met
+     *
+     * @param option          The name of the field, or if the field is in a page "pageName.fieldName"
+     * @param dependentOption The option that has to be enabled
+     */
+    protected void addDependency(String option, String dependentOption) {
+        if (!optionNames.containsKey(option) || !optionNames.containsKey(dependentOption)) return;
+        optionNames.get(option).addDependency(() -> {
+            try {
+                return (boolean) optionNames.get(dependentOption).get();
+            } catch (IllegalAccessException ignored) {
+                return true;
+            }
+        });
+    }
+
+    /**
+     * Disable an option if a certain condition is not met
+     *
+     * @param option  The name of the field, or if the field is in a page "pageName.fieldName"
+     * @param value  The value of the dependency
+     */
+    protected void addDependency(String option, boolean value) {
+        if (!optionNames.containsKey(option)) return;
+        optionNames.get(option).addDependency(() -> value);
+    }
+
+    /**
      * Register a new listener for when an option changes
      *
      * @param option   The name of the field, or if the field is in a page "pageName.fieldName"

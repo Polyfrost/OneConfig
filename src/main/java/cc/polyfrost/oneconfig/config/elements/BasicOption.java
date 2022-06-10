@@ -44,7 +44,7 @@ public abstract class BasicOption {
     /**
      * @return value of variable as Java object
      */
-    protected Object get() throws IllegalAccessException {
+    public Object get() throws IllegalAccessException {
         if (field == null) return null;
         return field.get(parent);
     }
