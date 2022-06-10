@@ -83,7 +83,7 @@ public class ConfigUtils {
         try {
             field.setAccessible(true);
             return field.get(parent);
-        } catch (IllegalAccessException ignored) {
+        } catch (Exception ignored) {
             return null;
         }
     }
@@ -92,7 +92,7 @@ public class ConfigUtils {
         try {
             field.setAccessible(true);
             field.set(parent, value);
-        } catch (IllegalAccessException ignored) {
+        } catch (Exception ignored) {
         }
     }
 }
