@@ -10,7 +10,7 @@ import cc.polyfrost.oneconfig.config.migration.VigilanceMigrator;
 import gg.essential.universal.UKeyboard;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 
-public class TestConfig extends Config {
+public class TestConfig_Test extends Config {
 
     @Switch(
             name = "Test Switch",
@@ -88,7 +88,7 @@ public class TestConfig extends Config {
             location = PageLocation.TOP
 
     )
-    public TestPage testPage = new TestPage();
+    public TestPage_Test testPage = new TestPage_Test();
 
     @Page(
             name = "Test Page",
@@ -96,7 +96,7 @@ public class TestConfig extends Config {
             location = PageLocation.BOTTOM
 
     )
-    public TestPage testPage2 = new TestPage();
+    public TestPage_Test testPage2 = new TestPage_Test();
 
     @Switch(
             name = "Test Switch",
@@ -117,9 +117,9 @@ public class TestConfig extends Config {
             name = "Test HUD",
             category = "HUD"
     )
-    public TestHud hud = new TestHud(false, 0, 0);
+    public TestHud_Test hud = new TestHud_Test(false, 0, 0);
 
-    public TestConfig() {
+    public TestConfig_Test() {
         super(new Mod("Test Mod", ModType.UTIL_QOL, new VigilanceMigrator("./config/testConfig.toml")), "hacksConfig.json");
     }
 }

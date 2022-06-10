@@ -1,17 +1,15 @@
 package cc.polyfrost.oneconfig.internal;
 
-import cc.polyfrost.oneconfig.internal.config.core.ConfigCore;
 import cc.polyfrost.oneconfig.config.data.Mod;
 import cc.polyfrost.oneconfig.config.data.ModType;
 import cc.polyfrost.oneconfig.events.EventManager;
-import cc.polyfrost.oneconfig.internal.hud.HudCore;
-import cc.polyfrost.oneconfig.internal.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.internal.command.OneConfigCommand;
+import cc.polyfrost.oneconfig.internal.config.OneConfigConfig;
+import cc.polyfrost.oneconfig.internal.config.core.ConfigCore;
 import cc.polyfrost.oneconfig.internal.gui.BlurHandler;
-import cc.polyfrost.oneconfig.test.TestCommand;
-import cc.polyfrost.oneconfig.test.TestConfig;
-import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
+import cc.polyfrost.oneconfig.internal.hud.HudCore;
 import cc.polyfrost.oneconfig.utils.commands.CommandManager;
+import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 import cc.polyfrost.oneconfig.utils.hypixel.HypixelUtils;
 import net.minecraftforge.fml.common.DummyModContainer;
 import net.minecraftforge.fml.common.Loader;
@@ -32,7 +30,6 @@ public class OneConfig {
     public static final List<Mod> loadedMods = new ArrayList<>();
     public static final List<ModMetadata> loadedOtherMods = new ArrayList<>();
     public static OneConfigConfig config;
-    public static TestConfig testConfig;
     private static boolean preLaunched = false;
     private static boolean initialized = false;
 
@@ -60,9 +57,7 @@ public class OneConfig {
         if (initialized) return;
         GuiUtils.getDeltaTime(); // called to make sure static initializer is called
         BlurHandler.INSTANCE.load();
-        testConfig = new TestConfig();
         CommandManager.INSTANCE.registerCommand(OneConfigCommand.class);
-        CommandManager.INSTANCE.registerCommand(TestCommand.class);
         EventManager.getEventManager().register(new HudCore());
         EventManager.getEventManager().register(HypixelUtils.INSTANCE);
         reloadModsList();

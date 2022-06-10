@@ -8,8 +8,8 @@ import net.minecraft.client.Minecraft;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TestHud extends TextHud {
-    public TestHud(boolean enabled, int x, int y) {
+public class TestHud_Test extends TextHud {
+    public TestHud_Test(boolean enabled, int x, int y) {
         super(enabled, x, y);
     }
 

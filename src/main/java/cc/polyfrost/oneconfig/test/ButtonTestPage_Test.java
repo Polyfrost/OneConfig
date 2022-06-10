@@ -7,7 +7,7 @@ import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 
 import java.util.ArrayList;
 
-public class ButtonTestPage extends Page {
+public class ButtonTestPage_Test extends Page {
     private final ArrayList<BasicButton> row1 = new ArrayList<BasicButton>() {{
         add(new BasicButton(254, 48, "Primary", BasicButton.ALIGNMENT_LEFT, ColorPalette.PRIMARY));
         add(new BasicButton(254, 48, "Primary Destructive", BasicButton.ALIGNMENT_LEFT, ColorPalette.PRIMARY_DESTRUCTIVE));
@@ -42,7 +42,7 @@ public class ButtonTestPage extends Page {
         add(new BasicButton(254, 48, "Disabled :(", SVGs.BOX, SVGs.BOX, BasicButton.ALIGNMENT_JUSTIFIED, ColorPalette.PRIMARY));
     }};
 
-    public ButtonTestPage() {
+    public ButtonTestPage_Test() {
         super("Buttons");
         row3.get(3).disable(true);
         row3.get(4).disable(true);

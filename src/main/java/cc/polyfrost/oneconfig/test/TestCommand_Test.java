@@ -7,7 +7,7 @@ import cc.polyfrost.oneconfig.utils.commands.annotations.SubCommand;
 import gg.essential.universal.UChat;
 
 @Command(value = "test", aliases = {"t"})
-public class TestCommand {
+public class TestCommand_Test {
 
     @Main
     private static void main() {  // /test

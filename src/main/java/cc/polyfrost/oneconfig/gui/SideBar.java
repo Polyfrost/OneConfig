@@ -10,7 +10,6 @@ import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
-import cc.polyfrost.oneconfig.test.ButtonTestPage;
 import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 
@@ -41,7 +40,6 @@ public class SideBar {
     public SideBar() {
         buttons.get(0).setClickAction(new CreditsPage());
         buttons.get(2).setClickAction(new ModsPage());
-        buttons.get(8).setClickAction(new ButtonTestPage());
         HUDButton.setClickAction(() -> GuiUtils.displayScreen(new HudGui()));
         CloseButton.setClickAction(GuiUtils::closeScreen);
         for (BasicButton button : buttons) {
