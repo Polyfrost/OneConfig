@@ -175,4 +175,15 @@ public class Config {
         if (!optionNames.containsKey(option)) return;
         optionNames.get(option).addDependency(condition);
     }
+
+    /**
+     * Register a new listener for when an option changes
+     *
+     * @param option   The name of the field, or if the field is in a page "pageName.fieldName"
+     * @param runnable What should be executed after the option is changed
+     */
+    protected void addListener(String option, Runnable runnable) {
+        if (!optionNames.containsKey(option)) return;
+        optionNames.get(option).addListener(runnable);
+    }
 }

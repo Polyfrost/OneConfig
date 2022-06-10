@@ -13,6 +13,7 @@ public abstract class BasicOption {
     public final String category;
     public final String subcategory;
     private final ArrayList<Supplier<Boolean>> dependencies = new ArrayList<>();
+    private final ArrayList<Runnable> listeners = new ArrayList<>();
 
     /**
      * Initialize option
@@ -83,6 +84,16 @@ public abstract class BasicOption {
     }
 
     /**
+     * @return If the option is enabled, based on the dependencies
+     */
+    protected boolean isEnabled() {
+        for (Supplier<Boolean> dependency : dependencies) {
+            if (!dependency.get()) return false;
+        }
+        return true;
+    }
+
+    /**
      * Add a condition to this option
      *
      * @param supplier The dependency
@@ -92,12 +103,11 @@ public abstract class BasicOption {
     }
 
     /**
-     * @return If the option is enabled, based on the dependencies
+     * Add a listener to this option
+     *
+     * @param runnable The listener
      */
-    protected boolean isEnabled() {
-        for (Supplier<Boolean> dependency : dependencies) {
-            if (!dependency.get()) return false;
-        }
-        return true;
+    public void addListener(Runnable runnable) {
+        this.listeners.add(runnable);
     }
 }
