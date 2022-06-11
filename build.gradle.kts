@@ -237,7 +237,6 @@ tasks {
                     "TweakOrder" to "0",
                     "MixinConfigs" to "mixins.oneconfig.json",
                     "TweakClass" to "org.spongepowered.asm.launch.MixinTweaker",
-                    "FMLCorePlugin" to "cc.polyfrost.oneconfig.internal.plugin.LoadingPlugin",
                     "FMLCorePluginContainsFMLMod" to "lol"
                 )
             )

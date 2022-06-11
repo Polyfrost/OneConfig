@@ -17,7 +17,6 @@ public class LoadingPlugin implements IFMLLoadingPlugin {
      * <a href="https://github.com/DJtheRedstoner/LWJGLTwoPointFive/blob/master/LICENSE/">https://github.com/DJtheRedstoner/LWJGLTwoPointFive/blob/master/LICENSE/</a>
      */
     public LoadingPlugin() {
-        if (Launch.blackboard.containsKey("oneconfig.init.initialized")) return;
         try {
             Field f_exceptions = LaunchClassLoader.class.getDeclaredField("classLoaderExceptions");
             f_exceptions.setAccessible(true);
@@ -32,7 +31,6 @@ public class LoadingPlugin implements IFMLLoadingPlugin {
 
     @Override
     public String[] getASMTransformerClass() {
-        if (Launch.blackboard.containsKey("oneconfig.init.registered_transformer")) return new String[]{};
         Launch.blackboard.put("oneconfig.init.registered_transformer", true);
         return new String[]{ClassTransformer.class.getName()};
     }
