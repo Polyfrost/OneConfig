@@ -15,6 +15,7 @@
     "NetHandlerPlayClientMixin",
     "NetworkManagerMixin",
     "ShaderGroupAccessor",
+    "VigilantMixin",
     "WorldClientMixin"
   ]
 }

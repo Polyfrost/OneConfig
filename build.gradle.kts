@@ -47,6 +47,7 @@ loom {
         launchConfigs.named("client") {
             property("fml.coreMods.load", "cc.polyfrost.oneconfig.internal.plugin.LoadingPlugin")
             property("mixin.debug.export", "true")
+            property("debugBytecode", "true")
         }
     }
     if (project.platform.isForge) {

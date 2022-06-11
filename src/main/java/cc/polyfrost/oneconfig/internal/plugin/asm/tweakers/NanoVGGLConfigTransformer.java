@@ -35,7 +35,7 @@ public class NanoVGGLConfigTransformer implements ITransformer {
                 ));
                 list.add(new InsnNode(Opcodes.RETURN));
 
-                method.instructions.clear();
+                clearInstructions(method);
                 method.instructions.insert(list);
             }
         }

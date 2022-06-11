@@ -1,5 +1,6 @@
 package cc.polyfrost.oneconfig.internal.plugin;
 
+import cc.polyfrost.oneconfig.internal.plugin.asm.tweakers.VigilantTransformer;
 import org.spongepowered.asm.lib.tree.ClassNode;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
@@ -8,7 +9,7 @@ import java.util.List;
 import java.util.Set;
 
 public class OneConfigMixinPlugin implements IMixinConfigPlugin {
-    public static boolean isVigilance = false;
+    private static boolean isVigilance = false;
 
     @Override
     public void onLoad(String mixinPackage) {
@@ -47,6 +48,10 @@ public class OneConfigMixinPlugin implements IMixinConfigPlugin {
 
     @Override
     public void postApply(String targetClassName, ClassNode targetClass, String mixinClassName, IMixinInfo mixinInfo) {
-
+        System.out.println(mixinClassName);
+        if (mixinClassName.equals("cc.polyfrost.oneconfig.internal.mixin.VigilantMixin")) {
+            System.out.println("A");
+            VigilantTransformer.transform(targetClass);
+        }
     }
 }
