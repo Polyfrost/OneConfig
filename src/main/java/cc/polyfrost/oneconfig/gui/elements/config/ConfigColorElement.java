@@ -39,7 +39,7 @@ public class ConfigColorElement extends BasicOption {
     public void draw(long vg, int x, int y) {
         if (!isEnabled()) RenderManager.setAlpha(vg, 0.5f);
         hexField.disable(!isEnabled());
-        alphaField.disable(!isEnabled() || allowAlpha);
+        alphaField.disable(!isEnabled() || !allowAlpha);
         element.disable(!isEnabled());
 
         int x1 = size == 1 ? x : x + 512;
