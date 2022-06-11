@@ -29,6 +29,7 @@ public class NumberInputField extends TextInputField {
     @Override
     public void draw(long vg, int x, int y) {
         super.errored = false;
+        if(disabled) RenderManager.setAlpha(vg, 0.5f);
         RenderManager.drawRoundedRect(vg, x + width + 4, y, 12, 28, Colors.GRAY_500, 6f);
         upArrow.disable(disabled);
         downArrow.disable(disabled);
@@ -71,7 +72,7 @@ public class NumberInputField extends TextInputField {
         }
         RenderManager.drawRoundedRectVaried(vg, x + width + 4, y + 14, 12, 14, colorBottom.getColor(downArrow.isHovered(), downArrow.isPressed()), 0f, 0f, 6f, 6f);
         RenderManager.drawSvg(vg, SVGs.CHEVRON_DOWN, x + width + 5, y + 15, 10, 10);
-        RenderManager.setAlpha(vg, 1f);
+        if(!disabled) RenderManager.setAlpha(vg, 1f);
 
         try {
             super.draw(vg, x, y - 2);
@@ -80,6 +81,7 @@ public class NumberInputField extends TextInputField {
             super.caretPos = 0;
             super.prevCaret = 0;
         }
+        if(disabled) RenderManager.setAlpha(vg, 1f);
     }
 
 

@@ -20,12 +20,14 @@ public class ConfigColorElement extends BasicOption {
     private final TextInputField alphaField = new TextInputField(72, 32, "", false, false);
     private final BasicElement element = new BasicElement(64, 32, false);
     private boolean open = false;
+    private final boolean isAlphaAllowed;
 
     public ConfigColorElement(Field field, Object parent, String name, String category, String subcategory, int size) {
         super(field, parent, name, category, subcategory, size);
         hexField.setCentered(true);
         alphaField.setCentered(true);
         alphaField.onlyAcceptNumbers(true);
+        isAlphaAllowed = true;
     }
 
     public static ConfigColorElement create(Field field, Object parent) {
@@ -37,7 +39,7 @@ public class ConfigColorElement extends BasicOption {
     public void draw(long vg, int x, int y) {
         if (!isEnabled()) RenderManager.setAlpha(vg, 0.5f);
         hexField.disable(!isEnabled());
-        alphaField.disable(!isEnabled());
+        alphaField.disable(!isEnabled() || isAlphaAllowed);
         element.disable(!isEnabled());
 
         int x1 = size == 1 ? x : x + 512;
