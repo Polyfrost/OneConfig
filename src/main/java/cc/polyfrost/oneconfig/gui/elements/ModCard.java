@@ -44,6 +44,7 @@ public class ModCard extends BasicElement {
     @Override
     public void draw(long vg, int x, int y) {
         super.update(x, y);
+        String cleanName = modData.name.replaceAll("§.", "");
         Scissor scissor = ScissorManager.scissor(vg, x, y, width, height);
 
         isHoveredMain = InputUtils.isAreaHovered(x, y, width, 87);
@@ -57,11 +58,11 @@ public class ModCard extends BasicElement {
                 RenderManager.drawSvg(vg, modData.modIcon, x + 98, y + 19, 48, 48);
             else RenderManager.drawImage(vg, modData.modIcon, x + 98, y + 19, 48, 48);
         } else {
-            RenderManager.drawText(vg, modData.name, x + 122 - RenderManager.getTextWidth(vg, modData.name, 16, Fonts.MINECRAFT_BOLD) / 2f, y + 44, ColorUtils.setAlpha(Colors.WHITE, (int) (colorFrame.getAlpha() * 255)), 16, Fonts.MINECRAFT_BOLD);
+            RenderManager.drawText(vg, cleanName, x + Math.max(0, (244 - RenderManager.getTextWidth(vg, cleanName, 16, Fonts.MINECRAFT_BOLD))) / 2f, y + 44, ColorUtils.setAlpha(Colors.WHITE, (int) (colorFrame.getAlpha() * 255)), 16, Fonts.MINECRAFT_BOLD);
         }
         favoriteButton.draw(vg, x + 212, y + 87);
         favorite = favoriteButton.isToggled();
-        RenderManager.drawText(vg, modData.name, x + 12, y + 103, ColorUtils.setAlpha(Colors.WHITE, (int) (colorToggle.getAlpha() * 255)), 14f, Fonts.MEDIUM);
+        RenderManager.drawText(vg, cleanName, x + 12, y + 103, ColorUtils.setAlpha(Colors.WHITE, (int) (colorToggle.getAlpha() * 255)), 14f, Fonts.MEDIUM);
         if (favorite) favoriteButton.setLeftIcon(SVGs.HEART_FILL);
         else favoriteButton.setLeftIcon(SVGs.HEART_OUTLINE);
 

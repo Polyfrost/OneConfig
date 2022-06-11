@@ -319,7 +319,7 @@ public final class RenderManager {
         nvgFontFace(vg, font.getName());
         nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
         NVGColor nvgColor = color(vg, color);
-        nvgText(vg, x, y, text.replaceAll("§.", ""));
+        nvgText(vg, x, y, text);
         nvgFill(vg);
         nvgColor.free();
     }
