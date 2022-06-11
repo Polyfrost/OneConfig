@@ -1,9 +1,6 @@
 package cc.polyfrost.oneconfig.utils.commands;
 
-import cc.polyfrost.oneconfig.utils.commands.annotations.Command;
-import cc.polyfrost.oneconfig.utils.commands.annotations.Greedy;
-import cc.polyfrost.oneconfig.utils.commands.annotations.Main;
-import cc.polyfrost.oneconfig.utils.commands.annotations.SubCommand;
+import cc.polyfrost.oneconfig.utils.commands.annotations.*;
 import cc.polyfrost.oneconfig.utils.commands.arguments.*;
 import cc.polyfrost.oneconfig.libs.universal.ChatColor;
 import cc.polyfrost.oneconfig.libs.universal.UChat;
@@ -105,7 +102,7 @@ public class CommandManager {
 
                 @Override
                 public List<String> addTabCompletionOptions(ICommandSender sender, String[] args, BlockPos pos) {
-                    return handleTabCompletion(root, args);
+                    return handleTabCompletion(root, annotation, args);
                 }
             });
         }
@@ -124,7 +121,7 @@ public class CommandManager {
             }
         } else {
             if (annotation.helpCommand() && args[0].equalsIgnoreCase("help")) {
-                //UChat.chat(sendHelpCommand(root));
+                UChat.chat(sendHelpCommand(root));
             } else {
                 List<InternalCommand.InternalCommandInvoker> commands = new ArrayList<>();
                 int depth = 0;
@@ -173,13 +170,13 @@ public class CommandManager {
         }
     }
 
-    private List<String> handleTabCompletion(InternalCommand root, String[] args) {
+    private List<String> handleTabCompletion(InternalCommand root, Command annotation, String[] args) {
         try {
             Set<Pair<InternalCommand.InternalCommandInvoker, Integer>> commands = new HashSet<>();
             for (InternalCommand command : root.children) {
                 loopThroughCommandsTab(commands, 0, command, args);
             }
-            if (!commands.isEmpty()) {
+            if (!commands.isEmpty() || annotation.helpCommand()) {
                 List<Triple<InternalCommand.InternalCommandInvoker, Integer, Integer>> validCommands = new ArrayList<>(); // command, depth, and all processed params
                 for (Pair<InternalCommand.InternalCommandInvoker, Integer> pair : commands) {
                     InternalCommand.InternalCommandInvoker invoker = pair.getLeft();
@@ -215,7 +212,7 @@ public class CommandManager {
                         validCommands.add(new ImmutableTriple<>(pair.getLeft(), depth, currentParam));
                     }
                 }
-                if (!validCommands.isEmpty()) {
+                if (!validCommands.isEmpty() || annotation.helpCommand()) {
                     Set<String> completions = new HashSet<>();
                     for (Triple<InternalCommand.InternalCommandInvoker, Integer, Integer> valid : validCommands) {
                         if (valid.getMiddle() == args.length) {
@@ -240,6 +237,11 @@ public class CommandManager {
                             }
                         } catch (Exception ignored) {
 
+                        }
+                    }
+                    if (args.length == 1 && annotation.helpCommand()) {
+                        if ("help".startsWith(args[0].toLowerCase(Locale.ENGLISH))) {
+                            completions.add("help");
                         }
                     }
                     return new ArrayList<>(completions);
@@ -328,6 +330,54 @@ public class CommandManager {
             for (InternalCommand.InternalCommandInvoker invoker : command.invokers) {
                 commands.add(new ImmutablePair<>(invoker, nextDepth));
             }
+        }
+    }
+
+    //TODO: someone make the help command actually look nice lmao
+    private String sendHelpCommand(InternalCommand root) {
+        StringBuilder builder = new StringBuilder();
+        builder.append(ChatColor.GOLD).append("Help for ").append(ChatColor.BOLD).append(root.name).append(ChatColor.RESET).append(ChatColor.GOLD).append(":\n");
+        if (!root.description.isEmpty()) {
+            builder.append("\n").append(ChatColor.GOLD).append("Description: ").append(ChatColor.BOLD).append(root.description);
+        }
+        for (InternalCommand command : root.children) {
+            runThroughCommandsHelp(root.name, command, builder);
+        }
+        builder.append("\n").append(ChatColor.GOLD).append("Aliases: ").append(ChatColor.BOLD);
+        int index = 0;
+        for (String alias : root.aliases) {
+            ++index;
+            builder.append(alias).append(index < root.aliases.length ? ", " : "");
+        }
+        builder.append("\n");
+        return builder.toString();
+    }
+
+    private void runThroughCommandsHelp(String append, InternalCommand command, StringBuilder builder) {
+        if (!command.invokers.isEmpty()) {
+            Class<?> declaringClass = command.invokers.get(0).method.getDeclaringClass();
+            if (declaringClass.isAnnotationPresent(SubCommand.class)) {
+                String description = declaringClass.getAnnotation(SubCommand.class).description();
+                if (!description.isEmpty()) {
+                    builder.append("\n").append(ChatColor.GOLD).append("Description: ").append(ChatColor.BOLD).append(description);
+                }
+            }
+        }
+        for (InternalCommand.InternalCommandInvoker invoker : command.invokers) {
+            builder.append("\n").append(ChatColor.GOLD).append("/").append(append).append(" ").append(command.name);
+            for (Parameter parameter : invoker.method.getParameters()) {
+                String name = parameter.getName();
+                if (parameter.isAnnotationPresent(Name.class)) {
+                    name = parameter.getAnnotation(Name.class).value();
+                }
+                builder.append(" <").append(name).append(">");
+            }
+            if (!command.description.trim().isEmpty()) {
+                builder.append(": ").append(ChatColor.BOLD).append(command.description);
+            }
+        }
+        for (InternalCommand subCommand : command.children) {
+            runThroughCommandsHelp(append + " " + command.name, subCommand, builder);
         }
     }
 

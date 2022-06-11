@@ -206,6 +206,9 @@ tasks {
             exclude("fabric.mod.json")
             if (project.platform.isLegacyForge) {
                 exclude("mods.toml")
+                exclude("META-INF/versions/**")
+                exclude("**/module-info.class")
+                exclude("**/package-info.class")
             } else {
                 exclude("mcmod.info")
             }
