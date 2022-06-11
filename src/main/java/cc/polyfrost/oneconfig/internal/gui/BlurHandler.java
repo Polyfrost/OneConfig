@@ -6,9 +6,9 @@ import cc.polyfrost.oneconfig.events.event.ScreenOpenEvent;
 import cc.polyfrost.oneconfig.events.event.Stage;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.internal.mixin.ShaderGroupAccessor;
-import gg.essential.universal.UMinecraft;
-import gg.essential.universal.UScreen;
-import me.kbrewster.eventbus.Subscribe;
+import cc.polyfrost.oneconfig.libs.universal.UMinecraft;
+import cc.polyfrost.oneconfig.libs.universal.UScreen;
+import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.shader.Shader;
@@ -43,7 +43,7 @@ public class BlurHandler {
      * Simply initializes the blur mod so events are properly handled by forge.
      */
     public void load() {
-        EventManager.getEventManager().register(this);
+        EventManager.INSTANCE.register(this);
     }
 
     @Subscribe

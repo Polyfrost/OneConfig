@@ -58,8 +58,8 @@ public class OneConfig {
         GuiUtils.getDeltaTime(); // called to make sure static initializer is called
         BlurHandler.INSTANCE.load();
         CommandManager.INSTANCE.registerCommand(OneConfigCommand.class);
-        EventManager.getEventManager().register(new HudCore());
-        EventManager.getEventManager().register(HypixelUtils.INSTANCE);
+        EventManager.INSTANCE.register(new HudCore());
+        EventManager.INSTANCE.register(HypixelUtils.INSTANCE);
         reloadModsList();
         initialized = true;
     }

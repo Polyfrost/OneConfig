@@ -1,6 +1,6 @@
 package cc.polyfrost.oneconfig.config.core;
 
-import gg.essential.universal.UKeyboard;
+import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
 
 import java.util.ArrayList;
 

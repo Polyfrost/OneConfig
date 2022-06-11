@@ -7,7 +7,7 @@ import cc.polyfrost.oneconfig.config.data.*;
 import cc.polyfrost.oneconfig.config.Config;
 import cc.polyfrost.oneconfig.config.data.ModType;
 import cc.polyfrost.oneconfig.config.migration.VigilanceMigrator;
-import gg.essential.universal.UKeyboard;
+import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 
 public class TestConfig_Test extends Config {

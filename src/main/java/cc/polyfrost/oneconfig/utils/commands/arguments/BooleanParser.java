@@ -13,7 +13,14 @@ public class BooleanParser extends ArgumentParser<Boolean> {
 
     @Override
     public @Nullable Boolean parse(Arguments arguments) {
-        return Boolean.parseBoolean(arguments.poll());
+        String next = arguments.poll();
+        if (next.equalsIgnoreCase("true")) {
+            return true;
+        } else if (next.equalsIgnoreCase("false")) {
+            return false;
+        } else {
+            return null;
+        }
     }
 
     @Override

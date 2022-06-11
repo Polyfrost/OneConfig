@@ -1,5 +1,7 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+import gg.essential.gradle.util.RelocationTransform.Companion.registerRelocationAttribute
 import gg.essential.gradle.util.noServerRunConfigs
+import gg.essential.gradle.util.prebundle
 
 plugins {
     kotlin("jvm")
@@ -59,6 +61,15 @@ repositories {
     maven("https://repo.polyfrost.cc/releases")
 }
 
+val relocated = registerRelocationAttribute("relocate") {
+    relocate("gg.essential", "cc.polyfrost.oneconfig.libs")
+    relocate("me.kbrewster", "cc.polyfrost.oneconfig.libs")
+}
+
+val shadeRelocated: Configuration by configurations.creating {
+    attributes { attribute(relocated, true) }
+}
+
 val shade: Configuration by configurations.creating {
     configurations.implementation.get().extendsFrom(this)
 }
@@ -94,25 +105,33 @@ dependencies {
         isTransitive = false
     }
 
-    shade("gg.essential:universalcraft-$platform:211") {
+    shadeRelocated("gg.essential:universalcraft-$platform:211") {
         isTransitive = false
     }
 
-    shade("com.github.KevinPriv:keventbus:c52e0a2ea0") {
+    shadeRelocated("com.github.KevinPriv:keventbus:c52e0a2ea0") {
         isTransitive = false
     }
 
     // for other mods and universalcraft
-    shade("org.jetbrains.kotlin:kotlin-stdlib:1.6.21")
-    shade("org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.6.21")
-    shade("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.21")
-    shade("org.jetbrains.kotlin:kotlin-reflect:1.6.21")
-    shade("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.1")
-    shade("org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.6.1")
-    shade("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.6.1")
-    shade("org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.3.3")
-    shade("org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.3.3")
-    shade("org.jetbrains.kotlinx:kotlinx-serialization-cbor-jvm:1.3.3")
+    val kotlinVersion: String by project
+    val coroutinesVersion: String by project
+    val serializationVersion: String by project
+    val atomicfuVersion: String by project
+    val datetimeVersion: String by project
+    shade("org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion")
+    shade("org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion")
+    shade("org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlinVersion")
+    shade("org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion")
+
+    shade("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion")
+    shade("org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:$coroutinesVersion")
+    shade("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:$coroutinesVersion")
+    shade("org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:$serializationVersion")
+    shade("org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:$serializationVersion")
+    shade("org.jetbrains.kotlinx:kotlinx-serialization-cbor-jvm:$serializationVersion")
+    shade("org.jetbrains.kotlinx:atomicfu-jvm:$atomicfuVersion")
+    shade("org.jetbrains.kotlinx:kotlinx-datetime-jvm:$datetimeVersion")
 
     shade("org.spongepowered:mixin:0.7.11-SNAPSHOT") {
         isTransitive = false
@@ -135,6 +154,7 @@ dependencies {
     lwjglNative("org.lwjgl:lwjgl-tinyfd:3.3.1:natives-macos")
     lwjglNative("org.lwjgl:lwjgl-nanovg:3.3.1:natives-macos")
     shade(lwjglJar.get().outputs.files)
+    shade(prebundle(shadeRelocated))
 
     dokkaHtmlPlugin("org.jetbrains.dokka:kotlin-as-java-plugin:1.6.21")
 }
@@ -186,6 +206,9 @@ tasks {
             exclude("fabric.mod.json")
             if (project.platform.isLegacyForge) {
                 exclude("mods.toml")
+                exclude("META-INF/versions/**")
+                exclude("**/module-info.class")
+                exclude("**/package-info.class")
             } else {
                 exclude("mcmod.info")
             }
@@ -199,9 +222,6 @@ tasks {
         archiveClassifier.set("dev")
         configurations = listOf(shade, lwjglNative)
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-
-        relocate("gg.essential", "cc.polyfrost.oneconfig.libs")
-        relocate("me.kbrewster", "cc.polyfrost.oneconfig.libs")
     }
     remapJar {
         input.set(shadowJar.get().archiveFile)

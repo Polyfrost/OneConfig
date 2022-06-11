@@ -17,7 +17,7 @@ public class NetHandlerPlayClientMixin {
     @Inject(method = "addToSendQueue", at = @At("HEAD"), cancellable = true)
     private void onSendPacket(Packet<?> p_147297_1_, CallbackInfo ci) {
         SendPacketEvent event = new SendPacketEvent(p_147297_1_);
-        EventManager.getEventManager().post(event);
+        EventManager.INSTANCE.post(event);
         if (event.isCancelled) {
             ci.cancel();
         }
@@ -27,7 +27,7 @@ public class NetHandlerPlayClientMixin {
     private void onClientChat(S02PacketChat packetIn, CallbackInfo ci) {
         if (packetIn.getType() == 0) {
             ChatReceiveEvent event = new ChatReceiveEvent(packetIn.getChatComponent());
-            EventManager.getEventManager().post(event);
+            EventManager.INSTANCE.post(event);
             if (event.isCancelled) {
                 ci.cancel();
             }

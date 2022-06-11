@@ -42,6 +42,8 @@ fun nanoVG(mcScaling: Boolean = false, block: VG.() -> Unit) = RenderManager.set
     )
 }
 
+fun nanoVG(context: Long, block: VG.() -> Unit) = block.invoke(VG(context))
+
 
 fun Long.drawRect(x: Number, y: Number, width: Number, height: Number, color: Int, bypassOneConfig: Boolean = false) =
     if (bypassOneConfig) {

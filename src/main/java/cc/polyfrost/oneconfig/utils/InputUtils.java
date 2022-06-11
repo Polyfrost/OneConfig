@@ -1,14 +1,14 @@
 package cc.polyfrost.oneconfig.utils;
 
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
-import gg.essential.universal.UResolution;
+import cc.polyfrost.oneconfig.libs.universal.UResolution;
 import org.lwjgl.input.Mouse;
 
 /**
  * Various utility methods for input.
  * <p>
  * All values returned from this class are not scaled to Minecraft's GUI scale.
- * For scaled values, see {@link gg.essential.universal.UMouse}.
+ * For scaled values, see {@link cc.polyfrost.oneconfig.libs.universal.UMouse}.
  * </p>
  */
 public final class InputUtils {
@@ -78,7 +78,7 @@ public final class InputUtils {
      * Gets the current mouse X position.
      * <p>
      * All values returned from this class are not scaled to Minecraft's GUI scale.
-     * For scaled values, see {@link gg.essential.universal.UMouse}.
+     * For scaled values, see {@link cc.polyfrost.oneconfig.libs.universal.UMouse}.
      * </p>
      *
      * @return the current mouse X position
@@ -92,7 +92,7 @@ public final class InputUtils {
      * Gets the current mouse Y position.
      * <p>
      * All values returned from this class are not scaled to Minecraft's GUI scale.
-     * For scaled values, see {@link gg.essential.universal.UMouse}.
+     * For scaled values, see {@link cc.polyfrost.oneconfig.libs.universal.UMouse}.
      * </p>
      *
      * @return the current mouse Y position
