@@ -27,9 +27,9 @@ public class HUDUtils {
             options.get(options.size() - 1).addDependency(() -> hud.enabled);
             options.add(new ConfigCheckbox(hud.getClass().getField("border"), hud, "Outline/border", category, subcategory, 1));
             options.get(options.size() - 1).addDependency(() -> hud.enabled);
-            options.add(new ConfigColorElement(hud.getClass().getField("bgColor"), hud, "Background color:", category, subcategory, 1));
+            options.add(new ConfigColorElement(hud.getClass().getField("bgColor"), hud, "Background color:", category, subcategory, 1, true));
             options.get(options.size() - 1).addDependency(() -> hud.enabled);
-            options.add(new ConfigColorElement(hud.getClass().getField("borderColor"), hud, "Border color:", category, subcategory, 1));
+            options.add(new ConfigColorElement(hud.getClass().getField("borderColor"), hud, "Border color:", category, subcategory, 1, true));
             options.get(options.size() - 1).addDependency(() -> hud.enabled && hud.border);
             options.add(new ConfigSlider(hud.getClass().getField("cornerRadius"), hud, "Corner radius:", category, subcategory, 0, 10, 0));
             options.get(options.size() - 1).addDependency(() -> hud.enabled && hud.rounded);

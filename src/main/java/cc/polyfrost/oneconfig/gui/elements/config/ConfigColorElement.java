@@ -20,26 +20,26 @@ public class ConfigColorElement extends BasicOption {
     private final TextInputField alphaField = new TextInputField(72, 32, "", false, false);
     private final BasicElement element = new BasicElement(64, 32, false);
     private boolean open = false;
-    private final boolean isAlphaAllowed;
+    private final boolean allowAlpha;
 
-    public ConfigColorElement(Field field, Object parent, String name, String category, String subcategory, int size) {
+    public ConfigColorElement(Field field, Object parent, String name, String category, String subcategory, int size, boolean allowAlpha) {
         super(field, parent, name, category, subcategory, size);
         hexField.setCentered(true);
         alphaField.setCentered(true);
         alphaField.onlyAcceptNumbers(true);
-        isAlphaAllowed = true;
+        this.allowAlpha = allowAlpha;
     }
 
     public static ConfigColorElement create(Field field, Object parent) {
         Color color = field.getAnnotation(Color.class);
-        return new ConfigColorElement(field, parent, color.name(), color.category(), color.subcategory(), color.size());
+        return new ConfigColorElement(field, parent, color.name(), color.category(), color.subcategory(), color.size(), color.allowAlpha());
     }
 
     @Override
     public void draw(long vg, int x, int y) {
         if (!isEnabled()) RenderManager.setAlpha(vg, 0.5f);
         hexField.disable(!isEnabled());
-        alphaField.disable(!isEnabled() || isAlphaAllowed);
+        alphaField.disable(!isEnabled() || allowAlpha);
         element.disable(!isEnabled());
 
         int x1 = size == 1 ? x : x + 512;
@@ -87,7 +87,7 @@ public class ConfigColorElement extends BasicOption {
         RenderManager.drawRoundedRect(vg, x1 + 420, y + 4, 56, 24, color.getRGB(), 8f);
         if (element.isClicked() && !element.isToggled()) {
             open = !open;
-            OneConfigGui.INSTANCE.initColorSelector(new ColorSelector(color, InputUtils.mouseX(), InputUtils.mouseY()));
+            OneConfigGui.INSTANCE.initColorSelector(new ColorSelector(color, InputUtils.mouseX(), InputUtils.mouseY(), allowAlpha));
         }
         if (OneConfigGui.INSTANCE.currentColorSelector == null) open = false;
         if (OneConfigGui.INSTANCE.currentColorSelector != null && open) {

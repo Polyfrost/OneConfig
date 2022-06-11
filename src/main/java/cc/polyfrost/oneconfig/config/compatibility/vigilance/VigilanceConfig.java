@@ -169,7 +169,7 @@ public class VigilanceConfig extends Config {
         private OneColor cachedColor = null;
 
         public CompatConfigColorElement(Field color, Vigilant parent, String name, String category, String subcategory, int size) {
-            super(null, parent, name, category, subcategory, size);
+            super(null, parent, name, category, subcategory, size, true);
             this.color = color;
         }
 
