@@ -4,7 +4,7 @@ import cc.polyfrost.oneconfig.utils.commands.annotations.Command;
 import cc.polyfrost.oneconfig.utils.commands.annotations.Main;
 import cc.polyfrost.oneconfig.utils.commands.annotations.Name;
 import cc.polyfrost.oneconfig.utils.commands.annotations.SubCommand;
-import gg.essential.universal.UChat;
+import cc.polyfrost.oneconfig.libs.universal.UChat;
 
 @Command(value = "test", aliases = {"t"})
 public class TestCommand_Test {

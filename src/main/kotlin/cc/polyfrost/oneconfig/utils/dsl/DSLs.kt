@@ -1,6 +1,6 @@
 package cc.polyfrost.oneconfig.utils.dsl
 
-import gg.essential.universal.UMinecraft
+import cc.polyfrost.oneconfig.libs.universal.UMinecraft
 
 /**
  * Gets the current [net.minecraft.client.Minecraft] instance.

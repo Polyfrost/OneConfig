@@ -8,11 +8,11 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import gg.essential.universal.UChat;
-import gg.essential.universal.UMinecraft;
-import gg.essential.universal.wrappers.UPlayer;
-import gg.essential.universal.wrappers.message.UTextComponent;
-import me.kbrewster.eventbus.Subscribe;
+import cc.polyfrost.oneconfig.libs.universal.UChat;
+import cc.polyfrost.oneconfig.libs.universal.UMinecraft;
+import cc.polyfrost.oneconfig.libs.universal.wrappers.UPlayer;
+import cc.polyfrost.oneconfig.libs.universal.wrappers.message.UTextComponent;
+import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
 
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
@@ -123,7 +123,7 @@ public class HypixelUtils {
                     previousLocraw = parsed;
                     inGame = true; // If your gamemode does not return "lobby", boolean inGame is true.
                 }
-                EventManager.getEventManager().post(new LocrawEvent(locraw));
+                EventManager.INSTANCE.post(new LocrawEvent(locraw));
                 event.isCancelled = true;
             }
         } catch (Exception ex) {

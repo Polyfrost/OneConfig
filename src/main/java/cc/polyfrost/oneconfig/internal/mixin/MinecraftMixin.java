@@ -27,28 +27,28 @@ public class MinecraftMixin {
 
     @Inject(method = "startGame", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/client/FMLClientHandler;onInitializationComplete()V", shift = At.Shift.AFTER, remap = false), remap = true)
     private void onInit(CallbackInfo ci) {
-        EventManager.getEventManager().post(new InitializationEvent());
+        EventManager.INSTANCE.post(new InitializationEvent());
         OneConfig.init();
     }
 
     @Inject(method = "runGameLoop", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/FMLCommonHandler;onRenderTickStart(F)V", shift = At.Shift.AFTER, remap = false), remap = true)
     private void onRenderTickStart(CallbackInfo ci) {
-        EventManager.getEventManager().post(new RenderEvent(Stage.START, timer.renderPartialTicks));
+        EventManager.INSTANCE.post(new RenderEvent(Stage.START, timer.renderPartialTicks));
     }
 
     @Inject(method = "runGameLoop", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/FMLCommonHandler;onRenderTickEnd(F)V", shift = At.Shift.AFTER, remap = false), remap = true)
     private void onRenderTickEnd(CallbackInfo ci) {
-        EventManager.getEventManager().post(new RenderEvent(Stage.END, timer.renderPartialTicks));
+        EventManager.INSTANCE.post(new RenderEvent(Stage.END, timer.renderPartialTicks));
     }
 
     @Inject(method = "runTick", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/FMLCommonHandler;onPreClientTick()V", shift = At.Shift.AFTER, remap = false), remap = true)
     private void onClientTickStart(CallbackInfo ci) {
-        EventManager.getEventManager().post(new TickEvent(Stage.START));
+        EventManager.INSTANCE.post(new TickEvent(Stage.START));
     }
 
     @Inject(method = "runTick", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/FMLCommonHandler;onPostClientTick()V", shift = At.Shift.AFTER, remap = false), remap = true)
     private void onClientTickEnd(CallbackInfo ci) {
-        EventManager.getEventManager().post(new TickEvent(Stage.END));
+        EventManager.INSTANCE.post(new TickEvent(Stage.END));
     }
 
     @ModifyArg(method = "displayGuiScreen", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/eventhandler/EventBus;post(Lnet/minecraftforge/fml/common/eventhandler/Event;)Z", remap = false), remap = true)
@@ -56,7 +56,7 @@ public class MinecraftMixin {
         if (a instanceof GuiOpenEvent) {
             GuiOpenEvent forgeEvent = (GuiOpenEvent) a;
             ScreenOpenEvent event = new ScreenOpenEvent(forgeEvent.gui);
-            EventManager.getEventManager().post(event);
+            EventManager.INSTANCE.post(event);
             if (event.isCancelled) {
                 forgeEvent.setCanceled(true);
             }
@@ -67,11 +67,11 @@ public class MinecraftMixin {
 
     @Inject(method = "runGameLoop", at = @At(value = "FIELD", target = "Lnet/minecraft/util/Timer;renderPartialTicks:F", opcode = Opcodes.PUTFIELD, shift = At.Shift.AFTER))
     private void onNonDeltaTickTimerUpdate(CallbackInfo ci) {
-        EventManager.getEventManager().post(new TimerUpdateEvent(timer, false));
+        EventManager.INSTANCE.post(new TimerUpdateEvent(timer, false));
     }
 
     @Inject(method = "runGameLoop", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/Timer;updateTimer()V", shift = At.Shift.AFTER, ordinal = 1))
     private void onDeltaTickTimerUpdate(CallbackInfo ci) {
-        EventManager.getEventManager().post(new TimerUpdateEvent(timer, true));
+        EventManager.INSTANCE.post(new TimerUpdateEvent(timer, true));
     }
 }

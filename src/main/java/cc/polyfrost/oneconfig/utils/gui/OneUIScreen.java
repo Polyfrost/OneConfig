@@ -2,8 +2,8 @@ package cc.polyfrost.oneconfig.utils.gui;
 
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.utils.InputUtils;
-import gg.essential.universal.UMatrixStack;
-import gg.essential.universal.UScreen;
+import cc.polyfrost.oneconfig.libs.universal.UMatrixStack;
+import cc.polyfrost.oneconfig.libs.universal.UScreen;
 import net.minecraft.client.gui.GuiScreen;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.input.Mouse;

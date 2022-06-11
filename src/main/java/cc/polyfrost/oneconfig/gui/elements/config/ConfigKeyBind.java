@@ -10,7 +10,7 @@ import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
-import gg.essential.universal.UKeyboard;
+import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
 
 import java.lang.reflect.Field;
 

@@ -1,7 +1,7 @@
 package cc.polyfrost.oneconfig.hud;
 
 import cc.polyfrost.oneconfig.renderer.RenderManager;
-import gg.essential.universal.UMinecraft;
+import cc.polyfrost.oneconfig.libs.universal.UMinecraft;
 
 import java.util.List;
 
