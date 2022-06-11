@@ -211,7 +211,7 @@ public class TextInputField extends BasicElement {
                 }
             }
 
-
+            if(disabled) RenderManager.setAlpha(vg, 0.5f);
             if (toggled) {
                 if (multiLine) {
                     int lineY = y + 20 + getCaretLine(caretPos) * 24;
@@ -249,9 +249,9 @@ public class TextInputField extends BasicElement {
             } else {
                 RenderManager.drawText(vg, s.toString(), x + 12, y + height / 2f + 1, color, 14f, Fonts.REGULAR);
             }
+            RenderManager.setAlpha(vg, 1f);
             ScissorManager.resetScissor(vg, scissor);
-        } catch (
-                Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 

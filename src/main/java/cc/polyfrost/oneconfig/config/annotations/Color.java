@@ -14,6 +14,8 @@ import java.lang.annotation.Target;
 public @interface Color {
     String name();
 
+    boolean allowAlpha() default true;
+
     int size() default 1;
 
     String category() default "General";

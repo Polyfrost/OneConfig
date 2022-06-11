@@ -51,12 +51,17 @@ public class ColorSelector {
     private Animation barMoveAnimation = new DummyAnimation(18);
     private Animation moveAnimation = new DummyAnimation(1);
     private int mouseX, mouseY;
-    private int mode = 0, prevMode = 0;
+    private int mode = 0;
     private boolean dragging, mouseWasDown;
-
+    private final boolean hasAlpha;
 
     public ColorSelector(OneColor color, int mouseX, int mouseY) {
+        this(color, mouseX, mouseY, true);
+    }
+
+    public ColorSelector(OneColor color, int mouseX, int mouseY, boolean hasAlpha) {
         this.color = color;
+        this.hasAlpha = hasAlpha;
         buttons.add(new BasicButton(124, 28, "HSB Box", BasicButton.ALIGNMENT_CENTER, ColorPalette.TERTIARY));
         buttons.add(new BasicButton(124, 28, "Color Wheel", BasicButton.ALIGNMENT_CENTER, ColorPalette.TERTIARY));
         buttons.add(new BasicButton(124, 28, "Chroma", BasicButton.ALIGNMENT_CENTER, ColorPalette.TERTIARY));
@@ -64,6 +69,10 @@ public class ColorSelector {
         saturationInput.setCurrentValue(color.getSaturation());
         brightnessInput.setCurrentValue(color.getBrightness());
         alphaInput.setCurrentValue(color.getAlpha() / 255f * 100f);
+        if(!hasAlpha) {
+            bottomSlider.disabled = true;
+            alphaInput.disabled = true;
+        }
         speedSlider.setValue(color.getDataBit());
         topSlider.setValue(color.getHue());
         topSlider.setColor(color.getRGBMax(true));
@@ -134,7 +143,7 @@ public class ColorSelector {
         for (BasicElement button : buttons) {
             button.draw(vg, x + i, y + 66);
             if (button.isClicked()) {
-                prevMode = mode;
+                int prevMode = mode;
                 mode = buttons.indexOf(button);
                 setXYFromColor();
                 barMoveAnimation = new EaseInOutCubic(175, 18 + prevMode * 128, 18 + mode * 128, false);
@@ -405,6 +414,9 @@ public class ColorSelector {
         this.favoriteColors.get(index).setToggled(true);
     }
 
+    public boolean isAlphaAllowed() {
+        return hasAlpha;
+    }
 
     private static class ColorSlider extends Slider {
         protected int gradColorStart, gradColorEnd;
@@ -419,7 +431,8 @@ public class ColorSelector {
 
         @Override
         public void draw(long vg, int x, int y) {
-            update(x, y);
+            if(!disabled) update(x, y);
+            else RenderManager.setAlpha(vg, 0.5f);
             super.dragPointerSize = 15f;
             if (image != null) {
                 RenderManager.drawRoundImage(vg, image, x + 1, y + 1, width - 2, height - 2, 8f);
@@ -431,6 +444,7 @@ public class ColorSelector {
             RenderManager.drawHollowRoundRect(vg, currentDragPoint - 1, y - 1, 18, 18, Colors.WHITE, 9f, 1f);
             RenderManager.drawHollowRoundRect(vg, currentDragPoint, y, 16, 16, Colors.BLACK, 8f, 1f);
             RenderManager.drawRoundedRect(vg, currentDragPoint + 1.5f, y + 1.5f, 14, 14, color, 7f);
+            RenderManager.setAlpha(vg, 1f);
         }
 
         public void setGradient(int start, int end) {

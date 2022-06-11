@@ -22,10 +22,12 @@ public class Slider extends BasicElement {
 
     @Override
     public void draw(long vg, int x, int y) {
-        update(x, y);
+        if(!disabled) update(x, y);
+        else RenderManager.setAlpha(vg, 0.5f);
         RenderManager.drawRoundedRect(vg, x, y + 2, width, height - 4, Colors.GRAY_300, 3f);
         RenderManager.drawRoundedRect(vg, x, y + 2, width * value, height - 4, Colors.PRIMARY_500, 3f);
         RenderManager.drawRoundedRect(vg, currentDragPoint - dragPointerSize / 2, y - 8, 24, 24, Colors.WHITE, 12f);
+        RenderManager.setAlpha(vg, 1f);
 
 
     }
