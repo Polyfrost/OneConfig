@@ -15,6 +15,8 @@ import net.minecraftforge.fml.common.DummyModContainer;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.ModContainer;
 import net.minecraftforge.fml.common.ModMetadata;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -29,9 +31,11 @@ public class OneConfig {
     public static final File oneConfigDir = new File("./OneConfig");
     public static final List<Mod> loadedMods = new ArrayList<>();
     public static final List<ModMetadata> loadedOtherMods = new ArrayList<>();
+    public static final Logger LOGGER = LogManager.getLogger("@NAME@");
     public static OneConfigConfig config;
     private static boolean preLaunched = false;
     private static boolean initialized = false;
+    private static boolean isObfuscated = true;
 
     /**
      * Called before mods are loaded.
@@ -39,6 +43,12 @@ public class OneConfig {
      */
     public static void preLaunch() {
         if (preLaunched) return;
+        try {
+            OneConfig.class.getResourceAsStream("net/minecraft/world/World");
+            LOGGER.warn("OneConfig is NOT obfuscated!");
+            isObfuscated = false;
+        } catch (Exception ignored) {
+        }
         if (!net.minecraft.launchwrapper.Launch.blackboard.containsKey("oneconfig.initialized")) {
             throw new RuntimeException("OneConfig has not been initialized! Please add the OneConfig tweaker or call OneConfigInit via an ITweaker or a FMLLoadingPlugin!");
         }
@@ -76,5 +86,11 @@ public class OneConfig {
             if (mod instanceof DummyModContainer || newMod.name.equals("OneConfig")) continue;
             if (modData.add(newMod)) loadedMods.add(newMod);
         }
+    }
+
+    /** Returns weather this is an obfuscated environment, using a check for obfuscated name of net.minecraft.world.World.class.
+     * @return true if this is an obfuscated environment, which is normal for Minecraft or false if not. */
+    public static boolean isObfuscated() {
+        return isObfuscated;
     }
 }

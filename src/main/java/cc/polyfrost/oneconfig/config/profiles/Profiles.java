@@ -16,7 +16,7 @@ public class Profiles {
 
     public static String getCurrentProfile() {
         if (!profileDir.exists() && !profileDir.mkdir()) {
-            System.out.println("Could not create profiles folder");
+            OneConfig.LOGGER.fatal("Could not create profiles folder");
             return null;
         }
         if (profiles == null) {
@@ -32,7 +32,7 @@ public class Profiles {
     public static void createProfile(String name) {
         File folder = new File(profileDir, name);
         if (!folder.exists() && !folder.mkdir()) {
-            System.out.println("Could not create profile folder");
+            OneConfig.LOGGER.fatal("Could not create profile folder");
             return;
         }
         profiles.add(name);
@@ -65,14 +65,14 @@ public class Profiles {
             profiles.remove(name);
             profiles.add(newName);
         } catch (IOException e) {
-            System.out.println("Failed to rename profile");
+            OneConfig.LOGGER.error("Failed to rename profile");
         }
     }
 
     public static void deleteProfile(String name) {
         if (name.equals(getCurrentProfile())) {
             if (profiles.size() == 1) {
-                System.out.println("Cannot delete only profile!");
+                OneConfig.LOGGER.error("Cannot delete only profile!");
                 return;
             }
             loadProfile(profiles.stream().filter(entry -> !entry.equals(name)).findFirst().get());
@@ -81,7 +81,7 @@ public class Profiles {
             FileUtils.deleteDirectory(getProfileDir(name));
             profiles.remove(name);
         } catch (IOException e) {
-            System.out.println("Failed to delete profile");
+            OneConfig.LOGGER.error("Failed to delete profile");
         }
     }
 }

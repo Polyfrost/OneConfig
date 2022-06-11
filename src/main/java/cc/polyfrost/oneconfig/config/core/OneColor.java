@@ -16,26 +16,38 @@ import java.awt.*;
  */
 @SuppressWarnings("unused")
 public final class OneColor {
-    transient private Integer rgba = null;
+    transient private Integer argb = null;
     private short[] hsba;
     private int dataBit = -1;
+
+    // hex constructor
+
+    /** Create a OneColor from the given hex.
+     */
+    public OneColor(String hex) {
+        hsba = new short[]{0, 0, 0, 0};
+        if(hex.length() > 7) {
+            hsba[3] = (short) Integer.parseInt(hex.substring(6, 8), 16);
+        }
+        setColorFromHex(hex);
+    }
 
     // rgb constructors
 
     /**
      * Create a new OneColor, converting the RGBA color to HSBA.
      */
-    public OneColor(int rgba) {
-        this.rgba = rgba;
-        this.hsba = RGBAtoHSBA(this.rgba);
+    public OneColor(int argb) {
+        this.argb = argb;
+        this.hsba = ARGBtoHSBA(this.argb);
     }
 
     /**
      * Create a new OneColor from the given RGBA values.
      */
     public OneColor(int r, int g, int b, int a) {
-        this.rgba = ((a & 0xFF) << 24) | ((r & 0xFF) << 16) | ((g & 0xFF) << 8) | ((b & 0xFF));
-        this.hsba = RGBAtoHSBA(this.rgba);
+        this.argb = ((a & 0xFF) << 24) | ((r & 0xFF) << 16) | ((g & 0xFF) << 8) | ((b & 0xFF));
+        this.hsba = ARGBtoHSBA(this.argb);
     }
 
     /**
@@ -59,7 +71,7 @@ public final class OneColor {
      */
     public OneColor(float hue, float saturation, float brightness, float alpha) {
         this.hsba = new short[]{(short) hue, (short) saturation, (short) brightness, (short) alpha};
-        this.rgba = HSBAtoRGBA(this.hsba[0], this.hsba[1], this.hsba[2], this.hsba[3]);
+        this.argb = HSBAtoARGB(this.hsba[0], this.hsba[1], this.hsba[2], this.hsba[3]);
 
     }
 
@@ -86,7 +98,7 @@ public final class OneColor {
     public OneColor(int hue, int saturation, int brightness, int alpha, int chromaSpeed) {
         if (chromaSpeed == -1) {
             this.hsba = new short[]{(short) hue, (short) saturation, (short) brightness, (short) alpha};
-            this.rgba = HSBAtoRGBA(this.hsba[0], this.hsba[1], this.hsba[2], this.hsba[3]);
+            this.argb = HSBAtoARGB(this.hsba[0], this.hsba[1], this.hsba[2], this.hsba[3]);
         } else {
             this.dataBit = chromaSpeed;
             this.hsba = new short[]{(short) hue, (short) saturation, (short) brightness, (short) alpha};
@@ -99,7 +111,7 @@ public final class OneColor {
     /**
      * Get the RGBA color from the HSB color, and apply the alpha.
      */
-    public static int HSBAtoRGBA(float hue, float saturation, float brightness, int alpha) {
+    public static int HSBAtoARGB(float hue, float saturation, float brightness, int alpha) {
         int temp = Color.HSBtoRGB(hue / 360f, saturation / 100f, brightness / 100f);
         return ((temp & 0x00ffffff) | (alpha << 24));
     }
@@ -107,7 +119,7 @@ public final class OneColor {
     /**
      * Get the HSBA color from the RGBA color.
      */
-    public static short[] RGBAtoHSBA(int rgba) {
+    public static short[] ARGBtoHSBA(int rgba) {
         short[] hsb = new short[4];
         float[] hsbArray = Color.RGBtoHSB((rgba >> 16 & 255), (rgba >> 8 & 255), (rgba & 255), null);
         hsb[0] = (short) (hsbArray[0] * 360);
@@ -121,21 +133,21 @@ public final class OneColor {
      * Get the red value of the color (0-255).
      */
     public int getRed() {
-        return rgba >> 16 & 255;
+        return argb >> 16 & 255;
     }
 
     /**
      * Get the green value of the color (0-255).
      */
     public int getGreen() {
-        return rgba >> 8 & 255;
+        return argb >> 8 & 255;
     }
 
     /**
      * Get the blue value of the color (0-255).
      */
     public int getBlue() {
-        return rgba & 255;
+        return argb & 255;
     }
 
     /**
@@ -168,7 +180,7 @@ public final class OneColor {
 
     public void setAlpha(int alpha) {
         this.hsba[3] = (short) alpha;
-        rgba = HSBAtoRGBA(this.hsba[0], this.hsba[1], this.hsba[2], this.hsba[3]);
+        argb = HSBAtoARGB(this.hsba[0], this.hsba[1], this.hsba[2], this.hsba[3]);
     }
 
     /**
@@ -199,7 +211,7 @@ public final class OneColor {
         this.hsba[1] = (short) saturation;
         this.hsba[2] = (short) brightness;
         this.hsba[3] = (short) alpha;
-        this.rgba = HSBAtoRGBA(this.hsba[0], this.hsba[1], this.hsba[2], this.hsba[3]);
+        this.argb = HSBAtoARGB(this.hsba[0], this.hsba[1], this.hsba[2], this.hsba[3]);
     }
 
     public void setFromOneColor(OneColor color) {
@@ -217,8 +229,8 @@ public final class OneColor {
         if (dataBit == 0) dataBit = -1;
         if (dataBit == -1) {
             // fix for when rgba is not set because of deserializing not calling constructor
-            if (rgba == null) rgba = HSBAtoRGBA(this.hsba[0], this.hsba[1], this.hsba[2], this.hsba[3]);
-            return rgba;
+            if (argb == null) argb = HSBAtoARGB(this.hsba[0], this.hsba[1], this.hsba[2], this.hsba[3]);
+            return argb;
         } else {
             int temp = Color.HSBtoRGB(System.currentTimeMillis() % dataBit / (float) dataBit, hsba[1] / 100f, hsba[2] / 100f);
             hsba[0] = (short) ((System.currentTimeMillis() % dataBit / (float) dataBit) * 360);
@@ -239,7 +251,7 @@ public final class OneColor {
     public int getRGBMax(boolean maxBrightness) {
         if (dataBit == 0) dataBit = -1;
         if (dataBit == -1) {
-            return HSBAtoRGBA(this.hsba[0], 100, maxBrightness ? 100 : 0, this.hsba[3]);
+            return HSBAtoARGB(this.hsba[0], 100, maxBrightness ? 100 : 0, this.hsba[3]);
         } else {
             int temp = Color.HSBtoRGB(System.currentTimeMillis() % dataBit / (float) dataBit, 1, maxBrightness ? 1 : 0);
             hsba[0] = (short) ((System.currentTimeMillis() % dataBit / (float) dataBit) * 360);
@@ -253,6 +265,9 @@ public final class OneColor {
 
     public void setColorFromHex(String hex) {
         hex = hex.replace("#", "");
+        if(hex.length() == 8) {
+            hsba[3] = (short) (Integer.parseInt(hex.substring(6, 8), 16));
+        }
         if (hex.length() > 6) {
             hex = hex.substring(0, 6);
         }
@@ -270,12 +285,11 @@ public final class OneColor {
             hexBuilder.append("0");
         }
         hex = hexBuilder.toString();
-        //System.out.println(hex);
         int r = Integer.valueOf(hex.substring(0, 2), 16);
         int g = Integer.valueOf(hex.substring(2, 4), 16);
         int b = Integer.valueOf(hex.substring(4, 6), 16);
-        this.rgba = ((getAlpha() & 0xFF) << 24) | ((r & 0xFF) << 16) | ((g & 0xFF) << 8) | ((b & 0xFF));
-        hsba = RGBAtoHSBA(rgba);
+        this.argb = ((getAlpha() & 0xFF) << 24) | ((r & 0xFF) << 16) | ((g & 0xFF) << 8) | ((b & 0xFF));
+        hsba = ARGBtoHSBA(argb);
     }
 
     private String charsToString(char... chars) {
@@ -284,6 +298,10 @@ public final class OneColor {
             sb.append(c);
         }
         return sb.toString();
+    }
+
+    public Color toJavaColor() {
+        return new Color(getRGB(), true);
     }
 
     @Override

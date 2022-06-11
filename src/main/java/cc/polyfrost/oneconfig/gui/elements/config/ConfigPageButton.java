@@ -29,7 +29,7 @@ public class ConfigPageButton extends BasicOption {
     @Override
     public void draw(long vg, int x, int y) {
         int height = description.equals("") ? 64 : 96;
-        boolean hovered = InputUtils.isAreaHovered(x - 2, y, 1024, height) && isEnabled();
+        boolean hovered = InputUtils.isAreaHovered(x - 16, y, 1024, height) && isEnabled();
         boolean clicked = hovered && InputUtils.isClicked();
 
         if (!isEnabled()) RenderManager.setAlpha(vg, 0.5f);

@@ -8,8 +8,10 @@ import cc.polyfrost.oneconfig.gui.elements.ColorSelector;
 import cc.polyfrost.oneconfig.gui.elements.text.TextInputField;
 import cc.polyfrost.oneconfig.gui.pages.ModsPage;
 import cc.polyfrost.oneconfig.gui.pages.Page;
+import cc.polyfrost.oneconfig.internal.OneConfig;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.internal.config.OneConfigConfig;
+import cc.polyfrost.oneconfig.libs.universal.*;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
@@ -17,10 +19,6 @@ import cc.polyfrost.oneconfig.renderer.scissor.ScissorManager;
 import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
-import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
-import cc.polyfrost.oneconfig.libs.universal.UMatrixStack;
-import cc.polyfrost.oneconfig.libs.universal.UResolution;
-import cc.polyfrost.oneconfig.libs.universal.UScreen;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.input.Mouse;
@@ -69,8 +67,6 @@ public class OneConfigGui extends UScreen {
     public void onDrawScreen(@NotNull UMatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
         super.onDrawScreen(matrixStack, mouseX, mouseY, partialTicks);
         long start = System.nanoTime();
-        int x2 = 0;
-        int y2 = 0;
         RenderManager.setupAndDraw((vg) -> {
             if (currentPage == null) {
                 currentPage = new ModsPage();
@@ -96,8 +92,8 @@ public class OneConfigGui extends UScreen {
             RenderManager.drawLine(vg, x + 224, y, x + 222, y + 800, 1, Colors.GRAY_700);
 
             RenderManager.drawSvg(vg, SVGs.ONECONFIG, x + 19, y + 19, 42, 42);
-            RenderManager.drawText(vg, "OneConfig", x + 69, y + 32, Colors.WHITE, 18f, Fonts.BOLD);        // added half line height to center text
-            RenderManager.drawText(vg, "By Polyfrost", x + 69, y + 51, Colors.WHITE, 12f, Fonts.REGULAR);
+            RenderManager.drawText(vg, "OneConfig", x + 69, y + 32, -1, 18f, Fonts.BOLD);        // added half line height to center text
+            RenderManager.drawText(vg, "By Polyfrost", x + 69, y + 51, -1, 12f, Fonts.REGULAR);
 
             textInputField.draw(vg, x + 1020, y + 16);
             sideBar.draw(vg, x, y);
@@ -139,7 +135,7 @@ public class OneConfigGui extends UScreen {
                 }
             }
 
-            ScissorManager.scissor(vg, x + 224, y + 88, 1056, 698);
+            ScissorManager.scissor(vg, x + 224, y + 72, 1056, 728);
             if (prevPage != null && animation != null) {
                 float pageProgress = animation.get(GuiUtils.getDeltaTime());
                 if (!animation.isReversed()) {
@@ -191,8 +187,7 @@ public class OneConfigGui extends UScreen {
             if (currentColorSelector != null) currentColorSelector.keyTyped(typedChar, keyCode);
             currentPage.keyTyped(typedChar, keyCode);
         } catch (Exception e) {
-            e.printStackTrace();
-            System.out.println("this should literally never happen");
+            OneConfig.LOGGER.error("Error while processing keyboard input; ignoring!");
         }
     }
 

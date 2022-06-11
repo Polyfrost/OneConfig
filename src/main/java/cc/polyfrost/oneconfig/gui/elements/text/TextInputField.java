@@ -455,7 +455,6 @@ public class TextInputField extends BasicElement {
             endLine = caretLine;
             start = x + 12 + this.getTextWidth(vg, wrappedText.get(caretLine).substring(0, getLineCaret(prevCaret, startLine)));
             end = this.getTextWidth(vg, wrappedText.get(caretLine).substring(getLineCaret(prevCaret, startLine), getLineCaret(caretPos, startLine)));
-            System.out.println(wrappedText.get(caretLine).substring(getLineCaret(prevCaret, startLine), getLineCaret(caretPos, startLine)));
         } else {
             start = x + 12 + this.getTextWidth(vg, input.substring(0, prevCaret));
             end = this.getTextWidth(vg, input.substring(prevCaret, caretPos));

@@ -1,9 +1,14 @@
 package cc.polyfrost.oneconfig.gui.pages;
 
 import cc.polyfrost.oneconfig.gui.animations.Animation;
+import cc.polyfrost.oneconfig.gui.animations.ColorAnimation;
 import cc.polyfrost.oneconfig.gui.animations.EaseOutQuad;
+import cc.polyfrost.oneconfig.internal.assets.Colors;
+import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.scissor.Scissor;
 import cc.polyfrost.oneconfig.renderer.scissor.ScissorManager;
+import cc.polyfrost.oneconfig.utils.InputUtils;
+import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 import org.lwjgl.input.Mouse;
 
 /**
@@ -12,9 +17,14 @@ import org.lwjgl.input.Mouse;
 public abstract class Page {
     protected final String title;
     private Animation scrollAnimation;
+    private final ColorAnimation colorAnimation = new ColorAnimation(new ColorPalette(Colors.TRANSPARENT, Colors.GRAY_400_60, Colors.GRAY_400_60));
     private float scrollTarget;
+    private long scrollTime;
+    private boolean mouseWasDown, dragging;
+    private float yStart;
 
-    protected Page(String title) {
+    public Page(String title) {
+        colorAnimation.setSpeed(200);
         this.title = title;
     }
 
@@ -32,10 +42,11 @@ public abstract class Page {
     public void finishUpAndClose() {
     }
 
-    public void scrollWithDraw(long vg, int x, int y) {     // TODO scroll bar
+    public void scrollWithDraw(long vg, int x, int y) {
         int maxScroll = getMaxScrollHeight();
         int scissorOffset = drawStatic(vg, x, y);
         float scroll = scrollAnimation == null ? scrollTarget : scrollAnimation.get();
+        final float scrollBarLength = (728f / maxScroll) * 728f;
         Scissor scissor = ScissorManager.scissor(vg, x, y + scissorOffset, x + 1056, y + 728 - scissorOffset);
         int dWheel = Mouse.getDWheel();
         if (dWheel != 0) {
@@ -45,6 +56,7 @@ public abstract class Page {
             else if (scrollTarget < -maxScroll + 728) scrollTarget = -maxScroll + 728;
 
             scrollAnimation = new EaseOutQuad(150, scroll, scrollTarget, false);
+            scrollTime = System.currentTimeMillis();
         } else if (scrollAnimation != null && scrollAnimation.isFinished()) scrollAnimation = null;
         if (maxScroll <= 728) {
             draw(vg, x, y);
@@ -52,8 +64,29 @@ public abstract class Page {
             return;
         }
         draw(vg, x, (int) (y + scroll));
+        if (dragging && InputUtils.isClicked(true)) {
+            dragging = false;
+        }
 
         ScissorManager.resetScissor(vg, scissor);
+        if(!(scrollBarLength > 727f)) {
+            final float scrollBarY = (scroll / maxScroll) * 720f;
+            final boolean isMouseDown = Mouse.isButtonDown(0);
+            final boolean scrollHover = InputUtils.isAreaHovered(x + 1042, (int) (y - scrollBarY), 12, (int) scrollBarLength) || (System.currentTimeMillis() - scrollTime < 1000);
+            final boolean hovered = scrollHover && Mouse.isButtonDown(0);
+            if (hovered && isMouseDown && !mouseWasDown) {
+                yStart = InputUtils.mouseY();
+                dragging = true;
+            }
+            mouseWasDown = isMouseDown;
+            if(dragging) {
+                scrollTarget = -(InputUtils.mouseY() - yStart) * maxScroll / 728f;
+                if (scrollTarget > 0f) scrollTarget = 0f;
+                else if (scrollTarget < -maxScroll + 728) scrollTarget = -maxScroll + 728;
+                scrollAnimation = new EaseOutQuad(150, scroll, scrollTarget, false);
+            }
+            RenderManager.drawRoundedRect(vg, x + 1044, y - scrollBarY, 8, scrollBarLength, colorAnimation.getColor(scrollHover, dragging), 4f);
+        }
     }
 
     public String getTitle() {
