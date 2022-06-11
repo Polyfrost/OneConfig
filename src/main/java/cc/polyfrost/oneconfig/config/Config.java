@@ -93,13 +93,14 @@ public class Config {
     protected void generateOptionList(Object instance, OptionPage page, Mod mod, boolean migrate) {
         for (Field field : instance.getClass().getDeclaredFields()) {
             Option option = ConfigUtils.findAnnotation(field, Option.class);
+            String optionName = (page.equals(mod.defaultPage) ? "" : page.name + ".") + field.getName();
             if (option != null) {
                 BasicOption configOption = ConfigUtils.addOptionToPage(page, option, field, instance, migrate ? mod.migrator : null);
-                optionNames.put(page.equals(mod.defaultPage) ? "" : page.name + "." + field.getName(), configOption);
+                optionNames.put(optionName, configOption);
             } else if (field.isAnnotationPresent(CustomOption.class)) {
                 BasicOption configOption = getCustomOption(field, page, mod, migrate);
                 if (configOption == null) continue;
-                optionNames.put(page.equals(mod.defaultPage) ? "" : page.name + "." + field.getName(), configOption);
+                optionNames.put(optionName, configOption);
             } else if (field.isAnnotationPresent(Page.class)) {
                 Page optionPage = field.getAnnotation(Page.class);
                 OptionSubcategory subcategory = ConfigUtils.getSubCategory(page, optionPage.category(), optionPage.subcategory());
@@ -196,7 +197,7 @@ public class Config {
     /**
      * Disable an option if a certain condition is not met
      *
-     * @param option  The name of the field, or if the field is in a page "pageName.fieldName"
+     * @param option The name of the field, or if the field is in a page "pageName.fieldName"
      * @param value  The value of the dependency
      */
     protected void addDependency(String option, boolean value) {

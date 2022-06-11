@@ -121,6 +121,7 @@ public class TestConfig_Test extends Config {
 
     public TestConfig_Test() {
         super(new Mod("Test Mod", ModType.UTIL_QOL, new VigilanceMigrator("./config/testConfig.toml")), "hacksConfig.json");
+        addDependency("testCheckBox", "testSwitch");
     }
 }
 
