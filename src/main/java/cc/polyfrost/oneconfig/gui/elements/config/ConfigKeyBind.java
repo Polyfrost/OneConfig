@@ -6,6 +6,7 @@ import cc.polyfrost.oneconfig.config.core.OneKeyBind;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.elements.BasicButton;
+import cc.polyfrost.oneconfig.internal.config.core.KeyBindHandler;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
@@ -22,6 +23,7 @@ public class ConfigKeyBind extends BasicOption {
         super(field, parent, name, category, subcategory, size);
         button = new BasicButton(256, 32, "", SVGs.KEYSTROKE, null, BasicButton.ALIGNMENT_JUSTIFIED, ColorPalette.SECONDARY);
         button.setToggleable(true);
+        KeyBindHandler.addKeyBind(getKeyBind());
     }
 
     public static ConfigKeyBind create(Field field, Object parent) {
@@ -71,6 +73,7 @@ public class ConfigKeyBind extends BasicOption {
     private OneKeyBind getKeyBind() {
         OneKeyBind keyBind = new OneKeyBind();
         try {
+            field.setAccessible(true);
             keyBind = (OneKeyBind) get();
         } catch (IllegalAccessException ignored) {
         }

@@ -5,12 +5,15 @@ import cc.polyfrost.oneconfig.config.data.ModType;
 import cc.polyfrost.oneconfig.events.EventManager;
 import cc.polyfrost.oneconfig.internal.command.OneConfigCommand;
 import cc.polyfrost.oneconfig.internal.config.OneConfigConfig;
+import cc.polyfrost.oneconfig.internal.config.Preferences;
 import cc.polyfrost.oneconfig.internal.config.core.ConfigCore;
+import cc.polyfrost.oneconfig.internal.config.core.KeyBindHandler;
 import cc.polyfrost.oneconfig.internal.gui.BlurHandler;
 import cc.polyfrost.oneconfig.internal.hud.HudCore;
 import cc.polyfrost.oneconfig.utils.commands.CommandManager;
 import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 import cc.polyfrost.oneconfig.utils.hypixel.HypixelUtils;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.DummyModContainer;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.ModContainer;
@@ -33,6 +36,7 @@ public class OneConfig {
     public static final List<ModMetadata> loadedOtherMods = new ArrayList<>();
     public static final Logger LOGGER = LogManager.getLogger("@NAME@");
     public static OneConfigConfig config;
+    public static Preferences preferences;
     private static boolean preLaunched = false;
     private static boolean initialized = false;
     private static boolean isObfuscated = true;
@@ -55,6 +59,7 @@ public class OneConfig {
         oneConfigDir.mkdirs();
         new File(oneConfigDir, "profiles").mkdirs();
         config = new OneConfigConfig();
+        preferences = new Preferences();
         preLaunched = true;
     }
 
@@ -70,6 +75,7 @@ public class OneConfig {
         CommandManager.INSTANCE.registerCommand(OneConfigCommand.class);
         EventManager.INSTANCE.register(new HudCore());
         EventManager.INSTANCE.register(HypixelUtils.INSTANCE);
+        MinecraftForge.EVENT_BUS.register(new KeyBindHandler());
         reloadModsList();
         initialized = true;
     }

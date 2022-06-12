@@ -16,9 +16,9 @@ import org.lwjgl.input.Mouse;
  */
 public abstract class Page {
     protected final String title;
-    private Animation scrollAnimation;
+    protected Animation scrollAnimation;
     private final ColorAnimation colorAnimation = new ColorAnimation(new ColorPalette(Colors.TRANSPARENT, Colors.GRAY_400_60, Colors.GRAY_400_60));
-    private float scrollTarget;
+    protected float scrollTarget;
     private long scrollTime;
     private boolean mouseWasDown, dragging;
     private float yStart;

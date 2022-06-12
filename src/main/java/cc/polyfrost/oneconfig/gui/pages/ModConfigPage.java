@@ -3,6 +3,7 @@ package cc.polyfrost.oneconfig.gui.pages;
 import cc.polyfrost.oneconfig.config.elements.OptionPage;
 import cc.polyfrost.oneconfig.config.elements.OptionSubcategory;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
+import cc.polyfrost.oneconfig.gui.animations.DummyAnimation;
 import cc.polyfrost.oneconfig.gui.elements.BasicButton;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
@@ -17,10 +18,12 @@ public class ModConfigPage extends Page {
     private final ArrayList<BasicButton> categories = new ArrayList<>();
     private String selectedCategory;
     private int totalSize = 724;
+    private final boolean base;
 
-    public ModConfigPage(OptionPage page) {
+    public ModConfigPage(OptionPage page, boolean base) {
         super(page.name);
         this.page = page;
+        this.base = base;
         if (page.categories.size() == 0) return;
         for (String category : page.categories.keySet()) {
             selectedCategory = category;
@@ -34,6 +37,10 @@ public class ModConfigPage extends Page {
             if (category.equals(selectedCategory)) button.setToggled(true);
             categories.add(button);
         }
+    }
+
+    public ModConfigPage(OptionPage page) {
+        this(page, false);
     }
 
     @Override
@@ -84,11 +91,18 @@ public class ModConfigPage extends Page {
         for (BasicButton button : categories) {
             if (button.getText().equals(newCategory)) continue;
             button.setToggled(false);
+            scrollTarget = 0;
+            scrollAnimation = null;
         }
     }
 
     @Override
     public int getMaxScrollHeight() {
         return totalSize;
+    }
+
+    @Override
+    public boolean isBase() {
+        return base;
     }
 }

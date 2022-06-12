@@ -5,20 +5,36 @@ import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
 import java.util.ArrayList;
 
 public class OneKeyBind {
-    private final ArrayList<Integer> keyBinds = new ArrayList<>();
+    protected final ArrayList<Integer> keyBinds = new ArrayList<>();
+    protected final Runnable runnable;
+    protected boolean hasRun;
 
-    public OneKeyBind(int... keys) {
+    public OneKeyBind(Runnable runnable, int... keys) {
+        this.runnable = runnable;
         for (int key : keys) {
             keyBinds.add(key);
         }
     }
 
+    public OneKeyBind(int... keys) {
+        this(null, keys);
+    }
+
     public boolean isActive() {
         if (keyBinds.size() == 0) return false;
         for (int keyBind : keyBinds) {
-            if (!UKeyboard.isKeyDown(keyBind)) return false;
+            if (!UKeyboard.isKeyDown(keyBind)) {
+                hasRun = false;
+                return false;
+            }
         }
         return true;
+    }
+
+    public void run() {
+        if (runnable == null || hasRun) return;
+        runnable.run();
+        hasRun = true;
     }
 
     public String getDisplay() {
