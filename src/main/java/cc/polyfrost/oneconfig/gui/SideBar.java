@@ -5,7 +5,9 @@ import cc.polyfrost.oneconfig.gui.animations.DummyAnimation;
 import cc.polyfrost.oneconfig.gui.animations.EaseInOutQuart;
 import cc.polyfrost.oneconfig.gui.elements.BasicButton;
 import cc.polyfrost.oneconfig.gui.pages.CreditsPage;
+import cc.polyfrost.oneconfig.gui.pages.ModConfigPage;
 import cc.polyfrost.oneconfig.gui.pages.ModsPage;
+import cc.polyfrost.oneconfig.internal.OneConfig;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
@@ -40,6 +42,7 @@ public class SideBar {
     public SideBar() {
         buttons.get(0).setClickAction(new CreditsPage());
         buttons.get(2).setClickAction(new ModsPage());
+        buttons.get(8).setClickAction(new ModConfigPage(OneConfig.preferences.mod.defaultPage, true));
         HUDButton.setClickAction(() -> GuiUtils.displayScreen(new HudGui()));
         CloseButton.setClickAction(GuiUtils::closeScreen);
         for (BasicButton button : buttons) {

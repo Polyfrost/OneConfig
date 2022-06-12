@@ -16,9 +16,9 @@ import org.lwjgl.input.Mouse;
  */
 public abstract class Page {
     protected final String title;
-    private Animation scrollAnimation;
+    protected Animation scrollAnimation;
     private final ColorAnimation colorAnimation = new ColorAnimation(new ColorPalette(Colors.TRANSPARENT, Colors.GRAY_400_60, Colors.GRAY_400_60));
-    private float scrollTarget;
+    protected float scrollTarget;
     private long scrollTime;
     private boolean mouseWasDown, dragging;
     private float yStart;
@@ -69,23 +69,24 @@ public abstract class Page {
         }
 
         ScissorManager.resetScissor(vg, scissor);
-        if(!(scrollBarLength > 727f)) {
+        if (!(scrollBarLength > 727f)) {
             final float scrollBarY = (scroll / maxScroll) * 720f;
             final boolean isMouseDown = Mouse.isButtonDown(0);
-            final boolean scrollHover = InputUtils.isAreaHovered(x + 1042, (int) (y - scrollBarY), 12, (int) scrollBarLength) || (System.currentTimeMillis() - scrollTime < 1000);
-            final boolean hovered = scrollHover && Mouse.isButtonDown(0);
-            if (hovered && isMouseDown && !mouseWasDown) {
+            final boolean scrollHover = InputUtils.isAreaHovered(x + 1042, (int) (y - scrollBarY), 12, (int) scrollBarLength);
+            final boolean scrollTimePeriod = (System.currentTimeMillis() - scrollTime < 1000);
+            final boolean hovered = (scrollHover || scrollTimePeriod) && Mouse.isButtonDown(0);
+            if (scrollHover && isMouseDown && !mouseWasDown) {
                 yStart = InputUtils.mouseY();
                 dragging = true;
             }
             mouseWasDown = isMouseDown;
-            if(dragging) {
+            if (dragging) {
                 scrollTarget = -(InputUtils.mouseY() - yStart) * maxScroll / 728f;
                 if (scrollTarget > 0f) scrollTarget = 0f;
                 else if (scrollTarget < -maxScroll + 728) scrollTarget = -maxScroll + 728;
                 scrollAnimation = new EaseOutQuad(150, scroll, scrollTarget, false);
             }
-            RenderManager.drawRoundedRect(vg, x + 1044, y - scrollBarY, 8, scrollBarLength, colorAnimation.getColor(scrollHover, dragging), 4f);
+            RenderManager.drawRoundedRect(vg, x + 1044, y - scrollBarY, 8, scrollBarLength, colorAnimation.getColor(scrollHover || scrollTimePeriod, dragging), 4f);
         }
     }
 

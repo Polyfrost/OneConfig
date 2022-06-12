@@ -32,4 +32,9 @@ public class CreditsPage extends Page {
         RenderManager.drawText(vg, " - Quiltflower (Quilt Team) - Gradle decompiler", x + 20, y + 415, -1, 12, Fonts.REGULAR);
         RenderManager.drawText(vg, " - Seraph (Scherso) - Locraw and Multithreading utilities", x + 20, y + 430, -1, 12, Fonts.REGULAR);
     }
+
+    @Override
+    public boolean isBase() {
+        return true;
+    }
 }
