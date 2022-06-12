@@ -136,7 +136,6 @@ dependencies {
     shade("org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:$serializationVersion")
     shade("org.jetbrains.kotlinx:kotlinx-serialization-cbor-jvm:$serializationVersion")
     shade("org.jetbrains.kotlinx:atomicfu-jvm:$atomicfuVersion")
-    shade("org.jetbrains.kotlinx:kotlinx-datetime-jvm:$datetimeVersion")
 
     shade("org.spongepowered:mixin:0.7.11-SNAPSHOT") {
         isTransitive = false
