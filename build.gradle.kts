@@ -65,6 +65,7 @@ repositories {
 val relocated = registerRelocationAttribute("relocate") {
     relocate("gg.essential", "cc.polyfrost.oneconfig.libs")
     relocate("me.kbrewster", "cc.polyfrost.oneconfig.libs")
+    relocate("com.github.benmanes", "cc.polyfrost.oneconfig.libs")
 }
 
 val shadeRelocated: Configuration by configurations.creating {
@@ -113,6 +114,9 @@ dependencies {
     shadeRelocated("com.github.KevinPriv:keventbus:c52e0a2ea0") {
         isTransitive = false
     }
+
+    @Suppress("GradlePackageUpdate")
+    shadeRelocated("com.github.ben-manes.caffeine:caffeine:2.9.3")
 
     // for other mods and universalcraft
     val kotlinVersion: String by project

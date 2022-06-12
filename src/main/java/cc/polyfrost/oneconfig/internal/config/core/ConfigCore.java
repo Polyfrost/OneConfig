@@ -18,7 +18,7 @@ public class ConfigCore {
         ArrayList<Mod> data = new ArrayList<>(oneConfigMods);
         oneConfigMods.clear();
         HudCore.huds.clear();
-        KeyBindHandler.clearKeyBinds();
+        KeyBindHandler.INSTANCE.clearKeyBinds();
         for (Mod modData : data) {
             modData.config.init(modData);
         }

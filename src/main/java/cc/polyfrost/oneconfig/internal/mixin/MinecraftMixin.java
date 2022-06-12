@@ -74,4 +74,14 @@ public class MinecraftMixin {
     private void onDeltaTickTimerUpdate(CallbackInfo ci) {
         EventManager.INSTANCE.post(new TimerUpdateEvent(timer, true));
     }
+
+    @Inject(method = "runTick", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/FMLCommonHandler;fireKeyInput()V"))
+    private void onKeyEvent(CallbackInfo ci) {
+        EventManager.INSTANCE.post(new KeyInputEvent());
+    }
+
+    @Inject(method = "runTick", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/FMLCommonHandler;fireMouseInput()V"))
+    private void onMouseEvent(CallbackInfo ci) {
+        EventManager.INSTANCE.post(new MouseInputEvent());
+    }
 }

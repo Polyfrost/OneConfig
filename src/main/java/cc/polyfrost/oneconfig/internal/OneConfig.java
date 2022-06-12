@@ -13,7 +13,6 @@ import cc.polyfrost.oneconfig.internal.hud.HudCore;
 import cc.polyfrost.oneconfig.utils.commands.CommandManager;
 import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 import cc.polyfrost.oneconfig.utils.hypixel.HypixelUtils;
-import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.DummyModContainer;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.ModContainer;
@@ -75,7 +74,7 @@ public class OneConfig {
         CommandManager.INSTANCE.registerCommand(OneConfigCommand.class);
         EventManager.INSTANCE.register(new HudCore());
         EventManager.INSTANCE.register(HypixelUtils.INSTANCE);
-        MinecraftForge.EVENT_BUS.register(new KeyBindHandler());
+        EventManager.INSTANCE.register(KeyBindHandler.INSTANCE);
         reloadModsList();
         initialized = true;
     }

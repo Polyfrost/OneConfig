@@ -1,27 +1,28 @@
 package cc.polyfrost.oneconfig.internal.config.core;
 
 import cc.polyfrost.oneconfig.config.core.OneKeyBind;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.gameevent.InputEvent;
+import cc.polyfrost.oneconfig.events.event.KeyInputEvent;
+import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
 
 import java.util.ArrayList;
 
 public class KeyBindHandler {
-    private static final ArrayList<OneKeyBind> keyBinds = new ArrayList<>();
+    public static final KeyBindHandler INSTANCE = new KeyBindHandler();
+    private final ArrayList<OneKeyBind> keyBinds = new ArrayList<>();
 
-    @SubscribeEvent
-    public void onKeyPressed(InputEvent.KeyInputEvent event) {
+    @Subscribe
+    private void onKeyPressed(KeyInputEvent event) {
         for (OneKeyBind keyBind : keyBinds) {
             if (keyBind.isActive()) keyBind.run();
         }
     }
 
-    public static void addKeyBind(OneKeyBind keyBind) {
+    public void addKeyBind(OneKeyBind keyBind) {
         if (keyBind == null) return;
         keyBinds.add(keyBind);
     }
 
-    public static void clearKeyBinds() {
+    public void clearKeyBinds() {
         keyBinds.clear();
     }
 }
