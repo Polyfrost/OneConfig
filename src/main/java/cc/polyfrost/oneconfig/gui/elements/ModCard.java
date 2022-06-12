@@ -62,6 +62,7 @@ public class ModCard extends BasicElement {
         }
         favoriteButton.draw(vg, x + 212, y + 87);
         favorite = favoriteButton.isToggled();
+        Scissor scissor2 = ScissorManager.scissor(vg, x, y + 87, width - 32, 32);
         RenderManager.drawText(vg, cleanName, x + 12, y + 103, ColorUtils.setAlpha(Colors.WHITE, (int) (colorToggle.getAlpha() * 255)), 14f, Fonts.MEDIUM);
         if (favorite) favoriteButton.setLeftIcon(SVGs.HEART_FILL);
         else favoriteButton.setLeftIcon(SVGs.HEART_OUTLINE);
