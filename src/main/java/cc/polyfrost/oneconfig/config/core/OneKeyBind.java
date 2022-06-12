@@ -6,8 +6,8 @@ import java.util.ArrayList;
 
 public class OneKeyBind {
     protected final ArrayList<Integer> keyBinds = new ArrayList<>();
-    protected final Runnable runnable;
-    protected boolean hasRun;
+    protected transient final Runnable runnable;
+    protected transient boolean hasRun;
 
     public OneKeyBind(Runnable runnable, int... keys) {
         this.runnable = runnable;
