@@ -123,7 +123,6 @@ dependencies {
     val coroutinesVersion: String by project
     val serializationVersion: String by project
     val atomicfuVersion: String by project
-    val datetimeVersion: String by project
     shade("org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion")
     shade("org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion")
     shade("org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlinVersion")
