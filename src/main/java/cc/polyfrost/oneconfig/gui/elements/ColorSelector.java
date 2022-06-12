@@ -69,7 +69,7 @@ public class ColorSelector {
         saturationInput.setCurrentValue(color.getSaturation());
         brightnessInput.setCurrentValue(color.getBrightness());
         alphaInput.setCurrentValue(color.getAlpha() / 255f * 100f);
-        if(!hasAlpha) {
+        if (!hasAlpha) {
             bottomSlider.disabled = true;
             alphaInput.disabled = true;
         }
@@ -196,16 +196,16 @@ public class ColorSelector {
         parseInputFields();
         if (guideBtn.isClicked()) NetworkUtils.browseLink("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
 
-
         // draw the color preview
         RenderManager.drawHollowRoundRect(vg, x + 15, y + 487, 384, 40, Colors.GRAY_300, 12f, 2f);
         RenderManager.drawRoundImage(vg, Images.ALPHA_GRID, x + 20, y + 492, 376, 32, 8f);
         RenderManager.drawRoundedRect(vg, x + 20, y + 492, 376, 32, color.getRGB(), 8f);
+
         InputUtils.blockClicks(true);
-        if (closeBtn.isClicked()) {
+        if (closeBtn.isClicked() || Mouse.isButtonDown(0) && !mouseWasDown && !InputUtils.isAreaHovered(x - 3, y - 3, width + 6, height + 6))
             OneConfigGui.INSTANCE.closeColorSelector();
-        }
         ScissorManager.resetScissor(vg, scissor);
+        mouseWasDown = Mouse.isButtonDown(0);
     }
 
     private void drawColorSelector(long vg, int mode, int x, int y) {
@@ -254,7 +254,6 @@ public class ColorSelector {
         boolean isMouseDown = Mouse.isButtonDown(0);
         boolean hovered = Mouse.isButtonDown(0) && InputUtils.isAreaHovered(x + 16, y + 120, 384, 288);
         if (hovered && isMouseDown && !mouseWasDown) dragging = true;
-        mouseWasDown = isMouseDown;
         switch (mode) {
             case 0:
             case 2:
@@ -285,7 +284,6 @@ public class ColorSelector {
                 hovered = squareDist < 144 * 144 && Mouse.isButtonDown(0);
                 isMouseDown = Mouse.isButtonDown(0);
                 if (hovered && isMouseDown && !mouseWasDown) dragging = true;
-                mouseWasDown = isMouseDown;
 
                 int angle = 0;
                 int saturation = color.getSaturation();
@@ -431,7 +429,7 @@ public class ColorSelector {
 
         @Override
         public void draw(long vg, int x, int y) {
-            if(!disabled) update(x, y);
+            if (!disabled) update(x, y);
             else RenderManager.setAlpha(vg, 0.5f);
             super.dragPointerSize = 15f;
             if (image != null) {

@@ -3,8 +3,8 @@ package cc.polyfrost.oneconfig.gui.animations;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 
 public class ColorAnimation {
-    private int speed = 100;
     private ColorPalette palette;
+    private final int duration;
     /**
      * 0 = nothing
      * 1 = hovered
@@ -17,12 +17,17 @@ public class ColorAnimation {
     private Animation blueAnimation;
     private Animation alphaAnimation;
 
-    public ColorAnimation(ColorPalette palette) {
+    public ColorAnimation(ColorPalette palette, int duration) {
         this.palette = palette;
+        this.duration = duration;
         redAnimation = new DummyAnimation(palette.getNormalColorf()[0]);
         greenAnimation = new DummyAnimation(palette.getNormalColorf()[1]);
         blueAnimation = new DummyAnimation(palette.getNormalColorf()[2]);
         alphaAnimation = new DummyAnimation(palette.getNormalColorf()[3]);
+    }
+
+    public ColorAnimation(ColorPalette palette) {
+        this(palette, 100);
     }
 
     /**
@@ -36,23 +41,13 @@ public class ColorAnimation {
         int state = pressed ? 2 : hovered ? 1 : 0;
         if (state != prevState) {
             float[] newColors = pressed ? palette.getPressedColorf() : hovered ? palette.getHoveredColorf() : palette.getNormalColorf();
-            redAnimation = new EaseInOutQuad(speed, redAnimation.get(), newColors[0], false);
-            greenAnimation = new EaseInOutQuad(speed, greenAnimation.get(), newColors[1], false);
-            blueAnimation = new EaseInOutQuad(speed, blueAnimation.get(), newColors[2], false);
-            alphaAnimation = new EaseInOutQuad(speed, alphaAnimation.get(), newColors[3], false);
+            redAnimation = new EaseInOutQuad(duration, redAnimation.get(), newColors[0], false);
+            greenAnimation = new EaseInOutQuad(duration, greenAnimation.get(), newColors[1], false);
+            blueAnimation = new EaseInOutQuad(duration, blueAnimation.get(), newColors[2], false);
+            alphaAnimation = new EaseInOutQuad(duration, alphaAnimation.get(), newColors[3], false);
             prevState = state;
         }
         return ((int) (alphaAnimation.get() * 255) << 24) | ((int) (redAnimation.get() * 255) << 16) | ((int) (greenAnimation.get() * 255) << 8) | ((int) (blueAnimation.get() * 255));
-    }
-
-    /** Set the speed in milliseconds for the animation. */
-    public void setSpeed(int speed) {
-        this.speed = speed;
-    }
-
-    /** Get the speed in milliseconds for the animation. */
-    public int getSpeed() {
-        return speed;
     }
 
     /**

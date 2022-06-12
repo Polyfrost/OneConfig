@@ -17,14 +17,13 @@ import org.lwjgl.input.Mouse;
 public abstract class Page {
     protected final String title;
     protected Animation scrollAnimation;
-    private final ColorAnimation colorAnimation = new ColorAnimation(new ColorPalette(Colors.TRANSPARENT, Colors.GRAY_400_60, Colors.GRAY_400_60));
+    private final ColorAnimation colorAnimation = new ColorAnimation(new ColorPalette(Colors.TRANSPARENT, Colors.GRAY_400_60, Colors.GRAY_400_60), 200);
     protected float scrollTarget;
     private long scrollTime;
     private boolean mouseWasDown, dragging;
     private float yStart;
 
     public Page(String title) {
-        colorAnimation.setSpeed(200);
         this.title = title;
     }
 

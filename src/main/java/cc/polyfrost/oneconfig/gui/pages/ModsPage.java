@@ -55,7 +55,7 @@ public class ModsPage extends Page {
                 }
             }
         }
-        size = iY + 119;
+        size = iY - y + 135;
         if (iX == x + 16 && iY == y + 72) {
             RenderManager.drawText(vg, "Looks like there is nothing here. Try another category?", x + 16, y + 72, Colors.WHITE_60, 14f, Fonts.MEDIUM);
         }

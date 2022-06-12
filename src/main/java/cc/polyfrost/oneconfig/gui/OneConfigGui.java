@@ -202,6 +202,7 @@ public class OneConfigGui extends UScreen {
     public void openPage(@NotNull Page page, Animation animation, boolean addToPrevious) {
         if (page == currentPage) return;
         currentPage.finishUpAndClose();
+        textInputField.setInput("");
         if (!page.isBase()) {
             boolean alreadyInParents = false;
             for (int i = 0; i < parents.size(); i++) {
