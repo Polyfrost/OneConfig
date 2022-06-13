@@ -18,7 +18,6 @@ public class KeyBindHandler {
     }
 
     public void addKeyBind(OneKeyBind keyBind) {
-        if (keyBind == null) return;
         keyBinds.add(keyBind);
     }
 

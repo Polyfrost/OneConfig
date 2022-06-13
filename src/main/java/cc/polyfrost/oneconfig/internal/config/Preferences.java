@@ -17,9 +17,10 @@ public class Preferences extends InternalConfig {
             name = "OneConfig Keybind",
             size = 2
     )
-    public static OneKeyBind oneConfigKeyBind = new OneKeyBind(() -> GuiUtils.displayScreen(OneConfigGui.create()), UKeyboard.KEY_RSHIFT);
+    public static OneKeyBind oneConfigKeyBind = new OneKeyBind(UKeyboard.KEY_RSHIFT);
 
     public Preferences() {
         super("Preferences", "Preferences.json");
+        registerKeyBind(oneConfigKeyBind, () -> GuiUtils.displayScreen(OneConfigGui.create()));
     }
 }

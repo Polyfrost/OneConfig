@@ -6,18 +6,13 @@ import java.util.ArrayList;
 
 public class OneKeyBind {
     protected final ArrayList<Integer> keyBinds = new ArrayList<>();
-    protected transient final Runnable runnable;
+    protected transient Runnable runnable;
     protected transient boolean hasRun;
 
-    public OneKeyBind(Runnable runnable, int... keys) {
-        this.runnable = runnable;
+    public OneKeyBind(int... keys) {
         for (int key : keys) {
             keyBinds.add(key);
         }
-    }
-
-    public OneKeyBind(int... keys) {
-        this(null, keys);
     }
 
     public boolean isActive() {
@@ -56,5 +51,9 @@ public class OneKeyBind {
 
     public int getSize() {
         return keyBinds.size();
+    }
+
+    public void setRunnable(Runnable runnable) {
+        this.runnable = runnable;
     }
 }
