@@ -24,4 +24,8 @@ public class Scissor {
         this.width = scissor.width;
         this.height = scissor.height;
     }
+
+    public boolean isInScissor(int x, int y) {
+        return x >= this.x && x <= this.x + this.width && y >= this.y && y <= this.y + this.height;
+    }
 }

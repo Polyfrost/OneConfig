@@ -85,14 +85,12 @@ public class ConfigColorElement extends BasicOption {
         RenderManager.drawHollowRoundRect(vg, x1 + 415, y - 1, 64, 32, Colors.GRAY_300, 12f, 2f);
         RenderManager.drawRoundImage(vg, Images.ALPHA_GRID, x1 + 420, y + 4, 56, 24, 8f);
         RenderManager.drawRoundedRect(vg, x1 + 420, y + 4, 56, 24, color.getRGB(), 8f);
-        if (element.isClicked() && !element.isToggled()) {
-            open = !open;
+        if (element.isClicked() && !open) {
+            open = true;
             OneConfigGui.INSTANCE.initColorSelector(new ColorSelector(color, InputUtils.mouseX(), InputUtils.mouseY(), allowAlpha));
         }
         if (OneConfigGui.INSTANCE.currentColorSelector == null) open = false;
-        if (OneConfigGui.INSTANCE.currentColorSelector != null && open) {
-            color = (OneConfigGui.INSTANCE.getColor());
-        }
+        else if (open) color = (OneConfigGui.INSTANCE.getColor());
         setColor(color);
         RenderManager.setAlpha(vg, 1f);
     }

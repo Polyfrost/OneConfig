@@ -7,6 +7,7 @@ import cc.polyfrost.oneconfig.gui.animations.ColorAnimation;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
+import cc.polyfrost.oneconfig.renderer.scissor.Scissor;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 import org.lwjgl.input.Mouse;
@@ -20,6 +21,7 @@ public class ConfigDropdown extends BasicOption {
     private final ColorAnimation backgroundColor = new ColorAnimation(ColorPalette.SECONDARY);
     private final ColorAnimation atomColor = new ColorAnimation(new ColorPalette(Colors.PRIMARY_600, Colors.PRIMARY_500, Colors.PRIMARY_500));
     private boolean opened = false;
+    private Scissor inputScissor = null;
 
     public ConfigDropdown(Field field, Object parent, String name, String category, String subcategory, int size, String[] options) {
         super(field, parent, name, category, subcategory, size);
@@ -45,7 +47,8 @@ public class ConfigDropdown extends BasicOption {
                         size == 2 && !InputUtils.isAreaHovered(x + 352, y + 40, 640, options.length * 32))) {
             opened = !opened;
             backgroundColor.setPalette(opened ? ColorPalette.PRIMARY : ColorPalette.SECONDARY);
-            InputUtils.blockClicks(opened);
+            if (opened) inputScissor = InputUtils.blockAllInput();
+            else if (inputScissor != null) InputUtils.stopBlock(inputScissor);
         }
         if (opened) return;
 
@@ -75,8 +78,8 @@ public class ConfigDropdown extends BasicOption {
         if (!opened) return;
 
         boolean hovered;
-        if (size == 1) hovered = InputUtils.isAreaHovered(x + 224, y, 256, 32);
-        else hovered = InputUtils.isAreaHovered(x + 352, y, 640, 32);
+        if (size == 1) hovered = InputUtils.isAreaHovered(x + 224, y, 256, 32, true);
+        else hovered = InputUtils.isAreaHovered(x + 352, y, 640, 32, true);
 
         int selected = 0;
         try {
@@ -98,7 +101,7 @@ public class ConfigDropdown extends BasicOption {
             int optionY = y + 44;
             for (String option : options) {
                 int color = Colors.WHITE_80;
-                boolean optionHovered = InputUtils.isAreaHovered(x + 224, optionY, 252, 32);
+                boolean optionHovered = InputUtils.isAreaHovered(x + 224, optionY, 252, 32, true);
                 if (optionHovered && Mouse.isButtonDown(0)) {
                     RenderManager.drawRoundedRect(vg, x + 228, optionY + 2, 248, 28, Colors.PRIMARY_700_80, 8);
                 } else if (optionHovered) {
@@ -112,7 +115,7 @@ public class ConfigDropdown extends BasicOption {
                     }
                     opened = false;
                     backgroundColor.setPalette(ColorPalette.SECONDARY);
-                    InputUtils.blockClicks(false);
+                    if (inputScissor != null) InputUtils.stopBlock(inputScissor);
                 }
 
                 RenderManager.drawText(vg, option, x + 240, optionY + 18, color, 14, Fonts.MEDIUM);
@@ -131,7 +134,7 @@ public class ConfigDropdown extends BasicOption {
             int optionY = y + 44;
             for (String option : options) {
                 int color = Colors.WHITE_80;
-                boolean optionHovered = InputUtils.isAreaHovered(x + 352, optionY, 640, 36);
+                boolean optionHovered = InputUtils.isAreaHovered(x + 352, optionY, 640, 36, true);
                 if (optionHovered && Mouse.isButtonDown(0)) {
                     RenderManager.drawRoundedRect(vg, x + 356, optionY + 2, 632, 28, Colors.PRIMARY_700_80, 8);
                 } else if (optionHovered) {
@@ -148,7 +151,7 @@ public class ConfigDropdown extends BasicOption {
                     }
                     opened = false;
                     backgroundColor.setPalette(ColorPalette.SECONDARY);
-                    InputUtils.blockClicks(false);
+                    if (inputScissor != null) InputUtils.stopBlock(inputScissor);
                 }
                 optionY += 32;
             }

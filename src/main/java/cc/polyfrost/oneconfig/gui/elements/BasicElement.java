@@ -44,7 +44,7 @@ public class BasicElement {
     public int currentColor;
     protected final float radius;
     /**
-     * Boolean to determine if this element is allowed to be clicked when {@link InputUtils#isBlockingClicks()} is true.
+     * Boolean to determine if this element is allowed to be clicked when {@link InputUtils#isBlockingInput()} is true.
      */
     private boolean block = false;
     /**

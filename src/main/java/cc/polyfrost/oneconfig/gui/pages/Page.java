@@ -11,6 +11,8 @@ import cc.polyfrost.oneconfig.utils.InputUtils;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 import org.lwjgl.input.Mouse;
 
+import java.util.ArrayList;
+
 /**
  * A page is a 1056x728 rectangle of the GUI. It is the main content of the gui, and can be switched back and forwards easily. All the content of OneConfig is in a page.
  */
@@ -22,6 +24,7 @@ public abstract class Page {
     private long scrollTime;
     private boolean mouseWasDown, dragging;
     private float yStart;
+    public ArrayList<Page> parents = null;
 
     public Page(String title) {
         this.title = title;
@@ -47,6 +50,7 @@ public abstract class Page {
         float scroll = scrollAnimation == null ? scrollTarget : scrollAnimation.get();
         final float scrollBarLength = (728f / maxScroll) * 728f;
         Scissor scissor = ScissorManager.scissor(vg, x, y + scissorOffset, x + 1056, y + 728 - scissorOffset);
+        Scissor inputScissor = InputUtils.blockInputArea(x, y, x + 1056, y + scissorOffset);
         int dWheel = Mouse.getDWheel();
         if (dWheel != 0) {
             scrollTarget += dWheel;
@@ -60,6 +64,7 @@ public abstract class Page {
         if (maxScroll <= 728) {
             draw(vg, x, y);
             ScissorManager.resetScissor(vg, scissor);
+            InputUtils.stopBlock(inputScissor);
             return;
         }
         draw(vg, x, (int) (y + scroll));
@@ -68,6 +73,7 @@ public abstract class Page {
         }
 
         ScissorManager.resetScissor(vg, scissor);
+        InputUtils.stopBlock(inputScissor);
         if (!(scrollBarLength > 727f)) {
             final float scrollBarY = (scroll / maxScroll) * 720f;
             final boolean isMouseDown = Mouse.isButtonDown(0);

@@ -2,7 +2,11 @@ package cc.polyfrost.oneconfig.utils;
 
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.libs.universal.UResolution;
+import cc.polyfrost.oneconfig.renderer.scissor.Scissor;
+import cc.polyfrost.oneconfig.renderer.scissor.ScissorManager;
 import org.lwjgl.input.Mouse;
+
+import java.util.ArrayList;
 
 /**
  * Various utility methods for input.
@@ -12,7 +16,19 @@ import org.lwjgl.input.Mouse;
  * </p>
  */
 public final class InputUtils {
-    private static boolean blockClicks = false;
+    private static final ArrayList<Scissor> blockScissors = new ArrayList<>();
+    private static Scissor finalScissor = new Scissor(0, 0, 0, 0);
+
+    /**
+     * function to determine weather the mouse is currently over a specific region. Uses the current nvgScale to fix to any scale.
+     *
+     * @return true if mouse is over region, false if not.
+     */
+    public static boolean isAreaHovered(int x, int y, int width, int height, boolean ignoreBlock) {
+        int mouseX = mouseX();
+        int mouseY = mouseY();
+        return (ignoreBlock || blockScissors.size() == 0 || !finalScissor.isInScissor(mouseX, mouseY)) && mouseX > x && mouseY > y && mouseX < x + width && mouseY < y + height;
+    }
 
     /**
      * function to determine weather the mouse is currently over a specific region. Uses the current nvgScale to fix to any scale.
@@ -20,9 +36,7 @@ public final class InputUtils {
      * @return true if mouse is over region, false if not.
      */
     public static boolean isAreaHovered(int x, int y, int width, int height) {
-        int mouseX = mouseX();
-        int mouseY = mouseY();
-        return mouseX > x && mouseY > y && mouseX < x + width && mouseY < y + height;
+        return isAreaHovered(x, y, width, height, false);
     }
 
     /**
@@ -32,12 +46,12 @@ public final class InputUtils {
      * @param y           the y position of the region
      * @param width       the width of the region
      * @param height      the height of the region
-     * @param ignoreBlock if true, will ignore {@link InputUtils#blockClicks(boolean)}
+     * @param ignoreBlock if true, will ignore
      * @return true if the mouse is clicked and is over the region, false if not
      * @see InputUtils#isAreaHovered(int, int, int, int)
      */
     public static boolean isAreaClicked(int x, int y, int width, int height, boolean ignoreBlock) {
-        return isAreaHovered(x, y, width, height) && isClicked(ignoreBlock);
+        return isAreaHovered(x, y, width, height, ignoreBlock) && isClicked(false);
     }
 
     /**
@@ -57,11 +71,11 @@ public final class InputUtils {
     /**
      * Checks whether the mouse is clicked or not.
      *
-     * @param ignoreBlock if true, will ignore {@link InputUtils#blockClicks(boolean)}
+     * @param ignoreBlock if true, will ignore
      * @return true if the mouse is clicked, false if not
      */
     public static boolean isClicked(boolean ignoreBlock) {
-        return OneConfigGui.INSTANCE != null && OneConfigGui.INSTANCE.mouseDown && !Mouse.isButtonDown(0) && (!blockClicks || ignoreBlock);
+        return OneConfigGui.INSTANCE != null && OneConfigGui.INSTANCE.mouseDown && !Mouse.isButtonDown(0) && (ignoreBlock || blockScissors.size() == 0 || !finalScissor.isInScissor(mouseX(), mouseY()));
     }
 
     /**
@@ -103,10 +117,42 @@ public final class InputUtils {
     }
 
     /**
+     * Block all clicks outside an area
+     *
+     * @param x      X coordinate
+     * @param y      Y coordinate
+     * @param width  Width
+     * @param height Height
+     */
+    public static Scissor blockInputArea(int x, int y, int width, int height) {
+        Scissor scissor = new Scissor(new Scissor(x, y, width, height));
+        blockScissors.add(scissor);
+        finalScissor = ScissorManager.getFinalScissor(blockScissors);
+        return scissor;
+    }
+
+    /**
      * Should be used if there is something above other components and you don't want it clicking trough
      */
-    public static void blockClicks(boolean value) {
-        blockClicks = value;
+    public static Scissor blockAllInput() {
+        return blockInputArea(0, 0, 1920, 1080);
+    }
+
+    /**
+     * Stop blocking an area from being interacted with
+     *
+     * @param scissor The scissor area
+     */
+    public static void stopBlock(Scissor scissor) {
+        blockScissors.remove(scissor);
+        if (blockScissors.size() > 0) finalScissor = ScissorManager.getFinalScissor(blockScissors);
+    }
+
+    /**
+     * Clears all blocking areas
+     */
+    public static void stopBlockingInput() {
+        blockScissors.clear();
     }
 
     /**
@@ -114,7 +160,7 @@ public final class InputUtils {
      *
      * @return true if clicks are blocked, false if not
      */
-    public static boolean isBlockingClicks() {
-        return blockClicks;
+    public static boolean isBlockingInput() {
+        return blockScissors.size() > 0;
     }
 }

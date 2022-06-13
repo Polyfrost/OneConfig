@@ -32,7 +32,7 @@ public class OneConfigCommand {
         @Main
         private static void main() {
             OneConfigGui.instanceToRestore = null;
-            InputUtils.blockClicks(false);
+            InputUtils.stopBlockingInput();
         }
     }
 }

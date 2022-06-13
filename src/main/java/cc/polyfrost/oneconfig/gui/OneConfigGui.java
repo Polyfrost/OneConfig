@@ -35,7 +35,6 @@ public class OneConfigGui extends UScreen {
     private final ArrayList<Page> nextPages = new ArrayList<>();
     private final BasicElement backArrow = new BasicElement(40, 40, new ColorPalette(Colors.GRAY_700, Colors.GRAY_500, Colors.GRAY_500_80), true);
     private final BasicElement forwardArrow = new BasicElement(40, 40, new ColorPalette(Colors.GRAY_700, Colors.GRAY_500, Colors.GRAY_500_80), true);
-    private final ArrayList<Page> parents = new ArrayList<>();
     public ColorSelector currentColorSelector;
     public boolean mouseDown;
     public boolean allowClose = true;
@@ -70,7 +69,8 @@ public class OneConfigGui extends UScreen {
         RenderManager.setupAndDraw((vg) -> {
             if (currentPage == null) {
                 currentPage = new ModsPage();
-                parents.add(currentPage);
+                currentPage.parents = new ArrayList<>();
+                currentPage.parents.add(currentPage);
             }
             if (OneConfigConfig.australia) {
                 NanoVG.nvgTranslate(vg, UResolution.getWindowWidth(), UResolution.getWindowHeight());
@@ -154,17 +154,17 @@ public class OneConfigGui extends UScreen {
             ScissorManager.clearScissors(vg);
 
             float breadcrumbX = x + 352;
-            for (int i = 0; i < parents.size(); i++) {
-                String title = parents.get(i).getTitle();
+            for (int i = 0; i < currentPage.parents.size(); i++) {
+                String title = currentPage.parents.get(i).getTitle();
                 float width = RenderManager.getTextWidth(vg, title, 24f, Fonts.SEMIBOLD);
                 boolean hovered = InputUtils.isAreaHovered((int) breadcrumbX, y + 24, (int) width, 36);
                 int color = Colors.WHITE_60;
-                if (i == parents.size() - 1) color = Colors.WHITE;
+                if (i == currentPage.parents.size() - 1) color = Colors.WHITE;
                 else if (hovered && !Mouse.isButtonDown(0)) color = Colors.WHITE_80;
                 RenderManager.drawText(vg, title, breadcrumbX, y + 38, color, 24f, Fonts.SEMIBOLD);
                 if (i != 0)
                     RenderManager.drawSvg(vg, SVGs.CARET_RIGHT, breadcrumbX - 28, y + 25, 24, 24, color);
-                if (hovered && InputUtils.isClicked()) openPage(parents.get(i));
+                if (hovered && InputUtils.isClicked()) openPage(currentPage.parents.get(i));
                 breadcrumbX += width + 32;
             }
 
@@ -203,20 +203,23 @@ public class OneConfigGui extends UScreen {
         if (page == currentPage) return;
         currentPage.finishUpAndClose();
         textInputField.setInput("");
-        if (!page.isBase()) {
-            boolean alreadyInParents = false;
-            for (int i = 0; i < parents.size(); i++) {
-                Page parent = parents.get(i);
-                if (parent == page) {
-                    alreadyInParents = true;
-                    parents.subList(i + 1, parents.size()).clear();
-                    break;
+        if (page.parents == null) {
+            page.parents = new ArrayList<>(currentPage.parents);
+            if (!page.isBase()) {
+                boolean alreadyInParents = false;
+                for (int i = 0; i < page.parents.size(); i++) {
+                    Page parent = page.parents.get(i);
+                    if (parent == page) {
+                        alreadyInParents = true;
+                        page.parents.subList(i + 1, page.parents.size()).clear();
+                        break;
+                    }
                 }
+                if (!alreadyInParents) page.parents.add(page);
+            } else {
+                page.parents.clear();
+                page.parents.add(page);
             }
-            if (!alreadyInParents) parents.add(page);
-        } else {
-            parents.clear();
-            parents.add(page);
         }
         if (addToPrevious) {
             previousPages.add(0, currentPage);
@@ -235,7 +238,7 @@ public class OneConfigGui extends UScreen {
      * Correct usage: <code>OneConfigGui.INSTANCE.initColorSelector(new ColorSelector(color, InputUtils.mouseX(), InputUtils.mouseY()));</code>
      */
     public void initColorSelector(ColorSelector colorSelector) {
-        InputUtils.blockClicks(true);
+        if (currentColorSelector != null) closeColorSelector();
         currentColorSelector = colorSelector;
     }
 

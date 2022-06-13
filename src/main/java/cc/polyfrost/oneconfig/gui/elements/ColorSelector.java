@@ -54,6 +54,7 @@ public class ColorSelector {
     private int mode = 0;
     private boolean dragging, mouseWasDown;
     private final boolean hasAlpha;
+    private Scissor inputScissor = null;
 
     public ColorSelector(OneColor color, int mouseX, int mouseY) {
         this(color, mouseX, mouseY, true);
@@ -106,7 +107,7 @@ public class ColorSelector {
     }
 
     public void draw(long vg) {
-        InputUtils.blockClicks(false);
+        if (inputScissor != null) InputUtils.stopBlock(inputScissor);
         doDrag();
         int width = 416;
         int height = 768;
@@ -201,11 +202,12 @@ public class ColorSelector {
         RenderManager.drawRoundImage(vg, Images.ALPHA_GRID, x + 20, y + 492, 376, 32, 8f);
         RenderManager.drawRoundedRect(vg, x + 20, y + 492, 376, 32, color.getRGB(), 8f);
 
-        InputUtils.blockClicks(true);
-        if (closeBtn.isClicked() || Mouse.isButtonDown(0) && !mouseWasDown && !InputUtils.isAreaHovered(x - 3, y - 3, width + 6, height + 6))
-            OneConfigGui.INSTANCE.closeColorSelector();
+        inputScissor = InputUtils.blockInputArea(x - 3, y - 3, width + 6, height + 6);
         ScissorManager.resetScissor(vg, scissor);
         mouseWasDown = Mouse.isButtonDown(0);
+        if (closeBtn.isClicked()) {
+            OneConfigGui.INSTANCE.closeColorSelector();
+        }
     }
 
     private void drawColorSelector(long vg, int mode, int x, int y) {
@@ -392,7 +394,7 @@ public class ColorSelector {
     }
 
     public void onClose() {
-        InputUtils.blockClicks(false);
+        if (inputScissor != null) InputUtils.stopBlock(inputScissor);
         /*for (int i = 0; i < OneConfigConfig.recentColors.size(); i++) {
             OneColor color1 = OneConfigConfig.recentColors.get(i);
             if (color1.getRGB() == color.getRGB()) {
