@@ -39,7 +39,7 @@ public class VigilantTransformer implements ITransformer {
 
     @Override
     public void transform(String transformedName, ClassNode node) {
-        if (!didMixin) {
+        if (!didMixin && !node.interfaces.contains("cc/polyfrost/oneconfig/config/compatibility/vigilance/VigilantAccessor")) {
             node.fields.add(new FieldNode(Opcodes.ACC_PUBLIC, "oneconfig$config", Type.getDescriptor(VigilanceConfig.class), null, null));
             node.fields.add(new FieldNode(Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL, "oneconfig$file", Type.getDescriptor(File.class), null, null));
 
@@ -110,7 +110,7 @@ public class VigilantTransformer implements ITransformer {
 
     // this is the method above but using spongemixin's stupid relocate asm and static
     public static void transform(org.spongepowered.asm.lib.tree.ClassNode node) {
-        if (!didASM) {
+        if (!didASM && !node.interfaces.contains("cc/polyfrost/oneconfig/config/compatibility/vigilance/VigilantAccessor")) {
             node.fields.add(new org.spongepowered.asm.lib.tree.FieldNode(Opcodes.ACC_PUBLIC, "oneconfig$config", Type.getDescriptor(VigilanceConfig.class), null, null));
             node.fields.add(new org.spongepowered.asm.lib.tree.FieldNode(Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL, "oneconfig$file", Type.getDescriptor(File.class), null, null));
 
