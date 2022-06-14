@@ -1,31 +1,29 @@
 package cc.polyfrost.oneconfig.gui.pages;
 
-import cc.polyfrost.oneconfig.internal.OneConfig;
-import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.config.data.Mod;
 import cc.polyfrost.oneconfig.config.data.ModType;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.elements.BasicButton;
 import cc.polyfrost.oneconfig.gui.elements.ModCard;
+import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.internal.config.OneConfigConfig;
+import cc.polyfrost.oneconfig.internal.config.core.ConfigCore;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Iterator;
 
 public class ModsPage extends Page {
 
-    private final List<ModCard> modCards = new ArrayList<>();
-    private final List<BasicButton> modCategories = new ArrayList<>();
+    private final ArrayList<ModCard> modCards = new ArrayList<>();
+    private final ArrayList<BasicButton> modCategories = new ArrayList<>();
     private int size;
 
     public ModsPage() {
         super("Mods");
-        for (Mod modData : OneConfig.loadedMods) {
-            modCards.add(OneConfigConfig.favoriteMods.contains(modData.name) ? 0 : modCards.size(), new ModCard(modData, modData.config == null || modData.config.enabled, false, OneConfigConfig.favoriteMods.contains(modData.name)));
-        }
+        reloadMods();
         modCategories.add(new BasicButton(64, 32, "All", BasicButton.ALIGNMENT_CENTER, ColorPalette.SECONDARY));
         modCategories.add(new BasicButton(80, 32, "Combat", BasicButton.ALIGNMENT_CENTER, ColorPalette.SECONDARY));
         modCategories.add(new BasicButton(64, 32, "HUD", BasicButton.ALIGNMENT_CENTER, ColorPalette.SECONDARY));
@@ -45,7 +43,8 @@ public class ModsPage extends Page {
         String filter = OneConfigGui.INSTANCE == null ? "" : OneConfigGui.INSTANCE.getSearchValue().toLowerCase().trim();
         int iX = x + 16;
         int iY = y + 72;
-        for (ModCard modCard : modCards) {
+        ArrayList<ModCard> finalModCards = new ArrayList<>(modCards);
+        for (ModCard modCard : finalModCards) {
             if (inSelection(modCard) && (filter.equals("") || modCard.getModData().name.toLowerCase().contains(filter))) {
                 modCard.draw(vg, iX, iY);
                 iX += 260;
@@ -81,21 +80,15 @@ public class ModsPage extends Page {
         }
     }
 
-    @Override
-    public void finishUpAndClose() {
-        OneConfigConfig.favoriteMods.clear();
-        for (ModCard modCard : modCards) {
-            if (modCard.isFavorite()) OneConfigConfig.favoriteMods.add(modCard.getModData().name);
-            if (modCard.getModData().config != null && modCard.getModData().config.enabled != modCard.isActive()) {
-                modCard.getModData().config.enabled = modCard.isActive();
-                modCard.getModData().config.save();
-            }
-        }
-        OneConfig.config.save();
+    private boolean inSelection(ModCard modCard) {
+        return modCategories.get(0).isToggled() || (modCategories.get(1).isToggled() && modCard.getModData().modType == ModType.PVP) || (modCategories.get(2).isToggled() && modCard.getModData().modType == ModType.HUD) || (modCategories.get(3).isToggled() && modCard.getModData().modType == ModType.UTIL_QOL) || (modCategories.get(4).isToggled() && modCard.getModData().modType == ModType.HYPIXEL) || (modCategories.get(5).isToggled() && modCard.getModData().modType == ModType.SKYBLOCK) || (modCategories.get(6).isToggled() && modCard.getModData().modType == ModType.THIRD_PARTY);
     }
 
-    private boolean inSelection(ModCard modCard) {
-        return modCategories.get(0).isToggled() && (OneConfigConfig.allShowShortCut || !modCard.getModData().isShortCut) || (modCategories.get(1).isToggled() && modCard.getModData().modType == ModType.PVP) || (modCategories.get(2).isToggled() && modCard.getModData().modType == ModType.HUD) || (modCategories.get(3).isToggled() && modCard.getModData().modType == ModType.UTIL_QOL) || (modCategories.get(4).isToggled() && modCard.getModData().modType == ModType.HYPIXEL) || (modCategories.get(5).isToggled() && modCard.getModData().modType == ModType.SKYBLOCK) || (modCategories.get(6).isToggled() && modCard.getModData().modType == ModType.THIRD_PARTY);
+    public void reloadMods() {
+        modCards.clear();
+        for (Mod modData : ConfigCore.oneConfigMods) {
+            modCards.add(new ModCard(modData, modData.config == null || modData.config.enabled, false, OneConfigConfig.favoriteMods.contains(modData.name), this));
+        }
     }
 
     @Override

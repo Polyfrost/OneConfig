@@ -58,7 +58,6 @@ public class ModConfigPage extends Page {
 
     @Override
     public int drawStatic(long vg, int x, int y) {
-        // Category buttons
         if (categories.size() <= 1) return 0;
         int buttonX = x + 16;
         for (BasicButton button : categories) {

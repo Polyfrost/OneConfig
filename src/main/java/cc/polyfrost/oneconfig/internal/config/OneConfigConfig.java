@@ -22,7 +22,6 @@ public class OneConfigConfig extends InternalConfig {
     public static ArrayList<String> favoriteMods = new ArrayList<>();
     public static ArrayList<OneColor> favoriteColors = new ArrayList<>();
     public static ArrayList<OneColor> recentColors = new ArrayList<>();
-    public static boolean allShowShortCut = false;
     public static boolean australia = false;
 
     public OneConfigConfig() {

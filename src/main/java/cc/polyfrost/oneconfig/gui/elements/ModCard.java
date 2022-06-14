@@ -1,44 +1,45 @@
 package cc.polyfrost.oneconfig.gui.elements;
 
-import cc.polyfrost.oneconfig.internal.OneConfig;
-import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.config.data.Mod;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.animations.ColorAnimation;
 import cc.polyfrost.oneconfig.gui.pages.ModConfigPage;
+import cc.polyfrost.oneconfig.gui.pages.ModsPage;
+import cc.polyfrost.oneconfig.internal.OneConfig;
+import cc.polyfrost.oneconfig.internal.assets.Colors;
+import cc.polyfrost.oneconfig.internal.assets.SVGs;
+import cc.polyfrost.oneconfig.internal.config.OneConfigConfig;
+import cc.polyfrost.oneconfig.internal.config.core.ConfigCore;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
-import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.renderer.scissor.Scissor;
 import cc.polyfrost.oneconfig.renderer.scissor.ScissorManager;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 import cc.polyfrost.oneconfig.utils.color.ColorUtils;
-import cc.polyfrost.oneconfig.libs.universal.wrappers.UPlayer;
-import net.minecraftforge.client.ClientCommandHandler;
-import net.minecraftforge.fml.common.ModMetadata;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.input.Mouse;
-
-import java.util.ArrayList;
 
 public class ModCard extends BasicElement {
     private final Mod modData;
     private final BasicButton favoriteButton = new BasicButton(32, 32, SVGs.HEART_OUTLINE, BasicButton.ALIGNMENT_CENTER, ColorPalette.TERTIARY);
     private final ColorAnimation colorFrame = new ColorAnimation(ColorPalette.SECONDARY);
-    private final ColorAnimation colorToggle = new ColorAnimation(ColorPalette.PRIMARY);
+    private final ColorAnimation colorToggle;
     private boolean active, disabled, favorite;
     private boolean isHoveredMain = false;
+    private final ModsPage page;
 
-    public ModCard(@NotNull Mod mod, boolean active, boolean disabled, boolean favorite) {
+    public ModCard(@NotNull Mod mod, boolean active, boolean disabled, boolean favorite, ModsPage page) {
         super(244, 119, false);
         this.modData = mod;
         this.active = active;
         toggled = active;
+        colorToggle = new ColorAnimation(active ? ColorPalette.PRIMARY : ColorPalette.SECONDARY);
         this.disabled = disabled;
         this.favorite = favorite;
         favoriteButton.setToggled(favorite);
         toggled = active;
+        this.page = page;
     }
 
     @Override
@@ -62,6 +63,13 @@ public class ModCard extends BasicElement {
         }
         favoriteButton.draw(vg, x + 212, y + 87);
         favorite = favoriteButton.isToggled();
+        if (favoriteButton.isClicked()) {
+            if (favorite) OneConfigConfig.favoriteMods.add(modData.name);
+            else OneConfigConfig.favoriteMods.remove(modData.name);
+            ConfigCore.sortMods();
+            page.reloadMods();
+            OneConfig.config.save();
+        }
         Scissor scissor2 = ScissorManager.scissor(vg, x, y + 87, width - 32, 32);
         RenderManager.drawText(vg, cleanName, x + 12, y + 103, ColorUtils.setAlpha(Colors.WHITE, (int) (colorToggle.getAlpha() * 255)), 14f, Fonts.MEDIUM);
         ScissorManager.resetScissor(vg, scissor2);
@@ -75,50 +83,19 @@ public class ModCard extends BasicElement {
         if (clicked && !isHoveredSecondary && active) toggled = true;
         if (!active & disabled) toggled = false;
 
-        active = toggled;
-        colorToggle.setPalette(active ? ColorPalette.PRIMARY : ColorPalette.SECONDARY);
+        if (active != toggled) {
+            active = toggled;
+            colorToggle.setPalette(active ? ColorPalette.PRIMARY : ColorPalette.SECONDARY);
+            modData.config.enabled = active;
+            modData.config.save();
+        }
         RenderManager.setAlpha(vg, 1f);
         ScissorManager.resetScissor(vg, scissor);
     }
 
     public void onClick() {
-        if (isHoveredMain) {
-            for (Mod data : OneConfig.loadedMods) {
-                if (!data.isShortCut) {
-                    if (data.name.equalsIgnoreCase(modData.name)) {
-                        OneConfigGui.INSTANCE.openPage(new ModConfigPage(data.defaultPage));
-                        return;
-                    }
-                }
-            }
-            for (ModMetadata mod : OneConfig.loadedOtherMods) {
-                if (mod.name.equalsIgnoreCase(modData.name)) {
-                    ArrayList<String> possibleCommands = new ArrayList<>();
-                    possibleCommands.add(mod.name.toLowerCase().replace(" ", ""));
-                    possibleCommands.add(mod.modId.toLowerCase().replaceAll("[ -_]", ""));
-                    if (mod.name.split(" ").length > 1) {
-                        StringBuilder result = new StringBuilder();
-                        for (String word : mod.name.split(" ")) {
-                            if (word.length() == 0) continue;
-                            result.append(word.charAt(0));
-                        }
-                        possibleCommands.add(result.toString().toLowerCase());
-                    }
-                    for (String command : ClientCommandHandler.instance.getCommands().keySet()) {
-                        if (possibleCommands.contains(command)) {
-                            try {
-                                ClientCommandHandler.instance.getCommands().get(command).processCommand(UPlayer.getPlayer(), new String[]{});
-                            } catch (Exception e) {
-                                throw new RuntimeException(e);
-                            }
-                            break;
-                        }
-                    }
-                    return;
-                }
-
-            }
-        }
+        if (isHoveredMain)
+            OneConfigGui.INSTANCE.openPage(new ModConfigPage(modData.defaultPage));
     }
 
     public Mod getModData() {

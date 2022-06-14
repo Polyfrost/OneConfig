@@ -3,16 +3,17 @@ package cc.polyfrost.oneconfig.config.data;
 import cc.polyfrost.oneconfig.config.Config;
 import cc.polyfrost.oneconfig.config.elements.OptionPage;
 import cc.polyfrost.oneconfig.config.migration.Migrator;
+import cc.polyfrost.oneconfig.internal.config.OneConfigConfig;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class Mod {
+public class Mod implements Comparable<Mod> {
     public final String name;
     public final ModType modType;
     public final String modIcon;
     public final Migrator migrator;
     public final OptionPage defaultPage;
     public Config config;
-    public boolean isShortCut = false;
 
     /**
      * @param name     Friendly name of the mod
@@ -52,5 +53,14 @@ public class Mod {
      */
     public Mod(String name, ModType modType) {
         this(name, modType, null, null);
+    }
+
+    @Override
+    public int compareTo(@NotNull Mod mod) {
+        int result = name.compareTo(mod.name);
+        //if (mod.modType != ModType.THIRD_PARTY) result *= 10;
+        //if (OneConfigConfig.favoriteMods.contains(name)) result *= 100;
+        System.out.println(name + " " + mod.name + " " + result);
+        return result;
     }
 }

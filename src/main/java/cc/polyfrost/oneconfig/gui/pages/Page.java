@@ -50,7 +50,7 @@ public abstract class Page {
         float scroll = scrollAnimation == null ? scrollTarget : scrollAnimation.get();
         final float scrollBarLength = (728f / maxScroll) * 728f;
         Scissor scissor = ScissorManager.scissor(vg, x, y + scissorOffset, x + 1056, y + 728 - scissorOffset);
-        //Scissor inputScissor = InputUtils.blockInputArea(x, y, x + 1056, y + scissorOffset);
+        Scissor inputScissor = InputUtils.blockInputArea(x, y,1056, scissorOffset);
         int dWheel = Mouse.getDWheel();
         if (dWheel != 0) {
             scrollTarget += dWheel;
@@ -64,7 +64,7 @@ public abstract class Page {
         if (maxScroll <= 728) {
             draw(vg, x, y);
             ScissorManager.resetScissor(vg, scissor);
-            //InputUtils.stopBlock(inputScissor);
+            InputUtils.stopBlock(inputScissor);
             return;
         }
         draw(vg, x, (int) (y + scroll));
@@ -73,7 +73,7 @@ public abstract class Page {
         }
 
         ScissorManager.resetScissor(vg, scissor);
-        //InputUtils.stopBlock(inputScissor);
+        InputUtils.stopBlock(inputScissor);
         if (!(scrollBarLength > 727f)) {
             final float scrollBarY = (scroll / maxScroll) * 720f;
             final boolean isMouseDown = Mouse.isButtonDown(0);
