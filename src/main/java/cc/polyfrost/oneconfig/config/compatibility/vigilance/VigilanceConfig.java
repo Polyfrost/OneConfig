@@ -80,6 +80,9 @@ public class VigilanceConfig extends Config {
                 case DECIMAL_SLIDER:
                     options.add(new ConfigSlider(getFieldOfProperty(option), option.getInstance(), getName(attributes), getCategory(attributes), getSubcategory(attributes), attributes.getMinF(), attributes.getMaxF(), 0));
                     break;
+                case NUMBER:
+                    options.add(new ConfigSlider(getFieldOfProperty(option), option.getInstance(), getName(attributes), getCategory(attributes), getSubcategory(attributes), attributes.getMin(), attributes.getMax(), 1));
+                    break;
                 case SLIDER:
                     options.add(new ConfigSlider(getFieldOfProperty(option), option.getInstance(), getName(attributes), getCategory(attributes), getSubcategory(attributes), attributes.getMin(), attributes.getMax(), 0));
                     break;
