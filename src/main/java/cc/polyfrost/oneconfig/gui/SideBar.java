@@ -54,11 +54,8 @@ public class SideBar {
     public void draw(long vg, int x, int y) {
         for (BasicButton button : buttons) {
             if (!button.isClicked()) continue;
-            if (button.equals(buttons.get(selected))) break;
-            buttons.get(selected).setColorPalette(ColorPalette.TERTIARY);
-            moveAnimation = new EaseInOutQuart(300, buttons.get(selected).y, button.y, false);
-            sizeAnimation = new DummyAnimation(36);
-            selected = buttons.indexOf(button);
+            moveSideBar(button);
+            break;
         }
         if (moveAnimation != null) {
             RenderManager.drawRoundedRect(vg, x + 16, moveAnimation.get() - (sizeAnimation.get() - 36) / 2f, 192, sizeAnimation.get(0), Colors.PRIMARY_600, 12);
@@ -82,5 +79,21 @@ public class SideBar {
         buttons.get(8).draw(vg, x + 16, y + 448);
         HUDButton.draw(vg, x + 16, y + 704);
         CloseButton.draw(vg, x + 16, y + 748);
+    }
+
+    public void pageOpened(String page) {
+        for (BasicButton button : buttons) {
+            if (!button.getText().equalsIgnoreCase(page)) continue;
+            moveSideBar(button);
+            return;
+        }
+    }
+
+    private void moveSideBar(BasicButton button) {
+        if (button.equals(buttons.get(selected))) return;
+        buttons.get(selected).setColorPalette(ColorPalette.TERTIARY);
+        moveAnimation = new EaseInOutQuart(300, buttons.get(selected).y, button.y, false);
+        sizeAnimation = new DummyAnimation(36);
+        selected = buttons.indexOf(button);
     }
 }

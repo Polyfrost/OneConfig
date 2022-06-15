@@ -95,12 +95,13 @@ public class Config {
     protected void generateOptionList(Object instance, OptionPage page, Mod mod, boolean migrate) {
         for (Field field : instance.getClass().getDeclaredFields()) {
             Option option = ConfigUtils.findAnnotation(field, Option.class);
+            CustomOption customOption = ConfigUtils.findAnnotation(field, CustomOption.class);
             String optionName = (page.equals(mod.defaultPage) ? "" : page.name + ".") + field.getName();
             if (option != null) {
                 BasicOption configOption = ConfigUtils.addOptionToPage(page, option, field, instance, migrate ? mod.migrator : null);
                 optionNames.put(optionName, configOption);
-            } else if (field.isAnnotationPresent(CustomOption.class)) {
-                BasicOption configOption = getCustomOption(field, page, mod, migrate);
+            } else if (customOption != null) {
+                BasicOption configOption = getCustomOption(field, customOption, page, mod, migrate);
                 if (configOption == null) continue;
                 optionNames.put(optionName, configOption);
             } else if (field.isAnnotationPresent(Page.class)) {
@@ -122,12 +123,13 @@ public class Config {
     /**
      * All fields with the CustomOption annotation are sent to this function
      *
-     * @param field   Target field
-     * @param page    Page to add options too
-     * @param mod     The data of the mod
-     * @param migrate If the data should be migrated
+     * @param field      Target field
+     * @param annotation The annotation the field has
+     * @param page       Page to add options too
+     * @param mod        The data of the mod
+     * @param migrate    If the data should be migrated
      */
-    protected BasicOption getCustomOption(Field field, OptionPage page, Mod mod, boolean migrate) {
+    protected BasicOption getCustomOption(Field field, CustomOption annotation, OptionPage page, Mod mod, boolean migrate) {
         return null;
     }
 

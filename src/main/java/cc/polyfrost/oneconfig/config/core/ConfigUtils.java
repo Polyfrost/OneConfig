@@ -72,6 +72,7 @@ public class ConfigUtils {
     }
 
     public static <T extends Annotation> T findAnnotation(Field field, Class<T> annotationType) {
+        if (field.isAnnotationPresent(annotationType)) return field.getAnnotation(annotationType);
         for (Annotation ann : field.getDeclaredAnnotations()) {
             if (ann.annotationType().isAnnotationPresent(annotationType))
                 return ann.annotationType().getAnnotation(annotationType);

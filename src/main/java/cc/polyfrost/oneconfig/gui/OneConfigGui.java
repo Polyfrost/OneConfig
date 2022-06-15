@@ -69,7 +69,6 @@ public class OneConfigGui extends UScreen {
         RenderManager.setupAndDraw((vg) -> {
             if (currentPage == null) {
                 currentPage = new ModsPage();
-                currentPage.parents = new ArrayList<>();
                 currentPage.parents.add(currentPage);
             }
             if (OneConfigConfig.australia) {
@@ -203,8 +202,8 @@ public class OneConfigGui extends UScreen {
         if (page == currentPage) return;
         currentPage.finishUpAndClose();
         textInputField.setInput("");
-        if (page.parents == null) {
-            page.parents = new ArrayList<>(currentPage.parents);
+        if (page.parents.size() == 0) {
+            page.parents.addAll(currentPage.parents);
             if (!page.isBase()) {
                 boolean alreadyInParents = false;
                 for (int i = 0; i < page.parents.size(); i++) {
@@ -221,6 +220,7 @@ public class OneConfigGui extends UScreen {
                 page.parents.add(page);
             }
         }
+        sideBar.pageOpened(page.parents.get(0).getTitle());
         if (addToPrevious) {
             previousPages.add(0, currentPage);
             nextPages.clear();

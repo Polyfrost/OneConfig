@@ -24,7 +24,7 @@ public abstract class Page {
     private long scrollTime;
     private boolean mouseWasDown, dragging;
     private float yStart;
-    public ArrayList<Page> parents = null;
+    public final ArrayList<Page> parents = new ArrayList<>();
 
     public Page(String title) {
         this.title = title;
