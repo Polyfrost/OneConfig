@@ -57,10 +57,6 @@ public class Mod implements Comparable<Mod> {
 
     @Override
     public int compareTo(@NotNull Mod mod) {
-        int result = name.compareTo(mod.name);
-        //if (mod.modType != ModType.THIRD_PARTY) result *= 10;
-        //if (OneConfigConfig.favoriteMods.contains(name)) result *= 100;
-        System.out.println(name + " " + mod.name + " " + result);
-        return result;
+        return name.compareTo(mod.name);
     }
 }

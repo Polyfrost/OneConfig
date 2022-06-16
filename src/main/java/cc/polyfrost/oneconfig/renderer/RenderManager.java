@@ -1,23 +1,22 @@
 package cc.polyfrost.oneconfig.renderer;
 
-import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.config.data.InfoType;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
-import cc.polyfrost.oneconfig.renderer.font.Font;
-import cc.polyfrost.oneconfig.renderer.font.FontManager;
-import cc.polyfrost.oneconfig.renderer.font.Fonts;
+import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.internal.assets.Images;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
-import cc.polyfrost.oneconfig.utils.InputUtils;
-import cc.polyfrost.oneconfig.utils.NetworkUtils;
 import cc.polyfrost.oneconfig.libs.universal.UGraphics;
 import cc.polyfrost.oneconfig.libs.universal.UMinecraft;
 import cc.polyfrost.oneconfig.libs.universal.UResolution;
+import cc.polyfrost.oneconfig.renderer.font.Font;
+import cc.polyfrost.oneconfig.renderer.font.FontManager;
+import cc.polyfrost.oneconfig.renderer.font.Fonts;
+import cc.polyfrost.oneconfig.utils.InputUtils;
+import cc.polyfrost.oneconfig.utils.NetworkUtils;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.shader.Framebuffer;
 import org.lwjgl.nanovg.NVGColor;
 import org.lwjgl.nanovg.NVGPaint;
-import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.GL11;
 
 import java.util.function.LongConsumer;
@@ -71,9 +70,9 @@ public final class RenderManager {
         GL11.glDisable(GL11.GL_ALPHA_TEST);
 
         if (mcScaling) {
-            nvgBeginFrame(vg, (float) UResolution.getScaledWidth(), (float) UResolution.getScaledHeight(), (float) UResolution.getScaleFactor() * Display.getPixelScaleFactor());
+            nvgBeginFrame(vg, (float) UResolution.getScaledWidth(), (float) UResolution.getScaledHeight(), (float) UResolution.getScaleFactor());
         } else {
-            nvgBeginFrame(vg, UResolution.getWindowWidth(), UResolution.getWindowHeight(), Display.getPixelScaleFactor());
+            nvgBeginFrame(vg, UResolution.getWindowWidth(), UResolution.getWindowHeight(), 1);
         }
 
         consumer.accept(vg);
