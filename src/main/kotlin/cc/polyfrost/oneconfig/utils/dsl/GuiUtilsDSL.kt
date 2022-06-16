@@ -4,8 +4,8 @@ import cc.polyfrost.oneconfig.utils.gui.GuiUtils
 import net.minecraft.client.gui.GuiScreen
 
 /**
- * Displays the provided screen after a tick, preventing mouse sync issues.
+ * Displays a screen after the specified amount of ticks.
  *
- * @see GuiUtils.displayScreen
+ * @param ticks the amount of ticks to wait for before displaying the screen.
  */
-fun GuiScreen.openScreen() = GuiUtils.displayScreen(this)
+fun GuiScreen.openScreen(ticks: Int = 1) = GuiUtils.displayScreen(this, ticks)

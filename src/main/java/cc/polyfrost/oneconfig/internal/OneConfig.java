@@ -36,7 +36,7 @@ public class OneConfig {
     public static void preLaunch() {
         if (preLaunched) return;
         try {
-            OneConfig.class.getResourceAsStream("net/minecraft/world/World");
+            Class.forName("net.minecraft.world.World");
             LOGGER.warn("OneConfig is NOT obfuscated!");
             isObfuscated = false;
         } catch (Exception ignored) {
