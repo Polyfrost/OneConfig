@@ -17,6 +17,7 @@ import net.minecraft.client.gui.Gui;
 import net.minecraft.client.shader.Framebuffer;
 import org.lwjgl.nanovg.NVGColor;
 import org.lwjgl.nanovg.NVGPaint;
+import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.GL11;
 
 import java.util.function.LongConsumer;
@@ -70,10 +71,9 @@ public final class RenderManager {
         GL11.glDisable(GL11.GL_ALPHA_TEST);
 
         if (mcScaling) {
-            nvgBeginFrame(vg, (float) UResolution.getScaledWidth(), (float) UResolution.getScaledHeight(), (float) UResolution.getScaleFactor());
+            nvgBeginFrame(vg, (float) UResolution.getScaledWidth(), (float) UResolution.getScaledHeight(), (float) UResolution.getScaleFactor() * Display.getPixelScaleFactor());
         } else {
-            // If we get blurry problems with high DPI monitors, 1 might need to be  replaced with Display.getPixelScaleFactor()
-            nvgBeginFrame(vg, UResolution.getWindowWidth(), UResolution.getWindowHeight(), 1);
+            nvgBeginFrame(vg, UResolution.getWindowWidth(), UResolution.getWindowHeight(), Display.getPixelScaleFactor());
         }
 
         consumer.accept(vg);
