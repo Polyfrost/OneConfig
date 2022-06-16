@@ -7,14 +7,20 @@ import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
 
 /**
  * Schedules a Runnable to be called after a certain amount of ticks.
+ *
+ * If the amount of ticks is below 1, the Runnable will be called immediately.
  */
 public class TickDelay {
     private final Runnable function;
     private int delay;
 
     public TickDelay(Runnable functionName, int ticks) {
-        EventManager.INSTANCE.register(this);
-        delay = ticks;
+        if (ticks < 1) {
+            functionName.run();
+        } else {
+            EventManager.INSTANCE.register(this);
+            delay = ticks;
+        }
         function = functionName;
     }
 
