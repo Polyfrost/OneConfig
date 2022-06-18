@@ -1,6 +1,7 @@
 package cc.polyfrost.oneconfig.internal.config;
 
 import cc.polyfrost.oneconfig.config.annotations.KeyBind;
+import cc.polyfrost.oneconfig.config.annotations.Slider;
 import cc.polyfrost.oneconfig.config.annotations.Switch;
 import cc.polyfrost.oneconfig.config.core.OneKeyBind;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
@@ -18,6 +19,20 @@ public class Preferences extends InternalConfig {
             size = 2
     )
     public static OneKeyBind oneConfigKeyBind = new OneKeyBind(UKeyboard.KEY_RSHIFT);
+
+    @Switch(
+            name = "Use custom GUI scale",
+            subcategory = "GUI Scale",
+            size = 2
+    )
+    public static boolean enableCustomScale = false;
+
+    @Slider(
+            name = "Custom GUI scale",
+            min = 0.5f,
+            max = 5f
+    )
+    public static float customScale = 1f;
 
     public Preferences() {
         super("Preferences", "Preferences.json");

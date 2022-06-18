@@ -3,7 +3,7 @@ package cc.polyfrost.oneconfig.gui.animations;
 import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 
 public abstract class Animation {
-    protected final boolean reverse;
+    private final boolean reverse;
     private final float duration;
     private final float start;
     private final float change;
@@ -34,7 +34,7 @@ public abstract class Animation {
     public float get(float deltaTime) {
         timePassed += deltaTime;
         if (timePassed >= duration) timePassed = duration;
-        return animate(timePassed, duration, start, change);
+        return animate(timePassed / duration) * change + start;
     }
 
     /**
@@ -58,5 +58,5 @@ public abstract class Animation {
         return reverse;
     }
 
-    protected abstract float animate(float timePassed, float duration, float start, float change);
+    protected abstract float animate(float x);
 }

@@ -12,6 +12,7 @@ import cc.polyfrost.oneconfig.internal.OneConfig;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.internal.config.OneConfigConfig;
+import cc.polyfrost.oneconfig.internal.config.Preferences;
 import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
 import cc.polyfrost.oneconfig.libs.universal.UMatrixStack;
 import cc.polyfrost.oneconfig.libs.universal.UResolution;
@@ -78,8 +79,8 @@ public class OneConfigGui extends UScreen {
                 NanoVG.nvgTranslate(vg, UResolution.getWindowWidth(), UResolution.getWindowHeight());
                 NanoVG.nvgRotate(vg, (float) Math.toRadians(180));
             }
-            scale = Math.min(UResolution.getWindowWidth() / 1920f, UResolution.getWindowHeight() / 1080f);
-            if (scale < 1)
+            scale = Preferences.enableCustomScale ? Preferences.customScale : Math.min(UResolution.getWindowWidth() / 1920f, UResolution.getWindowHeight() / 1080f);
+            if (scale < 1 && !Preferences.enableCustomScale)
                 scale = Math.min(Math.min(1f, UResolution.getWindowWidth() / 1280f), Math.min(1f, UResolution.getWindowHeight() / 800f));
             int x = (int) ((UResolution.getWindowWidth() - 1280 * scale) / 2f / scale);
             int y = (int) ((UResolution.getWindowHeight() - 800 * scale) / 2f / scale);

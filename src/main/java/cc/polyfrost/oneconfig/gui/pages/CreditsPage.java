@@ -28,7 +28,7 @@ public class CreditsPage extends Page {
         RenderManager.drawText(vg, " - #getResourceAsStream (SpinyOwl) - IO Utility and shadow", x + 20, y + 355, -1, 12, Fonts.REGULAR);
         RenderManager.drawText(vg, " - NanoVG (memononen) - NanoVG Library", x + 20, y + 370, -1, 12, Fonts.REGULAR);
         RenderManager.drawText(vg, " - UniversalCraft (Sk1er LLC) - Multiversioning bindings", x + 20, y + 385, -1, 12, Fonts.REGULAR);
-        RenderManager.drawText(vg, " - Easing Functions (jesusgollonet)", x + 20, y + 400, -1, 12, Fonts.REGULAR);
+        RenderManager.drawText(vg, " - https://easings.net/ - Easing functions", x + 20, y + 400, -1, 12, Fonts.REGULAR);
         RenderManager.drawText(vg, " - Quiltflower (Quilt Team) - Gradle decompiler", x + 20, y + 415, -1, 12, Fonts.REGULAR);
         RenderManager.drawText(vg, " - Seraph (Scherso) - Locraw and Multithreading utilities", x + 20, y + 430, -1, 12, Fonts.REGULAR);
     }

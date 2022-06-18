@@ -16,7 +16,7 @@ public class EaseOutQuad extends Animation {
      * Adapted from <a href="https://github.com/jesusgollonet/processing-penner-easing">https://github.com/jesusgollonet/processing-penner-easing</a>
      */
     @Override
-    protected float animate(float timePassed, float duration, float start, float change) {
-        return -change * (timePassed /= duration) * (timePassed - 2) + start;
+    protected float animate(float x) {
+        return 1 - (1 - x) * (1 - x);
     }
 }
