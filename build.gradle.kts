@@ -222,13 +222,14 @@ tasks {
         }
     }
     named<ShadowJar>("shadowJar") {
-        archiveClassifier.set("dev")
+        archiveClassifier.set("donotusethis")
         configurations = listOf(shade, lwjglNative)
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+        dependsOn(jar)
     }
     remapJar {
         input.set(shadowJar.get().archiveFile)
-        archiveClassifier.set("")
+        archiveClassifier.set("full")
     }
     jar {
         manifest {
@@ -242,9 +243,9 @@ tasks {
                 )
             )
         }
-        dependsOn(shadowJar)
+        exclude("**/internal")
+        exclude("**/internal/**")
         archiveClassifier.set("")
-        enabled = false
     }
     dokkaHtml.configure {
         outputDirectory.set(buildDir.resolve("dokka"))
@@ -308,8 +309,10 @@ publishing {
             groupId = "cc.polyfrost"
             artifactId = base.archivesName.get()
 
-            from(components["java"])
+            artifact(tasks["jar"])
             artifact(tasks["remapJar"])
+            artifact(tasks["lwjglJar"])
+            artifact(tasks["sourcesJar"])
             artifact(tasks["dokkaJar"])
         }
     }
