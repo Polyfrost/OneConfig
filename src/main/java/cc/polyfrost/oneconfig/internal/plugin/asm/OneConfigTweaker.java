@@ -1,7 +1,6 @@
-package cc.polyfrost.oneconfig.internal.plugin;
+package cc.polyfrost.oneconfig.internal.plugin.asm;
 
 import cc.polyfrost.oneconfig.internal.init.OneConfigInit;
-import cc.polyfrost.oneconfig.internal.plugin.asm.ClassTransformer;
 import net.minecraft.launchwrapper.ITweaker;
 import net.minecraft.launchwrapper.Launch;
 import net.minecraft.launchwrapper.LaunchClassLoader;
@@ -38,9 +37,9 @@ public class OneConfigTweaker implements ITweaker {
                             Attributes attributes = jarFile.getManifest().getMainAttributes();
                             String tweakerClass = attributes.getValue("TweakClass");
                             if (Objects.equals(tweakerClass, "cc.polyfrost.oneconfigwrapper.OneConfigWrapper")) {
-                                String mixinConfig = attributes.getValue("MixinConfigs");
                                 CoreModManager.getIgnoredMods().remove(file.getName());
                                 CoreModManager.getReparseableCoremods().add(file.getName());
+                                String mixinConfig = attributes.getValue("MixinConfigs");
                                 if (mixinConfig != null) {
                                     try {
                                         try {
@@ -78,6 +77,7 @@ public class OneConfigTweaker implements ITweaker {
     public void injectIntoClassLoader(LaunchClassLoader classLoader) {
         removeLWJGLException();
         Launch.classLoader.registerTransformer(ClassTransformer.class.getName());
+        Launch.classLoader.addClassLoaderExclusion("cc.polyfrost.oneconfig.internal.plugin.asm.");
     }
 
     /**

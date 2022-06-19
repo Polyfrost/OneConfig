@@ -1,6 +1,6 @@
 package cc.polyfrost.oneconfig.internal.mixin;
 
-import cc.polyfrost.oneconfig.internal.plugin.OptifineConfigHook;
+import cc.polyfrost.oneconfig.internal.plugin.hooks.OptifineConfigHook;
 import org.spongepowered.asm.mixin.Dynamic;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;

@@ -1,4 +1,4 @@
-package cc.polyfrost.oneconfig.internal.plugin;
+package cc.polyfrost.oneconfig.internal.plugin.hooks;
 
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.libs.universal.UScreen;

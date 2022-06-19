@@ -46,7 +46,7 @@ loom {
     noServerRunConfigs()
     if (project.platform.isLegacyForge) {
         launchConfigs.named("client") {
-            arg("--tweakClass", "cc.polyfrost.oneconfig.internal.plugin.OneConfigTweaker")
+            arg("--tweakClass", "cc.polyfrost.oneconfig.internal.plugin.asm.OneConfigTweaker")
             property("mixin.debug.export", "true")
             property("debugBytecode", "true")
         }
@@ -243,7 +243,7 @@ tasks {
                     "ForceLoadAsMod" to true,
                     "TweakOrder" to "0",
                     "MixinConfigs" to "mixins.oneconfig.json",
-                    "TweakClass" to "cc.polyfrost.oneconfig.internal.plugin.OneConfigTweaker"
+                    "TweakClass" to "cc.polyfrost.oneconfig.internal.plugin.asm.OneConfigTweaker"
                 )
             )
         }
