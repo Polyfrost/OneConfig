@@ -22,17 +22,18 @@ import java.util.jar.JarFile;
 public class OneConfigTweaker implements ITweaker {
 
     public OneConfigTweaker() {
-        doMagicMixinStuff();
+        for (URL url : Launch.classLoader.getSources()) {
+            doMagicMixinStuff(url);
+        }
     }
 
-    private void doMagicMixinStuff() {
-        for (URL url : Launch.classLoader.getSources()) {
-            try {
-                URI uri = url.toURI();
-                if (Objects.equals(uri.getScheme(), "file")) {
-                    File file = new File(uri);
-                    if (file.exists() && file.isFile()) {
-                        JarFile jarFile = new JarFile(file);
+    private void doMagicMixinStuff(URL url) {
+        try {
+            URI uri = url.toURI();
+            if (Objects.equals(uri.getScheme(), "file")) {
+                File file = new File(uri);
+                if (file.exists() && file.isFile()) {
+                    try (JarFile jarFile = new JarFile(file)) {
                         if (jarFile.getManifest() != null) {
                             Attributes attributes = jarFile.getManifest().getMainAttributes();
                             String tweakerClass = attributes.getValue("TweakClass");
@@ -62,9 +63,9 @@ public class OneConfigTweaker implements ITweaker {
                         }
                     }
                 }
-            } catch (Exception ignored) {
-
             }
+        } catch (Exception ignored) {
+
         }
     }
 

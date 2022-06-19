@@ -3,6 +3,7 @@ import gg.essential.gradle.util.RelocationTransform.Companion.registerRelocation
 import gg.essential.gradle.util.noServerRunConfigs
 import gg.essential.gradle.util.prebundle
 
+
 plugins {
     kotlin("jvm")
     id("gg.essential.multi-version")
@@ -231,6 +232,9 @@ tasks {
         input.set(shadowJar.get().archiveFile)
         archiveClassifier.set("full")
     }
+    fun Jar.excludeInternal() {
+        exclude("**/internal/**")
+    }
     jar {
         manifest {
             attributes(
@@ -243,8 +247,7 @@ tasks {
                 )
             )
         }
-        exclude("**/internal")
-        exclude("**/internal/**")
+        excludeInternal()
         archiveClassifier.set("")
     }
     dokkaHtml.configure {
@@ -272,7 +275,10 @@ tasks {
         dependsOn(dokkaHtml)
         from(layout.buildDirectory.dir("dokka"))
     }
-    named("sourcesJar").get().dependsOn(dokkaJar)
+    named<Jar>("sourcesJar") {
+        dependsOn(dokkaJar)
+        excludeInternal()
+    }
 }
 
 afterEvaluate {

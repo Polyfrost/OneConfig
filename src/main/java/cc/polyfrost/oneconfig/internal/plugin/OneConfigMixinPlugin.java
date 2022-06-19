@@ -48,9 +48,7 @@ public class OneConfigMixinPlugin implements IMixinConfigPlugin {
 
     @Override
     public void postApply(String targetClassName, ClassNode targetClass, String mixinClassName, IMixinInfo mixinInfo) {
-        System.out.println(mixinClassName);
         if (mixinClassName.equals("cc.polyfrost.oneconfig.internal.mixin.VigilantMixin")) {
-            System.out.println("A");
             VigilantTransformer.transform(targetClass);
         }
     }
