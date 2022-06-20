@@ -192,7 +192,7 @@ tasks {
     }
     named<ShadowJar>("shadowJar") {
         archiveClassifier.set("donotusethis")
-        configurations = listOf(shade)
+        configurations = listOf(shade, shadeNoPom)
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
         dependsOn(jar)
     }
