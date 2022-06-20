@@ -74,32 +74,14 @@ val shadeRelocated: Configuration by configurations.creating {
 }
 
 val shade: Configuration by configurations.creating {
-    configurations.implementation.get().extendsFrom(this)
+    configurations.api.get().extendsFrom(this)
 }
 
-val lwjgl: Configuration by configurations.creating
-
-val lwjglNative: Configuration by configurations.creating {
-    isTransitive = false
-}
+val shadeNoPom: Configuration by configurations.creating
 
 sourceSets {
     main {
-        runtimeClasspath += lwjglNative
         output.setResourcesDir(java.classesDirectory)
-    }
-}
-
-val lwjglJar by tasks.registering(ShadowJar::class) {
-    group = "shadow"
-    archiveClassifier.set("lwjgl")
-    configurations = listOf(lwjgl)
-    exclude("META-INF/versions/**")
-    exclude("**/module-info.class")
-    exclude("**/package-info.class")
-    relocate("org.lwjgl", "org.lwjgl3") {
-        include("org.lwjgl.PointerBuffer")
-        include("org.lwjgl.BufferUtils")
     }
 }
 
@@ -140,27 +122,13 @@ dependencies {
     shade("org.spongepowered:mixin:0.7.11-SNAPSHOT") {
         isTransitive = false
     }
-
-    lwjgl("org.lwjgl:lwjgl:3.3.1")
-    lwjgl("org.lwjgl:lwjgl-stb:3.3.1")
-    lwjgl("org.lwjgl:lwjgl-tinyfd:3.3.1")
-    lwjgl("org.lwjgl:lwjgl-nanovg:3.3.1")
-    lwjglNative("org.lwjgl:lwjgl:3.3.1:natives-windows")
-    lwjglNative("org.lwjgl:lwjgl-stb:3.3.1:natives-windows")
-    lwjglNative("org.lwjgl:lwjgl-tinyfd:3.3.1:natives-windows")
-    lwjglNative("org.lwjgl:lwjgl-nanovg:3.3.1:natives-windows")
-    lwjglNative("org.lwjgl:lwjgl:3.3.1:natives-linux")
-    lwjglNative("org.lwjgl:lwjgl-stb:3.3.1:natives-linux")
-    lwjglNative("org.lwjgl:lwjgl-tinyfd:3.3.1:natives-linux")
-    lwjglNative("org.lwjgl:lwjgl-nanovg:3.3.1:natives-linux")
-    lwjglNative("org.lwjgl:lwjgl:3.3.1:natives-macos")
-    lwjglNative("org.lwjgl:lwjgl-stb:3.3.1:natives-macos")
-    lwjglNative("org.lwjgl:lwjgl-tinyfd:3.3.1:natives-macos")
-    lwjglNative("org.lwjgl:lwjgl-nanovg:3.3.1:natives-macos")
-    shade(lwjglJar.get().outputs.files)
-    shade(prebundle(shadeRelocated))
+    shade("cc.polyfrost:lwjgl:$mod_version")
+    shadeNoPom(prebundle(shadeRelocated))
 
     dokkaHtmlPlugin("org.jetbrains.dokka:kotlin-as-java-plugin:1.6.21")
+
+    configurations.named(JavaPlugin.COMPILE_CLASSPATH_CONFIGURATION_NAME) { extendsFrom(shadeNoPom) }
+    configurations.named(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME) { extendsFrom(shadeNoPom) }
 }
 
 tasks.processResources {
@@ -224,7 +192,7 @@ tasks {
     }
     named<ShadowJar>("shadowJar") {
         archiveClassifier.set("donotusethis")
-        configurations = listOf(shade, lwjglNative)
+        configurations = listOf(shade)
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
         dependsOn(jar)
     }
@@ -283,18 +251,11 @@ tasks {
 
 afterEvaluate {
     val checkFile = file(".gradle/loom-cache/SETUP")
-    val lwjglJarDelayed by tasks.creating {
-        dependsOn(lwjglJar)
-    }
-
     @Suppress("UNUSED_VARIABLE")
     val setupGradle by tasks.creating {
         group = "loom"
         description = "Setup OneConfig"
-        dependsOn(lwjglJarDelayed)
-        val genSourcesWithQuiltflower = tasks.named("genSourcesWithQuiltflower").get()
-        dependsOn(genSourcesWithQuiltflower)
-        genSourcesWithQuiltflower.mustRunAfter(lwjglJarDelayed)
+        dependsOn(tasks.named("genSourcesWithQuiltflower").get())
         doLast {
             checkFile.parentFile.mkdirs()
             checkFile.createNewFile()
@@ -317,7 +278,6 @@ publishing {
 
             artifact(tasks["jar"])
             artifact(tasks["remapJar"])
-            artifact(tasks["lwjglJar"])
             artifact(tasks["sourcesJar"])
             artifact(tasks["dokkaJar"])
         }

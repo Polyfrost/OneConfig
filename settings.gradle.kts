@@ -32,3 +32,4 @@ listOf(
         buildFileName = "../../build.gradle.kts"
     }
 }
+include(":lwjgl")
