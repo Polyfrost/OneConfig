@@ -123,7 +123,7 @@ dependencies {
         isTransitive = false
     }
     shade("cc.polyfrost:lwjgl:$mod_version")
-    shadeNoPom(prebundle(shadeRelocated))
+    shade(prebundle(shadeRelocated)) // TODO: fix shadeNoPOM here
 
     dokkaHtmlPlugin("org.jetbrains.dokka:kotlin-as-java-plugin:1.6.21")
 
