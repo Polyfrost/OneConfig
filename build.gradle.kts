@@ -98,9 +98,6 @@ dependencies {
         isTransitive = false
     }
 
-    @Suppress("GradlePackageUpdate")
-    shadeRelocated("com.github.ben-manes.caffeine:caffeine:2.9.3")
-
     // for other mods and universalcraft
     val kotlinVersion: String by project
     val coroutinesVersion: String by project
