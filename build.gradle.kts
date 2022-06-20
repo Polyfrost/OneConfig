@@ -192,7 +192,7 @@ tasks {
     }
     named<ShadowJar>("shadowJar") {
         archiveClassifier.set("donotusethis")
-        configurations = listOf(shade, shadeNoPom)
+        configurations = listOf(shade)
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
         dependsOn(jar)
     }
@@ -204,6 +204,8 @@ tasks {
         exclude("**/internal/**")
     }
     jar {
+        dependsOn(shadeNoPom)
+        from({ shadeNoPom.map { zipTree(it) } })
         manifest {
             attributes(
                 mapOf(
