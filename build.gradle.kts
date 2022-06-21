@@ -2,6 +2,7 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import gg.essential.gradle.util.RelocationTransform.Companion.registerRelocationAttribute
 import gg.essential.gradle.util.noServerRunConfigs
 import gg.essential.gradle.util.prebundle
+import net.fabricmc.loom.task.RemapSourcesJarTask
 
 
 plugins {
@@ -67,6 +68,10 @@ val relocated = registerRelocationAttribute("relocate") {
     relocate("gg.essential", "cc.polyfrost.oneconfig.libs")
     relocate("me.kbrewster", "cc.polyfrost.oneconfig.libs")
     relocate("com.github.benmanes", "cc.polyfrost.oneconfig.libs")
+    relocate("com.google", "cc.polyfrost.oneconfig.libs")
+    relocate("org.checkerframework", "cc.polyfrost.oneconfig.libs")
+    remapStringsIn("com.github.benmanes.caffeine.cache.LocalCacheFactory")
+    remapStringsIn("com.github.benmanes.caffeine.cache.NodeFactory")
 }
 
 val shadeRelocated: Configuration by configurations.creating {
@@ -98,6 +103,9 @@ dependencies {
         isTransitive = false
     }
 
+    @Suppress("GradlePackageUpdate")
+    shadeRelocated("com.github.ben-manes.caffeine:caffeine:2.9.3")
+
     // for other mods and universalcraft
     val kotlinVersion: String by project
     val coroutinesVersion: String by project
@@ -120,7 +128,7 @@ dependencies {
         isTransitive = false
     }
     shade("cc.polyfrost:lwjgl:1.0.0-alpha1")
-    shade(prebundle(shadeRelocated)) // TODO: fix shadeNoPOM here
+    shadeNoPom(prebundle(shadeRelocated))
 
     dokkaHtmlPlugin("org.jetbrains.dokka:kotlin-as-java-plugin:1.6.21")
 
@@ -189,7 +197,7 @@ tasks {
     }
     named<ShadowJar>("shadowJar") {
         archiveClassifier.set("donotusethis")
-        configurations = listOf(shade)
+        configurations = listOf(shade, shadeNoPom)
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
         dependsOn(jar)
     }
@@ -202,7 +210,7 @@ tasks {
     }
     jar {
         dependsOn(shadeNoPom)
-        from({ shadeNoPom.map { zipTree(it) } })
+        from({ shadeNoPom.map { if (it.isDirectory) it else zipTree(it) } })
         manifest {
             attributes(
                 mapOf(
@@ -245,6 +253,13 @@ tasks {
     named<Jar>("sourcesJar") {
         dependsOn(dokkaJar)
         excludeInternal()
+        archiveClassifier.set("sources")
+        doFirst {
+            archiveClassifier.set("sources")
+        }
+    }
+    withType<RemapSourcesJarTask> {
+        enabled = false
     }
 }
 
