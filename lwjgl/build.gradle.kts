@@ -12,7 +12,7 @@ val mod_name: String by project
 val mod_version: String by project
 val mod_id: String by project
 
-version = mod_version
+version = "1.0.0-alpha1"
 
 repositories {
     maven("https://repo.polyfrost.cc/releases")

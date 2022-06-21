@@ -119,7 +119,7 @@ dependencies {
     shade("org.spongepowered:mixin:0.7.11-SNAPSHOT") {
         isTransitive = false
     }
-    shade("cc.polyfrost:lwjgl:$mod_version")
+    shade("cc.polyfrost:lwjgl:1.0.0-alpha1")
     shade(prebundle(shadeRelocated)) // TODO: fix shadeNoPOM here
 
     dokkaHtmlPlugin("org.jetbrains.dokka:kotlin-as-java-plugin:1.6.21")
