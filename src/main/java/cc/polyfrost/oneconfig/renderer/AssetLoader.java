@@ -3,17 +3,22 @@ package cc.polyfrost.oneconfig.renderer;
 import cc.polyfrost.oneconfig.internal.assets.Images;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.utils.IOUtils;
+import org.lwjgl.BufferUtils;
 import org.lwjgl.nanovg.NSVGImage;
 import org.lwjgl.nanovg.NanoSVG;
 import org.lwjgl.nanovg.NanoVG;
 import org.lwjgl.stb.STBImage;
 import org.lwjgl.system.MemoryUtil;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
+import java.nio.IntBuffer;
 import java.util.HashMap;
+import java.util.Objects;
 
 /**
  * Loads images and SVGs from resources into NanoVG.
@@ -36,7 +41,7 @@ public final class AssetLoader {
      *
      * @param vg       The NanoVG context.
      * @param fileName The name of the file to load.
-     * @return Whether the assets was loaded successfully.
+     * @return Whether the asset was loaded successfully.
      */
     public boolean loadImage(long vg, String fileName) {
         if (!imageHashMap.containsKey(fileName)) {
@@ -188,5 +193,32 @@ public final class AssetLoader {
             NanoVG.nvgDeleteImage(vg, svgHashMap.get(image));
             svgHashMap.remove(image);
         }
+    }
+
+    /**
+     * Convert the given image (as a quantified path) to an IntBuffer, of its pixels, in order, stored as integers in ARGB format.
+     * Mostly an internal method; used by LWJGL.
+     * @param fileName quantified path to the image
+     * @return intBuffer of the image's pixels in ARGB format
+     */
+    public IntBuffer imageToIntBuffer(String fileName) {
+        try {
+            InputStream inputStream = this.getClass().getResourceAsStream(fileName);
+            BufferedImage img = ImageIO.read(Objects.requireNonNull(inputStream));
+            int width = img.getWidth();
+            int height = img.getHeight();
+            IntBuffer intBuffer = BufferUtils.createIntBuffer(256);
+            for (int y = 0; y < height; y++) {
+                for (int x = 0; x < width; x++) {
+                    intBuffer.put(img.getRGB(x, y));
+                }
+            }
+            return intBuffer;
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.err.println("Failed to load asset: " + fileName);
+            return BufferUtils.createIntBuffer(256);
+        }
+
     }
 }

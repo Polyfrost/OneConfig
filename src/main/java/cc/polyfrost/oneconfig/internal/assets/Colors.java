@@ -2,6 +2,7 @@ package cc.polyfrost.oneconfig.internal.assets;
 
 import java.awt.*;
 
+@SuppressWarnings("unused")
 public class Colors {
     // the color library
     public static final int TRANSPARENT = new Color(0, 0, 0, 0).getRGB();                // Transparent
@@ -44,4 +45,33 @@ public class Colors {
     public static boolean ROUNDED_CORNERS = true;
     public static final float CORNER_RADIUS_WIN = 20f;
     public static final float CORNER_RADIUS = 12f;
+
+    /** List of all colors used by Minecraft in its code.
+     * Source: <a href="https://www.digminecraft.com/lists/color_list_pc.php">Click Here</a>
+     * */
+    public static class MinecraftColors {
+        /** Letter Code used before colors in Minecraft */
+        public static final String CODE = "\u00a7";
+
+        public static final String RESET = "\u00a70";
+
+        public static final int DARK_RED = new Color(170, 0, 0).getRGB();           // Mapped to 4
+        public static final int RED = new Color(255, 85, 85).getRGB();              // Mapped to c
+        public static final int GOLD = new Color(255, 170, 0).getRGB();             // Mapped to 6
+        public static final int YELLOW = new Color(255, 255, 85).getRGB();          // Mapped to e
+        public static final int DARK_GREEN = new Color(0, 170, 0).getRGB();         // Mapped to 2
+        public static final int GREEN = new Color(85, 255, 85).getRGB();            // Mapped to a
+        public static final int AQUA = new Color(85, 255, 255).getRGB();            // Mapped to b
+        public static final int DARK_AQUA = new Color(0, 170, 170).getRGB();        // Mapped to 3
+        public static final int DARK_BLUE = new Color(0, 0, 170).getRGB();          // Mapped to 1
+        public static final int BLUE = new Color(85, 85, 255).getRGB();             // Mapped to 9
+        public static final int LIGHT_PURPLE = new Color(255, 85, 255).getRGB();    // Mapped to d
+        public static final int DARK_PURPLE = new Color(170, 0, 170).getRGB();      // Mapped to 5
+        public static final int WHITE = new Color(255, 255, 255).getRGB();          // Mapped to f
+        public static final int GRAY = new Color(170, 170, 170).getRGB();           // Mapped to 7
+        public static final int DARK_GRAY = new Color(85, 85, 85).getRGB();         // Mapped to 8
+        public static final int BLACK = new Color(0, 0, 0).getRGB();                // Mapped to 0
+
+
+    }
 }
