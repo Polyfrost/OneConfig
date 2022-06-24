@@ -29,6 +29,7 @@ public class Preferences extends InternalConfig {
 
     @Slider(
             name = "Custom GUI scale",
+            subcategory = "GUI Scale",
             min = 0.5f,
             max = 5f
     )
