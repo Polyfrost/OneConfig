@@ -1,7 +1,7 @@
 package cc.polyfrost.oneconfig.gui;
 
 import cc.polyfrost.oneconfig.internal.config.core.ConfigCore;
-import cc.polyfrost.oneconfig.hud.BasicHud;
+import cc.polyfrost.oneconfig.hud.Hud;
 import cc.polyfrost.oneconfig.internal.hud.HudCore;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
@@ -14,7 +14,7 @@ import java.awt.*;
 import java.util.ArrayList;
 
 public class HudGui extends UScreen {
-    private BasicHud editingHud;
+    private Hud editingHud;
     private boolean isDragging;
     private boolean isScaling;
     private int xOffset;
@@ -35,12 +35,12 @@ public class HudGui extends UScreen {
             setPosition(mouseX - xOffset, mouseY - yOffset, true);
         }
 
-        for (BasicHud hud : HudCore.huds) {
+        for (Hud hud : HudCore.huds) {
             if (hud.enabled) processHud(hud, mouseX);
         }
     }
 
-    private void processHud(BasicHud hud, int mouseX) {
+    private void processHud(Hud hud, int mouseX) {
         if (hud == editingHud && isScaling) {
             float xFloat = hud.getXScaled(this.width);
             float yFloat = hud.getYScaled(this.height);
@@ -127,7 +127,7 @@ public class HudGui extends UScreen {
             if (snapX != newX || snapY != newY) {
                 newX = snapX;
                 newY = snapY;
-                for (BasicHud hud : HudCore.huds) {
+                for (Hud hud : HudCore.huds) {
                     if (!hud.enabled) continue;
                     if (findParent(hud, snapX, snapY))
                         break;
@@ -145,7 +145,7 @@ public class HudGui extends UScreen {
             editingHud.yUnscaled = (newY + height) / (double) this.height;
     }
 
-    private boolean findParent(BasicHud hud, float snapX, float snapY) {
+    private boolean findParent(Hud hud, float snapX, float snapY) {
         int hudWidth = (int) (hud.getWidth(hud.scale) + hud.paddingX * hud.scale);
         int hudX = (int) hud.getXScaled(this.width);
         int hudHeight = (int) (hud.getHeight(hud.scale) + hud.paddingY * hud.scale);
@@ -167,7 +167,7 @@ public class HudGui extends UScreen {
     private float getXSnapping(float pos, boolean rightOnly) {
         float width = editingHud.getWidth(editingHud.scale) + editingHud.paddingX * editingHud.scale;
         ArrayList<Float> verticalLines = new ArrayList<>();
-        for (BasicHud hud : HudCore.huds) {
+        for (Hud hud : HudCore.huds) {
             if (!hud.enabled) continue;
             verticalLines.addAll(getXSnappingHud(hud));
         }
@@ -193,7 +193,7 @@ public class HudGui extends UScreen {
         return pos;
     }
 
-    private ArrayList<Float> getXSnappingHud(BasicHud hud) {
+    private ArrayList<Float> getXSnappingHud(Hud hud) {
         ArrayList<Float> verticalLines = new ArrayList<>();
         if (hud == editingHud) return verticalLines;
         if (hud.childRight != null) verticalLines.addAll(getXSnappingHud(hud.childRight));
@@ -207,7 +207,7 @@ public class HudGui extends UScreen {
     private float getYSnapping(float pos) {
         float height = editingHud.getHeight(editingHud.scale) + editingHud.paddingY * editingHud.scale;
         ArrayList<Float> horizontalLines = new ArrayList<>();
-        for (BasicHud hud : HudCore.huds) {
+        for (Hud hud : HudCore.huds) {
             if (!hud.enabled) continue;
             horizontalLines.addAll(getYSnappingHud(hud));
         }
@@ -233,7 +233,7 @@ public class HudGui extends UScreen {
         return pos;
     }
 
-    private ArrayList<Float> getYSnappingHud(BasicHud hud) {
+    private ArrayList<Float> getYSnappingHud(Hud hud) {
         ArrayList<Float> horizontalLines = new ArrayList<>();
         if (hud == editingHud) return horizontalLines;
         if (hud.childBottom != null) horizontalLines.addAll(getYSnappingHud(hud.childBottom));
@@ -270,7 +270,7 @@ public class HudGui extends UScreen {
                 }
             }
             editingHud = null;
-            for (BasicHud hud : HudCore.huds) {
+            for (Hud hud : HudCore.huds) {
                 if (!hud.enabled) continue;
                 if (mouseClickedHud(hud, (int) mouseX, (int) mouseY))
                     break;
@@ -278,7 +278,7 @@ public class HudGui extends UScreen {
         }
     }
 
-    private boolean mouseClickedHud(BasicHud hud, int mouseX, int mouseY) {
+    private boolean mouseClickedHud(Hud hud, int mouseX, int mouseY) {
         int width = (int) (hud.getWidth(hud.scale) + hud.paddingX * hud.scale);
         int height = (int) (hud.getHeight(hud.scale) + hud.paddingY * hud.scale);
         float x = hud.getXScaled(this.width);

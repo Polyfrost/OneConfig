@@ -13,7 +13,7 @@ import java.util.ArrayList;
 public class HUDUtils {
     public static void addHudOptions(OptionPage page, Field field, Object instance) {
         HUD hudAnnotation = field.getAnnotation(HUD.class);
-        BasicHud hud = (BasicHud) ConfigUtils.getField(field, instance);
+        Hud hud = (Hud) ConfigUtils.getField(field, instance);
         if (hud == null) return;
         HudCore.huds.add(hud);
         String category = hudAnnotation.category();
@@ -22,7 +22,7 @@ public class HUDUtils {
         try {
             options.add(new ConfigHeader(field, hud, hudAnnotation.name(), category, subcategory, 2));
             options.add(new ConfigSwitch(hud.getClass().getField("enabled"), hud, "Enabled", category, subcategory, 2));
-            options.addAll(ConfigUtils.getClassOptions(hud));
+            options.addAll(ConfigUtils.getClassOptions(hud, Hud.class));
             options.add(new ConfigCheckbox(hud.getClass().getField("rounded"), hud, "Rounded corners", category, subcategory, 1));
             options.get(options.size() - 1).addDependency(() -> hud.enabled);
             options.add(new ConfigCheckbox(hud.getClass().getField("border"), hud, "Outline/border", category, subcategory, 1));

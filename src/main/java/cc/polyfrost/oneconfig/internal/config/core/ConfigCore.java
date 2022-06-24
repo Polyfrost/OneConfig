@@ -7,9 +7,19 @@ import cc.polyfrost.oneconfig.internal.hud.HudCore;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.stream.Collectors;
 
 public class ConfigCore {
+    static {
+        new Timer().scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                saveAll();
+            }
+        }, 30000, 30000);
+    }
     public static List<Mod> oneConfigMods = new ArrayList<>();
 
     public static void saveAll() {

@@ -37,7 +37,9 @@ public abstract class BasicOption {
      * @param object Java object to set the variable to
      */
     protected void set(Object object) throws IllegalAccessException {
-        if (field == null) return;
+        if (field == null) {
+            return;
+        }
         field.set(parent, object);
     }
 

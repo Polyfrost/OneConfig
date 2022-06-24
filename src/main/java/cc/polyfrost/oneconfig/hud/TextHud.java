@@ -1,38 +1,39 @@
 package cc.polyfrost.oneconfig.hud;
 
-import cc.polyfrost.oneconfig.renderer.RenderManager;
-import cc.polyfrost.oneconfig.libs.universal.UMinecraft;
+import cc.polyfrost.oneconfig.config.annotations.Color;
+import cc.polyfrost.oneconfig.config.annotations.Dropdown;
+import cc.polyfrost.oneconfig.config.annotations.Switch;
+import cc.polyfrost.oneconfig.config.core.OneColor;
 
-import java.util.List;
+abstract class TextHud extends Hud {
+    @Color(
+            name = "Text Color"
+    )
+    public OneColor color = new OneColor(255, 255, 255);
 
-public abstract class TextHud extends BasicHud {
-    private transient int width = 100;
-    private transient int height;
+    @Switch(
+            name = "Show in Chat"
+    )
+    public boolean showInChat;
+
+    @Switch(
+            name = "Show in F3 (Debug)"
+    )
+    public boolean showInDebug;
+
+    @Switch(
+            name = "Show in GUIs"
+    )
+    public boolean showInGuis = true;
+
+    @Dropdown(
+            name = "Text Type",
+            options = {"No Shadow", "Shadow", "Full Shadow"}
+    )
+    public int textType = 0;
+
+
     public TextHud(boolean enabled, int x, int y) {
         super(enabled, x, y);
     }
-
-    @Override
-    public int getWidth(float scale) {
-        return (int) (width * scale);
-    }
-
-    @Override
-    public int getHeight(float scale) {
-        return (int) (height * scale);
-    }
-
-    @Override
-    public void draw(int x, int y, float scale) {
-        int textY = y;
-        width = 0;
-        for (String line : getLines()) {
-            RenderManager.drawScaledString(line, x, textY, 0xffffff, false, scale);
-            width = Math.max(width, UMinecraft.getFontRenderer().getStringWidth(line));
-            textY += 12 * scale;
-        }
-        height = (int) ((textY - y) / scale - 3);
-    }
-
-    public abstract List<String> getLines();
 }

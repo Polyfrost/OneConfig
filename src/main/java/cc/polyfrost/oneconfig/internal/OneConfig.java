@@ -1,6 +1,8 @@
 package cc.polyfrost.oneconfig.internal;
 
 import cc.polyfrost.oneconfig.events.EventManager;
+import cc.polyfrost.oneconfig.events.event.ShutdownEvent;
+import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.internal.command.OneConfigCommand;
 import cc.polyfrost.oneconfig.internal.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.internal.config.Preferences;
@@ -8,6 +10,7 @@ import cc.polyfrost.oneconfig.internal.config.core.ConfigCore;
 import cc.polyfrost.oneconfig.internal.config.core.KeyBindHandler;
 import cc.polyfrost.oneconfig.internal.gui.BlurHandler;
 import cc.polyfrost.oneconfig.internal.hud.HudCore;
+import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
 import cc.polyfrost.oneconfig.utils.commands.CommandManager;
 import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 import cc.polyfrost.oneconfig.utils.hypixel.HypixelUtils;
@@ -21,6 +24,11 @@ import java.io.File;
  */
 @net.minecraftforge.fml.common.Mod(modid = "@ID@", name = "@NAME@", version = "@VER@")
 public class OneConfig {
+
+    public OneConfig() {
+        EventManager.INSTANCE.register(this);
+    }
+
     public static final File oneConfigDir = new File("./OneConfig");
     public static final Logger LOGGER = LogManager.getLogger("@NAME@");
     public static OneConfigConfig config;
@@ -72,5 +80,10 @@ public class OneConfig {
      * @return true if this is an obfuscated environment, which is normal for Minecraft or false if not. */
     public static boolean isObfuscated() {
         return isObfuscated;
+    }
+
+    @Subscribe
+    private void onShutdown(ShutdownEvent event) {
+        ConfigCore.saveAll();
     }
 }

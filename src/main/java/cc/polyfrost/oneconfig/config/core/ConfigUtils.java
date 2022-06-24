@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class ConfigUtils {
     public static BasicOption getOption(Option option, Field field, Object instance) {
@@ -42,9 +43,19 @@ public class ConfigUtils {
         return null;
     }
 
-    public static ArrayList<BasicOption> getClassOptions(Object object) {
+    public static ArrayList<BasicOption> getClassOptions(Object object, Class<?> parentClass) {
         ArrayList<BasicOption> options = new ArrayList<>();
-        for (Field field : object.getClass().getDeclaredFields()) {
+        ArrayList<Field> fields = new ArrayList<>(Arrays.asList(object.getClass().getDeclaredFields()));
+        Class<?> clazz = object.getClass();
+        while (true) {
+            clazz = clazz.getSuperclass();
+            if (clazz != null && clazz != parentClass) {
+                fields.addAll(Arrays.asList(clazz.getDeclaredFields()));
+            } else {
+                break;
+            }
+        }
+        for (Field field : fields) {
             Option option = findAnnotation(field, Option.class);
             if (option == null) continue;
             options.add(getOption(option, field, object));

@@ -2,8 +2,39 @@ package cc.polyfrost.oneconfig.hud;
 
 import cc.polyfrost.oneconfig.config.core.OneColor;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
+import cc.polyfrost.oneconfig.config.Config;
 
-public abstract class BasicHud {
+/**
+ * Represents a HUD element in OneConfig.
+ * A HUD element can be used to display useful information to the user, like FPS or CPS.
+ * <p>
+ * If you simply want to display text, extend {@link SingleTextHud} or {@link MultiTextHud},
+ * whichever applies to the use case. Then, override the required methods.
+ * <p>
+ * If you want to display something else, extend this class and override {@link Hud#getWidth(float)}, {@link Hud#getHeight(float)}, and {@link Hud#draw(int, int, float)} with the width, height, and the drawing code respectively.
+ * </p>
+ * <p>
+ * It should also be noted that additional options to the HUD can be added simply by declaring them.
+ * <pre>{@code
+ *     public class TestHud extends SingleTextHud {
+ *         @literal @Switch(
+ *             name = "Additional Option"
+ *         )
+ *         public boolean additionalOption = true;
+ *     }
+ *     }</pre>
+ * </p>
+ * To register an element, add it to your OneConfig {@link Config}.
+ * <pre>{@code
+ *  *     public class YourConfig extends Config {
+ *  *         @literal @HUD(
+ *  *             name = "HUD Element"
+ *  *         )
+ *  *         public YourHudElement hudElement = new YourHudElement(false);
+ *  *     }
+ *  *     }</pre>
+ */
+public abstract class Hud {
     public boolean enabled;
     public boolean rounded;
     public boolean border;
@@ -16,9 +47,9 @@ public abstract class BasicHud {
     public float scale;
     public float paddingX;
     public float paddingY;
-    public BasicHud parent;
-    public BasicHud childRight;
-    public BasicHud childBottom;
+    public Hud parent;
+    public Hud childRight;
+    public Hud childBottom;
 
     /**
      * @param enabled      If the hud is enabled
@@ -34,7 +65,7 @@ public abstract class BasicHud {
      * @param borderSize   Thickness of the border
      * @param borderColor  The color of the border
      */
-    public BasicHud(boolean enabled, int x, int y, float scale, boolean rounded, int cornerRadius, int paddingX, int paddingY, OneColor bgColor, boolean border, float borderSize, OneColor borderColor) {
+    public Hud(boolean enabled, int x, int y, float scale, boolean rounded, int cornerRadius, int paddingX, int paddingY, OneColor bgColor, boolean border, float borderSize, OneColor borderColor) {
         this.enabled = enabled;
         this.scale = scale;
         this.rounded = rounded;
@@ -57,7 +88,7 @@ public abstract class BasicHud {
      * @param y       Y-coordinate of hud on a 1080p display
      * @param scale   Scale of the hud
      */
-    public BasicHud(boolean enabled, int x, int y, int scale) {
+    public Hud(boolean enabled, int x, int y, int scale) {
         this(enabled, x, y, scale, false, 2, 5, 5, new OneColor(0, 0, 0, 120), false, 2, new OneColor(0, 0, 0));
     }
 
@@ -66,14 +97,14 @@ public abstract class BasicHud {
      * @param x       X-coordinate of hud on a 1080p display
      * @param y       Y-coordinate of hud on a 1080p display
      */
-    public BasicHud(boolean enabled, int x, int y) {
+    public Hud(boolean enabled, int x, int y) {
         this(enabled, x, y, 1, false, 2, 5, 5, new OneColor(0, 0, 0, 120), false, 2, new OneColor(0, 0, 0));
     }
 
     /**
      * @param enabled If the hud is enabled
      */
-    public BasicHud(boolean enabled) {
+    public Hud(boolean enabled) {
         this(enabled, 0, 0, 1, false, 2, 5, 5, new OneColor(0, 0, 0, 120), false, 2, new OneColor(0, 0, 0));
     }
 

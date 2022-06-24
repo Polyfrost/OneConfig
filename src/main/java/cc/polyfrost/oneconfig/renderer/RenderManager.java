@@ -20,6 +20,7 @@ import org.lwjgl.nanovg.NVGPaint;
 import org.lwjgl.opengl.GL11;
 
 import java.util.function.LongConsumer;
+import java.util.regex.Pattern;
 
 import static org.lwjgl.nanovg.NanoVG.*;
 import static org.lwjgl.nanovg.NanoVGGL2.NVG_ANTIALIAS;
@@ -740,14 +741,68 @@ public final class RenderManager {
 
     // gl
 
-    public static void drawScaledString(String text, float x, float y, int color, boolean shadow, float scale) {
+    private static final Pattern regex = Pattern.compile("(?i)\\\\u00A7[0-9a-f]");
+
+    public static int drawBorderedText(String text, float x, float y, int color, int opacity) {
+        String noColors = regex.matcher(text).replaceAll("\u00A7r");
+        int yes = 0;
+        if (opacity > 3) {
+            int xOff = -3;
+            while (xOff < 3) {
+                xOff++;
+                int yOff = -3;
+                while (yOff < 3) {
+                    yOff++;
+                    if (xOff * xOff != yOff * yOff) {
+                        yes +=
+                                //#if MODERN==0
+                                UMinecraft.getFontRenderer().drawString(
+                                        noColors, (xOff / 2f) + x, (yOff / 2f) + y, (opacity) << 24, false
+                                );
+                                //#else
+                                //$$ draw(
+                                //$$     matrix.toMC(), noColors, (xOff / 2f) + x, (yOff / 2f) + y, (opacity) shl 24
+                                //$$     )
+                                //#endif
+                    }
+                }
+            }
+        }
+        yes +=
+            //#if MODERN==0
+            UMinecraft.getFontRenderer().drawString(text, x, y, color, false);
+            //#else
+            //$$ draw(matrix.toMC(), text, x.toFloat(), y.toFloat(), color)
+            //#endif
+        return yes;
+    }
+
+    public static void drawScaledString(String text, float x, float y, int color, TextType type, float scale) {
         UGraphics.GL.pushMatrix();
         UGraphics.GL.scale(scale, scale, 1);
-        UMinecraft.getFontRenderer().drawString(text, x * (1 / scale), y * (1 / scale), color, shadow);
+        switch (type) {
+            case NONE:
+                UMinecraft.getFontRenderer().drawString(text, x * (1 / scale), y * (1 / scale), color, false);
+                break;
+            case SHADOW:
+                UMinecraft.getFontRenderer().drawString(text, x * (1 / scale), y * (1 / scale), color, true);
+                break;
+            case FULL:
+                drawBorderedText(text, x, y, color, 100);
+                break;
+        }
         UGraphics.GL.popMatrix();
     }
 
     public static void drawGlRect(int x, int y, int width, int height, int color) {
         Gui.drawRect(x, y, x + width, y + height, color);
+    }
+
+    public enum TextType {
+        NONE, SHADOW, FULL;
+
+        public static TextType toType(int type) {
+            return values()[type];
+        }
     }
 }
