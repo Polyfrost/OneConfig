@@ -1,6 +1,5 @@
 package cc.polyfrost.oneconfig.gui.elements;
 
-import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.config.core.OneColor;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.animations.Animation;
@@ -9,21 +8,21 @@ import cc.polyfrost.oneconfig.gui.animations.EaseInOutCubic;
 import cc.polyfrost.oneconfig.gui.animations.EaseInOutQuad;
 import cc.polyfrost.oneconfig.gui.elements.text.NumberInputField;
 import cc.polyfrost.oneconfig.gui.elements.text.TextInputField;
+import cc.polyfrost.oneconfig.internal.assets.Colors;
+import cc.polyfrost.oneconfig.internal.assets.Images;
+import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.internal.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
-import cc.polyfrost.oneconfig.internal.assets.Images;
-import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.renderer.scissor.Scissor;
 import cc.polyfrost.oneconfig.renderer.scissor.ScissorManager;
+import cc.polyfrost.oneconfig.utils.IOUtils;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import cc.polyfrost.oneconfig.utils.NetworkUtils;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 import org.lwjgl.input.Mouse;
 
 import java.awt.*;
-import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.StringSelection;
 import java.util.ArrayList;
 
 public class ColorSelector {
@@ -354,11 +353,11 @@ public class ColorSelector {
 
     private void parseHex() {
         if (copyBtn.isClicked()) {
-            Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(color.getHex()), null);
+            IOUtils.copyStringToClipboard(color.getHex());
         }
         if (pasteBtn.isClicked() && mode != 2) {
             try {
-                color.setColorFromHex(Toolkit.getDefaultToolkit().getSystemClipboard().getContents(null).getTransferData(DataFlavor.stringFlavor).toString());
+                color.setColorFromHex(IOUtils.getStringFromClipboard());
                 hexInput.setInput("#" + color.getHex());
             } catch (Exception ignored) {
             }

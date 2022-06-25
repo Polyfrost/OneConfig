@@ -1,12 +1,20 @@
 package cc.polyfrost.oneconfig.images;
 
+import cc.polyfrost.oneconfig.internal.OneConfig;
+import cc.polyfrost.oneconfig.utils.IOUtils;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.geom.AffineTransform;
-import java.awt.image.*;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.awt.image.AffineTransformOp;
+import java.awt.image.BufferedImage;
+import java.io.*;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.util.Base64;
 import java.util.Objects;
 
 /** An Image wrapper class that is used by the OneConfig system.*/
@@ -123,6 +131,57 @@ public class Image {
     /** Attempt to save the image to the specified file. */
     public void save(String filePath) throws IOException {
         ImageIO.write(image, "png", new File(filePath));
+    }
+
+    /** Attempt to upload the image to Imgur, returning the JSON that the server replied with. */
+    public JsonObject uploadToImgur() {
+        try {
+            // thanks stack overflow for the help with this :_)
+            URL url = new URL("https://api.imgur.com/3/image");
+            HttpURLConnection con = (HttpURLConnection) url.openConnection();
+            con.setDoInput(true);
+            con.setDoOutput(true);
+            con.setRequestMethod("POST");
+            con.setRequestProperty("Authorization", "Client-ID " + "6cfc432a9954f4d");
+            con.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+            con.connect();
+            ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
+            ImageIO.write(image, "png", byteOut);
+            String encoded = URLEncoder.encode("image", "UTF-8") + "=" + URLEncoder.encode(Base64.getEncoder().encodeToString(byteOut.toByteArray()), "UTF-8");
+            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(con.getOutputStream()));
+            writer.write(encoded);
+            byteOut.close();
+            writer.close();
+            if(con.getResponseCode() != 200) {
+                OneConfig.LOGGER.error("Error uploading image to Imgur: " + con.getResponseCode());
+                return null;
+            }
+
+            BufferedReader rd = new BufferedReader(new InputStreamReader(con.getInputStream()));
+            JsonObject object = new JsonParser().parse(rd).getAsJsonObject();
+            rd.close();
+
+            return object;
+        } catch (Exception e) {
+            e.printStackTrace();
+            OneConfig.LOGGER.error("Error uploading image to Imgur.");
+            return null;
+        }
+    }
+
+    /** Attempt to upload the image to Imgur, returning the URL that the image is hosted at.
+     * @param copy weather or not to copy the URL to the clipboard as well. */
+    public String uploadToImgur(boolean copy) {
+        JsonObject object = uploadToImgur();
+        String link = object.get("data").getAsJsonObject().get("link").getAsString();
+        if(copy) IOUtils.copyStringToClipboard(link);
+        return link;
+    }
+
+    /** Copy the image to the system clipboard and delete the graphics object. */
+    public void copyToClipboard() {
+        IOUtils.copyImageToClipboard(image);
+        dispose();
     }
 
 

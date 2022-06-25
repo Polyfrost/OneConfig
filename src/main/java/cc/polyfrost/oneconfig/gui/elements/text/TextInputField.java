@@ -1,24 +1,23 @@
 package cc.polyfrost.oneconfig.gui.elements.text;
 
-import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.gui.elements.BasicElement;
+import cc.polyfrost.oneconfig.internal.assets.Colors;
+import cc.polyfrost.oneconfig.internal.assets.SVGs;
+import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
-import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.renderer.scissor.Scissor;
 import cc.polyfrost.oneconfig.renderer.scissor.ScissorManager;
+import cc.polyfrost.oneconfig.utils.IOUtils;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import cc.polyfrost.oneconfig.utils.MathUtils;
 import cc.polyfrost.oneconfig.utils.TextUtils;
-import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 
-import java.awt.*;
-import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.StringSelection;
 import java.util.ArrayList;
+import java.util.Objects;
 
 public class TextInputField extends BasicElement {
 
@@ -262,15 +261,15 @@ public class TextInputField extends BasicElement {
             if (toggled) {
                 if (UKeyboard.isKeyComboCtrlC(key)) {
                     if (selectedText != null && start != 0f && end != 0f) {
-                        Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(selectedText), null);
+                        IOUtils.copyStringToClipboard(selectedText);
                     }
                     return;
                 }
                 if (UKeyboard.isKeyComboCtrlV(key) || key == Keyboard.KEY_INSERT) { // TODO: find the UKeyboard equivalent for insert
                     try {
-                        String clip = Toolkit.getDefaultToolkit().getSystemClipboard().getContents(null).getTransferData(DataFlavor.stringFlavor).toString();
+                        String clip = IOUtils.getStringFromClipboard();
                         input = input.substring(0, caretPos) + clip + input.substring(caretPos);
-                        caretPos = caretPos + clip.length();
+                        caretPos = caretPos + Objects.requireNonNull(clip).length();
                         return;
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -307,7 +306,7 @@ public class TextInputField extends BasicElement {
                     }
                     if (UKeyboard.isKeyComboCtrlX(key)) {
                         if (selectedText != null && start != 0f && end != 0f) {
-                            Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(selectedText), null);
+                            IOUtils.copyStringToClipboard(selectedText);
                             key = UKeyboard.KEY_BACKSPACE;
                         } else return;
                     }

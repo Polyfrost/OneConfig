@@ -1,5 +1,9 @@
 package cc.polyfrost.oneconfig.utils;
 
+import org.jetbrains.annotations.NotNull;
+
+import java.awt.*;
+import java.awt.datatransfer.*;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -52,4 +56,75 @@ public final class IOUtils {
         }
     }
 
+    /**
+     * Copy the specified String to the System Clipboard.
+     * @param s the string to copy
+     */
+    public static void copyStringToClipboard(String s) {
+        StringSelection stringSelection = new StringSelection(s);
+        Toolkit.getDefaultToolkit().getSystemClipboard().setContents(stringSelection, null);
+    }
+
+    /**
+     * Return the String on the system clipboard.
+     * @return the string on the system clipboard, or null if there is no string on the clipboard or another error occurred.
+     */
+    public static String getStringFromClipboard() {
+        try {
+            return Toolkit.getDefaultToolkit().getSystemClipboard().getContents(null).getTransferData(DataFlavor.stringFlavor).toString();
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /**
+     * Copy the given image to the System Clipboard.
+     * @param image the image to copy
+     */
+    public static void copyImageToClipboard(Image image) {
+        ImageSelection imageSelection = new ImageSelection(image);
+        Toolkit.getDefaultToolkit().getSystemClipboard().setContents(imageSelection, null);
+    }
+
+    /**
+     * Return the image on the system clipboard.
+     * @return the image on the system clipboard, or null if there is no image on the clipboard or another error occurred.
+     */
+    public static Image getImageFromClipboard() {
+        try {
+            return (Image) Toolkit.getDefaultToolkit().getSystemClipboard().getContents(null).getTransferData(DataFlavor.imageFlavor);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+
+
+
+
+    private static class ImageSelection implements Transferable {
+        private final Image image;
+        public ImageSelection(Image image) {
+            this.image = image;
+        }
+
+        @Override
+        public DataFlavor[] getTransferDataFlavors() {
+            return new DataFlavor[] {DataFlavor.imageFlavor};
+        }
+
+        @Override
+        public boolean isDataFlavorSupported(DataFlavor flavor) {
+            return DataFlavor.imageFlavor.equals(flavor);
+        }
+
+        @NotNull
+        @Override
+        public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException {
+            if(!DataFlavor.imageFlavor.equals(flavor)) {
+                throw new UnsupportedFlavorException(flavor);
+            }
+            return image;
+        }
+    }
 }
