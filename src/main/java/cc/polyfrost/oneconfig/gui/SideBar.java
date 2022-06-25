@@ -34,10 +34,10 @@ public class SideBar {
     }};
     private final BasicButton HUDButton = new BasicButton(192, SIZE_36, "Edit HUD", SVGs.NOTE_PENCIL_BOLD, null, ALIGNMENT_LEFT, ColorPalette.SECONDARY);
     private final BasicButton CloseButton = new BasicButton(192, SIZE_36, "Close", SVGs.X_CIRCLE_BOLD, null, ALIGNMENT_LEFT, ColorPalette.SECONDARY_DESTRUCTIVE);
-
     private int selected = 2;
     private Animation moveAnimation = null;
     private Animation sizeAnimation = null;
+    private int y;
 
     public SideBar() {
         buttons.get(0).setClickAction(new CreditsPage());
@@ -52,13 +52,14 @@ public class SideBar {
     }
 
     public void draw(long vg, int x, int y) {
+        this.y = y;
         for (BasicButton button : buttons) {
             if (!button.isClicked()) continue;
             moveSideBar(button);
             break;
         }
         if (moveAnimation != null) {
-            RenderManager.drawRoundedRect(vg, x + 16, moveAnimation.get() - (sizeAnimation.get() - 36) / 2f, 192, sizeAnimation.get(0), Colors.PRIMARY_600, 12);
+            RenderManager.drawRoundedRect(vg, x + 16, y + moveAnimation.get() - (sizeAnimation.get() - 36) / 2f, 192, sizeAnimation.get(0), Colors.PRIMARY_600, 12);
             if (moveAnimation.isFinished() && sizeAnimation.isFinished()) {
                 moveAnimation = null;
                 sizeAnimation = null;
@@ -92,7 +93,7 @@ public class SideBar {
     private void moveSideBar(BasicButton button) {
         if (button.equals(buttons.get(selected))) return;
         buttons.get(selected).setColorPalette(ColorPalette.TERTIARY);
-        moveAnimation = new EaseInOutQuart(300, buttons.get(selected).y, button.y, false);
+        moveAnimation = new EaseInOutQuart(300, buttons.get(selected).y - y, button.y - y, false);
         sizeAnimation = new DummyAnimation(36);
         selected = buttons.indexOf(button);
     }
