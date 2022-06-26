@@ -33,7 +33,6 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 public class Config {
-    public transient static Config INSTANCE = null;
     public final transient HashMap<String, BasicOption> optionNames = new HashMap<>();
     transient protected final String configFile;
     transient protected final Gson gson = new GsonBuilder().excludeFieldsWithModifiers(Modifier.TRANSIENT).setPrettyPrinting().create();
@@ -61,7 +60,6 @@ public class Config {
         ConfigCore.oneConfigMods.add(mod);
         this.mod = mod;
         hasBeenInitialized = true;
-        INSTANCE = this;
     }
 
     /**
