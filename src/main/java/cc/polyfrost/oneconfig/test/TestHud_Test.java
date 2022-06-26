@@ -2,25 +2,21 @@ package cc.polyfrost.oneconfig.test;
 
 import cc.polyfrost.oneconfig.config.annotations.Switch;
 import cc.polyfrost.oneconfig.hud.SingleTextHud;
-import net.minecraft.client.Minecraft;
 
 public class TestHud_Test extends SingleTextHud {
+    int times = 0;
     @Switch(
             name = "Custom Option"
     )
     public boolean yes;
 
-    public TestHud_Test(boolean enabled, int x, int y) {
-        super(enabled, x, y);
-    }
-
-    @Override
-    public String getDefaultTitle() {
-        return "FPS";
+    public TestHud_Test() {
+        super("Time");
     }
 
     @Override
     public String getText() {
-        return Integer.toString(Minecraft.getDebugFPS());
+        times++;
+        return String.valueOf(times);
     }
 }

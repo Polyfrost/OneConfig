@@ -1,6 +1,7 @@
 package cc.polyfrost.oneconfig.config;
 
 import cc.polyfrost.oneconfig.config.annotations.CustomOption;
+import cc.polyfrost.oneconfig.config.annotations.Exclude;
 import cc.polyfrost.oneconfig.config.annotations.HUD;
 import cc.polyfrost.oneconfig.config.annotations.Page;
 import cc.polyfrost.oneconfig.config.core.ConfigUtils;
@@ -35,7 +36,7 @@ import java.util.function.Supplier;
 public class Config {
     public final transient HashMap<String, BasicOption> optionNames = new HashMap<>();
     transient protected final String configFile;
-    transient protected final Gson gson = new GsonBuilder().excludeFieldsWithModifiers(Modifier.TRANSIENT).setPrettyPrinting().create();
+    transient protected final Gson gson = new GsonBuilder().setExclusionStrategies(new ExcludeStrategy()).excludeFieldsWithModifiers(Modifier.TRANSIENT).setPrettyPrinting().create();
     transient public Mod mod;
     public transient boolean hasBeenInitialized = false;
     public boolean enabled = true;
@@ -43,10 +44,21 @@ public class Config {
     /**
      * @param modData    information about the mod
      * @param configFile file where config is stored
+     * @param initialize whether to initialize the config.
+     */
+    public Config(Mod modData, String configFile, boolean initialize) {
+        this.configFile = configFile;
+        if (initialize) {
+            init(modData);
+        }
+    }
+
+    /**
+     * @param modData    information about the mod
+     * @param configFile file where config is stored
      */
     public Config(Mod modData, String configFile) {
-        this.configFile = configFile;
-        init(modData);
+        this(modData, configFile, true);
     }
 
     public void init(Mod mod) {
@@ -229,5 +241,30 @@ public class Config {
     protected void registerKeyBind(OneKeyBind keyBind, Runnable runnable) {
         keyBind.setRunnable(runnable);
         KeyBindHandler.INSTANCE.addKeyBind(keyBind);
+    }
+
+    private static class ExcludeStrategy implements ExclusionStrategy {
+
+        /**
+         * @param f the field object that is under test
+         * @return true if the field should be ignored; otherwise false
+         */
+        @Override
+        public boolean shouldSkipField(FieldAttributes f) {
+            Exclude annotation = f.getAnnotation(Exclude.class);
+            if (annotation != null) {
+                return annotation.type() != Exclude.ExcludeType.HUD;
+            }
+            return false;
+        }
+
+        /**
+         * @param clazz the class object that is under test
+         * @return true if the class should be ignored; otherwise false
+         */
+        @Override
+        public boolean shouldSkipClass(Class<?> clazz) {
+            return false;
+        }
     }
 }

@@ -1,23 +1,66 @@
 package cc.polyfrost.oneconfig.hud;
 
 import cc.polyfrost.oneconfig.config.annotations.Dropdown;
+import cc.polyfrost.oneconfig.config.annotations.Exclude;
 import cc.polyfrost.oneconfig.config.annotations.Switch;
 import cc.polyfrost.oneconfig.config.annotations.Text;
+import cc.polyfrost.oneconfig.config.elements.BasicOption;
+import cc.polyfrost.oneconfig.events.EventManager;
+import cc.polyfrost.oneconfig.events.event.Stage;
+import cc.polyfrost.oneconfig.events.event.TickEvent;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
+import cc.polyfrost.oneconfig.gui.elements.config.ConfigSwitch;
+import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
 import cc.polyfrost.oneconfig.libs.universal.UMinecraft;
 import cc.polyfrost.oneconfig.libs.universal.UScreen;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import net.minecraft.client.gui.GuiChat;
 
-public abstract class SingleTextHud extends TextHud {
+import java.util.ArrayList;
 
-    public SingleTextHud(boolean enabled) {
-        this(enabled, 0, 0);
+public abstract class SingleTextHud extends TextHud implements Cacheable {
+
+    private transient String cachedString = null;
+    private transient final boolean caching;
+
+    public SingleTextHud(String title) {
+        this(title, true);
     }
 
-    public SingleTextHud(boolean enabled, int x, int y) {
+    public SingleTextHud(String title, boolean enabled) {
+        this(title, enabled, 0, 0);
+    }
+
+    public SingleTextHud(String title, boolean enabled, boolean caching) {
+        this(title, enabled, 0, 0, caching);
+    }
+
+    public SingleTextHud(String title, boolean enabled, int x, int y) {
+        this(title, enabled, x, y, true);
+    }
+
+    public SingleTextHud(String title, boolean enabled, int x, int y, boolean caching) {
         super(enabled, x, y);
+        this.title = title;
+        this.caching = caching;
+        if (caching) {
+            EventManager.INSTANCE.register(new TextCacher());
+        }
     }
+
+    @Override
+    public void addCacheOptions(String category, String subcategory, ArrayList<BasicOption> options) {
+        if (caching) {
+            try {
+                options.add(new ConfigSwitch(getClass().getField("cacheText"), this, "Cache Text", category, subcategory, 1));
+            } catch (NoSuchFieldException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    @Exclude(type = Exclude.ExcludeType.HUD)
+    public boolean cacheText = true;
 
     @Switch(
             name = "Brackets"
@@ -27,15 +70,13 @@ public abstract class SingleTextHud extends TextHud {
     @Text(
             name = "Title"
     )
-    public String title = getDefaultTitle();
+    public String title;
 
     @Dropdown(
             name = "Title Location",
             options = {"Left", "Right"}
     )
     public int titleLocation = 0;
-
-    public abstract String getDefaultTitle();
 
     @Override
     public int getWidth(float scale) {
@@ -77,7 +118,7 @@ public abstract class SingleTextHud extends TextHud {
             builder.append(title).append(": ");
         }
 
-        builder.append(example ? getExampleText() : getText());
+        builder.append(example ? getExampleText() : (cachedString == null ? getText() : cachedString));
 
         if (showTitle && titleLocation == 1) {
             builder.append(" ").append(title);
@@ -93,5 +134,18 @@ public abstract class SingleTextHud extends TextHud {
 
     public String getExampleText() {
         return getText();
+    }
+
+    private class TextCacher {
+        @Subscribe
+        private void onTick(TickEvent event) {
+            if (event.stage == Stage.START) {
+                if (cacheText) {
+                    cachedString = getText();
+                } else {
+                    cachedString = null;
+                }
+            }
+        }
     }
 }

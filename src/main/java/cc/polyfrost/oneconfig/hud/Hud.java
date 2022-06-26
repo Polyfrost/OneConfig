@@ -30,7 +30,7 @@ import cc.polyfrost.oneconfig.config.Config;
  *  *         @literal @HUD(
  *  *             name = "HUD Element"
  *  *         )
- *  *         public YourHudElement hudElement = new YourHudElement(false);
+ *  *         public YourHudElement hudElement = new YourHudElement("Title");
  *  *     }
  *  *     }</pre>
  */

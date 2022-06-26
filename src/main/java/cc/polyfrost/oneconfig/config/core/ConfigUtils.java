@@ -1,5 +1,6 @@
 package cc.polyfrost.oneconfig.config.core;
 
+import cc.polyfrost.oneconfig.config.annotations.Exclude;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
 import cc.polyfrost.oneconfig.config.elements.OptionCategory;
 import cc.polyfrost.oneconfig.config.elements.OptionPage;
@@ -55,6 +56,8 @@ public class ConfigUtils {
             parentClass = clazz;
         }
         for (Field field : fields) {
+            Exclude exclude = findAnnotation(field, Exclude.class);
+            if (exclude != null && exclude.type() != Exclude.ExcludeType.CONFIG) continue;
             Option option = findAnnotation(field, Option.class);
             if (option == null) continue;
             options.add(getOption(option, field, object));
