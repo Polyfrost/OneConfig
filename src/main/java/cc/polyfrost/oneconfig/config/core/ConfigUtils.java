@@ -43,17 +43,16 @@ public class ConfigUtils {
         return null;
     }
 
-    public static ArrayList<BasicOption> getClassOptions(Object object, Class<?> parentClass) {
+    public static ArrayList<BasicOption> getClassOptions(Object object) {
         ArrayList<BasicOption> options = new ArrayList<>();
         ArrayList<Field> fields = new ArrayList<>(Arrays.asList(object.getClass().getDeclaredFields()));
+        Class<?> parentClass = object.getClass();
         Class<?> clazz = object.getClass();
         while (true) {
             clazz = clazz.getSuperclass();
-            if (clazz != null && clazz != parentClass) {
-                fields.addAll(Arrays.asList(clazz.getDeclaredFields()));
-            } else {
-                break;
-            }
+            if (clazz != null && clazz != parentClass) fields.addAll(Arrays.asList(clazz.getDeclaredFields()));
+            else break;
+            parentClass = clazz;
         }
         for (Field field : fields) {
             Option option = findAnnotation(field, Option.class);

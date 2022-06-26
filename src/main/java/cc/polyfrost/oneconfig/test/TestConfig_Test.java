@@ -42,7 +42,7 @@ public class TestConfig_Test extends Config {
             options = {"option1", "option2", "option3"},
             size = OptionSize.DUAL
     )
-    private int testDropdown = 0;
+    private static int testDropdown = 0;
 
     @Color(
             name = "Test Color",

@@ -33,7 +33,7 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 public class Config {
-    public static Config INSTANCE = null;
+    public transient static Config INSTANCE = null;
     public final transient HashMap<String, BasicOption> optionNames = new HashMap<>();
     transient protected final String configFile;
     transient protected final Gson gson = new GsonBuilder().excludeFieldsWithModifiers(Modifier.TRANSIENT).setPrettyPrinting().create();
