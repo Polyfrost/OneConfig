@@ -264,6 +264,10 @@ public class Config {
          */
         @Override
         public boolean shouldSkipClass(Class<?> clazz) {
+            Exclude annotation = clazz.getAnnotation(Exclude.class);
+            if (annotation != null) {
+                return annotation.type() != Exclude.ExcludeType.HUD;
+            }
             return false;
         }
     }
