@@ -12,7 +12,7 @@ import java.lang.annotation.Target;
  * This can be used interchangeably with the transient modifier built into Java.
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.FIELD)
+@Target({ElementType.FIELD, ElementType.TYPE})
 public @interface Exclude {
     ExcludeType type() default ExcludeType.ALL;
 
