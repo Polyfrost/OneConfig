@@ -1,14 +1,19 @@
 package cc.polyfrost.oneconfig.hud;
 
+import cc.polyfrost.oneconfig.config.annotations.Switch;
 import cc.polyfrost.oneconfig.config.core.OneColor;
+import cc.polyfrost.oneconfig.gui.OneConfigGui;
+import cc.polyfrost.oneconfig.libs.universal.UMinecraft;
+import cc.polyfrost.oneconfig.libs.universal.UScreen;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.config.Config;
+import net.minecraft.client.gui.GuiChat;
 
 /**
  * Represents a HUD element in OneConfig.
  * A HUD element can be used to display useful information to the user, like FPS or CPS.
  * <p>
- * If you simply want to display text, extend {@link SingleTextHud} or {@link MultiTextHud},
+ * If you simply want to display text, extend {@link TextHud} or {@link SingleTextHud},
  * whichever applies to the use case. Then, override the required methods.
  * <p>
  * If you want to display something else, extend this class and override {@link Hud#getWidth(float)}, {@link Hud#getHeight(float)}, and {@link Hud#draw(int, int, float)} with the width, height, and the drawing code respectively.
@@ -47,9 +52,6 @@ public abstract class Hud {
     public float scale;
     public float paddingX;
     public float paddingY;
-    public Hud parent;
-    public Hud childRight;
-    public Hud childBottom;
 
     /**
      * @param enabled      If the hud is enabled
@@ -158,6 +160,13 @@ public abstract class Hud {
     }
 
     /**
+     * @return If the background should be drawn
+     */
+    public boolean drawBackground() {
+        return true;
+    }
+
+    /**
      * Draw the background, the hud and all childed huds, used by HudCore
      *
      * @param x          X-coordinate
@@ -166,12 +175,11 @@ public abstract class Hud {
      * @param background If background should be drawn or not
      */
     public void drawAll(float x, float y, float scale, boolean background) {
-        if (background) drawBackground(x, y, getTotalWidth(scale), getTotalHeight(scale), scale);
+        if (!showInGuis && UScreen.getCurrentScreen() != null && !(UScreen.getCurrentScreen() instanceof OneConfigGui)) return;
+        if (!showInChat && UScreen.getCurrentScreen() instanceof GuiChat) return;
+        if (!showInDebug && UMinecraft.getSettings().showDebugInfo) return;
+        if (background && drawBackground()) drawBackground(x, y, getWidth(scale), getHeight(scale), scale);
         draw((int) (x + paddingX * scale / 2f), (int) (y + paddingY * scale / 2f), scale);
-        if (childRight != null)
-            childRight.drawAll((int) x + paddingX * scale / 2f + getWidth(scale), (int) y, childRight.scale, false);
-        if (childBottom != null)
-            childBottom.drawAll((int) x, (int) y + paddingY * scale / 2f + getHeight(scale), childBottom.scale, false);
     }
 
     /**
@@ -183,12 +191,8 @@ public abstract class Hud {
      * @param background If background should be drawn or not
      */
     public void drawExampleAll(float x, float y, float scale, boolean background) {
-        if (background) drawBackground(x, y, getTotalExampleWidth(scale), getTotalExampleHeight(scale), scale);
+        if (background) drawBackground(x, y, getWidth(scale), getHeight(scale), scale);
         drawExample((int) (x + paddingX * scale / 2f), (int) (y + paddingY * scale / 2f), scale);
-        if (childRight != null)
-            childRight.drawExampleAll((int) x + paddingX * scale / 2f + getWidth(scale), (int) y, childRight.scale, false);
-        if (childBottom != null)
-            childBottom.drawExampleAll((int) x, (int) y + paddingY * scale / 2f + getHeight(scale), childBottom.scale, false);
     }
 
     /**
@@ -219,14 +223,8 @@ public abstract class Hud {
      * @return X-coordinate of the hud
      */
     public float getXScaled(int screenWidth) {
-        if (parent != null && parent.childRight == this) {
-            return parent.getXScaled(screenWidth) + parent.getWidth(parent.scale) + parent.paddingX * parent.scale / 2f;
-        } else if (parent != null) {
-            return parent.getXScaled(screenWidth);
-        }
-        if (xUnscaled <= 0.5) {
+        if (xUnscaled <= 0.5)
             return (int) (screenWidth * xUnscaled);
-        }
         return (float) (screenWidth - (1d - xUnscaled) * screenWidth - (getWidth(scale) + paddingX * scale));
     }
 
@@ -235,58 +233,22 @@ public abstract class Hud {
      * @return Y-coordinate of the hud
      */
     public float getYScaled(int screenHeight) {
-        if (parent != null && parent.childBottom == this) {
-            return parent.getYScaled(screenHeight) + parent.getHeight(parent.scale) + parent.paddingY * parent.scale / 2f;
-        } else if (parent != null) {
-            return parent.getYScaled(screenHeight);
-        }
-        if (yUnscaled <= 0.5) {
-            return (int) (screenHeight * yUnscaled);
-        }
+        if (yUnscaled <= 0.5) return (int) (screenHeight * yUnscaled);
         return (float) (screenHeight - (1d - yUnscaled) * screenHeight - (getHeight(scale) + paddingY * scale));
     }
 
-    /**
-     * @param scale Scale of the hud
-     * @return The width of the hud and all childed huds
-     */
-    public float getTotalWidth(float scale) {
-        float width = getWidth(scale);
-        if (childRight != null) width += childRight.getTotalWidth(childRight.scale) + paddingY * scale / 2f;
-        if (childBottom != null) width = Math.max(childBottom.getTotalWidth(childBottom.scale), width);
-        return width;
-    }
+    @Switch(
+            name = "Show in Chat"
+    )
+    public boolean showInChat = true;
 
-    /**
-     * @param scale Scale of the hud
-     * @return The height of the hud and all childed huds
-     */
-    public float getTotalHeight(float scale) {
-        float height = getHeight(scale);
-        if (childBottom != null) height += childBottom.getTotalHeight(childBottom.scale) + paddingY * scale / 2f;
-        if (childRight != null) height = Math.max(childRight.getTotalHeight(childRight.scale), height);
-        return height;
-    }
+    @Switch(
+            name = "Show in F3 (Debug)"
+    )
+    public boolean showInDebug = false;
 
-    /**
-     * @param scale Scale of the hud
-     * @return The example width of the hud and all childed huds
-     */
-    public float getTotalExampleWidth(float scale) {
-        float width = getExampleWidth(scale);
-        if (childRight != null) width += childRight.getTotalExampleWidth(childRight.scale) + paddingX * scale / 2f;
-        if (childBottom != null) width = Math.max(childBottom.getTotalExampleWidth(childBottom.scale), width);
-        return width;
-    }
-
-    /**
-     * @param scale Scale of the hud
-     * @return The example height of the hud and all childed huds
-     */
-    public float getTotalExampleHeight(float scale) {
-        float height = getExampleHeight(scale);
-        if (childBottom != null) height += childBottom.getTotalExampleHeight(childBottom.scale) + paddingY * scale / 2f;
-        if (childRight != null) height = Math.max(childRight.getTotalExampleHeight(childRight.scale), height);
-        return height;
-    }
+    @Switch(
+            name = "Show in GUIs"
+    )
+    public boolean showInGuis = true;
 }

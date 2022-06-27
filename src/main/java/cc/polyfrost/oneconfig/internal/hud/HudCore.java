@@ -1,7 +1,9 @@
 package cc.polyfrost.oneconfig.internal.hud;
 
 import cc.polyfrost.oneconfig.events.event.HudRenderEvent;
+import cc.polyfrost.oneconfig.events.event.TickEvent;
 import cc.polyfrost.oneconfig.hud.Hud;
+import cc.polyfrost.oneconfig.hud.TextHud;
 import cc.polyfrost.oneconfig.libs.universal.UResolution;
 import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
 
@@ -17,6 +19,15 @@ public class HudCore {
         for (Hud hud : huds) {
             if (hud.enabled)
                 hud.drawAll(hud.getXScaled(UResolution.getScaledWidth()), hud.getYScaled(UResolution.getScaledHeight()), hud.scale, true);
+        }
+    }
+
+    @Subscribe
+    public void onTick(TickEvent event) {
+        for (Hud hud : huds) {
+            if (hud instanceof TextHud) {
+                ((TextHud) hud).tick();
+            }
         }
     }
 }

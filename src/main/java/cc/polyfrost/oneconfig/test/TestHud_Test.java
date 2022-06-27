@@ -11,7 +11,7 @@ public class TestHud_Test extends SingleTextHud {
     public boolean yes;
 
     public TestHud_Test() {
-        super("Time");
+        super("Time", true);
     }
 
     @Override

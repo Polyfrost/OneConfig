@@ -48,9 +48,7 @@ public class Config {
      */
     public Config(Mod modData, String configFile, boolean initialize) {
         this.configFile = configFile;
-        if (initialize) {
-            init(modData);
-        }
+        if (initialize) init(modData);
     }
 
     /**

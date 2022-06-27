@@ -23,9 +23,6 @@ public class HUDUtils {
             options.add(new ConfigHeader(field, hud, hudAnnotation.name(), category, subcategory, 2));
             options.add(new ConfigSwitch(hud.getClass().getField("enabled"), hud, "Enabled", category, subcategory, 2));
             options.addAll(ConfigUtils.getClassOptions(hud));
-            if (hud instanceof Cacheable) {
-                ((Cacheable) hud).addCacheOptions(category, subcategory, options);
-            }
             options.add(new ConfigCheckbox(hud.getClass().getField("rounded"), hud, "Rounded corners", category, subcategory, 1));
             options.get(options.size() - 1).addDependency(() -> hud.enabled);
             options.add(new ConfigCheckbox(hud.getClass().getField("border"), hud, "Outline/border", category, subcategory, 1));

@@ -59,13 +59,12 @@ public class HudGui extends UScreen {
                 editingHud.yUnscaled = (yFloat + (hud.getHeight(hud.scale) + hud.paddingY * hud.scale)) / (double) this.height;
         }
 
-        int width = (int) (hud.getWidth(hud.scale) + hud.paddingX * hud.scale);
-        int height = (int) (hud.getHeight(hud.scale) + hud.paddingY * hud.scale);
+        int width = (int) (hud.getExampleWidth(hud.scale) + hud.paddingX * hud.scale);
+        int height = (int) (hud.getExampleHeight(hud.scale) + hud.paddingY * hud.scale);
         int x = (int) hud.getXScaled(this.width);
         int y = (int) hud.getYScaled(this.height);
 
-        if (hud.parent == null)
-            hud.drawExampleAll(x, y, hud.scale, true);
+        hud.drawExampleAll(x, y, hud.scale, true);
         int color = new Color(215, 224, 235).getRGB();
         if (editingHud == hud) {
             color = new Color(43, 159, 235).getRGB();
@@ -83,34 +82,11 @@ public class HudGui extends UScreen {
         if (hud == editingHud && !isDragging) {
             RenderManager.setupAndDraw(true, (vg) -> RenderManager.drawCircle(vg, x + width, y + height, 3, new Color(43, 159, 235).getRGB()));
         }
-
-        if (hud.childBottom != null) processHud(hud.childBottom, mouseX);
-        if (hud.childRight != null) processHud(hud.childRight, mouseX);
     }
 
     private void setPosition(float newX, float newY, boolean snap) {
         float width = editingHud.getWidth(editingHud.scale) + editingHud.paddingX * editingHud.scale;
         float height = editingHud.getHeight(editingHud.scale) + editingHud.paddingY * editingHud.scale;
-
-        /* Childing disabled since it still needs some extra work
-        if (editingHud.childRight != null) {
-            HudCore.huds.add(editingHud.childRight);
-            editingHud.childRight.parent = null;
-            editingHud.childRight = null;
-        }
-        if (editingHud.childBottom != null) {
-            HudCore.huds.add(editingHud.childBottom);
-            editingHud.childBottom.parent = null;
-            editingHud.childBottom = null;
-        }
-        if (editingHud.parent != null) {
-            HudCore.huds.add(editingHud);
-            if (editingHud.parent.childBottom == editingHud)
-                editingHud.parent.childBottom = null;
-            else if (editingHud.parent.childRight == editingHud)
-                editingHud.parent.childRight = null;
-            editingHud.parent = null;
-        }*/
 
         if (newX < 0)
             newX = 0;
@@ -127,11 +103,6 @@ public class HudGui extends UScreen {
             if (snapX != newX || snapY != newY) {
                 newX = snapX;
                 newY = snapY;
-                for (Hud hud : HudCore.huds) {
-                    if (!hud.enabled) continue;
-                    if (findParent(hud, snapX, snapY))
-                        break;
-                }
             }
         }
 
@@ -143,25 +114,6 @@ public class HudGui extends UScreen {
             editingHud.yUnscaled = newY / (double) this.height;
         else
             editingHud.yUnscaled = (newY + height) / (double) this.height;
-    }
-
-    private boolean findParent(Hud hud, float snapX, float snapY) {
-        int hudWidth = (int) (hud.getWidth(hud.scale) + hud.paddingX * hud.scale);
-        int hudX = (int) hud.getXScaled(this.width);
-        int hudHeight = (int) (hud.getHeight(hud.scale) + hud.paddingY * hud.scale);
-        int hudY = (int) hud.getYScaled(this.height);
-        if (hudX + hudWidth == snapX && hudY == snapY && hud.childRight == null) {
-            editingHud.parent = hud;
-            hud.childRight = editingHud;
-            HudCore.huds.remove(editingHud);
-            return true;
-        } else if (hudX == snapX && hudY + hudHeight == snapY && hud.childBottom == null) {
-            editingHud.parent = hud;
-            hud.childBottom = editingHud;
-            HudCore.huds.remove(editingHud);
-            return true;
-        }
-        return hud.childRight != null && findParent(hud.childRight, snapX, snapY) || hud.childBottom != null && findParent(hud.childBottom, snapX, snapY);
     }
 
     private float getXSnapping(float pos, boolean rightOnly) {
@@ -196,7 +148,6 @@ public class HudGui extends UScreen {
     private ArrayList<Float> getXSnappingHud(Hud hud) {
         ArrayList<Float> verticalLines = new ArrayList<>();
         if (hud == editingHud) return verticalLines;
-        if (hud.childRight != null) verticalLines.addAll(getXSnappingHud(hud.childRight));
         int hudWidth = (int) (hud.getWidth(hud.scale) + hud.paddingX * hud.scale);
         int hudX = (int) hud.getXScaled(this.width);
         verticalLines.add((float) hudX);
@@ -236,7 +187,6 @@ public class HudGui extends UScreen {
     private ArrayList<Float> getYSnappingHud(Hud hud) {
         ArrayList<Float> horizontalLines = new ArrayList<>();
         if (hud == editingHud) return horizontalLines;
-        if (hud.childBottom != null) horizontalLines.addAll(getYSnappingHud(hud.childBottom));
         int hudHeight = (int) (hud.getHeight(hud.scale) + hud.paddingY * hud.scale);
         int hudY = (int) hud.getYScaled(this.height);
         horizontalLines.add((float) hudY);
@@ -290,7 +240,7 @@ public class HudGui extends UScreen {
             isDragging = true;
             return true;
         }
-        return hud.childBottom != null && mouseClickedHud(hud.childBottom, mouseX, mouseY) || hud.childRight != null && mouseClickedHud(hud.childRight, mouseX, mouseY);
+        return false;
     }
 
     @Override
