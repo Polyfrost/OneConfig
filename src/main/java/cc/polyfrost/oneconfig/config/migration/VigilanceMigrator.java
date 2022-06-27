@@ -3,6 +3,7 @@ package cc.polyfrost.oneconfig.config.migration;
 import cc.polyfrost.oneconfig.config.compatibility.vigilance.VigilanceName;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.lang.reflect.Field;
 import java.util.HashMap;
@@ -16,13 +17,16 @@ public class VigilanceMigrator implements Migrator {
     private static final Pattern stringPattern = Pattern.compile("\"?(?<name>[^\\s\"]+)\"? = \"(?<value>.+)\"");
     protected final String filePath;
     protected HashMap<String, HashMap<String, HashMap<String, Object>>> values = null;
+    protected final boolean fileExists;
 
     public VigilanceMigrator(String filePath) {
         this.filePath = filePath;
+        this.fileExists = new File(filePath).exists();
     }
 
     @Override
     public Object getValue(Field field, String name, String category, String subcategory) {
+        if (!fileExists) return null;
         if (values == null) getOptions();
         if (field.isAnnotationPresent(VigilanceName.class)) {
             VigilanceName annotation = field.getAnnotation(VigilanceName.class);

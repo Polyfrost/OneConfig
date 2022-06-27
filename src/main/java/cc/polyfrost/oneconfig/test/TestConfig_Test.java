@@ -12,6 +12,7 @@ import net.minecraftforge.fml.common.FMLCommonHandler;
 
 public class TestConfig_Test extends Config {
 
+    @NonProfileSpecific
     @Switch(
             name = "Test Switch",
             size = OptionSize.DUAL

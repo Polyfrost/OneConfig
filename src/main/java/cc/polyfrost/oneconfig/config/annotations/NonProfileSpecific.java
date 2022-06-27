@@ -6,12 +6,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Excludes fields from being serialized or deserialized by OneConfig's Config and HUD
- * system.
- *
- * This can be used interchangeably with the transient modifier built into Java.
+ * Makes a field non profile specific, useful for things like an API key
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.FIELD, ElementType.TYPE})
-public @interface Exclude {
+public @interface NonProfileSpecific {
 }

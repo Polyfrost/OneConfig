@@ -1,7 +1,6 @@
 package cc.polyfrost.oneconfig.config;
 
 import cc.polyfrost.oneconfig.config.annotations.CustomOption;
-import cc.polyfrost.oneconfig.config.annotations.Exclude;
 import cc.polyfrost.oneconfig.config.annotations.HUD;
 import cc.polyfrost.oneconfig.config.annotations.Page;
 import cc.polyfrost.oneconfig.config.core.ConfigUtils;
@@ -11,6 +10,8 @@ import cc.polyfrost.oneconfig.config.data.PageLocation;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
 import cc.polyfrost.oneconfig.config.elements.OptionPage;
 import cc.polyfrost.oneconfig.config.elements.OptionSubcategory;
+import cc.polyfrost.oneconfig.config.gson.NonProfileSpecificExclusionStrategy;
+import cc.polyfrost.oneconfig.config.gson.ProfileExclusionStrategy;
 import cc.polyfrost.oneconfig.config.profiles.Profiles;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.elements.config.ConfigPageButton;
@@ -19,6 +20,8 @@ import cc.polyfrost.oneconfig.hud.HUDUtils;
 import cc.polyfrost.oneconfig.internal.config.annotations.Option;
 import cc.polyfrost.oneconfig.internal.config.core.ConfigCore;
 import cc.polyfrost.oneconfig.internal.config.core.KeyBindHandler;
+import cc.polyfrost.oneconfig.utils.JsonUtils;
+import cc.polyfrost.oneconfig.utils.TickDelay;
 import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 import com.google.gson.*;
 
@@ -36,7 +39,8 @@ import java.util.function.Supplier;
 public class Config {
     public final transient HashMap<String, BasicOption> optionNames = new HashMap<>();
     transient protected final String configFile;
-    transient protected final Gson gson = new GsonBuilder().setExclusionStrategies(new ExcludeStrategy()).excludeFieldsWithModifiers(Modifier.TRANSIENT).setPrettyPrinting().create();
+    transient protected final Gson gson = new GsonBuilder().setExclusionStrategies(new ProfileExclusionStrategy()).excludeFieldsWithModifiers(Modifier.TRANSIENT).setPrettyPrinting().create();
+    transient protected final Gson nonProfileSpecificGson = new GsonBuilder().setExclusionStrategies(new NonProfileSpecificExclusionStrategy()).excludeFieldsWithModifiers(Modifier.TRANSIENT).setPrettyPrinting().create();
     transient public Mod mod;
     public transient boolean hasBeenInitialized = false;
     public boolean enabled = true;
@@ -48,7 +52,7 @@ public class Config {
      */
     public Config(Mod modData, String configFile, boolean initialize) {
         this.configFile = configFile;
-        if (initialize) init(modData);
+        if (initialize) new TickDelay(() -> init(modData), 1); // wait one tick so every class in config gets initialized
     }
 
     /**
@@ -76,9 +80,16 @@ public class Config {
      * Save current config to file
      */
     public void save() {
+        Profiles.getProfileFile(configFile).getParentFile().mkdirs();
+        Profiles.getNonProfileSpecificDir(configFile).getParentFile().mkdirs();
         try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(Files.newOutputStream(Profiles.getProfileFile(configFile).toPath()), StandardCharsets.UTF_8))) {
             writer.write(gson.toJson(this));
-        } catch (IOException e) {
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(Files.newOutputStream(Profiles.getNonProfileSpecificDir(configFile).toPath()), StandardCharsets.UTF_8))) {
+            writer.write(nonProfileSpecificGson.toJson(this));
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -88,8 +99,13 @@ public class Config {
      */
     public void load() {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(Files.newInputStream(Profiles.getProfileFile(configFile).toPath()), StandardCharsets.UTF_8))) {
-            deserializePart(new JsonParser().parse(reader).getAsJsonObject(), this);
-        } catch (IOException e) {
+            deserializePart(JsonUtils.PARSER.parse(reader).getAsJsonObject(), this);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(Files.newInputStream(Profiles.getNonProfileSpecificDir(configFile).toPath()), StandardCharsets.UTF_8))) {
+            deserializePart(JsonUtils.PARSER.parse(reader).getAsJsonObject(), this);
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -239,34 +255,5 @@ public class Config {
     protected void registerKeyBind(OneKeyBind keyBind, Runnable runnable) {
         keyBind.setRunnable(runnable);
         KeyBindHandler.INSTANCE.addKeyBind(keyBind);
-    }
-
-    private static class ExcludeStrategy implements ExclusionStrategy {
-
-        /**
-         * @param f the field object that is under test
-         * @return true if the field should be ignored; otherwise false
-         */
-        @Override
-        public boolean shouldSkipField(FieldAttributes f) {
-            Exclude annotation = f.getAnnotation(Exclude.class);
-            if (annotation != null) {
-                return annotation.type() != Exclude.ExcludeType.HUD;
-            }
-            return false;
-        }
-
-        /**
-         * @param clazz the class object that is under test
-         * @return true if the class should be ignored; otherwise false
-         */
-        @Override
-        public boolean shouldSkipClass(Class<?> clazz) {
-            Exclude annotation = clazz.getAnnotation(Exclude.class);
-            if (annotation != null) {
-                return annotation.type() != Exclude.ExcludeType.HUD;
-            }
-            return false;
-        }
     }
 }

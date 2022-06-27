@@ -1,8 +1,8 @@
 package cc.polyfrost.oneconfig.config.profiles;
 
 import cc.polyfrost.oneconfig.internal.OneConfig;
-import cc.polyfrost.oneconfig.internal.config.core.ConfigCore;
 import cc.polyfrost.oneconfig.internal.config.OneConfigConfig;
+import cc.polyfrost.oneconfig.internal.config.core.ConfigCore;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
@@ -11,7 +11,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 public class Profiles {
-    private static final File profileDir = new File("OneConfig/profiles");
+    public static final File nonProfileSpecificDir = new File("OneConfig/config");
+    public static final File profileDir = new File("OneConfig/profiles");
     public static ArrayList<String> profiles;
 
     public static String getCurrentProfile() {
@@ -20,7 +21,7 @@ public class Profiles {
             return null;
         }
         if (profiles == null) {
-            String[] profilesArray = new File("OneConfig/profiles").list((file, s) -> file.isDirectory());
+            String[] profilesArray = profileDir.list((file, s) -> file.isDirectory());
             if (profilesArray != null) profiles = new ArrayList<>(Arrays.asList(profilesArray));
         }
         if (!getProfileDir(OneConfigConfig.currentProfile).exists()) {
@@ -43,11 +44,15 @@ public class Profiles {
     }
 
     public static File getProfileDir(String profile) {
-        return new File(new File("OneConfig/profiles"), profile);
+        return new File(profileDir, profile);
     }
 
     public static File getProfileFile(String file) {
         return new File(getProfileDir(), file);
+    }
+
+    public static File getNonProfileSpecificDir(String file) {
+        return new File(nonProfileSpecificDir, file);
     }
 
     public static void loadProfile(String profile) {
@@ -59,7 +64,7 @@ public class Profiles {
 
     public static void renameProfile(String name, String newName) {
         try {
-            File newFile = new File(new File("OneConfig/profiles"), newName);
+            File newFile = new File(profileDir, newName);
             FileUtils.moveDirectory(getProfileDir(name), newFile);
             if (OneConfigConfig.currentProfile.equals(name)) OneConfigConfig.currentProfile = newName;
             profiles.remove(name);
