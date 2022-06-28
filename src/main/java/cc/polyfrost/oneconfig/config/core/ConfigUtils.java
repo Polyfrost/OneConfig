@@ -57,8 +57,6 @@ public class ConfigUtils {
             parentClass = clazz;
         }
         for (Field field : fields) {
-            Exclude exclude = findAnnotation(field, Exclude.class);
-            if (exclude != null) continue;
             Option option = findAnnotation(field, Option.class);
             if (option == null) continue;
             options.add(getOption(option, field, object));
