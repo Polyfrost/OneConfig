@@ -7,7 +7,9 @@ public class ExclusionUtils {
         if (tempClass == parentClass) return true;
         while (true) {
             lastClass = tempClass;
+            if (tempClass == null) return false;
             tempClass = tempClass.getSuperclass();
+            if (tempClass == null) return false;
             if (tempClass == lastClass) return false;
             if (tempClass == parentClass) return true;
         }
