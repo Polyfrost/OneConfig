@@ -7,6 +7,7 @@ import net.minecraft.launchwrapper.LaunchClassLoader;
 import net.minecraftforge.fml.relauncher.CoreModManager;
 import org.spongepowered.asm.launch.MixinBootstrap;
 import org.spongepowered.asm.launch.MixinTweaker;
+import org.spongepowered.asm.mixin.Mixins;
 
 import java.io.File;
 import java.lang.reflect.Field;
@@ -70,13 +71,21 @@ public class OneConfigTweaker implements ITweaker {
 
     @Override
     public void acceptOptions(List<String> args, File gameDir, File assetsDir, String profile) {
-
+        boolean captureNext = false;
+        for (String arg : args) {
+            if (captureNext) {
+                Mixins.addConfiguration(arg);
+            }
+            captureNext = "--mixin".equals(arg);
+        }
     }
 
     @Override
     public void injectIntoClassLoader(LaunchClassLoader classLoader) {
         removeLWJGLException();
         Launch.classLoader.registerTransformer(ClassTransformer.class.getName());
+        OneConfigInit.initialize(new String[]{});
+        Launch.blackboard.put("oneconfig.init.initialized", true);
         Launch.classLoader.addClassLoaderExclusion("cc.polyfrost.oneconfig.internal.plugin.asm.");
     }
 
@@ -90,8 +99,6 @@ public class OneConfigTweaker implements ITweaker {
             f_exceptions.setAccessible(true);
             Set<String> exceptions = (Set<String>) f_exceptions.get(Launch.classLoader);
             exceptions.remove("org.lwjgl.");
-            OneConfigInit.initialize(new String[]{});
-            Launch.blackboard.put("oneconfig.init.initialized", true);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
