@@ -50,7 +50,7 @@ public abstract class MultiTextHud extends TextHud implements Conditional {
         }
     }
 
-    @Exclude(type = Exclude.ExcludeType.HUD)
+    @Exclude
     public boolean cacheText = true;
 
     @Override

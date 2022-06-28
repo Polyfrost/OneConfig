@@ -16,7 +16,7 @@ public class ProfileExclusionStrategy extends ExclusionUtils implements Exclusio
         if (isSuperClassOf(f.getDeclaredClass(), Config.class)) return true;
         if (f.getAnnotation(NonProfileSpecific.class) != null) return true;
         Exclude exclude = f.getAnnotation(Exclude.class);
-        return exclude != null && exclude.type() != Exclude.ExcludeType.HUD;
+        return exclude != null;
     }
 
     /**
@@ -26,6 +26,6 @@ public class ProfileExclusionStrategy extends ExclusionUtils implements Exclusio
     @Override
     public boolean shouldSkipClass(Class<?> clazz) {
         Exclude exclude = clazz.getAnnotation(Exclude.class);
-        return exclude != null && exclude.type() != Exclude.ExcludeType.HUD;
+        return exclude != null;
     }
 }
