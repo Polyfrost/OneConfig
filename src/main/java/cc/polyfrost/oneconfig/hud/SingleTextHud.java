@@ -56,6 +56,7 @@ public abstract class SingleTextHud extends TextHud implements Conditional {
         }
     }
 
+    @Switch(name = "Cache Text")
     @Exclude(type = Exclude.ExcludeType.HUD)
     public boolean cacheText = true;
 
