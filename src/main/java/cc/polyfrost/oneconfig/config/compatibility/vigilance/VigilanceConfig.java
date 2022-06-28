@@ -114,8 +114,8 @@ public class VigilanceConfig extends Config {
             try {
                 Field field = valueBackedPropertyValue.getClass().getDeclaredField("obj");
                 field.setAccessible(true);
-                return (Field) field.get(valueBackedPropertyValue);
-            } catch (IllegalAccessException | NoSuchFieldException e) {
+                return field;
+            } catch (NoSuchFieldException e) {
                 throw new RuntimeException(e);
             }
         } else if (data.getValue() instanceof KPropertyBackedPropertyValue) {

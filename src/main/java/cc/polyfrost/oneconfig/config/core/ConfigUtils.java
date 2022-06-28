@@ -8,6 +8,7 @@ import cc.polyfrost.oneconfig.config.elements.OptionSubcategory;
 import cc.polyfrost.oneconfig.config.migration.Migrator;
 import cc.polyfrost.oneconfig.gui.elements.config.*;
 import cc.polyfrost.oneconfig.internal.config.annotations.Option;
+import com.google.gson.FieldAttributes;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
@@ -56,6 +57,8 @@ public class ConfigUtils {
             parentClass = clazz;
         }
         for (Field field : fields) {
+            Exclude exclude = findAnnotation(field, Exclude.class);
+            if (exclude != null && exclude.type() != Exclude.ExcludeType.CONFIG) continue;
             Option option = findAnnotation(field, Option.class);
             if (option == null) continue;
             options.add(getOption(option, field, object));
@@ -85,6 +88,25 @@ public class ConfigUtils {
     public static <T extends Annotation> T findAnnotation(Field field, Class<T> annotationType) {
         if (field.isAnnotationPresent(annotationType)) return field.getAnnotation(annotationType);
         for (Annotation ann : field.getDeclaredAnnotations()) {
+            if (ann.annotationType().isAnnotationPresent(annotationType))
+                return ann.annotationType().getAnnotation(annotationType);
+        }
+        return null;
+    }
+
+    public static <T extends Annotation> T findAnnotation(FieldAttributes field, Class<T> annotationType) {
+        T annotation = field.getAnnotation(annotationType);
+        if (annotation != null) return annotation;
+        for (Annotation ann : field.getAnnotations()) {
+            if (ann.annotationType().isAnnotationPresent(annotationType))
+                return ann.annotationType().getAnnotation(annotationType);
+        }
+        return null;
+    }
+
+    public static <T extends Annotation> T findAnnotation(Class<?> clazz, Class<T> annotationType) {
+        if (clazz.isAnnotationPresent(annotationType)) return clazz.getAnnotation(annotationType);
+        for (Annotation ann : clazz.getDeclaredAnnotations()) {
             if (ann.annotationType().isAnnotationPresent(annotationType))
                 return ann.annotationType().getAnnotation(annotationType);
         }

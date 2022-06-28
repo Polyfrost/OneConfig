@@ -14,4 +14,11 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.FIELD, ElementType.TYPE})
 public @interface Exclude {
+    ExcludeType type() default ExcludeType.ALL;
+
+    enum ExcludeType {
+        ALL,
+        CONFIG,
+        HUD
+    }
 }

@@ -12,14 +12,14 @@ import java.util.TimerTask;
 import java.util.stream.Collectors;
 
 public class ConfigCore {
-    /*static {
+    static {
         new Timer().scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
                 saveAll();
             }
         }, 30000, 30000);
-    }*/
+    }
     public static List<Mod> oneConfigMods = new ArrayList<>();
 
     public static void saveAll() {
