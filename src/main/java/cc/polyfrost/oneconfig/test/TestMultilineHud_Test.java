@@ -1,12 +1,12 @@
 package cc.polyfrost.oneconfig.test;
 
-import cc.polyfrost.oneconfig.hud.MultiTextHud;
+import cc.polyfrost.oneconfig.hud.TextHud;
 import com.google.common.collect.Lists;
 import net.minecraft.client.Minecraft;
 
 import java.util.List;
 
-public class TestMultilineHud_Test extends MultiTextHud {
+public class TestMultilineHud_Test extends TextHud {
     public TestMultilineHud_Test() {
         super(true);
     }
