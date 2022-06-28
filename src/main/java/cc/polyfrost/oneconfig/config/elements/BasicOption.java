@@ -14,6 +14,7 @@ public abstract class BasicOption {
     public final String subcategory;
     private final ArrayList<Supplier<Boolean>> dependencies = new ArrayList<>();
     private final ArrayList<Runnable> listeners = new ArrayList<>();
+    private final ArrayList<Supplier<Boolean>> hideConditions = new ArrayList<>();
 
     /**
      * Initialize option
@@ -39,6 +40,7 @@ public abstract class BasicOption {
     protected void set(Object object) throws IllegalAccessException {
         if (field == null) return;
         field.set(parent, object);
+        for (Runnable listener : listeners) listener.run();
     }
 
     /**
@@ -86,11 +88,18 @@ public abstract class BasicOption {
     /**
      * @return If the option is enabled, based on the dependencies
      */
-    protected boolean isEnabled() {
+    public boolean isEnabled() {
         for (Supplier<Boolean> dependency : dependencies) {
             if (!dependency.get()) return false;
         }
         return true;
+    }
+
+    public boolean isHidden() {
+        for (Supplier<Boolean> condition : hideConditions) {
+            if (condition.get()) return true;
+        }
+        return false;
     }
 
     /**
@@ -109,5 +118,14 @@ public abstract class BasicOption {
      */
     public void addListener(Runnable runnable) {
         this.listeners.add(runnable);
+    }
+
+    /**
+     * Hide an option if a condition is met
+     *
+     * @param supplier The condition
+     */
+    public void addHideCondition(Supplier<Boolean> supplier) {
+        this.hideConditions.add(supplier);
     }
 }

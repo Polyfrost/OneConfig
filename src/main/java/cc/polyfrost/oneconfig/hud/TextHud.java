@@ -3,6 +3,8 @@ package cc.polyfrost.oneconfig.hud;
 import cc.polyfrost.oneconfig.config.annotations.Color;
 import cc.polyfrost.oneconfig.config.annotations.Dropdown;
 import cc.polyfrost.oneconfig.config.core.OneColor;
+import cc.polyfrost.oneconfig.events.EventManager;
+import cc.polyfrost.oneconfig.events.event.Stage;
 import cc.polyfrost.oneconfig.events.event.TickEvent;
 import cc.polyfrost.oneconfig.internal.hud.HudCore;
 import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
@@ -29,6 +31,7 @@ public abstract class TextHud extends Hud {
 
     public TextHud(boolean enabled, int x, int y) {
         super(enabled, x, y);
+        EventManager.INSTANCE.register(new TickHandler());
     }
 
     public TextHud(boolean enabled) {
@@ -95,9 +98,13 @@ public abstract class TextHud extends Hud {
         return (int) (height * scale);
     }
 
-    @Subscribe
-    public void onTick(TickEvent event) {
-        if (!HudCore.editing) lines = getLines();
-        else lines = getExampleLines();
+
+    private class TickHandler {
+        @Subscribe
+        private void onTick(TickEvent event) {
+            if (event.stage != Stage.START) return;
+            if (!HudCore.editing) lines = getLines();
+            else lines = getExampleLines();
+        }
     }
 }

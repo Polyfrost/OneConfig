@@ -49,6 +49,7 @@ public class OptionSubcategory {
         }
 
         for (ConfigPageButton page : filteredTop) {
+            if (page.isHidden()) continue;
             page.draw(vg, x, optionY);
             optionY += page.getHeight() + 16;
         }
@@ -57,6 +58,7 @@ public class OptionSubcategory {
             int backgroundSize = 16;
             for (int i = 0; i < filteredOptions.size(); i++) {
                 BasicOption option = filteredOptions.get(i);
+                if (option.isHidden()) continue;
                 if (i + 1 < filteredOptions.size()) {
                     BasicOption nextOption = filteredOptions.get(i + 1);
                     if (option.size == 1 && nextOption.size == 1) {
@@ -75,6 +77,7 @@ public class OptionSubcategory {
         if (filteredOptions.size() > 0) {
             for (int i = 0; i < filteredOptions.size(); i++) {
                 BasicOption option = filteredOptions.get(i);
+                if (option.isHidden()) continue;
                 option.draw(vg, x, optionY);
                 if (i + 1 < filteredOptions.size()) {
                     BasicOption nextOption = filteredOptions.get(i + 1);
@@ -91,6 +94,7 @@ public class OptionSubcategory {
         }
 
         for (ConfigPageButton page : filteredBottom) {
+            if (page.isHidden()) continue;
             page.draw(vg, x, optionY);
             optionY += page.getHeight() + 16;
         }
@@ -101,6 +105,7 @@ public class OptionSubcategory {
     public void drawLast(long vg, int x) {
         for (int i = 0; i < filteredOptions.size(); i++) {
             BasicOption option = filteredOptions.get(i);
+            if (option.isHidden()) continue;
             option.drawLast(vg, x, drawLastY);
             if (i + 1 < filteredOptions.size()) {
                 BasicOption nextOption = filteredOptions.get(i + 1);

@@ -236,6 +236,45 @@ public class Config {
     }
 
     /**
+     * Hide an option if a certain condition is met
+     *
+     * @param option    The name of the field, or if the field is in a page "pageName.fieldName"
+     * @param condition The condition that has to be met for the option to be hidden
+     */
+    protected void hideIf(String option, Supplier<Boolean> condition) {
+        if (!optionNames.containsKey(option)) return;
+        optionNames.get(option).addHideCondition(condition);
+    }
+
+    /**
+     * Disable an option if a certain condition is not met
+     *
+     * @param option          The name of the field, or if the field is in a page "pageName.fieldName"
+     * @param dependentOption The option that has to be hidden
+     */
+    protected void hideIf(String option, String dependentOption) {
+        if (!optionNames.containsKey(option) || !optionNames.containsKey(dependentOption)) return;
+        optionNames.get(option).addHideCondition(() -> {
+            try {
+                return (boolean) optionNames.get(dependentOption).get();
+            } catch (IllegalAccessException ignored) {
+                return true;
+            }
+        });
+    }
+
+    /**
+     * Hide an option if a certain condition is met
+     *
+     * @param option The name of the field, or if the field is in a page "pageName.fieldName"
+     * @param value  The value of the condition
+     */
+    protected void hideIf(String option, boolean value) {
+        if (!optionNames.containsKey(option)) return;
+        optionNames.get(option).addHideCondition(() -> value);
+    }
+
+    /**
      * Register a new listener for when an option changes
      *
      * @param option   The name of the field, or if the field is in a page "pageName.fieldName"
