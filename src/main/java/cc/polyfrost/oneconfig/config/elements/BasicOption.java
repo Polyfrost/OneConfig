@@ -2,6 +2,7 @@ package cc.polyfrost.oneconfig.config.elements;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.function.Supplier;
 
 @SuppressWarnings({"unused"})
@@ -15,6 +16,8 @@ public abstract class BasicOption {
     private final ArrayList<Supplier<Boolean>> dependencies = new ArrayList<>();
     private final ArrayList<Runnable> listeners = new ArrayList<>();
     private final ArrayList<Supplier<Boolean>> hideConditions = new ArrayList<>();
+
+    private static final HashMap<Field, BasicOption> options = new HashMap<>();
 
     /**
      * Initialize option
@@ -31,7 +34,10 @@ public abstract class BasicOption {
         this.size = size;
         this.category = category;
         this.subcategory = subcategory;
-        if (field != null) field.setAccessible(true);
+        if (field != null) {
+            field.setAccessible(true);
+            options.put(field, this);
+        }
     }
 
     /**
@@ -127,5 +133,9 @@ public abstract class BasicOption {
      */
     public void addHideCondition(Supplier<Boolean> supplier) {
         this.hideConditions.add(supplier);
+    }
+
+    public static BasicOption getOption(Field field) {
+        return options.get(field);
     }
 }

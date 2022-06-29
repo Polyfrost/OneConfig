@@ -71,6 +71,7 @@ public class OneConfigTweaker implements ITweaker {
 
     @Override
     public void acceptOptions(List<String> args, File gameDir, File assetsDir, String profile) {
+        MixinBootstrap.init();
         boolean captureNext = false;
         for (String arg : args) {
             if (captureNext) {
