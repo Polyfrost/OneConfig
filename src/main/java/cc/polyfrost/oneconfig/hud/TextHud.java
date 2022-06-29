@@ -42,7 +42,7 @@ public abstract class TextHud extends Hud {
     /**
      * This function is called every tick
      *
-     * @param lines The current lines of the hud
+     * @param lines Empty ArrayList to add your hud text too
      */
     protected abstract void getLines(List<String> lines);
 
@@ -58,7 +58,7 @@ public abstract class TextHud extends Hud {
     /**
      * This function is called every tick in the move GUI
      *
-     * @param lines The current lines of the hud
+     * @param lines Empty ArrayList to add your hud text too
      */
     protected void getExampleLines(List<String> lines) {
         getLines(lines);
@@ -103,6 +103,7 @@ public abstract class TextHud extends Hud {
         @Subscribe
         private void onTick(TickEvent event) {
             if (event.stage != Stage.START) return;
+            lines.clear();
             if (!HudCore.editing) getLines(lines);
             else getExampleLines(lines);
         }

@@ -53,7 +53,6 @@ public abstract class SingleTextHud extends TextHud {
 
     @Override
     protected void getLines(List<String> lines) {
-        lines.clear();
         lines.add(getCompleteText(getText()));
     }
 
@@ -67,7 +66,6 @@ public abstract class SingleTextHud extends TextHud {
 
     @Override
     protected void getExampleLines(List<String> lines) {
-        lines.clear();
         lines.add(getCompleteText(getExampleText()));
     }
 

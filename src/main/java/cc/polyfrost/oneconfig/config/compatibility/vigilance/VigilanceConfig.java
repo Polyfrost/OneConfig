@@ -193,7 +193,6 @@ public class VigilanceConfig extends Config {
                 try {
                     this.color.set(parent, newColor);
                 } catch (IllegalAccessException ignored) {
-
                 }
             }
         }

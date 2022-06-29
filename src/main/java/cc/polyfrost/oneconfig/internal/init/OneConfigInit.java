@@ -8,8 +8,6 @@ import org.spongepowered.asm.mixin.Mixins;
 public class OneConfigInit {
 
     public static void initialize(String[] args) {
-        Launch.blackboard.put("oneconfig.initialized", true);
-        MixinBootstrap.init();
         Mixins.addConfiguration("mixins.oneconfig.json");
     }
 }

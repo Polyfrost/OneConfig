@@ -7,13 +7,15 @@ import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class OptionSubcategory {
     private final String name;
     public ArrayList<BasicOption> options = new ArrayList<>();
     public ArrayList<ConfigPageButton> topButtons = new ArrayList<>();
     public ArrayList<ConfigPageButton> bottomButtons = new ArrayList<>();
-    private ArrayList<BasicOption> filteredOptions = new ArrayList<>();
+    private List<BasicOption> filteredOptions = new ArrayList<>();
     private int drawLastY;
 
     public OptionSubcategory(String name) {
@@ -22,25 +24,9 @@ public class OptionSubcategory {
 
     public int draw(long vg, int x, int y) {
         String filter = OneConfigGui.INSTANCE == null ? "" : OneConfigGui.INSTANCE.getSearchValue().toLowerCase().trim();
-        filteredOptions = new ArrayList<>(options);
-        ArrayList<ConfigPageButton> filteredTop = new ArrayList<>(topButtons);
-        ArrayList<ConfigPageButton> filteredBottom = new ArrayList<>(bottomButtons);
-        if (!filter.equals("") && !name.toLowerCase().contains(filter)) {
-            filteredOptions.clear();
-            filteredTop.clear();
-            filteredBottom.clear();
-            for (BasicOption option : options) {
-                if (option.name.toLowerCase().contains(filter)) filteredOptions.add(option);
-            }
-            for (ConfigPageButton page : topButtons) {
-                if (page.name.toLowerCase().contains(filter) || page.description.toLowerCase().contains(filter))
-                    filteredTop.add(page);
-            }
-            for (ConfigPageButton page : bottomButtons) {
-                if (page.name.toLowerCase().contains(filter) || page.description.toLowerCase().contains(filter))
-                    filteredBottom.add(page);
-            }
-        }
+        filteredOptions = options.stream().filter(option -> !option.isHidden() && (filter.equals("") || name.toLowerCase().contains(filter) || option.name.toLowerCase().contains(filter))).collect(Collectors.toList());
+        List<ConfigPageButton> filteredTop = topButtons.stream().filter(page -> !page.isHidden() && (filter.equals("") || name.toLowerCase().contains(filter) || page.name.toLowerCase().contains(filter) || page.description.toLowerCase().contains(filter))).collect(Collectors.toList());
+        List<ConfigPageButton> filteredBottom = bottomButtons.stream().filter(page -> !page.isHidden() && (filter.equals("") || name.toLowerCase().contains(filter) || page.name.toLowerCase().contains(filter) || page.description.toLowerCase().contains(filter))).collect(Collectors.toList());
         if (filteredOptions.size() == 0 && filteredTop.size() == 0 && filteredBottom.size() == 0) return 0;
         int optionY = y;
         if (!name.equals("")) {
@@ -49,7 +35,6 @@ public class OptionSubcategory {
         }
 
         for (ConfigPageButton page : filteredTop) {
-            if (page.isHidden()) continue;
             page.draw(vg, x, optionY);
             optionY += page.getHeight() + 16;
         }
@@ -58,7 +43,6 @@ public class OptionSubcategory {
             int backgroundSize = 16;
             for (int i = 0; i < filteredOptions.size(); i++) {
                 BasicOption option = filteredOptions.get(i);
-                if (option.isHidden()) continue;
                 if (i + 1 < filteredOptions.size()) {
                     BasicOption nextOption = filteredOptions.get(i + 1);
                     if (option.size == 1 && nextOption.size == 1) {
@@ -77,7 +61,6 @@ public class OptionSubcategory {
         if (filteredOptions.size() > 0) {
             for (int i = 0; i < filteredOptions.size(); i++) {
                 BasicOption option = filteredOptions.get(i);
-                if (option.isHidden()) continue;
                 option.draw(vg, x, optionY);
                 if (i + 1 < filteredOptions.size()) {
                     BasicOption nextOption = filteredOptions.get(i + 1);
@@ -94,7 +77,6 @@ public class OptionSubcategory {
         }
 
         for (ConfigPageButton page : filteredBottom) {
-            if (page.isHidden()) continue;
             page.draw(vg, x, optionY);
             optionY += page.getHeight() + 16;
         }
@@ -105,7 +87,6 @@ public class OptionSubcategory {
     public void drawLast(long vg, int x) {
         for (int i = 0; i < filteredOptions.size(); i++) {
             BasicOption option = filteredOptions.get(i);
-            if (option.isHidden()) continue;
             option.drawLast(vg, x, drawLastY);
             if (i + 1 < filteredOptions.size()) {
                 BasicOption nextOption = filteredOptions.get(i + 1);

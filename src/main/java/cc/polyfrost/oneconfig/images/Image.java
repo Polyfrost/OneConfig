@@ -24,7 +24,6 @@ public class Image {
     private Graphics2D graphics = null;
     private final int width, height;
 
-
     /**
      * Create a new Image from the file. This can be as a resource location inside your JAR.
      * @param filePath The path to the image file.
@@ -184,9 +183,6 @@ public class Image {
         dispose();
     }
 
-
-
-
     // MASK METHODS
     public void setBrightness(float brightness) {
         maskColor(new Color(0f,0f,0f,brightness));
@@ -206,11 +202,6 @@ public class Image {
         dispose();
     }
 
-
-
-
-
-
     // LINE METHODS
     public void drawLine(Stroke stroke, int sx, int sy, int ex, int ey) {
         Graphics2D g2d = getG2D();
@@ -222,10 +213,6 @@ public class Image {
     public void drawLine(int sx, int sy, int ex, int ey, int width) {
         drawLine(new BasicStroke(width), sx, sy, ex, ey);
     }
-
-
-
-
 
     // SHAPE METHODS
     public void drawTexturedRect(TexturePaint paint, int x, int y, int width, int height) {
@@ -335,9 +322,4 @@ public class Image {
     public void flipVertical() {
         scale(1, -1);
     }
-
-
-
-
-
 }

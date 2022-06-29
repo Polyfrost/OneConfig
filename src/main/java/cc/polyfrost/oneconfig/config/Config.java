@@ -21,6 +21,7 @@ import cc.polyfrost.oneconfig.internal.config.annotations.Option;
 import cc.polyfrost.oneconfig.internal.config.core.ConfigCore;
 import cc.polyfrost.oneconfig.internal.config.core.KeyBindHandler;
 import cc.polyfrost.oneconfig.utils.JsonUtils;
+import cc.polyfrost.oneconfig.utils.Multithreading;
 import cc.polyfrost.oneconfig.utils.TickDelay;
 import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 import com.google.gson.*;
@@ -52,7 +53,7 @@ public class Config {
      */
     public Config(Mod modData, String configFile, boolean initialize) {
         this.configFile = configFile;
-        if (initialize) new TickDelay(() -> init(modData), 1); // wait one tick so every class in config gets initialized
+        Multithreading.runAsync(() -> init(modData)); // wait a bit to give everything time to initialize
     }
 
     /**

@@ -49,9 +49,6 @@ public class OneConfig {
             isObfuscated = false;
         } catch (Exception ignored) {
         }
-        if (!net.minecraft.launchwrapper.Launch.blackboard.containsKey("oneconfig.initialized")) {
-            throw new RuntimeException("OneConfig has not been initialized! Please add the OneConfig tweaker or call OneConfigInit via an ITweaker or a FMLLoadingPlugin!");
-        }
         oneConfigDir.mkdirs();
         new File(oneConfigDir, "profiles").mkdirs();
         config = new OneConfigConfig();
