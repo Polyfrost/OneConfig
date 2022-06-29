@@ -52,27 +52,31 @@ public abstract class SingleTextHud extends TextHud {
     }
 
     @Override
-    protected List<String> getLines() {
-        return Collections.singletonList(getCompleteText(getText()));
+    protected void getLines(List<String> lines) {
+        lines.clear();
+        lines.add(getCompleteText(getText()));
     }
 
     @Override
-    protected List<String> getLinesFrequent() {
+    protected void getLinesFrequent(List<String> lines) {
         String text = getTextFrequent();
-        if (text == null) return null;
-        return Collections.singletonList(getCompleteText(text));
+        if (text == null) return;
+        lines.clear();
+        lines.add(getCompleteText(text));
     }
 
     @Override
-    protected List<String> getExampleLines() {
-        return Collections.singletonList(getCompleteText(getExampleText()));
+    protected void getExampleLines(List<String> lines) {
+        lines.clear();
+        lines.add(getCompleteText(getExampleText()));
     }
 
     @Override
-    protected List<String> getExampleLinesFrequent() {
+    protected void getExampleLinesFrequent(List<String> lines) {
         String text = getExampleTextFrequent();
-        if (text == null) return null;
-        return Collections.singletonList(getCompleteText(text));
+        if (text == null) return;
+        lines.clear();
+        lines.add(getCompleteText(text));
     }
 
     protected final String getCompleteText(String text) {

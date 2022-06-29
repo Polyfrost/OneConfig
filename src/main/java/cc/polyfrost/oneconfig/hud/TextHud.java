@@ -11,10 +11,11 @@ import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
 import cc.polyfrost.oneconfig.libs.universal.UMinecraft;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public abstract class TextHud extends Hud {
-    protected transient List<String> lines = null;
+    protected transient List<String> lines = new ArrayList<>();
     private transient int width;
     private transient int height;
 
@@ -41,41 +42,41 @@ public abstract class TextHud extends Hud {
     /**
      * This function is called every tick
      *
-     * @return The new lines
+     * @param lines The current lines of the hud
      */
-    protected abstract List<String> getLines();
+    protected abstract void getLines(List<String> lines);
 
     /**
      * This function is called every frame
      *
-     * @return The new lines, null if you want to use the cached lines
+     * @param lines The current lines of the hud
      */
-    protected List<String> getLinesFrequent() {
-        return null;
+    protected void getLinesFrequent(List<String> lines) {
+
     }
 
     /**
      * This function is called every tick in the move GUI
      *
-     * @return The new lines
+     * @param lines The current lines of the hud
      */
-    protected List<String> getExampleLines() {
-        return getLines();
+    protected void getExampleLines(List<String> lines) {
+        getLines(lines);
     }
 
     /**
      * This function is called every frame in the move GUI
      *
-     * @return The new lines, null if you want to use the cached lines
+     * @param lines The current lines of the hud
      */
-    protected List<String> getExampleLinesFrequent() {
-        return getLinesFrequent();
+    protected void getExampleLinesFrequent(List<String> lines) {
+        getLinesFrequent(lines);
     }
 
     @Override
     public void draw(int x, int y, float scale) {
-        List<String> frequentLines = HudCore.editing ? getExampleLinesFrequent() : getLinesFrequent();
-        if (frequentLines != null) lines = frequentLines;
+        if (!HudCore.editing) getLinesFrequent(lines);
+        else getExampleLinesFrequent(lines);
         if (lines == null) return;
 
         int textY = y;
@@ -98,13 +99,12 @@ public abstract class TextHud extends Hud {
         return (int) (height * scale);
     }
 
-
     private class TickHandler {
         @Subscribe
         private void onTick(TickEvent event) {
             if (event.stage != Stage.START) return;
-            if (!HudCore.editing) lines = getLines();
-            else lines = getExampleLines();
+            if (!HudCore.editing) getLines(lines);
+            else getExampleLines(lines);
         }
     }
 }
