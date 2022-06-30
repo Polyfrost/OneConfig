@@ -24,6 +24,7 @@ public abstract class Page {
     private long scrollTime;
     private boolean mouseWasDown, dragging;
     private float yStart;
+    protected float scroll;
     public final ArrayList<Page> parents = new ArrayList<>();
 
     public Page(String title) {
@@ -47,7 +48,7 @@ public abstract class Page {
     public void scrollWithDraw(long vg, int x, int y) {
         int maxScroll = getMaxScrollHeight();
         int scissorOffset = drawStatic(vg, x, y);
-        float scroll = scrollAnimation == null ? scrollTarget : scrollAnimation.get();
+        scroll = scrollAnimation == null ? scrollTarget : scrollAnimation.get();
         final float scrollBarLength = (728f / maxScroll) * 728f;
         Scissor scissor = ScissorManager.scissor(vg, x, y + scissorOffset, x + 1056, y + 728 - scissorOffset);
         Scissor inputScissor = InputUtils.blockInputArea(x, y,1056, scissorOffset);

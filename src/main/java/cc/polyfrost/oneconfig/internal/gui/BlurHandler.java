@@ -38,7 +38,7 @@ public class BlurHandler {
     private final ResourceLocation blurShader = new ResourceLocation("shaders/post/fade_in_blur.json");
     private final Logger logger = LogManager.getLogger("OneConfig - Blur");
     private long start;
-    private float lastProgress = 0;
+    private float progress = 0;
 
     /**
      * Simply initializes the blur mod so events are properly handled by forge.
@@ -67,18 +67,8 @@ public class BlurHandler {
         if (!UMinecraft.getMinecraft().entityRenderer.isShaderActive()) {
             return;
         }
-
-        float progress = getBlurStrengthProgress();
-
-        // If the new progress value matches the old one this
-        // will skip the frame update, which (hopefully) resolves the issue
-        // with the heavy computations after the "animation" is complete.
-        if (progress == this.lastProgress) {
-            return;
-        }
-
-        // Store it for the next iteration!
-        this.lastProgress = progress;
+        if (progress >= 5) return;
+        progress = getBlurStrengthProgress();
 
         // This is hilariously bad, and could cause frame issues on low-end computers.
         // Why is this being computed every tick? Surely there is a better way?
@@ -112,7 +102,7 @@ public class BlurHandler {
      * one of many conditions are met, such as no current other shader
      * is being used, we actually have the blur setting enabled
      */
-    private void reloadBlur(GuiScreen gui) {
+    public void reloadBlur(GuiScreen gui) {
         // Don't do anything if no world is loaded
         if (UMinecraft.getWorld() == null) {
             return;
@@ -124,9 +114,10 @@ public class BlurHandler {
             UMinecraft.getMinecraft().entityRenderer.loadShader(this.blurShader);
 
             this.start = System.currentTimeMillis();
+            this.progress = 0;
 
             // If a shader is active and the incoming UI is null or we have blur disabled, stop using the shader.
-        } else if (UMinecraft.getMinecraft().entityRenderer.isShaderActive() && (gui == null)) {
+        } else if (UMinecraft.getMinecraft().entityRenderer.isShaderActive() && (gui == null || !Preferences.enableBlur)) {
             String name = UMinecraft.getMinecraft().entityRenderer.getShaderGroup().getShaderGroupName();
 
             // Only stop our specific blur ;)

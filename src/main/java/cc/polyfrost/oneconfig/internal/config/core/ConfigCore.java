@@ -20,31 +20,31 @@ public class ConfigCore {
             }
         }, 30000, 30000);
     }
-    public static List<Mod> oneConfigMods = new ArrayList<>();
+    public static List<Mod> mods = new ArrayList<>();
 
     public static void saveAll() {
-        for (Mod modData : oneConfigMods) {
+        for (Mod modData : mods) {
             modData.config.save();
         }
     }
 
     public static void reInitAll() {
-        ArrayList<Mod> data = new ArrayList<>(oneConfigMods);
-        oneConfigMods.clear();
+        ArrayList<Mod> data = new ArrayList<>(mods);
+        mods.clear();
         HudCore.huds.clear();
         KeyBindHandler.INSTANCE.clearKeyBinds();
         for (Mod modData : data) {
-            modData.config.init(modData);
+            modData.config.initialize();
         }
         sortMods();
     }
 
     public static void sortMods() {
-        ArrayList<Mod> mods = new ArrayList<>(oneConfigMods);
-        oneConfigMods = mods.stream().filter((mod -> OneConfigConfig.favoriteMods.contains(mod.name))).sorted().collect(Collectors.toList());
-        mods.removeAll(oneConfigMods);
-        oneConfigMods.addAll(mods.stream().filter(mod -> mod.modType != ModType.THIRD_PARTY).sorted().collect(Collectors.toList()));
-        mods.removeAll(oneConfigMods);
-        oneConfigMods.addAll(mods.stream().sorted().collect(Collectors.toList()));
+        ArrayList<Mod> mods = new ArrayList<>(ConfigCore.mods);
+        ConfigCore.mods = mods.stream().filter((mod -> OneConfigConfig.favoriteMods.contains(mod.name))).sorted().collect(Collectors.toList());
+        mods.removeAll(ConfigCore.mods);
+        ConfigCore.mods.addAll(mods.stream().filter(mod -> mod.modType != ModType.THIRD_PARTY).sorted().collect(Collectors.toList()));
+        mods.removeAll(ConfigCore.mods);
+        ConfigCore.mods.addAll(mods.stream().sorted().collect(Collectors.toList()));
     }
 }

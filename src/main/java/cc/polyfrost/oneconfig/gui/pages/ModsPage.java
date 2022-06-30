@@ -13,7 +13,6 @@ import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 
 public class ModsPage extends Page {
 
@@ -46,7 +45,7 @@ public class ModsPage extends Page {
         ArrayList<ModCard> finalModCards = new ArrayList<>(modCards);
         for (ModCard modCard : finalModCards) {
             if (inSelection(modCard) && (filter.equals("") || modCard.getModData().name.toLowerCase().contains(filter))) {
-                modCard.draw(vg, iX, iY);
+                if (iY + 135 >= y - scroll && iY <= y + 728 - scroll) modCard.draw(vg, iX, iY);
                 iX += 260;
                 if (iX > x + 796) {
                     iX = x + 16;
@@ -86,7 +85,7 @@ public class ModsPage extends Page {
 
     public void reloadMods() {
         modCards.clear();
-        for (Mod modData : ConfigCore.oneConfigMods) {
+        for (Mod modData : ConfigCore.mods) {
             modCards.add(new ModCard(modData, modData.config == null || modData.config.enabled, false, OneConfigConfig.favoriteMods.contains(modData.name), this));
         }
     }

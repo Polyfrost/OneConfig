@@ -26,5 +26,6 @@ public class OneConfigConfig extends InternalConfig {
 
     public OneConfigConfig() {
         super("", "OneConfig.json");
+        initialize();
     }
 }

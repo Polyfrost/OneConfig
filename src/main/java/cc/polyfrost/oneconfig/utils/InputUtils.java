@@ -17,7 +17,6 @@ import java.util.ArrayList;
  */
 public final class InputUtils {
     private static final ArrayList<Scissor> blockScissors = new ArrayList<>();
-    private static Scissor finalScissor = new Scissor(0, 0, 0, 0);
 
     /**
      * function to determine weather the mouse is currently over a specific region. Uses the current nvgScale to fix to any scale.
@@ -27,7 +26,7 @@ public final class InputUtils {
     public static boolean isAreaHovered(int x, int y, int width, int height, boolean ignoreBlock) {
         int mouseX = mouseX();
         int mouseY = mouseY();
-        return (ignoreBlock || blockScissors.size() == 0 || !finalScissor.isInScissor(mouseX, mouseY)) && mouseX > x && mouseY > y && mouseX < x + width && mouseY < y + height;
+        return (ignoreBlock || blockScissors.size() == 0 || !shouldBlock(mouseX, mouseY)) && mouseX > x && mouseY > y && mouseX < x + width && mouseY < y + height;
     }
 
     /**
@@ -75,7 +74,7 @@ public final class InputUtils {
      * @return true if the mouse is clicked, false if not
      */
     public static boolean isClicked(boolean ignoreBlock) {
-        return OneConfigGui.INSTANCE != null && OneConfigGui.INSTANCE.mouseDown && !Mouse.isButtonDown(0) && (ignoreBlock || blockScissors.size() == 0 || !finalScissor.isInScissor(mouseX(), mouseY()));
+        return OneConfigGui.INSTANCE != null && OneConfigGui.INSTANCE.mouseDown && !Mouse.isButtonDown(0) && (ignoreBlock || blockScissors.size() == 0 || !shouldBlock(mouseX(), mouseY()));
     }
 
     /**
@@ -127,7 +126,6 @@ public final class InputUtils {
     public static Scissor blockInputArea(int x, int y, int width, int height) {
         Scissor scissor = new Scissor(new Scissor(x, y, width, height));
         blockScissors.add(scissor);
-        finalScissor = ScissorManager.getFinalScissor(blockScissors);
         return scissor;
     }
 
@@ -145,7 +143,6 @@ public final class InputUtils {
      */
     public static void stopBlock(Scissor scissor) {
         blockScissors.remove(scissor);
-        if (blockScissors.size() > 0) finalScissor = ScissorManager.getFinalScissor(blockScissors);
     }
 
     /**
@@ -162,5 +159,12 @@ public final class InputUtils {
      */
     public static boolean isBlockingInput() {
         return blockScissors.size() > 0;
+    }
+
+    private static boolean shouldBlock(int x, int y) {
+        for (Scissor block : blockScissors) {
+            if (block.isInScissor(x, y)) return true;
+        }
+        return false;
     }
 }

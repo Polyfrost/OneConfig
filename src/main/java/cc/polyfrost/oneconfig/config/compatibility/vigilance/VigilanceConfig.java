@@ -4,9 +4,7 @@ import cc.polyfrost.oneconfig.config.core.ConfigUtils;
 import cc.polyfrost.oneconfig.internal.config.core.ConfigCore;
 import cc.polyfrost.oneconfig.config.core.OneColor;
 import cc.polyfrost.oneconfig.config.data.Mod;
-import cc.polyfrost.oneconfig.config.elements.OptionCategory;
 import cc.polyfrost.oneconfig.config.elements.OptionPage;
-import cc.polyfrost.oneconfig.config.elements.OptionSubcategory;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
 import cc.polyfrost.oneconfig.config.Config;
 import cc.polyfrost.oneconfig.gui.elements.config.*;
@@ -31,16 +29,15 @@ public class VigilanceConfig extends Config {
     public VigilanceConfig(Mod modData, String configFile, Vigilant vigilant) {
         super(modData, configFile);
         this.vigilant = vigilant;
-        init(modData);
+        initialize();
     }
 
     @Override
-    public void init(Mod mod) {
+    public void initialize() {
         if (vigilant != null) {
             mod.config = this;
             generateOptionsList(mod.defaultPage);
-            ConfigCore.oneConfigMods.add(mod);
-            this.mod = mod;
+            ConfigCore.mods.add(mod);
         }
     }
 

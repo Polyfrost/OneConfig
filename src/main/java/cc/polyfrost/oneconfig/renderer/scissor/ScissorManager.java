@@ -58,7 +58,7 @@ public class ScissorManager {
         NanoVG.nvgScissor(vg, finalScissor.x, finalScissor.y, finalScissor.width, finalScissor.height);
     }
 
-    public static Scissor getFinalScissor(ArrayList<Scissor> scissors) {
+    private static Scissor getFinalScissor(ArrayList<Scissor> scissors) {
         Scissor finalScissor = new Scissor(scissors.get(0));
         for (int i = 1; i < scissors.size(); i++) {
             Scissor scissor = scissors.get(i);

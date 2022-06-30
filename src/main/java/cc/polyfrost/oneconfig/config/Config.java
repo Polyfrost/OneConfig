@@ -21,8 +21,6 @@ import cc.polyfrost.oneconfig.internal.config.annotations.Option;
 import cc.polyfrost.oneconfig.internal.config.core.ConfigCore;
 import cc.polyfrost.oneconfig.internal.config.core.KeyBindHandler;
 import cc.polyfrost.oneconfig.utils.JsonUtils;
-import cc.polyfrost.oneconfig.utils.Multithreading;
-import cc.polyfrost.oneconfig.utils.TickDelay;
 import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 import com.google.gson.*;
 
@@ -49,22 +47,13 @@ public class Config {
     /**
      * @param modData    information about the mod
      * @param configFile file where config is stored
-     * @param initialize whether to initialize the config.
-     */
-    public Config(Mod modData, String configFile, boolean initialize) {
-        this.configFile = configFile;
-        Multithreading.runAsync(() -> init(modData)); // wait a bit to give everything time to initialize
-    }
-
-    /**
-     * @param modData    information about the mod
-     * @param configFile file where config is stored
      */
     public Config(Mod modData, String configFile) {
-        this(modData, configFile, true);
+        this.configFile = configFile;
+        this.mod = modData;
     }
 
-    public void init(Mod mod) {
+    public void initialize() {
         boolean migrate = false;
         if (Profiles.getProfileFile(configFile).exists()) load();
         else if (!hasBeenInitialized && mod.migrator != null) migrate = true;
@@ -72,8 +61,7 @@ public class Config {
         mod.config = this;
         generateOptionList(this, mod.defaultPage, mod, migrate);
         if (migrate) save();
-        ConfigCore.oneConfigMods.add(mod);
-        this.mod = mod;
+        ConfigCore.mods.add(mod);
         hasBeenInitialized = true;
     }
 

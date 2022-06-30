@@ -19,6 +19,7 @@ import cc.polyfrost.oneconfig.libs.universal.UResolution;
 import cc.polyfrost.oneconfig.libs.universal.UScreen;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
+import cc.polyfrost.oneconfig.renderer.scissor.Scissor;
 import cc.polyfrost.oneconfig.renderer.scissor.ScissorManager;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
@@ -140,6 +141,7 @@ public class OneConfigGui extends UScreen {
             }
 
             ScissorManager.scissor(vg, x + 224, y + 72, 1056, 728);
+            Scissor blockedClicks = InputUtils.blockInputArea(x + 224, y, 1056,72);
             if (prevPage != null && animation != null) {
                 float pageProgress = animation.get(GuiUtils.getDeltaTime());
                 if (!animation.isReversed()) {
@@ -156,6 +158,7 @@ public class OneConfigGui extends UScreen {
                 currentPage.scrollWithDraw(vg, x + 224, y + 72);
             }
             ScissorManager.clearScissors(vg);
+            InputUtils.stopBlock(blockedClicks);
 
             float breadcrumbX = x + 352;
             for (int i = 0; i < currentPage.parents.size(); i++) {

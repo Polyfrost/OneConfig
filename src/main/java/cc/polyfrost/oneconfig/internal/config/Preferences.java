@@ -5,7 +5,9 @@ import cc.polyfrost.oneconfig.config.annotations.Slider;
 import cc.polyfrost.oneconfig.config.annotations.Switch;
 import cc.polyfrost.oneconfig.config.core.OneKeyBind;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
+import cc.polyfrost.oneconfig.internal.gui.BlurHandler;
 import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
+import cc.polyfrost.oneconfig.libs.universal.UMinecraft;
 import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 
 public class Preferences extends InternalConfig {
@@ -37,6 +39,8 @@ public class Preferences extends InternalConfig {
 
     public Preferences() {
         super("Preferences", "Preferences.json");
+        initialize();
+        addListener("enableBlur", () -> BlurHandler.INSTANCE.reloadBlur(UMinecraft.getMinecraft().currentScreen));
         registerKeyBind(oneConfigKeyBind, () -> GuiUtils.displayScreen(OneConfigGui.create()));
     }
 }

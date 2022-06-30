@@ -19,12 +19,11 @@ public abstract class InternalConfig extends Config {
     }
 
     @Override
-    public void init(Mod mod) {
+    public void initialize() {
         if (new File("OneConfig/" + configFile).exists()) load();
         else save();
         generateOptionList(this, mod.defaultPage, mod, false);
         mod.config = this;
-        this.mod = mod;
     }
 
     @Override
