@@ -67,9 +67,10 @@ public class OneConfig {
         BlurHandler.INSTANCE.load();
         CommandManager.INSTANCE.registerCommand(OneConfigCommand.class);
         EventManager.INSTANCE.register(new HudCore());
-        EventManager.INSTANCE.register(HypixelUtils.INSTANCE);
+        HypixelUtils.INSTANCE.initialize();
         EventManager.INSTANCE.register(KeyBindHandler.INSTANCE);
         ConfigCore.sortMods();
+
         initialized = true;
     }
 

@@ -13,6 +13,7 @@ import cc.polyfrost.oneconfig.libs.universal.UMinecraft;
 import cc.polyfrost.oneconfig.libs.universal.wrappers.UPlayer;
 import cc.polyfrost.oneconfig.libs.universal.wrappers.message.UTextComponent;
 import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
+import net.minecraftforge.fml.common.Loader;
 
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
@@ -37,6 +38,18 @@ public class HypixelUtils {
     private LocrawInfo locraw;
     private LocrawInfo previousLocraw;
 
+    private boolean initialized = false;
+    private boolean isSeraph = false;
+
+    public void initialize() {
+        if (initialized) {
+            return;
+        }
+        EventManager.INSTANCE.register(this);
+        isSeraph = Loader.isModLoaded("seraph");
+        initialized = true;
+    }
+
     /**
      * Checks whether the player is on Hypixel.
      *
@@ -44,7 +57,7 @@ public class HypixelUtils {
      * @see <a href="https://canary.discord.com/channels/864592657572560958/945075920664928276/978649312013725747">this discord link from jade / asbyth</a>
      */
     public boolean isHypixel() {
-        if (UMinecraft.getWorld() == null || UMinecraft.getMinecraft().isIntegratedServerRunning()) return false;
+        if (UMinecraft.getWorld() == null || UMinecraft.getMinecraft().isSingleplayer()) return false;
 
         net.minecraft.client.entity.EntityPlayerSP player = UPlayer.getPlayer();
         if (player == null) return false;
@@ -76,7 +89,7 @@ public class HypixelUtils {
 
             if (tick % 20 == 0) {
                 tick = 0;
-                if (isHypixel() && !sentCommand) {
+                if (isHypixel() && !sentCommand && !isSeraph) {
                     queueUpdate(500);
                     sentCommand = true;
                 }
@@ -94,12 +107,11 @@ public class HypixelUtils {
 
     @Subscribe
     private void onMessageReceived(ChatReceiveEvent event) {
-        if (!sentCommand) return;
         try {
             final String msg = UTextComponent.Companion.stripFormatting(event.message.getUnformattedText());
             // Checking for rate limitation.
             if (!(msg.startsWith("{") && msg.endsWith("}"))) {
-                if (msg.contains("You are sending too many commands! Please try again in a few seconds.")) // if you're being rate limited, the /locraw command will be resent in 5 seconds.
+                if (sentCommand && msg.contains("You are sending too many commands! Please try again in a few seconds.")) // if you're being rate limited, the /locraw command will be resent in 5 seconds.
                     queueUpdate(5000);
                 return;
             }
