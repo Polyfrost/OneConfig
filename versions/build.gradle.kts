@@ -10,6 +10,7 @@ plugins {
     id("gg.essential.defaults.repo")
     id("gg.essential.defaults.java")
     id("gg.essential.defaults.loom")
+    id("com.github.johnrengelman.shadow")
     id("net.kyori.blossom") version "1.3.0"
     id("org.jetbrains.dokka") version "1.6.21"
     id("maven-publish")
@@ -201,7 +202,15 @@ tasks {
         }
     }
 
+    val shadowJar = named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar") {
+        archiveClassifier.set("full-dev")
+        configurations = listOf(shade, shadeNoPom)
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+        dependsOn(jar)
+    }
+
     remapJar {
+        input.set(shadowJar.get().archiveFile)
         archiveClassifier.set("full")
     }
 
@@ -209,8 +218,9 @@ tasks {
         exclude("**/internal/**")
     }
     jar {
-        dependsOn(shadeNoPom, shade)
-        from({ ArrayList<File>().also { it.addAll(shadeNoPom); it.addAll(shade) }.map { if (it.isDirectory) it else zipTree(it) } })
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+        dependsOn(shadeNoPom)
+        from(shadeNoPom.map { if (it.isDirectory) it else zipTree(it) })
         manifest {
             attributes(
                 mapOf(
