@@ -10,6 +10,7 @@ pluginManagement {
         id("gg.essential.multi-version.root") version egtVersion
         id("gg.essential.defaults.repo") version egtVersion
         id("gg.essential.defaults.java") version egtVersion
+        id("gg.essential.multi-version.api-validation") version egtVersion
     }
     resolutionStrategy {
         eachPlugin {

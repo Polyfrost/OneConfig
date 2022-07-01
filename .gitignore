@@ -381,6 +381,8 @@ gradle-app.setting
 # Avoid ignore Gradle wrappper properties
 !gradle-wrapper.properties
 
+!*.api
+
 # Cache of project
 .gradletasknamecache
 

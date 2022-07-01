@@ -5,6 +5,7 @@ import gg.essential.gradle.util.prebundle
 
 plugins {
     kotlin("jvm") version "1.6.21"
+    id("org.jetbrains.kotlinx.binary-compatibility-validator") version "0.8.0"
     id("gg.essential.defaults.repo")
     id("gg.essential.defaults.java")
     id("net.kyori.blossom") version "1.3.0"
@@ -133,12 +134,6 @@ tasks {
             exclude("**/**_Test$**.**")
         }
     }
-    jar {
-        dependsOn(shadeNoPom, shade)
-        from({ ArrayList<File>().also { it.addAll(shadeNoPom); it.addAll(shade) }.map { if (it.isDirectory) it else zipTree(it) } })
-
-        archiveClassifier.set("")
-    }
     named<Jar>("sourcesJar") {
         exclude("**/internal/**")
         archiveClassifier.set("sources")
@@ -146,4 +141,10 @@ tasks {
             archiveClassifier.set("sources")
         }
     }
+}
+
+apiValidation {
+    ignoredProjects.add("lwjgl")
+    ignoredPackages.add("cc.polyfrost.oneconfig.libs")
+    ignoredPackages.add("cc.polyfrost.oneconfig.internal")
 }
