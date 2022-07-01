@@ -4,11 +4,11 @@ import cc.polyfrost.oneconfig.config.annotations.Slider;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
 import cc.polyfrost.oneconfig.gui.elements.text.NumberInputField;
+import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import cc.polyfrost.oneconfig.utils.MathUtils;
-import org.lwjgl.input.Mouse;
 
 import java.lang.reflect.Field;
 
@@ -40,7 +40,7 @@ public class ConfigSlider extends BasicOption {
         boolean hovered = InputUtils.isAreaHovered(x + 352, y, 512, 32) && isEnabled();
         inputField.disable(!isEnabled());
         if (!isEnabled()) RenderManager.setAlpha(vg, 0.5f);
-        boolean isMouseDown = Mouse.isButtonDown(0);
+        boolean isMouseDown = Platform.getMousePlatform().isButtonDown(0);
         if (hovered && isMouseDown && !mouseWasDown) dragging = true;
         mouseWasDown = isMouseDown;
         if (dragging) {

@@ -1,14 +1,7 @@
 package cc.polyfrost.oneconfig.internal.config;
 
-import cc.polyfrost.oneconfig.config.Config;
 import cc.polyfrost.oneconfig.config.core.OneColor;
-import cc.polyfrost.oneconfig.config.data.Mod;
-import cc.polyfrost.oneconfig.utils.JsonUtils;
 
-import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 
 public class OneConfigConfig extends InternalConfig {
@@ -24,8 +17,15 @@ public class OneConfigConfig extends InternalConfig {
     public static ArrayList<OneColor> recentColors = new ArrayList<>();
     public static boolean australia = false;
 
+    private static OneConfigConfig INSTANCE;
+
     public OneConfigConfig() {
         super("", "OneConfig.json");
         initialize();
+        INSTANCE = this;
+    }
+
+    public static OneConfigConfig getInstance() {
+        return INSTANCE == null ? (INSTANCE = new OneConfigConfig()) : INSTANCE;
     }
 }

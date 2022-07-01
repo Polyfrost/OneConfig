@@ -13,7 +13,6 @@ public class TestNanoVGGui_Test extends UScreen {
     @Override
     public void onDrawScreen(@NotNull UMatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
         super.onDrawScreen(matrixStack, mouseX, mouseY, partialTicks);
-        drawRect(0, 0, width, height, Color.BLACK.getRGB());
         long startTime = System.nanoTime();
         RenderManager.setupAndDraw((vg) -> {
             RenderManager.drawRect(vg, 0, 0, 100, 100, Color.BLUE.getRGB());

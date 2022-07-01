@@ -6,15 +6,13 @@ import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.internal.assets.Images;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.libs.universal.UGraphics;
-import cc.polyfrost.oneconfig.libs.universal.UMinecraft;
 import cc.polyfrost.oneconfig.libs.universal.UResolution;
+import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.font.Font;
 import cc.polyfrost.oneconfig.renderer.font.FontManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import cc.polyfrost.oneconfig.utils.NetworkUtils;
-import net.minecraft.client.gui.Gui;
-import net.minecraft.client.shader.Framebuffer;
 import org.lwjgl.nanovg.NVGColor;
 import org.lwjgl.nanovg.NVGPaint;
 import org.lwjgl.opengl.GL11;
@@ -63,10 +61,7 @@ public final class RenderManager {
             FontManager.INSTANCE.initialize(vg);
         }
 
-        Framebuffer fb = UMinecraft.getMinecraft().getFramebuffer();
-        if (!fb.isStencilEnabled()) {
-            fb.enableStencil();
-        }
+        Platform.getGLPlatform().enableStencil();
         GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
         GL11.glDisable(GL11.GL_ALPHA_TEST);
 
@@ -755,25 +750,15 @@ public final class RenderManager {
                     yOff++;
                     if (xOff * xOff != yOff * yOff) {
                         yes +=
-                                //#if MODERN==0
-                                UMinecraft.getFontRenderer().drawString(
+                                Platform.getGLPlatform().drawText(
                                         noColors, (xOff / 2f) + x, (yOff / 2f) + y, (opacity) << 24, false
                                 );
-                                //#else
-                                //$$ draw(
-                                //$$     matrix.toMC(), noColors, (xOff / 2f) + x, (yOff / 2f) + y, (opacity) shl 24
-                                //$$     )
-                                //#endif
                     }
                 }
             }
         }
         yes +=
-            //#if MODERN==0
-            UMinecraft.getFontRenderer().drawString(text, x, y, color, false);
-            //#else
-            //$$ draw(matrix.toMC(), text, x.toFloat(), y.toFloat(), color)
-            //#endif
+                Platform.getGLPlatform().drawText(text, x, y, color, false);
         return yes;
     }
 
@@ -782,10 +767,10 @@ public final class RenderManager {
         UGraphics.GL.scale(scale, scale, 1);
         switch (type) {
             case NONE:
-                UMinecraft.getFontRenderer().drawString(text, x * (1 / scale), y * (1 / scale), color, false);
+                Platform.getGLPlatform().drawText(text, x * (1 / scale), y * (1 / scale), color, false);
                 break;
             case SHADOW:
-                UMinecraft.getFontRenderer().drawString(text, x * (1 / scale), y * (1 / scale), color, true);
+                Platform.getGLPlatform().drawText(text, x * (1 / scale), y * (1 / scale), color, true);
                 break;
             case FULL:
                 drawBorderedText(text, x, y, color, 100);
@@ -795,7 +780,7 @@ public final class RenderManager {
     }
 
     public static void drawGlRect(int x, int y, int width, int height, int color) {
-        Gui.drawRect(x, y, x + width, y + height, color);
+        Platform.getGLPlatform().drawRect(x, y, x + width, y + height, color);
     }
 
     public enum TextType {

@@ -2,18 +2,15 @@ package cc.polyfrost.oneconfig.utils.hypixel;
 
 import cc.polyfrost.oneconfig.events.EventManager;
 import cc.polyfrost.oneconfig.events.event.*;
+import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
+import cc.polyfrost.oneconfig.libs.universal.UChat;
+import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.utils.JsonUtils;
 import cc.polyfrost.oneconfig.utils.Multithreading;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import cc.polyfrost.oneconfig.libs.universal.UChat;
-import cc.polyfrost.oneconfig.libs.universal.UMinecraft;
-import cc.polyfrost.oneconfig.libs.universal.wrappers.UPlayer;
-import cc.polyfrost.oneconfig.libs.universal.wrappers.message.UTextComponent;
-import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
-import net.minecraftforge.fml.common.Loader;
 
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
@@ -46,7 +43,7 @@ public class HypixelUtils {
             return;
         }
         EventManager.INSTANCE.register(this);
-        isSeraph = Loader.isModLoaded("seraph");
+        isSeraph = Platform.getLoaderPlatform().isModLoaded("seraph");
         initialized = true;
     }
 
@@ -57,11 +54,9 @@ public class HypixelUtils {
      * @see <a href="https://canary.discord.com/channels/864592657572560958/945075920664928276/978649312013725747">this discord link from jade / asbyth</a>
      */
     public boolean isHypixel() {
-        if (UMinecraft.getWorld() == null || UMinecraft.getMinecraft().isSingleplayer()) return false;
+        if (!Platform.getServerPlatform().inMultiplayer()) return false;
 
-        net.minecraft.client.entity.EntityPlayerSP player = UPlayer.getPlayer();
-        if (player == null) return false;
-        String serverBrand = player.getClientBrand();
+        String serverBrand = Platform.getServerPlatform().getServerBrand();
 
         if (serverBrand == null) return false;
 
@@ -108,7 +103,7 @@ public class HypixelUtils {
     @Subscribe
     private void onMessageReceived(ChatReceiveEvent event) {
         try {
-            final String msg = UTextComponent.Companion.stripFormatting(event.message.getUnformattedText());
+            final String msg = event.getFullyUnformattedMessage();
             // Checking for rate limitation.
             if (!(msg.startsWith("{") && msg.endsWith("}"))) {
                 if (sentCommand && msg.contains("You are sending too many commands! Please try again in a few seconds.")) // if you're being rate limited, the /locraw command will be resent in 5 seconds.

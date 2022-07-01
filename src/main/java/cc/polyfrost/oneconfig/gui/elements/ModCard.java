@@ -5,11 +5,11 @@ import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.animations.ColorAnimation;
 import cc.polyfrost.oneconfig.gui.pages.ModConfigPage;
 import cc.polyfrost.oneconfig.gui.pages.ModsPage;
-import cc.polyfrost.oneconfig.internal.OneConfig;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.internal.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.internal.config.core.ConfigCore;
+import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.renderer.scissor.Scissor;
@@ -18,7 +18,6 @@ import cc.polyfrost.oneconfig.utils.InputUtils;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 import cc.polyfrost.oneconfig.utils.color.ColorUtils;
 import org.jetbrains.annotations.NotNull;
-import org.lwjgl.input.Mouse;
 
 public class ModCard extends BasicElement {
     private final Mod modData;
@@ -51,8 +50,8 @@ public class ModCard extends BasicElement {
         isHoveredMain = InputUtils.isAreaHovered(x, y, width, 87);
         boolean isHoveredSecondary = InputUtils.isAreaHovered(x, y + 87, width - 32, 32) && !disabled;
         if (disabled) RenderManager.setAlpha(vg, 0.5f);
-        RenderManager.drawRoundedRectVaried(vg, x, y, width, 87, colorFrame.getColor(isHoveredMain, isHoveredMain && Mouse.isButtonDown(0)), 12f, 12f, 0f, 0f);
-        RenderManager.drawRoundedRectVaried(vg, x, y + 87, width, 32, colorToggle.getColor(isHoveredSecondary, isHoveredSecondary && Mouse.isButtonDown(0)), 0f, 0f, 12f, 12f);
+        RenderManager.drawRoundedRectVaried(vg, x, y, width, 87, colorFrame.getColor(isHoveredMain, isHoveredMain && Platform.getMousePlatform().isButtonDown(0)), 12f, 12f, 0f, 0f);
+        RenderManager.drawRoundedRectVaried(vg, x, y + 87, width, 32, colorToggle.getColor(isHoveredSecondary, isHoveredSecondary && Platform.getMousePlatform().isButtonDown(0)), 0f, 0f, 12f, 12f);
         RenderManager.drawLine(vg, x, y + 86, x + width, y + 86, 2, Colors.GRAY_300);
         if (modData.modIcon != null) {
             if (modData.modIcon.toLowerCase().endsWith(".svg"))
@@ -68,7 +67,6 @@ public class ModCard extends BasicElement {
             else OneConfigConfig.favoriteMods.remove(modData.name);
             ConfigCore.sortMods();
             page.reloadMods();
-            OneConfig.config.save();
         }
         Scissor scissor2 = ScissorManager.scissor(vg, x, y + 87, width - 32, 32);
         RenderManager.drawText(vg, cleanName, x + 12, y + 103, ColorUtils.setAlpha(Colors.WHITE, (int) (colorToggle.getAlpha() * 255)), 14f, Fonts.MEDIUM);

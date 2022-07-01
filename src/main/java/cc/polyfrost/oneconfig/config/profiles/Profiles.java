@@ -1,9 +1,10 @@
 package cc.polyfrost.oneconfig.config.profiles;
 
-import cc.polyfrost.oneconfig.internal.OneConfig;
 import cc.polyfrost.oneconfig.internal.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.internal.config.core.ConfigCore;
 import org.apache.commons.io.FileUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
@@ -11,13 +12,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 public class Profiles {
+    private static final Logger LOGGER = LogManager.getLogger("OneConfig Profiles");
     public static final File nonProfileSpecificDir = new File("OneConfig/config");
     public static final File profileDir = new File("OneConfig/profiles");
     public static ArrayList<String> profiles;
 
     public static String getCurrentProfile() {
         if (!profileDir.exists() && !profileDir.mkdir()) {
-            OneConfig.LOGGER.fatal("Could not create profiles folder");
+            LOGGER.fatal("Could not create profiles folder");
             return null;
         }
         if (profiles == null) {
@@ -33,7 +35,7 @@ public class Profiles {
     public static void createProfile(String name) {
         File folder = new File(profileDir, name);
         if (!folder.exists() && !folder.mkdir()) {
-            OneConfig.LOGGER.fatal("Could not create profile folder");
+            LOGGER.fatal("Could not create profile folder");
             return;
         }
         profiles.add(name);
@@ -58,7 +60,7 @@ public class Profiles {
     public static void loadProfile(String profile) {
         ConfigCore.saveAll();
         OneConfigConfig.currentProfile = profile;
-        OneConfig.config.save();
+        //OneConfig.config.save(); todo do we actually need this
         ConfigCore.reInitAll();
     }
 
@@ -70,14 +72,14 @@ public class Profiles {
             profiles.remove(name);
             profiles.add(newName);
         } catch (IOException e) {
-            OneConfig.LOGGER.error("Failed to rename profile");
+            LOGGER.error("Failed to rename profile");
         }
     }
 
     public static void deleteProfile(String name) {
         if (name.equals(getCurrentProfile())) {
             if (profiles.size() == 1) {
-                OneConfig.LOGGER.error("Cannot delete only profile!");
+                LOGGER.error("Cannot delete only profile!");
                 return;
             }
             loadProfile(profiles.stream().filter(entry -> !entry.equals(name)).findFirst().get());
@@ -86,7 +88,7 @@ public class Profiles {
             FileUtils.deleteDirectory(getProfileDir(name));
             profiles.remove(name);
         } catch (IOException e) {
-            OneConfig.LOGGER.error("Failed to delete profile");
+            LOGGER.error("Failed to delete profile");
         }
     }
 }

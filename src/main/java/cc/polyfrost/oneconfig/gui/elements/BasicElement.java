@@ -1,11 +1,11 @@
 package cc.polyfrost.oneconfig.gui.elements;
 
 import cc.polyfrost.oneconfig.gui.animations.ColorAnimation;
+import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 import org.jetbrains.annotations.NotNull;
-import org.lwjgl.input.Mouse;
 
 public class BasicElement {
     protected int width, height;
@@ -93,7 +93,7 @@ public class BasicElement {
             clicked = false;
         } else {
             hovered = InputUtils.isAreaHovered(x - hitBoxX, y - hitBoxY, width + hitBoxX, height + hitBoxY);
-            pressed = hovered && Mouse.isButtonDown(0);
+            pressed = hovered && Platform.getMousePlatform().isButtonDown(0);
             clicked = InputUtils.isClicked(block) && hovered;
 
             if (clicked) {

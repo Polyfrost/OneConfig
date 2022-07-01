@@ -1,12 +1,12 @@
 package cc.polyfrost.oneconfig.utils.gui;
 
-import cc.polyfrost.oneconfig.renderer.RenderManager;
-import cc.polyfrost.oneconfig.utils.InputUtils;
+import cc.polyfrost.oneconfig.gui.GuiPause;
 import cc.polyfrost.oneconfig.libs.universal.UMatrixStack;
 import cc.polyfrost.oneconfig.libs.universal.UScreen;
-import net.minecraft.client.gui.GuiScreen;
+import cc.polyfrost.oneconfig.platform.Platform;
+import cc.polyfrost.oneconfig.renderer.RenderManager;
+import cc.polyfrost.oneconfig.utils.InputUtils;
 import org.jetbrains.annotations.NotNull;
-import org.lwjgl.input.Mouse;
 
 /**
  * <h1>OneUIScreen</h1>
@@ -14,9 +14,9 @@ import org.lwjgl.input.Mouse;
  * It contains many handy methods for rendering, including {@link #draw(long, float)} for drawing using OneConfig's {@link RenderManager}.
  * <p> It also contains methods for mouse input. (see {@link InputUtils} for more utils).
  * <p></p>
- * Use {@link GuiUtils#displayScreen(GuiScreen)} to display a screen; and {@link GuiUtils#closeScreen()} to close it.
+ * Use GuiUtils to display a screen; and GuiUtils.closeScreen to close it.
  */
-public abstract class OneUIScreen extends UScreen {
+public abstract class OneUIScreen extends UScreen implements GuiPause {
     private boolean mouseDown;
     private boolean blockClicks;
 
@@ -40,7 +40,7 @@ public abstract class OneUIScreen extends UScreen {
     public void onDrawScreen(@NotNull UMatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
         super.onDrawScreen(matrixStack, mouseX, mouseY, partialTicks);
         RenderManager.setupAndDraw(ignoreMinecraftScale(), vg -> draw(vg, partialTicks));
-        mouseDown = Mouse.isButtonDown(0);
+        mouseDown = Platform.getMousePlatform().isButtonDown(0);
     }
 
     /**
@@ -77,19 +77,6 @@ public abstract class OneUIScreen extends UScreen {
     }
 
     /**
-     * Use this method to declare weather or not this Screen pauses the game when it is open. (Single-player only) Its default is false.
-     */
-    public boolean doesScreenPauseGame() {
-        return false;
-    }
-
-    @Override
-    public boolean doesGuiPauseGame() {
-        return doesScreenPauseGame();
-    }
-
-
-    /**
      * Get the current x position of the mouse.
      */
     public int getMouseX() {
@@ -114,7 +101,7 @@ public abstract class OneUIScreen extends UScreen {
      * @param ignoreBlockClicks whether to ignore the current click blocker.
      */
     public boolean isClicked(boolean ignoreBlockClicks) {
-        return mouseDown && !Mouse.isButtonDown(0) && (!blockClicks || ignoreBlockClicks);
+        return mouseDown && !Platform.getMousePlatform().isButtonDown(0) && (!blockClicks || ignoreBlockClicks);
     }
 
     /**
@@ -128,7 +115,7 @@ public abstract class OneUIScreen extends UScreen {
      * Retrieve weather or not the mouse is currently down. Will constantly return true if its clicked. See {@link #isClicked()} for a method that only executes once per tick.
      */
     public boolean isMouseDown() {
-        return Mouse.isButtonDown(0);
+        return Platform.getMousePlatform().isButtonDown(0);
     }
 
     /**

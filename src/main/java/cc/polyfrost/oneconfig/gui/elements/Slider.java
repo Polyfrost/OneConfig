@@ -1,9 +1,9 @@
 package cc.polyfrost.oneconfig.gui.elements;
 
 import cc.polyfrost.oneconfig.internal.assets.Colors;
+import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.utils.InputUtils;
-import org.lwjgl.input.Mouse;
 
 public class Slider extends BasicElement {
     private final float min, max;
@@ -34,7 +34,7 @@ public class Slider extends BasicElement {
 
     public void update(int x, int y) {
         super.update(x, y);
-        boolean isMouseDown = Mouse.isButtonDown(0);
+        boolean isMouseDown = Platform.getMousePlatform().isButtonDown(0);
         boolean hovered = InputUtils.isAreaHovered(x - 6, y - 3, width + 12, height + 6);
         if (hovered && isMouseDown && !mouseWasDown) dragging = true;
         mouseWasDown = isMouseDown;

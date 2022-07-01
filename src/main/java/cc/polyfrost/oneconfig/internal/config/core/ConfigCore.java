@@ -40,11 +40,13 @@ public class ConfigCore {
     }
 
     public static void sortMods() {
+
         ArrayList<Mod> mods = new ArrayList<>(ConfigCore.mods);
         ConfigCore.mods = mods.stream().filter((mod -> OneConfigConfig.favoriteMods.contains(mod.name))).sorted().collect(Collectors.toList());
         mods.removeAll(ConfigCore.mods);
         ConfigCore.mods.addAll(mods.stream().filter(mod -> mod.modType != ModType.THIRD_PARTY).sorted().collect(Collectors.toList()));
         mods.removeAll(ConfigCore.mods);
         ConfigCore.mods.addAll(mods.stream().sorted().collect(Collectors.toList()));
+        OneConfigConfig.getInstance().save();
     }
 }

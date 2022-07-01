@@ -4,13 +4,13 @@ import cc.polyfrost.oneconfig.config.annotations.Dropdown;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
 import cc.polyfrost.oneconfig.gui.animations.ColorAnimation;
+import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.renderer.scissor.Scissor;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
-import org.lwjgl.input.Mouse;
 
 import java.awt.*;
 import java.lang.reflect.Field;
@@ -58,14 +58,14 @@ public class ConfigDropdown extends BasicOption {
         } catch (IllegalAccessException ignored) {
         }
 
-        if (hovered && Mouse.isButtonDown(0)) RenderManager.setAlpha(vg, 0.8f);
+        if (hovered && Platform.getMousePlatform().isButtonDown(0)) RenderManager.setAlpha(vg, 0.8f);
         if (size == 1) {
-            RenderManager.drawRoundedRect(vg, x + 224, y, 256, 32, backgroundColor.getColor(hovered, hovered && Mouse.isButtonDown(0)), 12);
+            RenderManager.drawRoundedRect(vg, x + 224, y, 256, 32, backgroundColor.getColor(hovered, hovered && Platform.getMousePlatform().isButtonDown(0)), 12);
             RenderManager.drawText(vg, options[selected], x + 236, y + 16, Colors.WHITE_80, 14f, Fonts.MEDIUM);
             RenderManager.drawRoundedRect(vg, x + 452, y + 4, 24, 24, atomColor.getColor(hovered, false), 8);
             RenderManager.drawSvg(vg, SVGs.DROPDOWN_LIST, x + 452, y + 4, 24, 24);
         } else {
-            RenderManager.drawRoundedRect(vg, x + 352, y, 640, 32, backgroundColor.getColor(hovered, hovered && Mouse.isButtonDown(0)), 12);
+            RenderManager.drawRoundedRect(vg, x + 352, y, 640, 32, backgroundColor.getColor(hovered, hovered && Platform.getMousePlatform().isButtonDown(0)), 12);
             RenderManager.drawText(vg, options[selected], x + 364, y + 16, Colors.WHITE_80, 14f, Fonts.MEDIUM);
             RenderManager.drawRoundedRect(vg, x + 964, y + 4, 24, 24, atomColor.getColor(hovered, false), 8);
             RenderManager.drawSvg(vg, SVGs.DROPDOWN_LIST, x + 964, y + 4, 24, 24);
@@ -87,11 +87,11 @@ public class ConfigDropdown extends BasicOption {
         } catch (IllegalAccessException ignored) {
         }
 
-        if (hovered && Mouse.isButtonDown(0)) RenderManager.setAlpha(vg, 0.8f);
+        if (hovered && Platform.getMousePlatform().isButtonDown(0)) RenderManager.setAlpha(vg, 0.8f);
         if (size == 1) {
-            RenderManager.drawRoundedRect(vg, x + 224, y, 256, 32, backgroundColor.getColor(hovered, hovered && Mouse.isButtonDown(0)), 12);
+            RenderManager.drawRoundedRect(vg, x + 224, y, 256, 32, backgroundColor.getColor(hovered, hovered && Platform.getMousePlatform().isButtonDown(0)), 12);
             RenderManager.drawText(vg, options[selected], x + 236, y + 16, Colors.WHITE_80, 14f, Fonts.MEDIUM);
-            if (hovered && Mouse.isButtonDown(0)) RenderManager.setAlpha(vg, 0.8f);
+            if (hovered && Platform.getMousePlatform().isButtonDown(0)) RenderManager.setAlpha(vg, 0.8f);
             RenderManager.drawRoundedRect(vg, x + 452, y + 4, 24, 24, atomColor.getColor(hovered, false), 8);
             RenderManager.drawSvg(vg, SVGs.DROPDOWN_LIST, x + 452, y + 4, 24, 24);
 
@@ -102,7 +102,7 @@ public class ConfigDropdown extends BasicOption {
             for (String option : options) {
                 int color = Colors.WHITE_80;
                 boolean optionHovered = InputUtils.isAreaHovered(x + 224, optionY, 252, 32, true);
-                if (optionHovered && Mouse.isButtonDown(0)) {
+                if (optionHovered && Platform.getMousePlatform().isButtonDown(0)) {
                     RenderManager.drawRoundedRect(vg, x + 228, optionY + 2, 248, 28, Colors.PRIMARY_700_80, 8);
                 } else if (optionHovered) {
                     RenderManager.drawRoundedRect(vg, x + 228, optionY + 2, 248, 28, Colors.PRIMARY_700, 8);
@@ -122,9 +122,9 @@ public class ConfigDropdown extends BasicOption {
                 optionY += 32;
             }
         } else {
-            RenderManager.drawRoundedRect(vg, x + 352, y, 640, 32, backgroundColor.getColor(hovered, hovered && Mouse.isButtonDown(0)), 12);
+            RenderManager.drawRoundedRect(vg, x + 352, y, 640, 32, backgroundColor.getColor(hovered, hovered && Platform.getMousePlatform().isButtonDown(0)), 12);
             RenderManager.drawText(vg, options[selected], x + 364, y + 16, Colors.WHITE_80, 14f, Fonts.MEDIUM);
-            if (hovered && Mouse.isButtonDown(0)) RenderManager.setAlpha(vg, 0.8f);
+            if (hovered && Platform.getMousePlatform().isButtonDown(0)) RenderManager.setAlpha(vg, 0.8f);
             RenderManager.drawRoundedRect(vg, x + 964, y + 4, 24, 24, atomColor.getColor(hovered, false), 8);
             RenderManager.drawSvg(vg, SVGs.DROPDOWN_LIST, x + 964, y + 4, 24, 24);
 
@@ -135,7 +135,7 @@ public class ConfigDropdown extends BasicOption {
             for (String option : options) {
                 int color = Colors.WHITE_80;
                 boolean optionHovered = InputUtils.isAreaHovered(x + 352, optionY, 640, 36, true);
-                if (optionHovered && Mouse.isButtonDown(0)) {
+                if (optionHovered && Platform.getMousePlatform().isButtonDown(0)) {
                     RenderManager.drawRoundedRect(vg, x + 356, optionY + 2, 632, 28, Colors.PRIMARY_700_80, 8);
                 } else if (optionHovered) {
                     RenderManager.drawRoundedRect(vg, x + 356, optionY + 2, 632, 28, Colors.PRIMARY_700, 8);

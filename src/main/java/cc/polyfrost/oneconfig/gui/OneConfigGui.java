@@ -8,7 +8,6 @@ import cc.polyfrost.oneconfig.gui.elements.ColorSelector;
 import cc.polyfrost.oneconfig.gui.elements.text.TextInputField;
 import cc.polyfrost.oneconfig.gui.pages.ModsPage;
 import cc.polyfrost.oneconfig.gui.pages.Page;
-import cc.polyfrost.oneconfig.internal.OneConfig;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.internal.config.OneConfigConfig;
@@ -17,6 +16,7 @@ import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
 import cc.polyfrost.oneconfig.libs.universal.UMatrixStack;
 import cc.polyfrost.oneconfig.libs.universal.UResolution;
 import cc.polyfrost.oneconfig.libs.universal.UScreen;
+import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.renderer.scissor.Scissor;
@@ -26,12 +26,11 @@ import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.lwjgl.input.Mouse;
 import org.lwjgl.nanovg.NanoVG;
 
 import java.util.ArrayList;
 
-public class OneConfigGui extends UScreen {
+public class OneConfigGui extends UScreen implements GuiPause {
     public static OneConfigGui INSTANCE;
     public static OneConfigGui instanceToRestore = null;
     private final SideBar sideBar = new SideBar();
@@ -110,7 +109,7 @@ public class OneConfigGui extends UScreen {
                 RenderManager.setAlpha(vg, 0.5f);
             } else {
                 backArrow.disable(false);
-                if (!backArrow.isHovered() || Mouse.isButtonDown(0)) RenderManager.setAlpha(vg, 0.8f);
+                if (!backArrow.isHovered() || Platform.getMousePlatform().isButtonDown(0)) RenderManager.setAlpha(vg, 0.8f);
             }
             RenderManager.drawSvg(vg, SVGs.CARET_LEFT, x + 246, y + 22, 28, 28);
             RenderManager.setAlpha(vg, 1f);
@@ -119,7 +118,7 @@ public class OneConfigGui extends UScreen {
                 RenderManager.setAlpha(vg, 0.5f);
             } else {
                 forwardArrow.disable(false);
-                if (!forwardArrow.isHovered() || Mouse.isButtonDown(0)) RenderManager.setAlpha(vg, 0.8f);
+                if (!forwardArrow.isHovered() || Platform.getMousePlatform().isButtonDown(0)) RenderManager.setAlpha(vg, 0.8f);
             }
             RenderManager.drawSvg(vg, SVGs.CARET_RIGHT, x + 294, y + 22, 28, 28);
             RenderManager.setAlpha(vg, 1f);
@@ -167,7 +166,7 @@ public class OneConfigGui extends UScreen {
                 boolean hovered = InputUtils.isAreaHovered((int) breadcrumbX, y + 24, (int) width, 36);
                 int color = Colors.WHITE_60;
                 if (i == currentPage.parents.size() - 1) color = Colors.WHITE;
-                else if (hovered && !Mouse.isButtonDown(0)) color = Colors.WHITE_80;
+                else if (hovered && !Platform.getMousePlatform().isButtonDown(0)) color = Colors.WHITE_80;
                 RenderManager.drawText(vg, title, breadcrumbX, y + 38, color, 24f, Fonts.SEMIBOLD);
                 if (i != 0)
                     RenderManager.drawSvg(vg, SVGs.CARET_RIGHT, breadcrumbX - 28, y + 25, 24, 24, color);
@@ -182,7 +181,7 @@ public class OneConfigGui extends UScreen {
                 currentColorSelector.draw(vg);
             }
         });
-        mouseDown = Mouse.isButtonDown(0);
+        mouseDown = Platform.getMousePlatform().isButtonDown(0);
     }
 
     @Override
@@ -194,7 +193,7 @@ public class OneConfigGui extends UScreen {
             if (currentColorSelector != null) currentColorSelector.keyTyped(typedChar, keyCode);
             currentPage.keyTyped(typedChar, keyCode);
         } catch (Exception e) {
-            OneConfig.LOGGER.error("Error while processing keyboard input; ignoring!");
+            e.printStackTrace();
         }
     }
 
@@ -274,15 +273,15 @@ public class OneConfigGui extends UScreen {
     }
 
     @Override
-    public boolean doesGuiPauseGame() {
-        return false;
-    }
-
-    @Override
     public void onScreenClose() {
         currentPage.finishUpAndClose();
         instanceToRestore = this;
         INSTANCE = null;
         super.onScreenClose();
+    }
+
+    @Override
+    public boolean doesGuiPauseGame() {
+        return false;
     }
 }

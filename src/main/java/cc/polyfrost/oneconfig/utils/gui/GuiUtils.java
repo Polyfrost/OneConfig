@@ -6,13 +6,8 @@ import cc.polyfrost.oneconfig.events.event.Stage;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
 import cc.polyfrost.oneconfig.libs.universal.UMinecraft;
-import cc.polyfrost.oneconfig.libs.universal.UScreen;
+import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.utils.TickDelay;
-import net.minecraft.client.gui.GuiScreen;
-
-import java.util.Deque;
-import java.util.Optional;
-import java.util.concurrent.ConcurrentLinkedDeque;
 
 /**
  * A class containing utility methods for working with GuiScreens.
@@ -20,7 +15,6 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 public final class GuiUtils {
     private static long time = -1L;
     private static long deltaTime = 17L;
-    private static final Deque<Optional<GuiScreen>> screenQueue = new ConcurrentLinkedDeque<>();
 
     static {
         EventManager.INSTANCE.register(new GuiUtils());
@@ -30,8 +24,10 @@ public final class GuiUtils {
      * Displays a screen after a tick, preventing mouse sync issues.
      *
      * @param screen the screen to display.
+     * @deprecated Not actually deprecated, but should not be used.
      */
-    public static void displayScreen(GuiScreen screen) {
+    @Deprecated
+    public static void displayScreen(Object screen) {
         displayScreen(screen, screen instanceof OneConfigGui ? 2 : 1);
     }
 
@@ -41,24 +37,15 @@ public final class GuiUtils {
      * @param screen the screen to display.
      * @param ticks the amount of ticks to wait for before displaying the screen.
      */
-    public static void displayScreen(GuiScreen screen, int ticks) {
-        Optional<GuiScreen> optional = Optional.of(screen);
-        screenQueue.add(optional);
-        new TickDelay(() -> {
-            UScreen.displayScreen(screen);
-            screenQueue.remove(optional);
-        }, ticks);
-    }
-
-    public static Deque<Optional<GuiScreen>> getScreenQueue() {
-        return screenQueue;
+    public static void displayScreen(Object screen, int ticks) {
+        new TickDelay(() -> Platform.getGuiPlatform().setCurrentScreen(screen), ticks);
     }
 
     /**
      * Close the current open GUI screen.
      */
     public static void closeScreen() {
-        UScreen.displayScreen(null);
+        Platform.getGuiPlatform().setCurrentScreen(null);
     }
 
     /**

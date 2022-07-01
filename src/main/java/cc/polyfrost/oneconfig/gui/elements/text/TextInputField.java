@@ -4,6 +4,7 @@ import cc.polyfrost.oneconfig.gui.elements.BasicElement;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
+import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.renderer.scissor.Scissor;
@@ -13,8 +14,6 @@ import cc.polyfrost.oneconfig.utils.InputUtils;
 import cc.polyfrost.oneconfig.utils.MathUtils;
 import cc.polyfrost.oneconfig.utils.TextUtils;
 import org.jetbrains.annotations.NotNull;
-import org.lwjgl.input.Keyboard;
-import org.lwjgl.input.Mouse;
 
 import java.util.ArrayList;
 import java.util.Objects;
@@ -112,7 +111,7 @@ public class TextInputField extends BasicElement {
             }
             Scissor scissor = ScissorManager.scissor(vg, x, y, width, height);
             super.update(x, y);
-            if (Mouse.isButtonDown(0) && !InputUtils.isAreaHovered(x - 40, y - 20, width + 90, height + 20)) {
+            if (Platform.getMousePlatform().isButtonDown(0) && !InputUtils.isAreaHovered(x - 40, y - 20, width + 90, height + 20)) {
                 onClose();
                 toggled = false;
             }
@@ -144,9 +143,9 @@ public class TextInputField extends BasicElement {
                 width = RenderManager.getTextWidth(vg, s.substring(0, caretPos), 14f, Fonts.REGULAR.font);
             }
             if (hovered) {
-                while (Mouse.next()) {
-                    if (Mouse.getEventButtonState()) {
-                        if (Mouse.getEventButton() == 0) {
+                while (Platform.getMousePlatform().next()) {
+                    if (Platform.getMousePlatform().getEventButtonState()) {
+                        if (Platform.getMousePlatform().getEventButton() == 0) {
                             if (multiLine) {
                                 int caretLine = Math.max(0, Math.min(wrappedText.size() - 1, (int) Math.floor((InputUtils.mouseY() - y - 10) / 24f)));
                                 caretPos = calculatePos(InputUtils.mouseX(), wrappedText.get(caretLine));
@@ -158,7 +157,7 @@ public class TextInputField extends BasicElement {
                             clickTimeD1 = System.currentTimeMillis();
                         }
                     } else {
-                        if (Mouse.getEventButton() == 0) {
+                        if (Platform.getMousePlatform().getEventButton() == 0) {
                             long clickTimeU = System.currentTimeMillis();
                             if (clickTimeU - clickTimeD1 < 200) {
                                 if (!isDoubleClick) {
@@ -188,7 +187,7 @@ public class TextInputField extends BasicElement {
                 }
             }
             if (hovered) {
-                if (Mouse.isButtonDown(0) && !isDoubleClick) {
+                if (Platform.getMousePlatform().isButtonDown(0) && !isDoubleClick) {
                     if (multiLine) {
                         int caretLine = Math.max(0, Math.min(wrappedText.size() - 1, (int) Math.floor((InputUtils.mouseY() - y - 10) / 24f)));
                         caretPos = calculatePos(InputUtils.mouseX(), wrappedText.get(caretLine));
@@ -265,7 +264,7 @@ public class TextInputField extends BasicElement {
                     }
                     return;
                 }
-                if (UKeyboard.isKeyComboCtrlV(key) || key == Keyboard.KEY_INSERT) { // TODO: find the UKeyboard equivalent for insert
+                if (UKeyboard.isKeyComboCtrlV(key) || key == 0xD2) { // TODO: is this the same in LWJGL 3?
                     try {
                         String clip = IOUtils.getStringFromClipboard();
                         input = input.substring(0, caretPos) + clip + input.substring(caretPos);

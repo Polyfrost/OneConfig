@@ -1,23 +1,20 @@
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+import gg.essential.gradle.multiversion.StripReferencesTransform.Companion.registerStripReferencesAttribute
 import gg.essential.gradle.util.RelocationTransform.Companion.registerRelocationAttribute
-import gg.essential.gradle.util.noServerRunConfigs
 import gg.essential.gradle.util.prebundle
-import net.fabricmc.loom.task.RemapSourcesJarTask
 
 
 plugins {
-    kotlin("jvm")
-    id("gg.essential.multi-version")
+    kotlin("jvm") version "1.6.21"
     id("gg.essential.defaults.repo")
     id("gg.essential.defaults.java")
-    id("gg.essential.defaults.loom")
-    id("com.github.johnrengelman.shadow")
     id("net.kyori.blossom") version "1.3.0"
-    id("io.github.juuxel.loom-quiltflower-mini")
-    id("org.jetbrains.dokka") version "1.6.21"
     id("maven-publish")
     id("signing")
     java
+}
+
+kotlin.jvmToolchain {
+    (this as JavaToolchainSpec).languageVersion.set(JavaLanguageVersion.of(8))
 }
 
 java {
@@ -28,10 +25,6 @@ val mod_name: String by project
 val mod_version: String by project
 val mod_id: String by project
 
-preprocess {
-    vars.put("MODERN", if (project.platform.mcMinor >= 16) 1 else 0)
-}
-
 blossom {
     replaceToken("@VER@", mod_version)
     replaceToken("@NAME@", mod_name)
@@ -40,25 +33,6 @@ blossom {
 
 version = mod_version
 group = "cc.polyfrost"
-base {
-    archivesName.set("$mod_id-$platform")
-}
-loom {
-    noServerRunConfigs()
-    if (project.platform.isLegacyForge) {
-        launchConfigs.named("client") {
-            arg("--tweakClass", "cc.polyfrost.oneconfig.internal.plugin.asm.OneConfigTweaker")
-            property("mixin.debug.export", "true")
-            property("debugBytecode", "true")
-        }
-    }
-    if (project.platform.isForge) {
-        forge {
-            mixinConfig("mixins.${mod_id}.json")
-        }
-    }
-    mixin.defaultRefmapName.set("mixins.${mod_id}.refmap.json")
-}
 
 repositories {
     maven("https://repo.polyfrost.cc/releases")
@@ -90,12 +64,29 @@ sourceSets {
     }
 }
 
+val common = registerStripReferencesAttribute("common") {
+    excludes.add("net.minecraft")
+    excludes.add("net.minecraftforge")
+}
+
 dependencies {
-    compileOnly("gg.essential:vigilance-$platform:222") {
+
+    compileOnly("com.google.code.gson:gson:2.2.4")
+    compileOnly("commons-io:commons-io:2.4")
+    compileOnly("com.google.guava:guava:17.0")
+    compileOnly("org.lwjgl:lwjgl-opengl:3.3.1")
+    compileOnly("org.apache.logging.log4j:log4j-core:2.0-beta9")
+    compileOnly("org.apache.logging.log4j:log4j-api:2.0-beta9")
+    compileOnly("org.ow2.asm:asm-debug-all:5.0.3")
+    compileOnly("org.apache.commons:commons-lang3:3.3.2")
+
+    compileOnly("gg.essential:vigilance-1.8.9-forge:222") {
+        attributes { attribute(common, true) }
         isTransitive = false
     }
 
-    shadeRelocated("gg.essential:universalcraft-$platform:211") {
+    shadeRelocated("gg.essential:universalcraft-1.8.9-forge:211") {
+        attributes { attribute(common, true) }
         isTransitive = false
     }
 
@@ -130,197 +121,29 @@ dependencies {
     shade("cc.polyfrost:lwjgl:1.0.0-alpha1")
     shadeNoPom(prebundle(shadeRelocated))
 
-    dokkaHtmlPlugin("org.jetbrains.dokka:kotlin-as-java-plugin:1.6.21")
-
     configurations.named(JavaPlugin.COMPILE_CLASSPATH_CONFIGURATION_NAME) { extendsFrom(shadeNoPom) }
     configurations.named(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME) { extendsFrom(shadeNoPom) }
 }
 
-tasks.processResources {
-    inputs.property("id", mod_id)
-    inputs.property("name", mod_name)
-    val java = if (project.platform.mcMinor >= 18) {
-        17
-    } else {
-        if (project.platform.mcMinor == 17) 16 else 8
-    }
-    val compatLevel = "JAVA_${java}"
-    inputs.property("java", java)
-    inputs.property("java_level", compatLevel)
-    inputs.property("version", mod_version)
-    inputs.property("mcVersionStr", project.platform.mcVersionStr)
-    filesMatching(listOf("mcmod.info", "mixins.${mod_id}.json", "mods.toml")) {
-        expand(
-            mapOf(
-                "id" to mod_id,
-                "name" to mod_name,
-                "java" to java,
-                "java_level" to compatLevel,
-                "version" to mod_version,
-                "mcVersionStr" to project.platform.mcVersionStr
-            )
-        )
-    }
-    filesMatching("fabric.mod.json") {
-        expand(
-            mapOf(
-                "id" to mod_id,
-                "name" to mod_name,
-                "java" to java,
-                "java_level" to compatLevel,
-                "version" to mod_version,
-                "mcVersionStr" to project.platform.mcVersionStr.substringBeforeLast(".") + ".x"
-            )
-        )
-    }
-}
-
 tasks {
     withType(Jar::class.java) {
-        if (project.platform.isFabric) {
-            exclude("mcmod.info", "mods.toml")
-        } else {
-            exclude("fabric.mod.json")
-            if (project.platform.isLegacyForge) {
-                exclude("mods.toml")
-                exclude("META-INF/versions/**")
-                exclude("**/module-info.class")
-                exclude("**/package-info.class")
-            } else {
-                exclude("mcmod.info")
-            }
-        }
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
         if (!name.contains("sourcesjar", ignoreCase = true) || !name.contains("dokka", ignoreCase = true)) {
             exclude("**/**_Test.**")
             exclude("**/**_Test$**.**")
         }
     }
-    named<ShadowJar>("shadowJar") {
-        archiveClassifier.set("donotusethis")
-        configurations = listOf(shade, shadeNoPom)
-        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-        dependsOn(jar)
-    }
-    remapJar {
-        input.set(shadowJar.get().archiveFile)
-        archiveClassifier.set("full")
-    }
-    fun Jar.excludeInternal() {
-        exclude("**/internal/**")
-    }
     jar {
-        dependsOn(shadeNoPom)
-        from({ shadeNoPom.map { if (it.isDirectory) it else zipTree(it) } })
-        manifest {
-            attributes(
-                mapOf(
-                    "ModSide" to "CLIENT",
-                    "ForceLoadAsMod" to true,
-                    "TweakOrder" to "0",
-                    "MixinConfigs" to "mixins.oneconfig.json",
-                    "TweakClass" to "cc.polyfrost.oneconfig.internal.plugin.asm.OneConfigTweaker"
-                )
-            )
-        }
-        excludeInternal()
+        dependsOn(shadeNoPom, shade)
+        from({ ArrayList<File>().also { it.addAll(shadeNoPom); it.addAll(shade) }.map { if (it.isDirectory) it else zipTree(it) } })
+
         archiveClassifier.set("")
     }
-    dokkaHtml.configure {
-        outputDirectory.set(buildDir.resolve("dokka"))
-        moduleName.set("OneConfig $platform")
-        moduleVersion.set(mod_version)
-        dokkaSourceSets {
-            configureEach {
-                jdkVersion.set(8)
-                //reportUndocumented.set(true)
-            }
-        }
-        doLast {
-            val outputFile = outputDirectory.get().resolve("images/logo-icon.svg")
-            if (outputFile.exists()) {
-                outputFile.delete()
-            }
-            val inputFile = project.rootDir.resolve("src/main/resources/assets/oneconfig/icons/OneConfig.svg")
-            inputFile.copyTo(outputFile)
-        }
-    }
-    val dokkaJar = create("dokkaJar", Jar::class.java) {
-        archiveClassifier.set("dokka")
-        group = "build"
-        dependsOn(dokkaHtml)
-        from(layout.buildDirectory.dir("dokka"))
-    }
     named<Jar>("sourcesJar") {
-        dependsOn(dokkaJar)
-        excludeInternal()
+        exclude("**/internal/**")
         archiveClassifier.set("sources")
         doFirst {
             archiveClassifier.set("sources")
-        }
-    }
-    withType<RemapSourcesJarTask> {
-        enabled = false
-    }
-}
-
-afterEvaluate {
-    val checkFile = file(".gradle/loom-cache/SETUP")
-    @Suppress("UNUSED_VARIABLE")
-    val setupGradle by tasks.creating {
-        group = "loom"
-        description = "Setup OneConfig"
-        dependsOn(tasks.named("genSourcesWithQuiltflower").get())
-        doLast {
-            checkFile.parentFile.mkdirs()
-            checkFile.createNewFile()
-        }
-    }
-
-    if (!checkFile.exists()) {
-        logger.error("--------------")
-        logger.error("PLEASE RUN THE `setupGradle` TASK, OR ELSE UNEXPECTED THING MAY HAPPEN!")
-        logger.error("`setupGradle` is in the loom category of your gradle project.")
-        logger.error("--------------")
-    }
-}
-
-publishing {
-    publications {
-        register<MavenPublication>("oneconfig-$platform") {
-            groupId = "cc.polyfrost"
-            artifactId = base.archivesName.get()
-
-            artifact(tasks["jar"])
-            artifact(tasks["remapJar"])
-            artifact(tasks["sourcesJar"])
-            artifact(tasks["dokkaJar"])
-        }
-    }
-
-    repositories {
-        maven {
-            name = "releases"
-            url = uri("https://repo.polyfrost.cc/releases")
-            credentials(PasswordCredentials::class)
-            authentication {
-                create<BasicAuthentication>("basic")
-            }
-        }
-        maven {
-            name = "snapshots"
-            url = uri("https://repo.polyfrost.cc/snapshots")
-            credentials(PasswordCredentials::class)
-            authentication {
-                create<BasicAuthentication>("basic")
-            }
-        }
-        maven {
-            name = "private"
-            url = uri("https://repo.polyfrost.cc/private")
-            credentials(PasswordCredentials::class)
-            authentication {
-                create<BasicAuthentication>("basic")
-            }
         }
     }
 }

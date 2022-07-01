@@ -6,12 +6,12 @@ import cc.polyfrost.oneconfig.config.elements.BasicOption;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.animations.ColorAnimation;
 import cc.polyfrost.oneconfig.gui.pages.ModConfigPage;
+import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
-import org.lwjgl.input.Mouse;
 
 import java.lang.reflect.Field;
 
@@ -34,7 +34,7 @@ public class ConfigPageButton extends BasicOption {
 
         if (!isEnabled()) RenderManager.setAlpha(vg, 0.5f);
 
-        RenderManager.drawRoundedRect(vg, x - 16, y, 1024, height, backgroundColor.getColor(hovered, hovered && Mouse.isButtonDown(0)), 20);
+        RenderManager.drawRoundedRect(vg, x - 16, y, 1024, height, backgroundColor.getColor(hovered, hovered && Platform.getMousePlatform().isButtonDown(0)), 20);
         RenderManager.drawText(vg, name, x + 10, y + 32, Colors.WHITE_90, 24, Fonts.MEDIUM);
         if (!description.equals(""))
             RenderManager.drawText(vg, name, x + 10, y + 70, Colors.WHITE_90, 14, Fonts.MEDIUM);

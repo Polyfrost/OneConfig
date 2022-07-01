@@ -1,9 +1,10 @@
 package cc.polyfrost.oneconfig.images;
 
-import cc.polyfrost.oneconfig.internal.OneConfig;
 import cc.polyfrost.oneconfig.utils.IOUtils;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -20,6 +21,7 @@ import java.util.Objects;
 /** An Image wrapper class that is used by the OneConfig system.*/
 @SuppressWarnings("unused")
 public class Image {
+    private static final Logger LOGGER = LogManager.getLogger("OneConfig Images");
     private BufferedImage image;
     private Graphics2D graphics = null;
     private final int width, height;
@@ -152,7 +154,7 @@ public class Image {
             byteOut.close();
             writer.close();
             if(con.getResponseCode() != 200) {
-                OneConfig.LOGGER.error("Error uploading image to Imgur: " + con.getResponseCode());
+                LOGGER.error("Error uploading image to Imgur: " + con.getResponseCode());
                 return null;
             }
 
@@ -163,7 +165,7 @@ public class Image {
             return object;
         } catch (Exception e) {
             e.printStackTrace();
-            OneConfig.LOGGER.error("Error uploading image to Imgur.");
+            LOGGER.error("Error uploading image to Imgur.");
             return null;
         }
     }

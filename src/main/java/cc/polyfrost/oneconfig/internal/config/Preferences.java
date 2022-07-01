@@ -7,7 +7,8 @@ import cc.polyfrost.oneconfig.config.core.OneKeyBind;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.internal.gui.BlurHandler;
 import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
-import cc.polyfrost.oneconfig.libs.universal.UMinecraft;
+import cc.polyfrost.oneconfig.platform.Platform;
+import cc.polyfrost.oneconfig.utils.TickDelay;
 import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 
 public class Preferences extends InternalConfig {
@@ -37,10 +38,17 @@ public class Preferences extends InternalConfig {
     )
     public static float customScale = 1f;
 
+    private static Preferences INSTANCE;
+
     public Preferences() {
         super("Preferences", "Preferences.json");
         initialize();
-        addListener("enableBlur", () -> BlurHandler.INSTANCE.reloadBlur(UMinecraft.getMinecraft().currentScreen));
-        registerKeyBind(oneConfigKeyBind, () -> GuiUtils.displayScreen(OneConfigGui.create()));
+        addListener("enableBlur", () -> BlurHandler.INSTANCE.reloadBlur(Platform.getGuiPlatform().getCurrentScreen()));
+        registerKeyBind(oneConfigKeyBind, () -> new TickDelay(() -> Platform.getGuiPlatform().setCurrentScreen(OneConfigGui.create()), 1));
+        INSTANCE = this;
+    }
+
+    public static Preferences getInstance() {
+        return INSTANCE == null ? (INSTANCE = new Preferences()) : INSTANCE;
     }
 }

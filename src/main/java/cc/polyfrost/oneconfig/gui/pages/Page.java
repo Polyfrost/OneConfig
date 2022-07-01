@@ -4,12 +4,12 @@ import cc.polyfrost.oneconfig.gui.animations.Animation;
 import cc.polyfrost.oneconfig.gui.animations.ColorAnimation;
 import cc.polyfrost.oneconfig.gui.animations.EaseOutQuad;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
+import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.scissor.Scissor;
 import cc.polyfrost.oneconfig.renderer.scissor.ScissorManager;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
-import org.lwjgl.input.Mouse;
 
 import java.util.ArrayList;
 
@@ -52,7 +52,7 @@ public abstract class Page {
         final float scrollBarLength = (728f / maxScroll) * 728f;
         Scissor scissor = ScissorManager.scissor(vg, x, y + scissorOffset, x + 1056, y + 728 - scissorOffset);
         Scissor inputScissor = InputUtils.blockInputArea(x, y,1056, scissorOffset);
-        int dWheel = Mouse.getDWheel();
+        int dWheel = Platform.getMousePlatform().getDWheel();
         if (dWheel != 0) {
             scrollTarget += dWheel;
 
@@ -77,10 +77,10 @@ public abstract class Page {
         InputUtils.stopBlock(inputScissor);
         if (!(scrollBarLength > 727f)) {
             final float scrollBarY = (scroll / maxScroll) * 720f;
-            final boolean isMouseDown = Mouse.isButtonDown(0);
+            final boolean isMouseDown = Platform.getMousePlatform().isButtonDown(0);
             final boolean scrollHover = InputUtils.isAreaHovered(x + 1042, (int) (y - scrollBarY), 12, (int) scrollBarLength);
             final boolean scrollTimePeriod = (System.currentTimeMillis() - scrollTime < 1000);
-            final boolean hovered = (scrollHover || scrollTimePeriod) && Mouse.isButtonDown(0);
+            final boolean hovered = (scrollHover || scrollTimePeriod) && Platform.getMousePlatform().isButtonDown(0);
             if (scrollHover && isMouseDown && !mouseWasDown) {
                 yStart = InputUtils.mouseY();
                 dragging = true;

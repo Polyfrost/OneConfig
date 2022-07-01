@@ -12,6 +12,7 @@ import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.internal.assets.Images;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.internal.config.OneConfigConfig;
+import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.renderer.scissor.Scissor;
@@ -20,7 +21,6 @@ import cc.polyfrost.oneconfig.utils.IOUtils;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import cc.polyfrost.oneconfig.utils.NetworkUtils;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
-import org.lwjgl.input.Mouse;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -203,7 +203,7 @@ public class ColorSelector {
 
         inputScissor = InputUtils.blockInputArea(x - 3, y - 3, width + 6, height + 6);
         ScissorManager.resetScissor(vg, scissor);
-        mouseWasDown = Mouse.isButtonDown(0);
+        mouseWasDown = Platform.getMousePlatform().isButtonDown(0);
         if (closeBtn.isClicked()) {
             OneConfigGui.INSTANCE.closeColorSelector();
         }
@@ -241,9 +241,9 @@ public class ColorSelector {
     }
 
     private void doDrag() {
-        if (InputUtils.isAreaHovered(x, y, 368, 64) && Mouse.isButtonDown(0) && !dragging) {
-            int dx = (int) (Mouse.getDX() / (OneConfigGui.INSTANCE == null ? 1 : OneConfigGui.INSTANCE.getScaleFactor()));
-            int dy = (int) (Mouse.getDY() / (OneConfigGui.INSTANCE == null ? 1 : OneConfigGui.INSTANCE.getScaleFactor()));
+        if (InputUtils.isAreaHovered(x, y, 368, 64) && Platform.getMousePlatform().isButtonDown(0) && !dragging) {
+            int dx = (int) (Platform.getMousePlatform().getMouseDX() / (OneConfigGui.INSTANCE == null ? 1 : OneConfigGui.INSTANCE.getScaleFactor()));
+            int dy = (int) (Platform.getMousePlatform().getMouseDY() / (OneConfigGui.INSTANCE == null ? 1 : OneConfigGui.INSTANCE.getScaleFactor()));
             x += dx;
             mouseX += dx;
             y -= dy;
@@ -252,8 +252,8 @@ public class ColorSelector {
     }
 
     private void setColorFromXY() {
-        boolean isMouseDown = Mouse.isButtonDown(0);
-        boolean hovered = Mouse.isButtonDown(0) && InputUtils.isAreaHovered(x + 16, y + 120, 384, 288);
+        boolean isMouseDown = Platform.getMousePlatform().isButtonDown(0);
+        boolean hovered = Platform.getMousePlatform().isButtonDown(0) && InputUtils.isAreaHovered(x + 16, y + 120, 384, 288);
         if (hovered && isMouseDown && !mouseWasDown) dragging = true;
         switch (mode) {
             case 0:
@@ -282,8 +282,8 @@ public class ColorSelector {
                 int circleCenterX = x + 208;
                 int circleCenterY = y + 264;
                 double squareDist = Math.pow((circleCenterX - InputUtils.mouseX()), 2) + Math.pow((circleCenterY - InputUtils.mouseY()), 2);
-                hovered = squareDist < 144 * 144 && Mouse.isButtonDown(0);
-                isMouseDown = Mouse.isButtonDown(0);
+                hovered = squareDist < 144 * 144 && Platform.getMousePlatform().isButtonDown(0);
+                isMouseDown = Platform.getMousePlatform().isButtonDown(0);
                 if (hovered && isMouseDown && !mouseWasDown) dragging = true;
 
                 int angle = 0;

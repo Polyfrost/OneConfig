@@ -1,8 +1,5 @@
 package cc.polyfrost.oneconfig.events.event;
 
-
-import net.minecraft.util.IChatComponent;
-
 /**
  * Called when a chat message is received.
  */
@@ -10,9 +7,13 @@ public class ChatReceiveEvent extends CancellableEvent {
     /**
      * The message that was received.
      */
-    public final IChatComponent message;
+    public final Object message;
 
-    public ChatReceiveEvent(IChatComponent message) {
+    public ChatReceiveEvent(Object message) {
         this.message = message;
+    }
+
+    public String getFullyUnformattedMessage() {
+        return "";
     }
 }

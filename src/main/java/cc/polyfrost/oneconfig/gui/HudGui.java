@@ -3,6 +3,7 @@ package cc.polyfrost.oneconfig.gui;
 import cc.polyfrost.oneconfig.internal.config.core.ConfigCore;
 import cc.polyfrost.oneconfig.hud.Hud;
 import cc.polyfrost.oneconfig.internal.hud.HudCore;
+import cc.polyfrost.oneconfig.libs.universal.UResolution;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
 import cc.polyfrost.oneconfig.libs.universal.UMatrixStack;
@@ -13,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.util.ArrayList;
 
-public class HudGui extends UScreen {
+public class HudGui extends UScreen implements GuiPause {
     private Hud editingHud;
     private boolean isDragging;
     private boolean isScaling;
@@ -29,7 +30,7 @@ public class HudGui extends UScreen {
 
     @Override
     public void onDrawScreen(@NotNull UMatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
-        RenderManager.drawGlRect(0, 0, this.width, this.height, new Color(80, 80, 80, 50).getRGB());
+        RenderManager.drawGlRect(0, 0, UResolution.getScaledWidth(), UResolution.getScaledHeight(), new Color(80, 80, 80, 50).getRGB());
 
         if (isDragging) {
             setPosition(mouseX - xOffset, mouseY - yOffset, true);
@@ -42,8 +43,8 @@ public class HudGui extends UScreen {
 
     private void processHud(Hud hud, int mouseX) {
         if (hud == editingHud && isScaling) {
-            float xFloat = hud.getXScaled(this.width);
-            float yFloat = hud.getYScaled(this.height);
+            float xFloat = hud.getXScaled(UResolution.getScaledWidth());
+            float yFloat = hud.getYScaled(UResolution.getScaledHeight());
             float pos = getXSnapping(mouseX, true);
             float newWidth = pos - xFloat;
             float newScale = newWidth / ((hud.getWidth(hud.scale) + hud.paddingX * hud.scale) / hud.scale);
@@ -53,16 +54,16 @@ public class HudGui extends UScreen {
                 newScale = 0.3f;
             hud.scale = newScale;
 
-            if (xFloat / this.width > 0.5)
-                editingHud.xUnscaled = (xFloat + (hud.getWidth(hud.scale) + hud.paddingX * hud.scale)) / (double) this.width;
-            if (yFloat / this.height > 0.5)
-                editingHud.yUnscaled = (yFloat + (hud.getHeight(hud.scale) + hud.paddingY * hud.scale)) / (double) this.height;
+            if (xFloat / UResolution.getScaledWidth() > 0.5)
+                editingHud.xUnscaled = (xFloat + (hud.getWidth(hud.scale) + hud.paddingX * hud.scale)) / (double) UResolution.getScaledWidth();
+            if (yFloat / UResolution.getScaledHeight() > 0.5)
+                editingHud.yUnscaled = (yFloat + (hud.getHeight(hud.scale) + hud.paddingY * hud.scale)) / (double) UResolution.getScaledHeight();
         }
 
         int width = (int) (hud.getExampleWidth(hud.scale) + hud.paddingX * hud.scale);
         int height = (int) (hud.getExampleHeight(hud.scale) + hud.paddingY * hud.scale);
-        int x = (int) hud.getXScaled(this.width);
-        int y = (int) hud.getYScaled(this.height);
+        int x = (int) hud.getXScaled(UResolution.getScaledWidth());
+        int y = (int) hud.getYScaled(UResolution.getScaledHeight());
 
         hud.drawExampleAll(x, y, hud.scale, true);
         int color = new Color(215, 224, 235).getRGB();
@@ -90,12 +91,12 @@ public class HudGui extends UScreen {
 
         if (newX < 0)
             newX = 0;
-        else if (newX + width > this.width)
-            newX = this.width - width;
+        else if (newX + width > UResolution.getScaledWidth())
+            newX = UResolution.getScaledWidth() - width;
         if (newY < 0)
             newY = 0;
-        else if (newY + height > this.height)
-            newY = this.height - height;
+        else if (newY + height > UResolution.getScaledHeight())
+            newY = UResolution.getScaledHeight() - height;
 
         if (snap) {
             float snapX = getXSnapping(newX, false);
@@ -106,14 +107,14 @@ public class HudGui extends UScreen {
             }
         }
 
-        if (newX / this.width <= 0.5)
-            editingHud.xUnscaled = newX / (double) this.width;
+        if (newX / UResolution.getScaledWidth() <= 0.5)
+            editingHud.xUnscaled = newX / (double) UResolution.getScaledWidth();
         else
-            editingHud.xUnscaled = (newX + width) / (double) this.width;
-        if (newY / this.height <= 0.5)
-            editingHud.yUnscaled = newY / (double) this.height;
+            editingHud.xUnscaled = (newX + width) / (double) UResolution.getScaledWidth();
+        if (newY / UResolution.getScaledHeight() <= 0.5)
+            editingHud.yUnscaled = newY / (double) UResolution.getScaledHeight();
         else
-            editingHud.yUnscaled = (newY + height) / (double) this.height;
+            editingHud.yUnscaled = (newY + height) / (double) UResolution.getScaledHeight();
     }
 
     private float getXSnapping(float pos, boolean rightOnly) {
@@ -124,7 +125,7 @@ public class HudGui extends UScreen {
             verticalLines.addAll(getXSnappingHud(hud));
         }
         getSpaceSnapping(verticalLines);
-        verticalLines.add(this.width / 2f);
+        verticalLines.add(UResolution.getScaledWidth() / 2f);
         float smallestDiff = -1;
         float smallestLine = 0;
         float smallestOffset = 0;
@@ -139,7 +140,7 @@ public class HudGui extends UScreen {
         }
         if (smallestDiff != -1) {
             float finalSmallestLine = smallestLine;
-            RenderManager.setupAndDraw(true, (vg) -> RenderManager.drawLine(vg, finalSmallestLine, 0, finalSmallestLine, this.height, 1, new Color(255, 255, 255).getRGB()));
+            RenderManager.setupAndDraw(true, (vg) -> RenderManager.drawLine(vg, finalSmallestLine, 0, finalSmallestLine, UResolution.getScaledHeight(), 1, new Color(255, 255, 255).getRGB()));
             return smallestLine - smallestOffset;
         }
         return pos;
@@ -149,7 +150,7 @@ public class HudGui extends UScreen {
         ArrayList<Float> verticalLines = new ArrayList<>();
         if (hud == editingHud) return verticalLines;
         int hudWidth = (int) (hud.getWidth(hud.scale) + hud.paddingX * hud.scale);
-        int hudX = (int) hud.getXScaled(this.width);
+        int hudX = (int) hud.getXScaled(UResolution.getScaledWidth());
         verticalLines.add((float) hudX);
         verticalLines.add((float) (hudX + hudWidth));
         return verticalLines;
@@ -163,7 +164,7 @@ public class HudGui extends UScreen {
             horizontalLines.addAll(getYSnappingHud(hud));
         }
         getSpaceSnapping(horizontalLines);
-        horizontalLines.add(this.height / 2f);
+        horizontalLines.add(UResolution.getScaledHeight() / 2f);
         float smallestDiff = -1;
         float smallestLine = 0;
         float smallestOffset = 0;
@@ -178,7 +179,7 @@ public class HudGui extends UScreen {
         }
         if (smallestDiff != -1) {
             float finalSmallestLine = smallestLine;
-            RenderManager.setupAndDraw(true, (vg) -> RenderManager.drawLine(vg, 0, finalSmallestLine, this.width, finalSmallestLine, 1, new Color(255, 255, 255).getRGB()));
+            RenderManager.setupAndDraw(true, (vg) -> RenderManager.drawLine(vg, 0, finalSmallestLine, UResolution.getScaledWidth(), finalSmallestLine, 1, new Color(255, 255, 255).getRGB()));
             return smallestLine - smallestOffset;
         }
         return pos;
@@ -188,7 +189,7 @@ public class HudGui extends UScreen {
         ArrayList<Float> horizontalLines = new ArrayList<>();
         if (hud == editingHud) return horizontalLines;
         int hudHeight = (int) (hud.getHeight(hud.scale) + hud.paddingY * hud.scale);
-        int hudY = (int) hud.getYScaled(this.height);
+        int hudY = (int) hud.getYScaled(UResolution.getScaledHeight());
         horizontalLines.add((float) hudY);
         horizontalLines.add((float) (hudY + hudHeight));
         return horizontalLines;
@@ -212,8 +213,8 @@ public class HudGui extends UScreen {
             if (editingHud != null) {
                 int width = (int) (editingHud.getWidth(editingHud.scale) + editingHud.paddingX * editingHud.scale);
                 int height = (int) (editingHud.getHeight(editingHud.scale) + editingHud.paddingY * editingHud.scale);
-                float x = editingHud.getXScaled(this.width);
-                float y = editingHud.getYScaled(this.height);
+                float x = editingHud.getXScaled(UResolution.getScaledWidth());
+                float y = editingHud.getYScaled(UResolution.getScaledHeight());
                 if (mouseX >= x + width - 3 && mouseX <= x + width + 3 && mouseY >= y + height - 3 && mouseY <= y + height + 3) {
                     isScaling = true;
                     return;
@@ -231,8 +232,8 @@ public class HudGui extends UScreen {
     private boolean mouseClickedHud(Hud hud, int mouseX, int mouseY) {
         int width = (int) (hud.getWidth(hud.scale) + hud.paddingX * hud.scale);
         int height = (int) (hud.getHeight(hud.scale) + hud.paddingY * hud.scale);
-        float x = hud.getXScaled(this.width);
-        float y = hud.getYScaled(this.height);
+        float x = hud.getXScaled(UResolution.getScaledWidth());
+        float y = hud.getYScaled(UResolution.getScaledHeight());
         if (mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= y + height) {
             editingHud = hud;
             xOffset = (int) (mouseX - x);
@@ -253,8 +254,8 @@ public class HudGui extends UScreen {
     @Override
     public void onKeyPressed(int keyCode, char typedChar, @Nullable UKeyboard.Modifiers modifiers) {
         if (editingHud != null) {
-            float x = editingHud.getXScaled(this.width);
-            float y = editingHud.getYScaled(this.height);
+            float x = editingHud.getXScaled(UResolution.getScaledWidth());
+            float y = editingHud.getYScaled(UResolution.getScaledHeight());
             if (keyCode == UKeyboard.KEY_UP) {
                 setPosition(x, y - 1, false);
             } else if (keyCode == UKeyboard.KEY_DOWN) {

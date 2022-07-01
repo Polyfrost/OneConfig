@@ -4,11 +4,11 @@ import cc.polyfrost.oneconfig.config.annotations.Text;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
 import cc.polyfrost.oneconfig.gui.elements.text.TextInputField;
+import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.utils.InputUtils;
-import org.lwjgl.input.Mouse;
 
 import java.lang.reflect.Field;
 
@@ -50,7 +50,7 @@ public class ConfigTextBox extends BasicOption {
             boolean hovered = InputUtils.isAreaHovered(x + 967, y + 7, 18, 18) && isEnabled();
             int color = hovered ? Colors.WHITE : Colors.WHITE_80;
             if (hovered && InputUtils.isClicked()) textField.setPassword(!textField.getPassword());
-            if (hovered && Mouse.isButtonDown(0)) RenderManager.setAlpha(vg, 0.5f);
+            if (hovered && Platform.getMousePlatform().isButtonDown(0)) RenderManager.setAlpha(vg, 0.5f);
             RenderManager.drawSvg(vg, icon, x + 967, y + 7, 18, 18, color);
         }
         RenderManager.setAlpha(vg, 1f);

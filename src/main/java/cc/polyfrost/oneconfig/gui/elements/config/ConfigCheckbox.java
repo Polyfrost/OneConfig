@@ -7,13 +7,13 @@ import cc.polyfrost.oneconfig.gui.animations.Animation;
 import cc.polyfrost.oneconfig.gui.animations.ColorAnimation;
 import cc.polyfrost.oneconfig.gui.animations.DummyAnimation;
 import cc.polyfrost.oneconfig.gui.animations.EaseInOutQuad;
+import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 import cc.polyfrost.oneconfig.utils.color.ColorUtils;
-import org.lwjgl.input.Mouse;
 
 import java.awt.*;
 import java.lang.reflect.Field;
@@ -57,7 +57,7 @@ public class ConfigCheckbox extends BasicOption {
 
         RenderManager.drawText(vg, name, x + 32, y + 17, Colors.WHITE_90, 14f, Fonts.MEDIUM);
 
-        RenderManager.drawRoundedRect(vg, x, y + 4, 24, 24, color.getColor(hover, hover && Mouse.isButtonDown(0)), 6f);
+        RenderManager.drawRoundedRect(vg, x, y + 4, 24, 24, color.getColor(hover, hover && Platform.getMousePlatform().isButtonDown(0)), 6f);
         RenderManager.drawHollowRoundRect(vg, x, y + 4, 23.5f, 23.5f, Colors.GRAY_300, 6f, 1f);        // the 0.5f is to make it look better ok
 
         RenderManager.drawRoundedRect(vg, x, y + 4, 24, 24, ColorUtils.setAlpha(Colors.PRIMARY_500, (int) (percentOn * 255)), 6f);

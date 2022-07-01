@@ -8,6 +8,8 @@ pluginManagement {
     plugins {
         val egtVersion = "0.1.10"
         id("gg.essential.multi-version.root") version egtVersion
+        id("gg.essential.defaults.repo") version egtVersion
+        id("gg.essential.defaults.java") version egtVersion
     }
     resolutionStrategy {
         eachPlugin {
@@ -21,15 +23,21 @@ pluginManagement {
 val mod_name: String by settings
 
 rootProject.name = mod_name
-rootProject.buildFileName = "root.gradle.kts"
+
+include(":lwjgl")
+
+include(":platform")
+project(":platform").apply {
+    projectDir = file("versions/")
+    buildFileName = "root.gradle.kts"
+}
 
 listOf(
     "1.8.9-forge"
 ).forEach { version ->
-    include(":$version")
-    project(":$version").apply {
+    include(":platform:$version")
+    project(":platform:$version").apply {
         projectDir = file("versions/$version")
-        buildFileName = "../../build.gradle.kts"
+        buildFileName = "../build.gradle.kts"
     }
 }
-include(":lwjgl")

@@ -1,11 +1,10 @@
 package cc.polyfrost.oneconfig.events.event;
 
-import net.minecraft.network.Packet;
 
 public class SendPacketEvent extends CancellableEvent {
-    public final Packet<?> packet;
+    public final Object packet;
 
-    public SendPacketEvent(Packet<?> packet) {
+    public SendPacketEvent(Object packet) {
         this.packet = packet;
     }
 }

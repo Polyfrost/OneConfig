@@ -1,11 +1,9 @@
 package cc.polyfrost.oneconfig.events.event;
 
-import net.minecraft.network.Packet;
-
 public class ReceivePacketEvent extends CancellableEvent {
-    public final Packet<?> packet;
+    public final Object packet;
 
-    public ReceivePacketEvent(Packet<?> packet) {
+    public ReceivePacketEvent(Object packet) {
         this.packet = packet;
     }
 }

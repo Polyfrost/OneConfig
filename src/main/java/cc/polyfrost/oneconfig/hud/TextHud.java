@@ -9,6 +9,7 @@ import cc.polyfrost.oneconfig.events.event.TickEvent;
 import cc.polyfrost.oneconfig.internal.hud.HudCore;
 import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
 import cc.polyfrost.oneconfig.libs.universal.UMinecraft;
+import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 
 import java.util.ArrayList;
@@ -83,7 +84,7 @@ public abstract class TextHud extends Hud {
         width = 0;
         for (String line : lines) {
             RenderManager.drawScaledString(line, x, textY, color.getRGB(), RenderManager.TextType.toType(textType), scale);
-            width = Math.max(width, UMinecraft.getFontRenderer().getStringWidth(line));
+            width = Math.max(width, Platform.getGLPlatform().getStringWidth(line));
             textY += 12 * scale;
         }
         height = (int) ((textY - y) / scale - 3);

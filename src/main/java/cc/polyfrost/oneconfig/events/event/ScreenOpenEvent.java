@@ -1,6 +1,5 @@
 package cc.polyfrost.oneconfig.events.event;
 
-import net.minecraft.client.gui.GuiScreen;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -9,9 +8,9 @@ import org.jetbrains.annotations.Nullable;
  */
 public class ScreenOpenEvent extends CancellableEvent {
     @Nullable
-    public final GuiScreen screen;
+    public final Object screen;
 
-    public ScreenOpenEvent(@Nullable GuiScreen screen) {
+    public ScreenOpenEvent(@Nullable Object screen) {
         this.screen = screen;
     }
 }

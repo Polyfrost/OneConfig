@@ -2,9 +2,8 @@ package cc.polyfrost.oneconfig.utils;
 
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.libs.universal.UResolution;
+import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.scissor.Scissor;
-import cc.polyfrost.oneconfig.renderer.scissor.ScissorManager;
-import org.lwjgl.input.Mouse;
 
 import java.util.ArrayList;
 
@@ -74,7 +73,7 @@ public final class InputUtils {
      * @return true if the mouse is clicked, false if not
      */
     public static boolean isClicked(boolean ignoreBlock) {
-        return OneConfigGui.INSTANCE != null && OneConfigGui.INSTANCE.mouseDown && !Mouse.isButtonDown(0) && (ignoreBlock || blockScissors.size() == 0 || !shouldBlock(mouseX(), mouseY()));
+        return OneConfigGui.INSTANCE != null && OneConfigGui.INSTANCE.mouseDown && !Platform.getMousePlatform().isButtonDown(0) && (ignoreBlock || blockScissors.size() == 0 || !shouldBlock(mouseX(), mouseY()));
     }
 
     /**
@@ -97,8 +96,8 @@ public final class InputUtils {
      * @return the current mouse X position
      */
     public static int mouseX() {
-        if (OneConfigGui.INSTANCE == null) return Mouse.getX();
-        return (int) (Mouse.getX() / OneConfigGui.INSTANCE.getScaleFactor());
+        if (OneConfigGui.INSTANCE == null) return Platform.getMousePlatform().getMouseX();
+        return (int) (Platform.getMousePlatform().getMouseX() / OneConfigGui.INSTANCE.getScaleFactor());
     }
 
     /**
@@ -111,8 +110,8 @@ public final class InputUtils {
      * @return the current mouse Y position
      */
     public static int mouseY() {
-        if (OneConfigGui.INSTANCE == null) return UResolution.getWindowHeight() - Math.abs(Mouse.getY());
-        return (int) ((UResolution.getWindowHeight() - Math.abs(Mouse.getY())) / OneConfigGui.INSTANCE.getScaleFactor());
+        if (OneConfigGui.INSTANCE == null) return UResolution.getWindowHeight() - Math.abs(Platform.getMousePlatform().getMouseY());
+        return (int) ((UResolution.getWindowHeight() - Math.abs(Platform.getMousePlatform().getMouseY())) / OneConfigGui.INSTANCE.getScaleFactor());
     }
 
     /**

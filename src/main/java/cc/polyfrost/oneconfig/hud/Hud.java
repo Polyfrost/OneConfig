@@ -1,13 +1,11 @@
 package cc.polyfrost.oneconfig.hud;
 
+import cc.polyfrost.oneconfig.config.Config;
 import cc.polyfrost.oneconfig.config.annotations.Switch;
 import cc.polyfrost.oneconfig.config.core.OneColor;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
-import cc.polyfrost.oneconfig.libs.universal.UMinecraft;
-import cc.polyfrost.oneconfig.libs.universal.UScreen;
+import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
-import cc.polyfrost.oneconfig.config.Config;
-import net.minecraft.client.gui.GuiChat;
 
 /**
  * Represents a HUD element in OneConfig.
@@ -175,9 +173,9 @@ public abstract class Hud {
      * @param background If background should be drawn or not
      */
     public void drawAll(float x, float y, float scale, boolean background) {
-        if (!showInGuis && UScreen.getCurrentScreen() != null && !(UScreen.getCurrentScreen() instanceof OneConfigGui)) return;
-        if (!showInChat && UScreen.getCurrentScreen() instanceof GuiChat) return;
-        if (!showInDebug && UMinecraft.getSettings().showDebugInfo) return;
+        if (!showInGuis && Platform.getGuiPlatform().getCurrentScreen() != null && !(Platform.getGuiPlatform().getCurrentScreen() instanceof OneConfigGui)) return;
+        if (!showInChat && Platform.getGuiPlatform().isInChat()) return;
+        if (!showInDebug && Platform.getGuiPlatform().isInDebug()) return;
         if (background && drawBackground()) drawBackground(x, y, getWidth(scale), getHeight(scale), scale);
         draw((int) (x + paddingX * scale / 2f), (int) (y + paddingY * scale / 2f), scale);
     }
