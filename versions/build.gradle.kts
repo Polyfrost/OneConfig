@@ -268,6 +268,9 @@ tasks {
         doFirst {
             archiveClassifier.set("sources")
         }
+        doLast {
+            archiveClassifier.set("sources")
+        }
     }
     withType<RemapSourcesJarTask> {
         enabled = false
