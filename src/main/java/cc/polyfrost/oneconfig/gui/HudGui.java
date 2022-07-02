@@ -37,11 +37,11 @@ public class HudGui extends UScreen implements GuiPause {
         }
 
         for (Hud hud : HudCore.huds) {
-            if (hud.enabled) processHud(hud, mouseX);
+            if (hud.enabled) processHud(matrixStack, hud, mouseX);
         }
     }
 
-    private void processHud(Hud hud, int mouseX) {
+    private void processHud(UMatrixStack matrixStack, Hud hud, int mouseX) {
         if (hud == editingHud && isScaling) {
             float xFloat = hud.getXScaled(UResolution.getScaledWidth());
             float yFloat = hud.getYScaled(UResolution.getScaledHeight());
@@ -65,7 +65,7 @@ public class HudGui extends UScreen implements GuiPause {
         int x = (int) hud.getXScaled(UResolution.getScaledWidth());
         int y = (int) hud.getYScaled(UResolution.getScaledHeight());
 
-        hud.drawExampleAll(x, y, hud.scale, true);
+        hud.drawExampleAll(matrixStack, x, y, hud.scale, true);
         int color = new Color(215, 224, 235).getRGB();
         if (editingHud == hud) {
             color = new Color(43, 159, 235).getRGB();

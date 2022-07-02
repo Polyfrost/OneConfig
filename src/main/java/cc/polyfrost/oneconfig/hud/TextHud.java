@@ -8,7 +8,7 @@ import cc.polyfrost.oneconfig.events.event.Stage;
 import cc.polyfrost.oneconfig.events.event.TickEvent;
 import cc.polyfrost.oneconfig.internal.hud.HudCore;
 import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
-import cc.polyfrost.oneconfig.libs.universal.UMinecraft;
+import cc.polyfrost.oneconfig.libs.universal.UMatrixStack;
 import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 
@@ -75,7 +75,7 @@ public abstract class TextHud extends Hud {
     }
 
     @Override
-    public void draw(int x, int y, float scale) {
+    public void draw(UMatrixStack matrices, int x, int y, float scale) {
         if (!HudCore.editing) getLinesFrequent(lines);
         else getExampleLinesFrequent(lines);
         if (lines == null) return;

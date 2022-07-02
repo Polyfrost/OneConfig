@@ -16,7 +16,7 @@ public class HudCore {
         if (editing) return;
         for (Hud hud : huds) {
             if (hud.enabled)
-                hud.drawAll(hud.getXScaled(UResolution.getScaledWidth()), hud.getYScaled(UResolution.getScaledHeight()), hud.scale, true);
+                hud.drawAll(event.matrices, hud.getXScaled(UResolution.getScaledWidth()), hud.getYScaled(UResolution.getScaledHeight()), hud.scale, true);
         }
     }
 }

@@ -390,7 +390,8 @@ public class cc/polyfrost/oneconfig/events/event/ChatReceiveEvent : cc/polyfrost
 
 public class cc/polyfrost/oneconfig/events/event/HudRenderEvent {
 	public final field deltaTicks F
-	public fun <init> (F)V
+	public final field matrices Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;
+	public fun <init> (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;F)V
 }
 
 public class cc/polyfrost/oneconfig/events/event/InitializationEvent {
@@ -877,11 +878,11 @@ public abstract class cc/polyfrost/oneconfig/hud/Hud {
 	public fun <init> (ZII)V
 	public fun <init> (ZIIFZIIILcc/polyfrost/oneconfig/config/core/OneColor;ZFLcc/polyfrost/oneconfig/config/core/OneColor;)V
 	public fun <init> (ZIII)V
-	public abstract fun draw (IIF)V
-	public fun drawAll (FFFZ)V
+	public abstract fun draw (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;IIF)V
+	public fun drawAll (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;FFFZ)V
 	public fun drawBackground ()Z
-	public fun drawExample (IIF)V
-	public fun drawExampleAll (FFFZ)V
+	public fun drawExample (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;IIF)V
+	public fun drawExampleAll (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;FFFZ)V
 	public fun getExampleHeight (F)I
 	public fun getExampleWidth (F)I
 	public abstract fun getHeight (F)I
@@ -913,7 +914,7 @@ public abstract class cc/polyfrost/oneconfig/hud/TextHud : cc/polyfrost/oneconfi
 	public field textType I
 	public fun <init> (Z)V
 	public fun <init> (ZII)V
-	public fun draw (IIF)V
+	public fun draw (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;IIF)V
 	protected fun getExampleLines (Ljava/util/List;)V
 	protected fun getExampleLinesFrequent (Ljava/util/List;)V
 	public fun getHeight (F)I

@@ -4,6 +4,7 @@ import cc.polyfrost.oneconfig.config.Config;
 import cc.polyfrost.oneconfig.config.annotations.Switch;
 import cc.polyfrost.oneconfig.config.core.OneColor;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
+import cc.polyfrost.oneconfig.libs.universal.UMatrixStack;
 import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 
@@ -14,7 +15,7 @@ import cc.polyfrost.oneconfig.renderer.RenderManager;
  * If you simply want to display text, extend {@link TextHud} or {@link SingleTextHud},
  * whichever applies to the use case. Then, override the required methods.
  * <p>
- * If you want to display something else, extend this class and override {@link Hud#getWidth(float)}, {@link Hud#getHeight(float)}, and {@link Hud#draw(int, int, float)} with the width, height, and the drawing code respectively.
+ * If you want to display something else, extend this class and override {@link Hud#getWidth(float)}, {@link Hud#getHeight(float)}, and {@link Hud#draw(UMatrixStack, int, int, float)} with the width, height, and the drawing code respectively.
  * </p>
  * <p>
  * It should also be noted that additional options to the HUD can be added simply by declaring them.
@@ -115,7 +116,7 @@ public abstract class Hud {
      * @param y     Top left y-coordinate of the hud
      * @param scale Scale of the hud
      */
-    public abstract void draw(int x, int y, float scale);
+    public abstract void draw(UMatrixStack matrices, int x, int y, float scale);
 
     /**
      * Function called when drawing the example version of the hud.
@@ -125,8 +126,8 @@ public abstract class Hud {
      * @param y     Top left y-coordinate of the hud
      * @param scale Scale of the hud
      */
-    public void drawExample(int x, int y, float scale) {
-        draw(x, y, scale);
+    public void drawExample(UMatrixStack matrices, int x, int y, float scale) {
+        draw(matrices, x, y, scale);
     }
 
     /**
@@ -172,12 +173,12 @@ public abstract class Hud {
      * @param scale      Scale of the hud
      * @param background If background should be drawn or not
      */
-    public void drawAll(float x, float y, float scale, boolean background) {
+    public void drawAll(UMatrixStack matrices, float x, float y, float scale, boolean background) {
         if (!showInGuis && Platform.getGuiPlatform().getCurrentScreen() != null && !(Platform.getGuiPlatform().getCurrentScreen() instanceof OneConfigGui)) return;
         if (!showInChat && Platform.getGuiPlatform().isInChat()) return;
         if (!showInDebug && Platform.getGuiPlatform().isInDebug()) return;
         if (background && drawBackground()) drawBackground(x, y, getWidth(scale), getHeight(scale), scale);
-        draw((int) (x + paddingX * scale / 2f), (int) (y + paddingY * scale / 2f), scale);
+        draw(matrices, (int) (x + paddingX * scale / 2f), (int) (y + paddingY * scale / 2f), scale);
     }
 
     /**
@@ -188,9 +189,9 @@ public abstract class Hud {
      * @param scale      Scale of the hud
      * @param background If background should be drawn or not
      */
-    public void drawExampleAll(float x, float y, float scale, boolean background) {
+    public void drawExampleAll(UMatrixStack matrices, float x, float y, float scale, boolean background) {
         if (background) drawBackground(x, y, getWidth(scale), getHeight(scale), scale);
-        drawExample((int) (x + paddingX * scale / 2f), (int) (y + paddingY * scale / 2f), scale);
+        drawExample(matrices, (int) (x + paddingX * scale / 2f), (int) (y + paddingY * scale / 2f), scale);
     }
 
     /**
