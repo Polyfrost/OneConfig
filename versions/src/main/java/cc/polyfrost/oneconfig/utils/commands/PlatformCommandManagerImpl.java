@@ -39,7 +39,13 @@ public class PlatformCommandManagerImpl implements PlatformCommandManager {
             }
 
             @Override
-            public void processCommand(ICommandSender sender, String[] args) {
+            public void
+                    //#if MC<=10809
+                    processCommand(ICommandSender sender, String[] args)
+                    //#else
+                    //$$ execute(net.minecraft.server.MinecraftServer server, ICommandSender sender, String[] args)
+                    //#endif
+            {
                 handleCommand(root, annotation, args);
             }
 
@@ -49,7 +55,13 @@ public class PlatformCommandManagerImpl implements PlatformCommandManager {
             }
 
             @Override
-            public List<String> addTabCompletionOptions(ICommandSender sender, String[] args, BlockPos pos) {
+            public List<String>
+                    //#if MC<=10809
+                    addTabCompletionOptions(ICommandSender sender, String[] args, BlockPos pos)
+                    //#else
+                    //$$ getTabCompletions(net.minecraft.server.MinecraftServer server, ICommandSender sender, String[] args, BlockPos targetPos)
+                    //#endif
+            {
                 return handleTabCompletion(root, annotation, args);
             }
         });
