@@ -7,6 +7,7 @@ public class cc/polyfrost/oneconfig/config/Config {
 	protected final field nonProfileSpecificGson Lcom/google/gson/Gson;
 	public final field optionNames Ljava/util/HashMap;
 	public fun <init> (Lcc/polyfrost/oneconfig/config/data/Mod;Ljava/lang/String;)V
+	public fun <init> (Lcc/polyfrost/oneconfig/config/data/Mod;Ljava/lang/String;Z)V
 	protected fun addDependency (Ljava/lang/String;Ljava/lang/String;)V
 	protected fun addDependency (Ljava/lang/String;Ljava/util/function/Supplier;)V
 	protected fun addDependency (Ljava/lang/String;Z)V
@@ -1132,45 +1133,6 @@ public class cc/polyfrost/oneconfig/renderer/scissor/ScissorManager {
 	public static fun clearScissors (J)V
 	public static fun resetScissor (JLcc/polyfrost/oneconfig/renderer/scissor/Scissor;)V
 	public static fun scissor (JFFFF)Lcc/polyfrost/oneconfig/renderer/scissor/Scissor;
-}
-
-public class cc/polyfrost/oneconfig/test/ButtonTestPage_Test : cc/polyfrost/oneconfig/gui/pages/Page {
-	public fun <init> ()V
-	public fun draw (JII)V
-}
-
-public class cc/polyfrost/oneconfig/test/TestCommand_Test {
-	public fun <init> ()V
-}
-
-public class cc/polyfrost/oneconfig/test/TestConfig_Test : cc/polyfrost/oneconfig/config/Config {
-	public field hud Lcc/polyfrost/oneconfig/test/TestHud_Test;
-	public field multilineHud Lcc/polyfrost/oneconfig/test/TestMultilineHud_Test;
-	public static field testCheckBox Z
-	public field testPage Lcc/polyfrost/oneconfig/test/TestPage_Test;
-	public field testPage2 Lcc/polyfrost/oneconfig/test/TestPage_Test;
-	public field testSwitch Z
-	public fun <init> ()V
-}
-
-public class cc/polyfrost/oneconfig/test/TestHud_Test : cc/polyfrost/oneconfig/hud/SingleTextHud {
-	public field yes Z
-	public fun <init> ()V
-	public fun getText ()Ljava/lang/String;
-}
-
-public class cc/polyfrost/oneconfig/test/TestMultilineHud_Test : cc/polyfrost/oneconfig/hud/TextHud {
-	public fun <init> ()V
-	protected fun getLines (Ljava/util/List;)V
-}
-
-public class cc/polyfrost/oneconfig/test/TestNanoVGGui_Test : cc/polyfrost/oneconfig/libs/universal/UScreen {
-	public fun <init> ()V
-	public fun onDrawScreen (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;IIF)V
-}
-
-public class cc/polyfrost/oneconfig/test/TestPage_Test {
-	public fun <init> ()V
 }
 
 public final class cc/polyfrost/oneconfig/utils/IOUtils {

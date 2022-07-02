@@ -42,15 +42,25 @@ public class Config {
     transient protected final Gson nonProfileSpecificGson = new GsonBuilder().setExclusionStrategies(new NonProfileSpecificExclusionStrategy()).excludeFieldsWithModifiers(Modifier.TRANSIENT).setPrettyPrinting().create();
     transient public Mod mod;
     public transient boolean hasBeenInitialized = false;
-    public boolean enabled = true;
+    public boolean enabled;
+
+    /**
+     * @param modData    information about the mod
+     * @param configFile file where config is stored
+     * @param enabled   whether the mod is enabled or not
+     */
+    public Config(Mod modData, String configFile, boolean enabled) {
+        this.configFile = configFile;
+        this.mod = modData;
+        this.enabled = enabled;
+    }
 
     /**
      * @param modData    information about the mod
      * @param configFile file where config is stored
      */
     public Config(Mod modData, String configFile) {
-        this.configFile = configFile;
-        this.mod = modData;
+        this(modData, configFile, true);
     }
 
     public void initialize() {

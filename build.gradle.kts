@@ -147,4 +147,5 @@ apiValidation {
     ignoredProjects.add("lwjgl")
     ignoredPackages.add("cc.polyfrost.oneconfig.libs")
     ignoredPackages.add("cc.polyfrost.oneconfig.internal")
+    ignoredPackages.add("cc.polyfrost.oneconfig.test")
 }
