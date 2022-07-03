@@ -1,7 +1,4 @@
-net.minecraft.util.IChatComponent getUnformattedText() getUnformattedComponentText()
-net.minecraft.util.IChatComponent net.minecraft.util.text.ITextComponent
-net.minecraft.util.BlockPos net.minecraft.util.math.BlockPos
-net.minecraft.client.renderer.WorldRenderer net.minecraft.client.renderer.BufferBuilder
+net.minecraft.util.text.ITextComponent getUnformattedText() getUnformattedComponentText()
 net.minecraft.network.Packet net.minecraft.network.IPacket
 net.minecraft.client.gui.GuiScreen net.minecraft.client.gui.screen.Screen
 net.minecraft.client.gui.GuiChat net.minecraft.client.gui.screen.ChatScreen
