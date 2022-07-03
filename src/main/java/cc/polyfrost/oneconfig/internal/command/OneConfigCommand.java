@@ -23,7 +23,7 @@ public class OneConfigCommand {
     private static class HUDSubCommand {
         @Main
         private static void main() {
-            GuiUtils.displayScreen(new HudGui());
+            GuiUtils.displayScreen(new HudGui(false));
         }
     }
 

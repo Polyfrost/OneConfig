@@ -32,6 +32,7 @@ import java.nio.file.Files;
 import java.util.*;
 import java.util.function.Supplier;
 
+@SuppressWarnings({"unused", "ResultOfMethodCallIgnored"})
 public class Config {
     public final transient HashMap<String, BasicOption> optionNames = new HashMap<>();
     transient protected final String configFile;
@@ -302,5 +303,21 @@ public class Config {
     protected void registerKeyBind(OneKeyBind keyBind, Runnable runnable) {
         keyBind.setRunnable(runnable);
         KeyBindHandler.INSTANCE.addKeyBind(keyBind);
+    }
+
+    /**
+     * Reset this config file to its defaults.
+     * @return true if successful, false if not.
+     * @deprecated <b>not implemented yet.</b>
+     */
+    @Deprecated
+    public boolean reset() {
+        try {
+            // TODO
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+        return true;
     }
 }

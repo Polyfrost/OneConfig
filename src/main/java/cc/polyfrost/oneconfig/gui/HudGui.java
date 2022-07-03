@@ -8,6 +8,7 @@ import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
 import cc.polyfrost.oneconfig.libs.universal.UMatrixStack;
 import cc.polyfrost.oneconfig.libs.universal.UScreen;
+import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,8 +19,14 @@ public class HudGui extends UScreen implements GuiPause {
     private Hud editingHud;
     private boolean isDragging;
     private boolean isScaling;
+    private final boolean openOneConfigOnClose;
     private int xOffset;
     private int yOffset;
+
+    public HudGui(boolean openOneConfigOnClose) {
+        super();
+        this.openOneConfigOnClose = openOneConfigOnClose;
+    }
 
     @Override
     public void initScreen(int width, int height) {
@@ -275,6 +282,7 @@ public class HudGui extends UScreen implements GuiPause {
         HudCore.editing = false;
         UKeyboard.allowRepeatEvents(false);
         ConfigCore.saveAll();
+        if(openOneConfigOnClose) GuiUtils.displayScreen(OneConfigGui.create());
     }
 
     @Override
