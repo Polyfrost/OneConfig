@@ -47,21 +47,26 @@ public class ConfigUtils {
 
     public static ArrayList<BasicOption> getClassOptions(Object object) {
         ArrayList<BasicOption> options = new ArrayList<>();
-        ArrayList<Field> fields = new ArrayList<>(Arrays.asList(object.getClass().getDeclaredFields()));
-        Class<?> parentClass = object.getClass();
-        Class<?> clazz = object.getClass();
-        while (true) {
-            clazz = clazz.getSuperclass();
-            if (clazz != null && clazz != parentClass) fields.addAll(Arrays.asList(clazz.getDeclaredFields()));
-            else break;
-            parentClass = clazz;
-        }
+        ArrayList<Field> fields = getClassFields(object.getClass());
         for (Field field : fields) {
             Option option = findAnnotation(field, Option.class);
             if (option == null) continue;
             options.add(getOption(option, field, object));
         }
         return options;
+    }
+
+    public static ArrayList<Field> getClassFields(Class<?> object) {
+        ArrayList<Field> fields = new ArrayList<>(Arrays.asList(object.getDeclaredFields()));
+        Class<?> parentClass = object;
+        Class<?> clazz = object;
+        while (true) {
+            clazz = clazz.getSuperclass();
+            if (clazz != null && clazz != parentClass) fields.addAll(Arrays.asList(clazz.getDeclaredFields()));
+            else break;
+            parentClass = clazz;
+        }
+        return fields;
     }
 
     public static BasicOption addOptionToPage(OptionPage page, Option option, Field field, Object instance, @Nullable Migrator migrator) {

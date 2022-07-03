@@ -162,6 +162,7 @@ public class cc/polyfrost/oneconfig/config/core/ConfigUtils {
 	public static fun findAnnotation (Lcom/google/gson/FieldAttributes;Ljava/lang/Class;)Ljava/lang/annotation/Annotation;
 	public static fun findAnnotation (Ljava/lang/Class;Ljava/lang/Class;)Ljava/lang/annotation/Annotation;
 	public static fun findAnnotation (Ljava/lang/reflect/Field;Ljava/lang/Class;)Ljava/lang/annotation/Annotation;
+	public static fun getClassFields (Ljava/lang/Class;)Ljava/util/ArrayList;
 	public static fun getClassOptions (Ljava/lang/Object;)Ljava/util/ArrayList;
 	public static fun getField (Ljava/lang/reflect/Field;Ljava/lang/Object;)Ljava/lang/Object;
 	public static fun getOption (Lcc/polyfrost/oneconfig/internal/config/annotations/Option;Ljava/lang/reflect/Field;Ljava/lang/Object;)Lcc/polyfrost/oneconfig/config/elements/BasicOption;

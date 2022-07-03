@@ -29,10 +29,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Supplier;
 
 public class Config {
@@ -166,6 +163,7 @@ public class Config {
      */
     protected void deserializePart(JsonObject json, Object instance) {
         Class<?> clazz = instance.getClass();
+        ArrayList<Field> fields = ConfigUtils.getClassFields(clazz);
         for (Map.Entry<String, JsonElement> element : json.entrySet()) {
             String name = element.getKey();
             JsonElement value = element.getValue();
@@ -177,12 +175,23 @@ public class Config {
                 }
             }
             try {
-                Field field = clazz.getField(name);
-                TypeAdapter<?> adapter = gson.getAdapter(field.getType());
-                Object object = adapter.fromJsonTree(value);
-                field.setAccessible(true);
-                field.set(instance, object);
+                Field field = null;
+                for (Field f : fields) {
+                    if (f.getName().equals(name)) {
+                        field = f;
+                        break;
+                    }
+                }
+                if (field != null) {
+                    TypeAdapter<?> adapter = gson.getAdapter(field.getType());
+                    Object object = adapter.fromJsonTree(value);
+                    field.setAccessible(true);
+                    field.set(instance, object);
+                } else {
+                    System.out.println("Could not deserialize " + name + " in class " + clazz.getSimpleName());
+                }
             } catch (Exception ignored) {
+                System.out.println("Could not deserialize " + name + " in class " + clazz.getSimpleName());
             }
         }
     }
