@@ -27,6 +27,7 @@ public class PlatformCommandManagerImpl implements PlatformCommandManager {
 
     @Override
     public void createCommand(CommandManager.InternalCommand root, Command annotation) {
+        //#if MC<=11202
         ClientCommandHandler.instance.registerCommand(new CommandBase() {
             @Override
             public String getCommandName() {
@@ -65,6 +66,8 @@ public class PlatformCommandManagerImpl implements PlatformCommandManager {
                 return handleTabCompletion(root, annotation, args);
             }
         });
+        //#else
+        //#endif
     }
 
     private void handleCommand(CommandManager.InternalCommand root, Command annotation, String[] args) {

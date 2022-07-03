@@ -65,7 +65,7 @@ public class BlurHandlerImpl implements BlurHandler {
         // Why is this being computed every tick? Surely there is a better way?
         // This needs to be optimized.
         try {
-            final List<Shader> listShaders = ((ShaderGroupAccessor) Minecraft.getMinecraft().entityRenderer.getShaderGroup()).getListShaders();
+            final List<Shader> listShaders = ((ShaderGroupAccessor) UMinecraft.getMinecraft().entityRenderer.getShaderGroup()).getListShaders();
 
             // Should not happen. Something bad happened.
             if (listShaders == null) {

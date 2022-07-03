@@ -22,7 +22,11 @@ import java.util.ServiceLoader;
 /**
  * The main class of OneConfig.
  */
+//#if MC<=11202
 @net.minecraftforge.fml.common.Mod(modid = "@ID@", name = "@NAME@", version = "@VER@")
+//#else
+//$$ @net.minecraftforge.fml.common.Mod("@ID@")
+//#endif
 public class OneConfig {
 
     public OneConfig() {

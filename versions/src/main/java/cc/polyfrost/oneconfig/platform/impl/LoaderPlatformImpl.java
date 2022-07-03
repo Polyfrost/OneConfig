@@ -21,6 +21,10 @@ public class LoaderPlatformImpl implements LoaderPlatform {
         ModContainer container = Loader.instance().activeModContainer();
         if (container == null)
             return null;
+        //#if MC<=11202
         return new ActiveMod(container.getName(), container.getModId(), container.getVersion());
+        //#else
+        //$$ return new ActiveMod(container.getModInfo().getDisplayName(), container.getModId(), container.getModInfo().getVersion().getQualifier());
+        //#endif
     }
 }

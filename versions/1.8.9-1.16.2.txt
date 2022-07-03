@@ -1,0 +1,19 @@
+net.minecraft.util.IChatComponent getUnformattedText() getUnformattedComponentText()
+net.minecraft.util.IChatComponent net.minecraft.util.text.ITextComponent
+net.minecraft.util.BlockPos net.minecraft.util.math.BlockPos
+net.minecraft.client.renderer.WorldRenderer net.minecraft.client.renderer.BufferBuilder
+net.minecraft.network.Packet net.minecraft.network.IPacket
+net.minecraft.client.gui.GuiScreen net.minecraft.client.gui.screen.Screen
+net.minecraft.client.gui.GuiChat net.minecraft.client.gui.screen.ChatScreen
+net.minecraft.client.Minecraft getMinecraft() getInstance()
+net.minecraft.client.Minecraft isCallingFromMinecraftThread() isOnExecutionThread()
+net.minecraft.client.entity.EntityPlayerSP getClientBrand() getServerBrand()
+net.minecraft.client.entity.EntityPlayerSP net.minecraft.client.entity.player.ClientPlayerEntity
+net.minecraft.launchwrapper.IClassTransformer transform() transformClassBytes()
+net.minecraft.launchwrapper.IClassTransformer org.spongepowered.asm.service.ILegacyClassTransformer
+net.minecraft.client.Minecraft entityRenderer gameRenderer
+net.minecraftforge.fml.common.event.FMLInitializationEvent net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent
+net.minecraft.client.shader.ShaderUniform net.minecraft.client.shader.ShaderDefault
+net.minecraftforge.fml.common.Loader instance() get()
+net.minecraftforge.fml.common.Loader net.minecraftforge.fml.ModLoadingContext
+net.minecraftforge.fml.common.ModContainer net.minecraftforge.fml.ModContainer
