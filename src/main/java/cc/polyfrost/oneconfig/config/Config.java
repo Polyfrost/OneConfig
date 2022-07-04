@@ -38,6 +38,7 @@ public class Config {
     transient protected final String configFile;
     transient protected final Gson gson = new GsonBuilder().setExclusionStrategies(new ProfileExclusionStrategy()).excludeFieldsWithModifiers(Modifier.TRANSIENT).setPrettyPrinting().create();
     transient protected final Gson nonProfileSpecificGson = new GsonBuilder().setExclusionStrategies(new NonProfileSpecificExclusionStrategy()).excludeFieldsWithModifiers(Modifier.TRANSIENT).setPrettyPrinting().create();
+    transient protected final HashMap<Field, Object> defaults = new HashMap<>();
     transient public Mod mod;
     public transient boolean hasBeenInitialized = false;
     public boolean enabled;
@@ -45,7 +46,7 @@ public class Config {
     /**
      * @param modData    information about the mod
      * @param configFile file where config is stored
-     * @param enabled   whether the mod is enabled or not
+     * @param enabled    whether the mod is enabled or not
      */
     public Config(Mod modData, String configFile, boolean enabled) {
         this.configFile = configFile;
@@ -306,18 +307,19 @@ public class Config {
     }
 
     /**
-     * Reset this config file to its defaults.
-     * @return true if successful, false if not.
-     * @deprecated <b>not implemented yet.</b>
+     * @param field The field to get the default value from
+     * @return The default value of the given field
      */
-    @Deprecated
-    public boolean reset() {
-        try {
-            // TODO
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
+    public Object getDefault(Field field) {
+        return defaults.get(field);
+    }
+
+    /**
+     * Reset this config file to its defaults.
+     */
+    public void reset() {
+        for (BasicOption option : optionNames.values()) {
+            option.reset(this);
         }
-        return true;
     }
 }

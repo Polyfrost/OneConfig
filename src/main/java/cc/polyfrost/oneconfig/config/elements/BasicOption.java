@@ -1,5 +1,7 @@
 package cc.polyfrost.oneconfig.config.elements;
 
+import cc.polyfrost.oneconfig.config.Config;
+
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.function.Supplier;
@@ -83,6 +85,20 @@ public abstract class BasicOption {
      * @param keyCode code of key
      */
     public void keyTyped(char key, int keyCode) {
+    }
+
+    /**
+     * Reset the field to its default value
+     *
+     * @param config The config the field is in
+     */
+    public void reset(Config config) {
+        Object object = config.getDefault(field);
+        if (object == null) return;
+        try {
+            set(object);
+        } catch (IllegalAccessException ignored) {
+        }
     }
 
     /**

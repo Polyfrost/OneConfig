@@ -109,7 +109,8 @@ public class OneConfigGui extends UScreen implements GuiPause {
                 RenderManager.setAlpha(vg, 0.5f);
             } else {
                 backArrow.disable(false);
-                if (!backArrow.isHovered() || Platform.getMousePlatform().isButtonDown(0)) RenderManager.setAlpha(vg, 0.8f);
+                if (!backArrow.isHovered() || Platform.getMousePlatform().isButtonDown(0))
+                    RenderManager.setAlpha(vg, 0.8f);
             }
             RenderManager.drawSvg(vg, SVGs.CARET_LEFT, x + 246, y + 22, 28, 28);
             RenderManager.setAlpha(vg, 1f);
@@ -118,7 +119,8 @@ public class OneConfigGui extends UScreen implements GuiPause {
                 RenderManager.setAlpha(vg, 0.5f);
             } else {
                 forwardArrow.disable(false);
-                if (!forwardArrow.isHovered() || Platform.getMousePlatform().isButtonDown(0)) RenderManager.setAlpha(vg, 0.8f);
+                if (!forwardArrow.isHovered() || Platform.getMousePlatform().isButtonDown(0))
+                    RenderManager.setAlpha(vg, 0.8f);
             }
             RenderManager.drawSvg(vg, SVGs.CARET_RIGHT, x + 294, y + 22, 28, 28);
             RenderManager.setAlpha(vg, 1f);
@@ -140,7 +142,7 @@ public class OneConfigGui extends UScreen implements GuiPause {
             }
 
             ScissorManager.scissor(vg, x + 224, y + 72, 1056, 728);
-            Scissor blockedClicks = InputUtils.blockInputArea(x + 224, y, 1056,72);
+            Scissor blockedClicks = InputUtils.blockInputArea(x + 224, y, 1056, 72);
             if (prevPage != null && animation != null) {
                 float pageProgress = animation.get(GuiUtils.getDeltaTime());
                 if (!animation.isReversed()) {
@@ -188,9 +190,7 @@ public class OneConfigGui extends UScreen implements GuiPause {
     public void onKeyPressed(int keyCode, char typedChar, @Nullable UKeyboard.Modifiers modifiers) {
         UKeyboard.allowRepeatEvents(true);
         try {
-            if (keyCode == 1 && currentPage.parents.size() > 1) {
-                openPage(currentPage.parents.get(currentPage.parents.size() - 2));
-            } else if (allowClose) super.onKeyPressed(keyCode, typedChar, modifiers);
+            if (allowClose) super.onKeyPressed(keyCode, typedChar, modifiers);
             textInputField.keyTyped(typedChar, keyCode);
             if (currentColorSelector != null) currentColorSelector.keyTyped(typedChar, keyCode);
             currentPage.keyTyped(typedChar, keyCode);
