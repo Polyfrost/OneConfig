@@ -15,8 +15,8 @@ public class HudCore {
     public void onRender(HudRenderEvent event) {
         if (editing) return;
         for (Hud hud : huds) {
-            if (hud.enabled)
-                hud.drawAll(event.matrices, hud.getXScaled(UResolution.getScaledWidth()), hud.getYScaled(UResolution.getScaledHeight()), hud.scale, true);
+            if (!hud.isEnabled()) continue;
+            hud.drawAll(event.matrices, hud.getXScaled(UResolution.getScaledWidth()), hud.getYScaled(UResolution.getScaledHeight()), hud.scale, true);
         }
     }
 }

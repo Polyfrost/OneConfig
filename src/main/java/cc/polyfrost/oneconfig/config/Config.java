@@ -139,7 +139,7 @@ public class Config {
                 if (optionPage.location() == PageLocation.TOP) subcategory.topButtons.add(button);
                 else subcategory.bottomButtons.add(button);
             } else if (field.isAnnotationPresent(HUD.class)) {
-                HUDUtils.addHudOptions(page, field, instance);
+                HUDUtils.addHudOptions(page, field, instance, this);
             }
         }
     }

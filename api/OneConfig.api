@@ -1,5 +1,6 @@
 public class cc/polyfrost/oneconfig/config/Config {
 	protected final field configFile Ljava/lang/String;
+	protected final field defaults Ljava/util/HashMap;
 	public field enabled Z
 	protected final field gson Lcom/google/gson/Gson;
 	public field hasBeenInitialized Z
@@ -15,6 +16,7 @@ public class cc/polyfrost/oneconfig/config/Config {
 	protected fun deserializePart (Lcom/google/gson/JsonObject;Ljava/lang/Object;)V
 	protected fun generateOptionList (Ljava/lang/Object;Lcc/polyfrost/oneconfig/config/elements/OptionPage;Lcc/polyfrost/oneconfig/config/data/Mod;Z)V
 	protected fun getCustomOption (Ljava/lang/reflect/Field;Lcc/polyfrost/oneconfig/config/annotations/CustomOption;Lcc/polyfrost/oneconfig/config/elements/OptionPage;Lcc/polyfrost/oneconfig/config/data/Mod;Z)Lcc/polyfrost/oneconfig/config/elements/BasicOption;
+	public fun getDefault (Ljava/lang/reflect/Field;)Ljava/lang/Object;
 	protected fun hideIf (Ljava/lang/String;Ljava/lang/String;)V
 	protected fun hideIf (Ljava/lang/String;Ljava/util/function/Supplier;)V
 	protected fun hideIf (Ljava/lang/String;Z)V
@@ -22,7 +24,7 @@ public class cc/polyfrost/oneconfig/config/Config {
 	public fun load ()V
 	public fun openGui ()V
 	protected fun registerKeyBind (Lcc/polyfrost/oneconfig/config/core/OneKeyBind;Ljava/lang/Runnable;)V
-	public fun reset ()Z
+	public fun reset ()V
 	public fun save ()V
 }
 
@@ -281,12 +283,14 @@ public abstract class cc/polyfrost/oneconfig/config/elements/BasicOption {
 	public fun isEnabled ()Z
 	public fun isHidden ()Z
 	public fun keyTyped (CI)V
+	public fun reset (Lcc/polyfrost/oneconfig/config/Config;)V
 	protected fun set (Ljava/lang/Object;)V
 }
 
 public class cc/polyfrost/oneconfig/config/elements/OptionCategory {
 	public final field subcategories Ljava/util/ArrayList;
 	public fun <init> ()V
+	public fun reset (Lcc/polyfrost/oneconfig/config/Config;)V
 }
 
 public class cc/polyfrost/oneconfig/config/elements/OptionPage {
@@ -294,6 +298,7 @@ public class cc/polyfrost/oneconfig/config/elements/OptionPage {
 	public final field mod Lcc/polyfrost/oneconfig/config/data/Mod;
 	public final field name Ljava/lang/String;
 	public fun <init> (Ljava/lang/String;Lcc/polyfrost/oneconfig/config/data/Mod;)V
+	public fun reset (Lcc/polyfrost/oneconfig/config/Config;)V
 }
 
 public class cc/polyfrost/oneconfig/config/elements/OptionSubcategory {
@@ -304,6 +309,7 @@ public class cc/polyfrost/oneconfig/config/elements/OptionSubcategory {
 	public fun draw (JII)I
 	public fun drawLast (JI)V
 	public fun getName ()Ljava/lang/String;
+	public fun reset (Lcc/polyfrost/oneconfig/config/Config;)V
 }
 
 public class cc/polyfrost/oneconfig/config/gson/ExclusionUtils {
@@ -839,7 +845,7 @@ public abstract class cc/polyfrost/oneconfig/gui/pages/Page {
 
 public class cc/polyfrost/oneconfig/hud/HUDUtils {
 	public fun <init> ()V
-	public static fun addHudOptions (Lcc/polyfrost/oneconfig/config/elements/OptionPage;Ljava/lang/reflect/Field;Ljava/lang/Object;)V
+	public static fun addHudOptions (Lcc/polyfrost/oneconfig/config/elements/OptionPage;Ljava/lang/reflect/Field;Ljava/lang/Object;Lcc/polyfrost/oneconfig/config/Config;)V
 }
 
 public abstract class cc/polyfrost/oneconfig/hud/Hud {
@@ -848,7 +854,6 @@ public abstract class cc/polyfrost/oneconfig/hud/Hud {
 	public field borderColor Lcc/polyfrost/oneconfig/config/core/OneColor;
 	public field borderSize F
 	public field cornerRadius F
-	public field enabled Z
 	public field paddingX F
 	public field paddingY F
 	public field rounded Z
@@ -873,6 +878,8 @@ public abstract class cc/polyfrost/oneconfig/hud/Hud {
 	public abstract fun getWidth (F)I
 	public fun getXScaled (I)F
 	public fun getYScaled (I)F
+	public fun isEnabled ()Z
+	public fun setConfig (Lcc/polyfrost/oneconfig/config/Config;)V
 }
 
 public abstract class cc/polyfrost/oneconfig/hud/SingleTextHud : cc/polyfrost/oneconfig/hud/TextHud {

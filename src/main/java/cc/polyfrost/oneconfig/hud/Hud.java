@@ -39,7 +39,8 @@ import cc.polyfrost.oneconfig.renderer.RenderManager;
  *  *     }</pre>
  */
 public abstract class Hud {
-    public boolean enabled;
+    private boolean enabled;
+    transient private Config config;
     public boolean rounded;
     public boolean border;
     public OneColor bgColor;
@@ -234,6 +235,17 @@ public abstract class Hud {
     public float getYScaled(int screenHeight) {
         if (yUnscaled <= 0.5) return (int) (screenHeight * yUnscaled);
         return (float) (screenHeight - (1d - yUnscaled) * screenHeight - (getHeight(scale) + paddingY * scale));
+    }
+
+    /**
+     * @return If the hud is enabled
+     */
+    public boolean isEnabled() {
+        return enabled && (config == null || config.enabled);
+    }
+
+    public void setConfig(Config config) {
+        this.config = config;
     }
 
     @Switch(

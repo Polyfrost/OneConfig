@@ -1,13 +1,13 @@
 package cc.polyfrost.oneconfig.gui;
 
-import cc.polyfrost.oneconfig.internal.config.core.ConfigCore;
 import cc.polyfrost.oneconfig.hud.Hud;
+import cc.polyfrost.oneconfig.internal.config.core.ConfigCore;
 import cc.polyfrost.oneconfig.internal.hud.HudCore;
-import cc.polyfrost.oneconfig.libs.universal.UResolution;
-import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
 import cc.polyfrost.oneconfig.libs.universal.UMatrixStack;
+import cc.polyfrost.oneconfig.libs.universal.UResolution;
 import cc.polyfrost.oneconfig.libs.universal.UScreen;
+import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,7 +44,7 @@ public class HudGui extends UScreen implements GuiPause {
         }
 
         for (Hud hud : HudCore.huds) {
-            if (hud.enabled) processHud(matrixStack, hud, mouseX);
+            if (hud.isEnabled()) processHud(matrixStack, hud, mouseX);
         }
     }
 
@@ -128,7 +128,7 @@ public class HudGui extends UScreen implements GuiPause {
         float width = editingHud.getWidth(editingHud.scale) + editingHud.paddingX * editingHud.scale;
         ArrayList<Float> verticalLines = new ArrayList<>();
         for (Hud hud : HudCore.huds) {
-            if (!hud.enabled) continue;
+            if (!hud.isEnabled()) continue;
             verticalLines.addAll(getXSnappingHud(hud));
         }
         getSpaceSnapping(verticalLines);
@@ -167,7 +167,7 @@ public class HudGui extends UScreen implements GuiPause {
         float height = editingHud.getHeight(editingHud.scale) + editingHud.paddingY * editingHud.scale;
         ArrayList<Float> horizontalLines = new ArrayList<>();
         for (Hud hud : HudCore.huds) {
-            if (!hud.enabled) continue;
+            if (!hud.isEnabled()) continue;
             horizontalLines.addAll(getYSnappingHud(hud));
         }
         getSpaceSnapping(horizontalLines);
@@ -229,7 +229,7 @@ public class HudGui extends UScreen implements GuiPause {
             }
             editingHud = null;
             for (Hud hud : HudCore.huds) {
-                if (!hud.enabled) continue;
+                if (!hud.isEnabled()) continue;
                 if (mouseClickedHud(hud, (int) mouseX, (int) mouseY))
                     break;
             }
