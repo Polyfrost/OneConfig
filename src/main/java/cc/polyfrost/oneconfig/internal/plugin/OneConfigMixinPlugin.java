@@ -60,7 +60,7 @@ public class OneConfigMixinPlugin implements IMixinConfigPlugin {
      */
     private void transform(ClassNode node) {
         if (!node.interfaces.contains("cc/polyfrost/oneconfig/internal/config/compatibility/vigilance/VigilantAccessor")) {
-            node.fields.add(new FieldNode(Opcodes.ACC_PUBLIC, "oneconfig$config", "Lcc/polyfrost/oneconfig/config/compatibility/vigilance/VigilanceConfig;", null, null));
+            node.fields.add(new FieldNode(Opcodes.ACC_PUBLIC, "oneconfig$config", "Lcc/polyfrost/oneconfig/internal/config/compatibility/vigilance/VigilanceConfig;", null, null));
             node.fields.add(new FieldNode(Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL, "oneconfig$file", Type.getDescriptor(File.class), null, null));
 
             node.interfaces.add("cc/polyfrost/oneconfig/internal/config/compatibility/vigilance/VigilantAccessor");
@@ -80,14 +80,14 @@ public class OneConfigMixinPlugin implements IMixinConfigPlugin {
             methodNode2.instructions.add(labelNode2);
             methodNode2.instructions.add(new LineNumberNode(15636436, labelNode2));
             methodNode2.instructions.add(new VarInsnNode(Opcodes.ALOAD, 0));
-            methodNode2.instructions.add(new FieldInsnNode(Opcodes.GETFIELD, "gg/essential/vigilance/Vigilant", "oneconfig$config", "Lcc/polyfrost/oneconfig/config/compatibility/vigilance/VigilanceConfig;"));
+            methodNode2.instructions.add(new FieldInsnNode(Opcodes.GETFIELD, "gg/essential/vigilance/Vigilant", "oneconfig$config", "Lcc/polyfrost/oneconfig/internal/config/compatibility/vigilance/VigilanceConfig;"));
 
             methodNode2.instructions.add(new JumpInsnNode(Opcodes.IFNULL, labelNode4));
 
             methodNode2.instructions.add(labelNode3);
             methodNode2.instructions.add(new LineNumberNode(15636437, labelNode3));
             methodNode2.instructions.add(new VarInsnNode(Opcodes.ALOAD, 0));
-            methodNode2.instructions.add(new FieldInsnNode(Opcodes.GETFIELD, "gg/essential/vigilance/Vigilant", "oneconfig$config", "Lcc/polyfrost/oneconfig/config/compatibility/vigilance/VigilanceConfig;"));
+            methodNode2.instructions.add(new FieldInsnNode(Opcodes.GETFIELD, "gg/essential/vigilance/Vigilant", "oneconfig$config", "Lcc/polyfrost/oneconfig/internal/config/compatibility/vigilance/VigilanceConfig;"));
             methodNode2.instructions.add(new VarInsnNode(Opcodes.ALOAD, 1));
             methodNode2.instructions.add(new VarInsnNode(Opcodes.ALOAD, 2));
             methodNode2.instructions.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "cc/polyfrost/oneconfig/internal/config/compatibility/vigilance/VigilanceConfig", "addDependency", "(Lgg/essential/vigilance/data/PropertyData;Lgg/essential/vigilance/data/PropertyData;)V", false));
@@ -104,8 +104,8 @@ public class OneConfigMixinPlugin implements IMixinConfigPlugin {
                     list.add(new VarInsnNode(Opcodes.ALOAD, 0));
                     list.add(new VarInsnNode(Opcodes.ALOAD, 0));
                     list.add(new FieldInsnNode(Opcodes.GETFIELD, "gg/essential/vigilance/Vigilant", "oneconfig$file", Type.getDescriptor(File.class)));
-                    list.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "cc/polyfrost/oneconfig/internal/plugin/hooks/VigilantHook", "returnNewConfig", "(Lgg/essential/vigilance/Vigilant;Ljava/io/File;)Lcc/polyfrost/oneconfig/config/compatibility/vigilance/VigilanceConfig;", false));
-                    list.add(new FieldInsnNode(Opcodes.PUTFIELD, "gg/essential/vigilance/Vigilant", "oneconfig$config", "Lcc/polyfrost/oneconfig/config/compatibility/vigilance/VigilanceConfig;"));
+                    list.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "cc/polyfrost/oneconfig/internal/plugin/hooks/VigilantHook", "returnNewConfig", "(Lgg/essential/vigilance/Vigilant;Ljava/io/File;)Lcc/polyfrost/oneconfig/internal/config/compatibility/vigilance/VigilanceConfig;", false));
+                    list.add(new FieldInsnNode(Opcodes.PUTFIELD, "gg/essential/vigilance/Vigilant", "oneconfig$config", "Lcc/polyfrost/oneconfig/internal/config/compatibility/vigilance/VigilanceConfig;"));
                     method.instructions.insertBefore(method.instructions.getLast().getPrevious(), list);
                 } else if (method.name.equals("addDependency") && method.desc.equals("(Lgg/essential/vigilance/data/PropertyData;Lgg/essential/vigilance/data/PropertyData;)V")) {
                     InsnList list = new InsnList();
