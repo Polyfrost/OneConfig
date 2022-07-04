@@ -39,7 +39,7 @@ import cc.polyfrost.oneconfig.renderer.RenderManager;
  *  *     }</pre>
  */
 public abstract class Hud {
-    private boolean enabled;
+    protected boolean enabled;
     transient private Config config;
     public boolean rounded;
     public boolean border;
