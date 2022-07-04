@@ -22,6 +22,7 @@ public class cc/polyfrost/oneconfig/config/Config {
 	public fun load ()V
 	public fun openGui ()V
 	protected fun registerKeyBind (Lcc/polyfrost/oneconfig/config/core/OneKeyBind;Ljava/lang/Runnable;)V
+	public fun reset ()Z
 	public fun save ()V
 }
 
@@ -135,25 +136,6 @@ public abstract interface annotation class cc/polyfrost/oneconfig/config/annotat
 	public abstract fun secure ()Z
 	public abstract fun size ()I
 	public abstract fun subcategory ()Ljava/lang/String;
-}
-
-public class cc/polyfrost/oneconfig/config/compatibility/vigilance/VigilanceConfig : cc/polyfrost/oneconfig/config/Config {
-	public final field vigilant Lgg/essential/vigilance/Vigilant;
-	public fun <init> (Lcc/polyfrost/oneconfig/config/data/Mod;Ljava/lang/String;Lgg/essential/vigilance/Vigilant;)V
-	public fun addDependency (Lgg/essential/vigilance/data/PropertyData;Lgg/essential/vigilance/data/PropertyData;)V
-	public fun initialize ()V
-	public fun load ()V
-	public fun save ()V
-}
-
-public abstract interface annotation class cc/polyfrost/oneconfig/config/compatibility/vigilance/VigilanceName : java/lang/annotation/Annotation {
-	public abstract fun category ()Ljava/lang/String;
-	public abstract fun name ()Ljava/lang/String;
-	public abstract fun subcategory ()Ljava/lang/String;
-}
-
-public abstract interface class cc/polyfrost/oneconfig/config/compatibility/vigilance/VigilantAccessor {
-	public abstract fun getPropertyCollector ()Lgg/essential/vigilance/data/PropertyCollector;
 }
 
 public class cc/polyfrost/oneconfig/config/core/ConfigUtils {
@@ -473,7 +455,7 @@ public abstract interface class cc/polyfrost/oneconfig/gui/GuiPause {
 }
 
 public class cc/polyfrost/oneconfig/gui/HudGui : cc/polyfrost/oneconfig/libs/universal/UScreen, cc/polyfrost/oneconfig/gui/GuiPause {
-	public fun <init> ()V
+	public fun <init> (Z)V
 	public fun doesGuiPauseGame ()Z
 	public fun initScreen (II)V
 	public fun onDrawScreen (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;IIF)V

@@ -1,4 +1,4 @@
-package cc.polyfrost.oneconfig.config.compatibility.vigilance;
+package cc.polyfrost.oneconfig.internal.config.compatibility.vigilance;
 
 import gg.essential.vigilance.data.PropertyCollector;
 

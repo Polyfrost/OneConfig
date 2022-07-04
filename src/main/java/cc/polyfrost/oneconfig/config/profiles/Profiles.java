@@ -60,7 +60,7 @@ public class Profiles {
     public static void loadProfile(String profile) {
         ConfigCore.saveAll();
         OneConfigConfig.currentProfile = profile;
-        //OneConfig.config.save(); todo do we actually need this
+        OneConfigConfig.getInstance().save();
         ConfigCore.reInitAll();
     }
 

@@ -59,11 +59,11 @@ public class OneConfigMixinPlugin implements IMixinConfigPlugin {
      * If anything here is changed, edit the corresponding method in OneConfigMixinPlugin!
      */
     private void transform(ClassNode node) {
-        if (!node.interfaces.contains("cc/polyfrost/oneconfig/config/compatibility/vigilance/VigilantAccessor")) {
+        if (!node.interfaces.contains("cc/polyfrost/oneconfig/internal/config/compatibility/vigilance/VigilantAccessor")) {
             node.fields.add(new FieldNode(Opcodes.ACC_PUBLIC, "oneconfig$config", "Lcc/polyfrost/oneconfig/config/compatibility/vigilance/VigilanceConfig;", null, null));
             node.fields.add(new FieldNode(Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL, "oneconfig$file", Type.getDescriptor(File.class), null, null));
 
-            node.interfaces.add("cc/polyfrost/oneconfig/config/compatibility/vigilance/VigilantAccessor");
+            node.interfaces.add("cc/polyfrost/oneconfig/internal/config/compatibility/vigilance/VigilantAccessor");
             MethodNode methodNode = new MethodNode(Opcodes.ACC_PUBLIC, "getPropertyCollector", "()Lgg/essential/vigilance/data/PropertyCollector;", null, null);
             LabelNode labelNode = new LabelNode();
             methodNode.instructions.add(labelNode);
@@ -90,7 +90,7 @@ public class OneConfigMixinPlugin implements IMixinConfigPlugin {
             methodNode2.instructions.add(new FieldInsnNode(Opcodes.GETFIELD, "gg/essential/vigilance/Vigilant", "oneconfig$config", "Lcc/polyfrost/oneconfig/config/compatibility/vigilance/VigilanceConfig;"));
             methodNode2.instructions.add(new VarInsnNode(Opcodes.ALOAD, 1));
             methodNode2.instructions.add(new VarInsnNode(Opcodes.ALOAD, 2));
-            methodNode2.instructions.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "cc/polyfrost/oneconfig/config/compatibility/vigilance/VigilanceConfig", "addDependency", "(Lgg/essential/vigilance/data/PropertyData;Lgg/essential/vigilance/data/PropertyData;)V", false));
+            methodNode2.instructions.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "cc/polyfrost/oneconfig/internal/config/compatibility/vigilance/VigilanceConfig", "addDependency", "(Lgg/essential/vigilance/data/PropertyData;Lgg/essential/vigilance/data/PropertyData;)V", false));
 
             methodNode2.instructions.add(labelNode4);
             methodNode2.instructions.add(new LineNumberNode(15636438, labelNode4));

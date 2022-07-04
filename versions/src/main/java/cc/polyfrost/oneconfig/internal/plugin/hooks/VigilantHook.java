@@ -1,6 +1,6 @@
 package cc.polyfrost.oneconfig.internal.plugin.hooks;
 
-import cc.polyfrost.oneconfig.config.compatibility.vigilance.VigilanceConfig;
+import cc.polyfrost.oneconfig.internal.config.compatibility.vigilance.VigilanceConfig;
 import cc.polyfrost.oneconfig.config.data.Mod;
 import cc.polyfrost.oneconfig.config.data.ModType;
 import cc.polyfrost.oneconfig.internal.config.core.ConfigCore;

@@ -1,13 +1,13 @@
 package cc.polyfrost.oneconfig.gui.elements.config;
 
 import cc.polyfrost.oneconfig.config.annotations.Dropdown;
-import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
 import cc.polyfrost.oneconfig.gui.animations.ColorAnimation;
+import cc.polyfrost.oneconfig.internal.assets.Colors;
+import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
-import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.renderer.scissor.Scissor;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
@@ -43,8 +43,8 @@ public class ConfigDropdown extends BasicOption {
         else hovered = InputUtils.isAreaHovered(x + 352, y, 640, 32) && isEnabled();
 
         if (hovered && InputUtils.isClicked() || opened && InputUtils.isClicked(true) &&
-                (size == 1 && !InputUtils.isAreaHovered(x + 224, y + 40, 256, options.length * 32) ||
-                        size == 2 && !InputUtils.isAreaHovered(x + 352, y + 40, 640, options.length * 32))) {
+                (size == 1 && !InputUtils.isAreaHovered(x + 224, y + 40, 256, options.length * 32, true) ||
+                        size == 2 && !InputUtils.isAreaHovered(x + 352, y + 40, 640, options.length * 32, true))) {
             opened = !opened;
             backgroundColor.setPalette(opened ? ColorPalette.PRIMARY : ColorPalette.SECONDARY);
             if (opened) inputScissor = InputUtils.blockAllInput();
