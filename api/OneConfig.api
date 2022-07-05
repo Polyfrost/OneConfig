@@ -854,6 +854,7 @@ public abstract class cc/polyfrost/oneconfig/hud/Hud {
 	public field borderColor Lcc/polyfrost/oneconfig/config/core/OneColor;
 	public field borderSize F
 	public field cornerRadius F
+	public field enabled Z
 	public field paddingX F
 	public field paddingY F
 	public field rounded Z
@@ -1058,14 +1059,10 @@ public final class cc/polyfrost/oneconfig/renderer/RenderManager {
 	public static fun drawSvg (JLjava/lang/String;FFFF)V
 	public static fun drawSvg (JLjava/lang/String;FFFFI)V
 	public static fun drawText (JLjava/lang/String;FFIFLcc/polyfrost/oneconfig/renderer/font/Font;)V
-	public static fun drawText (JLjava/lang/String;FFIFLcc/polyfrost/oneconfig/renderer/font/Fonts;)V
 	public static fun drawURL (JLjava/lang/String;FFFLcc/polyfrost/oneconfig/renderer/font/Font;)V
-	public static fun drawURL (JLjava/lang/String;FFFLcc/polyfrost/oneconfig/renderer/font/Fonts;)V
 	public static fun drawWrappedString (JLjava/lang/String;FFFIFLcc/polyfrost/oneconfig/renderer/font/Font;)V
-	public static fun drawWrappedString (JLjava/lang/String;FFFIFLcc/polyfrost/oneconfig/renderer/font/Fonts;)V
 	public static fun fillNVGColorWithRGBA (FFFFLorg/lwjgl/nanovg/NVGColor;)V
 	public static fun getTextWidth (JLjava/lang/String;FLcc/polyfrost/oneconfig/renderer/font/Font;)F
-	public static fun getTextWidth (JLjava/lang/String;FLcc/polyfrost/oneconfig/renderer/font/Fonts;)F
 	public static fun scale (JFF)V
 	public static fun setAlpha (JF)V
 	public static fun setupAndDraw (Ljava/util/function/LongConsumer;)V
@@ -1079,6 +1076,20 @@ public final class cc/polyfrost/oneconfig/renderer/RenderManager$TextType : java
 	public static fun toType (I)Lcc/polyfrost/oneconfig/renderer/RenderManager$TextType;
 	public static fun valueOf (Ljava/lang/String;)Lcc/polyfrost/oneconfig/renderer/RenderManager$TextType;
 	public static fun values ()[Lcc/polyfrost/oneconfig/renderer/RenderManager$TextType;
+}
+
+public class cc/polyfrost/oneconfig/renderer/TextRenderer {
+	public fun <init> ()V
+	public static fun drawText (JLjava/lang/String;FFIFLcc/polyfrost/oneconfig/renderer/font/Font;)V
+	public static fun drawText (JLjava/lang/String;FFIFLcc/polyfrost/oneconfig/renderer/font/Font;F)V
+	public static fun drawText (JLjava/util/ArrayList;FFIFLcc/polyfrost/oneconfig/renderer/font/Font;F)V
+	public static fun drawText (JLjava/util/ArrayList;FFIFLcc/polyfrost/oneconfig/renderer/font/Font;FF)V
+	public static fun drawURL (JLjava/lang/String;FFFLcc/polyfrost/oneconfig/renderer/font/Font;)V
+	public static fun drawWrappedString (JLjava/lang/String;FFFIFLcc/polyfrost/oneconfig/renderer/font/Font;)V
+	public static fun getTextWidth (JLjava/lang/String;FLcc/polyfrost/oneconfig/renderer/font/Font;)F
+	public static fun getTextWidth (JLjava/lang/String;FLcc/polyfrost/oneconfig/renderer/font/Font;F)F
+	public static fun wrapText (JLjava/lang/String;FFLcc/polyfrost/oneconfig/renderer/font/Font;)Ljava/util/ArrayList;
+	public static fun wrapText (JLjava/lang/String;FFLcc/polyfrost/oneconfig/renderer/font/Font;F)Ljava/util/ArrayList;
 }
 
 public class cc/polyfrost/oneconfig/renderer/font/Font {
@@ -1096,16 +1107,14 @@ public class cc/polyfrost/oneconfig/renderer/font/FontManager {
 	public fun loadFont (JLcc/polyfrost/oneconfig/renderer/font/Font;)V
 }
 
-public final class cc/polyfrost/oneconfig/renderer/font/Fonts : java/lang/Enum {
-	public static final field BOLD Lcc/polyfrost/oneconfig/renderer/font/Fonts;
-	public static final field MEDIUM Lcc/polyfrost/oneconfig/renderer/font/Fonts;
-	public static final field MINECRAFT_BOLD Lcc/polyfrost/oneconfig/renderer/font/Fonts;
-	public static final field MINECRAFT_REGULAR Lcc/polyfrost/oneconfig/renderer/font/Fonts;
-	public static final field REGULAR Lcc/polyfrost/oneconfig/renderer/font/Fonts;
-	public static final field SEMIBOLD Lcc/polyfrost/oneconfig/renderer/font/Fonts;
-	public final field font Lcc/polyfrost/oneconfig/renderer/font/Font;
-	public static fun valueOf (Ljava/lang/String;)Lcc/polyfrost/oneconfig/renderer/font/Fonts;
-	public static fun values ()[Lcc/polyfrost/oneconfig/renderer/font/Fonts;
+public class cc/polyfrost/oneconfig/renderer/font/Fonts {
+	public static final field BOLD Lcc/polyfrost/oneconfig/renderer/font/Font;
+	public static final field MEDIUM Lcc/polyfrost/oneconfig/renderer/font/Font;
+	public static final field MINECRAFT_BOLD Lcc/polyfrost/oneconfig/renderer/font/Font;
+	public static final field MINECRAFT_REGULAR Lcc/polyfrost/oneconfig/renderer/font/Font;
+	public static final field REGULAR Lcc/polyfrost/oneconfig/renderer/font/Font;
+	public static final field SEMIBOLD Lcc/polyfrost/oneconfig/renderer/font/Font;
+	public fun <init> ()V
 }
 
 public class cc/polyfrost/oneconfig/renderer/scissor/Scissor {
@@ -1190,7 +1199,6 @@ public final class cc/polyfrost/oneconfig/utils/NetworkUtils {
 public final class cc/polyfrost/oneconfig/utils/TextUtils {
 	public fun <init> ()V
 	public static fun wrapText (JLjava/lang/String;FFLcc/polyfrost/oneconfig/renderer/font/Font;)Ljava/util/ArrayList;
-	public static fun wrapText (JLjava/lang/String;FFLcc/polyfrost/oneconfig/renderer/font/Fonts;)Ljava/util/ArrayList;
 }
 
 public class cc/polyfrost/oneconfig/utils/TickDelay {

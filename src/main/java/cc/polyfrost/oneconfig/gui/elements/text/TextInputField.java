@@ -129,18 +129,18 @@ public class TextInputField extends BasicElement {
             float width;
             StringBuilder s = new StringBuilder();
             if (multiLine) {
-                wrappedText = TextUtils.wrapText(vg, input, this.width - 24, 14f, Fonts.REGULAR.font);
+                wrappedText = TextUtils.wrapText(vg, input, this.width - 24, 14f, Fonts.REGULAR);
                 lines = wrappedText.size();
                 if (!toggled) caretPos = wrappedText.get(wrappedText.size() - 1).length();
                 int caretLine = (int) MathUtils.clamp(getCaretLine(caretPos), 0, wrappedText.size() - 1);
-                width = RenderManager.getTextWidth(vg, wrappedText.get(caretLine).substring(0, getLineCaret(caretPos, caretLine)), 14f, Fonts.REGULAR.font);
+                width = RenderManager.getTextWidth(vg, wrappedText.get(caretLine).substring(0, getLineCaret(caretPos, caretLine)), 14f, Fonts.REGULAR);
             } else if (!password) {
-                width = RenderManager.getTextWidth(vg, input.substring(0, caretPos), 14f, Fonts.REGULAR.font);
+                width = RenderManager.getTextWidth(vg, input.substring(0, caretPos), 14f, Fonts.REGULAR);
             } else {
                 for (int i = 0; i < input.length(); i++) {
                     s.append("*");
                 }
-                width = RenderManager.getTextWidth(vg, s.substring(0, caretPos), 14f, Fonts.REGULAR.font);
+                width = RenderManager.getTextWidth(vg, s.substring(0, caretPos), 14f, Fonts.REGULAR);
             }
             if (hovered) {
                 while (Platform.getMousePlatform().next()) {

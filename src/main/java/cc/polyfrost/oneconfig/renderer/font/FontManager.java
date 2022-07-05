@@ -3,6 +3,7 @@ package cc.polyfrost.oneconfig.renderer.font;
 import cc.polyfrost.oneconfig.utils.IOUtils;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 
 import static org.lwjgl.nanovg.NanoVG.nvgCreateFontMem;
@@ -17,8 +18,15 @@ public class FontManager {
      */
 
     public void initialize(long vg) {
-        for (Fonts fonts : Fonts.values()) {
-            loadFont(vg, fonts.font);
+        for (Field field : Fonts.class.getDeclaredFields()) {
+            try {
+                field.setAccessible(true);
+                Object font = field.get(null);
+                if (!(font instanceof Font)) continue;
+                loadFont(vg, (Font) font);
+            } catch (Exception e) {
+                throw new RuntimeException("Could not initialize fonts");
+            }
         }
     }
 

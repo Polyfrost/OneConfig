@@ -103,7 +103,7 @@ public abstract class TextHud extends Hud {
     private class TickHandler {
         @Subscribe
         private void onTick(TickEvent event) {
-            if (event.stage != Stage.START) return;
+            if (event.stage != Stage.START || !isEnabled()) return;
             lines.clear();
             if (!HudCore.editing) getLines(lines);
             else getExampleLines(lines);

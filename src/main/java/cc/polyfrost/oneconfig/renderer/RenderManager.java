@@ -292,22 +292,6 @@ public final class RenderManager {
      * @param font  The font.
      * @see cc.polyfrost.oneconfig.renderer.font.Font
      */
-    public static void drawText(long vg, String text, float x, float y, int color, float size, Fonts font) {
-        drawText(vg, text, x, y, color, size, font.font);
-    }
-
-    /**
-     * Draws a String with the given parameters.
-     *
-     * @param vg    The NanoVG context.
-     * @param text  The text.
-     * @param x     The x position.
-     * @param y     The y position.
-     * @param color The color.
-     * @param size  The size.
-     * @param font  The font.
-     * @see cc.polyfrost.oneconfig.renderer.font.Font
-     */
     public static void drawText(long vg, String text, float x, float y, int color, float size, Font font) {
         nvgBeginPath(vg);
         nvgFontSize(vg, size);
@@ -331,22 +315,6 @@ public final class RenderManager {
      * @param size  The size.
      * @param font  The font.
      */
-    public static void drawWrappedString(long vg, String text, float x, float y, float width, int color, float size, Fonts font) {
-        drawWrappedString(vg, text, x, y, width, color, size, font.font);
-    }
-
-    /**
-     * Draws a String wrapped at the given width, with the given parameters.
-     *
-     * @param vg    The NanoVG context.
-     * @param text  The text.
-     * @param x     The x position.
-     * @param y     The y position.
-     * @param width The width.
-     * @param color The color.
-     * @param size  The size.
-     * @param font  The font.
-     */
     public static void drawWrappedString(long vg, String text, float x, float y, float width, int color, float size, Font font) {
         nvgBeginPath(vg);
         nvgFontSize(vg, size);
@@ -356,18 +324,6 @@ public final class RenderManager {
         nvgTextBox(vg, x, y, width, text);
         nvgFill(vg);
         nvgColor.free();
-    }
-
-    /**
-     * Draw a formatted URL (a string in blue with an underline) that when clicked, opens the given text.
-     *
-     * <p><b>This does NOT scale to Minecraft's GUI scale!</b></p>
-     *
-     * @see RenderManager#drawText(long, String, float, float, int, float, Font)
-     * @see InputUtils#isAreaClicked(int, int, int, int)
-     */
-    public static void drawURL(long vg, String url, float x, float y, float size, Fonts font) {
-        drawURL(vg, url, x, y, size, font.font);
     }
 
     /**
@@ -485,10 +441,6 @@ public final class RenderManager {
      */
     public static void drawRoundImage(long vg, Images filePath, float x, float y, float width, float height, float radius) {
         drawRoundImage(vg, filePath.filePath, x, y, width, height, radius);
-    }
-
-    public static float getTextWidth(long vg, String text, float fontSize, Fonts font) {
-        return getTextWidth(vg, text, fontSize, font.font);
     }
 
     /**
