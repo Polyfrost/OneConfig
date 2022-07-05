@@ -5,18 +5,18 @@ public class cc/polyfrost/oneconfig/events/event/ChatReceiveEvent : cc/polyfrost
 }
 
 public class cc/polyfrost/oneconfig/events/event/ReceivePacketEvent : cc/polyfrost/oneconfig/events/event/CancellableEvent {
-	public final field packet Lnet/minecraft/network/Packet;
-	public fun <init> (Lnet/minecraft/network/Packet;)V
+	public final field packet Lnet/minecraft/network/IPacket;
+	public fun <init> (Lnet/minecraft/network/IPacket;)V
 }
 
 public class cc/polyfrost/oneconfig/events/event/ScreenOpenEvent : cc/polyfrost/oneconfig/events/event/CancellableEvent {
-	public final field screen Lnet/minecraft/client/gui/GuiScreen;
-	public fun <init> (Lnet/minecraft/client/gui/GuiScreen;)V
+	public final field screen Lnet/minecraft/client/gui/screen/Screen;
+	public fun <init> (Lnet/minecraft/client/gui/screen/Screen;)V
 }
 
 public class cc/polyfrost/oneconfig/events/event/SendPacketEvent : cc/polyfrost/oneconfig/events/event/CancellableEvent {
-	public final field packet Lnet/minecraft/network/Packet;
-	public fun <init> (Lnet/minecraft/network/Packet;)V
+	public final field packet Lnet/minecraft/network/IPacket;
+	public fun <init> (Lnet/minecraft/network/IPacket;)V
 }
 
 public class cc/polyfrost/oneconfig/events/event/TimerUpdateEvent {
@@ -78,10 +78,7 @@ public class cc/polyfrost/oneconfig/platform/impl/ServerPlatformImpl : cc/polyfr
 
 public class cc/polyfrost/oneconfig/utils/commands/PlatformCommandManagerImpl : cc/polyfrost/oneconfig/utils/commands/PlatformCommandManager {
 	public fun <init> ()V
-	public fun createCommand (Lcc/polyfrost/oneconfig/utils/commands/CommandManager$InternalCommand;Lcc/polyfrost/oneconfig/utils/commands/annotations/Command;)V
-	protected fun getParametersForInvoker (Lcc/polyfrost/oneconfig/utils/commands/CommandManager$InternalCommand$InternalCommandInvoker;I[Ljava/lang/String;)Ljava/util/List;
-	protected fun loopThroughCommands (Ljava/util/List;ILcc/polyfrost/oneconfig/utils/commands/CommandManager$InternalCommand;[Ljava/lang/String;)I
-	protected fun loopThroughCommandsTab (Ljava/util/Set;ILcc/polyfrost/oneconfig/utils/commands/CommandManager$InternalCommand;[Ljava/lang/String;)V
+	public fun handleNewParser (Lcc/polyfrost/oneconfig/utils/commands/arguments/ArgumentParser;Ljava/lang/Class;)V
 }
 
 public final class cc/polyfrost/oneconfig/utils/dsl/DSLsKt {
@@ -89,16 +86,16 @@ public final class cc/polyfrost/oneconfig/utils/dsl/DSLsKt {
 }
 
 public final class cc/polyfrost/oneconfig/utils/dsl/GuiUtilsDSLKt {
-	public static final fun openScreen (Lnet/minecraft/client/gui/GuiScreen;I)V
-	public static synthetic fun openScreen$default (Lnet/minecraft/client/gui/GuiScreen;IILjava/lang/Object;)V
+	public static final fun openScreen (Lnet/minecraft/client/gui/screen/Screen;I)V
+	public static synthetic fun openScreen$default (Lnet/minecraft/client/gui/screen/Screen;IILjava/lang/Object;)V
 }
 
 public final class cc/polyfrost/oneconfig/utils/gui/GuiUtils {
 	public fun <init> ()V
 	public static fun closeScreen ()V
 	public static fun displayScreen (Ljava/lang/Object;)V
-	public static fun displayScreen (Lnet/minecraft/client/gui/GuiScreen;)V
-	public static fun displayScreen (Lnet/minecraft/client/gui/GuiScreen;I)V
+	public static fun displayScreen (Lnet/minecraft/client/gui/screen/Screen;)V
+	public static fun displayScreen (Lnet/minecraft/client/gui/screen/Screen;I)V
 	public static fun getDeltaTime ()F
 	public static fun getScreenQueue ()Ljava/util/Deque;
 }

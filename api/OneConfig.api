@@ -988,15 +988,13 @@ public class cc/polyfrost/oneconfig/platform/LoaderPlatform$ActiveMod {
 }
 
 public abstract interface class cc/polyfrost/oneconfig/platform/MousePlatform {
-	public abstract fun getDWheel ()I
-	public abstract fun getEventButton ()I
-	public abstract fun getEventButtonState ()Z
-	public abstract fun getMouseDX ()I
-	public abstract fun getMouseDY ()I
-	public abstract fun getMouseX ()I
-	public abstract fun getMouseY ()I
+	public abstract fun getButtonState (I)I
+	public abstract fun getDWheel ()D
+	public abstract fun getMouseDX ()D
+	public abstract fun getMouseDY ()D
+	public abstract fun getMouseX ()D
+	public abstract fun getMouseY ()D
 	public abstract fun isButtonDown (I)Z
-	public abstract fun next ()Z
 }
 
 public abstract interface class cc/polyfrost/oneconfig/platform/Platform {
@@ -1005,6 +1003,7 @@ public abstract interface class cc/polyfrost/oneconfig/platform/Platform {
 	public static fun getI18nPlatform ()Lcc/polyfrost/oneconfig/platform/I18nPlatform;
 	public static fun getInstance ()Lcc/polyfrost/oneconfig/platform/Platform;
 	public static fun getLoaderPlatform ()Lcc/polyfrost/oneconfig/platform/LoaderPlatform;
+	public abstract fun getMinecraftVersion ()I
 	public static fun getMousePlatform ()Lcc/polyfrost/oneconfig/platform/MousePlatform;
 	public static fun getServerPlatform ()Lcc/polyfrost/oneconfig/platform/ServerPlatform;
 	public abstract fun isCallingFromMinecraftThread ()Z
@@ -1249,8 +1248,11 @@ public class cc/polyfrost/oneconfig/utils/commands/CommandManager {
 	public fun registerCommand (Ljava/lang/Class;)V
 }
 
-public abstract interface class cc/polyfrost/oneconfig/utils/commands/PlatformCommandManager {
-	public abstract fun createCommand (Lcc/polyfrost/oneconfig/utils/commands/CommandManager$InternalCommand;Lcc/polyfrost/oneconfig/utils/commands/annotations/Command;)V
+public abstract class cc/polyfrost/oneconfig/utils/commands/PlatformCommandManager {
+	public fun <init> ()V
+	public fun handleNewParser (Lcc/polyfrost/oneconfig/utils/commands/arguments/ArgumentParser;Ljava/lang/Class;)V
+	protected fun runThroughCommandsHelp (Ljava/lang/String;Lcc/polyfrost/oneconfig/utils/commands/CommandManager$InternalCommand;Ljava/lang/StringBuilder;)V
+	protected fun sendHelpCommand (Lcc/polyfrost/oneconfig/utils/commands/CommandManager$InternalCommand;)Ljava/lang/String;
 }
 
 public abstract interface annotation class cc/polyfrost/oneconfig/utils/commands/annotations/Command : java/lang/annotation/Annotation {
