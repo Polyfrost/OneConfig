@@ -1,9 +1,9 @@
 //#if MC==10809
 package cc.polyfrost.oneconfig.internal.mixin;
 
-import cc.polyfrost.oneconfig.internal.OneConfig;
 import cc.polyfrost.oneconfig.events.EventManager;
 import cc.polyfrost.oneconfig.events.event.*;
+import cc.polyfrost.oneconfig.internal.OneConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Timer;
 import net.minecraftforge.client.event.GuiOpenEvent;

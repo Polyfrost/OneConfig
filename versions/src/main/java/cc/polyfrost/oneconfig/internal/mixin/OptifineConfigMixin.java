@@ -1,4 +1,3 @@
-//#if MC==10809
 package cc.polyfrost.oneconfig.internal.mixin;
 
 import cc.polyfrost.oneconfig.internal.plugin.hooks.OptifineConfigHook;
@@ -20,4 +19,3 @@ public class OptifineConfigMixin {
         }
     }
 }
-//#endif

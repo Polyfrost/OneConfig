@@ -1,3 +1,4 @@
+//#if MC<=11202
 package cc.polyfrost.oneconfig.internal.plugin.asm;
 
 import cc.polyfrost.oneconfig.internal.init.OneConfigInit;
@@ -115,3 +116,4 @@ public class OneConfigTweaker implements ITweaker {
         return new String[0];
     }
 }
+//#endif
