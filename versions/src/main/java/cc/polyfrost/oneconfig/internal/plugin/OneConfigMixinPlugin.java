@@ -70,11 +70,11 @@ public class OneConfigMixinPlugin implements IMixinConfigPlugin {
      * If anything here is changed, edit the corresponding method in OneConfigMixinPlugin!
      */
     private void transform(org.spongepowered.asm.lib.tree.ClassNode node) {
-        if (!node.interfaces.contains("cc/polyfrost/oneconfig/config/compatibility/vigilance/VigilantAccessor")) {
-            node.fields.add(new org.spongepowered.asm.lib.tree.FieldNode(Opcodes.ACC_PUBLIC, "oneconfig$config", "Lcc/polyfrost/oneconfig/config/compatibility/vigilance/VigilanceConfig;", null, null));
+        if (!node.interfaces.contains("cc/polyfrost/oneconfig/internal/config/compatibility/vigilance/VigilantAccessor")) {
+            node.fields.add(new org.spongepowered.asm.lib.tree.FieldNode(Opcodes.ACC_PUBLIC, "oneconfig$config", "Lcc/polyfrost/oneconfig/internal/config/compatibility/vigilance/VigilanceConfig;", null, null));
             node.fields.add(new org.spongepowered.asm.lib.tree.FieldNode(Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL, "oneconfig$file", Type.getDescriptor(File.class), null, null));
 
-            node.interfaces.add("cc/polyfrost/oneconfig/config/compatibility/vigilance/VigilantAccessor");
+            node.interfaces.add("cc/polyfrost/oneconfig/internal/config/compatibility/vigilance/VigilantAccessor");
             org.spongepowered.asm.lib.tree.MethodNode methodNode = new org.spongepowered.asm.lib.tree.MethodNode(Opcodes.ACC_PUBLIC, "getPropertyCollector", "()Lgg/essential/vigilance/data/PropertyCollector;", null, null);
             org.spongepowered.asm.lib.tree.LabelNode labelNode = new org.spongepowered.asm.lib.tree.LabelNode();
             methodNode.instructions.add(labelNode);
@@ -91,17 +91,17 @@ public class OneConfigMixinPlugin implements IMixinConfigPlugin {
             methodNode2.instructions.add(labelNode2);
             methodNode2.instructions.add(new org.spongepowered.asm.lib.tree.LineNumberNode(15636436, labelNode2));
             methodNode2.instructions.add(new org.spongepowered.asm.lib.tree.VarInsnNode(Opcodes.ALOAD, 0));
-            methodNode2.instructions.add(new org.spongepowered.asm.lib.tree.FieldInsnNode(Opcodes.GETFIELD, "gg/essential/vigilance/Vigilant", "oneconfig$config", "Lcc/polyfrost/oneconfig/config/compatibility/vigilance/VigilanceConfig;"));
+            methodNode2.instructions.add(new org.spongepowered.asm.lib.tree.FieldInsnNode(Opcodes.GETFIELD, "gg/essential/vigilance/Vigilant", "oneconfig$config", "Lcc/polyfrost/oneconfig/internal/config/compatibility/vigilance/VigilanceConfig;"));
 
             methodNode2.instructions.add(new org.spongepowered.asm.lib.tree.JumpInsnNode(Opcodes.IFNULL, labelNode4));
 
             methodNode2.instructions.add(labelNode3);
             methodNode2.instructions.add(new org.spongepowered.asm.lib.tree.LineNumberNode(15636437, labelNode3));
             methodNode2.instructions.add(new org.spongepowered.asm.lib.tree.VarInsnNode(Opcodes.ALOAD, 0));
-            methodNode2.instructions.add(new org.spongepowered.asm.lib.tree.FieldInsnNode(Opcodes.GETFIELD, "gg/essential/vigilance/Vigilant", "oneconfig$config", "Lcc/polyfrost/oneconfig/config/compatibility/vigilance/VigilanceConfig;"));
+            methodNode2.instructions.add(new org.spongepowered.asm.lib.tree.FieldInsnNode(Opcodes.GETFIELD, "gg/essential/vigilance/Vigilant", "oneconfig$config", "Lcc/polyfrost/oneconfig/internal/config/compatibility/vigilance/VigilanceConfig;"));
             methodNode2.instructions.add(new org.spongepowered.asm.lib.tree.VarInsnNode(Opcodes.ALOAD, 1));
             methodNode2.instructions.add(new org.spongepowered.asm.lib.tree.VarInsnNode(Opcodes.ALOAD, 2));
-            methodNode2.instructions.add(new org.spongepowered.asm.lib.tree.MethodInsnNode(Opcodes.INVOKEVIRTUAL, "cc/polyfrost/oneconfig/config/compatibility/vigilance/VigilanceConfig", "addDependency", "(Lgg/essential/vigilance/data/PropertyData;Lgg/essential/vigilance/data/PropertyData;)V", false));
+            methodNode2.instructions.add(new org.spongepowered.asm.lib.tree.MethodInsnNode(Opcodes.INVOKEVIRTUAL, "cc/polyfrost/oneconfig/internal/config/compatibility/vigilance/VigilanceConfig", "addDependency", "(Lgg/essential/vigilance/data/PropertyData;Lgg/essential/vigilance/data/PropertyData;)V", false));
 
             methodNode2.instructions.add(labelNode4);
             methodNode2.instructions.add(new org.spongepowered.asm.lib.tree.LineNumberNode(15636438, labelNode4));
@@ -115,8 +115,8 @@ public class OneConfigMixinPlugin implements IMixinConfigPlugin {
                     list.add(new org.spongepowered.asm.lib.tree.VarInsnNode(Opcodes.ALOAD, 0));
                     list.add(new org.spongepowered.asm.lib.tree.VarInsnNode(Opcodes.ALOAD, 0));
                     list.add(new org.spongepowered.asm.lib.tree.FieldInsnNode(Opcodes.GETFIELD, "gg/essential/vigilance/Vigilant", "oneconfig$file", Type.getDescriptor(File.class)));
-                    list.add(new org.spongepowered.asm.lib.tree.MethodInsnNode(Opcodes.INVOKESTATIC, "cc/polyfrost/oneconfig/internal/plugin/hooks/VigilantHook", "returnNewConfig", "(Lgg/essential/vigilance/Vigilant;Ljava/io/File;)Lcc/polyfrost/oneconfig/config/compatibility/vigilance/VigilanceConfig;", false));
-                    list.add(new org.spongepowered.asm.lib.tree.FieldInsnNode(Opcodes.PUTFIELD, "gg/essential/vigilance/Vigilant", "oneconfig$config", "Lcc/polyfrost/oneconfig/config/compatibility/vigilance/VigilanceConfig;"));
+                    list.add(new org.spongepowered.asm.lib.tree.MethodInsnNode(Opcodes.INVOKESTATIC, "cc/polyfrost/oneconfig/internal/plugin/hooks/VigilantHook", "returnNewConfig", "(Lgg/essential/vigilance/Vigilant;Ljava/io/File;)Lcc/polyfrost/oneconfig/internal/config/compatibility/vigilance/VigilanceConfig;", false));
+                    list.add(new org.spongepowered.asm.lib.tree.FieldInsnNode(Opcodes.PUTFIELD, "gg/essential/vigilance/Vigilant", "oneconfig$config", "Lcc/polyfrost/oneconfig/internal/config/compatibility/vigilance/VigilanceConfig;"));
                     method.instructions.insertBefore(method.instructions.getLast().getPrevious(), list);
                 } else if (method.name.equals("addDependency") && method.desc.equals("(Lgg/essential/vigilance/data/PropertyData;Lgg/essential/vigilance/data/PropertyData;)V")) {
                     org.spongepowered.asm.lib.tree.InsnList list = new org.spongepowered.asm.lib.tree.InsnList();
