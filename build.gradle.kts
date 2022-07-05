@@ -59,12 +59,6 @@ val shade: Configuration by configurations.creating {
 
 val shadeNoPom: Configuration by configurations.creating
 
-sourceSets {
-    main {
-        output.setResourcesDir(java.classesDirectory)
-    }
-}
-
 val common = registerStripReferencesAttribute("common") {
     excludes.add("net.minecraft")
     excludes.add("net.minecraftforge")

@@ -1,4 +1,3 @@
-//#if MC==10809
 package cc.polyfrost.oneconfig.internal.mixin;
 
 import net.minecraft.client.shader.Shader;
@@ -13,4 +12,3 @@ public interface ShaderGroupAccessor {
     @Accessor("listShaders")
     List<Shader> getListShaders();
 }
-//#endif

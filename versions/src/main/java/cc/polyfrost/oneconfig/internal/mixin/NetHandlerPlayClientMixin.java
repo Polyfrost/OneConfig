@@ -15,15 +15,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(value = NetHandlerPlayClient.class, priority = Integer.MAX_VALUE)
 public class NetHandlerPlayClientMixin {
 
-    @Inject(method = "addToSendQueue", at = @At("HEAD"), cancellable = true)
-    private void onSendPacket(Packet<?> p_147297_1_, CallbackInfo ci) {
-        SendPacketEvent event = new SendPacketEvent(p_147297_1_);
-        EventManager.INSTANCE.post(event);
-        if (event.isCancelled) {
-            ci.cancel();
-        }
-    }
-
     @Inject(method = "handleChat", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/event/ForgeEventFactory;onClientChat(BLnet/minecraft/util/IChatComponent;)Lnet/minecraft/util/IChatComponent;", remap = false), cancellable = true, remap = true)
     private void onClientChat(S02PacketChat packetIn, CallbackInfo ci) {
         if (packetIn.getType() == 0) {

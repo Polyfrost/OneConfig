@@ -1,0 +1,30 @@
+modLoader="javafml"
+loaderVersion="[32,)"
+license="https://www.gnu.org/licenses/lgpl-3.0.en.html"
+[[mods]]
+modId="${id}"
+version="${version}"
+displayName="${name}"
+authors="Polyfrost"
+description="OneConfig"
+
+# A dependency - use the . to indicate dependency for a specific modid. Dependencies are optional.
+[[dependencies.oneconfig]] #optional
+# the modid of the dependency
+modId="forge" #mandatory
+# Does this dependency have to exist - if not, ordering below must be specified
+mandatory=true #mandatory
+# The version range of the dependency
+versionRange="[32,)" #mandatory
+# An ordering relationship for the dependency - BEFORE or AFTER required if the relationship is not mandatory
+ordering="NONE"
+# Side this dependency is applied on - BOTH, CLIENT or SERVER
+side="BOTH"
+# Here's another dependency
+[[dependencies.oneconfig]]
+modId="minecraft"
+mandatory=true
+# This version range declares a minimum of the current minecraft version up to but not including the next major version
+versionRange="[1.16,)"
+ordering="NONE"
+side="BOTH"

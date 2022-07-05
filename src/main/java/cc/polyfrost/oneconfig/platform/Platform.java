@@ -39,6 +39,8 @@ public interface Platform {
 
     boolean isCallingFromMinecraftThread();
 
+    int getMinecraftVersion();
+
     class PlatformHolder {
         private PlatformHolder() {
 

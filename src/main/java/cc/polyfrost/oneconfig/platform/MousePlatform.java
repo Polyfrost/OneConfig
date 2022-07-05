@@ -1,15 +1,13 @@
 package cc.polyfrost.oneconfig.platform;
 
 public interface MousePlatform {
-    int getMouseX();
-    int getMouseY();
-    int getDWheel();
-    int getMouseDX();
-    int getMouseDY();
+    double getMouseX();
+    double getMouseY();
+    double getDWheel();
+    double getMouseDX();
+    double getMouseDY();
 
-    boolean next();
-    boolean getEventButtonState();
-    int getEventButton();
+    int getButtonState(int button);
 
     boolean isButtonDown(int button);
 }
