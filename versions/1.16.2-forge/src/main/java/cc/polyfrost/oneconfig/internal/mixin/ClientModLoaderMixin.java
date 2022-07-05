@@ -2,6 +2,7 @@ package cc.polyfrost.oneconfig.internal.mixin;
 
 import cc.polyfrost.oneconfig.events.EventManager;
 import cc.polyfrost.oneconfig.events.event.InitializationEvent;
+import cc.polyfrost.oneconfig.internal.OneConfig;
 import net.minecraftforge.fml.client.ClientModLoader;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -9,13 +10,13 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(value = ClientModLoader.class, remap = false)
-public class ClientModLoaderMixin { //todo
+public class ClientModLoaderMixin {
     @Inject(method = "begin", at = @At("HEAD"))
     private static void onBegin(CallbackInfo ci) {
         OneConfig.preLaunch();
     }
 
-    @Inject(method = "finishModLoading", at = @At("HEAD"))
+    @Inject(method = "lambda$finishModLoading$9", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/GameSettings;loadOptions()V"))
     private static void onFinishModLoading(CallbackInfo ci) {
         EventManager.INSTANCE.post(new InitializationEvent());
         OneConfig.init();

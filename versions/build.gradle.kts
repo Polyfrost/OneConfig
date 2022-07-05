@@ -2,6 +2,7 @@ import gg.essential.gradle.util.RelocationTransform.Companion.registerRelocation
 import gg.essential.gradle.util.noServerRunConfigs
 import gg.essential.gradle.util.prebundle
 import net.fabricmc.loom.task.RemapSourcesJarTask
+import java.text.SimpleDateFormat
 
 
 plugins {
@@ -47,17 +48,24 @@ base {
 }
 loom {
     noServerRunConfigs()
-    if (project.platform.isLegacyForge) {
-        launchConfigs.named("client") {
+    launchConfigs.named("client") {
+        if (project.platform.isLegacyForge) {
             arg("--tweakClass", "cc.polyfrost.oneconfig.internal.plugin.asm.OneConfigTweaker")
-            property("mixin.debug.export", "true")
-            property("debugBytecode", "true")
+        }
+        property("mixin.debug.export", "true")
+        property("debugBytecode", "true")
+        property("forge.logging.console.level", "debug")
+        if (org.gradle.internal.os.OperatingSystem.current().isMacOsX) {
+            property("fml.earlyprogresswindow", "false")
         }
     }
     if (project.platform.isForge) {
         forge {
             mixinConfig("mixins.${mod_id}.json")
         }
+    }
+    log4jConfigs.asFileTree.files.forEach {
+        it.writeText(it.readText().replace("warn", "debug"))
     }
     mixin.defaultRefmapName.set("mixins.${mod_id}.refmap.json")
 }
@@ -85,10 +93,13 @@ val shade: Configuration by configurations.creating {
 }
 
 val shadeNoPom: Configuration by configurations.creating
+val shadeNoPom2: Configuration by configurations.creating
 
 sourceSets {
     main {
-        output.setResourcesDir(java.classesDirectory)
+        if (project.platform.isForge) {
+            output.setResourcesDir(java.classesDirectory)
+        }
     }
 }
 
@@ -105,8 +116,7 @@ dependencies {
         isTransitive = false
     }
 
-    @Suppress("GradlePackageUpdate")
-    shadeRelocated("com.github.ben-manes.caffeine:caffeine:2.9.3")
+    @Suppress("GradlePackageUpdate") shadeRelocated("com.github.ben-manes.caffeine:caffeine:2.9.3")
 
     // for other mods and universalcraft
     val kotlinVersion: String by project
@@ -126,14 +136,19 @@ dependencies {
     shade("org.jetbrains.kotlinx:kotlinx-serialization-cbor-jvm:$serializationVersion")
     shade("org.jetbrains.kotlinx:atomicfu-jvm:$atomicfuVersion")
 
-    shade("org.spongepowered:mixin:0.7.11-SNAPSHOT") {
-        isTransitive = false
+    if (platform.isLegacyForge) {
+        shade("org.spongepowered:mixin:0.7.11-SNAPSHOT") {
+            isTransitive = false
+        }
     }
     shadeNoPom(project(":")) {
         isTransitive = false
     }
     shade("cc.polyfrost:lwjgl:1.0.0-alpha1")
-    shadeNoPom(prebundle(shadeRelocated))
+    val prebundled = prebundle(shadeRelocated)
+    modCompileOnly(prebundled)
+    modRuntimeOnly(prebundled)
+    shadeNoPom2(prebundled)
 
     dokkaHtmlPlugin("org.jetbrains.dokka:kotlin-as-java-plugin:1.6.21")
 
@@ -155,7 +170,7 @@ tasks {
         inputs.property("java_level", compatLevel)
         inputs.property("version", mod_version)
         inputs.property("mcVersionStr", project.platform.mcVersionStr)
-        filesMatching(listOf("mcmod.info", "mixins.${mod_id}.json", "mods.toml")) {
+        filesMatching(listOf("mcmod.info", "mixins.${mod_id}.json", "**/mods.toml")) {
             expand(
                 mapOf(
                     "id" to mod_id,
@@ -184,11 +199,11 @@ tasks {
     withType(Jar::class.java) {
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
         if (project.platform.isFabric) {
-            exclude("mcmod.info", "mods.toml")
+            exclude("mcmod.info", "META-INF/mods.toml")
         } else {
             exclude("fabric.mod.json")
             if (project.platform.isLegacyForge) {
-                exclude("mods.toml")
+                exclude("**/mods.toml")
                 exclude("META-INF/versions/**")
                 exclude("**/module-info.class")
                 exclude("**/package-info.class")
@@ -204,7 +219,7 @@ tasks {
 
     val shadowJar = named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar") {
         archiveClassifier.set("full-dev")
-        configurations = listOf(shade, shadeNoPom)
+        configurations = listOf(shade, shadeNoPom, shadeNoPom2)
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
         dependsOn(jar)
     }
@@ -219,8 +234,9 @@ tasks {
     }
     jar {
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-        dependsOn(shadeNoPom)
-        from(shadeNoPom.map { if (it.isDirectory) it else zipTree(it) })
+        dependsOn(shadeNoPom, shadeNoPom2)
+        from(ArrayList<File>().run { addAll(shadeNoPom); addAll(shadeNoPom2); this }
+            .map { if (it.isDirectory) it else zipTree(it) })
         manifest {
             attributes(
                 mapOf(
@@ -228,10 +244,21 @@ tasks {
                     "ForceLoadAsMod" to true,
                     "TweakOrder" to "0",
                     "MixinConfigs" to "mixins.oneconfig.json",
-                    "TweakClass" to "cc.polyfrost.oneconfig.internal.plugin.asm.OneConfigTweaker"
+                    "TweakClass" to "cc.polyfrost.oneconfig.internal.plugin.asm.OneConfigTweaker",
+                    "FMLModType" to "LIBRARY",
+                    "Specification-Title" to mod_id,
+                    "Specification-Vendor" to mod_id,
+                    "Specification-Version" to "1", // We are version 1 of ourselves, whatever the hell that means
+                    "Implementation-Title" to mod_name,
+                    "Implementation-Version" to mod_version,
+                    "Implementation-Vendor" to mod_id,
+                    "Implementation-Timestamp" to SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").format(`java.util`.Date())
                 )
             )
         }
+        /*/
+
+         */
         excludeInternal()
         archiveClassifier.set("")
     }

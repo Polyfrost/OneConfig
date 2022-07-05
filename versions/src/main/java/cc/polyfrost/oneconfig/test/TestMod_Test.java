@@ -1,20 +1,20 @@
 package cc.polyfrost.oneconfig.test;
 
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.event.FMLInitializationEvent;
+import cc.polyfrost.oneconfig.events.EventManager;
+import cc.polyfrost.oneconfig.events.event.InitializationEvent;
+import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
 
 //#if MC<=11202
 @net.minecraftforge.fml.common.Mod(modid = "oneconfig-test-mod", name = "Test Mod", version = "0")
-//#else
-//$$ @Mod("oneconfig-test-mod")
 //#endif
 public class TestMod_Test {
     private TestConfig_Test config;
+    public TestMod_Test() {
+        EventManager.INSTANCE.register(this);
+    }
 
-    //#if MC<=11202
-    @Mod.EventHandler
-    //#endif
-    public void init(FMLInitializationEvent event) {
+    @Subscribe
+    public void init(InitializationEvent e) {
         config = new TestConfig_Test();
     }
 }

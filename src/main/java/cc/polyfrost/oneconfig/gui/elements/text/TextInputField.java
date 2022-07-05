@@ -143,32 +143,26 @@ public class TextInputField extends BasicElement {
                 width = RenderManager.getTextWidth(vg, s.substring(0, caretPos), 14f, Fonts.REGULAR.font);
             }
             if (hovered) {
-                while (Platform.getMousePlatform().next()) {
-                    if (Platform.getMousePlatform().getEventButtonState()) {
-                        if (Platform.getMousePlatform().getEventButton() == 0) {
-                            if (multiLine) {
-                                int caretLine = Math.max(0, Math.min(wrappedText.size() - 1, (int) Math.floor((InputUtils.mouseY() - y - 10) / 24f)));
-                                caretPos = calculatePos(InputUtils.mouseX(), wrappedText.get(caretLine));
-                            } else prevCaret = calculatePos(InputUtils.mouseX(), input);
-                            if (System.currentTimeMillis() - clickTimeD1 < 300) {
-                                onDoubleClick();
-                                isDoubleClick = true;
-                            }
-                            clickTimeD1 = System.currentTimeMillis();
+                int state = Platform.getMousePlatform().getButtonState(0); //todo does this work
+                if (state == 1) {
+                    if (multiLine) {
+                        int caretLine = Math.max(0, Math.min(wrappedText.size() - 1, (int) Math.floor((InputUtils.mouseY() - y - 10) / 24f)));
+                        caretPos = calculatePos(InputUtils.mouseX(), wrappedText.get(caretLine));
+                    } else prevCaret = calculatePos(InputUtils.mouseX(), input);
+                    if (System.currentTimeMillis() - clickTimeD1 < 300) {
+                        onDoubleClick();
+                        isDoubleClick = true;
+                    }
+                    clickTimeD1 = System.currentTimeMillis();
+                } else {
+                    long clickTimeU = System.currentTimeMillis();
+                    if (clickTimeU - clickTimeD1 < 200) {
+                        if (!isDoubleClick) {
+                            start = 0;
+                            end = 0;
                         }
-                    } else {
-                        if (Platform.getMousePlatform().getEventButton() == 0) {
-                            long clickTimeU = System.currentTimeMillis();
-                            if (clickTimeU - clickTimeD1 < 200) {
-                                if (!isDoubleClick) {
-                                    start = 0;
-                                    end = 0;
-                                }
-                                prevCaret = caretPos;
-                                isDoubleClick = false;
-                            }
-
-                        }
+                        prevCaret = caretPos;
+                        isDoubleClick = false;
                     }
                 }
             }

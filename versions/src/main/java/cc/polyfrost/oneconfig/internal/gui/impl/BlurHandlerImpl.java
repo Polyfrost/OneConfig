@@ -10,7 +10,6 @@ import cc.polyfrost.oneconfig.internal.mixin.ShaderGroupAccessor;
 import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
 import cc.polyfrost.oneconfig.libs.universal.UMinecraft;
 import cc.polyfrost.oneconfig.libs.universal.UScreen;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.shader.Shader;
 import net.minecraft.client.shader.ShaderUniform;
 import net.minecraft.util.ResourceLocation;
@@ -55,7 +54,7 @@ public class BlurHandlerImpl implements BlurHandler {
         }
 
         // Only update the shader if one is active
-        if (!UMinecraft.getMinecraft().entityRenderer.isShaderActive()) {
+        if (!isShaderActive()) {
             return;
         }
         if (progress >= 5) return;
@@ -102,14 +101,14 @@ public class BlurHandlerImpl implements BlurHandler {
         // If a shader is not already active and the UI is
         // a one of ours, we should load our own blur!
 
-        if (!UMinecraft.getMinecraft().entityRenderer.isShaderActive() && gui instanceof OneConfigGui && Preferences.enableBlur) {
+        if (!isShaderActive() && gui instanceof OneConfigGui && Preferences.enableBlur) {
             UMinecraft.getMinecraft().entityRenderer.loadShader(this.blurShader);
 
             this.start = System.currentTimeMillis();
             this.progress = 0;
 
             // If a shader is active and the incoming UI is null or we have blur disabled, stop using the shader.
-        } else if (UMinecraft.getMinecraft().entityRenderer.isShaderActive() && (gui == null || !Preferences.enableBlur)) {
+        } else if (isShaderActive() && (gui == null || !Preferences.enableBlur)) {
             String name = UMinecraft.getMinecraft().entityRenderer.getShaderGroup().getShaderGroupName();
 
             // Only stop our specific blur ;)
@@ -128,5 +127,13 @@ public class BlurHandlerImpl implements BlurHandler {
      */
     private float getBlurStrengthProgress() {
         return Math.min((System.currentTimeMillis() - this.start) / 50F, 5.0F);
+    }
+
+    private boolean isShaderActive() {
+        return UMinecraft.getMinecraft().entityRenderer.getShaderGroup() != null
+                //#if MC<=11202
+                && net.minecraft.client.renderer.OpenGlHelper.shadersSupported
+                //#endif
+        ;
     }
 }

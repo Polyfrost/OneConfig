@@ -9,8 +9,22 @@ net.minecraft.client.entity.EntityPlayerSP net.minecraft.client.entity.player.Cl
 net.minecraft.launchwrapper.IClassTransformer transform() transformClassBytes()
 net.minecraft.launchwrapper.IClassTransformer org.spongepowered.asm.service.ILegacyClassTransformer
 net.minecraft.client.Minecraft entityRenderer gameRenderer
-net.minecraftforge.fml.common.event.FMLInitializationEvent net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent
 net.minecraft.client.shader.ShaderUniform net.minecraft.client.shader.ShaderDefault
+
+net.minecraftforge.fml.common.event.FMLInitializationEvent net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent
 net.minecraftforge.fml.common.Loader instance() get()
+net.minecraftforge.fml.common.Loader activeModContainer() getActiveContainer()
 net.minecraftforge.fml.common.Loader net.minecraftforge.fml.ModLoadingContext
 net.minecraftforge.fml.common.ModContainer net.minecraftforge.fml.ModContainer
+
+org.spongepowered.asm.lib.tree.ClassNode org.objectweb.asm.tree.ClassNode
+org.spongepowered.asm.lib.tree.FieldNode org.objectweb.asm.tree.FieldNode
+org.spongepowered.asm.lib.tree.MethodNode org.objectweb.asm.tree.MethodNode
+org.spongepowered.asm.lib.tree.LabelNode org.objectweb.asm.tree.LabelNode
+org.spongepowered.asm.lib.tree.LineNumberNode org.objectweb.asm.tree.LineNumberNode
+org.spongepowered.asm.lib.tree.VarInsnNode org.objectweb.asm.tree.VarInsnNode
+org.spongepowered.asm.lib.tree.FieldInsnNode org.objectweb.asm.tree.FieldInsnNode
+org.spongepowered.asm.lib.tree.MethodInsnNode org.objectweb.asm.tree.MethodInsnNode
+org.spongepowered.asm.lib.tree.InsnList org.objectweb.asm.tree.InsnList
+org.spongepowered.asm.lib.tree.InsnNode org.objectweb.asm.tree.InsnNode
+org.spongepowered.asm.lib.tree.JumpInsnNode org.objectweb.asm.tree.JumpInsnNode

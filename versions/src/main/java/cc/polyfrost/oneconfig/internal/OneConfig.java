@@ -36,7 +36,6 @@ public class OneConfig {
     public static final Logger LOGGER = LogManager.getLogger("@NAME@");
     private static boolean preLaunched = false;
     private static boolean initialized = false;
-    private static boolean isObfuscated = true;
 
     /**
      * Called before mods are loaded.
@@ -44,12 +43,6 @@ public class OneConfig {
      */
     public static void preLaunch() {
         if (preLaunched) return;
-        try {
-            Class.forName("net.minecraft.world.World");
-            LOGGER.warn("OneConfig is NOT obfuscated!");
-            isObfuscated = false;
-        } catch (Exception ignored) {
-        }
         oneConfigDir.mkdirs();
         new File(oneConfigDir, "profiles").mkdirs();
         if (OneConfigConfig.getInstance() == null) {
@@ -81,12 +74,6 @@ public class OneConfig {
         ConfigCore.sortMods();
 
         initialized = true;
-    }
-
-    /** Returns weather this is an obfuscated environment, using a check for obfuscated name of net.minecraft.world.World.class.
-     * @return true if this is an obfuscated environment, which is normal for Minecraft or false if not. */
-    public static boolean isObfuscated() {
-        return isObfuscated;
     }
 
     @Subscribe

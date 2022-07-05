@@ -96,7 +96,7 @@ public final class InputUtils {
      * @return the current mouse X position
      */
     public static int mouseX() {
-        if (OneConfigGui.INSTANCE == null) return Platform.getMousePlatform().getMouseX();
+        if (OneConfigGui.INSTANCE == null) return (int) Platform.getMousePlatform().getMouseX(); //todo stop casting and actually use doubles
         return (int) (Platform.getMousePlatform().getMouseX() / OneConfigGui.INSTANCE.getScaleFactor());
     }
 
@@ -110,7 +110,7 @@ public final class InputUtils {
      * @return the current mouse Y position
      */
     public static int mouseY() {
-        if (OneConfigGui.INSTANCE == null) return UResolution.getWindowHeight() - Math.abs(Platform.getMousePlatform().getMouseY());
+        if (OneConfigGui.INSTANCE == null) return (int) (UResolution.getWindowHeight() - Math.abs(Platform.getMousePlatform().getMouseY()));
         return (int) ((UResolution.getWindowHeight() - Math.abs(Platform.getMousePlatform().getMouseY())) / OneConfigGui.INSTANCE.getScaleFactor());
     }
 

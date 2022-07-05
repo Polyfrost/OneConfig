@@ -1,3 +1,4 @@
+//#if MC<=11202
 package cc.polyfrost.oneconfig.internal.plugin.asm;
 
 import cc.polyfrost.oneconfig.internal.plugin.asm.tweakers.NanoVGGLConfigTransformer;
@@ -99,3 +100,4 @@ public class ClassTransformer implements IClassTransformer {
         return cw.toByteArray();
     }
 }
+//#endif
