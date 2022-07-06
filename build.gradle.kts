@@ -113,7 +113,7 @@ dependencies {
     shade("org.spongepowered:mixin:0.7.11-SNAPSHOT") {
         isTransitive = false
     }
-    shade("cc.polyfrost:lwjgl:1.0.0-alpha1")
+    shade("cc.polyfrost:lwjgl-1.8.9-forge:1.0.0-alpha5")
     shadeNoPom(prebundle(shadeRelocated))
 
     configurations.named(JavaPlugin.COMPILE_CLASSPATH_CONFIGURATION_NAME) { extendsFrom(shadeNoPom) }
@@ -138,7 +138,7 @@ tasks {
 }
 
 apiValidation {
-    ignoredProjects.add("lwjgl")
+    ignoredPackages.add("org.lwjgl")
     ignoredPackages.add("cc.polyfrost.oneconfig.libs")
     ignoredPackages.add("cc.polyfrost.oneconfig.internal")
     ignoredPackages.add("cc.polyfrost.oneconfig.test")

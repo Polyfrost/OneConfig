@@ -1,7 +1,11 @@
+@file:Suppress("GradlePackageUpdate")
+
 plugins {
     kotlin("jvm")
+    id("gg.essential.multi-version")
     id("gg.essential.defaults.repo")
     id("gg.essential.defaults.java")
+    id("gg.essential.defaults.loom")
     id("com.github.johnrengelman.shadow")
     id("maven-publish")
     id("signing")
@@ -12,7 +16,7 @@ val mod_name: String by project
 val mod_version: String by project
 val mod_id: String by project
 
-version = "1.0.0-alpha1"
+version = "1.0.0-alpha5"
 
 repositories {
     maven("https://repo.polyfrost.cc/releases")
@@ -27,23 +31,39 @@ sourceSets {
 }
 
 dependencies {
-    shadeCompileOnly("org.lwjgl:lwjgl:3.3.1")
-    shadeCompileOnly("org.lwjgl:lwjgl-stb:3.3.1")
-    shadeCompileOnly("org.lwjgl:lwjgl-tinyfd:3.3.1")
-    shadeCompileOnly("org.lwjgl:lwjgl-nanovg:3.3.1")
+    val lwjgl = if (platform.mcVersion >= 11600) {
+        "3.2.1"
+    } else {
+        "3.3.1"
+    }
+    if (platform.isLegacyForge) {
+        shadeCompileOnly("org.lwjgl:lwjgl:$lwjgl")
+        shadeCompileOnly("org.lwjgl:lwjgl-stb:$lwjgl")
+        shadeCompileOnly("org.lwjgl:lwjgl-tinyfd:$lwjgl")
 
-    shadeRuntimeOnly("org.lwjgl:lwjgl:3.3.1:natives-windows")
-    shadeRuntimeOnly("org.lwjgl:lwjgl-stb:3.3.1:natives-windows")
-    shadeRuntimeOnly("org.lwjgl:lwjgl-tinyfd:3.3.1:natives-windows")
-    shadeRuntimeOnly("org.lwjgl:lwjgl-nanovg:3.3.1:natives-windows")
-    shadeRuntimeOnly("org.lwjgl:lwjgl:3.3.1:natives-linux")
-    shadeRuntimeOnly("org.lwjgl:lwjgl-stb:3.3.1:natives-linux")
-    shadeRuntimeOnly("org.lwjgl:lwjgl-tinyfd:3.3.1:natives-linux")
-    shadeRuntimeOnly("org.lwjgl:lwjgl-nanovg:3.3.1:natives-linux")
-    shadeRuntimeOnly("org.lwjgl:lwjgl:3.3.1:natives-macos")
-    shadeRuntimeOnly("org.lwjgl:lwjgl-stb:3.3.1:natives-macos")
-    shadeRuntimeOnly("org.lwjgl:lwjgl-tinyfd:3.3.1:natives-macos")
-    shadeRuntimeOnly("org.lwjgl:lwjgl-nanovg:3.3.1:natives-macos")
+        shadeRuntimeOnly("org.lwjgl:lwjgl:$lwjgl:natives-windows")
+        shadeRuntimeOnly("org.lwjgl:lwjgl-stb:$lwjgl:natives-windows")
+        shadeRuntimeOnly("org.lwjgl:lwjgl-tinyfd:$lwjgl:natives-windows")
+        shadeRuntimeOnly("org.lwjgl:lwjgl:$lwjgl:natives-linux")
+        shadeRuntimeOnly("org.lwjgl:lwjgl-stb:$lwjgl:natives-linux")
+        shadeRuntimeOnly("org.lwjgl:lwjgl-tinyfd:$lwjgl:natives-linux")
+        shadeRuntimeOnly("org.lwjgl:lwjgl:$lwjgl:natives-macos")
+        shadeRuntimeOnly("org.lwjgl:lwjgl-stb:$lwjgl:natives-macos")
+        shadeRuntimeOnly("org.lwjgl:lwjgl-tinyfd:$lwjgl:natives-macos")
+    }
+
+    shadeCompileOnly("org.lwjgl:lwjgl-nanovg:$lwjgl") {
+        isTransitive = platform.isLegacyForge
+    }
+    shadeRuntimeOnly("org.lwjgl:lwjgl-nanovg:$lwjgl:natives-windows") {
+        isTransitive = platform.isLegacyForge
+    }
+    shadeRuntimeOnly("org.lwjgl:lwjgl-nanovg:$lwjgl:natives-linux") {
+        isTransitive = platform.isLegacyForge
+    }
+    shadeRuntimeOnly("org.lwjgl:lwjgl-nanovg:$lwjgl:natives-macos") {
+        isTransitive = platform.isLegacyForge
+    }
 }
 
 tasks {
@@ -53,9 +73,11 @@ tasks {
         exclude("META-INF/versions/**")
         exclude("**/module-info.class")
         exclude("**/package-info.class")
-        relocate("org.lwjgl", "org.lwjgl3") {
-            include("org.lwjgl.PointerBuffer")
-            include("org.lwjgl.BufferUtils")
+        if (platform.isLegacyForge) {
+            relocate("org.lwjgl", "org.lwjgl3") {
+                include("org.lwjgl.PointerBuffer")
+                include("org.lwjgl.BufferUtils")
+            }
         }
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
         dependsOn(jar)
@@ -63,13 +85,16 @@ tasks {
     jar {
         enabled = false
     }
+    remapJar {
+        enabled = false
+    }
 }
 
 publishing {
     publications {
-        register<MavenPublication>("lwjgl") {
+        register<MavenPublication>("lwjgl-$platform") {
             groupId = "cc.polyfrost"
-            artifactId = "lwjgl"
+            artifactId = "lwjgl-$platform"
             artifact(tasks["shadowJar"])
         }
     }

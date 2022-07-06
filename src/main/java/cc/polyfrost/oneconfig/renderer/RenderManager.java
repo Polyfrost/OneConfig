@@ -10,19 +10,17 @@ import cc.polyfrost.oneconfig.libs.universal.UResolution;
 import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.font.Font;
 import cc.polyfrost.oneconfig.renderer.font.FontManager;
-import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import cc.polyfrost.oneconfig.utils.NetworkUtils;
 import org.lwjgl.nanovg.NVGColor;
 import org.lwjgl.nanovg.NVGPaint;
+import org.lwjgl.nanovg.NanoVGGL2;
 import org.lwjgl.opengl.GL11;
 
 import java.util.function.LongConsumer;
 import java.util.regex.Pattern;
 
 import static org.lwjgl.nanovg.NanoVG.*;
-import static org.lwjgl.nanovg.NanoVGGL2.NVG_ANTIALIAS;
-import static org.lwjgl.nanovg.NanoVGGL2.nvgCreate;
 
 /**
  * Handles NanoVG rendering and wraps it in a more convenient interface.
@@ -54,7 +52,7 @@ public final class RenderManager {
      */
     public static void setupAndDraw(boolean mcScaling, LongConsumer consumer) {
         if (vg == -1) {
-            vg = nvgCreate(NVG_ANTIALIAS);
+            vg = NanoVGGL2.nvgCreate(NanoVGGL2.NVG_ANTIALIAS);
             if (vg == -1) {
                 throw new RuntimeException("Failed to create nvg context");
             }

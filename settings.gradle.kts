@@ -26,6 +26,10 @@ val mod_name: String by settings
 rootProject.name = mod_name
 
 include(":lwjgl")
+project(":lwjgl").apply {
+    projectDir = file("lwjgl/")
+    buildFileName = "root.gradle.kts"
+}
 
 include(":platform")
 project(":platform").apply {
@@ -39,8 +43,13 @@ listOf(
     "1.16.2-forge"
 ).forEach { version ->
     include(":platform:$version")
+    include(":lwjgl:$version")
     project(":platform:$version").apply {
         projectDir = file("versions/$version")
+        buildFileName = "../build.gradle.kts"
+    }
+    project(":lwjgl:$version").apply {
+        projectDir = file("lwjgl/$version")
         buildFileName = "../build.gradle.kts"
     }
 }

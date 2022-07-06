@@ -64,14 +64,17 @@ loom {
             mixinConfig("mixins.${mod_id}.json")
         }
     }
-    log4jConfigs.asFileTree.files.forEach {
-        it.writeText(it.readText().replace("warn", "debug"))
-    }
     mixin.defaultRefmapName.set("mixins.${mod_id}.refmap.json")
 }
 
 repositories {
     maven("https://repo.polyfrost.cc/releases")
+}
+
+val relocatedCommonProject = registerRelocationAttribute("common-lwjgl") {
+    if (platform.isModLauncher || platform.isFabric) {
+        relocate("org.lwjgl3", "org.lwjgl")
+    }
 }
 
 val relocated = registerRelocationAttribute("relocate") {
@@ -82,6 +85,10 @@ val relocated = registerRelocationAttribute("relocate") {
     relocate("org.checkerframework", "cc.polyfrost.oneconfig.libs")
     remapStringsIn("com.github.benmanes.caffeine.cache.LocalCacheFactory")
     remapStringsIn("com.github.benmanes.caffeine.cache.NodeFactory")
+}
+
+val shadeProject: Configuration by configurations.creating {
+    attributes { attribute(relocatedCommonProject, false) }
 }
 
 val shadeRelocated: Configuration by configurations.creating {
@@ -141,10 +148,11 @@ dependencies {
             isTransitive = false
         }
     }
-    shadeNoPom(project(":")) {
+    shadeProject(project(":")) {
         isTransitive = false
     }
-    shade("cc.polyfrost:lwjgl:1.0.0-alpha1")
+
+    shade("cc.polyfrost:lwjgl-$platform:1.0.0-alpha5")
     val prebundled = prebundle(shadeRelocated)
     modCompileOnly(prebundled)
     modRuntimeOnly(prebundled)
@@ -152,8 +160,8 @@ dependencies {
 
     dokkaHtmlPlugin("org.jetbrains.dokka:kotlin-as-java-plugin:1.6.21")
 
-    configurations.named(JavaPlugin.COMPILE_CLASSPATH_CONFIGURATION_NAME) { extendsFrom(shadeNoPom) }
-    configurations.named(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME) { extendsFrom(shadeNoPom) }
+    configurations.named(JavaPlugin.COMPILE_CLASSPATH_CONFIGURATION_NAME) { extendsFrom(shadeNoPom); extendsFrom(shadeProject) }
+    configurations.named(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME) { extendsFrom(shadeNoPom); extendsFrom(shadeProject) }
 }
 
 tasks {
@@ -219,7 +227,7 @@ tasks {
 
     val shadowJar = named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar") {
         archiveClassifier.set("full-dev")
-        configurations = listOf(shade, shadeNoPom, shadeNoPom2)
+        configurations = listOf(shade, shadeNoPom, shadeNoPom2, shadeProject)
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
         dependsOn(jar)
     }
@@ -234,26 +242,35 @@ tasks {
     }
     jar {
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-        dependsOn(shadeNoPom, shadeNoPom2)
-        from(ArrayList<File>().run { addAll(shadeNoPom); addAll(shadeNoPom2); this }
+        dependsOn(shadeNoPom, shadeNoPom2, shadeProject)
+        from(ArrayList<File>().run { addAll(shadeNoPom); addAll(shadeNoPom2); addAll(shadeProject); this }
             .map { if (it.isDirectory) it else zipTree(it) })
         manifest {
             attributes(
-                mapOf(
-                    "ModSide" to "CLIENT",
-                    "ForceLoadAsMod" to true,
-                    "TweakOrder" to "0",
-                    "MixinConfigs" to "mixins.oneconfig.json",
-                    "TweakClass" to "cc.polyfrost.oneconfig.internal.plugin.asm.OneConfigTweaker",
-                    "FMLModType" to "LIBRARY",
-                    "Specification-Title" to mod_id,
-                    "Specification-Vendor" to mod_id,
-                    "Specification-Version" to "1", // We are version 1 of ourselves, whatever the hell that means
-                    "Implementation-Title" to mod_name,
-                    "Implementation-Version" to mod_version,
-                    "Implementation-Vendor" to mod_id,
-                    "Implementation-Timestamp" to SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").format(`java.util`.Date())
-                )
+                if (platform.isForge) {
+                    if (platform.isLegacyForge) {
+                        mapOf(
+                            "ModSide" to "CLIENT",
+                            "ForceLoadAsMod" to true,
+                            "TweakOrder" to "0",
+                            "MixinConfigs" to "mixins.oneconfig.json",
+                            "TweakClass" to "cc.polyfrost.oneconfig.internal.plugin.asm.OneConfigTweaker"
+                        )
+                    } else {
+                        mapOf(
+                            "MixinConfigs" to "mixins.oneconfig.json",
+                            "Specification-Title" to mod_id,
+                            "Specification-Vendor" to mod_id,
+                            "Specification-Version" to "1", // We are version 1 of ourselves, whatever the hell that means
+                            "Implementation-Title" to mod_name,
+                            "Implementation-Version" to mod_version,
+                            "Implementation-Vendor" to mod_id,
+                            "Implementation-Timestamp" to SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").format(`java.util`.Date())
+                        )
+                    }
+                } else {
+                    mapOf()
+                }
             )
         }
         /*/
