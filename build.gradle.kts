@@ -40,6 +40,7 @@ repositories {
 }
 
 val relocated = registerRelocationAttribute("relocate") {
+    relocate("org.java_websocket", "cc.polyfrost.oneconfig.libs.websocket")
     relocate("gg.essential", "cc.polyfrost.oneconfig.libs")
     relocate("me.kbrewster", "cc.polyfrost.oneconfig.libs")
     relocate("com.github.benmanes", "cc.polyfrost.oneconfig.libs")
@@ -86,6 +87,10 @@ dependencies {
     }
 
     shadeRelocated("com.github.KevinPriv:keventbus:c52e0a2ea0") {
+        isTransitive = false
+    }
+
+    shadeRelocated("org.java-websocket:Java-WebSocket:1.5.3") {
         isTransitive = false
     }
 
