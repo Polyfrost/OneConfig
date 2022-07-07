@@ -75,12 +75,12 @@ public abstract class TextHud extends Hud {
     }
 
     @Override
-    public void draw(UMatrixStack matrices, int x, int y, float scale) {
+    public void draw(UMatrixStack matrices, float x, float y, float scale) {
         if (!HudCore.editing) getLinesFrequent(lines);
         else getExampleLinesFrequent(lines);
         if (lines == null) return;
 
-        int textY = y;
+        float textY = y;
         width = 0;
         for (String line : lines) {
             RenderManager.drawScaledString(line, x, textY, color.getRGB(), RenderManager.TextType.toType(textType), scale);
@@ -91,12 +91,12 @@ public abstract class TextHud extends Hud {
     }
 
     @Override
-    public int getWidth(float scale) {
+    public float getWidth(float scale) {
         return (int) (width * scale);
     }
 
     @Override
-    public int getHeight(float scale) {
+    public float getHeight(float scale) {
         return (int) (height * scale);
     }
 
