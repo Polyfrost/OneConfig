@@ -1,6 +1,7 @@
 //#if MC<=11202
 package cc.polyfrost.oneconfig.internal.eggs;
 
+import cc.polyfrost.oneconfig.internal.config.Preferences;
 import net.minecraft.client.model.ModelPig;
 import net.minecraft.client.renderer.entity.RenderPig;
 import net.minecraft.client.renderer.entity.layers.LayerRenderer;
@@ -23,7 +24,7 @@ public class TechnobladeCrownRenderer<T extends EntityPig> implements LayerRende
 
     @Override
     public void doRenderLayer(T entitylivingbaseIn, float f, float g, float partialTicks, float h, float i, float j, float scale) {
-        if (entitylivingbaseIn.hasCustomName() && entitylivingbaseIn.getCustomNameTag().equals("Technoblade")) {
+        if (Preferences.easterEgg1 && entitylivingbaseIn.hasCustomName() && entitylivingbaseIn.getCustomNameTag().equals("Technoblade")) {
             this.renderer.bindTexture(CROWN_TEXTURE);
             this.pigModel.setModelAttributes(renderer.getMainModel());
             this.pigModel.render(entitylivingbaseIn, f, g, h, i, j, scale);
