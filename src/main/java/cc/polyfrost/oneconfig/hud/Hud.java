@@ -185,8 +185,6 @@ public abstract class Hud {
         this.config = config;
     }
 
-    public abstract Hitbox calculateHitBox(float x, float y, float scale);
-
     @Switch(
             name = "Show in Chat"
     )
