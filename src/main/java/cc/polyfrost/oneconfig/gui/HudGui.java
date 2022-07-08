@@ -40,7 +40,7 @@ public class HudGui extends UScreen implements GuiPause {
         RenderManager.drawGlRect(0, 0, UResolution.getScaledWidth(), UResolution.getScaledHeight(), new Color(80, 80, 80, 50).getRGB());
 
         if (isDragging) {
-            setPosition(mouseX - xOffset, mouseY - yOffset, true);
+            setPosition(mouseX - xOffset, mouseY - yOffset, true, false);
         }
 
         for (Hud hud : HudCore.huds) {
@@ -92,17 +92,17 @@ public class HudGui extends UScreen implements GuiPause {
         }
     }
 
-    private void setPosition(float newX, float newY, boolean snap) {
+    private void setPosition(float newX, float newY, boolean snap, boolean loose) {
         float width = editingHud.getWidth(editingHud.scale) + editingHud.paddingX * editingHud.scale;
         float height = editingHud.getHeight(editingHud.scale) + editingHud.paddingY * editingHud.scale;
 
-        if (newX < 0)
+        if (newX < (loose ? -width * 2 : 0))
             newX = 0;
-        else if (newX + width > UResolution.getScaledWidth())
+        else if (newX + width + (loose ? width * 2 : 0) > UResolution.getScaledWidth())
             newX = UResolution.getScaledWidth() - width;
-        if (newY < 0)
+        if (newY < (loose ? -height * 2 : 0))
             newY = 0;
-        else if (newY + height > UResolution.getScaledHeight())
+        else if (newY + height + (loose ? height * 2 : 0) > UResolution.getScaledHeight())
             newY = UResolution.getScaledHeight() - height;
 
         if (snap) {
@@ -264,13 +264,13 @@ public class HudGui extends UScreen implements GuiPause {
             float x = editingHud.getXScaled(UResolution.getScaledWidth());
             float y = editingHud.getYScaled(UResolution.getScaledHeight());
             if (keyCode == UKeyboard.KEY_UP) {
-                setPosition(x, y - 1, false);
+                setPosition(x, y - 1, false, true);
             } else if (keyCode == UKeyboard.KEY_DOWN) {
-                setPosition(x, y + 1, false);
+                setPosition(x, y + 1, false, true);
             } else if (keyCode == UKeyboard.KEY_LEFT) {
-                setPosition(x - 1, y, false);
+                setPosition(x - 1, y, false, true);
             } else if (keyCode == UKeyboard.KEY_RIGHT) {
-                setPosition(x + 1, y, false);
+                setPosition(x + 1, y, false, true);
             }
         }
         super.onKeyPressed(keyCode, typedChar, modifiers);
