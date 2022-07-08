@@ -12,9 +12,6 @@ public abstract class BasicHud extends Hud {
     public float cornerRadius;
     public float borderSize;
 
-    public float paddingX;
-    public float paddingY;
-
     /**
      * @param enabled      If the hud is enabled
      * @param x            X-coordinate of hud on a 1080p display

@@ -38,11 +38,11 @@ public class HUDUtils {
                 options.get(options.size() - 1).addDependency(() -> hud.isEnabled() && ((BasicHud) hud).rounded);
                 options.add(new ConfigSlider(hud.getClass().getField("borderSize"), hud, "Border thickness:", category, subcategory, 0, 10, 0));
                 options.get(options.size() - 1).addDependency(() -> hud.isEnabled() && ((BasicHud) hud).border);
-                options.add(new ConfigSlider(hud.getClass().getField("paddingX"), hud, "X-Padding", category, subcategory, 0, 50, 0));
-                options.get(options.size() - 1).addDependency(hud::isEnabled);
-                options.add(new ConfigSlider(hud.getClass().getField("paddingY"), hud, "Y-Padding", category, subcategory, 0, 50, 0));
-                options.get(options.size() - 1).addDependency(hud::isEnabled);
             }
+            options.add(new ConfigSlider(hud.getClass().getField("paddingX"), hud, "X-Padding", category, subcategory, 0, 50, 0));
+            options.get(options.size() - 1).addDependency(hud::isEnabled);
+            options.add(new ConfigSlider(hud.getClass().getField("paddingY"), hud, "Y-Padding", category, subcategory, 0, 50, 0));
+            options.get(options.size() - 1).addDependency(hud::isEnabled);
         } catch (NoSuchFieldException ignored) {
         }
     }

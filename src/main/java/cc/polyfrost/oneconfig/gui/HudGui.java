@@ -72,7 +72,7 @@ public class HudGui extends UScreen implements GuiPause {
         int x = (int) hud.getXScaled(UResolution.getScaledWidth());
         int y = (int) hud.getYScaled(UResolution.getScaledHeight());
 
-        hud.drawExampleAll(matrixStack, x, y, hud.scale, true);
+        hud.drawExampleAll(matrixStack, x, y, hud.scale);
         int color = new Color(215, 224, 235).getRGB();
         if (editingHud == hud) {
             color = new Color(43, 159, 235).getRGB();
