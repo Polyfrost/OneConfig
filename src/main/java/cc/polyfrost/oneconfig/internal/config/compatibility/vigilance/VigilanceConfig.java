@@ -184,13 +184,10 @@ public class VigilanceConfig extends Config {
         }
 
         @Override
-        protected void setColor(OneColor color) {
-            if (cachedColor != color) {
-                Color newColor = new Color(color.getRGB(), true);
-                try {
-                    this.color.set(parent, newColor);
-                } catch (IllegalAccessException ignored) {
-                }
+        protected void set(Object color) throws IllegalAccessException {
+            if (color instanceof OneColor) {
+                Color newColor = new Color(((OneColor) color).getRGB(), true);
+                this.color.set(parent, newColor);
             }
         }
     }

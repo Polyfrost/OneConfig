@@ -22,9 +22,9 @@ public final class InputUtils {
      *
      * @return true if mouse is over region, false if not.
      */
-    public static boolean isAreaHovered(int x, int y, int width, int height, boolean ignoreBlock) {
-        int mouseX = mouseX();
-        int mouseY = mouseY();
+    public static boolean isAreaHovered(float x, float y, float width, float height, boolean ignoreBlock) {
+        float mouseX = mouseX();
+        float mouseY = mouseY();
         return (ignoreBlock || blockScissors.size() == 0 || !shouldBlock(mouseX, mouseY)) && mouseX > x && mouseY > y && mouseX < x + width && mouseY < y + height;
     }
 
@@ -33,7 +33,7 @@ public final class InputUtils {
      *
      * @return true if mouse is over region, false if not.
      */
-    public static boolean isAreaHovered(int x, int y, int width, int height) {
+    public static boolean isAreaHovered(float x, float y, float width, float height) {
         return isAreaHovered(x, y, width, height, false);
     }
 
@@ -46,9 +46,9 @@ public final class InputUtils {
      * @param height      the height of the region
      * @param ignoreBlock if true, will ignore
      * @return true if the mouse is clicked and is over the region, false if not
-     * @see InputUtils#isAreaHovered(int, int, int, int)
+     * @see InputUtils#isAreaHovered(float, float, float, float)
      */
-    public static boolean isAreaClicked(int x, int y, int width, int height, boolean ignoreBlock) {
+    public static boolean isAreaClicked(float x, float y, float width, float height, boolean ignoreBlock) {
         return isAreaHovered(x, y, width, height, ignoreBlock) && isClicked(false);
     }
 
@@ -60,9 +60,9 @@ public final class InputUtils {
      * @param width  the width of the region
      * @param height the height of the region
      * @return true if the mouse is clicked and is over the region, false if not
-     * @see InputUtils#isAreaClicked(int, int, int, int, boolean)
+     * @see InputUtils#isAreaClicked(float, float, float, float, boolean)
      */
-    public static boolean isAreaClicked(int x, int y, int width, int height) {
+    public static boolean isAreaClicked(float x, float y, float width, float height) {
         return isAreaClicked(x, y, width, height, false);
     }
 
@@ -95,9 +95,9 @@ public final class InputUtils {
      *
      * @return the current mouse X position
      */
-    public static int mouseX() {
-        if (OneConfigGui.INSTANCE == null) return (int) Platform.getMousePlatform().getMouseX(); //todo stop casting and actually use doubles
-        return (int) (Platform.getMousePlatform().getMouseX() / OneConfigGui.INSTANCE.getScaleFactor());
+    public static float mouseX() {
+        if (OneConfigGui.INSTANCE == null) return (float) Platform.getMousePlatform().getMouseX();
+        return (float) (Platform.getMousePlatform().getMouseX() / OneConfigGui.INSTANCE.getScaleFactor());
     }
 
     /**
@@ -109,9 +109,9 @@ public final class InputUtils {
      *
      * @return the current mouse Y position
      */
-    public static int mouseY() {
-        if (OneConfigGui.INSTANCE == null) return (int) (UResolution.getWindowHeight() - Math.abs(Platform.getMousePlatform().getMouseY()));
-        return (int) ((UResolution.getWindowHeight() - Math.abs(Platform.getMousePlatform().getMouseY())) / OneConfigGui.INSTANCE.getScaleFactor());
+    public static float mouseY() {
+        if (OneConfigGui.INSTANCE == null) return (float) (UResolution.getWindowHeight() - Math.abs(Platform.getMousePlatform().getMouseY()));
+        return (float) ((UResolution.getWindowHeight() - Math.abs(Platform.getMousePlatform().getMouseY())) / OneConfigGui.INSTANCE.getScaleFactor());
     }
 
     /**
@@ -122,7 +122,7 @@ public final class InputUtils {
      * @param width  Width
      * @param height Height
      */
-    public static Scissor blockInputArea(int x, int y, int width, int height) {
+    public static Scissor blockInputArea(float x, float y, float width, float height) {
         Scissor scissor = new Scissor(new Scissor(x, y, width, height));
         blockScissors.add(scissor);
         return scissor;
@@ -160,7 +160,7 @@ public final class InputUtils {
         return blockScissors.size() > 0;
     }
 
-    private static boolean shouldBlock(int x, int y) {
+    private static boolean shouldBlock(float x, float y) {
         for (Scissor block : blockScissors) {
             if (block.isInScissor(x, y)) return true;
         }

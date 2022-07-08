@@ -79,14 +79,14 @@ public abstract class OneUIScreen extends UScreen implements GuiPause {
     /**
      * Get the current x position of the mouse.
      */
-    public int getMouseX() {
+    public float getMouseX() {
         return InputUtils.mouseX();
     }
 
     /**
      * Get the current y position of the mouse.
      */
-    public int getMouseY() {
+    public float getMouseY() {
         return InputUtils.mouseY();
     }
 

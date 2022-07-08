@@ -26,7 +26,7 @@ public abstract class BasicHud extends Hud {
      * @param borderSize   Thickness of the border
      * @param borderColor  The color of the border
      */
-    public BasicHud(boolean enabled, float x, float y, float scale, boolean rounded, int cornerRadius, int paddingX, int paddingY, OneColor bgColor, boolean border, float borderSize, OneColor borderColor) {
+    public BasicHud(boolean enabled, float x, float y, float scale, boolean rounded, float cornerRadius, float paddingX, float paddingY, OneColor bgColor, boolean border, float borderSize, OneColor borderColor) {
         super(enabled, x, y, scale);
         this.rounded = rounded;
         this.cornerRadius = cornerRadius;

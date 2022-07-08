@@ -559,12 +559,12 @@ public class cc/polyfrost/oneconfig/gui/elements/BasicButton : cc/polyfrost/onec
 	protected field icon1 Lcc/polyfrost/oneconfig/internal/assets/SVGs;
 	protected field icon2 Lcc/polyfrost/oneconfig/internal/assets/SVGs;
 	protected field text Ljava/lang/String;
-	public field x I
-	public field y I
+	public field x F
+	public field y F
 	public fun <init> (IILcc/polyfrost/oneconfig/internal/assets/SVGs;ILcc/polyfrost/oneconfig/utils/color/ColorPalette;)V
 	public fun <init> (IILjava/lang/String;ILcc/polyfrost/oneconfig/utils/color/ColorPalette;)V
 	public fun <init> (IILjava/lang/String;Lcc/polyfrost/oneconfig/internal/assets/SVGs;Lcc/polyfrost/oneconfig/internal/assets/SVGs;ILcc/polyfrost/oneconfig/utils/color/ColorPalette;)V
-	public fun draw (JII)V
+	public fun draw (JFF)V
 	public fun getPage ()Lcc/polyfrost/oneconfig/gui/pages/Page;
 	public fun getText ()Ljava/lang/String;
 	public fun hasClickAction ()Z
@@ -597,7 +597,7 @@ public class cc/polyfrost/oneconfig/gui/elements/BasicElement {
 	public fun <init> (IILcc/polyfrost/oneconfig/utils/color/ColorPalette;ZF)V
 	public fun <init> (IIZ)V
 	public fun disable (Z)V
-	public fun draw (JII)V
+	public fun draw (JFF)V
 	public fun getHeight ()I
 	public fun getWidth ()I
 	public fun ignoreBlockedTouches (Z)V
@@ -612,12 +612,12 @@ public class cc/polyfrost/oneconfig/gui/elements/BasicElement {
 	public fun setHeight (I)V
 	public fun setToggled (Z)V
 	public fun setWidth (I)V
-	public fun update (II)V
+	public fun update (FF)V
 }
 
 public class cc/polyfrost/oneconfig/gui/elements/ColorSelector {
-	public fun <init> (Lcc/polyfrost/oneconfig/config/core/OneColor;II)V
-	public fun <init> (Lcc/polyfrost/oneconfig/config/core/OneColor;IIZ)V
+	public fun <init> (Lcc/polyfrost/oneconfig/config/core/OneColor;FF)V
+	public fun <init> (Lcc/polyfrost/oneconfig/config/core/OneColor;FFZ)V
 	public fun draw (J)V
 	public fun getColor ()Lcc/polyfrost/oneconfig/config/core/OneColor;
 	public fun isAlphaAllowed ()Z
@@ -628,7 +628,7 @@ public class cc/polyfrost/oneconfig/gui/elements/ColorSelector {
 
 public class cc/polyfrost/oneconfig/gui/elements/ModCard : cc/polyfrost/oneconfig/gui/elements/BasicElement {
 	public fun <init> (Lcc/polyfrost/oneconfig/config/data/Mod;ZZZLcc/polyfrost/oneconfig/gui/pages/ModsPage;)V
-	public fun draw (JII)V
+	public fun draw (JFF)V
 	public fun getModData ()Lcc/polyfrost/oneconfig/config/data/Mod;
 	public fun isActive ()Z
 	public fun isDisabled ()Z
@@ -642,11 +642,11 @@ public class cc/polyfrost/oneconfig/gui/elements/Slider : cc/polyfrost/oneconfig
 	protected field dragPointerSize F
 	protected field value F
 	public fun <init> (IFFF)V
-	public fun draw (JII)V
+	public fun draw (JFF)V
 	public fun getValue ()F
 	public fun isDragging ()Z
 	public fun setValue (F)V
-	public fun update (II)V
+	public fun update (FF)V
 }
 
 public class cc/polyfrost/oneconfig/gui/elements/config/ConfigButton : cc/polyfrost/oneconfig/config/elements/BasicOption {
@@ -744,7 +744,7 @@ public class cc/polyfrost/oneconfig/gui/elements/config/ConfigTextBox : cc/polyf
 public class cc/polyfrost/oneconfig/gui/elements/text/NumberInputField : cc/polyfrost/oneconfig/gui/elements/text/TextInputField {
 	public fun <init> (IIFFFF)V
 	public fun arrowsClicked ()Z
-	public fun draw (JII)V
+	public fun draw (JFF)V
 	public fun getCurrentValue ()F
 	public fun onClose ()V
 	public fun setCurrentValue (F)V
@@ -772,12 +772,12 @@ public class cc/polyfrost/oneconfig/gui/elements/text/TextInputField : cc/polyfr
 	protected field startLine I
 	protected field vg J
 	protected field wrappedText Ljava/util/ArrayList;
-	protected field x I
-	protected field y I
+	protected field x F
+	protected field y F
 	public fun <init> (IILjava/lang/String;ZZ)V
 	public fun <init> (IILjava/lang/String;ZZLcc/polyfrost/oneconfig/internal/assets/SVGs;)V
 	public fun <init> (IIZLjava/lang/String;)V
-	public fun draw (JII)V
+	public fun draw (JFF)V
 	public fun getInput ()Ljava/lang/String;
 	public fun getLines ()I
 	public fun getPassword ()Z
@@ -843,44 +843,55 @@ public abstract class cc/polyfrost/oneconfig/gui/pages/Page {
 	public fun scrollWithDraw (JII)V
 }
 
+public abstract class cc/polyfrost/oneconfig/hud/BasicHud : cc/polyfrost/oneconfig/hud/Hud {
+	public field bgColor Lcc/polyfrost/oneconfig/config/core/OneColor;
+	public field border Z
+	public field borderColor Lcc/polyfrost/oneconfig/config/core/OneColor;
+	public field borderSize F
+	public field cornerRadius F
+	public field rounded Z
+	public fun <init> ()V
+	public fun <init> (Z)V
+	public fun <init> (ZFF)V
+	public fun <init> (ZFFF)V
+	public fun <init> (ZFFFZFFFLcc/polyfrost/oneconfig/config/core/OneColor;ZFLcc/polyfrost/oneconfig/config/core/OneColor;)V
+	public fun drawAll (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;FFF)V
+	public fun drawExampleAll (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;FFF)V
+	public fun shouldDrawBackground ()Z
+}
+
 public class cc/polyfrost/oneconfig/hud/HUDUtils {
 	public fun <init> ()V
 	public static fun addHudOptions (Lcc/polyfrost/oneconfig/config/elements/OptionPage;Ljava/lang/reflect/Field;Ljava/lang/Object;Lcc/polyfrost/oneconfig/config/Config;)V
 }
 
 public abstract class cc/polyfrost/oneconfig/hud/Hud {
-	public field bgColor Lcc/polyfrost/oneconfig/config/core/OneColor;
-	public field border Z
-	public field borderColor Lcc/polyfrost/oneconfig/config/core/OneColor;
-	public field borderSize F
-	public field cornerRadius F
 	public field enabled Z
 	public field paddingX F
 	public field paddingY F
-	public field rounded Z
 	public field scale F
 	public field showInChat Z
 	public field showInDebug Z
 	public field showInGuis Z
 	public field xUnscaled D
 	public field yUnscaled D
+	public fun <init> ()V
 	public fun <init> (Z)V
-	public fun <init> (ZII)V
-	public fun <init> (ZIIFZIIILcc/polyfrost/oneconfig/config/core/OneColor;ZFLcc/polyfrost/oneconfig/config/core/OneColor;)V
-	public fun <init> (ZIII)V
-	public abstract fun draw (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;IIF)V
-	public fun drawAll (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;FFFZ)V
-	public fun drawBackground ()Z
-	public fun drawExample (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;IIF)V
-	public fun drawExampleAll (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;FFFZ)V
-	public fun getExampleHeight (F)I
-	public fun getExampleWidth (F)I
-	public abstract fun getHeight (F)I
-	public abstract fun getWidth (F)I
+	public fun <init> (ZFF)V
+	public fun <init> (ZFFF)V
+	public abstract fun draw (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;FFF)V
+	public fun drawAll (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;FFF)V
+	public fun drawExample (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;FFF)V
+	public fun drawExampleAll (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;FFF)V
+	public fun getExampleHeight (F)F
+	public fun getExampleWidth (F)F
+	public abstract fun getHeight (F)F
+	public abstract fun getWidth (F)F
 	public fun getXScaled (I)F
 	public fun getYScaled (I)F
 	public fun isEnabled ()Z
 	public fun setConfig (Lcc/polyfrost/oneconfig/config/Config;)V
+	protected fun shouldShow ()Z
 }
 
 public abstract class cc/polyfrost/oneconfig/hud/SingleTextHud : cc/polyfrost/oneconfig/hud/TextHud {
@@ -906,13 +917,13 @@ public abstract class cc/polyfrost/oneconfig/hud/TextHud : cc/polyfrost/oneconfi
 	public field textType I
 	public fun <init> (Z)V
 	public fun <init> (ZII)V
-	public fun draw (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;IIF)V
+	public fun draw (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;FFF)V
 	protected fun getExampleLines (Ljava/util/List;)V
 	protected fun getExampleLinesFrequent (Ljava/util/List;)V
-	public fun getHeight (F)I
+	public fun getHeight (F)F
 	protected abstract fun getLines (Ljava/util/List;)V
 	protected fun getLinesFrequent (Ljava/util/List;)V
-	public fun getWidth (F)I
+	public fun getWidth (F)F
 }
 
 public class cc/polyfrost/oneconfig/images/Image {
@@ -1123,7 +1134,7 @@ public class cc/polyfrost/oneconfig/renderer/scissor/Scissor {
 	public field y F
 	public fun <init> (FFFF)V
 	public fun <init> (Lcc/polyfrost/oneconfig/renderer/scissor/Scissor;)V
-	public fun isInScissor (II)Z
+	public fun isInScissor (FF)Z
 }
 
 public class cc/polyfrost/oneconfig/renderer/scissor/ScissorManager {
@@ -1146,16 +1157,16 @@ public final class cc/polyfrost/oneconfig/utils/IOUtils {
 public final class cc/polyfrost/oneconfig/utils/InputUtils {
 	public fun <init> ()V
 	public static fun blockAllInput ()Lcc/polyfrost/oneconfig/renderer/scissor/Scissor;
-	public static fun blockInputArea (IIII)Lcc/polyfrost/oneconfig/renderer/scissor/Scissor;
-	public static fun isAreaClicked (IIII)Z
-	public static fun isAreaClicked (IIIIZ)Z
-	public static fun isAreaHovered (IIII)Z
-	public static fun isAreaHovered (IIIIZ)Z
+	public static fun blockInputArea (FFFF)Lcc/polyfrost/oneconfig/renderer/scissor/Scissor;
+	public static fun isAreaClicked (FFFF)Z
+	public static fun isAreaClicked (FFFFZ)Z
+	public static fun isAreaHovered (FFFF)Z
+	public static fun isAreaHovered (FFFFZ)Z
 	public static fun isBlockingInput ()Z
 	public static fun isClicked ()Z
 	public static fun isClicked (Z)Z
-	public static fun mouseX ()I
-	public static fun mouseY ()I
+	public static fun mouseX ()F
+	public static fun mouseY ()F
 	public static fun stopBlock (Lcc/polyfrost/oneconfig/renderer/scissor/Scissor;)V
 	public static fun stopBlockingInput ()V
 }
@@ -1462,8 +1473,8 @@ public abstract class cc/polyfrost/oneconfig/utils/gui/OneUIScreen : cc/polyfros
 	public fun <init> ()V
 	public fun <init> (Z)V
 	public abstract fun draw (JF)V
-	public fun getMouseX ()I
-	public fun getMouseY ()I
+	public fun getMouseX ()F
+	public fun getMouseY ()F
 	public fun ignoreMinecraftScale ()Z
 	public fun initScreen (II)V
 	public fun isBlockingClicks ()Z

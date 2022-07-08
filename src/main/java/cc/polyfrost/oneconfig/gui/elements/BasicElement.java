@@ -72,13 +72,13 @@ public class BasicElement {
 
     /**
      * Draw script for the element.
-     * <br> <b>Make sure to call {@link #update(int x, int y)} to update the elements states!</b>
+     * <br> <b>Make sure to call {@link #update(float, float)} to update the elements states!</b>
      *
      * @param vg NanoVG context (see {@link RenderManager})
      * @param x  x position of the element
      * @param y  y position of the element
      */
-    public void draw(long vg, int x, int y) {
+    public void draw(long vg, float x, float y) {
         this.update(x, y);
         RenderManager.drawRoundedRect(vg, x, y, width, height, currentColor, radius);
     }
@@ -86,7 +86,7 @@ public class BasicElement {
     /**
      * Update this element's clicked, hovered, toggled, and pressed states, invoke any necessary methods, and update the color animation.
      */
-    public void update(int x, int y) {
+    public void update(float x, float y) {
         if (disabled) {
             hovered = false;
             pressed = false;

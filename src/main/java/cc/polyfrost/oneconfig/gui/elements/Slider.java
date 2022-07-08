@@ -21,7 +21,7 @@ public class Slider extends BasicElement {
     }
 
     @Override
-    public void draw(long vg, int x, int y) {
+    public void draw(long vg, float x, float y) {
         if(!disabled) update(x, y);
         else RenderManager.setAlpha(vg, 0.5f);
         RenderManager.drawRoundedRect(vg, x, y + 2, width, height - 4, Colors.GRAY_300, 3f);
@@ -32,18 +32,18 @@ public class Slider extends BasicElement {
 
     }
 
-    public void update(int x, int y) {
+    public void update(float x, float y) {
         super.update(x, y);
         boolean isMouseDown = Platform.getMousePlatform().isButtonDown(0);
         boolean hovered = InputUtils.isAreaHovered(x - 6, y - 3, width + 12, height + 6);
         if (hovered && isMouseDown && !mouseWasDown) dragging = true;
         mouseWasDown = isMouseDown;
         if (dragging) {
-            value = ((float) InputUtils.mouseX() - x) / width;
+            value = (InputUtils.mouseX() - x) / width;
         }
         if (dragging && InputUtils.isClicked(true)) {
             dragging = false;
-            value = ((float) InputUtils.mouseX() - x) / width;
+            value = (InputUtils.mouseX() - x) / width;
         }
 
         if (value < 0) value = 0;
