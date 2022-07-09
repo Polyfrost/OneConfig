@@ -5,7 +5,7 @@ import cc.polyfrost.oneconfig.libs.universal.UResolution;
 import com.google.gson.annotations.SerializedName;
 
 public class Position {
-    private AnchorPosition anchorPosition;
+    private AnchorPosition anchor;
     private float x;
     private float y;
     @Exclude
@@ -54,23 +54,23 @@ public class Position {
         float bottomY = y + height;
 
         if (x <= screenWidth / 3f && y <= screenHeight / 3f)
-            this.anchorPosition = AnchorPosition.TOP_LEFT;
+            this.anchor = AnchorPosition.TOP_LEFT;
         else if (rightX >= screenWidth / 3f * 2f && y <= screenHeight / 3f)
-            this.anchorPosition = AnchorPosition.TOP_RIGHT;
+            this.anchor = AnchorPosition.TOP_RIGHT;
         else if (x <= screenWidth / 3f && bottomY >= screenHeight / 3f * 2f)
-            this.anchorPosition = AnchorPosition.BOTTOM_LEFT;
+            this.anchor = AnchorPosition.BOTTOM_LEFT;
         else if (rightX >= screenWidth / 3f * 2f && bottomY >= screenHeight / 3f * 2f)
-            this.anchorPosition = AnchorPosition.BOTTOM_RIGHT;
+            this.anchor = AnchorPosition.BOTTOM_RIGHT;
         else if (y <= screenHeight / 3f)
-            this.anchorPosition = AnchorPosition.TOP_CENTER;
+            this.anchor = AnchorPosition.TOP_CENTER;
         else if (x <= screenWidth / 3f)
-            this.anchorPosition = AnchorPosition.MIDDLE_LEFT;
+            this.anchor = AnchorPosition.MIDDLE_LEFT;
         else if (rightX >= screenWidth / 3f * 2f)
-            this.anchorPosition = AnchorPosition.MIDDLE_RIGHT;
+            this.anchor = AnchorPosition.MIDDLE_RIGHT;
         else if (bottomY >= screenHeight / 3f * 2f)
-            this.anchorPosition = AnchorPosition.BOTTOM_CENTER;
+            this.anchor = AnchorPosition.BOTTOM_CENTER;
         else
-            this.anchorPosition = AnchorPosition.MIDDLE_CENTER;
+            this.anchor = AnchorPosition.MIDDLE_CENTER;
 
         this.x = x - getAnchorX(screenWidth) + getAnchorX(width);
         this.y = y - getAnchorY(screenHeight) + getAnchorX(height);
@@ -188,11 +188,11 @@ public class Position {
     }
 
     private float getAnchorX(float value) {
-        return value * anchorPosition.x;
+        return value * anchor.x;
     }
 
     private float getAnchorY(float value) {
-        return value * anchorPosition.y;
+        return value * anchor.y;
     }
 
     /**

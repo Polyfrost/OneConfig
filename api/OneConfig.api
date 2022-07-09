@@ -463,12 +463,6 @@ public abstract interface class cc/polyfrost/oneconfig/gui/GuiPause {
 public class cc/polyfrost/oneconfig/gui/HudGui : cc/polyfrost/oneconfig/libs/universal/UScreen, cc/polyfrost/oneconfig/gui/GuiPause {
 	public fun <init> (Z)V
 	public fun doesGuiPauseGame ()Z
-	public fun initScreen (II)V
-	public fun onDrawScreen (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;IIF)V
-	public fun onKeyPressed (ICLcc/polyfrost/oneconfig/libs/universal/UKeyboard$Modifiers;)V
-	public fun onMouseClicked (DDI)V
-	public fun onMouseReleased (DDI)V
-	public fun onScreenClose ()V
 }
 
 public class cc/polyfrost/oneconfig/gui/OneConfigGui : cc/polyfrost/oneconfig/libs/universal/UScreen, cc/polyfrost/oneconfig/gui/GuiPause {
@@ -849,14 +843,17 @@ public abstract class cc/polyfrost/oneconfig/hud/BasicHud : cc/polyfrost/oneconf
 	public field borderColor Lcc/polyfrost/oneconfig/config/core/OneColor;
 	public field borderSize F
 	public field cornerRadius F
+	public field paddingX F
+	public field paddingY F
 	public field rounded Z
 	public fun <init> ()V
 	public fun <init> (Z)V
 	public fun <init> (ZFF)V
 	public fun <init> (ZFFF)V
 	public fun <init> (ZFFFZFFFLcc/polyfrost/oneconfig/config/core/OneColor;ZFLcc/polyfrost/oneconfig/config/core/OneColor;)V
-	public fun drawAll (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;FFF)V
-	public fun drawExampleAll (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;FFF)V
+	public fun drawAll (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;)V
+	protected fun drawBackground (FFFFF)V
+	public fun drawExampleAll (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;)V
 	public fun shouldDrawBackground ()Z
 }
 
@@ -867,31 +864,60 @@ public class cc/polyfrost/oneconfig/hud/HUDUtils {
 
 public abstract class cc/polyfrost/oneconfig/hud/Hud {
 	public field enabled Z
-	public field paddingX F
-	public field paddingY F
+	public final field position Lcc/polyfrost/oneconfig/hud/Position;
 	public field scale F
 	public field showInChat Z
 	public field showInDebug Z
 	public field showInGuis Z
-	public field xUnscaled D
-	public field yUnscaled D
 	public fun <init> ()V
 	public fun <init> (Z)V
 	public fun <init> (ZFF)V
 	public fun <init> (ZFFF)V
 	public abstract fun draw (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;FFF)V
-	public fun drawAll (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;FFF)V
+	public fun drawAll (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;)V
 	public fun drawExample (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;FFF)V
-	public fun drawExampleAll (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;FFF)V
+	public fun drawExampleAll (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;)V
 	public fun getExampleHeight (F)F
 	public fun getExampleWidth (F)F
 	public abstract fun getHeight (F)F
 	public abstract fun getWidth (F)F
-	public fun getXScaled (I)F
-	public fun getYScaled (I)F
 	public fun isEnabled ()Z
 	public fun setConfig (Lcc/polyfrost/oneconfig/config/Config;)V
 	protected fun shouldShow ()Z
+}
+
+public class cc/polyfrost/oneconfig/hud/Position {
+	public fun <init> (FFFF)V
+	public fun <init> (FFFFFF)V
+	public fun getBottomY ()F
+	public fun getBottomY (F)F
+	public fun getHeight ()F
+	public fun getRightX ()F
+	public fun getRightX (F)F
+	public fun getWidth ()F
+	public fun getX ()F
+	public fun getX (F)F
+	public fun getY ()F
+	public fun getY (F)F
+	public fun setPosition (FF)V
+	public fun setPosition (FFFF)V
+	public fun setSize (FF)V
+}
+
+public final class cc/polyfrost/oneconfig/hud/Position$AnchorPosition : java/lang/Enum {
+	public static final field BOTTOM_CENTER Lcc/polyfrost/oneconfig/hud/Position$AnchorPosition;
+	public static final field BOTTOM_LEFT Lcc/polyfrost/oneconfig/hud/Position$AnchorPosition;
+	public static final field BOTTOM_RIGHT Lcc/polyfrost/oneconfig/hud/Position$AnchorPosition;
+	public static final field MIDDLE_CENTER Lcc/polyfrost/oneconfig/hud/Position$AnchorPosition;
+	public static final field MIDDLE_LEFT Lcc/polyfrost/oneconfig/hud/Position$AnchorPosition;
+	public static final field MIDDLE_RIGHT Lcc/polyfrost/oneconfig/hud/Position$AnchorPosition;
+	public static final field TOP_CENTER Lcc/polyfrost/oneconfig/hud/Position$AnchorPosition;
+	public static final field TOP_LEFT Lcc/polyfrost/oneconfig/hud/Position$AnchorPosition;
+	public static final field TOP_RIGHT Lcc/polyfrost/oneconfig/hud/Position$AnchorPosition;
+	public final field x F
+	public final field y F
+	public static fun valueOf (Ljava/lang/String;)Lcc/polyfrost/oneconfig/hud/Position$AnchorPosition;
+	public static fun values ()[Lcc/polyfrost/oneconfig/hud/Position$AnchorPosition;
 }
 
 public abstract class cc/polyfrost/oneconfig/hud/SingleTextHud : cc/polyfrost/oneconfig/hud/TextHud {
@@ -911,7 +937,7 @@ public abstract class cc/polyfrost/oneconfig/hud/SingleTextHud : cc/polyfrost/on
 	protected fun getTextFrequent ()Ljava/lang/String;
 }
 
-public abstract class cc/polyfrost/oneconfig/hud/TextHud : cc/polyfrost/oneconfig/hud/Hud {
+public abstract class cc/polyfrost/oneconfig/hud/TextHud : cc/polyfrost/oneconfig/hud/BasicHud {
 	public field color Lcc/polyfrost/oneconfig/config/core/OneColor;
 	protected field lines Ljava/util/List;
 	public field textType I
