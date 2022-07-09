@@ -171,7 +171,12 @@ fun DependencyHandlerScope.include(dependency: Any, pom: Boolean = true) {
             shadeNoPom2(dependency)
         }
     } else {
-        "include"(dependency)
+        if (pom) {
+            modApi(dependency)
+        } else {
+            modCompileOnly(dependency)
+            modRuntimeOnly(dependency)
+        }?.let { "include"(it) }
     }
 }
 

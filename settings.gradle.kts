@@ -40,7 +40,8 @@ project(":platform").apply {
 listOf(
     "1.8.9-forge",
     "1.12.2-forge",
-    "1.16.2-forge"
+    "1.16.2-forge",
+    "1.16.2-fabric"
 ).forEach { version ->
     include(":platform:$version")
     include(":lwjgl:$version")

@@ -1,3 +1,4 @@
+//#if FORGE==1
 package cc.polyfrost.oneconfig.internal.mixin;
 
 import cc.polyfrost.oneconfig.events.EventManager;
@@ -22,3 +23,4 @@ public class ClientModLoaderMixin {
         OneConfig.init();
     }
 }
+//#endif

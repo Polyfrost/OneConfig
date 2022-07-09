@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(MouseHelper.class)
-public class MouseHelperMixin {
+public class MouseMixin {
     @Inject(method = "mouseButtonCallback", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/client/ForgeHooksClient;fireMouseInput(III)V"))
     private void onMouse(long handle, int button, int action, int mods, CallbackInfo ci) {
         EventManager.INSTANCE.post(new MouseInputEvent());
