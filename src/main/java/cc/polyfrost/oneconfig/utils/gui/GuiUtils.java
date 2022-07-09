@@ -24,7 +24,6 @@ public final class GuiUtils {
      * Displays a screen after a tick, preventing mouse sync issues.
      *
      * @param screen the screen to display.
-     * @deprecated Not actually deprecated, but should not be used.
      */
     @Deprecated
     public static void displayScreen(Object screen) {

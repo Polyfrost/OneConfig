@@ -43,7 +43,7 @@ public class SideBar {
         buttons.get(0).setClickAction(new CreditsPage());
         buttons.get(2).setClickAction(new ModsPage());
         buttons.get(8).setClickAction(new ModConfigPage(Preferences.getInstance().mod.defaultPage, true));
-        HUDButton.setClickAction(() -> GuiUtils.displayScreen(new HudGui(true)));
+        HUDButton.setClickAction(() -> GuiUtils.displayScreen(new HudGui()));
         CloseButton.setClickAction(GuiUtils::closeScreen);
         for (BasicButton button : buttons) {
             if (button.hasClickAction()) continue;

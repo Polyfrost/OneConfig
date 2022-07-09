@@ -461,8 +461,13 @@ public abstract interface class cc/polyfrost/oneconfig/gui/GuiPause {
 }
 
 public class cc/polyfrost/oneconfig/gui/HudGui : cc/polyfrost/oneconfig/libs/universal/UScreen, cc/polyfrost/oneconfig/gui/GuiPause {
-	public fun <init> (Z)V
+	public fun <init> ()V
 	public fun doesGuiPauseGame ()Z
+	public fun initScreen (II)V
+	public fun onDrawScreen (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;IIF)V
+	public fun onMouseClicked (DDI)V
+	public fun onMouseReleased (DDI)V
+	public fun onScreenClose ()V
 }
 
 public class cc/polyfrost/oneconfig/gui/OneConfigGui : cc/polyfrost/oneconfig/libs/universal/UScreen, cc/polyfrost/oneconfig/gui/GuiPause {
