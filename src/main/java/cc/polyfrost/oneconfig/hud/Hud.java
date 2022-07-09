@@ -39,8 +39,7 @@ import cc.polyfrost.oneconfig.platform.Platform;
 public abstract class Hud {
     public boolean enabled;
     transient private Config config;
-    public double xUnscaled;
-    public double yUnscaled;
+    public final Position position;
     public float scale;
 
     /**
@@ -52,10 +51,7 @@ public abstract class Hud {
     public Hud(boolean enabled, float x, float y, float scale) {
         this.enabled = enabled;
         this.scale = scale;
-        if (x / 1920d <= 0.5d) xUnscaled = x / 1920d;
-        else xUnscaled = (x + getWidth(scale)) / 1920d;
-        if (y / 1080d <= 0.5d) yUnscaled = y / 1080d;
-        else yUnscaled = (y + getHeight(scale)) / 1090d;
+        position = new Position(x, y, getWidth(scale), getHeight(scale));
     }
 
     /**
@@ -129,49 +125,26 @@ public abstract class Hud {
 
     /**
      * Draw the background, the hud and all childed huds, used by HudCore
-     *
-     * @param x          X-coordinate
-     * @param y          Y-coordinate
-     * @param scale      Scale of the hud
      */
-    public void drawAll(UMatrixStack matrices, float x, float y, float scale) {
-        if (shouldShow()) draw(matrices, x, y, scale);
+    public void drawAll(UMatrixStack matrices) {
+        if (!shouldShow()) return;
+        position.setSize(getWidth(scale), getHeight(scale));
+        draw(matrices, position.getX(), position.getY(), scale);
     }
 
     /**
      * Draw example version of the background, the hud and all childed huds, used by HudGui
-     *
-     * @param x          X-coordinate
-     * @param y          Y-coordinate
-     * @param scale      Scale of the hud
      */
-    public void drawExampleAll(UMatrixStack matrices, float x, float y, float scale) {
-        drawExample(matrices, x, y, scale);
+    public void drawExampleAll(UMatrixStack matrices) {
+        position.setSize(getExampleWidth(scale), getExampleHeight(scale));
+        draw(matrices, position.getX(), position.getY(), scale);
     }
 
     protected boolean shouldShow() {
-        if (!showInGuis && Platform.getGuiPlatform().getCurrentScreen() != null && !(Platform.getGuiPlatform().getCurrentScreen() instanceof OneConfigGui)) return false;
+        if (!showInGuis && Platform.getGuiPlatform().getCurrentScreen() != null && !(Platform.getGuiPlatform().getCurrentScreen() instanceof OneConfigGui))
+            return false;
         if (!showInChat && Platform.getGuiPlatform().isInChat()) return false;
         return showInDebug || !Platform.getGuiPlatform().isInDebug();
-    }
-
-    /**
-     * @param screenWidth width of the screen
-     * @return X-coordinate of the hud
-     */
-    public float getXScaled(int screenWidth) {
-        if (xUnscaled <= 0.5)
-            return (int) (screenWidth * xUnscaled);
-        return (float) (screenWidth - (1d - xUnscaled) * screenWidth - (getWidth(scale)));
-    }
-
-    /**
-     * @param screenHeight height of the screen
-     * @return Y-coordinate of the hud
-     */
-    public float getYScaled(int screenHeight) {
-        if (yUnscaled <= 0.5) return (int) (screenHeight * yUnscaled);
-        return (float) (screenHeight - (1d - yUnscaled) * screenHeight - (getHeight(scale)));
     }
 
     /**

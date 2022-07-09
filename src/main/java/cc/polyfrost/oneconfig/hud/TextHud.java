@@ -92,12 +92,12 @@ public abstract class TextHud extends BasicHud {
 
     @Override
     public float getWidth(float scale) {
-        return (int) (width * scale);
+        return width * scale;
     }
 
     @Override
     public float getHeight(float scale) {
-        return (int) (height * scale);
+        return height * scale;
     }
 
     private class TickHandler {

@@ -1,5 +1,6 @@
 package cc.polyfrost.oneconfig.hud;
 
+import cc.polyfrost.oneconfig.config.annotations.Exclude;
 import cc.polyfrost.oneconfig.libs.universal.UResolution;
 import com.google.gson.annotations.SerializedName;
 
@@ -7,104 +8,196 @@ public class Position {
     private AnchorPosition anchorPosition;
     private float x;
     private float y;
+    @Exclude
     private float width;
+    @Exclude
     private float height;
 
+    /**
+     * Position object used for huds
+     *
+     * @param x            The X coordinate
+     * @param y            The Y coordinate
+     * @param width        The width of the HUD
+     * @param height       The height of the HUD
+     * @param screenWidth  The width of the screen to initialize the position width
+     * @param screenHeight The height of the screen to initialize the position width
+     */
     public Position(float x, float y, float width, float height, float screenWidth, float screenHeight) {
         this.width = width;
         this.height = height;
         setPosition(x, y, screenWidth, screenHeight);
     }
 
+    /**
+     * Position object used for huds
+     *
+     * @param x      The X coordinate
+     * @param y      The Y coordinate
+     * @param width  The width of the HUD
+     * @param height The height of the HUD
+     */
+    public Position(float x, float y, float width, float height) {
+        this(x, y, width, height, 1920, 1080);
+    }
+
+    /**
+     * Set the position
+     *
+     * @param x            The X coordinate
+     * @param y            The Y coordinate
+     * @param screenWidth  The screen width
+     * @param screenHeight The screen height
+     */
     public void setPosition(float x, float y, float screenWidth, float screenHeight) {
-        float widthX = x + width;
-        float heightY = y + height;
+        float rightX = x + width;
+        float bottomY = y + height;
 
         if (x <= screenWidth / 3f && y <= screenHeight / 3f)
             this.anchorPosition = AnchorPosition.TOP_LEFT;
-        else if (widthX >= screenWidth / 3f * 2f && y <= screenHeight / 3f)
+        else if (rightX >= screenWidth / 3f * 2f && y <= screenHeight / 3f)
             this.anchorPosition = AnchorPosition.TOP_RIGHT;
-        else if (x <= screenWidth / 3f && heightY >= screenHeight / 3f * 2f)
+        else if (x <= screenWidth / 3f && bottomY >= screenHeight / 3f * 2f)
             this.anchorPosition = AnchorPosition.BOTTOM_LEFT;
-        else if (widthX >= screenWidth / 3f * 2f && heightY >= screenHeight / 3f * 2f)
+        else if (rightX >= screenWidth / 3f * 2f && bottomY >= screenHeight / 3f * 2f)
             this.anchorPosition = AnchorPosition.BOTTOM_RIGHT;
         else if (y <= screenHeight / 3f)
             this.anchorPosition = AnchorPosition.TOP_CENTER;
         else if (x <= screenWidth / 3f)
             this.anchorPosition = AnchorPosition.MIDDLE_LEFT;
-        else if (widthX >= screenWidth / 3f * 2f)
+        else if (rightX >= screenWidth / 3f * 2f)
             this.anchorPosition = AnchorPosition.MIDDLE_RIGHT;
-        else if (heightY >= screenHeight / 3f * 2f)
+        else if (bottomY >= screenHeight / 3f * 2f)
             this.anchorPosition = AnchorPosition.BOTTOM_CENTER;
         else
             this.anchorPosition = AnchorPosition.MIDDLE_CENTER;
 
-        // todo: use alignment to right and bottom and stuff to prevent it clipping or moving if hud size changes
-        this.x = x - getAnchorX(screenWidth);
-        this.y = y - getAnchorY(screenHeight);
+        this.x = x - getAnchorX(screenWidth) + getAnchorX(width);
+        this.y = y - getAnchorY(screenHeight) + getAnchorX(height);
     }
 
+    /**
+     * Set the position
+     *
+     * @param x The X coordinate
+     * @param y The Y coordinate
+     */
     public void setPosition(float x, float y) {
         setPosition(x, y, UResolution.getScaledWidth(), UResolution.getScaledHeight());
     }
 
+    /**
+     * Set the size of the position
+     *
+     * @param width  The width
+     * @param height The height
+     */
     public void setSize(float width, float height) {
         this.width = width;
         this.height = height;
     }
 
+    /**
+     * Get the X coordinate scaled to the size of the screen
+     *
+     * @param screenWidth The width of the screen
+     * @return The X coordinate
+     */
     public float getX(float screenWidth) {
-        return x + getAnchorX(screenWidth);
+        return x + getAnchorX(screenWidth) - getAnchorX(width);
     }
 
+    /**
+     * Get the X coordinate scaled to the size of the screen
+     *
+     * @return The X coordinate
+     */
     public float getX() {
         return getX(UResolution.getScaledWidth());
     }
 
+    /**
+     * Get the Y coordinate scaled to the size of the screen
+     *
+     * @param screenHeight The height of the screen
+     * @return The Y coordinate
+     */
     public float getY(float screenHeight) {
-        return y + getAnchorY(screenHeight);
+        return y + getAnchorY(screenHeight) - getAnchorY(height);
     }
 
+    /**
+     * Get the Y coordinate scaled to the size of the screen
+     *
+     * @return The Y coordinate
+     */
     public float getY() {
         return getY(UResolution.getScaledHeight());
     }
 
-    private float getAnchorX(float screenWidth) {
-        switch (anchorPosition) {
-            case TOP_LEFT:
-            case MIDDLE_LEFT:
-            case BOTTOM_LEFT:
-                return 0;
-            case TOP_CENTER:
-            case MIDDLE_CENTER:
-            case BOTTOM_CENTER:
-                return screenWidth / 2f;
-            case TOP_RIGHT:
-            case MIDDLE_RIGHT:
-            case BOTTOM_RIGHT:
-                return screenWidth;
-        }
-        return 0;
+    /**
+     * Get the X coordinate scaled to the size of the screen of the right corner
+     *
+     * @param screenWidth The width of the screen
+     * @return The X coordinate of the right corner
+     */
+    public float getRightX(float screenWidth) {
+        return getX(screenWidth) + width;
     }
 
-    private float getAnchorY(float screenHeight) {
-        switch (anchorPosition) {
-            case TOP_LEFT:
-            case TOP_RIGHT:
-            case TOP_CENTER:
-                return 0;
-            case MIDDLE_LEFT:
-            case MIDDLE_CENTER:
-            case MIDDLE_RIGHT:
-                return screenHeight / 2f;
-            case BOTTOM_LEFT:
-            case BOTTOM_CENTER:
-            case BOTTOM_RIGHT:
-                return screenHeight;
-        }
-        return 0;
+    /**
+     * Get the X coordinate scaled to the size of the screen of the right corner
+     *
+     * @return The X coordinate of the right corner
+     */
+    public float getRightX() {
+        return getRightX(UResolution.getScaledWidth());
     }
 
+    /**
+     * Get the Y coordinate scaled to the size of the screen of the bottom corner
+     *
+     * @param screenHeight The width of the screen
+     * @return The Y coordinate of the bottom corner
+     */
+    public float getBottomY(float screenHeight) {
+        return getY(screenHeight) + height;
+    }
+
+    /**
+     * Get the Y coordinate scaled to the size of the screen of the bottom corner
+     *
+     * @return The Y coordinate of the bottom corner
+     */
+    public float getBottomY() {
+        return getBottomY(UResolution.getScaledHeight());
+    }
+
+    /**
+     * @return The width of the position
+     */
+    public float getWidth() {
+        return width;
+    }
+
+    /**
+     * @return The height of the position
+     */
+    public float getHeight() {
+        return height;
+    }
+
+    private float getAnchorX(float value) {
+        return value * anchorPosition.x;
+    }
+
+    private float getAnchorY(float value) {
+        return value * anchorPosition.y;
+    }
+
+    /**
+     * Position of the anchors were the position is relative too
+     */
     public enum AnchorPosition {
         @SerializedName("0")
         TOP_LEFT(0f, 0f),

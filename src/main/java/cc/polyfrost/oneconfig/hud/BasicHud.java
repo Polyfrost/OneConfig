@@ -38,6 +38,7 @@ public abstract class BasicHud extends Hud {
         this.border = border;
         this.borderSize = borderSize;
         this.borderColor = borderColor;
+        position.setSize(getWidth(scale) + paddingX * 2f, getHeight(scale) + paddingY * 2f);
     }
 
     /**
@@ -71,17 +72,20 @@ public abstract class BasicHud extends Hud {
     }
 
     @Override
-    public void drawAll(UMatrixStack matrices, float x, float y, float scale) {
-        if (shouldShow()) {
-            if (shouldDrawBackground()) drawBackground(x, y, getWidth(scale), getHeight(scale), scale);
-            draw(matrices, x, y, scale);
-        }
+    public void drawAll(UMatrixStack matrices) {
+        if (!shouldShow()) return;
+        position.setSize(getWidth(scale) + paddingX * 2f, getHeight(scale) + paddingY * 2f);
+        if (shouldDrawBackground())
+            drawBackground(position.getX(), position.getY(), position.getWidth(), position.getHeight(), scale);
+        draw(matrices, position.getX() + paddingX, position.getY() + paddingY, scale);
     }
 
     @Override
-    public void drawExampleAll(UMatrixStack matrices, float x, float y, float scale) {
-        if (shouldDrawBackground()) drawBackground(x, y, getWidth(scale), getHeight(scale), scale);
-        drawExample(matrices, x, y, scale);
+    public void drawExampleAll(UMatrixStack matrices) {
+        position.setSize(getExampleWidth(scale) + paddingX * 2f, getExampleHeight(scale) + paddingY * 2f);
+        if (shouldDrawBackground())
+            drawBackground(position.getX(), position.getY(), position.getWidth(), position.getHeight(), scale);
+        drawExample(matrices, position.getX() + paddingX, position.getY() + paddingY, scale);
     }
 
     /**
@@ -91,18 +95,18 @@ public abstract class BasicHud extends Hud {
         return true;
     }
 
-    private void drawBackground(float x, float y, float width, float height, float scale) {
+    protected void drawBackground(float x, float y, float width, float height, float scale) {
+        // todo: make border rendering perfect
         RenderManager.setupAndDraw(true, (vg) -> {
             if (rounded) {
-                RenderManager.drawRoundedRect(vg, x, y, (width + paddingX * scale), (height + paddingY * scale), bgColor.getRGB(), cornerRadius * scale);
+                RenderManager.drawRoundedRect(vg, x, y, width, height, bgColor.getRGB(), cornerRadius * scale);
                 if (border)
-                    RenderManager.drawHollowRoundRect(vg, x - borderSize * scale, y - borderSize * scale, (width + paddingX * scale) + borderSize * scale, (height + paddingY * scale) + borderSize * scale, borderColor.getRGB(), cornerRadius * scale, borderSize * scale);
+                    RenderManager.drawHollowRoundRect(vg, x - borderSize * scale, y - borderSize * scale, width + borderSize * scale, height + borderSize * scale, borderColor.getRGB(), cornerRadius * scale, borderSize * scale);
             } else {
-                RenderManager.drawRect(vg, x, y, (width + paddingX * scale), (height + paddingY * scale), bgColor.getRGB());
+                RenderManager.drawRect(vg, x, y, width, height, bgColor.getRGB());
                 if (border)
-                    RenderManager.drawHollowRoundRect(vg, x - borderSize * scale, y - borderSize * scale, (width + paddingX * scale) + borderSize * scale, (height + paddingY * scale) + borderSize * scale, borderColor.getRGB(), 0, borderSize * scale);
+                    RenderManager.drawHollowRoundRect(vg, x - borderSize * scale, y - borderSize * scale, width + borderSize * scale, height + borderSize * scale, borderColor.getRGB(), 0, borderSize * scale);
             }
         });
     }
-
 }
