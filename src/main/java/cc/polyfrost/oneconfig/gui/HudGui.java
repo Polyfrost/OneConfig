@@ -28,7 +28,7 @@ public class HudGui extends UScreen implements GuiPause {
         this.openOneConfigOnClose = openOneConfigOnClose;
     }
 
-    @Override
+    /*@Override
     public void initScreen(int width, int height) {
         HudCore.editing = true;
         UKeyboard.allowRepeatEvents(true);
@@ -283,7 +283,7 @@ public class HudGui extends UScreen implements GuiPause {
         UKeyboard.allowRepeatEvents(false);
         ConfigCore.saveAll();
         if(openOneConfigOnClose) GuiUtils.displayScreen(OneConfigGui.create());
-    }
+    }*/
 
     @Override
     public boolean doesGuiPauseGame() {

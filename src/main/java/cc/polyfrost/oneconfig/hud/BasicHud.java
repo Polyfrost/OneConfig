@@ -11,6 +11,8 @@ public abstract class BasicHud extends Hud {
     public OneColor borderColor;
     public float cornerRadius;
     public float borderSize;
+    public float paddingX;
+    public float paddingY;
 
     /**
      * @param enabled      If the hud is enabled

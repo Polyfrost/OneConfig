@@ -41,8 +41,6 @@ public abstract class Hud {
     transient private Config config;
     public double xUnscaled;
     public double yUnscaled;
-    public float paddingX;
-    public float paddingY;
     public float scale;
 
     /**

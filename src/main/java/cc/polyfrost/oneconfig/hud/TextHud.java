@@ -15,7 +15,7 @@ import cc.polyfrost.oneconfig.renderer.RenderManager;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class TextHud extends Hud {
+public abstract class TextHud extends BasicHud {
     protected transient List<String> lines = new ArrayList<>();
     private transient int width;
     private transient int height;
