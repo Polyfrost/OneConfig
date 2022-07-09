@@ -99,7 +99,6 @@ val shade: Configuration by configurations.creating {
     configurations.api.get().extendsFrom(this)
 }
 
-val shadeNoPom: Configuration by configurations.creating
 val shadeNoPom2: Configuration by configurations.creating
 
 sourceSets {
@@ -130,18 +129,18 @@ dependencies {
     val coroutinesVersion: String by project
     val serializationVersion: String by project
     val atomicfuVersion: String by project
-    shade("org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion")
-    shade("org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion")
-    shade("org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlinVersion")
-    shade("org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion")
+    include("org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion")
+    include("org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion")
+    include("org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlinVersion")
+    include("org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion")
 
-    shade("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion")
-    shade("org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:$coroutinesVersion")
-    shade("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:$coroutinesVersion")
-    shade("org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:$serializationVersion")
-    shade("org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:$serializationVersion")
-    shade("org.jetbrains.kotlinx:kotlinx-serialization-cbor-jvm:$serializationVersion")
-    shade("org.jetbrains.kotlinx:atomicfu-jvm:$atomicfuVersion")
+    include("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion")
+    include("org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:$coroutinesVersion")
+    include("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:$coroutinesVersion")
+    include("org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:$serializationVersion")
+    include("org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:$serializationVersion")
+    include("org.jetbrains.kotlinx:kotlinx-serialization-cbor-jvm:$serializationVersion")
+    include("org.jetbrains.kotlinx:atomicfu-jvm:$atomicfuVersion")
 
     if (platform.isLegacyForge) {
         shade("org.spongepowered:mixin:0.7.11-SNAPSHOT") {
@@ -152,16 +151,28 @@ dependencies {
         isTransitive = false
     }
 
-    shade("cc.polyfrost:lwjgl-$platform:1.0.0-alpha5")
+    include("cc.polyfrost:lwjgl-$platform:1.0.0-alpha6")
     val prebundled = prebundle(shadeRelocated)
     modCompileOnly(prebundled)
     modRuntimeOnly(prebundled)
-    shadeNoPom2(prebundled)
+    include(prebundled, false)
 
     dokkaHtmlPlugin("org.jetbrains.dokka:kotlin-as-java-plugin:1.6.21")
 
-    configurations.named(JavaPlugin.COMPILE_CLASSPATH_CONFIGURATION_NAME) { extendsFrom(shadeNoPom); extendsFrom(shadeProject) }
-    configurations.named(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME) { extendsFrom(shadeNoPom); extendsFrom(shadeProject) }
+    configurations.named(JavaPlugin.COMPILE_CLASSPATH_CONFIGURATION_NAME) { extendsFrom(shadeProject) }
+    configurations.named(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME) { extendsFrom(shadeProject) }
+}
+
+fun DependencyHandlerScope.include(dependency: Any, pom: Boolean = true) {
+    if (platform.isForge) {
+        if (pom) {
+            shade(dependency)
+        } else {
+            shadeNoPom2(dependency)
+        }
+    } else {
+        "include"(dependency)
+    }
 }
 
 tasks {
@@ -227,7 +238,7 @@ tasks {
 
     val shadowJar = named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar") {
         archiveClassifier.set("full-dev")
-        configurations = listOf(shade, shadeNoPom, shadeNoPom2, shadeProject)
+        configurations = listOf(shade, shadeNoPom2, shadeProject)
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
         dependsOn(jar)
     }
@@ -242,8 +253,8 @@ tasks {
     }
     jar {
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-        dependsOn(shadeNoPom, shadeNoPom2, shadeProject)
-        from(ArrayList<File>().run { addAll(shadeNoPom); addAll(shadeNoPom2); addAll(shadeProject); this }
+        dependsOn(shadeNoPom2, shadeProject)
+        from(ArrayList<File>().run { addAll(shadeNoPom2); addAll(shadeProject); this }
             .map { if (it.isDirectory) it else zipTree(it) })
         manifest {
             attributes(

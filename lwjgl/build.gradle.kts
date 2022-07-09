@@ -16,7 +16,7 @@ val mod_name: String by project
 val mod_version: String by project
 val mod_id: String by project
 
-version = "1.0.0-alpha5"
+version = "1.0.0-alpha6"
 
 repositories {
     maven("https://repo.polyfrost.cc/releases")
@@ -70,10 +70,10 @@ tasks {
     named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar") {
         archiveClassifier.set("")
         configurations = listOf(shadeCompileOnly, shadeRuntimeOnly)
-        exclude("META-INF/versions/**")
-        exclude("**/module-info.class")
-        exclude("**/package-info.class")
         if (platform.isLegacyForge) {
+            exclude("META-INF/versions/**")
+            exclude("**/module-info.class")
+            exclude("**/package-info.class")
             relocate("org.lwjgl", "org.lwjgl3") {
                 include("org.lwjgl.PointerBuffer")
                 include("org.lwjgl.BufferUtils")

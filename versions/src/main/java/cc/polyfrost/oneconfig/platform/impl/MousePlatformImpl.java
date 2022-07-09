@@ -9,7 +9,6 @@ import cc.polyfrost.oneconfig.platform.MousePlatform;
 import org.lwjgl.input.Mouse;
 //#endif
 
-@SuppressWarnings("unused")
 public class MousePlatformImpl implements MousePlatform {
 
     //#if MC>11600

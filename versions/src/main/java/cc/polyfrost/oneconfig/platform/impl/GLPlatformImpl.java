@@ -9,7 +9,6 @@ import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.shader.Framebuffer;
 
-@SuppressWarnings("unused")
 public class GLPlatformImpl implements GLPlatform {
 
     @Override
