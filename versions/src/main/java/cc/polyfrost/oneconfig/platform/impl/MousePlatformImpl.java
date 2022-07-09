@@ -3,7 +3,7 @@ package cc.polyfrost.oneconfig.platform.impl;
 import cc.polyfrost.oneconfig.platform.MousePlatform;
 //#if MC>=11600
 //$$ import cc.polyfrost.oneconfig.libs.universal.UMinecraft;
-//$$ import cc.polyfrost.oneconfig.internal.mixin.MouseHelperAccessor;
+//$$ import cc.polyfrost.oneconfig.internal.mixin.MouseAccessor;
 //$$ import org.lwjgl.glfw.GLFW;
 //#else
 import org.lwjgl.input.Mouse;
@@ -36,7 +36,7 @@ public class MousePlatformImpl implements MousePlatform {
     @Override
     public double getDWheel() {
         //#if MC>=11600
-        //$$ double scrollDelta = ((MouseHelperAccessor) UMinecraft.getMinecraft().mouseHelper).getAccumulatedScrollDelta();
+        //$$ double scrollDelta = ((MouseAccessor) UMinecraft.getMinecraft().mouseHelper).getEventDeltaWheel();
         //$$ double amount = scrollDelta - prevScroll;
         //$$ prevScroll = scrollDelta;
         //$$ return amount;
@@ -48,7 +48,11 @@ public class MousePlatformImpl implements MousePlatform {
     @Override
     public double getMouseDX() {
         //#if MC>=11600
-        //$$ return UMinecraft.getMinecraft().mouseHelper.getXVelocity();
+            //#if FORGE==1
+            //$$ return UMinecraft.getMinecraft().mouseHelper.getXVelocity();
+            //#else
+            //$$ return ((MouseAccessor) UMinecraft.getMinecraft().mouse).getCursorDeltaX();
+            //#endif
         //#else
         return Mouse.getDX();
         //#endif
@@ -57,7 +61,11 @@ public class MousePlatformImpl implements MousePlatform {
     @Override
     public double getMouseDY() {
         //#if MC>=11600
-        //$$ return UMinecraft.getMinecraft().mouseHelper.getYVelocity();
+            //#if FORGE==1
+            //$$ return UMinecraft.getMinecraft().mouseHelper.getYVelocity();
+            //#else
+            //$$ return ((MouseAccessor) UMinecraft.getMinecraft().mouse).getCursorDeltaY();
+            //#endif
         //#else
         return Mouse.getDY();
         //#endif

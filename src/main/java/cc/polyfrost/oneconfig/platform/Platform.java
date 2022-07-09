@@ -45,6 +45,8 @@ public interface Platform {
 
     int getMinecraftVersion();
 
+    Loader getLoader();
+
     class PlatformHolder {
         private PlatformHolder() {
 
@@ -59,5 +61,10 @@ public interface Platform {
         I18nPlatform i18nPlatform = ServiceLoader.load(I18nPlatform.class, I18nPlatform.class.getClassLoader()).iterator().next();
 
         NanoVGPlatform nvgPlatform = ServiceLoader.load(NanoVGPlatform.class, NanoVGPlatform.class.getClassLoader()).iterator().next();
+    }
+
+    enum Loader {
+        FORGE,
+        FABRIC
     }
 }

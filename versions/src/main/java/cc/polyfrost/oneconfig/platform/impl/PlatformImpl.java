@@ -37,4 +37,13 @@ public class PlatformImpl implements Platform {
         return 10800;
         //#endif
     }
+
+    @Override
+    public Loader getLoader() {
+        //#if FORGE==1
+        return Loader.FORGE;
+        //#else
+        //$$ return Loader.FABRIC;
+        //#endif
+    }
 }

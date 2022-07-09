@@ -7,6 +7,9 @@ import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.internal.config.Preferences;
 import cc.polyfrost.oneconfig.internal.gui.BlurHandler;
 import cc.polyfrost.oneconfig.internal.mixin.ShaderGroupAccessor;
+//#if FABRIC==1
+//$$ import cc.polyfrost.oneconfig.internal.mixin.GameRendererAccessor;
+//#endif
 import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
 import cc.polyfrost.oneconfig.libs.universal.UMinecraft;
 import cc.polyfrost.oneconfig.libs.universal.UScreen;
@@ -102,7 +105,11 @@ public class BlurHandlerImpl implements BlurHandler {
         // a one of ours, we should load our own blur!
 
         if (!isShaderActive() && gui instanceof OneConfigGui && Preferences.enableBlur) {
+            //#if FABRIC==1
+            //$$ ((GameRendererAccessor) UMinecraft.getMinecraft().gameRenderer).invokeLoadShader(this.blurShader);
+            //#else
             UMinecraft.getMinecraft().entityRenderer.loadShader(this.blurShader);
+            //#endif
 
             this.start = System.currentTimeMillis();
             this.progress = 0;
