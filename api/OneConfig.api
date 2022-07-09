@@ -1008,6 +1008,28 @@ public abstract interface class cc/polyfrost/oneconfig/platform/MousePlatform {
 	public abstract fun isButtonDown (I)Z
 }
 
+public abstract interface class cc/polyfrost/oneconfig/platform/NanoVGPlatform {
+	public static final field NVG_ANTIALIAS I
+	public static final field NVG_DEBUG I
+	public static final field NVG_IMAGE_NODELETE I
+	public static final field NVG_STENCIL_STROKES I
+	public abstract fun nnvgCreate (I)J
+	public abstract fun nnvgDelete (J)V
+	public abstract fun nnvglCreateImageFromHandle (JIIII)I
+	public abstract fun nnvglImageHandle (JI)I
+	public abstract fun nnvgluBindFramebuffer (JJ)V
+	public abstract fun nnvgluCreateFramebuffer (JIII)J
+	public abstract fun nnvgluDeleteFramebuffer (JJ)V
+	public abstract fun nvgCreate (I)J
+	public abstract fun nvgDelete (J)V
+	public abstract fun nvglCreateImageFromHandle (JIIII)I
+	public abstract fun nvglImageHandle (JI)I
+	public abstract fun nvgluBindFramebuffer (JLorg/lwjgl/nanovg/NVGLUFramebuffer;)V
+	public abstract fun nvgluCreateFramebuffer (JIII)Lorg/lwjgl/nanovg/NVGLUFramebuffer;
+	public abstract fun nvgluDeleteFramebuffer (JLorg/lwjgl/nanovg/NVGLUFramebuffer;)V
+	public abstract fun triggerStaticInitialization ()V
+}
+
 public abstract interface class cc/polyfrost/oneconfig/platform/Platform {
 	public static fun getGLPlatform ()Lcc/polyfrost/oneconfig/platform/GLPlatform;
 	public static fun getGuiPlatform ()Lcc/polyfrost/oneconfig/platform/GuiPlatform;
@@ -1016,6 +1038,7 @@ public abstract interface class cc/polyfrost/oneconfig/platform/Platform {
 	public static fun getLoaderPlatform ()Lcc/polyfrost/oneconfig/platform/LoaderPlatform;
 	public abstract fun getMinecraftVersion ()I
 	public static fun getMousePlatform ()Lcc/polyfrost/oneconfig/platform/MousePlatform;
+	public static fun getNanoVGPlatform ()Lcc/polyfrost/oneconfig/platform/NanoVGPlatform;
 	public static fun getServerPlatform ()Lcc/polyfrost/oneconfig/platform/ServerPlatform;
 	public abstract fun isCallingFromMinecraftThread ()Z
 }

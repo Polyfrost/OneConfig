@@ -6,7 +6,6 @@ import cc.polyfrost.oneconfig.platform.GuiPlatform;
 import net.minecraft.client.gui.GuiChat;
 import net.minecraft.client.gui.GuiScreen;
 
-@SuppressWarnings("unused")
 public class GuiPlatformImpl implements GuiPlatform {
 
     @Override

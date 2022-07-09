@@ -28,3 +28,5 @@ org.spongepowered.asm.lib.tree.MethodInsnNode org.objectweb.asm.tree.MethodInsnN
 org.spongepowered.asm.lib.tree.InsnList org.objectweb.asm.tree.InsnList
 org.spongepowered.asm.lib.tree.InsnNode org.objectweb.asm.tree.InsnNode
 org.spongepowered.asm.lib.tree.JumpInsnNode org.objectweb.asm.tree.JumpInsnNode
+
+org.lwjgl.nanovg.NanoVGGL2 org.lwjgl.nanovg.NanoVGGL3

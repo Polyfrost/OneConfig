@@ -7,7 +7,6 @@ import cc.polyfrost.oneconfig.platform.LoaderPlatform;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.ModContainer;
 
-@SuppressWarnings("unused")
 public class LoaderPlatformImpl implements LoaderPlatform {
     @Override
     public boolean isModLoaded(String id) {
