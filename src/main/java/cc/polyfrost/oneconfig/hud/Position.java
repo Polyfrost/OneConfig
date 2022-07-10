@@ -24,8 +24,7 @@ public class Position {
      * @param screenHeight The height of the screen to initialize the position width
      */
     public Position(float x, float y, float width, float height, float screenWidth, float screenHeight) {
-        this.width = width;
-        this.height = height;
+        setSize(width, height);
         setPosition(x, y, screenWidth, screenHeight);
     }
 
@@ -73,7 +72,7 @@ public class Position {
             this.anchor = AnchorPosition.MIDDLE_CENTER;
 
         this.x = x - getAnchorX(screenWidth) + getAnchorX(width);
-        this.y = y - getAnchorY(screenHeight) + getAnchorX(height);
+        this.y = y - getAnchorY(screenHeight) + getAnchorY(height);
     }
 
     /**
