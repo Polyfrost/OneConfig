@@ -153,9 +153,7 @@ dependencies {
 
     include("cc.polyfrost:lwjgl-$platform:1.0.0-alpha6")
     val prebundled = prebundle(shadeRelocated)
-    modCompileOnly(prebundled)
-    modRuntimeOnly(prebundled)
-    include(prebundled, false)
+    include(prebundled, false, true)
 
     dokkaHtmlPlugin("org.jetbrains.dokka:kotlin-as-java-plugin:1.6.21")
 
@@ -163,20 +161,28 @@ dependencies {
     configurations.named(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME) { extendsFrom(shadeProject) }
 }
 
-fun DependencyHandlerScope.include(dependency: Any, pom: Boolean = true) {
+fun DependencyHandlerScope.include(dependency: Any, pom: Boolean = true, mod: Boolean = false) {
     if (platform.isForge) {
         if (pom) {
             shade(dependency)
         } else {
+            if (mod) {
+                modCompileOnly(dependency)
+                modRuntimeOnly(dependency)
+            } else {
+                compileOnly(dependency)
+                runtimeOnly(dependency)
+            }
             shadeNoPom2(dependency)
         }
     } else {
         if (pom) {
-            modApi(dependency)
+            if (mod) modApi(dependency) else api(dependency)
         } else {
-            modCompileOnly(dependency)
-            modRuntimeOnly(dependency)
-        }?.let { "include"(it) }
+            if (mod) modRuntimeOnly(dependency) else runtimeOnly(dependency)
+            if (mod) modCompileOnly(dependency) else compileOnly(dependency)
+        }
+        "include"(dependency)
     }
 }
 
