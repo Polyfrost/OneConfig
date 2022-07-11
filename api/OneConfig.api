@@ -465,6 +465,7 @@ public class cc/polyfrost/oneconfig/gui/HudGui : cc/polyfrost/oneconfig/libs/uni
 	public fun doesGuiPauseGame ()Z
 	public fun initScreen (II)V
 	public fun onDrawScreen (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;IIF)V
+	public fun onKeyPressed (ICLcc/polyfrost/oneconfig/libs/universal/UKeyboard$Modifiers;)V
 	public fun onMouseClicked (DDI)V
 	public fun onMouseReleased (DDI)V
 	public fun onScreenClose ()V
