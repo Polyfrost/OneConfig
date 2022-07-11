@@ -114,7 +114,7 @@ dependencies {
         isTransitive = false
     }
 
-    include("gg.essential:universalcraft-$platform:211", relocate = true, transitive = false)
+    include("gg.essential:universalcraft-$platform:211", relocate = true, transitive = false, mod = true)
 
     include("com.github.KevinPriv:keventbus:c52e0a2ea0", relocate = true, transitive = false)
 
