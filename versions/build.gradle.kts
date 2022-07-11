@@ -48,6 +48,11 @@ base {
 }
 loom {
     noServerRunConfigs()
+    runConfigs.named("client") {
+        if (project.platform.isLegacyForge) {
+            vmArgs.remove("-XstartOnFirstThread")
+        }
+    }
     launchConfigs.named("client") {
         if (project.platform.isLegacyForge) {
             arg("--tweakClass", "cc.polyfrost.oneconfig.internal.plugin.asm.OneConfigTweaker")
