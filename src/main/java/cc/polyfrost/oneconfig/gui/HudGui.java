@@ -18,9 +18,12 @@ import java.util.ArrayList;
 
 public class HudGui extends UScreen implements GuiPause {
     private final ArrayList<Hud> editingHuds = new ArrayList<>(); // allow selection of multiple HUDS
-    private Hud draggingHud;
+    private boolean isDragging;
     private float lastX;
     private float lastY;
+    private boolean isSelecting;
+    private float selectX;
+    private float selectY;
 
     public HudGui() {
         super();
@@ -35,47 +38,61 @@ public class HudGui extends UScreen implements GuiPause {
 
     @Override
     public void onDrawScreen(@NotNull UMatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
-        if (draggingHud != null) {
+        if (isDragging) {
             setHudPositions(mouseX - lastX, mouseY - lastY, true);
             this.lastX = mouseX;
             this.lastY = mouseY;
+        } else if (isSelecting) {
+            getHudsInRegion(selectX, selectY, mouseX, mouseY);
         }
 
-        RenderManager.setupAndDraw(true, vg -> {
-            for (Hud hud : HudCore.huds) {
-                if (!hud.isEnabled()) continue;
-                Position position = hud.position;
-                if (editingHuds.contains(hud))
-                    RenderManager.drawRectangle(vg, position.getX(), position.getY(), position.getWidth(), position.getHeight(), new Color(0, 128, 128, 60).getRGB());
-                hud.drawExampleAll(matrixStack);
-                RenderManager.drawLine(vg, position.getX(), position.getY(), position.getRightX(), position.getY(), 1, new Color(255, 255, 255).getRGB());
-                RenderManager.drawLine(vg, position.getX(), position.getBottomY(), position.getRightX(), position.getBottomY(), 1, new Color(255, 255, 255).getRGB());
-                RenderManager.drawLine(vg, position.getX(), position.getY(), position.getX(), position.getBottomY(), 1, new Color(255, 255, 255).getRGB());
-                RenderManager.drawLine(vg, position.getRightX(), position.getY(), position.getRightX(), position.getBottomY(), 1, new Color(255, 255, 255).getRGB());
-            }
-        });
+        float scaleFactor = (float) UResolution.getScaleFactor();
+        int width = Math.max(1, Math.round(Math.min(UResolution.getWindowWidth() / 1920f, UResolution.getWindowHeight() / 1080f)));
+        for (Hud hud : HudCore.huds) {
+            if (!hud.isEnabled()) continue;
+            Position position = hud.position;
+            hud.drawExampleAll(matrixStack);
+            if (editingHuds.contains(hud))
+                RenderManager.setupAndDraw(true, vg -> RenderManager.drawRect(vg, position.getX(), position.getY(), position.getWidth(), position.getHeight(), new Color(0, 128, 128, 60).getRGB()));
+            RenderManager.setupAndDraw(vg -> {
+                RenderManager.drawLine(vg, position.getX() * scaleFactor - width / 2f, position.getY() * scaleFactor - width / 2f, position.getRightX() * scaleFactor + width / 2f, position.getY() * scaleFactor - width / 2f, width, new Color(255, 255, 255).getRGB());
+                RenderManager.drawLine(vg, position.getX() * scaleFactor - width / 2f, position.getBottomY() * scaleFactor + width / 2f, position.getRightX() * scaleFactor + width / 2f, position.getBottomY() * scaleFactor + width / 2f, width, new Color(255, 255, 255).getRGB());
+                RenderManager.drawLine(vg, position.getX() * scaleFactor - width / 2f, position.getY() * scaleFactor - width / 2f, position.getX() * scaleFactor - width / 2f, position.getBottomY() * scaleFactor + width / 2f, width, new Color(255, 255, 255).getRGB());
+                RenderManager.drawLine(vg, position.getRightX() * scaleFactor + width / 2f, position.getY() * scaleFactor - width / 2f, position.getRightX() * scaleFactor + width / 2f, position.getBottomY() * scaleFactor + width / 2f, width, new Color(255, 255, 255).getRGB());
+            });
+        }
+
+        if (isSelecting)
+            RenderManager.setupAndDraw(true, vg -> RenderManager.drawRect(vg, selectX, selectY, mouseX - selectX, mouseY - selectY, new Color(0, 0, 255, 100).getRGB()));
     }
 
     @Override
     public void onMouseClicked(double mouseX, double mouseY, int mouseButton) {
         super.onMouseClicked(mouseX, mouseY, mouseButton);
-        if (mouseButton == 0) {
-            editingHuds.clear();
-            draggingHud = null;
-            for (Hud hud : HudCore.huds) {
-                if (!hud.isEnabled() || !mouseClickedHud(hud, (float) mouseX, (float) mouseY)) continue;
-                if (!editingHuds.contains(hud)) editingHuds.add(hud);
-                draggingHud = hud;
-                this.lastX = (float) mouseX;
-                this.lastY = (float) mouseY;
+        if (mouseButton != 0) return;
+        isDragging = false;
+        isSelecting = false;
+        for (Hud hud : HudCore.huds) {
+            if (!hud.isEnabled() || !mouseClickedHud(hud, (float) mouseX, (float) mouseY)) continue;
+            if (!editingHuds.contains(hud)) {
+                editingHuds.clear();
+                editingHuds.add(hud);
             }
+            isDragging = true;
+            this.lastX = (float) mouseX;
+            this.lastY = (float) mouseY;
+            return;
         }
+        isSelecting = true;
+        selectX = (float) mouseX;
+        selectY = (float) mouseY;
     }
 
     @Override
     public void onMouseReleased(double mouseX, double mouseY, int state) {
+        isDragging = false;
+        isSelecting = false;
         super.onMouseReleased(mouseX, mouseY, state);
-        draggingHud = null;
     }
 
     @Override
@@ -104,6 +121,28 @@ public class HudGui extends UScreen implements GuiPause {
     @Override
     public boolean doesGuiPauseGame() {
         return false;
+    }
+
+    private void getHudsInRegion(float x1, float y1, float x2, float y2) {
+        if (x1 > x2) {
+            float temp = x1;
+            x1 = x2;
+            x2 = temp;
+        }
+        if (y1 > y2) {
+            float temp = y1;
+            y1 = y2;
+            y2 = temp;
+        }
+
+        editingHuds.clear();
+        for (Hud hud : HudCore.huds) {
+            if (!hud.isEnabled()) continue;
+            Position pos = hud.position;
+            if ((x1 <= pos.getX() && x2 >= pos.getX() || x1 <= pos.getRightX() && x2 >= pos.getRightX())
+                    && (y1 <= pos.getY() && y2 >= pos.getY() || y1 <= pos.getBottomY() && y2 >= pos.getBottomY()))
+                editingHuds.add(hud);
+        }
     }
 
     private void setHudPositions(float xOffset, float yOffset, boolean locked) {
