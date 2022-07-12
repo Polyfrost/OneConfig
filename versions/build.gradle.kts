@@ -114,15 +114,11 @@ dependencies {
         isTransitive = false
     }
 
-    shadeRelocated("gg.essential:universalcraft-$platform:211") {
-        isTransitive = false
-    }
+    include("gg.essential:universalcraft-$platform:211", relocate = true, transitive = false, mod = true)
 
-    shadeRelocated("com.github.KevinPriv:keventbus:c52e0a2ea0") {
-        isTransitive = false
-    }
+    include("com.github.KevinPriv:keventbus:c52e0a2ea0", relocate = true, transitive = false)
 
-    @Suppress("GradlePackageUpdate") shadeRelocated("com.github.ben-manes.caffeine:caffeine:2.9.3")
+    @Suppress("GradlePackageUpdate") include("com.github.ben-manes.caffeine:caffeine:2.9.3", relocate = true)
 
     // for other mods and universalcraft
     val kotlinVersion: String by project
@@ -152,8 +148,6 @@ dependencies {
     }
 
     include("cc.polyfrost:lwjgl-$platform:1.0.0-alpha6")
-    val prebundled = prebundle(shadeRelocated)
-    include(prebundled, false, true)
 
     dokkaHtmlPlugin("org.jetbrains.dokka:kotlin-as-java-plugin:1.6.21")
 
@@ -161,28 +155,38 @@ dependencies {
     configurations.named(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME) { extendsFrom(shadeProject) }
 }
 
-fun DependencyHandlerScope.include(dependency: Any, pom: Boolean = true, mod: Boolean = false) {
+fun DependencyHandlerScope.include(dependency: String, pom: Boolean = true, mod: Boolean = false, relocate: Boolean = false, transitive: Boolean = true) {
     if (platform.isForge) {
-        if (pom) {
-            shade(dependency)
+        if (relocate) {
+            shadeRelocated(dependency) { isTransitive = transitive }
+            compileOnly(dependency) { isTransitive = transitive; attributes { attribute(relocated, true) } }
+            runtimeOnly(dependency) { isTransitive = transitive; attributes { attribute(relocated, true) } }
         } else {
-            if (mod) {
-                modCompileOnly(dependency)
-                modRuntimeOnly(dependency)
+            if (pom) {
+                shade(dependency) { isTransitive = transitive }
             } else {
-                compileOnly(dependency)
-                runtimeOnly(dependency)
+                shadeNoPom2(dependency) { isTransitive = transitive }
+                compileOnly(dependency) { isTransitive = transitive }
+                runtimeOnly(dependency) { isTransitive = transitive }
             }
-            shadeNoPom2(dependency)
         }
     } else {
-        if (pom) {
-            if (mod) modApi(dependency) else api(dependency)
+        if (pom && !relocate) {
+            if (mod) {
+                modApi(dependency) { isTransitive = transitive }
+            } else {
+                api(dependency) { isTransitive = transitive }
+            }
         } else {
-            if (mod) modRuntimeOnly(dependency) else runtimeOnly(dependency)
-            if (mod) modCompileOnly(dependency) else compileOnly(dependency)
+            if (mod) {
+                modCompileOnly(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
+                modRuntimeOnly(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
+            } else {
+                compileOnly(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
+                runtimeOnly(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
+            }
         }
-        "include"(dependency)
+        "include"(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
     }
 }
 
@@ -249,7 +253,7 @@ tasks {
 
     val shadowJar = named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar") {
         archiveClassifier.set("full-dev")
-        configurations = listOf(shade, shadeNoPom2, shadeProject)
+        configurations = listOf(shade, shadeNoPom2, shadeProject, shadeRelocated)
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
         dependsOn(jar)
     }
@@ -264,8 +268,8 @@ tasks {
     }
     jar {
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-        dependsOn(shadeNoPom2, shadeProject)
-        from(ArrayList<File>().run { addAll(shadeNoPom2); addAll(shadeProject); this }
+        dependsOn(shadeNoPom2, shadeProject, shadeRelocated)
+        from(ArrayList<File>().run { addAll(shadeNoPom2); addAll(shadeProject); addAll(shadeRelocated); this }
             .map { if (it.isDirectory) it else zipTree(it) })
         manifest {
             attributes(
