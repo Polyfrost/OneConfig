@@ -97,6 +97,19 @@ public class Position {
     }
 
     /**
+     * Update the position so the top left corner stays in the same spot
+     *
+     * @param width  The width
+     * @param height The height
+     */
+    public void updateSizePosition(float width, float height) {
+        float x = getX();
+        float y = getY();
+        setSize(width, height);
+        setPosition(x, y);
+    }
+
+    /**
      * Get the X coordinate scaled to the size of the screen
      *
      * @param screenWidth The width of the screen

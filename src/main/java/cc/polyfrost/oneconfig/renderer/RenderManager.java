@@ -86,24 +86,6 @@ public final class RenderManager {
      * @param height The height.
      * @param color  The color.
      */
-    public static void drawRectangle(long vg, float x, float y, float width, float height, int color) {     // TODO make everything use this one day
-        if (Colors.ROUNDED_CORNERS) {
-            drawRoundedRect(vg, x, y, width, height, color, Colors.CORNER_RADIUS);
-        } else {
-            drawRect(vg, x, y, width, height, color);
-        }
-    }
-
-    /**
-     * Draws a rectangle with the given parameters.
-     *
-     * @param vg     The NanoVG context.
-     * @param x      The x position.
-     * @param y      The y position.
-     * @param width  The width.
-     * @param height The height.
-     * @param color  The color.
-     */
     public static void drawRect(long vg, float x, float y, float width, float height, int color) {
         nvgBeginPath(vg);
         nvgRect(vg, x, y, width, height);
@@ -330,12 +312,12 @@ public final class RenderManager {
      * <p><b>This does NOT scale to Minecraft's GUI scale!</b></p>
      *
      * @see RenderManager#drawText(long, String, float, float, int, float, Font)
-     * @see InputUtils#isAreaClicked(int, int, int, int)
+     * @see InputUtils#isAreaClicked(float, float, float, float)
      */
     public static void drawURL(long vg, String url, float x, float y, float size, Font font) {
         drawText(vg, url, x, y, Colors.PRIMARY_500, size, font);
         float length = getTextWidth(vg, url, size, font);
-        drawRectangle(vg, x, y + size / 2, length, 1, Colors.PRIMARY_500);
+        drawRect(vg, x, y + size / 2, length, 1, Colors.PRIMARY_500);
         if (InputUtils.isAreaClicked((int) (x - 2), (int) (y - 1), (int) (length + 4), (int) (size / 2 + 3))) {
             NetworkUtils.browseLink(url);
         }

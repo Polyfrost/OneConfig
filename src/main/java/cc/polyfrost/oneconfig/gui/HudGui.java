@@ -9,6 +9,7 @@ import cc.polyfrost.oneconfig.libs.universal.UMatrixStack;
 import cc.polyfrost.oneconfig.libs.universal.UResolution;
 import cc.polyfrost.oneconfig.libs.universal.UScreen;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
+import cc.polyfrost.oneconfig.utils.MathUtils;
 import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,6 +25,7 @@ public class HudGui extends UScreen implements GuiPause {
     private boolean isSelecting;
     private float selectX;
     private float selectY;
+    private boolean isScaling;
 
     public HudGui() {
         super();
@@ -44,6 +46,10 @@ public class HudGui extends UScreen implements GuiPause {
             this.lastY = mouseY;
         } else if (isSelecting) {
             getHudsInRegion(selectX, selectY, mouseX, mouseY);
+        } else if (isScaling && editingHuds.size() == 1) {
+            Hud hud = editingHuds.get(0);
+            Position position = hud.position;
+            hud.setScale(MathUtils.clamp((mouseX - position.getX()) / (position.getWidth() / hud.getScale()), 0.3f, 20f));
         }
 
         float scaleFactor = (float) UResolution.getScaleFactor();
@@ -60,6 +66,8 @@ public class HudGui extends UScreen implements GuiPause {
                 RenderManager.drawLine(vg, position.getX() * scaleFactor - width / 2f, position.getY() * scaleFactor - width / 2f, position.getX() * scaleFactor - width / 2f, position.getBottomY() * scaleFactor + width / 2f, width, new Color(255, 255, 255).getRGB());
                 RenderManager.drawLine(vg, position.getRightX() * scaleFactor + width / 2f, position.getY() * scaleFactor - width / 2f, position.getRightX() * scaleFactor + width / 2f, position.getBottomY() * scaleFactor + width / 2f, width, new Color(255, 255, 255).getRGB());
             });
+            if (editingHuds.contains(hud) && editingHuds.size() == 1)
+                RenderManager.setupAndDraw(true, vg -> RenderManager.drawRect(vg, position.getRightX() - 5, position.getBottomY() - 5, 10, 10, new Color(0, 128, 128, 200).getRGB()));
         }
 
         if (isSelecting)
@@ -72,10 +80,18 @@ public class HudGui extends UScreen implements GuiPause {
         if (mouseButton != 0) return;
         isDragging = false;
         isSelecting = false;
+        isScaling = false;
+        if (editingHuds.size() == 1) {
+            Position position = editingHuds.get(0).position;
+            if (mouseX >= position.getRightX() - 7 && mouseX <= position.getRightX() + 7 && mouseY >= position.getBottomY() - 7 && mouseY <= position.getBottomY() + 7) {
+                isScaling = true;
+                return;
+            }
+        }
         for (Hud hud : HudCore.huds) {
             if (!hud.isEnabled() || !mouseClickedHud(hud, (float) mouseX, (float) mouseY)) continue;
             if (!editingHuds.contains(hud)) {
-                editingHuds.clear();
+                if (!UKeyboard.isCtrlKeyDown()) editingHuds.clear();
                 editingHuds.add(hud);
             }
             isDragging = true;
@@ -92,6 +108,7 @@ public class HudGui extends UScreen implements GuiPause {
     public void onMouseReleased(double mouseX, double mouseY, int state) {
         isDragging = false;
         isSelecting = false;
+        isScaling = false;
         super.onMouseReleased(mouseX, mouseY, state);
     }
 

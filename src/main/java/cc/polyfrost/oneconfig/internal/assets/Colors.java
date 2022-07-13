@@ -42,9 +42,6 @@ public class Colors {
     public static final int ERROR_800_80 = new Color(145, 24, 24, 204).getRGB();         // Red 800
     public static final int ERROR_300 = new Color(253, 155, 155).getRGB();
     public static final int ERROR_300_80 = new Color(253, 155, 155, 204).getRGB();
-    public static boolean ROUNDED_CORNERS = true;
-    public static final float CORNER_RADIUS_WIN = 20f;
-    public static final float CORNER_RADIUS = 12f;
 
     /** List of all colors used by Minecraft in its code.
      * Source: <a href="https://www.digminecraft.com/lists/color_list_pc.php">Click Here</a>
@@ -71,7 +68,5 @@ public class Colors {
         public static final int GRAY = new Color(170, 170, 170).getRGB();           // Mapped to 7
         public static final int DARK_GRAY = new Color(85, 85, 85).getRGB();         // Mapped to 8
         public static final int BLACK = new Color(0, 0, 0).getRGB();                // Mapped to 0
-
-
     }
 }

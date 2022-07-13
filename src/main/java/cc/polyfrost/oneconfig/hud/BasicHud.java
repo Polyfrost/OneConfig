@@ -5,14 +5,14 @@ import cc.polyfrost.oneconfig.libs.universal.UMatrixStack;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 
 public abstract class BasicHud extends Hud {
-    public boolean rounded;
-    public boolean border;
-    public OneColor bgColor;
-    public OneColor borderColor;
-    public float cornerRadius;
-    public float borderSize;
-    public float paddingX;
-    public float paddingY;
+    protected boolean rounded;
+    protected boolean border;
+    protected OneColor bgColor;
+    protected OneColor borderColor;
+    protected float cornerRadius;
+    protected float borderSize;
+    protected float paddingX;
+    protected float paddingY;
 
     /**
      * @param enabled      If the hud is enabled
@@ -86,6 +86,17 @@ public abstract class BasicHud extends Hud {
         if (shouldDrawBackground())
             drawBackground(position.getX(), position.getY(), position.getWidth(), position.getHeight(), scale);
         drawExample(matrices, position.getX() + paddingX, position.getY() + paddingY, scale);
+    }
+
+    /**
+     * Set a new scale value
+     *
+     * @param scale The new scale
+     */
+    @Override
+    public void setScale(float scale) {
+        this.scale = scale;
+        position.updateSizePosition(getWidth(scale) + paddingX * 2f, getHeight(scale) + paddingY * 2f);
     }
 
     /**

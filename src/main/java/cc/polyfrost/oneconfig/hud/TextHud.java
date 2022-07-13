@@ -18,7 +18,6 @@ import java.util.List;
 public abstract class TextHud extends BasicHud {
     protected transient List<String> lines = new ArrayList<>();
     private transient int width;
-    private transient int height;
 
     @Color(
             name = "Text Color"
@@ -78,7 +77,7 @@ public abstract class TextHud extends BasicHud {
     public void draw(UMatrixStack matrices, float x, float y, float scale) {
         if (!HudCore.editing) getLinesFrequent(lines);
         else getExampleLinesFrequent(lines);
-        if (lines == null) return;
+        if (lines == null || lines.size() == 0) return;
 
         float textY = y;
         width = 0;
@@ -87,7 +86,6 @@ public abstract class TextHud extends BasicHud {
             width = Math.max(width, Platform.getGLPlatform().getStringWidth(line));
             textY += 12 * scale;
         }
-        height = (int) ((textY - y) / scale - 3);
     }
 
     @Override
@@ -97,7 +95,12 @@ public abstract class TextHud extends BasicHud {
 
     @Override
     public float getHeight(float scale) {
-        return height * scale;
+        return lines == null ? 0 : (lines.size() * 12 - 4) * scale;
+    }
+
+    @Override
+    public boolean shouldDrawBackground() {
+        return super.shouldDrawBackground() && lines != null && lines.size() > 0;
     }
 
     private class TickHandler {

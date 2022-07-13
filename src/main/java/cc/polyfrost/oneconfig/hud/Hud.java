@@ -37,10 +37,10 @@ import cc.polyfrost.oneconfig.platform.Platform;
  *  *     }</pre>
  */
 public abstract class Hud {
-    public boolean enabled;
+    protected boolean enabled;
     transient private Config config;
     public final Position position;
-    public float scale;
+    protected float scale;
 
     /**
      * @param enabled If the hud is enabled
@@ -154,8 +154,30 @@ public abstract class Hud {
         return enabled && (config == null || config.enabled);
     }
 
+    /**
+     * Set the config to disable accordingly, intended for internal use
+     *
+     * @param config The config instance
+     */
     public void setConfig(Config config) {
         this.config = config;
+    }
+
+    /**
+     * @return The scale of the Hud
+     */
+    public float getScale() {
+        return scale;
+    }
+
+    /**
+     * Set a new scale value
+     *
+     * @param scale The new scale
+     */
+    public void setScale(float scale) {
+        this.scale = scale;
+        position.updateSizePosition(getWidth(scale), getHeight(scale));
     }
 
     @Switch(
