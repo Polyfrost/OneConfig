@@ -102,7 +102,7 @@ public abstract class BasicHud extends Hud {
     /**
      * @return If the background should be drawn
      */
-    public boolean shouldDrawBackground() {
+    protected boolean shouldDrawBackground() {
         return true;
     }
 

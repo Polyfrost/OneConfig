@@ -81,7 +81,7 @@ public abstract class Hud {
      * @param y     Top left y-coordinate of the hud
      * @param scale Scale of the hud
      */
-    public abstract void draw(UMatrixStack matrices, float x, float y, float scale);
+    protected abstract void draw(UMatrixStack matrices, float x, float y, float scale);
 
     /**
      * Function called when drawing the example version of the hud.
@@ -91,7 +91,7 @@ public abstract class Hud {
      * @param y     Top left y-coordinate of the hud
      * @param scale Scale of the hud
      */
-    public void drawExample(UMatrixStack matrices, float x, float y, float scale) {
+    protected void drawExample(UMatrixStack matrices, float x, float y, float scale) {
         draw(matrices, x, y, scale);
     }
 
@@ -99,13 +99,13 @@ public abstract class Hud {
      * @param scale Scale of the hud
      * @return The width of the hud
      */
-    public abstract float getWidth(float scale);
+    protected abstract float getWidth(float scale);
 
     /**
      * @param scale Scale of the hud
      * @return The height of the hud
      */
-    public abstract float getHeight(float scale);
+    protected abstract float getHeight(float scale);
 
     /**
      * @param scale Scale of the hud

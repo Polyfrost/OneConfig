@@ -844,14 +844,14 @@ public abstract class cc/polyfrost/oneconfig/gui/pages/Page {
 }
 
 public abstract class cc/polyfrost/oneconfig/hud/BasicHud : cc/polyfrost/oneconfig/hud/Hud {
-	public field bgColor Lcc/polyfrost/oneconfig/config/core/OneColor;
-	public field border Z
-	public field borderColor Lcc/polyfrost/oneconfig/config/core/OneColor;
-	public field borderSize F
-	public field cornerRadius F
-	public field paddingX F
-	public field paddingY F
-	public field rounded Z
+	protected field bgColor Lcc/polyfrost/oneconfig/config/core/OneColor;
+	protected field border Z
+	protected field borderColor Lcc/polyfrost/oneconfig/config/core/OneColor;
+	protected field borderSize F
+	protected field cornerRadius F
+	protected field paddingX F
+	protected field paddingY F
+	protected field rounded Z
 	public fun <init> ()V
 	public fun <init> (Z)V
 	public fun <init> (ZFF)V
@@ -860,7 +860,8 @@ public abstract class cc/polyfrost/oneconfig/hud/BasicHud : cc/polyfrost/oneconf
 	public fun drawAll (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;)V
 	protected fun drawBackground (FFFFF)V
 	public fun drawExampleAll (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;)V
-	public fun shouldDrawBackground ()Z
+	public fun setScale (F)V
+	protected fun shouldDrawBackground ()Z
 }
 
 public class cc/polyfrost/oneconfig/hud/HUDUtils {
@@ -869,9 +870,9 @@ public class cc/polyfrost/oneconfig/hud/HUDUtils {
 }
 
 public abstract class cc/polyfrost/oneconfig/hud/Hud {
-	public field enabled Z
+	protected field enabled Z
 	public final field position Lcc/polyfrost/oneconfig/hud/Position;
-	public field scale F
+	protected field scale F
 	public field showInChat Z
 	public field showInDebug Z
 	public field showInGuis Z
@@ -879,16 +880,18 @@ public abstract class cc/polyfrost/oneconfig/hud/Hud {
 	public fun <init> (Z)V
 	public fun <init> (ZFF)V
 	public fun <init> (ZFFF)V
-	public abstract fun draw (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;FFF)V
+	protected abstract fun draw (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;FFF)V
 	public fun drawAll (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;)V
-	public fun drawExample (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;FFF)V
+	protected fun drawExample (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;FFF)V
 	public fun drawExampleAll (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;)V
 	public fun getExampleHeight (F)F
 	public fun getExampleWidth (F)F
-	public abstract fun getHeight (F)F
-	public abstract fun getWidth (F)F
+	protected abstract fun getHeight (F)F
+	public fun getScale ()F
+	protected abstract fun getWidth (F)F
 	public fun isEnabled ()Z
 	public fun setConfig (Lcc/polyfrost/oneconfig/config/Config;)V
+	public fun setScale (F)V
 	protected fun shouldShow ()Z
 }
 
@@ -908,6 +911,7 @@ public class cc/polyfrost/oneconfig/hud/Position {
 	public fun setPosition (FF)V
 	public fun setPosition (FFFF)V
 	public fun setSize (FF)V
+	public fun updateSizePosition (FF)V
 }
 
 public final class cc/polyfrost/oneconfig/hud/Position$AnchorPosition : java/lang/Enum {
@@ -927,9 +931,9 @@ public final class cc/polyfrost/oneconfig/hud/Position$AnchorPosition : java/lan
 }
 
 public abstract class cc/polyfrost/oneconfig/hud/SingleTextHud : cc/polyfrost/oneconfig/hud/TextHud {
-	public field brackets Z
-	public field title Ljava/lang/String;
-	public field titleLocation I
+	protected field brackets Z
+	protected field title Ljava/lang/String;
+	protected field titleLocation I
 	public fun <init> (Ljava/lang/String;Z)V
 	public fun <init> (Ljava/lang/String;ZII)V
 	protected final fun getCompleteText (Ljava/lang/String;)Ljava/lang/String;
@@ -944,18 +948,19 @@ public abstract class cc/polyfrost/oneconfig/hud/SingleTextHud : cc/polyfrost/on
 }
 
 public abstract class cc/polyfrost/oneconfig/hud/TextHud : cc/polyfrost/oneconfig/hud/BasicHud {
-	public field color Lcc/polyfrost/oneconfig/config/core/OneColor;
+	protected field color Lcc/polyfrost/oneconfig/config/core/OneColor;
 	protected field lines Ljava/util/List;
-	public field textType I
+	protected field textType I
 	public fun <init> (Z)V
 	public fun <init> (ZII)V
 	public fun draw (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;FFF)V
 	protected fun getExampleLines (Ljava/util/List;)V
 	protected fun getExampleLinesFrequent (Ljava/util/List;)V
-	public fun getHeight (F)F
+	protected fun getHeight (F)F
 	protected abstract fun getLines (Ljava/util/List;)V
 	protected fun getLinesFrequent (Ljava/util/List;)V
-	public fun getWidth (F)F
+	protected fun getWidth (F)F
+	public fun shouldDrawBackground ()Z
 }
 
 public class cc/polyfrost/oneconfig/images/Image {
@@ -1121,7 +1126,6 @@ public final class cc/polyfrost/oneconfig/renderer/RenderManager {
 	public static fun drawInfo (JLcc/polyfrost/oneconfig/config/data/InfoType;FFF)V
 	public static fun drawLine (JFFFFFI)V
 	public static fun drawRect (JFFFFI)V
-	public static fun drawRectangle (JFFFFI)V
 	public static fun drawRoundImage (JLcc/polyfrost/oneconfig/internal/assets/Images;FFFFF)V
 	public static fun drawRoundImage (JLjava/lang/String;FFFFF)V
 	public static fun drawRoundedRect (JFFFFIF)V

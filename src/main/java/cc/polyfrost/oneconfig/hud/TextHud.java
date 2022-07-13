@@ -22,13 +22,13 @@ public abstract class TextHud extends BasicHud {
     @Color(
             name = "Text Color"
     )
-    public OneColor color = new OneColor(255, 255, 255);
+    protected OneColor color = new OneColor(255, 255, 255);
 
     @Dropdown(
             name = "Text Type",
             options = {"No Shadow", "Shadow", "Full Shadow"}
     )
-    public int textType = 0;
+    protected int textType = 0;
 
     public TextHud(boolean enabled, int x, int y) {
         super(enabled, x, y);
@@ -89,12 +89,12 @@ public abstract class TextHud extends BasicHud {
     }
 
     @Override
-    public float getWidth(float scale) {
+    protected float getWidth(float scale) {
         return width * scale;
     }
 
     @Override
-    public float getHeight(float scale) {
+    protected float getHeight(float scale) {
         return lines == null ? 0 : (lines.size() * 12 - 4) * scale;
     }
 

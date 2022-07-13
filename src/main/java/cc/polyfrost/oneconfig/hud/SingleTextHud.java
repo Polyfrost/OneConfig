@@ -104,16 +104,16 @@ public abstract class SingleTextHud extends TextHud {
     @Switch(
             name = "Brackets"
     )
-    public boolean brackets = false;
+    protected boolean brackets = false;
 
     @Text(
             name = "Title"
     )
-    public String title;
+    protected String title;
 
     @Dropdown(
             name = "Title Location",
             options = {"Left", "Right"}
     )
-    public int titleLocation = 0;
+    protected int titleLocation = 0;
 }
