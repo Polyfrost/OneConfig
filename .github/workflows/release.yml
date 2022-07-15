@@ -1,0 +1,44 @@
+# Release Workflow
+
+name: Build
+
+on:
+  workflow_dispatch
+  push:
+    branches:
+      - master
+
+concurrency:
+  group: ${{ github.head_ref || format('{0}-{1}', github.ref, github.run_number) }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v2
+        with:
+          java-version: 17
+          distribution: temurin
+          cache: gradle
+
+      - name: Chmod Gradle
+        run: chmod +x ./gradlew
+
+      - name: Publish
+          run: ./gradlew platform:1.8.9-forge:publishOneconfig-1.8.9-forgePublicationToReleasesRepository -Pmod_version=0.1.0-alpha-${{ $(git rev-parse --short "$GITHUB_SHA") }} -PreleasesUsername=${{ secrets.MAVEN_NAME }} -PreleasesPassword=${{ secrets.MAVEN_TOKEN }} --no-daemon
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: oneconfig-artifacts
+          path: versions/**/build/libs/
