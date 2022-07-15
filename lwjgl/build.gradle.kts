@@ -16,7 +16,7 @@ val mod_name: String by project
 val mod_version: String by project
 val mod_id: String by project
 
-version = "1.0.0-alpha6"
+version = "1.0.0-alpha8"
 
 repositories {
     maven("https://repo.polyfrost.cc/releases")
@@ -50,6 +50,9 @@ dependencies {
         shadeRuntimeOnly("org.lwjgl:lwjgl:$lwjgl:natives-macos")
         shadeRuntimeOnly("org.lwjgl:lwjgl-stb:$lwjgl:natives-macos")
         shadeRuntimeOnly("org.lwjgl:lwjgl-tinyfd:$lwjgl:natives-macos")
+        shadeRuntimeOnly("org.lwjgl:lwjgl:$lwjgl:natives-macos-arm64")
+        shadeRuntimeOnly("org.lwjgl:lwjgl-stb:$lwjgl:natives-macos-arm64")
+        shadeRuntimeOnly("org.lwjgl:lwjgl-tinyfd:$lwjgl:natives-macos-arm64")
     }
 
     shadeCompileOnly("org.lwjgl:lwjgl-nanovg:$lwjgl") {
@@ -62,6 +65,11 @@ dependencies {
         isTransitive = platform.isLegacyForge
     }
     shadeRuntimeOnly("org.lwjgl:lwjgl-nanovg:$lwjgl:natives-macos") {
+        isTransitive = platform.isLegacyForge
+    }
+    // force 3.3.1 for this, because
+    // if the user is actually running M1+, LWJGL must be 3.3.0+
+    shadeRuntimeOnly("org.lwjgl:lwjgl-nanovg:3.3.1:natives-macos-arm64") {
         isTransitive = platform.isLegacyForge
     }
 }

@@ -1,11 +1,11 @@
 package cc.polyfrost.oneconfig.internal.plugin;
 
+import cc.polyfrost.oneconfig.internal.init.OneConfigInit;
 import net.fabricmc.loader.api.entrypoint.PreLaunchEntrypoint;
-import cc.polyfrost.oneconfig.internal.OneConfig;
 
 public class OneConfigPreLaunch implements PreLaunchEntrypoint {
     @Override
     public void onPreLaunch() {
-        OneConfig.preLaunch();
+        OneConfigInit.initialize(new String[]{});
     }
 }

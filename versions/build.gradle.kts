@@ -1,6 +1,5 @@
 import gg.essential.gradle.util.RelocationTransform.Companion.registerRelocationAttribute
 import gg.essential.gradle.util.noServerRunConfigs
-import gg.essential.gradle.util.prebundle
 import net.fabricmc.loom.task.RemapSourcesJarTask
 import java.text.SimpleDateFormat
 
@@ -147,7 +146,7 @@ dependencies {
         isTransitive = false
     }
 
-    include("cc.polyfrost:lwjgl-$platform:1.0.0-alpha6")
+    include("cc.polyfrost:lwjgl-$platform:1.0.0-alpha8")
 
     dokkaHtmlPlugin("org.jetbrains.dokka:kotlin-as-java-plugin:1.6.21")
 

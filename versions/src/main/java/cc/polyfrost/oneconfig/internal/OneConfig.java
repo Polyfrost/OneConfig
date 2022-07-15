@@ -34,21 +34,8 @@ public class OneConfig {
         EventManager.INSTANCE.register(this);
     }
 
-    public static final File oneConfigDir = new File("./OneConfig");
     public static final Logger LOGGER = LogManager.getLogger("@NAME@");
-    private static boolean preLaunched = false;
     private static boolean initialized = false;
-
-    /**
-     * Called before mods are loaded.
-     * <p><b>SHOULD NOT BE CALLED!</b></p>
-     */
-    public static void preLaunch() {
-        if (preLaunched) return;
-        oneConfigDir.mkdirs();
-        new File(oneConfigDir, "profiles").mkdirs();
-        preLaunched = true;
-    }
 
     /**
      * Called after mods are loaded.
