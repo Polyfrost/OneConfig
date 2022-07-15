@@ -4,7 +4,6 @@ import cc.polyfrost.oneconfig.config.annotations.CustomOption;
 import cc.polyfrost.oneconfig.config.annotations.HUD;
 import cc.polyfrost.oneconfig.config.annotations.Page;
 import cc.polyfrost.oneconfig.config.core.ConfigUtils;
-import cc.polyfrost.oneconfig.config.core.OneKeyBind;
 import cc.polyfrost.oneconfig.config.data.Mod;
 import cc.polyfrost.oneconfig.config.data.PageLocation;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
@@ -19,12 +18,14 @@ import cc.polyfrost.oneconfig.gui.pages.ModConfigPage;
 import cc.polyfrost.oneconfig.hud.HUDUtils;
 import cc.polyfrost.oneconfig.internal.config.annotations.Option;
 import cc.polyfrost.oneconfig.internal.config.core.ConfigCore;
-import cc.polyfrost.oneconfig.internal.config.core.KeyBindHandler;
 import cc.polyfrost.oneconfig.utils.JsonUtils;
 import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 import com.google.gson.*;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
@@ -293,17 +294,6 @@ public class Config {
     protected void addListener(String option, Runnable runnable) {
         if (!optionNames.containsKey(option)) return;
         optionNames.get(option).addListener(runnable);
-    }
-
-    /**
-     * Register an action to a keybind
-     *
-     * @param keyBind  The keybind
-     * @param runnable The code to be executed
-     */
-    protected void registerKeyBind(OneKeyBind keyBind, Runnable runnable) {
-        keyBind.setRunnable(runnable);
-        KeyBindHandler.INSTANCE.addKeyBind(keyBind);
     }
 
     /**

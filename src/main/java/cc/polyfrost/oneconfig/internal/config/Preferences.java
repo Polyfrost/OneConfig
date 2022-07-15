@@ -9,7 +9,6 @@ import cc.polyfrost.oneconfig.internal.gui.BlurHandler;
 import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
 import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.utils.TickDelay;
-import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 
 public class Preferences extends InternalConfig {
     @Switch(
@@ -21,12 +20,8 @@ public class Preferences extends InternalConfig {
             name = "OneConfig Keybind",
             size = 2
     )
-    public static OneKeyBind oneConfigKeyBind = new OneKeyBind(UKeyboard.KEY_RSHIFT);
+    public static OneKeyBind oneConfigKeyBind = new OneKeyBind(() -> new TickDelay(() -> Platform.getGuiPlatform().setCurrentScreen(OneConfigGui.create()), 1), UKeyboard.KEY_RSHIFT);
 
-    @Switch(
-            name = "Easter Egg 1"
-    )
-    public static boolean easterEgg1 = true;
 
     @Switch(
             name = "Use custom GUI scale",
@@ -49,7 +44,6 @@ public class Preferences extends InternalConfig {
         super("Preferences", "Preferences.json");
         initialize();
         addListener("enableBlur", () -> BlurHandler.INSTANCE.reloadBlur(Platform.getGuiPlatform().getCurrentScreen()));
-        registerKeyBind(oneConfigKeyBind, () -> new TickDelay(() -> Platform.getGuiPlatform().setCurrentScreen(OneConfigGui.create()), 1));
         INSTANCE = this;
     }
 

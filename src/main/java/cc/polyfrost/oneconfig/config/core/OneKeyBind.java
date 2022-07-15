@@ -1,5 +1,6 @@
 package cc.polyfrost.oneconfig.config.core;
 
+import cc.polyfrost.oneconfig.internal.config.core.KeyBindHandler;
 import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
 
 import java.util.ArrayList;
@@ -9,10 +10,16 @@ public class OneKeyBind {
     protected transient Runnable runnable;
     protected transient boolean hasRun;
 
-    public OneKeyBind(int... keys) {
+    public OneKeyBind(Runnable runnable, boolean initialize, int... keys) {
         for (int key : keys) {
             keyBinds.add(key);
         }
+        this.runnable = runnable;
+        KeyBindHandler.INSTANCE.addKeyBind(this);
+    }
+
+    public OneKeyBind(Runnable runnable, int... keys) {
+        this(runnable, true, keys);
     }
 
     public boolean isActive() {
