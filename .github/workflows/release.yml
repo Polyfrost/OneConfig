@@ -3,7 +3,7 @@
 name: Release
 
 on:
-  workflow_dispatch
+  workflow_dispatch:
   push:
     branches:
       - master
@@ -35,7 +35,7 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Publish
-          run: ./gradlew platform:1.8.9-forge:publishOneconfig-1.8.9-forgePublicationToReleasesRepository -Pmod_version=0.1.0-alpha-${{ $(git rev-parse --short "$GITHUB_SHA") }} -PreleasesUsername=${{ secrets.MAVEN_NAME }} -PreleasesPassword=${{ secrets.MAVEN_TOKEN }} --no-daemon
+        run: ./gradlew platform:1.8.9-forge:publishOneconfig-1.8.9-forgePublicationToReleasesRepository -Pmod_version=0.1.0-alpha-${{ $(git rev-parse --short "$GITHUB_SHA") }} -PreleasesUsername=${{ secrets.MAVEN_NAME }} -PreleasesPassword=${{ secrets.MAVEN_TOKEN }} --no-daemon
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v2
