@@ -1539,19 +1539,16 @@ public final class cc/polyfrost/oneconfig/utils/gui/GuiUtils {
 public abstract class cc/polyfrost/oneconfig/utils/gui/OneUIScreen : cc/polyfrost/oneconfig/libs/universal/UScreen, cc/polyfrost/oneconfig/gui/GuiPause {
 	public fun <init> ()V
 	public fun <init> (Z)V
+	public fun doesGuiPauseGame ()Z
 	public abstract fun draw (JF)V
-	public fun getMouseX ()F
-	public fun getMouseY ()F
+	protected fun getMouseX ()F
+	protected fun getMouseY ()F
 	public fun ignoreMinecraftScale ()Z
-	public fun initScreen (II)V
 	public fun isBlockingClicks ()Z
-	public fun isClicked ()Z
-	public fun isClicked (Z)Z
-	public fun isMouseDown ()Z
-	public fun onDrawScreen (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;IIF)V
-	public fun onMouseClicked (DDI)V
-	public abstract fun onScreenClose ()V
-	public abstract fun onScreenOpen ()V
+	protected fun isClicked ()Z
+	protected fun isClicked (Z)Z
+	protected fun isMouseDown ()Z
+	public final fun onDrawScreen (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;IIF)V
 	public fun shouldBlockClicks (Z)V
 }
 

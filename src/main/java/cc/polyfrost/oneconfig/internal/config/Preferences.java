@@ -1,5 +1,6 @@
 package cc.polyfrost.oneconfig.internal.config;
 
+import cc.polyfrost.oneconfig.config.annotations.Exclude;
 import cc.polyfrost.oneconfig.config.annotations.KeyBind;
 import cc.polyfrost.oneconfig.config.annotations.Slider;
 import cc.polyfrost.oneconfig.config.annotations.Switch;
@@ -20,7 +21,7 @@ public class Preferences extends InternalConfig {
             name = "OneConfig Keybind",
             size = 2
     )
-    public static OneKeyBind oneConfigKeyBind = new OneKeyBind(() -> new TickDelay(() -> Platform.getGuiPlatform().setCurrentScreen(OneConfigGui.create()), 1), UKeyboard.KEY_RSHIFT);
+    public static OneKeyBind oneConfigKeyBind = new OneKeyBind(UKeyboard.KEY_RSHIFT);
 
 
     @Switch(
@@ -38,12 +39,14 @@ public class Preferences extends InternalConfig {
     )
     public static float customScale = 1f;
 
+    @Exclude
     private static Preferences INSTANCE;
 
     public Preferences() {
         super("Preferences", "Preferences.json");
         initialize();
         addListener("enableBlur", () -> BlurHandler.INSTANCE.reloadBlur(Platform.getGuiPlatform().getCurrentScreen()));
+        registerKeyBind(oneConfigKeyBind, () -> new TickDelay(() -> Platform.getGuiPlatform().setCurrentScreen(OneConfigGui.create()), 1));
         INSTANCE = this;
     }
 
