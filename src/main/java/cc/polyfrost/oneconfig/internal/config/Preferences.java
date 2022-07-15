@@ -24,6 +24,11 @@ public class Preferences extends InternalConfig {
     public static OneKeyBind oneConfigKeyBind = new OneKeyBind(UKeyboard.KEY_RSHIFT);
 
     @Switch(
+            name = "Easter Egg 1"
+    )
+    public static boolean easterEgg1 = true;
+
+    @Switch(
             name = "Use custom GUI scale",
             subcategory = "GUI Scale",
             size = 2

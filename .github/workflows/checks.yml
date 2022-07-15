@@ -15,11 +15,6 @@ jobs:
   build:
     name: Build
 
-    strategy:
-      matrix:
-        version:
-          - 1.8.9-forge
-
     runs-on: ubuntu-latest
 
     steps:
@@ -44,5 +39,5 @@ jobs:
     - name: Upload Build Artifacts
       uses: actions/upload-artifact@v2
       with:
-        name: ${{ matrix.version }} Artifacts
-        path: versions/${{ matrix.version }}/build/libs/
+        name: oneconfig-artifacts
+        path: versions/**/build/libs/
