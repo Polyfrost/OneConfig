@@ -35,7 +35,7 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Get version number
-        run: echo '::set-output name=VERSION_NUMBER::$(46 + ${{ github.run_number }})'
+        run: echo '::set-output name=VERSION_NUMBER::$((47 + ${{ github.run_number }}))'
         id: version
 
       - name: Publish
