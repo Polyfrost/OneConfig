@@ -37,16 +37,12 @@ public abstract class OneUIScreen extends UScreen implements GuiPause {
     }
 
     @Override
-    public void onDrawScreen(@NotNull UMatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
+    public final void onDrawScreen(@NotNull UMatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
         super.onDrawScreen(matrixStack, mouseX, mouseY, partialTicks);
         RenderManager.setupAndDraw(ignoreMinecraftScale(), vg -> draw(vg, partialTicks));
         mouseDown = Platform.getMousePlatform().isButtonDown(0);
     }
 
-    /**
-     * This method is called when the screen is first opened. You can use it to set variables, initialize things, etc.
-     */
-    public abstract void onScreenOpen();
 
     /**
      * Use this method to draw things on the screen. It is called every render tick, and has a handy <code>vg</code> (NanoVG context) that can be used with the {@link RenderManager} to draw things.
@@ -59,18 +55,7 @@ public abstract class OneUIScreen extends UScreen implements GuiPause {
     public abstract void draw(long vg, float partialTicks);
 
     /**
-     * This method is called when the screen is closed. You can use it to clean up things, etc.
-     */
-    @Override
-    public abstract void onScreenClose();
-
-    @Override
-    public void initScreen(int width, int height) {
-        onScreenOpen();
-    }
-
-    /**
-     * Use this method to set weather or not to use the Minecraft scale on the GUI. Its default is true, and that is recommended for the NanoVG rendering.
+     * Use this method to set whether to use the Minecraft scale on the GUI. Its default is true, and that is recommended for the NanoVG rendering.
      */
     public boolean ignoreMinecraftScale() {
         return true;
@@ -79,20 +64,15 @@ public abstract class OneUIScreen extends UScreen implements GuiPause {
     /**
      * Get the current x position of the mouse.
      */
-    public float getMouseX() {
+    protected float getMouseX() {
         return InputUtils.mouseX();
     }
 
     /**
      * Get the current y position of the mouse.
      */
-    public float getMouseY() {
+    protected float getMouseY() {
         return InputUtils.mouseY();
-    }
-
-    @Override
-    public void onMouseClicked(double mouseX, double mouseY, int mouseButton) {
-        super.onMouseClicked(mouseX, mouseY, mouseButton);
     }
 
     /**
@@ -100,21 +80,21 @@ public abstract class OneUIScreen extends UScreen implements GuiPause {
      *
      * @param ignoreBlockClicks whether to ignore the current click blocker.
      */
-    public boolean isClicked(boolean ignoreBlockClicks) {
+    protected boolean isClicked(boolean ignoreBlockClicks) {
         return mouseDown && !Platform.getMousePlatform().isButtonDown(0) && (!blockClicks || ignoreBlockClicks);
     }
 
     /**
      * Retrieve the click status of the mouse. This method uses a boolean to store the status of the mouse, so it will only return true once per click. (very useful)
      */
-    public boolean isClicked() {
+    protected boolean isClicked() {
         return isClicked(false);
     }
 
     /**
      * Retrieve weather or not the mouse is currently down. Will constantly return true if its clicked. See {@link #isClicked()} for a method that only executes once per tick.
      */
-    public boolean isMouseDown() {
+    protected boolean isMouseDown() {
         return Platform.getMousePlatform().isButtonDown(0);
     }
 
@@ -130,5 +110,10 @@ public abstract class OneUIScreen extends UScreen implements GuiPause {
      */
     public boolean isBlockingClicks() {
         return blockClicks;
+    }
+
+    @Override
+    public boolean doesGuiPauseGame() {
+        return false;
     }
 }

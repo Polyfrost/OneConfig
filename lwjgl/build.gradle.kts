@@ -56,21 +56,21 @@ dependencies {
     }
 
     shadeCompileOnly("org.lwjgl:lwjgl-nanovg:$lwjgl") {
-        isTransitive = platform.isLegacyForge
+        isTransitive = false
     }
     shadeRuntimeOnly("org.lwjgl:lwjgl-nanovg:$lwjgl:natives-windows") {
-        isTransitive = platform.isLegacyForge
+        isTransitive = false
     }
     shadeRuntimeOnly("org.lwjgl:lwjgl-nanovg:$lwjgl:natives-linux") {
-        isTransitive = platform.isLegacyForge
+        isTransitive = false
     }
     shadeRuntimeOnly("org.lwjgl:lwjgl-nanovg:$lwjgl:natives-macos") {
-        isTransitive = platform.isLegacyForge
+        isTransitive = false
     }
     // force 3.3.1 for this, because
     // if the user is actually running M1+, LWJGL must be 3.3.0+
     shadeRuntimeOnly("org.lwjgl:lwjgl-nanovg:3.3.1:natives-macos-arm64") {
-        isTransitive = platform.isLegacyForge
+        isTransitive = false
     }
 }
 
