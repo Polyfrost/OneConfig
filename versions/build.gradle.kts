@@ -28,7 +28,8 @@ java {
 }
 
 val mod_name: String by project
-val mod_version: String by project
+val mod_major_version: String by project
+val mod_minor_version: String by project
 val mod_id: String by project
 
 preprocess {
@@ -36,12 +37,12 @@ preprocess {
 }
 
 blossom {
-    replaceToken("@VER@", mod_version)
+    replaceToken("@VER@", mod_major_version + mod_minor_version)
     replaceToken("@NAME@", mod_name)
     replaceToken("@ID@", mod_id)
 }
 
-version = mod_version
+version = mod_major_version + mod_minor_version
 group = "cc.polyfrost"
 base {
     archivesName.set("$mod_id-$platform")
@@ -181,7 +182,7 @@ tasks {
         val compatLevel = "JAVA_${java}"
         inputs.property("java", java)
         inputs.property("java_level", compatLevel)
-        inputs.property("version", mod_version)
+        inputs.property("version", mod_major_version + mod_minor_version)
         inputs.property("mcVersionStr", project.platform.mcVersionStr)
         filesMatching(listOf("mcmod.info", "mixins.${mod_id}.json", "**/mods.toml")) {
             expand(
@@ -190,7 +191,7 @@ tasks {
                     "name" to mod_name,
                     "java" to java,
                     "java_level" to compatLevel,
-                    "version" to mod_version,
+                    "version" to mod_major_version + mod_minor_version,
                     "mcVersionStr" to project.platform.mcVersionStr
                 )
             )
@@ -202,7 +203,7 @@ tasks {
                     "name" to mod_name,
                     "java" to java,
                     "java_level" to compatLevel,
-                    "version" to mod_version,
+                    "version" to mod_major_version + mod_minor_version,
                     "mcVersionStr" to project.platform.mcVersionStr.substringBeforeLast(".") + ".x"
                 )
             )
@@ -268,7 +269,7 @@ tasks {
                             "Specification-Vendor" to mod_id,
                             "Specification-Version" to "1", // We are version 1 of ourselves, whatever the hell that means
                             "Implementation-Title" to mod_name,
-                            "Implementation-Version" to mod_version,
+                            "Implementation-Version" to mod_major_version + mod_minor_version,
                             "Implementation-Vendor" to mod_id,
                             "Implementation-Timestamp" to SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").format(`java.util`.Date())
                         )
@@ -287,7 +288,7 @@ tasks {
     dokkaHtml.configure {
         outputDirectory.set(buildDir.resolve("dokka"))
         moduleName.set("OneConfig $platform")
-        moduleVersion.set(mod_version)
+        moduleVersion.set(mod_major_version + mod_minor_version)
         dokkaSourceSets {
             configureEach {
                 jdkVersion.set(8)
