@@ -35,8 +35,12 @@ jobs:
       - name: Chmod Gradle
         run: chmod +x ./gradlew
 
+      - name: Get short SHA
+        id: sha
+        run: echo "::set-output name=output::$(git rev-parse --short HEAD)"
+
       - name: Build
-        run: ./gradlew build -Pmod_version=0.1.0-alpha-${{ $(git rev-parse --short "$GITHUB_SHA") }} --no-daemon
+        run: ./gradlew build -Pmod_version=0.1.0-alpha-${{ steps.sha.output }} --no-daemon
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v2

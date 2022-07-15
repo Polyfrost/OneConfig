@@ -34,8 +34,12 @@ jobs:
       - name: Chmod Gradle
         run: chmod +x ./gradlew
 
+      - name: Get short SHA
+        id: sha
+        run: echo "::set-output name=output::$(git rev-parse --short HEAD)"
+
       - name: Publish
-        run: ./gradlew platform:1.8.9-forge:publishOneconfig-1.8.9-forgePublicationToReleasesRepository -Pmod_version=0.1.0-alpha-${{ $(git rev-parse --short "$GITHUB_SHA") }} -PreleasesUsername=${{ secrets.MAVEN_NAME }} -PreleasesPassword=${{ secrets.MAVEN_TOKEN }} --no-daemon
+        run: ./gradlew platform:1.8.9-forge:publishOneconfig-1.8.9-forgePublicationToReleasesRepository -Pmod_version=0.1.0-alpha-${{ steps.sha.output }} -PreleasesUsername=${{ secrets.MAVEN_NAME }} -PreleasesPassword=${{ secrets.MAVEN_TOKEN }} --no-daemon
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v2
