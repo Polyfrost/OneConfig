@@ -1,4 +1,4 @@
-package cc.polyfrost.oneconfig.internal.config.compatibility.vigilance;
+package cc.polyfrost.oneconfig.config.migration;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
