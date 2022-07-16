@@ -343,6 +343,12 @@ public class cc/polyfrost/oneconfig/config/migration/VigilanceMigrator : cc/poly
 	protected fun parse (Ljava/lang/String;)Ljava/lang/String;
 }
 
+public abstract interface annotation class cc/polyfrost/oneconfig/config/migration/VigilanceName : java/lang/annotation/Annotation {
+	public abstract fun category ()Ljava/lang/String;
+	public abstract fun name ()Ljava/lang/String;
+	public abstract fun subcategory ()Ljava/lang/String;
+}
+
 public class cc/polyfrost/oneconfig/config/profiles/Profiles {
 	public static final field nonProfileSpecificDir Ljava/io/File;
 	public static final field profileDir Ljava/io/File;
