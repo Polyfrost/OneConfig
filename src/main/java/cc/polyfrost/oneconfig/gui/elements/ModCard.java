@@ -24,7 +24,7 @@ public class ModCard extends BasicElement {
     private final BasicButton favoriteButton = new BasicButton(32, 32, SVGs.HEART_OUTLINE, BasicButton.ALIGNMENT_CENTER, ColorPalette.TERTIARY);
     private final ColorAnimation colorFrame = new ColorAnimation(ColorPalette.SECONDARY);
     private final ColorAnimation colorToggle;
-    private boolean active, favorite;
+    private boolean active, disabled, favorite;
     private boolean isHoveredMain = false;
     private final ModsPage page;
 
@@ -98,6 +98,14 @@ public class ModCard extends BasicElement {
 
     public Mod getModData() {
         return modData;
+    }
+
+    public boolean isDisabled() {
+        return disabled;
+    }
+
+    public void setDisabled(boolean disabled) {
+        this.disabled = disabled;
     }
 
     public boolean isActive() {
