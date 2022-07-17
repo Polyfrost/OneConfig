@@ -201,7 +201,7 @@ public class Position {
      * @return The center X coordinate
      */
     public float getCenterX() {
-        return getRightX(UResolution.getScaledWidth());
+        return getCenterX(UResolution.getScaledWidth());
     }
 
     /**
@@ -220,7 +220,7 @@ public class Position {
      * @return The center Y coordinate
      */
     public float getCenterY() {
-        return getRightX(UResolution.getScaledWidth());
+        return getCenterY(UResolution.getScaledHeight());
     }
 
     /**

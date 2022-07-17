@@ -6,23 +6,23 @@ import cc.polyfrost.oneconfig.renderer.RenderManager;
 import java.awt.*;
 
 public class SnappingLine {
-    private static final int COLOR =  new Color(138, 43, 226).getRGB();
+    private static final int COLOR = new Color(138, 43, 226).getRGB();
     private final float line;
     private final float distance;
     private final float position;
 
-    public SnappingLine(float line, float left, float size) {
+    public SnappingLine(float line, float left, float size, boolean multipleSides) {
         this.line = line;
         float center = left + size / 2f;
         float right = left + size;
         float leftDistance = Math.abs(line - left);
         float centerDistance = Math.abs(line - center);
         float rightDistance = Math.abs(line - right);
-        if (leftDistance <= centerDistance && leftDistance <= rightDistance) {
+        if (!multipleSides || leftDistance <= centerDistance && leftDistance <= rightDistance) {
             distance = leftDistance;
             position = line;
-        } else if (centerDistance <= rightDistance && centerDistance <= leftDistance) {
-            distance = rightDistance;
+        } else if (centerDistance <= rightDistance) {
+            distance = centerDistance;
             position = line - size / 2f;
         } else {
             distance = rightDistance;

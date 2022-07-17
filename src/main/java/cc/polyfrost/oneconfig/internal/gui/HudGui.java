@@ -44,15 +44,18 @@ public class HudGui extends UScreen implements GuiPause {
 
     @Override
     public void onDrawScreen(@NotNull UMatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
-        int width = Math.max(1, Math.round(Math.min(UResolution.getWindowWidth() / 1920f, UResolution.getWindowHeight() / 1080f)));
+        int lineWidth = Math.max(1, Math.round(Math.min(UResolution.getWindowWidth() / 1920f, UResolution.getWindowHeight() / 1080f)));
         if (isDragging) {
-            RenderManager.setupAndDraw(vg -> setHudPositions(vg, mouseX, mouseY, true, true, width));
+            RenderManager.setupAndDraw(vg -> setHudPositions(vg, mouseX, mouseY, true, true, lineWidth));
         } else if (isSelecting) {
             getHudsInRegion(selectX, selectY, mouseX, mouseY);
         } else if (isScaling && editingHuds.size() == 1) {
-            Hud hud = (Hud) editingHuds.keySet().toArray()[0];
-            Position position = hud.position;
-            hud.setScale(MathUtils.clamp((mouseX - position.getX()) / (position.getWidth() / hud.getScale()), 0.3f, 20f));
+            RenderManager.setupAndDraw(vg -> {
+                Hud hud = (Hud) editingHuds.keySet().toArray()[0];
+                Position position = hud.position;
+                float scaleX = getXSnapping(vg, lineWidth, mouseX, position.getWidth(), false);
+                hud.setScale(MathUtils.clamp((scaleX - position.getX()) / (position.getWidth() / hud.getScale()), 0.3f, 10f));
+            });
         }
 
         float scaleFactor = (float) UResolution.getScaleFactor();
@@ -63,10 +66,10 @@ public class HudGui extends UScreen implements GuiPause {
             if (editingHuds.containsKey(hud))
                 RenderManager.setupAndDraw(true, vg -> RenderManager.drawRect(vg, position.getX(), position.getY(), position.getWidth(), position.getHeight(), new Color(0, 128, 128, 60).getRGB()));
             RenderManager.setupAndDraw(vg -> {
-                RenderManager.drawLine(vg, position.getX() * scaleFactor - width / 2f, position.getY() * scaleFactor - width / 2f, position.getRightX() * scaleFactor + width / 2f, position.getY() * scaleFactor - width / 2f, width, new Color(255, 255, 255).getRGB());
-                RenderManager.drawLine(vg, position.getX() * scaleFactor - width / 2f, position.getBottomY() * scaleFactor + width / 2f, position.getRightX() * scaleFactor + width / 2f, position.getBottomY() * scaleFactor + width / 2f, width, new Color(255, 255, 255).getRGB());
-                RenderManager.drawLine(vg, position.getX() * scaleFactor - width / 2f, position.getY() * scaleFactor - width / 2f, position.getX() * scaleFactor - width / 2f, position.getBottomY() * scaleFactor + width / 2f, width, new Color(255, 255, 255).getRGB());
-                RenderManager.drawLine(vg, position.getRightX() * scaleFactor + width / 2f, position.getY() * scaleFactor - width / 2f, position.getRightX() * scaleFactor + width / 2f, position.getBottomY() * scaleFactor + width / 2f, width, new Color(255, 255, 255).getRGB());
+                RenderManager.drawLine(vg, position.getX() * scaleFactor - lineWidth / 2f, position.getY() * scaleFactor - lineWidth / 2f, position.getRightX() * scaleFactor + lineWidth / 2f, position.getY() * scaleFactor - lineWidth / 2f, lineWidth, new Color(255, 255, 255).getRGB());
+                RenderManager.drawLine(vg, position.getX() * scaleFactor - lineWidth / 2f, position.getBottomY() * scaleFactor + lineWidth / 2f, position.getRightX() * scaleFactor + lineWidth / 2f, position.getBottomY() * scaleFactor + lineWidth / 2f, lineWidth, new Color(255, 255, 255).getRGB());
+                RenderManager.drawLine(vg, position.getX() * scaleFactor - lineWidth / 2f, position.getY() * scaleFactor - lineWidth / 2f, position.getX() * scaleFactor - lineWidth / 2f, position.getBottomY() * scaleFactor + lineWidth / 2f, lineWidth, new Color(255, 255, 255).getRGB());
+                RenderManager.drawLine(vg, position.getRightX() * scaleFactor + lineWidth / 2f, position.getY() * scaleFactor - lineWidth / 2f, position.getRightX() * scaleFactor + lineWidth / 2f, position.getBottomY() * scaleFactor + lineWidth / 2f, lineWidth, new Color(255, 255, 255).getRGB());
             });
             if (editingHuds.containsKey(hud) && editingHuds.size() == 1)
                 RenderManager.setupAndDraw(true, vg -> RenderManager.drawRect(vg, position.getRightX() - 4, position.getBottomY() - 4, 8, 8, new Color(0, 128, 128, 200).getRGB()));
@@ -173,8 +176,8 @@ public class HudGui extends UScreen implements GuiPause {
             float y = mouseY - grabOffset.getY();
 
             if (editingHuds.size() == 1 && snap) {
-                x = getXSnapping(vg, lineWidth, x, position.getWidth());
-                y = getYSnapping(vg, lineWidth, y, position.getHeight());
+                x = getXSnapping(vg, lineWidth, x, position.getWidth(), true);
+                y = getYSnapping(vg, lineWidth, y, position.getHeight(), true);
             }
 
             if (locked) {
@@ -200,13 +203,13 @@ public class HudGui extends UScreen implements GuiPause {
                 mouseY >= position.getY() && mouseY <= position.getBottomY();
     }
 
-    private float getXSnapping(long vg, float lineWidth, float x, float width) {
+    private float getXSnapping(long vg, float lineWidth, float x, float width, boolean multipleSides) {
         ArrayList<Float> lines = getXSnappingLines();
         ArrayList<SnappingLine> snappingLines = new ArrayList<>();
-        float closest = SNAPPING_DISTANCE;
+        float closest = (float) (SNAPPING_DISTANCE / UResolution.getScaleFactor());
         for (Float line : lines) {
-            SnappingLine snappingLine = new SnappingLine(line, x, width);
-            if (snappingLine.getDistance() == closest) snappingLines.add(snappingLine);
+            SnappingLine snappingLine = new SnappingLine(line, x, width, multipleSides);
+            if (Math.round(snappingLine.getDistance()) == Math.round(closest)) snappingLines.add(snappingLine);
             else if (snappingLine.getDistance() < closest) {
                 closest = snappingLine.getDistance();
                 snappingLines.clear();
@@ -232,13 +235,13 @@ public class HudGui extends UScreen implements GuiPause {
         return lines;
     }
 
-    private float getYSnapping(long vg, float lineWidth, float y, float height) {
+    private float getYSnapping(long vg, float lineWidth, float y, float height, boolean multipleSides) {
         ArrayList<Float> lines = getYSnappingLines();
         ArrayList<SnappingLine> snappingLines = new ArrayList<>();
-        float closest = SNAPPING_DISTANCE;
+        float closest = (float) (SNAPPING_DISTANCE / UResolution.getScaleFactor());
         for (Float line : lines) {
-            SnappingLine snappingLine = new SnappingLine(line, y, height);
-            if (snappingLine.getDistance() == closest) snappingLines.add(snappingLine);
+            SnappingLine snappingLine = new SnappingLine(line, y, height, multipleSides);
+            if (Math.round(snappingLine.getDistance()) == Math.round(closest)) snappingLines.add(snappingLine);
             else if (snappingLine.getDistance() < closest) {
                 closest = snappingLine.getDistance();
                 snappingLines.clear();
