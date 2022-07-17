@@ -37,6 +37,7 @@ public class ConfigColorElement extends BasicOption {
 
     @Override
     public void draw(long vg, int x, int y) {
+        if(OneConfigGui.INSTANCE == null) return;           // fix for an NPE I got once
         if (!isEnabled()) RenderManager.setAlpha(vg, 0.5f);
         hexField.disable(!isEnabled());
         alphaField.disable(!isEnabled() || !allowAlpha);

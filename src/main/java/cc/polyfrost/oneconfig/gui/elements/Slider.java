@@ -32,6 +32,7 @@ public class Slider extends BasicElement {
 
     }
 
+    @Override
     public void update(float x, float y) {
         super.update(x, y);
         boolean isMouseDown = Platform.getMousePlatform().isButtonDown(0);
