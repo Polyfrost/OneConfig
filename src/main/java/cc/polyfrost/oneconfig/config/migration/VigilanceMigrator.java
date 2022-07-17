@@ -1,7 +1,5 @@
 package cc.polyfrost.oneconfig.config.migration;
 
-import cc.polyfrost.oneconfig.internal.config.compatibility.vigilance.VigilanceName;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;

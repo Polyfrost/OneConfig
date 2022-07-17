@@ -96,6 +96,14 @@ public class cc/polyfrost/oneconfig/platform/impl/ServerPlatformImpl : cc/polyfr
 	public fun inMultiplayer ()Z
 }
 
+public final class cc/polyfrost/oneconfig/utils/KotlinLanguageAdapter : net/minecraftforge/fml/common/ILanguageAdapter {
+	public fun <init> ()V
+	public fun getNewInstance (Lnet/minecraftforge/fml/common/FMLModContainer;Ljava/lang/Class;Ljava/lang/ClassLoader;Ljava/lang/reflect/Method;)Ljava/lang/Object;
+	public fun setInternalProxies (Lnet/minecraftforge/fml/common/ModContainer;Lnet/minecraftforge/fml/relauncher/Side;Ljava/lang/ClassLoader;)V
+	public fun setProxy (Ljava/lang/reflect/Field;Ljava/lang/Class;Ljava/lang/Object;)V
+	public fun supportsStatics ()Z
+}
+
 public class cc/polyfrost/oneconfig/utils/commands/PlatformCommandManagerImpl : cc/polyfrost/oneconfig/utils/commands/PlatformCommandManager {
 	public fun <init> ()V
 	public fun createCommand (Lcc/polyfrost/oneconfig/utils/commands/CommandManager$InternalCommand;Lcc/polyfrost/oneconfig/utils/commands/annotations/Command;)V
