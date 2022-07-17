@@ -107,7 +107,6 @@ public abstract class BasicHud extends Hud {
     }
 
     protected void drawBackground(float x, float y, float width, float height, float scale) {
-        // todo: make border rendering perfect
         RenderManager.setupAndDraw(true, (vg) -> {
             if (rounded) {
                 RenderManager.drawRoundedRect(vg, x, y, width, height, bgColor.getRGB(), cornerRadius * scale);

@@ -1,7 +1,11 @@
-package cc.polyfrost.oneconfig.gui;
+package cc.polyfrost.oneconfig.internal.gui;
 
+import cc.polyfrost.oneconfig.gui.GuiPause;
+import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.hud.Hud;
 import cc.polyfrost.oneconfig.hud.Position;
+import cc.polyfrost.oneconfig.internal.hud.utils.GrabOffset;
+import cc.polyfrost.oneconfig.internal.hud.utils.SnappingLine;
 import cc.polyfrost.oneconfig.internal.config.core.ConfigCore;
 import cc.polyfrost.oneconfig.internal.hud.HudCore;
 import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
@@ -16,12 +20,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class HudGui extends UScreen implements GuiPause {
-    private final ArrayList<Hud> editingHuds = new ArrayList<>(); // allow selection of multiple HUDS
+    private static final int SNAPPING_DISTANCE = 10;
+    private final HashMap<Hud, GrabOffset> editingHuds = new HashMap<>();
     private boolean isDragging;
-    private float lastX;
-    private float lastY;
     private boolean isSelecting;
     private float selectX;
     private float selectY;
@@ -40,25 +44,23 @@ public class HudGui extends UScreen implements GuiPause {
 
     @Override
     public void onDrawScreen(@NotNull UMatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
+        int width = Math.max(1, Math.round(Math.min(UResolution.getWindowWidth() / 1920f, UResolution.getWindowHeight() / 1080f)));
         if (isDragging) {
-            setHudPositions(mouseX - lastX, mouseY - lastY, true);
-            this.lastX = mouseX;
-            this.lastY = mouseY;
+            RenderManager.setupAndDraw(vg -> setHudPositions(vg, mouseX, mouseY, true, true, width));
         } else if (isSelecting) {
             getHudsInRegion(selectX, selectY, mouseX, mouseY);
         } else if (isScaling && editingHuds.size() == 1) {
-            Hud hud = editingHuds.get(0);
+            Hud hud = (Hud) editingHuds.keySet().toArray()[0];
             Position position = hud.position;
             hud.setScale(MathUtils.clamp((mouseX - position.getX()) / (position.getWidth() / hud.getScale()), 0.3f, 20f));
         }
 
         float scaleFactor = (float) UResolution.getScaleFactor();
-        int width = Math.max(1, Math.round(Math.min(UResolution.getWindowWidth() / 1920f, UResolution.getWindowHeight() / 1080f)));
         for (Hud hud : HudCore.huds) {
             if (!hud.isEnabled()) continue;
             Position position = hud.position;
             hud.drawExampleAll(matrixStack);
-            if (editingHuds.contains(hud))
+            if (editingHuds.containsKey(hud))
                 RenderManager.setupAndDraw(true, vg -> RenderManager.drawRect(vg, position.getX(), position.getY(), position.getWidth(), position.getHeight(), new Color(0, 128, 128, 60).getRGB()));
             RenderManager.setupAndDraw(vg -> {
                 RenderManager.drawLine(vg, position.getX() * scaleFactor - width / 2f, position.getY() * scaleFactor - width / 2f, position.getRightX() * scaleFactor + width / 2f, position.getY() * scaleFactor - width / 2f, width, new Color(255, 255, 255).getRGB());
@@ -66,8 +68,8 @@ public class HudGui extends UScreen implements GuiPause {
                 RenderManager.drawLine(vg, position.getX() * scaleFactor - width / 2f, position.getY() * scaleFactor - width / 2f, position.getX() * scaleFactor - width / 2f, position.getBottomY() * scaleFactor + width / 2f, width, new Color(255, 255, 255).getRGB());
                 RenderManager.drawLine(vg, position.getRightX() * scaleFactor + width / 2f, position.getY() * scaleFactor - width / 2f, position.getRightX() * scaleFactor + width / 2f, position.getBottomY() * scaleFactor + width / 2f, width, new Color(255, 255, 255).getRGB());
             });
-            if (editingHuds.contains(hud) && editingHuds.size() == 1)
-                RenderManager.setupAndDraw(true, vg -> RenderManager.drawRect(vg, position.getRightX() - 5, position.getBottomY() - 5, 10, 10, new Color(0, 128, 128, 200).getRGB()));
+            if (editingHuds.containsKey(hud) && editingHuds.size() == 1)
+                RenderManager.setupAndDraw(true, vg -> RenderManager.drawRect(vg, position.getRightX() - 4, position.getBottomY() - 4, 8, 8, new Color(0, 128, 128, 200).getRGB()));
         }
 
         if (isSelecting)
@@ -82,7 +84,7 @@ public class HudGui extends UScreen implements GuiPause {
         isSelecting = false;
         isScaling = false;
         if (editingHuds.size() == 1) {
-            Position position = editingHuds.get(0).position;
+            Position position = ((Hud) editingHuds.keySet().toArray()[0]).position;
             if (mouseX >= position.getRightX() - 7 && mouseX <= position.getRightX() + 7 && mouseY >= position.getBottomY() - 7 && mouseY <= position.getBottomY() + 7) {
                 isScaling = true;
                 return;
@@ -90,13 +92,12 @@ public class HudGui extends UScreen implements GuiPause {
         }
         for (Hud hud : HudCore.huds) {
             if (!hud.isEnabled() || !mouseClickedHud(hud, (float) mouseX, (float) mouseY)) continue;
-            if (!editingHuds.contains(hud)) {
+            if (!editingHuds.containsKey(hud)) {
                 if (!UKeyboard.isCtrlKeyDown()) editingHuds.clear();
-                editingHuds.add(hud);
+                editingHuds.put(hud, new GrabOffset());
             }
             isDragging = true;
-            this.lastX = (float) mouseX;
-            this.lastY = (float) mouseY;
+            editingHuds.forEach((hud2, grabOffset) -> grabOffset.setOffset((float) (mouseX - hud2.position.getX()), (float) (mouseY - hud2.position.getY())));
             return;
         }
         isSelecting = true;
@@ -114,6 +115,8 @@ public class HudGui extends UScreen implements GuiPause {
 
     @Override
     public void onKeyPressed(int keyCode, char typedChar, @Nullable UKeyboard.Modifiers modifiers) {
+        if (isDragging) return;
+        editingHuds.forEach((hud, grabOffset) -> grabOffset.setOffset(-hud.position.getX(), -hud.position.getY()));
         if (keyCode == UKeyboard.KEY_UP) {
             setHudPositions(0f, -1f, false);
         } else if (keyCode == UKeyboard.KEY_DOWN) {
@@ -158,15 +161,21 @@ public class HudGui extends UScreen implements GuiPause {
             Position pos = hud.position;
             if ((x1 <= pos.getX() && x2 >= pos.getX() || x1 <= pos.getRightX() && x2 >= pos.getRightX())
                     && (y1 <= pos.getY() && y2 >= pos.getY() || y1 <= pos.getBottomY() && y2 >= pos.getBottomY()))
-                editingHuds.add(hud);
+                editingHuds.put(hud, new GrabOffset());
         }
     }
 
-    private void setHudPositions(float xOffset, float yOffset, boolean locked) {
-        for (Hud hud : editingHuds) {
+    private void setHudPositions(long vg, float mouseX, float mouseY, boolean snap, boolean locked, int lineWidth) {
+        for (Hud hud : editingHuds.keySet()) {
+            GrabOffset grabOffset = editingHuds.get(hud);
             Position position = hud.position;
-            float x = position.getX() + xOffset;
-            float y = position.getY() + yOffset;
+            float x = mouseX - grabOffset.getX();
+            float y = mouseY - grabOffset.getY();
+
+            if (editingHuds.size() == 1 && snap) {
+                x = getXSnapping(vg, lineWidth, x, position.getWidth());
+                y = getYSnapping(vg, lineWidth, y, position.getHeight());
+            }
 
             if (locked) {
                 if (x < 0) x = 0;
@@ -181,9 +190,77 @@ public class HudGui extends UScreen implements GuiPause {
         }
     }
 
+    private void setHudPositions(float mouseX, float mouseY, boolean locked) {
+        setHudPositions(0, mouseX, mouseY, false, locked, 0);
+    }
+
     private boolean mouseClickedHud(Hud hud, float mouseX, float mouseY) {
         Position position = hud.position;
         return mouseX >= position.getX() && mouseX <= position.getRightX() &&
                 mouseY >= position.getY() && mouseY <= position.getBottomY();
+    }
+
+    private float getXSnapping(long vg, float lineWidth, float x, float width) {
+        ArrayList<Float> lines = getXSnappingLines();
+        ArrayList<SnappingLine> snappingLines = new ArrayList<>();
+        float closest = SNAPPING_DISTANCE;
+        for (Float line : lines) {
+            SnappingLine snappingLine = new SnappingLine(line, x, width);
+            if (snappingLine.getDistance() == closest) snappingLines.add(snappingLine);
+            else if (snappingLine.getDistance() < closest) {
+                closest = snappingLine.getDistance();
+                snappingLines.clear();
+                snappingLines.add(snappingLine);
+            }
+        }
+        if (snappingLines.isEmpty()) return x;
+        for (SnappingLine snappingLine : snappingLines) {
+            snappingLine.drawLine(vg, lineWidth, true);
+        }
+        return snappingLines.get(0).getPosition();
+    }
+
+    private ArrayList<Float> getXSnappingLines() {
+        ArrayList<Float> lines = new ArrayList<>();
+        lines.add(UResolution.getScaledWidth() / 2f);
+        for (Hud hud : HudCore.huds) {
+            if (!hud.isEnabled() || editingHuds.containsKey(hud)) continue;
+            lines.add(hud.position.getX());
+            lines.add(hud.position.getCenterX());
+            lines.add(hud.position.getRightX());
+        }
+        return lines;
+    }
+
+    private float getYSnapping(long vg, float lineWidth, float y, float height) {
+        ArrayList<Float> lines = getYSnappingLines();
+        ArrayList<SnappingLine> snappingLines = new ArrayList<>();
+        float closest = SNAPPING_DISTANCE;
+        for (Float line : lines) {
+            SnappingLine snappingLine = new SnappingLine(line, y, height);
+            if (snappingLine.getDistance() == closest) snappingLines.add(snappingLine);
+            else if (snappingLine.getDistance() < closest) {
+                closest = snappingLine.getDistance();
+                snappingLines.clear();
+                snappingLines.add(snappingLine);
+            }
+        }
+        if (snappingLines.isEmpty()) return y;
+        for (SnappingLine snappingLine : snappingLines) {
+            snappingLine.drawLine(vg, lineWidth, false);
+        }
+        return snappingLines.get(0).getPosition();
+    }
+
+    private ArrayList<Float> getYSnappingLines() {
+        ArrayList<Float> lines = new ArrayList<>();
+        lines.add(UResolution.getScaledHeight() / 2f);
+        for (Hud hud : HudCore.huds) {
+            if (!hud.isEnabled() || editingHuds.containsKey(hud)) continue;
+            lines.add(hud.position.getY());
+            lines.add(hud.position.getCenterY());
+            lines.add(hud.position.getBottomY());
+        }
+        return lines;
     }
 }

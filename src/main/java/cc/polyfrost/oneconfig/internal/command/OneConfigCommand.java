@@ -1,6 +1,6 @@
 package cc.polyfrost.oneconfig.internal.command;
 
-import cc.polyfrost.oneconfig.gui.HudGui;
+import cc.polyfrost.oneconfig.internal.gui.HudGui;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 import cc.polyfrost.oneconfig.utils.InputUtils;

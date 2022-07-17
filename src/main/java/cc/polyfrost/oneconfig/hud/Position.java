@@ -186,6 +186,44 @@ public class Position {
     }
 
     /**
+     * Get the center X coordinate
+     *
+     * @param screenWidth The width of the screen
+     * @return The center X coordinate
+     */
+    public float getCenterX(float screenWidth) {
+        return getX(screenWidth) + width / 2f;
+    }
+
+    /**
+     * Get the center X coordinate
+     *
+     * @return The center X coordinate
+     */
+    public float getCenterX() {
+        return getRightX(UResolution.getScaledWidth());
+    }
+
+    /**
+     * Get the center Y coordinate
+     *
+     * @param screenHeight The width of the screen
+     * @return The center Y coordinate
+     */
+    public float getCenterY(float screenHeight) {
+        return getY(screenHeight) + height / 2f;
+    }
+
+    /**
+     * Get the center Y coordinate
+     *
+     * @return The center Y coordinate
+     */
+    public float getCenterY() {
+        return getRightX(UResolution.getScaledWidth());
+    }
+
+    /**
      * @return The width of the position
      */
     public float getWidth() {
