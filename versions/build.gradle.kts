@@ -144,9 +144,7 @@ dependencies {
     include("org.jetbrains.kotlinx:atomicfu-jvm:$atomicfuVersion")
 
     if (platform.isLegacyForge) {
-        shade("org.spongepowered:mixin:0.7.11-SNAPSHOT") {
-            isTransitive = false
-        }
+        include("org.spongepowered:mixin:0.7.11-SNAPSHOT", pom = false, transitive = false)
     }
     shadeProject(project(":")) {
         isTransitive = false
@@ -158,41 +156,6 @@ dependencies {
 
     configurations.named(JavaPlugin.COMPILE_CLASSPATH_CONFIGURATION_NAME) { extendsFrom(shadeProject) }
     configurations.named(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME) { extendsFrom(shadeProject) }
-}
-
-fun DependencyHandlerScope.include(dependency: String, pom: Boolean = true, mod: Boolean = false, relocate: Boolean = false, transitive: Boolean = true) {
-    if (platform.isForge) {
-        if (relocate) {
-            shadeRelocated(dependency) { isTransitive = transitive }
-            compileOnly(dependency) { isTransitive = transitive; attributes { attribute(relocated, true) } }
-            runtimeOnly(dependency) { isTransitive = transitive; attributes { attribute(relocated, true) } }
-        } else {
-            if (pom) {
-                shade(dependency) { isTransitive = transitive }
-            } else {
-                shadeNoPom2(dependency) { isTransitive = transitive }
-                compileOnly(dependency) { isTransitive = transitive }
-                runtimeOnly(dependency) { isTransitive = transitive }
-            }
-        }
-    } else {
-        if (pom && !relocate) {
-            if (mod) {
-                modApi(dependency) { isTransitive = transitive }
-            } else {
-                api(dependency) { isTransitive = transitive }
-            }
-        } else {
-            if (mod) {
-                modCompileOnly(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
-                modRuntimeOnly(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
-            } else {
-                compileOnly(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
-                runtimeOnly(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
-            }
-        }
-        "include"(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
-    }
 }
 
 tasks {
@@ -390,5 +353,104 @@ publishing {
                 create<BasicAuthentication>("basic")
             }
         }
+    }
+}
+
+fun DependencyHandlerScope.include(dependency: Any, pom: Boolean = true, mod: Boolean = false) {
+    if (platform.isForge) {
+        if (pom) {
+            shade(dependency)
+        } else {
+            shadeNoPom2(dependency)
+            compileOnly(dependency)
+            runtimeOnly(dependency)
+        }
+    } else {
+        if (pom) {
+            if (mod) {
+                modApi(dependency)
+            } else {
+                api(dependency)
+            }
+        } else {
+            if (mod) {
+                modCompileOnly(dependency)
+                modRuntimeOnly(dependency)
+            } else {
+                compileOnly(dependency)
+                runtimeOnly(dependency)
+            }
+        }
+        "include"(dependency)
+    }
+}
+
+fun DependencyHandlerScope.include(dependency: ModuleDependency, pom: Boolean = true, mod: Boolean = false, relocate: Boolean = false, transitive: Boolean = true) {
+    if (platform.isForge) {
+        if (relocate) {
+            shadeRelocated(dependency) { isTransitive = transitive }
+            compileOnly(dependency) { isTransitive = transitive; attributes { attribute(relocated, true) } }
+            runtimeOnly(dependency) { isTransitive = transitive; attributes { attribute(relocated, true) } }
+        } else {
+            if (pom) {
+                shade(dependency) { isTransitive = transitive }
+            } else {
+                shadeNoPom2(dependency) { isTransitive = transitive }
+                compileOnly(dependency) { isTransitive = transitive }
+                runtimeOnly(dependency) { isTransitive = transitive }
+            }
+        }
+    } else {
+        if (pom && !relocate) {
+            if (mod) {
+                modApi(dependency) { isTransitive = transitive }
+            } else {
+                api(dependency) { isTransitive = transitive }
+            }
+        } else {
+            if (mod) {
+                modCompileOnly(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
+                modRuntimeOnly(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
+            } else {
+                compileOnly(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
+                runtimeOnly(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
+            }
+        }
+        "include"(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
+    }
+}
+
+fun DependencyHandlerScope.include(dependency: String, pom: Boolean = true, mod: Boolean = false, relocate: Boolean = false, transitive: Boolean = true) {
+    if (platform.isForge) {
+        if (relocate) {
+            shadeRelocated(dependency) { isTransitive = transitive }
+            compileOnly(dependency) { isTransitive = transitive; attributes { attribute(relocated, true) } }
+            runtimeOnly(dependency) { isTransitive = transitive; attributes { attribute(relocated, true) } }
+        } else {
+            if (pom) {
+                shade(dependency) { isTransitive = transitive }
+            } else {
+                shadeNoPom2(dependency) { isTransitive = transitive }
+                compileOnly(dependency) { isTransitive = transitive }
+                runtimeOnly(dependency) { isTransitive = transitive }
+            }
+        }
+    } else {
+        if (pom && !relocate) {
+            if (mod) {
+                modApi(dependency) { isTransitive = transitive }
+            } else {
+                api(dependency) { isTransitive = transitive }
+            }
+        } else {
+            if (mod) {
+                modCompileOnly(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
+                modRuntimeOnly(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
+            } else {
+                compileOnly(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
+                runtimeOnly(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
+            }
+        }
+        "include"(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
     }
 }
