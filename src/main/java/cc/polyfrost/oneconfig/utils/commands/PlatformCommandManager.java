@@ -16,7 +16,7 @@ public abstract class PlatformCommandManager {
         builder.append(root.color).append("Help for ").append(ChatColor.BOLD).append(root.name).append(ChatColor.RESET).append(root.color);
         int index = 0;
         for (String alias : root.aliases) {
-            if(index == 0) builder.append("(");
+            if(index == 0) builder.append(" (");
             ++index;
             builder.append("/").append(alias).append(index < root.aliases.length ? ", " : ")");
         }
@@ -52,7 +52,7 @@ public abstract class PlatformCommandManager {
             }
             int index = 0;
             for (String alias : command.aliases) {
-                if(index == 0) builder.append("(");
+                if(index == 0) builder.append(" (");
                 ++index;
                 builder.append(alias).append(index < command.aliases.length ? ", " : ")");
             }
