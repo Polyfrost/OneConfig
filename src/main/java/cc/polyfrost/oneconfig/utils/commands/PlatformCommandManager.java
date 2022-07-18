@@ -13,18 +13,19 @@ public abstract class PlatformCommandManager {
     //TODO: someone make the help command actually look nice lmao
     protected String sendHelpCommand(CommandManager.InternalCommand root) {
         StringBuilder builder = new StringBuilder();
-        builder.append(root.color).append("Help for ").append(ChatColor.BOLD).append(root.name).append(ChatColor.RESET).append(root.color).append(":\n");
+        builder.append(root.color).append("Help for ").append(ChatColor.BOLD).append(root.name).append(ChatColor.RESET).append(root.color);
+        int index = 0;
+        for (String alias : root.aliases) {
+            if(index == 0) builder.append("(");
+            ++index;
+            builder.append("/").append(alias).append(index < root.aliases.length ? ", " : ")");
+        }
+        builder.append(":\n");
        if (!root.description.isEmpty()) {
            builder.append("\n").append(root.color).append("/").append(root.name).append(": ").append(ChatColor.BOLD).append(root.description);
        }
         for (CommandManager.InternalCommand command : root.children) {
             runThroughCommandsHelp(root.name, command, builder);
-        }
-        builder.append("\n \n").append(root.color).append("Aliases: ").append(ChatColor.BOLD);
-        int index = 0;
-        for (String alias : root.aliases) {
-            ++index;
-            builder.append(alias).append(index < root.aliases.length ? ", " : "");
         }
         builder.append("\n");
         return builder.toString();
@@ -49,8 +50,14 @@ public abstract class PlatformCommandManager {
                 }
                 builder.append(" <").append(name).append(">");
             }
+            int index = 0;
+            for (String alias : command.aliases) {
+                if(index == 0) builder.append("(");
+                ++index;
+                builder.append(alias).append(index < command.aliases.length ? ", " : ")");
+            }
             if (!command.description.trim().isEmpty()) {
-                builder.append(": ").append(ChatColor.BOLD).append(command.description);
+                builder.append(": ").append(ChatColor.BOLD).append(command.color).append(command.description);
             }
         }
         for (CommandManager.InternalCommand subCommand : command.children) {
