@@ -13,14 +13,14 @@ public abstract class PlatformCommandManager {
     //TODO: someone make the help command actually look nice lmao
     protected String sendHelpCommand(CommandManager.InternalCommand root) {
         StringBuilder builder = new StringBuilder();
-        builder.append(ChatColor.GOLD).append("Help for ").append(ChatColor.BOLD).append(root.name).append(ChatColor.RESET).append(ChatColor.GOLD).append(":\n");
-        if (!root.description.isEmpty()) {
-            builder.append("\n").append(ChatColor.GOLD).append("Description: ").append(ChatColor.BOLD).append(root.description);
-        }
+        builder.append(root.color).append("Help for ").append(ChatColor.BOLD).append(root.name).append(ChatColor.RESET).append(root.color).append(":\n");
+       if (!root.description.isEmpty()) {
+           builder.append("\n").append(root.color).append("/").append(root.name).append(": ").append(ChatColor.BOLD).append(root.description);
+       }
         for (CommandManager.InternalCommand command : root.children) {
             runThroughCommandsHelp(root.name, command, builder);
         }
-        builder.append("\n").append(ChatColor.GOLD).append("Aliases: ").append(ChatColor.BOLD);
+        builder.append("\n \n").append(root.color).append("Aliases: ").append(ChatColor.BOLD);
         int index = 0;
         for (String alias : root.aliases) {
             ++index;
@@ -36,12 +36,12 @@ public abstract class PlatformCommandManager {
             if (declaringClass.isAnnotationPresent(SubCommand.class)) {
                 String description = declaringClass.getAnnotation(SubCommand.class).description();
                 if (!description.isEmpty()) {
-                    builder.append("\n").append(ChatColor.GOLD).append("Description: ").append(ChatColor.BOLD).append(description);
+                    builder.append("\n");
                 }
             }
         }
         for (CommandManager.InternalCommand.InternalCommandInvoker invoker : command.invokers) {
-            builder.append("\n").append(ChatColor.GOLD).append("/").append(append).append(" ").append(command.name);
+            builder.append("\n").append(command.color).append("/").append(append).append(" ").append(command.name);
             for (Parameter parameter : invoker.method.getParameters()) {
                 String name = parameter.getName();
                 if (parameter.isAnnotationPresent(Name.class)) {

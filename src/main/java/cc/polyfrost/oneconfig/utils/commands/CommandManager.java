@@ -1,5 +1,6 @@
 package cc.polyfrost.oneconfig.utils.commands;
 
+import cc.polyfrost.oneconfig.libs.universal.ChatColor;
 import cc.polyfrost.oneconfig.utils.commands.annotations.Command;
 import cc.polyfrost.oneconfig.utils.commands.annotations.Main;
 import cc.polyfrost.oneconfig.utils.commands.annotations.SubCommand;
@@ -63,7 +64,8 @@ public class CommandManager {
         if (clazz.isAnnotationPresent(Command.class)) {
             final Command annotation = clazz.getAnnotation(Command.class);
 
-            final InternalCommand root = new InternalCommand(annotation.value(), annotation.aliases(), annotation.description().trim().isEmpty() ? "Main command for " + annotation.value() : annotation.description(), null);
+            final InternalCommand root = new InternalCommand(annotation.value(), annotation.aliases(), annotation.description().trim().isEmpty()
+                    ? "Main command for " + annotation.value() : annotation.description(), annotation.color(),  null);
             for (Method method : clazz.getDeclaredMethods()) {
                 if (method.isAnnotationPresent(Main.class) && method.getParameterCount() == 0) {
                     root.invokers.add(new InternalCommand.InternalCommandInvoker(annotation.value(), annotation.aliases(), method, root));
@@ -79,7 +81,7 @@ public class CommandManager {
         for (Class<?> clazz : classes) {
             if (clazz.isAnnotationPresent(SubCommand.class)) {
                 SubCommand annotation = clazz.getAnnotation(SubCommand.class);
-                InternalCommand command = new InternalCommand(annotation.value(), annotation.aliases(), annotation.description(), parent);
+                InternalCommand command = new InternalCommand(annotation.value(), annotation.aliases(), annotation.description(), annotation.color() == ChatColor.RESET ? parent.color : annotation.color(), parent);
                 for (Method method : clazz.getDeclaredMethods()) {
                     if (method.isAnnotationPresent(Main.class)) {
                         command.invokers.add(new InternalCommand.InternalCommandInvoker(annotation.value(), annotation.aliases(), method, command));
@@ -103,15 +105,17 @@ public class CommandManager {
         public final String name;
         public final String[] aliases;
         public final String description;
+        public final ChatColor color;
         public final ArrayList<InternalCommandInvoker> invokers = new ArrayList<>();
         public final InternalCommand parent;
         public final ArrayList<InternalCommand> children = new ArrayList<>();
 
-        public InternalCommand(String name, String[] aliases, String description, InternalCommand parent) {
+        public InternalCommand(String name, String[] aliases, String description, ChatColor color, InternalCommand parent) {
             this.name = name;
             this.aliases = aliases;
             this.description = description;
             this.parent = parent;
+            this.color = color;
         }
 
         public boolean isValid(String name, boolean tabCompletion) {
