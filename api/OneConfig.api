@@ -852,10 +852,9 @@ public abstract class cc/polyfrost/oneconfig/hud/BasicHud : cc/polyfrost/oneconf
 	public fun <init> (ZFF)V
 	public fun <init> (ZFFF)V
 	public fun <init> (ZFFFZFFFLcc/polyfrost/oneconfig/config/core/OneColor;ZFLcc/polyfrost/oneconfig/config/core/OneColor;)V
-	public fun drawAll (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;)V
+	public fun drawAll (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;Z)V
 	protected fun drawBackground (FFFFF)V
-	public fun drawExampleAll (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;)V
-	public fun setScale (F)V
+	public fun setScale (FZ)V
 	protected fun shouldDrawBackground ()Z
 }
 
@@ -875,18 +874,14 @@ public abstract class cc/polyfrost/oneconfig/hud/Hud {
 	public fun <init> (Z)V
 	public fun <init> (ZFF)V
 	public fun <init> (ZFFF)V
-	protected abstract fun draw (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;FFF)V
-	public fun drawAll (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;)V
-	protected fun drawExample (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;FFF)V
-	public fun drawExampleAll (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;)V
-	public fun getExampleHeight (F)F
-	public fun getExampleWidth (F)F
-	protected abstract fun getHeight (F)F
+	protected abstract fun draw (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;FFFZ)V
+	public fun drawAll (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;Z)V
+	protected abstract fun getHeight (FZ)F
 	public fun getScale ()F
-	protected abstract fun getWidth (F)F
+	protected abstract fun getWidth (FZ)F
 	public fun isEnabled ()Z
 	public fun setConfig (Lcc/polyfrost/oneconfig/config/Config;)V
-	public fun setScale (F)V
+	public fun setScale (FZ)V
 	protected fun shouldShow ()Z
 }
 
@@ -936,14 +931,10 @@ public abstract class cc/polyfrost/oneconfig/hud/SingleTextHud : cc/polyfrost/on
 	public fun <init> (Ljava/lang/String;Z)V
 	public fun <init> (Ljava/lang/String;ZII)V
 	protected final fun getCompleteText (Ljava/lang/String;)Ljava/lang/String;
-	protected fun getExampleLines (Ljava/util/List;)V
-	protected fun getExampleLinesFrequent (Ljava/util/List;)V
-	protected fun getExampleText ()Ljava/lang/String;
-	protected fun getExampleTextFrequent ()Ljava/lang/String;
-	protected fun getLines (Ljava/util/List;)V
-	protected fun getLinesFrequent (Ljava/util/List;)V
-	protected abstract fun getText ()Ljava/lang/String;
-	protected fun getTextFrequent ()Ljava/lang/String;
+	protected fun getLines (Ljava/util/List;Z)V
+	protected fun getLinesFrequent (Ljava/util/List;Z)V
+	protected abstract fun getText (Z)Ljava/lang/String;
+	protected fun getTextFrequent (Z)Ljava/lang/String;
 }
 
 public abstract class cc/polyfrost/oneconfig/hud/TextHud : cc/polyfrost/oneconfig/hud/BasicHud {
@@ -952,13 +943,11 @@ public abstract class cc/polyfrost/oneconfig/hud/TextHud : cc/polyfrost/oneconfi
 	protected field textType I
 	public fun <init> (Z)V
 	public fun <init> (ZII)V
-	public fun draw (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;FFF)V
-	protected fun getExampleLines (Ljava/util/List;)V
-	protected fun getExampleLinesFrequent (Ljava/util/List;)V
-	protected fun getHeight (F)F
-	protected abstract fun getLines (Ljava/util/List;)V
-	protected fun getLinesFrequent (Ljava/util/List;)V
-	protected fun getWidth (F)F
+	public fun draw (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;FFFZ)V
+	protected fun getHeight (FZ)F
+	protected abstract fun getLines (Ljava/util/List;Z)V
+	protected fun getLinesFrequent (Ljava/util/List;Z)V
+	protected fun getWidth (FZ)F
 	public fun shouldDrawBackground ()Z
 }
 

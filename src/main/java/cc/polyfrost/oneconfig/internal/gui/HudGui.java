@@ -54,7 +54,7 @@ public class HudGui extends UScreen implements GuiPause {
                 Hud hud = (Hud) editingHuds.keySet().toArray()[0];
                 Position position = hud.position;
                 float scaleX = getXSnapping(vg, lineWidth, mouseX, position.getWidth(), false);
-                hud.setScale(MathUtils.clamp((scaleX - position.getX()) / (position.getWidth() / hud.getScale()), 0.3f, 10f));
+                hud.setScale(MathUtils.clamp((scaleX - position.getX()) / (position.getWidth() / hud.getScale()), 0.3f, 10f), true);
             });
         }
 
@@ -62,7 +62,7 @@ public class HudGui extends UScreen implements GuiPause {
         for (Hud hud : HudCore.huds) {
             if (!hud.isEnabled()) continue;
             Position position = hud.position;
-            hud.drawExampleAll(matrixStack);
+            hud.drawAll(matrixStack, true);
             if (editingHuds.containsKey(hud))
                 RenderManager.setupAndDraw(true, vg -> RenderManager.drawRect(vg, position.getX(), position.getY(), position.getWidth(), position.getHeight(), new Color(0, 128, 128, 60).getRGB()));
             RenderManager.setupAndDraw(vg -> {

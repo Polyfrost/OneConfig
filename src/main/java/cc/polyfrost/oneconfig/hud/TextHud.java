@@ -44,39 +44,20 @@ public abstract class TextHud extends BasicHud {
      *
      * @param lines Empty ArrayList to add your hud text too
      */
-    protected abstract void getLines(List<String> lines);
+    protected abstract void getLines(List<String> lines, boolean example);
 
     /**
      * This function is called every frame
      *
      * @param lines The current lines of the hud
      */
-    protected void getLinesFrequent(List<String> lines) {
+    protected void getLinesFrequent(List<String> lines, boolean example) {
 
-    }
-
-    /**
-     * This function is called every tick in the move GUI
-     *
-     * @param lines Empty ArrayList to add your hud text too
-     */
-    protected void getExampleLines(List<String> lines) {
-        getLines(lines);
-    }
-
-    /**
-     * This function is called every frame in the move GUI
-     *
-     * @param lines The current lines of the hud
-     */
-    protected void getExampleLinesFrequent(List<String> lines) {
-        getLinesFrequent(lines);
     }
 
     @Override
-    public void draw(UMatrixStack matrices, float x, float y, float scale) {
-        if (!HudCore.editing) getLinesFrequent(lines);
-        else getExampleLinesFrequent(lines);
+    public void draw(UMatrixStack matrices, float x, float y, float scale, boolean example) {
+        getLinesFrequent(lines, example);
         if (lines == null || lines.size() == 0) return;
 
         float textY = y;
@@ -89,12 +70,12 @@ public abstract class TextHud extends BasicHud {
     }
 
     @Override
-    protected float getWidth(float scale) {
+    protected float getWidth(float scale, boolean example) {
         return width * scale;
     }
 
     @Override
-    protected float getHeight(float scale) {
+    protected float getHeight(float scale, boolean example) {
         return lines == null ? 0 : (lines.size() * 12 - 4) * scale;
     }
 
@@ -108,8 +89,7 @@ public abstract class TextHud extends BasicHud {
         private void onTick(TickEvent event) {
             if (event.stage != Stage.START || !isEnabled()) return;
             lines.clear();
-            if (!HudCore.editing) getLines(lines);
-            else getExampleLines(lines);
+            getLines(lines, HudCore.editing);
         }
     }
 }

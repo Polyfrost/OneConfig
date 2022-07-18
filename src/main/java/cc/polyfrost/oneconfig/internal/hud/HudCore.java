@@ -16,7 +16,7 @@ public class HudCore {
         if (editing) return;
         for (Hud hud : huds) {
             if (!hud.isEnabled()) continue;
-            hud.drawAll(event.matrices);
+            hud.drawAll(event.matrices, false);
         }
     }
 }

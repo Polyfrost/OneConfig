@@ -13,7 +13,7 @@ import cc.polyfrost.oneconfig.platform.Platform;
  * If you simply want to display text, extend {@link TextHud} or {@link SingleTextHud},
  * whichever applies to the use case. Then, override the required methods.
  * <p>
- * If you want to display something else, extend this class and override {@link Hud#getWidth(float)}, {@link Hud#getHeight(float)}, and {@link Hud#draw(UMatrixStack, float, float, float)} with the width, height, and the drawing code respectively.
+ * If you want to display something else, extend this class and override {@link Hud#getWidth(float, boolean)}, {@link Hud#getHeight(float, boolean)}, and {@link Hud#draw(UMatrixStack, float, float, float, boolean)} with the width, height, and the drawing code respectively.
  * </p>
  * <p>
  * It should also be noted that additional options to the HUD can be added simply by declaring them.
@@ -51,7 +51,7 @@ public abstract class Hud {
     public Hud(boolean enabled, float x, float y, float scale) {
         this.enabled = enabled;
         this.scale = scale;
-        position = new Position(x, y, getWidth(scale), getHeight(scale));
+        position = new Position(x, y, getWidth(scale, true), getHeight(scale, true));
     }
 
     /**
@@ -81,63 +81,27 @@ public abstract class Hud {
      * @param y     Top left y-coordinate of the hud
      * @param scale Scale of the hud
      */
-    protected abstract void draw(UMatrixStack matrices, float x, float y, float scale);
-
-    /**
-     * Function called when drawing the example version of the hud.
-     * This is used in for example, the hud editor gui.
-     *
-     * @param x     Top left x-coordinate of the hud
-     * @param y     Top left y-coordinate of the hud
-     * @param scale Scale of the hud
-     */
-    protected void drawExample(UMatrixStack matrices, float x, float y, float scale) {
-        draw(matrices, x, y, scale);
-    }
+    protected abstract void draw(UMatrixStack matrices, float x, float y, float scale, boolean example);
 
     /**
      * @param scale Scale of the hud
      * @return The width of the hud
      */
-    protected abstract float getWidth(float scale);
+    protected abstract float getWidth(float scale, boolean example);
 
     /**
      * @param scale Scale of the hud
      * @return The height of the hud
      */
-    protected abstract float getHeight(float scale);
-
-    /**
-     * @param scale Scale of the hud
-     * @return The width of the example version of the hud
-     */
-    public float getExampleWidth(float scale) {
-        return getWidth(scale);
-    }
-
-    /**
-     * @param scale Scale of the hud
-     * @return The height of the example version of the hud
-     */
-    public float getExampleHeight(float scale) {
-        return getHeight(scale);
-    }
+    protected abstract float getHeight(float scale, boolean example);
 
     /**
      * Draw the background, the hud and all childed huds, used by HudCore
      */
-    public void drawAll(UMatrixStack matrices) {
-        if (!shouldShow()) return;
-        position.setSize(getWidth(scale), getHeight(scale));
-        draw(matrices, position.getX(), position.getY(), scale);
-    }
-
-    /**
-     * Draw example version of the background, the hud and all childed huds, used by HudGui
-     */
-    public void drawExampleAll(UMatrixStack matrices) {
-        position.setSize(getExampleWidth(scale), getExampleHeight(scale));
-        draw(matrices, position.getX(), position.getY(), scale);
+    public void drawAll(UMatrixStack matrices, boolean example) {
+        if (!example && !shouldShow()) return;
+        position.setSize(getWidth(scale, example), getHeight(scale, example));
+        draw(matrices, position.getX(), position.getY(), scale, example);
     }
 
     protected boolean shouldShow() {
@@ -175,9 +139,9 @@ public abstract class Hud {
      *
      * @param scale The new scale
      */
-    public void setScale(float scale) {
+    public void setScale(float scale, boolean example) {
         this.scale = scale;
-        position.updateSizePosition(getWidth(scale), getHeight(scale));
+        position.updateSizePosition(getWidth(scale, example), getHeight(scale, example));
     }
 
     @Switch(

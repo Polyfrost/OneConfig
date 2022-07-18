@@ -15,7 +15,7 @@ public class TestHud_Test extends SingleTextHud {
     }
 
     @Override
-    public String getText() {
+    public String getText(boolean example) {
         times++;
         return String.valueOf(times);
     }
