@@ -186,7 +186,7 @@ public class VigilanceConfig extends Config {
         @Override
         protected void set(Object color) throws IllegalAccessException {
             if (color instanceof OneColor) {
-                Color newColor = new Color(((OneColor) color).getRGB(), true);
+                Color newColor = ((OneColor) color).toJavaColor();
                 this.color.set(parent, newColor);
             }
         }

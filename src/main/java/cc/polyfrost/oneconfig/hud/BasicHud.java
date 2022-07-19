@@ -38,7 +38,7 @@ public abstract class BasicHud extends Hud {
         this.border = border;
         this.borderSize = borderSize;
         this.borderColor = borderColor;
-        position.setSize(getWidth(scale, true) + paddingX * 2f, getHeight(scale, true) + paddingY * 2f);
+        position.setSize(getWidth(scale, true) + paddingX * scale * 2f, getHeight(scale, true) + paddingY * scale * 2f);
     }
 
     /**
@@ -74,21 +74,23 @@ public abstract class BasicHud extends Hud {
     @Override
     public void drawAll(UMatrixStack matrices, boolean example) {
         if (!example && !shouldShow()) return;
-        position.setSize(getWidth(scale, example) + paddingX * 2f, getHeight(scale, example) + paddingY * 2f);
+        preRender(example);
+        position.setSize(getWidth(scale, example) + paddingX * scale * 2f, getHeight(scale, example) + paddingY * scale * 2f);
         if (shouldDrawBackground())
             drawBackground(position.getX(), position.getY(), position.getWidth(), position.getHeight(), scale);
-        draw(matrices, position.getX() + paddingX, position.getY() + paddingY, scale, example);
+        draw(matrices, position.getX() + paddingX * scale, position.getY() + paddingY * scale, scale, example);
     }
 
     /**
      * Set a new scale value
      *
-     * @param scale The new scale
+     * @param scale   The new scale
+     * @param example If the HUD is being rendered in example form
      */
     @Override
     public void setScale(float scale, boolean example) {
         this.scale = scale;
-        position.updateSizePosition(getWidth(scale, example) + paddingX * 2f, getHeight(scale, example) + paddingY * 2f);
+        position.updateSizePosition(getWidth(scale, example) + paddingX * scale * 2f, getHeight(scale, example) + paddingY * scale * 2f);
     }
 
     /**

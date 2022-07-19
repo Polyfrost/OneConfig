@@ -52,26 +52,54 @@ public abstract class TextHud extends BasicHud {
      * @param lines The current lines of the hud
      */
     protected void getLinesFrequent(List<String> lines, boolean example) {
-
     }
 
     @Override
     public void draw(UMatrixStack matrices, float x, float y, float scale, boolean example) {
-        getLinesFrequent(lines, example);
         if (lines == null || lines.size() == 0) return;
 
         float textY = y;
-        width = 0;
         for (String line : lines) {
-            RenderManager.drawScaledString(line, x, textY, color.getRGB(), RenderManager.TextType.toType(textType), scale);
-            width = Math.max(width, Platform.getGLPlatform().getStringWidth(line));
+            drawLine(line, x, textY, scale);
             textY += 12 * scale;
         }
     }
 
+    /**
+     * Function that can be overwritten to implement different behavior easily
+     *
+     * @param line  The line
+     * @param x     The X coordinate
+     * @param y     The Y coordinate
+     * @param scale The scale
+     */
+    protected void drawLine(String line, float x, float y, float scale) {
+        RenderManager.drawScaledString(line, x, y, color.getRGB(), RenderManager.TextType.toType(textType), scale);
+    }
+
+    /**
+     * Function that can be overwritten to implement different behavior easily
+     *
+     * @param line The line
+     * @return The width of the line (scaled accordingly)
+     */
+    protected float getLineWidth(String line, float scale) {
+        return Platform.getGLPlatform().getStringWidth(line) * scale;
+    }
+
+    @Override
+    protected void preRender(boolean example) {
+        getLinesFrequent(lines, example);
+    }
+
     @Override
     protected float getWidth(float scale, boolean example) {
-        return width * scale;
+        if (lines == null) return 0;
+        float width = 0;
+        for (String line : lines) {
+            width = Math.max(width, getLineWidth(line, scale));
+        }
+        return width;
     }
 
     @Override

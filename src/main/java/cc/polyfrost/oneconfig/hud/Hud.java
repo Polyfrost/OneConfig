@@ -77,29 +77,42 @@ public abstract class Hud {
     /**
      * Function called when drawing the hud
      *
-     * @param x     Top left x-coordinate of the hud
-     * @param y     Top left y-coordinate of the hud
-     * @param scale Scale of the hud
+     * @param matrices The UMatrixStack used for rendering in higher versions
+     * @param x        Top left x-coordinate of the hud
+     * @param y        Top left y-coordinate of the hud
+     * @param scale    Scale of the hud
+     * @param example  If the HUD is being rendered in example form
      */
     protected abstract void draw(UMatrixStack matrices, float x, float y, float scale, boolean example);
 
     /**
-     * @param scale Scale of the hud
+     * @param scale   Scale of the hud
+     * @param example If the HUD is being rendered in example form
      * @return The width of the hud
      */
     protected abstract float getWidth(float scale, boolean example);
 
     /**
-     * @param scale Scale of the hud
+     * @param scale   Scale of the hud
+     * @param example If the HUD is being rendered in example form
      * @return The height of the hud
      */
     protected abstract float getHeight(float scale, boolean example);
+
+    /**
+     * Function to do things before rendering anything
+     *
+     * @param example If the HUD is being rendered in example form
+     */
+    protected void preRender(boolean example) {
+    }
 
     /**
      * Draw the background, the hud and all childed huds, used by HudCore
      */
     public void drawAll(UMatrixStack matrices, boolean example) {
         if (!example && !shouldShow()) return;
+        preRender(example);
         position.setSize(getWidth(scale, example), getHeight(scale, example));
         draw(matrices, position.getX(), position.getY(), scale, example);
     }
@@ -137,7 +150,8 @@ public abstract class Hud {
     /**
      * Set a new scale value
      *
-     * @param scale The new scale
+     * @param scale   The new scale
+     * @param example If the HUD is being rendered in example form
      */
     public void setScale(float scale, boolean example) {
         this.scale = scale;
