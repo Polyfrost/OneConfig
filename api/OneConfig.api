@@ -880,6 +880,7 @@ public abstract class cc/polyfrost/oneconfig/hud/Hud {
 	public fun getScale ()F
 	protected abstract fun getWidth (FZ)F
 	public fun isEnabled ()Z
+	protected fun preRender (Z)V
 	public fun setConfig (Lcc/polyfrost/oneconfig/config/Config;)V
 	public fun setScale (FZ)V
 	protected fun shouldShow ()Z
@@ -944,10 +945,13 @@ public abstract class cc/polyfrost/oneconfig/hud/TextHud : cc/polyfrost/oneconfi
 	public fun <init> (Z)V
 	public fun <init> (ZII)V
 	public fun draw (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;FFFZ)V
+	protected fun drawLine (Ljava/lang/String;FFF)V
 	protected fun getHeight (FZ)F
+	protected fun getLineWidth (Ljava/lang/String;F)F
 	protected abstract fun getLines (Ljava/util/List;Z)V
 	protected fun getLinesFrequent (Ljava/util/List;Z)V
 	protected fun getWidth (FZ)F
+	protected fun preRender (Z)V
 	public fun shouldDrawBackground ()Z
 }
 
