@@ -705,7 +705,7 @@ public final class RenderManager {
                 Platform.getGLPlatform().drawText(text, x * (1 / scale), y * (1 / scale), color, true);
                 break;
             case FULL:
-                drawBorderedText(text, x, y, color, 100);
+                drawBorderedText(text, x * (1 / scale), y * (1 / scale), color, 100);
                 break;
         }
         UGraphics.GL.popMatrix();
