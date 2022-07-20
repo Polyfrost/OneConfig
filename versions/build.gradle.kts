@@ -308,7 +308,7 @@ tasks {
         }
         doLast {
             archiveFile.orNull?.asFile?.let {
-                it.copyTo(File(it.parentFile, it.nameWithoutExtension + "-dev" + it.extension.let { if (it.isBlank()) "" else ".$it" }))
+                it.copyTo(File(it.parentFile, it.nameWithoutExtension + "-dev" + it.extension.let { if (it.isBlank()) "" else ".$it" }), overwrite = true)
             }
             archiveClassifier.set("sources")
         }
