@@ -22,56 +22,25 @@ public abstract class SingleTextHud extends TextHud {
      *
      * @return The new text
      */
-    protected abstract String getText();
+    protected abstract String getText(boolean example);
 
     /**
      * This function is called every frame
      *
      * @return The new text, null to use the cached value
      */
-    protected String getTextFrequent() {
+    protected String getTextFrequent(boolean example) {
         return null;
     }
 
-    /**
-     * This function is called every tick in the move GUI
-     *
-     * @return The new text
-     */
-    protected String getExampleText() {
-        return getText();
-    }
-
-    /**
-     * This function is called every frame in the move GUI
-     *
-     * @return The new text, null to use the cached value
-     */
-    protected String getExampleTextFrequent() {
-        return getTextFrequent();
+    @Override
+    protected void getLines(List<String> lines, boolean example) {
+        lines.add(getCompleteText(getText(example)));
     }
 
     @Override
-    protected void getLines(List<String> lines) {
-        lines.add(getCompleteText(getText()));
-    }
-
-    @Override
-    protected void getLinesFrequent(List<String> lines) {
-        String text = getTextFrequent();
-        if (text == null) return;
-        lines.clear();
-        lines.add(getCompleteText(text));
-    }
-
-    @Override
-    protected void getExampleLines(List<String> lines) {
-        lines.add(getCompleteText(getExampleText()));
-    }
-
-    @Override
-    protected void getExampleLinesFrequent(List<String> lines) {
-        String text = getExampleTextFrequent();
+    protected void getLinesFrequent(List<String> lines, boolean example) {
+        String text = getTextFrequent(example);
         if (text == null) return;
         lines.clear();
         lines.add(getCompleteText(text));
@@ -104,16 +73,16 @@ public abstract class SingleTextHud extends TextHud {
     @Switch(
             name = "Brackets"
     )
-    public boolean brackets = false;
+    protected boolean brackets = false;
 
     @Text(
             name = "Title"
     )
-    public String title;
+    protected String title;
 
     @Dropdown(
             name = "Title Location",
             options = {"Left", "Right"}
     )
-    public int titleLocation = 0;
+    protected int titleLocation = 0;
 }

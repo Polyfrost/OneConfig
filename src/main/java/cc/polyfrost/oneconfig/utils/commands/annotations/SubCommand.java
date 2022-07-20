@@ -1,5 +1,7 @@
 package cc.polyfrost.oneconfig.utils.commands.annotations;
 
+import cc.polyfrost.oneconfig.libs.universal.ChatColor;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -34,4 +36,11 @@ public @interface SubCommand {
      * @return The description of the command.
      */
     String description() default "";
+
+    /**
+     * The color of the command.
+     *
+     * @return The color of the command.
+     */
+    ChatColor color() default ChatColor.RESET;
 }

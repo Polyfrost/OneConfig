@@ -1,6 +1,5 @@
 import gg.essential.gradle.util.RelocationTransform.Companion.registerRelocationAttribute
 import gg.essential.gradle.util.noServerRunConfigs
-import gg.essential.gradle.util.prebundle
 import net.fabricmc.loom.task.RemapSourcesJarTask
 import java.text.SimpleDateFormat
 
@@ -105,7 +104,6 @@ val shade: Configuration by configurations.creating {
     configurations.api.get().extendsFrom(this)
 }
 
-val shadeNoPom: Configuration by configurations.creating
 val shadeNoPom2: Configuration by configurations.creating
 
 sourceSets {
@@ -121,53 +119,43 @@ dependencies {
         isTransitive = false
     }
 
-    shadeRelocated("gg.essential:universalcraft-$platform:211") {
-        isTransitive = false
-    }
+    include("gg.essential:universalcraft-$platform:211", relocate = true, transitive = false, mod = true)
 
-    shadeRelocated("com.github.KevinPriv:keventbus:c52e0a2ea0") {
-        isTransitive = false
-    }
+    include("com.github.KevinPriv:keventbus:c52e0a2ea0", relocate = true, transitive = false)
 
-    @Suppress("GradlePackageUpdate") shadeRelocated("com.github.ben-manes.caffeine:caffeine:2.9.3")
+    @Suppress("GradlePackageUpdate") include("com.github.ben-manes.caffeine:caffeine:2.9.3", relocate = true)
 
     // for other mods and universalcraft
     val kotlinVersion: String by project
     val coroutinesVersion: String by project
     val serializationVersion: String by project
     val atomicfuVersion: String by project
-    shade("org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion")
-    shade("org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion")
-    shade("org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlinVersion")
-    shade("org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion")
+    include("org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion")
+    include("org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion")
+    include("org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlinVersion")
+    include("org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion")
 
-    shade("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion")
-    shade("org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:$coroutinesVersion")
-    shade("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:$coroutinesVersion")
-    shade("org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:$serializationVersion")
-    shade("org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:$serializationVersion")
-    shade("org.jetbrains.kotlinx:kotlinx-serialization-cbor-jvm:$serializationVersion")
-    shade("org.jetbrains.kotlinx:atomicfu-jvm:$atomicfuVersion")
+    include("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion")
+    include("org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:$coroutinesVersion")
+    include("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:$coroutinesVersion")
+    include("org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:$serializationVersion")
+    include("org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:$serializationVersion")
+    include("org.jetbrains.kotlinx:kotlinx-serialization-cbor-jvm:$serializationVersion")
+    include("org.jetbrains.kotlinx:atomicfu-jvm:$atomicfuVersion")
 
     if (platform.isLegacyForge) {
-        shade("org.spongepowered:mixin:0.7.11-SNAPSHOT") {
-            isTransitive = false
-        }
+        include("org.spongepowered:mixin:0.7.11-SNAPSHOT", pom = false, transitive = false)
     }
     shadeProject(project(":")) {
         isTransitive = false
     }
 
-    shade("cc.polyfrost:lwjgl-$platform:1.0.0-alpha5")
-    val prebundled = prebundle(shadeRelocated)
-    modCompileOnly(prebundled)
-    modRuntimeOnly(prebundled)
-    shadeNoPom2(prebundled)
+    include("cc.polyfrost:lwjgl-$platform:1.0.0-alpha8")
 
     dokkaHtmlPlugin("org.jetbrains.dokka:kotlin-as-java-plugin:1.6.21")
 
-    configurations.named(JavaPlugin.COMPILE_CLASSPATH_CONFIGURATION_NAME) { extendsFrom(shadeNoPom); extendsFrom(shadeProject) }
-    configurations.named(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME) { extendsFrom(shadeNoPom); extendsFrom(shadeProject) }
+    configurations.named(JavaPlugin.COMPILE_CLASSPATH_CONFIGURATION_NAME) { extendsFrom(shadeProject) }
+    configurations.named(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME) { extendsFrom(shadeProject) }
 }
 
 tasks {
@@ -233,7 +221,7 @@ tasks {
 
     val shadowJar = named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar") {
         archiveClassifier.set("full-dev")
-        configurations = listOf(shade, shadeNoPom, shadeNoPom2, shadeProject)
+        configurations = listOf(shade, shadeNoPom2, shadeProject, shadeRelocated)
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
         dependsOn(jar)
     }
@@ -248,8 +236,8 @@ tasks {
     }
     jar {
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-        dependsOn(shadeNoPom, shadeNoPom2, shadeProject)
-        from(ArrayList<File>().run { addAll(shadeNoPom); addAll(shadeNoPom2); addAll(shadeProject); this }
+        dependsOn(shadeNoPom2, shadeProject, shadeRelocated)
+        from(ArrayList<File>().run { addAll(shadeNoPom2); addAll(shadeProject); addAll(shadeRelocated); this }
             .map { if (it.isDirectory) it else zipTree(it) })
         manifest {
             attributes(
@@ -319,6 +307,9 @@ tasks {
             archiveClassifier.set("sources")
         }
         doLast {
+            archiveFile.orNull?.asFile?.let {
+                it.copyTo(File(it.parentFile, it.nameWithoutExtension + "-dev" + it.extension.let { if (it.isBlank()) "" else ".$it" }), overwrite = true)
+            }
             archiveClassifier.set("sources")
         }
     }
@@ -365,5 +356,104 @@ publishing {
                 create<BasicAuthentication>("basic")
             }
         }
+    }
+}
+
+fun DependencyHandlerScope.include(dependency: Any, pom: Boolean = true, mod: Boolean = false) {
+    if (platform.isForge) {
+        if (pom) {
+            shade(dependency)
+        } else {
+            shadeNoPom2(dependency)
+            compileOnly(dependency)
+            runtimeOnly(dependency)
+        }
+    } else {
+        if (pom) {
+            if (mod) {
+                modApi(dependency)
+            } else {
+                api(dependency)
+            }
+        } else {
+            if (mod) {
+                modCompileOnly(dependency)
+                modRuntimeOnly(dependency)
+            } else {
+                compileOnly(dependency)
+                runtimeOnly(dependency)
+            }
+        }
+        "include"(dependency)
+    }
+}
+
+fun DependencyHandlerScope.include(dependency: ModuleDependency, pom: Boolean = true, mod: Boolean = false, relocate: Boolean = false, transitive: Boolean = true) {
+    if (platform.isForge) {
+        if (relocate) {
+            shadeRelocated(dependency) { isTransitive = transitive }
+            compileOnly(dependency) { isTransitive = transitive; attributes { attribute(relocated, true) } }
+            runtimeOnly(dependency) { isTransitive = transitive; attributes { attribute(relocated, true) } }
+        } else {
+            if (pom) {
+                shade(dependency) { isTransitive = transitive }
+            } else {
+                shadeNoPom2(dependency) { isTransitive = transitive }
+                compileOnly(dependency) { isTransitive = transitive }
+                runtimeOnly(dependency) { isTransitive = transitive }
+            }
+        }
+    } else {
+        if (pom && !relocate) {
+            if (mod) {
+                modApi(dependency) { isTransitive = transitive }
+            } else {
+                api(dependency) { isTransitive = transitive }
+            }
+        } else {
+            if (mod) {
+                modCompileOnly(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
+                modRuntimeOnly(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
+            } else {
+                compileOnly(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
+                runtimeOnly(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
+            }
+        }
+        "include"(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
+    }
+}
+
+fun DependencyHandlerScope.include(dependency: String, pom: Boolean = true, mod: Boolean = false, relocate: Boolean = false, transitive: Boolean = true) {
+    if (platform.isForge) {
+        if (relocate) {
+            shadeRelocated(dependency) { isTransitive = transitive }
+            compileOnly(dependency) { isTransitive = transitive; attributes { attribute(relocated, true) } }
+            runtimeOnly(dependency) { isTransitive = transitive; attributes { attribute(relocated, true) } }
+        } else {
+            if (pom) {
+                shade(dependency) { isTransitive = transitive }
+            } else {
+                shadeNoPom2(dependency) { isTransitive = transitive }
+                compileOnly(dependency) { isTransitive = transitive }
+                runtimeOnly(dependency) { isTransitive = transitive }
+            }
+        }
+    } else {
+        if (pom && !relocate) {
+            if (mod) {
+                modApi(dependency) { isTransitive = transitive }
+            } else {
+                api(dependency) { isTransitive = transitive }
+            }
+        } else {
+            if (mod) {
+                modCompileOnly(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
+                modRuntimeOnly(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
+            } else {
+                compileOnly(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
+                runtimeOnly(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
+            }
+        }
+        "include"(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
     }
 }

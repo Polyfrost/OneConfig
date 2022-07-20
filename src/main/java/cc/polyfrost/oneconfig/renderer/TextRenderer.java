@@ -122,12 +122,12 @@ public class TextRenderer {
      * <p><b>This does NOT scale to Minecraft's GUI scale!</b></p>
      *
      * @see RenderManager#drawText(long, String, float, float, int, float, Font)
-     * @see InputUtils#isAreaClicked(int, int, int, int)
+     * @see InputUtils#isAreaClicked(float, float, float, float)
      */
     public static void drawURL(long vg, String url, float x, float y, float size, Font font) {
         drawText(vg, url, x, y, Colors.PRIMARY_500, size, font);
         float length = getTextWidth(vg, url, size, font);
-        RenderManager.drawRectangle(vg, x, y + size / 2, length, 1, Colors.PRIMARY_500);
+        RenderManager.drawRect(vg, x, y + size / 2, length, 1, Colors.PRIMARY_500);
         if (InputUtils.isAreaClicked((int) (x - 2), (int) (y - 1), (int) (length + 4), (int) (size / 2 + 3))) {
             NetworkUtils.browseLink(url);
         }

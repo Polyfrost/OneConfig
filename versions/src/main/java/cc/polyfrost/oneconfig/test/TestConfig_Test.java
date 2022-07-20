@@ -126,6 +126,12 @@ public class TestConfig_Test extends Config {
     )
     public TestMultilineHud_Test multilineHud = new TestMultilineHud_Test();
 
+    @HUD(
+            name = "Test Basic HUD",
+            category = "HUD"
+    )
+    public TestBasicHud_Test basicHud = new TestBasicHud_Test();
+
     public TestConfig_Test() {
         super(new Mod("Test Mod", ModType.UTIL_QOL, new VigilanceMigrator("./config/testConfig.toml")), "hacksConfig.json");
         initialize();

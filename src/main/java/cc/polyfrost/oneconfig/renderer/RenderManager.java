@@ -7,6 +7,7 @@ import cc.polyfrost.oneconfig.internal.assets.Images;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.libs.universal.UGraphics;
 import cc.polyfrost.oneconfig.libs.universal.UResolution;
+import cc.polyfrost.oneconfig.platform.NanoVGPlatform;
 import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.font.Font;
 import cc.polyfrost.oneconfig.renderer.font.FontManager;
@@ -14,7 +15,6 @@ import cc.polyfrost.oneconfig.utils.InputUtils;
 import cc.polyfrost.oneconfig.utils.NetworkUtils;
 import org.lwjgl.nanovg.NVGColor;
 import org.lwjgl.nanovg.NVGPaint;
-import org.lwjgl.nanovg.NanoVGGL2;
 import org.lwjgl.opengl.GL11;
 
 import java.util.function.LongConsumer;
@@ -52,7 +52,7 @@ public final class RenderManager {
      */
     public static void setupAndDraw(boolean mcScaling, LongConsumer consumer) {
         if (vg == -1) {
-            vg = NanoVGGL2.nvgCreate(NanoVGGL2.NVG_ANTIALIAS);
+            vg = Platform.getNanoVGPlatform().nvgCreate(NanoVGPlatform.NVG_ANTIALIAS);
             if (vg == -1) {
                 throw new RuntimeException("Failed to create nvg context");
             }
@@ -74,24 +74,6 @@ public final class RenderManager {
         nvgEndFrame(vg);
 
         GL11.glPopAttrib();
-    }
-
-    /**
-     * Draws a rectangle with the given parameters.
-     *
-     * @param vg     The NanoVG context.
-     * @param x      The x position.
-     * @param y      The y position.
-     * @param width  The width.
-     * @param height The height.
-     * @param color  The color.
-     */
-    public static void drawRectangle(long vg, float x, float y, float width, float height, int color) {     // TODO make everything use this one day
-        if (Colors.ROUNDED_CORNERS) {
-            drawRoundedRect(vg, x, y, width, height, color, Colors.CORNER_RADIUS);
-        } else {
-            drawRect(vg, x, y, width, height, color);
-        }
     }
 
     /**
@@ -330,12 +312,12 @@ public final class RenderManager {
      * <p><b>This does NOT scale to Minecraft's GUI scale!</b></p>
      *
      * @see RenderManager#drawText(long, String, float, float, int, float, Font)
-     * @see InputUtils#isAreaClicked(int, int, int, int)
+     * @see InputUtils#isAreaClicked(float, float, float, float)
      */
     public static void drawURL(long vg, String url, float x, float y, float size, Font font) {
         drawText(vg, url, x, y, Colors.PRIMARY_500, size, font);
         float length = getTextWidth(vg, url, size, font);
-        drawRectangle(vg, x, y + size / 2, length, 1, Colors.PRIMARY_500);
+        drawRect(vg, x, y + size / 2, length, 1, Colors.PRIMARY_500);
         if (InputUtils.isAreaClicked((int) (x - 2), (int) (y - 1), (int) (length + 4), (int) (size / 2 + 3))) {
             NetworkUtils.browseLink(url);
         }
@@ -723,7 +705,7 @@ public final class RenderManager {
                 Platform.getGLPlatform().drawText(text, x * (1 / scale), y * (1 / scale), color, true);
                 break;
             case FULL:
-                drawBorderedText(text, x, y, color, 100);
+                drawBorderedText(text, x * (1 / scale), y * (1 / scale), color, 100);
                 break;
         }
         UGraphics.GL.popMatrix();

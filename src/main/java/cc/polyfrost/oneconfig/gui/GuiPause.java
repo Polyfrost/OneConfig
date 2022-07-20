@@ -5,5 +5,6 @@ package cc.polyfrost.oneconfig.gui;
  * Minecraft itself.
  */
 public interface GuiPause {
+    @SuppressWarnings("unused")
     boolean doesGuiPauseGame();
 }

@@ -14,7 +14,6 @@
     "NetHandlerPlayClientMixin",
     "NetworkManagerMixin",
     "OptifineConfigMixin",
-    "RenderPigMixin",
     "ShaderGroupAccessor",
     "VigilantMixin",
     "WorldClientMixin"

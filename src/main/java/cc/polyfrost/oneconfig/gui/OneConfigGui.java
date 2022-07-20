@@ -85,13 +85,13 @@ public class OneConfigGui extends UScreen implements GuiPause {
             int x = (int) ((UResolution.getWindowWidth() - 1280 * scale) / 2f / scale);
             int y = (int) ((UResolution.getWindowHeight() - 800 * scale) / 2f / scale);
             RenderManager.scale(vg, scale, scale);
-            if (Colors.ROUNDED_CORNERS) {
-                RenderManager.drawDropShadow(vg, x, y, 1280, 800, 32, 0, 20);
-                RenderManager.drawRoundedRect(vg, x + 224, y, 1056, 800, Colors.GRAY_800, Colors.CORNER_RADIUS_WIN);
-                RenderManager.drawRoundedRect(vg, x, y, 244, 800, Colors.GRAY_800_95, Colors.CORNER_RADIUS_WIN);
-                RenderManager.drawRect(vg, x + 224, y, 20, 800, Colors.GRAY_800);
-                RenderManager.drawHollowRoundRect(vg, x - 1, y - 1, 1282, 802, 0x4DCCCCCC, 20, scale < 1 ? 1 / scale : 1);
-            }
+
+            RenderManager.drawDropShadow(vg, x, y, 1280, 800, 32, 0, 20);
+            RenderManager.drawRoundedRect(vg, x + 224, y, 1056, 800, Colors.GRAY_800, 20f);
+            RenderManager.drawRoundedRect(vg, x, y, 244, 800, Colors.GRAY_800_95, 20f);
+            RenderManager.drawRect(vg, x + 224, y, 20, 800, Colors.GRAY_800);
+            RenderManager.drawHollowRoundRect(vg, x - 1, y - 1, 1282, 802, 0x4DCCCCCC, 20, scale < 1 ? 1 / scale : 1);
+
             RenderManager.drawLine(vg, x + 224, y + 72, x + 1280, y + 72, 1, Colors.GRAY_700);
             RenderManager.drawLine(vg, x + 224, y, x + 222, y + 800, 1, Colors.GRAY_700);
 

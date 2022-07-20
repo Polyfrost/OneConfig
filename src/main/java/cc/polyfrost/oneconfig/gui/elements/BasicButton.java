@@ -16,9 +16,9 @@ public class BasicButton extends BasicElement {
     protected SVGs icon1, icon2;
     private final int alignment;
     private final float fontSize, cornerRadius;
-    private final int xSpacing, xPadding;
+    private final float xSpacing, xPadding;
     private final int iconSize;
-    public int x, y;
+    public float x, y;
     public static final int ALIGNMENT_LEFT = 0;
     public static final int ALIGNMENT_CENTER = 2;
     public static final int ALIGNMENT_JUSTIFIED = 3;
@@ -57,7 +57,7 @@ public class BasicButton extends BasicElement {
     }
 
     @Override
-    public void draw(long vg, int x, int y) {
+    public void draw(long vg, float x, float y) {
         this.x = x;
         this.y = y;
         this.update(x, y);
