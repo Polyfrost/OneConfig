@@ -1599,3 +1599,24 @@ public final class cc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType : ja
 	public static fun values ()[Lcc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
 }
 
+public final class cc/polyfrost/oneconfig/utils/notifications/Notification {
+	public fun getAction ()Ljava/lang/Runnable;
+	public fun getDuration ()F
+	public fun getMessage ()Ljava/lang/String;
+	public fun getOnClose ()Ljava/lang/Runnable;
+	public fun getTitle ()Ljava/lang/String;
+	public fun getX ()F
+	public fun getY ()F
+	public fun setMessage (Ljava/lang/String;)V
+	public fun setTitle (Ljava/lang/String;)V
+}
+
+public final class cc/polyfrost/oneconfig/utils/notifications/Notifications {
+	public static final field INSTANCE Lcc/polyfrost/oneconfig/utils/notifications/Notifications;
+	public fun send (Ljava/lang/String;Ljava/lang/String;)V
+	public fun send (Ljava/lang/String;Ljava/lang/String;F)V
+	public fun send (Ljava/lang/String;Ljava/lang/String;FLjava/lang/Runnable;)V
+	public fun send (Ljava/lang/String;Ljava/lang/String;FLjava/lang/Runnable;Ljava/lang/Runnable;)V
+	public fun send (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Runnable;)V
+}
+
