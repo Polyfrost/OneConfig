@@ -124,8 +124,15 @@ public class JsonMigrator implements Migrator {
     private Object migrate(JsonPrimitive primitive) {
         if (primitive.isJsonNull()) return null;
         else if (primitive.isBoolean()) return primitive.getAsBoolean();
-        else if (primitive.isNumber()) return primitive.getAsNumber();
-        else
+        else if (primitive.isNumber()) {
+            Number number = primitive.getAsNumber();
+            if (number instanceof Integer) return number.intValue();
+            else if (number instanceof Float) return number.floatValue();
+            else if (number instanceof Long) return number.longValue();
+            else if (number instanceof Double) return number.doubleValue();
+            else if (number instanceof Short) return number.shortValue();
+            else return number.byteValue();
+        } else
             return primitive.getAsString();                             // if is not boolean, null or number return as String
     }
 }
