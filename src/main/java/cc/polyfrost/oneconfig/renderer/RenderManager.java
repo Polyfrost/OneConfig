@@ -11,6 +11,7 @@ import cc.polyfrost.oneconfig.platform.NanoVGPlatform;
 import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.font.Font;
 import cc.polyfrost.oneconfig.renderer.font.FontManager;
+import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.utils.InputUtils;
 import cc.polyfrost.oneconfig.utils.NetworkUtils;
 import org.lwjgl.nanovg.NVGColor;
@@ -32,6 +33,27 @@ public final class RenderManager {
 
     private RenderManager() {
 
+    }
+
+    /** This method draws a load of things off the screen to load the NanoVG natives.<br>
+     * <b>SHOULD NOT BE CALLED!</b>
+     */
+    public static void initialize() {
+        System.out.println("Loading NVG natives");
+        setupAndDraw((vg) -> {
+            RenderManager.drawRoundedRect(vg, -1000, -1000, 100, 100, -38291321, 12);
+            RenderManager.drawSvg(vg, SVGs.BOX, -1000, -1000, 64, 64);
+            RenderManager.drawText(vg, "Loading....", -1000, -1000, -1, 12f, Fonts.BOLD);
+            RenderManager.drawDropShadow(vg, -1000, -1000, 12, 12, 12, 12, 12);
+            RenderManager.drawHollowRoundRect(vg, -1000, -1000, 12, 12, 12, 12, 2);
+            RenderManager.drawLine(vg, -1000, -1000, -990, -990, 2, -1);
+            RenderManager.drawRect(vg, -1000, -1000, 20, 20, -1);
+            nvgRotate(vg, 2);
+            nvgGlobalAlpha(vg, 0.4f);
+            nvgGlobalAlpha(vg, 1f);
+            nvgReset(vg);
+            nvgResetTransform(vg);
+        });
     }
 
     /**
@@ -463,7 +485,6 @@ public final class RenderManager {
 
     /**
      * Draw a drop shadow.
-     *
      * <a href="https://github.com/SpinyOwl/legui/blob/develop/LICENSE">Adapted from legui under MIT license</a>
      *
      * @param vg           The NanoVG context.

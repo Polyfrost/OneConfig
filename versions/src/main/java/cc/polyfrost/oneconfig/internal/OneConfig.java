@@ -10,6 +10,7 @@ import cc.polyfrost.oneconfig.internal.config.core.KeyBindHandler;
 import cc.polyfrost.oneconfig.internal.gui.BlurHandler;
 import cc.polyfrost.oneconfig.internal.hud.HudCore;
 import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
+import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.utils.commands.CommandManager;
 import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 import cc.polyfrost.oneconfig.utils.hypixel.HypixelUtils;
@@ -22,7 +23,7 @@ import java.io.File;
  * The main class of OneConfig.
  */
 //#if MC<=11202
-@net.minecraftforge.fml.common.Mod(modid = "@ID@", name = "@NAME@", version = "@VER@")
+@net.minecraftforge.fml.common.Mod(modid = "@ID@", name = "@NAME@", version = "@VER@", guiFactory = "cc.polyfrost.oneconfig.internal.gui.impl.ConfigButtonImpl")
 //#else
 //#if FORGE==1
 //$$ @net.minecraftforge.fml.common.Mod("@ID@")
@@ -57,6 +58,7 @@ public class OneConfig {
             e.printStackTrace();
         }
         CommandManager.INSTANCE.registerCommand(OneConfigCommand.class);
+        RenderManager.initialize();
         EventManager.INSTANCE.register(new HudCore());
         HypixelUtils.INSTANCE.initialize();
         EventManager.INSTANCE.register(KeyBindHandler.INSTANCE);

@@ -3,7 +3,9 @@ package cc.polyfrost.oneconfig.internal.mixin;
 
 import cc.polyfrost.oneconfig.events.EventManager;
 import cc.polyfrost.oneconfig.events.event.*;
+import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.internal.OneConfig;
+import cc.polyfrost.oneconfig.internal.gui.impl.ConfigButtonImpl;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Timer;
 import net.minecraftforge.client.event.GuiOpenEvent;
@@ -15,11 +17,19 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(Minecraft.class)
 public class MinecraftMixin {
     @Shadow
     private Timer timer;
+
+    @Inject(method = "getLimitFramerate", at = @At(value = "HEAD"), cancellable = true)
+    public void fixFramerate(CallbackInfoReturnable<Integer> cir) {
+        if (Minecraft.getMinecraft().currentScreen instanceof ConfigButtonImpl.ConfigGuiWrapper) {
+            cir.setReturnValue(Minecraft.getMinecraft().gameSettings.limitFramerate);
+        }
+    }
 
     @Inject(method = "shutdownMinecraftApplet", at = @At("HEAD"))
     private void onShutdown(CallbackInfo ci) {

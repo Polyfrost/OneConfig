@@ -33,7 +33,7 @@ import java.util.ArrayList;
 public class OneConfigGui extends UScreen implements GuiPause {
     public static OneConfigGui INSTANCE;
     public static OneConfigGui instanceToRestore = null;
-    private final SideBar sideBar = new SideBar();
+    public final SideBar sideBar = new SideBar();
     private final TextInputField textInputField = new TextInputField(248, 40, "Search...", false, false, SVGs.MAGNIFYING_GLASS_BOLD);
     private final ArrayList<Page> previousPages = new ArrayList<>();
     private final ArrayList<Page> nextPages = new ArrayList<>();
