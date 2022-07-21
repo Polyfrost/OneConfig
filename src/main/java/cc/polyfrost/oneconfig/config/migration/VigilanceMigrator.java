@@ -1,5 +1,7 @@
 package cc.polyfrost.oneconfig.config.migration;
 
+import cc.polyfrost.oneconfig.config.core.OneColor;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -13,6 +15,7 @@ public class VigilanceMigrator implements Migrator {
     private static final Pattern booleanPattern = Pattern.compile("\"?(?<name>[^\\s\"]+)\"? = (?<value>true|false)");
     private static final Pattern numberPattern = Pattern.compile("\"?(?<name>[^\\s\"]+)\"? = (?<value>[\\d.]+)");
     private static final Pattern stringPattern = Pattern.compile("\"?(?<name>[^\\s\"]+)\"? = \"(?<value>.+)\"");
+    private static final Pattern colorPattern = Pattern.compile("\"?(?<name>[^\\s\"]+)\"? = \"(?<value>(\\d{1,3},){3}\\d{1,3})\"");
     protected final String filePath;
     protected HashMap<String, HashMap<String, HashMap<String, Object>>> values = null;
     protected final boolean fileExists;
@@ -26,8 +29,8 @@ public class VigilanceMigrator implements Migrator {
     public Object getValue(Field field, String name, String category, String subcategory) {
         if (!fileExists) return null;
         if (values == null) getOptions();
-        if (field.isAnnotationPresent(VigilanceName.class)) {
-            VigilanceName annotation = field.getAnnotation(VigilanceName.class);
+        if (field.isAnnotationPresent(SerializedName.class)) {
+            SerializedName annotation = field.getAnnotation(SerializedName.class);
             name = annotation.name();
             category = annotation.category();
             subcategory = annotation.subcategory();
@@ -73,6 +76,15 @@ public class VigilanceMigrator implements Migrator {
                     if (value.contains(".")) options.put(numberMatcher.group("name"), Float.parseFloat(value));
                     else options.put(numberMatcher.group("name"), Integer.parseInt(value));
                     continue;
+                }
+                Matcher colorMatcher = colorPattern.matcher(line);
+                if(colorMatcher.find()) {
+                    String[] strings = colorMatcher.group("value").split(",");
+                    int[] values = new int[4];
+                    for(int i = 0; i < 4; i++) {
+                        values[i] = Integer.parseInt(strings[i]);
+                    }
+                    options.put(colorMatcher.group("name"), new OneColor(values[0], values[1], values[2], values[3]));
                 }
                 Matcher stringMatcher = stringPattern.matcher(line);
                 if (stringMatcher.find()) {

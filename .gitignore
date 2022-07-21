@@ -21,6 +21,7 @@ build
 eclipse
 run
 build - Copy.gradle
+git-story_media
 .vscode
 .devauth
 .DS_STORE
