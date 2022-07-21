@@ -329,8 +329,27 @@ public class cc/polyfrost/oneconfig/config/gson/ProfileExclusionStrategy : cc/po
 	public fun shouldSkipField (Lcom/google/gson/FieldAttributes;)Z
 }
 
+public class cc/polyfrost/oneconfig/config/migration/JsonMigrator : cc/polyfrost/oneconfig/config/migration/Migrator {
+	public static final field CAMEL_CASE I
+	public static final field UNDERSCORES I
+	protected final field delimiter I
+	protected field object Lcom/google/gson/JsonObject;
+	protected field values Ljava/util/HashMap;
+	public fun <init> (Ljava/lang/String;I)V
+	protected fun generateValues ()V
+	public fun getValue (Ljava/lang/reflect/Field;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/Object;
+	protected fun parse (Ljava/lang/String;)Ljava/lang/String;
+	protected fun put (Ljava/lang/String;Lcom/google/gson/JsonElement;)V
+}
+
 public abstract interface class cc/polyfrost/oneconfig/config/migration/Migrator {
 	public abstract fun getValue (Ljava/lang/reflect/Field;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/Object;
+}
+
+public abstract interface annotation class cc/polyfrost/oneconfig/config/migration/SerializedName : java/lang/annotation/Annotation {
+	public abstract fun category ()Ljava/lang/String;
+	public abstract fun name ()Ljava/lang/String;
+	public abstract fun subcategory ()Ljava/lang/String;
 }
 
 public class cc/polyfrost/oneconfig/config/migration/VigilanceMigrator : cc/polyfrost/oneconfig/config/migration/Migrator {
@@ -341,12 +360,6 @@ public class cc/polyfrost/oneconfig/config/migration/VigilanceMigrator : cc/poly
 	protected fun getOptions ()V
 	public fun getValue (Ljava/lang/reflect/Field;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/Object;
 	protected fun parse (Ljava/lang/String;)Ljava/lang/String;
-}
-
-public abstract interface annotation class cc/polyfrost/oneconfig/config/migration/VigilanceName : java/lang/annotation/Annotation {
-	public abstract fun category ()Ljava/lang/String;
-	public abstract fun name ()Ljava/lang/String;
-	public abstract fun subcategory ()Ljava/lang/String;
 }
 
 public class cc/polyfrost/oneconfig/config/profiles/Profiles {

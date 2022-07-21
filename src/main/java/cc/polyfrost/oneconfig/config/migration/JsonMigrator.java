@@ -1,7 +1,7 @@
 package cc.polyfrost.oneconfig.config.migration;
 
 import com.google.gson.*;
-import com.sun.istack.internal.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.FileReader;
