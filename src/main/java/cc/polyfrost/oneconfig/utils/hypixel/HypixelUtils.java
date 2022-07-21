@@ -29,6 +29,7 @@ public class HypixelUtils {
     private int limboLoop = 0;
 
     private boolean sentCommand = false;
+    private boolean cancel = false;
     private boolean sendPermitted = false;
     private boolean inGame;
 
@@ -72,6 +73,7 @@ public class HypixelUtils {
         sendPermitted = true;
         Multithreading.schedule(() -> {
             if (sendPermitted) {
+                cancel = true;
                 UChat.say("/locraw");
             }
         }, interval, TimeUnit.MILLISECONDS);
@@ -96,6 +98,7 @@ public class HypixelUtils {
     private void onWorldLoad(WorldLoadEvent event) {
         locraw = null;
         sendPermitted = false;
+        cancel = false;
         sentCommand = false;
         limboLoop = 0;
     }
@@ -103,6 +106,7 @@ public class HypixelUtils {
     @Subscribe
     private void onMessageReceived(ChatReceiveEvent event) {
         try {
+            final boolean didSendCommand = sentCommand;
             final String msg = event.getFullyUnformattedMessage();
             // Checking for rate limitation.
             if (!(msg.startsWith("{") && msg.endsWith("}"))) {
@@ -131,7 +135,10 @@ public class HypixelUtils {
                     inGame = true; // If your gamemode does not return "lobby", boolean inGame is true.
                 }
                 EventManager.INSTANCE.post(new LocrawEvent(locraw));
-                event.isCancelled = true;
+                if (cancel && didSendCommand) {
+                    cancel = false;
+                    event.isCancelled = true;
+                }
             }
         } catch (Exception ex) {
             ex.printStackTrace();
