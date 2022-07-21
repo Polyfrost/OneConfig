@@ -103,6 +103,7 @@ public class HypixelUtils {
     @Subscribe
     private void onMessageReceived(ChatReceiveEvent event) {
         try {
+            final boolean didSendCommand = sentCommand;
             final String msg = event.getFullyUnformattedMessage();
             // Checking for rate limitation.
             if (!(msg.startsWith("{") && msg.endsWith("}"))) {
@@ -131,7 +132,9 @@ public class HypixelUtils {
                     inGame = true; // If your gamemode does not return "lobby", boolean inGame is true.
                 }
                 EventManager.INSTANCE.post(new LocrawEvent(locraw));
-                event.isCancelled = true;
+                if (didSendCommand) {
+                    event.isCancelled = true;
+                }
             }
         } catch (Exception ex) {
             ex.printStackTrace();
