@@ -109,12 +109,9 @@ public class JsonMigrator implements Migrator {
         else if (primitive.isBoolean()) return primitive.getAsBoolean();
         else if (primitive.isNumber()) {
             Number number = primitive.getAsNumber();
-            if (number instanceof Integer) return number.intValue();
-            else if (number instanceof Float) return number.floatValue();
-            else if (number instanceof Long) return number.longValue();
-            else if (number instanceof Double) return number.doubleValue();
-            else if (number instanceof Short) return number.shortValue();
-            else return number.byteValue();
+            if(number.floatValue() % 1f != 0) {
+                return number.floatValue();
+            } else return number.intValue();
         } else
             return primitive.getAsString();                             // if is not boolean, null or number return as String
     }
