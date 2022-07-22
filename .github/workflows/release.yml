@@ -29,13 +29,23 @@ jobs:
         with:
           java-version: 17
           distribution: temurin
-          cache: gradle
+
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            **/loom-cache
+            **/prebundled-jars
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
 
       - name: Chmod Gradle
         run: chmod +x ./gradlew
 
       - name: Get version number
-        run: echo '::set-output name=VERSION_NUMBER::$((47 + ${{ github.run_number }}))'
+        run: echo '::set-output name=VERSION_NUMBER::$(( ${{ secrets.BUILD_OFFSET }} + ${{ github.run_number }}))'
         id: version
 
       - name: Publish
