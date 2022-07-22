@@ -1,6 +1,7 @@
 package cc.polyfrost.oneconfig.config.migration;
 
 import com.google.gson.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -11,16 +12,12 @@ import java.util.Iterator;
 import java.util.Map;
 
 public class JsonMigrator implements Migrator {
-    public static final int CAMEL_CASE = 0;
-    public static final int UNDERSCORES = 1;
 
     protected JsonObject object;
     protected HashMap<String, Object> values = null;
-    protected final int delimiter;
 
 
-    public JsonMigrator(String filePath, int nameDelimiter) {
-        this.delimiter = nameDelimiter;
+    public JsonMigrator(String filePath) {
         File file = new File(filePath);
         try {
             object = new JsonParser().parse(new FileReader(file)).getAsJsonObject();
@@ -31,50 +28,36 @@ public class JsonMigrator implements Migrator {
     }
 
     @Override
-    public Object getValue(Field field, String name, @Nullable String category, @Nullable String subcategory) {
+    public Object getValue(Field field, @NotNull String name, @Nullable String category, @Nullable String subcategory) {
         if (object == null) return null;
         if (values == null) generateValues();
-        if (field.isAnnotationPresent(SerializedName.class)) {
-            SerializedName annotation = field.getAnnotation(SerializedName.class);
+        if (field.isAnnotationPresent(MigrationName.class)) {
+            MigrationName annotation = field.getAnnotation(MigrationName.class);
             name = annotation.name();
             category = annotation.category();
             subcategory = annotation.subcategory();
         }
-
-        name = parse(name);
-        category = parse(category);
-        subcategory = parse(subcategory);
         String key = "";
         if (category != null) {
+            category = parse(category);
             key = category + ".";
             if (subcategory != null) {
+                subcategory = parse(subcategory);
                 key += subcategory + ".";
             }
         }
+        name = parse(name);
         key += name;
         return values.get(key);
     }
 
-    protected String parse(String value) {
-        if (delimiter == UNDERSCORES) {
-            return value.replace(" ", "_");
-        } else {
-            String[] words = value.split(" ");
-            StringBuilder stringBuilder = new StringBuilder();
-            stringBuilder.append(words[0]);
-            for (int i = 1; i < words.length; i++) {
-                String word = words[i];
-                word = word.substring(0, 1).toUpperCase() + word.substring(1);
-                stringBuilder.append(word);
-            }
-            return stringBuilder.toString();
-        }
+    @Override
+    public @NotNull String parse(@NotNull String value) {
+        return value.replace(" ", "");
     }
 
-    /**
-     * Convert the JsonObject into a "." delimited HashMap.
-     */
-    protected void generateValues() {
+    @Override
+    public void generateValues() {
         if (object == null) return;
         values = new HashMap<>();
         for (Map.Entry<String, JsonElement> master : object.entrySet()) {
@@ -97,7 +80,7 @@ public class JsonMigrator implements Migrator {
     /**
      * Take the JsonElement and add it as the correct type to the hashmap.
      *
-     * @param key . delimited key
+     * @param key "." delimited key
      * @param val value to be parsed
      */
     protected void put(String key, JsonElement val) {

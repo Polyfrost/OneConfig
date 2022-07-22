@@ -1,6 +1,7 @@
 package cc.polyfrost.oneconfig.config.migration;
 
 import cc.polyfrost.oneconfig.config.core.OneColor;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -26,11 +27,11 @@ public class VigilanceMigrator implements Migrator {
     }
 
     @Override
-    public Object getValue(Field field, String name, String category, String subcategory) {
+    public Object getValue(Field field, @NotNull String name, @NotNull String category, @NotNull String subcategory) {
         if (!fileExists) return null;
-        if (values == null) getOptions();
-        if (field.isAnnotationPresent(SerializedName.class)) {
-            SerializedName annotation = field.getAnnotation(SerializedName.class);
+        if (values == null) generateValues();
+        if (field.isAnnotationPresent(MigrationName.class)) {
+            MigrationName annotation = field.getAnnotation(MigrationName.class);
             name = annotation.name();
             category = annotation.category();
             subcategory = annotation.subcategory();
@@ -38,16 +39,16 @@ public class VigilanceMigrator implements Migrator {
         name = parse(name);
         category = parse(category);
         subcategory = parse(subcategory);
-        if (values.containsKey(category) && values.get(category).containsKey(subcategory) && values.get(category).get(subcategory).containsKey(name))
-            return values.get(category).get(subcategory).get(name);
-        return null;
+        return values.getOrDefault(category, new HashMap<>()).getOrDefault(subcategory, new HashMap<>()).getOrDefault(name, null);
     }
 
-    protected String parse(String value) {
+    @Override
+    public @NotNull String parse(@NotNull String value) {
         return value.toLowerCase().replace(" ", "_");
     }
 
-    protected void getOptions() {
+    @Override
+    public void generateValues() {
         if (values == null) values = new HashMap<>();
         try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
             String currentCategory = null;
@@ -78,10 +79,10 @@ public class VigilanceMigrator implements Migrator {
                     continue;
                 }
                 Matcher colorMatcher = colorPattern.matcher(line);
-                if(colorMatcher.find()) {
+                if (colorMatcher.find()) {
                     String[] strings = colorMatcher.group("value").split(",");
                     int[] values = new int[4];
-                    for(int i = 0; i < 4; i++) {
+                    for (int i = 0; i < 4; i++) {
                         values[i] = Integer.parseInt(strings[i]);
                     }
                     options.put(colorMatcher.group("name"), new OneColor(values[0], values[1], values[2], values[3]));
