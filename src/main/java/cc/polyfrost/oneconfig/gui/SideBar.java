@@ -1,6 +1,7 @@
 package cc.polyfrost.oneconfig.gui;
 
 import cc.polyfrost.oneconfig.gui.animations.Animation;
+import cc.polyfrost.oneconfig.gui.animations.CubicBezier;
 import cc.polyfrost.oneconfig.gui.animations.DummyAnimation;
 import cc.polyfrost.oneconfig.gui.animations.EaseInOutQuart;
 import cc.polyfrost.oneconfig.gui.elements.BasicButton;
@@ -94,7 +95,7 @@ public class SideBar {
     private void moveSideBar(BasicButton button) {
         if (button.equals(buttons.get(selected))) return;
         buttons.get(selected).setColorPalette(ColorPalette.TERTIARY);
-        moveAnimation = new EaseInOutQuart(300, buttons.get(selected).y - y, button.y - y, false);
+        moveAnimation = new CubicBezier(0.76f, 0, 0.24f, 1, 300, buttons.get(selected).y - y, button.y - y, false);
         sizeAnimation = new DummyAnimation(36);
         selected = buttons.indexOf(button);
     }
