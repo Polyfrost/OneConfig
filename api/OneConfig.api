@@ -516,6 +516,16 @@ public class cc/polyfrost/oneconfig/gui/animations/ColorAnimation {
 	public fun setPalette (Lcc/polyfrost/oneconfig/utils/color/ColorPalette;)V
 }
 
+public class cc/polyfrost/oneconfig/gui/animations/CubicBezier : cc/polyfrost/oneconfig/gui/animations/Animation {
+	protected final field P0 F
+	protected final field P1 F
+	protected final field P2 F
+	protected final field P3 F
+	public fun <init> (FFFFFFFZ)V
+	public fun <init> ([FFFFZ)V
+	protected fun animate (F)F
+}
+
 public class cc/polyfrost/oneconfig/gui/animations/DummyAnimation : cc/polyfrost/oneconfig/gui/animations/Animation {
 	protected final field value F
 	public fun <init> (F)V
