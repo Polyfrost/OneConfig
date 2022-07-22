@@ -34,13 +34,14 @@ public class CfgMigrator implements Migrator {
      * <br><b>NOTE: .cfg files DO NOT support subcategories! The implementation of this is:</b> <br>
      * <pre>{@code // if a category and a subcategory is supplied, only the category is used. else:
      * if(category == null && subcategory != null) category = subcategory;}</pre>
+     *
      * @param subcategory The subcategory of the option (not supported!)
      */
     @Nullable
     @Override
     public Object getValue(Field field, @NotNull String name, @Nullable String category, @Nullable String subcategory) {
-        if(!fileExists) return null;
-        if(values == null) generateValues();
+        if (!fileExists) return null;
+        if (values == null) generateValues();
         if (field.isAnnotationPresent(MigrationName.class)) {
             MigrationName annotation = field.getAnnotation(MigrationName.class);
             name = annotation.name();
@@ -48,8 +49,8 @@ public class CfgMigrator implements Migrator {
             subcategory = annotation.subcategory();
         }
         name = parse(name);
-        if(category == null) {
-            if(subcategory != null) {
+        if (category == null) {
+            if (subcategory != null) {
                 category = parse(subcategory);
             }
         } else category = parse(category);
@@ -64,27 +65,27 @@ public class CfgMigrator implements Migrator {
             String line;
             while ((line = reader.readLine()) != null) {
                 Matcher categoryMatcher = categoryPattern.matcher(line);
-                if(categoryMatcher.find()) {
+                if (categoryMatcher.find()) {
                     currentCategory = categoryMatcher.group("name");
                     if (!values.containsKey(currentCategory)) values.put(currentCategory, new HashMap<>());
                 }
-                if(currentCategory == null) continue;
-                if(line.contains("\"")) {
+                if (currentCategory == null) continue;
+                if (line.contains("\"")) {
                     line = line.replaceAll("\"", "").replaceAll(" ", "");
                 }
                 Matcher booleanMatcher = booleanPattern.matcher(line);
-                if(booleanMatcher.find()) {
+                if (booleanMatcher.find()) {
                     values.get(currentCategory).put(booleanMatcher.group("name"), Boolean.parseBoolean(booleanMatcher.group("value")));
                     continue;
                 }
                 Matcher intMatcher = intPattern.matcher(line);
-                if(intMatcher.find()) {
+                if (intMatcher.find()) {
                     values.get(currentCategory).put(intMatcher.group("name"), Integer.parseInt(intMatcher.group("value")));
                     continue;
                 }
                 Matcher stringOrFloatMatcher = stringOrFloatPattern.matcher(line.trim());
-                if(stringOrFloatMatcher.matches()) {
-                    if(line.contains(".")) {
+                if (stringOrFloatMatcher.matches()) {
+                    if (line.contains(".")) {
                         try {
                             values.get(currentCategory).put(stringOrFloatMatcher.group("name"), Float.parseFloat(stringOrFloatMatcher.group("value")));
                         } catch (Exception ignored) {
@@ -95,10 +96,10 @@ public class CfgMigrator implements Migrator {
                     continue;
                 }
                 Matcher listMatcher = listPattern.matcher(line.trim());
-                if(listMatcher.matches()) {
+                if (listMatcher.matches()) {
                     String name = listMatcher.group("name");
                     ArrayList<String> list = new ArrayList<>();
-                    while((line = reader.readLine()) != null && !line.contains(">")) {
+                    while ((line = reader.readLine()) != null && !line.contains(">")) {
                         list.add(line.trim());
                     }
                     String[] array = new String[list.size()];
@@ -115,7 +116,7 @@ public class CfgMigrator implements Migrator {
     @Override
     @NotNull
     public String parse(@NotNull String value) {
-        if(value.contains("\"")) {
+        if (value.contains("\"")) {
             return value.replaceAll("\"", "").replaceAll(" ", "");
         } else return value;
     }
