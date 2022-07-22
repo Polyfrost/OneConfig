@@ -29,7 +29,6 @@ jobs:
         with:
           java-version: 17
           distribution: temurin
-          cache: gradle
 
       - uses: actions/cache@v2
         with:
@@ -37,6 +36,7 @@ jobs:
             ~/.gradle/caches
             ~/.gradle/wrapper
             **/loom-cache
+            **/prebundled-jars
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
             ${{ runner.os }}-gradle-
