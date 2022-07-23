@@ -53,7 +53,7 @@ public class CubicBezier extends Animation {
             float midpoint = (start + end) / 2;
             float estimate = evaluateCubic(P0, P2, midpoint);
             if (Math.abs(x - estimate) < CubicErrorBound)
-                return evaluateCubic(P1, P2, midpoint);
+                return evaluateCubic(P1, P3, midpoint);
             if (estimate < x) start = midpoint;
             else end = midpoint;
         }
