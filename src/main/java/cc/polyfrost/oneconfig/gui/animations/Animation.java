@@ -33,7 +33,7 @@ public abstract class Animation {
      */
     public float get(float deltaTime) {
         timePassed += deltaTime;
-        if (timePassed >= duration) timePassed = duration;
+        if (timePassed >= duration) return start + change;
         return animate(timePassed / duration) * change + start;
     }
 
