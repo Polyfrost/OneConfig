@@ -1,3 +1,34 @@
+/* This file contains an adaptation of code from The Android Open Source
+ * Project found at <https://cs.android.com/>
+ * For the avoidance of doubt, this file is still licensed under the terms
+ * of OneConfig's Licensing.
+ *
+ *                 LICENSE NOTICE FOR ADAPTED CODE
+ *
+ * Copyright 2019 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use the file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Significant changes (as required by the Apache 2.0):
+ * - Changed variable names
+ * - Code adapted from Kotlin to Java
+ * - Removed variables defining premade easing functions
+ * - Added constructor for JDT and OneConfig's animation system
+ *
+ * As per the terms of the Apache 2.0 License, a copy of the License
+ * is found at `src/main/resources/licenses/Android-License.txt`.
+ */
+
 package cc.polyfrost.oneconfig.gui.animations;
 
 public class CubicBezier extends Animation {
