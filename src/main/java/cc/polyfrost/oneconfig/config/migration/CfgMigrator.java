@@ -18,6 +18,7 @@ public class CfgMigrator implements Migrator {
     HashMap<String, HashMap<String, Object>> values;
     final Pattern stringOrFloatPattern = Pattern.compile("S:(?<name>\\S+)=(?<value>\\S+)");
     final Pattern intPattern = Pattern.compile("I:(?<name>\\S+)=(?<value>\\S+)");
+    final Pattern doublePattern = Pattern.compile("D:(?<name>\\S+)=(?<value>\\S+)");
     final Pattern booleanPattern = Pattern.compile("B:(?<name>\\S+)=(?<value>\\S+)");
     final Pattern listPattern = Pattern.compile("S:(?<name>\\S+)\\s<");
     final Pattern categoryPattern = Pattern.compile("(?<name>\\S+)\\s\\Q{");
@@ -29,7 +30,7 @@ public class CfgMigrator implements Migrator {
 
 
     /**
-     * Get the value from its name, category, and subcategory. The target field is also supplied, which can be used to check for {@link MigrationName}.
+     * Get the value from its name, category, and subcategory. The target field is also supplied, which can be used to check for {@link VigilanceName}.
      * The returned Object is intended to be a "Duck" object, and should be cast to the correct type. The Migrator should never return ClassCastExceptions.
      * <br><b>NOTE: .cfg files DO NOT support subcategories! The implementation of this is:</b> <br>
      * <pre>{@code // if a category and a subcategory is supplied, only the category is used. else:
@@ -42,11 +43,10 @@ public class CfgMigrator implements Migrator {
     public Object getValue(Field field, @NotNull String name, @Nullable String category, @Nullable String subcategory) {
         if (!fileExists) return null;
         if (values == null) generateValues();
-        if (field.isAnnotationPresent(MigrationName.class)) {
-            MigrationName annotation = field.getAnnotation(MigrationName.class);
+        if (field.isAnnotationPresent(CfgName.class)) {
+            CfgName annotation = field.getAnnotation(CfgName.class);
             name = annotation.name();
             category = annotation.category();
-            subcategory = annotation.subcategory();
         }
         name = parse(name);
         if (category == null) {
@@ -57,8 +57,7 @@ public class CfgMigrator implements Migrator {
         return values.getOrDefault(category, new HashMap<>()).getOrDefault(name, null);
     }
 
-    @Override
-    public void generateValues() {
+    protected void generateValues() {
         if (values == null) values = new HashMap<>();
         try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
             String currentCategory = null;
@@ -81,6 +80,11 @@ public class CfgMigrator implements Migrator {
                 Matcher intMatcher = intPattern.matcher(line);
                 if (intMatcher.find()) {
                     values.get(currentCategory).put(intMatcher.group("name"), Integer.parseInt(intMatcher.group("value")));
+                    continue;
+                }
+                Matcher doubleMatcher = doublePattern.matcher(line);
+                if (doubleMatcher.find()) {
+                    values.get(currentCategory).put(doubleMatcher.group("name"), Double.parseDouble(doubleMatcher.group("value")));
                     continue;
                 }
                 Matcher stringOrFloatMatcher = stringOrFloatPattern.matcher(line.trim());
@@ -113,9 +117,8 @@ public class CfgMigrator implements Migrator {
         }
     }
 
-    @Override
     @NotNull
-    public String parse(@NotNull String value) {
+    protected String parse(@NotNull String value) {
         if (value.contains("\"")) {
             return value.replaceAll("\"", "").replaceAll(" ", "");
         } else return value;

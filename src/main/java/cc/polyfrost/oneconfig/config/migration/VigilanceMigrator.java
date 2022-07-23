@@ -30,8 +30,8 @@ public class VigilanceMigrator implements Migrator {
     public Object getValue(Field field, @NotNull String name, @NotNull String category, @NotNull String subcategory) {
         if (!fileExists) return null;
         if (values == null) generateValues();
-        if (field.isAnnotationPresent(MigrationName.class)) {
-            MigrationName annotation = field.getAnnotation(MigrationName.class);
+        if (field.isAnnotationPresent(VigilanceName.class)) {
+            VigilanceName annotation = field.getAnnotation(VigilanceName.class);
             name = annotation.name();
             category = annotation.category();
             subcategory = annotation.subcategory();
@@ -42,13 +42,11 @@ public class VigilanceMigrator implements Migrator {
         return values.getOrDefault(category, new HashMap<>()).getOrDefault(subcategory, new HashMap<>()).getOrDefault(name, null);
     }
 
-    @Override
-    public @NotNull String parse(@NotNull String value) {
+    protected @NotNull String parse(@NotNull String value) {
         return value.toLowerCase().replace(" ", "_");
     }
 
-    @Override
-    public void generateValues() {
+    protected void generateValues() {
         if (values == null) values = new HashMap<>();
         try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
             String currentCategory = null;
