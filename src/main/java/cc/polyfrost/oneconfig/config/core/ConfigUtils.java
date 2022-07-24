@@ -1,6 +1,6 @@
 package cc.polyfrost.oneconfig.config.core;
 
-import cc.polyfrost.oneconfig.config.annotations.Exclude;
+import cc.polyfrost.oneconfig.config.data.OptionType;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
 import cc.polyfrost.oneconfig.config.elements.OptionCategory;
 import cc.polyfrost.oneconfig.config.elements.OptionPage;
@@ -20,29 +20,47 @@ public class ConfigUtils {
     public static BasicOption getOption(Option option, Field field, Object instance) {
         switch (option.type()) {
             case SWITCH:
+                check(OptionType.SWITCH, field, boolean.class, Boolean.class);
                 return ConfigSwitch.create(field, instance);
             case CHECKBOX:
+                check(OptionType.CHECKBOX, field, boolean.class, Boolean.class);
                 return ConfigCheckbox.create(field, instance);
             case INFO:
                 return ConfigInfo.create(field, instance);
             case HEADER:
                 return ConfigHeader.create(field, instance);
             case COLOR:
+                check(OptionType.COLOR, field, OneColor.class);
                 return ConfigColorElement.create(field, instance);
             case DROPDOWN:
+                check(OptionType.DROPDOWN, field, int.class, Integer.class);
                 return ConfigDropdown.create(field, instance);
             case TEXT:
+                check(OptionType.TEXT, field, String.class);
                 return ConfigTextBox.create(field, instance);
             case BUTTON:
+                check(OptionType.BUTTON, field, Runnable.class);
                 return ConfigButton.create(field, instance);
             case SLIDER:
+                check(OptionType.SLIDER, field, int.class, float.class, Integer.class, Float.class);
                 return ConfigSlider.create(field, instance);
             case KEYBIND:
+                check(OptionType.KEYBIND, field, OneKeyBind.class);
                 return ConfigKeyBind.create(field, instance);
             case DUAL_OPTION:
+                check(OptionType.DUAL_OPTION, field, boolean.class, Boolean.class);
                 return ConfigDualOption.create(field, instance);
         }
         return null;
+    }
+
+    private static void check(OptionType type, Field field, Class<?>... expectedType) {
+        // I have tried to check for supertype classes like Boolean other ways.
+        // but they actually don't extend their primitive types (because that is impossible) so isAssignableFrom doesn't work.
+        for (Class<?> clazz : expectedType) {
+            if(field.getType().equals(clazz)) return;
+        }
+        throw new InvalidConfigException("Field " + field.getName() + " in config " + field.getDeclaringClass().getName() + " is annotated as a " + type.toString() + ", but is not of valid type, expected " + Arrays.toString(expectedType) + " (found " + field.getType() + ")");
     }
 
     public static ArrayList<BasicOption> getClassOptions(Object object) {
