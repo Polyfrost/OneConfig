@@ -1,12 +1,12 @@
 package cc.polyfrost.oneconfig.config.core;
 
-public class InvalidConfigException extends RuntimeException {
+public class InvalidTypeException extends RuntimeException {
     /**
      * Constructs a new invalid config exception with {@code null} as its
      * detail message.  The cause is not initialized, and may subsequently be
      * initialized by a call to {@link #initCause}.
      */
-    public InvalidConfigException() {
+    public InvalidTypeException() {
         super();
     }
 
@@ -18,7 +18,7 @@ public class InvalidConfigException extends RuntimeException {
      * @param message the detail message. The detail message is saved for
      *                later retrieval by the {@link #getMessage()} method.
      */
-    public InvalidConfigException(String message) {
+    public InvalidTypeException(String message) {
         super(message);
     }
 
@@ -36,7 +36,7 @@ public class InvalidConfigException extends RuntimeException {
      *                unknown.)
      * @since 1.4
      */
-    public InvalidConfigException(String message, Throwable cause) {
+    public InvalidTypeException(String message, Throwable cause) {
         super(message, cause);
     }
 
@@ -53,7 +53,7 @@ public class InvalidConfigException extends RuntimeException {
      *              unknown.)
      * @since 1.4
      */
-    public InvalidConfigException(Throwable cause) {
+    public InvalidTypeException(Throwable cause) {
         super(cause);
     }
 
@@ -71,9 +71,9 @@ public class InvalidConfigException extends RuntimeException {
      *                           be writable
      * @since 1.7
      */
-    protected InvalidConfigException(String message, Throwable cause,
-                                     boolean enableSuppression,
-                                     boolean writableStackTrace) {
+    protected InvalidTypeException(String message, Throwable cause,
+                                   boolean enableSuppression,
+                                   boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
     }
 }

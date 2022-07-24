@@ -1,6 +1,6 @@
 package cc.polyfrost.oneconfig.events;
 
-import cc.polyfrost.oneconfig.config.core.InvalidConfigException;
+import cc.polyfrost.oneconfig.config.core.InvalidTypeException;
 import cc.polyfrost.oneconfig.libs.eventbus.EventBus;
 import cc.polyfrost.oneconfig.libs.eventbus.exception.ExceptionHandler;
 import cc.polyfrost.oneconfig.libs.eventbus.invokers.LMFInvoker;
@@ -66,8 +66,8 @@ public final class EventManager {
     private static class OneConfigExceptionHandler implements ExceptionHandler {
         @Override
         public void handle(@NotNull Exception e) {
-            if(e instanceof InvalidConfigException) {
-                throw (InvalidConfigException) e;
+            if(e instanceof InvalidTypeException) {
+                throw (InvalidTypeException) e;
             }
             else e.printStackTrace();
         }

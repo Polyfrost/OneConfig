@@ -60,7 +60,7 @@ public class ConfigUtils {
         for (Class<?> clazz : expectedType) {
             if(field.getType().equals(clazz)) return;
         }
-        throw new InvalidConfigException("Field " + field.getName() + " in config " + field.getDeclaringClass().getName() + " is annotated as a " + type.toString() + ", but is not of valid type, expected " + Arrays.toString(expectedType) + " (found " + field.getType() + ")");
+        throw new InvalidTypeException("Field " + field.getName() + " in config " + field.getDeclaringClass().getName() + " is annotated as a " + type.toString() + ", but is not of valid type, expected " + Arrays.toString(expectedType) + " (found " + field.getType() + ")");
     }
 
     public static ArrayList<BasicOption> getClassOptions(Object object) {
