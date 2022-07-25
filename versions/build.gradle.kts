@@ -101,7 +101,9 @@ val shadeRelocated: Configuration by configurations.creating {
 }
 
 val shade: Configuration by configurations.creating {
-    configurations.api.get().extendsFrom(this)
+    if (!platform.isFabric) { // we do this manually for fabric
+        configurations.api.get().extendsFrom(this)
+    }
 }
 
 val shadeNoPom2: Configuration by configurations.creating
@@ -145,12 +147,24 @@ dependencies {
 
     if (platform.isLegacyForge) {
         include("org.spongepowered:mixin:0.7.11-SNAPSHOT", pom = false, transitive = false)
+    } else {
+        if (platform.isFabric && platform.mcVersion >= 11700) {
+            val fabricApiVersion = when {
+                platform.mcVersion >= 11900 -> "0.57.0+1.19"
+                platform.mcVersion >= 11800 -> "0.57.0+1.18.2"
+                platform.mcVersion >= 11700 -> "0.46.1+1.17"
+                else -> throw IllegalAccessException("Minecraft version below 1.17 is not supported")
+            }
+            include("net.fabricmc.fabric-api:fabric-command-api-v1:$fabricApiVersion")
+        }
+        include("com.github.LlamaLad7:MixinExtras:0.0.11", pom = false, transitive = false)
+        annotationProcessor("com.github.LlamaLad7:MixinExtras:0.0.11")
     }
     shadeProject(project(":")) {
         isTransitive = false
     }
 
-    include("cc.polyfrost:lwjgl-$platform:1.0.0-alpha8")
+    include("cc.polyfrost:lwjgl-$platform:1.0.0-alpha8", jar = false, transitive = false)
 
     dokkaHtmlPlugin("org.jetbrains.dokka:kotlin-as-java-plugin:1.6.21")
 
@@ -359,7 +373,7 @@ publishing {
     }
 }
 
-fun DependencyHandlerScope.include(dependency: Any, pom: Boolean = true, mod: Boolean = false) {
+fun DependencyHandlerScope.include(dependency: Any, pom: Boolean = true, mod: Boolean = false, jar: Boolean = true) {
     if (platform.isForge) {
         if (pom) {
             shade(dependency)
@@ -384,11 +398,19 @@ fun DependencyHandlerScope.include(dependency: Any, pom: Boolean = true, mod: Bo
                 runtimeOnly(dependency)
             }
         }
-        "include"(dependency)
+        if (jar) {
+            "include"(dependency)
+        } else {
+            if (pom) {
+                shade(dependency)
+            } else {
+                shadeNoPom2(dependency)
+            }
+        }
     }
 }
 
-fun DependencyHandlerScope.include(dependency: ModuleDependency, pom: Boolean = true, mod: Boolean = false, relocate: Boolean = false, transitive: Boolean = true) {
+fun DependencyHandlerScope.include(dependency: ModuleDependency, pom: Boolean = true, mod: Boolean = false, relocate: Boolean = false, transitive: Boolean = true, jar: Boolean = true) {
     if (platform.isForge) {
         if (relocate) {
             shadeRelocated(dependency) { isTransitive = transitive }
@@ -419,11 +441,23 @@ fun DependencyHandlerScope.include(dependency: ModuleDependency, pom: Boolean = 
                 runtimeOnly(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
             }
         }
-        "include"(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
+        if (jar) {
+            "include"(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
+        } else {
+            if (relocate) {
+                shadeRelocated(dependency) { isTransitive = transitive }
+            } else {
+                if (pom) {
+                    shade(dependency) { isTransitive = transitive }
+                } else {
+                    shadeNoPom2(dependency) { isTransitive = transitive }
+                }
+            }
+        }
     }
 }
 
-fun DependencyHandlerScope.include(dependency: String, pom: Boolean = true, mod: Boolean = false, relocate: Boolean = false, transitive: Boolean = true) {
+fun DependencyHandlerScope.include(dependency: String, pom: Boolean = true, mod: Boolean = false, relocate: Boolean = false, transitive: Boolean = true, jar: Boolean = true) {
     if (platform.isForge) {
         if (relocate) {
             shadeRelocated(dependency) { isTransitive = transitive }
@@ -454,6 +488,18 @@ fun DependencyHandlerScope.include(dependency: String, pom: Boolean = true, mod:
                 runtimeOnly(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
             }
         }
-        "include"(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
+        if (jar) {
+            "include"(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
+        } else {
+            if (relocate) {
+                shadeRelocated(dependency) { isTransitive = transitive }
+            } else {
+                if (pom) {
+                    shade(dependency) { isTransitive = transitive }
+                } else {
+                    shadeNoPom2(dependency) { isTransitive = transitive }
+                }
+            }
+        }
     }
 }

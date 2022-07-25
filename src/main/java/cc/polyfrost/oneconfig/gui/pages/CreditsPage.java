@@ -31,6 +31,8 @@ public class CreditsPage extends Page {
         RenderManager.drawText(vg, " - https://easings.net/ - Easing functions", x + 20, y + 400, -1, 12, Fonts.REGULAR);
         RenderManager.drawText(vg, " - Quiltflower (Quilt Team) - Gradle decompiler", x + 20, y + 415, -1, 12, Fonts.REGULAR);
         RenderManager.drawText(vg, " - Seraph (Scherso) - Locraw and Multithreading utilities", x + 20, y + 430, -1, 12, Fonts.REGULAR);
+        RenderManager.drawText(vg, " - Android - Cubic Bezier curve", x + 20, y + 445, -1, 12, Fonts.REGULAR);
+        RenderManager.drawText(vg, " - Fabric API (FabricMC) - Client-side Commands", x + 20, y + 460, -1, 12, Fonts.REGULAR);
     }
 
     @Override

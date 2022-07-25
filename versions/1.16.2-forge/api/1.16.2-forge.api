@@ -96,6 +96,31 @@ public class cc/polyfrost/oneconfig/platform/impl/ServerPlatformImpl : cc/polyfr
 	public fun inMultiplayer ()Z
 }
 
+public final class cc/polyfrost/oneconfig/utils/commands/ClientCommandInternals {
+	public fun <init> ()V
+	public static fun addCommands (Lcom/mojang/brigadier/CommandDispatcher;Lcc/polyfrost/oneconfig/utils/commands/FabricClientCommandSource;)V
+	public static fun executeCommand (Ljava/lang/String;)Z
+	public static fun finalizeInit ()V
+}
+
+public final class cc/polyfrost/oneconfig/utils/commands/ClientCommandManager {
+	public static final field DISPATCHER Lcom/mojang/brigadier/CommandDispatcher;
+	public static fun argument (Ljava/lang/String;Lcom/mojang/brigadier/arguments/ArgumentType;)Lcom/mojang/brigadier/builder/RequiredArgumentBuilder;
+	public static fun literal (Ljava/lang/String;)Lcom/mojang/brigadier/builder/LiteralArgumentBuilder;
+}
+
+public abstract interface class cc/polyfrost/oneconfig/utils/commands/FabricClientCommandSource : net/minecraft/command/ISuggestionProvider {
+	public abstract fun getClient ()Lnet/minecraft/client/Minecraft;
+	public fun getEntity ()Lnet/minecraft/entity/Entity;
+	public fun getMeta (Ljava/lang/String;)Ljava/lang/Object;
+	public abstract fun getPlayer ()Lnet/minecraft/client/entity/player/ClientPlayerEntity;
+	public fun getPosition ()Lnet/minecraft/util/math/vector/Vector3d;
+	public fun getRotation ()Lnet/minecraft/util/math/vector/Vector2f;
+	public abstract fun getWorld ()Lnet/minecraft/client/world/ClientWorld;
+	public abstract fun sendError (Lnet/minecraft/util/text/ITextComponent;)V
+	public abstract fun sendFeedback (Lnet/minecraft/util/text/ITextComponent;)V
+}
+
 public class cc/polyfrost/oneconfig/utils/commands/PlatformCommandManagerImpl : cc/polyfrost/oneconfig/utils/commands/PlatformCommandManager {
 	public fun <init> ()V
 	public fun handleNewParser (Lcc/polyfrost/oneconfig/utils/commands/arguments/ArgumentParser;Ljava/lang/Class;)V
