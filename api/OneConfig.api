@@ -154,14 +154,6 @@ public class cc/polyfrost/oneconfig/config/core/ConfigUtils {
 	public static fun setField (Ljava/lang/reflect/Field;Ljava/lang/Object;Ljava/lang/Object;)V
 }
 
-public class cc/polyfrost/oneconfig/config/core/InvalidTypeException : java/lang/RuntimeException {
-	public fun <init> ()V
-	public fun <init> (Ljava/lang/String;)V
-	public fun <init> (Ljava/lang/String;Ljava/lang/Throwable;)V
-	protected fun <init> (Ljava/lang/String;Ljava/lang/Throwable;ZZ)V
-	public fun <init> (Ljava/lang/Throwable;)V
-}
-
 public final class cc/polyfrost/oneconfig/config/core/OneColor {
 	public fun <init> (FFF)V
 	public fun <init> (FFFF)V
@@ -207,6 +199,14 @@ public class cc/polyfrost/oneconfig/config/core/OneKeyBind {
 	public fun isActive ()Z
 	public fun run ()V
 	public fun setRunnable (Ljava/lang/Runnable;)V
+}
+
+public class cc/polyfrost/oneconfig/config/core/exceptions/InvalidTypeException : java/lang/RuntimeException {
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/Throwable;)V
+	protected fun <init> (Ljava/lang/String;Ljava/lang/Throwable;ZZ)V
+	public fun <init> (Ljava/lang/Throwable;)V
 }
 
 public final class cc/polyfrost/oneconfig/config/data/InfoType : java/lang/Enum {
