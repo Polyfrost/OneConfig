@@ -8,7 +8,7 @@ import cc.polyfrost.oneconfig.renderer.RenderManager;
 public class TestBasicHud_Test extends BasicHud {
     @Override
     protected void draw(UMatrixStack matrices, float x, float y, float scale, boolean example) {
-        RenderManager.setupAndDraw(true, vg -> RenderManager.drawImage(vg, Images.HUE_GRADIENT, x, y, 50 * scale, 50f * scale));
+        RenderManager.setupAndDraw(true, vg -> RenderManager.drawImage(vg, Images.HUE_GRADIENT.filePath, x, y, 50 * scale, 50f * scale));
     }
 
     @Override

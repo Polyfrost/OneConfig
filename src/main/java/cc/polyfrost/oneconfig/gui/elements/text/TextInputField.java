@@ -2,10 +2,10 @@ package cc.polyfrost.oneconfig.gui.elements.text;
 
 import cc.polyfrost.oneconfig.gui.elements.BasicElement;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
-import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
 import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
+import cc.polyfrost.oneconfig.renderer.SVG;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.renderer.scissor.Scissor;
 import cc.polyfrost.oneconfig.renderer.scissor.ScissorManager;
@@ -35,12 +35,12 @@ public class TextInputField extends BasicElement {
     protected boolean onlyNums = false;
     protected boolean errored = false;
     protected boolean centered = false;
-    protected SVGs icon;
+    protected SVG icon;
     protected ArrayList<String> wrappedText = null;
     private long clickTimeD1;
     private int lines = 1;
 
-    public TextInputField(int width, int height, String defaultText, boolean multiLine, boolean password, SVGs icon) {
+    public TextInputField(int width, int height, String defaultText, boolean multiLine, boolean password, SVG icon) {
         super(width, height, false);
         this.multiLine = multiLine;
         this.defaultText = defaultText;

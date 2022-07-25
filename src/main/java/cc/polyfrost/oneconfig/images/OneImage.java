@@ -20,53 +20,53 @@ import java.util.Objects;
 
 /** An Image wrapper class that is used by the OneConfig system.*/
 @SuppressWarnings("unused")
-public class Image {
+public class OneImage {
     private static final Logger LOGGER = LogManager.getLogger("OneConfig Images");
     private BufferedImage image;
     private Graphics2D graphics = null;
     private final int width, height;
 
     /**
-     * Create a new Image from the file. This can be as a resource location inside your JAR.
+     * Create a new OneImage from the file. This can be as a resource location inside your JAR.
      * @param filePath The path to the image file.
      */
-    public Image(String filePath) throws IOException {
-        image = ImageIO.read(Objects.requireNonNull(Image.class.getResourceAsStream(filePath)));
+    public OneImage(String filePath) throws IOException {
+        image = ImageIO.read(Objects.requireNonNull(OneImage.class.getResourceAsStream(filePath)));
         width = image.getWidth();
         height = image.getHeight();
     }
 
     /**
-     * Create a new Image from the file.
+     * Create a new OneImage from the file.
      * @param is InputStream to the image file.
      */
-    public Image(InputStream is) throws IOException {
+    public OneImage(InputStream is) throws IOException {
         image = ImageIO.read(is);
         width = image.getWidth();
         height = image.getHeight();
     }
 
     /**
-     * Create a new Image from the file.
+     * Create a new OneImage from the file.
      * @param file File to the image file.
      */
-    public Image(File file) throws IOException {
+    public OneImage(File file) throws IOException {
             image = ImageIO.read(Objects.requireNonNull(file));
             width = image.getWidth();
             height = image.getHeight();
     }
 
     /**
-     * Create a new Image from the BufferedImage.
+     * Create a new OneImage from the BufferedImage.
      */
-    public Image(BufferedImage image) {
+    public OneImage(BufferedImage image) {
         this.image = image;
         width = image.getWidth();
         height = image.getHeight();
     }
 
     /** Create a new blank image with the specified width and height. */
-    public Image(int width, int height) {
+    public OneImage(int width, int height) {
         this.width = width;
         this.height = height;
         image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);

@@ -6,6 +6,7 @@ import cc.polyfrost.oneconfig.config.elements.BasicOption;
 import cc.polyfrost.oneconfig.gui.elements.text.TextInputField;
 import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
+import cc.polyfrost.oneconfig.renderer.SVG;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.utils.InputUtils;
@@ -46,7 +47,7 @@ public class ConfigTextBox extends BasicOption {
         textField.draw(vg, x + (size == 1 ? 224 : 352), y);
 
         if (secure) {
-            SVGs icon = textField.getPassword() ? SVGs.EYE_OFF : SVGs.EYE;
+            final SVG icon = textField.getPassword() ? SVGs.EYE_OFF : SVGs.EYE;
             boolean hovered = InputUtils.isAreaHovered(x + 967, y + 7, 18, 18) && isEnabled();
             int color = hovered ? Colors.WHITE : Colors.WHITE_80;
             if (hovered && InputUtils.isClicked()) textField.setPassword(!textField.getPassword());
