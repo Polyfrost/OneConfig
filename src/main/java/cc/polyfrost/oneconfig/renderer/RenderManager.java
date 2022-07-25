@@ -632,7 +632,7 @@ public final class RenderManager {
      * @param size The diameter.
      */
     public static void drawInfo(long vg, InfoType type, float x, float y, float size) {
-        SVGs icon = null;
+        SVG icon = null;
         int colorOuter = 0;
         int colorInner = 0;
         switch (type) {
@@ -662,7 +662,7 @@ public final class RenderManager {
         drawCircle(vg, centerX, centerY, size / 2, colorOuter);
         drawCircle(vg, centerX, centerY, size / 2 - size / 12, colorInner);
         float iconSize = size / 1.75f;
-        drawSvg(vg, icon.svg, centerX - iconSize / 2f, centerY - iconSize / 2f, iconSize, iconSize);
+        drawSvg(vg, icon, centerX - iconSize / 2f, centerY - iconSize / 2f, iconSize, iconSize);
     }
 
     // gl

@@ -29,11 +29,11 @@ public class ColorSelector {
     private final OneColor color;
     private final ArrayList<BasicElement> buttons = new ArrayList<>();
     private final BasicElement closeBtn = new BasicElement(32, 32, false);
-    private final BasicButton copyBtn = new BasicButton(32, 32, SVGs.COPY.svg, BasicButton.ALIGNMENT_CENTER, ColorPalette.SECONDARY);
-    private final BasicButton pasteBtn = new BasicButton(32, 32, SVGs.PASTE.svg, BasicButton.ALIGNMENT_CENTER, ColorPalette.SECONDARY);
-    private final BasicButton guideBtn = new BasicButton(112, 32, "Guide", SVGs.HELP_CIRCLE.svg, SVGs.POP_OUT.svg, BasicButton.ALIGNMENT_CENTER, ColorPalette.SECONDARY);
-    private final BasicButton faveBtn = new BasicButton(32, 32, SVGs.HEART_OUTLINE.svg, BasicButton.ALIGNMENT_CENTER, ColorPalette.SECONDARY);
-    private final BasicButton recentBtn = new BasicButton(32, 32, SVGs.HISTORY.svg, BasicButton.ALIGNMENT_CENTER, ColorPalette.SECONDARY);
+    private final BasicButton copyBtn = new BasicButton(32, 32, SVGs.COPY, BasicButton.ALIGNMENT_CENTER, ColorPalette.SECONDARY);
+    private final BasicButton pasteBtn = new BasicButton(32, 32, SVGs.PASTE, BasicButton.ALIGNMENT_CENTER, ColorPalette.SECONDARY);
+    private final BasicButton guideBtn = new BasicButton(112, 32, "Guide", SVGs.HELP_CIRCLE, SVGs.POP_OUT, BasicButton.ALIGNMENT_CENTER, ColorPalette.SECONDARY);
+    private final BasicButton faveBtn = new BasicButton(32, 32, SVGs.HEART_OUTLINE, BasicButton.ALIGNMENT_CENTER, ColorPalette.SECONDARY);
+    private final BasicButton recentBtn = new BasicButton(32, 32, SVGs.HISTORY, BasicButton.ALIGNMENT_CENTER, ColorPalette.SECONDARY);
     private final NumberInputField hueInput = new NumberInputField(90, 32, 0, 0, 360, 1);
     private final NumberInputField saturationInput = new NumberInputField(90, 32, 100, 0, 100, 1);
     private final NumberInputField brightnessInput = new NumberInputField(90, 32, 100, 0, 100, 1);
@@ -116,7 +116,7 @@ public class ColorSelector {
         RenderManager.drawText(vg, "Color Selector", x + 16, y + 32, Colors.WHITE_90, 18f, Fonts.SEMIBOLD);
         if (!closeBtn.isHovered()) RenderManager.setAlpha(vg, 0.8f);
         closeBtn.draw(vg, x + 368, y + 16);
-        RenderManager.drawSvg(vg, SVGs.X_CIRCLE_BOLD.svg, x + 368, y + 16, 32, 32, closeBtn.isHovered() ? Colors.ERROR_600 : -1);
+        RenderManager.drawSvg(vg, SVGs.X_CIRCLE_BOLD, x + 368, y + 16, 32, 32, closeBtn.isHovered() ? Colors.ERROR_600 : -1);
         RenderManager.setAlpha(vg, 1f);
 
         // hex parser

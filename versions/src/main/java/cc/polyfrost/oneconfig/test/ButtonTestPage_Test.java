@@ -15,31 +15,31 @@ public class ButtonTestPage_Test extends Page {
         add(new BasicButton(254, 48, "Secondary Destructive", BasicButton.ALIGNMENT_LEFT, ColorPalette.SECONDARY_DESTRUCTIVE));
         add(new BasicButton(254, 48, "Tertiary", BasicButton.ALIGNMENT_LEFT, ColorPalette.TERTIARY));
         add(new BasicButton(254, 48, "Tertiary Destructive", BasicButton.ALIGNMENT_LEFT, ColorPalette.TERTIARY_DESTRUCTIVE));
-        add(new BasicButton(254, 48, "LeftIconLA", SVGs.BOX.svg, null, BasicButton.ALIGNMENT_LEFT, ColorPalette.SECONDARY));
-        add(new BasicButton(254, 48, "RightIconLA", null, SVGs.BOX.svg, BasicButton.ALIGNMENT_LEFT, ColorPalette.SECONDARY));
-        add(new BasicButton(254, 48, "LeftIconCA", SVGs.BOX.svg, null, BasicButton.ALIGNMENT_CENTER, ColorPalette.SECONDARY));
-        add(new BasicButton(254, 48, "RightIconCA", null, SVGs.BOX.svg, BasicButton.ALIGNMENT_CENTER, ColorPalette.SECONDARY));
+        add(new BasicButton(254, 48, "LeftIconLA", SVGs.BOX, null, BasicButton.ALIGNMENT_LEFT, ColorPalette.SECONDARY));
+        add(new BasicButton(254, 48, "RightIconLA", null, SVGs.BOX, BasicButton.ALIGNMENT_LEFT, ColorPalette.SECONDARY));
+        add(new BasicButton(254, 48, "LeftIconCA", SVGs.BOX, null, BasicButton.ALIGNMENT_CENTER, ColorPalette.SECONDARY));
+        add(new BasicButton(254, 48, "RightIconCA", null, SVGs.BOX, BasicButton.ALIGNMENT_CENTER, ColorPalette.SECONDARY));
     }};
 
     private final ArrayList<BasicButton> row2 = new ArrayList<BasicButton>() {{
-        add(new BasicButton(170, 32, "32", SVGs.BOX.svg, SVGs.BOX.svg, BasicButton.ALIGNMENT_LEFT, ColorPalette.PRIMARY));
-        add(new BasicButton(193, 36, "36", SVGs.BOX.svg, SVGs.BOX.svg, BasicButton.ALIGNMENT_LEFT, ColorPalette.PRIMARY));
-        add(new BasicButton(208, 40, "40", SVGs.BOX.svg, SVGs.BOX.svg, BasicButton.ALIGNMENT_LEFT, ColorPalette.PRIMARY));
-        add(new BasicButton(254, 48, "48", SVGs.BOX.svg, SVGs.BOX.svg, BasicButton.ALIGNMENT_LEFT, ColorPalette.PRIMARY));
-        add(new BasicButton(254, 48, "JustifiedRight", null, SVGs.BOX.svg, BasicButton.ALIGNMENT_JUSTIFIED, ColorPalette.SECONDARY_DESTRUCTIVE));
-        add(new BasicButton(254, 48, "JustifiedLeft", SVGs.BOX.svg, null, BasicButton.ALIGNMENT_JUSTIFIED, ColorPalette.SECONDARY_DESTRUCTIVE));
+        add(new BasicButton(170, 32, "32", SVGs.BOX, SVGs.BOX, BasicButton.ALIGNMENT_LEFT, ColorPalette.PRIMARY));
+        add(new BasicButton(193, 36, "36", SVGs.BOX, SVGs.BOX, BasicButton.ALIGNMENT_LEFT, ColorPalette.PRIMARY));
+        add(new BasicButton(208, 40, "40", SVGs.BOX, SVGs.BOX, BasicButton.ALIGNMENT_LEFT, ColorPalette.PRIMARY));
+        add(new BasicButton(254, 48, "48", SVGs.BOX, SVGs.BOX, BasicButton.ALIGNMENT_LEFT, ColorPalette.PRIMARY));
+        add(new BasicButton(254, 48, "JustifiedRight", null, SVGs.BOX, BasicButton.ALIGNMENT_JUSTIFIED, ColorPalette.SECONDARY_DESTRUCTIVE));
+        add(new BasicButton(254, 48, "JustifiedLeft", SVGs.BOX, null, BasicButton.ALIGNMENT_JUSTIFIED, ColorPalette.SECONDARY_DESTRUCTIVE));
         add(new BasicButton(254, 48, "JustifiedNoIcon", null, null, BasicButton.ALIGNMENT_JUSTIFIED, ColorPalette.PRIMARY));
-        add(new BasicButton(254, 48, "TertiaryIcon", SVGs.BOX.svg, null, BasicButton.ALIGNMENT_JUSTIFIED, ColorPalette.TERTIARY_DESTRUCTIVE));
+        add(new BasicButton(254, 48, "TertiaryIcon", SVGs.BOX, null, BasicButton.ALIGNMENT_JUSTIFIED, ColorPalette.TERTIARY_DESTRUCTIVE));
 
     }};
 
     private final ArrayList<BasicButton> row3 = new ArrayList<BasicButton>() {{
-        add(new BasicButton(254, 48, "Left", SVGs.BOX.svg, SVGs.BOX.svg, BasicButton.ALIGNMENT_LEFT, ColorPalette.PRIMARY));
-        add(new BasicButton(254, 48, "Center", SVGs.BOX.svg, SVGs.BOX.svg, BasicButton.ALIGNMENT_CENTER, ColorPalette.PRIMARY));
-        add(new BasicButton(254, 48, "Justified", SVGs.BOX.svg, SVGs.BOX.svg, BasicButton.ALIGNMENT_JUSTIFIED, ColorPalette.PRIMARY));
-        add(new BasicButton(254, 48, "Disabled :(", SVGs.BOX.svg, SVGs.BOX.svg, BasicButton.ALIGNMENT_LEFT, ColorPalette.PRIMARY));
-        add(new BasicButton(254, 48, "Disabled :(", SVGs.BOX.svg, SVGs.BOX.svg, BasicButton.ALIGNMENT_CENTER, ColorPalette.PRIMARY));
-        add(new BasicButton(254, 48, "Disabled :(", SVGs.BOX.svg, SVGs.BOX.svg, BasicButton.ALIGNMENT_JUSTIFIED, ColorPalette.PRIMARY));
+        add(new BasicButton(254, 48, "Left", SVGs.BOX, SVGs.BOX, BasicButton.ALIGNMENT_LEFT, ColorPalette.PRIMARY));
+        add(new BasicButton(254, 48, "Center", SVGs.BOX, SVGs.BOX, BasicButton.ALIGNMENT_CENTER, ColorPalette.PRIMARY));
+        add(new BasicButton(254, 48, "Justified", SVGs.BOX, SVGs.BOX, BasicButton.ALIGNMENT_JUSTIFIED, ColorPalette.PRIMARY));
+        add(new BasicButton(254, 48, "Disabled :(", SVGs.BOX, SVGs.BOX, BasicButton.ALIGNMENT_LEFT, ColorPalette.PRIMARY));
+        add(new BasicButton(254, 48, "Disabled :(", SVGs.BOX, SVGs.BOX, BasicButton.ALIGNMENT_CENTER, ColorPalette.PRIMARY));
+        add(new BasicButton(254, 48, "Disabled :(", SVGs.BOX, SVGs.BOX, BasicButton.ALIGNMENT_JUSTIFIED, ColorPalette.PRIMARY));
     }};
 
     public ButtonTestPage_Test() {

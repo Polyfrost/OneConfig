@@ -34,7 +34,7 @@ public class OneConfigGui extends UScreen implements GuiPause {
     public static OneConfigGui INSTANCE;
     public static OneConfigGui instanceToRestore = null;
     private final SideBar sideBar = new SideBar();
-    private final TextInputField textInputField = new TextInputField(248, 40, "Search...", false, false, SVGs.MAGNIFYING_GLASS_BOLD.svg);
+    private final TextInputField textInputField = new TextInputField(248, 40, "Search...", false, false, SVGs.MAGNIFYING_GLASS_BOLD);
     private final ArrayList<Page> previousPages = new ArrayList<>();
     private final ArrayList<Page> nextPages = new ArrayList<>();
     private final BasicElement backArrow = new BasicElement(40, 40, new ColorPalette(Colors.GRAY_700, Colors.GRAY_500, Colors.GRAY_500_80), true);
@@ -95,7 +95,7 @@ public class OneConfigGui extends UScreen implements GuiPause {
             RenderManager.drawLine(vg, x + 224, y + 72, x + 1280, y + 72, 1, Colors.GRAY_700);
             RenderManager.drawLine(vg, x + 224, y, x + 222, y + 800, 1, Colors.GRAY_700);
 
-            RenderManager.drawSvg(vg, SVGs.ONECONFIG.svg, x + 19, y + 19, 42, 42);
+            RenderManager.drawSvg(vg, SVGs.ONECONFIG, x + 19, y + 19, 42, 42);
             RenderManager.drawText(vg, "OneConfig", x + 69, y + 32, -1, 18f, Fonts.BOLD);        // added half line height to center text
             RenderManager.drawText(vg, "By Polyfrost", x + 69, y + 51, -1, 12f, Fonts.REGULAR);
 
@@ -112,7 +112,7 @@ public class OneConfigGui extends UScreen implements GuiPause {
                 if (!backArrow.isHovered() || Platform.getMousePlatform().isButtonDown(0))
                     RenderManager.setAlpha(vg, 0.8f);
             }
-            RenderManager.drawSvg(vg, SVGs.CARET_LEFT.svg, x + 246, y + 22, 28, 28);
+            RenderManager.drawSvg(vg, SVGs.CARET_LEFT, x + 246, y + 22, 28, 28);
             RenderManager.setAlpha(vg, 1f);
             if (nextPages.size() == 0) {
                 forwardArrow.disable(true);
@@ -122,7 +122,7 @@ public class OneConfigGui extends UScreen implements GuiPause {
                 if (!forwardArrow.isHovered() || Platform.getMousePlatform().isButtonDown(0))
                     RenderManager.setAlpha(vg, 0.8f);
             }
-            RenderManager.drawSvg(vg, SVGs.CARET_RIGHT.svg, x + 294, y + 22, 28, 28);
+            RenderManager.drawSvg(vg, SVGs.CARET_RIGHT, x + 294, y + 22, 28, 28);
             RenderManager.setAlpha(vg, 1f);
 
             if (backArrow.isClicked() && previousPages.size() > 0) {
@@ -171,7 +171,7 @@ public class OneConfigGui extends UScreen implements GuiPause {
                 else if (hovered && !Platform.getMousePlatform().isButtonDown(0)) color = Colors.WHITE_80;
                 RenderManager.drawText(vg, title, breadcrumbX, y + 38, color, 24f, Fonts.SEMIBOLD);
                 if (i != 0)
-                    RenderManager.drawSvg(vg, SVGs.CARET_RIGHT.svg, breadcrumbX - 28, y + 25, 24, 24, color);
+                    RenderManager.drawSvg(vg, SVGs.CARET_RIGHT, breadcrumbX - 28, y + 25, 24, 24, color);
                 if (hovered && InputUtils.isClicked()) openPage(currentPage.parents.get(i));
                 breadcrumbX += width + 32;
             }

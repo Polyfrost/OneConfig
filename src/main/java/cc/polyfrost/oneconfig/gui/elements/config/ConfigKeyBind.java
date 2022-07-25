@@ -20,7 +20,7 @@ public class ConfigKeyBind extends BasicOption {
 
     public ConfigKeyBind(Field field, Object parent, String name, String category, String subcategory, int size) {
         super(field, parent, name, category, subcategory, size);
-        button = new BasicButton(256, 32, "", SVGs.KEYSTROKE.svg, null, BasicButton.ALIGNMENT_JUSTIFIED, ColorPalette.SECONDARY);
+        button = new BasicButton(256, 32, "", SVGs.KEYSTROKE, null, BasicButton.ALIGNMENT_JUSTIFIED, ColorPalette.SECONDARY);
         button.setToggleable(true);
     }
 
