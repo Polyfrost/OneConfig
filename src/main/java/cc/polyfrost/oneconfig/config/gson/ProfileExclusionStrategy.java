@@ -14,6 +14,7 @@ public class ProfileExclusionStrategy extends ExclusionUtils implements Exclusio
     @Override
     public boolean shouldSkipField(FieldAttributes f) {
         if (isSuperClassOf(f.getDeclaredClass(), Config.class)) return true;
+        if (f.getDeclaredClass().isAssignableFrom(Runnable.class)) return true;
         if (f.getAnnotation(NonProfileSpecific.class) != null) return true;
         Exclude exclude = f.getAnnotation(Exclude.class);
         return exclude != null;
