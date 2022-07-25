@@ -25,6 +25,22 @@ public class TestConfig_Test extends Config {
     )
     public static boolean testCheckBox = true;
 
+    @Button(
+            name = "hello",
+            text = "click"
+    )
+    private void doSomething() {
+        UChat.chat("i was called from a nonstatic method");
+    }
+
+    @Button(
+            name = "hello2",
+            text = "click"
+    )
+    private static void doSomethingElse() {
+        UChat.chat("i was called from a static method");
+    }
+
     @Info(
             text = "Test Info",
             type = InfoType.ERROR,
