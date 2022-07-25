@@ -140,9 +140,14 @@ public class Config {
                 OptionSubcategory subcategory = ConfigUtils.getSubCategory(page, optionPage.category(), optionPage.subcategory());
                 Object pageInstance = ConfigUtils.getField(field, instance);
                 if (pageInstance == null) continue;
-                OptionPage newPage = new OptionPage(optionPage.name(), mod);
-                generateOptionList(pageInstance, newPage, mod, migrate);
-                ConfigPageButton button = new ConfigPageButton(field, instance, optionPage.name(), optionPage.description(), optionPage.category(), optionPage.subcategory(), newPage);
+                ConfigPageButton button;
+                if(pageInstance instanceof cc.polyfrost.oneconfig.gui.pages.Page) {
+                    button = new ConfigPageButton(field, instance, optionPage.name(), optionPage.description(), optionPage.category(), optionPage.subcategory(), (cc.polyfrost.oneconfig.gui.pages.Page) pageInstance);
+                } else {
+                    OptionPage newPage = new OptionPage(optionPage.name(), mod);
+                    generateOptionList(pageInstance, newPage, mod, migrate);
+                    button = new ConfigPageButton(field, instance, optionPage.name(), optionPage.description(), optionPage.category(), optionPage.subcategory(), newPage);
+                }
                 if (optionPage.location() == PageLocation.TOP) subcategory.topButtons.add(button);
                 else subcategory.bottomButtons.add(button);
             } else if (field.isAnnotationPresent(HUD.class)) {
@@ -170,6 +175,7 @@ public class Config {
      * @param migrate    If the data should be migrated
      */
     protected BasicOption getCustomOption(Field field, CustomOption annotation, OptionPage page, Mod mod, boolean migrate) {
+        ConfigUtils.check("CustomOption", field, BasicOption.class);
         return null;
     }
 
