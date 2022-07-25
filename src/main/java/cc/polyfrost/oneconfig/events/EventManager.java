@@ -1,6 +1,6 @@
 package cc.polyfrost.oneconfig.events;
 
-import cc.polyfrost.oneconfig.config.core.InvalidTypeException;
+import cc.polyfrost.oneconfig.config.core.exceptions.InvalidTypeException;
 import cc.polyfrost.oneconfig.libs.eventbus.EventBus;
 import cc.polyfrost.oneconfig.libs.eventbus.exception.ExceptionHandler;
 import cc.polyfrost.oneconfig.libs.eventbus.invokers.LMFInvoker;

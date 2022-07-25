@@ -1,5 +1,6 @@
 package cc.polyfrost.oneconfig.config.core;
 
+import cc.polyfrost.oneconfig.config.core.exceptions.InvalidTypeException;
 import cc.polyfrost.oneconfig.config.data.OptionType;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
 import cc.polyfrost.oneconfig.config.elements.OptionCategory;
