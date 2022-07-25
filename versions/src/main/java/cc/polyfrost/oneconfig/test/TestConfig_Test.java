@@ -7,6 +7,7 @@ import cc.polyfrost.oneconfig.config.data.*;
 import cc.polyfrost.oneconfig.config.Config;
 import cc.polyfrost.oneconfig.config.data.ModType;
 import cc.polyfrost.oneconfig.config.migration.VigilanceMigrator;
+import cc.polyfrost.oneconfig.gui.pages.HomePage;
 import cc.polyfrost.oneconfig.libs.universal.UChat;
 import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
 
@@ -24,6 +25,16 @@ public class TestConfig_Test extends Config {
             size = OptionSize.DUAL
     )
     public static boolean testCheckBox = true;
+
+    @CustomOption
+
+
+    @Page(
+            name = "An actual page",
+            description = "yes very cool",
+            location = PageLocation.BOTTOM
+    )
+    private final cc.polyfrost.oneconfig.gui.pages.Page page = new HomePage();
 
     @Button(
             name = "hello",
