@@ -338,6 +338,33 @@ public class cc/polyfrost/oneconfig/config/gson/ProfileExclusionStrategy : cc/po
 	public fun shouldSkipField (Lcom/google/gson/FieldAttributes;)Z
 }
 
+public class cc/polyfrost/oneconfig/config/migration/CfgMigrator : cc/polyfrost/oneconfig/config/migration/Migrator {
+	public fun <init> (Ljava/lang/String;)V
+	protected fun generateValues ()V
+	public fun getValue (Ljava/lang/reflect/Field;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/Object;
+	protected fun parse (Ljava/lang/String;)Ljava/lang/String;
+}
+
+public abstract interface annotation class cc/polyfrost/oneconfig/config/migration/CfgName : java/lang/annotation/Annotation {
+	public abstract fun category ()Ljava/lang/String;
+	public abstract fun name ()Ljava/lang/String;
+}
+
+public class cc/polyfrost/oneconfig/config/migration/JsonMigrator : cc/polyfrost/oneconfig/config/migration/Migrator {
+	protected field object Lcom/google/gson/JsonObject;
+	protected field values Ljava/util/HashMap;
+	public fun <init> (Ljava/lang/String;)V
+	protected fun generateValues ()V
+	public fun getValue (Ljava/lang/reflect/Field;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/Object;
+	protected fun loopThroughChildren (Ljava/lang/String;Lcom/google/gson/JsonObject;)V
+	protected fun parse (Ljava/lang/String;)Ljava/lang/String;
+	protected fun put (Ljava/lang/String;Lcom/google/gson/JsonElement;)V
+}
+
+public abstract interface annotation class cc/polyfrost/oneconfig/config/migration/JsonName : java/lang/annotation/Annotation {
+	public abstract fun value ()Ljava/lang/String;
+}
+
 public abstract interface class cc/polyfrost/oneconfig/config/migration/Migrator {
 	public abstract fun getValue (Ljava/lang/reflect/Field;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/Object;
 }
@@ -347,7 +374,7 @@ public class cc/polyfrost/oneconfig/config/migration/VigilanceMigrator : cc/poly
 	protected final field filePath Ljava/lang/String;
 	protected field values Ljava/util/HashMap;
 	public fun <init> (Ljava/lang/String;)V
-	protected fun getOptions ()V
+	protected fun generateValues ()V
 	public fun getValue (Ljava/lang/reflect/Field;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/Object;
 	protected fun parse (Ljava/lang/String;)Ljava/lang/String;
 }
