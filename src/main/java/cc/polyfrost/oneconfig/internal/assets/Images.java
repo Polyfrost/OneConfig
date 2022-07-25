@@ -1,6 +1,7 @@
 package cc.polyfrost.oneconfig.internal.assets;
 
 import cc.polyfrost.oneconfig.renderer.AssetLoader;
+import cc.polyfrost.oneconfig.renderer.Image;
 
 /**
  * An enum of images used in OneConfig.
@@ -14,8 +15,10 @@ public enum Images {
     ALPHA_GRID("/assets/oneconfig/options/AlphaGrid.png");
 
     public final String filePath;
+    public final Image image;
 
     Images(String filePath) {
         this.filePath = filePath;
+        this.image = new Image(filePath);
     }
 }

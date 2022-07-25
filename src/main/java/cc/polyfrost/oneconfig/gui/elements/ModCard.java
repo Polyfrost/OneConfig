@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class ModCard extends BasicElement {
     private final Mod modData;
-    private final BasicButton favoriteButton = new BasicButton(32, 32, SVGs.HEART_OUTLINE, BasicButton.ALIGNMENT_CENTER, ColorPalette.TERTIARY);
+    private final BasicButton favoriteButton = new BasicButton(32, 32, SVGs.HEART_OUTLINE.svg, BasicButton.ALIGNMENT_CENTER, ColorPalette.TERTIARY);
     private final ColorAnimation colorFrame = new ColorAnimation(ColorPalette.SECONDARY);
     private final ColorAnimation colorToggle;
     private boolean active, disabled, favorite;
@@ -71,8 +71,8 @@ public class ModCard extends BasicElement {
         Scissor scissor2 = ScissorManager.scissor(vg, x, y + 87, width - 32, 32);
         RenderManager.drawText(vg, cleanName, x + 12, y + 103, ColorUtils.setAlpha(Colors.WHITE, (int) (colorToggle.getAlpha() * 255)), 14f, Fonts.MEDIUM);
         ScissorManager.resetScissor(vg, scissor2);
-        if (favorite) favoriteButton.setLeftIcon(SVGs.HEART_FILL);
-        else favoriteButton.setLeftIcon(SVGs.HEART_OUTLINE);
+        if (favorite) favoriteButton.setLeftIcon(SVGs.HEART_FILL.svg);
+        else favoriteButton.setLeftIcon(SVGs.HEART_OUTLINE.svg);
 
         if (clicked && isHoveredMain) {
             if (!active) toggled = false;

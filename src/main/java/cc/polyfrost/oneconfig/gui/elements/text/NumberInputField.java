@@ -63,7 +63,7 @@ public class NumberInputField extends TextInputField {
             upArrow.disable(true);
         }
         RenderManager.drawRoundedRectVaried(vg, x + width + 4, y, 12, 14, colorTop.getColor(upArrow.isHovered(), upArrow.isPressed()), 6f, 6f, 0f, 0f);
-        RenderManager.drawSvg(vg, SVGs.CHEVRON_UP, x + width + 5, y + 2, 10, 10);
+        RenderManager.drawSvg(vg, SVGs.CHEVRON_UP.svg, x + width + 5, y + 2, 10, 10);
         if (current >= max && !disabled) RenderManager.setAlpha(vg, 1f);
 
         if (current <= min && !disabled) {
@@ -71,7 +71,7 @@ public class NumberInputField extends TextInputField {
             downArrow.disable(true);
         }
         RenderManager.drawRoundedRectVaried(vg, x + width + 4, y + 14, 12, 14, colorBottom.getColor(downArrow.isHovered(), downArrow.isPressed()), 0f, 0f, 6f, 6f);
-        RenderManager.drawSvg(vg, SVGs.CHEVRON_DOWN, x + width + 5, y + 15, 10, 10);
+        RenderManager.drawSvg(vg, SVGs.CHEVRON_DOWN.svg, x + width + 5, y + 15, 10, 10);
         if(!disabled) RenderManager.setAlpha(vg, 1f);
 
         try {

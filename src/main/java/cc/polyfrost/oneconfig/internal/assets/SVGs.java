@@ -1,6 +1,7 @@
 package cc.polyfrost.oneconfig.internal.assets;
 
 import cc.polyfrost.oneconfig.renderer.AssetLoader;
+import cc.polyfrost.oneconfig.renderer.SVG;
 
 /**
  * An enum of SVGs used in OneConfig.
@@ -48,7 +49,10 @@ public enum SVGs {
 
     public final String filePath;
 
+    public final SVG svg;
+
     SVGs(String filePath) {
         this.filePath = filePath;
+        this.svg = new SVG(filePath);
     }
 }

@@ -63,12 +63,12 @@ public class ConfigDropdown extends BasicOption {
             RenderManager.drawRoundedRect(vg, x + 224, y, 256, 32, backgroundColor.getColor(hovered, hovered && Platform.getMousePlatform().isButtonDown(0)), 12);
             RenderManager.drawText(vg, options[selected], x + 236, y + 16, Colors.WHITE_80, 14f, Fonts.MEDIUM);
             RenderManager.drawRoundedRect(vg, x + 452, y + 4, 24, 24, atomColor.getColor(hovered, false), 8);
-            RenderManager.drawSvg(vg, SVGs.DROPDOWN_LIST, x + 452, y + 4, 24, 24);
+            RenderManager.drawSvg(vg, SVGs.DROPDOWN_LIST.svg, x + 452, y + 4, 24, 24);
         } else {
             RenderManager.drawRoundedRect(vg, x + 352, y, 640, 32, backgroundColor.getColor(hovered, hovered && Platform.getMousePlatform().isButtonDown(0)), 12);
             RenderManager.drawText(vg, options[selected], x + 364, y + 16, Colors.WHITE_80, 14f, Fonts.MEDIUM);
             RenderManager.drawRoundedRect(vg, x + 964, y + 4, 24, 24, atomColor.getColor(hovered, false), 8);
-            RenderManager.drawSvg(vg, SVGs.DROPDOWN_LIST, x + 964, y + 4, 24, 24);
+            RenderManager.drawSvg(vg, SVGs.DROPDOWN_LIST.svg, x + 964, y + 4, 24, 24);
         }
         RenderManager.setAlpha(vg, 1f);
     }
@@ -93,7 +93,7 @@ public class ConfigDropdown extends BasicOption {
             RenderManager.drawText(vg, options[selected], x + 236, y + 16, Colors.WHITE_80, 14f, Fonts.MEDIUM);
             if (hovered && Platform.getMousePlatform().isButtonDown(0)) RenderManager.setAlpha(vg, 0.8f);
             RenderManager.drawRoundedRect(vg, x + 452, y + 4, 24, 24, atomColor.getColor(hovered, false), 8);
-            RenderManager.drawSvg(vg, SVGs.DROPDOWN_LIST, x + 452, y + 4, 24, 24);
+            RenderManager.drawSvg(vg, SVGs.DROPDOWN_LIST.svg, x + 452, y + 4, 24, 24);
 
             RenderManager.setAlpha(vg, 1f);
             RenderManager.drawRoundedRect(vg, x + 224, y + 40, 256, options.length * 32 + 8, Colors.GRAY_700, 12);
@@ -126,7 +126,7 @@ public class ConfigDropdown extends BasicOption {
             RenderManager.drawText(vg, options[selected], x + 364, y + 16, Colors.WHITE_80, 14f, Fonts.MEDIUM);
             if (hovered && Platform.getMousePlatform().isButtonDown(0)) RenderManager.setAlpha(vg, 0.8f);
             RenderManager.drawRoundedRect(vg, x + 964, y + 4, 24, 24, atomColor.getColor(hovered, false), 8);
-            RenderManager.drawSvg(vg, SVGs.DROPDOWN_LIST, x + 964, y + 4, 24, 24);
+            RenderManager.drawSvg(vg, SVGs.DROPDOWN_LIST.svg, x + 964, y + 4, 24, 24);
 
             RenderManager.setAlpha(vg, 1f);
             RenderManager.drawRoundedRect(vg, x + 352, y + 40, 640, options.length * 32 + 8, Colors.GRAY_700, 12);

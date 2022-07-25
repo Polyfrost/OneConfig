@@ -29,11 +29,11 @@ public class ColorSelector {
     private final OneColor color;
     private final ArrayList<BasicElement> buttons = new ArrayList<>();
     private final BasicElement closeBtn = new BasicElement(32, 32, false);
-    private final BasicButton copyBtn = new BasicButton(32, 32, SVGs.COPY, BasicButton.ALIGNMENT_CENTER, ColorPalette.SECONDARY);
-    private final BasicButton pasteBtn = new BasicButton(32, 32, SVGs.PASTE, BasicButton.ALIGNMENT_CENTER, ColorPalette.SECONDARY);
-    private final BasicButton guideBtn = new BasicButton(112, 32, "Guide", SVGs.HELP_CIRCLE, SVGs.POP_OUT, BasicButton.ALIGNMENT_CENTER, ColorPalette.SECONDARY);
-    private final BasicButton faveBtn = new BasicButton(32, 32, SVGs.HEART_OUTLINE, BasicButton.ALIGNMENT_CENTER, ColorPalette.SECONDARY);
-    private final BasicButton recentBtn = new BasicButton(32, 32, SVGs.HISTORY, BasicButton.ALIGNMENT_CENTER, ColorPalette.SECONDARY);
+    private final BasicButton copyBtn = new BasicButton(32, 32, SVGs.COPY.svg, BasicButton.ALIGNMENT_CENTER, ColorPalette.SECONDARY);
+    private final BasicButton pasteBtn = new BasicButton(32, 32, SVGs.PASTE.svg, BasicButton.ALIGNMENT_CENTER, ColorPalette.SECONDARY);
+    private final BasicButton guideBtn = new BasicButton(112, 32, "Guide", SVGs.HELP_CIRCLE.svg, SVGs.POP_OUT.svg, BasicButton.ALIGNMENT_CENTER, ColorPalette.SECONDARY);
+    private final BasicButton faveBtn = new BasicButton(32, 32, SVGs.HEART_OUTLINE.svg, BasicButton.ALIGNMENT_CENTER, ColorPalette.SECONDARY);
+    private final BasicButton recentBtn = new BasicButton(32, 32, SVGs.HISTORY.svg, BasicButton.ALIGNMENT_CENTER, ColorPalette.SECONDARY);
     private final NumberInputField hueInput = new NumberInputField(90, 32, 0, 0, 360, 1);
     private final NumberInputField saturationInput = new NumberInputField(90, 32, 100, 0, 100, 1);
     private final NumberInputField brightnessInput = new NumberInputField(90, 32, 100, 0, 100, 1);
@@ -102,7 +102,7 @@ public class ColorSelector {
             recentColors.add(new ColorBox(new OneColor(0, 0, 0, 0)));
         }
 
-        topSlider.setImage(Images.HUE_GRADIENT);
+        topSlider.setImage(Images.HUE_GRADIENT.filePath);
     }
 
     public void draw(long vg) {
@@ -116,7 +116,7 @@ public class ColorSelector {
         RenderManager.drawText(vg, "Color Selector", x + 16, y + 32, Colors.WHITE_90, 18f, Fonts.SEMIBOLD);
         if (!closeBtn.isHovered()) RenderManager.setAlpha(vg, 0.8f);
         closeBtn.draw(vg, x + 368, y + 16);
-        RenderManager.drawSvg(vg, SVGs.X_CIRCLE_BOLD, x + 368, y + 16, 32, 32, closeBtn.isHovered() ? Colors.ERROR_600 : -1);
+        RenderManager.drawSvg(vg, SVGs.X_CIRCLE_BOLD.svg, x + 368, y + 16, 32, 32, closeBtn.isHovered() ? Colors.ERROR_600 : -1);
         RenderManager.setAlpha(vg, 1f);
 
         // hex parser
@@ -183,7 +183,7 @@ public class ColorSelector {
             dragging = false;
         }
         bottomSlider.setGradient(Colors.TRANSPARENT, color.getRGBNoAlpha());
-        RenderManager.drawRoundImage(vg, Images.ALPHA_GRID, x + 16, y + 456, 384, 16, 8f);
+        RenderManager.drawRoundImage(vg, Images.ALPHA_GRID.filePath, x + 16, y + 456, 384, 16, 8f);
         bottomSlider.draw(vg, x + 16, y + 456);
 
         if (percentMoveMain > 0.96f) {
@@ -198,7 +198,7 @@ public class ColorSelector {
 
         // draw the color preview
         RenderManager.drawHollowRoundRect(vg, x + 15, y + 487, 384, 40, Colors.GRAY_300, 12f, 2f);
-        RenderManager.drawRoundImage(vg, Images.ALPHA_GRID, x + 20, y + 492, 376, 32, 8f);
+        RenderManager.drawRoundImage(vg, Images.ALPHA_GRID.filePath, x + 20, y + 492, 376, 32, 8f);
         RenderManager.drawRoundedRect(vg, x + 20, y + 492, 376, 32, color.getRGB(), 8f);
 
         inputScissor = InputUtils.blockInputArea(x - 3, y - 3, width + 6, height + 6);
@@ -215,7 +215,7 @@ public class ColorSelector {
             case 0:
             case 2:
                 //buttons.get(mode).colorAnimation.setPalette(ColorPalette.TERTIARY);
-                topSlider.setImage(Images.HUE_GRADIENT);
+                topSlider.setImage(Images.HUE_GRADIENT.filePath);
                 RenderManager.drawHSBBox(vg, x + 16, y + 120, 384, 288, color.getRGBMax(true));
 
                 if (mode == 0) {
@@ -231,7 +231,7 @@ public class ColorSelector {
             case 1:
                 //buttons.get(1).colorAnimation.setPalette(ColorPalette.TERTIARY);
                 topSlider.setImage(null);
-                RenderManager.drawRoundImage(vg, Images.COLOR_WHEEL, x + 64, y + 120, 288, 288, 144f);
+                RenderManager.drawRoundImage(vg, Images.COLOR_WHEEL.filePath, x + 64, y + 120, 288, 288, 144f);
 
                 topSlider.setGradient(Colors.BLACK, color.getRGBMax(true));
                 topSlider.setImage(null);
@@ -419,7 +419,7 @@ public class ColorSelector {
 
     private static class ColorSlider extends Slider {
         protected int gradColorStart, gradColorEnd;
-        protected Images image;
+        protected String image;
         protected int color;
 
         public ColorSlider(int length, float min, float max, float startValue) {
@@ -455,7 +455,7 @@ public class ColorSelector {
             this.color = color;
         }
 
-        public void setImage(Images image) {
+        public void setImage(String image) {
             this.image = image;
         }
     }

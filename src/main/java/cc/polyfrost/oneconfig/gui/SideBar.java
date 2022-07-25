@@ -3,7 +3,6 @@ package cc.polyfrost.oneconfig.gui;
 import cc.polyfrost.oneconfig.gui.animations.Animation;
 import cc.polyfrost.oneconfig.gui.animations.CubicBezier;
 import cc.polyfrost.oneconfig.gui.animations.DummyAnimation;
-import cc.polyfrost.oneconfig.gui.animations.EaseInOutQuart;
 import cc.polyfrost.oneconfig.gui.elements.BasicButton;
 import cc.polyfrost.oneconfig.gui.pages.CreditsPage;
 import cc.polyfrost.oneconfig.gui.pages.ModConfigPage;
@@ -24,18 +23,18 @@ import static cc.polyfrost.oneconfig.gui.elements.BasicButton.SIZE_36;
 
 public class SideBar {
     private final ArrayList<BasicButton> buttons = new ArrayList<BasicButton>() {{
-        add(new BasicButton(192, SIZE_36, "Credits", SVGs.COPYRIGHT_FILL, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY));
-        add(new BasicButton(192, SIZE_36, "Global Search", SVGs.MAGNIFYING_GLASS_BOLD, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY));
-        add(new BasicButton(192, SIZE_36, "Mods", SVGs.FADERS_HORIZONTAL_BOLD, null, ALIGNMENT_LEFT, ColorPalette.PRIMARY));
-        add(new BasicButton(192, SIZE_36, "Profiles", SVGs.USER_SWITCH_FILL, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY));
-        add(new BasicButton(192, SIZE_36, "Performance", SVGs.GAUGE_FILL, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY));
-        add(new BasicButton(192, SIZE_36, "Updates", SVGs.ARROWS_CLOCKWISE_BOLD, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY));
-        add(new BasicButton(192, SIZE_36, "Themes", SVGs.PAINT_BRUSH_BROAD_FILL, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY));
-        add(new BasicButton(192, SIZE_36, "Screenshots", SVGs.APERTURE_FILL, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY));
-        add(new BasicButton(192, SIZE_36, "Preferences", SVGs.GEAR_SIX_FILL, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY));
+        add(new BasicButton(192, SIZE_36, "Credits", SVGs.COPYRIGHT_FILL.svg, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY));
+        add(new BasicButton(192, SIZE_36, "Global Search", SVGs.MAGNIFYING_GLASS_BOLD.svg, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY));
+        add(new BasicButton(192, SIZE_36, "Mods", SVGs.FADERS_HORIZONTAL_BOLD.svg, null, ALIGNMENT_LEFT, ColorPalette.PRIMARY));
+        add(new BasicButton(192, SIZE_36, "Profiles", SVGs.USER_SWITCH_FILL.svg, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY));
+        add(new BasicButton(192, SIZE_36, "Performance", SVGs.GAUGE_FILL.svg, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY));
+        add(new BasicButton(192, SIZE_36, "Updates", SVGs.ARROWS_CLOCKWISE_BOLD.svg, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY));
+        add(new BasicButton(192, SIZE_36, "Themes", SVGs.PAINT_BRUSH_BROAD_FILL.svg, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY));
+        add(new BasicButton(192, SIZE_36, "Screenshots", SVGs.APERTURE_FILL.svg, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY));
+        add(new BasicButton(192, SIZE_36, "Preferences", SVGs.GEAR_SIX_FILL.svg, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY));
     }};
-    private final BasicButton HUDButton = new BasicButton(192, SIZE_36, "Edit HUD", SVGs.NOTE_PENCIL_BOLD, null, ALIGNMENT_LEFT, ColorPalette.SECONDARY);
-    private final BasicButton CloseButton = new BasicButton(192, SIZE_36, "Close", SVGs.X_CIRCLE_BOLD, null, ALIGNMENT_LEFT, ColorPalette.SECONDARY_DESTRUCTIVE);
+    private final BasicButton HUDButton = new BasicButton(192, SIZE_36, "Edit HUD", SVGs.NOTE_PENCIL_BOLD.svg, null, ALIGNMENT_LEFT, ColorPalette.SECONDARY);
+    private final BasicButton CloseButton = new BasicButton(192, SIZE_36, "Close", SVGs.X_CIRCLE_BOLD.svg, null, ALIGNMENT_LEFT, ColorPalette.SECONDARY_DESTRUCTIVE);
     private int selected = 2;
     private Animation moveAnimation = null;
     private Animation sizeAnimation = null;

@@ -35,7 +35,7 @@ public class HomePage extends Page {
         RenderManager.drawRoundedRect(vg, x, y, 184, 36, -1, 12f);
         RenderManager.drawText(vg, "This is a cool string to test pages", x + 32, y + 72, -1, 36f, Fonts.BOLD);
         RenderManager.drawRoundedRect(vg, x + 350, y + 310, 300, 200, Colors.PRIMARY_600, 14f);
-        RenderManager.drawSvg(vg, SVGs.INFO_CIRCLE, x + 20, y + 604, 24, 24);
+        RenderManager.drawSvg(vg, SVGs.INFO_CIRCLE.svg, x + 20, y + 604, 24, 24);
         RenderManager.drawText(vg, "Info", x + 52, y + 618, Colors.WHITE_90, 24f, Fonts.MEDIUM);
         RenderManager.drawRoundedRect(vg, x + 16, y + 644, 1024, 64, Colors.GRAY_700, 20f);
 

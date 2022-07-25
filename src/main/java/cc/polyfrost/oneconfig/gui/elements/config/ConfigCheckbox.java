@@ -61,7 +61,7 @@ public class ConfigCheckbox extends BasicOption {
         RenderManager.drawHollowRoundRect(vg, x, y + 4, 23.5f, 23.5f, Colors.GRAY_300, 6f, 1f);        // the 0.5f is to make it look better ok
 
         RenderManager.drawRoundedRect(vg, x, y + 4, 24, 24, ColorUtils.setAlpha(Colors.PRIMARY_500, (int) (percentOn * 255)), 6f);
-        RenderManager.drawSvg(vg, SVGs.CHECKBOX_TICK, x, y + 4, 24, 24, new Color(1f, 1f, 1f, percentOn).getRGB());
+        RenderManager.drawSvg(vg, SVGs.CHECKBOX_TICK.svg, x, y + 4, 24, 24, new Color(1f, 1f, 1f, percentOn).getRGB());
 
         if (toggled && hover)
             RenderManager.drawHollowRoundRect(vg, x - 1, y + 3, 24, 24, Colors.PRIMARY_600, 6f, 2f);

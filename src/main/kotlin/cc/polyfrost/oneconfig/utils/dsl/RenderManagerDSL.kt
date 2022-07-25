@@ -3,8 +3,8 @@ package cc.polyfrost.oneconfig.utils.dsl
 import cc.polyfrost.oneconfig.config.data.InfoType
 import cc.polyfrost.oneconfig.renderer.RenderManager
 import cc.polyfrost.oneconfig.renderer.font.Font
-import cc.polyfrost.oneconfig.internal.assets.Images
-import cc.polyfrost.oneconfig.internal.assets.SVGs
+import cc.polyfrost.oneconfig.renderer.Image
+import cc.polyfrost.oneconfig.renderer.SVG
 import cc.polyfrost.oneconfig.utils.color.ColorUtils
 import org.lwjgl.nanovg.NVGColor
 
@@ -161,16 +161,16 @@ fun Long.drawImage(filePath: String, x: Number, y: Number, width: Number, height
 fun VG.drawImage(filePath: String, x: Number, y: Number, width: Number, height: Number, color: Int) =
     instance.drawImage(filePath, x, y, width, height, color)
 
-fun Long.drawImage(image: Images, x: Number, y: Number, width: Number, height: Number) =
+fun Long.drawImage(image: Image, x: Number, y: Number, width: Number, height: Number) =
     RenderManager.drawImage(this, image, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat())
 
-fun VG.drawImage(image: Images, x: Number, y: Number, width: Number, height: Number) =
+fun VG.drawImage(image: Image, x: Number, y: Number, width: Number, height: Number) =
     instance.drawImage(image, x, y, width, height)
 
-fun Long.drawImage(image: Images, x: Number, y: Number, width: Number, height: Number, color: Int) =
+fun Long.drawImage(image: Image, x: Number, y: Number, width: Number, height: Number, color: Int) =
     RenderManager.drawImage(this, image, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat(), color)
 
-fun VG.drawImage(image: Images, x: Number, y: Number, width: Number, height: Number, color: Int) =
+fun VG.drawImage(image: Image, x: Number, y: Number, width: Number, height: Number, color: Int) =
     instance.drawImage(image, x, y, width, height, color)
 
 
@@ -182,12 +182,12 @@ fun Long.drawRoundedImage(filePath: String, x: Number, y: Number, width: Number,
 fun VG.drawRoundedImage(filePath: String, x: Number, y: Number, width: Number, height: Number, radius: Number) =
     instance.drawRoundedImage(filePath, x, y, width, height, radius)
 
-fun Long.drawRoundedImage(image: Images, x: Number, y: Number, width: Number, height: Number, radius: Number) =
+fun Long.drawRoundedImage(image: Image, x: Number, y: Number, width: Number, height: Number, radius: Number) =
     RenderManager.drawRoundImage(
         this, image, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat(), radius.toFloat()
     )
 
-fun VG.drawRoundedImage(image: Images, x: Number, y: Number, width: Number, height: Number, radius: Number) =
+fun VG.drawRoundedImage(image: Image, x: Number, y: Number, width: Number, height: Number, radius: Number) =
     instance.drawRoundedImage(image, x, y, width, height, radius)
 
 
@@ -248,16 +248,16 @@ fun Long.drawSVG(filePath: String, x: Number, y: Number, width: Number, height: 
 fun VG.drawSVG(filePath: String, x: Number, y: Number, width: Number, height: Number, color: Int) =
     instance.drawSVG(filePath, x, y, width, height, color)
 
-fun Long.drawSVG(svg: SVGs, x: Number, y: Number, width: Number, height: Number) =
+fun Long.drawSVG(svg: SVG, x: Number, y: Number, width: Number, height: Number) =
     RenderManager.drawSvg(this, svg, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat())
 
-fun VG.drawSVG(svg: SVGs, x: Number, y: Number, width: Number, height: Number) =
+fun VG.drawSVG(svg: SVG, x: Number, y: Number, width: Number, height: Number) =
     instance.drawSVG(svg, x, y, width, height)
 
-fun Long.drawSVG(svg: SVGs, x: Number, y: Number, width: Number, height: Number, color: Int) =
+fun Long.drawSVG(svg: SVG, x: Number, y: Number, width: Number, height: Number, color: Int) =
     RenderManager.drawSvg(this, svg, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat(), color)
 
-fun VG.drawSVG(svg: SVGs, x: Number, y: Number, width: Number, height: Number, color: Int) =
+fun VG.drawSVG(svg: SVG, x: Number, y: Number, width: Number, height: Number, color: Int) =
     instance.drawSVG(svg, x, y, width, height, color)
 
 
