@@ -1,5 +1,6 @@
 package cc.polyfrost.oneconfig.config;
 
+import cc.polyfrost.oneconfig.config.annotations.Button;
 import cc.polyfrost.oneconfig.config.annotations.CustomOption;
 import cc.polyfrost.oneconfig.config.annotations.HUD;
 import cc.polyfrost.oneconfig.config.annotations.Page;
@@ -14,6 +15,7 @@ import cc.polyfrost.oneconfig.config.gson.NonProfileSpecificExclusionStrategy;
 import cc.polyfrost.oneconfig.config.gson.ProfileExclusionStrategy;
 import cc.polyfrost.oneconfig.config.profiles.Profiles;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
+import cc.polyfrost.oneconfig.gui.elements.config.ConfigButton;
 import cc.polyfrost.oneconfig.gui.elements.config.ConfigPageButton;
 import cc.polyfrost.oneconfig.gui.pages.ModConfigPage;
 import cc.polyfrost.oneconfig.hud.HUDUtils;
@@ -29,6 +31,7 @@ import java.io.BufferedWriter;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -120,10 +123,11 @@ public class Config {
      * @param migrate  whether the migrator should be run
      */
     protected void generateOptionList(Object instance, OptionPage page, Mod mod, boolean migrate) {
+        String pagePath = page.equals(mod.defaultPage) ? "" : page.name + ".";
         for (Field field : instance.getClass().getDeclaredFields()) {
             Option option = ConfigUtils.findAnnotation(field, Option.class);
             CustomOption customOption = ConfigUtils.findAnnotation(field, CustomOption.class);
-            String optionName = (page.equals(mod.defaultPage) ? "" : page.name + ".") + field.getName();
+            String optionName = pagePath + field.getName();
             if (option != null) {
                 BasicOption configOption = ConfigUtils.addOptionToPage(page, option, field, instance, migrate ? mod.migrator : null);
                 optionNames.put(optionName, configOption);
@@ -143,6 +147,15 @@ public class Config {
                 else subcategory.bottomButtons.add(button);
             } else if (field.isAnnotationPresent(HUD.class)) {
                 HUDUtils.addHudOptions(page, field, instance, this);
+            }
+        }
+        for (Method method : instance.getClass().getDeclaredMethods()) {
+            Button button = ConfigUtils.findAnnotation(method, Button.class);
+            String optionName = pagePath + method.getName();
+            if (button != null) {
+                ConfigButton option = ConfigButton.create(method, instance);
+                ConfigUtils.getSubCategory(page, button.category(), button.subcategory()).options.add(option);
+                optionNames.put(optionName, option);
             }
         }
     }

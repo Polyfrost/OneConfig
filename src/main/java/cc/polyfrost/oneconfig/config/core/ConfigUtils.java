@@ -14,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -59,7 +60,7 @@ public class ConfigUtils {
         // I have tried to check for supertype classes like Boolean other ways.
         // but they actually don't extend their primitive types (because that is impossible) so isAssignableFrom doesn't work.
         for (Class<?> clazz : expectedType) {
-            if(field.getType().equals(clazz)) return;
+            if (field.getType().equals(clazz)) return;
         }
         throw new InvalidTypeException("Field " + field.getName() + " in config " + field.getDeclaringClass().getName() + " is annotated as a " + type.toString() + ", but is not of valid type, expected " + Arrays.toString(expectedType) + " (found " + field.getType() + ")");
     }
@@ -110,6 +111,15 @@ public class ConfigUtils {
     public static <T extends Annotation> T findAnnotation(Field field, Class<T> annotationType) {
         if (field.isAnnotationPresent(annotationType)) return field.getAnnotation(annotationType);
         for (Annotation ann : field.getDeclaredAnnotations()) {
+            if (ann.annotationType().isAnnotationPresent(annotationType))
+                return ann.annotationType().getAnnotation(annotationType);
+        }
+        return null;
+    }
+
+    public static <T extends Annotation> T findAnnotation(Method method, Class<T> annotationType) {
+        if (method.isAnnotationPresent(annotationType)) return method.getAnnotation(annotationType);
+        for (Annotation ann : method.getDeclaredAnnotations()) {
             if (ann.annotationType().isAnnotationPresent(annotationType))
                 return ann.annotationType().getAnnotation(annotationType);
         }
