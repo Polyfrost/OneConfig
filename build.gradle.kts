@@ -8,7 +8,7 @@ plugins {
     id("org.jetbrains.kotlinx.binary-compatibility-validator") version "0.8.0"
     id("gg.essential.defaults.repo")
     id("gg.essential.defaults.java")
-    id("net.kyori.blossom") version "1.3.0"
+    id("net.kyori.blossom") version "1.3.1"
     id("maven-publish")
     id("signing")
     java
