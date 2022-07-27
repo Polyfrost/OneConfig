@@ -16,6 +16,9 @@ public class OneConfigMixinPlugin implements IMixinConfigPlugin {
 
     @Override
     public void onLoad(String mixinPackage) {
+        //#if MODERN==1
+        //$$ com.llamalad7.mixinextras.MixinExtrasBootstrap.init();
+        //#endif
         try {
             Class.forName("gg.essential.vigilance.Vigilant");
             isVigilance = true;
@@ -48,6 +51,13 @@ public class OneConfigMixinPlugin implements IMixinConfigPlugin {
             } else {
                 mixins.add("FramebufferMixin");
                 mixins.add("GameRendererAccessor");
+            }
+            if (Platform.getInstance().getMinecraftVersion() < 11700 || Platform.getInstance().getLoader() == Platform.Loader.FORGE) {
+                mixins.add("commands.ClientPlayerEntityMixin");
+                mixins.add("commands.ClientPlayNetHandlerMixin");
+                mixins.add("commands.ClientSuggestionProviderMixin");
+                mixins.add("commands.HelpCommandAccessor");
+                mixins.add("commands.MinecraftMixin_Commands");
             }
             mixins.add("KeyboardMixin");
             mixins.add("MouseAccessor");

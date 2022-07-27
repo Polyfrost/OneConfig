@@ -12,8 +12,6 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import net.minecraft.command.CommandSource;
-import net.minecraft.command.Commands;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -23,6 +21,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.CompletableFuture;
 
+import static cc.polyfrost.oneconfig.utils.commands.ClientCommandManager.*;
 import static cc.polyfrost.oneconfig.utils.commands.CommandManager.METHOD_RUN_ERROR;
 
 public class PlatformCommandManagerImpl extends PlatformCommandManager {
@@ -31,7 +30,7 @@ public class PlatformCommandManagerImpl extends PlatformCommandManager {
 
     @Override
     void createCommand(CommandManager.InternalCommand root, Command annotation) {
-        LiteralArgumentBuilder<CommandSource> builder = Commands.literal(annotation.value());
+        LiteralArgumentBuilder<FabricClientCommandSource> builder = literal(annotation.value());
         if (!root.invokers.isEmpty()) {
             builder.executes((context ->
             {
@@ -46,48 +45,61 @@ public class PlatformCommandManagerImpl extends PlatformCommandManager {
             }));
         }
         if (annotation.helpCommand()) {
-            builder.then(Commands.literal("help").executes((context ->
+            builder.then(literal("help").executes((context ->
             {
                 UChat.chat(sendHelpCommand(root));
                 return 1;
             })));
         }
         for (CommandManager.InternalCommand command : root.children) {
-            loopThroughChildren(command, builder, null);
+            builder.then(loopThroughChildren(command, null));
         }
+        DISPATCHER.register(builder);
     }
 
-    private void loopThroughChildren(CommandManager.InternalCommand command, LiteralArgumentBuilder<CommandSource> root, LiteralArgumentBuilder<CommandSource> builder) {
-        if (command.invokers.isEmpty() || command.children.isEmpty()) return;
+    private LiteralArgumentBuilder<FabricClientCommandSource> loopThroughChildren(CommandManager.InternalCommand command, LiteralArgumentBuilder<FabricClientCommandSource> builder) {
         if (builder == null) {
-            builder = root.then(Commands.literal(command.name));
-        } else {
-            builder = builder.then(Commands.literal(command.name));
+            builder = literal(command.name);
+        }
+        for (CommandManager.InternalCommand child : command.children) {
+            builder.then(loopThroughChildren(child, builder));
         }
         for (CommandManager.InternalCommand.InternalCommandInvoker invoker : command.invokers) {
             for (Parameter parameter : invoker.method.getParameters()) {
                 Pair<ArgumentType<Object>, ArgumentType<Object>> pair = parsers.get(parameter.getType());
-                builder.then(Commands.argument(parameter.getName(), parameter.isAnnotationPresent(Greedy.class) ? pair.getRight() : pair.getLeft()));
+                builder.then(argument(parameter.getName(), parameter.isAnnotationPresent(Greedy.class) ? pair.getRight() : pair.getLeft()));
             }
-            builder.executes((context ->
-            {
-                try {
-                    ArrayList<Object> args = new ArrayList<>(invoker.method.getParameterCount());
-                    for (Parameter parameter: invoker.method.getParameters()) {
-                        args.add(context.getArgument(parameter.getName(), Object.class));
+            if (invoker.parameterTypes.length == 0) {
+                builder.executes((context ->
+                {
+                    try {
+                        invoker.method.invoke(null);
+                        return 1;
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        UChat.chat(ChatColor.RED.toString() + ChatColor.BOLD + METHOD_RUN_ERROR);
+                        return 0;
                     }
-                    invoker.method.invoke(null, args);
-                    return 1;
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    UChat.chat(ChatColor.RED.toString() + ChatColor.BOLD + METHOD_RUN_ERROR);
-                    return 0;
-                }
-            }));
+                }));
+            } else {
+                builder.executes((context ->
+                {
+                    try {
+                        ArrayList<Object> args = new ArrayList<>(invoker.method.getParameterCount());
+                        for (Parameter parameter: invoker.method.getParameters()) {
+                            args.add(context.getArgument(parameter.getName(), Object.class));
+                        }
+                        invoker.method.invoke(null, args.toArray());
+                        return 1;
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        UChat.chat(ChatColor.RED.toString() + ChatColor.BOLD + METHOD_RUN_ERROR);
+                        return 0;
+                    }
+                }));
+            }
         }
-        for (CommandManager.InternalCommand child : command.children) {
-            loopThroughChildren(child, root, builder);
-        }
+        return builder;
     }
 
     @Override
