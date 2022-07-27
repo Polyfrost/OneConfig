@@ -1,9 +1,6 @@
 package cc.polyfrost.oneconfig.config;
 
-import cc.polyfrost.oneconfig.config.annotations.Button;
-import cc.polyfrost.oneconfig.config.annotations.CustomOption;
-import cc.polyfrost.oneconfig.config.annotations.HUD;
-import cc.polyfrost.oneconfig.config.annotations.Page;
+import cc.polyfrost.oneconfig.config.annotations.*;
 import cc.polyfrost.oneconfig.config.core.ConfigUtils;
 import cc.polyfrost.oneconfig.config.core.OneKeyBind;
 import cc.polyfrost.oneconfig.config.data.Mod;
@@ -141,7 +138,7 @@ public class Config {
                 Object pageInstance = ConfigUtils.getField(field, instance);
                 if (pageInstance == null) continue;
                 ConfigPageButton button;
-                if(pageInstance instanceof cc.polyfrost.oneconfig.gui.pages.Page) {
+                if (pageInstance instanceof cc.polyfrost.oneconfig.gui.pages.Page) {
                     button = new ConfigPageButton(field, instance, optionPage.name(), optionPage.description(), optionPage.category(), optionPage.subcategory(), (cc.polyfrost.oneconfig.gui.pages.Page) pageInstance);
                 } else {
                     OptionPage newPage = new OptionPage(optionPage.name(), mod);
@@ -154,7 +151,7 @@ public class Config {
                 HUDUtils.addHudOptions(page, field, instance, this);
             }
         }
-        for (Method method : instance.getClass().getDeclaredMethods()) {
+        /*for (Method method : instance.getClass().getDeclaredMethods()) {
             Button button = ConfigUtils.findAnnotation(method, Button.class);
             String optionName = pagePath + method.getName();
             if (button != null) {
@@ -162,11 +159,12 @@ public class Config {
                 ConfigUtils.getSubCategory(page, button.category(), button.subcategory()).options.add(option);
                 optionNames.put(optionName, option);
             }
-        }
+        }*/
     }
 
     /**
-     * All fields with the CustomOption annotation are sent to this function
+     * All fields with the CustomOption annotation are sent to this function, overwrite this function to handle custom options,
+     * For documentation please see: <a href="https://docs.polyfrost.cc/oneconfig/config/adding-options/custom-options">https://docs.polyfrost.cc/oneconfig/config/adding-options/custom-options</a>
      *
      * @param field      Target field
      * @param annotation The annotation the field has
@@ -175,7 +173,6 @@ public class Config {
      * @param migrate    If the data should be migrated
      */
     protected BasicOption getCustomOption(Field field, CustomOption annotation, OptionPage page, Mod mod, boolean migrate) {
-        ConfigUtils.check("CustomOption", field, BasicOption.class);
         return null;
     }
 
