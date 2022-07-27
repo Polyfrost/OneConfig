@@ -19,10 +19,10 @@ class KotlinLanguageAdapter : ILanguageAdapter {
 
     override fun supportsStatics(): Boolean = false
     override fun getNewInstance(
-        container: FMLModContainer, objectClass: Class<*>, classLoader: ClassLoader, factoryMarkedAnnotation: Method
+        container: FMLModContainer?, objectClass: Class<*>, classLoader: ClassLoader?, factoryMarkedAnnotation: Method?
     ): Any = objectClass.kotlin.objectInstance ?: objectClass.getDeclaredConstructor().newInstance()
 
-    override fun setProxy(target: Field, proxyTarget: Class<*>, proxy: Any) {
+    override fun setProxy(target: Field, proxyTarget: Class<*>, proxy: Any?) {
         target.set(proxyTarget.kotlin.objectInstance, proxy)
     }
 
