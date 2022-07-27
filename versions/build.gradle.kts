@@ -1,6 +1,7 @@
 import gg.essential.gradle.util.RelocationTransform.Companion.registerRelocationAttribute
 import gg.essential.gradle.util.noServerRunConfigs
 import net.fabricmc.loom.task.RemapSourcesJarTask
+import org.jetbrains.kotlin.gradle.utils.extendsFrom
 import java.text.SimpleDateFormat
 
 
@@ -90,6 +91,16 @@ val relocated = registerRelocationAttribute("relocate") {
     relocate("org.checkerframework", "cc.polyfrost.oneconfig.libs")
     remapStringsIn("com.github.benmanes.caffeine.cache.LocalCacheFactory")
     remapStringsIn("com.github.benmanes.caffeine.cache.NodeFactory")
+}
+
+val implementationNoPom: Configuration by configurations.creating {
+    configurations.named(JavaPlugin.COMPILE_CLASSPATH_CONFIGURATION_NAME) { extendsFrom(this@creating) }
+    configurations.named(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME) { extendsFrom(this@creating) }
+}
+
+val modImplementationNoPom: Configuration by configurations.creating {
+    configurations.modImplementation.get().extendsFrom(this)
+    configurations.modRuntime.get().extendsFrom(this)
 }
 
 val shadeProject: Configuration by configurations.creating {
@@ -365,8 +376,7 @@ fun DependencyHandlerScope.include(dependency: Any, pom: Boolean = true, mod: Bo
             shade(dependency)
         } else {
             shadeNoPom2(dependency)
-            compileOnly(dependency)
-            runtimeOnly(dependency)
+            implementationNoPom(dependency)
         }
     } else {
         if (pom) {
@@ -377,11 +387,9 @@ fun DependencyHandlerScope.include(dependency: Any, pom: Boolean = true, mod: Bo
             }
         } else {
             if (mod) {
-                modCompileOnly(dependency)
-                modRuntimeOnly(dependency)
+                modImplementationNoPom(dependency)
             } else {
-                compileOnly(dependency)
-                runtimeOnly(dependency)
+                implementationNoPom(dependency)
             }
         }
         "include"(dependency)
@@ -392,15 +400,13 @@ fun DependencyHandlerScope.include(dependency: ModuleDependency, pom: Boolean = 
     if (platform.isForge) {
         if (relocate) {
             shadeRelocated(dependency) { isTransitive = transitive }
-            compileOnly(dependency) { isTransitive = transitive; attributes { attribute(relocated, true) } }
-            runtimeOnly(dependency) { isTransitive = transitive; attributes { attribute(relocated, true) } }
+            implementationNoPom(dependency) { isTransitive = transitive; attributes { attribute(relocated, true) } }
         } else {
             if (pom) {
                 shade(dependency) { isTransitive = transitive }
             } else {
                 shadeNoPom2(dependency) { isTransitive = transitive }
-                compileOnly(dependency) { isTransitive = transitive }
-                runtimeOnly(dependency) { isTransitive = transitive }
+                implementationNoPom(dependency) { isTransitive = transitive }
             }
         }
     } else {
@@ -412,11 +418,9 @@ fun DependencyHandlerScope.include(dependency: ModuleDependency, pom: Boolean = 
             }
         } else {
             if (mod) {
-                modCompileOnly(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
-                modRuntimeOnly(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
+                modImplementationNoPom(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
             } else {
-                compileOnly(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
-                runtimeOnly(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
+                implementationNoPom(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
             }
         }
         "include"(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
@@ -427,15 +431,13 @@ fun DependencyHandlerScope.include(dependency: String, pom: Boolean = true, mod:
     if (platform.isForge) {
         if (relocate) {
             shadeRelocated(dependency) { isTransitive = transitive }
-            compileOnly(dependency) { isTransitive = transitive; attributes { attribute(relocated, true) } }
-            runtimeOnly(dependency) { isTransitive = transitive; attributes { attribute(relocated, true) } }
+            implementationNoPom(dependency) { isTransitive = transitive; attributes { attribute(relocated, true) } }
         } else {
             if (pom) {
                 shade(dependency) { isTransitive = transitive }
             } else {
                 shadeNoPom2(dependency) { isTransitive = transitive }
-                compileOnly(dependency) { isTransitive = transitive }
-                runtimeOnly(dependency) { isTransitive = transitive }
+                implementationNoPom(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
             }
         }
     } else {
@@ -447,11 +449,9 @@ fun DependencyHandlerScope.include(dependency: String, pom: Boolean = true, mod:
             }
         } else {
             if (mod) {
-                modCompileOnly(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
-                modRuntimeOnly(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
+                modImplementationNoPom(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
             } else {
-                compileOnly(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
-                runtimeOnly(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
+                implementationNoPom(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
             }
         }
         "include"(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
