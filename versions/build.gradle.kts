@@ -1,7 +1,6 @@
 import gg.essential.gradle.util.RelocationTransform.Companion.registerRelocationAttribute
 import gg.essential.gradle.util.noServerRunConfigs
 import net.fabricmc.loom.task.RemapSourcesJarTask
-import org.jetbrains.kotlin.gradle.utils.extendsFrom
 import java.text.SimpleDateFormat
 
 
@@ -115,7 +114,9 @@ val shade: Configuration by configurations.creating {
     configurations.api.get().extendsFrom(this)
 }
 
-val shadeNoPom2: Configuration by configurations.creating
+val shadeNoPom: Configuration by configurations.creating
+
+val shadeNoJar: Configuration by configurations.creating
 
 sourceSets {
     main {
@@ -155,7 +156,9 @@ dependencies {
     include("org.jetbrains.kotlinx:atomicfu-jvm:$atomicfuVersion")
 
     if (platform.isLegacyForge) {
-        include("org.spongepowered:mixin:0.7.11-SNAPSHOT", pom = false, transitive = false)
+        implementationNoPom(shadeNoJar("org.spongepowered:mixin:0.7.11-SNAPSHOT") {
+            isTransitive = false
+        })
     }
     shadeProject(project(":")) {
         isTransitive = false
@@ -232,7 +235,7 @@ tasks {
 
     val shadowJar = named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar") {
         archiveClassifier.set("full-dev")
-        configurations = listOf(shade, shadeNoPom2, shadeProject, shadeRelocated)
+        configurations = listOf(shade, shadeNoPom, shadeNoJar, shadeProject, shadeRelocated)
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
         dependsOn(jar)
     }
@@ -247,8 +250,8 @@ tasks {
     }
     jar {
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-        dependsOn(shadeNoPom2, shadeProject, shadeRelocated)
-        from(ArrayList<File>().run { addAll(shadeNoPom2); addAll(shadeProject); addAll(shadeRelocated); this }
+        dependsOn(shadeNoPom, shadeProject, shadeRelocated)
+        from(ArrayList<File>().run { addAll(shadeNoPom); addAll(shadeProject); addAll(shadeRelocated); this }
             .map { if (it.isDirectory) it else zipTree(it) })
         manifest {
             attributes(
@@ -375,7 +378,7 @@ fun DependencyHandlerScope.include(dependency: Any, pom: Boolean = true, mod: Bo
         if (pom) {
             shade(dependency)
         } else {
-            shadeNoPom2(dependency)
+            shadeNoPom(dependency)
             implementationNoPom(dependency)
         }
     } else {
@@ -405,7 +408,7 @@ fun DependencyHandlerScope.include(dependency: ModuleDependency, pom: Boolean = 
             if (pom) {
                 shade(dependency) { isTransitive = transitive }
             } else {
-                shadeNoPom2(dependency) { isTransitive = transitive }
+                shadeNoPom(dependency) { isTransitive = transitive }
                 implementationNoPom(dependency) { isTransitive = transitive }
             }
         }
@@ -436,7 +439,7 @@ fun DependencyHandlerScope.include(dependency: String, pom: Boolean = true, mod:
             if (pom) {
                 shade(dependency) { isTransitive = transitive }
             } else {
-                shadeNoPom2(dependency) { isTransitive = transitive }
+                shadeNoPom(dependency) { isTransitive = transitive }
                 implementationNoPom(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
             }
         }
