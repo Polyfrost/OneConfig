@@ -1637,6 +1637,7 @@ public final class cc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType : ja
 	public static final field BUILD_BATTLE Lcc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
 	public static final field CLASSIC_GAMES Lcc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
 	public static final field COPS_AND_CRIMS Lcc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
+	public static final field DROPPER Lcc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
 	public static final field DUELS Lcc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
 	public static final field HOUSING Lcc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
 	public static final field LIMBO Lcc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
