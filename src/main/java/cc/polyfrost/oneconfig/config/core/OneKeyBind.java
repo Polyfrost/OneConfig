@@ -55,4 +55,8 @@ public class OneKeyBind {
     public void setRunnable(Runnable runnable) {
         this.runnable = runnable;
     }
+
+    public ArrayList<Integer> getKeyBinds() {
+        return keyBinds;
+    }
 }
