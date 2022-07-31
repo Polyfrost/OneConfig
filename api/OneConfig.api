@@ -114,6 +114,9 @@ public abstract interface annotation class cc/polyfrost/oneconfig/config/annotat
 	public abstract fun subcategory ()Ljava/lang/String;
 }
 
+public abstract interface annotation class cc/polyfrost/oneconfig/config/annotations/Preview : java/lang/annotation/Annotation {
+}
+
 public abstract interface annotation class cc/polyfrost/oneconfig/config/annotations/Slider : java/lang/annotation/Annotation {
 	public abstract fun category ()Ljava/lang/String;
 	public abstract fun max ()F
@@ -384,6 +387,28 @@ public abstract interface annotation class cc/polyfrost/oneconfig/config/migrati
 	public abstract fun category ()Ljava/lang/String;
 	public abstract fun name ()Ljava/lang/String;
 	public abstract fun subcategory ()Ljava/lang/String;
+}
+
+public abstract class cc/polyfrost/oneconfig/config/preview/BasicPreview {
+	public fun <init> ()V
+	public abstract fun getHeight (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;JFFF)F
+	public abstract fun setupCallDraw (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;JFFFF)V
+}
+
+public abstract class cc/polyfrost/oneconfig/config/preview/MCPreview : cc/polyfrost/oneconfig/config/preview/BasicPreview {
+	public fun <init> ()V
+	protected abstract fun draw (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;FF)V
+	protected abstract fun getHeight (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;FFF)F
+	public final fun getHeight (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;JFFF)F
+	public final fun setupCallDraw (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;JFFFF)V
+}
+
+public abstract class cc/polyfrost/oneconfig/config/preview/VGPreview : cc/polyfrost/oneconfig/config/preview/BasicPreview {
+	public fun <init> ()V
+	protected abstract fun draw (JFF)V
+	protected abstract fun getHeight (JFFF)F
+	public final fun getHeight (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;JFFF)F
+	public final fun setupCallDraw (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;JFFFF)V
 }
 
 public class cc/polyfrost/oneconfig/config/profiles/Profiles {
@@ -1187,10 +1212,13 @@ public final class cc/polyfrost/oneconfig/renderer/RenderManager {
 	public static fun drawWrappedString (JLjava/lang/String;FFFIFLcc/polyfrost/oneconfig/renderer/font/Font;)V
 	public static fun fillNVGColorWithRGBA (FFFFLorg/lwjgl/nanovg/NVGColor;)V
 	public static fun getTextWidth (JLjava/lang/String;FLcc/polyfrost/oneconfig/renderer/font/Font;)F
+	public static fun resetTransform (J)V
+	public static fun rotate (JF)V
 	public static fun scale (JFF)V
 	public static fun setAlpha (JF)V
 	public static fun setupAndDraw (Ljava/util/function/LongConsumer;)V
 	public static fun setupAndDraw (ZLjava/util/function/LongConsumer;)V
+	public static fun translate (JFF)V
 }
 
 public final class cc/polyfrost/oneconfig/renderer/RenderManager$TextType : java/lang/Enum {
