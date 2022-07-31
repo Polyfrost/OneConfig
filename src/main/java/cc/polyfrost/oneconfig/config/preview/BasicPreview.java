@@ -20,4 +20,6 @@ public abstract class BasicPreview {
      * @param height The height of the preview.
      */
     public abstract void setupCallDraw(UMatrixStack matrices, long vg, float x, float y, float width, float height);
+
+    public abstract float getHeight(UMatrixStack matrices, long vg, float x, float y, float width);
 }

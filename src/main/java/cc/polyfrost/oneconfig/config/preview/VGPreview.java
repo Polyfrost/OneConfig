@@ -29,4 +29,11 @@ public abstract class VGPreview extends BasicPreview {
      * @param height The height of the preview.
      */
     protected abstract void draw(long vg, float width, float height);
+
+    @Override
+    public final float getHeight(UMatrixStack matrices, long vg, float x, float y, float width) {
+        return getHeight(vg, x, y, width);
+    }
+
+    protected abstract float getHeight(long vg, float x, float y, float width);
 }

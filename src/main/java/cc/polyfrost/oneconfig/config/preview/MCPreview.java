@@ -23,4 +23,11 @@ public abstract class MCPreview extends BasicPreview {
      * @param height The height of the preview.
      */
     protected abstract void draw(UMatrixStack matrices, float width, float height);
+
+    @Override
+    public final float getHeight(UMatrixStack matrices, long vg, float x, float y, float width) {
+        return getHeight(matrices, x, y, width);
+    }
+
+    protected abstract float getHeight(UMatrixStack matrices, float x, float y, float width);
 }
