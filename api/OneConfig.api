@@ -197,6 +197,7 @@ public class cc/polyfrost/oneconfig/config/core/OneKeyBind {
 	public fun addKey (I)V
 	public fun clearKeys ()V
 	public fun getDisplay ()Ljava/lang/String;
+	public fun getKeyBinds ()Ljava/util/ArrayList;
 	public fun getSize ()I
 	public fun isActive ()Z
 	public fun run ()V
