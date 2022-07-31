@@ -535,6 +535,34 @@ public final class RenderManager {
     }
 
     /**
+     * Translates all rendering by the provided x and y values.
+     *
+     * @param vg The NanoVG context.
+     * @param x  The x value.
+     * @param y  The y value.
+     */
+    public static void translate(long vg, float x, float y) {
+        nvgTranslate(vg, x, y);
+    }
+
+    /**
+     * Rotates all rendering by the provided angle.
+     *
+     * @param vg The NanoVG context.
+     * @param a  The angle.
+     */
+    public static void rotate(long vg, float a) {
+        nvgRotate(vg, a);
+    }
+
+    /**
+     * Resets all prior transformations.
+     */
+    public static void resetTransform(long vg) {
+        nvgResetTransform(vg);
+    }
+
+    /**
      * Sets the global alpha value to render with.
      *
      * @param vg    The NanoVG context.

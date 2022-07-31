@@ -26,7 +26,6 @@ import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.lwjgl.nanovg.NanoVG;
 
 import java.util.ArrayList;
 
@@ -76,8 +75,8 @@ public class OneConfigGui extends UScreen implements GuiPause {
                 currentPage.parents.add(currentPage);
             }
             if (OneConfigConfig.australia) {
-                NanoVG.nvgTranslate(vg, UResolution.getWindowWidth(), UResolution.getWindowHeight());
-                NanoVG.nvgRotate(vg, (float) Math.toRadians(180));
+                RenderManager.translate(vg, UResolution.getWindowWidth(), UResolution.getWindowHeight());
+                RenderManager.rotate(vg, (float) Math.toRadians(180));
             }
             scale = Preferences.enableCustomScale ? Preferences.customScale : Math.min(UResolution.getWindowWidth() / 1920f, UResolution.getWindowHeight() / 1080f);
             if (scale < 1 && !Preferences.enableCustomScale)
