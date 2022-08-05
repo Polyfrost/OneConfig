@@ -115,6 +115,10 @@ public abstract interface annotation class cc/polyfrost/oneconfig/config/annotat
 }
 
 public abstract interface annotation class cc/polyfrost/oneconfig/config/annotations/Preview : java/lang/annotation/Annotation {
+	public abstract fun category ()Ljava/lang/String;
+	public abstract fun location ()Lcc/polyfrost/oneconfig/config/data/PageLocation;
+	public abstract fun name ()Ljava/lang/String;
+	public abstract fun subcategory ()Ljava/lang/String;
 }
 
 public abstract interface annotation class cc/polyfrost/oneconfig/config/annotations/Slider : java/lang/annotation/Annotation {
@@ -390,25 +394,23 @@ public abstract interface annotation class cc/polyfrost/oneconfig/config/migrati
 }
 
 public abstract class cc/polyfrost/oneconfig/config/preview/BasicPreview {
+	public final field WIDTH F
+	public field height F
 	public fun <init> ()V
-	public abstract fun getHeight (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;JFFF)F
-	public abstract fun setupCallDraw (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;JFFFF)V
+	public abstract fun getHeight ()F
+	public abstract fun setupCallDraw (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;JFF)V
 }
 
 public abstract class cc/polyfrost/oneconfig/config/preview/MCPreview : cc/polyfrost/oneconfig/config/preview/BasicPreview {
 	public fun <init> ()V
 	protected abstract fun draw (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;FF)V
-	protected abstract fun getHeight (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;FFF)F
-	public final fun getHeight (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;JFFF)F
-	public final fun setupCallDraw (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;JFFFF)V
+	public final fun setupCallDraw (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;JFF)V
 }
 
 public abstract class cc/polyfrost/oneconfig/config/preview/VGPreview : cc/polyfrost/oneconfig/config/preview/BasicPreview {
 	public fun <init> ()V
 	protected abstract fun draw (JFF)V
-	protected abstract fun getHeight (JFFF)F
-	public final fun getHeight (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;JFFF)F
-	public final fun setupCallDraw (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;JFFFF)V
+	public final fun setupCallDraw (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;JFF)V
 }
 
 public class cc/polyfrost/oneconfig/config/profiles/Profiles {
@@ -784,6 +786,12 @@ public class cc/polyfrost/oneconfig/gui/elements/config/ConfigPageButton : cc/po
 	public final field page Lcc/polyfrost/oneconfig/gui/pages/Page;
 	public fun <init> (Ljava/lang/reflect/Field;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lcc/polyfrost/oneconfig/config/elements/OptionPage;)V
 	public fun <init> (Ljava/lang/reflect/Field;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lcc/polyfrost/oneconfig/gui/pages/Page;)V
+	public fun draw (JII)V
+	public fun getHeight ()I
+}
+
+public class cc/polyfrost/oneconfig/gui/elements/config/ConfigPreview : cc/polyfrost/oneconfig/config/elements/BasicOption {
+	public fun <init> (Ljava/lang/reflect/Field;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lcc/polyfrost/oneconfig/config/preview/BasicPreview;)V
 	public fun draw (JII)V
 	public fun getHeight ()I
 }

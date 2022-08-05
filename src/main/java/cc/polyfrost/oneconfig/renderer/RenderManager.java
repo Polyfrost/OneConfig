@@ -462,7 +462,6 @@ public final class RenderManager {
 
     /**
      * Draw a drop shadow.
-     *
      * <a href="https://github.com/SpinyOwl/legui/blob/develop/LICENSE">Adapted from legui under MIT license</a>
      *
      * @param vg           The NanoVG context.
@@ -556,11 +555,13 @@ public final class RenderManager {
     }
 
     /**
-     * Resets all prior transformations.
+     * Resets all prior transformations. <br>
+     * <h1><b>NOTE: If you are using this inside the OneConfig GUI, DON'T!<br> It will break things!</b></h1>
      */
     public static void resetTransform(long vg) {
         nvgResetTransform(vg);
     }
+
 
     /**
      * Sets the global alpha value to render with.

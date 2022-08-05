@@ -165,7 +165,7 @@ public class TestConfig_Test extends Config {
     )
     public VGPreview preview = new VGPreview() {
         @Override
-        protected void draw(long vg, float x, float y, float width) {
+        protected void draw(long vg, float width, float height) {
 
         }
 

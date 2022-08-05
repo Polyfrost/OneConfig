@@ -11,7 +11,8 @@ public abstract class MCPreview extends BasicPreview {
     public final void setupCallDraw(UMatrixStack matrices, long vg, float x, float y) {
         matrices.push();
         matrices.translate(x, y, 0);
-        draw(matrices, WIDTH);
+        height = getHeight();
+        draw(matrices, WIDTH, height);
         matrices.pop();
     }
 
@@ -20,5 +21,5 @@ public abstract class MCPreview extends BasicPreview {
      *
      * @param matrices The matrix stack used to draw the preview. The X and Y coordinates have already been translated on this stack.
      */
-    protected abstract void draw(UMatrixStack matrices, float width);
+    protected abstract void draw(UMatrixStack matrices, float width, float height);
 }

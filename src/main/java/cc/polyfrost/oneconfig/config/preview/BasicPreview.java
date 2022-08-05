@@ -7,6 +7,7 @@ import cc.polyfrost.oneconfig.libs.universal.UMatrixStack;
  */
 public abstract class BasicPreview {
     public final float WIDTH = 1008;
+    public float height = getHeight();
 
     /**
      * Prepares the preview for drawing and calls a draw method specified by the preview.

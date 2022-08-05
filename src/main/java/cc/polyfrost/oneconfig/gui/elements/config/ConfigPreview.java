@@ -20,14 +20,14 @@ public class ConfigPreview extends BasicOption {
 
     @Override
     public int getHeight() {
-        return (int) preview.getHeight() + 28;
+        return (int) preview.height + 28;
     }
 
     @Override
     public void draw(long vg, int x, int y) {
         RenderManager.drawRoundedRect(vg, x - 16, y, 1024, getHeight(), Colors.GRAY_900, 20);
         RenderManager.drawText(vg, name, x, y + 11, Colors.WHITE_60, 10f, Fonts.REGULAR);
-        RenderManager.drawHollowRoundRect(vg, x - 8, y + 18, 1008, preview.getHeight(), Colors.GRAY_300, 16f, 1.5f);
+        RenderManager.drawHollowRoundRect(vg, x - 8, y + 18, 1008, preview.height, Colors.GRAY_300, 16f, 1.5f);
         //                      ! this is probably not going to work...
         preview.setupCallDraw(UMatrixStack.Compat.INSTANCE.get(), vg, x - 8, y + 18);
     }
