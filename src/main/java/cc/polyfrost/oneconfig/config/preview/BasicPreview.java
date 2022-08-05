@@ -6,8 +6,6 @@ import cc.polyfrost.oneconfig.libs.universal.UMatrixStack;
  * The base class for all config preview classes.
  */
 public abstract class BasicPreview {
-    public final float WIDTH = 1008;
-    public float height = getHeight();
 
     /**
      * Prepares the preview for drawing and calls a draw method specified by the preview.
@@ -20,7 +18,7 @@ public abstract class BasicPreview {
      * @param x        The x coordinate of the preview.
      * @param y        The y coordinate of the preview.
      */
-    public abstract void setupCallDraw(UMatrixStack matrices, long vg, float x, float y);
+    public abstract void setupCallDraw(UMatrixStack matrices, long vg, float x, float y, float width, float height);
 
     /**
      * @return return the entire height of this preview.

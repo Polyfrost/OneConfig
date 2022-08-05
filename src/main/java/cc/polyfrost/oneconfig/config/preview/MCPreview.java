@@ -8,11 +8,10 @@ import cc.polyfrost.oneconfig.libs.universal.UMatrixStack;
 public abstract class MCPreview extends BasicPreview {
 
     @Override
-    public final void setupCallDraw(UMatrixStack matrices, long vg, float x, float y) {
+    public final void setupCallDraw(UMatrixStack matrices, long vg, float x, float y, float width, float height) {
         matrices.push();
         matrices.translate(x, y, 0);
-        height = getHeight();
-        draw(matrices, WIDTH, height);
+        draw(matrices, width, height);
         matrices.pop();
     }
 
