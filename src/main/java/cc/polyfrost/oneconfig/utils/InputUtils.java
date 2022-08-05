@@ -77,6 +77,25 @@ public final class InputUtils {
     }
 
     /**
+     * Check weather a mouse button is actively down. This method repeats calls as long as the button is pressed.
+     * @param button button to check
+     * @param ignoreBlock ignore blocked clicks due to scissors
+     * @return true if button is actively down
+     */
+    public static boolean isButtonDown(int button, boolean ignoreBlock) {
+        return OneConfigGui.INSTANCE != null && Platform.getMousePlatform().isButtonDown(button) && (ignoreBlock || blockScissors.size() == 0 || !shouldBlock(mouseX(), mouseY()));
+    }
+
+    /**
+     * Check weather a mouse button is actively down. This method repeats calls as long as the button is pressed. Doesn't ignore blocks.
+     * @param button button to check
+     * @return true if button is actively down
+     */
+    public static boolean isButtonDown(int button) {
+        return isButtonDown(button, false);
+    }
+
+    /**
      * Checks whether the mouse is clicked or not.
      *
      * @return true if the mouse is clicked, false if not

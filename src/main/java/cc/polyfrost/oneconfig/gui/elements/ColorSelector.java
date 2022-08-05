@@ -23,6 +23,7 @@ import cc.polyfrost.oneconfig.utils.NetworkUtils;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 
 import java.awt.*;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 
 public class ColorSelector {
@@ -39,7 +40,7 @@ public class ColorSelector {
     private final NumberInputField brightnessInput = new NumberInputField(90, 32, 100, 0, 100, 1);
     private final NumberInputField alphaInput = new NumberInputField(90, 32, 0, 0, 100, 1);
     private final NumberInputField speedInput = new NumberInputField(90, 32, 2, 1, 30, 1);
-    private final TextInputField hexInput = new TextInputField(88, 32, true, "");
+    private final TextInputField hexInput = new TextInputField(88, 32, "", false, false, false, null);
     private final ArrayList<ColorBox> favoriteColors = new ArrayList<>();
     private final ArrayList<ColorBox> recentColors = new ArrayList<>();
     private final ColorSlider topSlider = new ColorSlider(384, 0, 360, 127);

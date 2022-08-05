@@ -24,9 +24,9 @@ public class ConfigColorElement extends BasicOption {
 
     public ConfigColorElement(Field field, Object parent, String name, String category, String subcategory, int size, boolean allowAlpha) {
         super(field, parent, name, category, subcategory, size);
-        hexField.setCentered(true);
-        alphaField.setCentered(true);
-        alphaField.onlyAcceptNumbers(true);
+        //hexField.setCentered(true);       // TODO
+        //alphaField.setCentered(true);
+        //alphaField.onlyAcceptNumbers(true);
         this.allowAlpha = allowAlpha;
     }
 

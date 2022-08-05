@@ -42,17 +42,17 @@ public class ConfigTextBox extends BasicOption {
         } catch (IllegalAccessException ignored) {
         }
 
-        if (multiLine && textField.getLines() > 2) textField.setHeight(64 + 24 * (textField.getLines() - 2));
-        else if (multiLine) textField.setHeight(64);
+        //if (multiLine && textField.getLines() > 2) textField.setHeight(64 + 24 * (textField.getLines() - 2));       // TODO
+        //else if (multiLine) textField.setHeight(64);
         textField.draw(vg, x + (size == 1 ? 224 : 352), y);
 
         if (secure) {
-            final SVG icon = textField.getPassword() ? SVGs.EYE_OFF : SVGs.EYE;
+            //final SVG icon = textField.getPassword() ? SVGs.EYE_OFF : SVGs.EYE;
             boolean hovered = InputUtils.isAreaHovered(x + 967, y + 7, 18, 18) && isEnabled();
             int color = hovered ? Colors.WHITE : Colors.WHITE_80;
-            if (hovered && InputUtils.isClicked()) textField.setPassword(!textField.getPassword());
+            //if (hovered && InputUtils.isClicked()) textField.setPassword(!textField.getPassword());
             if (hovered && Platform.getMousePlatform().isButtonDown(0)) RenderManager.setAlpha(vg, 0.5f);
-            RenderManager.drawSvg(vg, icon, x + 967, y + 7, 18, 18, color);
+            //RenderManager.drawSvg(vg, icon, x + 967, y + 7, 18, 18, color);
         }
         RenderManager.setAlpha(vg, 1f);
     }

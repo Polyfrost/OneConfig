@@ -18,8 +18,8 @@ public class NumberInputField extends TextInputField {
     private float current;
 
     public NumberInputField(int width, int height, float defaultValue, float min, float max, float step) {
-        super(width - 16, height, true, "");
-        super.onlyNums = true;
+        super(width - 16, height, "", false, false, true);      // TODO
+        //super.onlyNums = true;
         this.min = min;
         this.max = max;
         this.step = step;
@@ -79,7 +79,7 @@ public class NumberInputField extends TextInputField {
         } catch (Exception e) {
             setCurrentValue(current);
             super.caretPos = 0;
-            super.prevCaret = 0;
+            //super.prevCaret = 0;
         }
         if(disabled) RenderManager.setAlpha(vg, 1f);
     }
@@ -94,7 +94,7 @@ public class NumberInputField extends TextInputField {
     }
 
     @Override
-    public void onClose() {
+    public void close() {
         try {
             if (current < min) current = min;
             if (current > max) current = max;
