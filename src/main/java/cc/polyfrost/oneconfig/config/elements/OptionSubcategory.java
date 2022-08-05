@@ -1,9 +1,8 @@
 package cc.polyfrost.oneconfig.config.elements;
 
 import cc.polyfrost.oneconfig.config.Config;
-import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
-import cc.polyfrost.oneconfig.gui.elements.config.ConfigPageButton;
+import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 
@@ -14,8 +13,8 @@ import java.util.stream.Collectors;
 public class OptionSubcategory {
     private final String name;
     public ArrayList<BasicOption> options = new ArrayList<>();
-    public ArrayList<ConfigPageButton> topButtons = new ArrayList<>();
-    public ArrayList<ConfigPageButton> bottomButtons = new ArrayList<>();
+    public ArrayList<BasicOption> topButtons = new ArrayList<>();
+    public ArrayList<BasicOption> bottomButtons = new ArrayList<>();
     private List<BasicOption> filteredOptions = new ArrayList<>();
     private int drawLastY;
 
@@ -26,8 +25,8 @@ public class OptionSubcategory {
     public int draw(long vg, int x, int y) {
         String filter = OneConfigGui.INSTANCE == null ? "" : OneConfigGui.INSTANCE.getSearchValue().toLowerCase().trim();
         filteredOptions = options.stream().filter(option -> !option.isHidden() && (filter.equals("") || name.toLowerCase().contains(filter) || option.name.toLowerCase().contains(filter))).collect(Collectors.toList());
-        List<ConfigPageButton> filteredTop = topButtons.stream().filter(page -> !page.isHidden() && (filter.equals("") || name.toLowerCase().contains(filter) || page.name.toLowerCase().contains(filter) || page.description.toLowerCase().contains(filter))).collect(Collectors.toList());
-        List<ConfigPageButton> filteredBottom = bottomButtons.stream().filter(page -> !page.isHidden() && (filter.equals("") || name.toLowerCase().contains(filter) || page.name.toLowerCase().contains(filter) || page.description.toLowerCase().contains(filter))).collect(Collectors.toList());
+        List<BasicOption> filteredTop = topButtons.stream().filter(opt -> !opt.isHidden() && (filter.equals("") || name.toLowerCase().contains(filter) || opt.name.toLowerCase().contains(filter))).collect(Collectors.toList());
+        List<BasicOption> filteredBottom = bottomButtons.stream().filter(opt -> !opt.isHidden() && (filter.equals("") || name.toLowerCase().contains(filter) || opt.name.toLowerCase().contains(filter))).collect(Collectors.toList());
         if (filteredOptions.size() == 0 && filteredTop.size() == 0 && filteredBottom.size() == 0) return 0;
         int optionY = y;
         if (!name.equals("")) {
@@ -35,9 +34,9 @@ public class OptionSubcategory {
             optionY += 36;
         }
 
-        for (ConfigPageButton page : filteredTop) {
-            page.draw(vg, x, optionY);
-            optionY += page.getHeight() + 16;
+        for (BasicOption opt : filteredTop) {
+            opt.draw(vg, x, optionY);
+            optionY += opt.getHeight() + 16;
         }
 
         if (filteredOptions.size() > 0) {
@@ -77,7 +76,7 @@ public class OptionSubcategory {
             optionY += 16;
         }
 
-        for (ConfigPageButton page : filteredBottom) {
+        for (BasicOption page : filteredBottom) {
             page.draw(vg, x, optionY);
             optionY += page.getHeight() + 16;
         }

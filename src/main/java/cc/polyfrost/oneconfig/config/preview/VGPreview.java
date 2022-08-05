@@ -10,10 +10,8 @@ import cc.polyfrost.oneconfig.renderer.RenderManager;
  */
 public abstract class VGPreview extends BasicPreview {
     @Override
-    public final void setupCallDraw(UMatrixStack matrices, long vg, float x, float y, float width, float height) {
-        RenderManager.translate(vg, x, y);
-        draw(vg, width, height);
-        RenderManager.resetTransform(vg);
+    public final void setupCallDraw(UMatrixStack matrices, long vg, float x, float y) {
+        draw(vg, x, y, WIDTH);
         // australia moment
         if (OneConfigConfig.australia) {
             RenderManager.translate(vg, UResolution.getWindowWidth(), UResolution.getWindowHeight());
@@ -25,15 +23,9 @@ public abstract class VGPreview extends BasicPreview {
      * Draws the preview.
      *
      * @param vg The VG instance used to draw the preview.
-     * @param width The width of the preview.
-     * @param height The height of the preview.
+     * @param x  The x coordinate of the preview.
+     * @param y  The y coordinate of the preview.
+     * @param width The width. constant.
      */
-    protected abstract void draw(long vg, float width, float height);
-
-    @Override
-    public final float getHeight(UMatrixStack matrices, long vg, float x, float y, float width) {
-        return getHeight(vg, x, y, width);
-    }
-
-    protected abstract float getHeight(long vg, float x, float y, float width);
+    protected abstract void draw(long vg, float x, float y, float width);
 }

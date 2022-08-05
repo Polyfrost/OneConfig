@@ -16,7 +16,7 @@ public @interface Page {
     String name();
 
     /**
-     * If the page button is at the top or bottem of the page
+     * If the page button is at the top or bottom of the page
      */
     PageLocation location();
 

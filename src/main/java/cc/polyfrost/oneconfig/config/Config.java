@@ -1,6 +1,9 @@
 package cc.polyfrost.oneconfig.config;
 
-import cc.polyfrost.oneconfig.config.annotations.*;
+import cc.polyfrost.oneconfig.config.annotations.CustomOption;
+import cc.polyfrost.oneconfig.config.annotations.HUD;
+import cc.polyfrost.oneconfig.config.annotations.Page;
+import cc.polyfrost.oneconfig.config.annotations.Preview;
 import cc.polyfrost.oneconfig.config.core.ConfigUtils;
 import cc.polyfrost.oneconfig.config.core.OneKeyBind;
 import cc.polyfrost.oneconfig.config.data.Mod;
@@ -10,10 +13,11 @@ import cc.polyfrost.oneconfig.config.elements.OptionPage;
 import cc.polyfrost.oneconfig.config.elements.OptionSubcategory;
 import cc.polyfrost.oneconfig.config.gson.NonProfileSpecificExclusionStrategy;
 import cc.polyfrost.oneconfig.config.gson.ProfileExclusionStrategy;
+import cc.polyfrost.oneconfig.config.preview.BasicPreview;
 import cc.polyfrost.oneconfig.config.profiles.Profiles;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
-import cc.polyfrost.oneconfig.gui.elements.config.ConfigButton;
 import cc.polyfrost.oneconfig.gui.elements.config.ConfigPageButton;
+import cc.polyfrost.oneconfig.gui.elements.config.ConfigPreview;
 import cc.polyfrost.oneconfig.gui.pages.ModConfigPage;
 import cc.polyfrost.oneconfig.hud.HUDUtils;
 import cc.polyfrost.oneconfig.internal.config.annotations.Option;
@@ -28,7 +32,6 @@ import java.io.BufferedWriter;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -132,6 +135,16 @@ public class Config {
                 BasicOption configOption = getCustomOption(field, customOption, page, mod, migrate);
                 if (configOption == null) continue;
                 optionNames.put(optionName, configOption);
+            } else if (field.isAnnotationPresent(Preview.class)) {
+                Preview preview = field.getAnnotation(Preview.class);
+                OptionSubcategory subcategory = ConfigUtils.getSubCategory(page, preview.category(), preview.subcategory());
+                Object previewInstance = ConfigUtils.getField(field, instance);
+                ConfigUtils.check("Preview", field, BasicPreview.class);
+                if (preview.location() == PageLocation.TOP) {
+                    subcategory.topButtons.add(new ConfigPreview(field, instance, preview.name(), preview.category(), preview.subcategory(), (BasicPreview) previewInstance));
+                } else {
+                    subcategory.bottomButtons.add(new ConfigPreview(field, instance, preview.name(), preview.category(), preview.subcategory(), (BasicPreview) previewInstance));
+                }
             } else if (field.isAnnotationPresent(Page.class)) {
                 Page optionPage = field.getAnnotation(Page.class);
                 OptionSubcategory subcategory = ConfigUtils.getSubCategory(page, optionPage.category(), optionPage.subcategory());
@@ -151,6 +164,7 @@ public class Config {
                 HUDUtils.addHudOptions(page, field, instance, this);
             }
         }
+        // TODO sorting of configs so this can not always be at the bottom
         /*for (Method method : instance.getClass().getDeclaredMethods()) {
             Button button = ConfigUtils.findAnnotation(method, Button.class);
             String optionName = pagePath + method.getName();

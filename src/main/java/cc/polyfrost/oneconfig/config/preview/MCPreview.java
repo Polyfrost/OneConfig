@@ -8,26 +8,17 @@ import cc.polyfrost.oneconfig.libs.universal.UMatrixStack;
 public abstract class MCPreview extends BasicPreview {
 
     @Override
-    public final void setupCallDraw(UMatrixStack matrices, long vg, float x, float y, float width, float height) {
+    public final void setupCallDraw(UMatrixStack matrices, long vg, float x, float y) {
         matrices.push();
         matrices.translate(x, y, 0);
-        draw(matrices, width, height);
+        draw(matrices, WIDTH);
         matrices.pop();
     }
 
     /**
      * Draws the preview.
      *
-     * @param matrices The matrix stack used to draw the preview.
-     * @param width The width of the preview.
-     * @param height The height of the preview.
+     * @param matrices The matrix stack used to draw the preview. The X and Y coordinates have already been translated on this stack.
      */
-    protected abstract void draw(UMatrixStack matrices, float width, float height);
-
-    @Override
-    public final float getHeight(UMatrixStack matrices, long vg, float x, float y, float width) {
-        return getHeight(matrices, x, y, width);
-    }
-
-    protected abstract float getHeight(UMatrixStack matrices, float x, float y, float width);
+    protected abstract void draw(UMatrixStack matrices, float width);
 }
