@@ -49,7 +49,7 @@ jobs:
         id: version
 
       - name: Publish
-        run: ./gradlew platform:publishAllPublicationsToReleasesRepository -Pmod_minor_version=${{ steps.version.outputs.VERSION_NUMBER }} -PreleasesUsername=${{ secrets.MAVEN_NAME }} -PreleasesPassword=${{ secrets.MAVEN_TOKEN }} --no-daemon
+        run: ./gradlew publish -Pmod_minor_version=${{ steps.version.outputs.VERSION_NUMBER }} -PreleasesUsername=${{ secrets.MAVEN_NAME }} -PreleasesPassword=${{ secrets.MAVEN_TOKEN }} -DBUILDING_CI=true --no-daemon
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v2
