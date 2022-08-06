@@ -3,7 +3,6 @@ package cc.polyfrost.oneconfig.gui.pages;
 import cc.polyfrost.oneconfig.config.elements.OptionPage;
 import cc.polyfrost.oneconfig.config.elements.OptionSubcategory;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
-import cc.polyfrost.oneconfig.gui.animations.DummyAnimation;
 import cc.polyfrost.oneconfig.gui.elements.BasicButton;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
@@ -59,7 +58,7 @@ public class ModConfigPage extends Page {
     @Override
     public int drawStatic(long vg, int x, int y) {
         if (categories.size() <= 1) return 0;
-        int buttonX = x + 16;
+        float buttonX = x + 16;
         for (BasicButton button : categories) {
             if (button.getWidth() == 0)
                 button.setWidth((int) (Math.ceil(RenderManager.getTextWidth(vg, button.getText(), 12f, Fonts.MEDIUM) / 8f) * 8 + 16));

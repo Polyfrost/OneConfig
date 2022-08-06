@@ -73,7 +73,7 @@ public class ConfigButton extends BasicOption {
     }
 
     @Override
-    public int getHeight() {
+    public float getHeight() {
         return 32;
     }
 }

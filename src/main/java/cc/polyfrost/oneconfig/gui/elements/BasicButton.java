@@ -44,7 +44,7 @@ public class BasicButton extends BasicElement {
             this.xPadding = 16;
         } else this.xPadding = size == SIZE_48 ? 20 : 12;
         this.height = size;
-        this.iconSize = this.height / 2;
+        this.iconSize = (int) (this.height / 2);
         this.fontSize = size == SIZE_48 ? 20 : (float) (size / 2 - 4);
     }
 

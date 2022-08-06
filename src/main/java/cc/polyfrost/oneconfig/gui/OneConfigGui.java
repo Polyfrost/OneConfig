@@ -34,7 +34,7 @@ public class OneConfigGui extends UScreen implements GuiPause {
     public static OneConfigGui INSTANCE;
     public static OneConfigGui instanceToRestore = null;
     private final SideBar sideBar = new SideBar();
-    private final TextInputField textInputField = new TextInputField(300, 120, "Search...", true, false, false, SVGs.MAGNIFYING_GLASS_BOLD);
+    private final TextInputField textInputField = new TextInputField(300, 120, "Search...", true, false, SVGs.MAGNIFYING_GLASS_BOLD);
     private final ArrayList<Page> previousPages = new ArrayList<>();
     private final ArrayList<Page> nextPages = new ArrayList<>();
     private final BasicElement backArrow = new BasicElement(40, 40, new ColorPalette(Colors.GRAY_700, Colors.GRAY_500, Colors.GRAY_500_80), true);

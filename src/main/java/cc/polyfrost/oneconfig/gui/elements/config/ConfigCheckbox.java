@@ -69,7 +69,7 @@ public class ConfigCheckbox extends BasicOption {
     }
 
     @Override
-    public int getHeight() {
+    public float getHeight() {
         return 32;
     }
 }

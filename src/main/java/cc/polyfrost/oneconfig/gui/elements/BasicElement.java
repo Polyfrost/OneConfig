@@ -8,7 +8,8 @@ import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 import org.jetbrains.annotations.NotNull;
 
 public class BasicElement {
-    protected int width, height;
+    protected float width;
+    protected float height;
     /**
      * The color palette used for this element.
      */
@@ -16,7 +17,7 @@ public class BasicElement {
     /**
      * hitBoxX and hitBoxY are integer variables to determine (in pixels) how far past the boundaries of this button it is still able to be interacted with.
      */
-    protected int hitBoxX, hitBoxY;
+    protected float hitBoxX, hitBoxY;
     protected boolean hoverFx;
     /**
      * Whether the element is currently being hovered over
@@ -120,7 +121,7 @@ public class BasicElement {
         hitBoxY = y;
     }
 
-    public void setWidth(int width) {
+    public void setWidth(float width) {
         this.width = width;
     }
 
@@ -135,11 +136,11 @@ public class BasicElement {
         this.colorAnimation.setPalette(colorPalette);
     }
 
-    public int getWidth() {
+    public float getWidth() {
         return width;
     }
 
-    public int getHeight() {
+    public float getHeight() {
         return height;
     }
 

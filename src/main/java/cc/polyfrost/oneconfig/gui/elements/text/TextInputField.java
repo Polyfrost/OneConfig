@@ -1,7 +1,9 @@
 package cc.polyfrost.oneconfig.gui.elements.text;
 
+import cc.polyfrost.oneconfig.gui.animations.EaseInOutQuad;
 import cc.polyfrost.oneconfig.gui.elements.BasicElement;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
+import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
 import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
@@ -18,38 +20,41 @@ public class TextInputField extends BasicElement {
     public static final int UP_LINE = Integer.MAX_VALUE;
     public static final int MOVE_END = Integer.MAX_VALUE - 1;
     public static final int MOVE_START = Integer.MIN_VALUE + 1;
-    private final int LINE_HEIGHT = 20, MAX_WIDTH;
-    private static final String NEW_LINE = "/n";
+    private final int MAX_WIDTH, MAX_LINES;
+    private static final int LINE_HEIGHT = 20;
+    /**
+     * <a href="https://https://www.cl.cam.ac.uk/~mgk25/ucs/examples/UTF-8-test.txt">UTF-8 Stress Test</a> Character 2.3.1 (used because it's never going to be used in theory)
+     */
+    private static final char NEW_LINE = '\uD7FF';
     protected final String defaultText;
     protected final SVG icon;
-    protected final boolean centered, multiLine, password;
-    protected boolean mouseWasDown, dragging;
-    protected String input, renderCache;
+    protected final boolean centered, password;
+    protected boolean mouseWasDown, dragging, errored, shown;
+    protected EaseInOutQuad animation;
+    protected String input = "", renderCache;
     protected Selection selection;
-    protected int caretPos;
-    protected boolean errored, shown;
+    protected int caretPos, requestedLines = 1;
     private long vg, clickTime, clickTime2;
     private Point2D.Float textStart;
-    private float x;
+    private float x, y;
 
-    public TextInputField(int width, int height, String defaultText, boolean multiLine, boolean password, boolean centered, SVG icon) {
-        super(width, height, false);
-        this.multiLine = multiLine;
+    public TextInputField(int width, int maxHeight, String defaultText, boolean password, boolean centered, SVG icon) {
+        super(width, maxHeight, false);
+        if (maxHeight < LINE_HEIGHT + 12) {
+            MAX_LINES = 1;
+            System.err.println("Minimum height for a text box is 32px, setting to 32px");
+            height = 32;
+        } else MAX_LINES = maxHeight / LINE_HEIGHT;
+        this.animation = new EaseInOutQuad(200, 0, MAX_LINES * LINE_HEIGHT, false);
         this.defaultText = defaultText;
         this.password = password;
-        this.input = "";
         this.icon = icon;
-        // TODO centering (just use textStart)
         this.centered = centered;
-        this.MAX_WIDTH = width - (icon != null ? 32 : 12);
+        this.MAX_WIDTH = width - (icon != null ? 32 : 12) - (password ? 24 : 0) - (centered ? 12 : 0);
     }
 
-    public TextInputField(int width, int height, String defaultText, boolean multiLine, boolean password, boolean centered) {
-        this(width, height, defaultText, multiLine, password, centered, null);
-    }
-
-    public TextInputField(int width, int height, String defaultText, boolean multiLine, boolean password) {
-        this(width, height, defaultText, multiLine, password, false, null);
+    public TextInputField(int width, int maxHeight, boolean centered) {
+        this(width, maxHeight, "", false, centered, null);
     }
 
     public static boolean isAllowedCharacter(char character) {
@@ -63,18 +68,26 @@ public class TextInputField extends BasicElement {
     @Override
     public void draw(long vg, float x, float y) {
         this.vg = vg;
-        if (textStart == null || this.x != x) {
-            if (!centered) {
-                textStart = new Point2D.Float(icon != null ? x + 32 : x + 12, multiLine ? y + 20 : y + height / 2f + 1);
-            }
+        if (textStart == null || this.x != x || this.y != y) {
+            textStart = new Point2D.Float(icon != null ? x + 36 : x + 12, MAX_LINES != 1 ? y + 20 : y + height / 2f + 1);
         }
         this.x = x;
+        this.y = y;
+
+        // box animations stuff
+        if (requestedLines < 1) requestedLines = 1;
+        if (animation.get(200) < requestedLines * LINE_HEIGHT) {
+            animation = new EaseInOutQuad(200, height, requestedLines * LINE_HEIGHT, false);
+        } else if (animation.get(200) > requestedLines * LINE_HEIGHT) {
+            animation = new EaseInOutQuad(200, height, requestedLines * LINE_HEIGHT, false);
+        }
 
         // DRAW BOX AND ICON
+        height = animation.get() + 12;
         int colorOutline = errored ? Colors.ERROR_700 : Colors.GRAY_700;
-        if (!toggled)
-            RenderManager.drawHollowRoundRect(vg, x, y, width - 0.5f, height - 0.5f, colorOutline, 12f, 2f);        // TODO box expansion
-        else {
+        if (!toggled) {
+            RenderManager.drawHollowRoundRect(vg, x, y, width - 0.5f, height - 0.5f, colorOutline, 12f, 2f);
+        } else {
             RenderManager.setAlpha(vg, 0.15f);
             RenderManager.drawRoundedRect(vg, x - 4, y - 4, width + 8, height + 8, errored ? Colors.ERROR_600 : Colors.PRIMARY_600, 16);
             RenderManager.setAlpha(vg, 1f);
@@ -85,13 +98,34 @@ public class TextInputField extends BasicElement {
         if (icon != null) {
             RenderManager.drawSvg(vg, icon, x + 12, y + height / 2f - 12f, 24, 24, color);
         }
+        if (password) {
+            final SVG icon = shown ? SVGs.EYE_OFF : SVGs.EYE;
+            boolean hovered = InputUtils.isAreaHovered(x + MAX_WIDTH + 18, y + height / 2f - 9f, 18, 18);
+            int eyeColor = hovered ? Colors.WHITE : Colors.WHITE_80;
+            if (hovered && InputUtils.isClicked()) {
+                shown = !shown;
+                invalidateAll();
+            }
+            if (hovered && Platform.getMousePlatform().isButtonDown(0)) RenderManager.setAlpha(vg, 0.5f);
+            RenderManager.drawSvg(vg, icon, x + MAX_WIDTH + 20, y + height / 2f - 9f, 18, 18, eyeColor);
+        }
 
-        // check the selection
+
         if (input.equals("")) {
-            // draw empty caret
-            RenderManager.drawRect(vg, textStart.x, textStart.y - 10, 1, LINE_HEIGHT, Colors.WHITE);
+            // draw empty stuff
+            if (defaultText != null && !defaultText.isEmpty()) {
+                if (centered) {
+                    textStart.x = x + (width / 2f) - (getTextWidth(defaultText) / 2f);
+                }
+                RenderManager.drawText(vg, defaultText, textStart.x, textStart.y, Colors.WHITE_60, 14f, Fonts.REGULAR);
+            }
+            if (toggled) {
+                RenderManager.drawRect(vg, textStart.x, textStart.y - 10, 1, LINE_HEIGHT, Colors.WHITE);
+            }
             return;
         }
+
+        // check the selection
         float selectionLength = 0;
         boolean longSelection = false;
         validateSelection();
@@ -103,15 +137,18 @@ public class TextInputField extends BasicElement {
         // ACTUAL DRAWING
         float textY = textStart.y;
         int startIndex = 0;
-        for (final String s : getRenderText()) {
-            final int endIndex = startIndex + s.length();
+        for (final String line : getRenderText()) {
+            if (centered) {
+                textStart.x = x + (width / 2f) - (getTextWidth(line) / 2f);
+            }
+            final int endIndex = startIndex + line.length();
 
             // draw selection
             if (selectionLength != 0 && selection != null) {
-                final float from = selection.indexStart < endIndex && selection.indexStart >= startIndex ? getTextWidth(s.substring(0, selection.indexStart - startIndex)) : 0;
+                final float from = selection.indexStart < endIndex && selection.indexStart >= startIndex ? getTextWidth(line.substring(0, selection.indexStart - startIndex)) : 0;
                 float thisLength = selectionLength;
                 if (longSelection) {
-                    thisLength = getTextWidth(s);
+                    thisLength = getTextWidth(line);
                     selectionLength = selectionLength - thisLength;
                     RenderManager.drawRect(vg, from + textStart.x, textY - 10, thisLength, LINE_HEIGHT, Colors.GRAY_300);
                 } else if (selection.indexStart < endIndex && selection.indexStart >= startIndex) {
@@ -120,19 +157,19 @@ public class TextInputField extends BasicElement {
             }
 
             // draw text
-            RenderManager.drawText(vg, s, textStart.x, textY, color, 14f, Fonts.REGULAR);
+            RenderManager.drawText(vg, line, textStart.x, textY, color, 14f, Fonts.REGULAR);
 
             // draw caret
             if (selection == null && toggled) {
                 // check if caret is applicable for this line
                 if ((caretPos > startIndex && caretPos <= endIndex)) {
-                    RenderManager.drawRect(vg, textStart.x + getTextWidth(s.substring(0, caretPos - startIndex)), textY - 10, 1, LINE_HEIGHT, Colors.WHITE);
+                    RenderManager.drawRect(vg, textStart.x + getTextWidth(line.substring(0, caretPos - startIndex)), textY - 10, 1, LINE_HEIGHT, Colors.WHITE);
                 }
             }
 
             // update for next line
             textY += LINE_HEIGHT + 4;
-            startIndex += s.length();
+            startIndex += line.length();
         }
 
 
@@ -166,8 +203,8 @@ public class TextInputField extends BasicElement {
             clickTime2 = System.currentTimeMillis();
         }
         // drag
-        if (dragging && System.currentTimeMillis() - clickTime > 100 && !doubleClick) {
-            // TODO dragging
+        //if (dragging && System.currentTimeMillis() - clickTime > 100 && !doubleClick) {
+        // TODO dragging
             /*int pos = snapToChar(InputUtils.mouseX(), InputUtils.mouseY());
             if (pos > input.length() || pos < 0) return;
             if (selection == null) {
@@ -180,7 +217,7 @@ public class TextInputField extends BasicElement {
                     selection.indexEnd = pos;
                 }
             }*/
-        }
+        //}
         // reset on outside click
         if (InputUtils.isClicked() && !InputUtils.isAreaHovered(x - 40, y - 20, width + 90, height + 20)) {
             close();
@@ -196,11 +233,12 @@ public class TextInputField extends BasicElement {
 
     // getting selected coords
     private int snapToChar(float mouseX, float mouseY) {
+        // TODO fix on centered box
         String[] lines = getRenderText();
         int lineIndex = getHoveredLineIndex(mouseY);
         if (lineIndex >= lines.length) {
             return input.length();
-        } else if(lineIndex < 0) {
+        } else if (lineIndex < 0) {
             return 0;
         }
         int index = 0;
@@ -230,6 +268,9 @@ public class TextInputField extends BasicElement {
     }
 
     public void keyTyped(char c, int key) {
+        if (c == NEW_LINE) {
+            throw new IllegalArgumentException("funny one mate");
+        }
         try {
             if (toggled) {
                 // COPYING
@@ -240,6 +281,7 @@ public class TextInputField extends BasicElement {
                     return;
                 }
                 if (UKeyboard.isKeyComboCtrlV(key) || key == 0xD2) {
+                    if (requestedLines > MAX_LINES) return;
                     String clip = IOUtils.getStringFromClipboard();
                     if (clip != null) {
                         addChars(caretPos, clip);
@@ -300,6 +342,7 @@ public class TextInputField extends BasicElement {
                     return;
                 }
                 if (key == UKeyboard.KEY_ENTER) {
+                    if (requestedLines == MAX_LINES) return;
                     addChars(caretPos, NEW_LINE);
                     return;
                 }
@@ -326,6 +369,7 @@ public class TextInputField extends BasicElement {
 
                 // ADDING
                 if (key == UKeyboard.KEY_TAB) {
+                    if (requestedLines > MAX_LINES) return;
                     addChars(caretPos, "    ");
                     return;
                 }
@@ -334,6 +378,7 @@ public class TextInputField extends BasicElement {
                         removeSequence(selection.indexStart, selection.indexEnd);
                         selection = null;
                     }
+                    if (requestedLines > MAX_LINES) return;
                     addChars(caretPos, c);
                 }
             }
@@ -463,31 +508,60 @@ public class TextInputField extends BasicElement {
 
     // render text
     public String[] getRenderText() {
-        return getUnformattedRenderText().split(NEW_LINE);
+        return getUnformattedRenderText().split(String.valueOf(NEW_LINE));
     }
 
     public String getUnformattedRenderText() {
         if (renderCache == null) {
+            if (MAX_LINES == 1) {
+                renderCache = input;
+                if (!shown && password) {
+                    StringBuilder s1 = new StringBuilder();
+                    while (s1.length() < input.length()) {
+                        s1.append('*');
+                    }
+                    renderCache = s1.toString();
+                }
+                return renderCache;
+            }
             final String[] words = input.split(" ");
             final StringBuilder output = new StringBuilder();
             float width = 0;
+            int lineAmount = 1;
             for (String word : words) {
                 width += getTextWidth(word + " ");
-                //if (getTextWidth(word) >= MAX_WIDTH) {
-                // TODO skill issue ngl
-                //}
-                if (width >= MAX_WIDTH) {
+                if (getTextWidth(word) >= MAX_WIDTH) {
+                    for (char c : word.toCharArray()) {
+                        output.append(c);
+                        width += getTextWidth(String.valueOf(c));
+                        if (width >= MAX_WIDTH) {
+                            output.append(NEW_LINE);
+                            width = 0;
+                            lineAmount++;
+                        }
+                    }
+                } else if (width >= MAX_WIDTH) {
                     width = 0;
                     output.append(NEW_LINE);
                     width += getTextWidth(word + " ");
+                    lineAmount++;
+                    if (lineAmount >= MAX_LINES) {
+                        requestedLines = MAX_LINES;
+                        break;
+                    }
                 }
+                requestedLines = lineAmount == 0 ? 1 : lineAmount;
                 output.append(word).append(" ");
 
             }
             renderCache = output.toString();
             if (!shown && password) {
-                // replace all chars except the new line literal on password fields
-                renderCache = renderCache.replaceAll("[^" + NEW_LINE + "]+", "*");
+                StringBuilder s1 = new StringBuilder();
+                for (char c : renderCache.trim().toCharArray()) {
+                    if (c == NEW_LINE) s1.append(NEW_LINE);
+                    else s1.append('*');
+                }
+                renderCache = s1.toString();
             }
         }
         return renderCache;
@@ -508,7 +582,10 @@ public class TextInputField extends BasicElement {
     }
 
     public void close() {
-
+        if (selection != null) {
+            selection = null;
+        }
+        toggled = false;
     }
 
 
@@ -534,6 +611,16 @@ public class TextInputField extends BasicElement {
         invalidateAll();
     }
 
+    public void setShowState(boolean state) {
+        if (!password) return;
+        this.shown = state;
+    }
+
+    public boolean getShowState() {
+        if (!password) return false;
+        return this.shown;
+    }
+
     public boolean isErrored() {
         return errored;
     }
@@ -542,7 +629,7 @@ public class TextInputField extends BasicElement {
         this.errored = errored;
     }
 
-    private float getTextWidth(String s) {
+    private float getTextWidth(@NotNull String s) {
         if (!shown && password) {
             StringBuilder s1 = new StringBuilder();
             while (s1.length() < s.length()) {

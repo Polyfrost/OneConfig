@@ -16,8 +16,8 @@ import cc.polyfrost.oneconfig.utils.InputUtils;
 import java.lang.reflect.Field;
 
 public class ConfigColorElement extends BasicOption {
-    private final TextInputField hexField = new TextInputField(104, 32, "", false, false);
-    private final TextInputField alphaField = new TextInputField(72, 32, "", false, false);
+    private final TextInputField hexField = new TextInputField(104, 32, true);
+    private final TextInputField alphaField = new TextInputField(72, 32, true);
     private final BasicElement element = new BasicElement(64, 32, false);
     private boolean open = false;
     private final boolean allowAlpha;
@@ -110,7 +110,7 @@ public class ConfigColorElement extends BasicOption {
     }
 
     @Override
-    public int getHeight() {
+    public float getHeight() {
         return 32;
     }
 }

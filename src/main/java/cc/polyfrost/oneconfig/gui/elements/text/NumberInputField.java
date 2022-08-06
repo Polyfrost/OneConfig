@@ -18,7 +18,7 @@ public class NumberInputField extends TextInputField {
     private float current;
 
     public NumberInputField(int width, int height, float defaultValue, float min, float max, float step) {
-        super(width - 16, height, "", false, false, true);      // TODO
+        super(width - 16, height, "", false, false, null);      // TODO
         //super.onlyNums = true;
         this.min = min;
         this.max = max;

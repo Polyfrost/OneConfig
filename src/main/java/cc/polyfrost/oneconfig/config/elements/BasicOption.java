@@ -56,7 +56,7 @@ public abstract class BasicOption {
     /**
      * @return height of option to align other options accordingly
      */
-    public abstract int getHeight();
+    public abstract float getHeight();
 
     /**
      * Function that gets called when drawing option

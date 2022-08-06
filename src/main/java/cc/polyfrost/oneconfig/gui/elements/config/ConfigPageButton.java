@@ -52,7 +52,7 @@ public class ConfigPageButton extends BasicOption {
     }
 
     @Override
-    public int getHeight() {
+    public float getHeight() {
         return description.equals("") ? 64 : 96;
     }
 }

@@ -9,7 +9,6 @@ import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.internal.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.internal.config.core.ConfigCore;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
-import cc.polyfrost.oneconfig.renderer.TextRenderer;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 
@@ -62,7 +61,7 @@ public class ModsPage extends Page {
 
     @Override
     public int drawStatic(long vg, int x, int y) {
-        int iXCat = x + 16;
+        float iXCat = x + 16;
         boolean selected = false;
         for (BasicButton btn : modCategories) {
             btn.draw(vg, iXCat, y + 16);
