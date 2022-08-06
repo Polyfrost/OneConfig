@@ -23,16 +23,17 @@ java {
 }
 
 val mod_name: String by project
-val mod_version: String by project
+val mod_major_version: String by project
+val mod_minor_version: String by project
 val mod_id: String by project
 
 blossom {
-    replaceToken("@VER@", mod_version)
+    replaceToken("@VER@", mod_major_version + mod_minor_version)
     replaceToken("@NAME@", mod_name)
     replaceToken("@ID@", mod_id)
 }
 
-version = mod_version
+version = mod_major_version + mod_minor_version
 group = "cc.polyfrost"
 
 repositories {
@@ -118,7 +119,7 @@ dependencies {
     shade("org.spongepowered:mixin:0.7.11-SNAPSHOT") {
         isTransitive = false
     }
-    shade("cc.polyfrost:lwjgl-1.8.9-forge:1.0.0-alpha5")
+    shade("cc.polyfrost:lwjgl-1.8.9-forge:1.0.0-alpha8")
     shadeNoPom(prebundle(shadeRelocated))
 
     configurations.named(JavaPlugin.COMPILE_CLASSPATH_CONFIGURATION_NAME) { extendsFrom(shadeNoPom) }

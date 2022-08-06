@@ -1,11 +1,11 @@
 package cc.polyfrost.oneconfig.gui.elements;
 
-import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.pages.Page;
+import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
+import cc.polyfrost.oneconfig.renderer.SVG;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
-import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 import cc.polyfrost.oneconfig.utils.color.ColorUtils;
 import org.jetbrains.annotations.NotNull;
@@ -13,12 +13,12 @@ import org.jetbrains.annotations.NotNull;
 public class BasicButton extends BasicElement {
 
     protected String text;
-    protected SVGs icon1, icon2;
+    protected SVG icon1, icon2;
     private final int alignment;
     private final float fontSize, cornerRadius;
-    private final int xSpacing, xPadding;
+    private final float xSpacing, xPadding;
     private final int iconSize;
-    public int x, y;
+    public float x, y;
     public static final int ALIGNMENT_LEFT = 0;
     public static final int ALIGNMENT_CENTER = 2;
     public static final int ALIGNMENT_JUSTIFIED = 3;
@@ -31,7 +31,7 @@ public class BasicButton extends BasicElement {
     private Page page;
     private Runnable runnable;
 
-    public BasicButton(int width, int size, String text, SVGs icon1, SVGs icon2, int align, @NotNull ColorPalette colorPalette) {
+    public BasicButton(int width, int size, String text, SVG icon1, SVG icon2, int align, @NotNull ColorPalette colorPalette) {
         super(width, 32, colorPalette, true);
         if (text != null) this.text = text;
         if (icon1 != null) this.icon1 = icon1;
@@ -48,7 +48,7 @@ public class BasicButton extends BasicElement {
         this.fontSize = size == SIZE_48 ? 20 : (float) (size / 2 - 4);
     }
 
-    public BasicButton(int width, int size, SVGs icon, int align, @NotNull ColorPalette colorPalette) {
+    public BasicButton(int width, int size, SVG icon, int align, @NotNull ColorPalette colorPalette) {
         this(width, size, null, icon, null, align, colorPalette);
     }
 
@@ -57,7 +57,7 @@ public class BasicButton extends BasicElement {
     }
 
     @Override
-    public void draw(long vg, int x, int y) {
+    public void draw(long vg, float x, float y) {
         this.x = x;
         this.y = y;
         this.update(x, y);
@@ -115,6 +115,7 @@ public class BasicButton extends BasicElement {
 
     @Override
     public void onClick() {
+        if(disabled) return;
         if (this.page != null && OneConfigGui.INSTANCE != null) {
             OneConfigGui.INSTANCE.openPage(page);
         } else if (this.runnable != null) {
@@ -155,11 +156,11 @@ public class BasicButton extends BasicElement {
         this.text = text;
     }
 
-    public void setLeftIcon(SVGs icon) {
+    public void setLeftIcon(SVG icon) {
         icon1 = icon;
     }
 
-    public void setRightIcon(SVGs icon) {
+    public void setRightIcon(SVG icon) {
         icon2 = icon;
     }
 

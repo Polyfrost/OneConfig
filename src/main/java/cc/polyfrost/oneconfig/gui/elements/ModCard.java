@@ -42,7 +42,7 @@ public class ModCard extends BasicElement {
     }
 
     @Override
-    public void draw(long vg, int x, int y) {
+    public void draw(long vg, float x, float y) {
         super.update(x, y);
         String cleanName = modData.name.replaceAll("§.", "");
         Scissor scissor = ScissorManager.scissor(vg, x, y, width, height);

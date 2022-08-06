@@ -1,6 +1,7 @@
 package cc.polyfrost.oneconfig.config.core;
 
-import cc.polyfrost.oneconfig.config.annotations.Exclude;
+import cc.polyfrost.oneconfig.config.core.exceptions.InvalidTypeException;
+import cc.polyfrost.oneconfig.config.data.OptionType;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
 import cc.polyfrost.oneconfig.config.elements.OptionCategory;
 import cc.polyfrost.oneconfig.config.elements.OptionPage;
@@ -13,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -20,29 +22,47 @@ public class ConfigUtils {
     public static BasicOption getOption(Option option, Field field, Object instance) {
         switch (option.type()) {
             case SWITCH:
+                check(OptionType.SWITCH.toString(), field, boolean.class, Boolean.class);
                 return ConfigSwitch.create(field, instance);
             case CHECKBOX:
+                check(OptionType.CHECKBOX.toString(), field, boolean.class, Boolean.class);
                 return ConfigCheckbox.create(field, instance);
             case INFO:
                 return ConfigInfo.create(field, instance);
             case HEADER:
                 return ConfigHeader.create(field, instance);
             case COLOR:
+                check(OptionType.COLOR.toString(), field, OneColor.class);
                 return ConfigColorElement.create(field, instance);
             case DROPDOWN:
+                check(OptionType.DROPDOWN.toString(), field, int.class, Integer.class);
                 return ConfigDropdown.create(field, instance);
             case TEXT:
+                check(OptionType.TEXT.toString(), field, String.class);
                 return ConfigTextBox.create(field, instance);
             case BUTTON:
+                check(OptionType.BUTTON.toString(), field, Runnable.class);
                 return ConfigButton.create(field, instance);
             case SLIDER:
+                check(OptionType.SLIDER.toString(), field, int.class, float.class, Integer.class, Float.class);
                 return ConfigSlider.create(field, instance);
             case KEYBIND:
+                check(OptionType.KEYBIND.toString(), field, OneKeyBind.class);
                 return ConfigKeyBind.create(field, instance);
             case DUAL_OPTION:
+                check(OptionType.DUAL_OPTION.toString(), field, boolean.class, Boolean.class);
                 return ConfigDualOption.create(field, instance);
         }
         return null;
+    }
+
+    public static void check(String type, Field field, Class<?>... expectedType) {
+        // I have tried to check for supertype classes like Boolean other ways.
+        // because they actually don't extend their primitive types (because that is impossible) so isAssignableFrom doesn't work.
+        for (Class<?> clazz : expectedType) {
+            if (clazz.isAssignableFrom(field.getType())) return;
+        }
+        throw new InvalidTypeException("Field " + field.getName() + " in config " + field.getDeclaringClass().getName() + " is annotated as a " + type + ", but is not of valid type, expected " + Arrays.toString(expectedType) + " (found " + field.getType() + ")");
     }
 
     public static ArrayList<BasicOption> getClassOptions(Object object) {
@@ -91,6 +111,15 @@ public class ConfigUtils {
     public static <T extends Annotation> T findAnnotation(Field field, Class<T> annotationType) {
         if (field.isAnnotationPresent(annotationType)) return field.getAnnotation(annotationType);
         for (Annotation ann : field.getDeclaredAnnotations()) {
+            if (ann.annotationType().isAnnotationPresent(annotationType))
+                return ann.annotationType().getAnnotation(annotationType);
+        }
+        return null;
+    }
+
+    public static <T extends Annotation> T findAnnotation(Method method, Class<T> annotationType) {
+        if (method.isAnnotationPresent(annotationType)) return method.getAnnotation(annotationType);
+        for (Annotation ann : method.getDeclaredAnnotations()) {
             if (ann.annotationType().isAnnotationPresent(annotationType))
                 return ann.annotationType().getAnnotation(annotationType);
         }

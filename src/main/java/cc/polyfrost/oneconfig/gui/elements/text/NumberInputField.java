@@ -27,7 +27,7 @@ public class NumberInputField extends TextInputField {
     }
 
     @Override
-    public void draw(long vg, int x, int y) {
+    public void draw(long vg, float x, float y) {
         super.errored = false;
         if(disabled) RenderManager.setAlpha(vg, 0.5f);
         RenderManager.drawRoundedRect(vg, x + width + 4, y, 12, 28, Colors.GRAY_500, 6f);

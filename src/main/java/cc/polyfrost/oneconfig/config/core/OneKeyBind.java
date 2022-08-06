@@ -14,7 +14,6 @@ public class OneKeyBind {
             keyBinds.add(key);
         }
     }
-
     public boolean isActive() {
         if (keyBinds.size() == 0) return false;
         for (int keyBind : keyBinds) {

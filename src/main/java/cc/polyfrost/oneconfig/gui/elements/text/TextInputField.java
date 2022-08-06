@@ -2,10 +2,10 @@ package cc.polyfrost.oneconfig.gui.elements.text;
 
 import cc.polyfrost.oneconfig.gui.elements.BasicElement;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
-import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
 import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
+import cc.polyfrost.oneconfig.renderer.SVG;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.renderer.scissor.Scissor;
 import cc.polyfrost.oneconfig.renderer.scissor.ScissorManager;
@@ -26,7 +26,7 @@ public class TextInputField extends BasicElement {
     protected boolean password;
 
     protected int caretPos;
-    protected int x, y;
+    protected float x, y;
     protected float start, end;
     protected int startLine, endLine;
     protected long vg;
@@ -35,12 +35,12 @@ public class TextInputField extends BasicElement {
     protected boolean onlyNums = false;
     protected boolean errored = false;
     protected boolean centered = false;
-    protected SVGs icon;
+    protected SVG icon;
     protected ArrayList<String> wrappedText = null;
     private long clickTimeD1;
     private int lines = 1;
 
-    public TextInputField(int width, int height, String defaultText, boolean multiLine, boolean password, SVGs icon) {
+    public TextInputField(int width, int height, String defaultText, boolean multiLine, boolean password, SVG icon) {
         super(width, height, false);
         this.multiLine = multiLine;
         this.defaultText = defaultText;
@@ -95,7 +95,7 @@ public class TextInputField extends BasicElement {
     }
 
     @Override
-    public void draw(long vg, int x, int y) {
+    public void draw(long vg, float x, float y) {
         this.x = x;
         this.y = y;
         this.vg = vg;
@@ -206,12 +206,12 @@ public class TextInputField extends BasicElement {
             if(disabled) RenderManager.setAlpha(vg, 0.5f);
             if (toggled) {
                 if (multiLine) {
-                    int lineY = y + 20 + getCaretLine(caretPos) * 24;
+                    float lineY = y + 20 + getCaretLine(caretPos) * 24;
                     RenderManager.drawLine(vg, x + width + 12, lineY - 10, x + width + 12, lineY + 10, 1, Colors.WHITE);
                 } else if (!centered) {
-                    RenderManager.drawLine(vg, x + width + 12, (float) y + height / 2f - 10, x + width + 12, (float) y + height / 2f + 10, 1, Colors.WHITE);
+                    RenderManager.drawLine(vg, x + width + 12, y + height / 2f - 10, x + width + 12, y + height / 2f + 10, 1, Colors.WHITE);
                 } else {
-                    RenderManager.drawLine(vg, x + this.width / 2f - halfTextWidth + width, (float) y + height / 2f - 10, x + this.width / 2f - halfTextWidth + width, (float) y + height / 2f + 10, 1, Colors.WHITE);
+                    RenderManager.drawLine(vg, x + this.width / 2f - halfTextWidth + width, y + height / 2f - 10, x + this.width / 2f - halfTextWidth + width, y + height / 2f + 10, 1, Colors.WHITE);
                 }
             }
 
@@ -228,7 +228,7 @@ public class TextInputField extends BasicElement {
 
             if (!password) {
                 if (multiLine) {
-                    int textY = y + 20;
+                    float textY = y + 20;
                     for (String line : wrappedText) {
                         RenderManager.drawText(vg, line, x + 12, textY, color, 14f, Fonts.REGULAR);
                         textY += 24;
@@ -453,7 +453,7 @@ public class TextInputField extends BasicElement {
         }
     }
 
-    private int calculatePos(int pos, String string) {
+    private int calculatePos(float pos, String string) {
         if (centered) pos -= 12;
         String s1 = "";
         int i;

@@ -24,7 +24,9 @@ import java.io.File;
 //#if MC<=11202
 @net.minecraftforge.fml.common.Mod(modid = "@ID@", name = "@NAME@", version = "@VER@")
 //#else
+//#if FORGE==1
 //$$ @net.minecraftforge.fml.common.Mod("@ID@")
+//#endif
 //#endif
 public class OneConfig {
 
@@ -32,27 +34,8 @@ public class OneConfig {
         EventManager.INSTANCE.register(this);
     }
 
-    public static final File oneConfigDir = new File("./OneConfig");
     public static final Logger LOGGER = LogManager.getLogger("@NAME@");
-    private static boolean preLaunched = false;
     private static boolean initialized = false;
-
-    /**
-     * Called before mods are loaded.
-     * <p><b>SHOULD NOT BE CALLED!</b></p>
-     */
-    public static void preLaunch() {
-        if (preLaunched) return;
-        oneConfigDir.mkdirs();
-        new File(oneConfigDir, "profiles").mkdirs();
-        if (OneConfigConfig.getInstance() == null) {
-            OneConfigConfig.getInstance();
-        }
-        if (Preferences.getInstance() == null) {
-            Preferences.getInstance();
-        }
-        preLaunched = true;
-    }
 
     /**
      * Called after mods are loaded.
@@ -61,6 +44,12 @@ public class OneConfig {
     @SuppressWarnings("ResultOfMethodCallIgnored")
     public static void init() {
         if (initialized) return;
+        if (OneConfigConfig.getInstance() == null) {
+            OneConfigConfig.getInstance();
+        }
+        if (Preferences.getInstance() == null) {
+            Preferences.getInstance();
+        }
         GuiUtils.getDeltaTime(); // called to make sure static initializer is called
         try {
             EventManager.INSTANCE.register(BlurHandler.INSTANCE);

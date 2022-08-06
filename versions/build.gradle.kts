@@ -1,6 +1,5 @@
 import gg.essential.gradle.util.RelocationTransform.Companion.registerRelocationAttribute
 import gg.essential.gradle.util.noServerRunConfigs
-import gg.essential.gradle.util.prebundle
 import net.fabricmc.loom.task.RemapSourcesJarTask
 import java.text.SimpleDateFormat
 
@@ -28,7 +27,8 @@ java {
 }
 
 val mod_name: String by project
-val mod_version: String by project
+val mod_major_version: String by project
+val mod_minor_version: String by project
 val mod_id: String by project
 
 preprocess {
@@ -36,18 +36,23 @@ preprocess {
 }
 
 blossom {
-    replaceToken("@VER@", mod_version)
+    replaceToken("@VER@", mod_major_version + mod_minor_version)
     replaceToken("@NAME@", mod_name)
     replaceToken("@ID@", mod_id)
 }
 
-version = mod_version
+version = mod_major_version + mod_minor_version
 group = "cc.polyfrost"
 base {
     archivesName.set("$mod_id-$platform")
 }
 loom {
     noServerRunConfigs()
+    runConfigs.named("client") {
+        if (project.platform.isLegacyForge) {
+            vmArgs.remove("-XstartOnFirstThread")
+        }
+    }
     launchConfigs.named("client") {
         if (project.platform.isLegacyForge) {
             arg("--tweakClass", "cc.polyfrost.oneconfig.internal.plugin.asm.OneConfigTweaker")
@@ -87,6 +92,16 @@ val relocated = registerRelocationAttribute("relocate") {
     remapStringsIn("com.github.benmanes.caffeine.cache.NodeFactory")
 }
 
+val implementationNoPom: Configuration by configurations.creating {
+    configurations.named(JavaPlugin.COMPILE_CLASSPATH_CONFIGURATION_NAME) { extendsFrom(this@creating) }
+    configurations.named(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME) { extendsFrom(this@creating) }
+}
+
+val modImplementationNoPom: Configuration by configurations.creating {
+    configurations.modImplementation.get().extendsFrom(this)
+    configurations.modRuntime.get().extendsFrom(this)
+}
+
 val shadeProject: Configuration by configurations.creating {
     attributes { attribute(relocatedCommonProject, false) }
 }
@@ -100,7 +115,8 @@ val shade: Configuration by configurations.creating {
 }
 
 val shadeNoPom: Configuration by configurations.creating
-val shadeNoPom2: Configuration by configurations.creating
+
+val shadeNoJar: Configuration by configurations.creating
 
 sourceSets {
     main {
@@ -115,53 +131,45 @@ dependencies {
         isTransitive = false
     }
 
-    shadeRelocated("gg.essential:universalcraft-$platform:211") {
-        isTransitive = false
-    }
+    include("gg.essential:universalcraft-$platform:211", relocate = true, transitive = false, mod = true)
 
-    shadeRelocated("com.github.KevinPriv:keventbus:c52e0a2ea0") {
-        isTransitive = false
-    }
+    include("com.github.KevinPriv:keventbus:c52e0a2ea0", relocate = true, transitive = false)
 
-    @Suppress("GradlePackageUpdate") shadeRelocated("com.github.ben-manes.caffeine:caffeine:2.9.3")
+    @Suppress("GradlePackageUpdate") include("com.github.ben-manes.caffeine:caffeine:2.9.3", relocate = true)
 
     // for other mods and universalcraft
     val kotlinVersion: String by project
     val coroutinesVersion: String by project
     val serializationVersion: String by project
     val atomicfuVersion: String by project
-    shade("org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion")
-    shade("org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion")
-    shade("org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlinVersion")
-    shade("org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion")
+    include("org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion")
+    include("org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion")
+    include("org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlinVersion")
+    include("org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion")
 
-    shade("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion")
-    shade("org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:$coroutinesVersion")
-    shade("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:$coroutinesVersion")
-    shade("org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:$serializationVersion")
-    shade("org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:$serializationVersion")
-    shade("org.jetbrains.kotlinx:kotlinx-serialization-cbor-jvm:$serializationVersion")
-    shade("org.jetbrains.kotlinx:atomicfu-jvm:$atomicfuVersion")
+    include("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion")
+    include("org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:$coroutinesVersion")
+    include("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:$coroutinesVersion")
+    include("org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:$serializationVersion")
+    include("org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:$serializationVersion")
+    include("org.jetbrains.kotlinx:kotlinx-serialization-cbor-jvm:$serializationVersion")
+    include("org.jetbrains.kotlinx:atomicfu-jvm:$atomicfuVersion")
 
     if (platform.isLegacyForge) {
-        shade("org.spongepowered:mixin:0.7.11-SNAPSHOT") {
+        implementationNoPom(shadeNoJar("org.spongepowered:mixin:0.7.11-SNAPSHOT") {
             isTransitive = false
-        }
+        })
     }
     shadeProject(project(":")) {
         isTransitive = false
     }
 
-    shade("cc.polyfrost:lwjgl-$platform:1.0.0-alpha5")
-    val prebundled = prebundle(shadeRelocated)
-    modCompileOnly(prebundled)
-    modRuntimeOnly(prebundled)
-    shadeNoPom2(prebundled)
+    include("cc.polyfrost:lwjgl-$platform:1.0.0-alpha8")
 
     dokkaHtmlPlugin("org.jetbrains.dokka:kotlin-as-java-plugin:1.6.21")
 
-    configurations.named(JavaPlugin.COMPILE_CLASSPATH_CONFIGURATION_NAME) { extendsFrom(shadeNoPom); extendsFrom(shadeProject) }
-    configurations.named(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME) { extendsFrom(shadeNoPom); extendsFrom(shadeProject) }
+    configurations.named(JavaPlugin.COMPILE_CLASSPATH_CONFIGURATION_NAME) { extendsFrom(shadeProject) }
+    configurations.named(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME) { extendsFrom(shadeProject) }
 }
 
 tasks {
@@ -176,7 +184,7 @@ tasks {
         val compatLevel = "JAVA_${java}"
         inputs.property("java", java)
         inputs.property("java_level", compatLevel)
-        inputs.property("version", mod_version)
+        inputs.property("version", mod_major_version + mod_minor_version)
         inputs.property("mcVersionStr", project.platform.mcVersionStr)
         filesMatching(listOf("mcmod.info", "mixins.${mod_id}.json", "**/mods.toml")) {
             expand(
@@ -185,7 +193,7 @@ tasks {
                     "name" to mod_name,
                     "java" to java,
                     "java_level" to compatLevel,
-                    "version" to mod_version,
+                    "version" to mod_major_version + mod_minor_version,
                     "mcVersionStr" to project.platform.mcVersionStr
                 )
             )
@@ -197,7 +205,7 @@ tasks {
                     "name" to mod_name,
                     "java" to java,
                     "java_level" to compatLevel,
-                    "version" to mod_version,
+                    "version" to mod_major_version + mod_minor_version,
                     "mcVersionStr" to project.platform.mcVersionStr.substringBeforeLast(".") + ".x"
                 )
             )
@@ -227,7 +235,7 @@ tasks {
 
     val shadowJar = named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar") {
         archiveClassifier.set("full-dev")
-        configurations = listOf(shade, shadeNoPom, shadeNoPom2, shadeProject)
+        configurations = listOf(shade, shadeNoPom, shadeNoJar, shadeProject, shadeRelocated)
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
         dependsOn(jar)
     }
@@ -242,8 +250,8 @@ tasks {
     }
     jar {
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-        dependsOn(shadeNoPom, shadeNoPom2, shadeProject)
-        from(ArrayList<File>().run { addAll(shadeNoPom); addAll(shadeNoPom2); addAll(shadeProject); this }
+        dependsOn(shadeNoPom, shadeProject, shadeRelocated)
+        from(ArrayList<File>().run { addAll(shadeNoPom); addAll(shadeProject); addAll(shadeRelocated); this }
             .map { if (it.isDirectory) it else zipTree(it) })
         manifest {
             attributes(
@@ -263,7 +271,7 @@ tasks {
                             "Specification-Vendor" to mod_id,
                             "Specification-Version" to "1", // We are version 1 of ourselves, whatever the hell that means
                             "Implementation-Title" to mod_name,
-                            "Implementation-Version" to mod_version,
+                            "Implementation-Version" to mod_major_version + mod_minor_version,
                             "Implementation-Vendor" to mod_id,
                             "Implementation-Timestamp" to SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").format(`java.util`.Date())
                         )
@@ -282,7 +290,7 @@ tasks {
     dokkaHtml.configure {
         outputDirectory.set(buildDir.resolve("dokka"))
         moduleName.set("OneConfig $platform")
-        moduleVersion.set(mod_version)
+        moduleVersion.set(mod_major_version + mod_minor_version)
         dokkaSourceSets {
             configureEach {
                 jdkVersion.set(8)
@@ -313,6 +321,9 @@ tasks {
             archiveClassifier.set("sources")
         }
         doLast {
+            archiveFile.orNull?.asFile?.let {
+                it.copyTo(File(it.parentFile, it.nameWithoutExtension + "-dev" + it.extension.let { if (it.isBlank()) "" else ".$it" }), overwrite = true)
+            }
             archiveClassifier.set("sources")
         }
     }
@@ -359,5 +370,93 @@ publishing {
                 create<BasicAuthentication>("basic")
             }
         }
+    }
+}
+
+fun DependencyHandlerScope.include(dependency: Any, pom: Boolean = true, mod: Boolean = false) {
+    if (platform.isForge) {
+        if (pom) {
+            shade(dependency)
+        } else {
+            shadeNoPom(dependency)
+            implementationNoPom(dependency)
+        }
+    } else {
+        if (pom) {
+            if (mod) {
+                modApi(dependency)
+            } else {
+                api(dependency)
+            }
+        } else {
+            if (mod) {
+                modImplementationNoPom(dependency)
+            } else {
+                implementationNoPom(dependency)
+            }
+        }
+        "include"(dependency)
+    }
+}
+
+fun DependencyHandlerScope.include(dependency: ModuleDependency, pom: Boolean = true, mod: Boolean = false, relocate: Boolean = false, transitive: Boolean = true) {
+    if (platform.isForge) {
+        if (relocate) {
+            shadeRelocated(dependency) { isTransitive = transitive }
+            implementationNoPom(dependency) { isTransitive = transitive; attributes { attribute(relocated, true) } }
+        } else {
+            if (pom) {
+                shade(dependency) { isTransitive = transitive }
+            } else {
+                shadeNoPom(dependency) { isTransitive = transitive }
+                implementationNoPom(dependency) { isTransitive = transitive }
+            }
+        }
+    } else {
+        if (pom && !relocate) {
+            if (mod) {
+                modApi(dependency) { isTransitive = transitive }
+            } else {
+                api(dependency) { isTransitive = transitive }
+            }
+        } else {
+            if (mod) {
+                modImplementationNoPom(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
+            } else {
+                implementationNoPom(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
+            }
+        }
+        "include"(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
+    }
+}
+
+fun DependencyHandlerScope.include(dependency: String, pom: Boolean = true, mod: Boolean = false, relocate: Boolean = false, transitive: Boolean = true) {
+    if (platform.isForge) {
+        if (relocate) {
+            shadeRelocated(dependency) { isTransitive = transitive }
+            implementationNoPom(dependency) { isTransitive = transitive; attributes { attribute(relocated, true) } }
+        } else {
+            if (pom) {
+                shade(dependency) { isTransitive = transitive }
+            } else {
+                shadeNoPom(dependency) { isTransitive = transitive }
+                implementationNoPom(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
+            }
+        }
+    } else {
+        if (pom && !relocate) {
+            if (mod) {
+                modApi(dependency) { isTransitive = transitive }
+            } else {
+                api(dependency) { isTransitive = transitive }
+            }
+        } else {
+            if (mod) {
+                modImplementationNoPom(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
+            } else {
+                implementationNoPom(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
+            }
+        }
+        "include"(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
     }
 }

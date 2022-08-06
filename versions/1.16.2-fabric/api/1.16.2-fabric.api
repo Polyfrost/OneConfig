@@ -1,0 +1,122 @@
+public class cc/polyfrost/oneconfig/events/event/ChatReceiveEvent : cc/polyfrost/oneconfig/events/event/CancellableEvent {
+	public final field message Lnet/minecraft/text/Text;
+	public fun <init> (Lnet/minecraft/text/Text;)V
+	public fun getFullyUnformattedMessage ()Ljava/lang/String;
+}
+
+public class cc/polyfrost/oneconfig/events/event/ReceivePacketEvent : cc/polyfrost/oneconfig/events/event/CancellableEvent {
+	public final field packet Lnet/minecraft/network/Packet;
+	public fun <init> (Lnet/minecraft/network/Packet;)V
+}
+
+public class cc/polyfrost/oneconfig/events/event/ScreenOpenEvent : cc/polyfrost/oneconfig/events/event/CancellableEvent {
+	public final field screen Lnet/minecraft/client/gui/screen/Screen;
+	public fun <init> (Lnet/minecraft/client/gui/screen/Screen;)V
+}
+
+public class cc/polyfrost/oneconfig/events/event/SendPacketEvent : cc/polyfrost/oneconfig/events/event/CancellableEvent {
+	public final field packet Lnet/minecraft/network/Packet;
+	public fun <init> (Lnet/minecraft/network/Packet;)V
+}
+
+public class cc/polyfrost/oneconfig/events/event/TimerUpdateEvent {
+	public final field timer Lnet/minecraft/client/render/RenderTickCounter;
+	public final field updatedDeltaTicks Z
+	public fun <init> (Lnet/minecraft/client/render/RenderTickCounter;Z)V
+}
+
+public class cc/polyfrost/oneconfig/platform/impl/GLPlatformImpl : cc/polyfrost/oneconfig/platform/GLPlatform {
+	public fun <init> ()V
+	public fun drawRect (FFFFI)V
+	public fun drawText (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;Ljava/lang/String;FFIZ)F
+	public fun enableStencil ()V
+	public fun getStringWidth (Ljava/lang/String;)I
+}
+
+public class cc/polyfrost/oneconfig/platform/impl/GuiPlatformImpl : cc/polyfrost/oneconfig/platform/GuiPlatform {
+	public fun <init> ()V
+	public fun getCurrentScreen ()Ljava/lang/Object;
+	public fun isInChat ()Z
+	public fun isInDebug ()Z
+	public fun setCurrentScreen (Ljava/lang/Object;)V
+}
+
+public class cc/polyfrost/oneconfig/platform/impl/I18nPlatformImpl : cc/polyfrost/oneconfig/platform/I18nPlatform {
+	public fun <init> ()V
+	public fun format (Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;
+}
+
+public class cc/polyfrost/oneconfig/platform/impl/LoaderPlatformImpl : cc/polyfrost/oneconfig/platform/LoaderPlatform {
+	public fun <init> ()V
+	public fun getActiveModContainer ()Lcc/polyfrost/oneconfig/platform/LoaderPlatform$ActiveMod;
+	public fun hasActiveModContainer ()Z
+	public fun isModLoaded (Ljava/lang/String;)Z
+}
+
+public class cc/polyfrost/oneconfig/platform/impl/MousePlatformImpl : cc/polyfrost/oneconfig/platform/MousePlatform {
+	public fun <init> ()V
+	public fun getButtonState (I)I
+	public fun getDWheel ()D
+	public fun getMouseDX ()D
+	public fun getMouseDY ()D
+	public fun getMouseX ()D
+	public fun getMouseY ()D
+	public fun isButtonDown (I)Z
+}
+
+public class cc/polyfrost/oneconfig/platform/impl/NanoVGPlatformImpl : cc/polyfrost/oneconfig/platform/NanoVGPlatform {
+	public fun <init> ()V
+	public fun nnvgCreate (I)J
+	public fun nnvgDelete (J)V
+	public fun nnvglCreateImageFromHandle (JIIII)I
+	public fun nnvglImageHandle (JI)I
+	public fun nnvgluBindFramebuffer (JJ)V
+	public fun nnvgluCreateFramebuffer (JIII)J
+	public fun nnvgluDeleteFramebuffer (JJ)V
+	public fun nvgCreate (I)J
+	public fun nvgDelete (J)V
+	public fun nvglCreateImageFromHandle (JIIII)I
+	public fun nvglImageHandle (JI)I
+	public fun nvgluBindFramebuffer (JLorg/lwjgl/nanovg/NVGLUFramebuffer;)V
+	public fun nvgluCreateFramebuffer (JIII)Lorg/lwjgl/nanovg/NVGLUFramebuffer;
+	public fun nvgluDeleteFramebuffer (JLorg/lwjgl/nanovg/NVGLUFramebuffer;)V
+	public fun triggerStaticInitialization ()V
+}
+
+public class cc/polyfrost/oneconfig/platform/impl/PlatformImpl : cc/polyfrost/oneconfig/platform/Platform {
+	public fun <init> ()V
+	public fun getLoader ()Lcc/polyfrost/oneconfig/platform/Platform$Loader;
+	public fun getMinecraftVersion ()I
+	public fun isCallingFromMinecraftThread ()Z
+}
+
+public class cc/polyfrost/oneconfig/platform/impl/ServerPlatformImpl : cc/polyfrost/oneconfig/platform/ServerPlatform {
+	public fun <init> ()V
+	public fun getServerBrand ()Ljava/lang/String;
+	public fun inMultiplayer ()Z
+}
+
+public class cc/polyfrost/oneconfig/utils/commands/PlatformCommandManagerImpl : cc/polyfrost/oneconfig/utils/commands/PlatformCommandManager {
+	public fun <init> ()V
+	public fun handleNewParser (Lcc/polyfrost/oneconfig/utils/commands/arguments/ArgumentParser;Ljava/lang/Class;)V
+}
+
+public final class cc/polyfrost/oneconfig/utils/dsl/DSLsKt {
+	public static final fun getMc ()Lnet/minecraft/client/MinecraftClient;
+}
+
+public final class cc/polyfrost/oneconfig/utils/dsl/GuiUtilsDSLKt {
+	public static final fun openScreen (Lnet/minecraft/client/gui/screen/Screen;I)V
+	public static synthetic fun openScreen$default (Lnet/minecraft/client/gui/screen/Screen;IILjava/lang/Object;)V
+}
+
+public final class cc/polyfrost/oneconfig/utils/gui/GuiUtils {
+	public fun <init> ()V
+	public static fun closeScreen ()V
+	public static fun displayScreen (Ljava/lang/Object;)V
+	public static fun displayScreen (Lnet/minecraft/client/gui/screen/Screen;)V
+	public static fun displayScreen (Lnet/minecraft/client/gui/screen/Screen;I)V
+	public static fun getDeltaTime ()F
+	public static fun getScreenQueue ()Ljava/util/Deque;
+}
+

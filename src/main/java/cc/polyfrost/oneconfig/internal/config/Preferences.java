@@ -1,5 +1,6 @@
 package cc.polyfrost.oneconfig.internal.config;
 
+import cc.polyfrost.oneconfig.config.annotations.Exclude;
 import cc.polyfrost.oneconfig.config.annotations.KeyBind;
 import cc.polyfrost.oneconfig.config.annotations.Slider;
 import cc.polyfrost.oneconfig.config.annotations.Switch;
@@ -9,7 +10,6 @@ import cc.polyfrost.oneconfig.internal.gui.BlurHandler;
 import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
 import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.utils.TickDelay;
-import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 
 public class Preferences extends InternalConfig {
     @Switch(
@@ -23,10 +23,6 @@ public class Preferences extends InternalConfig {
     )
     public static OneKeyBind oneConfigKeyBind = new OneKeyBind(UKeyboard.KEY_RSHIFT);
 
-    @Switch(
-            name = "Easter Egg 1"
-    )
-    public static boolean easterEgg1 = true;
 
     @Switch(
             name = "Use custom GUI scale",
@@ -43,6 +39,7 @@ public class Preferences extends InternalConfig {
     )
     public static float customScale = 1f;
 
+    @Exclude
     private static Preferences INSTANCE;
 
     public Preferences() {

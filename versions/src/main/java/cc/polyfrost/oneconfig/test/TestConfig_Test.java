@@ -7,6 +7,7 @@ import cc.polyfrost.oneconfig.config.data.*;
 import cc.polyfrost.oneconfig.config.Config;
 import cc.polyfrost.oneconfig.config.data.ModType;
 import cc.polyfrost.oneconfig.config.migration.VigilanceMigrator;
+import cc.polyfrost.oneconfig.gui.pages.HomePage;
 import cc.polyfrost.oneconfig.libs.universal.UChat;
 import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
 
@@ -24,6 +25,32 @@ public class TestConfig_Test extends Config {
             size = OptionSize.DUAL
     )
     public static boolean testCheckBox = true;
+
+    @CustomOption
+
+
+    @Page(
+            name = "An actual page",
+            description = "yes very cool",
+            location = PageLocation.BOTTOM
+    )
+    private final cc.polyfrost.oneconfig.gui.pages.Page page = new HomePage();
+
+    @Button(
+            name = "hello",
+            text = "click"
+    )
+    private void doSomething() {
+        UChat.chat("i was called from a nonstatic method");
+    }
+
+    @Button(
+            name = "hello2",
+            text = "click"
+    )
+    private static void doSomethingElse() {
+        UChat.chat("i was called from a static method");
+    }
 
     @Info(
             text = "Test Info",
@@ -125,6 +152,12 @@ public class TestConfig_Test extends Config {
             category = "HUD"
     )
     public TestMultilineHud_Test multilineHud = new TestMultilineHud_Test();
+
+    @HUD(
+            name = "Test Basic HUD",
+            category = "HUD"
+    )
+    public TestBasicHud_Test basicHud = new TestBasicHud_Test();
 
     public TestConfig_Test() {
         super(new Mod("Test Mod", ModType.UTIL_QOL, new VigilanceMigrator("./config/testConfig.toml")), "hacksConfig.json");

@@ -1,7 +1,10 @@
 package cc.polyfrost.oneconfig.events;
 
+import cc.polyfrost.oneconfig.config.core.exceptions.InvalidTypeException;
 import cc.polyfrost.oneconfig.libs.eventbus.EventBus;
+import cc.polyfrost.oneconfig.libs.eventbus.exception.ExceptionHandler;
 import cc.polyfrost.oneconfig.libs.eventbus.invokers.LMFInvoker;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Manages all events from OneConfig.
@@ -11,7 +14,7 @@ public final class EventManager {
      * The instance of the {@link EventManager}.
      */
     public static final EventManager INSTANCE = new EventManager();
-    private final EventBus eventBus = new EventBus(new LMFInvoker(), Throwable::printStackTrace);
+    private final EventBus eventBus = new EventBus(new LMFInvoker(), new OneConfigExceptionHandler());
 
     private EventManager() {
 
@@ -54,5 +57,19 @@ public final class EventManager {
      */
     public void post(Object event) {
         eventBus.post(event);
+    }
+
+
+    /**
+     * Bypass to allow special exceptions to actually crash
+     */
+    private static class OneConfigExceptionHandler implements ExceptionHandler {
+        @Override
+        public void handle(@NotNull Exception e) {
+            if(e instanceof InvalidTypeException) {
+                throw (InvalidTypeException) e;
+            }
+            else e.printStackTrace();
+        }
     }
 }

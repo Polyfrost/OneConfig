@@ -1,6 +1,7 @@
 package cc.polyfrost.oneconfig.utils.commands.annotations;
 
 import cc.polyfrost.oneconfig.internal.command.OneConfigCommand;
+import cc.polyfrost.oneconfig.libs.universal.ChatColor;
 import cc.polyfrost.oneconfig.utils.commands.CommandManager;
 import cc.polyfrost.oneconfig.utils.commands.arguments.ArgumentParser;
 
@@ -106,6 +107,13 @@ public @interface Command {
      * @return The description of the command.
      */
     String description() default "";
+
+    /**
+     * The color of the command.
+     *
+     * @return The color of the command.
+     */
+    ChatColor color() default ChatColor.GOLD;
 
     /**
      * Whether the command generates a help command.

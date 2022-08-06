@@ -4,7 +4,6 @@ import cc.polyfrost.oneconfig.libs.universal.UMinecraft;
 import cc.polyfrost.oneconfig.platform.ServerPlatform;
 import net.minecraft.client.entity.EntityPlayerSP;
 
-@SuppressWarnings("unused")
 public class ServerPlatformImpl implements ServerPlatform {
 
     @Override

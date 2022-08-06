@@ -7,9 +7,13 @@ import cc.polyfrost.oneconfig.platform.GLPlatform;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.client.shader.Framebuffer;
 
-@SuppressWarnings("unused")
+//#if FORGE==1
+import net.minecraft.client.shader.Framebuffer;
+//#else
+//$$ import cc.polyfrost.oneconfig.internal.hook.FramebufferHook;
+//#endif
+
 public class GLPlatformImpl implements GLPlatform {
 
     @Override
@@ -48,7 +52,11 @@ public class GLPlatformImpl implements GLPlatform {
 
     @Override
     public void enableStencil() {
+        //#if FORGE==1
         Framebuffer framebuffer = UMinecraft.getMinecraft().getFramebuffer();
+        //#else
+        //$$ FramebufferHook framebuffer = ((FramebufferHook) UMinecraft.getMinecraft().getFramebuffer());
+        //#endif
         if (!framebuffer.isStencilEnabled()) {
             framebuffer.enableStencil();
         }

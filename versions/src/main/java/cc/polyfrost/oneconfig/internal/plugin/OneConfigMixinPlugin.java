@@ -43,11 +43,16 @@ public class OneConfigMixinPlugin implements IMixinConfigPlugin {
     public List<String> getMixins() {
         if (Platform.getInstance().getMinecraftVersion() >= 11600) {
             ArrayList<String> mixins = new ArrayList<>();
-            mixins.add("ClientModLoaderMixin");
-            mixins.add("KeyboardListenerMixin");
-            mixins.add("MouseHelperAccessor");
-            mixins.add("MouseHelperMixin");
-            mixins.add("TimeTrackerMixin");
+            if (Platform.getInstance().getLoader() == Platform.Loader.FORGE) {
+                mixins.add("ClientModLoaderMixin");
+            } else {
+                mixins.add("FramebufferMixin");
+                mixins.add("GameRendererAccessor");
+            }
+            mixins.add("KeyboardMixin");
+            mixins.add("MouseAccessor");
+            mixins.add("MouseMixin");
+            mixins.add("TickTimeTrackerMixin");
             return mixins;
         } else {
             return null;

@@ -15,21 +15,20 @@ import cc.polyfrost.oneconfig.renderer.RenderManager;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class TextHud extends Hud {
+public abstract class TextHud extends BasicHud {
     protected transient List<String> lines = new ArrayList<>();
     private transient int width;
-    private transient int height;
 
     @Color(
             name = "Text Color"
     )
-    public OneColor color = new OneColor(255, 255, 255);
+    protected OneColor color = new OneColor(255, 255, 255);
 
     @Dropdown(
             name = "Text Type",
             options = {"No Shadow", "Shadow", "Full Shadow"}
     )
-    public int textType = 0;
+    protected int textType = 0;
 
     public TextHud(boolean enabled, int x, int y) {
         super(enabled, x, y);
@@ -45,59 +44,72 @@ public abstract class TextHud extends Hud {
      *
      * @param lines Empty ArrayList to add your hud text too
      */
-    protected abstract void getLines(List<String> lines);
+    protected abstract void getLines(List<String> lines, boolean example);
 
     /**
      * This function is called every frame
      *
      * @param lines The current lines of the hud
      */
-    protected void getLinesFrequent(List<String> lines) {
-
-    }
-
-    /**
-     * This function is called every tick in the move GUI
-     *
-     * @param lines Empty ArrayList to add your hud text too
-     */
-    protected void getExampleLines(List<String> lines) {
-        getLines(lines);
-    }
-
-    /**
-     * This function is called every frame in the move GUI
-     *
-     * @param lines The current lines of the hud
-     */
-    protected void getExampleLinesFrequent(List<String> lines) {
-        getLinesFrequent(lines);
+    protected void getLinesFrequent(List<String> lines, boolean example) {
     }
 
     @Override
-    public void draw(UMatrixStack matrices, int x, int y, float scale) {
-        if (!HudCore.editing) getLinesFrequent(lines);
-        else getExampleLinesFrequent(lines);
-        if (lines == null) return;
+    public void draw(UMatrixStack matrices, float x, float y, float scale, boolean example) {
+        if (lines == null || lines.size() == 0) return;
 
-        int textY = y;
-        width = 0;
+        float textY = y;
         for (String line : lines) {
-            RenderManager.drawScaledString(line, x, textY, color.getRGB(), RenderManager.TextType.toType(textType), scale);
-            width = Math.max(width, Platform.getGLPlatform().getStringWidth(line));
+            drawLine(line, x, textY, scale);
             textY += 12 * scale;
         }
-        height = (int) ((textY - y) / scale - 3);
+    }
+
+    /**
+     * Function that can be overwritten to implement different behavior easily
+     *
+     * @param line  The line
+     * @param x     The X coordinate
+     * @param y     The Y coordinate
+     * @param scale The scale
+     */
+    protected void drawLine(String line, float x, float y, float scale) {
+        RenderManager.drawScaledString(line, x, y, color.getRGB(), RenderManager.TextType.toType(textType), scale);
+    }
+
+    /**
+     * Function that can be overwritten to implement different behavior easily
+     *
+     * @param line The line
+     * @return The width of the line (scaled accordingly)
+     */
+    protected float getLineWidth(String line, float scale) {
+        return Platform.getGLPlatform().getStringWidth(line) * scale;
     }
 
     @Override
-    public int getWidth(float scale) {
-        return (int) (width * scale);
+    protected void preRender(boolean example) {
+        getLinesFrequent(lines, example);
     }
 
     @Override
-    public int getHeight(float scale) {
-        return (int) (height * scale);
+    protected float getWidth(float scale, boolean example) {
+        if (lines == null) return 0;
+        float width = 0;
+        for (String line : lines) {
+            width = Math.max(width, getLineWidth(line, scale));
+        }
+        return width;
+    }
+
+    @Override
+    protected float getHeight(float scale, boolean example) {
+        return lines == null ? 0 : (lines.size() * 12 - 4) * scale;
+    }
+
+    @Override
+    public boolean shouldDrawBackground() {
+        return super.shouldDrawBackground() && lines != null && lines.size() > 0;
     }
 
     private class TickHandler {
@@ -105,8 +117,7 @@ public abstract class TextHud extends Hud {
         private void onTick(TickEvent event) {
             if (event.stage != Stage.START || !isEnabled()) return;
             lines.clear();
-            if (!HudCore.editing) getLines(lines);
-            else getExampleLines(lines);
+            getLines(lines, HudCore.editing);
         }
     }
 }

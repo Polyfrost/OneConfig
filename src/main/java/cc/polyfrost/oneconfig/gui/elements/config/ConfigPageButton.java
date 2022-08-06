@@ -1,5 +1,6 @@
 package cc.polyfrost.oneconfig.gui.elements.config;
 
+import cc.polyfrost.oneconfig.gui.pages.Page;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.config.elements.OptionPage;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
@@ -16,11 +17,17 @@ import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 import java.lang.reflect.Field;
 
 public class ConfigPageButton extends BasicOption {
-    public final OptionPage page;
+    public final Page page;
     public final String description;
     private final ColorAnimation backgroundColor = new ColorAnimation(ColorPalette.SECONDARY);
 
     public ConfigPageButton(Field field, Object parent, String name, String description, String category, String subcategory, OptionPage page) {
+        super(field, parent, name, category, subcategory, 2);
+        this.description = description;
+        this.page = new ModConfigPage(page);
+    }
+
+    public ConfigPageButton(Field field, Object parent, String name, String description, String category, String subcategory, Page page) {
         super(field, parent, name, category, subcategory, 2);
         this.description = description;
         this.page = page;
@@ -40,7 +47,7 @@ public class ConfigPageButton extends BasicOption {
             RenderManager.drawText(vg, name, x + 10, y + 70, Colors.WHITE_90, 14, Fonts.MEDIUM);
         RenderManager.drawSvg(vg, SVGs.CARET_RIGHT, x + 981f, y + (description.equals("") ? 20f : 36f), 13, 22);
 
-        if (clicked) OneConfigGui.INSTANCE.openPage(new ModConfigPage(page));
+        if (clicked) OneConfigGui.INSTANCE.openPage(page);
         RenderManager.setAlpha(vg, 1f);
     }
 

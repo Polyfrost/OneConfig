@@ -13,7 +13,7 @@ import java.util.function.IntSupplier;
 import java.util.function.LongSupplier;
 
 @Mixin(TimeTracker.class)
-public class TimeTrackerMixin {
+public class TickTimeTrackerMixin {
     @Inject(method = "<init>", at = @At("RETURN"))
     private void onStart(LongSupplier longSupplier, IntSupplier intSupplier, CallbackInfo ci) {
         EventManager.INSTANCE.post(new StartEvent());

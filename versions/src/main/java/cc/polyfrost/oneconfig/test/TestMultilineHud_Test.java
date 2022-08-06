@@ -10,7 +10,8 @@ public class TestMultilineHud_Test extends TextHud {
     }
 
     @Override
-    protected void getLines(List<String> lines) {
+    protected void getLines(List<String> lines, boolean example) {
         lines.add(String.valueOf(System.currentTimeMillis()));
+        lines.add("HEY!");
     }
 }

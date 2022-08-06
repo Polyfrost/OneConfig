@@ -133,21 +133,21 @@ public final class OneColor {
      * Get the red value of the color (0-255).
      */
     public int getRed() {
-        return argb >> 16 & 255;
+        return getRGB() >> 16 & 255;
     }
 
     /**
      * Get the green value of the color (0-255).
      */
     public int getGreen() {
-        return argb >> 8 & 255;
+        return getRGB() >> 8 & 255;
     }
 
     /**
      * Get the blue value of the color (0-255).
      */
     public int getBlue() {
-        return argb & 255;
+        return getRGB() & 255;
     }
 
     /**
