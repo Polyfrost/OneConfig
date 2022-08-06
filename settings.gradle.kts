@@ -23,12 +23,16 @@ pluginManagement {
 
 val mod_name: String by settings
 
+val buildingCi = System.getProperty("BUILDING_CI") == "true"
+
 rootProject.name = mod_name
 
-include(":lwjgl")
-project(":lwjgl").apply {
-    projectDir = file("lwjgl/")
-    buildFileName = "root.gradle.kts"
+if (!buildingCi) {
+    include(":lwjgl")
+    project(":lwjgl").apply {
+        projectDir = file("lwjgl/")
+        buildFileName = "root.gradle.kts"
+    }
 }
 
 include(":platform")
@@ -44,13 +48,15 @@ listOf(
     "1.16.2-fabric"
 ).forEach { version ->
     include(":platform:$version")
-    include(":lwjgl:$version")
     project(":platform:$version").apply {
         projectDir = file("versions/$version")
         buildFileName = "../build.gradle.kts"
     }
-    project(":lwjgl:$version").apply {
-        projectDir = file("lwjgl/$version")
-        buildFileName = "../build.gradle.kts"
+    if (!buildingCi) {
+        include(":lwjgl:$version")
+        project(":lwjgl:$version").apply {
+            projectDir = file("lwjgl/$version")
+            buildFileName = "../build.gradle.kts"
+        }
     }
 }
