@@ -3,6 +3,7 @@
  * OneConfig - Next Generation Config Library for Minecraft: Java Edition
  * Copyright (C) 2021, 2022 Polyfrost.
  *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
+ * Co-author: MicrocontrollersDev <https://github.com/MicrocontrollersDev> (non-copyrightable contribution)
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
