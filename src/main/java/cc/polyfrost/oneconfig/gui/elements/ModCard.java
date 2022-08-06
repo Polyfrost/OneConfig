@@ -8,6 +8,7 @@ import cc.polyfrost.oneconfig.gui.pages.ModsPage;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.internal.config.OneConfigConfig;
+import cc.polyfrost.oneconfig.internal.config.compatibility.forge.ForgeCompat;
 import cc.polyfrost.oneconfig.internal.config.core.ConfigCore;
 import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
@@ -92,8 +93,16 @@ public class ModCard extends BasicElement {
     }
 
     public void onClick() {
-        if (isHoveredMain)
+        if (isHoveredMain) {
+            if (modData instanceof ForgeCompat.ForgeCompatMod) {
+                Runnable runnable = ForgeCompat.compatMods.get(modData);
+                if (runnable != null) {
+                    runnable.run();
+                    return;
+                }
+            }
             OneConfigGui.INSTANCE.openPage(new ModConfigPage(modData.defaultPage));
+        }
     }
 
     public Mod getModData() {
