@@ -1,3 +1,29 @@
+/*
+ * This file is part of OneConfig.
+ * OneConfig - Next Generation Config Library for Minecraft: Java Edition
+ * Copyright (C) 2021, 2022 Polyfrost.
+ *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
+ *
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ *   OneConfig is licensed under the terms of version 3 of the GNU Lesser
+ * General Public License as published by the Free Software Foundation, AND
+ * under the Additional Terms Applicable to OneConfig, as published by Polyfrost,
+ * either version 1.0 of the Additional Terms, or (at your option) any later
+ * version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ *   You should have received a copy of the GNU Lesser General Public
+ * License.  If not, see <https://www.gnu.org/licenses/>. You should
+ * have also received a copy of the Additional Terms Applicable
+ * to OneConfig, as published by Polyfrost. If not, see
+ * <https://polyfrost.cc/legal/oneconfig/additional-terms>
+ */
+
 package cc.polyfrost.oneconfig.gui.elements.config;
 
 import cc.polyfrost.oneconfig.config.annotations.Color;
@@ -84,7 +110,7 @@ public class ConfigColorElement extends BasicOption {
 
         element.update(x1 + 416, y);
         RenderManager.drawHollowRoundRect(vg, x1 + 415, y - 1, 64, 32, Colors.GRAY_300, 12f, 2f);
-        RenderManager.drawRoundImage(vg, Images.ALPHA_GRID, x1 + 420, y + 4, 56, 24, 8f);
+        RenderManager.drawRoundImage(vg, Images.ALPHA_GRID.filePath, x1 + 420, y + 4, 56, 24, 8f);
         RenderManager.drawRoundedRect(vg, x1 + 420, y + 4, 56, 24, color.getRGB(), 8f);
         if (element.isClicked() && !open) {
             open = true;

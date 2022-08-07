@@ -1,3 +1,29 @@
+/*
+ * This file is part of OneConfig.
+ * OneConfig - Next Generation Config Library for Minecraft: Java Edition
+ * Copyright (C) 2021, 2022 Polyfrost.
+ *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
+ *
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ *   OneConfig is licensed under the terms of version 3 of the GNU Lesser
+ * General Public License as published by the Free Software Foundation, AND
+ * under the Additional Terms Applicable to OneConfig, as published by Polyfrost,
+ * either version 1.0 of the Additional Terms, or (at your option) any later
+ * version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ *   You should have received a copy of the GNU Lesser General Public
+ * License.  If not, see <https://www.gnu.org/licenses/>. You should
+ * have also received a copy of the Additional Terms Applicable
+ * to OneConfig, as published by Polyfrost. If not, see
+ * <https://polyfrost.cc/legal/oneconfig/additional-terms>
+ */
+
 package cc.polyfrost.oneconfig.images;
 
 import cc.polyfrost.oneconfig.utils.IOUtils;
@@ -20,53 +46,53 @@ import java.util.Objects;
 
 /** An Image wrapper class that is used by the OneConfig system.*/
 @SuppressWarnings("unused")
-public class Image {
+public class OneImage {
     private static final Logger LOGGER = LogManager.getLogger("OneConfig Images");
     private BufferedImage image;
     private Graphics2D graphics = null;
     private final int width, height;
 
     /**
-     * Create a new Image from the file. This can be as a resource location inside your JAR.
+     * Create a new OneImage from the file. This can be as a resource location inside your JAR.
      * @param filePath The path to the image file.
      */
-    public Image(String filePath) throws IOException {
-        image = ImageIO.read(Objects.requireNonNull(Image.class.getResourceAsStream(filePath)));
+    public OneImage(String filePath) throws IOException {
+        image = ImageIO.read(Objects.requireNonNull(OneImage.class.getResourceAsStream(filePath)));
         width = image.getWidth();
         height = image.getHeight();
     }
 
     /**
-     * Create a new Image from the file.
+     * Create a new OneImage from the file.
      * @param is InputStream to the image file.
      */
-    public Image(InputStream is) throws IOException {
+    public OneImage(InputStream is) throws IOException {
         image = ImageIO.read(is);
         width = image.getWidth();
         height = image.getHeight();
     }
 
     /**
-     * Create a new Image from the file.
+     * Create a new OneImage from the file.
      * @param file File to the image file.
      */
-    public Image(File file) throws IOException {
+    public OneImage(File file) throws IOException {
             image = ImageIO.read(Objects.requireNonNull(file));
             width = image.getWidth();
             height = image.getHeight();
     }
 
     /**
-     * Create a new Image from the BufferedImage.
+     * Create a new OneImage from the BufferedImage.
      */
-    public Image(BufferedImage image) {
+    public OneImage(BufferedImage image) {
         this.image = image;
         width = image.getWidth();
         height = image.getHeight();
     }
 
     /** Create a new blank image with the specified width and height. */
-    public Image(int width, int height) {
+    public OneImage(int width, int height) {
         this.width = width;
         this.height = height;
         image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);

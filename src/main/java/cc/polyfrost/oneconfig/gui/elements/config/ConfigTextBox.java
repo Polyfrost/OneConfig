@@ -1,3 +1,29 @@
+/*
+ * This file is part of OneConfig.
+ * OneConfig - Next Generation Config Library for Minecraft: Java Edition
+ * Copyright (C) 2021, 2022 Polyfrost.
+ *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
+ *
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ *   OneConfig is licensed under the terms of version 3 of the GNU Lesser
+ * General Public License as published by the Free Software Foundation, AND
+ * under the Additional Terms Applicable to OneConfig, as published by Polyfrost,
+ * either version 1.0 of the Additional Terms, or (at your option) any later
+ * version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ *   You should have received a copy of the GNU Lesser General Public
+ * License.  If not, see <https://www.gnu.org/licenses/>. You should
+ * have also received a copy of the Additional Terms Applicable
+ * to OneConfig, as published by Polyfrost. If not, see
+ * <https://polyfrost.cc/legal/oneconfig/additional-terms>
+ */
+
 package cc.polyfrost.oneconfig.gui.elements.config;
 
 import cc.polyfrost.oneconfig.config.annotations.Text;
@@ -6,6 +32,7 @@ import cc.polyfrost.oneconfig.config.elements.BasicOption;
 import cc.polyfrost.oneconfig.gui.elements.text.TextInputField;
 import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
+import cc.polyfrost.oneconfig.renderer.SVG;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.utils.InputUtils;
@@ -46,7 +73,7 @@ public class ConfigTextBox extends BasicOption {
         textField.draw(vg, x + (size == 1 ? 224 : 352), y);
 
         if (secure) {
-            SVGs icon = textField.getPassword() ? SVGs.EYE_OFF : SVGs.EYE;
+            final SVG icon = textField.getPassword() ? SVGs.EYE_OFF : SVGs.EYE;
             boolean hovered = InputUtils.isAreaHovered(x + 967, y + 7, 18, 18) && isEnabled();
             int color = hovered ? Colors.WHITE : Colors.WHITE_80;
             if (hovered && InputUtils.isClicked()) textField.setPassword(!textField.getPassword());

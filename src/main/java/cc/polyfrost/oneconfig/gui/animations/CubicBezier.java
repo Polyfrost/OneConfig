@@ -1,32 +1,27 @@
-/* This file contains an adaptation of code from The Android Open Source
- * Project found at <https://cs.android.com/>
- * For the avoidance of doubt, this file is still licensed under the terms
- * of OneConfig's Licensing.
+/*
+ * This file is part of OneConfig.
+ * OneConfig - Next Generation Config Library for Minecraft: Java Edition
+ * Copyright (C) 2021, 2022 Polyfrost.
+ *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
  *
- *                 LICENSE NOTICE FOR ADAPTED CODE
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
- * Copyright 2019 The Android Open Source Project
+ *   OneConfig is licensed under the terms of version 3 of the GNU Lesser
+ * General Public License as published by the Free Software Foundation, AND
+ * under the Additional Terms Applicable to OneConfig, as published by Polyfrost,
+ * either version 1.0 of the Additional Terms, or (at your option) any later
+ * version.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use the file except in compliance with the License.
- * You may obtain a copy of the License at
+ *   This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- * Significant changes (as required by the Apache 2.0):
- * - Changed variable names
- * - Code adapted from Kotlin to Java
- * - Removed variables defining premade easing functions
- * - Added constructor for JDT and OneConfig's animation system
- *
- * As per the terms of the Apache 2.0 License, a copy of the License
- * is found at `src/main/resources/licenses/Android-License.txt`.
+ *   You should have received a copy of the GNU Lesser General Public
+ * License.  If not, see <https://www.gnu.org/licenses/>. You should
+ * have also received a copy of the Additional Terms Applicable
+ * to OneConfig, as published by Polyfrost. If not, see
+ * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
 package cc.polyfrost.oneconfig.gui.animations;

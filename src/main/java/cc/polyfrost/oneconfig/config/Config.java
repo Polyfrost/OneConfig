@@ -1,8 +1,32 @@
+/*
+ * This file is part of OneConfig.
+ * OneConfig - Next Generation Config Library for Minecraft: Java Edition
+ * Copyright (C) 2021, 2022 Polyfrost.
+ *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
+ *
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ *   OneConfig is licensed under the terms of version 3 of the GNU Lesser
+ * General Public License as published by the Free Software Foundation, AND
+ * under the Additional Terms Applicable to OneConfig, as published by Polyfrost,
+ * either version 1.0 of the Additional Terms, or (at your option) any later
+ * version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ *   You should have received a copy of the GNU Lesser General Public
+ * License.  If not, see <https://www.gnu.org/licenses/>. You should
+ * have also received a copy of the Additional Terms Applicable
+ * to OneConfig, as published by Polyfrost. If not, see
+ * <https://polyfrost.cc/legal/oneconfig/additional-terms>
+ */
+
 package cc.polyfrost.oneconfig.config;
 
-import cc.polyfrost.oneconfig.config.annotations.CustomOption;
-import cc.polyfrost.oneconfig.config.annotations.HUD;
-import cc.polyfrost.oneconfig.config.annotations.Page;
+import cc.polyfrost.oneconfig.config.annotations.*;
 import cc.polyfrost.oneconfig.config.core.ConfigUtils;
 import cc.polyfrost.oneconfig.config.core.OneKeyBind;
 import cc.polyfrost.oneconfig.config.data.Mod;
@@ -14,6 +38,7 @@ import cc.polyfrost.oneconfig.config.gson.NonProfileSpecificExclusionStrategy;
 import cc.polyfrost.oneconfig.config.gson.ProfileExclusionStrategy;
 import cc.polyfrost.oneconfig.config.profiles.Profiles;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
+import cc.polyfrost.oneconfig.gui.elements.config.ConfigButton;
 import cc.polyfrost.oneconfig.gui.elements.config.ConfigPageButton;
 import cc.polyfrost.oneconfig.gui.pages.ModConfigPage;
 import cc.polyfrost.oneconfig.hud.HUDUtils;
@@ -29,6 +54,7 @@ import java.io.BufferedWriter;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -120,10 +146,11 @@ public class Config {
      * @param migrate  whether the migrator should be run
      */
     protected void generateOptionList(Object instance, OptionPage page, Mod mod, boolean migrate) {
+        String pagePath = page.equals(mod.defaultPage) ? "" : page.name + ".";
         for (Field field : instance.getClass().getDeclaredFields()) {
             Option option = ConfigUtils.findAnnotation(field, Option.class);
             CustomOption customOption = ConfigUtils.findAnnotation(field, CustomOption.class);
-            String optionName = (page.equals(mod.defaultPage) ? "" : page.name + ".") + field.getName();
+            String optionName = pagePath + field.getName();
             if (option != null) {
                 BasicOption configOption = ConfigUtils.addOptionToPage(page, option, field, instance, migrate ? mod.migrator : null);
                 optionNames.put(optionName, configOption);
@@ -136,19 +163,34 @@ public class Config {
                 OptionSubcategory subcategory = ConfigUtils.getSubCategory(page, optionPage.category(), optionPage.subcategory());
                 Object pageInstance = ConfigUtils.getField(field, instance);
                 if (pageInstance == null) continue;
-                OptionPage newPage = new OptionPage(optionPage.name(), mod);
-                generateOptionList(pageInstance, newPage, mod, migrate);
-                ConfigPageButton button = new ConfigPageButton(field, instance, optionPage.name(), optionPage.description(), optionPage.category(), optionPage.subcategory(), newPage);
+                ConfigPageButton button;
+                if (pageInstance instanceof cc.polyfrost.oneconfig.gui.pages.Page) {
+                    button = new ConfigPageButton(field, instance, optionPage.name(), optionPage.description(), optionPage.category(), optionPage.subcategory(), (cc.polyfrost.oneconfig.gui.pages.Page) pageInstance);
+                } else {
+                    OptionPage newPage = new OptionPage(optionPage.name(), mod);
+                    generateOptionList(pageInstance, newPage, mod, migrate);
+                    button = new ConfigPageButton(field, instance, optionPage.name(), optionPage.description(), optionPage.category(), optionPage.subcategory(), newPage);
+                }
                 if (optionPage.location() == PageLocation.TOP) subcategory.topButtons.add(button);
                 else subcategory.bottomButtons.add(button);
             } else if (field.isAnnotationPresent(HUD.class)) {
                 HUDUtils.addHudOptions(page, field, instance, this);
             }
         }
+        /*for (Method method : instance.getClass().getDeclaredMethods()) {
+            Button button = ConfigUtils.findAnnotation(method, Button.class);
+            String optionName = pagePath + method.getName();
+            if (button != null) {
+                ConfigButton option = ConfigButton.create(method, instance);
+                ConfigUtils.getSubCategory(page, button.category(), button.subcategory()).options.add(option);
+                optionNames.put(optionName, option);
+            }
+        }*/
     }
 
     /**
-     * All fields with the CustomOption annotation are sent to this function
+     * All fields with the CustomOption annotation are sent to this function, overwrite this function to handle custom options,
+     * For documentation please see: <a href="https://docs.polyfrost.cc/oneconfig/config/adding-options/custom-options">https://docs.polyfrost.cc/oneconfig/config/adding-options/custom-options</a>
      *
      * @param field      Target field
      * @param annotation The annotation the field has

@@ -1,11 +1,37 @@
+/*
+ * This file is part of OneConfig.
+ * OneConfig - Next Generation Config Library for Minecraft: Java Edition
+ * Copyright (C) 2021, 2022 Polyfrost.
+ *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
+ *
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ *   OneConfig is licensed under the terms of version 3 of the GNU Lesser
+ * General Public License as published by the Free Software Foundation, AND
+ * under the Additional Terms Applicable to OneConfig, as published by Polyfrost,
+ * either version 1.0 of the Additional Terms, or (at your option) any later
+ * version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ *   You should have received a copy of the GNU Lesser General Public
+ * License.  If not, see <https://www.gnu.org/licenses/>. You should
+ * have also received a copy of the Additional Terms Applicable
+ * to OneConfig, as published by Polyfrost. If not, see
+ * <https://polyfrost.cc/legal/oneconfig/additional-terms>
+ */
+
 package cc.polyfrost.oneconfig.gui.elements.text;
 
 import cc.polyfrost.oneconfig.gui.elements.BasicElement;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
-import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
 import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
+import cc.polyfrost.oneconfig.renderer.SVG;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.renderer.scissor.Scissor;
 import cc.polyfrost.oneconfig.renderer.scissor.ScissorManager;
@@ -35,12 +61,12 @@ public class TextInputField extends BasicElement {
     protected boolean onlyNums = false;
     protected boolean errored = false;
     protected boolean centered = false;
-    protected SVGs icon;
+    protected SVG icon;
     protected ArrayList<String> wrappedText = null;
     private long clickTimeD1;
     private int lines = 1;
 
-    public TextInputField(int width, int height, String defaultText, boolean multiLine, boolean password, SVGs icon) {
+    public TextInputField(int width, int height, String defaultText, boolean multiLine, boolean password, SVG icon) {
         super(width, height, false);
         this.multiLine = multiLine;
         this.defaultText = defaultText;

@@ -1,9 +1,34 @@
+/*
+ * This file is part of OneConfig.
+ * OneConfig - Next Generation Config Library for Minecraft: Java Edition
+ * Copyright (C) 2021, 2022 Polyfrost.
+ *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
+ *
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ *   OneConfig is licensed under the terms of version 3 of the GNU Lesser
+ * General Public License as published by the Free Software Foundation, AND
+ * under the Additional Terms Applicable to OneConfig, as published by Polyfrost,
+ * either version 1.0 of the Additional Terms, or (at your option) any later
+ * version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ *   You should have received a copy of the GNU Lesser General Public
+ * License.  If not, see <https://www.gnu.org/licenses/>. You should
+ * have also received a copy of the Additional Terms Applicable
+ * to OneConfig, as published by Polyfrost. If not, see
+ * <https://polyfrost.cc/legal/oneconfig/additional-terms>
+ */
+
 package cc.polyfrost.oneconfig.renderer;
 
 import cc.polyfrost.oneconfig.config.data.InfoType;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
-import cc.polyfrost.oneconfig.internal.assets.Images;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.libs.universal.UGraphics;
 import cc.polyfrost.oneconfig.libs.universal.UResolution;
@@ -377,7 +402,7 @@ public final class RenderManager {
      *
      * @see RenderManager#drawImage(long, String, float, float, float, float)
      */
-    public static void drawImage(long vg, Images filePath, float x, float y, float width, float height) {
+    public static void drawImage(long vg, Image filePath, float x, float y, float width, float height) {
         drawImage(vg, filePath.filePath, x, y, width, height);
     }
 
@@ -386,7 +411,7 @@ public final class RenderManager {
      *
      * @see RenderManager#drawImage(long, String, float, float, float, float, int)
      */
-    public static void drawImage(long vg, Images filePath, float x, float y, float width, float height, int color) {
+    public static void drawImage(long vg, Image filePath, float x, float y, float width, float height, int color) {
         drawImage(vg, filePath.filePath, x, y, width, height, color);
     }
 
@@ -419,7 +444,7 @@ public final class RenderManager {
      *
      * @see RenderManager#drawRoundImage(long, String, float, float, float, float, float)
      */
-    public static void drawRoundImage(long vg, Images filePath, float x, float y, float width, float height, float radius) {
+    public static void drawRoundImage(long vg, Image filePath, float x, float y, float width, float height, float radius) {
         drawRoundImage(vg, filePath.filePath, x, y, width, height, radius);
     }
 
@@ -610,7 +635,7 @@ public final class RenderManager {
      *
      * @see RenderManager#drawSvg(long, String, float, float, float, float)
      */
-    public static void drawSvg(long vg, SVGs svg, float x, float y, float width, float height) {
+    public static void drawSvg(long vg, SVG svg, float x, float y, float width, float height) {
         drawSvg(vg, svg.filePath, x, y, width, height);
     }
 
@@ -619,7 +644,7 @@ public final class RenderManager {
      *
      * @see RenderManager#drawSvg(long, String, float, float, float, float, int)
      */
-    public static void drawSvg(long vg, SVGs svg, float x, float y, float width, float height, int color) {
+    public static void drawSvg(long vg, SVG svg, float x, float y, float width, float height, int color) {
         drawSvg(vg, svg.filePath, x, y, width, height, color);
     }
 
@@ -633,7 +658,7 @@ public final class RenderManager {
      * @param size The diameter.
      */
     public static void drawInfo(long vg, InfoType type, float x, float y, float size) {
-        SVGs icon = null;
+        SVG icon = null;
         int colorOuter = 0;
         int colorInner = 0;
         switch (type) {

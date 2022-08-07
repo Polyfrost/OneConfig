@@ -92,6 +92,16 @@ val relocated = registerRelocationAttribute("relocate") {
     remapStringsIn("com.github.benmanes.caffeine.cache.NodeFactory")
 }
 
+val implementationNoPom: Configuration by configurations.creating {
+    configurations.named(JavaPlugin.COMPILE_CLASSPATH_CONFIGURATION_NAME) { extendsFrom(this@creating) }
+    configurations.named(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME) { extendsFrom(this@creating) }
+}
+
+val modImplementationNoPom: Configuration by configurations.creating {
+    configurations.modImplementation.get().extendsFrom(this)
+    configurations.modRuntime.get().extendsFrom(this)
+}
+
 val shadeProject: Configuration by configurations.creating {
     attributes { attribute(relocatedCommonProject, false) }
 }
@@ -106,7 +116,9 @@ val shade: Configuration by configurations.creating {
     }
 }
 
-val shadeNoPom2: Configuration by configurations.creating
+val shadeNoPom: Configuration by configurations.creating
+
+val shadeNoJar: Configuration by configurations.creating
 
 sourceSets {
     main {
@@ -146,7 +158,9 @@ dependencies {
     include("org.jetbrains.kotlinx:atomicfu-jvm:$atomicfuVersion")
 
     if (platform.isLegacyForge) {
-        include("org.spongepowered:mixin:0.7.11-SNAPSHOT", pom = false, transitive = false)
+        implementationNoPom(shadeNoJar("org.spongepowered:mixin:0.7.11-SNAPSHOT") {
+            isTransitive = false
+        })
     } else {
         if (platform.isFabric && platform.mcVersion >= 11700) {
             val fabricApiVersion = when {
@@ -235,7 +249,7 @@ tasks {
 
     val shadowJar = named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar") {
         archiveClassifier.set("full-dev")
-        configurations = listOf(shade, shadeNoPom2, shadeProject, shadeRelocated)
+        configurations = listOf(shade, shadeNoPom, shadeNoJar, shadeProject, shadeRelocated)
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
         dependsOn(jar)
     }
@@ -250,8 +264,8 @@ tasks {
     }
     jar {
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-        dependsOn(shadeNoPom2, shadeProject, shadeRelocated)
-        from(ArrayList<File>().run { addAll(shadeNoPom2); addAll(shadeProject); addAll(shadeRelocated); this }
+        dependsOn(shadeNoPom, shadeProject, shadeRelocated)
+        from(ArrayList<File>().run { addAll(shadeNoPom); addAll(shadeProject); addAll(shadeRelocated); this }
             .map { if (it.isDirectory) it else zipTree(it) })
         manifest {
             attributes(
@@ -378,9 +392,8 @@ fun DependencyHandlerScope.include(dependency: Any, pom: Boolean = true, mod: Bo
         if (pom) {
             shade(dependency)
         } else {
-            shadeNoPom2(dependency)
-            compileOnly(dependency)
-            runtimeOnly(dependency)
+            shadeNoPom(dependency)
+            implementationNoPom(dependency)
         }
     } else {
         if (pom) {
@@ -391,11 +404,9 @@ fun DependencyHandlerScope.include(dependency: Any, pom: Boolean = true, mod: Bo
             }
         } else {
             if (mod) {
-                modCompileOnly(dependency)
-                modRuntimeOnly(dependency)
+                modImplementationNoPom(dependency)
             } else {
-                compileOnly(dependency)
-                runtimeOnly(dependency)
+                implementationNoPom(dependency)
             }
         }
         if (jar) {
@@ -414,15 +425,13 @@ fun DependencyHandlerScope.include(dependency: ModuleDependency, pom: Boolean = 
     if (platform.isForge) {
         if (relocate) {
             shadeRelocated(dependency) { isTransitive = transitive }
-            compileOnly(dependency) { isTransitive = transitive; attributes { attribute(relocated, true) } }
-            runtimeOnly(dependency) { isTransitive = transitive; attributes { attribute(relocated, true) } }
+            implementationNoPom(dependency) { isTransitive = transitive; attributes { attribute(relocated, true) } }
         } else {
             if (pom) {
                 shade(dependency) { isTransitive = transitive }
             } else {
-                shadeNoPom2(dependency) { isTransitive = transitive }
-                compileOnly(dependency) { isTransitive = transitive }
-                runtimeOnly(dependency) { isTransitive = transitive }
+                shadeNoPom(dependency) { isTransitive = transitive }
+                implementationNoPom(dependency) { isTransitive = transitive }
             }
         }
     } else {
@@ -434,11 +443,9 @@ fun DependencyHandlerScope.include(dependency: ModuleDependency, pom: Boolean = 
             }
         } else {
             if (mod) {
-                modCompileOnly(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
-                modRuntimeOnly(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
+                modImplementationNoPom(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
             } else {
-                compileOnly(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
-                runtimeOnly(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
+                implementationNoPom(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
             }
         }
         if (jar) {
@@ -461,15 +468,13 @@ fun DependencyHandlerScope.include(dependency: String, pom: Boolean = true, mod:
     if (platform.isForge) {
         if (relocate) {
             shadeRelocated(dependency) { isTransitive = transitive }
-            compileOnly(dependency) { isTransitive = transitive; attributes { attribute(relocated, true) } }
-            runtimeOnly(dependency) { isTransitive = transitive; attributes { attribute(relocated, true) } }
+            implementationNoPom(dependency) { isTransitive = transitive; attributes { attribute(relocated, true) } }
         } else {
             if (pom) {
                 shade(dependency) { isTransitive = transitive }
             } else {
-                shadeNoPom2(dependency) { isTransitive = transitive }
-                compileOnly(dependency) { isTransitive = transitive }
-                runtimeOnly(dependency) { isTransitive = transitive }
+                shadeNoPom(dependency) { isTransitive = transitive }
+                implementationNoPom(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
             }
         }
     } else {
@@ -481,11 +486,9 @@ fun DependencyHandlerScope.include(dependency: String, pom: Boolean = true, mod:
             }
         } else {
             if (mod) {
-                modCompileOnly(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
-                modRuntimeOnly(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
+                modImplementationNoPom(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
             } else {
-                compileOnly(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
-                runtimeOnly(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
+                implementationNoPom(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
             }
         }
         if (jar) {
