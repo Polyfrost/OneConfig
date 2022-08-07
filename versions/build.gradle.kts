@@ -415,7 +415,7 @@ fun DependencyHandlerScope.include(dependency: Any, pom: Boolean = true, mod: Bo
             if (pom) {
                 shade(dependency)
             } else {
-                shadeNoPom2(dependency)
+                shadeNoPom(dependency)
             }
         }
     }
@@ -457,7 +457,7 @@ fun DependencyHandlerScope.include(dependency: ModuleDependency, pom: Boolean = 
                 if (pom) {
                     shade(dependency) { isTransitive = transitive }
                 } else {
-                    shadeNoPom2(dependency) { isTransitive = transitive }
+                    shadeNoPom(dependency) { isTransitive = transitive }
                 }
             }
         }
@@ -500,7 +500,7 @@ fun DependencyHandlerScope.include(dependency: String, pom: Boolean = true, mod:
                 if (pom) {
                     shade(dependency) { isTransitive = transitive }
                 } else {
-                    shadeNoPom2(dependency) { isTransitive = transitive }
+                    shadeNoPom(dependency) { isTransitive = transitive }
                 }
             }
         }
