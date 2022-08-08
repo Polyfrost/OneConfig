@@ -126,17 +126,12 @@ public class TextInputField extends BasicElement {
         }
 
         // check the selection
-        float selectionLength = 0;
-        boolean longSelection = false;
         validateSelection();
-        if (selection != null && selection.getText() != null) {
-            selectionLength = getTextWidth(selection.getText());
-            longSelection = selectionLength > MAX_WIDTH;
-        }
 
         // ACTUAL DRAWING
         float textY = textStart.y;
         int startIndex = 0;
+        boolean caretDone = false;
         for (final String line : getRenderText()) {
             if (centered) {
                 textStart.x = x + (width / 2f) - (getTextWidth(line) / 2f);
@@ -144,26 +139,26 @@ public class TextInputField extends BasicElement {
             final int endIndex = startIndex + line.length();
 
             // draw selection
-            if (selectionLength != 0 && selection != null) {
+            if (selection != null) {
                 final float from = selection.indexStart < endIndex && selection.indexStart >= startIndex ? getTextWidth(line.substring(0, selection.indexStart - startIndex)) : 0;
-                float thisLength = selectionLength;
-                if (longSelection) {
-                    thisLength = getTextWidth(line);
-                    selectionLength = selectionLength - thisLength;
-                    RenderManager.drawRect(vg, from + textStart.x, textY - 10, thisLength, LINE_HEIGHT, Colors.GRAY_300);
-                } else if (selection.indexStart < endIndex && selection.indexStart >= startIndex) {
-                    RenderManager.drawRect(vg, from + textStart.x, textY - 10, thisLength, LINE_HEIGHT, Colors.GRAY_300);
+                final float to = selection.indexEnd < endIndex && selection.indexEnd >= startIndex ? getTextWidth(line.substring(0, selection.indexEnd - startIndex)) : getTextWidth(line);
+                if(selection.indexStart < endIndex && selection.indexStart >= startIndex) {
+                    RenderManager.drawRect(vg, textStart.x + from, textY - 10, to - from, LINE_HEIGHT, Colors.GRAY_300);
+                } else if(selection.indexEnd < endIndex && selection.indexEnd >= startIndex) {
+                    RenderManager.drawRect(vg, textStart.x, textY - 10, to, LINE_HEIGHT, Colors.GRAY_300);
                 }
+                //RenderManager.drawRect(vg, textStart.x + from, textY - 10, to - from, LINE_HEIGHT, Colors.GRAY_300);
             }
 
             // draw text
             RenderManager.drawText(vg, line, textStart.x, textY, color, 14f, Fonts.REGULAR);
 
             // draw caret
-            if (selection == null && toggled) {
+            if (selection == null && toggled && !caretDone) {
                 // check if caret is applicable for this line
-                if ((caretPos > startIndex && caretPos <= endIndex)) {
+                if ((caretPos >= startIndex && caretPos <= endIndex)) {
                     RenderManager.drawRect(vg, textStart.x + getTextWidth(line.substring(0, caretPos - startIndex)), textY - 10, 1, LINE_HEIGHT, Colors.WHITE);
+                    caretDone = true;
                 }
             }
 
