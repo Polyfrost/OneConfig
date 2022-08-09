@@ -67,7 +67,7 @@ public class OneConfigCommand {
     @SubCommand(value = "profile", description = "Actions related to profiles.", aliases = {"profiles"})
     private static class ProfileSubCommand {
         @SubCommand(value = "list", description = "View all profiles", aliases = {"view"})
-        private static class list {
+        private static class List {
             @Main
             private static void main() {
                 StringBuilder builder = new StringBuilder()
@@ -83,7 +83,7 @@ public class OneConfigCommand {
         }
 
         @SubCommand(value = "switch", description = "Switch to a profile", aliases = {"enable", "set", "load"})
-        private static class switchProfile {
+        private static class SwitchProfile {
             @Main
             private static void main(@Name("profile") @Greedy String profile) {
                 if (!Profiles.doesProfileExist(profile)) {
@@ -96,7 +96,7 @@ public class OneConfigCommand {
         }
 
         @SubCommand(value = "create", description = "Create a new profile", aliases = {"make"})
-        private static class create {
+        private static class Create {
             @Main
             private static void main(@Name("profile") @Greedy String profile) {
                 if (Profiles.doesProfileExist(profile)) {
@@ -110,7 +110,7 @@ public class OneConfigCommand {
         }
 
         @SubCommand(value = "rename", description = "Rename a profile")
-        private static class rename {
+        private static class Rename {
             @Main
             private static void main(@Name("Old Name") String profile, @Name("New Name") @Greedy String newName) {
                 if (!Profiles.doesProfileExist(profile)) {
@@ -123,7 +123,7 @@ public class OneConfigCommand {
         }
 
         @SubCommand(value = "delete", description = "Delete a profile", aliases = {"remove", "destroy"})
-        private static class delete {
+        private static class Delete {
             @Main
             private static void main(@Name("profile") @Greedy String profile) {
                 if (!Profiles.doesProfileExist(profile)) {
