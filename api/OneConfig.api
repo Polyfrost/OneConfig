@@ -279,7 +279,7 @@ public abstract class cc/polyfrost/oneconfig/config/elements/BasicOption {
 	public final field category Ljava/lang/String;
 	protected final field field Ljava/lang/reflect/Field;
 	public final field name Ljava/lang/String;
-	protected final field parent Ljava/lang/Object;
+	protected field parent Ljava/lang/Object;
 	public final field size I
 	public final field subcategory Ljava/lang/String;
 	public fun <init> (Ljava/lang/reflect/Field;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;I)V
@@ -289,12 +289,15 @@ public abstract class cc/polyfrost/oneconfig/config/elements/BasicOption {
 	public abstract fun draw (JII)V
 	public fun drawLast (JII)V
 	public fun get ()Ljava/lang/Object;
+	public fun getField ()Ljava/lang/reflect/Field;
 	public abstract fun getHeight ()I
+	public fun getParent ()Ljava/lang/Object;
 	public fun isEnabled ()Z
 	public fun isHidden ()Z
 	public fun keyTyped (CI)V
 	public fun reset (Lcc/polyfrost/oneconfig/config/Config;)V
 	protected fun set (Ljava/lang/Object;)V
+	public fun setParent (Ljava/lang/Object;)V
 }
 
 public class cc/polyfrost/oneconfig/config/elements/OptionCategory {
@@ -384,22 +387,6 @@ public abstract interface annotation class cc/polyfrost/oneconfig/config/migrati
 	public abstract fun category ()Ljava/lang/String;
 	public abstract fun name ()Ljava/lang/String;
 	public abstract fun subcategory ()Ljava/lang/String;
-}
-
-public class cc/polyfrost/oneconfig/config/profiles/Profiles {
-	public static final field nonProfileSpecificDir Ljava/io/File;
-	public static final field profileDir Ljava/io/File;
-	public static field profiles Ljava/util/ArrayList;
-	public fun <init> ()V
-	public static fun createProfile (Ljava/lang/String;)V
-	public static fun deleteProfile (Ljava/lang/String;)V
-	public static fun getCurrentProfile ()Ljava/lang/String;
-	public static fun getNonProfileSpecificDir (Ljava/lang/String;)Ljava/io/File;
-	public static fun getProfileDir ()Ljava/io/File;
-	public static fun getProfileDir (Ljava/lang/String;)Ljava/io/File;
-	public static fun getProfileFile (Ljava/lang/String;)Ljava/io/File;
-	public static fun loadProfile (Ljava/lang/String;)V
-	public static fun renameProfile (Ljava/lang/String;Ljava/lang/String;)V
 }
 
 public final class cc/polyfrost/oneconfig/events/EventManager {
@@ -508,7 +495,6 @@ public class cc/polyfrost/oneconfig/gui/OneConfigGui : cc/polyfrost/oneconfig/li
 	public field allowClose Z
 	public field currentColorSelector Lcc/polyfrost/oneconfig/gui/elements/ColorSelector;
 	protected field currentPage Lcc/polyfrost/oneconfig/gui/pages/Page;
-	public static field instanceToRestore Lcc/polyfrost/oneconfig/gui/OneConfigGui;
 	public field mouseDown Z
 	protected field prevPage Lcc/polyfrost/oneconfig/gui/pages/Page;
 	public fun <init> ()V
