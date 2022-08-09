@@ -40,6 +40,7 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map;
 
 public class HUDUtils {
     public static void addHudOptions(OptionPage page, Field field, Object instance, Config config) {
@@ -48,7 +49,22 @@ public class HUDUtils {
         Hud hud = (Hud) ConfigUtils.getField(field, instance);
         if (hud == null) return;
         hud.setConfig(config);
-        HudCore.huds.add(hud);
+        HudCore.huds.put(new Map.Entry<Field, Object>() {
+            @Override
+            public Field getKey() {
+                return field;
+            }
+
+            @Override
+            public Object getValue() {
+                return instance;
+            }
+
+            @Override
+            public Object setValue(Object value) {
+                return null;
+            }
+        }, hud);
         String category = hudAnnotation.category();
         String subcategory = hudAnnotation.subcategory();
         ArrayList<BasicOption> options = new ArrayList<>();
@@ -78,6 +94,7 @@ public class HUDUtils {
             }
         } catch (Exception ignored) {
         }
+        HudCore.hudOptions.addAll(options);
         ConfigUtils.getSubCategory(page, hudAnnotation.category(), hudAnnotation.subcategory()).options.addAll(options);
     }
 }

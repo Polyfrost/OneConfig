@@ -36,6 +36,7 @@ import cc.polyfrost.oneconfig.config.elements.OptionPage;
 import cc.polyfrost.oneconfig.config.elements.OptionSubcategory;
 import cc.polyfrost.oneconfig.config.gson.NonProfileSpecificExclusionStrategy;
 import cc.polyfrost.oneconfig.config.gson.ProfileExclusionStrategy;
+import cc.polyfrost.oneconfig.gui.elements.config.ConfigKeyBind;
 import cc.polyfrost.oneconfig.internal.config.profiles.Profiles;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.elements.config.ConfigPageButton;
@@ -94,6 +95,7 @@ public class Config {
         if (Profiles.getProfileFile(configFile).exists()) load();
         else if (!hasBeenInitialized && mod.migrator != null) migrate = true;
         else save();
+        if (hasBeenInitialized) return;
         mod.config = this;
         generateOptionList(this, mod.defaultPage, mod, migrate);
         if (migrate) save();
@@ -345,8 +347,23 @@ public class Config {
      * @param runnable The code to be executed
      */
     protected void registerKeyBind(OneKeyBind keyBind, Runnable runnable) {
+        Field field = null;
+        Object instance = null;
+        for (BasicOption option : optionNames.values()) {
+            if (!(option instanceof ConfigKeyBind)) continue;
+            try {
+                Field f = option.getField();
+                OneKeyBind keyBind1 = (OneKeyBind) option.get();
+                if (keyBind1 != keyBind) continue;
+                field = f;
+                instance = option.getParent();
+            } catch (IllegalAccessException ignored) {
+                continue;
+            }
+            break;
+        }
         keyBind.setRunnable(runnable);
-        KeyBindHandler.INSTANCE.addKeyBind(keyBind);
+        KeyBindHandler.INSTANCE.addKeyBind(field, instance, keyBind);
     }
 
     /**
