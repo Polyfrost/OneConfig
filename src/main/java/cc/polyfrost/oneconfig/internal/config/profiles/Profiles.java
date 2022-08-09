@@ -1,4 +1,30 @@
-package cc.polyfrost.oneconfig.config.profiles;
+/*
+ * This file is part of OneConfig.
+ * OneConfig - Next Generation Config Library for Minecraft: Java Edition
+ * Copyright (C) 2021, 2022 Polyfrost.
+ *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
+ *
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ *   OneConfig is licensed under the terms of version 3 of the GNU Lesser
+ * General Public License as published by the Free Software Foundation, AND
+ * under the Additional Terms Applicable to OneConfig, as published by Polyfrost,
+ * either version 1.0 of the Additional Terms, or (at your option) any later
+ * version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ *   You should have received a copy of the GNU Lesser General Public
+ * License.  If not, see <https://www.gnu.org/licenses/>. You should
+ * have also received a copy of the Additional Terms Applicable
+ * to OneConfig, as published by Polyfrost. If not, see
+ * <https://polyfrost.cc/legal/oneconfig/additional-terms>
+ */
+
+package cc.polyfrost.oneconfig.internal.config.profiles;
 
 import cc.polyfrost.oneconfig.internal.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.internal.config.core.ConfigCore;
@@ -10,12 +36,13 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class Profiles {
     private static final Logger LOGGER = LogManager.getLogger("OneConfig Profiles");
     public static final File nonProfileSpecificDir = new File("OneConfig/config");
     public static final File profileDir = new File("OneConfig/profiles");
-    public static ArrayList<String> profiles;
+    private static ArrayList<String> profiles;
 
     public static String getCurrentProfile() {
         if (!profileDir.exists() && !profileDir.mkdir()) {
@@ -55,6 +82,14 @@ public class Profiles {
 
     public static File getNonProfileSpecificDir(String file) {
         return new File(nonProfileSpecificDir, file);
+    }
+
+    public static List<String> getProfiles() {
+        return new ArrayList<>(profiles);
+    }
+
+    public static boolean doesProfileExist(String profile) {
+        return profiles.contains(profile);
     }
 
     public static void loadProfile(String profile) {

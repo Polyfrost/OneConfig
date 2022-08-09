@@ -32,7 +32,6 @@ import java.util.ArrayList;
 
 public class OneConfigGui extends UScreen implements GuiPause {
     public static OneConfigGui INSTANCE;
-    public static OneConfigGui instanceToRestore = null;
     private final SideBar sideBar = new SideBar();
     private final TextInputField textInputField = new TextInputField(248, 40, "Search...", false, false, SVGs.MAGNIFYING_GLASS_BOLD);
     private final ArrayList<Page> previousPages = new ArrayList<>();
@@ -49,21 +48,15 @@ public class OneConfigGui extends UScreen implements GuiPause {
 
     public OneConfigGui() {
         INSTANCE = this;
-        instanceToRestore = null;
     }
 
     public OneConfigGui(Page page) {
         INSTANCE = this;
-        instanceToRestore = null;
         currentPage = page;
     }
 
     public static OneConfigGui create() {
-        try {
-            return instanceToRestore == null ? new OneConfigGui() : instanceToRestore;
-        } finally {
-            if (instanceToRestore != null) INSTANCE = instanceToRestore;
-        }
+        return INSTANCE == null ? new OneConfigGui() : INSTANCE;
     }
 
     @Override
@@ -277,8 +270,6 @@ public class OneConfigGui extends UScreen implements GuiPause {
     @Override
     public void onScreenClose() {
         currentPage.finishUpAndClose();
-        instanceToRestore = this;
-        INSTANCE = null;
         super.onScreenClose();
     }
 
