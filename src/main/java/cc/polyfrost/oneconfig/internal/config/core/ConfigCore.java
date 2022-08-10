@@ -55,14 +55,11 @@ public class ConfigCore {
     }
 
     public static void reInitAll() {
-        ArrayList<Mod> data = new ArrayList<>(mods);
-        mods.clear();
-        HudCore.huds.clear();
-        KeyBindHandler.INSTANCE.clearKeyBinds();
-        for (Mod modData : data) {
+        for (Mod modData : mods) {
             modData.config.initialize();
         }
-        sortMods();
+        HudCore.reInitHuds();
+        KeyBindHandler.INSTANCE.reInitKeyBinds();
     }
 
     public static void sortMods() {

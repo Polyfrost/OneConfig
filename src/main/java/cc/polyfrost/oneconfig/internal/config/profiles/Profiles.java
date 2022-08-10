@@ -24,7 +24,7 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.config.profiles;
+package cc.polyfrost.oneconfig.internal.config.profiles;
 
 import cc.polyfrost.oneconfig.internal.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.internal.config.core.ConfigCore;
@@ -36,12 +36,13 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class Profiles {
     private static final Logger LOGGER = LogManager.getLogger("OneConfig Profiles");
     public static final File nonProfileSpecificDir = new File("OneConfig/config");
     public static final File profileDir = new File("OneConfig/profiles");
-    public static ArrayList<String> profiles;
+    private static ArrayList<String> profiles;
 
     public static String getCurrentProfile() {
         if (!profileDir.exists() && !profileDir.mkdir()) {
@@ -81,6 +82,14 @@ public class Profiles {
 
     public static File getNonProfileSpecificDir(String file) {
         return new File(nonProfileSpecificDir, file);
+    }
+
+    public static List<String> getProfiles() {
+        return new ArrayList<>(profiles);
+    }
+
+    public static boolean doesProfileExist(String profile) {
+        return profiles.contains(profile);
     }
 
     public static void loadProfile(String profile) {

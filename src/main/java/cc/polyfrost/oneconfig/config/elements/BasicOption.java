@@ -36,7 +36,7 @@ import java.util.function.Supplier;
 public abstract class BasicOption {
     public final int size;
     protected final Field field;
-    protected final Object parent;
+    protected Object parent;
     public final String name;
     public final String category;
     public final String subcategory;
@@ -169,5 +169,26 @@ public abstract class BasicOption {
      */
     public void addHideCondition(Supplier<Boolean> supplier) {
         this.hideConditions.add(supplier);
+    }
+
+    /**
+     * @return The field
+     */
+    public Field getField() {
+        return field;
+    }
+
+    /**
+     * @return The parent of the field
+     */
+    public Object getParent() {
+        return parent;
+    }
+
+    /**
+     * @param parent The new parent object
+     */
+    public void setParent(Object parent) {
+        this.parent = parent;
     }
 }

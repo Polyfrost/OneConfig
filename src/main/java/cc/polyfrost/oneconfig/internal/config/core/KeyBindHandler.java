@@ -30,21 +30,49 @@ import cc.polyfrost.oneconfig.config.core.OneKeyBind;
 import cc.polyfrost.oneconfig.events.event.KeyInputEvent;
 import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
 
-import java.util.ArrayList;
+import java.lang.reflect.Field;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class KeyBindHandler {
     public static final KeyBindHandler INSTANCE = new KeyBindHandler();
-    private final ArrayList<OneKeyBind> keyBinds = new ArrayList<>();
+    private final ConcurrentHashMap<Map.Entry<Field, Object>, OneKeyBind> keyBinds = new ConcurrentHashMap<>();
 
     @Subscribe
     private void onKeyPressed(KeyInputEvent event) {
-        for (OneKeyBind keyBind : keyBinds) {
+        for (OneKeyBind keyBind : keyBinds.values()) {
             if (keyBind.isActive()) keyBind.run();
         }
     }
 
-    public void addKeyBind(OneKeyBind keyBind) {
-        keyBinds.add(keyBind);
+    public void addKeyBind(Field field, Object instance, OneKeyBind keyBind) {
+        keyBinds.put(new Map.Entry<Field, Object>() {
+
+            @Override
+            public Field getKey() {
+                return field;
+            }
+
+            @Override
+            public Object getValue() {
+                return instance;
+            }
+
+            @Override
+            public Object setValue(Object value) {
+                return null;
+            }
+        }, keyBind);
+    }
+
+    public void reInitKeyBinds() {
+        for (Map.Entry<Field, Object> field : keyBinds.keySet()) {
+            if (field.getValue() == null) continue;
+            try {
+                keyBinds.put(field, (OneKeyBind) field.getKey().get(field.getValue()));
+            } catch (IllegalAccessException ignored) {
+            }
+        }
     }
 
     public void clearKeyBinds() {
