@@ -913,6 +913,7 @@ public abstract class cc/polyfrost/oneconfig/hud/Hud {
 	public fun <init> (ZFFF)V
 	protected abstract fun draw (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;FFFZ)V
 	public fun drawAll (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;Z)V
+	public fun getConfig ()Lcc/polyfrost/oneconfig/config/Config;
 	protected abstract fun getHeight (FZ)F
 	public fun getScale ()F
 	protected abstract fun getWidth (FZ)F

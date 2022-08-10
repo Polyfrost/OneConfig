@@ -56,6 +56,7 @@ public class HudCore {
                 field.getKey().setAccessible(true);
                 Hud oldHud = huds.get(field);
                 Hud newHud = (Hud) field.getKey().get(field.getValue());
+                newHud.setConfig(oldHud.getConfig());
                 for (BasicOption option : hudOptions) {
                     if (option.getParent().equals(oldHud)) {
                         option.setParent(newHud);
