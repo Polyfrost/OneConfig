@@ -68,7 +68,6 @@ public class Config {
     transient protected final Gson nonProfileSpecificGson = new GsonBuilder().setExclusionStrategies(new NonProfileSpecificExclusionStrategy()).excludeFieldsWithModifiers(Modifier.TRANSIENT).setPrettyPrinting().create();
     transient protected final HashMap<Field, Object> defaults = new HashMap<>();
     transient public Mod mod;
-    public transient boolean hasBeenInitialized = false;
     public boolean enabled;
 
     /**
@@ -93,14 +92,17 @@ public class Config {
     public void initialize() {
         boolean migrate = false;
         if (Profiles.getProfileFile(configFile).exists()) load();
-        else if (!hasBeenInitialized && mod.migrator != null) migrate = true;
+        else if (mod.migrator != null) migrate = true;
         else save();
-        if (hasBeenInitialized) return;
         mod.config = this;
         generateOptionList(this, mod.defaultPage, mod, migrate);
         if (migrate) save();
         ConfigCore.mods.add(mod);
-        hasBeenInitialized = true;
+    }
+
+    public void reInitialize() {
+        if (Profiles.getProfileFile(configFile).exists()) load();
+        else save();
     }
 
     /**
@@ -381,5 +383,12 @@ public class Config {
         for (BasicOption option : optionNames.values()) {
             option.reset(this);
         }
+    }
+
+    /**
+     * @return If this mod supports profiles, false for compatibility mode
+     */
+    public boolean supportsProfiles() {
+        return true;
     }
 }

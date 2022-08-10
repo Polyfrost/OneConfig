@@ -19,17 +19,14 @@ public class ForgeCompat {
             config = new Config(this, "") {
                 @Override
                 public void initialize() {
-
                 }
 
                 @Override
                 public void save() {
-
                 }
 
                 @Override
                 public void load() {
-
                 }
 
                 @Override
@@ -44,7 +41,11 @@ public class ForgeCompat {
 
                 @Override
                 public void reset() {
+                }
 
+                @Override
+                public boolean supportsProfiles() {
+                    return false;
                 }
             };
         }
