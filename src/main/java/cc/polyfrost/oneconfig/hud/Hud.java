@@ -167,6 +167,13 @@ public abstract class Hud {
     }
 
     /**
+     * @return The config of this HUD
+     */
+    public Config getConfig() {
+        return this.config;
+    }
+
+    /**
      * @return The scale of the Hud
      */
     public float getScale() {
