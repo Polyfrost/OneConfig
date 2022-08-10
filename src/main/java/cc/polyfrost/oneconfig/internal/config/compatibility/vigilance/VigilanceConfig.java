@@ -217,4 +217,9 @@ public class VigilanceConfig extends Config {
             }
         }
     }
+
+    @Override
+    public boolean supportsProfiles() {
+        return false;
+    }
 }

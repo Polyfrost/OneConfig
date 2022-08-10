@@ -3,7 +3,6 @@ public class cc/polyfrost/oneconfig/config/Config {
 	protected final field defaults Ljava/util/HashMap;
 	public field enabled Z
 	protected final field gson Lcom/google/gson/Gson;
-	public field hasBeenInitialized Z
 	public field mod Lcc/polyfrost/oneconfig/config/data/Mod;
 	protected final field nonProfileSpecificGson Lcom/google/gson/Gson;
 	public final field optionNames Ljava/util/HashMap;
@@ -23,9 +22,11 @@ public class cc/polyfrost/oneconfig/config/Config {
 	public fun initialize ()V
 	public fun load ()V
 	public fun openGui ()V
+	public fun reInitialize ()V
 	protected fun registerKeyBind (Lcc/polyfrost/oneconfig/config/core/OneKeyBind;Ljava/lang/Runnable;)V
 	public fun reset ()V
 	public fun save ()V
+	public fun supportsProfiles ()Z
 }
 
 public abstract interface annotation class cc/polyfrost/oneconfig/config/annotations/Button : java/lang/annotation/Annotation {
