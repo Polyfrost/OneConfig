@@ -151,8 +151,13 @@ public class cc/polyfrost/oneconfig/config/core/ConfigUtils {
 	public static fun findAnnotation (Ljava/lang/reflect/Method;Ljava/lang/Class;)Ljava/lang/annotation/Annotation;
 	public static fun getClassFields (Ljava/lang/Class;)Ljava/util/ArrayList;
 	public static fun getClassOptions (Ljava/lang/Object;)Ljava/util/ArrayList;
+	public static fun getCurrentProfile ()Ljava/lang/String;
 	public static fun getField (Ljava/lang/reflect/Field;Ljava/lang/Object;)Ljava/lang/Object;
+	public static fun getNonProfileSpecificFile (Ljava/lang/String;)Ljava/io/File;
+	public static fun getNonSpecificProfileDir ()Ljava/io/File;
 	public static fun getOption (Lcc/polyfrost/oneconfig/internal/config/annotations/Option;Ljava/lang/reflect/Field;Ljava/lang/Object;)Lcc/polyfrost/oneconfig/config/elements/BasicOption;
+	public static fun getProfileDir ()Ljava/io/File;
+	public static fun getProfileFile (Ljava/lang/String;)Ljava/io/File;
 	public static fun getSubCategory (Lcc/polyfrost/oneconfig/config/elements/OptionPage;Ljava/lang/String;Ljava/lang/String;)Lcc/polyfrost/oneconfig/config/elements/OptionSubcategory;
 	public static fun setField (Ljava/lang/reflect/Field;Ljava/lang/Object;Ljava/lang/Object;)V
 }

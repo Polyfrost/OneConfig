@@ -45,6 +45,9 @@ public class Profiles {
     private static ArrayList<String> profiles;
 
     public static String getCurrentProfile() {
+        if (OneConfigConfig.getInstance() == null) {
+            OneConfigConfig.getInstance();
+        }
         if (!profileDir.exists() && !profileDir.mkdir()) {
             LOGGER.fatal("Could not create profiles folder");
             return null;
@@ -80,7 +83,7 @@ public class Profiles {
         return new File(getProfileDir(), file);
     }
 
-    public static File getNonProfileSpecificDir(String file) {
+    public static File getNonProfileSpecificFile(String file) {
         return new File(nonProfileSpecificDir, file);
     }
 

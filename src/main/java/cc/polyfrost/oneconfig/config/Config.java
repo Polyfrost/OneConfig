@@ -37,7 +37,6 @@ import cc.polyfrost.oneconfig.config.elements.OptionSubcategory;
 import cc.polyfrost.oneconfig.config.gson.NonProfileSpecificExclusionStrategy;
 import cc.polyfrost.oneconfig.config.gson.ProfileExclusionStrategy;
 import cc.polyfrost.oneconfig.gui.elements.config.ConfigKeyBind;
-import cc.polyfrost.oneconfig.internal.config.profiles.Profiles;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.elements.config.ConfigPageButton;
 import cc.polyfrost.oneconfig.gui.pages.ModConfigPage;
@@ -91,7 +90,7 @@ public class Config {
 
     public void initialize() {
         boolean migrate = false;
-        if (Profiles.getProfileFile(configFile).exists()) load();
+        if (ConfigUtils.getProfileFile(configFile).exists()) load();
         else if (mod.migrator != null) migrate = true;
         else save();
         mod.config = this;
@@ -101,7 +100,7 @@ public class Config {
     }
 
     public void reInitialize() {
-        if (Profiles.getProfileFile(configFile).exists()) load();
+        if (ConfigUtils.getProfileFile(configFile).exists()) load();
         else save();
     }
 
@@ -109,14 +108,14 @@ public class Config {
      * Save current config to file
      */
     public void save() {
-        Profiles.getProfileFile(configFile).getParentFile().mkdirs();
-        Profiles.getNonProfileSpecificDir(configFile).getParentFile().mkdirs();
-        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(Files.newOutputStream(Profiles.getProfileFile(configFile).toPath()), StandardCharsets.UTF_8))) {
+        ConfigUtils.getProfileFile(configFile).getParentFile().mkdirs();
+        ConfigUtils.getNonProfileSpecificFile(configFile).getParentFile().mkdirs();
+        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(Files.newOutputStream(ConfigUtils.getProfileFile(configFile).toPath()), StandardCharsets.UTF_8))) {
             writer.write(gson.toJson(this));
         } catch (Exception e) {
             e.printStackTrace();
         }
-        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(Files.newOutputStream(Profiles.getNonProfileSpecificDir(configFile).toPath()), StandardCharsets.UTF_8))) {
+        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(Files.newOutputStream(ConfigUtils.getNonProfileSpecificFile(configFile).toPath()), StandardCharsets.UTF_8))) {
             writer.write(nonProfileSpecificGson.toJson(this));
         } catch (Exception e) {
             e.printStackTrace();
@@ -127,12 +126,12 @@ public class Config {
      * Load file and overwrite current values
      */
     public void load() {
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(Files.newInputStream(Profiles.getProfileFile(configFile).toPath()), StandardCharsets.UTF_8))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(Files.newInputStream(ConfigUtils.getProfileFile(configFile).toPath()), StandardCharsets.UTF_8))) {
             deserializePart(JsonUtils.PARSER.parse(reader).getAsJsonObject(), this);
         } catch (Exception e) {
             e.printStackTrace();
         }
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(Files.newInputStream(Profiles.getNonProfileSpecificDir(configFile).toPath()), StandardCharsets.UTF_8))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(Files.newInputStream(ConfigUtils.getNonProfileSpecificFile(configFile).toPath()), StandardCharsets.UTF_8))) {
             deserializePart(JsonUtils.PARSER.parse(reader).getAsJsonObject(), this);
         } catch (Exception e) {
             e.printStackTrace();
