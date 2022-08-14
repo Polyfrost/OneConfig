@@ -35,9 +35,11 @@ import cc.polyfrost.oneconfig.config.elements.OptionSubcategory;
 import cc.polyfrost.oneconfig.config.migration.Migrator;
 import cc.polyfrost.oneconfig.gui.elements.config.*;
 import cc.polyfrost.oneconfig.internal.config.annotations.Option;
+import cc.polyfrost.oneconfig.internal.config.profiles.Profiles;
 import com.google.gson.FieldAttributes;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -186,5 +188,25 @@ public class ConfigUtils {
             field.set(parent, value);
         } catch (Exception ignored) {
         }
+    }
+
+    public static String getCurrentProfile() {
+        return Profiles.getCurrentProfile();
+    }
+
+    public static File getProfileDir() {
+        return Profiles.getProfileDir();
+    }
+
+    public static File getNonSpecificProfileDir() {
+        return Profiles.nonProfileSpecificDir;
+    }
+
+    public static File getProfileFile(String file) {
+        return Profiles.getProfileFile(file);
+    }
+
+    public static File getNonProfileSpecificFile(String file) {
+        return Profiles.getNonProfileSpecificFile(file);
     }
 }

@@ -101,6 +101,7 @@ public class OneConfigGui extends UScreen implements GuiPause {
             scale = Preferences.enableCustomScale ? Preferences.customScale : Math.min(UResolution.getWindowWidth() / 1920f, UResolution.getWindowHeight() / 1080f);
             if (scale < 1 && !Preferences.enableCustomScale)
                 scale = Math.min(Math.min(1f, UResolution.getWindowWidth() / 1280f), Math.min(1f, UResolution.getWindowHeight() / 800f));
+            scale = (float) (Math.floor(scale / 0.05f) * 0.05f);
             int x = (int) ((UResolution.getWindowWidth() - 1280 * scale) / 2f / scale);
             int y = (int) ((UResolution.getWindowHeight() - 800 * scale) / 2f / scale);
             RenderManager.scale(vg, scale, scale);
