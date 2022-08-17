@@ -26,10 +26,10 @@
 
 package cc.polyfrost.oneconfig.utils;
 
-import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.libs.universal.UResolution;
 import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.scissor.Scissor;
+import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 
 import java.util.ArrayList;
 
@@ -40,15 +40,37 @@ import java.util.ArrayList;
  * For scaled values, see {@link cc.polyfrost.oneconfig.libs.universal.UMouse}.
  * </p>
  */
-public final class InputUtils {
-    private static final ArrayList<Scissor> blockScissors = new ArrayList<>();
+public class InputHandler {
+    private final ArrayList<Scissor> blockScissors = new ArrayList<>();
+    private double scaleX = 1d;
+    private double scaleY = 1d;
+
+    /**
+     * Push a scale for the input utils to use
+     *
+     * @param scaleX X scale
+     * @param scaleY Y scale
+     */
+    public void scale(double scaleX, double scaleY) {
+        this.scaleX = scaleX;
+        this.scaleY = scaleY;
+    }
+
+    /**
+     * Reset the scale input utils uses
+     */
+    public void resetScale() {
+        scaleX = 1d;
+        scaleY = 1d;
+    }
+
 
     /**
      * function to determine weather the mouse is currently over a specific region. Uses the current nvgScale to fix to any scale.
      *
      * @return true if mouse is over region, false if not.
      */
-    public static boolean isAreaHovered(float x, float y, float width, float height, boolean ignoreBlock) {
+    public boolean isAreaHovered(float x, float y, float width, float height, boolean ignoreBlock) {
         float mouseX = mouseX();
         float mouseY = mouseY();
         return (ignoreBlock || blockScissors.size() == 0 || !shouldBlock(mouseX, mouseY)) && mouseX > x && mouseY > y && mouseX < x + width && mouseY < y + height;
@@ -59,7 +81,7 @@ public final class InputUtils {
      *
      * @return true if mouse is over region, false if not.
      */
-    public static boolean isAreaHovered(float x, float y, float width, float height) {
+    public boolean isAreaHovered(float x, float y, float width, float height) {
         return isAreaHovered(x, y, width, height, false);
     }
 
@@ -72,9 +94,9 @@ public final class InputUtils {
      * @param height      the height of the region
      * @param ignoreBlock if true, will ignore
      * @return true if the mouse is clicked and is over the region, false if not
-     * @see InputUtils#isAreaHovered(float, float, float, float)
+     * @see InputHandler#isAreaHovered(float, float, float, float)
      */
-    public static boolean isAreaClicked(float x, float y, float width, float height, boolean ignoreBlock) {
+    public boolean isAreaClicked(float x, float y, float width, float height, boolean ignoreBlock) {
         return isAreaHovered(x, y, width, height, ignoreBlock) && isClicked(false);
     }
 
@@ -86,9 +108,9 @@ public final class InputUtils {
      * @param width  the width of the region
      * @param height the height of the region
      * @return true if the mouse is clicked and is over the region, false if not
-     * @see InputUtils#isAreaClicked(float, float, float, float, boolean)
+     * @see InputHandler#isAreaClicked(float, float, float, float, boolean)
      */
-    public static boolean isAreaClicked(float x, float y, float width, float height) {
+    public boolean isAreaClicked(float x, float y, float width, float height) {
         return isAreaClicked(x, y, width, height, false);
     }
 
@@ -98,17 +120,17 @@ public final class InputUtils {
      * @param ignoreBlock if true, will ignore
      * @return true if the mouse is clicked, false if not
      */
-    public static boolean isClicked(boolean ignoreBlock) {
-        return OneConfigGui.INSTANCE != null && OneConfigGui.INSTANCE.mouseDown && !Platform.getMousePlatform().isButtonDown(0) && (ignoreBlock || blockScissors.size() == 0 || !shouldBlock(mouseX(), mouseY()));
+    public boolean isClicked(boolean ignoreBlock) {
+        return GuiUtils.wasMouseDown() && !Platform.getMousePlatform().isButtonDown(0) && (ignoreBlock || blockScissors.size() == 0 || !shouldBlock(mouseX(), mouseY()));
     }
 
     /**
      * Checks whether the mouse is clicked or not.
      *
      * @return true if the mouse is clicked, false if not
-     * @see InputUtils#isClicked(boolean)
+     * @see InputHandler#isClicked(boolean)
      */
-    public static boolean isClicked() {
+    public boolean isClicked() {
         return isClicked(false);
     }
 
@@ -121,9 +143,8 @@ public final class InputUtils {
      *
      * @return the current mouse X position
      */
-    public static float mouseX() {
-        if (OneConfigGui.INSTANCE == null) return (float) Platform.getMousePlatform().getMouseX();
-        return (float) (Platform.getMousePlatform().getMouseX() / OneConfigGui.INSTANCE.getScaleFactor());
+    public float mouseX() {
+        return (float) (Platform.getMousePlatform().getMouseX() / scaleX);
     }
 
     /**
@@ -135,9 +156,8 @@ public final class InputUtils {
      *
      * @return the current mouse Y position
      */
-    public static float mouseY() {
-        if (OneConfigGui.INSTANCE == null) return (float) (UResolution.getWindowHeight() - Math.abs(Platform.getMousePlatform().getMouseY()));
-        return (float) ((UResolution.getWindowHeight() - Math.abs(Platform.getMousePlatform().getMouseY())) / OneConfigGui.INSTANCE.getScaleFactor());
+    public float mouseY() {
+        return (float) ((UResolution.getWindowHeight() - Math.abs(Platform.getMousePlatform().getMouseY())) / scaleY);
     }
 
     /**
@@ -148,7 +168,7 @@ public final class InputUtils {
      * @param width  Width
      * @param height Height
      */
-    public static Scissor blockInputArea(float x, float y, float width, float height) {
+    public Scissor blockInputArea(float x, float y, float width, float height) {
         Scissor scissor = new Scissor(new Scissor(x, y, width, height));
         blockScissors.add(scissor);
         return scissor;
@@ -157,7 +177,7 @@ public final class InputUtils {
     /**
      * Should be used if there is something above other components and you don't want it clicking trough
      */
-    public static Scissor blockAllInput() {
+    public Scissor blockAllInput() {
         return blockInputArea(0, 0, 1920, 1080);
     }
 
@@ -166,14 +186,14 @@ public final class InputUtils {
      *
      * @param scissor The scissor area
      */
-    public static void stopBlock(Scissor scissor) {
+    public void stopBlock(Scissor scissor) {
         blockScissors.remove(scissor);
     }
 
     /**
      * Clears all blocking areas
      */
-    public static void stopBlockingInput() {
+    public void stopBlockingInput() {
         blockScissors.clear();
     }
 
@@ -182,11 +202,11 @@ public final class InputUtils {
      *
      * @return true if clicks are blocked, false if not
      */
-    public static boolean isBlockingInput() {
+    public boolean isBlockingInput() {
         return blockScissors.size() > 0;
     }
 
-    private static boolean shouldBlock(float x, float y) {
+    private boolean shouldBlock(float x, float y) {
         for (Scissor block : blockScissors) {
             if (block.isInScissor(x, y)) return true;
         }

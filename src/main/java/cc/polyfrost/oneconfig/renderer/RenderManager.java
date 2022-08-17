@@ -36,7 +36,7 @@ import cc.polyfrost.oneconfig.platform.NanoVGPlatform;
 import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.font.Font;
 import cc.polyfrost.oneconfig.renderer.font.FontManager;
-import cc.polyfrost.oneconfig.utils.InputUtils;
+import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.NetworkUtils;
 import org.lwjgl.nanovg.NVGColor;
 import org.lwjgl.nanovg.NVGPaint;
@@ -337,13 +337,13 @@ public final class RenderManager {
      * <p><b>This does NOT scale to Minecraft's GUI scale!</b></p>
      *
      * @see RenderManager#drawText(long, String, float, float, int, float, Font)
-     * @see InputUtils#isAreaClicked(float, float, float, float)
+     * @see InputHandler#isAreaClicked(float, float, float, float)
      */
-    public static void drawURL(long vg, String url, float x, float y, float size, Font font) {
+    public static void drawURL(long vg, String url, float x, float y, float size, Font font, InputHandler inputHandler) {
         drawText(vg, url, x, y, Colors.PRIMARY_500, size, font);
         float length = getTextWidth(vg, url, size, font);
         drawRect(vg, x, y + size / 2, length, 1, Colors.PRIMARY_500);
-        if (InputUtils.isAreaClicked((int) (x - 2), (int) (y - 1), (int) (length + 4), (int) (size / 2 + 3))) {
+        if (inputHandler.isAreaClicked((int) (x - 2), (int) (y - 1), (int) (length + 4), (int) (size / 2 + 3))) {
             NetworkUtils.browseLink(url);
         }
     }

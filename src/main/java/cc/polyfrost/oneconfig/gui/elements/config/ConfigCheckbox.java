@@ -37,7 +37,7 @@ import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
-import cc.polyfrost.oneconfig.utils.InputUtils;
+import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 import cc.polyfrost.oneconfig.utils.color.ColorUtils;
 
@@ -58,7 +58,7 @@ public class ConfigCheckbox extends BasicOption {
     }
 
     @Override
-    public void draw(long vg, int x, int y) {
+    public void draw(long vg, int x, int y, InputHandler inputHandler) {
         if (!isEnabled()) RenderManager.setAlpha(vg, 0.5f);
         boolean toggled = false;
         try {
@@ -66,9 +66,9 @@ public class ConfigCheckbox extends BasicOption {
             if (animation == null) animation = new DummyAnimation(toggled ? 1 : 0);
         } catch (IllegalAccessException ignored) {
         }
-        boolean hover = InputUtils.isAreaHovered(x, y + 4, 24, 24);
+        boolean hover = inputHandler.isAreaHovered(x, y + 4, 24, 24);
 
-        boolean clicked = InputUtils.isClicked() && hover;
+        boolean clicked = inputHandler.isClicked() && hover;
         if (clicked && isEnabled()) {
             toggled = !toggled;
             animation = new EaseInOutQuad(100, 0, 1, !toggled);

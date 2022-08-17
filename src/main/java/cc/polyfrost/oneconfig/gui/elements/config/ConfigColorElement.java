@@ -37,7 +37,7 @@ import cc.polyfrost.oneconfig.gui.elements.text.TextInputField;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.internal.assets.Images;
-import cc.polyfrost.oneconfig.utils.InputUtils;
+import cc.polyfrost.oneconfig.utils.InputHandler;
 
 import java.lang.reflect.Field;
 
@@ -62,7 +62,7 @@ public class ConfigColorElement extends BasicOption {
     }
 
     @Override
-    public void draw(long vg, int x, int y) {
+    public void draw(long vg, int x, int y, InputHandler inputHandler) {
         if(OneConfigGui.INSTANCE == null) return;
         if (!isEnabled()) RenderManager.setAlpha(vg, 0.5f);
         hexField.disable(!isEnabled());
@@ -86,7 +86,7 @@ public class ConfigColorElement extends BasicOption {
                 hexField.setErrored(true);
             }
         }
-        hexField.draw(vg, x1 + 224, y);
+        hexField.draw(vg, x1 + 224, y, inputHandler);
 
         if (!alphaField.isToggled()) alphaField.setInput(Math.round(color.getAlpha() / 2.55f) + "%");
         alphaField.setErrored(false);
@@ -106,15 +106,15 @@ public class ConfigColorElement extends BasicOption {
                 alphaField.setErrored(true);
             }
         }
-        alphaField.draw(vg, x1 + 336, y);
+        alphaField.draw(vg, x1 + 336, y, inputHandler);
 
-        element.update(x1 + 416, y);
+        element.update(x1 + 416, y, inputHandler);
         RenderManager.drawHollowRoundRect(vg, x1 + 415, y - 1, 64, 32, Colors.GRAY_300, 12f, 2f);
         RenderManager.drawRoundImage(vg, Images.ALPHA_GRID.filePath, x1 + 420, y + 4, 56, 24, 8f);
         RenderManager.drawRoundedRect(vg, x1 + 420, y + 4, 56, 24, color.getRGB(), 8f);
         if (element.isClicked() && !open) {
             open = true;
-            OneConfigGui.INSTANCE.initColorSelector(new ColorSelector(color, InputUtils.mouseX(), InputUtils.mouseY(), allowAlpha));
+            OneConfigGui.INSTANCE.initColorSelector(new ColorSelector(color, inputHandler.mouseX(), inputHandler.mouseY(), allowAlpha, inputHandler));
         }
         if (OneConfigGui.INSTANCE.currentColorSelector == null) open = false;
         else if (open) color = (OneConfigGui.INSTANCE.getColor());

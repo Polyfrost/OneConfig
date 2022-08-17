@@ -36,6 +36,7 @@ import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
+import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 
 import java.lang.reflect.Field;
@@ -56,7 +57,7 @@ public class ConfigKeyBind extends BasicOption {
     }
 
     @Override
-    public void draw(long vg, int x, int y) {
+    public void draw(long vg, int x, int y, InputHandler inputHandler) {
         if (!isEnabled()) RenderManager.setAlpha(vg, 0.5f);
         RenderManager.drawText(vg, name, x, y + 17, Colors.WHITE, 14f, Fonts.MEDIUM);
         OneKeyBind keyBind = getKeyBind();
@@ -77,7 +78,7 @@ public class ConfigKeyBind extends BasicOption {
             }
         } else if (text.equals("")) text = "None";
         button.setText(text);
-        button.draw(vg, x + (size == 1 ? 224 : 736), y);
+        button.draw(vg, x + (size == 1 ? 224 : 736), y, inputHandler);
         RenderManager.setAlpha(vg, 1f);
     }
 

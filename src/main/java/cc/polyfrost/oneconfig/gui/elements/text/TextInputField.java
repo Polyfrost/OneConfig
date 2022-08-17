@@ -36,7 +36,7 @@ import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.renderer.scissor.Scissor;
 import cc.polyfrost.oneconfig.renderer.scissor.ScissorManager;
 import cc.polyfrost.oneconfig.utils.IOUtils;
-import cc.polyfrost.oneconfig.utils.InputUtils;
+import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.MathUtils;
 import cc.polyfrost.oneconfig.utils.TextUtils;
 import org.jetbrains.annotations.NotNull;
@@ -121,7 +121,7 @@ public class TextInputField extends BasicElement {
     }
 
     @Override
-    public void draw(long vg, float x, float y) {
+    public void draw(long vg, float x, float y, InputHandler inputHandler) {
         this.x = x;
         this.y = y;
         this.vg = vg;
@@ -136,8 +136,8 @@ public class TextInputField extends BasicElement {
                 RenderManager.drawHollowRoundRect(vg, x, y, width - 0.5f, height - 0.5f, errored ? Colors.ERROR_600 : Colors.PRIMARY_600, 12f, 2f);
             }
             Scissor scissor = ScissorManager.scissor(vg, x, y, width, height);
-            super.update(x, y);
-            if (Platform.getMousePlatform().isButtonDown(0) && !InputUtils.isAreaHovered(x - 40, y - 20, width + 90, height + 20)) {
+            super.update(x, y, inputHandler);
+            if (Platform.getMousePlatform().isButtonDown(0) && !inputHandler.isAreaHovered(x - 40, y - 20, width + 90, height + 20)) {
                 onClose();
                 toggled = false;
             }
@@ -172,11 +172,11 @@ public class TextInputField extends BasicElement {
                 int state = Platform.getMousePlatform().getButtonState(0); //todo does this work
                 if (state == 1) {
                     if (multiLine) {
-                        int caretLine = Math.max(0, Math.min(wrappedText.size() - 1, (int) Math.floor((InputUtils.mouseY() - y - 10) / 24f)));
-                        caretPos = calculatePos(InputUtils.mouseX(), wrappedText.get(caretLine));
-                    } else prevCaret = calculatePos(InputUtils.mouseX(), input);
+                        int caretLine = Math.max(0, Math.min(wrappedText.size() - 1, (int) Math.floor((inputHandler.mouseY() - y - 10) / 24f)));
+                        caretPos = calculatePos(inputHandler.mouseX(), wrappedText.get(caretLine));
+                    } else prevCaret = calculatePos(inputHandler.mouseX(), input);
                     if (System.currentTimeMillis() - clickTimeD1 < 300) {
-                        onDoubleClick();
+                        onDoubleClick(inputHandler);
                         isDoubleClick = true;
                     }
                     clickTimeD1 = System.currentTimeMillis();
@@ -209,10 +209,10 @@ public class TextInputField extends BasicElement {
             if (hovered) {
                 if (Platform.getMousePlatform().isButtonDown(0) && !isDoubleClick) {
                     if (multiLine) {
-                        int caretLine = Math.max(0, Math.min(wrappedText.size() - 1, (int) Math.floor((InputUtils.mouseY() - y - 10) / 24f)));
-                        caretPos = calculatePos(InputUtils.mouseX(), wrappedText.get(caretLine));
+                        int caretLine = Math.max(0, Math.min(wrappedText.size() - 1, (int) Math.floor((inputHandler.mouseY() - y - 10) / 24f)));
+                        caretPos = calculatePos(inputHandler.mouseX(), wrappedText.get(caretLine));
                         for (int i = 0; i < caretLine; i++) caretPos += wrappedText.get(i).length();
-                    } else caretPos = calculatePos(InputUtils.mouseX(), input);
+                    } else caretPos = calculatePos(inputHandler.mouseX(), input);
                     if (caretPos > prevCaret) {
                         if (!centered) start = x + 12 + this.getTextWidth(vg, input.substring(0, prevCaret));
                         else
@@ -462,13 +462,13 @@ public class TextInputField extends BasicElement {
         toggled = true;
     }
 
-    private void onDoubleClick() {
+    private void onDoubleClick(InputHandler inputHandler) {
         prevCaret = input.substring(0, caretPos).lastIndexOf(' ') + 1;
         caretPos = input.indexOf(' ', caretPos);
         if (caretPos == -1) caretPos = input.length();
         selectedText = input.substring(prevCaret, caretPos);
         if (multiLine) {
-            int caretLine = Math.max(0, Math.min(wrappedText.size() - 1, (int) Math.floor((InputUtils.mouseY() - y - 10) / 24f)));
+            int caretLine = Math.max(0, Math.min(wrappedText.size() - 1, (int) Math.floor((inputHandler.mouseY() - y - 10) / 24f)));
             startLine = caretLine;
             endLine = caretLine;
             start = x + 12 + this.getTextWidth(vg, wrappedText.get(caretLine).substring(0, getLineCaret(prevCaret, startLine)));

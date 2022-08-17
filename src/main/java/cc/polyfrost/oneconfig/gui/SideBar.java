@@ -39,6 +39,7 @@ import cc.polyfrost.oneconfig.internal.config.Preferences;
 import cc.polyfrost.oneconfig.internal.gui.HudGui;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
+import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 
@@ -78,7 +79,7 @@ public class SideBar {
         }
     }
 
-    public void draw(long vg, int x, int y) {
+    public void draw(long vg, int x, int y, InputHandler inputHandler) {
         this.y = y;
         for (BasicButton button : buttons) {
             if (!button.isClicked()) continue;
@@ -94,19 +95,19 @@ public class SideBar {
             }
         }
 
-        buttons.get(0).draw(vg, x + 16, y + 80);
-        buttons.get(1).draw(vg, x + 16, y + 116);
+        buttons.get(0).draw(vg, x + 16, y + 80, inputHandler);
+        buttons.get(1).draw(vg, x + 16, y + 116, inputHandler);
         RenderManager.drawText(vg, "MOD CONFIG", x + 16, y + 178, Colors.WHITE, 12, Fonts.SEMIBOLD);
-        buttons.get(2).draw(vg, x + 16, y + 192);
-        buttons.get(3).draw(vg, x + 16, y + 228);
-        buttons.get(4).draw(vg, x + 16, y + 264);
-        buttons.get(5).draw(vg, x + 16, y + 300);
+        buttons.get(2).draw(vg, x + 16, y + 192, inputHandler);
+        buttons.get(3).draw(vg, x + 16, y + 228, inputHandler);
+        buttons.get(4).draw(vg, x + 16, y + 264, inputHandler);
+        buttons.get(5).draw(vg, x + 16, y + 300, inputHandler);
         RenderManager.drawText(vg, "PERSONALIZATION", x + 16, y + 362, Colors.WHITE, 12, Fonts.SEMIBOLD);
-        buttons.get(6).draw(vg, x + 16, y + 376);
-        buttons.get(7).draw(vg, x + 16, y + 412);
-        buttons.get(8).draw(vg, x + 16, y + 448);
-        HUDButton.draw(vg, x + 16, y + 704);
-        CloseButton.draw(vg, x + 16, y + 748);
+        buttons.get(6).draw(vg, x + 16, y + 376, inputHandler);
+        buttons.get(7).draw(vg, x + 16, y + 412, inputHandler);
+        buttons.get(8).draw(vg, x + 16, y + 448, inputHandler);
+        HUDButton.draw(vg, x + 16, y + 704, inputHandler);
+        CloseButton.draw(vg, x + 16, y + 748, inputHandler);
     }
 
     public void pageOpened(String page) {

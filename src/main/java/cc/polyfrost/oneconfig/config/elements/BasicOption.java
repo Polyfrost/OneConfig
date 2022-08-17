@@ -27,6 +27,7 @@
 package cc.polyfrost.oneconfig.config.elements;
 
 import cc.polyfrost.oneconfig.config.Config;
+import cc.polyfrost.oneconfig.utils.InputHandler;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -91,7 +92,7 @@ public abstract class BasicOption {
      * @param x  x position
      * @param y  y position
      */
-    public abstract void draw(long vg, int x, int y);
+    public abstract void draw(long vg, int x, int y, InputHandler inputHandler);
 
     /**
      * Function that gets called last drawing option,
@@ -101,7 +102,7 @@ public abstract class BasicOption {
      * @param x  x position
      * @param y  y position
      */
-    public void drawLast(long vg, int x, int y) {
+    public void drawLast(long vg, int x, int y , InputHandler inputHandler) {
     }
 
     /**

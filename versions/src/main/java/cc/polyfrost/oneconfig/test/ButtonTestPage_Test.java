@@ -29,6 +29,7 @@ package cc.polyfrost.oneconfig.test;
 import cc.polyfrost.oneconfig.gui.elements.BasicButton;
 import cc.polyfrost.oneconfig.gui.pages.Page;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
+import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 
 import java.util.ArrayList;
@@ -76,20 +77,20 @@ public class ButtonTestPage_Test extends Page {
     }
 
     @Override
-    public void draw(long vg, int x, int y) {
+    public void draw(long vg, int x, int y, InputHandler inputHandler) {
         int buttonY = y + 16;
         for (BasicButton button : row1) {
-            button.draw(vg, x + 16, buttonY);
+            button.draw(vg, x + 16, buttonY, inputHandler);
             buttonY += 64;
         }
         buttonY = y + 16;
         for (BasicButton button : row2) {
-            button.draw(vg, x + 286, buttonY);
+            button.draw(vg, x + 286, buttonY, inputHandler);
             buttonY += 64;
         }
         buttonY = y + 16;
         for (BasicButton button : row3) {
-            button.draw(vg, x + 556, buttonY);
+            button.draw(vg, x + 556, buttonY, inputHandler);
             buttonY += 64;
         }
     }
