@@ -28,6 +28,7 @@ package cc.polyfrost.oneconfig.test;
 
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
+import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.gui.OneUIScreen;
 
 import java.awt.*;
@@ -42,7 +43,7 @@ import java.awt.*;
 public class TestNanoVGGui_Test extends OneUIScreen {
 
     @Override
-    public void draw(long vg, float partialTicks) {
+    public void draw(long vg, float partialTicks, InputHandler inputHandler) {
         long startTime = System.nanoTime();
         RenderManager.drawRect(vg, 0, 0, 100, 100, Color.BLUE.getRGB());
         RenderManager.drawRoundedRect(vg, 305, 305, 100, 100, Color.YELLOW.getRGB(), 8);

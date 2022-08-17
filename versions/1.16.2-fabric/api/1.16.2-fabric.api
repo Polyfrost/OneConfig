@@ -118,5 +118,6 @@ public final class cc/polyfrost/oneconfig/utils/gui/GuiUtils {
 	public static fun displayScreen (Lnet/minecraft/client/gui/screen/Screen;I)V
 	public static fun getDeltaTime ()F
 	public static fun getScreenQueue ()Ljava/util/Deque;
+	public static fun wasMouseDown ()Z
 }
 

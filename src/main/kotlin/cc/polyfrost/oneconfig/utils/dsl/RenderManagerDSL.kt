@@ -31,6 +31,7 @@ import cc.polyfrost.oneconfig.renderer.RenderManager
 import cc.polyfrost.oneconfig.renderer.font.Font
 import cc.polyfrost.oneconfig.renderer.Image
 import cc.polyfrost.oneconfig.renderer.SVG
+import cc.polyfrost.oneconfig.utils.InputHandler
 import cc.polyfrost.oneconfig.utils.color.ColorUtils
 import org.lwjgl.nanovg.NVGColor
 
@@ -169,10 +170,11 @@ fun Long.drawWrappedString(text: String, x: Number, y: Number, width: Number, co
 fun VG.drawWrappedString(text: String, x: Number, y: Number, width: Number, color: Int, size: Number, font: Font) =
     instance.drawWrappedString(text, x, y, width, color, size, font)
 
-fun Long.drawURL(url: String, x: Number, y: Number, size: Number, font: Font) =
-    RenderManager.drawURL(this, url, x.toFloat(), y.toFloat(), size.toFloat(), font)
+fun Long.drawURL(url: String, x: Number, y: Number, size: Number, font: Font, inputHandler: InputHandler) =
+    RenderManager.drawURL(this, url, x.toFloat(), y.toFloat(), size.toFloat(), font, inputHandler)
 
-fun VG.drawURL(url: String, x: Number, y: Number, size: Number, font: Font) = instance.drawURL(url, x, y, size, font)
+fun VG.drawURL(url: String, x: Number, y: Number, size: Number, font: Font, inputHandler: InputHandler) =
+    instance.drawURL(url, x, y, size, font, inputHandler)
 
 
 fun Long.drawImage(filePath: String, x: Number, y: Number, width: Number, height: Number) =

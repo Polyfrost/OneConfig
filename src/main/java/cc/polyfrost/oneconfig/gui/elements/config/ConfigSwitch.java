@@ -36,7 +36,7 @@ import cc.polyfrost.oneconfig.gui.animations.EaseInOutQuad;
 import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
-import cc.polyfrost.oneconfig.utils.InputUtils;
+import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 
 import java.lang.reflect.Field;
@@ -55,7 +55,7 @@ public class ConfigSwitch extends BasicOption {
     }
 
     @Override
-    public void draw(long vg, int x, int y) {
+    public void draw(long vg, int x, int y, InputHandler inputHandler) {
         boolean toggled = false;
         try {
             toggled = (boolean) get();
@@ -67,13 +67,13 @@ public class ConfigSwitch extends BasicOption {
         }
         float percentOn = animation.get();
         int x2 = x + 3 + (int) (percentOn * 18);
-        boolean hovered = InputUtils.isAreaHovered(x, y, 42, 32);
+        boolean hovered = inputHandler.isAreaHovered(x, y, 42, 32);
         if (!isEnabled()) RenderManager.setAlpha(vg, 0.5f);
         RenderManager.drawRoundedRect(vg, x, y + 4, 42, 24, color.getColor(hovered, hovered && Platform.getMousePlatform().isButtonDown(0)), 12f);
         RenderManager.drawRoundedRect(vg, x2, y + 7, 18, 18, Colors.WHITE, 9f);
         RenderManager.drawText(vg, name, x + 50, y + 17, Colors.WHITE, 14f, Fonts.MEDIUM);
 
-        if (InputUtils.isAreaClicked(x, y, 42, 32) && isEnabled()) {
+        if (inputHandler.isAreaClicked(x, y, 42, 32) && isEnabled()) {
             toggled = !toggled;
             animation = new EaseInOutQuad(200, 0, 1, !toggled);
             color.setPalette(toggled ? ColorPalette.PRIMARY : ColorPalette.SECONDARY);

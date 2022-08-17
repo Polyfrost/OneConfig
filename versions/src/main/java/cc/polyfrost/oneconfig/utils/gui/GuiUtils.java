@@ -33,6 +33,7 @@ import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
 import cc.polyfrost.oneconfig.libs.universal.UMinecraft;
 import cc.polyfrost.oneconfig.libs.universal.UScreen;
+import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.utils.TickDelay;
 import net.minecraft.client.gui.GuiScreen;
 
@@ -46,6 +47,7 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 public final class GuiUtils {
     private static long time = -1L;
     private static long deltaTime = 17L;
+    private static boolean wasMouseDown = false;
     private static final Deque<Optional<GuiScreen>> screenQueue = new ConcurrentLinkedDeque<>();
 
     static {
@@ -112,6 +114,13 @@ public final class GuiUtils {
         return deltaTime;
     }
 
+    /**
+     * @return If the mouse was down last frame
+     */
+    public static boolean wasMouseDown() {
+        return wasMouseDown;
+    }
+
     @Subscribe
     private void onRenderEvent(RenderEvent event) {
         if (event.stage == Stage.START) {
@@ -121,6 +130,8 @@ public final class GuiUtils {
                 deltaTime = currentTime - time;
                 time = currentTime;
             }
+        } else if (event.stage == Stage.END) {
+            wasMouseDown = Platform.getMousePlatform().isButtonDown(0);
         }
     }
 }

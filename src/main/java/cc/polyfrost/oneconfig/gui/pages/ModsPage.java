@@ -37,6 +37,7 @@ import cc.polyfrost.oneconfig.internal.config.core.ConfigCore;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.TextRenderer;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
+import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 
 import java.util.ArrayList;
@@ -65,14 +66,14 @@ public class ModsPage extends Page {
         modCategories.get(0).setToggled(true);
     }
 
-    public void draw(long vg, int x, int y) {
+    public void draw(long vg, int x, int y, InputHandler inputHandler) {
         String filter = OneConfigGui.INSTANCE == null ? "" : OneConfigGui.INSTANCE.getSearchValue().toLowerCase().trim();
         int iX = x + 16;
         int iY = y + 72;
         ArrayList<ModCard> finalModCards = new ArrayList<>(modCards);
         for (ModCard modCard : finalModCards) {
             if (inSelection(modCard) && (filter.equals("") || modCard.getModData().name.toLowerCase().contains(filter))) {
-                if (iY + 135 >= y - scroll && iY <= y + 728 - scroll) modCard.draw(vg, iX, iY);
+                if (iY + 135 >= y - scroll && iY <= y + 728 - scroll) modCard.draw(vg, iX, iY, inputHandler);
                 iX += 260;
                 if (iX > x + 796) {
                     iX = x + 16;
@@ -87,11 +88,11 @@ public class ModsPage extends Page {
     }
 
     @Override
-    public int drawStatic(long vg, int x, int y) {
+    public int drawStatic(long vg, int x, int y, InputHandler inputHandler) {
         int iXCat = x + 16;
         boolean selected = false;
         for (BasicButton btn : modCategories) {
-            btn.draw(vg, iXCat, y + 16);
+            btn.draw(vg, iXCat, y + 16, inputHandler);
             iXCat += btn.getWidth() + 8;
             if (btn.isToggled()) selected = true;
         }

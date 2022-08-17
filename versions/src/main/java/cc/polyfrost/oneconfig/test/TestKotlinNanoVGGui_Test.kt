@@ -27,6 +27,7 @@
 package cc.polyfrost.oneconfig.test
 
 import cc.polyfrost.oneconfig.renderer.font.Fonts
+import cc.polyfrost.oneconfig.utils.InputHandler
 import cc.polyfrost.oneconfig.utils.dsl.*
 import cc.polyfrost.oneconfig.utils.gui.OneUIScreen
 import java.awt.Color
@@ -41,7 +42,7 @@ import kotlin.system.measureTimeMillis
  */
 class TestKotlinNanoVGGui_Test : OneUIScreen() {
 
-    override fun draw(vg: Long, partialTicks: Float) {
+    override fun draw(vg: Long, partialTicks: Float, inputHandler: InputHandler) {
         nanoVG(vg) {
             val millis = measureTimeMillis {
                 drawRect(0f, 0f, 100f, 100f, Color.BLUE.rgb)

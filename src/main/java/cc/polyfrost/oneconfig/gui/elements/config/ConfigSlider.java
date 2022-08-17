@@ -33,7 +33,7 @@ import cc.polyfrost.oneconfig.gui.elements.text.NumberInputField;
 import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
-import cc.polyfrost.oneconfig.utils.InputUtils;
+import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.MathUtils;
 
 import java.lang.reflect.Field;
@@ -60,24 +60,24 @@ public class ConfigSlider extends BasicOption {
     }
 
     @Override
-    public void draw(long vg, int x, int y) {
+    public void draw(long vg, int x, int y, InputHandler inputHandler) {
         int xCoordinate = 0;
         float value = 0;
-        boolean hovered = InputUtils.isAreaHovered(x + 352, y, 512, 32) && isEnabled();
+        boolean hovered = inputHandler.isAreaHovered(x + 352, y, 512, 32) && isEnabled();
         inputField.disable(!isEnabled());
         if (!isEnabled()) RenderManager.setAlpha(vg, 0.5f);
         boolean isMouseDown = Platform.getMousePlatform().isButtonDown(0);
         if (hovered && isMouseDown && !mouseWasDown) dragging = true;
         mouseWasDown = isMouseDown;
         if (dragging) {
-            xCoordinate = (int) MathUtils.clamp(InputUtils.mouseX(), x + 352, x + 864);
+            xCoordinate = (int) MathUtils.clamp(inputHandler.mouseX(), x + 352, x + 864);
             if (step > 0) xCoordinate = getStepCoordinate(xCoordinate, x);
             value = MathUtils.map(xCoordinate, x + 352, x + 864, min, max);
         } else if (inputField.isToggled() || inputField.arrowsClicked()) {
             value = inputField.getCurrentValue();
             xCoordinate = (int) MathUtils.clamp(MathUtils.map(value, min, max, x + 352, x + 864), x + 352, x + 864);
         }
-        if (dragging && InputUtils.isClicked() || inputField.isToggled() || inputField.arrowsClicked()) {
+        if (dragging && inputHandler.isClicked() || inputField.isToggled() || inputField.arrowsClicked()) {
             dragging = false;
             if (step > 0) {
                 xCoordinate = getStepCoordinate(xCoordinate, x);
@@ -110,7 +110,7 @@ public class ConfigSlider extends BasicOption {
         }
         if (step == 0) RenderManager.drawRoundedRect(vg, xCoordinate - 12, y + 4, 24, 24, Colors.WHITE, 12f);
         else RenderManager.drawRoundedRect(vg, xCoordinate - 4, y + 4, 8, 24, Colors.WHITE, 4f);
-        inputField.draw(vg, x + 892, y);
+        inputField.draw(vg, x + 892, y, inputHandler);
         RenderManager.setAlpha(vg, 1f);
     }
 
