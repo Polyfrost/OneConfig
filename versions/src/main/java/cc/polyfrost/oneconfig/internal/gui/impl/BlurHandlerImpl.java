@@ -29,8 +29,6 @@ package cc.polyfrost.oneconfig.internal.gui.impl;
 import cc.polyfrost.oneconfig.events.event.RenderEvent;
 import cc.polyfrost.oneconfig.events.event.ScreenOpenEvent;
 import cc.polyfrost.oneconfig.events.event.Stage;
-import cc.polyfrost.oneconfig.gui.OneConfigGui;
-import cc.polyfrost.oneconfig.internal.config.Preferences;
 import cc.polyfrost.oneconfig.internal.gui.BlurHandler;
 import cc.polyfrost.oneconfig.internal.mixin.ShaderGroupAccessor;
 //#if FABRIC==1
@@ -39,6 +37,7 @@ import cc.polyfrost.oneconfig.internal.mixin.ShaderGroupAccessor;
 import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
 import cc.polyfrost.oneconfig.libs.universal.UMinecraft;
 import cc.polyfrost.oneconfig.libs.universal.UScreen;
+import cc.polyfrost.oneconfig.utils.gui.OneUIScreen;
 import net.minecraft.client.shader.Shader;
 import net.minecraft.client.shader.ShaderUniform;
 import net.minecraft.util.ResourceLocation;
@@ -130,7 +129,7 @@ public class BlurHandlerImpl implements BlurHandler {
         // If a shader is not already active and the UI is
         // a one of ours, we should load our own blur!
 
-        if (!isShaderActive() && gui instanceof OneConfigGui && Preferences.enableBlur) {
+        if (!isShaderActive() && (gui instanceof OneUIScreen && ((OneUIScreen) gui).hasBackgroundBlur())) {
             //#if FABRIC==1
             //$$ ((GameRendererAccessor) UMinecraft.getMinecraft().gameRenderer).invokeLoadShader(this.blurShader);
             //#else
@@ -141,7 +140,7 @@ public class BlurHandlerImpl implements BlurHandler {
             this.progress = 0;
 
             // If a shader is active and the incoming UI is null or we have blur disabled, stop using the shader.
-        } else if (isShaderActive() && (gui == null || !Preferences.enableBlur)) {
+        } else if (isShaderActive() && (gui == null || (gui instanceof OneUIScreen && !((OneUIScreen) gui).hasBackgroundBlur()))) {
             String name = UMinecraft.getMinecraft().entityRenderer.getShaderGroup().getShaderGroupName();
 
             // Only stop our specific blur ;)

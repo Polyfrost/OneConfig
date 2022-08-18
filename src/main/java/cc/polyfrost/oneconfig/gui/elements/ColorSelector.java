@@ -47,6 +47,7 @@ import cc.polyfrost.oneconfig.utils.IOUtils;
 import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.NetworkUtils;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
+import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -358,7 +359,7 @@ public class ColorSelector {
                 color.setChromaSpeed((int) speedInput.getCurrentValue());
             }
             setXYFromColor();
-        } else if (OneConfigGui.INSTANCE.mouseDown) {
+        } else if (GuiUtils.wasMouseDown()) {
             saturationInput.setInput(String.format("%.01f", (float) color.getSaturation()));
             brightnessInput.setInput(String.format("%.01f", (float) color.getBrightness()));
             if (!alphaInput.arrowsClicked()) {

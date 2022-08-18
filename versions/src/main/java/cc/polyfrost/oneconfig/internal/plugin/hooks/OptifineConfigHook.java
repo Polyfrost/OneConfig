@@ -26,20 +26,20 @@
 
 package cc.polyfrost.oneconfig.internal.plugin.hooks;
 
-import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
+import cc.polyfrost.oneconfig.utils.gui.OneUIScreen;
 
 import java.util.Optional;
 
 public class OptifineConfigHook {
 
     public static boolean shouldNotApplyFastRender() {
-        if (Platform.getGuiPlatform().getCurrentScreen() instanceof OneConfigGui) {
+        if (Platform.getGuiPlatform().getCurrentScreen() instanceof OneUIScreen && ((OneUIScreen) Platform.getGuiPlatform().getCurrentScreen()).hasBackgroundBlur()) {
             return true;
         }
         for (Optional screen : GuiUtils.getScreenQueue()) {
-            if (screen.isPresent() && screen.get() instanceof OneConfigGui) {
+            if (screen.isPresent() && screen.get() instanceof OneUIScreen && ((OneUIScreen) screen.get()).hasBackgroundBlur()) {
                 return true;
             }
         }
