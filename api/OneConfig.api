@@ -1132,21 +1132,28 @@ public abstract interface class cc/polyfrost/oneconfig/platform/ServerPlatform {
 }
 
 public final class cc/polyfrost/oneconfig/renderer/AssetLoader {
+	public static final field DEFAULT_FLAGS I
 	public static field INSTANCE Lcc/polyfrost/oneconfig/renderer/AssetLoader;
 	public fun clearImages (J)V
 	public fun clearSVGs (J)V
 	public fun getImage (Ljava/lang/String;)I
 	public fun getSVG (Ljava/lang/String;FF)I
 	public fun imageToIntBuffer (Ljava/lang/String;)Ljava/nio/IntBuffer;
+	public fun loadImage (JLcc/polyfrost/oneconfig/renderer/Image;)Z
 	public fun loadImage (JLjava/lang/String;)Z
+	public fun loadImage (JLjava/lang/String;I)Z
+	public fun loadSVG (JLcc/polyfrost/oneconfig/renderer/SVG;FF)Z
 	public fun loadSVG (JLjava/lang/String;FF)Z
+	public fun loadSVG (JLjava/lang/String;FFI)Z
 	public fun removeImage (JLjava/lang/String;)V
 	public fun removeSVG (JLjava/lang/String;FF)V
 }
 
 public class cc/polyfrost/oneconfig/renderer/Image {
 	public final field filePath Ljava/lang/String;
+	public final field flags I
 	public fun <init> (Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/String;I)V
 }
 
 public final class cc/polyfrost/oneconfig/renderer/RenderManager {
@@ -1197,7 +1204,9 @@ public final class cc/polyfrost/oneconfig/renderer/RenderManager$TextType : java
 
 public class cc/polyfrost/oneconfig/renderer/SVG {
 	public final field filePath Ljava/lang/String;
+	public final field flags I
 	public fun <init> (Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/String;I)V
 }
 
 public class cc/polyfrost/oneconfig/renderer/TextRenderer {

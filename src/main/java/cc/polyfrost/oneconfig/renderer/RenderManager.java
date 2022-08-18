@@ -402,8 +402,10 @@ public final class RenderManager {
      *
      * @see RenderManager#drawImage(long, String, float, float, float, float)
      */
-    public static void drawImage(long vg, Image filePath, float x, float y, float width, float height) {
-        drawImage(vg, filePath.filePath, x, y, width, height);
+    public static void drawImage(long vg, Image image, float x, float y, float width, float height) {
+        if (AssetLoader.INSTANCE.loadImage(vg, image)) {
+            drawImage(vg, image.filePath, x, y, width, height);
+        }
     }
 
     /**
@@ -411,8 +413,10 @@ public final class RenderManager {
      *
      * @see RenderManager#drawImage(long, String, float, float, float, float, int)
      */
-    public static void drawImage(long vg, Image filePath, float x, float y, float width, float height, int color) {
-        drawImage(vg, filePath.filePath, x, y, width, height, color);
+    public static void drawImage(long vg, Image image, float x, float y, float width, float height, int color) {
+        if (AssetLoader.INSTANCE.loadImage(vg, image)) {
+            drawImage(vg, image.filePath, x, y, width, height, color);
+        }
     }
 
     /**
@@ -444,8 +448,10 @@ public final class RenderManager {
      *
      * @see RenderManager#drawRoundImage(long, String, float, float, float, float, float)
      */
-    public static void drawRoundImage(long vg, Image filePath, float x, float y, float width, float height, float radius) {
-        drawRoundImage(vg, filePath.filePath, x, y, width, height, radius);
+    public static void drawRoundImage(long vg, Image image, float x, float y, float width, float height, float radius) {
+        if (AssetLoader.INSTANCE.loadImage(vg, image)) {
+            drawRoundImage(vg, image.filePath, x, y, width, height, radius);
+        }
     }
 
     /**
@@ -636,7 +642,15 @@ public final class RenderManager {
      * @see RenderManager#drawSvg(long, String, float, float, float, float)
      */
     public static void drawSvg(long vg, SVG svg, float x, float y, float width, float height) {
-        drawSvg(vg, svg.filePath, x, y, width, height);
+        float w = width;
+        float h = height;
+        if (OneConfigGui.INSTANCE != null) {
+            w *= OneConfigGui.INSTANCE.getScaleFactor();
+            h *= OneConfigGui.INSTANCE.getScaleFactor();
+        }
+        if (AssetLoader.INSTANCE.loadSVG(vg, svg, w, h)) {
+            drawSvg(vg, svg.filePath, x, y, width, height);
+        }
     }
 
     /**
@@ -645,7 +659,15 @@ public final class RenderManager {
      * @see RenderManager#drawSvg(long, String, float, float, float, float, int)
      */
     public static void drawSvg(long vg, SVG svg, float x, float y, float width, float height, int color) {
-        drawSvg(vg, svg.filePath, x, y, width, height, color);
+        float w = width;
+        float h = height;
+        if (OneConfigGui.INSTANCE != null) {
+            w *= OneConfigGui.INSTANCE.getScaleFactor();
+            h *= OneConfigGui.INSTANCE.getScaleFactor();
+        }
+        if (AssetLoader.INSTANCE.loadSVG(vg, svg, w, h)) {
+            drawSvg(vg, svg.filePath, x, y, width, height, color);
+        }
     }
 
     /**
