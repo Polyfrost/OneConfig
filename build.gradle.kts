@@ -91,7 +91,7 @@ dependencies {
     }
 
     @Suppress("GradlePackageUpdate")
-    shadeRelocated("com.github.ben-manes.caffeine:caffeine:2.9.3")
+    shadeRelocated("com.github.ben-manes.caffeine:caffeine:3.1.1")
 
     // for other mods and universalcraft
     val kotlinVersion: String by project
