@@ -33,8 +33,14 @@ package cc.polyfrost.oneconfig.renderer;
  */
 public class SVG {
     public final String filePath;
+    public final int flags;
+
+    public SVG(String filePath, int flags) {
+        this.filePath = filePath;
+        this.flags = flags;
+    }
 
     public SVG(String filePath) {
-        this.filePath = filePath;
+        this(filePath, AssetLoader.DEFAULT_FLAGS);
     }
 }
