@@ -91,6 +91,13 @@ public abstract class OneUIScreen extends UScreen implements GuiPause {
      */
     public abstract void draw(long vg, float partialTicks, InputHandler inputHandler);
 
+    /**
+     * @return If this gui has background blur
+     */
+    public boolean hasBackgroundBlur() {
+        return false;
+    }
+
     @Override
     public boolean doesGuiPauseGame() {
         return false;
