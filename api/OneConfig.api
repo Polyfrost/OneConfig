@@ -496,23 +496,23 @@ public abstract interface class cc/polyfrost/oneconfig/gui/GuiPause {
 	public abstract fun doesGuiPauseGame ()Z
 }
 
-public class cc/polyfrost/oneconfig/gui/OneConfigGui : cc/polyfrost/oneconfig/libs/universal/UScreen, cc/polyfrost/oneconfig/gui/GuiPause {
+public class cc/polyfrost/oneconfig/gui/OneConfigGui : cc/polyfrost/oneconfig/utils/gui/OneUIScreen {
 	public static field INSTANCE Lcc/polyfrost/oneconfig/gui/OneConfigGui;
 	public field allowClose Z
 	public field currentColorSelector Lcc/polyfrost/oneconfig/gui/elements/ColorSelector;
 	protected field currentPage Lcc/polyfrost/oneconfig/gui/pages/Page;
-	public field mouseDown Z
 	protected field prevPage Lcc/polyfrost/oneconfig/gui/pages/Page;
 	public fun <init> ()V
 	public fun <init> (Lcc/polyfrost/oneconfig/gui/pages/Page;)V
 	public fun closeColorSelector ()Lcc/polyfrost/oneconfig/config/core/OneColor;
 	public static fun create ()Lcc/polyfrost/oneconfig/gui/OneConfigGui;
 	public fun doesGuiPauseGame ()Z
+	public fun draw (JFLcc/polyfrost/oneconfig/utils/InputHandler;)V
 	public fun getColor ()Lcc/polyfrost/oneconfig/config/core/OneColor;
 	public fun getScaleFactor ()F
 	public fun getSearchValue ()Ljava/lang/String;
+	public fun hasBackgroundBlur ()Z
 	public fun initColorSelector (Lcc/polyfrost/oneconfig/gui/elements/ColorSelector;)V
-	public fun onDrawScreen (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;IIF)V
 	public fun onKeyPressed (ICLcc/polyfrost/oneconfig/libs/universal/UKeyboard$Modifiers;)V
 	public fun onScreenClose ()V
 	public fun openPage (Lcc/polyfrost/oneconfig/gui/pages/Page;)V
@@ -1592,6 +1592,7 @@ public abstract class cc/polyfrost/oneconfig/utils/gui/OneUIScreen : cc/polyfros
 	public fun <init> (ZZ)V
 	public fun doesGuiPauseGame ()Z
 	public abstract fun draw (JFLcc/polyfrost/oneconfig/utils/InputHandler;)V
+	public fun hasBackgroundBlur ()Z
 	public final fun onDrawScreen (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;IIF)V
 }
 
