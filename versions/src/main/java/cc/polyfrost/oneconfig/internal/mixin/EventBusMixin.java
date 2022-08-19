@@ -24,28 +24,33 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
+//#if MC==10809
 package cc.polyfrost.oneconfig.internal.mixin;
 
 import cc.polyfrost.oneconfig.events.EventManager;
 import cc.polyfrost.oneconfig.events.event.ChatReceiveEvent;
-import net.minecraft.client.network.play.ClientPlayNetHandler;
-import net.minecraft.network.play.server.SChatPacket;
+import net.minecraftforge.client.event.ClientChatReceivedEvent;
+import net.minecraftforge.fml.common.eventhandler.Event;
+import net.minecraftforge.fml.common.eventhandler.EventBus;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(value = ClientPlayNetHandler.class, priority = Integer.MAX_VALUE)
-public class NetHandlerPlayClientMixin {
+@Mixin(EventBus.class)
+public class EventBusMixin {
 
-    @Inject(method = "handleChat", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/event/ForgeEventFactory;onClientChat(Lnet/minecraft/util/text/ChatType;Lnet/minecraft/util/text/ITextComponent;Ljava/util/UUID;)Lnet/minecraft/util/text/ITextComponent;", remap = false), cancellable = true, remap = true)
-    private void onClientChat(SChatPacket packetIn, CallbackInfo ci) {
-        if (packetIn.getType().getId() == 0) {
-            ChatReceiveEvent event = new ChatReceiveEvent(packetIn.getChatComponent());
-            EventManager.INSTANCE.post(event);
-            if (event.isCancelled) {
-                ci.cancel();
+    @Inject(method = "post", at = @At(value = "HEAD"), remap = false)
+    private void post(Event e, CallbackInfoReturnable<Boolean> cir) {
+        if(!(e instanceof ClientChatReceivedEvent)) return;
+        ClientChatReceivedEvent event = (ClientChatReceivedEvent) e;
+        if (event.type == 0) {
+            ChatReceiveEvent customEvent = new ChatReceiveEvent(event.message);
+            EventManager.INSTANCE.post(customEvent);
+            if (customEvent.isCancelled) {
+                e.setCanceled(true);
             }
         }
     }
 }
+//#endif
