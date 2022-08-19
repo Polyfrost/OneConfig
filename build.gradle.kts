@@ -81,7 +81,7 @@ dependencies {
         isTransitive = false
     }
 
-    shadeRelocated("gg.essential:universalcraft-1.8.9-forge:211") {
+    shadeRelocated("gg.essential:universalcraft-1.8.9-forge:228") {
         attributes { attribute(common, true) }
         isTransitive = false
     }
