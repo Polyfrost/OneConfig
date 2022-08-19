@@ -69,14 +69,14 @@ dependencies {
 
     compileOnly("com.google.code.gson:gson:2.2.4")
     compileOnly("commons-io:commons-io:2.4")
-    compileOnly("com.google.guava:guava:17.0")
+    compileOnly("com.google.guava:guava:23.0")
     compileOnly("org.lwjgl:lwjgl-opengl:3.3.1")
     compileOnly("org.apache.logging.log4j:log4j-core:2.0-beta9")
     compileOnly("org.apache.logging.log4j:log4j-api:2.0-beta9")
     compileOnly("org.ow2.asm:asm-debug-all:5.0.3")
     compileOnly("org.apache.commons:commons-lang3:3.3.2")
 
-    compileOnly("gg.essential:vigilance-1.8.9-forge:222") {
+    compileOnly("gg.essential:vigilance-1.8.9-forge:252") {
         attributes { attribute(common, true) }
         isTransitive = false
     }
