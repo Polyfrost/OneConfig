@@ -24,7 +24,6 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-//#if MC==10809
 package cc.polyfrost.oneconfig.internal.mixin;
 
 import cc.polyfrost.oneconfig.events.EventManager;
