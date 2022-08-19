@@ -24,6 +24,7 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
+//#if FORGE==1
 package cc.polyfrost.oneconfig.internal.mixin;
 
 import cc.polyfrost.oneconfig.events.EventManager;
@@ -53,3 +54,5 @@ public class EventBusMixin {
         }
     }
 }
+
+//#endif
