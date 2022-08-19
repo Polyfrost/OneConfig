@@ -7,6 +7,10 @@ For a guide of how to use OneConfig please see our documentation at https://docs
 ![image](https://user-images.githubusercontent.com/67508414/172061081-7a32a139-d5c6-4f5a-907a-5af66deb799f.png)
 <br><br><br>
 
+## I WANT IT!!!
+
+We have initiated closed alpha testing for a small selection of inhouse OneConfig mods. You can gain access to these by boosting our [**Discord server**](https://polyfrost.cc/discord). (Note: the source code for most of these mods can be found on our GitHub.)
+
 ## License
 
 OneConfig is free and open-source. Except where noted otherwise (below and/or in individual files), all code is licensed under BOTH 
@@ -14,6 +18,8 @@ OneConfig is free and open-source. Except where noted otherwise (below and/or in
 - the Additional Terms Applicable to OneConfig, version 1.0 of the Additional Terms or (at your option) any later version.
 
 Copies of version 3 of the GNU Lesser General Public License, version 1.0 of the Additional Terms Applicable to OneConfig, and version 3 of the GNU General Public License (which the GNU LGPLv3 supplements) can be found in the [**LICENSE**](https://github.com/Polyfrost/OneConfig/blob/master/LICENSE) file.
+
+Polyfrost acts as the specified proxy when deciding whether future versions of the GNU Lesser General Public License shall apply. If Polyfrost publicly states the acceptance of a later version of the GNU Lesser General Public License, this is permanent authorization for you to choose that version for OneConfig. However, you **must still** be compliant with the Additional Terms Applicable to OneConfig.
 
 ## Supporting Projects
 ![YourKitLogo|50](https://www.yourkit.com/images/yklogo.png)
