@@ -24,14 +24,24 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.internal.plugin;
+package cc.polyfrost.oneconfig.internal.mixin;
 
-import cc.polyfrost.oneconfig.internal.init.OneConfigInit;
-import net.fabricmc.loader.api.entrypoint.PreLaunchEntrypoint;
+import cc.polyfrost.oneconfig.events.EventManager;
+import cc.polyfrost.oneconfig.events.event.WorldLoadEvent;
+import net.minecraft.client.network.ClientPlayNetworkHandler;
+import net.minecraft.client.world.ClientWorld;
+import net.minecraft.util.profiler.Profiler;
+import net.minecraft.world.Difficulty;
+import net.minecraft.world.level.LevelInfo;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-public class OneConfigPreLaunch implements PreLaunchEntrypoint {
-    @Override
-    public void onPreLaunch() {
-        OneConfigInit.initialize(new String[]{});
+@Mixin(ClientWorld.class)
+public class WorldClientMixin {
+    @Inject(method = "<init>", at = @At("RETURN"))
+    private void onWorldLoad(ClientPlayNetworkHandler clientPlayNetworkHandler, LevelInfo levelInfo, int i, Difficulty difficulty, Profiler profiler, CallbackInfo ci) {
+        EventManager.INSTANCE.post(new WorldLoadEvent());
     }
 }

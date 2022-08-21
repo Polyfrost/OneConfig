@@ -1,3 +1,4 @@
+import gg.essential.gradle.multiversion.StripReferencesTransform.Companion.registerStripReferencesAttribute
 import gg.essential.gradle.util.RelocationTransform.Companion.registerRelocationAttribute
 import gg.essential.gradle.util.noServerRunConfigs
 import net.fabricmc.loom.task.RemapSourcesJarTask
@@ -73,6 +74,7 @@ loom {
 }
 
 repositories {
+    mavenLocal()
     maven("https://repo.polyfrost.cc/releases")
 }
 
@@ -127,11 +129,15 @@ sourceSets {
 }
 
 dependencies {
-    compileOnly("gg.essential:vigilance-$platform:222") {
+    compileOnly("gg.essential:vigilance-1.8.9-forge:222") {
+        attributes { attribute(registerStripReferencesAttribute("common") {
+            excludes.add("net.minecraft")
+            excludes.add("net.minecraftforge")
+        }, true) }
         isTransitive = false
     }
 
-    include("gg.essential:universalcraft-$platform:211", relocate = true, transitive = false, mod = true)
+    include("gg.essential:universalcraft-$platform:master-SNAPSHOT", relocate = true, transitive = false, mod = true)
 
     include("com.github.KevinPriv:keventbus:c52e0a2ea0", relocate = true, transitive = false)
 
@@ -164,7 +170,11 @@ dependencies {
         isTransitive = false
     }
 
-    include("cc.polyfrost:lwjgl-$platform:1.0.0-alpha8")
+    if (platform.isFabric) {
+        include("com.github.Chocohead:Fabric-ASM:v2.3")
+    }
+
+    include("cc.polyfrost:lwjgl-$platform:1.0.0-alpha9")
 
     dokkaHtmlPlugin("org.jetbrains.dokka:kotlin-as-java-plugin:1.6.21")
 

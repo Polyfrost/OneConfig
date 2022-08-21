@@ -37,6 +37,7 @@ version = mod_major_version + mod_minor_version
 group = "cc.polyfrost"
 
 repositories {
+    mavenLocal()
     maven("https://repo.polyfrost.cc/releases")
 }
 
@@ -76,12 +77,12 @@ dependencies {
     compileOnly("org.ow2.asm:asm-debug-all:5.0.3")
     compileOnly("org.apache.commons:commons-lang3:3.3.2")
 
-    compileOnly("gg.essential:vigilance-1.8.9-forge:252") {
+    compileOnly("gg.essential:vigilance-1.8.9-forge:222") {
         attributes { attribute(common, true) }
         isTransitive = false
     }
 
-    shadeRelocated("gg.essential:universalcraft-1.8.9-forge:228") {
+    shadeRelocated("gg.essential:universalcraft-1.8.9-forge:master-SNAPSHOT") {
         attributes { attribute(common, true) }
         isTransitive = false
     }
@@ -114,7 +115,7 @@ dependencies {
     shade("org.spongepowered:mixin:0.7.11-SNAPSHOT") {
         isTransitive = false
     }
-    shade("cc.polyfrost:lwjgl-1.8.9-forge:1.0.0-alpha8")
+    shade("cc.polyfrost:lwjgl-1.8.9-forge:1.0.0-alpha9")
     shadeNoPom(prebundle(shadeRelocated))
 
     configurations.named(JavaPlugin.COMPILE_CLASSPATH_CONFIGURATION_NAME) { extendsFrom(shadeNoPom) }

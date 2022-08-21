@@ -41,10 +41,14 @@ import java.util.function.LongSupplier;
 
 @Mixin(TickTimeTracker.class)
 public class TickTimeTrackerMixin {
+    private static boolean started = false;
     @Inject(method = "<init>", at = @At("RETURN"))
     private void onStart(LongSupplier longSupplier, IntSupplier intSupplier, CallbackInfo ci) {
-        OneConfig.init();
-        EventManager.INSTANCE.post(new StartEvent());
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> EventManager.INSTANCE.post(new ShutdownEvent())));
+        if (!started) {
+            started = true;
+            OneConfig.init();
+            EventManager.INSTANCE.post(new StartEvent());
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> EventManager.INSTANCE.post(new ShutdownEvent())));
+        }
     }
 }

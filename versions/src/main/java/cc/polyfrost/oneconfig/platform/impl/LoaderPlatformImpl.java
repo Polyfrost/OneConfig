@@ -27,16 +27,15 @@
 package cc.polyfrost.oneconfig.platform.impl;
 
 import cc.polyfrost.oneconfig.platform.LoaderPlatform;
-//#if MC>=11600
-    //#if FORGE==1
-    //$$ import net.minecraftforge.fml.ModList;
-    //#else
-    //$$ import net.fabricmc.loader.api.FabricLoader;
-    //#endif
+//#if MC>=11600 && FORGE==1
+//$$ import net.minecraftforge.fml.ModList;
 //#endif
 //#if FORGE==1
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.ModContainer;
+//#endif
+//#if FABRIC==1
+//$$ import net.fabricmc.loader.api.FabricLoader;
 //#endif
 
 public class LoaderPlatformImpl implements LoaderPlatform {
@@ -48,8 +47,10 @@ public class LoaderPlatformImpl implements LoaderPlatform {
             //#else
             //$$ return FabricLoader.getInstance().isModLoaded(id);
             //#endif
-        //#else
+        //#elseif FORGE==1
         return Loader.isModLoaded(id);
+        //#else
+        //$$ return FabricLoader.getInstance().isModLoaded(id);
         //#endif
     }
 

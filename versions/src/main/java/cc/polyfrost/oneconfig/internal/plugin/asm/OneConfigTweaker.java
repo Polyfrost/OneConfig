@@ -24,7 +24,7 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-//#if MC<=11202
+//#if FORGE==1 && MC<=11202
 package cc.polyfrost.oneconfig.internal.plugin.asm;
 
 import cc.polyfrost.oneconfig.internal.init.OneConfigInit;

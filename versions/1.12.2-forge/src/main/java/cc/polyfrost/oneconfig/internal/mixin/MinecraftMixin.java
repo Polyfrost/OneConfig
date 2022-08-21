@@ -66,12 +66,12 @@ public class MinecraftMixin {
 
     @Inject(method = "runGameLoop", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/FMLCommonHandler;onRenderTickStart(F)V", shift = At.Shift.AFTER, remap = false), remap = true)
     private void onRenderTickStart(CallbackInfo ci) {
-        EventManager.INSTANCE.post(new RenderEvent(Stage.START, timer.renderPartialTicks));
+        EventManager.INSTANCE.post(new RenderEvent(Stage.START, this.timer.renderPartialTicks));
     }
 
     @Inject(method = "runGameLoop", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/FMLCommonHandler;onRenderTickEnd(F)V", shift = At.Shift.AFTER, remap = false), remap = true)
     private void onRenderTickEnd(CallbackInfo ci) {
-        EventManager.INSTANCE.post(new RenderEvent(Stage.END, timer.renderPartialTicks));
+        EventManager.INSTANCE.post(new RenderEvent(Stage.END, this.timer.renderPartialTicks));
     }
 
     @Inject(method = "runTick", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/FMLCommonHandler;onPreClientTick()V", shift = At.Shift.AFTER, remap = false), remap = true)
@@ -100,7 +100,7 @@ public class MinecraftMixin {
 
     @Inject(method = "runGameLoop", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/Timer;updateTimer()V", shift = At.Shift.AFTER))
     private void onDeltaTickTimerUpdate(CallbackInfo ci) {
-        EventManager.INSTANCE.post(new TimerUpdateEvent(timer, true));
+        EventManager.INSTANCE.post(new TimerUpdateEvent(this.timer, true));
     }
 
     @Inject(method = "runTickKeyboard", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/FMLCommonHandler;fireKeyInput()V"))

@@ -1,12 +1,13 @@
 pluginManagement {
     repositories {
+        mavenLocal()
         gradlePluginPortal()
         mavenCentral()
         maven("https://repo.polyfrost.cc/releases")
         maven("https://maven.architectury.dev/")
     }
     plugins {
-        val egtVersion = "0.1.10"
+        val egtVersion = "0.1.1314241"
         id("gg.essential.multi-version.root") version egtVersion
         id("gg.essential.defaults.repo") version egtVersion
         id("gg.essential.defaults.java") version egtVersion
@@ -43,6 +44,8 @@ project(":platform").apply {
 
 listOf(
     "1.8.9-forge",
+    "1.8.9-fabric",
+    "1.12.2-fabric",
     "1.12.2-forge",
     "1.16.2-forge",
     "1.16.2-fabric"

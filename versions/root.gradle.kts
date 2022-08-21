@@ -9,9 +9,13 @@ plugins {
 
 preprocess {
     "1.8.9-forge"(10809, "srg") {
-        "1.12.2-forge"(11202, "srg", file("1.8.9-1.12.2.txt")) {
-            "1.16.2-forge"(11602, "srg", file("1.12.2-1.16.2.txt")) {
-                "1.16.2-fabric"(11602, "yarn")
+        "1.8.9-fabric"(10809, "yarn", file("forge-fabric-legacy.txt")) {
+            "1.12.2-fabric"(11202, "yarn") {
+                "1.12.2-forge"(11202, "srg", file("fabric-forge-legacy.txt")) {
+                    "1.16.2-forge"(11602, "srg", file("1.12.2-1.16.2.txt")) {
+                        "1.16.2-fabric"(11602, "yarn")
+                    }
+                }
             }
         }
     }

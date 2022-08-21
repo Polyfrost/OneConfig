@@ -24,7 +24,7 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-//#if MC>=11202
+//#if MC<=11202
 package cc.polyfrost.oneconfig.utils.commands;
 
 import cc.polyfrost.oneconfig.libs.universal.ChatColor;
@@ -34,9 +34,7 @@ import cc.polyfrost.oneconfig.utils.commands.annotations.Greedy;
 import cc.polyfrost.oneconfig.utils.commands.arguments.ArgumentParser;
 import cc.polyfrost.oneconfig.utils.commands.arguments.Arguments;
 import net.minecraft.command.CommandBase;
-import net.minecraft.command.ICommandSender;
 import net.minecraft.util.BlockPos;
-import net.minecraftforge.client.ClientCommandHandler;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.ImmutableTriple;
 import org.apache.commons.lang3.tuple.Pair;
@@ -49,11 +47,14 @@ import java.util.*;
 import static cc.polyfrost.oneconfig.utils.commands.CommandManager.*;
 import static cc.polyfrost.oneconfig.utils.commands.CommandManager.METHOD_RUN_ERROR;
 
+//#if FORGE==1
+//$$ import net.minecraftforge.client.ClientCommandHandler;
+//#endif
+
 public class PlatformCommandManagerImpl extends PlatformCommandManager {
 
     @Override
     public void createCommand(CommandManager.InternalCommand root, Command annotation) {
-        //#if MC<=11202
         ClientCommandHandler.instance.registerCommand(new CommandBase() {
             @Override
             public String getCommandName() {
@@ -61,16 +62,18 @@ public class PlatformCommandManagerImpl extends PlatformCommandManager {
             }
 
             @Override
-            public String getCommandUsage(ICommandSender sender) {
+            public String getCommandUsage(net.minecraft.command.ICommandSender sender) {
                 return "/" + annotation.value();
             }
 
             @Override
             public void
                 //#if MC<=10809
-                processCommand(ICommandSender sender, String[] args)
+                processCommand(net.minecraft.command.ICommandSender sender, String[] args)
+                //#elseif FABRIC==1
+                //$$ method_3279(net.minecraft.server.MinecraftServer var1, net.minecraft.command.CommandSource sender, String[] args)
                 //#else
-                //$$ execute(net.minecraft.server.MinecraftServer server, ICommandSender sender, String[] args)
+                //$$ execute(net.minecraft.server.MinecraftServer server, net.minecraft.command.ICommandSender sender, String[] args)
                 //#endif
             {
                 if (args.length == 0) {
@@ -142,9 +145,11 @@ public class PlatformCommandManagerImpl extends PlatformCommandManager {
             @Override
             public List<String>
                 //#if MC<=10809
-                addTabCompletionOptions(ICommandSender sender, String[] args, BlockPos pos)
+                addTabCompletionOptions(net.minecraft.command.ICommandSender sender, String[] args, BlockPos pos)
+                //#elseif FABRIC==1
+                //$$ method_10738(net.minecraft.server.MinecraftServer server, net.minecraft.command.CommandSource sender, String[] args, BlockPos targetPos)
                 //#else
-                //$$ getTabCompletions(net.minecraft.server.MinecraftServer server, ICommandSender sender, String[] args, BlockPos targetPos)
+                //$$ getTabCompletions(net.minecraft.server.MinecraftServer server, net.minecraft.command.ICommandSender sender, String[] args, BlockPos targetPos)
                 //#endif
             {
                 try {
@@ -229,8 +234,6 @@ public class PlatformCommandManagerImpl extends PlatformCommandManager {
                 return null;
             }
         });
-        //#else
-        //#endif
     }
 
     protected List<Object> getParametersForInvoker(CommandManager.InternalCommand.InternalCommandInvoker invoker, int depth, String[] args) {

@@ -16,7 +16,7 @@ val mod_name: String by project
 val mod_version: String by project
 val mod_id: String by project
 
-version = "1.0.0-alpha8"
+version = "1.0.0-alpha9"
 
 repositories {
     maven("https://repo.polyfrost.cc/releases")
@@ -36,7 +36,7 @@ dependencies {
     } else {
         "3.3.1"
     }
-    if (platform.isLegacyForge) {
+    if (platform.isLegacyForge || platform.isLegacyFabric) {
         shadeCompileOnly("org.lwjgl:lwjgl:$lwjgl")
         shadeCompileOnly("org.lwjgl:lwjgl-stb:$lwjgl")
         shadeCompileOnly("org.lwjgl:lwjgl-tinyfd:$lwjgl")
