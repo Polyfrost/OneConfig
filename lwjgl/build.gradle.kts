@@ -16,7 +16,7 @@ val mod_name: String by project
 val mod_version: String by project
 val mod_id: String by project
 
-version = "1.0.0-alpha9"
+version = "1.0.0-alpha14"
 
 repositories {
     maven("https://repo.polyfrost.cc/releases")
@@ -31,40 +31,41 @@ sourceSets {
 }
 
 dependencies {
-    val lwjgl = if (platform.mcVersion >= 11600) {
+    val lwjglVersion = if (platform.mcVersion >= 11600) {
         "3.2.1"
     } else {
         "3.3.1"
     }
     if (platform.isLegacyForge || platform.isLegacyFabric) {
-        shadeCompileOnly("org.lwjgl:lwjgl:$lwjgl")
-        shadeCompileOnly("org.lwjgl:lwjgl-stb:$lwjgl")
-        shadeCompileOnly("org.lwjgl:lwjgl-tinyfd:$lwjgl")
+        shadeCompileOnly("org.lwjgl:lwjgl-stb:$lwjglVersion")
+        shadeCompileOnly("org.lwjgl:lwjgl-tinyfd:$lwjglVersion")
 
-        shadeRuntimeOnly("org.lwjgl:lwjgl:$lwjgl:natives-windows")
-        shadeRuntimeOnly("org.lwjgl:lwjgl-stb:$lwjgl:natives-windows")
-        shadeRuntimeOnly("org.lwjgl:lwjgl-tinyfd:$lwjgl:natives-windows")
-        shadeRuntimeOnly("org.lwjgl:lwjgl:$lwjgl:natives-linux")
-        shadeRuntimeOnly("org.lwjgl:lwjgl-stb:$lwjgl:natives-linux")
-        shadeRuntimeOnly("org.lwjgl:lwjgl-tinyfd:$lwjgl:natives-linux")
-        shadeRuntimeOnly("org.lwjgl:lwjgl:$lwjgl:natives-macos")
-        shadeRuntimeOnly("org.lwjgl:lwjgl-stb:$lwjgl:natives-macos")
-        shadeRuntimeOnly("org.lwjgl:lwjgl-tinyfd:$lwjgl:natives-macos")
-        shadeRuntimeOnly("org.lwjgl:lwjgl:$lwjgl:natives-macos-arm64")
-        shadeRuntimeOnly("org.lwjgl:lwjgl-stb:$lwjgl:natives-macos-arm64")
-        shadeRuntimeOnly("org.lwjgl:lwjgl-tinyfd:$lwjgl:natives-macos-arm64")
+        shadeRuntimeOnly("org.lwjgl:lwjgl-stb:$lwjglVersion:natives-windows")
+        shadeRuntimeOnly("org.lwjgl:lwjgl-tinyfd:$lwjglVersion:natives-windows")
+        shadeRuntimeOnly("org.lwjgl:lwjgl-stb:$lwjglVersion:natives-linux")
+        shadeRuntimeOnly("org.lwjgl:lwjgl-tinyfd:$lwjglVersion:natives-linux")
+        shadeRuntimeOnly("org.lwjgl:lwjgl-stb:$lwjglVersion:natives-macos")
+        shadeRuntimeOnly("org.lwjgl:lwjgl-tinyfd:$lwjglVersion:natives-macos")
+        shadeRuntimeOnly("org.lwjgl:lwjgl-stb:$lwjglVersion:natives-macos-arm64")
+        shadeRuntimeOnly("org.lwjgl:lwjgl-tinyfd:$lwjglVersion:natives-macos-arm64")
     }
 
-    shadeCompileOnly("org.lwjgl:lwjgl-nanovg:$lwjgl") {
+    shadeCompileOnly("org.lwjgl:lwjgl:$lwjglVersion")
+    shadeRuntimeOnly("org.lwjgl:lwjgl:$lwjglVersion:natives-windows")
+    shadeRuntimeOnly("org.lwjgl:lwjgl:$lwjglVersion:natives-linux")
+    shadeRuntimeOnly("org.lwjgl:lwjgl:$lwjglVersion:natives-macos")
+    shadeRuntimeOnly("org.lwjgl:lwjgl:3.3.1:natives-macos-arm64")
+
+    shadeCompileOnly("org.lwjgl:lwjgl-nanovg:$lwjglVersion") {
         isTransitive = false
     }
-    shadeRuntimeOnly("org.lwjgl:lwjgl-nanovg:$lwjgl:natives-windows") {
+    shadeRuntimeOnly("org.lwjgl:lwjgl-nanovg:$lwjglVersion:natives-windows") {
         isTransitive = false
     }
-    shadeRuntimeOnly("org.lwjgl:lwjgl-nanovg:$lwjgl:natives-linux") {
+    shadeRuntimeOnly("org.lwjgl:lwjgl-nanovg:$lwjglVersion:natives-linux") {
         isTransitive = false
     }
-    shadeRuntimeOnly("org.lwjgl:lwjgl-nanovg:$lwjgl:natives-macos") {
+    shadeRuntimeOnly("org.lwjgl:lwjgl-nanovg:$lwjglVersion:natives-macos") {
         isTransitive = false
     }
     // force 3.3.1 for this, because
@@ -78,15 +79,12 @@ tasks {
     named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar") {
         archiveClassifier.set("")
         configurations = listOf(shadeCompileOnly, shadeRuntimeOnly)
-        if (platform.isLegacyForge) {
+        if (platform.isLegacyForge || platform.isLegacyFabric) {
             exclude("META-INF/versions/**")
             exclude("**/module-info.class")
             exclude("**/package-info.class")
-            relocate("org.lwjgl", "org.lwjgl3") {
-                include("org.lwjgl.PointerBuffer")
-                include("org.lwjgl.BufferUtils")
-            }
         }
+        relocate("org.lwjgl", "org.lwjgl3")
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
         dependsOn(jar)
     }

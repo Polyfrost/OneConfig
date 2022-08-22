@@ -31,12 +31,12 @@ import cc.polyfrost.oneconfig.renderer.font.Font;
 import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.NetworkUtils;
 import com.google.common.annotations.Beta;
-import org.lwjgl.nanovg.NVGColor;
+import org.lwjgl3.nanovg.NVGColor;
 
 import java.util.ArrayList;
 
 import static cc.polyfrost.oneconfig.renderer.RenderManager.color;
-import static org.lwjgl.nanovg.NanoVG.*;
+import static org.lwjgl3.nanovg.NanoVG.*;
 
 public class TextRenderer {
     /**

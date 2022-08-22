@@ -81,7 +81,7 @@ repositories {
 
 val relocatedCommonProject = registerRelocationAttribute("common-lwjgl") {
     if (platform.isModLauncher || platform.isFabric) {
-        relocate("org.lwjgl3", "org.lwjgl")
+        relocate("org.lwjgl3.buffer", "org.lwjgl3")
     }
 }
 
@@ -175,7 +175,7 @@ dependencies {
         include("com.github.Chocohead:Fabric-ASM:v2.3")
     }
     val tempLwjglConfiguration by configurations.creating
-    compileOnly(tempLwjglConfiguration("cc.polyfrost:lwjgl-$platform:1.0.0-alpha9") {
+    compileOnly(tempLwjglConfiguration("cc.polyfrost:lwjgl-$platform:1.0.0-alpha14") {
         isTransitive = false
     })
     shadeNoPom(shade(prebundle(tempLwjglConfiguration, "lwjgl.jar"))!!)

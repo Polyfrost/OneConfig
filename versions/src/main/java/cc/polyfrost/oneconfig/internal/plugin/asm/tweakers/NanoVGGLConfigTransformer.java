@@ -37,7 +37,7 @@ import org.objectweb.asm.tree.*;
 public class NanoVGGLConfigTransformer implements ITransformer {
     @Override
     public String[] getClassName() {
-        return new String[]{"org.lwjgl.nanovg.NanoVGGLConfig"};
+        return new String[]{"org.lwjgl3.nanovg.NanoVGGLConfig"};
     }
 
     @Override
@@ -58,7 +58,7 @@ public class NanoVGGLConfigTransformer implements ITransformer {
                 ));
                 list.add(new MethodInsnNode(
                         Opcodes.INVOKESTATIC,
-                        "org/lwjgl/nanovg/NanoVGGLConfig",
+                        "org/lwjgl3/nanovg/NanoVGGLConfig",
                         "config",
                         "(JLorg/lwjgl/system/FunctionProvider;)V",
                         false

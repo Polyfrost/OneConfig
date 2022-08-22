@@ -50,7 +50,7 @@ import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 import cc.polyfrost.oneconfig.utils.gui.OneUIScreen;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.lwjgl.nanovg.NanoVG;
+import org.lwjgl3.nanovg.NanoVG;
 
 import java.util.ArrayList;
 

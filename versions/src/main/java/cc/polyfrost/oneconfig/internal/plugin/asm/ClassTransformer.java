@@ -61,7 +61,9 @@ public class ClassTransformer
     //#endif
 
     public ClassTransformer() {
+        //#if MC<=11202
         registerTransformer(new NanoVGGLConfigTransformer());
+        //#endif
         registerTransformer(new VigilantTransformer());
     }
 

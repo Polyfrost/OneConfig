@@ -33,7 +33,7 @@ import cc.polyfrost.oneconfig.renderer.Image
 import cc.polyfrost.oneconfig.renderer.SVG
 import cc.polyfrost.oneconfig.utils.InputHandler
 import cc.polyfrost.oneconfig.utils.color.ColorUtils
-import org.lwjgl.nanovg.NVGColor
+import org.lwjgl3.nanovg.NVGColor
 
 /**
  * Wrapper for a NanoVG instance.

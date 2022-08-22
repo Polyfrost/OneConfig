@@ -26,7 +26,7 @@
 
 package cc.polyfrost.oneconfig.renderer.scissor;
 
-import org.lwjgl.nanovg.NanoVG;
+import org.lwjgl3.nanovg.NanoVG;
 
 import java.util.ArrayList;
 

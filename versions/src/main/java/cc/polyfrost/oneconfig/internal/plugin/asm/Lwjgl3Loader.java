@@ -28,24 +28,39 @@ public class Lwjgl3Loader {
                 addURL = root.getClass().getDeclaredMethod("addUrlFwd", URL.class);
             } catch (Exception ex) {
                 ex.printStackTrace();
-                try {
-                    //#if FORGE==1 && MC<=11202
-                    net.minecraft.launchwrapper.Launch.classLoader.addURL(getTempJar().toURI().toURL());
-                    //#endif
-                } catch (Exception exception) {
-                    e.printStackTrace();
-                }
+                postLoad();
                 return;
             }
         }
         addURL.setAccessible(true);
         try {
             addURL.invoke(root, getTempJar().toURI().toURL());
+            postLoad();
+        } catch (IllegalAccessException | InvocationTargetException | IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void postLoad() {
+        try {
             //#if FORGE==1 && MC<=11202
             net.minecraft.launchwrapper.Launch.classLoader.addURL(getTempJar().toURI().toURL());
             //#endif
-        } catch (IllegalAccessException | InvocationTargetException | IOException e) {
-            e.printStackTrace();
+            Class<?> configClass;
+            try {
+                configClass = Class.forName("org.lwjgl3.system.Configuration", true, Lwjgl3Loader.class.getClassLoader());
+            } catch (Exception e) {
+                //#if FORGE==1 && MC<=11202
+                configClass = Class.forName("org.lwjgl3.system.Configuration", true, net.minecraft.launchwrapper.Launch.classLoader);
+                //#else
+                //$$ return;
+                //#endif
+            }
+            Object extractDirField = configClass.getField("SHARED_LIBRARY_EXTRACT_DIRECTORY").get(null);
+            Method setMethod = configClass.getMethod("set", Object.class);
+            setMethod.invoke(extractDirField, new File("./OneConfig/temp").getAbsolutePath());
+        } catch (Exception ignored) {
+
         }
     }
 

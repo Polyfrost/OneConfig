@@ -38,14 +38,14 @@ import cc.polyfrost.oneconfig.renderer.font.Font;
 import cc.polyfrost.oneconfig.renderer.font.FontManager;
 import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.NetworkUtils;
-import org.lwjgl.nanovg.NVGColor;
-import org.lwjgl.nanovg.NVGPaint;
+import org.lwjgl3.nanovg.NVGColor;
+import org.lwjgl3.nanovg.NVGPaint;
 import org.lwjgl.opengl.GL11;
 
 import java.util.function.LongConsumer;
 import java.util.regex.Pattern;
 
-import static org.lwjgl.nanovg.NanoVG.*;
+import static org.lwjgl3.nanovg.NanoVG.*;
 
 /**
  * Handles NanoVG rendering and wraps it in a more convenient interface.

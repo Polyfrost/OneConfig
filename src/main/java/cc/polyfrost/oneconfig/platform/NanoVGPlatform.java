@@ -27,7 +27,7 @@
 package cc.polyfrost.oneconfig.platform;
 
 import org.jetbrains.annotations.Nullable;
-import org.lwjgl.nanovg.NVGLUFramebuffer;
+import org.lwjgl3.nanovg.NVGLUFramebuffer;
 
 public interface NanoVGPlatform {
     int NVG_ANTIALIAS = 1;

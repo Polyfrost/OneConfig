@@ -28,8 +28,8 @@ package cc.polyfrost.oneconfig.platform.impl;
 
 import cc.polyfrost.oneconfig.platform.NanoVGPlatform;
 import org.jetbrains.annotations.Nullable;
-import org.lwjgl.nanovg.NVGLUFramebuffer;
-import org.lwjgl.nanovg.NanoVGGL2;
+import org.lwjgl3.nanovg.NVGLUFramebuffer;
+import org.lwjgl3.nanovg.NanoVGGL2;
 
 public class NanoVGPlatformImpl implements NanoVGPlatform {
     @Override

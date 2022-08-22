@@ -29,12 +29,12 @@ package cc.polyfrost.oneconfig.renderer;
 import cc.polyfrost.oneconfig.internal.assets.Images;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.utils.IOUtils;
-import org.lwjgl.BufferUtils;
-import org.lwjgl.nanovg.NSVGImage;
-import org.lwjgl.nanovg.NanoSVG;
-import org.lwjgl.nanovg.NanoVG;
-import org.lwjgl.stb.STBImage;
-import org.lwjgl.system.MemoryUtil;
+import org.lwjgl3.BufferUtils;
+import org.lwjgl3.nanovg.NSVGImage;
+import org.lwjgl3.nanovg.NanoSVG;
+import org.lwjgl3.nanovg.NanoVG;
+import org.lwjgl3.stb.STBImage;
+import org.lwjgl3.system.MemoryUtil;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
