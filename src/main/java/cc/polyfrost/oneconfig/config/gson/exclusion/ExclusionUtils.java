@@ -24,7 +24,7 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.config.gson;
+package cc.polyfrost.oneconfig.config.gson.exclusion;
 
 public class ExclusionUtils {
     protected static boolean isSuperClassOf(Class<?> clazz, Class<?> parentClass) {

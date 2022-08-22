@@ -24,7 +24,7 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.config.gson;
+package cc.polyfrost.oneconfig.config.gson.exclusion;
 
 import cc.polyfrost.oneconfig.config.Config;
 import cc.polyfrost.oneconfig.config.annotations.Exclude;
@@ -33,7 +33,7 @@ import cc.polyfrost.oneconfig.gui.pages.Page;
 import com.google.gson.ExclusionStrategy;
 import com.google.gson.FieldAttributes;
 
-public class NonProfileSpecificExclusionStrategy extends ExclusionUtils implements ExclusionStrategy {
+public class ProfileExclusionStrategy extends ExclusionUtils implements ExclusionStrategy {
     /**
      * @param f the field object that is under test
      * @return true if the field should be ignored; otherwise false
@@ -43,7 +43,7 @@ public class NonProfileSpecificExclusionStrategy extends ExclusionUtils implemen
         if (isSuperClassOf(f.getDeclaredClass(), Config.class)) return true;
         if (isSuperClassOf(f.getDeclaredClass(), Page.class)) return true;
         if (f.getDeclaredClass().isAssignableFrom(Runnable.class)) return true;
-        if (f.getAnnotation(NonProfileSpecific.class) == null) return true;
+        if (f.getAnnotation(NonProfileSpecific.class) != null) return true;
         Exclude exclude = f.getAnnotation(Exclude.class);
         return exclude != null;
     }
