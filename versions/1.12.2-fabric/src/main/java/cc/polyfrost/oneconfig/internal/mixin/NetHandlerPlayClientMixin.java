@@ -25,7 +25,7 @@
  */
 
 package cc.polyfrost.oneconfig.internal.mixin;
-
+//#if FABRIC==1 && MC<=11200
 import cc.polyfrost.oneconfig.events.EventManager;
 import cc.polyfrost.oneconfig.events.event.ChatReceiveEvent;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
@@ -49,3 +49,4 @@ public class NetHandlerPlayClientMixin {
         }
     }
 }
+//#endif

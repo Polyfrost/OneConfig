@@ -25,7 +25,7 @@
  */
 
 package cc.polyfrost.oneconfig.internal.mixin;
-
+//#if FABRIC==1 && MC<=11200
 import cc.polyfrost.oneconfig.internal.hook.FramebufferHook;
 import com.mojang.blaze3d.platform.GLX;
 import net.minecraft.client.gl.Framebuffer;
@@ -79,3 +79,4 @@ public abstract class FramebufferMixin implements FramebufferHook {
         }
     }
 }
+//#endif

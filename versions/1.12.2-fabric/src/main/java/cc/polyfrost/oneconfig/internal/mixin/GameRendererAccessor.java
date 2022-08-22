@@ -25,7 +25,7 @@
  */
 
 package cc.polyfrost.oneconfig.internal.mixin;
-
+//#if FABRIC==1 && MC<=11200
 import net.minecraft.client.render.GameRenderer;
 import net.minecraft.util.Identifier;
 import org.spongepowered.asm.mixin.Mixin;
@@ -36,3 +36,4 @@ public interface GameRendererAccessor {
     @Invoker
     void invokeLoadShader(Identifier identifier);
 }
+//#endif
