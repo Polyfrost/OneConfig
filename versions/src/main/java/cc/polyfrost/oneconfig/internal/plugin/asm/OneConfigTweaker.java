@@ -52,6 +52,7 @@ public class OneConfigTweaker implements ITweaker {
         for (URL url : Launch.classLoader.getSources()) {
             doMagicMixinStuff(url);
         }
+        Lwjgl3Loader.load();
     }
 
     private void doMagicMixinStuff(URL url) {

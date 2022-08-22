@@ -76,6 +76,7 @@ public class ClassTransformer
     //#if FABRIC==1
     //$$ @Override
     //$$ public void run() {
+    //$$     Lwjgl3Loader.load();
     //$$     for (java.util.Map.Entry<String, ITransformer> entry : transformerMap.entries()) {
     //$$         com.chocohead.mm.api.ClassTinkerers.addTransformation(entry.getKey(), (node) -> entry.getValue().transform(entry.getKey(), node));
     //$$     }

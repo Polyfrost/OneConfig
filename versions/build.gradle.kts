@@ -1,6 +1,7 @@
 import gg.essential.gradle.multiversion.StripReferencesTransform.Companion.registerStripReferencesAttribute
 import gg.essential.gradle.util.RelocationTransform.Companion.registerRelocationAttribute
 import gg.essential.gradle.util.noServerRunConfigs
+import gg.essential.gradle.util.prebundle
 import net.fabricmc.loom.task.RemapSourcesJarTask
 import java.text.SimpleDateFormat
 
@@ -173,8 +174,11 @@ dependencies {
     if (platform.isFabric) {
         include("com.github.Chocohead:Fabric-ASM:v2.3")
     }
-
-    include("cc.polyfrost:lwjgl-$platform:1.0.0-alpha9")
+    val tempLwjglConfiguration by configurations.creating
+    compileOnly(tempLwjglConfiguration("cc.polyfrost:lwjgl-$platform:1.0.0-alpha9") {
+        isTransitive = false
+    })
+    shadeNoPom(shade(prebundle(tempLwjglConfiguration, "lwjgl.jar"))!!)
 
     dokkaHtmlPlugin("org.jetbrains.dokka:kotlin-as-java-plugin:1.6.21")
 
