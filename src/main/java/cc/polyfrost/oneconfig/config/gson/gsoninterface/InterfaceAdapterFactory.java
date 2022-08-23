@@ -4,7 +4,6 @@ package cc.polyfrost.oneconfig.config.gson.gsoninterface;
  * This file is part of OneConfig.
  * OneConfig - Next Generation Config Library for Minecraft: Java Edition
  * Copyright (C) 2021, 2022 Polyfrost.
- * Copyright (c) 2012, Brandon Mintern, EasyESI, Berkeley, CA
  *
  *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
  *
@@ -34,6 +33,8 @@ package cc.polyfrost.oneconfig.config.gson.gsoninterface;
  *
  *                 LICENSE NOTICE FOR ADAPTED CODE
  *
+ * Copyright (C) 2012, Brandon Mintern, EasyESI, Berkeley, CA
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
  * met:
@@ -58,11 +59,13 @@ package cc.polyfrost.oneconfig.config.gson.gsoninterface;
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 import com.google.gson.*;
 import com.google.gson.internal.Streams;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
+
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Type;
