@@ -42,6 +42,7 @@ import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
 import cc.polyfrost.oneconfig.utils.commands.CommandManager;
 import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 import cc.polyfrost.oneconfig.utils.hypixel.HypixelUtils;
+import cc.polyfrost.oneconfig.utils.notifications.Notifications;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
 import org.apache.logging.log4j.LogManager;
@@ -150,6 +151,7 @@ public class OneConfig {
         EventManager.INSTANCE.register(new HudCore());
         HypixelUtils.INSTANCE.initialize();
         EventManager.INSTANCE.register(KeyBindHandler.INSTANCE);
+        EventManager.INSTANCE.register(Notifications.INSTANCE);
         ConfigCore.sortMods();
 
         initialized = true;

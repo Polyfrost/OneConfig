@@ -26,75 +26,81 @@
 
 package cc.polyfrost.oneconfig.utils.notifications;
 
-/**
- * @deprecated Reserved for future use, not implemented yet.
- */
-@Deprecated
+import cc.polyfrost.oneconfig.gui.animations.*;
+import cc.polyfrost.oneconfig.internal.assets.Colors;
+import cc.polyfrost.oneconfig.libs.universal.UResolution;
+import cc.polyfrost.oneconfig.renderer.Icon;
+import cc.polyfrost.oneconfig.utils.InputHandler;
+import cc.polyfrost.oneconfig.utils.color.ColorPalette;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.concurrent.Callable;
+
 public final class Notification {
     private String title;
     private String message;
-    private final float duration;
-    private float x;
-    private float y;
-
+    private Icon icon;
+    private final Animation animation;
+    private final Callable<Boolean> progressBar;
     private final Runnable action;
-    private final Runnable onClose;
+    private final InputHandler inputHandler = new InputHandler();
+    private final ColorAnimation bgColor = new ColorAnimation(new ColorPalette(Colors.GRAY_800, Colors.GRAY_700, Colors.GRAY_900));
+    private final ColorAnimation titleColor = new ColorAnimation(new ColorPalette(Colors.WHITE_80, Colors.WHITE, Colors.WHITE));
+    private final ColorAnimation messageColor = new ColorAnimation(new ColorPalette(Colors.WHITE_60, Colors.WHITE_90, Colors.WHITE_90));
+    private float height = 110;
 
-    Notification(String title, String message, float duration, float x, float y, Runnable action, Runnable onClose) {
+    Notification(String title, String message, @Nullable Icon icon, float duration, @Nullable Callable<Boolean> progressBar, @Nullable Runnable action) {
         this.title = title;
         this.message = message;
-        this.duration = duration;
-        this.x = x;
-        this.y = y;
+        this.icon = icon;
+        this.animation = new ChainedAnimation(
+                new EaseInOutQuad(300, 0, 314, false),
+                new DummyAnimation(314, duration),
+                new EaseInOutQuad(300, 314, 0, false)
+        );
+        this.progressBar = progressBar;
         this.action = action;
-        this.onClose = onClose;
     }
 
     void draw(final long vg) {
+        float x = UResolution.getWindowWidth() - 32 - animation.get();
+        float y = UResolution.getWindowHeight() - 32 - height;
+        boolean hovered = inputHandler.isAreaHovered(x, y, 134, height);
+        boolean clicked = hovered && inputHandler.isClicked();
+        int bgColor = this.bgColor.getColor(hovered, clicked);
+        int titleColor = this.titleColor.getColor(hovered, clicked);
+        int messageColor = this.messageColor.getColor(hovered, clicked);
+    }
 
+    public boolean isFinished() {
+        return animation.isFinished();
     }
 
     public String getTitle() {
         return title;
     }
 
-    public String getMessage() {
-        return message;
-    }
-
-    public float getDuration() {
-        return duration;
-    }
-
-    public float getX() {
-        return x;
-    }
-
-    public float getY() {
-        return y;
-    }
-
-    public Runnable getAction() {
-        return action;
-    }
-
-    public Runnable getOnClose() {
-        return onClose;
-    }
-
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    public String getMessage() {
+        return message;
     }
 
     public void setMessage(String message) {
         this.message = message;
     }
 
-    void setX(float x) {
-        this.x = x;
+    public Icon getIcon() {
+        return icon;
     }
 
-    void setY(float y) {
-        this.y = y;
+    public void setIcon(Icon icon) {
+        this.icon = icon;
+    }
+
+    public Runnable getAction() {
+        return action;
     }
 }

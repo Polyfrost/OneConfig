@@ -26,33 +26,88 @@
 
 package cc.polyfrost.oneconfig.utils.notifications;
 
-/**
- * @deprecated Reserved for future use, not implemented yet.
- */
-@Deprecated
+import cc.polyfrost.oneconfig.events.event.HudRenderEvent;
+import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
+import cc.polyfrost.oneconfig.renderer.Icon;
+import cc.polyfrost.oneconfig.renderer.RenderManager;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.concurrent.Callable;
+
 public final class Notifications {
     public static final Notifications INSTANCE = new Notifications();
+    private final ArrayList<Notification> notifications = new ArrayList<>();
+    private final float DEFAULT_DURATION = 5000;
+
     private Notifications() {
-
     }
 
-    public void send(String title, String message) {
-
+    public Notification send(String title, String message, Icon icon, float duration, @Nullable Callable<Boolean> progressbar, @Nullable Runnable action) {
+        Notification notification = new Notification(title, message, icon, duration, progressbar, action);
+        notifications.add(notification);
+        return notification;
     }
 
-    public void send(String title, String message, Runnable action) {
-
+    public Notification send(String title, String message, float duration, @Nullable Callable<Boolean> progressbar, @Nullable Runnable action) {
+        return send(title, message, null, duration, progressbar, action);
     }
 
-    public void send(String title, String message, float duration) {
-
+    public Notification send(String title, String message, Icon icon, float duration, @Nullable Callable<Boolean> progressbar) {
+        return send(title, message, icon, duration, progressbar, null);
     }
 
-    public void send(String title, String message, float duration, Runnable action) {
-
+    public Notification send(String title, String message, Icon icon, float duration, @Nullable Runnable action) {
+        return send(title, message, icon, duration, null, action);
     }
 
-    public void send(String title, String message, float duration, Runnable action, Runnable onClose) {
+    public Notification send(String title, String message, float duration, @Nullable Callable<Boolean> progressbar) {
+        return send(title, message, duration, progressbar, null);
+    }
 
+    public Notification send(String title, String message, float duration, @Nullable Runnable action) {
+        return send(title, message, duration, null, action);
+    }
+
+    public Notification send(String title, String message, Icon icon, @Nullable Callable<Boolean> progressbar) {
+        return send(title, message, icon, DEFAULT_DURATION, progressbar);
+    }
+
+    public Notification send(String title, String message, Icon icon, @Nullable Runnable action) {
+        return send(title, message, icon, DEFAULT_DURATION, action);
+    }
+
+    public Notification send(String title, String message, @Nullable Callable<Boolean> progressbar) {
+        return send(title, message, DEFAULT_DURATION, progressbar);
+    }
+
+    public Notification send(String title, String message, @Nullable Runnable action) {
+        return send(title, message, DEFAULT_DURATION, action);
+    }
+
+    public Notification send(String title, String message, Icon icon, float duration) {
+        return send(title, message, icon, duration, (Callable<Boolean>) null);
+    }
+
+    public Notification send(String title, String message, float duration) {
+        return send(title, message, duration, (Callable<Boolean>) null);
+    }
+
+    public Notification send(String title, String message, Icon icon) {
+        return send(title, message, icon, (Callable<Boolean>) null);
+    }
+
+    public Notification send(String title, String message) {
+        return send(title, message, (Callable<Boolean>) null);
+    }
+
+    @Subscribe
+    public void onHudRender(HudRenderEvent event) {
+        RenderManager.setupAndDraw((vg) -> {
+            for (Notification notification : notifications) {
+                notification.draw(vg);
+            }
+            notifications.removeIf(Notification::isFinished);
+        });
     }
 }
