@@ -1,8 +1,38 @@
 package cc.polyfrost.oneconfig.config.gson.gsoninterface;
 
 /*
+ * This file is part of OneConfig.
+ * OneConfig - Next Generation Config Library for Minecraft: Java Edition
+ * Copyright (C) 2021, 2022 Polyfrost.
  * Copyright (c) 2012, Brandon Mintern, EasyESI, Berkeley, CA
- * All rights reserved.
+ *
+ *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
+ *
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ *   OneConfig is licensed under the terms of version 3 of the GNU Lesser
+ * General Public License as published by the Free Software Foundation, AND
+ * under the Additional Terms Applicable to OneConfig, as published by Polyfrost,
+ * either version 1.0 of the Additional Terms, or (at your option) any later
+ * version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ *   You should have received a copy of the GNU Lesser General Public
+ * License.  If not, see <https://www.gnu.org/licenses/>. You should
+ * have also received a copy of the Additional Terms Applicable
+ * to OneConfig, as published by Polyfrost. If not, see
+ * <https://polyfrost.cc/legal/oneconfig/additional-terms>
+
+ * This file contains an adaptation of code from gson-interface
+ * Project found at <https://github.com/mintern/gson-interface>
+ * For the avoidance of doubt, this file is still licensed under the terms
+ * of OneConfig's Licensing.
+ *
+ *                 LICENSE NOTICE FOR ADAPTED CODE
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,6 +57,6 @@ package cc.polyfrost.oneconfig.config.gson.gsoninterface;
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
-public interface JsonDeserialization<D extends JsonDeserializes<? extends JsonDeserialization<D>>> { }
+public interface JsonDeserialization<D extends JsonDeserializes<? extends JsonDeserialization<D>>> {
+}

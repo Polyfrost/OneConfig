@@ -1,8 +1,38 @@
 package cc.polyfrost.oneconfig.config.gson.gsoninterface;
 
 /*
+ * This file is part of OneConfig.
+ * OneConfig - Next Generation Config Library for Minecraft: Java Edition
+ * Copyright (C) 2021, 2022 Polyfrost.
  * Copyright (c) 2012, Brandon Mintern, EasyESI, Berkeley, CA
- * All rights reserved.
+ *
+ *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
+ *
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ *   OneConfig is licensed under the terms of version 3 of the GNU Lesser
+ * General Public License as published by the Free Software Foundation, AND
+ * under the Additional Terms Applicable to OneConfig, as published by Polyfrost,
+ * either version 1.0 of the Additional Terms, or (at your option) any later
+ * version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ *   You should have received a copy of the GNU Lesser General Public
+ * License.  If not, see <https://www.gnu.org/licenses/>. You should
+ * have also received a copy of the Additional Terms Applicable
+ * to OneConfig, as published by Polyfrost. If not, see
+ * <https://polyfrost.cc/legal/oneconfig/additional-terms>
+
+ * This file contains an adaptation of code from gson-interface
+ * Project found at <https://github.com/mintern/gson-interface>
+ * For the avoidance of doubt, this file is still licensed under the terms
+ * of OneConfig's Licensing.
+ *
+ *                 LICENSE NOTICE FOR ADAPTED CODE
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -12,7 +42,7 @@ package cc.polyfrost.oneconfig.config.gson.gsoninterface;
  *   * Redistributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither Java-Reflection nor the names of its contributors may be used
+ *   * Neither gson-interface nor the names of its contributors may be used
  *     to endorse or promote products derived from this software without
  *     specific prior written permission.
  *
@@ -27,8 +57,8 @@ package cc.polyfrost.oneconfig.config.gson.gsoninterface;
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
+
 import java.lang.reflect.*;
 import java.util.ArrayList;
 import java.util.EmptyStackException;
@@ -36,18 +66,20 @@ import java.util.EmptyStackException;
 /**
  * Provides various static helper methods that add a high-level interface to
  * introspection and reflection.
+ *
  * @author mintern
  */
 public class Reflection {
     /**
      * A wrapper for Class.newInstance() that throws an unchecked Exception.
      * It also ensures that even private constructors can be called.
-     * @param c  the class on which to call newInstance()
-     * @return  the object returned from c.newInstance()
-     * @throws IllegalArgumentException  if there was an exception
-     *   constructing the instance
+     *
+     * @param c the class on which to call newInstance()
+     * @return the object returned from c.newInstance()
+     * @throws IllegalArgumentException if there was an exception
+     *                                  constructing the instance
      */
-    public static <T> T newInstance (Class<T> c) {
+    public static <T> T newInstance(Class<T> c) {
         try {
             return constructAnyway(c.getDeclaredConstructor());
         } catch (Exception e) {
@@ -58,10 +90,11 @@ public class Reflection {
     /**
      * Gets the aClass constructor with the given paramaters, throwing an
      * unchecked exception in the case of errors.
-     * @param aClass  the class whose constructor should be fetched.
-     * @param params  the parameters to the desired constructor
-     * @return  the constructor for aClass that accepts params, or null if
-     *   there is no such constructor
+     *
+     * @param aClass the class whose constructor should be fetched.
+     * @param params the parameters to the desired constructor
+     * @return the constructor for aClass that accepts params, or null if
+     * there is no such constructor
      */
     public static <T> Constructor<T> getConstructor(Class<T> aClass, Class... params) {
         try {
@@ -74,12 +107,13 @@ public class Reflection {
     /**
      * Invokes the given constructor with the given args even if it's not
      * accessible.
-     * @param <T>  the type of value to be constructed
-     * @param constructor  the constructor to invoke (see getConstructor)
-     * @param args  the args to send to the constructor
-     * @return  a new instance of type T
-     * @throws IllegalArgumentException  if there was an exception while
-     *   setting the constructor to be accessible or invoking it
+     *
+     * @param <T>         the type of value to be constructed
+     * @param constructor the constructor to invoke (see getConstructor)
+     * @param args        the args to send to the constructor
+     * @return a new instance of type T
+     * @throws IllegalArgumentException if there was an exception while
+     *                                  setting the constructor to be accessible or invoking it
      */
     public static <T> T constructAnyway(Constructor<T> constructor, Object... args)
             throws IllegalArgumentException {
@@ -99,19 +133,21 @@ public class Reflection {
 
     /**
      * Checks whether a class is abstract.
-     * @param c  the class to check
+     *
+     * @param c the class to check
      * @return true iff c is an interface or abstract class
      */
-    public static boolean isAbstract (Class c) {
+    public static boolean isAbstract(Class c) {
         return c.isInterface() || Modifier.isAbstract(c.getModifiers());
     }
 
     /**
      * Obtain the value of a field even if it is not public.
-     * @param field  the field value to obtain
-     * @param fieldObj  an instantiated object which defines field
-     * @return  the value of field in fieldObj
-     * @throws IllegalArgumentException  on any error
+     *
+     * @param field    the field value to obtain
+     * @param fieldObj an instantiated object which defines field
+     * @return the value of field in fieldObj
+     * @throws IllegalArgumentException on any error
      */
     public static Object getFieldValue(Field field, Object fieldObj)
             throws IllegalArgumentException {
@@ -131,10 +167,11 @@ public class Reflection {
     /**
      * Returns a field on which field.get(...) can be called, even if the field
      * is private.
-     * @param aClass  the class defining the desired field
-     * @param fieldName  the name of the desired field
-     * @return  a field that is accessible regardless of its modifiers
-     * @throws IllegalArgumentException  on any error
+     *
+     * @param aClass    the class defining the desired field
+     * @param fieldName the name of the desired field
+     * @return a field that is accessible regardless of its modifiers
+     * @throws IllegalArgumentException on any error
      */
     public static Field getAccessibleField(Class aClass, String fieldName)
             throws IllegalArgumentException {
@@ -153,56 +190,57 @@ public class Reflection {
      * genClass, return the types that genClass is instantiated with. This
      * method has a runtime linear in the size of the type hierarchy, so if
      * the results are used at runtime, it is recommended to cache them.
-     *
+     * <p>
      * An example of its usage:
-     *
+     * <p>
      * import java.util.*;
      * public class IdToNameMap extends HashMap<Integer, String> {
-     *     public static void main (String[] args) {
-     *         for (Class c: getTypeParameters(IdToNameMap.class, Map.class) {
-     *              System.out.println(c);
-     *         }
-     *     }
+     * public static void main (String[] args) {
+     * for (Class c: getTypeParameters(IdToNameMap.class, Map.class) {
+     * System.out.println(c);
      * }
-     *
+     * }
+     * }
+     * <p>
      * Calling main() would print out:
-     *
+     * <p>
      * Integer.class
      * String.class
-     *
+     * <p>
      * Note that this method ascends and descends the class hierarchy to
      * determine the best bounds possible on all type parameters. For
      * example, even if the class hierarchy is:
-     *
+     * <p>
      * public class IdMap<V> extends HashMap<Integer, V> {}
      * public class IdToNameMap extends IdMap<String> {}
-     *
+     * <p>
      * the main() call would print the same thing. For type parameters that
      * remain unbounded, the tightest bound available is printed. So:
-     *
+     * <p>
      * getTypeParameters(EnumSet.class, Set.class)
-     *
+     * <p>
      * would return Enum.class. Sometimes the tightest bound available is
      * Object.class.
-     *
+     * <p>
      * This method should NOT be called with implClass or genClass as a
      * primitive class. This is not sensible, anyway.
-     * @param implClass  a class instantiating a generic class or interface
+     *
+     * @param implClass a class instantiating a generic class or interface
      * @param genClass  the generic class or interface which has type
-     *   parameters you want to know
-     * @return  the array of instantiated parameters. If implClass does not
-     *   extend or implement genClass, null is returned. For any genClass
-     *   type parameters not instantiated by implClass, we return the
-     *   parameters' upper bounds.
+     *                  parameters you want to know
+     * @return the array of instantiated parameters. If implClass does not
+     * extend or implement genClass, null is returned. For any genClass
+     * type parameters not instantiated by implClass, we return the
+     * parameters' upper bounds.
      */
     public static Class[] getTypeParameters(Class implClass, Class genClass) {
         return getTypeParameters(implClass, genClass, new Stack());
     }
 
     /**
-     * @param genClass  typically a Class with generic type parameters
-     * @return  the array of Class bounds on those parameters, or an empty
-     *   Class array if genClass is not generic.
+     * @param genClass typically a Class with generic type parameters
+     * @return the array of Class bounds on those parameters, or an empty
+     * Class array if genClass is not generic.
      */
     public static Class[] getParameterBounds(Class genClass) {
         Type[] parameters = genClass.getTypeParameters();
@@ -214,10 +252,10 @@ public class Reflection {
     }
 
     /**
-     * @param type  any Type object
-     * @return  the most specific class of type that we can determine
+     * @param type any Type object
+     * @return the most specific class of type that we can determine
      */
-    public static Class classOfType (Type type) {
+    public static Class classOfType(Type type) {
         if (type instanceof Class) {
             return (Class) type;
         } else if (type instanceof ParameterizedType) {
@@ -247,10 +285,11 @@ public class Reflection {
      * upper bound, which in some cases will be Object.class.  @param
      * implClass  the class extending/implementing genClass @param genClass
      * a class with generic type parameters
-     * @param classStack  the stack of subclasses we've visited before
-     *   reaching this implClass
-     * @return  the tightest bounds implClass places on those type
-     *   parameters
+     *
+     * @param classStack the stack of subclasses we've visited before
+     *                   reaching this implClass
+     * @return the tightest bounds implClass places on those type
+     * parameters
      */
     private static Class[] getTypeParameters(Class implClass, Class genClass, Stack<Class> classStack) {
         if (genClass.isInterface()) {
@@ -264,15 +303,15 @@ public class Reflection {
      * interface.  Since a class can implement multiple interfaces and since
      * they must be retrieved differently than with a superclass, we keep
      * the functions separate.
-     *
+     * <p>
      * At each level, we check each interface against genClass. If none of
      * them match, we look at any interface's implemented interfaces, and so
      * on all the way up until we reach an interface with no implemented
      * interfaces.
-     *
+     * <p>
      * If we still haven't found genClass at this point, we ascend into
      * implClass's superclass and perform the same work.
-     *
+     * <p>
      * As mentioned in private ... getTypeParameters, any time we ascend the
      * type hierarchy, we push the implClass onto the classStack so that we
      * can later descend the class hierarchy to resolve type parameters
@@ -282,7 +321,7 @@ public class Reflection {
         Type[] interfaces = implClass.getGenericInterfaces();
         // Check each of the interfaces implemented by implClass to see if
         // one matches genClass.
-        for (Type iface: interfaces) {
+        for (Type iface : interfaces) {
             Class[] result = getParametersIfMatches(iface, implClass, genClass, classStack);
             if (result != null) {
                 // We found it.
@@ -291,7 +330,7 @@ public class Reflection {
         }
         // None of the implemented interfaces matched genClass. Ascend each
         // interface's type hierarchy looking for genClass.
-        for (Type iface: interfaces) {
+        for (Type iface : interfaces) {
             Class interfaceClass = classOfType(iface);
             classStack.push(implClass);
             Class[] result = getInterfaceParameters(interfaceClass, genClass, classStack);
@@ -348,16 +387,17 @@ public class Reflection {
     /**
      * If the Class represented by type matches genClass, return the
      * genClass type parameters. If it is not a match, returns null.
-     * @param type  the type being considered, with all information present
-     *   in implClass
+     *
+     * @param type       the type being considered, with all information present
+     *                   in implClass
      * @param implClass  the current class, for which type was a superclass
-     *   or an implemented interface
-     * @param genClass  the class we are looking for (to be compared against
-     *   type)
+     *                   or an implemented interface
+     * @param genClass   the class we are looking for (to be compared against
+     *                   type)
      * @param classStack
-     * @return   null if type is not of Class genClass, genClass
-     *   instantiated type parameters otherwise. Class[0] if genClasses has
-     *   no type parameters
+     * @return null if type is not of Class genClass, genClass
+     * instantiated type parameters otherwise. Class[0] if genClasses has
+     * no type parameters
      */
     private static Class[] getParametersIfMatches(Type type, Class implClass, Class genClass, Stack<Class> classStack) {
         if (type == genClass) {
@@ -404,7 +444,8 @@ public class Reflection {
             //     classes = [Integer, String]
             // and we continue to the next iteration of the outer loop,
             // where it turns out to terminate. Finally, we return classes.
-            types: for (int i = 0; i < types.length; i++) {
+            types:
+            for (int i = 0; i < types.length; i++) {
                 if (types[i] instanceof TypeVariable && !classStack.isEmpty()) {
                     if (implParams == null) {
                         implParams = implClass.getTypeParameters();
@@ -437,14 +478,16 @@ public class Reflection {
      * A non-threadsafe alternative to java.util.Stack.
      * Since the Reflection code is single threaded, using this should be
      * faster.
-     * @param E  the type of elements in the stack
+     *
+     * @param E the type of elements in the stack
      */
     public static class Stack<E> extends ArrayList<E> {
         /**
          * Push an item onto the stack. The next call to pop() will return
          * the most-recently push()ed item.
-         * @param elt  the element to add to the stack
-         * @return  this; convenient for chaining: stack.push(...).push(...)
+         *
+         * @param elt the element to add to the stack
+         * @return this; convenient for chaining: stack.push(...).push(...)
          */
         public Stack<E> push(E elt) {
             add(elt);
@@ -454,8 +497,9 @@ public class Reflection {
         /**
          * Pop from this and return the item that was most recently pushed
          * onto this. This should never be called on an empty stack.
-         * @return  the item that was pop()ed
-         * @throws EmptyStackException  if this is empty
+         *
+         * @return the item that was pop()ed
+         * @throws EmptyStackException if this is empty
          */
         public E pop() {
             try {
