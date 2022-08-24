@@ -45,7 +45,7 @@ public final class Notifications {
     public static final Notifications INSTANCE = new Notifications();
     // animation stores the bottom y of the notification
     private final LinkedHashMap<Notification, Animation> notifications = new LinkedHashMap<>();
-    private final float DEFAULT_DURATION = 2500;
+    private final float DEFAULT_DURATION = 4000;
 
     private Notifications() {
     }
