@@ -196,7 +196,7 @@ public class TestConfig_Test extends Config {
         addDependency("testCheckBox", "testSwitch");
 
         registerKeyBind(testKeyBind, () -> {
-            Animation barAnimation = new EaseInOutQuart(3000, 0f, 1f, false);
+            Animation barAnimation = new EaseInOutQuart(4000, 0f, 1f, false);
             Notifications.INSTANCE.send(
                     "Title",
                     "Very epic long message that will need to wrap because yes.",
