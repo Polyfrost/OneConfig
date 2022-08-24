@@ -24,7 +24,7 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.utils.notifications;
+package cc.polyfrost.oneconfig.internal.utils;
 
 import cc.polyfrost.oneconfig.gui.animations.*;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
@@ -42,9 +42,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.concurrent.Callable;
 
 public final class Notification {
-    private String title;
-    private String message;
-    private Icon icon;
+    private final String title;
+    private final String message;
+    private final Icon icon;
     private final Animation animation;
     private final Callable<Float> progressBar;
     private final Runnable action;
@@ -53,7 +53,7 @@ public final class Notification {
     private final ColorAnimation titleColor = new ColorAnimation(new ColorPalette(Colors.WHITE_80, Colors.WHITE, Colors.WHITE));
     private final ColorAnimation messageColor = new ColorAnimation(new ColorPalette(Colors.WHITE_60, Colors.WHITE_90, Colors.WHITE_90));
 
-    Notification(String title, String message, @Nullable Icon icon, float duration, @Nullable Callable<Float> progressBar, @Nullable Runnable action) {
+    public Notification(String title, String message, @Nullable Icon icon, float duration, @Nullable Callable<Float> progressBar, @Nullable Runnable action) {
         this.title = title;
         this.message = message;
         this.icon = icon;
@@ -66,7 +66,7 @@ public final class Notification {
         this.action = action;
     }
 
-    float draw(final long vg, float y) {
+    public float draw(final long vg, float y) {
         float x = UResolution.getWindowWidth() - animation.get();
         float textX = icon == null ? x + 16 : x + 64;
         float textMaxLength = icon == null ? 268 : 220;
@@ -108,33 +108,5 @@ public final class Notification {
 
     public boolean isFinished() {
         return animation.isFinished();
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
-    }
-
-    public Icon getIcon() {
-        return icon;
-    }
-
-    public void setIcon(Icon icon) {
-        this.icon = icon;
-    }
-
-    public Runnable getAction() {
-        return action;
     }
 }

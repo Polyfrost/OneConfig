@@ -24,22 +24,21 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.utils.notifications;
+package cc.polyfrost.oneconfig.utils;
 
 import cc.polyfrost.oneconfig.events.event.HudRenderEvent;
 import cc.polyfrost.oneconfig.gui.animations.Animation;
 import cc.polyfrost.oneconfig.gui.animations.DummyAnimation;
 import cc.polyfrost.oneconfig.gui.animations.EaseInOutQuad;
+import cc.polyfrost.oneconfig.internal.utils.Notification;
 import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
 import cc.polyfrost.oneconfig.libs.universal.UResolution;
 import cc.polyfrost.oneconfig.renderer.Icon;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.concurrent.Callable;
 
 public final class Notifications {
@@ -60,12 +59,10 @@ public final class Notifications {
      * @param duration    The duration the notification is on screen in ms
      * @param progressbar A callable that returns the progress from 0-1
      * @param action      The action executed when the notification is pressed
-     * @return The notification
      */
-    public Notification send(String title, String message, @Nullable Icon icon, float duration, @Nullable Callable<Float> progressbar, @Nullable Runnable action) {
+    public void send(String title, String message, @Nullable Icon icon, float duration, @Nullable Callable<Float> progressbar, @Nullable Runnable action) {
         Notification notification = new Notification(title, message, icon, duration, progressbar, action);
         notifications.put(notification, new DummyAnimation(-1));
-        return notification;
     }
 
     /**
@@ -76,10 +73,9 @@ public final class Notifications {
      * @param duration    The duration the notification is on screen in ms
      * @param progressbar A callable that returns the progress from 0-1
      * @param action      The action executed when the notification is pressed
-     * @return The notification
      */
-    public Notification send(String title, String message, float duration, @Nullable Callable<Float> progressbar, @Nullable Runnable action) {
-        return send(title, message, null, duration, progressbar, action);
+    public void send(String title, String message, float duration, @Nullable Callable<Float> progressbar, @Nullable Runnable action) {
+        send(title, message, null, duration, progressbar, action);
     }
 
     /**
@@ -90,10 +86,9 @@ public final class Notifications {
      * @param icon        The icon of the notification, null for none
      * @param duration    The duration the notification is on screen in ms
      * @param progressbar A callable that returns the progress from 0-1
-     * @return The notification
      */
-    public Notification send(String title, String message, @Nullable Icon icon, float duration, @Nullable Callable<Float> progressbar) {
-        return send(title, message, icon, duration, progressbar, null);
+    public void send(String title, String message, @Nullable Icon icon, float duration, @Nullable Callable<Float> progressbar) {
+        send(title, message, icon, duration, progressbar, null);
     }
 
     /**
@@ -104,10 +99,9 @@ public final class Notifications {
      * @param icon     The icon of the notification, null for none
      * @param duration The duration the notification is on screen in ms
      * @param action   The action executed when the notification is pressed
-     * @return The notification
      */
-    public Notification send(String title, String message, @Nullable Icon icon, float duration, @Nullable Runnable action) {
-        return send(title, message, icon, duration, null, action);
+    public void send(String title, String message, @Nullable Icon icon, float duration, @Nullable Runnable action) {
+        send(title, message, icon, duration, null, action);
     }
 
     /**
@@ -117,10 +111,9 @@ public final class Notifications {
      * @param message     The message of the notification
      * @param duration    The duration the notification is on screen in ms
      * @param progressbar A callable that returns the progress from 0-1
-     * @return The notification
      */
-    public Notification send(String title, String message, float duration, @Nullable Callable<Float> progressbar) {
-        return send(title, message, duration, progressbar, null);
+    public void send(String title, String message, float duration, @Nullable Callable<Float> progressbar) {
+        send(title, message, duration, progressbar, null);
     }
 
     /**
@@ -130,10 +123,9 @@ public final class Notifications {
      * @param message  The message of the notification
      * @param duration The duration the notification is on screen in ms
      * @param action   The action executed when the notification is pressed
-     * @return The notification
      */
-    public Notification send(String title, String message, float duration, @Nullable Runnable action) {
-        return send(title, message, duration, null, action);
+    public void send(String title, String message, float duration, @Nullable Runnable action) {
+        send(title, message, duration, null, action);
     }
 
     /**
@@ -143,10 +135,9 @@ public final class Notifications {
      * @param message     The message of the notification
      * @param icon        The icon of the notification, null for none
      * @param progressbar A callable that returns the progress from 0-1
-     * @return The notification
      */
-    public Notification send(String title, String message, @Nullable Icon icon, @Nullable Callable<Float> progressbar) {
-        return send(title, message, icon, DEFAULT_DURATION, progressbar);
+    public void send(String title, String message, @Nullable Icon icon, @Nullable Callable<Float> progressbar) {
+        send(title, message, icon, DEFAULT_DURATION, progressbar);
     }
 
     /**
@@ -156,10 +147,9 @@ public final class Notifications {
      * @param message The message of the notification
      * @param icon    The icon of the notification, null for none
      * @param action  The action executed when the notification is pressed
-     * @return The notification
      */
-    public Notification send(String title, String message, @Nullable Icon icon, @Nullable Runnable action) {
-        return send(title, message, icon, DEFAULT_DURATION, action);
+    public void send(String title, String message, @Nullable Icon icon, @Nullable Runnable action) {
+        send(title, message, icon, DEFAULT_DURATION, action);
     }
 
     /**
@@ -168,10 +158,9 @@ public final class Notifications {
      * @param title       The title of the notification
      * @param message     The message of the notification
      * @param progressbar A callable that returns the progress from 0-1
-     * @return The notification
      */
-    public Notification send(String title, String message, @Nullable Callable<Float> progressbar) {
-        return send(title, message, DEFAULT_DURATION, progressbar);
+    public void send(String title, String message, @Nullable Callable<Float> progressbar) {
+        send(title, message, DEFAULT_DURATION, progressbar);
     }
 
     /**
@@ -181,10 +170,9 @@ public final class Notifications {
      * @param message  The message of the notification
      * @param icon     The icon of the notification, null for none
      * @param duration The duration the notification is on screen in ms
-     * @return The notification
      */
-    public Notification send(String title, String message, @Nullable Icon icon, float duration) {
-        return send(title, message, icon, duration, (Callable<Float>) null);
+    public void send(String title, String message, @Nullable Icon icon, float duration) {
+        send(title, message, icon, duration, (Callable<Float>) null);
     }
 
     /**
@@ -193,10 +181,9 @@ public final class Notifications {
      * @param title   The title of the notification
      * @param message The message of the notification
      * @param action  The action executed when the notification is pressed
-     * @return The notification
      */
-    public Notification send(String title, String message, @Nullable Runnable action) {
-        return send(title, message, DEFAULT_DURATION, action);
+    public void send(String title, String message, @Nullable Runnable action) {
+        send(title, message, DEFAULT_DURATION, action);
     }
 
     /**
@@ -205,10 +192,9 @@ public final class Notifications {
      * @param title    The title of the notification
      * @param message  The message of the notification
      * @param duration The duration the notification is on screen in ms
-     * @return The notification
      */
-    public Notification send(String title, String message, float duration) {
-        return send(title, message, duration, (Callable<Float>) null);
+    public void send(String title, String message, float duration) {
+        send(title, message, duration, (Callable<Float>) null);
     }
 
     /**
@@ -217,10 +203,9 @@ public final class Notifications {
      * @param title   The title of the notification
      * @param message The message of the notification
      * @param icon    The icon of the notification, null for none
-     * @return The notification
      */
-    public Notification send(String title, String message, @Nullable Icon icon) {
-        return send(title, message, icon, (Callable<Float>) null);
+    public void send(String title, String message, @Nullable Icon icon) {
+        send(title, message, icon, (Callable<Float>) null);
     }
 
     /**
@@ -228,10 +213,9 @@ public final class Notifications {
      *
      * @param title   The title of the notification
      * @param message The message of the notification
-     * @return The notification
      */
-    public Notification send(String title, String message) {
-        return send(title, message, (Callable<Float>) null);
+    public void send(String title, String message) {
+        send(title, message, (Callable<Float>) null);
     }
 
     @Subscribe

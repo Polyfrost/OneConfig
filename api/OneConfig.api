@@ -1370,6 +1370,24 @@ public final class cc/polyfrost/oneconfig/utils/NetworkUtils {
 	public static fun getString (Ljava/lang/String;Ljava/lang/String;IZ)Ljava/lang/String;
 }
 
+public final class cc/polyfrost/oneconfig/utils/Notifications {
+	public static final field INSTANCE Lcc/polyfrost/oneconfig/utils/Notifications;
+	public fun send (Ljava/lang/String;Ljava/lang/String;)V
+	public fun send (Ljava/lang/String;Ljava/lang/String;F)V
+	public fun send (Ljava/lang/String;Ljava/lang/String;FLjava/lang/Runnable;)V
+	public fun send (Ljava/lang/String;Ljava/lang/String;FLjava/util/concurrent/Callable;)V
+	public fun send (Ljava/lang/String;Ljava/lang/String;FLjava/util/concurrent/Callable;Ljava/lang/Runnable;)V
+	public fun send (Ljava/lang/String;Ljava/lang/String;Lcc/polyfrost/oneconfig/renderer/Icon;)V
+	public fun send (Ljava/lang/String;Ljava/lang/String;Lcc/polyfrost/oneconfig/renderer/Icon;F)V
+	public fun send (Ljava/lang/String;Ljava/lang/String;Lcc/polyfrost/oneconfig/renderer/Icon;FLjava/lang/Runnable;)V
+	public fun send (Ljava/lang/String;Ljava/lang/String;Lcc/polyfrost/oneconfig/renderer/Icon;FLjava/util/concurrent/Callable;)V
+	public fun send (Ljava/lang/String;Ljava/lang/String;Lcc/polyfrost/oneconfig/renderer/Icon;FLjava/util/concurrent/Callable;Ljava/lang/Runnable;)V
+	public fun send (Ljava/lang/String;Ljava/lang/String;Lcc/polyfrost/oneconfig/renderer/Icon;Ljava/lang/Runnable;)V
+	public fun send (Ljava/lang/String;Ljava/lang/String;Lcc/polyfrost/oneconfig/renderer/Icon;Ljava/util/concurrent/Callable;)V
+	public fun send (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Runnable;)V
+	public fun send (Ljava/lang/String;Ljava/lang/String;Ljava/util/concurrent/Callable;)V
+}
+
 public final class cc/polyfrost/oneconfig/utils/TextUtils {
 	public fun <init> ()V
 	public static fun wrapText (JLjava/lang/String;FFLcc/polyfrost/oneconfig/renderer/font/Font;)Ljava/util/ArrayList;
@@ -1698,34 +1716,5 @@ public final class cc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType : ja
 	public fun getServerName ()Ljava/lang/String;
 	public static fun valueOf (Ljava/lang/String;)Lcc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
 	public static fun values ()[Lcc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-}
-
-public final class cc/polyfrost/oneconfig/utils/notifications/Notification {
-	public fun getAction ()Ljava/lang/Runnable;
-	public fun getIcon ()Lcc/polyfrost/oneconfig/renderer/Icon;
-	public fun getMessage ()Ljava/lang/String;
-	public fun getTitle ()Ljava/lang/String;
-	public fun isFinished ()Z
-	public fun setIcon (Lcc/polyfrost/oneconfig/renderer/Icon;)V
-	public fun setMessage (Ljava/lang/String;)V
-	public fun setTitle (Ljava/lang/String;)V
-}
-
-public final class cc/polyfrost/oneconfig/utils/notifications/Notifications {
-	public static final field INSTANCE Lcc/polyfrost/oneconfig/utils/notifications/Notifications;
-	public fun send (Ljava/lang/String;Ljava/lang/String;)Lcc/polyfrost/oneconfig/utils/notifications/Notification;
-	public fun send (Ljava/lang/String;Ljava/lang/String;F)Lcc/polyfrost/oneconfig/utils/notifications/Notification;
-	public fun send (Ljava/lang/String;Ljava/lang/String;FLjava/lang/Runnable;)Lcc/polyfrost/oneconfig/utils/notifications/Notification;
-	public fun send (Ljava/lang/String;Ljava/lang/String;FLjava/util/concurrent/Callable;)Lcc/polyfrost/oneconfig/utils/notifications/Notification;
-	public fun send (Ljava/lang/String;Ljava/lang/String;FLjava/util/concurrent/Callable;Ljava/lang/Runnable;)Lcc/polyfrost/oneconfig/utils/notifications/Notification;
-	public fun send (Ljava/lang/String;Ljava/lang/String;Lcc/polyfrost/oneconfig/renderer/Icon;)Lcc/polyfrost/oneconfig/utils/notifications/Notification;
-	public fun send (Ljava/lang/String;Ljava/lang/String;Lcc/polyfrost/oneconfig/renderer/Icon;F)Lcc/polyfrost/oneconfig/utils/notifications/Notification;
-	public fun send (Ljava/lang/String;Ljava/lang/String;Lcc/polyfrost/oneconfig/renderer/Icon;FLjava/lang/Runnable;)Lcc/polyfrost/oneconfig/utils/notifications/Notification;
-	public fun send (Ljava/lang/String;Ljava/lang/String;Lcc/polyfrost/oneconfig/renderer/Icon;FLjava/util/concurrent/Callable;)Lcc/polyfrost/oneconfig/utils/notifications/Notification;
-	public fun send (Ljava/lang/String;Ljava/lang/String;Lcc/polyfrost/oneconfig/renderer/Icon;FLjava/util/concurrent/Callable;Ljava/lang/Runnable;)Lcc/polyfrost/oneconfig/utils/notifications/Notification;
-	public fun send (Ljava/lang/String;Ljava/lang/String;Lcc/polyfrost/oneconfig/renderer/Icon;Ljava/lang/Runnable;)Lcc/polyfrost/oneconfig/utils/notifications/Notification;
-	public fun send (Ljava/lang/String;Ljava/lang/String;Lcc/polyfrost/oneconfig/renderer/Icon;Ljava/util/concurrent/Callable;)Lcc/polyfrost/oneconfig/utils/notifications/Notification;
-	public fun send (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Runnable;)Lcc/polyfrost/oneconfig/utils/notifications/Notification;
-	public fun send (Ljava/lang/String;Ljava/lang/String;Ljava/util/concurrent/Callable;)Lcc/polyfrost/oneconfig/utils/notifications/Notification;
 }
 
