@@ -55,6 +55,14 @@ public class Icon {
         return (Image) icon;
     }
 
+    public void draw(long vg, float x, float y, float width, float height, int color, float scale) {
+        if (type == Type.SVG) {
+            RenderManager.drawSvg(vg, getSVG(), x, y, width, height, color, scale);
+        } else if (type == Type.IMAGE) {
+            RenderManager.drawImage(vg, getImage(), x, y, width, height, color);
+        }
+    }
+
     public void draw(long vg, float x, float y, float width, float height, int color) {
         if (type == Type.SVG) {
             RenderManager.drawSvg(vg, getSVG(), x, y, width, height, color);

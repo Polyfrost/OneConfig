@@ -27,6 +27,7 @@
 package cc.polyfrost.oneconfig.utils;
 
 import cc.polyfrost.oneconfig.events.event.HudRenderEvent;
+import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.animations.Animation;
 import cc.polyfrost.oneconfig.gui.animations.DummyAnimation;
 import cc.polyfrost.oneconfig.gui.animations.EaseInOutQuad;
@@ -221,13 +222,14 @@ public final class Notifications {
     @Subscribe
     private void onHudRender(HudRenderEvent event) {
         RenderManager.setupAndDraw((vg) -> {
-            float desiredPosition = UResolution.getWindowHeight() - 16f;
+            float desiredPosition = -16f;
+            float scale = OneConfigGui.getScaleFactor();
             for (Map.Entry<Notification, Animation> entry : notifications.entrySet()) {
                 if (entry.getValue().getEnd() == -1f)
                     entry.setValue(new DummyAnimation(desiredPosition));
                 else if (desiredPosition != entry.getValue().getEnd())
                     entry.setValue(new EaseInOutQuad(250, entry.getValue().get(0), desiredPosition, false));
-                float height = entry.getKey().draw(vg, entry.getValue().get());
+                float height = entry.getKey().draw(vg, UResolution.getWindowHeight() / scale + entry.getValue().get(), scale);
                 desiredPosition -= height + 16f;
             }
             notifications.entrySet().removeIf(entry -> entry.getKey().isFinished());

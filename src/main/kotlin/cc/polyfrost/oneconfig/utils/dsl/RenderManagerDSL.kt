@@ -259,10 +259,20 @@ fun NVGColor.fill(r: Float, g: Float, b: Float, a: Float) = RenderManager.fillNV
 fun Long.scale(x: Float, y: Float) = RenderManager.scale(this, x, y)
 fun VG.scale(x: Float, y: Float) = instance.scale(x, y)
 
+fun Long.translate(x: Float, y: Float) = RenderManager.translate(this, x, y)
+fun VG.translate(x: Float, y: Float) = instance.translate(x, y)
+
+fun Long.resetTransform() = RenderManager.resetTransform(this)
+fun VG.resetTransform() = instance.resetTransform()
 
 fun Long.setAlpha(alpha: Float) = RenderManager.setAlpha(this, alpha)
 fun VG.setAlpha(alpha: Float) = instance.setAlpha(alpha)
 
+fun Long.drawSVG(filePath: String, x: Number, y: Number, width: Number, height: Number, scale: Number) =
+    RenderManager.drawSvg(this, filePath, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat(), scale.toFloat())
+
+fun VG.drawSVG(filePath: String, x: Number, y: Number, width: Number, height: Number, scale: Number) =
+    instance.drawSVG(filePath, x, y, width, height, scale)
 
 fun Long.drawSVG(filePath: String, x: Number, y: Number, width: Number, height: Number) =
     RenderManager.drawSvg(this, filePath, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat())
@@ -270,17 +280,35 @@ fun Long.drawSVG(filePath: String, x: Number, y: Number, width: Number, height: 
 fun VG.drawSVG(filePath: String, x: Number, y: Number, width: Number, height: Number) =
     instance.drawSVG(filePath, x, y, width, height)
 
+fun Long.drawSVG(filePath: String, x: Number, y: Number, width: Number, height: Number, color: Int, scale: Number) =
+    RenderManager.drawSvg(this, filePath, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat(), color, scale.toFloat())
+
+fun VG.drawSVG(filePath: String, x: Number, y: Number, width: Number, height: Number, color: Int, scale: Number) =
+    instance.drawSVG(filePath, x, y, width, height, color, scale.toFloat())
+
 fun Long.drawSVG(filePath: String, x: Number, y: Number, width: Number, height: Number, color: Int) =
     RenderManager.drawSvg(this, filePath, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat(), color)
 
 fun VG.drawSVG(filePath: String, x: Number, y: Number, width: Number, height: Number, color: Int) =
     instance.drawSVG(filePath, x, y, width, height, color)
 
+fun Long.drawSVG(svg: SVG, x: Number, y: Number, width: Number, height: Number, scale: Number) =
+    RenderManager.drawSvg(this, svg, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat(), scale.toFloat())
+
+fun VG.drawSVG(svg: SVG, x: Number, y: Number, width: Number, height: Number, scale: Number) =
+    instance.drawSVG(svg, x, y, width, height, scale)
+
 fun Long.drawSVG(svg: SVG, x: Number, y: Number, width: Number, height: Number) =
     RenderManager.drawSvg(this, svg, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat())
 
 fun VG.drawSVG(svg: SVG, x: Number, y: Number, width: Number, height: Number) =
     instance.drawSVG(svg, x, y, width, height)
+
+fun Long.drawSVG(svg: SVG, x: Number, y: Number, width: Number, height: Number, color: Int, scale: Number) =
+    RenderManager.drawSvg(this, svg, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat(), color, scale.toFloat())
+
+fun VG.drawSVG(svg: SVG, x: Number, y: Number, width: Number, height: Number, color: Int, scale: Number) =
+    instance.drawSVG(svg, x, y, width, height, color, scale)
 
 fun Long.drawSVG(svg: SVG, x: Number, y: Number, width: Number, height: Number, color: Int) =
     RenderManager.drawSvg(this, svg, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat(), color)

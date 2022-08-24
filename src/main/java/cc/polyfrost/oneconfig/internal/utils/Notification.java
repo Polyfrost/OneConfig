@@ -26,6 +26,7 @@
 
 package cc.polyfrost.oneconfig.internal.utils;
 
+import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.animations.*;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.libs.universal.UResolution;
@@ -37,6 +38,7 @@ import cc.polyfrost.oneconfig.renderer.scissor.ScissorManager;
 import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.MathUtils;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
+import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.Callable;
@@ -52,6 +54,7 @@ public final class Notification {
     private final ColorAnimation bgColor = new ColorAnimation(new ColorPalette(Colors.GRAY_800, Colors.GRAY_700, Colors.GRAY_900));
     private final ColorAnimation titleColor = new ColorAnimation(new ColorPalette(Colors.WHITE_80, Colors.WHITE, Colors.WHITE));
     private final ColorAnimation messageColor = new ColorAnimation(new ColorPalette(Colors.WHITE_60, Colors.WHITE_90, Colors.WHITE_90));
+    private boolean hovered = false;
 
     public Notification(String title, String message, @Nullable Icon icon, float duration, @Nullable Callable<Float> progressBar, @Nullable Runnable action) {
         this.title = title;
@@ -66,21 +69,23 @@ public final class Notification {
         this.action = action;
     }
 
-    public float draw(final long vg, float y) {
-        float x = UResolution.getWindowWidth() - animation.get();
+    public float draw(final long vg, float y, float scale) {
+        RenderManager.scale(vg, scale, scale);
+        inputHandler.scale(scale, scale);
+        float x = (UResolution.getWindowWidth() / scale - animation.get(hovered ? 0 : GuiUtils.getDeltaTime()));
         float textX = icon == null ? x + 16 : x + 64;
         float textMaxLength = icon == null ? 268 : 220;
         float messageHeight = RenderManager.getWrappedStringHeight(vg, message, textMaxLength, 12f, 1.75f, Fonts.REGULAR);
         float height = getHeight(messageHeight);
         y -= height;
-        boolean hovered = inputHandler.isAreaHovered(x, y, 314, height);
+        hovered = inputHandler.isAreaHovered(x, y, 314, height);
         if (hovered && inputHandler.isClicked() && action != null) action.run();
         int bgColor = this.bgColor.getColor(hovered, hovered && inputHandler.isMouseDown());
         int titleColor = this.titleColor.getColor(hovered, hovered && inputHandler.isMouseDown());
         int messageColor = this.messageColor.getColor(hovered, hovered && inputHandler.isMouseDown());
         RenderManager.drawRoundedRect(vg, x, y, 314f, height, bgColor, 8f);
         if (icon != null)
-            icon.draw(vg, x + 16f, y + (height - (progressBar == null ? 0f : 5f)) / 2f - 16f, 32f, 32f, titleColor);
+            icon.draw(vg, x + 16f, y + (height - (progressBar == null ? 0f : 5f)) / 2f - 16f, 32f, 32f, titleColor, scale);
         RenderManager.drawText(vg, title, textX, y + 30, titleColor, 16f, Fonts.SEMIBOLD);
         RenderManager.drawWrappedString(vg, message, textX, y + 46, textMaxLength, messageColor, 12f, 1.75f, Fonts.REGULAR);
         if (progressBar != null) {
@@ -97,6 +102,7 @@ public final class Notification {
             } catch (Exception ignored) {
             }
         }
+        RenderManager.resetTransform(vg);
         return height;
     }
 

@@ -578,6 +578,26 @@ public final class RenderManager {
     }
 
     /**
+     * Translate to a location
+     *
+     * @param vg The NanoVG context
+     * @param x  The x scale
+     * @param y  The y scale
+     */
+    public static void translate(long vg, float x, float y) {
+        nvgTranslate(vg, x, y);
+    }
+
+    /**
+     * Reset all transforms
+     *
+     * @param vg The NanoVG context
+     */
+    public static void resetTransform(long vg) {
+        nvgResetTransform(vg);
+    }
+
+    /**
      * Sets the global alpha value to render with.
      *
      * @param vg    The NanoVG context.
@@ -596,10 +616,11 @@ public final class RenderManager {
      * @param y        The y position.
      * @param width    The width.
      * @param height   The height.
+     * @param scale    The scale
      */
-    public static void drawSvg(long vg, String filePath, float x, float y, float width, float height) {
-        float w = width;
-        float h = height;
+    public static void drawSvg(long vg, String filePath, float x, float y, float width, float height, float scale) {
+        float w = width * scale;
+        float h = height * scale;
         if (OneConfigGui.INSTANCE != null && OneConfigGui.isOpen()) {
             w *= OneConfigGui.INSTANCE.getScaleFactor();
             h *= OneConfigGui.INSTANCE.getScaleFactor();
@@ -609,6 +630,52 @@ public final class RenderManager {
             int image = AssetLoader.INSTANCE.getSVG(filePath, w, h);
             nvgBeginPath(vg);
             nvgImagePattern(vg, x, y, width, height, 0, image, 1, imagePaint);
+            nvgRect(vg, x, y, width, height);
+            nvgFillPaint(vg, imagePaint);
+            nvgFill(vg);
+            imagePaint.free();
+        }
+    }
+
+    /**
+     * Draws an SVG with the provided file path and parameters.
+     *
+     * @param vg       The NanoVG context.
+     * @param filePath The file path.
+     * @param x        The x position.
+     * @param y        The y position.
+     * @param width    The width.
+     * @param height   The height.
+     */
+    public static void drawSvg(long vg, String filePath, float x, float y, float width, float height) {
+        float scale = 1;
+        if (OneConfigGui.isOpen()) {
+            scale = OneConfigGui.getScaleFactor();
+        }
+        drawSvg(vg, filePath, x, y, width, height, scale);
+    }
+
+    /**
+     * Draws an SVG with the provided file path and parameters.
+     *
+     * @param vg       The NanoVG context.
+     * @param filePath The file path.
+     * @param x        The x position.
+     * @param y        The y position.
+     * @param width    The width.
+     * @param height   The height.
+     * @param color    The color.
+     * @param scale    The scale
+     */
+    public static void drawSvg(long vg, String filePath, float x, float y, float width, float height, int color, float scale) {
+        float w = width * scale;
+        float h = height * scale;
+        if (AssetLoader.INSTANCE.loadSVG(vg, filePath, w, h)) {
+            NVGPaint imagePaint = NVGPaint.calloc();
+            int image = AssetLoader.INSTANCE.getSVG(filePath, w, h);
+            nvgBeginPath(vg);
+            nvgImagePattern(vg, x, y, width, height, 0, image, 1, imagePaint);
+            nvgRGBA((byte) (color >> 16 & 0xFF), (byte) (color >> 8 & 0xFF), (byte) (color & 0xFF), (byte) (color >> 24 & 0xFF), imagePaint.innerColor());
             nvgRect(vg, x, y, width, height);
             nvgFillPaint(vg, imagePaint);
             nvgFill(vg);
@@ -628,22 +695,23 @@ public final class RenderManager {
      * @param color    The color.
      */
     public static void drawSvg(long vg, String filePath, float x, float y, float width, float height, int color) {
-        float w = width;
-        float h = height;
-        if (OneConfigGui.INSTANCE != null && OneConfigGui.isOpen()) {
-            w *= OneConfigGui.INSTANCE.getScaleFactor();
-            h *= OneConfigGui.INSTANCE.getScaleFactor();
+        float scale = 1;
+        if (OneConfigGui.isOpen()) {
+            scale = OneConfigGui.getScaleFactor();
         }
-        if (AssetLoader.INSTANCE.loadSVG(vg, filePath, w, h)) {
-            NVGPaint imagePaint = NVGPaint.calloc();
-            int image = AssetLoader.INSTANCE.getSVG(filePath, w, h);
-            nvgBeginPath(vg);
-            nvgImagePattern(vg, x, y, width, height, 0, image, 1, imagePaint);
-            nvgRGBA((byte) (color >> 16 & 0xFF), (byte) (color >> 8 & 0xFF), (byte) (color & 0xFF), (byte) (color >> 24 & 0xFF), imagePaint.innerColor());
-            nvgRect(vg, x, y, width, height);
-            nvgFillPaint(vg, imagePaint);
-            nvgFill(vg);
-            imagePaint.free();
+        drawSvg(vg, filePath, x, y, width, height, color, scale);
+    }
+
+    /**
+     * Draws an SVG with the provided file path and parameters.
+     *
+     * @see RenderManager#drawSvg(long, String, float, float, float, float)
+     */
+    public static void drawSvg(long vg, SVG svg, float x, float y, float width, float height, float scale) {
+        float w = width * scale;
+        float h = height * scale;
+        if (AssetLoader.INSTANCE.loadSVG(vg, svg, w, h)) {
+            drawSvg(vg, svg.filePath, x, y, width, height);
         }
     }
 
@@ -653,15 +721,11 @@ public final class RenderManager {
      * @see RenderManager#drawSvg(long, String, float, float, float, float)
      */
     public static void drawSvg(long vg, SVG svg, float x, float y, float width, float height) {
-        float w = width;
-        float h = height;
-        if (OneConfigGui.INSTANCE != null && OneConfigGui.isOpen()) {
-            w *= OneConfigGui.INSTANCE.getScaleFactor();
-            h *= OneConfigGui.INSTANCE.getScaleFactor();
+        float scale = 1;
+        if (OneConfigGui.isOpen()) {
+            scale = OneConfigGui.getScaleFactor();
         }
-        if (AssetLoader.INSTANCE.loadSVG(vg, svg, w, h)) {
-            drawSvg(vg, svg.filePath, x, y, width, height);
-        }
+        drawSvg(vg, svg, x, y, width, height, scale);
     }
 
     /**
@@ -669,16 +733,25 @@ public final class RenderManager {
      *
      * @see RenderManager#drawSvg(long, String, float, float, float, float, int)
      */
-    public static void drawSvg(long vg, SVG svg, float x, float y, float width, float height, int color) {
-        float w = width;
-        float h = height;
-        if (OneConfigGui.INSTANCE != null && OneConfigGui.isOpen()) {
-            w *= OneConfigGui.INSTANCE.getScaleFactor();
-            h *= OneConfigGui.INSTANCE.getScaleFactor();
-        }
+    public static void drawSvg(long vg, SVG svg, float x, float y, float width, float height, int color, float scale) {
+        float w = width * scale;
+        float h = height * scale;
         if (AssetLoader.INSTANCE.loadSVG(vg, svg, w, h)) {
             drawSvg(vg, svg.filePath, x, y, width, height, color);
         }
+    }
+
+    /**
+     * Draws an SVG with the provided file path and parameters.
+     *
+     * @see RenderManager#drawSvg(long, String, float, float, float, float)
+     */
+    public static void drawSvg(long vg, SVG svg, float x, float y, float width, float height, int color) {
+        float scale = 1;
+        if (OneConfigGui.isOpen()) {
+            scale = OneConfigGui.getScaleFactor();
+        }
+        drawSvg(vg, svg, x, y, width, height, color, scale);
     }
 
     /**
