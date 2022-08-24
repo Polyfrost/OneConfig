@@ -95,6 +95,9 @@ public final class EventManager {
             if(e instanceof InvalidTypeException) {
                 throw (InvalidTypeException) e;
             }
+            if(e instanceof IllegalArgumentException) {
+                throw (IllegalArgumentException) e;
+            }
             else e.printStackTrace();
         }
     }

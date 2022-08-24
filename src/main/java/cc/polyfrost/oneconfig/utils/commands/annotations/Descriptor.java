@@ -32,16 +32,37 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Marks a method as the main method of a command.
+ * This annotation can be used to describe methods and arguments.
+ * It is used for aliases and for better help messages for your users. <br>
+ * <b>Usage on a command method:</b>
+ * <pre>{@code
+ *  @Descriptor(value = "My command", aliases = {"mycmd"}, description = "My command description")
+ *  public void myCommand(String arg1, String arg2) {
+ *      // this will allow the user to do /{yourcommandname} myCommand OR /{yourcommandname} mycmd   (aliases)
+ *      // It will also display the name of this command, and its description if provided in the help message.
+ *  }
+ * }</pre> <br>
+ * <b>Usage on parameters:</b>
+ * <pre>{@code
+ *  public void myCommand(@Descriptor("first parameter") int bob, float someParam) {
+ *      // this will mark the first parameter as "first parameter" in the help message.
+ *      // If its not present, it will just show the TYPE of the parameter (e.g. int).
+ *  }
  *
- * @see Command
- * @see SubCommand
- * @see cc.polyfrost.oneconfig.utils.commands.CommandManager
+ * </pre>
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD})
-public @interface Main {
+@Target({ElementType.PARAMETER, ElementType.METHOD})
+public @interface Descriptor {
+    /**
+     * The name of the parameter.
+     *
+     * @return The name of the parameter.
+     */
+    String value();
     String description() default "";
-
-    int priority() default 1000;
+    String[] aliases() default {};
+    /** The string to autocomplete to if the parameter is empty. set to PLAYER for it to autocomplete with player names. <br>
+     * Use a comma separated list for your arguments. */
+    String autoCompletesTo() default "";
 }

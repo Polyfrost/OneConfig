@@ -32,12 +32,11 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Excludes fields from being serialized or deserialized by OneConfig's Config and HUD
- * system.
- *
- * This can be used interchangeably with the transient modifier built into Java.
+ * Mark a field, method or class from being used in OneConfig.
+ * <br> This is useful for having fields you do not want serialized in a config file, or for methods you don't want to be registered into commands.
+ * <br>It can be used interchangeably with the transient modifier built into Java (for fields).
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.FIELD, ElementType.TYPE})
+@Target({ElementType.METHOD, ElementType.FIELD, ElementType.TYPE})
 public @interface Exclude {
 }
