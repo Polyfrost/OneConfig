@@ -1,3 +1,29 @@
+/*
+ * This file is part of OneConfig.
+ * OneConfig - Next Generation Config Library for Minecraft: Java Edition
+ * Copyright (C) 2021, 2022 Polyfrost.
+ *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
+ *
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ *   OneConfig is licensed under the terms of version 3 of the GNU Lesser
+ * General Public License as published by the Free Software Foundation, AND
+ * under the Additional Terms Applicable to OneConfig, as published by Polyfrost,
+ * either version 1.0 of the Additional Terms, or (at your option) any later
+ * version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ *   You should have received a copy of the GNU Lesser General Public
+ * License.  If not, see <https://www.gnu.org/licenses/>. You should
+ * have also received a copy of the Additional Terms Applicable
+ * to OneConfig, as published by Polyfrost. If not, see
+ * <https://polyfrost.cc/legal/oneconfig/additional-terms>
+ */
+
 package cc.polyfrost.oneconfig.internal.plugin;
 
 import cc.polyfrost.oneconfig.platform.Platform;
@@ -41,8 +67,13 @@ public class OneConfigMixinPlugin implements IMixinConfigPlugin {
 
     @Override
     public List<String> getMixins() {
+        ArrayList<String> mixins = new ArrayList<>();
+        if (Platform.getInstance().getLoader().equals(Platform.Loader.FORGE)) {
+            mixins.add("EventBusMixin");
+        } else if (Platform.getInstance().getLoader().equals(Platform.Loader.FABRIC)) {
+            mixins.add("NetHandlerPlayClientMixin");
+        }
         if (Platform.getInstance().getMinecraftVersion() >= 11600) {
-            ArrayList<String> mixins = new ArrayList<>();
             if (Platform.getInstance().getLoader() == Platform.Loader.FORGE) {
                 mixins.add("ClientModLoaderMixin");
             } else {
@@ -54,9 +85,8 @@ public class OneConfigMixinPlugin implements IMixinConfigPlugin {
             mixins.add("MouseMixin");
             mixins.add("TickTimeTrackerMixin");
             return mixins;
-        } else {
-            return null;
         }
+        return mixins.isEmpty() ? null : mixins;
     }
 
     @Override

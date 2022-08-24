@@ -1,3 +1,29 @@
+/*
+ * This file is part of OneConfig.
+ * OneConfig - Next Generation Config Library for Minecraft: Java Edition
+ * Copyright (C) 2021, 2022 Polyfrost.
+ *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
+ *
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ *   OneConfig is licensed under the terms of version 3 of the GNU Lesser
+ * General Public License as published by the Free Software Foundation, AND
+ * under the Additional Terms Applicable to OneConfig, as published by Polyfrost,
+ * either version 1.0 of the Additional Terms, or (at your option) any later
+ * version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ *   You should have received a copy of the GNU Lesser General Public
+ * License.  If not, see <https://www.gnu.org/licenses/>. You should
+ * have also received a copy of the Additional Terms Applicable
+ * to OneConfig, as published by Polyfrost. If not, see
+ * <https://polyfrost.cc/legal/oneconfig/additional-terms>
+ */
+
 package cc.polyfrost.oneconfig.gui.elements.config;
 
 import cc.polyfrost.oneconfig.config.annotations.Dropdown;
@@ -9,7 +35,7 @@ import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.renderer.scissor.Scissor;
-import cc.polyfrost.oneconfig.utils.InputUtils;
+import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 
 import java.awt.*;
@@ -34,21 +60,21 @@ public class ConfigDropdown extends BasicOption {
     }
 
     @Override
-    public void draw(long vg, int x, int y) {
+    public void draw(long vg, int x, int y, InputHandler inputHandler) {
         if (!isEnabled()) RenderManager.setAlpha(vg, 0.5f);
         RenderManager.drawText(vg, name, x, y + 16, Colors.WHITE_90, 14f, Fonts.MEDIUM);
 
         boolean hovered;
-        if (size == 1) hovered = InputUtils.isAreaHovered(x + 224, y, 256, 32) && isEnabled();
-        else hovered = InputUtils.isAreaHovered(x + 352, y, 640, 32) && isEnabled();
+        if (size == 1) hovered = inputHandler.isAreaHovered(x + 224, y, 256, 32) && isEnabled();
+        else hovered = inputHandler.isAreaHovered(x + 352, y, 640, 32) && isEnabled();
 
-        if (hovered && InputUtils.isClicked() || opened && InputUtils.isClicked(true) &&
-                (size == 1 && !InputUtils.isAreaHovered(x + 224, y + 40, 256, options.length * 32, true) ||
-                        size == 2 && !InputUtils.isAreaHovered(x + 352, y + 40, 640, options.length * 32, true))) {
+        if (hovered && inputHandler.isClicked() || opened && inputHandler.isClicked(true) &&
+                (size == 1 && !inputHandler.isAreaHovered(x + 224, y + 40, 256, options.length * 32, true) ||
+                        size == 2 && !inputHandler.isAreaHovered(x + 352, y + 40, 640, options.length * 32, true))) {
             opened = !opened;
             backgroundColor.setPalette(opened ? ColorPalette.PRIMARY : ColorPalette.SECONDARY);
-            if (opened) inputScissor = InputUtils.blockAllInput();
-            else if (inputScissor != null) InputUtils.stopBlock(inputScissor);
+            if (opened) inputScissor = inputHandler.blockAllInput();
+            else if (inputScissor != null) inputHandler.stopBlock(inputScissor);
         }
         if (opened) return;
 
@@ -74,12 +100,12 @@ public class ConfigDropdown extends BasicOption {
     }
 
     @Override
-    public void drawLast(long vg, int x, int y) {
+    public void drawLast(long vg, int x, int y, InputHandler inputHandler) {
         if (!opened) return;
 
         boolean hovered;
-        if (size == 1) hovered = InputUtils.isAreaHovered(x + 224, y, 256, 32, true);
-        else hovered = InputUtils.isAreaHovered(x + 352, y, 640, 32, true);
+        if (size == 1) hovered = inputHandler.isAreaHovered(x + 224, y, 256, 32, true);
+        else hovered = inputHandler.isAreaHovered(x + 352, y, 640, 32, true);
 
         int selected = 0;
         try {
@@ -101,21 +127,21 @@ public class ConfigDropdown extends BasicOption {
             int optionY = y + 44;
             for (String option : options) {
                 int color = Colors.WHITE_80;
-                boolean optionHovered = InputUtils.isAreaHovered(x + 224, optionY, 252, 32, true);
+                boolean optionHovered = inputHandler.isAreaHovered(x + 224, optionY, 252, 32, true);
                 if (optionHovered && Platform.getMousePlatform().isButtonDown(0)) {
                     RenderManager.drawRoundedRect(vg, x + 228, optionY + 2, 248, 28, Colors.PRIMARY_700_80, 8);
                 } else if (optionHovered) {
                     RenderManager.drawRoundedRect(vg, x + 228, optionY + 2, 248, 28, Colors.PRIMARY_700, 8);
                     color = Colors.WHITE;
                 }
-                if (optionHovered && InputUtils.isClicked(true)) {
+                if (optionHovered && inputHandler.isClicked(true)) {
                     try {
                         set(Arrays.asList(options).indexOf(option));
                     } catch (IllegalAccessException ignored) {
                     }
                     opened = false;
                     backgroundColor.setPalette(ColorPalette.SECONDARY);
-                    if (inputScissor != null) InputUtils.stopBlock(inputScissor);
+                    if (inputScissor != null) inputHandler.stopBlock(inputScissor);
                 }
 
                 RenderManager.drawText(vg, option, x + 240, optionY + 18, color, 14, Fonts.MEDIUM);
@@ -134,7 +160,7 @@ public class ConfigDropdown extends BasicOption {
             int optionY = y + 44;
             for (String option : options) {
                 int color = Colors.WHITE_80;
-                boolean optionHovered = InputUtils.isAreaHovered(x + 352, optionY, 640, 36, true);
+                boolean optionHovered = inputHandler.isAreaHovered(x + 352, optionY, 640, 36, true);
                 if (optionHovered && Platform.getMousePlatform().isButtonDown(0)) {
                     RenderManager.drawRoundedRect(vg, x + 356, optionY + 2, 632, 28, Colors.PRIMARY_700_80, 8);
                 } else if (optionHovered) {
@@ -144,14 +170,14 @@ public class ConfigDropdown extends BasicOption {
 
                 RenderManager.drawText(vg, option, x + 368, optionY + 18, color, 14, Fonts.MEDIUM);
 
-                if (optionHovered && InputUtils.isClicked(true)) {
+                if (optionHovered && inputHandler.isClicked(true)) {
                     try {
                         set(Arrays.asList(options).indexOf(option));
                     } catch (IllegalAccessException ignored) {
                     }
                     opened = false;
                     backgroundColor.setPalette(ColorPalette.SECONDARY);
-                    if (inputScissor != null) InputUtils.stopBlock(inputScissor);
+                    if (inputScissor != null) inputHandler.stopBlock(inputScissor);
                 }
                 optionY += 32;
             }

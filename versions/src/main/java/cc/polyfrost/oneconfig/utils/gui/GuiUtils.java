@@ -1,3 +1,29 @@
+/*
+ * This file is part of OneConfig.
+ * OneConfig - Next Generation Config Library for Minecraft: Java Edition
+ * Copyright (C) 2021, 2022 Polyfrost.
+ *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
+ *
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ *   OneConfig is licensed under the terms of version 3 of the GNU Lesser
+ * General Public License as published by the Free Software Foundation, AND
+ * under the Additional Terms Applicable to OneConfig, as published by Polyfrost,
+ * either version 1.0 of the Additional Terms, or (at your option) any later
+ * version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ *   You should have received a copy of the GNU Lesser General Public
+ * License.  If not, see <https://www.gnu.org/licenses/>. You should
+ * have also received a copy of the Additional Terms Applicable
+ * to OneConfig, as published by Polyfrost. If not, see
+ * <https://polyfrost.cc/legal/oneconfig/additional-terms>
+ */
+
 package cc.polyfrost.oneconfig.utils.gui;
 
 import cc.polyfrost.oneconfig.events.EventManager;
@@ -7,6 +33,7 @@ import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
 import cc.polyfrost.oneconfig.libs.universal.UMinecraft;
 import cc.polyfrost.oneconfig.libs.universal.UScreen;
+import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.utils.TickDelay;
 import net.minecraft.client.gui.GuiScreen;
 
@@ -20,6 +47,7 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 public final class GuiUtils {
     private static long time = -1L;
     private static long deltaTime = 17L;
+    private static boolean wasMouseDown = false;
     private static final Deque<Optional<GuiScreen>> screenQueue = new ConcurrentLinkedDeque<>();
 
     static {
@@ -86,6 +114,13 @@ public final class GuiUtils {
         return deltaTime;
     }
 
+    /**
+     * @return If the mouse was down last frame
+     */
+    public static boolean wasMouseDown() {
+        return wasMouseDown;
+    }
+
     @Subscribe
     private void onRenderEvent(RenderEvent event) {
         if (event.stage == Stage.START) {
@@ -95,6 +130,8 @@ public final class GuiUtils {
                 deltaTime = currentTime - time;
                 time = currentTime;
             }
+        } else if (event.stage == Stage.END) {
+            wasMouseDown = Platform.getMousePlatform().isButtonDown(0);
         }
     }
 }

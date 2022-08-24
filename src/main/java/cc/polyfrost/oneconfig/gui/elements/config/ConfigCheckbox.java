@@ -1,3 +1,29 @@
+/*
+ * This file is part of OneConfig.
+ * OneConfig - Next Generation Config Library for Minecraft: Java Edition
+ * Copyright (C) 2021, 2022 Polyfrost.
+ *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
+ *
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ *   OneConfig is licensed under the terms of version 3 of the GNU Lesser
+ * General Public License as published by the Free Software Foundation, AND
+ * under the Additional Terms Applicable to OneConfig, as published by Polyfrost,
+ * either version 1.0 of the Additional Terms, or (at your option) any later
+ * version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ *   You should have received a copy of the GNU Lesser General Public
+ * License.  If not, see <https://www.gnu.org/licenses/>. You should
+ * have also received a copy of the Additional Terms Applicable
+ * to OneConfig, as published by Polyfrost. If not, see
+ * <https://polyfrost.cc/legal/oneconfig/additional-terms>
+ */
+
 package cc.polyfrost.oneconfig.gui.elements.config;
 
 import cc.polyfrost.oneconfig.config.annotations.Checkbox;
@@ -11,7 +37,7 @@ import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
-import cc.polyfrost.oneconfig.utils.InputUtils;
+import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 import cc.polyfrost.oneconfig.utils.color.ColorUtils;
 
@@ -32,7 +58,7 @@ public class ConfigCheckbox extends BasicOption {
     }
 
     @Override
-    public void draw(long vg, int x, int y) {
+    public void draw(long vg, int x, int y, InputHandler inputHandler) {
         if (!isEnabled()) RenderManager.setAlpha(vg, 0.5f);
         boolean toggled = false;
         try {
@@ -40,9 +66,9 @@ public class ConfigCheckbox extends BasicOption {
             if (animation == null) animation = new DummyAnimation(toggled ? 1 : 0);
         } catch (IllegalAccessException ignored) {
         }
-        boolean hover = InputUtils.isAreaHovered(x, y + 4, 24, 24);
+        boolean hover = inputHandler.isAreaHovered(x, y + 4, 24, 24);
 
-        boolean clicked = InputUtils.isClicked() && hover;
+        boolean clicked = inputHandler.isClicked() && hover;
         if (clicked && isEnabled()) {
             toggled = !toggled;
             animation = new EaseInOutQuad(100, 0, 1, !toggled);

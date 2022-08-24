@@ -1,3 +1,29 @@
+/*
+ * This file is part of OneConfig.
+ * OneConfig - Next Generation Config Library for Minecraft: Java Edition
+ * Copyright (C) 2021, 2022 Polyfrost.
+ *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
+ *
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ *   OneConfig is licensed under the terms of version 3 of the GNU Lesser
+ * General Public License as published by the Free Software Foundation, AND
+ * under the Additional Terms Applicable to OneConfig, as published by Polyfrost,
+ * either version 1.0 of the Additional Terms, or (at your option) any later
+ * version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ *   You should have received a copy of the GNU Lesser General Public
+ * License.  If not, see <https://www.gnu.org/licenses/>. You should
+ * have also received a copy of the Additional Terms Applicable
+ * to OneConfig, as published by Polyfrost. If not, see
+ * <https://polyfrost.cc/legal/oneconfig/additional-terms>
+ */
+
 package cc.polyfrost.oneconfig.gui.elements.text;
 
 import cc.polyfrost.oneconfig.internal.assets.Colors;
@@ -5,6 +31,7 @@ import cc.polyfrost.oneconfig.gui.animations.ColorAnimation;
 import cc.polyfrost.oneconfig.gui.elements.BasicElement;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
+import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 
 public class NumberInputField extends TextInputField {
@@ -27,14 +54,14 @@ public class NumberInputField extends TextInputField {
     }
 
     @Override
-    public void draw(long vg, float x, float y) {
+    public void draw(long vg, float x, float y, InputHandler inputHandler) {
         super.errored = false;
-        if(disabled) RenderManager.setAlpha(vg, 0.5f);
+        if (disabled) RenderManager.setAlpha(vg, 0.5f);
         RenderManager.drawRoundedRect(vg, x + width + 4, y, 12, 28, Colors.GRAY_500, 6f);
         upArrow.disable(disabled);
         downArrow.disable(disabled);
-        upArrow.update(x + width + 4, y);
-        downArrow.update(x + width + 4, y + 14);
+        upArrow.update(x + width + 4, y, inputHandler);
+        downArrow.update(x + width + 4, y + 14, inputHandler);
         try {
             current = Float.parseFloat(input);
         } catch (NumberFormatException e) {
@@ -72,16 +99,16 @@ public class NumberInputField extends TextInputField {
         }
         RenderManager.drawRoundedRectVaried(vg, x + width + 4, y + 14, 12, 14, colorBottom.getColor(downArrow.isHovered(), downArrow.isPressed()), 0f, 0f, 6f, 6f);
         RenderManager.drawSvg(vg, SVGs.CHEVRON_DOWN, x + width + 5, y + 15, 10, 10);
-        if(!disabled) RenderManager.setAlpha(vg, 1f);
+        if (!disabled) RenderManager.setAlpha(vg, 1f);
 
         try {
-            super.draw(vg, x, y - 2);
+            super.draw(vg, x, y - 2, inputHandler);
         } catch (Exception e) {
             setCurrentValue(current);
             super.caretPos = 0;
             super.prevCaret = 0;
         }
-        if(disabled) RenderManager.setAlpha(vg, 1f);
+        if (disabled) RenderManager.setAlpha(vg, 1f);
     }
 
 

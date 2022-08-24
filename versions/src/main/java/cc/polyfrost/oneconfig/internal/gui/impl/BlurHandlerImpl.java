@@ -1,10 +1,34 @@
+/*
+ * This file is part of OneConfig.
+ * OneConfig - Next Generation Config Library for Minecraft: Java Edition
+ * Copyright (C) 2021, 2022 Polyfrost.
+ *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
+ *
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ *   OneConfig is licensed under the terms of version 3 of the GNU Lesser
+ * General Public License as published by the Free Software Foundation, AND
+ * under the Additional Terms Applicable to OneConfig, as published by Polyfrost,
+ * either version 1.0 of the Additional Terms, or (at your option) any later
+ * version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ *   You should have received a copy of the GNU Lesser General Public
+ * License.  If not, see <https://www.gnu.org/licenses/>. You should
+ * have also received a copy of the Additional Terms Applicable
+ * to OneConfig, as published by Polyfrost. If not, see
+ * <https://polyfrost.cc/legal/oneconfig/additional-terms>
+ */
+
 package cc.polyfrost.oneconfig.internal.gui.impl;
 
 import cc.polyfrost.oneconfig.events.event.RenderEvent;
 import cc.polyfrost.oneconfig.events.event.ScreenOpenEvent;
 import cc.polyfrost.oneconfig.events.event.Stage;
-import cc.polyfrost.oneconfig.gui.OneConfigGui;
-import cc.polyfrost.oneconfig.internal.config.Preferences;
 import cc.polyfrost.oneconfig.internal.gui.BlurHandler;
 import cc.polyfrost.oneconfig.internal.mixin.ShaderGroupAccessor;
 //#if FABRIC==1
@@ -13,6 +37,7 @@ import cc.polyfrost.oneconfig.internal.mixin.ShaderGroupAccessor;
 import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
 import cc.polyfrost.oneconfig.libs.universal.UMinecraft;
 import cc.polyfrost.oneconfig.libs.universal.UScreen;
+import cc.polyfrost.oneconfig.utils.gui.OneUIScreen;
 import net.minecraft.client.shader.Shader;
 import net.minecraft.client.shader.ShaderUniform;
 import net.minecraft.util.ResourceLocation;
@@ -104,7 +129,7 @@ public class BlurHandlerImpl implements BlurHandler {
         // If a shader is not already active and the UI is
         // a one of ours, we should load our own blur!
 
-        if (!isShaderActive() && gui instanceof OneConfigGui && Preferences.enableBlur) {
+        if (!isShaderActive() && (gui instanceof OneUIScreen && ((OneUIScreen) gui).hasBackgroundBlur())) {
             //#if FABRIC==1
             //$$ ((GameRendererAccessor) UMinecraft.getMinecraft().gameRenderer).invokeLoadShader(this.blurShader);
             //#else
@@ -115,7 +140,7 @@ public class BlurHandlerImpl implements BlurHandler {
             this.progress = 0;
 
             // If a shader is active and the incoming UI is null or we have blur disabled, stop using the shader.
-        } else if (isShaderActive() && (gui == null || !Preferences.enableBlur)) {
+        } else if (isShaderActive() && (gui == null || (gui instanceof OneUIScreen && !((OneUIScreen) gui).hasBackgroundBlur()))) {
             String name = UMinecraft.getMinecraft().entityRenderer.getShaderGroup().getShaderGroupName();
 
             // Only stop our specific blur ;)

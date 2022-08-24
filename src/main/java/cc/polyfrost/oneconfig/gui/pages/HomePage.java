@@ -1,9 +1,36 @@
+/*
+ * This file is part of OneConfig.
+ * OneConfig - Next Generation Config Library for Minecraft: Java Edition
+ * Copyright (C) 2021, 2022 Polyfrost.
+ *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
+ *
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ *   OneConfig is licensed under the terms of version 3 of the GNU Lesser
+ * General Public License as published by the Free Software Foundation, AND
+ * under the Additional Terms Applicable to OneConfig, as published by Polyfrost,
+ * either version 1.0 of the Additional Terms, or (at your option) any later
+ * version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ *   You should have received a copy of the GNU Lesser General Public
+ * License.  If not, see <https://www.gnu.org/licenses/>. You should
+ * have also received a copy of the Additional Terms Applicable
+ * to OneConfig, as published by Polyfrost. If not, see
+ * <https://polyfrost.cc/legal/oneconfig/additional-terms>
+ */
+
 package cc.polyfrost.oneconfig.gui.pages;
 
 import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
+import cc.polyfrost.oneconfig.utils.InputHandler;
 
 public class HomePage extends Page {
     /*private final BasicButton socialsBtn = new BasicButton(184, 36, "Socials", SVGs.SHARE, SVGs.POP_OUT, BasicButton.ALIGNMENT_CENTER, ColorUtils.PRIMARY);
@@ -31,7 +58,7 @@ public class HomePage extends Page {
 
     }
 
-    public void draw(long vg, int x, int y) {
+    public void draw(long vg, int x, int y, InputHandler inputHandler) {
         RenderManager.drawRoundedRect(vg, x, y, 184, 36, -1, 12f);
         RenderManager.drawText(vg, "This is a cool string to test pages", x + 32, y + 72, -1, 36f, Fonts.BOLD);
         RenderManager.drawRoundedRect(vg, x + 350, y + 310, 300, 200, Colors.PRIMARY_600, 14f);
@@ -39,7 +66,7 @@ public class HomePage extends Page {
         RenderManager.drawText(vg, "Info", x + 52, y + 618, Colors.WHITE_90, 24f, Fonts.MEDIUM);
         RenderManager.drawRoundedRect(vg, x + 16, y + 644, 1024, 64, Colors.GRAY_700, 20f);
 
-        RenderManager.drawURL(vg, "https://www.youtube.com/watch?v=dQw4w9WgXcQ", x + 100, y + 205, 24, Fonts.MEDIUM);
+        RenderManager.drawURL(vg, "https://www.youtube.com/watch?v=dQw4w9WgXcQ", x + 100, y + 205, 24, Fonts.MEDIUM, inputHandler);
 
         /*discordBtn.draw(vg, x + 32, y + 658);
         webBtn.draw(vg, x + 232, y + 658);

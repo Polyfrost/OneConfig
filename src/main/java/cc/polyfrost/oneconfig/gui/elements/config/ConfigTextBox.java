@@ -1,3 +1,29 @@
+/*
+ * This file is part of OneConfig.
+ * OneConfig - Next Generation Config Library for Minecraft: Java Edition
+ * Copyright (C) 2021, 2022 Polyfrost.
+ *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
+ *
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ *   OneConfig is licensed under the terms of version 3 of the GNU Lesser
+ * General Public License as published by the Free Software Foundation, AND
+ * under the Additional Terms Applicable to OneConfig, as published by Polyfrost,
+ * either version 1.0 of the Additional Terms, or (at your option) any later
+ * version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ *   You should have received a copy of the GNU Lesser General Public
+ * License.  If not, see <https://www.gnu.org/licenses/>. You should
+ * have also received a copy of the Additional Terms Applicable
+ * to OneConfig, as published by Polyfrost. If not, see
+ * <https://polyfrost.cc/legal/oneconfig/additional-terms>
+ */
+
 package cc.polyfrost.oneconfig.gui.elements.config;
 
 import cc.polyfrost.oneconfig.config.annotations.Text;
@@ -9,7 +35,7 @@ import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.SVG;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
-import cc.polyfrost.oneconfig.utils.InputUtils;
+import cc.polyfrost.oneconfig.utils.InputHandler;
 
 import java.lang.reflect.Field;
 
@@ -31,7 +57,7 @@ public class ConfigTextBox extends BasicOption {
     }
 
     @Override
-    public void draw(long vg, int x, int y) {
+    public void draw(long vg, int x, int y, InputHandler inputHandler) {
         if (!isEnabled()) RenderManager.setAlpha(vg, 0.5f);
         textField.disable(!isEnabled());
         RenderManager.drawText(vg, name, x, y + 16, Colors.WHITE_90, 14, Fonts.MEDIUM);
@@ -44,13 +70,13 @@ public class ConfigTextBox extends BasicOption {
 
         if (multiLine && textField.getLines() > 2) textField.setHeight(64 + 24 * (textField.getLines() - 2));
         else if (multiLine) textField.setHeight(64);
-        textField.draw(vg, x + (size == 1 ? 224 : 352), y);
+        textField.draw(vg, x + (size == 1 ? 224 : 352), y, inputHandler);
 
         if (secure) {
             final SVG icon = textField.getPassword() ? SVGs.EYE_OFF : SVGs.EYE;
-            boolean hovered = InputUtils.isAreaHovered(x + 967, y + 7, 18, 18) && isEnabled();
+            boolean hovered = inputHandler.isAreaHovered(x + 967, y + 7, 18, 18) && isEnabled();
             int color = hovered ? Colors.WHITE : Colors.WHITE_80;
-            if (hovered && InputUtils.isClicked()) textField.setPassword(!textField.getPassword());
+            if (hovered && inputHandler.isClicked()) textField.setPassword(!textField.getPassword());
             if (hovered && Platform.getMousePlatform().isButtonDown(0)) RenderManager.setAlpha(vg, 0.5f);
             RenderManager.drawSvg(vg, icon, x + 967, y + 7, 18, 18, color);
         }

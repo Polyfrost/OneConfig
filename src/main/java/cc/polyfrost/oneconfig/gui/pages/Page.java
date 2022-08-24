@@ -1,3 +1,29 @@
+/*
+ * This file is part of OneConfig.
+ * OneConfig - Next Generation Config Library for Minecraft: Java Edition
+ * Copyright (C) 2021, 2022 Polyfrost.
+ *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
+ *
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ *   OneConfig is licensed under the terms of version 3 of the GNU Lesser
+ * General Public License as published by the Free Software Foundation, AND
+ * under the Additional Terms Applicable to OneConfig, as published by Polyfrost,
+ * either version 1.0 of the Additional Terms, or (at your option) any later
+ * version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ *   You should have received a copy of the GNU Lesser General Public
+ * License.  If not, see <https://www.gnu.org/licenses/>. You should
+ * have also received a copy of the Additional Terms Applicable
+ * to OneConfig, as published by Polyfrost. If not, see
+ * <https://polyfrost.cc/legal/oneconfig/additional-terms>
+ */
+
 package cc.polyfrost.oneconfig.gui.pages;
 
 import cc.polyfrost.oneconfig.gui.animations.Animation;
@@ -8,7 +34,7 @@ import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.scissor.Scissor;
 import cc.polyfrost.oneconfig.renderer.scissor.ScissorManager;
-import cc.polyfrost.oneconfig.utils.InputUtils;
+import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 
 import java.util.ArrayList;
@@ -31,27 +57,27 @@ public abstract class Page {
         this.title = title;
     }
 
-    public abstract void draw(long vg, int x, int y);
+    public abstract void draw(long vg, int x, int y, InputHandler inputHandler);
 
     /**
      * Use this method to draw elements that are static on the page (ignore the scrolling).
      *
      * @return the total height of the elements, so they are excluded from the scissor rectangle.
      */
-    public int drawStatic(long vg, int x, int y) {
+    public int drawStatic(long vg, int x, int y, InputHandler inputHandler) {
         return 0;
     }
 
     public void finishUpAndClose() {
     }
 
-    public void scrollWithDraw(long vg, int x, int y) {
+    public void scrollWithDraw(long vg, int x, int y, InputHandler inputHandler) {
         int maxScroll = getMaxScrollHeight();
-        int scissorOffset = drawStatic(vg, x, y);
+        int scissorOffset = drawStatic(vg, x, y, inputHandler);
         scroll = scrollAnimation == null ? scrollTarget : scrollAnimation.get();
         final float scrollBarLength = (728f / maxScroll) * 728f;
         Scissor scissor = ScissorManager.scissor(vg, x, y + scissorOffset, x + 1056, y + 728 - scissorOffset);
-        Scissor inputScissor = InputUtils.blockInputArea(x, y,1056, scissorOffset);
+        Scissor inputScissor = inputHandler.blockInputArea(x, y,1056, scissorOffset);
         float dWheel = (float) Platform.getMousePlatform().getDWheel();
         if (dWheel != 0) {
             scrollTarget += dWheel;
@@ -63,31 +89,31 @@ public abstract class Page {
             scrollTime = System.currentTimeMillis();
         } else if (scrollAnimation != null && scrollAnimation.isFinished()) scrollAnimation = null;
         if (maxScroll <= 728) {
-            draw(vg, x, y);
+            draw(vg, x, y, inputHandler);
             ScissorManager.resetScissor(vg, scissor);
-            InputUtils.stopBlock(inputScissor);
+            inputHandler.stopBlock(inputScissor);
             return;
         }
-        draw(vg, x, (int) (y + scroll));
-        if (dragging && InputUtils.isClicked(true)) {
+        draw(vg, x, (int) (y + scroll), inputHandler);
+        if (dragging && inputHandler.isClicked(true)) {
             dragging = false;
         }
 
         ScissorManager.resetScissor(vg, scissor);
-        InputUtils.stopBlock(inputScissor);
+        inputHandler.stopBlock(inputScissor);
         if (!(scrollBarLength > 727f)) {
             final float scrollBarY = (scroll / maxScroll) * 720f;
             final boolean isMouseDown = Platform.getMousePlatform().isButtonDown(0);
-            final boolean scrollHover = InputUtils.isAreaHovered(x + 1042, (int) (y - scrollBarY), 12, (int) scrollBarLength);
+            final boolean scrollHover = inputHandler.isAreaHovered(x + 1042, (int) (y - scrollBarY), 12, (int) scrollBarLength);
             final boolean scrollTimePeriod = (System.currentTimeMillis() - scrollTime < 1000);
             final boolean hovered = (scrollHover || scrollTimePeriod) && Platform.getMousePlatform().isButtonDown(0);
             if (scrollHover && isMouseDown && !mouseWasDown) {
-                yStart = InputUtils.mouseY();
+                yStart = inputHandler.mouseY();
                 dragging = true;
             }
             mouseWasDown = isMouseDown;
             if (dragging) {
-                scrollTarget = -(InputUtils.mouseY() - yStart) * maxScroll / 728f;
+                scrollTarget = -(inputHandler.mouseY() - yStart) * maxScroll / 728f;
                 if (scrollTarget > 0f) scrollTarget = 0f;
                 else if (scrollTarget < -maxScroll + 728) scrollTarget = -maxScroll + 728;
                 scrollAnimation = new EaseOutQuad(150, scroll, scrollTarget, false);

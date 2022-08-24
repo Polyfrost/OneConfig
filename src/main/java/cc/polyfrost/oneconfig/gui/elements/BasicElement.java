@@ -1,9 +1,35 @@
+/*
+ * This file is part of OneConfig.
+ * OneConfig - Next Generation Config Library for Minecraft: Java Edition
+ * Copyright (C) 2021, 2022 Polyfrost.
+ *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
+ *
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ *   OneConfig is licensed under the terms of version 3 of the GNU Lesser
+ * General Public License as published by the Free Software Foundation, AND
+ * under the Additional Terms Applicable to OneConfig, as published by Polyfrost,
+ * either version 1.0 of the Additional Terms, or (at your option) any later
+ * version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ *   You should have received a copy of the GNU Lesser General Public
+ * License.  If not, see <https://www.gnu.org/licenses/>. You should
+ * have also received a copy of the Additional Terms Applicable
+ * to OneConfig, as published by Polyfrost. If not, see
+ * <https://polyfrost.cc/legal/oneconfig/additional-terms>
+ */
+
 package cc.polyfrost.oneconfig.gui.elements;
 
 import cc.polyfrost.oneconfig.gui.animations.ColorAnimation;
 import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
-import cc.polyfrost.oneconfig.utils.InputUtils;
+import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,7 +70,7 @@ public class BasicElement {
     public int currentColor;
     protected final float radius;
     /**
-     * Boolean to determine if this element is allowed to be clicked when {@link InputUtils#isBlockingInput()} is true.
+     * Boolean to determine if this element is allowed to be clicked when {@link InputHandler#isBlockingInput()} is true.
      */
     private boolean block = false;
     /**
@@ -72,29 +98,29 @@ public class BasicElement {
 
     /**
      * Draw script for the element.
-     * <br> <b>Make sure to call {@link #update(float, float)} to update the elements states!</b>
+     * <br> <b>Make sure to call {@link #update(float, float, InputHandler)} to update the elements states!</b>
      *
      * @param vg NanoVG context (see {@link RenderManager})
      * @param x  x position of the element
      * @param y  y position of the element
      */
-    public void draw(long vg, float x, float y) {
-        this.update(x, y);
+    public void draw(long vg, float x, float y, InputHandler inputHandler) {
+        this.update(x, y, inputHandler);
         RenderManager.drawRoundedRect(vg, x, y, width, height, currentColor, radius);
     }
 
     /**
      * Update this element's clicked, hovered, toggled, and pressed states, invoke any necessary methods, and update the color animation.
      */
-    public void update(float x, float y) {
+    public void update(float x, float y, InputHandler inputHandler) {
         if (disabled) {
             hovered = false;
             pressed = false;
             clicked = false;
         } else {
-            hovered = InputUtils.isAreaHovered(x - hitBoxX, y - hitBoxY, width + hitBoxX, height + hitBoxY);
+            hovered = inputHandler.isAreaHovered(x - hitBoxX, y - hitBoxY, width + hitBoxX, height + hitBoxY);
             pressed = hovered && Platform.getMousePlatform().isButtonDown(0);
-            clicked = InputUtils.isClicked(block) && hovered;
+            clicked = inputHandler.isClicked(block) && hovered;
 
             if (clicked) {
                 toggled = !toggled;

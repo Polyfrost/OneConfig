@@ -1,3 +1,30 @@
+/*
+ * This file is part of OneConfig.
+ * OneConfig - Next Generation Config Library for Minecraft: Java Edition
+ * Copyright (C) 2021, 2022 Polyfrost and Kendell R.
+ *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
+ * Co-author: Kendell R (KTibow) <https://github.com/KTibow>
+ *
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ *   OneConfig is licensed under the terms of version 3 of the GNU Lesser
+ * General Public License as published by the Free Software Foundation, AND
+ * under the Additional Terms Applicable to OneConfig, as published by Polyfrost,
+ * either version 1.0 of the Additional Terms, or (at your option) any later
+ * version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ *   You should have received a copy of the GNU Lesser General Public
+ * License.  If not, see <https://www.gnu.org/licenses/>. You should
+ * have also received a copy of the Additional Terms Applicable
+ * to OneConfig, as published by Polyfrost. If not, see
+ * <https://polyfrost.cc/legal/oneconfig/additional-terms>
+ */
+
 package cc.polyfrost.oneconfig.gui.elements;
 
 import cc.polyfrost.oneconfig.config.data.Mod;
@@ -15,7 +42,7 @@ import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.renderer.scissor.Scissor;
 import cc.polyfrost.oneconfig.renderer.scissor.ScissorManager;
-import cc.polyfrost.oneconfig.utils.InputUtils;
+import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 import cc.polyfrost.oneconfig.utils.color.ColorUtils;
 import org.jetbrains.annotations.NotNull;
@@ -43,13 +70,13 @@ public class ModCard extends BasicElement {
     }
 
     @Override
-    public void draw(long vg, float x, float y) {
-        super.update(x, y);
+    public void draw(long vg, float x, float y, InputHandler inputHandler) {
+        super.update(x, y, inputHandler);
         String cleanName = modData.name.replaceAll("§.", "");
         Scissor scissor = ScissorManager.scissor(vg, x, y, width, height);
 
-        isHoveredMain = InputUtils.isAreaHovered(x, y, width, 87);
-        boolean isHoveredSecondary = InputUtils.isAreaHovered(x, y + 87, width - 32, 32) && !disabled;
+        isHoveredMain = inputHandler.isAreaHovered(x, y, width, 87);
+        boolean isHoveredSecondary = inputHandler.isAreaHovered(x, y + 87, width - 32, 32) && !disabled;
         if (disabled) RenderManager.setAlpha(vg, 0.5f);
         RenderManager.drawRoundedRectVaried(vg, x, y, width, 87, colorFrame.getColor(isHoveredMain, isHoveredMain && Platform.getMousePlatform().isButtonDown(0)), 12f, 12f, 0f, 0f);
         RenderManager.drawRoundedRectVaried(vg, x, y + 87, width, 32, colorToggle.getColor(isHoveredSecondary, isHoveredSecondary && Platform.getMousePlatform().isButtonDown(0)), 0f, 0f, 12f, 12f);
@@ -61,7 +88,7 @@ public class ModCard extends BasicElement {
         } else {
             RenderManager.drawText(vg, cleanName, x + Math.max(0, (244 - RenderManager.getTextWidth(vg, cleanName, 16, Fonts.MINECRAFT_BOLD))) / 2f, y + 44, ColorUtils.setAlpha(Colors.WHITE, (int) (colorFrame.getAlpha() * 255)), 16, Fonts.MINECRAFT_BOLD);
         }
-        favoriteButton.draw(vg, x + 212, y + 87);
+        favoriteButton.draw(vg, x + 212, y + 87, inputHandler);
         favorite = favoriteButton.isToggled();
         if (favoriteButton.isClicked()) {
             if (favorite) OneConfigConfig.favoriteMods.add(modData.name);

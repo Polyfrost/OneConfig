@@ -1,6 +1,33 @@
+/*
+ * This file is part of OneConfig.
+ * OneConfig - Next Generation Config Library for Minecraft: Java Edition
+ * Copyright (C) 2021, 2022 Polyfrost.
+ *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
+ *
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ *   OneConfig is licensed under the terms of version 3 of the GNU Lesser
+ * General Public License as published by the Free Software Foundation, AND
+ * under the Additional Terms Applicable to OneConfig, as published by Polyfrost,
+ * either version 1.0 of the Additional Terms, or (at your option) any later
+ * version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ *   You should have received a copy of the GNU Lesser General Public
+ * License.  If not, see <https://www.gnu.org/licenses/>. You should
+ * have also received a copy of the Additional Terms Applicable
+ * to OneConfig, as published by Polyfrost. If not, see
+ * <https://polyfrost.cc/legal/oneconfig/additional-terms>
+ */
+
 package cc.polyfrost.oneconfig.test
 
 import cc.polyfrost.oneconfig.renderer.font.Fonts
+import cc.polyfrost.oneconfig.utils.InputHandler
 import cc.polyfrost.oneconfig.utils.dsl.*
 import cc.polyfrost.oneconfig.utils.gui.OneUIScreen
 import java.awt.Color
@@ -15,7 +42,7 @@ import kotlin.system.measureTimeMillis
  */
 class TestKotlinNanoVGGui_Test : OneUIScreen() {
 
-    override fun draw(vg: Long, partialTicks: Float) {
+    override fun draw(vg: Long, partialTicks: Float, inputHandler: InputHandler) {
         nanoVG(vg) {
             val millis = measureTimeMillis {
                 drawRect(0f, 0f, 100f, 100f, Color.BLUE.rgb)

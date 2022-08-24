@@ -1,3 +1,29 @@
+/*
+ * This file is part of OneConfig.
+ * OneConfig - Next Generation Config Library for Minecraft: Java Edition
+ * Copyright (C) 2021, 2022 Polyfrost.
+ *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
+ *
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ *   OneConfig is licensed under the terms of version 3 of the GNU Lesser
+ * General Public License as published by the Free Software Foundation, AND
+ * under the Additional Terms Applicable to OneConfig, as published by Polyfrost,
+ * either version 1.0 of the Additional Terms, or (at your option) any later
+ * version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ *   You should have received a copy of the GNU Lesser General Public
+ * License.  If not, see <https://www.gnu.org/licenses/>. You should
+ * have also received a copy of the Additional Terms Applicable
+ * to OneConfig, as published by Polyfrost. If not, see
+ * <https://polyfrost.cc/legal/oneconfig/additional-terms>
+ */
+
 package cc.polyfrost.oneconfig.utils.dsl
 
 import cc.polyfrost.oneconfig.config.data.InfoType
@@ -5,6 +31,7 @@ import cc.polyfrost.oneconfig.renderer.RenderManager
 import cc.polyfrost.oneconfig.renderer.font.Font
 import cc.polyfrost.oneconfig.renderer.Image
 import cc.polyfrost.oneconfig.renderer.SVG
+import cc.polyfrost.oneconfig.utils.InputHandler
 import cc.polyfrost.oneconfig.utils.color.ColorUtils
 import org.lwjgl.nanovg.NVGColor
 
@@ -143,10 +170,11 @@ fun Long.drawWrappedString(text: String, x: Number, y: Number, width: Number, co
 fun VG.drawWrappedString(text: String, x: Number, y: Number, width: Number, color: Int, size: Number, font: Font) =
     instance.drawWrappedString(text, x, y, width, color, size, font)
 
-fun Long.drawURL(url: String, x: Number, y: Number, size: Number, font: Font) =
-    RenderManager.drawURL(this, url, x.toFloat(), y.toFloat(), size.toFloat(), font)
+fun Long.drawURL(url: String, x: Number, y: Number, size: Number, font: Font, inputHandler: InputHandler) =
+    RenderManager.drawURL(this, url, x.toFloat(), y.toFloat(), size.toFloat(), font, inputHandler)
 
-fun VG.drawURL(url: String, x: Number, y: Number, size: Number, font: Font) = instance.drawURL(url, x, y, size, font)
+fun VG.drawURL(url: String, x: Number, y: Number, size: Number, font: Font, inputHandler: InputHandler) =
+    instance.drawURL(url, x, y, size, font, inputHandler)
 
 
 fun Long.drawImage(filePath: String, x: Number, y: Number, width: Number, height: Number) =

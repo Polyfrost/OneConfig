@@ -1,3 +1,29 @@
+/*
+ * This file is part of OneConfig.
+ * OneConfig - Next Generation Config Library for Minecraft: Java Edition
+ * Copyright (C) 2021, 2022 Polyfrost.
+ *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
+ *
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ *   OneConfig is licensed under the terms of version 3 of the GNU Lesser
+ * General Public License as published by the Free Software Foundation, AND
+ * under the Additional Terms Applicable to OneConfig, as published by Polyfrost,
+ * either version 1.0 of the Additional Terms, or (at your option) any later
+ * version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ *   You should have received a copy of the GNU Lesser General Public
+ * License.  If not, see <https://www.gnu.org/licenses/>. You should
+ * have also received a copy of the Additional Terms Applicable
+ * to OneConfig, as published by Polyfrost. If not, see
+ * <https://polyfrost.cc/legal/oneconfig/additional-terms>
+ */
+
 package cc.polyfrost.oneconfig.gui.elements.config;
 
 import cc.polyfrost.oneconfig.config.annotations.DualOption;
@@ -8,7 +34,7 @@ import cc.polyfrost.oneconfig.gui.animations.DummyAnimation;
 import cc.polyfrost.oneconfig.gui.animations.EaseInOutCubic;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
-import cc.polyfrost.oneconfig.utils.InputUtils;
+import cc.polyfrost.oneconfig.utils.InputHandler;
 
 import java.lang.reflect.Field;
 
@@ -33,7 +59,7 @@ public class ConfigDualOption extends BasicOption {
     }
 
     @Override
-    public void draw(long vg, int x, int y) {
+    public void draw(long vg, int x, int y, InputHandler inputHandler) {
         boolean toggled = false;
         try {
             toggled = (boolean) get();
@@ -41,8 +67,8 @@ public class ConfigDualOption extends BasicOption {
         } catch (IllegalAccessException ignored) {
         }
         if (!isEnabled()) RenderManager.setAlpha(vg, 0.5f);
-        boolean hoveredLeft = InputUtils.isAreaHovered(x + 226, y, 128, 32) && isEnabled();
-        boolean hoveredRight = InputUtils.isAreaHovered(x + 354, y, 128, 32) && isEnabled();
+        boolean hoveredLeft = inputHandler.isAreaHovered(x + 226, y, 128, 32) && isEnabled();
+        boolean hoveredRight = inputHandler.isAreaHovered(x + 354, y, 128, 32) && isEnabled();
         RenderManager.drawText(vg, name, x, y + 16, Colors.WHITE_90, 14f, Fonts.MEDIUM);
         RenderManager.drawRoundedRect(vg, x + 226, y, 256, 32, Colors.GRAY_600, 12f);
         RenderManager.drawRoundedRect(vg, x + posAnimation.get(), y + 2, 124, 28, Colors.PRIMARY_600, 10f);
@@ -53,7 +79,7 @@ public class ConfigDualOption extends BasicOption {
         RenderManager.drawText(vg, right, x + 418 - RenderManager.getTextWidth(vg, right, 12f, Fonts.MEDIUM) / 2, y + 17, Colors.WHITE, 12f, Fonts.MEDIUM);
 
         RenderManager.setAlpha(vg, 1);
-        if ((hoveredLeft && toggled || hoveredRight && !toggled) && InputUtils.isClicked()) {
+        if ((hoveredLeft && toggled || hoveredRight && !toggled) && inputHandler.isClicked()) {
             toggled = !toggled;
             posAnimation = new EaseInOutCubic(175, 228, 356, !toggled);
             try {

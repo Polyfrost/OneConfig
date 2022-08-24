@@ -1,6 +1,33 @@
+/*
+ * This file is part of OneConfig.
+ * OneConfig - Next Generation Config Library for Minecraft: Java Edition
+ * Copyright (C) 2021, 2022 Polyfrost.
+ *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
+ *
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ *   OneConfig is licensed under the terms of version 3 of the GNU Lesser
+ * General Public License as published by the Free Software Foundation, AND
+ * under the Additional Terms Applicable to OneConfig, as published by Polyfrost,
+ * either version 1.0 of the Additional Terms, or (at your option) any later
+ * version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ *   You should have received a copy of the GNU Lesser General Public
+ * License.  If not, see <https://www.gnu.org/licenses/>. You should
+ * have also received a copy of the Additional Terms Applicable
+ * to OneConfig, as published by Polyfrost. If not, see
+ * <https://polyfrost.cc/legal/oneconfig/additional-terms>
+ */
+
 package cc.polyfrost.oneconfig.config.elements;
 
 import cc.polyfrost.oneconfig.config.Config;
+import cc.polyfrost.oneconfig.utils.InputHandler;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -10,7 +37,7 @@ import java.util.function.Supplier;
 public abstract class BasicOption {
     public final int size;
     protected final Field field;
-    protected final Object parent;
+    protected Object parent;
     public final String name;
     public final String category;
     public final String subcategory;
@@ -65,7 +92,7 @@ public abstract class BasicOption {
      * @param x  x position
      * @param y  y position
      */
-    public abstract void draw(long vg, int x, int y);
+    public abstract void draw(long vg, int x, int y, InputHandler inputHandler);
 
     /**
      * Function that gets called last drawing option,
@@ -75,7 +102,7 @@ public abstract class BasicOption {
      * @param x  x position
      * @param y  y position
      */
-    public void drawLast(long vg, int x, int y) {
+    public void drawLast(long vg, int x, int y , InputHandler inputHandler) {
     }
 
     /**
@@ -143,5 +170,26 @@ public abstract class BasicOption {
      */
     public void addHideCondition(Supplier<Boolean> supplier) {
         this.hideConditions.add(supplier);
+    }
+
+    /**
+     * @return The field
+     */
+    public Field getField() {
+        return field;
+    }
+
+    /**
+     * @return The parent of the field
+     */
+    public Object getParent() {
+        return parent;
+    }
+
+    /**
+     * @param parent The new parent object
+     */
+    public void setParent(Object parent) {
+        this.parent = parent;
     }
 }

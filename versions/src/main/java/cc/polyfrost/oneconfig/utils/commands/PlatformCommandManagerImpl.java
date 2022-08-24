@@ -1,3 +1,29 @@
+/*
+ * This file is part of OneConfig.
+ * OneConfig - Next Generation Config Library for Minecraft: Java Edition
+ * Copyright (C) 2021, 2022 Polyfrost.
+ *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
+ *
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ *   OneConfig is licensed under the terms of version 3 of the GNU Lesser
+ * General Public License as published by the Free Software Foundation, AND
+ * under the Additional Terms Applicable to OneConfig, as published by Polyfrost,
+ * either version 1.0 of the Additional Terms, or (at your option) any later
+ * version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ *   You should have received a copy of the GNU Lesser General Public
+ * License.  If not, see <https://www.gnu.org/licenses/>. You should
+ * have also received a copy of the Additional Terms Applicable
+ * to OneConfig, as published by Polyfrost. If not, see
+ * <https://polyfrost.cc/legal/oneconfig/additional-terms>
+ */
+
 //#if MC>=11202
 package cc.polyfrost.oneconfig.utils.commands;
 
@@ -41,11 +67,11 @@ public class PlatformCommandManagerImpl extends PlatformCommandManager {
 
             @Override
             public void
-                    //#if MC<=10809
-                    processCommand(ICommandSender sender, String[] args)
-                    //#else
-                    //$$ execute(net.minecraft.server.MinecraftServer server, ICommandSender sender, String[] args)
-                    //#endif
+                //#if MC<=10809
+                processCommand(ICommandSender sender, String[] args)
+                //#else
+                //$$ execute(net.minecraft.server.MinecraftServer server, ICommandSender sender, String[] args)
+                //#endif
             {
                 if (args.length == 0) {
                     if (!root.invokers.isEmpty()) {
@@ -115,11 +141,11 @@ public class PlatformCommandManagerImpl extends PlatformCommandManager {
 
             @Override
             public List<String>
-                    //#if MC<=10809
-                    addTabCompletionOptions(ICommandSender sender, String[] args, BlockPos pos)
-                    //#else
-                    //$$ getTabCompletions(net.minecraft.server.MinecraftServer server, ICommandSender sender, String[] args, BlockPos targetPos)
-                    //#endif
+                //#if MC<=10809
+                addTabCompletionOptions(ICommandSender sender, String[] args, BlockPos pos)
+                //#else
+                //$$ getTabCompletions(net.minecraft.server.MinecraftServer server, ICommandSender sender, String[] args, BlockPos targetPos)
+                //#endif
             {
                 try {
                     Set<Pair<InternalCommand.InternalCommandInvoker, Integer>> commands = new HashSet<>();
@@ -257,7 +283,8 @@ public class PlatformCommandManagerImpl extends PlatformCommandManager {
             }
             boolean added = false;
             for (CommandManager.InternalCommand.InternalCommandInvoker invoker : command.invokers) {
-                if (args.length - nextDepth == invoker.parameterTypes.length) {
+                if (args.length - nextDepth == invoker.parameterTypes.length ||
+                        invoker.method.getParameters()[invoker.parameterTypes.length - 1].isAnnotationPresent(Greedy.class)) {
                     commands.add(invoker);
                     added = true;
                 } else {

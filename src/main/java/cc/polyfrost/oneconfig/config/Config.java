@@ -1,3 +1,29 @@
+/*
+ * This file is part of OneConfig.
+ * OneConfig - Next Generation Config Library for Minecraft: Java Edition
+ * Copyright (C) 2021, 2022 Polyfrost.
+ *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
+ *
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ *   OneConfig is licensed under the terms of version 3 of the GNU Lesser
+ * General Public License as published by the Free Software Foundation, AND
+ * under the Additional Terms Applicable to OneConfig, as published by Polyfrost,
+ * either version 1.0 of the Additional Terms, or (at your option) any later
+ * version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ *   You should have received a copy of the GNU Lesser General Public
+ * License.  If not, see <https://www.gnu.org/licenses/>. You should
+ * have also received a copy of the Additional Terms Applicable
+ * to OneConfig, as published by Polyfrost. If not, see
+ * <https://polyfrost.cc/legal/oneconfig/additional-terms>
+ */
+
 package cc.polyfrost.oneconfig.config;
 
 import cc.polyfrost.oneconfig.config.annotations.*;
@@ -8,11 +34,11 @@ import cc.polyfrost.oneconfig.config.data.PageLocation;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
 import cc.polyfrost.oneconfig.config.elements.OptionPage;
 import cc.polyfrost.oneconfig.config.elements.OptionSubcategory;
-import cc.polyfrost.oneconfig.config.gson.NonProfileSpecificExclusionStrategy;
-import cc.polyfrost.oneconfig.config.gson.ProfileExclusionStrategy;
-import cc.polyfrost.oneconfig.config.profiles.Profiles;
+import cc.polyfrost.oneconfig.config.gson.exclusion.NonProfileSpecificExclusionStrategy;
+import cc.polyfrost.oneconfig.config.gson.exclusion.ProfileExclusionStrategy;
+import cc.polyfrost.oneconfig.config.gson.gsoninterface.InterfaceAdapterFactory;
+import cc.polyfrost.oneconfig.gui.elements.config.ConfigKeyBind;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
-import cc.polyfrost.oneconfig.gui.elements.config.ConfigButton;
 import cc.polyfrost.oneconfig.gui.elements.config.ConfigPageButton;
 import cc.polyfrost.oneconfig.gui.pages.ModConfigPage;
 import cc.polyfrost.oneconfig.hud.HUDUtils;
@@ -28,7 +54,6 @@ import java.io.BufferedWriter;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -39,11 +64,20 @@ import java.util.function.Supplier;
 public class Config {
     public final transient HashMap<String, BasicOption> optionNames = new HashMap<>();
     transient protected final String configFile;
-    transient protected final Gson gson = new GsonBuilder().setExclusionStrategies(new ProfileExclusionStrategy()).excludeFieldsWithModifiers(Modifier.TRANSIENT).setPrettyPrinting().create();
-    transient protected final Gson nonProfileSpecificGson = new GsonBuilder().setExclusionStrategies(new NonProfileSpecificExclusionStrategy()).excludeFieldsWithModifiers(Modifier.TRANSIENT).setPrettyPrinting().create();
+    transient protected final Gson gson = new GsonBuilder()
+            .setExclusionStrategies(new ProfileExclusionStrategy())
+            .registerTypeAdapterFactory(new InterfaceAdapterFactory())
+            .excludeFieldsWithModifiers(Modifier.TRANSIENT)
+            .setPrettyPrinting()
+            .create();
+    transient protected final Gson nonProfileSpecificGson = new GsonBuilder()
+            .setExclusionStrategies(new NonProfileSpecificExclusionStrategy())
+            .registerTypeAdapterFactory(new InterfaceAdapterFactory())
+            .excludeFieldsWithModifiers(Modifier.TRANSIENT)
+            .setPrettyPrinting()
+            .create();
     transient protected final HashMap<Field, Object> defaults = new HashMap<>();
     transient public Mod mod;
-    public transient boolean hasBeenInitialized = false;
     public boolean enabled;
 
     /**
@@ -67,28 +101,32 @@ public class Config {
 
     public void initialize() {
         boolean migrate = false;
-        if (Profiles.getProfileFile(configFile).exists()) load();
-        else if (!hasBeenInitialized && mod.migrator != null) migrate = true;
+        if (ConfigUtils.getProfileFile(configFile).exists()) load();
+        else if (mod.migrator != null) migrate = true;
         else save();
         mod.config = this;
         generateOptionList(this, mod.defaultPage, mod, migrate);
         if (migrate) save();
         ConfigCore.mods.add(mod);
-        hasBeenInitialized = true;
+    }
+
+    public void reInitialize() {
+        if (ConfigUtils.getProfileFile(configFile).exists()) load();
+        else save();
     }
 
     /**
      * Save current config to file
      */
     public void save() {
-        Profiles.getProfileFile(configFile).getParentFile().mkdirs();
-        Profiles.getNonProfileSpecificDir(configFile).getParentFile().mkdirs();
-        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(Files.newOutputStream(Profiles.getProfileFile(configFile).toPath()), StandardCharsets.UTF_8))) {
+        ConfigUtils.getProfileFile(configFile).getParentFile().mkdirs();
+        ConfigUtils.getNonProfileSpecificFile(configFile).getParentFile().mkdirs();
+        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(Files.newOutputStream(ConfigUtils.getProfileFile(configFile).toPath()), StandardCharsets.UTF_8))) {
             writer.write(gson.toJson(this));
         } catch (Exception e) {
             e.printStackTrace();
         }
-        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(Files.newOutputStream(Profiles.getNonProfileSpecificDir(configFile).toPath()), StandardCharsets.UTF_8))) {
+        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(Files.newOutputStream(ConfigUtils.getNonProfileSpecificFile(configFile).toPath()), StandardCharsets.UTF_8))) {
             writer.write(nonProfileSpecificGson.toJson(this));
         } catch (Exception e) {
             e.printStackTrace();
@@ -99,12 +137,12 @@ public class Config {
      * Load file and overwrite current values
      */
     public void load() {
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(Files.newInputStream(Profiles.getProfileFile(configFile).toPath()), StandardCharsets.UTF_8))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(Files.newInputStream(ConfigUtils.getProfileFile(configFile).toPath()), StandardCharsets.UTF_8))) {
             deserializePart(JsonUtils.PARSER.parse(reader).getAsJsonObject(), this);
         } catch (Exception e) {
             e.printStackTrace();
         }
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(Files.newInputStream(Profiles.getNonProfileSpecificDir(configFile).toPath()), StandardCharsets.UTF_8))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(Files.newInputStream(ConfigUtils.getNonProfileSpecificFile(configFile).toPath()), StandardCharsets.UTF_8))) {
             deserializePart(JsonUtils.PARSER.parse(reader).getAsJsonObject(), this);
         } catch (Exception e) {
             e.printStackTrace();
@@ -321,8 +359,23 @@ public class Config {
      * @param runnable The code to be executed
      */
     protected void registerKeyBind(OneKeyBind keyBind, Runnable runnable) {
+        Field field = null;
+        Object instance = null;
+        for (BasicOption option : optionNames.values()) {
+            if (!(option instanceof ConfigKeyBind)) continue;
+            try {
+                Field f = option.getField();
+                OneKeyBind keyBind1 = (OneKeyBind) option.get();
+                if (keyBind1 != keyBind) continue;
+                field = f;
+                instance = option.getParent();
+            } catch (IllegalAccessException ignored) {
+                continue;
+            }
+            break;
+        }
         keyBind.setRunnable(runnable);
-        KeyBindHandler.INSTANCE.addKeyBind(keyBind);
+        KeyBindHandler.INSTANCE.addKeyBind(field, instance, keyBind);
     }
 
     /**
@@ -340,5 +393,12 @@ public class Config {
         for (BasicOption option : optionNames.values()) {
             option.reset(this);
         }
+    }
+
+    /**
+     * @return If this mod supports profiles, false for compatibility mode
+     */
+    public boolean supportsProfiles() {
+        return true;
     }
 }

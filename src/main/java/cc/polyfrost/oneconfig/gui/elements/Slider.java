@@ -1,9 +1,35 @@
+/*
+ * This file is part of OneConfig.
+ * OneConfig - Next Generation Config Library for Minecraft: Java Edition
+ * Copyright (C) 2021, 2022 Polyfrost.
+ *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
+ *
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ *   OneConfig is licensed under the terms of version 3 of the GNU Lesser
+ * General Public License as published by the Free Software Foundation, AND
+ * under the Additional Terms Applicable to OneConfig, as published by Polyfrost,
+ * either version 1.0 of the Additional Terms, or (at your option) any later
+ * version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ *   You should have received a copy of the GNU Lesser General Public
+ * License.  If not, see <https://www.gnu.org/licenses/>. You should
+ * have also received a copy of the Additional Terms Applicable
+ * to OneConfig, as published by Polyfrost. If not, see
+ * <https://polyfrost.cc/legal/oneconfig/additional-terms>
+ */
+
 package cc.polyfrost.oneconfig.gui.elements;
 
 import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
-import cc.polyfrost.oneconfig.utils.InputUtils;
+import cc.polyfrost.oneconfig.utils.InputHandler;
 
 public class Slider extends BasicElement {
     private final float min, max;
@@ -21,8 +47,8 @@ public class Slider extends BasicElement {
     }
 
     @Override
-    public void draw(long vg, float x, float y) {
-        if(!disabled) update(x, y);
+    public void draw(long vg, float x, float y, InputHandler inputHandler) {
+        if(!disabled) update(x, y, inputHandler);
         else RenderManager.setAlpha(vg, 0.5f);
         RenderManager.drawRoundedRect(vg, x, y + 2, width, height - 4, Colors.GRAY_300, 3f);
         RenderManager.drawRoundedRect(vg, x, y + 2, width * value, height - 4, Colors.PRIMARY_500, 3f);
@@ -32,18 +58,18 @@ public class Slider extends BasicElement {
 
     }
 
-    public void update(float x, float y) {
-        super.update(x, y);
+    public void update(float x, float y, InputHandler inputHandler) {
+        super.update(x, y, inputHandler);
         boolean isMouseDown = Platform.getMousePlatform().isButtonDown(0);
-        boolean hovered = InputUtils.isAreaHovered(x - 6, y - 3, width + 12, height + 6);
+        boolean hovered = inputHandler.isAreaHovered(x - 6, y - 3, width + 12, height + 6);
         if (hovered && isMouseDown && !mouseWasDown) dragging = true;
         mouseWasDown = isMouseDown;
         if (dragging) {
-            value = (InputUtils.mouseX() - x) / width;
+            value = (inputHandler.mouseX() - x) / width;
         }
-        if (dragging && InputUtils.isClicked(true)) {
+        if (dragging && inputHandler.isClicked(true)) {
             dragging = false;
-            value = (InputUtils.mouseX() - x) / width;
+            value = (inputHandler.mouseX() - x) / width;
         }
 
         if (value < 0) value = 0;
