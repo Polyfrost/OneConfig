@@ -26,20 +26,53 @@
 
 package cc.polyfrost.oneconfig.gui.animations;
 
+import java.util.concurrent.Callable;
+
 public class DummyAnimation extends Animation {
     protected final float value;
+    protected Callable<Boolean> done = null;
+
+    /**
+     * @param value The value that is returned
+     * @param done  A callable that returns if the animation is finished
+     */
+    public DummyAnimation(float value, Callable<Boolean> done) {
+        super(0, value, value, false);
+        this.value = value;
+        this.done = done;
+    }
+
+    /**
+     * @param value    The value that is returned
+     * @param duration The duration of the animation
+     */
+    public DummyAnimation(float value, float duration) {
+        super(duration, value, value, false);
+        this.value = value;
+    }
 
     /**
      * @param value The value that is returned
      */
     public DummyAnimation(float value) {
-        super(value, value, value, false);
-        this.value = value;
+        this(value, 0);
     }
 
     @Override
     public float get(float deltaTime) {
+        timePassed += deltaTime;
         return value;
+    }
+
+    @Override
+    public boolean isFinished() {
+        if (done != null) {
+            try {
+                return done.call();
+            } catch (Exception ignored) {
+            }
+        }
+        return super.isFinished();
     }
 
     @Override

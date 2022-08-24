@@ -28,13 +28,13 @@ package cc.polyfrost.oneconfig.utils;
 
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Font;
-import cc.polyfrost.oneconfig.renderer.font.Fonts;
 
 import java.util.ArrayList;
 
 /**
- * Simple text utility class for NanoVG text rendering.
+ * @deprecated Use RenderManager's functions for wrapping text and getting the height of it instead
  */
+@Deprecated
 public final class TextUtils {
 
     /**

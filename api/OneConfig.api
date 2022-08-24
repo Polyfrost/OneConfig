@@ -560,10 +560,11 @@ public class cc/polyfrost/oneconfig/gui/OneConfigGui : cc/polyfrost/oneconfig/ut
 	public fun doesGuiPauseGame ()Z
 	public fun draw (JFLcc/polyfrost/oneconfig/utils/InputHandler;)V
 	public fun getColor ()Lcc/polyfrost/oneconfig/config/core/OneColor;
-	public fun getScaleFactor ()F
+	public static fun getScaleFactor ()F
 	public fun getSearchValue ()Ljava/lang/String;
 	public fun hasBackgroundBlur ()Z
 	public fun initColorSelector (Lcc/polyfrost/oneconfig/gui/elements/ColorSelector;)V
+	public static fun isOpen ()Z
 	public fun onKeyPressed (ICLcc/polyfrost/oneconfig/libs/universal/UKeyboard$Modifiers;)V
 	public fun onScreenClose ()V
 	public fun openPage (Lcc/polyfrost/oneconfig/gui/pages/Page;)V
@@ -578,12 +579,26 @@ public class cc/polyfrost/oneconfig/gui/SideBar {
 }
 
 public abstract class cc/polyfrost/oneconfig/gui/animations/Animation {
+	protected final field change F
+	protected final field duration F
+	protected final field reverse Z
+	protected final field start F
+	protected field timePassed F
 	public fun <init> (FFFZ)V
 	protected abstract fun animate (F)F
 	public fun get ()F
 	public fun get (F)F
+	public fun getEnd ()F
+	public fun getStart ()F
 	public fun isFinished ()Z
 	public fun isReversed ()Z
+}
+
+public class cc/polyfrost/oneconfig/gui/animations/ChainedAnimation : cc/polyfrost/oneconfig/gui/animations/Animation {
+	public fun <init> ([Lcc/polyfrost/oneconfig/gui/animations/Animation;)V
+	protected fun animate (F)F
+	public fun get (F)F
+	public fun isFinished ()Z
 }
 
 public class cc/polyfrost/oneconfig/gui/animations/ColorAnimation {
@@ -607,10 +622,14 @@ public class cc/polyfrost/oneconfig/gui/animations/CubicBezier : cc/polyfrost/on
 }
 
 public class cc/polyfrost/oneconfig/gui/animations/DummyAnimation : cc/polyfrost/oneconfig/gui/animations/Animation {
+	protected field done Ljava/util/concurrent/Callable;
 	protected final field value F
 	public fun <init> (F)V
+	public fun <init> (FF)V
+	public fun <init> (FLjava/util/concurrent/Callable;)V
 	protected fun animate (F)F
 	public fun get (F)F
+	public fun isFinished ()Z
 }
 
 public class cc/polyfrost/oneconfig/gui/animations/EaseInOutCubic : cc/polyfrost/oneconfig/gui/animations/Animation {
@@ -1200,6 +1219,25 @@ public final class cc/polyfrost/oneconfig/renderer/AssetLoader {
 	public fun removeSVG (JLjava/lang/String;FF)V
 }
 
+public class cc/polyfrost/oneconfig/renderer/Icon {
+	public final field type Lcc/polyfrost/oneconfig/renderer/Icon$Type;
+	public fun <init> (Lcc/polyfrost/oneconfig/renderer/Image;)V
+	public fun <init> (Lcc/polyfrost/oneconfig/renderer/SVG;)V
+	public fun <init> (Ljava/lang/String;)V
+	public fun draw (JFFFF)V
+	public fun draw (JFFFFI)V
+	public fun draw (JFFFFIF)V
+	public fun getImage ()Lcc/polyfrost/oneconfig/renderer/Image;
+	public fun getSVG ()Lcc/polyfrost/oneconfig/renderer/SVG;
+}
+
+public final class cc/polyfrost/oneconfig/renderer/Icon$Type : java/lang/Enum {
+	public static final field IMAGE Lcc/polyfrost/oneconfig/renderer/Icon$Type;
+	public static final field SVG Lcc/polyfrost/oneconfig/renderer/Icon$Type;
+	public static fun valueOf (Ljava/lang/String;)Lcc/polyfrost/oneconfig/renderer/Icon$Type;
+	public static fun values ()[Lcc/polyfrost/oneconfig/renderer/Icon$Type;
+}
+
 public class cc/polyfrost/oneconfig/renderer/Image {
 	public final field filePath Ljava/lang/String;
 	public final field flags I
@@ -1230,18 +1268,25 @@ public final class cc/polyfrost/oneconfig/renderer/RenderManager {
 	public static fun drawRoundedRectVaried (JFFFFIFFFF)V
 	public static fun drawScaledString (Ljava/lang/String;FFILcc/polyfrost/oneconfig/renderer/RenderManager$TextType;F)V
 	public static fun drawSvg (JLcc/polyfrost/oneconfig/renderer/SVG;FFFF)V
+	public static fun drawSvg (JLcc/polyfrost/oneconfig/renderer/SVG;FFFFF)V
 	public static fun drawSvg (JLcc/polyfrost/oneconfig/renderer/SVG;FFFFI)V
+	public static fun drawSvg (JLcc/polyfrost/oneconfig/renderer/SVG;FFFFIF)V
 	public static fun drawSvg (JLjava/lang/String;FFFF)V
+	public static fun drawSvg (JLjava/lang/String;FFFFF)V
 	public static fun drawSvg (JLjava/lang/String;FFFFI)V
+	public static fun drawSvg (JLjava/lang/String;FFFFIF)V
 	public static fun drawText (JLjava/lang/String;FFIFLcc/polyfrost/oneconfig/renderer/font/Font;)V
 	public static fun drawURL (JLjava/lang/String;FFFLcc/polyfrost/oneconfig/renderer/font/Font;Lcc/polyfrost/oneconfig/utils/InputHandler;)V
-	public static fun drawWrappedString (JLjava/lang/String;FFFIFLcc/polyfrost/oneconfig/renderer/font/Font;)V
+	public static fun drawWrappedString (JLjava/lang/String;FFFIFFLcc/polyfrost/oneconfig/renderer/font/Font;)V
 	public static fun fillNVGColorWithRGBA (FFFFLorg/lwjgl/nanovg/NVGColor;)V
 	public static fun getTextWidth (JLjava/lang/String;FLcc/polyfrost/oneconfig/renderer/font/Font;)F
+	public static fun getWrappedStringHeight (JLjava/lang/String;FFFLcc/polyfrost/oneconfig/renderer/font/Font;)F
+	public static fun resetTransform (J)V
 	public static fun scale (JFF)V
 	public static fun setAlpha (JF)V
 	public static fun setupAndDraw (Ljava/util/function/LongConsumer;)V
 	public static fun setupAndDraw (ZLjava/util/function/LongConsumer;)V
+	public static fun translate (JFF)V
 }
 
 public final class cc/polyfrost/oneconfig/renderer/RenderManager$TextType : java/lang/Enum {
@@ -1337,6 +1382,8 @@ public class cc/polyfrost/oneconfig/utils/InputHandler {
 	public fun isBlockingInput ()Z
 	public fun isClicked ()Z
 	public fun isClicked (Z)Z
+	public fun isMouseDown ()Z
+	public fun isMouseDown (I)Z
 	public fun mouseX ()F
 	public fun mouseY ()F
 	public fun resetScale ()V
@@ -1378,6 +1425,24 @@ public final class cc/polyfrost/oneconfig/utils/NetworkUtils {
 	public static fun getJsonElement (Ljava/lang/String;Ljava/lang/String;IZ)Lcom/google/gson/JsonElement;
 	public static fun getString (Ljava/lang/String;)Ljava/lang/String;
 	public static fun getString (Ljava/lang/String;Ljava/lang/String;IZ)Ljava/lang/String;
+}
+
+public final class cc/polyfrost/oneconfig/utils/Notifications {
+	public static final field INSTANCE Lcc/polyfrost/oneconfig/utils/Notifications;
+	public fun send (Ljava/lang/String;Ljava/lang/String;)V
+	public fun send (Ljava/lang/String;Ljava/lang/String;F)V
+	public fun send (Ljava/lang/String;Ljava/lang/String;FLjava/lang/Runnable;)V
+	public fun send (Ljava/lang/String;Ljava/lang/String;FLjava/util/concurrent/Callable;)V
+	public fun send (Ljava/lang/String;Ljava/lang/String;FLjava/util/concurrent/Callable;Ljava/lang/Runnable;)V
+	public fun send (Ljava/lang/String;Ljava/lang/String;Lcc/polyfrost/oneconfig/renderer/Icon;)V
+	public fun send (Ljava/lang/String;Ljava/lang/String;Lcc/polyfrost/oneconfig/renderer/Icon;F)V
+	public fun send (Ljava/lang/String;Ljava/lang/String;Lcc/polyfrost/oneconfig/renderer/Icon;FLjava/lang/Runnable;)V
+	public fun send (Ljava/lang/String;Ljava/lang/String;Lcc/polyfrost/oneconfig/renderer/Icon;FLjava/util/concurrent/Callable;)V
+	public fun send (Ljava/lang/String;Ljava/lang/String;Lcc/polyfrost/oneconfig/renderer/Icon;FLjava/util/concurrent/Callable;Ljava/lang/Runnable;)V
+	public fun send (Ljava/lang/String;Ljava/lang/String;Lcc/polyfrost/oneconfig/renderer/Icon;Ljava/lang/Runnable;)V
+	public fun send (Ljava/lang/String;Ljava/lang/String;Lcc/polyfrost/oneconfig/renderer/Icon;Ljava/util/concurrent/Callable;)V
+	public fun send (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Runnable;)V
+	public fun send (Ljava/lang/String;Ljava/lang/String;Ljava/util/concurrent/Callable;)V
 }
 
 public final class cc/polyfrost/oneconfig/utils/TextUtils {
@@ -1586,18 +1651,26 @@ public final class cc/polyfrost/oneconfig/utils/dsl/RenderManagerDSLKt {
 	public static final fun drawRoundedRectVaried (Lcc/polyfrost/oneconfig/utils/dsl/VG;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;ILjava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;)V
 	public static final fun drawSVG (JLcc/polyfrost/oneconfig/renderer/SVG;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;)V
 	public static final fun drawSVG (JLcc/polyfrost/oneconfig/renderer/SVG;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;I)V
+	public static final fun drawSVG (JLcc/polyfrost/oneconfig/renderer/SVG;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;ILjava/lang/Number;)V
+	public static final fun drawSVG (JLcc/polyfrost/oneconfig/renderer/SVG;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;)V
 	public static final fun drawSVG (JLjava/lang/String;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;)V
 	public static final fun drawSVG (JLjava/lang/String;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;I)V
+	public static final fun drawSVG (JLjava/lang/String;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;ILjava/lang/Number;)V
+	public static final fun drawSVG (JLjava/lang/String;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;)V
 	public static final fun drawSVG (Lcc/polyfrost/oneconfig/utils/dsl/VG;Lcc/polyfrost/oneconfig/renderer/SVG;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;)V
 	public static final fun drawSVG (Lcc/polyfrost/oneconfig/utils/dsl/VG;Lcc/polyfrost/oneconfig/renderer/SVG;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;I)V
+	public static final fun drawSVG (Lcc/polyfrost/oneconfig/utils/dsl/VG;Lcc/polyfrost/oneconfig/renderer/SVG;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;ILjava/lang/Number;)V
+	public static final fun drawSVG (Lcc/polyfrost/oneconfig/utils/dsl/VG;Lcc/polyfrost/oneconfig/renderer/SVG;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;)V
 	public static final fun drawSVG (Lcc/polyfrost/oneconfig/utils/dsl/VG;Ljava/lang/String;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;)V
 	public static final fun drawSVG (Lcc/polyfrost/oneconfig/utils/dsl/VG;Ljava/lang/String;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;I)V
+	public static final fun drawSVG (Lcc/polyfrost/oneconfig/utils/dsl/VG;Ljava/lang/String;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;ILjava/lang/Number;)V
+	public static final fun drawSVG (Lcc/polyfrost/oneconfig/utils/dsl/VG;Ljava/lang/String;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;)V
 	public static final fun drawText (JLjava/lang/String;Ljava/lang/Number;Ljava/lang/Number;ILjava/lang/Number;Lcc/polyfrost/oneconfig/renderer/font/Font;)V
 	public static final fun drawText (Lcc/polyfrost/oneconfig/utils/dsl/VG;Ljava/lang/String;Ljava/lang/Number;Ljava/lang/Number;ILjava/lang/Number;Lcc/polyfrost/oneconfig/renderer/font/Font;)V
 	public static final fun drawURL (JLjava/lang/String;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;Lcc/polyfrost/oneconfig/renderer/font/Font;Lcc/polyfrost/oneconfig/utils/InputHandler;)V
 	public static final fun drawURL (Lcc/polyfrost/oneconfig/utils/dsl/VG;Ljava/lang/String;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;Lcc/polyfrost/oneconfig/renderer/font/Font;Lcc/polyfrost/oneconfig/utils/InputHandler;)V
-	public static final fun drawWrappedString (JLjava/lang/String;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;ILjava/lang/Number;Lcc/polyfrost/oneconfig/renderer/font/Font;)V
-	public static final fun drawWrappedString (Lcc/polyfrost/oneconfig/utils/dsl/VG;Ljava/lang/String;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;ILjava/lang/Number;Lcc/polyfrost/oneconfig/renderer/font/Font;)V
+	public static final fun drawWrappedString (JLjava/lang/String;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;ILjava/lang/Number;Ljava/lang/Number;Lcc/polyfrost/oneconfig/renderer/font/Font;)V
+	public static final fun drawWrappedString (Lcc/polyfrost/oneconfig/utils/dsl/VG;Ljava/lang/String;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;ILjava/lang/Number;Ljava/lang/Number;Lcc/polyfrost/oneconfig/renderer/font/Font;)V
 	public static final fun fill (Lorg/lwjgl/nanovg/NVGColor;FFFF)V
 	public static final fun fill (Lorg/lwjgl/nanovg/NVGColor;I)V
 	public static final fun fill (Lorg/lwjgl/nanovg/NVGColor;IIII)V
@@ -1610,10 +1683,14 @@ public final class cc/polyfrost/oneconfig/utils/dsl/RenderManagerDSLKt {
 	public static final fun newColor (JIIII)Lorg/lwjgl/nanovg/NVGColor;
 	public static final fun newColor (Lcc/polyfrost/oneconfig/utils/dsl/VG;I)Lorg/lwjgl/nanovg/NVGColor;
 	public static final fun newColor (Lcc/polyfrost/oneconfig/utils/dsl/VG;IIII)Lorg/lwjgl/nanovg/NVGColor;
+	public static final fun resetTransform (J)V
+	public static final fun resetTransform (Lcc/polyfrost/oneconfig/utils/dsl/VG;)V
 	public static final fun scale (JFF)V
 	public static final fun scale (Lcc/polyfrost/oneconfig/utils/dsl/VG;FF)V
 	public static final fun setAlpha (JF)V
 	public static final fun setAlpha (Lcc/polyfrost/oneconfig/utils/dsl/VG;F)V
+	public static final fun translate (JFF)V
+	public static final fun translate (Lcc/polyfrost/oneconfig/utils/dsl/VG;FF)V
 }
 
 public final class cc/polyfrost/oneconfig/utils/dsl/TextUtilsDSLKt {
@@ -1708,26 +1785,5 @@ public final class cc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType : ja
 	public fun getServerName ()Ljava/lang/String;
 	public static fun valueOf (Ljava/lang/String;)Lcc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
 	public static fun values ()[Lcc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-}
-
-public final class cc/polyfrost/oneconfig/utils/notifications/Notification {
-	public fun getAction ()Ljava/lang/Runnable;
-	public fun getDuration ()F
-	public fun getMessage ()Ljava/lang/String;
-	public fun getOnClose ()Ljava/lang/Runnable;
-	public fun getTitle ()Ljava/lang/String;
-	public fun getX ()F
-	public fun getY ()F
-	public fun setMessage (Ljava/lang/String;)V
-	public fun setTitle (Ljava/lang/String;)V
-}
-
-public final class cc/polyfrost/oneconfig/utils/notifications/Notifications {
-	public static final field INSTANCE Lcc/polyfrost/oneconfig/utils/notifications/Notifications;
-	public fun send (Ljava/lang/String;Ljava/lang/String;)V
-	public fun send (Ljava/lang/String;Ljava/lang/String;F)V
-	public fun send (Ljava/lang/String;Ljava/lang/String;FLjava/lang/Runnable;)V
-	public fun send (Ljava/lang/String;Ljava/lang/String;FLjava/lang/Runnable;Ljava/lang/Runnable;)V
-	public fun send (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Runnable;)V
 }
 

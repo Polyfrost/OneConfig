@@ -26,10 +26,7 @@
 
 package cc.polyfrost.oneconfig.internal.config;
 
-import cc.polyfrost.oneconfig.config.annotations.Exclude;
-import cc.polyfrost.oneconfig.config.annotations.KeyBind;
-import cc.polyfrost.oneconfig.config.annotations.Slider;
-import cc.polyfrost.oneconfig.config.annotations.Switch;
+import cc.polyfrost.oneconfig.config.annotations.*;
 import cc.polyfrost.oneconfig.config.core.OneKeyBind;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.internal.gui.BlurHandler;
@@ -49,6 +46,12 @@ public class Preferences extends InternalConfig {
     )
     public static OneKeyBind oneConfigKeyBind = new OneKeyBind(UKeyboard.KEY_RSHIFT);
 
+    @Dropdown(
+            name = "Release Channel",
+            options = {"Releases", "Pre-Releases"},
+            size = 2
+    )
+    public static int updateChannel = 0;
 
     @Switch(
             name = "Use custom GUI scale",
@@ -73,6 +76,10 @@ public class Preferences extends InternalConfig {
         initialize();
         addListener("enableBlur", () -> BlurHandler.INSTANCE.reloadBlur(Platform.getGuiPlatform().getCurrentScreen()));
         registerKeyBind(oneConfigKeyBind, () -> new TickDelay(() -> Platform.getGuiPlatform().setCurrentScreen(OneConfigGui.create()), 1));
+        addListener("updateChannel", () -> {
+            OneConfigConfig.updateChannel = updateChannel;
+            OneConfigConfig.getInstance().save();
+        });
         INSTANCE = this;
     }
 

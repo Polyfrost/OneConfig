@@ -24,35 +24,33 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.utils.notifications;
+package cc.polyfrost.oneconfig.gui.animations;
 
-/**
- * @deprecated Reserved for future use, not implemented yet.
- */
-@Deprecated
-public final class Notifications {
-    public static final Notifications INSTANCE = new Notifications();
-    private Notifications() {
+public class ChainedAnimation extends Animation {
+    private final Animation[] animations;
+    private int currentAnimation = 0;
+    private float value;
 
+    public ChainedAnimation(Animation... animations) {
+        super(1, 0, 0, false);
+        this.animations = animations;
     }
 
-    public void send(String title, String message) {
-
+    @Override
+    public float get(float deltaTime) {
+        if (currentAnimation >= animations.length) return value;
+        value = animations[currentAnimation].get(deltaTime);
+        if (animations[currentAnimation].isFinished()) currentAnimation++;
+        return value;
     }
 
-    public void send(String title, String message, Runnable action) {
-
+    @Override
+    public boolean isFinished() {
+        return currentAnimation >= animations.length;
     }
 
-    public void send(String title, String message, float duration) {
-
-    }
-
-    public void send(String title, String message, float duration, Runnable action) {
-
-    }
-
-    public void send(String title, String message, float duration, Runnable action, Runnable onClose) {
-
+    @Override
+    protected float animate(float x) {
+        return 0;
     }
 }
