@@ -34,8 +34,9 @@ import cc.polyfrost.oneconfig.config.data.PageLocation;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
 import cc.polyfrost.oneconfig.config.elements.OptionPage;
 import cc.polyfrost.oneconfig.config.elements.OptionSubcategory;
-import cc.polyfrost.oneconfig.config.gson.NonProfileSpecificExclusionStrategy;
-import cc.polyfrost.oneconfig.config.gson.ProfileExclusionStrategy;
+import cc.polyfrost.oneconfig.config.gson.exclusion.NonProfileSpecificExclusionStrategy;
+import cc.polyfrost.oneconfig.config.gson.exclusion.ProfileExclusionStrategy;
+import cc.polyfrost.oneconfig.config.gson.gsoninterface.InterfaceAdapterFactory;
 import cc.polyfrost.oneconfig.gui.elements.config.ConfigKeyBind;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.elements.config.ConfigPageButton;
@@ -63,8 +64,18 @@ import java.util.function.Supplier;
 public class Config {
     public final transient HashMap<String, BasicOption> optionNames = new HashMap<>();
     transient protected final String configFile;
-    transient protected final Gson gson = new GsonBuilder().setExclusionStrategies(new ProfileExclusionStrategy()).excludeFieldsWithModifiers(Modifier.TRANSIENT).setPrettyPrinting().create();
-    transient protected final Gson nonProfileSpecificGson = new GsonBuilder().setExclusionStrategies(new NonProfileSpecificExclusionStrategy()).excludeFieldsWithModifiers(Modifier.TRANSIENT).setPrettyPrinting().create();
+    transient protected final Gson gson = new GsonBuilder()
+            .setExclusionStrategies(new ProfileExclusionStrategy())
+            .registerTypeAdapterFactory(new InterfaceAdapterFactory())
+            .excludeFieldsWithModifiers(Modifier.TRANSIENT)
+            .setPrettyPrinting()
+            .create();
+    transient protected final Gson nonProfileSpecificGson = new GsonBuilder()
+            .setExclusionStrategies(new NonProfileSpecificExclusionStrategy())
+            .registerTypeAdapterFactory(new InterfaceAdapterFactory())
+            .excludeFieldsWithModifiers(Modifier.TRANSIENT)
+            .setPrettyPrinting()
+            .create();
     transient protected final HashMap<Field, Object> defaults = new HashMap<>();
     transient public Mod mod;
     public boolean enabled;

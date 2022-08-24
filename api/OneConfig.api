@@ -332,21 +332,71 @@ public class cc/polyfrost/oneconfig/config/elements/OptionSubcategory {
 	public fun reset (Lcc/polyfrost/oneconfig/config/Config;)V
 }
 
-public class cc/polyfrost/oneconfig/config/gson/ExclusionUtils {
+public class cc/polyfrost/oneconfig/config/gson/exclusion/ExclusionUtils {
 	public fun <init> ()V
 	protected static fun isSuperClassOf (Ljava/lang/Class;Ljava/lang/Class;)Z
 }
 
-public class cc/polyfrost/oneconfig/config/gson/NonProfileSpecificExclusionStrategy : cc/polyfrost/oneconfig/config/gson/ExclusionUtils, com/google/gson/ExclusionStrategy {
+public class cc/polyfrost/oneconfig/config/gson/exclusion/NonProfileSpecificExclusionStrategy : cc/polyfrost/oneconfig/config/gson/exclusion/ExclusionUtils, com/google/gson/ExclusionStrategy {
 	public fun <init> ()V
 	public fun shouldSkipClass (Ljava/lang/Class;)Z
 	public fun shouldSkipField (Lcom/google/gson/FieldAttributes;)Z
 }
 
-public class cc/polyfrost/oneconfig/config/gson/ProfileExclusionStrategy : cc/polyfrost/oneconfig/config/gson/ExclusionUtils, com/google/gson/ExclusionStrategy {
+public class cc/polyfrost/oneconfig/config/gson/exclusion/ProfileExclusionStrategy : cc/polyfrost/oneconfig/config/gson/exclusion/ExclusionUtils, com/google/gson/ExclusionStrategy {
 	public fun <init> ()V
 	public fun shouldSkipClass (Ljava/lang/Class;)Z
 	public fun shouldSkipField (Lcom/google/gson/FieldAttributes;)Z
+}
+
+public class cc/polyfrost/oneconfig/config/gson/gsoninterface/GsonContext {
+	public fun <init> (Lcom/google/gson/Gson;Lcc/polyfrost/oneconfig/config/gson/gsoninterface/InterfaceAdapterFactory$InterfaceTypeAdapter;)V
+	public fun fromJsonTree (Lcom/google/gson/JsonElement;Ljava/lang/Class;)Ljava/lang/Object;
+	public fun fromJsonTree (Lcom/google/gson/JsonElement;Ljava/lang/reflect/Type;)Ljava/lang/Object;
+	public fun thisFromJsonTree (Lcom/google/gson/JsonElement;)Ljava/lang/Object;
+	public fun thisFromJsonTree (Lcom/google/gson/JsonElement;Ljava/lang/reflect/Type;)Ljava/lang/Object;
+	public fun thisToJsonTree (Ljava/lang/Object;)Lcom/google/gson/JsonElement;
+	public fun toJsonTree (Ljava/lang/Object;)Lcom/google/gson/JsonElement;
+}
+
+public class cc/polyfrost/oneconfig/config/gson/gsoninterface/InterfaceAdapterFactory : com/google/gson/TypeAdapterFactory {
+	public fun <init> ()V
+	public fun create (Lcom/google/gson/Gson;Lcom/google/gson/reflect/TypeToken;)Lcom/google/gson/TypeAdapter;
+}
+
+public class cc/polyfrost/oneconfig/config/gson/gsoninterface/InterfaceAdapterFactory$InterfaceTypeAdapter : com/google/gson/TypeAdapter {
+	public fun read (Lcom/google/gson/stream/JsonReader;)Ljava/lang/Object;
+	public fun write (Lcom/google/gson/stream/JsonWriter;Ljava/lang/Object;)V
+}
+
+public abstract interface class cc/polyfrost/oneconfig/config/gson/gsoninterface/JsonDeserialization {
+}
+
+public abstract interface class cc/polyfrost/oneconfig/config/gson/gsoninterface/JsonDeserializes {
+	public abstract fun fromJsonTree (Lcom/google/gson/JsonElement;Ljava/lang/reflect/Type;Lcc/polyfrost/oneconfig/config/gson/gsoninterface/GsonContext;)Ljava/lang/Object;
+}
+
+public abstract interface class cc/polyfrost/oneconfig/config/gson/gsoninterface/JsonSerialization {
+	public abstract fun toJsonTree (Lcc/polyfrost/oneconfig/config/gson/gsoninterface/GsonContext;)Lcom/google/gson/JsonElement;
+}
+
+public class cc/polyfrost/oneconfig/config/gson/gsoninterface/Reflection {
+	public fun <init> ()V
+	public static fun classOfType (Ljava/lang/reflect/Type;)Ljava/lang/Class;
+	public static fun constructAnyway (Ljava/lang/reflect/Constructor;[Ljava/lang/Object;)Ljava/lang/Object;
+	public static fun getAccessibleField (Ljava/lang/Class;Ljava/lang/String;)Ljava/lang/reflect/Field;
+	public static fun getConstructor (Ljava/lang/Class;[Ljava/lang/Class;)Ljava/lang/reflect/Constructor;
+	public static fun getFieldValue (Ljava/lang/reflect/Field;Ljava/lang/Object;)Ljava/lang/Object;
+	public static fun getParameterBounds (Ljava/lang/Class;)[Ljava/lang/Class;
+	public static fun getTypeParameters (Ljava/lang/Class;Ljava/lang/Class;)[Ljava/lang/Class;
+	public static fun isAbstract (Ljava/lang/Class;)Z
+	public static fun newInstance (Ljava/lang/Class;)Ljava/lang/Object;
+}
+
+public class cc/polyfrost/oneconfig/config/gson/gsoninterface/Reflection$Stack : java/util/ArrayList {
+	public fun <init> ()V
+	public fun pop ()Ljava/lang/Object;
+	public fun push (Ljava/lang/Object;)Lcc/polyfrost/oneconfig/config/gson/gsoninterface/Reflection$Stack;
 }
 
 public class cc/polyfrost/oneconfig/config/migration/CfgMigrator : cc/polyfrost/oneconfig/config/migration/Migrator {
