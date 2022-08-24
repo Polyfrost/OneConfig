@@ -303,4 +303,8 @@ public class OneConfigGui extends OneUIScreen {
     public boolean hasBackgroundBlur() {
         return Preferences.enableBlur;
     }
+
+    public static boolean isOpen() {
+        return Platform.getGuiPlatform().getCurrentScreen() instanceof OneConfigGui;
+    }
 }

@@ -30,7 +30,12 @@ import cc.polyfrost.oneconfig.gui.animations.*;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.libs.universal.UResolution;
 import cc.polyfrost.oneconfig.renderer.Icon;
+import cc.polyfrost.oneconfig.renderer.RenderManager;
+import cc.polyfrost.oneconfig.renderer.font.Fonts;
+import cc.polyfrost.oneconfig.renderer.scissor.Scissor;
+import cc.polyfrost.oneconfig.renderer.scissor.ScissorManager;
 import cc.polyfrost.oneconfig.utils.InputHandler;
+import cc.polyfrost.oneconfig.utils.MathUtils;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,35 +46,64 @@ public final class Notification {
     private String message;
     private Icon icon;
     private final Animation animation;
-    private final Callable<Boolean> progressBar;
+    private final Callable<Float> progressBar;
     private final Runnable action;
     private final InputHandler inputHandler = new InputHandler();
     private final ColorAnimation bgColor = new ColorAnimation(new ColorPalette(Colors.GRAY_800, Colors.GRAY_700, Colors.GRAY_900));
     private final ColorAnimation titleColor = new ColorAnimation(new ColorPalette(Colors.WHITE_80, Colors.WHITE, Colors.WHITE));
     private final ColorAnimation messageColor = new ColorAnimation(new ColorPalette(Colors.WHITE_60, Colors.WHITE_90, Colors.WHITE_90));
-    private float height = 110;
 
-    Notification(String title, String message, @Nullable Icon icon, float duration, @Nullable Callable<Boolean> progressBar, @Nullable Runnable action) {
+    Notification(String title, String message, @Nullable Icon icon, float duration, @Nullable Callable<Float> progressBar, @Nullable Runnable action) {
         this.title = title;
         this.message = message;
         this.icon = icon;
         this.animation = new ChainedAnimation(
-                new EaseInOutQuad(300, 0, 314, false),
-                new DummyAnimation(314, duration),
-                new EaseInOutQuad(300, 314, 0, false)
+                new EaseInOutQuad(250, 0, 330, false),
+                progressBar == null ? new DummyAnimation(330, duration) : new DummyAnimation(330, () -> progressBar.call() >= 1f),
+                new EaseInOutQuad(250, 330, 0, false)
         );
         this.progressBar = progressBar;
         this.action = action;
     }
 
-    void draw(final long vg) {
-        float x = UResolution.getWindowWidth() - 32 - animation.get();
-        float y = UResolution.getWindowHeight() - 32 - height;
-        boolean hovered = inputHandler.isAreaHovered(x, y, 134, height);
-        boolean clicked = hovered && inputHandler.isClicked();
-        int bgColor = this.bgColor.getColor(hovered, clicked);
-        int titleColor = this.titleColor.getColor(hovered, clicked);
-        int messageColor = this.messageColor.getColor(hovered, clicked);
+    float draw(final long vg, float y) {
+        float x = UResolution.getWindowWidth() - animation.get();
+        float textX = icon == null ? x + 16 : x + 64;
+        float textMaxLength = icon == null ? 268 : 220;
+        float messageHeight = RenderManager.getWrappedStringHeight(vg, message, textMaxLength, 12f, 1.75f, Fonts.REGULAR);
+        float height = getHeight(messageHeight);
+        y -= height;
+        boolean hovered = inputHandler.isAreaHovered(x, y, 314, height);
+        if (hovered && inputHandler.isClicked() && action != null) action.run();
+        int bgColor = this.bgColor.getColor(hovered, hovered && inputHandler.isMouseDown());
+        int titleColor = this.titleColor.getColor(hovered, hovered && inputHandler.isMouseDown());
+        int messageColor = this.messageColor.getColor(hovered, hovered && inputHandler.isMouseDown());
+        RenderManager.drawRoundedRect(vg, x, y, 314f, height, bgColor, 8f);
+        if (icon != null)
+            icon.draw(vg, x + 16f, y + (height - (progressBar == null ? 0f : 5f)) / 2f - 16f, 32f, 32f, titleColor);
+        RenderManager.drawText(vg, title, textX, y + 30, titleColor, 16f, Fonts.SEMIBOLD);
+        RenderManager.drawWrappedString(vg, message, textX, y + 46, textMaxLength, messageColor, 12f, 1.75f, Fonts.REGULAR);
+        if (progressBar != null) {
+            try {
+                float progress = MathUtils.clamp(progressBar.call());
+                Scissor scissor1 = ScissorManager.scissor(vg, x + 314f * progress, y + height - 5f, 314f * (1 - progress), 5f);
+                RenderManager.drawRoundedRect(vg, x, y, 314f, height, Colors.PRIMARY_800, 8f);
+                ScissorManager.resetScissor(vg, scissor1);
+                Scissor scissor2 = ScissorManager.scissor(vg, x, y + height - 5f, 314f * progress - (314f * progress < 2.5f || 311.5f * progress > 2.5f ? 0f : 2.5f), 5f);
+                RenderManager.drawRoundedRect(vg, x, y, 314f, height, Colors.PRIMARY_500, 8f);
+                ScissorManager.resetScissor(vg, scissor2);
+                if (314f * progress >= 2.5f && 311.5f * progress <= 2.5f)
+                    RenderManager.drawRoundedRect(vg, x + 2.5f, y + height - 5f, Math.max(0, 314f * progress - 5f), 5f, Colors.PRIMARY_500, 2.5f);
+            } catch (Exception ignored) {
+            }
+        }
+        return height;
+    }
+
+    private float getHeight(float messageHeight) {
+        float height = 68 + messageHeight;
+        if (progressBar != null) height += 5f;
+        return height;
     }
 
     public boolean isFinished() {

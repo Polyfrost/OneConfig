@@ -32,6 +32,11 @@ public class Icon {
     private final Object icon;
     public final Type type;
 
+    public Icon(String filePath) {
+        this.icon = filePath;
+        this.type = filePath.endsWith(".svg") ? Type.SVG : Type.IMAGE;
+    }
+
     public Icon(SVG svg) {
         this.icon = svg;
         this.type = Type.SVG;

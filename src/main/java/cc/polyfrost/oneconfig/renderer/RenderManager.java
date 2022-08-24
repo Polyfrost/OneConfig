@@ -42,6 +42,7 @@ import org.lwjgl.nanovg.NVGColor;
 import org.lwjgl.nanovg.NVGPaint;
 import org.lwjgl.opengl.GL11;
 
+import java.util.Arrays;
 import java.util.function.LongConsumer;
 import java.util.regex.Pattern;
 
@@ -320,15 +321,25 @@ public final class RenderManager {
      * @param size  The size.
      * @param font  The font.
      */
-    public static void drawWrappedString(long vg, String text, float x, float y, float width, int color, float size, Font font) {
+    public static void drawWrappedString(long vg, String text, float x, float y, float width, int color, float size, float lineHeight, Font font) {
         nvgBeginPath(vg);
         nvgFontSize(vg, size);
         nvgFontFace(vg, font.getName());
-        nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
+        nvgTextLineHeight(vg, lineHeight);
+        nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_TOP); // Align top because center is weird with wrapping
         NVGColor nvgColor = color(vg, color);
         nvgTextBox(vg, x, y, width, text);
         nvgFill(vg);
         nvgColor.free();
+    }
+
+    public static float getWrappedStringHeight(long vg, String text, float width, float fontSize, float lineHeight, Font font) {
+        float[] bounds = new float[4];
+        nvgFontSize(vg, fontSize);
+        nvgFontFace(vg, font.getName());
+        nvgTextLineHeight(vg, lineHeight);
+        nvgTextBoxBounds(vg, 0, 0, width, text, bounds);
+        return bounds[3] - bounds[1];
     }
 
     /**
@@ -589,7 +600,7 @@ public final class RenderManager {
     public static void drawSvg(long vg, String filePath, float x, float y, float width, float height) {
         float w = width;
         float h = height;
-        if (OneConfigGui.INSTANCE != null) {
+        if (OneConfigGui.INSTANCE != null && OneConfigGui.isOpen()) {
             w *= OneConfigGui.INSTANCE.getScaleFactor();
             h *= OneConfigGui.INSTANCE.getScaleFactor();
         }
@@ -619,7 +630,7 @@ public final class RenderManager {
     public static void drawSvg(long vg, String filePath, float x, float y, float width, float height, int color) {
         float w = width;
         float h = height;
-        if (OneConfigGui.INSTANCE != null) {
+        if (OneConfigGui.INSTANCE != null && OneConfigGui.isOpen()) {
             w *= OneConfigGui.INSTANCE.getScaleFactor();
             h *= OneConfigGui.INSTANCE.getScaleFactor();
         }
@@ -644,7 +655,7 @@ public final class RenderManager {
     public static void drawSvg(long vg, SVG svg, float x, float y, float width, float height) {
         float w = width;
         float h = height;
-        if (OneConfigGui.INSTANCE != null) {
+        if (OneConfigGui.INSTANCE != null && OneConfigGui.isOpen()) {
             w *= OneConfigGui.INSTANCE.getScaleFactor();
             h *= OneConfigGui.INSTANCE.getScaleFactor();
         }
@@ -661,7 +672,7 @@ public final class RenderManager {
     public static void drawSvg(long vg, SVG svg, float x, float y, float width, float height, int color) {
         float w = width;
         float h = height;
-        if (OneConfigGui.INSTANCE != null) {
+        if (OneConfigGui.INSTANCE != null && OneConfigGui.isOpen()) {
             w *= OneConfigGui.INSTANCE.getScaleFactor();
             h *= OneConfigGui.INSTANCE.getScaleFactor();
         }

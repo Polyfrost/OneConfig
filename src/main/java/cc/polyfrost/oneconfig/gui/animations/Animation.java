@@ -84,5 +84,19 @@ public abstract class Animation {
         return reverse;
     }
 
+    /**
+     * @return The start position of the animation
+     */
+    public float getStart() {
+        return start;
+    }
+
+    /**
+     * @return The end position of the animation
+     */
+    public float getEnd() {
+        return start + change;
+    }
+
     protected abstract float animate(float x);
 }

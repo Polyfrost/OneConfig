@@ -135,6 +135,21 @@ public class InputHandler {
     }
 
     /**
+     * @param button The button
+     * @return If the button is down
+     */
+    public boolean isMouseDown(int button) {
+        return Platform.getMousePlatform().isButtonDown(button);
+    }
+
+    /**
+     * @return If the left mouse button is down
+     */
+    public boolean isMouseDown() {
+        return isMouseDown(0);
+    }
+
+    /**
      * Gets the current mouse X position.
      * <p>
      * All values returned from this class are not scaled to Minecraft's GUI scale.

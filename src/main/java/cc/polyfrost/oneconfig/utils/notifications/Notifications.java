@@ -27,87 +27,226 @@
 package cc.polyfrost.oneconfig.utils.notifications;
 
 import cc.polyfrost.oneconfig.events.event.HudRenderEvent;
+import cc.polyfrost.oneconfig.gui.animations.Animation;
+import cc.polyfrost.oneconfig.gui.animations.DummyAnimation;
+import cc.polyfrost.oneconfig.gui.animations.EaseInOutQuad;
 import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
+import cc.polyfrost.oneconfig.libs.universal.UResolution;
 import cc.polyfrost.oneconfig.renderer.Icon;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.Callable;
 
 public final class Notifications {
     public static final Notifications INSTANCE = new Notifications();
-    private final ArrayList<Notification> notifications = new ArrayList<>();
-    private final float DEFAULT_DURATION = 5000;
+    // animation stores the bottom y of the notification
+    private final LinkedHashMap<Notification, Animation> notifications = new LinkedHashMap<>();
+    private final float DEFAULT_DURATION = 2500;
 
     private Notifications() {
     }
 
-    public Notification send(String title, String message, Icon icon, float duration, @Nullable Callable<Boolean> progressbar, @Nullable Runnable action) {
+    /**
+     * Send a notification to the user
+     *
+     * @param title       The title of the notification
+     * @param message     The message of the notification
+     * @param icon        The icon of the notification, null for none
+     * @param duration    The duration the notification is on screen in ms
+     * @param progressbar A callable that returns the progress from 0-1
+     * @param action      The action executed when the notification is pressed
+     * @return The notification
+     */
+    public Notification send(String title, String message, @Nullable Icon icon, float duration, @Nullable Callable<Float> progressbar, @Nullable Runnable action) {
         Notification notification = new Notification(title, message, icon, duration, progressbar, action);
-        notifications.add(notification);
+        notifications.put(notification, new DummyAnimation(-1));
         return notification;
     }
 
-    public Notification send(String title, String message, float duration, @Nullable Callable<Boolean> progressbar, @Nullable Runnable action) {
+    /**
+     * Send a notification to the user
+     *
+     * @param title       The title of the notification
+     * @param message     The message of the notification
+     * @param duration    The duration the notification is on screen in ms
+     * @param progressbar A callable that returns the progress from 0-1
+     * @param action      The action executed when the notification is pressed
+     * @return The notification
+     */
+    public Notification send(String title, String message, float duration, @Nullable Callable<Float> progressbar, @Nullable Runnable action) {
         return send(title, message, null, duration, progressbar, action);
     }
 
-    public Notification send(String title, String message, Icon icon, float duration, @Nullable Callable<Boolean> progressbar) {
+    /**
+     * Send a notification to the user
+     *
+     * @param title       The title of the notification
+     * @param message     The message of the notification
+     * @param icon        The icon of the notification, null for none
+     * @param duration    The duration the notification is on screen in ms
+     * @param progressbar A callable that returns the progress from 0-1
+     * @return The notification
+     */
+    public Notification send(String title, String message, @Nullable Icon icon, float duration, @Nullable Callable<Float> progressbar) {
         return send(title, message, icon, duration, progressbar, null);
     }
 
-    public Notification send(String title, String message, Icon icon, float duration, @Nullable Runnable action) {
+    /**
+     * Send a notification to the user
+     *
+     * @param title    The title of the notification
+     * @param message  The message of the notification
+     * @param icon     The icon of the notification, null for none
+     * @param duration The duration the notification is on screen in ms
+     * @param action   The action executed when the notification is pressed
+     * @return The notification
+     */
+    public Notification send(String title, String message, @Nullable Icon icon, float duration, @Nullable Runnable action) {
         return send(title, message, icon, duration, null, action);
     }
 
-    public Notification send(String title, String message, float duration, @Nullable Callable<Boolean> progressbar) {
+    /**
+     * Send a notification to the user
+     *
+     * @param title       The title of the notification
+     * @param message     The message of the notification
+     * @param duration    The duration the notification is on screen in ms
+     * @param progressbar A callable that returns the progress from 0-1
+     * @return The notification
+     */
+    public Notification send(String title, String message, float duration, @Nullable Callable<Float> progressbar) {
         return send(title, message, duration, progressbar, null);
     }
 
+    /**
+     * Send a notification to the user
+     *
+     * @param title    The title of the notification
+     * @param message  The message of the notification
+     * @param duration The duration the notification is on screen in ms
+     * @param action   The action executed when the notification is pressed
+     * @return The notification
+     */
     public Notification send(String title, String message, float duration, @Nullable Runnable action) {
         return send(title, message, duration, null, action);
     }
 
-    public Notification send(String title, String message, Icon icon, @Nullable Callable<Boolean> progressbar) {
+    /**
+     * Send a notification to the user
+     *
+     * @param title       The title of the notification
+     * @param message     The message of the notification
+     * @param icon        The icon of the notification, null for none
+     * @param progressbar A callable that returns the progress from 0-1
+     * @return The notification
+     */
+    public Notification send(String title, String message, @Nullable Icon icon, @Nullable Callable<Float> progressbar) {
         return send(title, message, icon, DEFAULT_DURATION, progressbar);
     }
 
-    public Notification send(String title, String message, Icon icon, @Nullable Runnable action) {
+    /**
+     * Send a notification to the user
+     *
+     * @param title   The title of the notification
+     * @param message The message of the notification
+     * @param icon    The icon of the notification, null for none
+     * @param action  The action executed when the notification is pressed
+     * @return The notification
+     */
+    public Notification send(String title, String message, @Nullable Icon icon, @Nullable Runnable action) {
         return send(title, message, icon, DEFAULT_DURATION, action);
     }
 
-    public Notification send(String title, String message, @Nullable Callable<Boolean> progressbar) {
+    /**
+     * Send a notification to the user
+     *
+     * @param title       The title of the notification
+     * @param message     The message of the notification
+     * @param progressbar A callable that returns the progress from 0-1
+     * @return The notification
+     */
+    public Notification send(String title, String message, @Nullable Callable<Float> progressbar) {
         return send(title, message, DEFAULT_DURATION, progressbar);
     }
 
+    /**
+     * Send a notification to the user
+     *
+     * @param title    The title of the notification
+     * @param message  The message of the notification
+     * @param icon     The icon of the notification, null for none
+     * @param duration The duration the notification is on screen in ms
+     * @return The notification
+     */
+    public Notification send(String title, String message, @Nullable Icon icon, float duration) {
+        return send(title, message, icon, duration, (Callable<Float>) null);
+    }
+
+    /**
+     * Send a notification to the user
+     *
+     * @param title   The title of the notification
+     * @param message The message of the notification
+     * @param action  The action executed when the notification is pressed
+     * @return The notification
+     */
     public Notification send(String title, String message, @Nullable Runnable action) {
         return send(title, message, DEFAULT_DURATION, action);
     }
 
-    public Notification send(String title, String message, Icon icon, float duration) {
-        return send(title, message, icon, duration, (Callable<Boolean>) null);
-    }
-
+    /**
+     * Send a notification to the user
+     *
+     * @param title    The title of the notification
+     * @param message  The message of the notification
+     * @param duration The duration the notification is on screen in ms
+     * @return The notification
+     */
     public Notification send(String title, String message, float duration) {
-        return send(title, message, duration, (Callable<Boolean>) null);
+        return send(title, message, duration, (Callable<Float>) null);
     }
 
-    public Notification send(String title, String message, Icon icon) {
-        return send(title, message, icon, (Callable<Boolean>) null);
+    /**
+     * Send a notification to the user
+     *
+     * @param title   The title of the notification
+     * @param message The message of the notification
+     * @param icon    The icon of the notification, null for none
+     * @return The notification
+     */
+    public Notification send(String title, String message, @Nullable Icon icon) {
+        return send(title, message, icon, (Callable<Float>) null);
     }
 
+    /**
+     * Send a notification to the user
+     *
+     * @param title   The title of the notification
+     * @param message The message of the notification
+     * @return The notification
+     */
     public Notification send(String title, String message) {
-        return send(title, message, (Callable<Boolean>) null);
+        return send(title, message, (Callable<Float>) null);
     }
 
     @Subscribe
-    public void onHudRender(HudRenderEvent event) {
+    private void onHudRender(HudRenderEvent event) {
         RenderManager.setupAndDraw((vg) -> {
-            for (Notification notification : notifications) {
-                notification.draw(vg);
+            float desiredPosition = UResolution.getWindowHeight() - 16f;
+            for (Map.Entry<Notification, Animation> entry : notifications.entrySet()) {
+                if (entry.getValue().getEnd() == -1f)
+                    entry.setValue(new DummyAnimation(desiredPosition));
+                else if (desiredPosition != entry.getValue().getEnd())
+                    entry.setValue(new EaseInOutQuad(250, entry.getValue().get(0), desiredPosition, false));
+                float height = entry.getKey().draw(vg, entry.getValue().get());
+                desiredPosition -= height + 16f;
             }
-            notifications.removeIf(Notification::isFinished);
+            notifications.entrySet().removeIf(entry -> entry.getKey().isFinished());
         });
     }
 }

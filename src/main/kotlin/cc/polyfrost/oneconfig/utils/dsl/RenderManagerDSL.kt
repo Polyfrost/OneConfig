@@ -164,11 +164,11 @@ fun Long.drawText(text: String, x: Number, y: Number, color: Int, size: Number, 
 fun VG.drawText(text: String, x: Number, y: Number, color: Int, size: Number, font: Font) =
     instance.drawText(text, x, y, color, size, font)
 
-fun Long.drawWrappedString(text: String, x: Number, y: Number, width: Number, color: Int, size: Number, font: Font) =
-    RenderManager.drawWrappedString(this, text, x.toFloat(), y.toFloat(), width.toFloat(), color, size.toFloat(), font)
+fun Long.drawWrappedString(text: String, x: Number, y: Number, width: Number, color: Int, size: Number, lineHeight: Number, font: Font) =
+    RenderManager.drawWrappedString(this, text, x.toFloat(), y.toFloat(), width.toFloat(), color, size.toFloat(), lineHeight.toFloat(), font)
 
-fun VG.drawWrappedString(text: String, x: Number, y: Number, width: Number, color: Int, size: Number, font: Font) =
-    instance.drawWrappedString(text, x, y, width, color, size, font)
+fun VG.drawWrappedString(text: String, x: Number, y: Number, width: Number, color: Int, size: Number, lineHeight: Number, font: Font) =
+    instance.drawWrappedString(text, x, y, width, color, size, lineHeight, font)
 
 fun Long.drawURL(url: String, x: Number, y: Number, size: Number, font: Font, inputHandler: InputHandler) =
     RenderManager.drawURL(this, url, x.toFloat(), y.toFloat(), size.toFloat(), font, inputHandler)
