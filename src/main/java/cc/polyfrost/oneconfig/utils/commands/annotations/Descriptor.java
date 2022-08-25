@@ -62,7 +62,6 @@ public @interface Descriptor {
     String value();
     String description() default "";
     String[] aliases() default {};
-    /** The string to autocomplete to if the parameter is empty. set to PLAYER for it to autocomplete with player names. <br>
-     * Use a comma separated list for your arguments. */
-    String autoCompletesTo() default "";
+    /** The string to autocomplete to if the parameter is empty. set to PLAYER for it to autocomplete with player names. */
+    String[] autoCompletesTo() default "";
 }

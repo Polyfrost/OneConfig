@@ -28,14 +28,22 @@
 package cc.polyfrost.oneconfig.utils.commands;
 
 import cc.polyfrost.oneconfig.libs.universal.UChat;
+import cc.polyfrost.oneconfig.utils.commands.annotations.Descriptor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.util.BlockPos;
 import net.minecraftforge.client.ClientCommandHandler;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.lang.reflect.Parameter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Collectors;
+
+import static cc.polyfrost.oneconfig.utils.commands.CommandManager.*;
 
 public class PlatformCommandManagerImpl extends PlatformCommandManager {
 
@@ -62,7 +70,7 @@ public class PlatformCommandManagerImpl extends PlatformCommandManager {
                 //#endif
             {
                 try {
-                    String[] result = root.doCommand(args);
+                    String[] result = doCommand(args);
                     if (result.length != 0 && result[0] != null) {
                         for (String s : result) {
                             UChat.chat(s);
@@ -92,16 +100,110 @@ public class PlatformCommandManagerImpl extends PlatformCommandManager {
                 //$$ getTabCompletions(net.minecraft.server.MinecraftServer server, ICommandSender sender, String[] args, BlockPos targetPos)
                 //#endif
             {
-                return root.getTabCompletionOptions(args);
+                List<String> opts = new ArrayList<>();
+                CommandManager.Pair<String[], CommandManager.InternalCommand> command = getCommand(args);
+                try {
+                    if (command != null) {
+                        Parameter currentParam = command.getValue().getUnderlyingMethod().getParameters()[command.getKey().length - 1];
+                        String type = currentParam.getType().getSimpleName();
+                        boolean isNumeric = type.equalsIgnoreCase("int") || type.equalsIgnoreCase("long") ||
+                                type.equalsIgnoreCase("double") || type.equalsIgnoreCase("float") || type.equalsIgnoreCase("integer");
+
+                        Descriptor descriptor = currentParam.isAnnotationPresent(Descriptor.class) ? currentParam.getAnnotation(Descriptor.class) : null;
+                        String[] targets = descriptor != null && descriptor.autoCompletesTo().length != 0 ? descriptor.autoCompletesTo() : null;
+                        if (targets != null) {
+                            if (targets[0].equals("PLAYER")) {
+                                if (platform.getPlayerNames() != null) {
+                                    opts.addAll(platform.getPlayerNames());
+                                }
+                            } else {
+                                opts.addAll(Arrays.asList(targets));
+                            }
+                        } else {
+                            // yes.
+                            if (isNumeric) opts.add("0");
+                            else if (type.equalsIgnoreCase("boolean")) {
+                                opts.add("true");
+                                opts.add("false");
+                            } else if (type.equalsIgnoreCase("string")) {
+                                opts.add("String");
+                            }
+                        }
+                    } else {
+                        String current = String.join(DELIMITER, args);
+                        root.commandsMap.forEach((key, value) -> {
+                            if (!value.isUnderAlias()) {
+                                String toAdd;
+                                if (key.contains(current)) {
+                                    key = key.substring(current.length());
+                                }
+                                if (!key.contains(DELIMITER)) toAdd = key;
+                                else toAdd = key.substring(0, key.indexOf(DELIMITER));
+                                if (!opts.contains(toAdd) && !toAdd.isEmpty()) {
+                                    opts.add(toAdd);
+                                }
+                            }
+                        });
+                    }
+                } catch (Exception ignored) {
+                }
+
+                return opts.isEmpty() ? null : opts;
+            }
+
+            private String[] doCommand(@NotNull String[] args) {
+                if (args.length == 0) {
+                    if (root.mainMethod != null) return new String[]{root.mainMethod.invoke()};
+                    else return root.helpCommand;
+                } else if (args[0].equalsIgnoreCase("help")) {
+                    if (args.length == 1) {
+                        return root.helpCommand;
+                    } else {
+                        //noinspection ConstantConditions
+                        return root.getAdvancedHelp(getCommand(args) != null ? getCommand(args).getValue() : null);
+                    }
+                } else {
+                    CommandManager.Pair<String[], CommandManager.InternalCommand> command = getCommand(args);
+                    if (command != null) {
+                        return new String[]{command.getValue().invoke(command.getKey())};
+                    }
+                }
+                return new String[]{root.getMetadata().chatColor() + NOT_FOUND_TEXT.replace("@ROOT_COMMAND@", root.getMetadata().value())};
+            }
+
+            /**
+             * Convert the String[] args into a processable command
+             */
+            @Nullable
+            private CommandManager.Pair<String[], CommandManager.InternalCommand> getCommand(String[] args) {
+                // turn the given args into a 'path'
+                String argsIn = String.join(DELIMITER, args).toLowerCase();
+                for (int i = args.length - 1; i >= 0; i--) {
+                    // work backwards to find the first match
+                    if (root.commandsMap.containsKey(argsIn)) {
+                        // create the args for the command
+                        String[] newArgs = new String[args.length - i - 1];
+                        System.arraycopy(args, i + 1, newArgs, 0, args.length - i - 1);
+                        // return the command and the args
+                        return new CommandManager.Pair<>(newArgs, root.commandsMap.get(argsIn));
+                    } else if (root.commandsMap.containsKey(argsIn + DELIMITER + "main")) {
+                        String[] newArgs = new String[args.length - i - 1];
+                        System.arraycopy(args, i + 1, newArgs, 0, args.length - i - 1);
+                        return new CommandManager.Pair<>(newArgs, root.commandsMap.get(argsIn + DELIMITER + "main"));
+                    }
+                    // remove the last word
+                    int target = argsIn.lastIndexOf(DELIMITER);
+                    argsIn = argsIn.substring(0, target == -1 ? argsIn.length() : target);
+                }
+                return null;
             }
         });
-        //#else
         //#endif
     }
 
     @Override
     List<String> getPlayerNames() {
-        if(Minecraft.getMinecraft().thePlayer != null && Minecraft.getMinecraft().thePlayer.sendQueue != null) {
+        if (Minecraft.getMinecraft().thePlayer != null && Minecraft.getMinecraft().thePlayer.sendQueue != null) {
             // is it sad that I know how to do this off by heart now?
             return Minecraft.getMinecraft().thePlayer.sendQueue.getPlayerInfoMap().stream().map(info -> info.getGameProfile().getName()).collect(Collectors.toList());
         } else return null;

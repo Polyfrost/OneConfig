@@ -40,7 +40,10 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.ServiceLoader;
 import java.util.stream.Collectors;
 
 /**
@@ -49,15 +52,15 @@ import java.util.stream.Collectors;
  * @see Command
  */
 public class CommandManager {
-    private static final PlatformCommandManager platform = ServiceLoader.load(PlatformCommandManager.class, PlatformCommandManager.class.getClassLoader()).iterator().next();
     public static final CommandManager INSTANCE = new CommandManager();
+    static final PlatformCommandManager platform = ServiceLoader.load(PlatformCommandManager.class, PlatformCommandManager.class.getClassLoader()).iterator().next();
     static final String NOT_FOUND_TEXT = "Command not found! Type /@ROOT_COMMAND@ help for help.";
     static final String NOT_FOUND_HELP_TEXT = "Help for this command was not found! Type /@ROOT_COMMAND@ help for generic help first.";
     static final String METHOD_RUN_ERROR = "Error while running @ROOT_COMMAND@ method! Please report this to the developer.";
     /**
      * <a href="https://https://www.cl.cam.ac.uk/~mgk25/ucs/examples/UTF-8-test.txt">UTF-8 Stress Test</a> Character 2.3.1 (used because it's never going to be used in theory)
      */
-    private static final String DELIMITER = "\uD7FF";
+    static final String DELIMITER = "\uD7FF";
     private final HashMap<Class<?>, ArgumentParser<?>> parsers = new HashMap<>();
 
     private CommandManager() {
@@ -140,10 +143,10 @@ public class CommandManager {
      * Internal class for command handling.
      */
     protected class OCCommand {
-        private final HashMap<String, InternalCommand> commandsMap = new HashMap<>();
-        private final String[] helpCommand;
+        final HashMap<String, InternalCommand> commandsMap = new HashMap<>();
+        final String[] helpCommand;
         private final Command meta;
-        private final InternalCommand mainMethod;
+        final InternalCommand mainMethod;
 
         private OCCommand(@NotNull Object commandIsn) {
             Class<?> cls = commandIsn.getClass();
@@ -253,72 +256,22 @@ public class CommandManager {
             return sb.toString().split("\n");
         }
 
-        public String[] doCommand(@NotNull String[] args) {
-            if (args.length == 0) {
-                if (mainMethod != null) return new String[]{mainMethod.invoke()};
-                else return helpCommand;
-            } else if (args[0].equalsIgnoreCase("help")) {
-                if (args.length == 1) {
-                    return helpCommand;
-                } else {
-                    return getAdvancedHelp(args);
-                }
-            } else {
-                Pair<String[], InternalCommand> command = getCommand(args);
-                if (command != null) {
-                    return new String[]{command.getValue().invoke(command.getKey())};
-                }
-            }
-            return new String[]{meta.chatColor() + NOT_FOUND_TEXT.replace("@ROOT_COMMAND@", meta.value())};
-        }
-
-        /**
-         * Convert the String[] args into a processable command
-         */
-        @Nullable
-        private Pair<String[], InternalCommand> getCommand(String[] args) {
-            // turn the given args into a 'path'
-            String argsIn = String.join(DELIMITER, args).toLowerCase();
-            for (int i = args.length - 1; i >= 0; i--) {
-                // work backwards to find the first match
-                if (commandsMap.containsKey(argsIn)) {
-                    // create the args for the command
-                    String[] newArgs = new String[args.length - i - 1];
-                    System.arraycopy(args, i + 1, newArgs, 0, args.length - i - 1);
-                    // return the command and the args
-                    return new Pair<>(newArgs, commandsMap.get(argsIn));
-                } else if (commandsMap.containsKey(argsIn + DELIMITER + "main")) {
-                    String[] newArgs = new String[args.length - i - 1];
-                    System.arraycopy(args, i + 1, newArgs, 0, args.length - i - 1);
-                    return new Pair<>(newArgs, commandsMap.get(argsIn + DELIMITER + "main"));
-                }
-                // remove the last word
-                int target = argsIn.lastIndexOf(DELIMITER);
-                argsIn = argsIn.substring(0, target == -1 ? argsIn.length() : target);
-            }
-            return null;
-        }
-
-        private String[] getAdvancedHelp(String[] args) {
-            // do advanced help stuff
-            String[] args1 = new String[args.length - 1];
-            System.arraycopy(args, 1, args1, 0, args.length - 1);
-            Pair<String[], InternalCommand> cmd = getCommand(args1);
-            if (cmd != null) {
+        String[] getAdvancedHelp(InternalCommand command) {
+            if (command != null) {
                 // mm string builder looks great
                 StringBuilder sb = new StringBuilder(200);
                 sb.append(meta.chatColor()).append(ChatColor.BOLD).append("Advanced help for /").append(meta.value()).append(" ");
-                sb.append(String.join(" ", args1)).append(ChatColor.RESET).append(meta.chatColor()).append(": ").append(cmd.getValue().descriptor != null ?
-                        "(" + cmd.getValue().descriptor.value() + ")" : "").append("\n").append(meta.chatColor());
-                if (cmd.getValue().hasHelp) {
-                    sb.append(ChatColor.BOLD).append("Description: ").append(ChatColor.RESET).append(meta.chatColor()).append(cmd.getValue().getHelp())
+                sb.append(String.join(" ", command.getName())).append(ChatColor.RESET).append(meta.chatColor()).append(": ").append(command.descriptor != null ?
+                        "(" + command.descriptor.value() + ")" : "").append("\n").append(meta.chatColor());
+                if (command.hasHelp) {
+                    sb.append(ChatColor.BOLD).append("Description: ").append(ChatColor.RESET).append(meta.chatColor()).append(command.getHelp())
                             .append("\n").append(meta.chatColor());
                 }
-                if (cmd.getValue().getAliases().length > 0) {
-                    sb.append("Aliases: ").append(String.join(", ", cmd.getValue().getAliases())).append("\n").append(meta.chatColor());
+                if (command.getAliases().length > 0) {
+                    sb.append("Aliases: ").append(String.join(", ", command.getAliases())).append("\n").append(meta.chatColor());
                 }
                 sb.append("Parameters:\n").append(meta.chatColor());
-                for (Parameter parameter : cmd.getValue().method.getParameters()) {
+                for (Parameter parameter : command.method.getParameters()) {
                     Descriptor descriptor = parameter.isAnnotationPresent(Descriptor.class) ? parameter.getAnnotation(Descriptor.class) : null;
                     String s = descriptor != null ? descriptor.value() : parameter.getType().getSimpleName();
                     sb.append("<").append(s);
@@ -333,67 +286,12 @@ public class CommandManager {
             } else return new String[]{meta.chatColor() + NOT_FOUND_HELP_TEXT.replace("@ROOT_COMMAND@", meta.value())};
         }
 
-        public List<String> getTabCompletionOptions(String[] args) {
-            List<String> opts = new ArrayList<>();
-            Pair<String[], InternalCommand> command = getCommand(args);
-            try {
-                // means we are in a command
-                if (command != null) {
-                    Parameter currentParam = command.getValue().method.getParameters()[command.getKey().length - 1];
-                    String type = currentParam.getType().getSimpleName();
-                    boolean isNumeric = type.equalsIgnoreCase("int") || type.equalsIgnoreCase("long") ||
-                            type.equalsIgnoreCase("double") || type.equalsIgnoreCase("float") || type.equalsIgnoreCase("integer");
-
-                    Descriptor descriptor = currentParam.isAnnotationPresent(Descriptor.class) ? currentParam.getAnnotation(Descriptor.class) : null;
-                    String targets = descriptor != null && !descriptor.autoCompletesTo().isEmpty() ? descriptor.autoCompletesTo() : null;
-                    if (targets != null) {
-                        if (targets.equals("PLAYER")) {
-                            if (platform.getPlayerNames() != null) {
-                                opts.addAll(platform.getPlayerNames());
-                            }
-                        } else {
-                            opts.addAll(Arrays.asList(targets.split(",")));
-                        }
-                    } else {
-                        // yes.
-                        if (isNumeric) opts.add("0");
-                        else if (type.equalsIgnoreCase("boolean")) {
-                            opts.add("true");
-                            opts.add("false");
-                        } else if (type.equalsIgnoreCase("string")) {
-                            opts.add("String");
-                        }
-                    }
-                } else {
-                    String current = args.length == 0 ? "" : String.join(" ", Arrays.copyOfRange(args, 0, args.length - 1));
-                    //System.out.println(current);
-                    commandsMap.forEach((key, value) -> {
-                        if(!value.isAlias) {
-                            String toAdd = "";
-                            if(current.isEmpty()) {
-                                if(!key.contains(DELIMITER)) toAdd = key;
-                                else toAdd = key.substring(0, key.indexOf(DELIMITER));
-                            } else {
-                                //System.out.println(key);
-                                /// TODO BROKEN AND I DONT KNOW WHY plz help me
-                                //System.out.println(key.substring(current.length()));
-                            }
-                            if(!opts.contains(toAdd)) opts.add(toAdd);
-                        }
-                    });
-                }
-            } catch (Exception ignored) {
-                // happens when there is too many args presented for a method
-            }
-            return opts.isEmpty() ? null : opts;
-        }
-
-        public Command getMetadata() {
+        Command getMetadata() {
             return meta;
         }
     }
 
-    private class InternalCommand {
+    class InternalCommand {
         private final Method method;
         private final Descriptor descriptor;
         private final String[] aliases;
@@ -429,7 +327,7 @@ public class CommandManager {
         }
 
         @Nullable
-        private String invoke(String... argsIn) {
+        String invoke(String... argsIn) {
             try {
                 if ((argsIn.length != method.getParameterCount()) && !method.getParameters()[method.getParameterCount() - 1].isAnnotationPresent(Greedy.class)) {
                     return ChatColor.RED + "Incorrect number of parameters, expected " + method.getParameterCount() + " but got " + argsIn.length;
@@ -464,20 +362,20 @@ public class CommandManager {
         /**
          * Return weather this command was created under an alias path
          */
-        private boolean isUnderAlias() {
+        boolean isUnderAlias() {
             return isAlias;
         }
 
-        private String[] getAliases() {
+        String[] getAliases() {
             return aliases;
         }
 
-        private String getName() {
+        String getName() {
             return name;
         }
 
         @Nullable
-        private String getHelp() {
+        String getHelp() {
             // return new Therapist();
             if (hasHelp) {
                 return descriptor.description();
@@ -485,26 +383,30 @@ public class CommandManager {
                 return null;
             }
         }
+
+        Method getUnderlyingMethod() {
+            return method;
+        }
     }
 
 
     /**
      * A final Pair class to hold a command and its arguments. The JavaFX one isn't final and might not be included so
      */
-    private final static class Pair<K, V> {
+    final static class Pair<K, V> {
         private final K key;
         private final V value;
 
-        private Pair(K key, V value) {
+        Pair(K key, V value) {
             this.key = key;
             this.value = value;
         }
 
-        private K getKey() {
+        K getKey() {
             return key;
         }
 
-        private V getValue() {
+        V getValue() {
             return value;
         }
     }
