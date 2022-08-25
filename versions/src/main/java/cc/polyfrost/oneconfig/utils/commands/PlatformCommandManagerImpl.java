@@ -28,7 +28,7 @@
 package cc.polyfrost.oneconfig.utils.commands;
 
 import cc.polyfrost.oneconfig.libs.universal.UChat;
-import cc.polyfrost.oneconfig.utils.commands.annotations.Descriptor;
+import cc.polyfrost.oneconfig.utils.commands.annotations.Description;
 import net.minecraft.client.Minecraft;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
@@ -109,8 +109,8 @@ public class PlatformCommandManagerImpl extends PlatformCommandManager {
                         boolean isNumeric = type.equalsIgnoreCase("int") || type.equalsIgnoreCase("long") ||
                                 type.equalsIgnoreCase("double") || type.equalsIgnoreCase("float") || type.equalsIgnoreCase("integer");
 
-                        Descriptor descriptor = currentParam.isAnnotationPresent(Descriptor.class) ? currentParam.getAnnotation(Descriptor.class) : null;
-                        String[] targets = descriptor != null && descriptor.autoCompletesTo().length != 0 ? descriptor.autoCompletesTo() : null;
+                        Description description = currentParam.isAnnotationPresent(Description.class) ? currentParam.getAnnotation(Description.class) : null;
+                        String[] targets = description != null && description.autoCompletesTo().length != 0 ? description.autoCompletesTo() : null;
                         if (targets != null) {
                             if (targets[0].equals("PLAYER")) {
                                 if (platform.getPlayerNames() != null) {

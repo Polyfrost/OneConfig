@@ -26,12 +26,12 @@
 
 package cc.polyfrost.oneconfig.test;
 
-import cc.polyfrost.oneconfig.config.annotations.Exclude;
 import cc.polyfrost.oneconfig.libs.universal.ChatColor;
 import cc.polyfrost.oneconfig.libs.universal.UChat;
 import cc.polyfrost.oneconfig.utils.commands.annotations.Command;
-import cc.polyfrost.oneconfig.utils.commands.annotations.Descriptor;
+import cc.polyfrost.oneconfig.utils.commands.annotations.Description;
 import cc.polyfrost.oneconfig.utils.commands.annotations.Greedy;
+import cc.polyfrost.oneconfig.utils.commands.annotations.SubCommand;
 
 @Command(value = "test", aliases = {"t"}, description = "Description of the test command", chatColor = ChatColor.GREEN)
 public class TestCommand_Test {
@@ -42,24 +42,24 @@ public class TestCommand_Test {
 
     @Command(value = "subcommand", aliases = {"s"}, description = "Subcommand 1.")
     private static class TestSubCommand {
-        private static void main(int a, float b, @Descriptor("GREEDY c") @Greedy String c) { // /test subcommand <a> <b> <c>
+        private static void main(int a, float b, @Description("GREEDY c") @Greedy String c) { // /test subcommand <a> <b> <c>
             UChat.chat("Integer main: " + (a + b) + " " + c);
         }
 
-        @Descriptor(value = "A method", aliases = {"yesNo"}, description = "A method description")
-        private void yes(@Descriptor("first number") double a, double b, @Descriptor("named c") String c) { // /test subcommand <a> <b> <c>
+        @SubCommand(aliases = {"yesNo"}, description = "A method description")
+        private void yes(@Description("first number") double a, double b, @Description("named c") String c) { // /test subcommand <a> <b> <c>
             UChat.chat("Double main: " + a + " " + b + " " + c);
         }
 
         @Command(value = "subSub", aliases = {"ss"}, description = "SubSubcommand 1.")
         private static class TestSubSubCommand {
-            private void wow(int a, float b, @Descriptor("named c") String c) { // /test subSub <a> <b> <c>
+            private void wow(int a, float b, @Description("named c") String c) { // /test subSub <a> <b> <c>
                 UChat.chat("Integer subSub: " + (a + b) + " " + c);
             }
         }
     }
 
-    @Exclude
+
     private static void joinAndChat(Object... stuff) {
         StringBuilder builder = new StringBuilder();
         for (Object thing : stuff) {

@@ -59,12 +59,13 @@ import java.lang.annotation.Target;
  * {@link String}, {@code boolean}, {@code int}, {@code double}, {@code float},
  * or is added as an {@link ArgumentParser} and added to the
  * {@link CommandManager} via {@link CommandManager#addParser(ArgumentParser)}.
- * Parameters can also be annotated with various annotations, such as {@link Descriptor}, which names the parameter
+ * Parameters can also be annotated with various annotations, such as {@link Description}, which names the parameter
  * for the user, {@link Greedy}, which takes all following arguments along with itself (vargs).
  * For example, the following command method:
  * <pre>{@code
- *     // this command can be invoked using /test another
- *     private void another(String arg1, @Descriptor("nameOfSecondArgument") boolean arg2, int arg3, double arg4, float arg5, @Greedy String greedyArgument) {
+ *     // this command can be invoked using /test another, /test a, or /test an
+ *     @SubCommand(description = "A subcommand.", aliases = {"a", "an"})
+ *     private void another(String arg1, @Description("nameOfSecondArgument") boolean arg2, int arg3, double arg4, float arg5, @Greedy String greedyArgument) {
  *         // do things here
  *         UChat.chat(arg3 + arg4);
  *         if(arg2) System.out.println(greedyArgument); // Greedily takes all remaining arguments after greedyArgument as well as itself. 1984
@@ -86,14 +87,16 @@ import java.lang.annotation.Target;
  *         // method that is called when /myCommand hello is typed
  *         // if /myc hello true my name is jeff is typed, it will print "my name is jeff" to the console
  *         // greedy will consume all arguments after it
+ *         @Subcommand()
  *         private void hello(boolean truth, @Greedy String input) {
  *             if(truth) System.out.println(input);
  *         }
  *
- *         // the @Descriptor tags will add the value and description to the help method.
+ *         // the @Description tags will add the value and description to the help method.
  *         // the parameter descriptions are presented in the advanced help for the command, accessed using /myc help (command name) which will display help for just this command
  *         // syntax: /myc do (int) (float)
- *         public void do(@Descriptor("age") int num, @Descriptor(value = "multiplier", description = "Multiplier for the age") float multiplier) {
+ *         @Subcommand()
+ *         public void do(@Description("age") int num, @Description(value = "multiplier", description = "Multiplier for the age") float multiplier) {
  *             UChat.chat("Output: " + age * multiplier);
  *         }
  *
@@ -103,10 +106,12 @@ import java.lang.annotation.Target;
  *
  *             // the main method can be called either using /myc sub main (boolean) (float) OR /myc sub (boolean) (float)
  *             // subcommand main methods support parameters
- *             private static void main(boolean bob, @Descriptor("number) float f) {
+ *             @SubCommand()
+ *             private static void main(boolean bob, @Description("number) float f) {
  *                 // do things here
  *             }
  *
+ *             @SubCommand()
  *             // this command will be called with /myc sub yes
  *             private void yes() {
  *                 // do something
@@ -116,6 +121,7 @@ import java.lang.annotation.Target;
  *             @Command(value = "subSub", aliases = {"subSubAlias1"}, description = "My subSubcommand description")
  *             private static class SubSub {
  *                 // so this one's syntax will be /myc sub subSub asg (case insensitive)
+ *                 @Subcommand()
  *                 private static void asg() {
  *                     // do things here
  *                 }
@@ -128,9 +134,9 @@ import java.lang.annotation.Target;
  * To register commands, use {@link CommandManager#registerCommand(Object)}.
  *
  * <p>
- * OneConfig's command system also generates very helpful help messages, which will display the {@link Descriptor} and {@link Command}'s information, such as the description and parameter names.
- * If a parameter is not named by a Descriptor, it will be shown as it's type. /test help (command) will display advanced help for a specific command as well. <br>
- * Autocompletion is also supported for commands. see {@link Descriptor#autoCompletesTo()} for more information.
+ * OneConfig's command system also generates very helpful help messages, which will display the {@link Description} and {@link Command}'s information, such as the description and parameter names.
+ * If a parameter is not named by a Description, it will be shown as it's type. /test help (command) will display advanced help for a specific command as well. <br>
+ * Autocompletion is also supported for commands. see {@link Description#autoCompletesTo()} for more information.
  * </p>
  * @see CommandManager
  */

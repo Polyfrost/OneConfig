@@ -27,11 +27,11 @@
 
 package cc.polyfrost.oneconfig.utils.commands;
 
-import cc.polyfrost.oneconfig.config.annotations.Exclude;
 import cc.polyfrost.oneconfig.libs.universal.ChatColor;
 import cc.polyfrost.oneconfig.utils.commands.annotations.Command;
-import cc.polyfrost.oneconfig.utils.commands.annotations.Descriptor;
+import cc.polyfrost.oneconfig.utils.commands.annotations.Description;
 import cc.polyfrost.oneconfig.utils.commands.annotations.Greedy;
+import cc.polyfrost.oneconfig.utils.commands.annotations.SubCommand;
 import cc.polyfrost.oneconfig.utils.commands.arguments.ArgumentParser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -185,7 +185,7 @@ public class CommandManager {
          */
         private void create(String path, Object parent, @NotNull Method method, boolean isAlias) {
             if (!method.isAccessible()) method.setAccessible(true);
-            if (method.isAnnotationPresent(Exclude.class)) return;
+            if (!method.isAnnotationPresent(SubCommand.class)) return;
             if (parent.getClass().equals(Class.class)) return;
             InternalCommand internalCommand = new InternalCommand(parent, method, isAlias);
             InternalCommand result = commandsMap.putIfAbsent(path + internalCommand.getName().toLowerCase(), internalCommand);
@@ -241,8 +241,8 @@ public class CommandManager {
                         sb.replace(sb.length() - 5, sb.length(), "");
                     }
                     for (Parameter parameter : command.method.getParameters()) {
-                        String s = parameter.isAnnotationPresent(Descriptor.class) ?
-                                parameter.getAnnotation(Descriptor.class).value() : parameter.getType().getSimpleName();
+                        String s = parameter.isAnnotationPresent(Description.class) ?
+                                parameter.getAnnotation(Description.class).value() : parameter.getType().getSimpleName();
                         sb.append("<").append(s);
                         if (parameter.getType().isArray() || parameter.isAnnotationPresent(Greedy.class))
                             sb.append("...");
@@ -261,8 +261,7 @@ public class CommandManager {
                 // mm string builder looks great
                 StringBuilder sb = new StringBuilder(200);
                 sb.append(meta.chatColor()).append(ChatColor.BOLD).append("Advanced help for /").append(meta.value()).append(" ");
-                sb.append(String.join(" ", command.getName())).append(ChatColor.RESET).append(meta.chatColor()).append(": ").append(command.descriptor != null ?
-                        "(" + command.descriptor.value() + ")" : "").append("\n").append(meta.chatColor());
+                sb.append(String.join(" ", command.getName())).append(ChatColor.RESET).append(meta.chatColor()).append(": ").append("\n").append(meta.chatColor());
                 if (command.hasHelp) {
                     sb.append(ChatColor.BOLD).append("Description: ").append(ChatColor.RESET).append(meta.chatColor()).append(command.getHelp())
                             .append("\n").append(meta.chatColor());
@@ -272,14 +271,14 @@ public class CommandManager {
                 }
                 sb.append("Parameters:\n").append(meta.chatColor());
                 for (Parameter parameter : command.method.getParameters()) {
-                    Descriptor descriptor = parameter.isAnnotationPresent(Descriptor.class) ? parameter.getAnnotation(Descriptor.class) : null;
-                    String s = descriptor != null ? descriptor.value() : parameter.getType().getSimpleName();
+                    Description description = parameter.isAnnotationPresent(Description.class) ? parameter.getAnnotation(Description.class) : null;
+                    String s = description != null ? description.value() : parameter.getType().getSimpleName();
                     sb.append("<").append(s);
                     if (parameter.getType().isArray() || parameter.isAnnotationPresent(Greedy.class)) {
                         sb.append("...");
                     }
                     sb.append(">");
-                    String desc = descriptor != null && !descriptor.description().isEmpty() ? descriptor.description() : null;
+                    String desc = description != null && !description.description().isEmpty() ? description.description() : null;
                     sb.append(desc != null ? ": " + desc : "\n").append(meta.chatColor());
                 }
                 return sb.toString().split("\n");
@@ -293,7 +292,7 @@ public class CommandManager {
 
     class InternalCommand {
         private final Method method;
-        private final Descriptor descriptor;
+        private final SubCommand info;
         private final String[] aliases;
         private final String name;
         private final boolean hasHelp, isAlias;
@@ -303,13 +302,13 @@ public class CommandManager {
             this.parent = parent;
             if (!methodIn.isAccessible()) methodIn.setAccessible(true);
             this.method = methodIn;
-            this.descriptor = methodIn.isAnnotationPresent(Descriptor.class) ? methodIn.getAnnotation(Descriptor.class) : null;
-            this.hasHelp = descriptor != null && !descriptor.description().isEmpty();
+            this.info = methodIn.isAnnotationPresent(SubCommand.class) ? methodIn.getAnnotation(SubCommand.class) : null;
+            this.hasHelp = info != null && !info.description().isEmpty();
             this.isAlias = isAlias;
 
             // generate aliases
             this.name = methodIn.getName();
-            this.aliases = descriptor != null ? descriptor.aliases() : new String[0];
+            this.aliases = info != null ? info.aliases() : new String[0];
 
             // check parameters
             int i = 0;
@@ -378,7 +377,7 @@ public class CommandManager {
         String getHelp() {
             // return new Therapist();
             if (hasHelp) {
-                return descriptor.description();
+                return info.description();
             } else {
                 return null;
             }

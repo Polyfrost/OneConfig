@@ -32,19 +32,12 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * This annotation can be used to describe methods and arguments.
- * It is used for aliases and for better help messages for your users. <br>
- * <b>Usage on a command method:</b>
- * <pre>{@code
- *  @Descriptor(value = "My command", aliases = {"mycmd"}, description = "My command description")
- *  public void myCommand(String arg1, String arg2) {
- *      // this will allow the user to do /{yourcommandname} myCommand OR /{yourcommandname} mycmd   (aliases)
- *      // It will also display the name of this command, and its description if provided in the help message.
- *  }
- * }</pre> <br>
+ * This annotation can be used to describe arguments. It is completely optional, but is recommended.
+ * It is used for better help messages for your users; and for control on autocompletion. <br>
+ * </pre> <br>
  * <b>Usage on parameters:</b>
  * <pre>{@code
- *  public void myCommand(@Descriptor("first parameter") int bob, float someParam) {
+ *  public void myCommand(@Description("first parameter") int bob, @Description(autoCompletesTo = {"1", "3.232"} float someParam) {
  *      // this will mark the first parameter as "first parameter" in the help message.
  *      // If its not present, it will just show the TYPE of the parameter (e.g. int).
  *  }
@@ -52,16 +45,16 @@ import java.lang.annotation.Target;
  * </pre>
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.PARAMETER, ElementType.METHOD})
-public @interface Descriptor {
+@Target({ElementType.PARAMETER})
+public @interface Description {
     /**
      * The name of the parameter.
      *
      * @return The name of the parameter.
      */
-    String value();
+    String value() default "";
+    /** Description for the parameter. */
     String description() default "";
-    String[] aliases() default {};
     /** The string to autocomplete to if the parameter is empty. set to PLAYER for it to autocomplete with player names. */
     String[] autoCompletesTo() default "";
 }
