@@ -33,7 +33,7 @@ public class Icon {
     public final Type type;
 
     public Icon(String filePath) {
-        this.icon = filePath;
+        this.icon = filePath.endsWith(".svg") ? new SVG(filePath) : new Image(filePath);
         this.type = filePath.endsWith(".svg") ? Type.SVG : Type.IMAGE;
     }
 
