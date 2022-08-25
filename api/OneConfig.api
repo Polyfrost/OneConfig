@@ -1408,9 +1408,18 @@ public abstract interface annotation class cc/polyfrost/oneconfig/utils/commands
 public abstract interface annotation class cc/polyfrost/oneconfig/utils/commands/annotations/Greedy : java/lang/annotation/Annotation {
 }
 
+public abstract interface annotation class cc/polyfrost/oneconfig/utils/commands/annotations/Main : java/lang/annotation/Annotation {
+	public abstract fun description ()Ljava/lang/String;
+}
+
 public abstract interface annotation class cc/polyfrost/oneconfig/utils/commands/annotations/SubCommand : java/lang/annotation/Annotation {
 	public abstract fun aliases ()[Ljava/lang/String;
 	public abstract fun description ()Ljava/lang/String;
+}
+
+public abstract interface annotation class cc/polyfrost/oneconfig/utils/commands/annotations/SubCommandGroup : java/lang/annotation/Annotation {
+	public abstract fun aliases ()[Ljava/lang/String;
+	public abstract fun value ()Ljava/lang/String;
 }
 
 public abstract class cc/polyfrost/oneconfig/utils/commands/arguments/ArgumentParser {
