@@ -87,9 +87,9 @@ public abstract class ArgumentParser<T> {
     public static class BooleanParser extends ArgumentParser<Boolean> {
         @Override
         public @Nullable Boolean parse(@NotNull String s) {
-            if (s.equalsIgnoreCase("false")) {
+            if (s.equalsIgnoreCase("false") || s.equalsIgnoreCase("off") || s.equalsIgnoreCase("no") || s.equalsIgnoreCase("disabled")) {
                 return false;
-            } else if (s.equalsIgnoreCase("true")) {
+            } else if (s.equalsIgnoreCase("true") || s.equalsIgnoreCase("on") || s.equalsIgnoreCase("yes") || s.equalsIgnoreCase("enabled")) {
                 return true;
             } else {
                 throw new IllegalArgumentException(s + " is not true/false");

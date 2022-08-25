@@ -186,10 +186,8 @@ public class PlatformCommandManagerImpl extends PlatformCommandManager {
                         System.arraycopy(args, i + 1, newArgs, 0, args.length - i - 1);
                         // return the command and the args
                         return new CommandManager.Pair<>(newArgs, root.commandsMap.get(argsIn));
-                    } else if (root.commandsMap.containsKey(argsIn + DELIMITER + "main")) {
-                        String[] newArgs = new String[args.length - i - 1];
-                        System.arraycopy(args, i + 1, newArgs, 0, args.length - i - 1);
-                        return new CommandManager.Pair<>(newArgs, root.commandsMap.get(argsIn + DELIMITER + "main"));
+                    } else if (root.commandsMap.containsKey(argsIn + DELIMITER + MAIN_METHOD_NAME)) {
+                        return new CommandManager.Pair<>(null, root.commandsMap.get(argsIn + DELIMITER + MAIN_METHOD_NAME));
                     }
                     // remove the last word
                     int target = argsIn.lastIndexOf(DELIMITER);

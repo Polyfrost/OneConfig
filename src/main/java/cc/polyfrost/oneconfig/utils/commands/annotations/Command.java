@@ -101,7 +101,7 @@ import java.lang.annotation.Target;
  *         }
  *
  *         // the name of the class (case insensitive) and its aliases are used for the command syntax. The value is displayed in the help method.
- *         @Command(value = "subby", description = "Subcommand example.", aliases = {"subcommand", "yes"}
+ *         @SubCommandGroup(value = "subby", aliases = {"subcommand", "yes"}
  *         private static class Sub {
  *
  *             // the main method can be called either using /myc sub main (boolean) (float) OR /myc sub (boolean) (float)
@@ -118,7 +118,7 @@ import java.lang.annotation.Target;
  *             }
  *
  *             // you can stack subcommand classes as much as you want
- *             @Command(value = "subSub", aliases = {"subSubAlias1"}, description = "My subSubcommand description")
+ *             @SubCommandGroup(value = "subSub", aliases = {"subSubAlias1"})
  *             private static class SubSub {
  *                 // so this one's syntax will be /myc sub subSub asg (case insensitive)
  *                 @Subcommand()

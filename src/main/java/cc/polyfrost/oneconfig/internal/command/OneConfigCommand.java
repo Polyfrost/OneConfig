@@ -32,10 +32,7 @@ import cc.polyfrost.oneconfig.internal.config.profiles.Profiles;
 import cc.polyfrost.oneconfig.internal.gui.HudGui;
 import cc.polyfrost.oneconfig.libs.universal.ChatColor;
 import cc.polyfrost.oneconfig.libs.universal.UChat;
-import cc.polyfrost.oneconfig.utils.commands.annotations.Command;
-import cc.polyfrost.oneconfig.utils.commands.annotations.Description;
-import cc.polyfrost.oneconfig.utils.commands.annotations.Greedy;
-import cc.polyfrost.oneconfig.utils.commands.annotations.SubCommand;
+import cc.polyfrost.oneconfig.utils.commands.annotations.*;
 import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 
 /**
@@ -44,7 +41,7 @@ import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 @Command(value = "oneconfig", aliases = {"ocfg"})
 public class OneConfigCommand {
 
-    @SubCommand(description = "Opens the OneConfig GUI")
+    @Main(description = "Opens the OneConfig GUI")
     private void main() {
         GuiUtils.displayScreen(OneConfigGui.create());
     }
@@ -59,7 +56,7 @@ public class OneConfigCommand {
         OneConfigGui.INSTANCE = null;
     }
 
-    @Command(value = "Profile", description = "Actions related to profiles.", aliases = {"profiles"})
+    @SubCommandGroup(value = "Profile", aliases = {"profiles"})
     private static class Profile {
         @SubCommand(description = "View all profiles", aliases = {"view"})
         private void list() {
