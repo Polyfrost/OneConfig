@@ -102,7 +102,7 @@ public abstract class BasicOption {
      * @param x  x position
      * @param y  y position
      */
-    public void drawLast(long vg, int x, int y , InputHandler inputHandler) {
+    public void drawLast(long vg, int x, int y, InputHandler inputHandler) {
     }
 
     /**
@@ -112,20 +112,6 @@ public abstract class BasicOption {
      * @param keyCode code of key
      */
     public void keyTyped(char key, int keyCode) {
-    }
-
-    /**
-     * Reset the field to its default value
-     *
-     * @param config The config the field is in
-     */
-    public void reset(Config config) {
-        Object object = config.getDefault(field);
-        if (object == null) return;
-        try {
-            set(object);
-        } catch (IllegalAccessException ignored) {
-        }
     }
 
     /**

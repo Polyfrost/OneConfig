@@ -194,7 +194,6 @@ public class TestConfig_Test extends Config {
         super(new Mod("Test Mod", ModType.UTIL_QOL, new VigilanceMigrator("./config/testConfig.toml")), "hacksConfig.json");
         initialize();
         addDependency("testCheckBox", "testSwitch");
-
         registerKeyBind(testKeyBind, () -> {
             Animation barAnimation = new EaseInOutQuart(4000, 0f, 1f, false);
             Notifications.INSTANCE.send(

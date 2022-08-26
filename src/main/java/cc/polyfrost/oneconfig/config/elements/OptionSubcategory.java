@@ -132,10 +132,4 @@ public class OptionSubcategory {
     public String getName() {
         return name;
     }
-
-    public void reset(Config config) {
-        for (BasicOption option : options) {
-            options.remove(config);
-        }
-    }
 }

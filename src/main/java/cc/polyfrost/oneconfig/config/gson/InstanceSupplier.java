@@ -24,12 +24,21 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.config.elements;
+package cc.polyfrost.oneconfig.config.gson;
 
-import cc.polyfrost.oneconfig.config.Config;
+import com.google.gson.InstanceCreator;
 
-import java.util.ArrayList;
+import java.lang.reflect.Type;
 
-public class OptionCategory {
-    public final ArrayList<OptionSubcategory> subcategories = new ArrayList<>();
+public class InstanceSupplier<T> implements InstanceCreator<T> {
+    private final T instance;
+
+    public InstanceSupplier(T instance) {
+        this.instance = instance;
+    }
+
+    @Override
+    public T createInstance(Type type) {
+        return instance;
+    }
 }
