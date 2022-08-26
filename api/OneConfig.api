@@ -1,6 +1,5 @@
 public class cc/polyfrost/oneconfig/config/Config {
 	protected final field configFile Ljava/lang/String;
-	protected final field defaults Ljava/util/HashMap;
 	public field enabled Z
 	protected final field gson Lcom/google/gson/Gson;
 	public field mod Lcc/polyfrost/oneconfig/config/data/Mod;
@@ -8,23 +7,21 @@ public class cc/polyfrost/oneconfig/config/Config {
 	public final field optionNames Ljava/util/HashMap;
 	public fun <init> (Lcc/polyfrost/oneconfig/config/data/Mod;Ljava/lang/String;)V
 	public fun <init> (Lcc/polyfrost/oneconfig/config/data/Mod;Ljava/lang/String;Z)V
-	protected fun addDependency (Ljava/lang/String;Ljava/lang/String;)V
-	protected fun addDependency (Ljava/lang/String;Ljava/util/function/Supplier;)V
-	protected fun addDependency (Ljava/lang/String;Z)V
-	protected fun addListener (Ljava/lang/String;Ljava/lang/Runnable;)V
-	protected fun deserializePart (Lcom/google/gson/JsonObject;Ljava/lang/Object;)V
-	protected fun generateOptionList (Ljava/lang/Object;Lcc/polyfrost/oneconfig/config/elements/OptionPage;Lcc/polyfrost/oneconfig/config/data/Mod;Z)V
+	protected final fun addDependency (Ljava/lang/String;Ljava/lang/String;)V
+	protected final fun addDependency (Ljava/lang/String;Ljava/util/function/Supplier;)V
+	protected final fun addDependency (Ljava/lang/String;Z)V
+	protected fun addGsonOptions (Lcom/google/gson/GsonBuilder;)Lcom/google/gson/GsonBuilder;
+	protected final fun addListener (Ljava/lang/String;Ljava/lang/Runnable;)V
+	protected final fun generateOptionList (Ljava/lang/Object;Lcc/polyfrost/oneconfig/config/elements/OptionPage;Lcc/polyfrost/oneconfig/config/data/Mod;Z)V
 	protected fun getCustomOption (Ljava/lang/reflect/Field;Lcc/polyfrost/oneconfig/config/annotations/CustomOption;Lcc/polyfrost/oneconfig/config/elements/OptionPage;Lcc/polyfrost/oneconfig/config/data/Mod;Z)Lcc/polyfrost/oneconfig/config/elements/BasicOption;
-	public fun getDefault (Ljava/lang/reflect/Field;)Ljava/lang/Object;
-	protected fun hideIf (Ljava/lang/String;Ljava/lang/String;)V
-	protected fun hideIf (Ljava/lang/String;Ljava/util/function/Supplier;)V
-	protected fun hideIf (Ljava/lang/String;Z)V
+	protected final fun hideIf (Ljava/lang/String;Ljava/lang/String;)V
+	protected final fun hideIf (Ljava/lang/String;Ljava/util/function/Supplier;)V
+	protected final fun hideIf (Ljava/lang/String;Z)V
 	public fun initialize ()V
 	public fun load ()V
 	public fun openGui ()V
 	public fun reInitialize ()V
-	protected fun registerKeyBind (Lcc/polyfrost/oneconfig/config/core/OneKeyBind;Ljava/lang/Runnable;)V
-	public fun reset ()V
+	protected final fun registerKeyBind (Lcc/polyfrost/oneconfig/config/core/OneKeyBind;Ljava/lang/Runnable;)V
 	public fun save ()V
 	public fun supportsProfiles ()Z
 }
@@ -302,7 +299,6 @@ public abstract class cc/polyfrost/oneconfig/config/elements/BasicOption {
 	public fun isEnabled ()Z
 	public fun isHidden ()Z
 	public fun keyTyped (CI)V
-	public fun reset (Lcc/polyfrost/oneconfig/config/Config;)V
 	protected fun set (Ljava/lang/Object;)V
 	public fun setParent (Ljava/lang/Object;)V
 }
@@ -310,7 +306,6 @@ public abstract class cc/polyfrost/oneconfig/config/elements/BasicOption {
 public class cc/polyfrost/oneconfig/config/elements/OptionCategory {
 	public final field subcategories Ljava/util/ArrayList;
 	public fun <init> ()V
-	public fun reset (Lcc/polyfrost/oneconfig/config/Config;)V
 }
 
 public class cc/polyfrost/oneconfig/config/elements/OptionPage {
@@ -318,7 +313,6 @@ public class cc/polyfrost/oneconfig/config/elements/OptionPage {
 	public final field mod Lcc/polyfrost/oneconfig/config/data/Mod;
 	public final field name Ljava/lang/String;
 	public fun <init> (Ljava/lang/String;Lcc/polyfrost/oneconfig/config/data/Mod;)V
-	public fun reset (Lcc/polyfrost/oneconfig/config/Config;)V
 }
 
 public class cc/polyfrost/oneconfig/config/elements/OptionSubcategory {
@@ -329,7 +323,11 @@ public class cc/polyfrost/oneconfig/config/elements/OptionSubcategory {
 	public fun draw (JIILcc/polyfrost/oneconfig/utils/InputHandler;)I
 	public fun drawLast (JILcc/polyfrost/oneconfig/utils/InputHandler;)V
 	public fun getName ()Ljava/lang/String;
-	public fun reset (Lcc/polyfrost/oneconfig/config/Config;)V
+}
+
+public class cc/polyfrost/oneconfig/config/gson/InstanceSupplier : com/google/gson/InstanceCreator {
+	public fun <init> (Ljava/lang/Object;)V
+	public fun createInstance (Ljava/lang/reflect/Type;)Ljava/lang/Object;
 }
 
 public class cc/polyfrost/oneconfig/config/gson/exclusion/ExclusionUtils {
@@ -347,56 +345,6 @@ public class cc/polyfrost/oneconfig/config/gson/exclusion/ProfileExclusionStrate
 	public fun <init> ()V
 	public fun shouldSkipClass (Ljava/lang/Class;)Z
 	public fun shouldSkipField (Lcom/google/gson/FieldAttributes;)Z
-}
-
-public class cc/polyfrost/oneconfig/config/gson/gsoninterface/GsonContext {
-	public fun <init> (Lcom/google/gson/Gson;Lcc/polyfrost/oneconfig/config/gson/gsoninterface/InterfaceAdapterFactory$InterfaceTypeAdapter;)V
-	public fun fromJsonTree (Lcom/google/gson/JsonElement;Ljava/lang/Class;)Ljava/lang/Object;
-	public fun fromJsonTree (Lcom/google/gson/JsonElement;Ljava/lang/reflect/Type;)Ljava/lang/Object;
-	public fun thisFromJsonTree (Lcom/google/gson/JsonElement;)Ljava/lang/Object;
-	public fun thisFromJsonTree (Lcom/google/gson/JsonElement;Ljava/lang/reflect/Type;)Ljava/lang/Object;
-	public fun thisToJsonTree (Ljava/lang/Object;)Lcom/google/gson/JsonElement;
-	public fun toJsonTree (Ljava/lang/Object;)Lcom/google/gson/JsonElement;
-}
-
-public class cc/polyfrost/oneconfig/config/gson/gsoninterface/InterfaceAdapterFactory : com/google/gson/TypeAdapterFactory {
-	public fun <init> ()V
-	public fun create (Lcom/google/gson/Gson;Lcom/google/gson/reflect/TypeToken;)Lcom/google/gson/TypeAdapter;
-}
-
-public class cc/polyfrost/oneconfig/config/gson/gsoninterface/InterfaceAdapterFactory$InterfaceTypeAdapter : com/google/gson/TypeAdapter {
-	public fun read (Lcom/google/gson/stream/JsonReader;)Ljava/lang/Object;
-	public fun write (Lcom/google/gson/stream/JsonWriter;Ljava/lang/Object;)V
-}
-
-public abstract interface class cc/polyfrost/oneconfig/config/gson/gsoninterface/JsonDeserialization {
-}
-
-public abstract interface class cc/polyfrost/oneconfig/config/gson/gsoninterface/JsonDeserializes {
-	public abstract fun fromJsonTree (Lcom/google/gson/JsonElement;Ljava/lang/reflect/Type;Lcc/polyfrost/oneconfig/config/gson/gsoninterface/GsonContext;)Ljava/lang/Object;
-}
-
-public abstract interface class cc/polyfrost/oneconfig/config/gson/gsoninterface/JsonSerialization {
-	public abstract fun toJsonTree (Lcc/polyfrost/oneconfig/config/gson/gsoninterface/GsonContext;)Lcom/google/gson/JsonElement;
-}
-
-public class cc/polyfrost/oneconfig/config/gson/gsoninterface/Reflection {
-	public fun <init> ()V
-	public static fun classOfType (Ljava/lang/reflect/Type;)Ljava/lang/Class;
-	public static fun constructAnyway (Ljava/lang/reflect/Constructor;[Ljava/lang/Object;)Ljava/lang/Object;
-	public static fun getAccessibleField (Ljava/lang/Class;Ljava/lang/String;)Ljava/lang/reflect/Field;
-	public static fun getConstructor (Ljava/lang/Class;[Ljava/lang/Class;)Ljava/lang/reflect/Constructor;
-	public static fun getFieldValue (Ljava/lang/reflect/Field;Ljava/lang/Object;)Ljava/lang/Object;
-	public static fun getParameterBounds (Ljava/lang/Class;)[Ljava/lang/Class;
-	public static fun getTypeParameters (Ljava/lang/Class;Ljava/lang/Class;)[Ljava/lang/Class;
-	public static fun isAbstract (Ljava/lang/Class;)Z
-	public static fun newInstance (Ljava/lang/Class;)Ljava/lang/Object;
-}
-
-public class cc/polyfrost/oneconfig/config/gson/gsoninterface/Reflection$Stack : java/util/ArrayList {
-	public fun <init> ()V
-	public fun pop ()Ljava/lang/Object;
-	public fun push (Ljava/lang/Object;)Lcc/polyfrost/oneconfig/config/gson/gsoninterface/Reflection$Stack;
 }
 
 public class cc/polyfrost/oneconfig/config/migration/CfgMigrator : cc/polyfrost/oneconfig/config/migration/Migrator {
