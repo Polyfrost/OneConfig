@@ -43,7 +43,6 @@ import java.util.List;
 
 public abstract class TextHud extends BasicHud {
     protected transient List<String> lines = new ArrayList<>();
-    private transient int width;
 
     @Color(
             name = "Text Color"
@@ -55,6 +54,11 @@ public abstract class TextHud extends BasicHud {
             options = {"No Shadow", "Shadow", "Full Shadow"}
     )
     protected int textType = 0;
+
+    public TextHud(boolean enabled, float x, float y, float scale, boolean background, boolean rounded, float cornerRadius, float paddingX, float paddingY, OneColor bgColor, boolean border, float borderSize, OneColor borderColor) {
+        super(enabled, x, y, scale, background, rounded, cornerRadius, paddingX, paddingY, bgColor, border, borderSize, borderColor);
+        EventManager.INSTANCE.register(new TickHandler());
+    }
 
     public TextHud(boolean enabled, int x, int y) {
         super(enabled, x, y);
