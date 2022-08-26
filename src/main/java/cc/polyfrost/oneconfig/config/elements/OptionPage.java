@@ -40,10 +40,4 @@ public class OptionPage {
         this.name = name;
         this.mod = mod;
     }
-
-    public void reset(Config config) {
-        for (OptionCategory subcategory : categories.values()) {
-            subcategory.reset(config);
-        }
-    }
 }

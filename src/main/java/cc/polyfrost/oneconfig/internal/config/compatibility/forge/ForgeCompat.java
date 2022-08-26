@@ -35,15 +35,6 @@ public class ForgeCompat {
                 }
 
                 @Override
-                public Object getDefault(Field field) {
-                    return null;
-                }
-
-                @Override
-                public void reset() {
-                }
-
-                @Override
                 public boolean supportsProfiles() {
                     return false;
                 }
