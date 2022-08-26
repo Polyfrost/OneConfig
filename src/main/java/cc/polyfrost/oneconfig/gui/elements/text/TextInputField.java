@@ -141,12 +141,13 @@ public class TextInputField extends BasicElement {
             // draw selection
             if (selection != null) {
                 final float from = selection.indexStart < endIndex && selection.indexStart >= startIndex ? getTextWidth(line.substring(0, selection.indexStart - startIndex)) : 0;
-                final float to = selection.indexEnd < endIndex && selection.indexEnd >= startIndex ? getTextWidth(line.substring(0, selection.indexEnd - startIndex)) : getTextWidth(line);
-                if(selection.indexStart < endIndex && selection.indexStart >= startIndex) {
+                float to = selection.indexEnd < endIndex && selection.indexEnd >= startIndex ? getTextWidth(line.substring(0, selection.indexEnd - startIndex)) : getTextWidth(line);
+                if(selection.indexEnd < startIndex) to = 0;
+                if(from != 0 && to != 0) {
                     RenderManager.drawRect(vg, textStart.x + from, textY - 10, to - from, LINE_HEIGHT, Colors.GRAY_300);
-                } else if(selection.indexEnd < endIndex && selection.indexEnd >= startIndex) {
-                    RenderManager.drawRect(vg, textStart.x, textY - 10, to, LINE_HEIGHT, Colors.GRAY_300);
                 }
+
+                //}
                 //RenderManager.drawRect(vg, textStart.x + from, textY - 10, to - from, LINE_HEIGHT, Colors.GRAY_300);
             }
 
