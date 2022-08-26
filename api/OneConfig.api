@@ -951,6 +951,7 @@ public abstract class cc/polyfrost/oneconfig/gui/pages/Page {
 }
 
 public abstract class cc/polyfrost/oneconfig/hud/BasicHud : cc/polyfrost/oneconfig/hud/Hud {
+	protected field background Z
 	protected field bgColor Lcc/polyfrost/oneconfig/config/core/OneColor;
 	protected field border Z
 	protected field borderColor Lcc/polyfrost/oneconfig/config/core/OneColor;
@@ -963,7 +964,7 @@ public abstract class cc/polyfrost/oneconfig/hud/BasicHud : cc/polyfrost/oneconf
 	public fun <init> (Z)V
 	public fun <init> (ZFF)V
 	public fun <init> (ZFFF)V
-	public fun <init> (ZFFFZFFFLcc/polyfrost/oneconfig/config/core/OneColor;ZFLcc/polyfrost/oneconfig/config/core/OneColor;)V
+	public fun <init> (ZFFFZZFFFLcc/polyfrost/oneconfig/config/core/OneColor;ZFLcc/polyfrost/oneconfig/config/core/OneColor;)V
 	public fun drawAll (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;Z)V
 	protected fun drawBackground (FFFFF)V
 	public fun setScale (FZ)V
@@ -1043,7 +1044,9 @@ public abstract class cc/polyfrost/oneconfig/hud/SingleTextHud : cc/polyfrost/on
 	protected field title Ljava/lang/String;
 	protected field titleLocation I
 	public fun <init> (Ljava/lang/String;Z)V
+	public fun <init> (Ljava/lang/String;ZFFFZZFFFLcc/polyfrost/oneconfig/config/core/OneColor;ZFLcc/polyfrost/oneconfig/config/core/OneColor;)V
 	public fun <init> (Ljava/lang/String;ZII)V
+	public fun drawAll (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;Z)V
 	protected final fun getCompleteText (Ljava/lang/String;)Ljava/lang/String;
 	protected fun getLines (Ljava/util/List;Z)V
 	protected fun getLinesFrequent (Ljava/util/List;Z)V
@@ -1056,6 +1059,7 @@ public abstract class cc/polyfrost/oneconfig/hud/TextHud : cc/polyfrost/oneconfi
 	protected field lines Ljava/util/List;
 	protected field textType I
 	public fun <init> (Z)V
+	public fun <init> (ZFFFZZFFFLcc/polyfrost/oneconfig/config/core/OneColor;ZFLcc/polyfrost/oneconfig/config/core/OneColor;)V
 	public fun <init> (ZII)V
 	public fun draw (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;FFFZ)V
 	protected fun drawLine (Ljava/lang/String;FFF)V
