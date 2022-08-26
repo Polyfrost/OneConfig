@@ -76,17 +76,27 @@ public class HUDUtils {
             options.add(new ConfigSwitch(fields.get("enabled"), hud, "Enabled", category, subcategory, 2));
             options.addAll(ConfigUtils.getClassOptions(hud));
             if (hud instanceof BasicHud) {
+                options.add(new ConfigCheckbox(fields.get("background"), hud, "Background", category, subcategory, 1));
                 options.add(new ConfigCheckbox(fields.get("rounded"), hud, "Rounded corners", category, subcategory, 1));
+                options.get(options.size() - 1).addDependency(() -> ((BasicHud) hud).background || ((BasicHud) hud).border);
                 options.add(new ConfigCheckbox(fields.get("border"), hud, "Outline/border", category, subcategory, 1));
                 options.add(new ConfigColorElement(fields.get("bgColor"), hud, "Background color:", category, subcategory, 1, true));
+                options.get(options.size() - 1).addDependency(() -> ((BasicHud) hud).background);
                 options.add(new ConfigColorElement(fields.get("borderColor"), hud, "Border color:", category, subcategory, 1, true));
                 options.get(options.size() - 1).addDependency(() -> ((BasicHud) hud).border);
                 options.add(new ConfigSlider(fields.get("cornerRadius"), hud, "Corner radius:", category, subcategory, 0, 10, 0));
                 options.get(options.size() - 1).addDependency(() -> ((BasicHud) hud).rounded);
                 options.add(new ConfigSlider(fields.get("borderSize"), hud, "Border thickness:", category, subcategory, 0, 10, 0));
                 options.get(options.size() - 1).addDependency(() -> ((BasicHud) hud).border);
-                options.add(new ConfigSlider(fields.get("paddingX"), hud, "X-Padding", category, subcategory, 0, 50, 0));
-                options.add(new ConfigSlider(fields.get("paddingY"), hud, "Y-Padding", category, subcategory, 0, 50, 0));
+                if (hud instanceof SingleTextHud) {
+                    options.add(new ConfigSlider(fields.get("paddingX"), hud, "Width", category, subcategory, 50, 72, 0));
+                    options.add(new ConfigSlider(fields.get("paddingY"), hud, "Height", category, subcategory, 10, 22, 0));
+                } else {
+                    options.add(new ConfigSlider(fields.get("paddingX"), hud, "X-Padding", category, subcategory, 0, 50, 0));
+                    options.add(new ConfigSlider(fields.get("paddingY"), hud, "Y-Padding", category, subcategory, 0, 50, 0));
+                }
+                options.get(options.size() - 2).addDependency(() -> ((BasicHud) hud).background || ((BasicHud) hud).border);
+                options.get(options.size() - 1).addDependency(() -> ((BasicHud) hud).background || ((BasicHud) hud).border);
             }
             for (BasicOption option : options) {
                 if (option.name.equals("Enabled")) continue;
