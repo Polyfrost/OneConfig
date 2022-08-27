@@ -51,7 +51,8 @@ public class Deprecator {
                 // ignore the first two
                 if (i > 2) {
                     // remove any that are native, or called from a system package
-                    if (!element.isNativeMethod() && !element.getClassName().startsWith("sun.reflect") && !element.getClassName().startsWith("java.lang")) {
+                    if (!element.isNativeMethod() && !element.getClassName().startsWith("sun.") && !element.getClassName().startsWith("java.")
+                            && !element.getClassName().startsWith("javax.") && !element.getClassName().startsWith("jdk.") && !element.getClassName().startsWith("com.sun.")) {
                         target = element;
                         break;
                     }
