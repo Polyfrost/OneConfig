@@ -206,7 +206,7 @@ public class Config {
     protected GsonBuilder addGsonOptions(GsonBuilder builder) {
         return builder
                 .registerTypeAdapter(this.getClass(), new InstanceSupplier<>(this))
-                .excludeFieldsWithModifiers(Modifier.TRANSIENT, Modifier.FINAL)
+                .excludeFieldsWithModifiers(Modifier.TRANSIENT)
                 .setPrettyPrinting();
     }
 
