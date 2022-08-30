@@ -26,6 +26,7 @@
 
 package cc.polyfrost.oneconfig.utils;
 
+import cc.polyfrost.oneconfig.internal.utils.Deprecator;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Font;
 
@@ -47,7 +48,9 @@ public final class TextUtils {
      * @param font     The font to use.
      * @return The array of lines.
      */
+    @Deprecated
     public static ArrayList<String> wrapText(long vg, String text, float maxWidth, float fontSize, Font font) {
+        Deprecator.markDeprecated();
         ArrayList<String> wrappedText = new ArrayList<>();
         text += " ";
         int prevIndex = 0;

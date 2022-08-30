@@ -26,15 +26,31 @@
 
 package cc.polyfrost.oneconfig.internal.utils;
 
-import cc.polyfrost.oneconfig.internal.config.core.ConfigCore;
+import cc.polyfrost.oneconfig.utils.LogScanner;
 import cc.polyfrost.oneconfig.utils.Notifications;
 
-import java.util.Iterator;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Class used by OneConfig for deprecation related utilities.
  */
-public class Deprecator {
+public final class Deprecator {
+    private static final List<String> recentlyWarned = new ArrayList<>();
+
+    // spam protector
+    static {
+        new Timer().schedule(new TimerTask() {
+            @Override
+            public void run() {
+                recentlyWarned.clear();
+            }
+        }, TimeUnit.MINUTES.toMillis(3), TimeUnit.MINUTES.toMillis(3));
+    }
+
     /**
      * mark a method as deprecated. When a method has this call, it will
      * throw a new exception to grab the name (or package) of the mod that call said method. <br>
@@ -44,50 +60,10 @@ public class Deprecator {
         try {
             throw new Exception("This method is deprecated");
         } catch (Exception e) {
-            // first is this method name, second is the method it called, third is what called it
-            StackTraceElement target = null;
-            int i = 0;
-            for (StackTraceElement element : e.getStackTrace()) {
-                // ignore the first two
-                if (i > 2) {
-                    // remove any that are native, or called from a system package
-                    if (!element.isNativeMethod() && !element.getClassName().startsWith("sun.") && !element.getClassName().startsWith("java.")
-                            && !element.getClassName().startsWith("javax.") && !element.getClassName().startsWith("jdk.") && !element.getClassName().startsWith("com.sun.")) {
-                        target = element;
-                        break;
-                    }
-                }
-                i++;
-            }
-
-            // turn the full path into a package name
-            StringBuilder sb = new StringBuilder();
-            int dots = 0;
-            if (target != null) {
-                for (char c : target.getClassName().toCharArray()) {
-                    if (c == '.') dots++;
-                    if (dots == 3) break;
-                    sb.append(c);
-                }
-            } else {
-                // this should never happen but you know
-                sb.append("Unknown");
-            }
-
-            String culprit = sb.toString();
-            // attempt to get the mods "formal name" from the config mod list
-            for (Iterator<String> it = ConfigCore.mods.stream().map(mod -> mod.name).iterator(); it.hasNext(); ) {
-                String s = it.next().replaceAll(" ", "");
-                if (s.equalsIgnoreCase(culprit.substring(culprit.lastIndexOf(".")))) {
-                    culprit = s;
-                    break;
-                }
-            }
-            Notifications.INSTANCE.send("Deprecation Warning", "The mod '" + culprit + "' is using a deprecated method, and will no longer work in the future. Please report this to the mod author.");
-            try {
-                throw new UnsupportedOperationException("Method " + e.getStackTrace()[1].getClassName() + "." + e.getStackTrace()[1].getMethodName() + "() is deprecated; but is still being used by mod " + culprit + "!");
-            } catch (UnsupportedOperationException e1) {
-                e1.printStackTrace();
+            String culprit = LogScanner.identifyCallerFromStacktrace(e).stream().map(activeMod -> activeMod.name).findFirst().orElse("Unknown");
+            if (!recentlyWarned.contains(culprit)) {
+                recentlyWarned.add(culprit);
+                Notifications.INSTANCE.send("Deprecation Warning", "The mod '" + culprit + "' is using a deprecated method, and will no longer work in the future. Please report this to the mod author.");
             }
         }
     }
