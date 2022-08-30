@@ -31,25 +31,12 @@ import cc.polyfrost.oneconfig.utils.Notifications;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Class used by OneConfig for deprecation related utilities.
  */
 public final class Deprecator {
-    private static final List<String> recentlyWarned = new ArrayList<>();
-
-    // spam protector
-    static {
-        new Timer().schedule(new TimerTask() {
-            @Override
-            public void run() {
-                recentlyWarned.clear();
-            }
-        }, TimeUnit.MINUTES.toMillis(3), TimeUnit.MINUTES.toMillis(3));
-    }
+    private static final List<String> warned = new ArrayList<>();
 
     /**
      * mark a method as deprecated. When a method has this call, it will
@@ -61,8 +48,8 @@ public final class Deprecator {
             throw new Exception("This method is deprecated");
         } catch (Exception e) {
             String culprit = LogScanner.identifyCallerFromStacktrace(e).stream().map(activeMod -> activeMod.name).findFirst().orElse("Unknown");
-            if (!recentlyWarned.contains(culprit)) {
-                recentlyWarned.add(culprit);
+            if (!warned.contains(culprit)) {
+                warned.add(culprit);
                 Notifications.INSTANCE.send("Deprecation Warning", "The mod '" + culprit + "' is using a deprecated method, and will no longer work in the future. Please report this to the mod author.");
             }
         }
