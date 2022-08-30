@@ -70,15 +70,17 @@ public class LoaderPlatformImpl implements LoaderPlatform {
 
     @Override
     public @NotNull List<ActiveMod> getLoadedMods() {
+        return
         //#if FORGE==1
         //#if MC<=11202
-        return Loader.instance().getActiveModList().stream().map(this::toActiveMod).collect(Collectors.toList());
+        Loader.instance().getActiveModList().stream().map
         //#else
-        //$$ return ModList.get().applyForEachModContainer(this::toActiveMod).collect(Collectors.toList());
+        //$$ ModList.get().applyForEachModContainer
         //#endif
         //#else
-        //$$ return FabricLoader.getInstance().getAllMods().stream().map(this::toActiveMod).collect(Collectors.toList());
+        //$$ FabricLoader.getInstance().getAllMods().stream().map
         //#endif
+                (this::toActiveMod).collect(Collectors.toList());
     }
 
     @Override

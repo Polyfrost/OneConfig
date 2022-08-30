@@ -70,8 +70,7 @@ import java.util.stream.Collectors;
  */
 public class LogScanner {
     static final Logger LOGGER = LogManager.getLogger("OneConfig Log Scanner");
-    //static final boolean FORCE_DEBUG = System.getProperty("oneconfig.debugLogger", "false").equals("true");
-    static final boolean FORCE_DEBUG = true;
+    static final boolean FORCE_DEBUG = System.getProperty("oneconfig.debugLogger", "false").equals("true");
 
     /**
      * Return a set of ActiveMods that have been blamed for the given stacktrace.
