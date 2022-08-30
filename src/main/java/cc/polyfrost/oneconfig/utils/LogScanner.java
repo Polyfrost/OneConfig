@@ -48,6 +48,7 @@
 
 package cc.polyfrost.oneconfig.utils;
 
+import cc.polyfrost.oneconfig.internal.config.Preferences;
 import cc.polyfrost.oneconfig.platform.LoaderPlatform;
 import cc.polyfrost.oneconfig.platform.Platform;
 import org.apache.logging.log4j.LogManager;
@@ -70,7 +71,6 @@ import java.util.stream.Collectors;
  */
 public class LogScanner {
     static final Logger LOGGER = LogManager.getLogger("OneConfig Log Scanner");
-    static final boolean FORCE_DEBUG = System.getProperty("oneconfig.debugLogger", "false").equals("true");
 
     /**
      * Return a set of ActiveMods that have been blamed for the given stacktrace.
@@ -142,7 +142,7 @@ public class LogScanner {
     }
 
     private static void debug(Supplier<String> message) {
-        if (FORCE_DEBUG) LOGGER.info(message.get());
+        if (Preferences.DEBUG) LOGGER.info(message.get());
     }
 
     // TODO: get a list of mixin transformers that affected the class and blame those too
