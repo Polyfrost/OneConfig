@@ -29,8 +29,6 @@ package cc.polyfrost.oneconfig.config.data;
 import cc.polyfrost.oneconfig.config.Config;
 import cc.polyfrost.oneconfig.config.elements.OptionPage;
 import cc.polyfrost.oneconfig.config.migration.Migrator;
-import cc.polyfrost.oneconfig.platform.LoaderPlatform;
-import cc.polyfrost.oneconfig.utils.LogScanner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,11 +43,6 @@ public class Mod implements Comparable<Mod> {
     @NotNull
     public final OptionPage defaultPage;
     public Config config;
-    /**
-     * Return the ActiveMod associated with this mod file. Will be null if it does not exist.
-     */
-    @Nullable
-    public final LoaderPlatform.ActiveMod mod;
 
     /**
      * @param name     Friendly name of the mod
@@ -63,7 +56,6 @@ public class Mod implements Comparable<Mod> {
         this.modIcon = modIcon;
         this.migrator = migrator;
         this.defaultPage = new OptionPage(name, this);
-        this.mod = LogScanner.identifyFromClass(this.getClass().getCanonicalName()).stream().findFirst().orElse(null);
     }
 
     /**
