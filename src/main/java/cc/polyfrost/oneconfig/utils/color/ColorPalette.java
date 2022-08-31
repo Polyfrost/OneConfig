@@ -27,8 +27,8 @@
 package cc.polyfrost.oneconfig.utils.color;
 
 
-import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.config.core.OneColor;
+import cc.polyfrost.oneconfig.internal.assets.Colors;
 
 import java.awt.*;
 

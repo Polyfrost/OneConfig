@@ -48,11 +48,12 @@ public final class OneColor {
 
     // hex constructor
 
-    /** Create a OneColor from the given hex.
+    /**
+     * Create a OneColor from the given hex.
      */
     public OneColor(String hex) {
         hsba = new short[]{0, 0, 0, 0};
-        if(hex.length() > 7) {
+        if (hex.length() > 7) {
             hsba[3] = (short) Integer.parseInt(hex.substring(6, 8), 16);
         }
         setColorFromHex(hex);
@@ -291,7 +292,7 @@ public final class OneColor {
 
     public void setColorFromHex(String hex) {
         hex = hex.replace("#", "");
-        if(hex.length() == 8) {
+        if (hex.length() == 8) {
             hsba[3] = (short) (Integer.parseInt(hex.substring(6, 8), 16));
         }
         if (hex.length() > 6) {

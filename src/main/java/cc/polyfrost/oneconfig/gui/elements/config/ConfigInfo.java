@@ -27,9 +27,9 @@
 package cc.polyfrost.oneconfig.gui.elements.config;
 
 import cc.polyfrost.oneconfig.config.annotations.Info;
-import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.config.data.InfoType;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
+import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.renderer.scissor.Scissor;

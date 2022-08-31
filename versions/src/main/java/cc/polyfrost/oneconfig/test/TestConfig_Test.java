@@ -26,12 +26,11 @@
 
 package cc.polyfrost.oneconfig.test;
 
+import cc.polyfrost.oneconfig.config.Config;
 import cc.polyfrost.oneconfig.config.annotations.*;
 import cc.polyfrost.oneconfig.config.core.OneColor;
 import cc.polyfrost.oneconfig.config.core.OneKeyBind;
 import cc.polyfrost.oneconfig.config.data.*;
-import cc.polyfrost.oneconfig.config.Config;
-import cc.polyfrost.oneconfig.config.data.ModType;
 import cc.polyfrost.oneconfig.config.migration.VigilanceMigrator;
 import cc.polyfrost.oneconfig.gui.animations.Animation;
 import cc.polyfrost.oneconfig.gui.animations.EaseInOutQuart;

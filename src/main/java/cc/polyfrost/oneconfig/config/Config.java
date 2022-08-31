@@ -26,7 +26,9 @@
 
 package cc.polyfrost.oneconfig.config;
 
-import cc.polyfrost.oneconfig.config.annotations.*;
+import cc.polyfrost.oneconfig.config.annotations.CustomOption;
+import cc.polyfrost.oneconfig.config.annotations.HUD;
+import cc.polyfrost.oneconfig.config.annotations.Page;
 import cc.polyfrost.oneconfig.config.core.ConfigUtils;
 import cc.polyfrost.oneconfig.config.core.OneKeyBind;
 import cc.polyfrost.oneconfig.config.data.Mod;
@@ -37,8 +39,8 @@ import cc.polyfrost.oneconfig.config.elements.OptionSubcategory;
 import cc.polyfrost.oneconfig.config.gson.InstanceSupplier;
 import cc.polyfrost.oneconfig.config.gson.exclusion.NonProfileSpecificExclusionStrategy;
 import cc.polyfrost.oneconfig.config.gson.exclusion.ProfileExclusionStrategy;
-import cc.polyfrost.oneconfig.gui.elements.config.ConfigKeyBind;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
+import cc.polyfrost.oneconfig.gui.elements.config.ConfigKeyBind;
 import cc.polyfrost.oneconfig.gui.elements.config.ConfigPageButton;
 import cc.polyfrost.oneconfig.gui.pages.ModConfigPage;
 import cc.polyfrost.oneconfig.hud.HUDUtils;
@@ -46,14 +48,18 @@ import cc.polyfrost.oneconfig.internal.config.annotations.Option;
 import cc.polyfrost.oneconfig.internal.config.core.ConfigCore;
 import cc.polyfrost.oneconfig.internal.config.core.KeyBindHandler;
 import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
-import com.google.gson.*;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.*;
+import java.util.HashMap;
 import java.util.function.Supplier;
 
 @SuppressWarnings({"unused", "ResultOfMethodCallIgnored"})

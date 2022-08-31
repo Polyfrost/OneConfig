@@ -69,11 +69,14 @@ public class Colors {
     public static final int ERROR_300 = new Color(253, 155, 155).getRGB();
     public static final int ERROR_300_80 = new Color(253, 155, 155, 204).getRGB();
 
-    /** List of all colors used by Minecraft in its code.
+    /**
+     * List of all colors used by Minecraft in its code.
      * Source: <a href="https://www.digminecraft.com/lists/color_list_pc.php">Click Here</a>
-     * */
+     */
     public static class MinecraftColors {
-        /** Letter Code used before colors in Minecraft */
+        /**
+         * Letter Code used before colors in Minecraft
+         */
         public static final String CODE = "\u00a7";
 
         public static final String RESET = "\u00a70";

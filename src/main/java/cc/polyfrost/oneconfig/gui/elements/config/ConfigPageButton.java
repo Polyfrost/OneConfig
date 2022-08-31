@@ -26,17 +26,17 @@
 
 package cc.polyfrost.oneconfig.gui.elements.config;
 
-import cc.polyfrost.oneconfig.gui.pages.Page;
-import cc.polyfrost.oneconfig.internal.assets.Colors;
-import cc.polyfrost.oneconfig.config.elements.OptionPage;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
+import cc.polyfrost.oneconfig.config.elements.OptionPage;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.animations.ColorAnimation;
 import cc.polyfrost.oneconfig.gui.pages.ModConfigPage;
+import cc.polyfrost.oneconfig.gui.pages.Page;
+import cc.polyfrost.oneconfig.internal.assets.Colors;
+import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
-import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 

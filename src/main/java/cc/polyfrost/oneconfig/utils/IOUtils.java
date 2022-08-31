@@ -29,7 +29,10 @@ package cc.polyfrost.oneconfig.utils;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
-import java.awt.datatransfer.*;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.StringSelection;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -84,6 +87,7 @@ public final class IOUtils {
 
     /**
      * Copy the specified String to the System Clipboard.
+     *
      * @param s the string to copy
      */
     public static void copyStringToClipboard(String s) {
@@ -93,6 +97,7 @@ public final class IOUtils {
 
     /**
      * Return the String on the system clipboard.
+     *
      * @return the string on the system clipboard, or null if there is no string on the clipboard or another error occurred.
      */
     public static String getStringFromClipboard() {
@@ -105,6 +110,7 @@ public final class IOUtils {
 
     /**
      * Copy the given image to the System Clipboard.
+     *
      * @param image the image to copy
      */
     public static void copyImageToClipboard(Image image) {
@@ -114,6 +120,7 @@ public final class IOUtils {
 
     /**
      * Return the image on the system clipboard.
+     *
      * @return the image on the system clipboard, or null if there is no image on the clipboard or another error occurred.
      */
     public static Image getImageFromClipboard() {
@@ -125,18 +132,16 @@ public final class IOUtils {
     }
 
 
-
-
-
     private static class ImageSelection implements Transferable {
         private final Image image;
+
         public ImageSelection(Image image) {
             this.image = image;
         }
 
         @Override
         public DataFlavor[] getTransferDataFlavors() {
-            return new DataFlavor[] {DataFlavor.imageFlavor};
+            return new DataFlavor[]{DataFlavor.imageFlavor};
         }
 
         @Override
@@ -147,7 +152,7 @@ public final class IOUtils {
         @NotNull
         @Override
         public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException {
-            if(!DataFlavor.imageFlavor.equals(flavor)) {
+            if (!DataFlavor.imageFlavor.equals(flavor)) {
                 throw new UnsupportedFlavorException(flavor);
             }
             return image;

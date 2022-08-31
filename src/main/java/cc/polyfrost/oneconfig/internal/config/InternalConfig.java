@@ -28,7 +28,6 @@ package cc.polyfrost.oneconfig.internal.config;
 
 import cc.polyfrost.oneconfig.config.Config;
 import cc.polyfrost.oneconfig.config.data.Mod;
-import cc.polyfrost.oneconfig.utils.JsonUtils;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;

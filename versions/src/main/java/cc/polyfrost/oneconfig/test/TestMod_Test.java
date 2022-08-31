@@ -35,6 +35,7 @@ import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
 //#endif
 public class TestMod_Test {
     private TestConfig_Test config;
+
     public TestMod_Test() {
         EventManager.INSTANCE.register(this);
     }

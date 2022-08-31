@@ -92,10 +92,9 @@ public final class EventManager {
     private static class OneConfigExceptionHandler implements ExceptionHandler {
         @Override
         public void handle(@NotNull Exception e) {
-            if(e instanceof InvalidTypeException) {
+            if (e instanceof InvalidTypeException) {
                 throw (InvalidTypeException) e;
-            }
-            else e.printStackTrace();
+            } else e.printStackTrace();
         }
     }
 }

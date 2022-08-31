@@ -77,7 +77,7 @@ public abstract class Page {
         scroll = scrollAnimation == null ? scrollTarget : scrollAnimation.get();
         final float scrollBarLength = (728f / maxScroll) * 728f;
         Scissor scissor = ScissorManager.scissor(vg, x, y + scissorOffset, x + 1056, y + 728 - scissorOffset);
-        Scissor inputScissor = inputHandler.blockInputArea(x, y,1056, scissorOffset);
+        Scissor inputScissor = inputHandler.blockInputArea(x, y, 1056, scissorOffset);
         float dWheel = (float) Platform.getMousePlatform().getDWheel();
         if (dWheel != 0) {
             scrollTarget += dWheel;

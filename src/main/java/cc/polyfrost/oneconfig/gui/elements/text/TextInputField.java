@@ -229,7 +229,7 @@ public class TextInputField extends BasicElement {
                 }
             }
 
-            if(disabled) RenderManager.setAlpha(vg, 0.5f);
+            if (disabled) RenderManager.setAlpha(vg, 0.5f);
             if (toggled) {
                 if (multiLine) {
                     float lineY = y + 20 + getCaretLine(caretPos) * 24;

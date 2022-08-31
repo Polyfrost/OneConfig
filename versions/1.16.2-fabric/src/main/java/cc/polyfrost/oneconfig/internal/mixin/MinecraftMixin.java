@@ -28,7 +28,6 @@ package cc.polyfrost.oneconfig.internal.mixin;
 
 import cc.polyfrost.oneconfig.events.EventManager;
 import cc.polyfrost.oneconfig.events.event.*;
-
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.render.RenderTickCounter;

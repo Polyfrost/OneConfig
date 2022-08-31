@@ -27,16 +27,16 @@
 package cc.polyfrost.oneconfig.gui.elements.config;
 
 import cc.polyfrost.oneconfig.config.annotations.Color;
-import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.config.core.OneColor;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.elements.BasicElement;
 import cc.polyfrost.oneconfig.gui.elements.ColorSelector;
 import cc.polyfrost.oneconfig.gui.elements.text.TextInputField;
+import cc.polyfrost.oneconfig.internal.assets.Colors;
+import cc.polyfrost.oneconfig.internal.assets.Images;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
-import cc.polyfrost.oneconfig.internal.assets.Images;
 import cc.polyfrost.oneconfig.utils.InputHandler;
 
 import java.lang.reflect.Field;
@@ -63,7 +63,7 @@ public class ConfigColorElement extends BasicOption {
 
     @Override
     public void draw(long vg, int x, int y, InputHandler inputHandler) {
-        if(OneConfigGui.INSTANCE == null) return;
+        if (OneConfigGui.INSTANCE == null) return;
         if (!isEnabled()) RenderManager.setAlpha(vg, 0.5f);
         hexField.disable(!isEnabled());
         alphaField.disable(!isEnabled() || !allowAlpha);

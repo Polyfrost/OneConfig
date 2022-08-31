@@ -122,14 +122,14 @@ public class TextRenderer {
     /**
      * Draws a String wrapped at the given width, with the given parameters.
      *
-     * @param vg            The NanoVG context.
-     * @param text          The text.
-     * @param x             The x position.
-     * @param y             The y position.
-     * @param width         The width.
-     * @param color         The color.
-     * @param size          The size.
-     * @param font          The font.
+     * @param vg    The NanoVG context.
+     * @param text  The text.
+     * @param x     The x position.
+     * @param y     The y position.
+     * @param width The width.
+     * @param color The color.
+     * @param size  The size.
+     * @param font  The font.
      */
     public static void drawWrappedString(long vg, String text, float x, float y, float width, int color, float size, Font font) {
         nvgBeginPath(vg);

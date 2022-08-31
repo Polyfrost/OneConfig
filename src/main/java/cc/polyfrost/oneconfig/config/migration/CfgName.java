@@ -41,5 +41,6 @@ import java.lang.annotation.Target;
 @Target(ElementType.FIELD)
 public @interface CfgName {
     String name();
+
     String category();
 }

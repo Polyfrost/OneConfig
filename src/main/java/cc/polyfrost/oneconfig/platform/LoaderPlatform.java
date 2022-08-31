@@ -28,7 +28,9 @@ package cc.polyfrost.oneconfig.platform;
 
 public interface LoaderPlatform {
     boolean isModLoaded(String id);
+
     boolean hasActiveModContainer();
+
     ActiveMod getActiveModContainer();
 
     class ActiveMod {

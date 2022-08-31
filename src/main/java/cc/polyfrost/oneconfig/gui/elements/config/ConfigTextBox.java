@@ -27,14 +27,14 @@
 package cc.polyfrost.oneconfig.gui.elements.config;
 
 import cc.polyfrost.oneconfig.config.annotations.Text;
-import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
 import cc.polyfrost.oneconfig.gui.elements.text.TextInputField;
+import cc.polyfrost.oneconfig.internal.assets.Colors;
+import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.SVG;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
-import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.utils.InputHandler;
 
 import java.lang.reflect.Field;

@@ -79,7 +79,7 @@ public final class GuiUtils {
      * Displays a screen after the specified amount of ticks.
      *
      * @param screen the screen to display.
-     * @param ticks the amount of ticks to wait for before displaying the screen.
+     * @param ticks  the amount of ticks to wait for before displaying the screen.
      */
     public static void displayScreen(GuiScreen screen, int ticks) {
         Optional<GuiScreen> optional = Optional.of(screen);

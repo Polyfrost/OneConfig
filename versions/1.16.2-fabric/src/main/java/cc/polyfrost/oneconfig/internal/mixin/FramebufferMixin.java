@@ -44,14 +44,20 @@ import java.nio.IntBuffer;
  */
 @Mixin(Framebuffer.class)
 public abstract class FramebufferMixin implements FramebufferHook {
-    @Shadow public int textureWidth;
-    @Shadow public int textureHeight;
-    @Shadow private int depthAttachment;
+    @Shadow
+    public int textureWidth;
+    @Shadow
+    public int textureHeight;
+    @Shadow
+    private int depthAttachment;
 
-    @Shadow public abstract void resize(int width, int height, boolean getError);
+    @Shadow
+    public abstract void resize(int width, int height, boolean getError);
 
-    @Shadow public int viewportWidth;
-    @Shadow public int viewportHeight;
+    @Shadow
+    public int viewportWidth;
+    @Shadow
+    public int viewportHeight;
     private boolean stencilEnabled = false;
 
     @Redirect(method = "initFbo", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/platform/GlStateManager;texImage2D(IIIIIIIILjava/nio/IntBuffer;)V", ordinal = 0))

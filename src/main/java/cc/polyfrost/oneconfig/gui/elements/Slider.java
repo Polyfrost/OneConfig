@@ -48,7 +48,7 @@ public class Slider extends BasicElement {
 
     @Override
     public void draw(long vg, float x, float y, InputHandler inputHandler) {
-        if(!disabled) update(x, y, inputHandler);
+        if (!disabled) update(x, y, inputHandler);
         else RenderManager.setAlpha(vg, 0.5f);
         RenderManager.drawRoundedRect(vg, x, y + 2, width, height - 4, Colors.GRAY_300, 3f);
         RenderManager.drawRoundedRect(vg, x, y + 2, width * value, height - 4, Colors.PRIMARY_500, 3f);

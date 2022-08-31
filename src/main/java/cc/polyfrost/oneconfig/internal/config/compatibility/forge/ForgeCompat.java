@@ -6,7 +6,6 @@ import cc.polyfrost.oneconfig.config.data.ModType;
 import cc.polyfrost.oneconfig.config.migration.Migrator;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Field;
 import java.util.HashMap;
 
 public class ForgeCompat {

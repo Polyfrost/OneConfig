@@ -47,7 +47,6 @@ import java.lang.reflect.Parameter;
 import java.util.*;
 
 import static cc.polyfrost.oneconfig.utils.commands.CommandManager.*;
-import static cc.polyfrost.oneconfig.utils.commands.CommandManager.METHOD_RUN_ERROR;
 
 public class PlatformCommandManagerImpl extends PlatformCommandManager {
 
@@ -68,10 +67,10 @@ public class PlatformCommandManagerImpl extends PlatformCommandManager {
             @Override
             public void
                 //#if MC<=10809
-                processCommand(ICommandSender sender, String[] args)
-                //#else
-                //$$ execute(net.minecraft.server.MinecraftServer server, ICommandSender sender, String[] args)
-                //#endif
+            processCommand(ICommandSender sender, String[] args)
+            //#else
+            //$$ execute(net.minecraft.server.MinecraftServer server, ICommandSender sender, String[] args)
+            //#endif
             {
                 if (args.length == 0) {
                     if (!root.invokers.isEmpty()) {
@@ -142,10 +141,10 @@ public class PlatformCommandManagerImpl extends PlatformCommandManager {
             @Override
             public List<String>
                 //#if MC<=10809
-                addTabCompletionOptions(ICommandSender sender, String[] args, BlockPos pos)
-                //#else
-                //$$ getTabCompletions(net.minecraft.server.MinecraftServer server, ICommandSender sender, String[] args, BlockPos targetPos)
-                //#endif
+            addTabCompletionOptions(ICommandSender sender, String[] args, BlockPos pos)
+            //#else
+            //$$ getTabCompletions(net.minecraft.server.MinecraftServer server, ICommandSender sender, String[] args, BlockPos targetPos)
+            //#endif
             {
                 try {
                     Set<Pair<InternalCommand.InternalCommandInvoker, Integer>> commands = new HashSet<>();

@@ -43,7 +43,7 @@ public class EventBusMixin {
 
     @Inject(method = "post", at = @At(value = "HEAD"), remap = false)
     private void post(Event e, CallbackInfoReturnable<Boolean> cir) {
-        if(!(e instanceof ClientChatReceivedEvent)) return;
+        if (!(e instanceof ClientChatReceivedEvent)) return;
         ClientChatReceivedEvent event = (ClientChatReceivedEvent) e;
         if (event.getType() == ChatType.CHAT) {
             ChatReceiveEvent customEvent = new ChatReceiveEvent(event.getMessage());

@@ -26,11 +26,11 @@
 
 package cc.polyfrost.oneconfig.test;
 
+import cc.polyfrost.oneconfig.libs.universal.UChat;
 import cc.polyfrost.oneconfig.utils.commands.annotations.Command;
 import cc.polyfrost.oneconfig.utils.commands.annotations.Main;
 import cc.polyfrost.oneconfig.utils.commands.annotations.Name;
 import cc.polyfrost.oneconfig.utils.commands.annotations.SubCommand;
-import cc.polyfrost.oneconfig.libs.universal.UChat;
 
 @Command(value = "test", aliases = {"t"}, description = "Description of the test command")
 public class TestCommand_Test {

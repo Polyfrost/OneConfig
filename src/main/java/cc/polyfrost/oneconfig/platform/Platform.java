@@ -30,7 +30,7 @@ import java.util.ServiceLoader;
 
 /**
  * Contains various platform-specific utilities for OneConfig.
- *
+ * <p>
  * This is meant for internal usage, however other mods may use these (unless otherwise stated).
  */
 public interface Platform {
@@ -77,6 +77,7 @@ public interface Platform {
         private PlatformHolder() {
 
         }
+
         static PlatformHolder INSTANCE = new PlatformHolder();
         Platform platform = ServiceLoader.load(Platform.class, Platform.class.getClassLoader()).iterator().next();
         MousePlatform mousePlatform = ServiceLoader.load(MousePlatform.class, MousePlatform.class.getClassLoader()).iterator().next();

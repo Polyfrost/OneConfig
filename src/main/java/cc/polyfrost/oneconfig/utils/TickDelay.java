@@ -33,7 +33,7 @@ import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
 
 /**
  * Schedules a Runnable to be called after a certain amount of ticks.
- *
+ * <p>
  * If the amount of ticks is below 1, the Runnable will be called immediately.
  */
 public class TickDelay {

@@ -92,7 +92,7 @@ public class CommandManager {
             final Command annotation = clazz.getAnnotation(Command.class);
 
             final InternalCommand root = new InternalCommand(annotation.value(), annotation.aliases(), annotation.description().trim().isEmpty()
-                    ? "Main command for " + annotation.value() : annotation.description(), annotation.color(),  null);
+                    ? "Main command for " + annotation.value() : annotation.description(), annotation.color(), null);
             for (Method method : clazz.getDeclaredMethods()) {
                 if (method.isAnnotationPresent(Main.class) && method.getParameterCount() == 0) {
                     root.invokers.add(new InternalCommand.InternalCommandInvoker(annotation.value(), annotation.aliases(), method, root));

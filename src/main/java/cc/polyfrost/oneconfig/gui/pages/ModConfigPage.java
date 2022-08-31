@@ -26,9 +26,9 @@
 
 package cc.polyfrost.oneconfig.gui.pages;
 
+import cc.polyfrost.oneconfig.config.elements.BasicOption;
 import cc.polyfrost.oneconfig.config.elements.OptionPage;
 import cc.polyfrost.oneconfig.config.elements.OptionSubcategory;
-import cc.polyfrost.oneconfig.config.elements.BasicOption;
 import cc.polyfrost.oneconfig.gui.elements.BasicButton;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;

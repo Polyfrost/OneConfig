@@ -27,10 +27,10 @@
 package cc.polyfrost.oneconfig.utils.dsl
 
 import cc.polyfrost.oneconfig.config.data.InfoType
-import cc.polyfrost.oneconfig.renderer.RenderManager
-import cc.polyfrost.oneconfig.renderer.font.Font
 import cc.polyfrost.oneconfig.renderer.Image
+import cc.polyfrost.oneconfig.renderer.RenderManager
 import cc.polyfrost.oneconfig.renderer.SVG
+import cc.polyfrost.oneconfig.renderer.font.Font
 import cc.polyfrost.oneconfig.utils.InputHandler
 import cc.polyfrost.oneconfig.utils.color.ColorUtils
 import org.lwjgl.nanovg.NVGColor
@@ -164,10 +164,38 @@ fun Long.drawText(text: String, x: Number, y: Number, color: Int, size: Number, 
 fun VG.drawText(text: String, x: Number, y: Number, color: Int, size: Number, font: Font) =
     instance.drawText(text, x, y, color, size, font)
 
-fun Long.drawWrappedString(text: String, x: Number, y: Number, width: Number, color: Int, size: Number, lineHeight: Number, font: Font) =
-    RenderManager.drawWrappedString(this, text, x.toFloat(), y.toFloat(), width.toFloat(), color, size.toFloat(), lineHeight.toFloat(), font)
+fun Long.drawWrappedString(
+    text: String,
+    x: Number,
+    y: Number,
+    width: Number,
+    color: Int,
+    size: Number,
+    lineHeight: Number,
+    font: Font
+) =
+    RenderManager.drawWrappedString(
+        this,
+        text,
+        x.toFloat(),
+        y.toFloat(),
+        width.toFloat(),
+        color,
+        size.toFloat(),
+        lineHeight.toFloat(),
+        font
+    )
 
-fun VG.drawWrappedString(text: String, x: Number, y: Number, width: Number, color: Int, size: Number, lineHeight: Number, font: Font) =
+fun VG.drawWrappedString(
+    text: String,
+    x: Number,
+    y: Number,
+    width: Number,
+    color: Int,
+    size: Number,
+    lineHeight: Number,
+    font: Font
+) =
     instance.drawWrappedString(text, x, y, width, color, size, lineHeight, font)
 
 fun Long.drawURL(url: String, x: Number, y: Number, size: Number, font: Font, inputHandler: InputHandler) =
@@ -281,7 +309,16 @@ fun VG.drawSVG(filePath: String, x: Number, y: Number, width: Number, height: Nu
     instance.drawSVG(filePath, x, y, width, height)
 
 fun Long.drawSVG(filePath: String, x: Number, y: Number, width: Number, height: Number, color: Int, scale: Number) =
-    RenderManager.drawSvg(this, filePath, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat(), color, scale.toFloat())
+    RenderManager.drawSvg(
+        this,
+        filePath,
+        x.toFloat(),
+        y.toFloat(),
+        width.toFloat(),
+        height.toFloat(),
+        color,
+        scale.toFloat()
+    )
 
 fun VG.drawSVG(filePath: String, x: Number, y: Number, width: Number, height: Number, color: Int, scale: Number) =
     instance.drawSVG(filePath, x, y, width, height, color, scale.toFloat())
@@ -305,7 +342,16 @@ fun VG.drawSVG(svg: SVG, x: Number, y: Number, width: Number, height: Number) =
     instance.drawSVG(svg, x, y, width, height)
 
 fun Long.drawSVG(svg: SVG, x: Number, y: Number, width: Number, height: Number, color: Int, scale: Number) =
-    RenderManager.drawSvg(this, svg, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat(), color, scale.toFloat())
+    RenderManager.drawSvg(
+        this,
+        svg,
+        x.toFloat(),
+        y.toFloat(),
+        width.toFloat(),
+        height.toFloat(),
+        color,
+        scale.toFloat()
+    )
 
 fun VG.drawSVG(svg: SVG, x: Number, y: Number, width: Number, height: Number, color: Int, scale: Number) =
     instance.drawSVG(svg, x, y, width, height, color, scale)

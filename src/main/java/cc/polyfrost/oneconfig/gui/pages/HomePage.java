@@ -27,9 +27,9 @@
 package cc.polyfrost.oneconfig.gui.pages;
 
 import cc.polyfrost.oneconfig.internal.assets.Colors;
+import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
-import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.utils.InputHandler;
 
 public class HomePage extends Page {

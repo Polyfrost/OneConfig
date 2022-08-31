@@ -37,7 +37,7 @@ public class OneKeyBind {
     protected transient boolean hasRun;
 
     /**
-     * @param keys  The bound keys
+     * @param keys The bound keys
      */
     public OneKeyBind(int... keys) {
         for (int key : keys) {
@@ -81,7 +81,7 @@ public class OneKeyBind {
     }
 
     /**
-     * @param key   Add a Key to keys
+     * @param key Add a Key to keys
      */
     public void addKey(int key) {
         if (!keyBinds.contains(key)) keyBinds.add(key);
@@ -103,6 +103,7 @@ public class OneKeyBind {
 
     /**
      * Set the Runnable that gets ran when OneKeyBind#run() is called
+     *
      * @param runnable The Runnable to run
      */
     public void setRunnable(Runnable runnable) {

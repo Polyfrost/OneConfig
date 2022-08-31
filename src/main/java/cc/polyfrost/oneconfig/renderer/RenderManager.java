@@ -42,7 +42,6 @@ import org.lwjgl.nanovg.NVGColor;
 import org.lwjgl.nanovg.NVGPaint;
 import org.lwjgl.opengl.GL11;
 
-import java.util.Arrays;
 import java.util.function.LongConsumer;
 import java.util.regex.Pattern;
 

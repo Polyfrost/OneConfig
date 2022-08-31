@@ -27,9 +27,9 @@
 package cc.polyfrost.oneconfig.gui.elements.config;
 
 import cc.polyfrost.oneconfig.config.annotations.Slider;
-import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
 import cc.polyfrost.oneconfig.gui.elements.text.NumberInputField;
+import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
@@ -47,7 +47,7 @@ public class ConfigSlider extends BasicOption {
     private boolean mouseWasDown = false;
 
     public ConfigSlider(Field field, Object parent, String name, String category, String subcategory, float min, float max, int step) {
-        super(field, parent, name,category, subcategory, 2);
+        super(field, parent, name, category, subcategory, 2);
         this.min = min;
         this.max = max;
         this.step = step;

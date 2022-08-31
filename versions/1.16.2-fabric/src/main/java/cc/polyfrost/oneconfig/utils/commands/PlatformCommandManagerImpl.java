@@ -98,7 +98,7 @@ public class PlatformCommandManagerImpl extends PlatformCommandManager {
             {
                 try {
                     ArrayList<Object> args = new ArrayList<>(invoker.method.getParameterCount());
-                    for (Parameter parameter: invoker.method.getParameters()) {
+                    for (Parameter parameter : invoker.method.getParameters()) {
                         args.add(context.getArgument(parameter.getName(), Object.class));
                     }
                     invoker.method.invoke(null, args);

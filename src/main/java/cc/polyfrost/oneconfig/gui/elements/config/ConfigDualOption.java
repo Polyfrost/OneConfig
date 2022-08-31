@@ -27,11 +27,11 @@
 package cc.polyfrost.oneconfig.gui.elements.config;
 
 import cc.polyfrost.oneconfig.config.annotations.DualOption;
-import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
 import cc.polyfrost.oneconfig.gui.animations.Animation;
 import cc.polyfrost.oneconfig.gui.animations.DummyAnimation;
 import cc.polyfrost.oneconfig.gui.animations.EaseInOutCubic;
+import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.utils.InputHandler;

@@ -26,7 +26,6 @@
 
 package cc.polyfrost.oneconfig.config.elements;
 
-import cc.polyfrost.oneconfig.config.Config;
 import cc.polyfrost.oneconfig.config.data.Mod;
 
 import java.util.LinkedHashMap;

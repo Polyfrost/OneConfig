@@ -26,7 +26,6 @@
 
 package cc.polyfrost.oneconfig.config.elements;
 
-import cc.polyfrost.oneconfig.config.Config;
 import cc.polyfrost.oneconfig.utils.InputHandler;
 
 import java.lang.reflect.Field;

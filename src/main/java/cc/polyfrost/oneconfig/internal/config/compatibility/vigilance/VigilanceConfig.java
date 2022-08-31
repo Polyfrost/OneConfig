@@ -26,14 +26,14 @@
 
 package cc.polyfrost.oneconfig.internal.config.compatibility.vigilance;
 
+import cc.polyfrost.oneconfig.config.Config;
 import cc.polyfrost.oneconfig.config.core.ConfigUtils;
-import cc.polyfrost.oneconfig.internal.config.core.ConfigCore;
 import cc.polyfrost.oneconfig.config.core.OneColor;
 import cc.polyfrost.oneconfig.config.data.Mod;
-import cc.polyfrost.oneconfig.config.elements.OptionPage;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
-import cc.polyfrost.oneconfig.config.Config;
+import cc.polyfrost.oneconfig.config.elements.OptionPage;
 import cc.polyfrost.oneconfig.gui.elements.config.*;
+import cc.polyfrost.oneconfig.internal.config.core.ConfigCore;
 import cc.polyfrost.oneconfig.platform.Platform;
 import gg.essential.vigilance.Vigilant;
 import gg.essential.vigilance.data.*;
@@ -88,7 +88,7 @@ public class VigilanceConfig extends Config {
                     options.add(new ConfigSwitch(getFieldOfProperty(option), option.getInstance(), getName(attributes), getCategory(attributes), getSubcategory(attributes), 2));
                     break;
                 case CHECKBOX:
-                    options.add(new ConfigCheckbox(getFieldOfProperty(option), option.getInstance(), getName(attributes),getCategory(attributes), getSubcategory(attributes), 2));
+                    options.add(new ConfigCheckbox(getFieldOfProperty(option), option.getInstance(), getName(attributes), getCategory(attributes), getSubcategory(attributes), 2));
                     break;
                 case PARAGRAPH:
                 case TEXT:

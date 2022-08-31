@@ -44,7 +44,9 @@ import java.net.URLEncoder;
 import java.util.Base64;
 import java.util.Objects;
 
-/** An Image wrapper class that is used by the OneConfig system.*/
+/**
+ * An Image wrapper class that is used by the OneConfig system.
+ */
 @SuppressWarnings("unused")
 public class OneImage {
     private static final Logger LOGGER = LogManager.getLogger("OneConfig Images");
@@ -54,6 +56,7 @@ public class OneImage {
 
     /**
      * Create a new OneImage from the file. This can be as a resource location inside your JAR.
+     *
      * @param filePath The path to the image file.
      */
     public OneImage(String filePath) throws IOException {
@@ -64,6 +67,7 @@ public class OneImage {
 
     /**
      * Create a new OneImage from the file.
+     *
      * @param is InputStream to the image file.
      */
     public OneImage(InputStream is) throws IOException {
@@ -74,12 +78,13 @@ public class OneImage {
 
     /**
      * Create a new OneImage from the file.
+     *
      * @param file File to the image file.
      */
     public OneImage(File file) throws IOException {
-            image = ImageIO.read(Objects.requireNonNull(file));
-            width = image.getWidth();
-            height = image.getHeight();
+        image = ImageIO.read(Objects.requireNonNull(file));
+        width = image.getWidth();
+        height = image.getHeight();
     }
 
     /**
@@ -91,14 +96,18 @@ public class OneImage {
         height = image.getHeight();
     }
 
-    /** Create a new blank image with the specified width and height. */
+    /**
+     * Create a new blank image with the specified width and height.
+     */
     public OneImage(int width, int height) {
         this.width = width;
         this.height = height;
         image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
     }
 
-    /** Get the image as a BufferedImage. */
+    /**
+     * Get the image as a BufferedImage.
+     */
     public BufferedImage getImage() {
         return image;
     }
@@ -107,7 +116,9 @@ public class OneImage {
         image = img;
     }
 
-    /** Get the graphics object associated with the image. */
+    /**
+     * Get the graphics object associated with the image.
+     */
     public Graphics2D getG2D() {
         if (graphics == null) {
             graphics = image.createGraphics();
@@ -117,50 +128,66 @@ public class OneImage {
     }
 
 
-    /** Dispose of the graphics object. */
+    /**
+     * Dispose of the graphics object.
+     */
     public void dispose() {
-        if(graphics != null) {
+        if (graphics != null) {
             graphics.dispose();
             graphics = null;
         }
     }
 
-    /** Get the width of the image. */
+    /**
+     * Get the width of the image.
+     */
     public int getWidth() {
         return width;
     }
 
-    /** Get the height of the image. */
+    /**
+     * Get the height of the image.
+     */
     public int getHeight() {
         return height;
     }
 
-    /** Crop the image to the specified width and height.
+    /**
+     * Crop the image to the specified width and height.
+     *
      * @param startX The x coordinate of the top-left corner of the crop.
      * @param startY The y coordinate of the top-left corner of the crop.
-     * @param width The width of the crop.
+     * @param width  The width of the crop.
      * @param height The height of the crop.
      */
     public void crop(int startX, int startY, int width, int height) {
         image = image.getSubimage(startX, startY, width, height);
     }
 
-    /** Get the color of a pixel in the image. */
+    /**
+     * Get the color of a pixel in the image.
+     */
     public void getColorAtPos(int x, int y) {
         image.getRGB(x, y);
     }
 
-    /** Set the color of a pixel in the image. */
+    /**
+     * Set the color of a pixel in the image.
+     */
     public void setColorAtPos(int x, int y, int argb) {
         image.setRGB(x, y, argb);
     }
 
-    /** Attempt to save the image to the specified file. */
+    /**
+     * Attempt to save the image to the specified file.
+     */
     public void save(String filePath) throws IOException {
         ImageIO.write(image, "png", new File(filePath));
     }
 
-    /** Attempt to upload the image to Imgur, returning the JSON that the server replied with. */
+    /**
+     * Attempt to upload the image to Imgur, returning the JSON that the server replied with.
+     */
     public JsonObject uploadToImgur() {
         try {
             // thanks stack overflow for the help with this :_)
@@ -179,7 +206,7 @@ public class OneImage {
             writer.write(encoded);
             byteOut.close();
             writer.close();
-            if(con.getResponseCode() != 200) {
+            if (con.getResponseCode() != 200) {
                 LOGGER.error("Error uploading image to Imgur: " + con.getResponseCode());
                 return null;
             }
@@ -196,16 +223,21 @@ public class OneImage {
         }
     }
 
-    /** Attempt to upload the image to Imgur, returning the URL that the image is hosted at.
-     * @param copy weather or not to copy the URL to the clipboard as well. */
+    /**
+     * Attempt to upload the image to Imgur, returning the URL that the image is hosted at.
+     *
+     * @param copy weather or not to copy the URL to the clipboard as well.
+     */
     public String uploadToImgur(boolean copy) {
         JsonObject object = uploadToImgur();
         String link = object.get("data").getAsJsonObject().get("link").getAsString();
-        if(copy) IOUtils.copyStringToClipboard(link);
+        if (copy) IOUtils.copyStringToClipboard(link);
         return link;
     }
 
-    /** Copy the image to the system clipboard and delete the graphics object. */
+    /**
+     * Copy the image to the system clipboard and delete the graphics object.
+     */
     public void copyToClipboard() {
         IOUtils.copyImageToClipboard(image);
         dispose();
@@ -213,20 +245,20 @@ public class OneImage {
 
     // MASK METHODS
     public void setBrightness(float brightness) {
-        maskColor(new Color(0f,0f,0f,brightness));
+        maskColor(new Color(0f, 0f, 0f, brightness));
     }
 
     public void maskColor(Color color) {
         Graphics2D g2d = getG2D();
         g2d.setColor(color);
-        g2d.fillRect(0,0,width,height);
+        g2d.fillRect(0, 0, width, height);
         dispose();
     }
 
     public void maskPaint(Paint paint) {
         Graphics2D g2d = getG2D();
         g2d.setPaint(paint);
-        g2d.fillRect(0,0,width,height);
+        g2d.fillRect(0, 0, width, height);
         dispose();
     }
 
@@ -256,6 +288,7 @@ public class OneImage {
         g2d.drawRect(x, y, width, height);
         dispose();
     }
+
     public void drawRoundedRect(int x, int y, int width, int height, int radius, int color) {
         Graphics2D g2d = getG2D();
         g2d.setColor(new Color(color, true));
@@ -281,7 +314,7 @@ public class OneImage {
     public void drawTriangle(Point p1, Point p2, Point p3, int color) {
         Graphics2D g2d = getG2D();
         g2d.setColor(new Color(color, true));
-        g2d.fillPolygon(new int[] {p1.x, p2.x, p3.x}, new int[] {p1.y, p2.y, p3.y}, 3);
+        g2d.fillPolygon(new int[]{p1.x, p2.x, p3.x}, new int[]{p1.y, p2.y, p3.y}, 3);
         dispose();
     }
 
@@ -291,10 +324,6 @@ public class OneImage {
         g2d.fillRoundRect(x, y, radius, radius, radius, radius);
         dispose();
     }
-
-
-
-
 
 
     // STRING METHODS
@@ -307,46 +336,57 @@ public class OneImage {
     }
 
 
-
     // IMAGE METHODS
-    /** Scale the image by the given factor (1.0 = no change). */
+
+    /**
+     * Scale the image by the given factor (1.0 = no change).
+     */
     public void scale(double sx, double sy) {
-        if(sx == 1.0 && sy == 1.0) return;
+        if (sx == 1.0 && sy == 1.0) return;
         BufferedImage old = image;
         image = new BufferedImage((int) (Math.abs(sx * image.getWidth())), (int) (Math.abs(image.getHeight() * sy)), BufferedImage.TYPE_INT_ARGB);
         Graphics2D g2d = getG2D();
         g2d.drawImage(old, new AffineTransformOp(AffineTransform.getScaleInstance(sx, sy), AffineTransformOp.TYPE_BILINEAR), 0, 0);
         dispose();
     }
+
     /**
      * Scale the image to the specified width and height.
      */
     public void setSize(int width, int height) {
-        if(width == this.width && height == this.height) return;
+        if (width == this.width && height == this.height) return;
         scale(width / (double) this.width, height / (double) this.height);
     }
 
-    /** Rotate the image by the given angle (in degrees). */
+    /**
+     * Rotate the image by the given angle (in degrees).
+     */
     public void rotate(double angle) {
-        if(angle == 0 || angle == 360) return;
+        if (angle == 0 || angle == 360) return;
         Graphics2D g2d = getG2D();
         g2d.drawImage(image, new AffineTransformOp(AffineTransform.getRotateInstance(Math.toRadians(angle)), AffineTransformOp.TYPE_BILINEAR), 0, 0);
         dispose();
     }
 
-    /** Translate the image by the given amount. */
+    /**
+     * Translate the image by the given amount.
+     */
     public void translate(int moveX, int moveY) {
         Graphics2D g2d = getG2D();
         g2d.drawImage(image, new AffineTransformOp(AffineTransform.getTranslateInstance(moveX, moveY), AffineTransformOp.TYPE_BILINEAR), 0, 0);
         dispose();
     }
 
-    /** Flip the image horizontally. */
+    /**
+     * Flip the image horizontally.
+     */
     public void flipHorizontal() {
         scale(-1, 1);
     }
 
-    /** Flip the image vertically. */
+    /**
+     * Flip the image vertically.
+     */
     public void flipVertical() {
         scale(1, -1);
     }
