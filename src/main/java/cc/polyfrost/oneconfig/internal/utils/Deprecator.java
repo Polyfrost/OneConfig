@@ -48,9 +48,16 @@ public final class Deprecator {
             throw new Exception("This method is deprecated");
         } catch (Exception e) {
             String culprit = LogScanner.identifyCallerFromStacktrace(e).stream().map(activeMod -> activeMod.name).findFirst().orElse("Unknown");
+            // sometimes it blames OneConfig as well so
+            if(culprit.equals("OneConfig")) return;
             if (!warned.contains(culprit)) {
                 warned.add(culprit);
                 Notifications.INSTANCE.send("Deprecation Warning", "The mod '" + culprit + "' is using a deprecated method, and will no longer work in the future. Please report this to the mod author.");
+                try {
+                    throw new UnsupportedOperationException("Method " + e.getStackTrace()[1].getClassName() + "." + e.getStackTrace()[1].getMethodName() + "() is deprecated; but is still being used by mod " + culprit + "!");
+                } catch (UnsupportedOperationException e1) {
+                    e1.printStackTrace();
+                }
             }
         }
     }
