@@ -112,10 +112,10 @@ public class LogScanner {
             }
             i++;
         }
-        if(target == null) {
+        if (target == null) {
             return Collections.emptySet();
         }
-        Set<LoaderPlatform.ActiveMod> classMods = identifyFromClass(target.getClassName(), Platform.getLoaderPlatform().getLoadedMods());
+        Set<LoaderPlatform.ActiveMod> classMods = identifyFromClass(target.getClassName());
         return classMods.isEmpty() ? Collections.emptySet() : classMods;
     }
 
@@ -135,7 +135,7 @@ public class LogScanner {
 
         Set<LoaderPlatform.ActiveMod> mods = new LinkedHashSet<>();
         for (String className : involvedClasses) {
-            Set<LoaderPlatform.ActiveMod> classMods = identifyFromClass(className, Platform.getLoaderPlatform().getLoadedMods());
+            Set<LoaderPlatform.ActiveMod> classMods = identifyFromClass(className);
             mods.addAll(classMods);
         }
         return mods;
@@ -146,8 +146,13 @@ public class LogScanner {
     }
 
     // TODO: get a list of mixin transformers that affected the class and blame those too
+
+    /**
+     * Return a set of ActiveMods that have been associated with the given class.
+     */
     @NotNull
-    private static Set<LoaderPlatform.ActiveMod> identifyFromClass(String className, @NotNull List<LoaderPlatform.ActiveMod> modMap) {
+    public static Set<LoaderPlatform.ActiveMod> identifyFromClass(String className) {
+        List<LoaderPlatform.ActiveMod> modMap = Platform.getLoaderPlatform().getLoadedMods();
         // Skip identification for Mixin, one's mod copy of the library is shared with all other mods
         if (className.startsWith("org.spongepowered.asm.mixin.")) {
             debug(() -> "Ignoring class " + className + " for identification because it is a mixin class");

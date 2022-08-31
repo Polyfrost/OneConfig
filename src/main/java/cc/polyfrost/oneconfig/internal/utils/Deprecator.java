@@ -40,7 +40,7 @@ public final class Deprecator {
 
     /**
      * mark a method as deprecated. When a method has this call, it will
-     * throw a new exception to grab the name (or package) of the mod that call said method. <br>
+     * throw a new exception to grab the name (or package) of the mod that called said method. <br>
      * This will then send a notification detailing this to the user, and throw an UnsupportedOperationException to print a stack to the log.
      */
     public static void markDeprecated() {
