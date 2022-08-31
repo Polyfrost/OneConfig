@@ -39,18 +39,23 @@ import cc.polyfrost.oneconfig.internal.config.core.KeyBindHandler;
 import cc.polyfrost.oneconfig.internal.gui.BlurHandler;
 import cc.polyfrost.oneconfig.internal.hud.HudCore;
 import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
-import cc.polyfrost.oneconfig.utils.Notifications;
 import cc.polyfrost.oneconfig.utils.commands.CommandManager;
 import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 import cc.polyfrost.oneconfig.utils.hypixel.HypixelUtils;
+import cc.polyfrost.oneconfig.utils.Notifications;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+//#if FORGE==1
+import net.minecraftforge.fml.common.ModContainer;
+//#endif
+
+//#if MC<=11202
 import net.minecraftforge.fml.client.FMLClientHandler;
 import net.minecraftforge.fml.client.IModGuiFactory;
 import net.minecraftforge.fml.common.Loader;
-import net.minecraftforge.fml.common.ModContainer;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+//#endif
 
 import java.util.Map;
 
@@ -87,50 +92,50 @@ public class OneConfig {
             Preferences.getInstance();
         }
         //#if FORGE==1
-        //#if MC<=11202
-        for (ModContainer mod : Loader.instance().getActiveModList()) {
+            //#if MC<=11202
+            for (ModContainer mod : Loader.instance().getActiveModList()) {
 
-            IModGuiFactory factory = FMLClientHandler.instance().getGuiFactoryFor(mod);
-            //#if MC<=10809
-            if (factory == null || factory.mainConfigGuiClass() == null) continue;
+                IModGuiFactory factory = FMLClientHandler.instance().getGuiFactoryFor(mod);
+                //#if MC<=10809
+                if (factory == null || factory.mainConfigGuiClass() == null) continue;
+                //#else
+                //$$ if (factory == null || !factory.hasConfigGui()) continue;
+                //#endif
+                ForgeCompat.compatMods.put(new ForgeCompat.ForgeCompatMod(mod.getName(), ModType.THIRD_PARTY), () -> {
+                    try {
+                        GuiUtils.displayScreen(
+                                //#if MC<=10809
+                                factory.mainConfigGuiClass().getConstructor(GuiScreen.class).newInstance(Minecraft.getMinecraft().currentScreen)
+                                //#else
+                                //$$ factory.createConfigGui(Minecraft.getMinecraft().currentScreen)
+                                //#endif
+                        );
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                });
+            }
             //#else
-            //$$ if (factory == null || !factory.hasConfigGui()) continue;
+            //$$ try {
+            //$$     java.lang.reflect.Field mods = net.minecraftforge.fml.ModList.class.getDeclaredField("mods");
+            //$$     mods.setAccessible(true);
+            //$$     for (ModContainer container : ((java.util.List<ModContainer>) mods.get(net.minecraftforge.fml.ModList.get()))) {
+            //$$         try {
+            //$$             java.util.Optional<java.util.function.BiFunction<Minecraft, net.minecraft.client.gui.screen.Screen, net.minecraft.client.gui.screen.Screen>> gui = container.getCustomExtension(net.minecraftforge.fml.ExtensionPoint.CONFIGGUIFACTORY);
+            //$$             gui.ifPresent(minecraftScreenScreenBiFunction -> ForgeCompat.compatMods.put(new ForgeCompat.ForgeCompatMod(container.getModId(), ModType.THIRD_PARTY), () -> {
+            //$$                 net.minecraft.client.gui.screen.Screen screen = minecraftScreenScreenBiFunction.apply(Minecraft.getInstance(), Minecraft.getInstance().currentScreen);
+            //$$                 if (screen != null) {
+            //$$                     GuiUtils.displayScreen(screen);
+            //$$                 }
+            //$$             }));
+            //$$         } catch (Exception e) {
+            //$$             e.printStackTrace();
+            //$$         }
+            //$$     }
+            //$$ } catch (Exception e) {
+            //$$     e.printStackTrace();
+            //$$ }
             //#endif
-            ForgeCompat.compatMods.put(new ForgeCompat.ForgeCompatMod(mod.getName(), ModType.THIRD_PARTY), () -> {
-                try {
-                    GuiUtils.displayScreen(
-                            //#if MC<=10809
-                            factory.mainConfigGuiClass().getConstructor(GuiScreen.class).newInstance(Minecraft.getMinecraft().currentScreen)
-                            //#else
-                            //$$ factory.createConfigGui(Minecraft.getMinecraft().currentScreen)
-                            //#endif
-                    );
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            });
-        }
-        //#else
-        //$$ try {
-        //$$     java.lang.reflect.Field mods = net.minecraftforge.fml.ModList.class.getDeclaredField("mods");
-        //$$     mods.setAccessible(true);
-        //$$     for (ModContainer container : ((java.util.List<ModContainer>) mods.get(net.minecraftforge.fml.ModList.get()))) {
-        //$$         try {
-        //$$             java.util.Optional<java.util.function.BiFunction<Minecraft, net.minecraft.client.gui.screen.Screen, net.minecraft.client.gui.screen.Screen>> gui = container.getCustomExtension(net.minecraftforge.fml.ExtensionPoint.CONFIGGUIFACTORY);
-        //$$             gui.ifPresent(minecraftScreenScreenBiFunction -> ForgeCompat.compatMods.put(new ForgeCompat.ForgeCompatMod(container.getModId(), ModType.THIRD_PARTY), () -> {
-        //$$                 net.minecraft.client.gui.screen.Screen screen = minecraftScreenScreenBiFunction.apply(Minecraft.getInstance(), Minecraft.getInstance().currentScreen);
-        //$$                 if (screen != null) {
-        //$$                     GuiUtils.displayScreen(screen);
-        //$$                 }
-        //$$             }));
-        //$$         } catch (Exception e) {
-        //$$             e.printStackTrace();
-        //$$         }
-        //$$     }
-        //$$ } catch (Exception e) {
-        //$$     e.printStackTrace();
-        //$$ }
-        //#endif
 
         for (Map.Entry<Mod, Runnable> entry : ForgeCompat.compatMods.entrySet()) {
             ConfigCore.mods.add(entry.getKey());

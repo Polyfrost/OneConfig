@@ -31,6 +31,9 @@ import cc.polyfrost.oneconfig.events.event.ScreenOpenEvent;
 import cc.polyfrost.oneconfig.events.event.Stage;
 import cc.polyfrost.oneconfig.internal.gui.BlurHandler;
 import cc.polyfrost.oneconfig.internal.mixin.ShaderGroupAccessor;
+//#if FABRIC==1
+//$$ import cc.polyfrost.oneconfig.internal.mixin.GameRendererAccessor;
+//#endif
 import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
 import cc.polyfrost.oneconfig.libs.universal.UMinecraft;
 import cc.polyfrost.oneconfig.libs.universal.UScreen;
@@ -163,6 +166,6 @@ public class BlurHandlerImpl implements BlurHandler {
                 //#if MC<=11202
                 && net.minecraft.client.renderer.OpenGlHelper.shadersSupported
                 //#endif
-                ;
+        ;
     }
 }
