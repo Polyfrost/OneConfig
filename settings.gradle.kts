@@ -7,7 +7,7 @@ pluginManagement {
         maven("https://maven.architectury.dev/")
     }
     plugins {
-        val egtVersion = "0.1.1314241"
+        val egtVersion = "0.1.13"
         id("gg.essential.multi-version.root") version egtVersion
         id("gg.essential.defaults.repo") version egtVersion
         id("gg.essential.defaults.java") version egtVersion

@@ -1097,9 +1097,9 @@ public abstract interface class cc/polyfrost/oneconfig/platform/NanoVGPlatform {
 	public abstract fun nvgDelete (J)V
 	public abstract fun nvglCreateImageFromHandle (JIIII)I
 	public abstract fun nvglImageHandle (JI)I
-	public abstract fun nvgluBindFramebuffer (JLorg/lwjgl/nanovg/NVGLUFramebuffer;)V
-	public abstract fun nvgluCreateFramebuffer (JIII)Lorg/lwjgl/nanovg/NVGLUFramebuffer;
-	public abstract fun nvgluDeleteFramebuffer (JLorg/lwjgl/nanovg/NVGLUFramebuffer;)V
+	public abstract fun nvgluBindFramebuffer (JLorg/lwjgl3/nanovg/NVGLUFramebuffer;)V
+	public abstract fun nvgluCreateFramebuffer (JIII)Lorg/lwjgl3/nanovg/NVGLUFramebuffer;
+	public abstract fun nvgluDeleteFramebuffer (JLorg/lwjgl3/nanovg/NVGLUFramebuffer;)V
 	public abstract fun triggerStaticInitialization ()V
 }
 
@@ -1158,7 +1158,7 @@ public class cc/polyfrost/oneconfig/renderer/Image {
 }
 
 public final class cc/polyfrost/oneconfig/renderer/RenderManager {
-	public static fun color (JI)Lorg/lwjgl/nanovg/NVGColor;
+	public static fun color (JI)Lorg/lwjgl3/nanovg/NVGColor;
 	public static fun drawBorderedText (Ljava/lang/String;FFII)I
 	public static fun drawCircle (JFFFI)V
 	public static fun drawDropShadow (JFFFFFFF)V
@@ -1186,7 +1186,7 @@ public final class cc/polyfrost/oneconfig/renderer/RenderManager {
 	public static fun drawText (JLjava/lang/String;FFIFLcc/polyfrost/oneconfig/renderer/font/Font;)V
 	public static fun drawURL (JLjava/lang/String;FFFLcc/polyfrost/oneconfig/renderer/font/Font;Lcc/polyfrost/oneconfig/utils/InputHandler;)V
 	public static fun drawWrappedString (JLjava/lang/String;FFFIFLcc/polyfrost/oneconfig/renderer/font/Font;)V
-	public static fun fillNVGColorWithRGBA (FFFFLorg/lwjgl/nanovg/NVGColor;)V
+	public static fun fillNVGColorWithRGBA (FFFFLorg/lwjgl3/nanovg/NVGColor;)V
 	public static fun getTextWidth (JLjava/lang/String;FLcc/polyfrost/oneconfig/renderer/font/Font;)F
 	public static fun scale (JFF)V
 	public static fun setAlpha (JF)V
@@ -1548,18 +1548,18 @@ public final class cc/polyfrost/oneconfig/utils/dsl/RenderManagerDSLKt {
 	public static final fun drawURL (Lcc/polyfrost/oneconfig/utils/dsl/VG;Ljava/lang/String;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;Lcc/polyfrost/oneconfig/renderer/font/Font;Lcc/polyfrost/oneconfig/utils/InputHandler;)V
 	public static final fun drawWrappedString (JLjava/lang/String;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;ILjava/lang/Number;Lcc/polyfrost/oneconfig/renderer/font/Font;)V
 	public static final fun drawWrappedString (Lcc/polyfrost/oneconfig/utils/dsl/VG;Ljava/lang/String;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;ILjava/lang/Number;Lcc/polyfrost/oneconfig/renderer/font/Font;)V
-	public static final fun fill (Lorg/lwjgl/nanovg/NVGColor;FFFF)V
-	public static final fun fill (Lorg/lwjgl/nanovg/NVGColor;I)V
-	public static final fun fill (Lorg/lwjgl/nanovg/NVGColor;IIII)V
+	public static final fun fill (Lorg/lwjgl3/nanovg/NVGColor;FFFF)V
+	public static final fun fill (Lorg/lwjgl3/nanovg/NVGColor;I)V
+	public static final fun fill (Lorg/lwjgl3/nanovg/NVGColor;IIII)V
 	public static final fun getTextWidth (JLjava/lang/String;Ljava/lang/Number;Lcc/polyfrost/oneconfig/renderer/font/Font;)F
 	public static final fun getTextWidth (Lcc/polyfrost/oneconfig/utils/dsl/VG;Ljava/lang/String;Ljava/lang/Number;Lcc/polyfrost/oneconfig/renderer/font/Font;)F
 	public static final fun nanoVG (JLkotlin/jvm/functions/Function1;)V
 	public static final fun nanoVG (ZLkotlin/jvm/functions/Function1;)V
 	public static synthetic fun nanoVG$default (ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
-	public static final fun newColor (JI)Lorg/lwjgl/nanovg/NVGColor;
-	public static final fun newColor (JIIII)Lorg/lwjgl/nanovg/NVGColor;
-	public static final fun newColor (Lcc/polyfrost/oneconfig/utils/dsl/VG;I)Lorg/lwjgl/nanovg/NVGColor;
-	public static final fun newColor (Lcc/polyfrost/oneconfig/utils/dsl/VG;IIII)Lorg/lwjgl/nanovg/NVGColor;
+	public static final fun newColor (JI)Lorg/lwjgl3/nanovg/NVGColor;
+	public static final fun newColor (JIIII)Lorg/lwjgl3/nanovg/NVGColor;
+	public static final fun newColor (Lcc/polyfrost/oneconfig/utils/dsl/VG;I)Lorg/lwjgl3/nanovg/NVGColor;
+	public static final fun newColor (Lcc/polyfrost/oneconfig/utils/dsl/VG;IIII)Lorg/lwjgl3/nanovg/NVGColor;
 	public static final fun scale (JFF)V
 	public static final fun scale (Lcc/polyfrost/oneconfig/utils/dsl/VG;FF)V
 	public static final fun setAlpha (JF)V

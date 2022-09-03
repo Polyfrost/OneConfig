@@ -8,15 +8,16 @@ plugins {
 }
 
 preprocess {
-    "1.8.9-forge"(10809, "srg") {
-        "1.8.9-fabric"(10809, "yarn", file("forge-fabric-legacy.txt")) {
-            "1.12.2-fabric"(11202, "yarn") {
-                "1.12.2-forge"(11202, "srg", file("fabric-forge-legacy.txt")) {
-                    "1.16.2-forge"(11602, "srg", file("1.12.2-1.16.2.txt")) {
-                        "1.16.2-fabric"(11602, "yarn")
-                    }
-                }
-            }
-        }
-    }
+    val forge10809 = createNode("1.8.9-forge", 10809, "srg")
+    val fabric10809 = createNode("1.8.9-fabric", 10809, "yarn")
+    val forge11202 = createNode("1.12.2-forge", 11202, "srg")
+    val fabric11202 = createNode("1.12.2-fabric", 11202, "yarn")
+    val forge11602 = createNode("1.16.2-forge", 11602, "srg")
+    val fabric11602 = createNode("1.16.2-fabric", 11602, "yarn")
+
+    fabric11602.link(forge11602)
+    forge11602.link(forge11202, file("1.12.2-1.16.2.txt"))
+    fabric11202.link(forge11202)
+    forge11202.link(forge10809)
+    fabric10809.link(forge10809, file("forge-fabric-legacy.txt"))
 }
