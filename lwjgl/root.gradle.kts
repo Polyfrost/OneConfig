@@ -17,7 +17,7 @@ preprocess {
 
     fabric11602.link(forge11602)
     forge11602.link(forge11202)
-    fabric11202.link(forge11202)
+    fabric11202.link(fabric10809)
     forge11202.link(forge10809)
     fabric10809.link(forge10809)
 }

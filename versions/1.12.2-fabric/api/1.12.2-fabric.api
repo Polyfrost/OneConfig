@@ -77,9 +77,9 @@ public class cc/polyfrost/oneconfig/platform/impl/NanoVGPlatformImpl : cc/polyfr
 	public fun nvgDelete (J)V
 	public fun nvglCreateImageFromHandle (JIIII)I
 	public fun nvglImageHandle (JI)I
-	public fun nvgluBindFramebuffer (JLorg/lwjgl/nanovg/NVGLUFramebuffer;)V
-	public fun nvgluCreateFramebuffer (JIII)Lorg/lwjgl/nanovg/NVGLUFramebuffer;
-	public fun nvgluDeleteFramebuffer (JLorg/lwjgl/nanovg/NVGLUFramebuffer;)V
+	public fun nvgluBindFramebuffer (JLorg/lwjgl3/nanovg/NVGLUFramebuffer;)V
+	public fun nvgluCreateFramebuffer (JIII)Lorg/lwjgl3/nanovg/NVGLUFramebuffer;
+	public fun nvgluDeleteFramebuffer (JLorg/lwjgl3/nanovg/NVGLUFramebuffer;)V
 	public fun triggerStaticInitialization ()V
 }
 

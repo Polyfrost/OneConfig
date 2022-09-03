@@ -1,0 +1,12 @@
+org.objectweb.asm.tree.ClassNode org.spongepowered.asm.lib.tree.ClassNode
+org.objectweb.asm.tree.FieldNode org.spongepowered.asm.lib.tree.FieldNode
+org.objectweb.asm.tree.MethodNode org.spongepowered.asm.lib.tree.MethodNode
+org.objectweb.asm.tree.AbstractInsnNode org.spongepowered.asm.lib.tree.AbstractInsnNode
+org.objectweb.asm.tree.InsnList org.spongepowered.asm.lib.tree.InsnList
+org.objectweb.asm.tree.LabelNode org.spongepowered.asm.lib.tree.LabelNode
+org.objectweb.asm.tree.LineNumberNode org.spongepowered.asm.lib.tree.LineNumberNode
+org.objectweb.asm.tree.VarInsnNode org.spongepowered.asm.lib.tree.VarInsnNode
+org.objectweb.asm.tree.FieldInsnNode org.spongepowered.asm.lib.tree.FieldInsnNode
+org.objectweb.asm.tree.InsnNode org.spongepowered.asm.lib.tree.InsnNode
+org.objectweb.asm.tree.JumpInsnNode org.spongepowered.asm.lib.tree.JumpInsnNode
+org.objectweb.asm.tree.MethodInsnNode org.spongepowered.asm.lib.tree.MethodInsnNode
