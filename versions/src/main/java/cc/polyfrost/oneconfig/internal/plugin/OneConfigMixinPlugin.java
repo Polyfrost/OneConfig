@@ -86,6 +86,9 @@ public class OneConfigMixinPlugin implements IMixinConfigPlugin {
             mixins.add("TickTimeTrackerMixin");
             return mixins;
         }
+        if (Platform.getInstance().getMinecraftVersion() == 10800 || Platform.getInstance().getMinecraftVersion() == 11200) {
+            mixins.add("HudCachingMixin");
+        }
         return mixins.isEmpty() ? null : mixins;
     }
 
