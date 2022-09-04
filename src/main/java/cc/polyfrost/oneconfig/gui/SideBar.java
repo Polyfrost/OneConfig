@@ -52,6 +52,7 @@ public class SideBar {
     private final ArrayList<BasicButton> buttons = new ArrayList<BasicButton>() {{
         add(new BasicButton(192, SIZE_36, "Credits", SVGs.COPYRIGHT_FILL, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY));
         add(new BasicButton(192, SIZE_36, "Global Search", SVGs.MAGNIFYING_GLASS_BOLD, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY));
+
         add(new BasicButton(192, SIZE_36, "Mods", SVGs.FADERS_HORIZONTAL_BOLD, null, ALIGNMENT_LEFT, ColorPalette.PRIMARY));
         add(new BasicButton(192, SIZE_36, "Profiles", SVGs.USER_SWITCH_FILL, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY));
         add(new BasicButton(192, SIZE_36, "Performance", SVGs.GAUGE_FILL, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY));
@@ -60,8 +61,8 @@ public class SideBar {
         add(new BasicButton(192, SIZE_36, "Screenshots", SVGs.APERTURE_FILL, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY));
         add(new BasicButton(192, SIZE_36, "Preferences", SVGs.GEAR_SIX_FILL, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY));
     }};
-    private final BasicButton HUDButton = new BasicButton(192, SIZE_36, "Edit HUD", SVGs.NOTE_PENCIL_BOLD, null, ALIGNMENT_LEFT, ColorPalette.SECONDARY);
-    private final BasicButton CloseButton = new BasicButton(192, SIZE_36, "Close", SVGs.X_CIRCLE_BOLD, null, ALIGNMENT_LEFT, ColorPalette.SECONDARY_DESTRUCTIVE);
+    private final BasicButton hudButton = new BasicButton(192, SIZE_36, "Edit HUD", SVGs.NOTE_PENCIL_BOLD, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY);
+    private final BasicButton closeButton = new BasicButton(192, SIZE_36, "Close", SVGs.X_CIRCLE_BOLD, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY_DESTRUCTIVE);
     private int selected = 2;
     private Animation moveAnimation = null;
     private Animation sizeAnimation = null;
@@ -71,8 +72,8 @@ public class SideBar {
         buttons.get(0).setClickAction(new CreditsPage());
         buttons.get(2).setClickAction(new ModsPage());
         buttons.get(8).setClickAction(new ModConfigPage(Preferences.getInstance().mod.defaultPage, true));
-        HUDButton.setClickAction(() -> GuiUtils.displayScreen(new HudGui()));
-        CloseButton.setClickAction(GuiUtils::closeScreen);
+        hudButton.setClickAction(() -> GuiUtils.displayScreen(new HudGui()));
+        closeButton.setClickAction(GuiUtils::closeScreen);
         for (BasicButton button : buttons) {
             if (button.hasClickAction()) continue;
             button.disable(true);
@@ -106,8 +107,8 @@ public class SideBar {
         buttons.get(6).draw(vg, x + 16, y + 376, inputHandler);
         buttons.get(7).draw(vg, x + 16, y + 412, inputHandler);
         buttons.get(8).draw(vg, x + 16, y + 448, inputHandler);
-        HUDButton.draw(vg, x + 16, y + 704, inputHandler);
-        CloseButton.draw(vg, x + 16, y + 748, inputHandler);
+        hudButton.draw(vg, x + 16, y + 704, inputHandler);
+        closeButton.draw(vg, x + 16, y + 748, inputHandler);
     }
 
     public void pageOpened(String page) {
