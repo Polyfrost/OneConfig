@@ -69,10 +69,10 @@ public final class Notification {
         this.action = action;
     }
 
-    public float draw(final long vg, float y, float scale) {
+    public float draw(final long vg, float y, float scale, float deltaTime) {
         RenderManager.scale(vg, scale, scale);
         inputHandler.scale(scale, scale);
-        float x = (UResolution.getWindowWidth() / scale - animation.get(hovered ? 0 : GuiUtils.getDeltaTime()));
+        float x = (UResolution.getWindowWidth() / scale - animation.get(hovered ? 0 : deltaTime));
         float textX = icon == null ? x + 16 : x + 64;
         float textMaxLength = icon == null ? 268 : 220;
         float messageHeight = RenderManager.getWrappedStringHeight(vg, message, textMaxLength, 12f, 1.75f, Fonts.REGULAR);

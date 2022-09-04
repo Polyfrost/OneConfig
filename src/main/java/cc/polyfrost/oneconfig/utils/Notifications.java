@@ -27,6 +27,8 @@
 package cc.polyfrost.oneconfig.utils;
 
 import cc.polyfrost.oneconfig.events.event.HudRenderEvent;
+import cc.polyfrost.oneconfig.events.event.RenderEvent;
+import cc.polyfrost.oneconfig.events.event.Stage;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.animations.Animation;
 import cc.polyfrost.oneconfig.gui.animations.DummyAnimation;
@@ -36,6 +38,7 @@ import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
 import cc.polyfrost.oneconfig.libs.universal.UResolution;
 import cc.polyfrost.oneconfig.renderer.Icon;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
+import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashMap;
@@ -219,6 +222,8 @@ public final class Notifications {
         send(title, message, (Callable<Float>) null);
     }
 
+    private float deltaTime = 0;
+
     @Subscribe
     private void onHudRender(HudRenderEvent event) {
         RenderManager.setupAndDraw((vg) -> {
@@ -229,10 +234,18 @@ public final class Notifications {
                     entry.setValue(new DummyAnimation(desiredPosition));
                 else if (desiredPosition != entry.getValue().getEnd())
                     entry.setValue(new EaseInOutQuad(250, entry.getValue().get(0), desiredPosition, false));
-                float height = entry.getKey().draw(vg, UResolution.getWindowHeight() / scale + entry.getValue().get(), scale);
+                float height = entry.getKey().draw(vg, UResolution.getWindowHeight() / scale + entry.getValue().get(deltaTime), scale, deltaTime);
                 desiredPosition -= height + 16f;
             }
             notifications.entrySet().removeIf(entry -> entry.getKey().isFinished());
         });
+        deltaTime = 0;
+    }
+
+    @Subscribe
+    private void onRenderEvent(RenderEvent event) {
+        if (event.stage == Stage.START) {
+            deltaTime += GuiUtils.getDeltaTime(); // add up deltatime since we might not render every frame because of hud caching
+        }
     }
 }
