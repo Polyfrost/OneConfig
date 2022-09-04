@@ -35,10 +35,17 @@ import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.utils.TickDelay;
 
 public class Preferences extends InternalConfig {
-    @Switch(
-            name = "Enable Blur"
+
+    @Dropdown(
+            name = "Release Channel",
+            options = {"Releases", "Pre-Releases"}
     )
-    public static boolean enableBlur = true;
+    public static int updateChannel = 0;
+
+    @Switch(
+            name = "Debug Mode"
+    )
+    public static boolean DEBUG = false;
 
     @KeyBind(
             name = "OneConfig Keybind",
@@ -46,23 +53,21 @@ public class Preferences extends InternalConfig {
     )
     public static OneKeyBind oneConfigKeyBind = new OneKeyBind(UKeyboard.KEY_RSHIFT);
 
-    @Dropdown(
-            name = "Release Channel",
-            options = {"Releases", "Pre-Releases"},
-            size = 2
+    @Switch(
+            name = "Enable Blur",
+            subcategory = "GUI Settings"
     )
-    public static int updateChannel = 0;
+    public static boolean enableBlur = true;
 
     @Switch(
             name = "Use custom GUI scale",
-            subcategory = "GUI Scale",
-            size = 2
+            subcategory = "GUI Settings"
     )
     public static boolean enableCustomScale = false;
 
     @Slider(
             name = "Custom GUI scale",
-            subcategory = "GUI Scale",
+            subcategory = "GUI Settings",
             min = 0.5f,
             max = 5f
     )
