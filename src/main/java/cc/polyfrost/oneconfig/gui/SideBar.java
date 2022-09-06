@@ -37,6 +37,9 @@ import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.internal.config.Preferences;
 import cc.polyfrost.oneconfig.internal.gui.HudGui;
+import cc.polyfrost.oneconfig.libs.universal.UMinecraft;
+import cc.polyfrost.oneconfig.libs.universal.wrappers.UPlayer;
+import cc.polyfrost.oneconfig.libs.universal.wrappers.message.UTextComponent;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.utils.InputHandler;
@@ -67,6 +70,7 @@ public class SideBar {
     private Animation moveAnimation = null;
     private Animation sizeAnimation = null;
     private int y;
+    private int sidebarY;
 
     public SideBar() {
         buttons.get(0).setClickAction(new CreditsPage());
@@ -96,17 +100,22 @@ public class SideBar {
             }
         }
 
-        buttons.get(0).draw(vg, x + 16, y + 80, inputHandler);
-        buttons.get(1).draw(vg, x + 16, y + 116, inputHandler);
-        RenderManager.drawText(vg, "MOD CONFIG", x + 16, y + 178, Colors.WHITE, 12, Fonts.SEMIBOLD);
-        buttons.get(2).draw(vg, x + 16, y + 192, inputHandler);
-        buttons.get(3).draw(vg, x + 16, y + 228, inputHandler);
-        buttons.get(4).draw(vg, x + 16, y + 264, inputHandler);
-        buttons.get(5).draw(vg, x + 16, y + 300, inputHandler);
-        RenderManager.drawText(vg, "PERSONALIZATION", x + 16, y + 362, Colors.WHITE, 12, Fonts.SEMIBOLD);
-        buttons.get(6).draw(vg, x + 16, y + 376, inputHandler);
-        buttons.get(7).draw(vg, x + 16, y + 412, inputHandler);
-        buttons.get(8).draw(vg, x + 16, y + 448, inputHandler);
+        sidebarY = y + 44;
+        buttons.get(0).draw(vg, x + 16, calcAndIncrementLn(sidebarY), inputHandler);
+//        buttons.get(1).draw(vg, x + 16, y + 116, inputHandler);
+        RenderManager.drawText(vg, "MOD CONFIG", x + 16, calcAndIncrementLn(sidebarY + 26), Colors.WHITE_50, 12, Fonts.SEMIBOLD);
+        sidebarY = sidebarY - 26;
+        buttons.get(2).draw(vg, x + 16, calcAndIncrementLn(sidebarY), inputHandler);
+        buttons.get(3).draw(vg, x + 16, calcAndIncrementLn(sidebarY), inputHandler);
+        buttons.get(4).draw(vg, x + 16, calcAndIncrementLn(sidebarY), inputHandler);
+//        buttons.get(5).draw(vg, x + 16, listNewLn(sidebarY), inputHandler);
+        RenderManager.drawText(vg, "PERSONALIZATION", x + 16, calcAndIncrementLn(sidebarY + 26), Colors.WHITE_50, 12, Fonts.SEMIBOLD);
+        sidebarY = sidebarY - 26;
+        buttons.get(6).draw(vg, x + 16, calcAndIncrementLn(sidebarY), inputHandler);
+        buttons.get(7).draw(vg, x + 16, calcAndIncrementLn(sidebarY), inputHandler);
+        buttons.get(8).draw(vg, x + 16, calcAndIncrementLn(sidebarY), inputHandler);
+        sidebarY = 0;
+
         hudButton.draw(vg, x + 16, y + 704, inputHandler);
         closeButton.draw(vg, x + 16, y + 748, inputHandler);
     }
@@ -125,5 +134,11 @@ public class SideBar {
         moveAnimation = new CubicBezier(0.76f, 0, 0.24f, 1, 300, buttons.get(selected).y - y, button.y - y, false);
         sizeAnimation = new DummyAnimation(36);
         selected = buttons.indexOf(button);
+    }
+
+    // Utils
+    private int calcAndIncrementLn(int n) {
+        sidebarY = n + 36;
+        return sidebarY;
     }
 }

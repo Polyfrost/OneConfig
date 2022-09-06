@@ -49,6 +49,9 @@ public class CreditsPage extends Page {
         RenderManager.drawText(vg, " - nextdaydelivery - GUI frontend, Render Manager, Utilities", x + 20, y + 235, -1, 12, Fonts.REGULAR);
         RenderManager.drawText(vg, " - Wyvest - Gradle, Render Manager, VCAL, Utilities", x + 20, y + 250, -1, 12, Fonts.REGULAR);
         RenderManager.drawText(vg, " - Ethan - Utilities", x + 20, y + 265, -1, 12, Fonts.REGULAR);
+        RenderManager.drawText(vg, " - Caledonian - Designer", x + 20, y + 280, -1, 12, Fonts.REGULAR);
+
+        x = x + 15;
 
         RenderManager.drawText(vg, "Libraries", x + 20, y + 318, -1, 24, Fonts.SEMIBOLD);
         RenderManager.drawText(vg, " - LWJGLTwoPointFive (DJTheRedstoner) - LWJGL3 loading hack", x + 20, y + 340, -1, 12, Fonts.REGULAR);

@@ -98,7 +98,7 @@ public class OneConfigGui extends OneUIScreen {
         RenderManager.scale(vg, scale, scale);
         inputHandler.scale(scale, scale);
 
-        RenderManager.drawDropShadow(vg, x, y, 1280, 800, 32, 0, 20);
+        RenderManager.drawDropShadow(vg, x, y, 1280, 800, 64, 0, 20);
         RenderManager.drawRoundedRect(vg, x + 224, y, 1056, 800, Colors.GRAY_800, 20f);
         RenderManager.drawRoundedRect(vg, x, y, 244, 800, Colors.GRAY_800_95, 20f);
         RenderManager.drawRect(vg, x + 224, y, 20, 800, Colors.GRAY_800);
