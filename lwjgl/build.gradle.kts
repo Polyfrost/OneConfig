@@ -1,5 +1,10 @@
 @file:Suppress("GradlePackageUpdate")
 
+import java.util.jar.JarInputStream
+import java.util.jar.JarOutputStream
+import java.io.Closeable
+import java.util.zip.ZipEntry
+
 plugins {
     kotlin("jvm")
     id("gg.essential.multi-version")
@@ -76,7 +81,7 @@ dependencies {
 }
 
 tasks {
-    named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar") {
+    shadowJar {
         archiveClassifier.set("")
         configurations = listOf(shadeCompileOnly, shadeRuntimeOnly)
         if (platform.isLegacyForge || platform.isLegacyFabric) {
@@ -84,15 +89,65 @@ tasks {
             exclude("**/module-info.class")
             exclude("**/package-info.class")
         }
+        relocate("lwjgl", "lwjgl3") {
+            include("org/lwjgl/system/Library.class")
+        }
         relocate("org.lwjgl", "org.lwjgl3")
+        val lwjglNatives = mapOf(
+            "liblwjgl.so" to "liblwjgl3.so",
+            "liblwjgl.so.git" to "liblwjgl3.so.git",
+            "liblwjgl.so.sha1" to "liblwjgl3.so.sha1",
+            "liblwjgl.dylib" to "liblwjgl3.dylib",
+            "liblwjgl.dylib.git" to "liblwjgl3.dylib.git",
+            "liblwjgl.dylib.sha1" to "liblwjgl3.dylib.sha1",
+            "lwjgl.dll" to "lwjgl3.dll",
+            "lwjgl.dll.git" to "lwjgl3.dll.git",
+            "lwjgl.dll.sha1" to "lwjgl3.dll.sha1"
+        )
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
         dependsOn(jar)
+
+        doLast {
+            val original = shadowJar.get().archiveFile.get().asFile
+            val input = File(original.parentFile, "${original.nameWithoutExtension}-donotusethis.jar")
+            original.renameTo(input)
+            val output = File(input.parentFile, input.name.replace("-donotusethis", ""))
+            useInOut((input to output)) { jarIn, jarOut ->
+                while (true) {
+                    val entry = jarIn.nextJarEntry ?: break
+                    val beforeName = entry.name.substringBeforeLast("/")
+                    val afterName = entry.name.substringAfterLast("/")
+                    jarOut.putNextEntry(ZipEntry(lwjglNatives[afterName]?.let { "$beforeName/$it" } ?: entry.name))
+                    jarOut.write(jarIn.readBytes())
+                    jarOut.closeEntry()
+                }
+            }
+        }
     }
     jar {
         enabled = false
     }
     remapJar {
         enabled = false
+    }
+}
+
+/**
+ * Taken from Essential Gradle Toolkit under GPL 3.0
+ * https://github.com/EssentialGG/essential-gradle-toolkit/blob/master/LICENSE.md
+ */
+fun <T : Closeable, U : Closeable> T.nestedUse(nest: (T) -> U, block: (U) -> Unit) =
+    use { nest(it).use(block) }
+
+/**
+ * Adapted from Essential Gradle Toolkit under GPL 3.0
+ * https://github.com/EssentialGG/essential-gradle-toolkit/blob/master/LICENSE.md
+ */
+fun useInOut(inOut: Pair<File, File>, block: (jarIn: JarInputStream, jarOut: JarOutputStream) -> Unit) {
+    inOut.first.inputStream().nestedUse(::JarInputStream) { jarIn ->
+        inOut.second.outputStream().nestedUse(::JarOutputStream) { jarOut ->
+            block.invoke(jarIn, jarOut)
+        }
     }
 }
 

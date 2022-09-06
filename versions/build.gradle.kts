@@ -247,7 +247,7 @@ tasks {
         }
     }
 
-    val shadowJar = named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar") {
+    shadowJar {
         archiveClassifier.set("full-dev")
         configurations = listOf(shade, shadeNoPom, shadeNoJar, shadeProject, shadeRelocated)
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
