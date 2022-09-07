@@ -28,6 +28,7 @@ public class cc/polyfrost/oneconfig/config/Config {
 
 public abstract interface annotation class cc/polyfrost/oneconfig/config/annotations/Button : java/lang/annotation/Annotation {
 	public abstract fun category ()Ljava/lang/String;
+	public abstract fun description ()Ljava/lang/String;
 	public abstract fun name ()Ljava/lang/String;
 	public abstract fun size ()I
 	public abstract fun subcategory ()Ljava/lang/String;
@@ -36,6 +37,7 @@ public abstract interface annotation class cc/polyfrost/oneconfig/config/annotat
 
 public abstract interface annotation class cc/polyfrost/oneconfig/config/annotations/Checkbox : java/lang/annotation/Annotation {
 	public abstract fun category ()Ljava/lang/String;
+	public abstract fun description ()Ljava/lang/String;
 	public abstract fun name ()Ljava/lang/String;
 	public abstract fun size ()I
 	public abstract fun subcategory ()Ljava/lang/String;
@@ -44,6 +46,7 @@ public abstract interface annotation class cc/polyfrost/oneconfig/config/annotat
 public abstract interface annotation class cc/polyfrost/oneconfig/config/annotations/Color : java/lang/annotation/Annotation {
 	public abstract fun allowAlpha ()Z
 	public abstract fun category ()Ljava/lang/String;
+	public abstract fun description ()Ljava/lang/String;
 	public abstract fun name ()Ljava/lang/String;
 	public abstract fun size ()I
 	public abstract fun subcategory ()Ljava/lang/String;
@@ -55,6 +58,7 @@ public abstract interface annotation class cc/polyfrost/oneconfig/config/annotat
 
 public abstract interface annotation class cc/polyfrost/oneconfig/config/annotations/Dropdown : java/lang/annotation/Annotation {
 	public abstract fun category ()Ljava/lang/String;
+	public abstract fun description ()Ljava/lang/String;
 	public abstract fun name ()Ljava/lang/String;
 	public abstract fun options ()[Ljava/lang/String;
 	public abstract fun size ()I
@@ -63,6 +67,7 @@ public abstract interface annotation class cc/polyfrost/oneconfig/config/annotat
 
 public abstract interface annotation class cc/polyfrost/oneconfig/config/annotations/DualOption : java/lang/annotation/Annotation {
 	public abstract fun category ()Ljava/lang/String;
+	public abstract fun description ()Ljava/lang/String;
 	public abstract fun left ()Ljava/lang/String;
 	public abstract fun name ()Ljava/lang/String;
 	public abstract fun right ()Ljava/lang/String;
@@ -96,6 +101,7 @@ public abstract interface annotation class cc/polyfrost/oneconfig/config/annotat
 
 public abstract interface annotation class cc/polyfrost/oneconfig/config/annotations/KeyBind : java/lang/annotation/Annotation {
 	public abstract fun category ()Ljava/lang/String;
+	public abstract fun description ()Ljava/lang/String;
 	public abstract fun name ()Ljava/lang/String;
 	public abstract fun size ()I
 	public abstract fun subcategory ()Ljava/lang/String;
@@ -114,6 +120,7 @@ public abstract interface annotation class cc/polyfrost/oneconfig/config/annotat
 
 public abstract interface annotation class cc/polyfrost/oneconfig/config/annotations/Slider : java/lang/annotation/Annotation {
 	public abstract fun category ()Ljava/lang/String;
+	public abstract fun description ()Ljava/lang/String;
 	public abstract fun max ()F
 	public abstract fun min ()F
 	public abstract fun name ()Ljava/lang/String;
@@ -123,6 +130,7 @@ public abstract interface annotation class cc/polyfrost/oneconfig/config/annotat
 
 public abstract interface annotation class cc/polyfrost/oneconfig/config/annotations/Switch : java/lang/annotation/Annotation {
 	public abstract fun category ()Ljava/lang/String;
+	public abstract fun description ()Ljava/lang/String;
 	public abstract fun name ()Ljava/lang/String;
 	public abstract fun size ()I
 	public abstract fun subcategory ()Ljava/lang/String;
@@ -130,6 +138,7 @@ public abstract interface annotation class cc/polyfrost/oneconfig/config/annotat
 
 public abstract interface annotation class cc/polyfrost/oneconfig/config/annotations/Text : java/lang/annotation/Annotation {
 	public abstract fun category ()Ljava/lang/String;
+	public abstract fun description ()Ljava/lang/String;
 	public abstract fun multiline ()Z
 	public abstract fun name ()Ljava/lang/String;
 	public abstract fun placeholder ()Ljava/lang/String;
@@ -281,16 +290,18 @@ public final class cc/polyfrost/oneconfig/config/data/PageLocation : java/lang/E
 
 public abstract class cc/polyfrost/oneconfig/config/elements/BasicOption {
 	public final field category Ljava/lang/String;
+	public final field description Ljava/lang/String;
 	protected final field field Ljava/lang/reflect/Field;
 	public final field name Ljava/lang/String;
 	protected field parent Ljava/lang/Object;
 	public final field size I
 	public final field subcategory Ljava/lang/String;
-	public fun <init> (Ljava/lang/reflect/Field;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;I)V
+	public fun <init> (Ljava/lang/reflect/Field;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;I)V
 	public fun addDependency (Ljava/util/function/Supplier;)V
 	public fun addHideCondition (Ljava/util/function/Supplier;)V
 	public fun addListener (Ljava/lang/Runnable;)V
 	public abstract fun draw (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
+	public fun drawDescription (JIIILcc/polyfrost/oneconfig/utils/InputHandler;)V
 	public fun drawLast (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
 	public fun get ()Ljava/lang/Object;
 	public fun getField ()Ljava/lang/reflect/Field;
@@ -301,6 +312,7 @@ public abstract class cc/polyfrost/oneconfig/config/elements/BasicOption {
 	public fun keyTyped (CI)V
 	protected fun set (Ljava/lang/Object;)V
 	public fun setParent (Ljava/lang/Object;)V
+	protected fun shouldDrawDescription ()Z
 }
 
 public class cc/polyfrost/oneconfig/config/elements/OptionCategory {
@@ -702,9 +714,9 @@ public class cc/polyfrost/oneconfig/gui/elements/Slider : cc/polyfrost/oneconfig
 }
 
 public class cc/polyfrost/oneconfig/gui/elements/config/ConfigButton : cc/polyfrost/oneconfig/config/elements/BasicOption {
-	public fun <init> (Ljava/lang/Runnable;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;)V
-	public fun <init> (Ljava/lang/reflect/Field;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;)V
-	public fun <init> (Ljava/lang/reflect/Method;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;)V
+	public fun <init> (Ljava/lang/Runnable;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;)V
+	public fun <init> (Ljava/lang/reflect/Field;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;)V
+	public fun <init> (Ljava/lang/reflect/Method;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;)V
 	public static fun create (Ljava/lang/reflect/Field;Ljava/lang/Object;)Lcc/polyfrost/oneconfig/gui/elements/config/ConfigButton;
 	public static fun create (Ljava/lang/reflect/Method;Ljava/lang/Object;)Lcc/polyfrost/oneconfig/gui/elements/config/ConfigButton;
 	public fun draw (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
@@ -712,14 +724,14 @@ public class cc/polyfrost/oneconfig/gui/elements/config/ConfigButton : cc/polyfr
 }
 
 public class cc/polyfrost/oneconfig/gui/elements/config/ConfigCheckbox : cc/polyfrost/oneconfig/config/elements/BasicOption {
-	public fun <init> (Ljava/lang/reflect/Field;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;I)V
+	public fun <init> (Ljava/lang/reflect/Field;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;I)V
 	public static fun create (Ljava/lang/reflect/Field;Ljava/lang/Object;)Lcc/polyfrost/oneconfig/gui/elements/config/ConfigCheckbox;
 	public fun draw (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
 	public fun getHeight ()I
 }
 
 public class cc/polyfrost/oneconfig/gui/elements/config/ConfigColorElement : cc/polyfrost/oneconfig/config/elements/BasicOption {
-	public fun <init> (Ljava/lang/reflect/Field;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;IZ)V
+	public fun <init> (Ljava/lang/reflect/Field;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;IZ)V
 	public static fun create (Ljava/lang/reflect/Field;Ljava/lang/Object;)Lcc/polyfrost/oneconfig/gui/elements/config/ConfigColorElement;
 	public fun draw (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
 	public fun getHeight ()I
@@ -728,15 +740,16 @@ public class cc/polyfrost/oneconfig/gui/elements/config/ConfigColorElement : cc/
 }
 
 public class cc/polyfrost/oneconfig/gui/elements/config/ConfigDropdown : cc/polyfrost/oneconfig/config/elements/BasicOption {
-	public fun <init> (Ljava/lang/reflect/Field;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;I[Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/reflect/Field;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;I[Ljava/lang/String;)V
 	public static fun create (Ljava/lang/reflect/Field;Ljava/lang/Object;)Lcc/polyfrost/oneconfig/gui/elements/config/ConfigDropdown;
 	public fun draw (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
 	public fun drawLast (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
 	public fun getHeight ()I
+	protected fun shouldDrawDescription ()Z
 }
 
 public class cc/polyfrost/oneconfig/gui/elements/config/ConfigDualOption : cc/polyfrost/oneconfig/config/elements/BasicOption {
-	public fun <init> (Ljava/lang/reflect/Field;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/reflect/Field;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;)V
 	public static fun create (Ljava/lang/reflect/Field;Ljava/lang/Object;)Lcc/polyfrost/oneconfig/gui/elements/config/ConfigDualOption;
 	public fun draw (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
 	public fun getHeight ()I
@@ -757,7 +770,7 @@ public class cc/polyfrost/oneconfig/gui/elements/config/ConfigInfo : cc/polyfros
 }
 
 public class cc/polyfrost/oneconfig/gui/elements/config/ConfigKeyBind : cc/polyfrost/oneconfig/config/elements/BasicOption {
-	public fun <init> (Ljava/lang/reflect/Field;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;I)V
+	public fun <init> (Ljava/lang/reflect/Field;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;I)V
 	public static fun create (Ljava/lang/reflect/Field;Ljava/lang/Object;)Lcc/polyfrost/oneconfig/gui/elements/config/ConfigKeyBind;
 	public fun draw (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
 	public fun getHeight ()I
@@ -774,7 +787,7 @@ public class cc/polyfrost/oneconfig/gui/elements/config/ConfigPageButton : cc/po
 }
 
 public class cc/polyfrost/oneconfig/gui/elements/config/ConfigSlider : cc/polyfrost/oneconfig/config/elements/BasicOption {
-	public fun <init> (Ljava/lang/reflect/Field;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;FFI)V
+	public fun <init> (Ljava/lang/reflect/Field;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;FFI)V
 	public static fun create (Ljava/lang/reflect/Field;Ljava/lang/Object;)Lcc/polyfrost/oneconfig/gui/elements/config/ConfigSlider;
 	public fun draw (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
 	public fun getHeight ()I
@@ -782,18 +795,19 @@ public class cc/polyfrost/oneconfig/gui/elements/config/ConfigSlider : cc/polyfr
 }
 
 public class cc/polyfrost/oneconfig/gui/elements/config/ConfigSwitch : cc/polyfrost/oneconfig/config/elements/BasicOption {
-	public fun <init> (Ljava/lang/reflect/Field;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;I)V
+	public fun <init> (Ljava/lang/reflect/Field;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;I)V
 	public static fun create (Ljava/lang/reflect/Field;Ljava/lang/Object;)Lcc/polyfrost/oneconfig/gui/elements/config/ConfigSwitch;
 	public fun draw (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
 	public fun getHeight ()I
 }
 
 public class cc/polyfrost/oneconfig/gui/elements/config/ConfigTextBox : cc/polyfrost/oneconfig/config/elements/BasicOption {
-	public fun <init> (Ljava/lang/reflect/Field;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;ZZ)V
+	public fun <init> (Ljava/lang/reflect/Field;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;ZZ)V
 	public static fun create (Ljava/lang/reflect/Field;Ljava/lang/Object;)Lcc/polyfrost/oneconfig/gui/elements/config/ConfigTextBox;
 	public fun draw (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
 	public fun getHeight ()I
 	public fun keyTyped (CI)V
+	protected fun shouldDrawDescription ()Z
 }
 
 public class cc/polyfrost/oneconfig/gui/elements/text/NumberInputField : cc/polyfrost/oneconfig/gui/elements/text/TextInputField {
@@ -1163,6 +1177,8 @@ public final class cc/polyfrost/oneconfig/renderer/AssetLoader {
 	public fun clearImages (J)V
 	public fun clearSVGs (J)V
 	public fun getImage (Ljava/lang/String;)I
+	public fun getNVGImage (Ljava/lang/String;)Lcc/polyfrost/oneconfig/renderer/NVGAsset;
+	public fun getNVGSVG (Ljava/lang/String;)Lcc/polyfrost/oneconfig/renderer/NVGAsset;
 	public fun getSVG (Ljava/lang/String;FF)I
 	public fun imageToIntBuffer (Ljava/lang/String;)Ljava/nio/IntBuffer;
 	public fun loadImage (JLcc/polyfrost/oneconfig/renderer/Image;)Z
@@ -1199,6 +1215,13 @@ public class cc/polyfrost/oneconfig/renderer/Image {
 	public final field flags I
 	public fun <init> (Ljava/lang/String;)V
 	public fun <init> (Ljava/lang/String;I)V
+}
+
+public class cc/polyfrost/oneconfig/renderer/NVGAsset {
+	protected fun <init> (III)V
+	public fun getHeight ()I
+	public fun getImage ()I
+	public fun getWidth ()I
 }
 
 public final class cc/polyfrost/oneconfig/renderer/RenderManager {
@@ -1321,6 +1344,7 @@ public final class cc/polyfrost/oneconfig/utils/IOUtils {
 	public fun <init> ()V
 	public static fun copyImageToClipboard (Ljava/awt/Image;)V
 	public static fun copyStringToClipboard (Ljava/lang/String;)V
+	public static fun getFileChecksum (Ljava/io/File;)Ljava/lang/String;
 	public static fun getImageFromClipboard ()Ljava/awt/Image;
 	public static fun getStringFromClipboard ()Ljava/lang/String;
 	public static fun resourceToByteBuffer (Ljava/lang/String;)Ljava/nio/ByteBuffer;
@@ -1383,11 +1407,11 @@ public final class cc/polyfrost/oneconfig/utils/NetworkUtils {
 	public static fun browseLink (Ljava/lang/String;)V
 	public static fun downloadFile (Ljava/lang/String;Ljava/io/File;)Z
 	public static fun downloadFile (Ljava/lang/String;Ljava/io/File;Ljava/lang/String;IZ)Z
-	public static fun getFileChecksum (Ljava/io/File;)Ljava/lang/String;
 	public static fun getJsonElement (Ljava/lang/String;)Lcom/google/gson/JsonElement;
 	public static fun getJsonElement (Ljava/lang/String;Ljava/lang/String;IZ)Lcom/google/gson/JsonElement;
 	public static fun getString (Ljava/lang/String;)Ljava/lang/String;
 	public static fun getString (Ljava/lang/String;Ljava/lang/String;IZ)Ljava/lang/String;
+	public static fun setupConnection (Ljava/lang/String;Ljava/lang/String;IZ)Ljava/io/InputStream;
 }
 
 public final class cc/polyfrost/oneconfig/utils/Notifications {
@@ -1555,6 +1579,10 @@ public final class cc/polyfrost/oneconfig/utils/dsl/ColorUtilsDSLKt {
 	public static final fun toColor (I)Lcc/polyfrost/oneconfig/config/core/OneColor;
 }
 
+public final class cc/polyfrost/oneconfig/utils/dsl/IOUtilsDSLKt {
+	public static final fun checksum (Ljava/io/File;)Ljava/lang/String;
+}
+
 public final class cc/polyfrost/oneconfig/utils/dsl/JsonUtilsDSLKt {
 	public static final fun asJsonElement (Ljava/lang/String;Z)Lcom/google/gson/JsonElement;
 	public static synthetic fun asJsonElement$default (Ljava/lang/String;ZILjava/lang/Object;)Lcom/google/gson/JsonElement;
@@ -1572,7 +1600,6 @@ public final class cc/polyfrost/oneconfig/utils/dsl/MultithreadingDSLKt {
 
 public final class cc/polyfrost/oneconfig/utils/dsl/NetworkUtilsDSLKt {
 	public static final fun browseLink (Lcc/polyfrost/oneconfig/libs/universal/UDesktop;Ljava/lang/String;)V
-	public static final fun checksum (Ljava/io/File;)Ljava/lang/String;
 	public static final fun download (Ljava/io/File;Ljava/lang/String;Ljava/lang/String;IZ)Z
 	public static synthetic fun download$default (Ljava/io/File;Ljava/lang/String;Ljava/lang/String;IZILjava/lang/Object;)Z
 }
