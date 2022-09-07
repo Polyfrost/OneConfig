@@ -43,7 +43,6 @@ public class EaseOutQuad extends Animation {
      */
     @Override
     protected float animate(float x) {
-        if (1 - (1 - x) * (1 - x) >= 1) System.out.println(x);
         return 1 - (1 - x) * (1 - x);
     }
 }
