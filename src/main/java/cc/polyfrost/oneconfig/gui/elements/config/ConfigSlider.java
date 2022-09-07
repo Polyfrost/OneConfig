@@ -46,8 +46,8 @@ public class ConfigSlider extends BasicOption {
     private boolean dragging = false;
     private boolean mouseWasDown = false;
 
-    public ConfigSlider(Field field, Object parent, String name, String category, String subcategory, float min, float max, int step) {
-        super(field, parent, name,category, subcategory, 2);
+    public ConfigSlider(Field field, Object parent, String name, String description, String category, String subcategory, float min, float max, int step) {
+        super(field, parent, name, description, category, subcategory, 2);
         this.min = min;
         this.max = max;
         this.step = step;
@@ -56,7 +56,7 @@ public class ConfigSlider extends BasicOption {
 
     public static ConfigSlider create(Field field, Object parent) {
         Slider slider = field.getAnnotation(Slider.class);
-        return new ConfigSlider(field, parent, slider.name(), slider.category(), slider.subcategory(), slider.min(), slider.max(), slider.step());
+        return new ConfigSlider(field, parent, slider.name(), slider.description(), slider.category(), slider.subcategory(), slider.min(), slider.max(), slider.step());
     }
 
     @Override

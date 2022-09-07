@@ -42,7 +42,7 @@ public class ConfigInfo extends BasicOption {
     private final InfoType type;
 
     public ConfigInfo(Field field, Object parent, String name, String category, String subcategory, int size, InfoType type) {
-        super(field, parent, name, category, subcategory, size);
+        super(field, parent, name, "", category, subcategory, size);
         this.type = type;
     }
 

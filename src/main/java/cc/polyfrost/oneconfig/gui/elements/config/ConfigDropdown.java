@@ -49,14 +49,14 @@ public class ConfigDropdown extends BasicOption {
     private boolean opened = false;
     private Scissor inputScissor = null;
 
-    public ConfigDropdown(Field field, Object parent, String name, String category, String subcategory, int size, String[] options) {
-        super(field, parent, name, category, subcategory, size);
+    public ConfigDropdown(Field field, Object parent, String name, String description, String category, String subcategory, int size, String[] options) {
+        super(field, parent, name, description, category, subcategory, size);
         this.options = options;
     }
 
     public static ConfigDropdown create(Field field, Object parent) {
         Dropdown dropdown = field.getAnnotation(Dropdown.class);
-        return new ConfigDropdown(field, parent, dropdown.name(), dropdown.category(), dropdown.subcategory(), dropdown.size(), dropdown.options());
+        return new ConfigDropdown(field, parent, dropdown.name(), dropdown.description(), dropdown.category(), dropdown.subcategory(), dropdown.size(), dropdown.options());
     }
 
     @Override
@@ -188,5 +188,10 @@ public class ConfigDropdown extends BasicOption {
     @Override
     public int getHeight() {
         return 32;
+    }
+
+    @Override
+    protected boolean shouldDrawDescription() {
+        return super.shouldDrawDescription() && !opened;
     }
 }

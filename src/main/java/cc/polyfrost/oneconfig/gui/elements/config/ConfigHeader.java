@@ -40,7 +40,7 @@ import java.lang.reflect.Field;
 public class ConfigHeader extends BasicOption {
 
     public ConfigHeader(Field field, Object parent, String name, String category, String subcategory, int size) {
-        super(field, parent, name, category, subcategory, size);
+        super(field, parent, name, "", category, subcategory, size);
     }
 
     public static ConfigHeader create(Field field, Object parent)  {

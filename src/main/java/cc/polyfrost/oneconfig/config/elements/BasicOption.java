@@ -26,8 +26,15 @@
 
 package cc.polyfrost.oneconfig.config.elements;
 
-import cc.polyfrost.oneconfig.config.Config;
+import cc.polyfrost.oneconfig.gui.animations.Animation;
+import cc.polyfrost.oneconfig.gui.animations.DummyAnimation;
+import cc.polyfrost.oneconfig.gui.animations.EaseOutQuad;
+import cc.polyfrost.oneconfig.internal.assets.Colors;
+import cc.polyfrost.oneconfig.internal.assets.SVGs;
+import cc.polyfrost.oneconfig.renderer.RenderManager;
+import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.utils.InputHandler;
+import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -39,27 +46,36 @@ public abstract class BasicOption {
     protected final Field field;
     protected Object parent;
     public final String name;
+    public final String description;
     public final String category;
     public final String subcategory;
     private final ArrayList<Supplier<Boolean>> dependencies = new ArrayList<>();
     private final ArrayList<Runnable> listeners = new ArrayList<>();
     private final ArrayList<Supplier<Boolean>> hideConditions = new ArrayList<>();
+    private Animation descriptionAnimation = new DummyAnimation(0f);
+    private float mouseStillTime = 0f;
+    private float prevMouseX = 0f;
+    private float prevMouseY = 0f;
 
     /**
      * Initialize option
      *
-     * @param field  variable attached to option (null for category)
-     * @param parent the parent object of the field, used for getting and setting the variable
-     * @param name   name of option
-     * @param size   size of option, 0 for single column, 1 for double.
+     * @param field       variable attached to option (null for category)
+     * @param parent      the parent object of the field, used for getting and setting the variable
+     * @param name        name of option
+     * @param description The description
+     * @param category    The category
+     * @param subcategory The subcategory
+     * @param size        size of option, 0 for single column, 1 for double.
      */
-    public BasicOption(Field field, Object parent, String name, String category, String subcategory, int size) {
+    public BasicOption(Field field, Object parent, String name, String description, String category, String subcategory, int size) {
         this.field = field;
         this.parent = parent;
         this.name = name;
-        this.size = size;
+        this.description = description;
         this.category = category;
         this.subcategory = subcategory;
+        this.size = size;
         if (field != null) field.setAccessible(true);
     }
 
@@ -112,6 +128,38 @@ public abstract class BasicOption {
      * @param keyCode code of key
      */
     public void keyTyped(char key, int keyCode) {
+    }
+
+    public void drawDescription(long vg, int x, int y, int height, InputHandler inputHandler) {
+        if (description.trim().equals("")) return;
+        if (inputHandler.isAreaHovered(x - 16, y, size == 1 ? 512f : 1024f, height) && prevMouseX == inputHandler.mouseX() && prevMouseY == inputHandler.mouseY()) {
+            mouseStillTime += GuiUtils.getDeltaTime();
+        } else {
+            mouseStillTime = 0;
+        }
+        prevMouseX = inputHandler.mouseX();
+        prevMouseY = inputHandler.mouseY();
+        boolean shouldDrawDescription = shouldDrawDescription();
+        if (descriptionAnimation.getEnd() != 1f && shouldDrawDescription) {
+            descriptionAnimation = new EaseOutQuad(150, descriptionAnimation.get(0), 1f, false);
+        } else if (descriptionAnimation.getEnd() != 0f && !shouldDrawDescription) {
+            descriptionAnimation = new EaseOutQuad(150, descriptionAnimation.get(0), 0f, false);
+        }
+        if (!shouldDrawDescription && descriptionAnimation.isFinished()) return;
+        float textWidth = RenderManager.getTextWidth(vg, description, 16, Fonts.MEDIUM);
+        RenderManager.setAlpha(vg, descriptionAnimation.get());
+        RenderManager.drawRoundedRect(vg, x, y - 42f, textWidth + 68f, 44f, Colors.GRAY_700, 8f);
+        RenderManager.drawDropShadow(vg, x, y - 42f, textWidth + 84f, 44f, 32f, 0f, 8f);
+        RenderManager.drawSvg(vg, SVGs.INFO_ARROW, x + 16, y - 30f, 20f, 20f, Colors.WHITE_80);
+        RenderManager.drawText(vg, description, x + 52, y - 20, Colors.WHITE_80, 16, Fonts.MEDIUM);
+        RenderManager.setAlpha(vg, 1f);
+    }
+
+    /**
+     * @return If this option should draw its description
+     */
+    protected boolean shouldDrawDescription() {
+        return mouseStillTime > 350;
     }
 
     /**

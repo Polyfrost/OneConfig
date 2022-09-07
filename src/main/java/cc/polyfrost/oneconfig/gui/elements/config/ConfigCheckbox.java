@@ -48,13 +48,13 @@ public class ConfigCheckbox extends BasicOption {
     private final ColorAnimation color = new ColorAnimation(ColorPalette.SECONDARY);
     private Animation animation;
 
-    public ConfigCheckbox(Field field, Object parent, String name, String category, String subcategory, int size) {
-        super(field, parent, name, category, subcategory, size);
+    public ConfigCheckbox(Field field, Object parent, String name, String description, String category, String subcategory, int size) {
+        super(field, parent, name, description, category, subcategory, size);
     }
 
     public static ConfigCheckbox create(Field field, Object parent) {
         Checkbox checkbox = field.getAnnotation(Checkbox.class);
-        return new ConfigCheckbox(field, parent, checkbox.name(), checkbox.category(), checkbox.subcategory(), checkbox.size());
+        return new ConfigCheckbox(field, parent, checkbox.name(), checkbox.description(), checkbox.category(), checkbox.subcategory(), checkbox.size());
     }
 
     @Override

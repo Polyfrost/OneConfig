@@ -44,6 +44,8 @@ public @interface DualOption {
 
     String right();
 
+    String description() default "";
+
     int size() default 1;
 
     String category() default "General";
