@@ -149,7 +149,7 @@ public abstract class BasicOption {
         float textWidth = RenderManager.getTextWidth(vg, description, 16, Fonts.MEDIUM);
         RenderManager.setAlpha(vg, descriptionAnimation.get());
         RenderManager.drawRoundedRect(vg, x, y - 42f, textWidth + 68f, 44f, Colors.GRAY_700, 8f);
-        RenderManager.drawDropShadow(vg, x, y - 42f, textWidth + 84f, 44f, 32f, 0f, 8f);
+        RenderManager.drawDropShadow(vg, x, y - 42f, textWidth + 68f, 44f, 32f, 0f, 8f);
         RenderManager.drawSvg(vg, SVGs.INFO_ARROW, x + 16, y - 30f, 20f, 20f, Colors.WHITE_80);
         RenderManager.drawText(vg, description, x + 52, y - 20, Colors.WHITE_80, 16, Fonts.MEDIUM);
         RenderManager.setAlpha(vg, 1f);
