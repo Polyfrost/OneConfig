@@ -56,6 +56,7 @@ public class CommandManager {
      */
     static final String DELIMITER = "\uD7FF";
     private final HashMap<Class<?>, ArgumentParser<?>> parsers = new HashMap<>();
+    private final String[] EMPTY_ARRAY = new String[]{""};
     // so that no one can name a method this
     static final String MAIN_METHOD_NAME = "MAIN" + DELIMITER + DELIMITER + "MAIN";
 
@@ -136,10 +137,35 @@ public class CommandManager {
     }
 
     /**
+     * Take a command, go through all its parents, and for each add itself and its aliases
+     */
+    private static String[] computePaths(InternalCommand in) {
+        List<String> out = new ArrayList<>();
+        for (String path : in.getParentPaths()) {
+            for (String alias : in.getAliases()) {
+                out.add((path + (path.isEmpty() ? "" : DELIMITER) + alias).toLowerCase());
+            }
+        }
+        return out.toArray(new String[0]);
+    }
+
+    private static String[] computePaths(String[] paths, Class<?> cls) {
+        List<String> out = new ArrayList<>();
+        SubCommandGroup annotation = cls.getAnnotation(SubCommandGroup.class);
+        for (String path : paths) {
+            for (String alias : annotation.aliases()) {
+                out.add((path + (path.isEmpty() ? "" : DELIMITER) + alias).toLowerCase());
+            }
+            out.add((path + (path.isEmpty() ? "" : DELIMITER) + annotation.value()).toLowerCase());
+        }
+        return out.toArray(new String[0]);
+    }
+
+    /**
      * Internal class for command handling.
      */
     protected class OCCommand {
-        final TreeMap<String, InternalCommand> commandsMap = new TreeMap<>();
+        final HashMap<String[], InternalCommand> commandsMap = new HashMap<>();
         final String[] helpCommand;
         private final Command meta;
         InternalCommand mainMethod;
@@ -151,12 +177,12 @@ public class CommandManager {
 
                 for (Method method : cls.getDeclaredMethods()) {
                     if (!method.isAccessible()) method.setAccessible(true);
-                    create("", commandIsn, method, false);
+                    create(EMPTY_ARRAY, commandIsn, method);
                 }
 
                 for (Class<?> subcommand : cls.getDeclaredClasses()) {
                     if (!subcommand.isAnnotationPresent(SubCommandGroup.class)) continue;
-                    walk("", createIsnOf(subcommand, commandIsn), false);
+                    walk(EMPTY_ARRAY, createIsnOf(subcommand, commandIsn));
                 }
 
                 if (meta.customHelpMessage().length == 0) helpCommand = genHelpCommand();
@@ -170,51 +196,39 @@ public class CommandManager {
         /**
          * Turn a method into a InternalCommand and add it to the map.
          */
-        private void create(String path, Object parent, @NotNull Method method, boolean isAlias) {
+        private void create(String[] parentPaths, Object parent, @NotNull Method method) {
             if (parent.getClass().equals(Class.class)) return;
             if (!method.isAccessible()) method.setAccessible(true);
             if (!method.isAnnotationPresent(SubCommand.class)) {
                 if (method.isAnnotationPresent(Main.class)) {
-                    if (method.getParameterCount() != 0)
+                    if (method.getParameterCount() != 0) {
                         throw new IllegalArgumentException("Method " + method.getName() + " is annotated with @Main, and does not take 0 parameters");
-                    if (!path.isEmpty())
-                        commandsMap.put(path + MAIN_METHOD_NAME, new InternalCommand(parent, method, isAlias));
-                    else mainMethod = new InternalCommand(parent, method, false);
-                }
-                return;
+                    }
+                    if(Arrays.equals(parentPaths, EMPTY_ARRAY)) {
+                        mainMethod = new InternalCommand(parent, method, parentPaths);
+                    }
+                } else return;
             }
-            InternalCommand internalCommand = new InternalCommand(parent, method, isAlias);
-            InternalCommand result = commandsMap.putIfAbsent(path + internalCommand.getName().toLowerCase(), internalCommand);
-            if (result != null) {
+            InternalCommand internalCommand = new InternalCommand(parent, method, parentPaths);
+            if (commandsMap.containsValue(internalCommand)) {
                 throw new IllegalArgumentException("Command " + method.getName() + " is already registered!");
             }
-            internalCommand = new InternalCommand(parent, method, true);
-            for (String s : internalCommand.getAliases()) {
-                result = commandsMap.putIfAbsent((path + s).toLowerCase(), internalCommand);
-                if (result != null) {
-                    throw new IllegalArgumentException("Command " + method.getName() + " is already registered!");
-                }
-            }
+            commandsMap.put(computePaths(internalCommand), internalCommand);
         }
 
         /**
          * Walk through the class and add all subclasses.
          */
-        private void walk(String path, @NotNull Object self, boolean isAlias) {
+        private void walk(String[] paths, @NotNull Object self) {
             Class<?> classIn = self.getClass();
+            paths = computePaths(paths, classIn);
             for (Method method : classIn.getDeclaredMethods()) {
-                create((path + (path.equals("") ? "" : DELIMITER) + classIn.getAnnotation(SubCommandGroup.class).value()).toLowerCase() + DELIMITER, self, method, isAlias);
-                for (String alias : classIn.getAnnotation(SubCommandGroup.class).aliases()) {
-                    create((path + (path.equals("") ? "" : DELIMITER) + alias + DELIMITER).toLowerCase(), self, method, true);
-                }
+                create(paths, self, method);
             }
             for (Class<?> cls : classIn.getDeclaredClasses()) {
                 if (!cls.isAnnotationPresent(SubCommandGroup.class)) continue;
                 Object subcommand = createIsnOf(cls, self);
-                walk(path + (path.equals("") ? "" : DELIMITER) + classIn.getAnnotation(SubCommandGroup.class).value(), subcommand, isAlias);
-                for (String alias : classIn.getAnnotation(SubCommandGroup.class).aliases()) {
-                    walk(path + (path.equals("") ? "" : DELIMITER) + alias, subcommand, true);
-                }
+                walk(paths, subcommand);
             }
         }
 
@@ -229,30 +243,27 @@ public class CommandManager {
                 Main annotation = mainMethod.getUnderlyingMethod().isAnnotationPresent(Main.class) ? mainMethod.getUnderlyingMethod().getAnnotation(Main.class) : null;
                 sb.append("/").append(masterName).append(" - ").append(annotation != null && !annotation.description().isEmpty() ? annotation.description() : "Main command").append("\n").append(meta.chatColor());
             }
-            for (Map.Entry<String, InternalCommand> entry : commandsMap.entrySet()) {
-                InternalCommand command = entry.getValue();
+            for (InternalCommand command : commandsMap.values()) {
                 String path;
-                if (entry.getKey().endsWith(MAIN_METHOD_NAME)) {
+                if (command.getName().endsWith(MAIN_METHOD_NAME)) {
                     Main annotation = command.getUnderlyingMethod().isAnnotationPresent(Main.class) ? command.getUnderlyingMethod().getAnnotation(Main.class) : null;
-                    path = entry.getKey().substring(0, entry.getKey().length() - MAIN_METHOD_NAME.length()).replaceAll(DELIMITER, " ");
+                    path = command.getName().substring(0, command.getName().length() - MAIN_METHOD_NAME.length()).replaceAll(DELIMITER, " ");
                     sb.append("/").append(masterName).append(path).append(" - ").append(annotation != null && !annotation.description().isEmpty() ? annotation.description() : "Main command").append("\n").append(meta.chatColor());
                     continue;
                 }
-                path = entry.getKey().replaceAll(DELIMITER, " ");
-                if (!command.isUnderAlias()) {
-                    sb.append("/").append(masterName).append(" ").append(path).append(" ");
-                    for (Parameter parameter : command.method.getParameters()) {
-                        String s = parameter.isAnnotationPresent(Description.class) ?
-                                parameter.getAnnotation(Description.class).value() : parameter.getType().getSimpleName();
-                        sb.append("<").append(s);
-                        if (parameter.getType().isArray() || parameter.isAnnotationPresent(Greedy.class))
-                            sb.append("...");
-                        sb.append("> ");
-                    }
-                    if (command.hasHelp) sb.append("- ").append(command.getHelp());
-                    sb.append("\n").append(meta.chatColor());
-
+                path = command.getPrimaryPath().replaceAll(DELIMITER, " ");
+                sb.append("/").append(masterName).append(" ").append(path).append(" ");
+                for (Parameter parameter : command.method.getParameters()) {
+                    String s = parameter.isAnnotationPresent(Description.class) ?
+                            parameter.getAnnotation(Description.class).value() : parameter.getType().getSimpleName();
+                    sb.append("<").append(s);
+                    if (parameter.getType().isArray() || parameter.isAnnotationPresent(Greedy.class))
+                        sb.append("...");
+                    sb.append("> ");
                 }
+                if (command.hasHelp) sb.append("- ").append(command.getHelp());
+                sb.append("\n").append(meta.chatColor());
+
             }
             return sb.toString().split("\n");
         }
@@ -261,8 +272,8 @@ public class CommandManager {
             if (command != null) {
                 // mm string builder looks great
                 StringBuilder sb = new StringBuilder(200);
-                sb.append(meta.chatColor()).append(ChatColor.BOLD).append("Advanced help for /").append(meta.value()).append(" ");
-                sb.append(String.join(" ", command.getName())).append(ChatColor.RESET).append(meta.chatColor()).append(": ").append("\n").append(meta.chatColor());
+                sb.append(meta.chatColor()).append(ChatColor.BOLD).append("Advanced help for /").append(meta.value()).append(" ").append(command.getPrimaryPath().replaceAll(DELIMITER, " "));
+                sb.append(ChatColor.RESET).append(meta.chatColor()).append(": ").append("\n").append(meta.chatColor());
                 if (command.hasHelp) {
                     sb.append(ChatColor.BOLD).append("Description: ").append(ChatColor.RESET).append(meta.chatColor()).append(command.getHelp())
                             .append("\n").append(meta.chatColor());
@@ -293,23 +304,27 @@ public class CommandManager {
 
     class InternalCommand {
         private final Method method;
-        private final SubCommand info;
-        private final String[] aliases;
-        private final String name;
-        private final boolean hasHelp, isAlias;
+        private final SubCommand meta;
+        private final String[] aliases, paths;
+        private final boolean hasHelp;
         private final Object parent;
 
-        private InternalCommand(Object parent, @NotNull Method methodIn, boolean isAlias) {
+        private InternalCommand(Object parent, @NotNull Method methodIn, String[] paths) {
             this.parent = parent;
             if (!methodIn.isAccessible()) methodIn.setAccessible(true);
             this.method = methodIn;
-            this.info = methodIn.isAnnotationPresent(SubCommand.class) ? methodIn.getAnnotation(SubCommand.class) : null;
-            this.hasHelp = info != null && !info.description().isEmpty();
-            this.isAlias = isAlias;
+            this.meta = methodIn.isAnnotationPresent(SubCommand.class) ? methodIn.getAnnotation(SubCommand.class) : null;
+            this.hasHelp = meta != null && !meta.description().isEmpty();
 
             // generate aliases
-            this.name = methodIn.getName();
-            this.aliases = info != null ? info.aliases() : new String[0];
+            this.aliases = new String[meta != null ? meta.aliases().length + 1 : 1];
+            if (meta != null) {
+                aliases[0] = methodIn.getName();
+                System.arraycopy(meta.aliases(), 0, aliases, 1, meta.aliases().length);
+            } else {
+                aliases[0] = MAIN_METHOD_NAME;
+            }
+            this.paths = paths;
 
             // check parameters
             int i = 0;
@@ -364,26 +379,27 @@ public class CommandManager {
             }
         }
 
-        /**
-         * Return weather this command was created under an alias path
-         */
-        boolean isUnderAlias() {
-            return isAlias;
-        }
-
         String[] getAliases() {
             return aliases;
         }
 
+        String[] getParentPaths() {
+            return paths;
+        }
+
         String getName() {
-            return name;
+            return aliases[0];
+        }
+
+        String getPrimaryPath() {
+            return paths[0] + (paths[0].isEmpty() ? "" : DELIMITER) + aliases[0];
         }
 
         @Nullable
         String getHelp() {
             // return new Therapist();
             if (hasHelp) {
-                return info.description();
+                return meta.description();
             } else {
                 return null;
             }

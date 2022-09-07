@@ -64,10 +64,10 @@ public class PlatformCommandManagerImpl extends PlatformCommandManager {
             @Override
             public void
                 //#if MC<=10809
-                processCommand(ICommandSender sender, String[] args)
-                //#else
-                //$$ execute(net.minecraft.server.MinecraftServer server, ICommandSender sender, String[] args)
-                //#endif
+            processCommand(ICommandSender sender, String[] args)
+            //#else
+            //$$ execute(net.minecraft.server.MinecraftServer server, ICommandSender sender, String[] args)
+            //#endif
             {
                 try {
                     String[] result = doCommand(args);
@@ -95,10 +95,10 @@ public class PlatformCommandManagerImpl extends PlatformCommandManager {
             @Override
             public List<String>
                 //#if MC<=10809
-                addTabCompletionOptions(ICommandSender sender, String[] args, BlockPos pos)
-                //#else
-                //$$ getTabCompletions(net.minecraft.server.MinecraftServer server, ICommandSender sender, String[] args, BlockPos targetPos)
-                //#endif
+            addTabCompletionOptions(ICommandSender sender, String[] args, BlockPos pos)
+            //#else
+            //$$ getTabCompletions(net.minecraft.server.MinecraftServer server, ICommandSender sender, String[] args, BlockPos targetPos)
+            //#endif
             {
                 List<String> opts = new ArrayList<>();
                 CommandManager.Pair<String[], CommandManager.InternalCommand> command = getCommand(args);
@@ -131,11 +131,14 @@ public class PlatformCommandManagerImpl extends PlatformCommandManager {
                         }
                     } else {
                         String current = String.join(DELIMITER, args);
-                        root.commandsMap.forEach((key, value) -> {
-                            if (!value.isUnderAlias()) {
+                        root.commandsMap.forEach((keys, value) -> {
+                            for (String key : keys) {
                                 String toAdd;
                                 if (key.contains(current)) {
                                     key = key.substring(current.length());
+                                    if(key.contains(DELIMITER)) {
+                                        key = key.substring(0, key.lastIndexOf(DELIMITER));
+                                    }
                                 }
                                 if (!key.contains(DELIMITER)) toAdd = key;
                                 else toAdd = key.substring(0, key.indexOf(DELIMITER));
@@ -159,8 +162,9 @@ public class PlatformCommandManagerImpl extends PlatformCommandManager {
                     if (args.length == 1) {
                         return root.helpCommand;
                     } else {
-                        //noinspection ConstantConditions
-                        return root.getAdvancedHelp(getCommand(args) != null ? getCommand(args).getValue() : null);
+                        String[] newArgs = Arrays.copyOfRange(args, 1, args.length);
+                        Pair<String[], CommandManager.InternalCommand> command = getCommand(newArgs);
+                        return root.getAdvancedHelp(command == null ? null : command.getValue());
                     }
                 } else {
                     CommandManager.Pair<String[], CommandManager.InternalCommand> command = getCommand(args);
@@ -180,14 +184,13 @@ public class PlatformCommandManagerImpl extends PlatformCommandManager {
                 String argsIn = String.join(DELIMITER, args).toLowerCase();
                 for (int i = args.length - 1; i >= 0; i--) {
                     // work backwards to find the first match
-                    if (root.commandsMap.containsKey(argsIn)) {
+                    CommandManager.InternalCommand command = get(root, argsIn);
+                    if (command != null) {
                         // create the args for the command
                         String[] newArgs = new String[args.length - i - 1];
                         System.arraycopy(args, i + 1, newArgs, 0, args.length - i - 1);
                         // return the command and the args
-                        return new CommandManager.Pair<>(newArgs, root.commandsMap.get(argsIn));
-                    } else if (root.commandsMap.containsKey(argsIn + DELIMITER + MAIN_METHOD_NAME)) {
-                        return new CommandManager.Pair<>(null, root.commandsMap.get(argsIn + DELIMITER + MAIN_METHOD_NAME));
+                        return new CommandManager.Pair<>(newArgs, command);
                     }
                     // remove the last word
                     int target = argsIn.lastIndexOf(DELIMITER);
@@ -205,6 +208,18 @@ public class PlatformCommandManagerImpl extends PlatformCommandManager {
             // is it sad that I know how to do this off by heart now?
             return Minecraft.getMinecraft().thePlayer.sendQueue.getPlayerInfoMap().stream().map(info -> info.getGameProfile().getName()).collect(Collectors.toList());
         } else return null;
+    }
+
+
+    private static CommandManager.InternalCommand get(CommandManager.OCCommand command, String in) {
+        for (String[] ss : command.commandsMap.keySet()) {
+            for (String s : ss) {
+                if (s.equalsIgnoreCase(in) || s.equalsIgnoreCase(in + DELIMITER + MAIN_METHOD_NAME)) {
+                    return command.commandsMap.get(ss);
+                }
+            }
+        }
+        return null;
     }
 }
 //#endif
