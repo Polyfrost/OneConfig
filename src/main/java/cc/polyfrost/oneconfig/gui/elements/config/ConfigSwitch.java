@@ -45,13 +45,13 @@ public class ConfigSwitch extends BasicOption {
     private ColorAnimation color;
     private Animation animation;
 
-    public ConfigSwitch(Field field, Object parent, String name, String category, String subcategory, int size) {
-        super(field, parent, name, category, subcategory, size);
+    public ConfigSwitch(Field field, Object parent, String name, String description, String category, String subcategory, int size) {
+        super(field, parent, name, description, category, subcategory, size);
     }
 
     public static ConfigSwitch create(Field field, Object parent) {
         Switch options = field.getAnnotation(Switch.class);
-        return new ConfigSwitch(field, parent, options.name(), options.category(), options.subcategory(), options.size());
+        return new ConfigSwitch(field, parent, options.name(), options.description(), options.category(), options.subcategory(), options.size());
     }
 
     @Override

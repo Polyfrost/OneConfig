@@ -42,6 +42,8 @@ public @interface Dropdown {
 
     String[] options();
 
+    String description() default "";
+
     int size() default 1;
 
     String category() default "General";

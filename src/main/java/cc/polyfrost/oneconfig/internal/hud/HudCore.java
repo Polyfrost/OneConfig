@@ -52,6 +52,7 @@ public class HudCore {
 
     public static void reInitHuds() {
         for (Map.Entry<Field, Object> field : huds.keySet()) {
+            if (field == null || field.getKey() == null || field.getValue() == null) continue;
             try {
                 field.getKey().setAccessible(true);
                 Hud oldHud = huds.get(field);

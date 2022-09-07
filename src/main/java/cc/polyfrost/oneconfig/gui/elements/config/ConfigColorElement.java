@@ -48,8 +48,8 @@ public class ConfigColorElement extends BasicOption {
     private boolean open = false;
     private final boolean allowAlpha;
 
-    public ConfigColorElement(Field field, Object parent, String name, String category, String subcategory, int size, boolean allowAlpha) {
-        super(field, parent, name, category, subcategory, size);
+    public ConfigColorElement(Field field, Object parent, String name, String description, String category, String subcategory, int size, boolean allowAlpha) {
+        super(field, parent, name, description, category, subcategory, size);
         hexField.setCentered(true);
         alphaField.setCentered(true);
         alphaField.onlyAcceptNumbers(true);
@@ -58,7 +58,7 @@ public class ConfigColorElement extends BasicOption {
 
     public static ConfigColorElement create(Field field, Object parent) {
         Color color = field.getAnnotation(Color.class);
-        return new ConfigColorElement(field, parent, color.name(), color.category(), color.subcategory(), color.size(), color.allowAlpha());
+        return new ConfigColorElement(field, parent, color.name(), color.description(), color.category(), color.subcategory(), color.size(), color.allowAlpha());
     }
 
     @Override

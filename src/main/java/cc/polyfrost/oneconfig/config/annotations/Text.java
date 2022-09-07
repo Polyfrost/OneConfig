@@ -46,6 +46,8 @@ public @interface Text {
 
     boolean multiline() default false;
 
+    String description() default "";
+
     int size() default 1;
 
     String category() default "General";

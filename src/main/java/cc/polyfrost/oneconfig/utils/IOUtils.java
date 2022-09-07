@@ -30,15 +30,13 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.awt.datatransfer.*;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.URL;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.file.Files;
+import java.security.MessageDigest;
 
 /**
  * Utility class for I/O operations.
@@ -54,7 +52,9 @@ public final class IOUtils {
         byte[] bytes;
         path = path.trim();
         if (path.startsWith("http")) {
-            bytes = org.apache.commons.io.IOUtils.toByteArray(new URL(path));
+            try (InputStream in = NetworkUtils.setupConnection(path, "OneConfig", 5000, true)) {
+                bytes = org.apache.commons.io.IOUtils.toByteArray(in);
+            }
         } else {
             InputStream stream;
             File file = new File(path);
@@ -84,6 +84,7 @@ public final class IOUtils {
 
     /**
      * Copy the specified String to the System Clipboard.
+     *
      * @param s the string to copy
      */
     public static void copyStringToClipboard(String s) {
@@ -93,6 +94,7 @@ public final class IOUtils {
 
     /**
      * Return the String on the system clipboard.
+     *
      * @return the string on the system clipboard, or null if there is no string on the clipboard or another error occurred.
      */
     public static String getStringFromClipboard() {
@@ -105,6 +107,7 @@ public final class IOUtils {
 
     /**
      * Copy the given image to the System Clipboard.
+     *
      * @param image the image to copy
      */
     public static void copyImageToClipboard(Image image) {
@@ -114,6 +117,7 @@ public final class IOUtils {
 
     /**
      * Return the image on the system clipboard.
+     *
      * @return the image on the system clipboard, or null if there is no image on the clipboard or another error occurred.
      */
     public static Image getImageFromClipboard() {
@@ -124,19 +128,49 @@ public final class IOUtils {
         }
     }
 
+    /**
+     * Gets the SHA-256 hash of a file.
+     *
+     * @param file The file to hash.
+     * @return The SHA-256 hash of the file.
+     */
+    public static String getFileChecksum(File file) {
+        try (FileInputStream inputStream = new FileInputStream(file)) {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] bytesBuffer = new byte[1024];
+            int bytesRead;
 
+            while ((bytesRead = inputStream.read(bytesBuffer)) != -1) {
+                digest.update(bytesBuffer, 0, bytesRead);
+            }
 
+            return convertByteArrayToHexString(digest.digest());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return "";
+    }
+
+    private static String convertByteArrayToHexString(byte[] arrayBytes) {
+        StringBuilder stringBuffer = new StringBuilder();
+        for (byte arrayByte : arrayBytes) {
+            stringBuffer.append(Integer.toString((arrayByte & 0xff) + 0x100, 16)
+                    .substring(1));
+        }
+        return stringBuffer.toString();
+    }
 
 
     private static class ImageSelection implements Transferable {
         private final Image image;
+
         public ImageSelection(Image image) {
             this.image = image;
         }
 
         @Override
         public DataFlavor[] getTransferDataFlavors() {
-            return new DataFlavor[] {DataFlavor.imageFlavor};
+            return new DataFlavor[]{DataFlavor.imageFlavor};
         }
 
         @Override
@@ -147,7 +181,7 @@ public final class IOUtils {
         @NotNull
         @Override
         public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException {
-            if(!DataFlavor.imageFlavor.equals(flavor)) {
+            if (!DataFlavor.imageFlavor.equals(flavor)) {
                 throw new UnsupportedFlavorException(flavor);
             }
             return image;
