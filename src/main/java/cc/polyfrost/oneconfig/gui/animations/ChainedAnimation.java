@@ -24,29 +24,33 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.config.annotations;
+package cc.polyfrost.oneconfig.gui.animations;
 
-import cc.polyfrost.oneconfig.config.data.OptionType;
-import cc.polyfrost.oneconfig.internal.config.annotations.Option;
+public class ChainedAnimation extends Animation {
+    private final Animation[] animations;
+    private int currentAnimation = 0;
+    private float value;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+    public ChainedAnimation(Animation... animations) {
+        super(1, 0, 0, false);
+        this.animations = animations;
+    }
 
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.FIELD)
-@Option(type = OptionType.DROPDOWN)
-public @interface Dropdown {
-    String name();
+    @Override
+    public float get(float deltaTime) {
+        if (currentAnimation >= animations.length) return value;
+        value = animations[currentAnimation].get(deltaTime);
+        if (animations[currentAnimation].isFinished()) currentAnimation++;
+        return value;
+    }
 
-    String[] options();
+    @Override
+    public boolean isFinished() {
+        return currentAnimation >= animations.length;
+    }
 
-    String description() default "";
-
-    int size() default 1;
-
-    String category() default "General";
-
-    String subcategory() default "";
+    @Override
+    protected float animate(float x) {
+        return 0;
+    }
 }

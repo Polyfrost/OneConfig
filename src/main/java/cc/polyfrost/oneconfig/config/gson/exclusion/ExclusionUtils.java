@@ -24,29 +24,20 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.config.annotations;
+package cc.polyfrost.oneconfig.config.gson.exclusion;
 
-import cc.polyfrost.oneconfig.config.data.OptionType;
-import cc.polyfrost.oneconfig.internal.config.annotations.Option;
-
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.FIELD)
-@Option(type = OptionType.DROPDOWN)
-public @interface Dropdown {
-    String name();
-
-    String[] options();
-
-    String description() default "";
-
-    int size() default 1;
-
-    String category() default "General";
-
-    String subcategory() default "";
+public class ExclusionUtils {
+    protected static boolean isSuperClassOf(Class<?> clazz, Class<?> parentClass) {
+        Class<?> tempClass = clazz;
+        Class<?> lastClass;
+        if (tempClass == parentClass) return true;
+        while (true) {
+            lastClass = tempClass;
+            if (tempClass == null) return false;
+            tempClass = tempClass.getSuperclass();
+            if (tempClass == null) return false;
+            if (tempClass == lastClass) return false;
+            if (tempClass == parentClass) return true;
+        }
+    }
 }

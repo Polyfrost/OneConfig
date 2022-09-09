@@ -24,29 +24,21 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.config.annotations;
+package cc.polyfrost.oneconfig.config.gson;
 
-import cc.polyfrost.oneconfig.config.data.OptionType;
-import cc.polyfrost.oneconfig.internal.config.annotations.Option;
+import com.google.gson.InstanceCreator;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.lang.reflect.Type;
 
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.FIELD)
-@Option(type = OptionType.DROPDOWN)
-public @interface Dropdown {
-    String name();
+public class InstanceSupplier<T> implements InstanceCreator<T> {
+    private final T instance;
 
-    String[] options();
+    public InstanceSupplier(T instance) {
+        this.instance = instance;
+    }
 
-    String description() default "";
-
-    int size() default 1;
-
-    String category() default "General";
-
-    String subcategory() default "";
+    @Override
+    public T createInstance(Type type) {
+        return instance;
+    }
 }

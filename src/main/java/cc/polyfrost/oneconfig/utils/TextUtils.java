@@ -26,15 +26,16 @@
 
 package cc.polyfrost.oneconfig.utils;
 
+import cc.polyfrost.oneconfig.internal.utils.Deprecator;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Font;
-import cc.polyfrost.oneconfig.renderer.font.Fonts;
 
 import java.util.ArrayList;
 
 /**
- * Simple text utility class for NanoVG text rendering.
+ * @deprecated Use RenderManager's functions for wrapping text and getting the height of it instead
  */
+@Deprecated
 public final class TextUtils {
 
     /**
@@ -47,7 +48,9 @@ public final class TextUtils {
      * @param font     The font to use.
      * @return The array of lines.
      */
+    @Deprecated
     public static ArrayList<String> wrapText(long vg, String text, float maxWidth, float fontSize, Font font) {
+        Deprecator.markDeprecated();
         ArrayList<String> wrappedText = new ArrayList<>();
         text += " ";
         int prevIndex = 0;

@@ -44,8 +44,8 @@ public class ConfigTextBox extends BasicOption {
     private final boolean multiLine;
     private final TextInputField textField;
 
-    public ConfigTextBox(Field field, Object parent, String name, String category, String subcategory, int size, String placeholder, boolean secure, boolean multiLine) {
-        super(field, parent, name, category, subcategory, size);
+    public ConfigTextBox(Field field, Object parent, String name, String description, String category, String subcategory, int size, String placeholder, boolean secure, boolean multiLine) {
+        super(field, parent, name, category, description, subcategory, size);
         this.secure = secure;
         this.multiLine = multiLine;
         this.textField = new TextInputField(size == 1 ? 256 : 640, multiLine ? 64 : 32, placeholder, multiLine, secure);
@@ -53,7 +53,7 @@ public class ConfigTextBox extends BasicOption {
 
     public static ConfigTextBox create(Field field, Object parent) {
         Text text = field.getAnnotation(Text.class);
-        return new ConfigTextBox(field, parent, text.name(), text.category(), text.subcategory(), text.secure() || text.multiline() ? 2 : text.size(), text.placeholder(), text.secure(), text.multiline());
+        return new ConfigTextBox(field, parent, text.name(), text.description(), text.category(), text.subcategory(), text.secure() || text.multiline() ? 2 : text.size(), text.placeholder(), text.secure(), text.multiline());
     }
 
     @Override
@@ -96,5 +96,10 @@ public class ConfigTextBox extends BasicOption {
     @Override
     public int getHeight() {
         return multiLine ? textField.getHeight() : 32;
+    }
+
+    @Override
+    protected boolean shouldDrawDescription() {
+        return super.shouldDrawDescription() && !textField.isToggled();
     }
 }

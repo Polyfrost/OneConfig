@@ -65,6 +65,22 @@ public class PlatformImpl implements Platform {
     }
 
     @Override
+    public boolean isDevelopmentEnvironment() {
+        //#if FORGE==1 && MC<=11202
+        try {
+            Class.forName("net.minecraft.block.BlockDirt");
+            return true;
+        } catch (Exception ignored) {
+            return false;
+        }
+        //#elseif FABRIC==1
+        //$$ return net.fabricmc.loader.api.FabricLoader.getInstance().isDevelopmentEnvironment();
+        //#else
+        //$$ return !net.minecraftforge.fml.loading.FMLLoader.isProduction();
+        //#endif
+    }
+
+    @Override
     public Loader getLoader() {
         //#if FORGE==1
         return Loader.FORGE;

@@ -24,35 +24,27 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.utils.notifications;
+//#if MC==10809
+package cc.polyfrost.oneconfig.internal.mixin;
 
-/**
- * @deprecated Reserved for future use, not implemented yet.
- */
-@Deprecated
-public final class Notifications {
-    public static final Notifications INSTANCE = new Notifications();
-    private Notifications() {
+import net.minecraft.client.shader.Framebuffer;
+import org.spongepowered.asm.mixin.Dynamic;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Pseudo;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-    }
+@Pseudo
+@Mixin(targets = "club.sk1er.patcher.screen.render.caching.HUDCaching", remap = false)
+public class HudCachingMixin {
 
-    public void send(String title, String message) {
-
-    }
-
-    public void send(String title, String message, Runnable action) {
-
-    }
-
-    public void send(String title, String message, float duration) {
-
-    }
-
-    public void send(String title, String message, float duration, Runnable action) {
-
-    }
-
-    public void send(String title, String message, float duration, Runnable action, Runnable onClose) {
-
+    @Dynamic
+    @Inject(method = "checkFramebufferSizes", at = @At(value = "RETURN", ordinal = 0), remap = false)
+    private static void checkFramebufferSizes(Framebuffer framebuffer, int width, int height, CallbackInfoReturnable<Framebuffer> cir) {
+        if (cir.getReturnValue() != null && !cir.getReturnValue().isStencilEnabled()) {
+            cir.getReturnValue().enableStencil();
+        }
     }
 }
+//#endif
