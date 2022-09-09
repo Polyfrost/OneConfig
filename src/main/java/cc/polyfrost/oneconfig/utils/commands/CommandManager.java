@@ -92,7 +92,8 @@ public class CommandManager {
     }
 
     /**
-     * Registers the provided command.
+     * Registers the provided command. <br>
+     * This method is fail-fast, meaning that it will throw Exceptions if the command is invalid upon startup.
      *
      * @param obj the command to register (must be an instance of a class annotated with @Command).
      */
@@ -139,7 +140,7 @@ public class CommandManager {
     /**
      * Take a command, go through all its parents, and for each add itself and its aliases
      */
-    private static String[] computePaths(InternalCommand in) {
+    static String[] computePaths(InternalCommand in) {
         List<String> out = new ArrayList<>();
         for (String path : in.getParentPaths()) {
             for (String alias : in.getAliases()) {
@@ -407,6 +408,16 @@ public class CommandManager {
 
         Method getUnderlyingMethod() {
             return method;
+        }
+
+        @Override
+        public String toString() {
+            return "InternalCommand{" +
+                    "method=" + method.getName() +
+                    ", primary=" + getPrimaryPath() +
+                    ", aliases=" + Arrays.toString(aliases) +
+                    ", parents=" + Arrays.toString(paths).replaceAll(DELIMITER, " ") +
+                    '}';
         }
     }
 
