@@ -40,6 +40,8 @@ import java.lang.annotation.Target;
 public @interface KeyBind {
     String name();
 
+    String description() default "";
+
     int size() default 1;
 
     String category() default "General";

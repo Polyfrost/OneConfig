@@ -24,28 +24,27 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
+//#if MC==10809
 package cc.polyfrost.oneconfig.internal.mixin;
 
-import cc.polyfrost.oneconfig.events.EventManager;
-import cc.polyfrost.oneconfig.events.event.ChatReceiveEvent;
-import net.minecraft.client.network.play.ClientPlayNetHandler;
-import net.minecraft.network.play.server.SChatPacket;
+import net.minecraft.client.shader.Framebuffer;
+import org.spongepowered.asm.mixin.Dynamic;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(value = ClientPlayNetHandler.class, priority = Integer.MAX_VALUE)
-public class NetHandlerPlayClientMixin {
+@Pseudo
+@Mixin(targets = "club.sk1er.patcher.screen.render.caching.HUDCaching", remap = false)
+public class HudCachingMixin {
 
-    @Inject(method = "handleChat", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/event/ForgeEventFactory;onClientChat(Lnet/minecraft/util/text/ChatType;Lnet/minecraft/util/text/ITextComponent;Ljava/util/UUID;)Lnet/minecraft/util/text/ITextComponent;", remap = false), cancellable = true, remap = true)
-    private void onClientChat(SChatPacket packetIn, CallbackInfo ci) {
-        if (packetIn.getType().getId() == 0) {
-            ChatReceiveEvent event = new ChatReceiveEvent(packetIn.getChatComponent());
-            EventManager.INSTANCE.post(event);
-            if (event.isCancelled) {
-                ci.cancel();
-            }
+    @Dynamic
+    @Inject(method = "checkFramebufferSizes", at = @At(value = "RETURN", ordinal = 0), remap = false)
+    private static void checkFramebufferSizes(Framebuffer framebuffer, int width, int height, CallbackInfoReturnable<Framebuffer> cir) {
+        if (cir.getReturnValue() != null && !cir.getReturnValue().isStencilEnabled()) {
+            cir.getReturnValue().enableStencil();
         }
     }
 }
+//#endif

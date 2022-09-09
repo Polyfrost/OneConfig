@@ -34,27 +34,22 @@ import cc.polyfrost.oneconfig.config.data.PageLocation;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
 import cc.polyfrost.oneconfig.config.elements.OptionPage;
 import cc.polyfrost.oneconfig.config.elements.OptionSubcategory;
-import cc.polyfrost.oneconfig.config.gson.NonProfileSpecificExclusionStrategy;
-import cc.polyfrost.oneconfig.config.gson.ProfileExclusionStrategy;
-import cc.polyfrost.oneconfig.config.profiles.Profiles;
+import cc.polyfrost.oneconfig.config.gson.InstanceSupplier;
+import cc.polyfrost.oneconfig.config.gson.exclusion.NonProfileSpecificExclusionStrategy;
+import cc.polyfrost.oneconfig.config.gson.exclusion.ProfileExclusionStrategy;
+import cc.polyfrost.oneconfig.gui.elements.config.ConfigKeyBind;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
-import cc.polyfrost.oneconfig.gui.elements.config.ConfigButton;
 import cc.polyfrost.oneconfig.gui.elements.config.ConfigPageButton;
 import cc.polyfrost.oneconfig.gui.pages.ModConfigPage;
 import cc.polyfrost.oneconfig.hud.HUDUtils;
 import cc.polyfrost.oneconfig.internal.config.annotations.Option;
 import cc.polyfrost.oneconfig.internal.config.core.ConfigCore;
 import cc.polyfrost.oneconfig.internal.config.core.KeyBindHandler;
-import cc.polyfrost.oneconfig.utils.JsonUtils;
 import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 import com.google.gson.*;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -65,11 +60,13 @@ import java.util.function.Supplier;
 public class Config {
     public final transient HashMap<String, BasicOption> optionNames = new HashMap<>();
     transient protected final String configFile;
-    transient protected final Gson gson = new GsonBuilder().setExclusionStrategies(new ProfileExclusionStrategy()).excludeFieldsWithModifiers(Modifier.TRANSIENT).setPrettyPrinting().create();
-    transient protected final Gson nonProfileSpecificGson = new GsonBuilder().setExclusionStrategies(new NonProfileSpecificExclusionStrategy()).excludeFieldsWithModifiers(Modifier.TRANSIENT).setPrettyPrinting().create();
-    transient protected final HashMap<Field, Object> defaults = new HashMap<>();
+    transient protected final Gson gson = addGsonOptions(new GsonBuilder()
+            .setExclusionStrategies(new ProfileExclusionStrategy()))
+            .create();
+    transient protected final Gson nonProfileSpecificGson = addGsonOptions(new GsonBuilder()
+            .setExclusionStrategies(new NonProfileSpecificExclusionStrategy()))
+            .create();
     transient public Mod mod;
-    public transient boolean hasBeenInitialized = false;
     public boolean enabled;
 
     /**
@@ -93,28 +90,32 @@ public class Config {
 
     public void initialize() {
         boolean migrate = false;
-        if (Profiles.getProfileFile(configFile).exists()) load();
-        else if (!hasBeenInitialized && mod.migrator != null) migrate = true;
+        if (ConfigUtils.getProfileFile(configFile).exists()) load();
+        else if (mod.migrator != null) migrate = true;
         else save();
         mod.config = this;
         generateOptionList(this, mod.defaultPage, mod, migrate);
         if (migrate) save();
         ConfigCore.mods.add(mod);
-        hasBeenInitialized = true;
+    }
+
+    public void reInitialize() {
+        if (ConfigUtils.getProfileFile(configFile).exists()) load();
+        else save();
     }
 
     /**
      * Save current config to file
      */
     public void save() {
-        Profiles.getProfileFile(configFile).getParentFile().mkdirs();
-        Profiles.getNonProfileSpecificDir(configFile).getParentFile().mkdirs();
-        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(Files.newOutputStream(Profiles.getProfileFile(configFile).toPath()), StandardCharsets.UTF_8))) {
+        ConfigUtils.getProfileFile(configFile).getParentFile().mkdirs();
+        ConfigUtils.getNonProfileSpecificFile(configFile).getParentFile().mkdirs();
+        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(Files.newOutputStream(ConfigUtils.getProfileFile(configFile).toPath()), StandardCharsets.UTF_8))) {
             writer.write(gson.toJson(this));
         } catch (Exception e) {
             e.printStackTrace();
         }
-        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(Files.newOutputStream(Profiles.getNonProfileSpecificDir(configFile).toPath()), StandardCharsets.UTF_8))) {
+        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(Files.newOutputStream(ConfigUtils.getNonProfileSpecificFile(configFile).toPath()), StandardCharsets.UTF_8))) {
             writer.write(nonProfileSpecificGson.toJson(this));
         } catch (Exception e) {
             e.printStackTrace();
@@ -125,13 +126,13 @@ public class Config {
      * Load file and overwrite current values
      */
     public void load() {
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(Files.newInputStream(Profiles.getProfileFile(configFile).toPath()), StandardCharsets.UTF_8))) {
-            deserializePart(JsonUtils.PARSER.parse(reader).getAsJsonObject(), this);
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(Files.newInputStream(ConfigUtils.getProfileFile(configFile).toPath()), StandardCharsets.UTF_8))) {
+            gson.fromJson(reader, this.getClass());
         } catch (Exception e) {
             e.printStackTrace();
         }
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(Files.newInputStream(Profiles.getNonProfileSpecificDir(configFile).toPath()), StandardCharsets.UTF_8))) {
-            deserializePart(JsonUtils.PARSER.parse(reader).getAsJsonObject(), this);
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(Files.newInputStream(ConfigUtils.getNonProfileSpecificFile(configFile).toPath()), StandardCharsets.UTF_8))) {
+            nonProfileSpecificGson.fromJson(reader, this.getClass());
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -145,7 +146,7 @@ public class Config {
      * @param mod      data about the mod
      * @param migrate  whether the migrator should be run
      */
-    protected void generateOptionList(Object instance, OptionPage page, Mod mod, boolean migrate) {
+    protected final void generateOptionList(Object instance, OptionPage page, Mod mod, boolean migrate) {
         String pagePath = page.equals(mod.defaultPage) ? "" : page.name + ".";
         for (Field field : instance.getClass().getDeclaredFields()) {
             Option option = ConfigUtils.findAnnotation(field, Option.class);
@@ -202,45 +203,11 @@ public class Config {
         return null;
     }
 
-    /**
-     * Deserialize part of config and load values
-     *
-     * @param json     json to deserialize
-     * @param instance instance of target class
-     */
-    protected void deserializePart(JsonObject json, Object instance) {
-        Class<?> clazz = instance.getClass();
-        ArrayList<Field> fields = ConfigUtils.getClassFields(clazz);
-        for (Map.Entry<String, JsonElement> element : json.entrySet()) {
-            String name = element.getKey();
-            JsonElement value = element.getValue();
-            if (value.isJsonObject()) {
-                Optional<Class<?>> innerClass = Arrays.stream(clazz.getClasses()).filter(aClass -> aClass.getSimpleName().equals(name)).findFirst();
-                if (innerClass.isPresent()) {
-                    deserializePart(value.getAsJsonObject(), innerClass.get());
-                    continue;
-                }
-            }
-            try {
-                Field field = null;
-                for (Field f : fields) {
-                    if (f.getName().equals(name)) {
-                        field = f;
-                        break;
-                    }
-                }
-                if (field != null) {
-                    TypeAdapter<?> adapter = gson.getAdapter(field.getType());
-                    Object object = adapter.fromJsonTree(value);
-                    field.setAccessible(true);
-                    field.set(instance, object);
-                } else {
-                    System.out.println("Could not deserialize " + name + " in class " + clazz.getSimpleName());
-                }
-            } catch (Exception ignored) {
-                System.out.println("Could not deserialize " + name + " in class " + clazz.getSimpleName());
-            }
-        }
+    protected GsonBuilder addGsonOptions(GsonBuilder builder) {
+        return builder
+                .registerTypeAdapter(this.getClass(), new InstanceSupplier<>(this))
+                .excludeFieldsWithModifiers(Modifier.TRANSIENT)
+                .setPrettyPrinting();
     }
 
     /**
@@ -257,7 +224,7 @@ public class Config {
      * @param option    The name of the field, or if the field is in a page "pageName.fieldName"
      * @param condition The condition that has to be met for the option to be enabled
      */
-    protected void addDependency(String option, Supplier<Boolean> condition) {
+    protected final void addDependency(String option, Supplier<Boolean> condition) {
         if (!optionNames.containsKey(option)) return;
         optionNames.get(option).addDependency(condition);
     }
@@ -268,7 +235,7 @@ public class Config {
      * @param option          The name of the field, or if the field is in a page "pageName.fieldName"
      * @param dependentOption The option that has to be enabled
      */
-    protected void addDependency(String option, String dependentOption) {
+    protected final void addDependency(String option, String dependentOption) {
         if (!optionNames.containsKey(option) || !optionNames.containsKey(dependentOption)) return;
         optionNames.get(option).addDependency(() -> {
             try {
@@ -285,7 +252,7 @@ public class Config {
      * @param option The name of the field, or if the field is in a page "pageName.fieldName"
      * @param value  The value of the dependency
      */
-    protected void addDependency(String option, boolean value) {
+    protected final void addDependency(String option, boolean value) {
         if (!optionNames.containsKey(option)) return;
         optionNames.get(option).addDependency(() -> value);
     }
@@ -296,7 +263,7 @@ public class Config {
      * @param option    The name of the field, or if the field is in a page "pageName.fieldName"
      * @param condition The condition that has to be met for the option to be hidden
      */
-    protected void hideIf(String option, Supplier<Boolean> condition) {
+    protected final void hideIf(String option, Supplier<Boolean> condition) {
         if (!optionNames.containsKey(option)) return;
         optionNames.get(option).addHideCondition(condition);
     }
@@ -307,7 +274,7 @@ public class Config {
      * @param option          The name of the field, or if the field is in a page "pageName.fieldName"
      * @param dependentOption The option that has to be hidden
      */
-    protected void hideIf(String option, String dependentOption) {
+    protected final void hideIf(String option, String dependentOption) {
         if (!optionNames.containsKey(option) || !optionNames.containsKey(dependentOption)) return;
         optionNames.get(option).addHideCondition(() -> {
             try {
@@ -324,7 +291,7 @@ public class Config {
      * @param option The name of the field, or if the field is in a page "pageName.fieldName"
      * @param value  The value of the condition
      */
-    protected void hideIf(String option, boolean value) {
+    protected final void hideIf(String option, boolean value) {
         if (!optionNames.containsKey(option)) return;
         optionNames.get(option).addHideCondition(() -> value);
     }
@@ -335,7 +302,7 @@ public class Config {
      * @param option   The name of the field, or if the field is in a page "pageName.fieldName"
      * @param runnable What should be executed after the option is changed
      */
-    protected void addListener(String option, Runnable runnable) {
+    protected final void addListener(String option, Runnable runnable) {
         if (!optionNames.containsKey(option)) return;
         optionNames.get(option).addListener(runnable);
     }
@@ -346,25 +313,30 @@ public class Config {
      * @param keyBind  The keybind
      * @param runnable The code to be executed
      */
-    protected void registerKeyBind(OneKeyBind keyBind, Runnable runnable) {
-        keyBind.setRunnable(runnable);
-        KeyBindHandler.INSTANCE.addKeyBind(keyBind);
-    }
-
-    /**
-     * @param field The field to get the default value from
-     * @return The default value of the given field
-     */
-    public Object getDefault(Field field) {
-        return defaults.get(field);
-    }
-
-    /**
-     * Reset this config file to its defaults.
-     */
-    public void reset() {
+    protected final void registerKeyBind(OneKeyBind keyBind, Runnable runnable) {
+        Field field = null;
+        Object instance = null;
         for (BasicOption option : optionNames.values()) {
-            option.reset(this);
+            if (!(option instanceof ConfigKeyBind)) continue;
+            try {
+                Field f = option.getField();
+                OneKeyBind keyBind1 = (OneKeyBind) option.get();
+                if (keyBind1 != keyBind) continue;
+                field = f;
+                instance = option.getParent();
+            } catch (IllegalAccessException ignored) {
+                continue;
+            }
+            break;
         }
+        keyBind.setRunnable(runnable);
+        KeyBindHandler.INSTANCE.addKeyBind(field, instance, keyBind);
+    }
+
+    /**
+     * @return If this mod supports profiles, false for compatibility mode
+     */
+    public boolean supportsProfiles() {
+        return true;
     }
 }

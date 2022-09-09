@@ -64,7 +64,7 @@ public abstract class InternalConfig extends Config {
     @Override
     public void load() {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(Files.newInputStream(Paths.get("OneConfig/" + configFile)), StandardCharsets.UTF_8))) {
-            deserializePart(JsonUtils.PARSER.parse(reader).getAsJsonObject(), this);
+            gson.fromJson(reader, this.getClass());
         } catch (IOException e) {
             e.printStackTrace();
         }

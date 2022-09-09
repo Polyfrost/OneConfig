@@ -3,6 +3,7 @@
  * OneConfig - Next Generation Config Library for Minecraft: Java Edition
  * Copyright (C) 2021, 2022 Polyfrost.
  *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
+ * Co-author: ForBai <https://github.com/ForBai> (non-copyrightable contribution)
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -35,11 +36,18 @@ public class OneKeyBind {
     protected transient Runnable runnable;
     protected transient boolean hasRun;
 
+    /**
+     * @param keys  The bound keys
+     */
     public OneKeyBind(int... keys) {
         for (int key : keys) {
             keyBinds.add(key);
         }
     }
+
+    /**
+     * @return If the keys are pressed
+     */
     public boolean isActive() {
         if (keyBinds.size() == 0) return false;
         for (int keyBind : keyBinds) {
@@ -51,12 +59,18 @@ public class OneKeyBind {
         return true;
     }
 
+    /**
+     * Run the set Runnable
+     */
     public void run() {
         if (runnable == null || hasRun) return;
         runnable.run();
         hasRun = true;
     }
 
+    /**
+     * @return The set keys as the name of the keys
+     */
     public String getDisplay() {
         StringBuilder sb = new StringBuilder();
         for (int keyBind : keyBinds) {
@@ -66,19 +80,39 @@ public class OneKeyBind {
         return sb.toString().trim();
     }
 
+    /**
+     * @param key   Add a Key to keys
+     */
     public void addKey(int key) {
         if (!keyBinds.contains(key)) keyBinds.add(key);
     }
 
+    /**
+     * Clear the keys List
+     */
     public void clearKeys() {
         keyBinds.clear();
     }
 
+    /**
+     * @return The amount of key in the keys List
+     */
     public int getSize() {
         return keyBinds.size();
     }
 
+    /**
+     * Set the Runnable that gets ran when OneKeyBind#run() is called
+     * @param runnable The Runnable to run
+     */
     public void setRunnable(Runnable runnable) {
         this.runnable = runnable;
+    }
+
+    /**
+     * @return The key in the keys List
+     */
+    public ArrayList<Integer> getKeyBinds() {
+        return keyBinds;
     }
 }

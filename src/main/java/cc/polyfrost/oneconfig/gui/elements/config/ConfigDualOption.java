@@ -34,7 +34,7 @@ import cc.polyfrost.oneconfig.gui.animations.DummyAnimation;
 import cc.polyfrost.oneconfig.gui.animations.EaseInOutCubic;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
-import cc.polyfrost.oneconfig.utils.InputUtils;
+import cc.polyfrost.oneconfig.utils.InputHandler;
 
 import java.lang.reflect.Field;
 
@@ -42,15 +42,15 @@ public class ConfigDualOption extends BasicOption {
     private final String left, right;
     private Animation posAnimation;
 
-    public ConfigDualOption(Field field, Object parent, String name, String category, String subcategory, int size, String left, String right) {
-        super(field, parent, name, category, subcategory, size);
+    public ConfigDualOption(Field field, Object parent, String name, String description, String category, String subcategory, int size, String left, String right) {
+        super(field, parent, name, description, category, subcategory, size);
         this.left = left;
         this.right = right;
     }
 
     public static ConfigDualOption create(Field field, Object parent) {
         DualOption dualOption = field.getAnnotation(DualOption.class);
-        return new ConfigDualOption(field, parent, dualOption.name(), dualOption.category(), dualOption.subcategory(), dualOption.size(), dualOption.left(), dualOption.right());
+        return new ConfigDualOption(field, parent, dualOption.name(), dualOption.description(), dualOption.category(), dualOption.subcategory(), dualOption.size(), dualOption.left(), dualOption.right());
     }
 
     @Override
@@ -59,7 +59,7 @@ public class ConfigDualOption extends BasicOption {
     }
 
     @Override
-    public void draw(long vg, int x, int y) {
+    public void draw(long vg, int x, int y, InputHandler inputHandler) {
         boolean toggled = false;
         try {
             toggled = (boolean) get();
@@ -67,8 +67,8 @@ public class ConfigDualOption extends BasicOption {
         } catch (IllegalAccessException ignored) {
         }
         if (!isEnabled()) RenderManager.setAlpha(vg, 0.5f);
-        boolean hoveredLeft = InputUtils.isAreaHovered(x + 226, y, 128, 32) && isEnabled();
-        boolean hoveredRight = InputUtils.isAreaHovered(x + 354, y, 128, 32) && isEnabled();
+        boolean hoveredLeft = inputHandler.isAreaHovered(x + 226, y, 128, 32) && isEnabled();
+        boolean hoveredRight = inputHandler.isAreaHovered(x + 354, y, 128, 32) && isEnabled();
         RenderManager.drawText(vg, name, x, y + 16, Colors.WHITE_90, 14f, Fonts.MEDIUM);
         RenderManager.drawRoundedRect(vg, x + 226, y, 256, 32, Colors.GRAY_600, 12f);
         RenderManager.drawRoundedRect(vg, x + posAnimation.get(), y + 2, 124, 28, Colors.PRIMARY_600, 10f);
@@ -79,7 +79,7 @@ public class ConfigDualOption extends BasicOption {
         RenderManager.drawText(vg, right, x + 418 - RenderManager.getTextWidth(vg, right, 12f, Fonts.MEDIUM) / 2, y + 17, Colors.WHITE, 12f, Fonts.MEDIUM);
 
         RenderManager.setAlpha(vg, 1);
-        if ((hoveredLeft && toggled || hoveredRight && !toggled) && InputUtils.isClicked()) {
+        if ((hoveredLeft && toggled || hoveredRight && !toggled) && inputHandler.isClicked()) {
             toggled = !toggled;
             posAnimation = new EaseInOutCubic(175, 228, 356, !toggled);
             try {

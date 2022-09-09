@@ -31,13 +31,6 @@ import cc.polyfrost.oneconfig.libs.universal.UDesktop
 import java.io.File
 
 /**
- * Returns the SHA-256 hash of the given [File].
- *
- * @see NetworkUtils.getFileChecksum
- */
-fun File.checksum() = NetworkUtils.getFileChecksum(this)
-
-/**
  * Downloads the given [url] to the given [File].
  *
  * @see NetworkUtils.downloadFile

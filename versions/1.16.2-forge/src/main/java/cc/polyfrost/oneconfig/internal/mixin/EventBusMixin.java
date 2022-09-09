@@ -24,20 +24,34 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.config.gson;
+//#if FORGE==1
+package cc.polyfrost.oneconfig.internal.mixin;
 
-public class ExclusionUtils {
-    protected static boolean isSuperClassOf(Class<?> clazz, Class<?> parentClass) {
-        Class<?> tempClass = clazz;
-        Class<?> lastClass;
-        if (tempClass == parentClass) return true;
-        while (true) {
-            lastClass = tempClass;
-            if (tempClass == null) return false;
-            tempClass = tempClass.getSuperclass();
-            if (tempClass == null) return false;
-            if (tempClass == lastClass) return false;
-            if (tempClass == parentClass) return true;
+import cc.polyfrost.oneconfig.events.EventManager;
+import cc.polyfrost.oneconfig.events.event.ChatReceiveEvent;
+import net.minecraft.util.text.ChatType;
+import net.minecraftforge.client.event.ClientChatReceivedEvent;
+import net.minecraftforge.eventbus.EventBus;
+import net.minecraftforge.eventbus.api.Event;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+@Mixin(EventBus.class)
+public class EventBusMixin {
+
+    @Inject(method = "post", at = @At(value = "HEAD"), remap = false)
+    private void post(Event e, CallbackInfoReturnable<Boolean> cir) {
+        if(!(e instanceof ClientChatReceivedEvent)) return;
+        ClientChatReceivedEvent event = (ClientChatReceivedEvent) e;
+        if (event.getType() == ChatType.CHAT) {
+            ChatReceiveEvent customEvent = new ChatReceiveEvent(event.getMessage());
+            EventManager.INSTANCE.post(customEvent);
+            if (customEvent.isCancelled) {
+                e.setCanceled(true);
+            }
         }
     }
 }
+//#endif

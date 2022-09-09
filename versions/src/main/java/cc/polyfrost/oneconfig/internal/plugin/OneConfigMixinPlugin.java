@@ -70,8 +70,13 @@ public class OneConfigMixinPlugin implements IMixinConfigPlugin {
 
     @Override
     public List<String> getMixins() {
+        ArrayList<String> mixins = new ArrayList<>();
+        if (Platform.getInstance().getLoader().equals(Platform.Loader.FORGE)) {
+            mixins.add("EventBusMixin");
+        } else if (Platform.getInstance().getLoader().equals(Platform.Loader.FABRIC)) {
+            mixins.add("NetHandlerPlayClientMixin");
+        }
         if (Platform.getInstance().getMinecraftVersion() >= 11600) {
-            ArrayList<String> mixins = new ArrayList<>();
             if (Platform.getInstance().getLoader() == Platform.Loader.FORGE) {
                 mixins.add("ClientModLoaderMixin");
             } else {
@@ -90,9 +95,11 @@ public class OneConfigMixinPlugin implements IMixinConfigPlugin {
             mixins.add("MouseMixin");
             mixins.add("TickTimeTrackerMixin");
             return mixins;
-        } else {
-            return null;
         }
+        if (Platform.getInstance().getMinecraftVersion() == 10800 || Platform.getInstance().getMinecraftVersion() == 11200) {
+            mixins.add("HudCachingMixin");
+        }
+        return mixins.isEmpty() ? null : mixins;
     }
 
     @Override

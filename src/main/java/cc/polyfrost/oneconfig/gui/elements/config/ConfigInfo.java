@@ -34,6 +34,7 @@ import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.renderer.scissor.Scissor;
 import cc.polyfrost.oneconfig.renderer.scissor.ScissorManager;
+import cc.polyfrost.oneconfig.utils.InputHandler;
 
 import java.lang.reflect.Field;
 
@@ -41,7 +42,7 @@ public class ConfigInfo extends BasicOption {
     private final InfoType type;
 
     public ConfigInfo(Field field, Object parent, String name, String category, String subcategory, int size, InfoType type) {
-        super(field, parent, name, category, subcategory, size);
+        super(field, parent, name, "", category, subcategory, size);
         this.type = type;
     }
 
@@ -51,7 +52,7 @@ public class ConfigInfo extends BasicOption {
     }
 
     @Override
-    public void draw(long vg, int x, int y) {
+    public void draw(long vg, int x, int y, InputHandler inputHandler) {
         Scissor scissor = ScissorManager.scissor(vg, x, y, size == 1 ? 448 : 960, 32);
         RenderManager.drawInfo(vg, type, x, y + 4, 24);
         RenderManager.drawText(vg, name, x + 32, y + 18, Colors.WHITE_90, 14, Fonts.MEDIUM);

@@ -41,6 +41,7 @@ import cc.polyfrost.oneconfig.utils.TickDelay;
 public final class GuiUtils {
     private static long time = -1L;
     private static long deltaTime = 17L;
+    private static boolean wasMouseDown = false;
 
     static {
         EventManager.INSTANCE.register(new GuiUtils());
@@ -86,6 +87,13 @@ public final class GuiUtils {
         return deltaTime;
     }
 
+    /**
+     * @return If the mouse was down last frame
+     */
+    public static boolean wasMouseDown() {
+        return wasMouseDown;
+    }
+
     @Subscribe
     private void onRenderEvent(RenderEvent event) {
         if (event.stage == Stage.START) {
@@ -95,6 +103,8 @@ public final class GuiUtils {
                 deltaTime = currentTime - time;
                 time = currentTime;
             }
+        } else if (event.stage == Stage.END) {
+            wasMouseDown = Platform.getMousePlatform().isButtonDown(0);
         }
     }
 }

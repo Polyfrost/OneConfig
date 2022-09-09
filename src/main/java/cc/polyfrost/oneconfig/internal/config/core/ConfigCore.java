@@ -46,6 +46,7 @@ public class ConfigCore {
             }
         }, 30000, 30000);
     }
+
     public static List<Mod> mods = new ArrayList<>();
 
     public static void saveAll() {
@@ -55,14 +56,12 @@ public class ConfigCore {
     }
 
     public static void reInitAll() {
-        ArrayList<Mod> data = new ArrayList<>(mods);
-        mods.clear();
-        HudCore.huds.clear();
-        KeyBindHandler.INSTANCE.clearKeyBinds();
-        for (Mod modData : data) {
-            modData.config.initialize();
+        for (Mod modData : mods) {
+            if (!modData.config.supportsProfiles()) continue;
+            modData.config.reInitialize();
         }
-        sortMods();
+        HudCore.reInitHuds();
+        KeyBindHandler.INSTANCE.reInitKeyBinds();
     }
 
     public static void sortMods() {

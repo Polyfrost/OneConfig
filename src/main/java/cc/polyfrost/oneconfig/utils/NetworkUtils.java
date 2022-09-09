@@ -131,29 +131,6 @@ public final class NetworkUtils {
     }
 
     /**
-     * Gets the SHA-256 hash of a file.
-     *
-     * @param file The file to hash.
-     * @return The SHA-256 hash of the file.
-     */
-    public static String getFileChecksum(File file) {
-        try (FileInputStream inputStream = new FileInputStream(file)) {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] bytesBuffer = new byte[1024];
-            int bytesRead;
-
-            while ((bytesRead = inputStream.read(bytesBuffer)) != -1) {
-                digest.update(bytesBuffer, 0, bytesRead);
-            }
-
-            return convertByteArrayToHexString(digest.digest());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return "";
-    }
-
-    /**
      * Launches a URL in the default browser.
      *
      * @param uri The URI to launch.
@@ -164,7 +141,7 @@ public final class NetworkUtils {
         UDesktop.browse(URI.create(uri));
     }
 
-    private static InputStream setupConnection(String url, String userAgent, int timeout, boolean useCaches) throws IOException {
+    public static InputStream setupConnection(String url, String userAgent, int timeout, boolean useCaches) throws IOException {
         HttpURLConnection connection = ((HttpURLConnection) new URL(url).openConnection());
         connection.setRequestMethod("GET");
         connection.setUseCaches(useCaches);
@@ -173,14 +150,5 @@ public final class NetworkUtils {
         connection.setConnectTimeout(timeout);
         connection.setDoOutput(true);
         return connection.getInputStream();
-    }
-
-    private static String convertByteArrayToHexString(byte[] arrayBytes) {
-        StringBuilder stringBuffer = new StringBuilder();
-        for (byte arrayByte : arrayBytes) {
-            stringBuffer.append(Integer.toString((arrayByte & 0xff) + 0x100, 16)
-                    .substring(1));
-        }
-        return stringBuffer.toString();
     }
 }

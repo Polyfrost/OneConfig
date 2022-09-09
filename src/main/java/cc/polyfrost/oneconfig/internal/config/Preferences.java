@@ -26,10 +26,7 @@
 
 package cc.polyfrost.oneconfig.internal.config;
 
-import cc.polyfrost.oneconfig.config.annotations.Exclude;
-import cc.polyfrost.oneconfig.config.annotations.KeyBind;
-import cc.polyfrost.oneconfig.config.annotations.Slider;
-import cc.polyfrost.oneconfig.config.annotations.Switch;
+import cc.polyfrost.oneconfig.config.annotations.*;
 import cc.polyfrost.oneconfig.config.core.OneKeyBind;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.internal.gui.BlurHandler;
@@ -38,10 +35,17 @@ import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.utils.TickDelay;
 
 public class Preferences extends InternalConfig {
-    @Switch(
-            name = "Enable Blur"
+
+    @Dropdown(
+            name = "Release Channel",
+            options = {"Releases", "Pre-Releases"}
     )
-    public static boolean enableBlur = true;
+    public static int updateChannel = 0;
+
+    @Switch(
+            name = "Debug Mode"
+    )
+    public static boolean DEBUG = false;
 
     @KeyBind(
             name = "OneConfig Keybind",
@@ -49,17 +53,21 @@ public class Preferences extends InternalConfig {
     )
     public static OneKeyBind oneConfigKeyBind = new OneKeyBind(UKeyboard.KEY_RSHIFT);
 
+    @Switch(
+            name = "Enable Blur",
+            subcategory = "GUI Settings"
+    )
+    public static boolean enableBlur = true;
 
     @Switch(
             name = "Use custom GUI scale",
-            subcategory = "GUI Scale",
-            size = 2
+            subcategory = "GUI Settings"
     )
     public static boolean enableCustomScale = false;
 
     @Slider(
             name = "Custom GUI scale",
-            subcategory = "GUI Scale",
+            subcategory = "GUI Settings",
             min = 0.5f,
             max = 5f
     )
@@ -73,6 +81,10 @@ public class Preferences extends InternalConfig {
         initialize();
         addListener("enableBlur", () -> BlurHandler.INSTANCE.reloadBlur(Platform.getGuiPlatform().getCurrentScreen()));
         registerKeyBind(oneConfigKeyBind, () -> new TickDelay(() -> Platform.getGuiPlatform().setCurrentScreen(OneConfigGui.create()), 1));
+        addListener("updateChannel", () -> {
+            OneConfigConfig.updateChannel = updateChannel;
+            OneConfigConfig.getInstance().save();
+        });
         INSTANCE = this;
     }
 

@@ -29,10 +29,10 @@ package cc.polyfrost.oneconfig.gui.pages;
 import cc.polyfrost.oneconfig.config.elements.OptionPage;
 import cc.polyfrost.oneconfig.config.elements.OptionSubcategory;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
-import cc.polyfrost.oneconfig.gui.animations.DummyAnimation;
 import cc.polyfrost.oneconfig.gui.elements.BasicButton;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
+import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 
 import java.util.ArrayList;
@@ -70,26 +70,26 @@ public class ModConfigPage extends Page {
     }
 
     @Override
-    public void draw(long vg, int x, int y) {
+    public void draw(long vg, int x, int y, InputHandler inputHandler) {
         if (page.categories.size() == 0) return;
         int optionY = y + (page.categories.size() == 1 ? 16 : 64);
         for (OptionSubcategory subCategory : page.categories.get(selectedCategory).subcategories) {
-            optionY += subCategory.draw(vg, x + 30, optionY);
+            optionY += subCategory.draw(vg, x + 30, optionY, inputHandler);
         }
         for (OptionSubcategory subCategory : page.categories.get(selectedCategory).subcategories) {
-            subCategory.drawLast(vg, x + 30);
+            subCategory.drawLast(vg, x + 30, inputHandler);
         }
         totalSize = optionY - y;
     }
 
     @Override
-    public int drawStatic(long vg, int x, int y) {
+    public int drawStatic(long vg, int x, int y, InputHandler inputHandler) {
         if (categories.size() <= 1) return 0;
         int buttonX = x + 16;
         for (BasicButton button : categories) {
             if (button.getWidth() == 0)
                 button.setWidth((int) (Math.ceil(RenderManager.getTextWidth(vg, button.getText(), 12f, Fonts.MEDIUM) / 8f) * 8 + 16));
-            button.draw(vg, buttonX, y + 16);
+            button.draw(vg, buttonX, y + 16, inputHandler);
             buttonX += button.getWidth() + 16;
         }
         return 60;

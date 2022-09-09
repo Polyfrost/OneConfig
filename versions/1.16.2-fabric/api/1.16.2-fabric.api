@@ -49,8 +49,10 @@ public class cc/polyfrost/oneconfig/platform/impl/I18nPlatformImpl : cc/polyfros
 public class cc/polyfrost/oneconfig/platform/impl/LoaderPlatformImpl : cc/polyfrost/oneconfig/platform/LoaderPlatform {
 	public fun <init> ()V
 	public fun getActiveModContainer ()Lcc/polyfrost/oneconfig/platform/LoaderPlatform$ActiveMod;
+	public fun getLoadedMods ()Ljava/util/List;
 	public fun hasActiveModContainer ()Z
 	public fun isModLoaded (Ljava/lang/String;)Z
+	public fun toActiveMod (Ljava/lang/Object;)Lcc/polyfrost/oneconfig/platform/LoaderPlatform$ActiveMod;
 }
 
 public class cc/polyfrost/oneconfig/platform/impl/MousePlatformImpl : cc/polyfrost/oneconfig/platform/MousePlatform {
@@ -88,6 +90,7 @@ public class cc/polyfrost/oneconfig/platform/impl/PlatformImpl : cc/polyfrost/on
 	public fun getLoader ()Lcc/polyfrost/oneconfig/platform/Platform$Loader;
 	public fun getMinecraftVersion ()I
 	public fun isCallingFromMinecraftThread ()Z
+	public fun isDevelopmentEnvironment ()Z
 }
 
 public class cc/polyfrost/oneconfig/platform/impl/ServerPlatformImpl : cc/polyfrost/oneconfig/platform/ServerPlatform {
@@ -143,5 +146,6 @@ public final class cc/polyfrost/oneconfig/utils/gui/GuiUtils {
 	public static fun displayScreen (Lnet/minecraft/client/gui/screen/Screen;I)V
 	public static fun getDeltaTime ()F
 	public static fun getScreenQueue ()Ljava/util/Deque;
+	public static fun wasMouseDown ()Z
 }
 

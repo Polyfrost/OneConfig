@@ -44,9 +44,10 @@ import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.renderer.scissor.Scissor;
 import cc.polyfrost.oneconfig.renderer.scissor.ScissorManager;
 import cc.polyfrost.oneconfig.utils.IOUtils;
-import cc.polyfrost.oneconfig.utils.InputUtils;
+import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.NetworkUtils;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
+import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -80,12 +81,14 @@ public class ColorSelector {
     private boolean dragging, mouseWasDown;
     private final boolean hasAlpha;
     private Scissor inputScissor = null;
+    private final InputHandler inputHandler;
 
-    public ColorSelector(OneColor color, float mouseX, float mouseY) {
-        this(color, mouseX, mouseY, true);
+    public ColorSelector(OneColor color, float mouseX, float mouseY, InputHandler inputHandler) {
+        this(color, mouseX, mouseY, true, inputHandler);
     }
 
-    public ColorSelector(OneColor color, float mouseX, float mouseY, boolean hasAlpha) {
+    public ColorSelector(OneColor color, float mouseX, float mouseY, boolean hasAlpha, InputHandler inputHandler) {
+        this.inputHandler = inputHandler;
         this.color = color;
         this.hasAlpha = hasAlpha;
         buttons.add(new BasicButton(124, 28, "HSB Box", BasicButton.ALIGNMENT_CENTER, ColorPalette.TERTIARY));
@@ -132,7 +135,7 @@ public class ColorSelector {
     }
 
     public void draw(long vg) {
-        if (inputScissor != null) InputUtils.stopBlock(inputScissor);
+        if (inputScissor != null) inputHandler.stopBlock(inputScissor);
         doDrag();
         int width = 416;
         int height = 768;
@@ -141,7 +144,7 @@ public class ColorSelector {
         RenderManager.drawRoundedRect(vg, x, y, width, height, Colors.GRAY_800, 20f);
         RenderManager.drawText(vg, "Color Selector", x + 16, y + 32, Colors.WHITE_90, 18f, Fonts.SEMIBOLD);
         if (!closeBtn.isHovered()) RenderManager.setAlpha(vg, 0.8f);
-        closeBtn.draw(vg, x + 368, y + 16);
+        closeBtn.draw(vg, x + 368, y + 16, inputHandler);
         RenderManager.drawSvg(vg, SVGs.X_CIRCLE_BOLD, x + 368, y + 16, 32, 32, closeBtn.isHovered() ? Colors.ERROR_600 : -1);
         RenderManager.setAlpha(vg, 1f);
 
@@ -151,13 +154,13 @@ public class ColorSelector {
         }
 
         // TODO favorite stuff
-        faveBtn.draw(vg, x + 16, y + 672);
-        recentBtn.draw(vg, x + 16, y + 720);
+        faveBtn.draw(vg, x + 16, y + 672, inputHandler);
+        recentBtn.draw(vg, x + 16, y + 720, inputHandler);
         for (int i = 0; i < 7; i++) {
-            favoriteColors.get(i).draw(vg, x + 104 + i * 44, y + 672);
+            favoriteColors.get(i).draw(vg, x + 104 + i * 44, y + 672, inputHandler);
         }
         for (int i = 0; i < 7; i++) {
-            recentColors.get(i).draw(vg, x + 104 + i * 44, y + 720);
+            recentColors.get(i).draw(vg, x + 104 + i * 44, y + 720, inputHandler);
         }
 
         RenderManager.drawRoundedRect(vg, x + 16, y + 64, 384, 32, Colors.GRAY_500, 12f);
@@ -167,7 +170,7 @@ public class ColorSelector {
 
         int i = 18;
         for (BasicElement button : buttons) {
-            button.draw(vg, x + i, y + 66);
+            button.draw(vg, x + i, y + 66, inputHandler);
             if (button.isClicked()) {
                 int prevMode = mode;
                 mode = buttons.indexOf(button);
@@ -181,36 +184,36 @@ public class ColorSelector {
         float percentMoveMain = moveAnimation.get();
 
         RenderManager.drawText(vg, "Saturation", x + 224, y + 560, Colors.WHITE_80, 12f, Fonts.MEDIUM);
-        saturationInput.draw(vg, x + 312, y + 544);
+        saturationInput.draw(vg, x + 312, y + 544, inputHandler);
         RenderManager.drawText(vg, "Brightness", x + 16, y + 599, Colors.WHITE_80, 12f, Fonts.MEDIUM);
-        brightnessInput.draw(vg, x + 104, y + 584);
+        brightnessInput.draw(vg, x + 104, y + 584, inputHandler);
         RenderManager.drawText(vg, "Alpha (%)", x + 224, y + 599, Colors.WHITE_80, 12f, Fonts.MEDIUM);
-        alphaInput.draw(vg, x + 312, y + 584);
+        alphaInput.draw(vg, x + 312, y + 584, inputHandler);
         RenderManager.drawText(vg, color.getDataBit() == -1 ? "Hex (RGB):" : "Color Code:", x + 16, y + 641, Colors.WHITE_80, 12f, Fonts.MEDIUM);
-        hexInput.draw(vg, x + 104, y + 624);
+        hexInput.draw(vg, x + 104, y + 624, inputHandler);
 
-        copyBtn.draw(vg, x + 204, y + 624);
-        pasteBtn.draw(vg, x + 244, y + 624);
+        copyBtn.draw(vg, x + 204, y + 624, inputHandler);
+        pasteBtn.draw(vg, x + 244, y + 624, inputHandler);
         if (mode != 2) {
             RenderManager.drawText(vg, "Hue", x + 16, y + 560, Colors.WHITE_80, 12f, Fonts.MEDIUM);
-            hueInput.draw(vg, x + 104, y + 544);
+            hueInput.draw(vg, x + 104, y + 544, inputHandler);
         } else {
             RenderManager.drawText(vg, "Speed (s)", x + 16, y + 560, Colors.WHITE_80, 12f, Fonts.MEDIUM);
-            speedInput.draw(vg, x + 104, y + 544);
+            speedInput.draw(vg, x + 104, y + 544, inputHandler);
         }
 
-        guideBtn.draw(vg, x + 288, y + 624);
+        guideBtn.draw(vg, x + 288, y + 624, inputHandler);
 
 
         setColorFromXY();
         if (mode != 2) color.setChromaSpeed(-1);
         drawColorSelector(vg, mode, (x * percentMoveMain), y);
-        if (dragging && InputUtils.isClicked(true)) {
+        if (dragging && inputHandler.isClicked(true)) {
             dragging = false;
         }
         bottomSlider.setGradient(Colors.TRANSPARENT, color.getRGBNoAlpha());
         RenderManager.drawRoundImage(vg, Images.ALPHA_GRID.filePath, x + 16, y + 456, 384, 16, 8f);
-        bottomSlider.draw(vg, x + 16, y + 456);
+        bottomSlider.draw(vg, x + 16, y + 456, inputHandler);
 
         if (percentMoveMain > 0.96f) {
             RenderManager.drawRoundedRect(vg, mouseX - 7, mouseY - 7, 14, 14, Colors.WHITE, 14f);
@@ -227,7 +230,7 @@ public class ColorSelector {
         RenderManager.drawRoundImage(vg, Images.ALPHA_GRID.filePath, x + 20, y + 492, 376, 32, 8f);
         RenderManager.drawRoundedRect(vg, x + 20, y + 492, 376, 32, color.getRGB(), 8f);
 
-        inputScissor = InputUtils.blockInputArea(x - 3, y - 3, width + 6, height + 6);
+        inputScissor = inputHandler.blockInputArea(x - 3, y - 3, width + 6, height + 6);
         ScissorManager.resetScissor(vg, scissor);
         mouseWasDown = Platform.getMousePlatform().isButtonDown(0);
         if (closeBtn.isClicked()) {
@@ -246,10 +249,10 @@ public class ColorSelector {
 
                 if (mode == 0) {
                     topSlider.setColor(color.getRGBMax(true));
-                    topSlider.draw(vg, x + 16, y + 424);
+                    topSlider.draw(vg, x + 16, y + 424, inputHandler);
                 }
                 if (mode == 2) {
-                    speedSlider.draw(vg, x + 60, y + 424);
+                    speedSlider.draw(vg, x + 60, y + 424, inputHandler);
                     RenderManager.drawText(vg, "SLOW", x + 16, y + 429, Colors.WHITE_80, 12f, Fonts.REGULAR);
                     RenderManager.drawText(vg, "FAST", x + 370, y + 429, Colors.WHITE_80, 12f, Fonts.REGULAR);
                 }
@@ -261,13 +264,13 @@ public class ColorSelector {
 
                 topSlider.setGradient(Colors.BLACK, color.getRGBMax(true));
                 topSlider.setImage(null);
-                topSlider.draw(vg, x + 16, y + 424);
+                topSlider.draw(vg, x + 16, y + 424, inputHandler);
                 break;
         }
     }
 
     private void doDrag() {
-        if (InputUtils.isAreaHovered(x, y, 368, 64) && Platform.getMousePlatform().isButtonDown(0) && !dragging) {
+        if (inputHandler.isAreaHovered(x, y, 368, 64) && Platform.getMousePlatform().isButtonDown(0) && !dragging) {
             float dx = (float) (Platform.getMousePlatform().getMouseDX() / (OneConfigGui.INSTANCE == null ? 1 : OneConfigGui.INSTANCE.getScaleFactor()));
             float dy = (float) (Platform.getMousePlatform().getMouseDY() / (OneConfigGui.INSTANCE == null ? 1 : OneConfigGui.INSTANCE.getScaleFactor()));
             x += dx;
@@ -279,14 +282,14 @@ public class ColorSelector {
 
     private void setColorFromXY() {
         boolean isMouseDown = Platform.getMousePlatform().isButtonDown(0);
-        boolean hovered = Platform.getMousePlatform().isButtonDown(0) && InputUtils.isAreaHovered(x + 16, y + 120, 384, 288);
+        boolean hovered = Platform.getMousePlatform().isButtonDown(0) && inputHandler.isAreaHovered(x + 16, y + 120, 384, 288);
         if (hovered && isMouseDown && !mouseWasDown) dragging = true;
         switch (mode) {
             case 0:
             case 2:
                 if (dragging) {
-                    mouseX = InputUtils.mouseX();
-                    mouseY = InputUtils.mouseY();
+                    mouseX = inputHandler.mouseX();
+                    mouseY = inputHandler.mouseY();
                 }
                 if (mouseX < x + 16) mouseX = x + 16;
                 if (mouseY < y + 120) mouseY = y + 120;
@@ -307,7 +310,7 @@ public class ColorSelector {
             case 1:
                 float circleCenterX = x + 208;
                 float circleCenterY = y + 264;
-                double squareDist = Math.pow((circleCenterX - InputUtils.mouseX()), 2) + Math.pow((circleCenterY - InputUtils.mouseY()), 2);
+                double squareDist = Math.pow((circleCenterX - inputHandler.mouseX()), 2) + Math.pow((circleCenterY - inputHandler.mouseY()), 2);
                 hovered = squareDist < 144 * 144 && Platform.getMousePlatform().isButtonDown(0);
                 isMouseDown = Platform.getMousePlatform().isButtonDown(0);
                 if (hovered && isMouseDown && !mouseWasDown) dragging = true;
@@ -315,7 +318,7 @@ public class ColorSelector {
                 int angle = 0;
                 int saturation = color.getSaturation();
                 if (dragging) {
-                    angle = (int) Math.toDegrees(Math.atan2(InputUtils.mouseY() - circleCenterY, InputUtils.mouseX() - circleCenterX));
+                    angle = (int) Math.toDegrees(Math.atan2(inputHandler.mouseY() - circleCenterY, inputHandler.mouseX() - circleCenterX));
                     if (angle < 0) angle += 360;
                     if ((squareDist / (144 * 144) > 1f)) {
                         saturation = 100;
@@ -323,8 +326,8 @@ public class ColorSelector {
                         mouseY = (float) (Math.cos(Math.toRadians(-angle) + 1.5708) * 144 + y + 264);
                     } else {
                         saturation = (int) (squareDist / (144 * 144) * 100);
-                        mouseX = InputUtils.mouseX();
-                        mouseY = InputUtils.mouseY();
+                        mouseX = inputHandler.mouseX();
+                        mouseY = inputHandler.mouseY();
                     }
                 }
                 color.setHSBA(dragging ? angle : color.getHue(), saturation, (int) (topSlider.getValue() / 360 * 100), (int) bottomSlider.getValue());
@@ -356,7 +359,7 @@ public class ColorSelector {
                 color.setChromaSpeed((int) speedInput.getCurrentValue());
             }
             setXYFromColor();
-        } else if (OneConfigGui.INSTANCE.mouseDown) {
+        } else if (GuiUtils.wasMouseDown()) {
             saturationInput.setInput(String.format("%.01f", (float) color.getSaturation()));
             brightnessInput.setInput(String.format("%.01f", (float) color.getBrightness()));
             if (!alphaInput.arrowsClicked()) {
@@ -419,7 +422,7 @@ public class ColorSelector {
     }
 
     public void onClose() {
-        if (inputScissor != null) InputUtils.stopBlock(inputScissor);
+        if (inputScissor != null) inputHandler.stopBlock(inputScissor);
         /*for (int i = 0; i < OneConfigConfig.recentColors.size(); i++) {
             OneColor color1 = OneConfigConfig.recentColors.get(i);
             if (color1.getRGB() == color.getRGB()) {
@@ -455,8 +458,8 @@ public class ColorSelector {
         }
 
         @Override
-        public void draw(long vg, float x, float y) {
-            if (!disabled) update(x, y);
+        public void draw(long vg, float x, float y, InputHandler inputHandler) {
+            if (!disabled) update(x, y, inputHandler);
             else RenderManager.setAlpha(vg, 0.5f);
             super.dragPointerSize = 15f;
             if (image != null) {
@@ -495,11 +498,11 @@ public class ColorSelector {
         }
 
         @Override
-        public void draw(long vg, float x, float y) {
+        public void draw(long vg, float x, float y, InputHandler inputHandler) {
             RenderManager.drawRoundedRect(vg, x, y, 32, 32, toggled ? Colors.PRIMARY_600 : Colors.GRAY_300, 12f);
             RenderManager.drawRoundedRect(vg, x + 2, y + 2, 28, 28, Colors.GRAY_800, 10f);
             RenderManager.drawRoundedRect(vg, x + 4, y + 4, 24, 24, color.getRGB(), 8f);
-            update(x, y);
+            update(x, y, inputHandler);
         }
 
         public OneColor getColor() {

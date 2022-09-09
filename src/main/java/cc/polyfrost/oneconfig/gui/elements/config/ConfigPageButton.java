@@ -37,7 +37,7 @@ import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
-import cc.polyfrost.oneconfig.utils.InputUtils;
+import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 
 import java.lang.reflect.Field;
@@ -48,22 +48,22 @@ public class ConfigPageButton extends BasicOption {
     private final ColorAnimation backgroundColor = new ColorAnimation(ColorPalette.SECONDARY);
 
     public ConfigPageButton(Field field, Object parent, String name, String description, String category, String subcategory, OptionPage page) {
-        super(field, parent, name, category, subcategory, 2);
+        super(field, parent, name, "", category, subcategory, 2);
         this.description = description;
         this.page = new ModConfigPage(page);
     }
 
     public ConfigPageButton(Field field, Object parent, String name, String description, String category, String subcategory, Page page) {
-        super(field, parent, name, category, subcategory, 2);
+        super(field, parent, name, "", category, subcategory, 2);
         this.description = description;
         this.page = page;
     }
 
     @Override
-    public void draw(long vg, int x, int y) {
+    public void draw(long vg, int x, int y, InputHandler inputHandler) {
         int height = description.equals("") ? 64 : 96;
-        boolean hovered = InputUtils.isAreaHovered(x - 16, y, 1024, height) && isEnabled();
-        boolean clicked = hovered && InputUtils.isClicked();
+        boolean hovered = inputHandler.isAreaHovered(x - 16, y, 1024, height) && isEnabled();
+        boolean clicked = hovered && inputHandler.isClicked();
 
         if (!isEnabled()) RenderManager.setAlpha(vg, 0.5f);
 

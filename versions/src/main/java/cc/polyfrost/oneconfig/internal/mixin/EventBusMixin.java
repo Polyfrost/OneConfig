@@ -24,35 +24,33 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.utils.notifications;
+//#if MC==10809
+package cc.polyfrost.oneconfig.internal.mixin;
 
-/**
- * @deprecated Reserved for future use, not implemented yet.
- */
-@Deprecated
-public final class Notifications {
-    public static final Notifications INSTANCE = new Notifications();
-    private Notifications() {
+import cc.polyfrost.oneconfig.events.EventManager;
+import cc.polyfrost.oneconfig.events.event.ChatReceiveEvent;
+import net.minecraftforge.client.event.ClientChatReceivedEvent;
+import net.minecraftforge.fml.common.eventhandler.Event;
+import net.minecraftforge.fml.common.eventhandler.EventBus;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-    }
+@Mixin(EventBus.class)
+public class EventBusMixin {
 
-    public void send(String title, String message) {
-
-    }
-
-    public void send(String title, String message, Runnable action) {
-
-    }
-
-    public void send(String title, String message, float duration) {
-
-    }
-
-    public void send(String title, String message, float duration, Runnable action) {
-
-    }
-
-    public void send(String title, String message, float duration, Runnable action, Runnable onClose) {
-
+    @Inject(method = "post", at = @At(value = "HEAD"), remap = false)
+    private void post(Event e, CallbackInfoReturnable<Boolean> cir) {
+        if(!(e instanceof ClientChatReceivedEvent)) return;
+        ClientChatReceivedEvent event = (ClientChatReceivedEvent) e;
+        if (event.type == 0) {
+            ChatReceiveEvent customEvent = new ChatReceiveEvent(event.message);
+            EventManager.INSTANCE.post(customEvent);
+            if (customEvent.isCancelled) {
+                e.setCanceled(true);
+            }
+        }
     }
 }
+//#endif

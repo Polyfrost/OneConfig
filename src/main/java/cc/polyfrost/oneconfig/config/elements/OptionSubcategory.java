@@ -32,6 +32,7 @@ import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.elements.config.ConfigPageButton;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
+import cc.polyfrost.oneconfig.utils.InputHandler;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,7 +50,7 @@ public class OptionSubcategory {
         this.name = name;
     }
 
-    public int draw(long vg, int x, int y) {
+    public int draw(long vg, int x, int y, InputHandler inputHandler) {
         String filter = OneConfigGui.INSTANCE == null ? "" : OneConfigGui.INSTANCE.getSearchValue().toLowerCase().trim();
         filteredOptions = options.stream().filter(option -> !option.isHidden() && (filter.equals("") || name.toLowerCase().contains(filter) || option.name.toLowerCase().contains(filter))).collect(Collectors.toList());
         List<ConfigPageButton> filteredTop = topButtons.stream().filter(page -> !page.isHidden() && (filter.equals("") || name.toLowerCase().contains(filter) || page.name.toLowerCase().contains(filter) || page.description.toLowerCase().contains(filter))).collect(Collectors.toList());
@@ -62,7 +63,7 @@ public class OptionSubcategory {
         }
 
         for (ConfigPageButton page : filteredTop) {
-            page.draw(vg, x, optionY);
+            page.draw(vg, x, optionY, inputHandler);
             optionY += page.getHeight() + 16;
         }
 
@@ -88,12 +89,16 @@ public class OptionSubcategory {
         if (filteredOptions.size() > 0) {
             for (int i = 0; i < filteredOptions.size(); i++) {
                 BasicOption option = filteredOptions.get(i);
-                option.draw(vg, x, optionY);
+                option.draw(vg, x, optionY, inputHandler);
+                int optionHeight =  option.getHeight();
+                option.drawDescription(vg, x, optionY, optionHeight, inputHandler);
                 if (i + 1 < filteredOptions.size()) {
                     BasicOption nextOption = filteredOptions.get(i + 1);
                     if (option.size == 1 && nextOption.size == 1) {
-                        nextOption.draw(vg, x + 512, optionY);
-                        optionY += Math.max(option.getHeight(), nextOption.getHeight()) + 16;
+                        nextOption.draw(vg, x + 512, optionY, inputHandler);
+                        nextOption.drawDescription(vg, x + 512, optionY, optionHeight, inputHandler);
+                        int nextOptionHeight = nextOption.getHeight();
+                        optionY += Math.max(optionHeight, nextOptionHeight) + 16;
                         i++;
                         continue;
                     }
@@ -104,21 +109,21 @@ public class OptionSubcategory {
         }
 
         for (ConfigPageButton page : filteredBottom) {
-            page.draw(vg, x, optionY);
+            page.draw(vg, x, optionY, inputHandler);
             optionY += page.getHeight() + 16;
         }
 
         return optionY - y;
     }
 
-    public void drawLast(long vg, int x) {
+    public void drawLast(long vg, int x, InputHandler inputHandler) {
         for (int i = 0; i < filteredOptions.size(); i++) {
             BasicOption option = filteredOptions.get(i);
-            option.drawLast(vg, x, drawLastY);
+            option.drawLast(vg, x, drawLastY, inputHandler);
             if (i + 1 < filteredOptions.size()) {
                 BasicOption nextOption = filteredOptions.get(i + 1);
                 if (option.size == 1 && nextOption.size == 1) {
-                    nextOption.drawLast(vg, x + 512, drawLastY);
+                    nextOption.drawLast(vg, x + 512, drawLastY, inputHandler);
                     drawLastY += Math.max(option.getHeight(), nextOption.getHeight()) + 16;
                     i++;
                     continue;
@@ -130,11 +135,5 @@ public class OptionSubcategory {
 
     public String getName() {
         return name;
-    }
-
-    public void reset(Config config) {
-        for (BasicOption option : options) {
-            options.remove(config);
-        }
     }
 }

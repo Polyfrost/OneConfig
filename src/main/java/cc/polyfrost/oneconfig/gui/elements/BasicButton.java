@@ -32,6 +32,7 @@ import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.SVG;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
+import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 import cc.polyfrost.oneconfig.utils.color.ColorUtils;
 import org.jetbrains.annotations.NotNull;
@@ -83,10 +84,10 @@ public class BasicButton extends BasicElement {
     }
 
     @Override
-    public void draw(long vg, float x, float y) {
+    public void draw(long vg, float x, float y, InputHandler inputHandler) {
         this.x = x;
         this.y = y;
-        this.update(x, y);
+        this.update(x, y, inputHandler);
         if (disabled) RenderManager.setAlpha(vg, 0.5f);
         float contentWidth = 0f;
         int color;
