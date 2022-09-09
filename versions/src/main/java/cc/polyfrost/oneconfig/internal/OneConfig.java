@@ -147,7 +147,7 @@ public class OneConfig {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        CommandManager.INSTANCE.registerCommand(OneConfigCommand.class);
+        CommandManager.INSTANCE.registerCommand(new OneConfigCommand());
         EventManager.INSTANCE.register(new HudCore());
         HypixelUtils.INSTANCE.initialize();
         EventManager.INSTANCE.register(KeyBindHandler.INSTANCE);

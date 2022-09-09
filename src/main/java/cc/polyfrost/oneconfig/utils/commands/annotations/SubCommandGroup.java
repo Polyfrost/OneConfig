@@ -24,41 +24,28 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.utils.commands.arguments;
+package cc.polyfrost.oneconfig.utils.commands.annotations;
 
-import com.google.common.collect.Lists;
-import org.jetbrains.annotations.Nullable;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-import java.lang.reflect.Parameter;
-import java.util.List;
-import java.util.Locale;
+/** Use this annotation on subclasses to mark them as subcommands. This uses the value field and the aliases for the syntax. */
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
+public @interface SubCommandGroup {
+    /**
+     * The name of the command.
+     *
+     * @return The name of the command.
+     */
+    String value();
 
-public class BooleanParser extends ArgumentParser<Boolean> {
-
-    private static final List<String> VALUES = Lists.newArrayList("true", "false");
-
-    @Override
-    public @Nullable Boolean parse(Arguments arguments) {
-        String next = arguments.poll();
-        if (next.equalsIgnoreCase("true")) {
-            return true;
-        } else if (next.equalsIgnoreCase("false")) {
-            return false;
-        } else {
-            return null;
-        }
-    }
-
-    @Override
-    public @Nullable List<String> complete(Arguments arguments, Parameter parameter) {
-        String value = arguments.poll();
-        if (value != null && !value.trim().isEmpty()) {
-            for (String v : VALUES) {
-                if (v.startsWith(value.toLowerCase(Locale.ENGLISH))) {
-                    return Lists.newArrayList(v);
-                }
-            }
-        }
-        return VALUES;
-    }
+    /**
+     * The aliases of the command.
+     *
+     * @return The aliases of the command.
+     */
+    String[] aliases() default {};
 }

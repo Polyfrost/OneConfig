@@ -126,7 +126,6 @@ public abstract interface class cc/polyfrost/oneconfig/utils/commands/FabricClie
 
 public class cc/polyfrost/oneconfig/utils/commands/PlatformCommandManagerImpl : cc/polyfrost/oneconfig/utils/commands/PlatformCommandManager {
 	public fun <init> ()V
-	public fun handleNewParser (Lcc/polyfrost/oneconfig/utils/commands/arguments/ArgumentParser;Ljava/lang/Class;)V
 }
 
 public final class cc/polyfrost/oneconfig/utils/dsl/DSLsKt {
