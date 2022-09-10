@@ -38,7 +38,7 @@ public class Preferences extends InternalConfig {
 
     @Dropdown(
             name = "Release Channel",
-            options = {"Releases", "Pre-Releases"}
+            options = {"Releases", "Pre-Releases"}, size = 2
     )
     public static int updateChannel = 0;
 
@@ -46,6 +46,11 @@ public class Preferences extends InternalConfig {
             name = "Debug Mode"
     )
     public static boolean DEBUG = false;
+
+    @Switch(
+            name = "Enable Crash Report Log Scanning"
+    )
+    public static boolean scanCrashes = true;
 
     @KeyBind(
             name = "OneConfig Keybind",

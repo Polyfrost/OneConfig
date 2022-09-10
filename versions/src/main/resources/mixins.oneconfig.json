@@ -9,6 +9,7 @@
   },
   "verbose": true,
   "client": [
+    "CrashReportMixin",
     "GuiIngameForgeMixin",
     "MinecraftMixin",
     "NetworkManagerMixin",

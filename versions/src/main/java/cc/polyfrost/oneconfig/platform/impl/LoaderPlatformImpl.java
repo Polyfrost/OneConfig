@@ -47,6 +47,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class LoaderPlatformImpl implements LoaderPlatform {
+    List<ActiveMod> loadedModsCache = null;
     @Override
     public boolean isModLoaded(String id) {
         //#if MC>=11600
@@ -71,21 +72,31 @@ public class LoaderPlatformImpl implements LoaderPlatform {
 
     @Override
     public @NotNull List<ActiveMod> getLoadedMods() {
-        try {
-            return
-                    //#if FORGE==1
-                    //#if MC<=11202
-                    Loader.instance().getActiveModList().stream().map
-                    //#else
-                    //$$ ModList.get().applyForEachModContainer
-                    //#endif
-                    //#else
-                    //$$ FabricLoader.getInstance().getAllMods().stream().map
-                    //#endif
-                                    (this::toActiveMod).collect(Collectors.toList());
-        } catch (Exception e) {
-            return Collections.emptyList();
+        if(loadedModsCache == null || loadedModsCache.isEmpty()) {
+            try {
+                loadedModsCache =
+                        //#if FORGE==1
+                        //#if MC<=11202
+                        Loader.instance().getActiveModList().stream().map
+                        //#else
+                        //$$ ModList.get().applyForEachModContainer
+                        //#endif
+                        //#else
+                        //$$ FabricLoader.getInstance().getAllMods().stream().map
+                        //#endif
+                                 (this::toActiveMod).collect(Collectors.toList());
+            } catch (Exception e) {
+                return loadedModsCache = Collections.emptyList();
+            }
         }
+        return loadedModsCache;
+    }
+
+    @NotNull
+    @Override
+    public List<ActiveMod> reloadModsList() {
+        loadedModsCache = null;
+        return getLoadedMods();
     }
 
     @Override
@@ -104,12 +115,12 @@ public class LoaderPlatformImpl implements LoaderPlatform {
             if (container == null) return null;
             //#if FORGE==1
             //#if MC==11202
-            return new ActiveMod(container.getName(), container.getModId(), container.getVersion(), container.getSource());
+            return new ActiveMod(container.getName(), container.getModId(), container.getVersion(), container.getSource().toPath());
             //#else
-            //$$ return new ActiveMod(container.getModInfo().getDisplayName(), container.getModId(), container.getModInfo().getVersion().getQualifier(), ModList.get().getModFileById(container.getModId()).getFile().getFilePath().toFile());
+            //$$ return new ActiveMod(container.getModInfo().getDisplayName(), container.getModId(), container.getModInfo().getVersion().getQualifier(), ModList.get().getModFileById(container.getModId()).getFile().getFilePath());
             //#endif
             //#else
-            //$$ return new ActiveMod(container.getMetadata().getName(), container.getMetadata().getId(), container.getMetadata().getVersion().getFriendlyString(), container.getRootPaths().get(0).toFile());
+            //$$ return new ActiveMod(container.getMetadata().getName(), container.getMetadata().getId(), container.getMetadata().getVersion().getFriendlyString(), container.getRootPaths().get(0));
             //#endif
         } catch (Exception e) {
             return null;

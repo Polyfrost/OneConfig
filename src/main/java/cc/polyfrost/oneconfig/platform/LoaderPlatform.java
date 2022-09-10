@@ -29,7 +29,7 @@ package cc.polyfrost.oneconfig.platform;
 import cc.polyfrost.oneconfig.libs.checker.nullness.qual.Nullable;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 
 public interface LoaderPlatform {
@@ -47,13 +47,24 @@ public interface LoaderPlatform {
     @NotNull
     List<ActiveMod> getLoadedMods();
 
+    /**
+     * Delete the cached list and return it. <br>
+     * Note: the list may contain null elements
+     */
+    @NotNull
+    List<ActiveMod> reloadModsList();
+
     class ActiveMod {
         public final String name;
         public final String id;
         public final String version;
-        public final File source;
+        /** <h2>The path to the mod's jar file.</h2>
+         * <b>Forge:</b> Feel free to use {@link Path#toFile()}. <br>
+         * <b>Fabric:</b> A path returned by this method may be incompatible with {@link Path#toFile()} as its FileSystem doesn't necessarily represent the OS file system, but potentially a virtual view of jar contents or another abstraction. <br>
+         */
+        public final Path source;
 
-        public ActiveMod(String name, String id, String version, File source) {
+        public ActiveMod(String name, String id, String version, Path source) {
             this.name = name;
             this.id = id;
             this.version = version;
