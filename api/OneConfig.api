@@ -1098,15 +1098,16 @@ public abstract interface class cc/polyfrost/oneconfig/platform/LoaderPlatform {
 	public abstract fun getLoadedMods ()Ljava/util/List;
 	public abstract fun hasActiveModContainer ()Z
 	public abstract fun isModLoaded (Ljava/lang/String;)Z
+	public abstract fun reloadModsList ()Ljava/util/List;
 	public abstract fun toActiveMod (Ljava/lang/Object;)Lcc/polyfrost/oneconfig/platform/LoaderPlatform$ActiveMod;
 }
 
 public class cc/polyfrost/oneconfig/platform/LoaderPlatform$ActiveMod {
 	public final field id Ljava/lang/String;
 	public final field name Ljava/lang/String;
-	public final field source Ljava/io/File;
+	public final field source Ljava/nio/file/Path;
 	public final field version Ljava/lang/String;
-	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/io/File;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/nio/file/Path;)V
 }
 
 public abstract interface class cc/polyfrost/oneconfig/platform/MousePlatform {
@@ -1384,6 +1385,8 @@ public class cc/polyfrost/oneconfig/utils/LogScanner {
 	public static fun identifyCallerFromStacktrace (Ljava/lang/Throwable;)Ljava/util/Set;
 	public static fun identifyFromClass (Ljava/lang/String;)Ljava/util/Set;
 	public static fun identifyFromStacktrace (Ljava/lang/Throwable;)Ljava/util/Set;
+	public static fun identifyFromStacktrace (Ljava/lang/Throwable;Z)Ljava/util/Set;
+	public static fun onCrash (Ljava/lang/StringBuilder;Ljava/lang/Throwable;)V
 }
 
 public final class cc/polyfrost/oneconfig/utils/MathUtils {

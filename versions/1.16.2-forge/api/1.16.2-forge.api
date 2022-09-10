@@ -52,6 +52,7 @@ public class cc/polyfrost/oneconfig/platform/impl/LoaderPlatformImpl : cc/polyfr
 	public fun getLoadedMods ()Ljava/util/List;
 	public fun hasActiveModContainer ()Z
 	public fun isModLoaded (Ljava/lang/String;)Z
+	public fun reloadModsList ()Ljava/util/List;
 	public fun toActiveMod (Ljava/lang/Object;)Lcc/polyfrost/oneconfig/platform/LoaderPlatform$ActiveMod;
 }
 
