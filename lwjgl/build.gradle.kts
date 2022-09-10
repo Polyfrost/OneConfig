@@ -1,8 +1,11 @@
 @file:Suppress("GradlePackageUpdate")
 
+import org.objectweb.asm.ClassReader
+import org.objectweb.asm.ClassWriter
+import org.objectweb.asm.tree.ClassNode
+import java.io.Closeable
 import java.util.jar.JarInputStream
 import java.util.jar.JarOutputStream
-import java.io.Closeable
 import java.util.zip.ZipEntry
 
 plugins {
@@ -89,9 +92,6 @@ tasks {
             exclude("**/module-info.class")
             exclude("**/package-info.class")
         }
-        relocate("lwjgl", "lwjgl3") {
-            include("org/lwjgl/system/Library.class")
-        }
         relocate("org.lwjgl", "org.lwjgl3")
         val lwjglNatives = mapOf(
             "liblwjgl.so" to "liblwjgl3.so",
@@ -115,10 +115,40 @@ tasks {
             useInOut((input to output)) { jarIn, jarOut ->
                 while (true) {
                     val entry = jarIn.nextJarEntry ?: break
+                    var modifiedBytes = jarIn.readBytes()
+                    if (entry.name.endsWith(".class")) {
+                        val reader = ClassReader(modifiedBytes)
+                        val node = ClassNode()
+                        reader.accept(node, ClassReader.EXPAND_FRAMES)
+
+                        node.methods.forEach {
+                            if (it.name == "<clinit>") {
+                                it.instructions.forEach { insn ->
+                                    if (insn is org.objectweb.asm.tree.LdcInsnNode) {
+                                        if (insn.cst is String) {
+                                            val str = insn.cst as String
+                                            if (str == "lwjgl") {
+                                                insn.cst = "lwjgl3"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        val cw = ClassWriter(ClassWriter.COMPUTE_FRAMES)
+                        try {
+                            node.accept(cw)
+                        } catch (t: Throwable) {
+                            logger.error("Exception when transforming " + entry.name + " : " + t.javaClass.simpleName)
+                            t.printStackTrace()
+                        }
+                        modifiedBytes = cw.toByteArray()
+                    }
                     val beforeName = entry.name.substringBeforeLast("/")
                     val afterName = entry.name.substringAfterLast("/")
                     jarOut.putNextEntry(ZipEntry(lwjglNatives[afterName]?.let { "$beforeName/$it" } ?: entry.name))
-                    jarOut.write(jarIn.readBytes())
+                    jarOut.write(modifiedBytes)
                     jarOut.closeEntry()
                 }
             }
