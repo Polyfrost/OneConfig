@@ -115,7 +115,7 @@ dependencies {
     shade("org.spongepowered:mixin:0.7.11-SNAPSHOT") {
         isTransitive = false
     }
-    shade("cc.polyfrost:lwjgl-1.8.9-forge:1.0.0-alpha14")
+    shade("cc.polyfrost:lwjgl-1.8.9-forge:1.0.0-alpha19")
     shadeNoPom(prebundle(shadeRelocated))
 
     configurations.named(JavaPlugin.COMPILE_CLASSPATH_CONFIGURATION_NAME) { extendsFrom(shadeNoPom) }

@@ -25,7 +25,7 @@
  */
 
 package cc.polyfrost.oneconfig.internal.plugin.hooks;
-
+//#if MC<=11202
 import org.lwjgl3.system.FunctionProvider;
 
 import java.lang.reflect.Method;
@@ -71,3 +71,4 @@ public class Lwjgl2FunctionProvider implements FunctionProvider {
         throw new UnsupportedOperationException();
     }
 }
+//#endif

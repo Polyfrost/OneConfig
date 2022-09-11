@@ -175,7 +175,7 @@ dependencies {
         include("com.github.Chocohead:Fabric-ASM:v2.3")
     }
     val tempLwjglConfiguration by configurations.creating
-    compileOnly(tempLwjglConfiguration("cc.polyfrost:lwjgl-$platform:1.0.0-alpha14") {
+    compileOnly(tempLwjglConfiguration("cc.polyfrost:lwjgl-$platform:1.0.0-alpha19") {
         isTransitive = false
     })
     shadeNoPom(shade(prebundle(tempLwjglConfiguration, "lwjgl.jar"))!!)
