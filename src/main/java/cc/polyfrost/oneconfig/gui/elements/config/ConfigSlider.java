@@ -99,7 +99,7 @@ public class ConfigSlider extends BasicOption {
         }
         if (!inputField.isToggled()) inputField.setCurrentValue(value);
 
-        RenderManager.drawText(vg, name, x, y + 17, Colors.WHITE_90, 14f, Fonts.MEDIUM);
+        RenderManager.drawText(vg, name, x, y + 17, nameColor, 14f, Fonts.MEDIUM);
         RenderManager.drawRoundedRect(vg, x + 352, y + 13, 512, 6, Colors.GRAY_300, 4f);
         RenderManager.drawRoundedRect(vg, x + 352, y + 13, xCoordinate - x - 352, 6, Colors.PRIMARY_500, 4f);
         if (step > 0) {

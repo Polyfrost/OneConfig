@@ -32,6 +32,7 @@ import cc.polyfrost.oneconfig.config.elements.BasicOption;
 import cc.polyfrost.oneconfig.gui.elements.BasicButton;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
+import cc.polyfrost.oneconfig.renderer.scissor.ScissorManager;
 import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 
@@ -76,9 +77,12 @@ public class ModConfigPage extends Page {
         for (OptionSubcategory subCategory : page.categories.get(selectedCategory).subcategories) {
             optionY += subCategory.draw(vg, x + 30, optionY, inputHandler);
         }
+        ScissorManager.save();
+        ScissorManager.clearScissors(vg);
         for (OptionSubcategory subCategory : page.categories.get(selectedCategory).subcategories) {
             subCategory.drawLast(vg, x + 30, inputHandler);
         }
+        ScissorManager.restore(vg);
         totalSize = optionY - y;
     }
 

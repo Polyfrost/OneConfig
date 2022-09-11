@@ -293,6 +293,7 @@ public abstract class cc/polyfrost/oneconfig/config/elements/BasicOption {
 	public final field description Ljava/lang/String;
 	protected final field field Ljava/lang/reflect/Field;
 	public final field name Ljava/lang/String;
+	protected field nameColor I
 	protected field parent Ljava/lang/Object;
 	public final field size I
 	public final field subcategory Ljava/lang/String;
@@ -301,11 +302,12 @@ public abstract class cc/polyfrost/oneconfig/config/elements/BasicOption {
 	public fun addHideCondition (Ljava/util/function/Supplier;)V
 	public fun addListener (Ljava/lang/Runnable;)V
 	public abstract fun draw (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
-	public fun drawDescription (JIIILcc/polyfrost/oneconfig/utils/InputHandler;)V
+	public fun drawDescription (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
 	public fun drawLast (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
 	public fun get ()Ljava/lang/Object;
 	public fun getField ()Ljava/lang/reflect/Field;
 	public abstract fun getHeight ()I
+	protected fun getNameX (I)F
 	public fun getParent ()Ljava/lang/Object;
 	public fun isEnabled ()Z
 	public fun isHidden ()Z
@@ -728,6 +730,7 @@ public class cc/polyfrost/oneconfig/gui/elements/config/ConfigCheckbox : cc/poly
 	public static fun create (Ljava/lang/reflect/Field;Ljava/lang/Object;)Lcc/polyfrost/oneconfig/gui/elements/config/ConfigCheckbox;
 	public fun draw (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
 	public fun getHeight ()I
+	protected fun getNameX (I)F
 }
 
 public class cc/polyfrost/oneconfig/gui/elements/config/ConfigColorElement : cc/polyfrost/oneconfig/config/elements/BasicOption {
@@ -799,6 +802,7 @@ public class cc/polyfrost/oneconfig/gui/elements/config/ConfigSwitch : cc/polyfr
 	public static fun create (Ljava/lang/reflect/Field;Ljava/lang/Object;)Lcc/polyfrost/oneconfig/gui/elements/config/ConfigSwitch;
 	public fun draw (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
 	public fun getHeight ()I
+	protected fun getNameX (I)F
 }
 
 public class cc/polyfrost/oneconfig/gui/elements/config/ConfigTextBox : cc/polyfrost/oneconfig/config/elements/BasicOption {
@@ -1337,6 +1341,8 @@ public class cc/polyfrost/oneconfig/renderer/scissor/ScissorManager {
 	public fun <init> ()V
 	public static fun clearScissors (J)V
 	public static fun resetScissor (JLcc/polyfrost/oneconfig/renderer/scissor/Scissor;)V
+	public static fun restore (J)V
+	public static fun save ()V
 	public static fun scissor (JFFFF)Lcc/polyfrost/oneconfig/renderer/scissor/Scissor;
 }
 

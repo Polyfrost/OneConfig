@@ -62,7 +62,7 @@ public class ConfigDropdown extends BasicOption {
     @Override
     public void draw(long vg, int x, int y, InputHandler inputHandler) {
         if (!isEnabled()) RenderManager.setAlpha(vg, 0.5f);
-        RenderManager.drawText(vg, name, x, y + 16, Colors.WHITE_90, 14f, Fonts.MEDIUM);
+        RenderManager.drawText(vg, name, x, y + 16, nameColor, 14f, Fonts.MEDIUM);
 
         boolean hovered;
         if (size == 1) hovered = inputHandler.isAreaHovered(x + 224, y, 256, 32) && isEnabled();

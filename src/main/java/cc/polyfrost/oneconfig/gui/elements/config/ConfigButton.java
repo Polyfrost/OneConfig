@@ -94,7 +94,7 @@ public class ConfigButton extends BasicOption {
     public void draw(long vg, int x, int y, InputHandler inputHandler) {
         button.disable(!isEnabled());
         if (!isEnabled()) RenderManager.setAlpha(vg, 0.5f);
-        RenderManager.drawText(vg, name, x, y + 17, Colors.WHITE, 14f, Fonts.MEDIUM);
+        RenderManager.drawText(vg, name, x, y + 17, nameColor, 14f, Fonts.MEDIUM);
         button.draw(vg, x + (size == 1 ? 352 : 736), y, inputHandler);
         RenderManager.setAlpha(vg, 1f);
     }
