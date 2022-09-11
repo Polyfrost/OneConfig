@@ -27,6 +27,7 @@
 package cc.polyfrost.oneconfig.config.elements;
 
 import cc.polyfrost.oneconfig.gui.animations.Animation;
+import cc.polyfrost.oneconfig.gui.animations.ColorAnimation;
 import cc.polyfrost.oneconfig.gui.animations.DummyAnimation;
 import cc.polyfrost.oneconfig.gui.animations.EaseOutQuad;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
@@ -34,6 +35,7 @@ import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.utils.InputHandler;
+import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 
 import java.lang.reflect.Field;
@@ -49,13 +51,13 @@ public abstract class BasicOption {
     public final String description;
     public final String category;
     public final String subcategory;
+    private final ColorAnimation nameColorAnimation = new ColorAnimation(new ColorPalette(Colors.WHITE_90, Colors.WHITE, Colors.WHITE_90));
+    protected int nameColor = Colors.WHITE_90;
     private final ArrayList<Supplier<Boolean>> dependencies = new ArrayList<>();
     private final ArrayList<Runnable> listeners = new ArrayList<>();
     private final ArrayList<Supplier<Boolean>> hideConditions = new ArrayList<>();
     private Animation descriptionAnimation = new DummyAnimation(0f);
-    private float mouseStillTime = 0f;
-    private float prevMouseX = 0f;
-    private float prevMouseY = 0f;
+    private float hoverTime = 0f;
 
     /**
      * Initialize option
@@ -130,15 +132,12 @@ public abstract class BasicOption {
     public void keyTyped(char key, int keyCode) {
     }
 
-    public void drawDescription(long vg, int x, int y, int height, InputHandler inputHandler) {
+    public void drawDescription(long vg, int x, int y, InputHandler inputHandler) {
         if (description.trim().equals("")) return;
-        if (inputHandler.isAreaHovered(x - 16, y, size == 1 ? 512f : 1024f, height) && prevMouseX == inputHandler.mouseX() && prevMouseY == inputHandler.mouseY()) {
-            mouseStillTime += GuiUtils.getDeltaTime();
-        } else {
-            mouseStillTime = 0;
-        }
-        prevMouseX = inputHandler.mouseX();
-        prevMouseY = inputHandler.mouseY();
+        boolean hovered = inputHandler.isAreaHovered(getNameX(x), y, RenderManager.getTextWidth(vg, name, 14f, Fonts.MEDIUM), 32f);
+        nameColor = nameColorAnimation.getColor(hovered, false);
+        if (hovered) hoverTime += GuiUtils.getDeltaTime();
+        else hoverTime = 0;
         boolean shouldDrawDescription = shouldDrawDescription();
         if (descriptionAnimation.getEnd() != 1f && shouldDrawDescription) {
             descriptionAnimation = new EaseOutQuad(150, descriptionAnimation.get(0), 1f, false);
@@ -159,7 +158,17 @@ public abstract class BasicOption {
      * @return If this option should draw its description
      */
     protected boolean shouldDrawDescription() {
-        return mouseStillTime > 350;
+        return hoverTime > 350;
+    }
+
+    /**
+     * Get the X of the name of the option, used to trigger the description
+     *
+     * @param x The x coordinate of the option
+     * @return The x coordinate of the option's name
+     */
+    protected int getNameX(int x) {
+        return x;
     }
 
     /**

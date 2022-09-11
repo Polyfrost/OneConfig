@@ -45,7 +45,7 @@ public class ConfigTextBox extends BasicOption {
     private final TextInputField textField;
 
     public ConfigTextBox(Field field, Object parent, String name, String description, String category, String subcategory, int size, String placeholder, boolean secure, boolean multiLine) {
-        super(field, parent, name, category, description, subcategory, size);
+        super(field, parent, name, description, category, subcategory, size);
         this.secure = secure;
         this.multiLine = multiLine;
         this.textField = new TextInputField(size == 1 ? 256 : 640, multiLine ? 64 : 32, placeholder, multiLine, secure);
@@ -60,7 +60,7 @@ public class ConfigTextBox extends BasicOption {
     public void draw(long vg, int x, int y, InputHandler inputHandler) {
         if (!isEnabled()) RenderManager.setAlpha(vg, 0.5f);
         textField.disable(!isEnabled());
-        RenderManager.drawText(vg, name, x, y + 16, Colors.WHITE_90, 14, Fonts.MEDIUM);
+        RenderManager.drawText(vg, name, x, y + 16, nameColor, 14, Fonts.MEDIUM);
 
         try {
             String value = (String) get();

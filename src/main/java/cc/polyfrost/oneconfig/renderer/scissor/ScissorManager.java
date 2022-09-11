@@ -34,7 +34,8 @@ import java.util.ArrayList;
  * Provides an easy way to manage and group scissor rectangles.
  */
 public class ScissorManager {
-    private static final ArrayList<Scissor> scissors = new ArrayList<>();
+    private static final ArrayList<ArrayList<Scissor>> previousScissors = new ArrayList<>();
+    private static ArrayList<Scissor> scissors = new ArrayList<>();
 
     /**
      * Adds and applies a scissor rectangle to the list of scissor rectangles.
@@ -77,9 +78,26 @@ public class ScissorManager {
         NanoVG.nvgResetScissor(vg);
     }
 
+    /**
+     * Save the current scissors
+     */
+    public static void save() {
+        previousScissors.add(new ArrayList<>(scissors));
+    }
+
+    /**
+     * Restore the scissors from the last save
+     *
+     * @param vg The NanoVG context.
+     */
+    public static void restore(long vg) {
+        scissors = previousScissors.remove(0);
+        applyScissors(vg);
+    }
+
     private static void applyScissors(long vg) {
         NanoVG.nvgResetScissor(vg);
-        if (scissors.size() <= 0) return;
+        if (scissors.size() == 0) return;
         Scissor finalScissor = getFinalScissor(scissors);
         NanoVG.nvgScissor(vg, finalScissor.x, finalScissor.y, finalScissor.width, finalScissor.height);
     }

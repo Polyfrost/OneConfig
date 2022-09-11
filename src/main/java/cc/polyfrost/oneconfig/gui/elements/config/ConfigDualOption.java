@@ -69,7 +69,7 @@ public class ConfigDualOption extends BasicOption {
         if (!isEnabled()) RenderManager.setAlpha(vg, 0.5f);
         boolean hoveredLeft = inputHandler.isAreaHovered(x + 226, y, 128, 32) && isEnabled();
         boolean hoveredRight = inputHandler.isAreaHovered(x + 354, y, 128, 32) && isEnabled();
-        RenderManager.drawText(vg, name, x, y + 16, Colors.WHITE_90, 14f, Fonts.MEDIUM);
+        RenderManager.drawText(vg, name, x, y + 16, nameColor, 14f, Fonts.MEDIUM);
         RenderManager.drawRoundedRect(vg, x + 226, y, 256, 32, Colors.GRAY_600, 12f);
         RenderManager.drawRoundedRect(vg, x + posAnimation.get(), y + 2, 124, 28, Colors.PRIMARY_600, 10f);
         if (!hoveredLeft && isEnabled()) RenderManager.setAlpha(vg, 0.8f);
