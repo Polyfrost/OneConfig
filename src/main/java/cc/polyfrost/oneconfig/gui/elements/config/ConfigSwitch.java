@@ -88,7 +88,7 @@ public class ConfigSwitch extends BasicOption {
     }
 
     @Override
-    protected int getNameX(int x) {
+    protected float getNameX(int x) {
         return x + 50;
     }
 

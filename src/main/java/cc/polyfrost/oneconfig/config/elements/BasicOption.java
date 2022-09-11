@@ -167,7 +167,7 @@ public abstract class BasicOption {
      * @param x The x coordinate of the option
      * @return The x coordinate of the option's name
      */
-    protected int getNameX(int x) {
+    protected float getNameX(int x) {
         return x;
     }
 

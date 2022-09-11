@@ -307,7 +307,7 @@ public abstract class cc/polyfrost/oneconfig/config/elements/BasicOption {
 	public fun get ()Ljava/lang/Object;
 	public fun getField ()Ljava/lang/reflect/Field;
 	public abstract fun getHeight ()I
-	protected fun getNameX (I)I
+	protected fun getNameX (I)F
 	public fun getParent ()Ljava/lang/Object;
 	public fun isEnabled ()Z
 	public fun isHidden ()Z
@@ -730,7 +730,7 @@ public class cc/polyfrost/oneconfig/gui/elements/config/ConfigCheckbox : cc/poly
 	public static fun create (Ljava/lang/reflect/Field;Ljava/lang/Object;)Lcc/polyfrost/oneconfig/gui/elements/config/ConfigCheckbox;
 	public fun draw (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
 	public fun getHeight ()I
-	protected fun getNameX (I)I
+	protected fun getNameX (I)F
 }
 
 public class cc/polyfrost/oneconfig/gui/elements/config/ConfigColorElement : cc/polyfrost/oneconfig/config/elements/BasicOption {
@@ -802,7 +802,7 @@ public class cc/polyfrost/oneconfig/gui/elements/config/ConfigSwitch : cc/polyfr
 	public static fun create (Ljava/lang/reflect/Field;Ljava/lang/Object;)Lcc/polyfrost/oneconfig/gui/elements/config/ConfigSwitch;
 	public fun draw (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
 	public fun getHeight ()I
-	protected fun getNameX (I)I
+	protected fun getNameX (I)F
 }
 
 public class cc/polyfrost/oneconfig/gui/elements/config/ConfigTextBox : cc/polyfrost/oneconfig/config/elements/BasicOption {
