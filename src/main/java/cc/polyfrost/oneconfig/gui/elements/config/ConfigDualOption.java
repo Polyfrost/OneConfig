@@ -42,15 +42,15 @@ public class ConfigDualOption extends BasicOption {
     private final String left, right;
     private Animation posAnimation;
 
-    public ConfigDualOption(Field field, Object parent, String name, String category, String subcategory, int size, String left, String right) {
-        super(field, parent, name, category, subcategory, size);
+    public ConfigDualOption(Field field, Object parent, String name, String description, String category, String subcategory, int size, String left, String right) {
+        super(field, parent, name, description, category, subcategory, size);
         this.left = left;
         this.right = right;
     }
 
     public static ConfigDualOption create(Field field, Object parent) {
         DualOption dualOption = field.getAnnotation(DualOption.class);
-        return new ConfigDualOption(field, parent, dualOption.name(), dualOption.category(), dualOption.subcategory(), dualOption.size(), dualOption.left(), dualOption.right());
+        return new ConfigDualOption(field, parent, dualOption.name(), dualOption.description(), dualOption.category(), dualOption.subcategory(), dualOption.size(), dualOption.left(), dualOption.right());
     }
 
     @Override

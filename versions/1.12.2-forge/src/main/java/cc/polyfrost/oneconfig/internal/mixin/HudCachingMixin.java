@@ -24,29 +24,27 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.config.annotations;
+//#if MC==11202
+package cc.polyfrost.oneconfig.internal.mixin;
 
-import cc.polyfrost.oneconfig.config.data.OptionType;
-import cc.polyfrost.oneconfig.internal.config.annotations.Option;
+import net.minecraft.client.shader.Framebuffer;
+import org.spongepowered.asm.mixin.Dynamic;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Pseudo;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+@Pseudo
+@Mixin(targets = "club.sk1er.patcher.screen.render.caching.HUDCaching", remap = false)
+public class HudCachingMixin {
 
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.FIELD)
-@Option(type = OptionType.DROPDOWN)
-public @interface Dropdown {
-    String name();
-
-    String[] options();
-
-    String description() default "";
-
-    int size() default 1;
-
-    String category() default "General";
-
-    String subcategory() default "";
+    @Dynamic
+    @Inject(method = "checkFramebufferSizes", at = @At(value = "RETURN", ordinal = 0), remap = false)
+    private static void checkFramebufferSizes(Framebuffer framebuffer, int width, int height, CallbackInfoReturnable<Framebuffer> cir) {
+        if (cir.getReturnValue() != null && !cir.getReturnValue().isStencilEnabled()) {
+            cir.getReturnValue().enableStencil();
+        }
+    }
 }
+//#endif

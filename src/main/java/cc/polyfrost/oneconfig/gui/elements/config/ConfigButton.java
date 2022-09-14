@@ -42,20 +42,20 @@ import java.util.Arrays;
 public class ConfigButton extends BasicOption {
     private final BasicButton button;
 
-    public ConfigButton(Runnable runnable, Object parent, String name, String category, String subcategory, int size, String text) {
-        super(null, parent, name, category, subcategory, size);
+    public ConfigButton(Runnable runnable, Object parent, String name, String description, String category, String subcategory, int size, String text) {
+        super(null, parent, name, description, category, subcategory, size);
         this.button = new BasicButton(size == 1 ? 128 : 256, 32, text, BasicButton.ALIGNMENT_CENTER, ColorPalette.PRIMARY);
         this.button.setClickAction(runnable);
     }
 
-    public ConfigButton(Field field, Object parent, String name, String category, String subcategory, int size, String text) {
-        super(field, parent, name, category, subcategory, size);
+    public ConfigButton(Field field, Object parent, String name, String description, String category, String subcategory, int size, String text) {
+        super(field, parent, name, description, category, subcategory, size);
         this.button = new BasicButton(size == 1 ? 128 : 256, 32, text, BasicButton.ALIGNMENT_CENTER, ColorPalette.PRIMARY);
         this.button.setClickAction(getRunnableFromField(field, parent));
     }
 
-    public ConfigButton(Method method, Object parent, String name, String category, String subcategory, int size, String text) {
-        super(null, parent, name, category, subcategory, size);
+    public ConfigButton(Method method, Object parent, String name, String description, String category, String subcategory, int size, String text) {
+        super(null, parent, name, description, category, subcategory, size);
         this.button = new BasicButton(size == 1 ? 128 : 256, 32, text, BasicButton.ALIGNMENT_CENTER, ColorPalette.PRIMARY);
         this.button.setClickAction(() -> {
             try {
@@ -70,13 +70,13 @@ public class ConfigButton extends BasicOption {
 
     public static ConfigButton create(Field field, Object parent) {
         Button button = field.getAnnotation(Button.class);
-        return new ConfigButton(field, parent, button.name(), button.category(), button.subcategory(), button.size(), button.text());
+        return new ConfigButton(field, parent, button.name(), button.description(), button.category(), button.subcategory(), button.size(), button.text());
     }
 
     public static ConfigButton create(Method method, Object parent) {
         method.setAccessible(true);
         Button button = method.getAnnotation(Button.class);
-        return new ConfigButton(method, parent, button.name(), button.category(), button.subcategory(), button.size(), button.text());
+        return new ConfigButton(method, parent, button.name(), button.description(), button.category(), button.subcategory(), button.size(), button.text());
     }
 
     private static Runnable getRunnableFromField(Field field, Object parent) {
