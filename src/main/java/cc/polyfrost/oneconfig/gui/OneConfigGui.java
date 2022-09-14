@@ -107,9 +107,7 @@ public class OneConfigGui extends OneUIScreen {
         RenderManager.drawLine(vg, x + 224, y + 72, x + 1280, y + 72, 1, Colors.GRAY_700);
         RenderManager.drawLine(vg, x + 224, y, x + 222, y + 800, 1, Colors.GRAY_700);
 
-        RenderManager.drawSvg(vg, SVGs.ONECONFIG, x + 19, y + 19, 42, 42);
-        RenderManager.drawText(vg, "OneConfig", x + 69, y + 32, -1, 18f, Fonts.BOLD);        // added half line height to center text
-        RenderManager.drawText(vg, "By Polyfrost", x + 69, y + 51, -1, 12f, Fonts.REGULAR);
+        RenderManager.drawSvg(vg, SVGs.ONECONFIG_FULL_DARK, x + 33f, y + 22f, 158f, 34f);
 
         textInputField.draw(vg, x + 1020, y + 16, inputHandler);
         sideBar.draw(vg, x, y, inputHandler);

@@ -38,10 +38,8 @@ public class CreditsPage extends Page {
 
     @Override
     public void draw(long vg, int x, int y, InputHandler inputHandler) {
-        RenderManager.drawSvg(vg, SVGs.ONECONFIG, x + 20f, y + 20f, 96, 96);
-        RenderManager.drawText(vg, "OneConfig", x + 130, y + 46, -1, 42, Fonts.BOLD);
-        RenderManager.drawText(vg, "ALPHA - By Polyfrost", x + 132, y + 76, -1, 18, Fonts.MEDIUM);
-        RenderManager.drawText(vg, "v0.1", x + 132, y + 96, -1, 18, Fonts.MEDIUM);
+        RenderManager.drawSvg(vg, SVGs.ONECONFIG_FULL_DARK, x + 15f, y + 20f, 474, 102);
+        y -= 32;
 
         RenderManager.drawText(vg, "Development Team", x + 20, y + 180, -1, 24, Fonts.SEMIBOLD);
         RenderManager.drawText(vg, " - MoonTidez - Founder and lead designer", x + 20, y + 205, -1, 12, Fonts.REGULAR);
@@ -50,8 +48,6 @@ public class CreditsPage extends Page {
         RenderManager.drawText(vg, " - Wyvest - Gradle, Render Manager, VCAL, Utilities", x + 20, y + 250, -1, 12, Fonts.REGULAR);
         RenderManager.drawText(vg, " - Pauline - Utilities", x + 20, y + 265, -1, 12, Fonts.REGULAR);
         RenderManager.drawText(vg, " - Caledonian - Designer", x + 20, y + 280, -1, 12, Fonts.REGULAR);
-
-        x = x + 15;
 
         RenderManager.drawText(vg, "Libraries", x + 20, y + 318, -1, 24, Fonts.SEMIBOLD);
         RenderManager.drawText(vg, " - LWJGLTwoPointFive (DJTheRedstoner) - LWJGL3 loading hack", x + 20, y + 340, -1, 12, Fonts.REGULAR);
