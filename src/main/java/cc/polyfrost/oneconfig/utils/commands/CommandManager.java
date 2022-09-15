@@ -102,6 +102,15 @@ public class CommandManager {
     }
 
     /**
+     * Shortcut for registering the provided command, if you are lazy. <br>
+     * This method is fail-fast, meaning that it will throw Exceptions if the command is invalid upon startup.
+     * @param obj the command to register (must be an instance of a class annotated with @Command).
+     */
+    public static void register(Object obj) {
+        INSTANCE.registerCommand(obj);
+    }
+
+    /**
      * Registers the provided command. <b>Deprecated!</b>
      *
      * @param cls the command to register as a class.

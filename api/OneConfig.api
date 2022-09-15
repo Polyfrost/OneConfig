@@ -1482,6 +1482,7 @@ public class cc/polyfrost/oneconfig/utils/commands/CommandManager {
 	public static final field INSTANCE Lcc/polyfrost/oneconfig/utils/commands/CommandManager;
 	public fun addParser (Lcc/polyfrost/oneconfig/utils/commands/arguments/ArgumentParser;)V
 	public fun addParser (Lcc/polyfrost/oneconfig/utils/commands/arguments/ArgumentParser;Ljava/lang/Class;)V
+	public static fun register (Ljava/lang/Object;)V
 	public fun registerCommand (Ljava/lang/Class;)V
 	public fun registerCommand (Ljava/lang/Object;)V
 }
