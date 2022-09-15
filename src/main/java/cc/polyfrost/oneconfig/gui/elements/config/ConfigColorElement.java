@@ -76,7 +76,7 @@ public class ConfigColorElement extends BasicOption {
         } catch (IllegalAccessException e) {
             return;
         }
-        RenderManager.drawText(vg, name, x, y + 16, Colors.WHITE_90, 14f, Fonts.MEDIUM);
+        RenderManager.drawText(vg, name, x, y + 16, nameColor, 14f, Fonts.MEDIUM);
         if (!hexField.isToggled()) hexField.setInput("#" + color.getHex());
         hexField.setErrored(false);
         if (hexField.isToggled()) {

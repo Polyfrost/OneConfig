@@ -55,7 +55,7 @@ public class ConfigInfo extends BasicOption {
     public void draw(long vg, int x, int y, InputHandler inputHandler) {
         Scissor scissor = ScissorManager.scissor(vg, x, y, size == 1 ? 448 : 960, 32);
         RenderManager.drawInfo(vg, type, x, y + 4, 24);
-        RenderManager.drawText(vg, name, x + 32, y + 18, Colors.WHITE_90, 14, Fonts.MEDIUM);
+        RenderManager.drawText(vg, name, x + 32, y + 18, nameColor, 14, Fonts.MEDIUM);
         ScissorManager.resetScissor(vg, scissor);
     }
 
