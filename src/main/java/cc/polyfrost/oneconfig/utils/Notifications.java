@@ -224,7 +224,7 @@ public final class Notifications {
 
     private float deltaTime = 0;
 
-    @Subscribe
+    //@Subscribe
     private void onHudRender(HudRenderEvent event) {
         RenderManager.setupAndDraw((vg) -> {
             float desiredPosition = -16f;

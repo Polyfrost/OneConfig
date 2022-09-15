@@ -93,7 +93,7 @@ public class OneConfigCommand {
         }
 
         @SubCommand(description = "Rename a Profile")
-        private void rename(@Description("Old name") String profile, @Description("New name") @Greedy String newName) {
+        private void rename(@Description("Old name") String profile, @Description("New name") String newName) {
             if (!Profiles.doesProfileExist(profile)) {
                 UChat.chat(ChatColor.RED + "The Profile \"" + profile + "\" does not exist!");
             } else {
