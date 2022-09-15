@@ -60,8 +60,8 @@ public class OneConfigGui extends OneUIScreen {
     private final TextInputField textInputField = new TextInputField(248, 40, "Search...", false, false, SVGs.MAGNIFYING_GLASS_BOLD);
     private final ArrayList<Page> previousPages = new ArrayList<>();
     private final ArrayList<Page> nextPages = new ArrayList<>();
-    private final BasicElement backArrow = new BasicElement(40, 40, new ColorPalette(Colors.GRAY_700, Colors.GRAY_500, Colors.GRAY_500_80), true);
-    private final BasicElement forwardArrow = new BasicElement(40, 40, new ColorPalette(Colors.GRAY_700, Colors.GRAY_500, Colors.GRAY_500_80), true);
+    private final BasicElement backArrow = new BasicElement(40, 40, ColorPalette.TERTIARY, true);
+    private final BasicElement forwardArrow = new BasicElement(40, 40, ColorPalette.TERTIARY, true);
     public ColorSelector currentColorSelector;
     public boolean allowClose = true;
     protected Page currentPage;
@@ -83,7 +83,6 @@ public class OneConfigGui extends OneUIScreen {
 
     @Override
     public void draw(long vg, float partialTicks, InputHandler inputHandler) {
-        long start = System.nanoTime();
         if (currentPage == null) {
             currentPage = new ModsPage();
             currentPage.parents.add(currentPage);
@@ -111,8 +110,8 @@ public class OneConfigGui extends OneUIScreen {
 
         textInputField.draw(vg, x + 1020, y + 16, inputHandler);
         sideBar.draw(vg, x, y, inputHandler);
-        backArrow.draw(vg, x + 240, y + 16, inputHandler);
-        forwardArrow.draw(vg, x + 288, y + 16, inputHandler);
+        backArrow.update(x + 240, y + 16, inputHandler);
+        forwardArrow.update(x + 280, y + 16, inputHandler);
 
         if (previousPages.size() == 0) {
             backArrow.disable(true);
@@ -122,7 +121,7 @@ public class OneConfigGui extends OneUIScreen {
             if (!backArrow.isHovered() || Platform.getMousePlatform().isButtonDown(0))
                 RenderManager.setAlpha(vg, 0.8f);
         }
-        RenderManager.drawSvg(vg, SVGs.CARET_LEFT, x + 246, y + 22, 28, 28);
+        RenderManager.drawSvg(vg, SVGs.ARROW_LEFT, x + 250, y + 26, 20, 20, backArrow.currentColor);
         RenderManager.setAlpha(vg, 1f);
         if (nextPages.size() == 0) {
             forwardArrow.disable(true);
@@ -132,7 +131,7 @@ public class OneConfigGui extends OneUIScreen {
             if (!forwardArrow.isHovered() || Platform.getMousePlatform().isButtonDown(0))
                 RenderManager.setAlpha(vg, 0.8f);
         }
-        RenderManager.drawSvg(vg, SVGs.CARET_RIGHT, x + 294, y + 22, 28, 28);
+        RenderManager.drawSvg(vg, SVGs.ARROW_RIGHT, x + 290, y + 26, 20, 20, forwardArrow.currentColor);
         RenderManager.setAlpha(vg, 1f);
 
         if (backArrow.isClicked() && previousPages.size() > 0) {
@@ -171,7 +170,7 @@ public class OneConfigGui extends OneUIScreen {
         ScissorManager.clearScissors(vg);
         inputHandler.stopBlock(blockedClicks);
 
-        float breadcrumbX = x + 352;
+        float breadcrumbX = x + 336;
         for (int i = 0; i < currentPage.parents.size(); i++) {
             String title = currentPage.parents.get(i).getTitle();
             float width = RenderManager.getTextWidth(vg, title, 24f, Fonts.SEMIBOLD);
@@ -186,9 +185,6 @@ public class OneConfigGui extends OneUIScreen {
             breadcrumbX += width + 32;
         }
 
-        long end = System.nanoTime() - start;
-        String s = (" draw: " + end / 1000000f + "ms");
-        RenderManager.drawText(vg, s, x + 1170, y + 792, Colors.GRAY_300, 10f, Fonts.MEDIUM);
         if (currentColorSelector != null) {
             currentColorSelector.draw(vg);
         }

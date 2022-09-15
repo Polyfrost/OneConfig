@@ -50,6 +50,8 @@ public class SVGs {
     public static final SVG X_CIRCLE_BOLD = new SVG("/assets/oneconfig/icons/XCircleBold.svg");
     public static final SVG CARET_LEFT = new SVG("/assets/oneconfig/icons/CaretLeftBold.svg");
     public static final SVG CARET_RIGHT = new SVG("/assets/oneconfig/icons/CaretRightBold.svg");
+    public static final SVG ARROW_LEFT = new SVG("/assets/oneconfig/icons/ArrowLeft.svg");
+    public static final SVG ARROW_RIGHT = new SVG("/assets/oneconfig/icons/ArrowRight.svg");
     public static final SVG INFO_ARROW = new SVG("/assets/oneconfig/icons/InfoArrow.svg");
 
     // OLD ICONS

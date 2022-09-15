@@ -621,10 +621,6 @@ public final class RenderManager {
     public static void drawSvg(long vg, String filePath, float x, float y, float width, float height, float scale) {
         float w = width * scale;
         float h = height * scale;
-        if (OneConfigGui.INSTANCE != null && OneConfigGui.isOpen()) {
-            w *= OneConfigGui.INSTANCE.getScaleFactor();
-            h *= OneConfigGui.INSTANCE.getScaleFactor();
-        }
         if (AssetLoader.INSTANCE.loadSVG(vg, filePath, w, h)) {
             NVGPaint imagePaint = NVGPaint.calloc();
             int image = AssetLoader.INSTANCE.getSVG(filePath, w, h);
@@ -648,11 +644,8 @@ public final class RenderManager {
      * @param height   The height.
      */
     public static void drawSvg(long vg, String filePath, float x, float y, float width, float height) {
-        float scale = 1;
-        if (OneConfigGui.isOpen()) {
-            scale = OneConfigGui.getScaleFactor();
-        }
-        drawSvg(vg, filePath, x, y, width, height, scale);
+        if (OneConfigGui.isOpen()) drawSvg(vg, filePath, x, y, width, height, OneConfigGui.getScaleFactor());
+        else drawSvg(vg, filePath, x, y, width, height, 1f);
     }
 
     /**
@@ -695,11 +688,8 @@ public final class RenderManager {
      * @param color    The color.
      */
     public static void drawSvg(long vg, String filePath, float x, float y, float width, float height, int color) {
-        float scale = 1;
-        if (OneConfigGui.isOpen()) {
-            scale = OneConfigGui.getScaleFactor();
-        }
-        drawSvg(vg, filePath, x, y, width, height, color, scale);
+        if (OneConfigGui.isOpen()) drawSvg(vg, filePath, x, y, width, height, color, OneConfigGui.getScaleFactor());
+        else drawSvg(vg, filePath, x, y, width, height, color, 1f);
     }
 
     /**
@@ -708,11 +698,7 @@ public final class RenderManager {
      * @see RenderManager#drawSvg(long, String, float, float, float, float)
      */
     public static void drawSvg(long vg, SVG svg, float x, float y, float width, float height, float scale) {
-        float w = width * scale;
-        float h = height * scale;
-        if (AssetLoader.INSTANCE.loadSVG(vg, svg, w, h)) {
-            drawSvg(vg, svg.filePath, x, y, width, height);
-        }
+        drawSvg(vg, svg.filePath, x, y, width, height, scale);
     }
 
     /**
@@ -721,11 +707,7 @@ public final class RenderManager {
      * @see RenderManager#drawSvg(long, String, float, float, float, float)
      */
     public static void drawSvg(long vg, SVG svg, float x, float y, float width, float height) {
-        float scale = 1;
-        if (OneConfigGui.isOpen()) {
-            scale = OneConfigGui.getScaleFactor();
-        }
-        drawSvg(vg, svg, x, y, width, height, scale);
+        drawSvg(vg, svg.filePath, x, y, width, height);
     }
 
     /**
@@ -734,11 +716,7 @@ public final class RenderManager {
      * @see RenderManager#drawSvg(long, String, float, float, float, float, int)
      */
     public static void drawSvg(long vg, SVG svg, float x, float y, float width, float height, int color, float scale) {
-        float w = width * scale;
-        float h = height * scale;
-        if (AssetLoader.INSTANCE.loadSVG(vg, svg, w, h)) {
-            drawSvg(vg, svg.filePath, x, y, width, height, color);
-        }
+        drawSvg(vg, svg.filePath, x, y, width, height, color, scale);
     }
 
     /**
@@ -747,15 +725,12 @@ public final class RenderManager {
      * @see RenderManager#drawSvg(long, String, float, float, float, float)
      */
     public static void drawSvg(long vg, SVG svg, float x, float y, float width, float height, int color) {
-        float scale = 1;
-        if (OneConfigGui.isOpen()) {
-            scale = OneConfigGui.getScaleFactor();
-        }
-        drawSvg(vg, svg, x, y, width, height, color, scale);
+        if (OneConfigGui.isOpen()) drawSvg(vg, svg, x, y, width, height, color, OneConfigGui.getScaleFactor());
+        else drawSvg(vg, svg, x, y, width, height, color, 1f);
     }
 
     /**
-     * Draw a circle with an info icon inside of it
+     * Draw a circle with an info icon inside it
      *
      * @param vg   The NanoVG context.
      * @param type The icon type.
