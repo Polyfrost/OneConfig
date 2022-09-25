@@ -38,19 +38,18 @@ import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.internal.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.internal.config.Preferences;
-import cc.polyfrost.oneconfig.libs.universal.*;
+import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
+import cc.polyfrost.oneconfig.libs.universal.UResolution;
 import cc.polyfrost.oneconfig.platform.Platform;
-import cc.polyfrost.oneconfig.renderer.RenderManager;
+import cc.polyfrost.oneconfig.renderer.LwjglManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.renderer.scissor.Scissor;
-import cc.polyfrost.oneconfig.renderer.scissor.ScissorManager;
 import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 import cc.polyfrost.oneconfig.utils.gui.OneUIScreen;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.lwjgl3.nanovg.NanoVG;
 
 import java.util.ArrayList;
 
@@ -90,8 +89,8 @@ public class OneConfigGui extends OneUIScreen {
             currentPage.parents.add(currentPage);
         }
         if (OneConfigConfig.australia) {
-            NanoVG.nvgTranslate(vg, UResolution.getWindowWidth(), UResolution.getWindowHeight());
-            NanoVG.nvgRotate(vg, (float) Math.toRadians(180));
+            LwjglManager.INSTANCE.getNanoVGHelper().translate(vg, UResolution.getWindowWidth(), UResolution.getWindowHeight());
+            LwjglManager.INSTANCE.getNanoVGHelper().rotate(vg, (float) Math.toRadians(180));
         }
         scale = Preferences.enableCustomScale ? Preferences.customScale : Math.min(UResolution.getWindowWidth() / 1920f, UResolution.getWindowHeight() / 1080f);
         if (scale < 1 && !Preferences.enableCustomScale)
@@ -99,21 +98,21 @@ public class OneConfigGui extends OneUIScreen {
         scale = (float) (Math.floor(scale / 0.05f) * 0.05f);
         int x = (int) ((UResolution.getWindowWidth() - 1280 * scale) / 2f / scale);
         int y = (int) ((UResolution.getWindowHeight() - 800 * scale) / 2f / scale);
-        RenderManager.scale(vg, scale, scale);
+        LwjglManager.INSTANCE.getNanoVGHelper().scale(vg, scale, scale);
         inputHandler.scale(scale, scale);
 
-        RenderManager.drawDropShadow(vg, x, y, 1280, 800, 32, 0, 20);
-        RenderManager.drawRoundedRect(vg, x + 224, y, 1056, 800, Colors.GRAY_800, 20f);
-        RenderManager.drawRoundedRect(vg, x, y, 244, 800, Colors.GRAY_800_95, 20f);
-        RenderManager.drawRect(vg, x + 224, y, 20, 800, Colors.GRAY_800);
-        RenderManager.drawHollowRoundRect(vg, x - 1, y - 1, 1282, 802, 0x4DCCCCCC, 20, scale < 1 ? 1 / scale : 1);
+        LwjglManager.INSTANCE.getNanoVGHelper().drawDropShadow(vg, x, y, 1280, 800, 32, 0, 20);
+        LwjglManager.INSTANCE.getNanoVGHelper().drawRoundedRect(vg, x + 224, y, 1056, 800, Colors.GRAY_800, 20f);
+        LwjglManager.INSTANCE.getNanoVGHelper().drawRoundedRect(vg, x, y, 244, 800, Colors.GRAY_800_95, 20f);
+        LwjglManager.INSTANCE.getNanoVGHelper().drawRect(vg, x + 224, y, 20, 800, Colors.GRAY_800);
+        LwjglManager.INSTANCE.getNanoVGHelper().drawHollowRoundRect(vg, x - 1, y - 1, 1282, 802, 0x4DCCCCCC, 20, scale < 1 ? 1 / scale : 1);
 
-        RenderManager.drawLine(vg, x + 224, y + 72, x + 1280, y + 72, 1, Colors.GRAY_700);
-        RenderManager.drawLine(vg, x + 224, y, x + 222, y + 800, 1, Colors.GRAY_700);
+        LwjglManager.INSTANCE.getNanoVGHelper().drawLine(vg, x + 224, y + 72, x + 1280, y + 72, 1, Colors.GRAY_700);
+        LwjglManager.INSTANCE.getNanoVGHelper().drawLine(vg, x + 224, y, x + 222, y + 800, 1, Colors.GRAY_700);
 
-        RenderManager.drawSvg(vg, SVGs.ONECONFIG, x + 19, y + 19, 42, 42);
-        RenderManager.drawText(vg, "OneConfig", x + 69, y + 32, -1, 18f, Fonts.BOLD);        // added half line height to center text
-        RenderManager.drawText(vg, "By Polyfrost", x + 69, y + 51, -1, 12f, Fonts.REGULAR);
+        LwjglManager.INSTANCE.getNanoVGHelper().drawSvg(vg, SVGs.ONECONFIG, x + 19, y + 19, 42, 42);
+        LwjglManager.INSTANCE.getNanoVGHelper().drawText(vg, "OneConfig", x + 69, y + 32, -1, 18f, Fonts.BOLD);        // added half line height to center text
+        LwjglManager.INSTANCE.getNanoVGHelper().drawText(vg, "By Polyfrost", x + 69, y + 51, -1, 12f, Fonts.REGULAR);
 
         textInputField.draw(vg, x + 1020, y + 16, inputHandler);
         sideBar.draw(vg, x, y, inputHandler);
@@ -122,24 +121,24 @@ public class OneConfigGui extends OneUIScreen {
 
         if (previousPages.size() == 0) {
             backArrow.disable(true);
-            RenderManager.setAlpha(vg, 0.5f);
+            LwjglManager.INSTANCE.getNanoVGHelper().setAlpha(vg, 0.5f);
         } else {
             backArrow.disable(false);
             if (!backArrow.isHovered() || Platform.getMousePlatform().isButtonDown(0))
-                RenderManager.setAlpha(vg, 0.8f);
+                LwjglManager.INSTANCE.getNanoVGHelper().setAlpha(vg, 0.8f);
         }
-        RenderManager.drawSvg(vg, SVGs.CARET_LEFT, x + 246, y + 22, 28, 28);
-        RenderManager.setAlpha(vg, 1f);
+        LwjglManager.INSTANCE.getNanoVGHelper().drawSvg(vg, SVGs.CARET_LEFT, x + 246, y + 22, 28, 28);
+        LwjglManager.INSTANCE.getNanoVGHelper().setAlpha(vg, 1f);
         if (nextPages.size() == 0) {
             forwardArrow.disable(true);
-            RenderManager.setAlpha(vg, 0.5f);
+            LwjglManager.INSTANCE.getNanoVGHelper().setAlpha(vg, 0.5f);
         } else {
             forwardArrow.disable(false);
             if (!forwardArrow.isHovered() || Platform.getMousePlatform().isButtonDown(0))
-                RenderManager.setAlpha(vg, 0.8f);
+                LwjglManager.INSTANCE.getNanoVGHelper().setAlpha(vg, 0.8f);
         }
-        RenderManager.drawSvg(vg, SVGs.CARET_RIGHT, x + 294, y + 22, 28, 28);
-        RenderManager.setAlpha(vg, 1f);
+        LwjglManager.INSTANCE.getNanoVGHelper().drawSvg(vg, SVGs.CARET_RIGHT, x + 294, y + 22, 28, 28);
+        LwjglManager.INSTANCE.getNanoVGHelper().setAlpha(vg, 1f);
 
         if (backArrow.isClicked() && previousPages.size() > 0) {
             try {
@@ -157,7 +156,7 @@ public class OneConfigGui extends OneUIScreen {
             }
         }
 
-        ScissorManager.scissor(vg, x + 224, y + 72, 1056, 728);
+        LwjglManager.INSTANCE.getScissorHelper().scissor(vg, x + 224, y + 72, 1056, 728);
         Scissor blockedClicks = inputHandler.blockInputArea(x + 224, y, 1056, 72);
         if (prevPage != null && animation != null) {
             float pageProgress = animation.get(GuiUtils.getDeltaTime());
@@ -174,27 +173,27 @@ public class OneConfigGui extends OneUIScreen {
         } else {
             currentPage.scrollWithDraw(vg, x + 224, y + 72, inputHandler);
         }
-        ScissorManager.clearScissors(vg);
+        LwjglManager.INSTANCE.getScissorHelper().clearScissors(vg);
         inputHandler.stopBlock(blockedClicks);
 
         float breadcrumbX = x + 352;
         for (int i = 0; i < currentPage.parents.size(); i++) {
             String title = currentPage.parents.get(i).getTitle();
-            float width = RenderManager.getTextWidth(vg, title, 24f, Fonts.SEMIBOLD);
+            float width = LwjglManager.INSTANCE.getNanoVGHelper().getTextWidth(vg, title, 24f, Fonts.SEMIBOLD);
             boolean hovered = inputHandler.isAreaHovered((int) breadcrumbX, y + 24, (int) width, 36);
             int color = Colors.WHITE_60;
             if (i == currentPage.parents.size() - 1) color = Colors.WHITE;
             else if (hovered && !Platform.getMousePlatform().isButtonDown(0)) color = Colors.WHITE_80;
-            RenderManager.drawText(vg, title, breadcrumbX, y + 38, color, 24f, Fonts.SEMIBOLD);
+            LwjglManager.INSTANCE.getNanoVGHelper().drawText(vg, title, breadcrumbX, y + 38, color, 24f, Fonts.SEMIBOLD);
             if (i != 0)
-                RenderManager.drawSvg(vg, SVGs.CARET_RIGHT, breadcrumbX - 28, y + 25, 24, 24, color);
+                LwjglManager.INSTANCE.getNanoVGHelper().drawSvg(vg, SVGs.CARET_RIGHT, breadcrumbX - 28, y + 25, 24, 24, color);
             if (hovered && inputHandler.isClicked()) openPage(currentPage.parents.get(i));
             breadcrumbX += width + 32;
         }
 
         long end = System.nanoTime() - start;
         String s = (" draw: " + end / 1000000f + "ms");
-        RenderManager.drawText(vg, s, x + 1170, y + 792, Colors.GRAY_300, 10f, Fonts.MEDIUM);
+        LwjglManager.INSTANCE.getNanoVGHelper().drawText(vg, s, x + 1170, y + 792, Colors.GRAY_300, 10f, Fonts.MEDIUM);
         if (currentColorSelector != null) {
             currentColorSelector.draw(vg);
         }

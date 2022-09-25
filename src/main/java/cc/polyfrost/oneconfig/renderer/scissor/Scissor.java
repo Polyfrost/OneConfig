@@ -29,7 +29,7 @@ package cc.polyfrost.oneconfig.renderer.scissor;
 /**
  * A class that represents a scissor rectangle.
  *
- * @see ScissorManager
+ * @see ScissorHelper
  */
 public class Scissor {
     public float x;

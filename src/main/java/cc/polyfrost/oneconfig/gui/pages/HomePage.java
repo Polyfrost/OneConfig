@@ -27,7 +27,8 @@
 package cc.polyfrost.oneconfig.gui.pages;
 
 import cc.polyfrost.oneconfig.internal.assets.Colors;
-import cc.polyfrost.oneconfig.renderer.RenderManager;
+import cc.polyfrost.oneconfig.renderer.LwjglManager;
+
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.utils.InputHandler;
@@ -59,14 +60,14 @@ public class HomePage extends Page {
     }
 
     public void draw(long vg, int x, int y, InputHandler inputHandler) {
-        RenderManager.drawRoundedRect(vg, x, y, 184, 36, -1, 12f);
-        RenderManager.drawText(vg, "This is a cool string to test pages", x + 32, y + 72, -1, 36f, Fonts.BOLD);
-        RenderManager.drawRoundedRect(vg, x + 350, y + 310, 300, 200, Colors.PRIMARY_600, 14f);
-        RenderManager.drawSvg(vg, SVGs.INFO_CIRCLE, x + 20, y + 604, 24, 24);
-        RenderManager.drawText(vg, "Info", x + 52, y + 618, Colors.WHITE_90, 24f, Fonts.MEDIUM);
-        RenderManager.drawRoundedRect(vg, x + 16, y + 644, 1024, 64, Colors.GRAY_700, 20f);
+        LwjglManager.INSTANCE.getNanoVGHelper().drawRoundedRect(vg, x, y, 184, 36, -1, 12f);
+        LwjglManager.INSTANCE.getNanoVGHelper().drawText(vg, "This is a cool string to test pages", x + 32, y + 72, -1, 36f, Fonts.BOLD);
+        LwjglManager.INSTANCE.getNanoVGHelper().drawRoundedRect(vg, x + 350, y + 310, 300, 200, Colors.PRIMARY_600, 14f);
+        LwjglManager.INSTANCE.getNanoVGHelper().drawSvg(vg, SVGs.INFO_CIRCLE, x + 20, y + 604, 24, 24);
+        LwjglManager.INSTANCE.getNanoVGHelper().drawText(vg, "Info", x + 52, y + 618, Colors.WHITE_90, 24f, Fonts.MEDIUM);
+        LwjglManager.INSTANCE.getNanoVGHelper().drawRoundedRect(vg, x + 16, y + 644, 1024, 64, Colors.GRAY_700, 20f);
 
-        RenderManager.drawURL(vg, "https://www.youtube.com/watch?v=dQw4w9WgXcQ", x + 100, y + 205, 24, Fonts.MEDIUM, inputHandler);
+        LwjglManager.INSTANCE.getNanoVGHelper().drawURL(vg, "https://www.youtube.com/watch?v=dQw4w9WgXcQ", x + 100, y + 205, 24, Fonts.MEDIUM, inputHandler);
 
         /*discordBtn.draw(vg, x + 32, y + 658);
         webBtn.draw(vg, x + 232, y + 658);

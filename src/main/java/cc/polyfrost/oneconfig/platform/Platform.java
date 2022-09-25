@@ -63,10 +63,6 @@ public interface Platform {
         return PlatformHolder.INSTANCE.i18nPlatform;
     }
 
-    static NanoVGPlatform getNanoVGPlatform() {
-        return PlatformHolder.INSTANCE.nvgPlatform;
-    }
-
     boolean isCallingFromMinecraftThread();
 
     int getMinecraftVersion();
@@ -85,8 +81,6 @@ public interface Platform {
         GLPlatform glPlatform = ServiceLoader.load(GLPlatform.class, GLPlatform.class.getClassLoader()).iterator().next();
         GuiPlatform guiPlatform = ServiceLoader.load(GuiPlatform.class, GuiPlatform.class.getClassLoader()).iterator().next();
         I18nPlatform i18nPlatform = ServiceLoader.load(I18nPlatform.class, I18nPlatform.class.getClassLoader()).iterator().next();
-
-        NanoVGPlatform nvgPlatform = ServiceLoader.load(NanoVGPlatform.class, NanoVGPlatform.class.getClassLoader()).iterator().next();
     }
 
     enum Loader {

@@ -36,7 +36,9 @@ import cc.polyfrost.oneconfig.internal.hud.HudCore;
 import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
 import cc.polyfrost.oneconfig.libs.universal.UMatrixStack;
 import cc.polyfrost.oneconfig.platform.Platform;
-import cc.polyfrost.oneconfig.renderer.RenderManager;
+import cc.polyfrost.oneconfig.renderer.LwjglManager;
+import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
+
 
 import java.util.ArrayList;
 import java.util.List;
@@ -100,7 +102,7 @@ public abstract class TextHud extends BasicHud {
      * @param scale The scale
      */
     protected void drawLine(String line, float x, float y, float scale) {
-        RenderManager.drawScaledString(line, x, y, color.getRGB(), RenderManager.TextType.toType(textType), scale);
+        LwjglManager.INSTANCE.getNanoVGHelper().drawScaledString(line, x, y, color.getRGB(), NanoVGHelper.TextType.toType(textType), scale);
     }
 
     /**

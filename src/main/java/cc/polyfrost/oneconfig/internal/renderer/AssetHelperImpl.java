@@ -24,10 +24,13 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.renderer;
+package cc.polyfrost.oneconfig.internal.renderer;
 
 import cc.polyfrost.oneconfig.internal.assets.Images;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
+import cc.polyfrost.oneconfig.renderer.AssetHelper;
+import cc.polyfrost.oneconfig.renderer.Image;
+import cc.polyfrost.oneconfig.renderer.SVG;
 import cc.polyfrost.oneconfig.utils.IOUtils;
 import org.lwjgl3.BufferUtils;
 import org.lwjgl3.nanovg.NSVGImage;
@@ -49,19 +52,13 @@ import java.util.Objects;
 /**
  * Loads images and SVGs from resources into NanoVG.
  *
- * @see cc.polyfrost.oneconfig.renderer.RenderManager
+ * @see NanoVGHelperImpl
  * @see Images
  * @see SVGs
  */
-public final class AssetLoader {
-    private AssetLoader() {
-
-    }
-
-    public static final int DEFAULT_FLAGS = NanoVG.NVG_IMAGE_REPEATX | NanoVG.NVG_IMAGE_REPEATY | NanoVG.NVG_IMAGE_GENERATE_MIPMAPS;
+public final class AssetHelperImpl implements AssetHelper {
     private final HashMap<String, Integer> imageHashMap = new HashMap<>();
     private final HashMap<String, Integer> svgHashMap = new HashMap<>();
-    public static AssetLoader INSTANCE = new AssetLoader();
 
     /**
      * Loads an assets from resources.
@@ -198,7 +195,7 @@ public final class AssetLoader {
      *
      * @param fileName The name of the file to load.
      * @return The assets
-     * @see AssetLoader#loadImage(long, String)
+     * @see AssetHelperImpl#loadImage(long, String)
      */
     public int getImage(String fileName) {
         return imageHashMap.get(fileName);
@@ -210,7 +207,7 @@ public final class AssetLoader {
      *
      * @param vg       The NanoVG context.
      * @param fileName The name of the file to remove.
-     * @see AssetLoader#loadImage(long, String)
+     * @see AssetHelperImpl#loadImage(long, String)
      */
     public void removeImage(long vg, String fileName) {
         NanoVG.nvgDeleteImage(vg, imageHashMap.get(fileName));
@@ -237,7 +234,7 @@ public final class AssetLoader {
      *
      * @param fileName The name of the file to load.
      * @return The SVG
-     * @see AssetLoader#loadSVG(long, String, float, float)
+     * @see AssetHelperImpl#loadSVG(long, String, float, float)
      */
     public int getSVG(String fileName, float width, float height) {
         String name = fileName + "-" + width + "-" + height;
@@ -250,7 +247,7 @@ public final class AssetLoader {
      *
      * @param vg       The NanoVG context.
      * @param fileName The name of the file to remove.
-     * @see AssetLoader#loadSVG(long, String, float, float)
+     * @see AssetHelperImpl#loadSVG(long, String, float, float)
      */
     public void removeSVG(long vg, String fileName, float width, float height) {
         String name = fileName + "-" + width + "-" + height;

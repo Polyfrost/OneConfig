@@ -41,6 +41,6 @@ public class Image {
     }
 
     public Image(String filePath) {
-        this(filePath, AssetLoader.DEFAULT_FLAGS);
+        this(filePath, AssetHelper.DEFAULT_FLAGS);
     }
 }

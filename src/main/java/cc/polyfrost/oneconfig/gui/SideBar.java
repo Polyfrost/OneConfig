@@ -37,7 +37,8 @@ import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.internal.config.Preferences;
 import cc.polyfrost.oneconfig.internal.gui.HudGui;
-import cc.polyfrost.oneconfig.renderer.RenderManager;
+import cc.polyfrost.oneconfig.renderer.LwjglManager;
+
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
@@ -87,7 +88,7 @@ public class SideBar {
             break;
         }
         if (moveAnimation != null) {
-            RenderManager.drawRoundedRect(vg, x + 16, y + moveAnimation.get() - (sizeAnimation.get() - 36) / 2f, 192, sizeAnimation.get(0), Colors.PRIMARY_600, 12);
+            LwjglManager.INSTANCE.getNanoVGHelper().drawRoundedRect(vg, x + 16, y + moveAnimation.get() - (sizeAnimation.get() - 36) / 2f, 192, sizeAnimation.get(0), Colors.PRIMARY_600, 12);
             if (moveAnimation.isFinished() && sizeAnimation.isFinished()) {
                 moveAnimation = null;
                 sizeAnimation = null;
@@ -97,12 +98,12 @@ public class SideBar {
 
         buttons.get(0).draw(vg, x + 16, y + 80, inputHandler);
         buttons.get(1).draw(vg, x + 16, y + 116, inputHandler);
-        RenderManager.drawText(vg, "MOD CONFIG", x + 16, y + 178, Colors.WHITE, 12, Fonts.SEMIBOLD);
+        LwjglManager.INSTANCE.getNanoVGHelper().drawText(vg, "MOD CONFIG", x + 16, y + 178, Colors.WHITE, 12, Fonts.SEMIBOLD);
         buttons.get(2).draw(vg, x + 16, y + 192, inputHandler);
         buttons.get(3).draw(vg, x + 16, y + 228, inputHandler);
         buttons.get(4).draw(vg, x + 16, y + 264, inputHandler);
         buttons.get(5).draw(vg, x + 16, y + 300, inputHandler);
-        RenderManager.drawText(vg, "PERSONALIZATION", x + 16, y + 362, Colors.WHITE, 12, Fonts.SEMIBOLD);
+        LwjglManager.INSTANCE.getNanoVGHelper().drawText(vg, "PERSONALIZATION", x + 16, y + 362, Colors.WHITE, 12, Fonts.SEMIBOLD);
         buttons.get(6).draw(vg, x + 16, y + 376, inputHandler);
         buttons.get(7).draw(vg, x + 16, y + 412, inputHandler);
         buttons.get(8).draw(vg, x + 16, y + 448, inputHandler);

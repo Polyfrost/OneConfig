@@ -34,7 +34,8 @@ import cc.polyfrost.oneconfig.gui.animations.ColorAnimation;
 import cc.polyfrost.oneconfig.gui.animations.DummyAnimation;
 import cc.polyfrost.oneconfig.gui.animations.EaseInOutQuad;
 import cc.polyfrost.oneconfig.platform.Platform;
-import cc.polyfrost.oneconfig.renderer.RenderManager;
+import cc.polyfrost.oneconfig.renderer.LwjglManager;
+
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.utils.InputHandler;
@@ -59,7 +60,7 @@ public class ConfigCheckbox extends BasicOption {
 
     @Override
     public void draw(long vg, int x, int y, InputHandler inputHandler) {
-        if (!isEnabled()) RenderManager.setAlpha(vg, 0.5f);
+        if (!isEnabled()) LwjglManager.INSTANCE.getNanoVGHelper().setAlpha(vg, 0.5f);
         boolean toggled = false;
         try {
             toggled = (boolean) get();
@@ -81,17 +82,17 @@ public class ConfigCheckbox extends BasicOption {
         }
         float percentOn = animation.get();
 
-        RenderManager.drawText(vg, name, x + 32, y + 17, Colors.WHITE_90, 14f, Fonts.MEDIUM);
+        LwjglManager.INSTANCE.getNanoVGHelper().drawText(vg, name, x + 32, y + 17, Colors.WHITE_90, 14f, Fonts.MEDIUM);
 
-        RenderManager.drawRoundedRect(vg, x, y + 4, 24, 24, color.getColor(hover, hover && Platform.getMousePlatform().isButtonDown(0)), 6f);
-        RenderManager.drawHollowRoundRect(vg, x, y + 4, 23.5f, 23.5f, Colors.GRAY_300, 6f, 1f);        // the 0.5f is to make it look better ok
+        LwjglManager.INSTANCE.getNanoVGHelper().drawRoundedRect(vg, x, y + 4, 24, 24, color.getColor(hover, hover && Platform.getMousePlatform().isButtonDown(0)), 6f);
+        LwjglManager.INSTANCE.getNanoVGHelper().drawHollowRoundRect(vg, x, y + 4, 23.5f, 23.5f, Colors.GRAY_300, 6f, 1f);        // the 0.5f is to make it look better ok
 
-        RenderManager.drawRoundedRect(vg, x, y + 4, 24, 24, ColorUtils.setAlpha(Colors.PRIMARY_500, (int) (percentOn * 255)), 6f);
-        RenderManager.drawSvg(vg, SVGs.CHECKBOX_TICK, x, y + 4, 24, 24, new Color(1f, 1f, 1f, percentOn).getRGB());
+        LwjglManager.INSTANCE.getNanoVGHelper().drawRoundedRect(vg, x, y + 4, 24, 24, ColorUtils.setAlpha(Colors.PRIMARY_500, (int) (percentOn * 255)), 6f);
+        LwjglManager.INSTANCE.getNanoVGHelper().drawSvg(vg, SVGs.CHECKBOX_TICK, x, y + 4, 24, 24, new Color(1f, 1f, 1f, percentOn).getRGB());
 
         if (toggled && hover)
-            RenderManager.drawHollowRoundRect(vg, x - 1, y + 3, 24, 24, Colors.PRIMARY_600, 6f, 2f);
-        RenderManager.setAlpha(vg, 1f);
+            LwjglManager.INSTANCE.getNanoVGHelper().drawHollowRoundRect(vg, x - 1, y + 3, 24, 24, Colors.PRIMARY_600, 6f, 2f);
+        LwjglManager.INSTANCE.getNanoVGHelper().setAlpha(vg, 1f);
     }
 
     @Override

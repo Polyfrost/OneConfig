@@ -34,7 +34,8 @@ import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.animations.ColorAnimation;
 import cc.polyfrost.oneconfig.gui.pages.ModConfigPage;
 import cc.polyfrost.oneconfig.platform.Platform;
-import cc.polyfrost.oneconfig.renderer.RenderManager;
+import cc.polyfrost.oneconfig.renderer.LwjglManager;
+
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.utils.InputHandler;
@@ -65,16 +66,16 @@ public class ConfigPageButton extends BasicOption {
         boolean hovered = inputHandler.isAreaHovered(x - 16, y, 1024, height) && isEnabled();
         boolean clicked = hovered && inputHandler.isClicked();
 
-        if (!isEnabled()) RenderManager.setAlpha(vg, 0.5f);
+        if (!isEnabled()) LwjglManager.INSTANCE.getNanoVGHelper().setAlpha(vg, 0.5f);
 
-        RenderManager.drawRoundedRect(vg, x - 16, y, 1024, height, backgroundColor.getColor(hovered, hovered && Platform.getMousePlatform().isButtonDown(0)), 20);
-        RenderManager.drawText(vg, name, x + 10, y + 32, Colors.WHITE_90, 24, Fonts.MEDIUM);
+        LwjglManager.INSTANCE.getNanoVGHelper().drawRoundedRect(vg, x - 16, y, 1024, height, backgroundColor.getColor(hovered, hovered && Platform.getMousePlatform().isButtonDown(0)), 20);
+        LwjglManager.INSTANCE.getNanoVGHelper().drawText(vg, name, x + 10, y + 32, Colors.WHITE_90, 24, Fonts.MEDIUM);
         if (!description.equals(""))
-            RenderManager.drawText(vg, name, x + 10, y + 70, Colors.WHITE_90, 14, Fonts.MEDIUM);
-        RenderManager.drawSvg(vg, SVGs.CARET_RIGHT, x + 981f, y + (description.equals("") ? 20f : 36f), 13, 22);
+            LwjglManager.INSTANCE.getNanoVGHelper().drawText(vg, name, x + 10, y + 70, Colors.WHITE_90, 14, Fonts.MEDIUM);
+        LwjglManager.INSTANCE.getNanoVGHelper().drawSvg(vg, SVGs.CARET_RIGHT, x + 981f, y + (description.equals("") ? 20f : 36f), 13, 22);
 
         if (clicked) OneConfigGui.INSTANCE.openPage(page);
-        RenderManager.setAlpha(vg, 1f);
+        LwjglManager.INSTANCE.getNanoVGHelper().setAlpha(vg, 1f);
     }
 
     @Override

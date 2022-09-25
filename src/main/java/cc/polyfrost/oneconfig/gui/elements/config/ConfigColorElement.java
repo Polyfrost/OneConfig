@@ -34,7 +34,8 @@ import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.elements.BasicElement;
 import cc.polyfrost.oneconfig.gui.elements.ColorSelector;
 import cc.polyfrost.oneconfig.gui.elements.text.TextInputField;
-import cc.polyfrost.oneconfig.renderer.RenderManager;
+import cc.polyfrost.oneconfig.renderer.LwjglManager;
+
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.internal.assets.Images;
 import cc.polyfrost.oneconfig.utils.InputHandler;
@@ -64,7 +65,7 @@ public class ConfigColorElement extends BasicOption {
     @Override
     public void draw(long vg, int x, int y, InputHandler inputHandler) {
         if(OneConfigGui.INSTANCE == null) return;
-        if (!isEnabled()) RenderManager.setAlpha(vg, 0.5f);
+        if (!isEnabled()) LwjglManager.INSTANCE.getNanoVGHelper().setAlpha(vg, 0.5f);
         hexField.disable(!isEnabled());
         alphaField.disable(!isEnabled() || !allowAlpha);
         element.disable(!isEnabled());
@@ -76,7 +77,7 @@ public class ConfigColorElement extends BasicOption {
         } catch (IllegalAccessException e) {
             return;
         }
-        RenderManager.drawText(vg, name, x, y + 16, Colors.WHITE_90, 14f, Fonts.MEDIUM);
+        LwjglManager.INSTANCE.getNanoVGHelper().drawText(vg, name, x, y + 16, Colors.WHITE_90, 14f, Fonts.MEDIUM);
         if (!hexField.isToggled()) hexField.setInput("#" + color.getHex());
         hexField.setErrored(false);
         if (hexField.isToggled()) {
@@ -109,9 +110,9 @@ public class ConfigColorElement extends BasicOption {
         alphaField.draw(vg, x1 + 336, y, inputHandler);
 
         element.update(x1 + 416, y, inputHandler);
-        RenderManager.drawHollowRoundRect(vg, x1 + 415, y - 1, 64, 32, Colors.GRAY_300, 12f, 2f);
-        RenderManager.drawRoundImage(vg, Images.ALPHA_GRID.filePath, x1 + 420, y + 4, 56, 24, 8f);
-        RenderManager.drawRoundedRect(vg, x1 + 420, y + 4, 56, 24, color.getRGB(), 8f);
+        LwjglManager.INSTANCE.getNanoVGHelper().drawHollowRoundRect(vg, x1 + 415, y - 1, 64, 32, Colors.GRAY_300, 12f, 2f);
+        LwjglManager.INSTANCE.getNanoVGHelper().drawRoundImage(vg, Images.ALPHA_GRID.filePath, x1 + 420, y + 4, 56, 24, 8f);
+        LwjglManager.INSTANCE.getNanoVGHelper().drawRoundedRect(vg, x1 + 420, y + 4, 56, 24, color.getRGB(), 8f);
         if (element.isClicked() && !open) {
             open = true;
             OneConfigGui.INSTANCE.initColorSelector(new ColorSelector(color, inputHandler.mouseX(), inputHandler.mouseY(), allowAlpha, inputHandler));
@@ -119,7 +120,7 @@ public class ConfigColorElement extends BasicOption {
         if (OneConfigGui.INSTANCE.currentColorSelector == null) open = false;
         else if (open) color = (OneConfigGui.INSTANCE.getColor());
         setColor(color);
-        RenderManager.setAlpha(vg, 1f);
+        LwjglManager.INSTANCE.getNanoVGHelper().setAlpha(vg, 1f);
     }
 
     @Override

@@ -31,7 +31,8 @@ import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
 import cc.polyfrost.oneconfig.gui.elements.text.TextInputField;
 import cc.polyfrost.oneconfig.platform.Platform;
-import cc.polyfrost.oneconfig.renderer.RenderManager;
+import cc.polyfrost.oneconfig.renderer.LwjglManager;
+
 import cc.polyfrost.oneconfig.renderer.SVG;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
@@ -58,9 +59,9 @@ public class ConfigTextBox extends BasicOption {
 
     @Override
     public void draw(long vg, int x, int y, InputHandler inputHandler) {
-        if (!isEnabled()) RenderManager.setAlpha(vg, 0.5f);
+        if (!isEnabled()) LwjglManager.INSTANCE.getNanoVGHelper().setAlpha(vg, 0.5f);
         textField.disable(!isEnabled());
-        RenderManager.drawText(vg, name, x, y + 16, Colors.WHITE_90, 14, Fonts.MEDIUM);
+        LwjglManager.INSTANCE.getNanoVGHelper().drawText(vg, name, x, y + 16, Colors.WHITE_90, 14, Fonts.MEDIUM);
 
         try {
             String value = (String) get();
@@ -77,10 +78,10 @@ public class ConfigTextBox extends BasicOption {
             boolean hovered = inputHandler.isAreaHovered(x + 967, y + 7, 18, 18) && isEnabled();
             int color = hovered ? Colors.WHITE : Colors.WHITE_80;
             if (hovered && inputHandler.isClicked()) textField.setPassword(!textField.getPassword());
-            if (hovered && Platform.getMousePlatform().isButtonDown(0)) RenderManager.setAlpha(vg, 0.5f);
-            RenderManager.drawSvg(vg, icon, x + 967, y + 7, 18, 18, color);
+            if (hovered && Platform.getMousePlatform().isButtonDown(0)) LwjglManager.INSTANCE.getNanoVGHelper().setAlpha(vg, 0.5f);
+            LwjglManager.INSTANCE.getNanoVGHelper().drawSvg(vg, icon, x + 967, y + 7, 18, 18, color);
         }
-        RenderManager.setAlpha(vg, 1f);
+        LwjglManager.INSTANCE.getNanoVGHelper().setAlpha(vg, 1f);
     }
 
     @Override

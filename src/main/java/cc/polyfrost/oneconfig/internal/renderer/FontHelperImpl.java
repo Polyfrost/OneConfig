@@ -24,8 +24,11 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.renderer.font;
+package cc.polyfrost.oneconfig.internal.renderer;
 
+import cc.polyfrost.oneconfig.renderer.font.Font;
+import cc.polyfrost.oneconfig.renderer.font.FontHelper;
+import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.utils.IOUtils;
 
 import java.io.IOException;
@@ -34,8 +37,7 @@ import java.nio.ByteBuffer;
 
 import static org.lwjgl3.nanovg.NanoVG.nvgCreateFontMem;
 
-public class FontManager {
-    public static FontManager INSTANCE = new FontManager();
+public class FontHelperImpl implements FontHelper {
 
     /**
      * Load all fonts in the Fonts class

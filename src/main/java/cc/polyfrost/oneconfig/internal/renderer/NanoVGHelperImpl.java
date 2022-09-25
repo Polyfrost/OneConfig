@@ -24,7 +24,7 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.renderer;
+package cc.polyfrost.oneconfig.internal.renderer;
 
 import cc.polyfrost.oneconfig.config.data.InfoType;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
@@ -32,15 +32,19 @@ import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.libs.universal.UGraphics;
 import cc.polyfrost.oneconfig.libs.universal.UResolution;
-import cc.polyfrost.oneconfig.platform.NanoVGPlatform;
 import cc.polyfrost.oneconfig.platform.Platform;
+import cc.polyfrost.oneconfig.renderer.Image;
+import cc.polyfrost.oneconfig.renderer.LwjglManager;
+import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
+import cc.polyfrost.oneconfig.renderer.SVG;
 import cc.polyfrost.oneconfig.renderer.font.Font;
-import cc.polyfrost.oneconfig.renderer.font.FontManager;
 import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.NetworkUtils;
+import org.lwjgl.opengl.GL11;
 import org.lwjgl3.nanovg.NVGColor;
 import org.lwjgl3.nanovg.NVGPaint;
-import org.lwjgl.opengl.GL11;
+import org.lwjgl3.nanovg.NanoVG;
+import org.lwjgl3.nanovg.NanoVGGL2;
 
 import java.util.function.LongConsumer;
 import java.util.regex.Pattern;
@@ -50,12 +54,12 @@ import static org.lwjgl3.nanovg.NanoVG.*;
 /**
  * Handles NanoVG rendering and wraps it in a more convenient interface.
  */
-public final class RenderManager {
-    private static long vg = -1;
+public final class NanoVGHelperImpl implements NanoVGHelper {
+    private long vg = -1;
 
     //nanovg
 
-    private RenderManager() {
+    private NanoVGHelperImpl() {
 
     }
 
@@ -63,9 +67,9 @@ public final class RenderManager {
      * Sets up rendering, calls the consumer with the NanoVG context, and then cleans up.
      *
      * @param consumer The consumer to call.
-     * @see RenderManager#setupAndDraw(boolean, LongConsumer)
+     * @see NanoVGHelperImpl#setupAndDraw(boolean, LongConsumer)
      */
-    public static void setupAndDraw(LongConsumer consumer) {
+    public void setupAndDraw(LongConsumer consumer) {
         setupAndDraw(false, consumer);
     }
 
@@ -75,13 +79,13 @@ public final class RenderManager {
      * @param mcScaling Whether to render with Minecraft's scaling.
      * @param consumer  The consumer to call.
      */
-    public static void setupAndDraw(boolean mcScaling, LongConsumer consumer) {
+    public void setupAndDraw(boolean mcScaling, LongConsumer consumer) {
         if (vg == -1) {
-            vg = Platform.getNanoVGPlatform().nvgCreate(NanoVGPlatform.NVG_ANTIALIAS);
+            vg = NanoVGGL2.nvgCreate(NanoVGGL2.NVG_ANTIALIAS);
             if (vg == -1) {
                 throw new RuntimeException("Failed to create nvg context");
             }
-            FontManager.INSTANCE.initialize(vg);
+            LwjglManager.INSTANCE.getFontHelper().initialize(vg);
         }
 
         Platform.getGLPlatform().enableStencil();
@@ -111,7 +115,7 @@ public final class RenderManager {
      * @param height The height.
      * @param color  The color.
      */
-    public static void drawRect(long vg, float x, float y, float width, float height, int color) {
+    public void drawRect(long vg, float x, float y, float width, float height, int color) {
         nvgBeginPath(vg);
         nvgRect(vg, x, y, width, height);
         NVGColor nvgColor = color(vg, color);
@@ -130,7 +134,7 @@ public final class RenderManager {
      * @param color  The color.
      * @param radius The radius.
      */
-    public static void drawRoundedRect(long vg, float x, float y, float width, float height, int color, float radius) {
+    public void drawRoundedRect(long vg, float x, float y, float width, float height, int color, float radius) {
         nvgBeginPath(vg);
         nvgRoundedRect(vg, x, y, width, height, radius);
         color(vg, color);
@@ -153,7 +157,7 @@ public final class RenderManager {
      * @param radiusBR Bottom right corner radius.
      * @param radiusBL Bottom left corner radius
      */
-    public static void drawRoundedRectVaried(long vg, float x, float y, float width, float height, int color, float radiusTL, float radiusTR, float radiusBR, float radiusBL) {
+    public void drawRoundedRectVaried(long vg, float x, float y, float width, float height, int color, float radiusTL, float radiusTR, float radiusBR, float radiusBL) {
         nvgBeginPath(vg);
         nvgRoundedRectVarying(vg, x, y, width, height, radiusTL, radiusTR, radiusBR, radiusBL);
         color(vg, color);
@@ -174,7 +178,7 @@ public final class RenderManager {
      * @param radius    The radius.
      * @param thickness The thickness.
      */
-    public static void drawHollowRoundRect(long vg, float x, float y, float width, float height, int color, float radius, float thickness) {
+    public void drawHollowRoundRect(long vg, float x, float y, float width, float height, int color, float radius, float thickness) {
         nvgBeginPath(vg);
         nvgRoundedRect(vg, x + thickness, y + thickness, width - thickness, height - thickness, radius);
         nvgStrokeWidth(vg, thickness + 0.5f);
@@ -197,7 +201,7 @@ public final class RenderManager {
      * @param color  The first color of the gradient.
      * @param color2 The second color of the gradient.
      */
-    public static void drawGradientRect(long vg, float x, float y, float width, float height, int color, int color2) {
+    public void drawGradientRect(long vg, float x, float y, float width, float height, int color, int color2) {
         NVGPaint bg = NVGPaint.create();
         nvgBeginPath(vg);
         nvgRect(vg, x, y, width, height);
@@ -222,7 +226,7 @@ public final class RenderManager {
      * @param color2 The second color of the gradient.
      * @param radius The corner radius.
      */
-    public static void drawGradientRoundedRect(long vg, float x, float y, float width, float height, int color, int color2, float radius) {
+    public void drawGradientRoundedRect(long vg, float x, float y, float width, float height, int color, int color2, float radius) {
         NVGPaint bg = NVGPaint.create();
         nvgBeginPath(vg);
         nvgRoundedRect(vg, x, y, width, height, radius);
@@ -244,7 +248,7 @@ public final class RenderManager {
      * @param height      The height.
      * @param colorTarget Hue color
      */
-    public static void drawHSBBox(long vg, float x, float y, float width, float height, int colorTarget) {
+    public void drawHSBBox(long vg, float x, float y, float width, float height, int colorTarget) {
         drawRoundedRect(vg, x, y, width, height, colorTarget, 8f);
 
         NVGPaint bg = NVGPaint.create();
@@ -277,7 +281,7 @@ public final class RenderManager {
      * @param radius The radius.
      * @param color  The color.
      */
-    public static void drawCircle(long vg, float x, float y, float radius, int color) {
+    public void drawCircle(long vg, float x, float y, float radius, int color) {
         nvgBeginPath(vg);
         nvgCircle(vg, x, y, radius);
         NVGColor nvgColor = color(vg, color);
@@ -297,7 +301,7 @@ public final class RenderManager {
      * @param font  The font.
      * @see cc.polyfrost.oneconfig.renderer.font.Font
      */
-    public static void drawText(long vg, String text, float x, float y, int color, float size, Font font) {
+    public void drawText(long vg, String text, float x, float y, int color, float size, Font font) {
         nvgBeginPath(vg);
         nvgFontSize(vg, size);
         nvgFontFace(vg, font.getName());
@@ -320,7 +324,7 @@ public final class RenderManager {
      * @param size  The size.
      * @param font  The font.
      */
-    public static void drawWrappedString(long vg, String text, float x, float y, float width, int color, float size, Font font) {
+    public void drawWrappedString(long vg, String text, float x, float y, float width, int color, float size, Font font) {
         nvgBeginPath(vg);
         nvgFontSize(vg, size);
         nvgFontFace(vg, font.getName());
@@ -336,10 +340,10 @@ public final class RenderManager {
      *
      * <p><b>This does NOT scale to Minecraft's GUI scale!</b></p>
      *
-     * @see RenderManager#drawText(long, String, float, float, int, float, Font)
+     * @see NanoVGHelperImpl#drawText(long, String, float, float, int, float, Font)
      * @see InputHandler#isAreaClicked(float, float, float, float)
      */
-    public static void drawURL(long vg, String url, float x, float y, float size, Font font, InputHandler inputHandler) {
+    public void drawURL(long vg, String url, float x, float y, float size, Font font, InputHandler inputHandler) {
         drawText(vg, url, x, y, Colors.PRIMARY_500, size, font);
         float length = getTextWidth(vg, url, size, font);
         drawRect(vg, x, y + size / 2, length, 1, Colors.PRIMARY_500);
@@ -357,12 +361,12 @@ public final class RenderManager {
      * @param y        The y position.
      * @param width    The width.
      * @param height   The height.
-     * @see RenderManager#drawImage(long, String, float, float, float, float, int)
+     * @see NanoVGHelperImpl#drawImage(long, String, float, float, float, float, int)
      */
-    public static void drawImage(long vg, String filePath, float x, float y, float width, float height) {
-        if (AssetLoader.INSTANCE.loadImage(vg, filePath)) {
+    public void drawImage(long vg, String filePath, float x, float y, float width, float height) {
+        if (LwjglManager.INSTANCE.getAssetHelper().loadImage(vg, filePath)) {
             NVGPaint imagePaint = NVGPaint.calloc();
-            int image = AssetLoader.INSTANCE.getImage(filePath);
+            int image = LwjglManager.INSTANCE.getAssetHelper().getImage(filePath);
             nvgBeginPath(vg);
             nvgImagePattern(vg, x, y, width, height, 0, image, 1, imagePaint);
             nvgRect(vg, x, y, width, height);
@@ -383,10 +387,10 @@ public final class RenderManager {
      * @param height   The height.
      * @param color    The color.
      */
-    public static void drawImage(long vg, String filePath, float x, float y, float width, float height, int color) {
-        if (AssetLoader.INSTANCE.loadImage(vg, filePath)) {
+    public void drawImage(long vg, String filePath, float x, float y, float width, float height, int color) {
+        if (LwjglManager.INSTANCE.getAssetHelper().loadImage(vg, filePath)) {
             NVGPaint imagePaint = NVGPaint.calloc();
-            int image = AssetLoader.INSTANCE.getImage(filePath);
+            int image = LwjglManager.INSTANCE.getAssetHelper().getImage(filePath);
             nvgBeginPath(vg);
             nvgImagePattern(vg, x, y, width, height, 0, image, 1, imagePaint);
             nvgRGBA((byte) (color >> 16 & 0xFF), (byte) (color >> 8 & 0xFF), (byte) (color & 0xFF), (byte) (color >> 24 & 0xFF), imagePaint.innerColor());
@@ -400,10 +404,10 @@ public final class RenderManager {
     /**
      * Draws an image with the provided file path and parameters.
      *
-     * @see RenderManager#drawImage(long, String, float, float, float, float)
+     * @see NanoVGHelperImpl#drawImage(long, String, float, float, float, float)
      */
-    public static void drawImage(long vg, Image image, float x, float y, float width, float height) {
-        if (AssetLoader.INSTANCE.loadImage(vg, image)) {
+    public void drawImage(long vg, Image image, float x, float y, float width, float height) {
+        if (LwjglManager.INSTANCE.getAssetHelper().loadImage(vg, image)) {
             drawImage(vg, image.filePath, x, y, width, height);
         }
     }
@@ -411,10 +415,10 @@ public final class RenderManager {
     /**
      * Draws an image with the provided file path and parameters.
      *
-     * @see RenderManager#drawImage(long, String, float, float, float, float, int)
+     * @see NanoVGHelperImpl#drawImage(long, String, float, float, float, float, int)
      */
-    public static void drawImage(long vg, Image image, float x, float y, float width, float height, int color) {
-        if (AssetLoader.INSTANCE.loadImage(vg, image)) {
+    public void drawImage(long vg, Image image, float x, float y, float width, float height, int color) {
+        if (LwjglManager.INSTANCE.getAssetHelper().loadImage(vg, image)) {
             drawImage(vg, image.filePath, x, y, width, height, color);
         }
     }
@@ -430,10 +434,10 @@ public final class RenderManager {
      * @param height   The height.
      * @param radius   The radius.
      */
-    public static void drawRoundImage(long vg, String filePath, float x, float y, float width, float height, float radius) {
-        if (AssetLoader.INSTANCE.loadImage(vg, filePath)) {
+    public void drawRoundImage(long vg, String filePath, float x, float y, float width, float height, float radius) {
+        if (LwjglManager.INSTANCE.getAssetHelper().loadImage(vg, filePath)) {
             NVGPaint imagePaint = NVGPaint.calloc();
-            int image = AssetLoader.INSTANCE.getImage(filePath);
+            int image = LwjglManager.INSTANCE.getAssetHelper().getImage(filePath);
             nvgBeginPath(vg);
             nvgImagePattern(vg, x, y, width, height, 0, image, 1, imagePaint);
             nvgRoundedRect(vg, x, y, width, height, radius);
@@ -446,10 +450,10 @@ public final class RenderManager {
     /**
      * Draws a rounded image with the provided file path and parameters.
      *
-     * @see RenderManager#drawRoundImage(long, String, float, float, float, float, float)
+     * @see NanoVGHelperImpl#drawRoundImage(long, String, float, float, float, float, float)
      */
-    public static void drawRoundImage(long vg, Image image, float x, float y, float width, float height, float radius) {
-        if (AssetLoader.INSTANCE.loadImage(vg, image)) {
+    public void drawRoundImage(long vg, Image image, float x, float y, float width, float height, float radius) {
+        if (LwjglManager.INSTANCE.getAssetHelper().loadImage(vg, image)) {
             drawRoundImage(vg, image.filePath, x, y, width, height, radius);
         }
     }
@@ -463,7 +467,7 @@ public final class RenderManager {
      * @param font     The font.
      * @return The width of the text.
      */
-    public static float getTextWidth(long vg, String text, float fontSize, Font font) {
+    public float getTextWidth(long vg, String text, float fontSize, Font font) {
         float[] bounds = new float[4];
         nvgFontSize(vg, fontSize);
         nvgFontFace(vg, font.getName());
@@ -481,7 +485,7 @@ public final class RenderManager {
      * @param width The width.
      * @param color The color.
      */
-    public static void drawLine(long vg, float x, float y, float endX, float endY, float width, int color) {
+    public void drawLine(long vg, float x, float y, float endX, float endY, float width, int color) {
         nvgBeginPath(vg);
         nvgMoveTo(vg, x, y);
         nvgLineTo(vg, endX, endY);
@@ -506,7 +510,7 @@ public final class RenderManager {
      * @param spread       The spread.
      * @param cornerRadius The radius of the corner
      */
-    public static void drawDropShadow(long vg, float x, float y, float w, float h, float blur, float spread, float cornerRadius) {
+    public void drawDropShadow(long vg, float x, float y, float w, float h, float blur, float spread, float cornerRadius) {
         try (NVGPaint shadowPaint = NVGPaint.calloc();  // allocating memory to pass color to nanovg wrapper
              NVGColor firstColor = NVGColor.calloc();  // allocating memory to pass color to nanovg wrapper
              NVGColor secondColor = NVGColor.calloc()  // allocating memory to pass color to nanovg wrapper
@@ -534,7 +538,7 @@ public final class RenderManager {
      * @param a     The alpha value.
      * @param color The {@link NVGColor} to fill.
      */
-    public static void fillNVGColorWithRGBA(float r, float g, float b, float a, NVGColor color) {
+    public void fillNVGColorWithRGBA(float r, float g, float b, float a, NVGColor color) {
         color.r(r);
         color.g(g);
         color.b(b);
@@ -548,7 +552,7 @@ public final class RenderManager {
      * @param color The color.
      * @return The {@link NVGColor} created.
      */
-    public static NVGColor color(long vg, int color) {
+    public NVGColor color(long vg, int color) {
         NVGColor nvgColor = NVGColor.calloc();
         nvgRGBA((byte) (color >> 16 & 0xFF), (byte) (color >> 8 & 0xFF), (byte) (color & 0xFF), (byte) (color >> 24 & 0xFF), nvgColor);
         nvgFillColor(vg, nvgColor);
@@ -562,7 +566,7 @@ public final class RenderManager {
      * @param x  The x scale.
      * @param y  The y scale.
      */
-    public static void scale(long vg, float x, float y) {
+    public void scale(long vg, float x, float y) {
         nvgScale(vg, x, y);
     }
 
@@ -572,7 +576,7 @@ public final class RenderManager {
      * @param vg    The NanoVG context.
      * @param alpha The alpha value.
      */
-    public static void setAlpha(long vg, float alpha) {
+    public void setAlpha(long vg, float alpha) {
         nvgGlobalAlpha(vg, alpha);
     }
 
@@ -586,16 +590,16 @@ public final class RenderManager {
      * @param width    The width.
      * @param height   The height.
      */
-    public static void drawSvg(long vg, String filePath, float x, float y, float width, float height) {
+    public void drawSvg(long vg, String filePath, float x, float y, float width, float height) {
         float w = width;
         float h = height;
         if (OneConfigGui.INSTANCE != null) {
             w *= OneConfigGui.INSTANCE.getScaleFactor();
             h *= OneConfigGui.INSTANCE.getScaleFactor();
         }
-        if (AssetLoader.INSTANCE.loadSVG(vg, filePath, w, h)) {
+        if (LwjglManager.INSTANCE.getAssetHelper().loadSVG(vg, filePath, w, h)) {
             NVGPaint imagePaint = NVGPaint.calloc();
-            int image = AssetLoader.INSTANCE.getSVG(filePath, w, h);
+            int image = LwjglManager.INSTANCE.getAssetHelper().getSVG(filePath, w, h);
             nvgBeginPath(vg);
             nvgImagePattern(vg, x, y, width, height, 0, image, 1, imagePaint);
             nvgRect(vg, x, y, width, height);
@@ -616,16 +620,16 @@ public final class RenderManager {
      * @param height   The height.
      * @param color    The color.
      */
-    public static void drawSvg(long vg, String filePath, float x, float y, float width, float height, int color) {
+    public void drawSvg(long vg, String filePath, float x, float y, float width, float height, int color) {
         float w = width;
         float h = height;
         if (OneConfigGui.INSTANCE != null) {
             w *= OneConfigGui.INSTANCE.getScaleFactor();
             h *= OneConfigGui.INSTANCE.getScaleFactor();
         }
-        if (AssetLoader.INSTANCE.loadSVG(vg, filePath, w, h)) {
+        if (LwjglManager.INSTANCE.getAssetHelper().loadSVG(vg, filePath, w, h)) {
             NVGPaint imagePaint = NVGPaint.calloc();
-            int image = AssetLoader.INSTANCE.getSVG(filePath, w, h);
+            int image = LwjglManager.INSTANCE.getAssetHelper().getSVG(filePath, w, h);
             nvgBeginPath(vg);
             nvgImagePattern(vg, x, y, width, height, 0, image, 1, imagePaint);
             nvgRGBA((byte) (color >> 16 & 0xFF), (byte) (color >> 8 & 0xFF), (byte) (color & 0xFF), (byte) (color >> 24 & 0xFF), imagePaint.innerColor());
@@ -639,16 +643,16 @@ public final class RenderManager {
     /**
      * Draws an SVG with the provided file path and parameters.
      *
-     * @see RenderManager#drawSvg(long, String, float, float, float, float)
+     * @see NanoVGHelperImpl#drawSvg(long, String, float, float, float, float)
      */
-    public static void drawSvg(long vg, SVG svg, float x, float y, float width, float height) {
+    public void drawSvg(long vg, SVG svg, float x, float y, float width, float height) {
         float w = width;
         float h = height;
         if (OneConfigGui.INSTANCE != null) {
             w *= OneConfigGui.INSTANCE.getScaleFactor();
             h *= OneConfigGui.INSTANCE.getScaleFactor();
         }
-        if (AssetLoader.INSTANCE.loadSVG(vg, svg, w, h)) {
+        if (LwjglManager.INSTANCE.getAssetHelper().loadSVG(vg, svg, w, h)) {
             drawSvg(vg, svg.filePath, x, y, width, height);
         }
     }
@@ -656,16 +660,16 @@ public final class RenderManager {
     /**
      * Draws an SVG with the provided file path and parameters.
      *
-     * @see RenderManager#drawSvg(long, String, float, float, float, float, int)
+     * @see NanoVGHelperImpl#drawSvg(long, String, float, float, float, float, int)
      */
-    public static void drawSvg(long vg, SVG svg, float x, float y, float width, float height, int color) {
+    public void drawSvg(long vg, SVG svg, float x, float y, float width, float height, int color) {
         float w = width;
         float h = height;
         if (OneConfigGui.INSTANCE != null) {
             w *= OneConfigGui.INSTANCE.getScaleFactor();
             h *= OneConfigGui.INSTANCE.getScaleFactor();
         }
-        if (AssetLoader.INSTANCE.loadSVG(vg, svg, w, h)) {
+        if (LwjglManager.INSTANCE.getAssetHelper().loadSVG(vg, svg, w, h)) {
             drawSvg(vg, svg.filePath, x, y, width, height, color);
         }
     }
@@ -679,7 +683,7 @@ public final class RenderManager {
      * @param y    The y position.
      * @param size The diameter.
      */
-    public static void drawInfo(long vg, InfoType type, float x, float y, float size) {
+    public void drawInfo(long vg, InfoType type, float x, float y, float size) {
         SVG icon = null;
         int colorOuter = 0;
         int colorInner = 0;
@@ -715,9 +719,9 @@ public final class RenderManager {
 
     // gl
 
-    private static final Pattern regex = Pattern.compile("(?i)\\\\u00A7[0-9a-f]");
+    private final Pattern regex = Pattern.compile("(?i)\\\\u00A7[0-9a-f]");
 
-    public static int drawBorderedText(String text, float x, float y, int color, int opacity) {
+    public int drawBorderedText(String text, float x, float y, int color, int opacity) {
         String noColors = regex.matcher(text).replaceAll("\u00A7r");
         int yes = 0;
         if (opacity > 3) {
@@ -741,7 +745,7 @@ public final class RenderManager {
         return yes;
     }
 
-    public static void drawScaledString(String text, float x, float y, int color, TextType type, float scale) {
+    public void drawScaledString(String text, float x, float y, int color, TextType type, float scale) {
         UGraphics.GL.pushMatrix();
         UGraphics.GL.scale(scale, scale, 1);
         switch (type) {
@@ -758,15 +762,17 @@ public final class RenderManager {
         UGraphics.GL.popMatrix();
     }
 
-    public static void drawGlRect(int x, int y, int width, int height, int color) {
+    public void drawGlRect(int x, int y, int width, int height, int color) {
         Platform.getGLPlatform().drawRect(x, y, x + width, y + height, color);
     }
 
-    public enum TextType {
-        NONE, SHADOW, FULL;
+    @Override
+    public void translate(long vg, float x, float y) {
+        NanoVG.nvgTranslate(vg, x, y);
+    }
 
-        public static TextType toType(int type) {
-            return values()[type];
-        }
+    @Override
+    public void rotate(long vg, float angle) {
+        NanoVG.nvgRotate(vg, angle);
     }
 }

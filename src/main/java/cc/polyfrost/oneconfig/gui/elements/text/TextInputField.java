@@ -30,11 +30,11 @@ import cc.polyfrost.oneconfig.gui.elements.BasicElement;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
 import cc.polyfrost.oneconfig.platform.Platform;
-import cc.polyfrost.oneconfig.renderer.RenderManager;
+import cc.polyfrost.oneconfig.renderer.LwjglManager;
+
 import cc.polyfrost.oneconfig.renderer.SVG;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.renderer.scissor.Scissor;
-import cc.polyfrost.oneconfig.renderer.scissor.ScissorManager;
 import cc.polyfrost.oneconfig.utils.IOUtils;
 import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.MathUtils;
@@ -128,14 +128,14 @@ public class TextInputField extends BasicElement {
         try {
             int colorOutline = errored ? Colors.ERROR_700 : Colors.GRAY_700;
             if (!toggled)
-                RenderManager.drawHollowRoundRect(vg, x, y, width - 0.5f, height - 0.5f, colorOutline, 12f, 2f);
+                LwjglManager.INSTANCE.getNanoVGHelper().drawHollowRoundRect(vg, x, y, width - 0.5f, height - 0.5f, colorOutline, 12f, 2f);
             else {
-                RenderManager.setAlpha(vg, 0.15f);
-                RenderManager.drawRoundedRect(vg, x - 4, y - 4, width + 8, height + 8, errored ? Colors.ERROR_600 : Colors.PRIMARY_600, 16);
-                RenderManager.setAlpha(vg, 1f);
-                RenderManager.drawHollowRoundRect(vg, x, y, width - 0.5f, height - 0.5f, errored ? Colors.ERROR_600 : Colors.PRIMARY_600, 12f, 2f);
+                LwjglManager.INSTANCE.getNanoVGHelper().setAlpha(vg, 0.15f);
+                LwjglManager.INSTANCE.getNanoVGHelper().drawRoundedRect(vg, x - 4, y - 4, width + 8, height + 8, errored ? Colors.ERROR_600 : Colors.PRIMARY_600, 16);
+                LwjglManager.INSTANCE.getNanoVGHelper().setAlpha(vg, 1f);
+                LwjglManager.INSTANCE.getNanoVGHelper().drawHollowRoundRect(vg, x, y, width - 0.5f, height - 0.5f, errored ? Colors.ERROR_600 : Colors.PRIMARY_600, 12f, 2f);
             }
-            Scissor scissor = ScissorManager.scissor(vg, x, y, width, height);
+            Scissor scissor = LwjglManager.INSTANCE.getScissorHelper().scissor(vg, x, y, width, height);
             super.update(x, y, inputHandler);
             if (Platform.getMousePlatform().isButtonDown(0) && !inputHandler.isAreaHovered(x - 40, y - 20, width + 90, height + 20)) {
                 onClose();
@@ -148,7 +148,7 @@ public class TextInputField extends BasicElement {
             if (caretPos < 0) caretPos = 0;
             if (prevCaret < 0) prevCaret = 0;
             if (icon != null) {
-                RenderManager.drawSvg(vg, icon, x + 12, y + height / 2f - 12f, 24, 24, color);
+                LwjglManager.INSTANCE.getNanoVGHelper().drawSvg(vg, icon, x + 12, y + height / 2f - 12f, 24, 24, color);
                 x += 32;
                 this.x = x;
             }
@@ -159,14 +159,14 @@ public class TextInputField extends BasicElement {
                 lines = wrappedText.size();
                 if (!toggled) caretPos = wrappedText.get(wrappedText.size() - 1).length();
                 int caretLine = (int) MathUtils.clamp(getCaretLine(caretPos), 0, wrappedText.size() - 1);
-                width = RenderManager.getTextWidth(vg, wrappedText.get(caretLine).substring(0, getLineCaret(caretPos, caretLine)), 14f, Fonts.REGULAR);
+                width = LwjglManager.INSTANCE.getNanoVGHelper().getTextWidth(vg, wrappedText.get(caretLine).substring(0, getLineCaret(caretPos, caretLine)), 14f, Fonts.REGULAR);
             } else if (!password) {
-                width = RenderManager.getTextWidth(vg, input.substring(0, caretPos), 14f, Fonts.REGULAR);
+                width = LwjglManager.INSTANCE.getNanoVGHelper().getTextWidth(vg, input.substring(0, caretPos), 14f, Fonts.REGULAR);
             } else {
                 for (int i = 0; i < input.length(); i++) {
                     s.append("*");
                 }
-                width = RenderManager.getTextWidth(vg, s.substring(0, caretPos), 14f, Fonts.REGULAR);
+                width = LwjglManager.INSTANCE.getNanoVGHelper().getTextWidth(vg, s.substring(0, caretPos), 14f, Fonts.REGULAR);
             }
             if (hovered) {
                 int state = Platform.getMousePlatform().getButtonState(0); //todo does this work
@@ -195,15 +195,15 @@ public class TextInputField extends BasicElement {
             float halfTextWidth = this.getTextWidth(vg, input) / 2f;
             if (start != 0f && end != 0f && toggled) {
                 if (!multiLine) {
-                    RenderManager.drawRect(vg, start, y + height / 2f - 10, end, 20, Colors.GRAY_300);
+                    LwjglManager.INSTANCE.getNanoVGHelper().drawRect(vg, start, y + height / 2f - 10, end, 20, Colors.GRAY_300);
                 } else if (startLine == endLine) {
-                    RenderManager.drawRect(vg, start, y + 10 + 24 * startLine, end, 20, Colors.GRAY_300);
+                    LwjglManager.INSTANCE.getNanoVGHelper().drawRect(vg, start, y + 10 + 24 * startLine, end, 20, Colors.GRAY_300);
                 } else {
-                    RenderManager.drawRect(vg, start, y + 10 + 24 * startLine, this.width - 24, 20, Colors.GRAY_300);
+                    LwjglManager.INSTANCE.getNanoVGHelper().drawRect(vg, start, y + 10 + 24 * startLine, this.width - 24, 20, Colors.GRAY_300);
                     for (int i = startLine + 1; i < endLine; i++) {
-                        RenderManager.drawRect(vg, x + 12, y + 10 + 24 * i, this.width - 24, 20, Colors.GRAY_300);
+                        LwjglManager.INSTANCE.getNanoVGHelper().drawRect(vg, x + 12, y + 10 + 24 * i, this.width - 24, 20, Colors.GRAY_300);
                     }
-                    RenderManager.drawRect(vg, x + 12, y + 10 + 24 * endLine, end, 20, Colors.GRAY_300);
+                    LwjglManager.INSTANCE.getNanoVGHelper().drawRect(vg, x + 12, y + 10 + 24 * endLine, end, 20, Colors.GRAY_300);
                 }
             }
             if (hovered) {
@@ -229,26 +229,26 @@ public class TextInputField extends BasicElement {
                 }
             }
 
-            if(disabled) RenderManager.setAlpha(vg, 0.5f);
+            if(disabled) LwjglManager.INSTANCE.getNanoVGHelper().setAlpha(vg, 0.5f);
             if (toggled) {
                 if (multiLine) {
                     float lineY = y + 20 + getCaretLine(caretPos) * 24;
-                    RenderManager.drawLine(vg, x + width + 12, lineY - 10, x + width + 12, lineY + 10, 1, Colors.WHITE);
+                    LwjglManager.INSTANCE.getNanoVGHelper().drawLine(vg, x + width + 12, lineY - 10, x + width + 12, lineY + 10, 1, Colors.WHITE);
                 } else if (!centered) {
-                    RenderManager.drawLine(vg, x + width + 12, y + height / 2f - 10, x + width + 12, y + height / 2f + 10, 1, Colors.WHITE);
+                    LwjglManager.INSTANCE.getNanoVGHelper().drawLine(vg, x + width + 12, y + height / 2f - 10, x + width + 12, y + height / 2f + 10, 1, Colors.WHITE);
                 } else {
-                    RenderManager.drawLine(vg, x + this.width / 2f - halfTextWidth + width, y + height / 2f - 10, x + this.width / 2f - halfTextWidth + width, y + height / 2f + 10, 1, Colors.WHITE);
+                    LwjglManager.INSTANCE.getNanoVGHelper().drawLine(vg, x + this.width / 2f - halfTextWidth + width, y + height / 2f - 10, x + this.width / 2f - halfTextWidth + width, y + height / 2f + 10, 1, Colors.WHITE);
                 }
             }
 
 
             if (input.equals("")) {
                 if (multiLine) {
-                    RenderManager.drawText(vg, defaultText, x + 12, y + 16, color, 14f, Fonts.REGULAR);
+                    LwjglManager.INSTANCE.getNanoVGHelper().drawText(vg, defaultText, x + 12, y + 16, color, 14f, Fonts.REGULAR);
                 } else if (!centered) {
-                    RenderManager.drawText(vg, defaultText, x + 12, y + height / 2f + 1, color, 14f, Fonts.REGULAR);
+                    LwjglManager.INSTANCE.getNanoVGHelper().drawText(vg, defaultText, x + 12, y + height / 2f + 1, color, 14f, Fonts.REGULAR);
                 } else {
-                    RenderManager.drawText(vg, defaultText, x + this.width / 2f - halfTextWidth, y + height / 2f + 1, color, 14f, Fonts.REGULAR);
+                    LwjglManager.INSTANCE.getNanoVGHelper().drawText(vg, defaultText, x + this.width / 2f - halfTextWidth, y + height / 2f + 1, color, 14f, Fonts.REGULAR);
                 }
             }
 
@@ -256,19 +256,19 @@ public class TextInputField extends BasicElement {
                 if (multiLine) {
                     float textY = y + 20;
                     for (String line : wrappedText) {
-                        RenderManager.drawText(vg, line, x + 12, textY, color, 14f, Fonts.REGULAR);
+                        LwjglManager.INSTANCE.getNanoVGHelper().drawText(vg, line, x + 12, textY, color, 14f, Fonts.REGULAR);
                         textY += 24;
                     }
                 } else if (!centered) {
-                    RenderManager.drawText(vg, input, x + 12, y + height / 2f + 1, color, 14f, Fonts.REGULAR);
+                    LwjglManager.INSTANCE.getNanoVGHelper().drawText(vg, input, x + 12, y + height / 2f + 1, color, 14f, Fonts.REGULAR);
                 } else {
-                    RenderManager.drawText(vg, input, x + this.width / 2f - halfTextWidth, y + height / 2f + 1, color, 14f, Fonts.REGULAR);
+                    LwjglManager.INSTANCE.getNanoVGHelper().drawText(vg, input, x + this.width / 2f - halfTextWidth, y + height / 2f + 1, color, 14f, Fonts.REGULAR);
                 }
             } else {
-                RenderManager.drawText(vg, s.toString(), x + 12, y + height / 2f + 1, color, 14f, Fonts.REGULAR);
+                LwjglManager.INSTANCE.getNanoVGHelper().drawText(vg, s.toString(), x + 12, y + height / 2f + 1, color, 14f, Fonts.REGULAR);
             }
-            RenderManager.setAlpha(vg, 1f);
-            ScissorManager.resetScissor(vg, scissor);
+            LwjglManager.INSTANCE.getNanoVGHelper().setAlpha(vg, 1f);
+            LwjglManager.INSTANCE.getScissorHelper().resetScissor(vg, scissor);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -508,9 +508,9 @@ public class TextInputField extends BasicElement {
             while (s1.length() < s.length()) {
                 s1.append('*');
             }
-            return RenderManager.getTextWidth(vg, s1.toString(), 14.0f, Fonts.REGULAR);
+            return LwjglManager.INSTANCE.getNanoVGHelper().getTextWidth(vg, s1.toString(), 14.0f, Fonts.REGULAR);
         } else {
-            return RenderManager.getTextWidth(vg, s, 14.0f, Fonts.REGULAR);
+            return LwjglManager.INSTANCE.getNanoVGHelper().getTextWidth(vg, s, 14.0f, Fonts.REGULAR);
         }
     }
 
@@ -527,12 +527,12 @@ public class TextInputField extends BasicElement {
     private float getCaretX(int caret) {
         int pos = 0;
         for (String text : wrappedText) {
-            float length = RenderManager.getTextWidth(vg, text, 14.0f, Fonts.REGULAR);
+            float length = LwjglManager.INSTANCE.getNanoVGHelper().getTextWidth(vg, text, 14.0f, Fonts.REGULAR);
             if (pos + length < caret) {
                 pos += length;
                 continue;
             }
-            return RenderManager.getTextWidth(vg, text.substring(0, caret - pos), 14.0f, Fonts.REGULAR);
+            return LwjglManager.INSTANCE.getNanoVGHelper().getTextWidth(vg, text.substring(0, caret - pos), 14.0f, Fonts.REGULAR);
         }
         return 0;
     }

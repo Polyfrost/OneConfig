@@ -38,7 +38,8 @@ import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
 import cc.polyfrost.oneconfig.libs.universal.UMatrixStack;
 import cc.polyfrost.oneconfig.libs.universal.UResolution;
 import cc.polyfrost.oneconfig.libs.universal.UScreen;
-import cc.polyfrost.oneconfig.renderer.RenderManager;
+import cc.polyfrost.oneconfig.renderer.LwjglManager;
+
 import cc.polyfrost.oneconfig.utils.MathUtils;
 import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 import org.jetbrains.annotations.NotNull;
@@ -72,11 +73,11 @@ public class HudGui extends UScreen implements GuiPause {
     public void onDrawScreen(@NotNull UMatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
         int lineWidth = Math.max(1, Math.round(Math.min(UResolution.getWindowWidth() / 1920f, UResolution.getWindowHeight() / 1080f)));
         if (isDragging) {
-            RenderManager.setupAndDraw(vg -> setHudPositions(vg, mouseX, mouseY, true, true, lineWidth));
+            LwjglManager.INSTANCE.getNanoVGHelper().setupAndDraw(vg -> setHudPositions(vg, mouseX, mouseY, true, true, lineWidth));
         } else if (isSelecting) {
             getHudsInRegion(selectX, selectY, mouseX, mouseY);
         } else if (isScaling && editingHuds.size() == 1) {
-            RenderManager.setupAndDraw(vg -> {
+            LwjglManager.INSTANCE.getNanoVGHelper().setupAndDraw(vg -> {
                 Hud hud = (Hud) editingHuds.keySet().toArray()[0];
                 Position position = hud.position;
                 float scaleX = getXSnapping(vg, lineWidth, mouseX, position.getWidth(), false);
@@ -90,19 +91,19 @@ public class HudGui extends UScreen implements GuiPause {
             Position position = hud.position;
             hud.drawAll(matrixStack, true);
             if (editingHuds.containsKey(hud))
-                RenderManager.setupAndDraw(true, vg -> RenderManager.drawRect(vg, position.getX(), position.getY(), position.getWidth(), position.getHeight(), new Color(0, 128, 128, 60).getRGB()));
-            RenderManager.setupAndDraw(vg -> {
-                RenderManager.drawLine(vg, position.getX() * scaleFactor - lineWidth / 2f, position.getY() * scaleFactor - lineWidth / 2f, position.getRightX() * scaleFactor + lineWidth / 2f, position.getY() * scaleFactor - lineWidth / 2f, lineWidth, new Color(255, 255, 255).getRGB());
-                RenderManager.drawLine(vg, position.getX() * scaleFactor - lineWidth / 2f, position.getBottomY() * scaleFactor + lineWidth / 2f, position.getRightX() * scaleFactor + lineWidth / 2f, position.getBottomY() * scaleFactor + lineWidth / 2f, lineWidth, new Color(255, 255, 255).getRGB());
-                RenderManager.drawLine(vg, position.getX() * scaleFactor - lineWidth / 2f, position.getY() * scaleFactor - lineWidth / 2f, position.getX() * scaleFactor - lineWidth / 2f, position.getBottomY() * scaleFactor + lineWidth / 2f, lineWidth, new Color(255, 255, 255).getRGB());
-                RenderManager.drawLine(vg, position.getRightX() * scaleFactor + lineWidth / 2f, position.getY() * scaleFactor - lineWidth / 2f, position.getRightX() * scaleFactor + lineWidth / 2f, position.getBottomY() * scaleFactor + lineWidth / 2f, lineWidth, new Color(255, 255, 255).getRGB());
+                LwjglManager.INSTANCE.getNanoVGHelper().setupAndDraw(true, vg -> LwjglManager.INSTANCE.getNanoVGHelper().drawRect(vg, position.getX(), position.getY(), position.getWidth(), position.getHeight(), new Color(0, 128, 128, 60).getRGB()));
+            LwjglManager.INSTANCE.getNanoVGHelper().setupAndDraw(vg -> {
+                LwjglManager.INSTANCE.getNanoVGHelper().drawLine(vg, position.getX() * scaleFactor - lineWidth / 2f, position.getY() * scaleFactor - lineWidth / 2f, position.getRightX() * scaleFactor + lineWidth / 2f, position.getY() * scaleFactor - lineWidth / 2f, lineWidth, new Color(255, 255, 255).getRGB());
+                LwjglManager.INSTANCE.getNanoVGHelper().drawLine(vg, position.getX() * scaleFactor - lineWidth / 2f, position.getBottomY() * scaleFactor + lineWidth / 2f, position.getRightX() * scaleFactor + lineWidth / 2f, position.getBottomY() * scaleFactor + lineWidth / 2f, lineWidth, new Color(255, 255, 255).getRGB());
+                LwjglManager.INSTANCE.getNanoVGHelper().drawLine(vg, position.getX() * scaleFactor - lineWidth / 2f, position.getY() * scaleFactor - lineWidth / 2f, position.getX() * scaleFactor - lineWidth / 2f, position.getBottomY() * scaleFactor + lineWidth / 2f, lineWidth, new Color(255, 255, 255).getRGB());
+                LwjglManager.INSTANCE.getNanoVGHelper().drawLine(vg, position.getRightX() * scaleFactor + lineWidth / 2f, position.getY() * scaleFactor - lineWidth / 2f, position.getRightX() * scaleFactor + lineWidth / 2f, position.getBottomY() * scaleFactor + lineWidth / 2f, lineWidth, new Color(255, 255, 255).getRGB());
             });
             if (editingHuds.containsKey(hud) && editingHuds.size() == 1)
-                RenderManager.setupAndDraw(true, vg -> RenderManager.drawRect(vg, position.getRightX() - 4, position.getBottomY() - 4, 8, 8, new Color(0, 128, 128, 200).getRGB()));
+                LwjglManager.INSTANCE.getNanoVGHelper().setupAndDraw(true, vg -> LwjglManager.INSTANCE.getNanoVGHelper().drawRect(vg, position.getRightX() - 4, position.getBottomY() - 4, 8, 8, new Color(0, 128, 128, 200).getRGB()));
         }
 
         if (isSelecting)
-            RenderManager.setupAndDraw(true, vg -> RenderManager.drawRect(vg, selectX, selectY, mouseX - selectX, mouseY - selectY, new Color(0, 0, 255, 100).getRGB()));
+            LwjglManager.INSTANCE.getNanoVGHelper().setupAndDraw(true, vg -> LwjglManager.INSTANCE.getNanoVGHelper().drawRect(vg, selectX, selectY, mouseX - selectX, mouseY - selectY, new Color(0, 0, 255, 100).getRGB()));
     }
 
     @Override

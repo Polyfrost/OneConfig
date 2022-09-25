@@ -24,17 +24,16 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.renderer.scissor;
+package cc.polyfrost.oneconfig.internal.renderer;
 
+import cc.polyfrost.oneconfig.renderer.scissor.Scissor;
+import cc.polyfrost.oneconfig.renderer.scissor.ScissorHelper;
 import org.lwjgl3.nanovg.NanoVG;
 
 import java.util.ArrayList;
 
-/**
- * Provides an easy way to manage and group scissor rectangles.
- */
-public class ScissorManager {
-    private static final ArrayList<Scissor> scissors = new ArrayList<>();
+public class ScissorHelperImpl implements ScissorHelper {
+    private final ArrayList<Scissor> scissors = new ArrayList<>();
 
     /**
      * Adds and applies a scissor rectangle to the list of scissor rectangles.
@@ -46,7 +45,7 @@ public class ScissorManager {
      * @param height The height of the scissor rectangle.
      * @return The scissor rectangle.
      */
-    public static Scissor scissor(long vg, float x, float y, float width, float height) {
+    public Scissor scissor(long vg, float x, float y, float width, float height) {
         Scissor scissor = new Scissor(x, y, width, height);
         if (scissors.contains(scissor)) return scissor;
         scissors.add(scissor);
@@ -60,7 +59,7 @@ public class ScissorManager {
      * @param vg      The NanoVG context.
      * @param scissor The scissor rectangle to reset.
      */
-    public static void resetScissor(long vg, Scissor scissor) {
+    public void resetScissor(long vg, Scissor scissor) {
         if (scissors.contains(scissor)) {
             scissors.remove(scissor);
             applyScissors(vg);
@@ -72,19 +71,19 @@ public class ScissorManager {
      *
      * @param vg The NanoVG context.
      */
-    public static void clearScissors(long vg) {
+    public void clearScissors(long vg) {
         scissors.clear();
         NanoVG.nvgResetScissor(vg);
     }
 
-    private static void applyScissors(long vg) {
+    private void applyScissors(long vg) {
         NanoVG.nvgResetScissor(vg);
         if (scissors.size() <= 0) return;
         Scissor finalScissor = getFinalScissor(scissors);
         NanoVG.nvgScissor(vg, finalScissor.x, finalScissor.y, finalScissor.width, finalScissor.height);
     }
 
-    private static Scissor getFinalScissor(ArrayList<Scissor> scissors) {
+    private Scissor getFinalScissor(ArrayList<Scissor> scissors) {
         Scissor finalScissor = new Scissor(scissors.get(0));
         for (int i = 1; i < scissors.size(); i++) {
             Scissor scissor = scissors.get(i);

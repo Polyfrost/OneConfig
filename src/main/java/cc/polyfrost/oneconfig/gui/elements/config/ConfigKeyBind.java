@@ -34,7 +34,8 @@ import cc.polyfrost.oneconfig.gui.elements.BasicButton;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
-import cc.polyfrost.oneconfig.renderer.RenderManager;
+import cc.polyfrost.oneconfig.renderer.LwjglManager;
+
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
@@ -58,8 +59,8 @@ public class ConfigKeyBind extends BasicOption {
 
     @Override
     public void draw(long vg, int x, int y, InputHandler inputHandler) {
-        if (!isEnabled()) RenderManager.setAlpha(vg, 0.5f);
-        RenderManager.drawText(vg, name, x, y + 17, Colors.WHITE, 14f, Fonts.MEDIUM);
+        if (!isEnabled()) LwjglManager.INSTANCE.getNanoVGHelper().setAlpha(vg, 0.5f);
+        LwjglManager.INSTANCE.getNanoVGHelper().drawText(vg, name, x, y + 17, Colors.WHITE, 14f, Fonts.MEDIUM);
         OneKeyBind keyBind = getKeyBind();
         String text = keyBind.getDisplay();
         button.disable(!isEnabled());
@@ -79,7 +80,7 @@ public class ConfigKeyBind extends BasicOption {
         } else if (text.equals("")) text = "None";
         button.setText(text);
         button.draw(vg, x + (size == 1 ? 224 : 736), y, inputHandler);
-        RenderManager.setAlpha(vg, 1f);
+        LwjglManager.INSTANCE.getNanoVGHelper().setAlpha(vg, 1f);
     }
 
     @Override

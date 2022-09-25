@@ -62,6 +62,9 @@ loom {
         property("mixin.debug.export", "true")
         property("debugBytecode", "true")
         property("forge.logging.console.level", "debug")
+        property("org.lwjgl3.util.Debug", "true")
+        property("org.lwjgl3.util.DebugLoader", "true")
+        property("org.lwjgl3.util.DebugStream", "true")
         if (org.gradle.internal.os.OperatingSystem.current().isMacOsX) {
             property("fml.earlyprogresswindow", "false")
         }
@@ -175,7 +178,7 @@ dependencies {
         include("com.github.Chocohead:Fabric-ASM:v2.3")
     }
     val tempLwjglConfiguration by configurations.creating
-    compileOnly(tempLwjglConfiguration("cc.polyfrost:lwjgl-$platform:1.0.0-alpha19") {
+    compileOnly(tempLwjglConfiguration("cc.polyfrost:lwjgl-$platform:1.0.0-alpha21") {
         isTransitive = false
     })
     shadeNoPom(shade(prebundle(tempLwjglConfiguration, "lwjgl.jar"))!!)
