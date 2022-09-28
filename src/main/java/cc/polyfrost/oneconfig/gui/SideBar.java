@@ -29,6 +29,7 @@ package cc.polyfrost.oneconfig.gui;
 import cc.polyfrost.oneconfig.gui.animations.Animation;
 import cc.polyfrost.oneconfig.gui.animations.CubicBezier;
 import cc.polyfrost.oneconfig.gui.animations.DummyAnimation;
+import cc.polyfrost.oneconfig.gui.animations.EaseOutExpo;
 import cc.polyfrost.oneconfig.gui.elements.BasicButton;
 import cc.polyfrost.oneconfig.gui.pages.CreditsPage;
 import cc.polyfrost.oneconfig.gui.pages.ModConfigPage;
@@ -53,16 +54,16 @@ import static cc.polyfrost.oneconfig.gui.elements.BasicButton.SIZE_36;
 
 public class SideBar {
     private final ArrayList<BasicButton> buttons = new ArrayList<BasicButton>() {{
-        add(new BasicButton(192, SIZE_36, "Credits", SVGs.COPYRIGHT_FILL, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY));
-        add(new BasicButton(192, SIZE_36, "Global Search", SVGs.MAGNIFYING_GLASS_BOLD, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY));
+        int width = 192;
+        add(new BasicButton(width, SIZE_36, "Credits", SVGs.COPYRIGHT_FILL, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY));
 
-        add(new BasicButton(192, SIZE_36, "Mods", SVGs.FADERS_HORIZONTAL_BOLD, null, ALIGNMENT_LEFT, ColorPalette.PRIMARY));
-        add(new BasicButton(192, SIZE_36, "Profiles", SVGs.USER_SWITCH_FILL, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY));
-        add(new BasicButton(192, SIZE_36, "Performance", SVGs.GAUGE_FILL, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY));
-        add(new BasicButton(192, SIZE_36, "Updates", SVGs.ARROWS_CLOCKWISE_BOLD, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY));
-        add(new BasicButton(192, SIZE_36, "Themes", SVGs.PAINT_BRUSH_BROAD_FILL, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY));
-        add(new BasicButton(192, SIZE_36, "Screenshots", SVGs.APERTURE_FILL, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY));
-        add(new BasicButton(192, SIZE_36, "Preferences", SVGs.GEAR_SIX_FILL, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY));
+        add(new BasicButton(width, SIZE_36, "Mods", SVGs.FADERS_HORIZONTAL_BOLD, null, ALIGNMENT_LEFT, ColorPalette.PRIMARY));
+        add(new BasicButton(width, SIZE_36, "Profiles", SVGs.USER_SWITCH_FILL, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY));
+        add(new BasicButton(width, SIZE_36, "Performance", SVGs.GAUGE_FILL, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY));
+
+        add(new BasicButton(width, SIZE_36, "Themes", SVGs.PAINT_BRUSH_BROAD_FILL, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY));
+        add(new BasicButton(width, SIZE_36, "Screenshots", SVGs.APERTURE_FILL, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY));
+        add(new BasicButton(width, SIZE_36, "Preferences", SVGs.GEAR_SIX_FILL, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY));
     }};
     private final BasicButton hudButton = new BasicButton(192, SIZE_36, "Edit HUD", SVGs.NOTE_PENCIL_BOLD, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY);
     private final BasicButton closeButton = new BasicButton(192, SIZE_36, "Close", SVGs.X_CIRCLE_BOLD, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY_DESTRUCTIVE);
@@ -74,8 +75,8 @@ public class SideBar {
 
     public SideBar() {
         buttons.get(0).setClickAction(new CreditsPage());
-        buttons.get(2).setClickAction(new ModsPage());
-        buttons.get(8).setClickAction(new ModConfigPage(Preferences.getInstance().mod.defaultPage, true));
+        buttons.get(1).setClickAction(new ModsPage());
+        buttons.get(6).setClickAction(new ModConfigPage(Preferences.getInstance().mod.defaultPage, true));
         hudButton.setClickAction(() -> GuiUtils.displayScreen(new HudGui()));
         closeButton.setClickAction(GuiUtils::closeScreen);
         for (BasicButton button : buttons) {
@@ -105,15 +106,15 @@ public class SideBar {
 //        buttons.get(1).draw(vg, x + 16, y + 116, inputHandler);
         RenderManager.drawText(vg, "MOD CONFIG", x + 16, calcAndIncrementLn(sidebarY + 26), Colors.WHITE_50, 12, Fonts.SEMIBOLD);
         sidebarY = sidebarY - 26;
+        buttons.get(1).draw(vg, x + 16, calcAndIncrementLn(sidebarY), inputHandler);
         buttons.get(2).draw(vg, x + 16, calcAndIncrementLn(sidebarY), inputHandler);
         buttons.get(3).draw(vg, x + 16, calcAndIncrementLn(sidebarY), inputHandler);
-        buttons.get(4).draw(vg, x + 16, calcAndIncrementLn(sidebarY), inputHandler);
 //        buttons.get(5).draw(vg, x + 16, listNewLn(sidebarY), inputHandler);
         RenderManager.drawText(vg, "PERSONALIZATION", x + 16, calcAndIncrementLn(sidebarY + 26), Colors.WHITE_50, 12, Fonts.SEMIBOLD);
         sidebarY = sidebarY - 26;
+        buttons.get(4).draw(vg, x + 16, calcAndIncrementLn(sidebarY), inputHandler);
+        buttons.get(5).draw(vg, x + 16, calcAndIncrementLn(sidebarY), inputHandler);
         buttons.get(6).draw(vg, x + 16, calcAndIncrementLn(sidebarY), inputHandler);
-        buttons.get(7).draw(vg, x + 16, calcAndIncrementLn(sidebarY), inputHandler);
-        buttons.get(8).draw(vg, x + 16, calcAndIncrementLn(sidebarY), inputHandler);
         sidebarY = 0;
 
         hudButton.draw(vg, x + 16, y + 704, inputHandler);
@@ -131,7 +132,7 @@ public class SideBar {
     private void moveSideBar(BasicButton button) {
         if (button.equals(buttons.get(selected))) return;
         buttons.get(selected).setColorPalette(ColorPalette.TERTIARY);
-        moveAnimation = new CubicBezier(0.76f, 0, 0.24f, 1, 300, buttons.get(selected).y - y, button.y - y, false);
+        moveAnimation = new EaseOutExpo(300, buttons.get(selected).y - y, button.y - y, false);
         sizeAnimation = new DummyAnimation(36);
         selected = buttons.indexOf(button);
     }

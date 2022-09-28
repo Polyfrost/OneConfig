@@ -29,6 +29,7 @@ package cc.polyfrost.oneconfig.gui;
 import cc.polyfrost.oneconfig.config.core.OneColor;
 import cc.polyfrost.oneconfig.gui.animations.Animation;
 import cc.polyfrost.oneconfig.gui.animations.EaseInOutQuad;
+import cc.polyfrost.oneconfig.gui.animations.EaseOutExpo;
 import cc.polyfrost.oneconfig.gui.elements.BasicElement;
 import cc.polyfrost.oneconfig.gui.elements.ColorSelector;
 import cc.polyfrost.oneconfig.gui.elements.text.TextInputField;
@@ -144,7 +145,7 @@ public class OneConfigGui extends OneUIScreen {
         } else if (forwardArrow.isClicked() && nextPages.size() > 0) {
             try {
                 previousPages.add(0, currentPage);
-                openPage(nextPages.get(0), new EaseInOutQuad(300, 224, 2128, true), false);
+                openPage(nextPages.get(0), new EaseOutExpo(300, 224, 2128, true), false);
                 nextPages.remove(0);
             } catch (Exception ignored) {
             }
@@ -209,7 +210,7 @@ public class OneConfigGui extends OneUIScreen {
     }
 
     public void openPage(@NotNull Page page, boolean addToPrevious) {
-        openPage(page, new EaseInOutQuad(300, 224, 2128, false), addToPrevious);
+        openPage(page, new EaseOutExpo(300, 224, 2128, false), addToPrevious);
     }
 
     public void openPage(@NotNull Page page, Animation animation, boolean addToPrevious) {
