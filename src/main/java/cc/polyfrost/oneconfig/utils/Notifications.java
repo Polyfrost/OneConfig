@@ -226,6 +226,7 @@ public final class Notifications {
 
     @Subscribe
     private void onHudRender(HudRenderEvent event) {
+        if (notifications.size() == 0) return;
         RenderManager.setupAndDraw((vg) -> {
             float desiredPosition = -16f;
             float scale = OneConfigGui.getScaleFactor();
