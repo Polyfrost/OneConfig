@@ -609,6 +609,16 @@ public class cc/polyfrost/oneconfig/gui/animations/EaseInOutQuart : cc/polyfrost
 	protected fun animate (F)F
 }
 
+public class cc/polyfrost/oneconfig/gui/animations/EaseOutBump : cc/polyfrost/oneconfig/gui/animations/Animation {
+	public fun <init> (IFFZ)V
+	protected fun animate (F)F
+}
+
+public class cc/polyfrost/oneconfig/gui/animations/EaseOutExpo : cc/polyfrost/oneconfig/gui/animations/Animation {
+	public fun <init> (IFFZ)V
+	protected fun animate (F)F
+}
+
 public class cc/polyfrost/oneconfig/gui/animations/EaseOutQuad : cc/polyfrost/oneconfig/gui/animations/Animation {
 	public fun <init> (IFFZ)V
 	protected fun animate (F)F
