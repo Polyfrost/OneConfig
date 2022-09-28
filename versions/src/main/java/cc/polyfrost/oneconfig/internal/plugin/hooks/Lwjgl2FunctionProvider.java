@@ -26,7 +26,7 @@
 
 package cc.polyfrost.oneconfig.internal.plugin.hooks;
 //#if MC<=11202
-import org.lwjgl3.system.FunctionProvider;
+import org.lwjgl.system.FunctionProvider;
 
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;

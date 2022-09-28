@@ -32,12 +32,12 @@ import cc.polyfrost.oneconfig.renderer.AssetHelper;
 import cc.polyfrost.oneconfig.renderer.Image;
 import cc.polyfrost.oneconfig.renderer.SVG;
 import cc.polyfrost.oneconfig.utils.IOUtils;
-import org.lwjgl3.BufferUtils;
-import org.lwjgl3.nanovg.NSVGImage;
-import org.lwjgl3.nanovg.NanoSVG;
-import org.lwjgl3.nanovg.NanoVG;
-import org.lwjgl3.stb.STBImage;
-import org.lwjgl3.system.MemoryUtil;
+import org.lwjgl.BufferUtils;
+import org.lwjgl.nanovg.NSVGImage;
+import org.lwjgl.nanovg.NanoSVG;
+import org.lwjgl.nanovg.NanoVG;
+import org.lwjgl.stb.STBImage;
+import org.lwjgl.system.MemoryUtil;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;

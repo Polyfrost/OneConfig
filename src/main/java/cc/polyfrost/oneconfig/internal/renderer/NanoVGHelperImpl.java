@@ -41,15 +41,15 @@ import cc.polyfrost.oneconfig.renderer.font.Font;
 import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.NetworkUtils;
 import org.lwjgl.opengl.GL11;
-import org.lwjgl3.nanovg.NVGColor;
-import org.lwjgl3.nanovg.NVGPaint;
-import org.lwjgl3.nanovg.NanoVG;
-import org.lwjgl3.nanovg.NanoVGGL2;
+import org.lwjgl.nanovg.NVGColor;
+import org.lwjgl.nanovg.NVGPaint;
+import org.lwjgl.nanovg.NanoVG;
+import org.lwjgl.nanovg.NanoVGGL2;
 
 import java.util.function.LongConsumer;
 import java.util.regex.Pattern;
 
-import static org.lwjgl3.nanovg.NanoVG.*;
+import static org.lwjgl.nanovg.NanoVG.*;
 
 /**
  * Handles NanoVG rendering and wraps it in a more convenient interface.
@@ -58,10 +58,6 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
     private long vg = -1;
 
     //nanovg
-
-    private NanoVGHelperImpl() {
-
-    }
 
     /**
      * Sets up rendering, calls the consumer with the NanoVG context, and then cleans up.

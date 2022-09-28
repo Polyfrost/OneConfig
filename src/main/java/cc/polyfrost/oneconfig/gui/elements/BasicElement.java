@@ -101,7 +101,7 @@ public class BasicElement {
      * Draw script for the element.
      * <br> <b>Make sure to call {@link #update(float, float, InputHandler)} to update the elements states!</b>
      *
-     * @param vg NanoVG context (see {@link NanoVGHelperImpl})
+     * @param vg NanoVG context (see {@link NanoVGHelper})
      * @param x  x position of the element
      * @param y  y position of the element
      */

@@ -62,9 +62,9 @@ loom {
         property("mixin.debug.export", "true")
         property("debugBytecode", "true")
         property("forge.logging.console.level", "debug")
-        property("org.lwjgl3.util.Debug", "true")
-        property("org.lwjgl3.util.DebugLoader", "true")
-        property("org.lwjgl3.util.DebugStream", "true")
+        property("org.lwjgl.util.Debug", "true")
+        property("org.lwjgl.util.DebugLoader", "true")
+        property("org.lwjgl.util.DebugStream", "true")
         if (org.gradle.internal.os.OperatingSystem.current().isMacOsX) {
             property("fml.earlyprogresswindow", "false")
         }
