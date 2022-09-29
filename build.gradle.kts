@@ -4,7 +4,7 @@ import gg.essential.gradle.util.prebundle
 
 
 plugins {
-    kotlin("jvm") version "1.6.21"
+    kotlin("jvm") version "1.7.20"
     id("org.jetbrains.kotlinx.binary-compatibility-validator") version "0.8.0"
     id("gg.essential.defaults.repo")
     id("gg.essential.defaults.java")
