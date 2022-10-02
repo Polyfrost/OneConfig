@@ -98,7 +98,14 @@ public class CommandManager {
      * @param obj the command to register (must be an instance of a class annotated with @Command).
      */
     public void registerCommand(Object obj) {
-        platform.createCommand(new OCCommand(obj));
+        try {
+            platform.createCommand(new OCCommand(obj));
+        } catch (Exception exception) {
+            throw new RuntimeException(
+                    "Error while registering command " + obj.getClass().getSimpleName(),
+                    exception
+            );
+        }
     }
 
     /**
