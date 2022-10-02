@@ -26,7 +26,6 @@
 
 package cc.polyfrost.oneconfig.utils.commands;
 
-import cc.polyfrost.oneconfig.Test;
 import cc.polyfrost.oneconfig.libs.universal.UChat;
 import cc.polyfrost.oneconfig.libs.universal.UMinecraft;
 import cc.polyfrost.oneconfig.utils.commands.annotations.Description;
@@ -38,27 +37,12 @@ import com.mojang.brigadier.arguments.FloatArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
-import com.mojang.brigadier.context.CommandContext;
-import com.mojang.brigadier.suggestion.Suggestions;
-import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.mojang.brigadier.tree.LiteralCommandNode;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.server.command.CommandSource;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.registry.DynamicRegistryManager;
-import net.minecraft.util.registry.RegistryKey;
-import net.minecraft.world.World;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Parameter;
 import java.util.Collection;
 import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.stream.Stream;
 
 import static cc.polyfrost.oneconfig.utils.commands.ClientCommandManager.*;
 import static cc.polyfrost.oneconfig.utils.commands.CommandManager.DELIMITER;
@@ -67,78 +51,6 @@ import static com.mojang.brigadier.arguments.StringArgumentType.greedyString;
 import static com.mojang.brigadier.arguments.StringArgumentType.string;
 
 public class PlatformCommandManagerImpl extends PlatformCommandManager {
-
-	private static final FabricClientCommandSource ADAPTER = new FabricClientCommandSource() {
-		@Override
-		public void sendFeedback(Text message) {
-			System.out.println(message.getString());
-		}
-
-		@Override
-		public void sendError(Text message) {
-			System.err.println(message.asString());
-		}
-
-		@Override
-		public MinecraftClient getClient() {
-			return null;
-		}
-
-		@Override
-		public ClientPlayerEntity getPlayer() {
-			return null;
-		}
-
-		@Override
-		public ClientWorld getWorld() {
-			return null;
-		}
-
-		@Override
-		public Collection<String> getPlayerNames() {
-			return null;
-		}
-
-		@Override
-		public Collection<String> getTeamNames() {
-			return null;
-		}
-
-		@Override
-		public Collection<Identifier> getSoundIds() {
-			return null;
-		}
-
-		@Override
-		public Stream<Identifier> getRecipeIds() {
-			return null;
-		}
-
-		@Override
-		public CompletableFuture<Suggestions> getCompletions(CommandContext<CommandSource> context, SuggestionsBuilder builder) {
-			return null;
-		}
-
-		@Override
-		public Set<RegistryKey<World>> getWorldKeys() {
-			return null;
-		}
-
-		@Override
-		public DynamicRegistryManager getRegistryManager() {
-			return null;
-		}
-
-		@Override
-		public boolean hasPermissionLevel(int level) {
-			return false;
-		}
-	};
-
-	static {
-		Test.register(DISPATCHER);
-	}
-
 	@Override
 	void createCommand(CommandManager.OCCommand cmd) {
 		try {
