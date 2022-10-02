@@ -70,7 +70,7 @@ public class OneConfigMixinPlugin implements IMixinConfigPlugin {
 
     @Override
     public List<String> getMixins() {
-        ArrayList<String> mixins = new ArrayList<>();
+        List<String> mixins = new ArrayList<>();
         if (Platform.getInstance().getLoader().equals(Platform.Loader.FORGE)) {
             mixins.add("EventBusMixin");
         } else if (Platform.getInstance().getLoader().equals(Platform.Loader.FABRIC)) {
@@ -90,10 +90,10 @@ public class OneConfigMixinPlugin implements IMixinConfigPlugin {
                 mixins.add("commands.HelpCommandAccessor");
                 mixins.add("commands.MinecraftMixin_Commands");
             }
+            mixins.add("ClientBuiltinResourcePackProviderMixin");
             mixins.add("KeyboardMixin");
             mixins.add("MouseAccessor");
             mixins.add("MouseMixin");
-            mixins.add("TickTimeTrackerMixin");
             return mixins;
         }
         if (Platform.getInstance().getMinecraftVersion() == 10800 || Platform.getInstance().getMinecraftVersion() == 11200) {
