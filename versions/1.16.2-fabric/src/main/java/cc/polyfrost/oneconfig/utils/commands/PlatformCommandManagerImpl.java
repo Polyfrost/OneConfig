@@ -32,6 +32,10 @@ import cc.polyfrost.oneconfig.libs.universal.UMinecraft;
 import cc.polyfrost.oneconfig.utils.commands.annotations.Description;
 import cc.polyfrost.oneconfig.utils.commands.annotations.Greedy;
 import com.mojang.brigadier.Command;
+import com.mojang.brigadier.arguments.ArgumentType;
+import com.mojang.brigadier.arguments.DoubleArgumentType;
+import com.mojang.brigadier.arguments.FloatArgumentType;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
@@ -47,6 +51,7 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.DynamicRegistryManager;
 import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.World;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Parameter;
 import java.util.Collection;
@@ -59,7 +64,7 @@ import static cc.polyfrost.oneconfig.utils.commands.ClientCommandManager.*;
 import static cc.polyfrost.oneconfig.utils.commands.CommandManager.DELIMITER;
 import static cc.polyfrost.oneconfig.utils.commands.CommandManager.MAIN_METHOD_NAME;
 import static com.mojang.brigadier.arguments.StringArgumentType.greedyString;
-import static com.mojang.brigadier.arguments.StringArgumentType.word;
+import static com.mojang.brigadier.arguments.StringArgumentType.string;
 
 public class PlatformCommandManagerImpl extends PlatformCommandManager {
 
@@ -176,14 +181,12 @@ public class PlatformCommandManagerImpl extends PlatformCommandManager {
 
 	private static LiteralCommandNode<FabricClientCommandSource> createSubNode(String p, CommandManager.InternalCommand cmd) {
 		// Literal paths
-		System.out.println("-------------------");
 		String[] paths = p.split(DELIMITER);
 		LiteralArgumentBuilder<FabricClientCommandSource> lastLiteral = literal(paths[0]);
 		LiteralArgumentBuilder<FabricClientCommandSource> rootLiteral = lastLiteral;
 		for (int i = 1; i < paths.length; i++) {
 			LiteralArgumentBuilder<FabricClientCommandSource> current = literal(paths[i]);
 
-			System.out.println(lastLiteral.getLiteral() + " then " + current.getLiteral());
 			lastLiteral.then(current);
 			lastLiteral = current;
 		}
@@ -194,12 +197,9 @@ public class PlatformCommandManagerImpl extends PlatformCommandManager {
 		for (Parameter parameter : cmd.getUnderlyingMethod().getParameters()) {
 			RequiredArgumentBuilder<FabricClientCommandSource, ?> current = argument(
 					getArgName(parameter),
-					parameter.isAnnotationPresent(Greedy.class)
-							? greedyString()
-							: word()
+					getType(parameter)
 			);
 			if (lastParam != null) {
-				System.out.println(lastParam.getName() + " then " + current.getName());
 				lastParam.then(current);
 			} else {
 				rootParam = current;
@@ -207,6 +207,7 @@ public class PlatformCommandManagerImpl extends PlatformCommandManager {
 			lastParam = current;
 		}
 
+		// Command execution
 		Command<FabricClientCommandSource> command = context -> {
 			if (cmd.getUnderlyingMethod().getParameterCount() == 0) {
 				chat(cmd.invoke());
@@ -221,16 +222,41 @@ public class PlatformCommandManagerImpl extends PlatformCommandManager {
 			return 1;
 		};
 
-		System.out.println("First literal : " + rootLiteral.getLiteral());
-		System.out.println("Builder (last): " + lastLiteral.getLiteral());
-		System.out.println("First param: " + (rootParam != null ? rootParam.getName() : null));
-		System.out.println("Last param : " + (lastParam != null ? lastParam.getName() : null));
+		/*
+		 * Basically we're trying to do something like this:
+		 *
+		 * If no params:
+		 *  rootLiteral.then(
+		 *      (...).then(
+		 *          lastLiteral.executes(...)
+		 *      )
+		 *  ).build()
+		 *
+		 * If there are params:
+		 *  rootLiteral.then(
+		 *      (...).then(
+		 *          lastLiteral.then(
+		 *              rootParam.then(
+		 *                  (...).then(
+		 *                      lastParam.executes(...)
+		 *                  )
+		 *              )
+		 *          )
+		 *      )
+		 *   ).build();
+		 *
+		 * So:
+		 *  - building the root literal
+		 *  - adding command execution to the last param and then'ing the root
+		 * param to the last literal
+		 *  - OR adding command execution to the last literal
+		 *
+		 * That's exactly what we're doing. why doesn't this work. AAAAAAAAAA
+		 */
 		if (lastParam != null) {
-			System.out.println("executes(command) then(rootParam)");
 			lastParam.executes(command);
 			lastLiteral.then(rootParam);
 		} else {
-			System.out.println("executes(command)");
 			lastLiteral.executes(command);
 		}
 		return rootLiteral.build();
@@ -240,6 +266,22 @@ public class PlatformCommandManagerImpl extends PlatformCommandManager {
 		return parameter.isAnnotationPresent(Description.class)
 				? parameter.getAnnotation(Description.class).value()
 				: parameter.getType().getSimpleName() + "@" + parameter.getName().hashCode();
+	}
+
+	private static @NotNull ArgumentType<?> getType(@NotNull Parameter parameter) {
+		Class<?> type = parameter.getType();
+		if (type.equals(float.class) || type.equals(Float.class)) {
+			return FloatArgumentType.floatArg();
+		}
+		if (type.equals(double.class) || type.equals(Double.class)) {
+			return DoubleArgumentType.doubleArg();
+		}
+		if (type.equals(int.class) || type.equals(Integer.class)) {
+			return IntegerArgumentType.integer();
+		}
+		return parameter.isAnnotationPresent(Greedy.class)
+				? greedyString()
+				: string();
 	}
 
 	private static LiteralCommandNode<FabricClientCommandSource> createHelpNode(CommandManager.OCCommand cmd) {
