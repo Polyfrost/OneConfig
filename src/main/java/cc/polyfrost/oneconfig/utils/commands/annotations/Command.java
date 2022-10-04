@@ -136,7 +136,6 @@ import java.lang.annotation.Target;
  * <p>
  * OneConfig's command system also generates very helpful help messages, which will display the {@link Description} and {@link Command}'s information, such as the description and parameter names.
  * If a parameter is not named by a Description, it will be shown as it's type. /test help (command) will display advanced help for a specific command as well. <br>
- * Autocompletion is also supported for commands. see {@link Description#autoCompletesTo()} for more information.
  * </p>
  * @see CommandManager
  */

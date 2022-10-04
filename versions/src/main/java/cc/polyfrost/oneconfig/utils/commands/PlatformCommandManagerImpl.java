@@ -28,7 +28,6 @@
 package cc.polyfrost.oneconfig.utils.commands;
 
 import cc.polyfrost.oneconfig.libs.universal.UChat;
-import cc.polyfrost.oneconfig.utils.commands.annotations.Description;
 import net.minecraft.client.Minecraft;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
@@ -109,25 +108,12 @@ public class PlatformCommandManagerImpl extends PlatformCommandManager {
                         boolean isNumeric = type.equalsIgnoreCase("int") || type.equalsIgnoreCase("long") ||
                                 type.equalsIgnoreCase("double") || type.equalsIgnoreCase("float") || type.equalsIgnoreCase("integer");
 
-                        Description description = currentParam.isAnnotationPresent(Description.class) ? currentParam.getAnnotation(Description.class) : null;
-                        String[] targets = description != null && description.autoCompletesTo().length != 0 ? description.autoCompletesTo() : null;
-                        if (targets != null) {
-                            if (targets[0].equals("PLAYER")) {
-                                if (platform.getPlayerNames() != null) {
-                                    opts.addAll(platform.getPlayerNames());
-                                }
-                            } else {
-                                opts.addAll(Arrays.asList(targets));
-                            }
-                        } else {
-                            // yes.
-                            if (isNumeric) opts.add("0");
-                            else if (type.equalsIgnoreCase("boolean")) {
-                                opts.add("true");
-                                opts.add("false");
-                            } else if (type.equalsIgnoreCase("string")) {
-                                opts.add("String");
-                            }
+                        if (isNumeric) opts.add("0");
+                        else if (type.equalsIgnoreCase("boolean")) {
+                            opts.add("true");
+                            opts.add("false");
+                        } else if (type.equalsIgnoreCase("string")) {
+                            opts.add("String");
                         }
                     } else {
                         String current = String.join(DELIMITER, args);
