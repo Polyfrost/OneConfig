@@ -33,11 +33,12 @@ import java.lang.annotation.Target;
 
 /**
  * This annotation can be used to describe arguments. It is completely optional, but is recommended.
- * It is used for better help messages for your users; and for control on autocompletion. <br>
+ * It is used for better help messages for your users.<br>
  * </pre> <br>
  * <b>Usage on parameters:</b>
  * <pre>{@code
- * public void myCommand(@Description("first parameter") int bob, @Description(autoCompletesTo = {"1", "3.232"} float someParam) {
+ * public void myCommand(@Description("first parameter") int bob,
+ * @Description(description = "The required floating value") float someParam) {}
  * // this will mark the first parameter as "first parameter" in the help message.
  * // If its not present, it will just show the TYPE of the parameter (e.g. int).
  * }

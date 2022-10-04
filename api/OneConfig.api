@@ -1503,7 +1503,6 @@ public abstract interface annotation class cc/polyfrost/oneconfig/utils/commands
 }
 
 public abstract interface annotation class cc/polyfrost/oneconfig/utils/commands/annotations/Description : java/lang/annotation/Annotation {
-	public abstract fun autoCompletesTo ()[Ljava/lang/String;
 	public abstract fun description ()Ljava/lang/String;
 	public abstract fun value ()Ljava/lang/String;
 }
