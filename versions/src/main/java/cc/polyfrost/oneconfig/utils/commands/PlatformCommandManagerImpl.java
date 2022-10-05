@@ -105,23 +105,10 @@ public class PlatformCommandManagerImpl extends PlatformCommandManager {
                 try {
                     if (command != null) {
                         Parameter currentParam = command.getValue().getUnderlyingMethod().getParameters()[command.getKey().length - 1];
-                        String type = currentParam.getType().getSimpleName();
-                        boolean isNumeric = type.equalsIgnoreCase("int") || type.equalsIgnoreCase("long") ||
-                                type.equalsIgnoreCase("double") || type.equalsIgnoreCase("float") || type.equalsIgnoreCase("integer");
-
                         Description description = currentParam.isAnnotationPresent(Description.class) ? currentParam.getAnnotation(Description.class) : null;
                         String[] targets = description != null && description.autoCompletesTo().length != 0 ? description.autoCompletesTo() : null;
                         if (targets != null) {
                             opts.addAll(Arrays.asList(targets));
-                        } else {
-                            // yes.
-                            if (isNumeric) opts.add("0");
-                            else if (type.equalsIgnoreCase("boolean")) {
-                                opts.add("true");
-                                opts.add("false");
-                            } else if (type.equalsIgnoreCase("string")) {
-                                opts.add("String");
-                            }
                         }
                     } else {
                         String current = String.join(DELIMITER, args);
