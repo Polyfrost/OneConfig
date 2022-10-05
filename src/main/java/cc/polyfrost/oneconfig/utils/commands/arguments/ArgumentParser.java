@@ -26,9 +26,15 @@
 
 package cc.polyfrost.oneconfig.utils.commands.arguments;
 
+import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.lang.reflect.Parameter;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
 
 /**
  * A class used to create a parser for a given String. Some examples can be found in this class.
@@ -49,6 +55,19 @@ public abstract class ArgumentParser<T> {
      */
     @Nullable
     public abstract T parse(@NotNull String arg) throws Exception;
+
+    /**
+     * Returns possible completions for the given arguments.
+     * Should return an empty list or null if no completions are possible.
+     *
+     * @param arguments The arguments to complete.
+     * @param parameter The parameter to complete.
+     * @return A list of possible completions, or an empty list or null if no completions are possible.
+     */
+    @Nullable
+    public List<String> complete(Arguments arguments, Parameter parameter) {
+        return Collections.emptyList();
+    }
 
 
     // DEFAULT PARSERS
@@ -85,6 +104,9 @@ public abstract class ArgumentParser<T> {
     }
 
     public static class BooleanParser extends ArgumentParser<Boolean> {
+
+        private static final List<String> VALUES = Lists.newArrayList("true", "false");
+
         @Override
         public @Nullable Boolean parse(@NotNull String s) {
             if (s.equalsIgnoreCase("false") || s.equalsIgnoreCase("off") || s.equalsIgnoreCase("no") || s.equalsIgnoreCase("disabled")) {
@@ -94,6 +116,19 @@ public abstract class ArgumentParser<T> {
             } else {
                 throw new IllegalArgumentException(s + " is not true/false");
             }
+        }
+
+        @Override
+        public @Nullable List<String> complete(Arguments arguments, Parameter parameter) {
+            String value = arguments.poll();
+            if (value != null && !value.trim().isEmpty()) {
+                for (String v : VALUES) {
+                    if (v.startsWith(value.toLowerCase(Locale.ENGLISH))) {
+                        return Lists.newArrayList(v);
+                    }
+                }
+            }
+            return VALUES;
         }
     }
 }

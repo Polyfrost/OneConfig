@@ -55,7 +55,7 @@ public class CommandManager {
      * <a href="https://https://www.cl.cam.ac.uk/~mgk25/ucs/examples/UTF-8-test.txt">UTF-8 Stress Test</a> Character 2.3.1 (used because it's never going to be used in theory)
      */
     static final String DELIMITER = "\uD7FF";
-    private final HashMap<Class<?>, ArgumentParser<?>> parsers = new HashMap<>();
+    final HashMap<Class<?>, ArgumentParser<?>> parsers = new HashMap<>();
     private final String[] EMPTY_ARRAY = new String[]{""};
     // so that no one can name a method this
     static final String MAIN_METHOD_NAME = "MAIN" + DELIMITER + DELIMITER + "MAIN";
