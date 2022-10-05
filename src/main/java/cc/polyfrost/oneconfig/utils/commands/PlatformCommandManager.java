@@ -35,8 +35,5 @@ public abstract class PlatformCommandManager {
 
     abstract void createCommand(CommandManager.OCCommand command);
 
-    /** Method that returns a collection of players currently in the server. Can be null. */
-    abstract Collection<String> getPlayerNames();
-
     void handleNewParser(ArgumentParser<?> parser, Class<?> clazz) {}
 }

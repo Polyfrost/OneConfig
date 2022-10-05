@@ -28,6 +28,7 @@
 package cc.polyfrost.oneconfig.utils.commands;
 
 import cc.polyfrost.oneconfig.libs.universal.UChat;
+import cc.polyfrost.oneconfig.utils.commands.annotations.Description;
 import net.minecraft.client.Minecraft;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
@@ -63,10 +64,10 @@ public class PlatformCommandManagerImpl extends PlatformCommandManager {
             @Override
             public void
                 //#if MC<=10809
-                processCommand(ICommandSender sender, String[] args)
-                //#else
-                //$$ execute(net.minecraft.server.MinecraftServer server, ICommandSender sender, String[] args)
-                //#endif
+            processCommand(ICommandSender sender, String[] args)
+            //#else
+            //$$ execute(net.minecraft.server.MinecraftServer server, ICommandSender sender, String[] args)
+            //#endif
             {
                 try {
                     String[] result = doCommand(args);
@@ -94,10 +95,10 @@ public class PlatformCommandManagerImpl extends PlatformCommandManager {
             @Override
             public List<String>
                 //#if MC<=10809
-                addTabCompletionOptions(ICommandSender sender, String[] args, BlockPos pos)
-                //#else
-                //$$ getTabCompletions(net.minecraft.server.MinecraftServer server, ICommandSender sender, String[] args, BlockPos targetPos)
-                //#endif
+            addTabCompletionOptions(ICommandSender sender, String[] args, BlockPos pos)
+            //#else
+            //$$ getTabCompletions(net.minecraft.server.MinecraftServer server, ICommandSender sender, String[] args, BlockPos targetPos)
+            //#endif
             {
                 List<String> opts = new ArrayList<>();
                 CommandManager.Pair<String[], CommandManager.InternalCommand> command = getCommand(args);
@@ -108,12 +109,19 @@ public class PlatformCommandManagerImpl extends PlatformCommandManager {
                         boolean isNumeric = type.equalsIgnoreCase("int") || type.equalsIgnoreCase("long") ||
                                 type.equalsIgnoreCase("double") || type.equalsIgnoreCase("float") || type.equalsIgnoreCase("integer");
 
-                        if (isNumeric) opts.add("0");
-                        else if (type.equalsIgnoreCase("boolean")) {
-                            opts.add("true");
-                            opts.add("false");
-                        } else if (type.equalsIgnoreCase("string")) {
-                            opts.add("String");
+                        Description description = currentParam.isAnnotationPresent(Description.class) ? currentParam.getAnnotation(Description.class) : null;
+                        String[] targets = description != null && description.autoCompletesTo().length != 0 ? description.autoCompletesTo() : null;
+                        if (targets != null) {
+                            opts.addAll(Arrays.asList(targets));
+                        } else {
+                            // yes.
+                            if (isNumeric) opts.add("0");
+                            else if (type.equalsIgnoreCase("boolean")) {
+                                opts.add("true");
+                                opts.add("false");
+                            } else if (type.equalsIgnoreCase("string")) {
+                                opts.add("String");
+                            }
                         }
                     } else {
                         String current = String.join(DELIMITER, args);
@@ -122,7 +130,7 @@ public class PlatformCommandManagerImpl extends PlatformCommandManager {
                                 String toAdd;
                                 if (key.contains(current)) {
                                     key = key.substring(current.length());
-                                    if(key.contains(DELIMITER)) {
+                                    if (key.contains(DELIMITER)) {
                                         key = key.substring(0, key.lastIndexOf(DELIMITER));
                                     }
                                 }
@@ -186,14 +194,6 @@ public class PlatformCommandManagerImpl extends PlatformCommandManager {
             }
         });
         //#endif
-    }
-
-    @Override
-    List<String> getPlayerNames() {
-        if (Minecraft.getMinecraft().thePlayer != null && Minecraft.getMinecraft().thePlayer.sendQueue != null) {
-            // is it sad that I know how to do this off by heart now?
-            return Minecraft.getMinecraft().thePlayer.sendQueue.getPlayerInfoMap().stream().map(info -> info.getGameProfile().getName()).collect(Collectors.toList());
-        } else return null;
     }
 
 

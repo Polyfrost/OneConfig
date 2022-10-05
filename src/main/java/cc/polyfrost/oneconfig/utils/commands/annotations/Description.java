@@ -37,24 +37,24 @@ import java.lang.annotation.Target;
  * </pre> <br>
  * <b>Usage on parameters:</b>
  * <pre>{@code
- * public void myCommand(@Description("first parameter") int bob,
- * @Description(description = "The required floating value") float someParam) {}
- * // this will mark the first parameter as "first parameter" in the help message.
- * // If its not present, it will just show the TYPE of the parameter (e.g. int).
- * }
+ *  public void myCommand(@Description("first parameter") int bob, @Description(autoCompletesTo = {"1", "3.232"} float someParam) {
+ *      // this will mark the first parameter as "first parameter" in the help message.
+ *      // If its not present, it will just show the TYPE of the parameter (e.g. int).
+ *  }
+ *
+ * </pre>
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.PARAMETER})
 public @interface Description {
-	/**
-	 * The name of the parameter.
-	 *
-	 * @return The name of the parameter.
-	 */
-	String value() default "";
-
-	/**
-	 * Description for the parameter.
-	 */
-	String description() default "";
+    /**
+     * The name of the parameter.
+     *
+     * @return The name of the parameter.
+     */
+    String value() default "";
+    /** Description for the parameter. */
+    String description() default "";
+    /** Strings to autocomplete alongside the argument's parser. */
+    String[] autoCompletesTo() default "";
 }
