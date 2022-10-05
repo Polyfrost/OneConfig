@@ -45,6 +45,7 @@ import java.util.stream.Collectors;
  *
  * @see Command
  */
+@SuppressWarnings("deprecation")
 public class CommandManager {
     public static final CommandManager INSTANCE = new CommandManager();
     static final PlatformCommandManager platform = ServiceLoader.load(PlatformCommandManager.class, PlatformCommandManager.class.getClassLoader()).iterator().next();
@@ -104,6 +105,7 @@ public class CommandManager {
     /**
      * Shortcut for registering the provided command, if you are lazy. <br>
      * This method is fail-fast, meaning that it will throw Exceptions if the command is invalid upon startup.
+     *
      * @param obj the command to register (must be an instance of a class annotated with @Command).
      */
     public static void register(Object obj) {
@@ -214,7 +216,7 @@ public class CommandManager {
                     if (method.getParameterCount() != 0) {
                         throw new IllegalArgumentException("Method " + method.getName() + " is annotated with @Main, and does not take 0 parameters");
                     }
-                    if(Arrays.equals(parentPaths, EMPTY_ARRAY)) {
+                    if (Arrays.equals(parentPaths, EMPTY_ARRAY)) {
                         mainMethod = new InternalCommand(parent, method, parentPaths);
                     }
                 } else return;
@@ -432,23 +434,33 @@ public class CommandManager {
 
 
     /**
-     * A final Pair class to hold a command and its arguments. The JavaFX one isn't final and might not be included so
+     * A final Pair class to hold a command and its arguments.
      */
     final static class Pair<K, V> {
-        private final K key;
-        private final V value;
+        private final @NotNull K key;
+        private final @NotNull V value;
 
-        Pair(K key, V value) {
+        Pair(@NotNull K key, @NotNull V value) {
             this.key = key;
             this.value = value;
         }
 
+        @NotNull
         K getKey() {
             return key;
         }
 
+        @NotNull
         V getValue() {
             return value;
+        }
+
+        @Override
+        public String toString() {
+            return "CommandManager.Pair{"
+                    + "key=" + key
+                    + ", value=" + value
+                    + "}";
         }
     }
 }

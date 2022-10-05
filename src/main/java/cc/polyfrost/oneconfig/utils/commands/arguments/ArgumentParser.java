@@ -27,14 +27,13 @@
 package cc.polyfrost.oneconfig.utils.commands.arguments;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Parameter;
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 
 /**
  * A class used to create a parser for a given String. Some examples can be found in this class.
@@ -74,7 +73,7 @@ public abstract class ArgumentParser<T> {
     public static class DoubleParser extends ArgumentParser<Double> {
         @Nullable
         @Override
-        public Double parse(@NotNull String arg) throws Exception {
+        public Double parse(@NotNull String arg) {
             return Double.parseDouble(arg);
         }
     }
@@ -82,7 +81,7 @@ public abstract class ArgumentParser<T> {
     public static class IntegerParser extends ArgumentParser<Integer> {
         @Nullable
         @Override
-        public Integer parse(@NotNull String arg) throws Exception {
+        public Integer parse(@NotNull String arg) {
             return Integer.parseInt(arg);
         }
     }
@@ -90,7 +89,7 @@ public abstract class ArgumentParser<T> {
     public static class FloatParser extends ArgumentParser<Float> {
         @Nullable
         @Override
-        public Float parse(@NotNull String arg) throws Exception {
+        public Float parse(@NotNull String arg) {
             return Float.parseFloat(arg);
         }
     }
@@ -98,37 +97,45 @@ public abstract class ArgumentParser<T> {
     public static class StringParser extends ArgumentParser<String> {
         @Nullable
         @Override
-        public String parse(@NotNull String arg) throws Exception {
+        public String parse(@NotNull String arg) {
             return arg;
         }
     }
 
     public static class BooleanParser extends ArgumentParser<Boolean> {
+        private static final Map<String, List<String>> VALUES =
+                Maps.newHashMap();
 
-        private static final List<String> VALUES = Lists.newArrayList("true", "false");
+        static {
+            VALUES.put("true", Lists.newArrayList("on", "yes", "y", "enabled", "enable", "1"));
+            VALUES.put("false", Lists.newArrayList("off", "no", "n", "disabled", "disable", "0"));
+        }
 
         @Override
         public @Nullable Boolean parse(@NotNull String s) {
-            if (s.equalsIgnoreCase("false") || s.equalsIgnoreCase("off") || s.equalsIgnoreCase("no") || s.equalsIgnoreCase("disabled")) {
-                return false;
-            } else if (s.equalsIgnoreCase("true") || s.equalsIgnoreCase("on") || s.equalsIgnoreCase("yes") || s.equalsIgnoreCase("enabled")) {
-                return true;
-            } else {
-                throw new IllegalArgumentException(s + " is not true/false");
-            }
+            return Boolean.parseBoolean(
+                    VALUES.entrySet().stream()
+                            .filter(it -> it.getValue().contains(s.toLowerCase()))
+                            .map(Map.Entry::getKey)
+                            .findFirst()
+                            .orElseThrow(() -> new IllegalArgumentException(
+                                    s + " is not any of: "
+                                            + String.join(", ", VALUES.keySet())
+                            ))
+            );
         }
 
         @Override
         public @Nullable List<String> complete(Arguments arguments, Parameter parameter) {
             String value = arguments.poll();
             if (value != null && !value.trim().isEmpty()) {
-                for (String v : VALUES) {
+                for (String v : VALUES.keySet()) {
                     if (v.startsWith(value.toLowerCase(Locale.ENGLISH))) {
                         return Lists.newArrayList(v);
                     }
                 }
             }
-            return VALUES;
+            return new ArrayList<>(VALUES.keySet());
         }
     }
 }
