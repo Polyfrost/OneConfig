@@ -1699,12 +1699,6 @@ public final class cc/polyfrost/oneconfig/utils/dsl/RenderManagerDSLKt {
 	public static final fun translate (Lcc/polyfrost/oneconfig/utils/dsl/VG;FF)V
 }
 
-public final class cc/polyfrost/oneconfig/utils/dsl/TextUtilsDSLKt {
-	public static final fun wrap (JLjava/lang/String;FLjava/lang/Number;Lcc/polyfrost/oneconfig/renderer/font/Font;)Ljava/util/ArrayList;
-	public static final fun wrap (Lcc/polyfrost/oneconfig/utils/dsl/VG;Ljava/lang/String;FLjava/lang/Number;Lcc/polyfrost/oneconfig/renderer/font/Font;)Ljava/util/ArrayList;
-	public static final fun wrap (Ljava/lang/String;JFLjava/lang/Number;Lcc/polyfrost/oneconfig/renderer/font/Font;)Ljava/util/ArrayList;
-}
-
 public final class cc/polyfrost/oneconfig/utils/dsl/TickDelayDSLKt {
 	public static final fun tick (ILkotlin/jvm/functions/Function0;)Lcc/polyfrost/oneconfig/utils/TickDelay;
 }
