@@ -107,7 +107,7 @@ public class PlatformCommandManagerImpl extends PlatformCommandManager {
                         if (targets != null) {
                             opts.addAll(Arrays.asList(targets));
                         }
-                        opts.addAll(INSTANCE.parsers.get(currentParam.getType()).complete(args[args.length - 1]));
+                        opts.addAll(INSTANCE.parsers.get(currentParam.getType()).complete(args[args.length - 1], currentParam));
                     } else {
                         opts.addAll(getApplicableOptsFor(args));
                     }

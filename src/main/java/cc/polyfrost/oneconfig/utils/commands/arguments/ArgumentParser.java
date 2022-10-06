@@ -32,6 +32,7 @@ import com.google.common.reflect.TypeToken;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Parameter;
 import java.util.*;
 
 /**
@@ -59,10 +60,11 @@ public abstract class ArgumentParser<T> {
      * Should return an empty list if no completions are possible.
      *
      * @param current The argument's current state.
+     * @param parameter The parameter this argument is for. Can be used to get any annotations on the parameter.
      * @return A list of possible completions, or an empty list if no completions are possible.
      */
     @NotNull
-    public List<String> complete(String current) {
+    public List<String> complete(String current, Parameter parameter) {
         return Collections.emptyList();
     }
 
@@ -125,7 +127,7 @@ public abstract class ArgumentParser<T> {
 
         @NotNull
         @Override
-        public List<String> complete(String current) {
+        public List<String> complete(String current, Parameter parameter) {
             if (current != null && !current.trim().isEmpty()) {
                 for (String v : VALUES.keySet()) {
                     if (v.startsWith(current.toLowerCase(Locale.ENGLISH))) {

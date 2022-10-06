@@ -1544,13 +1544,13 @@ public abstract interface annotation class cc/polyfrost/oneconfig/utils/commands
 public abstract class cc/polyfrost/oneconfig/utils/commands/arguments/ArgumentParser {
 	public final field typeClass Ljava/lang/Class;
 	public fun <init> ()V
-	public fun complete (Ljava/lang/String;)Ljava/util/List;
+	public fun complete (Ljava/lang/String;Ljava/lang/reflect/Parameter;)Ljava/util/List;
 	public abstract fun parse (Ljava/lang/String;)Ljava/lang/Object;
 }
 
 public class cc/polyfrost/oneconfig/utils/commands/arguments/ArgumentParser$BooleanParser : cc/polyfrost/oneconfig/utils/commands/arguments/ArgumentParser {
 	public fun <init> ()V
-	public fun complete (Ljava/lang/String;)Ljava/util/List;
+	public fun complete (Ljava/lang/String;Ljava/lang/reflect/Parameter;)Ljava/util/List;
 	public fun parse (Ljava/lang/String;)Ljava/lang/Boolean;
 	public synthetic fun parse (Ljava/lang/String;)Ljava/lang/Object;
 }
