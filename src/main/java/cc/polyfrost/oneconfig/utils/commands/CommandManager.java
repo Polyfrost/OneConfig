@@ -30,6 +30,7 @@ package cc.polyfrost.oneconfig.utils.commands;
 import cc.polyfrost.oneconfig.libs.universal.ChatColor;
 import cc.polyfrost.oneconfig.utils.commands.annotations.*;
 import cc.polyfrost.oneconfig.utils.commands.arguments.ArgumentParser;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,7 +46,6 @@ import java.util.stream.Collectors;
  *
  * @see Command
  */
-@SuppressWarnings("deprecation")
 public class CommandManager {
     public static final CommandManager INSTANCE = new CommandManager();
     static final PlatformCommandManager platform = ServiceLoader.load(PlatformCommandManager.class, PlatformCommandManager.class.getClassLoader()).iterator().next();
@@ -132,6 +132,7 @@ public class CommandManager {
     /**
      * Turn an inner class into an Object instance.
      */
+    @NotNull
     private static Object createIsnOf(Class<?> cls, Object parent) {
         try {
             if (Modifier.isStatic(cls.getModifiers())) {
@@ -151,7 +152,8 @@ public class CommandManager {
     /**
      * Take a command, go through all its parents, and for each add itself and its aliases
      */
-    static String[] computePaths(InternalCommand in) {
+    @NotNull
+    static String[] computePaths(@NotNull InternalCommand in) {
         List<String> out = new ArrayList<>();
         for (String path : in.getParentPaths()) {
             for (String alias : in.getAliases()) {
@@ -161,7 +163,8 @@ public class CommandManager {
         return out.toArray(new String[0]);
     }
 
-    private static String[] computePaths(String[] paths, Class<?> cls) {
+    @NotNull
+    private static String[] computePaths(@NotNull String[] paths, @NotNull Class<?> cls) {
         List<String> out = new ArrayList<>();
         SubCommandGroup annotation = cls.getAnnotation(SubCommandGroup.class);
         for (String path : paths) {
@@ -208,7 +211,7 @@ public class CommandManager {
         /**
          * Turn a method into a InternalCommand and add it to the map.
          */
-        private void create(String[] parentPaths, Object parent, @NotNull Method method) {
+        private void create(String[] parentPaths, @NotNull Object parent, @NotNull Method method) {
             if (parent.getClass().equals(Class.class)) return;
             if (!method.isAccessible()) method.setAccessible(true);
             if (!method.isAnnotationPresent(SubCommand.class)) {
@@ -251,12 +254,9 @@ public class CommandManager {
             sb.append(meta.chatColor()).append(ChatColor.BOLD).append("Help for /").append(masterName).append(ChatColor.RESET).append(meta.chatColor());
             if (!meta.description().isEmpty()) sb.append(" - ").append(meta.description());
             sb.append(":           ").append(Arrays.toString(meta.aliases())).append("\n").append(meta.chatColor());
-            if (mainMethod != null) {
-                Main annotation = mainMethod.getUnderlyingMethod().isAnnotationPresent(Main.class) ? mainMethod.getUnderlyingMethod().getAnnotation(Main.class) : null;
-                sb.append("/").append(masterName).append(" - ").append(annotation != null && !annotation.description().isEmpty() ? annotation.description() : "Main command").append("\n").append(meta.chatColor());
-            }
-            for (InternalCommand command : commandsMap.values()) {
-                String path;
+            for (Iterator<InternalCommand> it = commandsMap.values().stream().sorted().iterator(); it.hasNext(); ) {
+                final InternalCommand command = it.next();
+                final String path;
                 if (command.getName().endsWith(MAIN_METHOD_NAME)) {
                     Main annotation = command.getUnderlyingMethod().isAnnotationPresent(Main.class) ? command.getUnderlyingMethod().getAnnotation(Main.class) : null;
                     path = command.getName().substring(0, command.getName().length() - MAIN_METHOD_NAME.length()).replaceAll(DELIMITER, " ");
@@ -314,7 +314,7 @@ public class CommandManager {
         }
     }
 
-    class InternalCommand {
+    class InternalCommand implements Comparable<InternalCommand> {
         private final Method method;
         private final SubCommand meta;
         private final String[] aliases, paths;
@@ -430,6 +430,11 @@ public class CommandManager {
                     ", parents=" + Arrays.toString(paths).replaceAll(DELIMITER, " ") +
                     '}';
         }
+
+        @Override
+        public int compareTo(@NotNull InternalCommand cmd) {
+            return this.getPrimaryPath().compareTo(cmd.getPrimaryPath());
+        }
     }
 
 
@@ -455,6 +460,8 @@ public class CommandManager {
             return value;
         }
 
+        @NotNull
+        @Contract(pure = true)
         @Override
         public String toString() {
             return "CommandManager.Pair{"

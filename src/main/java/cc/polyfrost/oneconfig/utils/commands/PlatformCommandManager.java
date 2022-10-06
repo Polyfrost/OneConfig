@@ -27,13 +27,7 @@
 
 package cc.polyfrost.oneconfig.utils.commands;
 
-import cc.polyfrost.oneconfig.utils.commands.arguments.ArgumentParser;
-
-import java.util.Collection;
-
 public abstract class PlatformCommandManager {
 
     abstract void createCommand(CommandManager.OCCommand command);
-
-    void handleNewParser(ArgumentParser<?> parser, Class<?> clazz) {}
 }

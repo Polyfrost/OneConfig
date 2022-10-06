@@ -32,7 +32,6 @@ import com.google.common.reflect.TypeToken;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Parameter;
 import java.util.*;
 
 /**
@@ -56,15 +55,14 @@ public abstract class ArgumentParser<T> {
     public abstract T parse(@NotNull String arg) throws Exception;
 
     /**
-     * Returns possible completions for the given arguments.
-     * Should return an empty list or null if no completions are possible.
+     * Returns possible completions for the given argument.
+     * Should return an empty list if no completions are possible.
      *
-     * @param arguments The arguments to complete.
-     * @param parameter The parameter to complete.
-     * @return A list of possible completions, or an empty list or null if no completions are possible.
+     * @param current The argument's current state.
+     * @return A list of possible completions, or an empty list if no completions are possible.
      */
-    @Nullable
-    public List<String> complete(Arguments arguments, Parameter parameter) {
+    @NotNull
+    public List<String> complete(String current) {
         return Collections.emptyList();
     }
 
@@ -125,12 +123,12 @@ public abstract class ArgumentParser<T> {
             );
         }
 
+        @NotNull
         @Override
-        public @Nullable List<String> complete(Arguments arguments, Parameter parameter) {
-            String value = arguments.poll();
-            if (value != null && !value.trim().isEmpty()) {
+        public List<String> complete(String current) {
+            if (current != null && !current.trim().isEmpty()) {
                 for (String v : VALUES.keySet()) {
-                    if (v.startsWith(value.toLowerCase(Locale.ENGLISH))) {
+                    if (v.startsWith(current.toLowerCase(Locale.ENGLISH))) {
                         return Lists.newArrayList(v);
                     }
                 }

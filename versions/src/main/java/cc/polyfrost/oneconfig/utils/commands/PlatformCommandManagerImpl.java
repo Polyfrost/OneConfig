@@ -28,6 +28,7 @@
 package cc.polyfrost.oneconfig.utils.commands;
 
 import cc.polyfrost.oneconfig.libs.universal.UChat;
+import cc.polyfrost.oneconfig.utils.StringUtils;
 import cc.polyfrost.oneconfig.utils.commands.annotations.Description;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
@@ -37,9 +38,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Parameter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 import static cc.polyfrost.oneconfig.utils.commands.CommandManager.*;
 
@@ -108,24 +107,9 @@ public class PlatformCommandManagerImpl extends PlatformCommandManager {
                         if (targets != null) {
                             opts.addAll(Arrays.asList(targets));
                         }
+                        opts.addAll(INSTANCE.parsers.get(currentParam.getType()).complete(args[args.length - 1]));
                     } else {
-                        String current = String.join(DELIMITER, args);
-                        root.commandsMap.forEach((keys, value) -> {
-                            for (String key : keys) {
-                                String toAdd;
-                                if (key.contains(current)) {
-                                    key = key.substring(current.length());
-                                    if (key.contains(DELIMITER)) {
-                                        key = key.substring(0, key.lastIndexOf(DELIMITER));
-                                    }
-                                }
-                                if (!key.contains(DELIMITER)) toAdd = key;
-                                else toAdd = key.substring(0, key.indexOf(DELIMITER));
-                                if (!opts.contains(toAdd) && !toAdd.isEmpty()) {
-                                    opts.add(toAdd);
-                                }
-                            }
-                        });
+                        opts.addAll(getApplicableOptsFor(args));
                     }
                 } catch (Exception ignored) {
                 }
@@ -172,12 +156,33 @@ public class PlatformCommandManagerImpl extends PlatformCommandManager {
                         return new CommandManager.Pair<>(newArgs, command);
                     }
                     // remove the last word
-                    int target = argsIn.lastIndexOf(DELIMITER);
-                    argsIn = argsIn.substring(0, target == -1 ? argsIn.length() : target);
+                    argsIn = StringUtils.substringToLastIndexOf(argsIn, DELIMITER);
                 }
                 return null;
             }
+
+            private Collection<String> getApplicableOptsFor(String[] args) {
+                // isn't it amazing when you come to a somewhat elegant solution to a problem
+                final Set<String> opts = new HashSet<>();
+                final String current = String.join(DELIMITER, args);
+                root.commandsMap.keySet().forEach(paths -> {
+                    for (String p : paths) {
+                        if (p.endsWith(MAIN_METHOD_NAME)) continue;
+                        if (!p.contains(current)) continue;
+                        final String[] split = p.split(DELIMITER);
+                        if (args.length - 1 < split.length) {
+                            final String s = split[args.length - 1];
+                            if (s.isEmpty()) continue;
+                            opts.add(s);
+                        }
+                    }
+                });
+                // remove main when it was mainMethod of a command
+                opts.remove("main");
+                return opts;
+            }
         });
+
         //#endif
     }
 
