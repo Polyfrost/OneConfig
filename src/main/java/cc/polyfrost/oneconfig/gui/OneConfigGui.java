@@ -29,14 +29,15 @@ import org.jetbrains.annotations.Nullable;
 import org.lwjgl.nanovg.NanoVG;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class OneConfigGui extends UScreen implements GuiPause {
     public static OneConfigGui INSTANCE;
     public static OneConfigGui instanceToRestore = null;
     private final SideBar sideBar = new SideBar();
     private final TextInputField textInputField = new TextInputField(300, 120, "Search...", true, false, SVGs.MAGNIFYING_GLASS_BOLD);
-    private final ArrayList<Page> previousPages = new ArrayList<>();
-    private final ArrayList<Page> nextPages = new ArrayList<>();
+    private final List<Page> previousPages = new ArrayList<>();
+    private final List<Page> nextPages = new ArrayList<>();
     private final BasicElement backArrow = new BasicElement(40, 40, new ColorPalette(Colors.GRAY_700, Colors.GRAY_500, Colors.GRAY_500_80), true);
     private final BasicElement forwardArrow = new BasicElement(40, 40, new ColorPalette(Colors.GRAY_700, Colors.GRAY_500, Colors.GRAY_500_80), true);
     public ColorSelector currentColorSelector;
@@ -254,6 +255,7 @@ public class OneConfigGui extends UScreen implements GuiPause {
     /**
      * Close the current color selector and return the color it had when it closed.
      */
+    @SuppressWarnings("UnusedReturnValue")
     public OneColor closeColorSelector() {
         currentColorSelector.onClose();
         OneColor color = currentColorSelector.getColor();
