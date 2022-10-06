@@ -30,6 +30,7 @@ package cc.polyfrost.oneconfig.utils.commands;
 import cc.polyfrost.oneconfig.libs.universal.UChat;
 import cc.polyfrost.oneconfig.utils.StringUtils;
 import cc.polyfrost.oneconfig.utils.commands.annotations.Description;
+import cc.polyfrost.oneconfig.utils.commands.arguements.PlayerArgumentParser;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.util.BlockPos;
@@ -43,6 +44,10 @@ import java.util.*;
 import static cc.polyfrost.oneconfig.utils.commands.CommandManager.*;
 
 public class PlatformCommandManagerImpl extends PlatformCommandManager {
+
+    static {
+        INSTANCE.addParser(new PlayerArgumentParser());
+    }
 
     @Override
     public void createCommand(CommandManager.OCCommand root) {
