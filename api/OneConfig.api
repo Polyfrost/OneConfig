@@ -1448,6 +1448,22 @@ public final class cc/polyfrost/oneconfig/utils/Notifications {
 	public fun send (Ljava/lang/String;Ljava/lang/String;Ljava/util/concurrent/Callable;)V
 }
 
+public final class cc/polyfrost/oneconfig/utils/StringUtils {
+	public fun <init> ()V
+	public static fun addStringAt (Ljava/lang/String;ILjava/lang/String;)Ljava/lang/String;
+	public static fun isValidSequence (Ljava/lang/String;II)Z
+	public static fun nullToEmpty (Ljava/lang/String;)Ljava/lang/String;
+	public static fun substringIf (Ljava/lang/String;IIZ)Ljava/lang/String;
+	public static fun substringOrDont (Ljava/lang/String;II)Ljava/lang/String;
+	public static fun substringOrElse (Ljava/lang/String;IILjava/lang/String;)Ljava/lang/String;
+	public static fun substringOrEmpty (Ljava/lang/String;II)Ljava/lang/String;
+	public static fun substringSafe (Ljava/lang/String;I)Ljava/lang/String;
+	public static fun substringSafe (Ljava/lang/String;II)Ljava/lang/String;
+	public static fun substringTo (Ljava/lang/String;I)Ljava/lang/String;
+	public static fun substringTo (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+	public static fun substringToLastIndexOf (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+}
+
 public final class cc/polyfrost/oneconfig/utils/TextUtils {
 	public fun <init> ()V
 	public static fun wrapText (JLjava/lang/String;FFLcc/polyfrost/oneconfig/renderer/font/Font;)Ljava/util/ArrayList;
@@ -1699,6 +1715,21 @@ public final class cc/polyfrost/oneconfig/utils/dsl/RenderManagerDSLKt {
 	public static final fun translate (Lcc/polyfrost/oneconfig/utils/dsl/VG;FF)V
 }
 
+public final class cc/polyfrost/oneconfig/utils/dsl/StringUtilsDSLKt {
+	public static final fun addStringAt (Ljava/lang/String;ILjava/lang/String;)Ljava/lang/String;
+	public static final fun isValidSequence (Ljava/lang/String;II)Z
+	public static final fun nullToEmpty (Ljava/lang/String;)Ljava/lang/String;
+	public static final fun substringIf (Ljava/lang/String;IIZ)Ljava/lang/String;
+	public static final fun substringOrDont (Ljava/lang/String;II)Ljava/lang/String;
+	public static final fun substringOrElse (Ljava/lang/String;IILjava/lang/String;)Ljava/lang/String;
+	public static final fun substringOrEmpty (Ljava/lang/String;II)Ljava/lang/String;
+	public static final fun substringSafe (Ljava/lang/String;I)Ljava/lang/String;
+	public static final fun substringSafe (Ljava/lang/String;II)Ljava/lang/String;
+	public static final fun substringTo (Ljava/lang/String;I)Ljava/lang/String;
+	public static final fun substringTo (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+	public static final fun substringToLastIndexOf (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+}
+
 public final class cc/polyfrost/oneconfig/utils/dsl/TickDelayDSLKt {
 	public static final fun tick (ILkotlin/jvm/functions/Function0;)Lcc/polyfrost/oneconfig/utils/TickDelay;
 }
@@ -1744,8 +1775,10 @@ public class cc/polyfrost/oneconfig/utils/hypixel/HypixelUtils {
 	public fun queueUpdate (J)V
 }
 
-public class cc/polyfrost/oneconfig/utils/hypixel/LocrawInfo {
+public class cc/polyfrost/oneconfig/utils/hypixel/LocrawInfo : java/io/Serializable, java/lang/Comparable {
 	public fun <init> ()V
+	public fun compareTo (Lcc/polyfrost/oneconfig/utils/hypixel/LocrawInfo;)I
+	public synthetic fun compareTo (Ljava/lang/Object;)I
 	public fun equals (Ljava/lang/Object;)Z
 	public fun getGameMode ()Ljava/lang/String;
 	public fun getGameType ()Lcc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;

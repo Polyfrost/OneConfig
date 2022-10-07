@@ -41,7 +41,7 @@ import com.google.gson.JsonObject;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
-/**
+    /**
  * Various utilities for Hypixel.
  * <p>
  * Locraw utilities taken from Seraph by Scherso under LGPL-2.1
