@@ -173,7 +173,7 @@ public class PlatformCommandManagerImpl extends PlatformCommandManager {
                 root.commandsMap.keySet().forEach(paths -> {
                     for (String p : paths) {
                         if (p.endsWith(MAIN_METHOD_NAME)) continue;
-                        if (!p.contains(current)) continue;
+                        if (!p.startsWith(current)) continue;
                         final String[] split = p.split(DELIMITER);
                         if (args.length - 1 < split.length) {
                             final String s = split[args.length - 1];

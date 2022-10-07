@@ -28,6 +28,7 @@
 package cc.polyfrost.oneconfig.utils.commands;
 
 import cc.polyfrost.oneconfig.libs.universal.ChatColor;
+import cc.polyfrost.oneconfig.utils.SimpleProfiler;
 import cc.polyfrost.oneconfig.utils.commands.annotations.*;
 import cc.polyfrost.oneconfig.utils.commands.arguments.ArgumentParser;
 import org.jetbrains.annotations.Contract;
@@ -99,7 +100,9 @@ public class CommandManager {
      * @param obj the command to register (must be an instance of a class annotated with @Command).
      */
     public void registerCommand(Object obj) {
+        SimpleProfiler.push("registering command");
         platform.createCommand(new OCCommand(obj));
+        SimpleProfiler.pop("registering command");
     }
 
     /**
