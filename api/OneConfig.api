@@ -1432,6 +1432,13 @@ public final class cc/polyfrost/oneconfig/utils/Notifications {
 	public fun send (Ljava/lang/String;Ljava/lang/String;Ljava/util/concurrent/Callable;)V
 }
 
+public final class cc/polyfrost/oneconfig/utils/SimpleProfiler {
+	public fun <init> ()V
+	public static fun pop (Ljava/lang/String;)F
+	public static fun pop (Ljava/lang/String;Lorg/apache/logging/log4j/Level;)F
+	public static fun push (Ljava/lang/String;)Z
+}
+
 public final class cc/polyfrost/oneconfig/utils/StringUtils {
 	public fun <init> ()V
 	public static fun addStringAt (Ljava/lang/String;ILjava/lang/String;)Ljava/lang/String;
