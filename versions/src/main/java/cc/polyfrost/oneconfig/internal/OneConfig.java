@@ -39,6 +39,11 @@ import cc.polyfrost.oneconfig.internal.config.core.KeyBindHandler;
 import cc.polyfrost.oneconfig.internal.gui.BlurHandler;
 import cc.polyfrost.oneconfig.internal.hud.HudCore;
 import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
+import cc.polyfrost.oneconfig.libs.universal.ChatColor;
+import cc.polyfrost.oneconfig.libs.universal.UChat;
+import cc.polyfrost.oneconfig.libs.universal.UScreen;
+import cc.polyfrost.oneconfig.libs.universal.wrappers.UPlayer;
+import cc.polyfrost.oneconfig.utils.TickDelay;
 import cc.polyfrost.oneconfig.utils.commands.CommandManager;
 import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 import cc.polyfrost.oneconfig.utils.hypixel.HypixelUtils;
@@ -57,7 +62,9 @@ import net.minecraftforge.fml.client.IModGuiFactory;
 import net.minecraftforge.fml.common.Loader;
 //#endif
 
+import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * The main class of OneConfig.
@@ -94,26 +101,8 @@ public class OneConfig {
         //#if FORGE==1
             //#if MC<=11202
             for (ModContainer mod : Loader.instance().getActiveModList()) {
-
-                IModGuiFactory factory = FMLClientHandler.instance().getGuiFactoryFor(mod);
-                //#if MC<=10809
-                if (factory == null || factory.mainConfigGuiClass() == null) continue;
-                //#else
-                //$$ if (factory == null || !factory.hasConfigGui()) continue;
-                //#endif
-                ForgeCompat.compatMods.put(new ForgeCompat.ForgeCompatMod(mod.getName(), ModType.THIRD_PARTY), () -> {
-                    try {
-                        GuiUtils.displayScreen(
-                                //#if MC<=10809
-                                factory.mainConfigGuiClass().getConstructor(GuiScreen.class).newInstance(Minecraft.getMinecraft().currentScreen)
-                                //#else
-                                //$$ factory.createConfigGui(Minecraft.getMinecraft().currentScreen)
-                                //#endif
-                        );
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                });
+                handleForgeCommand(mod);
+                handleForgeGui(mod);
             }
             //#else
             //$$ try {
@@ -156,6 +145,53 @@ public class OneConfig {
 
         initialized = true;
     }
+
+    //#if FORGE==1 && MC<=11202
+
+    private static void handleForgeCommand(ModContainer mod) {
+        for (Mod configMod : ConfigCore.mods) {
+            final String configModName = configMod.name.toLowerCase(Locale.ENGLISH);
+            if (Objects.equals(configModName, mod.getName()) || Objects.equals(configModName, mod.getModId())) {
+                return;
+            }
+        }
+        for (net.minecraft.command.ICommand command :  net.minecraftforge.client.ClientCommandHandler.instance.getCommands().values()) {
+            if (Objects.equals(command.getCommandName(), mod.getModId())) {
+                ForgeCompat.compatMods.put(new ForgeCompat.ForgeCompatMod(mod.getName(), ModType.THIRD_PARTY), () -> new TickDelay(() -> {
+                    UScreen.displayScreen(null);
+                    try {
+                        command.processCommand(UPlayer.getPlayer(), new String[]{});
+                    } catch (Exception e) {
+                        UChat.chat(ChatColor.RED + "Forge command compat has failed! Please report this to Polyfrost on https://inv.wtf/polyfrost!");
+                    }
+                }, 1));
+                return;
+            }
+        }
+    }
+
+    private static void handleForgeGui(ModContainer mod) {
+        IModGuiFactory factory = FMLClientHandler.instance().getGuiFactoryFor(mod);
+        //#if MC<=10809
+        if (factory == null || factory.mainConfigGuiClass() == null) return;
+        //#else
+        //$$ if (factory == null || !factory.hasConfigGui()) return;
+        //#endif
+        ForgeCompat.compatMods.put(new ForgeCompat.ForgeCompatMod(mod.getName(), ModType.THIRD_PARTY), () -> {
+            try {
+                GuiUtils.displayScreen(
+                        //#if MC<=10809
+                        factory.mainConfigGuiClass().getConstructor(GuiScreen.class).newInstance(Minecraft.getMinecraft().currentScreen)
+                        //#else
+                        //$$ factory.createConfigGui(Minecraft.getMinecraft().currentScreen)
+                        //#endif
+                );
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+    }
+    //#endif
 
     @Subscribe
     private void onShutdown(ShutdownEvent event) {

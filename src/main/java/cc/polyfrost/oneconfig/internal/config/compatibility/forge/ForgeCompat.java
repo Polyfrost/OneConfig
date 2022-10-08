@@ -32,7 +32,6 @@ import cc.polyfrost.oneconfig.config.data.ModType;
 import cc.polyfrost.oneconfig.config.migration.Migrator;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Field;
 import java.util.HashMap;
 
 public class ForgeCompat {
@@ -40,7 +39,7 @@ public class ForgeCompat {
 
     public static class ForgeCompatMod extends Mod {
 
-        public ForgeCompatMod(String name, ModType modType, @Nullable String modIcon, @Nullable Migrator migrator) {
+        private ForgeCompatMod(String name, ModType modType, @Nullable String modIcon, @Nullable Migrator migrator) {
             super(name, modType, modIcon, migrator);
             config = new Config(this, "") {
                 @Override
@@ -65,14 +64,6 @@ public class ForgeCompat {
                     return false;
                 }
             };
-        }
-
-        public ForgeCompatMod(String name, ModType modType, @Nullable String modIcon) {
-            this(name, modType, modIcon, null);
-        }
-
-        public ForgeCompatMod(String name, ModType modType, @Nullable Migrator migrator) {
-            this(name, modType, null, migrator);
         }
 
         public ForgeCompatMod(String name, ModType modType) {
