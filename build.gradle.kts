@@ -2,7 +2,6 @@ import gg.essential.gradle.multiversion.StripReferencesTransform.Companion.regis
 import gg.essential.gradle.util.RelocationTransform.Companion.registerRelocationAttribute
 import gg.essential.gradle.util.prebundle
 
-
 plugins {
     kotlin("jvm") version "1.6.21"
     id("org.jetbrains.kotlinx.binary-compatibility-validator") version "0.8.0"
@@ -67,7 +66,6 @@ val common = registerStripReferencesAttribute("common") {
 }
 
 dependencies {
-
     compileOnly("com.google.code.gson:gson:2.2.4")
     compileOnly("commons-io:commons-io:2.4")
     compileOnly("com.google.guava:guava:17.0")
@@ -76,6 +74,12 @@ dependencies {
     compileOnly("org.apache.logging.log4j:log4j-api:2.0-beta9")
     compileOnly("org.ow2.asm:asm-debug-all:5.0.3")
     compileOnly("org.apache.commons:commons-lang3:3.3.2")
+
+    arrayOf("asm", "asm-commons").forEach { module ->
+        compileOnly("org.ow2.asm:$module:9.2") {
+            isTransitive = false
+        }
+    }
 
     compileOnly("gg.essential:vigilance-1.8.9-forge:222") {
         attributes { attribute(common, true) }
@@ -115,7 +119,9 @@ dependencies {
     shade("org.spongepowered:mixin:0.7.11-SNAPSHOT") {
         isTransitive = false
     }
-    shade("cc.polyfrost:lwjgl-1.8.9-forge:1.0.0-alpha21")
+    shade("cc.polyfrost:lwjgl-1.8.9-forge:1.0.0-alpha21") {
+        isTransitive = false
+    }
     shadeNoPom(prebundle(shadeRelocated))
 
     configurations.named(JavaPlugin.COMPILE_CLASSPATH_CONFIGURATION_NAME) { extendsFrom(shadeNoPom) }
