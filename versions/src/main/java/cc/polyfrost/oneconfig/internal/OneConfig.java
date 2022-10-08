@@ -160,7 +160,12 @@ public class OneConfig {
                 ForgeCompat.compatMods.put(new ForgeCompat.ForgeCompatMod(mod.getName(), ModType.THIRD_PARTY), () -> new TickDelay(() -> {
                     UScreen.displayScreen(null);
                     try {
+                        //execute
+                        //#if MC<=10809
                         command.processCommand(UPlayer.getPlayer(), new String[]{});
+                        //#else
+                        //$$ command.execute(net.minecraft.client.Minecraft.getMinecraft().getIntegratedServer(), UPlayer.getPlayer(), new String[]{});
+                        //#endif
                     } catch (Exception e) {
                         UChat.chat(ChatColor.RED + "Forge command compat has failed! Please report this to Polyfrost at https://polyfrost.cc/discord");
                     }
