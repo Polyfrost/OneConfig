@@ -162,7 +162,7 @@ public class OneConfig {
                     try {
                         command.processCommand(UPlayer.getPlayer(), new String[]{});
                     } catch (Exception e) {
-                        UChat.chat(ChatColor.RED + "Forge command compat has failed! Please report this to Polyfrost on https://inv.wtf/polyfrost!");
+                        UChat.chat(ChatColor.RED + "Forge command compat has failed! Please report this to Polyfrost at https://polyfrost.cc/discord");
                     }
                 }, 1));
                 return;
