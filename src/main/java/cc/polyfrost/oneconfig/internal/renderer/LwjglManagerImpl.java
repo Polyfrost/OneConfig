@@ -9,8 +9,16 @@ import cc.polyfrost.oneconfig.renderer.scissor.ScissorHelper;
 import org.apache.commons.io.IOUtils;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.ClassRemapper;
 import org.objectweb.asm.commons.Remapper;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.InsnList;
+import org.objectweb.asm.tree.InsnNode;
+import org.objectweb.asm.tree.MethodInsnNode;
+import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.TypeInsnNode;
+import org.objectweb.asm.tree.VarInsnNode;
 
 import java.io.File;
 import java.io.IOException;
@@ -24,6 +32,7 @@ import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.security.ProtectionDomain;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
@@ -31,31 +40,230 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 public class LwjglManagerImpl extends URLClassLoader implements LwjglManager {
-    private final Set<String> implClasses = new CopyOnWriteArraySet<>();
-    private final Map<String, Class<?>> classCache = new HashMap<>();
 
     private static final Object unsafeInstance;
     private static final Method defineClassMethod;
-    private static final Map<String, String> hackyRemapping;
+    private static final Map<String, String> remappingMap;
 
+    private static final String LWJGL_FUNCTION_PROVIDER =
+            "cc.polyfrost.oneconfig.internal.plugin.hooks.Lwjgl2FunctionProvider";
+
+    private static final String JAR_NAME = "oneconfig-lwjgl3.jar";
     private static final URL jarFile = getJarFile();
+
+    private final Set<String> classLoaderInclude = new CopyOnWriteArraySet<>();
+    private final Map<String, Class<?>> classCache = new HashMap<>();
+
+    private final AssetHelper assetHelper;
+    private final NanoVGHelper nanoVGHelper;
+    private final ScissorHelper scissorHelper;
+    private final FontHelper fontHelper;
+    private final TinyFD tinyFD;
 
     public LwjglManagerImpl() throws ClassNotFoundException, NoSuchFieldException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
         super(new URL[] { jarFile }, LwjglManager.class.getClassLoader());
-        implClasses.add("cc.polyfrost.oneconfig.internal.renderer.FontHelperImpl");
-        implClasses.add("cc.polyfrost.oneconfig.internal.renderer.ScissorHelperImpl");
-        implClasses.add("cc.polyfrost.oneconfig.internal.renderer.NanoVGHelperImpl");
-        implClasses.add("cc.polyfrost.oneconfig.internal.renderer.AssetHelperImpl");
-        implClasses.add("cc.polyfrost.oneconfig.internal.renderer.TinyFDImpl");
+        // Internal accessors
+        classLoaderInclude.add("cc.polyfrost.oneconfig.internal.renderer.FontHelperImpl");
+        classLoaderInclude.add("cc.polyfrost.oneconfig.internal.renderer.ScissorHelperImpl");
+        classLoaderInclude.add("cc.polyfrost.oneconfig.internal.renderer.NanoVGHelperImpl");
+        classLoaderInclude.add("cc.polyfrost.oneconfig.internal.renderer.AssetHelperImpl");
+        classLoaderInclude.add("cc.polyfrost.oneconfig.internal.renderer.TinyFDImpl");
+        // Provider
+        classLoaderInclude.add(LWJGL_FUNCTION_PROVIDER);
+        // Lwjgl
+        Arrays.asList("system", "nanovg", "stb", "util.tinyfd", "actually3")
+                .forEach(it -> classLoaderInclude.add("org.lwjgl." + it + "."));
+        classLoaderInclude.add("org.lwjgl.Version"); // won't work when remapped
 
-        Class<?> configClass = findClass("org.lwjgl.system.Configuration");
-        Object extractDirField = configClass.getField("SHARED_LIBRARY_EXTRACT_DIRECTORY").get(null);
+        // Keep the path somewhere for LWJGL2 after initializing LWJGL3
+        // (this is read in the Lwjgl2FunctionProvider class)
+        System.setProperty("oneconfig.lwjgl2.librarypath", System.getProperty("org.lwjgl.librarypath"));
+
+        // Setup LW3 config
+        Class<?> configClass = Class.forName("org.lwjgl.system.Configuration", true, this);
         Method setMethod = configClass.getMethod("set", Object.class);
+
+        Object extractDirField = configClass.getField("SHARED_LIBRARY_EXTRACT_DIRECTORY").get(null);
         setMethod.invoke(extractDirField, new File("./OneConfig/temp").getAbsolutePath());
+
+        // stop trying to Class.forName("true") ffs
+        Object debugStreamField = configClass.getField("DEBUG_STREAM").get(null);
+        setMethod.invoke(debugStreamField, System.err);
+
+        // Initialize helper instances
+        try {
+            nanoVGHelper = (NanoVGHelper) Class.forName("cc.polyfrost.oneconfig.internal.renderer.NanoVGHelperImpl", true, this).getConstructor().newInstance();
+            scissorHelper = (ScissorHelper) Class.forName("cc.polyfrost.oneconfig.internal.renderer.ScissorHelperImpl", true, this).getConstructor().newInstance();
+            assetHelper = (AssetHelper) Class.forName("cc.polyfrost.oneconfig.internal.renderer.AssetHelperImpl", true, this).getConstructor().newInstance();
+            fontHelper = (FontHelper) Class.forName("cc.polyfrost.oneconfig.internal.renderer.FontHelperImpl", true, this).getConstructor().newInstance();
+            tinyFD = (TinyFD) Class.forName("cc.polyfrost.oneconfig.internal.renderer.TinyFDImpl", true, this).getConstructor().newInstance();
+        } catch (ReflectiveOperationException exception) {
+            exception.printStackTrace();
+            throw new RuntimeException("fuck", exception);
+        }
+    }
+
+    private boolean canBeSharedWithMc(String name) {
+        for (String implClass : classLoaderInclude) {
+            if (name.startsWith(implClass)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    @Override
+    protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+        if (!canBeSharedWithMc(name)) {
+            synchronized (getClassLoadingLock(name)) {
+                Class<?> cls = findLoadedClass(name);
+                if (cls == null) {
+                    cls = findClass(name);
+                }
+                if (resolve) {
+                    resolveClass(cls);
+                }
+                return cls;
+            }
+        }
+        return getParent().loadClass(name);
+    }
+
+    @Override
+    protected Class<?> findClass(String name) throws ClassNotFoundException {
+        String remappedName = remappingMap.getOrDefault(
+                name.replace('.', '/'),
+                name
+        ).replace('/', '.');
+        String unmappedName = remappingMap.keySet().stream()
+                .filter(it -> remappingMap.get(it).equalsIgnoreCase(remappedName.replace('.', '/')))
+                .findFirst()
+                .orElse(name)
+                .replace('/', '.');
+
+        // if it exists in the remapping map
+        if (!remappedName.equals(unmappedName)) {
+            // if we're being requested class.A and see that it has class.B as
+            // a remapped value, load it through the parent classloader
+            if (name.equals(unmappedName)) {
+                return getParent().loadClass(name);
+            }
+            // Otherwise, if we get class.B and see that it's class.A remapped,
+            // then we need to transform and load class.B ourselves
+        }
+        if (classCache.containsKey(name)) {
+            // ayo cache :D
+            return classCache.get(name);
+        }
+
+        if (canBeSharedWithMc(remappedName)) {
+            // Delegate share-able requests to the parent classloader
+            return getParent().loadClass(remappedName);
+        }
+
+        try {
+            String path = unmappedName.replace('.', '/').concat(".class");
+            URL classUrl = null;
+            // First check the lwjgl jar
+            Enumeration<URL> urls = getResources(path);
+            while (urls.hasMoreElements()) {
+                URL url = urls.nextElement();
+
+                // check that the URL is provided from the custom lwjgl jar
+                if (!url.toString().contains(JAR_NAME)) continue;
+
+                classUrl = url;
+                break;
+            }
+
+            if (classUrl == null) {
+                classUrl = getParent().getResource(path);
+                if (classUrl == null) {
+                    throw new ClassNotFoundException(name);
+                }
+            }
+
+            byte[] classBuffer = IOUtils.toByteArray(classUrl);
+
+            // define class through Unsafe to bypass package seal checking
+            Class<?> clazz = defineClassBypass(unmappedName, classBuffer);
+            classCache.put(remappedName, clazz);
+            return clazz;
+        } catch (IOException ignored) {
+        }
+        throw new ClassNotFoundException(name);
+    }
+
+    private Class<?> defineClassBypass(String name, byte[] b) {
+        name = remappingMap.getOrDefault(name.replace('.', '/'), name)
+                .replace('/', '.');
+
+        ClassReader classReader = new ClassReader(b);
+        Remapper remapper = new Remapper() {
+            @Override
+            public String map(String desc) {
+                if (remappingMap.containsKey(desc)) {
+                    return remappingMap.get(desc);
+                }
+                return desc;
+            }
+        };
+        ClassWriter classWriter = new ClassWriter(classReader, ClassWriter.COMPUTE_MAXS);
+        ClassRemapper classRemapper = new ClassRemapper(classWriter, remapper);
+        classReader.accept(classRemapper, ClassReader.EXPAND_FRAMES);
+        b = classWriter.toByteArray();
+
+        if (name.equalsIgnoreCase("org.lwjgl.nanovg.NanoVGGLConfig")) {
+            ClassNode node = new ClassNode();
+            classReader = new ClassReader(b);
+            classReader.accept(node, ClassReader.EXPAND_FRAMES);
+
+            transform(node);
+
+            classWriter = new ClassWriter(classReader, ClassWriter.COMPUTE_MAXS);
+            node.accept(classWriter);
+            b = classWriter.toByteArray();
+        }
+
+        try {
+            return (Class<?>) defineClassMethod.invoke(unsafeInstance, name, b, 0, b.length, /*classLoader = */this, null);
+        } catch (IllegalAccessException | InvocationTargetException e) {
+            throw new RuntimeException("whoops...", e);
+        }
+    }
+
+    private void transform(ClassNode node) {
+        for (MethodNode method : node.methods) {
+            if (method.name.equals("configGL")) {
+                InsnList list = new InsnList();
+
+                list.add(new VarInsnNode(Opcodes.LLOAD, 0));
+                list.add(new TypeInsnNode(Opcodes.NEW, "cc/polyfrost/oneconfig/internal/plugin/hooks/Lwjgl2FunctionProvider"));
+                list.add(new InsnNode(Opcodes.DUP));
+                list.add(new MethodInsnNode(
+                        Opcodes.INVOKESPECIAL,
+                        "cc/polyfrost/oneconfig/internal/plugin/hooks/Lwjgl2FunctionProvider",
+                        "<init>",
+                        "()V",
+                        false
+                ));
+                list.add(new MethodInsnNode(
+                        Opcodes.INVOKESTATIC,
+                        "org/lwjgl/nanovg/NanoVGGLConfig",
+                        "config",
+                        "(JLorg/lwjgl/system/FunctionProvider;)V",
+                        false
+                ));
+                list.add(new InsnNode(Opcodes.RETURN));
+
+                method.instructions.clear();
+                method.instructions.insert(list);
+            }
+        }
     }
 
     private static synchronized URL getJarFile() {
-        final File tempJar = new File("./OneConfig/temp/oneconfig-lwjgl3.jar");
+        final File tempJar = new File("./OneConfig/temp/" + JAR_NAME);
         tempJar.mkdirs();
         try {
             tempJar.createNewFile();
@@ -78,162 +286,38 @@ public class LwjglManagerImpl extends URLClassLoader implements LwjglManager {
 
     @Override
     public NanoVGHelper getNanoVGHelper() {
-        try {
-            return (NanoVGHelper) Class.forName("cc.polyfrost.oneconfig.internal.renderer.NanoVGHelperImpl", true, this).newInstance();
-        } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        }
+        return nanoVGHelper;
     }
 
     @Override
     public ScissorHelper getScissorHelper() {
-        try {
-            return (ScissorHelper) Class.forName("cc.polyfrost.oneconfig.internal.renderer.ScissorHelperImpl", true, this).newInstance();
-        } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        }
+        return scissorHelper;
     }
 
     @Override
     public AssetHelper getAssetHelper() {
-        try {
-            return (AssetHelper) Class.forName("cc.polyfrost.oneconfig.internal.renderer.AssetHelperImpl", true, this).newInstance();
-        } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        }
+        return assetHelper;
     }
 
     @Override
     public FontHelper getFontHelper() {
-        try {
-            return (FontHelper) Class.forName("cc.polyfrost.oneconfig.internal.renderer.FontHelperImpl", true, this).newInstance();
-        } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        }
+        return fontHelper;
     }
 
     @Override
     public TinyFD getTinyFD() {
-        try {
-            return (TinyFD) Class.forName("cc.polyfrost.oneconfig.internal.renderer.TinyFDImpl", true, this).newInstance();
-        } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private boolean canBeSharedWithMc(String name) {
-        if (name.startsWith("org.lwjgl.")) {
-            return false; // MC may have a different version
-        }
-        for (String implClass : implClasses) {
-            if (name.startsWith(implClass)) {
-                return false; // depends on above lwjgl
-            }
-        }
-        return true;
-    }
-
-    @Override
-    protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
-        if (!canBeSharedWithMc(name)) {
-            synchronized (getClassLoadingLock(name)) {
-                Class<?> cls = findLoadedClass(name);
-                if (cls == null) {
-                    cls = findClass(name);
-                }
-                if (resolve) {
-                    resolveClass(cls);
-                }
-                return cls;
-            }
-        } else {
-            return super.loadClass(name, resolve);
-        }
-    }
-
-    private Class<?> defineClassBypass(String name, byte[] b) {
-        ClassReader classReader = new ClassReader(b);
-        Remapper remapper = new Remapper() {
-            @Override
-            public String map(String desc) {
-                return hackyRemapping.getOrDefault(desc, desc);
-            }
-        };
-        ClassWriter classWriter = new ClassWriter(classReader, ClassWriter.COMPUTE_MAXS);
-        ClassRemapper classRemapper = new ClassRemapper(classWriter, remapper);
-        classReader.accept(classRemapper, ClassReader.EXPAND_FRAMES);
-
-        b = classWriter.toByteArray();
-        name = hackyRemapping.getOrDefault(name.replace('.', '/'), name).replace('/', '.');
-
-        try {
-            File file = new File("/tmp/lwjglgamer/" + name.replace(".", "/") + ".class");
-            file.getParentFile().mkdirs();
-            if (file.exists()) file.delete();
-            file.createNewFile();
-            Files.write(file.toPath(), b);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        try {
-            System.out.println("Defining " + name);
-            return (Class<?>) defineClassMethod.invoke(unsafeInstance, name, b, 0, b.length, /*classLoader = */null, null);
-        } catch (IllegalAccessException | InvocationTargetException e) {
-            throw new RuntimeException("whoops...", e);
-        }
-    }
-
-    @Override
-    protected Class<?> findClass(String name) throws ClassNotFoundException {
-        String finalName = name;
-
-        name = hackyRemapping.keySet()
-                .stream()
-                .filter(it -> hackyRemapping.get(it).equals(finalName.replace('.', '/')))
-                .findFirst()
-                .orElse(name)
-                .replace('/', '.');
-
-        System.out.println("findClass(" + name + ")");
-
-        if (classCache.containsKey(name)) {
-            return classCache.get(name);
-        }
-
-        try {
-            if (!canBeSharedWithMc(name)) {
-                Enumeration<URL> enumer = getResources(
-                        name.replace('.', '/') + ".class"
-                );
-                while (enumer.hasMoreElements()) {
-                    URL url = enumer.nextElement();
-                    if (!url.toString().contains("oneconfig-lwjgl3")) {
-                        continue;
-                    }
-                    InputStream stream = url.openStream();
-                    byte[] barr = IOUtils.toByteArray(stream);
-                    Class<?> clazz = defineClassBypass(name, barr);
-                    classCache.put(name, clazz);
-                    return clazz;
-                }
-            }
-            if (findLoadedClass(name) != null) {
-                return findLoadedClass(name);
-            }
-            return super.findClass(name);
-        } catch (ClassNotFoundException | IOException ignored) {
-        }
-        return getParent().loadClass(name);
+        return tinyFD;
     }
 
     static {
         registerAsParallelCapable();
 
-        hackyRemapping = new HashMap<>();
-        hackyRemapping.put("org/lwjgl/BufferUtils", "org/lwjgl/actually3/BufferUtils");
-        hackyRemapping.put("org/lwjgl/CLongBuffer", "org/lwjgl/actually3/CLongBuffer");
-        hackyRemapping.put("org/lwjgl/PointerBuffer", "org/lwjgl/actually3/PointerBuffer");
+        remappingMap = new HashMap<>();
+        remappingMap.put("org/lwjgl/BufferUtils", "org/lwjgl/actually3/BufferUtils");
+        remappingMap.put("org/lwjgl/PointerBuffer", "org/lwjgl/actually3/PointerBuffer");
+        remappingMap.put("org/lwjgl/CLongBuffer", "org/lwjgl/actually3/CLongBuffer");
+//        hackyRemapping.put("org/lwjgl/Version", "org/lwjgl/actually3/CLongBuffer");
+//        hackyRemapping.put("org/lwjgl/Version$BuildType", "org/lwjgl/actually3/Version$BuildType");
 
         Class<?> unsafeClass;
         try {

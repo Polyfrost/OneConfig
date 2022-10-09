@@ -1,4 +1,6 @@
 package cc.polyfrost.oneconfig.internal.renderer;
 
-public class TinyFDImpl {
+import cc.polyfrost.oneconfig.renderer.TinyFD;
+
+public class TinyFDImpl implements TinyFD {
 }

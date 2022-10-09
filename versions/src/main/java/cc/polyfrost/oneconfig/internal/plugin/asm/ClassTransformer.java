@@ -26,7 +26,6 @@
 //#disable-remap
 package cc.polyfrost.oneconfig.internal.plugin.asm;
 
-import cc.polyfrost.oneconfig.internal.plugin.asm.tweakers.NanoVGGLConfigTransformer;
 import cc.polyfrost.oneconfig.internal.plugin.asm.tweakers.VigilantTransformer;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
@@ -61,9 +60,6 @@ public class ClassTransformer
     //#endif
 
     public ClassTransformer() {
-        //#if MC<=11202
-        registerTransformer(new NanoVGGLConfigTransformer());
-        //#endif
         registerTransformer(new VigilantTransformer());
     }
 
@@ -78,7 +74,6 @@ public class ClassTransformer
     //#if FABRIC==1
     //$$ @Override
     //$$ public void run() {
-    //$$     //Lwjgl3Loader.load(); // wat is that
     //$$     for (java.util.Map.Entry<String, ITransformer> entry : transformerMap.entries()) {
     //$$         com.chocohead.mm.api.ClassTinkerers.addTransformation(entry.getKey(), (node) -> entry.getValue().transform(entry.getKey(), node));
     //$$     }

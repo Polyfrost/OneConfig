@@ -160,7 +160,7 @@ public final class AssetHelperImpl implements AssetHelper {
                 return false;
             }
         }
-        return true;
+        return svgHashMap.containsKey(name);
     }
 
     /**
@@ -238,7 +238,7 @@ public final class AssetHelperImpl implements AssetHelper {
      */
     public int getSVG(String fileName, float width, float height) {
         String name = fileName + "-" + width + "-" + height;
-        return svgHashMap.get(name);
+        return svgHashMap.getOrDefault(name, null);
     }
 
     /**
@@ -288,6 +288,7 @@ public final class AssetHelperImpl implements AssetHelper {
                     intBuffer.put(img.getRGB(x, y));
                 }
             }
+            inputStream.close();
             return intBuffer;
         } catch (Exception e) {
             e.printStackTrace();
