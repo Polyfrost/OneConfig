@@ -1775,10 +1775,8 @@ public class cc/polyfrost/oneconfig/utils/hypixel/HypixelUtils {
 	public fun queueUpdate (J)V
 }
 
-public class cc/polyfrost/oneconfig/utils/hypixel/LocrawInfo : java/io/Serializable, java/lang/Comparable {
+public class cc/polyfrost/oneconfig/utils/hypixel/LocrawInfo : java/io/Serializable {
 	public fun <init> ()V
-	public fun compareTo (Lcc/polyfrost/oneconfig/utils/hypixel/LocrawInfo;)I
-	public synthetic fun compareTo (Ljava/lang/Object;)I
 	public fun equals (Ljava/lang/Object;)Z
 	public fun getGameMode ()Ljava/lang/String;
 	public fun getGameType ()Lcc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
