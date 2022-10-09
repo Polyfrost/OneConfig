@@ -64,25 +64,6 @@ public class cc/polyfrost/oneconfig/platform/impl/MousePlatformImpl : cc/polyfro
 	public fun isButtonDown (I)Z
 }
 
-public class cc/polyfrost/oneconfig/platform/impl/NanoVGPlatformImpl : cc/polyfrost/oneconfig/platform/NanoVGPlatform {
-	public fun <init> ()V
-	public fun nnvgCreate (I)J
-	public fun nnvgDelete (J)V
-	public fun nnvglCreateImageFromHandle (JIIII)I
-	public fun nnvglImageHandle (JI)I
-	public fun nnvgluBindFramebuffer (JJ)V
-	public fun nnvgluCreateFramebuffer (JIII)J
-	public fun nnvgluDeleteFramebuffer (JJ)V
-	public fun nvgCreate (I)J
-	public fun nvgDelete (J)V
-	public fun nvglCreateImageFromHandle (JIIII)I
-	public fun nvglImageHandle (JI)I
-	public fun nvgluBindFramebuffer (JLorg/lwjgl3/nanovg/NVGLUFramebuffer;)V
-	public fun nvgluCreateFramebuffer (JIII)Lorg/lwjgl3/nanovg/NVGLUFramebuffer;
-	public fun nvgluDeleteFramebuffer (JLorg/lwjgl3/nanovg/NVGLUFramebuffer;)V
-	public fun triggerStaticInitialization ()V
-}
-
 public class cc/polyfrost/oneconfig/platform/impl/PlatformImpl : cc/polyfrost/oneconfig/platform/Platform {
 	public fun <init> ()V
 	public fun getLoader ()Lcc/polyfrost/oneconfig/platform/Platform$Loader;

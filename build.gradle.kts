@@ -75,12 +75,6 @@ dependencies {
     compileOnly("org.ow2.asm:asm-debug-all:5.0.3")
     compileOnly("org.apache.commons:commons-lang3:3.3.2")
 
-    arrayOf("asm", "asm-commons").forEach { module ->
-        compileOnly("org.ow2.asm:$module:9.2") {
-            isTransitive = false
-        }
-    }
-
     compileOnly("gg.essential:vigilance-1.8.9-forge:222") {
         attributes { attribute(common, true) }
         isTransitive = false
@@ -92,6 +86,10 @@ dependencies {
     }
 
     shadeRelocated("com.github.KevinPriv:keventbus:c52e0a2ea0") {
+        isTransitive = false
+    }
+
+    shadeRelocated("com.github.xtrm-en:deencapsulation:42b829f373") {
         isTransitive = false
     }
 

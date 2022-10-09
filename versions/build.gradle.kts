@@ -142,9 +142,8 @@ dependencies {
     }
 
     include("gg.essential:universalcraft-$platform:master-SNAPSHOT", relocate = true, transitive = false, mod = true)
-    arrayOf("asm", "asm-commons").forEach { module ->
-        include("org.ow2.asm:$module:9.2", relocate = true, transitive = false, mod = false)
-    }
+
+    include("com.github.xtrm-en:deencapsulation:42b829f373", relocate = true, transitive = false, mod = false)
 
     include("com.github.KevinPriv:keventbus:c52e0a2ea0", relocate = true, transitive = false)
 

@@ -6,12 +6,17 @@ import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
 import cc.polyfrost.oneconfig.renderer.TinyFD;
 import cc.polyfrost.oneconfig.renderer.font.FontHelper;
 import cc.polyfrost.oneconfig.renderer.scissor.ScissorHelper;
+import dev.xdark.deencapsulation.Deencapsulation;
 import org.apache.commons.io.IOUtils;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.commons.ClassRemapper;
 import org.objectweb.asm.commons.Remapper;
+//#if FORGE==1 && MC<=11202
+import org.objectweb.asm.commons.RemappingClassAdapter;
+//#else
+//$$ import org.objectweb.asm.commons.ClassRemapper;
+//#endif
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.InsnNode;
@@ -61,7 +66,7 @@ public class LwjglManagerImpl extends URLClassLoader implements LwjglManager {
     private final TinyFD tinyFD;
 
     public LwjglManagerImpl() throws ClassNotFoundException, NoSuchFieldException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
-        super(new URL[] { jarFile }, LwjglManager.class.getClassLoader());
+        super(new URL[]{jarFile}, LwjglManager.class.getClassLoader());
         // Internal accessors
         classLoaderInclude.add("cc.polyfrost.oneconfig.internal.renderer.FontHelperImpl");
         classLoaderInclude.add("cc.polyfrost.oneconfig.internal.renderer.ScissorHelperImpl");
@@ -209,7 +214,11 @@ public class LwjglManagerImpl extends URLClassLoader implements LwjglManager {
             }
         };
         ClassWriter classWriter = new ClassWriter(classReader, ClassWriter.COMPUTE_MAXS);
-        ClassRemapper classRemapper = new ClassRemapper(classWriter, remapper);
+        //#if FORGE==1 && MC<=11202
+        RemappingClassAdapter classRemapper = new RemappingClassAdapter(classWriter, remapper);
+        //#else
+        //$$ ClassRemapper classRemapper = new ClassRemapper(classWriter, remapper);
+        //#endif
         classReader.accept(classRemapper, ClassReader.EXPAND_FRAMES);
         b = classWriter.toByteArray();
 
@@ -331,6 +340,12 @@ public class LwjglManagerImpl extends URLClassLoader implements LwjglManager {
         }
 
         try {
+            try {
+                Deencapsulation.deencapsulate(Object.class);
+                Deencapsulation.deencapsulate(unsafeClass);
+            } catch (Throwable ignored) {
+            }
+
             Field unsafeField = unsafeClass.getDeclaredField("theUnsafe");
             unsafeField.setAccessible(true);
             unsafeInstance = unsafeField.get(null);
