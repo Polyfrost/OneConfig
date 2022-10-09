@@ -1,12 +1,12 @@
 package cc.polyfrost.oneconfig.internal.renderer;
 
+import cc.polyfrost.oneconfig.libs.deencapsulation.Deencapsulation;
 import cc.polyfrost.oneconfig.renderer.AssetHelper;
 import cc.polyfrost.oneconfig.renderer.LwjglManager;
 import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
 import cc.polyfrost.oneconfig.renderer.TinyFD;
 import cc.polyfrost.oneconfig.renderer.font.FontHelper;
 import cc.polyfrost.oneconfig.renderer.scissor.ScissorHelper;
-import dev.xdark.deencapsulation.Deencapsulation;
 import org.apache.commons.io.IOUtils;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
@@ -44,8 +44,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
-public class LwjglManagerImpl extends URLClassLoader implements LwjglManager {
+public class LwjglManagerImpl
+        //#if MC<=11202
+        extends URLClassLoader
+        //#endif
+        implements LwjglManager {
 
+    //#if MC<=11202
     private static final Object unsafeInstance;
     private static final Method defineClassMethod;
     private static final Map<String, String> remappingMap;
@@ -53,11 +58,12 @@ public class LwjglManagerImpl extends URLClassLoader implements LwjglManager {
     private static final String LWJGL_FUNCTION_PROVIDER =
             "cc.polyfrost.oneconfig.internal.plugin.hooks.Lwjgl2FunctionProvider";
 
-    private static final String JAR_NAME = "oneconfig-lwjgl3.jar";
-    private static final URL jarFile = getJarFile();
-
     private final Set<String> classLoaderInclude = new CopyOnWriteArraySet<>();
     private final Map<String, Class<?>> classCache = new HashMap<>();
+
+    private static final String JAR_NAME = "oneconfig-lwjgl3.jar";
+    private static final URL jarFile = getJarFile();
+    //#endif
 
     private final AssetHelper assetHelper;
     private final NanoVGHelper nanoVGHelper;
@@ -65,7 +71,8 @@ public class LwjglManagerImpl extends URLClassLoader implements LwjglManager {
     private final FontHelper fontHelper;
     private final TinyFD tinyFD;
 
-    public LwjglManagerImpl() throws ClassNotFoundException, NoSuchFieldException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+    public LwjglManagerImpl() throws ReflectiveOperationException {
+        //#if MC<=11202
         super(new URL[]{jarFile}, LwjglManager.class.getClassLoader());
         // Internal accessors
         classLoaderInclude.add("cc.polyfrost.oneconfig.internal.renderer.FontHelperImpl");
@@ -83,13 +90,24 @@ public class LwjglManagerImpl extends URLClassLoader implements LwjglManager {
         // Keep the path somewhere for LWJGL2 after initializing LWJGL3
         // (this is read in the Lwjgl2FunctionProvider class)
         System.setProperty("oneconfig.lwjgl2.librarypath", System.getProperty("org.lwjgl.librarypath"));
+        //#endif
+
+        ClassLoader classLoader =
+                //#if MC<=11202
+                this
+                //#else
+                //$$ LwjglManager.class.getClassLoader()
+                //#endif
+                ;
 
         // Setup LW3 config
-        Class<?> configClass = Class.forName("org.lwjgl.system.Configuration", true, this);
+        Class<?> configClass = Class.forName("org.lwjgl.system.Configuration", true, classLoader);
         Method setMethod = configClass.getMethod("set", Object.class);
 
+        //#if MC<=11202
         Object extractDirField = configClass.getField("SHARED_LIBRARY_EXTRACT_DIRECTORY").get(null);
         setMethod.invoke(extractDirField, new File("./OneConfig/temp").getAbsolutePath());
+        //#endif
 
         // stop trying to Class.forName("true") ffs
         Object debugStreamField = configClass.getField("DEBUG_STREAM").get(null);
@@ -97,17 +115,18 @@ public class LwjglManagerImpl extends URLClassLoader implements LwjglManager {
 
         // Initialize helper instances
         try {
-            nanoVGHelper = (NanoVGHelper) Class.forName("cc.polyfrost.oneconfig.internal.renderer.NanoVGHelperImpl", true, this).getConstructor().newInstance();
-            scissorHelper = (ScissorHelper) Class.forName("cc.polyfrost.oneconfig.internal.renderer.ScissorHelperImpl", true, this).getConstructor().newInstance();
-            assetHelper = (AssetHelper) Class.forName("cc.polyfrost.oneconfig.internal.renderer.AssetHelperImpl", true, this).getConstructor().newInstance();
-            fontHelper = (FontHelper) Class.forName("cc.polyfrost.oneconfig.internal.renderer.FontHelperImpl", true, this).getConstructor().newInstance();
-            tinyFD = (TinyFD) Class.forName("cc.polyfrost.oneconfig.internal.renderer.TinyFDImpl", true, this).getConstructor().newInstance();
+            nanoVGHelper = (NanoVGHelper) Class.forName("cc.polyfrost.oneconfig.internal.renderer.NanoVGHelperImpl", true, classLoader).getConstructor().newInstance();
+            scissorHelper = (ScissorHelper) Class.forName("cc.polyfrost.oneconfig.internal.renderer.ScissorHelperImpl", true, classLoader).getConstructor().newInstance();
+            assetHelper = (AssetHelper) Class.forName("cc.polyfrost.oneconfig.internal.renderer.AssetHelperImpl", true, classLoader).getConstructor().newInstance();
+            fontHelper = (FontHelper) Class.forName("cc.polyfrost.oneconfig.internal.renderer.FontHelperImpl", true, classLoader).getConstructor().newInstance();
+            tinyFD = (TinyFD) Class.forName("cc.polyfrost.oneconfig.internal.renderer.TinyFDImpl", true, classLoader).getConstructor().newInstance();
         } catch (ReflectiveOperationException exception) {
             exception.printStackTrace();
             throw new RuntimeException("fuck", exception);
         }
     }
 
+    //#if MC<=11202
     private boolean canBeSharedWithMc(String name) {
         for (String implClass : classLoaderInclude) {
             if (name.startsWith(implClass)) {
@@ -203,6 +222,7 @@ public class LwjglManagerImpl extends URLClassLoader implements LwjglManager {
         name = remappingMap.getOrDefault(name.replace('.', '/'), name)
                 .replace('/', '.');
 
+        //#if MC<=11202
         ClassReader classReader = new ClassReader(b);
         Remapper remapper = new Remapper() {
             @Override
@@ -214,7 +234,7 @@ public class LwjglManagerImpl extends URLClassLoader implements LwjglManager {
             }
         };
         ClassWriter classWriter = new ClassWriter(classReader, ClassWriter.COMPUTE_MAXS);
-        //#if FORGE==1 && MC<=11202
+        //#if FORGE==1
         RemappingClassAdapter classRemapper = new RemappingClassAdapter(classWriter, remapper);
         //#else
         //$$ ClassRemapper classRemapper = new ClassRemapper(classWriter, remapper);
@@ -233,6 +253,7 @@ public class LwjglManagerImpl extends URLClassLoader implements LwjglManager {
             node.accept(classWriter);
             b = classWriter.toByteArray();
         }
+        //#endif
 
         try {
             return (Class<?>) defineClassMethod.invoke(unsafeInstance, name, b, 0, b.length, /*classLoader = */this, null);
@@ -271,53 +292,6 @@ public class LwjglManagerImpl extends URLClassLoader implements LwjglManager {
         }
     }
 
-    private static synchronized URL getJarFile() {
-        final File tempJar = new File("./OneConfig/temp/" + JAR_NAME);
-        tempJar.mkdirs();
-        try {
-            tempJar.createNewFile();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        tempJar.deleteOnExit();
-        try (InputStream in = LwjglManagerImpl.class.getResourceAsStream("/lwjgl.jar")) {
-            assert in != null;
-            Files.copy(in, tempJar.toPath(), StandardCopyOption.REPLACE_EXISTING);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        try {
-            return tempJar.toURI().toURL();
-        } catch (MalformedURLException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @Override
-    public NanoVGHelper getNanoVGHelper() {
-        return nanoVGHelper;
-    }
-
-    @Override
-    public ScissorHelper getScissorHelper() {
-        return scissorHelper;
-    }
-
-    @Override
-    public AssetHelper getAssetHelper() {
-        return assetHelper;
-    }
-
-    @Override
-    public FontHelper getFontHelper() {
-        return fontHelper;
-    }
-
-    @Override
-    public TinyFD getTinyFD() {
-        return tinyFD;
-    }
-
     static {
         registerAsParallelCapable();
 
@@ -325,8 +299,6 @@ public class LwjglManagerImpl extends URLClassLoader implements LwjglManager {
         remappingMap.put("org/lwjgl/BufferUtils", "org/lwjgl/actually3/BufferUtils");
         remappingMap.put("org/lwjgl/PointerBuffer", "org/lwjgl/actually3/PointerBuffer");
         remappingMap.put("org/lwjgl/CLongBuffer", "org/lwjgl/actually3/CLongBuffer");
-//        hackyRemapping.put("org/lwjgl/Version", "org/lwjgl/actually3/CLongBuffer");
-//        hackyRemapping.put("org/lwjgl/Version$BuildType", "org/lwjgl/actually3/Version$BuildType");
 
         Class<?> unsafeClass;
         try {
@@ -363,5 +335,53 @@ public class LwjglManagerImpl extends URLClassLoader implements LwjglManager {
         } catch (ReflectiveOperationException exception) {
             throw new RuntimeException("Error while fetching Unsafe instance.", exception);
         }
+    }
+
+    private static synchronized URL getJarFile() {
+        final File tempJar = new File("./OneConfig/temp/" + JAR_NAME);
+        tempJar.mkdirs();
+        try {
+            tempJar.createNewFile();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        tempJar.deleteOnExit();
+        try (InputStream in = LwjglManagerImpl.class.getResourceAsStream("/lwjgl.jar")) {
+            assert in != null;
+            Files.copy(in, tempJar.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try {
+            return tempJar.toURI().toURL();
+        } catch (MalformedURLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    //#endif
+
+    @Override
+    public NanoVGHelper getNanoVGHelper() {
+        return nanoVGHelper;
+    }
+
+    @Override
+    public ScissorHelper getScissorHelper() {
+        return scissorHelper;
+    }
+
+    @Override
+    public AssetHelper getAssetHelper() {
+        return assetHelper;
+    }
+
+    @Override
+    public FontHelper getFontHelper() {
+        return fontHelper;
+    }
+
+    @Override
+    public TinyFD getTinyFD() {
+        return tinyFD;
     }
 }

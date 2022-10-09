@@ -74,6 +74,7 @@ loom {
             mixinConfig("mixins.${mod_id}.json")
         }
     }
+    @Suppress("UnstableApiUsage")
     mixin.defaultRefmapName.set("mixins.${mod_id}.refmap.json")
 }
 
@@ -94,6 +95,8 @@ val relocated = registerRelocationAttribute("relocate") {
     relocate("com.github.benmanes", "cc.polyfrost.oneconfig.libs")
     relocate("com.google", "cc.polyfrost.oneconfig.libs")
     relocate("org.checkerframework", "cc.polyfrost.oneconfig.libs")
+    relocate("dev.xdark", "cc.polyfrost.oneconfig.libs")
+
     remapStringsIn("com.github.benmanes.caffeine.cache.LocalCacheFactory")
     remapStringsIn("com.github.benmanes.caffeine.cache.NodeFactory")
 }
@@ -147,7 +150,8 @@ dependencies {
 
     include("com.github.KevinPriv:keventbus:c52e0a2ea0", relocate = true, transitive = false)
 
-    @Suppress("GradlePackageUpdate") include("com.github.ben-manes.caffeine:caffeine:2.9.3", relocate = true)
+    @Suppress("GradlePackageUpdate")
+    include("com.github.ben-manes.caffeine:caffeine:2.9.3", relocate = true)
 
     // for other mods and universalcraft
     val kotlinVersion: String by project
@@ -179,11 +183,19 @@ dependencies {
     if (platform.isFabric) {
         include("com.github.Chocohead:Fabric-ASM:v2.3")
     }
-    val tempLwjglConfiguration by configurations.creating
-    compileOnly(tempLwjglConfiguration("cc.polyfrost:lwjgl-$platform:1.0.0-alpha21") {
-        isTransitive = false
-    })
-    shadeNoPom(shade(prebundle(tempLwjglConfiguration, "lwjgl.jar"))!!)
+    if (platform.mcVersion <= 11202) {
+        val tempLwjglConfiguration by configurations.creating
+        compileOnly(tempLwjglConfiguration("cc.polyfrost:lwjgl-$platform:1.0.0-alpha21") {
+            isTransitive = false
+        })
+        shadeNoPom(shade(prebundle(tempLwjglConfiguration, "lwjgl.jar"))!!)
+    } else {
+        val lwjglVersion = "3.2.2"
+        include("org.lwjgl:lwjgl-nanovg:$lwjglVersion")
+        include("org.lwjgl:lwjgl-nanovg:$lwjglVersion:natives-windows")
+        include("org.lwjgl:lwjgl-nanovg:$lwjglVersion:natives-linux")
+        include("org.lwjgl:lwjgl-nanovg:$lwjglVersion:natives-macos")
+    }
 
     dokkaHtmlPlugin("org.jetbrains.dokka:kotlin-as-java-plugin:1.6.21")
 
