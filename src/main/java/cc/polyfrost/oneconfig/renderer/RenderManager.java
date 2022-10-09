@@ -42,7 +42,6 @@ import org.lwjgl.nanovg.NVGColor;
 import org.lwjgl.nanovg.NVGPaint;
 import org.lwjgl.opengl.GL11;
 
-import java.util.Arrays;
 import java.util.function.LongConsumer;
 import java.util.regex.Pattern;
 
@@ -100,6 +99,7 @@ public final class RenderManager {
         nvgEndFrame(vg);
 
         GL11.glPopAttrib();
+        GL11.glEnable(GL11.GL_ALPHA_TEST);
     }
 
     /**
@@ -505,7 +505,6 @@ public final class RenderManager {
 
     /**
      * Draw a drop shadow.
-     *
      * <a href="https://github.com/SpinyOwl/legui/blob/develop/LICENSE">Adapted from legui under MIT license</a>
      *
      * @param vg           The NanoVG context.
@@ -777,7 +776,7 @@ public final class RenderManager {
     private static final Pattern regex = Pattern.compile("(?i)\\\\u00A7[0-9a-f]");
 
     public static int drawBorderedText(String text, float x, float y, int color, int opacity) {
-        String noColors = regex.matcher(text).replaceAll("\u00A7r");
+        String noColors = regex.matcher(text).replaceAll("§r");
         int yes = 0;
         if (opacity > 3) {
             int xOff = -3;
