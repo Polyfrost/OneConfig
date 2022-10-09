@@ -28,7 +28,6 @@
 package cc.polyfrost.oneconfig.utils.hypixel;
 
 import com.google.gson.annotations.SerializedName;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
 import java.util.Objects;
@@ -42,7 +41,7 @@ import java.util.Objects;
  *
  * @see HypixelUtils
  */
-public class LocrawInfo implements Serializable, Comparable<LocrawInfo> {
+public class LocrawInfo implements Serializable {
     @SerializedName("server")
     private String serverId;
     @SerializedName("mode")
@@ -64,7 +63,7 @@ public class LocrawInfo implements Serializable, Comparable<LocrawInfo> {
      * @return The GameType of the server as a String.
      */
     public String getRawGameType() {
-        if(rawGameType == null) rawGameType = "UNKNOWN";
+        if (rawGameType == null) rawGameType = "UNKNOWN";
         return rawGameType;
     }
 
@@ -114,15 +113,6 @@ public class LocrawInfo implements Serializable, Comparable<LocrawInfo> {
         return Objects.hash(serverId, gameMode, mapName, rawGameType);
     }
 
-    /**
-     * Compares the gametype of this locraw to another locraw.
-     * @see Comparable#compareTo(Object) 
-     */
-    @Override
-    public int compareTo(@NotNull LocrawInfo o) {
-        return gameType.compareTo(o.gameType);
-    }
-
     public enum GameType {
         UNKNOWN(""), LIMBO("LIMBO"), BEDWARS("BEDWARS"), SKYWARS("SKYWARS"), PROTOTYPE("PROTOTYPE"), SKYBLOCK("SKYBLOCK"), MAIN("MAIN"), MURDER_MYSTERY("MURDER_MYSTERY"), HOUSING("HOUSING"), ARCADE_GAMES("ARCADE"), BUILD_BATTLE("BUILD_BATTLE"), DUELS("DUELS"), PIT("PIT"), UHC_CHAMPIONS("UHC"), SPEED_UHC("SPEED_UHC"), TNT_GAMES("TNTGAMES"), CLASSIC_GAMES("LEGACY"), COPS_AND_CRIMS("MCGO"), BLITZ_SG("SURVIVAL_GAMES"), MEGA_WALLS("WALLS3"), SMASH_HEROES("SUPER_SMASH"), WARLORDS("BATTLEGROUND"), DROPPER("DROPPER");
 
@@ -133,7 +123,7 @@ public class LocrawInfo implements Serializable, Comparable<LocrawInfo> {
         }
 
         public static GameType getFromLocraw(String gameType) {
-            if(gameType == null) return UNKNOWN;
+            if (gameType == null) return UNKNOWN;
             for (GameType value : values()) {
                 if (value.serverName.equals(gameType)) {
                     return value;
