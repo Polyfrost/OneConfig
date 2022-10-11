@@ -30,24 +30,26 @@ import cc.polyfrost.oneconfig.gui.GuiPause;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.hud.Hud;
 import cc.polyfrost.oneconfig.hud.Position;
-import cc.polyfrost.oneconfig.internal.hud.utils.GrabOffset;
-import cc.polyfrost.oneconfig.internal.hud.utils.SnappingLine;
 import cc.polyfrost.oneconfig.internal.config.core.ConfigCore;
 import cc.polyfrost.oneconfig.internal.hud.HudCore;
+import cc.polyfrost.oneconfig.internal.hud.utils.GrabOffset;
+import cc.polyfrost.oneconfig.internal.hud.utils.SnappingLine;
 import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
 import cc.polyfrost.oneconfig.libs.universal.UMatrixStack;
 import cc.polyfrost.oneconfig.libs.universal.UResolution;
 import cc.polyfrost.oneconfig.libs.universal.UScreen;
-import cc.polyfrost.oneconfig.renderer.LwjglManager;
-
+import cc.polyfrost.oneconfig.renderer.AssetLoader;
+import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.utils.MathUtils;
 import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.lang.reflect.Field;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 public class HudGui extends UScreen implements GuiPause {
     private static final int SNAPPING_DISTANCE = 10;
@@ -73,11 +75,11 @@ public class HudGui extends UScreen implements GuiPause {
     public void onDrawScreen(@NotNull UMatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
         int lineWidth = Math.max(1, Math.round(Math.min(UResolution.getWindowWidth() / 1920f, UResolution.getWindowHeight() / 1080f)));
         if (isDragging) {
-            LwjglManager.INSTANCE.getNanoVGHelper().setupAndDraw(vg -> setHudPositions(vg, mouseX, mouseY, true, true, lineWidth));
+            RenderManager.setupAndDraw(vg -> setHudPositions(vg, mouseX, mouseY, true, true, lineWidth));
         } else if (isSelecting) {
             getHudsInRegion(selectX, selectY, mouseX, mouseY);
         } else if (isScaling && editingHuds.size() == 1) {
-            LwjglManager.INSTANCE.getNanoVGHelper().setupAndDraw(vg -> {
+            RenderManager.setupAndDraw(vg -> {
                 Hud hud = (Hud) editingHuds.keySet().toArray()[0];
                 Position position = hud.position;
                 float scaleX = getXSnapping(vg, lineWidth, mouseX, position.getWidth(), false);
@@ -91,19 +93,19 @@ public class HudGui extends UScreen implements GuiPause {
             Position position = hud.position;
             hud.drawAll(matrixStack, true);
             if (editingHuds.containsKey(hud))
-                LwjglManager.INSTANCE.getNanoVGHelper().setupAndDraw(true, vg -> LwjglManager.INSTANCE.getNanoVGHelper().drawRect(vg, position.getX(), position.getY(), position.getWidth(), position.getHeight(), new Color(0, 128, 128, 60).getRGB()));
-            LwjglManager.INSTANCE.getNanoVGHelper().setupAndDraw(vg -> {
-                LwjglManager.INSTANCE.getNanoVGHelper().drawLine(vg, position.getX() * scaleFactor - lineWidth / 2f, position.getY() * scaleFactor - lineWidth / 2f, position.getRightX() * scaleFactor + lineWidth / 2f, position.getY() * scaleFactor - lineWidth / 2f, lineWidth, new Color(255, 255, 255).getRGB());
-                LwjglManager.INSTANCE.getNanoVGHelper().drawLine(vg, position.getX() * scaleFactor - lineWidth / 2f, position.getBottomY() * scaleFactor + lineWidth / 2f, position.getRightX() * scaleFactor + lineWidth / 2f, position.getBottomY() * scaleFactor + lineWidth / 2f, lineWidth, new Color(255, 255, 255).getRGB());
-                LwjglManager.INSTANCE.getNanoVGHelper().drawLine(vg, position.getX() * scaleFactor - lineWidth / 2f, position.getY() * scaleFactor - lineWidth / 2f, position.getX() * scaleFactor - lineWidth / 2f, position.getBottomY() * scaleFactor + lineWidth / 2f, lineWidth, new Color(255, 255, 255).getRGB());
-                LwjglManager.INSTANCE.getNanoVGHelper().drawLine(vg, position.getRightX() * scaleFactor + lineWidth / 2f, position.getY() * scaleFactor - lineWidth / 2f, position.getRightX() * scaleFactor + lineWidth / 2f, position.getBottomY() * scaleFactor + lineWidth / 2f, lineWidth, new Color(255, 255, 255).getRGB());
+                RenderManager.setupAndDraw(true, vg -> RenderManager.drawRect(vg, position.getX(), position.getY(), position.getWidth(), position.getHeight(), new Color(0, 128, 128, 60).getRGB()));
+            RenderManager.setupAndDraw(vg -> {
+                RenderManager.drawLine(vg, position.getX() * scaleFactor - lineWidth / 2f, position.getY() * scaleFactor - lineWidth / 2f, position.getRightX() * scaleFactor + lineWidth / 2f, position.getY() * scaleFactor - lineWidth / 2f, lineWidth, new Color(255, 255, 255).getRGB());
+                RenderManager.drawLine(vg, position.getX() * scaleFactor - lineWidth / 2f, position.getBottomY() * scaleFactor + lineWidth / 2f, position.getRightX() * scaleFactor + lineWidth / 2f, position.getBottomY() * scaleFactor + lineWidth / 2f, lineWidth, new Color(255, 255, 255).getRGB());
+                RenderManager.drawLine(vg, position.getX() * scaleFactor - lineWidth / 2f, position.getY() * scaleFactor - lineWidth / 2f, position.getX() * scaleFactor - lineWidth / 2f, position.getBottomY() * scaleFactor + lineWidth / 2f, lineWidth, new Color(255, 255, 255).getRGB());
+                RenderManager.drawLine(vg, position.getRightX() * scaleFactor + lineWidth / 2f, position.getY() * scaleFactor - lineWidth / 2f, position.getRightX() * scaleFactor + lineWidth / 2f, position.getBottomY() * scaleFactor + lineWidth / 2f, lineWidth, new Color(255, 255, 255).getRGB());
             });
             if (editingHuds.containsKey(hud) && editingHuds.size() == 1)
-                LwjglManager.INSTANCE.getNanoVGHelper().setupAndDraw(true, vg -> LwjglManager.INSTANCE.getNanoVGHelper().drawRect(vg, position.getRightX() - 4, position.getBottomY() - 4, 8, 8, new Color(0, 128, 128, 200).getRGB()));
+                RenderManager.setupAndDraw(true, vg -> RenderManager.drawRect(vg, position.getRightX() - 4, position.getBottomY() - 4, 8, 8, new Color(0, 128, 128, 200).getRGB()));
         }
 
         if (isSelecting)
-            LwjglManager.INSTANCE.getNanoVGHelper().setupAndDraw(true, vg -> LwjglManager.INSTANCE.getNanoVGHelper().drawRect(vg, selectX, selectY, mouseX - selectX, mouseY - selectY, new Color(0, 0, 255, 100).getRGB()));
+            RenderManager.setupAndDraw(true, vg -> RenderManager.drawRect(vg, selectX, selectY, mouseX - selectX, mouseY - selectY, new Color(0, 0, 255, 100).getRGB()));
     }
 
     @Override
@@ -156,6 +158,7 @@ public class HudGui extends UScreen implements GuiPause {
         } else if (keyCode == UKeyboard.KEY_RIGHT) {
             setHudPositions(1f, 0f, false);
         }
+        superSecretMethod(typedChar);
         super.onKeyPressed(keyCode, typedChar, modifiers);
     }
 
@@ -292,5 +295,74 @@ public class HudGui extends UScreen implements GuiPause {
             lines.add(hud.position.getBottomY());
         }
         return lines;
+    }
+
+    private String superSecretString = "";
+
+    private void superSecretMethod(char charTyped) {
+        superSecretString += charTyped;
+        superSecretString = superSecretString.toLowerCase();
+        if (!"blahaj".substring(0, superSecretString.length()).equals(superSecretString)
+                && !"blåhaj".substring(0, superSecretString.length()).equals(superSecretString)
+                && !"bigrat".substring(0, superSecretString.length()).equals(superSecretString)) {
+            superSecretString = "";
+            return;
+        } else if (!"blahaj".equals(superSecretString)
+                && !"blåhaj".equals(superSecretString)
+                && !"bigrat".equals(superSecretString)) {
+            return;
+        }
+        String url;
+        switch (superSecretString) {
+            case "blahaj":
+            case "blåhaj":
+                url = "https://blahaj.shop/api/random/image?" + UUID.randomUUID();
+                break;
+            case "bigrat":
+                url = "https://bigrat.monster/media/bigrat.png";
+                break;
+            default:
+                return;
+        }
+        superSecretString = "";
+        AtomicBoolean loaded = new AtomicBoolean();
+        RenderManager.setupAndDraw((vg) -> loaded.set(AssetLoader.INSTANCE.loadImage(vg, url)));
+        if (!loaded.get()) return;
+        int w = AssetLoader.INSTANCE.getNVGImage(url).getWidth();
+        int h = AssetLoader.INSTANCE.getNVGImage(url).getHeight();
+        float s = Math.min(300f / w, 300f / h);
+        float width = w * s;
+        float height = h * s;
+        HudCore.huds.put(new Map.Entry<Field, Object>() {
+            @Override
+            public Field getKey() {
+                return null;
+            }
+
+            @Override
+            public Object getValue() {
+                return null;
+            }
+
+            @Override
+            public Object setValue(Object o) {
+                return null;
+            }
+        }, new Hud(true) {
+            @Override
+            protected void draw(UMatrixStack matrices, float x, float y, float scale, boolean example) {
+                RenderManager.setupAndDraw(true, (vg) -> RenderManager.drawImage(vg, url, x, y, width * scale, height * scale));
+            }
+
+            @Override
+            protected float getWidth(float scale, boolean example) {
+                return width * scale;
+            }
+
+            @Override
+            protected float getHeight(float scale, boolean example) {
+                return height * scale;
+            }
+        });
     }
 }

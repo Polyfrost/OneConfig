@@ -24,20 +24,27 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.config.gson;
+//#if MC==11202
+package cc.polyfrost.oneconfig.internal.mixin;
 
-public class ExclusionUtils {
-    protected static boolean isSuperClassOf(Class<?> clazz, Class<?> parentClass) {
-        Class<?> tempClass = clazz;
-        Class<?> lastClass;
-        if (tempClass == parentClass) return true;
-        while (true) {
-            lastClass = tempClass;
-            if (tempClass == null) return false;
-            tempClass = tempClass.getSuperclass();
-            if (tempClass == null) return false;
-            if (tempClass == lastClass) return false;
-            if (tempClass == parentClass) return true;
+import net.minecraft.client.shader.Framebuffer;
+import org.spongepowered.asm.mixin.Dynamic;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Pseudo;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+@Pseudo
+@Mixin(targets = "club.sk1er.patcher.screen.render.caching.HUDCaching", remap = false)
+public class HudCachingMixin {
+
+    @Dynamic
+    @Inject(method = "checkFramebufferSizes", at = @At(value = "RETURN", ordinal = 0), remap = false)
+    private static void checkFramebufferSizes(Framebuffer framebuffer, int width, int height, CallbackInfoReturnable<Framebuffer> cir) {
+        if (cir.getReturnValue() != null && !cir.getReturnValue().isStencilEnabled()) {
+            cir.getReturnValue().enableStencil();
         }
     }
 }
+//#endif

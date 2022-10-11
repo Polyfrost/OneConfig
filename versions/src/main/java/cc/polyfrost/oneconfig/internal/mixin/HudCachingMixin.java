@@ -24,28 +24,27 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.utils.dsl
+//#if MC==10809
+package cc.polyfrost.oneconfig.internal.mixin;
 
-import cc.polyfrost.oneconfig.renderer.font.Font
-import cc.polyfrost.oneconfig.utils.TextUtils
+import net.minecraft.client.shader.Framebuffer;
+import org.spongepowered.asm.mixin.Dynamic;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Pseudo;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-/**
- * Wraps the given [String] to the given [maxWidth].
- * @see TextUtils.wrapText
- */
-fun String.wrap(vg: Long, maxWidth: Float, fontSize: Number, font: Font) =
-    TextUtils.wrapText(vg, this, maxWidth, fontSize.toFloat(), font)
+@Pseudo
+@Mixin(targets = "club.sk1er.patcher.screen.render.caching.HUDCaching", remap = false)
+public class HudCachingMixin {
 
-/**
- * Wraps the given [String] to the given [maxWidth].
- * @see wrap
- */
-fun Long.wrap(text: String, maxWidth: Float, fontSize: Number, font: Font) =
-    TextUtils.wrapText(this, text, maxWidth, fontSize.toFloat(), font)
-
-/**
- * Wraps the given [String] to the given [maxWidth].
- * @see wrap
- */
-fun VG.wrap(text: String, maxWidth: Float, fontSize: Number, font: Font) =
-    TextUtils.wrapText(instance, text, maxWidth, fontSize.toFloat(), font)
+    @Dynamic
+    @Inject(method = "checkFramebufferSizes", at = @At(value = "RETURN", ordinal = 0), remap = false)
+    private static void checkFramebufferSizes(Framebuffer framebuffer, int width, int height, CallbackInfoReturnable<Framebuffer> cir) {
+        if (cir.getReturnValue() != null && !cir.getReturnValue().isStencilEnabled()) {
+            cir.getReturnValue().enableStencil();
+        }
+    }
+}
+//#endif

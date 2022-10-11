@@ -27,15 +27,11 @@
 package cc.polyfrost.oneconfig.gui.elements.config;
 
 import cc.polyfrost.oneconfig.config.annotations.Switch;
+import cc.polyfrost.oneconfig.gui.animations.*;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
-import cc.polyfrost.oneconfig.gui.animations.Animation;
-import cc.polyfrost.oneconfig.gui.animations.ColorAnimation;
-import cc.polyfrost.oneconfig.gui.animations.DummyAnimation;
-import cc.polyfrost.oneconfig.gui.animations.EaseInOutQuad;
 import cc.polyfrost.oneconfig.platform.Platform;
-import cc.polyfrost.oneconfig.renderer.LwjglManager;
-
+import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
@@ -46,13 +42,13 @@ public class ConfigSwitch extends BasicOption {
     private ColorAnimation color;
     private Animation animation;
 
-    public ConfigSwitch(Field field, Object parent, String name, String category, String subcategory, int size) {
-        super(field, parent, name, category, subcategory, size);
+    public ConfigSwitch(Field field, Object parent, String name, String description, String category, String subcategory, int size) {
+        super(field, parent, name, description, category, subcategory, size);
     }
 
     public static ConfigSwitch create(Field field, Object parent) {
         Switch options = field.getAnnotation(Switch.class);
-        return new ConfigSwitch(field, parent, options.name(), options.category(), options.subcategory(), options.size());
+        return new ConfigSwitch(field, parent, options.name(), options.description(), options.category(), options.subcategory(), options.size());
     }
 
     @Override
@@ -69,14 +65,14 @@ public class ConfigSwitch extends BasicOption {
         float percentOn = animation.get();
         int x2 = x + 3 + (int) (percentOn * 18);
         boolean hovered = inputHandler.isAreaHovered(x, y, 42, 32);
-        if (!isEnabled()) LwjglManager.INSTANCE.getNanoVGHelper().setAlpha(vg, 0.5f);
-        LwjglManager.INSTANCE.getNanoVGHelper().drawRoundedRect(vg, x, y + 4, 42, 24, color.getColor(hovered, hovered && Platform.getMousePlatform().isButtonDown(0)), 12f);
-        LwjglManager.INSTANCE.getNanoVGHelper().drawRoundedRect(vg, x2, y + 7, 18, 18, Colors.WHITE, 9f);
-        LwjglManager.INSTANCE.getNanoVGHelper().drawText(vg, name, x + 50, y + 17, Colors.WHITE, 14f, Fonts.MEDIUM);
+        if (!isEnabled()) RenderManager.setAlpha(vg, 0.5f);
+        RenderManager.drawRoundedRect(vg, x, y + 4, 42, 24, color.getColor(hovered, hovered && Platform.getMousePlatform().isButtonDown(0)), 12f);
+        RenderManager.drawRoundedRect(vg, x2, y + 7, 18, 18, Colors.WHITE, 9f);
+        RenderManager.drawText(vg, name, x + 50, y + 17, nameColor, 14f, Fonts.MEDIUM);
 
         if (inputHandler.isAreaClicked(x, y, 42, 32) && isEnabled()) {
             toggled = !toggled;
-            animation = new EaseInOutQuad(200, 0, 1, !toggled);
+            animation = new EaseOutBump(200, 0, 1, !toggled);
             color.setPalette(toggled ? ColorPalette.PRIMARY : ColorPalette.SECONDARY);
             try {
                 set(toggled);
@@ -85,7 +81,12 @@ public class ConfigSwitch extends BasicOption {
                 e.printStackTrace();
             }
         }
-        LwjglManager.INSTANCE.getNanoVGHelper().setAlpha(vg, 1f);
+        RenderManager.setAlpha(vg, 1f);
+    }
+
+    @Override
+    protected float getNameX(int x) {
+        return x + 50;
     }
 
     @Override

@@ -46,6 +46,7 @@ import org.lwjgl.nanovg.NVGPaint;
 import org.lwjgl.nanovg.NanoVG;
 import org.lwjgl.nanovg.NanoVGGL2;
 
+import java.util.Arrays;
 import java.util.function.LongConsumer;
 import java.util.regex.Pattern;
 
@@ -311,24 +312,35 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
     /**
      * Draws a String wrapped at the given width, with the given parameters.
      *
-     * @param vg    The NanoVG context.
-     * @param text  The text.
-     * @param x     The x position.
-     * @param y     The y position.
-     * @param width The width.
-     * @param color The color.
-     * @param size  The size.
-     * @param font  The font.
+     * @param vg         The NanoVG context.
+     * @param text       The text.
+     * @param x          The x position.
+     * @param y          The y position.
+     * @param width      The width.
+     * @param color      The color.
+     * @param size       The size.
+     * @param lineHeight The line height.
+     * @param font       The font.
      */
-    public void drawWrappedString(long vg, String text, float x, float y, float width, int color, float size, Font font) {
+    public void drawWrappedString(long vg, String text, float x, float y, float width, int color, float size, float lineHeight, Font font) {
         nvgBeginPath(vg);
         nvgFontSize(vg, size);
         nvgFontFace(vg, font.getName());
-        nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
+        nvgTextLineHeight(vg, lineHeight);
+        nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_TOP); // Align top because center is weird with wrapping
         NVGColor nvgColor = color(vg, color);
         nvgTextBox(vg, x, y, width, text);
         nvgFill(vg);
         nvgColor.free();
+    }
+
+    public static float getWrappedStringHeight(long vg, String text, float width, float fontSize, float lineHeight, Font font) {
+        float[] bounds = new float[4];
+        nvgFontSize(vg, fontSize);
+        nvgFontFace(vg, font.getName());
+        nvgTextLineHeight(vg, lineHeight);
+        nvgTextBoxBounds(vg, 0, 0, width, text, bounds);
+        return bounds[3] - bounds[1];
     }
 
     /**
@@ -567,6 +579,31 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
     }
 
     /**
+     * Translate to a location
+     *
+     * @param vg The NanoVG context
+     * @param x  The x scale
+     * @param y  The y scale
+     */
+    public static void translate(long vg, float x, float y) {
+        nvgTranslate(vg, x, y);
+    }
+
+    @Override
+    public void rotate(long vg, float angle) {
+        nvgRotate(vg, angle);
+    }
+
+    /**
+     * Reset all transforms
+     *
+     * @param vg The NanoVG context
+     */
+    public static void resetTransform(long vg) {
+        nvgResetTransform(vg);
+    }
+
+    /**
      * Sets the global alpha value to render with.
      *
      * @param vg    The NanoVG context.
@@ -585,14 +622,11 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
      * @param y        The y position.
      * @param width    The width.
      * @param height   The height.
+     * @param scale    The scale
      */
-    public void drawSvg(long vg, String filePath, float x, float y, float width, float height) {
-        float w = width;
-        float h = height;
-        if (OneConfigGui.INSTANCE != null) {
-            w *= OneConfigGui.INSTANCE.getScaleFactor();
-            h *= OneConfigGui.INSTANCE.getScaleFactor();
-        }
+    public static void drawSvg(long vg, String filePath, float x, float y, float width, float height, float scale) {
+        float w = width * scale;
+        float h = height * scale;
         if (LwjglManager.INSTANCE.getAssetHelper().loadSVG(vg, filePath, w, h)) {
             NVGPaint imagePaint = NVGPaint.calloc();
             int image = LwjglManager.INSTANCE.getAssetHelper().getSVG(filePath, w, h);
@@ -614,15 +648,27 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
      * @param y        The y position.
      * @param width    The width.
      * @param height   The height.
-     * @param color    The color.
      */
-    public void drawSvg(long vg, String filePath, float x, float y, float width, float height, int color) {
-        float w = width;
-        float h = height;
-        if (OneConfigGui.INSTANCE != null) {
-            w *= OneConfigGui.INSTANCE.getScaleFactor();
-            h *= OneConfigGui.INSTANCE.getScaleFactor();
-        }
+    public static void drawSvg(long vg, String filePath, float x, float y, float width, float height) {
+        if (OneConfigGui.isOpen()) drawSvg(vg, filePath, x, y, width, height, OneConfigGui.getScaleFactor());
+        else drawSvg(vg, filePath, x, y, width, height, 1f);
+    }
+
+    /**
+     * Draws a SVG with the provided file path and parameters.
+     *
+     * @param vg       The NanoVG context.
+     * @param filePath The file path.
+     * @param x        The x position.
+     * @param y        The y position.
+     * @param width    The width.
+     * @param height   The height.
+     * @param color    The color.
+     * @param scale    The scale
+     */
+    public static void drawSvg(long vg, String filePath, float x, float y, float width, float height, int color, float scale) {
+        float w = width * scale;
+        float h = height * scale;
         if (LwjglManager.INSTANCE.getAssetHelper().loadSVG(vg, filePath, w, h)) {
             NVGPaint imagePaint = NVGPaint.calloc();
             int image = LwjglManager.INSTANCE.getAssetHelper().getSVG(filePath, w, h);
@@ -639,39 +685,58 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
     /**
      * Draws an SVG with the provided file path and parameters.
      *
-     * @see NanoVGHelperImpl#drawSvg(long, String, float, float, float, float)
+     * @param vg       The NanoVG context.
+     * @param filePath The file path.
+     * @param x        The x position.
+     * @param y        The y position.
+     * @param width    The width.
+     * @param height   The height.
+     * @param color    The color.
      */
-    public void drawSvg(long vg, SVG svg, float x, float y, float width, float height) {
-        float w = width;
-        float h = height;
-        if (OneConfigGui.INSTANCE != null) {
-            w *= OneConfigGui.INSTANCE.getScaleFactor();
-            h *= OneConfigGui.INSTANCE.getScaleFactor();
-        }
-        if (LwjglManager.INSTANCE.getAssetHelper().loadSVG(vg, svg, w, h)) {
-            drawSvg(vg, svg.filePath, x, y, width, height);
-        }
+    public static void drawSvg(long vg, String filePath, float x, float y, float width, float height, int color) {
+        if (OneConfigGui.isOpen()) drawSvg(vg, filePath, x, y, width, height, color, OneConfigGui.getScaleFactor());
+        else drawSvg(vg, filePath, x, y, width, height, color, 1f);
     }
 
     /**
      * Draws an SVG with the provided file path and parameters.
      *
-     * @see NanoVGHelperImpl#drawSvg(long, String, float, float, float, float, int)
+     * @see RenderManager#drawSvg(long, String, float, float, float, float)
      */
-    public void drawSvg(long vg, SVG svg, float x, float y, float width, float height, int color) {
-        float w = width;
-        float h = height;
-        if (OneConfigGui.INSTANCE != null) {
-            w *= OneConfigGui.INSTANCE.getScaleFactor();
-            h *= OneConfigGui.INSTANCE.getScaleFactor();
-        }
-        if (LwjglManager.INSTANCE.getAssetHelper().loadSVG(vg, svg, w, h)) {
-            drawSvg(vg, svg.filePath, x, y, width, height, color);
-        }
+    public static void drawSvg(long vg, SVG svg, float x, float y, float width, float height, float scale) {
+        drawSvg(vg, svg.filePath, x, y, width, height, scale);
     }
 
     /**
-     * Draw a circle with an info icon inside of it
+     * Draws an SVG with the provided file path and parameters.
+     *
+     * @see NanoVGHelperImpl#drawSvg(long, String, float, float, float, float)
+     */
+    public static void drawSvg(long vg, SVG svg, float x, float y, float width, float height) {
+        drawSvg(vg, svg.filePath, x, y, width, height);
+    }
+
+    /**
+     * Draws an SVG with the provided file path and parameters.
+     *
+     * @see RenderManager#drawSvg(long, String, float, float, float, float, int)
+     */
+    public static void drawSvg(long vg, SVG svg, float x, float y, float width, float height, int color, float scale) {
+        drawSvg(vg, svg.filePath, x, y, width, height, color, scale);
+    }
+
+    /**
+     * Draws an SVG with the provided file path and parameters.
+     *
+     * @see RenderManager#drawSvg(long, String, float, float, float, float)
+     */
+    public static void drawSvg(long vg, SVG svg, float x, float y, float width, float height, int color) {
+        if (OneConfigGui.isOpen()) drawSvg(vg, svg, x, y, width, height, color, OneConfigGui.getScaleFactor());
+        else drawSvg(vg, svg, x, y, width, height, color, 1f);
+    }
+
+    /**
+     * Draw a circle with an info icon inside it
      *
      * @param vg   The NanoVG context.
      * @param type The icon type.
@@ -715,7 +780,7 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
 
     // gl
 
-    private final Pattern regex = Pattern.compile("(?i)\\\\u00A7[0-9a-f]");
+    private static final Pattern regex = Pattern.compile("(?i)\\\\u00A7[0-9a-f]");
 
     public int drawBorderedText(String text, float x, float y, int color, int opacity) {
         String noColors = regex.matcher(text).replaceAll("\u00A7r");
@@ -736,8 +801,7 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
                 }
             }
         }
-        yes +=
-                Platform.getGLPlatform().drawText(text, x, y, color, false);
+        yes += Platform.getGLPlatform().drawText(text, x, y, color, false);
         return yes;
     }
 
@@ -762,13 +826,11 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
         Platform.getGLPlatform().drawRect(x, y, x + width, y + height, color);
     }
 
-    @Override
-    public void translate(long vg, float x, float y) {
-        NanoVG.nvgTranslate(vg, x, y);
-    }
+    public enum TextType {
+        NONE, SHADOW, FULL;
 
-    @Override
-    public void rotate(long vg, float angle) {
-        NanoVG.nvgRotate(vg, angle);
+        public static TextType toType(int type) {
+            return values()[type];
+        }
     }
 }

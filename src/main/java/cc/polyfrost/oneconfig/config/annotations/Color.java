@@ -40,6 +40,8 @@ import java.lang.annotation.Target;
 public @interface Color {
     String name();
 
+    String description() default "";
+
     boolean allowAlpha() default true;
 
     int size() default 1;

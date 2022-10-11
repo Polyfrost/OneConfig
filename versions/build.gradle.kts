@@ -14,7 +14,6 @@ plugins {
     id("gg.essential.defaults.loom")
     id("com.github.johnrengelman.shadow")
     id("net.kyori.blossom") version "1.3.0"
-    id("org.jetbrains.dokka") version "1.6.21"
     id("maven-publish")
     id("signing")
     java
@@ -26,6 +25,7 @@ kotlin.jvmToolchain {
 
 java {
     withSourcesJar()
+    withJavadocJar()
 }
 
 val mod_name: String by project
@@ -197,8 +197,6 @@ dependencies {
         include("org.lwjgl:lwjgl-nanovg:$lwjglVersion:natives-macos")
     }
 
-    dokkaHtmlPlugin("org.jetbrains.dokka:kotlin-as-java-plugin:1.6.21")
-
     configurations.named(JavaPlugin.COMPILE_CLASSPATH_CONFIGURATION_NAME) { extendsFrom(shadeProject) }
     configurations.named(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME) { extendsFrom(shadeProject) }
 }
@@ -258,7 +256,7 @@ tasks {
                 exclude("mcmod.info")
             }
         }
-        if (!name.contains("sourcesjar", ignoreCase = true) || !name.contains("dokka", ignoreCase = true)) {
+        if (!name.contains("sourcesjar", ignoreCase = true) || !name.contains("javadoc", ignoreCase = true)) {
             exclude("**/**_Test.**")
             exclude("**/**_Test$**.**")
         }
@@ -318,34 +316,8 @@ tasks {
         excludeInternal()
         archiveClassifier.set("")
     }
-    dokkaHtml.configure {
-        outputDirectory.set(buildDir.resolve("dokka"))
-        moduleName.set("OneConfig $platform")
-        moduleVersion.set(mod_major_version + mod_minor_version)
-        dokkaSourceSets {
-            configureEach {
-                jdkVersion.set(8)
-                //reportUndocumented.set(true)
-            }
-        }
-        doLast {
-            val outputFile = outputDirectory.get().resolve("images/logo-icon.svg")
-            if (outputFile.exists()) {
-                outputFile.delete()
-            }
-            val inputFile = project.rootDir.resolve("src/main/resources/assets/oneconfig/icons/OneConfig.svg")
-            inputFile.copyTo(outputFile)
-        }
-    }
-    val dokkaJar = create("dokkaJar", Jar::class.java) {
-        archiveClassifier.set("dokka")
-        group = "build"
-        dependsOn(dokkaHtml)
-        from(layout.buildDirectory.dir("dokka"))
-    }
     named<Jar>("sourcesJar") {
         from(project(":").sourceSets.main.map { it.allSource })
-        dependsOn(dokkaJar)
         excludeInternal()
         archiveClassifier.set("sources")
         doFirst {
@@ -357,6 +329,9 @@ tasks {
             }
             archiveClassifier.set("sources")
         }
+    }
+    named<Jar>("javadocJar") {
+        archiveClassifier.set("javadoc")
     }
     withType<RemapSourcesJarTask> {
         enabled = false
@@ -372,7 +347,7 @@ publishing {
             artifact(tasks["jar"])
             artifact(tasks["remapJar"])
             artifact(tasks["sourcesJar"])
-            artifact(tasks["dokkaJar"])
+            artifact(tasks["javadocJar"])
         }
     }
 

@@ -46,6 +46,8 @@ public @interface Slider {
 
     int step() default 0;
 
+    String description() default "";
+
     String category() default "General";
 
     String subcategory() default "";

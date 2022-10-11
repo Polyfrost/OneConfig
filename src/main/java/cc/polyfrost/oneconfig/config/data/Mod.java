@@ -29,15 +29,18 @@ package cc.polyfrost.oneconfig.config.data;
 import cc.polyfrost.oneconfig.config.Config;
 import cc.polyfrost.oneconfig.config.elements.OptionPage;
 import cc.polyfrost.oneconfig.config.migration.Migrator;
-import cc.polyfrost.oneconfig.internal.config.OneConfigConfig;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class Mod implements Comparable<Mod> {
+    @NotNull
     public final String name;
     public final ModType modType;
+    @Nullable
     public final String modIcon;
+    @Nullable
     public final Migrator migrator;
+    @NotNull
     public final OptionPage defaultPage;
     public Config config;
 
@@ -47,7 +50,7 @@ public class Mod implements Comparable<Mod> {
      * @param modIcon  Path to icon of the mod (png or svg format)
      * @param migrator Migrator class to port the old config
      */
-    public Mod(String name, ModType modType, @Nullable String modIcon, @Nullable Migrator migrator) {
+    public Mod(@NotNull String name, ModType modType, @Nullable String modIcon, @Nullable Migrator migrator) {
         this.name = name;
         this.modType = modType;
         this.modIcon = modIcon;

@@ -32,6 +32,7 @@ import cc.polyfrost.oneconfig.renderer.LwjglManager;
 
 
 public abstract class BasicHud extends Hud {
+    protected boolean background;
     protected boolean rounded;
     protected boolean border;
     protected OneColor bgColor;
@@ -46,6 +47,7 @@ public abstract class BasicHud extends Hud {
      * @param x            X-coordinate of hud on a 1080p display
      * @param y            Y-coordinate of hud on a 1080p display
      * @param scale        Scale of the hud
+     * @param background   If the HUD should have a background
      * @param rounded      If the corner is rounded or not
      * @param cornerRadius Radius of the corner
      * @param paddingX     Horizontal background padding
@@ -55,8 +57,9 @@ public abstract class BasicHud extends Hud {
      * @param borderSize   Thickness of the border
      * @param borderColor  The color of the border
      */
-    public BasicHud(boolean enabled, float x, float y, float scale, boolean rounded, float cornerRadius, float paddingX, float paddingY, OneColor bgColor, boolean border, float borderSize, OneColor borderColor) {
+    public BasicHud(boolean enabled, float x, float y, float scale, boolean background, boolean rounded, float cornerRadius, float paddingX, float paddingY, OneColor bgColor, boolean border, float borderSize, OneColor borderColor) {
         super(enabled, x, y, scale);
+        this.background = background;
         this.rounded = rounded;
         this.cornerRadius = cornerRadius;
         this.paddingX = paddingX;
@@ -75,7 +78,7 @@ public abstract class BasicHud extends Hud {
      * @param scale   Scale of the hud
      */
     public BasicHud(boolean enabled, float x, float y, float scale) {
-        this(enabled, x, y, scale, false, 2, 5, 5, new OneColor(0, 0, 0, 120), false, 2, new OneColor(0, 0, 0));
+        this(enabled, x, y, scale, true, false, 2, 5, 5, new OneColor(0, 0, 0, 120), false, 2, new OneColor(0, 0, 0));
     }
 
     /**
@@ -84,18 +87,18 @@ public abstract class BasicHud extends Hud {
      * @param y       Y-coordinate of hud on a 1080p display
      */
     public BasicHud(boolean enabled, float x, float y) {
-        this(enabled, x, y, 1, false, 2, 5, 5, new OneColor(0, 0, 0, 120), false, 2, new OneColor(0, 0, 0));
+        this(enabled, x, y, 1, true, false, 2, 5, 5, new OneColor(0, 0, 0, 120), false, 2, new OneColor(0, 0, 0));
     }
 
     /**
      * @param enabled If the hud is enabled
      */
     public BasicHud(boolean enabled) {
-        this(enabled, 0, 0, 1, false, 2, 5, 5, new OneColor(0, 0, 0, 120), false, 2, new OneColor(0, 0, 0));
+        this(enabled, 0, 0, 1, true, false, 2, 5, 5, new OneColor(0, 0, 0, 120), false, 2, new OneColor(0, 0, 0));
     }
 
     public BasicHud() {
-        this(false, 0, 0, 1, false, 2, 5, 5, new OneColor(0, 0, 0, 120), false, 2, new OneColor(0, 0, 0));
+        this(false, 0, 0, 1, true, false, 2, 5, 5, new OneColor(0, 0, 0, 120), false, 2, new OneColor(0, 0, 0));
     }
 
     @Override
@@ -103,7 +106,7 @@ public abstract class BasicHud extends Hud {
         if (!example && !shouldShow()) return;
         preRender(example);
         position.setSize(getWidth(scale, example) + paddingX * scale * 2f, getHeight(scale, example) + paddingY * scale * 2f);
-        if (shouldDrawBackground())
+        if (shouldDrawBackground() && background)
             drawBackground(position.getX(), position.getY(), position.getWidth(), position.getHeight(), scale);
         draw(matrices, position.getX() + paddingX * scale, position.getY() + paddingY * scale, scale, example);
     }

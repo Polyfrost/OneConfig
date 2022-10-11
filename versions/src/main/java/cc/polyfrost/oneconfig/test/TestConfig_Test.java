@@ -33,9 +33,14 @@ import cc.polyfrost.oneconfig.config.data.*;
 import cc.polyfrost.oneconfig.config.Config;
 import cc.polyfrost.oneconfig.config.data.ModType;
 import cc.polyfrost.oneconfig.config.migration.VigilanceMigrator;
+import cc.polyfrost.oneconfig.gui.animations.Animation;
+import cc.polyfrost.oneconfig.gui.animations.EaseInOutQuart;
 import cc.polyfrost.oneconfig.gui.pages.HomePage;
+import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.libs.universal.UChat;
 import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
+import cc.polyfrost.oneconfig.renderer.Icon;
+import cc.polyfrost.oneconfig.utils.Notifications;
 
 public class TestConfig_Test extends Config {
 
@@ -189,6 +194,15 @@ public class TestConfig_Test extends Config {
         super(new Mod("Test Mod", ModType.UTIL_QOL, new VigilanceMigrator("./config/testConfig.toml")), "hacksConfig.json");
         initialize();
         addDependency("testCheckBox", "testSwitch");
+        registerKeyBind(testKeyBind, () -> {
+            Animation barAnimation = new EaseInOutQuart(4000, 0f, 1f, false);
+            Notifications.INSTANCE.send(
+                    "Title",
+                    "Very epic long message that will need to wrap because yes.",
+                    new Icon(SVGs.APERTURE_FILL),
+                    () -> barAnimation.get()
+            );
+        });
     }
 }
 

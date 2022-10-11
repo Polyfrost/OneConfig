@@ -26,20 +26,38 @@
 
 package cc.polyfrost.oneconfig.platform;
 
+import cc.polyfrost.oneconfig.libs.checker.nullness.qual.Nullable;
+import org.jetbrains.annotations.NotNull;
+
+import java.io.File;
+import java.util.List;
+
 public interface LoaderPlatform {
     boolean isModLoaded(String id);
+
     boolean hasActiveModContainer();
-    ActiveMod getActiveModContainer();
+
+    @Nullable ActiveMod getActiveModContainer();
+
+    @Nullable ActiveMod toActiveMod(@Nullable Object in);
+
+    /**
+     * Note: the list may contain null elements
+     */
+    @NotNull
+    List<ActiveMod> getLoadedMods();
 
     class ActiveMod {
         public final String name;
         public final String id;
         public final String version;
+        public final File source;
 
-        public ActiveMod(String name, String id, String version) {
+        public ActiveMod(String name, String id, String version, File source) {
             this.name = name;
             this.id = id;
             this.version = version;
+            this.source = source;
         }
     }
 }

@@ -57,8 +57,9 @@ import java.util.Objects;
  * @see SVGs
  */
 public final class AssetHelperImpl implements AssetHelper {
-    private final HashMap<String, Integer> imageHashMap = new HashMap<>();
-    private final HashMap<String, Integer> svgHashMap = new HashMap<>();
+    public static final int DEFAULT_FLAGS = NanoVG.NVG_IMAGE_REPEATX | NanoVG.NVG_IMAGE_REPEATY | NanoVG.NVG_IMAGE_GENERATE_MIPMAPS;
+    private final HashMap<String, NVGAsset> imageHashMap = new HashMap<>();
+    private final HashMap<String, NVGAsset> svgHashMap = new HashMap<>();
 
     /**
      * Loads an assets from resources.
@@ -84,7 +85,7 @@ public final class AssetHelperImpl implements AssetHelper {
                 return false;
             }
 
-            imageHashMap.put(fileName, NanoVG.nvgCreateImageRGBA(vg, width[0], height[0], flags, buffer));
+            imageHashMap.put(fileName, new NVGAsset(NanoVG.nvgCreateImageRGBA(vg, width[0], height[0], flags, buffer), width[0], height[0]));
             return true;
         }
         return true;
@@ -152,7 +153,7 @@ public final class AssetHelperImpl implements AssetHelper {
                 NanoSVG.nsvgDeleteRasterizer(rasterizer);
                 NanoSVG.nsvgDelete(svg);
 
-                svgHashMap.put(name, NanoVG.nvgCreateImageRGBA(vg, w, h, flags, image));
+                svgHashMap.put(name, new NVGAsset(NanoVG.nvgCreateImageRGBA(vg, w, h, flags, image), w, h));
                 return true;
             } catch (Exception e) {
                 System.err.println("Failed to parse SVG file");
@@ -160,7 +161,7 @@ public final class AssetHelperImpl implements AssetHelper {
                 return false;
             }
         }
-        return svgHashMap.containsKey(name);
+        return true;
     }
 
     /**
@@ -198,6 +199,18 @@ public final class AssetHelperImpl implements AssetHelper {
      * @see AssetHelperImpl#loadImage(long, String)
      */
     public int getImage(String fileName) {
+        return imageHashMap.get(fileName).getImage();
+    }
+
+    /**
+     * Get a loaded assets from the cache.
+     * <p><b>Requires the assets to have been loaded first.</b></p>
+     *
+     * @param fileName The name of the file to load.
+     * @return The image and its data
+     * @see AssetLoader#loadImage(long, String)
+     */
+    public NVGAsset getNVGImage(String fileName) {
         return imageHashMap.get(fileName);
     }
 
@@ -210,7 +223,7 @@ public final class AssetHelperImpl implements AssetHelper {
      * @see AssetHelperImpl#loadImage(long, String)
      */
     public void removeImage(long vg, String fileName) {
-        NanoVG.nvgDeleteImage(vg, imageHashMap.get(fileName));
+        NanoVG.nvgDeleteImage(vg, imageHashMap.get(fileName).getImage());
         imageHashMap.remove(fileName);
     }
 
@@ -221,9 +234,9 @@ public final class AssetHelperImpl implements AssetHelper {
      * @param vg The NanoVG context.
      */
     public void clearImages(long vg) {
-        HashMap<String, Integer> temp = new HashMap<>(imageHashMap);
+        HashMap<String, NVGAsset> temp = new HashMap<>(imageHashMap);
         for (String image : temp.keySet()) {
-            NanoVG.nvgDeleteImage(vg, imageHashMap.get(image));
+            NanoVG.nvgDeleteImage(vg, imageHashMap.get(image).getImage());
             imageHashMap.remove(image);
         }
     }
@@ -238,7 +251,19 @@ public final class AssetHelperImpl implements AssetHelper {
      */
     public int getSVG(String fileName, float width, float height) {
         String name = fileName + "-" + width + "-" + height;
-        return svgHashMap.getOrDefault(name, null);
+        return svgHashMap.get(name).getImage();
+    }
+
+    /**
+     * Get a loaded assets from the cache.
+     * <p><b>Requires the assets to have been loaded first.</b></p>
+     *
+     * @param fileName The name of the file to load.
+     * @return The SVG and its data
+     * @see AssetLoader#loadImage(long, String)
+     */
+    public NVGAsset getNVGSVG(String fileName) {
+        return svgHashMap.get(fileName);
     }
 
     /**
@@ -251,7 +276,7 @@ public final class AssetHelperImpl implements AssetHelper {
      */
     public void removeSVG(long vg, String fileName, float width, float height) {
         String name = fileName + "-" + width + "-" + height;
-        NanoVG.nvgDeleteImage(vg, imageHashMap.get(name));
+        NanoVG.nvgDeleteImage(vg, imageHashMap.get(name).getImage());
         svgHashMap.remove(name);
     }
 
@@ -262,9 +287,9 @@ public final class AssetHelperImpl implements AssetHelper {
      * @param vg The NanoVG context.
      */
     public void clearSVGs(long vg) {
-        HashMap<String, Integer> temp = new HashMap<>(svgHashMap);
+        HashMap<String, NVGAsset> temp = new HashMap<>(svgHashMap);
         for (String image : temp.keySet()) {
-            NanoVG.nvgDeleteImage(vg, svgHashMap.get(image));
+            NanoVG.nvgDeleteImage(vg, svgHashMap.get(image).getImage());
             svgHashMap.remove(image);
         }
     }

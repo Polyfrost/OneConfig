@@ -91,10 +91,12 @@ public class OptionSubcategory {
             for (int i = 0; i < filteredOptions.size(); i++) {
                 BasicOption option = filteredOptions.get(i);
                 option.draw(vg, x, optionY, inputHandler);
+                option.drawDescription(vg, x, optionY, inputHandler);
                 if (i + 1 < filteredOptions.size()) {
                     BasicOption nextOption = filteredOptions.get(i + 1);
                     if (option.size == 1 && nextOption.size == 1) {
                         nextOption.draw(vg, x + 512, optionY, inputHandler);
+                        nextOption.drawDescription(vg, x + 512, optionY, inputHandler);
                         optionY += Math.max(option.getHeight(), nextOption.getHeight()) + 16;
                         i++;
                         continue;
@@ -132,11 +134,5 @@ public class OptionSubcategory {
 
     public String getName() {
         return name;
-    }
-
-    public void reset(Config config) {
-        for (BasicOption option : options) {
-            options.remove(config);
-        }
     }
 }

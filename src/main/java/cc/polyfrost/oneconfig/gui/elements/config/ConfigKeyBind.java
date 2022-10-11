@@ -34,8 +34,7 @@ import cc.polyfrost.oneconfig.gui.elements.BasicButton;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
-import cc.polyfrost.oneconfig.renderer.LwjglManager;
-
+import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
@@ -46,21 +45,21 @@ public class ConfigKeyBind extends BasicOption {
     private final BasicButton button;
     private boolean clicked = false;
 
-    public ConfigKeyBind(Field field, Object parent, String name, String category, String subcategory, int size) {
-        super(field, parent, name, category, subcategory, size);
+    public ConfigKeyBind(Field field, Object parent, String name, String description, String category, String subcategory, int size) {
+        super(field, parent, name, description, category, subcategory, size);
         button = new BasicButton(256, 32, "", SVGs.KEYSTROKE, null, BasicButton.ALIGNMENT_JUSTIFIED, ColorPalette.SECONDARY);
         button.setToggleable(true);
     }
 
     public static ConfigKeyBind create(Field field, Object parent) {
         KeyBind keyBind = field.getAnnotation(KeyBind.class);
-        return new ConfigKeyBind(field, parent, keyBind.name(), keyBind.category(), keyBind.subcategory(), keyBind.size());
+        return new ConfigKeyBind(field, parent, keyBind.name(), keyBind.description(), keyBind.category(), keyBind.subcategory(), keyBind.size());
     }
 
     @Override
     public void draw(long vg, int x, int y, InputHandler inputHandler) {
-        if (!isEnabled()) LwjglManager.INSTANCE.getNanoVGHelper().setAlpha(vg, 0.5f);
-        LwjglManager.INSTANCE.getNanoVGHelper().drawText(vg, name, x, y + 17, Colors.WHITE, 14f, Fonts.MEDIUM);
+        if (!isEnabled()) RenderManager.setAlpha(vg, 0.5f);
+        RenderManager.drawText(vg, name, x, y + 17, nameColor, 14f, Fonts.MEDIUM);
         OneKeyBind keyBind = getKeyBind();
         String text = keyBind.getDisplay();
         button.disable(!isEnabled());
@@ -80,7 +79,7 @@ public class ConfigKeyBind extends BasicOption {
         } else if (text.equals("")) text = "None";
         button.setText(text);
         button.draw(vg, x + (size == 1 ? 224 : 736), y, inputHandler);
-        LwjglManager.INSTANCE.getNanoVGHelper().setAlpha(vg, 1f);
+        RenderManager.setAlpha(vg, 1f);
     }
 
     @Override
