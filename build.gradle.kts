@@ -36,6 +36,7 @@ version = mod_major_version + mod_minor_version
 group = "cc.polyfrost"
 
 repositories {
+    mavenLocal()
     maven("https://repo.polyfrost.cc/releases")
 }
 

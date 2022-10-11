@@ -29,6 +29,7 @@ package cc.polyfrost.oneconfig.renderer;
 import cc.polyfrost.oneconfig.config.data.InfoType;
 import cc.polyfrost.oneconfig.renderer.font.Font;
 import cc.polyfrost.oneconfig.utils.InputHandler;
+import org.lwjgl.nanovg.NVGColor;
 
 import java.util.function.LongConsumer;
 
@@ -43,7 +44,7 @@ public interface NanoVGHelper {
      * @param consumer The consumer to call.
      * @see NanoVGHelper#setupAndDraw(boolean, LongConsumer)
      */
-     void setupAndDraw(LongConsumer consumer);
+    void setupAndDraw(LongConsumer consumer);
 
     /**
      * Sets up rendering, calls the consumer with the NanoVG context, and then cleans up.
@@ -187,6 +188,21 @@ public interface NanoVGHelper {
     void drawWrappedString(long vg, String text, float x, float y, float width, int color, float size, Font font);
 
     /**
+     * Draws a String wrapped at the given width, with the given parameters.
+     *
+     * @param vg         The NanoVG context.
+     * @param text       The text.
+     * @param x          The x position.
+     * @param y          The y position.
+     * @param width      The width.
+     * @param color      The color.
+     * @param size       The size.
+     * @param lineHeight The line's height.
+     * @param font       The font.
+     */
+    void drawWrappedString(long vg, String text, float x, float y, float width, int color, float size, float lineHeight, Font font);
+
+    /**
      * Draw a formatted URL (a string in blue with an underline) that when clicked, opens the given text.
      *
      * <p><b>This does NOT scale to Minecraft's GUI scale!</b></p>
@@ -296,6 +312,10 @@ public interface NanoVGHelper {
      */
     void drawDropShadow(long vg, float x, float y, float w, float h, float blur, float spread, float cornerRadius);
 
+    void fillNVGColorWithRGBA(float r, float g, float b, float a, NVGColor color);
+
+    NVGColor color(long vg, int color);
+
     /**
      * Scales all rendering by the provided scale.
      *
@@ -304,6 +324,8 @@ public interface NanoVGHelper {
      * @param y  The y scale.
      */
     void scale(long vg, float x, float y);
+
+    void resetTransform(long vg);
 
     /**
      * Sets the global alpha value to render with.
