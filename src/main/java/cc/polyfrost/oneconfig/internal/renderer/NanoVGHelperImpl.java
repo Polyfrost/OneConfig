@@ -654,7 +654,7 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
     }
 
     /**
-     * Draws a SVG with the provided file path and parameters.
+     * Draws an SVG with the provided file path and parameters.
      *
      * @param vg       The NanoVG context.
      * @param filePath The file path.

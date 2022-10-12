@@ -335,6 +335,8 @@ public interface NanoVGHelper {
      */
     void setAlpha(long vg, float alpha);
 
+    void drawSvg(long vg, String filePath, float x, float y, float width, float height, float scale);
+
     /**
      * Draws a SVG with the provided file path and parameters.
      *
@@ -346,6 +348,8 @@ public interface NanoVGHelper {
      * @param height   The height.
      */
     void drawSvg(long vg, String filePath, float x, float y, float width, float height);
+
+    void drawSvg(long vg, String filePath, float x, float y, float width, float height, int color, float scale);
 
     /**
      * Draws a SVG with the provided file path and parameters.
@@ -360,12 +364,16 @@ public interface NanoVGHelper {
      */
     void drawSvg(long vg, String filePath, float x, float y, float width, float height, int color);
 
+    void drawSvg(long vg, SVG svg, float x, float y, float width, float height, float scale);
+
     /**
      * Draws an SVG with the provided file path and parameters.
      *
      * @see NanoVGHelper#drawSvg(long, String, float, float, float, float)
      */
     void drawSvg(long vg, SVG svg, float x, float y, float width, float height);
+
+    void drawSvg(long vg, SVG svg, float x, float y, float width, float height, int color, float scale);
 
     /**
      * Draws an SVG with the provided file path and parameters.

@@ -30,6 +30,7 @@ import cc.polyfrost.oneconfig.internal.assets.Images;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.renderer.AssetHelper;
 import cc.polyfrost.oneconfig.renderer.Image;
+import cc.polyfrost.oneconfig.renderer.NVGAsset;
 import cc.polyfrost.oneconfig.renderer.SVG;
 import cc.polyfrost.oneconfig.utils.IOUtils;
 import org.lwjgl.BufferUtils;
@@ -208,7 +209,7 @@ public final class AssetHelperImpl implements AssetHelper {
      *
      * @param fileName The name of the file to load.
      * @return The image and its data
-     * @see AssetLoader#loadImage(long, String)
+     * @see AssetHelperImpl#loadImage(long, String)
      */
     public NVGAsset getNVGImage(String fileName) {
         return imageHashMap.get(fileName);
@@ -260,7 +261,7 @@ public final class AssetHelperImpl implements AssetHelper {
      *
      * @param fileName The name of the file to load.
      * @return The SVG and its data
-     * @see AssetLoader#loadImage(long, String)
+     * @see AssetHelperImpl#loadImage(long, String)
      */
     public NVGAsset getNVGSVG(String fileName) {
         return svgHashMap.get(fileName);
