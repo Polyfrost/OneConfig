@@ -24,28 +24,25 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.renderer;
+package cc.polyfrost.oneconfig.renderer.asset;
 
-public class NVGAsset {
-    private final int image;
-    private final int width;
-    private final int height;
+import cc.polyfrost.oneconfig.renderer.AssetHelper;
 
-    protected NVGAsset(int image, int width, int height) {
-        this.image = image;
-        this.width = width;
-        this.height = height;
+/**
+ * Data class storing an image.
+ * This class is purely a data class, and does not contain any logic. It does not need to be used unless you want to
+ * differentiate between a String and an image.
+ */
+public class Image {
+    public final String filePath;
+    public final int flags;
+
+    public Image(String filePath, int flags) {
+        this.filePath = filePath;
+        this.flags = flags;
     }
 
-    public int getImage() {
-        return image;
-    }
-
-    public int getWidth() {
-        return width;
-    }
-
-    public int getHeight() {
-        return height;
+    public Image(String filePath) {
+        this(filePath, AssetHelper.DEFAULT_FLAGS);
     }
 }

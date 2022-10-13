@@ -26,7 +26,7 @@
 
 package cc.polyfrost.oneconfig.internal.assets;
 
-import cc.polyfrost.oneconfig.renderer.SVG;
+import cc.polyfrost.oneconfig.renderer.asset.SVG;
 
 public class SVGs {
     public static final SVG ONECONFIG_FULL_DARK = new SVG("/assets/oneconfig/icons/OneConfigFullDark.svg");

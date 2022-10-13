@@ -24,7 +24,7 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.renderer;
+package cc.polyfrost.oneconfig.renderer.asset;
 
 import com.google.gson.annotations.SerializedName;
 

@@ -1,8 +1,12 @@
 package cc.polyfrost.oneconfig.renderer;
 
+import cc.polyfrost.oneconfig.renderer.asset.Image;
+import cc.polyfrost.oneconfig.renderer.asset.SVG;
+
 import java.nio.IntBuffer;
 
 public interface AssetHelper {
+    AssetHelper INSTANCE = LwjglManager.INSTANCE.getAssetHelper();
 
     int DEFAULT_FLAGS = 2 | 4 | 1; // NanoVG.NVG_IMAGE_REPEATX | NanoVG.NVG_IMAGE_REPEATY | NanoVG.NVG_IMAGE_GENERATE_MIPMAPS
 

@@ -29,9 +29,9 @@ package cc.polyfrost.oneconfig.internal.renderer;
 import cc.polyfrost.oneconfig.internal.assets.Images;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.renderer.AssetHelper;
-import cc.polyfrost.oneconfig.renderer.Image;
-import cc.polyfrost.oneconfig.renderer.NVGAsset;
-import cc.polyfrost.oneconfig.renderer.SVG;
+import cc.polyfrost.oneconfig.renderer.asset.Image;
+import cc.polyfrost.oneconfig.renderer.asset.NVGAsset;
+import cc.polyfrost.oneconfig.renderer.asset.SVG;
 import cc.polyfrost.oneconfig.utils.IOUtils;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.nanovg.NSVGImage;
@@ -48,6 +48,7 @@ import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -59,8 +60,8 @@ import java.util.Objects;
  */
 public final class AssetHelperImpl implements AssetHelper {
     public static final int DEFAULT_FLAGS = NanoVG.NVG_IMAGE_REPEATX | NanoVG.NVG_IMAGE_REPEATY | NanoVG.NVG_IMAGE_GENERATE_MIPMAPS;
-    private final HashMap<String, NVGAsset> imageHashMap = new HashMap<>();
-    private final HashMap<String, NVGAsset> svgHashMap = new HashMap<>();
+    private final Map<String, NVGAsset> imageHashMap = new HashMap<>();
+    private final Map<String, NVGAsset> svgHashMap = new HashMap<>();
 
     /**
      * Loads an assets from resources.

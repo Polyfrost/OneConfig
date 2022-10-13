@@ -26,7 +26,7 @@
 
 package cc.polyfrost.oneconfig.internal.assets;
 
-import cc.polyfrost.oneconfig.renderer.Image;
+import cc.polyfrost.oneconfig.renderer.asset.Image;
 
 public class Images {
     public static final Image HUE_GRADIENT = new Image("/assets/oneconfig/options/HueGradient.png");

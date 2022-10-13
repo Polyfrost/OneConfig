@@ -28,6 +28,7 @@ package cc.polyfrost.oneconfig.test;
 
 import cc.polyfrost.oneconfig.renderer.LwjglManager;
 
+import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.gui.OneUIScreen;

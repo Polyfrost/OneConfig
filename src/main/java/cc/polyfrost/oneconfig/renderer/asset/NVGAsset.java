@@ -24,23 +24,28 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.renderer;
+package cc.polyfrost.oneconfig.renderer.asset;
 
-/**
- * Data class storing an SVG image.
- * This class is purely a data class, and does not contain any logic. It does not need to be used unless you want to
- * differentiate between a String and an SVG image.
- */
-public class SVG {
-    public final String filePath;
-    public final int flags;
+public class NVGAsset {
+    private final int image;
+    private final int width;
+    private final int height;
 
-    public SVG(String filePath, int flags) {
-        this.filePath = filePath;
-        this.flags = flags;
+    public NVGAsset(int image, int width, int height) {
+        this.image = image;
+        this.width = width;
+        this.height = height;
     }
 
-    public SVG(String filePath) {
-        this(filePath, AssetHelper.DEFAULT_FLAGS);
+    public int getImage() {
+        return image;
+    }
+
+    public int getWidth() {
+        return width;
+    }
+
+    public int getHeight() {
+        return height;
     }
 }

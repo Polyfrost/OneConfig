@@ -27,6 +27,8 @@
 package cc.polyfrost.oneconfig.renderer;
 
 import cc.polyfrost.oneconfig.config.data.InfoType;
+import cc.polyfrost.oneconfig.renderer.asset.Image;
+import cc.polyfrost.oneconfig.renderer.asset.SVG;
 import cc.polyfrost.oneconfig.renderer.font.Font;
 import cc.polyfrost.oneconfig.utils.InputHandler;
 import org.lwjgl.nanovg.NVGColor;
@@ -37,6 +39,7 @@ import java.util.function.LongConsumer;
  * Handles NanoVG rendering and wraps it in a more convenient interface.
  */
 public interface NanoVGHelper {
+    NanoVGHelper INSTANCE = LwjglManager.INSTANCE.getNanoVGHelper();
 
     /**
      * Sets up rendering, calls the consumer with the NanoVG context, and then cleans up.
@@ -298,7 +301,6 @@ public interface NanoVGHelper {
 
     /**
      * Draw a drop shadow.
-     *
      * <a href="https://github.com/SpinyOwl/legui/blob/develop/LICENSE">Adapted from legui under MIT license</a>
      *
      * @param vg           The NanoVG context.

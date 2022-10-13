@@ -39,7 +39,7 @@ import cc.polyfrost.oneconfig.gui.pages.HomePage;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.libs.universal.UChat;
 import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
-import cc.polyfrost.oneconfig.renderer.Icon;
+import cc.polyfrost.oneconfig.renderer.asset.Icon;
 import cc.polyfrost.oneconfig.utils.Notifications;
 
 public class TestConfig_Test extends Config {

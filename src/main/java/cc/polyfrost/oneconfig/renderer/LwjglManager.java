@@ -5,6 +5,9 @@ import cc.polyfrost.oneconfig.renderer.scissor.ScissorHelper;
 
 import java.util.ServiceLoader;
 
+/**
+ * Abstraction over the LWJGL3 implementation & loading.
+ */
 public interface LwjglManager {
     NanoVGHelper getNanoVGHelper();
     ScissorHelper getScissorHelper();

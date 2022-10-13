@@ -27,18 +27,23 @@
 package cc.polyfrost.oneconfig.utils.dsl
 
 import cc.polyfrost.oneconfig.config.data.InfoType
-import cc.polyfrost.oneconfig.renderer.Image
+import cc.polyfrost.oneconfig.renderer.asset.Image
 import cc.polyfrost.oneconfig.renderer.LwjglManager
-import cc.polyfrost.oneconfig.renderer.SVG
+import cc.polyfrost.oneconfig.renderer.NanoVGHelper
+import cc.polyfrost.oneconfig.renderer.asset.SVG
 import cc.polyfrost.oneconfig.renderer.font.Font
 import cc.polyfrost.oneconfig.utils.InputHandler
+
+val nanoVGHelper: NanoVGHelper
+    get() = LwjglManager.INSTANCE.nanoVGHelper
 
 /**
  * Wrapper for a NanoVG instance.
  * @see nanoVG
- * @see LwjglManager.INSTANCE.nanoVGHelper
+ * @see LwjglManager.getNanoVGHelper
  */
-data class VG(val instance: Long)
+@JvmInline
+value class VG(val instance: Long)
 
 /**
  * Sets up rendering, calls the block with the NanoVG instance, and then cleans up.
@@ -61,7 +66,7 @@ data class VG(val instance: Long)
  * @param mcScaling Whether to scale the NanoVG instance to match the Minecraft GUI scale.
  * @param block The block to run.
  */
-fun nanoVG(mcScaling: Boolean = false, block: VG.() -> Unit) = LwjglManager.INSTANCE.nanoVGHelper.setupAndDraw(mcScaling) {
+fun nanoVG(mcScaling: Boolean = false, block: VG.() -> Unit) = nanoVGHelper.setupAndDraw(mcScaling) {
     block.invoke(
         VG(it)
     )

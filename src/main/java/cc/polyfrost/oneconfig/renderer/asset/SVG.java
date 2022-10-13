@@ -24,23 +24,25 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.renderer;
+package cc.polyfrost.oneconfig.renderer.asset;
+
+import cc.polyfrost.oneconfig.renderer.AssetHelper;
 
 /**
- * Data class storing an image.
+ * Data class storing an SVG image.
  * This class is purely a data class, and does not contain any logic. It does not need to be used unless you want to
- * differentiate between a String and an image.
+ * differentiate between a String and an SVG image.
  */
-public class Image {
+public class SVG {
     public final String filePath;
     public final int flags;
 
-    public Image(String filePath, int flags) {
+    public SVG(String filePath, int flags) {
         this.filePath = filePath;
         this.flags = flags;
     }
 
-    public Image(String filePath) {
+    public SVG(String filePath) {
         this(filePath, AssetHelper.DEFAULT_FLAGS);
     }
 }

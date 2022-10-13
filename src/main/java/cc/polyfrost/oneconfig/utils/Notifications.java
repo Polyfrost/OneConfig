@@ -36,7 +36,7 @@ import cc.polyfrost.oneconfig.gui.animations.EaseInOutQuad;
 import cc.polyfrost.oneconfig.internal.utils.Notification;
 import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
 import cc.polyfrost.oneconfig.libs.universal.UResolution;
-import cc.polyfrost.oneconfig.renderer.Icon;
+import cc.polyfrost.oneconfig.renderer.asset.Icon;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 import org.jetbrains.annotations.Nullable;
