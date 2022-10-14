@@ -26,6 +26,7 @@
 
 package cc.polyfrost.oneconfig.renderer.asset;
 
+import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
 import com.google.gson.annotations.SerializedName;
 
 public class Icon {
@@ -57,25 +58,25 @@ public class Icon {
 
     public void draw(long vg, float x, float y, float width, float height, int color, float scale) {
         if (type == Type.SVG) {
-            RenderManager.drawSvg(vg, getSVG(), x, y, width, height, color, scale);
+            NanoVGHelper.INSTANCE.drawSvg(vg, getSVG(), x, y, width, height, color, scale);
         } else if (type == Type.IMAGE) {
-            RenderManager.drawImage(vg, getImage(), x, y, width, height, color);
+            NanoVGHelper.INSTANCE.drawImage(vg, getImage(), x, y, width, height, color);
         }
     }
 
     public void draw(long vg, float x, float y, float width, float height, int color) {
         if (type == Type.SVG) {
-            RenderManager.drawSvg(vg, getSVG(), x, y, width, height, color);
+            NanoVGHelper.INSTANCE.drawSvg(vg, getSVG(), x, y, width, height, color);
         } else if (type == Type.IMAGE) {
-            RenderManager.drawImage(vg, getImage(), x, y, width, height, color);
+            NanoVGHelper.INSTANCE.drawImage(vg, getImage(), x, y, width, height, color);
         }
     }
 
     public void draw(long vg, float x, float y, float width, float height) {
         if (type == Type.SVG) {
-            RenderManager.drawSvg(vg, getSVG(), x, y, width, height);
+            NanoVGHelper.INSTANCE.drawSvg(vg, getSVG(), x, y, width, height);
         } else if (type == Type.IMAGE) {
-            RenderManager.drawImage(vg, getImage(), x, y, width, height);
+            NanoVGHelper.INSTANCE.drawImage(vg, getImage(), x, y, width, height);
         }
     }
 

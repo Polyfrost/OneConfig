@@ -38,8 +38,9 @@ import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
 import cc.polyfrost.oneconfig.libs.universal.UMatrixStack;
 import cc.polyfrost.oneconfig.libs.universal.UResolution;
 import cc.polyfrost.oneconfig.libs.universal.UScreen;
-import cc.polyfrost.oneconfig.renderer.AssetLoader;
-import cc.polyfrost.oneconfig.renderer.RenderManager;
+import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
+import cc.polyfrost.oneconfig.renderer.asset.AssetHelper;
+import cc.polyfrost.oneconfig.renderer.asset.NVGAsset;
 import cc.polyfrost.oneconfig.utils.MathUtils;
 import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 import org.jetbrains.annotations.NotNull;
@@ -47,9 +48,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.lang.reflect.Field;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
 
 public class HudGui extends UScreen implements GuiPause {
     private static final int SNAPPING_DISTANCE = 10;
@@ -73,13 +76,15 @@ public class HudGui extends UScreen implements GuiPause {
 
     @Override
     public void onDrawScreen(@NotNull UMatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
+        NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
+
         int lineWidth = Math.max(1, Math.round(Math.min(UResolution.getWindowWidth() / 1920f, UResolution.getWindowHeight() / 1080f)));
         if (isDragging) {
-            RenderManager.setupAndDraw(vg -> setHudPositions(vg, mouseX, mouseY, true, true, lineWidth));
+            nanoVGHelper.setupAndDraw(vg -> setHudPositions(vg, mouseX, mouseY, true, true, lineWidth));
         } else if (isSelecting) {
             getHudsInRegion(selectX, selectY, mouseX, mouseY);
         } else if (isScaling && editingHuds.size() == 1) {
-            RenderManager.setupAndDraw(vg -> {
+            nanoVGHelper.setupAndDraw(vg -> {
                 Hud hud = (Hud) editingHuds.keySet().toArray()[0];
                 Position position = hud.position;
                 float scaleX = getXSnapping(vg, lineWidth, mouseX, position.getWidth(), false);
@@ -92,20 +97,23 @@ public class HudGui extends UScreen implements GuiPause {
             if (!hud.isEnabled()) continue;
             Position position = hud.position;
             hud.drawAll(matrixStack, true);
-            if (editingHuds.containsKey(hud))
-                RenderManager.setupAndDraw(true, vg -> RenderManager.drawRect(vg, position.getX(), position.getY(), position.getWidth(), position.getHeight(), new Color(0, 128, 128, 60).getRGB()));
-            RenderManager.setupAndDraw(vg -> {
-                RenderManager.drawLine(vg, position.getX() * scaleFactor - lineWidth / 2f, position.getY() * scaleFactor - lineWidth / 2f, position.getRightX() * scaleFactor + lineWidth / 2f, position.getY() * scaleFactor - lineWidth / 2f, lineWidth, new Color(255, 255, 255).getRGB());
-                RenderManager.drawLine(vg, position.getX() * scaleFactor - lineWidth / 2f, position.getBottomY() * scaleFactor + lineWidth / 2f, position.getRightX() * scaleFactor + lineWidth / 2f, position.getBottomY() * scaleFactor + lineWidth / 2f, lineWidth, new Color(255, 255, 255).getRGB());
-                RenderManager.drawLine(vg, position.getX() * scaleFactor - lineWidth / 2f, position.getY() * scaleFactor - lineWidth / 2f, position.getX() * scaleFactor - lineWidth / 2f, position.getBottomY() * scaleFactor + lineWidth / 2f, lineWidth, new Color(255, 255, 255).getRGB());
-                RenderManager.drawLine(vg, position.getRightX() * scaleFactor + lineWidth / 2f, position.getY() * scaleFactor - lineWidth / 2f, position.getRightX() * scaleFactor + lineWidth / 2f, position.getBottomY() * scaleFactor + lineWidth / 2f, lineWidth, new Color(255, 255, 255).getRGB());
+            if (editingHuds.containsKey(hud)) {
+                nanoVGHelper.setupAndDraw(true, vg -> nanoVGHelper.drawRect(vg, position.getX(), position.getY(), position.getWidth(), position.getHeight(), new Color(0, 128, 128, 60).getRGB()));
+            }
+            nanoVGHelper.setupAndDraw(vg -> {
+                nanoVGHelper.drawLine(vg, position.getX() * scaleFactor - lineWidth / 2f, position.getY() * scaleFactor - lineWidth / 2f, position.getRightX() * scaleFactor + lineWidth / 2f, position.getY() * scaleFactor - lineWidth / 2f, lineWidth, new Color(255, 255, 255).getRGB());
+                nanoVGHelper.drawLine(vg, position.getX() * scaleFactor - lineWidth / 2f, position.getBottomY() * scaleFactor + lineWidth / 2f, position.getRightX() * scaleFactor + lineWidth / 2f, position.getBottomY() * scaleFactor + lineWidth / 2f, lineWidth, new Color(255, 255, 255).getRGB());
+                nanoVGHelper.drawLine(vg, position.getX() * scaleFactor - lineWidth / 2f, position.getY() * scaleFactor - lineWidth / 2f, position.getX() * scaleFactor - lineWidth / 2f, position.getBottomY() * scaleFactor + lineWidth / 2f, lineWidth, new Color(255, 255, 255).getRGB());
+                nanoVGHelper.drawLine(vg, position.getRightX() * scaleFactor + lineWidth / 2f, position.getY() * scaleFactor - lineWidth / 2f, position.getRightX() * scaleFactor + lineWidth / 2f, position.getBottomY() * scaleFactor + lineWidth / 2f, lineWidth, new Color(255, 255, 255).getRGB());
             });
-            if (editingHuds.containsKey(hud) && editingHuds.size() == 1)
-                RenderManager.setupAndDraw(true, vg -> RenderManager.drawRect(vg, position.getRightX() - 4, position.getBottomY() - 4, 8, 8, new Color(0, 128, 128, 200).getRGB()));
+            if (editingHuds.containsKey(hud) && editingHuds.size() == 1) {
+                nanoVGHelper.setupAndDraw(true, vg -> nanoVGHelper.drawRect(vg, position.getRightX() - 4, position.getBottomY() - 4, 8, 8, new Color(0, 128, 128, 200).getRGB()));
+            }
         }
 
-        if (isSelecting)
-            RenderManager.setupAndDraw(true, vg -> RenderManager.drawRect(vg, selectX, selectY, mouseX - selectX, mouseY - selectY, new Color(0, 0, 255, 100).getRGB()));
+        if (isSelecting) {
+            nanoVGHelper.setupAndDraw(true, vg -> nanoVGHelper.drawRect(vg, selectX, selectY, mouseX - selectX, mouseY - selectY, new Color(0, 0, 255, 100).getRGB()));
+        }
     }
 
     @Override
@@ -326,10 +334,12 @@ public class HudGui extends UScreen implements GuiPause {
         }
         superSecretString = "";
         AtomicBoolean loaded = new AtomicBoolean();
-        RenderManager.setupAndDraw((vg) -> loaded.set(AssetLoader.INSTANCE.loadImage(vg, url)));
+        AssetHelper assetHelper = AssetHelper.INSTANCE;
+        NanoVGHelper.INSTANCE.setupAndDraw((vg) -> loaded.set(assetHelper.loadImage(vg, url)));
         if (!loaded.get()) return;
-        int w = AssetLoader.INSTANCE.getNVGImage(url).getWidth();
-        int h = AssetLoader.INSTANCE.getNVGImage(url).getHeight();
+        NVGAsset image = assetHelper.getNVGImage(url);
+        int w = image.getWidth();
+        int h = image.getHeight();
         float s = Math.min(300f / w, 300f / h);
         float width = w * s;
         float height = h * s;
@@ -351,7 +361,7 @@ public class HudGui extends UScreen implements GuiPause {
         }, new Hud(true) {
             @Override
             protected void draw(UMatrixStack matrices, float x, float y, float scale, boolean example) {
-                RenderManager.setupAndDraw(true, (vg) -> RenderManager.drawImage(vg, url, x, y, width * scale, height * scale));
+                NanoVGHelper.INSTANCE.setupAndDraw(true, (vg) -> NanoVGHelper.INSTANCE.drawImage(vg, url, x, y, width * scale, height * scale));
             }
 
             @Override

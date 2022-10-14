@@ -27,11 +27,14 @@
 package cc.polyfrost.oneconfig.gui.elements.config;
 
 import cc.polyfrost.oneconfig.config.annotations.Switch;
-import cc.polyfrost.oneconfig.gui.animations.*;
-import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
+import cc.polyfrost.oneconfig.gui.animations.Animation;
+import cc.polyfrost.oneconfig.gui.animations.ColorAnimation;
+import cc.polyfrost.oneconfig.gui.animations.DummyAnimation;
+import cc.polyfrost.oneconfig.gui.animations.EaseOutBump;
+import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.platform.Platform;
-import cc.polyfrost.oneconfig.renderer.RenderManager;
+import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
@@ -53,6 +56,7 @@ public class ConfigSwitch extends BasicOption {
 
     @Override
     public void draw(long vg, int x, int y, InputHandler inputHandler) {
+        NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
         boolean toggled = false;
         try {
             toggled = (boolean) get();
@@ -65,10 +69,10 @@ public class ConfigSwitch extends BasicOption {
         float percentOn = animation.get();
         int x2 = x + 3 + (int) (percentOn * 18);
         boolean hovered = inputHandler.isAreaHovered(x, y, 42, 32);
-        if (!isEnabled()) RenderManager.setAlpha(vg, 0.5f);
-        RenderManager.drawRoundedRect(vg, x, y + 4, 42, 24, color.getColor(hovered, hovered && Platform.getMousePlatform().isButtonDown(0)), 12f);
-        RenderManager.drawRoundedRect(vg, x2, y + 7, 18, 18, Colors.WHITE, 9f);
-        RenderManager.drawText(vg, name, x + 50, y + 17, nameColor, 14f, Fonts.MEDIUM);
+        if (!isEnabled()) nanoVGHelper.setAlpha(vg, 0.5f);
+        nanoVGHelper.drawRoundedRect(vg, x, y + 4, 42, 24, color.getColor(hovered, hovered && Platform.getMousePlatform().isButtonDown(0)), 12f);
+        nanoVGHelper.drawRoundedRect(vg, x2, y + 7, 18, 18, Colors.WHITE, 9f);
+        nanoVGHelper.drawText(vg, name, x + 50, y + 17, nameColor, 14f, Fonts.MEDIUM);
 
         if (inputHandler.isAreaClicked(x, y, 42, 32) && isEnabled()) {
             toggled = !toggled;
@@ -81,7 +85,7 @@ public class ConfigSwitch extends BasicOption {
                 e.printStackTrace();
             }
         }
-        RenderManager.setAlpha(vg, 1f);
+        nanoVGHelper.setAlpha(vg, 1f);
     }
 
     @Override

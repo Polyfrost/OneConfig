@@ -353,7 +353,8 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
         }
     }
 
-    public static float getWrappedStringHeight(long vg, String text, float width, float fontSize, float lineHeight, Font font) {
+    @Override
+    public float getWrappedStringHeight(long vg, String text, float width, float fontSize, float lineHeight, Font font) {
         float[] bounds = new float[4];
         nvgFontSize(vg, fontSize);
         nvgFontFace(vg, font.getName());

@@ -27,11 +27,11 @@
 package cc.polyfrost.oneconfig.gui.elements.config;
 
 import cc.polyfrost.oneconfig.config.annotations.Slider;
-import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
 import cc.polyfrost.oneconfig.gui.elements.text.NumberInputField;
+import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.platform.Platform;
-import cc.polyfrost.oneconfig.renderer.RenderManager;
+import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.MathUtils;
@@ -61,11 +61,12 @@ public class ConfigSlider extends BasicOption {
 
     @Override
     public void draw(long vg, int x, int y, InputHandler inputHandler) {
+        NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
         int xCoordinate = 0;
         float value = 0;
         boolean hovered = inputHandler.isAreaHovered(x + 352, y, 512, 32) && isEnabled();
         inputField.disable(!isEnabled());
-        if (!isEnabled()) RenderManager.setAlpha(vg, 0.5f);
+        if (!isEnabled()) nanoVGHelper.setAlpha(vg, 0.5f);
         boolean isMouseDown = Platform.getMousePlatform().isButtonDown(0);
         if (hovered && isMouseDown && !mouseWasDown) dragging = true;
         mouseWasDown = isMouseDown;
@@ -99,19 +100,19 @@ public class ConfigSlider extends BasicOption {
         }
         if (!inputField.isToggled()) inputField.setCurrentValue(value);
 
-        RenderManager.drawText(vg, name, x, y + 17, nameColor, 14f, Fonts.MEDIUM);
-        RenderManager.drawRoundedRect(vg, x + 352, y + 13, 512, 6, Colors.GRAY_300, 4f);
-        RenderManager.drawRoundedRect(vg, x + 352, y + 13, xCoordinate - x - 352, 6, Colors.PRIMARY_500, 4f);
+        nanoVGHelper.drawText(vg, name, x, y + 17, nameColor, 14f, Fonts.MEDIUM);
+        nanoVGHelper.drawRoundedRect(vg, x + 352, y + 13, 512, 6, Colors.GRAY_300, 4f);
+        nanoVGHelper.drawRoundedRect(vg, x + 352, y + 13, xCoordinate - x - 352, 6, Colors.PRIMARY_500, 4f);
         if (step > 0) {
             for (float i = x + 352; i <= x + 864; i += 512 / ((max - min) / step)) {
                 int color = xCoordinate > i - 2 ? Colors.PRIMARY_500 : Colors.GRAY_300;
-                RenderManager.drawRoundedRect(vg, i - 2, y + 9, 4, 14, color, 2f);
+                nanoVGHelper.drawRoundedRect(vg, i - 2, y + 9, 4, 14, color, 2f);
             }
         }
-        if (step == 0) RenderManager.drawRoundedRect(vg, xCoordinate - 12, y + 4, 24, 24, Colors.WHITE, 12f);
-        else RenderManager.drawRoundedRect(vg, xCoordinate - 4, y + 4, 8, 24, Colors.WHITE, 4f);
+        if (step == 0) nanoVGHelper.drawRoundedRect(vg, xCoordinate - 12, y + 4, 24, 24, Colors.WHITE, 12f);
+        else nanoVGHelper.drawRoundedRect(vg, xCoordinate - 4, y + 4, 8, 24, Colors.WHITE, 4f);
         inputField.draw(vg, x + 892, y, inputHandler);
-        RenderManager.setAlpha(vg, 1f);
+        nanoVGHelper.setAlpha(vg, 1f);
     }
 
     private int getStepCoordinate(int xCoordinate, int x) {

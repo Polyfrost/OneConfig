@@ -29,8 +29,7 @@ package cc.polyfrost.oneconfig.gui.elements.config;
 import cc.polyfrost.oneconfig.config.annotations.Button;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
 import cc.polyfrost.oneconfig.gui.elements.BasicButton;
-import cc.polyfrost.oneconfig.internal.assets.Colors;
-import cc.polyfrost.oneconfig.renderer.RenderManager;
+import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
@@ -93,10 +92,11 @@ public class ConfigButton extends BasicOption {
     @Override
     public void draw(long vg, int x, int y, InputHandler inputHandler) {
         button.disable(!isEnabled());
-        if (!isEnabled()) RenderManager.setAlpha(vg, 0.5f);
-        RenderManager.drawText(vg, name, x, y + 17, nameColor, 14f, Fonts.MEDIUM);
+        NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
+        if (!isEnabled()) nanoVGHelper.setAlpha(vg, 0.5f);
+        nanoVGHelper.drawText(vg, name, x, y + 17, nameColor, 14f, Fonts.MEDIUM);
         button.draw(vg, x + (size == 1 ? 352 : 736), y, inputHandler);
-        RenderManager.setAlpha(vg, 1f);
+        nanoVGHelper.setAlpha(vg, 1f);
     }
 
     @Override

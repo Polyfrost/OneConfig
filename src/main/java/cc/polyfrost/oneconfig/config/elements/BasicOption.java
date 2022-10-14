@@ -32,7 +32,7 @@ import cc.polyfrost.oneconfig.gui.animations.DummyAnimation;
 import cc.polyfrost.oneconfig.gui.animations.EaseOutQuad;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
-import cc.polyfrost.oneconfig.renderer.RenderManager;
+import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
@@ -134,7 +134,8 @@ public abstract class BasicOption {
 
     public void drawDescription(long vg, int x, int y, InputHandler inputHandler) {
         if (description.trim().equals("")) return;
-        boolean hovered = inputHandler.isAreaHovered(getNameX(x), y, RenderManager.getTextWidth(vg, name, 14f, Fonts.MEDIUM), 32f);
+        NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
+        boolean hovered = inputHandler.isAreaHovered(getNameX(x), y, nanoVGHelper.getTextWidth(vg, name, 14f, Fonts.MEDIUM), 32f);
         nameColor = nameColorAnimation.getColor(hovered, false);
         if (hovered) hoverTime += GuiUtils.getDeltaTime();
         else hoverTime = 0;
@@ -145,13 +146,13 @@ public abstract class BasicOption {
             descriptionAnimation = new EaseOutQuad(150, descriptionAnimation.get(0), 0f, false);
         }
         if (!shouldDrawDescription && descriptionAnimation.isFinished()) return;
-        float textWidth = RenderManager.getTextWidth(vg, description, 16, Fonts.MEDIUM);
-        RenderManager.setAlpha(vg, descriptionAnimation.get());
-        RenderManager.drawRoundedRect(vg, x, y - 42f, textWidth + 68f, 44f, Colors.GRAY_700, 8f);
-        RenderManager.drawDropShadow(vg, x, y - 42f, textWidth + 68f, 44f, 32f, 0f, 8f);
-        RenderManager.drawSvg(vg, SVGs.INFO_ARROW, x + 16, y - 30f, 20f, 20f, Colors.WHITE_80);
-        RenderManager.drawText(vg, description, x + 52, y - 19, Colors.WHITE_80, 16, Fonts.MEDIUM);
-        RenderManager.setAlpha(vg, 1f);
+        float textWidth = nanoVGHelper.getTextWidth(vg, description, 16, Fonts.MEDIUM);
+        nanoVGHelper.setAlpha(vg, descriptionAnimation.get());
+        nanoVGHelper.drawRoundedRect(vg, x, y - 42f, textWidth + 68f, 44f, Colors.GRAY_700, 8f);
+        nanoVGHelper.drawDropShadow(vg, x, y - 42f, textWidth + 68f, 44f, 32f, 0f, 8f);
+        nanoVGHelper.drawSvg(vg, SVGs.INFO_ARROW, x + 16, y - 30f, 20f, 20f, Colors.WHITE_80);
+        nanoVGHelper.drawText(vg, description, x + 52, y - 19, Colors.WHITE_80, 16, Fonts.MEDIUM);
+        nanoVGHelper.setAlpha(vg, 1f);
     }
 
     /**

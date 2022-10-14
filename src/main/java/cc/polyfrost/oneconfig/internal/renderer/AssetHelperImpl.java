@@ -28,7 +28,7 @@ package cc.polyfrost.oneconfig.internal.renderer;
 
 import cc.polyfrost.oneconfig.internal.assets.Images;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
-import cc.polyfrost.oneconfig.renderer.AssetHelper;
+import cc.polyfrost.oneconfig.renderer.asset.AssetHelper;
 import cc.polyfrost.oneconfig.renderer.asset.Image;
 import cc.polyfrost.oneconfig.renderer.asset.NVGAsset;
 import cc.polyfrost.oneconfig.renderer.asset.SVG;
@@ -71,6 +71,7 @@ public final class AssetHelperImpl implements AssetHelper {
      * @param flags    The image flags
      * @return Whether the asset was loaded successfully.
      */
+    @Override
     public boolean loadImage(long vg, String fileName, int flags) {
         if (!imageHashMap.containsKey(fileName)) {
             int[] width = {0};
@@ -100,6 +101,7 @@ public final class AssetHelperImpl implements AssetHelper {
      * @param image The Image
      * @return Whether the asset was loaded successfully.
      */
+    @Override
     public boolean loadImage(long vg, Image image) {
         return loadImage(vg, image.filePath, image.flags);
     }
@@ -111,6 +113,7 @@ public final class AssetHelperImpl implements AssetHelper {
      * @param fileName The name of the file to load.
      * @return Whether the asset was loaded successfully.
      */
+    @Override
     public boolean loadImage(long vg, String fileName) {
         return loadImage(vg, fileName, DEFAULT_FLAGS);
     }
@@ -125,6 +128,7 @@ public final class AssetHelperImpl implements AssetHelper {
      * @param flags    The image flags
      * @return Whether the SVG was loaded successfully.
      */
+    @Override
     public boolean loadSVG(long vg, String fileName, float width, float height, int flags) {
         String name = fileName + "-" + width + "-" + height;
         if (!svgHashMap.containsKey(name)) {
@@ -175,6 +179,7 @@ public final class AssetHelperImpl implements AssetHelper {
      * @param height The height of the SVG.
      * @return Whether the asset was loaded successfully.
      */
+    @Override
     public boolean loadSVG(long vg, SVG svg, float width, float height) {
         return loadSVG(vg, svg.filePath, width, height, svg.flags);
     }
@@ -188,6 +193,7 @@ public final class AssetHelperImpl implements AssetHelper {
      * @param height   The height of the SVG.
      * @return Whether the SVG was loaded successfully.
      */
+    @Override
     public boolean loadSVG(long vg, String fileName, float width, float height) {
         return loadSVG(vg, fileName, width, height, DEFAULT_FLAGS);
     }
@@ -200,6 +206,7 @@ public final class AssetHelperImpl implements AssetHelper {
      * @return The assets
      * @see AssetHelperImpl#loadImage(long, String)
      */
+    @Override
     public int getImage(String fileName) {
         return imageHashMap.get(fileName).getImage();
     }
@@ -212,6 +219,7 @@ public final class AssetHelperImpl implements AssetHelper {
      * @return The image and its data
      * @see AssetHelperImpl#loadImage(long, String)
      */
+    @Override
     public NVGAsset getNVGImage(String fileName) {
         return imageHashMap.get(fileName);
     }
@@ -224,6 +232,7 @@ public final class AssetHelperImpl implements AssetHelper {
      * @param fileName The name of the file to remove.
      * @see AssetHelperImpl#loadImage(long, String)
      */
+    @Override
     public void removeImage(long vg, String fileName) {
         NanoVG.nvgDeleteImage(vg, imageHashMap.get(fileName).getImage());
         imageHashMap.remove(fileName);
@@ -235,8 +244,9 @@ public final class AssetHelperImpl implements AssetHelper {
      *
      * @param vg The NanoVG context.
      */
+    @Override
     public void clearImages(long vg) {
-        HashMap<String, NVGAsset> temp = new HashMap<>(imageHashMap);
+        Map<String, NVGAsset> temp = new HashMap<>(imageHashMap);
         for (String image : temp.keySet()) {
             NanoVG.nvgDeleteImage(vg, imageHashMap.get(image).getImage());
             imageHashMap.remove(image);
@@ -251,6 +261,7 @@ public final class AssetHelperImpl implements AssetHelper {
      * @return The SVG
      * @see AssetHelperImpl#loadSVG(long, String, float, float)
      */
+    @Override
     public int getSVG(String fileName, float width, float height) {
         String name = fileName + "-" + width + "-" + height;
         return svgHashMap.get(name).getImage();
@@ -264,6 +275,7 @@ public final class AssetHelperImpl implements AssetHelper {
      * @return The SVG and its data
      * @see AssetHelperImpl#loadImage(long, String)
      */
+    @Override
     public NVGAsset getNVGSVG(String fileName) {
         return svgHashMap.get(fileName);
     }
@@ -276,6 +288,7 @@ public final class AssetHelperImpl implements AssetHelper {
      * @param fileName The name of the file to remove.
      * @see AssetHelperImpl#loadSVG(long, String, float, float)
      */
+    @Override
     public void removeSVG(long vg, String fileName, float width, float height) {
         String name = fileName + "-" + width + "-" + height;
         NanoVG.nvgDeleteImage(vg, imageHashMap.get(name).getImage());
@@ -288,8 +301,9 @@ public final class AssetHelperImpl implements AssetHelper {
      *
      * @param vg The NanoVG context.
      */
+    @Override
     public void clearSVGs(long vg) {
-        HashMap<String, NVGAsset> temp = new HashMap<>(svgHashMap);
+        Map<String, NVGAsset> temp = new HashMap<>(svgHashMap);
         for (String image : temp.keySet()) {
             NanoVG.nvgDeleteImage(vg, svgHashMap.get(image).getImage());
             svgHashMap.remove(image);
@@ -303,6 +317,7 @@ public final class AssetHelperImpl implements AssetHelper {
      * @param fileName quantified path to the image
      * @return intBuffer of the image's pixels in ARGB format
      */
+    @Override
     public IntBuffer imageToIntBuffer(String fileName) {
         try {
             InputStream inputStream = this.getClass().getResourceAsStream(fileName);

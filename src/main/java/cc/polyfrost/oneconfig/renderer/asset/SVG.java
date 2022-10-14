@@ -26,8 +26,6 @@
 
 package cc.polyfrost.oneconfig.renderer.asset;
 
-import cc.polyfrost.oneconfig.renderer.AssetHelper;
-
 /**
  * Data class storing an SVG image.
  * This class is purely a data class, and does not contain any logic. It does not need to be used unless you want to

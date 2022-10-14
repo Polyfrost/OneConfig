@@ -31,13 +31,14 @@ import cc.polyfrost.oneconfig.renderer.scissor.ScissorHelper;
 import org.lwjgl.nanovg.NanoVG;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Provides an easy way to manage and group scissor rectangles.
  */
 public class ScissorHelperImpl implements ScissorHelper {
-    private static final ArrayList<ArrayList<Scissor>> previousScissors = new ArrayList<>();
-    private static ArrayList<Scissor> scissors = new ArrayList<>();
+    private final List<List<Scissor>> previousScissors = new ArrayList<>();
+    private List<Scissor> scissors = new ArrayList<>();
 
     /**
      * Adds and applies a scissor rectangle to the list of scissor rectangles.
@@ -83,7 +84,8 @@ public class ScissorHelperImpl implements ScissorHelper {
     /**
      * Save the current scissors
      */
-    public static void save() {
+    @Override
+    public void save() {
         previousScissors.add(new ArrayList<>(scissors));
     }
 
@@ -92,7 +94,8 @@ public class ScissorHelperImpl implements ScissorHelper {
      *
      * @param vg The NanoVG context.
      */
-    public static void restore(long vg) {
+    @Override
+    public void restore(long vg) {
         scissors = previousScissors.remove(0);
         applyScissors(vg);
     }
@@ -104,7 +107,7 @@ public class ScissorHelperImpl implements ScissorHelper {
         NanoVG.nvgScissor(vg, finalScissor.x, finalScissor.y, finalScissor.width, finalScissor.height);
     }
 
-    private Scissor getFinalScissor(ArrayList<Scissor> scissors) {
+    private Scissor getFinalScissor(List<Scissor> scissors) {
         Scissor finalScissor = new Scissor(scissors.get(0));
         for (int i = 1; i < scissors.size(); i++) {
             Scissor scissor = scissors.get(i);

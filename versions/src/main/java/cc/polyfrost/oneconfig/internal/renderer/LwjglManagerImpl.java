@@ -1,7 +1,7 @@
 package cc.polyfrost.oneconfig.internal.renderer;
 
 import cc.polyfrost.oneconfig.libs.deencapsulation.Deencapsulation;
-import cc.polyfrost.oneconfig.renderer.AssetHelper;
+import cc.polyfrost.oneconfig.renderer.asset.AssetHelper;
 import cc.polyfrost.oneconfig.renderer.LwjglManager;
 import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
 import cc.polyfrost.oneconfig.renderer.TinyFD;

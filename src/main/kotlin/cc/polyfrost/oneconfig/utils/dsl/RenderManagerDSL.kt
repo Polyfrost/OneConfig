@@ -74,19 +74,18 @@ fun nanoVG(mcScaling: Boolean = false, block: VG.() -> Unit) = nanoVGHelper.setu
 
 fun nanoVG(context: Long, block: VG.() -> Unit) = block.invoke(VG(context))
 
-
 fun Long.drawRect(x: Number, y: Number, width: Number, height: Number, color: Int, bypassOneConfig: Boolean = false) =
     if (bypassOneConfig) {
-        LwjglManager.INSTANCE.nanoVGHelper.drawRect(this, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat(), color)
+        nanoVGHelper.drawRect(this, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat(), color)
     } else {
-        LwjglManager.INSTANCE.nanoVGHelper.drawRect(this, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat(), color)
+        nanoVGHelper.drawRect(this, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat(), color)
     }
 
 fun VG.drawRect(x: Number, y: Number, width: Number, height: Number, color: Int, bypassOneConfig: Boolean = false) =
     instance.drawRect(x, y, width, height, color, bypassOneConfig)
 
 fun Long.drawRoundedRect(x: Number, y: Number, width: Number, height: Number, radius: Number, color: Int) =
-    LwjglManager.INSTANCE.nanoVGHelper.drawRoundedRect(
+    nanoVGHelper.drawRoundedRect(
         this, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat(), color, radius.toFloat()
     )
 
@@ -95,7 +94,7 @@ fun VG.drawRoundedRect(x: Number, y: Number, width: Number, height: Number, radi
 
 fun Long.drawHollowRoundedRect(
     x: Number, y: Number, width: Number, height: Number, radius: Number, color: Int, thickness: Number
-) = LwjglManager.INSTANCE.nanoVGHelper.drawHollowRoundRect(
+) = nanoVGHelper.drawHollowRoundRect(
     this, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat(), color, radius.toFloat(), thickness.toFloat()
 )
 
@@ -113,7 +112,7 @@ fun Long.drawRoundedRectVaried(
     radiusTR: Number,
     radiusBR: Number,
     radiusBL: Number
-) = RenderManager.drawRoundedRectVaried(
+) = nanoVGHelper.drawRoundedRectVaried(
     this,
     x.toFloat(),
     y.toFloat(),
@@ -139,14 +138,14 @@ fun VG.drawRoundedRectVaried(
 ) = instance.drawRoundedRectVaried(x, y, width, height, color, radiusTL, radiusTR, radiusBR, radiusBL)
 
 fun Long.drawGradientRect(x: Number, y: Number, width: Number, height: Number, color1: Int, color2: Int) =
-    LwjglManager.INSTANCE.nanoVGHelper.drawGradientRect(this, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat(), color1, color2)
+    nanoVGHelper.drawGradientRect(this, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat(), color1, color2)
 
 fun VG.drawGradientRect(x: Number, y: Number, width: Number, height: Number, color1: Int, color2: Int) =
     instance.drawGradientRect(x, y, width, height, color1, color2)
 
 fun Long.drawGradientRoundedRect(
     x: Number, y: Number, width: Number, height: Number, color: Int, color2: Int, radius: Number
-) = LwjglManager.INSTANCE.nanoVGHelper.drawGradientRoundedRect(
+) = nanoVGHelper.drawGradientRoundedRect(
     this, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat(), color, color2, radius.toFloat()
 )
 
@@ -156,57 +155,57 @@ fun VG.drawGradientRoundedRect(
 
 
 fun Long.drawCircle(x: Number, y: Number, radius: Number, color: Int) =
-    LwjglManager.INSTANCE.nanoVGHelper.drawCircle(this, x.toFloat(), y.toFloat(), radius.toFloat(), color)
+    nanoVGHelper.drawCircle(this, x.toFloat(), y.toFloat(), radius.toFloat(), color)
 
 fun VG.drawCircle(x: Number, y: Number, radius: Number, color: Int) = instance.drawCircle(x, y, radius, color)
 
 
 fun Long.drawText(text: String, x: Number, y: Number, color: Int, size: Number, font: Font) =
-    LwjglManager.INSTANCE.nanoVGHelper.drawText(this, text, x.toFloat(), y.toFloat(), color, size.toFloat(), font)
+    nanoVGHelper.drawText(this, text, x.toFloat(), y.toFloat(), color, size.toFloat(), font)
 
 fun VG.drawText(text: String, x: Number, y: Number, color: Int, size: Number, font: Font) =
     instance.drawText(text, x, y, color, size, font)
 
 fun Long.drawWrappedString(text: String, x: Number, y: Number, width: Number, color: Int, size: Number, lineHeight: Number, font: Font) =
-    LwjglManager.INSTANCE.nanoVGHelper.drawWrappedString(this, text, x.toFloat(), y.toFloat(), width.toFloat(), color, size.toFloat(), lineHeight.toFloat(), font)
+    nanoVGHelper.drawWrappedString(this, text, x.toFloat(), y.toFloat(), width.toFloat(), color, size.toFloat(), lineHeight.toFloat(), font)
 
 fun VG.drawWrappedString(text: String, x: Number, y: Number, width: Number, color: Int, size: Number, lineHeight: Number, font: Font) =
     instance.drawWrappedString(text, x, y, width, color, size, lineHeight, font)
 
 fun Long.drawURL(url: String, x: Number, y: Number, size: Number, font: Font, inputHandler: InputHandler) =
-    LwjglManager.INSTANCE.nanoVGHelper.drawURL(this, url, x.toFloat(), y.toFloat(), size.toFloat(), font, inputHandler)
+    nanoVGHelper.drawURL(this, url, x.toFloat(), y.toFloat(), size.toFloat(), font, inputHandler)
 
 fun VG.drawURL(url: String, x: Number, y: Number, size: Number, font: Font, inputHandler: InputHandler) =
     instance.drawURL(url, x, y, size, font, inputHandler)
 
 
 fun Long.drawImage(filePath: String, x: Number, y: Number, width: Number, height: Number) =
-    LwjglManager.INSTANCE.nanoVGHelper.drawImage(this, filePath, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat())
+    nanoVGHelper.drawImage(this, filePath, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat())
 
 fun VG.drawImage(filePath: String, x: Number, y: Number, width: Number, height: Number) =
     instance.drawImage(filePath, x, y, width, height)
 
 fun Long.drawImage(filePath: String, x: Number, y: Number, width: Number, height: Number, color: Int) =
-    LwjglManager.INSTANCE.nanoVGHelper.drawImage(this, filePath, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat(), color)
+    nanoVGHelper.drawImage(this, filePath, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat(), color)
 
 fun VG.drawImage(filePath: String, x: Number, y: Number, width: Number, height: Number, color: Int) =
     instance.drawImage(filePath, x, y, width, height, color)
 
 fun Long.drawImage(image: Image, x: Number, y: Number, width: Number, height: Number) =
-    LwjglManager.INSTANCE.nanoVGHelper.drawImage(this, image, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat())
+    nanoVGHelper.drawImage(this, image, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat())
 
 fun VG.drawImage(image: Image, x: Number, y: Number, width: Number, height: Number) =
     instance.drawImage(image, x, y, width, height)
 
 fun Long.drawImage(image: Image, x: Number, y: Number, width: Number, height: Number, color: Int) =
-    LwjglManager.INSTANCE.nanoVGHelper.drawImage(this, image, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat(), color)
+    nanoVGHelper.drawImage(this, image, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat(), color)
 
 fun VG.drawImage(image: Image, x: Number, y: Number, width: Number, height: Number, color: Int) =
     instance.drawImage(image, x, y, width, height, color)
 
 
 fun Long.drawRoundedImage(filePath: String, x: Number, y: Number, width: Number, height: Number, radius: Number) =
-    LwjglManager.INSTANCE.nanoVGHelper.drawRoundImage(
+    nanoVGHelper.drawRoundImage(
         this, filePath, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat(), radius.toFloat()
     )
 
@@ -214,7 +213,7 @@ fun VG.drawRoundedImage(filePath: String, x: Number, y: Number, width: Number, h
     instance.drawRoundedImage(filePath, x, y, width, height, radius)
 
 fun Long.drawRoundedImage(image: Image, x: Number, y: Number, width: Number, height: Number, radius: Number) =
-    LwjglManager.INSTANCE.nanoVGHelper.drawRoundImage(
+    nanoVGHelper.drawRoundImage(
         this, image, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat(), radius.toFloat()
     )
 
@@ -223,13 +222,13 @@ fun VG.drawRoundedImage(image: Image, x: Number, y: Number, width: Number, heigh
 
 
 fun Long.getTextWidth(text: String, size: Number, font: Font) =
-    LwjglManager.INSTANCE.nanoVGHelper.getTextWidth(this, text, size.toFloat(), font)
+    nanoVGHelper.getTextWidth(this, text, size.toFloat(), font)
 
 fun VG.getTextWidth(text: String, size: Number, font: Font) = instance.getTextWidth(text, size, font)
 
 
 fun Long.drawLine(x1: Number, y1: Number, x2: Number, y2: Number, width: Number, color: Int) =
-    LwjglManager.INSTANCE.nanoVGHelper.drawLine(this, x1.toFloat(), y1.toFloat(), x2.toFloat(), y2.toFloat(), width.toFloat(), color)
+    nanoVGHelper.drawLine(this, x1.toFloat(), y1.toFloat(), x2.toFloat(), y2.toFloat(), width.toFloat(), color)
 
 fun VG.drawLine(x1: Number, y1: Number, x2: Number, y2: Number, width: Number, color: Int) =
     instance.drawLine(x1, y1, x2, y2, width, color)
@@ -237,75 +236,75 @@ fun VG.drawLine(x1: Number, y1: Number, x2: Number, y2: Number, width: Number, c
 
 fun Long.drawDropShadow(
     x: Number, y: Number, w: Number, h: Number, blur: Number, spread: Number, cornerRadius: Number
-) = LwjglManager.INSTANCE.nanoVGHelper.drawDropShadow(
+) = nanoVGHelper.drawDropShadow(
     this, x.toFloat(), y.toFloat(), w.toFloat(), h.toFloat(), blur.toFloat(), spread.toFloat(), cornerRadius.toFloat()
 )
 
 fun VG.drawDropShadow(x: Number, y: Number, w: Number, h: Number, blur: Number, spread: Number, cornerRadius: Number) =
     instance.drawDropShadow(x, y, w, h, blur, spread, cornerRadius)
 
-fun Long.scale(x: Float, y: Float) = LwjglManager.INSTANCE.nanoVGHelper.scale(this, x, y)
+fun Long.scale(x: Float, y: Float) = nanoVGHelper.scale(this, x, y)
 fun VG.scale(x: Float, y: Float) = instance.scale(x, y)
 
-fun Long.translate(x: Float, y: Float) = RenderManager.translate(this, x, y)
+fun Long.translate(x: Float, y: Float) = nanoVGHelper.translate(this, x, y)
 fun VG.translate(x: Float, y: Float) = instance.translate(x, y)
 
-fun Long.resetTransform() = RenderManager.resetTransform(this)
+fun Long.resetTransform() = nanoVGHelper.resetTransform(this)
 fun VG.resetTransform() = instance.resetTransform()
 
-fun Long.setAlpha(alpha: Float) = LwjglManager.INSTANCE.nanoVGHelper.setAlpha(this, alpha)
+fun Long.setAlpha(alpha: Float) = nanoVGHelper.setAlpha(this, alpha)
 fun VG.setAlpha(alpha: Float) = instance.setAlpha(alpha)
 
 fun Long.drawSVG(filePath: String, x: Number, y: Number, width: Number, height: Number, scale: Number) =
-    RenderManager.drawSvg(this, filePath, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat(), scale.toFloat())
+    nanoVGHelper.drawSvg(this, filePath, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat(), scale.toFloat())
 
 fun VG.drawSVG(filePath: String, x: Number, y: Number, width: Number, height: Number, scale: Number) =
     instance.drawSVG(filePath, x, y, width, height, scale)
 
 fun Long.drawSVG(filePath: String, x: Number, y: Number, width: Number, height: Number) =
-    LwjglManager.INSTANCE.nanoVGHelper.drawSvg(this, filePath, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat())
+    nanoVGHelper.drawSvg(this, filePath, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat())
 
 fun VG.drawSVG(filePath: String, x: Number, y: Number, width: Number, height: Number) =
     instance.drawSVG(filePath, x, y, width, height)
 
 fun Long.drawSVG(filePath: String, x: Number, y: Number, width: Number, height: Number, color: Int, scale: Number) =
-    RenderManager.drawSvg(this, filePath, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat(), color, scale.toFloat())
+    nanoVGHelper.drawSvg(this, filePath, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat(), color, scale.toFloat())
 
 fun VG.drawSVG(filePath: String, x: Number, y: Number, width: Number, height: Number, color: Int, scale: Number) =
     instance.drawSVG(filePath, x, y, width, height, color, scale.toFloat())
 
 fun Long.drawSVG(filePath: String, x: Number, y: Number, width: Number, height: Number, color: Int) =
-    LwjglManager.INSTANCE.nanoVGHelper.drawSvg(this, filePath, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat(), color)
+    nanoVGHelper.drawSvg(this, filePath, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat(), color)
 
 fun VG.drawSVG(filePath: String, x: Number, y: Number, width: Number, height: Number, color: Int) =
     instance.drawSVG(filePath, x, y, width, height, color)
 
 fun Long.drawSVG(svg: SVG, x: Number, y: Number, width: Number, height: Number, scale: Number) =
-    RenderManager.drawSvg(this, svg, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat(), scale.toFloat())
+    nanoVGHelper.drawSvg(this, svg, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat(), scale.toFloat())
 
 fun VG.drawSVG(svg: SVG, x: Number, y: Number, width: Number, height: Number, scale: Number) =
     instance.drawSVG(svg, x, y, width, height, scale)
 
 fun Long.drawSVG(svg: SVG, x: Number, y: Number, width: Number, height: Number) =
-    LwjglManager.INSTANCE.nanoVGHelper.drawSvg(this, svg, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat())
+    nanoVGHelper.drawSvg(this, svg, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat())
 
 fun VG.drawSVG(svg: SVG, x: Number, y: Number, width: Number, height: Number) =
     instance.drawSVG(svg, x, y, width, height)
 
 fun Long.drawSVG(svg: SVG, x: Number, y: Number, width: Number, height: Number, color: Int, scale: Number) =
-    RenderManager.drawSvg(this, svg, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat(), color, scale.toFloat())
+    nanoVGHelper.drawSvg(this, svg, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat(), color, scale.toFloat())
 
 fun VG.drawSVG(svg: SVG, x: Number, y: Number, width: Number, height: Number, color: Int, scale: Number) =
     instance.drawSVG(svg, x, y, width, height, color, scale)
 
 fun Long.drawSVG(svg: SVG, x: Number, y: Number, width: Number, height: Number, color: Int) =
-    LwjglManager.INSTANCE.nanoVGHelper.drawSvg(this, svg, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat(), color)
+    nanoVGHelper.drawSvg(this, svg, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat(), color)
 
 fun VG.drawSVG(svg: SVG, x: Number, y: Number, width: Number, height: Number, color: Int) =
     instance.drawSVG(svg, x, y, width, height, color)
 
 
 fun Long.drawInfo(type: InfoType, x: Number, y: Number, size: Number) =
-    LwjglManager.INSTANCE.nanoVGHelper.drawInfo(this, type, x.toFloat(), y.toFloat(), size.toFloat())
+    nanoVGHelper.drawInfo(this, type, x.toFloat(), y.toFloat(), size.toFloat())
 
 fun VG.drawInfo(type: InfoType, x: Number, y: Number, size: Number) = instance.drawInfo(type, x, y, size)

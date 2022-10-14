@@ -47,13 +47,13 @@ import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 
 public class OneConfigTweaker implements ITweaker {
-
     public OneConfigTweaker() {
         for (URL url : Launch.classLoader.getSources()) {
             doMagicMixinStuff(url);
         }
     }
 
+    @SuppressWarnings("unchecked")
     private void doMagicMixinStuff(URL url) {
         try {
             URI uri = url.toURI();

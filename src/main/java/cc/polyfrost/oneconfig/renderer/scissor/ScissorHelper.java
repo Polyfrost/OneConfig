@@ -1,9 +1,13 @@
 package cc.polyfrost.oneconfig.renderer.scissor;
 
+import cc.polyfrost.oneconfig.renderer.LwjglManager;
+
 /**
  * Provides an easy way to manage and group scissor rectangles.
  */
 public interface ScissorHelper {
+    ScissorHelper INSTANCE = LwjglManager.INSTANCE.getScissorHelper();
+
     /**
      * Adds and applies a scissor rectangle to the list of scissor rectangles.
      *
@@ -30,4 +34,8 @@ public interface ScissorHelper {
      * @param vg The NanoVG context.
      */
     void clearScissors(long vg);
+
+    void save();
+
+    void restore(long vg);
 }
