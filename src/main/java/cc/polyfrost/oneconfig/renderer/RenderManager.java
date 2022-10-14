@@ -505,7 +505,6 @@ public final class RenderManager {
 
     /**
      * Draw a drop shadow.
-     *
      * <a href="https://github.com/SpinyOwl/legui/blob/develop/LICENSE">Adapted from legui under MIT license</a>
      *
      * @param vg           The NanoVG context.
@@ -578,20 +577,29 @@ public final class RenderManager {
     }
 
     /**
-     * Translate to a location
+     * Translates all rendering by the provided x and y values.
      *
-     * @param vg The NanoVG context
-     * @param x  The x scale
-     * @param y  The y scale
+     * @param vg The NanoVG context.
+     * @param x  The x value.
+     * @param y  The y value.
      */
     public static void translate(long vg, float x, float y) {
         nvgTranslate(vg, x, y);
     }
 
     /**
-     * Reset all transforms
+     * Rotates all rendering by the provided angle.
      *
-     * @param vg The NanoVG context
+     * @param vg The NanoVG context.
+     * @param a  The angle.
+     */
+    public static void rotate(long vg, float a) {
+        nvgRotate(vg, a);
+    }
+
+    /**
+     * Resets all prior transformations. <br>
+     * <h1><b>NOTE: If you are using this inside the OneConfig GUI, DON'T!<br> It will break things!</b></h1>
      */
     public static void resetTransform(long vg) {
         nvgResetTransform(vg);

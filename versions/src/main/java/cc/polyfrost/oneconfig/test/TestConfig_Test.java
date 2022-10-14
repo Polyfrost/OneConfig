@@ -26,15 +26,15 @@
 
 package cc.polyfrost.oneconfig.test;
 
+import cc.polyfrost.oneconfig.config.Config;
 import cc.polyfrost.oneconfig.config.annotations.*;
 import cc.polyfrost.oneconfig.config.core.OneColor;
 import cc.polyfrost.oneconfig.config.core.OneKeyBind;
 import cc.polyfrost.oneconfig.config.data.*;
-import cc.polyfrost.oneconfig.config.Config;
-import cc.polyfrost.oneconfig.config.data.ModType;
 import cc.polyfrost.oneconfig.config.migration.VigilanceMigrator;
 import cc.polyfrost.oneconfig.gui.animations.Animation;
 import cc.polyfrost.oneconfig.gui.animations.EaseInOutQuart;
+import cc.polyfrost.oneconfig.config.preview.VGPreview;
 import cc.polyfrost.oneconfig.gui.pages.HomePage;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.libs.universal.UChat;
@@ -189,6 +189,23 @@ public class TestConfig_Test extends Config {
             category = "HUD"
     )
     public TestBasicHud_Test basicHud = new TestBasicHud_Test();
+
+    @Preview(
+            name = "A Preview",
+            location = PageLocation.TOP
+    )
+    public VGPreview preview = new VGPreview() {
+        @Override
+        protected void draw(long vg, float width, float height) {
+
+        }
+
+        @Override
+        public float getHeight() {
+            return 120;
+        }
+    };
+
 
     public TestConfig_Test() {
         super(new Mod("Test Mod", ModType.UTIL_QOL, new VigilanceMigrator("./config/testConfig.toml")), "hacksConfig.json");
