@@ -2,18 +2,21 @@
 
 
 
-# OneConfig, the next generation library
+# Introducing OneConfig
+Easy, stunning, expandable, open source. That sums it up quite well. We built OneConfig for the developer, to completly eliminate the hassle of making tools to configure their mods. Our API is elegant, and easy to learn. OneConfig was built from the ground up for this purpose. As for the user experience, it was our top priority. All of their mods will appear in one place, and they don't even need to install anything extra. The visual design is stunning, and is ready to grow whenever needed.
 
-OneConfig is a next generation config library currently in development for all Minecraft mods.
+## Developer documentation
+For a guide of how to use OneConfig please see our wiki at https://docs.polyfrost.cc. It's very thorough, and actually written by the people who write OneConfig.
 
-For a guide of how to use OneConfig please see our documentation at https://docs.polyfrost.cc
+## Screenshots
+<details>
+  <summary>Click to view screenshots</summary>
+  <img src="https://user-images.githubusercontent.com/67508414/172061081-7a32a139-d5c6-4f5a-907a-5af66deb799f.png">
+</details>
 
-![image](https://user-images.githubusercontent.com/67508414/172061081-7a32a139-d5c6-4f5a-907a-5af66deb799f.png)
-<br><br><br>
+# How do I get it?
 
-## I WANT IT!!!
-
-We have initiated closed alpha testing for a small selection of inhouse OneConfig mods. You can gain access to these by boosting our [**Discord server**](https://polyfrost.cc/discord). (Note: the source code for most of these mods can be found on our GitHub.)
+OneConfig Open Beta is just around the corner, or has already passed. If you want to be the first to recieve news of new OneConfig updates, or new supported mods, check out our [**Discord server**](https://polyfrost.cc/discord). We're always in there so feel free to say hi!
 
 ## Licenses and Supporting Projects
 
