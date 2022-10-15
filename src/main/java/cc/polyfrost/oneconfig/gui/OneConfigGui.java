@@ -83,7 +83,7 @@ public class OneConfigGui extends OneUIScreen {
 
     @Override
     public void draw(long vg, float partialTicks, InputHandler inputHandler) {
-        NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
+        final NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
         if (currentPage == null) {
             currentPage = new ModsPage();
             currentPage.parents.add(currentPage);

@@ -61,7 +61,7 @@ public class ConfigDropdown extends BasicOption {
 
     @Override
     public void draw(long vg, int x, int y, InputHandler inputHandler) {
-        NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
+        final NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
         if (!isEnabled()) nanoVGHelper.setAlpha(vg, 0.5f);
         nanoVGHelper.drawText(vg, name, x, y + 16, nameColor, 14f, Fonts.MEDIUM);
 
@@ -103,7 +103,7 @@ public class ConfigDropdown extends BasicOption {
     @Override
     public void drawLast(long vg, int x, int y, InputHandler inputHandler) {
         if (!opened) return;
-        NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
+        final NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
 
         boolean hovered;
         if (size == 1) hovered = inputHandler.isAreaHovered(x + 224, y, 256, 32, true);

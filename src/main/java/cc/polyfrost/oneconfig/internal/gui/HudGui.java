@@ -76,7 +76,7 @@ public class HudGui extends UScreen implements GuiPause {
 
     @Override
     public void onDrawScreen(@NotNull UMatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
-        NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
+        final NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
 
         int lineWidth = Math.max(1, Math.round(Math.min(UResolution.getWindowWidth() / 1920f, UResolution.getWindowHeight() / 1080f)));
         if (isDragging) {

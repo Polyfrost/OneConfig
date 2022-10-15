@@ -57,7 +57,7 @@ public class ConfigKeyBind extends BasicOption {
 
     @Override
     public void draw(long vg, int x, int y, InputHandler inputHandler) {
-        NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
+        final NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
         if (!isEnabled()) nanoVGHelper.setAlpha(vg, 0.5f);
         nanoVGHelper.drawText(vg, name, x, y + 17, nameColor, 14f, Fonts.MEDIUM);
         OneKeyBind keyBind = getKeyBind();

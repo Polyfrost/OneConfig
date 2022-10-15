@@ -64,7 +64,7 @@ public class ConfigColorElement extends BasicOption {
     @Override
     public void draw(long vg, int x, int y, InputHandler inputHandler) {
         if(OneConfigGui.INSTANCE == null) return;
-        NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
+        final NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
 
         if (!isEnabled()) nanoVGHelper.setAlpha(vg, 0.5f);
         hexField.disable(!isEnabled());

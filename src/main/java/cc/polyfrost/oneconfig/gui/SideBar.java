@@ -82,7 +82,7 @@ public class SideBar {
     }
 
     public void draw(long vg, int x, int y, InputHandler inputHandler) {
-        NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
+        final NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
 
         this.y = y;
         for (BasicButton button : buttons) {

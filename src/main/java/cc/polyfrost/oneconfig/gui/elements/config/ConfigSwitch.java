@@ -56,7 +56,7 @@ public class ConfigSwitch extends BasicOption {
 
     @Override
     public void draw(long vg, int x, int y, InputHandler inputHandler) {
-        NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
+        final NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
         boolean toggled = false;
         try {
             toggled = (boolean) get();

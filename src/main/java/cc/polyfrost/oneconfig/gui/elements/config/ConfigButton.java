@@ -92,7 +92,7 @@ public class ConfigButton extends BasicOption {
     @Override
     public void draw(long vg, int x, int y, InputHandler inputHandler) {
         button.disable(!isEnabled());
-        NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
+        final NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
         if (!isEnabled()) nanoVGHelper.setAlpha(vg, 0.5f);
         nanoVGHelper.drawText(vg, name, x, y + 17, nameColor, 14f, Fonts.MEDIUM);
         button.draw(vg, x + (size == 1 ? 352 : 736), y, inputHandler);

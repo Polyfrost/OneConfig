@@ -38,7 +38,7 @@ public class CreditsPage extends Page {
 
     @Override
     public void draw(long vg, int x, int y, InputHandler inputHandler) {
-        NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
+        final NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
         nanoVGHelper.drawSvg(vg, SVGs.ONECONFIG_FULL_DARK, x + 15f, y + 20f, 474, 102);
         y -= 32;
 

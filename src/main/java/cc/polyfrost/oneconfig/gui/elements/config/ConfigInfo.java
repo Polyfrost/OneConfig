@@ -52,7 +52,7 @@ public class ConfigInfo extends BasicOption {
 
     @Override
     public void draw(long vg, int x, int y, InputHandler inputHandler) {
-        NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
+        final NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
         ScissorHelper scissorHelper = ScissorHelper.INSTANCE;
 
         Scissor scissor = scissorHelper.scissor(vg, x, y, size == 1 ? 448 : 960, 32);

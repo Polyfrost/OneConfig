@@ -61,7 +61,7 @@ public class ConfigSlider extends BasicOption {
 
     @Override
     public void draw(long vg, int x, int y, InputHandler inputHandler) {
-        NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
+        final NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
         int xCoordinate = 0;
         float value = 0;
         boolean hovered = inputHandler.isAreaHovered(x + 352, y, 512, 32) && isEnabled();

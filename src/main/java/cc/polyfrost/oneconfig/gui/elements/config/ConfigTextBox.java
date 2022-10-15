@@ -58,7 +58,7 @@ public class ConfigTextBox extends BasicOption {
 
     @Override
     public void draw(long vg, int x, int y, InputHandler inputHandler) {
-        NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
+        final NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
 
         if (!isEnabled()) nanoVGHelper.setAlpha(vg, 0.5f);
         textField.disable(!isEnabled());
