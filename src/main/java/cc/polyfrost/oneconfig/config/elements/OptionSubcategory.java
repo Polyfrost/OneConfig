@@ -61,18 +61,9 @@ public class OptionSubcategory {
             optionY += 36;
         }
 
-/*
-// what do we do here TODO
- master
-        for (ConfigPageButton page : filteredTop) {
-            page.draw(vg, x, optionY, inputHandler);
-            optionY += page.getHeight() + 16;
------
         for (BasicOption opt : filteredTop) {
-            opt.draw(vg, x, optionY);
+            opt.draw(vg, x, optionY, inputHandler);
             optionY += opt.getHeight() + 16;
- previews
-*/
         }
 
         if (filteredOptions.size() > 0) {
@@ -114,18 +105,10 @@ public class OptionSubcategory {
             optionY += 16;
         }
 
-/*
-// what do we do here as well TODO
- master
-        for (ConfigPageButton page : filteredBottom) {
-            page.draw(vg, x, optionY, inputHandler);
---------
         for (BasicOption page : filteredBottom) {
-            page.draw(vg, x, optionY);
- previews
+            page.draw(vg, x, optionY, inputHandler);
             optionY += page.getHeight() + 16;
         }
-        */
 
         return optionY - y;
     }

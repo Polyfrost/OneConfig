@@ -61,4 +61,28 @@ public final class Deprecator {
             }
         }
     }
+
+    /**
+     * mark a method as beta. When a method has this call, it will
+     * throw a new exception to grab the name (or package) of the mod that called said method. <br>
+     * This will then send a notification detailing this to the user, and throw an UnsupportedOperationException to print a stack to the log.
+     */
+    public static void markBeta() {
+        try {
+            throw new Exception("This method is in beta");
+        } catch (Exception e) {
+            String culprit = LogScanner.identifyCallerFromStacktrace(e).stream().map(activeMod -> activeMod.name).findFirst().orElse("Unknown");
+            // sometimes it blames OneConfig as well so
+            if(culprit.equals("OneConfig")) return;
+            if (!warned.contains(culprit)) {
+                warned.add(culprit);
+                Notifications.INSTANCE.send("Beta Warning", "The mod '" + culprit + "' is using a beta method, and may not work well. Please report this to the mod author.");
+                try {
+                    throw new UnsupportedOperationException("Method " + e.getStackTrace()[1].getClassName() + "." + e.getStackTrace()[1].getMethodName() + "() is deprecated; but is still being used by mod " + culprit + "!");
+                } catch (UnsupportedOperationException e1) {
+                    e1.printStackTrace();
+                }
+            }
+        }
+    }
 }

@@ -32,14 +32,16 @@ import cc.polyfrost.oneconfig.config.core.OneColor;
 import cc.polyfrost.oneconfig.config.core.OneKeyBind;
 import cc.polyfrost.oneconfig.config.data.*;
 import cc.polyfrost.oneconfig.config.migration.VigilanceMigrator;
+import cc.polyfrost.oneconfig.config.preview.VGPreview;
 import cc.polyfrost.oneconfig.gui.animations.Animation;
 import cc.polyfrost.oneconfig.gui.animations.EaseInOutQuart;
-import cc.polyfrost.oneconfig.config.preview.VGPreview;
 import cc.polyfrost.oneconfig.gui.pages.HomePage;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.libs.universal.UChat;
 import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
 import cc.polyfrost.oneconfig.renderer.Icon;
+import cc.polyfrost.oneconfig.renderer.RenderManager;
+import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.utils.Notifications;
 
 public class TestConfig_Test extends Config {
@@ -197,7 +199,7 @@ public class TestConfig_Test extends Config {
     public VGPreview preview = new VGPreview() {
         @Override
         protected void draw(long vg, float width, float height) {
-
+            RenderManager.drawText(vg, "Good morning", width / 2 - RenderManager.getTextWidth(vg, "Good morning", 20, Fonts.MEDIUM), height / 2, -1, 20, Fonts.MEDIUM);
         }
 
         @Override

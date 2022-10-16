@@ -7,6 +7,7 @@ import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.libs.universal.UMatrixStack;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
+import cc.polyfrost.oneconfig.utils.InputHandler;
 
 import java.lang.reflect.Field;
 
@@ -15,7 +16,7 @@ public class ConfigPreview extends BasicOption {
     private float height;
 
     public ConfigPreview(Field field, Object instance, String name, String category, String subcategory, BasicPreview preview) {
-        super(field, instance, name, category, subcategory, OptionSize.DUAL);
+        super(field, instance, name, "", category, subcategory, OptionSize.DUAL);
         this.preview = preview;
     }
 
@@ -25,11 +26,11 @@ public class ConfigPreview extends BasicOption {
     }
 
     @Override
-    public void draw(long vg, int x, int y) {
+    public void draw(long vg, int x, int y, InputHandler inputHandler) {
         RenderManager.drawRoundedRect(vg, x - 16, y, 1024, getHeight(), Colors.GRAY_900, 20);
         RenderManager.drawText(vg, name, x, y + 11, Colors.WHITE_60, 10f, Fonts.REGULAR);
         RenderManager.drawHollowRoundRect(vg, x - 8, y + 18, 1008, (height = preview.getHeight()), Colors.GRAY_300, 16f, 1.5f);
         //                      ! this is probably not going to work...
-        preview.setupCallDraw(UMatrixStack.Compat.INSTANCE.get(), vg, x - 8, y + 18, 1008, height);
+        preview.setupCallDraw(vg, x - 8, y + 18, 1008, height);
     }
 }
