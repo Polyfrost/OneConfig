@@ -32,6 +32,7 @@ import cc.polyfrost.oneconfig.config.core.OneColor;
 import cc.polyfrost.oneconfig.config.core.OneKeyBind;
 import cc.polyfrost.oneconfig.config.data.*;
 import cc.polyfrost.oneconfig.config.migration.VigilanceMigrator;
+import cc.polyfrost.oneconfig.config.preview.BackgroundVGPreview;
 import cc.polyfrost.oneconfig.config.preview.VGPreview;
 import cc.polyfrost.oneconfig.gui.animations.Animation;
 import cc.polyfrost.oneconfig.gui.animations.EaseInOutQuart;
@@ -196,15 +197,11 @@ public class TestConfig_Test extends Config {
             name = "A Preview",
             location = PageLocation.TOP
     )
-    public VGPreview preview = new VGPreview() {
+    public VGPreview preview = new BackgroundVGPreview() {
         @Override
         protected void draw(long vg, float width, float height) {
+            super.draw(vg, width, height);
             RenderManager.drawText(vg, "Good morning", width / 2 - RenderManager.getTextWidth(vg, "Good morning", 20, Fonts.MEDIUM), height / 2, -1, 20, Fonts.MEDIUM);
-        }
-
-        @Override
-        public float getHeight() {
-            return 120;
         }
     };
 

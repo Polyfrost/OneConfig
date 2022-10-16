@@ -26,7 +26,6 @@
 
 package cc.polyfrost.oneconfig.internal.utils;
 
-import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.animations.*;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.libs.universal.UResolution;
@@ -38,7 +37,6 @@ import cc.polyfrost.oneconfig.renderer.scissor.ScissorManager;
 import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.MathUtils;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
-import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.Callable;

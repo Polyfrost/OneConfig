@@ -30,7 +30,6 @@ public class ConfigPreview extends BasicOption {
         RenderManager.drawRoundedRect(vg, x - 16, y, 1024, getHeight(), Colors.GRAY_900, 20);
         RenderManager.drawText(vg, name, x, y + 11, Colors.WHITE_60, 10f, Fonts.REGULAR);
         RenderManager.drawHollowRoundRect(vg, x - 8, y + 18, 1008, (height = preview.getHeight()), Colors.GRAY_300, 16f, 1.5f);
-        //                      ! this is probably not going to work...
         preview.setupCallDraw(vg, x - 8, y + 18, 1008, height);
     }
 }
