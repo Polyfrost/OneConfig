@@ -79,39 +79,47 @@ public class OneConfigMixinPlugin implements IMixinConfigPlugin {
     @Override
     public List<String> getMixins() {
         List<String> mixins = new ArrayList<>();
-        if (Platform.getInstance().getLoader().equals(Platform.Loader.FORGE)) {
+        Platform.Loader loader = Platform.getInstance().getLoader();
+        int version = Platform.getInstance().getMinecraftVersion();
+
+        // Loader-specific mixins
+        if (loader == Platform.Loader.FORGE) {
             mixins.add("EventBusMixin");
-        } else if (Platform.getInstance().getLoader().equals(Platform.Loader.FABRIC)) {
+            if (version == 10809 || version == 11202) {
+                // Patcher mixin
+                mixins.add("HudCachingMixin");
+            }
+            if (version >= 11600) {
+                mixins.add("ClientModLoaderMixin");
+            }
+        }
+        if (loader == Platform.Loader.FABRIC) {
             mixins.add("GameRendererAccessor");
             mixins.add("NetHandlerPlayClientMixin");
             mixins.add("FramebufferMixin");
-            if (Platform.getInstance().getMinecraftVersion() <= 11202) {
+
+            if (version <= 11202) {
                 mixins.add("commands.ChatScreenMixin");
                 mixins.add("commands.ScreenMixin");
             }
         }
-        if (Platform.getInstance().getMinecraftVersion() >= 11600 || Platform.getInstance().getLoader() == Platform.Loader.FABRIC) {
+
+        if (version >= 11600 || loader == Platform.Loader.FABRIC) {
             mixins.add("TickTimeTrackerMixin");
         }
-        if (Platform.getInstance().getMinecraftVersion() >= 11600) {
-            if (Platform.getInstance().getLoader() == Platform.Loader.FORGE) {
-                mixins.add("ClientModLoaderMixin");
-            }
+
+        // Inter-loader mixins
+        if (version >= 11600) {
             mixins.add("KeyboardMixin");
             mixins.add("MouseAccessor");
             mixins.add("MouseMixin");
         }
-        if (Platform.getInstance().getLoader() == Platform.Loader.FORGE) {
-            if (Platform.getInstance().getMinecraftVersion() == 10800 || Platform.getInstance().getMinecraftVersion() == 11200) {
-                mixins.add("HudCachingMixin");
-            }
-        }
+
         return mixins.isEmpty() ? null : mixins;
     }
 
     @Override
     public void preApply(String targetClassName, ClassNode targetClass, String mixinClassName, IMixinInfo mixinInfo) {
-
     }
 
     @Override
@@ -122,8 +130,9 @@ public class OneConfigMixinPlugin implements IMixinConfigPlugin {
     }
 
     /**
-     * If anything here is changed, edit the corresponding method in OneConfigMixinPlugin!
+     * If anything here is changed, edit the corresponding method in VigilantTransformer!
      */
+    @SuppressWarnings("DuplicatedCode"/*, reason = "VigilantTransformer takes as an argument a regular ClassNode and OneConfigMixinPlugin takes a relocated ClassNode from mixin's libraries, so common code isn't feasible without dumb wrapping code" */)
     private void transform(ClassNode node) {
         if (!node.interfaces.contains("cc/polyfrost/oneconfig/internal/config/compatibility/vigilance/VigilantAccessor")) {
             node.fields.add(new FieldNode(Opcodes.ACC_PUBLIC, "oneconfig$config", "Lcc/polyfrost/oneconfig/internal/config/compatibility/vigilance/VigilanceConfig;", null, null));
@@ -164,29 +173,25 @@ public class OneConfigMixinPlugin implements IMixinConfigPlugin {
             node.methods.add(methodNode2);
 
             for (MethodNode method : node.methods) {
+                InsnList list = new InsnList();
                 if (method.name.equals("initialize")) {
-                    InsnList list = new InsnList();
                     list.add(new VarInsnNode(Opcodes.ALOAD, 0));
                     list.add(new VarInsnNode(Opcodes.ALOAD, 0));
                     list.add(new VarInsnNode(Opcodes.ALOAD, 0));
                     list.add(new FieldInsnNode(Opcodes.GETFIELD, "gg/essential/vigilance/Vigilant", "oneconfig$file", Type.getDescriptor(File.class)));
                     list.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "cc/polyfrost/oneconfig/internal/plugin/hooks/VigilantHook", "returnNewConfig", "(Lgg/essential/vigilance/Vigilant;Ljava/io/File;)Lcc/polyfrost/oneconfig/internal/config/compatibility/vigilance/VigilanceConfig;", false));
                     list.add(new FieldInsnNode(Opcodes.PUTFIELD, "gg/essential/vigilance/Vigilant", "oneconfig$config", "Lcc/polyfrost/oneconfig/internal/config/compatibility/vigilance/VigilanceConfig;"));
-                    method.instructions.insertBefore(method.instructions.getLast().getPrevious(), list);
                 } else if (method.name.equals("addDependency") && method.desc.equals("(Lgg/essential/vigilance/data/PropertyData;Lgg/essential/vigilance/data/PropertyData;)V")) {
-                    InsnList list = new InsnList();
-
                     list.add(new VarInsnNode(Opcodes.ALOAD, 0));
                     list.add(new VarInsnNode(Opcodes.ALOAD, 1));
                     list.add(new VarInsnNode(Opcodes.ALOAD, 2));
                     list.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "gg/essential/vigilance/Vigilant", "handleOneConfigDependency", "(Lgg/essential/vigilance/data/PropertyData;Lgg/essential/vigilance/data/PropertyData;)V", false));
-
-                    method.instructions.insertBefore(method.instructions.getLast().getPrevious(), list);
                 } else if (method.name.equals("<init>") && method.desc.equals("(Ljava/io/File;Ljava/lang/String;Lgg/essential/vigilance/data/PropertyCollector;Lgg/essential/vigilance/data/SortingBehavior;)V")) {
-                    InsnList list = new InsnList();
                     list.add(new VarInsnNode(Opcodes.ALOAD, 0));
                     list.add(new VarInsnNode(Opcodes.ALOAD, 1));
                     list.add(new FieldInsnNode(Opcodes.PUTFIELD, "gg/essential/vigilance/Vigilant", "oneconfig$file", Type.getDescriptor(File.class)));
+                }
+                if (list.size() != 0) {
                     method.instructions.insertBefore(method.instructions.getLast().getPrevious(), list);
                 }
             }

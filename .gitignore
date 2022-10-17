@@ -13,6 +13,9 @@ out
 *.iml
 .idea
 
+# fleet
+.fleet
+
 # gradle
 build
 .gradle

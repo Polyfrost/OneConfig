@@ -35,11 +35,14 @@ import java.util.Optional;
 public class OptifineConfigHook {
 
     public static boolean shouldNotApplyFastRender() {
-        if (Platform.getGuiPlatform().getCurrentScreen() instanceof OneUIScreen && ((OneUIScreen) Platform.getGuiPlatform().getCurrentScreen()).hasBackgroundBlur()) {
+        Object currentScreen = Platform.getGuiPlatform().getCurrentScreen();
+        if (currentScreen instanceof OneUIScreen && ((OneUIScreen) currentScreen).hasBackgroundBlur()) {
             return true;
         }
-        for (Optional screen : GuiUtils.getScreenQueue()) {
-            if (screen.isPresent() && screen.get() instanceof OneUIScreen && ((OneUIScreen) screen.get()).hasBackgroundBlur()) {
+        for (Optional<?> screen : GuiUtils.getScreenQueue()) {
+            if (!screen.isPresent()) continue;
+            currentScreen = screen.get();
+            if (currentScreen instanceof OneUIScreen && ((OneUIScreen) currentScreen).hasBackgroundBlur()) {
                 return true;
             }
         }

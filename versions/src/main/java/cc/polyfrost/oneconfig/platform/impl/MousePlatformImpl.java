@@ -37,7 +37,7 @@ import org.lwjgl.input.Mouse;
 
 public class MousePlatformImpl implements MousePlatform {
 
-    //#if MC>11600
+    //#if MC>=11600
     //$$ private double prevScroll = 0;
     //#endif
 
