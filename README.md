@@ -11,7 +11,9 @@ For a guide of how to use OneConfig please see our wiki at https://docs.polyfros
 ## Screenshots
 <details>
   <summary>Click to view screenshots</summary>
-  <img src="https://user-images.githubusercontent.com/67508414/172061081-7a32a139-d5c6-4f5a-907a-5af66deb799f.png">
+  <img src="https://user-images.githubusercontent.com/62163840/196335017-0ef66813-1500-4279-a6b1-565ec0741816.png">
+  <img src="https://user-images.githubusercontent.com/62163840/196335021-2df9bf19-d8d8-4872-ac57-1f6a53769cdd.png">
+  <img src="https://user-images.githubusercontent.com/62163840/196335012-9c0f098e-4214-42cf-a83a-9bcbe65a240b.png">
 </details>
 
 # How do I get it?
