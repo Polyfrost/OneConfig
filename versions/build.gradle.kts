@@ -28,26 +28,28 @@ java {
     withJavadocJar()
 }
 
-val mod_name: String by project
-val mod_major_version: String by project
-val mod_minor_version: String by project
-val mod_id: String by project
+val modName = project.properties["mod_name"]
+val modMajor = project.properties["mod_major_version"]
+val modMinor = project.properties["mod_minor_version"]
+val modId = project.properties["mod_id"] as String
 
 preprocess {
     vars.put("MODERN", if (project.platform.mcMinor >= 16) 1 else 0)
 }
 
+version = "$modMajor$modMinor"
+group = "cc.polyfrost"
+
 blossom {
-    replaceToken("@VER@", mod_major_version + mod_minor_version)
-    replaceToken("@NAME@", mod_name)
-    replaceToken("@ID@", mod_id)
+    replaceToken("@VER@", version)
+    replaceToken("@NAME@", modName)
+    replaceToken("@ID@", modId)
 }
 
-version = mod_major_version + mod_minor_version
-group = "cc.polyfrost"
 base {
-    archivesName.set("$mod_id-$platform")
+    archivesName.set("$modId-$platform")
 }
+
 loom {
     noServerRunConfigs()
     runConfigs.named("client") {
@@ -68,11 +70,11 @@ loom {
     }
     if (project.platform.isForge) {
         forge {
-            mixinConfig("mixins.${mod_id}.json")
+            mixinConfig("mixins.${modId}.json")
         }
     }
     @Suppress("UnstableApiUsage")
-    mixin.defaultRefmapName.set("mixins.${mod_id}.refmap.json")
+    mixin.defaultRefmapName.set("mixins.${modId}.refmap.json")
 }
 
 repositories {
@@ -200,8 +202,8 @@ dependencies {
 
 tasks {
     processResources {
-        inputs.property("id", mod_id)
-        inputs.property("name", mod_name)
+        inputs.property("id", modId)
+        inputs.property("name", modName)
         val java = if (project.platform.mcMinor >= 18) {
             17
         } else {
@@ -210,16 +212,17 @@ tasks {
         val compatLevel = "JAVA_${java}"
         inputs.property("java", java)
         inputs.property("java_level", compatLevel)
-        inputs.property("version", mod_major_version + mod_minor_version)
+        inputs.property("version", project.version)
         inputs.property("mcVersionStr", project.platform.mcVersionStr)
-        filesMatching(listOf("mcmod.info", "mixins.${mod_id}.json", "**/mods.toml")) {
+
+        filesMatching(listOf("mcmod.info", "mixins.${modId}.json", "**/mods.toml")) {
             expand(
                 mapOf(
-                    "id" to mod_id,
-                    "name" to mod_name,
+                    "id" to modId,
+                    "name" to modName,
                     "java" to java,
                     "java_level" to compatLevel,
-                    "version" to mod_major_version + mod_minor_version,
+                    "version" to project.version,
                     "mcVersionStr" to project.platform.mcVersionStr
                 )
             )
@@ -227,11 +230,11 @@ tasks {
         filesMatching("fabric.mod.json") {
             expand(
                 mapOf(
-                    "id" to mod_id,
-                    "name" to mod_name,
+                    "id" to modId,
+                    "name" to modName,
                     "java" to java,
                     "java_level" to compatLevel,
-                    "version" to mod_major_version + mod_minor_version,
+                    "version" to project.version,
                     "mcVersionStr" to project.platform.mcVersionStr.substringBeforeLast(".") + ".x"
                 )
             )
@@ -293,12 +296,12 @@ tasks {
                     } else {
                         mapOf(
                             "MixinConfigs" to "mixins.oneconfig.json",
-                            "Specification-Title" to mod_id,
-                            "Specification-Vendor" to mod_id,
+                            "Specification-Title" to modId,
+                            "Specification-Vendor" to modId,
                             "Specification-Version" to "1", // We are version 1 of ourselves, whatever the hell that means
-                            "Implementation-Title" to mod_name,
-                            "Implementation-Version" to mod_major_version + mod_minor_version,
-                            "Implementation-Vendor" to mod_id,
+                            "Implementation-Title" to modName,
+                            "Implementation-Version" to project.version,
+                            "Implementation-Vendor" to modId,
                             "Implementation-Timestamp" to SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").format(`java.util`.Date())
                         )
                     }
