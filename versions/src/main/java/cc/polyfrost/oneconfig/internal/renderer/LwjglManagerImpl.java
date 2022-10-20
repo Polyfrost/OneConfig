@@ -44,6 +44,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
+@SuppressWarnings("deprecation")
 public class LwjglManagerImpl
         //#if MC<=11202
         extends URLClassLoader
