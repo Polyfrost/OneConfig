@@ -31,8 +31,9 @@ import cc.polyfrost.oneconfig.gui.animations.ColorAnimation;
 import cc.polyfrost.oneconfig.gui.animations.EaseOutQuad;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.platform.Platform;
-import cc.polyfrost.oneconfig.renderer.LwjglManager;
+import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
 import cc.polyfrost.oneconfig.renderer.scissor.Scissor;
+import cc.polyfrost.oneconfig.renderer.scissor.ScissorHelper;
 import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 
@@ -71,11 +72,12 @@ public abstract class Page {
     }
 
     public void scrollWithDraw(long vg, int x, int y, InputHandler inputHandler) {
+        ScissorHelper scissorHelper = ScissorHelper.INSTANCE;
         int maxScroll = getMaxScrollHeight();
         int scissorOffset = drawStatic(vg, x, y, inputHandler);
         scroll = scrollAnimation == null ? scrollTarget : scrollAnimation.get();
         final float scrollBarLength = (728f / maxScroll) * 728f;
-        Scissor scissor = LwjglManager.INSTANCE.getScissorHelper().scissor(vg, x, y + scissorOffset, x + 1056, y + 728 - scissorOffset);
+        Scissor scissor = scissorHelper.scissor(vg, x, y + scissorOffset, x + 1056, y + 728 - scissorOffset);
         Scissor inputScissor = inputHandler.blockInputArea(x, y,1056, scissorOffset);
         float dWheel = (float) Platform.getMousePlatform().getDWheel();
         if (dWheel != 0) {
@@ -89,7 +91,7 @@ public abstract class Page {
         } else if (scrollAnimation != null && scrollAnimation.isFinished()) scrollAnimation = null;
         if (maxScroll <= 728) {
             draw(vg, x, y, inputHandler);
-            LwjglManager.INSTANCE.getScissorHelper().resetScissor(vg, scissor);
+            scissorHelper.resetScissor(vg, scissor);
             inputHandler.stopBlock(inputScissor);
             return;
         }
@@ -98,7 +100,7 @@ public abstract class Page {
             dragging = false;
         }
 
-        LwjglManager.INSTANCE.getScissorHelper().resetScissor(vg, scissor);
+        scissorHelper.resetScissor(vg, scissor);
         inputHandler.stopBlock(inputScissor);
         if (!(scrollBarLength > 727f)) {
             final float scrollBarY = (scroll / maxScroll) * 720f;
@@ -117,7 +119,7 @@ public abstract class Page {
                 else if (scrollTarget < -maxScroll + 728) scrollTarget = -maxScroll + 728;
                 scrollAnimation = new EaseOutQuad(150, scroll, scrollTarget, false);
             }
-            LwjglManager.INSTANCE.getNanoVGHelper().drawRoundedRect(vg, x + 1044, y - scrollBarY, 8, scrollBarLength, colorAnimation.getColor(scrollHover || scrollTimePeriod, dragging), 4f);
+            NanoVGHelper.INSTANCE.drawRoundedRect(vg, x + 1044, y - scrollBarY, 8, scrollBarLength, colorAnimation.getColor(scrollHover || scrollTimePeriod, dragging), 4f);
         }
     }
 

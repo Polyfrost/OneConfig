@@ -27,20 +27,19 @@
 package cc.polyfrost.oneconfig.utils.dsl
 
 import cc.polyfrost.oneconfig.config.data.InfoType
-import cc.polyfrost.oneconfig.renderer.asset.Image
-import cc.polyfrost.oneconfig.renderer.LwjglManager
 import cc.polyfrost.oneconfig.renderer.NanoVGHelper
+import cc.polyfrost.oneconfig.renderer.asset.Image
 import cc.polyfrost.oneconfig.renderer.asset.SVG
 import cc.polyfrost.oneconfig.renderer.font.Font
 import cc.polyfrost.oneconfig.utils.InputHandler
 
 val nanoVGHelper: NanoVGHelper
-    get() = LwjglManager.INSTANCE.nanoVGHelper
+    get() = NanoVGHelper.INSTANCE
 
 /**
  * Wrapper for a NanoVG instance.
  * @see nanoVG
- * @see LwjglManager.getNanoVGHelper
+ * @see NanoVGHelper.INSTANCE
  */
 @JvmInline
 value class VG(val instance: Long)

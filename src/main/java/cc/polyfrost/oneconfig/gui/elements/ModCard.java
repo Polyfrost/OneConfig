@@ -38,10 +38,10 @@ import cc.polyfrost.oneconfig.internal.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.internal.config.compatibility.forge.ForgeCompat;
 import cc.polyfrost.oneconfig.internal.config.core.ConfigCore;
 import cc.polyfrost.oneconfig.platform.Platform;
-import cc.polyfrost.oneconfig.renderer.LwjglManager;
-
+import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.renderer.scissor.Scissor;
+import cc.polyfrost.oneconfig.renderer.scissor.ScissorHelper;
 import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 import cc.polyfrost.oneconfig.utils.color.ColorUtils;
@@ -72,21 +72,24 @@ public class ModCard extends BasicElement {
     @Override
     public void draw(long vg, float x, float y, InputHandler inputHandler) {
         super.update(x, y, inputHandler);
+        ScissorHelper scissorHelper = ScissorHelper.INSTANCE;
+        NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
+
         String cleanName = modData.name.replaceAll("§.", "");
-        Scissor scissor = LwjglManager.INSTANCE.getScissorHelper().scissor(vg, x, y, width, height);
+        Scissor scissor = scissorHelper.scissor(vg, x, y, width, height);
 
         isHoveredMain = inputHandler.isAreaHovered(x, y, width, 87);
         boolean isHoveredSecondary = inputHandler.isAreaHovered(x, y + 87, width - 32, 32) && !disabled;
-        if (disabled) LwjglManager.INSTANCE.getNanoVGHelper().setAlpha(vg, 0.5f);
-        LwjglManager.INSTANCE.getNanoVGHelper().drawRoundedRectVaried(vg, x, y, width, 87, colorFrame.getColor(isHoveredMain, isHoveredMain && Platform.getMousePlatform().isButtonDown(0)), 12f, 12f, 0f, 0f);
-        LwjglManager.INSTANCE.getNanoVGHelper().drawRoundedRectVaried(vg, x, y + 87, width, 32, colorToggle.getColor(isHoveredSecondary, isHoveredSecondary && Platform.getMousePlatform().isButtonDown(0)), 0f, 0f, 12f, 12f);
-        LwjglManager.INSTANCE.getNanoVGHelper().drawLine(vg, x, y + 86, x + width, y + 86, 2, Colors.GRAY_300);
+        if (disabled) nanoVGHelper.setAlpha(vg, 0.5f);
+        nanoVGHelper.drawRoundedRectVaried(vg, x, y, width, 87, colorFrame.getColor(isHoveredMain, isHoveredMain && Platform.getMousePlatform().isButtonDown(0)), 12f, 12f, 0f, 0f);
+        nanoVGHelper.drawRoundedRectVaried(vg, x, y + 87, width, 32, colorToggle.getColor(isHoveredSecondary, isHoveredSecondary && Platform.getMousePlatform().isButtonDown(0)), 0f, 0f, 12f, 12f);
+        nanoVGHelper.drawLine(vg, x, y + 86, x + width, y + 86, 2, Colors.GRAY_300);
         if (modData.modIcon != null) {
             if (modData.modIcon.toLowerCase().endsWith(".svg"))
-                LwjglManager.INSTANCE.getNanoVGHelper().drawSvg(vg, modData.modIcon, x + 98, y + 19, 48, 48);
-            else LwjglManager.INSTANCE.getNanoVGHelper().drawImage(vg, modData.modIcon, x + 98, y + 19, 48, 48);
+                nanoVGHelper.drawSvg(vg, modData.modIcon, x + 98, y + 19, 48, 48);
+            else nanoVGHelper.drawImage(vg, modData.modIcon, x + 98, y + 19, 48, 48);
         } else {
-            LwjglManager.INSTANCE.getNanoVGHelper().drawText(vg, cleanName, x + Math.max(0, (244 - LwjglManager.INSTANCE.getNanoVGHelper().getTextWidth(vg, cleanName, 16, Fonts.MINECRAFT_BOLD))) / 2f, y + 44, ColorUtils.setAlpha(Colors.WHITE, (int) (colorFrame.getAlpha() * 255)), 16, Fonts.MINECRAFT_BOLD);
+            nanoVGHelper.drawText(vg, cleanName, x + Math.max(0, (244 - nanoVGHelper.getTextWidth(vg, cleanName, 16, Fonts.MINECRAFT_BOLD))) / 2f, y + 44, ColorUtils.setAlpha(Colors.WHITE, (int) (colorFrame.getAlpha() * 255)), 16, Fonts.MINECRAFT_BOLD);
         }
         favoriteButton.draw(vg, x + 212, y + 87, inputHandler);
         favorite = favoriteButton.isToggled();
@@ -96,9 +99,9 @@ public class ModCard extends BasicElement {
             ConfigCore.sortMods();
             page.reloadMods();
         }
-        Scissor scissor2 = LwjglManager.INSTANCE.getScissorHelper().scissor(vg, x, y + 87, width - 32, 32);
-        LwjglManager.INSTANCE.getNanoVGHelper().drawText(vg, cleanName, x + 12, y + 103, ColorUtils.setAlpha(Colors.WHITE, (int) (colorToggle.getAlpha() * 255)), 14f, Fonts.MEDIUM);
-        LwjglManager.INSTANCE.getScissorHelper().resetScissor(vg, scissor2);
+        Scissor scissor2 = scissorHelper.scissor(vg, x, y + 87, width - 32, 32);
+        nanoVGHelper.drawText(vg, cleanName, x + 12, y + 103, ColorUtils.setAlpha(Colors.WHITE, (int) (colorToggle.getAlpha() * 255)), 14f, Fonts.MEDIUM);
+        scissorHelper.resetScissor(vg, scissor2);
         if (favorite) favoriteButton.setLeftIcon(SVGs.HEART_FILL);
         else favoriteButton.setLeftIcon(SVGs.HEART_OUTLINE);
 
@@ -115,8 +118,8 @@ public class ModCard extends BasicElement {
             modData.config.enabled = active;
             modData.config.save();
         }
-        LwjglManager.INSTANCE.getNanoVGHelper().setAlpha(vg, 1f);
-        LwjglManager.INSTANCE.getScissorHelper().resetScissor(vg, scissor);
+        nanoVGHelper.setAlpha(vg, 1f);
+        scissorHelper.resetScissor(vg, scissor);
     }
 
     public void onClick() {

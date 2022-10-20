@@ -39,6 +39,7 @@ import java.util.function.LongConsumer;
  * Handles NanoVG rendering and wraps it in a more convenient interface.
  */
 public interface NanoVGHelper {
+    @SuppressWarnings("deprecation")
     NanoVGHelper INSTANCE = LwjglManager.INSTANCE.getNanoVGHelper();
 
     /**

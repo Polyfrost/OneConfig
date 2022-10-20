@@ -28,8 +28,7 @@ package cc.polyfrost.oneconfig.gui.elements;
 
 import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.platform.Platform;
-import cc.polyfrost.oneconfig.renderer.LwjglManager;
-
+import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
 import cc.polyfrost.oneconfig.utils.InputHandler;
 
 public class Slider extends BasicElement {
@@ -49,14 +48,15 @@ public class Slider extends BasicElement {
 
     @Override
     public void draw(long vg, float x, float y, InputHandler inputHandler) {
+        NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
+
         if(!disabled) update(x, y, inputHandler);
-        else LwjglManager.INSTANCE.getNanoVGHelper().setAlpha(vg, 0.5f);
-        LwjglManager.INSTANCE.getNanoVGHelper().drawRoundedRect(vg, x, y + 2, width, height - 4, Colors.GRAY_300, 3f);
-        LwjglManager.INSTANCE.getNanoVGHelper().drawRoundedRect(vg, x, y + 2, width * value, height - 4, Colors.PRIMARY_500, 3f);
-        LwjglManager.INSTANCE.getNanoVGHelper().drawRoundedRect(vg, currentDragPoint - dragPointerSize / 2, y - 8, 24, 24, Colors.WHITE, 12f);
-        LwjglManager.INSTANCE.getNanoVGHelper().setAlpha(vg, 1f);
+        else nanoVGHelper.setAlpha(vg, 0.5f);
 
-
+        nanoVGHelper.drawRoundedRect(vg, x, y + 2, width, height - 4, Colors.GRAY_300, 3f);
+        nanoVGHelper.drawRoundedRect(vg, x, y + 2, width * value, height - 4, Colors.PRIMARY_500, 3f);
+        nanoVGHelper.drawRoundedRect(vg, currentDragPoint - dragPointerSize / 2, y - 8, 24, 24, Colors.WHITE, 12f);
+        nanoVGHelper.setAlpha(vg, 1f);
     }
 
     public void update(float x, float y, InputHandler inputHandler) {

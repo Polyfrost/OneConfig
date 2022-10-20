@@ -27,7 +27,7 @@
 package cc.polyfrost.oneconfig.utils;
 
 import cc.polyfrost.oneconfig.internal.utils.Deprecator;
-import cc.polyfrost.oneconfig.renderer.LwjglManager;
+import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
 import cc.polyfrost.oneconfig.renderer.font.Font;
 
 import java.util.ArrayList;
@@ -56,7 +56,7 @@ public final class TextUtils {
         int prevIndex = 0;
         for (int i = text.indexOf(" "); i >= 0; i = text.indexOf(" ", i + 1)) {
             String textPart = text.substring(0, i);
-            float textWidth = LwjglManager.INSTANCE.getNanoVGHelper().getTextWidth(vg, textPart, fontSize, font);
+            float textWidth = NanoVGHelper.INSTANCE.getTextWidth(vg, textPart, fontSize, font);
             if (textWidth < maxWidth) {
                 prevIndex = i;
                 continue;

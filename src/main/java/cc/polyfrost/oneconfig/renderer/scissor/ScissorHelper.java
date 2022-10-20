@@ -6,6 +6,7 @@ import cc.polyfrost.oneconfig.renderer.LwjglManager;
  * Provides an easy way to manage and group scissor rectangles.
  */
 public interface ScissorHelper {
+    @SuppressWarnings("deprecation")
     ScissorHelper INSTANCE = LwjglManager.INSTANCE.getScissorHelper();
 
     /**

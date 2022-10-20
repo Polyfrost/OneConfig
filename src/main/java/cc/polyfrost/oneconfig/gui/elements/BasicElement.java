@@ -28,8 +28,6 @@ package cc.polyfrost.oneconfig.gui.elements;
 
 import cc.polyfrost.oneconfig.gui.animations.ColorAnimation;
 import cc.polyfrost.oneconfig.platform.Platform;
-import cc.polyfrost.oneconfig.renderer.LwjglManager;
-
 import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
 import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
@@ -108,7 +106,7 @@ public class BasicElement {
      */
     public void draw(long vg, float x, float y, InputHandler inputHandler) {
         this.update(x, y, inputHandler);
-        LwjglManager.INSTANCE.getNanoVGHelper().drawRoundedRect(vg, x, y, width, height, currentColor, radius);
+        NanoVGHelper.INSTANCE.drawRoundedRect(vg, x, y, width, height, currentColor, radius);
     }
 
     /**

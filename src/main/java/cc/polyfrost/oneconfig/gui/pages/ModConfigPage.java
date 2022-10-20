@@ -30,7 +30,7 @@ import cc.polyfrost.oneconfig.config.elements.BasicOption;
 import cc.polyfrost.oneconfig.config.elements.OptionPage;
 import cc.polyfrost.oneconfig.config.elements.OptionSubcategory;
 import cc.polyfrost.oneconfig.gui.elements.BasicButton;
-import cc.polyfrost.oneconfig.renderer.LwjglManager;
+import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.renderer.scissor.ScissorHelper;
 import cc.polyfrost.oneconfig.utils.InputHandler;
@@ -93,7 +93,7 @@ public class ModConfigPage extends Page {
         int buttonX = x + 16;
         for (BasicButton button : categories) {
             if (button.getWidth() == 0)
-                button.setWidth((int) (Math.ceil(LwjglManager.INSTANCE.getNanoVGHelper().getTextWidth(vg, button.getText(), 12f, Fonts.MEDIUM) / 8f) * 8 + 16));
+                button.setWidth((int) (Math.ceil(NanoVGHelper.INSTANCE.getTextWidth(vg, button.getText(), 12f, Fonts.MEDIUM) / 8f) * 8 + 16));
             button.draw(vg, buttonX, y + 16, inputHandler);
             buttonX += button.getWidth() + 16;
         }

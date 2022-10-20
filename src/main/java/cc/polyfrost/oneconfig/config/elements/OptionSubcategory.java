@@ -26,12 +26,10 @@
 
 package cc.polyfrost.oneconfig.config.elements;
 
-import cc.polyfrost.oneconfig.config.Config;
-import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.elements.config.ConfigPageButton;
-import cc.polyfrost.oneconfig.renderer.LwjglManager;
-
+import cc.polyfrost.oneconfig.internal.assets.Colors;
+import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.utils.InputHandler;
 
@@ -52,6 +50,7 @@ public class OptionSubcategory {
     }
 
     public int draw(long vg, int x, int y, InputHandler inputHandler) {
+        NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
         String filter = OneConfigGui.INSTANCE == null ? "" : OneConfigGui.INSTANCE.getSearchValue().toLowerCase().trim();
         filteredOptions = options.stream().filter(option -> !option.isHidden() && (filter.equals("") || name.toLowerCase().contains(filter) || option.name.toLowerCase().contains(filter))).collect(Collectors.toList());
         List<ConfigPageButton> filteredTop = topButtons.stream().filter(page -> !page.isHidden() && (filter.equals("") || name.toLowerCase().contains(filter) || page.name.toLowerCase().contains(filter) || page.description.toLowerCase().contains(filter))).collect(Collectors.toList());
@@ -59,7 +58,7 @@ public class OptionSubcategory {
         if (filteredOptions.size() == 0 && filteredTop.size() == 0 && filteredBottom.size() == 0) return 0;
         int optionY = y;
         if (!name.equals("")) {
-            LwjglManager.INSTANCE.getNanoVGHelper().drawText(vg, name, x, y + 12, Colors.WHITE_90, 24, Fonts.MEDIUM);
+            nanoVGHelper.drawText(vg, name, x, y + 12, Colors.WHITE_90, 24, Fonts.MEDIUM);
             optionY += 36;
         }
 
@@ -82,7 +81,7 @@ public class OptionSubcategory {
                 }
                 backgroundSize += option.getHeight() + 16;
             }
-            LwjglManager.INSTANCE.getNanoVGHelper().drawRoundedRect(vg, x - 16, optionY, 1024, backgroundSize, Colors.GRAY_900, 20);
+            nanoVGHelper.drawRoundedRect(vg, x - 16, optionY, 1024, backgroundSize, Colors.GRAY_900, 20);
             optionY += 16;
         }
 

@@ -1,6 +1,10 @@
 package cc.polyfrost.oneconfig.renderer.font;
 
+import cc.polyfrost.oneconfig.renderer.LwjglManager;
+
 public interface FontHelper {
+    FontHelper INSTANCE = LwjglManager.INSTANCE.getFontHelper();
+
     /**
      * Load all fonts in the Fonts class
      *

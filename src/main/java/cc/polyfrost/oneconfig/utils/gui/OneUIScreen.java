@@ -30,7 +30,6 @@ import cc.polyfrost.oneconfig.gui.GuiPause;
 import cc.polyfrost.oneconfig.libs.universal.UMatrixStack;
 import cc.polyfrost.oneconfig.libs.universal.UResolution;
 import cc.polyfrost.oneconfig.libs.universal.UScreen;
-import cc.polyfrost.oneconfig.renderer.LwjglManager;
 import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
 import cc.polyfrost.oneconfig.utils.InputHandler;
 import org.jetbrains.annotations.NotNull;
@@ -78,7 +77,7 @@ public abstract class OneUIScreen extends UScreen implements GuiPause {
     public final void onDrawScreen(@NotNull UMatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
         super.onDrawScreen(matrixStack, mouseX, mouseY, partialTicks);
         if (useMinecraftScale) inputHandler.scale(UResolution.getScaleFactor(), UResolution.getScaleFactor());
-        LwjglManager.INSTANCE.getNanoVGHelper().setupAndDraw(useMinecraftScale, vg -> draw(vg, partialTicks, inputHandler));
+        NanoVGHelper.INSTANCE.setupAndDraw(useMinecraftScale, vg -> draw(vg, partialTicks, inputHandler));
     }
 
     /**
