@@ -27,9 +27,9 @@
 package cc.polyfrost.oneconfig.gui.elements.config;
 
 import cc.polyfrost.oneconfig.config.annotations.Slider;
-import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
 import cc.polyfrost.oneconfig.gui.elements.text.NumberInputField;
+import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
@@ -37,26 +37,33 @@ import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.MathUtils;
 
 import java.lang.reflect.Field;
+import java.util.Locale;
 
 public class ConfigSlider extends BasicOption {
     private final NumberInputField inputField;
     private final float min, max;
     private final int step;
+    private final int decimalPlaces;
     private boolean isFloat = true;
     private boolean dragging = false;
     private boolean mouseWasDown = false;
 
     public ConfigSlider(Field field, Object parent, String name, String description, String category, String subcategory, float min, float max, int step) {
+        this(field, parent, name, description, category, subcategory, min, max, step, 1);
+    }
+
+    public ConfigSlider(Field field, Object parent, String name, String description, String category, String subcategory, float min, float max, int step, int decimalPlaces) {
         super(field, parent, name, description, category, subcategory, 2);
         this.min = min;
         this.max = max;
         this.step = step;
+        this.decimalPlaces = decimalPlaces;
         inputField = new NumberInputField(84, 32, 0, min, max, step == 0 ? 1 : step);
     }
 
     public static ConfigSlider create(Field field, Object parent) {
         Slider slider = field.getAnnotation(Slider.class);
-        return new ConfigSlider(field, parent, slider.name(), slider.description(), slider.category(), slider.subcategory(), slider.min(), slider.max(), slider.step());
+        return new ConfigSlider(field, parent, slider.name(), slider.description(), slider.category(), slider.subcategory(), slider.min(), slider.max(), slider.step(), slider.decimalPlaces());
     }
 
     @Override
@@ -72,7 +79,7 @@ public class ConfigSlider extends BasicOption {
         if (dragging) {
             xCoordinate = (int) MathUtils.clamp(inputHandler.mouseX(), x + 352, x + 864);
             if (step > 0) xCoordinate = getStepCoordinate(xCoordinate, x);
-            value = MathUtils.map(xCoordinate, x + 352, x + 864, min, max);
+            value = Float.parseFloat(String.format(Locale.US, "%." + decimalPlaces + "f", MathUtils.map(xCoordinate, x + 352, x + 864, min, max)));
         } else if (inputField.isToggled() || inputField.arrowsClicked()) {
             value = inputField.getCurrentValue();
             xCoordinate = (int) MathUtils.clamp(MathUtils.map(value, min, max, x + 352, x + 864), x + 352, x + 864);
@@ -91,7 +98,7 @@ public class ConfigSlider extends BasicOption {
                 Object object = get();
                 if (object instanceof Integer)
                     isFloat = false;
-                if (isFloat) value = (float) object;
+                if (isFloat) value = Float.parseFloat(String.format(Locale.US, "%." + decimalPlaces + "f", object));
                 else value = (int) object;
                 xCoordinate = (int) MathUtils.clamp(MathUtils.map(value, min, max, x + 352, x + 864), x + 352, x + 864);
             } catch (IllegalAccessException ignored) {
@@ -124,7 +131,7 @@ public class ConfigSlider extends BasicOption {
 
     private void setValue(float value) {
         try {
-            if (isFloat) set(value);
+            if (isFloat) set(Float.parseFloat(String.format(Locale.US, "%." + decimalPlaces + "f", value)));
             else set(Math.round(value));
         } catch (IllegalAccessException ignored) {
         }
