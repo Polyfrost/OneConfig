@@ -29,7 +29,7 @@ package cc.polyfrost.oneconfig.platform;
 import cc.polyfrost.oneconfig.libs.checker.nullness.qual.Nullable;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 
 public interface LoaderPlatform {
@@ -51,9 +51,9 @@ public interface LoaderPlatform {
         public final String name;
         public final String id;
         public final String version;
-        public final File source;
+        public final Path source;
 
-        public ActiveMod(String name, String id, String version, File source) {
+        public ActiveMod(String name, String id, String version, Path source) {
             this.name = name;
             this.id = id;
             this.version = version;

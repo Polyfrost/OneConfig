@@ -105,12 +105,12 @@ public class LoaderPlatformImpl implements LoaderPlatform {
             if (container == null) return null;
             //#if FORGE==1
             //#if MC==11202
-            return new ActiveMod(container.getName(), container.getModId(), container.getVersion(), container.getSource());
+            return new ActiveMod(container.getName(), container.getModId(), container.getVersion(), container.getSource().toPath());
             //#else
-            //$$ return new ActiveMod(container.getModInfo().getDisplayName(), container.getModId(), container.getModInfo().getVersion().getQualifier(), ModList.get().getModFileById(container.getModId()).getFile().getFilePath().toFile());
+            //$$ return new ActiveMod(container.getModInfo().getDisplayName(), container.getModId(), container.getModInfo().getVersion().getQualifier(), ModList.get().getModFileById(container.getModId()).getFile().getFilePath());
             //#endif
             //#else
-            //$$ return new ActiveMod(container.getMetadata().getName(), container.getMetadata().getId(), container.getMetadata().getVersion().getFriendlyString(), container.getRootPaths().get(0).toFile());
+            //$$ return new ActiveMod(container.getMetadata().getName(), container.getMetadata().getId(), container.getMetadata().getVersion().getFriendlyString(), container.getRootPaths().get(0));
             //#endif
         } catch (Exception e) {
         //#endif
