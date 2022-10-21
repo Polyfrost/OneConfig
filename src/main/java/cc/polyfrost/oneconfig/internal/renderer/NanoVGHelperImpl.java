@@ -55,7 +55,6 @@ import static org.lwjgl.nanovg.NanoVG.*;
  * Handles NanoVG rendering and wraps it in a more convenient interface.
  */
 public final class NanoVGHelperImpl implements NanoVGHelper {
-    private static final AssetHelper assetHelper = AssetHelper.INSTANCE;
     private long vg = -1;
 
     //nanovg
@@ -396,6 +395,7 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
      */
     @Override
     public void drawImage(long vg, String filePath, float x, float y, float width, float height) {
+        AssetHelper assetHelper = AssetHelper.INSTANCE;
         if (assetHelper.loadImage(vg, filePath)) {
             NVGPaint imagePaint = NVGPaint.calloc();
             int image = assetHelper.getImage(filePath);
@@ -421,6 +421,7 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
      */
     @Override
     public void drawImage(long vg, String filePath, float x, float y, float width, float height, int color) {
+        AssetHelper assetHelper = AssetHelper.INSTANCE;
         if (assetHelper.loadImage(vg, filePath)) {
             try (NVGPaint imagePaint = NVGPaint.calloc()) {
                 int image = assetHelper.getImage(filePath);
@@ -447,6 +448,7 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
      * @see NanoVGHelperImpl#drawImage(long, String, float, float, float, float)
      */
     public void drawImage(long vg, Image image, float x, float y, float width, float height) {
+        AssetHelper assetHelper = AssetHelper.INSTANCE;
         if (assetHelper.loadImage(vg, image)) {
             drawImage(vg, image.filePath, x, y, width, height);
         }
@@ -459,6 +461,7 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
      */
     @Override
     public void drawImage(long vg, Image image, float x, float y, float width, float height, int color) {
+        AssetHelper assetHelper = AssetHelper.INSTANCE;
         if (assetHelper.loadImage(vg, image)) {
             drawImage(vg, image.filePath, x, y, width, height, color);
         }
@@ -477,6 +480,7 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
      */
     @Override
     public void drawRoundImage(long vg, String filePath, float x, float y, float width, float height, float radius) {
+        AssetHelper assetHelper = AssetHelper.INSTANCE;
         if (assetHelper.loadImage(vg, filePath)) {
             try (NVGPaint imagePaint = NVGPaint.calloc()) {
                 int image = assetHelper.getImage(filePath);
@@ -496,7 +500,7 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
      */
     @Override
     public void drawRoundImage(long vg, Image image, float x, float y, float width, float height, float radius) {
-        if (assetHelper.loadImage(vg, image)) {
+        if (AssetHelper.INSTANCE.loadImage(vg, image)) {
             drawRoundImage(vg, image.filePath, x, y, width, height, radius);
         }
     }
@@ -671,6 +675,7 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
     public void drawSvg(long vg, String filePath, float x, float y, float width, float height, float scale) {
         float w = width * scale;
         float h = height * scale;
+        AssetHelper assetHelper = AssetHelper.INSTANCE;
         if (assetHelper.loadSVG(vg, filePath, w, h)) {
             NVGPaint imagePaint = NVGPaint.calloc();
             int image = assetHelper.getSVG(filePath, w, h);
@@ -715,6 +720,7 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
     public void drawSvg(long vg, String filePath, float x, float y, float width, float height, int color, float scale) {
         float w = width * scale;
         float h = height * scale;
+        AssetHelper assetHelper = AssetHelper.INSTANCE;
         if (assetHelper.loadSVG(vg, filePath, w, h)) {
             try (NVGPaint imagePaint = NVGPaint.calloc()) {
                 int image = assetHelper.getSVG(filePath, w, h);

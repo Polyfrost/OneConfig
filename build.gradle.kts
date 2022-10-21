@@ -1,3 +1,7 @@
+// These inspections trigger because we're using the library versions that
+// are bundled with Minecraft, which are not the latest versions.
+@file:Suppress("GradlePackageUpdate", "VulnerableLibrariesLocal")
+
 import gg.essential.gradle.multiversion.StripReferencesTransform.Companion.registerStripReferencesAttribute
 import gg.essential.gradle.util.RelocationTransform.Companion.registerRelocationAttribute
 import gg.essential.gradle.util.prebundle
@@ -21,19 +25,19 @@ java {
     withSourcesJar()
 }
 
-val mod_name: String by project
-val mod_major_version: String by project
-val mod_minor_version: String by project
-val mod_id: String by project
+val modName = project.properties["mod_name"]
+val modMajor = project.properties["mod_major_version"]
+val modMinor = project.properties["mod_minor_version"]
+val modId = project.properties["mod_id"] as String
+
+version = "$modMajor$modMinor"
+group = "cc.polyfrost"
 
 blossom {
-    replaceToken("@VER@", mod_major_version + mod_minor_version)
-    replaceToken("@NAME@", mod_name)
-    replaceToken("@ID@", mod_id)
+    replaceToken("@VER@", project.version)
+    replaceToken("@NAME@", modName)
+    replaceToken("@ID@", modId)
 }
-
-version = mod_major_version + mod_minor_version
-group = "cc.polyfrost"
 
 repositories {
     mavenLocal()
