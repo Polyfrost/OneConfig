@@ -977,6 +977,7 @@ public abstract class cc/polyfrost/oneconfig/hud/Hud {
 }
 
 public class cc/polyfrost/oneconfig/hud/Position {
+	public field anchor Lcc/polyfrost/oneconfig/hud/Position$AnchorPosition;
 	public fun <init> (FFFF)V
 	public fun <init> (FFFFFF)V
 	public fun getBottomY ()F
