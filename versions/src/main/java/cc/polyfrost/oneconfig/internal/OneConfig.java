@@ -50,6 +50,7 @@ import cc.polyfrost.oneconfig.utils.hypixel.HypixelUtils;
 import cc.polyfrost.oneconfig.utils.Notifications;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
+import net.minecraftforge.fml.common.versioning.ArtifactVersion;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //#if FORGE==1
@@ -154,9 +155,19 @@ public class OneConfig {
             if (Objects.equals(configModName, mod.getName()) || Objects.equals(configModName, mod.getModId())) {
                 return;
             }
+            for (ArtifactVersion dependency : mod.getDependencies()) {
+                if (Objects.equals("oneconfig", dependency.getLabel())) {
+                    return;
+                }
+            }
         }
         for (net.minecraft.command.ICommand command :  net.minecraftforge.client.ClientCommandHandler.instance.getCommands().values()) {
             if (Objects.equals(command.getCommandName(), mod.getModId())) {
+                for (String alias : command.getCommandAliases()) {
+                    if (Objects.equals(alias, mod.getModId())) {
+                        return;
+                    }
+                }
                 ForgeCompat.compatMods.put(new ForgeCompat.ForgeCompatMod(mod.getName(), ModType.THIRD_PARTY), () -> new TickDelay(() -> {
                     UScreen.displayScreen(null);
                     try {
