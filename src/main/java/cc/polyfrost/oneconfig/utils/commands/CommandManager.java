@@ -219,9 +219,6 @@ public class CommandManager {
             if (!method.isAccessible()) method.setAccessible(true);
             if (!method.isAnnotationPresent(SubCommand.class)) {
                 if (method.isAnnotationPresent(Main.class)) {
-                    if (method.getParameterCount() != 0) {
-                        throw new IllegalArgumentException("Method " + method.getName() + " is annotated with @Main, and does not take 0 parameters");
-                    }
                     if (Arrays.equals(parentPaths, EMPTY_ARRAY)) {
                         mainMethod = new InternalCommand(parent, method, parentPaths);
                     }
