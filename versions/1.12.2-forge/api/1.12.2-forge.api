@@ -109,10 +109,15 @@ public final class cc/polyfrost/oneconfig/utils/KotlinLanguageAdapter : net/mine
 
 public class cc/polyfrost/oneconfig/utils/commands/PlatformCommandManagerImpl : cc/polyfrost/oneconfig/utils/commands/PlatformCommandManager {
 	public fun <init> ()V
-	public fun createCommand (Lcc/polyfrost/oneconfig/utils/commands/CommandManager$InternalCommand;Lcc/polyfrost/oneconfig/utils/commands/annotations/Command;)V
-	protected fun getParametersForInvoker (Lcc/polyfrost/oneconfig/utils/commands/CommandManager$InternalCommand$InternalCommandInvoker;I[Ljava/lang/String;)Ljava/util/List;
-	protected fun loopThroughCommands (Ljava/util/List;ILcc/polyfrost/oneconfig/utils/commands/CommandManager$InternalCommand;[Ljava/lang/String;)I
-	protected fun loopThroughCommandsTab (Ljava/util/Set;ILcc/polyfrost/oneconfig/utils/commands/CommandManager$InternalCommand;[Ljava/lang/String;)V
+	public fun createCommand (Lcc/polyfrost/oneconfig/utils/commands/CommandManager$OCCommand;)V
+}
+
+public class cc/polyfrost/oneconfig/utils/commands/arguements/PlayerArgumentParser : cc/polyfrost/oneconfig/utils/commands/arguments/ArgumentParser {
+	public fun <init> ()V
+	public fun complete (Ljava/lang/String;Ljava/lang/reflect/Parameter;)Ljava/util/List;
+	public static fun getMatchingPlayers (Ljava/lang/String;)Ljava/util/List;
+	public synthetic fun parse (Ljava/lang/String;)Ljava/lang/Object;
+	public fun parse (Ljava/lang/String;)Lnet/minecraft/entity/player/EntityPlayer;
 }
 
 public final class cc/polyfrost/oneconfig/utils/dsl/DSLsKt {

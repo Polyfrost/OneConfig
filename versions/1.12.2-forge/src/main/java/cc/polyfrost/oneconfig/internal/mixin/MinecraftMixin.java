@@ -103,12 +103,12 @@ public class MinecraftMixin {
         EventManager.INSTANCE.post(new TimerUpdateEvent(timer, true));
     }
 
-    @Inject(method = "runTickKeyboard", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/FMLCommonHandler;fireKeyInput()V", remap = false))
+    @Inject(method = "runTickKeyboard", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/FMLCommonHandler;fireKeyInput()V", remap = false), remap = true)
     private void onKeyEvent(CallbackInfo ci) {
         EventManager.INSTANCE.post(new KeyInputEvent());
     }
 
-    @Inject(method = "runTickMouse", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/FMLCommonHandler;fireMouseInput()V", remap = false))
+    @Inject(method = "runTickMouse", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/FMLCommonHandler;fireMouseInput()V", remap = false), remap = true)
     private void onMouseEvent(CallbackInfo ci) {
         EventManager.INSTANCE.post(new MouseInputEvent());
     }
