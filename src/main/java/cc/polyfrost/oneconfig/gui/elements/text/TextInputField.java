@@ -14,6 +14,9 @@ import cc.polyfrost.oneconfig.utils.InputUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.geom.Point2D;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class TextInputField extends BasicElement {
     public static final int DOWN_LINE = Integer.MIN_VALUE;
@@ -21,10 +24,6 @@ public class TextInputField extends BasicElement {
     public static final int MOVE_END = Integer.MAX_VALUE - 1;
     public static final int MOVE_START = Integer.MIN_VALUE + 1;
     private static final int LINE_HEIGHT = 20;
-    /**
-     * <a href="https://https://www.cl.cam.ac.uk/~mgk25/ucs/examples/UTF-8-test.txt">UTF-8 Stress Test</a> Character 2.3.1 (used because it's never going to be used in theory)
-     */
-    private static final char NEW_LINE = '\uD7FF';
     private final int maxWidth;
     private final int maxLines;
     protected final String defaultText;
@@ -37,7 +36,7 @@ public class TextInputField extends BasicElement {
     protected boolean shown;
     protected EaseInOutQuad animation;
     protected String input = "";
-    protected String renderCache;
+    protected final List<String> renderText = new ArrayList<>();
     protected Selection selection;
     protected int caretPos;
     protected int requestedLines = 1;
@@ -47,6 +46,7 @@ public class TextInputField extends BasicElement {
     private Point2D.Float textStart;
     private float x;
     private float y;
+    private boolean isDirty = false;
 
     public TextInputField(int width, int maxHeight, String defaultText, boolean password, boolean centered, SVG icon) {
         super(width, maxHeight, false);
@@ -153,8 +153,8 @@ public class TextInputField extends BasicElement {
             if (selection != null) {
                 final float from = selection.indexStart < endIndex && selection.indexStart >= startIndex ? getTextWidth(line.substring(0, selection.indexStart - startIndex)) : 0;
                 float to = selection.indexEnd < endIndex && selection.indexEnd >= startIndex ? getTextWidth(line.substring(0, selection.indexEnd - startIndex)) : getTextWidth(line);
-                if(selection.indexEnd < startIndex) to = 0;
-                if(from != 0 && to != 0) {
+                if (selection.indexEnd < startIndex) to = 0;
+                if (from != 0 && to != 0) {
                     RenderManager.drawRect(vg, textStart.x + from, textY - 10, to - from, LINE_HEIGHT, Colors.GRAY_300);
                 }
 
@@ -239,18 +239,19 @@ public class TextInputField extends BasicElement {
     // getting selected coords
     private int snapToChar(float mouseX, float mouseY) {
         // TODO fix on centered box
-        String[] lines = getRenderText();
+        mouseX += 1.0f;
+        List<String> lines = getRenderText();
         int lineIndex = getHoveredLineIndex(mouseY);
-        if (lineIndex >= lines.length) {
+        if (lineIndex >= lines.size()) {
             return input.length();
         } else if (lineIndex < 0) {
             return 0;
         }
         int index = 0;
         for (int i = 0; i < lineIndex; i++) {
-            index += lines[i].length();
+            index += lines.get(i).length();
         }
-        String text = lines[lineIndex];
+        String text = lines.get(lineIndex);
         if (mouseX < textStart.x) {
             return index;
         }
@@ -273,9 +274,6 @@ public class TextInputField extends BasicElement {
     }
 
     public void keyTyped(char c, int key) {
-        if (c == NEW_LINE) {
-            throw new IllegalArgumentException("funny one mate");
-        }
         if (key == UKeyboard.KEY_ESCAPE) {
             // TODO: fix this at a higher level
             this.toggled = false;
@@ -352,8 +350,7 @@ public class TextInputField extends BasicElement {
                     return;
                 }
                 if (key == UKeyboard.KEY_ENTER) {
-                    if (requestedLines == maxLines) return;
-                    addChars(caretPos, NEW_LINE);
+                    close();
                     return;
                 }
 
@@ -443,7 +440,7 @@ public class TextInputField extends BasicElement {
             selection = null;
         }
         if (movement == DOWN_LINE || movement == UP_LINE) {
-            final String[] lines = getRenderText();
+            final List<String> lines = getRenderText();
             int curr = 0;
             int i = 0;
             for (final String line : lines) {
@@ -454,25 +451,25 @@ public class TextInputField extends BasicElement {
                 i++;
             }
             if (i < 0) return;
-            final float currentWidth = getTextWidth(lines[i].substring(0, caretPos - curr));
+            final float currentWidth = getTextWidth(lines.get(i).substring(0, caretPos - curr));
             i = (movement == DOWN_LINE) ? i + 1 : i - 1;
             if (i < 0) {
                 moveCaret(-caretPos, select);
                 return;
             }
-            if (i >= lines.length) {
+            if (i >= lines.size()) {
                 moveCaret(input.length() - caretPos, select);
                 return;
             }
             final StringBuilder builder = new StringBuilder();
-            for (final char c : lines[i].toCharArray()) {
+            for (final char c : lines.get(i).toCharArray()) {
                 builder.append(c);
                 final float width = getTextWidth(builder.toString());
                 if (width > currentWidth) {
                     if (movement == UP_LINE) {
                         moveCaret(builder.length() - 1 - caretPos, select);
                     } else {
-                        moveCaret(lines[i - 1].length() - caretPos + builder.length(), select);
+                        moveCaret(lines.get(i - 1).length() - caretPos + builder.length(), select);
                     }
                     return;
                 }
@@ -517,71 +514,59 @@ public class TextInputField extends BasicElement {
     }
 
     // render text
-    public String[] getRenderText() {
-        return getUnformattedRenderText().split(String.valueOf(NEW_LINE));
+    public List<String> getRenderText() {
+        return isDirty ? rebuildRenderText() : renderText;
     }
 
-    public String getUnformattedRenderText() {
-        if (renderCache == null) {
-            if (maxLines == 1) {
-                renderCache = input;
-                if (!shown && password) {
-                    StringBuilder s1 = new StringBuilder();
-                    while (s1.length() < input.length()) {
-                        s1.append('*');
-                    }
-                    renderCache = s1.toString();
-                }
-                return renderCache;
+    public List<String> rebuildRenderText() {
+        renderText.clear();
+        final String src;
+        if (!shown && password) {
+            StringBuilder s1 = new StringBuilder();
+            while (s1.length() < input.length()) {
+                s1.append('*');
             }
-            final String[] words = input.split(" ");
-            final StringBuilder output = new StringBuilder();
-            float width = 0;
-            int lineAmount = 1;
-            for (String word : words) {
-                width += getTextWidth(word + " ");
-                if (getTextWidth(word) >= maxWidth) {
-                    for (char c : word.toCharArray()) {
-                        output.append(c);
-                        width += getTextWidth(String.valueOf(c));
-                        if (width >= maxWidth) {
-                            output.append(NEW_LINE);
-                            width = 0;
-                            lineAmount++;
-                        }
-                    }
-                } else if (width >= maxWidth) {
-                    width = 0;
-                    output.append(NEW_LINE);
-                    width += getTextWidth(word + " ");
-                    lineAmount++;
-                    if (lineAmount >= maxLines) {
-                        requestedLines = maxLines;
-                        break;
+            src = s1.toString();
+        } else src = input;
+        final String[] words = src.split(" ");
+        final StringBuilder output = new StringBuilder();
+        float width = 0;
+        int lineAmount = 1;
+        for (String word : words) {
+            if (getTextWidth(word) >= maxWidth) {
+                final char[] array = word.toCharArray();
+                for (int i = array.length - 1; i > -1; i--) {
+                    final char c = array[i];
+                    output.append(c);
+                    width += getTextWidth(String.valueOf(c));
+                    if (width >= maxWidth) {
+                        output.append("\n");
+                        width = 0;
+                        lineAmount++;
                     }
                 }
-                requestedLines = lineAmount == 0 ? 1 : lineAmount;
-                output.append(word).append(" ");
+                continue;
+            }
 
+            width += getTextWidth(word + " ");
+            if (width >= maxWidth) {
+                width = 0;
+                output.append("\n");
+                width += getTextWidth(word + " ");
+                lineAmount++;
             }
-            renderCache = output.toString();
-            if (!shown && password) {
-                StringBuilder s1 = new StringBuilder();
-                for (char c : renderCache.trim().toCharArray()) {
-                    if (c == NEW_LINE) s1.append(NEW_LINE);
-                    else s1.append('*');
-                }
-                renderCache = s1.toString();
-            }
+            output.append(word).append(" ");
         }
-        return renderCache;
+        requestedLines = lineAmount;
+        renderText.addAll(Arrays.asList(output.toString().split("\n")));
+        return renderText;
     }
 
     /**
      * Invalidate the entire render cache, meaning the new lines have to be recalculated.
      */
     private void invalidateAll() {
-        renderCache = null;
+        isDirty = true;
     }
 
     public void clear() {
