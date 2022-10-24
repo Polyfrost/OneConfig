@@ -168,7 +168,7 @@ public class cc/polyfrost/oneconfig/config/core/ConfigUtils {
 	public static fun setField (Ljava/lang/reflect/Field;Ljava/lang/Object;Ljava/lang/Object;)V
 }
 
-public final class cc/polyfrost/oneconfig/config/core/OneColor {
+public final class cc/polyfrost/oneconfig/config/core/OneColor : java/io/Serializable, java/lang/Cloneable, java/lang/Comparable {
 	public fun <init> (FFF)V
 	public fun <init> (FFFF)V
 	public fun <init> (I)V
@@ -180,11 +180,18 @@ public final class cc/polyfrost/oneconfig/config/core/OneColor {
 	public fun <init> (Ljava/lang/String;)V
 	public static fun ARGBtoHSBA (I)[S
 	public static fun HSBAtoARGB (FFFI)I
+	public fun clone ()Lcc/polyfrost/oneconfig/config/core/OneColor;
+	public synthetic fun clone ()Ljava/lang/Object;
+	public fun compareTo (Lcc/polyfrost/oneconfig/config/core/OneColor;)I
+	public synthetic fun compareTo (Ljava/lang/Object;)I
+	public fun copy ()Lcc/polyfrost/oneconfig/config/core/OneColor;
+	public fun equals (Ljava/lang/Object;)Z
 	public fun getAlpha ()I
 	public fun getBlue ()I
 	public fun getBrightness ()I
 	public fun getDataBit ()I
 	public fun getGreen ()I
+	public fun getHSBA ()[S
 	public fun getHex ()Ljava/lang/String;
 	public fun getHue ()I
 	public fun getRGB ()I
@@ -196,6 +203,7 @@ public final class cc/polyfrost/oneconfig/config/core/OneColor {
 	public fun setChromaSpeed (I)V
 	public fun setColorFromHex (Ljava/lang/String;)V
 	public fun setFromOneColor (Lcc/polyfrost/oneconfig/config/core/OneColor;)V
+	public fun setHSBA (II)V
 	public fun setHSBA (IIII)V
 	public fun toJavaColor ()Ljava/awt/Color;
 	public fun toString ()Ljava/lang/String;
@@ -641,6 +649,7 @@ public class cc/polyfrost/oneconfig/gui/elements/BasicButton : cc/polyfrost/onec
 	public fun <init> (IILjava/lang/String;ILcc/polyfrost/oneconfig/utils/color/ColorPalette;)V
 	public fun <init> (IILjava/lang/String;Lcc/polyfrost/oneconfig/renderer/SVG;Lcc/polyfrost/oneconfig/renderer/SVG;ILcc/polyfrost/oneconfig/utils/color/ColorPalette;)V
 	public fun draw (JFFLcc/polyfrost/oneconfig/utils/InputHandler;)V
+	protected fun drawIcon (JLcc/polyfrost/oneconfig/renderer/SVG;FFFFI)V
 	public fun getPage ()Lcc/polyfrost/oneconfig/gui/pages/Page;
 	public fun getText ()Ljava/lang/String;
 	public fun hasClickAction ()Z
@@ -692,14 +701,25 @@ public class cc/polyfrost/oneconfig/gui/elements/BasicElement {
 }
 
 public class cc/polyfrost/oneconfig/gui/elements/ColorSelector {
-	public fun <init> (Lcc/polyfrost/oneconfig/config/core/OneColor;FFLcc/polyfrost/oneconfig/utils/InputHandler;)V
 	public fun <init> (Lcc/polyfrost/oneconfig/config/core/OneColor;FFZLcc/polyfrost/oneconfig/utils/InputHandler;)V
+	public static fun assignFavoriteColor (Lcc/polyfrost/oneconfig/config/core/OneColor;I)V
+	public static fun assignRecentColor (Lcc/polyfrost/oneconfig/config/core/OneColor;)V
 	public fun draw (J)V
 	public fun getColor ()Lcc/polyfrost/oneconfig/config/core/OneColor;
 	public fun isAlphaAllowed ()Z
 	public fun keyTyped (CI)V
 	public fun onClose ()V
-	public fun setFavorite (I)V
+	public fun update ()V
+}
+
+public class cc/polyfrost/oneconfig/gui/elements/Dropdown : cc/polyfrost/oneconfig/gui/elements/BasicButton {
+	public fun <init> (II[Ljava/lang/String;ILcc/polyfrost/oneconfig/utils/color/ColorPalette;)V
+	public fun draw (JFFLcc/polyfrost/oneconfig/utils/InputHandler;)V
+	public fun drawIcon (JLcc/polyfrost/oneconfig/renderer/SVG;FFFFI)V
+	public fun getSelected ()I
+	public fun onChange (I)V
+	public fun select (I)V
+	public fun update (FFLcc/polyfrost/oneconfig/utils/InputHandler;)V
 }
 
 public class cc/polyfrost/oneconfig/gui/elements/ModCard : cc/polyfrost/oneconfig/gui/elements/BasicElement {
@@ -714,14 +734,19 @@ public class cc/polyfrost/oneconfig/gui/elements/ModCard : cc/polyfrost/oneconfi
 }
 
 public class cc/polyfrost/oneconfig/gui/elements/Slider : cc/polyfrost/oneconfig/gui/elements/BasicElement {
+	public static final field HORIZONTAL I
+	public static final field VERTICAL I
 	protected field currentDragPoint F
 	protected field dragPointerSize F
 	protected field value F
-	public fun <init> (IFFF)V
+	public fun <init> (IFFFI)V
 	public fun draw (JFFLcc/polyfrost/oneconfig/utils/InputHandler;)V
 	public fun getValue ()F
+	public fun getValueInverted ()F
+	public static fun invert (FF)F
 	public fun isDragging ()Z
 	public fun setValue (F)V
+	public fun setValueInverted (F)V
 	public fun update (FFLcc/polyfrost/oneconfig/utils/InputHandler;)V
 }
 
@@ -858,7 +883,8 @@ public class cc/polyfrost/oneconfig/gui/elements/text/TextInputField : cc/polyfr
 	protected field x F
 	protected field y F
 	public fun <init> (IILjava/lang/String;ZZ)V
-	public fun <init> (IILjava/lang/String;ZZLcc/polyfrost/oneconfig/renderer/SVG;)V
+	public fun <init> (IILjava/lang/String;ZZLcc/polyfrost/oneconfig/renderer/SVG;F)V
+	public fun <init> (IIZF)V
 	public fun <init> (IIZLjava/lang/String;)V
 	public fun draw (JFFLcc/polyfrost/oneconfig/utils/InputHandler;)V
 	public fun getInput ()Ljava/lang/String;
@@ -1094,6 +1120,7 @@ public abstract interface class cc/polyfrost/oneconfig/platform/GLPlatform {
 	public fun drawText (Ljava/lang/String;FFIZ)F
 	public abstract fun enableStencil ()V
 	public abstract fun getStringWidth (Ljava/lang/String;)I
+	public abstract fun isFrameBufferEnabled ()Z
 }
 
 public abstract interface class cc/polyfrost/oneconfig/platform/GuiPlatform {
@@ -1244,8 +1271,8 @@ public final class cc/polyfrost/oneconfig/renderer/RenderManager {
 	public static fun drawCircle (JFFFI)V
 	public static fun drawDropShadow (JFFFFFFF)V
 	public static fun drawGlRect (IIIII)V
-	public static fun drawGradientRect (JFFFFII)V
-	public static fun drawGradientRoundedRect (JFFFFIIF)V
+	public static fun drawGradientRect (JFFFFIILcc/polyfrost/oneconfig/renderer/RenderManager$GradientDirection;)V
+	public static fun drawGradientRoundedRect (JFFFFIIFLcc/polyfrost/oneconfig/renderer/RenderManager$GradientDirection;)V
 	public static fun drawHSBBox (JFFFFI)V
 	public static fun drawHollowRoundRect (JFFFFIFF)V
 	public static fun drawImage (JLcc/polyfrost/oneconfig/renderer/Image;FFFF)V
@@ -1275,11 +1302,24 @@ public final class cc/polyfrost/oneconfig/renderer/RenderManager {
 	public static fun getTextWidth (JLjava/lang/String;FLcc/polyfrost/oneconfig/renderer/font/Font;)F
 	public static fun getWrappedStringHeight (JLjava/lang/String;FFFLcc/polyfrost/oneconfig/renderer/font/Font;)F
 	public static fun resetTransform (J)V
+	public static fun rotate (JD)V
 	public static fun scale (JFF)V
 	public static fun setAlpha (JF)V
 	public static fun setupAndDraw (Ljava/util/function/LongConsumer;)V
 	public static fun setupAndDraw (ZLjava/util/function/LongConsumer;)V
 	public static fun translate (JFF)V
+}
+
+public final class cc/polyfrost/oneconfig/renderer/RenderManager$GradientDirection : java/lang/Enum {
+	public static final field DIAGONAL_DOWN Lcc/polyfrost/oneconfig/renderer/RenderManager$GradientDirection;
+	public static final field DIAGONAL_UP Lcc/polyfrost/oneconfig/renderer/RenderManager$GradientDirection;
+	public static final field DOWN Lcc/polyfrost/oneconfig/renderer/RenderManager$GradientDirection;
+	public static final field LEFT Lcc/polyfrost/oneconfig/renderer/RenderManager$GradientDirection;
+	public static final field RIGHT Lcc/polyfrost/oneconfig/renderer/RenderManager$GradientDirection;
+	public static final field UP Lcc/polyfrost/oneconfig/renderer/RenderManager$GradientDirection;
+	public static fun getValues (FFFFLcc/polyfrost/oneconfig/renderer/RenderManager$GradientDirection;)[F
+	public static fun valueOf (Ljava/lang/String;)Lcc/polyfrost/oneconfig/renderer/RenderManager$GradientDirection;
+	public static fun values ()[Lcc/polyfrost/oneconfig/renderer/RenderManager$GradientDirection;
 }
 
 public final class cc/polyfrost/oneconfig/renderer/RenderManager$TextType : java/lang/Enum {
@@ -1483,6 +1523,7 @@ public final class cc/polyfrost/oneconfig/utils/color/ColorUtils {
 	public fun <init> ()V
 	public static fun getAlpha (I)I
 	public static fun getBlue (I)I
+	public static fun getColor (BBBB)I
 	public static fun getColor (FFFF)I
 	public static fun getColor (III)I
 	public static fun getColor (IIII)I
@@ -1625,10 +1666,10 @@ public final class cc/polyfrost/oneconfig/utils/dsl/RenderManagerDSLKt {
 	public static final fun drawCircle (Lcc/polyfrost/oneconfig/utils/dsl/VG;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;I)V
 	public static final fun drawDropShadow (JLjava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;)V
 	public static final fun drawDropShadow (Lcc/polyfrost/oneconfig/utils/dsl/VG;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;)V
-	public static final fun drawGradientRect (JLjava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;II)V
-	public static final fun drawGradientRect (Lcc/polyfrost/oneconfig/utils/dsl/VG;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;II)V
-	public static final fun drawGradientRoundedRect (JLjava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;IILjava/lang/Number;)V
-	public static final fun drawGradientRoundedRect (Lcc/polyfrost/oneconfig/utils/dsl/VG;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;IILjava/lang/Number;)V
+	public static final fun drawGradientRect (JLjava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;IILcc/polyfrost/oneconfig/renderer/RenderManager$GradientDirection;)V
+	public static final fun drawGradientRect (Lcc/polyfrost/oneconfig/utils/dsl/VG;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;IILcc/polyfrost/oneconfig/renderer/RenderManager$GradientDirection;)V
+	public static final fun drawGradientRoundedRect (JLjava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;IILjava/lang/Number;Lcc/polyfrost/oneconfig/renderer/RenderManager$GradientDirection;)V
+	public static final fun drawGradientRoundedRect (Lcc/polyfrost/oneconfig/utils/dsl/VG;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;IILjava/lang/Number;Lcc/polyfrost/oneconfig/renderer/RenderManager$GradientDirection;)V
 	public static final fun drawHollowRoundedRect (JLjava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;ILjava/lang/Number;)V
 	public static final fun drawHollowRoundedRect (Lcc/polyfrost/oneconfig/utils/dsl/VG;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;ILjava/lang/Number;)V
 	public static final fun drawImage (JLcc/polyfrost/oneconfig/renderer/Image;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;)V

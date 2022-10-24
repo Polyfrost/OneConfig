@@ -105,7 +105,7 @@ public class BasicButton extends BasicElement {
         }
         if (alignment == ALIGNMENT_CENTER) {
             if (icon1 != null && icon2 == null && text == null) {
-                RenderManager.drawSvg(vg, icon1, middle - iconSize / 2f, middleYIcon, iconSize, iconSize, color);
+                drawIcon(vg, icon1, middle - iconSize / 2f, middleYIcon, iconSize, iconSize, color);
             } else {
                 if (icon1 != null)
                     contentWidth += iconSize + xSpacing;
@@ -114,35 +114,43 @@ public class BasicButton extends BasicElement {
                 if (text != null)
                     RenderManager.drawText(vg, text, middle - contentWidth / 2 + (icon1 == null ? 0 : iconSize + xSpacing), middleYText, color, fontSize, Fonts.MEDIUM);
                 if (icon1 != null)
-                    RenderManager.drawSvg(vg, icon1, middle - contentWidth / 2, middleYIcon, iconSize, iconSize, color);
+                    drawIcon(vg, icon1, middle - contentWidth / 2, middleYIcon, iconSize, iconSize, color);
                 if (icon2 != null)
-                    RenderManager.drawSvg(vg, icon2, middle + contentWidth / 2 - iconSize, middleYIcon, iconSize, iconSize, color);
+                    drawIcon(vg, icon2, middle + contentWidth / 2 - iconSize, middleYIcon, iconSize, iconSize, color);
             }
         } else if (alignment == ALIGNMENT_JUSTIFIED) {
             if (text != null)
                 RenderManager.drawText(vg, text, middle - contentWidth / 2, middleYText, color, fontSize, Fonts.MEDIUM);
             if (icon1 != null)
-                RenderManager.drawSvg(vg, icon1, x + xPadding, middleYIcon, iconSize, iconSize, color);
+                drawIcon(vg, icon1, x + xPadding, middleYIcon, iconSize, iconSize, color);
             if (icon2 != null)
-                RenderManager.drawSvg(vg, icon2, x + width - xPadding - iconSize, middleYIcon, iconSize, iconSize, color);
+                drawIcon(vg, icon2, x + width - xPadding - iconSize, middleYIcon, iconSize, iconSize, color);
         } else if (alignment == ALIGNMENT_LEFT) {
             contentWidth = xPadding;
             if (icon1 != null) {
-                RenderManager.drawSvg(vg, icon1, x + contentWidth, middleYIcon, iconSize, iconSize, color);
+                drawIcon(vg, icon1, x + contentWidth, middleYIcon, iconSize, iconSize, color);
                 contentWidth += iconSize + xSpacing;
             }
             if (text != null) {
                 RenderManager.drawText(vg, text, x + contentWidth, middleYText, color, fontSize, Fonts.MEDIUM);
             }
             if (icon2 != null)
-                RenderManager.drawSvg(vg, icon2, x + width - xPadding - iconSize, middleYIcon, iconSize, iconSize, color);
+                drawIcon(vg, icon2, x + width - xPadding - iconSize, middleYIcon, iconSize, iconSize, color);
         }
         if (disabled) RenderManager.setAlpha(vg, 1f);
     }
 
+    /**
+     * Override this method to perform transformations on the icon before it is drawn. <br>
+     * Make sure to reset your transformations afterwards.
+     */
+    protected void drawIcon(long vg, SVG icon, float x, float y, float width, float height, int color) {
+        RenderManager.drawSvg(vg, icon, x, y, width, height, color);
+    }
+
     @Override
     public void onClick() {
-        if(disabled) return;
+        if (disabled) return;
         if (this.page != null && OneConfigGui.INSTANCE != null) {
             OneConfigGui.INSTANCE.openPage(page);
         } else if (this.runnable != null) {

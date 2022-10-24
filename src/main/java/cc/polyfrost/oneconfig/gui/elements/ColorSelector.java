@@ -28,11 +28,6 @@ package cc.polyfrost.oneconfig.gui.elements;
 
 import cc.polyfrost.oneconfig.config.core.OneColor;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
-import cc.polyfrost.oneconfig.gui.animations.Animation;
-import cc.polyfrost.oneconfig.gui.animations.DummyAnimation;
-import cc.polyfrost.oneconfig.gui.animations.EaseInOutCubic;
-import cc.polyfrost.oneconfig.gui.animations.EaseInOutQuad;
-import cc.polyfrost.oneconfig.gui.elements.text.NumberInputField;
 import cc.polyfrost.oneconfig.gui.elements.text.TextInputField;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.internal.assets.Images;
@@ -40,469 +35,456 @@ import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.internal.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
-import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.renderer.scissor.Scissor;
 import cc.polyfrost.oneconfig.renderer.scissor.ScissorManager;
-import cc.polyfrost.oneconfig.utils.IOUtils;
 import cc.polyfrost.oneconfig.utils.InputHandler;
-import cc.polyfrost.oneconfig.utils.NetworkUtils;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
-import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
+import cc.polyfrost.oneconfig.utils.color.ColorUtils;
+import org.jetbrains.annotations.NotNull;
+import org.lwjgl.BufferUtils;
+import org.lwjgl.opengl.GL11;
 
-import java.awt.*;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
 public class ColorSelector {
-    private final OneColor color;
-    private final ArrayList<BasicElement> buttons = new ArrayList<>();
-    private final BasicElement closeBtn = new BasicElement(32, 32, false);
-    private final BasicButton copyBtn = new BasicButton(32, 32, SVGs.COPY, BasicButton.ALIGNMENT_CENTER, ColorPalette.SECONDARY);
-    private final BasicButton pasteBtn = new BasicButton(32, 32, SVGs.PASTE, BasicButton.ALIGNMENT_CENTER, ColorPalette.SECONDARY);
-    private final BasicButton guideBtn = new BasicButton(112, 32, "Guide", SVGs.HELP_CIRCLE, SVGs.POP_OUT, BasicButton.ALIGNMENT_CENTER, ColorPalette.SECONDARY);
+    private OneColor color;
+    private static final BasicButton closeBtn = new BasicButton(32, 32, SVGs.ARROW_LEFT, BasicButton.ALIGNMENT_CENTER, ColorPalette.TERTIARY_DESTRUCTIVE);
     private final BasicButton faveBtn = new BasicButton(32, 32, SVGs.HEART_OUTLINE, BasicButton.ALIGNMENT_CENTER, ColorPalette.SECONDARY);
-    private final BasicButton recentBtn = new BasicButton(32, 32, SVGs.HISTORY, BasicButton.ALIGNMENT_CENTER, ColorPalette.SECONDARY);
-    private final NumberInputField hueInput = new NumberInputField(90, 32, 0, 0, 360, 1);
-    private final NumberInputField saturationInput = new NumberInputField(90, 32, 100, 0, 100, 1);
-    private final NumberInputField brightnessInput = new NumberInputField(90, 32, 100, 0, 100, 1);
-    private final NumberInputField alphaInput = new NumberInputField(90, 32, 0, 0, 100, 1);
-    private final NumberInputField speedInput = new NumberInputField(90, 32, 2, 1, 30, 1);
-    private final TextInputField hexInput = new TextInputField(88, 32, true, "");
-    private final ArrayList<ColorBox> favoriteColors = new ArrayList<>();
-    private final ArrayList<ColorBox> recentColors = new ArrayList<>();
-    private final ColorSlider topSlider = new ColorSlider(384, 0, 360, 127);
-    private final ColorSlider bottomSlider = new ColorSlider(384, 0, 255, 100);
-    private final Slider speedSlider = new Slider(296, 1, 32, 0);
-    private float x;
-    private float y;
-    private Animation barMoveAnimation = new DummyAnimation(18);
-    private Animation moveAnimation = new DummyAnimation(1);
-    private float mouseX, mouseY;
-    private int mode = 0;
-    private boolean dragging, mouseWasDown;
+    private final BasicButton recentBtn = new BasicButton(32, 32, SVGs.HISTORY, BasicButton.ALIGNMENT_CENTER, ColorPalette.SECONDARY) {
+        @Override
+        public void onClick() {
+            super.onClick();
+            assignRecentColor(color.clone());
+        }
+    };
+    private static final BasicButton pickerBtn = new BasicButton(32, 32, SVGs.COPY, BasicButton.ALIGNMENT_CENTER, ColorPalette.TERTIARY);
+    private final Dropdown modeDropdown = new Dropdown(128, 36, new String[]{"Solid Color"}, 0, ColorPalette.TERTIARY) {
+        @Override
+        public void onChange(int changedTo) {
+            switch (changedTo) {
+                default:
+                case 0:
+                    picker = new SolidColorPicker();
+            }
+        }
+    };
+    private final Dropdown inputTypeDropdown = new Dropdown(90, 36, new String[]{"HEX", "HSBA"}, 0, ColorPalette.TERTIARY) {
+        @Override
+        public void onChange(int changedTo) {
+            switch (changedTo) {
+                default:
+                case 0:
+                    colorInput = new HexInput();
+                    break;
+                case 1:
+                    colorInput = new HSBAInput();
+                    break;
+            }
+        }
+    };
+    private final ArrayList<ColorBox> favoriteColors = new ArrayList<>(6);
+    private final ArrayList<ColorBox> recentColors = new ArrayList<>(6);
+    private final float x, y;
+    private float cursorX, cursorY;
+    @NotNull
+    private ColorInput colorInput;
+    @NotNull
+    private ColorPicker picker;
+    private static final float width = 296, height = 398;
+    private boolean pickerIsActive, mouseWasDown;
     private final boolean hasAlpha;
-    private Scissor inputScissor = null;
+    private Scissor inputScissor;
     private final InputHandler inputHandler;
 
-    public ColorSelector(OneColor color, float mouseX, float mouseY, InputHandler inputHandler) {
-        this(color, mouseX, mouseY, true, inputHandler);
-    }
-
-    public ColorSelector(OneColor color, float mouseX, float mouseY, boolean hasAlpha, InputHandler inputHandler) {
+    public ColorSelector(OneColor color, float mouseX, float mouseY, final boolean hasAlpha, final InputHandler inputHandler) {
         this.inputHandler = inputHandler;
+        for (OneColor oo : OneConfigConfig.recentColors) {
+            // this was annoying to use.
+            //if (oo.equals(color)) color = oo;
+            recentColors.add(new ColorBox(oo));
+        }
+        for (OneColor o : OneConfigConfig.favoriteColors) {
+            //if (o.equals(color)) color = o;
+            favoriteColors.add(new ColorBox(o));
+        }
+        while (favoriteColors.size() < 6) favoriteColors.add(new ColorBox(new OneColor(0, 0, 0, 0)));
+        while (recentColors.size() < 6) recentColors.add(new ColorBox(new OneColor(0, 0, 0, 0)));
         this.color = color;
         this.hasAlpha = hasAlpha;
-        buttons.add(new BasicButton(124, 28, "HSB Box", BasicButton.ALIGNMENT_CENTER, ColorPalette.TERTIARY));
-        buttons.add(new BasicButton(124, 28, "Color Wheel", BasicButton.ALIGNMENT_CENTER, ColorPalette.TERTIARY));
-        buttons.add(new BasicButton(124, 28, "Chroma", BasicButton.ALIGNMENT_CENTER, ColorPalette.TERTIARY));
-        hueInput.setCurrentValue(color.getHue());
-        saturationInput.setCurrentValue(color.getSaturation());
-        brightnessInput.setCurrentValue(color.getBrightness());
-        alphaInput.setCurrentValue(color.getAlpha() / 255f * 100f);
-        if (!hasAlpha) {
-            bottomSlider.disabled = true;
-            alphaInput.disabled = true;
-        }
-        speedSlider.setValue(color.getDataBit());
-        topSlider.setValue(color.getHue());
-        topSlider.setColor(color.getRGBMax(true));
-        bottomSlider.setValue(color.getAlpha());
-        hexInput.setInput(color.getHex());
-        this.x = mouseX - 208;
-        this.y = Math.max(0, mouseY - 776);
-        if (color.getDataBit() != -1) mode = 2;
-        if (mode == 0 || mode == 2) {
-            this.mouseX = (color.getSaturation() / 100f * 384 + x + 16);
-            this.mouseY = (Math.abs(color.getBrightness() / 100f - 1f) * 288 + y + 120);
-        } else {
-            topSlider.setValue(color.getBrightness() / 100f * 360f);
-            this.mouseX = (float) (Math.sin(Math.toRadians(-color.getHue()) + 1.5708) * (saturationInput.getCurrentValue() / 100 * 144) + x + 208);
-            this.mouseY = (float) (Math.cos(Math.toRadians(-color.getHue()) + 1.5708) * (saturationInput.getCurrentValue() / 100 * 144) + y + 264);
-        }
-        //for(OneColor color1 : OneConfigConfig.recentColors) {
-        //    recentColors.add(new ColorBox(color1));
-        //}
-        //for(OneColor color1 : OneConfigConfig.favoriteColors) {
-        //    favoriteColors.add(new ColorBox(color1));
-        //}
-        while (favoriteColors.size() < 7) {
-            favoriteColors.add(new ColorBox(new OneColor(0, 0, 0, 0)));
-        }
-        while (recentColors.size() < 7) {
-            recentColors.add(new ColorBox(new OneColor(0, 0, 0, 0)));
-        }
-
-        topSlider.setImage(Images.HUE_GRADIENT.filePath);
+        this.x = mouseX - width / 2;
+        this.y = Math.max(0, mouseY - height);
+        // it looks nice okay? streams are cool
+        faveBtn.setToggleable(true);
+        picker = new SolidColorPicker();
+        colorInput = new HexInput();
     }
 
     public void draw(long vg) {
         if (inputScissor != null) inputHandler.stopBlock(inputScissor);
-        doDrag();
-        int width = 416;
-        int height = 768;
-        Scissor scissor = ScissorManager.scissor(vg, x - 3, y - 3, width + 6, height + 6);
-        RenderManager.drawHollowRoundRect(vg, x - 3, y - 3, width + 4, height + 4, new Color(204, 204, 204, 77).getRGB(), 20f, 2f);
-        RenderManager.drawRoundedRect(vg, x, y, width, height, Colors.GRAY_800, 20f);
-        RenderManager.drawText(vg, "Color Selector", x + 16, y + 32, Colors.WHITE_90, 18f, Fonts.SEMIBOLD);
-        if (!closeBtn.isHovered()) RenderManager.setAlpha(vg, 0.8f);
-        closeBtn.draw(vg, x + 368, y + 16, inputHandler);
-        RenderManager.drawSvg(vg, SVGs.X_CIRCLE_BOLD, x + 368, y + 16, 32, 32, closeBtn.isHovered() ? Colors.ERROR_600 : -1);
-        RenderManager.setAlpha(vg, 1f);
-
-        // hex parser
-        if (hexInput.isToggled()) {
-            parseHex();
-        }
-
-        // TODO favorite stuff
-        faveBtn.draw(vg, x + 16, y + 672, inputHandler);
-        recentBtn.draw(vg, x + 16, y + 720, inputHandler);
-        for (int i = 0; i < 7; i++) {
-            favoriteColors.get(i).draw(vg, x + 104 + i * 44, y + 672, inputHandler);
-        }
-        for (int i = 0; i < 7; i++) {
-            recentColors.get(i).draw(vg, x + 104 + i * 44, y + 720, inputHandler);
-        }
-
-        RenderManager.drawRoundedRect(vg, x + 16, y + 64, 384, 32, Colors.GRAY_500, 12f);
-        if (!barMoveAnimation.isFinished())
-            RenderManager.drawRoundedRect(vg, x + barMoveAnimation.get(), y + 66, 124, 28, Colors.PRIMARY_600, 10f);
-        else buttons.get(mode).setColorPalette(ColorPalette.PRIMARY);
-
-        int i = 18;
-        for (BasicElement button : buttons) {
-            button.draw(vg, x + i, y + 66, inputHandler);
-            if (button.isClicked()) {
-                int prevMode = mode;
-                mode = buttons.indexOf(button);
-                setXYFromColor();
-                barMoveAnimation = new EaseInOutCubic(175, 18 + prevMode * 128, 18 + mode * 128, false);
-                moveAnimation = new EaseInOutQuad(300, 0, 1, false);
-                for (BasicElement button1 : buttons) button1.setColorPalette(ColorPalette.TERTIARY);
+        if (pickerBtn.toggled) {
+            inputHandler.blockAllInput();
+            // net.minecraft.util.ScreenShotHelper
+            final ByteBuffer buf = BufferUtils.createByteBuffer(4);
+            // TODO this segfaults lmao
+            // if(Platform.getGLPlatform().isFrameBufferEnabled()) GL11.glGetTexImage(GL11.GL_TEXTURE_2D, 0, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, buf);
+            GL11.glReadPixels((int) Platform.getMousePlatform().getMouseY(), (int) Platform.getMousePlatform().getMouseY(), 1, 1, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, buf);
+            final int color = ColorUtils.getColor(buf.get(), buf.get(), buf.get(), buf.get());
+            RenderManager.drawRoundedRect(vg, inputHandler.mouseX() - 16, inputHandler.mouseY() - 32, 32, 32, -1, 16f);
+            RenderManager.drawRoundedRect(vg, inputHandler.mouseX() - 15, inputHandler.mouseY() - 31, 30, 30, color, 15f);
+            if (inputHandler.isClicked(true)) {
+                __setColor(new OneColor(color));
+                pickerBtn.toggled = false;
+                inputHandler.stopBlockingInput();
             }
-            i += 128;
-        }
-        float percentMoveMain = moveAnimation.get();
-
-        RenderManager.drawText(vg, "Saturation", x + 224, y + 560, Colors.WHITE_80, 12f, Fonts.MEDIUM);
-        saturationInput.draw(vg, x + 312, y + 544, inputHandler);
-        RenderManager.drawText(vg, "Brightness", x + 16, y + 599, Colors.WHITE_80, 12f, Fonts.MEDIUM);
-        brightnessInput.draw(vg, x + 104, y + 584, inputHandler);
-        RenderManager.drawText(vg, "Alpha (%)", x + 224, y + 599, Colors.WHITE_80, 12f, Fonts.MEDIUM);
-        alphaInput.draw(vg, x + 312, y + 584, inputHandler);
-        RenderManager.drawText(vg, color.getDataBit() == -1 ? "Hex (RGB):" : "Color Code:", x + 16, y + 641, Colors.WHITE_80, 12f, Fonts.MEDIUM);
-        hexInput.draw(vg, x + 104, y + 624, inputHandler);
-
-        copyBtn.draw(vg, x + 204, y + 624, inputHandler);
-        pasteBtn.draw(vg, x + 244, y + 624, inputHandler);
-        if (mode != 2) {
-            RenderManager.drawText(vg, "Hue", x + 16, y + 560, Colors.WHITE_80, 12f, Fonts.MEDIUM);
-            hueInput.draw(vg, x + 104, y + 544, inputHandler);
-        } else {
-            RenderManager.drawText(vg, "Speed (s)", x + 16, y + 560, Colors.WHITE_80, 12f, Fonts.MEDIUM);
-            speedInput.draw(vg, x + 104, y + 544, inputHandler);
         }
 
-        guideBtn.draw(vg, x + 288, y + 624, inputHandler);
+        Scissor scissor = ScissorManager.scissor(vg, x - 3, y - 3, width + 6, height + 6);
+        RenderManager.drawRoundedRect(vg, x, y, width, height, Colors.GRAY_800, 20f);
+        closeBtn.draw(vg, x + 248, y + 8, inputHandler);
 
+        picker.drawAndUpdate(vg, x + 16, y + 48, inputHandler);
+        picker.drawCursor(vg, cursorX, cursorY, color.getRGB());
 
-        setColorFromXY();
-        if (mode != 2) color.setChromaSpeed(-1);
-        drawColorSelector(vg, mode, (x * percentMoveMain), y);
-        if (dragging && inputHandler.isClicked(true)) {
-            dragging = false;
+        colorInput.drawAndUpdate(vg, x + 100, y + 260, inputHandler);
+
+        pickerBtn.draw(vg, x + 252, y + 260, inputHandler);
+
+        faveBtn.draw(vg, x + 12, y + 304, inputHandler);
+        recentBtn.draw(vg, x + 12, y + 348, inputHandler);
+        for (int i = 0; i < 6; i++) {
+            final ColorBox box = favoriteColors.get(i);
+            box.draw(vg, x + 52 + i * 40, y + 304, inputHandler);
+            if (box.isClicked()) {
+                if (faveBtn.isToggled()) {
+                    box.setColor(color);
+                    // remove tie
+                    __setColor(color.clone());
+                    faveBtn.setToggled(false);
+                } else {
+                    __setColor(box.getColor());
+                }
+            }
+            final ColorBox rBox = recentColors.get(i);
+            rBox.draw(vg, x + 52 + i * 40, y + 348, inputHandler);
+            if (rBox.isClicked()) {
+                __setColor(rBox.getColor());
+            }
         }
-        bottomSlider.setGradient(Colors.TRANSPARENT, color.getRGBNoAlpha());
-        RenderManager.drawRoundImage(vg, Images.ALPHA_GRID.filePath, x + 16, y + 456, 384, 16, 8f);
-        bottomSlider.draw(vg, x + 16, y + 456, inputHandler);
 
-        if (percentMoveMain > 0.96f) {
-            RenderManager.drawRoundedRect(vg, mouseX - 7, mouseY - 7, 14, 14, Colors.WHITE, 14f);
-            RenderManager.drawRoundedRect(vg, mouseX - 6, mouseY - 6, 12, 12, Colors.BLACK, 12f);
-            RenderManager.drawRoundedRect(vg, mouseX - 5, mouseY - 5, 10, 10, color.getRGBMax(true), 10f);
-        }
+        modeDropdown.draw(vg, x + 16, y + 8, inputHandler);
+        inputTypeDropdown.draw(vg, x + 2, y + 260, inputHandler);
 
-        // deal with the input fields
-        parseInputFields();
-        if (guideBtn.isClicked()) NetworkUtils.browseLink("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
-
-        // draw the color preview
-        RenderManager.drawHollowRoundRect(vg, x + 15, y + 487, 384, 40, Colors.GRAY_300, 12f, 2f);
-        RenderManager.drawRoundImage(vg, Images.ALPHA_GRID.filePath, x + 20, y + 492, 376, 32, 8f);
-        RenderManager.drawRoundedRect(vg, x + 20, y + 492, 376, 32, color.getRGB(), 8f);
-
-        inputScissor = inputHandler.blockInputArea(x - 3, y - 3, width + 6, height + 6);
+        inputScissor = inputHandler.blockInputArea(x, y, width, height);
         ScissorManager.resetScissor(vg, scissor);
+        if (pickerIsActive && inputHandler.isClicked(true)) {
+            pickerIsActive = false;
+        }
         mouseWasDown = Platform.getMousePlatform().isButtonDown(0);
-        if (closeBtn.isClicked()) {
+        if (closeBtn.isClicked() && !mouseWasDown) {
             OneConfigGui.INSTANCE.closeColorSelector();
         }
     }
 
-    private void drawColorSelector(long vg, int mode, float x, float y) {
-        switch (mode) {
-            default:
-            case 0:
-            case 2:
-                //buttons.get(mode).colorAnimation.setPalette(ColorPalette.TERTIARY);
-                topSlider.setImage(Images.HUE_GRADIENT.filePath);
-                RenderManager.drawHSBBox(vg, x + 16, y + 120, 384, 288, color.getRGBMax(true));
-
-                if (mode == 0) {
-                    topSlider.setColor(color.getRGBMax(true));
-                    topSlider.draw(vg, x + 16, y + 424, inputHandler);
-                }
-                if (mode == 2) {
-                    speedSlider.draw(vg, x + 60, y + 424, inputHandler);
-                    RenderManager.drawText(vg, "SLOW", x + 16, y + 429, Colors.WHITE_80, 12f, Fonts.REGULAR);
-                    RenderManager.drawText(vg, "FAST", x + 370, y + 429, Colors.WHITE_80, 12f, Fonts.REGULAR);
-                }
-                break;
-            case 1:
-                //buttons.get(1).colorAnimation.setPalette(ColorPalette.TERTIARY);
-                topSlider.setImage(null);
-                RenderManager.drawRoundImage(vg, Images.COLOR_WHEEL.filePath, x + 64, y + 120, 288, 288, 144f);
-
-                topSlider.setGradient(Colors.BLACK, color.getRGBMax(true));
-                topSlider.setImage(null);
-                topSlider.draw(vg, x + 16, y + 424, inputHandler);
-                break;
-        }
+    public void update() {
+        doDrag();
     }
+
 
     private void doDrag() {
-        if (inputHandler.isAreaHovered(x, y, 368, 64) && Platform.getMousePlatform().isButtonDown(0) && !dragging) {
-            float dx = (float) (Platform.getMousePlatform().getMouseDX() / (OneConfigGui.INSTANCE == null ? 1 : OneConfigGui.getScaleFactor()));
-            float dy = (float) (Platform.getMousePlatform().getMouseDY() / (OneConfigGui.INSTANCE == null ? 1 : OneConfigGui.getScaleFactor()));
-            x += dx;
-            mouseX += dx;
-            y -= dy;
-            mouseY -= dy;
+        if (inputHandler.isAreaHovered(x, y, width, 48) && Platform.getMousePlatform().isButtonDown(0) && !pickerIsActive) {
+            // TODO: drag
         }
     }
 
-    private void setColorFromXY() {
-        boolean isMouseDown = Platform.getMousePlatform().isButtonDown(0);
-        boolean hovered = Platform.getMousePlatform().isButtonDown(0) && inputHandler.isAreaHovered(x + 16, y + 120, 384, 288);
-        if (hovered && isMouseDown && !mouseWasDown) dragging = true;
-        switch (mode) {
-            case 0:
-            case 2:
-                if (dragging) {
-                    mouseX = inputHandler.mouseX();
-                    mouseY = inputHandler.mouseY();
-                }
-                if (mouseX < x + 16) mouseX = x + 16;
-                if (mouseY < y + 120) mouseY = y + 120;
-                if (mouseX > x + 400) mouseX = x + 400;
-                if (mouseY > y + 408) mouseY = y + 408;
-                float progressX = (mouseX - x - 16f) / 384f;
-                float progressY = Math.abs((mouseY - y - 120f) / 288f - 1f);
-                color.setHSBA((int) topSlider.getValue(), Math.round(progressX * 100), Math.round(progressY * 100), (int) bottomSlider.getValue());
-                if (mode == 2) {
-                    if (!speedSlider.isDragging()) {
-                        if (!speedInput.isToggled()) {
-                            color.setChromaSpeed((int) Math.abs(speedSlider.getValue() - 31));
-                            speedInput.setCurrentValue(color.getDataBit());
-                        }
-                    }
-                }
-                break;
-            case 1:
-                float circleCenterX = x + 208;
-                float circleCenterY = y + 264;
-                double squareDist = Math.pow((circleCenterX - inputHandler.mouseX()), 2) + Math.pow((circleCenterY - inputHandler.mouseY()), 2);
-                hovered = squareDist < 144 * 144 && Platform.getMousePlatform().isButtonDown(0);
-                isMouseDown = Platform.getMousePlatform().isButtonDown(0);
-                if (hovered && isMouseDown && !mouseWasDown) dragging = true;
-
-                int angle = 0;
-                int saturation = color.getSaturation();
-                if (dragging) {
-                    angle = (int) Math.toDegrees(Math.atan2(inputHandler.mouseY() - circleCenterY, inputHandler.mouseX() - circleCenterX));
-                    if (angle < 0) angle += 360;
-                    if ((squareDist / (144 * 144) > 1f)) {
-                        saturation = 100;
-                        mouseX = (float) (Math.sin(Math.toRadians(-angle) + 1.5708) * 144 + x + 208);
-                        mouseY = (float) (Math.cos(Math.toRadians(-angle) + 1.5708) * 144 + y + 264);
-                    } else {
-                        saturation = (int) (squareDist / (144 * 144) * 100);
-                        mouseX = inputHandler.mouseX();
-                        mouseY = inputHandler.mouseY();
-                    }
-                }
-                color.setHSBA(dragging ? angle : color.getHue(), saturation, (int) (topSlider.getValue() / 360 * 100), (int) bottomSlider.getValue());
-                break;
-        }
-    }
-
-    private void setXYFromColor() {
-        bottomSlider.setValue(color.getAlpha());
-        if (mode == 1) {
-            mouseX = (float) (Math.sin(Math.toRadians(-color.getHue()) + 1.5708) * (saturationInput.getCurrentValue() / 100 * 144) + x + 208);
-            mouseY = (float) (Math.cos(Math.toRadians(-color.getHue()) + 1.5708) * (saturationInput.getCurrentValue() / 100 * 144) + y + 264);
-            topSlider.setValue(color.getBrightness() / 100f * 360f);
-        }
-        if (mode == 0 || mode == 2) {
-            topSlider.setValue(color.getHue());
-            mouseX = (saturationInput.getCurrentValue() / 100f * 384 + x + 16);
-            mouseY = (Math.abs(brightnessInput.getCurrentValue() / 100f - 1f) * 288 + y + 120);
-        }
-    }
-
-    private void parseInputFields() {
-        if (hueInput.isToggled() || saturationInput.isToggled() || brightnessInput.isToggled() || alphaInput.isToggled() || hueInput.arrowsClicked() || saturationInput.arrowsClicked() || brightnessInput.arrowsClicked() || alphaInput.arrowsClicked() || hexInput.isToggled() || pasteBtn.isClicked() || speedInput.isToggled()) {
-            if (mode != 2 && !hexInput.isToggled()) {
-                color.setHSBA((int) hueInput.getCurrentValue(), (int) saturationInput.getCurrentValue(), (int) brightnessInput.getCurrentValue(), (int) ((alphaInput.getCurrentValue() / 100f) * 255f));
-            }
-            if (mode == 2) {
-                color.setHSBA(color.getHue(), (int) saturationInput.getCurrentValue(), (int) brightnessInput.getCurrentValue(), (int) ((alphaInput.getCurrentValue() / 100f) * 255f));
-                color.setChromaSpeed((int) speedInput.getCurrentValue());
-            }
-            setXYFromColor();
-        } else if (GuiUtils.wasMouseDown()) {
-            saturationInput.setInput(String.format("%.01f", (float) color.getSaturation()));
-            brightnessInput.setInput(String.format("%.01f", (float) color.getBrightness()));
-            if (!alphaInput.arrowsClicked()) {
-                alphaInput.setInput(String.format("%.01f", color.getAlpha() / 255f * 100f));
-            }
-            if (hexInput.isToggled()) return;
-            if (mode != 2) {
-                hueInput.setInput(String.format("%.01f", (float) color.getHue()));
-                hexInput.setInput("#" + color.getHex());
-            } else {
-                speedInput.setInput(String.format("%.01f", (float) color.getDataBit()));
-                hexInput.setInput("Z" + color.getDataBit());
-            }
-
-        }
-        if (mode != 2 && !hexInput.isToggled()) {
-            hexInput.setInput("#" + color.getHex());
-        }
-    }
-
-    private void parseHex() {
-        if (copyBtn.isClicked()) {
-            IOUtils.copyStringToClipboard(color.getHex());
-        }
-        if (pasteBtn.isClicked() && mode != 2) {
-            try {
-                color.setColorFromHex(IOUtils.getStringFromClipboard());
-                hexInput.setInput("#" + color.getHex());
-            } catch (Exception ignored) {
-            }
-        }
-        hexInput.setErrored(false);
-        if ((hexInput.isToggled() || pasteBtn.isClicked()) && mode != 2) {
-            try {
-                color.setColorFromHex(hexInput.getInput());
-            } catch (Exception e) {
-                hexInput.setErrored(true);
-                e.printStackTrace();
-            }
-            saturationInput.setInput(String.format("%.01f", (float) color.getSaturation()));
-            brightnessInput.setInput(String.format("%.01f", (float) color.getBrightness()));
-            alphaInput.setInput(String.format("%.01f", color.getAlpha() / 255f * 100f));
-            hueInput.setInput(String.format("%.01f", (float) color.getHue()));
-            if (mode == 0) topSlider.setValue(color.getHue());
-            if (mode == 1) topSlider.setValue(color.getBrightness() / 100f * 360f);
-        }
-    }
 
     public OneColor getColor() {
         return color;
     }
 
     public void keyTyped(char typedChar, int keyCode) {
-        hexInput.keyTyped(typedChar, keyCode);
-        saturationInput.keyTyped(typedChar, keyCode);
-        brightnessInput.keyTyped(typedChar, keyCode);
-        alphaInput.keyTyped(typedChar, keyCode);
-        hueInput.keyTyped(typedChar, keyCode);
-        speedInput.keyTyped(typedChar, keyCode);
+        colorInput.keyTyped(typedChar, keyCode);
     }
 
     public void onClose() {
         if (inputScissor != null) inputHandler.stopBlock(inputScissor);
-        /*for (int i = 0; i < OneConfigConfig.recentColors.size(); i++) {
-            OneColor color1 = OneConfigConfig.recentColors.get(i);
-            if (color1.getRGB() == color.getRGB()) {
-                OneConfigConfig.recentColors.get(i).setFromOneColor(color1);
-                return;
-            }
+        int i = 0;
+        for (ColorBox box : favoriteColors) {
+            if (box.isEmpty()) continue;
+            assignFavoriteColor(box.getColor().clone(), i);
+            i++;
         }
-        OneConfigConfig.recentColors.add(color);*/
+        assignRecentColor(color.clone());
+        OneConfigConfig.getInstance().save();
     }
 
-    public void setFavorite(int index) {
-        if (index < 0 || index >= OneConfigConfig.favoriteColors.size()) {
-            return;
-        }
-        OneConfigConfig.favoriteColors.add(index, color);
-        this.favoriteColors.add(index, new ColorBox(color));
-        this.favoriteColors.get(index).setToggled(true);
+    public static void assignRecentColor(OneColor color) {
+        if (OneConfigConfig.recentColors.size() == 6) {
+            OneConfigConfig.recentColors.set(0, color);
+        } else OneConfigConfig.recentColors.add(color);
+    }
+
+    public static void assignFavoriteColor(OneColor color, int index) {
+        if (index < 0) index = 0;
+        if (index > 5) index = 5;
+        if (index >= OneConfigConfig.favoriteColors.size()) OneConfigConfig.favoriteColors.add(color);
+        else OneConfigConfig.favoriteColors.set(index, color);
+    }
+
+    /**
+     * <b>Dangerous Method!</b>
+     */
+    private void __setColor(OneColor color) {
+        if (color.getRGB() == 0) return;
+        this.color = color;
+        picker.onColorChanged();
+        colorInput.onColorChanged();
     }
 
     public boolean isAlphaAllowed() {
         return hasAlpha;
     }
 
-    private static class ColorSlider extends Slider {
-        protected int gradColorStart, gradColorEnd;
-        protected String image;
-        protected int color;
 
-        public ColorSlider(int length, float min, float max, float startValue) {
-            super(length, min, max, startValue);
-            super.height = 16;
-            super.dragPointerSize = 0f;
+    // input types
+    interface ColorInput {
+        void drawAndUpdate(long vg, float x, float y, InputHandler inputHandler);
+
+        void onColorChanged();
+
+        void keyTyped(char typedChar, int keyCode);
+    }
+
+    final class HexInput implements ColorInput {
+        private final TextInputField alphaInput = new TextInputField(56, 32, true, 4f) {
+            @Override
+            public void onClose() {
+                alphaInput.setInput((int) (color.getAlpha() / 2.55f) + "%");
+            }
+        };
+        private final TextInputField hexInput = new TextInputField(80, 32, true, 4f) {
+            @Override
+            public void onClose() {
+                hexInput.setInput("#" + color.getHex());
+            }
+        };
+
+        public HexInput() {
+            hexInput.setInput("#" + color.getHex());
+            alphaInput.setInput((int) (color.getAlpha() / 2.55f) + "%");
+            if (!hasAlpha) alphaInput.disable(true);
         }
 
         @Override
-        public void draw(long vg, float x, float y, InputHandler inputHandler) {
-            if (!disabled) update(x, y, inputHandler);
-            else RenderManager.setAlpha(vg, 0.5f);
-            super.dragPointerSize = 15f;
-            if (image != null) {
-                RenderManager.drawRoundImage(vg, image, x + 1, y + 1, width - 2, height - 2, 8f);
-            } else {
-                RenderManager.drawGradientRoundedRect(vg, x, y, width, height, gradColorStart, gradColorEnd, 8f);
+        public void drawAndUpdate(long vg, float x, float y, InputHandler inputHandler) {
+            hexInput.draw(vg, x, y, inputHandler);
+            alphaInput.draw(vg, x + 88, y, inputHandler);
+            hexInput.setErrored(false);
+            alphaInput.setErrored(false);
+            if (hexInput.isToggled()) {
+                try {
+                    color.setColorFromHex(hexInput.getInput());
+                    picker.onColorChanged();
+                } catch (Exception e) {
+                    hexInput.setErrored(true);
+                }
             }
-
-            RenderManager.drawHollowRoundRect(vg, x - 0.5f, y - 0.5f, width, height, new Color(204, 204, 204, 80).getRGB(), 8f, 1f);
-            RenderManager.drawHollowRoundRect(vg, currentDragPoint - 1, y - 1, 18, 18, Colors.WHITE, 9f, 1f);
-            RenderManager.drawHollowRoundRect(vg, currentDragPoint, y, 16, 16, Colors.BLACK, 8f, 1f);
-            RenderManager.drawRoundedRect(vg, currentDragPoint + 1.5f, y + 1.5f, 14, 14, color, 7f);
-            RenderManager.setAlpha(vg, 1f);
+            if (alphaInput.isToggled()) {
+                final String s = alphaInput.getInput().endsWith("%") ? alphaInput.getInput().substring(0, alphaInput.getInput().length() - 1) : alphaInput.getInput();
+                try {
+                    color.setAlpha((int) (Float.parseFloat(s) * 2.55f));
+                    picker.onColorChanged();
+                } catch (Exception e) {
+                    alphaInput.setErrored(true);
+                }
+            }
         }
 
-        public void setGradient(int start, int end) {
-            gradColorStart = start;
-            gradColorEnd = end;
+        @Override
+        public void onColorChanged() {
+            hexInput.setInput("#" + color.getHex());
+            alphaInput.setInput((int) (color.getAlpha() / 2.55f) + "%");
         }
 
-        public void setColor(int color) {
-            this.color = color;
-        }
-
-        public void setImage(String image) {
-            this.image = image;
+        @Override
+        public void keyTyped(char typedChar, int keyCode) {
+            hexInput.keyTyped(typedChar, keyCode);
+            alphaInput.keyTyped(typedChar, keyCode);
         }
     }
 
-    private static class ColorBox extends BasicElement {
-        protected OneColor color;
+    final class HSBAInput implements ColorInput {
+        final TextInputField[] inputs = new TextInputField[4];
+
+        HSBAInput() {
+            for (int i = 0; i < inputs.length; i++) {
+                final int index = i;
+                inputs[i] = new TextInputField(40, 32, true, 4f) {
+                    @Override
+                    public void onClose() {
+                        inputs[index].setInput(color.getHSBA()[index] + "");
+                    }
+                };
+                inputs[i].setInput(color.getHSBA()[i] + "");
+            }
+            if (!hasAlpha) inputs[3].disable(true);
+        }
+
+        @Override
+        public void drawAndUpdate(long vg, float x, float y, InputHandler inputHandler) {
+            for (int i = 0; i < 4; i++) {
+                final TextInputField in = inputs[i];
+                in.setErrored(false);
+                in.draw(vg, x - 12 + (42 * i), y, inputHandler);
+                if (in.isToggled()) {
+                    color.setHSBA(i, parseIntOrElse(in.getInput(), color.getHSBA()[i]));
+                    picker.onColorChanged();
+                }
+            }
+        }
+
+        @Override
+        public void onColorChanged() {
+            inputs[0].setInput(color.getHue() + "");
+            inputs[1].setInput(color.getSaturation() + "");
+            inputs[2].setInput(color.getBrightness() + "");
+            inputs[3].setInput(color.getAlpha() + "");
+        }
+
+        @Override
+        public void keyTyped(char typedChar, int keyCode) {
+            for (TextInputField i : inputs) i.keyTyped(typedChar, keyCode);
+        }
+
+        int parseIntOrElse(String s, int orElse) {
+            try {
+                return Integer.parseInt(s);
+            } catch (Exception e) {
+                return orElse;
+            }
+        }
+    }
+
+
+    // color pickers
+    interface ColorPicker {
+        void drawAndUpdate(long vg, float x, float y, InputHandler inputHandler);
+
+        void onColorChanged();
+
+        default void drawCursor(long vg, float cursorX, float cursorY, int color) {
+            RenderManager.drawRoundedRect(vg, cursorX - 7, cursorY - 7, 14, 14, Colors.WHITE, 14f);
+            RenderManager.drawRoundedRect(vg, cursorX - 5, cursorY - 5, 10, 10, color, 10f);
+        }
+    }
+
+    private final class SolidColorPicker implements ColorPicker {
+        private final ColorSlider alphaSlider, hueSlider;
+
+        public SolidColorPicker() {
+            cursorX = (color.getSaturation() / 100f * 200) + x + 16;
+            cursorY = (1 - (color.getBrightness() / 100f)) * 200 + y + 48;
+            alphaSlider = new ColorSlider(200, 0, 255, 255 - color.getAlpha(), Colors.TRANSPARENT, color.getRGBMax(true));
+            hueSlider = new ColorSlider(200, 0, 360, 360 - color.getHue());
+            if (!hasAlpha) alphaSlider.disable(true);
+        }
+
+        @Override
+        public void drawAndUpdate(long vg, float x, float y, InputHandler inputHandler) {
+            RenderManager.drawHSBBox(vg, x, y, 200, 200, color.getRGBMax(true));
+            hueSlider.draw(vg, x + 216, y, inputHandler);
+            alphaSlider.draw(vg, x + 248, y, inputHandler);
+            alphaSlider.setGradient(color.getRGBNoAlpha(), Colors.TRANSPARENT);
+
+            if (hueSlider.isDragging() || alphaSlider.isDragging()) {
+                color.setHSBA((int) hueSlider.getValueInverted(), color.getSaturation(), color.getBrightness(), (int) alphaSlider.getValueInverted());
+                colorInput.onColorChanged();
+            }
+
+            final boolean hovered = Platform.getMousePlatform().isButtonDown(0) && inputHandler.isAreaHovered(x, y, 200, 200);
+            if (hovered && Platform.getMousePlatform().isButtonDown(0) && !mouseWasDown) pickerIsActive = true;
+            if (!pickerIsActive) return;
+            cursorX = inputHandler.mouseX();
+            cursorY = inputHandler.mouseY();
+            if (cursorX < x) cursorX = x;
+            if (cursorY < y) cursorY = y;
+            if (cursorX > x + 200) cursorX = x + 200;
+            if (cursorY > y + 200) cursorY = y + 200;
+            final float progressX = (cursorX - x) / 200f;
+            final float progressY = Math.abs((cursorY - y) / 200f - 1f);
+            color.setHSBA((int) hueSlider.getValueInverted(), Math.round(progressX * 100), Math.round(progressY * 100), (int) alphaSlider.getValueInverted());
+        }
+
+        @Override
+        public void onColorChanged() {
+            cursorX = (color.getSaturation() / 100f * 200) + x + 16;
+            cursorY = (1 - (color.getBrightness() / 100f)) * 200 + y + 48;
+            alphaSlider.setValueInverted(color.getAlpha());
+            hueSlider.setValueInverted(color.getHue());
+            alphaSlider.setGradient(color.getRGBNoAlpha(), Colors.TRANSPARENT);
+        }
+    }
+
+
+    // other util classes
+    static final class ColorSlider extends Slider {
+        private int gradColorStart, gradColorEnd;
+        private final boolean img;
+
+        public ColorSlider(int length, float min, float max, float startValue, int gradColorStart, int gradColorEnd) {
+            super(length, min, max, startValue, VERTICAL);
+            super.width = 16;
+            super.dragPointerSize = 15f;
+            if (gradColorEnd == 0 && gradColorStart == 0) {
+                this.gradColorStart = 0;
+                this.gradColorEnd = 0;
+                img = true;
+            } else {
+                this.gradColorStart = gradColorStart;
+                this.gradColorEnd = gradColorEnd;
+                img = false;
+            }
+        }
+
+        public ColorSlider(int length, float min, float max, float startValue) {
+            this(length, min, max, startValue, 0, 0);
+        }
+
+        @Override
+        public void draw(long vg, float x, float y, InputHandler inputHandler) {
+            if (!disabled) super.update(x, y, inputHandler);
+            else RenderManager.setAlpha(vg, 0.5f);
+            if (img) {
+                RenderManager.drawRoundImage(vg, Images.HUE_GRADIENT.filePath, x + 1, y + 1, width - 2, height - 2, 8f);
+            } else {
+                RenderManager.drawRoundImage(vg, Images.ALPHA_GRID, x + 1, y + 1, width - 2, height - 2, 8f);
+                RenderManager.drawGradientRoundedRect(vg, x, y, width, height, gradColorStart, gradColorEnd, 8f, RenderManager.GradientDirection.DOWN);
+            }
+            RenderManager.drawHollowRoundRect(vg, x, currentDragPoint, 14, 14, Colors.WHITE, 7f, 1f);
+            RenderManager.setAlpha(vg, 1f);
+        }
+
+        public void setGradient(int gradColorStart, int gradColorEnd) {
+            if (img) return;
+            this.gradColorEnd = gradColorEnd;
+            this.gradColorStart = gradColorStart;
+        }
+    }
+
+    static final class ColorBox extends BasicElement {
+        private OneColor color;
 
         public ColorBox(OneColor color) {
-            super(32, 32, false);
+            // this attempts to make the color hover-able
+            super(32, 32, new ColorPalette(color.getRGB(), color.toJavaColor().brighter().getRGB(), ColorUtils.setAlpha(color.getRGB(), (int) (color.getAlpha() * 0.8f))), true);
             this.color = color;
         }
 
         @Override
         public void draw(long vg, float x, float y, InputHandler inputHandler) {
-            RenderManager.drawRoundedRect(vg, x, y, 32, 32, toggled ? Colors.PRIMARY_600 : Colors.GRAY_300, 12f);
-            RenderManager.drawRoundedRect(vg, x + 2, y + 2, 28, 28, Colors.GRAY_800, 10f);
-            RenderManager.drawRoundedRect(vg, x + 4, y + 4, 24, 24, color.getRGB(), 8f);
-            update(x, y, inputHandler);
+            RenderManager.drawRoundedRect(vg, x, y, 32, 32, Colors.GRAY_900, 8f);
+            RenderManager.drawRoundedRect(vg, x, y, 32, 32, color.getRGB(), 8f);
+            super.update(x, y, inputHandler);
         }
 
         public OneColor getColor() {
@@ -512,6 +494,9 @@ public class ColorSelector {
         public void setColor(OneColor color) {
             this.color = color;
         }
+
+        public boolean isEmpty() {
+            return color.getRGB() == 0;
+        }
     }
 }
-

@@ -65,23 +65,30 @@ public class TextInputField extends BasicElement {
     protected ArrayList<String> wrappedText = null;
     private long clickTimeD1;
     private int lines = 1;
+    private final float radius;
 
-    public TextInputField(int width, int height, String defaultText, boolean multiLine, boolean password, SVG icon) {
+    public TextInputField(int width, int height, String defaultText, boolean multiLine, boolean password, SVG icon, float radius) {
         super(width, height, false);
         this.multiLine = multiLine;
         this.defaultText = defaultText;
         this.password = password;
         this.input = "";
         this.icon = icon;
+        this.radius = radius;
     }
 
     public TextInputField(int width, int height, String defaultText, boolean multiLine, boolean password) {
-        this(width, height, defaultText, multiLine, password, null);
+        this(width, height, defaultText, multiLine, password, null, 12);
     }
 
     public TextInputField(int width, int height, boolean centered, String defaultText) {
-        this(width, height, defaultText, false, false, null);
+        this(width, height, defaultText, false, false, null, 12);
         this.centered = centered;
+    }
+
+    public TextInputField(int width, int height, boolean centered, float radius) {
+        this(width, height, "", false, false, null, radius);
+        setCentered(centered);
     }
 
     public static boolean isAllowedCharacter(char character) {
@@ -128,12 +135,12 @@ public class TextInputField extends BasicElement {
         try {
             int colorOutline = errored ? Colors.ERROR_700 : Colors.GRAY_700;
             if (!toggled)
-                RenderManager.drawHollowRoundRect(vg, x, y, width - 0.5f, height - 0.5f, colorOutline, 12f, 2f);
+                RenderManager.drawHollowRoundRect(vg, x, y, width - 0.5f, height - 0.5f, colorOutline, radius, 2f);
             else {
                 RenderManager.setAlpha(vg, 0.15f);
-                RenderManager.drawRoundedRect(vg, x - 4, y - 4, width + 8, height + 8, errored ? Colors.ERROR_600 : Colors.PRIMARY_600, 16);
+                RenderManager.drawRoundedRect(vg, x - 4, y - 4, width + 8, height + 8, errored ? Colors.ERROR_600 : Colors.PRIMARY_600, radius + 4);
                 RenderManager.setAlpha(vg, 1f);
-                RenderManager.drawHollowRoundRect(vg, x, y, width - 0.5f, height - 0.5f, errored ? Colors.ERROR_600 : Colors.PRIMARY_600, 12f, 2f);
+                RenderManager.drawHollowRoundRect(vg, x, y, width - 0.5f, height - 0.5f, errored ? Colors.ERROR_600 : Colors.PRIMARY_600, radius, 2f);
             }
             Scissor scissor = ScissorManager.scissor(vg, x, y, width, height);
             super.update(x, y, inputHandler);

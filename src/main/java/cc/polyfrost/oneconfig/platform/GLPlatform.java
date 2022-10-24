@@ -40,4 +40,7 @@ public interface GLPlatform {
     float drawText(UMatrixStack matrixStack, String text, float x, float y, int color, boolean shadow);
 
     int getStringWidth(String text);
+
+
+    boolean isFrameBufferEnabled();
 }

@@ -38,11 +38,12 @@ import cc.polyfrost.oneconfig.renderer.font.Font;
 import cc.polyfrost.oneconfig.renderer.font.FontManager;
 import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.NetworkUtils;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 import org.lwjgl.nanovg.NVGColor;
 import org.lwjgl.nanovg.NVGPaint;
 import org.lwjgl.opengl.GL11;
 
-import java.util.Arrays;
 import java.util.function.LongConsumer;
 import java.util.regex.Pattern;
 
@@ -198,13 +199,14 @@ public final class RenderManager {
      * @param color  The first color of the gradient.
      * @param color2 The second color of the gradient.
      */
-    public static void drawGradientRect(long vg, float x, float y, float width, float height, int color, int color2) {
+    public static void drawGradientRect(long vg, float x, float y, float width, float height, int color, int color2, RenderManager.GradientDirection direction) {
         NVGPaint bg = NVGPaint.create();
         nvgBeginPath(vg);
         nvgRect(vg, x, y, width, height);
         NVGColor nvgColor = color(vg, color);
         NVGColor nvgColor2 = color(vg, color2);
-        nvgFillPaint(vg, nvgLinearGradient(vg, x, y, x, y + width, nvgColor, nvgColor2, bg));
+        final float[] pts = GradientDirection.getValues(x, y, width, height, direction);
+        nvgFillPaint(vg, nvgLinearGradient(vg, pts[0], pts[1], pts[2], pts[3], nvgColor, nvgColor2, bg));
         nvgFillPaint(vg, bg);
         nvgFill(vg);
         nvgColor.free();
@@ -223,13 +225,14 @@ public final class RenderManager {
      * @param color2 The second color of the gradient.
      * @param radius The corner radius.
      */
-    public static void drawGradientRoundedRect(long vg, float x, float y, float width, float height, int color, int color2, float radius) {
+    public static void drawGradientRoundedRect(long vg, float x, float y, float width, float height, int color, int color2, float radius, RenderManager.GradientDirection direction) {
         NVGPaint bg = NVGPaint.create();
         nvgBeginPath(vg);
         nvgRoundedRect(vg, x, y, width, height, radius);
         NVGColor nvgColor = color(vg, color);
         NVGColor nvgColor2 = color(vg, color2);
-        nvgFillPaint(vg, nvgLinearGradient(vg, x, y, x + width, y, nvgColor, nvgColor2, bg));
+        final float[] pts = GradientDirection.getValues(x, y, width, height, direction);
+        nvgFillPaint(vg, nvgLinearGradient(vg, pts[0], pts[1], pts[2], pts[3], nvgColor, nvgColor2, bg));
         nvgFill(vg);
         nvgColor.free();
         nvgColor2.free();
@@ -504,8 +507,7 @@ public final class RenderManager {
     }
 
     /**
-     * Draw a drop shadow.
-     *
+     * Draw a drop shadow. <br>
      * <a href="https://github.com/SpinyOwl/legui/blob/develop/LICENSE">Adapted from legui under MIT license</a>
      *
      * @param vg           The NanoVG context.
@@ -595,6 +597,16 @@ public final class RenderManager {
      */
     public static void resetTransform(long vg) {
         nvgResetTransform(vg);
+    }
+
+    /**
+     * Rotate the vg context.
+     * <b>NOTE: you need to set the origin point for this to work correctly!</b>
+     *
+     * @see cc.polyfrost.oneconfig.gui.elements.Dropdown#drawIcon(long, SVG, float, float, float, float, int)
+     */
+    public static void rotate(long vg, double degrees) {
+        nvgRotate(vg, (float) Math.toRadians(degrees));
     }
 
     /**
@@ -826,6 +838,58 @@ public final class RenderManager {
 
         public static TextType toType(int type) {
             return values()[type];
+        }
+    }
+
+    public enum GradientDirection {
+        /**
+         * Top to bottom
+         */
+        DOWN,
+        /**
+         * Bottom to top
+         */
+        UP,
+        /**
+         * Left to right
+         */
+        LEFT,
+        /**
+         * Right to left
+         */
+        RIGHT,
+        /**
+         * Top left to bottom right
+         */
+        DIAGONAL_DOWN,
+        /**
+         * Bottom right to top left
+         */
+        DIAGONAL_UP;
+
+        /**
+         * return the positions needed for the gradient to work, based on the given rectangle.
+         *
+         * @return float array of positions, in the order of sx, sy, ex, ey
+         */
+        @NotNull
+        @Contract(value = "_, _, _, _, _ -> new", pure = true)
+        public static float[] getValues(float x, float y, float width, float height, @NotNull GradientDirection direction) {
+            switch (direction) {
+                case DOWN:
+                default:
+                    return new float[]{x, y, x, y + height};
+                case UP:
+                    return new float[]{x, y + height, x, y};
+                case LEFT:
+                    return new float[]{x + width, y, x, y};
+                case RIGHT:
+                    return new float[]{x, y, x + width, y};
+                case DIAGONAL_DOWN:
+                    return new float[]{x, y, x + width, y + height};
+                case DIAGONAL_UP:
+                    return new float[]{x, y + height, x + width, y};
+            }
         }
     }
 }

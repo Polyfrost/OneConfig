@@ -103,4 +103,15 @@ public class GLPlatformImpl implements GLPlatform {
     public int getStringWidth(String text) {
         return UMinecraft.getFontRenderer().getStringWidth(text);
     }
+
+    @Override
+    public boolean isFrameBufferEnabled() {
+        // framebuffer is always available in modern MC (new opengl versions)
+
+        //#if MC<=11202
+        return net.minecraft.client.renderer.OpenGlHelper.isFramebufferEnabled();
+        //#else
+        //$$ return true;
+        //#endif
+    }
 }

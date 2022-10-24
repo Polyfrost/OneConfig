@@ -38,6 +38,7 @@ group = "cc.polyfrost"
 
 repositories {
     maven("https://repo.polyfrost.cc/releases")
+    maven("https://repo.spongepowered.org/repository/maven-public/")
 }
 
 val relocated = registerRelocationAttribute("relocate") {

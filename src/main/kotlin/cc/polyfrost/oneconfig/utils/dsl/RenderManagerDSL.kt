@@ -30,6 +30,7 @@ import cc.polyfrost.oneconfig.config.data.InfoType
 import cc.polyfrost.oneconfig.renderer.RenderManager
 import cc.polyfrost.oneconfig.renderer.font.Font
 import cc.polyfrost.oneconfig.renderer.Image
+import cc.polyfrost.oneconfig.renderer.RenderManager.GradientDirection
 import cc.polyfrost.oneconfig.renderer.SVG
 import cc.polyfrost.oneconfig.utils.InputHandler
 import cc.polyfrost.oneconfig.utils.color.ColorUtils
@@ -135,21 +136,21 @@ fun VG.drawRoundedRectVaried(
     radiusBL: Number
 ) = instance.drawRoundedRectVaried(x, y, width, height, color, radiusTL, radiusTR, radiusBR, radiusBL)
 
-fun Long.drawGradientRect(x: Number, y: Number, width: Number, height: Number, color1: Int, color2: Int) =
-    RenderManager.drawGradientRect(this, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat(), color1, color2)
+fun Long.drawGradientRect(x: Number, y: Number, width: Number, height: Number, color1: Int, color2: Int, direction: GradientDirection) =
+    RenderManager.drawGradientRect(this, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat(), color1, color2, direction)
 
-fun VG.drawGradientRect(x: Number, y: Number, width: Number, height: Number, color1: Int, color2: Int) =
-    instance.drawGradientRect(x, y, width, height, color1, color2)
+fun VG.drawGradientRect(x: Number, y: Number, width: Number, height: Number, color1: Int, color2: Int, direction: RenderManager.GradientDirection) =
+    instance.drawGradientRect(x, y, width, height, color1, color2, direction)
 
 fun Long.drawGradientRoundedRect(
-    x: Number, y: Number, width: Number, height: Number, color: Int, color2: Int, radius: Number
+    x: Number, y: Number, width: Number, height: Number, color: Int, color2: Int, radius: Number, direction: GradientDirection
 ) = RenderManager.drawGradientRoundedRect(
-    this, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat(), color, color2, radius.toFloat()
+    this, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat(), color, color2, radius.toFloat(), direction
 )
 
 fun VG.drawGradientRoundedRect(
-    x: Number, y: Number, width: Number, height: Number, color: Int, color2: Int, radius: Number
-) = instance.drawGradientRoundedRect(x, y, width, height, color, color2, radius)
+    x: Number, y: Number, width: Number, height: Number, color: Int, color2: Int, radius: Number, direction: GradientDirection
+) = instance.drawGradientRoundedRect(x, y, width, height, color, color2, radius, direction)
 
 
 fun Long.drawCircle(x: Number, y: Number, radius: Number, color: Int) =

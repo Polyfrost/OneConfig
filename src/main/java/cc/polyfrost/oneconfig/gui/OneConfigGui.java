@@ -28,7 +28,6 @@ package cc.polyfrost.oneconfig.gui;
 
 import cc.polyfrost.oneconfig.config.core.OneColor;
 import cc.polyfrost.oneconfig.gui.animations.Animation;
-import cc.polyfrost.oneconfig.gui.animations.EaseInOutQuad;
 import cc.polyfrost.oneconfig.gui.animations.EaseOutExpo;
 import cc.polyfrost.oneconfig.gui.elements.BasicElement;
 import cc.polyfrost.oneconfig.gui.elements.ColorSelector;
@@ -39,7 +38,8 @@ import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.internal.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.internal.config.Preferences;
-import cc.polyfrost.oneconfig.libs.universal.*;
+import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
+import cc.polyfrost.oneconfig.libs.universal.UResolution;
 import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
@@ -51,14 +51,13 @@ import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 import cc.polyfrost.oneconfig.utils.gui.OneUIScreen;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.lwjgl.nanovg.NanoVG;
 
 import java.util.ArrayList;
 
 public class OneConfigGui extends OneUIScreen {
     public static OneConfigGui INSTANCE;
     private final SideBar sideBar = new SideBar();
-    private final TextInputField textInputField = new TextInputField(248, 40, "Search...", false, false, SVGs.MAGNIFYING_GLASS_BOLD);
+    private final TextInputField textInputField = new TextInputField(248, 40, "Search...", false, false, SVGs.MAGNIFYING_GLASS_BOLD, 12);
     private final ArrayList<Page> previousPages = new ArrayList<>();
     private final ArrayList<Page> nextPages = new ArrayList<>();
     private final BasicElement backArrow = new BasicElement(40, 40, ColorPalette.TERTIARY, true);
@@ -89,8 +88,8 @@ public class OneConfigGui extends OneUIScreen {
             currentPage.parents.add(currentPage);
         }
         if (OneConfigConfig.australia) {
-            NanoVG.nvgTranslate(vg, UResolution.getWindowWidth(), UResolution.getWindowHeight());
-            NanoVG.nvgRotate(vg, (float) Math.toRadians(180));
+            RenderManager.translate(vg, UResolution.getWindowWidth(), UResolution.getWindowHeight());
+            RenderManager.rotate(vg, (float) Math.toRadians(180));
         }
         float scale = getScaleFactor();
         int x = (int) ((UResolution.getWindowWidth() - 1280 * scale) / 2f / scale);

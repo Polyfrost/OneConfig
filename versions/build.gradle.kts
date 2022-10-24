@@ -74,6 +74,7 @@ loom {
 
 repositories {
     maven("https://repo.polyfrost.cc/releases")
+    maven("https://repo.spongepowered.org/repository/maven-public/")
 }
 
 val relocatedCommonProject = registerRelocationAttribute("common-lwjgl") {

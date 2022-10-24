@@ -31,6 +31,7 @@ public class cc/polyfrost/oneconfig/platform/impl/GLPlatformImpl : cc/polyfrost/
 	public fun drawText (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;Ljava/lang/String;FFIZ)F
 	public fun enableStencil ()V
 	public fun getStringWidth (Ljava/lang/String;)I
+	public fun isFrameBufferEnabled ()Z
 }
 
 public class cc/polyfrost/oneconfig/platform/impl/GuiPlatformImpl : cc/polyfrost/oneconfig/platform/GuiPlatform {
