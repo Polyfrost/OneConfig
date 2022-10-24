@@ -35,10 +35,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.lang.reflect.Parameter;
+import java.lang.reflect.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -361,34 +358,54 @@ public class CommandManager {
                     method.invoke(parent);
                     return null;
                 }
-                if ((argsIn.length != method.getParameterCount()) && !method.getParameters()[method.getParameterCount() - 1].isAnnotationPresent(Greedy.class)) {
+                if ((argsIn.length != method.getParameterCount()) && (method.getParameterCount() == 0 || !method.getParameters()[method.getParameterCount() - 1].isAnnotationPresent(Greedy.class))) {
+                    // ok but what if... hear me out
+                    Method[] methods = method.getDeclaringClass().getDeclaredMethods();
+                    for (Method m : methods) {
+                        if (m == method) continue;
+                        if (!m.isAnnotationPresent(Main.class)) continue;
+                        if (m.getParameterCount() == 0) continue;
+                        if (m.getParameterCount() != argsIn.length) continue;
+
+                        try {
+                            return invokeWith(m, argsIn);
+                        } catch (ReflectiveOperationException ignored) {
+                        }
+                    }
+
                     return ChatColor.RED + "Incorrect number of parameters, expected " + method.getParameterCount() + " but got " + argsIn.length;
                 }
-                Object[] args = new Object[method.getParameterCount()];
-                Parameter[] parameters = method.getParameters();
-                int i = 0;
-                for (Parameter parameter : parameters) {
-                    try {
-                        if (i == args.length - 1 && parameter.isAnnotationPresent(Greedy.class)) {
-                            // I love streams
-                            args[i] = Arrays.stream(argsIn).skip(i).collect(Collectors.joining(" "));
-                        } else {
-                            args[i] = parsers.get(parameter.getType()).parse(argsIn[i]);
-                        }
-                    } catch (NumberFormatException ne) {
-                        return ChatColor.RED + "Error while parsing parameter '" + argsIn[i] + "': " + "Parameter should be a number!";
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        return ChatColor.RED + "Error while parsing parameter '" + argsIn[i] + "': " + e.getMessage();
-                    }
-                    i++;
-                }
-                method.invoke(parent, args);
-                return null;
+                return invokeWith(method, argsIn);
             } catch (Exception e) {
                 e.printStackTrace();
                 return ChatColor.RED + METHOD_RUN_ERROR.replace("@ROOT_COMMAND@", getName());
             }
+        }
+
+        private String invokeWith(Method method, String[] argsIn) throws InvocationTargetException, IllegalAccessException {
+            method.setAccessible(true);
+
+            Object[] args = new Object[method.getParameterCount()];
+            Parameter[] parameters = method.getParameters();
+            int i = 0;
+            for (Parameter parameter : parameters) {
+                try {
+                    if (i == args.length - 1 && parameter.isAnnotationPresent(Greedy.class)) {
+                        // I love streams
+                        args[i] = Arrays.stream(argsIn).skip(i).collect(Collectors.joining(" "));
+                    } else {
+                        args[i] = parsers.get(parameter.getType()).parse(argsIn[i]);
+                    }
+                } catch (NumberFormatException ne) {
+                    return ChatColor.RED + "Error while parsing parameter '" + argsIn[i] + "': " + "Parameter should be a number!";
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return ChatColor.RED + "Error while parsing parameter '" + argsIn[i] + "': " + e.getMessage();
+                }
+                i++;
+            }
+            method.invoke(parent, args);
+            return null;
         }
 
         String[] getAliases() {

@@ -140,7 +140,9 @@ public class PlatformCommandManagerImpl extends PlatformCommandManager {
                         return new String[]{command.getValue().invoke(command.getKey())};
                     }
                 }
-                return new String[]{root.getMetadata().chatColor() + NOT_FOUND_TEXT.replace("@ROOT_COMMAND@", root.getMetadata().value())};
+                //TODO: better fix lmao
+                return new String[] { root.mainMethod.invoke(args) };
+                //return new String[]{root.getMetadata().chatColor() + NOT_FOUND_TEXT.replace("@ROOT_COMMAND@", root.getMetadata().value())};
             }
 
             /**
