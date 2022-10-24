@@ -38,12 +38,15 @@ import cc.polyfrost.oneconfig.renderer.font.Font;
 import cc.polyfrost.oneconfig.renderer.font.FontManager;
 import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.NetworkUtils;
+import cc.polyfrost.oneconfig.utils.color.ColorUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.lwjgl.BufferUtils;
 import org.lwjgl.nanovg.NVGColor;
 import org.lwjgl.nanovg.NVGPaint;
 import org.lwjgl.opengl.GL11;
 
+import java.nio.ByteBuffer;
 import java.util.function.LongConsumer;
 import java.util.regex.Pattern;
 
@@ -54,6 +57,8 @@ import static org.lwjgl.nanovg.NanoVG.*;
  */
 public final class RenderManager {
     private static long vg = -1;
+    private static int[] readingPixels = null;
+    private static int[] readColors = new int[]{0};
 
     //nanovg
 
@@ -101,6 +106,28 @@ public final class RenderManager {
         nvgEndFrame(vg);
 
         GL11.glPopAttrib();
+
+        if(readingPixels != null) {
+            final int amount = readingPixels[2] * readingPixels[3];
+            readColors = new int[amount];
+            final ByteBuffer buf = BufferUtils.createByteBuffer(readingPixels[2] * readingPixels[3] * 4);
+            GL11.glReadPixels(readingPixels[0], readingPixels[1], readingPixels[2], readingPixels[3], GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, buf);
+            for(int i = 0; i < amount; i++) readColors[i] = ColorUtils.setAlpha(ColorUtils.getColor(buf.get(), buf.get(), buf.get(), buf.get()), 255);
+            readingPixels = null;
+        }
+    }
+
+    /**
+     * Reads pixel colors from the screen. <br>
+     * Due to the nature of how this works, this will <b>return the previous frame's data</b>, because the read operation has to be executed OUTSIDE the vg frame.
+     * @return the previous frame's data. For the first call, this method will return 0 (transparent).
+     * @implNote The current NanoVG implementation means this method is static abuse. I'm sorry. Will be fixed with PolyUI update.
+     */
+    public static int[] readPixels(int x, int y, int width, int height) {
+        readingPixels = new int[]{x, y, width, height};
+        final int[] colors = readColors;
+        readColors = new int[]{0};
+        return colors;
     }
 
     /**

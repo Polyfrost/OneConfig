@@ -1301,6 +1301,7 @@ public final class cc/polyfrost/oneconfig/renderer/RenderManager {
 	public static fun fillNVGColorWithRGBA (FFFFLorg/lwjgl/nanovg/NVGColor;)V
 	public static fun getTextWidth (JLjava/lang/String;FLcc/polyfrost/oneconfig/renderer/font/Font;)F
 	public static fun getWrappedStringHeight (JLjava/lang/String;FFFLcc/polyfrost/oneconfig/renderer/font/Font;)F
+	public static fun readPixels (IIII)[I
 	public static fun resetTransform (J)V
 	public static fun rotate (JD)V
 	public static fun scale (JFF)V
@@ -1411,6 +1412,8 @@ public class cc/polyfrost/oneconfig/utils/InputHandler {
 	public fun <init> ()V
 	public fun blockAllInput ()Lcc/polyfrost/oneconfig/renderer/scissor/Scissor;
 	public fun blockInputArea (FFFF)Lcc/polyfrost/oneconfig/renderer/scissor/Scissor;
+	public fun getXScaleFactor ()D
+	public fun getYScaleFactor ()D
 	public fun isAreaClicked (FFFF)Z
 	public fun isAreaClicked (FFFFZ)Z
 	public fun isAreaHovered (FFFF)Z

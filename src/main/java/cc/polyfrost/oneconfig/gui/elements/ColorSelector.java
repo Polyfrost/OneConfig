@@ -44,6 +44,9 @@ import org.jetbrains.annotations.NotNull;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.File;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
@@ -114,7 +117,6 @@ public class ColorSelector {
         this.hasAlpha = hasAlpha;
         this.x = mouseX - width / 2;
         this.y = Math.max(0, mouseY - height);
-        // it looks nice okay? streams are cool
         faveBtn.setToggleable(true);
         picker = new SolidColorPicker();
         colorInput = new HexInput();
@@ -124,14 +126,9 @@ public class ColorSelector {
         if (inputScissor != null) inputHandler.stopBlock(inputScissor);
         if (pickerBtn.toggled) {
             inputHandler.blockAllInput();
-            // net.minecraft.util.ScreenShotHelper
-            final ByteBuffer buf = BufferUtils.createByteBuffer(4);
-            // TODO this segfaults lmao
-            // if(Platform.getGLPlatform().isFrameBufferEnabled()) GL11.glGetTexImage(GL11.GL_TEXTURE_2D, 0, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, buf);
-            GL11.glReadPixels((int) Platform.getMousePlatform().getMouseY(), (int) Platform.getMousePlatform().getMouseY(), 1, 1, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, buf);
-            final int color = ColorUtils.getColor(buf.get(), buf.get(), buf.get(), buf.get());
-            RenderManager.drawRoundedRect(vg, inputHandler.mouseX() - 16, inputHandler.mouseY() - 32, 32, 32, -1, 16f);
-            RenderManager.drawRoundedRect(vg, inputHandler.mouseX() - 15, inputHandler.mouseY() - 31, 30, 30, color, 15f);
+            final int color = RenderManager.readPixels((int) (inputHandler.mouseX()), (int) ((Platform.getMousePlatform().getMouseY() / inputHandler.getYScaleFactor())),1,1)[0];
+            RenderManager.drawRoundedRect(vg, inputHandler.mouseX() - 16, inputHandler.mouseY() - 33, 32, 32, -1, 16f);
+            RenderManager.drawRoundedRect(vg, inputHandler.mouseX() - 15, inputHandler.mouseY() - 32, 30, 30, color, 15f);
             if (inputHandler.isClicked(true)) {
                 __setColor(new OneColor(color));
                 pickerBtn.toggled = false;
