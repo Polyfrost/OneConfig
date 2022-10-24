@@ -220,7 +220,8 @@ public class ColorSelector {
 
     public static void assignRecentColor(OneColor color) {
         if (OneConfigConfig.recentColors.size() == 6) {
-            OneConfigConfig.recentColors.set(0, color);
+            OneConfigConfig.recentColors.remove(5);
+            OneConfigConfig.recentColors.add(0, color);
         } else OneConfigConfig.recentColors.add(color);
     }
 
