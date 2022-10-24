@@ -50,7 +50,6 @@ import cc.polyfrost.oneconfig.utils.hypixel.HypixelUtils;
 import cc.polyfrost.oneconfig.utils.Notifications;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
-import net.minecraftforge.fml.common.versioning.ArtifactVersion;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //#if FORGE==1
@@ -58,6 +57,7 @@ import net.minecraftforge.fml.common.ModContainer;
 //#endif
 
 //#if MC<=11202
+import net.minecraftforge.fml.common.versioning.ArtifactVersion;
 import net.minecraftforge.fml.client.FMLClientHandler;
 import net.minecraftforge.fml.client.IModGuiFactory;
 import net.minecraftforge.fml.common.Loader;
