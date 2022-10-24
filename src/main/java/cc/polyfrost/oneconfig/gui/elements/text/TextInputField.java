@@ -20,37 +20,49 @@ public class TextInputField extends BasicElement {
     public static final int UP_LINE = Integer.MAX_VALUE;
     public static final int MOVE_END = Integer.MAX_VALUE - 1;
     public static final int MOVE_START = Integer.MIN_VALUE + 1;
-    private final int MAX_WIDTH, MAX_LINES;
     private static final int LINE_HEIGHT = 20;
     /**
      * <a href="https://https://www.cl.cam.ac.uk/~mgk25/ucs/examples/UTF-8-test.txt">UTF-8 Stress Test</a> Character 2.3.1 (used because it's never going to be used in theory)
      */
     private static final char NEW_LINE = '\uD7FF';
+    private final int maxWidth;
+    private final int maxLines;
     protected final String defaultText;
     protected final SVG icon;
-    protected final boolean centered, password;
-    protected boolean mouseWasDown, dragging, errored, shown;
+    protected final boolean centered;
+    protected final boolean password;
+    protected boolean mouseWasDown;
+    protected boolean dragging;
+    protected boolean errored;
+    protected boolean shown;
     protected EaseInOutQuad animation;
-    protected String input = "", renderCache;
+    protected String input = "";
+    protected String renderCache;
     protected Selection selection;
-    protected int caretPos, requestedLines = 1;
-    private long vg, clickTime, clickTime2;
+    protected int caretPos;
+    protected int requestedLines = 1;
+    private long vg;
+    protected long clickTime;
+    protected long clickTime2;
     private Point2D.Float textStart;
-    private float x, y;
+    private float x;
+    private float y;
 
     public TextInputField(int width, int maxHeight, String defaultText, boolean password, boolean centered, SVG icon) {
         super(width, maxHeight, false);
         if (maxHeight < LINE_HEIGHT + 12) {
-            MAX_LINES = 1;
+            maxLines = 1;
             System.err.println("Minimum height for a text box is 32px, setting to 32px");
             height = 32;
-        } else MAX_LINES = maxHeight / LINE_HEIGHT;
-        this.animation = new EaseInOutQuad(200, 0, MAX_LINES * LINE_HEIGHT, false);
+        } else {
+            maxLines = maxHeight / LINE_HEIGHT;
+        }
+        this.animation = new EaseInOutQuad(200, 0, maxLines * LINE_HEIGHT, false);
         this.defaultText = defaultText;
         this.password = password;
         this.icon = icon;
         this.centered = centered;
-        this.MAX_WIDTH = width - (icon != null ? 32 : 12) - (password ? 24 : 0) - (centered ? 12 : 0);
+        this.maxWidth = width - (icon != null ? 32 : 12) - (password ? 24 : 0) - (centered ? 12 : 0);
     }
 
     public TextInputField(int width, int maxHeight, boolean centered) {
@@ -69,7 +81,7 @@ public class TextInputField extends BasicElement {
     public void draw(long vg, float x, float y) {
         this.vg = vg;
         if (textStart == null || this.x != x || this.y != y) {
-            textStart = new Point2D.Float(icon != null ? x + 36 : x + 12, MAX_LINES != 1 ? y + 20 : y + height / 2f + 1);
+            textStart = new Point2D.Float(icon != null ? x + 36 : x + 12, maxLines != 1 ? y + 20 : y + height / 2f + 1);
         }
         this.x = x;
         this.y = y;
@@ -100,18 +112,17 @@ public class TextInputField extends BasicElement {
         }
         if (password) {
             final SVG icon = shown ? SVGs.EYE_OFF : SVGs.EYE;
-            boolean hovered = InputUtils.isAreaHovered(x + MAX_WIDTH + 18, y + height / 2f - 9f, 18, 18);
+            boolean hovered = InputUtils.isAreaHovered(x + maxWidth + 18, y + height / 2f - 9f, 18, 18);
             int eyeColor = hovered ? Colors.WHITE : Colors.WHITE_80;
             if (hovered && InputUtils.isClicked()) {
                 shown = !shown;
                 invalidateAll();
             }
             if (hovered && Platform.getMousePlatform().isButtonDown(0)) RenderManager.setAlpha(vg, 0.5f);
-            RenderManager.drawSvg(vg, icon, x + MAX_WIDTH + 20, y + height / 2f - 9f, 18, 18, eyeColor);
+            RenderManager.drawSvg(vg, icon, x + maxWidth + 20, y + height / 2f - 9f, 18, 18, eyeColor);
         }
 
-
-        if (input.equals("")) {
+        if (input.equals("") && toggled) {
             // draw empty stuff
             if (defaultText != null && !defaultText.isEmpty()) {
                 if (centered) {
@@ -167,8 +178,6 @@ public class TextInputField extends BasicElement {
             textY += LINE_HEIGHT + 4;
             startIndex += line.length();
         }
-
-
     }
 
     @Override
@@ -267,6 +276,11 @@ public class TextInputField extends BasicElement {
         if (c == NEW_LINE) {
             throw new IllegalArgumentException("funny one mate");
         }
+        if (key == UKeyboard.KEY_ESCAPE) {
+            // TODO: fix this at a higher level
+            this.toggled = false;
+            return;
+        }
         try {
             if (toggled) {
                 // COPYING
@@ -277,7 +291,7 @@ public class TextInputField extends BasicElement {
                     return;
                 }
                 if (UKeyboard.isKeyComboCtrlV(key) || key == 0xD2) {
-                    if (requestedLines > MAX_LINES) return;
+                    if (requestedLines > maxLines) return;
                     String clip = IOUtils.getStringFromClipboard();
                     if (clip != null) {
                         addChars(caretPos, clip);
@@ -338,7 +352,7 @@ public class TextInputField extends BasicElement {
                     return;
                 }
                 if (key == UKeyboard.KEY_ENTER) {
-                    if (requestedLines == MAX_LINES) return;
+                    if (requestedLines == maxLines) return;
                     addChars(caretPos, NEW_LINE);
                     return;
                 }
@@ -365,7 +379,7 @@ public class TextInputField extends BasicElement {
 
                 // ADDING
                 if (key == UKeyboard.KEY_TAB) {
-                    if (requestedLines > MAX_LINES) return;
+                    if (requestedLines > maxLines) return;
                     addChars(caretPos, "    ");
                     return;
                 }
@@ -374,7 +388,7 @@ public class TextInputField extends BasicElement {
                         removeSequence(selection.indexStart, selection.indexEnd);
                         selection = null;
                     }
-                    if (requestedLines > MAX_LINES) return;
+                    if (requestedLines > maxLines) return;
                     addChars(caretPos, c);
                 }
             }
@@ -509,7 +523,7 @@ public class TextInputField extends BasicElement {
 
     public String getUnformattedRenderText() {
         if (renderCache == null) {
-            if (MAX_LINES == 1) {
+            if (maxLines == 1) {
                 renderCache = input;
                 if (!shown && password) {
                     StringBuilder s1 = new StringBuilder();
@@ -526,23 +540,23 @@ public class TextInputField extends BasicElement {
             int lineAmount = 1;
             for (String word : words) {
                 width += getTextWidth(word + " ");
-                if (getTextWidth(word) >= MAX_WIDTH) {
+                if (getTextWidth(word) >= maxWidth) {
                     for (char c : word.toCharArray()) {
                         output.append(c);
                         width += getTextWidth(String.valueOf(c));
-                        if (width >= MAX_WIDTH) {
+                        if (width >= maxWidth) {
                             output.append(NEW_LINE);
                             width = 0;
                             lineAmount++;
                         }
                     }
-                } else if (width >= MAX_WIDTH) {
+                } else if (width >= maxWidth) {
                     width = 0;
                     output.append(NEW_LINE);
                     width += getTextWidth(word + " ");
                     lineAmount++;
-                    if (lineAmount >= MAX_LINES) {
-                        requestedLines = MAX_LINES;
+                    if (lineAmount >= maxLines) {
+                        requestedLines = maxLines;
                         break;
                     }
                 }
