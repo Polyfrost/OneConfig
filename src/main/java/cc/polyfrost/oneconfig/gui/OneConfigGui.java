@@ -29,6 +29,7 @@ package cc.polyfrost.oneconfig.gui;
 import cc.polyfrost.oneconfig.config.core.OneColor;
 import cc.polyfrost.oneconfig.gui.animations.Animation;
 import cc.polyfrost.oneconfig.gui.animations.EaseInOutQuad;
+import cc.polyfrost.oneconfig.gui.animations.EaseOutExpo;
 import cc.polyfrost.oneconfig.gui.elements.BasicElement;
 import cc.polyfrost.oneconfig.gui.elements.ColorSelector;
 import cc.polyfrost.oneconfig.gui.elements.text.TextInputField;
@@ -60,8 +61,8 @@ public class OneConfigGui extends OneUIScreen {
     private final TextInputField textInputField = new TextInputField(248, 40, "Search...", false, false, SVGs.MAGNIFYING_GLASS_BOLD);
     private final ArrayList<Page> previousPages = new ArrayList<>();
     private final ArrayList<Page> nextPages = new ArrayList<>();
-    private final BasicElement backArrow = new BasicElement(40, 40, new ColorPalette(Colors.GRAY_700, Colors.GRAY_500, Colors.GRAY_500_80), true);
-    private final BasicElement forwardArrow = new BasicElement(40, 40, new ColorPalette(Colors.GRAY_700, Colors.GRAY_500, Colors.GRAY_500_80), true);
+    private final BasicElement backArrow = new BasicElement(40, 40, ColorPalette.TERTIARY, true);
+    private final BasicElement forwardArrow = new BasicElement(40, 40, ColorPalette.TERTIARY, true);
     public ColorSelector currentColorSelector;
     public boolean allowClose = true;
     protected Page currentPage;
@@ -83,7 +84,6 @@ public class OneConfigGui extends OneUIScreen {
 
     @Override
     public void draw(long vg, float partialTicks, InputHandler inputHandler) {
-        long start = System.nanoTime();
         if (currentPage == null) {
             currentPage = new ModsPage();
             currentPage.parents.add(currentPage);
@@ -98,7 +98,7 @@ public class OneConfigGui extends OneUIScreen {
         RenderManager.scale(vg, scale, scale);
         inputHandler.scale(scale, scale);
 
-        RenderManager.drawDropShadow(vg, x, y, 1280, 800, 32, 0, 20);
+        RenderManager.drawDropShadow(vg, x, y, 1280, 800, 64, 0, 20);
         RenderManager.drawRoundedRect(vg, x + 224, y, 1056, 800, Colors.GRAY_800, 20f);
         RenderManager.drawRoundedRect(vg, x, y, 244, 800, Colors.GRAY_800_95, 20f);
         RenderManager.drawRect(vg, x + 224, y, 20, 800, Colors.GRAY_800);
@@ -107,14 +107,12 @@ public class OneConfigGui extends OneUIScreen {
         RenderManager.drawLine(vg, x + 224, y + 72, x + 1280, y + 72, 1, Colors.GRAY_700);
         RenderManager.drawLine(vg, x + 224, y, x + 222, y + 800, 1, Colors.GRAY_700);
 
-        RenderManager.drawSvg(vg, SVGs.ONECONFIG, x + 19, y + 19, 42, 42);
-        RenderManager.drawText(vg, "OneConfig", x + 69, y + 32, -1, 18f, Fonts.BOLD);        // added half line height to center text
-        RenderManager.drawText(vg, "By Polyfrost", x + 69, y + 51, -1, 12f, Fonts.REGULAR);
+        RenderManager.drawSvg(vg, SVGs.ONECONFIG_FULL_DARK, x + 33f, y + 22f, 158f, 34f);
 
         textInputField.draw(vg, x + 1020, y + 16, inputHandler);
         sideBar.draw(vg, x, y, inputHandler);
-        backArrow.draw(vg, x + 240, y + 16, inputHandler);
-        forwardArrow.draw(vg, x + 288, y + 16, inputHandler);
+        backArrow.update(x + 240, y + 16, inputHandler);
+        forwardArrow.update(x + 280, y + 16, inputHandler);
 
         if (previousPages.size() == 0) {
             backArrow.disable(true);
@@ -124,7 +122,7 @@ public class OneConfigGui extends OneUIScreen {
             if (!backArrow.isHovered() || Platform.getMousePlatform().isButtonDown(0))
                 RenderManager.setAlpha(vg, 0.8f);
         }
-        RenderManager.drawSvg(vg, SVGs.CARET_LEFT, x + 246, y + 22, 28, 28);
+        RenderManager.drawSvg(vg, SVGs.ARROW_LEFT, x + 250, y + 26, 20, 20, backArrow.currentColor);
         RenderManager.setAlpha(vg, 1f);
         if (nextPages.size() == 0) {
             forwardArrow.disable(true);
@@ -134,7 +132,7 @@ public class OneConfigGui extends OneUIScreen {
             if (!forwardArrow.isHovered() || Platform.getMousePlatform().isButtonDown(0))
                 RenderManager.setAlpha(vg, 0.8f);
         }
-        RenderManager.drawSvg(vg, SVGs.CARET_RIGHT, x + 294, y + 22, 28, 28);
+        RenderManager.drawSvg(vg, SVGs.ARROW_RIGHT, x + 290, y + 26, 20, 20, forwardArrow.currentColor);
         RenderManager.setAlpha(vg, 1f);
 
         if (backArrow.isClicked() && previousPages.size() > 0) {
@@ -147,7 +145,7 @@ public class OneConfigGui extends OneUIScreen {
         } else if (forwardArrow.isClicked() && nextPages.size() > 0) {
             try {
                 previousPages.add(0, currentPage);
-                openPage(nextPages.get(0), new EaseInOutQuad(300, 224, 2128, true), false);
+                openPage(nextPages.get(0), new EaseOutExpo(300, 224, 2128, true), false);
                 nextPages.remove(0);
             } catch (Exception ignored) {
             }
@@ -173,7 +171,7 @@ public class OneConfigGui extends OneUIScreen {
         ScissorManager.clearScissors(vg);
         inputHandler.stopBlock(blockedClicks);
 
-        float breadcrumbX = x + 352;
+        float breadcrumbX = x + 336;
         for (int i = 0; i < currentPage.parents.size(); i++) {
             String title = currentPage.parents.get(i).getTitle();
             float width = RenderManager.getTextWidth(vg, title, 24f, Fonts.SEMIBOLD);
@@ -188,9 +186,6 @@ public class OneConfigGui extends OneUIScreen {
             breadcrumbX += width + 32;
         }
 
-        long end = System.nanoTime() - start;
-        String s = (" draw: " + end / 1000000f + "ms");
-        RenderManager.drawText(vg, s, x + 1170, y + 792, Colors.GRAY_300, 10f, Fonts.MEDIUM);
         if (currentColorSelector != null) {
             currentColorSelector.draw(vg);
         }
@@ -215,7 +210,7 @@ public class OneConfigGui extends OneUIScreen {
     }
 
     public void openPage(@NotNull Page page, boolean addToPrevious) {
-        openPage(page, new EaseInOutQuad(300, 224, 2128, false), addToPrevious);
+        openPage(page, new EaseOutExpo(300, 224, 2128, false), addToPrevious);
     }
 
     public void openPage(@NotNull Page page, Animation animation, boolean addToPrevious) {

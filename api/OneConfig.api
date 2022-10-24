@@ -293,6 +293,7 @@ public abstract class cc/polyfrost/oneconfig/config/elements/BasicOption {
 	public final field description Ljava/lang/String;
 	protected final field field Ljava/lang/reflect/Field;
 	public final field name Ljava/lang/String;
+	protected field nameColor I
 	protected field parent Ljava/lang/Object;
 	public final field size I
 	public final field subcategory Ljava/lang/String;
@@ -301,11 +302,12 @@ public abstract class cc/polyfrost/oneconfig/config/elements/BasicOption {
 	public fun addHideCondition (Ljava/util/function/Supplier;)V
 	public fun addListener (Ljava/lang/Runnable;)V
 	public abstract fun draw (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
-	public fun drawDescription (JIIILcc/polyfrost/oneconfig/utils/InputHandler;)V
+	public fun drawDescription (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
 	public fun drawLast (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
 	public fun get ()Ljava/lang/Object;
 	public fun getField ()Ljava/lang/reflect/Field;
 	public abstract fun getHeight ()I
+	protected fun getNameX (I)F
 	public fun getParent ()Ljava/lang/Object;
 	public fun isEnabled ()Z
 	public fun isHidden ()Z
@@ -607,6 +609,16 @@ public class cc/polyfrost/oneconfig/gui/animations/EaseInOutQuart : cc/polyfrost
 	protected fun animate (F)F
 }
 
+public class cc/polyfrost/oneconfig/gui/animations/EaseOutBump : cc/polyfrost/oneconfig/gui/animations/Animation {
+	public fun <init> (IFFZ)V
+	protected fun animate (F)F
+}
+
+public class cc/polyfrost/oneconfig/gui/animations/EaseOutExpo : cc/polyfrost/oneconfig/gui/animations/Animation {
+	public fun <init> (IFFZ)V
+	protected fun animate (F)F
+}
+
 public class cc/polyfrost/oneconfig/gui/animations/EaseOutQuad : cc/polyfrost/oneconfig/gui/animations/Animation {
 	public fun <init> (IFFZ)V
 	protected fun animate (F)F
@@ -728,6 +740,7 @@ public class cc/polyfrost/oneconfig/gui/elements/config/ConfigCheckbox : cc/poly
 	public static fun create (Ljava/lang/reflect/Field;Ljava/lang/Object;)Lcc/polyfrost/oneconfig/gui/elements/config/ConfigCheckbox;
 	public fun draw (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
 	public fun getHeight ()I
+	protected fun getNameX (I)F
 }
 
 public class cc/polyfrost/oneconfig/gui/elements/config/ConfigColorElement : cc/polyfrost/oneconfig/config/elements/BasicOption {
@@ -799,6 +812,7 @@ public class cc/polyfrost/oneconfig/gui/elements/config/ConfigSwitch : cc/polyfr
 	public static fun create (Ljava/lang/reflect/Field;Ljava/lang/Object;)Lcc/polyfrost/oneconfig/gui/elements/config/ConfigSwitch;
 	public fun draw (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
 	public fun getHeight ()I
+	protected fun getNameX (I)F
 }
 
 public class cc/polyfrost/oneconfig/gui/elements/config/ConfigTextBox : cc/polyfrost/oneconfig/config/elements/BasicOption {
@@ -1337,6 +1351,8 @@ public class cc/polyfrost/oneconfig/renderer/scissor/ScissorManager {
 	public fun <init> ()V
 	public static fun clearScissors (J)V
 	public static fun resetScissor (JLcc/polyfrost/oneconfig/renderer/scissor/Scissor;)V
+	public static fun restore (J)V
+	public static fun save ()V
 	public static fun scissor (JFFFF)Lcc/polyfrost/oneconfig/renderer/scissor/Scissor;
 }
 
@@ -1700,12 +1716,6 @@ public final class cc/polyfrost/oneconfig/utils/dsl/RenderManagerDSLKt {
 	public static final fun setAlpha (Lcc/polyfrost/oneconfig/utils/dsl/VG;F)V
 	public static final fun translate (JFF)V
 	public static final fun translate (Lcc/polyfrost/oneconfig/utils/dsl/VG;FF)V
-}
-
-public final class cc/polyfrost/oneconfig/utils/dsl/TextUtilsDSLKt {
-	public static final fun wrap (JLjava/lang/String;FLjava/lang/Number;Lcc/polyfrost/oneconfig/renderer/font/Font;)Ljava/util/ArrayList;
-	public static final fun wrap (Lcc/polyfrost/oneconfig/utils/dsl/VG;Ljava/lang/String;FLjava/lang/Number;Lcc/polyfrost/oneconfig/renderer/font/Font;)Ljava/util/ArrayList;
-	public static final fun wrap (Ljava/lang/String;JFLjava/lang/Number;Lcc/polyfrost/oneconfig/renderer/font/Font;)Ljava/util/ArrayList;
 }
 
 public final class cc/polyfrost/oneconfig/utils/dsl/TickDelayDSLKt {

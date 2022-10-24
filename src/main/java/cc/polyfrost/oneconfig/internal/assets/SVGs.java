@@ -36,8 +36,7 @@ import cc.polyfrost.oneconfig.renderer.SVG;
  * @see AssetLoader
  */
 public class SVGs {
-    public static final SVG ONECONFIG = new SVG("/assets/oneconfig/icons/OneConfig.svg");
-    public static final SVG ONECONFIG_OFF = new SVG("/assets/oneconfig/icons/OneConfigOff.svg");
+    public static final SVG ONECONFIG_FULL_DARK = new SVG("/assets/oneconfig/icons/OneConfigFullDark.svg");
     public static final SVG COPYRIGHT_FILL = new SVG("/assets/oneconfig/icons/CopyrightFill.svg");
     public static final SVG APERTURE_FILL = new SVG("/assets/oneconfig/icons/ApertureFill.svg");
     public static final SVG ARROWS_CLOCKWISE_BOLD = new SVG("/assets/oneconfig/icons/ArrowsClockwiseBold.svg");
@@ -51,6 +50,8 @@ public class SVGs {
     public static final SVG X_CIRCLE_BOLD = new SVG("/assets/oneconfig/icons/XCircleBold.svg");
     public static final SVG CARET_LEFT = new SVG("/assets/oneconfig/icons/CaretLeftBold.svg");
     public static final SVG CARET_RIGHT = new SVG("/assets/oneconfig/icons/CaretRightBold.svg");
+    public static final SVG ARROW_LEFT = new SVG("/assets/oneconfig/icons/ArrowLeft.svg");
+    public static final SVG ARROW_RIGHT = new SVG("/assets/oneconfig/icons/ArrowRight.svg");
     public static final SVG INFO_ARROW = new SVG("/assets/oneconfig/icons/InfoArrow.svg");
 
     // OLD ICONS

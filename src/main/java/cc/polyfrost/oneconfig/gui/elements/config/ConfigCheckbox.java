@@ -81,7 +81,7 @@ public class ConfigCheckbox extends BasicOption {
         }
         float percentOn = animation.get();
 
-        RenderManager.drawText(vg, name, x + 32, y + 17, Colors.WHITE_90, 14f, Fonts.MEDIUM);
+        RenderManager.drawText(vg, name, x + 32, y + 17, nameColor, 14f, Fonts.MEDIUM);
 
         RenderManager.drawRoundedRect(vg, x, y + 4, 24, 24, color.getColor(hover, hover && Platform.getMousePlatform().isButtonDown(0)), 6f);
         RenderManager.drawHollowRoundRect(vg, x, y + 4, 23.5f, 23.5f, Colors.GRAY_300, 6f, 1f);        // the 0.5f is to make it look better ok
@@ -92,6 +92,11 @@ public class ConfigCheckbox extends BasicOption {
         if (toggled && hover)
             RenderManager.drawHollowRoundRect(vg, x - 1, y + 3, 24, 24, Colors.PRIMARY_600, 6f, 2f);
         RenderManager.setAlpha(vg, 1f);
+    }
+
+    @Override
+    protected float getNameX(int x) {
+        return x + 32;
     }
 
     @Override

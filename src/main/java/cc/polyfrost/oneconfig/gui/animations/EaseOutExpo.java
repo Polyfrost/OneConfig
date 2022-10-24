@@ -24,28 +24,23 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.renderer;
+package cc.polyfrost.oneconfig.gui.animations;
 
-public class NVGAsset {
-    private final int image;
-    private final int width;
-    private final int height;
+public class EaseOutExpo extends Animation {
 
-    protected NVGAsset(int image, int width, int height) {
-        this.image = image;
-        this.width = width;
-        this.height = height;
+    /**
+     * @param duration The duration of the animation
+     * @param start    The start of the animation
+     * @param end      The end of the animation
+     * @param reverse  Reverse the animation
+     */
+    public EaseOutExpo(int duration, float start, float end, boolean reverse) {
+        super(duration, start, end, reverse);
     }
 
-    public int getImage() {
-        return image;
-    }
-
-    public int getWidth() {
-        return width;
-    }
-
-    public int getHeight() {
-        return height;
+    // Courtesy of https://easings.net/
+    @Override
+    protected float animate(float x) {
+        return x == 1 ? 1 : 1 - (float) Math.pow(2, -10 * x);
     }
 }
