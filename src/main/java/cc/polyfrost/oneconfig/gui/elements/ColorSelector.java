@@ -41,13 +41,7 @@ import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 import cc.polyfrost.oneconfig.utils.color.ColorUtils;
 import org.jetbrains.annotations.NotNull;
-import org.lwjgl.BufferUtils;
-import org.lwjgl.opengl.GL11;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
 public class ColorSelector {
@@ -126,7 +120,7 @@ public class ColorSelector {
         if (inputScissor != null) inputHandler.stopBlock(inputScissor);
         if (pickerBtn.toggled) {
             inputHandler.blockAllInput();
-            final int color = RenderManager.readPixels((int) (inputHandler.mouseX()), (int) ((Platform.getMousePlatform().getMouseY() / inputHandler.getYScaleFactor())),1,1)[0];
+            final int color = RenderManager.readPixels((int) (inputHandler.mouseX()), (int) ((Platform.getMousePlatform().getMouseY() / inputHandler.getYScaleFactor())), 1, 1)[0];
             RenderManager.drawRoundedRect(vg, inputHandler.mouseX() - 16, inputHandler.mouseY() - 33, 32, 32, -1, 16f);
             RenderManager.drawRoundedRect(vg, inputHandler.mouseX() - 15, inputHandler.mouseY() - 32, 30, 30, color, 15f);
             if (inputHandler.isClicked(true)) {

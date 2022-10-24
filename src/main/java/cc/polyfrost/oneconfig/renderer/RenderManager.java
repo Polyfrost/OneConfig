@@ -107,12 +107,13 @@ public final class RenderManager {
 
         GL11.glPopAttrib();
 
-        if(readingPixels != null) {
+        if (readingPixels != null) {
             final int amount = readingPixels[2] * readingPixels[3];
             readColors = new int[amount];
             final ByteBuffer buf = BufferUtils.createByteBuffer(readingPixels[2] * readingPixels[3] * 4);
             GL11.glReadPixels(readingPixels[0], readingPixels[1], readingPixels[2], readingPixels[3], GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, buf);
-            for(int i = 0; i < amount; i++) readColors[i] = ColorUtils.setAlpha(ColorUtils.getColor(buf.get(), buf.get(), buf.get(), buf.get()), 255);
+            for (int i = 0; i < amount; i++)
+                readColors[i] = ColorUtils.getColor(buf.get(), buf.get(), buf.get(), buf.get());
             readingPixels = null;
         }
     }
@@ -120,6 +121,7 @@ public final class RenderManager {
     /**
      * Reads pixel colors from the screen. <br>
      * Due to the nature of how this works, this will <b>return the previous frame's data</b>, because the read operation has to be executed OUTSIDE the vg frame.
+     *
      * @return the previous frame's data. For the first call, this method will return 0 (transparent).
      * @implNote The current NanoVG implementation means this method is static abuse. I'm sorry. Will be fixed with PolyUI update.
      */
