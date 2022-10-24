@@ -35,6 +35,7 @@ Polyfrost acts as the specified proxy when deciding whether future versions of t
 
 <details>
   <summary>Supporting Projects</summary>
+
 ![YourKitLogo|50](https://www.yourkit.com/images/yklogo.png)
 
 YourKit supports open source projects with innovative and intelligent tools
