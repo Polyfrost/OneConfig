@@ -76,7 +76,7 @@ dependencies {
     compileOnly("org.ow2.asm:asm-debug-all:5.0.3")
     compileOnly("org.apache.commons:commons-lang3:3.3.2")
 
-    compileOnly("gg.essential:vigilance-1.8.9-forge:258") {
+    compileOnly("gg.essential:vigilance-1.8.9-forge:262") {
         attributes { attribute(common, true) }
         isTransitive = false
     }
