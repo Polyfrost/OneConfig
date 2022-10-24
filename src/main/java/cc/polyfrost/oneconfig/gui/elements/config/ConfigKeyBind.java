@@ -95,7 +95,7 @@ public class ConfigKeyBind extends BasicOption {
         setKeyBind(keyBind);
     }
 
-    private OneKeyBind getKeyBind() {
+    protected OneKeyBind getKeyBind() {
         OneKeyBind keyBind = new OneKeyBind();
         try {
             field.setAccessible(true);
@@ -105,7 +105,7 @@ public class ConfigKeyBind extends BasicOption {
         return keyBind;
     }
 
-    private void setKeyBind(OneKeyBind keyBind) {
+    protected void setKeyBind(OneKeyBind keyBind) {
         try {
             set(keyBind);
         } catch (IllegalAccessException ignored) {
