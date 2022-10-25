@@ -151,21 +151,24 @@ public class OneConfig {
 
     private static void handleForgeCommand(ModContainer mod) {
         for (Mod configMod : ConfigCore.mods) {
-            final String configModName = configMod.name.toLowerCase(Locale.ENGLISH);
-            if (Objects.equals(configModName, mod.getName()) || Objects.equals(configModName, mod.getModId())) {
+            final String configModName = configMod.name.toLowerCase(Locale.ENGLISH).replace(" ", "");
+            if (Objects.equals(configModName, mod.getName().toLowerCase(Locale.ENGLISH)) || Objects.equals(configModName, mod.getModId())) {
                 return;
             }
-            for (ArtifactVersion dependency : mod.getDependencies()) {
-                if (Objects.equals("oneconfig", dependency.getLabel())) {
-                    return;
-                }
+        }
+
+        for (ArtifactVersion dependency : mod.getDependencies()) {
+            if (Objects.equals("oneconfig", dependency.getLabel())) {
+                return;
             }
         }
-        for (net.minecraft.command.ICommand command :  net.minecraftforge.client.ClientCommandHandler.instance.getCommands().values()) {
+        for (net.minecraft.command.ICommand command : net.minecraftforge.client.ClientCommandHandler.instance.getCommands().values()) {
             if (Objects.equals(command.getCommandName(), mod.getModId())) {
                 for (String alias : command.getCommandAliases()) {
-                    if (Objects.equals(alias, mod.getModId())) {
-                        return;
+                    for (Mod configMod : ConfigCore.mods) {
+                        if (Objects.equals(configMod.name.toLowerCase(Locale.ENGLISH).replace(" ", ""), alias.toLowerCase(Locale.ENGLISH))) {
+                            return;
+                        }
                     }
                 }
                 ForgeCompat.compatMods.put(new ForgeCompat.ForgeCompatMod(mod.getName(), ModType.THIRD_PARTY), () -> new TickDelay(() -> {
