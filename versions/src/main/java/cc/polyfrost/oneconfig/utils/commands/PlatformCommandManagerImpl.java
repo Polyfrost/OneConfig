@@ -53,14 +53,6 @@ public class PlatformCommandManagerImpl extends PlatformCommandManager {
 
     @Override
     public void createCommand(CommandManager.OCCommand root) {
-        System.out.println("Creating command: " + root.getMetadata().value());
-        System.out.println("Map:");
-        for (Map.Entry<CommandManager.InternalCommand, String[]> entry : root.commandsMap.entrySet()) {
-            CommandManager.InternalCommand internalCommand = entry.getKey();
-            System.out.println("  " + Arrays.toString(entry.getValue()) + " -> ");
-            System.out.println("    \"" + internalCommand.getName() + "\" => " + internalCommand.getUnderlyingMethod().getName());
-        }
-
         //#if MC<=11202
         ClientCommandHandler.instance.registerCommand(new CommandBase() {
             @Override
@@ -114,21 +106,6 @@ public class PlatformCommandManagerImpl extends PlatformCommandManager {
             {
                 List<String> opts = new ArrayList<>();
                 //TODO: fix no arg autocompletion
-                /*
-                UChat.chat(Arrays.toString(args) + " " + args.length + " '" + args[0] + "'");
-                if (args == null || args.length == 0 || args[0].isEmpty()) {
-                    List<Method> mainMethods = root.commandsMap.entrySet().stream()
-                            .filter(it -> Arrays.asList(it.getValue()).contains(MAIN_METHOD_NAME))
-                            .map(Map.Entry::getKey)
-                            .map(CommandManager.InternalCommand::getUnderlyingMethod)
-                            .collect(Collectors.toList());
-
-                    for (Method method : mainMethods) {
-                        Parameter currentParam = method.getParameters()[0];
-                        appendToOptions(opts, currentParam);
-                        opts.addAll(INSTANCE.parsers.get(currentParam.getType()).complete("", currentParam));
-                    }
-                }*/
                 CommandManager.Pair<String[], CommandManager.InternalCommand> command = getCommand(args);
                 try {
                     if (command != null) {
@@ -169,34 +146,12 @@ public class PlatformCommandManagerImpl extends PlatformCommandManager {
              */
             @Nullable
             private CommandManager.Pair<String[], CommandManager.InternalCommand> getCommand(String[] args) {
-                /*String argsIn = String.join(DELIMITER, args).toLowerCase();
-                CommandManager.InternalCommand command = get(root, argsIn);
-                if (command != null) {
-                    UChat.chat("found! " + command.getName() + " > " + command.getUnderlyingMethod().getName());
-                    UChat.chat("primary: " + command.getPrimaryPath().replace(MAIN_METHOD_NAME, ""));
-                    int skipArgs = 0;
-                    for (char c : command.getPrimaryPath().replace(MAIN_METHOD_NAME, "").toCharArray()) {
-                        if (c == DELIMITER.toCharArray()[0]) skipArgs++;
-                    }
-                    // create the args for the command
-                    UChat.chat("Args: " + Arrays.toString(args) + ", " + skipArgs + " will be skipped to get to args");
-                    String[] newArgs = new String[args.length - 1 - skipArgs];
-                    System.arraycopy(args, skipArgs, newArgs, 0, args.length - 1 - skipArgs);
-                    UChat.chat("Executing @ " + Arrays.toString(newArgs));
-                    // return the command and the args
-                    return new CommandManager.Pair<>(newArgs, command);
-                }
-                */
-                UChat.chat("Looking @ " + Arrays.toString(args));
                 // turn the given args into a 'path'
                 String argsIn = String.join(DELIMITER, args).toLowerCase();
                 for (int i = args.length - 1; i >= 0; i--) {
-                    UChat.chat(i + " > Pass: \"" + argsIn + "\"");
                     // work backwards to find the first match
                     CommandManager.InternalCommand command = get(root, argsIn);
                     if (command != null) {
-                        UChat.chat("found! " + command.getName() + " > " + command.getUnderlyingMethod().getName());
-                        UChat.chat("primary: " + command.getPrimaryPath());
                         String primaryPath = command.getPrimaryPath()
                                 .replace(DELIMITER + MAIN_METHOD_NAME, "")
                                 .replace(MAIN_METHOD_NAME, "");
@@ -206,10 +161,8 @@ public class PlatformCommandManagerImpl extends PlatformCommandManager {
                             if (c == DELIMITER.toCharArray()[0]) skipArgs++;
                         }
                         // create the args for the command
-                        UChat.chat("Args: " + Arrays.toString(args) + ", " + skipArgs + " will be skipped to get to args");
                         String[] newArgs = new String[args.length - skipArgs];
                         System.arraycopy(args, skipArgs, newArgs, 0, args.length - skipArgs);
-                        UChat.chat("Executing @ " + Arrays.toString(newArgs));
                         // return the command and the args
                         return new CommandManager.Pair<>(newArgs, command);
                     }
@@ -300,13 +253,11 @@ public class PlatformCommandManagerImpl extends PlatformCommandManager {
             for (Map.Entry<CommandManager.InternalCommand, String[]> entry : command.commandsMap.entrySet()) {
                 CommandManager.InternalCommand potentialCommand = entry.getKey();
                 String[] acceptedPaths = entry.getValue();
-                System.out.println(">> Looking at " + Arrays.toString(acceptedPaths));
                 for (String cmdPath : acceptedPaths) {
                     boolean matchesPath = cmdPath.equals(path);
                     if (path.isEmpty()) matchesPath = false;
                     boolean matchesMain = cmdPath.equals(path + (path.isEmpty() ? "" : DELIMITER) + MAIN_METHOD_NAME.toLowerCase(Locale.ROOT));
                     if (matchesPath || matchesMain) {
-                        UChat.chat("Matched " + matchesMain + " / " + matchesPath + " @ " + cmdPath);
                         commands.add(potentialCommand);
                         continue cmdfor;
                     }
@@ -314,47 +265,17 @@ public class PlatformCommandManagerImpl extends PlatformCommandManager {
             }
             for (CommandManager.InternalCommand command1 : commands) {
                 Method method = command1.getUnderlyingMethod();
-                UChat.chat("FOUND " + command1.getName() + " / " + method.getName());
 
                 if (method.getParameterCount() == 0) {
-                    UChat.chat("no params");
                     continue;
                 }
                 if (method.getParameterCount() == splitData.length) {
-                    UChat.chat("Returning cmd1");
                     return new Pair<>(path, command1);
                 } else if (method.getParameters()[method.getParameterCount() - 1].isAnnotationPresent(Greedy.class)) {
-                    UChat.chat("Returning cmd1");
                     return new Pair<>(path, command1);
                 }
             }
         }
-
-        /*
-        if (in.isEmpty()) {
-            return Collections.singletonList(command.commandsMap.entrySet().stream().findFirst(it -> it.getValue() == MAIN_METHOD_NAME).orElse(null));
-        }
-        UChat.chat(">> finding for " + in);
-        for (String[] ss : command.commandsMap.values()) {
-            for (String s : ss) {
-                UChat.chat(EnumChatFormatting.GRAY + "=> " + s);
-                if (s.equalsIgnoreCase(in) || s.equalsIgnoreCase(in + DELIMITER + MAIN_METHOD_NAME)) {
-                    return command.commandsMap.entrySet().stream()
-                            .filter(it -> it.getValue() == ss)
-                            .map(Map.Entry::getKey)
-                            .collect(Collectors.toList());
-                }
-            }
-        }
-        for (Map.Entry<CommandManager.InternalCommand, String[]> entry : command.commandsMap.entrySet()) {
-            CommandManager.InternalCommand internalCommand = entry.getKey();
-            Method method = internalCommand.getUnderlyingMethod();
-            boolean isMain = method.isAnnotationPresent(Main.class);
-            if (!isMain) continue;
-            boolean hasArgs = method.getParameterCount() != 0;
-            if (!hasArgs) continue;
-
-        }*/
         return null;
     }
 }

@@ -46,11 +46,6 @@ public class OneConfigCommand {
         GuiUtils.displayScreen(OneConfigGui.create());
     }
 
-    @Main(description = "fallback")
-    private void fallback(@Description("Cool boolean") boolean boolautocompletetest) {
-        UChat.chat("test: " + boolautocompletetest);
-    }
-
     @SubCommand(description = "Opens the OneConfig HUD configurator.", aliases = {"edithud"})
     private void hud() {
         GuiUtils.displayScreen(new HudGui());
@@ -63,11 +58,6 @@ public class OneConfigCommand {
 
     @SubCommandGroup(value = "Profile", aliases = {"profiles"})
     private static class Profile {
-        @Main(description = "fallback")
-        private void fallback(@Description("Cool boolean") boolean boolautocompletetest) {
-            UChat.chat("test profiles: " + boolautocompletetest);
-        }
-
         @SubCommand(description = "View all profiles", aliases = {"view"})
         private void list() {
             StringBuilder builder = new StringBuilder()

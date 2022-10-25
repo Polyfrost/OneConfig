@@ -28,7 +28,6 @@
 package cc.polyfrost.oneconfig.utils.commands;
 
 import cc.polyfrost.oneconfig.libs.universal.ChatColor;
-import cc.polyfrost.oneconfig.libs.universal.UChat;
 import cc.polyfrost.oneconfig.utils.SimpleProfiler;
 import cc.polyfrost.oneconfig.utils.commands.annotations.*;
 import cc.polyfrost.oneconfig.utils.commands.arguments.ArgumentParser;
@@ -384,7 +383,6 @@ public class CommandManager {
                     return null;
                 }
                 if ((argsIn.length != method.getParameterCount()) && (method.getParameterCount() == 0 || !method.getParameters()[method.getParameterCount() - 1].isAnnotationPresent(Greedy.class))) {
-                    UChat.chat(ChatColor.RED + "Called " + method.getName() + " with " + Arrays.toString(argsIn) + ", expected " + Arrays.stream(method.getParameters()).map(it -> it.getType().getSimpleName()).collect(Collectors.joining(", ")));
                     return ChatColor.RED + "Incorrect number of parameters, expected " + method.getParameterCount() + " but got " + argsIn.length;
                 }
                 return invokeWith(method, argsIn);
