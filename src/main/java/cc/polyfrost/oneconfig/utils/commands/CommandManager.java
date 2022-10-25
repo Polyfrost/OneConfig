@@ -58,7 +58,7 @@ public class CommandManager {
      */
     static final String DELIMITER = "\uD7FF";
     final HashMap<Class<?>, ArgumentParser<?>> parsers = new HashMap<>();
-    private final String[] EMPTY_ARRAY = new String[]{""};
+    static final String[] EMPTY_ARRAY = new String[]{""};
     // so that no one can name a method this
     static final String MAIN_METHOD_NAME = "MAIN" + DELIMITER + DELIMITER + "MAIN";
 
@@ -225,10 +225,9 @@ public class CommandManager {
                 } else return;
             }
             InternalCommand internalCommand = new InternalCommand(parent, method, parentPaths);
-            if (commandsMap.containsValue(internalCommand)) {
+            if (commandsMap.put(computePaths(internalCommand), internalCommand) != null) {
                 throw new IllegalArgumentException("Command " + method.getName() + " is already registered!");
             }
-            commandsMap.put(computePaths(internalCommand), internalCommand);
         }
 
         /**
@@ -320,11 +319,13 @@ public class CommandManager {
         private final String[] aliases, paths;
         private final boolean hasHelp;
         private final Object parent;
+        private final int parameterCount;
 
         private InternalCommand(Object parent, @NotNull Method methodIn, String[] paths) {
             this.parent = parent;
             if (!methodIn.isAccessible()) methodIn.setAccessible(true);
             this.method = methodIn;
+            this.parameterCount = method.getParameterCount();
             this.meta = methodIn.isAnnotationPresent(SubCommand.class) ? methodIn.getAnnotation(SubCommand.class) : null;
             this.hasHelp = meta != null && !meta.description().isEmpty();
 
@@ -415,6 +416,10 @@ public class CommandManager {
             } else {
                 return null;
             }
+        }
+
+        int getParameterCount() {
+            return parameterCount;
         }
 
         Method getUnderlyingMethod() {

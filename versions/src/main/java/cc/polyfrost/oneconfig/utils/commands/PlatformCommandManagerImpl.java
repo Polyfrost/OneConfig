@@ -152,7 +152,7 @@ public class PlatformCommandManagerImpl extends PlatformCommandManager {
                 String argsIn = String.join(DELIMITER, args).toLowerCase();
                 for (int i = args.length - 1; i >= 0; i--) {
                     // work backwards to find the first match
-                    CommandManager.InternalCommand command = get(root, argsIn);
+                    CommandManager.InternalCommand command = get(root, argsIn, args);
                     if (command != null) {
                         // create the args for the command
                         String[] newArgs = new String[args.length - i - 1];
@@ -192,15 +192,21 @@ public class PlatformCommandManagerImpl extends PlatformCommandManager {
     }
 
 
-    private static CommandManager.InternalCommand get(CommandManager.OCCommand command, String in) {
-        for (String[] ss : command.commandsMap.keySet()) {
-            for (String s : ss) {
-                if (s.equalsIgnoreCase(in) || s.equalsIgnoreCase(in + DELIMITER + MAIN_METHOD_NAME)) {
-                    return command.commandsMap.get(ss);
+    private static CommandManager.InternalCommand get(CommandManager.OCCommand command, String in, String[] srcArgs) {
+        final List<CommandManager.InternalCommand> commands = new ArrayList<>();
+        for (String[] paths : command.commandsMap.keySet()) {
+            for (String path : paths) {
+                if (path.equalsIgnoreCase(in) || path.equalsIgnoreCase(in + DELIMITER + MAIN_METHOD_NAME)) {
+                    commands.add(command.commandsMap.get(paths));
                 }
             }
         }
-        return null;
+        if (commands.size() == 1) return commands.get(0);
+        else {
+            // find the best match based on the args given
+            int len = Arrays.copyOfRange(srcArgs, in.split(DELIMITER).length, srcArgs.length).length;
+            return commands.stream().filter(cmd -> cmd.getParameterCount() == len).findFirst().orElse(null);
+        }
     }
 }
 //#endif

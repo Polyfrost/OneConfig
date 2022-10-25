@@ -28,16 +28,29 @@ package cc.polyfrost.oneconfig.test;
 
 import cc.polyfrost.oneconfig.libs.universal.ChatColor;
 import cc.polyfrost.oneconfig.libs.universal.UChat;
-import cc.polyfrost.oneconfig.utils.commands.annotations.Command;
-import cc.polyfrost.oneconfig.utils.commands.annotations.Description;
-import cc.polyfrost.oneconfig.utils.commands.annotations.Greedy;
-import cc.polyfrost.oneconfig.utils.commands.annotations.SubCommand;
+import cc.polyfrost.oneconfig.utils.commands.annotations.*;
 
 @Command(value = "test", aliases = {"t"}, description = "Description of the test command", chatColor = ChatColor.GREEN)
 public class TestCommand_Test {
 
+    @Main
     private static void main() {  // /test
         UChat.chat("Main command");
+    }
+
+    @SubCommand
+    private void gexp() {
+        UChat.chat("called with no args");
+    }
+
+    @SubCommand
+    private void gexp(String s) {
+        UChat.chat("called with 1 arg: " + s);
+    }
+
+    @SubCommand
+    private void gexp(String s, int a) {
+        UChat.chat("called with 2 args: " + s + ", " + a);
     }
 
     @Command(value = "subcommand", aliases = {"s"}, description = "Subcommand 1.")
