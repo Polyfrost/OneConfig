@@ -235,12 +235,16 @@ public class PlatformCommandManagerImpl extends PlatformCommandManager {
         in = in.trim();
         if (in.isEmpty()) {
             // if there's nothing, just return the main method
-            return new Pair<>(MAIN_METHOD_NAME, Objects.requireNonNull(command.commandsMap.entrySet().stream()
+            CommandManager.InternalCommand cmd = command.commandsMap.entrySet().stream()
                     .filter(e -> Arrays.asList(e.getValue()).contains(MAIN_METHOD_NAME))
                     .map(Map.Entry::getKey)
                     .filter(it -> it.getUnderlyingMethod().getParameterCount() == 0)
                     .findFirst()
-                    .orElse(null)));
+                    .orElse(null);
+            if (cmd == null) {
+                return null;
+            }
+            return new Pair<>(MAIN_METHOD_NAME, cmd);
         }
 
         String[] splitData = in.split(DELIMITER);
