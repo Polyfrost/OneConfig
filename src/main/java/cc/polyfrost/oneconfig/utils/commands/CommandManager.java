@@ -119,6 +119,7 @@ public class CommandManager {
      * @param cls the command to register as a class.
      * @deprecated <b>Replace with {@link #registerCommand(Object)} aka. {@code new YourCommand()}</b>
      */
+    @SuppressWarnings("DeprecatedIsStillUsed")
     @Deprecated
     public void registerCommand(Class<?> cls) {
         try {
@@ -393,8 +394,6 @@ public class CommandManager {
         }
 
         private String invokeWith(Method method, String[] argsIn) throws InvocationTargetException, IllegalAccessException {
-            method.setAccessible(true);
-
             Object[] args = new Object[method.getParameterCount()];
             Parameter[] parameters = method.getParameters();
             int i = 0;
