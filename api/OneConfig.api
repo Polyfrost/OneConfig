@@ -709,7 +709,6 @@ public class cc/polyfrost/oneconfig/gui/elements/ColorSelector {
 	public fun isAlphaAllowed ()Z
 	public fun keyTyped (CI)V
 	public fun onClose ()V
-	public fun update ()V
 }
 
 public class cc/polyfrost/oneconfig/gui/elements/Dropdown : cc/polyfrost/oneconfig/gui/elements/BasicButton {
@@ -896,8 +895,10 @@ public class cc/polyfrost/oneconfig/gui/elements/text/TextInputField : cc/polyfr
 	public fun onClick ()V
 	public fun onClose ()V
 	public fun onlyAcceptNumbers (Z)V
+	public fun setBoarderThickness (F)V
 	public fun setCentered (Z)V
 	public fun setErrored (Z)V
+	public fun setFontSize (F)V
 	public fun setInput (Ljava/lang/String;)V
 	public fun setPassword (Z)V
 }
