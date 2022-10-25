@@ -32,6 +32,7 @@ import cc.polyfrost.oneconfig.internal.config.profiles.Profiles;
 import cc.polyfrost.oneconfig.internal.gui.HudGui;
 import cc.polyfrost.oneconfig.libs.universal.ChatColor;
 import cc.polyfrost.oneconfig.libs.universal.UChat;
+import cc.polyfrost.oneconfig.libs.universal.wrappers.UPlayer;
 import cc.polyfrost.oneconfig.utils.commands.annotations.*;
 import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 
@@ -44,6 +45,11 @@ public class OneConfigCommand {
     @Main(description = "Opens the OneConfig GUI")
     private void main() {
         GuiUtils.displayScreen(OneConfigGui.create());
+    }
+
+    @Main(description = "fallback")
+    private void fallback(@Description("Cool boolean") boolean boolautocompletetest) {
+        UChat.chat("test: " + boolautocompletetest);
     }
 
     @SubCommand(description = "Opens the OneConfig HUD configurator.", aliases = {"edithud"})

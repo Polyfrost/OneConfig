@@ -38,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.*;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Handles the registration of OneConfig commands.
@@ -180,7 +181,7 @@ public class CommandManager {
      * Internal class for command handling.
      */
     protected class OCCommand {
-        final HashMap<String[], InternalCommand> commandsMap = new HashMap<>();
+        final Map<InternalCommand, String[]> commandsMap = new HashMap<>();
         final String[] helpCommand;
         private final Command meta;
         InternalCommand mainMethod;
@@ -216,16 +217,23 @@ public class CommandManager {
             if (!method.isAccessible()) method.setAccessible(true);
             if (!method.isAnnotationPresent(SubCommand.class)) {
                 if (method.isAnnotationPresent(Main.class)) {
+                    // If @Main *and* doesn't have any arguments, this is the main method
                     if (Arrays.equals(parentPaths, EMPTY_ARRAY)) {
                         mainMethod = new InternalCommand(parent, method, parentPaths);
+                    } else {
+                        Method[] methods = method.getDeclaringClass().getDeclaredMethods();
+                        int mains = (int) Stream.of(methods).filter(m -> m.isAnnotationPresent(Main.class)).count();
+                        if (mains == 1) {
+                            mainMethod = new InternalCommand(parent, method, parentPaths);
+                        }
                     }
                 } else return;
             }
             InternalCommand internalCommand = new InternalCommand(parent, method, parentPaths);
-            if (commandsMap.containsValue(internalCommand)) {
+            if (commandsMap.keySet().stream().anyMatch(internalCommand::equals)) {
                 throw new IllegalArgumentException("Command " + method.getName() + " is already registered!");
             }
-            commandsMap.put(computePaths(internalCommand), internalCommand);
+            commandsMap.put(internalCommand, computePaths(internalCommand));
         }
 
         /**
@@ -251,7 +259,7 @@ public class CommandManager {
             sb.append(meta.chatColor()).append(ChatColor.BOLD).append("Help for /").append(masterName).append(ChatColor.RESET).append(meta.chatColor());
             if (!meta.description().isEmpty()) sb.append(" - ").append(meta.description());
             sb.append(":           ").append(Arrays.toString(meta.aliases())).append("\n").append(meta.chatColor());
-            for (Iterator<InternalCommand> it = commandsMap.values().stream().sorted().iterator(); it.hasNext(); ) {
+            for (Iterator<InternalCommand> it = commandsMap.keySet().stream().sorted().iterator(); it.hasNext(); ) {
                 final InternalCommand command = it.next();
                 final String path;
                 if (command.getName().endsWith(MAIN_METHOD_NAME)) {
@@ -331,7 +339,10 @@ public class CommandManager {
                 aliases[0] = methodIn.getName();
                 System.arraycopy(meta.aliases(), 0, aliases, 1, meta.aliases().length);
             } else {
-                aliases[0] = MAIN_METHOD_NAME;
+                aliases[0] =// methodIn.getParameterCount() == 0
+                        /*?*/ MAIN_METHOD_NAME
+                       // : methodIn.getName() //+ DELIMITER + DELIMITER + methodIn.getName();
+                ;
             }
             this.paths = paths;
 
@@ -359,20 +370,6 @@ public class CommandManager {
                     return null;
                 }
                 if ((argsIn.length != method.getParameterCount()) && (method.getParameterCount() == 0 || !method.getParameters()[method.getParameterCount() - 1].isAnnotationPresent(Greedy.class))) {
-                    // ok but what if... hear me out
-                    Method[] methods = method.getDeclaringClass().getDeclaredMethods();
-                    for (Method m : methods) {
-                        if (m == method) continue;
-                        if (!m.isAnnotationPresent(Main.class)) continue;
-                        if (m.getParameterCount() == 0) continue;
-                        if (m.getParameterCount() != argsIn.length) continue;
-
-                        try {
-                            return invokeWith(m, argsIn);
-                        } catch (ReflectiveOperationException ignored) {
-                        }
-                    }
-
                     return ChatColor.RED + "Incorrect number of parameters, expected " + method.getParameterCount() + " but got " + argsIn.length;
                 }
                 return invokeWith(method, argsIn);
