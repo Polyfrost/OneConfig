@@ -115,7 +115,8 @@ public abstract class ArgumentParser<T> {
         public @Nullable Boolean parse(@NotNull String s) {
             return Boolean.parseBoolean(
                     VALUES.entrySet().stream()
-                            .filter(it -> it.getValue().contains(s.toLowerCase()))
+                            .filter(it -> it.getKey().equalsIgnoreCase(s)
+                                    || it.getValue().contains(s.toLowerCase()))
                             .map(Map.Entry::getKey)
                             .findFirst()
                             .orElseThrow(() -> new IllegalArgumentException(
