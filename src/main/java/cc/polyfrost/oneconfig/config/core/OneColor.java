@@ -352,8 +352,9 @@ public final class OneColor implements Serializable, Cloneable, Comparable<OneCo
     @Override
     public boolean equals(Object o) {
         if (o == null) return false;
+        if (o == this) return true;
         if (o instanceof OneColor) {
-            OneColor color = (OneColor) o;
+            final OneColor color = (OneColor) o;
             // can't just check the RGB because of chroma, so we just check the HSBA + the data bit
             return getHue() == color.getHue() && getSaturation() == color.getSaturation() &&
                     getBrightness() == color.getBrightness() && getAlpha() == color.getAlpha() && getDataBit() == color.getDataBit();

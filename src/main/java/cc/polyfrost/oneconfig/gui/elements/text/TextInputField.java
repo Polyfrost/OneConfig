@@ -66,6 +66,8 @@ public class TextInputField extends BasicElement {
     private long clickTimeD1;
     private int lines = 1;
     private final float radius;
+    private float boarderThickness = 1f;
+    private float textSize = 14f;
 
     public TextInputField(int width, int height, String defaultText, boolean multiLine, boolean password, SVG icon, float radius) {
         super(width, height, false);
@@ -133,14 +135,15 @@ public class TextInputField extends BasicElement {
         this.y = y;
         this.vg = vg;
         try {
+            RenderManager.drawRoundedRect(vg, x + boarderThickness, y + boarderThickness, width - boarderThickness * 2, height - boarderThickness * 2, Colors.GRAY_850, radius);
             int colorOutline = errored ? Colors.ERROR_700 : Colors.GRAY_700;
             if (!toggled)
-                RenderManager.drawHollowRoundRect(vg, x, y, width - 0.5f, height - 0.5f, colorOutline, radius, 2f);
+                RenderManager.drawHollowRoundRect(vg, x, y, width - 0.5f, height - 0.5f, colorOutline, radius, boarderThickness);
             else {
                 RenderManager.setAlpha(vg, 0.15f);
                 RenderManager.drawRoundedRect(vg, x - 4, y - 4, width + 8, height + 8, errored ? Colors.ERROR_600 : Colors.PRIMARY_600, radius + 4);
                 RenderManager.setAlpha(vg, 1f);
-                RenderManager.drawHollowRoundRect(vg, x, y, width - 0.5f, height - 0.5f, errored ? Colors.ERROR_600 : Colors.PRIMARY_600, radius, 2f);
+                RenderManager.drawHollowRoundRect(vg, x, y, width - 0.5f, height - 0.5f, errored ? Colors.ERROR_600 : Colors.PRIMARY_600, radius, boarderThickness);
             }
             Scissor scissor = ScissorManager.scissor(vg, x, y, width, height);
             super.update(x, y, inputHandler);
@@ -148,6 +151,7 @@ public class TextInputField extends BasicElement {
                 onClose();
                 toggled = false;
             }
+
             int color = toggled ? Colors.WHITE : Colors.WHITE_60;
             if (!toggled) caretPos = input.length();
             if (caretPos > input.length()) caretPos = input.length();
@@ -162,18 +166,18 @@ public class TextInputField extends BasicElement {
             float width;
             StringBuilder s = new StringBuilder();
             if (multiLine) {
-                wrappedText = TextUtils.wrapText(vg, input, this.width - 24, 14f, Fonts.REGULAR);
+                wrappedText = TextUtils.wrapText(vg, input, this.width - 24, textSize, Fonts.REGULAR);
                 lines = wrappedText.size();
                 if (!toggled) caretPos = wrappedText.get(wrappedText.size() - 1).length();
                 int caretLine = (int) MathUtils.clamp(getCaretLine(caretPos), 0, wrappedText.size() - 1);
-                width = RenderManager.getTextWidth(vg, wrappedText.get(caretLine).substring(0, getLineCaret(caretPos, caretLine)), 14f, Fonts.REGULAR);
+                width = RenderManager.getTextWidth(vg, wrappedText.get(caretLine).substring(0, getLineCaret(caretPos, caretLine)), textSize, Fonts.REGULAR);
             } else if (!password) {
-                width = RenderManager.getTextWidth(vg, input.substring(0, caretPos), 14f, Fonts.REGULAR);
+                width = RenderManager.getTextWidth(vg, input.substring(0, caretPos), textSize, Fonts.REGULAR);
             } else {
                 for (int i = 0; i < input.length(); i++) {
                     s.append("*");
                 }
-                width = RenderManager.getTextWidth(vg, s.substring(0, caretPos), 14f, Fonts.REGULAR);
+                width = RenderManager.getTextWidth(vg, s.substring(0, caretPos), textSize, Fonts.REGULAR);
             }
             if (hovered) {
                 int state = Platform.getMousePlatform().getButtonState(0); //todo does this work
@@ -251,11 +255,11 @@ public class TextInputField extends BasicElement {
 
             if (input.equals("")) {
                 if (multiLine) {
-                    RenderManager.drawText(vg, defaultText, x + 12, y + 16, color, 14f, Fonts.REGULAR);
+                    RenderManager.drawText(vg, defaultText, x + 12, y + 16, color, textSize, Fonts.REGULAR);
                 } else if (!centered) {
-                    RenderManager.drawText(vg, defaultText, x + 12, y + height / 2f + 1, color, 14f, Fonts.REGULAR);
+                    RenderManager.drawText(vg, defaultText, x + 12, y + height / 2f, color, textSize, Fonts.REGULAR);
                 } else {
-                    RenderManager.drawText(vg, defaultText, x + this.width / 2f - halfTextWidth, y + height / 2f + 1, color, 14f, Fonts.REGULAR);
+                    RenderManager.drawText(vg, defaultText, x + this.width / 2f - halfTextWidth, y + height / 2f, color, textSize, Fonts.REGULAR);
                 }
             }
 
@@ -263,16 +267,16 @@ public class TextInputField extends BasicElement {
                 if (multiLine) {
                     float textY = y + 20;
                     for (String line : wrappedText) {
-                        RenderManager.drawText(vg, line, x + 12, textY, color, 14f, Fonts.REGULAR);
+                        RenderManager.drawText(vg, line, x + 12, textY, color, textSize, Fonts.REGULAR);
                         textY += 24;
                     }
                 } else if (!centered) {
-                    RenderManager.drawText(vg, input, x + 12, y + height / 2f + 1, color, 14f, Fonts.REGULAR);
+                    RenderManager.drawText(vg, input, x + 12, y + height / 2f, color, textSize, Fonts.REGULAR);
                 } else {
-                    RenderManager.drawText(vg, input, x + this.width / 2f - halfTextWidth, y + height / 2f + 1, color, 14f, Fonts.REGULAR);
+                    RenderManager.drawText(vg, input, x + this.width / 2f - halfTextWidth, y + height / 2f, color, textSize, Fonts.REGULAR);
                 }
             } else {
-                RenderManager.drawText(vg, s.toString(), x + 12, y + height / 2f + 1, color, 14f, Fonts.REGULAR);
+                RenderManager.drawText(vg, s.toString(), x + 12, y + height / 2f, color, textSize, Fonts.REGULAR);
             }
             RenderManager.setAlpha(vg, 1f);
             ScissorManager.resetScissor(vg, scissor);
@@ -559,5 +563,13 @@ public class TextInputField extends BasicElement {
 
     public int getLines() {
         return lines;
+    }
+
+    public void setBoarderThickness(float thickness) {
+        this.boarderThickness = thickness;
+    }
+
+    public void setFontSize(float textSize) {
+        this.textSize = textSize;
     }
 }
