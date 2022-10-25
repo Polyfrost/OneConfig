@@ -67,7 +67,7 @@ public class PlatformCommandManagerImpl extends PlatformCommandManager {
 
             @Override
             public void
-                //#if MC<=10809
+            //#if MC<=10809
             processCommand(ICommandSender sender, String[] args)
             //#else
             //$$ execute(net.minecraft.server.MinecraftServer server, ICommandSender sender, String[] args)
@@ -98,7 +98,7 @@ public class PlatformCommandManagerImpl extends PlatformCommandManager {
 
             @Override
             public List<String>
-                //#if MC<=10809
+            //#if MC<=10809
             addTabCompletionOptions(ICommandSender sender, String[] args, BlockPos pos)
             //#else
             //$$ getTabCompletions(net.minecraft.server.MinecraftServer server, ICommandSender sender, String[] args, BlockPos targetPos)
