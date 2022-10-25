@@ -28,6 +28,7 @@
 package cc.polyfrost.oneconfig.utils.commands;
 
 import cc.polyfrost.oneconfig.libs.universal.ChatColor;
+import cc.polyfrost.oneconfig.libs.universal.UChat;
 import cc.polyfrost.oneconfig.utils.SimpleProfiler;
 import cc.polyfrost.oneconfig.utils.commands.annotations.*;
 import cc.polyfrost.oneconfig.utils.commands.arguments.ArgumentParser;
@@ -169,10 +170,11 @@ public class CommandManager {
         List<String> out = new ArrayList<>();
         SubCommandGroup annotation = cls.getAnnotation(SubCommandGroup.class);
         for (String path : paths) {
+            String prefix = path + (path.isEmpty() ? "" : DELIMITER);
             for (String alias : annotation.aliases()) {
-                out.add((path + (path.isEmpty() ? "" : DELIMITER) + alias).toLowerCase());
+                out.add((prefix + alias).toLowerCase());
             }
-            out.add((path + (path.isEmpty() ? "" : DELIMITER) + annotation.value()).toLowerCase());
+            out.add((prefix + annotation.value()).toLowerCase());
         }
         return out.toArray(new String[0]);
     }
@@ -217,14 +219,17 @@ public class CommandManager {
             if (!method.isAccessible()) method.setAccessible(true);
             if (!method.isAnnotationPresent(SubCommand.class)) {
                 if (method.isAnnotationPresent(Main.class)) {
-                    // If @Main *and* doesn't have any arguments, this is the main method
-                    if (Arrays.equals(parentPaths, EMPTY_ARRAY)) {
-                        mainMethod = new InternalCommand(parent, method, parentPaths);
-                    } else {
-                        Method[] methods = method.getDeclaringClass().getDeclaredMethods();
-                        int mains = (int) Stream.of(methods).filter(m -> m.isAnnotationPresent(Main.class)).count();
-                        if (mains == 1) {
+                    if (mainMethod == null) {
+                        // If @Main *and* doesn't have any arguments, this is the main method
+                        if (Arrays.equals(parentPaths, EMPTY_ARRAY) && method.getParameterCount() == 0) {
                             mainMethod = new InternalCommand(parent, method, parentPaths);
+                        } else {
+                            // If there's only one main method, take it even if it has arguments
+                            Method[] methods = method.getDeclaringClass().getDeclaredMethods();
+                            int mains = (int) Stream.of(methods).filter(m -> m.isAnnotationPresent(Main.class)).count();
+                            if (mains == 1) {
+                                mainMethod = new InternalCommand(parent, method, parentPaths);
+                            }
                         }
                     }
                 } else return;
@@ -262,27 +267,36 @@ public class CommandManager {
             for (Iterator<InternalCommand> it = commandsMap.keySet().stream().sorted().iterator(); it.hasNext(); ) {
                 final InternalCommand command = it.next();
                 final String path;
-                if (command.getName().endsWith(MAIN_METHOD_NAME)) {
-                    Main annotation = command.getUnderlyingMethod().isAnnotationPresent(Main.class) ? command.getUnderlyingMethod().getAnnotation(Main.class) : null;
-                    path = command.getName().substring(0, command.getName().length() - MAIN_METHOD_NAME.length()).replaceAll(DELIMITER, " ");
-                    sb.append("/").append(masterName).append(path).append(" - ").append(annotation != null && !annotation.description().isEmpty() ? annotation.description() : "Main command").append("\n").append(meta.chatColor());
+                Method method = command.getUnderlyingMethod();
+                if (command.getPrimaryPath().endsWith(MAIN_METHOD_NAME)) {
+                    Main annotation = method.isAnnotationPresent(Main.class) ? method.getAnnotation(Main.class) : null;
+                    path = command.getPrimaryPath().substring(0, command.getPrimaryPath().length() - MAIN_METHOD_NAME.length()).replaceAll(DELIMITER, " ").trim();
+                    sb.append("/").append(masterName).append(path.isEmpty() ? "" : " ").append(path).append(" ");
+                    for (Parameter parameter : method.getParameters()) {
+                        appendParameter(sb, parameter);
+                    }
+                    sb.append("- ").append(annotation != null && !annotation.description().isEmpty() ? annotation.description() : "Main command").append("\n").append(meta.chatColor());
                     continue;
                 }
                 path = command.getPrimaryPath().replaceAll(DELIMITER, " ");
                 sb.append("/").append(masterName).append(" ").append(path).append(" ");
                 for (Parameter parameter : command.method.getParameters()) {
-                    String s = parameter.isAnnotationPresent(Description.class) ?
-                            parameter.getAnnotation(Description.class).value() : parameter.getType().getSimpleName();
-                    sb.append("<").append(s);
-                    if (parameter.getType().isArray() || parameter.isAnnotationPresent(Greedy.class))
-                        sb.append("...");
-                    sb.append("> ");
+                    appendParameter(sb, parameter);
                 }
                 if (command.hasHelp) sb.append("- ").append(command.getHelp());
                 sb.append("\n").append(meta.chatColor());
 
             }
             return sb.toString().split("\n");
+        }
+
+        private void appendParameter(StringBuilder sb, Parameter parameter) {
+            String s = parameter.isAnnotationPresent(Description.class) ?
+                    parameter.getAnnotation(Description.class).value() : parameter.getType().getSimpleName();
+            sb.append("<").append(s);
+            if (parameter.getType().isArray() || parameter.isAnnotationPresent(Greedy.class))
+                sb.append("...");
+            sb.append("> ");
         }
 
         String[] getAdvancedHelp(InternalCommand command) {
@@ -341,7 +355,7 @@ public class CommandManager {
             } else {
                 aliases[0] =// methodIn.getParameterCount() == 0
                         /*?*/ MAIN_METHOD_NAME
-                       // : methodIn.getName() //+ DELIMITER + DELIMITER + methodIn.getName();
+                // : methodIn.getName() //+ DELIMITER + DELIMITER + methodIn.getName();
                 ;
             }
             this.paths = paths;
@@ -370,6 +384,7 @@ public class CommandManager {
                     return null;
                 }
                 if ((argsIn.length != method.getParameterCount()) && (method.getParameterCount() == 0 || !method.getParameters()[method.getParameterCount() - 1].isAnnotationPresent(Greedy.class))) {
+                    UChat.chat(ChatColor.RED + "Called " + method.getName() + " with " + Arrays.toString(argsIn) + ", expected " + Arrays.stream(method.getParameters()).map(it -> it.getType().getSimpleName()).collect(Collectors.joining(", ")));
                     return ChatColor.RED + "Incorrect number of parameters, expected " + method.getParameterCount() + " but got " + argsIn.length;
                 }
                 return invokeWith(method, argsIn);
