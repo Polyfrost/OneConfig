@@ -35,12 +35,10 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.lang.reflect.Parameter;
+import java.lang.reflect.*;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Handles the registration of OneConfig commands.
@@ -121,6 +119,7 @@ public class CommandManager {
      * @param cls the command to register as a class.
      * @deprecated <b>Replace with {@link #registerCommand(Object)} aka. {@code new YourCommand()}</b>
      */
+    @SuppressWarnings("DeprecatedIsStillUsed")
     @Deprecated
     public void registerCommand(Class<?> cls) {
         try {
@@ -171,10 +170,11 @@ public class CommandManager {
         List<String> out = new ArrayList<>();
         SubCommandGroup annotation = cls.getAnnotation(SubCommandGroup.class);
         for (String path : paths) {
+            String prefix = path + (path.isEmpty() ? "" : DELIMITER);
             for (String alias : annotation.aliases()) {
-                out.add((path + (path.isEmpty() ? "" : DELIMITER) + alias).toLowerCase());
+                out.add((prefix + alias).toLowerCase());
             }
-            out.add((path + (path.isEmpty() ? "" : DELIMITER) + annotation.value()).toLowerCase());
+            out.add((prefix + annotation.value()).toLowerCase());
         }
         return out.toArray(new String[0]);
     }
@@ -183,7 +183,7 @@ public class CommandManager {
      * Internal class for command handling.
      */
     protected class OCCommand {
-        final HashMap<String[], InternalCommand> commandsMap = new HashMap<>();
+        final Map<InternalCommand, String[]> commandsMap = new HashMap<>();
         final String[] helpCommand;
         private final Command meta;
         InternalCommand mainMethod;
@@ -219,16 +219,26 @@ public class CommandManager {
             if (!method.isAccessible()) method.setAccessible(true);
             if (!method.isAnnotationPresent(SubCommand.class)) {
                 if (method.isAnnotationPresent(Main.class)) {
-                    if (Arrays.equals(parentPaths, EMPTY_ARRAY)) {
-                        mainMethod = new InternalCommand(parent, method, parentPaths);
+                    if (mainMethod == null) {
+                        // If @Main *and* doesn't have any arguments, this is the main method
+                        if (Arrays.equals(parentPaths, EMPTY_ARRAY) && method.getParameterCount() == 0) {
+                            mainMethod = new InternalCommand(parent, method, parentPaths);
+                        } else {
+                            // If there's only one main method, take it even if it has arguments
+                            Method[] methods = method.getDeclaringClass().getDeclaredMethods();
+                            int mains = (int) Stream.of(methods).filter(m -> m.isAnnotationPresent(Main.class)).count();
+                            if (mains == 1) {
+                                mainMethod = new InternalCommand(parent, method, parentPaths);
+                            }
+                        }
                     }
                 } else return;
             }
             InternalCommand internalCommand = new InternalCommand(parent, method, parentPaths);
-            if (commandsMap.containsValue(internalCommand)) {
+            if (commandsMap.keySet().stream().anyMatch(internalCommand::equals)) {
                 throw new IllegalArgumentException("Command " + method.getName() + " is already registered!");
             }
-            commandsMap.put(computePaths(internalCommand), internalCommand);
+            commandsMap.put(internalCommand, computePaths(internalCommand));
         }
 
         /**
@@ -254,30 +264,39 @@ public class CommandManager {
             sb.append(meta.chatColor()).append(ChatColor.BOLD).append("Help for /").append(masterName).append(ChatColor.RESET).append(meta.chatColor());
             if (!meta.description().isEmpty()) sb.append(" - ").append(meta.description());
             sb.append(":           ").append(Arrays.toString(meta.aliases())).append("\n").append(meta.chatColor());
-            for (Iterator<InternalCommand> it = commandsMap.values().stream().sorted().iterator(); it.hasNext(); ) {
+            for (Iterator<InternalCommand> it = commandsMap.keySet().stream().sorted().iterator(); it.hasNext(); ) {
                 final InternalCommand command = it.next();
                 final String path;
-                if (command.getName().endsWith(MAIN_METHOD_NAME)) {
-                    Main annotation = command.getUnderlyingMethod().isAnnotationPresent(Main.class) ? command.getUnderlyingMethod().getAnnotation(Main.class) : null;
-                    path = command.getName().substring(0, command.getName().length() - MAIN_METHOD_NAME.length()).replaceAll(DELIMITER, " ");
-                    sb.append("/").append(masterName).append(path).append(" - ").append(annotation != null && !annotation.description().isEmpty() ? annotation.description() : "Main command").append("\n").append(meta.chatColor());
+                Method method = command.getUnderlyingMethod();
+                if (command.getPrimaryPath().endsWith(MAIN_METHOD_NAME)) {
+                    Main annotation = method.isAnnotationPresent(Main.class) ? method.getAnnotation(Main.class) : null;
+                    path = command.getPrimaryPath().substring(0, command.getPrimaryPath().length() - MAIN_METHOD_NAME.length()).replaceAll(DELIMITER, " ").trim();
+                    sb.append("/").append(masterName).append(path.isEmpty() ? "" : " ").append(path).append(" ");
+                    for (Parameter parameter : method.getParameters()) {
+                        appendParameter(sb, parameter);
+                    }
+                    sb.append("- ").append(annotation != null && !annotation.description().isEmpty() ? annotation.description() : "Main command").append("\n").append(meta.chatColor());
                     continue;
                 }
                 path = command.getPrimaryPath().replaceAll(DELIMITER, " ");
                 sb.append("/").append(masterName).append(" ").append(path).append(" ");
                 for (Parameter parameter : command.method.getParameters()) {
-                    String s = parameter.isAnnotationPresent(Description.class) ?
-                            parameter.getAnnotation(Description.class).value() : parameter.getType().getSimpleName();
-                    sb.append("<").append(s);
-                    if (parameter.getType().isArray() || parameter.isAnnotationPresent(Greedy.class))
-                        sb.append("...");
-                    sb.append("> ");
+                    appendParameter(sb, parameter);
                 }
                 if (command.hasHelp) sb.append("- ").append(command.getHelp());
                 sb.append("\n").append(meta.chatColor());
 
             }
             return sb.toString().split("\n");
+        }
+
+        private void appendParameter(StringBuilder sb, Parameter parameter) {
+            String s = parameter.isAnnotationPresent(Description.class) ?
+                    parameter.getAnnotation(Description.class).value() : parameter.getType().getSimpleName();
+            sb.append("<").append(s);
+            if (parameter.getType().isArray() || parameter.isAnnotationPresent(Greedy.class))
+                sb.append("...");
+            sb.append("> ");
         }
 
         String[] getAdvancedHelp(InternalCommand command) {
@@ -334,7 +353,10 @@ public class CommandManager {
                 aliases[0] = methodIn.getName();
                 System.arraycopy(meta.aliases(), 0, aliases, 1, meta.aliases().length);
             } else {
-                aliases[0] = MAIN_METHOD_NAME;
+                aliases[0] =// methodIn.getParameterCount() == 0
+                        /*?*/ MAIN_METHOD_NAME
+                // : methodIn.getName() //+ DELIMITER + DELIMITER + methodIn.getName();
+                ;
             }
             this.paths = paths;
 
@@ -361,34 +383,38 @@ public class CommandManager {
                     method.invoke(parent);
                     return null;
                 }
-                if ((argsIn.length != method.getParameterCount()) && !method.getParameters()[method.getParameterCount() - 1].isAnnotationPresent(Greedy.class)) {
+                if ((argsIn.length != method.getParameterCount()) && (method.getParameterCount() == 0 || !method.getParameters()[method.getParameterCount() - 1].isAnnotationPresent(Greedy.class))) {
                     return ChatColor.RED + "Incorrect number of parameters, expected " + method.getParameterCount() + " but got " + argsIn.length;
                 }
-                Object[] args = new Object[method.getParameterCount()];
-                Parameter[] parameters = method.getParameters();
-                int i = 0;
-                for (Parameter parameter : parameters) {
-                    try {
-                        if (i == args.length - 1 && parameter.isAnnotationPresent(Greedy.class)) {
-                            // I love streams
-                            args[i] = Arrays.stream(argsIn).skip(i).collect(Collectors.joining(" "));
-                        } else {
-                            args[i] = parsers.get(parameter.getType()).parse(argsIn[i]);
-                        }
-                    } catch (NumberFormatException ne) {
-                        return ChatColor.RED + "Error while parsing parameter '" + argsIn[i] + "': " + "Parameter should be a number!";
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        return ChatColor.RED + "Error while parsing parameter '" + argsIn[i] + "': " + e.getMessage();
-                    }
-                    i++;
-                }
-                method.invoke(parent, args);
-                return null;
+                return invokeWith(method, argsIn);
             } catch (Exception e) {
                 e.printStackTrace();
                 return ChatColor.RED + METHOD_RUN_ERROR.replace("@ROOT_COMMAND@", getName());
             }
+        }
+
+        private String invokeWith(Method method, String[] argsIn) throws InvocationTargetException, IllegalAccessException {
+            Object[] args = new Object[method.getParameterCount()];
+            Parameter[] parameters = method.getParameters();
+            int i = 0;
+            for (Parameter parameter : parameters) {
+                try {
+                    if (i == args.length - 1 && parameter.isAnnotationPresent(Greedy.class)) {
+                        // I love streams
+                        args[i] = Arrays.stream(argsIn).skip(i).collect(Collectors.joining(" "));
+                    } else {
+                        args[i] = parsers.get(parameter.getType()).parse(argsIn[i]);
+                    }
+                } catch (NumberFormatException ne) {
+                    return ChatColor.RED + "Error while parsing parameter '" + argsIn[i] + "': " + "Parameter should be a number!";
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return ChatColor.RED + "Error while parsing parameter '" + argsIn[i] + "': " + e.getMessage();
+                }
+                i++;
+            }
+            method.invoke(parent, args);
+            return null;
         }
 
         String[] getAliases() {

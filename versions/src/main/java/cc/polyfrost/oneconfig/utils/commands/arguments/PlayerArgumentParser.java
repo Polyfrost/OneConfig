@@ -1,7 +1,6 @@
 //#if MC<=11202
-package cc.polyfrost.oneconfig.utils.commands.arguements;
+package cc.polyfrost.oneconfig.utils.commands.arguments;
 
-import cc.polyfrost.oneconfig.utils.commands.arguments.ArgumentParser;
 import com.google.common.collect.Lists;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayer;
