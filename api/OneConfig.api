@@ -110,6 +110,16 @@ public abstract interface annotation class cc/polyfrost/oneconfig/config/annotat
 public abstract interface annotation class cc/polyfrost/oneconfig/config/annotations/NonProfileSpecific : java/lang/annotation/Annotation {
 }
 
+public abstract interface annotation class cc/polyfrost/oneconfig/config/annotations/Number : java/lang/annotation/Annotation {
+	public abstract fun category ()Ljava/lang/String;
+	public abstract fun description ()Ljava/lang/String;
+	public abstract fun max ()F
+	public abstract fun min ()F
+	public abstract fun name ()Ljava/lang/String;
+	public abstract fun step ()I
+	public abstract fun subcategory ()Ljava/lang/String;
+}
+
 public abstract interface annotation class cc/polyfrost/oneconfig/config/annotations/Page : java/lang/annotation/Annotation {
 	public abstract fun category ()Ljava/lang/String;
 	public abstract fun description ()Ljava/lang/String;
@@ -274,6 +284,7 @@ public final class cc/polyfrost/oneconfig/config/data/OptionType : java/lang/Enu
 	public static final field HEADER Lcc/polyfrost/oneconfig/config/data/OptionType;
 	public static final field INFO Lcc/polyfrost/oneconfig/config/data/OptionType;
 	public static final field KEYBIND Lcc/polyfrost/oneconfig/config/data/OptionType;
+	public static final field NUMBER Lcc/polyfrost/oneconfig/config/data/OptionType;
 	public static final field SLIDER Lcc/polyfrost/oneconfig/config/data/OptionType;
 	public static final field SWITCH Lcc/polyfrost/oneconfig/config/data/OptionType;
 	public static final field TEXT Lcc/polyfrost/oneconfig/config/data/OptionType;
@@ -788,6 +799,15 @@ public class cc/polyfrost/oneconfig/gui/elements/config/ConfigKeyBind : cc/polyf
 	public fun draw (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
 	public fun getHeight ()I
 	public fun keyTyped (CI)V
+}
+
+public class cc/polyfrost/oneconfig/gui/elements/config/ConfigNumber : cc/polyfrost/oneconfig/config/elements/BasicOption {
+	public fun <init> (Ljava/lang/reflect/Field;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;FFI)V
+	public static fun create (Ljava/lang/reflect/Field;Ljava/lang/Object;)Lcc/polyfrost/oneconfig/gui/elements/config/ConfigNumber;
+	public fun draw (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
+	public fun getHeight ()I
+	public fun keyTyped (CI)V
+	protected fun shouldDrawDescription ()Z
 }
 
 public class cc/polyfrost/oneconfig/gui/elements/config/ConfigPageButton : cc/polyfrost/oneconfig/config/elements/BasicOption {
