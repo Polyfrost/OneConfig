@@ -24,56 +24,31 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.config.data;
+package cc.polyfrost.oneconfig.config.annotations;
 
-public enum OptionType {
-    /**
-     * Type: boolean
-     */
-    SWITCH,
-    /**
-     * Type: boolean
-     */
-    CHECKBOX,
-    /**
-     * Type: boolean
-     */
-    DUAL_OPTION,
-    /**
-     * Type: int
-     */
-    TEXT,
-    /**
-     * Type: int or float
-     */
-    SLIDER,
+import cc.polyfrost.oneconfig.config.data.OptionType;
+import cc.polyfrost.oneconfig.internal.config.annotations.Option;
 
-    /**
-     * Type: int or float
-     */
-    NUMBER,
-    /**
-     * Type: OneColor
-     */
-    COLOR,
-    /**
-     * Type: int
-     */
-    DROPDOWN,
-    /**
-     * Type: doesn't matter
-     */
-    INFO,
-    /**
-     * Type: doesn't matter
-     */
-    HEADER,
-    /**
-     * Type: runnable
-     */
-    BUTTON,
-    /**
-     * Type: OneKeyBind
-     */
-    KEYBIND,
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.FIELD)
+@Option(type = OptionType.NUMBER)
+public @interface Number {
+    String name();
+
+    float min();
+
+    float max();
+
+    int step() default 1;
+
+    String description() default "";
+
+    String category() default "General";
+
+    String subcategory() default "";
 }

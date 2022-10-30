@@ -104,13 +104,13 @@ public class VigilanceConfig extends Config {
                     options.add(new ConfigSlider(getFieldOfProperty(option), option.getInstance(), getName(attributes), attributes.getDescription(), getCategory(attributes), getSubcategory(attributes), attributes.getMinF(), attributes.getMaxF(), 0));
                     break;
                 case NUMBER:
-                    options.add(new ConfigSlider(getFieldOfProperty(option), option.getInstance(), getName(attributes), attributes.getDescription(), getCategory(attributes), getSubcategory(attributes), attributes.getMin(), attributes.getMax(), 1));
+                    options.add(new ConfigNumber(getFieldOfProperty(option), option.getInstance(), getName(attributes), attributes.getDescription(), getCategory(attributes), getSubcategory(attributes), attributes.getMin(), attributes.getMax(), attributes.getIncrement()));
                     break;
                 case SLIDER:
                     options.add(new ConfigSlider(getFieldOfProperty(option), option.getInstance(), getName(attributes), attributes.getDescription(), getCategory(attributes), getSubcategory(attributes), attributes.getMin(), attributes.getMax(), 0));
                     break;
                 case COLOR:
-                    options.add(new CompatConfigColorElement(getFieldOfProperty(option), option.getInstance(), getCategory(attributes), attributes.getDescription(), getSubcategory(attributes), getName(attributes), 2));
+                    options.add(new CompatConfigColorElement(getFieldOfProperty(option), option.getInstance(), getName(attributes), attributes.getDescription(), getCategory(attributes), getSubcategory(attributes), 2, attributes.getAllowAlpha()));
                     break;
                 case BUTTON:
                     options.add(new ConfigButton(() -> ((CallablePropertyValue) option.getValue()).invoke(option.getInstance()), option.getInstance(), getName(attributes), attributes.getDescription(), getCategory(attributes), getSubcategory(attributes), 2, attributes.getPlaceholder().isEmpty() ? "Activate" : attributes.getPlaceholder()));
@@ -194,8 +194,8 @@ public class VigilanceConfig extends Config {
         private Color prevColor = null;
         private OneColor cachedColor = null;
 
-        public CompatConfigColorElement(Field color, Vigilant parent, String name, String description, String category, String subcategory, int size) {
-            super(null, parent, name, description, category, subcategory, size, true);
+        public CompatConfigColorElement(Field color, Vigilant parent, String name, String description, String category, String subcategory, int size, boolean allowAlpha) {
+            super(null, parent, name, description, category, subcategory, size, allowAlpha);
             this.color = color;
         }
 

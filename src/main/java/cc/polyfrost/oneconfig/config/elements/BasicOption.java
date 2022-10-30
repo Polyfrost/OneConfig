@@ -32,6 +32,7 @@ import cc.polyfrost.oneconfig.gui.animations.DummyAnimation;
 import cc.polyfrost.oneconfig.gui.animations.EaseOutQuad;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
+import cc.polyfrost.oneconfig.libs.universal.ChatColor;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.utils.InputHandler;
@@ -74,7 +75,7 @@ public abstract class BasicOption {
         this.field = field;
         this.parent = parent;
         this.name = name;
-        this.description = description;
+        this.description = ChatColor.Companion.stripControlCodes(description);
         this.category = category;
         this.subcategory = subcategory;
         this.size = size;
