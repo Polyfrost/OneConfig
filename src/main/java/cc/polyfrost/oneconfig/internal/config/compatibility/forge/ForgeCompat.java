@@ -41,7 +41,7 @@ public class ForgeCompat {
 
         private ForgeCompatMod(String name, ModType modType, @Nullable String modIcon, @Nullable Migrator migrator) {
             super(name, modType, modIcon, migrator);
-            config = new Config(this, "") {
+            config = new Config(this, "", true, false) {
                 @Override
                 public void initialize() {
                 }

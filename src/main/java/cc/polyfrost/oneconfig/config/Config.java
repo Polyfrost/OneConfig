@@ -68,16 +68,22 @@ public class Config {
             .create();
     transient public Mod mod;
     public boolean enabled;
+    public final boolean canToggle;
 
     /**
      * @param modData    information about the mod
      * @param configFile file where config is stored
      * @param enabled    whether the mod is enabled or not
      */
-    public Config(Mod modData, String configFile, boolean enabled) {
+    public Config(Mod modData, String configFile, boolean enabled, boolean canToggle) {
         this.configFile = configFile;
         this.mod = modData;
         this.enabled = enabled;
+        this.canToggle = canToggle;
+    }
+
+    public Config(Mod modData, String configFile, boolean enabled) {
+        this(modData, configFile, enabled, true);
     }
 
     /**

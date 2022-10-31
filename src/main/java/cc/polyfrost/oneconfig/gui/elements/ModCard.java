@@ -111,9 +111,13 @@ public class ModCard extends BasicElement {
 
         if (active != toggled) {
             active = toggled;
-            colorToggle.setPalette(active ? ColorPalette.PRIMARY : ColorPalette.SECONDARY);
-            modData.config.enabled = active;
-            modData.config.save();
+            if (modData.config.canToggle) {
+                colorToggle.setPalette(active ? ColorPalette.PRIMARY : ColorPalette.SECONDARY);
+                modData.config.enabled = active;
+                modData.config.save();
+            } else {
+                toggled = active = true;
+            }
         }
         RenderManager.setAlpha(vg, 1f);
         ScissorManager.resetScissor(vg, scissor);

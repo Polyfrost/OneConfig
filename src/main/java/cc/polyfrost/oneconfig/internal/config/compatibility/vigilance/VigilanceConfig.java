@@ -53,7 +53,7 @@ public class VigilanceConfig extends Config {
     public final Vigilant vigilant;
 
     public VigilanceConfig(Mod modData, String configFile, Vigilant vigilant) {
-        super(modData, configFile);
+        super(modData, configFile, true, false);
         this.vigilant = vigilant;
         initialize();
     }
