@@ -12,6 +12,7 @@
     "GuiIngameForgeMixin",
     "MinecraftMixin",
     "NetworkManagerMixin",
+    "OptifineConfigMixin",
     "ShaderGroupAccessor",
     "VigilantMixin",
     "WorldClientMixin"
