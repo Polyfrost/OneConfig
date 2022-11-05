@@ -34,6 +34,7 @@ import cc.polyfrost.oneconfig.config.elements.OptionPage;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
 import cc.polyfrost.oneconfig.config.Config;
 import cc.polyfrost.oneconfig.gui.elements.config.*;
+import cc.polyfrost.oneconfig.libs.universal.ChatColor;
 import cc.polyfrost.oneconfig.platform.Platform;
 import gg.essential.vigilance.Vigilant;
 import gg.essential.vigilance.data.*;
@@ -157,7 +158,7 @@ public class VigilanceConfig extends Config {
     private String getName(PropertyAttributesExt ext) {
         try {
             PropertyAttributesExt.class.getDeclaredField("i18nName").setAccessible(true);
-            return Platform.getI18nPlatform().format((String) PropertyAttributesExt.class.getDeclaredField("i18nName").get(ext));
+            return Platform.getI18nPlatform().format(ChatColor.Companion.stripControlCodes((String) PropertyAttributesExt.class.getDeclaredField("i18nName").get(ext)));
         } catch (IllegalAccessException | NoSuchFieldException e) {
             return ext.getName();
         }
@@ -166,7 +167,7 @@ public class VigilanceConfig extends Config {
     private String getCategory(PropertyAttributesExt ext) {
         try {
             PropertyAttributesExt.class.getDeclaredField("i18nCategory").setAccessible(true);
-            return Platform.getI18nPlatform().format((String) PropertyAttributesExt.class.getDeclaredField("i18nCategory").get(ext));
+            return Platform.getI18nPlatform().format(ChatColor.Companion.stripControlCodes((String) PropertyAttributesExt.class.getDeclaredField("i18nCategory").get(ext)));
         } catch (IllegalAccessException | NoSuchFieldException e) {
             return ext.getCategory();
         }
@@ -175,7 +176,7 @@ public class VigilanceConfig extends Config {
     private String getSubcategory(PropertyAttributesExt ext) {
         try {
             PropertyAttributesExt.class.getDeclaredField("i18nSubcategory").setAccessible(true);
-            return Platform.getI18nPlatform().format((String) PropertyAttributesExt.class.getDeclaredField("i18nSubcategory").get(ext));
+            return Platform.getI18nPlatform().format(ChatColor.Companion.stripControlCodes((String) PropertyAttributesExt.class.getDeclaredField("i18nSubcategory").get(ext)));
         } catch (IllegalAccessException | NoSuchFieldException e) {
             return ext.getSubcategory();
         }

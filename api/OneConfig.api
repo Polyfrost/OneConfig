@@ -1,4 +1,5 @@
 public class cc/polyfrost/oneconfig/config/Config {
+	public final field canToggle Z
 	protected final field configFile Ljava/lang/String;
 	public field enabled Z
 	protected final field gson Lcom/google/gson/Gson;
@@ -7,6 +8,7 @@ public class cc/polyfrost/oneconfig/config/Config {
 	public final field optionNames Ljava/util/HashMap;
 	public fun <init> (Lcc/polyfrost/oneconfig/config/data/Mod;Ljava/lang/String;)V
 	public fun <init> (Lcc/polyfrost/oneconfig/config/data/Mod;Ljava/lang/String;Z)V
+	public fun <init> (Lcc/polyfrost/oneconfig/config/data/Mod;Ljava/lang/String;ZZ)V
 	protected final fun addDependency (Ljava/lang/String;Ljava/lang/String;)V
 	protected final fun addDependency (Ljava/lang/String;Ljava/util/function/Supplier;)V
 	protected final fun addDependency (Ljava/lang/String;Z)V
