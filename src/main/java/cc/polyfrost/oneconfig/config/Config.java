@@ -253,17 +253,6 @@ public class Config {
     }
 
     /**
-     * Disable an option if a certain condition is not met
-     *
-     * @param option The name of the field, or if the field is in a page "pageName.fieldName"
-     * @param value  The value of the dependency
-     */
-    protected final void addDependency(String option, boolean value) {
-        if (!optionNames.containsKey(option)) return;
-        optionNames.get(option).addDependency(() -> value);
-    }
-
-    /**
      * Hide an option if a certain condition is met
      *
      * @param option    The name of the field, or if the field is in a page "pageName.fieldName"

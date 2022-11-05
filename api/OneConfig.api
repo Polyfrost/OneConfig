@@ -11,7 +11,6 @@ public class cc/polyfrost/oneconfig/config/Config {
 	public fun <init> (Lcc/polyfrost/oneconfig/config/data/Mod;Ljava/lang/String;ZZ)V
 	protected final fun addDependency (Ljava/lang/String;Ljava/lang/String;)V
 	protected final fun addDependency (Ljava/lang/String;Ljava/util/function/Supplier;)V
-	protected final fun addDependency (Ljava/lang/String;Z)V
 	protected fun addGsonOptions (Lcom/google/gson/GsonBuilder;)Lcom/google/gson/GsonBuilder;
 	protected final fun addListener (Ljava/lang/String;Ljava/lang/Runnable;)V
 	protected final fun generateOptionList (Ljava/lang/Object;Lcc/polyfrost/oneconfig/config/elements/OptionPage;Lcc/polyfrost/oneconfig/config/data/Mod;Z)V
