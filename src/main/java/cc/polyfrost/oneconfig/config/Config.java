@@ -45,6 +45,7 @@ import cc.polyfrost.oneconfig.hud.HUDUtils;
 import cc.polyfrost.oneconfig.internal.config.annotations.Option;
 import cc.polyfrost.oneconfig.internal.config.core.ConfigCore;
 import cc.polyfrost.oneconfig.internal.config.core.KeyBindHandler;
+import cc.polyfrost.oneconfig.internal.utils.Deprecator;
 import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 import com.google.gson.*;
 
@@ -258,9 +259,9 @@ public class Config {
      * @param option The name of the field, or if the field is in a page "pageName.fieldName"
      * @param value  The value of the dependency
      */
+    @Deprecated
     protected final void addDependency(String option, boolean value) {
-        if (!optionNames.containsKey(option)) return;
-        optionNames.get(option).addDependency(() -> value);
+        Deprecator.markDeprecated();
     }
 
     /**
@@ -297,9 +298,9 @@ public class Config {
      * @param option The name of the field, or if the field is in a page "pageName.fieldName"
      * @param value  The value of the condition
      */
+    @Deprecated
     protected final void hideIf(String option, boolean value) {
-        if (!optionNames.containsKey(option)) return;
-        optionNames.get(option).addHideCondition(() -> value);
+        Deprecator.markDeprecated();
     }
 
     /**
