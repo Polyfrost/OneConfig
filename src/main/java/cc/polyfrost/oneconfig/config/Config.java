@@ -262,6 +262,8 @@ public class Config {
     @Deprecated
     protected final void addDependency(String option, boolean value) {
         Deprecator.markDeprecated();
+        if (!optionNames.containsKey(option)) return;
+        optionNames.get(option).addDependency(() -> value);
     }
 
     /**
@@ -301,6 +303,8 @@ public class Config {
     @Deprecated
     protected final void hideIf(String option, boolean value) {
         Deprecator.markDeprecated();
+        if (!optionNames.containsKey(option)) return;
+        optionNames.get(option).addHideCondition(() -> value);
     }
 
     /**
