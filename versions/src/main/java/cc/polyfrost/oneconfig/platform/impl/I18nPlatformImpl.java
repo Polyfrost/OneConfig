@@ -44,9 +44,11 @@ public class I18nPlatformImpl implements I18nPlatform {
             //#else
             //$$ final String s = net.minecraft.client.util.InputMappings.getInputByCode(key, scanCode).func_237520_d_().getString();
             //#endif
-            //$$ return s.length() == 1 ? s.toUpperCase() : s;
+            //$$ if (s == null) return "Unknown";
+            //$$ else return s.length() == 1 ? s.toUpperCase() : s;
         //#else
-        return net.minecraft.client.settings.GameSettings.getKeyDisplayString(key);
+        final String s = net.minecraft.client.settings.GameSettings.getKeyDisplayString(key);
+        return s == null ? "Unknown" : s;
         //#endif
     }
 }
