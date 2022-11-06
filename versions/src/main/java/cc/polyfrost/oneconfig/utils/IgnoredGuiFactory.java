@@ -24,11 +24,12 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.platform;
+//#if FORGE==1
+package cc.polyfrost.oneconfig.utils;
 
-public interface I18nPlatform {
-    String format(String key, Object... args);
-
-    /** Return the localized name of the key given. */
-    String getKeyName(int key, int scanCode);
+/** Use this interface to ignore a {@link net.minecraftforge.fml.client.IModGuiFactory} during processing of automatic GUI handling in OneConfig. <br>
+ * Commonly used if you don't want to use the default behavior (opening this GUI upon pressing) and instead want to use your own system.
+ */
+public interface IgnoredGuiFactory {
 }
+//#endif

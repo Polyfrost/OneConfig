@@ -28,6 +28,7 @@
 package cc.polyfrost.oneconfig.config.core;
 
 import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
+import cc.polyfrost.oneconfig.platform.Platform;
 
 import java.util.ArrayList;
 
@@ -75,7 +76,7 @@ public class OneKeyBind {
         StringBuilder sb = new StringBuilder();
         for (int keyBind : keyBinds) {
             if (sb.length() != 0) sb.append(" + ");
-            sb.append(UKeyboard.getKeyName(keyBind, -1));
+            sb.append(Platform.getI18nPlatform().getKeyName(keyBind, -1));
         }
         return sb.toString().trim();
     }
