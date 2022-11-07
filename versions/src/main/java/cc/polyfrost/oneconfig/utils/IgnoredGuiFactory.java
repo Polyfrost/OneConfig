@@ -24,31 +24,17 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.platform.impl;
-
-import cc.polyfrost.oneconfig.platform.I18nPlatform;
-import net.minecraft.client.resources.I18n;
-
-public class I18nPlatformImpl implements I18nPlatform {
-
-    @Override
-    public String format(String key, Object... args) {
-        return I18n.format(key, args);
-    }
-
-    @Override
-    public String getKeyName(int key, int scanCode) {
-        //#if MC>=11600
-            //#if FABRIC==1
-            //$$ final String s = net.minecraft.client.util.InputUtil.fromKeyCode(key, scanCode).getLocalizedText().asString();
-            //#else
-            //$$ final String s = net.minecraft.client.util.InputMappings.getInputByCode(key, scanCode).func_237520_d_().getString();
-            //#endif
-            //$$ if (s == null) return "Unknown";
-            //$$ else return s.length() == 1 ? s.toUpperCase() : s;
-        //#else
-        final String s = net.minecraft.client.settings.GameSettings.getKeyDisplayString(key);
-        return s == null ? "Unknown" : s;
-        //#endif
-    }
+//#if FORGE==1
+package cc.polyfrost.oneconfig.utils;
+//#if MC<=11202
+/** Use this interface to ignore a {@link net.minecraftforge.fml.client.IModGuiFactory} during processing of automatic GUI handling in OneConfig. <br>
+ * Commonly used if you don't want to use the default behavior (opening this GUI upon pressing) and instead want to use your own system.
+ */
+//#else
+//$$ /** Use this interface to ignore the `CONFIGGUIFACTORY` {@link net.minecraftforge.fml.ExtensionPoint} during processing of automatic GUI handling in OneConfig. <br>
+//$$  * Commonly used if you don't want to use the default behavior (opening this GUI upon pressing) and instead want to use your own system.
+//$$  */
+//#endif
+public interface IgnoredGuiFactory {
 }
+//#endif

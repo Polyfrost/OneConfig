@@ -54,6 +54,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //#if FORGE==1
 import net.minecraftforge.fml.common.ModContainer;
+import cc.polyfrost.oneconfig.utils.IgnoredGuiFactory;
 //#endif
 
 //#if MC<=11202
@@ -196,6 +197,7 @@ public class OneConfig {
         //#else
         //$$ if (factory == null || !factory.hasConfigGui()) return;
         //#endif
+        if (IgnoredGuiFactory.class.isAssignableFrom(factory.getClass())) return;
         ForgeCompat.compatMods.put(new ForgeCompat.ForgeCompatMod(mod.getName(), ModType.THIRD_PARTY), () -> {
             try {
                 GuiUtils.displayScreen(
