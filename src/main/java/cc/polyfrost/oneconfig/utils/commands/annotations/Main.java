@@ -32,16 +32,13 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Marks a method as the main method of a command.
- *
- * @see Command
- * @see SubCommand
- * @see cc.polyfrost.oneconfig.utils.commands.CommandManager
+ * Use this annotation to mark a method as the main method for this command or subcommand. <br>It may only be used once per
+ * command/subcommand, and <b>MUST</b> take no parameters. <br><br>It is called when the direct name is typed, for example:<br>
+ * For master command named "test": /test<br>
+ * For any subcommands: /test (subcommand name)
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD})
+@Target(ElementType.METHOD)
 public @interface Main {
     String description() default "";
-
-    int priority() default 1000;
 }

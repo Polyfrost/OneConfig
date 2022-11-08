@@ -24,41 +24,17 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.utils.commands.arguments;
-
-import com.google.common.collect.Lists;
-import org.jetbrains.annotations.Nullable;
-
-import java.lang.reflect.Parameter;
-import java.util.List;
-import java.util.Locale;
-
-public class BooleanParser extends ArgumentParser<Boolean> {
-
-    private static final List<String> VALUES = Lists.newArrayList("true", "false");
-
-    @Override
-    public @Nullable Boolean parse(Arguments arguments) {
-        String next = arguments.poll();
-        if (next.equalsIgnoreCase("true")) {
-            return true;
-        } else if (next.equalsIgnoreCase("false")) {
-            return false;
-        } else {
-            return null;
-        }
-    }
-
-    @Override
-    public @Nullable List<String> complete(Arguments arguments, Parameter parameter) {
-        String value = arguments.poll();
-        if (value != null && !value.trim().isEmpty()) {
-            for (String v : VALUES) {
-                if (v.startsWith(value.toLowerCase(Locale.ENGLISH))) {
-                    return Lists.newArrayList(v);
-                }
-            }
-        }
-        return VALUES;
-    }
+//#if FORGE==1
+package cc.polyfrost.oneconfig.utils;
+//#if MC<=11202
+/** Use this interface to ignore a {@link net.minecraftforge.fml.client.IModGuiFactory} during processing of automatic GUI handling in OneConfig. <br>
+ * Commonly used if you don't want to use the default behavior (opening this GUI upon pressing) and instead want to use your own system.
+ */
+//#else
+//$$ /** Use this interface to ignore the `CONFIGGUIFACTORY` {@link net.minecraftforge.fml.ExtensionPoint} during processing of automatic GUI handling in OneConfig. <br>
+//$$  * Commonly used if you don't want to use the default behavior (opening this GUI upon pressing) and instead want to use your own system.
+//$$  */
+//#endif
+public interface IgnoredGuiFactory {
 }
+//#endif

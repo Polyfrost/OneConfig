@@ -27,47 +27,29 @@
 
 package cc.polyfrost.oneconfig.utils.commands.annotations;
 
-import cc.polyfrost.oneconfig.libs.universal.ChatColor;
-
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Marks a class as a subcommand. Can be stacked together.
+ * This annotation is used to mark a method as a subcommand. <br>
+ * A subcommand can be called using any of the aliases in the annotation, AND its name (case-insensitive). <br><br>
+ * It doesn't have to have any arguments, but they are recommended as they are used for better help messages for your users and for aliases. <br>
+ * </pre>
+ * <b>Usage on methods:</b>
+ * <pre>{@code
+ *  @SubCommand(description = "A command for doing something cool.", aliases = {"myc", "yes"})
+ *  public void myCommand(int bob, float someParam) {
+ *      // with this annotation, the description will be displayed on the help message.
+ *      // also, because of the aliases, it can be called using /test mycommand, /test myc, or /test yes.
+ *  }
  *
- * @see Command
- * @see cc.polyfrost.oneconfig.utils.commands.CommandManager
+ * </pre>
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.TYPE})
+@Target(ElementType.METHOD)
 public @interface SubCommand {
-    /**
-     * The name of the command.
-     *
-     * @return The name of the command.
-     */
-    String value();
-
-    /**
-     * The aliases of the command.
-     *
-     * @return The aliases of the command.
-     */
-    String[] aliases() default {};
-
-    /**
-     * The description of the command.
-     *
-     * @return The description of the command.
-     */
     String description() default "";
-
-    /**
-     * The color of the command.
-     *
-     * @return The color of the command.
-     */
-    ChatColor color() default ChatColor.RESET;
+    String[] aliases() default {};
 }

@@ -74,6 +74,9 @@ public class ConfigUtils {
             case SLIDER:
                 check(OptionType.SLIDER.toString(), field, int.class, float.class, Integer.class, Float.class);
                 return ConfigSlider.create(field, instance);
+            case NUMBER:
+                check(OptionType.NUMBER.toString(), field, int.class, float.class, Integer.class, Float.class);
+                return ConfigNumber.create(field, instance);
             case KEYBIND:
                 check(OptionType.KEYBIND.toString(), field, OneKeyBind.class);
                 return ConfigKeyBind.create(field, instance);
