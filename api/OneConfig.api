@@ -139,6 +139,7 @@ public abstract interface annotation class cc/polyfrost/oneconfig/config/annotat
 
 public abstract interface annotation class cc/polyfrost/oneconfig/config/annotations/Slider : java/lang/annotation/Annotation {
 	public abstract fun category ()Ljava/lang/String;
+	public abstract fun decimalPlaces ()I
 	public abstract fun description ()Ljava/lang/String;
 	public abstract fun max ()F
 	public abstract fun min ()F
@@ -427,42 +428,25 @@ public abstract interface annotation class cc/polyfrost/oneconfig/config/migrati
 	public abstract fun name ()Ljava/lang/String;
 	public abstract fun subcategory ()Ljava/lang/String;
 }
-\
-public abstract class cc/polyfrost/oneconfig/config/preview/BasicPreview {
-	public final field WIDTH F
-	public field height F
+
+public abstract class cc/polyfrost/oneconfig/config/preview/BackgroundVGPreview : cc/polyfrost/oneconfig/config/preview/VGPreview {
 	public fun <init> ()V
-	public abstract fun getHeight ()F
-	public abstract fun setupCallDraw (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;JFF)V
+	protected fun draw (JFF)V
+	public fun getHeight ()F
 }
 
-public abstract class cc/polyfrost/oneconfig/config/preview/MCPreview : cc/polyfrost/oneconfig/config/preview/BasicPreview {
+public abstract class cc/polyfrost/oneconfig/config/preview/BasicPreview {
 	public fun <init> ()V
-	protected abstract fun draw (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;FF)V
-	public final fun setupCallDraw (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;JFF)V
+	public abstract fun getHeight ()F
+	public abstract fun setupCallDraw (JFFFF)V
 }
 
 public abstract class cc/polyfrost/oneconfig/config/preview/VGPreview : cc/polyfrost/oneconfig/config/preview/BasicPreview {
 	public fun <init> ()V
 	protected abstract fun draw (JFF)V
-	public final fun setupCallDraw (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;JFF)V
+	public final fun setupCallDraw (JFFFF)V
 }
 
-public class cc/polyfrost/oneconfig/config/profiles/Profiles {
-	public static final field nonProfileSpecificDir Ljava/io/File;
-	public static final field profileDir Ljava/io/File;
-	public static field profiles Ljava/util/ArrayList;
-	public fun <init> ()V
-	public static fun createProfile (Ljava/lang/String;)V
-	public static fun deleteProfile (Ljava/lang/String;)V
-	public static fun getCurrentProfile ()Ljava/lang/String;
-	public static fun getNonProfileSpecificDir (Ljava/lang/String;)Ljava/io/File;
-	public static fun getProfileDir ()Ljava/io/File;
-	public static fun getProfileDir (Ljava/lang/String;)Ljava/io/File;
-	public static fun getProfileFile (Ljava/lang/String;)Ljava/io/File;
-	public static fun loadProfile (Ljava/lang/String;)V
-	public static fun renameProfile (Ljava/lang/String;Ljava/lang/String;)V
-}
 public final class cc/polyfrost/oneconfig/events/EventManager {
 	public static final field INSTANCE Lcc/polyfrost/oneconfig/events/EventManager;
 	public fun getEventBus ()Lcc/polyfrost/oneconfig/libs/eventbus/EventBus;
@@ -865,12 +849,13 @@ public class cc/polyfrost/oneconfig/gui/elements/config/ConfigPageButton : cc/po
 
 public class cc/polyfrost/oneconfig/gui/elements/config/ConfigPreview : cc/polyfrost/oneconfig/config/elements/BasicOption {
 	public fun <init> (Ljava/lang/reflect/Field;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lcc/polyfrost/oneconfig/config/preview/BasicPreview;)V
-	public fun draw (JII)V
+	public fun draw (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
 	public fun getHeight ()I
 }
 
 public class cc/polyfrost/oneconfig/gui/elements/config/ConfigSlider : cc/polyfrost/oneconfig/config/elements/BasicOption {
 	public fun <init> (Ljava/lang/reflect/Field;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;FFI)V
+	public fun <init> (Ljava/lang/reflect/Field;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;FFII)V
 	public static fun create (Ljava/lang/reflect/Field;Ljava/lang/Object;)Lcc/polyfrost/oneconfig/gui/elements/config/ConfigSlider;
 	public fun draw (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
 	public fun getHeight ()I
@@ -896,6 +881,7 @@ public class cc/polyfrost/oneconfig/gui/elements/config/ConfigTextBox : cc/polyf
 
 public class cc/polyfrost/oneconfig/gui/elements/text/NumberInputField : cc/polyfrost/oneconfig/gui/elements/text/TextInputField {
 	public fun <init> (IIFFFF)V
+	public fun <init> (IIFFFFI)V
 	public fun arrowsClicked ()Z
 	public fun draw (JFFLcc/polyfrost/oneconfig/utils/InputHandler;)V
 	public fun getCurrentValue ()F
@@ -1311,6 +1297,7 @@ public class cc/polyfrost/oneconfig/renderer/NVGAsset {
 }
 
 public final class cc/polyfrost/oneconfig/renderer/RenderManager {
+	public static fun beginFrame (Z)V
 	public static fun color (JI)Lorg/lwjgl/nanovg/NVGColor;
 	public static fun drawBorderedText (Ljava/lang/String;FFII)I
 	public static fun drawCircle (JFFFI)V
@@ -1343,6 +1330,7 @@ public final class cc/polyfrost/oneconfig/renderer/RenderManager {
 	public static fun drawText (JLjava/lang/String;FFIFLcc/polyfrost/oneconfig/renderer/font/Font;)V
 	public static fun drawURL (JLjava/lang/String;FFFLcc/polyfrost/oneconfig/renderer/font/Font;Lcc/polyfrost/oneconfig/utils/InputHandler;)V
 	public static fun drawWrappedString (JLjava/lang/String;FFFIFFLcc/polyfrost/oneconfig/renderer/font/Font;)V
+	public static fun endFrame ()V
 	public static fun fillNVGColorWithRGBA (FFFFLorg/lwjgl/nanovg/NVGColor;)V
 	public static fun getTextWidth (JLjava/lang/String;FLcc/polyfrost/oneconfig/renderer/font/Font;)F
 	public static fun getWrappedStringHeight (JLjava/lang/String;FFFLcc/polyfrost/oneconfig/renderer/font/Font;)F
