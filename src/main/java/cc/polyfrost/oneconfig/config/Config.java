@@ -50,6 +50,7 @@ import cc.polyfrost.oneconfig.hud.HUDUtils;
 import cc.polyfrost.oneconfig.internal.config.annotations.Option;
 import cc.polyfrost.oneconfig.internal.config.core.ConfigCore;
 import cc.polyfrost.oneconfig.internal.config.core.KeyBindHandler;
+import cc.polyfrost.oneconfig.internal.utils.Deprecator;
 import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -77,16 +78,22 @@ public class Config {
             .create();
     transient public Mod mod;
     public boolean enabled;
+    public final boolean canToggle;
 
     /**
      * @param modData    information about the mod
      * @param configFile file where config is stored
      * @param enabled    whether the mod is enabled or not
      */
-    public Config(Mod modData, String configFile, boolean enabled) {
+    public Config(Mod modData, String configFile, boolean enabled, boolean canToggle) {
         this.configFile = configFile;
         this.mod = modData;
         this.enabled = enabled;
+        this.canToggle = canToggle;
+    }
+
+    public Config(Mod modData, String configFile, boolean enabled) {
+        this(modData, configFile, enabled, true);
     }
 
     /**
@@ -272,7 +279,9 @@ public class Config {
      * @param option The name of the field, or if the field is in a page "pageName.fieldName"
      * @param value  The value of the dependency
      */
+    @Deprecated
     protected final void addDependency(String option, boolean value) {
+        Deprecator.markDeprecated();
         if (!optionNames.containsKey(option)) return;
         optionNames.get(option).addDependency(() -> value);
     }
@@ -311,7 +320,9 @@ public class Config {
      * @param option The name of the field, or if the field is in a page "pageName.fieldName"
      * @param value  The value of the condition
      */
+    @Deprecated
     protected final void hideIf(String option, boolean value) {
+        Deprecator.markDeprecated();
         if (!optionNames.containsKey(option)) return;
         optionNames.get(option).addHideCondition(() -> value);
     }

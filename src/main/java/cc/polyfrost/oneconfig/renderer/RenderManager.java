@@ -53,6 +53,7 @@ import static org.lwjgl.nanovg.NanoVG.*;
  */
 public final class RenderManager {
     private static long vg = -1;
+    private static boolean drawing = false;
 
     //nanovg
 
@@ -77,25 +78,30 @@ public final class RenderManager {
      * @param consumer  The consumer to call.
      */
     public static void setupAndDraw(boolean mcScaling, LongConsumer consumer) {
-        if (vg == -1) {
-            vg = Platform.getNanoVGPlatform().nvgCreate(NanoVGPlatform.NVG_ANTIALIAS);
+        try {
+            drawing = true;
             if (vg == -1) {
-                throw new RuntimeException("Failed to create nvg context");
+                vg = Platform.getNanoVGPlatform().nvgCreate(NanoVGPlatform.NVG_ANTIALIAS);
+                if (vg == -1) {
+                    throw new RuntimeException("Failed to create nvg context");
+                }
+                FontManager.INSTANCE.initialize(vg);
             }
-            FontManager.INSTANCE.initialize(vg);
+
+            Platform.getGLPlatform().enableStencil();
+            GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
+            GL11.glDisable(GL11.GL_ALPHA_TEST);
+
+            beginFrame(mcScaling);
+
+            consumer.accept(vg);
+
+            endFrame();
+
+            GL11.glPopAttrib();
+        } finally {
+            drawing = false;
         }
-
-        Platform.getGLPlatform().enableStencil();
-        GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
-        GL11.glDisable(GL11.GL_ALPHA_TEST);
-
-        beginFrame(mcScaling);
-
-        consumer.accept(vg);
-
-        endFrame();
-
-        GL11.glPopAttrib();
     }
 
     public static void beginFrame(boolean mcScaling) {
@@ -786,6 +792,10 @@ public final class RenderManager {
         drawCircle(vg, centerX, centerY, size / 2 - size / 12, colorInner);
         float iconSize = size / 1.75f;
         drawSvg(vg, icon, centerX - iconSize / 2f, centerY - iconSize / 2f, iconSize, iconSize);
+    }
+
+    public static boolean isDrawing() {
+        return drawing;
     }
 
     // gl
