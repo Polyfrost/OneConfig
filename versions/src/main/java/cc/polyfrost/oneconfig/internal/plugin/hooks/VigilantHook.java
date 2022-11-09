@@ -30,6 +30,7 @@ import cc.polyfrost.oneconfig.internal.config.compatibility.vigilance.VigilanceC
 import cc.polyfrost.oneconfig.config.data.Mod;
 import cc.polyfrost.oneconfig.config.data.ModType;
 import cc.polyfrost.oneconfig.internal.config.core.ConfigCore;
+import cc.polyfrost.oneconfig.libs.universal.ChatColor;
 import cc.polyfrost.oneconfig.platform.Platform;
 import gg.essential.vigilance.Vigilant;
 
@@ -41,10 +42,11 @@ public class VigilantHook {
         if (vigilant != null && Platform.getInstance().isCallingFromMinecraftThread()) {
             String name = !vigilant.getGuiTitle().equals("Settings") ? vigilant.getGuiTitle() : !Platform.getLoaderPlatform().hasActiveModContainer() ? "Unknown" : Platform.getLoaderPlatform().getActiveModContainer().name;
             if (name.equals("OneConfig")) name = "Essential";
-            String finalName = name;
+            if (name.equals("Patcher")) return null;
+            String finalName = ChatColor.Companion.stripControlCodes(name);
             // duplicate fix
             if (ConfigCore.mods.stream().anyMatch(mod -> mod.name.equals(finalName))) return null;
-            return new VigilanceConfig(new Mod(name, ModType.THIRD_PARTY), file.getAbsolutePath(), vigilant);
+            return new VigilanceConfig(new Mod(finalName, ModType.THIRD_PARTY), file.getAbsolutePath(), vigilant);
         } else {
             return null;
         }

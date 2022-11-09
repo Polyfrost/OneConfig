@@ -70,7 +70,7 @@ public class ConfigPageButton extends BasicOption {
         RenderManager.drawRoundedRect(vg, x - 16, y, 1024, height, backgroundColor.getColor(hovered, hovered && Platform.getMousePlatform().isButtonDown(0)), 20);
         RenderManager.drawText(vg, name, x + 10, y + 32, Colors.WHITE_90, 24, Fonts.MEDIUM);
         if (!description.equals(""))
-            RenderManager.drawText(vg, name, x + 10, y + 70, Colors.WHITE_90, 14, Fonts.MEDIUM);
+            RenderManager.drawText(vg, description, x + 10, y + 70, Colors.WHITE_90, 14, Fonts.MEDIUM);
         RenderManager.drawSvg(vg, SVGs.CARET_RIGHT, x + 981f, y + (description.equals("") ? 20f : 36f), 13, 22);
 
         if (clicked) OneConfigGui.INSTANCE.openPage(page);

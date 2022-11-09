@@ -24,18 +24,28 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.utils.commands.arguments;
+package cc.polyfrost.oneconfig.utils.commands.annotations;
 
-import org.jetbrains.annotations.Nullable;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-public class FloatParser extends ArgumentParser<Float> {
+/** Use this annotation on subclasses to mark them as subcommands. This uses the value field and the aliases for the syntax. */
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
+public @interface SubCommandGroup {
+    /**
+     * The name of the command.
+     *
+     * @return The name of the command.
+     */
+    String value();
 
-    @Override
-    public @Nullable Float parse(Arguments arguments) {
-        try {
-            return Float.parseFloat(arguments.poll());
-        } catch (NumberFormatException e) {
-            return null;
-        }
-    }
+    /**
+     * The aliases of the command.
+     *
+     * @return The aliases of the command.
+     */
+    String[] aliases() default {};
 }

@@ -71,6 +71,7 @@ public class HUDUtils {
             for (Field f : fieldArrayList) fields.put(f.getName(), f);
             options.add(new ConfigHeader(field, hud, hudAnnotation.name(), category, subcategory, 2));
             options.add(new ConfigSwitch(fields.get("enabled"), hud, "Enabled", "If the HUD is enabled", category, subcategory, 2));
+            options.add(new ConfigSlider(fields.get("scale"), hud, "Scale", "The scale of the HUD", category, subcategory, 0.3f, 10f, 0));
             options.addAll(ConfigUtils.getClassOptions(hud));
             if (hud instanceof BasicHud) {
                 options.add(new ConfigCheckbox(fields.get("background"), hud, "Background", "If the background of the HUD is enabled.", category, subcategory, 1));

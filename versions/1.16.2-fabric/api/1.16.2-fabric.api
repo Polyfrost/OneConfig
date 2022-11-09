@@ -45,6 +45,7 @@ public class cc/polyfrost/oneconfig/platform/impl/GuiPlatformImpl : cc/polyfrost
 public class cc/polyfrost/oneconfig/platform/impl/I18nPlatformImpl : cc/polyfrost/oneconfig/platform/I18nPlatform {
 	public fun <init> ()V
 	public fun format (Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;
+	public fun getKeyName (II)Ljava/lang/String;
 }
 
 public class cc/polyfrost/oneconfig/platform/impl/LoaderPlatformImpl : cc/polyfrost/oneconfig/platform/LoaderPlatform {
@@ -102,7 +103,6 @@ public class cc/polyfrost/oneconfig/platform/impl/ServerPlatformImpl : cc/polyfr
 
 public class cc/polyfrost/oneconfig/utils/commands/PlatformCommandManagerImpl : cc/polyfrost/oneconfig/utils/commands/PlatformCommandManager {
 	public fun <init> ()V
-	public fun handleNewParser (Lcc/polyfrost/oneconfig/utils/commands/arguments/ArgumentParser;Ljava/lang/Class;)V
 }
 
 public final class cc/polyfrost/oneconfig/utils/dsl/DSLsKt {
