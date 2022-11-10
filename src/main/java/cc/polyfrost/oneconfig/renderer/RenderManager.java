@@ -68,7 +68,7 @@ public final class RenderManager {
         EventManager.INSTANCE.register(new Object() {
             @Subscribe
             private void onRender(RenderEvent event) {
-                if (event.stage == Stage.START) {
+                if (event.stage == Stage.END) {
                     if (drawing) {
                         drawing = false;
                     }
