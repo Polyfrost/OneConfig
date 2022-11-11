@@ -27,9 +27,13 @@
 package cc.polyfrost.oneconfig.renderer;
 
 import cc.polyfrost.oneconfig.config.data.InfoType;
+import cc.polyfrost.oneconfig.events.EventManager;
+import cc.polyfrost.oneconfig.events.event.RenderEvent;
+import cc.polyfrost.oneconfig.events.event.Stage;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
+import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
 import cc.polyfrost.oneconfig.libs.universal.UGraphics;
 import cc.polyfrost.oneconfig.libs.universal.UResolution;
 import cc.polyfrost.oneconfig.platform.NanoVGPlatform;
@@ -60,6 +64,19 @@ public final class RenderManager {
 
     }
 
+    static {
+        EventManager.INSTANCE.register(new Object() {
+            @Subscribe
+            private void onRender(RenderEvent event) {
+                if (event.stage == Stage.END) {
+                    if (drawing) {
+                        drawing = false;
+                    }
+                }
+            }
+        });
+    }
+
     /**
      * Sets up rendering, calls the consumer with the NanoVG context, and then cleans up.
      *
@@ -77,35 +94,30 @@ public final class RenderManager {
      * @param consumer  The consumer to call.
      */
     public static void setupAndDraw(boolean mcScaling, LongConsumer consumer) {
-        try {
-            drawing = true;
+        drawing = true;
+        if (vg == -1) {
+            vg = Platform.getNanoVGPlatform().nvgCreate(NanoVGPlatform.NVG_ANTIALIAS);
             if (vg == -1) {
-                vg = Platform.getNanoVGPlatform().nvgCreate(NanoVGPlatform.NVG_ANTIALIAS);
-                if (vg == -1) {
-                    throw new RuntimeException("Failed to create nvg context");
-                }
-                FontManager.INSTANCE.initialize(vg);
+                throw new RuntimeException("Failed to create nvg context");
             }
-
-            Platform.getGLPlatform().enableStencil();
-            GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
-            GL11.glDisable(GL11.GL_ALPHA_TEST);
-
-            if (mcScaling) {
-                nvgBeginFrame(vg, (float) UResolution.getScaledWidth(), (float) UResolution.getScaledHeight(), (float) UResolution.getScaleFactor());
-            } else {
-                nvgBeginFrame(vg, UResolution.getWindowWidth(), UResolution.getWindowHeight(), 1);
-            }
-
-            consumer.accept(vg);
-
-            nvgEndFrame(vg);
-            
-            GL11.glPopAttrib();
-            GL11.glEnable(GL11.GL_ALPHA_TEST);
-        } finally {
-            drawing = false;
+            FontManager.INSTANCE.initialize(vg);
         }
+
+        Platform.getGLPlatform().enableStencil();
+        GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
+        GL11.glDisable(GL11.GL_ALPHA_TEST);
+
+        if (mcScaling) {
+            nvgBeginFrame(vg, (float) UResolution.getScaledWidth(), (float) UResolution.getScaledHeight(), (float) UResolution.getScaleFactor());
+        } else {
+            nvgBeginFrame(vg, UResolution.getWindowWidth(), UResolution.getWindowHeight(), 1);
+        }
+
+        consumer.accept(vg);
+
+        nvgEndFrame(vg);
+
+        GL11.glPopAttrib();
     }
 
     /**
