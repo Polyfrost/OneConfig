@@ -440,6 +440,11 @@ public class cc/polyfrost/oneconfig/events/event/ChatReceiveEvent : cc/polyfrost
 	public fun getFullyUnformattedMessage ()Ljava/lang/String;
 }
 
+public class cc/polyfrost/oneconfig/events/event/FramebufferRenderEvent {
+	public final field stage Lcc/polyfrost/oneconfig/events/event/Stage;
+	public fun <init> (Lcc/polyfrost/oneconfig/events/event/Stage;)V
+}
+
 public class cc/polyfrost/oneconfig/events/event/HudRenderEvent {
 	public final field deltaTicks F
 	public final field matrices Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;

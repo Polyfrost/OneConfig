@@ -28,7 +28,7 @@ package cc.polyfrost.oneconfig.renderer;
 
 import cc.polyfrost.oneconfig.config.data.InfoType;
 import cc.polyfrost.oneconfig.events.EventManager;
-import cc.polyfrost.oneconfig.events.event.RenderEvent;
+import cc.polyfrost.oneconfig.events.event.FramebufferRenderEvent;
 import cc.polyfrost.oneconfig.events.event.Stage;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
@@ -57,6 +57,7 @@ import static org.lwjgl.nanovg.NanoVG.*;
 public final class RenderManager {
     private static long vg = -1;
     private static boolean drawing = false;
+    private static boolean goingToCancel = false;
 
     //nanovg
 
@@ -67,10 +68,15 @@ public final class RenderManager {
     static {
         EventManager.INSTANCE.register(new Object() {
             @Subscribe
-            private void onRender(RenderEvent event) {
+            private void onFramebufferRender(FramebufferRenderEvent event) {
                 if (event.stage == Stage.END) {
                     if (drawing) {
-                        drawing = false;
+                        if (goingToCancel) {
+                            drawing = false;
+                            goingToCancel = false;
+                        } else {
+                            goingToCancel = true;
+                        }
                     }
                 }
             }

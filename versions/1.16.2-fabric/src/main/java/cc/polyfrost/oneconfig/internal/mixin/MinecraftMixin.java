@@ -60,6 +60,16 @@ public class MinecraftMixin {
         EventManager.INSTANCE.post(new RenderEvent(Stage.END, renderTickCounter.tickDelta));
     }
 
+    @Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gl/Framebuffer;draw(II)V"))
+    private void onFramebufferStart(CallbackInfo ci) {
+        EventManager.INSTANCE.post(new FramebufferRenderEvent(Stage.START));
+    }
+
+    @Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gl/Framebuffer;draw(II)V", shift = At.Shift.AFTER))
+    private void onFramebufferEnd(CallbackInfo ci) {
+        EventManager.INSTANCE.post(new FramebufferRenderEvent(Stage.END));
+    }
+
     @Inject(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/profiler/Profiler;push(Ljava/lang/String;)V", ordinal = 0))
     private void onClientTickStart(CallbackInfo ci) {
         EventManager.INSTANCE.post(new TickEvent(Stage.START));
