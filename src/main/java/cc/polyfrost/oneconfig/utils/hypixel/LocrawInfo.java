@@ -29,6 +29,7 @@ package cc.polyfrost.oneconfig.utils.hypixel;
 
 import com.google.gson.annotations.SerializedName;
 
+import java.io.Serializable;
 import java.util.Objects;
 
 /**
@@ -40,7 +41,7 @@ import java.util.Objects;
  *
  * @see HypixelUtils
  */
-public class LocrawInfo {
+public class LocrawInfo implements Serializable {
     @SerializedName("server")
     private String serverId;
     @SerializedName("mode")
@@ -62,6 +63,7 @@ public class LocrawInfo {
      * @return The GameType of the server as a String.
      */
     public String getRawGameType() {
+        if (rawGameType == null) rawGameType = "UNKNOWN";
         return rawGameType;
     }
 
@@ -121,6 +123,7 @@ public class LocrawInfo {
         }
 
         public static GameType getFromLocraw(String gameType) {
+            if (gameType == null) return UNKNOWN;
             for (GameType value : values()) {
                 if (value.serverName.equals(gameType)) {
                     return value;
