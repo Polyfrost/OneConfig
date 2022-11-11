@@ -26,7 +26,6 @@
 
 package cc.polyfrost.oneconfig.utils;
 
-import cc.polyfrost.oneconfig.libs.universal.UResolution;
 import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.scissor.Scissor;
 import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
@@ -172,7 +171,7 @@ public class InputHandler {
      * @return the current mouse Y position
      */
     public float mouseY() {
-        return (float) ((UResolution.getWindowHeight() - Math.abs(Platform.getMousePlatform().getMouseY())) / scaleY);
+        return (float) (Platform.getMousePlatform().getMouseY() / scaleY);
     }
 
     /**
