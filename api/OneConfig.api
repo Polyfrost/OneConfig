@@ -1118,9 +1118,9 @@ public abstract interface class cc/polyfrost/oneconfig/platform/LoaderPlatform {
 public class cc/polyfrost/oneconfig/platform/LoaderPlatform$ActiveMod {
 	public final field id Ljava/lang/String;
 	public final field name Ljava/lang/String;
-	public final field source Ljava/io/File;
+	public final field source Ljava/nio/file/Path;
 	public final field version Ljava/lang/String;
-	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/io/File;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/nio/file/Path;)V
 }
 
 public abstract interface class cc/polyfrost/oneconfig/platform/MousePlatform {
