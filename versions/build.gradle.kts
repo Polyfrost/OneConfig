@@ -190,11 +190,11 @@ dependencies {
         shadeNoPom(shade(prebundle(tempLwjglConfiguration, "lwjgl.jar"))!!)
     } else {
         val lwjglVersion = "3.2.2"
-        include("org.lwjgl:lwjgl-nanovg:$lwjglVersion")
-        include("org.lwjgl:lwjgl-nanovg:$lwjglVersion:natives-windows")
-        include("org.lwjgl:lwjgl-nanovg:$lwjglVersion:natives-linux")
-        include("org.lwjgl:lwjgl-nanovg:$lwjglVersion:natives-macos")
-        include("org.lwjgl:lwjgl-nanovg:3.3.1:natives-macos-arm64")
+        shade("org.lwjgl:lwjgl-nanovg:$lwjglVersion")
+        shade("org.lwjgl:lwjgl-nanovg:$lwjglVersion:natives-windows")
+        shade("org.lwjgl:lwjgl-nanovg:$lwjglVersion:natives-linux")
+        shade("org.lwjgl:lwjgl-nanovg:$lwjglVersion:natives-macos")
+        shade("org.lwjgl:lwjgl-nanovg:3.3.1:natives-macos-arm64")
     }
 
     configurations.named(JavaPlugin.COMPILE_CLASSPATH_CONFIGURATION_NAME) { extendsFrom(shadeProject) }
