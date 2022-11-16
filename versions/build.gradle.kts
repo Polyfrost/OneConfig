@@ -194,6 +194,7 @@ dependencies {
         include("org.lwjgl:lwjgl-nanovg:$lwjglVersion:natives-windows")
         include("org.lwjgl:lwjgl-nanovg:$lwjglVersion:natives-linux")
         include("org.lwjgl:lwjgl-nanovg:$lwjglVersion:natives-macos")
+        include("org.lwjgl:lwjgl-nanovg:3.3.1:natives-macos-arm64")
     }
 
     configurations.named(JavaPlugin.COMPILE_CLASSPATH_CONFIGURATION_NAME) { extendsFrom(shadeProject) }
