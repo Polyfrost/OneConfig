@@ -6,7 +6,7 @@
 Easy, stunning, expandable, open source. That sums it up quite well. We built OneConfig for the developer, to completly eliminate the hassle of making tools to configure their mods. Our API is elegant, and easy to learn. OneConfig was built from the ground up for this purpose. As for the user experience, it was our top priority. All of their mods will appear in one place, and they don't even need to install anything extra. The visual design is stunning, and is ready to grow whenever needed.
 
 ## Developer documentation
-For a guide of how to use OneConfig please see our wiki at https://docs.polyfrost.cc. It's very thorough, and actually written by the people who write OneConfig.
+For a guide of how to use OneConfig please see our wiki at https://docs.polyfrost.cc. It's very thorough, and written by the people who develop OneConfig.
 
 ## Screenshots
 <details>
@@ -18,7 +18,7 @@ For a guide of how to use OneConfig please see our wiki at https://docs.polyfros
 
 # How do I get it?
 
-OneConfig Open Beta is now opened to the public! If you want to be the first to recieve news of new OneConfig updates, or new supported mods, check out our [**Discord server**](https://polyfrost.cc/discord). We're always in there so feel free to say hi!
+OneConfig's open beta just released for everyone! If you want to be the first to recieve news of new OneConfig updates, or new supported mods, check out our [**Discord server**](https://polyfrost.cc/discord). We're always in there so feel free to say hi!
 
 ## Licenses and Supporting Projects
 
