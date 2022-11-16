@@ -24,18 +24,26 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.utils.commands.arguments;
+package cc.polyfrost.oneconfig.test.huds;
 
-import org.jetbrains.annotations.Nullable;
+import cc.polyfrost.oneconfig.hud.BasicHud;
+import cc.polyfrost.oneconfig.internal.assets.Images;
+import cc.polyfrost.oneconfig.libs.universal.UMatrixStack;
+import cc.polyfrost.oneconfig.renderer.RenderManager;
 
-public class FloatParser extends ArgumentParser<Float> {
+public class TestBasicHud_Test extends BasicHud {
+    @Override
+    protected void draw(UMatrixStack matrices, float x, float y, float scale, boolean example) {
+        RenderManager.setupAndDraw(true, vg -> RenderManager.drawImage(vg, Images.HUE_GRADIENT.filePath, x, y, 50 * scale, 50f * scale));
+    }
 
     @Override
-    public @Nullable Float parse(Arguments arguments) {
-        try {
-            return Float.parseFloat(arguments.poll());
-        } catch (NumberFormatException e) {
-            return null;
-        }
+    protected float getWidth(float scale, boolean example) {
+        return 50 * scale;
+    }
+
+    @Override
+    protected float getHeight(float scale, boolean example) {
+        return 50 * scale;
     }
 }

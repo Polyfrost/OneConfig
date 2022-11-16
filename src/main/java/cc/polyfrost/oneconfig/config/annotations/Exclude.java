@@ -34,7 +34,6 @@ import java.lang.annotation.Target;
 /**
  * Excludes fields from being serialized or deserialized by OneConfig's Config and HUD
  * system.
- *
  * This can be used interchangeably with the transient modifier built into Java.
  */
 @Retention(RetentionPolicy.RUNTIME)

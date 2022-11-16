@@ -24,26 +24,25 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.test;
+package cc.polyfrost.oneconfig.test.huds;
 
-import cc.polyfrost.oneconfig.hud.BasicHud;
-import cc.polyfrost.oneconfig.internal.assets.Images;
-import cc.polyfrost.oneconfig.libs.universal.UMatrixStack;
-import cc.polyfrost.oneconfig.renderer.RenderManager;
+import cc.polyfrost.oneconfig.config.annotations.Switch;
+import cc.polyfrost.oneconfig.hud.SingleTextHud;
 
-public class TestBasicHud_Test extends BasicHud {
-    @Override
-    protected void draw(UMatrixStack matrices, float x, float y, float scale, boolean example) {
-        RenderManager.setupAndDraw(true, vg -> RenderManager.drawImage(vg, Images.HUE_GRADIENT.filePath, x, y, 50 * scale, 50f * scale));
+public class TestHud_Test extends SingleTextHud {
+    int times = 0;
+    @Switch(
+            name = "Custom Option"
+    )
+    public boolean yes;
+
+    public TestHud_Test() {
+        super("Time", true);
     }
 
     @Override
-    protected float getWidth(float scale, boolean example) {
-        return 50 * scale;
-    }
-
-    @Override
-    protected float getHeight(float scale, boolean example) {
-        return 50 * scale;
+    public String getText(boolean example) {
+        times++;
+        return String.valueOf(times);
     }
 }

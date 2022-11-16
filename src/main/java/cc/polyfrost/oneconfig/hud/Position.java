@@ -31,7 +31,7 @@ import cc.polyfrost.oneconfig.libs.universal.UResolution;
 import com.google.gson.annotations.SerializedName;
 
 public class Position {
-    private AnchorPosition anchor;
+    public AnchorPosition anchor;
     private float x;
     private float y;
     @Exclude

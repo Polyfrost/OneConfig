@@ -24,25 +24,31 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.test;
+package cc.polyfrost.oneconfig.config.annotations;
 
-import cc.polyfrost.oneconfig.config.annotations.Switch;
-import cc.polyfrost.oneconfig.hud.SingleTextHud;
+import cc.polyfrost.oneconfig.config.data.OptionType;
+import cc.polyfrost.oneconfig.internal.config.annotations.Option;
 
-public class TestHud_Test extends SingleTextHud {
-    int times = 0;
-    @Switch(
-            name = "Custom Option"
-    )
-    public boolean yes;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-    public TestHud_Test() {
-        super("Time", true);
-    }
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.FIELD)
+@Option(type = OptionType.NUMBER)
+public @interface Number {
+    String name();
 
-    @Override
-    public String getText(boolean example) {
-        times++;
-        return String.valueOf(times);
-    }
+    float min();
+
+    float max();
+
+    int step() default 1;
+
+    String description() default "";
+
+    String category() default "General";
+
+    String subcategory() default "";
 }

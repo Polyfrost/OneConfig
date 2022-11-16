@@ -47,6 +47,11 @@ public enum OptionType {
      * Type: int or float
      */
     SLIDER,
+
+    /**
+     * Type: int or float
+     */
+    NUMBER,
     /**
      * Type: OneColor
      */

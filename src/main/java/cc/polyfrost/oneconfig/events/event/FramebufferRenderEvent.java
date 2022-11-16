@@ -24,15 +24,15 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.utils.commands.arguments;
+package cc.polyfrost.oneconfig.events.event;
 
-public class IntegerParser extends ArgumentParser<Integer> {
-    @Override
-    public Integer parse(Arguments arguments) {
-        try {
-            return Integer.parseInt(arguments.poll());
-        } catch (NumberFormatException e) {
-            return null;
-        }
+public class FramebufferRenderEvent {
+    /**
+     * Whether the tick is starting or ending.
+     */
+    public final Stage stage;
+
+    public FramebufferRenderEvent(Stage stage) {
+        this.stage = stage;
     }
 }

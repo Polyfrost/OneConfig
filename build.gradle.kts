@@ -38,6 +38,7 @@ group = "cc.polyfrost"
 
 repositories {
     maven("https://repo.polyfrost.cc/releases")
+    mavenCentral()
 }
 
 val relocated = registerRelocationAttribute("relocate") {
@@ -75,8 +76,9 @@ dependencies {
     compileOnly("org.apache.logging.log4j:log4j-api:2.0-beta9")
     compileOnly("org.ow2.asm:asm-debug-all:5.0.3")
     compileOnly("org.apache.commons:commons-lang3:3.3.2")
+    compileOnly("org.jetbrains:annotations:23.0.0")
 
-    compileOnly("gg.essential:vigilance-1.8.9-forge:252") {
+    compileOnly("gg.essential:vigilance-1.8.9-forge:258") {
         attributes { attribute(common, true) }
         isTransitive = false
     }
