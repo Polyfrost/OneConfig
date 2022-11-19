@@ -2,10 +2,10 @@
 
 plugins {
     kotlin("jvm")
-    id("gg.essential.multi-version")
-    id("gg.essential.defaults.repo")
-    id("gg.essential.defaults.java")
-    id("gg.essential.defaults.loom")
+    id("cc.polyfrost.multi-version")
+    id("cc.polyfrost.defaults.repo")
+    id("cc.polyfrost.defaults.java")
+    id("cc.polyfrost.defaults.loom")
     id("com.github.johnrengelman.shadow")
     id("maven-publish")
     id("signing")

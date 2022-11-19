@@ -2,15 +2,15 @@
 // are bundled with Minecraft, which are not the latest versions.
 @file:Suppress("GradlePackageUpdate", "VulnerableLibrariesLocal")
 
-import gg.essential.gradle.multiversion.StripReferencesTransform.Companion.registerStripReferencesAttribute
-import gg.essential.gradle.util.RelocationTransform.Companion.registerRelocationAttribute
-import gg.essential.gradle.util.prebundle
+import cc.polyfrost.gradle.multiversion.StripReferencesTransform.Companion.registerStripReferencesAttribute
+import cc.polyfrost.gradle.util.RelocationTransform.Companion.registerRelocationAttribute
+import cc.polyfrost.gradle.util.prebundle
 
 plugins {
     kotlin("jvm") version "1.6.21"
     id("org.jetbrains.kotlinx.binary-compatibility-validator") version "0.8.0"
-    id("gg.essential.defaults.repo")
-    id("gg.essential.defaults.java")
+    id("cc.polyfrost.defaults.repo")
+    id("cc.polyfrost.defaults.java")
     id("net.kyori.blossom") version "1.3.0"
     id("maven-publish")
     id("signing")

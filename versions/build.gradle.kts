@@ -1,17 +1,17 @@
-import gg.essential.gradle.multiversion.StripReferencesTransform.Companion.registerStripReferencesAttribute
-import gg.essential.gradle.util.RelocationTransform.Companion.registerRelocationAttribute
-import gg.essential.gradle.util.noServerRunConfigs
-import gg.essential.gradle.util.prebundle
+import cc.polyfrost.gradle.multiversion.StripReferencesTransform.Companion.registerStripReferencesAttribute
+import cc.polyfrost.gradle.util.RelocationTransform.Companion.registerRelocationAttribute
+import cc.polyfrost.gradle.util.noServerRunConfigs
+import cc.polyfrost.gradle.util.prebundle
 import net.fabricmc.loom.task.RemapSourcesJarTask
 import java.text.SimpleDateFormat
 
 
 plugins {
     kotlin("jvm")
-    id("gg.essential.multi-version")
-    id("gg.essential.defaults.repo")
-    id("gg.essential.defaults.java")
-    id("gg.essential.defaults.loom")
+    id("cc.polyfrost.multi-version")
+    id("cc.polyfrost.defaults.repo")
+    id("cc.polyfrost.defaults.java")
+    id("cc.polyfrost.defaults.loom")
     id("com.github.johnrengelman.shadow")
     id("net.kyori.blossom") version "1.3.0"
     id("maven-publish")

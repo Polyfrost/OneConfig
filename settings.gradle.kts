@@ -2,16 +2,14 @@ pluginManagement {
     repositories {
         mavenLocal()
         gradlePluginPortal()
-        mavenCentral()
         maven("https://repo.polyfrost.cc/releases")
-        maven("https://maven.architectury.dev/")
     }
     plugins {
-        val egtVersion = "0.1.13"
-        id("gg.essential.multi-version.root") version egtVersion
-        id("gg.essential.defaults.repo") version egtVersion
-        id("gg.essential.defaults.java") version egtVersion
-        id("gg.essential.multi-version.api-validation") version egtVersion
+        val egtVersion = "0.1.21"
+        id("cc.polyfrost.multi-version.root") version egtVersion
+        id("cc.polyfrost.defaults.repo") version egtVersion
+        id("cc.polyfrost.defaults.java") version egtVersion
+        id("cc.polyfrost.multi-version.api-validation") version egtVersion
     }
     resolutionStrategy {
         eachPlugin {
