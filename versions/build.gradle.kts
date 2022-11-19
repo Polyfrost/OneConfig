@@ -184,7 +184,7 @@ dependencies {
     }
     if (platform.mcVersion <= 11202) {
         val tempLwjglConfiguration by configurations.creating
-        compileOnly(tempLwjglConfiguration("cc.polyfrost:lwjgl-$platform:1.0.0-alpha21") {
+        compileOnly(tempLwjglConfiguration("cc.polyfrost:lwjgl:1.0.0-alpha22") {
             isTransitive = false
         })
         shadeNoPom(shade(prebundle(tempLwjglConfiguration, "lwjgl.jar"))!!)
