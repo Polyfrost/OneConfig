@@ -105,7 +105,7 @@ public class OneConfigMixinPlugin implements IMixinConfigPlugin {
         }
 
         if (version >= 11600 || loader == Platform.Loader.FABRIC) {
-            mixins.add("TickTimeTrackerMixin");
+            mixins.add("ClientBuiltinResourcePackProviderMixin");
         }
 
         // Inter-loader mixins

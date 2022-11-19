@@ -121,7 +121,7 @@ dependencies {
     shade("org.spongepowered:mixin:0.7.11-SNAPSHOT") {
         isTransitive = false
     }
-    shade("cc.polyfrost:lwjgl:1.0.0-alpha22") {
+    compileOnly("cc.polyfrost:lwjgl-1.8.9-fabric:1.0.0-alpha23") {
         isTransitive = false
     }
     shadeNoPom(prebundle(shadeRelocated))

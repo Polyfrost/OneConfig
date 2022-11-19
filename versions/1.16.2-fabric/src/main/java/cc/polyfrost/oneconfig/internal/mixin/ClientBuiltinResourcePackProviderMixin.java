@@ -27,22 +27,31 @@
 package cc.polyfrost.oneconfig.internal.mixin;
 
 import cc.polyfrost.oneconfig.events.EventManager;
+import cc.polyfrost.oneconfig.events.event.InitializationEvent;
 import cc.polyfrost.oneconfig.events.event.ShutdownEvent;
 import cc.polyfrost.oneconfig.events.event.StartEvent;
-import net.minecraft.profiler.TimeTracker;
+import cc.polyfrost.oneconfig.internal.OneConfig;
+import net.minecraft.client.resource.ClientBuiltinResourcePackProvider;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.function.IntSupplier;
-import java.util.function.LongSupplier;
+@Mixin(ClientBuiltinResourcePackProvider.class)
+public class ClientBuiltinResourcePackProviderMixin {
+    @Unique
+    private boolean initialized;
 
-@Mixin(TimeTracker.class)
-public class TickTimeTrackerMixin {
     @Inject(method = "<init>", at = @At("RETURN"))
-    private void onStart(LongSupplier longSupplier, IntSupplier intSupplier, CallbackInfo ci) {
+    private void onStart(CallbackInfo ci) {
+        if (initialized) return;
+        initialized = true;
+
         EventManager.INSTANCE.post(new StartEvent());
         Runtime.getRuntime().addShutdownHook(new Thread(() -> EventManager.INSTANCE.post(new ShutdownEvent())));
+
+        EventManager.INSTANCE.post(new InitializationEvent());
+        OneConfig.init();
     }
 }

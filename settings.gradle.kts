@@ -22,17 +22,7 @@ pluginManagement {
 
 val mod_name: String by settings
 
-val buildingCi = System.getProperty("BUILDING_CI") == "true"
-
 rootProject.name = mod_name
-
-if (!buildingCi) {
-    include(":lwjgl")
-    project(":lwjgl").apply {
-        projectDir = file("lwjgl/")
-        buildFileName = "root.gradle.kts"
-    }
-}
 
 include(":platform")
 project(":platform").apply {
@@ -52,12 +42,5 @@ listOf(
     project(":platform:$version").apply {
         projectDir = file("versions/$version")
         buildFileName = "../build.gradle.kts"
-    }
-    if (!buildingCi) {
-        include(":lwjgl:$version")
-        project(":lwjgl:$version").apply {
-            projectDir = file("lwjgl/$version")
-            buildFileName = "../build.gradle.kts"
-        }
     }
 }

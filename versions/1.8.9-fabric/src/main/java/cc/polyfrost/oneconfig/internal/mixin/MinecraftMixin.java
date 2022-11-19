@@ -49,12 +49,6 @@ public class MinecraftMixin {
         EventManager.INSTANCE.post(new PreShutdownEvent());
     }
 
-    @Inject(method = "startGame", at = @At("HEAD"))
-    private void onStart(CallbackInfo ci) {
-        EventManager.INSTANCE.post(new StartEvent());
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> EventManager.INSTANCE.post(new ShutdownEvent())));
-    }
-
     @Inject(method = "runGameLoop", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/GameRenderer;render(FJ)V"))
     private void onRenderTickStart(CallbackInfo ci) {
         EventManager.INSTANCE.post(new RenderEvent(Stage.START, tricker.tickDelta));
@@ -94,7 +88,7 @@ public class MinecraftMixin {
         EventManager.INSTANCE.post(new TimerUpdateEvent(tricker, true));
     }
 
-    @Inject(method = "tick", at = @At(value = "FIELD", target = "Lnet/minecraft/client/options/GameOptions;debugEnabled:Z", opcode = Opcodes.GETFIELD))
+    @Inject(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/MinecraftClient;openGameMenuScreen()V", shift = At.Shift.BY, by = 2))
     private void onKeyEvent(CallbackInfo ci) {
         EventManager.INSTANCE.post(new KeyInputEvent());
     }

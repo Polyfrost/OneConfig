@@ -46,12 +46,9 @@ import java.util.concurrent.CopyOnWriteArraySet;
 
 @SuppressWarnings("deprecation")
 public class LwjglManagerImpl
-        //#if MC<=11202
         extends URLClassLoader
-        //#endif
         implements LwjglManager {
 
-    //#if MC<=11202
     private static final Object unsafeInstance;
     private static final Method defineClassMethod;
     private static final Map<String, String> remappingMap;
@@ -64,7 +61,6 @@ public class LwjglManagerImpl
 
     private static final String JAR_NAME = "oneconfig-lwjgl3.jar";
     private static final URL jarFile = getJarFile();
-    //#endif
 
     private final AssetHelper assetHelper;
     private final NanoVGHelper nanoVGHelper;
@@ -73,7 +69,6 @@ public class LwjglManagerImpl
     private final TinyFD tinyFD;
 
     public LwjglManagerImpl() throws ReflectiveOperationException {
-        //#if MC<=11202
         super(new URL[]{jarFile}, LwjglManager.class.getClassLoader());
         // Internal accessors
         classLoaderInclude.add("cc.polyfrost.oneconfig.internal.renderer.FontHelperImpl");
@@ -84,31 +79,27 @@ public class LwjglManagerImpl
         // Provider
         classLoaderInclude.add(LWJGL_FUNCTION_PROVIDER);
         // Lwjgl
-        Arrays.asList("system", "nanovg", "stb", "util.tinyfd", "actually3")
-                .forEach(it -> classLoaderInclude.add("org.lwjgl." + it + "."));
+        Arrays.asList("nanovg", "actually3"
+                        //#if MC<=11202
+                        , "stb", "util.tinyfd", "system"
+                        //#endif
+                ).forEach(it -> classLoaderInclude.add("org.lwjgl." + it + "."));
         classLoaderInclude.add("org.lwjgl.Version"); // won't work when remapped
 
         // Keep the path somewhere for LWJGL2 after initializing LWJGL3
         // (this is read in the Lwjgl2FunctionProvider class)
         System.setProperty("oneconfig.lwjgl2.librarypath", System.getProperty("org.lwjgl.librarypath"));
-        //#endif
 
         ClassLoader classLoader =
-                //#if MC<=11202
                 this
-                //#else
-                //$$ LwjglManager.class.getClassLoader()
-                //#endif
                 ;
 
         // Setup LW3 config
         Class<?> configClass = Class.forName("org.lwjgl.system.Configuration", true, classLoader);
         Method setMethod = configClass.getMethod("set", Object.class);
 
-        //#if MC<=11202
         Object extractDirField = configClass.getField("SHARED_LIBRARY_EXTRACT_DIRECTORY").get(null);
         setMethod.invoke(extractDirField, new File("./OneConfig/temp").getAbsolutePath());
-        //#endif
 
         // stop trying to Class.forName("true") ffs
         Object debugStreamField = configClass.getField("DEBUG_STREAM").get(null);
@@ -127,7 +118,6 @@ public class LwjglManagerImpl
         }
     }
 
-    //#if MC<=11202
     private boolean canBeSharedWithMc(String name) {
         for (String implClass : classLoaderInclude) {
             if (name.startsWith(implClass)) {
@@ -223,7 +213,6 @@ public class LwjglManagerImpl
         name = remappingMap.getOrDefault(name.replace('.', '/'), name)
                 .replace('/', '.');
 
-        //#if MC<=11202
         ClassReader classReader = new ClassReader(b);
         Remapper remapper = new Remapper() {
             @Override
@@ -235,7 +224,7 @@ public class LwjglManagerImpl
             }
         };
         ClassWriter classWriter = new ClassWriter(classReader, ClassWriter.COMPUTE_MAXS);
-        //#if FORGE==1
+        //#if FORGE==1 && MC<=11202
         RemappingClassAdapter classRemapper = new RemappingClassAdapter(classWriter, remapper);
         //#else
         //$$ ClassRemapper classRemapper = new ClassRemapper(classWriter, remapper);
@@ -243,6 +232,7 @@ public class LwjglManagerImpl
         classReader.accept(classRemapper, ClassReader.EXPAND_FRAMES);
         b = classWriter.toByteArray();
 
+        //#if MC<=11202
         if (name.equalsIgnoreCase("org.lwjgl.nanovg.NanoVGGLConfig")) {
             ClassNode node = new ClassNode();
             classReader = new ClassReader(b);
@@ -263,6 +253,7 @@ public class LwjglManagerImpl
         }
     }
 
+    //#if MC<=11202
     private void transform(ClassNode node) {
         for (MethodNode method : node.methods) {
             if (method.name.equals("configGL")) {
@@ -292,14 +283,17 @@ public class LwjglManagerImpl
             }
         }
     }
+    //#endif
 
     static {
         registerAsParallelCapable();
 
         remappingMap = new HashMap<>();
+        //#if MC<=11202
         remappingMap.put("org/lwjgl/BufferUtils", "org/lwjgl/actually3/BufferUtils");
         remappingMap.put("org/lwjgl/PointerBuffer", "org/lwjgl/actually3/PointerBuffer");
         remappingMap.put("org/lwjgl/CLongBuffer", "org/lwjgl/actually3/CLongBuffer");
+        //#endif
 
         Class<?> unsafeClass;
         try {
@@ -359,7 +353,6 @@ public class LwjglManagerImpl
             throw new RuntimeException(e);
         }
     }
-    //#endif
 
     @Override
     public NanoVGHelper getNanoVGHelper() {

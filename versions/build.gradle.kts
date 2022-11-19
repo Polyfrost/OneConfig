@@ -182,19 +182,13 @@ dependencies {
     if (platform.isFabric) {
         include("com.github.Chocohead:Fabric-ASM:v2.3")
     }
-    if (platform.mcVersion <= 11202) {
+    if (/*platform.mcVersion <= 11202*/ true) {
         val tempLwjglConfiguration by configurations.creating
-        compileOnly(tempLwjglConfiguration("cc.polyfrost:lwjgl:1.0.0-alpha22") {
+
+        compileOnly(tempLwjglConfiguration("cc.polyfrost:lwjgl-$platform:1.0.0-alpha23"){
             isTransitive = false
         })
         shadeNoPom(shade(prebundle(tempLwjglConfiguration, "lwjgl.jar"))!!)
-    } else {
-        val lwjglVersion = "3.2.2"
-        shade("org.lwjgl:lwjgl-nanovg:$lwjglVersion")
-        shade("org.lwjgl:lwjgl-nanovg:$lwjglVersion:natives-windows")
-        shade("org.lwjgl:lwjgl-nanovg:$lwjglVersion:natives-linux")
-        shade("org.lwjgl:lwjgl-nanovg:$lwjglVersion:natives-macos")
-        shade("org.lwjgl:lwjgl-nanovg:3.3.1:natives-macos-arm64")
     }
 
     configurations.named(JavaPlugin.COMPILE_CLASSPATH_CONFIGURATION_NAME) { extendsFrom(shadeProject) }

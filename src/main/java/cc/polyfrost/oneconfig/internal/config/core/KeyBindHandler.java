@@ -41,7 +41,9 @@ public class KeyBindHandler {
     @Subscribe
     private void onKeyPressed(KeyInputEvent event) {
         for (OneKeyBind keyBind : keyBinds.values()) {
-            if (keyBind.isActive()) keyBind.run();
+            if (keyBind.isActive()) {
+                keyBind.run();
+            }
         }
     }
 

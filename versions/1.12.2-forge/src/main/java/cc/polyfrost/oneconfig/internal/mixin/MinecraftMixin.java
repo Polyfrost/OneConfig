@@ -52,12 +52,6 @@ public class MinecraftMixin {
         EventManager.INSTANCE.post(new PreShutdownEvent());
     }
 
-    @Inject(method = "init", at = @At("HEAD"))
-    private void onStart(CallbackInfo ci) {
-        EventManager.INSTANCE.post(new StartEvent());
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> EventManager.INSTANCE.post(new ShutdownEvent())));
-    }
-
     @Inject(method = "init", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/client/FMLClientHandler;onInitializationComplete()V", shift = At.Shift.AFTER, remap = false), remap = true)
     private void onInit(CallbackInfo ci) {
         EventManager.INSTANCE.post(new InitializationEvent());
