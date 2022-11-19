@@ -146,6 +146,9 @@ public class LwjglManagerImpl
 
     @Override
     protected Class<?> findClass(String name) throws ClassNotFoundException {
+        System.out.println("findClass: " + name);
+        System.out.flush();
+
         String remappedName = remappingMap.getOrDefault(
                 name.replace('.', '/'),
                 name
