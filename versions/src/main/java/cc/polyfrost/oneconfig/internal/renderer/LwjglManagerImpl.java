@@ -86,13 +86,14 @@ public class LwjglManagerImpl
                 ).forEach(it -> classLoaderInclude.add("org.lwjgl." + it + "."));
         classLoaderInclude.add("org.lwjgl.Version"); // won't work when remapped
 
-        // Keep the path somewhere for LWJGL2 after initializing LWJGL3
-        // (this is read in the Lwjgl2FunctionProvider class)
-        System.setProperty("oneconfig.lwjgl2.librarypath", System.getProperty("org.lwjgl.librarypath"));
-
         ClassLoader classLoader =
                 this
                 ;
+
+        //#if MC<=11202
+        // Keep the path somewhere for LWJGL2 after initializing LWJGL3
+        // (this is read in the Lwjgl2FunctionProvider class)
+        System.setProperty("oneconfig.lwjgl2.librarypath", System.getProperty("org.lwjgl.librarypath"));
 
         // Setup LW3 config
         Class<?> configClass = Class.forName("org.lwjgl.system.Configuration", true, classLoader);
@@ -104,6 +105,7 @@ public class LwjglManagerImpl
         // stop trying to Class.forName("true") ffs
         Object debugStreamField = configClass.getField("DEBUG_STREAM").get(null);
         setMethod.invoke(debugStreamField, System.err);
+        //#endif
 
         // Initialize helper instances
         try {
