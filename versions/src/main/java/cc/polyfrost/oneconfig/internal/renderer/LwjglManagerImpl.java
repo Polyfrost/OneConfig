@@ -1,10 +1,10 @@
 package cc.polyfrost.oneconfig.internal.renderer;
 
 import cc.polyfrost.oneconfig.libs.deencapsulation.Deencapsulation;
-import cc.polyfrost.oneconfig.renderer.asset.AssetHelper;
 import cc.polyfrost.oneconfig.renderer.LwjglManager;
 import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
 import cc.polyfrost.oneconfig.renderer.TinyFD;
+import cc.polyfrost.oneconfig.renderer.asset.AssetHelper;
 import cc.polyfrost.oneconfig.renderer.font.FontHelper;
 import cc.polyfrost.oneconfig.renderer.scissor.ScissorHelper;
 import org.apache.commons.io.IOUtils;
@@ -148,9 +148,6 @@ public class LwjglManagerImpl
 
     @Override
     protected Class<?> findClass(String name) throws ClassNotFoundException {
-        System.out.println("findClass: " + name);
-        System.out.flush();
-
         String remappedName = remappingMap.getOrDefault(
                 name.replace('.', '/'),
                 name
@@ -346,7 +343,20 @@ public class LwjglManagerImpl
             e.printStackTrace();
         }
         tempJar.deleteOnExit();
-        try (InputStream in = LwjglManagerImpl.class.getResourceAsStream("/lwjgl.jar")) {
+        String jarName =
+                //#if MC<=11202
+                "lwjgl-legacy"
+                //#elseif MC<=11900
+                //$$ "lwjgl-pre-1.19"
+                //#else
+                //$$ "lwjgl-post-1.19"
+                //#endif
+        ;
+        //#if MC>11202 && MC<=11900
+        //$$ String osArch = System.getProperty("os.arch");
+        //$$ jarName = jarName + "-" + ((osArch.startsWith("arm") || osArch.startsWith("aarch64")) ? "arm" : "noarm");
+        //#endif
+        try (InputStream in = LwjglManagerImpl.class.getResourceAsStream("/" + jarName + ".jar")) {
             assert in != null;
             Files.copy(in, tempJar.toPath(), StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {

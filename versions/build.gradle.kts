@@ -134,6 +134,14 @@ sourceSets {
     }
 }
 
+private enum class RepackedVersion(val string: String) {
+    LEGACY("legacy"), PRE119NOARM("pre-1.19-noarm"), PRE119ARM("pre-1.19-arm"), POST119("post-1.19");
+
+    override fun toString(): String {
+        return string
+    }
+}
+
 dependencies {
     compileOnly("gg.essential:vigilance-1.8.9-forge:222") {
         attributes { attribute(registerStripReferencesAttribute("common") {
@@ -182,13 +190,20 @@ dependencies {
     if (platform.isFabric) {
         include("com.github.Chocohead:Fabric-ASM:v2.3")
     }
-    if (/*platform.mcVersion <= 11202*/ true) {
-        val tempLwjglConfiguration by configurations.creating
 
-        compileOnly(tempLwjglConfiguration("cc.polyfrost:lwjgl-$platform:1.0.0-alpha23"){
+    val repackedVersions = when (platform.mcVersion) {
+        in 10809..11202 -> listOf(RepackedVersion.LEGACY)
+        in 11203..11802 -> listOf(RepackedVersion.PRE119NOARM, RepackedVersion.PRE119ARM)
+        else -> listOf(RepackedVersion.POST119)
+    }
+
+    repackedVersions.forEachIndexed { index, version ->
+        val configuration = configurations.create("tempLwjglConfiguration$index")
+
+        compileOnly(configuration("cc.polyfrost:lwjgl-$version:1.0.0-alpha24"){
             isTransitive = false
         })
-        shadeNoPom(shade(prebundle(tempLwjglConfiguration, "lwjgl.jar"))!!)
+        shadeNoPom(shade(prebundle(configuration, "lwjgl-$version.jar"))!!)
     }
 
     configurations.named(JavaPlugin.COMPILE_CLASSPATH_CONFIGURATION_NAME) { extendsFrom(shadeProject) }
