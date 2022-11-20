@@ -15,7 +15,7 @@ public class ChatScreenMixin {
         return Formatting.strip(par1);
     }
 
-    @Inject(method = "method_12184", at = @At(value = "NEW", target = "Lnet/minecraft/network/packet/c2s/play/RequestCommandCompletionsC2SPacket;<init>(Ljava/lang/String;Lnet/minecraft/util/math/BlockPos;Z)V"))
+    @Inject(method = "method_12184", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayNetworkHandler;sendPacket(Lnet/minecraft/network/Packet;)V"))
     private void addAutoComplete(String string, CallbackInfo ci) {
         ClientCommandHandler.instance.autoComplete(string);
     }
