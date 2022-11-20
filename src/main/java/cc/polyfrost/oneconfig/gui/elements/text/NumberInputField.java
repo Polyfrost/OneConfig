@@ -42,21 +42,15 @@ public class NumberInputField extends TextInputField {
     private float min;
     private float max;
     private float step;
-    private final int decimalPlaces;
     private float current;
 
     public NumberInputField(int width, int height, float defaultValue, float min, float max, float step) {
-        this(width, height, defaultValue, min, max, step, 1);
-    }
-
-    public NumberInputField(int width, int height, float defaultValue, float min, float max, float step, int decimalPlaces) {
         super(width - 16, height, true, "");
         super.onlyNums = true;
         this.min = min;
         this.max = max;
         this.step = step;
-        this.decimalPlaces = decimalPlaces;
-        this.input = String.format("%." + decimalPlaces + "f", defaultValue);
+        this.input = String.format("%.01f", defaultValue);
     }
 
     @Override
@@ -123,7 +117,7 @@ public class NumberInputField extends TextInputField {
     }
 
     public void setCurrentValue(float value) {
-        input = String.format("%." + decimalPlaces + "f", value);
+        input = String.format("%.01f", value);
     }
 
     @Override

@@ -46,8 +46,6 @@ public @interface Slider {
 
     int step() default 0;
 
-    int decimalPlaces() default 1;
-
     String description() default "";
 
     String category() default "General";
