@@ -46,7 +46,7 @@ public class CubicBezier extends Animation {
      * @param reverse  Reverse the animation
      */
     public CubicBezier(float P0, float P1, float P2, float P3, float duration, float start, float end, boolean reverse) {
-        super(duration, start, end, reverse, true);
+        super(duration, start, end, reverse);
         this.P0 = P0;
         this.P1 = P1;
         this.P2 = P2;
