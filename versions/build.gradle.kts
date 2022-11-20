@@ -127,7 +127,7 @@ sourceSets {
 }
 
 dependencies {
-    compileOnly("gg.essential:vigilance-$platform:222") {
+    compileOnly("gg.essential:vigilance-1.8.9-forge:+") {
         isTransitive = false
     }
 

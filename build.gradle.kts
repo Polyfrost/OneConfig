@@ -78,7 +78,7 @@ dependencies {
     compileOnly("org.apache.commons:commons-lang3:3.3.2")
     compileOnly("org.jetbrains:annotations:23.0.0")
 
-    compileOnly("gg.essential:vigilance-1.8.9-forge:258") {
+    compileOnly("gg.essential:vigilance-1.8.9-forge:+") {
         attributes { attribute(common, true) }
         isTransitive = false
     }
