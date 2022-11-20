@@ -32,6 +32,7 @@ public abstract class Animation {
     protected final boolean reverse;
     protected final float duration;
     protected final float start;
+    protected final boolean x;
     protected final float change;
     protected float timePassed = 0;
 
@@ -48,6 +49,19 @@ public abstract class Animation {
             start = end;
             end = temp;
         }
+        this.x = true;
+        this.start = start;
+        this.change = end - start;
+        this.reverse = reverse;
+    }
+    public Animation(float duration, float start, float end, boolean reverse, boolean x) {
+        this.duration = duration;
+        if (reverse) {
+            float temp = start;
+            start = end;
+            end = temp;
+        }
+        this.x = x;
         this.start = start;
         this.change = end - start;
         this.reverse = reverse;
@@ -97,6 +111,8 @@ public abstract class Animation {
     public float getEnd() {
         return start + change;
     }
+
+    public boolean isX() { return x; }
 
     protected abstract float animate(float x);
 }

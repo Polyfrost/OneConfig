@@ -35,7 +35,7 @@ public class EaseInOutQuad extends Animation {
      * @param reverse  Reverse the animation
      */
     public EaseInOutQuad(int duration, float start, float end, boolean reverse) {
-        super(duration, start, end, reverse);
+        super(duration, start, end, reverse, true);
     }
 
     @Override

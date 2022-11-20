@@ -35,7 +35,11 @@ public class EaseOutQuad extends Animation {
      * @param reverse  Reverse the animation
      */
     public EaseOutQuad(int duration, float start, float end, boolean reverse) {
-        super(duration, start, end, reverse);
+        super(duration, start, end, reverse, true);
+    }
+
+    public EaseOutQuad(int duration, float start, float end, boolean reverse, boolean x) {
+        super(duration, start, end, reverse, x);
     }
 
     /**

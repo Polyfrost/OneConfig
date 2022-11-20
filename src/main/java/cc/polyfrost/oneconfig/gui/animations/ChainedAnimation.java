@@ -27,17 +27,27 @@
 package cc.polyfrost.oneconfig.gui.animations;
 
 public class ChainedAnimation extends Animation {
-    private final Animation[] animations;
+    protected final Animation[] animations;
     private int currentAnimation = 0;
     private float value;
+    private float totalDuration = 0;
 
     public ChainedAnimation(Animation... animations) {
-        super(1, 0, 0, false);
+        super(1, 0, 0, false, false);
         this.animations = animations;
+    }
+
+    public ChainedAnimation(boolean x, Animation... animations) {
+        super(1, 0, 0, false, x);
+        this.animations = animations;
+        for (Animation animation : animations) {
+            totalDuration += animation.duration;
+        }
     }
 
     @Override
     public float get(float deltaTime) {
+        timePassed += deltaTime;
         if (currentAnimation >= animations.length) return value;
         value = animations[currentAnimation].get(deltaTime);
         if (animations[currentAnimation].isFinished()) currentAnimation++;
@@ -46,11 +56,15 @@ public class ChainedAnimation extends Animation {
 
     @Override
     public boolean isFinished() {
-        return currentAnimation >= animations.length;
+        return timePassed >= totalDuration;
     }
 
     @Override
     protected float animate(float x) {
         return 0;
     }
+
+    public float getTimePassed() { return timePassed; }
+
+    public float getDuration() { return totalDuration; }
 }

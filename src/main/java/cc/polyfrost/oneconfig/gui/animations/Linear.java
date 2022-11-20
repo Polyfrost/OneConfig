@@ -26,7 +26,7 @@
 
 package cc.polyfrost.oneconfig.gui.animations;
 
-public class EaseOutExpo extends Animation {
+public class Linear extends Animation {
 
     /**
      * @param duration The duration of the animation
@@ -34,13 +34,18 @@ public class EaseOutExpo extends Animation {
      * @param end      The end of the animation
      * @param reverse  Reverse the animation
      */
-    public EaseOutExpo(int duration, float start, float end, boolean reverse) {
+    public Linear(int duration, float start, float end, boolean reverse) {
         super(duration, start, end, reverse, true);
     }
+    public Linear(int duration, float start, float end, boolean reverse, boolean x) {
+        super(duration, start, end, reverse, x);
+    }
 
-    // Courtesy of https://easings.net/
+    /**
+     * Adapted from <a href="https://github.com/jesusgollonet/processing-penner-easing">https://github.com/jesusgollonet/processing-penner-easing</a>
+     */
     @Override
     protected float animate(float x) {
-        return x == 1 ? 1 : 1 - (float) Math.pow(2, -10 * x);
+        return x;
     }
 }

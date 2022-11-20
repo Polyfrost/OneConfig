@@ -37,7 +37,7 @@ public class DummyAnimation extends Animation {
      * @param done  A callable that returns if the animation is finished
      */
     public DummyAnimation(float value, Callable<Boolean> done) {
-        super(0, value, value, false);
+        super(0, value, value, false, true);
         this.value = value;
         this.done = done;
     }
@@ -47,7 +47,7 @@ public class DummyAnimation extends Animation {
      * @param duration The duration of the animation
      */
     public DummyAnimation(float value, float duration) {
-        super(duration, value, value, false);
+        super(duration, value, value, false, true);
         this.value = value;
     }
 

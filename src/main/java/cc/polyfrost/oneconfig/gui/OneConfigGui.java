@@ -27,9 +27,7 @@
 package cc.polyfrost.oneconfig.gui;
 
 import cc.polyfrost.oneconfig.config.core.OneColor;
-import cc.polyfrost.oneconfig.gui.animations.Animation;
-import cc.polyfrost.oneconfig.gui.animations.EaseInOutQuad;
-import cc.polyfrost.oneconfig.gui.animations.EaseOutExpo;
+import cc.polyfrost.oneconfig.gui.animations.*;
 import cc.polyfrost.oneconfig.gui.elements.BasicElement;
 import cc.polyfrost.oneconfig.gui.elements.ColorSelector;
 import cc.polyfrost.oneconfig.gui.elements.text.TextInputField;
@@ -145,7 +143,7 @@ public class OneConfigGui extends OneUIScreen {
         } else if (forwardArrow.isClicked() && nextPages.size() > 0) {
             try {
                 previousPages.add(0, currentPage);
-                openPage(nextPages.get(0), new EaseOutExpo(300, 224, 2128, true), false);
+                openPage(nextPages.get(0), false);
                 nextPages.remove(0);
             } catch (Exception ignored) {
             }
@@ -153,18 +151,8 @@ public class OneConfigGui extends OneUIScreen {
 
         ScissorManager.scissor(vg, x + 224, y + 72, 1056, 728);
         Scissor blockedClicks = inputHandler.blockInputArea(x + 224, y, 1056, 72);
-        if (prevPage != null && animation != null) {
-            float pageProgress = animation.get(GuiUtils.getDeltaTime());
-            if (!animation.isReversed()) {
-                prevPage.scrollWithDraw(vg, (int) (x + pageProgress), y + 72, inputHandler);
-                currentPage.scrollWithDraw(vg, (int) (x - 1904 + pageProgress), y + 72, inputHandler);
-            } else {
-                prevPage.scrollWithDraw(vg, (int) (x - 1904 + pageProgress), y + 72, inputHandler);
-                currentPage.scrollWithDraw(vg, (int) (x + pageProgress), y + 72, inputHandler);
-            }
-            if (animation.isFinished()) {
-                prevPage = null;
-            }
+        if (animation != null && !animation.isFinished()) {
+            handleAnimation(vg, x, y, inputHandler);
         } else {
             currentPage.scrollWithDraw(vg, x + 224, y + 72, inputHandler);
         }
@@ -192,6 +180,37 @@ public class OneConfigGui extends OneUIScreen {
         RenderManager.resetTransform(vg);
     }
 
+    public void handleAnimation(long vg, int initX, int initY, InputHandler inputHandler) {
+        float pageProgress = animation.get(GuiUtils.getDeltaTime());
+        int x = initX + (animation.isX() ? (int) (pageProgress) : 224);
+        int y = initY + (animation.isX() ? 72 : (int) (pageProgress));
+        if (animation instanceof ChainedAnimation) {
+            ChainedAnimation animations = (ChainedAnimation) animation;
+            if (animations.getTimePassed() < (animations.getDuration() / 2) && prevPage != null) {
+                prevPage.scrollWithDraw(vg, x, y, inputHandler);
+            } else if (animations.getTimePassed() > animations.getDuration() / 2 + 2) {
+                prevPage = null;
+                currentPage.scrollWithDraw(vg, x, y, inputHandler);
+            }
+        } else {
+            if (!animation.isReversed()) {
+                prevPage.scrollWithDraw(vg, x, y, inputHandler);
+                currentPage.scrollWithDraw(vg, x - (animation.isX() ? 1904 : 0), y - (animation.isX() ? 0 : 1056), inputHandler);
+            } else {
+                prevPage.scrollWithDraw(vg, x - (animation.isX() ? 1904 : 0), y - (animation.isX() ? 0 : 1056), inputHandler);
+                currentPage.scrollWithDraw(vg, x, y, inputHandler);
+            }
+            if (animation.isFinished()) {
+                prevPage = null;
+                animation = null;
+            }
+        }
+        if (animation.isFinished()) {
+            prevPage = null;
+            animation = null;
+        }
+    }
+
     @Override
     public void onKeyPressed(int keyCode, char typedChar, @Nullable UKeyboard.Modifiers modifiers) {
         UKeyboard.allowRepeatEvents(true);
@@ -210,7 +229,13 @@ public class OneConfigGui extends OneUIScreen {
     }
 
     public void openPage(@NotNull Page page, boolean addToPrevious) {
-        openPage(page, new EaseOutExpo(300, 224, 2128, false), addToPrevious);
+        int oldHeightDiff = 200; // how much the old page should go up before disappearing
+        int newHeightDiff = 200; // how much the new page should be offset by initially
+        int totalDuration = 200; // how long the total length of the animation is
+        System.out.println((int) (totalDuration * (oldHeightDiff / ((float)(oldHeightDiff + newHeightDiff))))); // animation length proportional to number of pixels being displaced
+        openPage(page, new ChainedAnimation(
+        false, new Linear((int) (totalDuration * (oldHeightDiff / ((float)(oldHeightDiff + newHeightDiff)))), 72, 72 - oldHeightDiff, false, false),
+                new EaseOutQuad((int) (totalDuration * (newHeightDiff / ((float)(oldHeightDiff + newHeightDiff)))), 72 + newHeightDiff, 72, false, false)), addToPrevious);
     }
 
     public void openPage(@NotNull Page page, Animation animation, boolean addToPrevious) {
