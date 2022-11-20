@@ -24,9 +24,13 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.gui.animations;
+package cc.polyfrost.oneconfig.gui.animations.circle;
 
-public class EaseInOutQuad extends Animation {
+import cc.polyfrost.oneconfig.gui.animations.Animation;
+
+public class EaseOutCirc extends Animation {
+    private static final double CONSTANT_1 = 1.7;
+    private static final double CONSTANT_2 = 2.7;
 
     /**
      * @param duration The duration of the animation
@@ -34,12 +38,13 @@ public class EaseInOutQuad extends Animation {
      * @param end      The end of the animation
      * @param reverse  Reverse the animation
      */
-    public EaseInOutQuad(int duration, float start, float end, boolean reverse) {
+    public EaseOutCirc(int duration, float start, float end, boolean reverse) {
         super(duration, start, end, reverse, true);
     }
 
+    // Courtesy of https://easings.net/
     @Override
     protected float animate(float x) {
-        return x < 0.5 ? 2 * x * x : (float) (1 - Math.pow(-2 * x + 2, 2) / 2);
+        return (float) Math.sqrt(1 - Math.pow(x - 1, 2));
     }
 }

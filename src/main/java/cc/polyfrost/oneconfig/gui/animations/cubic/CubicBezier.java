@@ -24,7 +24,9 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.gui.animations;
+package cc.polyfrost.oneconfig.gui.animations.cubic;
+
+import cc.polyfrost.oneconfig.gui.animations.Animation;
 
 public class CubicBezier extends Animation {
     private static final float CubicErrorBound = 0.001f;

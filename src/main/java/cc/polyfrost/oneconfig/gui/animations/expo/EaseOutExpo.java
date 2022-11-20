@@ -24,9 +24,11 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.gui.animations;
+package cc.polyfrost.oneconfig.gui.animations.expo;
 
-public class EaseInOutCubic extends Animation {
+import cc.polyfrost.oneconfig.gui.animations.Animation;
+
+public class EaseOutExpo extends Animation {
 
     /**
      * @param duration The duration of the animation
@@ -34,12 +36,13 @@ public class EaseInOutCubic extends Animation {
      * @param end      The end of the animation
      * @param reverse  Reverse the animation
      */
-    public EaseInOutCubic(int duration, float start, float end, boolean reverse) {
+    public EaseOutExpo(int duration, float start, float end, boolean reverse) {
         super(duration, start, end, reverse, true);
     }
 
+    // Courtesy of https://easings.net/
     @Override
     protected float animate(float x) {
-        return x < 0.5 ? 4 * x * x * x : (float) (1 - Math.pow(-2 * x + 2, 3) / 2);
+        return x == 1 ? 1 : 1 - (float) Math.pow(2, -10 * x);
     }
 }

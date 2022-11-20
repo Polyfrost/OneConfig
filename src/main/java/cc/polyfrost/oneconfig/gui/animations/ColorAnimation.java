@@ -26,6 +26,7 @@
 
 package cc.polyfrost.oneconfig.gui.animations;
 
+import cc.polyfrost.oneconfig.gui.animations.quad.EaseInOutQuad;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 
 public class ColorAnimation {

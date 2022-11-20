@@ -24,7 +24,9 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.gui.animations;
+package cc.polyfrost.oneconfig.gui.animations.quad;
+
+import cc.polyfrost.oneconfig.gui.animations.Animation;
 
 public class EaseOutQuad extends Animation {
 
