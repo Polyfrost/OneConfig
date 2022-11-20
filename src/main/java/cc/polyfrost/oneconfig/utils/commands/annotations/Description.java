@@ -3,7 +3,6 @@
  * OneConfig - Next Generation Config Library for Minecraft: Java Edition
  * Copyright (C) 2021, 2022 Polyfrost.
  *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
- * Co-author: Pinkulu <pinkulumc@gmail.com> <https://github.com/pinkulu>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -33,23 +32,29 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * This annotation is used to mark a method as a subcommand. <br>
- * A subcommand can be called using any of the aliases in the annotation, AND its name (case-insensitive). <br><br>
- * It doesn't have to have any arguments, but they are recommended as they are used for better help messages for your users and for aliases. <br>
- * </pre>
- * <b>Usage on methods:</b>
+ * This annotation can be used to describe arguments. It is completely optional, but is recommended.
+ * It is used for better help messages for your users.<br>
+ * </pre> <br>
+ * <b>Usage on parameters:</b>
  * <pre>{@code
- *  @SubCommand(description = "A command for doing something cool.", aliases = {"myc", "yes"})
- *  public void myCommand(int bob, float someParam) {
- *      // with this annotation, the description will be displayed on the help message.
- *      // also, because of the aliases, it can be called using /test mycommand, /test myc, or /test yes.
+ *  public void myCommand(@Description("first parameter") int bob, @Description(autoCompletesTo = {"1", "3.232"} float someParam) {
+ *      // this will mark the first parameter as "first parameter" in the help message.
+ *      // If its not present, it will just show the TYPE of the parameter (e.g. int).
  *  }
  *
  * </pre>
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
-public @interface SubCommand {
+@Target({ElementType.PARAMETER})
+public @interface Description {
+    /**
+     * The name of the parameter.
+     *
+     * @return The name of the parameter.
+     */
+    String value() default "";
+    /** Description for the parameter. */
     String description() default "";
-    String[] aliases() default {};
+    /** Strings to autocomplete alongside the argument's parser. */
+    String[] autoCompletesTo() default "";
 }

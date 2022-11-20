@@ -8,7 +8,7 @@ import cc.polyfrost.gradle.util.prebundle
 
 plugins {
     kotlin("jvm") version "1.6.21"
-    id("org.jetbrains.kotlinx.binary-compatibility-validator") version "0.8.0"
+    id("org.jetbrains.kotlinx.binary-compatibility-validator") version "0.12.1"
     id("cc.polyfrost.defaults.repo")
     id("cc.polyfrost.defaults.java")
     id("net.kyori.blossom") version "1.3.0"
@@ -40,7 +40,6 @@ blossom {
 }
 
 repositories {
-    mavenLocal()
     maven("https://repo.polyfrost.cc/releases")
 }
 
@@ -78,6 +77,7 @@ dependencies {
     compileOnly("org.apache.logging.log4j:log4j-api:2.0-beta9")
     compileOnly("org.ow2.asm:asm-debug-all:5.0.3")
     compileOnly("org.apache.commons:commons-lang3:3.3.2")
+    compileOnly("org.jetbrains:annotations:23.0.0")
 
     compileOnly("gg.essential:vigilance-1.8.9-forge:258") {
         attributes { attribute(common, true) }

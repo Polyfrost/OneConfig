@@ -27,6 +27,7 @@
 package cc.polyfrost.oneconfig.test;
 
 import cc.polyfrost.oneconfig.config.annotations.*;
+import cc.polyfrost.oneconfig.config.annotations.Number;
 import cc.polyfrost.oneconfig.config.core.OneColor;
 import cc.polyfrost.oneconfig.config.core.OneKeyBind;
 import cc.polyfrost.oneconfig.config.data.*;
@@ -40,6 +41,9 @@ import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.libs.universal.UChat;
 import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
 import cc.polyfrost.oneconfig.renderer.asset.Icon;
+import cc.polyfrost.oneconfig.test.huds.TestBasicHud_Test;
+import cc.polyfrost.oneconfig.test.huds.TestHud_Test;
+import cc.polyfrost.oneconfig.test.huds.TestMultilineHud_Test;
 import cc.polyfrost.oneconfig.utils.Notifications;
 
 public class TestConfig_Test extends Config {
@@ -127,6 +131,20 @@ public class TestConfig_Test extends Config {
             max = 50
     )
     float testSlider = 50;
+
+    @Number(
+            name = "Test Number",
+            min = 25,
+            max = 50
+    )
+    int testNumber = 50;
+
+    @Number(
+            name = "Test Number 2",
+            min = 25,
+            max = 50
+    )
+    float testNumber2 = 24.5f;
 
     @KeyBind(
             name = "Test KeyBind",

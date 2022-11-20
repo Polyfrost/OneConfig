@@ -29,6 +29,7 @@ package cc.polyfrost.oneconfig.test;
 import cc.polyfrost.oneconfig.events.EventManager;
 import cc.polyfrost.oneconfig.events.event.InitializationEvent;
 import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
+import cc.polyfrost.oneconfig.utils.commands.CommandManager;
 
 //#if MC<=11202 && FORGE==1
 @net.minecraftforge.fml.common.Mod(modid = "oneconfig-test-mod", name = "Test Mod", version = "0")
@@ -42,5 +43,6 @@ public class TestMod_Test {
     @Subscribe
     public void init(InitializationEvent e) {
         config = new TestConfig_Test();
+        CommandManager.INSTANCE.registerCommand(new TestCommand_Test());
     }
 }

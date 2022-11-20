@@ -27,9 +27,13 @@
 package cc.polyfrost.oneconfig.internal.renderer;
 
 import cc.polyfrost.oneconfig.config.data.InfoType;
+import cc.polyfrost.oneconfig.events.EventManager;
+import cc.polyfrost.oneconfig.events.event.FramebufferRenderEvent;
+import cc.polyfrost.oneconfig.events.event.Stage;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
+import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
 import cc.polyfrost.oneconfig.libs.universal.UGraphics;
 import cc.polyfrost.oneconfig.libs.universal.UResolution;
 import cc.polyfrost.oneconfig.platform.Platform;
@@ -56,8 +60,28 @@ import static org.lwjgl.nanovg.NanoVG.*;
  */
 public final class NanoVGHelperImpl implements NanoVGHelper {
     private long vg = -1;
+    private boolean drawing = false;
+    private boolean goingToCancel = false;
 
     //nanovg
+
+    public NanoVGHelperImpl() {
+        EventManager.INSTANCE.register(new Object() {
+            @Subscribe
+            private void onFramebufferRender(FramebufferRenderEvent event) {
+                if (event.stage == Stage.END) {
+                    if (drawing) {
+                        if (goingToCancel) {
+                            drawing = false;
+                            goingToCancel = false;
+                        } else {
+                            goingToCancel = true;
+                        }
+                    }
+                }
+            }
+        });
+    }
 
     /**
      * Sets up rendering, calls the consumer with the NanoVG context, and then cleans up.
@@ -78,6 +102,7 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
      */
     @Override
     public void setupAndDraw(boolean mcScaling, LongConsumer consumer) {
+        drawing = true;
         if (vg == -1) {
             vg = NanoVGGL2.nvgCreate(NanoVGGL2.NVG_ANTIALIAS);
             if (vg == -1) {
@@ -830,6 +855,11 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
         drawCircle(vg, centerX, centerY, size / 2 - size / 12, colorInner);
         float iconSize = size / 1.75f;
         drawSvg(vg, icon, centerX - iconSize / 2f, centerY - iconSize / 2f, iconSize, iconSize);
+    }
+
+    @Override
+    public boolean isDrawing() {
+        return drawing;
     }
 
     // gl

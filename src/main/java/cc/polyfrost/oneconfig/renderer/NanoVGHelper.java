@@ -398,6 +398,8 @@ public interface NanoVGHelper {
      */
     void drawInfo(long vg, InfoType type, float x, float y, float size);
 
+    boolean isDrawing();
+
     int drawBorderedText(String text, float x, float y, int color, int opacity);
 
     void drawScaledString(String text, float x, float y, int color, TextType type, float scale);

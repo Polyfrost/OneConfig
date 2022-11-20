@@ -107,7 +107,7 @@ val implementationNoPom: Configuration by configurations.creating {
 
 val modImplementationNoPom: Configuration by configurations.creating {
     configurations.modImplementation.get().extendsFrom(this)
-    configurations.modRuntime.get().extendsFrom(this)
+    configurations.modRuntimeOnly.get().extendsFrom(this)
 }
 
 val shadeProject: Configuration by configurations.creating {

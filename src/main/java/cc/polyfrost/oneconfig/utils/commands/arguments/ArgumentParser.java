@@ -26,13 +26,18 @@
 
 package cc.polyfrost.oneconfig.utils.commands.arguments;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Parameter;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
+/**
+ * A class used to create a parser for a given String. Some examples can be found in this class.
+ */
 @SuppressWarnings("UnstableApiUsage")
 public abstract class ArgumentParser<T> {
     private final TypeToken<T> type = new TypeToken<T>(getClass()) {
@@ -41,24 +46,97 @@ public abstract class ArgumentParser<T> {
 
     /**
      * Parses the given string into an object of the type specified by this parser.
-     * Should return null if the string cannot be parsed.
+     * Should return a relevant exception if it cannot be parsed. <b>The exception's name is presented to the user if they input a bad argument.</b>
      *
-     * @param arguments The string to parse.
-     * @return The parsed object, or null if the string cannot be parsed.
+     * @param arg The string to parse.
+     * @return The parsed object, or an exception if it fails
+     * @throws Exception a <b>RELEVANT</b> exception if the parsing fails
      */
     @Nullable
-    public abstract T parse(Arguments arguments);
+    public abstract T parse(@NotNull String arg) throws Exception;
 
     /**
-     * Returns possible completions for the given arguments.
-     * Should return an empty list or null if no completions are possible.
+     * Returns possible completions for the given argument.
+     * Should return an empty list if no completions are possible.
      *
-     * @param arguments The arguments to complete.
-     * @param parameter The parameter to complete.
-     * @return A list of possible completions, or an empty list or null if no completions are possible.
+     * @param current The argument's current state.
+     * @param parameter The parameter this argument is for. Can be used to get any annotations on the parameter.
+     * @return A list of possible completions, or an empty list if no completions are possible.
      */
-    @Nullable
-    public List<String> complete(Arguments arguments, Parameter parameter) {
+    @NotNull
+    public List<String> complete(String current, Parameter parameter) {
         return Collections.emptyList();
+    }
+
+
+    // DEFAULT PARSERS
+    public static class DoubleParser extends ArgumentParser<Double> {
+        @Nullable
+        @Override
+        public Double parse(@NotNull String arg) {
+            return Double.parseDouble(arg);
+        }
+    }
+
+    public static class IntegerParser extends ArgumentParser<Integer> {
+        @Nullable
+        @Override
+        public Integer parse(@NotNull String arg) {
+            return Integer.parseInt(arg);
+        }
+    }
+
+    public static class FloatParser extends ArgumentParser<Float> {
+        @Nullable
+        @Override
+        public Float parse(@NotNull String arg) {
+            return Float.parseFloat(arg);
+        }
+    }
+
+    public static class StringParser extends ArgumentParser<String> {
+        @Nullable
+        @Override
+        public String parse(@NotNull String arg) {
+            return arg;
+        }
+    }
+
+    public static class BooleanParser extends ArgumentParser<Boolean> {
+        private static final Map<String, List<String>> VALUES =
+                Maps.newHashMap();
+
+        static {
+            VALUES.put("true", Lists.newArrayList("on", "yes", "y", "enabled", "enable", "1"));
+            VALUES.put("false", Lists.newArrayList("off", "no", "n", "disabled", "disable", "0"));
+        }
+
+        @Override
+        public @Nullable Boolean parse(@NotNull String s) {
+            return Boolean.parseBoolean(
+                    VALUES.entrySet().stream()
+                            .filter(it -> it.getKey().equalsIgnoreCase(s)
+                                    || it.getValue().contains(s.toLowerCase()))
+                            .map(Map.Entry::getKey)
+                            .findFirst()
+                            .orElseThrow(() -> new IllegalArgumentException(
+                                    s + " is not any of: "
+                                            + String.join(", ", VALUES.keySet())
+                            ))
+            );
+        }
+
+        @NotNull
+        @Override
+        public List<String> complete(String current, Parameter parameter) {
+            if (current != null && !current.trim().isEmpty()) {
+                for (String v : VALUES.keySet()) {
+                    if (v.startsWith(current.toLowerCase(Locale.ENGLISH))) {
+                        return Lists.newArrayList(v);
+                    }
+                }
+            }
+            return new ArrayList<>(VALUES.keySet());
+        }
     }
 }

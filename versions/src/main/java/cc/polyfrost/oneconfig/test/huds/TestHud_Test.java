@@ -24,15 +24,25 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.utils.commands.arguments;
+package cc.polyfrost.oneconfig.test.huds;
 
-public class IntegerParser extends ArgumentParser<Integer> {
+import cc.polyfrost.oneconfig.config.annotations.Switch;
+import cc.polyfrost.oneconfig.hud.SingleTextHud;
+
+public class TestHud_Test extends SingleTextHud {
+    int times = 0;
+    @Switch(
+            name = "Custom Option"
+    )
+    public boolean yes;
+
+    public TestHud_Test() {
+        super("Time", true);
+    }
+
     @Override
-    public Integer parse(Arguments arguments) {
-        try {
-            return Integer.parseInt(arguments.poll());
-        } catch (NumberFormatException e) {
-            return null;
-        }
+    public String getText(boolean example) {
+        times++;
+        return String.valueOf(times);
     }
 }

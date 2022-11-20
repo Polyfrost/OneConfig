@@ -74,6 +74,16 @@ public class MinecraftMixin {
         EventManager.INSTANCE.post(new RenderEvent(Stage.END, this.timer.renderPartialTicks));
     }
 
+    @Inject(method = "runGameLoop", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/shader/Framebuffer;framebufferRender(II)V"))
+    private void onFramebufferStart(CallbackInfo ci) {
+        EventManager.INSTANCE.post(new FramebufferRenderEvent(Stage.START));
+    }
+
+    @Inject(method = "runGameLoop", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/shader/Framebuffer;framebufferRender(II)V", shift = At.Shift.AFTER))
+    private void onFramebufferEnd(CallbackInfo ci) {
+        EventManager.INSTANCE.post(new FramebufferRenderEvent(Stage.END));
+    }
+
     @Inject(method = "runTick", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/FMLCommonHandler;onPreClientTick()V", shift = At.Shift.AFTER, remap = false), remap = true)
     private void onClientTickStart(CallbackInfo ci) {
         EventManager.INSTANCE.post(new TickEvent(Stage.START));
@@ -108,12 +118,12 @@ public class MinecraftMixin {
         EventManager.INSTANCE.post(new TimerUpdateEvent(this.timer, true));
     }
 
-    @Inject(method = "runTick", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/FMLCommonHandler;fireKeyInput()V"))
+    @Inject(method = "runTick", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/FMLCommonHandler;fireKeyInput()V", remap = false), remap = true)
     private void onKeyEvent(CallbackInfo ci) {
         EventManager.INSTANCE.post(new KeyInputEvent());
     }
 
-    @Inject(method = "runTick", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/FMLCommonHandler;fireMouseInput()V"))
+    @Inject(method = "runTick", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/FMLCommonHandler;fireMouseInput()V", remap = false), remap = true)
     private void onMouseEvent(CallbackInfo ci) {
         EventManager.INSTANCE.post(new MouseInputEvent());
     }

@@ -26,26 +26,11 @@
 
 package cc.polyfrost.oneconfig.internal.plugin.hooks;
 
-import cc.polyfrost.oneconfig.platform.Platform;
-import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
-import cc.polyfrost.oneconfig.utils.gui.OneUIScreen;
-
-import java.util.Optional;
+import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
 
 public class OptifineConfigHook {
 
     public static boolean shouldNotApplyFastRender() {
-        Object currentScreen = Platform.getGuiPlatform().getCurrentScreen();
-        if (currentScreen instanceof OneUIScreen && ((OneUIScreen) currentScreen).hasBackgroundBlur()) {
-            return true;
-        }
-        for (Optional<?> screen : GuiUtils.getScreenQueue()) {
-            if (!screen.isPresent()) continue;
-            currentScreen = screen.get();
-            if (currentScreen instanceof OneUIScreen && ((OneUIScreen) currentScreen).hasBackgroundBlur()) {
-                return true;
-            }
-        }
-        return false;
+        return NanoVGHelper.INSTANCE.isDrawing();
     }
 }

@@ -24,26 +24,27 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.utils.commands.annotations;
+package cc.polyfrost.oneconfig.test.huds;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import cc.polyfrost.oneconfig.hud.BasicHud;
+import cc.polyfrost.oneconfig.internal.assets.Images;
+import cc.polyfrost.oneconfig.libs.universal.UMatrixStack;
+import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
 
-/**
- * Marks the name of a parameter.
- *
- * @see Main
- * @see Command
- */
-@Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.PARAMETER})
-public @interface Name {
-    /**
-     * The name of the parameter.
-     *
-     * @return The name of the parameter.
-     */
-    String value();
+
+public class TestBasicHud_Test extends BasicHud {
+    @Override
+    protected void draw(UMatrixStack matrices, float x, float y, float scale, boolean example) {
+        NanoVGHelper.INSTANCE.setupAndDraw(true, vg -> NanoVGHelper.INSTANCE.drawImage(vg, Images.HUE_GRADIENT.filePath, x, y, 50 * scale, 50f * scale));
+    }
+
+    @Override
+    protected float getWidth(float scale, boolean example) {
+        return 50 * scale;
+    }
+
+    @Override
+    protected float getHeight(float scale, boolean example) {
+        return 50 * scale;
+    }
 }

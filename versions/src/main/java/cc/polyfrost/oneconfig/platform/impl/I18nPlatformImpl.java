@@ -35,4 +35,20 @@ public class I18nPlatformImpl implements I18nPlatform {
     public String format(String key, Object... args) {
         return I18n.format(key, args);
     }
+
+    @Override
+    public String getKeyName(int key, int scanCode) {
+        //#if MC>=11600
+            //#if FABRIC==1
+            //$$ final String s = net.minecraft.client.util.InputUtil.fromKeyCode(key, scanCode).getLocalizedText().asString();
+            //#else
+            //$$ final String s = net.minecraft.client.util.InputMappings.getInputByCode(key, scanCode).func_237520_d_().getString();
+            //#endif
+            //$$ if (s == null) return "Unknown";
+            //$$ else return s.length() == 1 ? s.toUpperCase() : s;
+        //#else
+        final String s = net.minecraft.client.settings.GameSettings.getKeyDisplayString(key);
+        return s == null ? "Unknown" : s;
+        //#endif
+    }
 }

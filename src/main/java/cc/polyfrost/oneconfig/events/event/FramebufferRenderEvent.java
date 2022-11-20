@@ -24,20 +24,15 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.test;
+package cc.polyfrost.oneconfig.events.event;
 
-import cc.polyfrost.oneconfig.hud.TextHud;
+public class FramebufferRenderEvent {
+    /**
+     * Whether the tick is starting or ending.
+     */
+    public final Stage stage;
 
-import java.util.List;
-
-public class TestMultilineHud_Test extends TextHud {
-    public TestMultilineHud_Test() {
-        super(true);
-    }
-
-    @Override
-    protected void getLines(List<String> lines, boolean example) {
-        lines.add(String.valueOf(System.currentTimeMillis()));
-        lines.add("HEY!");
+    public FramebufferRenderEvent(Stage stage) {
+        this.stage = stage;
     }
 }

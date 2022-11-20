@@ -34,6 +34,7 @@ import cc.polyfrost.oneconfig.config.elements.OptionPage;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
 import cc.polyfrost.oneconfig.config.Config;
 import cc.polyfrost.oneconfig.gui.elements.config.*;
+import cc.polyfrost.oneconfig.libs.universal.ChatColor;
 import cc.polyfrost.oneconfig.platform.Platform;
 import gg.essential.vigilance.Vigilant;
 import gg.essential.vigilance.data.*;
@@ -53,7 +54,7 @@ public class VigilanceConfig extends Config {
     public final Vigilant vigilant;
 
     public VigilanceConfig(Mod modData, String configFile, Vigilant vigilant) {
-        super(modData, configFile);
+        super(modData, configFile, true, false);
         this.vigilant = vigilant;
         initialize();
     }
@@ -104,13 +105,13 @@ public class VigilanceConfig extends Config {
                     options.add(new ConfigSlider(getFieldOfProperty(option), option.getInstance(), getName(attributes), attributes.getDescription(), getCategory(attributes), getSubcategory(attributes), attributes.getMinF(), attributes.getMaxF(), 0));
                     break;
                 case NUMBER:
-                    options.add(new ConfigSlider(getFieldOfProperty(option), option.getInstance(), getName(attributes), attributes.getDescription(), getCategory(attributes), getSubcategory(attributes), attributes.getMin(), attributes.getMax(), 1));
+                    options.add(new ConfigNumber(getFieldOfProperty(option), option.getInstance(), getName(attributes), attributes.getDescription(), getCategory(attributes), getSubcategory(attributes), attributes.getMin(), attributes.getMax(), attributes.getIncrement()));
                     break;
                 case SLIDER:
                     options.add(new ConfigSlider(getFieldOfProperty(option), option.getInstance(), getName(attributes), attributes.getDescription(), getCategory(attributes), getSubcategory(attributes), attributes.getMin(), attributes.getMax(), 0));
                     break;
                 case COLOR:
-                    options.add(new CompatConfigColorElement(getFieldOfProperty(option), option.getInstance(), getCategory(attributes), attributes.getDescription(), getSubcategory(attributes), getName(attributes), 2));
+                    options.add(new CompatConfigColorElement(getFieldOfProperty(option), option.getInstance(), getName(attributes), attributes.getDescription(), getCategory(attributes), getSubcategory(attributes), 2, attributes.getAllowAlpha()));
                     break;
                 case BUTTON:
                     options.add(new ConfigButton(() -> ((CallablePropertyValue) option.getValue()).invoke(option.getInstance()), option.getInstance(), getName(attributes), attributes.getDescription(), getCategory(attributes), getSubcategory(attributes), 2, attributes.getPlaceholder().isEmpty() ? "Activate" : attributes.getPlaceholder()));
@@ -157,7 +158,7 @@ public class VigilanceConfig extends Config {
     private String getName(PropertyAttributesExt ext) {
         try {
             PropertyAttributesExt.class.getDeclaredField("i18nName").setAccessible(true);
-            return Platform.getI18nPlatform().format((String) PropertyAttributesExt.class.getDeclaredField("i18nName").get(ext));
+            return Platform.getI18nPlatform().format(ChatColor.Companion.stripControlCodes((String) PropertyAttributesExt.class.getDeclaredField("i18nName").get(ext)));
         } catch (IllegalAccessException | NoSuchFieldException e) {
             return ext.getName();
         }
@@ -166,7 +167,7 @@ public class VigilanceConfig extends Config {
     private String getCategory(PropertyAttributesExt ext) {
         try {
             PropertyAttributesExt.class.getDeclaredField("i18nCategory").setAccessible(true);
-            return Platform.getI18nPlatform().format((String) PropertyAttributesExt.class.getDeclaredField("i18nCategory").get(ext));
+            return Platform.getI18nPlatform().format(ChatColor.Companion.stripControlCodes((String) PropertyAttributesExt.class.getDeclaredField("i18nCategory").get(ext)));
         } catch (IllegalAccessException | NoSuchFieldException e) {
             return ext.getCategory();
         }
@@ -175,7 +176,7 @@ public class VigilanceConfig extends Config {
     private String getSubcategory(PropertyAttributesExt ext) {
         try {
             PropertyAttributesExt.class.getDeclaredField("i18nSubcategory").setAccessible(true);
-            return Platform.getI18nPlatform().format((String) PropertyAttributesExt.class.getDeclaredField("i18nSubcategory").get(ext));
+            return Platform.getI18nPlatform().format(ChatColor.Companion.stripControlCodes((String) PropertyAttributesExt.class.getDeclaredField("i18nSubcategory").get(ext)));
         } catch (IllegalAccessException | NoSuchFieldException e) {
             return ext.getSubcategory();
         }
@@ -194,8 +195,8 @@ public class VigilanceConfig extends Config {
         private Color prevColor = null;
         private OneColor cachedColor = null;
 
-        public CompatConfigColorElement(Field color, Vigilant parent, String name, String description, String category, String subcategory, int size) {
-            super(null, parent, name, description, category, subcategory, size, true);
+        public CompatConfigColorElement(Field color, Vigilant parent, String name, String description, String category, String subcategory, int size, boolean allowAlpha) {
+            super(null, parent, name, description, category, subcategory, size, allowAlpha);
             this.color = color;
         }
 
