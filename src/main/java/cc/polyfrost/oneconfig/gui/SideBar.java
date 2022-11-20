@@ -27,8 +27,8 @@
 package cc.polyfrost.oneconfig.gui;
 
 import cc.polyfrost.oneconfig.gui.animations.Animation;
-import cc.polyfrost.oneconfig.gui.animations.CubicBezier;
 import cc.polyfrost.oneconfig.gui.animations.DummyAnimation;
+import cc.polyfrost.oneconfig.gui.animations.EaseOutExpo;
 import cc.polyfrost.oneconfig.gui.elements.BasicButton;
 import cc.polyfrost.oneconfig.gui.pages.CreditsPage;
 import cc.polyfrost.oneconfig.gui.pages.ModConfigPage;
@@ -130,7 +130,7 @@ public class SideBar {
     private void moveSideBar(BasicButton button) {
         if (button.equals(buttons.get(selected))) return;
         buttons.get(selected).setColorPalette(ColorPalette.TERTIARY);
-        moveAnimation = new CubicBezier(0.76f, 0, 0.24f, 1, 300, buttons.get(selected).y - y, button.y - y, false);
+        moveAnimation = new EaseOutExpo(300, buttons.get(selected).y - y, button.y - y, false);
         sizeAnimation = new DummyAnimation(36);
         selected = buttons.indexOf(button);
     }
