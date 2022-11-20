@@ -63,6 +63,7 @@ public class GLPlatformImpl implements GLPlatform {
         Tessellator tessellator = Tessellator.getInstance();
         WorldRenderer worldRenderer = tessellator.getWorldRenderer();
         UGraphics.enableBlend();
+        //noinspection deprecation
         UGraphics.disableTexture2D();
         UGraphics.tryBlendFuncSeparate(770, 771, 1, 0);
         UGraphics.color4f(g, h, j, f);
@@ -72,6 +73,7 @@ public class GLPlatformImpl implements GLPlatform {
         worldRenderer.pos(x2, y, 0.0).endVertex();
         worldRenderer.pos(x, y, 0.0).endVertex();
         tessellator.draw();
+        //noinspection deprectation
         UGraphics.enableTexture2D();
         UGraphics.disableBlend();
     }

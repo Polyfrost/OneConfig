@@ -27,9 +27,13 @@
 package cc.polyfrost.oneconfig.renderer;
 
 import cc.polyfrost.oneconfig.config.data.InfoType;
+import cc.polyfrost.oneconfig.events.EventManager;
+import cc.polyfrost.oneconfig.events.event.FramebufferRenderEvent;
+import cc.polyfrost.oneconfig.events.event.Stage;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
+import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
 import cc.polyfrost.oneconfig.libs.universal.UGraphics;
 import cc.polyfrost.oneconfig.libs.universal.UResolution;
 import cc.polyfrost.oneconfig.platform.NanoVGPlatform;
@@ -42,7 +46,6 @@ import org.lwjgl.nanovg.NVGColor;
 import org.lwjgl.nanovg.NVGPaint;
 import org.lwjgl.opengl.GL11;
 
-import java.util.Arrays;
 import java.util.function.LongConsumer;
 import java.util.regex.Pattern;
 
@@ -54,11 +57,30 @@ import static org.lwjgl.nanovg.NanoVG.*;
 public final class RenderManager {
     private static long vg = -1;
     private static boolean drawing = false;
+    private static boolean goingToCancel = false;
 
     //nanovg
 
     private RenderManager() {
 
+    }
+
+    static {
+        EventManager.INSTANCE.register(new Object() {
+            @Subscribe
+            private void onFramebufferRender(FramebufferRenderEvent event) {
+                if (event.stage == Stage.END) {
+                    if (drawing) {
+                        if (goingToCancel) {
+                            drawing = false;
+                            goingToCancel = false;
+                        } else {
+                            goingToCancel = true;
+                        }
+                    }
+                }
+            }
+        });
     }
 
     /**
@@ -78,30 +100,29 @@ public final class RenderManager {
      * @param consumer  The consumer to call.
      */
     public static void setupAndDraw(boolean mcScaling, LongConsumer consumer) {
-        try {
-            drawing = true;
+        drawing = true;
+        if (vg == -1) {
+            vg = Platform.getNanoVGPlatform().nvgCreate(NanoVGPlatform.NVG_ANTIALIAS);
             if (vg == -1) {
-                vg = Platform.getNanoVGPlatform().nvgCreate(NanoVGPlatform.NVG_ANTIALIAS);
-                if (vg == -1) {
-                    throw new RuntimeException("Failed to create nvg context");
-                }
-                FontManager.INSTANCE.initialize(vg);
+                throw new RuntimeException("Failed to create nvg context");
             }
-
-            Platform.getGLPlatform().enableStencil();
-            GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
-            GL11.glDisable(GL11.GL_ALPHA_TEST);
-
-            beginFrame(mcScaling);
-
-            consumer.accept(vg);
-
-            endFrame();
-
-            GL11.glPopAttrib();
-        } finally {
-            drawing = false;
         }
+
+        Platform.getGLPlatform().enableStencil();
+        GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
+        GL11.glDisable(GL11.GL_ALPHA_TEST);
+
+        if (mcScaling) {
+            nvgBeginFrame(vg, (float) UResolution.getScaledWidth(), (float) UResolution.getScaledHeight(), (float) UResolution.getScaleFactor());
+        } else {
+            nvgBeginFrame(vg, UResolution.getWindowWidth(), UResolution.getWindowHeight(), 1);
+        }
+
+        consumer.accept(vg);
+
+        nvgEndFrame(vg);
+
+        GL11.glPopAttrib();
     }
 
     public static void beginFrame(boolean mcScaling) {
@@ -803,7 +824,7 @@ public final class RenderManager {
     private static final Pattern regex = Pattern.compile("(?i)\\\\u00A7[0-9a-f]");
 
     public static int drawBorderedText(String text, float x, float y, int color, int opacity) {
-        String noColors = regex.matcher(text).replaceAll("\u00A7r");
+        String noColors = regex.matcher(text).replaceAll("§r");
         int yes = 0;
         if (opacity > 3) {
             int xOff = -3;

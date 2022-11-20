@@ -24,25 +24,15 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.test;
+package cc.polyfrost.oneconfig.events.event;
 
-import cc.polyfrost.oneconfig.config.annotations.Switch;
-import cc.polyfrost.oneconfig.hud.SingleTextHud;
+public class FramebufferRenderEvent {
+    /**
+     * Whether the tick is starting or ending.
+     */
+    public final Stage stage;
 
-public class TestHud_Test extends SingleTextHud {
-    int times = 0;
-    @Switch(
-            name = "Custom Option"
-    )
-    public boolean yes;
-
-    public TestHud_Test() {
-        super("Time", true);
-    }
-
-    @Override
-    public String getText(boolean example) {
-        times++;
-        return String.valueOf(times);
+    public FramebufferRenderEvent(Stage stage) {
+        this.stage = stage;
     }
 }

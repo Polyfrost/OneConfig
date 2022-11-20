@@ -24,20 +24,25 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.test;
+package cc.polyfrost.oneconfig.test.huds;
 
-import cc.polyfrost.oneconfig.hud.TextHud;
+import cc.polyfrost.oneconfig.config.annotations.Switch;
+import cc.polyfrost.oneconfig.hud.SingleTextHud;
 
-import java.util.List;
+public class TestHud_Test extends SingleTextHud {
+    int times = 0;
+    @Switch(
+            name = "Custom Option"
+    )
+    public boolean yes;
 
-public class TestMultilineHud_Test extends TextHud {
-    public TestMultilineHud_Test() {
-        super(true);
+    public TestHud_Test() {
+        super("Time", true);
     }
 
     @Override
-    protected void getLines(List<String> lines, boolean example) {
-        lines.add(String.valueOf(System.currentTimeMillis()));
-        lines.add("HEY!");
+    public String getText(boolean example) {
+        times++;
+        return String.valueOf(times);
     }
 }

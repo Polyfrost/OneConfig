@@ -44,6 +44,9 @@ import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
 import cc.polyfrost.oneconfig.renderer.Icon;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
+import cc.polyfrost.oneconfig.test.huds.TestBasicHud_Test;
+import cc.polyfrost.oneconfig.test.huds.TestHud_Test;
+import cc.polyfrost.oneconfig.test.huds.TestMultilineHud_Test;
 import cc.polyfrost.oneconfig.utils.Notifications;
 
 public class TestConfig_Test extends Config {

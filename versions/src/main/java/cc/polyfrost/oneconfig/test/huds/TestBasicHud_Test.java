@@ -24,12 +24,26 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-/**
- * The package where all internal OneConfig shenanigans go on.
- * This package is hidden from devs and is subject to change at any time with no warning.
- * <p><b>It is recommended you do not interact with this package in any way.</b></p>
- */
-@ApiStatus.Internal
-package cc.polyfrost.oneconfig.internal;
+package cc.polyfrost.oneconfig.test.huds;
 
-import org.jetbrains.annotations.ApiStatus;
+import cc.polyfrost.oneconfig.hud.BasicHud;
+import cc.polyfrost.oneconfig.internal.assets.Images;
+import cc.polyfrost.oneconfig.libs.universal.UMatrixStack;
+import cc.polyfrost.oneconfig.renderer.RenderManager;
+
+public class TestBasicHud_Test extends BasicHud {
+    @Override
+    protected void draw(UMatrixStack matrices, float x, float y, float scale, boolean example) {
+        RenderManager.setupAndDraw(true, vg -> RenderManager.drawImage(vg, Images.HUE_GRADIENT.filePath, x, y, 50 * scale, 50f * scale));
+    }
+
+    @Override
+    protected float getWidth(float scale, boolean example) {
+        return 50 * scale;
+    }
+
+    @Override
+    protected float getHeight(float scale, boolean example) {
+        return 50 * scale;
+    }
+}
