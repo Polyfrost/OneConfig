@@ -32,7 +32,7 @@ import cc.polyfrost.oneconfig.events.event.Stage;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.animations.Animation;
 import cc.polyfrost.oneconfig.gui.animations.DummyAnimation;
-import cc.polyfrost.oneconfig.gui.animations.EaseInOutQuad;
+import cc.polyfrost.oneconfig.gui.animations.quad.EaseInOutQuad;
 import cc.polyfrost.oneconfig.internal.utils.Notification;
 import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
 import cc.polyfrost.oneconfig.libs.universal.UResolution;

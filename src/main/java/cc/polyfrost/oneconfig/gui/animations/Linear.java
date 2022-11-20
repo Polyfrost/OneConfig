@@ -35,7 +35,7 @@ public class Linear extends Animation {
      * @param reverse  Reverse the animation
      */
     public Linear(int duration, float start, float end, boolean reverse) {
-        super(duration, start, end, reverse);
+        super(duration, start, end, reverse, true);
     }
 
     /**

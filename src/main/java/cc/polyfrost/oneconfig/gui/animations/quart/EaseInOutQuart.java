@@ -37,11 +37,11 @@ public class EaseInOutQuart extends Animation {
      * @param reverse  Reverse the animation
      */
     public EaseInOutQuart(int duration, float start, float end, boolean reverse) {
-        super(duration, start, end, reverse);
+        super(duration, start, end, reverse, true);
     }
 
     @Override
-    protected float animate(float x) {
+    public float animate(float x) {
         return x < 0.5 ? 8 * x * x * x * x : (float) (1 - Math.pow(-2 * x + 2, 4) / 2);
     }
 }

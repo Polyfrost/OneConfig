@@ -28,7 +28,7 @@ package cc.polyfrost.oneconfig.gui.pages;
 
 import cc.polyfrost.oneconfig.gui.animations.Animation;
 import cc.polyfrost.oneconfig.gui.animations.ColorAnimation;
-import cc.polyfrost.oneconfig.gui.animations.EaseOutQuad;
+import cc.polyfrost.oneconfig.gui.animations.quad.EaseOutQuad;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.RenderManager;

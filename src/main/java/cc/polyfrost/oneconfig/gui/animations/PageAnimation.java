@@ -26,6 +26,8 @@
 
 package cc.polyfrost.oneconfig.gui.animations;
 
+import cc.polyfrost.oneconfig.gui.animations.expo.EaseOutExpo;
+import cc.polyfrost.oneconfig.gui.animations.quart.EaseInOutQuart;
 import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 
 import java.util.stream.Stream;

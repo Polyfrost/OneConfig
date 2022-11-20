@@ -37,12 +37,12 @@ public class EaseOutExpo extends Animation {
      * @param reverse  Reverse the animation
      */
     public EaseOutExpo(int duration, float start, float end, boolean reverse) {
-        super(duration, start, end, reverse);
+        super(duration, start, end, reverse, true);
     }
 
     // Courtesy of https://easings.net/
     @Override
-    protected float animate(float x) {
+    public float animate(float x) {
         return x == 1 ? 1 : 1 - (float) Math.pow(2, -10 * x);
     }
 }

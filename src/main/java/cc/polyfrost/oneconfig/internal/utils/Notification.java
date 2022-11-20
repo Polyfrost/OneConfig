@@ -28,6 +28,7 @@ package cc.polyfrost.oneconfig.internal.utils;
 
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.animations.*;
+import cc.polyfrost.oneconfig.gui.animations.quad.EaseInOutQuad;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.libs.universal.UResolution;
 import cc.polyfrost.oneconfig.renderer.Icon;

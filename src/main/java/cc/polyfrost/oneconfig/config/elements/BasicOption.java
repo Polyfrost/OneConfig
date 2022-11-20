@@ -29,7 +29,7 @@ package cc.polyfrost.oneconfig.config.elements;
 import cc.polyfrost.oneconfig.gui.animations.Animation;
 import cc.polyfrost.oneconfig.gui.animations.ColorAnimation;
 import cc.polyfrost.oneconfig.gui.animations.DummyAnimation;
-import cc.polyfrost.oneconfig.gui.animations.EaseOutQuad;
+import cc.polyfrost.oneconfig.gui.animations.quad.EaseOutQuad;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.libs.universal.ChatColor;

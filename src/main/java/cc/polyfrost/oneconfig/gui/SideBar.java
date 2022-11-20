@@ -27,9 +27,9 @@
 package cc.polyfrost.oneconfig.gui;
 
 import cc.polyfrost.oneconfig.gui.animations.Animation;
-import cc.polyfrost.oneconfig.gui.animations.CubicBezier;
+import cc.polyfrost.oneconfig.gui.animations.cubic.CubicBezier;
 import cc.polyfrost.oneconfig.gui.animations.DummyAnimation;
-import cc.polyfrost.oneconfig.gui.animations.EaseOutExpo;
+import cc.polyfrost.oneconfig.gui.animations.expo.EaseOutExpo;
 import cc.polyfrost.oneconfig.gui.elements.BasicButton;
 import cc.polyfrost.oneconfig.gui.pages.CreditsPage;
 import cc.polyfrost.oneconfig.gui.pages.ModConfigPage;

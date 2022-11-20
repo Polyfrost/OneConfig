@@ -40,8 +40,9 @@ public abstract class Animation {
      * @param start    The start of the animation
      * @param end      The end of the animation
      * @param reverse  Reverse the animation
+     * @param b
      */
-    public Animation(float duration, float start, float end, boolean reverse) {
+    public Animation(float duration, float start, float end, boolean reverse, boolean b) {
         this.duration = duration;
         if (reverse) {
             float temp = start;
