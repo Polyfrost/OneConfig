@@ -33,16 +33,8 @@ public class ChainedAnimation extends Animation {
     private float totalDuration = 0;
 
     public ChainedAnimation(Animation... animations) {
-        super(1, 0, 0, false, false);
+        super(1, 0, 0, false);
         this.animations = animations;
-    }
-
-    public ChainedAnimation(boolean x, Animation... animations) {
-        super(1, 0, 0, false, x);
-        this.animations = animations;
-        for (Animation animation : animations) {
-            totalDuration += animation.duration;
-        }
     }
 
     @Override

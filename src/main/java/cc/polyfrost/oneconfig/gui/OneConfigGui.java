@@ -31,8 +31,7 @@ import cc.polyfrost.oneconfig.gui.animations.*;
 import cc.polyfrost.oneconfig.gui.elements.BasicElement;
 import cc.polyfrost.oneconfig.gui.elements.ColorSelector;
 import cc.polyfrost.oneconfig.gui.elements.text.TextInputField;
-import cc.polyfrost.oneconfig.gui.pages.ModsPage;
-import cc.polyfrost.oneconfig.gui.pages.Page;
+import cc.polyfrost.oneconfig.gui.pages.*;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.internal.config.OneConfigConfig;
@@ -65,7 +64,7 @@ public class OneConfigGui extends OneUIScreen {
     public boolean allowClose = true;
     protected Page currentPage;
     protected Page prevPage;
-    private Animation animation;
+    private PageAnimation animation;
 
     public OneConfigGui() {
         INSTANCE = this;
@@ -136,14 +135,14 @@ public class OneConfigGui extends OneUIScreen {
         if (backArrow.isClicked() && previousPages.size() > 0) {
             try {
                 nextPages.add(0, currentPage);
-                openPage(previousPages.get(0), false);
+                openPage(previousPages.get(0), PageAnimation.LEFT, false);
                 previousPages.remove(0);
             } catch (Exception ignored) {
             }
         } else if (forwardArrow.isClicked() && nextPages.size() > 0) {
             try {
                 previousPages.add(0, currentPage);
-                openPage(nextPages.get(0), false);
+                openPage(nextPages.get(0), PageAnimation.RIGHT, false);
                 nextPages.remove(0);
             } catch (Exception ignored) {
             }
@@ -182,29 +181,26 @@ public class OneConfigGui extends OneUIScreen {
 
     public void handleAnimation(long vg, int initX, int initY, InputHandler inputHandler) {
         float pageProgress = animation.get(GuiUtils.getDeltaTime());
-        int x = initX + (animation.isX() ? (int) (pageProgress) : 224);
-        int y = initY + (animation.isX() ? 72 : (int) (pageProgress));
-        if (animation instanceof ChainedAnimation) {
-            ChainedAnimation animations = (ChainedAnimation) animation;
-            if (animations.getTimePassed() < (animations.getDuration() / 2) && prevPage != null) {
+        int x = initX + (animation.isLeftRight() ? (int) (pageProgress) : 224);
+        int y = initY + (animation.isLeftRight() ? 72 : (int) (pageProgress));
+
+        if (!animation.isLeftRight()) {
+            if (animation.getTimePassed() < (animation.getDuration() / 2) && prevPage != null) {
                 prevPage.scrollWithDraw(vg, x, y, inputHandler);
-            } else if (animations.getTimePassed() > animations.getDuration() / 2 + 2) {
+            } else if (animation.getTimePassed() > animation.getDuration() / 2 + 2) {
                 prevPage = null;
                 currentPage.scrollWithDraw(vg, x, y, inputHandler);
             }
         } else {
-            if (!animation.isReversed()) {
+            if (animation == PageAnimation.RIGHT) {
                 prevPage.scrollWithDraw(vg, x, y, inputHandler);
-                currentPage.scrollWithDraw(vg, x - (animation.isX() ? 1904 : 0), y - (animation.isX() ? 0 : 1056), inputHandler);
+                currentPage.scrollWithDraw(vg, x + 1904, y, inputHandler);
             } else {
-                prevPage.scrollWithDraw(vg, x - (animation.isX() ? 1904 : 0), y - (animation.isX() ? 0 : 1056), inputHandler);
-                currentPage.scrollWithDraw(vg, x, y, inputHandler);
-            }
-            if (animation.isFinished()) {
-                prevPage = null;
-                animation = null;
+                prevPage.scrollWithDraw(vg, x, y, inputHandler);
+                currentPage.scrollWithDraw(vg, x - 1904, y, inputHandler);
             }
         }
+
         if (animation.isFinished()) {
             prevPage = null;
             animation = null;
@@ -225,20 +221,39 @@ public class OneConfigGui extends OneUIScreen {
     }
 
     public void openPage(@NotNull Page page) {
-        openPage(page, true);
+        switch (page.getTitle()) {
+            case "Preferences":
+                openPage(page, PageAnimation.DOWN, true);
+                return;
+            case "Credits":
+                openPage(page, PageAnimation.UP, true);
+                return;
+            case "Mods":
+                if (currentPage.getTitle().equals("Preferences")) {
+                    openPage(page, PageAnimation.UP, true);
+                    return;
+                } else if (currentPage.getTitle().equals("Credits")) {
+                    openPage(page, PageAnimation.DOWN, true);
+                    return;
+                } else {
+                    openPage(page, PageAnimation.LEFT, true);
+                    return;
+                }
+            default:
+                if (nextPages.contains(page)) {
+                    openPage(page, PageAnimation.RIGHT, true);
+                    return;
+                }
+                if (previousPages.contains(page) && currentPage.parents.contains(page)) {
+                    openPage(page, PageAnimation.LEFT, true);
+                    return;
+                }
+                openPage(page, PageAnimation.RIGHT, true);
+
+        }
     }
 
-    public void openPage(@NotNull Page page, boolean addToPrevious) {
-        int oldHeightDiff = 200; // how much the old page should go up before disappearing
-        int newHeightDiff = 200; // how much the new page should be offset by initially
-        int totalDuration = 200; // how long the total length of the animation is
-        System.out.println((int) (totalDuration * (oldHeightDiff / ((float)(oldHeightDiff + newHeightDiff))))); // animation length proportional to number of pixels being displaced
-        openPage(page, new ChainedAnimation(
-        false, new Linear((int) (totalDuration * (oldHeightDiff / ((float)(oldHeightDiff + newHeightDiff)))), 72, 72 - oldHeightDiff, false, false),
-                new EaseOutQuad((int) (totalDuration * (newHeightDiff / ((float)(oldHeightDiff + newHeightDiff)))), 72 + newHeightDiff, 72, false, false)), addToPrevious);
-    }
-
-    public void openPage(@NotNull Page page, Animation animation, boolean addToPrevious) {
+    public void openPage(@NotNull Page page, PageAnimation animation, boolean addToPrevious) {
         if (page == currentPage) return;
         currentPage.finishUpAndClose();
         textInputField.setInput("");

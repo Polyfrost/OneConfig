@@ -37,7 +37,7 @@ public class EaseOutBump extends Animation {
      * @param reverse  Reverse the animation
      */
     public EaseOutBump(int duration, float start, float end, boolean reverse) {
-        super(duration, start, end, reverse, true);
+        super(duration, start, end, reverse);
     }
 
     // Courtesy of https://easings.net/
