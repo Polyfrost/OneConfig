@@ -27,13 +27,13 @@
 package cc.polyfrost.oneconfig.utils;
 
 import cc.polyfrost.oneconfig.internal.utils.Deprecator;
-import cc.polyfrost.oneconfig.renderer.RenderManager;
+import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
 import cc.polyfrost.oneconfig.renderer.font.Font;
 
 import java.util.ArrayList;
 
 /**
- * @deprecated Use RenderManager's functions for wrapping text and getting the height of it instead
+ * @deprecated Use NanoVGHelper's functions for wrapping text and getting the height of it instead
  */
 @Deprecated
 public final class TextUtils {
@@ -56,7 +56,7 @@ public final class TextUtils {
         int prevIndex = 0;
         for (int i = text.indexOf(" "); i >= 0; i = text.indexOf(" ", i + 1)) {
             String textPart = text.substring(0, i);
-            float textWidth = RenderManager.getTextWidth(vg, textPart, fontSize, font);
+            float textWidth = NanoVGHelper.INSTANCE.getTextWidth(vg, textPart, fontSize, font);
             if (textWidth < maxWidth) {
                 prevIndex = i;
                 continue;

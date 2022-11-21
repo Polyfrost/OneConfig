@@ -26,13 +26,13 @@
 
 package cc.polyfrost.oneconfig.gui.pages;
 
+import cc.polyfrost.oneconfig.config.elements.BasicOption;
 import cc.polyfrost.oneconfig.config.elements.OptionPage;
 import cc.polyfrost.oneconfig.config.elements.OptionSubcategory;
-import cc.polyfrost.oneconfig.config.elements.BasicOption;
 import cc.polyfrost.oneconfig.gui.elements.BasicButton;
-import cc.polyfrost.oneconfig.renderer.RenderManager;
+import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
-import cc.polyfrost.oneconfig.renderer.scissor.ScissorManager;
+import cc.polyfrost.oneconfig.renderer.scissor.ScissorHelper;
 import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 
@@ -73,16 +73,17 @@ public class ModConfigPage extends Page {
     @Override
     public void draw(long vg, int x, int y, InputHandler inputHandler) {
         if (page.categories.size() == 0) return;
+        ScissorHelper scissorHelper = ScissorHelper.INSTANCE;
         int optionY = y + (page.categories.size() == 1 ? 16 : 64);
         for (OptionSubcategory subCategory : page.categories.get(selectedCategory).subcategories) {
             optionY += subCategory.draw(vg, x + 30, optionY, inputHandler);
         }
-        ScissorManager.save();
-        ScissorManager.clearScissors(vg);
+        scissorHelper.save();
+        scissorHelper.clearScissors(vg);
         for (OptionSubcategory subCategory : page.categories.get(selectedCategory).subcategories) {
             subCategory.drawLast(vg, x + 30, inputHandler);
         }
-        ScissorManager.restore(vg);
+        scissorHelper.restore(vg);
         totalSize = optionY - y;
     }
 
@@ -92,7 +93,7 @@ public class ModConfigPage extends Page {
         int buttonX = x + 16;
         for (BasicButton button : categories) {
             if (button.getWidth() == 0)
-                button.setWidth((int) (Math.ceil(RenderManager.getTextWidth(vg, button.getText(), 12f, Fonts.MEDIUM) / 8f) * 8 + 16));
+                button.setWidth((int) (Math.ceil(NanoVGHelper.INSTANCE.getTextWidth(vg, button.getText(), 12f, Fonts.MEDIUM) / 8f) * 8 + 16));
             button.draw(vg, buttonX, y + 16, inputHandler);
             buttonX += button.getWidth() + 16;
         }

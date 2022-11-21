@@ -27,7 +27,7 @@
 package cc.polyfrost.oneconfig.internal.hud.utils;
 
 import cc.polyfrost.oneconfig.libs.universal.UResolution;
-import cc.polyfrost.oneconfig.renderer.RenderManager;
+import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
 
 import java.awt.*;
 
@@ -59,9 +59,9 @@ public class SnappingLine {
     public void drawLine(long vg, float lineWidth, boolean isX) {
         float pos = (float) (line * UResolution.getScaleFactor() - lineWidth / 2f);
         if (isX) {
-            RenderManager.drawLine(vg, pos, 0, pos, UResolution.getWindowHeight(), lineWidth, COLOR);
+            NanoVGHelper.INSTANCE.drawLine(vg, pos, 0, pos, UResolution.getWindowHeight(), lineWidth, COLOR);
         } else {
-            RenderManager.drawLine(vg, 0, pos, UResolution.getWindowWidth(), pos, lineWidth, COLOR);
+            NanoVGHelper.INSTANCE.drawLine(vg, 0, pos, UResolution.getWindowWidth(), pos, lineWidth, COLOR);
         }
     }
 

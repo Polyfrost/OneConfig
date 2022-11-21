@@ -1,5 +1,0 @@
-net.minecraft.util.IChatComponent net.minecraft.util.text.ITextComponent
-net.minecraft.util.BlockPos net.minecraft.util.math.BlockPos
-net.minecraft.client.renderer.WorldRenderer net.minecraft.client.renderer.BufferBuilder
-net.minecraft.command.ICommand getCommandName() getName()
-net.minecraft.command.ICommand getCommandUsage() getUsage()

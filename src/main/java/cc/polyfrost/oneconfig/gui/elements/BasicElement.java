@@ -28,7 +28,7 @@ package cc.polyfrost.oneconfig.gui.elements;
 
 import cc.polyfrost.oneconfig.gui.animations.ColorAnimation;
 import cc.polyfrost.oneconfig.platform.Platform;
-import cc.polyfrost.oneconfig.renderer.RenderManager;
+import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
 import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 import org.jetbrains.annotations.NotNull;
@@ -100,13 +100,13 @@ public class BasicElement {
      * Draw script for the element.
      * <br> <b>Make sure to call {@link #update(float, float, InputHandler)} to update the elements states!</b>
      *
-     * @param vg NanoVG context (see {@link RenderManager})
+     * @param vg NanoVG context (see {@link NanoVGHelper})
      * @param x  x position of the element
      * @param y  y position of the element
      */
     public void draw(long vg, float x, float y, InputHandler inputHandler) {
         this.update(x, y, inputHandler);
-        RenderManager.drawRoundedRect(vg, x, y, width, height, currentColor, radius);
+        NanoVGHelper.INSTANCE.drawRoundedRect(vg, x, y, width, height, currentColor, radius);
     }
 
     /**

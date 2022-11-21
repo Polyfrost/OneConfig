@@ -34,16 +34,15 @@ import org.objectweb.asm.tree.*;
 import java.io.File;
 
 public class VigilantTransformer implements ITransformer {
-
     @Override
     public String[] getClassName() {
-        return new String[]{"gg.essential.vigilance.Vigilant"};
+        return new String[] {
+                "gg.essential.vigilance.Vigilant"
+        };
     }
 
-    /**
-     * If anything here is changed, edit the corresponding method in OneConfigMixinPlugin!
-     */
     @Override
+    @SuppressWarnings("DuplicatedCode"/*, reason = "VigilantTransformer takes as an argument a regular ClassNode and OneConfigMixinPlugin takes a relocated ClassNode from mixin's libraries, so common code isn't feasible without dumb wrapping code" */)
     public void transform(String transformedName, ClassNode node) {
         if (!node.interfaces.contains("cc/polyfrost/oneconfig/internal/config/compatibility/vigilance/VigilantAccessor")) {
             node.fields.add(new FieldNode(Opcodes.ACC_PUBLIC, "oneconfig$config", "Lcc/polyfrost/oneconfig/internal/config/compatibility/vigilance/VigilanceConfig;", null, null));
@@ -84,29 +83,25 @@ public class VigilantTransformer implements ITransformer {
             node.methods.add(methodNode2);
 
             for (MethodNode method : node.methods) {
+                InsnList list = new InsnList();
                 if (method.name.equals("initialize")) {
-                    InsnList list = new InsnList();
                     list.add(new VarInsnNode(Opcodes.ALOAD, 0));
                     list.add(new VarInsnNode(Opcodes.ALOAD, 0));
                     list.add(new VarInsnNode(Opcodes.ALOAD, 0));
                     list.add(new FieldInsnNode(Opcodes.GETFIELD, "gg/essential/vigilance/Vigilant", "oneconfig$file", Type.getDescriptor(File.class)));
                     list.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "cc/polyfrost/oneconfig/internal/plugin/hooks/VigilantHook", "returnNewConfig", "(Lgg/essential/vigilance/Vigilant;Ljava/io/File;)Lcc/polyfrost/oneconfig/internal/config/compatibility/vigilance/VigilanceConfig;", false));
                     list.add(new FieldInsnNode(Opcodes.PUTFIELD, "gg/essential/vigilance/Vigilant", "oneconfig$config", "Lcc/polyfrost/oneconfig/internal/config/compatibility/vigilance/VigilanceConfig;"));
-                    method.instructions.insertBefore(method.instructions.getLast().getPrevious(), list);
                 } else if (method.name.equals("addDependency") && method.desc.equals("(Lgg/essential/vigilance/data/PropertyData;Lgg/essential/vigilance/data/PropertyData;)V")) {
-                    InsnList list = new InsnList();
-
                     list.add(new VarInsnNode(Opcodes.ALOAD, 0));
                     list.add(new VarInsnNode(Opcodes.ALOAD, 1));
                     list.add(new VarInsnNode(Opcodes.ALOAD, 2));
                     list.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "gg/essential/vigilance/Vigilant", "handleOneConfigDependency", "(Lgg/essential/vigilance/data/PropertyData;Lgg/essential/vigilance/data/PropertyData;)V", false));
-
-                    method.instructions.insertBefore(method.instructions.getLast().getPrevious(), list);
                 } else if (method.name.equals("<init>") && method.desc.equals("(Ljava/io/File;Ljava/lang/String;Lgg/essential/vigilance/data/PropertyCollector;Lgg/essential/vigilance/data/SortingBehavior;)V")) {
-                    InsnList list = new InsnList();
                     list.add(new VarInsnNode(Opcodes.ALOAD, 0));
                     list.add(new VarInsnNode(Opcodes.ALOAD, 1));
                     list.add(new FieldInsnNode(Opcodes.PUTFIELD, "gg/essential/vigilance/Vigilant", "oneconfig$file", Type.getDescriptor(File.class)));
+                }
+                if (list.size() != 0) {
                     method.instructions.insertBefore(method.instructions.getLast().getPrevious(), list);
                 }
             }

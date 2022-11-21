@@ -1,13 +1,16 @@
-import gg.essential.gradle.multiversion.StripReferencesTransform.Companion.registerStripReferencesAttribute
-import gg.essential.gradle.util.RelocationTransform.Companion.registerRelocationAttribute
-import gg.essential.gradle.util.prebundle
+// These inspections trigger because we're using the library versions that
+// are bundled with Minecraft, which are not the latest versions.
+@file:Suppress("GradlePackageUpdate", "VulnerableLibrariesLocal")
 
+import cc.polyfrost.gradle.multiversion.StripReferencesTransform.Companion.registerStripReferencesAttribute
+import cc.polyfrost.gradle.util.RelocationTransform.Companion.registerRelocationAttribute
+import cc.polyfrost.gradle.util.prebundle
 
 plugins {
     kotlin("jvm") version "1.6.21"
     id("org.jetbrains.kotlinx.binary-compatibility-validator") version "0.12.1"
-    id("gg.essential.defaults.repo")
-    id("gg.essential.defaults.java")
+    id("cc.polyfrost.defaults.repo")
+    id("cc.polyfrost.defaults.java")
     id("net.kyori.blossom") version "1.3.0"
     id("maven-publish")
     id("signing")
@@ -22,23 +25,22 @@ java {
     withSourcesJar()
 }
 
-val mod_name: String by project
-val mod_major_version: String by project
-val mod_minor_version: String by project
-val mod_id: String by project
+val modName = project.properties["mod_name"]
+val modMajor = project.properties["mod_major_version"]
+val modMinor = project.properties["mod_minor_version"]
+val modId = project.properties["mod_id"] as String
+
+version = "$modMajor$modMinor"
+group = "cc.polyfrost"
 
 blossom {
-    replaceToken("@VER@", mod_major_version + mod_minor_version)
-    replaceToken("@NAME@", mod_name)
-    replaceToken("@ID@", mod_id)
+    replaceToken("@VER@", project.version)
+    replaceToken("@NAME@", modName)
+    replaceToken("@ID@", modId)
 }
-
-version = mod_major_version + mod_minor_version
-group = "cc.polyfrost"
 
 repositories {
     maven("https://repo.polyfrost.cc/releases")
-    mavenCentral()
 }
 
 val relocated = registerRelocationAttribute("relocate") {
@@ -67,7 +69,6 @@ val common = registerStripReferencesAttribute("common") {
 }
 
 dependencies {
-
     compileOnly("com.google.code.gson:gson:2.2.4")
     compileOnly("commons-io:commons-io:2.4")
     compileOnly("com.google.guava:guava:17.0")
@@ -89,6 +90,10 @@ dependencies {
     }
 
     shadeRelocated("com.github.KevinPriv:keventbus:c52e0a2ea0") {
+        isTransitive = false
+    }
+
+    shadeRelocated("com.github.xtrm-en:deencapsulation:42b829f373") {
         isTransitive = false
     }
 
@@ -116,7 +121,9 @@ dependencies {
     shade("org.spongepowered:mixin:0.7.11-SNAPSHOT") {
         isTransitive = false
     }
-    shade("cc.polyfrost:lwjgl-1.8.9-forge:1.0.0-alpha8")
+    compileOnly("cc.polyfrost:lwjgl-legacy:1.0.0-alpha24") {
+        isTransitive = false
+    }
     shadeNoPom(prebundle(shadeRelocated))
 
     configurations.named(JavaPlugin.COMPILE_CLASSPATH_CONFIGURATION_NAME) { extendsFrom(shadeNoPom) }

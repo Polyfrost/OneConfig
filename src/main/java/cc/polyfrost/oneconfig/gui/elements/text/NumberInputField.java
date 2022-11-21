@@ -26,11 +26,11 @@
 
 package cc.polyfrost.oneconfig.gui.elements.text;
 
-import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.gui.animations.ColorAnimation;
 import cc.polyfrost.oneconfig.gui.elements.BasicElement;
-import cc.polyfrost.oneconfig.renderer.RenderManager;
+import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
+import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
 import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 
@@ -55,9 +55,10 @@ public class NumberInputField extends TextInputField {
 
     @Override
     public void draw(long vg, float x, float y, InputHandler inputHandler) {
+        NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
         super.errored = false;
-        if (disabled) RenderManager.setAlpha(vg, 0.5f);
-        RenderManager.drawRoundedRect(vg, x + width + 4, y, 12, 28, Colors.GRAY_500, 6f);
+        if (disabled) nanoVGHelper.setAlpha(vg, 0.5f);
+        nanoVGHelper.drawRoundedRect(vg, x + width + 4, y, 12, 28, Colors.GRAY_500, 6f);
         upArrow.disable(disabled);
         downArrow.disable(disabled);
         upArrow.update(x + width + 4, y, inputHandler);
@@ -86,20 +87,20 @@ public class NumberInputField extends TextInputField {
             setCurrentValue(current);
         }
         if (current >= max && !disabled) {
-            RenderManager.setAlpha(vg, 0.3f);
+            nanoVGHelper.setAlpha(vg, 0.3f);
             upArrow.disable(true);
         }
-        RenderManager.drawRoundedRectVaried(vg, x + width + 4, y, 12, 14, colorTop.getColor(upArrow.isHovered(), upArrow.isPressed()), 6f, 6f, 0f, 0f);
-        RenderManager.drawSvg(vg, SVGs.CHEVRON_UP, x + width + 5, y + 2, 10, 10);
-        if (current >= max && !disabled) RenderManager.setAlpha(vg, 1f);
+        nanoVGHelper.drawRoundedRectVaried(vg, x + width + 4, y, 12, 14, colorTop.getColor(upArrow.isHovered(), upArrow.isPressed()), 6f, 6f, 0f, 0f);
+        nanoVGHelper.drawSvg(vg, SVGs.CHEVRON_UP, x + width + 5, y + 2, 10, 10);
+        if (current >= max && !disabled) nanoVGHelper.setAlpha(vg, 1f);
 
         if (current <= min && !disabled) {
-            RenderManager.setAlpha(vg, 0.3f);
+            nanoVGHelper.setAlpha(vg, 0.3f);
             downArrow.disable(true);
         }
-        RenderManager.drawRoundedRectVaried(vg, x + width + 4, y + 14, 12, 14, colorBottom.getColor(downArrow.isHovered(), downArrow.isPressed()), 0f, 0f, 6f, 6f);
-        RenderManager.drawSvg(vg, SVGs.CHEVRON_DOWN, x + width + 5, y + 15, 10, 10);
-        if (!disabled) RenderManager.setAlpha(vg, 1f);
+        nanoVGHelper.drawRoundedRectVaried(vg, x + width + 4, y + 14, 12, 14, colorBottom.getColor(downArrow.isHovered(), downArrow.isPressed()), 0f, 0f, 6f, 6f);
+        nanoVGHelper.drawSvg(vg, SVGs.CHEVRON_DOWN, x + width + 5, y + 15, 10, 10);
+        if (!disabled) nanoVGHelper.setAlpha(vg, 1f);
 
         try {
             super.draw(vg, x, y - 2, inputHandler);
@@ -108,7 +109,7 @@ public class NumberInputField extends TextInputField {
             super.caretPos = 0;
             super.prevCaret = 0;
         }
-        if (disabled) RenderManager.setAlpha(vg, 1f);
+        if (disabled) nanoVGHelper.setAlpha(vg, 1f);
     }
 
 

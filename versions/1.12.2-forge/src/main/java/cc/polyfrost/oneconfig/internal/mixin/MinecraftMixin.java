@@ -52,12 +52,6 @@ public class MinecraftMixin {
         EventManager.INSTANCE.post(new PreShutdownEvent());
     }
 
-    @Inject(method = "init", at = @At("HEAD"))
-    private void onStart(CallbackInfo ci) {
-        EventManager.INSTANCE.post(new StartEvent());
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> EventManager.INSTANCE.post(new ShutdownEvent())));
-    }
-
     @Inject(method = "init", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/client/FMLClientHandler;onInitializationComplete()V", shift = At.Shift.AFTER, remap = false), remap = true)
     private void onInit(CallbackInfo ci) {
         EventManager.INSTANCE.post(new InitializationEvent());
@@ -66,12 +60,12 @@ public class MinecraftMixin {
 
     @Inject(method = "runGameLoop", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/FMLCommonHandler;onRenderTickStart(F)V", shift = At.Shift.AFTER, remap = false), remap = true)
     private void onRenderTickStart(CallbackInfo ci) {
-        EventManager.INSTANCE.post(new RenderEvent(Stage.START, timer.renderPartialTicks));
+        EventManager.INSTANCE.post(new RenderEvent(Stage.START, this.timer.renderPartialTicks));
     }
 
     @Inject(method = "runGameLoop", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/FMLCommonHandler;onRenderTickEnd(F)V", shift = At.Shift.AFTER, remap = false), remap = true)
     private void onRenderTickEnd(CallbackInfo ci) {
-        EventManager.INSTANCE.post(new RenderEvent(Stage.END, timer.renderPartialTicks));
+        EventManager.INSTANCE.post(new RenderEvent(Stage.END, this.timer.renderPartialTicks));
     }
 
     @Inject(method = "runGameLoop", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/shader/Framebuffer;framebufferRender(II)V"))
@@ -110,7 +104,7 @@ public class MinecraftMixin {
 
     @Inject(method = "runGameLoop", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/Timer;updateTimer()V", shift = At.Shift.AFTER))
     private void onDeltaTickTimerUpdate(CallbackInfo ci) {
-        EventManager.INSTANCE.post(new TimerUpdateEvent(timer, true));
+        EventManager.INSTANCE.post(new TimerUpdateEvent(this.timer, true));
     }
 
     @Inject(method = "runTickKeyboard", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/FMLCommonHandler;fireKeyInput()V", remap = false), remap = true)

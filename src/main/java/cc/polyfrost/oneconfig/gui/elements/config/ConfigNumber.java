@@ -29,7 +29,7 @@ package cc.polyfrost.oneconfig.gui.elements.config;
 import cc.polyfrost.oneconfig.config.annotations.Number;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
 import cc.polyfrost.oneconfig.gui.elements.text.NumberInputField;
-import cc.polyfrost.oneconfig.renderer.RenderManager;
+import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.utils.InputHandler;
 
@@ -51,9 +51,10 @@ public class ConfigNumber extends BasicOption {
 
     @Override
     public void draw(long vg, int x, int y, InputHandler inputHandler) {
+        final NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
         float value = 0;
         inputField.disable(!isEnabled());
-        if (!isEnabled()) RenderManager.setAlpha(vg, 0.5f);
+        if (!isEnabled()) nanoVGHelper.setAlpha(vg, 0.5f);
         if (inputField.isToggled() || inputField.arrowsClicked()) {
             value = inputField.getCurrentValue();
         }
@@ -73,9 +74,9 @@ public class ConfigNumber extends BasicOption {
         }
         if (!inputField.isToggled()) inputField.setCurrentValue(value);
 
-        RenderManager.drawText(vg, name, x, y + 17, nameColor, 14f, Fonts.MEDIUM);
+        nanoVGHelper.drawText(vg, name, x, y + 17, nameColor, 14f, Fonts.MEDIUM);
         inputField.draw(vg, x + 892, y, inputHandler);
-        RenderManager.setAlpha(vg, 1f);
+        nanoVGHelper.setAlpha(vg, 1f);
     }
 
     private void setValue(float value) {

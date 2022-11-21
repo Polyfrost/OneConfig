@@ -39,10 +39,10 @@ import cc.polyfrost.oneconfig.internal.assets.Images;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.internal.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.platform.Platform;
-import cc.polyfrost.oneconfig.renderer.RenderManager;
+import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.renderer.scissor.Scissor;
-import cc.polyfrost.oneconfig.renderer.scissor.ScissorManager;
+import cc.polyfrost.oneconfig.renderer.scissor.ScissorHelper;
 import cc.polyfrost.oneconfig.utils.IOUtils;
 import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.NetworkUtils;
@@ -135,18 +135,22 @@ public class ColorSelector {
     }
 
     public void draw(long vg) {
-        if (inputScissor != null) inputHandler.stopBlock(inputScissor);
+        NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
+        ScissorHelper scissorHelper = ScissorHelper.INSTANCE;
+
+        if (inputScissor != null)
+            inputHandler.stopBlock(inputScissor);
         doDrag();
         int width = 416;
         int height = 768;
-        Scissor scissor = ScissorManager.scissor(vg, x - 3, y - 3, width + 6, height + 6);
-        RenderManager.drawHollowRoundRect(vg, x - 3, y - 3, width + 4, height + 4, new Color(204, 204, 204, 77).getRGB(), 20f, 2f);
-        RenderManager.drawRoundedRect(vg, x, y, width, height, Colors.GRAY_800, 20f);
-        RenderManager.drawText(vg, "Color Selector", x + 16, y + 32, Colors.WHITE_90, 18f, Fonts.SEMIBOLD);
-        if (!closeBtn.isHovered()) RenderManager.setAlpha(vg, 0.8f);
+        Scissor scissor = scissorHelper.scissor(vg, x - 3, y - 3, width + 6, height + 6);
+        nanoVGHelper.drawHollowRoundRect(vg, x - 3, y - 3, width + 4, height + 4, new Color(204, 204, 204, 77).getRGB(), 20f, 2f);
+        nanoVGHelper.drawRoundedRect(vg, x, y, width, height, Colors.GRAY_800, 20f);
+        nanoVGHelper.drawText(vg, "Color Selector", x + 16, y + 32, Colors.WHITE_90, 18f, Fonts.SEMIBOLD);
+        if (!closeBtn.isHovered()) nanoVGHelper.setAlpha(vg, 0.8f);
         closeBtn.draw(vg, x + 368, y + 16, inputHandler);
-        RenderManager.drawSvg(vg, SVGs.X_CIRCLE_BOLD, x + 368, y + 16, 32, 32, closeBtn.isHovered() ? Colors.ERROR_600 : -1);
-        RenderManager.setAlpha(vg, 1f);
+        nanoVGHelper.drawSvg(vg, SVGs.X_CIRCLE_BOLD, x + 368, y + 16, 32, 32, closeBtn.isHovered() ? Colors.ERROR_600 : -1);
+        nanoVGHelper.setAlpha(vg, 1f);
 
         // hex parser
         if (hexInput.isToggled()) {
@@ -163,9 +167,9 @@ public class ColorSelector {
             recentColors.get(i).draw(vg, x + 104 + i * 44, y + 720, inputHandler);
         }
 
-        RenderManager.drawRoundedRect(vg, x + 16, y + 64, 384, 32, Colors.GRAY_500, 12f);
+        nanoVGHelper.drawRoundedRect(vg, x + 16, y + 64, 384, 32, Colors.GRAY_500, 12f);
         if (!barMoveAnimation.isFinished())
-            RenderManager.drawRoundedRect(vg, x + barMoveAnimation.get(), y + 66, 124, 28, Colors.PRIMARY_600, 10f);
+            nanoVGHelper.drawRoundedRect(vg, x + barMoveAnimation.get(), y + 66, 124, 28, Colors.PRIMARY_600, 10f);
         else buttons.get(mode).setColorPalette(ColorPalette.PRIMARY);
 
         int i = 18;
@@ -183,22 +187,22 @@ public class ColorSelector {
         }
         float percentMoveMain = moveAnimation.get();
 
-        RenderManager.drawText(vg, "Saturation", x + 224, y + 560, Colors.WHITE_80, 12f, Fonts.MEDIUM);
+        nanoVGHelper.drawText(vg, "Saturation", x + 224, y + 560, Colors.WHITE_80, 12f, Fonts.MEDIUM);
         saturationInput.draw(vg, x + 312, y + 544, inputHandler);
-        RenderManager.drawText(vg, "Brightness", x + 16, y + 599, Colors.WHITE_80, 12f, Fonts.MEDIUM);
+        nanoVGHelper.drawText(vg, "Brightness", x + 16, y + 599, Colors.WHITE_80, 12f, Fonts.MEDIUM);
         brightnessInput.draw(vg, x + 104, y + 584, inputHandler);
-        RenderManager.drawText(vg, "Alpha (%)", x + 224, y + 599, Colors.WHITE_80, 12f, Fonts.MEDIUM);
+        nanoVGHelper.drawText(vg, "Alpha (%)", x + 224, y + 599, Colors.WHITE_80, 12f, Fonts.MEDIUM);
         alphaInput.draw(vg, x + 312, y + 584, inputHandler);
-        RenderManager.drawText(vg, color.getDataBit() == -1 ? "Hex (RGB):" : "Color Code:", x + 16, y + 641, Colors.WHITE_80, 12f, Fonts.MEDIUM);
+        nanoVGHelper.drawText(vg, color.getDataBit() == -1 ? "Hex (RGB):" : "Color Code:", x + 16, y + 641, Colors.WHITE_80, 12f, Fonts.MEDIUM);
         hexInput.draw(vg, x + 104, y + 624, inputHandler);
 
         copyBtn.draw(vg, x + 204, y + 624, inputHandler);
         pasteBtn.draw(vg, x + 244, y + 624, inputHandler);
         if (mode != 2) {
-            RenderManager.drawText(vg, "Hue", x + 16, y + 560, Colors.WHITE_80, 12f, Fonts.MEDIUM);
+            nanoVGHelper.drawText(vg, "Hue", x + 16, y + 560, Colors.WHITE_80, 12f, Fonts.MEDIUM);
             hueInput.draw(vg, x + 104, y + 544, inputHandler);
         } else {
-            RenderManager.drawText(vg, "Speed (s)", x + 16, y + 560, Colors.WHITE_80, 12f, Fonts.MEDIUM);
+            nanoVGHelper.drawText(vg, "Speed (s)", x + 16, y + 560, Colors.WHITE_80, 12f, Fonts.MEDIUM);
             speedInput.draw(vg, x + 104, y + 544, inputHandler);
         }
 
@@ -212,13 +216,13 @@ public class ColorSelector {
             dragging = false;
         }
         bottomSlider.setGradient(Colors.TRANSPARENT, color.getRGBNoAlpha());
-        RenderManager.drawRoundImage(vg, Images.ALPHA_GRID.filePath, x + 16, y + 456, 384, 16, 8f);
+        nanoVGHelper.drawRoundImage(vg, Images.ALPHA_GRID.filePath, x + 16, y + 456, 384, 16, 8f);
         bottomSlider.draw(vg, x + 16, y + 456, inputHandler);
 
         if (percentMoveMain > 0.96f) {
-            RenderManager.drawRoundedRect(vg, mouseX - 7, mouseY - 7, 14, 14, Colors.WHITE, 14f);
-            RenderManager.drawRoundedRect(vg, mouseX - 6, mouseY - 6, 12, 12, Colors.BLACK, 12f);
-            RenderManager.drawRoundedRect(vg, mouseX - 5, mouseY - 5, 10, 10, color.getRGBMax(true), 10f);
+            nanoVGHelper.drawRoundedRect(vg, mouseX - 7, mouseY - 7, 14, 14, Colors.WHITE, 14f);
+            nanoVGHelper.drawRoundedRect(vg, mouseX - 6, mouseY - 6, 12, 12, Colors.BLACK, 12f);
+            nanoVGHelper.drawRoundedRect(vg, mouseX - 5, mouseY - 5, 10, 10, color.getRGBMax(true), 10f);
         }
 
         // deal with the input fields
@@ -226,12 +230,12 @@ public class ColorSelector {
         if (guideBtn.isClicked()) NetworkUtils.browseLink("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
 
         // draw the color preview
-        RenderManager.drawHollowRoundRect(vg, x + 15, y + 487, 384, 40, Colors.GRAY_300, 12f, 2f);
-        RenderManager.drawRoundImage(vg, Images.ALPHA_GRID.filePath, x + 20, y + 492, 376, 32, 8f);
-        RenderManager.drawRoundedRect(vg, x + 20, y + 492, 376, 32, color.getRGB(), 8f);
+        nanoVGHelper.drawHollowRoundRect(vg, x + 15, y + 487, 384, 40, Colors.GRAY_300, 12f, 2f);
+        nanoVGHelper.drawRoundImage(vg, Images.ALPHA_GRID.filePath, x + 20, y + 492, 376, 32, 8f);
+        nanoVGHelper.drawRoundedRect(vg, x + 20, y + 492, 376, 32, color.getRGB(), 8f);
 
         inputScissor = inputHandler.blockInputArea(x - 3, y - 3, width + 6, height + 6);
-        ScissorManager.resetScissor(vg, scissor);
+        scissorHelper.resetScissor(vg, scissor);
         mouseWasDown = Platform.getMousePlatform().isButtonDown(0);
         if (closeBtn.isClicked()) {
             OneConfigGui.INSTANCE.closeColorSelector();
@@ -239,13 +243,14 @@ public class ColorSelector {
     }
 
     private void drawColorSelector(long vg, int mode, float x, float y) {
+        NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
         switch (mode) {
             default:
             case 0:
             case 2:
                 //buttons.get(mode).colorAnimation.setPalette(ColorPalette.TERTIARY);
                 topSlider.setImage(Images.HUE_GRADIENT.filePath);
-                RenderManager.drawHSBBox(vg, x + 16, y + 120, 384, 288, color.getRGBMax(true));
+                nanoVGHelper.drawHSBBox(vg, x + 16, y + 120, 384, 288, color.getRGBMax(true));
 
                 if (mode == 0) {
                     topSlider.setColor(color.getRGBMax(true));
@@ -253,14 +258,14 @@ public class ColorSelector {
                 }
                 if (mode == 2) {
                     speedSlider.draw(vg, x + 60, y + 424, inputHandler);
-                    RenderManager.drawText(vg, "SLOW", x + 16, y + 429, Colors.WHITE_80, 12f, Fonts.REGULAR);
-                    RenderManager.drawText(vg, "FAST", x + 370, y + 429, Colors.WHITE_80, 12f, Fonts.REGULAR);
+                    nanoVGHelper.drawText(vg, "SLOW", x + 16, y + 429, Colors.WHITE_80, 12f, Fonts.REGULAR);
+                    nanoVGHelper.drawText(vg, "FAST", x + 370, y + 429, Colors.WHITE_80, 12f, Fonts.REGULAR);
                 }
                 break;
             case 1:
                 //buttons.get(1).colorAnimation.setPalette(ColorPalette.TERTIARY);
                 topSlider.setImage(null);
-                RenderManager.drawRoundImage(vg, Images.COLOR_WHEEL.filePath, x + 64, y + 120, 288, 288, 144f);
+                nanoVGHelper.drawRoundImage(vg, Images.COLOR_WHEEL.filePath, x + 64, y + 120, 288, 288, 144f);
 
                 topSlider.setGradient(Colors.BLACK, color.getRGBMax(true));
                 topSlider.setImage(null);
@@ -459,20 +464,22 @@ public class ColorSelector {
 
         @Override
         public void draw(long vg, float x, float y, InputHandler inputHandler) {
+            NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
+
             if (!disabled) update(x, y, inputHandler);
-            else RenderManager.setAlpha(vg, 0.5f);
+            else nanoVGHelper.setAlpha(vg, 0.5f);
             super.dragPointerSize = 15f;
             if (image != null) {
-                RenderManager.drawRoundImage(vg, image, x + 1, y + 1, width - 2, height - 2, 8f);
+                nanoVGHelper.drawRoundImage(vg, image, x + 1, y + 1, width - 2, height - 2, 8f);
             } else {
-                RenderManager.drawGradientRoundedRect(vg, x, y, width, height, gradColorStart, gradColorEnd, 8f);
+                nanoVGHelper.drawGradientRoundedRect(vg, x, y, width, height, gradColorStart, gradColorEnd, 8f);
             }
 
-            RenderManager.drawHollowRoundRect(vg, x - 0.5f, y - 0.5f, width, height, new Color(204, 204, 204, 80).getRGB(), 8f, 1f);
-            RenderManager.drawHollowRoundRect(vg, currentDragPoint - 1, y - 1, 18, 18, Colors.WHITE, 9f, 1f);
-            RenderManager.drawHollowRoundRect(vg, currentDragPoint, y, 16, 16, Colors.BLACK, 8f, 1f);
-            RenderManager.drawRoundedRect(vg, currentDragPoint + 1.5f, y + 1.5f, 14, 14, color, 7f);
-            RenderManager.setAlpha(vg, 1f);
+            nanoVGHelper.drawHollowRoundRect(vg, x - 0.5f, y - 0.5f, width, height, new Color(204, 204, 204, 80).getRGB(), 8f, 1f);
+            nanoVGHelper.drawHollowRoundRect(vg, currentDragPoint - 1, y - 1, 18, 18, Colors.WHITE, 9f, 1f);
+            nanoVGHelper.drawHollowRoundRect(vg, currentDragPoint, y, 16, 16, Colors.BLACK, 8f, 1f);
+            nanoVGHelper.drawRoundedRect(vg, currentDragPoint + 1.5f, y + 1.5f, 14, 14, color, 7f);
+            nanoVGHelper.setAlpha(vg, 1f);
         }
 
         public void setGradient(int start, int end) {
@@ -499,9 +506,10 @@ public class ColorSelector {
 
         @Override
         public void draw(long vg, float x, float y, InputHandler inputHandler) {
-            RenderManager.drawRoundedRect(vg, x, y, 32, 32, toggled ? Colors.PRIMARY_600 : Colors.GRAY_300, 12f);
-            RenderManager.drawRoundedRect(vg, x + 2, y + 2, 28, 28, Colors.GRAY_800, 10f);
-            RenderManager.drawRoundedRect(vg, x + 4, y + 4, 24, 24, color.getRGB(), 8f);
+            NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
+            nanoVGHelper.drawRoundedRect(vg, x, y, 32, 32, toggled ? Colors.PRIMARY_600 : Colors.GRAY_300, 12f);
+            nanoVGHelper.drawRoundedRect(vg, x + 2, y + 2, 28, 28, Colors.GRAY_800, 10f);
+            nanoVGHelper.drawRoundedRect(vg, x + 4, y + 4, 24, 24, color.getRGB(), 8f);
             update(x, y, inputHandler);
         }
 

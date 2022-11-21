@@ -27,7 +27,6 @@
 package cc.polyfrost.oneconfig.gui;
 
 import cc.polyfrost.oneconfig.gui.animations.Animation;
-import cc.polyfrost.oneconfig.gui.animations.CubicBezier;
 import cc.polyfrost.oneconfig.gui.animations.DummyAnimation;
 import cc.polyfrost.oneconfig.gui.animations.EaseOutExpo;
 import cc.polyfrost.oneconfig.gui.elements.BasicButton;
@@ -38,10 +37,7 @@ import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.internal.config.Preferences;
 import cc.polyfrost.oneconfig.internal.gui.HudGui;
-import cc.polyfrost.oneconfig.libs.universal.UMinecraft;
-import cc.polyfrost.oneconfig.libs.universal.wrappers.UPlayer;
-import cc.polyfrost.oneconfig.libs.universal.wrappers.message.UTextComponent;
-import cc.polyfrost.oneconfig.renderer.RenderManager;
+import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
@@ -86,6 +82,8 @@ public class SideBar {
     }
 
     public void draw(long vg, int x, int y, InputHandler inputHandler) {
+        final NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
+
         this.y = y;
         for (BasicButton button : buttons) {
             if (!button.isClicked()) continue;
@@ -93,7 +91,7 @@ public class SideBar {
             break;
         }
         if (moveAnimation != null) {
-            RenderManager.drawRoundedRect(vg, x + 16, y + moveAnimation.get() - (sizeAnimation.get() - 36) / 2f, 192, sizeAnimation.get(0), Colors.PRIMARY_600, 12);
+            nanoVGHelper.drawRoundedRect(vg, x + 16, y + moveAnimation.get() - (sizeAnimation.get() - 36) / 2f, 192, sizeAnimation.get(0), Colors.PRIMARY_600, 12);
             if (moveAnimation.isFinished() && sizeAnimation.isFinished()) {
                 moveAnimation = null;
                 sizeAnimation = null;
@@ -104,13 +102,13 @@ public class SideBar {
         sidebarY = y + 44;
         buttons.get(0).draw(vg, x + 16, calcAndIncrementLn(sidebarY), inputHandler);
 //        buttons.get(1).draw(vg, x + 16, y + 116, inputHandler);
-        RenderManager.drawText(vg, "MOD CONFIG", x + 16, calcAndIncrementLn(sidebarY + 26), Colors.WHITE_50, 12, Fonts.SEMIBOLD);
+        nanoVGHelper.drawText(vg, "MOD CONFIG", x + 16, calcAndIncrementLn(sidebarY + 26), Colors.WHITE_50, 12, Fonts.SEMIBOLD);
         sidebarY = sidebarY - 26;
         buttons.get(1).draw(vg, x + 16, calcAndIncrementLn(sidebarY), inputHandler);
         buttons.get(2).draw(vg, x + 16, calcAndIncrementLn(sidebarY), inputHandler);
         buttons.get(3).draw(vg, x + 16, calcAndIncrementLn(sidebarY), inputHandler);
 //        buttons.get(5).draw(vg, x + 16, listNewLn(sidebarY), inputHandler);
-        RenderManager.drawText(vg, "PERSONALIZATION", x + 16, calcAndIncrementLn(sidebarY + 26), Colors.WHITE_50, 12, Fonts.SEMIBOLD);
+        nanoVGHelper.drawText(vg, "PERSONALIZATION", x + 16, calcAndIncrementLn(sidebarY + 26), Colors.WHITE_50, 12, Fonts.SEMIBOLD);
         sidebarY = sidebarY - 26;
         buttons.get(4).draw(vg, x + 16, calcAndIncrementLn(sidebarY), inputHandler);
         buttons.get(5).draw(vg, x + 16, calcAndIncrementLn(sidebarY), inputHandler);

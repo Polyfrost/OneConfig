@@ -31,7 +31,7 @@ import cc.polyfrost.oneconfig.events.event.InitializationEvent;
 import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
 import cc.polyfrost.oneconfig.utils.commands.CommandManager;
 
-//#if MC<=11202
+//#if MC<=11202 && FORGE==1
 @net.minecraftforge.fml.common.Mod(modid = "oneconfig-test-mod", name = "Test Mod", version = "0")
 //#endif
 public class TestMod_Test {

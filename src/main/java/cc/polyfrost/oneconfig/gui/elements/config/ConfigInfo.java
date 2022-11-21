@@ -27,13 +27,12 @@
 package cc.polyfrost.oneconfig.gui.elements.config;
 
 import cc.polyfrost.oneconfig.config.annotations.Info;
-import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.config.data.InfoType;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
-import cc.polyfrost.oneconfig.renderer.RenderManager;
+import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.renderer.scissor.Scissor;
-import cc.polyfrost.oneconfig.renderer.scissor.ScissorManager;
+import cc.polyfrost.oneconfig.renderer.scissor.ScissorHelper;
 import cc.polyfrost.oneconfig.utils.InputHandler;
 
 import java.lang.reflect.Field;
@@ -53,10 +52,13 @@ public class ConfigInfo extends BasicOption {
 
     @Override
     public void draw(long vg, int x, int y, InputHandler inputHandler) {
-        Scissor scissor = ScissorManager.scissor(vg, x, y, size == 1 ? 448 : 960, 32);
-        RenderManager.drawInfo(vg, type, x, y + 4, 24);
-        RenderManager.drawText(vg, name, x + 32, y + 18, nameColor, 14, Fonts.MEDIUM);
-        ScissorManager.resetScissor(vg, scissor);
+        final NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
+        ScissorHelper scissorHelper = ScissorHelper.INSTANCE;
+
+        Scissor scissor = scissorHelper.scissor(vg, x, y, size == 1 ? 448 : 960, 32);
+        nanoVGHelper.drawInfo(vg, type, x, y + 4, 24);
+        nanoVGHelper.drawText(vg, name, x + 32, y + 18, nameColor, 14, Fonts.MEDIUM);
+        scissorHelper.resetScissor(vg, scissor);
     }
 
     @Override

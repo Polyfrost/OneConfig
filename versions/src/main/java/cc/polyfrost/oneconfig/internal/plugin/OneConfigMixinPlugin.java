@@ -29,6 +29,17 @@ package cc.polyfrost.oneconfig.internal.plugin;
 import cc.polyfrost.oneconfig.platform.Platform;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
+import org.spongepowered.asm.lib.tree.FieldInsnNode;
+import org.spongepowered.asm.lib.tree.InsnList;
+import org.spongepowered.asm.lib.tree.InsnNode;
+import org.spongepowered.asm.lib.tree.JumpInsnNode;
+import org.spongepowered.asm.lib.tree.LabelNode;
+import org.spongepowered.asm.lib.tree.ClassNode;
+import org.spongepowered.asm.lib.tree.FieldNode;
+import org.spongepowered.asm.lib.tree.LineNumberNode;
+import org.spongepowered.asm.lib.tree.MethodInsnNode;
+import org.spongepowered.asm.lib.tree.MethodNode;
+import org.spongepowered.asm.lib.tree.VarInsnNode;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 
@@ -67,109 +78,120 @@ public class OneConfigMixinPlugin implements IMixinConfigPlugin {
 
     @Override
     public List<String> getMixins() {
-        ArrayList<String> mixins = new ArrayList<>();
-        if (Platform.getInstance().getLoader().equals(Platform.Loader.FORGE)) {
+        List<String> mixins = new ArrayList<>();
+        Platform.Loader loader = Platform.getInstance().getLoader();
+        int version = Platform.getInstance().getMinecraftVersion();
+
+        // Loader-specific mixins
+        if (loader == Platform.Loader.FORGE) {
             mixins.add("EventBusMixin");
-        } else if (Platform.getInstance().getLoader().equals(Platform.Loader.FABRIC)) {
-            mixins.add("NetHandlerPlayClientMixin");
-        }
-        if (Platform.getInstance().getMinecraftVersion() >= 11600) {
-            if (Platform.getInstance().getLoader() == Platform.Loader.FORGE) {
-                mixins.add("ClientModLoaderMixin");
-            } else {
-                mixins.add("FramebufferMixin");
-                mixins.add("GameRendererAccessor");
+            if (version == 10809 || version == 11202) {
+                // Patcher mixin
+                mixins.add("HudCachingMixin");
             }
+            if (version >= 11600) {
+                mixins.add("ClientModLoaderMixin");
+            }
+        }
+        if (loader == Platform.Loader.FABRIC) {
+            mixins.add("GameRendererAccessor");
+            mixins.add("NetHandlerPlayClientMixin");
+            mixins.add("FramebufferMixin");
+
+            if (version <= 11202) {
+                mixins.add("commands.ChatScreenMixin");
+                mixins.add("commands.ScreenMixin");
+            }
+        }
+
+        if (version >= 11600 || loader == Platform.Loader.FABRIC) {
+            mixins.add("ClientBuiltinResourcePackProviderMixin");
+        }
+
+        // Inter-loader mixins
+        if (version >= 11600) {
             mixins.add("KeyboardMixin");
             mixins.add("MouseAccessor");
             mixins.add("MouseMixin");
-            mixins.add("TickTimeTrackerMixin");
-            return mixins;
         }
-        if (Platform.getInstance().getMinecraftVersion() == 10800 || Platform.getInstance().getMinecraftVersion() == 11200) {
-            mixins.add("HudCachingMixin");
-        }
+
         return mixins.isEmpty() ? null : mixins;
     }
 
     @Override
-    public void preApply(String targetClassName, org.spongepowered.asm.lib.tree.ClassNode targetClass, String mixinClassName, IMixinInfo mixinInfo) {
-
+    public void preApply(String targetClassName, ClassNode targetClass, String mixinClassName, IMixinInfo mixinInfo) {
     }
 
     @Override
-    public void postApply(String targetClassName, org.spongepowered.asm.lib.tree.ClassNode targetClass, String mixinClassName, IMixinInfo mixinInfo) {
+    public void postApply(String targetClassName, ClassNode targetClass, String mixinClassName, IMixinInfo mixinInfo) {
         if (mixinClassName.equals("cc.polyfrost.oneconfig.internal.mixin.VigilantMixin")) {
             transform(targetClass);
         }
     }
 
     /**
-     * If anything here is changed, edit the corresponding method in OneConfigMixinPlugin!
+     * If anything here is changed, edit the corresponding method in VigilantTransformer!
      */
-    private void transform(org.spongepowered.asm.lib.tree.ClassNode node) {
+    @SuppressWarnings("DuplicatedCode"/*, reason = "VigilantTransformer takes as an argument a regular ClassNode and OneConfigMixinPlugin takes a relocated ClassNode from mixin's libraries, so common code isn't feasible without dumb wrapping code" */)
+    private void transform(ClassNode node) {
         if (!node.interfaces.contains("cc/polyfrost/oneconfig/internal/config/compatibility/vigilance/VigilantAccessor")) {
-            node.fields.add(new org.spongepowered.asm.lib.tree.FieldNode(Opcodes.ACC_PUBLIC, "oneconfig$config", "Lcc/polyfrost/oneconfig/internal/config/compatibility/vigilance/VigilanceConfig;", null, null));
-            node.fields.add(new org.spongepowered.asm.lib.tree.FieldNode(Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL, "oneconfig$file", Type.getDescriptor(File.class), null, null));
+            node.fields.add(new FieldNode(Opcodes.ACC_PUBLIC, "oneconfig$config", "Lcc/polyfrost/oneconfig/internal/config/compatibility/vigilance/VigilanceConfig;", null, null));
+            node.fields.add(new FieldNode(Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL, "oneconfig$file", Type.getDescriptor(File.class), null, null));
 
             node.interfaces.add("cc/polyfrost/oneconfig/internal/config/compatibility/vigilance/VigilantAccessor");
-            org.spongepowered.asm.lib.tree.MethodNode methodNode = new org.spongepowered.asm.lib.tree.MethodNode(Opcodes.ACC_PUBLIC, "getPropertyCollector", "()Lgg/essential/vigilance/data/PropertyCollector;", null, null);
-            org.spongepowered.asm.lib.tree.LabelNode labelNode = new org.spongepowered.asm.lib.tree.LabelNode();
+            MethodNode methodNode = new MethodNode(Opcodes.ACC_PUBLIC, "getPropertyCollector", "()Lgg/essential/vigilance/data/PropertyCollector;", null, null);
+            LabelNode labelNode = new LabelNode();
             methodNode.instructions.add(labelNode);
-            methodNode.instructions.add(new org.spongepowered.asm.lib.tree.LineNumberNode(421421, labelNode));
-            methodNode.instructions.add(new org.spongepowered.asm.lib.tree.VarInsnNode(Opcodes.ALOAD, 0));
-            methodNode.instructions.add(new org.spongepowered.asm.lib.tree.FieldInsnNode(Opcodes.GETFIELD, "gg/essential/vigilance/Vigilant", "propertyCollector", "Lgg/essential/vigilance/data/PropertyCollector;"));
-            methodNode.instructions.add(new org.spongepowered.asm.lib.tree.InsnNode(Opcodes.ARETURN));
+            methodNode.instructions.add(new LineNumberNode(421421, labelNode));
+            methodNode.instructions.add(new VarInsnNode(Opcodes.ALOAD, 0));
+            methodNode.instructions.add(new FieldInsnNode(Opcodes.GETFIELD, "gg/essential/vigilance/Vigilant", "propertyCollector", "Lgg/essential/vigilance/data/PropertyCollector;"));
+            methodNode.instructions.add(new InsnNode(Opcodes.ARETURN));
             node.methods.add(methodNode);
 
-            org.spongepowered.asm.lib.tree.MethodNode methodNode2 = new org.spongepowered.asm.lib.tree.MethodNode(Opcodes.ACC_PUBLIC, "handleOneConfigDependency", "(Lgg/essential/vigilance/data/PropertyData;Lgg/essential/vigilance/data/PropertyData;)V", null, null);
-            org.spongepowered.asm.lib.tree.LabelNode labelNode2 = new org.spongepowered.asm.lib.tree.LabelNode();
-            org.spongepowered.asm.lib.tree.LabelNode labelNode3 = new org.spongepowered.asm.lib.tree.LabelNode();
-            org.spongepowered.asm.lib.tree.LabelNode labelNode4 = new org.spongepowered.asm.lib.tree.LabelNode();
+            MethodNode methodNode2 = new MethodNode(Opcodes.ACC_PUBLIC, "handleOneConfigDependency", "(Lgg/essential/vigilance/data/PropertyData;Lgg/essential/vigilance/data/PropertyData;)V", null, null);
+            LabelNode labelNode2 = new LabelNode();
+            LabelNode labelNode3 = new LabelNode();
+            LabelNode labelNode4 = new LabelNode();
             methodNode2.instructions.add(labelNode2);
-            methodNode2.instructions.add(new org.spongepowered.asm.lib.tree.LineNumberNode(15636436, labelNode2));
-            methodNode2.instructions.add(new org.spongepowered.asm.lib.tree.VarInsnNode(Opcodes.ALOAD, 0));
-            methodNode2.instructions.add(new org.spongepowered.asm.lib.tree.FieldInsnNode(Opcodes.GETFIELD, "gg/essential/vigilance/Vigilant", "oneconfig$config", "Lcc/polyfrost/oneconfig/internal/config/compatibility/vigilance/VigilanceConfig;"));
+            methodNode2.instructions.add(new LineNumberNode(15636436, labelNode2));
+            methodNode2.instructions.add(new VarInsnNode(Opcodes.ALOAD, 0));
+            methodNode2.instructions.add(new FieldInsnNode(Opcodes.GETFIELD, "gg/essential/vigilance/Vigilant", "oneconfig$config", "Lcc/polyfrost/oneconfig/internal/config/compatibility/vigilance/VigilanceConfig;"));
 
-            methodNode2.instructions.add(new org.spongepowered.asm.lib.tree.JumpInsnNode(Opcodes.IFNULL, labelNode4));
+            methodNode2.instructions.add(new JumpInsnNode(Opcodes.IFNULL, labelNode4));
 
             methodNode2.instructions.add(labelNode3);
-            methodNode2.instructions.add(new org.spongepowered.asm.lib.tree.LineNumberNode(15636437, labelNode3));
-            methodNode2.instructions.add(new org.spongepowered.asm.lib.tree.VarInsnNode(Opcodes.ALOAD, 0));
-            methodNode2.instructions.add(new org.spongepowered.asm.lib.tree.FieldInsnNode(Opcodes.GETFIELD, "gg/essential/vigilance/Vigilant", "oneconfig$config", "Lcc/polyfrost/oneconfig/internal/config/compatibility/vigilance/VigilanceConfig;"));
-            methodNode2.instructions.add(new org.spongepowered.asm.lib.tree.VarInsnNode(Opcodes.ALOAD, 1));
-            methodNode2.instructions.add(new org.spongepowered.asm.lib.tree.VarInsnNode(Opcodes.ALOAD, 2));
-            methodNode2.instructions.add(new org.spongepowered.asm.lib.tree.MethodInsnNode(Opcodes.INVOKEVIRTUAL, "cc/polyfrost/oneconfig/internal/config/compatibility/vigilance/VigilanceConfig", "addDependency", "(Lgg/essential/vigilance/data/PropertyData;Lgg/essential/vigilance/data/PropertyData;)V", false));
+            methodNode2.instructions.add(new LineNumberNode(15636437, labelNode3));
+            methodNode2.instructions.add(new VarInsnNode(Opcodes.ALOAD, 0));
+            methodNode2.instructions.add(new FieldInsnNode(Opcodes.GETFIELD, "gg/essential/vigilance/Vigilant", "oneconfig$config", "Lcc/polyfrost/oneconfig/internal/config/compatibility/vigilance/VigilanceConfig;"));
+            methodNode2.instructions.add(new VarInsnNode(Opcodes.ALOAD, 1));
+            methodNode2.instructions.add(new VarInsnNode(Opcodes.ALOAD, 2));
+            methodNode2.instructions.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "cc/polyfrost/oneconfig/internal/config/compatibility/vigilance/VigilanceConfig", "addDependency", "(Lgg/essential/vigilance/data/PropertyData;Lgg/essential/vigilance/data/PropertyData;)V", false));
 
             methodNode2.instructions.add(labelNode4);
-            methodNode2.instructions.add(new org.spongepowered.asm.lib.tree.LineNumberNode(15636438, labelNode4));
-            methodNode2.instructions.add(new org.spongepowered.asm.lib.tree.InsnNode(Opcodes.RETURN));
+            methodNode2.instructions.add(new LineNumberNode(15636438, labelNode4));
+            methodNode2.instructions.add(new InsnNode(Opcodes.RETURN));
             node.methods.add(methodNode2);
 
-            for (org.spongepowered.asm.lib.tree.MethodNode method : node.methods) {
+            for (MethodNode method : node.methods) {
+                InsnList list = new InsnList();
                 if (method.name.equals("initialize")) {
-                    org.spongepowered.asm.lib.tree.InsnList list = new org.spongepowered.asm.lib.tree.InsnList();
-                    list.add(new org.spongepowered.asm.lib.tree.VarInsnNode(Opcodes.ALOAD, 0));
-                    list.add(new org.spongepowered.asm.lib.tree.VarInsnNode(Opcodes.ALOAD, 0));
-                    list.add(new org.spongepowered.asm.lib.tree.VarInsnNode(Opcodes.ALOAD, 0));
-                    list.add(new org.spongepowered.asm.lib.tree.FieldInsnNode(Opcodes.GETFIELD, "gg/essential/vigilance/Vigilant", "oneconfig$file", Type.getDescriptor(File.class)));
-                    list.add(new org.spongepowered.asm.lib.tree.MethodInsnNode(Opcodes.INVOKESTATIC, "cc/polyfrost/oneconfig/internal/plugin/hooks/VigilantHook", "returnNewConfig", "(Lgg/essential/vigilance/Vigilant;Ljava/io/File;)Lcc/polyfrost/oneconfig/internal/config/compatibility/vigilance/VigilanceConfig;", false));
-                    list.add(new org.spongepowered.asm.lib.tree.FieldInsnNode(Opcodes.PUTFIELD, "gg/essential/vigilance/Vigilant", "oneconfig$config", "Lcc/polyfrost/oneconfig/internal/config/compatibility/vigilance/VigilanceConfig;"));
-                    method.instructions.insertBefore(method.instructions.getLast().getPrevious(), list);
+                    list.add(new VarInsnNode(Opcodes.ALOAD, 0));
+                    list.add(new VarInsnNode(Opcodes.ALOAD, 0));
+                    list.add(new VarInsnNode(Opcodes.ALOAD, 0));
+                    list.add(new FieldInsnNode(Opcodes.GETFIELD, "gg/essential/vigilance/Vigilant", "oneconfig$file", Type.getDescriptor(File.class)));
+                    list.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "cc/polyfrost/oneconfig/internal/plugin/hooks/VigilantHook", "returnNewConfig", "(Lgg/essential/vigilance/Vigilant;Ljava/io/File;)Lcc/polyfrost/oneconfig/internal/config/compatibility/vigilance/VigilanceConfig;", false));
+                    list.add(new FieldInsnNode(Opcodes.PUTFIELD, "gg/essential/vigilance/Vigilant", "oneconfig$config", "Lcc/polyfrost/oneconfig/internal/config/compatibility/vigilance/VigilanceConfig;"));
                 } else if (method.name.equals("addDependency") && method.desc.equals("(Lgg/essential/vigilance/data/PropertyData;Lgg/essential/vigilance/data/PropertyData;)V")) {
-                    org.spongepowered.asm.lib.tree.InsnList list = new org.spongepowered.asm.lib.tree.InsnList();
-
-                    list.add(new org.spongepowered.asm.lib.tree.VarInsnNode(Opcodes.ALOAD, 0));
-                    list.add(new org.spongepowered.asm.lib.tree.VarInsnNode(Opcodes.ALOAD, 1));
-                    list.add(new org.spongepowered.asm.lib.tree.VarInsnNode(Opcodes.ALOAD, 2));
-                    list.add(new org.spongepowered.asm.lib.tree.MethodInsnNode(Opcodes.INVOKEVIRTUAL, "gg/essential/vigilance/Vigilant", "handleOneConfigDependency", "(Lgg/essential/vigilance/data/PropertyData;Lgg/essential/vigilance/data/PropertyData;)V", false));
-
-                    method.instructions.insertBefore(method.instructions.getLast().getPrevious(), list);
+                    list.add(new VarInsnNode(Opcodes.ALOAD, 0));
+                    list.add(new VarInsnNode(Opcodes.ALOAD, 1));
+                    list.add(new VarInsnNode(Opcodes.ALOAD, 2));
+                    list.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "gg/essential/vigilance/Vigilant", "handleOneConfigDependency", "(Lgg/essential/vigilance/data/PropertyData;Lgg/essential/vigilance/data/PropertyData;)V", false));
                 } else if (method.name.equals("<init>") && method.desc.equals("(Ljava/io/File;Ljava/lang/String;Lgg/essential/vigilance/data/PropertyCollector;Lgg/essential/vigilance/data/SortingBehavior;)V")) {
-                    org.spongepowered.asm.lib.tree.InsnList list = new org.spongepowered.asm.lib.tree.InsnList();
-                    list.add(new org.spongepowered.asm.lib.tree.VarInsnNode(Opcodes.ALOAD, 0));
-                    list.add(new org.spongepowered.asm.lib.tree.VarInsnNode(Opcodes.ALOAD, 1));
-                    list.add(new org.spongepowered.asm.lib.tree.FieldInsnNode(Opcodes.PUTFIELD, "gg/essential/vigilance/Vigilant", "oneconfig$file", Type.getDescriptor(File.class)));
+                    list.add(new VarInsnNode(Opcodes.ALOAD, 0));
+                    list.add(new VarInsnNode(Opcodes.ALOAD, 1));
+                    list.add(new FieldInsnNode(Opcodes.PUTFIELD, "gg/essential/vigilance/Vigilant", "oneconfig$file", Type.getDescriptor(File.class)));
+                }
+                if (list.size() != 0) {
                     method.instructions.insertBefore(method.instructions.getLast().getPrevious(), list);
                 }
             }

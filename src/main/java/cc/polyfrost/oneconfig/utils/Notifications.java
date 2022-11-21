@@ -36,8 +36,8 @@ import cc.polyfrost.oneconfig.gui.animations.EaseInOutQuad;
 import cc.polyfrost.oneconfig.internal.utils.Notification;
 import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
 import cc.polyfrost.oneconfig.libs.universal.UResolution;
-import cc.polyfrost.oneconfig.renderer.Icon;
-import cc.polyfrost.oneconfig.renderer.RenderManager;
+import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
+import cc.polyfrost.oneconfig.renderer.asset.Icon;
 import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 import org.jetbrains.annotations.Nullable;
 
@@ -227,7 +227,7 @@ public final class Notifications {
     @Subscribe
     private void onHudRender(HudRenderEvent event) {
         if (notifications.size() == 0) return;
-        RenderManager.setupAndDraw((vg) -> {
+        NanoVGHelper.INSTANCE.setupAndDraw((vg) -> {
             float desiredPosition = -16f;
             float scale = OneConfigGui.getScaleFactor();
             for (Map.Entry<Notification, Animation> entry : notifications.entrySet()) {

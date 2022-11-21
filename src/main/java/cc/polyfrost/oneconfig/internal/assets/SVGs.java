@@ -26,15 +26,8 @@
 
 package cc.polyfrost.oneconfig.internal.assets;
 
-import cc.polyfrost.oneconfig.renderer.AssetLoader;
-import cc.polyfrost.oneconfig.renderer.SVG;
+import cc.polyfrost.oneconfig.renderer.asset.SVG;
 
-/**
- * An enum of SVGs used in OneConfig.
- *
- * @see cc.polyfrost.oneconfig.renderer.RenderManager#drawSvg(long, String, float, float, float, float, int)
- * @see AssetLoader
- */
 public class SVGs {
     public static final SVG ONECONFIG_FULL_DARK = new SVG("/assets/oneconfig/icons/OneConfigFullDark.svg");
     public static final SVG COPYRIGHT_FILL = new SVG("/assets/oneconfig/icons/CopyrightFill.svg");

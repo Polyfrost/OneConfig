@@ -20,6 +20,9 @@
   "entrypoints": {
     "preLaunch": [
       "cc.polyfrost.oneconfig.internal.plugin.OneConfigPreLaunch"
+    ],
+    "mm:early_risers": [
+      "cc.polyfrost.oneconfig.internal.plugin.asm.ClassTransformer"
     ]
   },
   "depends": {
