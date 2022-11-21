@@ -143,11 +143,7 @@ private enum class RepackedVersion(val string: String) {
 }
 
 dependencies {
-    compileOnly("gg.essential:vigilance-1.8.9-forge:222") {
-        attributes { attribute(registerStripReferencesAttribute("common") {
-            excludes.add("net.minecraft")
-            excludes.add("net.minecraftforge")
-        }, true) }
+    compileOnly("gg.essential:vigilance-1.8.9-forge:+") {
         isTransitive = false
     }
 
