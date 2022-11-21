@@ -41,7 +41,12 @@ public class Lwjgl2FunctionProvider implements FunctionProvider {
     private final Method getFunctionAddress;
 
     static {
-        System.setProperty("org.lwjgl.librarypath", System.getProperty("oneconfig.lwjgl2.librarypath"));
+        String libraryPath = System.getProperty("oneconfig.lwjgl2.librarypath", "");
+        System.out.println("(FP) LWJGL2 library path: " + libraryPath);
+        if (!libraryPath.isEmpty()) {
+            System.setProperty("org.lwjgl.librarypath", libraryPath);
+        }
+
         try {
             GL_CONTEXT = Class.forName("org.lwjgl.opengl.GLContext", true, OneConfig.class.getClassLoader());
         } catch (ReflectiveOperationException e) {
