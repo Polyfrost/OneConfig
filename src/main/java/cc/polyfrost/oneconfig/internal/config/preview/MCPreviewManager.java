@@ -24,20 +24,38 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.config.preview;
+package cc.polyfrost.oneconfig.internal.config.preview;
 
-import cc.polyfrost.oneconfig.renderer.RenderManager;
+import cc.polyfrost.oneconfig.config.preview.MCPreview;
+import cc.polyfrost.oneconfig.libs.universal.UMatrixStack;
 import cc.polyfrost.oneconfig.utils.InputHandler;
 
-public abstract class BackgroundVGPreview extends VGPreview {
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
 
-    @Override
-    protected void draw(long vg, float width, float height, InputHandler inputHandler) {
-        RenderManager.drawRoundImage(vg, "/assets/oneconfig/images/scene4.png", 0 + 1.5f, 0 + 1.5f, width - 1.5f, height - 1.5f, 16f);
+public class MCPreviewManager {
+    public static final MCPreviewManager INSTANCE = new MCPreviewManager();
+    public final ArrayList<MCPreview> previews = new ArrayList<>();
+    private final MethodHandle drawHandle;
+    private MCPreviewManager() {
+        try {
+            Method draw = MCPreview.class.getDeclaredMethod("setupDraw", UMatrixStack.class);
+            draw.setAccessible(true);
+            drawHandle = MethodHandles.lookup().unreflect(draw);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    @Override
-    public float getHeight() {
-        return 256;
+    public void drawMCPreviews(UMatrixStack matrixStack) {
+        for (MCPreview preview : previews) {
+            try {
+                drawHandle.invoke(preview, matrixStack);
+            } catch (Throwable throwable) {
+                throwable.printStackTrace();
+            }
+        }
     }
 }

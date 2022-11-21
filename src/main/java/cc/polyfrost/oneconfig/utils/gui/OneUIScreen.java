@@ -27,6 +27,8 @@
 package cc.polyfrost.oneconfig.utils.gui;
 
 import cc.polyfrost.oneconfig.gui.GuiPause;
+import cc.polyfrost.oneconfig.gui.OneConfigGui;
+import cc.polyfrost.oneconfig.internal.config.preview.MCPreviewManager;
 import cc.polyfrost.oneconfig.libs.universal.UMatrixStack;
 import cc.polyfrost.oneconfig.libs.universal.UResolution;
 import cc.polyfrost.oneconfig.libs.universal.UScreen;
@@ -78,6 +80,9 @@ public abstract class OneUIScreen extends UScreen implements GuiPause {
         super.onDrawScreen(matrixStack, mouseX, mouseY, partialTicks);
         if (useMinecraftScale) inputHandler.scale(UResolution.getScaleFactor(), UResolution.getScaleFactor());
         RenderManager.setupAndDraw(useMinecraftScale, vg -> draw(vg, partialTicks, inputHandler));
+        if (OneConfigGui.isOpen()) {
+            MCPreviewManager.INSTANCE.drawMCPreviews(matrixStack);
+        }
     }
 
     /**

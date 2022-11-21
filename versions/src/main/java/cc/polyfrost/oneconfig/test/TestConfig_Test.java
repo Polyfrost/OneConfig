@@ -34,6 +34,7 @@ import cc.polyfrost.oneconfig.config.core.OneKeyBind;
 import cc.polyfrost.oneconfig.config.data.*;
 import cc.polyfrost.oneconfig.config.migration.VigilanceMigrator;
 import cc.polyfrost.oneconfig.config.preview.BackgroundVGPreview;
+import cc.polyfrost.oneconfig.config.preview.MCPreview;
 import cc.polyfrost.oneconfig.config.preview.VGPreview;
 import cc.polyfrost.oneconfig.gui.animations.Animation;
 import cc.polyfrost.oneconfig.gui.animations.EaseInOutQuart;
@@ -41,12 +42,15 @@ import cc.polyfrost.oneconfig.gui.pages.HomePage;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.libs.universal.UChat;
 import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
+import cc.polyfrost.oneconfig.libs.universal.UMatrixStack;
+import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.Icon;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.test.huds.TestBasicHud_Test;
 import cc.polyfrost.oneconfig.test.huds.TestHud_Test;
 import cc.polyfrost.oneconfig.test.huds.TestMultilineHud_Test;
+import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.Notifications;
 
 public class TestConfig_Test extends Config {
@@ -217,9 +221,25 @@ public class TestConfig_Test extends Config {
     )
     public VGPreview preview = new BackgroundVGPreview() {
         @Override
-        protected void draw(long vg, float width, float height) {
-            super.draw(vg, width, height);
+        protected void draw(long vg, float width, float height, InputHandler inputHandler) {
+            super.draw(vg, width, height, inputHandler);
             RenderManager.drawText(vg, "Good morning", width / 2 - RenderManager.getTextWidth(vg, "Good morning", 20, Fonts.MEDIUM), height / 2, -1, 20, Fonts.MEDIUM);
+        }
+    };
+
+    @Preview(
+            name = "One More Preview",
+            location = PageLocation.TOP
+    )
+    public MCPreview preview2 = new MCPreview() {
+        @Override
+        public float getHeight() {
+            return 256;
+        }
+
+        @Override
+        protected void draw(UMatrixStack matrices, float width, float height, InputHandler inputHandler) {
+            Platform.getGLPlatform().drawRect(0, 0, width, height, -1);
         }
     };
 

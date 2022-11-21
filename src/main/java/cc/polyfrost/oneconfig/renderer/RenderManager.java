@@ -112,15 +112,11 @@ public final class RenderManager {
         GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
         GL11.glDisable(GL11.GL_ALPHA_TEST);
 
-        if (mcScaling) {
-            nvgBeginFrame(vg, (float) UResolution.getScaledWidth(), (float) UResolution.getScaledHeight(), (float) UResolution.getScaleFactor());
-        } else {
-            nvgBeginFrame(vg, UResolution.getWindowWidth(), UResolution.getWindowHeight(), 1);
-        }
+        beginFrame(mcScaling);
 
         consumer.accept(vg);
 
-        nvgEndFrame(vg);
+        endFrame();
 
         GL11.glPopAttrib();
     }
