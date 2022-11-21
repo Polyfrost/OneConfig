@@ -199,7 +199,7 @@ dependencies {
         compileOnly(configuration("cc.polyfrost:lwjgl-$version:1.0.0-alpha24"){
             isTransitive = false
         })
-        shadeNoPom(prebundle(configuration, "lwjgl-$version.jar")!!)
+        shadeNoPom(implementationNoPom(prebundle(configuration, "lwjgl-$version.jar"))!!)
     }
 
     configurations.named(JavaPlugin.COMPILE_CLASSPATH_CONFIGURATION_NAME) { extendsFrom(shadeProject) }
