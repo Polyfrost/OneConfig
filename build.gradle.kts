@@ -84,7 +84,7 @@ dependencies {
         isTransitive = false
     }
 
-    shadeRelocated("gg.essential:universalcraft-1.8.9-forge:228") {
+    compileOnly("cc.polyfrost:universalcraft-1.8.9-forge:245") {
         attributes { attribute(common, true) }
         isTransitive = false
     }

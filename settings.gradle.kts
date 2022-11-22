@@ -5,11 +5,11 @@ pluginManagement {
         maven("https://repo.polyfrost.cc/releases")
     }
     plugins {
-        val egtVersion = "0.1.21"
-        id("cc.polyfrost.multi-version.root") version egtVersion
-        id("cc.polyfrost.defaults.repo") version egtVersion
-        id("cc.polyfrost.defaults.java") version egtVersion
-        id("cc.polyfrost.multi-version.api-validation") version egtVersion
+        val pgtVersion = "0.1.22"
+        id("cc.polyfrost.multi-version.root") version pgtVersion
+        id("cc.polyfrost.defaults.repo") version pgtVersion
+        id("cc.polyfrost.defaults.java") version pgtVersion
+        id("cc.polyfrost.multi-version.api-validation") version pgtVersion
     }
     resolutionStrategy {
         eachPlugin {
@@ -35,8 +35,8 @@ listOf(
     "1.8.9-fabric",
     "1.12.2-fabric",
     "1.12.2-forge",
-    "1.16.2-forge",
-    "1.16.2-fabric"
+    "1.16.5-forge",
+    "1.16.5-fabric"
 ).forEach { version ->
     include(":platform:$version")
     project(":platform:$version").apply {

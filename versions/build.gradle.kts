@@ -1,4 +1,3 @@
-import cc.polyfrost.gradle.multiversion.StripReferencesTransform.Companion.registerStripReferencesAttribute
 import cc.polyfrost.gradle.util.RelocationTransform.Companion.registerRelocationAttribute
 import cc.polyfrost.gradle.util.noServerRunConfigs
 import cc.polyfrost.gradle.util.prebundle
@@ -78,7 +77,6 @@ loom {
 }
 
 repositories {
-    mavenLocal()
     maven("https://repo.polyfrost.cc/releases")
 }
 
@@ -147,7 +145,7 @@ dependencies {
         isTransitive = false
     }
 
-    include("gg.essential:universalcraft-$platform:master-SNAPSHOT", relocate = true, transitive = false, mod = true)
+    include("cc.polyfrost:universalcraft-$platform:245", transitive = false, mod = true)
 
     include("com.github.xtrm-en:deencapsulation:42b829f373", relocate = true, transitive = false, mod = false)
 
