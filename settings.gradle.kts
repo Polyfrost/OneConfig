@@ -5,7 +5,7 @@ pluginManagement {
         maven("https://repo.polyfrost.cc/releases")
     }
     plugins {
-        val egtVersion = "0.1.21"
+        val egtVersion = "0.1.22"
         id("cc.polyfrost.multi-version.root") version egtVersion
         id("cc.polyfrost.defaults.repo") version egtVersion
         id("cc.polyfrost.defaults.java") version egtVersion
