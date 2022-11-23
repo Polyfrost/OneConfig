@@ -32,6 +32,11 @@ import cc.polyfrost.oneconfig.libs.eventbus.exception.ExceptionHandler;
 import cc.polyfrost.oneconfig.libs.eventbus.invokers.LMFInvoker;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.reflect.Field;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+
 /**
  * Manages all events from OneConfig.
  */
@@ -40,10 +45,21 @@ public final class EventManager {
      * The instance of the {@link EventManager}.
      */
     public static final EventManager INSTANCE = new EventManager();
-    private final EventBus eventBus = new EventBus(new LMFInvoker(), new OneConfigExceptionHandler());
+    private final EventBus eventBus;
+    private final Map<Class<?>, List<EventBus.Subscriber>> subscriberMap;
 
     private EventManager() {
-
+        this.eventBus = new EventBus(new LMFInvoker(), new OneConfigExceptionHandler());
+        Map<Class<?>, List<EventBus.Subscriber>> reflectedMap;
+        try {
+            Field f_subscriberMap = EventBus.class.getDeclaredField("subscribers");
+            f_subscriberMap.setAccessible(true);
+            //noinspection unchecked
+            reflectedMap = (Map<Class<?>, List<EventBus.Subscriber>>) f_subscriberMap.get(this.eventBus);
+        } catch (ReflectiveOperationException exception) {
+            throw new RuntimeException(exception);
+        }
+        this.subscriberMap = reflectedMap;
     }
 
     /**
@@ -62,6 +78,9 @@ public final class EventManager {
      * @see EventBus#register(Object)
      */
     public void register(Object object) {
+        if (subscriberMap.values().stream().flatMap(Collection::stream).anyMatch(it -> it.getObj() == object)) {
+            return;
+        }
         eventBus.register(object);
     }
 
@@ -92,13 +111,12 @@ public final class EventManager {
     private static class OneConfigExceptionHandler implements ExceptionHandler {
         @Override
         public void handle(@NotNull Exception e) {
-            if(e instanceof InvalidTypeException) {
+            if (e instanceof InvalidTypeException) {
                 throw (InvalidTypeException) e;
             }
-            if(e instanceof IllegalArgumentException) {
+            if (e instanceof IllegalArgumentException) {
                 throw (IllegalArgumentException) e;
-            }
-            else e.printStackTrace();
+            } else e.printStackTrace();
         }
     }
 }
