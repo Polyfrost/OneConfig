@@ -423,6 +423,7 @@ public abstract interface annotation class cc/polyfrost/oneconfig/config/migrati
 
 public final class cc/polyfrost/oneconfig/events/EventManager {
 	public static final field INSTANCE Lcc/polyfrost/oneconfig/events/EventManager;
+	public fun <init> ()V
 	public fun getEventBus ()Lcc/polyfrost/oneconfig/libs/eventbus/EventBus;
 	public fun post (Ljava/lang/Object;)V
 	public fun register (Ljava/lang/Object;)V
