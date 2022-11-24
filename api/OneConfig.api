@@ -1206,7 +1206,6 @@ public abstract interface class cc/polyfrost/oneconfig/renderer/NanoVGHelper {
 	public abstract fun drawBorderedText (Ljava/lang/String;FFII)I
 	public abstract fun drawCircle (JFFFI)V
 	public abstract fun drawDropShadow (JFFFFFFF)V
-	public abstract fun drawGlRect (IIIII)V
 	public abstract fun drawGradientRect (JFFFFII)V
 	public abstract fun drawGradientRoundedRect (JFFFFIIF)V
 	public abstract fun drawHSBBox (JFFFFI)V
@@ -1259,6 +1258,7 @@ public final class cc/polyfrost/oneconfig/renderer/NanoVGHelper$TextType : java/
 
 public class cc/polyfrost/oneconfig/renderer/RenderManager {
 	public fun <init> ()V
+	public static fun drawBorderedText (Ljava/lang/String;FFII)I
 	public static fun drawScaledString (Ljava/lang/String;FFILcc/polyfrost/oneconfig/renderer/RenderManager$TextType;F)V
 }
 
@@ -1269,6 +1269,22 @@ public final class cc/polyfrost/oneconfig/renderer/RenderManager$TextType : java
 	public static fun toType (I)Lcc/polyfrost/oneconfig/renderer/RenderManager$TextType;
 	public static fun valueOf (Ljava/lang/String;)Lcc/polyfrost/oneconfig/renderer/RenderManager$TextType;
 	public static fun values ()[Lcc/polyfrost/oneconfig/renderer/RenderManager$TextType;
+}
+
+public class cc/polyfrost/oneconfig/renderer/TextRenderer {
+	public fun <init> ()V
+	public static fun drawBorderedText (Ljava/lang/String;FFII)I
+	public static fun drawScaledString (Ljava/lang/String;FFILcc/polyfrost/oneconfig/renderer/TextRenderer$TextType;F)V
+	public static fun isDrawingTextBorder ()Z
+}
+
+public final class cc/polyfrost/oneconfig/renderer/TextRenderer$TextType : java/lang/Enum {
+	public static final field FULL Lcc/polyfrost/oneconfig/renderer/TextRenderer$TextType;
+	public static final field NONE Lcc/polyfrost/oneconfig/renderer/TextRenderer$TextType;
+	public static final field SHADOW Lcc/polyfrost/oneconfig/renderer/TextRenderer$TextType;
+	public static fun toType (I)Lcc/polyfrost/oneconfig/renderer/TextRenderer$TextType;
+	public static fun valueOf (Ljava/lang/String;)Lcc/polyfrost/oneconfig/renderer/TextRenderer$TextType;
+	public static fun values ()[Lcc/polyfrost/oneconfig/renderer/TextRenderer$TextType;
 }
 
 public abstract interface class cc/polyfrost/oneconfig/renderer/TinyFD {
