@@ -141,9 +141,9 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
     public void drawRect(long vg, float x, float y, float width, float height, int color) {
         nvgBeginPath(vg);
         nvgRect(vg, x, y, width, height);
-        try (NVGColor nvgColor = color(vg, color)) {
-            nvgFill(vg);
-        }
+        NVGColor nvgColor = color(vg, color);
+        nvgFill(vg);
+        nvgColor.free();
     }
 
     /**
@@ -161,9 +161,9 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
     public void drawRoundedRect(long vg, float x, float y, float width, float height, int color, float radius) {
         nvgBeginPath(vg);
         nvgRoundedRect(vg, x, y, width, height, radius);
-        try (NVGColor nvgColor = color(vg, color)) {
-            nvgFill(vg);
-        }
+        NVGColor nvgColor = color(vg, color);
+        nvgFill(vg);
+        nvgColor.free();
     }
 
     /**
@@ -183,9 +183,9 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
     public void drawRoundedRectVaried(long vg, float x, float y, float width, float height, int color, float radiusTL, float radiusTR, float radiusBR, float radiusBL) {
         nvgBeginPath(vg);
         nvgRoundedRectVarying(vg, x, y, width, height, radiusTL, radiusTR, radiusBR, radiusBL);
-        try (NVGColor nvgColor = color(vg, color)) {
-            nvgFill(vg);
-        }
+        NVGColor nvgColor = color(vg, color);
+        nvgFill(vg);
+        nvgColor.free();
     }
 
     /**
@@ -206,10 +206,10 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
         nvgRoundedRect(vg, x + thickness, y + thickness, width - thickness, height - thickness, radius);
         nvgStrokeWidth(vg, thickness + 0.5f);
         nvgPathWinding(vg, NVG_HOLE);
-        try (NVGColor nvgColor = color(vg, color)) {
-            nvgStrokeColor(vg, nvgColor);
-            nvgStroke(vg);
-        }
+        NVGColor nvgColor = color(vg, color);
+        nvgStrokeColor(vg, nvgColor);
+        nvgStroke(vg);
+        nvgColor.free();
     }
 
     /**
@@ -310,9 +310,9 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
     public void drawCircle(long vg, float x, float y, float radius, int color) {
         nvgBeginPath(vg);
         nvgCircle(vg, x, y, radius);
-        try (NVGColor nvgColor = color(vg, color)) {
-            nvgFill(vg);
-        }
+        NVGColor nvgColor = color(vg, color);
+        nvgFill(vg);
+        nvgColor.free();
     }
 
     /**
@@ -333,10 +333,10 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
         nvgFontSize(vg, size);
         nvgFontFace(vg, font.getName());
         nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
-        try (NVGColor nvgColor = color(vg, color)) {
-            nvgText(vg, x, y, text);
-            nvgFill(vg);
-        }
+        NVGColor nvgColor = color(vg, color);
+        nvgText(vg, x, y, text);
+        nvgFill(vg);
+        nvgColor.free();
     }
 
 
@@ -346,10 +346,10 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
         nvgFontSize(vg, size);
         nvgFontFace(vg, font.getName());
         nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_TOP); // Align top because center is weird with wrapping
-        try (NVGColor nvgColor = color(vg, color)) {
-            nvgTextBox(vg, x, y, width, text);
-            nvgFill(vg);
-        }
+        NVGColor nvgColor = color(vg, color);
+        nvgTextBox(vg, x, y, width, text);
+        nvgFill(vg);
+        nvgColor.free();
     }
 
     /**
@@ -372,10 +372,10 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
         nvgFontFace(vg, font.getName());
         nvgTextLineHeight(vg, lineHeight);
         nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_TOP); // Align top because center is weird with wrapping
-        try (NVGColor nvgColor = color(vg, color)) {
-            nvgTextBox(vg, x, y, width, text);
-            nvgFill(vg);
-        }
+        NVGColor nvgColor = color(vg, color);
+        nvgTextBox(vg, x, y, width, text);
+        nvgFill(vg);
+        nvgColor.free();
     }
 
     @Override
@@ -447,12 +447,12 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
     public void drawImage(long vg, String filePath, float x, float y, float width, float height, int color) {
         AssetHelper assetHelper = AssetHelper.INSTANCE;
         if (assetHelper.loadImage(vg, filePath)) {
-            try (NVGPaint imagePaint = NVGPaint.calloc()) {
-                int image = assetHelper.getImage(filePath);
-                nvgBeginPath(vg);
-                nvgImagePattern(vg, x, y, width, height, 0, image, 1, imagePaint);
-                drawImageCommon(vg, x, y, width, height, color, imagePaint);
-            }
+            NVGPaint imagePaint = NVGPaint.calloc();
+            int image = assetHelper.getImage(filePath);
+            nvgBeginPath(vg);
+            nvgImagePattern(vg, x, y, width, height, 0, image, 1, imagePaint);
+            drawImageCommon(vg, x, y, width, height, color, imagePaint);
+            imagePaint.free();
         }
     }
 
@@ -506,14 +506,14 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
     public void drawRoundImage(long vg, String filePath, float x, float y, float width, float height, float radius) {
         AssetHelper assetHelper = AssetHelper.INSTANCE;
         if (assetHelper.loadImage(vg, filePath)) {
-            try (NVGPaint imagePaint = NVGPaint.calloc()) {
-                int image = assetHelper.getImage(filePath);
-                nvgBeginPath(vg);
-                nvgImagePattern(vg, x, y, width, height, 0, image, 1, imagePaint);
-                nvgRoundedRect(vg, x, y, width, height, radius);
-                nvgFillPaint(vg, imagePaint);
-                nvgFill(vg);
-            }
+            NVGPaint imagePaint = NVGPaint.calloc();
+            int image = assetHelper.getImage(filePath);
+            nvgBeginPath(vg);
+            nvgImagePattern(vg, x, y, width, height, 0, image, 1, imagePaint);
+            nvgRoundedRect(vg, x, y, width, height, radius);
+            nvgFillPaint(vg, imagePaint);
+            nvgFill(vg);
+            imagePaint.free();
         }
     }
 
@@ -746,12 +746,12 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
         float h = height * scale;
         AssetHelper assetHelper = AssetHelper.INSTANCE;
         if (assetHelper.loadSVG(vg, filePath, w, h)) {
-            try (NVGPaint imagePaint = NVGPaint.calloc()) {
-                int image = assetHelper.getSVG(filePath, w, h);
-                nvgBeginPath(vg);
-                nvgImagePattern(vg, x, y, width, height, 0, image, 1, imagePaint);
-                drawImageCommon(vg, x, y, width, height, color, imagePaint);
-            }
+            NVGPaint imagePaint = NVGPaint.calloc();
+            int image = assetHelper.getSVG(filePath, w, h);
+            nvgBeginPath(vg);
+            nvgImagePattern(vg, x, y, width, height, 0, image, 1, imagePaint);
+            drawImageCommon(vg, x, y, width, height, color, imagePaint);
+            imagePaint.free();
         }
     }
 
