@@ -24,24 +24,26 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.renderer;
+package cc.polyfrost.oneconfig.internal.mixin;
 
-@Deprecated
-public class RenderManager {
+import cc.polyfrost.oneconfig.renderer.TextRenderer;
+import org.spongepowered.asm.mixin.Dynamic;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Pseudo;
+import org.spongepowered.asm.mixin.injection.Constant;
+import org.spongepowered.asm.mixin.injection.ModifyConstant;
 
-    public static int drawBorderedText(String text, float x, float y, int color, int opacity) {
-        return TextRenderer.drawBorderedText(text, x, y, color, opacity);
-    }
+@Pseudo
+@Mixin(targets = "net.wyvest.redaction.features.NameHighlight")
+public class RedactionNameHighlightMixin {
 
-    public static void drawScaledString(String text, float x, float y, int color, TextType type, float scale) {
-        TextRenderer.drawScaledString(text, x, y, color, TextRenderer.TextType.toType(type.ordinal()), scale);
-    }
-
-    public enum TextType {
-        NONE, SHADOW, FULL;
-
-        public static TextType toType(int type) {
-            return values()[type];
+    @Dynamic("REDACTION")
+    @ModifyConstant(method = "getColorCode", remap = false, constant = @Constant(stringValue = "§w"))
+    private static String removeColorCode(String original) {
+        if (TextRenderer.isDrawingTextBorder()) {
+            return "";
+        } else {
+            return original;
         }
     }
 }
