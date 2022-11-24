@@ -32,10 +32,8 @@ import cc.polyfrost.oneconfig.libs.eventbus.exception.ExceptionHandler;
 import cc.polyfrost.oneconfig.libs.eventbus.invokers.LMFInvoker;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.reflect.Field;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Manages all events from OneConfig.
@@ -45,22 +43,8 @@ public final class EventManager {
      * The instance of the {@link EventManager}.
      */
     public static final EventManager INSTANCE = new EventManager();
-    private final EventBus eventBus;
-    private final Map<Class<?>, List<EventBus.Subscriber>> subscriberMap;
-
-    private EventManager() {
-        this.eventBus = new EventBus(new LMFInvoker(), new OneConfigExceptionHandler());
-        Map<Class<?>, List<EventBus.Subscriber>> reflectedMap;
-        try {
-            Field f_subscriberMap = EventBus.class.getDeclaredField("subscribers");
-            f_subscriberMap.setAccessible(true);
-            //noinspection unchecked
-            reflectedMap = (Map<Class<?>, List<EventBus.Subscriber>>) f_subscriberMap.get(this.eventBus);
-        } catch (ReflectiveOperationException exception) {
-            throw new RuntimeException(exception);
-        }
-        this.subscriberMap = reflectedMap;
-    }
+    private final EventBus eventBus = new EventBus(new LMFInvoker(), new OneConfigExceptionHandler());
+    private final Set<Object> listeners = new HashSet<>();
 
     /**
      * Returns the {@link EventBus} instance.
@@ -78,10 +62,9 @@ public final class EventManager {
      * @see EventBus#register(Object)
      */
     public void register(Object object) {
-        if (subscriberMap.values().stream().flatMap(Collection::stream).anyMatch(it -> it.getObj() == object)) {
-            return;
+        if (listeners.add(object)) {
+            eventBus.register(object);
         }
-        eventBus.register(object);
     }
 
     /**
@@ -91,6 +74,7 @@ public final class EventManager {
      * @see EventBus#unregister(Object)
      */
     public void unregister(Object object) {
+        listeners.remove(object);
         eventBus.unregister(object);
     }
 
