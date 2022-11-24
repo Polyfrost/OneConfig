@@ -400,17 +400,11 @@ public interface NanoVGHelper {
 
     boolean isDrawing();
 
-    /**
-     * @deprecated Use {@link cc.polyfrost.oneconfig.renderer.TextRenderer} instead.
-     */
-    @Deprecated
     int drawBorderedText(String text, float x, float y, int color, int opacity);
 
-    /**
-     * @deprecated Use {@link cc.polyfrost.oneconfig.renderer.TextRenderer} instead.
-     */
-    @Deprecated
     void drawScaledString(String text, float x, float y, int color, TextType type, float scale);
+
+    void drawGlRect(int x, int y, int width, int height, int color);
 
     void translate(long vg, float x, float y);
 

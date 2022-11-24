@@ -28,13 +28,8 @@ package cc.polyfrost.oneconfig.renderer;
 
 @Deprecated
 public class RenderManager {
-
-    public static int drawBorderedText(String text, float x, float y, int color, int opacity) {
-        return TextRenderer.drawBorderedText(text, x, y, color, opacity);
-    }
-
     public static void drawScaledString(String text, float x, float y, int color, TextType type, float scale) {
-        TextRenderer.drawScaledString(text, x, y, color, TextRenderer.TextType.toType(type.ordinal()), scale);
+        NanoVGHelper.INSTANCE.drawScaledString(text, x, y, color, NanoVGHelper.TextType.toType(type.ordinal()), scale);
     }
 
     public enum TextType {

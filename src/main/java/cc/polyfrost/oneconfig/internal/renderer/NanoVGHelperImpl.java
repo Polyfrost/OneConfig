@@ -34,10 +34,10 @@ import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
+import cc.polyfrost.oneconfig.libs.universal.UGraphics;
 import cc.polyfrost.oneconfig.libs.universal.UResolution;
 import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
-import cc.polyfrost.oneconfig.renderer.TextRenderer;
 import cc.polyfrost.oneconfig.renderer.asset.AssetHelper;
 import cc.polyfrost.oneconfig.renderer.asset.Image;
 import cc.polyfrost.oneconfig.renderer.asset.SVG;
@@ -51,6 +51,7 @@ import org.lwjgl.nanovg.NanoVGGL2;
 import org.lwjgl.opengl.GL11;
 
 import java.util.function.LongConsumer;
+import java.util.regex.Pattern;
 
 import static org.lwjgl.nanovg.NanoVG.*;
 
@@ -251,15 +252,15 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
      */
     @Override
     public void drawGradientRoundedRect(long vg, float x, float y, float width, float height, int color, int color2, float radius) {
-        NVGPaint bg = NVGPaint.create();
-        nvgBeginPath(vg);
-        nvgRoundedRect(vg, x, y, width, height, radius);
-        NVGColor nvgColor = color(vg, color);
-        NVGColor nvgColor2 = color(vg, color2);
-        nvgFillPaint(vg, nvgLinearGradient(vg, x, y, x + width, y, nvgColor, nvgColor2, bg));
+        try (NVGPaint bg = NVGPaint.create();
+             NVGColor nvgColor = color(vg, color);
+             NVGColor nvgColor2 = color(vg, color2)
+        ) {
+            nvgBeginPath(vg);
+            nvgRoundedRect(vg, x, y, width, height, radius);
+            nvgFillPaint(vg, nvgLinearGradient(vg, x, y, x + width, y, nvgColor, nvgColor2, bg));
+        }
         nvgFill(vg);
-        nvgColor.free();
-        nvgColor2.free();
     }
 
     /**
@@ -276,25 +277,25 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
     public void drawHSBBox(long vg, float x, float y, float width, float height, int colorTarget) {
         drawRoundedRect(vg, x, y, width, height, colorTarget, 8f);
 
-        NVGPaint bg = NVGPaint.create();
-        nvgBeginPath(vg);
-        nvgRoundedRect(vg, x, y, width, height, 8f);
-        NVGColor nvgColor = color(vg, -1);
-        NVGColor nvgColor2 = color(vg, Colors.TRANSPARENT);
-        nvgFillPaint(vg, nvgLinearGradient(vg, x, y, x + width, y, nvgColor, nvgColor2, bg));
+        try (NVGPaint bg = NVGPaint.create();
+             NVGColor nvgColor = color(vg, -1);
+             NVGColor nvgColor2 = color(vg, Colors.TRANSPARENT)
+        ) {
+            nvgBeginPath(vg);
+            nvgRoundedRect(vg, x, y, width, height, 8f);
+            nvgFillPaint(vg, nvgLinearGradient(vg, x, y, x + width, y, nvgColor, nvgColor2, bg));
+        }
         nvgFill(vg);
-        nvgColor.free();
-        nvgColor2.free();
 
-        NVGPaint bg2 = NVGPaint.create();
-        nvgBeginPath(vg);
-        nvgRoundedRect(vg, x, y, width, height, 8f);
-        NVGColor nvgColor3 = color(vg, Colors.TRANSPARENT);
-        NVGColor nvgColor4 = color(vg, Colors.BLACK);
-        nvgFillPaint(vg, nvgLinearGradient(vg, x, y, x, y + height, nvgColor3, nvgColor4, bg2));
+        try (NVGPaint bg2 = NVGPaint.create();
+             NVGColor nvgColor3 = color(vg, Colors.TRANSPARENT);
+             NVGColor nvgColor4 = color(vg, Colors.BLACK)
+        ) {
+            nvgBeginPath(vg);
+            nvgRoundedRect(vg, x, y, width, height, 8f);
+            nvgFillPaint(vg, nvgLinearGradient(vg, x, y, x, y + height, nvgColor3, nvgColor4, bg2));
+        }
         nvgFill(vg);
-        nvgColor3.free();
-        nvgColor4.free();
     }
 
     /**
@@ -863,19 +864,49 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
 
     // gl
 
-    /**
-     * @deprecated Use {@link cc.polyfrost.oneconfig.renderer.TextRenderer} instead.
-     */
-    @Deprecated
+    private static final Pattern regex = Pattern.compile("(?i)\\\\u00A7[0-9a-f]");
+
     public int drawBorderedText(String text, float x, float y, int color, int opacity) {
-        return TextRenderer.drawBorderedText(text, x, y, color, opacity);
+        String noColors = regex.matcher(text).replaceAll("\u00A7r");
+        int yes = 0;
+        if (opacity > 3) {
+            int xOff = -3;
+            while (xOff < 3) {
+                xOff++;
+                int yOff = -3;
+                while (yOff < 3) {
+                    yOff++;
+                    if (xOff * xOff != yOff * yOff) {
+                        yes +=
+                                Platform.getGLPlatform().drawText(
+                                        noColors, (xOff / 2f) + x, (yOff / 2f) + y, (opacity) << 24, false
+                                );
+                    }
+                }
+            }
+        }
+        yes += Platform.getGLPlatform().drawText(text, x, y, color, false);
+        return yes;
     }
 
-    /**
-     * @deprecated Use {@link cc.polyfrost.oneconfig.renderer.TextRenderer} instead.
-     */
-    @Deprecated
     public void drawScaledString(String text, float x, float y, int color, TextType type, float scale) {
-        TextRenderer.drawScaledString(text, x, y, color, TextRenderer.TextType.toType(type.ordinal()), scale);
+        UGraphics.GL.pushMatrix();
+        UGraphics.GL.scale(scale, scale, 1);
+        switch (type) {
+            case NONE:
+                Platform.getGLPlatform().drawText(text, x * (1 / scale), y * (1 / scale), color, false);
+                break;
+            case SHADOW:
+                Platform.getGLPlatform().drawText(text, x * (1 / scale), y * (1 / scale), color, true);
+                break;
+            case FULL:
+                drawBorderedText(text, x * (1 / scale), y * (1 / scale), color, 100);
+                break;
+        }
+        UGraphics.GL.popMatrix();
+    }
+
+    public void drawGlRect(int x, int y, int width, int height, int color) {
+        Platform.getGLPlatform().drawRect(x, y, x + width, y + height, color);
     }
 }

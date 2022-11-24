@@ -1,21 +1,20 @@
 {
-    "compatibilityLevel": "JAVA_8",
-    "minVersion": "0.7",
-    "package": "cc.polyfrost.oneconfig.internal.mixin",
-    "refmap": "mixins.oneconfig.refmap.json",
-    "plugin": "cc.polyfrost.oneconfig.internal.plugin.OneConfigMixinPlugin",
-    "injectors": {
-        "maxShiftBy": 5
-    },
-    "verbose": true,
-    "client": [
-        "GuiIngameForgeMixin",
-        "MinecraftMixin",
-        "NetworkManagerMixin",
-        "OptifineConfigMixin",
-        "ShaderGroupAccessor",
-        "VigilantMixin",
-        "WorldClientMixin",
-        "RedactionNameHighlightMixin"
-    ]
+  "compatibilityLevel": "JAVA_8",
+  "minVersion": "0.7",
+  "package": "cc.polyfrost.oneconfig.internal.mixin",
+  "refmap": "mixins.oneconfig.refmap.json",
+  "plugin": "cc.polyfrost.oneconfig.internal.plugin.OneConfigMixinPlugin",
+  "injectors": {
+    "maxShiftBy": 5
+  },
+  "verbose": true,
+  "client": [
+    "GuiIngameForgeMixin",
+    "MinecraftMixin",
+    "NetworkManagerMixin",
+    "OptifineConfigMixin",
+    "ShaderGroupAccessor",
+    "VigilantMixin",
+    "WorldClientMixin"
+  ]
 }
