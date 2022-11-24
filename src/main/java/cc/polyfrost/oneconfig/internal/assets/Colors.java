@@ -37,6 +37,7 @@ public class Colors {
     public static final int GRAY_900_80 = new Color(13, 14, 15, 204).getRGB();         // Gray 900 80%
     public static final int GRAY_800 = new Color(21, 22, 23, 255).getRGB();           // Gray 800
     public static final int GRAY_800_95 = new Color(21, 22, 23, 242).getRGB();
+    public static final int GRAY_850 = new Color(21, 23, 25, 255).getRGB();           // Gray 850
     public static final int GRAY_700 = new Color(34, 35, 38, 255).getRGB();           // Gray 700
     public static final int GRAY_600 = new Color(42, 44, 48, 255).getRGB();           // Gray 600
     public static final int GRAY_500 = new Color(49, 51, 56, 255).getRGB();           // Gray 500         // button sidebar hover, button gray normal

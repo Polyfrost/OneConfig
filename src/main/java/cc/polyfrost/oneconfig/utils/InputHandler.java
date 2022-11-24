@@ -63,6 +63,14 @@ public class InputHandler {
         scaleY = 1d;
     }
 
+    public double getXScaleFactor() {
+        return scaleX;
+    }
+
+    public double getYScaleFactor() {
+        return scaleY;
+    }
+
 
     /**
      * function to determine weather the mouse is currently over a specific region. Uses the current nvgScale to fix to any scale.
