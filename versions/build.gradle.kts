@@ -280,6 +280,7 @@ tasks {
 
     fun Jar.excludeInternal() {
         exclude("**/internal/**")
+        exclude("**/commands/ClientCommandHandler.**")
     }
     jar {
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
