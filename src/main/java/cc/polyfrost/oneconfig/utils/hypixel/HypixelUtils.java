@@ -64,8 +64,7 @@ public class HypixelUtils {
         try {
             JsonObject gotten = NetworkUtils.getJsonElement("https://api.hypixel.net/key?key=" + key).getAsJsonObject();
             return gotten.has("success") && gotten.get("success").getAsBoolean();
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (Exception ignored) {
         }
         return false;
     }

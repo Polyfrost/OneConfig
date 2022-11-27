@@ -26,11 +26,13 @@
 
 package cc.polyfrost.oneconfig.gui.elements.config;
 
+import cc.polyfrost.oneconfig.config.annotations.HypixelKey;
 import cc.polyfrost.oneconfig.config.annotations.Text;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
 import cc.polyfrost.oneconfig.gui.elements.text.TextInputField;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
+import cc.polyfrost.oneconfig.internal.config.HypixelKeys;
 import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
 import cc.polyfrost.oneconfig.renderer.asset.SVG;
@@ -42,18 +44,20 @@ import java.lang.reflect.Field;
 public class ConfigTextBox extends BasicOption {
     private final boolean secure;
     private final boolean multiLine;
+    private final boolean hypixelKey;
     private final TextInputField textField;
 
-    public ConfigTextBox(Field field, Object parent, String name, String description, String category, String subcategory, int size, String placeholder, boolean secure, boolean multiLine) {
+    public ConfigTextBox(Field field, Object parent, String name, String description, String category, String subcategory, int size, String placeholder, boolean secure, boolean multiLine, boolean apiKey) {
         super(field, parent, name, description, category, subcategory, size);
-        this.secure = secure;
+        this.secure = secure || apiKey;
         this.multiLine = multiLine;
-        this.textField = new TextInputField(size == 1 ? 256 : 640, multiLine ? 64 : 32, placeholder, multiLine, secure);
+        this.hypixelKey = apiKey;
+        this.textField = new TextInputField(size == 1 ? 256 : 640, multiLine ? 64 : 32, placeholder, multiLine, secure || apiKey);
     }
 
     public static ConfigTextBox create(Field field, Object parent) {
         Text text = field.getAnnotation(Text.class);
-        return new ConfigTextBox(field, parent, text.name(), text.description(), text.category(), text.subcategory(), text.secure() || text.multiline() ? 2 : text.size(), text.placeholder(), text.secure(), text.multiline());
+        return new ConfigTextBox(field, parent, text.name(), text.description(), text.category(), text.subcategory(), text.secure() || text.multiline() ? 2 : text.size(), text.placeholder(), text.secure(), text.multiline(), field.isAnnotationPresent(HypixelKey.class));
     }
 
     @Override
@@ -73,6 +77,15 @@ public class ConfigTextBox extends BasicOption {
         if (multiLine && textField.getLines() > 2) textField.setHeight(64 + 24 * (textField.getLines() - 2));
         else if (multiLine) textField.setHeight(64);
         textField.draw(vg, x + (size == 1 ? 224 : 352), y, inputHandler);
+
+        if (hypixelKey) {
+            final SVG icon = SVGs.ARROWS_CLOCKWISE_BOLD;
+            boolean hovered = inputHandler.isAreaHovered(x + 947, y + 7, 18, 18) && isEnabled();
+            int color = hovered ? Colors.WHITE : Colors.WHITE_80;
+            if (hovered && inputHandler.isClicked()) HypixelKeys.INSTANCE.syncKeys();
+            if (hovered && Platform.getMousePlatform().isButtonDown(0)) nanoVGHelper.setAlpha(vg, 0.5f);
+            nanoVGHelper.drawSvg(vg, icon, x + 947, y + 7, 18, 18, color);
+        }
 
         if (secure) {
             final SVG icon = textField.getPassword() ? SVGs.EYE_OFF : SVGs.EYE;

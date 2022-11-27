@@ -54,6 +54,37 @@ public class Preferences extends InternalConfig {
     public static OneKeyBind oneConfigKeyBind = new OneKeyBind(UKeyboard.KEY_RSHIFT);
 
     @Switch(
+            name = "Automatically Detect Hypixel API Key",
+            description = "Automatically detect your Hypixel API key from running /api new in chat.",
+            subcategory = "Hypixel"
+    )
+    public static boolean autoSetHypixelKey = true;
+
+    @Switch(
+            name = "Sync Hypixel API Keys on Startup",
+            description = "Automatically sync your Hypixel API keys across your mod configs on startup.",
+            subcategory = "Hypixel"
+    )
+    public static boolean syncHypixelKeys = true;
+
+    @Button(
+            name = "Sync Hypixel API Keys",
+            description = "Sync your Hypixel API keys across your mod configs.",
+            subcategory = "Hypixel",
+            text = "Sync"
+    )
+    private static void syncHypixelKeys() {
+        HypixelKeys.INSTANCE.syncKeys();
+    }
+
+    @Text(
+            name = "Hypixel API Key",
+            description = "Set all options marked as Hypixel API keys by the developer to this value.",
+            subcategory = "Hypixel"
+    )
+    private static String hypixelKey = "";
+
+    @Switch(
             name = "Enable Blur",
             subcategory = "GUI Settings"
     )
@@ -85,7 +116,14 @@ public class Preferences extends InternalConfig {
             OneConfigConfig.updateChannel = updateChannel;
             OneConfigConfig.getInstance().save();
         });
+        addListener("hypixelKey", () -> HypixelKeys.INSTANCE.setAllKeys(hypixelKey));
         INSTANCE = this;
+    }
+
+    @Override
+    public void save() {
+        hypixelKey = "";
+        super.save();
     }
 
     public static Preferences getInstance() {

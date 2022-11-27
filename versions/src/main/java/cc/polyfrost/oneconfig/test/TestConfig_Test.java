@@ -119,6 +119,13 @@ public class TestConfig_Test extends Config {
     )
     private static String testText = "Epic Text";
 
+    @Text(
+            name = "Api Key",
+            size = OptionSize.DUAL
+    )
+    @HypixelKey
+    private static String apiKey = "";
+
     @Button(
             name = "Test Button",
             text = "Say hi"
