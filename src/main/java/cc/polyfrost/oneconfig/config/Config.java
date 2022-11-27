@@ -58,6 +58,7 @@ import com.google.gson.GsonBuilder;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.lang.reflect.Field;
@@ -108,9 +109,12 @@ public class Config {
 
     public void initialize() {
         boolean migrate = false;
-        if (ConfigUtils.getProfileFile(configFile).exists()) load();
-        else if (mod.migrator != null) migrate = true;
-        else save();
+        File profileFile = ConfigUtils.getProfileFile(configFile);
+        if (profileFile.exists()) load();
+        if (!profileFile.exists()) {
+            if (mod.migrator != null) migrate = true;
+            else save();
+        }
         mod.config = this;
         generateOptionList(this, mod.defaultPage, mod, migrate);
         if (migrate) save();
@@ -118,8 +122,11 @@ public class Config {
     }
 
     public void reInitialize() {
-        if (ConfigUtils.getProfileFile(configFile).exists()) load();
-        else save();
+        File profileFile = ConfigUtils.getProfileFile(configFile);
+        if (profileFile.exists()) load();
+        if (!profileFile.exists()) {
+            save();
+        }
     }
 
     /**
@@ -148,11 +155,15 @@ public class Config {
             gson.fromJson(reader, this.getClass());
         } catch (Exception e) {
             e.printStackTrace();
+            File file = ConfigUtils.getProfileFile(configFile);
+            file.renameTo(new File(file.getParentFile(), file.getName() + ".corrupted"));
         }
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(Files.newInputStream(ConfigUtils.getNonProfileSpecificFile(configFile).toPath()), StandardCharsets.UTF_8))) {
             nonProfileSpecificGson.fromJson(reader, this.getClass());
         } catch (Exception e) {
             e.printStackTrace();
+            File file = ConfigUtils.getNonProfileSpecificFile(configFile);
+            file.renameTo(new File(file.getParentFile(), file.getName() + ".corrupted"));
         }
     }
 
