@@ -15,7 +15,7 @@ preprocess {
     val forge11605 = createNode("1.16.5-forge", 11605, "srg")
     val fabric11605 = createNode("1.16.5-fabric", 11605, "yarn")
 
-    fabric11605.link(forge11605)
+    fabric11605.link(forge11605, file("fabric-forge-modern.txt"))
     forge11605.link(forge11202, file("1.16.5-1.12.2.txt"))
     fabric11202.link(fabric10809)
     forge11202.link(forge10809, file("1.12.2-1.8.9.txt"))

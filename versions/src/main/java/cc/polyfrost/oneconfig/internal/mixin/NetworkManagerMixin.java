@@ -24,7 +24,6 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-//#if MC==10809 && FORGE==1
 package cc.polyfrost.oneconfig.internal.mixin;
 
 import cc.polyfrost.oneconfig.events.EventManager;
@@ -43,8 +42,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(value = NetworkManager.class, priority = Integer.MAX_VALUE)
 public class NetworkManagerMixin {
 
+    //#if MC<=11202
     @Inject(method = "sendPacket(Lnet/minecraft/network/Packet;Lio/netty/util/concurrent/GenericFutureListener;[Lio/netty/util/concurrent/GenericFutureListener;)V", at = @At("HEAD"), cancellable = true)
     private void onSendPacket(Packet<?> packetIn, GenericFutureListener<? extends Future<? super Void>> listener, GenericFutureListener<? extends Future<? super Void>>[] listeners, CallbackInfo ci) {
+    //#else
+    //$$ @Inject(method = "send(Lnet/minecraft/network/Packet;Lio/netty/util/concurrent/GenericFutureListener;)V", at = @At("HEAD"), cancellable = true)
+    //$$ private void onSendPacket(Packet<?> packetIn, GenericFutureListener<? extends Future<? super Void>> genericFutureListener, CallbackInfo ci) {
+    //#endif
         onSendPacket(packetIn, ci);
     }
 
@@ -66,4 +70,3 @@ public class NetworkManagerMixin {
         }
     }
 }
-//#endif

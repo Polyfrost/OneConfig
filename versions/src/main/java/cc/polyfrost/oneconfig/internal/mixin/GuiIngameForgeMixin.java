@@ -23,8 +23,6 @@
  * to OneConfig, as published by Polyfrost. If not, see
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
-
-//#if MC==10809 && FORGE==1
 package cc.polyfrost.oneconfig.internal.mixin;
 
 import cc.polyfrost.oneconfig.events.EventManager;
@@ -43,4 +41,3 @@ public class GuiIngameForgeMixin {
         EventManager.INSTANCE.post(new HudRenderEvent(new UMatrixStack(), partialTicks));
     }
 }
-//#endif

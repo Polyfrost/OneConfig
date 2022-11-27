@@ -36,8 +36,15 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(KeyboardListener.class)
 public class KeyboardMixin {
-    @Inject(method = "onKeyEvent", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/client/ForgeHooksClient;fireKeyInput(IIII)V", remap = false), remap = true)
+    @Inject(method = "onKeyEvent", at = @At(
+            //#if FORGE
+            value = "INVOKE", target = "Lnet/minecraftforge/client/ForgeHooksClient;fireKeyInput(IIII)V", remap = false
+            //#else
+            //$$ "TAIL"
+            //#endif
+    ), remap = true)
     private void onKeyEvent(long windowPointer, int key, int scanCode, int action, int modifiers, CallbackInfo ci) {
+        System.out.println("gdgjasdkogdsagikoDSJMGdskogjmds");
         EventManager.INSTANCE.post(new KeyInputEvent());
     }
 }
