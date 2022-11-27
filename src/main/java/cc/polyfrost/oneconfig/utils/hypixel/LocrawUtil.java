@@ -47,6 +47,13 @@ import cc.polyfrost.oneconfig.utils.JsonUtils;
 import cc.polyfrost.oneconfig.utils.TickDelay;
 import com.google.gson.Gson;
 
+/**
+ * <p>
+ *     An easy way to interact with the Hypixel Locraw API.
+ * </p>
+ * Modified from Hytilities by Sk1erLLC
+ * <a href="https://github.com/Sk1erLLC/Hytilities/blob/master/LICENSE">https://github.com/Sk1erLLC/Hytilities/blob/master/LICENSE</a>
+ */
 public class LocrawUtil {
     public static final LocrawUtil INSTANCE = new LocrawUtil();
 
