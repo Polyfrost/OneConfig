@@ -24,33 +24,36 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-//#if MC==10809 && FORGE==1
 package cc.polyfrost.oneconfig.internal.mixin;
 
 import cc.polyfrost.oneconfig.events.EventManager;
-import cc.polyfrost.oneconfig.events.event.ChatReceiveEvent;
-import net.minecraftforge.client.event.ClientChatReceivedEvent;
-import net.minecraftforge.fml.common.eventhandler.Event;
-import net.minecraftforge.fml.common.eventhandler.EventBus;
+import cc.polyfrost.oneconfig.events.event.ChatSendEvent;
+import net.minecraft.client.entity.EntityPlayerSP;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(EventBus.class)
-public class EventBusMixin {
+@Mixin(EntityPlayerSP.class)
+public class EntityPlayerSPMixin {
+    @Unique
+    private ChatSendEvent oneconfig$sendchatevent;
 
-    @Inject(method = "post", at = @At(value = "HEAD"), remap = false)
-    private void postReceiveEvent(Event e, CallbackInfoReturnable<Boolean> cir) {
-        if(!(e instanceof ClientChatReceivedEvent)) return;
-        ClientChatReceivedEvent event = (ClientChatReceivedEvent) e;
-        if (event.type == 0) {
-            ChatReceiveEvent customEvent = new ChatReceiveEvent(event.message);
-            EventManager.INSTANCE.post(customEvent);
-            if (customEvent.isCancelled) {
-                e.setCanceled(true);
-            }
+    @Inject(method = "sendChatMessage", at = @At("HEAD"), cancellable = true)
+    public void sendChatMessage(String message, CallbackInfo ci) {
+        oneconfig$sendchatevent = new ChatSendEvent(message);
+
+        EventManager.INSTANCE.post(oneconfig$sendchatevent);
+
+        if (oneconfig$sendchatevent.isCancelled) {
+            ci.cancel();
         }
     }
+
+    @ModifyVariable(method = "sendChatMessage", at = @At("HEAD"), ordinal = 0, argsOnly = true)
+    public String modifyMessage(String message) {
+        return oneconfig$sendchatevent.message;
+    }
 }
-//#endif
