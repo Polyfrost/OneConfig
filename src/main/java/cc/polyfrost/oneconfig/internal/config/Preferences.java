@@ -62,14 +62,14 @@ public class Preferences extends InternalConfig {
 
     @Switch(
             name = "Sync Hypixel API Keys on Startup",
-            description = "Automatically sync your Hypixel API keys across your mod configs on startup.",
+            description = "Automatically sync your Hypixel API keys across all options marked as Hypixel API keys in OneConfig.",
             subcategory = "Hypixel"
     )
     public static boolean syncHypixelKeys = true;
 
     @Button(
             name = "Sync Hypixel API Keys",
-            description = "Sync your Hypixel API keys across your mod configs.",
+            description = "Sync your Hypixel API keys across all options marked as Hypixel API keys in OneConfig.",
             subcategory = "Hypixel",
             text = "Sync"
     )
