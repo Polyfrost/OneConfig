@@ -44,7 +44,6 @@ public class KeyboardMixin {
             //#endif
     ), remap = true)
     private void onKeyEvent(long windowPointer, int key, int scanCode, int action, int modifiers, CallbackInfo ci) {
-        System.out.println("gdgjasdkogdsagikoDSJMGdskogjmds");
         EventManager.INSTANCE.post(new KeyInputEvent());
     }
 }
