@@ -27,7 +27,6 @@
 package cc.polyfrost.oneconfig.gui;
 
 import cc.polyfrost.oneconfig.gui.animations.Animation;
-import cc.polyfrost.oneconfig.gui.animations.cubic.CubicBezier;
 import cc.polyfrost.oneconfig.gui.animations.DummyAnimation;
 import cc.polyfrost.oneconfig.gui.animations.expo.EaseOutExpo;
 import cc.polyfrost.oneconfig.gui.elements.BasicButton;
@@ -38,9 +37,6 @@ import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.internal.config.Preferences;
 import cc.polyfrost.oneconfig.internal.gui.HudGui;
-import cc.polyfrost.oneconfig.libs.universal.UMinecraft;
-import cc.polyfrost.oneconfig.libs.universal.wrappers.UPlayer;
-import cc.polyfrost.oneconfig.libs.universal.wrappers.message.UTextComponent;
 import cc.polyfrost.oneconfig.renderer.RenderManager;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.utils.InputHandler;
@@ -141,5 +137,9 @@ public class SideBar {
     private int calcAndIncrementLn(int n) {
         sidebarY = n + 36;
         return sidebarY;
+    }
+
+    public ArrayList<BasicButton> getButtons() {
+        return buttons;
     }
 }

@@ -28,6 +28,7 @@ package cc.polyfrost.oneconfig.gui;
 
 import cc.polyfrost.oneconfig.config.core.OneColor;
 import cc.polyfrost.oneconfig.gui.animations.*;
+import cc.polyfrost.oneconfig.gui.elements.BasicButton;
 import cc.polyfrost.oneconfig.gui.elements.BasicElement;
 import cc.polyfrost.oneconfig.gui.elements.ColorSelector;
 import cc.polyfrost.oneconfig.gui.elements.text.TextInputField;
@@ -57,6 +58,7 @@ public class OneConfigGui extends OneUIScreen {
     private final SideBar sideBar = new SideBar();
     private final TextInputField textInputField = new TextInputField(248, 40, "Search...", false, false, SVGs.MAGNIFYING_GLASS_BOLD);
     private final ArrayList<Page> previousPages = new ArrayList<>();
+    private final ArrayList<String> sidebarPages = new ArrayList<>();
     private final ArrayList<Page> nextPages = new ArrayList<>();
     private final BasicElement backArrow = new BasicElement(40, 40, ColorPalette.TERTIARY, true);
     private final BasicElement forwardArrow = new BasicElement(40, 40, ColorPalette.TERTIARY, true);
@@ -68,11 +70,23 @@ public class OneConfigGui extends OneUIScreen {
 
     public OneConfigGui() {
         INSTANCE = this;
+
+        loadPages();
     }
 
     public OneConfigGui(Page page) {
         INSTANCE = this;
         currentPage = page;
+
+        loadPages();
+    }
+
+    private void loadPages() {
+        ArrayList<BasicButton> buttons = sideBar.getButtons();
+
+        for (BasicButton button : buttons) {
+            sidebarPages.add(button.getText());
+        }
     }
 
     public static OneConfigGui create() {
@@ -221,35 +235,23 @@ public class OneConfigGui extends OneUIScreen {
     }
 
     public void openPage(@NotNull Page page) {
-        switch (page.getTitle()) {
-            case "Preferences":
-                openPage(page, PageAnimation.DOWN, true);
-                return;
-            case "Credits":
-                openPage(page, PageAnimation.UP, true);
-                return;
-            case "Mods":
-                if (currentPage.getTitle().equals("Preferences")) {
+        try {
+            if(sidebarPages.contains(page.getTitle())) {
+                // New page is from sidebar
+                if (sidebarPages.indexOf(page.getTitle()) > sidebarPages.indexOf(currentPage.getTitle())) {
                     openPage(page, PageAnimation.UP, true);
-                    return;
-                } else if (currentPage.getTitle().equals("Credits")) {
-                    openPage(page, PageAnimation.DOWN, true);
-                    return;
                 } else {
-                    openPage(page, PageAnimation.LEFT, true);
-                    return;
+                    openPage(page, PageAnimation.DOWN, true);
                 }
-            default:
+            } else {
                 if (nextPages.contains(page)) {
-                    openPage(page, PageAnimation.RIGHT, true);
-                    return;
-                }
-                if (previousPages.contains(page) && currentPage.parents.contains(page)) {
                     openPage(page, PageAnimation.LEFT, true);
-                    return;
+                } else {
+                    openPage(page, PageAnimation.RIGHT, true);
                 }
-                openPage(page, PageAnimation.RIGHT, true);
-
+            }
+        } catch (Exception ex) {
+            openPage(page, PageAnimation.UP, true);
         }
     }
 
