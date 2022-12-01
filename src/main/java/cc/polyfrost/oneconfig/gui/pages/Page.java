@@ -69,6 +69,10 @@ public abstract class Page {
     }
 
     public void finishUpAndClose() {
+        scroll = 0;
+        scrollTarget = 0;
+        scrollTime = 0;
+        scrollAnimation = null;
     }
 
     public void scrollWithDraw(long vg, int x, int y, InputHandler inputHandler) {
