@@ -30,6 +30,7 @@ import cc.polyfrost.oneconfig.config.annotations.Slider;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
 import cc.polyfrost.oneconfig.gui.animations.Animation;
 import cc.polyfrost.oneconfig.gui.animations.DummyAnimation;
+import cc.polyfrost.oneconfig.gui.animations.EaseInOutCubic;
 import cc.polyfrost.oneconfig.gui.animations.EaseInOutQuart;
 import cc.polyfrost.oneconfig.gui.animations.EaseOutExpo;
 import cc.polyfrost.oneconfig.gui.elements.text.NumberInputField;
@@ -58,6 +59,7 @@ public class ConfigSlider extends BasicOption {
     private boolean mouseWasDown = false;
     private Animation stepsAnimation;
     private Animation targetAnimation;
+    private Animation stepSlideAnimation;
     private boolean animReset;
 
     public ConfigSlider(Field field, Object parent, String name, String description, String category, String subcategory, float min, float max, int step) {
@@ -68,6 +70,7 @@ public class ConfigSlider extends BasicOption {
         this.inputField = new NumberInputField(84, 32, 0, min, max, step == 0 ? 1 : step);
         this.stepsAnimation = new DummyAnimation(0);
         this.targetAnimation = new DummyAnimation(0);
+        this.stepSlideAnimation = new DummyAnimation(-1);
     }
 
     public static ConfigSlider create(Field field, Object parent) {
@@ -140,6 +143,14 @@ public class ConfigSlider extends BasicOption {
         if (!inputField.isToggled()) {
             inputField.setCurrentValue(value);
         }
+
+        // Animate sliding
+        if (stepSlideAnimation.get() == -1) {
+            stepSlideAnimation = new DummyAnimation(xCoordinate);
+        } else {
+            stepSlideAnimation = new EaseInOutCubic(45, stepSlideAnimation.get(), xCoordinate, false);
+        }
+        xCoordinate = (int) stepSlideAnimation.get();
 
         nanoVGHelper.drawText(vg, name, x, y + 17, nameColor, 14f, Fonts.MEDIUM);
         // Ease-out the radius when the steps are in view
