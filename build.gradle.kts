@@ -84,7 +84,7 @@ dependencies {
         isTransitive = false
     }
 
-    compileOnly("cc.polyfrost:universalcraft-1.8.9-forge:245") {
+    compileOnly("cc.polyfrost:universalcraft-1.8.9-forge:246") {
         attributes { attribute(common, true) }
         isTransitive = false
     }
