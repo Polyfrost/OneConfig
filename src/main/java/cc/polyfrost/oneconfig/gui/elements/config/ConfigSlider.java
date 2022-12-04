@@ -44,6 +44,10 @@ import cc.polyfrost.oneconfig.utils.MathUtils;
 import java.lang.reflect.Field;
 
 public class ConfigSlider extends BasicOption {
+    private static final int STEP_POPUP_DURATION = 75;
+    private static final int INDICATOR_POPUP_DURATION = 85;
+    private static final int INDICATOR_SLIDING_DURATION = 50;
+
     private static final float STEP_HEIGHT_HOVER = 4;
     // Step height drag is also the max height of the step
     private static final float STEP_HEIGHT_DRAG = 10;
@@ -113,18 +117,18 @@ public class ConfigSlider extends BasicOption {
         float targetPercent = targetAnimation.get();
         if (isEnabled()) {
             if (dragging && startedDragging) {
-                stepsAnimation = new EaseInOutQuart(65, stepPercent, 1, false);
-                targetAnimation = new EaseInOutQuart(75, targetPercent, TOUCH_TARGET_DRAG / TOUCH_TARGET_TOTAL, false);
+                stepsAnimation = new EaseInOutQuart(STEP_POPUP_DURATION, stepPercent, 1, false);
+                targetAnimation = new EaseInOutQuart(INDICATOR_POPUP_DURATION, targetPercent, TOUCH_TARGET_DRAG / TOUCH_TARGET_TOTAL, false);
                 animReset = true;
             } else if (!dragging && hovered) {
                 if (targetAnimation.getEnd() != 1) {
-                    stepsAnimation = new EaseOutExpo(65, stepPercent, STEP_HEIGHT_HOVER / STEP_HEIGHT_DRAG, false);
-                    targetAnimation = new EaseInOutQuart(75, targetPercent, 1, false);
+                    stepsAnimation = new EaseOutExpo(STEP_POPUP_DURATION, stepPercent, STEP_HEIGHT_HOVER / STEP_HEIGHT_DRAG, false);
+                    targetAnimation = new EaseInOutQuart(INDICATOR_POPUP_DURATION, targetPercent, 1, false);
                     animReset = true;
                 }
             } else if (!dragging && animReset) {
-                stepsAnimation = new EaseInOutQuart(65, stepPercent, 0, false);
-                targetAnimation = new EaseInOutQuart(75, targetPercent, 0, false);
+                stepsAnimation = new EaseInOutQuart(STEP_POPUP_DURATION, stepPercent, 0, false);
+                targetAnimation = new EaseInOutQuart(INDICATOR_POPUP_DURATION, targetPercent, 0, false);
                 animReset = false;
             }
         }
@@ -148,7 +152,7 @@ public class ConfigSlider extends BasicOption {
         if (stepSlideAnimation.get() == -1) {
             stepSlideAnimation = new DummyAnimation(xCoordinate);
         } else {
-            stepSlideAnimation = new EaseInOutCubic(45, stepSlideAnimation.get(), xCoordinate, false);
+            stepSlideAnimation = new EaseInOutCubic(INDICATOR_SLIDING_DURATION, stepSlideAnimation.get(), xCoordinate, false);
         }
         xCoordinate = (int) stepSlideAnimation.get();
 
