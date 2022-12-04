@@ -5,8 +5,7 @@ name: Release Snapshot
 on:
   push:
     branches:
-      - master
-      
+      - snapshot
 
 concurrency:
   group: ${{ github.head_ref || format('{0}-{1}', github.ref, github.run_number) }}
