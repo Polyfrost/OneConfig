@@ -73,6 +73,20 @@ public class Preferences extends InternalConfig {
     )
     public static float customScale = 1f;
 
+    @Switch(
+            name = "Opening Animation",
+            subcategory = "GUI Settings"
+    )
+    public static boolean guiOpenAnimation = true;
+
+    @Slider(
+            name = "Animation Duration",
+            subcategory = "GUI Settings",
+            min = 0.05f,
+            max = 5f
+    )
+    public static float animationTime = 0.5f;
+
     @Exclude
     private static Preferences INSTANCE;
 

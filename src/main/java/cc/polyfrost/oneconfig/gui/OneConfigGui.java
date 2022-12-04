@@ -28,6 +28,7 @@ package cc.polyfrost.oneconfig.gui;
 
 import cc.polyfrost.oneconfig.config.core.OneColor;
 import cc.polyfrost.oneconfig.gui.animations.Animation;
+import cc.polyfrost.oneconfig.gui.animations.DummyAnimation;
 import cc.polyfrost.oneconfig.gui.animations.EaseOutExpo;
 import cc.polyfrost.oneconfig.gui.elements.BasicElement;
 import cc.polyfrost.oneconfig.gui.elements.ColorSelector;
@@ -64,9 +65,12 @@ public class OneConfigGui extends OneUIScreen {
     private final BasicElement forwardArrow = new BasicElement(40, 40, ColorPalette.TERTIARY, true);
     public ColorSelector currentColorSelector;
     public boolean allowClose = true;
+    private boolean wasClosed = true;
     protected Page currentPage;
     protected Page prevPage;
     private Animation animation;
+    private Animation openingAnimation = new DummyAnimation(1);
+    private float cachedScaleFactor = 1f;
 
     public OneConfigGui() {
         INSTANCE = this;
@@ -88,6 +92,12 @@ public class OneConfigGui extends OneUIScreen {
             currentPage = new ModsPage();
             currentPage.parents.add(currentPage);
         }
+        if (wasClosed) {
+            openingAnimation = new EaseOutExpo((int) (Preferences.animationTime * 1000), 0.05f, 1, false);
+            wasClosed = false;
+        }
+        cachedScaleFactor = openingAnimation.get();
+
         if (OneConfigConfig.australia) {
             nanoVGHelper.translate(vg, UResolution.getWindowWidth(), UResolution.getWindowHeight());
             nanoVGHelper.rotate(vg, (float) Math.toRadians(180));
@@ -277,7 +287,10 @@ public class OneConfigGui extends OneUIScreen {
         float scale = Preferences.enableCustomScale ? Preferences.customScale : Math.min(UResolution.getWindowWidth() / 1920f, UResolution.getWindowHeight() / 1080f);
         if (scale < 1 && !Preferences.enableCustomScale)
             scale = Math.min(Math.min(1f, UResolution.getWindowWidth() / 1280f), Math.min(1f, UResolution.getWindowHeight() / 800f));
-        return (float) (Math.floor(scale / 0.05f) * 0.05f);
+        float scaleFactor = (float) (Math.floor(scale / 0.05f) * 0.05f);
+        if (Preferences.guiOpenAnimation)
+            return scaleFactor * INSTANCE.cachedScaleFactor;
+        return scaleFactor;
     }
 
     public String getSearchValue() {
@@ -287,6 +300,7 @@ public class OneConfigGui extends OneUIScreen {
     @Override
     public void onScreenClose() {
         currentPage.finishUpAndClose();
+        wasClosed = true;
         super.onScreenClose();
     }
 
