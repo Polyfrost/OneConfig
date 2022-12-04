@@ -119,6 +119,7 @@ public abstract interface annotation class cc/polyfrost/oneconfig/config/annotat
 	public abstract fun max ()F
 	public abstract fun min ()F
 	public abstract fun name ()Ljava/lang/String;
+	public abstract fun size ()I
 	public abstract fun step ()I
 	public abstract fun subcategory ()Ljava/lang/String;
 }
@@ -812,7 +813,7 @@ public class cc/polyfrost/oneconfig/gui/elements/config/ConfigKeyBind : cc/polyf
 }
 
 public class cc/polyfrost/oneconfig/gui/elements/config/ConfigNumber : cc/polyfrost/oneconfig/config/elements/BasicOption {
-	public fun <init> (Ljava/lang/reflect/Field;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;FFI)V
+	public fun <init> (Ljava/lang/reflect/Field;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;FFII)V
 	public static fun create (Ljava/lang/reflect/Field;Ljava/lang/Object;)Lcc/polyfrost/oneconfig/gui/elements/config/ConfigNumber;
 	public fun draw (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
 	public fun getHeight ()I
