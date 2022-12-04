@@ -8,12 +8,15 @@ net.minecraft.client.entity.EntityPlayerSP getServerBrand() getClientBrand()
 net.minecraft.client.entity.player.ClientPlayerEntity net.minecraft.client.entity.EntityPlayerSP
 net.minecraft.client.Minecraft gameRenderer entityRenderer
 net.minecraft.client.shader.ShaderDefault net.minecraft.client.shader.ShaderUniform
+net.minecraft.client.world.ClientWorld net.minecraft.client.multiplayer.WorldClient
 
 net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent net.minecraftforge.fml.common.event.FMLInitializationEvent
 net.minecraftforge.fml.common.Loader get() instance()
 net.minecraftforge.fml.common.Loader getActiveContainer() activeModContainer()
 net.minecraftforge.fml.ModLoadingContext net.minecraftforge.fml.common.Loader
 net.minecraftforge.fml.ModContainer net.minecraftforge.fml.common.ModContainer
+net.minecraftforge.client.gui.ForgeIngameGui net.minecraftforge.client.GuiIngameForge
+net.minecraftforge.eventbus.api.Event net.minecraftforge.fml.common.eventhandler.Event
 
 org.objectweb.asm.tree.ClassNode org.spongepowered.asm.lib.tree.ClassNode
 org.objectweb.asm.tree.FieldNode org.spongepowered.asm.lib.tree.FieldNode
