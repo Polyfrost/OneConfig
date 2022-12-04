@@ -104,7 +104,7 @@ public class OneConfigGui extends OneUIScreen {
             currentPage = new ModsPage();
             currentPage.parents.add(currentPage);
         }
-        if (wasClosed) {
+        if (wasClosed || inputHandler != null) {
             openingAnimation = new EaseOutExpo((int) (Preferences.animationTime * 1000), Preferences.guiClosingAnimation ? cachedScaleFactor : 0, 1, false);
             wasClosed = false;
             isClosing = false;
@@ -119,6 +119,9 @@ public class OneConfigGui extends OneUIScreen {
             nanoVGHelper.translate(vg, UResolution.getWindowWidth(), UResolution.getWindowHeight());
             nanoVGHelper.rotate(vg, (float) Math.toRadians(180));
         }
+        if (inputHandler == null)
+            inputHandler = DUMMY_HANDLER;
+
         float scale = getScaleFactor();
         int x = (int) ((UResolution.getWindowWidth() - 1280 * scale) / 2f / scale);
         int y = (int) ((UResolution.getWindowHeight() - 800 * scale) / 2f / scale);
@@ -344,7 +347,7 @@ public class OneConfigGui extends OneUIScreen {
         if (!isClosing) return;
         if (Platform.getGuiPlatform().getCurrentScreen() == this) return;
 
-        NanoVGHelper.INSTANCE.setupAndDraw(vg -> draw(vg, event.deltaTicks, DUMMY_HANDLER));
+        NanoVGHelper.INSTANCE.setupAndDraw(vg -> draw(vg, event.deltaTicks, null));
 
         if (cachedScaleFactor < 0.01) {
             isClosing = false;
