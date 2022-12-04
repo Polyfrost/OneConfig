@@ -29,6 +29,8 @@ package cc.polyfrost.oneconfig.gui.elements.config;
 import cc.polyfrost.oneconfig.config.annotations.HypixelKey;
 import cc.polyfrost.oneconfig.config.annotations.Text;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
+import cc.polyfrost.oneconfig.gui.animations.Animation;
+import cc.polyfrost.oneconfig.gui.animations.DummyAnimation;
 import cc.polyfrost.oneconfig.gui.elements.text.TextInputField;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
@@ -38,6 +40,7 @@ import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
 import cc.polyfrost.oneconfig.renderer.asset.SVG;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.utils.InputHandler;
+import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 
 import java.lang.reflect.Field;
 
@@ -45,7 +48,10 @@ public class ConfigTextBox extends BasicOption {
     private final boolean secure;
     private final boolean multiLine;
     private final boolean hypixelKey;
-    private final TextInputField textField;
+    public final TextInputField textField;
+    private Animation descriptionAnimation = new DummyAnimation(0f);
+    private float hoverTime = 0f;
+
 
     public ConfigTextBox(Field field, Object parent, String name, String description, String category, String subcategory, int size, String placeholder, boolean secure, boolean multiLine, boolean apiKey) {
         super(field, parent, name, description, category, subcategory, size);
@@ -57,7 +63,8 @@ public class ConfigTextBox extends BasicOption {
 
     public static ConfigTextBox create(Field field, Object parent) {
         Text text = field.getAnnotation(Text.class);
-        return new ConfigTextBox(field, parent, text.name(), text.description(), text.category(), text.subcategory(), text.secure() || text.multiline() ? 2 : text.size(), text.placeholder(), text.secure(), text.multiline(), field.isAnnotationPresent(HypixelKey.class));
+        boolean hypixelKey = field.isAnnotationPresent(HypixelKey.class);
+        return new ConfigTextBox(field, parent, text.name(), text.description(), text.category(), text.subcategory(), text.secure() || hypixelKey || text.multiline() ? 2 : text.size(), text.placeholder(), text.secure(), text.multiline(), hypixelKey);
     }
 
     @Override
@@ -84,7 +91,7 @@ public class ConfigTextBox extends BasicOption {
             int color = hovered ? Colors.WHITE : Colors.WHITE_80;
             if (hovered && inputHandler.isClicked()) HypixelKeys.INSTANCE.syncKeys();
             if (hovered && Platform.getMousePlatform().isButtonDown(0)) nanoVGHelper.setAlpha(vg, 0.5f);
-            nanoVGHelper.drawSvg(vg, icon, x + 947, y + 7, 18, 18, color);
+            nanoVGHelper.drawSvg(vg, icon, x + 967 - 18 - 4, y + 7, 18, 18, color);
         }
 
         if (secure) {
@@ -116,5 +123,13 @@ public class ConfigTextBox extends BasicOption {
     @Override
     protected boolean shouldDrawDescription() {
         return super.shouldDrawDescription() && !textField.isToggled();
+    }
+
+    public void drawSyncDescription(long vg, int x, int y, InputHandler inputHandler) {
+        if (inputHandler.isAreaHovered(x + 947, y + 7, 18, 18)) hoverTime += GuiUtils.getDeltaTime();
+        else hoverTime = 0;
+        NanoVGHelper.INSTANCE.translate(vg, 967 - 18 - 4, 0);
+        drawDescription(vg, x, y, "Sync other API keys marked in OneConfig to the same value.", () -> descriptionAnimation, (a) -> descriptionAnimation = a, hoverTime > 350, inputHandler);
+        NanoVGHelper.INSTANCE.translate(vg, -967 + 18 + 4, 0);
     }
 }

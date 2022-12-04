@@ -67,7 +67,7 @@ public class HypixelKeys {
                 Multithreading.runAsync(() -> { //run this async as getting from the API normally would freeze minecraft
                     if (!HypixelUtils.INSTANCE.isValidKey(tempApiKey)
                     ) {
-                        Notifications.INSTANCE.send("OneConfig API Key", "The API Key was invalid! Please try running the command again.");
+                        Notifications.INSTANCE.send("OneConfig Hypixel API Key", "The API Key was invalid! Please try running the command again.");
                     } else {
                         boolean success = true;
                         for (BasicOption option : options) {
@@ -75,12 +75,12 @@ public class HypixelKeys {
                                 option.getField().set(option.getParent(), tempApiKey);
                             } catch (IllegalAccessException e) {
                                 e.printStackTrace();
-                                Notifications.INSTANCE.send("OneConfig API Key", "Unable to set API Key of " + option.getField().getName() + " in " + option.getParent().getClass().getName() + "!");
+                                Notifications.INSTANCE.send("OneConfig Hypixel API Key", "Unable to set API Key of " + option.getField().getName() + " in " + option.getParent().getClass().getName() + "!");
                                 success = false;
                             }
                         }
                         if (success) {
-                            Notifications.INSTANCE.send("OneConfig API Key", "Successfully set API Key for " + options.size() + " options!");
+                            Notifications.INSTANCE.send("OneConfig Hypixel API Key", "Successfully set API Key for " + options.size() + " option" + (options.size() > 1 ? "s" : "") + "!");
                         }
                     }
                 });
@@ -113,23 +113,28 @@ public class HypixelKeys {
         if (firstValidKey != null) {
             setKeys(firstValidKey);
         } else {
-            Notifications.INSTANCE.send("OneConfig API Key", "There are mods that require a Hypixel API Key, but none of the keys are valid! Click here to get a new key.", () -> new TickDelay(() -> UChat.say("/api new"), 20));
+            Notifications.INSTANCE.send("OneConfig Hypixel API Key", "There are mods that require a Hypixel API Key, but none of the keys are valid! Click here to get a new key.", () -> new TickDelay(() -> UChat.say("/api new"), 20));
         }
     }
 
     public void setAllKeys(String hypixelKey) {
-        if (hypixelKey == null || hypixelKey.trim().isEmpty()) return;
+        if (hypixelKey == null) return;
         setKeys(hypixelKey);
     }
 
     private void setKeys(String hypixelKey) {
+        boolean success = true;
         for (BasicOption option : options) {
             try {
                 option.getField().set(option.getParent(), hypixelKey);
             } catch (IllegalAccessException e) {
                 e.printStackTrace();
-                Notifications.INSTANCE.send("OneConfig API Key", "Unable to set API Key of " + option.getField().getName() + " in " + option.getParent().getClass().getName() + "! Please contact us at https://polyfrost.cc/discord!");
+                Notifications.INSTANCE.send("OneConfig Hypixel API Key", "Unable to set API Key of " + option.getField().getName() + " in " + option.getParent().getClass().getName() + "! Please contact us at https://polyfrost.cc/discord!");
+                success = false;
             }
+        }
+        if (success) {
+            Notifications.INSTANCE.send("OneConfig Hypixel API Key", "Successfully synced API Key for " + options.size() + " option" + (options.size() > 1 ? "s" : "") + "!");
         }
     }
 }

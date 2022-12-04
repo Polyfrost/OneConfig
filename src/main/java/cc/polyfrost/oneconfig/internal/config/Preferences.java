@@ -26,7 +26,13 @@
 
 package cc.polyfrost.oneconfig.internal.config;
 
-import cc.polyfrost.oneconfig.config.annotations.*;
+import cc.polyfrost.oneconfig.config.annotations.Button;
+import cc.polyfrost.oneconfig.config.annotations.Dropdown;
+import cc.polyfrost.oneconfig.config.annotations.Exclude;
+import cc.polyfrost.oneconfig.config.annotations.KeyBind;
+import cc.polyfrost.oneconfig.config.annotations.Slider;
+import cc.polyfrost.oneconfig.config.annotations.Switch;
+import cc.polyfrost.oneconfig.config.annotations.Text;
 import cc.polyfrost.oneconfig.config.core.OneKeyBind;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.internal.gui.BlurHandler;
@@ -75,6 +81,16 @@ public class Preferences extends InternalConfig {
     )
     private static void syncHypixelKeys() {
         HypixelKeys.INSTANCE.syncKeys();
+    }
+
+    @Button(
+            name = "Remove All Syncable Hypixel API Keys",
+            description = "Remove all (and only) fields marked as Hypixel API keys in OneConfig.",
+            subcategory = "Hypixel",
+            text = "Remove"
+    )
+    private static void removeAllHypixelKeys() {
+        HypixelKeys.INSTANCE.setAllKeys("");
     }
 
     @Text(

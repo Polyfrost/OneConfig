@@ -32,8 +32,9 @@ import cc.polyfrost.oneconfig.gui.animations.DummyAnimation;
 import cc.polyfrost.oneconfig.gui.animations.EaseOutQuad;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
-import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
 import cc.polyfrost.oneconfig.libs.universal.ChatColor;
+import cc.polyfrost.oneconfig.libs.universal.UResolution;
+import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
@@ -41,9 +42,9 @@ import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-@SuppressWarnings({"unused"})
 public abstract class BasicOption {
     public final int size;
     protected final Field field;
@@ -135,24 +136,34 @@ public abstract class BasicOption {
 
     public void drawDescription(long vg, int x, int y, InputHandler inputHandler) {
         if (description.trim().equals("")) return;
-        final NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
-        boolean hovered = inputHandler.isAreaHovered(getNameX(x), y, nanoVGHelper.getTextWidth(vg, name, 14f, Fonts.MEDIUM), 32f);
+        boolean hovered = inputHandler.isAreaHovered(getNameX(x), y, NanoVGHelper.INSTANCE.getTextWidth(vg, name, 14f, Fonts.MEDIUM), 32f);
         nameColor = nameColorAnimation.getColor(hovered, false);
         if (hovered) hoverTime += GuiUtils.getDeltaTime();
         else hoverTime = 0;
-        boolean shouldDrawDescription = shouldDrawDescription();
-        if (descriptionAnimation.getEnd() != 1f && shouldDrawDescription) {
-            descriptionAnimation = new EaseOutQuad(150, descriptionAnimation.get(0), 1f, false);
-        } else if (descriptionAnimation.getEnd() != 0f && !shouldDrawDescription) {
-            descriptionAnimation = new EaseOutQuad(150, descriptionAnimation.get(0), 0f, false);
+        drawDescription(vg, x, y, description, () -> descriptionAnimation, (a) -> descriptionAnimation = a, shouldDrawDescription(), inputHandler);
+    }
+
+    protected void drawDescription(long vg, int x, int y, String description, Supplier<Animation> getDescriptionAnimation, Consumer<Animation> setDescriptionAnimation, boolean shouldDrawDescription, InputHandler inputHandler) {
+        final NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
+        if (getDescriptionAnimation.get().getEnd() != 1f && shouldDrawDescription) {
+            setDescriptionAnimation.accept(new EaseOutQuad(150, getDescriptionAnimation.get().get(0), 1f, false));
+        } else if (getDescriptionAnimation.get().getEnd() != 0f && !shouldDrawDescription) {
+            setDescriptionAnimation.accept(new EaseOutQuad(150, getDescriptionAnimation.get().get(0), 0f, false));
         }
-        if (!shouldDrawDescription && descriptionAnimation.isFinished()) return;
+        if (!shouldDrawDescription && getDescriptionAnimation.get().isFinished()) return;
         float textWidth = nanoVGHelper.getTextWidth(vg, description, 16, Fonts.MEDIUM);
-        nanoVGHelper.setAlpha(vg, descriptionAnimation.get());
+        nanoVGHelper.setAlpha(vg, getDescriptionAnimation.get().get());
+        boolean right = UResolution.getWindowWidth() / 2f < inputHandler.mouseX();
+        if (right) {
+            nanoVGHelper.translate(vg, -(textWidth + 68), 0);
+        }
         nanoVGHelper.drawRoundedRect(vg, x, y - 42f, textWidth + 68f, 44f, Colors.GRAY_700, 8f);
         nanoVGHelper.drawDropShadow(vg, x, y - 42f, textWidth + 68f, 44f, 32f, 0f, 8f);
         nanoVGHelper.drawSvg(vg, SVGs.INFO_ARROW, x + 16, y - 30f, 20f, 20f, Colors.WHITE_80);
         nanoVGHelper.drawText(vg, description, x + 52, y - 19, Colors.WHITE_80, 16, Fonts.MEDIUM);
+        if (right) {
+            nanoVGHelper.translate(vg, textWidth + 68, 0);
+        }
         nanoVGHelper.setAlpha(vg, 1f);
     }
 

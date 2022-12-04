@@ -121,10 +121,23 @@ public class TestConfig_Test extends Config {
 
     @Text(
             name = "Api Key",
-            size = OptionSize.DUAL
+            size = OptionSize.DUAL,
+            description = "This is a secret key"
     )
     @HypixelKey
     private static String apiKey = "";
+
+    @Text(
+            name = "Test Text 2",
+            secure = true
+    )
+    private static String testText2 = "Epic Text";
+
+    @Text(
+            name = "Test Text 3"
+    )
+    private static String testText3 = "Epic Text";
+
 
     @Button(
             name = "Test Button",
