@@ -53,8 +53,9 @@ import cc.polyfrost.oneconfig.internal.config.core.ConfigCore;
 import cc.polyfrost.oneconfig.internal.config.core.KeyBindHandler;
 import cc.polyfrost.oneconfig.internal.utils.Deprecator;
 import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import com.google.gson.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -380,5 +381,22 @@ public class Config {
      */
     public boolean supportsProfiles() {
         return true;
+    }
+
+    /**
+     * Register a mod to be managed by OneConfig. <br>
+     * <b>NOTE: DO NOT USE THIS METHOD UNLESS YOU ARE USING A CUSTOM IMPLEMENTATION!</b> This function is normally completed by initializing a Config. <br>
+     * @implNote null -> null, if already registered -> old mod, if registered successfully -> null
+     *
+     * @param mod The mod to be registered
+     */
+    @ApiStatus.Experimental
+    @Contract("null -> null")
+    public static Mod register(Mod mod) {
+        if(mod == null) return null;
+        if(ConfigCore.mods.contains(mod)) return mod;
+        ConfigCore.mods.add(mod);
+        ConfigCore.sortMods();
+        return null;
     }
 }

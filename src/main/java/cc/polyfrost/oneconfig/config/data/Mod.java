@@ -88,4 +88,14 @@ public class Mod implements Comparable<Mod> {
     public int compareTo(@NotNull Mod mod) {
         return name.compareTo(mod.name);
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if(obj == null) return false;
+        if(obj == this) return true;
+        if(obj instanceof Mod) {
+            Mod mod = (Mod) obj;
+            return name.equals(mod.name);
+        } else return false;
+    }
 }

@@ -23,6 +23,7 @@ public class cc/polyfrost/oneconfig/config/Config {
 	public fun load ()V
 	public fun openGui ()V
 	public fun reInitialize ()V
+	public static fun register (Lcc/polyfrost/oneconfig/config/data/Mod;)Lcc/polyfrost/oneconfig/config/data/Mod;
 	protected final fun registerKeyBind (Lcc/polyfrost/oneconfig/config/core/OneKeyBind;Ljava/lang/Runnable;)V
 	public fun save ()V
 	public fun supportsProfiles ()Z
@@ -263,6 +264,7 @@ public class cc/polyfrost/oneconfig/config/data/Mod : java/lang/Comparable {
 	public fun <init> (Ljava/lang/String;Lcc/polyfrost/oneconfig/config/data/ModType;Ljava/lang/String;Lcc/polyfrost/oneconfig/config/migration/Migrator;)V
 	public fun compareTo (Lcc/polyfrost/oneconfig/config/data/Mod;)I
 	public synthetic fun compareTo (Ljava/lang/Object;)I
+	public fun equals (Ljava/lang/Object;)Z
 }
 
 public final class cc/polyfrost/oneconfig/config/data/ModType : java/lang/Enum {
