@@ -40,14 +40,14 @@ public class TickDelay {
     private final Runnable function;
     private int delay;
 
-    public TickDelay(Runnable functionName, int ticks) {
+    public TickDelay(Runnable function, int ticks) {
         if (ticks < 1) {
-            functionName.run();
+            function.run();
         } else {
             EventManager.INSTANCE.register(this);
             delay = ticks;
         }
-        function = functionName;
+        this.function = function;
     }
 
     @Subscribe

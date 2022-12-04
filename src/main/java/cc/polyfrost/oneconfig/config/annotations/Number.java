@@ -46,6 +46,8 @@ public @interface Number {
 
     int step() default 1;
 
+    int size() default 1;
+
     String description() default "";
 
     String category() default "General";
