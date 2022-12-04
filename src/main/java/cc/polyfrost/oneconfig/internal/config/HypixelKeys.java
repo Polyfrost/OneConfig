@@ -35,6 +35,7 @@ import cc.polyfrost.oneconfig.events.event.TickEvent;
 import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
 import cc.polyfrost.oneconfig.libs.universal.UChat;
 import cc.polyfrost.oneconfig.platform.Platform;
+import cc.polyfrost.oneconfig.renderer.asset.Icon;
 import cc.polyfrost.oneconfig.utils.Multithreading;
 import cc.polyfrost.oneconfig.utils.Notifications;
 import cc.polyfrost.oneconfig.utils.TickDelay;
@@ -67,7 +68,7 @@ public class HypixelKeys {
                 Multithreading.runAsync(() -> { //run this async as getting from the API normally would freeze minecraft
                     if (!HypixelUtils.INSTANCE.isValidKey(tempApiKey)
                     ) {
-                        Notifications.INSTANCE.send("OneConfig Hypixel API Key", "The API Key was invalid! Please try running the command again.");
+                        sendNotification("The API Key was invalid! Please try running the command again.");
                     } else {
                         boolean success = true;
                         for (BasicOption option : options) {
@@ -75,12 +76,12 @@ public class HypixelKeys {
                                 option.getField().set(option.getParent(), tempApiKey);
                             } catch (IllegalAccessException e) {
                                 e.printStackTrace();
-                                Notifications.INSTANCE.send("OneConfig Hypixel API Key", "Unable to set API Key of " + option.getField().getName() + " in " + option.getParent().getClass().getName() + "!");
+                                sendNotification("Unable to set API Key of " + option.getField().getName() + " in " + option.getParent().getClass().getName() + "!");
                                 success = false;
                             }
                         }
                         if (success) {
-                            Notifications.INSTANCE.send("OneConfig Hypixel API Key", "Successfully set API Key for " + options.size() + " option" + (options.size() > 1 ? "s" : "") + "!");
+                            sendNotification("Successfully set API Key for " + options.size() + " option" + (options.size() > 1 ? "s" : "") + "!");
                         }
                     }
                 });
@@ -113,7 +114,7 @@ public class HypixelKeys {
         if (firstValidKey != null) {
             setKeys(firstValidKey);
         } else {
-            Notifications.INSTANCE.send("OneConfig Hypixel API Key", "There are mods that require a Hypixel API Key, but none of the keys are valid! Click here to get a new key.", () -> new TickDelay(() -> UChat.say("/api new"), 20));
+            sendNotification("There are mods that require a Hypixel API Key, but none of the keys are valid! Click here to get a new key.", () -> new TickDelay(() -> UChat.say("/api new"), 20));
         }
     }
 
@@ -129,12 +130,22 @@ public class HypixelKeys {
                 option.getField().set(option.getParent(), hypixelKey);
             } catch (IllegalAccessException e) {
                 e.printStackTrace();
-                Notifications.INSTANCE.send("OneConfig Hypixel API Key", "Unable to set API Key of " + option.getField().getName() + " in " + option.getParent().getClass().getName() + "! Please contact us at https://polyfrost.cc/discord!");
+                sendNotification("Unable to set API Key of " + option.getField().getName() + " in " + option.getParent().getClass().getName() + "! Please contact us at https://polyfrost.cc/discord!");
                 success = false;
             }
         }
         if (success) {
-            Notifications.INSTANCE.send("OneConfig Hypixel API Key", "Successfully synced API Key for " + options.size() + " option" + (options.size() > 1 ? "s" : "") + "!");
+            sendNotification("Successfully synced API Key for " + options.size() + " option" + (options.size() > 1 ? "s" : "") + "!");
         }
+    }
+
+    private final Icon icon = new Icon("/assets/oneconfig/icons/Key.svg");
+
+    private void sendNotification(String message) {
+        sendNotification(message, null);
+    }
+
+    private void sendNotification(String message, Runnable runnable) {
+        Notifications.INSTANCE.send("OneConfig Hypixel API Key", message, icon, runnable);
     }
 }
