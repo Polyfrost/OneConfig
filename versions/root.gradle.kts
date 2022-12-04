@@ -1,5 +1,5 @@
 /**
- * WHATEVER HAPPENS HERE MUST ALSO BE APPLIED IN `lwjgl/root.gradle.kts`
+ * WHATEVER HAPPENS HERE MUST ALSO BE APPLIED IN lwjgl-repacked
  */
 plugins {
     kotlin("jvm") version "1.6.21" apply false
