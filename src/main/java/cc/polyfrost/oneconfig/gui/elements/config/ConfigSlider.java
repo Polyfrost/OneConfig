@@ -44,9 +44,9 @@ import cc.polyfrost.oneconfig.utils.MathUtils;
 import java.lang.reflect.Field;
 
 public class ConfigSlider extends BasicOption {
-    private static final int STEP_POPUP_DURATION = 75;
-    private static final int INDICATOR_POPUP_DURATION = 85;
-    private static final int INDICATOR_SLIDING_DURATION = 50;
+    private static final int STEP_POPUP_DURATION = 400;
+    private static final int INDICATOR_POPUP_DURATION = 200;
+    private static final int INDICATOR_SLIDING_DURATION = 100;
 
     private static final float STEP_HEIGHT_HOVER = 4;
     // Step height drag is also the max height of the step
@@ -117,8 +117,8 @@ public class ConfigSlider extends BasicOption {
         float targetPercent = targetAnimation.get();
         if (isEnabled()) {
             if (dragging && startedDragging) {
-                stepsAnimation = new EaseInOutQuart(STEP_POPUP_DURATION, stepPercent, 1, false);
-                targetAnimation = new EaseInOutQuart(INDICATOR_POPUP_DURATION, targetPercent, TOUCH_TARGET_DRAG / TOUCH_TARGET_TOTAL, false);
+                stepsAnimation = new EaseOutExpo(STEP_POPUP_DURATION, stepPercent, 1, false);
+                targetAnimation = new EaseOutExpo(INDICATOR_POPUP_DURATION, targetPercent, TOUCH_TARGET_DRAG / TOUCH_TARGET_TOTAL, false);
                 animReset = true;
             } else if (!dragging && hovered) {
                 if (targetAnimation.getEnd() != 1) {
@@ -127,8 +127,8 @@ public class ConfigSlider extends BasicOption {
                     animReset = true;
                 }
             } else if (!dragging && animReset) {
-                stepsAnimation = new EaseInOutQuart(STEP_POPUP_DURATION, stepPercent, 0, false);
-                targetAnimation = new EaseInOutQuart(INDICATOR_POPUP_DURATION, targetPercent, 0, false);
+                stepsAnimation = new EaseOutExpo(STEP_POPUP_DURATION, stepPercent, 0, false);
+                targetAnimation = new EaseOutExpo(INDICATOR_POPUP_DURATION, targetPercent, 0, false);
                 animReset = false;
             }
         }
