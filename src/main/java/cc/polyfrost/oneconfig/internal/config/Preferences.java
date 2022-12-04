@@ -75,9 +75,17 @@ public class Preferences extends InternalConfig {
 
     @Switch(
             name = "Opening Animation",
+            description = "Plays an animation when opening the GUI",
             subcategory = "GUI Settings"
     )
     public static boolean guiOpenAnimation = true;
+
+    @Switch(
+            name = "Closing Animation",
+            description = "Plays an animation when closing the GUI",
+            subcategory = "GUI Settings"
+    )
+    public static boolean guiClosingAnimation = false;
 
     @Slider(
             name = "Animation Duration",

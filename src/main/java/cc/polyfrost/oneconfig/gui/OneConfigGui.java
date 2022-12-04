@@ -27,8 +27,11 @@
 package cc.polyfrost.oneconfig.gui;
 
 import cc.polyfrost.oneconfig.config.core.OneColor;
+import cc.polyfrost.oneconfig.events.EventManager;
+import cc.polyfrost.oneconfig.events.event.HudRenderEvent;
 import cc.polyfrost.oneconfig.gui.animations.Animation;
 import cc.polyfrost.oneconfig.gui.animations.DummyAnimation;
+import cc.polyfrost.oneconfig.gui.animations.EaseInBack;
 import cc.polyfrost.oneconfig.gui.animations.EaseOutExpo;
 import cc.polyfrost.oneconfig.gui.elements.BasicElement;
 import cc.polyfrost.oneconfig.gui.elements.ColorSelector;
@@ -39,6 +42,7 @@ import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.internal.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.internal.config.Preferences;
+import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
 import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
 import cc.polyfrost.oneconfig.libs.universal.UResolution;
 import cc.polyfrost.oneconfig.platform.Platform;
@@ -56,7 +60,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 
 public class OneConfigGui extends OneUIScreen {
+    private static final InputHandler DUMMY_HANDLER = new InputHandler();
     public static OneConfigGui INSTANCE;
+
     private final SideBar sideBar = new SideBar();
     private final TextInputField textInputField = new TextInputField(248, 40, "Search...", false, false, SVGs.MAGNIFYING_GLASS_BOLD);
     private final ArrayList<Page> previousPages = new ArrayList<>();
@@ -65,20 +71,26 @@ public class OneConfigGui extends OneUIScreen {
     private final BasicElement forwardArrow = new BasicElement(40, 40, ColorPalette.TERTIARY, true);
     public ColorSelector currentColorSelector;
     public boolean allowClose = true;
-    private boolean wasClosed = true;
     protected Page currentPage;
     protected Page prevPage;
     private Animation animation;
     private Animation openingAnimation = new DummyAnimation(1);
-    private float cachedScaleFactor = 1f;
+    private float cachedScaleFactor = 0f;
+
+    private boolean wasClosed = true;
+    private boolean isClosing = false;
 
     public OneConfigGui() {
+        if (INSTANCE != null)
+            EventManager.INSTANCE.unregister(INSTANCE);
         INSTANCE = this;
+
+        EventManager.INSTANCE.register(INSTANCE);
     }
 
     public OneConfigGui(Page page) {
-        INSTANCE = this;
-        currentPage = page;
+        this();
+        this.currentPage = page;
     }
 
     public static OneConfigGui create() {
@@ -93,10 +105,15 @@ public class OneConfigGui extends OneUIScreen {
             currentPage.parents.add(currentPage);
         }
         if (wasClosed) {
-            openingAnimation = new EaseOutExpo((int) (Preferences.animationTime * 1000), 0.05f, 1, false);
+            openingAnimation = new EaseOutExpo((int) (Preferences.animationTime * 1000), Preferences.guiClosingAnimation ? cachedScaleFactor : 0, 1, false);
             wasClosed = false;
+            isClosing = false;
+        } else if (isClosing) {
+            if (openingAnimation.getEnd() != 0)
+                openingAnimation = new EaseInBack((int) (Preferences.animationTime * 1000) / 2, cachedScaleFactor, 0, false);
         }
         cachedScaleFactor = openingAnimation.get();
+        if (cachedScaleFactor < 0) cachedScaleFactor = 0;
 
         if (OneConfigConfig.australia) {
             nanoVGHelper.translate(vg, UResolution.getWindowWidth(), UResolution.getWindowHeight());
@@ -300,7 +317,11 @@ public class OneConfigGui extends OneUIScreen {
     @Override
     public void onScreenClose() {
         currentPage.finishUpAndClose();
-        wasClosed = true;
+        if (Preferences.guiClosingAnimation) {
+            isClosing = true;
+        } else {
+            wasClosed = true;
+        }
         super.onScreenClose();
     }
 
@@ -316,5 +337,22 @@ public class OneConfigGui extends OneUIScreen {
 
     public static boolean isOpen() {
         return Platform.getGuiPlatform().getCurrentScreen() instanceof OneConfigGui;
+    }
+
+    @Subscribe
+    public void onRenderHUD(HudRenderEvent event) {
+        if (!isClosing) return;
+        if (Platform.getGuiPlatform().getCurrentScreen() == this) return;
+
+        NanoVGHelper.INSTANCE.setupAndDraw(vg -> draw(vg, event.deltaTicks, DUMMY_HANDLER));
+
+        if (cachedScaleFactor < 0.01) {
+            isClosing = false;
+            wasClosed = true;
+        }
+    }
+
+    static {
+        DUMMY_HANDLER.blockAllInput();
     }
 }
