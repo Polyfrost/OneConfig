@@ -115,20 +115,20 @@ public class OneConfigGui extends OneUIScreen {
                 if (containerAnimation.getEnd() != 0) {
                     switch (Preferences.animationType) {
                         case 0:
-                            containerAnimation = new EaseOutExpo((int) (Preferences.animationTime * 1000), scaleFactor - 0.75f, 0, false);
+                            containerAnimation = new EaseOutExpo((int) (Preferences.animationTime * 1000), Math.min(scaleFactor - 0.75f, 0.25f), 0, false);
                             break;
                         case 1:
-                            containerAnimation = new EaseInBack((int) (Preferences.animationTime * 750), scaleFactor, 0, false);
+                            containerAnimation = new EaseInBack((int) (Preferences.animationTime * 750), Math.min(scaleFactor, 1f), 0, false);
                             break;
                     }
                 }
             } else if (!renderedInHud && isClosed) {
                 switch (Preferences.animationType) {
                     case 0:
-                        containerAnimation = new EaseOutExpo((int) (Preferences.animationTime * 1000), scaleFactor - 0.75f, 0.25f, false);
+                        containerAnimation = new EaseOutExpo((int) (Preferences.animationTime * 1000), Math.max(scaleFactor - 0.75f, 0), 0.25f, false);
                         break;
                     case 1:
-                        containerAnimation = new EaseOutExpo((int) (Preferences.animationTime * 1000), scaleFactor, 1, false);
+                        containerAnimation = new EaseOutExpo((int) (Preferences.animationTime * 1000), Math.max(0, scaleFactor), 1, false);
                         break;
                 }
                 isClosed = false;
