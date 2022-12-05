@@ -96,7 +96,7 @@ public class Preferences extends InternalConfig {
             description = "The duration of the opening and closing animations, in seconds",
             subcategory = "GUI Settings",
             min = 0.05f,
-            max = 5f
+            max = 2f
     )
     public static float animationTime = 0.65f;
 

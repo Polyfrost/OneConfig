@@ -39,8 +39,6 @@ public class TestMod_Test
         //$$ implements net.fabricmc.api.ModInitializer
         //#endif
 {
-    private TestConfig_Test config;
-
     public TestMod_Test() {
         EventManager.INSTANCE.register(this);
     }
@@ -52,7 +50,7 @@ public class TestMod_Test
         //$$ @Override
         //$$ public void onInitialize() {
         //#endif
-        config = new TestConfig_Test();
+        new TestConfig_Test();
         CommandManager.INSTANCE.registerCommand(new TestCommand_Test());
     }
 }
