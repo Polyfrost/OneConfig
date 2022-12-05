@@ -73,12 +73,12 @@ public class OneConfigGui extends OneUIScreen {
     public boolean allowClose = true;
     protected Page currentPage;
     protected Page prevPage;
-    private Animation animation;
-    private Animation openingAnimation = new DummyAnimation(1);
+    private Animation pageAnimation;
+    private Animation containerAnimation = new DummyAnimation(1);
     private float cachedScaleFactor = 0f;
 
-    private boolean wasClosed = true;
-    private boolean isClosing = false;
+    private boolean isClosed = true;
+    private boolean shouldDisplayHud = false;
 
     public OneConfigGui() {
         if (INSTANCE != null)
@@ -104,25 +104,32 @@ public class OneConfigGui extends OneUIScreen {
             currentPage = new ModsPage();
             currentPage.parents.add(currentPage);
         }
-        if (wasClosed || inputHandler != null) {
-            openingAnimation = new EaseOutExpo((int) (Preferences.animationTime * 1000), Preferences.guiClosingAnimation ? cachedScaleFactor : 0, 1, false);
-            wasClosed = false;
-            isClosing = false;
-        } else if (isClosing) {
-            if (openingAnimation.getEnd() != 0)
-                openingAnimation = new EaseInBack((int) (Preferences.animationTime * 1000) / 2, cachedScaleFactor, 0, false);
+
+        if (Preferences.guiOpenAnimation) {
+            boolean renderedInHud = (inputHandler == null);
+            if (renderedInHud && Preferences.guiClosingAnimation && shouldDisplayHud) {
+                if (containerAnimation.getEnd() != 0) {
+                    containerAnimation = new EaseInBack((int) (Preferences.animationTime * 750), cachedScaleFactor, 0, false);
+                }
+            } else if (!renderedInHud && isClosed) {
+                containerAnimation = new EaseOutExpo((int) (Preferences.animationTime * 1000), cachedScaleFactor, 1, false);
+                isClosed = false;
+            }
         }
-        cachedScaleFactor = openingAnimation.get();
+
+        cachedScaleFactor = containerAnimation.get();
         if (cachedScaleFactor < 0) cachedScaleFactor = 0;
 
         if (OneConfigConfig.australia) {
             nanoVGHelper.translate(vg, UResolution.getWindowWidth(), UResolution.getWindowHeight());
             nanoVGHelper.rotate(vg, (float) Math.toRadians(180));
         }
-        if (inputHandler == null)
-            inputHandler = DUMMY_HANDLER;
 
-        float scale = getScaleFactor();
+        if (inputHandler == null) {
+            inputHandler = DUMMY_HANDLER;
+        }
+
+        float scale = getOneConfigScaleFactor();
         int x = (int) ((UResolution.getWindowWidth() - 1280 * scale) / 2f / scale);
         int y = (int) ((UResolution.getWindowHeight() - 800 * scale) / 2f / scale);
         nanoVGHelper.scale(vg, scale, scale);
@@ -184,16 +191,16 @@ public class OneConfigGui extends OneUIScreen {
         ScissorHelper scissorHelper = ScissorHelper.INSTANCE;
         scissorHelper.scissor(vg, x + 224, y + 72, 1056, 728);
         Scissor blockedClicks = inputHandler.blockInputArea(x + 224, y, 1056, 72);
-        if (prevPage != null && animation != null) {
-            float pageProgress = animation.get(GuiUtils.getDeltaTime());
-            if (!animation.isReversed()) {
+        if (prevPage != null && pageAnimation != null) {
+            float pageProgress = pageAnimation.get(GuiUtils.getDeltaTime());
+            if (!pageAnimation.isReversed()) {
                 prevPage.scrollWithDraw(vg, (int) (x + pageProgress), y + 72, inputHandler);
                 currentPage.scrollWithDraw(vg, (int) (x - 1904 + pageProgress), y + 72, inputHandler);
             } else {
                 prevPage.scrollWithDraw(vg, (int) (x - 1904 + pageProgress), y + 72, inputHandler);
                 currentPage.scrollWithDraw(vg, (int) (x + pageProgress), y + 72, inputHandler);
             }
-            if (animation.isFinished()) {
+            if (pageAnimation.isFinished()) {
                 prevPage = null;
             }
         } else {
@@ -275,7 +282,7 @@ public class OneConfigGui extends OneUIScreen {
             prevPage = currentPage;
         }
         currentPage = page;
-        this.animation = animation;
+        this.pageAnimation = animation;
     }
 
     /**
@@ -303,14 +310,18 @@ public class OneConfigGui extends OneUIScreen {
         return currentColorSelector.getColor();
     }
 
+    public static float getOneConfigScaleFactor() {
+        float scaleFactor = getScaleFactor();
+        if (Preferences.guiOpenAnimation)
+            return scaleFactor * INSTANCE.cachedScaleFactor;
+        return scaleFactor;
+    }
+
     public static float getScaleFactor() {
         float scale = Preferences.enableCustomScale ? Preferences.customScale : Math.min(UResolution.getWindowWidth() / 1920f, UResolution.getWindowHeight() / 1080f);
         if (scale < 1 && !Preferences.enableCustomScale)
             scale = Math.min(Math.min(1f, UResolution.getWindowWidth() / 1280f), Math.min(1f, UResolution.getWindowHeight() / 800f));
-        float scaleFactor = (float) (Math.floor(scale / 0.05f) * 0.05f);
-        if (Preferences.guiOpenAnimation)
-            return scaleFactor * INSTANCE.cachedScaleFactor;
-        return scaleFactor;
+        return (float) (Math.floor(scale / 0.05f) * 0.05f);
     }
 
     public String getSearchValue() {
@@ -320,11 +331,16 @@ public class OneConfigGui extends OneUIScreen {
     @Override
     public void onScreenClose() {
         currentPage.finishUpAndClose();
-        if (Preferences.guiClosingAnimation) {
-            isClosing = true;
-        } else {
-            wasClosed = true;
+
+        isClosed = true;
+        if (Preferences.guiOpenAnimation) {
+            if (Preferences.guiClosingAnimation) {
+                shouldDisplayHud = true;
+            } else {
+                cachedScaleFactor = 0;
+            }
         }
+
         super.onScreenClose();
     }
 
@@ -342,16 +358,24 @@ public class OneConfigGui extends OneUIScreen {
         return Platform.getGuiPlatform().getCurrentScreen() instanceof OneConfigGui;
     }
 
+    @Override
+    public void initScreen(int width, int height) {
+        super.initScreen(width, height);
+
+        if (Preferences.guiOpenAnimation) {
+            shouldDisplayHud = false;
+        }
+    }
+
     @Subscribe
     public void onRenderHUD(HudRenderEvent event) {
-        if (!isClosing) return;
+        if (!shouldDisplayHud) return;
         if (Platform.getGuiPlatform().getCurrentScreen() == this) return;
 
         NanoVGHelper.INSTANCE.setupAndDraw(vg -> draw(vg, event.deltaTicks, null));
 
         if (cachedScaleFactor < 0.01) {
-            isClosing = false;
-            wasClosed = true;
+            shouldDisplayHud = false;
         }
     }
 

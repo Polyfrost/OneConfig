@@ -93,7 +93,7 @@ public class Preferences extends InternalConfig {
             min = 0.05f,
             max = 5f
     )
-    public static float animationTime = 0.5f;
+    public static float animationTime = 0.65f;
 
     @Exclude
     private static Preferences INSTANCE;
@@ -107,6 +107,7 @@ public class Preferences extends InternalConfig {
             OneConfigConfig.updateChannel = updateChannel;
             OneConfigConfig.getInstance().save();
         });
+        addDependency("guiClosingAnimation", "guiOpenAnimation");
         INSTANCE = this;
     }
 
