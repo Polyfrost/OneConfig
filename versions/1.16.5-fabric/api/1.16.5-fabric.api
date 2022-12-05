@@ -88,7 +88,6 @@ public class cc/polyfrost/oneconfig/utils/commands/PlatformCommandManagerImpl : 
 public class cc/polyfrost/oneconfig/utils/commands/arguments/PlayerArgumentParser : cc/polyfrost/oneconfig/utils/commands/arguments/ArgumentParser {
 	public fun <init> ()V
 	public fun complete (Ljava/lang/String;Ljava/lang/reflect/Parameter;)Ljava/util/List;
-	public static fun getMatchingPlayers (Ljava/lang/String;)Ljava/util/List;
 	public fun parse (Ljava/lang/String;)Lcom/mojang/authlib/GameProfile;
 	public synthetic fun parse (Ljava/lang/String;)Ljava/lang/Object;
 }

@@ -33,7 +33,6 @@ import cc.polyfrost.oneconfig.utils.commands.annotations.Description;
 import cc.polyfrost.oneconfig.utils.commands.annotations.Greedy;
 import cc.polyfrost.oneconfig.utils.commands.annotations.SubCommand;
 import com.mojang.authlib.GameProfile;
-import net.minecraft.entity.player.EntityPlayer;
 
 @Command(value = "test", aliases = {"t"}, description = "Description of the test command", chatColor = ChatColor.GREEN)
 public class TestCommand_Test {
@@ -65,12 +64,6 @@ public class TestCommand_Test {
     private void playerTest(GameProfile profile) {
         UChat.chat("Player test: " + profile.getName());
         UChat.chat(profile.getId());
-    }
-
-    @SubCommand
-    private void playerTest2(EntityPlayer player) {
-        UChat.chat("Player test 2: " + player.getGameProfile().getName());
-        UChat.chat(player.getGameProfile().getId());
     }
 
 

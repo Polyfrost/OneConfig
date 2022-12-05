@@ -31,7 +31,7 @@ public class PlayerArgumentParser extends ArgumentParser<GameProfile> {
     }
 
     // checks mojang api for player uuid from name
-    static UUID getUUID(String name) {
+    private static UUID getUUID(String name) {
         try {
             if (uuidCache.containsKey(name)) {
                 return uuidCache.get(name);
@@ -51,7 +51,7 @@ public class PlayerArgumentParser extends ArgumentParser<GameProfile> {
         }
     }
 
-    public static List<GameProfile> getMatchingPlayers(String arg, boolean startWith) {
+    private static List<GameProfile> getMatchingPlayers(String arg, boolean startWith) {
         if (Minecraft.getMinecraft().theWorld == null) return Lists.newArrayList();
         return Minecraft.getMinecraft().getNetHandler().getPlayerInfoMap().stream().map(NetworkPlayerInfo::getGameProfile).filter(gameProfile -> {
             String name = gameProfile.getName().toLowerCase();
