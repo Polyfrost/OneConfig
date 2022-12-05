@@ -75,7 +75,7 @@ public class OneConfigGui extends OneUIScreen {
     protected Page prevPage;
     private Animation pageAnimation;
     private Animation containerAnimation = new DummyAnimation(1);
-    private float cachedScaleFactor = 0f;
+    public float cachedScaleFactor = 0f;
 
     private boolean isClosed = true;
     private boolean shouldDisplayHud = false;
@@ -100,13 +100,14 @@ public class OneConfigGui extends OneUIScreen {
     @Override
     public void draw(long vg, float partialTicks, InputHandler inputHandler) {
         final NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
+        final ScissorHelper scissorHelper = ScissorHelper.INSTANCE;
         if (currentPage == null) {
             currentPage = new ModsPage();
             currentPage.parents.add(currentPage);
         }
 
+        boolean renderedInHud = (inputHandler == null);
         if (Preferences.guiOpenAnimation) {
-            boolean renderedInHud = (inputHandler == null);
             if (renderedInHud && Preferences.guiClosingAnimation && shouldDisplayHud) {
                 if (containerAnimation.getEnd() != 0) {
                     containerAnimation = new EaseInBack((int) (Preferences.animationTime * 750), cachedScaleFactor, 0, false);
@@ -119,6 +120,8 @@ public class OneConfigGui extends OneUIScreen {
 
         cachedScaleFactor = containerAnimation.get();
         if (cachedScaleFactor < 0) cachedScaleFactor = 0;
+
+        nanoVGHelper.setAlpha(vg, cachedScaleFactor);
 
         if (OneConfigConfig.australia) {
             nanoVGHelper.translate(vg, UResolution.getWindowWidth(), UResolution.getWindowHeight());
@@ -136,10 +139,14 @@ public class OneConfigGui extends OneUIScreen {
         inputHandler.scale(scale, scale);
 
         nanoVGHelper.drawDropShadow(vg, x, y, 1280, 800, 64, 0, 20);
-        nanoVGHelper.drawRoundedRect(vg, x + 224, y, 1056, 800, Colors.GRAY_800, 20f);
+
+        Scissor mainPanel = scissorHelper.scissor(vg, x, y, 224, 800);
         nanoVGHelper.drawRoundedRect(vg, x, y, 244, 800, Colors.GRAY_800_95, 20f);
-        nanoVGHelper.drawRect(vg, x + 224, y, 20, 800, Colors.GRAY_800);
-        nanoVGHelper.drawHollowRoundRect(vg, x - 1, y - 1, 1282, 802, 0x4DCCCCCC, 20, scale < 1 ? 1 / scale : 1);
+        scissorHelper.resetScissor(vg, mainPanel);
+
+        Scissor contentPanel = scissorHelper.scissor(vg, x + 224, y, 1056, 800);
+        nanoVGHelper.drawRoundedRect(vg, x + 224 - 20, y, 1056 + 20, 800, Colors.GRAY_800, 20f);
+        scissorHelper.resetScissor(vg, contentPanel);
 
         nanoVGHelper.drawLine(vg, x + 224, y + 72, x + 1280, y + 72, 1, Colors.GRAY_700);
         nanoVGHelper.drawLine(vg, x + 224, y, x + 222, y + 800, 1, Colors.GRAY_700);
@@ -188,7 +195,6 @@ public class OneConfigGui extends OneUIScreen {
             }
         }
 
-        ScissorHelper scissorHelper = ScissorHelper.INSTANCE;
         scissorHelper.scissor(vg, x + 224, y + 72, 1056, 728);
         Scissor blockedClicks = inputHandler.blockInputArea(x + 224, y, 1056, 72);
         if (prevPage != null && pageAnimation != null) {
