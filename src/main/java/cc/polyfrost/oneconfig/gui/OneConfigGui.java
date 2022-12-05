@@ -76,7 +76,6 @@ public class OneConfigGui extends OneUIScreen {
     protected Page prevPage;
     private Animation pageAnimation;
 
-    public final List<Runnable> closeCallbacks = new ArrayList<>();
     private Animation containerAnimation = new DummyAnimation(1);
     private boolean isClosed = true;
     private boolean shouldDisplayHud = false;
@@ -373,9 +372,6 @@ public class OneConfigGui extends OneUIScreen {
             } else {
                 scaleFactor = transparencyFactor = 0;
             }
-        } else {
-            closeCallbacks.forEach(Runnable::run);
-            closeCallbacks.clear();
         }
 
         super.onScreenClose();
@@ -413,9 +409,6 @@ public class OneConfigGui extends OneUIScreen {
 
         if (transparencyFactor <= 0.01) {
             shouldDisplayHud = false;
-
-            closeCallbacks.forEach(Runnable::run);
-            closeCallbacks.clear();
         }
     }
 
