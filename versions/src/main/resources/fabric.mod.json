@@ -21,6 +21,7 @@
     "preLaunch": [
       "cc.polyfrost.oneconfig.internal.plugin.OneConfigPreLaunch"
     ],
+    "main": [ "cc.polyfrost.oneconfig.test.TestMod_Test" ],
     "mm:early_risers": [
       "cc.polyfrost.oneconfig.internal.plugin.asm.ClassTransformer"
     ]
