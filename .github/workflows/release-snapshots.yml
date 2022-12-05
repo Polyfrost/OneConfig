@@ -1,11 +1,11 @@
 # Release Workflow
 
-name: Release
+name: Release Snapshot
 
 on:
   push:
     branches:
-      - master
+      - develop
 
 concurrency:
   group: ${{ github.head_ref || format('{0}-{1}', github.ref, github.run_number) }}
@@ -48,7 +48,7 @@ jobs:
         id: version
 
       - name: Publish
-        run: ./gradlew publishAllPublicationsToReleasesRepository -Pmod_minor_version=${{ steps.version.outputs.VERSION_NUMBER }} -PreleasesUsername=${{ secrets.MAVEN_NAME }} -PreleasesPassword=${{ secrets.MAVEN_TOKEN }} -DBUILDING_CI=true --no-daemon
+        run: ./gradlew publishAllPublicationsToSnapshotsRepository -Pmod_minor_version=${{ steps.version.outputs.VERSION_NUMBER }} -PsnapshotsUsername=${{ secrets.MAVEN_NAME }} -PsnapshotsPassword=${{ secrets.MAVEN_TOKEN }} -DBUILDING_CI=true --no-daemon
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v2
