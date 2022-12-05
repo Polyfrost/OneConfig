@@ -89,6 +89,7 @@ public class Preferences extends InternalConfig {
 
     @Slider(
             name = "Animation Duration",
+            description = "The duration of the opening and closing animations, in seconds",
             subcategory = "GUI Settings",
             min = 0.05f,
             max = 5f
