@@ -682,8 +682,8 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
     @Override
     public void setAlpha(long vg, float alpha) {
         //FIXME: this would break a lot of stuff.
-        if (alpha > OneConfigGui.INSTANCE.cachedScaleFactor) {
-            alpha = OneConfigGui.INSTANCE.cachedScaleFactor;
+        if (alpha > OneConfigGui.INSTANCE.transparencyFactor) {
+            alpha = OneConfigGui.INSTANCE.transparencyFactor;
         }
         nvgGlobalAlpha(vg, alpha);
     }

@@ -58,6 +58,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class OneConfigGui extends OneUIScreen {
     private static final InputHandler DUMMY_HANDLER = new InputHandler();
@@ -65,8 +66,8 @@ public class OneConfigGui extends OneUIScreen {
 
     private final SideBar sideBar = new SideBar();
     private final TextInputField textInputField = new TextInputField(248, 40, "Search...", false, false, SVGs.MAGNIFYING_GLASS_BOLD);
-    private final ArrayList<Page> previousPages = new ArrayList<>();
-    private final ArrayList<Page> nextPages = new ArrayList<>();
+    private final List<Page> previousPages = new ArrayList<>();
+    private final List<Page> nextPages = new ArrayList<>();
     private final BasicElement backArrow = new BasicElement(40, 40, ColorPalette.TERTIARY, true);
     private final BasicElement forwardArrow = new BasicElement(40, 40, ColorPalette.TERTIARY, true);
     public ColorSelector currentColorSelector;
@@ -74,11 +75,13 @@ public class OneConfigGui extends OneUIScreen {
     protected Page currentPage;
     protected Page prevPage;
     private Animation pageAnimation;
-    private Animation containerAnimation = new DummyAnimation(1);
-    public float cachedScaleFactor = 0f;
 
+    public final List<Runnable> closeCallbacks = new ArrayList<>();
+    private Animation containerAnimation = new DummyAnimation(1);
     private boolean isClosed = true;
     private boolean shouldDisplayHud = false;
+    public float transparencyFactor = 0f;
+    public float scaleFactor = 0f;
 
     public OneConfigGui() {
         if (INSTANCE != null)
@@ -110,18 +113,42 @@ public class OneConfigGui extends OneUIScreen {
         if (Preferences.guiOpenAnimation) {
             if (renderedInHud && Preferences.guiClosingAnimation && shouldDisplayHud) {
                 if (containerAnimation.getEnd() != 0) {
-                    containerAnimation = new EaseInBack((int) (Preferences.animationTime * 750), cachedScaleFactor, 0, false);
+                    switch (Preferences.animationType) {
+                        case 0:
+                            containerAnimation = new EaseOutExpo((int) (Preferences.animationTime * 1000), scaleFactor - 0.75f, 0, false);
+                            break;
+                        case 1:
+                            containerAnimation = new EaseInBack((int) (Preferences.animationTime * 750), scaleFactor, 0, false);
+                            break;
+                    }
                 }
             } else if (!renderedInHud && isClosed) {
-                containerAnimation = new EaseOutExpo((int) (Preferences.animationTime * 1000), cachedScaleFactor, 1, false);
+                switch (Preferences.animationType) {
+                    case 0:
+                        containerAnimation = new EaseOutExpo((int) (Preferences.animationTime * 1000), scaleFactor - 0.75f, 0.25f, false);
+                        break;
+                    case 1:
+                        containerAnimation = new EaseOutExpo((int) (Preferences.animationTime * 1000), scaleFactor, 1, false);
+                        break;
+                }
                 isClosed = false;
             }
         }
 
-        cachedScaleFactor = containerAnimation.get();
-        if (cachedScaleFactor < 0) cachedScaleFactor = 0;
+        float animationValue = containerAnimation.get();
+        if (animationValue < 0) animationValue = 0;
 
-        nanoVGHelper.setAlpha(vg, cachedScaleFactor);
+        switch (Preferences.animationType) {
+            case 0:
+                scaleFactor = .75f + animationValue;
+                transparencyFactor = (animationValue - .05f) * 5f;
+                break;
+            case 1:
+                scaleFactor = transparencyFactor = animationValue;
+                break;
+        }
+
+        nanoVGHelper.setAlpha(vg, transparencyFactor);
 
         if (OneConfigConfig.australia) {
             nanoVGHelper.translate(vg, UResolution.getWindowWidth(), UResolution.getWindowHeight());
@@ -304,6 +331,7 @@ public class OneConfigGui extends OneUIScreen {
     /**
      * Close the current color selector and return the color it had when it closed.
      */
+    @SuppressWarnings("UnusedReturnValue")
     public OneColor closeColorSelector() {
         currentColorSelector.onClose();
         OneColor color = currentColorSelector.getColor();
@@ -319,7 +347,7 @@ public class OneConfigGui extends OneUIScreen {
     public static float getOneConfigScaleFactor() {
         float scaleFactor = getScaleFactor();
         if (Preferences.guiOpenAnimation)
-            return scaleFactor * INSTANCE.cachedScaleFactor;
+            return scaleFactor * INSTANCE.scaleFactor;
         return scaleFactor;
     }
 
@@ -343,8 +371,11 @@ public class OneConfigGui extends OneUIScreen {
             if (Preferences.guiClosingAnimation) {
                 shouldDisplayHud = true;
             } else {
-                cachedScaleFactor = 0;
+                scaleFactor = transparencyFactor = 0;
             }
+        } else {
+            closeCallbacks.forEach(Runnable::run);
+            closeCallbacks.clear();
         }
 
         super.onScreenClose();
@@ -380,8 +411,11 @@ public class OneConfigGui extends OneUIScreen {
 
         NanoVGHelper.INSTANCE.setupAndDraw(vg -> draw(vg, event.deltaTicks, null));
 
-        if (cachedScaleFactor < 0.01) {
+        if (transparencyFactor <= 0.01) {
             shouldDisplayHud = false;
+
+            closeCallbacks.forEach(Runnable::run);
+            closeCallbacks.clear();
         }
     }
 

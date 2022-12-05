@@ -26,7 +26,11 @@
 
 package cc.polyfrost.oneconfig.internal.config;
 
-import cc.polyfrost.oneconfig.config.annotations.*;
+import cc.polyfrost.oneconfig.config.annotations.Dropdown;
+import cc.polyfrost.oneconfig.config.annotations.Exclude;
+import cc.polyfrost.oneconfig.config.annotations.KeyBind;
+import cc.polyfrost.oneconfig.config.annotations.Slider;
+import cc.polyfrost.oneconfig.config.annotations.Switch;
 import cc.polyfrost.oneconfig.config.core.OneKeyBind;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.internal.gui.BlurHandler;
@@ -96,6 +100,14 @@ public class Preferences extends InternalConfig {
     )
     public static float animationTime = 0.65f;
 
+    @Dropdown(
+            name = "Animation Type",
+            description = "The type of opening/closing animation to use",
+            subcategory = "GUI Settings",
+            options = {"Subtle", "Full"}
+    )
+    public static int animationType = 0;
+
     @Exclude
     private static Preferences INSTANCE;
 
@@ -107,6 +119,11 @@ public class Preferences extends InternalConfig {
         addListener("updateChannel", () -> {
             OneConfigConfig.updateChannel = updateChannel;
             OneConfigConfig.getInstance().save();
+        });
+        addListener("animationType", () -> {
+            if (Preferences.guiOpenAnimation) {
+                Platform.getGuiPlatform().setCurrentScreen(OneConfigGui.INSTANCE);
+            }
         });
         addDependency("guiClosingAnimation", "guiOpenAnimation");
         INSTANCE = this;
