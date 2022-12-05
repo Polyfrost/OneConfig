@@ -42,7 +42,6 @@ public class Lwjgl2FunctionProvider implements FunctionProvider {
 
     static {
         String libraryPath = System.getProperty("oneconfig.lwjgl2.librarypath", "");
-        System.out.println("(FP) LWJGL2 library path: " + libraryPath);
         if (!libraryPath.isEmpty()) {
             System.setProperty("org.lwjgl.librarypath", libraryPath);
         }
