@@ -543,12 +543,15 @@ public class cc/polyfrost/oneconfig/gui/OneConfigGui : cc/polyfrost/oneconfig/ut
 	public fun doesGuiPauseGame ()Z
 	public fun draw (JFLcc/polyfrost/oneconfig/utils/InputHandler;)V
 	public fun getColor ()Lcc/polyfrost/oneconfig/config/core/OneColor;
+	public static fun getOneConfigScaleFactor ()F
 	public static fun getScaleFactor ()F
 	public fun getSearchValue ()Ljava/lang/String;
 	public fun hasBackgroundBlur ()Z
 	public fun initColorSelector (Lcc/polyfrost/oneconfig/gui/elements/ColorSelector;)V
+	public fun initScreen (II)V
 	public static fun isOpen ()Z
 	public fun onKeyPressed (ICLcc/polyfrost/oneconfig/libs/universal/UKeyboard$Modifiers;)V
+	public fun onRenderHUD (Lcc/polyfrost/oneconfig/events/event/HudRenderEvent;)V
 	public fun onScreenClose ()V
 	public fun openPage (Lcc/polyfrost/oneconfig/gui/pages/Page;)V
 	public fun openPage (Lcc/polyfrost/oneconfig/gui/pages/Page;Lcc/polyfrost/oneconfig/gui/animations/Animation;Z)V
@@ -613,6 +616,11 @@ public class cc/polyfrost/oneconfig/gui/animations/DummyAnimation : cc/polyfrost
 	protected fun animate (F)F
 	public fun get (F)F
 	public fun isFinished ()Z
+}
+
+public class cc/polyfrost/oneconfig/gui/animations/EaseInBack : cc/polyfrost/oneconfig/gui/animations/Animation {
+	public fun <init> (IFFZ)V
+	protected fun animate (F)F
 }
 
 public class cc/polyfrost/oneconfig/gui/animations/EaseInOutCubic : cc/polyfrost/oneconfig/gui/animations/Animation {
