@@ -182,6 +182,10 @@ dependencies {
 
     if (platform.isFabric) {
         include("com.github.Chocohead:Fabric-ASM:v2.3")
+        if (platform.mcVersion <= 11202) {
+            compileOnly(runtimeOnly("org.apache.logging.log4j:log4j-core:2.8.1")!!)
+            compileOnly(runtimeOnly("org.apache.logging.log4j:log4j-api:2.8.1")!!)
+        }
     }
 
     val repackedVersions = when (platform.mcVersion) {
