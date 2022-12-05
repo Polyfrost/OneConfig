@@ -533,7 +533,6 @@ public abstract interface class cc/polyfrost/oneconfig/gui/GuiPause {
 public class cc/polyfrost/oneconfig/gui/OneConfigGui : cc/polyfrost/oneconfig/utils/gui/OneUIScreen {
 	public static field INSTANCE Lcc/polyfrost/oneconfig/gui/OneConfigGui;
 	public field allowClose Z
-	public final field closeCallbacks Ljava/util/List;
 	public field currentColorSelector Lcc/polyfrost/oneconfig/gui/elements/ColorSelector;
 	protected field currentPage Lcc/polyfrost/oneconfig/gui/pages/Page;
 	protected field prevPage Lcc/polyfrost/oneconfig/gui/pages/Page;
