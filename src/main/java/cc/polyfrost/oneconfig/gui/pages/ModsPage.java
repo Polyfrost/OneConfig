@@ -34,7 +34,7 @@ import cc.polyfrost.oneconfig.gui.elements.ModCard;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.internal.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.internal.config.core.ConfigCore;
-import cc.polyfrost.oneconfig.internal.utils.LevenshteinDistance;
+import cc.polyfrost.oneconfig.utils.LevenshteinDistance;
 import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.utils.InputHandler;

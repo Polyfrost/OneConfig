@@ -29,7 +29,7 @@ package cc.polyfrost.oneconfig.config.elements;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.elements.config.ConfigPageButton;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
-import cc.polyfrost.oneconfig.internal.utils.LevenshteinDistance;
+import cc.polyfrost.oneconfig.utils.LevenshteinDistance;
 import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.utils.InputHandler;

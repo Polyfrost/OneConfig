@@ -32,7 +32,7 @@ import cc.polyfrost.oneconfig.config.elements.OptionPage;
 import cc.polyfrost.oneconfig.config.elements.OptionSubcategory;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.elements.BasicButton;
-import cc.polyfrost.oneconfig.internal.utils.LevenshteinDistance;
+import cc.polyfrost.oneconfig.utils.LevenshteinDistance;
 import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.renderer.scissor.ScissorHelper;

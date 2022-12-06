@@ -24,7 +24,7 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.internal.utils;
+package cc.polyfrost.oneconfig.utils;
 
 import java.util.Locale;
 
