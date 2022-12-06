@@ -36,20 +36,21 @@ import cc.polyfrost.oneconfig.utils.commands.CommandManager;
 //#endif
 public class TestMod_Test
 //#if FABRIC==1
-        //$$ implements net.fabricmc.api.ModInitializer
-        //#endif
+//$$ implements net.fabricmc.api.ModInitializer
+//#endif
 {
     public TestMod_Test() {
         EventManager.INSTANCE.register(this);
     }
 
-    //#if FORGE==1
+    //#if FABRIC==1
+    //$$ @Override
+    //$$ public void onInitialize()
+    //#else
     @Subscribe
-    public void init(InitializationEvent e) {
-        //#else if FABRIC==1
-        //$$ @Override
-        //$$ public void onInitialize() {
-        //#endif
+    public void init(InitializationEvent e)
+    //#endif
+    {
         new TestConfig_Test();
         CommandManager.INSTANCE.registerCommand(new TestCommand_Test());
     }
