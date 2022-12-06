@@ -95,7 +95,6 @@ public class BasicElement {
         this(width, height, ColorPalette.TRANSPARENT, hoverFx, 12f);
     }
 
-
     /**
      * Draw script for the element.
      * <br> <b>Make sure to call {@link #update(float, float, InputHandler)} to update the elements states!</b>
@@ -159,6 +158,10 @@ public class BasicElement {
             this.colorAnimation.setColors(colorPalette.getNormalColorf());
         this.colorPalette = colorPalette;
         this.colorAnimation.setPalette(colorPalette);
+    }
+
+    public ColorPalette getColorPalette() {
+        return colorPalette;
     }
 
     public int getWidth() {

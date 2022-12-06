@@ -38,34 +38,35 @@ public class ColorPalette {
     /**
      * Always returns transparent.
      */
-    public static final ColorPalette TRANSPARENT = new ColorPalette(Colors.TRANSPARENT, Colors.TRANSPARENT, Colors.TRANSPARENT);
+    public static final ColorPalette TRANSPARENT = new ColorPalette("Transparent", Colors.TRANSPARENT, Colors.TRANSPARENT, Colors.TRANSPARENT);
     /**
      * <h1>Primary Color Scheme</h1> Normal: Primary 600,<br> Hover: Primary 700,<br> Clicked: Primary 700 (80%)
      */
-    public static final ColorPalette PRIMARY = new ColorPalette(PRIMARY_600, PRIMARY_700, PRIMARY_700_80);
+    public static final ColorPalette PRIMARY = new ColorPalette("Primary", PRIMARY_600, PRIMARY_700, PRIMARY_700_80);
     /**
      * <h1>Secondary Color Scheme</h1> Normal: Gray 500,<br> Hover: Gray 400,<br> Clicked: Gray 400 (80%)
      */
-    public static final ColorPalette SECONDARY = new ColorPalette(Colors.GRAY_500, Colors.GRAY_400, Colors.GRAY_400_80);
+    public static final ColorPalette SECONDARY = new ColorPalette("Secondary", Colors.GRAY_500, Colors.GRAY_400, Colors.GRAY_400_80);
     /**
      * <h1>Tertiary Color Scheme</h1> Normal: Transparent (Text=White 90%),<br> Hover: Transparent (Text=White 100%),<br> Clicked: Transparent (Text=White 80%)
      * <h2>NOTICE this returns the text colors as it is always transparent.</h2>
      */
-    public static final ColorPalette TERTIARY = new ColorPalette(WHITE_80, WHITE, WHITE_80);
+    public static final ColorPalette TERTIARY = new ColorPalette("Tertiary", WHITE_80, WHITE, WHITE_80);
     /**
      * <h1>Primary Destructive Color Scheme</h1> Normal: Error 700,<br> Hover: Error 600,<br> Clicked: Error 600 (80%)
      */
-    public static final ColorPalette PRIMARY_DESTRUCTIVE = new ColorPalette(ERROR_700, ERROR_600, ERROR_600_80);
+    public static final ColorPalette PRIMARY_DESTRUCTIVE = new ColorPalette("Primary Destructive", ERROR_700, ERROR_600, ERROR_600_80);
     /**
      * <h1>Secondary Destructive Color Scheme</h1> Normal: Gray 500,<br> Hover: Error 800,<br> Clicked: Error 800 (80%)
      */
-    public static final ColorPalette SECONDARY_DESTRUCTIVE = new ColorPalette(Colors.GRAY_500, ERROR_800, ERROR_800_80);
+    public static final ColorPalette SECONDARY_DESTRUCTIVE = new ColorPalette("Secondary Destructive", Colors.GRAY_500, ERROR_800, ERROR_800_80);
     /**
      * <h1>Tertiary Destructive Color Scheme</h1> Normal: Transparent (Text=White 90%),<br> Hover: Transparent (Text=Error 300),<br> Clicked: Transparent (Text=Error 300 80%)
      * <h2>NOTICE this returns the text colors as it is always transparent.</h2>
      */
-    public static final ColorPalette TERTIARY_DESTRUCTIVE = new ColorPalette(WHITE_90, ERROR_300, ERROR_300_80);
+    public static final ColorPalette TERTIARY_DESTRUCTIVE = new ColorPalette("Tertiary Destructive", WHITE_90, ERROR_300, ERROR_300_80);
 
+    private final String name;
     private final int colorNormal;
     private final int colorHovered;
     private final int colorPressed;
@@ -83,6 +84,21 @@ public class ColorPalette {
      * @param colorPressed the color of the element when it is pressed.
      */
     public ColorPalette(int colorNormal, int colorHovered, int colorPressed) {
+        this("Unnamed", colorNormal, colorHovered, colorPressed);
+    }
+
+    /**
+     * <h1>Create a new ColorPalette.</h1>
+     * This color palette is used with animations, and the elements like BasicButton, BasicElement, and more.
+     * <br> This method takes integers in ARGB format, like many other classes, such as {@link OneColor} and {@link Color}.
+     *
+     * @param name         the name of the color palette.
+     * @param colorNormal  the color of the element when it is not hovered or pressed.
+     * @param colorHovered the color of the element when it is hovered.
+     * @param colorPressed the color of the element when it is pressed.
+     */
+    public ColorPalette(String name, int colorNormal, int colorHovered, int colorPressed) {
+        this.name = name;
         this.colorNormal = colorNormal;
         this.colorHovered = colorHovered;
         this.colorPressed = colorPressed;
@@ -141,6 +157,7 @@ public class ColorPalette {
      * @param colorPressed the color of the element when it is pressed.
      */
     public ColorPalette(float[] colorNormal, float[] colorHovered, float[] colorPressed, float[] colorDisabled) {
+        this.name = "Unnamed";
         this.colorNormalf = colorNormal;
         this.colorHoveredf = colorHovered;
         this.colorPressedf = colorPressed;
@@ -190,5 +207,10 @@ public class ColorPalette {
      */
     public float[] getPressedColorf() {
         return colorPressedf;
+    }
+
+    @Override
+    public String toString() {
+        return "ColorPalette(name=" + name + ", normal=" + colorNormal + ", hovered=" + colorHovered + ", pressed=" + colorPressed + ")";
     }
 }
