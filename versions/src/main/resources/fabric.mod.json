@@ -21,7 +21,7 @@
     "preLaunch": [
       "cc.polyfrost.oneconfig.internal.plugin.OneConfigPreLaunch"
     ],
-    "main": [ "cc.polyfrost.oneconfig.test.TestMod_Test" ],
+    "client": [ "cc.polyfrost.oneconfig.test.TestMod_Test" ], "_warning": [ "This line is automatically removed by Gradle's jar task" ],
     "mm:early_risers": [
       "cc.polyfrost.oneconfig.internal.plugin.asm.ClassTransformer"
     ]

@@ -36,7 +36,7 @@ import cc.polyfrost.oneconfig.utils.commands.CommandManager;
 //#endif
 public class TestMod_Test
 //#if FABRIC==1
-//$$ implements net.fabricmc.api.ModInitializer
+//$$ implements net.fabricmc.api.ClientModInitializer
 //#endif
 {
     public TestMod_Test() {
@@ -45,7 +45,7 @@ public class TestMod_Test
 
     //#if FABRIC==1
     //$$ @Override
-    //$$ public void onInitialize()
+    //$$ public void onInitializeClient()
     //#else
     @Subscribe
     public void init(InitializationEvent e)
