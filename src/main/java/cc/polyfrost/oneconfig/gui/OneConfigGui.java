@@ -51,6 +51,7 @@ import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.renderer.scissor.Scissor;
 import cc.polyfrost.oneconfig.renderer.scissor.ScissorHelper;
 import cc.polyfrost.oneconfig.utils.InputHandler;
+import cc.polyfrost.oneconfig.utils.MathUtils;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 import cc.polyfrost.oneconfig.utils.gui.OneUIScreen;
@@ -114,20 +115,20 @@ public class OneConfigGui extends OneUIScreen {
                 if (containerAnimation.getEnd() != 0) {
                     switch (Preferences.animationType) {
                         case 0:
-                            containerAnimation = new EaseOutExpo((int) (Preferences.animationTime * 1000), Math.min(animationScaleFactor - 0.9f, 0.1f), 0, false);
+                            containerAnimation = new EaseOutExpo((int) (Preferences.animationTime * 1000), MathUtils.clamp(animationScaleFactor - 0.9f, 0f, 0.1f), 0, false);
                             break;
                         case 1:
-                            containerAnimation = new EaseInBack((int) (Preferences.animationTime * 750), Math.min(animationScaleFactor, 1f), 0, false);
+                            containerAnimation = new EaseInBack((int) (Preferences.animationTime * 750), MathUtils.clamp(animationScaleFactor, 0f, 1f), 0, false);
                             break;
                     }
                 }
             } else if (!renderedInHud && isClosed) {
                 switch (Preferences.animationType) {
                     case 0:
-                        containerAnimation = new EaseOutExpo((int) (Preferences.animationTime * 1000), Math.max(animationScaleFactor - 0.9f, 0), 0.1f, false);
+                        containerAnimation = new EaseOutExpo((int) (Preferences.animationTime * 1000), MathUtils.clamp(animationScaleFactor - 0.9f, 0, 0.1f), 0.1f, false);
                         break;
                     case 1:
-                        containerAnimation = new EaseOutExpo((int) (Preferences.animationTime * 1000), Math.max(0, animationScaleFactor), 1, false);
+                        containerAnimation = new EaseOutExpo((int) (Preferences.animationTime * 1000), MathUtils.clamp(animationScaleFactor, 0, 1), 1, false);
                         break;
                 }
                 isClosed = false;
