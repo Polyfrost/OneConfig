@@ -534,10 +534,10 @@ public abstract interface class cc/polyfrost/oneconfig/gui/GuiPause {
 public class cc/polyfrost/oneconfig/gui/OneConfigGui : cc/polyfrost/oneconfig/utils/gui/OneUIScreen {
 	public static field INSTANCE Lcc/polyfrost/oneconfig/gui/OneConfigGui;
 	public field allowClose Z
+	public field animationScaleFactor F
 	public field currentColorSelector Lcc/polyfrost/oneconfig/gui/elements/ColorSelector;
 	protected field currentPage Lcc/polyfrost/oneconfig/gui/pages/Page;
 	protected field prevPage Lcc/polyfrost/oneconfig/gui/pages/Page;
-	public field scaleFactor F
 	public field transparencyFactor F
 	public fun <init> ()V
 	public fun <init> (Lcc/polyfrost/oneconfig/gui/pages/Page;)V
@@ -706,6 +706,7 @@ public class cc/polyfrost/oneconfig/gui/elements/BasicElement {
 	public fun <init> (IIZ)V
 	public fun disable (Z)V
 	public fun draw (JFFLcc/polyfrost/oneconfig/utils/InputHandler;)V
+	public fun getColorPalette ()Lcc/polyfrost/oneconfig/utils/color/ColorPalette;
 	public fun getHeight ()I
 	public fun getWidth ()I
 	public fun ignoreBlockedTouches (Z)V
@@ -1546,6 +1547,7 @@ public class cc/polyfrost/oneconfig/utils/color/ColorPalette {
 	public fun <init> (Lcc/polyfrost/oneconfig/config/core/OneColor;Lcc/polyfrost/oneconfig/config/core/OneColor;Lcc/polyfrost/oneconfig/config/core/OneColor;)V
 	public fun <init> (Ljava/awt/Color;Ljava/awt/Color;Ljava/awt/Color;)V
 	public fun <init> (Ljava/awt/Color;Ljava/awt/Color;Ljava/awt/Color;Ljava/awt/Color;)V
+	public fun <init> (Ljava/lang/String;III)V
 	public fun <init> ([F[F[F[F)V
 	public fun getHoveredColor ()I
 	public fun getHoveredColorf ()[F
@@ -1553,6 +1555,7 @@ public class cc/polyfrost/oneconfig/utils/color/ColorPalette {
 	public fun getNormalColorf ()[F
 	public fun getPressedColor ()I
 	public fun getPressedColorf ()[F
+	public fun toString ()Ljava/lang/String;
 }
 
 public final class cc/polyfrost/oneconfig/utils/color/ColorUtils {
