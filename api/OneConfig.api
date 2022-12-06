@@ -349,7 +349,7 @@ public class cc/polyfrost/oneconfig/config/elements/OptionSubcategory {
 	public field bottomButtons Ljava/util/ArrayList;
 	public field options Ljava/util/ArrayList;
 	public field topButtons Ljava/util/ArrayList;
-	public fun <init> (Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
 	public fun draw (JIILcc/polyfrost/oneconfig/utils/InputHandler;)I
 	public fun drawLast (JILcc/polyfrost/oneconfig/utils/InputHandler;)V
 	public fun getName ()Ljava/lang/String;

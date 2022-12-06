@@ -45,17 +45,20 @@ public class OptionSubcategory {
     public ArrayList<ConfigPageButton> bottomButtons = new ArrayList<>();
     private List<BasicOption> filteredOptions = new ArrayList<>();
     private int drawLastY;
+    private final String category;
 
-    public OptionSubcategory(String name) {
+    public OptionSubcategory(String name, String category) {
         this.name = name;
+        this.category = category;
     }
 
     public int draw(long vg, int x, int y, InputHandler inputHandler) {
         NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
         String filter = OneConfigGui.INSTANCE == null ? "" : OneConfigGui.INSTANCE.getSearchValue().toLowerCase().trim();
-        filteredOptions = options.stream().filter(option -> !option.isHidden() && (filter.equals("") || LevenshteinDistance.isSimilar(name, filter) || LevenshteinDistance.isSimilar(option.name, filter))).collect(Collectors.toList());
-        List<ConfigPageButton> filteredTop = topButtons.stream().filter(page -> !page.isHidden() && (filter.equals("") || LevenshteinDistance.isSimilar(name, filter) || LevenshteinDistance.isSimilar(page.name, filter) || LevenshteinDistance.isSimilar(page.description, filter))).collect(Collectors.toList());
-        List<ConfigPageButton> filteredBottom = bottomButtons.stream().filter(page -> !page.isHidden() && (filter.equals("") || LevenshteinDistance.isSimilar(name, filter) || LevenshteinDistance.isSimilar(page.name, filter) || LevenshteinDistance.isSimilar(page.description, filter))).collect(Collectors.toList());
+        boolean shouldNotFilter = filter.equals("") || LevenshteinDistance.isSimilar(category, filter) || LevenshteinDistance.isSimilar(name, filter);
+        filteredOptions = options.stream().filter(option -> !option.isHidden() && (shouldNotFilter || LevenshteinDistance.isSimilar(option.name, filter))).collect(Collectors.toList());
+        List<ConfigPageButton> filteredTop = topButtons.stream().filter(page -> !page.isHidden() && (shouldNotFilter || LevenshteinDistance.isSimilar(page.name, filter) || LevenshteinDistance.isSimilar(page.description, filter))).collect(Collectors.toList());
+        List<ConfigPageButton> filteredBottom = bottomButtons.stream().filter(page -> !page.isHidden() && (shouldNotFilter || LevenshteinDistance.isSimilar(page.name, filter) || LevenshteinDistance.isSimilar(page.description, filter))).collect(Collectors.toList());
         if (filteredOptions.size() == 0 && filteredTop.size() == 0 && filteredBottom.size() == 0) return 0;
         int optionY = y;
         if (!name.equals("")) {
