@@ -80,7 +80,7 @@ public class OneConfigGui extends OneUIScreen {
     private boolean isClosed = true;
     private boolean shouldDisplayHud = false;
     public float transparencyFactor = 0f;
-    public float scaleFactor = 0f;
+    public float animationScaleFactor = 0f;
 
     public OneConfigGui() {
         if (INSTANCE != null)
@@ -114,20 +114,20 @@ public class OneConfigGui extends OneUIScreen {
                 if (containerAnimation.getEnd() != 0) {
                     switch (Preferences.animationType) {
                         case 0:
-                            containerAnimation = new EaseOutExpo((int) (Preferences.animationTime * 1000), Math.min(scaleFactor - 0.75f, 0.25f), 0, false);
+                            containerAnimation = new EaseOutExpo((int) (Preferences.animationTime * 1000), Math.min(animationScaleFactor - 0.9f, 0.1f), 0, false);
                             break;
                         case 1:
-                            containerAnimation = new EaseInBack((int) (Preferences.animationTime * 750), Math.min(scaleFactor, 1f), 0, false);
+                            containerAnimation = new EaseInBack((int) (Preferences.animationTime * 750), Math.min(animationScaleFactor, 1f), 0, false);
                             break;
                     }
                 }
             } else if (!renderedInHud && isClosed) {
                 switch (Preferences.animationType) {
                     case 0:
-                        containerAnimation = new EaseOutExpo((int) (Preferences.animationTime * 1000), Math.max(scaleFactor - 0.75f, 0), 0.25f, false);
+                        containerAnimation = new EaseOutExpo((int) (Preferences.animationTime * 1000), Math.max(animationScaleFactor - 0.9f, 0), 0.1f, false);
                         break;
                     case 1:
-                        containerAnimation = new EaseOutExpo((int) (Preferences.animationTime * 1000), Math.max(0, scaleFactor), 1, false);
+                        containerAnimation = new EaseOutExpo((int) (Preferences.animationTime * 1000), Math.max(0, animationScaleFactor), 1, false);
                         break;
                 }
                 isClosed = false;
@@ -139,11 +139,11 @@ public class OneConfigGui extends OneUIScreen {
 
         switch (Preferences.animationType) {
             case 0:
-                scaleFactor = .75f + animationValue;
-                transparencyFactor = (animationValue - .05f) * 5f;
+                animationScaleFactor = .9f + animationValue;
+                transparencyFactor = animationValue * 10f;
                 break;
             case 1:
-                scaleFactor = transparencyFactor = animationValue;
+                animationScaleFactor = transparencyFactor = animationValue;
                 break;
         }
 
@@ -346,7 +346,7 @@ public class OneConfigGui extends OneUIScreen {
     public static float getOneConfigScaleFactor() {
         float scaleFactor = getScaleFactor();
         if (Preferences.guiOpenAnimation)
-            return scaleFactor * INSTANCE.scaleFactor;
+            return scaleFactor * INSTANCE.animationScaleFactor;
         return scaleFactor;
     }
 
@@ -370,7 +370,7 @@ public class OneConfigGui extends OneUIScreen {
             if (Preferences.guiClosingAnimation) {
                 shouldDisplayHud = true;
             } else {
-                scaleFactor = transparencyFactor = 0;
+                animationScaleFactor = transparencyFactor = 0;
             }
         }
 
