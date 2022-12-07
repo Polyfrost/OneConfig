@@ -1,25 +1,24 @@
+@file:Suppress("DSL_SCOPE_VIOLATION")
+
 import cc.polyfrost.gradle.util.RelocationTransform.Companion.registerRelocationAttribute
 import cc.polyfrost.gradle.util.noServerRunConfigs
 import cc.polyfrost.gradle.util.prebundle
 import net.fabricmc.loom.task.RemapSourcesJarTask
 import java.text.SimpleDateFormat
 
-
 plugins {
-    kotlin("jvm")
-    id("cc.polyfrost.multi-version")
-    id("cc.polyfrost.defaults.repo")
-    id("cc.polyfrost.defaults.java")
-    id("cc.polyfrost.defaults.loom")
-    id("com.github.johnrengelman.shadow")
-    id("net.kyori.blossom") version "1.3.0"
+    alias(libs.plugins.kotlin)
+    id(pgtLibs.plugins.pgt.get().pluginId)
+    id(pgtLibs.plugins.pgtDefaults.get().pluginId)
+    id(libs.plugins.blossom.get().pluginId)
+    id(libs.plugins.shadow.get().pluginId)
     id("maven-publish")
     id("signing")
     java
 }
 
 kotlin.jvmToolchain {
-    (this as JavaToolchainSpec).languageVersion.set(JavaLanguageVersion.of(8))
+    languageVersion.set(JavaLanguageVersion.of(8))
 }
 
 java {
@@ -51,11 +50,6 @@ base {
 
 loom {
     noServerRunConfigs()
-    runConfigs.named("client") {
-        if (project.platform.isLegacyForge) {
-            vmArgs.remove("-XstartOnFirstThread")
-        }
-    }
     launchConfigs.named("client") {
         if (project.platform.isLegacyForge) {
             arg("--tweakClass", "cc.polyfrost.oneconfig.internal.plugin.asm.OneConfigTweaker")
@@ -141,38 +135,34 @@ private enum class RepackedVersion(val string: String) {
 }
 
 dependencies {
-    compileOnly("gg.essential:vigilance-1.8.9-forge:+") {
+    compileOnly(libs.vigilance) {
         isTransitive = false
     }
 
-    include("cc.polyfrost:universalcraft-$platform:246", transitive = false, mod = true)
+    include("cc.polyfrost:universalcraft-$platform:${libs.versions.universalcraft.get()}", transitive = false, mod = true)
 
-    include("com.github.xtrm-en:deencapsulation:42b829f373", relocate = true, transitive = false, mod = false)
+    include(libs.deencapsulation, relocate = true, transitive = false, mod = false)
 
-    include("com.github.KevinPriv:keventbus:c52e0a2ea0", relocate = true, transitive = false)
+    include(libs.keventbus, relocate = true, transitive = false)
 
-    include("com.github.ben-manes.caffeine:caffeine:2.9.3", relocate = true)
+    include(libs.caffeine, relocate = true)
 
     // for other mods and universalcraft
-    val kotlinVersion: String by project
-    val coroutinesVersion: String by project
-    val serializationVersion: String by project
-    val atomicfuVersion: String by project
-    include("org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion")
-    include("org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion")
-    include("org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlinVersion")
-    include("org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion")
+    include(libs.kotlinStdlib)
+    include(libs.kotlinStdlibJdk8)
+    include(libs.kotlinStdlibJdk7)
+    include(libs.kotlinReflect)
 
-    include("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion")
-    include("org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:$coroutinesVersion")
-    include("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:$coroutinesVersion")
-    include("org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:$serializationVersion")
-    include("org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:$serializationVersion")
-    include("org.jetbrains.kotlinx:kotlinx-serialization-cbor-jvm:$serializationVersion")
-    include("org.jetbrains.kotlinx:atomicfu-jvm:$atomicfuVersion")
+    include(libs.kotlinxCoroutinesCore)
+    include(libs.kotlinxCoroutinesCoreJvm)
+    include(libs.kotlinxCoroutinesJdk8)
+    include(libs.kotlinxSerializationCore)
+    include(libs.kotlinxSerializationJson)
+    include(libs.kotlinxSerializationCbor)
+    include(libs.kotlinxAtomicfu)
 
     if (platform.isLegacyForge) {
-        implementationNoPom(shadeNoJar("org.spongepowered:mixin:0.7.11-SNAPSHOT") {
+        implementationNoPom(shadeNoJar(libs.mixin.get().run { "$group:$name:$version" }) {
             isTransitive = false
         })
     }
@@ -181,7 +171,7 @@ dependencies {
     }
 
     if (platform.isFabric) {
-        include("com.github.Chocohead:Fabric-ASM:v2.3")
+        include(libs.fabricAsm)
     }
 
     val repackedVersions = when (platform.mcVersion) {
@@ -193,7 +183,7 @@ dependencies {
     repackedVersions.forEachIndexed { index, version ->
         val configuration = configurations.create("tempLwjglConfiguration$index")
 
-        compileOnly(configuration("cc.polyfrost:lwjgl-$version:1.0.0-alpha24"){
+        compileOnly(configuration("cc.polyfrost:lwjgl-$version:${libs.versions.lwjgl.get()}"){
             isTransitive = false
         })
         shadeNoPom(implementationNoPom(prebundle(configuration, "lwjgl-$version.jar"))!!)
@@ -438,6 +428,10 @@ fun DependencyHandlerScope.include(dependency: ModuleDependency, pom: Boolean = 
         }
         "include"(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
     }
+}
+
+fun DependencyHandlerScope.include(dependency: Provider<MinimalExternalModuleDependency>, pom: Boolean = true, mod: Boolean = false, relocate: Boolean = false, transitive: Boolean = true) {
+    include(dependency.get().run { "$group:$name:$version" }, pom, mod, relocate, transitive)
 }
 
 fun DependencyHandlerScope.include(dependency: String, pom: Boolean = true, mod: Boolean = false, relocate: Boolean = false, transitive: Boolean = true) {

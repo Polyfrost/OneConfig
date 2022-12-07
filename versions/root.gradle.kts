@@ -1,10 +1,10 @@
+@file:Suppress("DSL_SCOPE_VIOLATION")
 /**
  * WHATEVER HAPPENS HERE MUST ALSO BE APPLIED IN lwjgl-repacked
  */
 plugins {
-    kotlin("jvm") version "1.6.21" apply false
-    id("cc.polyfrost.multi-version.root")
-    id("io.github.juuxel.loom-quiltflower-mini") version "171a6e2e49" apply false
+    alias(libs.plugins.kotlin) apply false
+    id(pgtLibs.plugins.pgtRoot.get().pluginId)
 }
 
 preprocess {

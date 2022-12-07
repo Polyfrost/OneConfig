@@ -1,0 +1,55 @@
+# PGT-related stuff is in settings.gradle.kts
+[versions]
+kotlin = "1.7.21"
+coroutines = "1.6.4"
+serialization = "1.4.1"
+atomicfu = "0.18.5"
+abi = "0.12.1"
+
+blossom = "1.3.1"
+shadow = "7.1.2"
+
+vigilance = "+"
+universalcraft = "246"
+keventbus = "c52e0a2ea0"
+deencapsulation = "42b829f373"
+caffeine = "2.9.3"
+mixin = "0.7.11-SNAPSHOT"
+
+lwjgl = "1.0.0-alpha24"
+fabric-asm = "v2.3"
+
+[libraries]
+
+vigilance = { module = "gg.essential:vigilance-1.8.9-forge", version.ref = "vigilance" }
+keventbus = { module = "com.github.KevinPriv:keventbus", version.ref = "keventbus" }
+deencapsulation = { module = "com.github.xtrm-en:deencapsulation", version.ref = "deencapsulation" }
+caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "caffeine" }
+
+kotlinReflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
+kotlinStdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
+kotlinStdlibJdk8 = { module = "org.jetbrains.kotlin:kotlin-stdlib-jdk8", version.ref = "kotlin" }
+kotlinStdlibJdk7 = { module = "org.jetbrains.kotlin:kotlin-stdlib-jdk7", version.ref = "kotlin" }
+kotlinxCoroutinesCore = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
+kotlinxCoroutinesCoreJvm = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm", version.ref = "coroutines" }
+kotlinxCoroutinesJdk8 = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-jdk8", version.ref = "coroutines" }
+
+kotlinxSerializationCore = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core-jvm", version.ref = "serialization" }
+kotlinxSerializationJson = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json-jvm", version.ref = "serialization" }
+kotlinxSerializationCbor = { module = "org.jetbrains.kotlinx:kotlinx-serialization-cbor-jvm", version.ref = "serialization" }
+
+kotlinxAtomicfu = { module = "org.jetbrains.kotlinx:atomicfu-jvm", version.ref = "atomicfu" }
+
+mixin = { module = "org.spongepowered:mixin", version.ref = "mixin" }
+
+fabricAsm = { module = "com.github.Chocohead:Fabric-ASM", version.ref = "fabric-asm" }
+
+
+[plugins]
+
+kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlinAbi = { id = "org.jetbrains.kotlinx.binary-compatibility-validator", version.ref = "abi" }
+
+blossom = { id = "net.kyori.blossom", version.ref = "blossom" }
+
+shadow = { id = "com.github.johnrengelman.shadow", version.ref = "shadow" }
