@@ -159,7 +159,7 @@ public class OneConfigGui extends OneUIScreen {
             inputHandler = DUMMY_HANDLER;
         }
 
-        float scale = getOneConfigScaleFactor();
+        float scale = getScaleFactor() * animationScaleFactor;
         int x = (int) ((UResolution.getWindowWidth() - 1280 * scale) / 2f / scale);
         int y = (int) ((UResolution.getWindowHeight() - 800 * scale) / 2f / scale);
         nanoVGHelper.scale(vg, scale, scale);
@@ -342,13 +342,6 @@ public class OneConfigGui extends OneUIScreen {
     public OneColor getColor() {
         if (currentColorSelector == null) return null;
         return currentColorSelector.getColor();
-    }
-
-    public static float getOneConfigScaleFactor() {
-        float scaleFactor = getScaleFactor();
-        if (Preferences.guiOpenAnimation)
-            return scaleFactor * INSTANCE.animationScaleFactor;
-        return scaleFactor;
     }
 
     public static float getScaleFactor() {
