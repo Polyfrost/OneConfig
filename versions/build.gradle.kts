@@ -145,7 +145,6 @@ dependencies {
     compileOnly("gg.essential:vigilance-1.8.9-forge:+") {
         isTransitive = false
     }
-    compileOnly("net.fabricmc:fabric-loader:0.11.6")
 
     include("cc.polyfrost:universalcraft-$platform:246", transitive = false, mod = true)
 
