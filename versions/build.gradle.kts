@@ -148,18 +148,7 @@ dependencies {
     include(libs.caffeine, relocate = true)
 
     // for other mods and universalcraft
-    include(libs.kotlinStdlib)
-    include(libs.kotlinStdlibJdk8)
-    include(libs.kotlinStdlibJdk7)
-    include(libs.kotlinReflect)
-
-    include(libs.kotlinxCoroutinesCore)
-    include(libs.kotlinxCoroutinesCoreJvm)
-    include(libs.kotlinxCoroutinesJdk8)
-    include(libs.kotlinxSerializationCore)
-    include(libs.kotlinxSerializationJson)
-    include(libs.kotlinxSerializationCbor)
-    include(libs.kotlinxAtomicfu)
+    include(libs.bundles.kotlin)
 
     if (platform.isLegacyForge) {
         implementationNoPom(shadeNoJar(libs.mixin.get().run { "$group:$name:$version" }) {

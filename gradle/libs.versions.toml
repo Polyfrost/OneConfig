@@ -44,6 +44,8 @@ mixin = { module = "org.spongepowered:mixin", version.ref = "mixin" }
 
 fabricAsm = { module = "com.github.Chocohead:Fabric-ASM", version.ref = "fabric-asm" }
 
+[bundles]
+kotlin = [ "kotlinReflect", "kotlinStdlib", "kotlinStdlibJdk8", "kotlinStdlibJdk7", "kotlinxCoroutinesCore", "kotlinxCoroutinesCoreJvm", "kotlinxCoroutinesJdk8", "kotlinxSerializationCore", "kotlinxSerializationJson", "kotlinxSerializationCbor", "kotlinxAtomicfu" ]
 
 [plugins]
 

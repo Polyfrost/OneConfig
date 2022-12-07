@@ -101,18 +101,7 @@ dependencies {
     shadeRelocated(libs.caffeine)
 
     // for other mods and universalcraft
-    shade(libs.kotlinStdlib)
-    shade(libs.kotlinStdlibJdk8)
-    shade(libs.kotlinStdlibJdk7)
-    shade(libs.kotlinReflect)
-
-    shade(libs.kotlinxCoroutinesCore)
-    shade(libs.kotlinxCoroutinesCoreJvm)
-    shade(libs.kotlinxCoroutinesJdk8)
-    shade(libs.kotlinxSerializationCore)
-    shade(libs.kotlinxSerializationJson)
-    shade(libs.kotlinxSerializationCbor)
-    shade(libs.kotlinxAtomicfu)
+    shade(libs.bundles.kotlin)
 
     shade(libs.mixin) {
         isTransitive = false
