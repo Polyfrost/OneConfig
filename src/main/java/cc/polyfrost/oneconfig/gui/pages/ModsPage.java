@@ -34,7 +34,7 @@ import cc.polyfrost.oneconfig.gui.elements.ModCard;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.internal.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.internal.config.core.ConfigCore;
-import cc.polyfrost.oneconfig.utils.LevenshteinDistance;
+import cc.polyfrost.oneconfig.utils.SearchUtils;
 import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.utils.InputHandler;
@@ -72,7 +72,7 @@ public class ModsPage extends Page {
         int iY = y + 72;
         ArrayList<ModCard> finalModCards = new ArrayList<>(modCards);
         for (ModCard modCard : finalModCards) {
-            if (inSelection(modCard) && (filter.equals("") || LevenshteinDistance.isSimilar(modCard.getModData().name, filter))) {
+            if (inSelection(modCard) && (filter.equals("") || SearchUtils.isSimilar(modCard.getModData().name, filter))) {
                 if (iY + 135 >= y - scroll && iY <= y + 728 - scroll) modCard.draw(vg, iX, iY, inputHandler);
                 iX += 260;
                 if (iX > x + 796) {

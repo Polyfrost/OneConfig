@@ -32,7 +32,7 @@ import cc.polyfrost.oneconfig.config.elements.OptionPage;
 import cc.polyfrost.oneconfig.config.elements.OptionSubcategory;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.elements.BasicButton;
-import cc.polyfrost.oneconfig.utils.LevenshteinDistance;
+import cc.polyfrost.oneconfig.utils.SearchUtils;
 import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.renderer.scissor.ScissorHelper;
@@ -102,7 +102,7 @@ public class ModConfigPage extends Page {
             if (button.getWidth() == 0)
                 button.setWidth((int) (Math.ceil(NanoVGHelper.INSTANCE.getTextWidth(vg, button.getText(), 12f, Fonts.MEDIUM) / 8f) * 8 + 16));
             if (searching) {
-                boolean similar = LevenshteinDistance.isSimilar(button.getText(), OneConfigGui.INSTANCE.getSearchValue());
+                boolean similar = SearchUtils.isSimilar(button.getText(), OneConfigGui.INSTANCE.getSearchValue());
                 boolean selected = button.isToggled();
                 button.setToggled(similar);
                 button.draw(vg, buttonX, y + 16, inputHandler);
@@ -137,15 +137,15 @@ public class ModConfigPage extends Page {
         } else {
             List<OptionSubcategory> subcategories = new ArrayList<>();
             for (Map.Entry<String, OptionCategory> category : page.categories.entrySet()) {
-                if (LevenshteinDistance.isSimilar(category.getKey(), OneConfigGui.INSTANCE.getSearchValue())) {
+                if (SearchUtils.isSimilar(category.getKey(), OneConfigGui.INSTANCE.getSearchValue())) {
                     subcategories.addAll(category.getValue().subcategories);
                 } else {
                     for (OptionSubcategory subcategory : category.getValue().subcategories) {
-                        if (LevenshteinDistance.isSimilar(subcategory.getName(), OneConfigGui.INSTANCE.getSearchValue())) {
+                        if (SearchUtils.isSimilar(subcategory.getName(), OneConfigGui.INSTANCE.getSearchValue())) {
                             subcategories.add(subcategory);
                         } else {
                             for (BasicOption option : subcategory.options) {
-                                if (LevenshteinDistance.isSimilar(option.name, OneConfigGui.INSTANCE.getSearchValue())) {
+                                if (SearchUtils.isSimilar(option.name, OneConfigGui.INSTANCE.getSearchValue())) {
                                     subcategories.add(subcategory);
                                     break;
                                 }

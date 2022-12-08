@@ -29,7 +29,7 @@ package cc.polyfrost.oneconfig.config.elements;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.elements.config.ConfigPageButton;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
-import cc.polyfrost.oneconfig.utils.LevenshteinDistance;
+import cc.polyfrost.oneconfig.utils.SearchUtils;
 import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.utils.InputHandler;
@@ -55,10 +55,11 @@ public class OptionSubcategory {
     public int draw(long vg, int x, int y, InputHandler inputHandler) {
         NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
         String filter = OneConfigGui.INSTANCE == null ? "" : OneConfigGui.INSTANCE.getSearchValue().toLowerCase().trim();
-        boolean shouldNotFilter = filter.equals("") || LevenshteinDistance.isSimilar(category, filter) || LevenshteinDistance.isSimilar(name, filter);
-        filteredOptions = options.stream().filter(option -> !option.isHidden() && (shouldNotFilter || LevenshteinDistance.isSimilar(option.name, filter))).collect(Collectors.toList());
-        List<ConfigPageButton> filteredTop = topButtons.stream().filter(page -> !page.isHidden() && (shouldNotFilter || LevenshteinDistance.isSimilar(page.name, filter) || LevenshteinDistance.isSimilar(page.description, filter))).collect(Collectors.toList());
-        List<ConfigPageButton> filteredBottom = bottomButtons.stream().filter(page -> !page.isHidden() && (shouldNotFilter || LevenshteinDistance.isSimilar(page.name, filter) || LevenshteinDistance.isSimilar(page.description, filter))).collect(Collectors.toList());
+        //todo bugs: "Test Page" in test mod doesn't get filtered nicely
+        boolean shouldNotFilter = filter.equals("") || SearchUtils.isSimilar(category, filter) || SearchUtils.isSimilar(name, filter);
+        filteredOptions = options.stream().filter(option -> !option.isHidden() && (shouldNotFilter || SearchUtils.isSimilar(option.name, filter))).collect(Collectors.toList());
+        List<ConfigPageButton> filteredTop = topButtons.stream().filter(page -> !page.isHidden() && (shouldNotFilter || SearchUtils.isSimilar(page.name, filter) || SearchUtils.isSimilar(page.description, filter))).collect(Collectors.toList());
+        List<ConfigPageButton> filteredBottom = bottomButtons.stream().filter(page -> !page.isHidden() && (shouldNotFilter || SearchUtils.isSimilar(page.name, filter) || SearchUtils.isSimilar(page.description, filter))).collect(Collectors.toList());
         if (filteredOptions.size() == 0 && filteredTop.size() == 0 && filteredBottom.size() == 0) return 0;
         int optionY = y;
         if (!name.equals("")) {
