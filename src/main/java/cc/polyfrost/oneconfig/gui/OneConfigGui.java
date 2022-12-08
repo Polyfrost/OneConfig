@@ -42,6 +42,7 @@ import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.internal.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.internal.config.Preferences;
+import cc.polyfrost.oneconfig.internal.renderer.NanoVGHelperImpl;
 import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
 import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
 import cc.polyfrost.oneconfig.libs.universal.UResolution;
@@ -83,9 +84,9 @@ public class OneConfigGui extends OneUIScreen {
     public float transparencyFactor = 0f;
     public float animationScaleFactor = 0f;
     /**
-     * Used for global transparency animation in NanoVGHelperImpl
+     * Used for global transparency animation in {@link NanoVGHelperImpl}
      */
-    public boolean isDrawing;
+    private boolean isDrawing;
 
     public OneConfigGui() {
         if (INSTANCE != null)
@@ -100,8 +101,13 @@ public class OneConfigGui extends OneUIScreen {
         this.currentPage = page;
     }
 
-    public static OneConfigGui create() {
-        return INSTANCE == null ? new OneConfigGui() : INSTANCE;
+    @Override
+    public void initScreen(int width, int height) {
+        super.initScreen(width, height);
+
+        if (Preferences.guiOpenAnimation) {
+            shouldDisplayHud = false;
+        }
     }
 
     @Override
@@ -378,29 +384,6 @@ public class OneConfigGui extends OneUIScreen {
         super.onScreenClose();
     }
 
-    @Override
-    public boolean doesGuiPauseGame() {
-        return false;
-    }
-
-    @Override
-    public boolean hasBackgroundBlur() {
-        return Preferences.enableBlur;
-    }
-
-    public static boolean isOpen() {
-        return Platform.getGuiPlatform().getCurrentScreen() instanceof OneConfigGui;
-    }
-
-    @Override
-    public void initScreen(int width, int height) {
-        super.initScreen(width, height);
-
-        if (Preferences.guiOpenAnimation) {
-            shouldDisplayHud = false;
-        }
-    }
-
     @Subscribe
     public void onRenderHUD(HudRenderEvent event) {
         if (!shouldDisplayHud) return;
@@ -411,6 +394,28 @@ public class OneConfigGui extends OneUIScreen {
         if (transparencyFactor <= 0.01) {
             shouldDisplayHud = false;
         }
+    }
+
+    @Override
+    public boolean doesGuiPauseGame() {
+        return false;
+    }
+
+    @Override
+    public boolean hasBackgroundBlur() {
+        return Preferences.enableBlur;
+    }
+
+    public boolean isDrawing() {
+        return isDrawing;
+    }
+
+    public static OneConfigGui create() {
+        return INSTANCE == null ? new OneConfigGui() : INSTANCE;
+    }
+
+    public static boolean isOpen() {
+        return Platform.getGuiPlatform().getCurrentScreen() instanceof OneConfigGui;
     }
 
     static {
