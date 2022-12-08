@@ -105,7 +105,7 @@ public class cc/polyfrost/oneconfig/utils/commands/PlatformCommandManagerImpl : 
 	public fun createCommand (Lcc/polyfrost/oneconfig/utils/commands/CommandManager$OCCommand;)V
 }
 
-public class cc/polyfrost/oneconfig/utils/commands/arguments/OldPlayerArgumentParser : cc/polyfrost/oneconfig/utils/commands/arguments/ArgumentParser {
+public class cc/polyfrost/oneconfig/utils/commands/arguments/EntityPlayerArgumentParser : cc/polyfrost/oneconfig/utils/commands/arguments/ArgumentParser {
 	public fun <init> ()V
 	public fun complete (Ljava/lang/String;Ljava/lang/reflect/Parameter;)Ljava/util/List;
 	public synthetic fun parse (Ljava/lang/String;)Ljava/lang/Object;

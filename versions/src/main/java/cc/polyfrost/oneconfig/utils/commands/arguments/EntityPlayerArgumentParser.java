@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
  * @deprecated Use {@link PlayerArgumentParser} instead.
  */
 @Deprecated
-public class OldPlayerArgumentParser extends ArgumentParser<EntityPlayer> {
+public class EntityPlayerArgumentParser extends ArgumentParser<EntityPlayer> {
     @Nullable
     @Override
     public EntityPlayer parse(@NotNull String arg) {

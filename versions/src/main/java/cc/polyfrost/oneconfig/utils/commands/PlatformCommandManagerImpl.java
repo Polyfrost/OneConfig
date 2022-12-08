@@ -31,7 +31,7 @@ import cc.polyfrost.oneconfig.libs.universal.UChat;
 import cc.polyfrost.oneconfig.utils.StringUtils;
 import cc.polyfrost.oneconfig.utils.commands.annotations.Description;
 import cc.polyfrost.oneconfig.utils.commands.annotations.Greedy;
-import cc.polyfrost.oneconfig.utils.commands.arguments.OldPlayerArgumentParser;
+import cc.polyfrost.oneconfig.utils.commands.arguments.EntityPlayerArgumentParser;
 import cc.polyfrost.oneconfig.utils.commands.arguments.PlayerArgumentParser;
 import net.minecraft.command.CommandBase;
 import net.minecraft.util.BlockPos;
@@ -51,7 +51,7 @@ import net.minecraftforge.client.ClientCommandHandler;
 public class PlatformCommandManagerImpl extends PlatformCommandManager {
 
     static {
-        INSTANCE.addParser(new OldPlayerArgumentParser());
+        INSTANCE.addParser(new EntityPlayerArgumentParser());
         INSTANCE.addParser(new PlayerArgumentParser());
     }
 
