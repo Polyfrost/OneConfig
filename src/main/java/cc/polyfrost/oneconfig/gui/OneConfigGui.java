@@ -82,6 +82,10 @@ public class OneConfigGui extends OneUIScreen {
     private boolean shouldDisplayHud = false;
     public float transparencyFactor = 0f;
     public float animationScaleFactor = 0f;
+    /**
+     * Used for global transparency animation in NanoVGHelperImpl
+     */
+    public boolean isDrawing;
 
     public OneConfigGui() {
         if (INSTANCE != null)
@@ -102,6 +106,8 @@ public class OneConfigGui extends OneUIScreen {
 
     @Override
     public void draw(long vg, float partialTicks, InputHandler inputHandler) {
+        this.isDrawing = true;
+
         final NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
         final ScissorHelper scissorHelper = ScissorHelper.INSTANCE;
         if (currentPage == null) {
@@ -261,6 +267,7 @@ public class OneConfigGui extends OneUIScreen {
             currentColorSelector.draw(vg);
         }
         nanoVGHelper.resetTransform(vg);
+        isDrawing = false;
     }
 
     @Override
