@@ -145,13 +145,12 @@ dependencies {
         isTransitive = false
     }
 
-    include("cc.polyfrost:universalcraft-$platform:245", transitive = false, mod = true)
+    include("cc.polyfrost:universalcraft-$platform:246", transitive = false, mod = true)
 
     include("com.github.xtrm-en:deencapsulation:42b829f373", relocate = true, transitive = false, mod = false)
 
     include("com.github.KevinPriv:keventbus:c52e0a2ea0", relocate = true, transitive = false)
 
-    @Suppress("GradlePackageUpdate")
     include("com.github.ben-manes.caffeine:caffeine:2.9.3", relocate = true)
 
     // for other mods and universalcraft

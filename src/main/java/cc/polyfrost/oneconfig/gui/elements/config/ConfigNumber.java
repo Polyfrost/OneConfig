@@ -38,15 +38,17 @@ import java.lang.reflect.Field;
 public class ConfigNumber extends BasicOption {
     private final NumberInputField inputField;
     private boolean isFloat = true;
+    private final int size;
 
-    public ConfigNumber(Field field, Object parent, String name, String description, String category, String subcategory, float min, float max, int step) {
-        super(field, parent, name, description, category, subcategory, 2);
+    public ConfigNumber(Field field, Object parent, String name, String description, String category, String subcategory, float min, float max, int step, int size) {
+        super(field, parent, name, description, category, subcategory, size);
         this.inputField = new NumberInputField(84, 32, 0, min, max, step);
+        this.size = size;
     }
 
     public static ConfigNumber create(Field field, Object parent) {
         Number slider = field.getAnnotation(Number.class);
-        return new ConfigNumber(field, parent, slider.name(), slider.description(), slider.category(), slider.subcategory(), slider.min(), slider.max(), slider.step());
+        return new ConfigNumber(field, parent, slider.name(), slider.description(), slider.category(), slider.subcategory(), slider.min(), slider.max(), slider.step(), slider.size());
     }
 
     @Override
@@ -75,7 +77,7 @@ public class ConfigNumber extends BasicOption {
         if (!inputField.isToggled()) inputField.setCurrentValue(value);
 
         nanoVGHelper.drawText(vg, name, x, y + 17, nameColor, 14f, Fonts.MEDIUM);
-        inputField.draw(vg, x + 892, y, inputHandler);
+        inputField.draw(vg, x + (size == 1 ? 480 - 84 : 892), y, inputHandler);
         nanoVGHelper.setAlpha(vg, 1f);
     }
 
