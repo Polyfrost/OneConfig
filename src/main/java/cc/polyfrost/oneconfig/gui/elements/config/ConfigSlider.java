@@ -46,7 +46,7 @@ import java.lang.reflect.Field;
 public class ConfigSlider extends BasicOption {
     private static final int STEP_POPUP_DURATION = 400;
     private static final int INDICATOR_POPUP_DURATION = 200;
-    private static final int INDICATOR_SLIDING_DURATION = 100;
+    private static final int INDICATOR_SLIDING_DURATION = 60;
 
     private static final float STEP_HEIGHT_HOVER = 4;
     // Step height drag is also the max height of the step
