@@ -48,6 +48,8 @@ import cc.polyfrost.oneconfig.internal.config.core.KeyBindHandler;
 import cc.polyfrost.oneconfig.internal.utils.Deprecator;
 import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 import com.google.gson.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 
 import java.io.*;
 import java.lang.reflect.Field;
@@ -97,9 +99,12 @@ public class Config {
 
     public void initialize() {
         boolean migrate = false;
-        if (ConfigUtils.getProfileFile(configFile).exists()) load();
-        else if (mod.migrator != null) migrate = true;
-        else save();
+        File profileFile = ConfigUtils.getProfileFile(configFile);
+        if (profileFile.exists()) load();
+        if (!profileFile.exists()) {
+            if (mod.migrator != null) migrate = true;
+            else save();
+        }
         mod.config = this;
         generateOptionList(this, mod.defaultPage, mod, migrate);
         if (migrate) save();
@@ -107,8 +112,11 @@ public class Config {
     }
 
     public void reInitialize() {
-        if (ConfigUtils.getProfileFile(configFile).exists()) load();
-        else save();
+        File profileFile = ConfigUtils.getProfileFile(configFile);
+        if (profileFile.exists()) load();
+        if (!profileFile.exists()) {
+            save();
+        }
     }
 
     /**
@@ -137,11 +145,15 @@ public class Config {
             gson.fromJson(reader, this.getClass());
         } catch (Exception e) {
             e.printStackTrace();
+            File file = ConfigUtils.getProfileFile(configFile);
+            file.renameTo(new File(file.getParentFile(), file.getName() + ".corrupted"));
         }
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(Files.newInputStream(ConfigUtils.getNonProfileSpecificFile(configFile).toPath()), StandardCharsets.UTF_8))) {
             nonProfileSpecificGson.fromJson(reader, this.getClass());
         } catch (Exception e) {
             e.printStackTrace();
+            File file = ConfigUtils.getNonProfileSpecificFile(configFile);
+            file.renameTo(new File(file.getParentFile(), file.getName() + ".corrupted"));
         }
     }
 
@@ -349,5 +361,22 @@ public class Config {
      */
     public boolean supportsProfiles() {
         return true;
+    }
+
+    /**
+     * Register a mod to be managed by OneConfig. <br>
+     * <b>NOTE: DO NOT USE THIS METHOD UNLESS YOU ARE USING A CUSTOM IMPLEMENTATION!</b> This function is normally completed by initializing a Config. <br>
+     * @implNote null -> null, if already registered -> old mod, if registered successfully -> null
+     *
+     * @param mod The mod to be registered
+     */
+    @ApiStatus.Experimental
+    @Contract("null -> null")
+    public static Mod register(Mod mod) {
+        if(mod == null) return null;
+        if(ConfigCore.mods.contains(mod)) return mod;
+        ConfigCore.mods.add(mod);
+        ConfigCore.sortMods();
+        return null;
     }
 }

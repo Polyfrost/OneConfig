@@ -38,9 +38,22 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(value = ClientPlayNetworkHandler.class, priority = Integer.MAX_VALUE)
 public class NetHandlerPlayClientMixin {
 
-    @Inject(method = "onChatMessage", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/hud/ChatHud;addMessage(Lnet/minecraft/text/Text;)V"), cancellable = true)
+    private static final String TARGET =
+            //#if MC<=10809
+            "Lnet/minecraft/client/gui/hud/ChatHud;addMessage(Lnet/minecraft/text/Text;)V";
+            //#else
+            //$$ "Lnet/minecraft/client/gui/hud/InGameHud;method_14471(Lnet/minecraft/util/ChatMessageType;Lnet/minecraft/text/Text;)V";
+            //#endif
+
+    @Inject(method = "onChatMessage", at = @At(value = "INVOKE", target = TARGET), cancellable = true)
     private void onClientChat(ChatMessageS2CPacket packet, CallbackInfo ci) {
-        if (packet.getType() == 0) {
+        if (
+                //#if MC<=10809
+                packet.getType() == 0
+                //#else
+                //$$ !packet.isNonChat()
+                //#endif
+        ) {
             ChatReceiveEvent event = new ChatReceiveEvent(packet.getMessage());
             EventManager.INSTANCE.post(event);
             if (event.isCancelled) {

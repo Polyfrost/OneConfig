@@ -44,7 +44,7 @@ import java.util.*;
 import static cc.polyfrost.oneconfig.utils.commands.CommandManager.*;
 
 //#if FORGE==1
-//$$ import net.minecraftforge.client.ClientCommandHandler;
+import net.minecraftforge.client.ClientCommandHandler;
 //#endif
 
 public class PlatformCommandManagerImpl extends PlatformCommandManager {

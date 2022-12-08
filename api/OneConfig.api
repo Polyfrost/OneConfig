@@ -23,6 +23,7 @@ public class cc/polyfrost/oneconfig/config/Config {
 	public fun load ()V
 	public fun openGui ()V
 	public fun reInitialize ()V
+	public static fun register (Lcc/polyfrost/oneconfig/config/data/Mod;)Lcc/polyfrost/oneconfig/config/data/Mod;
 	protected final fun registerKeyBind (Lcc/polyfrost/oneconfig/config/core/OneKeyBind;Ljava/lang/Runnable;)V
 	public fun save ()V
 	public fun supportsProfiles ()Z
@@ -118,6 +119,7 @@ public abstract interface annotation class cc/polyfrost/oneconfig/config/annotat
 	public abstract fun max ()F
 	public abstract fun min ()F
 	public abstract fun name ()Ljava/lang/String;
+	public abstract fun size ()I
 	public abstract fun step ()I
 	public abstract fun subcategory ()Ljava/lang/String;
 }
@@ -266,6 +268,7 @@ public class cc/polyfrost/oneconfig/config/data/Mod : java/lang/Comparable {
 	public fun <init> (Ljava/lang/String;Lcc/polyfrost/oneconfig/config/data/ModType;Ljava/lang/String;Lcc/polyfrost/oneconfig/config/migration/Migrator;)V
 	public fun compareTo (Lcc/polyfrost/oneconfig/config/data/Mod;)I
 	public synthetic fun compareTo (Ljava/lang/Object;)I
+	public fun equals (Ljava/lang/Object;)Z
 }
 
 public final class cc/polyfrost/oneconfig/config/data/ModType : java/lang/Enum {
@@ -431,6 +434,7 @@ public abstract interface annotation class cc/polyfrost/oneconfig/config/migrati
 
 public final class cc/polyfrost/oneconfig/events/EventManager {
 	public static final field INSTANCE Lcc/polyfrost/oneconfig/events/EventManager;
+	public fun <init> ()V
 	public fun getEventBus ()Lcc/polyfrost/oneconfig/libs/eventbus/EventBus;
 	public fun post (Ljava/lang/Object;)V
 	public fun register (Ljava/lang/Object;)V
@@ -833,7 +837,7 @@ public class cc/polyfrost/oneconfig/gui/elements/config/ConfigKeyBind : cc/polyf
 }
 
 public class cc/polyfrost/oneconfig/gui/elements/config/ConfigNumber : cc/polyfrost/oneconfig/config/elements/BasicOption {
-	public fun <init> (Ljava/lang/reflect/Field;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;FFI)V
+	public fun <init> (Ljava/lang/reflect/Field;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;FFII)V
 	public static fun create (Ljava/lang/reflect/Field;Ljava/lang/Object;)Lcc/polyfrost/oneconfig/gui/elements/config/ConfigNumber;
 	public fun draw (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
 	public fun getHeight ()I

@@ -23,8 +23,6 @@
  * to OneConfig, as published by Polyfrost. If not, see
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
-
-//#if MC==10809 && FORGE==1
 package cc.polyfrost.oneconfig.internal.mixin;
 
 import cc.polyfrost.oneconfig.events.EventManager;
@@ -38,9 +36,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(value = GuiIngameForge.class, remap = false)
 public class GuiIngameForgeMixin {
+    //#if MC>=11600
+    //$$     @Inject(method = "renderIngameGui", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/client/gui/ForgeIngameGui;post(Lnet/minecraftforge/client/event/RenderGameOverlayEvent$ElementType;Lcom/mojang/blaze3d/matrix/MatrixStack;)V", shift = At.Shift.AFTER, remap = false), remap = true)
+    //$$     private void onRenderGameOverlay(com.mojang.blaze3d.matrix.MatrixStack matrices, float partialTicks, CallbackInfo ci) {
+    //#else
     @Inject(method = "renderGameOverlay", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/client/GuiIngameForge;post(Lnet/minecraftforge/client/event/RenderGameOverlayEvent$ElementType;)V", shift = At.Shift.AFTER, remap = false), remap = true)
     private void onRenderGameOverlay(float partialTicks, CallbackInfo ci) {
+    //#endif
         EventManager.INSTANCE.post(new HudRenderEvent(new UMatrixStack(), partialTicks));
     }
 }
-//#endif

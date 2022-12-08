@@ -24,7 +24,7 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-//#if FORGE==1 && MC==10809
+//#if FORGE==1 && MC<=11202
 package cc.polyfrost.oneconfig.internal.mixin;
 
 import net.minecraft.client.shader.Framebuffer;

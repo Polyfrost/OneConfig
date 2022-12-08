@@ -1,0 +1,2 @@
+net.minecraft.util.profiler.Profiler net.minecraft.profiler.Profiler
+net.minecraft.util.registry.RegistryKey net.minecraft.util.RegistryKey

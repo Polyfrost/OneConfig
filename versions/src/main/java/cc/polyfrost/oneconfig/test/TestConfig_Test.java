@@ -132,6 +132,14 @@ public class TestConfig_Test extends Config {
     )
     float testSlider = 50;
 
+    @Slider(
+            name = "Test Stepped Slider",
+            min = 0,
+            max = 100,
+            step = 25
+    )
+    float testSteppedSlider = 50;
+
     @Number(
             name = "Test Number",
             min = 25,
