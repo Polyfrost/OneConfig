@@ -48,7 +48,7 @@ public class CreditsPage extends Page {
         nanoVGHelper.drawText(vg, " - nextdaydelivery - GUI Frontend, NanoVGHelper, Utilities", x + 20, y + 235, -1, 12, Fonts.REGULAR);
         nanoVGHelper.drawText(vg, " - Pauline - Utilities", x + 20, y + 250, -1, 12, Fonts.REGULAR);
         nanoVGHelper.drawText(vg, " - xtrm - Multiversion support, GUI Frontend", x + 20, y + 265, -1, 12, Fonts.REGULAR);
-        nanoVGHelper.drawText(vg, " - MoonTidez - Founder and Lead Designer", x + 20, y + 280, -1, 12, Fonts.REGULAR);
+        nanoVGHelper.drawText(vg, " - MoonTidez - Founder, Designer", x + 20, y + 280, -1, 12, Fonts.REGULAR);
         nanoVGHelper.drawText(vg, " - DeDiamondPro - Founder, Config Backend, GUI Frontend, HUD", x + 20, y + 295, -1, 12, Fonts.REGULAR);
 
         nanoVGHelper.drawText(vg, "Libraries", x + 20, y + 333, -1, 24, Fonts.SEMIBOLD);
@@ -59,6 +59,7 @@ public class CreditsPage extends Page {
         nanoVGHelper.drawText(vg, " - https://easings.net/ - Easing functions", x + 20, y + 415, -1, 12, Fonts.REGULAR);
         nanoVGHelper.drawText(vg, " - Quiltflower (Quilt Team) - Gradle decompiler", x + 20, y + 430, -1, 12, Fonts.REGULAR);
         nanoVGHelper.drawText(vg, " - Seraph (Scherso) - Locraw and Multithreading utilities", x + 20, y + 445, -1, 12, Fonts.REGULAR);
+        nanoVGHelper.drawText(vg, " - Deencapsulation (xDark) - Java 9+ utilities", x + 20, y + 460, -1, 12, Fonts.REGULAR);
     }
 
     @Override
