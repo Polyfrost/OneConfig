@@ -80,7 +80,7 @@ public class Preferences extends InternalConfig {
             description = "Plays an animation when closing the GUI",
             subcategory = "GUI Settings"
     )
-    public static boolean guiClosingAnimation = false;
+    public static boolean guiClosingAnimation = true;
 
     @Slider(
             name = "Animation Duration",
