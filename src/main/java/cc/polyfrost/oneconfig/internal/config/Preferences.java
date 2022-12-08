@@ -40,19 +40,10 @@ import cc.polyfrost.oneconfig.utils.TickDelay;
 
 public class Preferences extends InternalConfig {
 
-    @Dropdown(
-            name = "Release Channel",
-            options = {"Releases", "Pre-Releases"}
-    )
-    public static int updateChannel = 0;
-
-    @Switch(
-            name = "Debug Mode"
-    )
-    public static boolean DEBUG = false;
-
     @KeyBind(
             name = "OneConfig Keybind",
+            subcategory = "GUI Settings",
+            description = "Choose what key opens the OneConfig UI",
             size = 2
     )
     public static OneKeyBind oneConfigKeyBind = new OneKeyBind(UKeyboard.KEY_RSHIFT);
@@ -73,7 +64,7 @@ public class Preferences extends InternalConfig {
             name = "Custom GUI scale",
             subcategory = "GUI Settings",
             min = 0.5f,
-            max = 5f
+            max = 2f
     )
     public static float customScale = 1f;
 
@@ -107,6 +98,17 @@ public class Preferences extends InternalConfig {
             options = {"Subtle", "Full"}
     )
     public static int animationType = 0;
+
+    @Dropdown(
+            name = "Release Channel",
+            options = {"Releases", "Pre-Releases"}
+    )
+    public static int updateChannel = 0;
+
+    @Switch(
+            name = "Debug Mode"
+    )
+    public static boolean DEBUG = false;
 
     @Exclude
     private static Preferences INSTANCE;

@@ -64,7 +64,7 @@ public class ColorPalette {
      * <h1>Tertiary Destructive Color Scheme</h1> Normal: Transparent (Text=White 90%),<br> Hover: Transparent (Text=Error 300),<br> Clicked: Transparent (Text=Error 300 80%)
      * <h2>NOTICE this returns the text colors as it is always transparent.</h2>
      */
-    public static final ColorPalette TERTIARY_DESTRUCTIVE = new ColorPalette("Tertiary Destructive", WHITE_90, ERROR_300, ERROR_300_80);
+    public static final ColorPalette TERTIARY_DESTRUCTIVE = new ColorPalette("Tertiary Destructive", WHITE_90, ERROR_600_80, ERROR_600_80);
 
     private final String name;
     private final int colorNormal;

@@ -66,7 +66,7 @@ public class OneConfigGui extends OneUIScreen {
     public static OneConfigGui INSTANCE;
 
     private final SideBar sideBar = new SideBar();
-    private final TextInputField textInputField = new TextInputField(248, 40, "Search...", false, false, SVGs.MAGNIFYING_GLASS_BOLD);
+    private final TextInputField textInputField = new TextInputField(248, 40, "Search...", false, false, SVGs.SEARCH_SM);
     private final List<Page> previousPages = new ArrayList<>();
     private final List<Page> nextPages = new ArrayList<>();
     private final BasicElement backArrow = new BasicElement(40, 40, ColorPalette.TERTIARY, true);

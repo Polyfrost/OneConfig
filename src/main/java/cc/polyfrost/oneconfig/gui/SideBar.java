@@ -55,16 +55,13 @@ public class SideBar {
         add(new BasicButton(width, SIZE_36, "Credits", SVGs.COPYRIGHT_FILL, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY));
 
         add(new BasicButton(width, SIZE_36, "Mods", SVGs.FADERS_HORIZONTAL_BOLD, null, ALIGNMENT_LEFT, ColorPalette.PRIMARY));
-        add(new BasicButton(width, SIZE_36, "Profiles", SVGs.USER_SWITCH_FILL, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY));
-        add(new BasicButton(width, SIZE_36, "Performance", SVGs.GAUGE_FILL, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY));
+        add(new BasicButton(width, SIZE_36, "Profiles", SVGs.USERS_02, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY));
 
-        add(new BasicButton(width, SIZE_36, "Themes", SVGs.PAINT_BRUSH_BROAD_FILL, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY));
-        add(new BasicButton(width, SIZE_36, "Screenshots", SVGs.APERTURE_FILL, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY));
-        add(new BasicButton(width, SIZE_36, "Preferences", SVGs.GEAR_SIX_FILL, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY));
+        add(new BasicButton(width, SIZE_36, "Themes", SVGs.BRUSH, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY));
+        add(new BasicButton(width, SIZE_36, "Preferences", SVGs.SETTINGS_02, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY));
     }};
-
-    private final BasicButton hudButton = new BasicButton(192, SIZE_36, "Edit HUD", SVGs.NOTE_PENCIL_BOLD, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY);
-    private final BasicButton closeButton = new BasicButton(192, SIZE_36, "Close", SVGs.X_CIRCLE_BOLD, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY_DESTRUCTIVE);
+    private final BasicButton hudButton = new BasicButton(192, SIZE_36, "Edit HUD", SVGs.LAYOUT_ALT, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY);
+    private final BasicButton closeButton = new BasicButton(192, SIZE_36, "Close", SVGs.X_CLOSE, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY_DESTRUCTIVE);
     private int selected = 1;
     private Animation moveAnimation = null;
     private Animation sizeAnimation = null;
@@ -74,7 +71,7 @@ public class SideBar {
     public SideBar() {
         buttons.get(0).setClickAction(new CreditsPage());
         buttons.get(1).setClickAction(new ModsPage());
-        buttons.get(6).setClickAction(new ModConfigPage(Preferences.getInstance().mod.defaultPage, true));
+        buttons.get(4).setClickAction(new ModConfigPage(Preferences.getInstance().mod.defaultPage, true));
         hudButton.setClickAction(() -> GuiUtils.displayScreen(new HudGui()));
         closeButton.setClickAction(GuiUtils::closeScreen);
         for (BasicButton button : buttons) {
@@ -108,13 +105,11 @@ public class SideBar {
         sidebarY = sidebarY - 26;
         buttons.get(1).draw(vg, x + 16, calcAndIncrementLn(sidebarY), inputHandler);
         buttons.get(2).draw(vg, x + 16, calcAndIncrementLn(sidebarY), inputHandler);
-        buttons.get(3).draw(vg, x + 16, calcAndIncrementLn(sidebarY), inputHandler);
 //        buttons.get(5).draw(vg, x + 16, listNewLn(sidebarY), inputHandler);
         nanoVGHelper.drawText(vg, "PERSONALIZATION", x + 16, calcAndIncrementLn(sidebarY + 26), Colors.WHITE_50, 12, Fonts.SEMIBOLD);
         sidebarY = sidebarY - 26;
+        buttons.get(3).draw(vg, x + 16, calcAndIncrementLn(sidebarY), inputHandler);
         buttons.get(4).draw(vg, x + 16, calcAndIncrementLn(sidebarY), inputHandler);
-        buttons.get(5).draw(vg, x + 16, calcAndIncrementLn(sidebarY), inputHandler);
-        buttons.get(6).draw(vg, x + 16, calcAndIncrementLn(sidebarY), inputHandler);
         sidebarY = 0;
 
         hudButton.draw(vg, x + 16, y + 704, inputHandler);
