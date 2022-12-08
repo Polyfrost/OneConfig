@@ -1,15 +1,15 @@
 Copyright (C) 2021-2022 Polyfrost and contributors.
   <https://polyfrost.cc> <https://github.com/Polyfrost>
 
-  OneConfig is licensed under the terms of version 3 of the GNU Lesser 
-General Public License as published by the Free Software Foundation, AND 
-under the Additional Terms Applicable to OneConfig, as published by Polyfrost, 
-either version 1.0 of the Additional Terms, or (at your option) any later 
+  OneConfig is licensed under the terms of version 3 of the GNU Lesser
+General Public License as published by the Free Software Foundation, AND
+under the Additional Terms Applicable to OneConfig, as published by Polyfrost,
+either version 1.0 of the Additional Terms, or (at your option) any later
 version.
 
-  A copy of version 3 of the GNU Lesser General Public License is 
-found below, along with the Additional Terms Applicable to OneConfig.  
-A copy of version 3 of the GNU General Public License, which supplements 
+  A copy of version 3 of the GNU Lesser General Public License is
+found below, along with the Additional Terms Applicable to OneConfig.
+A copy of version 3 of the GNU General Public License, which supplements
 version 3 of the GNU Lesser General Public License, is also found below.
 
                     GNU GENERAL PUBLIC LICENSE
@@ -706,7 +706,7 @@ General Public License, and the "GNU GPL" refers to version 3 of the GNU
 General Public License.
 
   "the Library" refers to a covered work governed by this License,
-other than an Application or a Combined Work as defined below. 
+other than an Application or a Combined Work as defined below.
 
   An "Application" is any work that makes use of an interface provided
 by the Library, but which is not otherwise based on the Library.
@@ -856,16 +856,16 @@ Library.
               ADDITIONAL TERMS APPLICABLE TO ONECONFIG
                       Version 1.0, 6 August 2022
 
- Copyright (C) 2022 Polyfrost 
+ Copyright (C) 2022 Polyfrost
    <https://polyfrost.cc> <https://github.com/Polyfrost>
 
  Everyone is permitted to copy and distribute verbatim copies
  of this license document, but changing it is not allowed.
 
-  The following additional terms (“Additional Terms”) supplement and 
-modify the GNU Lesser General Public License, Version 3 (“GNU LGPL”) 
-applicable to the OneConfig Source Code "the Library". In addition to 
-the terms and conditions of the GNU LGPL, the the Library is subject to 
+  The following additional terms (“Additional Terms”) supplement and
+modify the GNU Lesser General Public License, Version 3 (“GNU LGPL”)
+applicable to the OneConfig Source Code "the Library". In addition to
+the terms and conditions of the GNU LGPL, the the Library is subject to
 further terms below.
 
   0. Definitions
@@ -873,25 +873,25 @@ further terms below.
   "You" (or "Your") shall mean an individual or Legal Entity
 exercising permissions granted by this License.
 
-  "Compiled" form means the compiled bytecode, object code, binary, 
-or any other form resulting from mechanical transformation or translation 
+  "Compiled" form means the compiled bytecode, object code, binary,
+or any other form resulting from mechanical transformation or translation
 of the Source form.
 
-  "Adaptation" or "Adapted Material" refers to material subject to 
-Copyright and Similar Rights that is derived from or based upon the 
-Library and in which the Library is translated, altered, arranged, 
-transformed, or otherwise modified in a manner requiring permission 
+  "Adaptation" or "Adapted Material" refers to material subject to
+Copyright and Similar Rights that is derived from or based upon the
+Library and in which the Library is translated, altered, arranged,
+transformed, or otherwise modified in a manner requiring permission
 under the Copyright and Similar Rights held by the authors.
 
-  "Copyright and Similar Rights" means copyright and/or similar rights 
-closely related to copyright including, without limitation, performance, 
-broadcast, sound recording, and Sui Generis Database Rights, without 
+  "Copyright and Similar Rights" means copyright and/or similar rights
+closely related to copyright including, without limitation, performance,
+broadcast, sound recording, and Sui Generis Database Rights, without
 regard to how the rights are labeled or categorized.
 
    "Standard Version" refers to an unmodified version of the covered
-work, a Compiled form of an unmodified version of the covered work, 
+work, a Compiled form of an unmodified version of the covered work,
 any covered work that has been modified only in ways explicitly requested
-by Polyfrost, or a Compiled form of any covered work that has been modified 
+by Polyfrost, or a Compiled form of any covered work that has been modified
 only in ways explicitly requested by Polyfrost.
 
   "GNU GPL" refers to Version 3 of the GNU General Public License.
@@ -915,54 +915,54 @@ designated in writing by the copyright owner as "Not a Contribution."
 ​
   1. Trademark Usage.
 
-  The GNU LGPL or GNU GPL do not grant any license or rights to use the 
-trademarks "OneConfig", any "OneConfig" logos, "Polyfrost", any "Polyfrost" 
-logos or any other trademarks of Polyfrost.  You are not authorized to use 
-the name Polyfrost, OneConfig or the names of any author or contributor 
+  The GNU LGPL or GNU GPL do not grant any license or rights to use the
+trademarks "OneConfig", any "OneConfig" logos, "Polyfrost", any "Polyfrost"
+logos or any other trademarks of Polyfrost.  You are not authorized to use
+the name Polyfrost, OneConfig or the names of any author or contributor
 for publicity purposes, without written authorization.
 
   2. Contributions
 
-  Unless You explicitly state otherwise, any Contribution intentionally 
-submitted for inclusion in the covered work by You to Polyfrost shall be 
-under the terms and conditions of the GNU LGPL and these Additional Terms, 
-or any later versions of the Additional Terms Applicable to OneConfig as 
-published by Polyfrost.  Furthermore, you also agree to specify Polyfrost as 
-a proxy that can decide whether future versions of the GNU Lesser General Public 
-License shall apply.  Notwithstanding the above, nothing herein shall supersede 
-or modify the terms of any separate license agreement you may have executed with 
+  Unless You explicitly state otherwise, any Contribution intentionally
+submitted for inclusion in the covered work by You to Polyfrost shall be
+under the terms and conditions of the GNU LGPL and these Additional Terms,
+or any later versions of the Additional Terms Applicable to OneConfig as
+published by Polyfrost.  Furthermore, you also agree to specify Polyfrost as
+a proxy that can decide whether future versions of the GNU Lesser General Public
+License shall apply.  Notwithstanding the above, nothing herein shall supersede
+or modify the terms of any separate license agreement you may have executed with
 Polyfrost regarding such Contributions.
 
   3. Attribution Requirements.
 
-  In addition to the other notice obligations of the GNU GPL and GNU LGPL 
-all Adapted Material conveyed by you must include, on each user 
-interface produced using the Library and/or covered by this License, 
+  In addition to the other notice obligations of the GNU GPL and GNU LGPL
+all Adapted Material conveyed by you must include, on each user
+interface produced using the Library and/or covered by this License,
 and in the Appropriate Legal Notices, the following text:
 
-"Powered by OneConfig - get OneConfig from the original creators 
+"Powered by OneConfig - get OneConfig from the original creators
 at <https://polyfrost.cc/oneconfig>"
 
-  On all user interface screens that use the Library, this text 
-must be visibly and clearly displayed directly in the view that is 
+  On all user interface screens that use the Library, this text
+must be visibly and clearly displayed directly in the view that is
 in focus, and should not be hidden.
 
   4. Adaptations.
 
-  The GNU GPL and GNU LGPL do not grant you any license or rights to 
-modify and/or remove these Additional Terms, without written 
+  The GNU GPL and GNU LGPL do not grant you any license or rights to
+modify and/or remove these Additional Terms, without written
 authorization from Polyfrost, in any Adaptation of the Library.
 
   5. Exceptions.
 
-  You may convey an Adapatation of the Library without being bound 
-by Section 3 of these Additional Terms if the Library is not used 
-for any commercial purpose, to gain commercial advantage and/or 
+  You may convey an Adapatation of the Library without being bound
+by Section 3 of these Additional Terms if the Library is not used
+for any commercial purpose, to gain commercial advantage and/or
 for monetary compensation.
 
-  You may convey an Adapatation of the Library under the GNU GPL 
+  You may convey an Adapatation of the Library under the GNU GPL
 without being bound by Section 3 of these Additional Terms.
 
-  You may convey the Standard Version of the Library 
-from Polyfrost without being bound by Section 3 of these Additional 
+  You may convey the Standard Version of the Library
+from Polyfrost without being bound by Section 3 of these Additional
 Terms.

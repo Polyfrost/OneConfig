@@ -24,7 +24,7 @@ OneConfig's open beta just released for everyone! If you want to be the first to
 
 <details>
   <summary>License</summary>
-  OneConfig is free and open-source. Except where noted otherwise (below and/or in individual files), all code is licensed under BOTH 
+  OneConfig is free and open-source. Except where noted otherwise (below and/or in individual files), all code is licensed under BOTH
 - version 3 of the GNU Lesser General Public License, **AND**
 - the Additional Terms Applicable to OneConfig, version 1.0 of the Additional Terms or (at your option) any later version.
 

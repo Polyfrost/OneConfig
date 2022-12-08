@@ -15,7 +15,7 @@ Your Gradle JDK should be set to Java 17 or up, to do this in Intellij go to `Fi
 You might have to reload your Gradle project, to do this click Gradle in the top right and then click the reload button.
 
 Now in the Gradle tab under the `loom` you should run the `setupGradle` task and then under the `ide` tab you should run the `genIntellijRuns` task.
-This will allow you to run Minecraft with your ide and use the debugger. 
+This will allow you to run Minecraft with your ide and use the debugger.
 To login in to your Minecraft account while in your development enviroment, we recommend the use of [DevAuth](https://github.com/DJtheRedstoner/DevAuth)
 
 # Pull Requests
