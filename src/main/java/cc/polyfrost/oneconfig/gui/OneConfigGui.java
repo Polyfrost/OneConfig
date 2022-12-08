@@ -153,7 +153,7 @@ public class OneConfigGui extends OneUIScreen {
         switch (Preferences.animationType) {
             case 0:
                 animationScaleFactor = .9f + animationValue;
-                transparencyFactor = animationValue * 10f;
+                transparencyFactor = animationValue * 12f;
                 break;
             case 1:
                 animationScaleFactor = transparencyFactor = animationValue;
