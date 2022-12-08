@@ -537,6 +537,7 @@ public class cc/polyfrost/oneconfig/gui/OneConfigGui : cc/polyfrost/oneconfig/ut
 	public field animationScaleFactor F
 	public field currentColorSelector Lcc/polyfrost/oneconfig/gui/elements/ColorSelector;
 	protected field currentPage Lcc/polyfrost/oneconfig/gui/pages/Page;
+	public field isDrawing Z
 	protected field prevPage Lcc/polyfrost/oneconfig/gui/pages/Page;
 	public field transparencyFactor F
 	public fun <init> ()V
@@ -546,7 +547,6 @@ public class cc/polyfrost/oneconfig/gui/OneConfigGui : cc/polyfrost/oneconfig/ut
 	public fun doesGuiPauseGame ()Z
 	public fun draw (JFLcc/polyfrost/oneconfig/utils/InputHandler;)V
 	public fun getColor ()Lcc/polyfrost/oneconfig/config/core/OneColor;
-	public static fun getOneConfigScaleFactor ()F
 	public static fun getScaleFactor ()F
 	public fun getSearchValue ()Ljava/lang/String;
 	public fun hasBackgroundBlur ()Z
