@@ -8,7 +8,6 @@ repos:
         exclude: '\.api$'
     -   id: end-of-file-fixer
         exclude: '\.api$'
-    -   id: check-added-large-files
 -   repo: local
     hooks:
     -   id: api-check
