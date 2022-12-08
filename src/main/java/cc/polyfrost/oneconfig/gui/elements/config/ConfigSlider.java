@@ -28,6 +28,11 @@ package cc.polyfrost.oneconfig.gui.elements.config;
 
 import cc.polyfrost.oneconfig.config.annotations.Slider;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
+import cc.polyfrost.oneconfig.gui.animations.Animation;
+import cc.polyfrost.oneconfig.gui.animations.DummyAnimation;
+import cc.polyfrost.oneconfig.gui.animations.EaseInOutCubic;
+import cc.polyfrost.oneconfig.gui.animations.EaseInOutQuart;
+import cc.polyfrost.oneconfig.gui.animations.EaseOutExpo;
 import cc.polyfrost.oneconfig.gui.elements.text.NumberInputField;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.platform.Platform;
@@ -39,19 +44,37 @@ import cc.polyfrost.oneconfig.utils.MathUtils;
 import java.lang.reflect.Field;
 
 public class ConfigSlider extends BasicOption {
+    private static final int STEP_POPUP_DURATION = 400;
+    private static final int INDICATOR_POPUP_DURATION = 200;
+    private static final int INDICATOR_SLIDING_DURATION = 60;
+
+    private static final float STEP_HEIGHT_HOVER = 4;
+    // Step height drag is also the max height of the step
+    private static final float STEP_HEIGHT_DRAG = 10;
+    private static final float TOUCH_TARGET_TOTAL = 16;
+    private static final float TOUCH_TARGET_HOVER = 16;
+    private static final float TOUCH_TARGET_DRAG = 10;
+
     private final NumberInputField inputField;
     private final float min, max;
     private final int step;
     private boolean isFloat = true;
     private boolean dragging = false;
     private boolean mouseWasDown = false;
+    private Animation stepsAnimation;
+    private Animation targetAnimation;
+    private Animation stepSlideAnimation;
+    private boolean animReset;
 
     public ConfigSlider(Field field, Object parent, String name, String description, String category, String subcategory, float min, float max, int step) {
         super(field, parent, name, description, category, subcategory, 2);
         this.min = min;
         this.max = max;
         this.step = step;
-        inputField = new NumberInputField(84, 32, 0, min, max, step == 0 ? 1 : step);
+        this.inputField = new NumberInputField(84, 32, 0, min, max, step == 0 ? 1 : step);
+        this.stepsAnimation = new DummyAnimation(0);
+        this.targetAnimation = new DummyAnimation(0);
+        this.stepSlideAnimation = new DummyAnimation(-1);
     }
 
     public static ConfigSlider create(Field field, Object parent) {
@@ -65,10 +88,13 @@ public class ConfigSlider extends BasicOption {
         int xCoordinate = 0;
         float value = 0;
         boolean hovered = inputHandler.isAreaHovered(x + 352, y, 512, 32) && isEnabled();
+
         inputField.disable(!isEnabled());
         if (!isEnabled()) nanoVGHelper.setAlpha(vg, 0.5f);
+
         boolean isMouseDown = Platform.getMousePlatform().isButtonDown(0);
         if (hovered && isMouseDown && !mouseWasDown) dragging = true;
+        boolean startedDragging = !mouseWasDown && isMouseDown;
         mouseWasDown = isMouseDown;
         if (dragging) {
             xCoordinate = (int) MathUtils.clamp(inputHandler.mouseX(), x + 352, x + 864);
@@ -87,6 +113,26 @@ public class ConfigSlider extends BasicOption {
             setValue(value);
         }
 
+        float stepPercent = stepsAnimation.get();
+        float targetPercent = targetAnimation.get();
+        if (isEnabled()) {
+            if (dragging && startedDragging) {
+                stepsAnimation = new EaseOutExpo(STEP_POPUP_DURATION, stepPercent, 1, false);
+                targetAnimation = new EaseOutExpo(INDICATOR_POPUP_DURATION, targetPercent, TOUCH_TARGET_DRAG / TOUCH_TARGET_TOTAL, false);
+                animReset = true;
+            } else if (!dragging && hovered) {
+                if (targetAnimation.getEnd() != 1) {
+                    stepsAnimation = new EaseOutExpo(STEP_POPUP_DURATION, stepPercent, STEP_HEIGHT_HOVER / STEP_HEIGHT_DRAG, false);
+                    targetAnimation = new EaseInOutQuart(INDICATOR_POPUP_DURATION, targetPercent, 1, false);
+                    animReset = true;
+                }
+            } else if (!dragging && animReset) {
+                stepsAnimation = new EaseOutExpo(STEP_POPUP_DURATION, stepPercent, 0, false);
+                targetAnimation = new EaseOutExpo(INDICATOR_POPUP_DURATION, targetPercent, 0, false);
+                animReset = false;
+            }
+        }
+
         if (!dragging && !inputField.isToggled()) {
             try {
                 Object object = get();
@@ -98,19 +144,39 @@ public class ConfigSlider extends BasicOption {
             } catch (IllegalAccessException ignored) {
             }
         }
-        if (!inputField.isToggled()) inputField.setCurrentValue(value);
+        if (!inputField.isToggled()) {
+            inputField.setCurrentValue(value);
+        }
+
+        // Animate sliding
+        if (stepSlideAnimation.get() == -1) {
+            stepSlideAnimation = new DummyAnimation(xCoordinate);
+        } else {
+            stepSlideAnimation = new EaseInOutCubic(INDICATOR_SLIDING_DURATION, stepSlideAnimation.get(), xCoordinate, false);
+        }
+        xCoordinate = (int) stepSlideAnimation.get();
 
         nanoVGHelper.drawText(vg, name, x, y + 17, nameColor, 14f, Fonts.MEDIUM);
-        nanoVGHelper.drawRoundedRect(vg, x + 352, y + 13, 512, 6, Colors.GRAY_300, 4f);
-        nanoVGHelper.drawRoundedRect(vg, x + 352, y + 13, xCoordinate - x - 352, 6, Colors.PRIMARY_500, 4f);
+        // Ease-out the radius when the steps are in view
+        float radius = 4;
         if (step > 0) {
+            radius *= 1 - (Math.min(stepPercent, STEP_HEIGHT_HOVER / STEP_HEIGHT_DRAG) * STEP_HEIGHT_DRAG / STEP_HEIGHT_HOVER);
+        }
+        nanoVGHelper.drawRoundedRect(vg, x + 352, y + 13, 512, 6, Colors.GRAY_300, radius);
+        nanoVGHelper.drawRoundedRect(vg, x + 352, y + 13, xCoordinate - x - 352, 6, Colors.PRIMARY_500, 4f);
+        if (step > 0 && stepPercent > 0) {
+            float stepOffset = 6 + (stepPercent * 10);
             for (float i = x + 352; i <= x + 864; i += 512 / ((max - min) / step)) {
                 int color = xCoordinate > i - 2 ? Colors.PRIMARY_500 : Colors.GRAY_300;
-                nanoVGHelper.drawRoundedRect(vg, i - 2, y + 9, 4, 14, color, 2f);
+                nanoVGHelper.drawRoundedRect(vg, i - 2, y + 16 - (stepOffset / 2f), 4, stepOffset, color, 2f);
             }
         }
-        if (step == 0) nanoVGHelper.drawRoundedRect(vg, xCoordinate - 12, y + 4, 24, 24, Colors.WHITE, 12f);
-        else nanoVGHelper.drawRoundedRect(vg, xCoordinate - 4, y + 4, 8, 24, Colors.WHITE, 4f);
+
+        nanoVGHelper.drawRoundedRect(vg, xCoordinate - 12, y + 4, 24, 24, Colors.WHITE, 12f);
+        if (targetPercent != 0) {
+            nanoVGHelper.drawRoundedRect(vg, xCoordinate - (TOUCH_TARGET_HOVER / 2 * targetPercent), y + 16 - (TOUCH_TARGET_HOVER / 2 * targetPercent), TOUCH_TARGET_HOVER * targetPercent, TOUCH_TARGET_HOVER * targetPercent, Colors.PRIMARY_500, 12f);
+        }
+
         inputField.draw(vg, x + 892, y, inputHandler);
         nanoVGHelper.setAlpha(vg, 1f);
     }

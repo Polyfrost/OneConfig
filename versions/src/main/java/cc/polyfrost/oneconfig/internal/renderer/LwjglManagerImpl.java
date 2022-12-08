@@ -94,7 +94,6 @@ public class LwjglManagerImpl
         // Keep the path somewhere for LWJGL2 after initializing LWJGL3
         // (this is read in the Lwjgl2FunctionProvider class)
         String libraryPath = System.getProperty("org.lwjgl.librarypath", "");
-        System.out.println("LWJGL2 library path: " + libraryPath);
         if (!libraryPath.isEmpty()) {
             System.setProperty("oneconfig.lwjgl2.librarypath", libraryPath);
         }
