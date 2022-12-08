@@ -18,6 +18,10 @@ Now in the Gradle tab under the `loom` you should run the `setupGradle` task and
 This will allow you to run Minecraft with your ide and use the debugger.
 To login in to your Minecraft account while in your development enviroment, we recommend the use of [DevAuth](https://github.com/DJtheRedstoner/DevAuth)
 
+### Setting up pre-commit hooks
+We use [pre-commit](https://pre-commit.com/) to run checks on your code before you commit it to ensure code quality.
+To set this up you need to install pre-commit and then run `pre-commit install` in the root of the project.
+
 # Pull Requests
 To contribute to OneConfig, please open a pull request. Here are the basic guidelines.
 
