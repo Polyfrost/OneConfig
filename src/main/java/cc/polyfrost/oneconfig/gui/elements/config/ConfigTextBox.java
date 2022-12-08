@@ -28,6 +28,7 @@ package cc.polyfrost.oneconfig.gui.elements.config;
 
 import cc.polyfrost.oneconfig.config.annotations.Text;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
+import cc.polyfrost.oneconfig.gui.elements.IFocusable;
 import cc.polyfrost.oneconfig.gui.elements.text.TextInputField;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
@@ -39,7 +40,7 @@ import cc.polyfrost.oneconfig.utils.InputHandler;
 
 import java.lang.reflect.Field;
 
-public class ConfigTextBox extends BasicOption {
+public class ConfigTextBox extends BasicOption implements IFocusable {
     private final boolean secure;
     private final boolean multiLine;
     private final TextInputField textField;
@@ -103,5 +104,10 @@ public class ConfigTextBox extends BasicOption {
     @Override
     protected boolean shouldDrawDescription() {
         return super.shouldDrawDescription() && !textField.isToggled();
+    }
+
+    @Override
+    public boolean hasFocus() {
+        return textField.isToggled();
     }
 }
