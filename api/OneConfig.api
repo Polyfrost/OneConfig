@@ -1438,12 +1438,6 @@ public final class cc/polyfrost/oneconfig/utils/JsonUtils {
 	public static fun parseString (Ljava/lang/String;Z)Lcom/google/gson/JsonElement;
 }
 
-public class cc/polyfrost/oneconfig/utils/LevenshteinDistance {
-	public fun <init> ()V
-	public static fun distance (Ljava/lang/String;Ljava/lang/String;)I
-	public static fun isSimilar (Ljava/lang/String;Ljava/lang/String;)Z
-}
-
 public class cc/polyfrost/oneconfig/utils/LogScanner {
 	public fun <init> ()V
 	public static fun identifyCallerFromStacktrace (Ljava/lang/Throwable;)Ljava/util/Set;
@@ -1495,6 +1489,11 @@ public final class cc/polyfrost/oneconfig/utils/Notifications {
 	public fun send (Ljava/lang/String;Ljava/lang/String;Lcc/polyfrost/oneconfig/renderer/asset/Icon;Ljava/util/concurrent/Callable;)V
 	public fun send (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Runnable;)V
 	public fun send (Ljava/lang/String;Ljava/lang/String;Ljava/util/concurrent/Callable;)V
+}
+
+public class cc/polyfrost/oneconfig/utils/SearchUtils {
+	public fun <init> ()V
+	public static fun isSimilar (Ljava/lang/String;Ljava/lang/String;)Z
 }
 
 public final class cc/polyfrost/oneconfig/utils/SimpleProfiler {
