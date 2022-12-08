@@ -33,6 +33,7 @@ import cc.polyfrost.oneconfig.gui.animations.DummyAnimation;
 import cc.polyfrost.oneconfig.gui.animations.EaseInOutCubic;
 import cc.polyfrost.oneconfig.gui.animations.EaseInOutQuart;
 import cc.polyfrost.oneconfig.gui.animations.EaseOutExpo;
+import cc.polyfrost.oneconfig.gui.elements.IFocusable;
 import cc.polyfrost.oneconfig.gui.elements.text.NumberInputField;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.platform.Platform;
@@ -43,7 +44,7 @@ import cc.polyfrost.oneconfig.utils.MathUtils;
 
 import java.lang.reflect.Field;
 
-public class ConfigSlider extends BasicOption {
+public class ConfigSlider extends BasicOption implements IFocusable {
     private static final int STEP_POPUP_DURATION = 400;
     private static final int INDICATOR_POPUP_DURATION = 200;
     private static final int INDICATOR_SLIDING_DURATION = 100;
@@ -205,5 +206,10 @@ public class ConfigSlider extends BasicOption {
     @Override
     public int getHeight() {
         return 32;
+    }
+
+    @Override
+    public boolean hasFocus() {
+        return inputField.isToggled();
     }
 }

@@ -135,4 +135,12 @@ public class ModConfigPage extends Page {
     public boolean isBase() {
         return base;
     }
+
+    public OptionPage getPage() {
+        return page;
+    }
+
+    public String getSelectedCategory() {
+        return selectedCategory;
+    }
 }
