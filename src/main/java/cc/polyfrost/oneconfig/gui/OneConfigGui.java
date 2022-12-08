@@ -57,7 +57,7 @@ import java.util.ArrayList;
 public class OneConfigGui extends OneUIScreen {
     public static OneConfigGui INSTANCE;
     private final SideBar sideBar = new SideBar();
-    private final TextInputField textInputField = new TextInputField(248, 40, "Search...", false, false, SVGs.MAGNIFYING_GLASS_BOLD);
+    private final TextInputField textInputField = new TextInputField(248, 40, "Search...", false, false, SVGs.SEARCH_SM);
     private final ArrayList<Page> previousPages = new ArrayList<>();
     private final ArrayList<Page> nextPages = new ArrayList<>();
     private final BasicElement backArrow = new BasicElement(40, 40, ColorPalette.TERTIARY, true);
