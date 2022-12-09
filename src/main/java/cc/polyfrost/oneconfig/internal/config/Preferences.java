@@ -58,7 +58,7 @@ public class Preferences extends InternalConfig {
             subcategory = "GUI Settings",
             description = "The maximum Levenshtein distance to search for similar config names."
     )
-    public static int searchDistance = 3;
+    public static int searchDistance = 2;
 
     @Switch(
             name = "Use custom GUI scale",
