@@ -27,6 +27,7 @@
 package cc.polyfrost.oneconfig.internal.config;
 
 import cc.polyfrost.oneconfig.config.annotations.*;
+import cc.polyfrost.oneconfig.config.annotations.Number;
 import cc.polyfrost.oneconfig.config.core.OneKeyBind;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.internal.gui.BlurHandler;
@@ -36,19 +37,10 @@ import cc.polyfrost.oneconfig.utils.TickDelay;
 
 public class Preferences extends InternalConfig {
 
-    @Dropdown(
-            name = "Release Channel",
-            options = {"Releases", "Pre-Releases"}
-    )
-    public static int updateChannel = 0;
-
-    @Switch(
-            name = "Debug Mode"
-    )
-    public static boolean DEBUG = false;
-
     @KeyBind(
             name = "OneConfig Keybind",
+            subcategory = "GUI Settings",
+            description = "Choose what key opens the OneConfig UI",
             size = 2
     )
     public static OneKeyBind oneConfigKeyBind = new OneKeyBind(UKeyboard.KEY_RSHIFT);
@@ -58,6 +50,15 @@ public class Preferences extends InternalConfig {
             subcategory = "GUI Settings"
     )
     public static boolean enableBlur = true;
+
+    @Number(
+            name = "Search Distance",
+            min = 0,
+            max = 10,
+            subcategory = "GUI Settings",
+            description = "The maximum Levenshtein distance to search for similar config names."
+    )
+    public static int searchDistance = 2;
 
     @Switch(
             name = "Use custom GUI scale",
@@ -69,9 +70,51 @@ public class Preferences extends InternalConfig {
             name = "Custom GUI scale",
             subcategory = "GUI Settings",
             min = 0.5f,
-            max = 5f
+            max = 2f
     )
     public static float customScale = 1f;
+
+    @Switch(
+            name = "Opening Animation",
+            description = "Plays an animation when opening the GUI",
+            subcategory = "GUI Settings"
+    )
+    public static boolean guiOpenAnimation = true;
+
+    @Switch(
+            name = "Closing Animation",
+            description = "Plays an animation when closing the GUI",
+            subcategory = "GUI Settings"
+    )
+    public static boolean guiClosingAnimation = true;
+
+    @Slider(
+            name = "Animation Duration",
+            description = "The duration of the opening and closing animations, in seconds",
+            subcategory = "GUI Settings",
+            min = 0.05f,
+            max = 2f
+    )
+    public static float animationTime = 0.6f;
+
+    @Dropdown(
+            name = "Animation Type",
+            description = "The type of opening/closing animation to use",
+            subcategory = "GUI Settings",
+            options = {"Subtle", "Full"}
+    )
+    public static int animationType = 0;
+
+    @Dropdown(
+            name = "Release Channel",
+            options = {"Releases", "Pre-Releases"}
+    )
+    public static int updateChannel = 0;
+
+    @Switch(
+            name = "Debug Mode"
+    )
+    public static boolean DEBUG = false;
 
     @Exclude
     private static Preferences INSTANCE;
@@ -85,6 +128,12 @@ public class Preferences extends InternalConfig {
             OneConfigConfig.updateChannel = updateChannel;
             OneConfigConfig.getInstance().save();
         });
+        addListener("animationType", () -> {
+            if (Preferences.guiOpenAnimation) {
+                Platform.getGuiPlatform().setCurrentScreen(OneConfigGui.INSTANCE);
+            }
+        });
+        addDependency("guiClosingAnimation", "guiOpenAnimation");
         INSTANCE = this;
     }
 

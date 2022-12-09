@@ -51,7 +51,7 @@ public class Font {
         return loaded;
     }
 
-    void setLoaded(boolean loaded) {
+    public void setLoaded(boolean loaded) {
         this.loaded = loaded;
     }
 
@@ -59,7 +59,7 @@ public class Font {
         return buffer;
     }
 
-    void setBuffer(ByteBuffer buffer) {
+    public void setBuffer(ByteBuffer buffer) {
         this.buffer = buffer;
     }
 

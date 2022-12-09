@@ -26,6 +26,7 @@
 
 package cc.polyfrost.oneconfig.platform.impl;
 
+import cc.polyfrost.oneconfig.libs.universal.UMouse;
 import cc.polyfrost.oneconfig.platform.MousePlatform;
 //#if MC>=11600
 //$$ import cc.polyfrost.oneconfig.libs.universal.UMinecraft;
@@ -37,26 +38,18 @@ import org.lwjgl.input.Mouse;
 
 public class MousePlatformImpl implements MousePlatform {
 
-    //#if MC>11600
+    //#if MC>=11600
     //$$ private double prevScroll = 0;
     //#endif
 
     @Override
     public double getMouseX() {
-        //#if MC>=11600
-        //$$ return UMinecraft.getMinecraft().mouseHelper.getMouseX();
-        //#else
-        return Mouse.getX();
-        //#endif
+        return UMouse.Raw.getX();
     }
 
     @Override
     public double getMouseY() {
-        //#if MC>=11600
-        //$$ return UMinecraft.getMinecraft().mouseHelper.getMouseY();
-        //#else
-        return Mouse.getY();
-        //#endif
+        return UMouse.Raw.getY();
     }
 
     @Override

@@ -26,11 +26,11 @@
 
 package cc.polyfrost.oneconfig.internal.plugin.hooks;
 
-import cc.polyfrost.oneconfig.renderer.RenderManager;
+import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
 
 public class OptifineConfigHook {
 
     public static boolean shouldNotApplyFastRender() {
-        return RenderManager.isDrawing();
+        return NanoVGHelper.INSTANCE.isDrawing();
     }
 }

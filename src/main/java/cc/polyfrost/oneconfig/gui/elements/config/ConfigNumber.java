@@ -28,32 +28,36 @@ package cc.polyfrost.oneconfig.gui.elements.config;
 
 import cc.polyfrost.oneconfig.config.annotations.Number;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
+import cc.polyfrost.oneconfig.gui.elements.IFocusable;
 import cc.polyfrost.oneconfig.gui.elements.text.NumberInputField;
-import cc.polyfrost.oneconfig.renderer.RenderManager;
+import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.utils.InputHandler;
 
 import java.lang.reflect.Field;
 
-public class ConfigNumber extends BasicOption {
+public class ConfigNumber extends BasicOption implements IFocusable {
     private final NumberInputField inputField;
     private boolean isFloat = true;
+    private final int size;
 
-    public ConfigNumber(Field field, Object parent, String name, String description, String category, String subcategory, float min, float max, int step) {
-        super(field, parent, name, description, category, subcategory, 2);
+    public ConfigNumber(Field field, Object parent, String name, String description, String category, String subcategory, float min, float max, float step, int size) {
+        super(field, parent, name, description, category, subcategory, size);
         this.inputField = new NumberInputField(84, 32, 0, min, max, step);
+        this.size = size;
     }
 
     public static ConfigNumber create(Field field, Object parent) {
         Number slider = field.getAnnotation(Number.class);
-        return new ConfigNumber(field, parent, slider.name(), slider.description(), slider.category(), slider.subcategory(), slider.min(), slider.max(), slider.step());
+        return new ConfigNumber(field, parent, slider.name(), slider.description(), slider.category(), slider.subcategory(), slider.min(), slider.max(), slider.step(), slider.size());
     }
 
     @Override
     public void draw(long vg, int x, int y, InputHandler inputHandler) {
+        final NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
         float value = 0;
         inputField.disable(!isEnabled());
-        if (!isEnabled()) RenderManager.setAlpha(vg, 0.5f);
+        if (!isEnabled()) nanoVGHelper.setAlpha(vg, 0.5f);
         if (inputField.isToggled() || inputField.arrowsClicked()) {
             value = inputField.getCurrentValue();
         }
@@ -73,9 +77,9 @@ public class ConfigNumber extends BasicOption {
         }
         if (!inputField.isToggled()) inputField.setCurrentValue(value);
 
-        RenderManager.drawText(vg, name, x, y + 17, nameColor, 14f, Fonts.MEDIUM);
-        inputField.draw(vg, x + 892, y, inputHandler);
-        RenderManager.setAlpha(vg, 1f);
+        nanoVGHelper.drawText(vg, name, x, y + 17, nameColor, 14f, Fonts.MEDIUM);
+        inputField.draw(vg, x + (size == 1 ? 480 - 84 : 892), y, inputHandler);
+        nanoVGHelper.setAlpha(vg, 1f);
     }
 
     private void setValue(float value) {
@@ -99,5 +103,10 @@ public class ConfigNumber extends BasicOption {
     @Override
     protected boolean shouldDrawDescription() {
         return super.shouldDrawDescription() && !inputField.isToggled();
+    }
+
+    @Override
+    public boolean hasFocus() {
+        return inputField.isToggled();
     }
 }

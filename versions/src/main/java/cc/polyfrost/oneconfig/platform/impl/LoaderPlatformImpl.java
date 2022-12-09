@@ -27,36 +27,36 @@
 package cc.polyfrost.oneconfig.platform.impl;
 
 import cc.polyfrost.oneconfig.platform.LoaderPlatform;
-//#if MC>=11600
-//#if FORGE==1
-//$$ import net.minecraftforge.fml.ModList;
-//#else
-//$$ import net.fabricmc.loader.api.FabricLoader;
-//$$ import net.fabricmc.loader.api.ModContainer;
-//#endif
-//#endif
-//#if FORGE==1
-import net.minecraftforge.fml.common.Loader;
-import net.minecraftforge.fml.common.ModContainer;
-//#endif
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+//#if FABRIC==1
+//$$ import net.fabricmc.loader.api.FabricLoader;
+//#else
+import net.minecraftforge.fml.common.Loader;
+import net.minecraftforge.fml.common.ModContainer;
+//#endif
+//#if FORGE==1 && MC>11202
+//$$ import net.minecraftforge.fml.ModList;
+//$$ import net.minecraftforge.fml.ModLoadingContext;
+//#endif
 
 public class LoaderPlatformImpl implements LoaderPlatform {
     @Override
     public boolean isModLoaded(String id) {
         //#if MC>=11600
-        //#if FORGE==1
-        //$$ return ModList.get().isLoaded(id);
+            //#if FORGE==1
+            //$$ return ModList.get().isLoaded(id);
+            //#else
+            //$$ return FabricLoader.getInstance().isModLoaded(id);
+            //#endif
+        //#elseif FORGE==1
+        return Loader.isModLoaded(id);
         //#else
         //$$ return FabricLoader.getInstance().isModLoaded(id);
-        //#endif
-        //#else
-        return Loader.isModLoaded(id);
         //#endif
     }
 
@@ -99,20 +99,24 @@ public class LoaderPlatformImpl implements LoaderPlatform {
 
     @Override
     public ActiveMod toActiveMod(@Nullable Object in) {
+        //#if FORGE==1
         try {
             ModContainer container = (ModContainer) in;
             if (container == null) return null;
             //#if FORGE==1
             //#if MC==11202
-            return new ActiveMod(container.getName(), container.getModId(), container.getVersion(), container.getSource());
+            return new ActiveMod(container.getName(), container.getModId(), container.getVersion(), container.getSource().toPath());
             //#else
-            //$$ return new ActiveMod(container.getModInfo().getDisplayName(), container.getModId(), container.getModInfo().getVersion().getQualifier(), ModList.get().getModFileById(container.getModId()).getFile().getFilePath().toFile());
+            //$$ return new ActiveMod(container.getModInfo().getDisplayName(), container.getModId(), container.getModInfo().getVersion().getQualifier(), ModList.get().getModFileById(container.getModId()).getFile().getFilePath());
             //#endif
             //#else
-            //$$ return new ActiveMod(container.getMetadata().getName(), container.getMetadata().getId(), container.getMetadata().getVersion().getFriendlyString(), container.getRootPaths().get(0).toFile());
+            //$$ return new ActiveMod(container.getMetadata().getName(), container.getMetadata().getId(), container.getMetadata().getVersion().getFriendlyString(), container.getRootPaths().get(0));
             //#endif
         } catch (Exception e) {
+        //#endif
             return null;
+        //#if FORGE==1
         }
+        //#endif
     }
 }

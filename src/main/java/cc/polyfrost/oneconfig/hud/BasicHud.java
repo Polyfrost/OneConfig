@@ -28,7 +28,8 @@ package cc.polyfrost.oneconfig.hud;
 
 import cc.polyfrost.oneconfig.config.core.OneColor;
 import cc.polyfrost.oneconfig.libs.universal.UMatrixStack;
-import cc.polyfrost.oneconfig.renderer.RenderManager;
+import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
+
 
 public abstract class BasicHud extends Hud {
     protected boolean background;
@@ -130,15 +131,16 @@ public abstract class BasicHud extends Hud {
     }
 
     protected void drawBackground(float x, float y, float width, float height, float scale) {
-        RenderManager.setupAndDraw(true, (vg) -> {
+        NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
+        nanoVGHelper.setupAndDraw(true, (vg) -> {
             if (rounded) {
-                RenderManager.drawRoundedRect(vg, x, y, width, height, bgColor.getRGB(), cornerRadius * scale);
+                nanoVGHelper.drawRoundedRect(vg, x, y, width, height, bgColor.getRGB(), cornerRadius * scale);
                 if (border)
-                    RenderManager.drawHollowRoundRect(vg, x - borderSize * scale, y - borderSize * scale, width + borderSize * scale, height + borderSize * scale, borderColor.getRGB(), cornerRadius * scale, borderSize * scale);
+                    nanoVGHelper.drawHollowRoundRect(vg, x - borderSize * scale, y - borderSize * scale, width + borderSize * scale, height + borderSize * scale, borderColor.getRGB(), cornerRadius * scale, borderSize * scale);
             } else {
-                RenderManager.drawRect(vg, x, y, width, height, bgColor.getRGB());
+                nanoVGHelper.drawRect(vg, x, y, width, height, bgColor.getRGB());
                 if (border)
-                    RenderManager.drawHollowRoundRect(vg, x - borderSize * scale, y - borderSize * scale, width + borderSize * scale, height + borderSize * scale, borderColor.getRGB(), 0, borderSize * scale);
+                    nanoVGHelper.drawHollowRoundRect(vg, x - borderSize * scale, y - borderSize * scale, width + borderSize * scale, height + borderSize * scale, borderColor.getRGB(), 0, borderSize * scale);
             }
         });
     }

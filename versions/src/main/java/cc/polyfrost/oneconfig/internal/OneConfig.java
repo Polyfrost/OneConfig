@@ -57,7 +57,7 @@ import net.minecraftforge.fml.common.ModContainer;
 import cc.polyfrost.oneconfig.utils.IgnoredGuiFactory;
 //#endif
 
-//#if MC<=11202
+//#if MC<=11202 && FORGE==1
 import net.minecraftforge.fml.common.versioning.ArtifactVersion;
 import net.minecraftforge.fml.client.FMLClientHandler;
 import net.minecraftforge.fml.client.IModGuiFactory;
@@ -71,10 +71,10 @@ import java.util.Objects;
 /**
  * The main class of OneConfig.
  */
+//#if FORGE==1
 //#if MC<=11202
 @net.minecraftforge.fml.common.Mod(modid = "@ID@", name = "@NAME@", version = "@VER@")
 //#else
-//#if FORGE==1
 //$$ @net.minecraftforge.fml.common.Mod("@ID@")
 //#endif
 //#endif

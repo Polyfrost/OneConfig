@@ -23,15 +23,12 @@
  * to OneConfig, as published by Polyfrost. If not, see
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
-
-//#if MC<=11202
+//#disable-remap
 package cc.polyfrost.oneconfig.internal.plugin.asm;
 
-import cc.polyfrost.oneconfig.internal.plugin.asm.tweakers.NanoVGGLConfigTransformer;
 import cc.polyfrost.oneconfig.internal.plugin.asm.tweakers.VigilantTransformer;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
-import net.minecraft.launchwrapper.IClassTransformer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.objectweb.asm.ClassReader;
@@ -49,13 +46,20 @@ import java.util.Collection;
  * <p>also half taken from asmworkspace by asbyth ty</p>
  */
 @SuppressWarnings("unused")
-public class ClassTransformer implements IClassTransformer {
+public class ClassTransformer
+        //#if FORGE==1 && MC<=11202
+        implements net.minecraft.launchwrapper.IClassTransformer
+        //#elseif FABRIC==1
+        //$$ implements Runnable
+        //#endif
+{
     private static final Logger logger = LogManager.getLogger("OneConfig ASM");
     private final Multimap<String, ITransformer> transformerMap = ArrayListMultimap.create();
+    //#if FORGE==1 && MC<=11202
     private static final boolean outputBytecode = Boolean.parseBoolean(System.getProperty("debugBytecode", "false"));
+    //#endif
 
     public ClassTransformer() {
-        registerTransformer(new NanoVGGLConfigTransformer());
         registerTransformer(new VigilantTransformer());
     }
 
@@ -66,6 +70,17 @@ public class ClassTransformer implements IClassTransformer {
             transformerMap.put(cls, transformer);
         }
     }
+
+    //#if FABRIC==1
+    //$$ @Override
+    //$$ public void run() {
+    //$$     for (java.util.Map.Entry<String, ITransformer> entry : transformerMap.entries()) {
+    //$$         com.chocohead.mm.api.ClassTinkerers.addTransformation(entry.getKey(), (node) -> entry.getValue().transform(entry.getKey(), node));
+    //$$     }
+    //$$ }
+    //#endif
+
+    //#if FORGE==1 && MC<=11202
     @Override
     public byte[] transform(String name, String transformedName, byte[] bytes) {
         if (bytes == null) return null;
@@ -125,5 +140,5 @@ public class ClassTransformer implements IClassTransformer {
 
         return cw.toByteArray();
     }
+    //#endif
 }
-//#endif

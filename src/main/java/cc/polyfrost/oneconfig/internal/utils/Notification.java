@@ -26,20 +26,18 @@
 
 package cc.polyfrost.oneconfig.internal.utils;
 
-import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.animations.*;
 import cc.polyfrost.oneconfig.gui.animations.quad.EaseInOutQuad;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.libs.universal.UResolution;
-import cc.polyfrost.oneconfig.renderer.Icon;
-import cc.polyfrost.oneconfig.renderer.RenderManager;
+import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
+import cc.polyfrost.oneconfig.renderer.asset.Icon;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.renderer.scissor.Scissor;
-import cc.polyfrost.oneconfig.renderer.scissor.ScissorManager;
+import cc.polyfrost.oneconfig.renderer.scissor.ScissorHelper;
 import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.MathUtils;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
-import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.Callable;
@@ -71,12 +69,14 @@ public final class Notification {
     }
 
     public float draw(final long vg, float y, float scale, float deltaTime) {
-        RenderManager.scale(vg, scale, scale);
+        NanoVGHelper renderer = NanoVGHelper.INSTANCE;
+
+        renderer.scale(vg, scale, scale);
         inputHandler.scale(scale, scale);
         float x = (UResolution.getWindowWidth() / scale - animation.get(hovered ? 0 : deltaTime));
         float textX = icon == null ? x + 16 : x + 64;
         float textMaxLength = icon == null ? 268 : 220;
-        float messageHeight = RenderManager.getWrappedStringHeight(vg, message, textMaxLength, 12f, 1.75f, Fonts.REGULAR);
+        float messageHeight = renderer.getWrappedStringHeight(vg, message, textMaxLength, 12f, 1.75f, Fonts.REGULAR);
         float height = getHeight(messageHeight);
         y -= height;
         hovered = inputHandler.isAreaHovered(x, y, 314, height);
@@ -84,26 +84,28 @@ public final class Notification {
         int bgColor = this.bgColor.getColor(hovered, hovered && inputHandler.isMouseDown());
         int titleColor = this.titleColor.getColor(hovered, hovered && inputHandler.isMouseDown());
         int messageColor = this.messageColor.getColor(hovered, hovered && inputHandler.isMouseDown());
-        RenderManager.drawRoundedRect(vg, x, y, 314f, height, bgColor, 8f);
+        renderer.drawRoundedRect(vg, x, y, 314f, height, bgColor, 8f);
         if (icon != null)
             icon.draw(vg, x + 16f, y + (height - (progressBar == null ? 0f : 5f)) / 2f - 16f, 32f, 32f, titleColor, scale);
-        RenderManager.drawText(vg, title, textX, y + 30, titleColor, 16f, Fonts.SEMIBOLD);
-        RenderManager.drawWrappedString(vg, message, textX, y + 46, textMaxLength, messageColor, 12f, 1.75f, Fonts.REGULAR);
+        renderer.drawText(vg, title, textX, y + 30, titleColor, 16f, Fonts.SEMIBOLD);
+        renderer.drawWrappedString(vg, message, textX, y + 46, textMaxLength, messageColor, 12f, 1.75f, Fonts.REGULAR);
         if (progressBar != null) {
             try {
+                ScissorHelper scissorHelper = ScissorHelper.INSTANCE;
+
                 float progress = MathUtils.clamp(progressBar.call());
-                Scissor scissor1 = ScissorManager.scissor(vg, x + 314f * progress, y + height - 5f, 314f * (1 - progress), 5f);
-                RenderManager.drawRoundedRect(vg, x, y, 314f, height, Colors.PRIMARY_800, 8f);
-                ScissorManager.resetScissor(vg, scissor1);
-                Scissor scissor2 = ScissorManager.scissor(vg, x, y + height - 5f, 314f * progress - (314f * progress < 2.5f || 311.5f * progress > 2.5f ? 0f : 2.5f), 5f);
-                RenderManager.drawRoundedRect(vg, x, y, 314f, height, Colors.PRIMARY_500, 8f);
-                ScissorManager.resetScissor(vg, scissor2);
+                Scissor scissor1 = scissorHelper.scissor(vg, x + 314f * progress, y + height - 5f, 314f * (1 - progress), 5f);
+                renderer.drawRoundedRect(vg, x, y, 314f, height, Colors.PRIMARY_800, 8f);
+                scissorHelper.resetScissor(vg, scissor1);
+                Scissor scissor2 = scissorHelper.scissor(vg, x, y + height - 5f, 314f * progress - (314f * progress < 2.5f || 311.5f * progress > 2.5f ? 0f : 2.5f), 5f);
+                renderer.drawRoundedRect(vg, x, y, 314f, height, Colors.PRIMARY_500, 8f);
+                scissorHelper.resetScissor(vg, scissor2);
                 if (314f * progress >= 2.5f && 311.5f * progress <= 2.5f)
-                    RenderManager.drawRoundedRect(vg, x + 2.5f, y + height - 5f, Math.max(0, 314f * progress - 5f), 5f, Colors.PRIMARY_500, 2.5f);
+                    renderer.drawRoundedRect(vg, x + 2.5f, y + height - 5f, Math.max(0, 314f * progress - 5f), 5f, Colors.PRIMARY_500, 2.5f);
             } catch (Exception ignored) {
             }
         }
-        RenderManager.resetTransform(vg);
+        renderer.resetTransform(vg);
         return height;
     }
 

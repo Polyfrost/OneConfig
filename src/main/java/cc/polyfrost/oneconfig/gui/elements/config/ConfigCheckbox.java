@@ -27,16 +27,16 @@
 package cc.polyfrost.oneconfig.gui.elements.config;
 
 import cc.polyfrost.oneconfig.config.annotations.Checkbox;
-import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
 import cc.polyfrost.oneconfig.gui.animations.Animation;
 import cc.polyfrost.oneconfig.gui.animations.ColorAnimation;
 import cc.polyfrost.oneconfig.gui.animations.DummyAnimation;
 import cc.polyfrost.oneconfig.gui.animations.quad.EaseInOutQuad;
-import cc.polyfrost.oneconfig.platform.Platform;
-import cc.polyfrost.oneconfig.renderer.RenderManager;
-import cc.polyfrost.oneconfig.renderer.font.Fonts;
+import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
+import cc.polyfrost.oneconfig.platform.Platform;
+import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
+import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 import cc.polyfrost.oneconfig.utils.color.ColorUtils;
@@ -59,7 +59,8 @@ public class ConfigCheckbox extends BasicOption {
 
     @Override
     public void draw(long vg, int x, int y, InputHandler inputHandler) {
-        if (!isEnabled()) RenderManager.setAlpha(vg, 0.5f);
+        final NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
+        if (!isEnabled()) nanoVGHelper.setAlpha(vg, 0.5f);
         boolean toggled = false;
         try {
             toggled = (boolean) get();
@@ -81,17 +82,17 @@ public class ConfigCheckbox extends BasicOption {
         }
         float percentOn = animation.get();
 
-        RenderManager.drawText(vg, name, x + 32, y + 17, nameColor, 14f, Fonts.MEDIUM);
+        nanoVGHelper.drawText(vg, name, x + 32, y + 17, nameColor, 14f, Fonts.MEDIUM);
 
-        RenderManager.drawRoundedRect(vg, x, y + 4, 24, 24, color.getColor(hover, hover && Platform.getMousePlatform().isButtonDown(0)), 6f);
-        RenderManager.drawHollowRoundRect(vg, x, y + 4, 23.5f, 23.5f, Colors.GRAY_300, 6f, 1f);        // the 0.5f is to make it look better ok
+        nanoVGHelper.drawRoundedRect(vg, x, y + 4, 24, 24, color.getColor(hover, hover && Platform.getMousePlatform().isButtonDown(0)), 6f);
+        nanoVGHelper.drawHollowRoundRect(vg, x, y + 4, 23.5f, 23.5f, Colors.GRAY_300, 6f, 1f);        // the 0.5f is to make it look better ok
 
-        RenderManager.drawRoundedRect(vg, x, y + 4, 24, 24, ColorUtils.setAlpha(Colors.PRIMARY_500, (int) (percentOn * 255)), 6f);
-        RenderManager.drawSvg(vg, SVGs.CHECKBOX_TICK, x, y + 4, 24, 24, new Color(1f, 1f, 1f, percentOn).getRGB());
+        nanoVGHelper.drawRoundedRect(vg, x, y + 4, 24, 24, ColorUtils.setAlpha(Colors.PRIMARY_500, (int) (percentOn * 255)), 6f);
+        nanoVGHelper.drawSvg(vg, SVGs.CHECKBOX_TICK, x, y + 4, 24, 24, new Color(1f, 1f, 1f, percentOn).getRGB());
 
         if (toggled && hover)
-            RenderManager.drawHollowRoundRect(vg, x - 1, y + 3, 24, 24, Colors.PRIMARY_600, 6f, 2f);
-        RenderManager.setAlpha(vg, 1f);
+            nanoVGHelper.drawHollowRoundRect(vg, x - 1, y + 3, 24, 24, Colors.PRIMARY_600, 6f, 2f);
+        nanoVGHelper.setAlpha(vg, 1f);
     }
 
     @Override

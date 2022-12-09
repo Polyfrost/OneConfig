@@ -29,8 +29,8 @@ package cc.polyfrost.oneconfig.gui.elements;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.pages.Page;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
-import cc.polyfrost.oneconfig.renderer.RenderManager;
-import cc.polyfrost.oneconfig.renderer.SVG;
+import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
+import cc.polyfrost.oneconfig.renderer.asset.SVG;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
@@ -85,59 +85,61 @@ public class BasicButton extends BasicElement {
 
     @Override
     public void draw(long vg, float x, float y, InputHandler inputHandler) {
+        NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
+
         this.x = x;
         this.y = y;
         this.update(x, y, inputHandler);
-        if (disabled) RenderManager.setAlpha(vg, 0.5f);
+        if (disabled) nanoVGHelper.setAlpha(vg, 0.5f);
         float contentWidth = 0f;
         int color;
         if (colorPalette == ColorPalette.TERTIARY || colorPalette == ColorPalette.TERTIARY_DESTRUCTIVE) {
             color = currentColor;
         } else {
-            RenderManager.drawRoundedRect(vg, x, y, this.width, this.height, currentColor, this.cornerRadius);
+            nanoVGHelper.drawRoundedRect(vg, x, y, this.width, this.height, currentColor, this.cornerRadius);
             color = ColorUtils.setAlpha(Colors.WHITE, (int) (colorAnimation.getAlpha() * 255));
         }
         final float middle = x + width / 2f;
         final float middleYIcon = y + height / 2f - iconSize / 2f;
         final float middleYText = y + height / 2f + fontSize / 8f;
         if (this.text != null) {
-            contentWidth += RenderManager.getTextWidth(vg, text, fontSize, Fonts.MEDIUM);
+            contentWidth += nanoVGHelper.getTextWidth(vg, text, fontSize, Fonts.MEDIUM);
         }
         if (alignment == ALIGNMENT_CENTER) {
             if (icon1 != null && icon2 == null && text == null) {
-                RenderManager.drawSvg(vg, icon1, middle - iconSize / 2f, middleYIcon, iconSize, iconSize, color);
+                nanoVGHelper.drawSvg(vg, icon1, middle - iconSize / 2f, middleYIcon, iconSize, iconSize, color);
             } else {
                 if (icon1 != null)
                     contentWidth += iconSize + xSpacing;
                 if (icon2 != null)
                     contentWidth += iconSize + xSpacing;
                 if (text != null)
-                    RenderManager.drawText(vg, text, middle - contentWidth / 2 + (icon1 == null ? 0 : iconSize + xSpacing), middleYText, color, fontSize, Fonts.MEDIUM);
+                    nanoVGHelper.drawText(vg, text, middle - contentWidth / 2 + (icon1 == null ? 0 : iconSize + xSpacing), middleYText, color, fontSize, Fonts.MEDIUM);
                 if (icon1 != null)
-                    RenderManager.drawSvg(vg, icon1, middle - contentWidth / 2, middleYIcon, iconSize, iconSize, color);
+                    nanoVGHelper.drawSvg(vg, icon1, middle - contentWidth / 2, middleYIcon, iconSize, iconSize, color);
                 if (icon2 != null)
-                    RenderManager.drawSvg(vg, icon2, middle + contentWidth / 2 - iconSize, middleYIcon, iconSize, iconSize, color);
+                    nanoVGHelper.drawSvg(vg, icon2, middle + contentWidth / 2 - iconSize, middleYIcon, iconSize, iconSize, color);
             }
         } else if (alignment == ALIGNMENT_JUSTIFIED) {
             if (text != null)
-                RenderManager.drawText(vg, text, middle - contentWidth / 2, middleYText, color, fontSize, Fonts.MEDIUM);
+                nanoVGHelper.drawText(vg, text, middle - contentWidth / 2, middleYText, color, fontSize, Fonts.MEDIUM);
             if (icon1 != null)
-                RenderManager.drawSvg(vg, icon1, x + xPadding, middleYIcon, iconSize, iconSize, color);
+                nanoVGHelper.drawSvg(vg, icon1, x + xPadding, middleYIcon, iconSize, iconSize, color);
             if (icon2 != null)
-                RenderManager.drawSvg(vg, icon2, x + width - xPadding - iconSize, middleYIcon, iconSize, iconSize, color);
+                nanoVGHelper.drawSvg(vg, icon2, x + width - xPadding - iconSize, middleYIcon, iconSize, iconSize, color);
         } else if (alignment == ALIGNMENT_LEFT) {
             contentWidth = xPadding;
             if (icon1 != null) {
-                RenderManager.drawSvg(vg, icon1, x + contentWidth, middleYIcon, iconSize, iconSize, color);
+                nanoVGHelper.drawSvg(vg, icon1, x + contentWidth, middleYIcon, iconSize, iconSize, color);
                 contentWidth += iconSize + xSpacing;
             }
             if (text != null) {
-                RenderManager.drawText(vg, text, x + contentWidth, middleYText, color, fontSize, Fonts.MEDIUM);
+                nanoVGHelper.drawText(vg, text, x + contentWidth, middleYText, color, fontSize, Fonts.MEDIUM);
             }
             if (icon2 != null)
-                RenderManager.drawSvg(vg, icon2, x + width - xPadding - iconSize, middleYIcon, iconSize, iconSize, color);
+                nanoVGHelper.drawSvg(vg, icon2, x + width - xPadding - iconSize, middleYIcon, iconSize, iconSize, color);
         }
-        if (disabled) RenderManager.setAlpha(vg, 1f);
+        if (disabled) nanoVGHelper.setAlpha(vg, 1f);
     }
 
     @Override

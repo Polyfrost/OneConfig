@@ -31,7 +31,7 @@ import cc.polyfrost.oneconfig.gui.animations.*;
 import cc.polyfrost.oneconfig.gui.animations.expo.EaseOutExpo;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
-import cc.polyfrost.oneconfig.renderer.RenderManager;
+import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.utils.InputHandler;
 
@@ -59,25 +59,26 @@ public class ConfigDualOption extends BasicOption {
 
     @Override
     public void draw(long vg, int x, int y, InputHandler inputHandler) {
+        final NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
         boolean toggled = false;
         try {
             toggled = (boolean) get();
             if (posAnimation == null) posAnimation = new DummyAnimation(toggled ? 356 : 228);
         } catch (IllegalAccessException ignored) {
         }
-        if (!isEnabled()) RenderManager.setAlpha(vg, 0.5f);
+        if (!isEnabled()) nanoVGHelper.setAlpha(vg, 0.5f);
         boolean hoveredLeft = inputHandler.isAreaHovered(x + 226, y, 128, 32) && isEnabled();
         boolean hoveredRight = inputHandler.isAreaHovered(x + 354, y, 128, 32) && isEnabled();
-        RenderManager.drawText(vg, name, x, y + 16, nameColor, 14f, Fonts.MEDIUM);
-        RenderManager.drawRoundedRect(vg, x + 226, y, 256, 32, Colors.GRAY_600, 12f);
-        RenderManager.drawRoundedRect(vg, x + posAnimation.get(), y + 2, 124, 28, Colors.PRIMARY_600, 10f);
-        if (!hoveredLeft && isEnabled()) RenderManager.setAlpha(vg, 0.8f);
-        RenderManager.drawText(vg, left, x + 290 - RenderManager.getTextWidth(vg, left, 12f, Fonts.MEDIUM) / 2, y + 17, Colors.WHITE, 12f, Fonts.MEDIUM);
-        if (isEnabled()) RenderManager.setAlpha(vg, 1f);
-        if (!hoveredRight && isEnabled()) RenderManager.setAlpha(vg, 0.8f);
-        RenderManager.drawText(vg, right, x + 418 - RenderManager.getTextWidth(vg, right, 12f, Fonts.MEDIUM) / 2, y + 17, Colors.WHITE, 12f, Fonts.MEDIUM);
+        nanoVGHelper.drawText(vg, name, x, y + 16, nameColor, 14f, Fonts.MEDIUM);
+        nanoVGHelper.drawRoundedRect(vg, x + 226, y, 256, 32, Colors.GRAY_600, 12f);
+        nanoVGHelper.drawRoundedRect(vg, x + posAnimation.get(), y + 2, 124, 28, Colors.PRIMARY_600, 10f);
+        if (!hoveredLeft && isEnabled()) nanoVGHelper.setAlpha(vg, 0.8f);
+        nanoVGHelper.drawText(vg, left, x + 290 - nanoVGHelper.getTextWidth(vg, left, 12f, Fonts.MEDIUM) / 2, y + 17, Colors.WHITE, 12f, Fonts.MEDIUM);
+        if (isEnabled()) nanoVGHelper.setAlpha(vg, 1f);
+        if (!hoveredRight && isEnabled()) nanoVGHelper.setAlpha(vg, 0.8f);
+        nanoVGHelper.drawText(vg, right, x + 418 - nanoVGHelper.getTextWidth(vg, right, 12f, Fonts.MEDIUM) / 2, y + 17, Colors.WHITE, 12f, Fonts.MEDIUM);
 
-        RenderManager.setAlpha(vg, 1);
+        nanoVGHelper.setAlpha(vg, 1);
         if ((hoveredLeft && toggled || hoveredRight && !toggled) && inputHandler.isClicked()) {
             toggled = !toggled;
             posAnimation = new EaseOutExpo(300, 228, 356, !toggled);

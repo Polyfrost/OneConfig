@@ -198,7 +198,7 @@ public class LogScanner {
 
     @NotNull
     private static Set<LoaderPlatform.ActiveMod> getModsAt(Path path, List<LoaderPlatform.ActiveMod> modMap) {
-        Set<LoaderPlatform.ActiveMod> mods = modMap.stream().filter(m -> m.source.toPath().equals(path)).collect(Collectors.toSet());
+        Set<LoaderPlatform.ActiveMod> mods = modMap.stream().filter(m -> m.source.equals(path)).collect(Collectors.toSet());
         if (!mods.isEmpty()) return mods;
         else if (Platform.getInstance().isDevelopmentEnvironment()) {
             // For some reason, in dev, the mod being tested has the 'resources' folder as the origin instead of the 'classes' folder.
@@ -209,7 +209,7 @@ public class LogScanner {
                     .replace("classes/java/main", "resources/main")
                     .replace("classes/kotlin/main", "resources/main");
             Path resourcesPath = Paths.get(resourcesPathString);
-            return modMap.stream().filter(m -> m.source.toPath().equals(resourcesPath)).collect(Collectors.toSet());
+            return modMap.stream().filter(m -> m.source.equals(resourcesPath)).collect(Collectors.toSet());
         } else {
             debug(() -> "Mod at path '" + path.toAbsolutePath() + "' is at fault," +
                     " but it could not be found in the map of mod paths: " /*+ modMap*/);

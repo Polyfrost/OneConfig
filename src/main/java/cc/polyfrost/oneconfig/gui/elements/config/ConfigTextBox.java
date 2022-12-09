@@ -27,19 +27,20 @@
 package cc.polyfrost.oneconfig.gui.elements.config;
 
 import cc.polyfrost.oneconfig.config.annotations.Text;
-import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
+import cc.polyfrost.oneconfig.gui.elements.IFocusable;
 import cc.polyfrost.oneconfig.gui.elements.text.TextInputField;
-import cc.polyfrost.oneconfig.platform.Platform;
-import cc.polyfrost.oneconfig.renderer.RenderManager;
-import cc.polyfrost.oneconfig.renderer.SVG;
-import cc.polyfrost.oneconfig.renderer.font.Fonts;
+import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
+import cc.polyfrost.oneconfig.platform.Platform;
+import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
+import cc.polyfrost.oneconfig.renderer.asset.SVG;
+import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.utils.InputHandler;
 
 import java.lang.reflect.Field;
 
-public class ConfigTextBox extends BasicOption {
+public class ConfigTextBox extends BasicOption implements IFocusable {
     private final boolean secure;
     private final boolean multiLine;
     private final TextInputField textField;
@@ -58,9 +59,11 @@ public class ConfigTextBox extends BasicOption {
 
     @Override
     public void draw(long vg, int x, int y, InputHandler inputHandler) {
-        if (!isEnabled()) RenderManager.setAlpha(vg, 0.5f);
+        final NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
+
+        if (!isEnabled()) nanoVGHelper.setAlpha(vg, 0.5f);
         textField.disable(!isEnabled());
-        RenderManager.drawText(vg, name, x, y + 16, nameColor, 14, Fonts.MEDIUM);
+        nanoVGHelper.drawText(vg, name, x, y + 16, nameColor, 14, Fonts.MEDIUM);
 
         try {
             String value = (String) get();
@@ -77,10 +80,10 @@ public class ConfigTextBox extends BasicOption {
             boolean hovered = inputHandler.isAreaHovered(x + 967, y + 7, 18, 18) && isEnabled();
             int color = hovered ? Colors.WHITE : Colors.WHITE_80;
             if (hovered && inputHandler.isClicked()) textField.setPassword(!textField.getPassword());
-            if (hovered && Platform.getMousePlatform().isButtonDown(0)) RenderManager.setAlpha(vg, 0.5f);
-            RenderManager.drawSvg(vg, icon, x + 967, y + 7, 18, 18, color);
+            if (hovered && Platform.getMousePlatform().isButtonDown(0)) nanoVGHelper.setAlpha(vg, 0.5f);
+            nanoVGHelper.drawSvg(vg, icon, x + 967, y + 7, 18, 18, color);
         }
-        RenderManager.setAlpha(vg, 1f);
+        nanoVGHelper.setAlpha(vg, 1f);
     }
 
     @Override
@@ -101,5 +104,10 @@ public class ConfigTextBox extends BasicOption {
     @Override
     protected boolean shouldDrawDescription() {
         return super.shouldDrawDescription() && !textField.isToggled();
+    }
+
+    @Override
+    public boolean hasFocus() {
+        return textField.isToggled();
     }
 }

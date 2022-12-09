@@ -1,15 +1,17 @@
-import gg.essential.gradle.util.RelocationTransform.Companion.registerRelocationAttribute
-import gg.essential.gradle.util.noServerRunConfigs
+import cc.polyfrost.gradle.util.RelocationTransform.Companion.registerRelocationAttribute
+import cc.polyfrost.gradle.util.noServerRunConfigs
+import cc.polyfrost.gradle.util.prebundle
 import net.fabricmc.loom.task.RemapSourcesJarTask
 import java.text.SimpleDateFormat
+import java.util.concurrent.atomic.AtomicReference
 
 
 plugins {
     kotlin("jvm")
-    id("gg.essential.multi-version")
-    id("gg.essential.defaults.repo")
-    id("gg.essential.defaults.java")
-    id("gg.essential.defaults.loom")
+    id("cc.polyfrost.multi-version")
+    id("cc.polyfrost.defaults.repo")
+    id("cc.polyfrost.defaults.java")
+    id("cc.polyfrost.defaults.loom")
     id("com.github.johnrengelman.shadow")
     id("net.kyori.blossom") version "1.3.0"
     id("maven-publish")
@@ -26,26 +28,28 @@ java {
     withJavadocJar()
 }
 
-val mod_name: String by project
-val mod_major_version: String by project
-val mod_minor_version: String by project
-val mod_id: String by project
+val modName = project.properties["mod_name"]
+val modMajor = project.properties["mod_major_version"]
+val modMinor = project.properties["mod_minor_version"]
+val modId = project.properties["mod_id"] as String
 
 preprocess {
     vars.put("MODERN", if (project.platform.mcMinor >= 16) 1 else 0)
 }
 
+version = "$modMajor$modMinor"
+group = "cc.polyfrost"
+
 blossom {
-    replaceToken("@VER@", mod_major_version + mod_minor_version)
-    replaceToken("@NAME@", mod_name)
-    replaceToken("@ID@", mod_id)
+    replaceToken("@VER@", version)
+    replaceToken("@NAME@", modName)
+    replaceToken("@ID@", modId)
 }
 
-version = mod_major_version + mod_minor_version
-group = "cc.polyfrost"
 base {
-    archivesName.set("$mod_id-$platform")
+    archivesName.set("$modId-$platform")
 }
+
 loom {
     noServerRunConfigs()
     runConfigs.named("client") {
@@ -66,10 +70,11 @@ loom {
     }
     if (project.platform.isForge) {
         forge {
-            mixinConfig("mixins.${mod_id}.json")
+            mixinConfig("mixins.${modId}.json")
         }
     }
-    mixin.defaultRefmapName.set("mixins.${mod_id}.refmap.json")
+    @Suppress("UnstableApiUsage")
+    mixin.defaultRefmapName.set("mixins.${modId}.refmap.json")
 }
 
 repositories {
@@ -78,7 +83,7 @@ repositories {
 
 val relocatedCommonProject = registerRelocationAttribute("common-lwjgl") {
     if (platform.isModLauncher || platform.isFabric) {
-        relocate("org.lwjgl3", "org.lwjgl")
+        relocate("org.lwjgl3.buffer", "org.lwjgl3")
     }
 }
 
@@ -88,6 +93,8 @@ val relocated = registerRelocationAttribute("relocate") {
     relocate("com.github.benmanes", "cc.polyfrost.oneconfig.libs")
     relocate("com.google", "cc.polyfrost.oneconfig.libs")
     relocate("org.checkerframework", "cc.polyfrost.oneconfig.libs")
+    relocate("dev.xdark", "cc.polyfrost.oneconfig.libs")
+
     remapStringsIn("com.github.benmanes.caffeine.cache.LocalCacheFactory")
     remapStringsIn("com.github.benmanes.caffeine.cache.NodeFactory")
 }
@@ -126,16 +133,26 @@ sourceSets {
     }
 }
 
+private enum class RepackedVersion(val string: String) {
+    LEGACY("legacy"), PRE119NOARM("pre-1.19-noarm"), PRE119ARM("pre-1.19-arm"), POST119("post-1.19");
+
+    override fun toString(): String {
+        return string
+    }
+}
+
 dependencies {
-    compileOnly("gg.essential:vigilance-$platform:222") {
+    compileOnly("gg.essential:vigilance-1.8.9-forge:+") {
         isTransitive = false
     }
 
-    include("gg.essential:universalcraft-$platform:211", relocate = true, transitive = false, mod = true)
+    include("cc.polyfrost:universalcraft-$platform:246", transitive = false, mod = true)
+
+    include("com.github.xtrm-en:deencapsulation:42b829f373", relocate = true, transitive = false, mod = false)
 
     include("com.github.KevinPriv:keventbus:c52e0a2ea0", relocate = true, transitive = false)
 
-    @Suppress("GradlePackageUpdate") include("com.github.ben-manes.caffeine:caffeine:2.9.3", relocate = true)
+    include("com.github.ben-manes.caffeine:caffeine:2.9.3", relocate = true)
 
     // for other mods and universalcraft
     val kotlinVersion: String by project
@@ -164,16 +181,74 @@ dependencies {
         isTransitive = false
     }
 
-    include("cc.polyfrost:lwjgl-$platform:1.0.0-alpha8")
+    if (platform.isFabric) {
+        include("com.github.Chocohead:Fabric-ASM:v2.3")
+        if (platform.mcVersion <= 11202) {
+            compileOnly(runtimeOnly("org.apache.logging.log4j:log4j-core:2.8.1")!!)
+            compileOnly(runtimeOnly("org.apache.logging.log4j:log4j-api:2.8.1")!!)
+        }
+    }
+
+    val repackedVersions = when (platform.mcVersion) {
+        in 10809..11202 -> listOf(RepackedVersion.LEGACY)
+        in 11203..11802 -> listOf(RepackedVersion.PRE119NOARM, RepackedVersion.PRE119ARM)
+        else -> listOf(RepackedVersion.POST119)
+    }
+
+    repackedVersions.forEachIndexed { index, version ->
+        val configuration = configurations.create("tempLwjglConfiguration$index")
+
+        compileOnly(configuration("cc.polyfrost:lwjgl-$version:1.0.0-alpha24") {
+            isTransitive = false
+        })
+        shadeNoPom(implementationNoPom(prebundle(configuration, "lwjgl-$version.jar"))!!)
+    }
 
     configurations.named(JavaPlugin.COMPILE_CLASSPATH_CONFIGURATION_NAME) { extendsFrom(shadeProject) }
     configurations.named(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME) { extendsFrom(shadeProject) }
 }
 
 tasks {
+    withType(Jar::class) {
+        val atomicLines = AtomicReference(listOf<String>())
+
+        // This removes the 24th line in fabric.mod.json,
+        // aka the TestMod entrypoint, for production builds.
+        doFirst {
+            val fabricModJson = buildDir.resolve("resources")
+                .resolve("main")
+                .resolve("fabric.mod.json")
+            if (fabricModJson.exists()) {
+                val lines = fabricModJson.readLines()
+                if (lines[23].contains("TestMod")) {
+                    atomicLines.set(lines)
+
+                    fabricModJson.delete()
+                    fabricModJson.writeText(
+                        lines.subList(0, 23).joinToString("\n") + "\n" + lines.subList(
+                            24,
+                            lines.size
+                        ).joinToString("\n")
+                    )
+                }
+            }
+        }
+
+        doLast {
+            val lines = atomicLines.get()
+            if (lines.isEmpty()) return@doLast
+
+            val fabricModJson = buildDir.resolve("resources")
+                .resolve("main")
+                .resolve("fabric.mod.json")
+
+            fabricModJson.delete()
+            fabricModJson.writeText(lines.joinToString("\n"))
+        }
+    }
     processResources {
-        inputs.property("id", mod_id)
-        inputs.property("name", mod_name)
+        inputs.property("id", modId)
+        inputs.property("name", modName)
         val java = if (project.platform.mcMinor >= 18) {
             17
         } else {
@@ -182,16 +257,17 @@ tasks {
         val compatLevel = "JAVA_${java}"
         inputs.property("java", java)
         inputs.property("java_level", compatLevel)
-        inputs.property("version", mod_major_version + mod_minor_version)
+        inputs.property("version", project.version)
         inputs.property("mcVersionStr", project.platform.mcVersionStr)
-        filesMatching(listOf("mcmod.info", "mixins.${mod_id}.json", "**/mods.toml")) {
+
+        filesMatching(listOf("mcmod.info", "mixins.${modId}.json", "**/mods.toml")) {
             expand(
                 mapOf(
-                    "id" to mod_id,
-                    "name" to mod_name,
+                    "id" to modId,
+                    "name" to modName,
                     "java" to java,
                     "java_level" to compatLevel,
-                    "version" to mod_major_version + mod_minor_version,
+                    "version" to project.version,
                     "mcVersionStr" to project.platform.mcVersionStr
                 )
             )
@@ -199,11 +275,11 @@ tasks {
         filesMatching("fabric.mod.json") {
             expand(
                 mapOf(
-                    "id" to mod_id,
-                    "name" to mod_name,
+                    "id" to modId,
+                    "name" to modName,
                     "java" to java,
                     "java_level" to compatLevel,
-                    "version" to mod_major_version + mod_minor_version,
+                    "version" to project.version,
                     "mcVersionStr" to project.platform.mcVersionStr.substringBeforeLast(".") + ".x"
                 )
             )
@@ -231,7 +307,7 @@ tasks {
         }
     }
 
-    val shadowJar = named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar") {
+    shadowJar {
         archiveClassifier.set("full-dev")
         configurations = listOf(shade, shadeNoPom, shadeNoJar, shadeProject, shadeRelocated)
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
@@ -245,6 +321,7 @@ tasks {
 
     fun Jar.excludeInternal() {
         exclude("**/internal/**")
+        exclude("**/commands/ClientCommandHandler.**")
     }
     jar {
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
@@ -265,12 +342,12 @@ tasks {
                     } else {
                         mapOf(
                             "MixinConfigs" to "mixins.oneconfig.json",
-                            "Specification-Title" to mod_id,
-                            "Specification-Vendor" to mod_id,
+                            "Specification-Title" to modId,
+                            "Specification-Vendor" to modId,
                             "Specification-Version" to "1", // We are version 1 of ourselves, whatever the hell that means
-                            "Implementation-Title" to mod_name,
-                            "Implementation-Version" to mod_major_version + mod_minor_version,
-                            "Implementation-Vendor" to mod_id,
+                            "Implementation-Title" to modName,
+                            "Implementation-Version" to project.version,
+                            "Implementation-Vendor" to modId,
                             "Implementation-Timestamp" to SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").format(`java.util`.Date())
                         )
                     }
@@ -294,7 +371,12 @@ tasks {
         }
         doLast {
             archiveFile.orNull?.asFile?.let {
-                it.copyTo(File(it.parentFile, it.nameWithoutExtension + "-dev" + it.extension.let { if (it.isBlank()) "" else ".$it" }), overwrite = true)
+                it.copyTo(
+                    File(
+                        it.parentFile,
+                        it.nameWithoutExtension + "-dev" + it.extension.let { if (it.isBlank()) "" else ".$it" }),
+                    overwrite = true
+                )
             }
             archiveClassifier.set("sources")
         }
@@ -374,7 +456,13 @@ fun DependencyHandlerScope.include(dependency: Any, pom: Boolean = true, mod: Bo
     }
 }
 
-fun DependencyHandlerScope.include(dependency: ModuleDependency, pom: Boolean = true, mod: Boolean = false, relocate: Boolean = false, transitive: Boolean = true) {
+fun DependencyHandlerScope.include(
+    dependency: ModuleDependency,
+    pom: Boolean = true,
+    mod: Boolean = false,
+    relocate: Boolean = false,
+    transitive: Boolean = true,
+) {
     if (platform.isForge) {
         if (relocate) {
             shadeRelocated(dependency) { isTransitive = transitive }
@@ -396,16 +484,36 @@ fun DependencyHandlerScope.include(dependency: ModuleDependency, pom: Boolean = 
             }
         } else {
             if (mod) {
-                modImplementationNoPom(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
+                modImplementationNoPom(dependency) {
+                    isTransitive = transitive; if (relocate) attributes {
+                    attribute(
+                        relocated,
+                        true
+                    )
+                }
+                }
             } else {
-                implementationNoPom(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
+                implementationNoPom(dependency) {
+                    isTransitive = transitive; if (relocate) attributes {
+                    attribute(
+                        relocated,
+                        true
+                    )
+                }
+                }
             }
         }
         "include"(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
     }
 }
 
-fun DependencyHandlerScope.include(dependency: String, pom: Boolean = true, mod: Boolean = false, relocate: Boolean = false, transitive: Boolean = true) {
+fun DependencyHandlerScope.include(
+    dependency: String,
+    pom: Boolean = true,
+    mod: Boolean = false,
+    relocate: Boolean = false,
+    transitive: Boolean = true,
+) {
     if (platform.isForge) {
         if (relocate) {
             shadeRelocated(dependency) { isTransitive = transitive }
@@ -415,7 +523,14 @@ fun DependencyHandlerScope.include(dependency: String, pom: Boolean = true, mod:
                 shade(dependency) { isTransitive = transitive }
             } else {
                 shadeNoPom(dependency) { isTransitive = transitive }
-                implementationNoPom(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
+                implementationNoPom(dependency) {
+                    isTransitive = transitive; if (relocate) attributes {
+                    attribute(
+                        relocated,
+                        true
+                    )
+                }
+                }
             }
         }
     } else {
@@ -427,9 +542,23 @@ fun DependencyHandlerScope.include(dependency: String, pom: Boolean = true, mod:
             }
         } else {
             if (mod) {
-                modImplementationNoPom(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
+                modImplementationNoPom(dependency) {
+                    isTransitive = transitive; if (relocate) attributes {
+                    attribute(
+                        relocated,
+                        true
+                    )
+                }
+                }
             } else {
-                implementationNoPom(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
+                implementationNoPom(dependency) {
+                    isTransitive = transitive; if (relocate) attributes {
+                    attribute(
+                        relocated,
+                        true
+                    )
+                }
+                }
             }
         }
         "include"(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
