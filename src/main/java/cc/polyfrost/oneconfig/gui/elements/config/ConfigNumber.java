@@ -28,6 +28,7 @@ package cc.polyfrost.oneconfig.gui.elements.config;
 
 import cc.polyfrost.oneconfig.config.annotations.Number;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
+import cc.polyfrost.oneconfig.gui.elements.IFocusable;
 import cc.polyfrost.oneconfig.gui.elements.text.NumberInputField;
 import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
@@ -35,7 +36,7 @@ import cc.polyfrost.oneconfig.utils.InputHandler;
 
 import java.lang.reflect.Field;
 
-public class ConfigNumber extends BasicOption {
+public class ConfigNumber extends BasicOption implements IFocusable {
     private final NumberInputField inputField;
     private boolean isFloat = true;
     private final int size;
@@ -102,5 +103,10 @@ public class ConfigNumber extends BasicOption {
     @Override
     protected boolean shouldDrawDescription() {
         return super.shouldDrawDescription() && !inputField.isToggled();
+    }
+
+    @Override
+    public boolean hasFocus() {
+        return inputField.isToggled();
     }
 }

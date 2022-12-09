@@ -724,6 +724,10 @@ public class cc/polyfrost/oneconfig/gui/elements/ColorSelector {
 	public fun setFavorite (I)V
 }
 
+public abstract interface class cc/polyfrost/oneconfig/gui/elements/IFocusable {
+	public abstract fun hasFocus ()Z
+}
+
 public class cc/polyfrost/oneconfig/gui/elements/ModCard : cc/polyfrost/oneconfig/gui/elements/BasicElement {
 	public fun <init> (Lcc/polyfrost/oneconfig/config/data/Mod;ZZZLcc/polyfrost/oneconfig/gui/pages/ModsPage;)V
 	public fun draw (JFFLcc/polyfrost/oneconfig/utils/InputHandler;)V
@@ -765,11 +769,12 @@ public class cc/polyfrost/oneconfig/gui/elements/config/ConfigCheckbox : cc/poly
 	protected fun getNameX (I)F
 }
 
-public class cc/polyfrost/oneconfig/gui/elements/config/ConfigColorElement : cc/polyfrost/oneconfig/config/elements/BasicOption {
+public class cc/polyfrost/oneconfig/gui/elements/config/ConfigColorElement : cc/polyfrost/oneconfig/config/elements/BasicOption, cc/polyfrost/oneconfig/gui/elements/IFocusable {
 	public fun <init> (Ljava/lang/reflect/Field;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;IZ)V
 	public static fun create (Ljava/lang/reflect/Field;Ljava/lang/Object;)Lcc/polyfrost/oneconfig/gui/elements/config/ConfigColorElement;
 	public fun draw (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
 	public fun getHeight ()I
+	public fun hasFocus ()Z
 	public fun keyTyped (CI)V
 	protected fun setColor (Lcc/polyfrost/oneconfig/config/core/OneColor;)V
 }
@@ -804,19 +809,21 @@ public class cc/polyfrost/oneconfig/gui/elements/config/ConfigInfo : cc/polyfros
 	public fun getHeight ()I
 }
 
-public class cc/polyfrost/oneconfig/gui/elements/config/ConfigKeyBind : cc/polyfrost/oneconfig/config/elements/BasicOption {
+public class cc/polyfrost/oneconfig/gui/elements/config/ConfigKeyBind : cc/polyfrost/oneconfig/config/elements/BasicOption, cc/polyfrost/oneconfig/gui/elements/IFocusable {
 	public fun <init> (Ljava/lang/reflect/Field;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;I)V
 	public static fun create (Ljava/lang/reflect/Field;Ljava/lang/Object;)Lcc/polyfrost/oneconfig/gui/elements/config/ConfigKeyBind;
 	public fun draw (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
 	public fun getHeight ()I
+	public fun hasFocus ()Z
 	public fun keyTyped (CI)V
 }
 
-public class cc/polyfrost/oneconfig/gui/elements/config/ConfigNumber : cc/polyfrost/oneconfig/config/elements/BasicOption {
+public class cc/polyfrost/oneconfig/gui/elements/config/ConfigNumber : cc/polyfrost/oneconfig/config/elements/BasicOption, cc/polyfrost/oneconfig/gui/elements/IFocusable {
 	public fun <init> (Ljava/lang/reflect/Field;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;FFII)V
 	public static fun create (Ljava/lang/reflect/Field;Ljava/lang/Object;)Lcc/polyfrost/oneconfig/gui/elements/config/ConfigNumber;
 	public fun draw (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
 	public fun getHeight ()I
+	public fun hasFocus ()Z
 	public fun keyTyped (CI)V
 	protected fun shouldDrawDescription ()Z
 }
@@ -830,11 +837,12 @@ public class cc/polyfrost/oneconfig/gui/elements/config/ConfigPageButton : cc/po
 	public fun getHeight ()I
 }
 
-public class cc/polyfrost/oneconfig/gui/elements/config/ConfigSlider : cc/polyfrost/oneconfig/config/elements/BasicOption {
+public class cc/polyfrost/oneconfig/gui/elements/config/ConfigSlider : cc/polyfrost/oneconfig/config/elements/BasicOption, cc/polyfrost/oneconfig/gui/elements/IFocusable {
 	public fun <init> (Ljava/lang/reflect/Field;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;FFI)V
 	public static fun create (Ljava/lang/reflect/Field;Ljava/lang/Object;)Lcc/polyfrost/oneconfig/gui/elements/config/ConfigSlider;
 	public fun draw (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
 	public fun getHeight ()I
+	public fun hasFocus ()Z
 	public fun keyTyped (CI)V
 }
 
@@ -846,11 +854,12 @@ public class cc/polyfrost/oneconfig/gui/elements/config/ConfigSwitch : cc/polyfr
 	protected fun getNameX (I)F
 }
 
-public class cc/polyfrost/oneconfig/gui/elements/config/ConfigTextBox : cc/polyfrost/oneconfig/config/elements/BasicOption {
+public class cc/polyfrost/oneconfig/gui/elements/config/ConfigTextBox : cc/polyfrost/oneconfig/config/elements/BasicOption, cc/polyfrost/oneconfig/gui/elements/IFocusable {
 	public fun <init> (Ljava/lang/reflect/Field;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;ZZ)V
 	public static fun create (Ljava/lang/reflect/Field;Ljava/lang/Object;)Lcc/polyfrost/oneconfig/gui/elements/config/ConfigTextBox;
 	public fun draw (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
 	public fun getHeight ()I
+	public fun hasFocus ()Z
 	public fun keyTyped (CI)V
 	protected fun shouldDrawDescription ()Z
 }
@@ -926,6 +935,8 @@ public class cc/polyfrost/oneconfig/gui/pages/ModConfigPage : cc/polyfrost/oneco
 	public fun drawStatic (JIILcc/polyfrost/oneconfig/utils/InputHandler;)I
 	public fun finishUpAndClose ()V
 	public fun getMaxScrollHeight ()I
+	public fun getPage ()Lcc/polyfrost/oneconfig/config/elements/OptionPage;
+	public fun getSelectedCategory ()Ljava/lang/String;
 	public fun isBase ()Z
 	public fun keyTyped (CI)V
 	public fun switchCategory (Ljava/lang/String;)V
