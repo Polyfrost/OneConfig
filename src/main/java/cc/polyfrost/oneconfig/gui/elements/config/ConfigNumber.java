@@ -41,7 +41,7 @@ public class ConfigNumber extends BasicOption implements IFocusable {
     private boolean isFloat = true;
     private final int size;
 
-    public ConfigNumber(Field field, Object parent, String name, String description, String category, String subcategory, float min, float max, int step, int size) {
+    public ConfigNumber(Field field, Object parent, String name, String description, String category, String subcategory, float min, float max, float step, int size) {
         super(field, parent, name, description, category, subcategory, size);
         this.inputField = new NumberInputField(84, 32, 0, min, max, step);
         this.size = size;
