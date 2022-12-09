@@ -27,9 +27,12 @@
 package cc.polyfrost.oneconfig.gui.pages;
 
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
+import cc.polyfrost.oneconfig.config.elements.OptionCategory;
 import cc.polyfrost.oneconfig.config.elements.OptionPage;
 import cc.polyfrost.oneconfig.config.elements.OptionSubcategory;
+import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.elements.BasicButton;
+import cc.polyfrost.oneconfig.utils.SearchUtils;
 import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.renderer.scissor.ScissorHelper;
@@ -37,6 +40,8 @@ import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 import static cc.polyfrost.oneconfig.gui.elements.BasicButton.SIZE_32;
 
@@ -75,12 +80,13 @@ public class ModConfigPage extends Page {
         if (page.categories.size() == 0) return;
         ScissorHelper scissorHelper = ScissorHelper.INSTANCE;
         int optionY = y + (page.categories.size() == 1 ? 16 : 64);
-        for (OptionSubcategory subCategory : page.categories.get(selectedCategory).subcategories) {
+        List<OptionSubcategory> subcategories = getSubcategories();
+        for (OptionSubcategory subCategory : subcategories) {
             optionY += subCategory.draw(vg, x + 30, optionY, inputHandler);
         }
         scissorHelper.save();
         scissorHelper.clearScissors(vg);
-        for (OptionSubcategory subCategory : page.categories.get(selectedCategory).subcategories) {
+        for (OptionSubcategory subCategory : subcategories) {
             subCategory.drawLast(vg, x + 30, inputHandler);
         }
         scissorHelper.restore(vg);
@@ -91,11 +97,21 @@ public class ModConfigPage extends Page {
     public int drawStatic(long vg, int x, int y, InputHandler inputHandler) {
         if (categories.size() <= 1) return 0;
         int buttonX = x + 16;
+        boolean searching = !OneConfigGui.INSTANCE.getSearchValue().trim().isEmpty();
         for (BasicButton button : categories) {
             if (button.getWidth() == 0)
                 button.setWidth((int) (Math.ceil(NanoVGHelper.INSTANCE.getTextWidth(vg, button.getText(), 12f, Fonts.MEDIUM) / 8f) * 8 + 16));
-            button.draw(vg, buttonX, y + 16, inputHandler);
-            buttonX += button.getWidth() + 16;
+            if (searching) {
+                boolean similar = SearchUtils.isSimilar(button.getText(), OneConfigGui.INSTANCE.getSearchValue());
+                boolean selected = button.isToggled();
+                button.setToggled(similar);
+                button.draw(vg, buttonX, y + 16, inputHandler);
+                buttonX += button.getWidth() + 16;
+                button.setToggled(selected);
+            } else {
+                button.draw(vg, buttonX, y + 16, inputHandler);
+                buttonX += button.getWidth() + 16;
+            }
         }
         return 60;
     }
@@ -108,10 +124,37 @@ public class ModConfigPage extends Page {
     @Override
     public void keyTyped(char key, int keyCode) {
         if (page.categories.size() == 0) return;
-        for (OptionSubcategory subCategory : page.categories.get(selectedCategory).subcategories) {
+        for (OptionSubcategory subCategory : getSubcategories()) {
             for (BasicOption option : subCategory.options) {
                 option.keyTyped(key, keyCode);
             }
+        }
+    }
+
+    private List<OptionSubcategory> getSubcategories() {
+        if (OneConfigGui.INSTANCE.getSearchValue().isEmpty()) {
+            return page.categories.get(selectedCategory).subcategories;
+        } else {
+            List<OptionSubcategory> subcategories = new ArrayList<>();
+            for (Map.Entry<String, OptionCategory> category : page.categories.entrySet()) {
+                if (SearchUtils.isSimilar(category.getKey(), OneConfigGui.INSTANCE.getSearchValue())) {
+                    subcategories.addAll(category.getValue().subcategories);
+                } else {
+                    for (OptionSubcategory subcategory : category.getValue().subcategories) {
+                        if (SearchUtils.isSimilar(subcategory.getName(), OneConfigGui.INSTANCE.getSearchValue())) {
+                            subcategories.add(subcategory);
+                        } else {
+                            for (BasicOption option : subcategory.options) {
+                                if (SearchUtils.isSimilar(option.name, OneConfigGui.INSTANCE.getSearchValue())) {
+                                    subcategories.add(subcategory);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            return subcategories;
         }
     }
 
@@ -134,5 +177,13 @@ public class ModConfigPage extends Page {
     @Override
     public boolean isBase() {
         return base;
+    }
+
+    public OptionPage getPage() {
+        return page;
+    }
+
+    public String getSelectedCategory() {
+        return selectedCategory;
     }
 }

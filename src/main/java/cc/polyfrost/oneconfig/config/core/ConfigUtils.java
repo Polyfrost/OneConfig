@@ -135,7 +135,7 @@ public class ConfigUtils {
         if (!page.categories.containsKey(categoryName)) page.categories.put(categoryName, new OptionCategory());
         OptionCategory category = page.categories.get(categoryName);
         if (category.subcategories.size() == 0 || !category.subcategories.get(category.subcategories.size() - 1).getName().equals(subcategoryName))
-            category.subcategories.add(new OptionSubcategory(subcategoryName));
+            category.subcategories.add(new OptionSubcategory(subcategoryName, categoryName));
         return category.subcategories.get(category.subcategories.size() - 1);
     }
 
