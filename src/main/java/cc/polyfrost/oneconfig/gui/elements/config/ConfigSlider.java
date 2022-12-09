@@ -33,6 +33,7 @@ import cc.polyfrost.oneconfig.gui.animations.DummyAnimation;
 import cc.polyfrost.oneconfig.gui.animations.EaseInOutCubic;
 import cc.polyfrost.oneconfig.gui.animations.EaseInOutQuart;
 import cc.polyfrost.oneconfig.gui.animations.EaseOutExpo;
+import cc.polyfrost.oneconfig.gui.elements.IFocusable;
 import cc.polyfrost.oneconfig.gui.elements.text.NumberInputField;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.platform.Platform;
@@ -43,14 +44,14 @@ import cc.polyfrost.oneconfig.utils.MathUtils;
 
 import java.lang.reflect.Field;
 
-public class ConfigSlider extends BasicOption {
+public class ConfigSlider extends BasicOption implements IFocusable {
     private static final int STEP_POPUP_DURATION = 400;
     private static final int INDICATOR_POPUP_DURATION = 200;
-    private static final int INDICATOR_SLIDING_DURATION = 100;
+    private static final int INDICATOR_SLIDING_DURATION = 60;
 
-    private static final float STEP_HEIGHT_HOVER = 4;
-    // Step height drag is also the max height of the step
-    private static final float STEP_HEIGHT_DRAG = 10;
+    private static final float STEP_HEIGHT_TOTAL = 16;
+    private static final float STEP_HEIGHT_HOVER = 10;
+    private static final float STEP_HEIGHT_DRAG = 16;
     private static final float TOUCH_TARGET_TOTAL = 16;
     private static final float TOUCH_TARGET_HOVER = 16;
     private static final float TOUCH_TARGET_DRAG = 10;
@@ -65,6 +66,7 @@ public class ConfigSlider extends BasicOption {
     private Animation targetAnimation;
     private Animation stepSlideAnimation;
     private boolean animReset;
+    private float lastX = -1;
 
     public ConfigSlider(Field field, Object parent, String name, String description, String category, String subcategory, float min, float max, int step) {
         super(field, parent, name, description, category, subcategory, 2);
@@ -122,7 +124,7 @@ public class ConfigSlider extends BasicOption {
                 animReset = true;
             } else if (!dragging && hovered) {
                 if (targetAnimation.getEnd() != 1) {
-                    stepsAnimation = new EaseOutExpo(STEP_POPUP_DURATION, stepPercent, STEP_HEIGHT_HOVER / STEP_HEIGHT_DRAG, false);
+                    stepsAnimation = new EaseOutExpo(STEP_POPUP_DURATION, stepPercent, STEP_HEIGHT_HOVER / STEP_HEIGHT_TOTAL, false);
                     targetAnimation = new EaseInOutQuart(INDICATOR_POPUP_DURATION, targetPercent, 1, false);
                     animReset = true;
                 }
@@ -149,31 +151,35 @@ public class ConfigSlider extends BasicOption {
         }
 
         // Animate sliding
-        if (stepSlideAnimation.get() == -1) {
+        if (stepSlideAnimation.get() == -1 || lastX != x) {
             stepSlideAnimation = new DummyAnimation(xCoordinate);
         } else {
             stepSlideAnimation = new EaseInOutCubic(INDICATOR_SLIDING_DURATION, stepSlideAnimation.get(), xCoordinate, false);
         }
         xCoordinate = (int) stepSlideAnimation.get();
 
-        nanoVGHelper.drawText(vg, name, x, y + 17, nameColor, 14f, Fonts.MEDIUM);
+        lastX = x;
+
         // Ease-out the radius when the steps are in view
         float radius = 4;
         if (step > 0) {
-            radius *= 1 - (Math.min(stepPercent, STEP_HEIGHT_HOVER / STEP_HEIGHT_DRAG) * STEP_HEIGHT_DRAG / STEP_HEIGHT_HOVER);
+            radius *= 1 - (Math.min(stepPercent, STEP_HEIGHT_HOVER / STEP_HEIGHT_TOTAL) * STEP_HEIGHT_TOTAL / STEP_HEIGHT_HOVER);
         }
+
+        nanoVGHelper.drawText(vg, name, x, y + 17, nameColor, 14f, Fonts.MEDIUM);
         nanoVGHelper.drawRoundedRect(vg, x + 352, y + 13, 512, 6, Colors.GRAY_300, radius);
         nanoVGHelper.drawRoundedRect(vg, x + 352, y + 13, xCoordinate - x - 352, 6, Colors.PRIMARY_500, 4f);
-        if (step > 0 && stepPercent > 0) {
-            float stepOffset = 6 + (stepPercent * 10);
-            for (float i = x + 352; i <= x + 864; i += 512 / ((max - min) / step)) {
+
+        if (step > 0 && stepPercent > 0.05f) {
+            float stepOffset = stepPercent * 16;
+            for (float i = x + 354; i <= x + 864; i += 512 / ((max - min) / step)) {
                 int color = xCoordinate > i - 2 ? Colors.PRIMARY_500 : Colors.GRAY_300;
                 nanoVGHelper.drawRoundedRect(vg, i - 2, y + 16 - (stepOffset / 2f), 4, stepOffset, color, 2f);
             }
         }
 
         nanoVGHelper.drawRoundedRect(vg, xCoordinate - 12, y + 4, 24, 24, Colors.WHITE, 12f);
-        if (targetPercent != 0) {
+        if (targetPercent > 0.02f) {
             nanoVGHelper.drawRoundedRect(vg, xCoordinate - (TOUCH_TARGET_HOVER / 2 * targetPercent), y + 16 - (TOUCH_TARGET_HOVER / 2 * targetPercent), TOUCH_TARGET_HOVER * targetPercent, TOUCH_TARGET_HOVER * targetPercent, Colors.PRIMARY_500, 12f);
         }
 
@@ -184,7 +190,8 @@ public class ConfigSlider extends BasicOption {
     private int getStepCoordinate(int xCoordinate, int x) {
         Integer nearest = null;
         for (float i = x + 352; i <= x + 864; i += 512 / ((max - min) / step)) {
-            if (nearest == null || Math.abs(xCoordinate - i) < Math.abs(xCoordinate - nearest)) nearest = (int) i;
+            if (nearest == null || Math.abs(xCoordinate - i) < Math.abs(xCoordinate - nearest))
+                nearest = (int) i;
         }
         return nearest == null ? 0 : nearest;
     }
@@ -205,5 +212,10 @@ public class ConfigSlider extends BasicOption {
     @Override
     public int getHeight() {
         return 32;
+    }
+
+    @Override
+    public boolean hasFocus() {
+        return inputField.isToggled();
     }
 }
