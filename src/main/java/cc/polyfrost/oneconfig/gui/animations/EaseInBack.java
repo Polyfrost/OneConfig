@@ -24,16 +24,25 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.internal.plugin;
+package cc.polyfrost.oneconfig.gui.animations;
 
-//#if FABRIC==1
-//$$ import cc.polyfrost.oneconfig.internal.init.OneConfigInit;
-//$$ import net.fabricmc.loader.api.entrypoint.PreLaunchEntrypoint;
-//$$
-//$$ public class OneConfigPreLaunch implements PreLaunchEntrypoint {
-//$$     @Override
-//$$     public void onPreLaunch() {
-//$$         OneConfigInit.initialize(new String[]{});
-//$$     }
-//$$ }
-//#endif
+public class EaseInBack extends Animation {
+
+    /**
+     * @param duration The duration of the animation
+     * @param start    The start of the animation
+     * @param end      The end of the animation
+     * @param reverse  Reverse the animation
+     */
+    public EaseInBack(int duration, float start, float end, boolean reverse) {
+        super(duration, start, end, reverse);
+    }
+
+    @Override
+    protected float animate(float x) {
+        float c1 = 1.70158f;
+        float c3 = c1 + 1;
+
+        return c3 * x * x * x - c1 * x * x;
+    }
+}

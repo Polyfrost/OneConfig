@@ -27,17 +27,27 @@
 package cc.polyfrost.oneconfig.gui;
 
 import cc.polyfrost.oneconfig.config.core.OneColor;
+import cc.polyfrost.oneconfig.events.EventManager;
+import cc.polyfrost.oneconfig.events.event.HudRenderEvent;
+import cc.polyfrost.oneconfig.config.elements.BasicOption;
+import cc.polyfrost.oneconfig.config.elements.OptionSubcategory;
 import cc.polyfrost.oneconfig.gui.animations.Animation;
+import cc.polyfrost.oneconfig.gui.animations.DummyAnimation;
+import cc.polyfrost.oneconfig.gui.animations.EaseInBack;
 import cc.polyfrost.oneconfig.gui.animations.EaseOutExpo;
 import cc.polyfrost.oneconfig.gui.elements.BasicElement;
 import cc.polyfrost.oneconfig.gui.elements.ColorSelector;
+import cc.polyfrost.oneconfig.gui.elements.IFocusable;
 import cc.polyfrost.oneconfig.gui.elements.text.TextInputField;
+import cc.polyfrost.oneconfig.gui.pages.ModConfigPage;
 import cc.polyfrost.oneconfig.gui.pages.ModsPage;
 import cc.polyfrost.oneconfig.gui.pages.Page;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.internal.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.internal.config.Preferences;
+import cc.polyfrost.oneconfig.internal.renderer.NanoVGHelperImpl;
+import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
 import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
 import cc.polyfrost.oneconfig.libs.universal.UResolution;
 import cc.polyfrost.oneconfig.platform.Platform;
@@ -46,6 +56,7 @@ import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.renderer.scissor.Scissor;
 import cc.polyfrost.oneconfig.renderer.scissor.ScissorHelper;
 import cc.polyfrost.oneconfig.utils.InputHandler;
+import cc.polyfrost.oneconfig.utils.MathUtils;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 import cc.polyfrost.oneconfig.utils.gui.OneUIScreen;
@@ -53,56 +64,132 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class OneConfigGui extends OneUIScreen {
+    private static final InputHandler DUMMY_HANDLER = new InputHandler();
     public static OneConfigGui INSTANCE;
+
     private final SideBar sideBar = new SideBar();
     private final TextInputField textInputField = new TextInputField(248, 40, "Search...", false, false, SVGs.SEARCH_SM);
-    private final ArrayList<Page> previousPages = new ArrayList<>();
-    private final ArrayList<Page> nextPages = new ArrayList<>();
+    private final List<Page> previousPages = new ArrayList<>();
+    private final List<Page> nextPages = new ArrayList<>();
     private final BasicElement backArrow = new BasicElement(40, 40, ColorPalette.TERTIARY, true);
     private final BasicElement forwardArrow = new BasicElement(40, 40, ColorPalette.TERTIARY, true);
     public ColorSelector currentColorSelector;
     public boolean allowClose = true;
     protected Page currentPage;
     protected Page prevPage;
-    private Animation animation;
+    private Animation pageAnimation;
+
+    private Animation containerAnimation = new DummyAnimation(1);
+    private boolean isClosed = true;
+    private boolean shouldDisplayHud = false;
+    public float transparencyFactor = 0f;
+    public float animationScaleFactor = 0f;
+    /**
+     * Used for global transparency animation in {@link NanoVGHelperImpl}
+     */
+    private boolean isDrawing;
 
     public OneConfigGui() {
+        if (INSTANCE != null)
+            EventManager.INSTANCE.unregister(INSTANCE);
         INSTANCE = this;
+
+        EventManager.INSTANCE.register(INSTANCE);
     }
 
     public OneConfigGui(Page page) {
-        INSTANCE = this;
-        currentPage = page;
+        this();
+        this.currentPage = page;
     }
 
-    public static OneConfigGui create() {
-        return INSTANCE == null ? new OneConfigGui() : INSTANCE;
+    @Override
+    public void initScreen(int width, int height) {
+        super.initScreen(width, height);
+
+        if (Preferences.guiOpenAnimation) {
+            shouldDisplayHud = false;
+        }
     }
 
     @Override
     public void draw(long vg, float partialTicks, InputHandler inputHandler) {
+        this.isDrawing = true;
+
         final NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
+        final ScissorHelper scissorHelper = ScissorHelper.INSTANCE;
         if (currentPage == null) {
             currentPage = new ModsPage();
             currentPage.parents.add(currentPage);
         }
+
+        boolean renderedInHud = (inputHandler == null);
+        if (Preferences.guiOpenAnimation) {
+            if (renderedInHud && Preferences.guiClosingAnimation && shouldDisplayHud) {
+                if (containerAnimation.getEnd() != 0) {
+                    switch (Preferences.animationType) {
+                        case 0:
+                            containerAnimation = new EaseOutExpo((int) (Preferences.animationTime * 1000), MathUtils.clamp(animationScaleFactor - 0.9f, 0f, 0.1f), 0, false);
+                            break;
+                        case 1:
+                            containerAnimation = new EaseInBack((int) (Preferences.animationTime * 750), MathUtils.clamp(animationScaleFactor, 0f, 1f), 0, false);
+                            break;
+                    }
+                }
+            } else if (!renderedInHud && isClosed) {
+                switch (Preferences.animationType) {
+                    case 0:
+                        containerAnimation = new EaseOutExpo((int) (Preferences.animationTime * 1000), MathUtils.clamp(animationScaleFactor - 0.9f, 0, 0.1f), 0.1f, false);
+                        break;
+                    case 1:
+                        containerAnimation = new EaseOutExpo((int) (Preferences.animationTime * 1000), MathUtils.clamp(animationScaleFactor, 0, 1), 1, false);
+                        break;
+                }
+                isClosed = false;
+            }
+        }
+
+        float animationValue = containerAnimation.get();
+        if (animationValue < 0) animationValue = 0;
+
+        switch (Preferences.animationType) {
+            case 0:
+                animationScaleFactor = .9f + animationValue;
+                transparencyFactor = animationValue * 12f;
+                break;
+            case 1:
+                animationScaleFactor = transparencyFactor = animationValue;
+                break;
+        }
+
+        nanoVGHelper.setAlpha(vg, transparencyFactor);
+
         if (OneConfigConfig.australia) {
             nanoVGHelper.translate(vg, UResolution.getWindowWidth(), UResolution.getWindowHeight());
             nanoVGHelper.rotate(vg, (float) Math.toRadians(180));
         }
-        float scale = getScaleFactor();
+
+        if (inputHandler == null) {
+            inputHandler = DUMMY_HANDLER;
+        }
+
+        float scale = getScaleFactor() * animationScaleFactor;
         int x = (int) ((UResolution.getWindowWidth() - 1280 * scale) / 2f / scale);
         int y = (int) ((UResolution.getWindowHeight() - 800 * scale) / 2f / scale);
         nanoVGHelper.scale(vg, scale, scale);
         inputHandler.scale(scale, scale);
 
         nanoVGHelper.drawDropShadow(vg, x, y, 1280, 800, 64, 0, 20);
-        nanoVGHelper.drawRoundedRect(vg, x + 224, y, 1056, 800, Colors.GRAY_800, 20f);
+
+        Scissor mainPanel = scissorHelper.scissor(vg, x, y, 224, 800);
         nanoVGHelper.drawRoundedRect(vg, x, y, 244, 800, Colors.GRAY_800_95, 20f);
-        nanoVGHelper.drawRect(vg, x + 224, y, 20, 800, Colors.GRAY_800);
-        nanoVGHelper.drawHollowRoundRect(vg, x - 1, y - 1, 1282, 802, 0x4DCCCCCC, 20, scale < 1 ? 1 / scale : 1);
+        scissorHelper.resetScissor(vg, mainPanel);
+
+        Scissor contentPanel = scissorHelper.scissor(vg, x + 224, y, 1056, 800);
+        nanoVGHelper.drawRoundedRect(vg, x + 224 - 20, y, 1056 + 20, 800, Colors.GRAY_800, 20f);
+        scissorHelper.resetScissor(vg, contentPanel);
 
         nanoVGHelper.drawLine(vg, x + 224, y + 72, x + 1280, y + 72, 1, Colors.GRAY_700);
         nanoVGHelper.drawLine(vg, x + 224, y, x + 222, y + 800, 1, Colors.GRAY_700);
@@ -135,35 +222,20 @@ public class OneConfigGui extends OneUIScreen {
         nanoVGHelper.drawSvg(vg, SVGs.ARROW_RIGHT, x + 290, y + 26, 20, 20, forwardArrow.currentColor);
         nanoVGHelper.setAlpha(vg, 1f);
 
-        if (backArrow.isClicked() && previousPages.size() > 0) {
-            try {
-                nextPages.add(0, currentPage);
-                openPage(previousPages.get(0), false);
-                previousPages.remove(0);
-            } catch (Exception ignored) {
-            }
-        } else if (forwardArrow.isClicked() && nextPages.size() > 0) {
-            try {
-                previousPages.add(0, currentPage);
-                openPage(nextPages.get(0), new EaseOutExpo(300, 224, 2128, true), false);
-                nextPages.remove(0);
-            } catch (Exception ignored) {
-            }
-        }
+        handleHistoryMovement(backArrow.isClicked(), forwardArrow.isClicked());
 
-        ScissorHelper scissorHelper = ScissorHelper.INSTANCE;
         scissorHelper.scissor(vg, x + 224, y + 72, 1056, 728);
         Scissor blockedClicks = inputHandler.blockInputArea(x + 224, y, 1056, 72);
-        if (prevPage != null && animation != null) {
-            float pageProgress = animation.get(GuiUtils.getDeltaTime());
-            if (!animation.isReversed()) {
+        if (prevPage != null && pageAnimation != null) {
+            float pageProgress = pageAnimation.get(GuiUtils.getDeltaTime());
+            if (!pageAnimation.isReversed()) {
                 prevPage.scrollWithDraw(vg, (int) (x + pageProgress), y + 72, inputHandler);
                 currentPage.scrollWithDraw(vg, (int) (x - 1904 + pageProgress), y + 72, inputHandler);
             } else {
                 prevPage.scrollWithDraw(vg, (int) (x - 1904 + pageProgress), y + 72, inputHandler);
                 currentPage.scrollWithDraw(vg, (int) (x + pageProgress), y + 72, inputHandler);
             }
-            if (animation.isFinished()) {
+            if (pageAnimation.isFinished()) {
                 prevPage = null;
             }
         } else {
@@ -191,6 +263,7 @@ public class OneConfigGui extends OneUIScreen {
             currentColorSelector.draw(vg);
         }
         nanoVGHelper.resetTransform(vg);
+        isDrawing = false;
     }
 
     @Override
@@ -201,8 +274,48 @@ public class OneConfigGui extends OneUIScreen {
             textInputField.keyTyped(typedChar, keyCode);
             if (currentColorSelector != null) currentColorSelector.keyTyped(typedChar, keyCode);
             currentPage.keyTyped(typedChar, keyCode);
+
+            // Don't handle inputs any further if a config element is focused
+            if (textInputField.isToggled()) return;
+            if (currentPage instanceof ModConfigPage) {
+                ModConfigPage modConfigPage = ((ModConfigPage) currentPage);
+                for (OptionSubcategory subCategory : modConfigPage.getPage().categories.get(modConfigPage.getSelectedCategory()).subcategories) {
+                    for (BasicOption option : subCategory.options) {
+                        if (option.isEnabled()) {
+                            if (option instanceof IFocusable) {
+                                if (((IFocusable) option).hasFocus()) {
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            handleHistoryMovement(
+                    keyCode == UKeyboard.KEY_LEFT,
+                    keyCode == UKeyboard.KEY_RIGHT
+            );
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    private void handleHistoryMovement(boolean back, boolean forward) {
+        if (back && forward) return;
+
+        try {
+            if (back && previousPages.size() > 0) {
+                nextPages.add(0, currentPage);
+                openPage(previousPages.get(0), false);
+                previousPages.remove(0);
+            }
+            if (forward && nextPages.size() > 0) {
+                previousPages.add(0, currentPage);
+                openPage(nextPages.get(0), new EaseOutExpo(300, 224, 2128, true), false);
+                nextPages.remove(0);
+            }
+        } catch (Throwable ignored) {
         }
     }
 
@@ -245,7 +358,7 @@ public class OneConfigGui extends OneUIScreen {
             prevPage = currentPage;
         }
         currentPage = page;
-        this.animation = animation;
+        this.pageAnimation = animation;
     }
 
     /**
@@ -261,6 +374,7 @@ public class OneConfigGui extends OneUIScreen {
     /**
      * Close the current color selector and return the color it had when it closed.
      */
+    @SuppressWarnings("UnusedReturnValue")
     public OneColor closeColorSelector() {
         currentColorSelector.onClose();
         OneColor color = currentColorSelector.getColor();
@@ -287,7 +401,29 @@ public class OneConfigGui extends OneUIScreen {
     @Override
     public void onScreenClose() {
         currentPage.finishUpAndClose();
+
+        isClosed = true;
+        if (Preferences.guiOpenAnimation) {
+            if (Preferences.guiClosingAnimation) {
+                shouldDisplayHud = true;
+            } else {
+                animationScaleFactor = transparencyFactor = 0;
+            }
+        }
+
         super.onScreenClose();
+    }
+
+    @Subscribe
+    public void onRenderHUD(HudRenderEvent event) {
+        if (!shouldDisplayHud) return;
+        if (Platform.getGuiPlatform().getCurrentScreen() == this) return;
+
+        NanoVGHelper.INSTANCE.setupAndDraw(vg -> draw(vg, event.deltaTicks, null));
+
+        if (transparencyFactor <= 0.01) {
+            shouldDisplayHud = false;
+        }
     }
 
     @Override
@@ -300,7 +436,19 @@ public class OneConfigGui extends OneUIScreen {
         return Preferences.enableBlur;
     }
 
+    public boolean isDrawing() {
+        return isDrawing;
+    }
+
+    public static OneConfigGui create() {
+        return INSTANCE == null ? new OneConfigGui() : INSTANCE;
+    }
+
     public static boolean isOpen() {
         return Platform.getGuiPlatform().getCurrentScreen() instanceof OneConfigGui;
+    }
+
+    static {
+        DUMMY_HANDLER.blockAllInput();
     }
 }

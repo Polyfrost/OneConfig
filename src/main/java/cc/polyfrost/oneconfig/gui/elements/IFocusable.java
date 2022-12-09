@@ -24,16 +24,8 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.internal.plugin;
+package cc.polyfrost.oneconfig.gui.elements;
 
-//#if FABRIC==1
-//$$ import cc.polyfrost.oneconfig.internal.init.OneConfigInit;
-//$$ import net.fabricmc.loader.api.entrypoint.PreLaunchEntrypoint;
-//$$
-//$$ public class OneConfigPreLaunch implements PreLaunchEntrypoint {
-//$$     @Override
-//$$     public void onPreLaunch() {
-//$$         OneConfigInit.initialize(new String[]{});
-//$$     }
-//$$ }
-//#endif
+public interface IFocusable {
+    boolean hasFocus();
+}

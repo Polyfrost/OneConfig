@@ -29,6 +29,7 @@ package cc.polyfrost.oneconfig.internal.config;
 import cc.polyfrost.oneconfig.config.core.OneColor;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class OneConfigConfig extends InternalConfig {
     public static String currentProfile = "Default Profile";
@@ -38,9 +39,9 @@ public class OneConfigConfig extends InternalConfig {
      * 1 = Pre-Releases
      */
     public static int updateChannel = 0;
-    public static ArrayList<String> favoriteMods = new ArrayList<>();
-    public static ArrayList<OneColor> favoriteColors = new ArrayList<>();
-    public static ArrayList<OneColor> recentColors = new ArrayList<>();
+    public static List<String> favoriteMods = new ArrayList<>();
+    public static List<OneColor> favoriteColors = new ArrayList<>();
+    public static List<OneColor> recentColors = new ArrayList<>();
     public static boolean australia = false;
 
     private static OneConfigConfig INSTANCE;

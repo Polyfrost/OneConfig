@@ -31,6 +31,7 @@ import cc.polyfrost.oneconfig.config.core.OneKeyBind;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.elements.BasicButton;
+import cc.polyfrost.oneconfig.gui.elements.IFocusable;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
 import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
@@ -40,7 +41,7 @@ import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 
 import java.lang.reflect.Field;
 
-public class ConfigKeyBind extends BasicOption {
+public class ConfigKeyBind extends BasicOption implements IFocusable {
     private final BasicButton button;
     private boolean clicked = false;
 
@@ -115,5 +116,10 @@ public class ConfigKeyBind extends BasicOption {
     @Override
     public int getHeight() {
         return 32;
+    }
+
+    @Override
+    public boolean hasFocus() {
+        return clicked;
     }
 }
