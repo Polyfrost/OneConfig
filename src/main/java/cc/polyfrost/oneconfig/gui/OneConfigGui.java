@@ -29,13 +29,17 @@ package cc.polyfrost.oneconfig.gui;
 import cc.polyfrost.oneconfig.config.core.OneColor;
 import cc.polyfrost.oneconfig.events.EventManager;
 import cc.polyfrost.oneconfig.events.event.HudRenderEvent;
+import cc.polyfrost.oneconfig.config.elements.BasicOption;
+import cc.polyfrost.oneconfig.config.elements.OptionSubcategory;
 import cc.polyfrost.oneconfig.gui.animations.Animation;
 import cc.polyfrost.oneconfig.gui.animations.DummyAnimation;
 import cc.polyfrost.oneconfig.gui.animations.EaseInBack;
 import cc.polyfrost.oneconfig.gui.animations.EaseOutExpo;
 import cc.polyfrost.oneconfig.gui.elements.BasicElement;
 import cc.polyfrost.oneconfig.gui.elements.ColorSelector;
+import cc.polyfrost.oneconfig.gui.elements.IFocusable;
 import cc.polyfrost.oneconfig.gui.elements.text.TextInputField;
+import cc.polyfrost.oneconfig.gui.pages.ModConfigPage;
 import cc.polyfrost.oneconfig.gui.pages.ModsPage;
 import cc.polyfrost.oneconfig.gui.pages.Page;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
@@ -218,21 +222,7 @@ public class OneConfigGui extends OneUIScreen {
         nanoVGHelper.drawSvg(vg, SVGs.ARROW_RIGHT, x + 290, y + 26, 20, 20, forwardArrow.currentColor);
         nanoVGHelper.setAlpha(vg, 1f);
 
-        if (backArrow.isClicked() && previousPages.size() > 0) {
-            try {
-                nextPages.add(0, currentPage);
-                openPage(previousPages.get(0), false);
-                previousPages.remove(0);
-            } catch (Exception ignored) {
-            }
-        } else if (forwardArrow.isClicked() && nextPages.size() > 0) {
-            try {
-                previousPages.add(0, currentPage);
-                openPage(nextPages.get(0), new EaseOutExpo(300, 224, 2128, true), false);
-                nextPages.remove(0);
-            } catch (Exception ignored) {
-            }
-        }
+        handleHistoryMovement(backArrow.isClicked(), forwardArrow.isClicked());
 
         scissorHelper.scissor(vg, x + 224, y + 72, 1056, 728);
         Scissor blockedClicks = inputHandler.blockInputArea(x + 224, y, 1056, 72);
@@ -284,8 +274,48 @@ public class OneConfigGui extends OneUIScreen {
             textInputField.keyTyped(typedChar, keyCode);
             if (currentColorSelector != null) currentColorSelector.keyTyped(typedChar, keyCode);
             currentPage.keyTyped(typedChar, keyCode);
+
+            // Don't handle inputs any further if a config element is focused
+            if (textInputField.isToggled()) return;
+            if (currentPage instanceof ModConfigPage) {
+                ModConfigPage modConfigPage = ((ModConfigPage) currentPage);
+                for (OptionSubcategory subCategory : modConfigPage.getPage().categories.get(modConfigPage.getSelectedCategory()).subcategories) {
+                    for (BasicOption option : subCategory.options) {
+                        if (option.isEnabled()) {
+                            if (option instanceof IFocusable) {
+                                if (((IFocusable) option).hasFocus()) {
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            handleHistoryMovement(
+                    keyCode == UKeyboard.KEY_LEFT,
+                    keyCode == UKeyboard.KEY_RIGHT
+            );
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    private void handleHistoryMovement(boolean back, boolean forward) {
+        if (back && forward) return;
+
+        try {
+            if (back && previousPages.size() > 0) {
+                nextPages.add(0, currentPage);
+                openPage(previousPages.get(0), false);
+                previousPages.remove(0);
+            }
+            if (forward && nextPages.size() > 0) {
+                previousPages.add(0, currentPage);
+                openPage(nextPages.get(0), new EaseOutExpo(300, 224, 2128, true), false);
+                nextPages.remove(0);
+            }
+        } catch (Throwable ignored) {
         }
     }
 

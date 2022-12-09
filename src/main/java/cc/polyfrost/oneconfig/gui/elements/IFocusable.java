@@ -24,10 +24,8 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.config.elements;
+package cc.polyfrost.oneconfig.gui.elements;
 
-import java.util.ArrayList;
-
-public class OptionCategory {
-    public final ArrayList<OptionSubcategory> subcategories = new ArrayList<>();
+public interface IFocusable {
+    boolean hasFocus();
 }
