@@ -27,6 +27,7 @@
 package cc.polyfrost.oneconfig.internal.config;
 
 import cc.polyfrost.oneconfig.config.annotations.*;
+import cc.polyfrost.oneconfig.config.annotations.Number;
 import cc.polyfrost.oneconfig.config.core.OneKeyBind;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.internal.gui.BlurHandler;
@@ -49,6 +50,15 @@ public class Preferences extends InternalConfig {
             subcategory = "GUI Settings"
     )
     public static boolean enableBlur = true;
+
+    @Number(
+            name = "Search Distance",
+            min = 0,
+            max = 10,
+            subcategory = "GUI Settings",
+            description = "The maximum Levenshtein distance to search for similar config names."
+    )
+    public static int searchDistance = 2;
 
     @Switch(
             name = "Use custom GUI scale",

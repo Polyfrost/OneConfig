@@ -24,10 +24,26 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.config.elements;
+package cc.polyfrost.oneconfig.utils;
 
-import java.util.ArrayList;
+import cc.polyfrost.oneconfig.internal.config.Preferences;
+import org.apache.commons.lang3.StringUtils;
 
-public class OptionCategory {
-    public final ArrayList<OptionSubcategory> subcategories = new ArrayList<>();
+import java.util.Locale;
+
+/**
+ * Based on <a href="https://www.baeldung.com/java-levenshtein-distance">https://www.baeldung.com/java-levenshtein-distance</a>
+ */
+public class SearchUtils {
+
+    public static boolean isSimilar(String s1, String s2) {
+        s1 = s1.toLowerCase(Locale.ENGLISH);
+        s2 = s2.toLowerCase(Locale.ENGLISH);
+        boolean similar = false;
+        for (String a : StringUtils.split(s1)) {
+            similar = a.contains(s2) || StringUtils.getLevenshteinDistance(a, s2) <= Preferences.searchDistance;
+            if (similar) break;
+        }
+        return similar || s1.contains(s2) || StringUtils.getLevenshteinDistance(s1, s2) <= Preferences.searchDistance;
+    }
 }
