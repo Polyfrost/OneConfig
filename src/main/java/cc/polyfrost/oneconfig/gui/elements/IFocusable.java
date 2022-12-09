@@ -24,35 +24,8 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.internal.config;
+package cc.polyfrost.oneconfig.gui.elements;
 
-import cc.polyfrost.oneconfig.config.core.OneColor;
-
-import java.util.ArrayList;
-import java.util.List;
-
-public class OneConfigConfig extends InternalConfig {
-    public static String currentProfile = "Default Profile";
-    public static boolean autoUpdate = true;
-    /**
-     * 0 = Releases
-     * 1 = Pre-Releases
-     */
-    public static int updateChannel = 0;
-    public static List<String> favoriteMods = new ArrayList<>();
-    public static List<OneColor> favoriteColors = new ArrayList<>(6);
-    public static List<OneColor> recentColors = new ArrayList<>(6);
-    public static boolean australia = false;
-
-    private static OneConfigConfig INSTANCE;
-
-    public OneConfigConfig() {
-        super("", "OneConfig.json");
-        initialize();
-        INSTANCE = this;
-    }
-
-    public static OneConfigConfig getInstance() {
-        return INSTANCE == null ? (INSTANCE = new OneConfigConfig()) : INSTANCE;
-    }
+public interface IFocusable {
+    boolean hasFocus();
 }

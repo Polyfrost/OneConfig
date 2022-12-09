@@ -24,35 +24,26 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.internal.config;
+package cc.polyfrost.oneconfig.utils;
 
-import cc.polyfrost.oneconfig.config.core.OneColor;
+import cc.polyfrost.oneconfig.internal.config.Preferences;
+import org.apache.commons.lang3.StringUtils;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Locale;
 
-public class OneConfigConfig extends InternalConfig {
-    public static String currentProfile = "Default Profile";
-    public static boolean autoUpdate = true;
-    /**
-     * 0 = Releases
-     * 1 = Pre-Releases
-     */
-    public static int updateChannel = 0;
-    public static List<String> favoriteMods = new ArrayList<>();
-    public static List<OneColor> favoriteColors = new ArrayList<>(6);
-    public static List<OneColor> recentColors = new ArrayList<>(6);
-    public static boolean australia = false;
+/**
+ * Based on <a href="https://www.baeldung.com/java-levenshtein-distance">https://www.baeldung.com/java-levenshtein-distance</a>
+ */
+public class SearchUtils {
 
-    private static OneConfigConfig INSTANCE;
-
-    public OneConfigConfig() {
-        super("", "OneConfig.json");
-        initialize();
-        INSTANCE = this;
-    }
-
-    public static OneConfigConfig getInstance() {
-        return INSTANCE == null ? (INSTANCE = new OneConfigConfig()) : INSTANCE;
+    public static boolean isSimilar(String s1, String s2) {
+        s1 = s1.toLowerCase(Locale.ENGLISH);
+        s2 = s2.toLowerCase(Locale.ENGLISH);
+        boolean similar = false;
+        for (String a : StringUtils.split(s1)) {
+            similar = a.contains(s2) || StringUtils.getLevenshteinDistance(a, s2) <= Preferences.searchDistance;
+            if (similar) break;
+        }
+        return similar || s1.contains(s2) || StringUtils.getLevenshteinDistance(s1, s2) <= Preferences.searchDistance;
     }
 }

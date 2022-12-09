@@ -32,6 +32,7 @@ import cc.polyfrost.oneconfig.config.elements.BasicOption;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.elements.BasicElement;
 import cc.polyfrost.oneconfig.gui.elements.ColorSelector;
+import cc.polyfrost.oneconfig.gui.elements.IFocusable;
 import cc.polyfrost.oneconfig.gui.elements.text.TextInputField;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.internal.assets.Images;
@@ -41,7 +42,7 @@ import cc.polyfrost.oneconfig.utils.InputHandler;
 
 import java.lang.reflect.Field;
 
-public class ConfigColorElement extends BasicOption {
+public class ConfigColorElement extends BasicOption implements IFocusable {
     private final TextInputField hexField = new TextInputField(104, 32, "", false, false);
     private final TextInputField alphaField = new TextInputField(72, 32, "", false, false);
     private final BasicElement element = new BasicElement(64, 32, false);
@@ -140,5 +141,10 @@ public class ConfigColorElement extends BasicOption {
     @Override
     public int getHeight() {
         return 32;
+    }
+
+    @Override
+    public boolean hasFocus() {
+        return hexField.isToggled() || alphaField.isToggled();
     }
 }

@@ -24,35 +24,25 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.internal.config;
+package cc.polyfrost.oneconfig.gui.animations;
 
-import cc.polyfrost.oneconfig.config.core.OneColor;
+public class EaseInBack extends Animation {
 
-import java.util.ArrayList;
-import java.util.List;
-
-public class OneConfigConfig extends InternalConfig {
-    public static String currentProfile = "Default Profile";
-    public static boolean autoUpdate = true;
     /**
-     * 0 = Releases
-     * 1 = Pre-Releases
+     * @param duration The duration of the animation
+     * @param start    The start of the animation
+     * @param end      The end of the animation
+     * @param reverse  Reverse the animation
      */
-    public static int updateChannel = 0;
-    public static List<String> favoriteMods = new ArrayList<>();
-    public static List<OneColor> favoriteColors = new ArrayList<>(6);
-    public static List<OneColor> recentColors = new ArrayList<>(6);
-    public static boolean australia = false;
-
-    private static OneConfigConfig INSTANCE;
-
-    public OneConfigConfig() {
-        super("", "OneConfig.json");
-        initialize();
-        INSTANCE = this;
+    public EaseInBack(int duration, float start, float end, boolean reverse) {
+        super(duration, start, end, reverse);
     }
 
-    public static OneConfigConfig getInstance() {
-        return INSTANCE == null ? (INSTANCE = new OneConfigConfig()) : INSTANCE;
+    @Override
+    protected float animate(float x) {
+        float c1 = 1.70158f;
+        float c3 = c1 + 1;
+
+        return c3 * x * x * x - c1 * x * x;
     }
 }

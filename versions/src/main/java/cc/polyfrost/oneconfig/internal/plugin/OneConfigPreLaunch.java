@@ -25,6 +25,7 @@
  */
 
 package cc.polyfrost.oneconfig.internal.plugin;
+
 //#if FABRIC==1
 //$$ import cc.polyfrost.oneconfig.internal.init.OneConfigInit;
 //$$ import net.fabricmc.loader.api.entrypoint.PreLaunchEntrypoint;

@@ -44,12 +44,13 @@ import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import static cc.polyfrost.oneconfig.gui.elements.BasicButton.ALIGNMENT_LEFT;
 import static cc.polyfrost.oneconfig.gui.elements.BasicButton.SIZE_36;
 
 public class SideBar {
-    private final ArrayList<BasicButton> buttons = new ArrayList<BasicButton>() {{
+    private final List<BasicButton> buttons = new ArrayList<BasicButton>() {{
         int width = 192;
         add(new BasicButton(width, SIZE_36, "Credits", SVGs.COPYRIGHT_FILL, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY));
 
@@ -61,7 +62,7 @@ public class SideBar {
     }};
     private final BasicButton hudButton = new BasicButton(192, SIZE_36, "Edit HUD", SVGs.LAYOUT_ALT, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY);
     private final BasicButton closeButton = new BasicButton(192, SIZE_36, "Close", SVGs.X_CLOSE, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY_DESTRUCTIVE);
-    private int selected = 2;
+    private int selected = 1;
     private Animation moveAnimation = null;
     private Animation sizeAnimation = null;
     private int y;
