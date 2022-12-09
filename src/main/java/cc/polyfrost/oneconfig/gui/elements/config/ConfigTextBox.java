@@ -31,6 +31,7 @@ import cc.polyfrost.oneconfig.config.annotations.Text;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
 import cc.polyfrost.oneconfig.gui.animations.Animation;
 import cc.polyfrost.oneconfig.gui.animations.DummyAnimation;
+import cc.polyfrost.oneconfig.gui.elements.IFocusable;
 import cc.polyfrost.oneconfig.gui.elements.text.TextInputField;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
@@ -44,7 +45,7 @@ import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 
 import java.lang.reflect.Field;
 
-public class ConfigTextBox extends BasicOption {
+public class ConfigTextBox extends BasicOption implements IFocusable {
     private final boolean secure;
     private final boolean multiLine;
     private final boolean hypixelKey;
@@ -131,5 +132,10 @@ public class ConfigTextBox extends BasicOption {
         NanoVGHelper.INSTANCE.translate(vg, 967 - 18 - 4, 0);
         drawDescription(vg, x, y, "Sync other API keys marked in OneConfig to the same value.", () -> descriptionAnimation, (a) -> descriptionAnimation = a, hoverTime > 350, inputHandler);
         NanoVGHelper.INSTANCE.translate(vg, -967 + 18 + 4, 0);
+    }
+  
+    @Override
+    public boolean hasFocus() {
+        return textField.isToggled();
     }
 }

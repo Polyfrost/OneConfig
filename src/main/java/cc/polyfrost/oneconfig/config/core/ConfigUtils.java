@@ -142,7 +142,7 @@ public class ConfigUtils {
         OptionCategory category = page.categories.get(categoryName);
         OptionSubcategory subcategory = category.subcategories.stream().filter(s -> s.getName().equals(subcategoryName)).findFirst().orElse(null);
         if (category.subcategories.size() == 0 || subcategory == null) {
-            category.subcategories.add((subcategory = new OptionSubcategory(subcategoryName)));
+            category.subcategories.add((subcategory = new OptionSubcategory(subcategoryName, categoryName)));
         }
         return subcategory;
     }

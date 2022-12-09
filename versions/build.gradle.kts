@@ -3,6 +3,7 @@ import cc.polyfrost.gradle.util.noServerRunConfigs
 import cc.polyfrost.gradle.util.prebundle
 import net.fabricmc.loom.task.RemapSourcesJarTask
 import java.text.SimpleDateFormat
+import java.util.concurrent.atomic.AtomicReference
 
 
 plugins {
@@ -182,6 +183,10 @@ dependencies {
 
     if (platform.isFabric) {
         include("com.github.Chocohead:Fabric-ASM:v2.3")
+        if (platform.mcVersion <= 11202) {
+            compileOnly(runtimeOnly("org.apache.logging.log4j:log4j-core:2.8.1")!!)
+            compileOnly(runtimeOnly("org.apache.logging.log4j:log4j-api:2.8.1")!!)
+        }
     }
 
     val repackedVersions = when (platform.mcVersion) {
@@ -193,7 +198,7 @@ dependencies {
     repackedVersions.forEachIndexed { index, version ->
         val configuration = configurations.create("tempLwjglConfiguration$index")
 
-        compileOnly(configuration("cc.polyfrost:lwjgl-$version:1.0.0-alpha24"){
+        compileOnly(configuration("cc.polyfrost:lwjgl-$version:1.0.0-alpha24") {
             isTransitive = false
         })
         shadeNoPom(implementationNoPom(prebundle(configuration, "lwjgl-$version.jar"))!!)
@@ -208,6 +213,43 @@ dependencies {
 }
 
 tasks {
+    withType(Jar::class) {
+        val atomicLines = AtomicReference(listOf<String>())
+
+        // This removes the 24th line in fabric.mod.json,
+        // aka the TestMod entrypoint, for production builds.
+        doFirst {
+            val fabricModJson = buildDir.resolve("resources")
+                .resolve("main")
+                .resolve("fabric.mod.json")
+            if (fabricModJson.exists()) {
+                val lines = fabricModJson.readLines()
+                if (lines[23].contains("TestMod")) {
+                    atomicLines.set(lines)
+
+                    fabricModJson.delete()
+                    fabricModJson.writeText(
+                        lines.subList(0, 23).joinToString("\n") + "\n" + lines.subList(
+                            24,
+                            lines.size
+                        ).joinToString("\n")
+                    )
+                }
+            }
+        }
+
+        doLast {
+            val lines = atomicLines.get()
+            if (lines.isEmpty()) return@doLast
+
+            val fabricModJson = buildDir.resolve("resources")
+                .resolve("main")
+                .resolve("fabric.mod.json")
+
+            fabricModJson.delete()
+            fabricModJson.writeText(lines.joinToString("\n"))
+        }
+    }
     processResources {
         inputs.property("id", modId)
         inputs.property("name", modName)
@@ -333,7 +375,12 @@ tasks {
         }
         doLast {
             archiveFile.orNull?.asFile?.let {
-                it.copyTo(File(it.parentFile, it.nameWithoutExtension + "-dev" + it.extension.let { if (it.isBlank()) "" else ".$it" }), overwrite = true)
+                it.copyTo(
+                    File(
+                        it.parentFile,
+                        it.nameWithoutExtension + "-dev" + it.extension.let { if (it.isBlank()) "" else ".$it" }),
+                    overwrite = true
+                )
             }
             archiveClassifier.set("sources")
         }
@@ -413,7 +460,13 @@ fun DependencyHandlerScope.include(dependency: Any, pom: Boolean = true, mod: Bo
     }
 }
 
-fun DependencyHandlerScope.include(dependency: ModuleDependency, pom: Boolean = true, mod: Boolean = false, relocate: Boolean = false, transitive: Boolean = true) {
+fun DependencyHandlerScope.include(
+    dependency: ModuleDependency,
+    pom: Boolean = true,
+    mod: Boolean = false,
+    relocate: Boolean = false,
+    transitive: Boolean = true,
+) {
     if (platform.isForge) {
         if (relocate) {
             shadeRelocated(dependency) { isTransitive = transitive }
@@ -435,16 +488,36 @@ fun DependencyHandlerScope.include(dependency: ModuleDependency, pom: Boolean = 
             }
         } else {
             if (mod) {
-                modImplementationNoPom(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
+                modImplementationNoPom(dependency) {
+                    isTransitive = transitive; if (relocate) attributes {
+                    attribute(
+                        relocated,
+                        true
+                    )
+                }
+                }
             } else {
-                implementationNoPom(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
+                implementationNoPom(dependency) {
+                    isTransitive = transitive; if (relocate) attributes {
+                    attribute(
+                        relocated,
+                        true
+                    )
+                }
+                }
             }
         }
         "include"(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
     }
 }
 
-fun DependencyHandlerScope.include(dependency: String, pom: Boolean = true, mod: Boolean = false, relocate: Boolean = false, transitive: Boolean = true) {
+fun DependencyHandlerScope.include(
+    dependency: String,
+    pom: Boolean = true,
+    mod: Boolean = false,
+    relocate: Boolean = false,
+    transitive: Boolean = true,
+) {
     if (platform.isForge) {
         if (relocate) {
             shadeRelocated(dependency) { isTransitive = transitive }
@@ -454,7 +527,14 @@ fun DependencyHandlerScope.include(dependency: String, pom: Boolean = true, mod:
                 shade(dependency) { isTransitive = transitive }
             } else {
                 shadeNoPom(dependency) { isTransitive = transitive }
-                implementationNoPom(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
+                implementationNoPom(dependency) {
+                    isTransitive = transitive; if (relocate) attributes {
+                    attribute(
+                        relocated,
+                        true
+                    )
+                }
+                }
             }
         }
     } else {
@@ -466,9 +546,23 @@ fun DependencyHandlerScope.include(dependency: String, pom: Boolean = true, mod:
             }
         } else {
             if (mod) {
-                modImplementationNoPom(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
+                modImplementationNoPom(dependency) {
+                    isTransitive = transitive; if (relocate) attributes {
+                    attribute(
+                        relocated,
+                        true
+                    )
+                }
+                }
             } else {
-                implementationNoPom(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
+                implementationNoPom(dependency) {
+                    isTransitive = transitive; if (relocate) attributes {
+                    attribute(
+                        relocated,
+                        true
+                    )
+                }
+                }
             }
         }
         "include"(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
