@@ -44,7 +44,7 @@ public @interface Number {
 
     float max();
 
-    float step() default 1f;
+    int step() default 1;
 
     int size() default 1;
 
