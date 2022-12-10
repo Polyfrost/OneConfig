@@ -82,8 +82,8 @@ public class OneConfigGui extends OneUIScreen {
     protected Page prevPage;
     private Animation pageAnimation;
 
-    private Animation containerAnimation = new DummyAnimation(1);
-    private boolean isClosed = true;
+    private Animation containerAnimation = new DummyAnimation(0);
+    public boolean isClosed = true;
     private boolean shouldDisplayHud = false;
     public float transparencyFactor = 0f;
     public float animationScaleFactor = 0f;
@@ -127,32 +127,34 @@ public class OneConfigGui extends OneUIScreen {
 
         boolean renderedInHud = (inputHandler == null);
         if (Preferences.guiOpenAnimation) {
+            int animationTime = (int) (Preferences.animationTime * 1000);
             if (renderedInHud && Preferences.guiClosingAnimation && shouldDisplayHud) {
                 if (containerAnimation.getEnd() != 0) {
                     switch (Preferences.animationType) {
                         case 0:
-                            containerAnimation = new EaseOutExpo((int) (Preferences.animationTime * 1000), MathUtils.clamp(animationScaleFactor - 0.9f, 0f, 0.1f), 0, false);
+                            containerAnimation = new EaseOutExpo(animationTime, MathUtils.clamp(animationScaleFactor - 0.9f, 0f, 0.1f), 0, false);
                             break;
                         case 1:
-                            containerAnimation = new EaseInBack((int) (Preferences.animationTime * 750), MathUtils.clamp(animationScaleFactor, 0f, 1f), 0, false);
+                            containerAnimation = new EaseInBack(animationTime, MathUtils.clamp(animationScaleFactor, 0f, 1f), 0, false);
                             break;
                     }
                 }
             } else if (!renderedInHud && isClosed) {
+                // If we are switching animations, aka if the previous one is already finished
+                boolean forceFinished = containerAnimation.isFinished() && containerAnimation.getEnd() != 0;
                 switch (Preferences.animationType) {
                     case 0:
-                        containerAnimation = new EaseOutExpo((int) (Preferences.animationTime * 1000), MathUtils.clamp(animationScaleFactor - 0.9f, 0, 0.1f), 0.1f, false);
+                        containerAnimation = new EaseOutExpo(animationTime, MathUtils.clamp(forceFinished ? 0.1f : (animationScaleFactor - 0.9f), 0, 0.1f), 0.1f, false);
                         break;
                     case 1:
-                        containerAnimation = new EaseOutExpo((int) (Preferences.animationTime * 1000), MathUtils.clamp(animationScaleFactor, 0, 1), 1, false);
+                        containerAnimation = new EaseOutExpo(animationTime, MathUtils.clamp(forceFinished ? 1 : animationScaleFactor, 0, 1), 1, false);
                         break;
                 }
                 isClosed = false;
             }
         }
 
-        float animationValue = MathUtils.clamp(containerAnimation.get());
-
+        float animationValue = Math.max(0, containerAnimation.get());
         switch (Preferences.animationType) {
             case 0:
                 animationScaleFactor = MathUtils.clamp(.9f + animationValue, .9f, 1f);
