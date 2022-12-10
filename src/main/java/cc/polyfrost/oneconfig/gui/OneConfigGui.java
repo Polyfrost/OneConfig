@@ -151,13 +151,12 @@ public class OneConfigGui extends OneUIScreen {
             }
         }
 
-        float animationValue = containerAnimation.get();
-        if (animationValue < 0) animationValue = 0;
+        float animationValue = MathUtils.clamp(containerAnimation.get());
 
         switch (Preferences.animationType) {
             case 0:
-                animationScaleFactor = .9f + animationValue;
-                transparencyFactor = Math.min(1, animationValue * 10f);
+                animationScaleFactor = MathUtils.clamp(.9f + animationValue, .9f, 1f);
+                transparencyFactor = MathUtils.clamp(animationValue * 10f, 0, 1);
                 break;
             case 1:
                 animationScaleFactor = transparencyFactor = animationValue;
