@@ -27,10 +27,11 @@
 package cc.polyfrost.oneconfig.gui;
 
 import cc.polyfrost.oneconfig.config.core.OneColor;
-import cc.polyfrost.oneconfig.events.EventManager;
-import cc.polyfrost.oneconfig.events.event.HudRenderEvent;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
 import cc.polyfrost.oneconfig.config.elements.OptionSubcategory;
+import cc.polyfrost.oneconfig.events.EventManager;
+import cc.polyfrost.oneconfig.events.event.RenderEvent;
+import cc.polyfrost.oneconfig.events.event.Stage;
 import cc.polyfrost.oneconfig.gui.animations.Animation;
 import cc.polyfrost.oneconfig.gui.animations.DummyAnimation;
 import cc.polyfrost.oneconfig.gui.animations.EaseInBack;
@@ -415,8 +416,8 @@ public class OneConfigGui extends OneUIScreen {
     }
 
     @Subscribe
-    public void onRenderHUD(HudRenderEvent event) {
-        if (!shouldDisplayHud) return;
+    public void onRenderHUD(RenderEvent event) {
+        if (!shouldDisplayHud || event.stage == Stage.START) return;
         if (Platform.getGuiPlatform().getCurrentScreen() == this) return;
 
         NanoVGHelper.INSTANCE.setupAndDraw(vg -> draw(vg, event.deltaTicks, null));
