@@ -416,7 +416,7 @@ public class OneConfigGui extends OneUIScreen {
     }
 
     @Subscribe
-    public void onRenderHUD(HudRenderEvent event) {
+    private void onRenderHUD(HudRenderEvent event) {
         if (!shouldDisplayHud) return;
         if (Platform.getGuiPlatform().getCurrentScreen() == this) return;
 
