@@ -26,7 +26,6 @@
 
 package cc.polyfrost.oneconfig.utils;
 
-import cc.polyfrost.oneconfig.events.event.HudRenderEvent;
 import cc.polyfrost.oneconfig.events.event.RenderEvent;
 import cc.polyfrost.oneconfig.events.event.Stage;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
@@ -225,7 +224,11 @@ public final class Notifications {
     private float deltaTime = 0;
 
     @Subscribe
-    private void onHudRender(HudRenderEvent event) {
+    private void onRenderEvent(RenderEvent event) {
+        if (event.stage == Stage.START) {
+            deltaTime += GuiUtils.getDeltaTime(); // add up deltatime since we might not render every frame because of hud caching
+            return;
+        }
         if (notifications.size() == 0) return;
         NanoVGHelper.INSTANCE.setupAndDraw((vg) -> {
             float desiredPosition = -16f;
@@ -241,12 +244,5 @@ public final class Notifications {
             notifications.entrySet().removeIf(entry -> entry.getKey().isFinished());
         });
         deltaTime = 0;
-    }
-
-    @Subscribe
-    private void onRenderEvent(RenderEvent event) {
-        if (event.stage == Stage.START) {
-            deltaTime += GuiUtils.getDeltaTime(); // add up deltatime since we might not render every frame because of hud caching
-        }
     }
 }
