@@ -34,19 +34,36 @@ import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.color.ColorUtils;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class DescriptionRenderer {
-    public static void drawDescription(long vg, int x, int y, String description, String warningDescription, Supplier<Animation> getDescriptionAnimation, Consumer<Animation> setDescriptionAnimation, boolean shouldDrawDescription, DescriptionPosition position, InputHandler inputHandler) {
-        final NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
-        if (getDescriptionAnimation.get().getEnd() != 1f && shouldDrawDescription) {
-            setDescriptionAnimation.accept(new EaseOutQuad(150, getDescriptionAnimation.get().get(0), 1f, false));
-        } else if (getDescriptionAnimation.get().getEnd() != 0f && !shouldDrawDescription) {
-            setDescriptionAnimation.accept(new EaseOutQuad(150, getDescriptionAnimation.get().get(0), 0f, false));
+    private static final NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
+
+    public static void drawDescription(
+            long vg,
+            int x,
+            int y,
+            @NotNull
+            String description,
+            @Nullable String warningDescription,
+            @NotNull Supplier<Animation> animationSupplier,
+            @NotNull Consumer<Animation> animationSetter,
+            boolean shouldDrawDescription,
+            @NotNull DescriptionPosition position,
+            @NotNull InputHandler inputHandler
+    ) {
+
+        if (animationSupplier.get().getEnd() != 1f && shouldDrawDescription) {
+            animationSetter.accept(new EaseOutQuad(150, animationSupplier.get().get(0), 1f, false));
+        } else if (animationSupplier.get().getEnd() != 0f && !shouldDrawDescription) {
+            animationSetter.accept(new EaseOutQuad(150, animationSupplier.get().get(0), 0f, false));
         }
-        if (!shouldDrawDescription && getDescriptionAnimation.get().isFinished()) return;
+
+        if (!shouldDrawDescription && animationSupplier.get().isFinished()) return;
         float textHeight;
         float textWidth;
         float[] descriptionBounds = nanoVGHelper.getWrappedStringBounds(vg, description, 400, 16, Fonts.MEDIUM);
@@ -58,24 +75,25 @@ public class DescriptionRenderer {
             textHeight = (descriptionBounds[3] - descriptionBounds[1]) + (warningBounds[3] - warningBounds[1]);
             textWidth = Math.max(descriptionBounds[2] - descriptionBounds[0], warningBounds[2] - warningBounds[0]);
         }
-        nanoVGHelper.setAlpha(vg, getDescriptionAnimation.get().get());
+        nanoVGHelper.setAlpha(vg, animationSupplier.get().get());
+
         if (position == DescriptionPosition.RIGHT) {
             nanoVGHelper.translate(vg, -(textWidth + 68), 0);
         }
         if (warningDescription != null) {
+            nanoVGHelper.drawDropShadow(vg, x - 1f, y - 42f - 47f, textWidth + 70f, 88f + 3f, 32f, 0f, 8f);
             nanoVGHelper.drawRoundedRect(vg, x - 1f, y - 42f - 47f, textWidth + 70f, 88f + 3f, Colors.GRAY_700, 8f);
             nanoVGHelper.drawRoundedRect(vg, x - 1f, y - 42f - 47f, textWidth + 70f, 88f + 3f, ColorUtils.getColor(204, 204, 204, 25), 8f);
             nanoVGHelper.drawRoundedRect(vg, x, y - 42f - 46f, textWidth + 68f, 88f + 1f, Colors.GRAY_700, 8f);
-            nanoVGHelper.drawDropShadow(vg, x - 1f, y - 42f - 47f, textWidth + 70f, 88f + 3f, 32f, 0f, 8f);
             nanoVGHelper.drawSvg(vg, SVGs.INFO_ARROW, x + 16, y - 30f - 45f, 20f, 20f, Colors.WHITE_80);
             nanoVGHelper.drawWrappedString(vg, description, x + 52, y - 19 - 45f, 200, Colors.WHITE_80, 16, Fonts.MEDIUM);
             nanoVGHelper.drawLine(vg, x + 16f, y + 44, x + textWidth + 68f - 16f, y, 1, ColorUtils.getColor(204, 204, 204, 25));
             nanoVGHelper.drawSvg(vg, SVGs.WARNING, x + 16, y - 30f, 20f, 20f, ColorUtils.getColor(223, 51, 39));
             nanoVGHelper.drawWrappedString(vg, warningDescription, x + 52, y - 19f, 200, ColorUtils.getColor(223, 51, 39), 16, Fonts.MEDIUM);
         } else {
+            nanoVGHelper.drawDropShadow(vg, x - 1f, y - 41f, textWidth + 70f, 44f + 2f, 32f, 0f, 8f);
             nanoVGHelper.drawRoundedRect(vg, x - 1f, y - 41f, textWidth + 70f, 44f + 2f, ColorUtils.getColor(204, 204, 204), 8f);
             nanoVGHelper.drawRoundedRect(vg, x, y - 42f, textWidth + 68f, 44f, Colors.GRAY_700, 8f);
-            nanoVGHelper.drawDropShadow(vg, x - 1f, y - 41f, textWidth + 70f, 44f + 2f, 32f, 0f, 8f);
             nanoVGHelper.drawSvg(vg, SVGs.INFO_ARROW, x + 16, y - 30f, 20f, 20f, Colors.WHITE_80);
             nanoVGHelper.drawWrappedString(vg, description, x + 52, y - 19, 200, Colors.WHITE_80, 16, Fonts.MEDIUM);
         }
