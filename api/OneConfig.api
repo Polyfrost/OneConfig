@@ -555,7 +555,6 @@ public class cc/polyfrost/oneconfig/gui/OneConfigGui : cc/polyfrost/oneconfig/ut
 	public fun isDrawing ()Z
 	public static fun isOpen ()Z
 	public fun onKeyPressed (ICLcc/polyfrost/oneconfig/libs/universal/UKeyboard$Modifiers;)V
-	public fun onRenderHUD (Lcc/polyfrost/oneconfig/events/event/HudRenderEvent;)V
 	public fun onScreenClose ()V
 	public fun openPage (Lcc/polyfrost/oneconfig/gui/pages/Page;)V
 	public fun openPage (Lcc/polyfrost/oneconfig/gui/pages/Page;Lcc/polyfrost/oneconfig/gui/animations/Animation;Z)V
