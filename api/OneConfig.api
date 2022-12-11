@@ -876,9 +876,11 @@ public class cc/polyfrost/oneconfig/gui/elements/config/ConfigSwitch : cc/polyfr
 }
 
 public class cc/polyfrost/oneconfig/gui/elements/config/ConfigTextBox : cc/polyfrost/oneconfig/config/elements/BasicOption, cc/polyfrost/oneconfig/gui/elements/IFocusable {
+	public final field textField Lcc/polyfrost/oneconfig/gui/elements/text/TextInputField;
 	public fun <init> (Ljava/lang/reflect/Field;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;ZZZ)V
 	public static fun create (Ljava/lang/reflect/Field;Ljava/lang/Object;)Lcc/polyfrost/oneconfig/gui/elements/config/ConfigTextBox;
 	public fun draw (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
+	public fun drawSyncDescription (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
 	public fun getHeight ()I
 	public fun hasFocus ()Z
 	public fun keyTyped (CI)V
@@ -1273,7 +1275,11 @@ public abstract interface class cc/polyfrost/oneconfig/renderer/NanoVGHelper {
 	public abstract fun drawWrappedString (JLjava/lang/String;FFFIFLcc/polyfrost/oneconfig/renderer/font/Font;)V
 	public abstract fun fillNVGColorWithRGBA (FFFFLorg/lwjgl/nanovg/NVGColor;)V
 	public abstract fun getTextWidth (JLjava/lang/String;FLcc/polyfrost/oneconfig/renderer/font/Font;)F
+	public abstract fun getWrappedStringBounds (JLjava/lang/String;FFFLcc/polyfrost/oneconfig/renderer/font/Font;)[F
+	public abstract fun getWrappedStringBounds (JLjava/lang/String;FFLcc/polyfrost/oneconfig/renderer/font/Font;)[F
 	public abstract fun getWrappedStringHeight (JLjava/lang/String;FFFLcc/polyfrost/oneconfig/renderer/font/Font;)F
+	public abstract fun getWrappedStringWidth (JLjava/lang/String;FFFLcc/polyfrost/oneconfig/renderer/font/Font;)F
+	public abstract fun getWrappedStringWidth (JLjava/lang/String;FFLcc/polyfrost/oneconfig/renderer/font/Font;)F
 	public abstract fun isDrawing ()Z
 	public abstract fun resetTransform (J)V
 	public abstract fun rotate (JF)V

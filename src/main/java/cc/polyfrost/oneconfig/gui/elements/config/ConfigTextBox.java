@@ -36,6 +36,8 @@ import cc.polyfrost.oneconfig.gui.elements.text.TextInputField;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.internal.config.HypixelKeys;
+import cc.polyfrost.oneconfig.internal.utils.DescriptionRenderer;
+import cc.polyfrost.oneconfig.libs.universal.UResolution;
 import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
 import cc.polyfrost.oneconfig.renderer.asset.SVG;
@@ -130,7 +132,7 @@ public class ConfigTextBox extends BasicOption implements IFocusable {
         if (inputHandler.isAreaHovered(x + 947, y + 7, 18, 18)) hoverTime += GuiUtils.getDeltaTime();
         else hoverTime = 0;
         NanoVGHelper.INSTANCE.translate(vg, 967 - 18 - 4, 0);
-        drawDescription(vg, x, y, "Sync other API keys marked in OneConfig to the same value.", () -> descriptionAnimation, (a) -> descriptionAnimation = a, hoverTime > 350, inputHandler);
+        DescriptionRenderer.drawDescription(vg, x, y, "Sync other API keys marked in OneConfig to the same value.", null, () -> descriptionAnimation, (a) -> descriptionAnimation = a, hoverTime > 350, (UResolution.getWindowWidth() / 2f < inputHandler.mouseX()) ? DescriptionRenderer.DescriptionPosition.RIGHT : DescriptionRenderer.DescriptionPosition.LEFT, inputHandler);
         NanoVGHelper.INSTANCE.translate(vg, -967 + 18 + 4, 0);
     }
   
