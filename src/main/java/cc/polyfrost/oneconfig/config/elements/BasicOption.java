@@ -29,9 +29,8 @@ package cc.polyfrost.oneconfig.config.elements;
 import cc.polyfrost.oneconfig.gui.animations.Animation;
 import cc.polyfrost.oneconfig.gui.animations.ColorAnimation;
 import cc.polyfrost.oneconfig.gui.animations.DummyAnimation;
-import cc.polyfrost.oneconfig.gui.animations.EaseOutQuad;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
-import cc.polyfrost.oneconfig.internal.assets.SVGs;
+import cc.polyfrost.oneconfig.internal.utils.Deprecator;
 import cc.polyfrost.oneconfig.internal.utils.DescriptionRenderer;
 import cc.polyfrost.oneconfig.libs.universal.ChatColor;
 import cc.polyfrost.oneconfig.libs.universal.UResolution;
@@ -40,10 +39,14 @@ import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.function.Consumer;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.function.Supplier;
 
 public abstract class BasicOption {
@@ -56,9 +59,9 @@ public abstract class BasicOption {
     public final String subcategory;
     private final ColorAnimation nameColorAnimation = new ColorAnimation(new ColorPalette(Colors.WHITE_90, Colors.WHITE, Colors.WHITE_90));
     protected int nameColor = Colors.WHITE_90;
-    private final ArrayList<Supplier<Boolean>> dependencies = new ArrayList<>();
-    private final ArrayList<Runnable> listeners = new ArrayList<>();
-    private final ArrayList<Supplier<Boolean>> hideConditions = new ArrayList<>();
+    private final Map<String, Supplier<Boolean>> dependencies = new HashMap<>();
+    private final List<Runnable> listeners = new ArrayList<>();
+    private final List<Supplier<Boolean>> hideConditions = new ArrayList<>();
     private Animation descriptionAnimation = new DummyAnimation(0f);
     private float hoverTime = 0f;
 
@@ -141,7 +144,44 @@ public abstract class BasicOption {
         nameColor = nameColorAnimation.getColor(hovered, false);
         if (hovered) hoverTime += GuiUtils.getDeltaTime();
         else hoverTime = 0;
-        DescriptionRenderer.drawDescription(vg, x, y, description, "My balls.", () -> descriptionAnimation, (a) -> descriptionAnimation = a, shouldDrawDescription(), (UResolution.getWindowWidth() / 2f < inputHandler.mouseX()) ? DescriptionRenderer.DescriptionPosition.RIGHT : DescriptionRenderer.DescriptionPosition.LEFT, inputHandler);
+
+        @Nullable String warningDescription = null;
+        int others = 0;
+        List<String> options = new ArrayList<>();
+        if (!dependencies.isEmpty()) {
+            for (Map.Entry<String, Supplier<Boolean>> dependency : dependencies.entrySet()) {
+                String name = dependency.getKey();
+                Supplier<Boolean> supplier = dependency.getValue();
+                if (name.startsWith("unknown-")) {
+                    others++;
+                    continue;
+                }
+
+                if (!supplier.get()) {
+                    options.add(name);
+                }
+            }
+        }
+        if (!options.isEmpty() || others != 0) {
+            boolean knownOptions = options.isEmpty();
+            StringBuilder builder = new StringBuilder("Option disabled by ");
+            for (String mod : options) {
+                builder.append("\"")
+                        .append(mod)
+                        .append("\", ");
+            }
+            builder = new StringBuilder(builder.substring(0, builder.length() - 2));
+            if (others != 0) {
+                if (knownOptions) builder.append(" and ");
+                builder.append(others)
+                        .append(" other option")
+                        .append(others == 1 ? "" : "s");
+            }
+            builder.append(".");
+            warningDescription = builder.toString();
+        }
+
+        DescriptionRenderer.drawDescription(vg, x, y, description, warningDescription, () -> descriptionAnimation, (a) -> descriptionAnimation = a, shouldDrawDescription(), (UResolution.getWindowWidth() / 2f < inputHandler.mouseX()) ? DescriptionRenderer.DescriptionPosition.RIGHT : DescriptionRenderer.DescriptionPosition.LEFT, inputHandler);
     }
 
     /**
@@ -165,7 +205,7 @@ public abstract class BasicOption {
      * @return If the option is enabled, based on the dependencies
      */
     public boolean isEnabled() {
-        for (Supplier<Boolean> dependency : dependencies) {
+        for (Supplier<Boolean> dependency : dependencies.values()) {
             if (!dependency.get()) return false;
         }
         return true;
@@ -181,10 +221,23 @@ public abstract class BasicOption {
     /**
      * Add a condition to this option
      *
+     * @param optionName The name of the option that adds this dependency
      * @param supplier The dependency
      */
+    public void addDependency(String optionName, Supplier<Boolean> supplier) {
+        this.dependencies.put(optionName, supplier);
+    }
+
+    /**
+     * Add a condition to this option
+     *
+     * @param supplier The dependency
+     * @deprecated Use {@link #addDependency(String, Supplier)} instead
+     */
+    @Deprecated
     public void addDependency(Supplier<Boolean> supplier) {
-        this.dependencies.add(supplier);
+        Deprecator.markDeprecated();
+        this.dependencies.put("unknown-" + UUID.randomUUID(), supplier);
     }
 
     /**

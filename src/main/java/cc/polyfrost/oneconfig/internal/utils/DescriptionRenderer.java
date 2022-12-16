@@ -47,8 +47,7 @@ public class DescriptionRenderer {
             long vg,
             int x,
             int y,
-            @NotNull
-            String description,
+            @NotNull String description,
             @Nullable String warningDescription,
             @NotNull Supplier<Animation> animationSupplier,
             @NotNull Consumer<Animation> animationSetter,
@@ -73,14 +72,16 @@ public class DescriptionRenderer {
         float textHeight;
         float textWidth;
         float[] descriptionBounds = nanoVGHelper.getWrappedStringBounds(vg, description, 400, 16, Fonts.MEDIUM);
-        float[] warningBounds = nanoVGHelper.getWrappedStringBounds(vg, warningDescription, 400, 16, Fonts.MEDIUM);
         if (warningDescription == null) {
             textHeight = descriptionBounds[3] - descriptionBounds[1];
             textWidth = descriptionBounds[2] - descriptionBounds[0];
         } else {
+            float[] warningBounds = nanoVGHelper.getWrappedStringBounds(vg, warningDescription, 400, 16, Fonts.MEDIUM);
             textHeight = (descriptionBounds[3] - descriptionBounds[1]) + (warningBounds[3] - warningBounds[1]);
             textWidth = Math.max(descriptionBounds[2] - descriptionBounds[0], warningBounds[2] - warningBounds[0]);
         }
+
+        nanoVGHelper.drawText(vg, textWidth + " <-", x, y, -1, 11, Fonts.REGULAR);
 
         nanoVGHelper.setAlpha(vg, animation.get());
 

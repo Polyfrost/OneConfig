@@ -276,9 +276,10 @@ public class Config {
      */
     protected final void addDependency(String option, String dependentOption) {
         if (!optionNames.containsKey(option) || !optionNames.containsKey(dependentOption)) return;
-        optionNames.get(option).addDependency(() -> {
+        BasicOption optionObj = optionNames.get(dependentOption);
+        optionNames.get(option).addDependency(optionObj.name, () -> {
             try {
-                return (boolean) optionNames.get(dependentOption).get();
+                return (boolean) optionObj.get();
             } catch (IllegalAccessException ignored) {
                 return true;
             }

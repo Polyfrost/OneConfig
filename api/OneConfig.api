@@ -319,6 +319,7 @@ public abstract class cc/polyfrost/oneconfig/config/elements/BasicOption {
 	public final field size I
 	public final field subcategory Ljava/lang/String;
 	public fun <init> (Ljava/lang/reflect/Field;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;I)V
+	public fun addDependency (Ljava/lang/String;Ljava/util/function/Supplier;)V
 	public fun addDependency (Ljava/util/function/Supplier;)V
 	public fun addHideCondition (Ljava/util/function/Supplier;)V
 	public fun addListener (Ljava/lang/Runnable;)V
