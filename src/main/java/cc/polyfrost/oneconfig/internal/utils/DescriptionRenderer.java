@@ -56,14 +56,20 @@ public class DescriptionRenderer {
             @NotNull DescriptionPosition position,
             @NotNull InputHandler inputHandler
     ) {
+        final Animation animation = animationSupplier.get();
 
-        if (animationSupplier.get().getEnd() != 1f && shouldDrawDescription) {
-            animationSetter.accept(new EaseOutQuad(150, animationSupplier.get().get(0), 1f, false));
-        } else if (animationSupplier.get().getEnd() != 0f && !shouldDrawDescription) {
-            animationSetter.accept(new EaseOutQuad(150, animationSupplier.get().get(0), 0f, false));
+        Animation targetAnim = null;
+        if (animation.getEnd() != 1f && shouldDrawDescription) {
+            targetAnim = new EaseOutQuad(150, animation.get(0), 1f, false);
+        } else if (animation.getEnd() != 0f && !shouldDrawDescription) {
+            targetAnim = new EaseOutQuad(150, animation.get(0), 0f, false);
+        }
+        if (targetAnim != null) {
+            animationSetter.accept(targetAnim);
         }
 
-        if (!shouldDrawDescription && animationSupplier.get().isFinished()) return;
+        if (!shouldDrawDescription && animation.isFinished()) return;
+
         float textHeight;
         float textWidth;
         float[] descriptionBounds = nanoVGHelper.getWrappedStringBounds(vg, description, 400, 16, Fonts.MEDIUM);
@@ -75,7 +81,8 @@ public class DescriptionRenderer {
             textHeight = (descriptionBounds[3] - descriptionBounds[1]) + (warningBounds[3] - warningBounds[1]);
             textWidth = Math.max(descriptionBounds[2] - descriptionBounds[0], warningBounds[2] - warningBounds[0]);
         }
-        nanoVGHelper.setAlpha(vg, animationSupplier.get().get());
+
+        nanoVGHelper.setAlpha(vg, animation.get());
 
         if (position == DescriptionPosition.RIGHT) {
             nanoVGHelper.translate(vg, -(textWidth + 68), 0);
