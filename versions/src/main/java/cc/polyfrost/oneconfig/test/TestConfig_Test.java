@@ -57,7 +57,8 @@ public class TestConfig_Test extends Config {
 
     @Checkbox(
             name = "Check box",
-            size = OptionSize.DUAL
+            size = OptionSize.DUAL,
+            description = "This is a checkbox"
     )
     public static boolean testCheckBox = true;
 

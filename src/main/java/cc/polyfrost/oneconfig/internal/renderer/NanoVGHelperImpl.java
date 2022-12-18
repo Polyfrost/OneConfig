@@ -345,7 +345,7 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
         nvgBeginPath(vg);
         nvgFontSize(vg, size);
         nvgFontFace(vg, font.getName());
-        nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_TOP); // Align top because center is weird with wrapping
+        nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE); // Align top because center is weird with wrapping
         NVGColor nvgColor = color(vg, color);
         nvgTextBox(vg, x, y, width, text);
         nvgFill(vg);
@@ -371,7 +371,7 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
         nvgFontSize(vg, size);
         nvgFontFace(vg, font.getName());
         nvgTextLineHeight(vg, lineHeight);
-        nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_TOP); // Align top because center is weird with wrapping
+        nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE); // Align top because center is weird with wrapping
         NVGColor nvgColor = color(vg, color);
         nvgTextBox(vg, x, y, width, text);
         nvgFill(vg);

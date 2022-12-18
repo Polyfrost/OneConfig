@@ -155,7 +155,7 @@ public class OneConfigGui extends OneUIScreen {
             }
         }
 
-        float animationValue = Math.max(0, containerAnimation.get());
+        float animationValue = Math.max(0, Preferences.guiOpenAnimation ? containerAnimation.get() : 1);
         switch (Preferences.animationType) {
             case 0:
                 animationScaleFactor = MathUtils.clamp(.9f + animationValue, .9f, 1f);
