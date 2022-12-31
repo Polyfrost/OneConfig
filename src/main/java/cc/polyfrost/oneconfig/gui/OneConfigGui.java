@@ -27,6 +27,8 @@
 package cc.polyfrost.oneconfig.gui;
 
 import cc.polyfrost.oneconfig.config.core.OneColor;
+import cc.polyfrost.oneconfig.config.elements.BasicOption;
+import cc.polyfrost.oneconfig.config.elements.OptionSubcategory;
 import cc.polyfrost.oneconfig.gui.animations.*;
 import cc.polyfrost.oneconfig.gui.animations.expo.EaseOutExpo;
 import cc.polyfrost.oneconfig.gui.elements.BasicButton;
