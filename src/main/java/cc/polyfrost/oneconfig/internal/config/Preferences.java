@@ -130,7 +130,8 @@ public class Preferences extends InternalConfig {
         });
         addListener("animationType", () -> {
             if (Preferences.guiOpenAnimation) {
-                Platform.getGuiPlatform().setCurrentScreen(OneConfigGui.INSTANCE);
+                // Force reset the animation
+                OneConfigGui.INSTANCE.isClosed = true;
             }
         });
         addDependency("guiClosingAnimation", "guiOpenAnimation");
