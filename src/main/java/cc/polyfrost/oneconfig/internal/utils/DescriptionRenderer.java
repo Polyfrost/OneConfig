@@ -97,9 +97,6 @@ public class DescriptionRenderer {
         nanoVGHelper.setAlpha(vg, 1f);
          */
         if (warningDescription != null) {
-            //todo hi init
-            // fix line stuff, text is weird
-            // plwease fix ily
             nanoVGHelper.drawRoundedRect(vg, x - 1f, y - 42f - 47f - (textHeight - 32f), textWidth + 70f, 88f + 3f + (textHeight - 32f), Colors.GRAY_700, 8f);
             nanoVGHelper.drawRoundedRect(vg, x - 1f, y - 42f - 47f - (textHeight - 32f), textWidth + 70f, 88f + 3f + (textHeight - 32f), ColorUtils.getColor(204, 204, 204, 25), 8f);
             nanoVGHelper.drawRoundedRect(vg, x, y - 42f - 46f - (textHeight - 32f), textWidth + 68f, 88f + 1f + (textHeight - 32f), Colors.GRAY_700, 8f);
@@ -108,7 +105,7 @@ public class DescriptionRenderer {
             nanoVGHelper.drawWrappedString(vg, description, x + 52, y - 19 - 45f - (textHeight - 32f), 400, Colors.WHITE_80, 16, 1f, Fonts.MEDIUM);
             nanoVGHelper.drawLine(vg, x + 16f, y - 44f + (descriptionBounds[3] - descriptionBounds[1] - 32f), x + textWidth + 68f - 16f, y - 44f - (descriptionBounds[3] - descriptionBounds[1] - 32f), 1, ColorUtils.getColor(204, 204, 204, 25));
             nanoVGHelper.drawSvg(vg, SVGs.WARNING, x + 16, y - 30f - (textHeight - 32f), 20f, 20f, ColorUtils.getColor(223, 51, 39));
-            nanoVGHelper.drawWrappedString(vg, warningDescription, x + 52, y - 19f - (textHeight - 32f), 400, ColorUtils.getColor(223, 51, 39), 16, 1.25f, Fonts.MEDIUM);
+            nanoVGHelper.drawWrappedString(vg, warningDescription, x + 52, y - 19f - (textHeight - 32f), 400, ColorUtils.getColor(223, 51, 39), 16, 1f, Fonts.MEDIUM);
         } else {
             nanoVGHelper.drawRoundedRect(vg, x - 1f, y - 42f - 1f, textWidth + 70f, 44f + 2f, Colors.GRAY_700, 8f);
             nanoVGHelper.drawRoundedRect(vg, x - 1f, y - 42f - 1f, textWidth + 70f, 44f + 2f, ColorUtils.getColor(204, 204, 204, 25), 8f);
