@@ -81,7 +81,7 @@ public class OneConfigGui extends OneUIScreen {
     protected Page prevPage;
     private PageAnimation pageAnimation;
     private Animation containerAnimation = new DummyAnimation(1);
-    private boolean isClosed = true;
+    public boolean isClosed = true;
     private boolean shouldDisplayHud = false;
     public float transparencyFactor = 0f;
     public float animationScaleFactor = 0f;
