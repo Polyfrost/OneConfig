@@ -48,6 +48,7 @@ public class EventBusMixin {
         if (event.getType() == ChatType.CHAT) {
             ChatReceiveEvent customEvent = new ChatReceiveEvent(event.getMessage());
             EventManager.INSTANCE.post(customEvent);
+            event.setMessage(customEvent.message);
             if (customEvent.isCancelled) {
                 e.setCanceled(true);
             }
