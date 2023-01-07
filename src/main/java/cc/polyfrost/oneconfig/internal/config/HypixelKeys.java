@@ -32,6 +32,7 @@ import cc.polyfrost.oneconfig.events.EventManager;
 import cc.polyfrost.oneconfig.events.event.ChatReceiveEvent;
 import cc.polyfrost.oneconfig.events.event.Stage;
 import cc.polyfrost.oneconfig.events.event.TickEvent;
+import cc.polyfrost.oneconfig.gui.GuiNotifications;
 import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
 import cc.polyfrost.oneconfig.libs.universal.UChat;
 import cc.polyfrost.oneconfig.platform.Platform;
@@ -130,19 +131,23 @@ public class HypixelKeys {
                 option.getField().set(option.getParent(), hypixelKey);
             } catch (IllegalAccessException e) {
                 e.printStackTrace();
-                sendNotification("Unable to set API Key of " + option.getField().getName() + " in " + option.getParent().getClass().getName() + "! Please contact us at https://polyfrost.cc/discord!");
+                sendGuiNotification("Unable to set API Key of " + option.getField().getName() + " in " + option.getParent().getClass().getName() + "! Please contact us at https://polyfrost.cc/discord!");
                 success = false;
             }
         }
         if (success) {
-            sendNotification("Successfully synced API Key for " + options.size() + " option" + (options.size() > 1 ? "s" : "") + "!");
+            sendGuiNotification("Successfully synced API Key for " + options.size() + " option" + (options.size() > 1 ? "s" : "") + "!");
         }
     }
 
     private final Icon icon = new Icon("/assets/oneconfig/icons/Key.svg");
 
+    private void sendGuiNotification(String message) {
+        GuiNotifications.INSTANCE.sendNotification(message, icon.getSVG());
+    }
+
     private void sendNotification(String message) {
-        sendNotification(message, null);
+        Notifications.INSTANCE.send("OneConfig Hypixel API Key", message, icon);
     }
 
     private void sendNotification(String message, Runnable runnable) {

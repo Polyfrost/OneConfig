@@ -31,6 +31,7 @@ import cc.polyfrost.oneconfig.gui.animations.EaseOutQuad;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
+import cc.polyfrost.oneconfig.renderer.asset.SVG;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.color.ColorUtils;
@@ -43,7 +44,7 @@ import java.util.function.Supplier;
 public class DescriptionRenderer {
     private static final NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
 
-    public static void drawDescription(
+    public static int drawDescription(
             long vg,
             int x,
             int y,
@@ -51,11 +52,12 @@ public class DescriptionRenderer {
             @Nullable String warningDescription,
             @NotNull Supplier<Animation> animationSupplier,
             @NotNull Consumer<Animation> animationSetter,
+            @Nullable SVG icon,
             boolean shouldDrawDescription,
             @NotNull DescriptionPosition position,
             @NotNull InputHandler inputHandler
     ) {
-        final Animation animation = animationSupplier.get();
+        Animation animation = animationSupplier.get();
 
         Animation targetAnim = null;
         if (animation.getEnd() != 1f && shouldDrawDescription) {
@@ -64,10 +66,11 @@ public class DescriptionRenderer {
             targetAnim = new EaseOutQuad(150, animation.get(0), 0f, false);
         }
         if (targetAnim != null) {
+            animation = targetAnim;
             animationSetter.accept(targetAnim);
         }
 
-        if (!shouldDrawDescription && animation.isFinished()) return;
+        if (!shouldDrawDescription && animation.isFinished()) return -1;
 
         float textHeight;
         float textWidth;
@@ -84,13 +87,20 @@ public class DescriptionRenderer {
 
         nanoVGHelper.setAlpha(vg, animation.get());
 
-        if (position == DescriptionPosition.RIGHT) {
-            nanoVGHelper.translate(vg, -(textWidth + 68), 0);
+        switch (position) {
+            case RIGHT:
+                nanoVGHelper.translate(vg, -(textWidth + 68), 0);
+                break;
+            case MIDDLE:
+                nanoVGHelper.translate(vg, -(textWidth / 2f + 34), 0);
+                break;
         }
+        int returnValue;
         if (warningDescription != null) {
-            nanoVGHelper.drawRoundedRect(vg, x - 1f, y - 42f - 47f - (textHeight - 32f), textWidth + 70f, 88f + 3f + (textHeight - 32f), Colors.GRAY_700, 8f);
-            nanoVGHelper.drawRoundedRect(vg, x - 1f, y - 42f - 47f - (textHeight - 32f), textWidth + 70f, 88f + 3f + (textHeight - 32f), ColorUtils.getColor(204, 204, 204, 25), 8f);
-            nanoVGHelper.drawRoundedRect(vg, x, y - 42f - 46f - (textHeight - 32f), textWidth + 68f, 88f + 1f + (textHeight - 32f), Colors.GRAY_700, 8f);
+            returnValue = (int) (88f + 3f + (textHeight - 32f));
+            nanoVGHelper.drawRoundedRect(vg, x - 1f, y - 42f - 47f - (textHeight - 32f), textWidth + 70f, returnValue, Colors.GRAY_700, 8f);
+            nanoVGHelper.drawRoundedRect(vg, x - 1f, y - 42f - 47f - (textHeight - 32f), textWidth + 70f, returnValue, ColorUtils.getColor(204, 204, 204, 25), 8f);
+            nanoVGHelper.drawRoundedRect(vg, x, y - 42f - 46f - (textHeight - 32f), textWidth + 68f, returnValue - 2f, Colors.GRAY_700, 8f);
 
             nanoVGHelper.drawSvg(vg, SVGs.WARNING, x + 16, y - 30f - (warningBounds[3] - warningBounds[1] - 16f), 20f, 20f, ColorUtils.getColor(223, 51, 39));
             nanoVGHelper.drawWrappedString(vg, warningDescription, x + 52, y - 19f - (warningBounds[3] - warningBounds[1] - 16f), 400, ColorUtils.getColor(223, 51, 39), 16, 1f, Fonts.MEDIUM);
@@ -100,19 +110,26 @@ public class DescriptionRenderer {
             nanoVGHelper.drawSvg(vg, SVGs.INFO_ARROW, x + 16, y - 14f - 45f - (textHeight - 16f), 20f, 20f, Colors.WHITE_80);
             nanoVGHelper.drawWrappedString(vg, description, x + 52, y - 3f - 45f - (textHeight - 16f), 400, Colors.WHITE_80, 16, 1f, Fonts.MEDIUM);
         } else {
-            nanoVGHelper.drawRoundedRect(vg, x - 1f, y - 42f - 1f - (textHeight - 16f), textWidth + 70f, 44f + 2f + (textHeight - 16f), Colors.GRAY_700, 8f);
-            nanoVGHelper.drawRoundedRect(vg, x - 1f, y - 42f - 1f - (textHeight - 16f), textWidth + 70f, 44f + 2f + (textHeight - 16f), ColorUtils.getColor(204, 204, 204, 25), 8f);
-            nanoVGHelper.drawRoundedRect(vg, x, y - 42f - (textHeight - 16f), textWidth + 68f, 44f + (textHeight - 16f), Colors.GRAY_700, 8f);
-            nanoVGHelper.drawSvg(vg, SVGs.INFO_ARROW, x + 16, y - 30f - (textHeight - 16f), 20f, 20f, Colors.WHITE_80);
+            returnValue = (int) (44f + 2f + (textHeight - 16f));
+            nanoVGHelper.drawRoundedRect(vg, x - 1f, y - 42f - 1f - (textHeight - 16f), textWidth + 70f, returnValue, Colors.GRAY_700, 8f);
+            nanoVGHelper.drawRoundedRect(vg, x - 1f, y - 42f - 1f - (textHeight - 16f), textWidth + 70f, returnValue, ColorUtils.getColor(204, 204, 204, 25), 8f);
+            nanoVGHelper.drawRoundedRect(vg, x, y - 42f - (textHeight - 16f), textWidth + 68f, returnValue - 2f, Colors.GRAY_700, 8f);
+            nanoVGHelper.drawSvg(vg, (icon == null ? SVGs.INFO_ARROW : icon), x + 16, y - 30f - (textHeight - 16f), 20f, 20f, Colors.WHITE_80);
             nanoVGHelper.drawWrappedString(vg, description, x + 52, y - 19 - (textHeight - 16f), 400, Colors.WHITE_80, 16, 1f, Fonts.MEDIUM);
         }
-        if (position == DescriptionPosition.RIGHT) {
-            nanoVGHelper.translate(vg, textWidth + 68, 0);
+        switch (position) {
+            case RIGHT:
+                nanoVGHelper.translate(vg, (textWidth + 68), 0);
+                break;
+            case MIDDLE:
+                nanoVGHelper.translate(vg, (textWidth / 2f + 34), 0);
+                break;
         }
         nanoVGHelper.setAlpha(vg, 1f);
+        return returnValue;
     }
 
     public enum DescriptionPosition {
-        LEFT, MEDIUM, RIGHT
+        LEFT, MIDDLE, RIGHT
     }
 }

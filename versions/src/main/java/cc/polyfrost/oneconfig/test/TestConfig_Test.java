@@ -34,6 +34,7 @@ import cc.polyfrost.oneconfig.config.data.*;
 import cc.polyfrost.oneconfig.config.Config;
 import cc.polyfrost.oneconfig.config.data.ModType;
 import cc.polyfrost.oneconfig.config.migration.VigilanceMigrator;
+import cc.polyfrost.oneconfig.gui.GuiNotifications;
 import cc.polyfrost.oneconfig.gui.animations.Animation;
 import cc.polyfrost.oneconfig.gui.animations.EaseInOutQuart;
 import cc.polyfrost.oneconfig.gui.pages.HomePage;
@@ -78,6 +79,7 @@ public class TestConfig_Test extends Config {
     )
     private void doSomething() {
         UChat.chat("i was called from a nonstatic method");
+        GuiNotifications.INSTANCE.sendNotification("Hello! This is a notification! HEWKGMESKOgdnsgjkdsn afkndfjk");
     }
 
     @Button(

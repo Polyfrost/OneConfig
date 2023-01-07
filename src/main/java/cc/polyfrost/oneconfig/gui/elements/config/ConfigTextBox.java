@@ -132,7 +132,7 @@ public class ConfigTextBox extends BasicOption implements IFocusable {
         if (inputHandler.isAreaHovered(x + 947, y + 7, 18, 18)) hoverTime += GuiUtils.getDeltaTime();
         else hoverTime = 0;
         NanoVGHelper.INSTANCE.translate(vg, 967 - 18 - 4, 0);
-        DescriptionRenderer.drawDescription(vg, x, y, "Sync other API keys marked in OneConfig to the same value.", null, () -> descriptionAnimation, (a) -> descriptionAnimation = a, hoverTime > 350, (UResolution.getWindowWidth() / 2f < inputHandler.mouseX()) ? DescriptionRenderer.DescriptionPosition.RIGHT : DescriptionRenderer.DescriptionPosition.LEFT, inputHandler);
+        DescriptionRenderer.drawDescription(vg, x, y, "Sync other API keys marked in OneConfig to the same value.", null, () -> descriptionAnimation, (a) -> descriptionAnimation = a, null, hoverTime > 350, (UResolution.getWindowWidth() / 2f < inputHandler.mouseX()) ? DescriptionRenderer.DescriptionPosition.RIGHT : DescriptionRenderer.DescriptionPosition.LEFT, inputHandler);
         NanoVGHelper.INSTANCE.translate(vg, -967 + 18 + 4, 0);
     }
   

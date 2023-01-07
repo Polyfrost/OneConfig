@@ -116,7 +116,7 @@ public class Preferences extends InternalConfig {
     public static float customScale = 1f;
 
     @Switch(
-            name = "Opening Animation fasfasfas asfsaf sfasf safsfsfsfsfs  fs",
+            name = "Opening Animation",
             description = "Plays an animation when opening the GUI",
             subcategory = "GUI Settings"
     )
@@ -124,7 +124,7 @@ public class Preferences extends InternalConfig {
 
     @Switch(
             name = "Closing Animation",
-            description = "Plays an animation when closing the GUI !!! !!! !!! !!! !!!! !! ! !!!!  !!!! !!",
+            description = "Plays an animation when closing the GUI",
             subcategory = "GUI Settings"
     )
     public static boolean guiClosingAnimation = true;
