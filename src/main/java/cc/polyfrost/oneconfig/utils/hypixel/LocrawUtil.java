@@ -61,7 +61,6 @@ public class LocrawUtil {
     private LocrawInfo locrawInfo;
     private LocrawInfo lastLocrawInfo;
     private boolean listening;
-    private boolean isResending = false;
     private int tick;
     private boolean playerSentCommand = false;
     private boolean inGame = false;
@@ -70,9 +69,11 @@ public class LocrawUtil {
         EventManager.INSTANCE.register(this);
     }
 
-    private void sendLocraw() {
-        this.listening = true;
-        new TickDelay(() -> UChat.say("/locraw"), 20);
+    private void sendLocraw(boolean delay) {
+        new TickDelay(() -> {
+            this.listening = true;
+            UChat.say("/locraw");
+        }, (delay ? 20 : 0));
     }
 
     @Subscribe
@@ -83,7 +84,7 @@ public class LocrawUtil {
 
         this.tick++;
         if (this.tick == 20 || this.tick % 500 == 0) {
-            sendLocraw();
+            sendLocraw(false);
         }
     }
 
@@ -91,26 +92,22 @@ public class LocrawUtil {
     private void onWorldLoad(WorldLoadEvent event) {
         locrawInfo = null;
         tick = 0;
-        isResending = true;
     }
 
     @Subscribe
     private void onMessageSent(ChatSendEvent event) {
         if (event.message.startsWith("/locraw") && !this.listening) {
-            if (this.tick == 22 || this.tick % 500 != 0) {
-                this.playerSentCommand = true;
-            }
+            playerSentCommand = true;
         }
     }
 
     @Subscribe
     private void onMessageReceived(ChatReceiveEvent event) {
-        if (!listening) return;
         try {
             // Had some false positives while testing, so this is here just to be safe.
             final String msg = event.getFullyUnformattedMessage();
             if (msg.startsWith("You are sending too many commands! Please try again in a few seconds.")) {
-                sendLocraw();
+                sendLocraw(true);
                 return;
             }
             if (JsonUtils.isValid(msg)) {
@@ -129,10 +126,7 @@ public class LocrawUtil {
                     if (!this.playerSentCommand) {
                         event.isCancelled = true;
                     }
-                    if (isResending) {
-                        EventManager.INSTANCE.post(new LocrawEvent(locrawInfo));
-                        isResending = false;
-                    }
+                    EventManager.INSTANCE.post(new LocrawEvent(locrawInfo));
 
                     this.playerSentCommand = false;
                     this.listening = false;
