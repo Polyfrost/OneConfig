@@ -72,7 +72,7 @@ public class DescriptionRenderer {
         float textHeight;
         float textWidth;
         float[] descriptionBounds = nanoVGHelper.getWrappedStringBounds(vg, description, 400, 16, 1f, Fonts.MEDIUM);
-        float[] warningBounds;
+        float[] warningBounds = new float[0];
         if (warningDescription == null) {
             textHeight = descriptionBounds[3] - descriptionBounds[1];
             textWidth = descriptionBounds[2] - descriptionBounds[0];
@@ -87,32 +87,24 @@ public class DescriptionRenderer {
         if (position == DescriptionPosition.RIGHT) {
             nanoVGHelper.translate(vg, -(textWidth + 68), 0);
         }
-        /*
-        float textWidth = nanoVGHelper.getTextWidth(vg, description, 16, Fonts.MEDIUM);
-        nanoVGHelper.setAlpha(vg, descriptionAnimation.get());
-        nanoVGHelper.drawRoundedRect(vg, x, y - 42f, textWidth + 68f, 44f, Colors.GRAY_700, 8f);
-        nanoVGHelper.drawDropShadow(vg, x, y - 42f, textWidth + 68f, 44f, 32f, 0f, 8f);
-        nanoVGHelper.drawSvg(vg, SVGs.INFO_ARROW, x + 16, y - 30f, 20f, 20f, Colors.WHITE_80);
-        nanoVGHelper.drawText(vg, description, x + 52, y - 19, Colors.WHITE_80, 16, Fonts.MEDIUM);
-        nanoVGHelper.setAlpha(vg, 1f);
-         */
         if (warningDescription != null) {
             nanoVGHelper.drawRoundedRect(vg, x - 1f, y - 42f - 47f - (textHeight - 32f), textWidth + 70f, 88f + 3f + (textHeight - 32f), Colors.GRAY_700, 8f);
             nanoVGHelper.drawRoundedRect(vg, x - 1f, y - 42f - 47f - (textHeight - 32f), textWidth + 70f, 88f + 3f + (textHeight - 32f), ColorUtils.getColor(204, 204, 204, 25), 8f);
             nanoVGHelper.drawRoundedRect(vg, x, y - 42f - 46f - (textHeight - 32f), textWidth + 68f, 88f + 1f + (textHeight - 32f), Colors.GRAY_700, 8f);
-            //nanoVGHelper.drawDropShadow(vg, x - 1f, y - 42f - 47f, textWidth + 70f, 88f + 3f, 32f, 0f, 8f);
-            nanoVGHelper.drawSvg(vg, SVGs.INFO_ARROW, x + 16, y - 30f - 45f - (textHeight - 32f), 20f, 20f, Colors.WHITE_80);
-            nanoVGHelper.drawWrappedString(vg, description, x + 52, y - 19 - 45f - (textHeight - 32f), 400, Colors.WHITE_80, 16, 1f, Fonts.MEDIUM);
-            nanoVGHelper.drawLine(vg, x + 16f, y - 44f + (descriptionBounds[3] - descriptionBounds[1] - 32f), x + textWidth + 68f - 16f, y - 44f - (descriptionBounds[3] - descriptionBounds[1] - 32f), 1, ColorUtils.getColor(204, 204, 204, 25));
-            nanoVGHelper.drawSvg(vg, SVGs.WARNING, x + 16, y - 30f - (textHeight - 32f), 20f, 20f, ColorUtils.getColor(223, 51, 39));
-            nanoVGHelper.drawWrappedString(vg, warningDescription, x + 52, y - 19f - (textHeight - 32f), 400, ColorUtils.getColor(223, 51, 39), 16, 1f, Fonts.MEDIUM);
+
+            nanoVGHelper.drawSvg(vg, SVGs.WARNING, x + 16, y - 30f - (warningBounds[3] - warningBounds[1] - 16f), 20f, 20f, ColorUtils.getColor(223, 51, 39));
+            nanoVGHelper.drawWrappedString(vg, warningDescription, x + 52, y - 19f - (warningBounds[3] - warningBounds[1] - 16f), 400, ColorUtils.getColor(223, 51, 39), 16, 1f, Fonts.MEDIUM);
+
+            nanoVGHelper.drawLine(vg, x + 16f, y - 42f - 47f - (textHeight - 32f) + ((88f + 3f + (textHeight - 32f)) / 2), x + textWidth + 68f - 16f, y - 42f - 47f - (textHeight - 32f) + ((88f + 3f + (textHeight - 32f)) / 2), 1, ColorUtils.getColor(204, 204, 204, 25));
+
+            nanoVGHelper.drawSvg(vg, SVGs.INFO_ARROW, x + 16, y - 14f - 45f - (textHeight - 16f), 20f, 20f, Colors.WHITE_80);
+            nanoVGHelper.drawWrappedString(vg, description, x + 52, y - 3f - 45f - (textHeight - 16f), 400, Colors.WHITE_80, 16, 1f, Fonts.MEDIUM);
         } else {
-            nanoVGHelper.drawRoundedRect(vg, x - 1f, y - 42f - 1f, textWidth + 70f, 44f + 2f, Colors.GRAY_700, 8f);
-            nanoVGHelper.drawRoundedRect(vg, x - 1f, y - 42f - 1f, textWidth + 70f, 44f + 2f, ColorUtils.getColor(204, 204, 204, 25), 8f);
-            nanoVGHelper.drawRoundedRect(vg, x, y - 42f, textWidth + 68f, 44f, Colors.GRAY_700, 8f);
-            //nanoVGHelper.drawDropShadow(vg, x - 1f, y - 41f, textWidth + 70f, 44f + 2f, 32f, 0f, 8f);
-            nanoVGHelper.drawSvg(vg, SVGs.INFO_ARROW, x + 16, y - 30f, 20f, 20f, Colors.WHITE_80);
-            nanoVGHelper.drawWrappedString(vg, description, x + 52, y - 19, 400, Colors.WHITE_80, 16, 1f, Fonts.MEDIUM);
+            nanoVGHelper.drawRoundedRect(vg, x - 1f, y - 42f - 1f - (textHeight - 16f), textWidth + 70f, 44f + 2f + (textHeight - 16f), Colors.GRAY_700, 8f);
+            nanoVGHelper.drawRoundedRect(vg, x - 1f, y - 42f - 1f - (textHeight - 16f), textWidth + 70f, 44f + 2f + (textHeight - 16f), ColorUtils.getColor(204, 204, 204, 25), 8f);
+            nanoVGHelper.drawRoundedRect(vg, x, y - 42f - (textHeight - 16f), textWidth + 68f, 44f + (textHeight - 16f), Colors.GRAY_700, 8f);
+            nanoVGHelper.drawSvg(vg, SVGs.INFO_ARROW, x + 16, y - 30f - (textHeight - 16f), 20f, 20f, Colors.WHITE_80);
+            nanoVGHelper.drawWrappedString(vg, description, x + 52, y - 19 - (textHeight - 16f), 400, Colors.WHITE_80, 16, 1f, Fonts.MEDIUM);
         }
         if (position == DescriptionPosition.RIGHT) {
             nanoVGHelper.translate(vg, textWidth + 68, 0);
