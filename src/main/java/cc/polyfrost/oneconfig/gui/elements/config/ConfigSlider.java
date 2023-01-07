@@ -36,6 +36,7 @@ import cc.polyfrost.oneconfig.gui.animations.EaseOutExpo;
 import cc.polyfrost.oneconfig.gui.elements.IFocusable;
 import cc.polyfrost.oneconfig.gui.elements.text.NumberInputField;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
+import cc.polyfrost.oneconfig.internal.config.Preferences;
 import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
@@ -47,7 +48,6 @@ import java.lang.reflect.Field;
 public class ConfigSlider extends BasicOption implements IFocusable {
     private static final int STEP_POPUP_DURATION = 400;
     private static final int INDICATOR_POPUP_DURATION = 200;
-    private static final int INDICATOR_SLIDING_DURATION = 60;
 
     private static final float STEP_HEIGHT_TOTAL = 16;
     private static final float STEP_HEIGHT_HOVER = 10;
@@ -154,7 +154,7 @@ public class ConfigSlider extends BasicOption implements IFocusable {
         if (stepSlideAnimation.get() == -1 || lastX != x) {
             stepSlideAnimation = new DummyAnimation(xCoordinate);
         } else {
-            stepSlideAnimation = new EaseInOutCubic(INDICATOR_SLIDING_DURATION, stepSlideAnimation.get(), xCoordinate, false);
+            stepSlideAnimation = new EaseInOutCubic((int) (Preferences.trackerResponseTime * 1000), stepSlideAnimation.get(), xCoordinate, false);
         }
         xCoordinate = (int) stepSlideAnimation.get();
 

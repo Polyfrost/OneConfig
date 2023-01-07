@@ -77,33 +77,55 @@ public class Preferences extends InternalConfig {
     @Switch(
             name = "Opening Animation",
             description = "Plays an animation when opening the GUI",
-            subcategory = "GUI Settings"
+            category = "Animations",
+            subcategory = "Global"
     )
     public static boolean guiOpenAnimation = true;
 
     @Switch(
             name = "Closing Animation",
             description = "Plays an animation when closing the GUI",
-            subcategory = "GUI Settings"
+            category = "Animations",
+            subcategory = "Global"
     )
     public static boolean guiClosingAnimation = true;
 
     @Slider(
-            name = "Animation Duration",
+            name = "Opening Time",
             description = "The duration of the opening and closing animations, in seconds",
-            subcategory = "GUI Settings",
+            category = "Animations",
+            subcategory = "Global",
             min = 0.05f,
             max = 2f
     )
     public static float animationTime = 0.6f;
 
     @Dropdown(
-            name = "Animation Type",
+            name = "Opening Type",
             description = "The type of opening/closing animation to use",
-            subcategory = "GUI Settings",
+            category = "Animations",
+            subcategory = "Global",
             options = {"Subtle", "Full"}
     )
     public static int animationType = 0;
+
+    @Switch(
+            name = "Toggle Switch Bounce",
+            description = "Enables or disable the bounce animation on toggle switches",
+            category = "Animations",
+            subcategory = "Toggles"
+    )
+    public static boolean toggleSwitchBounce = true;
+
+    @Slider(
+            name = "Tracker Response Time",
+            description = "The time it takes for the slider tracker to move, in seconds",
+            category = "Animations",
+            subcategory = "Sliders",
+            min = 0f,
+            max = 0.1f
+    )
+    public static float trackerResponseTime = 0.06f;
 
     @Dropdown(
             name = "Release Channel",
