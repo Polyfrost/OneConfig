@@ -538,6 +538,15 @@ public class cc/polyfrost/oneconfig/events/event/WorldLoadEvent {
 	public fun <init> ()V
 }
 
+public class cc/polyfrost/oneconfig/gui/GuiNotifications {
+	public static final field INSTANCE Lcc/polyfrost/oneconfig/gui/GuiNotifications;
+	public fun draw (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
+	public fun sendNotification (Ljava/lang/String;)V
+	public fun sendNotification (Ljava/lang/String;F)V
+	public fun sendNotification (Ljava/lang/String;FLcc/polyfrost/oneconfig/renderer/asset/SVG;)V
+	public fun sendNotification (Ljava/lang/String;Lcc/polyfrost/oneconfig/renderer/asset/SVG;)V
+}
+
 public abstract interface class cc/polyfrost/oneconfig/gui/GuiPause {
 	public abstract fun doesGuiPauseGame ()Z
 }
