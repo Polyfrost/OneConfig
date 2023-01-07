@@ -445,7 +445,7 @@ public class cc/polyfrost/oneconfig/events/event/CancellableEvent {
 }
 
 public class cc/polyfrost/oneconfig/events/event/ChatReceiveEvent : cc/polyfrost/oneconfig/events/event/CancellableEvent {
-	public final field message Ljava/lang/Object;
+	public field message Ljava/lang/Object;
 	public fun <init> (Ljava/lang/Object;)V
 	public fun getFullyUnformattedMessage ()Ljava/lang/String;
 }

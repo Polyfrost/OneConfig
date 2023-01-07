@@ -36,7 +36,7 @@ public class ChatReceiveEvent extends CancellableEvent {
     /**
      * The message that was received.
      */
-    public final IChatComponent message;
+    public IChatComponent message;
 
     public ChatReceiveEvent(IChatComponent message) {
         this.message = message;
