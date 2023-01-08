@@ -119,6 +119,7 @@ public class ModConfigPage extends Page {
     @Override
     public void finishUpAndClose() {
         page.mod.config.save();
+        OneConfigGui.INSTANCE.closeColorSelector();
     }
 
     @Override
@@ -167,6 +168,7 @@ public class ModConfigPage extends Page {
             scrollTarget = 0;
             scrollAnimation = null;
         }
+        OneConfigGui.INSTANCE.closeColorSelector();
     }
 
     @Override

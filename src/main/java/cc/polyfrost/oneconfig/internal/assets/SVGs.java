@@ -53,6 +53,8 @@ public class SVGs {
     public static final SVG SETTINGS_02 = new SVG("/assets/oneconfig/icons/settings-02.svg");
     public static final SVG USERS_02 = new SVG("/assets/oneconfig/icons/users-02.svg");
 
+    public static final SVG TEXT_INPUT = new SVG("/assets/oneconfig/icons/text-input.svg");
+
 
     // OLD ICONS
     public static final SVG BOX = new SVG("/assets/oneconfig/old-icons/Box.svg");

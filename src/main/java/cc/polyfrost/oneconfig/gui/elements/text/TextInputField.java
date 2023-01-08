@@ -131,12 +131,10 @@ public class TextInputField extends BasicElement {
         try {
             int colorOutline = errored ? Colors.ERROR_700 : Colors.GRAY_700;
             if (!toggled)
-                nanoVGHelper.drawHollowRoundRect(vg, x, y, width - 0.5f, height - 0.5f, colorOutline, 12f, 2f);
+                nanoVGHelper.drawHollowRoundRect(vg, x, y, width - 0.5f, height - 0.5f, colorOutline, 12f, 1);
             else {
-                nanoVGHelper.setAlpha(vg, 0.15f);
-                nanoVGHelper.drawRoundedRect(vg, x - 4, y - 4, width + 8, height + 8, errored ? Colors.ERROR_600 : Colors.PRIMARY_600, 16);
                 nanoVGHelper.setAlpha(vg, 1f);
-                nanoVGHelper.drawHollowRoundRect(vg, x, y, width - 0.5f, height - 0.5f, errored ? Colors.ERROR_600 : Colors.PRIMARY_600, 12f, 2f);
+                nanoVGHelper.drawHollowRoundRect(vg, x, y, width - 0.5f, height - 0.5f, errored ? Colors.ERROR_600 : Colors.PRIMARY_600, 12f, 1);
             }
             Scissor scissor = scissorHelper.scissor(vg, x, y, width, height);
             super.update(x, y, inputHandler);
@@ -151,25 +149,25 @@ public class TextInputField extends BasicElement {
             if (caretPos < 0) caretPos = 0;
             if (prevCaret < 0) prevCaret = 0;
             if (icon != null) {
-                nanoVGHelper.drawSvg(vg, icon, x + 12, y + height / 2f - 12f, 24, 24, color);
-                x += 32;
+                nanoVGHelper.drawSvg(vg, icon, x + 10, y + height / 2f - 10f, 20, 20, color);
+                x += 18 + 18;
                 this.x = x;
             }
             float width;
             StringBuilder s = new StringBuilder();
             if (multiLine) {
-                wrappedText = TextUtils.wrapText(vg, input, this.width - 24, 14f, Fonts.REGULAR);
+                wrappedText = TextUtils.wrapText(vg, input, this.width - 24, 12f, Fonts.REGULAR);
                 lines = wrappedText.size();
                 if (!toggled) caretPos = wrappedText.get(wrappedText.size() - 1).length();
                 int caretLine = (int) MathUtils.clamp(getCaretLine(caretPos), 0, wrappedText.size() - 1);
-                width = nanoVGHelper.getTextWidth(vg, wrappedText.get(caretLine).substring(0, getLineCaret(caretPos, caretLine)), 14f, Fonts.REGULAR);
+                width = nanoVGHelper.getTextWidth(vg, wrappedText.get(caretLine).substring(0, getLineCaret(caretPos, caretLine)), 12f, Fonts.REGULAR);
             } else if (!password) {
-                width = nanoVGHelper.getTextWidth(vg, input.substring(0, caretPos), 14f, Fonts.REGULAR);
+                width = nanoVGHelper.getTextWidth(vg, input.substring(0, caretPos), 12f, Fonts.REGULAR);
             } else {
                 for (int i = 0; i < input.length(); i++) {
                     s.append("*");
                 }
-                width = nanoVGHelper.getTextWidth(vg, s.substring(0, caretPos), 14f, Fonts.REGULAR);
+                width = nanoVGHelper.getTextWidth(vg, s.substring(0, caretPos), 12f, Fonts.REGULAR);
             }
             if (hovered) {
                 int state = Platform.getMousePlatform().getButtonState(0); //todo does this work
@@ -247,11 +245,11 @@ public class TextInputField extends BasicElement {
 
             if (input.equals("")) {
                 if (multiLine) {
-                    nanoVGHelper.drawText(vg, defaultText, x + 12, y + 16, color, 14f, Fonts.REGULAR);
+                    nanoVGHelper.drawText(vg, defaultText, x + 12, y + 16, color, 12f, Fonts.REGULAR);
                 } else if (!centered) {
-                    nanoVGHelper.drawText(vg, defaultText, x + 12, y + height / 2f + 1, color, 14f, Fonts.REGULAR);
+                    nanoVGHelper.drawText(vg, defaultText, x + 12, y + height / 2f + 1, color, 12f, Fonts.REGULAR);
                 } else {
-                    nanoVGHelper.drawText(vg, defaultText, x + this.width / 2f - halfTextWidth, y + height / 2f + 1, color, 14f, Fonts.REGULAR);
+                    nanoVGHelper.drawText(vg, defaultText, x + this.width / 2f - halfTextWidth, y + height / 2f + 1, color, 12f, Fonts.REGULAR);
                 }
             }
 
@@ -259,16 +257,16 @@ public class TextInputField extends BasicElement {
                 if (multiLine) {
                     float textY = y + 20;
                     for (String line : wrappedText) {
-                        nanoVGHelper.drawText(vg, line, x + 12, textY, color, 14f, Fonts.REGULAR);
+                        nanoVGHelper.drawText(vg, line, x + 12, textY, color, 12f, Fonts.REGULAR);
                         textY += 24;
                     }
                 } else if (!centered) {
-                    nanoVGHelper.drawText(vg, input, x + 12, y + height / 2f + 1, color, 14f, Fonts.REGULAR);
+                    nanoVGHelper.drawText(vg, input, x + 12, y + height / 2f + 1, color, 12f, Fonts.REGULAR);
                 } else {
-                    nanoVGHelper.drawText(vg, input, x + this.width / 2f - halfTextWidth, y + height / 2f + 1, color, 14f, Fonts.REGULAR);
+                    nanoVGHelper.drawText(vg, input, x + this.width / 2f - halfTextWidth, y + height / 2f + 1, color, 12f, Fonts.REGULAR);
                 }
             } else {
-                nanoVGHelper.drawText(vg, s.toString(), x + 12, y + height / 2f + 1, color, 14f, Fonts.REGULAR);
+                nanoVGHelper.drawText(vg, s.toString(), x + 12, y + height / 2f + 1, color, 12f, Fonts.REGULAR);
             }
             nanoVGHelper.setAlpha(vg, 1f);
             scissorHelper.resetScissor(vg, scissor);

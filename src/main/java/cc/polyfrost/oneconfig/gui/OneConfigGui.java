@@ -379,6 +379,7 @@ public class OneConfigGui extends OneUIScreen {
      */
     @SuppressWarnings("UnusedReturnValue")
     public OneColor closeColorSelector() {
+        if (currentColorSelector == null) return null;
         currentColorSelector.onClose();
         OneColor color = currentColorSelector.getColor();
         currentColorSelector = null;
