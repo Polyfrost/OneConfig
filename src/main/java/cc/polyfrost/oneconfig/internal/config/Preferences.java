@@ -95,7 +95,7 @@ public class Preferences extends InternalConfig {
             min = 0.05f,
             max = 2f
     )
-    public static float animationTime = 0.65f;
+    public static float animationTime = 0.6f;
 
     @Dropdown(
             name = "Animation Type",
@@ -130,7 +130,8 @@ public class Preferences extends InternalConfig {
         });
         addListener("animationType", () -> {
             if (Preferences.guiOpenAnimation) {
-                Platform.getGuiPlatform().setCurrentScreen(OneConfigGui.INSTANCE);
+                // Force reset the animation
+                OneConfigGui.INSTANCE.isClosed = true;
             }
         });
         addDependency("guiClosingAnimation", "guiOpenAnimation");

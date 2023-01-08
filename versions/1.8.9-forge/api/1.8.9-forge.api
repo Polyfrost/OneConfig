@@ -1,5 +1,5 @@
 public class cc/polyfrost/oneconfig/events/event/ChatReceiveEvent : cc/polyfrost/oneconfig/events/event/CancellableEvent {
-	public final field message Lnet/minecraft/util/IChatComponent;
+	public field message Lnet/minecraft/util/IChatComponent;
 	public fun <init> (Lnet/minecraft/util/IChatComponent;)V
 	public fun getFullyUnformattedMessage ()Ljava/lang/String;
 }
