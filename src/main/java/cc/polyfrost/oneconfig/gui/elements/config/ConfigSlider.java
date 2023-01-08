@@ -167,14 +167,14 @@ public class ConfigSlider extends BasicOption implements IFocusable {
         }
 
         nanoVGHelper.drawText(vg, name, x, y + 17, nameColor, 14f, Fonts.MEDIUM);
-        nanoVGHelper.drawRoundedRect(vg, x + 352, y + 13, 512, 6, Colors.GRAY_300, radius);
-        nanoVGHelper.drawRoundedRect(vg, x + 352, y + 13, xCoordinate - x - 352, 6, Colors.PRIMARY_500, 4f);
+        nanoVGHelper.drawRoundedRect(vg, x + 352, y + 13, 512, 4, Colors.GRAY_300, radius);
+        nanoVGHelper.drawRoundedRect(vg, x + 352, y + 13 - 1, xCoordinate - x - 352, 6, Colors.PRIMARY_500, 4f);
 
         if (step > 0 && stepPercent > 0.05f) {
             float stepOffset = stepPercent * 16;
             for (float i = x + 354; i <= x + 864; i += 512 / ((max - min) / step)) {
                 int color = xCoordinate > i - 2 ? Colors.PRIMARY_500 : Colors.GRAY_300;
-                nanoVGHelper.drawRoundedRect(vg, i - 2, y + 16 - (stepOffset / 2f), 4, stepOffset, color, 2f);
+                nanoVGHelper.drawRoundedRect(vg, i - 2, y + 16 - 1 - (stepOffset / 2f), 4, stepOffset, color, 2f);
             }
         }
 
