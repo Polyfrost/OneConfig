@@ -92,7 +92,7 @@ public class ConfigTextBox extends BasicOption implements IFocusable {
             final SVG icon = SVGs.ARROWS_CLOCKWISE_BOLD;
             boolean hovered = inputHandler.isAreaHovered(x + 947, y + 7, 18, 18) && isEnabled();
             int color = hovered ? Colors.WHITE : Colors.WHITE_80;
-            if (hovered && inputHandler.isClicked()) HypixelKeys.INSTANCE.syncKeys();
+            if (hovered && inputHandler.isClicked()) HypixelKeys.INSTANCE.syncKeys(true);
             if (hovered && Platform.getMousePlatform().isButtonDown(0)) nanoVGHelper.setAlpha(vg, 0.5f);
             nanoVGHelper.drawSvg(vg, icon, x + 967 - 18 - 4, y + 7, 18, 18, color);
         }

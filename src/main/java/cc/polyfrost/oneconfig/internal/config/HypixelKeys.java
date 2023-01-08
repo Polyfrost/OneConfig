@@ -33,6 +33,8 @@ import cc.polyfrost.oneconfig.events.event.ChatReceiveEvent;
 import cc.polyfrost.oneconfig.events.event.Stage;
 import cc.polyfrost.oneconfig.events.event.TickEvent;
 import cc.polyfrost.oneconfig.gui.GuiNotifications;
+import cc.polyfrost.oneconfig.gui.OneConfigGui;
+import cc.polyfrost.oneconfig.gui.pages.ModConfigPage;
 import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
 import cc.polyfrost.oneconfig.libs.universal.UChat;
 import cc.polyfrost.oneconfig.platform.Platform;
@@ -40,6 +42,7 @@ import cc.polyfrost.oneconfig.renderer.asset.Icon;
 import cc.polyfrost.oneconfig.utils.Multithreading;
 import cc.polyfrost.oneconfig.utils.Notifications;
 import cc.polyfrost.oneconfig.utils.TickDelay;
+import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 import cc.polyfrost.oneconfig.utils.hypixel.HypixelUtils;
 
 import java.util.ArrayList;
@@ -94,12 +97,12 @@ public class HypixelKeys {
     private void onTick(TickEvent event) {
         if (event.stage != Stage.START || !Platform.getServerPlatform().doesPlayerExist() || !HypixelUtils.INSTANCE.isHypixel()) return;
         if (!hasSynced && Preferences.syncHypixelKeys) {
-            syncKeys();
+            syncKeys(false);
             hasSynced = true;
         }
     }
 
-    public void syncKeys() {
+    public void syncKeys(boolean inGui) {
         options.sort(Comparator.comparingInt(o -> o.getField().getAnnotation(HypixelKey.class).priority()));
         String firstValidKey = null;
         for (BasicOption option : options) {
@@ -115,7 +118,14 @@ public class HypixelKeys {
         if (firstValidKey != null) {
             setKeys(firstValidKey);
         } else {
-            sendNotification("There are mods that require a Hypixel API Key, but none of the keys are valid! Click here to get a new key.", () -> new TickDelay(() -> UChat.say("/api new"), 20));
+            if (inGui) {
+                UChat.say("/api new");
+            } else {
+                sendNotification("There are mods that require a Hypixel API Key, but none of the keys are valid! Click here to open the preferences menu and sync your API key.", () -> {
+                    GuiUtils.displayScreen(OneConfigGui.create());
+                    new TickDelay(() -> OneConfigGui.INSTANCE.openPage(new ModConfigPage(Preferences.getInstance().mod.defaultPage, true)), 2);
+                });
+            }
         }
     }
 
@@ -131,23 +141,23 @@ public class HypixelKeys {
                 option.getField().set(option.getParent(), hypixelKey);
             } catch (IllegalAccessException e) {
                 e.printStackTrace();
-                sendGuiNotification("Unable to set API Key of " + option.getField().getName() + " in " + option.getParent().getClass().getName() + "! Please contact us at https://polyfrost.cc/discord!");
+                sendNotification("Unable to set API Key of " + option.getField().getName() + " in " + option.getParent().getClass().getName() + "! Please contact us at https://polyfrost.cc/discord!");
                 success = false;
             }
         }
         if (success) {
-            sendGuiNotification("Successfully synced API Key for " + options.size() + " option" + (options.size() > 1 ? "s" : "") + "!");
+            sendNotification("Successfully synced API Key for " + options.size() + " option" + (options.size() > 1 ? "s" : "") + "!");
         }
     }
 
     private final Icon icon = new Icon("/assets/oneconfig/icons/Key.svg");
 
-    private void sendGuiNotification(String message) {
-        GuiNotifications.INSTANCE.sendNotification(message, icon.getSVG());
-    }
-
     private void sendNotification(String message) {
-        Notifications.INSTANCE.send("OneConfig Hypixel API Key", message, icon);
+        if (Platform.getGuiPlatform().getCurrentScreen() instanceof OneConfigGui) {
+            GuiNotifications.INSTANCE.sendNotification(message, icon.getSVG());
+        } else {
+            Notifications.INSTANCE.send("OneConfig Hypixel API Key", message, icon);
+        }
     }
 
     private void sendNotification(String message, Runnable runnable) {

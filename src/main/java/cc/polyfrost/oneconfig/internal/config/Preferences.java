@@ -66,7 +66,7 @@ public class Preferences extends InternalConfig {
             text = "Sync"
     )
     private static void syncHypixelKeys() {
-        HypixelKeys.INSTANCE.syncKeys();
+        HypixelKeys.INSTANCE.syncKeys(true);
     }
 
     @Button(
