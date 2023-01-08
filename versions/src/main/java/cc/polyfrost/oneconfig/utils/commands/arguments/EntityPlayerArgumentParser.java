@@ -22,23 +22,23 @@ public class EntityPlayerArgumentParser extends ArgumentParser<EntityPlayer> {
     @Override
     public EntityPlayer parse(@NotNull String arg) {
         Deprecator.markDeprecated();
-        List<EntityPlayer> matchingPlayers = getMatchingPlayers(arg);
+        List<EntityPlayer> matchingPlayers = getMatchingPlayers(arg, false);
         for (EntityPlayer profile : matchingPlayers) {
             return profile;
         }
         throw new IllegalArgumentException("Player not found");
     }
     // This only returns players in tab list that match, not all players in the current server, hence why this is deprecated.
-    private static List<EntityPlayer> getMatchingPlayers(String arg) {
+    private static List<EntityPlayer> getMatchingPlayers(String arg, boolean startsWith) {
         if (Minecraft.getMinecraft().theWorld == null) return Lists.newArrayList();
         return Minecraft.getMinecraft().theWorld.getPlayers(EntityPlayer.class,
-                player -> player.getName().equals(arg) || player.getUniqueID().toString().equals(arg));
+                player -> (startsWith ? player.getName().startsWith(arg) : player.getName().equals(arg)));
     }
 
     @NotNull
     @Override
     public List<String> complete(String current, Parameter parameter) {
-        return getMatchingPlayers(current).stream().map(EntityPlayer::getName).collect(Collectors.toList());
+        return getMatchingPlayers(current, true).stream().map(EntityPlayer::getName).collect(Collectors.toList());
     }
 }
 //#endif
