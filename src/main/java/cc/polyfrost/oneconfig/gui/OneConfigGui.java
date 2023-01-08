@@ -186,7 +186,7 @@ public class OneConfigGui extends OneUIScreen {
         nanoVGHelper.drawDropShadow(vg, x, y, 1280, 800, 64, 0, 20);
 
         Scissor mainPanel = scissorHelper.scissor(vg, x, y, 224, 800);
-        nanoVGHelper.drawRoundedRect(vg, x, y, 244, 800, Colors.GRAY_800, 20f);
+        nanoVGHelper.drawRoundedRect(vg, x, y, 244, 800, Colors.GRAY_800_95, 20f);
         scissorHelper.resetScissor(vg, mainPanel);
 
         Scissor contentPanel = scissorHelper.scissor(vg, x + 224, y, 1056, 800);
