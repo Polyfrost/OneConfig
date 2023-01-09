@@ -150,7 +150,7 @@ public class HypixelKeys {
         }
     }
 
-    private final Icon icon = new Icon("/assets/oneconfig/icons/Key.svg");
+    private final Icon icon = new Icon("/assets/oneconfig/icons/KeyN.svg");
 
     private void sendNotification(String message) {
         if (Platform.getGuiPlatform().getCurrentScreen() instanceof OneConfigGui) {
