@@ -832,13 +832,11 @@ public class cc/polyfrost/oneconfig/gui/elements/config/ConfigCheckbox : cc/poly
 	protected fun getNameX (I)F
 }
 
-public class cc/polyfrost/oneconfig/gui/elements/config/ConfigColorElement : cc/polyfrost/oneconfig/config/elements/BasicOption, cc/polyfrost/oneconfig/gui/elements/IFocusable {
+public class cc/polyfrost/oneconfig/gui/elements/config/ConfigColorElement : cc/polyfrost/oneconfig/config/elements/BasicOption {
 	public fun <init> (Ljava/lang/reflect/Field;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;IZ)V
 	public static fun create (Ljava/lang/reflect/Field;Ljava/lang/Object;)Lcc/polyfrost/oneconfig/gui/elements/config/ConfigColorElement;
 	public fun draw (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
 	public fun getHeight ()I
-	public fun hasFocus ()Z
-	public fun keyTyped (CI)V
 	protected fun setColor (Lcc/polyfrost/oneconfig/config/core/OneColor;)V
 }
 

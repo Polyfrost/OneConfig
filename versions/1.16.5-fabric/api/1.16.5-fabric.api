@@ -85,6 +85,13 @@ public class cc/polyfrost/oneconfig/utils/commands/PlatformCommandManagerImpl : 
 	public fun <init> ()V
 }
 
+public class cc/polyfrost/oneconfig/utils/commands/arguments/PlayerArgumentParser : cc/polyfrost/oneconfig/utils/commands/arguments/ArgumentParser {
+	public fun <init> ()V
+	public fun complete (Ljava/lang/String;Ljava/lang/reflect/Parameter;)Ljava/util/List;
+	public fun parse (Ljava/lang/String;)Lcom/mojang/authlib/GameProfile;
+	public synthetic fun parse (Ljava/lang/String;)Ljava/lang/Object;
+}
+
 public final class cc/polyfrost/oneconfig/utils/dsl/DSLsKt {
 	public static final fun getMc ()Lnet/minecraft/client/MinecraftClient;
 }

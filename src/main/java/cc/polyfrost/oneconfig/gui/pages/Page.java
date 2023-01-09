@@ -123,7 +123,7 @@ public abstract class Page {
                 else if (scrollTarget < -maxScroll + 728) scrollTarget = -maxScroll + 728;
                 scrollAnimation = new EaseOutQuad(150, scroll, scrollTarget, false);
             }
-            NanoVGHelper.INSTANCE.drawRoundedRect(vg, x + 1044, y - scrollBarY, 8, scrollBarLength, colorAnimation.getColor(scrollHover || scrollTimePeriod, dragging), 4f);
+            NanoVGHelper.INSTANCE.drawRoundedRect(vg, x + 1048, y - scrollBarY, 4, scrollBarLength, colorAnimation.getColor(scrollHover || scrollTimePeriod, dragging), 4f);
         }
     }
 
