@@ -30,8 +30,6 @@ import cc.polyfrost.oneconfig.gui.animations.expo.EaseOutExpo;
 import cc.polyfrost.oneconfig.gui.animations.quart.EaseInOutQuart;
 import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 
-import java.util.stream.Stream;
-
 public enum PageAnimation {
     LEFT(300, 224, 1904, false),
     RIGHT(300, 224, -1904, false),
@@ -43,10 +41,10 @@ public enum PageAnimation {
      * @param start    The start of the animation
      * @param offset      The offset of the animation
      */
-    PageAnimation(int duration, float start, float offset, boolean isUpDown) {
+    PageAnimation(int duration, float start, float offset, boolean yAxis) {
         this.duration = duration;
         this.change = offset;
-        this.isUpDown = isUpDown;
+        this.isUpDown = yAxis;
         if (this.isUpDown) {
             this.starts = new float[] {start, start - offset};
             this.ends = new float[] {start - offset, start};
@@ -58,16 +56,16 @@ public enum PageAnimation {
         }
     }
 
-    private boolean isUpDown;
-    private float change;
+    private final boolean isUpDown;
+    private final float change;
+    private final float duration;
     private float start;
-    private float duration;
     private float[] starts;
     private float[] ends;
     private Linear animLin;
     private EaseInOutQuart animQuart;
     private EaseOutExpo animExpo;
-    protected float timePassed = 0;
+    private float timePassed = 0;
 
     /**
      * @param deltaTime The time since the last frame

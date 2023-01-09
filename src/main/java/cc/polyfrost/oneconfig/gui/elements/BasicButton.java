@@ -145,12 +145,14 @@ public class BasicButton extends BasicElement {
 
     @Override
     public void onClick() {
-        if(disabled) return;
+        if (disabled) return;
+
         if (this.page != null && OneConfigGui.INSTANCE != null) {
             OneConfigGui.INSTANCE.openPage(page);
         } else if (this.runnable != null) {
             runnable.run();
         }
+
         if (toggleable && toggled) setColorPalette(ColorPalette.PRIMARY);
         else if (toggleable) setColorPalette(ColorPalette.SECONDARY);
     }

@@ -34,13 +34,14 @@ import cc.polyfrost.oneconfig.gui.elements.ModCard;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.internal.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.internal.config.core.ConfigCore;
-import cc.polyfrost.oneconfig.utils.SearchUtils;
 import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.utils.InputHandler;
+import cc.polyfrost.oneconfig.utils.SearchUtils;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class ModsPage extends Page {
 
@@ -67,13 +68,19 @@ public class ModsPage extends Page {
     }
 
     public void draw(long vg, int x, int y, InputHandler inputHandler) {
-        String filter = OneConfigGui.INSTANCE == null ? "" : OneConfigGui.INSTANCE.getSearchValue().toLowerCase().trim();
+        String filter = OneConfigGui.INSTANCE == null
+                ? ""
+                : OneConfigGui.INSTANCE.getSearchValue().toLowerCase().trim();
+
         int iX = x + 16;
         int iY = y + 72;
-        ArrayList<ModCard> finalModCards = new ArrayList<>(modCards);
+        List<ModCard> finalModCards = new ArrayList<>(modCards);
         for (ModCard modCard : finalModCards) {
-            if (inSelection(modCard) && (filter.equals("") || SearchUtils.isSimilar(modCard.getModData().name, filter))) {
-                if (iY + 135 >= y - scroll && iY <= y + 728 - scroll) modCard.draw(vg, iX, iY, inputHandler);
+            if (!inSelection(modCard)) continue;
+            if (filter.equals("") || SearchUtils.isSimilar(modCard.getModData().name, filter)) {
+                if (iY + 135 >= y - scroll && iY <= y + 728 - scroll) {
+                    modCard.draw(vg, iX, iY, inputHandler);
+                }
                 iX += 260;
                 if (iX > x + 796) {
                     iX = x + 16;

@@ -29,17 +29,22 @@ package cc.polyfrost.oneconfig.gui;
 import cc.polyfrost.oneconfig.config.core.OneColor;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
 import cc.polyfrost.oneconfig.config.elements.OptionSubcategory;
-import cc.polyfrost.oneconfig.gui.animations.*;
-import cc.polyfrost.oneconfig.gui.animations.expo.EaseOutExpo;
-import cc.polyfrost.oneconfig.gui.elements.BasicButton;
 import cc.polyfrost.oneconfig.events.EventManager;
 import cc.polyfrost.oneconfig.events.event.RenderEvent;
 import cc.polyfrost.oneconfig.events.event.Stage;
+import cc.polyfrost.oneconfig.gui.animations.Animation;
+import cc.polyfrost.oneconfig.gui.animations.DummyAnimation;
+import cc.polyfrost.oneconfig.gui.animations.EaseInBack;
+import cc.polyfrost.oneconfig.gui.animations.PageAnimation;
+import cc.polyfrost.oneconfig.gui.animations.expo.EaseOutExpo;
+import cc.polyfrost.oneconfig.gui.elements.BasicButton;
 import cc.polyfrost.oneconfig.gui.elements.BasicElement;
 import cc.polyfrost.oneconfig.gui.elements.ColorSelector;
 import cc.polyfrost.oneconfig.gui.elements.IFocusable;
 import cc.polyfrost.oneconfig.gui.elements.text.TextInputField;
-import cc.polyfrost.oneconfig.gui.pages.*;
+import cc.polyfrost.oneconfig.gui.pages.ModConfigPage;
+import cc.polyfrost.oneconfig.gui.pages.ModsPage;
+import cc.polyfrost.oneconfig.gui.pages.Page;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.internal.config.OneConfigConfig;
@@ -89,7 +94,7 @@ public class OneConfigGui extends OneUIScreen {
      * Used for global transparency animation in {@link NanoVGHelperImpl}
      */
     private boolean isDrawing;
-    
+
     private OneConfigGui(boolean loadPages) {
         if (INSTANCE != null)
             EventManager.INSTANCE.unregister(INSTANCE);
@@ -237,10 +242,10 @@ public class OneConfigGui extends OneUIScreen {
         nanoVGHelper.setAlpha(vg, 1f);
 
         handleHistoryMovement(backArrow.isClicked(), forwardArrow.isClicked());
-        
+
         scissorHelper.scissor(vg, x + 224, y + 72, 1056, 728);
         Scissor blockedClicks = inputHandler.blockInputArea(x + 224, y, 1056, 72);
-        
+
         if (pageAnimation != null && !pageAnimation.isFinished()) {
             handleAnimation(vg, x, y, inputHandler);
         } else {
@@ -354,18 +359,22 @@ public class OneConfigGui extends OneUIScreen {
 
     public void openPage(@NotNull Page page) {
         try {
-            if(sidebarPages.contains(page.getTitle())) {
+            if (sidebarPages.contains(page.getTitle())) {
                 // New page is from sidebar
                 if (sidebarPages.indexOf(page.getTitle()) > sidebarPages.indexOf(currentPage.getTitle())) {
-                    openPage(page, PageAnimation.UP, true);
-                } else {
                     openPage(page, PageAnimation.DOWN, true);
+                } else {
+                    openPage(page, PageAnimation.UP, true);
                 }
             } else {
                 if (nextPages.contains(page)) {
                     openPage(page, PageAnimation.LEFT, true);
                 } else {
-                    openPage(page, PageAnimation.RIGHT, true);
+                    if (page instanceof ModConfigPage) {
+                        openPage(page, PageAnimation.LEFT, true);
+                    } else {
+                        openPage(page, PageAnimation.RIGHT, true);
+                    }
                 }
             }
         } catch (Exception ex) {
