@@ -152,6 +152,16 @@ public class Preferences extends InternalConfig {
     }
 
     @Button(
+            name = "Test Hypixel API Keys",
+            description = "Test to see if all your Hypixel API keys in OneConfig are valid.",
+            category = "Hypixel",
+            text = "Test"
+    )
+    private static void testAllHypixelKeys() {
+        HypixelKeys.INSTANCE.testKeys();
+    }
+
+    @Button(
             name = "Remove All Syncable Hypixel API Keys",
             description = "Remove all (and only) fields marked as Hypixel API keys in OneConfig.",
             category = "Hypixel",

@@ -188,7 +188,7 @@ public class Config {
                 optionNames.put(optionName, configOption);
                 if (isHypixelKey) {
                     if (option.type() == OptionType.TEXT) {
-                        HypixelKeys.INSTANCE.addOption(configOption);
+                        HypixelKeys.INSTANCE.addOption(configOption, mod);
                     } else {
                         throw new IllegalStateException("Field " + field.getName() + " is missing @Text annotation! This is required for Hypixel keys!");
                     }
