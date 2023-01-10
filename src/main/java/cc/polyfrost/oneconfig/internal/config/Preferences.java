@@ -46,47 +46,6 @@ public class Preferences extends InternalConfig {
     public static OneKeyBind oneConfigKeyBind = new OneKeyBind(UKeyboard.KEY_RSHIFT);
 
     @Switch(
-            name = "Automatically Detect Hypixel API Key",
-            description = "Automatically detect your Hypixel API key from running /api new in chat.",
-            subcategory = "Hypixel"
-    )
-    public static boolean autoSetHypixelKey = true;
-
-    @Switch(
-            name = "Sync Hypixel API Keys on Startup",
-            description = "Automatically sync your Hypixel API keys across all options marked as Hypixel API keys in OneConfig.",
-            subcategory = "Hypixel"
-    )
-    public static boolean syncHypixelKeys = true;
-
-    @Button(
-            name = "Sync Hypixel API Keys",
-            description = "Sync your Hypixel API keys across all options marked as Hypixel API keys in OneConfig.",
-            subcategory = "Hypixel",
-            text = "Sync"
-    )
-    private static void syncHypixelKeys() {
-        HypixelKeys.INSTANCE.syncKeys(true);
-    }
-
-    @Button(
-            name = "Remove All Syncable Hypixel API Keys",
-            description = "Remove all (and only) fields marked as Hypixel API keys in OneConfig.",
-            subcategory = "Hypixel",
-            text = "Remove"
-    )
-    private static void removeAllHypixelKeys() {
-        HypixelKeys.INSTANCE.setAllKeys("");
-    }
-
-    @Text(
-            name = "Hypixel API Key",
-            description = "Set all options marked as Hypixel API keys by the developer to this value.",
-            subcategory = "Hypixel"
-    )
-    private static String hypixelKey = "";
-
-    @Switch(
             name = "Enable Blur",
             subcategory = "GUI Settings"
     )
@@ -167,6 +126,47 @@ public class Preferences extends InternalConfig {
             max = 0.1f
     )
     public static float trackerResponseTime = 0.06f;
+
+    @Switch(
+            name = "Automatically Detect Hypixel API Key",
+            description = "Automatically detect your Hypixel API key from running /api new in chat.",
+            category = "Hypixel"
+    )
+    public static boolean autoSetHypixelKey = true;
+
+    @Switch(
+            name = "Sync Hypixel API Keys on Startup",
+            description = "Automatically sync your Hypixel API keys across all options marked as Hypixel API keys in OneConfig.",
+            category = "Hypixel"
+    )
+    public static boolean syncHypixelKeys = true;
+
+    @Button(
+            name = "Sync Hypixel API Keys",
+            description = "Sync your Hypixel API keys across all options marked as Hypixel API keys in OneConfig.",
+            category = "Hypixel",
+            text = "Sync"
+    )
+    private static void syncHypixelKeys() {
+        HypixelKeys.INSTANCE.syncKeys(true);
+    }
+
+    @Button(
+            name = "Remove All Syncable Hypixel API Keys",
+            description = "Remove all (and only) fields marked as Hypixel API keys in OneConfig.",
+            category = "Hypixel",
+            text = "Remove"
+    )
+    private static void removeAllHypixelKeys() {
+        HypixelKeys.INSTANCE.setAllKeys("");
+    }
+
+    @Text(
+            name = "Hypixel API Key",
+            description = "Set all options marked as Hypixel API keys by the developer to this value.",
+            category = "Hypixel"
+    )
+    private static String hypixelKey = "";
 
     @Dropdown(
             name = "Release Channel",
