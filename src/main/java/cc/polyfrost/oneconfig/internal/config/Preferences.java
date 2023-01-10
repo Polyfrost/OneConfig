@@ -26,8 +26,12 @@
 
 package cc.polyfrost.oneconfig.internal.config;
 
-import cc.polyfrost.oneconfig.config.annotations.*;
+import cc.polyfrost.oneconfig.config.annotations.Dropdown;
+import cc.polyfrost.oneconfig.config.annotations.Exclude;
+import cc.polyfrost.oneconfig.config.annotations.KeyBind;
 import cc.polyfrost.oneconfig.config.annotations.Number;
+import cc.polyfrost.oneconfig.config.annotations.Slider;
+import cc.polyfrost.oneconfig.config.annotations.Switch;
 import cc.polyfrost.oneconfig.config.core.OneKeyBind;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.internal.gui.BlurHandler;
@@ -51,15 +55,6 @@ public class Preferences extends InternalConfig {
     )
     public static boolean enableBlur = true;
 
-    @Number(
-            name = "Search Distance",
-            min = 0,
-            max = 10,
-            subcategory = "GUI Settings",
-            description = "The maximum Levenshtein distance to search for similar config names."
-    )
-    public static int searchDistance = 2;
-
     @Switch(
             name = "Use custom GUI scale",
             subcategory = "GUI Settings"
@@ -73,6 +68,42 @@ public class Preferences extends InternalConfig {
             max = 2f
     )
     public static float customScale = 1f;
+
+    @Dropdown(
+            name = "Opening Behavior",
+            category = "Behavior",
+            subcategory = "GUI Settings",
+            description = "Choose what happens when you Open the OneConfig UI",
+            options = {
+                    "\"Mods\" Page",
+                    "\"Preferences\" Page",
+                    "Previously open page",
+                    "Smart reset"
+            },
+            size = 2
+    )
+    public static int openingBehavior = 3;
+
+    @Slider(
+            name = "Time before reset",
+            category = "Behavior",
+            subcategory = "GUI Settings",
+            description = "How much time (in seconds) before opening back to the \"Mods\" page",
+            min = 5,
+            max = 60
+    )
+    public static int timeUntilReset = 15;
+
+    @Number(
+            name = "Search Distance",
+            min = 0,
+            max = 10,
+            category = "Behavior",
+            subcategory = "GUI Settings",
+            description = "The maximum Levenshtein distance to search for similar config names.",
+            size = 2 // looks awful at 1
+    )
+    public static int searchDistance = 2;
 
     @Switch(
             name = "Opening Animation",
