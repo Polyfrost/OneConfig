@@ -75,9 +75,9 @@ public class Preferences extends InternalConfig {
             subcategory = "GUI Settings",
             description = "Choose what happens when you Open the OneConfig UI",
             options = {
-                    "\"Mods\" Page",
-                    "\"Preferences\" Page",
-                    "Previously open page",
+                    "Mods",
+                    "Preferences",
+                    "Previous page",
                     "Smart reset"
             },
             size = 2
