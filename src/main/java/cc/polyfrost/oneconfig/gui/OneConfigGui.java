@@ -28,6 +28,7 @@ package cc.polyfrost.oneconfig.gui;
 
 import cc.polyfrost.oneconfig.config.core.OneColor;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
+import cc.polyfrost.oneconfig.config.elements.OptionPage;
 import cc.polyfrost.oneconfig.config.elements.OptionSubcategory;
 import cc.polyfrost.oneconfig.events.EventManager;
 import cc.polyfrost.oneconfig.events.event.RenderEvent;
@@ -83,6 +84,8 @@ public class OneConfigGui extends OneUIScreen {
     protected Page prevPage;
     private Animation pageAnimation;
 
+    private long lastClosedTime = -1;
+
     private Animation containerAnimation = new DummyAnimation(0);
     public boolean isClosed = true;
     private boolean shouldDisplayHud = false;
@@ -109,9 +112,55 @@ public class OneConfigGui extends OneUIScreen {
     @Override
     public void initScreen(int width, int height) {
         super.initScreen(width, height);
+        if (currentPage == null) {
+            currentPage = new ModsPage();
+            currentPage.parents.add(currentPage);
+        }
+
+        handleOpeningPage();
 
         if (Preferences.guiOpenAnimation) {
             shouldDisplayHud = false;
+        }
+    }
+
+    private void handleOpeningPage() {
+        switch (Preferences.openingBehavior) {
+            case 0:
+                if (currentPage instanceof ModsPage) {
+                    break;
+                }
+                previousPages.clear();
+                openPage(new ModsPage(), false);
+                break;
+            case 1:
+                OptionPage preferencesPage = Preferences.getInstance().mod.defaultPage;
+                if (currentPage instanceof ModConfigPage) {
+                    ModConfigPage modConfigPage = (ModConfigPage) currentPage;
+                    if (modConfigPage.getPage() == preferencesPage) {
+                        break;
+                    }
+                }
+                previousPages.clear();
+                openPage(new ModConfigPage(Preferences.getInstance().mod.defaultPage, true), false);
+                break;
+            case 2:
+                break;
+            case 3:
+                if (currentPage instanceof ModsPage) {
+                    break;
+                }
+
+                long current = System.currentTimeMillis();
+                long diff = current - lastClosedTime;
+                if (lastClosedTime == -1)
+                    break;
+                if (diff <= Preferences.timeUntilReset * 1000L) {
+                    break;
+                }
+                previousPages.clear();
+                openPage(new ModsPage(), false);
+                break;
         }
     }
 
@@ -121,10 +170,6 @@ public class OneConfigGui extends OneUIScreen {
 
         final NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
         final ScissorHelper scissorHelper = ScissorHelper.INSTANCE;
-        if (currentPage == null) {
-            currentPage = new ModsPage();
-            currentPage.parents.add(currentPage);
-        }
 
         boolean renderedInHud = (inputHandler == null);
         if (Preferences.guiOpenAnimation) {
@@ -405,6 +450,8 @@ public class OneConfigGui extends OneUIScreen {
     @Override
     public void onScreenClose() {
         currentPage.finishUpAndClose();
+
+        lastClosedTime = System.currentTimeMillis();
 
         isClosed = true;
         if (Preferences.guiOpenAnimation) {
