@@ -147,7 +147,7 @@ public class OneConfigGui extends OneUIScreen {
                     break;
                 }
                 previousPages.clear();
-                openPage(new ModsPage(), false);
+                openPage(new ModsPage(), PageAnimation.LEFT, false);
                 break;
             case 1:
                 OptionPage preferencesPage = Preferences.getInstance().mod.defaultPage;
@@ -158,7 +158,7 @@ public class OneConfigGui extends OneUIScreen {
                     }
                 }
                 previousPages.clear();
-                openPage(new ModConfigPage(Preferences.getInstance().mod.defaultPage, true), false);
+                openPage(new ModConfigPage(Preferences.getInstance().mod.defaultPage, true), PageAnimation.LEFT, false);
                 break;
             case 2:
                 break;
@@ -175,7 +175,7 @@ public class OneConfigGui extends OneUIScreen {
                     break;
                 }
                 previousPages.clear();
-                openPage(new ModsPage(), false);
+                openPage(new ModsPage(), PageAnimation.LEFT, false);
                 break;
         }
     }
