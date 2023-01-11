@@ -36,6 +36,7 @@ import cc.polyfrost.oneconfig.gui.animations.EaseOutExpo;
 import cc.polyfrost.oneconfig.gui.elements.IFocusable;
 import cc.polyfrost.oneconfig.gui.elements.text.NumberInputField;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
+import cc.polyfrost.oneconfig.internal.config.Preferences;
 import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
@@ -47,7 +48,6 @@ import java.lang.reflect.Field;
 public class ConfigSlider extends BasicOption implements IFocusable {
     private static final int STEP_POPUP_DURATION = 400;
     private static final int INDICATOR_POPUP_DURATION = 200;
-    private static final int INDICATOR_SLIDING_DURATION = 60;
 
     private static final float STEP_HEIGHT_TOTAL = 16;
     private static final float STEP_HEIGHT_HOVER = 10;
@@ -154,7 +154,7 @@ public class ConfigSlider extends BasicOption implements IFocusable {
         if (stepSlideAnimation.get() == -1 || lastX != x) {
             stepSlideAnimation = new DummyAnimation(xCoordinate);
         } else {
-            stepSlideAnimation = new EaseInOutCubic(INDICATOR_SLIDING_DURATION, stepSlideAnimation.get(), xCoordinate, false);
+            stepSlideAnimation = new EaseInOutCubic((int) (Preferences.trackerResponseTime * 1000), stepSlideAnimation.get(), xCoordinate, false);
         }
         xCoordinate = (int) stepSlideAnimation.get();
 
@@ -167,14 +167,14 @@ public class ConfigSlider extends BasicOption implements IFocusable {
         }
 
         nanoVGHelper.drawText(vg, name, x, y + 17, nameColor, 14f, Fonts.MEDIUM);
-        nanoVGHelper.drawRoundedRect(vg, x + 352, y + 13, 512, 6, Colors.GRAY_300, radius);
-        nanoVGHelper.drawRoundedRect(vg, x + 352, y + 13, xCoordinate - x - 352, 6, Colors.PRIMARY_500, 4f);
+        nanoVGHelper.drawRoundedRect(vg, x + 352, y + 13, 512, 4, Colors.GRAY_300, radius);
+        nanoVGHelper.drawRoundedRect(vg, x + 352, y + 13 - 1, xCoordinate - x - 352, 6, Colors.PRIMARY_500, 4f);
 
         if (step > 0 && stepPercent > 0.05f) {
             float stepOffset = stepPercent * 16;
             for (float i = x + 354; i <= x + 864; i += 512 / ((max - min) / step)) {
                 int color = xCoordinate > i - 2 ? Colors.PRIMARY_500 : Colors.GRAY_300;
-                nanoVGHelper.drawRoundedRect(vg, i - 2, y + 16 - (stepOffset / 2f), 4, stepOffset, color, 2f);
+                nanoVGHelper.drawRoundedRect(vg, i - 2, y + 16 - 1 - (stepOffset / 2f), 4, stepOffset, color, 2f);
             }
         }
 

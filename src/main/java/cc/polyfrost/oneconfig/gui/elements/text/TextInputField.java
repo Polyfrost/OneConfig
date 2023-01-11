@@ -50,7 +50,7 @@ public class TextInputField extends BasicElement {
     protected final boolean multiLine;
     private float radius;
     private float boarderThickness = 1f;
-    private float textSize = 14f;
+    private float textSize = 12f;
     protected String input, selectedText;
     protected boolean password;
     protected int caretPos;
@@ -143,9 +143,6 @@ public class TextInputField extends BasicElement {
             if (!toggled)
                 nanoVGHelper.drawHollowRoundRect(vg, x, y, width - 0.5f, height - 0.5f, colorOutline, radius, boarderThickness);
             else {
-                nanoVGHelper.setAlpha(vg, 0.15f);
-                nanoVGHelper.drawRoundedRect(vg, x - 4, y - 4, width + 8, height + 8, errored ? Colors.ERROR_600 : Colors.PRIMARY_600, radius + 4);
-                nanoVGHelper.setAlpha(vg, 1f);
                 nanoVGHelper.drawHollowRoundRect(vg, x, y, width - 0.5f, height - 0.5f, errored ? Colors.ERROR_600 : Colors.PRIMARY_600, radius, boarderThickness);
             }
             Scissor scissor = scissorHelper.scissor(vg, x, y, width, height);
@@ -162,8 +159,8 @@ public class TextInputField extends BasicElement {
             if (caretPos < 0) caretPos = 0;
             if (prevCaret < 0) prevCaret = 0;
             if (icon != null) {
-                nanoVGHelper.drawSvg(vg, icon, x + 12, y + height / 2f - 12f, 24, 24, color);
-                x += 32;
+                nanoVGHelper.drawSvg(vg, icon, x + 10, y + height / 2f - 10f, 20, 20, color);
+                x += 18 + 18;
                 this.x = x;
             }
             float width;
@@ -523,7 +520,7 @@ public class TextInputField extends BasicElement {
             }
             s = s1.toString();
         }
-        return NanoVGHelper.INSTANCE.getTextWidth(vg, s, 14.0f, Fonts.REGULAR);
+        return NanoVGHelper.INSTANCE.getTextWidth(vg, s, textSize, Fonts.REGULAR);
     }
 
     private int getCaretLine(int caret) {
@@ -540,12 +537,12 @@ public class TextInputField extends BasicElement {
         int pos = 0;
         NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
         for (String text : wrappedText) {
-            float length = nanoVGHelper.getTextWidth(vg, text, 14.0f, Fonts.REGULAR);
+            float length = nanoVGHelper.getTextWidth(vg, text, textSize, Fonts.REGULAR);
             if (pos + length < caret) {
                 pos += length;
                 continue;
             }
-            return nanoVGHelper.getTextWidth(vg, text.substring(0, caret - pos), 14.0f, Fonts.REGULAR);
+            return nanoVGHelper.getTextWidth(vg, text.substring(0, caret - pos), textSize, Fonts.REGULAR);
         }
         return 0;
     }

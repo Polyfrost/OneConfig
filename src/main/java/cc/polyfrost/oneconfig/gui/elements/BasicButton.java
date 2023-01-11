@@ -65,7 +65,8 @@ public class BasicButton extends BasicElement {
         if (icon2 != null) this.icon2 = icon2;
         this.colorPalette = colorPalette;
         this.alignment = align;
-        this.cornerRadius = size == SIZE_48 ? 16f : 12f;
+        this.cornerRadius = size == SIZE_48 ? 14f : 10f; // radius was originally 16f and 12f respectively, decreased both by two.
+                                                         // SIZE_48 doesn't seem to be used anywhere, so I'm not sure if this is correct.
         this.xSpacing = size == SIZE_48 ? 12 : 8;
         if (size == SIZE_36 || size == SIZE_40) {
             this.xPadding = 16;

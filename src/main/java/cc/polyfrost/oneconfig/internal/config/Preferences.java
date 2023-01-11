@@ -26,8 +26,12 @@
 
 package cc.polyfrost.oneconfig.internal.config;
 
-import cc.polyfrost.oneconfig.config.annotations.*;
+import cc.polyfrost.oneconfig.config.annotations.Dropdown;
+import cc.polyfrost.oneconfig.config.annotations.Exclude;
+import cc.polyfrost.oneconfig.config.annotations.KeyBind;
 import cc.polyfrost.oneconfig.config.annotations.Number;
+import cc.polyfrost.oneconfig.config.annotations.Slider;
+import cc.polyfrost.oneconfig.config.annotations.Switch;
 import cc.polyfrost.oneconfig.config.core.OneKeyBind;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.internal.gui.BlurHandler;
@@ -51,15 +55,6 @@ public class Preferences extends InternalConfig {
     )
     public static boolean enableBlur = true;
 
-    @Number(
-            name = "Search Distance",
-            min = 0,
-            max = 10,
-            subcategory = "GUI Settings",
-            description = "The maximum Levenshtein distance to search for similar config names."
-    )
-    public static int searchDistance = 2;
-
     @Switch(
             name = "Use custom GUI scale",
             subcategory = "GUI Settings"
@@ -74,36 +69,94 @@ public class Preferences extends InternalConfig {
     )
     public static float customScale = 1f;
 
+    @Dropdown(
+            name = "Opening Behavior",
+            category = "Behavior",
+            subcategory = "GUI Settings",
+            description = "Choose what happens when you Open the OneConfig UI",
+            options = {
+                    "Mods",
+                    "Preferences",
+                    "Previous page",
+                    "Smart reset"
+            },
+            size = 2
+    )
+    public static int openingBehavior = 3;
+
+    @Slider(
+            name = "Time before reset",
+            category = "Behavior",
+            subcategory = "GUI Settings",
+            description = "How much time (in seconds) before opening back to the \"Mods\" page",
+            min = 5,
+            max = 60
+    )
+    public static int timeUntilReset = 15;
+
+    @Number(
+            name = "Search Distance",
+            min = 0,
+            max = 10,
+            category = "Behavior",
+            subcategory = "GUI Settings",
+            description = "The maximum Levenshtein distance to search for similar config names.",
+            size = 2 // looks awful at 1
+    )
+    public static int searchDistance = 2;
+
     @Switch(
             name = "Opening Animation",
             description = "Plays an animation when opening the GUI",
-            subcategory = "GUI Settings"
+            category = "Animations",
+            subcategory = "Global"
     )
     public static boolean guiOpenAnimation = true;
 
     @Switch(
             name = "Closing Animation",
             description = "Plays an animation when closing the GUI",
-            subcategory = "GUI Settings"
+            category = "Animations",
+            subcategory = "Global"
     )
     public static boolean guiClosingAnimation = true;
 
     @Slider(
-            name = "Animation Duration",
+            name = "Opening Time",
             description = "The duration of the opening and closing animations, in seconds",
-            subcategory = "GUI Settings",
+            category = "Animations",
+            subcategory = "Global",
             min = 0.05f,
             max = 2f
     )
-    public static float animationTime = 0.65f;
+    public static float animationTime = 0.6f;
 
     @Dropdown(
-            name = "Animation Type",
+            name = "Opening Type",
             description = "The type of opening/closing animation to use",
-            subcategory = "GUI Settings",
+            category = "Animations",
+            subcategory = "Global",
             options = {"Subtle", "Full"}
     )
     public static int animationType = 0;
+
+    @Switch(
+            name = "Toggle Switch Bounce",
+            description = "Enables or disable the bounce animation on toggle switches",
+            category = "Animations",
+            subcategory = "Toggles"
+    )
+    public static boolean toggleSwitchBounce = true;
+
+    @Slider(
+            name = "Tracker Response Time",
+            description = "The time it takes for the slider tracker to move, in seconds",
+            category = "Animations",
+            subcategory = "Sliders",
+            min = 0f,
+            max = 0.1f
+    )
+    public static float trackerResponseTime = 0.06f;
 
     @Dropdown(
             name = "Release Channel",
@@ -130,7 +183,8 @@ public class Preferences extends InternalConfig {
         });
         addListener("animationType", () -> {
             if (Preferences.guiOpenAnimation) {
-                Platform.getGuiPlatform().setCurrentScreen(OneConfigGui.INSTANCE);
+                // Force reset the animation
+                OneConfigGui.INSTANCE.isClosed = true;
             }
         });
         addDependency("guiClosingAnimation", "guiOpenAnimation");

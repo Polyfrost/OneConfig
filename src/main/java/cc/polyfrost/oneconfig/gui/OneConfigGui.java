@@ -27,10 +27,12 @@
 package cc.polyfrost.oneconfig.gui;
 
 import cc.polyfrost.oneconfig.config.core.OneColor;
-import cc.polyfrost.oneconfig.events.EventManager;
-import cc.polyfrost.oneconfig.events.event.HudRenderEvent;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
+import cc.polyfrost.oneconfig.config.elements.OptionPage;
 import cc.polyfrost.oneconfig.config.elements.OptionSubcategory;
+import cc.polyfrost.oneconfig.events.EventManager;
+import cc.polyfrost.oneconfig.events.event.RenderEvent;
+import cc.polyfrost.oneconfig.events.event.Stage;
 import cc.polyfrost.oneconfig.gui.animations.Animation;
 import cc.polyfrost.oneconfig.gui.animations.DummyAnimation;
 import cc.polyfrost.oneconfig.gui.animations.EaseInBack;
@@ -82,8 +84,10 @@ public class OneConfigGui extends OneUIScreen {
     protected Page prevPage;
     private Animation pageAnimation;
 
-    private Animation containerAnimation = new DummyAnimation(1);
-    private boolean isClosed = true;
+    private long lastClosedTime = -1;
+
+    private Animation containerAnimation = new DummyAnimation(0);
+    public boolean isClosed = true;
     private boolean shouldDisplayHud = false;
     public float transparencyFactor = 0f;
     public float animationScaleFactor = 0f;
@@ -108,9 +112,55 @@ public class OneConfigGui extends OneUIScreen {
     @Override
     public void initScreen(int width, int height) {
         super.initScreen(width, height);
+        if (currentPage == null) {
+            currentPage = new ModsPage();
+            currentPage.parents.add(currentPage);
+        }
+
+        handleOpeningPage();
 
         if (Preferences.guiOpenAnimation) {
             shouldDisplayHud = false;
+        }
+    }
+
+    private void handleOpeningPage() {
+        switch (Preferences.openingBehavior) {
+            case 0:
+                if (currentPage instanceof ModsPage) {
+                    break;
+                }
+                previousPages.clear();
+                openPage(new ModsPage(), false);
+                break;
+            case 1:
+                OptionPage preferencesPage = Preferences.getInstance().mod.defaultPage;
+                if (currentPage instanceof ModConfigPage) {
+                    ModConfigPage modConfigPage = (ModConfigPage) currentPage;
+                    if (modConfigPage.getPage() == preferencesPage) {
+                        break;
+                    }
+                }
+                previousPages.clear();
+                openPage(new ModConfigPage(Preferences.getInstance().mod.defaultPage, true), false);
+                break;
+            case 2:
+                break;
+            case 3:
+                if (currentPage instanceof ModsPage) {
+                    break;
+                }
+
+                long current = System.currentTimeMillis();
+                long diff = current - lastClosedTime;
+                if (lastClosedTime == -1)
+                    break;
+                if (diff <= Preferences.timeUntilReset * 1000L) {
+                    break;
+                }
+                previousPages.clear();
+                openPage(new ModsPage(), false);
+                break;
         }
     }
 
@@ -120,44 +170,41 @@ public class OneConfigGui extends OneUIScreen {
 
         final NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
         final ScissorHelper scissorHelper = ScissorHelper.INSTANCE;
-        if (currentPage == null) {
-            currentPage = new ModsPage();
-            currentPage.parents.add(currentPage);
-        }
 
         boolean renderedInHud = (inputHandler == null);
         if (Preferences.guiOpenAnimation) {
+            int animationTime = (int) (Preferences.animationTime * 1000);
             if (renderedInHud && Preferences.guiClosingAnimation && shouldDisplayHud) {
                 if (containerAnimation.getEnd() != 0) {
                     switch (Preferences.animationType) {
                         case 0:
-                            containerAnimation = new EaseOutExpo((int) (Preferences.animationTime * 1000), MathUtils.clamp(animationScaleFactor - 0.9f, 0f, 0.1f), 0, false);
+                            containerAnimation = new EaseOutExpo(animationTime, MathUtils.clamp(animationScaleFactor - 0.9f, 0f, 0.1f), 0, false);
                             break;
                         case 1:
-                            containerAnimation = new EaseInBack((int) (Preferences.animationTime * 750), MathUtils.clamp(animationScaleFactor, 0f, 1f), 0, false);
+                            containerAnimation = new EaseInBack(animationTime, MathUtils.clamp(animationScaleFactor, 0f, 1f), 0, false);
                             break;
                     }
                 }
             } else if (!renderedInHud && isClosed) {
+                // If we are switching animations, aka if the previous one is already finished
+                boolean forceFinished = containerAnimation.isFinished() && containerAnimation.getEnd() != 0;
                 switch (Preferences.animationType) {
                     case 0:
-                        containerAnimation = new EaseOutExpo((int) (Preferences.animationTime * 1000), MathUtils.clamp(animationScaleFactor - 0.9f, 0, 0.1f), 0.1f, false);
+                        containerAnimation = new EaseOutExpo(animationTime, MathUtils.clamp(forceFinished ? 0.1f : (animationScaleFactor - 0.9f), 0, 0.1f), 0.1f, false);
                         break;
                     case 1:
-                        containerAnimation = new EaseOutExpo((int) (Preferences.animationTime * 1000), MathUtils.clamp(animationScaleFactor, 0, 1), 1, false);
+                        containerAnimation = new EaseOutExpo(animationTime, MathUtils.clamp(forceFinished ? 1 : animationScaleFactor, 0, 1), 1, false);
                         break;
                 }
                 isClosed = false;
             }
         }
 
-        float animationValue = containerAnimation.get();
-        if (animationValue < 0) animationValue = 0;
-
+        float animationValue = Math.max(0, containerAnimation.get());
         switch (Preferences.animationType) {
             case 0:
-                animationScaleFactor = .9f + animationValue;
-                transparencyFactor = animationValue * 12f;
+                animationScaleFactor = MathUtils.clamp(.9f + animationValue, .9f, 1f);
+                transparencyFactor = MathUtils.clamp(animationValue * 10f, 0, 1);
                 break;
             case 1:
                 animationScaleFactor = transparencyFactor = animationValue;
@@ -376,6 +423,7 @@ public class OneConfigGui extends OneUIScreen {
      */
     @SuppressWarnings("UnusedReturnValue")
     public OneColor closeColorSelector() {
+        if (currentColorSelector == null) return null;
         currentColorSelector.onClose();
         OneColor color = currentColorSelector.getColor();
         currentColorSelector = null;
@@ -402,6 +450,8 @@ public class OneConfigGui extends OneUIScreen {
     public void onScreenClose() {
         currentPage.finishUpAndClose();
 
+        lastClosedTime = System.currentTimeMillis();
+
         isClosed = true;
         if (Preferences.guiOpenAnimation) {
             if (Preferences.guiClosingAnimation) {
@@ -415,8 +465,8 @@ public class OneConfigGui extends OneUIScreen {
     }
 
     @Subscribe
-    public void onRenderHUD(HudRenderEvent event) {
-        if (!shouldDisplayHud) return;
+    private void onRenderHUD(RenderEvent event) {
+        if (!shouldDisplayHud || event.stage == Stage.START) return;
         if (Platform.getGuiPlatform().getCurrentScreen() == this) return;
 
         NanoVGHelper.INSTANCE.setupAndDraw(vg -> draw(vg, event.deltaTicks, null));

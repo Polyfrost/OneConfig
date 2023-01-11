@@ -30,9 +30,12 @@ import cc.polyfrost.oneconfig.events.EventManager;
 import cc.polyfrost.oneconfig.events.event.ChatReceiveEvent;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.network.packet.s2c.play.ChatMessageS2CPacket;
+import net.minecraft.text.Text;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(value = ClientPlayNetworkHandler.class, priority = Integer.MAX_VALUE)
@@ -44,6 +47,9 @@ public class NetHandlerPlayClientMixin {
             //#else
             //$$ "Lnet/minecraft/client/gui/hud/InGameHud;method_14471(Lnet/minecraft/util/ChatMessageType;Lnet/minecraft/text/Text;)V";
             //#endif
+
+    @Unique
+    private Text oneconfig$newMessage = null;
 
     @Inject(method = "onChatMessage", at = @At(value = "INVOKE", target = TARGET), cancellable = true)
     private void onClientChat(ChatMessageS2CPacket packet, CallbackInfo ci) {
@@ -59,6 +65,14 @@ public class NetHandlerPlayClientMixin {
             if (event.isCancelled) {
                 ci.cancel();
             }
+            oneconfig$newMessage = event.message;
+        } else {
+            oneconfig$newMessage = null;
         }
+    }
+
+    @Redirect(method = "onChatMessage", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/packet/s2c/play/ChatMessageS2CPacket;getMessage()Lnet/minecraft/text/Text;"))
+    private Text onClientChatRedirect(ChatMessageS2CPacket instance) {
+        return oneconfig$newMessage == null ? instance.getMessage() : oneconfig$newMessage;
     }
 }

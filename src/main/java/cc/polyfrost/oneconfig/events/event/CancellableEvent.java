@@ -28,6 +28,8 @@ package cc.polyfrost.oneconfig.events.event;
 
 /**
  * Represents an event that can be cancelled.
+ * Should not be used as a way of determining if an event can be cancelled, as
+ * some events may be cancellable but not extend this class.
  */
 public class CancellableEvent {
     /**

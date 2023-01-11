@@ -33,7 +33,7 @@ public class ChatReceiveEvent extends CancellableEvent {
     /**
      * The message that was received.
      */
-    public final Object message;
+    public Object message;
 
     public ChatReceiveEvent(Object message) {
         this.message = message;
