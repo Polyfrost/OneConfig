@@ -47,7 +47,7 @@ import static cc.polyfrost.oneconfig.gui.elements.BasicButton.SIZE_32;
 
 public class ModConfigPage extends Page {
     private final OptionPage page;
-    private final ArrayList<BasicButton> categories = new ArrayList<>();
+    private final List<BasicButton> categories = new ArrayList<>();
     private String selectedCategory;
     private int totalSize = 724;
     private final boolean base;
@@ -102,9 +102,16 @@ public class ModConfigPage extends Page {
         int buttonX = x + 16;
         int returned = 0;
         boolean searching = !OneConfigGui.INSTANCE.getSearchValue().trim().isEmpty();
+
         for (BasicButton button : categories) {
-            if (button.getWidth() == 0)
+            if (button.getWidth() == 0) {
                 button.setWidth((int) (Math.ceil(NanoVGHelper.INSTANCE.getTextWidth(vg, button.getText(), 12f, Fonts.MEDIUM) / 8f) * 8 + 16));
+            }
+            if (buttonX + button.getWidth() >= x + 1024 - 16) {
+                buttonX = x + 16;
+                returned += 48;
+                categoryY += 48;
+            }
             if (searching) {
                 boolean similar = SearchUtils.isSimilar(button.getText(), OneConfigGui.INSTANCE.getSearchValue());
                 boolean selected = button.isToggled();
@@ -115,11 +122,6 @@ public class ModConfigPage extends Page {
             } else {
                 button.draw(vg, buttonX, y + 16 + returned, inputHandler);
                 buttonX += button.getWidth() + 16;
-            }
-            if (buttonX >= 1200) {
-                buttonX = x + 16;
-                returned += 48;
-                categoryY += 48;
             }
         }
         return 60 + returned;

@@ -83,4 +83,29 @@ public class TestPage2_Test {
             category = "cat9"
     )
     boolean test9 = false;
+
+    @Switch(
+            name = "Epic Test Switch 9.5",
+            category = "cat9.5"
+    )
+    boolean test9fwiogj = false;
+
+    @Switch(
+            name = "Epic Test Switch 10",
+            category = "cat10"
+    )
+    boolean test10 = false;
+
+    @Switch(
+            name = "Epic Test Switch 11",
+            category = "cat11"
+    )
+    boolean test11 = false;
+
+    @Switch(
+            name = "Epic Test Switch 12",
+            category = "cat12"
+    )
+    boolean test12 = false;
+
 }
