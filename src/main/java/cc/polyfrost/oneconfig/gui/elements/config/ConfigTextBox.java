@@ -55,6 +55,9 @@ public class ConfigTextBox extends BasicOption implements IFocusable {
     private Animation descriptionAnimation = new DummyAnimation(0f);
     private float hoverTime = 0f;
 
+    public ConfigTextBox(Field field, Object parent, String name, String description, String category, String subcategory, int size, String placeholder, boolean secure, boolean multiLine) {
+        this(field, parent, name, description, category, subcategory, size, placeholder, secure, multiLine, false);
+    }
 
     public ConfigTextBox(Field field, Object parent, String name, String description, String category, String subcategory, int size, String placeholder, boolean secure, boolean multiLine, boolean apiKey) {
         super(field, parent, name, description, category, subcategory, size);
