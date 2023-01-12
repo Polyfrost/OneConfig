@@ -73,7 +73,7 @@ public class Preferences extends InternalConfig {
             name = "Opening Behavior",
             category = "Behavior",
             subcategory = "GUI Settings",
-            description = "Choose what happens when you Open the OneConfig UI",
+            description = "Choose which page will show when you open OneConfig",
             options = {
                     "Mods",
                     "Preferences",
@@ -83,6 +83,15 @@ public class Preferences extends InternalConfig {
             size = 2
     )
     public static int openingBehavior = 3;
+
+    @Switch(
+            name = "Show opening page animation",
+            category = "Behavior",
+            subcategory = "GUI Settings",
+            description = "Whether or not to show the page switch animation when opening OneConfig",
+            size = 2
+    )
+    public static boolean showPageAnimationOnOpen = false;
 
     @Slider(
             name = "Time before reset",
@@ -100,7 +109,7 @@ public class Preferences extends InternalConfig {
             max = 10,
             category = "Behavior",
             subcategory = "GUI Settings",
-            description = "The maximum Levenshtein distance to search for similar config names.",
+            description = "The maximum Levenshtein distance to search for similar config names",
             size = 2 // looks awful at 1
     )
     public static int searchDistance = 2;
@@ -139,6 +148,14 @@ public class Preferences extends InternalConfig {
             options = {"Subtle", "Full"}
     )
     public static int animationType = 0;
+
+    @Switch(
+            name = "Show Page Animations",
+            description = "Whether or not to show the page switch animation",
+            category = "Animations",
+            subcategory = "Pages"
+    )
+    public static boolean pageAnimations = true;
 
     @Switch(
             name = "Toggle Switch Bounce",
@@ -188,6 +205,7 @@ public class Preferences extends InternalConfig {
             }
         });
         addDependency("guiClosingAnimation", "guiOpenAnimation");
+        addDependency("timeUntilReset", () -> openingBehavior == 3);
         INSTANCE = this;
     }
 

@@ -565,6 +565,7 @@ public class cc/polyfrost/oneconfig/gui/SideBar {
 	public fun <init> ()V
 	public fun draw (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
 	public fun pageOpened (Ljava/lang/String;)V
+	public fun pageOpened (Ljava/lang/String;Z)V
 }
 
 public abstract class cc/polyfrost/oneconfig/gui/animations/Animation {
@@ -1672,7 +1673,7 @@ public class cc/polyfrost/oneconfig/utils/commands/arguments/ArgumentParser$Stri
 	public fun parse (Ljava/lang/String;)Ljava/lang/String;
 }
 
-public final class cc/polyfrost/oneconfig/utils/dsl/ColorUtilsDSLKt {
+public final class cc/polyfrost/oneconfig/utils/dsl/ColorsKt {
 	public static final fun getAlpha (I)I
 	public static final fun getBlue (I)I
 	public static final fun getGreen (I)I
@@ -1684,32 +1685,26 @@ public final class cc/polyfrost/oneconfig/utils/dsl/ColorUtilsDSLKt {
 	public static final fun toColor (I)Lcc/polyfrost/oneconfig/config/core/OneColor;
 }
 
-public final class cc/polyfrost/oneconfig/utils/dsl/IOUtilsDSLKt {
+public final class cc/polyfrost/oneconfig/utils/dsl/IoKt {
 	public static final fun checksum (Ljava/io/File;)Ljava/lang/String;
 }
 
-public final class cc/polyfrost/oneconfig/utils/dsl/JsonUtilsDSLKt {
+public final class cc/polyfrost/oneconfig/utils/dsl/JsonKt {
 	public static final fun asJsonElement (Ljava/lang/String;Z)Lcom/google/gson/JsonElement;
 	public static synthetic fun asJsonElement$default (Ljava/lang/String;ZILjava/lang/Object;)Lcom/google/gson/JsonElement;
 }
 
-public final class cc/polyfrost/oneconfig/utils/dsl/MathUtilsDSLKt {
+public final class cc/polyfrost/oneconfig/utils/dsl/MathsKt {
 	public static final fun clamp (Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;)F
 	public static synthetic fun clamp$default (Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;ILjava/lang/Object;)F
 }
 
-public final class cc/polyfrost/oneconfig/utils/dsl/MultithreadingDSLKt {
+public final class cc/polyfrost/oneconfig/utils/dsl/MultithreadingKt {
 	public static final fun runAsync (Lkotlin/jvm/functions/Function0;)V
 	public static final fun schedule (JLjava/util/concurrent/TimeUnit;Lkotlin/jvm/functions/Function0;)V
 }
 
-public final class cc/polyfrost/oneconfig/utils/dsl/NetworkUtilsDSLKt {
-	public static final fun browseLink (Lcc/polyfrost/oneconfig/libs/universal/UDesktop;Ljava/lang/String;)V
-	public static final fun download (Ljava/io/File;Ljava/lang/String;Ljava/lang/String;IZ)Z
-	public static synthetic fun download$default (Ljava/io/File;Ljava/lang/String;Ljava/lang/String;IZILjava/lang/Object;)Z
-}
-
-public final class cc/polyfrost/oneconfig/utils/dsl/RenderManagerDSLKt {
+public final class cc/polyfrost/oneconfig/utils/dsl/NanovgKt {
 	public static final fun drawCircle (JLjava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;I)V
 	public static final fun drawCircle-0M_6p4I (JLjava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;I)V
 	public static final fun drawDropShadow (JLjava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;)V
@@ -1782,7 +1777,13 @@ public final class cc/polyfrost/oneconfig/utils/dsl/RenderManagerDSLKt {
 	public static final fun translate-DMtsu_g (JFF)V
 }
 
-public final class cc/polyfrost/oneconfig/utils/dsl/StringUtilsDSLKt {
+public final class cc/polyfrost/oneconfig/utils/dsl/NetworkKt {
+	public static final fun browseLink (Lcc/polyfrost/oneconfig/libs/universal/UDesktop;Ljava/lang/String;)V
+	public static final fun download (Ljava/io/File;Ljava/lang/String;Ljava/lang/String;IZ)Z
+	public static synthetic fun download$default (Ljava/io/File;Ljava/lang/String;Ljava/lang/String;IZILjava/lang/Object;)Z
+}
+
+public final class cc/polyfrost/oneconfig/utils/dsl/StringsKt {
 	public static final fun addStringAt (Ljava/lang/String;ILjava/lang/String;)Ljava/lang/String;
 	public static final fun isValidSequence (Ljava/lang/String;II)Z
 	public static final fun nullToEmpty (Ljava/lang/String;)Ljava/lang/String;
@@ -1797,7 +1798,7 @@ public final class cc/polyfrost/oneconfig/utils/dsl/StringUtilsDSLKt {
 	public static final fun substringToLastIndexOf (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
 }
 
-public final class cc/polyfrost/oneconfig/utils/dsl/TickDelayDSLKt {
+public final class cc/polyfrost/oneconfig/utils/dsl/TickKt {
 	public static final fun tick (ILkotlin/jvm/functions/Function0;)Lcc/polyfrost/oneconfig/utils/TickDelay;
 }
 
