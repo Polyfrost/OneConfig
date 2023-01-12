@@ -27,37 +27,33 @@
 package cc.polyfrost.oneconfig.internal.mixin;
 
 import cc.polyfrost.oneconfig.events.EventManager;
-import cc.polyfrost.oneconfig.events.event.ChatReceiveEvent;
-import net.minecraft.client.network.ClientPlayNetworkHandler;
-import net.minecraft.network.packet.s2c.play.GameMessageS2CPacket;
-import net.minecraft.text.Text;
+import cc.polyfrost.oneconfig.events.event.ChatSendEvent;
+import net.minecraft.client.entity.EntityPlayerSP;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(value = ClientPlayNetworkHandler.class, priority = Integer.MAX_VALUE)
-public class NetHandlerPlayClientMixin {
-
+@Mixin(EntityPlayerSP.class)
+public class EntityPlayerSPMixin {
     @Unique
-    private ChatReceiveEvent oneconfig$event = null;
+    private ChatSendEvent oneconfig$sendchatevent;
 
-    @Inject(method = "onGameMessage", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/hud/InGameHud;addChatMessage(Lnet/minecraft/network/MessageType;Lnet/minecraft/text/Text;Ljava/util/UUID;)V"), cancellable = true)
-    private void onClientChat(GameMessageS2CPacket packet, CallbackInfo ci) {
-        if (oneconfig$event.isCancelled) {
+    @Inject(method = "sendChatMessage", at = @At("HEAD"), cancellable = true)
+    public void sendChatMessage(String message, CallbackInfo ci) {
+        oneconfig$sendchatevent = new ChatSendEvent(message);
+
+        EventManager.INSTANCE.post(oneconfig$sendchatevent);
+
+        if (oneconfig$sendchatevent.isCancelled) {
             ci.cancel();
         }
     }
 
-    @Redirect(method = "onGameMessage", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/packet/s2c/play/GameMessageS2CPacket;getMessage()Lnet/minecraft/text/Text;"))
-    private Text onClientChatRedirect(GameMessageS2CPacket packet) {
-        if (!packet.isNonChat()) {
-            oneconfig$event = new ChatReceiveEvent(packet.getMessage());
-            EventManager.INSTANCE.post(oneconfig$event);
-            return oneconfig$event.message;
-        }
-        return packet.getMessage();
+    @ModifyVariable(method = "sendChatMessage", at = @At("HEAD"), ordinal = 0, argsOnly = true)
+    public String modifyMessage(String message) {
+        return oneconfig$sendchatevent.message;
     }
 }

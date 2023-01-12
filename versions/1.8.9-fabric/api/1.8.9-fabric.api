@@ -78,6 +78,7 @@ public class cc/polyfrost/oneconfig/platform/impl/PlatformImpl : cc/polyfrost/on
 
 public class cc/polyfrost/oneconfig/platform/impl/ServerPlatformImpl : cc/polyfrost/oneconfig/platform/ServerPlatform {
 	public fun <init> ()V
+	public fun doesPlayerExist ()Z
 	public fun getServerBrand ()Ljava/lang/String;
 	public fun inMultiplayer ()Z
 }

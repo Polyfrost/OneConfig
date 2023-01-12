@@ -49,30 +49,28 @@ public class NetHandlerPlayClientMixin {
             //#endif
 
     @Unique
-    private Text oneconfig$newMessage = null;
+    private ChatReceiveEvent oneconfig$event = null;
 
     @Inject(method = "onChatMessage", at = @At(value = "INVOKE", target = TARGET), cancellable = true)
     private void onClientChat(ChatMessageS2CPacket packet, CallbackInfo ci) {
-        if (
-                //#if MC<=10809
-                packet.getType() == 0
-                //#else
-                //$$ !packet.isNonChat()
-                //#endif
-        ) {
-            ChatReceiveEvent event = new ChatReceiveEvent(packet.getMessage());
-            EventManager.INSTANCE.post(event);
-            if (event.isCancelled) {
-                ci.cancel();
-            }
-            oneconfig$newMessage = event.message;
-        } else {
-            oneconfig$newMessage = null;
+        if (oneconfig$event.isCancelled) {
+            ci.cancel();
         }
     }
 
     @Redirect(method = "onChatMessage", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/packet/s2c/play/ChatMessageS2CPacket;getMessage()Lnet/minecraft/text/Text;"))
-    private Text onClientChatRedirect(ChatMessageS2CPacket instance) {
-        return oneconfig$newMessage == null ? instance.getMessage() : oneconfig$newMessage;
+    private Text onClientChatRedirect(ChatMessageS2CPacket packet) {
+        if (
+            //#if MC<=10809
+                packet.getType() == 0
+            //#else
+            //$$ !packet.isNonChat()
+            //#endif
+        ) {
+            oneconfig$event = new ChatReceiveEvent(packet.getMessage());
+            EventManager.INSTANCE.post(oneconfig$event);
+            return oneconfig$event.message;
+        }
+        return packet.getMessage();
     }
 }

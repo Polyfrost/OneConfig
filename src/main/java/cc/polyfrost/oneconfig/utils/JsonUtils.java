@@ -29,6 +29,8 @@ package cc.polyfrost.oneconfig.utils;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 
+import java.util.function.Consumer;
+
 /**
  * Various utility methods for working with JSON.
  */
@@ -38,6 +40,35 @@ public final class JsonUtils {
      * The instance of the parser.
      */
     public static final JsonParser PARSER = new JsonParser();
+
+    /**
+     * Runs the provided consumer if the given string is a valid JSON string.
+     * @param json The JSON string to check.
+     * @param consumer The consumer to run if the string is a valid JSON.
+     * @return Whether the string is a valid JSON string.
+     */
+    public static boolean ifValid(String json, Consumer<JsonElement> consumer) {
+        try {
+            consumer.accept(PARSER.parse(json));
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
+     * Checks whether the given string is a valid JSON.
+     * @param json The string to check.
+     * @return Whether the string is a valid JSON.
+     */
+    public static boolean isValid(String json) {
+        try {
+            PARSER.parse(json);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
 
     /**
      * Parses a string into a {@link JsonElement}.

@@ -24,12 +24,12 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.platform;
+package cc.polyfrost.oneconfig.events.event;
 
-public interface ServerPlatform {
-    boolean inMultiplayer();
+public class ChatSendEvent extends CancellableEvent {
+    public String message;
 
-    String getServerBrand();
-
-    boolean doesPlayerExist();
+    public ChatSendEvent(String message) {
+        this.message = message;
+    }
 }

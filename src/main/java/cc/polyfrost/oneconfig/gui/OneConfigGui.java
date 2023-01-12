@@ -208,7 +208,7 @@ public class OneConfigGui extends OneUIScreen {
             }
         }
 
-        float animationValue = Math.max(0, containerAnimation.get());
+        float animationValue = Math.max(0, Preferences.guiOpenAnimation ? containerAnimation.get() : 1);
         switch (Preferences.animationType) {
             case 0:
                 animationScaleFactor = MathUtils.clamp(.9f + animationValue, .9f, 1f);
@@ -317,6 +317,7 @@ public class OneConfigGui extends OneUIScreen {
         if (currentColorSelector != null) {
             currentColorSelector.draw(vg);
         }
+        GuiNotifications.INSTANCE.draw(vg, x + 224 + ((1280 - 224) / 2), y + 720 + 72, inputHandler);
         nanoVGHelper.resetTransform(vg);
         isDrawing = false;
     }

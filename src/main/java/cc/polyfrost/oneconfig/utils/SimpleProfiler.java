@@ -34,7 +34,7 @@ public final class SimpleProfiler {
      * @see #push(String)
      */
     public static float pop(@NotNull final String msg) {
-        return pop(msg, Level.INFO);
+        return pop(msg, Level.DEBUG);
     }
 
     /**
