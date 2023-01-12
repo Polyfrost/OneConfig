@@ -199,12 +199,12 @@ public class TestConfig_Test extends Config {
     public TestPage_Test testPage = new TestPage_Test();
 
     @Page(
-            name = "Test Page",
+            name = "Test Page 2",
             description = "Test Description",
             location = PageLocation.BOTTOM
 
     )
-    public TestPage_Test testPage2 = new TestPage_Test();
+    public TestPage2_Test testPage2 = new TestPage2_Test();
 
     @Switch(
             name = "Test Switch",
