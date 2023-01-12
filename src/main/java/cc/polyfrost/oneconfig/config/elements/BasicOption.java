@@ -30,7 +30,6 @@ import cc.polyfrost.oneconfig.gui.animations.Animation;
 import cc.polyfrost.oneconfig.gui.animations.ColorAnimation;
 import cc.polyfrost.oneconfig.gui.animations.DummyAnimation;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
-import cc.polyfrost.oneconfig.internal.utils.Deprecator;
 import cc.polyfrost.oneconfig.internal.utils.DescriptionRenderer;
 import cc.polyfrost.oneconfig.libs.universal.ChatColor;
 import cc.polyfrost.oneconfig.libs.universal.UResolution;
@@ -236,7 +235,6 @@ public abstract class BasicOption {
      */
     @Deprecated
     public void addDependency(Supplier<Boolean> supplier) {
-        Deprecator.markDeprecated();
         this.dependencies.put("unknown-" + UUID.randomUUID(), supplier);
     }
 
