@@ -26,22 +26,12 @@
 
 package cc.polyfrost.oneconfig.utils.dsl
 
-import cc.polyfrost.oneconfig.utils.NetworkUtils
-import cc.polyfrost.oneconfig.libs.universal.UDesktop
+import cc.polyfrost.oneconfig.utils.IOUtils
 import java.io.File
 
 /**
- * Downloads the given [url] to the given [File].
+ * Returns the SHA-256 hash of the given [File].
  *
- * @see NetworkUtils.downloadFile
+ * @see IOUtils.getFileChecksum
  */
-fun File.download(url: String, userAgent: String = "OneConfig/1.0.0", timeout: Int = 5000, useCaches: Boolean = false) =
-    NetworkUtils.downloadFile(url, this, userAgent, timeout, useCaches)
-
-/**
- * Launches a URL in the default browser.
- *
- * @see NetworkUtils.browseLink
- */
-@Suppress("unused")
-fun UDesktop.browseLink(uri: String) = NetworkUtils.browseLink(uri)
+fun File.checksum() = IOUtils.getFileChecksum(this)!!
