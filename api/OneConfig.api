@@ -1199,6 +1199,7 @@ public abstract interface class cc/polyfrost/oneconfig/platform/Platform {
 	public static fun getServerPlatform ()Lcc/polyfrost/oneconfig/platform/ServerPlatform;
 	public abstract fun isCallingFromMinecraftThread ()Z
 	public abstract fun isDevelopmentEnvironment ()Z
+	public abstract fun playClickSound ()V
 }
 
 public final class cc/polyfrost/oneconfig/platform/Platform$Loader : java/lang/Enum {

@@ -69,6 +69,8 @@ public interface Platform {
 
     boolean isDevelopmentEnvironment();
 
+    void playClickSound();
+
     Loader getLoader();
 
     class PlatformHolder {

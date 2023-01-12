@@ -73,6 +73,7 @@ public class cc/polyfrost/oneconfig/platform/impl/PlatformImpl : cc/polyfrost/on
 	public fun getMinecraftVersion ()I
 	public fun isCallingFromMinecraftThread ()Z
 	public fun isDevelopmentEnvironment ()Z
+	public fun playClickSound ()V
 }
 
 public class cc/polyfrost/oneconfig/platform/impl/ServerPlatformImpl : cc/polyfrost/oneconfig/platform/ServerPlatform {
