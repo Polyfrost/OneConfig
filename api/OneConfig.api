@@ -886,6 +886,7 @@ public class cc/polyfrost/oneconfig/gui/elements/config/ConfigSwitch : cc/polyfr
 
 public class cc/polyfrost/oneconfig/gui/elements/config/ConfigTextBox : cc/polyfrost/oneconfig/config/elements/BasicOption, cc/polyfrost/oneconfig/gui/elements/IFocusable {
 	public final field textField Lcc/polyfrost/oneconfig/gui/elements/text/TextInputField;
+	public fun <init> (Ljava/lang/reflect/Field;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;ZZ)V
 	public fun <init> (Ljava/lang/reflect/Field;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;ZZZ)V
 	public static fun create (Ljava/lang/reflect/Field;Ljava/lang/Object;)Lcc/polyfrost/oneconfig/gui/elements/config/ConfigTextBox;
 	public fun draw (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
