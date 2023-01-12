@@ -367,7 +367,7 @@ public class OneConfigGui extends OneUIScreen {
             }
             if (forward && nextPages.size() > 0) {
                 previousPages.add(0, currentPage);
-                openPage(nextPages.get(0), new EaseOutExpo(300, 224, 2128, true), false);
+                openPage(nextPages.get(0), new EaseOutExpo((int) Preferences.pageAnimationDuration * 1000, 224, 2128, true), false);
                 nextPages.remove(0);
             }
         } catch (Throwable ignored) {
@@ -379,7 +379,7 @@ public class OneConfigGui extends OneUIScreen {
     }
 
     public void openPage(@NotNull Page page, boolean addToPrevious) {
-        openPage(page, new EaseOutExpo(300, 224, 2128, false), addToPrevious);
+        openPage(page, new EaseOutExpo((int) (Preferences.pageAnimationDuration * 1000), 224, 2128, false), addToPrevious);
     }
 
     private void openPage(@NotNull Page page, boolean addToPrevious, boolean instant) {
@@ -395,7 +395,7 @@ public class OneConfigGui extends OneUIScreen {
     }
 
     public void openPage(@NotNull Page page, Animation animation, boolean addToPrevious) {
-        if (!Preferences.pageAnimations) {
+        if (!Preferences.showPageAnimations) {
             animation = new DummyAnimation(animation.getEnd());
         }
 

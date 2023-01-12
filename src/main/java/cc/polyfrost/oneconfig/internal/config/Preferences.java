@@ -108,9 +108,9 @@ public class Preferences extends InternalConfig {
             min = 0,
             max = 10,
             category = "Behavior",
-            subcategory = "GUI Settings",
+            subcategory = "Search",
             description = "The maximum Levenshtein distance to search for similar config names",
-            size = 2 // looks awful at 1
+            size = 2
     )
     public static int searchDistance = 2;
 
@@ -151,15 +151,25 @@ public class Preferences extends InternalConfig {
 
     @Switch(
             name = "Show Page Animations",
-            description = "Whether or not to show the page switch animation",
+            description = "Enables or disables the page switch animation",
             category = "Animations",
             subcategory = "Pages"
     )
-    public static boolean pageAnimations = true;
+    public static boolean showPageAnimations = true;
+
+    @Slider(
+            name = "Page Animation Duration",
+            description = "The duration of the page switch animation, in seconds",
+            category = "Animations",
+            subcategory = "Pages",
+            min = 0.1f,
+            max = .6f
+    )
+    public static float pageAnimationDuration = .3f;
 
     @Switch(
             name = "Toggle Switch Bounce",
-            description = "Enables or disable the bounce animation on toggle switches",
+            description = "Enables or disables the bounce animation on toggle switches",
             category = "Animations",
             subcategory = "Toggles"
     )
@@ -167,13 +177,13 @@ public class Preferences extends InternalConfig {
 
     @Slider(
             name = "Tracker Response Time",
-            description = "The time it takes for the slider tracker to move, in seconds",
+            description = "The time it takes for the slider tracker to move, in milliseconds",
             category = "Animations",
             subcategory = "Sliders",
             min = 0f,
-            max = 0.1f
+            max = 100f
     )
-    public static float trackerResponseTime = 0.06f;
+    public static float trackerResponseDuration = 60;
 
     @Dropdown(
             name = "Release Channel",
@@ -206,6 +216,7 @@ public class Preferences extends InternalConfig {
         });
         addDependency("guiClosingAnimation", "guiOpenAnimation");
         addDependency("timeUntilReset", () -> openingBehavior == 3);
+        addDependency("pageAnimationDuration", "showPageAnimations");
         INSTANCE = this;
     }
 
