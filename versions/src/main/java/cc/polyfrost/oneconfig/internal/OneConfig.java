@@ -132,7 +132,10 @@ public class OneConfig {
             ConfigCore.mods.add(entry.getKey());
         }
         //#endif
-        GuiUtils.getDeltaTime(); // called to make sure static initializer is called
+        // called to make sure static initializer is called
+        Notifications.INSTANCE.getClass();
+        EventManager.INSTANCE.register(Notifications.INSTANCE);
+        GuiUtils.getDeltaTime();
         try {
             EventManager.INSTANCE.register(BlurHandler.INSTANCE);
         } catch (Exception e) {
@@ -142,7 +145,6 @@ public class OneConfig {
         EventManager.INSTANCE.register(new HudCore());
         HypixelUtils.INSTANCE.initialize();
         EventManager.INSTANCE.register(KeyBindHandler.INSTANCE);
-        EventManager.INSTANCE.register(Notifications.INSTANCE);
         ConfigCore.sortMods();
 
         initialized = true;

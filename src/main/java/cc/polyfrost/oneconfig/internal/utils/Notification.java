@@ -75,7 +75,7 @@ public final class Notification {
         float x = (UResolution.getWindowWidth() / scale - animation.get(hovered ? 0 : deltaTime));
         float textX = icon == null ? x + 16 : x + 64;
         float textMaxLength = icon == null ? 268 : 220;
-        float messageHeight = renderer.getWrappedStringHeight(vg, message, textMaxLength, 12f, 1.75f, Fonts.REGULAR);
+        float messageHeight = renderer.getWrappedStringHeight(vg, message, textMaxLength, 12f, 1f, Fonts.REGULAR);
         float height = getHeight(messageHeight);
         y -= height;
         hovered = inputHandler.isAreaHovered(x, y, 314, height);
@@ -87,7 +87,7 @@ public final class Notification {
         if (icon != null)
             icon.draw(vg, x + 16f, y + (height - (progressBar == null ? 0f : 5f)) / 2f - 16f, 32f, 32f, titleColor, scale);
         renderer.drawText(vg, title, textX, y + 30, titleColor, 16f, Fonts.SEMIBOLD);
-        renderer.drawWrappedString(vg, message, textX, y + 46, textMaxLength, messageColor, 12f, 1.75f, Fonts.REGULAR);
+        renderer.drawWrappedString(vg, message, textX, y + 46, textMaxLength, messageColor, 12f, 1f, Fonts.REGULAR);
         if (progressBar != null) {
             try {
                 ScissorHelper scissorHelper = ScissorHelper.INSTANCE;

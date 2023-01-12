@@ -28,7 +28,10 @@ package cc.polyfrost.oneconfig.internal.config;
 
 import cc.polyfrost.oneconfig.config.Config;
 import cc.polyfrost.oneconfig.config.data.Mod;
-
+import cc.polyfrost.oneconfig.config.gson.exclusion.ProfileExclusionStrategy;
+import com.google.gson.FieldAttributes;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -40,6 +43,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public abstract class InternalConfig extends Config {
+    transient protected final Gson gson = addGsonOptions(new GsonBuilder()
+            .setExclusionStrategies(new InternalConfigExclusionStrategy()))
+            .create();
+
     /**
      * @param title      title that is displayed
      * @param configFile file where config is stored
@@ -74,6 +81,13 @@ public abstract class InternalConfig extends Config {
             e.printStackTrace();
             File file = path.toFile();
             file.renameTo(new File(file.getParentFile(), file.getName() + ".corrupted"));
+        }
+    }
+
+    private static final class InternalConfigExclusionStrategy extends ProfileExclusionStrategy {
+        @Override
+        public boolean shouldSkipField(FieldAttributes f) {
+            return f.getName().equals("hypixelKey") || super.shouldSkipField(f);
         }
     }
 }
