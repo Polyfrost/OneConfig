@@ -585,6 +585,7 @@ public class cc/polyfrost/oneconfig/gui/SideBar {
 	public fun <init> ()V
 	public fun draw (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
 	public fun pageOpened (Ljava/lang/String;)V
+	public fun pageOpened (Ljava/lang/String;Z)V
 }
 
 public abstract class cc/polyfrost/oneconfig/gui/animations/Animation {
@@ -1175,6 +1176,7 @@ public abstract interface class cc/polyfrost/oneconfig/platform/GuiPlatform {
 	public abstract fun getCurrentScreen ()Ljava/lang/Object;
 	public abstract fun isInChat ()Z
 	public abstract fun isInDebug ()Z
+	public abstract fun playClickSound ()V
 	public abstract fun setCurrentScreen (Ljava/lang/Object;)V
 }
 

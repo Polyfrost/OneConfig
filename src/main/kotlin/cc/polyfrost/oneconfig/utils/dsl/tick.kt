@@ -24,11 +24,16 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
+// Retrocompatibility
+@file:JvmName("TickDelayDSLKt")
+
 package cc.polyfrost.oneconfig.utils.dsl
 
-import cc.polyfrost.oneconfig.utils.MathUtils
+import cc.polyfrost.oneconfig.utils.TickDelay
 
 /**
- * @see MathUtils.clamp
+ * Schedules a Runnable to be called after a certain amount of ticks.
+ *
+ * @see TickDelay
  */
-fun Number.clamp(min: Number = 0F, max: Number = 1F) = MathUtils.clamp(this.toFloat(), min.toFloat(), max.toFloat())
+fun tick(ticks: Int, block: () -> Unit) = TickDelay(block, ticks)

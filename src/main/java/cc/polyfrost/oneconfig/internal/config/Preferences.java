@@ -75,7 +75,7 @@ public class Preferences extends InternalConfig {
             name = "Opening Behavior",
             category = "Behavior",
             subcategory = "GUI Settings",
-            description = "Choose what happens when you Open the OneConfig UI",
+            description = "Choose which page will show when you open OneConfig",
             options = {
                     "Mods",
                     "Preferences",
@@ -85,6 +85,15 @@ public class Preferences extends InternalConfig {
             size = 2
     )
     public static int openingBehavior = 3;
+
+    @Switch(
+            name = "Show opening page animation",
+            category = "Behavior",
+            subcategory = "GUI Settings",
+            description = "Whether or not to show the page switch animation when opening OneConfig",
+            size = 2
+    )
+    public static boolean showPageAnimationOnOpen = false;
 
     @Slider(
             name = "Time before reset",
@@ -101,9 +110,9 @@ public class Preferences extends InternalConfig {
             min = 0,
             max = 10,
             category = "Behavior",
-            subcategory = "GUI Settings",
-            description = "The maximum Levenshtein distance to search for similar config names.",
-            size = 2 // looks awful at 1
+            subcategory = "Search",
+            description = "The maximum Levenshtein distance to search for similar config names",
+            size = 2
     )
     public static int searchDistance = 2;
 
@@ -143,8 +152,26 @@ public class Preferences extends InternalConfig {
     public static int animationType = 0;
 
     @Switch(
+            name = "Show Page Animations",
+            description = "Enables or disables the page switch animation",
+            category = "Animations",
+            subcategory = "Pages"
+    )
+    public static boolean showPageAnimations = true;
+
+    @Slider(
+            name = "Page Animation Duration",
+            description = "The duration of the page switch animation, in seconds",
+            category = "Animations",
+            subcategory = "Pages",
+            min = 0.1f,
+            max = .6f
+    )
+    public static float pageAnimationDuration = .3f;
+
+    @Switch(
             name = "Toggle Switch Bounce",
-            description = "Enables or disable the bounce animation on toggle switches",
+            description = "Enables or disables the bounce animation on toggle switches",
             category = "Animations",
             subcategory = "Toggles"
     )
@@ -152,13 +179,13 @@ public class Preferences extends InternalConfig {
 
     @Slider(
             name = "Tracker Response Time",
-            description = "The time it takes for the slider tracker to move, in seconds",
+            description = "The time it takes for the slider tracker to move, in milliseconds",
             category = "Animations",
             subcategory = "Sliders",
             min = 0f,
-            max = 0.1f
+            max = 100f
     )
-    public static float trackerResponseTime = 0.06f;
+    public static float trackerResponseDuration = 60;
 
     @Switch(
             name = "Automatically Detect Hypixel API Key",
@@ -242,6 +269,8 @@ public class Preferences extends InternalConfig {
             }
         });
         addDependency("guiClosingAnimation", "guiOpenAnimation");
+        addDependency("timeUntilReset", () -> openingBehavior == 3);
+        addDependency("pageAnimationDuration", "showPageAnimations");
         INSTANCE = this;
     }
 

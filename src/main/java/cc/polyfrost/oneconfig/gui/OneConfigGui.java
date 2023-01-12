@@ -125,13 +125,14 @@ public class OneConfigGui extends OneUIScreen {
     }
 
     private void handleOpeningPage() {
+        boolean instant = !Preferences.showPageAnimationOnOpen;
         switch (Preferences.openingBehavior) {
             case 0:
                 if (currentPage instanceof ModsPage) {
                     break;
                 }
                 previousPages.clear();
-                openPage(new ModsPage(), false);
+                openPage(new ModsPage(), false, instant);
                 break;
             case 1:
                 OptionPage preferencesPage = Preferences.getInstance().mod.defaultPage;
@@ -142,7 +143,14 @@ public class OneConfigGui extends OneUIScreen {
                     }
                 }
                 previousPages.clear();
-                openPage(new ModConfigPage(Preferences.getInstance().mod.defaultPage, true), false);
+                openPage(
+                        new ModConfigPage(
+                                Preferences.getInstance().mod.defaultPage,
+                                true
+                        ),
+                        false,
+                        instant
+                );
                 break;
             case 2:
                 break;
@@ -159,7 +167,7 @@ public class OneConfigGui extends OneUIScreen {
                     break;
                 }
                 previousPages.clear();
-                openPage(new ModsPage(), false);
+                openPage(new ModsPage(), false, instant);
                 break;
         }
     }
@@ -360,7 +368,7 @@ public class OneConfigGui extends OneUIScreen {
             }
             if (forward && nextPages.size() > 0) {
                 previousPages.add(0, currentPage);
-                openPage(nextPages.get(0), new EaseOutExpo(300, 224, 2128, true), false);
+                openPage(nextPages.get(0), new EaseOutExpo((int) Preferences.pageAnimationDuration * 1000, 224, 2128, true), false);
                 nextPages.remove(0);
             }
         } catch (Throwable ignored) {
@@ -372,10 +380,26 @@ public class OneConfigGui extends OneUIScreen {
     }
 
     public void openPage(@NotNull Page page, boolean addToPrevious) {
-        openPage(page, new EaseOutExpo(300, 224, 2128, false), addToPrevious);
+        openPage(page, new EaseOutExpo((int) (Preferences.pageAnimationDuration * 1000), 224, 2128, false), addToPrevious);
+    }
+
+    private void openPage(@NotNull Page page, boolean addToPrevious, boolean instant) {
+        if (instant) {
+            openPageInstant(page, addToPrevious);
+        } else {
+            openPage(page, addToPrevious);
+        }
+    }
+
+    private void openPageInstant(@NotNull Page page, boolean addToPrevious) {
+        openPage(page, new DummyAnimation(2128), addToPrevious);
     }
 
     public void openPage(@NotNull Page page, Animation animation, boolean addToPrevious) {
+        if (!Preferences.showPageAnimations) {
+            animation = new DummyAnimation(animation.getEnd());
+        }
+
         if (page == currentPage) return;
         currentPage.finishUpAndClose();
         textInputField.setInput("");
@@ -397,7 +421,7 @@ public class OneConfigGui extends OneUIScreen {
                 page.parents.add(page);
             }
         }
-        sideBar.pageOpened(page.parents.get(0).getTitle());
+        sideBar.pageOpened(page.parents.get(0).getTitle(), animation instanceof DummyAnimation);
         if (addToPrevious) {
             previousPages.add(0, currentPage);
             nextPages.clear();

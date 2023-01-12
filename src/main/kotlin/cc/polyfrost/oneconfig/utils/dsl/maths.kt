@@ -24,21 +24,14 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
+// Retrocompatibility
+@file:JvmName("MathUtilsDSLKt")
+
 package cc.polyfrost.oneconfig.utils.dsl
 
-import cc.polyfrost.oneconfig.utils.Multithreading
-import java.util.concurrent.TimeUnit
+import cc.polyfrost.oneconfig.utils.MathUtils
 
 /**
- * Runs the given [block] asynchronously.
- *
- * @see Multithreading.runAsync
+ * @see MathUtils.clamp
  */
-fun runAsync(block: () -> Unit) = Multithreading.runAsync(block)
-
-/**
- * Runs the given [block] asynchronously after the given [delay].
- *
- * @see Multithreading.schedule
- */
-fun schedule(delay: Long, timeUnit: TimeUnit, block: () -> Unit) = Multithreading.schedule(block, delay, timeUnit)
+fun Number.clamp(min: Number = 0F, max: Number = 1F) = MathUtils.clamp(this.toFloat(), min.toFloat(), max.toFloat())
