@@ -24,12 +24,17 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
+// Retrocompatibility
+@file:JvmName("GuiUtilsDSLKt")
+
 package cc.polyfrost.oneconfig.utils.dsl
 
-import cc.polyfrost.oneconfig.libs.universal.UMinecraft
+import cc.polyfrost.oneconfig.utils.gui.GuiUtils
+import net.minecraft.client.gui.GuiScreen
 
 /**
- * Gets the current [net.minecraft.client.Minecraft] instance.
+ * Displays a screen after the specified amount of ticks.
+ *
+ * @param ticks the amount of ticks to wait for before displaying the screen.
  */
-val mc
-    get() = UMinecraft.getMinecraft()
+fun GuiScreen.openScreen(ticks: Int = 1) = GuiUtils.displayScreen(this, ticks)

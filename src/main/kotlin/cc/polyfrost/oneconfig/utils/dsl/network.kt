@@ -24,6 +24,9 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
+// Retrocompatibility
+@file:JvmName("NetworkUtilsDSLKt")
+
 package cc.polyfrost.oneconfig.utils.dsl
 
 import cc.polyfrost.oneconfig.utils.NetworkUtils
