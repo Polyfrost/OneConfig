@@ -58,7 +58,7 @@ public final class Deprecator {
             // sometimes it blames OneConfig as well so
             if (culprit.equals("OneConfig")) return;
 
-            if (!warned.add(culprit)) {
+            if (warned.add(culprit)) {
                 Notifications.INSTANCE.send("Deprecation Warning", "The mod '" + culprit + "' is using a deprecated method, and will no longer work in the future. Please report this to the mod author.");
                 try {
                     throw new UnsupportedOperationException("Method " + e.getStackTrace()[1].getClassName() + "." + e.getStackTrace()[1].getMethodName() + "() is deprecated; but is still being used by mod " + culprit + "!");
