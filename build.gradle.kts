@@ -7,7 +7,7 @@ import cc.polyfrost.gradle.util.RelocationTransform.Companion.registerRelocation
 import cc.polyfrost.gradle.util.prebundle
 
 plugins {
-    kotlin("jvm") version "1.6.21"
+    kotlin("jvm") version "1.8.0"
     id("org.jetbrains.kotlinx.binary-compatibility-validator") version "0.12.1"
     id("cc.polyfrost.defaults.repo")
     id("cc.polyfrost.defaults.java")
