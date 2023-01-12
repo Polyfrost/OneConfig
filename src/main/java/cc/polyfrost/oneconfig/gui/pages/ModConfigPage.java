@@ -75,11 +75,13 @@ public class ModConfigPage extends Page {
         this(page, false);
     }
 
+    private int categoryY = 0;
+
     @Override
     public void draw(long vg, int x, int y, InputHandler inputHandler) {
         if (page.categories.size() == 0) return;
         ScissorHelper scissorHelper = ScissorHelper.INSTANCE;
-        int optionY = y + (page.categories.size() == 1 ? 16 : 64);
+        int optionY = y + (page.categories.size() == 1 ? 16 : 64) + categoryY;
         List<OptionSubcategory> subcategories = getSubcategories();
         for (OptionSubcategory subCategory : subcategories) {
             optionY += subCategory.draw(vg, x + 30, optionY, inputHandler);
@@ -95,8 +97,10 @@ public class ModConfigPage extends Page {
 
     @Override
     public int drawStatic(long vg, int x, int y, InputHandler inputHandler) {
+        categoryY = 0;
         if (categories.size() <= 1) return 0;
         int buttonX = x + 16;
+        int returned = 0;
         boolean searching = !OneConfigGui.INSTANCE.getSearchValue().trim().isEmpty();
         for (BasicButton button : categories) {
             if (button.getWidth() == 0)
@@ -105,15 +109,20 @@ public class ModConfigPage extends Page {
                 boolean similar = SearchUtils.isSimilar(button.getText(), OneConfigGui.INSTANCE.getSearchValue());
                 boolean selected = button.isToggled();
                 button.setToggled(similar);
-                button.draw(vg, buttonX, y + 16, inputHandler);
+                button.draw(vg, buttonX, y + 16 + returned, inputHandler);
                 buttonX += button.getWidth() + 16;
                 button.setToggled(selected);
             } else {
-                button.draw(vg, buttonX, y + 16, inputHandler);
+                button.draw(vg, buttonX, y + 16 + returned, inputHandler);
                 buttonX += button.getWidth() + 16;
             }
+            if (buttonX >= 1200) {
+                buttonX = x + 16;
+                returned += 48;
+                categoryY += 48;
+            }
         }
-        return 60;
+        return 60 + returned;
     }
 
     @Override
