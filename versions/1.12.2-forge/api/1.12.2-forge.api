@@ -38,6 +38,7 @@ public class cc/polyfrost/oneconfig/platform/impl/GuiPlatformImpl : cc/polyfrost
 	public fun getCurrentScreen ()Ljava/lang/Object;
 	public fun isInChat ()Z
 	public fun isInDebug ()Z
+	public fun playClickSound ()V
 	public fun setCurrentScreen (Ljava/lang/Object;)V
 }
 

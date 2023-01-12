@@ -31,6 +31,11 @@ import cc.polyfrost.oneconfig.libs.universal.UScreen;
 import cc.polyfrost.oneconfig.platform.GuiPlatform;
 import net.minecraft.client.gui.GuiChat;
 import net.minecraft.client.gui.GuiScreen;
+//#if MC<=11202
+import net.minecraft.client.gui.GuiButton;
+//#elseif MC<=11605
+//$$ import net.minecraft.client.gui.widget.button.Button;
+//#endif
 
 public class GuiPlatformImpl implements GuiPlatform {
 
@@ -52,5 +57,16 @@ public class GuiPlatformImpl implements GuiPlatform {
     @Override
     public boolean isInDebug() {
         return UMinecraft.getSettings().showDebugInfo;
+    }
+
+    @Override
+    public void playClickSound() {
+        //#if MC<=11202
+        new GuiButton(-1, -1, -1, "")
+                .playPressSound(UMinecraft.getMinecraft().getSoundHandler());
+        //#elseif MC<=11605
+        //$$ new Button(-1, -1, -1, -1, null, (button) -> {})
+        //$$         .playDownSound(UMinecraft.getMinecraft().getSoundHandler());
+        //#endif
     }
 }

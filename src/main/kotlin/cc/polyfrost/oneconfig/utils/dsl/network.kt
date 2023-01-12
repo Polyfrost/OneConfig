@@ -24,13 +24,27 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
+// Retrocompatibility
+@file:JvmName("NetworkUtilsDSLKt")
+
 package cc.polyfrost.oneconfig.utils.dsl
 
-import cc.polyfrost.oneconfig.utils.TickDelay
+import cc.polyfrost.oneconfig.utils.NetworkUtils
+import cc.polyfrost.oneconfig.libs.universal.UDesktop
+import java.io.File
 
 /**
- * Schedules a Runnable to be called after a certain amount of ticks.
+ * Downloads the given [url] to the given [File].
  *
- * @see TickDelay
+ * @see NetworkUtils.downloadFile
  */
-fun tick(ticks: Int, block: () -> Unit) = TickDelay(block, ticks)
+fun File.download(url: String, userAgent: String = "OneConfig/1.0.0", timeout: Int = 5000, useCaches: Boolean = false) =
+    NetworkUtils.downloadFile(url, this, userAgent, timeout, useCaches)
+
+/**
+ * Launches a URL in the default browser.
+ *
+ * @see NetworkUtils.browseLink
+ */
+@Suppress("unused", "UnusedReceiverParameter")
+fun UDesktop.browseLink(uri: String) = NetworkUtils.browseLink(uri)

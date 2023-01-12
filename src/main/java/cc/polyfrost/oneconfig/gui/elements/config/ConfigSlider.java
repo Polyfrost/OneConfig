@@ -154,7 +154,7 @@ public class ConfigSlider extends BasicOption implements IFocusable {
         if (stepSlideAnimation.get() == -1 || lastX != x) {
             stepSlideAnimation = new DummyAnimation(xCoordinate);
         } else {
-            stepSlideAnimation = new EaseInOutCubic((int) (Preferences.trackerResponseTime * 1000), stepSlideAnimation.get(), xCoordinate, false);
+            stepSlideAnimation = new EaseInOutCubic((int) Preferences.trackerResponseDuration, stepSlideAnimation.get(), xCoordinate, false);
         }
         xCoordinate = (int) stepSlideAnimation.get();
 

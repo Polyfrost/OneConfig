@@ -24,15 +24,24 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
+// Retrocompatibility
+@file:JvmName("MultithreadingDSLKt")
+
 package cc.polyfrost.oneconfig.utils.dsl
 
-import cc.polyfrost.oneconfig.utils.IOUtils
-import cc.polyfrost.oneconfig.utils.NetworkUtils
-import java.io.File
+import cc.polyfrost.oneconfig.utils.Multithreading
+import java.util.concurrent.TimeUnit
 
 /**
- * Returns the SHA-256 hash of the given [File].
+ * Runs the given [block] asynchronously.
  *
- * @see NetworkUtils.getFileChecksum
+ * @see Multithreading.runAsync
  */
-fun File.checksum() = IOUtils.getFileChecksum(this)
+fun runAsync(block: () -> Unit) = Multithreading.runAsync(block)
+
+/**
+ * Runs the given [block] asynchronously after the given [delay].
+ *
+ * @see Multithreading.schedule
+ */
+fun schedule(delay: Long, timeUnit: TimeUnit, block: () -> Unit) = Multithreading.schedule(block, delay, timeUnit)

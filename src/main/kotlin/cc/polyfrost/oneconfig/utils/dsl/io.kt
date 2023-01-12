@@ -24,14 +24,17 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
+// Retrocompatibility
+@file:JvmName("IOUtilsDSLKt")
+
 package cc.polyfrost.oneconfig.utils.dsl
 
-import cc.polyfrost.oneconfig.utils.JsonUtils
-import com.google.gson.JsonElement
+import cc.polyfrost.oneconfig.utils.IOUtils
+import java.io.File
 
 /**
- * Returns the [JsonElement] of the given [String].
+ * Returns the SHA-256 hash of the given [File].
  *
- * @see JsonUtils.parseString
+ * @see IOUtils.getFileChecksum
  */
-fun String.asJsonElement(catchExceptions: Boolean = true): JsonElement? = JsonUtils.parseString(this, catchExceptions)
+fun File.checksum() = IOUtils.getFileChecksum(this)!!
