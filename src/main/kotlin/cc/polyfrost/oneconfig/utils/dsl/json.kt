@@ -24,12 +24,17 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
+// Retrocompatibility
+@file:JvmName("JsonUtilsDSLKt")
+
 package cc.polyfrost.oneconfig.utils.dsl
 
-import cc.polyfrost.oneconfig.libs.universal.UMinecraft
+import cc.polyfrost.oneconfig.utils.JsonUtils
+import com.google.gson.JsonElement
 
 /**
- * Gets the current [net.minecraft.client.Minecraft] instance.
+ * Returns the [JsonElement] of the given [String].
+ *
+ * @see JsonUtils.parseString
  */
-val mc
-    get() = UMinecraft.getMinecraft()
+fun String.asJsonElement(catchExceptions: Boolean = true): JsonElement? = JsonUtils.parseString(this, catchExceptions)

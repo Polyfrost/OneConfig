@@ -24,15 +24,16 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
+// Retrocompatibility
+@file:JvmName("TickDelayDSLKt")
+
 package cc.polyfrost.oneconfig.utils.dsl
 
-import cc.polyfrost.oneconfig.utils.IOUtils
-import cc.polyfrost.oneconfig.utils.NetworkUtils
-import java.io.File
+import cc.polyfrost.oneconfig.utils.TickDelay
 
 /**
- * Returns the SHA-256 hash of the given [File].
+ * Schedules a Runnable to be called after a certain amount of ticks.
  *
- * @see NetworkUtils.getFileChecksum
+ * @see TickDelay
  */
-fun File.checksum() = IOUtils.getFileChecksum(this)
+fun tick(ticks: Int, block: () -> Unit) = TickDelay(block, ticks)

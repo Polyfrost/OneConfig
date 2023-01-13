@@ -24,14 +24,14 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
+// Retrocompatibility
+@file:JvmName("MathUtilsDSLKt")
+
 package cc.polyfrost.oneconfig.utils.dsl
 
-import cc.polyfrost.oneconfig.utils.JsonUtils
-import com.google.gson.JsonElement
+import cc.polyfrost.oneconfig.utils.MathUtils
 
 /**
- * Returns the [JsonElement] of the given [String].
- *
- * @see JsonUtils.parseString
+ * @see MathUtils.clamp
  */
-fun String.asJsonElement(catchExceptions: Boolean = true): JsonElement? = JsonUtils.parseString(this, catchExceptions)
+fun Number.clamp(min: Number = 0F, max: Number = 1F) = MathUtils.clamp(this.toFloat(), min.toFloat(), max.toFloat())

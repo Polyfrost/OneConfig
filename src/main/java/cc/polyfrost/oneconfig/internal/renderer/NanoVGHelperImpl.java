@@ -345,7 +345,7 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
         nvgBeginPath(vg);
         nvgFontSize(vg, size);
         nvgFontFace(vg, font.getName());
-        nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_TOP); // Align top because center is weird with wrapping
+        nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE); // Align top because center is weird with wrapping
         NVGColor nvgColor = color(vg, color);
         nvgTextBox(vg, x, y, width, text);
         nvgFill(vg);
@@ -371,11 +371,30 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
         nvgFontSize(vg, size);
         nvgFontFace(vg, font.getName());
         nvgTextLineHeight(vg, lineHeight);
-        nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_TOP); // Align top because center is weird with wrapping
+        nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE); // Align top because center is weird with wrapping
         NVGColor nvgColor = color(vg, color);
         nvgTextBox(vg, x, y, width, text);
         nvgFill(vg);
         nvgColor.free();
+    }
+
+    @Override
+    public float[] getWrappedStringBounds(long vg, String text, float width, float fontSize, Font font) {
+        float[] bounds = new float[4];
+        nvgFontSize(vg, fontSize);
+        nvgFontFace(vg, font.getName());
+        nvgTextBoxBounds(vg, 0, 0, width, text, bounds);
+        return bounds;
+    }
+
+    @Override
+    public float[] getWrappedStringBounds(long vg, String text, float width, float fontSize, float lineHeight, Font font) {
+        float[] bounds = new float[4];
+        nvgFontSize(vg, fontSize);
+        nvgFontFace(vg, font.getName());
+        nvgTextLineHeight(vg, lineHeight);
+        nvgTextBoxBounds(vg, 0, 0, width, text, bounds);
+        return bounds;
     }
 
     @Override
@@ -386,6 +405,25 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
         nvgTextLineHeight(vg, lineHeight);
         nvgTextBoxBounds(vg, 0, 0, width, text, bounds);
         return bounds[3] - bounds[1];
+    }
+
+    @Override
+    public float getWrappedStringWidth(long vg, String text, float width, float fontSize, Font font) {
+        float[] bounds = new float[4];
+        nvgFontSize(vg, fontSize);
+        nvgFontFace(vg, font.getName());
+        nvgTextBoxBounds(vg, 0, 0, width, text, bounds);
+        return bounds[2] - bounds[0];
+    }
+
+    @Override
+    public float getWrappedStringWidth(long vg, String text, float width, float fontSize, float lineHeight, Font font) {
+        float[] bounds = new float[4];
+        nvgFontSize(vg, fontSize);
+        nvgFontFace(vg, font.getName());
+        nvgTextLineHeight(vg, lineHeight);
+        nvgTextBoxBounds(vg, 0, 0, width, text, bounds);
+        return bounds[2] - bounds[0];
     }
 
     /**
@@ -681,6 +719,11 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
      */
     @Override
     public void setAlpha(long vg, float alpha) {
+        if (OneConfigGui.INSTANCE.isDrawing()) {
+            if (alpha > OneConfigGui.INSTANCE.transparencyFactor) {
+                alpha = OneConfigGui.INSTANCE.transparencyFactor;
+            }
+        }
         nvgGlobalAlpha(vg, alpha);
     }
 

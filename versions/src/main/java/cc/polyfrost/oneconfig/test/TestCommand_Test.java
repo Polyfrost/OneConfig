@@ -32,6 +32,7 @@ import cc.polyfrost.oneconfig.utils.commands.annotations.Command;
 import cc.polyfrost.oneconfig.utils.commands.annotations.Description;
 import cc.polyfrost.oneconfig.utils.commands.annotations.Greedy;
 import cc.polyfrost.oneconfig.utils.commands.annotations.SubCommand;
+import com.mojang.authlib.GameProfile;
 
 @Command(value = "test", aliases = {"t"}, description = "Description of the test command", chatColor = ChatColor.GREEN)
 public class TestCommand_Test {
@@ -57,6 +58,12 @@ public class TestCommand_Test {
                 UChat.chat("Integer subSub: " + (a + b) + " " + c);
             }
         }
+    }
+
+    @SubCommand
+    private void playerTest(GameProfile profile) {
+        UChat.chat("Player test: " + profile.getName());
+        UChat.chat(profile.getId());
     }
 
 

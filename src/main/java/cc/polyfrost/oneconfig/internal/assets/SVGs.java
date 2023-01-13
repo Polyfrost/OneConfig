@@ -46,6 +46,15 @@ public class SVGs {
     public static final SVG ARROW_LEFT = new SVG("/assets/oneconfig/icons/ArrowLeft.svg");
     public static final SVG ARROW_RIGHT = new SVG("/assets/oneconfig/icons/ArrowRight.svg");
     public static final SVG INFO_ARROW = new SVG("/assets/oneconfig/icons/InfoArrow.svg");
+    public static final SVG LAYOUT_ALT = new SVG("/assets/oneconfig/icons/layout-alt.svg");
+    public static final SVG X_CLOSE = new SVG("/assets/oneconfig/icons/x-close.svg");
+    public static final SVG BRUSH = new SVG("/assets/oneconfig/icons/brush.svg");
+    public static final SVG SEARCH_SM = new SVG("/assets/oneconfig/icons/search-sm.svg");
+    public static final SVG SETTINGS_02 = new SVG("/assets/oneconfig/icons/settings-02.svg");
+    public static final SVG USERS_02 = new SVG("/assets/oneconfig/icons/users-02.svg");
+
+    public static final SVG TEXT_INPUT = new SVG("/assets/oneconfig/icons/text-input.svg");
+
 
     // OLD ICONS
     public static final SVG BOX = new SVG("/assets/oneconfig/old-icons/Box.svg");

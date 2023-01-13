@@ -44,4 +44,9 @@ public class ServerPlatformImpl implements ServerPlatform {
             return null;
         return player.getClientBrand();
     }
+
+    @Override
+    public boolean doesPlayerExist() {
+        return UMinecraft.getPlayer() != null;
+    }
 }

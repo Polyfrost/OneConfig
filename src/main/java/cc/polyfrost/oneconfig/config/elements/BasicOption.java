@@ -29,21 +29,25 @@ package cc.polyfrost.oneconfig.config.elements;
 import cc.polyfrost.oneconfig.gui.animations.Animation;
 import cc.polyfrost.oneconfig.gui.animations.ColorAnimation;
 import cc.polyfrost.oneconfig.gui.animations.DummyAnimation;
-import cc.polyfrost.oneconfig.gui.animations.EaseOutQuad;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
-import cc.polyfrost.oneconfig.internal.assets.SVGs;
-import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
+import cc.polyfrost.oneconfig.internal.utils.DescriptionRenderer;
 import cc.polyfrost.oneconfig.libs.universal.ChatColor;
+import cc.polyfrost.oneconfig.libs.universal.UResolution;
+import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.function.Supplier;
 
-@SuppressWarnings({"unused"})
 public abstract class BasicOption {
     public final int size;
     protected final Field field;
@@ -54,9 +58,9 @@ public abstract class BasicOption {
     public final String subcategory;
     private final ColorAnimation nameColorAnimation = new ColorAnimation(new ColorPalette(Colors.WHITE_90, Colors.WHITE, Colors.WHITE_90));
     protected int nameColor = Colors.WHITE_90;
-    private final ArrayList<Supplier<Boolean>> dependencies = new ArrayList<>();
-    private final ArrayList<Runnable> listeners = new ArrayList<>();
-    private final ArrayList<Supplier<Boolean>> hideConditions = new ArrayList<>();
+    private final Map<String, Supplier<Boolean>> dependencies = new HashMap<>();
+    private final List<Runnable> listeners = new ArrayList<>();
+    private final List<Supplier<Boolean>> hideConditions = new ArrayList<>();
     private Animation descriptionAnimation = new DummyAnimation(0f);
     private float hoverTime = 0f;
 
@@ -135,25 +139,48 @@ public abstract class BasicOption {
 
     public void drawDescription(long vg, int x, int y, InputHandler inputHandler) {
         if (description.trim().equals("")) return;
-        final NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
-        boolean hovered = inputHandler.isAreaHovered(getNameX(x), y, nanoVGHelper.getTextWidth(vg, name, 14f, Fonts.MEDIUM), 32f);
+        boolean hovered = inputHandler.isAreaHovered(getNameX(x), y, NanoVGHelper.INSTANCE.getTextWidth(vg, name, 14f, Fonts.MEDIUM), 32f);
         nameColor = nameColorAnimation.getColor(hovered, false);
         if (hovered) hoverTime += GuiUtils.getDeltaTime();
         else hoverTime = 0;
-        boolean shouldDrawDescription = shouldDrawDescription();
-        if (descriptionAnimation.getEnd() != 1f && shouldDrawDescription) {
-            descriptionAnimation = new EaseOutQuad(150, descriptionAnimation.get(0), 1f, false);
-        } else if (descriptionAnimation.getEnd() != 0f && !shouldDrawDescription) {
-            descriptionAnimation = new EaseOutQuad(150, descriptionAnimation.get(0), 0f, false);
+
+        @Nullable String warningDescription = null;
+        int others = 0;
+        List<String> options = new ArrayList<>();
+        if (!dependencies.isEmpty()) {
+            for (Map.Entry<String, Supplier<Boolean>> dependency : dependencies.entrySet()) {
+                String name = dependency.getKey();
+                Supplier<Boolean> supplier = dependency.getValue();
+                if (name.startsWith("unknown-")) {
+                    others++;
+                    continue;
+                }
+
+                if (!supplier.get()) {
+                    options.add(name);
+                }
+            }
         }
-        if (!shouldDrawDescription && descriptionAnimation.isFinished()) return;
-        float textWidth = nanoVGHelper.getTextWidth(vg, description, 16, Fonts.MEDIUM);
-        nanoVGHelper.setAlpha(vg, descriptionAnimation.get());
-        nanoVGHelper.drawRoundedRect(vg, x, y - 42f, textWidth + 68f, 44f, Colors.GRAY_700, 8f);
-        nanoVGHelper.drawDropShadow(vg, x, y - 42f, textWidth + 68f, 44f, 32f, 0f, 8f);
-        nanoVGHelper.drawSvg(vg, SVGs.INFO_ARROW, x + 16, y - 30f, 20f, 20f, Colors.WHITE_80);
-        nanoVGHelper.drawText(vg, description, x + 52, y - 19, Colors.WHITE_80, 16, Fonts.MEDIUM);
-        nanoVGHelper.setAlpha(vg, 1f);
+        if (!options.isEmpty() || others != 0) {
+            boolean knownOptions = options.isEmpty();
+            StringBuilder builder = new StringBuilder("Option disabled by ");
+            for (String mod : options) {
+                builder.append("\"")
+                        .append(mod)
+                        .append("\", ");
+            }
+            builder = new StringBuilder(builder.substring(0, builder.length() - 2));
+            if (others != 0) {
+                if (knownOptions) builder.append(" and ");
+                builder.append(others)
+                        .append(" other option")
+                        .append(others == 1 ? "" : "s");
+            }
+            builder.append(".");
+            warningDescription = builder.toString();
+        }
+
+        DescriptionRenderer.drawDescription(vg, x, y, description, warningDescription, () -> descriptionAnimation, (a) -> descriptionAnimation = a, null, shouldDrawDescription(), (UResolution.getWindowWidth() / 2f < inputHandler.mouseX()) ? DescriptionRenderer.DescriptionPosition.RIGHT : DescriptionRenderer.DescriptionPosition.LEFT, inputHandler);
     }
 
     /**
@@ -177,7 +204,7 @@ public abstract class BasicOption {
      * @return If the option is enabled, based on the dependencies
      */
     public boolean isEnabled() {
-        for (Supplier<Boolean> dependency : dependencies) {
+        for (Supplier<Boolean> dependency : dependencies.values()) {
             if (!dependency.get()) return false;
         }
         return true;
@@ -193,10 +220,22 @@ public abstract class BasicOption {
     /**
      * Add a condition to this option
      *
+     * @param optionName The name of the option that adds this dependency
      * @param supplier The dependency
      */
+    public void addDependency(String optionName, Supplier<Boolean> supplier) {
+        this.dependencies.put(optionName, supplier);
+    }
+
+    /**
+     * Add a condition to this option
+     *
+     * @param supplier The dependency
+     * @deprecated Use {@link #addDependency(String, Supplier)} instead
+     */
+    @Deprecated
     public void addDependency(Supplier<Boolean> supplier) {
-        this.dependencies.add(supplier);
+        this.dependencies.put("unknown-" + UUID.randomUUID(), supplier);
     }
 
     /**

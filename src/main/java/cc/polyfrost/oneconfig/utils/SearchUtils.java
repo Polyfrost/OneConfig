@@ -24,21 +24,26 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.utils.dsl
+package cc.polyfrost.oneconfig.utils;
 
-import cc.polyfrost.oneconfig.utils.Multithreading
-import java.util.concurrent.TimeUnit
+import cc.polyfrost.oneconfig.internal.config.Preferences;
+import org.apache.commons.lang3.StringUtils;
 
-/**
- * Runs the given [block] asynchronously.
- *
- * @see Multithreading.runAsync
- */
-fun runAsync(block: () -> Unit) = Multithreading.runAsync(block)
+import java.util.Locale;
 
 /**
- * Runs the given [block] asynchronously after the given [delay].
- *
- * @see Multithreading.schedule
+ * Based on <a href="https://www.baeldung.com/java-levenshtein-distance">https://www.baeldung.com/java-levenshtein-distance</a>
  */
-fun schedule(delay: Long, timeUnit: TimeUnit, block: () -> Unit) = Multithreading.schedule(block, delay, timeUnit)
+public class SearchUtils {
+
+    public static boolean isSimilar(String s1, String s2) {
+        s1 = s1.toLowerCase(Locale.ENGLISH);
+        s2 = s2.toLowerCase(Locale.ENGLISH);
+        boolean similar = false;
+        for (String a : StringUtils.split(s1)) {
+            similar = a.contains(s2) || StringUtils.getLevenshteinDistance(a, s2) <= Preferences.searchDistance;
+            if (similar) break;
+        }
+        return similar || s1.contains(s2) || StringUtils.getLevenshteinDistance(s1, s2) <= Preferences.searchDistance;
+    }
+}

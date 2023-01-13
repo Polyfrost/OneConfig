@@ -24,24 +24,15 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
+// Retrocompatibility
+@file:JvmName("DSLsKt")
+
 package cc.polyfrost.oneconfig.utils.dsl
 
-import cc.polyfrost.oneconfig.utils.NetworkUtils
-import cc.polyfrost.oneconfig.libs.universal.UDesktop
-import java.io.File
+import cc.polyfrost.oneconfig.libs.universal.UMinecraft
 
 /**
- * Downloads the given [url] to the given [File].
- *
- * @see NetworkUtils.downloadFile
+ * Gets the current [net.minecraft.client.Minecraft] instance.
  */
-fun File.download(url: String, userAgent: String = "OneConfig/1.0.0", timeout: Int = 5000, useCaches: Boolean = false) =
-    NetworkUtils.downloadFile(url, this, userAgent, timeout, useCaches)
-
-/**
- * Launches a URL in the default browser.
- *
- * @see NetworkUtils.browseLink
- */
-@Suppress("unused")
-fun UDesktop.browseLink(uri: String) = NetworkUtils.browseLink(uri)
+val mc
+    get() = UMinecraft.getMinecraft()

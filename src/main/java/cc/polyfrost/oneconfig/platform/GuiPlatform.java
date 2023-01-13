@@ -31,4 +31,5 @@ public interface GuiPlatform {
     void setCurrentScreen(Object screen);
     boolean isInChat();
     boolean isInDebug();
+    void playClickSound();
 }

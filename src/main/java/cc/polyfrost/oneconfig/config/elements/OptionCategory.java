@@ -26,8 +26,6 @@
 
 package cc.polyfrost.oneconfig.config.elements;
 
-import cc.polyfrost.oneconfig.config.Config;
-
 import java.util.ArrayList;
 
 public class OptionCategory {

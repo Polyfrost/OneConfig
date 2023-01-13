@@ -131,12 +131,20 @@ public class ConfigUtils {
         return configOption;
     }
 
+    public static BasicOption addOptionToPage(OptionPage page, Method method, Object instance) {
+        BasicOption configOption = ConfigButton.create(method, instance);
+        getSubCategory(page, configOption.category, configOption.subcategory).options.add(configOption);
+        return configOption;
+    }
+
     public static OptionSubcategory getSubCategory(OptionPage page, String categoryName, String subcategoryName) {
         if (!page.categories.containsKey(categoryName)) page.categories.put(categoryName, new OptionCategory());
         OptionCategory category = page.categories.get(categoryName);
-        if (category.subcategories.size() == 0 || !category.subcategories.get(category.subcategories.size() - 1).getName().equals(subcategoryName))
-            category.subcategories.add(new OptionSubcategory(subcategoryName));
-        return category.subcategories.get(category.subcategories.size() - 1);
+        OptionSubcategory subcategory = category.subcategories.stream().filter(s -> s.getName().equals(subcategoryName)).findFirst().orElse(null);
+        if (category.subcategories.size() == 0 || subcategory == null) {
+            category.subcategories.add((subcategory = new OptionSubcategory(subcategoryName, categoryName)));
+        }
+        return subcategory;
     }
 
     public static <T extends Annotation> T findAnnotation(Field field, Class<T> annotationType) {
