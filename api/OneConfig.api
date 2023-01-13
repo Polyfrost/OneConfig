@@ -1778,7 +1778,13 @@ public final class cc/polyfrost/oneconfig/utils/dsl/MultithreadingDSLKt {
 	public static final fun schedule (JLjava/util/concurrent/TimeUnit;Lkotlin/jvm/functions/Function0;)V
 }
 
-public final class cc/polyfrost/oneconfig/utils/dsl/NanoVGHelperDSLKt {
+public final class cc/polyfrost/oneconfig/utils/dsl/NetworkUtilsDSLKt {
+	public static final fun browseLink (Lcc/polyfrost/oneconfig/libs/universal/UDesktop;Ljava/lang/String;)V
+	public static final fun download (Ljava/io/File;Ljava/lang/String;Ljava/lang/String;IZ)Z
+	public static synthetic fun download$default (Ljava/io/File;Ljava/lang/String;Ljava/lang/String;IZILjava/lang/Object;)Z
+}
+
+public final class cc/polyfrost/oneconfig/utils/dsl/RenderManagerDSLKt {
 	public static final fun drawCircle (JLjava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;I)V
 	public static final fun drawCircle-0M_6p4I (JLjava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;I)V
 	public static final fun drawDropShadow (JLjava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;Ljava/lang/Number;)V
@@ -1849,12 +1855,6 @@ public final class cc/polyfrost/oneconfig/utils/dsl/NanoVGHelperDSLKt {
 	public static final fun setAlpha-n9twlgA (JF)V
 	public static final fun translate (JFF)V
 	public static final fun translate-DMtsu_g (JFF)V
-}
-
-public final class cc/polyfrost/oneconfig/utils/dsl/NetworkUtilsDSLKt {
-	public static final fun browseLink (Lcc/polyfrost/oneconfig/libs/universal/UDesktop;Ljava/lang/String;)V
-	public static final fun download (Ljava/io/File;Ljava/lang/String;Ljava/lang/String;IZ)Z
-	public static synthetic fun download$default (Ljava/io/File;Ljava/lang/String;Ljava/lang/String;IZILjava/lang/Object;)Z
 }
 
 public final class cc/polyfrost/oneconfig/utils/dsl/StringUtilsDSLKt {
