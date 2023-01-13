@@ -32,7 +32,7 @@ import cc.polyfrost.oneconfig.platform.Platform;
 import java.util.regex.Pattern;
 
 public class TextRenderer {
-    private static final Pattern regex = Pattern.compile("(?i)\\\\u00A7[0-9a-f]");
+    private static final Pattern regex = Pattern.compile("(?i)\u00A7[0-9a-f]");
     private static boolean drawingBorder = false;
 
     public static int drawBorderedText(String text, float x, float y, int color, int opacity) {

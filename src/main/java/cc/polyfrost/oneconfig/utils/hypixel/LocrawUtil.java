@@ -110,7 +110,7 @@ public class LocrawUtil {
                 sendLocraw(true);
                 return;
             }
-            if (JsonUtils.isValid(msg)) {
+            if (msg.startsWith("{")) {
                 LocrawInfo oldLocrawInfo = locrawInfo;
                 // Parse the json, and make sure that it's not null.
                 this.locrawInfo = GSON.fromJson(msg, LocrawInfo.class);
@@ -132,8 +132,7 @@ public class LocrawUtil {
                     this.listening = false;
                 }
             }
-        } catch (Exception ex) {
-            ex.printStackTrace();
+        } catch (Exception ignored) {
         }
     }
 
