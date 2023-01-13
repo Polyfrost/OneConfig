@@ -9,13 +9,14 @@
     },
     "verbose": true,
     "client": [
+        "EntityPlayerSPMixin",
         "GuiIngameForgeMixin",
         "MinecraftMixin",
         "NetworkManagerMixin",
         "OptifineConfigMixin",
+        "RedactionNameHighlightMixin",
         "ShaderGroupAccessor",
         "VigilantMixin",
-        "WorldClientMixin",
-        "RedactionNameHighlightMixin"
+        "WorldClientMixin"
     ]
 }

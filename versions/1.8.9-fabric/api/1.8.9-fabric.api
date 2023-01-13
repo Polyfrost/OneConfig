@@ -1,5 +1,5 @@
 public class cc/polyfrost/oneconfig/events/event/ChatReceiveEvent : cc/polyfrost/oneconfig/events/event/CancellableEvent {
-	public final field message Lnet/minecraft/text/Text;
+	public field message Lnet/minecraft/text/Text;
 	public fun <init> (Lnet/minecraft/text/Text;)V
 	public fun getFullyUnformattedMessage ()Ljava/lang/String;
 }
@@ -38,6 +38,7 @@ public class cc/polyfrost/oneconfig/platform/impl/GuiPlatformImpl : cc/polyfrost
 	public fun getCurrentScreen ()Ljava/lang/Object;
 	public fun isInChat ()Z
 	public fun isInDebug ()Z
+	public fun playClickSound ()V
 	public fun setCurrentScreen (Ljava/lang/Object;)V
 }
 
@@ -77,6 +78,7 @@ public class cc/polyfrost/oneconfig/platform/impl/PlatformImpl : cc/polyfrost/on
 
 public class cc/polyfrost/oneconfig/platform/impl/ServerPlatformImpl : cc/polyfrost/oneconfig/platform/ServerPlatform {
 	public fun <init> ()V
+	public fun doesPlayerExist ()Z
 	public fun getServerBrand ()Ljava/lang/String;
 	public fun inMultiplayer ()Z
 }
@@ -94,12 +96,18 @@ public class cc/polyfrost/oneconfig/utils/commands/PlatformCommandManagerImpl : 
 	public fun createCommand (Lcc/polyfrost/oneconfig/utils/commands/CommandManager$OCCommand;)V
 }
 
+public class cc/polyfrost/oneconfig/utils/commands/arguments/EntityPlayerArgumentParser : cc/polyfrost/oneconfig/utils/commands/arguments/ArgumentParser {
+	public fun <init> ()V
+	public fun complete (Ljava/lang/String;Ljava/lang/reflect/Parameter;)Ljava/util/List;
+	public synthetic fun parse (Ljava/lang/String;)Ljava/lang/Object;
+	public fun parse (Ljava/lang/String;)Lnet/minecraft/entity/player/PlayerEntity;
+}
+
 public class cc/polyfrost/oneconfig/utils/commands/arguments/PlayerArgumentParser : cc/polyfrost/oneconfig/utils/commands/arguments/ArgumentParser {
 	public fun <init> ()V
 	public fun complete (Ljava/lang/String;Ljava/lang/reflect/Parameter;)Ljava/util/List;
-	public static fun getMatchingPlayers (Ljava/lang/String;)Ljava/util/List;
+	public fun parse (Ljava/lang/String;)Lcom/mojang/authlib/GameProfile;
 	public synthetic fun parse (Ljava/lang/String;)Ljava/lang/Object;
-	public fun parse (Ljava/lang/String;)Lnet/minecraft/entity/player/PlayerEntity;
 }
 
 public final class cc/polyfrost/oneconfig/utils/dsl/DSLsKt {

@@ -24,15 +24,14 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
+// Retrocompatibility
+@file:JvmName("MathUtilsDSLKt")
+
 package cc.polyfrost.oneconfig.utils.dsl
 
-import cc.polyfrost.oneconfig.utils.IOUtils
-import cc.polyfrost.oneconfig.utils.NetworkUtils
-import java.io.File
+import cc.polyfrost.oneconfig.utils.MathUtils
 
 /**
- * Returns the SHA-256 hash of the given [File].
- *
- * @see NetworkUtils.getFileChecksum
+ * @see MathUtils.clamp
  */
-fun File.checksum() = IOUtils.getFileChecksum(this)
+fun Number.clamp(min: Number = 0F, max: Number = 1F) = MathUtils.clamp(this.toFloat(), min.toFloat(), max.toFloat())

@@ -24,21 +24,16 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
+// Retrocompatibility
+@file:JvmName("TickDelayDSLKt")
+
 package cc.polyfrost.oneconfig.utils.dsl
 
-import cc.polyfrost.oneconfig.utils.Multithreading
-import java.util.concurrent.TimeUnit
+import cc.polyfrost.oneconfig.utils.TickDelay
 
 /**
- * Runs the given [block] asynchronously.
+ * Schedules a Runnable to be called after a certain amount of ticks.
  *
- * @see Multithreading.runAsync
+ * @see TickDelay
  */
-fun runAsync(block: () -> Unit) = Multithreading.runAsync(block)
-
-/**
- * Runs the given [block] asynchronously after the given [delay].
- *
- * @see Multithreading.schedule
- */
-fun schedule(delay: Long, timeUnit: TimeUnit, block: () -> Unit) = Multithreading.schedule(block, delay, timeUnit)
+fun tick(ticks: Int, block: () -> Unit) = TickDelay(block, ticks)

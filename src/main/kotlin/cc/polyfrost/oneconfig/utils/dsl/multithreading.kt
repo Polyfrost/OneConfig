@@ -24,16 +24,24 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.events.event;
+// Retrocompatibility
+@file:JvmName("MultithreadingDSLKt")
+
+package cc.polyfrost.oneconfig.utils.dsl
+
+import cc.polyfrost.oneconfig.utils.Multithreading
+import java.util.concurrent.TimeUnit
 
 /**
- * Represents an event that can be cancelled.
- * Should not be used as a way of determining if an event can be cancelled, as
- * some events may be cancellable but not extend this class.
+ * Runs the given [block] asynchronously.
+ *
+ * @see Multithreading.runAsync
  */
-public class CancellableEvent {
-    /**
-     * Whether the event has been cancelled.
-     */
-    public boolean isCancelled = false;
-}
+fun runAsync(block: () -> Unit) = Multithreading.runAsync(block)
+
+/**
+ * Runs the given [block] asynchronously after the given [delay].
+ *
+ * @see Multithreading.schedule
+ */
+fun schedule(delay: Long, timeUnit: TimeUnit, block: () -> Unit) = Multithreading.schedule(block, delay, timeUnit)

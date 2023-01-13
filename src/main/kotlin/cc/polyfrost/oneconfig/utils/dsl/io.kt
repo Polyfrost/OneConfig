@@ -24,16 +24,17 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.events.event;
+// Retrocompatibility
+@file:JvmName("IOUtilsDSLKt")
+
+package cc.polyfrost.oneconfig.utils.dsl
+
+import cc.polyfrost.oneconfig.utils.IOUtils
+import java.io.File
 
 /**
- * Represents an event that can be cancelled.
- * Should not be used as a way of determining if an event can be cancelled, as
- * some events may be cancellable but not extend this class.
+ * Returns the SHA-256 hash of the given [File].
+ *
+ * @see IOUtils.getFileChecksum
  */
-public class CancellableEvent {
-    /**
-     * Whether the event has been cancelled.
-     */
-    public boolean isCancelled = false;
-}
+fun File.checksum() = IOUtils.getFileChecksum(this)!!

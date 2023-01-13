@@ -28,6 +28,7 @@ package cc.polyfrost.oneconfig.config.gson.exclusion;
 
 import cc.polyfrost.oneconfig.config.Config;
 import cc.polyfrost.oneconfig.config.annotations.Exclude;
+import cc.polyfrost.oneconfig.config.annotations.HypixelKey;
 import cc.polyfrost.oneconfig.config.annotations.NonProfileSpecific;
 import cc.polyfrost.oneconfig.gui.pages.Page;
 import com.google.gson.ExclusionStrategy;
@@ -43,9 +44,9 @@ public class NonProfileSpecificExclusionStrategy extends ExclusionUtils implemen
         if (isSuperClassOf(f.getDeclaredClass(), Config.class)) return true;
         if (isSuperClassOf(f.getDeclaredClass(), Page.class)) return true;
         if (f.getDeclaredClass().isAssignableFrom(Runnable.class)) return true;
-        if (f.getAnnotation(NonProfileSpecific.class) == null) return true;
-        Exclude exclude = f.getAnnotation(Exclude.class);
-        return exclude != null;
+        if (f.getAnnotation(Exclude.class) != null) return true;
+        if (f.getAnnotation(NonProfileSpecific.class) != null) return false;
+        return f.getAnnotation(HypixelKey.class) == null;
     }
 
     /**

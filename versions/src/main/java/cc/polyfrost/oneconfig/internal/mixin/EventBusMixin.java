@@ -41,12 +41,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class EventBusMixin {
 
     @Inject(method = "post", at = @At(value = "HEAD"), remap = false)
-    private void post(Event e, CallbackInfoReturnable<Boolean> cir) {
+    private void postReceiveEvent(Event e, CallbackInfoReturnable<Boolean> cir) {
         if(!(e instanceof ClientChatReceivedEvent)) return;
         ClientChatReceivedEvent event = (ClientChatReceivedEvent) e;
         if (event.type == 0) {
             ChatReceiveEvent customEvent = new ChatReceiveEvent(event.message);
             EventManager.INSTANCE.post(customEvent);
+            event.message = customEvent.message;
             if (customEvent.isCancelled) {
                 e.setCanceled(true);
             }

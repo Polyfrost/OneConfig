@@ -26,10 +26,15 @@
 
 package cc.polyfrost.oneconfig.config;
 
-import cc.polyfrost.oneconfig.config.annotations.*;
+import cc.polyfrost.oneconfig.config.annotations.Button;
+import cc.polyfrost.oneconfig.config.annotations.CustomOption;
+import cc.polyfrost.oneconfig.config.annotations.HUD;
+import cc.polyfrost.oneconfig.config.annotations.HypixelKey;
+import cc.polyfrost.oneconfig.config.annotations.Page;
 import cc.polyfrost.oneconfig.config.core.ConfigUtils;
 import cc.polyfrost.oneconfig.config.core.OneKeyBind;
 import cc.polyfrost.oneconfig.config.data.Mod;
+import cc.polyfrost.oneconfig.config.data.OptionType;
 import cc.polyfrost.oneconfig.config.data.PageLocation;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
 import cc.polyfrost.oneconfig.config.elements.OptionPage;
@@ -37,11 +42,12 @@ import cc.polyfrost.oneconfig.config.elements.OptionSubcategory;
 import cc.polyfrost.oneconfig.config.gson.InstanceSupplier;
 import cc.polyfrost.oneconfig.config.gson.exclusion.NonProfileSpecificExclusionStrategy;
 import cc.polyfrost.oneconfig.config.gson.exclusion.ProfileExclusionStrategy;
-import cc.polyfrost.oneconfig.gui.elements.config.ConfigKeyBind;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
+import cc.polyfrost.oneconfig.gui.elements.config.ConfigKeyBind;
 import cc.polyfrost.oneconfig.gui.elements.config.ConfigPageButton;
 import cc.polyfrost.oneconfig.gui.pages.ModConfigPage;
 import cc.polyfrost.oneconfig.hud.HUDUtils;
+import cc.polyfrost.oneconfig.internal.config.HypixelKeys;
 import cc.polyfrost.oneconfig.internal.config.annotations.Option;
 import cc.polyfrost.oneconfig.internal.config.core.ConfigCore;
 import cc.polyfrost.oneconfig.internal.config.core.KeyBindHandler;
@@ -51,12 +57,17 @@ import com.google.gson.*;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.*;
+import java.util.HashMap;
 import java.util.function.Supplier;
 
 @SuppressWarnings({"unused", "ResultOfMethodCallIgnored"})
@@ -170,10 +181,18 @@ public class Config {
         for (Field field : instance.getClass().getDeclaredFields()) {
             Option option = ConfigUtils.findAnnotation(field, Option.class);
             CustomOption customOption = ConfigUtils.findAnnotation(field, CustomOption.class);
+            boolean isHypixelKey = field.isAnnotationPresent(HypixelKey.class);
             String optionName = pagePath + field.getName();
             if (option != null) {
                 BasicOption configOption = ConfigUtils.addOptionToPage(page, option, field, instance, migrate ? mod.migrator : null);
                 optionNames.put(optionName, configOption);
+                if (isHypixelKey) {
+                    if (option.type() == OptionType.TEXT) {
+                        HypixelKeys.INSTANCE.addOption(configOption, mod);
+                    } else {
+                        throw new IllegalStateException("Field " + field.getName() + " is missing @Text annotation! This is required for Hypixel keys!");
+                    }
+                }
             } else if (customOption != null) {
                 BasicOption configOption = getCustomOption(field, customOption, page, mod, migrate);
                 if (configOption == null) continue;
@@ -195,17 +214,18 @@ public class Config {
                 else subcategory.bottomButtons.add(button);
             } else if (field.isAnnotationPresent(HUD.class)) {
                 HUDUtils.addHudOptions(page, field, instance, this);
+            } else if (isHypixelKey) {
+                throw new IllegalStateException("Field " + field.getName() + " is missing @Text annotation! This is required for Hypixel keys!");
             }
         }
-        /*for (Method method : instance.getClass().getDeclaredMethods()) {
+        for (Method method : instance.getClass().getDeclaredMethods()) {
             Button button = ConfigUtils.findAnnotation(method, Button.class);
             String optionName = pagePath + method.getName();
             if (button != null) {
-                ConfigButton option = ConfigButton.create(method, instance);
-                ConfigUtils.getSubCategory(page, button.category(), button.subcategory()).options.add(option);
+                BasicOption option = ConfigUtils.addOptionToPage(page, method, instance);
                 optionNames.put(optionName, option);
             }
-        }*/
+        }
     }
 
     /**
@@ -256,9 +276,10 @@ public class Config {
      */
     protected final void addDependency(String option, String dependentOption) {
         if (!optionNames.containsKey(option) || !optionNames.containsKey(dependentOption)) return;
-        optionNames.get(option).addDependency(() -> {
+        BasicOption optionObj = optionNames.get(dependentOption);
+        optionNames.get(option).addDependency(optionObj.name, () -> {
             try {
-                return (boolean) optionNames.get(dependentOption).get();
+                return (boolean) optionObj.get();
             } catch (IllegalAccessException ignored) {
                 return true;
             }

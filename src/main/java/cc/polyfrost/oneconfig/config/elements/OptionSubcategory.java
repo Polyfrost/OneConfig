@@ -28,11 +28,12 @@ package cc.polyfrost.oneconfig.config.elements;
 
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.elements.config.ConfigPageButton;
+import cc.polyfrost.oneconfig.gui.elements.config.ConfigTextBox;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
-import cc.polyfrost.oneconfig.utils.SearchUtils;
 import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.utils.InputHandler;
+import cc.polyfrost.oneconfig.utils.SearchUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -96,11 +97,17 @@ public class OptionSubcategory {
                 BasicOption option = filteredOptions.get(i);
                 option.draw(vg, x, optionY, inputHandler);
                 option.drawDescription(vg, x, optionY, inputHandler);
+                if (option instanceof ConfigTextBox) {
+                    ((ConfigTextBox) option).drawSyncDescription(vg, x, optionY, inputHandler);
+                }
                 if (i + 1 < filteredOptions.size()) {
                     BasicOption nextOption = filteredOptions.get(i + 1);
                     if (option.size == 1 && nextOption.size == 1) {
                         nextOption.draw(vg, x + 512, optionY, inputHandler);
                         nextOption.drawDescription(vg, x + 512, optionY, inputHandler);
+                        if (option instanceof ConfigTextBox) {
+                            ((ConfigTextBox) option).drawSyncDescription(vg, x, optionY, inputHandler);
+                        }
                         optionY += Math.max(option.getHeight(), nextOption.getHeight()) + 16;
                         i++;
                         continue;

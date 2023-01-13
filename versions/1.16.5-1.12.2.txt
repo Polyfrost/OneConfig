@@ -9,6 +9,7 @@ net.minecraft.client.entity.player.ClientPlayerEntity net.minecraft.client.entit
 net.minecraft.client.Minecraft gameRenderer entityRenderer
 net.minecraft.client.shader.ShaderDefault net.minecraft.client.shader.ShaderUniform
 net.minecraft.client.world.ClientWorld net.minecraft.client.multiplayer.WorldClient
+net.minecraft.client.network.play.NetworkPlayerInfo net.minecraft.client.network.NetworkPlayerInfo
 
 net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent net.minecraftforge.fml.common.event.FMLInitializationEvent
 net.minecraftforge.fml.common.Loader get() instance()

@@ -30,9 +30,12 @@ import cc.polyfrost.oneconfig.events.EventManager;
 import cc.polyfrost.oneconfig.events.event.ChatReceiveEvent;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.network.packet.s2c.play.ChatMessageS2CPacket;
+import net.minecraft.text.Text;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(value = ClientPlayNetworkHandler.class, priority = Integer.MAX_VALUE)
@@ -45,20 +48,29 @@ public class NetHandlerPlayClientMixin {
             //$$ "Lnet/minecraft/client/gui/hud/InGameHud;method_14471(Lnet/minecraft/util/ChatMessageType;Lnet/minecraft/text/Text;)V";
             //#endif
 
+    @Unique
+    private ChatReceiveEvent oneconfig$event = null;
+
     @Inject(method = "onChatMessage", at = @At(value = "INVOKE", target = TARGET), cancellable = true)
     private void onClientChat(ChatMessageS2CPacket packet, CallbackInfo ci) {
-        if (
-                //#if MC<=10809
-                packet.getType() == 0
-                //#else
-                //$$ !packet.isNonChat()
-                //#endif
-        ) {
-            ChatReceiveEvent event = new ChatReceiveEvent(packet.getMessage());
-            EventManager.INSTANCE.post(event);
-            if (event.isCancelled) {
-                ci.cancel();
-            }
+        if (oneconfig$event.isCancelled) {
+            ci.cancel();
         }
+    }
+
+    @Redirect(method = "onChatMessage", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/packet/s2c/play/ChatMessageS2CPacket;getMessage()Lnet/minecraft/text/Text;"))
+    private Text onClientChatRedirect(ChatMessageS2CPacket packet) {
+        if (
+            //#if MC<=10809
+                packet.getType() == 0
+            //#else
+            //$$ !packet.isNonChat()
+            //#endif
+        ) {
+            oneconfig$event = new ChatReceiveEvent(packet.getMessage());
+            EventManager.INSTANCE.post(oneconfig$event);
+            return oneconfig$event.message;
+        }
+        return packet.getMessage();
     }
 }

@@ -34,6 +34,7 @@ import cc.polyfrost.oneconfig.config.data.*;
 import cc.polyfrost.oneconfig.config.Config;
 import cc.polyfrost.oneconfig.config.data.ModType;
 import cc.polyfrost.oneconfig.config.migration.VigilanceMigrator;
+import cc.polyfrost.oneconfig.gui.GuiNotifications;
 import cc.polyfrost.oneconfig.gui.animations.Animation;
 import cc.polyfrost.oneconfig.gui.animations.EaseInOutQuart;
 import cc.polyfrost.oneconfig.gui.pages.HomePage;
@@ -57,7 +58,8 @@ public class TestConfig_Test extends Config {
 
     @Checkbox(
             name = "Check box",
-            size = OptionSize.DUAL
+            size = OptionSize.DUAL,
+            description = "This is a checkbox"
     )
     public static boolean testCheckBox = true;
 
@@ -77,6 +79,7 @@ public class TestConfig_Test extends Config {
     )
     private void doSomething() {
         UChat.chat("i was called from a nonstatic method");
+        GuiNotifications.INSTANCE.sendNotification("Hello! This is a notification! HEWKGMESKOgdnsgjkdsn afkndfjk");
     }
 
     @Button(
@@ -118,6 +121,26 @@ public class TestConfig_Test extends Config {
             size = OptionSize.DUAL
     )
     private static String testText = "Epic Text";
+
+    @Text(
+            name = "Api Key",
+            size = OptionSize.DUAL,
+            description = "This is a secret key"
+    )
+    @HypixelKey
+    private static String apiKey = "";
+
+    @Text(
+            name = "Test Text 2",
+            secure = true
+    )
+    private static String testText2 = "Epic Text";
+
+    @Text(
+            name = "Test Text 3"
+    )
+    private static String testText3 = "Epic Text";
+
 
     @Button(
             name = "Test Button",
@@ -176,12 +199,12 @@ public class TestConfig_Test extends Config {
     public TestPage_Test testPage = new TestPage_Test();
 
     @Page(
-            name = "Test Page",
+            name = "Test Page 2",
             description = "Test Description",
             location = PageLocation.BOTTOM
 
     )
-    public TestPage_Test testPage2 = new TestPage_Test();
+    public TestPage2_Test testPage2 = new TestPage2_Test();
 
     @Switch(
             name = "Test Switch",

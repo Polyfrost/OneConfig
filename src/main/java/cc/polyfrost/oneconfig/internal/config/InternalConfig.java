@@ -28,14 +28,25 @@ package cc.polyfrost.oneconfig.internal.config;
 
 import cc.polyfrost.oneconfig.config.Config;
 import cc.polyfrost.oneconfig.config.data.Mod;
-import cc.polyfrost.oneconfig.utils.JsonUtils;
-
-import java.io.*;
+import cc.polyfrost.oneconfig.config.gson.exclusion.ProfileExclusionStrategy;
+import com.google.gson.FieldAttributes;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public abstract class InternalConfig extends Config {
+    transient protected final Gson gson = addGsonOptions(new GsonBuilder()
+            .setExclusionStrategies(new InternalConfigExclusionStrategy()))
+            .create();
+
     /**
      * @param title      title that is displayed
      * @param configFile file where config is stored
@@ -56,17 +67,27 @@ public abstract class InternalConfig extends Config {
     public void save() {
         try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(Files.newOutputStream(Paths.get("OneConfig/" + configFile)), StandardCharsets.UTF_8))) {
             writer.write(gson.toJson(this));
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
     @Override
     public void load() {
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(Files.newInputStream(Paths.get("OneConfig/" + configFile)), StandardCharsets.UTF_8))) {
+        Path path = Paths.get("OneConfig/" + configFile);
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(Files.newInputStream(path), StandardCharsets.UTF_8))) {
             gson.fromJson(reader, this.getClass());
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
+            File file = path.toFile();
+            file.renameTo(new File(file.getParentFile(), file.getName() + ".corrupted"));
+        }
+    }
+
+    private static final class InternalConfigExclusionStrategy extends ProfileExclusionStrategy {
+        @Override
+        public boolean shouldSkipField(FieldAttributes f) {
+            return f.getName().equals("hypixelKey") || super.shouldSkipField(f);
         }
     }
 }

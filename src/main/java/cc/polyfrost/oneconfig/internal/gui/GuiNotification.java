@@ -24,12 +24,31 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.utils.dsl
+package cc.polyfrost.oneconfig.internal.gui;
 
-import cc.polyfrost.oneconfig.libs.universal.UMinecraft
+import cc.polyfrost.oneconfig.gui.animations.Animation;
+import cc.polyfrost.oneconfig.gui.animations.DummyAnimation;
+import cc.polyfrost.oneconfig.internal.utils.DescriptionRenderer;
+import cc.polyfrost.oneconfig.renderer.asset.SVG;
+import cc.polyfrost.oneconfig.utils.InputHandler;
 
-/**
- * Gets the current [net.minecraft.client.Minecraft] instance.
- */
-val mc
-    get() = UMinecraft.getMinecraft()
+public class GuiNotification {
+    private final String message;
+    private final SVG icon;
+    private Animation progress;
+    private Animation colorAnimation = new DummyAnimation(0f);
+
+    public GuiNotification(String message, float duration, SVG icon) {
+        this.message = message;
+        this.icon = icon;
+        this.progress = new DummyAnimation(150, duration);
+    }
+
+    public int draw(long vg, int x, int y, InputHandler inputHandler) {
+        if (colorAnimation.isFinished() && !progress.isFinished()) {
+            progress.get();
+        }
+        int draw = DescriptionRenderer.drawDescription(vg, x, y, message, null, () -> colorAnimation, (a) -> colorAnimation = a, icon, !progress.isFinished(), DescriptionRenderer.DescriptionPosition.MIDDLE, inputHandler);
+        return draw;
+    }
+}

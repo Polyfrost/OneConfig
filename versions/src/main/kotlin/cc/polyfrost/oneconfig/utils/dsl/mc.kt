@@ -24,11 +24,15 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
+// Retrocompatibility
+@file:JvmName("DSLsKt")
+
 package cc.polyfrost.oneconfig.utils.dsl
 
-import cc.polyfrost.oneconfig.utils.MathUtils
+import cc.polyfrost.oneconfig.libs.universal.UMinecraft
 
 /**
- * @see MathUtils.clamp
+ * Gets the current [net.minecraft.client.Minecraft] instance.
  */
-fun Number.clamp(min: Number = 0F, max: Number = 1F) = MathUtils.clamp(this.toFloat(), min.toFloat(), max.toFloat())
+val mc
+    get() = UMinecraft.getMinecraft()
