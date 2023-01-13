@@ -24,12 +24,24 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.platform;
+// Retrocompatibility
+@file:JvmName("MultithreadingDSLKt")
 
-public interface ServerPlatform {
-    boolean inMultiplayer();
+package cc.polyfrost.oneconfig.utils.dsl
 
-    String getServerBrand();
+import cc.polyfrost.oneconfig.utils.Multithreading
+import java.util.concurrent.TimeUnit
 
-    boolean doesPlayerExist();
-}
+/**
+ * Runs the given [block] asynchronously.
+ *
+ * @see Multithreading.runAsync
+ */
+fun runAsync(block: () -> Unit) = Multithreading.runAsync(block)
+
+/**
+ * Runs the given [block] asynchronously after the given [delay].
+ *
+ * @see Multithreading.schedule
+ */
+fun schedule(delay: Long, timeUnit: TimeUnit, block: () -> Unit) = Multithreading.schedule(block, delay, timeUnit)

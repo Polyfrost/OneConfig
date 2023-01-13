@@ -24,24 +24,39 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.utils.dsl
+package cc.polyfrost.oneconfig.config.annotations;
 
-import cc.polyfrost.oneconfig.utils.NetworkUtils
-import cc.polyfrost.oneconfig.libs.universal.UDesktop
-import java.io.File
-
-/**
- * Downloads the given [url] to the given [File].
- *
- * @see NetworkUtils.downloadFile
- */
-fun File.download(url: String, userAgent: String = "OneConfig/1.0.0", timeout: Int = 5000, useCaches: Boolean = false) =
-    NetworkUtils.downloadFile(url, this, userAgent, timeout, useCaches)
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * Launches a URL in the default browser.
- *
- * @see NetworkUtils.browseLink
+ * Marks a {@link Text} as a Hypixel API key.
+ * <p>
+ *     This can allow OneConfig to
+ *     <p>
+ *         - automatically set this field when `/api new` is run in chat
+ *     </p>
+ *     <p>
+ *         - sync this field with other fields annotated with {@link HypixelKey}
+ *     </p>
+ *     <p>
+ *         - allow users to set all fields annotated with {@link HypixelKey} to the same value via the Preferences GUI.
+ *     </p>
+ *     This can be disabled by the user in the Preferences GUI.
+ * </p>
+ * <p>
+ *     Adding this annotation marks the field as non profile specific, see {@link NonProfileSpecific}.
+ * </p>
  */
-@Suppress("unused")
-fun UDesktop.browseLink(uri: String) = NetworkUtils.browseLink(uri)
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.FIELD)
+public @interface HypixelKey {
+    /**
+     * The priority of this field when syncing with other keys.
+     * When syncing, the field with the highest priority and valid key will be used.
+     * @return The priority of this field when syncing with other keys.
+     */
+    int priority() default 0;
+}

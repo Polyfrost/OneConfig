@@ -3,6 +3,9 @@
  * OneConfig - Next Generation Config Library for Minecraft: Java Edition
  * Copyright (C) 2021, 2022 Polyfrost.
  *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
+ * Co-author: lyndseyy (Lyndsey Winter) <https://github.com/lyndseyy>
+ * Co-author: asbyth <cyronize@gmail.com> (non-copyrightable contribution, deleted GitHub account)
+ * Co-author: GamingGeek (Jake Ward) <https://github.com/GamingGeek> (non-copyrightable contribution)
  * Co-author: MicrocontrollersDev <https://github.com/MicrocontrollersDev> (non-copyrightable contribution)
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -34,10 +37,6 @@ import java.util.Objects;
 
 /**
  * Represents the location of the player in Hypixel.
- * <p>
- * Locraw utilities taken from Seraph by Scherso under LGPL-2.1
- * <a href="https://github.com/Scherso/Seraph/blob/master/LICENSE">https://github.com/Scherso/Seraph/blob/master/LICENSE</a>
- * </p>
  *
  * @see HypixelUtils
  */

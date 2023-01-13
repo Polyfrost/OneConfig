@@ -204,6 +204,10 @@ dependencies {
         shadeNoPom(implementationNoPom(prebundle(configuration, "lwjgl-$version.jar"))!!)
     }
 
+    modRuntimeOnly("me.djtheredstoner:DevAuth-" +
+            (if (platform.isForge) { if (platform.isLegacyForge) "forge-legacy" else "forge-latest" } else "fabric")
+            + ":1.1.0")
+
     configurations.named(JavaPlugin.COMPILE_CLASSPATH_CONFIGURATION_NAME) { extendsFrom(shadeProject) }
     configurations.named(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME) { extendsFrom(shadeProject) }
 }

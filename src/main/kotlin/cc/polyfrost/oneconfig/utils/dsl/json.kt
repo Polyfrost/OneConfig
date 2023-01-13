@@ -24,14 +24,17 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
+// Retrocompatibility
+@file:JvmName("JsonUtilsDSLKt")
+
 package cc.polyfrost.oneconfig.utils.dsl
 
-import cc.polyfrost.oneconfig.utils.gui.GuiUtils
-import net.minecraft.client.gui.GuiScreen
+import cc.polyfrost.oneconfig.utils.JsonUtils
+import com.google.gson.JsonElement
 
 /**
- * Displays a screen after the specified amount of ticks.
+ * Returns the [JsonElement] of the given [String].
  *
- * @param ticks the amount of ticks to wait for before displaying the screen.
+ * @see JsonUtils.parseString
  */
-fun GuiScreen.openScreen(ticks: Int = 1) = GuiUtils.displayScreen(this, ticks)
+fun String.asJsonElement(catchExceptions: Boolean = true): JsonElement? = JsonUtils.parseString(this, catchExceptions)

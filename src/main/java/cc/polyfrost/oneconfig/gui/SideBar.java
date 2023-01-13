@@ -86,7 +86,7 @@ public class SideBar {
         this.y = y;
         for (BasicButton button : buttons) {
             if (!button.isClicked()) continue;
-            moveSideBar(button);
+            moveSideBar(button, false);
             break;
         }
         if (moveAnimation != null) {
@@ -117,17 +117,29 @@ public class SideBar {
     }
 
     public void pageOpened(String page) {
+        pageOpened(page, false);
+    }
+
+    public void pageOpened(String page, boolean instant) {
         for (BasicButton button : buttons) {
             if (!button.getText().equalsIgnoreCase(page)) continue;
-            moveSideBar(button);
+            moveSideBar(button, instant);
             return;
         }
     }
 
     private void moveSideBar(BasicButton button) {
+        moveSideBar(button, false);
+    }
+
+    private void moveSideBar(BasicButton button, boolean instant) {
         if (button.equals(buttons.get(selected))) return;
         buttons.get(selected).setColorPalette(ColorPalette.TERTIARY);
-        moveAnimation = new EaseOutExpo(300, buttons.get(selected).y - y, button.y - y, false);
+        if (instant) {
+            moveAnimation = new DummyAnimation(button.y - y);
+        } else {
+            moveAnimation = new EaseOutExpo(300, buttons.get(selected).y - y, button.y - y, false);
+        }
         sizeAnimation = new DummyAnimation(36);
         selected = buttons.indexOf(button);
     }

@@ -207,7 +207,15 @@ public interface NanoVGHelper {
      */
     void drawWrappedString(long vg, String text, float x, float y, float width, int color, float size, float lineHeight, Font font);
 
+    float[] getWrappedStringBounds(long vg, String text, float width, float fontSize, Font font);
+
+    float[] getWrappedStringBounds(long vg, String text, float width, float fontSize, float lineHeight, Font font);
+
     float getWrappedStringHeight(long vg, String text, float width, float fontSize, float lineHeight, Font font);
+
+    float getWrappedStringWidth(long vg, String text, float width, float fontSize, Font font);
+
+    float getWrappedStringWidth(long vg, String text, float width, float fontSize, float lineHeight, Font font);
 
     /**
      * Draw a formatted URL (a string in blue with an underline) that when clicked, opens the given text.

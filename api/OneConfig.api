@@ -94,6 +94,10 @@ public abstract interface annotation class cc/polyfrost/oneconfig/config/annotat
 	public abstract fun text ()Ljava/lang/String;
 }
 
+public abstract interface annotation class cc/polyfrost/oneconfig/config/annotations/HypixelKey : java/lang/annotation/Annotation {
+	public abstract fun priority ()I
+}
+
 public abstract interface annotation class cc/polyfrost/oneconfig/config/annotations/Info : java/lang/annotation/Annotation {
 	public abstract fun category ()Ljava/lang/String;
 	public abstract fun size ()I
@@ -164,6 +168,7 @@ public abstract interface annotation class cc/polyfrost/oneconfig/config/annotat
 public class cc/polyfrost/oneconfig/config/core/ConfigUtils {
 	public fun <init> ()V
 	public static fun addOptionToPage (Lcc/polyfrost/oneconfig/config/elements/OptionPage;Lcc/polyfrost/oneconfig/internal/config/annotations/Option;Ljava/lang/reflect/Field;Ljava/lang/Object;Lcc/polyfrost/oneconfig/config/migration/Migrator;)Lcc/polyfrost/oneconfig/config/elements/BasicOption;
+	public static fun addOptionToPage (Lcc/polyfrost/oneconfig/config/elements/OptionPage;Ljava/lang/reflect/Method;Ljava/lang/Object;)Lcc/polyfrost/oneconfig/config/elements/BasicOption;
 	public static fun check (Ljava/lang/String;Ljava/lang/reflect/Field;[Ljava/lang/Class;)V
 	public static fun findAnnotation (Lcom/google/gson/FieldAttributes;Ljava/lang/Class;)Ljava/lang/annotation/Annotation;
 	public static fun findAnnotation (Ljava/lang/Class;Ljava/lang/Class;)Ljava/lang/annotation/Annotation;
@@ -322,6 +327,7 @@ public abstract class cc/polyfrost/oneconfig/config/elements/BasicOption {
 	public final field size I
 	public final field subcategory Ljava/lang/String;
 	public fun <init> (Ljava/lang/reflect/Field;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;I)V
+	public fun addDependency (Ljava/lang/String;Ljava/util/function/Supplier;)V
 	public fun addDependency (Ljava/util/function/Supplier;)V
 	public fun addHideCondition (Ljava/util/function/Supplier;)V
 	public fun addListener (Ljava/lang/Runnable;)V
@@ -452,6 +458,11 @@ public class cc/polyfrost/oneconfig/events/event/ChatReceiveEvent : cc/polyfrost
 	public fun getFullyUnformattedMessage ()Ljava/lang/String;
 }
 
+public class cc/polyfrost/oneconfig/events/event/ChatSendEvent : cc/polyfrost/oneconfig/events/event/CancellableEvent {
+	public field message Ljava/lang/String;
+	public fun <init> (Ljava/lang/String;)V
+}
+
 public class cc/polyfrost/oneconfig/events/event/FramebufferRenderEvent {
 	public final field stage Lcc/polyfrost/oneconfig/events/event/Stage;
 	public fun <init> (Lcc/polyfrost/oneconfig/events/event/Stage;)V
@@ -535,6 +546,15 @@ public class cc/polyfrost/oneconfig/events/event/WorldLoadEvent {
 	public fun <init> ()V
 }
 
+public class cc/polyfrost/oneconfig/gui/GuiNotifications {
+	public static final field INSTANCE Lcc/polyfrost/oneconfig/gui/GuiNotifications;
+	public fun draw (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
+	public fun sendNotification (Ljava/lang/String;)V
+	public fun sendNotification (Ljava/lang/String;F)V
+	public fun sendNotification (Ljava/lang/String;FLcc/polyfrost/oneconfig/renderer/asset/SVG;)V
+	public fun sendNotification (Ljava/lang/String;Lcc/polyfrost/oneconfig/renderer/asset/SVG;)V
+}
+
 public abstract interface class cc/polyfrost/oneconfig/gui/GuiPause {
 	public abstract fun doesGuiPauseGame ()Z
 }
@@ -573,6 +593,7 @@ public class cc/polyfrost/oneconfig/gui/SideBar {
 	public fun <init> ()V
 	public fun draw (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
 	public fun pageOpened (Ljava/lang/String;)V
+	public fun pageOpened (Ljava/lang/String;Z)V
 }
 
 public abstract class cc/polyfrost/oneconfig/gui/animations/Animation {
@@ -888,9 +909,12 @@ public class cc/polyfrost/oneconfig/gui/elements/config/ConfigSwitch : cc/polyfr
 }
 
 public class cc/polyfrost/oneconfig/gui/elements/config/ConfigTextBox : cc/polyfrost/oneconfig/config/elements/BasicOption, cc/polyfrost/oneconfig/gui/elements/IFocusable {
+	public final field textField Lcc/polyfrost/oneconfig/gui/elements/text/TextInputField;
 	public fun <init> (Ljava/lang/reflect/Field;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;ZZ)V
+	public fun <init> (Ljava/lang/reflect/Field;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;ZZZ)V
 	public static fun create (Ljava/lang/reflect/Field;Ljava/lang/Object;)Lcc/polyfrost/oneconfig/gui/elements/config/ConfigTextBox;
 	public fun draw (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
+	public fun drawSyncDescription (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
 	public fun getHeight ()I
 	public fun hasFocus ()Z
 	public fun keyTyped (CI)V
@@ -1179,6 +1203,7 @@ public abstract interface class cc/polyfrost/oneconfig/platform/GuiPlatform {
 	public abstract fun getCurrentScreen ()Ljava/lang/Object;
 	public abstract fun isInChat ()Z
 	public abstract fun isInDebug ()Z
+	public abstract fun playClickSound ()V
 	public abstract fun setCurrentScreen (Ljava/lang/Object;)V
 }
 
@@ -1238,6 +1263,7 @@ public class cc/polyfrost/oneconfig/platform/Platform$PlatformHolder {
 }
 
 public abstract interface class cc/polyfrost/oneconfig/platform/ServerPlatform {
+	public abstract fun doesPlayerExist ()Z
 	public abstract fun getServerBrand ()Ljava/lang/String;
 	public abstract fun inMultiplayer ()Z
 }
@@ -1287,7 +1313,11 @@ public abstract interface class cc/polyfrost/oneconfig/renderer/NanoVGHelper {
 	public abstract fun drawWrappedString (JLjava/lang/String;FFFIFLcc/polyfrost/oneconfig/renderer/font/Font;)V
 	public abstract fun fillNVGColorWithRGBA (FFFFLorg/lwjgl/nanovg/NVGColor;)V
 	public abstract fun getTextWidth (JLjava/lang/String;FLcc/polyfrost/oneconfig/renderer/font/Font;)F
+	public abstract fun getWrappedStringBounds (JLjava/lang/String;FFFLcc/polyfrost/oneconfig/renderer/font/Font;)[F
+	public abstract fun getWrappedStringBounds (JLjava/lang/String;FFLcc/polyfrost/oneconfig/renderer/font/Font;)[F
 	public abstract fun getWrappedStringHeight (JLjava/lang/String;FFFLcc/polyfrost/oneconfig/renderer/font/Font;)F
+	public abstract fun getWrappedStringWidth (JLjava/lang/String;FFFLcc/polyfrost/oneconfig/renderer/font/Font;)F
+	public abstract fun getWrappedStringWidth (JLjava/lang/String;FFLcc/polyfrost/oneconfig/renderer/font/Font;)F
 	public abstract fun isDrawing ()Z
 	public abstract fun readPixels (IIII)[I
 	public abstract fun resetTransform (J)V
@@ -1496,6 +1526,8 @@ public class cc/polyfrost/oneconfig/utils/InputHandler {
 public final class cc/polyfrost/oneconfig/utils/JsonUtils {
 	public static final field PARSER Lcom/google/gson/JsonParser;
 	public fun <init> ()V
+	public static fun ifValid (Ljava/lang/String;Ljava/util/function/Consumer;)Z
+	public static fun isValid (Ljava/lang/String;)Z
 	public static fun parseString (Ljava/lang/String;)Lcom/google/gson/JsonElement;
 	public static fun parseString (Ljava/lang/String;Z)Lcom/google/gson/JsonElement;
 }
@@ -1885,7 +1917,7 @@ public class cc/polyfrost/oneconfig/utils/hypixel/HypixelUtils {
 	public fun initialize ()V
 	public fun isHypixel ()Z
 	public fun isInGame ()Z
-	public fun queueUpdate (J)V
+	public fun isValidKey (Ljava/lang/String;)Z
 }
 
 public class cc/polyfrost/oneconfig/utils/hypixel/LocrawInfo : java/io/Serializable {
@@ -1929,5 +1961,13 @@ public final class cc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType : ja
 	public fun getServerName ()Ljava/lang/String;
 	public static fun valueOf (Ljava/lang/String;)Lcc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
 	public static fun values ()[Lcc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
+}
+
+public class cc/polyfrost/oneconfig/utils/hypixel/LocrawUtil {
+	public static final field INSTANCE Lcc/polyfrost/oneconfig/utils/hypixel/LocrawUtil;
+	public fun <init> ()V
+	public fun getLastLocrawInfo ()Lcc/polyfrost/oneconfig/utils/hypixel/LocrawInfo;
+	public fun getLocrawInfo ()Lcc/polyfrost/oneconfig/utils/hypixel/LocrawInfo;
+	public fun isInGame ()Z
 }
 

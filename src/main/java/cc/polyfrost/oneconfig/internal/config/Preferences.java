@@ -26,12 +26,14 @@
 
 package cc.polyfrost.oneconfig.internal.config;
 
+import cc.polyfrost.oneconfig.config.annotations.Button;
 import cc.polyfrost.oneconfig.config.annotations.Dropdown;
 import cc.polyfrost.oneconfig.config.annotations.Exclude;
 import cc.polyfrost.oneconfig.config.annotations.KeyBind;
 import cc.polyfrost.oneconfig.config.annotations.Number;
 import cc.polyfrost.oneconfig.config.annotations.Slider;
 import cc.polyfrost.oneconfig.config.annotations.Switch;
+import cc.polyfrost.oneconfig.config.annotations.Text;
 import cc.polyfrost.oneconfig.config.core.OneKeyBind;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.internal.gui.BlurHandler;
@@ -73,7 +75,7 @@ public class Preferences extends InternalConfig {
             name = "Opening Behavior",
             category = "Behavior",
             subcategory = "GUI Settings",
-            description = "Choose what happens when you Open the OneConfig UI",
+            description = "Choose which page will show when you open OneConfig",
             options = {
                     "Mods",
                     "Preferences",
@@ -83,6 +85,15 @@ public class Preferences extends InternalConfig {
             size = 2
     )
     public static int openingBehavior = 3;
+
+    @Switch(
+            name = "Show opening page animation",
+            category = "Behavior",
+            subcategory = "GUI Settings",
+            description = "Whether or not to show the page switch animation when opening OneConfig",
+            size = 2
+    )
+    public static boolean showPageAnimationOnOpen = false;
 
     @Slider(
             name = "Time before reset",
@@ -99,9 +110,9 @@ public class Preferences extends InternalConfig {
             min = 0,
             max = 10,
             category = "Behavior",
-            subcategory = "GUI Settings",
-            description = "The maximum Levenshtein distance to search for similar config names.",
-            size = 2 // looks awful at 1
+            subcategory = "Search",
+            description = "The maximum Levenshtein distance to search for similar config names",
+            size = 2
     )
     public static int searchDistance = 2;
 
@@ -141,8 +152,26 @@ public class Preferences extends InternalConfig {
     public static int animationType = 0;
 
     @Switch(
+            name = "Show Page Animations",
+            description = "Enables or disables the page switch animation",
+            category = "Animations",
+            subcategory = "Pages"
+    )
+    public static boolean showPageAnimations = true;
+
+    @Slider(
+            name = "Page Animation Duration",
+            description = "The duration of the page switch animation, in seconds",
+            category = "Animations",
+            subcategory = "Pages",
+            min = 0.1f,
+            max = .6f
+    )
+    public static float pageAnimationDuration = .3f;
+
+    @Switch(
             name = "Toggle Switch Bounce",
-            description = "Enables or disable the bounce animation on toggle switches",
+            description = "Enables or disables the bounce animation on toggle switches",
             category = "Animations",
             subcategory = "Toggles"
     )
@@ -150,13 +179,64 @@ public class Preferences extends InternalConfig {
 
     @Slider(
             name = "Tracker Response Time",
-            description = "The time it takes for the slider tracker to move, in seconds",
+            description = "The time it takes for the slider tracker to move, in milliseconds",
             category = "Animations",
             subcategory = "Sliders",
             min = 0f,
-            max = 0.1f
+            max = 100f
     )
-    public static float trackerResponseTime = 0.06f;
+    public static float trackerResponseDuration = 60;
+
+    @Switch(
+            name = "Automatically Detect Hypixel API Key",
+            description = "Automatically detect your Hypixel API key from running /api new in chat.",
+            category = "Hypixel"
+    )
+    public static boolean autoSetHypixelKey = true;
+
+    @Switch(
+            name = "Sync Hypixel API Keys on Startup",
+            description = "Automatically sync your Hypixel API keys across all options marked as Hypixel API keys in OneConfig.",
+            category = "Hypixel"
+    )
+    public static boolean syncHypixelKeys = true;
+
+    @Button(
+            name = "Sync Hypixel API Keys",
+            description = "Sync your Hypixel API keys across all options marked as Hypixel API keys in OneConfig.",
+            category = "Hypixel",
+            text = "Sync"
+    )
+    private static void syncHypixelKeys() {
+        HypixelKeys.INSTANCE.syncKeys(true);
+    }
+
+    @Button(
+            name = "Test Hypixel API Keys",
+            description = "Test to see if all your Hypixel API keys in OneConfig are valid.",
+            category = "Hypixel",
+            text = "Test"
+    )
+    private static void testAllHypixelKeys() {
+        HypixelKeys.INSTANCE.testKeys();
+    }
+
+    @Button(
+            name = "Remove All Syncable Hypixel API Keys",
+            description = "Remove all (and only) fields marked as Hypixel API keys in OneConfig.",
+            category = "Hypixel",
+            text = "Remove"
+    )
+    private static void removeAllHypixelKeys() {
+        HypixelKeys.INSTANCE.setAllKeys("");
+    }
+
+    @Text(
+            name = "Hypixel API Key",
+            description = "Set all options marked as Hypixel API keys by the developer to this value.",
+            category = "Hypixel"
+    )
+    private static String hypixelKey = "";
 
     @Dropdown(
             name = "Release Channel",
@@ -181,6 +261,7 @@ public class Preferences extends InternalConfig {
             OneConfigConfig.updateChannel = updateChannel;
             OneConfigConfig.getInstance().save();
         });
+        addListener("hypixelKey", () -> HypixelKeys.INSTANCE.setAllKeys(hypixelKey));
         addListener("animationType", () -> {
             if (Preferences.guiOpenAnimation) {
                 // Force reset the animation
@@ -188,7 +269,15 @@ public class Preferences extends InternalConfig {
             }
         });
         addDependency("guiClosingAnimation", "guiOpenAnimation");
+        addDependency("timeUntilReset", () -> openingBehavior == 3);
+        addDependency("pageAnimationDuration", "showPageAnimations");
         INSTANCE = this;
+    }
+
+    @Override
+    public void save() {
+        hypixelKey = "";
+        super.save();
     }
 
     public static Preferences getInstance() {

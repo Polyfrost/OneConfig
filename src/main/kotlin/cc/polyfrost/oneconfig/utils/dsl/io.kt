@@ -24,12 +24,17 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.platform;
+// Retrocompatibility
+@file:JvmName("IOUtilsDSLKt")
 
-public interface ServerPlatform {
-    boolean inMultiplayer();
+package cc.polyfrost.oneconfig.utils.dsl
 
-    String getServerBrand();
+import cc.polyfrost.oneconfig.utils.IOUtils
+import java.io.File
 
-    boolean doesPlayerExist();
-}
+/**
+ * Returns the SHA-256 hash of the given [File].
+ *
+ * @see IOUtils.getFileChecksum
+ */
+fun File.checksum() = IOUtils.getFileChecksum(this)!!

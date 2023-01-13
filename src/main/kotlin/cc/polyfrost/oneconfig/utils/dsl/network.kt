@@ -24,12 +24,27 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.platform;
+// Retrocompatibility
+@file:JvmName("NetworkUtilsDSLKt")
 
-public interface ServerPlatform {
-    boolean inMultiplayer();
+package cc.polyfrost.oneconfig.utils.dsl
 
-    String getServerBrand();
+import cc.polyfrost.oneconfig.utils.NetworkUtils
+import cc.polyfrost.oneconfig.libs.universal.UDesktop
+import java.io.File
 
-    boolean doesPlayerExist();
-}
+/**
+ * Downloads the given [url] to the given [File].
+ *
+ * @see NetworkUtils.downloadFile
+ */
+fun File.download(url: String, userAgent: String = "OneConfig/1.0.0", timeout: Int = 5000, useCaches: Boolean = false) =
+    NetworkUtils.downloadFile(url, this, userAgent, timeout, useCaches)
+
+/**
+ * Launches a URL in the default browser.
+ *
+ * @see NetworkUtils.browseLink
+ */
+@Suppress("unused", "UnusedReceiverParameter")
+fun UDesktop.browseLink(uri: String) = NetworkUtils.browseLink(uri)

@@ -93,7 +93,7 @@ public class VigilanceConfig extends Config {
                     break;
                 case PARAGRAPH:
                 case TEXT:
-                    options.add(new ConfigTextBox(getFieldOfProperty(option), option.getInstance(), getName(attributes), attributes.getDescription(), getCategory(attributes), getSubcategory(attributes), 2, attributes.getPlaceholder(), attributes.getProtected(), attributes.getType() == PropertyType.PARAGRAPH));
+                    options.add(new ConfigTextBox(getFieldOfProperty(option), option.getInstance(), getName(attributes), attributes.getDescription(), getCategory(attributes), getSubcategory(attributes), 2, attributes.getPlaceholder(), attributes.getProtected(), attributes.getType() == PropertyType.PARAGRAPH, false));
                     break;
                 case SELECTOR:
                     options.add(new ConfigDropdown(getFieldOfProperty(option), option.getInstance(), getName(attributes), attributes.getDescription(), getCategory(attributes), getSubcategory(attributes), 2, attributes.getOptions().toArray(new String[0])));

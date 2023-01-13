@@ -24,13 +24,12 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.utils.dsl
+package cc.polyfrost.oneconfig.events.event;
 
-import cc.polyfrost.oneconfig.utils.TickDelay
+public class ChatSendEvent extends CancellableEvent {
+    public String message;
 
-/**
- * Schedules a Runnable to be called after a certain amount of ticks.
- *
- * @see TickDelay
- */
-fun tick(ticks: Int, block: () -> Unit) = TickDelay(block, ticks)
+    public ChatSendEvent(String message) {
+        this.message = message;
+    }
+}
