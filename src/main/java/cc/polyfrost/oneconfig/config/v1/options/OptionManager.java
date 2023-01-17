@@ -28,10 +28,14 @@ package cc.polyfrost.oneconfig.config.v1.options;
 
 import cc.polyfrost.oneconfig.config.v1.options.type.OptionType;
 import cc.polyfrost.oneconfig.config.v1.options.type.options.ButtonOptionType;
+import cc.polyfrost.oneconfig.config.v1.options.type.options.CheckboxOptionType;
+import cc.polyfrost.oneconfig.config.v1.options.type.options.ColorOptionType;
 import cc.polyfrost.oneconfig.config.v1.options.type.options.IncludeOptionType;
 import cc.polyfrost.oneconfig.config.v1.options.type.options.SliderOptionType;
 import cc.polyfrost.oneconfig.config.v1.options.type.options.SwitchOptionType;
 import cc.polyfrost.oneconfig.config.v1.options.type.options.TextOptionType;
+import cc.polyfrost.oneconfig.config.v1.options.type.options.dropdown.EnumDropdownOptionType;
+import cc.polyfrost.oneconfig.config.v1.options.type.options.dropdown.IntDropdownOptionType;
 
 import java.util.HashMap;
 
@@ -47,7 +51,11 @@ public class OptionManager {
 
     public OptionManager() {
         register(ButtonOptionType.class, new ButtonOptionType());
+        register(CheckboxOptionType.class, new CheckboxOptionType());
+        register(ColorOptionType.class, new ColorOptionType());
+        register(EnumDropdownOptionType.class, new EnumDropdownOptionType());
         register(IncludeOptionType.class, new IncludeOptionType());
+        register(IntDropdownOptionType.class, new IntDropdownOptionType());
         register(SliderOptionType.class, new SliderOptionType());
         register(SwitchOptionType.class, new SwitchOptionType());
         register(TextOptionType.class, new TextOptionType());

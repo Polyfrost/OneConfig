@@ -26,6 +26,8 @@
 
 package cc.polyfrost.oneconfig.utils.color;
 
+import java.awt.*;
+
 /**
  * A class to help with color manipulation.
  */
@@ -150,5 +152,26 @@ public final class ColorUtils {
      */
     public static int setAlpha(int color, int alpha) {
         return (color & 0xFFFFFF) | (alpha << 24);
+    }
+
+    /**
+     * Get the RGBA color from the HSB color, and apply the alpha.
+     */
+    public static int HSBAtoARGB(float hue, float saturation, float brightness, int alpha) {
+        int temp = Color.HSBtoRGB(hue / 360f, saturation / 100f, brightness / 100f);
+        return ((temp & 0x00ffffff) | (alpha << 24));
+    }
+
+    /**
+     * Get the HSBA color from the RGBA color.
+     */
+    public static short[] ARGBtoHSBA(int rgba) {
+        short[] hsb = new short[4];
+        float[] hsbArray = Color.RGBtoHSB(ColorUtils.getRed(rgba), ColorUtils.getGreen(rgba), ColorUtils.getBlue(rgba), null);
+        hsb[0] = (short) (hsbArray[0] * 360);
+        hsb[1] = (short) (hsbArray[1] * 100);
+        hsb[2] = (short) (hsbArray[2] * 100);
+        hsb[3] = (short) (rgba >> 24 & 255);
+        return hsb;
     }
 }
