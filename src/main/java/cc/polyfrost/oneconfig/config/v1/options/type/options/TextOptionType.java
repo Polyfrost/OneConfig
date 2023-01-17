@@ -31,8 +31,6 @@ import cc.polyfrost.oneconfig.config.v1.options.type.annotations.Text;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.Collections;
-import java.util.List;
 
 public class TextOptionType implements OptionType {
     @Override
@@ -41,9 +39,10 @@ public class TextOptionType implements OptionType {
     }
 
     @Override
-    public List<Class<?>> supportedClasses() {
-        return Collections.singletonList(String.class);
+    public boolean isSupportedClass(Class<?> type) {
+        return type.isAssignableFrom(String.class);
     }
+
     @Override
     public String getName(Field field) {
         return field.getAnnotation(Text.class).name();

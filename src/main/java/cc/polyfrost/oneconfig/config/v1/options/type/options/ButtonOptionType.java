@@ -28,11 +28,9 @@ package cc.polyfrost.oneconfig.config.v1.options.type.options;
 
 import cc.polyfrost.oneconfig.config.v1.options.type.OptionType;
 import cc.polyfrost.oneconfig.config.v1.options.type.annotations.Button;
-import com.google.common.collect.Lists;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.List;
 
 public class ButtonOptionType implements OptionType {
 
@@ -42,8 +40,8 @@ public class ButtonOptionType implements OptionType {
     }
 
     @Override
-    public List<Class<?>> supportedClasses() {
-        return Lists.newArrayList(Runnable.class, Void.TYPE);
+    public boolean isSupportedClass(Class<?> type) {
+        return type.isAssignableFrom(Runnable.class) || type.isAssignableFrom(Void.TYPE);
     }
 
     @Override

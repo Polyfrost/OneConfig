@@ -28,7 +28,6 @@ package cc.polyfrost.oneconfig.config.v1.options.type;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.List;
 
 /**
  * Represents a type of option.
@@ -41,24 +40,11 @@ public interface OptionType {
     String name();
 
     /**
-     * The classes that are supported by this option type.
-     * @return The classes that are supported by this option type.
-     */
-    List<Class<?>> supportedClasses();
-
-    /**
      * Whether the given class is supported by this option type.
      * @param type The class to check.
      * @return Whether the given class is supported by this option type.
      */
-    default boolean isSupportedClass(Class<?> type) {
-        for (Class<?> supportedType : supportedClasses()) {
-            if (supportedType.isAssignableFrom(type)) {
-                return true;
-            }
-        }
-        return false;
-    }
+    boolean isSupportedClass(Class<?> type);
 
     /**
      * Whether the option type supports serialization.

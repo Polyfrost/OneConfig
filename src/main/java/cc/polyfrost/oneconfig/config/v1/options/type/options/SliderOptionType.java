@@ -28,11 +28,9 @@ package cc.polyfrost.oneconfig.config.v1.options.type.options;
 
 import cc.polyfrost.oneconfig.config.v1.options.type.OptionType;
 import cc.polyfrost.oneconfig.config.v1.options.type.annotations.Slider;
-import com.google.common.collect.Lists;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.List;
 
 public class SliderOptionType implements OptionType {
     @Override
@@ -41,8 +39,8 @@ public class SliderOptionType implements OptionType {
     }
 
     @Override
-    public List<Class<?>> supportedClasses() {
-        return Lists.newArrayList(Integer.class, int.class, Float.class, float.class, Double.class, double.class, Number.class);
+    public boolean isSupportedClass(Class<?> type) {
+        return type.isAssignableFrom(Double.class) || type.isAssignableFrom(Double.TYPE) || type.isAssignableFrom(Float.class) || type.isAssignableFrom(Float.TYPE) || type.isAssignableFrom(Integer.class) || type.isAssignableFrom(Integer.TYPE) || type.isAssignableFrom(Number.class);
     }
 
     @Override

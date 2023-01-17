@@ -99,12 +99,7 @@ public class GsonSerializer implements Serializer {
                     name += option.getJavaName();
                 }
                 if (category.has(name)) {
-                    for (Class<?> clazz : option.getOptionType().supportedClasses()) {
-                        if (clazz.isAssignableFrom(option.getJavaClass())) {
-                            option.set(GSON.fromJson(category.get(name), clazz));
-                            break;
-                        }
-                    }
+                    option.set(GSON.fromJson(category.get(name), option.getJavaClass()));
                 }
             }
         }
