@@ -26,13 +26,13 @@
 
 package cc.polyfrost.oneconfig.test;
 
-import cc.polyfrost.oneconfig.config.v1.categories.Category;
-import cc.polyfrost.oneconfig.config.v1.OneConfig;
-import cc.polyfrost.oneconfig.config.v1.options.type.annotations.Accordion;
-import cc.polyfrost.oneconfig.config.v1.options.type.annotations.Button;
-import cc.polyfrost.oneconfig.config.v1.options.type.annotations.Slider;
-import cc.polyfrost.oneconfig.config.v1.options.type.annotations.Switch;
-import cc.polyfrost.oneconfig.config.v1.options.type.annotations.Text;
+import cc.polyfrost.oneconfig.api.v1.config.category.Category;
+import cc.polyfrost.oneconfig.api.v1.config.OneConfig;
+import cc.polyfrost.oneconfig.api.v1.config.option.type.annotations.Accordion;
+import cc.polyfrost.oneconfig.api.v1.config.option.type.annotations.Button;
+import cc.polyfrost.oneconfig.api.v1.config.option.type.annotations.Slider;
+import cc.polyfrost.oneconfig.api.v1.config.option.type.annotations.Switch;
+import cc.polyfrost.oneconfig.api.v1.config.option.type.annotations.Text;
 
 import java.io.File;
 
