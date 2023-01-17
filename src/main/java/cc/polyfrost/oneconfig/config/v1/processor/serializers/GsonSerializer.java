@@ -38,12 +38,13 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Locale;
 
 public class GsonSerializer implements Serializer {
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final Gson GSON = new GsonBuilder().excludeFieldsWithModifiers(Modifier.TRANSIENT).setPrettyPrinting().create();
 
     @Override
     public void serialize(OneConfig config, List<OptionHolder> options) {
