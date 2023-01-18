@@ -26,7 +26,7 @@
 
 package cc.polyfrost.oneconfig.api.v1.config.processor.serializers;
 
-import cc.polyfrost.oneconfig.api.v1.config.OneCollection;
+import cc.polyfrost.oneconfig.api.v1.OneCollection;
 import cc.polyfrost.oneconfig.api.v1.config.OneConfig;
 import cc.polyfrost.oneconfig.api.v1.config.option.OptionHolder;
 import cc.polyfrost.oneconfig.api.v1.config.property.Property;

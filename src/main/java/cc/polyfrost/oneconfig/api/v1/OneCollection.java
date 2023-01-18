@@ -24,7 +24,7 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.api.v1.config;
+package cc.polyfrost.oneconfig.api.v1;
 
 import java.util.ArrayList;
 import java.util.Arrays;

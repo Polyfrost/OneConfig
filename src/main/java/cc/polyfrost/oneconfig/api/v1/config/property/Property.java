@@ -26,8 +26,8 @@
 
 package cc.polyfrost.oneconfig.api.v1.config.property;
 
-import cc.polyfrost.oneconfig.api.v1.config.Namable;
-import cc.polyfrost.oneconfig.api.v1.config.OneCollection;
+import cc.polyfrost.oneconfig.api.v1.Namable;
+import cc.polyfrost.oneconfig.api.v1.OneCollection;
 import cc.polyfrost.oneconfig.api.v1.config.OneConfig;
 
 /**

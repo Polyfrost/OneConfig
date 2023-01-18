@@ -24,22 +24,12 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.api.v1.config.option.type;
-
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+package cc.polyfrost.oneconfig.api.v1;
 
 /**
- * Specifies the {@link OptionType} of an annotation.
+ * A {@link Namable} trait.
  */
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.ANNOTATION_TYPE)
-public @interface Type {
-    /**
-     * The {@link OptionType} of the annotation.
-     * @return The {@link OptionType} of the annotation.
-     */
-    Class<? extends OptionType> value();
+@FunctionalInterface
+public interface Namable {
+    String getName();
 }

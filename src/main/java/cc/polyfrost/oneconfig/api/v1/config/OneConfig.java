@@ -26,6 +26,7 @@
 
 package cc.polyfrost.oneconfig.api.v1.config;
 
+import cc.polyfrost.oneconfig.api.v1.OneCollection;
 import cc.polyfrost.oneconfig.api.v1.config.category.Category;
 import cc.polyfrost.oneconfig.api.v1.config.option.OptionHolder;
 import cc.polyfrost.oneconfig.api.v1.config.processor.OptionProcessor;
