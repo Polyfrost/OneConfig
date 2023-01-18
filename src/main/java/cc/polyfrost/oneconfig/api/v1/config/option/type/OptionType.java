@@ -29,6 +29,7 @@ package cc.polyfrost.oneconfig.api.v1.config.option.type;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
@@ -131,7 +132,7 @@ public interface OptionType {
      * Specifies the {@link OptionType} of an annotation.
      */
     @Retention(RetentionPolicy.RUNTIME)
-    @java.lang.annotation.Target(ElementType.ANNOTATION_TYPE)
+    @Target(ElementType.ANNOTATION_TYPE)
     @interface TypeTarget {
         /**
          * The {@link OptionType} of the annotation.

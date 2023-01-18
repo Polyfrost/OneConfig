@@ -1,30 +1,30 @@
-public abstract interface class cc/polyfrost/oneconfig/api/v1/config/Namable {
+public abstract interface class cc/polyfrost/oneconfig/api/v1/Namable {
 	public abstract fun getName ()Ljava/lang/String;
 }
 
-public class cc/polyfrost/oneconfig/api/v1/config/OneCollection {
-	public fun <init> ([Lcc/polyfrost/oneconfig/api/v1/config/Namable;)V
-	public fun add (Lcc/polyfrost/oneconfig/api/v1/config/Namable;)V
+public class cc/polyfrost/oneconfig/api/v1/OneCollection {
+	public fun <init> ([Lcc/polyfrost/oneconfig/api/v1/Namable;)V
+	public fun add (Lcc/polyfrost/oneconfig/api/v1/Namable;)V
 	public fun add (Ljava/util/Collection;)V
-	public final fun add ([Lcc/polyfrost/oneconfig/api/v1/config/Namable;)V
+	public final fun add ([Lcc/polyfrost/oneconfig/api/v1/Namable;)V
 	public fun clear ()V
-	public fun contains (Lcc/polyfrost/oneconfig/api/v1/config/Namable;)Z
+	public fun contains (Lcc/polyfrost/oneconfig/api/v1/Namable;)Z
 	public fun contains (Ljava/lang/String;)Z
 	public fun getElements ()Ljava/util/List;
-	public fun remove (Lcc/polyfrost/oneconfig/api/v1/config/Namable;)V
+	public fun remove (Lcc/polyfrost/oneconfig/api/v1/Namable;)V
 	public fun remove (Ljava/util/Collection;)V
-	public final fun remove ([Lcc/polyfrost/oneconfig/api/v1/config/Namable;)V
+	public final fun remove ([Lcc/polyfrost/oneconfig/api/v1/Namable;)V
 }
 
 public class cc/polyfrost/oneconfig/api/v1/config/OneConfig {
 	public fun <init> (Ljava/lang/String;Ljava/io/File;[Lcc/polyfrost/oneconfig/api/v1/config/category/Category;)V
-	public fun <init> (Ljava/lang/String;Ljava/nio/file/Path;Lcc/polyfrost/oneconfig/api/v1/config/OneCollection;[Lcc/polyfrost/oneconfig/api/v1/config/category/Category;)V
+	public fun <init> (Ljava/lang/String;Ljava/nio/file/Path;Lcc/polyfrost/oneconfig/api/v1/OneCollection;[Lcc/polyfrost/oneconfig/api/v1/config/category/Category;)V
 	protected final fun addDependency (Ljava/lang/String;Ljava/lang/String;)V
 	protected final fun addDependency (Ljava/lang/String;Ljava/lang/String;Ljava/util/function/Supplier;)V
 	public fun getCategories ()[Lcc/polyfrost/oneconfig/api/v1/config/category/Category;
 	public fun getName ()Ljava/lang/String;
 	public fun getPath ()Ljava/nio/file/Path;
-	public fun getProperties ()Lcc/polyfrost/oneconfig/api/v1/config/OneCollection;
+	public fun getProperties ()Lcc/polyfrost/oneconfig/api/v1/OneCollection;
 	protected final fun hideIf (Ljava/lang/String;Ljava/lang/String;)V
 	protected final fun hideIf (Ljava/lang/String;Ljava/util/function/Supplier;)V
 	public fun init ()V
@@ -90,10 +90,6 @@ public abstract interface class cc/polyfrost/oneconfig/api/v1/config/option/type
 }
 
 public abstract interface annotation class cc/polyfrost/oneconfig/api/v1/config/option/type/OptionType$TypeTarget : java/lang/annotation/Annotation {
-	public abstract fun value ()Ljava/lang/Class;
-}
-
-public abstract interface annotation class cc/polyfrost/oneconfig/api/v1/config/option/type/Type : java/lang/annotation/Annotation {
 	public abstract fun value ()Ljava/lang/Class;
 }
 
@@ -369,7 +365,7 @@ public abstract interface class cc/polyfrost/oneconfig/api/v1/config/processor/s
 	public abstract fun serialize (Lcc/polyfrost/oneconfig/api/v1/config/OneConfig;Ljava/util/List;)V
 }
 
-public class cc/polyfrost/oneconfig/api/v1/config/property/Property : cc/polyfrost/oneconfig/api/v1/config/Namable {
+public class cc/polyfrost/oneconfig/api/v1/config/property/Property : cc/polyfrost/oneconfig/api/v1/Namable {
 	public static final field GSON_SERIALIZATION Lcc/polyfrost/oneconfig/api/v1/config/property/Property;
 	public static final field NO_CATEGORY_SERIALIZATION Lcc/polyfrost/oneconfig/api/v1/config/property/Property;
 	public static final field SERIALIZE_BASED_ON_FIELD Lcc/polyfrost/oneconfig/api/v1/config/property/Property;
