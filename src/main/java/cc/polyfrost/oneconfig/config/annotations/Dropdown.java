@@ -34,6 +34,11 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * @deprecated Use {@link cc.polyfrost.oneconfig.api.v1.config.option.type.annotations.IntDropdown} instead,
+ * or the new {@link cc.polyfrost.oneconfig.api.v1.config.option.type.annotations.EnumDropdown} if you want to use enums.
+ */
+@Deprecated
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 @Option(type = OptionType.DROPDOWN)

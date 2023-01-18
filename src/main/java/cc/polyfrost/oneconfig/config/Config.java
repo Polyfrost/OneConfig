@@ -53,7 +53,8 @@ import cc.polyfrost.oneconfig.internal.config.core.ConfigCore;
 import cc.polyfrost.oneconfig.internal.config.core.KeyBindHandler;
 import cc.polyfrost.oneconfig.internal.utils.Deprecator;
 import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
-import com.google.gson.*;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 
@@ -68,11 +69,16 @@ import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Supplier;
 
+/**
+ * @deprecated Use {@link cc.polyfrost.oneconfig.api.v1.config.OneConfig} instead.
+ */
+@Deprecated
 @SuppressWarnings({"unused", "ResultOfMethodCallIgnored"})
 public class Config {
-    public final transient HashMap<String, BasicOption> optionNames = new HashMap<>();
+    public final transient Map<String, BasicOption> optionNames = new HashMap<>();
     transient protected final String configFile;
     transient protected final Gson gson = addGsonOptions(new GsonBuilder()
             .setExclusionStrategies(new ProfileExclusionStrategy()))
