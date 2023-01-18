@@ -35,7 +35,7 @@ import cc.polyfrost.oneconfig.api.v1.config.option.type.options.SliderOptionType
 import cc.polyfrost.oneconfig.api.v1.config.option.type.options.SwitchOptionType;
 import cc.polyfrost.oneconfig.api.v1.config.option.type.options.TextOptionType;
 import cc.polyfrost.oneconfig.api.v1.config.option.type.options.dropdown.EnumDropdownOptionType;
-import cc.polyfrost.oneconfig.api.v1.config.option.type.options.dropdown.IntDropdownOptionType;
+import cc.polyfrost.oneconfig.api.v1.config.option.type.options.dropdown.OrdinalDropdownOptionType;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -56,7 +56,7 @@ public class OptionManager {
         register(ColorOptionType.class, new ColorOptionType());
         register(EnumDropdownOptionType.class, new EnumDropdownOptionType());
         register(IncludeOptionType.class, new IncludeOptionType());
-        register(IntDropdownOptionType.class, new IntDropdownOptionType());
+        register(OrdinalDropdownOptionType.class, new OrdinalDropdownOptionType());
         register(SliderOptionType.class, new SliderOptionType());
         register(SwitchOptionType.class, new SwitchOptionType());
         register(TextOptionType.class, new TextOptionType());

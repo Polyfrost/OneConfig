@@ -148,7 +148,7 @@ public abstract interface annotation class cc/polyfrost/oneconfig/api/v1/config/
 	public abstract fun subcategory ()Ljava/lang/String;
 }
 
-public abstract interface annotation class cc/polyfrost/oneconfig/api/v1/config/option/type/annotations/IntDropdown : java/lang/annotation/Annotation {
+public abstract interface annotation class cc/polyfrost/oneconfig/api/v1/config/option/type/annotations/OrdinalDropdown : java/lang/annotation/Annotation {
 	public abstract fun category ()Ljava/lang/String;
 	public abstract fun description ()Ljava/lang/String;
 	public abstract fun name ()Ljava/lang/String;
@@ -327,7 +327,7 @@ public class cc/polyfrost/oneconfig/api/v1/config/option/type/options/dropdown/E
 	public fun isSupportedClass (Ljava/lang/Class;)Z
 }
 
-public class cc/polyfrost/oneconfig/api/v1/config/option/type/options/dropdown/IntDropdownOptionType : cc/polyfrost/oneconfig/api/v1/config/option/type/options/dropdown/DropdownOptionType {
+public class cc/polyfrost/oneconfig/api/v1/config/option/type/options/dropdown/OrdinalDropdownOptionType : cc/polyfrost/oneconfig/api/v1/config/option/type/options/dropdown/DropdownOptionType {
 	public fun <init> ()V
 	public fun getCategory (Ljava/lang/reflect/Field;)Ljava/lang/String;
 	public fun getCategory (Ljava/lang/reflect/Method;)Ljava/lang/String;

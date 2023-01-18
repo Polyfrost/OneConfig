@@ -26,12 +26,12 @@
 
 package cc.polyfrost.oneconfig.api.v1.config.option.type.options.dropdown;
 
-import cc.polyfrost.oneconfig.api.v1.config.option.type.annotations.IntDropdown;
+import cc.polyfrost.oneconfig.api.v1.config.option.type.annotations.OrdinalDropdown;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
-public class IntDropdownOptionType extends DropdownOptionType {
+public class OrdinalDropdownOptionType extends DropdownOptionType {
 
     @Override
     public boolean isSupportedClass(Class<?> type) {
@@ -40,51 +40,51 @@ public class IntDropdownOptionType extends DropdownOptionType {
 
     @Override
     public String getName(Field field) {
-        return field.getAnnotation(IntDropdown.class).name();
+        return field.getAnnotation(OrdinalDropdown.class).name();
     }
 
     @Override
     public String getName(Method method) {
-        return method.getAnnotation(IntDropdown.class).name();
+        return method.getAnnotation(OrdinalDropdown.class).name();
     }
 
     @Override
     public String getDescription(Field field) {
-        return field.getAnnotation(IntDropdown.class).description();
+        return field.getAnnotation(OrdinalDropdown.class).description();
     }
 
     @Override
     public String getDescription(Method method) {
-        return method.getAnnotation(IntDropdown.class).description();
+        return method.getAnnotation(OrdinalDropdown.class).description();
     }
 
     @Override
     public String getCategory(Field field) {
-        return field.getAnnotation(IntDropdown.class).category();
+        return field.getAnnotation(OrdinalDropdown.class).category();
     }
 
     @Override
     public String getCategory(Method method) {
-        return method.getAnnotation(IntDropdown.class).category();
+        return method.getAnnotation(OrdinalDropdown.class).category();
     }
 
     @Override
     public String getSubcategory(Field field) {
-        return field.getAnnotation(IntDropdown.class).subcategory();
+        return field.getAnnotation(OrdinalDropdown.class).subcategory();
     }
 
     @Override
     public String getSubcategory(Method method) {
-        return method.getAnnotation(IntDropdown.class).subcategory();
+        return method.getAnnotation(OrdinalDropdown.class).subcategory();
     }
 
     @Override
     public String[] getTags(Field field) {
-        return field.getAnnotation(IntDropdown.class).tags();
+        return field.getAnnotation(OrdinalDropdown.class).tags();
     }
 
     @Override
     public String[] getTags(Method method) {
-        return method.getAnnotation(IntDropdown.class).tags();
+        return method.getAnnotation(OrdinalDropdown.class).tags();
     }
 }

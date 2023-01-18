@@ -26,7 +26,7 @@
 
 package cc.polyfrost.oneconfig.api.v1.config.option.type.annotations;
 
-import cc.polyfrost.oneconfig.api.v1.config.option.type.options.dropdown.IntDropdownOptionType;
+import cc.polyfrost.oneconfig.api.v1.config.option.type.options.dropdown.OrdinalDropdownOptionType;
 import cc.polyfrost.oneconfig.api.v1.config.option.type.OptionType;
 
 import java.lang.annotation.ElementType;
@@ -36,8 +36,8 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
-@OptionType.TypeTarget(IntDropdownOptionType.class)
-public @interface IntDropdown {
+@OptionType.TypeTarget(OrdinalDropdownOptionType.class)
+public @interface OrdinalDropdown {
     String name();
 
     String[] options();

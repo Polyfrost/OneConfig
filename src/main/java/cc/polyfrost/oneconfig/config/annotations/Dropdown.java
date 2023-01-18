@@ -26,6 +26,7 @@
 
 package cc.polyfrost.oneconfig.config.annotations;
 
+import cc.polyfrost.oneconfig.api.v1.config.option.type.annotations.OrdinalDropdown;
 import cc.polyfrost.oneconfig.config.data.OptionType;
 import cc.polyfrost.oneconfig.internal.config.annotations.Option;
 
@@ -35,7 +36,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * @deprecated Use {@link cc.polyfrost.oneconfig.api.v1.config.option.type.annotations.IntDropdown} instead,
+ * @deprecated Use {@link OrdinalDropdown} instead,
  * or the new {@link cc.polyfrost.oneconfig.api.v1.config.option.type.annotations.EnumDropdown} if you want to use enums.
  */
 @Deprecated
