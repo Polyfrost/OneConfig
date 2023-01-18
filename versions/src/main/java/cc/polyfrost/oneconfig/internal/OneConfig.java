@@ -103,6 +103,7 @@ public class OneConfig {
         //#if FORGE==1
             //#if MC<=11202
             for (ModContainer mod : Loader.instance().getActiveModList()) {
+                if (mod == null) continue;
                 handleForgeCommand(mod);
                 handleForgeGui(mod);
             }
