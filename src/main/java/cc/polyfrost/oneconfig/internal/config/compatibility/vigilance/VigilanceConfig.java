@@ -186,7 +186,7 @@ public class VigilanceConfig extends Config {
     public void addDependency(PropertyData property, PropertyData dependency) {
         BasicOption option = optionNames.get(PropertyKt.fullPropertyPath(property.getAttributesExt()));
         if (option != null) {
-            option.addDependency(option.name, () -> Objects.equals(dependency.getValue().getValue(vigilant), true));
+            option.addDependency(getName(dependency.getAttributesExt()), () -> Objects.equals(dependency.getValue().getValue(vigilant), true));
         }
     }
 
