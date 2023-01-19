@@ -42,7 +42,6 @@ import java.util.Map;
 public class HUDUtils {
     public static void addHudOptions(OptionPage page, Field field, Object instance, Config config) {
         HUD hudAnnotation = field.getAnnotation(HUD.class);
-        field.setAccessible(true);
         Hud hud = (Hud) ConfigUtils.getField(field, instance);
         if (hud == null) return;
         hud.setConfig(config);
@@ -86,13 +85,20 @@ public class HUDUtils {
                 options.get(options.size() - 1).addDependency(() -> ((BasicHud) hud).rounded);
                 options.add(new ConfigSlider(fields.get("borderSize"), hud, "Border thickness:", "The thickness of the outline.", category, subcategory, 0, 10, 0));
                 options.get(options.size() - 1).addDependency(() -> ((BasicHud) hud).border);
-                if (hud instanceof SingleTextHud) {
-                    options.add(new ConfigSlider(fields.get("paddingX"), hud, "Width", "The width of the HUD.", category, subcategory, 50, 72, 0));
-                    options.add(new ConfigSlider(fields.get("paddingY"), hud, "Height", "The height of the HUD.", category, subcategory, 10, 22, 0));
-                } else {
-                    options.add(new ConfigSlider(fields.get("paddingX"), hud, "X-Padding", "The horizontal padding of the HUD.", category, subcategory, 0, 50, 0));
-                    options.add(new ConfigSlider(fields.get("paddingY"), hud, "Y-Padding", "The vertical padding of the HUD.", category, subcategory, 0, 50, 0));
+                Field paddingX = fields.get("paddingX");
+                Field paddingY = fields.get("paddingY");
+                try {
+                    if (((float) ConfigUtils.getField(paddingX, hud)) > 50) {
+                        paddingX.set(hud, 5f);
+                    }
+                    if (((float) ConfigUtils.getField(paddingY, hud)) > 50) {
+                        paddingY.set(hud, 5f);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
+                options.add(new ConfigSlider(paddingX, hud, "X-Padding", "The horizontal padding of the HUD.", category, subcategory, 0, 50, 0));
+                options.add(new ConfigSlider(paddingY, hud, "Y-Padding", "The vertical padding of the HUD.", category, subcategory, 0, 50, 0));
                 options.get(options.size() - 2).addDependency(() -> ((BasicHud) hud).background || ((BasicHud) hud).border);
                 options.get(options.size() - 1).addDependency(() -> ((BasicHud) hud).background || ((BasicHud) hud).border);
             }
