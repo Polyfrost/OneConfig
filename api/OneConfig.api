@@ -10,6 +10,7 @@ public class cc/polyfrost/oneconfig/config/Config {
 	public fun <init> (Lcc/polyfrost/oneconfig/config/data/Mod;Ljava/lang/String;Z)V
 	public fun <init> (Lcc/polyfrost/oneconfig/config/data/Mod;Ljava/lang/String;ZZ)V
 	protected final fun addDependency (Ljava/lang/String;Ljava/lang/String;)V
+	protected final fun addDependency (Ljava/lang/String;Ljava/lang/String;Ljava/util/function/Supplier;)V
 	protected final fun addDependency (Ljava/lang/String;Ljava/util/function/Supplier;)V
 	protected final fun addDependency (Ljava/lang/String;Z)V
 	protected fun addGsonOptions (Lcom/google/gson/GsonBuilder;)Lcom/google/gson/GsonBuilder;
@@ -1098,7 +1099,6 @@ public abstract class cc/polyfrost/oneconfig/hud/SingleTextHud : cc/polyfrost/on
 	public fun <init> (Ljava/lang/String;Z)V
 	public fun <init> (Ljava/lang/String;ZFFFZZFFFLcc/polyfrost/oneconfig/config/core/OneColor;ZFLcc/polyfrost/oneconfig/config/core/OneColor;)V
 	public fun <init> (Ljava/lang/String;ZII)V
-	public fun drawAll (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;Z)V
 	protected final fun getCompleteText (Ljava/lang/String;)Ljava/lang/String;
 	protected fun getLines (Ljava/util/List;Z)V
 	protected fun getLinesFrequent (Ljava/util/List;Z)V

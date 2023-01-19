@@ -75,36 +75,40 @@ public class HUDUtils {
             if (hud instanceof BasicHud) {
                 options.add(new ConfigCheckbox(fields.get("background"), hud, "Background", "If the background of the HUD is enabled.", category, subcategory, 1));
                 options.add(new ConfigCheckbox(fields.get("rounded"), hud, "Rounded corners", "If the background has rounded corners.", category, subcategory, 1));
-                options.get(options.size() - 1).addDependency(() -> ((BasicHud) hud).background || ((BasicHud) hud).border);
+                options.get(options.size() - 1).addDependency("Background or Border", () -> ((BasicHud) hud).background || ((BasicHud) hud).border);
                 options.add(new ConfigCheckbox(fields.get("border"), hud, "Outline/border", "If the hud has an outline.", category, subcategory, 1));
                 options.add(new ConfigColorElement(fields.get("bgColor"), hud, "Background color:", "The color of the background.", category, subcategory, 1, true));
-                options.get(options.size() - 1).addDependency(() -> ((BasicHud) hud).background);
+                options.get(options.size() - 1).addDependency("Background", () -> ((BasicHud) hud).background);
                 options.add(new ConfigColorElement(fields.get("borderColor"), hud, "Border color:", "The color of the border.", category, subcategory, 1, true));
-                options.get(options.size() - 1).addDependency(() -> ((BasicHud) hud).border);
+                options.get(options.size() - 1).addDependency("Border", () -> ((BasicHud) hud).border);
                 options.add(new ConfigSlider(fields.get("cornerRadius"), hud, "Corner radius:", "The corner radius of the background.", category, subcategory, 0, 10, 0));
-                options.get(options.size() - 1).addDependency(() -> ((BasicHud) hud).rounded);
+                options.get(options.size() - 1).addDependency("Rounded", () -> ((BasicHud) hud).rounded);
                 options.add(new ConfigSlider(fields.get("borderSize"), hud, "Border thickness:", "The thickness of the outline.", category, subcategory, 0, 10, 0));
-                options.get(options.size() - 1).addDependency(() -> ((BasicHud) hud).border);
+                options.get(options.size() - 1).addDependency("Border", () -> ((BasicHud) hud).border);
                 Field paddingX = fields.get("paddingX");
                 Field paddingY = fields.get("paddingY");
                 try {
-                    if (((float) ConfigUtils.getField(paddingX, hud)) > 50) {
+                    boolean changed = false;
+                    if (((float) ConfigUtils.getField(paddingX, hud)) > 10) {
                         paddingX.set(hud, 5f);
+                        changed = true;
                     }
-                    if (((float) ConfigUtils.getField(paddingY, hud)) > 50) {
+                    if (((float) ConfigUtils.getField(paddingY, hud)) > 10) {
                         paddingY.set(hud, 5f);
+                        changed = true;
                     }
+                    if (changed) config.save();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-                options.add(new ConfigSlider(paddingX, hud, "X-Padding", "The horizontal padding of the HUD.", category, subcategory, 0, 50, 0));
-                options.add(new ConfigSlider(paddingY, hud, "Y-Padding", "The vertical padding of the HUD.", category, subcategory, 0, 50, 0));
-                options.get(options.size() - 2).addDependency(() -> ((BasicHud) hud).background || ((BasicHud) hud).border);
-                options.get(options.size() - 1).addDependency(() -> ((BasicHud) hud).background || ((BasicHud) hud).border);
+                options.add(new ConfigSlider(paddingX, hud, "X-Padding", "The horizontal padding of the HUD.", category, subcategory, 0, 10, 0));
+                options.add(new ConfigSlider(paddingY, hud, "Y-Padding", "The vertical padding of the HUD.", category, subcategory, 0, 10, 0));
+                options.get(options.size() - 2).addDependency("Background or Border", () -> ((BasicHud) hud).background || ((BasicHud) hud).border);
+                options.get(options.size() - 1).addDependency("Background or Border", () -> ((BasicHud) hud).background || ((BasicHud) hud).border);
             }
             for (BasicOption option : options) {
                 if (option.name.equals("Enabled")) continue;
-                option.addDependency(hud::isEnabled);
+                option.addDependency(hudAnnotation.name(), hud::isEnabled);
             }
         } catch (Exception ignored) {
         }
