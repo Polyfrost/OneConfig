@@ -26,6 +26,7 @@
 
 package cc.polyfrost.oneconfig.config.annotations;
 
+import cc.polyfrost.oneconfig.api.v1.config.option.type.annotations.Boolean;
 import cc.polyfrost.oneconfig.config.data.OptionType;
 import cc.polyfrost.oneconfig.internal.config.annotations.Option;
 
@@ -35,7 +36,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * @deprecated Use {@link cc.polyfrost.oneconfig.api.v1.config.option.type.annotations.Switch} instead.
+ * @deprecated Use {@link Boolean} instead.
  */
 @Deprecated
 @Retention(RetentionPolicy.RUNTIME)

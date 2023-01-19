@@ -28,11 +28,10 @@ package cc.polyfrost.oneconfig.api.v1.config.option;
 
 import cc.polyfrost.oneconfig.api.v1.config.option.type.OptionType;
 import cc.polyfrost.oneconfig.api.v1.config.option.type.options.ButtonOptionType;
-import cc.polyfrost.oneconfig.api.v1.config.option.type.options.CheckboxOptionType;
 import cc.polyfrost.oneconfig.api.v1.config.option.type.options.ColorOptionType;
 import cc.polyfrost.oneconfig.api.v1.config.option.type.options.IncludeOptionType;
 import cc.polyfrost.oneconfig.api.v1.config.option.type.options.SliderOptionType;
-import cc.polyfrost.oneconfig.api.v1.config.option.type.options.SwitchOptionType;
+import cc.polyfrost.oneconfig.api.v1.config.option.type.options.BooleanOptionType;
 import cc.polyfrost.oneconfig.api.v1.config.option.type.options.TextOptionType;
 import cc.polyfrost.oneconfig.api.v1.config.option.type.options.dropdown.EnumDropdownOptionType;
 import cc.polyfrost.oneconfig.api.v1.config.option.type.options.dropdown.OrdinalDropdownOptionType;
@@ -52,13 +51,12 @@ public class OptionManager {
 
     public OptionManager() {
         register(ButtonOptionType.class, new ButtonOptionType());
-        register(CheckboxOptionType.class, new CheckboxOptionType());
         register(ColorOptionType.class, new ColorOptionType());
         register(EnumDropdownOptionType.class, new EnumDropdownOptionType());
         register(IncludeOptionType.class, new IncludeOptionType());
         register(OrdinalDropdownOptionType.class, new OrdinalDropdownOptionType());
         register(SliderOptionType.class, new SliderOptionType());
-        register(SwitchOptionType.class, new SwitchOptionType());
+        register(BooleanOptionType.class, new BooleanOptionType());
         register(TextOptionType.class, new TextOptionType());
     }
 

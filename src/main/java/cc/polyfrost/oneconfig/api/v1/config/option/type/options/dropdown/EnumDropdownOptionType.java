@@ -35,10 +35,8 @@ public class EnumDropdownOptionType extends DropdownOptionType {
 
     @Override
     public boolean isSupportedClass(Class<?> type) {
-        // TODO:
-        //  1 - use Namable instead of DropdownEnum
-        //  2 - accept any enum, even if it doesnt implement Namable, and use the enum name capitalized as the display name
-        return type.isEnum() /* && type.isAssignableFrom(DropdownEnum.class) */;
+        // note: accept any enum. if it doesn't implement Namable, use the enum name capitalized as the display name
+        return type.isEnum();
     }
 
     @Override

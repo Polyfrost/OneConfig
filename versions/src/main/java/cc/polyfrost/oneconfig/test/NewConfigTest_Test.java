@@ -31,26 +31,27 @@ import cc.polyfrost.oneconfig.api.v1.config.OneConfig;
 import cc.polyfrost.oneconfig.api.v1.config.option.type.annotations.Accordion;
 import cc.polyfrost.oneconfig.api.v1.config.option.type.annotations.Button;
 import cc.polyfrost.oneconfig.api.v1.config.option.type.annotations.Slider;
-import cc.polyfrost.oneconfig.api.v1.config.option.type.annotations.Switch;
+import cc.polyfrost.oneconfig.api.v1.config.option.type.annotations.Boolean;
 import cc.polyfrost.oneconfig.api.v1.config.option.type.annotations.Text;
 
 import java.io.File;
 
 public class NewConfigTest_Test extends OneConfig {
-    @Switch(
+    @Boolean(
             name = "Test"
     )
     public boolean test = true;
 
     @Accordion(name = "Accordion")
-    @Switch(
+    @Boolean(
             name = "Accordion Option 1"
     )
     public boolean accordion1 = true;
 
     @Accordion(name = "Accordion")
-    @Switch(
-            name = "Accordion Option 2"
+    @Boolean(
+            name = "Accordion Option 2",
+            type = Boolean.Type.CHECKBOX
     )
     public boolean accordion2 = true;
 

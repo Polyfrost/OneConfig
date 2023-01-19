@@ -24,8 +24,36 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.api.v1.config.option.type.options.dropdown;
+package cc.polyfrost.oneconfig.api.v1.config.option.type.annotations;
 
-public interface DropdownEnum {
-    String getOptionName();
+import cc.polyfrost.oneconfig.api.v1.config.option.type.OptionType;
+import cc.polyfrost.oneconfig.api.v1.config.option.type.options.BooleanOptionType;
+
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.FIELD)
+@OptionType.TypeTarget(BooleanOptionType.class)
+public @interface Boolean {
+    String name();
+
+    Type type() default Type.SWITCH;
+
+    String description() default "";
+
+    int size() default 1;
+
+    String category() default "General";
+
+    String subcategory() default "";
+
+    String[] tags() default {};
+
+    enum Type {
+        SWITCH,
+        CHECKBOX
+    }
 }

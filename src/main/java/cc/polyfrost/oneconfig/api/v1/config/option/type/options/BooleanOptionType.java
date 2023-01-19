@@ -27,70 +27,70 @@
 package cc.polyfrost.oneconfig.api.v1.config.option.type.options;
 
 import cc.polyfrost.oneconfig.api.v1.config.option.type.OptionType;
-import cc.polyfrost.oneconfig.api.v1.config.option.type.annotations.Switch;
+import cc.polyfrost.oneconfig.api.v1.config.option.type.annotations.Boolean;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
-public class SwitchOptionType implements OptionType {
+public class BooleanOptionType implements OptionType {
 
     @Override
     public String name() {
-        return "Switch";
+        return "Boolean";
     }
 
     @Override
     public boolean isSupportedClass(Class<?> type) {
-        return type.isAssignableFrom(Boolean.class) || type.isAssignableFrom(Boolean.TYPE);
+        return type.isAssignableFrom(java.lang.Boolean.class) || type.isAssignableFrom(java.lang.Boolean.TYPE);
     }
 
     @Override
     public String getName(Field field) {
-        return field.getAnnotation(Switch.class).name();
+        return field.getAnnotation(Boolean.class).name();
     }
 
     @Override
     public String getName(Method method) {
-        return method.getAnnotation(Switch.class).name();
+        return method.getAnnotation(Boolean.class).name();
     }
 
     @Override
     public String getDescription(Field field) {
-        return field.getAnnotation(Switch.class).description();
+        return field.getAnnotation(Boolean.class).description();
     }
 
     @Override
     public String getDescription(Method method) {
-        return method.getAnnotation(Switch.class).description();
+        return method.getAnnotation(Boolean.class).description();
     }
 
     @Override
     public String getCategory(Field field) {
-        return field.getAnnotation(Switch.class).category();
+        return field.getAnnotation(Boolean.class).category();
     }
 
     @Override
     public String getCategory(Method method) {
-        return method.getAnnotation(Switch.class).category();
+        return method.getAnnotation(Boolean.class).category();
     }
 
     @Override
     public String getSubcategory(Field field) {
-        return field.getAnnotation(Switch.class).subcategory();
+        return field.getAnnotation(Boolean.class).subcategory();
     }
 
     @Override
     public String getSubcategory(Method method) {
-        return method.getAnnotation(Switch.class).subcategory();
+        return method.getAnnotation(Boolean.class).subcategory();
     }
 
     @Override
     public String[] getTags(Field field) {
-        return field.getAnnotation(Switch.class).tags();
+        return field.getAnnotation(Boolean.class).tags();
     }
 
     @Override
     public String[] getTags(Method method) {
-        return method.getAnnotation(Switch.class).tags();
+        return method.getAnnotation(Boolean.class).tags();
     }
 }
