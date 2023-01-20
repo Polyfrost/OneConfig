@@ -1,7 +1,7 @@
 /*
  * This file is part of OneConfig.
  * OneConfig - Next Generation Config Library for Minecraft: Java Edition
- * Copyright (C) 2021, 2022 Polyfrost and Kendell R.
+ * Copyright (C) 2021~2023 Polyfrost and Kendell R.
  *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
  * Co-author: Kendell R (KTibow) <https://github.com/KTibow>
  *
