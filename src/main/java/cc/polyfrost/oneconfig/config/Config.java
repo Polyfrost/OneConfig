@@ -1,7 +1,7 @@
 /*
  * This file is part of OneConfig.
  * OneConfig - Next Generation Config Library for Minecraft: Java Edition
- * Copyright (C) 2021, 2022 Polyfrost.
+ * Copyright (C) 2021~2023 Polyfrost.
  *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -261,9 +261,23 @@ public class Config {
      * Disable an option if a certain condition is not met
      *
      * @param option    The name of the field, or if the field is in a page "pageName.fieldName"
+     * @param conditionName The name of the condition, this is used in the GUI
      * @param condition The condition that has to be met for the option to be enabled
      */
+    protected final void addDependency(String option, String conditionName, Supplier<Boolean> condition) {
+        if (!optionNames.containsKey(option)) return;
+        optionNames.get(option).addDependency(conditionName, condition);
+    }
+
+    /**
+     * Disable an option if a certain condition is not met
+     *
+     * @param option    The name of the field, or if the field is in a page "pageName.fieldName"
+     * @param condition The condition that has to be met for the option to be enabled
+     */
+    @Deprecated
     protected final void addDependency(String option, Supplier<Boolean> condition) {
+        Deprecator.markDeprecated();
         if (!optionNames.containsKey(option)) return;
         optionNames.get(option).addDependency(condition);
     }
