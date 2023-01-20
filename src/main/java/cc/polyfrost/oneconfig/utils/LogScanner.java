@@ -1,7 +1,7 @@
 /*
  * This file is part of OneConfig.
  * OneConfig - Next Generation Config Library for Minecraft: Java Edition
- * Copyright (C) 2021, 2022 Polyfrost.
+ * Copyright (C) 2021~2023 Polyfrost.
  *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -153,6 +153,7 @@ public class LogScanner {
     @NotNull
     public static Set<LoaderPlatform.ActiveMod> identifyFromClass(String className) {
         List<LoaderPlatform.ActiveMod> modMap = Platform.getLoaderPlatform().getLoadedMods();
+        modMap.removeIf(Objects::isNull);
         // Skip identification for Mixin, one's mod copy of the library is shared with all other mods
         if (className.startsWith("org.spongepowered.asm.mixin.")) {
             debug(() -> "Ignoring class " + className + " for identification because it is a mixin class");

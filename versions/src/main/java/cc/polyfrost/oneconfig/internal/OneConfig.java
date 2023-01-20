@@ -1,7 +1,7 @@
 /*
  * This file is part of OneConfig.
  * OneConfig - Next Generation Config Library for Minecraft: Java Edition
- * Copyright (C) 2021, 2022 Polyfrost.
+ * Copyright (C) 2021~2023 Polyfrost.
  *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -103,6 +103,7 @@ public class OneConfig {
         //#if FORGE==1
             //#if MC<=11202
             for (ModContainer mod : Loader.instance().getActiveModList()) {
+                if (mod == null) continue;
                 handleForgeCommand(mod);
                 handleForgeGui(mod);
             }
