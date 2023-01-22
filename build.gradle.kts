@@ -1,17 +1,17 @@
 // These inspections trigger because we're using the library versions that
 // are bundled with Minecraft, which are not the latest versions.
-@file:Suppress("GradlePackageUpdate", "VulnerableLibrariesLocal")
+@file:Suppress("GradlePackageUpdate", "VulnerableLibrariesLocal", "DSL_SCOPE_VIOLATION")
 
 import cc.polyfrost.gradle.multiversion.StripReferencesTransform.Companion.registerStripReferencesAttribute
 import cc.polyfrost.gradle.util.RelocationTransform.Companion.registerRelocationAttribute
 import cc.polyfrost.gradle.util.prebundle
 
 plugins {
-    kotlin("jvm") version "1.6.21"
-    id("org.jetbrains.kotlinx.binary-compatibility-validator") version "0.12.1"
-    id("cc.polyfrost.defaults.repo")
-    id("cc.polyfrost.defaults.java")
-    id("net.kyori.blossom") version "1.3.0"
+    alias(libs.plugins.kotlin)
+    alias(libs.plugins.kotlinAbi)
+    alias(pgtLibs.plugins.pgtDefaultJava)
+    alias(pgtLibs.plugins.pgtDefaultRepo)
+    alias(libs.plugins.blossom)
     id("maven-publish")
     id("signing")
     java
@@ -79,49 +79,34 @@ dependencies {
     compileOnly("org.apache.commons:commons-lang3:3.3.2")
     compileOnly("org.jetbrains:annotations:23.1.0")
 
-    compileOnly("gg.essential:vigilance-1.8.9-forge:+") {
+    compileOnly(libs.vigilance) {
         attributes { attribute(common, true) }
         isTransitive = false
     }
 
-    compileOnly("cc.polyfrost:universalcraft-1.8.9-forge:246") {
+    compileOnly("cc.polyfrost:universalcraft-1.8.9-forge:${libs.versions.universalcraft.get()}") {
         attributes { attribute(common, true) }
         isTransitive = false
     }
 
-    shadeRelocated("com.github.KevinPriv:keventbus:c52e0a2ea0") {
+    shadeRelocated(libs.keventbus) {
         isTransitive = false
     }
 
-    shadeRelocated("com.github.xtrm-en:deencapsulation:42b829f373") {
+    shadeRelocated(libs.deencapsulation) {
         isTransitive = false
     }
 
     @Suppress("GradlePackageUpdate")
-    shadeRelocated("com.github.ben-manes.caffeine:caffeine:2.9.3")
+    shadeRelocated(libs.caffeine)
 
     // for other mods and universalcraft
-    val kotlinVersion: String by project
-    val coroutinesVersion: String by project
-    val serializationVersion: String by project
-    val atomicfuVersion: String by project
-    shade("org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion")
-    shade("org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion")
-    shade("org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlinVersion")
-    shade("org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion")
+    shade(libs.bundles.kotlin)
 
-    shade("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion")
-    shade("org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:$coroutinesVersion")
-    shade("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:$coroutinesVersion")
-    shade("org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:$serializationVersion")
-    shade("org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:$serializationVersion")
-    shade("org.jetbrains.kotlinx:kotlinx-serialization-cbor-jvm:$serializationVersion")
-    shade("org.jetbrains.kotlinx:atomicfu-jvm:$atomicfuVersion")
-
-    shade("org.spongepowered:mixin:0.7.11-SNAPSHOT") {
+    shade(libs.mixin) {
         isTransitive = false
     }
-    compileOnly("cc.polyfrost:lwjgl-legacy:1.0.0-alpha24") {
+    compileOnly("cc.polyfrost:lwjgl-legacy:${libs.versions.lwjgl.get()}") {
         isTransitive = false
     }
     shadeNoPom(prebundle(shadeRelocated))
