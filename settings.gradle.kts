@@ -1,23 +1,29 @@
 pluginManagement {
     repositories {
-        mavenLocal()
         gradlePluginPortal()
         maven("https://repo.polyfrost.cc/releases")
     }
+    val pgtVersion = "0.1.27"
     plugins {
-        val pgtVersion = "0.1.23"
         id("cc.polyfrost.multi-version.root") version pgtVersion
+        id("cc.polyfrost.defaults") version pgtVersion
         id("cc.polyfrost.defaults.repo") version pgtVersion
         id("cc.polyfrost.defaults.java") version pgtVersion
         id("cc.polyfrost.multi-version.api-validation") version pgtVersion
     }
-    resolutionStrategy {
-        eachPlugin {
-            if (requested.id.id == "io.github.juuxel.loom-quiltflower-mini") {
-                useModule("com.github.wyvest:loom-quiltflower-mini:${requested.version}")
+    dependencyResolutionManagement {
+        versionCatalogs {
+            create("pgtLibs") {
+                plugin("pgtRoot", "cc.polyfrost.multi-version.root").version(pgtVersion)
+                plugin("pgt", "cc.polyfrost.multi-version").version(pgtVersion)
+                plugin("pgtDefaults", "cc.polyfrost.defaults").version(pgtVersion)
+                plugin("pgtDefaultRepo", "cc.polyfrost.defaults.repo").version(pgtVersion)
+                plugin("pgtDefaultJava", "cc.polyfrost.defaults.java").version(pgtVersion)
+                plugin("pgtAbi", "cc.polyfrost.multi-version.api-validation").version(pgtVersion)
             }
         }
     }
+
 }
 
 val mod_name: String by settings
