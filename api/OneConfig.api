@@ -1892,6 +1892,7 @@ public class cc/polyfrost/oneconfig/utils/hypixel/LocrawInfo : java/io/Serializa
 
 public final class cc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType : java/lang/Enum {
 	public static final field ARCADE_GAMES Lcc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
+	public static final field ARENA Lcc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
 	public static final field BEDWARS Lcc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
 	public static final field BLITZ_SG Lcc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
 	public static final field BUILD_BATTLE Lcc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
@@ -1904,17 +1905,23 @@ public final class cc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType : ja
 	public static final field MAIN Lcc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
 	public static final field MEGA_WALLS Lcc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
 	public static final field MURDER_MYSTERY Lcc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
+	public static final field PAINTBALL Lcc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
 	public static final field PIT Lcc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
 	public static final field PROTOTYPE Lcc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
+	public static final field QUAKE Lcc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
+	public static final field REPLAY Lcc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
 	public static final field SKYBLOCK Lcc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
 	public static final field SKYWARS Lcc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
 	public static final field SMASH_HEROES Lcc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
 	public static final field SPEED_UHC Lcc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
 	public static final field TNT_GAMES Lcc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
+	public static final field TURBO_KART_RACERS Lcc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
 	public static final field UHC_CHAMPIONS Lcc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
 	public static final field UNKNOWN Lcc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
+	public static final field VAMPIREZ Lcc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
+	public static final field WALLS Lcc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
 	public static final field WARLORDS Lcc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static final field WOOL_GAMES Lcc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
+	public static final field WOOL_WARS Lcc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
 	public static fun getFromLocraw (Ljava/lang/String;)Lcc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
 	public fun getServerName ()Ljava/lang/String;
 	public static fun valueOf (Ljava/lang/String;)Lcc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
