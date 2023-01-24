@@ -1909,6 +1909,7 @@ public final class cc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType : ja
 	public static final field PIT Lcc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
 	public static final field PROTOTYPE Lcc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
 	public static final field QUAKE Lcc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
+	public static final field REPLAY Lcc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
 	public static final field SKYBLOCK Lcc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
 	public static final field SKYWARS Lcc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
 	public static final field SMASH_HEROES Lcc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
