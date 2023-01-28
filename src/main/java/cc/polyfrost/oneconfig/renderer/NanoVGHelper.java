@@ -307,6 +307,7 @@ public interface NanoVGHelper {
      * @param height   The height.
      * @param radius   The radius.
      */
+    @Deprecated
     void drawRoundImage(long vg, String filePath, float x, float y, float width, float height, float radius);
 
     /**
@@ -439,6 +440,7 @@ public interface NanoVGHelper {
      * @param height   The height.
      * @param color    The color.
      */
+    @Deprecated
     void drawSvg(long vg, String filePath, float x, float y, float width, float height, int color);
 
     /**
