@@ -1264,11 +1264,14 @@ public abstract interface class cc/polyfrost/oneconfig/renderer/NanoVGHelper {
 	public abstract fun drawImage (JLcc/polyfrost/oneconfig/renderer/asset/Image;FFFFI)V
 	public abstract fun drawImage (JLjava/lang/String;FFFF)V
 	public abstract fun drawImage (JLjava/lang/String;FFFFI)V
+	public abstract fun drawImage (JLjava/lang/String;FFFFILjava/lang/Class;)V
+	public abstract fun drawImage (JLjava/lang/String;FFFFLjava/lang/Class;)V
 	public abstract fun drawInfo (JLcc/polyfrost/oneconfig/config/data/InfoType;FFF)V
 	public abstract fun drawLine (JFFFFFI)V
 	public abstract fun drawRect (JFFFFI)V
 	public abstract fun drawRoundImage (JLcc/polyfrost/oneconfig/renderer/asset/Image;FFFFF)V
 	public abstract fun drawRoundImage (JLjava/lang/String;FFFFF)V
+	public abstract fun drawRoundImage (JLjava/lang/String;FFFFFLjava/lang/Class;)V
 	public abstract fun drawRoundedRect (JFFFFIF)V
 	public abstract fun drawRoundedRectVaried (JFFFFIFFFF)V
 	public abstract fun drawScaledString (Ljava/lang/String;FFILcc/polyfrost/oneconfig/renderer/NanoVGHelper$TextType;F)V
@@ -1278,8 +1281,12 @@ public abstract interface class cc/polyfrost/oneconfig/renderer/NanoVGHelper {
 	public abstract fun drawSvg (JLcc/polyfrost/oneconfig/renderer/asset/SVG;FFFFIF)V
 	public abstract fun drawSvg (JLjava/lang/String;FFFF)V
 	public abstract fun drawSvg (JLjava/lang/String;FFFFF)V
+	public abstract fun drawSvg (JLjava/lang/String;FFFFFLjava/lang/Class;)V
 	public abstract fun drawSvg (JLjava/lang/String;FFFFI)V
 	public abstract fun drawSvg (JLjava/lang/String;FFFFIF)V
+	public abstract fun drawSvg (JLjava/lang/String;FFFFIFLjava/lang/Class;)V
+	public abstract fun drawSvg (JLjava/lang/String;FFFFILjava/lang/Class;)V
+	public abstract fun drawSvg (JLjava/lang/String;FFFFLjava/lang/Class;)V
 	public abstract fun drawText (JLjava/lang/String;FFIFLcc/polyfrost/oneconfig/renderer/font/Font;)V
 	public abstract fun drawURL (JLjava/lang/String;FFFLcc/polyfrost/oneconfig/renderer/font/Font;Lcc/polyfrost/oneconfig/utils/InputHandler;)V
 	public abstract fun drawWrappedString (JLjava/lang/String;FFFIFFLcc/polyfrost/oneconfig/renderer/font/Font;)V
@@ -1353,13 +1360,14 @@ public abstract interface class cc/polyfrost/oneconfig/renderer/asset/AssetHelpe
 	public abstract fun getNVGImage (Ljava/lang/String;)Lcc/polyfrost/oneconfig/renderer/asset/NVGAsset;
 	public abstract fun getNVGSVG (Ljava/lang/String;)Lcc/polyfrost/oneconfig/renderer/asset/NVGAsset;
 	public abstract fun getSVG (Ljava/lang/String;FF)I
-	public abstract fun imageToIntBuffer (Ljava/lang/String;)Ljava/nio/IntBuffer;
 	public abstract fun loadImage (JLcc/polyfrost/oneconfig/renderer/asset/Image;)Z
-	public abstract fun loadImage (JLjava/lang/String;)Z
-	public abstract fun loadImage (JLjava/lang/String;I)Z
+	public abstract fun loadImage (JLcc/polyfrost/oneconfig/renderer/asset/Image;Ljava/lang/Class;)Z
+	public abstract fun loadImage (JLjava/lang/String;ILjava/lang/Class;)Z
+	public abstract fun loadImage (JLjava/lang/String;Ljava/lang/Class;)Z
 	public abstract fun loadSVG (JLcc/polyfrost/oneconfig/renderer/asset/SVG;FF)Z
-	public abstract fun loadSVG (JLjava/lang/String;FF)Z
-	public abstract fun loadSVG (JLjava/lang/String;FFI)Z
+	public abstract fun loadSVG (JLcc/polyfrost/oneconfig/renderer/asset/SVG;FFLjava/lang/Class;)Z
+	public abstract fun loadSVG (JLjava/lang/String;FFILjava/lang/Class;)Z
+	public abstract fun loadSVG (JLjava/lang/String;FFLjava/lang/Class;)Z
 	public abstract fun removeImage (JLjava/lang/String;)V
 	public abstract fun removeSVG (JLjava/lang/String;FF)V
 }
@@ -1457,7 +1465,9 @@ public final class cc/polyfrost/oneconfig/utils/IOUtils {
 	public static fun getImageFromClipboard ()Ljava/awt/Image;
 	public static fun getStringFromClipboard ()Ljava/lang/String;
 	public static fun resourceToByteBuffer (Ljava/lang/String;)Ljava/nio/ByteBuffer;
+	public static fun resourceToByteBuffer (Ljava/lang/String;Ljava/lang/Class;)Ljava/nio/ByteBuffer;
 	public static fun resourceToByteBufferNullable (Ljava/lang/String;)Ljava/nio/ByteBuffer;
+	public static fun resourceToByteBufferNullable (Ljava/lang/String;Ljava/lang/Class;)Ljava/nio/ByteBuffer;
 }
 
 public class cc/polyfrost/oneconfig/utils/InputHandler {
