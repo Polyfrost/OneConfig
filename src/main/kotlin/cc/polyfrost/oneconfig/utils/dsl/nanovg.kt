@@ -181,11 +181,11 @@ fun VG.drawURL(url: String, x: Number, y: Number, size: Number, font: Font, inpu
     instance.drawURL(url, x, y, size, font, inputHandler)
 
 
-@Deprecated(message = "Doesn't pass class to load resource with", replaceWith = ReplaceWith("drawImage(filePath, x, y, width, height, getClass())"))
+@Deprecated(message = "Doesn't pass class to load resource with", replaceWith = ReplaceWith("drawImage(filePath, x, y, width, height, javaClass)"))
 fun Long.drawImage(filePath: String, x: Number, y: Number, width: Number, height: Number) =
     nanoVGHelper.drawImage(this, filePath, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat())
 
-@Deprecated(message = "Doesn't pass class to load resource with", replaceWith = ReplaceWith("drawImage(filePath, x, y, width, height, getClass())"))
+@Deprecated(message = "Doesn't pass class to load resource with", replaceWith = ReplaceWith("drawImage(filePath, x, y, width, height, javaClass)"))
 fun VG.drawImage(filePath: String, x: Number, y: Number, width: Number, height: Number) =
     instance.drawImage(filePath, x, y, width, height)
 
@@ -195,11 +195,11 @@ fun Long.drawImage(filePath: String, x: Number, y: Number, width: Number, height
 fun VG.drawImage(filePath: String, x: Number, y: Number, width: Number, height: Number, clazz: Class<*>) =
     instance.drawImage(filePath, x, y, width, height, clazz)
 
-@Deprecated(message = "Doesn't pass class to load resource with", replaceWith = ReplaceWith("drawImage(filePath, x, y, width, height, color, getClass())"))
+@Deprecated(message = "Doesn't pass class to load resource with", replaceWith = ReplaceWith("drawImage(filePath, x, y, width, height, color, javaClass)"))
 fun Long.drawImage(filePath: String, x: Number, y: Number, width: Number, height: Number, color: Int) =
     nanoVGHelper.drawImage(this, filePath, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat(), color)
 
-@Deprecated(message = "Doesn't pass class to load resource with", replaceWith = ReplaceWith("drawImage(filePath, x, y, width, height, color, getClass())"))
+@Deprecated(message = "Doesn't pass class to load resource with", replaceWith = ReplaceWith("drawImage(filePath, x, y, width, height, color, javaClass)"))
 fun VG.drawImage(filePath: String, x: Number, y: Number, width: Number, height: Number, color: Int) =
     instance.drawImage(filePath, x, y, width, height, color)
 
@@ -222,13 +222,13 @@ fun VG.drawImage(image: Image, x: Number, y: Number, width: Number, height: Numb
     instance.drawImage(image, x, y, width, height, color)
 
 
-@Deprecated(message = "Doesn't pass class to load resource with", replaceWith = ReplaceWith("drawImage(filePath, x, y, width, height, radius, getClass())"))
+@Deprecated(message = "Doesn't pass class to load resource with", replaceWith = ReplaceWith("drawImage(filePath, x, y, width, height, radius, javaClass)"))
 fun Long.drawRoundedImage(filePath: String, x: Number, y: Number, width: Number, height: Number, radius: Number) =
     nanoVGHelper.drawRoundImage(
         this, filePath, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat(), radius.toFloat()
     )
 
-@Deprecated(message = "Doesn't pass class to load resource with", replaceWith = ReplaceWith("drawImage(filePath, x, y, width, height, radius, getClass())"))
+@Deprecated(message = "Doesn't pass class to load resource with", replaceWith = ReplaceWith("drawImage(filePath, x, y, width, height, radius, javaClass)"))
 fun VG.drawRoundedImage(filePath: String, x: Number, y: Number, width: Number, height: Number, radius: Number) =
     instance.drawRoundedImage(filePath, x, y, width, height, radius)
 
@@ -283,11 +283,11 @@ fun VG.resetTransform() = instance.resetTransform()
 fun Long.setAlpha(alpha: Float) = nanoVGHelper.setAlpha(this, alpha)
 fun VG.setAlpha(alpha: Float) = instance.setAlpha(alpha)
 
-@Deprecated(message = "Doesn't pass class to load resource with", replaceWith = ReplaceWith("drawSVG(filePath, x, y, width, height, scale, getClass())"))
+@Deprecated(message = "Doesn't pass class to load resource with", replaceWith = ReplaceWith("drawSVG(filePath, x, y, width, height, scale, javaClass)"))
 fun Long.drawSVG(filePath: String, x: Number, y: Number, width: Number, height: Number, scale: Number) =
     nanoVGHelper.drawSvg(this, filePath, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat(), scale.toFloat())
 
-@Deprecated(message = "Doesn't pass class to load resource with", replaceWith = ReplaceWith("drawSVG(filePath, x, y, width, height, scale, getClass())"))
+@Deprecated(message = "Doesn't pass class to load resource with", replaceWith = ReplaceWith("drawSVG(filePath, x, y, width, height, scale, javaClass)"))
 fun VG.drawSVG(filePath: String, x: Number, y: Number, width: Number, height: Number, scale: Number) =
     instance.drawSVG(filePath, x, y, width, height, scale)
 
@@ -297,11 +297,11 @@ fun Long.drawSVG(filePath: String, x: Number, y: Number, width: Number, height: 
 fun VG.drawSVG(filePath: String, x: Number, y: Number, width: Number, height: Number, scale: Number, clazz: Class<*>) =
     instance.drawSVG(filePath, x, y, width, height, scale, clazz)
 
-@Deprecated(message = "Doesn't pass class to load resource with", replaceWith = ReplaceWith("drawSVG(filePath, x, y, width, height, getClass())"))
+@Deprecated(message = "Doesn't pass class to load resource with", replaceWith = ReplaceWith("drawSVG(filePath, x, y, width, height, javaClass)"))
 fun Long.drawSVG(filePath: String, x: Number, y: Number, width: Number, height: Number) =
     nanoVGHelper.drawSvg(this, filePath, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat())
 
-@Deprecated(message = "Doesn't pass class to load resource with", replaceWith = ReplaceWith("drawSVG(filePath, x, y, width, height, getClass())"))
+@Deprecated(message = "Doesn't pass class to load resource with", replaceWith = ReplaceWith("drawSVG(filePath, x, y, width, height, javaClass)"))
 fun VG.drawSVG(filePath: String, x: Number, y: Number, width: Number, height: Number) =
     instance.drawSVG(filePath, x, y, width, height)
 
@@ -311,11 +311,11 @@ fun Long.drawSVG(filePath: String, x: Number, y: Number, width: Number, height: 
 fun VG.drawSVG(filePath: String, x: Number, y: Number, width: Number, height: Number, clazz: Class<*>) =
     instance.drawSVG(filePath, x, y, width, height, clazz)
 
-@Deprecated(message = "Doesn't pass class to load resource with", replaceWith = ReplaceWith("drawSVG(filePath, x, y, width, height, color, scale, getClass())"))
+@Deprecated(message = "Doesn't pass class to load resource with", replaceWith = ReplaceWith("drawSVG(filePath, x, y, width, height, color, scale, javaClass)"))
 fun Long.drawSVG(filePath: String, x: Number, y: Number, width: Number, height: Number, color: Int, scale: Number) =
     nanoVGHelper.drawSvg(this, filePath, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat(), color, scale.toFloat())
 
-@Deprecated(message = "Doesn't pass class to load resource with", replaceWith = ReplaceWith("drawSVG(filePath, x, y, width, height, color, scale, getClass())"))
+@Deprecated(message = "Doesn't pass class to load resource with", replaceWith = ReplaceWith("drawSVG(filePath, x, y, width, height, color, scale, javaClass)"))
 fun VG.drawSVG(filePath: String, x: Number, y: Number, width: Number, height: Number, color: Int, scale: Number) =
     instance.drawSVG(filePath, x, y, width, height, color, scale.toFloat())
 
@@ -325,11 +325,11 @@ fun Long.drawSVG(filePath: String, x: Number, y: Number, width: Number, height: 
 fun VG.drawSVG(filePath: String, x: Number, y: Number, width: Number, height: Number, color: Int, scale: Number, clazz: Class<*>) =
     instance.drawSVG(filePath, x, y, width, height, color, scale.toFloat(), clazz)
 
-@Deprecated(message = "Doesn't pass class to load resource with", replaceWith = ReplaceWith("drawSVG(filePath, x, y, width, height, color, getClass())"))
+@Deprecated(message = "Doesn't pass class to load resource with", replaceWith = ReplaceWith("drawSVG(filePath, x, y, width, height, color, javaClass)"))
 fun Long.drawSVG(filePath: String, x: Number, y: Number, width: Number, height: Number, color: Int) =
     nanoVGHelper.drawSvg(this, filePath, x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat(), color)
 
-@Deprecated(message = "Doesn't pass class to load resource with", replaceWith = ReplaceWith("drawSVG(filePath, x, y, width, height, color, getClass())"))
+@Deprecated(message = "Doesn't pass class to load resource with", replaceWith = ReplaceWith("drawSVG(filePath, x, y, width, height, color, javaClass)"))
 fun VG.drawSVG(filePath: String, x: Number, y: Number, width: Number, height: Number, color: Int) =
     instance.drawSVG(filePath, x, y, width, height, color)
 
