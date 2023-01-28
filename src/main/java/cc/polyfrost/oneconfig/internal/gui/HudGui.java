@@ -335,7 +335,7 @@ public class HudGui extends UScreen implements GuiPause {
         superSecretString = "";
         AtomicBoolean loaded = new AtomicBoolean();
         AssetHelper assetHelper = AssetHelper.INSTANCE;
-        NanoVGHelper.INSTANCE.setupAndDraw((vg) -> loaded.set(assetHelper.loadImage(vg, url)));
+        NanoVGHelper.INSTANCE.setupAndDraw((vg) -> loaded.set(assetHelper.loadImage(vg, url, HudGui.class)));
         if (!loaded.get()) return;
         NVGAsset image = assetHelper.getNVGImage(url);
         int w = image.getWidth();
