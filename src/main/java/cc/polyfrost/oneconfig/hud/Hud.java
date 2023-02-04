@@ -69,7 +69,7 @@ public abstract class Hud {
     public final Position position;
     protected float scale;
     @Exclude
-    public float partialTicks;
+    public float deltaTicks;
 
     /**
      * @param enabled If the hud is enabled

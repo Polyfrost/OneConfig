@@ -37,8 +37,7 @@ import cc.polyfrost.oneconfig.internal.mixin.ShaderGroupAccessor;
 import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
 import cc.polyfrost.oneconfig.libs.universal.UMinecraft;
 import cc.polyfrost.oneconfig.libs.universal.UScreen;
-import cc.polyfrost.oneconfig.utils.gui.BlurUI;
-import cc.polyfrost.oneconfig.utils.gui.OneUIScreen;
+import cc.polyfrost.oneconfig.utils.gui.BlurScreen;
 import net.minecraft.client.shader.Shader;
 import net.minecraft.client.shader.ShaderUniform;
 import net.minecraft.util.ResourceLocation;
@@ -130,7 +129,7 @@ public class BlurHandlerImpl implements BlurHandler {
         // If a shader is not already active and the UI is
         // a one of ours, we should load our own blur!
 
-        if (!isShaderActive() && (gui instanceof BlurUI && ((BlurUI) gui).hasBackgroundBlur())) {
+        if (!isShaderActive() && (gui instanceof BlurScreen && ((BlurScreen) gui).hasBackgroundBlur())) {
             //#if FABRIC==1
             //$$ ((GameRendererAccessor) UMinecraft.getMinecraft().gameRenderer).invokeLoadShader(this.blurShader);
             //#else
@@ -141,7 +140,7 @@ public class BlurHandlerImpl implements BlurHandler {
             this.progress = 0;
 
             // If a shader is active and the incoming UI is null or we have blur disabled, stop using the shader.
-        } else if (isShaderActive() && (gui == null || (gui instanceof BlurUI && ((BlurUI) gui).hasBackgroundBlur()))) {
+        } else if (isShaderActive() && (gui == null || (gui instanceof BlurScreen && ((BlurScreen) gui).hasBackgroundBlur()))) {
             String name = UMinecraft.getMinecraft().entityRenderer.getShaderGroup().getShaderGroupName();
 
             // Only stop our specific blur ;)
