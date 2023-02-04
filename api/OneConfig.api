@@ -1030,6 +1030,7 @@ public class cc/polyfrost/oneconfig/hud/HUDUtils {
 
 public abstract class cc/polyfrost/oneconfig/hud/Hud {
 	protected field enabled Z
+	public field partialTicks F
 	public final field position Lcc/polyfrost/oneconfig/hud/Position;
 	protected field scale F
 	public field showInChat Z
@@ -1871,6 +1872,10 @@ public final class cc/polyfrost/oneconfig/utils/dsl/VG {
 	public final synthetic fun unbox-impl ()J
 }
 
+public abstract interface class cc/polyfrost/oneconfig/utils/gui/BlurUI {
+	public abstract fun hasBackgroundBlur ()Z
+}
+
 public final class cc/polyfrost/oneconfig/utils/gui/GuiUtils {
 	public fun <init> ()V
 	public static fun closeScreen ()V
@@ -1880,7 +1885,7 @@ public final class cc/polyfrost/oneconfig/utils/gui/GuiUtils {
 	public static fun wasMouseDown ()Z
 }
 
-public abstract class cc/polyfrost/oneconfig/utils/gui/OneUIScreen : cc/polyfrost/oneconfig/libs/universal/UScreen, cc/polyfrost/oneconfig/gui/GuiPause {
+public abstract class cc/polyfrost/oneconfig/utils/gui/OneUIScreen : cc/polyfrost/oneconfig/libs/universal/UScreen, cc/polyfrost/oneconfig/gui/GuiPause, cc/polyfrost/oneconfig/utils/gui/BlurUI {
 	public fun <init> ()V
 	public fun <init> (Z)V
 	public fun <init> (ZZ)V
