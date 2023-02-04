@@ -26,11 +26,14 @@
 
 package cc.polyfrost.oneconfig.internal.plugin.hooks;
 
+import cc.polyfrost.oneconfig.libs.universal.UScreen;
 import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
+import cc.polyfrost.oneconfig.utils.gui.BlurUI;
 
 public class OptifineConfigHook {
 
     public static boolean shouldNotApplyFastRender() {
-        return NanoVGHelper.INSTANCE.isDrawing();
+        return NanoVGHelper.INSTANCE.isDrawing() ||
+                UScreen.getCurrentScreen() instanceof BlurUI && ((BlurUI) UScreen.getCurrentScreen()).hasBackgroundBlur();
     }
 }

@@ -42,7 +42,7 @@ import org.jetbrains.annotations.NotNull;
  * <p></p>
  * Use GuiUtils to display a screen; and GuiUtils.closeScreen to close it.
  */
-public abstract class OneUIScreen extends UScreen implements GuiPause {
+public abstract class OneUIScreen extends UScreen implements GuiPause, BlurUI {
     private final boolean useMinecraftScale;
     private final InputHandler inputHandler = new InputHandler();
 
@@ -94,6 +94,7 @@ public abstract class OneUIScreen extends UScreen implements GuiPause {
     /**
      * @return If this gui has background blur
      */
+    @Override
     public boolean hasBackgroundBlur() {
         return false;
     }
