@@ -256,6 +256,8 @@ public final class cc/polyfrost/oneconfig/config/data/InfoType : java/lang/Enum 
 public class cc/polyfrost/oneconfig/config/data/Mod : java/lang/Comparable {
 	public field config Lcc/polyfrost/oneconfig/config/Config;
 	public final field defaultPage Lcc/polyfrost/oneconfig/config/elements/OptionPage;
+	public final field iconHeight I
+	public final field iconWidth I
 	public final field migrator Lcc/polyfrost/oneconfig/config/migration/Migrator;
 	public final field modIcon Ljava/lang/String;
 	public final field modType Lcc/polyfrost/oneconfig/config/data/ModType;
@@ -263,6 +265,8 @@ public class cc/polyfrost/oneconfig/config/data/Mod : java/lang/Comparable {
 	public fun <init> (Ljava/lang/String;Lcc/polyfrost/oneconfig/config/data/ModType;)V
 	public fun <init> (Ljava/lang/String;Lcc/polyfrost/oneconfig/config/data/ModType;Lcc/polyfrost/oneconfig/config/migration/Migrator;)V
 	public fun <init> (Ljava/lang/String;Lcc/polyfrost/oneconfig/config/data/ModType;Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/String;Lcc/polyfrost/oneconfig/config/data/ModType;Ljava/lang/String;II)V
+	public fun <init> (Ljava/lang/String;Lcc/polyfrost/oneconfig/config/data/ModType;Ljava/lang/String;IILcc/polyfrost/oneconfig/config/migration/Migrator;)V
 	public fun <init> (Ljava/lang/String;Lcc/polyfrost/oneconfig/config/data/ModType;Ljava/lang/String;Lcc/polyfrost/oneconfig/config/migration/Migrator;)V
 	public fun compareTo (Lcc/polyfrost/oneconfig/config/data/Mod;)I
 	public synthetic fun compareTo (Ljava/lang/Object;)I
