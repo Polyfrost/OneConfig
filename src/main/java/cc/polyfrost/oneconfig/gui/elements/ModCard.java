@@ -123,9 +123,8 @@ public class ModCard extends BasicElement {
     }
 
     protected void drawIcon(NanoVGHelper nanoVGHelper, long vg, float x, float y, String cleanName) {
-        int width = 56;
-        //noinspection SuspiciousNameCombination,UnnecessaryLocalVariable
-        int height = width;
+        int width = modData.iconWidth == -1 ? 56 : modData.iconWidth;
+        int height = modData.iconHeight == -1 ? width : modData.iconHeight;
 
         if (modData.modIcon != null) {
             if (modData.modIcon.toLowerCase().endsWith(".svg")) {
