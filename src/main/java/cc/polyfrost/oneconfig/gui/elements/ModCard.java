@@ -84,13 +84,9 @@ public class ModCard extends BasicElement {
         nanoVGHelper.drawRoundedRectVaried(vg, x, y, width, 87, colorFrame.getColor(isHoveredMain, isHoveredMain && Platform.getMousePlatform().isButtonDown(0)), 12f, 12f, 0f, 0f);
         nanoVGHelper.drawRoundedRectVaried(vg, x, y + 87, width, 32, colorToggle.getColor(isHoveredSecondary, isHoveredSecondary && Platform.getMousePlatform().isButtonDown(0)), 0f, 0f, 12f, 12f);
         nanoVGHelper.drawLine(vg, x, y + 86, x + width, y + 86, 2, Colors.GRAY_300);
-        if (modData.modIcon != null) {
-            if (modData.modIcon.toLowerCase().endsWith(".svg"))
-                nanoVGHelper.drawSvg(vg, modData.modIcon, x + 98, y + 19, 48, 48);
-            else nanoVGHelper.drawImage(vg, modData.modIcon, x + 98, y + 19, 48, 48);
-        } else {
-            nanoVGHelper.drawText(vg, cleanName, x + Math.max(0, (244 - nanoVGHelper.getTextWidth(vg, cleanName, 16, Fonts.MINECRAFT_BOLD))) / 2f, y + 44, ColorUtils.setAlpha(Colors.WHITE, (int) (colorFrame.getAlpha() * 255)), 16, Fonts.MINECRAFT_BOLD);
-        }
+
+        drawIcon(nanoVGHelper, vg, x, y, cleanName);
+
         favoriteButton.draw(vg, x + 212, y + 87, inputHandler);
         favorite = favoriteButton.isToggled();
         if (favoriteButton.isClicked()) {
@@ -124,6 +120,22 @@ public class ModCard extends BasicElement {
         }
         nanoVGHelper.setAlpha(vg, 1f);
         scissorHelper.resetScissor(vg, scissor);
+    }
+
+    protected void drawIcon(NanoVGHelper nanoVGHelper, long vg, float x, float y, String cleanName) {
+        int width = 64;
+        //noinspection SuspiciousNameCombination,UnnecessaryLocalVariable
+        int height = width;
+
+        if (modData.modIcon != null) {
+            if (modData.modIcon.toLowerCase().endsWith(".svg")) {
+                nanoVGHelper.drawSvg(vg, modData.modIcon, x + 122 - (width / 2f), y + 43 - (height / 2f), width, height);
+            } else {
+                nanoVGHelper.drawImage(vg, modData.modIcon, x + 122 - (width / 2f), y + 43 - (height / 2f), width, height);
+            }
+        } else {
+            nanoVGHelper.drawText(vg, cleanName, x + Math.max(0, (244 - nanoVGHelper.getTextWidth(vg, cleanName, 16, Fonts.MINECRAFT_BOLD))) / 2f, y + 44, ColorUtils.setAlpha(Colors.WHITE, (int) (colorFrame.getAlpha() * 255)), 16, Fonts.MINECRAFT_BOLD);
+        }
     }
 
     public void onClick() {
