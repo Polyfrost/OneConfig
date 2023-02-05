@@ -205,7 +205,13 @@ public class OneConfig {
         //$$ if (factory == null || !factory.hasConfigGui()) return;
         //#endif
         if (IgnoredGuiFactory.class.isAssignableFrom(factory.getClass())) return;
-        ForgeCompat.compatMods.put(new ForgeCompat.ForgeCompatMod(mod.getName(), ModType.THIRD_PARTY), () -> {
+
+        boolean isForgeContainer = "forge".equalsIgnoreCase(mod.getModId());
+        String icon = isForgeContainer
+                ? "/assets/oneconfig/icons/forge_logo.png"
+                : null;
+
+        ForgeCompat.compatMods.put(new ForgeCompat.ForgeCompatMod(mod.getName(), ModType.THIRD_PARTY, icon), () -> {
             try {
                 GuiUtils.displayScreen(
                         //#if MC<=10809
