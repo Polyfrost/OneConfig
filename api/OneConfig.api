@@ -764,6 +764,7 @@ public abstract interface class cc/polyfrost/oneconfig/gui/elements/IFocusable {
 public class cc/polyfrost/oneconfig/gui/elements/ModCard : cc/polyfrost/oneconfig/gui/elements/BasicElement {
 	public fun <init> (Lcc/polyfrost/oneconfig/config/data/Mod;ZZZLcc/polyfrost/oneconfig/gui/pages/ModsPage;)V
 	public fun draw (JFFLcc/polyfrost/oneconfig/utils/InputHandler;)V
+	protected fun drawIcon (Lcc/polyfrost/oneconfig/renderer/NanoVGHelper;JFFLjava/lang/String;)V
 	public fun getModData ()Lcc/polyfrost/oneconfig/config/data/Mod;
 	public fun isActive ()Z
 	public fun isDisabled ()Z
