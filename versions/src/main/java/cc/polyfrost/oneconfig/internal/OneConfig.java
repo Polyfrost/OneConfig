@@ -194,6 +194,10 @@ public class OneConfig {
     }
 
     private static void handleForgeGui(ModContainer mod) {
+        if ("fml".equalsIgnoreCase(mod.getModId())) {
+            return;
+        }
+
         IModGuiFactory factory = FMLClientHandler.instance().getGuiFactoryFor(mod);
         //#if MC<=10809
         if (factory == null || factory.mainConfigGuiClass() == null) return;
