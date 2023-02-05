@@ -50,6 +50,7 @@ import cc.polyfrost.oneconfig.utils.hypixel.HypixelUtils;
 import cc.polyfrost.oneconfig.utils.Notifications;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
+import net.minecraftforge.fml.common.ModMetadata;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //#if FORGE==1
@@ -206,10 +207,16 @@ public class OneConfig {
         //#endif
         if (IgnoredGuiFactory.class.isAssignableFrom(factory.getClass())) return;
 
+        ModMetadata metadata = mod.getMetadata();
+        String modLogoFile =
+                metadata.logoFile == null || metadata.logoFile.isEmpty()
+                        ? null
+                        : metadata.logoFile;
+
         boolean isForgeContainer = "forge".equalsIgnoreCase(mod.getModId());
         String icon = isForgeContainer
                 ? "/assets/oneconfig/icons/forge_logo.png"
-                : null;
+                : modLogoFile;
 
         ForgeCompat.compatMods.put(new ForgeCompat.ForgeCompatMod(mod.getName(), ModType.THIRD_PARTY, icon), () -> {
             try {
