@@ -123,7 +123,7 @@ public class ModCard extends BasicElement {
     }
 
     protected void drawIcon(NanoVGHelper nanoVGHelper, long vg, float x, float y, String cleanName) {
-        int width = 64;
+        int width = 56;
         //noinspection SuspiciousNameCombination,UnnecessaryLocalVariable
         int height = width;
 
