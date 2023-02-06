@@ -287,6 +287,7 @@ tasks {
         if (!name.contains("sourcesjar", ignoreCase = true) || !name.contains("javadoc", ignoreCase = true)) {
             exclude("**/**_Test.**")
             exclude("**/**_Test$**.**")
+            exclude("testmod_dark.svg")
         }
     }
 
