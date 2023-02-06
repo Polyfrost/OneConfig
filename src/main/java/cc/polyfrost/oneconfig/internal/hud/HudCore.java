@@ -46,6 +46,7 @@ public class HudCore {
         if (editing) return;
         for (Hud hud : huds.values()) {
             if (!hud.isEnabled()) continue;
+            hud.deltaTicks = event.deltaTicks;
             hud.drawAll(event.matrices, false);
         }
     }
