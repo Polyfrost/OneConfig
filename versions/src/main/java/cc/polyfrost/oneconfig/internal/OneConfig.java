@@ -212,6 +212,19 @@ public class OneConfig {
                 metadata.logoFile == null || metadata.logoFile.isEmpty()
                         ? null
                         : metadata.logoFile;
+        if (modLogoFile != null) {
+            if (modLogoFile.startsWith("/")) {
+                modLogoFile = modLogoFile.substring(1);
+            }
+            if (!modLogoFile.startsWith("assets/")) {
+                modLogoFile = "/assets/" + modLogoFile;
+            }
+
+            if (OneConfig.class.getResource(modLogoFile) == null) {
+                LOGGER.warn("Mod '{}' has an invalid logo file: {}", mod.getName(), modLogoFile);
+                modLogoFile = null;
+            }
+        }
 
         boolean isForgeContainer = "forge".equalsIgnoreCase(mod.getModId());
         String icon = isForgeContainer
