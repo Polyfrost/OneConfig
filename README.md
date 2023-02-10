@@ -18,7 +18,7 @@ For a guide of how to use OneConfig please see our wiki at https://docs.polyfros
 
 # How do I get it?
 
-OneConfig's open beta just released for everyone! If you want to be the first to recieve news of new OneConfig updates, or new supported mods, check out our [**Discord server**](https://polyfrost.cc/discord). We're always in there so feel free to say hi!
+OneConfig's open beta just released for everyone! If you want to be the first to receive news of new OneConfig updates, or new supported mods, check out our [**Discord server**](https://polyfrost.cc/discord). We're always in there so feel free to say hi!
 
 ## Licenses and Supporting Projects
 
