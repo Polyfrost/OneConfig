@@ -464,15 +464,18 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
 
     @Override
     public void drawImage(long vg, String filePath, float x, float y, float width, float height, Class<?> clazz) {
+        drawImage(vg, filePath, x, y, width, height, 0f, clazz);
+    }
+
+    @Override
+    public void drawImage(long vg, String filePath, float x, float y, float width, float height, float radius, Class<?> clazz) {
         AssetHelper assetHelper = AssetHelper.INSTANCE;
         if (assetHelper.loadImage(vg, filePath, clazz)) {
             NVGPaint imagePaint = NVGPaint.calloc();
             int image = assetHelper.getImage(filePath);
             nvgBeginPath(vg);
             nvgImagePattern(vg, x, y, width, height, 0, image, 1, imagePaint);
-            nvgRect(vg, x, y, width, height);
-            nvgFillPaint(vg, imagePaint);
-            nvgFill(vg);
+            drawImageCommon(vg, x, y, width, height, radius, imagePaint);
             imagePaint.free();
         }
     }
@@ -485,13 +488,19 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
 
     @Override
     public void drawImage(long vg, String filePath, float x, float y, float width, float height, int color, Class<?> clazz) {
+        drawImage(vg, filePath, x, y, width, height, color, 0, clazz);
+    }
+
+    @Override
+    public void drawImage(long vg, String filePath, float x, float y, float width, float height, int color, float radius, Class<?> clazz) {
         AssetHelper assetHelper = AssetHelper.INSTANCE;
         if (assetHelper.loadImage(vg, filePath, clazz)) {
             NVGPaint imagePaint = NVGPaint.calloc();
             int image = assetHelper.getImage(filePath);
             nvgBeginPath(vg);
             nvgImagePattern(vg, x, y, width, height, 0, image, 1, imagePaint);
-            drawImageCommon(vg, x, y, width, height, color, imagePaint);
+            nvgRGBA((byte) (color >> 16 & 0xFF), (byte) (color >> 8 & 0xFF), (byte) (color & 0xFF), (byte) (color >> 24 & 0xFF), imagePaint.innerColor());
+            drawImageCommon(vg, x, y, width, height, radius, imagePaint);
             imagePaint.free();
         }
     }
@@ -499,9 +508,12 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
     /**
      * <b>Important:</b> You must free {@code imagePaint} yourself!
      */
-    private void drawImageCommon(long vg, float x, float y, float width, float height, int color, NVGPaint imagePaint) {
-        nvgRGBA((byte) (color >> 16 & 0xFF), (byte) (color >> 8 & 0xFF), (byte) (color & 0xFF), (byte) (color >> 24 & 0xFF), imagePaint.innerColor());
-        nvgRect(vg, x, y, width, height);
+    private void drawImageCommon(long vg, float x, float y, float width, float height, float radius, NVGPaint imagePaint) {
+        if (radius == 0) {
+            nvgRect(vg, x, y, width, height);
+        } else {
+            nvgRoundedRect(vg, x, y, width, height, radius);
+        }
         nvgFillPaint(vg, imagePaint);
         nvgFill(vg);
     }
