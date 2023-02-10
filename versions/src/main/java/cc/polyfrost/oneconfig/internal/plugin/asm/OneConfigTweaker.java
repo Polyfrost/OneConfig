@@ -64,7 +64,7 @@ public class OneConfigTweaker implements ITweaker {
                         if (jarFile.getManifest() != null) {
                             Attributes attributes = jarFile.getManifest().getMainAttributes();
                             String tweakerClass = attributes.getValue("TweakClass");
-                            if (Objects.equals(tweakerClass, "cc.polyfrost.oneconfigwrapper.OneConfigWrapper")) {
+                            if (Objects.equals(tweakerClass, "cc.polyfrost.oneconfigwrapper.OneConfigWrapper") || Objects.equals(tweakerClass, "cc.polyfrost.oneconfig.loader.stage0.LaunchWrapperTweaker")) {
                                 CoreModManager.getIgnoredMods().remove(file.getName());
                                 CoreModManager.getReparseableCoremods().add(file.getName());
                                 String mixinConfig = attributes.getValue("MixinConfigs");
