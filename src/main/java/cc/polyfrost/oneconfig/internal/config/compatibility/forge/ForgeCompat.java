@@ -69,5 +69,9 @@ public class ForgeCompat {
         public ForgeCompatMod(String name, ModType modType) {
             this(name, modType, null, null);
         }
+
+        public ForgeCompatMod(String name, ModType modType, String icon) {
+            this(name, modType, icon, null);
+        }
     }
 }

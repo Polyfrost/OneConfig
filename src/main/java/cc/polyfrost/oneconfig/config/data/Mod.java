@@ -38,6 +38,8 @@ public class Mod implements Comparable<Mod> {
     public final ModType modType;
     @Nullable
     public final String modIcon;
+    public final int iconWidth;
+    public final int iconHeight;
     @Nullable
     public final Migrator migrator;
     @NotNull
@@ -45,17 +47,42 @@ public class Mod implements Comparable<Mod> {
     public Config config;
 
     /**
+     * @param name       Friendly name of the mod
+     * @param modType    Type of the mod (for example ModType.QOL)
+     * @param modIcon    Path to icon of the mod (png or svg format)
+     * @param iconWidth  Width of the icon
+     * @param iconHeight Height of the icon
+     * @param migrator   Migrator class to port the old config
+     */
+    public Mod(@NotNull String name, ModType modType, @Nullable String modIcon, int iconWidth, int iconHeight, @Nullable Migrator migrator) {
+        this.name = name;
+        this.modType = modType;
+        this.modIcon = modIcon;
+        this.iconWidth = iconWidth;
+        this.iconHeight = iconHeight;
+        this.migrator = migrator;
+        this.defaultPage = new OptionPage(name, this);
+    }
+
+    /**
      * @param name     Friendly name of the mod
      * @param modType  Type of the mod (for example ModType.QOL)
      * @param modIcon  Path to icon of the mod (png or svg format)
      * @param migrator Migrator class to port the old config
      */
-    public Mod(@NotNull String name, ModType modType, @Nullable String modIcon, @Nullable Migrator migrator) {
-        this.name = name;
-        this.modType = modType;
-        this.modIcon = modIcon;
-        this.migrator = migrator;
-        this.defaultPage = new OptionPage(name, this);
+    public Mod(String name, ModType modType, @Nullable String modIcon, Migrator migrator) {
+        this(name, modType, modIcon, -1, -1, null);
+    }
+
+    /**
+     * @param name       Friendly name of the mod
+     * @param modType    Type of the mod (for example ModType.QOL)
+     * @param modIcon    Path to icon of the mod (png or svg format)
+     * @param iconWidth  Width of the icon
+     * @param iconHeight Height of the icon
+     */
+    public Mod(String name, ModType modType, @Nullable String modIcon, int iconWidth, int iconHeight) {
+        this(name, modType, modIcon, iconWidth, iconHeight, null);
     }
 
     /**
@@ -64,7 +91,7 @@ public class Mod implements Comparable<Mod> {
      * @param modIcon path to icon of the mod (png or svg format)
      */
     public Mod(String name, ModType modType, @Nullable String modIcon) {
-        this(name, modType, modIcon, null);
+        this(name, modType, modIcon, -1, -1, null);
     }
 
     /**
@@ -73,7 +100,7 @@ public class Mod implements Comparable<Mod> {
      * @param migrator Migrator class to port the old config
      */
     public Mod(String name, ModType modType, @Nullable Migrator migrator) {
-        this(name, modType, null, migrator);
+        this(name, modType, null, -1, -1, migrator);
     }
 
     /**
@@ -81,7 +108,7 @@ public class Mod implements Comparable<Mod> {
      * @param modType Type of the mod (for example ModType.QOL)
      */
     public Mod(String name, ModType modType) {
-        this(name, modType, null, null);
+        this(name, modType, null, -1, -1, null);
     }
 
     @Override
@@ -91,9 +118,9 @@ public class Mod implements Comparable<Mod> {
 
     @Override
     public boolean equals(Object obj) {
-        if(obj == null) return false;
-        if(obj == this) return true;
-        if(obj instanceof Mod) {
+        if (obj == null) return false;
+        if (obj == this) return true;
+        if (obj instanceof Mod) {
             Mod mod = (Mod) obj;
             return name.equals(mod.name);
         } else return false;
