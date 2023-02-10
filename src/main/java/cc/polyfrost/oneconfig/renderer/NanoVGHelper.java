@@ -263,21 +263,6 @@ public interface NanoVGHelper {
      * @param y        The y position.
      * @param width    The width.
      * @param height   The height.
-     * @param radius   The corner radius.
-     * @param clazz    The class to use to get the resource.
-     * @see NanoVGHelper#drawImage(long, String, float, float, float, float, int)
-     */
-    void drawImage(long vg, String filePath, float x, float y, float width, float height, float radius, Class<?> clazz);
-
-    /**
-     * Draws an image with the provided file path.
-     *
-     * @param vg       The NanoVG context.
-     * @param filePath The file path.
-     * @param x        The x position.
-     * @param y        The y position.
-     * @param width    The width.
-     * @param height   The height.
      * @param color    The color.
      */
     @Deprecated
@@ -296,21 +281,6 @@ public interface NanoVGHelper {
      * @param clazz    The class to use to get the resource.
      */
     void drawImage(long vg, String filePath, float x, float y, float width, float height, int color, Class<?> clazz);
-
-    /**
-     * Draws an image with the provided file path.
-     *
-     * @param vg       The NanoVG context.
-     * @param filePath The file path.
-     * @param x        The x position.
-     * @param y        The y position.
-     * @param width    The width.
-     * @param height   The height.
-     * @param color    The color.
-     * @param radius   The rounded radius.
-     * @param clazz    The class to use to get the resource.
-     */
-    void drawImage(long vg, String filePath, float x, float y, float width, float height, int color, float radius, Class<?> clazz);
 
     /**
      * Draws an image with the provided file path and parameters.
