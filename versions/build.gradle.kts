@@ -117,6 +117,8 @@ val shade: Configuration by configurations.creating {
 
 val shadeNoPom: Configuration by configurations.creating
 
+val shadeOnly: Configuration by configurations.creating
+
 val shadeNoJar: Configuration by configurations.creating
 
 sourceSets {
@@ -149,7 +151,18 @@ dependencies {
     include(libs.caffeine, relocate = true)
 
     // for other mods and universalcraft
-    include(libs.bundles.kotlin)
+    api(libs.bundles.kotlin)
+    shadeOnly(libs.bundles.kotlin)
+
+    constraints {
+        fun requireShadedVersion(name: String, requestedVersion: String) =
+            add("shadeOnly", name) {
+                version {
+                    require(requestedVersion)
+                }
+            }
+        requireShadedVersion("org.jetbrains.kotlin:kotlin-stdlib", "1.8.0")
+    }
 
     if (platform.isLegacyForge) {
         implementationNoPom(shadeNoJar(libs.mixin.get().run { "$group:$name:$version" }) {
@@ -293,7 +306,7 @@ tasks {
 
     shadowJar {
         archiveClassifier.set("full-dev")
-        configurations = listOf(shade, shadeNoPom, shadeNoJar, shadeProject, shadeRelocated)
+        configurations = listOf(shade, shadeNoPom, shadeNoJar, shadeProject, shadeRelocated, shadeOnly)
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
         dependsOn(jar)
     }
