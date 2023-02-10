@@ -1269,7 +1269,9 @@ public abstract interface class cc/polyfrost/oneconfig/renderer/NanoVGHelper {
 	public abstract fun drawImage (JLcc/polyfrost/oneconfig/renderer/asset/Image;FFFF)V
 	public abstract fun drawImage (JLcc/polyfrost/oneconfig/renderer/asset/Image;FFFFI)V
 	public abstract fun drawImage (JLjava/lang/String;FFFF)V
+	public abstract fun drawImage (JLjava/lang/String;FFFFFLjava/lang/Class;)V
 	public abstract fun drawImage (JLjava/lang/String;FFFFI)V
+	public abstract fun drawImage (JLjava/lang/String;FFFFIFLjava/lang/Class;)V
 	public abstract fun drawImage (JLjava/lang/String;FFFFILjava/lang/Class;)V
 	public abstract fun drawImage (JLjava/lang/String;FFFFLjava/lang/Class;)V
 	public abstract fun drawInfo (JLcc/polyfrost/oneconfig/config/data/InfoType;FFF)V
