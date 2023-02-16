@@ -48,6 +48,7 @@ import cc.polyfrost.oneconfig.utils.commands.CommandManager;
 import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 import cc.polyfrost.oneconfig.utils.hypixel.HypixelUtils;
 import cc.polyfrost.oneconfig.utils.Notifications;
+import io.netty.util.ThreadDeathWatcher;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
 import org.apache.logging.log4j.LogManager;
@@ -105,8 +106,12 @@ public class OneConfig {
             //#if MC<=11202
             for (ModContainer mod : Loader.instance().getActiveModList()) {
                 if (mod == null) continue;
-                handleForgeCommand(mod);
-                handleForgeGui(mod);
+                try {
+                    handleForgeCommand(mod);
+                    handleForgeGui(mod);
+                } catch (Throwable t) {
+                    LOGGER.error("Failed to handle Forge compatibility for {}", mod.getModId(), t);
+                }
             }
             //#else
             //$$ try {
