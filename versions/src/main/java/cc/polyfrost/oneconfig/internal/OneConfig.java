@@ -105,8 +105,12 @@ public class OneConfig {
             //#if MC<=11202
             for (ModContainer mod : Loader.instance().getActiveModList()) {
                 if (mod == null) continue;
-                handleForgeCommand(mod);
-                handleForgeGui(mod);
+                try {
+                    handleForgeCommand(mod);
+                    handleForgeGui(mod);
+                } catch (Throwable t) {
+                    LOGGER.error("Failed to handle Forge compatibility for {}", mod.getModId(), t);
+                }
             }
             //#else
             //$$ try {
