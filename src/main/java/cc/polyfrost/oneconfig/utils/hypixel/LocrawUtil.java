@@ -45,6 +45,7 @@ import cc.polyfrost.oneconfig.libs.universal.UChat;
 import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.utils.TickDelay;
 import com.google.gson.Gson;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * <p>
@@ -151,6 +152,7 @@ public class LocrawUtil {
      * @return The current {@link LocrawInfo}.
      * @see LocrawInfo
      */
+    @Nullable
     public LocrawInfo getLocrawInfo() {
         return locrawInfo;
     }
@@ -161,6 +163,7 @@ public class LocrawUtil {
      * @return The previous {@link LocrawInfo}.
      * @see LocrawInfo
      */
+    @Nullable
     public LocrawInfo getLastLocrawInfo() {
         return lastLocrawInfo;
     }
