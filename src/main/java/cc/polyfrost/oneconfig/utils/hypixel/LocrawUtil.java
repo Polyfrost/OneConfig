@@ -43,13 +43,13 @@ import cc.polyfrost.oneconfig.events.event.WorldLoadEvent;
 import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
 import cc.polyfrost.oneconfig.libs.universal.UChat;
 import cc.polyfrost.oneconfig.platform.Platform;
-import cc.polyfrost.oneconfig.utils.JsonUtils;
 import cc.polyfrost.oneconfig.utils.TickDelay;
 import com.google.gson.Gson;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * <p>
- *     An easy way to interact with the Hypixel Locraw API.
+ * An easy way to interact with the Hypixel Locraw API.
  * </p>
  * Modified from Hytilities by Sk1erLLC
  * <a href="https://github.com/Sk1erLLC/Hytilities/blob/master/LICENSE">https://github.com/Sk1erLLC/Hytilities/blob/master/LICENSE</a>
@@ -90,6 +90,9 @@ public class LocrawUtil {
 
     @Subscribe
     private void onWorldLoad(WorldLoadEvent event) {
+        if (locrawInfo != null) {
+            lastLocrawInfo = locrawInfo;
+        }
         locrawInfo = null;
         tick = 0;
     }
@@ -111,14 +114,12 @@ public class LocrawUtil {
                 return;
             }
             if (msg.startsWith("{")) {
-                LocrawInfo oldLocrawInfo = locrawInfo;
                 // Parse the json, and make sure that it's not null.
                 this.locrawInfo = GSON.fromJson(msg, LocrawInfo.class);
                 if (locrawInfo != null) {
                     // Gson does not want to parse the GameType, as some stuff is different so this
                     // is just a way around that to make it properly work :)
                     this.locrawInfo.setGameType(LocrawInfo.GameType.getFromLocraw(locrawInfo.getRawGameType()));
-                    lastLocrawInfo = oldLocrawInfo;
                     // If your gamemode does not return "lobby", boolean inGame is true, otherwise false.
                     inGame = !locrawInfo.getGameMode().equals("lobby");
 
@@ -151,6 +152,7 @@ public class LocrawUtil {
      * @return The current {@link LocrawInfo}.
      * @see LocrawInfo
      */
+    @Nullable
     public LocrawInfo getLocrawInfo() {
         return locrawInfo;
     }
@@ -161,6 +163,7 @@ public class LocrawUtil {
      * @return The previous {@link LocrawInfo}.
      * @see LocrawInfo
      */
+    @Nullable
     public LocrawInfo getLastLocrawInfo() {
         return lastLocrawInfo;
     }
