@@ -2,15 +2,7 @@
 
 ## Supported Versions
 
-The versions in the following table are the ones that are currently
-being supported by security updates.
-
-| Version               | Supported          |
-|:--------------------- |:------------------ |
-| 1.x                   | :white_check_mark: |
-| 0.x                   | :white_check_mark: |
-| all earlier versions  | :x:                |
-
+The only supported version is the latest from the master and develop branch. All other versions will NOT be supported.
 ## Reporting a Vulnerability
 
 **Do not submit an issue or pull request**: this might reveal the vulnerability.

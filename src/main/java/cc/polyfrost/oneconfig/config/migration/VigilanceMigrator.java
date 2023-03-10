@@ -38,7 +38,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class VigilanceMigrator implements Migrator {
-    private static final Pattern categoryPattern = Pattern.compile("\\[\"?(?<category>[^.\\[\\]\"]+)\"?\\.\"?(?<subcategory>[^.\\[\\]\"]+)\"?]");
+    private static final Pattern categoryPattern = Pattern.compile("\\[\"?(?<category>[^.\\[\\]\"]+)\"?(\\.\"?(?<subcategory>[^.\\[\\]\"]+)\"?)?]");
     private static final Pattern booleanPattern = Pattern.compile("\"?(?<name>[^\\s\"]+)\"? = (?<value>true|false)");
     private static final Pattern numberPattern = Pattern.compile("\"?(?<name>[^\\s\"]+)\"? = (?<value>[\\d.]+)");
     private static final Pattern stringPattern = Pattern.compile("\"?(?<name>[^\\s\"]+)\"? = \"(?<value>.+)\"");
