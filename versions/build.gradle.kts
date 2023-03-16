@@ -161,7 +161,7 @@ dependencies {
                     require(requestedVersion)
                 }
             }
-        requireShadedVersion("org.jetbrains.kotlin:kotlin-stdlib", "1.8.0")
+        requireShadedVersion("org.jetbrains.kotlin:kotlin-stdlib", "1.8.10")
     }
 
     if (platform.isLegacyForge) {
