@@ -1,5 +1,4 @@
-![OneConfig_banner](https://user-images.githubusercontent.com/62163840/193199250-6e28836d-cdb4-4967-9f6f-3f25e2dec19d.png)
-
+![OneConfig_banner_wide](https://user-images.githubusercontent.com/62163840/226811571-ffe7a524-c96a-4b6e-9ca9-d29439f5174f.png)
 
 # OneConfig
 ![Dev Worflow Status](https://img.shields.io/github/actions/workflow/status/Polyfrost/OneConfig/release.yml?style=for-the-badge&color=1452cc&label=release)
