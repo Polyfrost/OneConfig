@@ -112,6 +112,12 @@ public class ConfigTextBox extends BasicOption implements IFocusable {
     }
 
     @Override
+    public void drawLast(long vg, int x, int y, InputHandler inputHandler) {
+        super.drawLast(vg, x, y, inputHandler);
+        drawSyncDescription(vg, x, y, inputHandler);
+    }
+
+    @Override
     public void keyTyped(char key, int keyCode) {
         if (!isEnabled()) return;
         textField.keyTyped(key, keyCode);
@@ -131,7 +137,7 @@ public class ConfigTextBox extends BasicOption implements IFocusable {
         return super.shouldDrawDescription() && !textField.isToggled();
     }
 
-    public void drawSyncDescription(long vg, int x, int y, InputHandler inputHandler) {
+    private void drawSyncDescription(long vg, int x, int y, InputHandler inputHandler) {
         if (inputHandler.isAreaHovered(x + 947, y + 7, 18, 18)) hoverTime += GuiUtils.getDeltaTime();
         else hoverTime = 0;
         NanoVGHelper.INSTANCE.translate(vg, 967 - 18 - 4, 0);

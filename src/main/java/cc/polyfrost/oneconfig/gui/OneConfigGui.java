@@ -92,7 +92,7 @@ public class OneConfigGui extends OneUIScreen {
     public float transparencyFactor = 0f;
     public float animationScaleFactor = 0f;
     /**
-     * Used for global transparency animation in {@link NanoVGHelperImpl}
+     * Used for global transparency animation in {@link NanoVGHelperImpl#setAlpha(long, float)}
      */
     private boolean isDrawing;
 

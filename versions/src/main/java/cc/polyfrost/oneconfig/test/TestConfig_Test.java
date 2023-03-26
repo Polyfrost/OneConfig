@@ -240,7 +240,7 @@ public class TestConfig_Test extends Config {
     public TestBasicHud_Test basicHud = new TestBasicHud_Test();
 
     public TestConfig_Test() {
-        super(new Mod("Test Mod", ModType.UTIL_QOL, new VigilanceMigrator("./config/testConfig.toml")), "hacksConfig.json");
+        super(new Mod("Test Mod", ModType.UTIL_QOL, "/testmod_dark.svg", new VigilanceMigrator("./config/testConfig.toml")), "hacksConfig.json");
         initialize();
         addDependency("testCheckBox", "testSwitch");
         registerKeyBind(testKeyBind, () -> {

@@ -68,7 +68,7 @@ public class FontHelperImpl implements FontHelper {
         if (font.isLoaded()) return;
         int loaded = -1;
         try {
-            ByteBuffer buffer = IOUtils.resourceToByteBuffer(font.getFileName());
+            ByteBuffer buffer = IOUtils.resourceToByteBuffer(font.getFileName(), font.getClass());
             loaded = nvgCreateFontMem(vg, font.getName(), buffer, 0);
             font.setBuffer(buffer);
         } catch (IOException e) {

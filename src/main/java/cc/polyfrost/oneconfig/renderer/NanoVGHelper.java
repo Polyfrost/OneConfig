@@ -238,7 +238,22 @@ public interface NanoVGHelper {
      * @param height   The height.
      * @see NanoVGHelper#drawImage(long, String, float, float, float, float, int)
      */
+    @Deprecated
     void drawImage(long vg, String filePath, float x, float y, float width, float height);
+
+    /**
+     * Draws an image with the provided file path.
+     *
+     * @param vg       The NanoVG context.
+     * @param filePath The file path.
+     * @param x        The x position.
+     * @param y        The y position.
+     * @param width    The width.
+     * @param height   The height.
+     * @param clazz    The class to use to get the resource.
+     * @see NanoVGHelper#drawImage(long, String, float, float, float, float, int)
+     */
+    void drawImage(long vg, String filePath, float x, float y, float width, float height, Class<?> clazz);
 
     /**
      * Draws an image with the provided file path.
@@ -251,7 +266,22 @@ public interface NanoVGHelper {
      * @param height   The height.
      * @param color    The color.
      */
+    @Deprecated
     void drawImage(long vg, String filePath, float x, float y, float width, float height, int color);
+
+    /**
+     * Draws an image with the provided file path.
+     *
+     * @param vg       The NanoVG context.
+     * @param filePath The file path.
+     * @param x        The x position.
+     * @param y        The y position.
+     * @param width    The width.
+     * @param height   The height.
+     * @param color    The color.
+     * @param clazz    The class to use to get the resource.
+     */
+    void drawImage(long vg, String filePath, float x, float y, float width, float height, int color, Class<?> clazz);
 
     /**
      * Draws an image with the provided file path and parameters.
@@ -278,7 +308,22 @@ public interface NanoVGHelper {
      * @param height   The height.
      * @param radius   The radius.
      */
+    @Deprecated
     void drawRoundImage(long vg, String filePath, float x, float y, float width, float height, float radius);
+
+    /**
+     * Draws a rounded image with the provided file path and parameters.
+     *
+     * @param vg       The NanoVG context.
+     * @param filePath The file path.
+     * @param x        The x position.
+     * @param y        The y position.
+     * @param width    The width.
+     * @param height   The height.
+     * @param radius   The radius.
+     * @param clazz    The class to use to get the resource.
+     */
+    void drawRoundImage(long vg, String filePath, float x, float y, float width, float height, float radius, Class<?> clazz);
 
     /**
      * Draws a rounded image with the provided file path and parameters.
@@ -349,7 +394,10 @@ public interface NanoVGHelper {
      */
     void setAlpha(long vg, float alpha);
 
+    @Deprecated
     void drawSvg(long vg, String filePath, float x, float y, float width, float height, float scale);
+
+    void drawSvg(long vg, String filePath, float x, float y, float width, float height, float scale, Class<?> clazz);
 
     /**
      * Draws a SVG with the provided file path and parameters.
@@ -361,9 +409,26 @@ public interface NanoVGHelper {
      * @param width    The width.
      * @param height   The height.
      */
+    @Deprecated
     void drawSvg(long vg, String filePath, float x, float y, float width, float height);
 
+    /**
+     * Draws a SVG with the provided file path and parameters.
+     *
+     * @param vg       The NanoVG context.
+     * @param filePath The file path.
+     * @param x        The x position.
+     * @param y        The y position.
+     * @param width    The width.
+     * @param height   The height.
+     * @param clazz    The class to use to get the resource.
+     */
+    void drawSvg(long vg, String filePath, float x, float y, float width, float height, Class<?> clazz);
+
+    @Deprecated
     void drawSvg(long vg, String filePath, float x, float y, float width, float height, int color, float scale);
+
+    void drawSvg(long vg, String filePath, float x, float y, float width, float height, int color, float scale, Class<?> clazz);
 
     /**
      * Draws a SVG with the provided file path and parameters.
@@ -376,7 +441,22 @@ public interface NanoVGHelper {
      * @param height   The height.
      * @param color    The color.
      */
+    @Deprecated
     void drawSvg(long vg, String filePath, float x, float y, float width, float height, int color);
+
+    /**
+     * Draws a SVG with the provided file path and parameters.
+     *
+     * @param vg       The NanoVG context.
+     * @param filePath The file path.
+     * @param x        The x position.
+     * @param y        The y position.
+     * @param width    The width.
+     * @param height   The height.
+     * @param color    The color.
+     * @param clazz    The class to use to get the resource.
+     */
+    void drawSvg(long vg, String filePath, float x, float y, float width, float height, int color, Class<?> clazz);
 
     void drawSvg(long vg, SVG svg, float x, float y, float width, float height, float scale);
 
