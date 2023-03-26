@@ -896,7 +896,7 @@ public class cc/polyfrost/oneconfig/gui/elements/config/ConfigTextBox : cc/polyf
 	public fun <init> (Ljava/lang/reflect/Field;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;ZZZ)V
 	public static fun create (Ljava/lang/reflect/Field;Ljava/lang/Object;)Lcc/polyfrost/oneconfig/gui/elements/config/ConfigTextBox;
 	public fun draw (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
-	public fun drawSyncDescription (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
+	public fun drawLast (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
 	public fun getHeight ()I
 	public fun hasFocus ()Z
 	public fun keyTyped (CI)V
