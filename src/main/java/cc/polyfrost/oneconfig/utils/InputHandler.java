@@ -197,6 +197,14 @@ public class InputHandler {
     }
 
     /**
+     * THIS SHOULD ONLY BE USED WITH SCISSORS FROM {@link #blockInputArea(float, float, float, float)}
+     * @param inputScissor The scissor area
+     */
+    public void blockInputArea(Scissor inputScissor) {
+        blockScissors.add(inputScissor);
+    }
+
+    /**
      * Should be used if there is something above other components and you don't want it clicking trough
      */
     public Scissor blockAllInput() {
@@ -225,11 +233,12 @@ public class InputHandler {
      * @return true if clicks are blocked, false if not
      */
     public boolean isBlockingInput() {
-        return blockScissors.size() > 0;
+        return !blockScissors.isEmpty();
     }
 
     private boolean shouldBlock(float x, float y) {
         for (Scissor block : blockScissors) {
+            System.out.println(block.x + " " + block.y + " " + block.width + " " + block.height);
             if (block.isInScissor(x, y)) return true;
         }
         return false;

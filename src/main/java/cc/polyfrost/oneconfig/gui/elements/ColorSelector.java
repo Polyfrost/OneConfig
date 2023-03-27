@@ -168,9 +168,6 @@ public class ColorSelector {
         modeDropdown.draw(vg, x + 16, y + 8, inputHandler);
         inputTypeDropdown.draw(vg, x + 2, y + 260, inputHandler);
 
-        if (closeBtn.isClicked() && !pickerIsActive) {
-            OneConfigGui.INSTANCE.closeColorSelector();
-        }
         final boolean hovered = Platform.getMousePlatform().isButtonDown(0) && inputHandler.isAreaHovered(x, y, width, 48);
         if (hovered && Platform.getMousePlatform().isButtonDown(0) && !mouseWasDown) {
             dragging = true;
@@ -182,6 +179,9 @@ public class ColorSelector {
             y = inputHandler.mouseY() - dragY;
         }
         inputScissor = inputHandler.blockInputArea(x, y, width, height);
+        if (closeBtn.isClicked() && !pickerIsActive) {
+            OneConfigGui.INSTANCE.closeColorSelector();
+        }
         ScissorHelper.INSTANCE.resetScissor(vg, scissor);
         if (dragging && inputHandler.isClicked(true)) {
             dragging = false;
