@@ -238,7 +238,6 @@ public class InputHandler {
 
     private boolean shouldBlock(float x, float y) {
         for (Scissor block : blockScissors) {
-            System.out.println(block.x + " " + block.y + " " + block.width + " " + block.height);
             if (block.isInScissor(x, y)) return true;
         }
         return false;

@@ -134,6 +134,7 @@ public class ColorSelector {
         }
 
         Scissor scissor = ScissorHelper.INSTANCE.scissor(vg, x - 3, y - 3, width + 6, height + 6);
+        NanoVGHelper.INSTANCE.drawHollowRoundRect(vg, x - 3, y - 3, width + 3, height + 3, Colors.GRAY_700, 20f, 3);
         NanoVGHelper.INSTANCE.drawRoundedRect(vg, x, y, width, height, Colors.GRAY_800, 20f);
         closeBtn.draw(vg, x + 248, y + 8, inputHandler);
 
@@ -202,7 +203,7 @@ public class ColorSelector {
     }
 
     public void onClose() {
-        if (inputScissor != null) inputHandler.stopBlock(inputScissor);
+        inputHandler.stopBlockingInput();
         int i = 0;
         for (ColorBox box : favoriteColors) {
             if (box.isEmpty()) continue;
