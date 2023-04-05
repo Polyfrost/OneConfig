@@ -277,4 +277,7 @@ public abstract class BasicOption {
     public void setParent(Object parent) {
         this.parent = parent;
     }
+
+    public void finishUpAndClose() {
+    }
 }

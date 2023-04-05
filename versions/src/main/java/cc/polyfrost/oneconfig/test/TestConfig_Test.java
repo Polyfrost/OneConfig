@@ -110,6 +110,19 @@ public class TestConfig_Test extends Config {
     )
     private static int testDropdown = 0;
 
+    @Dropdown(
+            name = "REALLY BIG Dropdown",
+            options = {"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"}
+    )
+    private static int bigDropdown = 0;
+
+    @Dropdown(
+            name = "Literally the same thing but on a dual size dropdown",
+            options = {"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"},
+            size = OptionSize.DUAL
+    )
+    private static int dualSizeBigDropdown = 0;
+
     @Color(
             name = "Test Color",
             size = OptionSize.DUAL
