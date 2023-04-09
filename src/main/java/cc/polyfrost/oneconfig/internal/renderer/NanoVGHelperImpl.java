@@ -34,6 +34,7 @@ import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
+import cc.polyfrost.oneconfig.libs.universal.UGraphics;
 import cc.polyfrost.oneconfig.libs.universal.UResolution;
 import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
@@ -113,7 +114,7 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
 
         Platform.getGLPlatform().enableStencil();
         GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
-        GL11.glDisable(GL11.GL_ALPHA_TEST);
+        UGraphics.disableAlpha();
 
         if (mcScaling) {
             nvgBeginFrame(vg, (float) UResolution.getScaledWidth(), (float) UResolution.getScaledHeight(), (float) UResolution.getScaleFactor());
@@ -124,7 +125,7 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
         consumer.accept(vg);
 
         nvgEndFrame(vg);
-
+        UGraphics.enableAlpha();
         GL11.glPopAttrib();
     }
 
