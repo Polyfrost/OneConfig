@@ -43,15 +43,19 @@ public class OneConfigInit {
         new File(oneConfigDir, "profiles").mkdirs();
 
         // Discord RPC
-        // create new thread
-        if (Preferences.rpcOnStartup) {
-            Thread rpcThread = new Thread(() -> {
-                try {
+        Thread rpcThread = new Thread(() -> {
+            try {
+                Thread.sleep(15 * 1000);
+                System.out.println(Preferences.rpcOnStartup);
+                if (Preferences.rpcOnStartup) {
+
                     DiscordRPC rpc = new DiscordRPC();
                     rpc.start();
-                } catch (RPCCreationException ignored) {}
-            });
-            rpcThread.start();
-        }
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        });
+        rpcThread.start();
     }
 }

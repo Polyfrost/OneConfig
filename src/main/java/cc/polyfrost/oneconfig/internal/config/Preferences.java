@@ -256,11 +256,12 @@ public class Preferences extends InternalConfig {
             text = "Start"
     )
     Runnable rpcRunnable = () -> {
-        GuiNotifications.INSTANCE.sendNotification("Starting RPC", grayBulb.getSVG());
+        GuiNotifications.INSTANCE.sendNotification("Downloading & starting RPC", grayBulb.getSVG());
 
         try {
             DiscordRPC rpc = new DiscordRPC();
             rpc.start();
+            GuiNotifications.INSTANCE.sendNotification("RPC successfully started", successBulb.getSVG());
         } catch (RPCCreationException ex) {
             GuiNotifications.INSTANCE.sendNotification("RPC Failed - " + ex.getMessage(), grayBulb.getSVG());
         }
