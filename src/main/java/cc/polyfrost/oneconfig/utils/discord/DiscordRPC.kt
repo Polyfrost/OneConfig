@@ -26,17 +26,13 @@
 
 package cc.polyfrost.oneconfig.utils.discord
 
-import cc.polyfrost.oneconfig.gui.GuiNotifications
-import cc.polyfrost.oneconfig.gui.OneConfigGui
 import cc.polyfrost.oneconfig.internal.config.Preferences
-import cc.polyfrost.oneconfig.platform.Platform
-import cc.polyfrost.oneconfig.renderer.asset.Icon
-import cc.polyfrost.oneconfig.utils.Notifications
 import cc.polyfrost.oneconfig.utils.discord.exception.RPCCreationException
 import cc.polyfrost.oneconfig.utils.discord.exception.RPCDownloadFail
 import de.jcm.discordgamesdk.Core
 import de.jcm.discordgamesdk.CreateParams
 import de.jcm.discordgamesdk.activity.Activity
+import org.spongepowered.asm.mixin.MixinEnvironment
 
 class DiscordRPC {
 
@@ -50,11 +46,9 @@ class DiscordRPC {
         val library = DiscordNativeLibrary().downloadLibrary() ?: throw RPCDownloadFail("Failed to download Discord SDK.")
 
         // Initialize core
-        println("1")
         Core.init(library)
 
         try {
-            println(2)
             val params = CreateParams()
 
             // Set client ID
@@ -63,37 +57,39 @@ class DiscordRPC {
 
             // Create core
             try {
-                println(3)
                 val core = Core(params)
-                println(4)
 
                 try {
                     val activity = Activity()
-
-                    // Set activity
-                    activity.details = "Playing Minecraft"
-
-                    activity.assets().largeImage = "oneconfig_light"
-
-                    core.activityManager().updateActivity(activity)
+                    updateActivity(core)
                 } catch (e: Exception) {
-                    e.printStackTrace()
                     throw RPCDownloadFail("Failed to create Discord RPC activity.")
                 }
-                println(5)
-                Thread {
-                    while (true) {
-                        core.runCallbacks()
-                        Thread.sleep(1000)
-                    }
-                }.start()
+//                Thread {
+//                    while (true) {
+//                        core.runCallbacks()
+//                        Thread.sleep(1000)
+//                    }
+//                }.start()
             } catch (e: Exception) {
-                e.printStackTrace()
                 throw RPCDownloadFail("Failed to create Discord RPC core.")
             }
         } catch (e: Exception) {
-            e.printStackTrace()
             throw RPCDownloadFail("Failed to create Discord RPC parameters.")
+        }
+    }
+
+    fun updateActivity(core: Core) {
+        try {
+            val activity = Activity()
+
+            // Set activity details
+            activity.details = "Playing Minecraft " + MixinEnvironment.getCurrentEnvironment().version
+            activity.assets().smallImage = "oneconfig_light"
+
+            core.activityManager().updateActivity(activity)
+        } catch (e: Exception) {
+            throw RPCDownloadFail("Failed to update Discord RPC activity.")
         }
     }
 }
