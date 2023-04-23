@@ -79,6 +79,9 @@ dependencies {
     compileOnly("org.apache.commons:commons-lang3:3.3.2")
     compileOnly("org.jetbrains:annotations:24.0.1")
 
+    // APIs
+    implementation("com.github.JnCrMx:discord-game-sdk4j:0.5.5")
+
     compileOnly(libs.vigilance) {
         attributes { attribute(common, true) }
         isTransitive = false

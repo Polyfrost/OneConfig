@@ -150,6 +150,9 @@ dependencies {
 
     include(libs.caffeine, relocate = true)
 
+    // TODO: Remove
+    implementation("com.github.JnCrMx:discord-game-sdk4j:0.5.5")
+
     // for other mods and universalcraft
     api(libs.bundles.kotlin)
     shadeOnly(libs.bundles.kotlin)

@@ -29,19 +29,29 @@ package cc.polyfrost.oneconfig.internal.config;
 import cc.polyfrost.oneconfig.config.annotations.Button;
 import cc.polyfrost.oneconfig.config.annotations.Dropdown;
 import cc.polyfrost.oneconfig.config.annotations.Exclude;
+import cc.polyfrost.oneconfig.config.annotations.Info;
 import cc.polyfrost.oneconfig.config.annotations.KeyBind;
 import cc.polyfrost.oneconfig.config.annotations.Number;
 import cc.polyfrost.oneconfig.config.annotations.Slider;
 import cc.polyfrost.oneconfig.config.annotations.Switch;
 import cc.polyfrost.oneconfig.config.annotations.Text;
 import cc.polyfrost.oneconfig.config.core.OneKeyBind;
+import cc.polyfrost.oneconfig.config.data.InfoType;
+import cc.polyfrost.oneconfig.gui.GuiNotifications;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.internal.gui.BlurHandler;
 import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
 import cc.polyfrost.oneconfig.platform.Platform;
+import cc.polyfrost.oneconfig.renderer.asset.Icon;
 import cc.polyfrost.oneconfig.utils.TickDelay;
+import cc.polyfrost.oneconfig.utils.discord.DiscordRPC;
+import cc.polyfrost.oneconfig.utils.discord.exception.RPCCreationException;
 
 public class Preferences extends InternalConfig {
+
+    Icon successBulb = new Icon("/assets/oneconfig/icons/successBulb.svg");
+    Icon grayBulb = new Icon("/assets/oneconfig/icons/grayBulb.svg");
+    Icon dangerBulb = new Icon("/assets/oneconfig/icons/dangerBulb.svg");
 
     @KeyBind(
             name = "OneConfig Keybind",
@@ -238,6 +248,46 @@ public class Preferences extends InternalConfig {
     )
     private static String hypixelKey = "";
 
+    // Discord
+    @Button(
+            name = "Start Discord RPC",
+            description = "Start or restart the rich presence for Discord.",
+            category = "Discord",
+            text = "Start"
+    )
+    Runnable rpcRunnable = () -> {
+        GuiNotifications.INSTANCE.sendNotification("Starting RPC", grayBulb.getSVG());
+
+        try {
+            DiscordRPC rpc = new DiscordRPC();
+            rpc.start();
+        } catch (RPCCreationException ex) {
+            GuiNotifications.INSTANCE.sendNotification("RPC Failed - " + ex.getMessage(), grayBulb.getSVG());
+        }
+    };
+
+    @Switch(
+            name = "RPC on startup",
+            description = "Initialize the Discord RPC on game startup.",
+            category = "Discord"
+    )
+    public static boolean rpcOnStartup = false;
+
+    @Info(
+            text = "This can cause errors or issues",
+            type = InfoType.ERROR,
+            category = "Discord"
+    )
+    public static boolean ignored;
+
+    @Text(
+            name = "Application ID",
+            description = "The details to display in the Discord RPC.",
+            category = "Discord"
+    )
+    public static String applicationId = "1099774171275345942";
+
+    // Other stuff
     @Dropdown(
             name = "Release Channel",
             options = {"Releases", "Pre-Releases"}
