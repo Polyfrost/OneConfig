@@ -249,25 +249,28 @@ public class Preferences extends InternalConfig {
 
     // Discord
     @Switch(
-            name = "Rich Presence on startup",
-            description = "Enable the 'Playing OneConfig' discord activity on startup",
-            category = "Discord"
+            name = "Rich Presence",
+            category = "Discord",
+            subcategory = "Rich Presence",
+            description = "Toggle the 'Playing OneConfig' discord activity."
     )
     public static boolean discordRPC = false;
-
-    @Text(
-            name = "Application ID",
-            description = "The details to display in the Discord RPC.",
-            category = "Discord"
-    )
-    public static String applicationId = "1099774171275345942"; // Default OneConfig RPC application client ID
 
     @Dropdown(
             name = "Style",
             category = "Discord",
+            subcategory = "Rich Presence",
             options = {"Default", "Minimal"}
     )
     public static int RPCStyleValue = 0;
+
+    @Text(
+            name = "Application ID",
+            category = "Discord",
+            subcategory = "Rich Presence",
+            description = "The details to display in the Discord RPC."
+    )
+    public static String applicationId = "1099774171275345942"; // Default OneConfig RPC application client ID
 
     // Other stuff
     @Dropdown(
@@ -303,7 +306,7 @@ public class Preferences extends InternalConfig {
         addDependency("guiClosingAnimation", "guiOpenAnimation");
         addDependency("timeUntilReset", "Smart Opening Behavior", () -> openingBehavior == 3);
         addDependency("pageAnimationDuration", "showPageAnimations");
-        addDependency("rpcInfoAmount", "discordRPC");
+        addDependency("RPCStyleValue", "discordRPC");
         addDependency("applicationId", "discordRPC");
         INSTANCE = this;
     }
