@@ -28,7 +28,6 @@ package cc.polyfrost.oneconfig.internal.init;
 
 import cc.polyfrost.oneconfig.internal.config.Preferences;
 import cc.polyfrost.oneconfig.utils.discord.DiscordRPC;
-import cc.polyfrost.oneconfig.utils.discord.exception.RPCCreationException;
 import org.spongepowered.asm.mixin.Mixins;
 
 import java.io.File;
@@ -42,20 +41,7 @@ public class OneConfigInit {
         oneConfigDir.mkdirs();
         new File(oneConfigDir, "profiles").mkdirs();
 
-        // Discord RPC
-        Thread rpcThread = new Thread(() -> {
-            try {
-                Thread.sleep(15 * 1000);
-                System.out.println(Preferences.rpcOnStartup);
-                if (Preferences.rpcOnStartup) {
-
-                    DiscordRPC rpc = new DiscordRPC();
-                    rpc.start();
-                }
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-        });
-        rpcThread.start();
+        DiscordRPC rpc = new DiscordRPC();
+        rpc.start();
     }
 }

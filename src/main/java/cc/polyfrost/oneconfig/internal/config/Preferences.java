@@ -45,7 +45,6 @@ import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.asset.Icon;
 import cc.polyfrost.oneconfig.utils.TickDelay;
 import cc.polyfrost.oneconfig.utils.discord.DiscordRPC;
-import cc.polyfrost.oneconfig.utils.discord.exception.RPCCreationException;
 
 public class Preferences extends InternalConfig {
 
@@ -249,44 +248,27 @@ public class Preferences extends InternalConfig {
     private static String hypixelKey = "";
 
     // Discord
-    @Button(
-            name = "Start Discord RPC",
-            description = "Start or restart the rich presence for Discord.",
-            category = "Discord",
-            text = "Start"
-    )
-    Runnable rpcRunnable = () -> {
-        GuiNotifications.INSTANCE.sendNotification("Downloading & starting RPC", grayBulb.getSVG());
-
-        try {
-            DiscordRPC rpc = new DiscordRPC();
-            rpc.start();
-            GuiNotifications.INSTANCE.sendNotification("RPC successfully started", successBulb.getSVG());
-        } catch (RPCCreationException ex) {
-            GuiNotifications.INSTANCE.sendNotification("RPC Failed - " + ex.getMessage(), grayBulb.getSVG());
-        }
-    };
-
     @Switch(
-            name = "RPC on startup",
-            description = "Initialize the Discord RPC on game startup.",
+            name = "Enable rich presence",
+            description = "Toggle the 'Playing OneConfig' discord activity",
             category = "Discord"
     )
-    public static boolean rpcOnStartup = false;
+    public static boolean discordRPC = false;
 
-    @Info(
-            text = "This can cause errors or issues",
-            type = InfoType.ERROR,
-            category = "Discord"
+    @Dropdown(
+            name = "Information",
+            description = "How much information should be shown",
+            category = "Discord",
+            options = {"Default", "Minimal"}
     )
-    public static boolean ignored;
+    public static int rpcInfoAmount = 0;
 
     @Text(
             name = "Application ID",
             description = "The details to display in the Discord RPC.",
             category = "Discord"
     )
-    public static String applicationId = "1099774171275345942";
+    public static String applicationId = "1099774171275345942"; // Default OneConfig RPC application client ID
 
     // Other stuff
     @Dropdown(
@@ -322,6 +304,8 @@ public class Preferences extends InternalConfig {
         addDependency("guiClosingAnimation", "guiOpenAnimation");
         addDependency("timeUntilReset", "Smart Opening Behavior", () -> openingBehavior == 3);
         addDependency("pageAnimationDuration", "showPageAnimations");
+        addDependency("rpcInfoAmount", "discordRPC");
+        addDependency("applicationId", "discordRPC");
         INSTANCE = this;
     }
 

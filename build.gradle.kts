@@ -81,6 +81,7 @@ dependencies {
 
     // APIs
     implementation("com.github.JnCrMx:discord-game-sdk4j:0.5.5")
+    implementation("com.github.caoimhebyrne:KDiscordIPC:0.2.1")
 
     compileOnly(libs.vigilance) {
         attributes { attribute(common, true) }

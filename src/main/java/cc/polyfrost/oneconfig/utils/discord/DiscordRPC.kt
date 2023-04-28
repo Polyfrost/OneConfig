@@ -27,69 +27,74 @@
 package cc.polyfrost.oneconfig.utils.discord
 
 import cc.polyfrost.oneconfig.internal.config.Preferences
-import cc.polyfrost.oneconfig.utils.discord.exception.RPCCreationException
-import cc.polyfrost.oneconfig.utils.discord.exception.RPCDownloadFail
-import de.jcm.discordgamesdk.Core
-import de.jcm.discordgamesdk.CreateParams
-import de.jcm.discordgamesdk.activity.Activity
-import org.spongepowered.asm.mixin.MixinEnvironment
+import cc.polyfrost.oneconfig.utils.dsl.schedule
+import dev.cbyrne.kdiscordipc.KDiscordIPC
+import dev.cbyrne.kdiscordipc.core.event.impl.ReadyEvent
+import dev.cbyrne.kdiscordipc.data.activity.button
+import dev.cbyrne.kdiscordipc.data.activity.largeImage
+import dev.cbyrne.kdiscordipc.data.activity.smallImage
+import kotlinx.coroutines.runBlocking
+import java.util.*
+import java.util.concurrent.TimeUnit
+import kotlin.concurrent.fixedRateTimer
 
 class DiscordRPC {
 
-    // Constants
+    // Discord application client ID
     val CLIENT_ID = Preferences.applicationId.toLong()
+    lateinit var ipc: KDiscordIPC
 
-    // Start DiscordPRC
-    @Throws(RPCCreationException::class)
+    // Attributes
+    var running = false;
+    var details = "Playing Minecraft"
+    var largeImage = "oneconfig_light"
+    var smallImage = "oneconfig_light"
+
+    // Add compatability with Java
     fun start() {
-        // Define library & throw exception on failure
-        val library = DiscordNativeLibrary().downloadLibrary() ?: throw RPCDownloadFail("Failed to download Discord SDK.")
-
-        // Initialize core
-        Core.init(library)
-
-        try {
-            val params = CreateParams()
-
-            // Set client ID
-            params.clientID = CLIENT_ID
-            params.setFlags(CreateParams.getDefaultFlags())
-
-            // Create core
-            try {
-                val core = Core(params)
-
-                try {
-                    val activity = Activity()
-                    updateActivity(core)
-                } catch (e: Exception) {
-                    throw RPCDownloadFail("Failed to create Discord RPC activity.")
+        val timer = Timer()
+        val task = object : TimerTask() {
+            override fun run() = runBlocking {
+                if (Preferences.discordRPC) {
+                    // RPC Enabled
+                    if (!running) startRPC() // If switch toggled but RPC isn't running, start
+                    updateRPC()
+                } else {
+                    if (running) disconnectIPC() // If switch disabled & RPC running, disconnect
                 }
-//                Thread {
-//                    while (true) {
-//                        core.runCallbacks()
-//                        Thread.sleep(1000)
-//                    }
-//                }.start()
-            } catch (e: Exception) {
-                throw RPCDownloadFail("Failed to create Discord RPC core.")
             }
-        } catch (e: Exception) {
-            throw RPCDownloadFail("Failed to create Discord RPC parameters.")
+        }
+        timer.scheduleAtFixedRate(task, 0, 15000)
+    }
+
+    private suspend fun startRPC() {
+        if (Preferences.discordRPC) {
+            ipc = KDiscordIPC(CLIENT_ID.toString())
+
+            ipc.on<ReadyEvent> {
+                updateRPC()
+            }
+
+            ipc.connect()
         }
     }
 
-    fun updateActivity(core: Core) {
-        try {
-            val activity = Activity()
+    fun disconnectIPC() {
+        ipc.disconnect()
+    }
 
-            // Set activity details
-            activity.details = "Playing Minecraft " + MixinEnvironment.getCurrentEnvironment().version
-            activity.assets().smallImage = "oneconfig_light"
+    private suspend fun updateRPC() {
+        // If RPC is running
+        ipc.activityManager.setActivity(details) {
+            when (Preferences.rpcInfoAmount) {
+                0 -> {
+                    largeImage(largeImage)
+                }
 
-            core.activityManager().updateActivity(activity)
-        } catch (e: Exception) {
-            throw RPCDownloadFail("Failed to update Discord RPC activity.")
+                1 -> {
+                    smallImage(smallImage)
+                }
+            }
         }
     }
 }
