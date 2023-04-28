@@ -54,17 +54,32 @@ class DiscordRPC {
          */
         fun start() {
             val taskScope = CoroutineScope(Dispatchers.Default)
-            taskScope.launch {
-                while (true) {
-                    if (Preferences.discordRPC && !ipc.connected) {
-                        launch { startRPC() }
-                    } else if (!Preferences.discordRPC && ipc.connected) {
-                        launch { disconnectIPC() }
-                    }
+            taskScope.launch { startRPC() }
+        }
 
-                    delay(15_000)
-                }
-            }
+//        fun start() {
+//            val taskScope = CoroutineScope(Dispatchers.Default)
+//            taskScope.launch {
+//                while (true) {
+//                    if (Preferences.discordRPC && !ipc.connected) {
+//                        launch { startRPC() }
+//                    } else if (!Preferences.discordRPC && ipc.connected) {
+//                        launch { disconnectIPC() }
+//                    }
+//
+//                    delay(15_000)
+//                }
+//            }
+//        }
+
+        fun stop() {
+            val taskScope = CoroutineScope(Dispatchers.Default)
+            taskScope.launch { disconnectIPC() }
+        }
+
+        fun update() {
+            val taskScope = CoroutineScope(Dispatchers.Default);
+            taskScope.launch { updateRPC() }
         }
 
 

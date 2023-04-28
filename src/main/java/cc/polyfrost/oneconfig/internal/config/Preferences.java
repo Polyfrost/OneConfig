@@ -303,6 +303,24 @@ public class Preferences extends InternalConfig {
                 OneConfigGui.INSTANCE.isClosed = true;
             }
         });
+
+        // RPC Toggle
+        addListener("discordRPC", () -> {
+            if (discordRPC) {
+                DiscordRPC.Companion.start();
+            } else {
+                DiscordRPC.Companion.stop();
+            }
+        });
+
+        // RPC style
+        addListener("RPCStyleValue", () -> {
+            if (discordRPC) {
+                DiscordRPC.Companion.update();
+                //GuiNotifications.INSTANCE.sendNotification("It updated boi");
+            }
+        });
+
         addDependency("guiClosingAnimation", "guiOpenAnimation");
         addDependency("timeUntilReset", "Smart Opening Behavior", () -> openingBehavior == 3);
         addDependency("pageAnimationDuration", "showPageAnimations");
