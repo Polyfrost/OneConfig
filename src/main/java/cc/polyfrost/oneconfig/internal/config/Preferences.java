@@ -249,19 +249,11 @@ public class Preferences extends InternalConfig {
 
     // Discord
     @Switch(
-            name = "Enable rich presence",
-            description = "Toggle the 'Playing OneConfig' discord activity",
+            name = "Rich Presence on startup",
+            description = "Enable the 'Playing OneConfig' discord activity on startup",
             category = "Discord"
     )
     public static boolean discordRPC = false;
-
-    @Dropdown(
-            name = "Information",
-            description = "How much information should be shown",
-            category = "Discord",
-            options = {"Default", "Minimal"}
-    )
-    public static int rpcInfoAmount = 0;
 
     @Text(
             name = "Application ID",
@@ -269,6 +261,13 @@ public class Preferences extends InternalConfig {
             category = "Discord"
     )
     public static String applicationId = "1099774171275345942"; // Default OneConfig RPC application client ID
+
+    @Dropdown(
+            name = "Style",
+            category = "Discord",
+            options = {"Default", "Minimal"}
+    )
+    public static int RPCStyleValue = 0;
 
     // Other stuff
     @Dropdown(

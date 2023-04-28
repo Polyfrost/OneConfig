@@ -41,7 +41,6 @@ public class OneConfigInit {
         oneConfigDir.mkdirs();
         new File(oneConfigDir, "profiles").mkdirs();
 
-        DiscordRPC rpc = new DiscordRPC();
-        rpc.start();
+        DiscordRPC.Companion.start();
     }
 }

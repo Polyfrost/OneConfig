@@ -27,74 +27,75 @@
 package cc.polyfrost.oneconfig.utils.discord
 
 import cc.polyfrost.oneconfig.internal.config.Preferences
-import cc.polyfrost.oneconfig.utils.dsl.schedule
+import cc.polyfrost.oneconfig.libs.universal.wrappers.UPlayer
 import dev.cbyrne.kdiscordipc.KDiscordIPC
 import dev.cbyrne.kdiscordipc.core.event.impl.ReadyEvent
-import dev.cbyrne.kdiscordipc.data.activity.button
 import dev.cbyrne.kdiscordipc.data.activity.largeImage
 import dev.cbyrne.kdiscordipc.data.activity.smallImage
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import java.util.*
-import java.util.concurrent.TimeUnit
-import kotlin.concurrent.fixedRateTimer
 
 class DiscordRPC {
 
-    // Discord application client ID
-    val CLIENT_ID = Preferences.applicationId.toLong()
-    lateinit var ipc: KDiscordIPC
+    companion object {
 
-    // Attributes
-    var running = false;
-    var details = "Playing Minecraft"
-    var largeImage = "oneconfig_light"
-    var smallImage = "oneconfig_light"
+        // Constants & IPC
+        private val CLIENT_ID = Preferences.applicationId.toLong()
+        private val ipc = KDiscordIPC(CLIENT_ID.toString())
 
-    // Add compatability with Java
-    fun start() {
-        val timer = Timer()
-        val task = object : TimerTask() {
-            override fun run() = runBlocking {
-                if (Preferences.discordRPC) {
-                    // RPC Enabled
-                    if (!running) startRPC() // If switch toggled but RPC isn't running, start
-                    updateRPC()
-                } else {
-                    if (running) disconnectIPC() // If switch disabled & RPC running, disconnect
+        // Attributes
+        val details = "Playing Minecraft"
+        val largeImage = "oneconfig_light"
+        val smallImage = "oneconfig_light"
+
+        /**
+         * Starts a coroutine that checks RPC settings every 15 seconds, and connects/disconnects
+         * the IPC accordingly. Launched in a separate scope to prevent blocking the main thread.
+         */
+        fun start() {
+            val taskScope = CoroutineScope(Dispatchers.Default)
+            taskScope.launch {
+                while (true) {
+                    if (Preferences.discordRPC && !ipc.connected) {
+                        launch { startRPC() }
+                    } else if (!Preferences.discordRPC && ipc.connected) {
+                        launch { disconnectIPC() }
+                    }
+
+                    delay(15_000)
                 }
             }
         }
-        timer.scheduleAtFixedRate(task, 0, 15000)
-    }
 
-    private suspend fun startRPC() {
-        if (Preferences.discordRPC) {
-            ipc = KDiscordIPC(CLIENT_ID.toString())
 
+        /**
+         * Connects to the IPC and sets the activity. This is a suspend function, so
+         * it must be called by a coroutine.
+         */
+        private suspend fun startRPC() {
             ipc.on<ReadyEvent> {
-                updateRPC()
-            }
-
-            ipc.connect()
-        }
-    }
-
-    fun disconnectIPC() {
-        ipc.disconnect()
-    }
-
-    private suspend fun updateRPC() {
-        // If RPC is running
-        ipc.activityManager.setActivity(details) {
-            when (Preferences.rpcInfoAmount) {
-                0 -> {
+                ipc.activityManager.setActivity(details) {
                     largeImage(largeImage)
                 }
+            }
+            ipc.connect()
+        }
 
-                1 -> {
-                    smallImage(smallImage)
+        private suspend fun updateRPC() {
+            ipc.activityManager.setActivity(details) {
+                when(Preferences.RPCStyleValue) {
+                    1 -> {
+                        smallImage(smallImage)
+                    }
+                    else -> {
+                        largeImage(largeImage)
+                    }
                 }
             }
+        }
+
+        private fun disconnectIPC() {
+            ipc.disconnect()
         }
     }
 }
