@@ -239,15 +239,21 @@ public class OneConfigGui extends OneUIScreen {
         inputHandler.scale(scale, scale);
 
         boolean popoutSidebar = Themes.dissosciateSidebar;
-        float dissosciateAmount = Themes.separationWidth;
+        float dissosciateAmount = 0;
+        if (popoutSidebar) {
+            dissosciateAmount = Themes.separationWidth;
+        }
 
         float rounding = Themes.oneConfigUIRounding;
         boolean hideInnerRounding = !popoutSidebar;
 
-        nanoVGHelper.drawDropShadow(vg, x, y, 1280, 800, Themes.backdropIntensity, Themes.backdropSpread, rounding);
+        nanoVGHelper.drawDropShadow(vg, x + (popoutSidebar ? 224 : 0), y, 1280 - (popoutSidebar ? 224 : 0), 800, Themes.backdropIntensity, Themes.backdropSpread, rounding);
+        if (popoutSidebar) {
+            nanoVGHelper.drawDropShadow(vg, x - dissosciateAmount, y, 224, 800, Themes.backdropIntensity, Themes.backdropSpread, rounding);
+        }
 
-        Scissor mainPanel = scissorHelper.scissor(vg, x, y, 224, 800);
-        nanoVGHelper.drawRoundedRect(vg, x, y, 224 + (hideInnerRounding ? rounding : 0), 800, Themes.bgSidebarOverlay.getRGB(), rounding);
+        Scissor mainPanel = scissorHelper.scissor(vg, x - dissosciateAmount, y, 224, 800);
+        nanoVGHelper.drawRoundedRect(vg, x - dissosciateAmount, y, 224 + (hideInnerRounding ? rounding : 0), 800, Themes.bgSidebarOverlay.getRGB(), rounding);
         scissorHelper.resetScissor(vg, mainPanel);
 
         Scissor contentPanel = scissorHelper.scissor(vg, x + 224, y, 1056, 800);
@@ -260,12 +266,12 @@ public class OneConfigGui extends OneUIScreen {
 
         int sideBarY = y - 55;
         if (Themes.oneConfigLogo) {
-            nanoVGHelper.drawSvg(vg, SVGs.ONECONFIG_FULL_DARK, x + 33f, y + 22f, 158f, 34f);
+            nanoVGHelper.drawSvg(vg, SVGs.ONECONFIG_FULL_DARK, x + 33f - dissosciateAmount, y + 22f, 158f, 34f);
             sideBarY += 55;
         }
 
         textInputField.draw(vg, x + 1020, y + 16, inputHandler);
-        sideBar.draw(vg, x, sideBarY, inputHandler);
+        sideBar.draw(vg, (int) (x - dissosciateAmount), sideBarY, inputHandler);
         backArrow.update(x + 240, y + 16, inputHandler);
         forwardArrow.update(x + 280, y + 16, inputHandler);
 
