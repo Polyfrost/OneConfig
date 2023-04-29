@@ -237,10 +237,10 @@ public class OneConfigGui extends OneUIScreen {
         nanoVGHelper.scale(vg, scale, scale);
         inputHandler.scale(scale, scale);
 
-        nanoVGHelper.drawDropShadow(vg, x, y, 1280, 800, 64, 0, 20);
+        nanoVGHelper.drawDropShadow(vg, x, y, 1280, 800, 64, 0, Themes.oneConfigUIRounding);
 
         Scissor mainPanel = scissorHelper.scissor(vg, x, y, 224, 800);
-        nanoVGHelper.drawRoundedRect(vg, x, y, 244, 800, Colors.GRAY_800_95, Themes.oneConfigUIRounding);
+        nanoVGHelper.drawRoundedRect(vg, x, y, 244, 800, Themes.bgSidebarOverlay.getRGB(), Themes.oneConfigUIRounding);
         scissorHelper.resetScissor(vg, mainPanel);
 
         Scissor contentPanel = scissorHelper.scissor(vg, x + 224, y, 1056, 800);
@@ -251,10 +251,14 @@ public class OneConfigGui extends OneUIScreen {
         nanoVGHelper.drawLine(vg, x + 224, y + 72, x + 1280, y + 72, 1, Themes.borderBorder10.getRGB());
         nanoVGHelper.drawLine(vg, x + 224, y, x + 222, y + 800, 1, Themes.borderBorder10.getRGB());
 
-        nanoVGHelper.drawSvg(vg, SVGs.ONECONFIG_FULL_DARK, x + 33f, y + 22f, 158f, 34f);
+        int sideBarY = y - 55;
+        if (Themes.oneConfigLogo) {
+            nanoVGHelper.drawSvg(vg, SVGs.ONECONFIG_FULL_DARK, x + 33f, y + 22f, 158f, 34f);
+            sideBarY += 55;
+        }
 
         textInputField.draw(vg, x + 1020, y + 16, inputHandler);
-        sideBar.draw(vg, x, y, inputHandler);
+        sideBar.draw(vg, x, sideBarY, inputHandler);
         backArrow.update(x + 240, y + 16, inputHandler);
         forwardArrow.update(x + 280, y + 16, inputHandler);
 

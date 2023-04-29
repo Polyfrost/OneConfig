@@ -114,6 +114,8 @@ public class SideBar {
         buttons.get(4).draw(vg, x + 16, calcAndIncrementLn(sidebarY), inputHandler);
         sidebarY = 0;
 
+        if (!Themes.oneConfigLogo) y += 55;
+
         hudButton.draw(vg, x + 16, y + 704, inputHandler);
         closeButton.draw(vg, x + 16, y + 748, inputHandler);
     }

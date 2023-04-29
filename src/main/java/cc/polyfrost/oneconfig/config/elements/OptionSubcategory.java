@@ -29,6 +29,7 @@ package cc.polyfrost.oneconfig.config.elements;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.elements.config.ConfigPageButton;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
+import cc.polyfrost.oneconfig.internal.config.Themes;
 import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.utils.InputHandler;
@@ -86,7 +87,7 @@ public class OptionSubcategory {
                 }
                 backgroundSize += option.getHeight() + 16;
             }
-            nanoVGHelper.drawRoundedRect(vg, x - 16, optionY, 1024, backgroundSize, Colors.GRAY_900, 20);
+            nanoVGHelper.drawRoundedRect(vg, x - 16, optionY, 1024, backgroundSize, Themes.bgPageElevated.getRGB(), 20);
             optionY += 16;
         }
 

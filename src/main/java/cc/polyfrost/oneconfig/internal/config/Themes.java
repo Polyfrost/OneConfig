@@ -29,6 +29,7 @@ package cc.polyfrost.oneconfig.internal.config;
 import cc.polyfrost.oneconfig.config.annotations.Color;
 import cc.polyfrost.oneconfig.config.annotations.Exclude;
 import cc.polyfrost.oneconfig.config.annotations.Slider;
+import cc.polyfrost.oneconfig.config.annotations.Switch;
 import cc.polyfrost.oneconfig.config.core.OneColor;
 
 public class Themes extends InternalConfig {
@@ -55,12 +56,12 @@ public class Themes extends InternalConfig {
     public static OneColor bgPageElevated = new OneColor(26, 34, 41, 255);
 
     @Color(
-            name = "Page depressed",
-            description = "bg.page.depressed",
+            name = "Sidebar overlay",
+            description = "bg.page.sidebar",
             category = "Colors",
             subcategory = "Page background"
     )
-    public static OneColor bgPageDepressed = new OneColor(14, 19, 23, 255);
+    public static OneColor bgSidebarOverlay = new OneColor(17, 23, 28, 80);
 
     // border
     @Color(
@@ -70,14 +71,6 @@ public class Themes extends InternalConfig {
             subcategory = "Border"
     )
     public static OneColor borderBorder10 = new OneColor(255, 255, 255, 25);
-
-    @Color(
-            name = "Border light",
-            description = "border.border.5%",
-            category = "Colors",
-            subcategory = "Border"
-    )
-    public static OneColor borderBorder5 = new OneColor(255, 255, 255, 12);
 
     // component.bg
     @Color(
@@ -96,29 +89,7 @@ public class Themes extends InternalConfig {
     )
     public static OneColor componentBgElevated = new OneColor(23, 31, 37, 255);
 
-    @Color(
-            name = "Component pressed",
-            description = "component.bg.pressed",
-            category = "Colors",
-            subcategory = "Component background"
-    )
-    public static OneColor componentBgPressed = new OneColor(34, 44, 53, 255);
 
-    @Color(
-            name = "Component deselected",
-            description = "component.bg.deselected",
-            category = "Colors",
-            subcategory = "Component background"
-    )
-    public static OneColor componentBgDeselected = new OneColor(26, 34, 41, 0);
-
-    @Color(
-            name = "Component disabled",
-            description = "component.bg.disabled",
-            category = "Colors",
-            subcategory = "Component background"
-    )
-    public static OneColor componentBgDisabled = new OneColor(26, 34, 41, 126);
 
     // ROUNDING
     @Slider(
@@ -128,6 +99,13 @@ public class Themes extends InternalConfig {
             min = 0f, max = 50f
     )
     public static float oneConfigUIRounding = 20f;
+
+    @Switch(
+            name = "OneConfig logo",
+            description = "Toggle the visibility of the OneConfig logo",
+            category = "Interface"
+    )
+    public static boolean oneConfigLogo = true;
 
 
     // Initialize the config
