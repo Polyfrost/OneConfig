@@ -26,6 +26,8 @@
 
 package cc.polyfrost.oneconfig.internal.assets;
 
+import cc.polyfrost.oneconfig.internal.config.Themes;
+
 import java.awt.*;
 
 @SuppressWarnings("unused")
@@ -49,6 +51,7 @@ public class Colors {
     public static final int PRIMARY_700 = new Color(18, 71, 178, 255).getRGB();          // Blue 700
     public static final int PRIMARY_700_80 = new Color(18, 71, 178, 204).getRGB();       // Blue 700 80%
     public static final int PRIMARY_600 = new Color(20, 82, 204, 255).getRGB();          // Blue 600         // button blue normal
+    //public static final int PRIMARY_600 = new Color(Themes.primaryColor.getRed(), Themes.primaryColor.getGreen(), Themes.primaryColor.getBlue(), Themes.primaryColor.getAlpha()).getRGB();         // Blue 600         // button blue normal
     public static final int PRIMARY_500 = new Color(25, 103, 255, 255).getRGB();         // Blue 500         // button blue hover
     public static final int PRIMARY_400 = new Color(48, 129, 242, 255).getRGB();
     public static final int WHITE_50 = new Color(255, 255, 255, 127).getRGB();        // White 50%

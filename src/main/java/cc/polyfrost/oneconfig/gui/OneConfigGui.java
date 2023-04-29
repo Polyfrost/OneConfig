@@ -48,6 +48,7 @@ import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.internal.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.internal.config.Preferences;
+import cc.polyfrost.oneconfig.internal.config.Themes;
 import cc.polyfrost.oneconfig.internal.renderer.NanoVGHelperImpl;
 import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
 import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
@@ -239,15 +240,16 @@ public class OneConfigGui extends OneUIScreen {
         nanoVGHelper.drawDropShadow(vg, x, y, 1280, 800, 64, 0, 20);
 
         Scissor mainPanel = scissorHelper.scissor(vg, x, y, 224, 800);
-        nanoVGHelper.drawRoundedRect(vg, x, y, 244, 800, Colors.GRAY_800_95, 20f);
+        nanoVGHelper.drawRoundedRect(vg, x, y, 244, 800, Colors.GRAY_800_95, Themes.oneConfigUIRounding);
         scissorHelper.resetScissor(vg, mainPanel);
 
         Scissor contentPanel = scissorHelper.scissor(vg, x + 224, y, 1056, 800);
-        nanoVGHelper.drawRoundedRect(vg, x + 224 - 20, y, 1056 + 20, 800, Colors.GRAY_800, 20f);
+        //nanoVGHelper.drawRoundedRect(vg, x + 224 - 20, y, 1056 + 20, 800, Colors.GRAY_800, Themes.oneConfigUIRounding);
+        nanoVGHelper.drawRoundedRect(vg, x + 224 - 20, y, 1056 + 20, 800, Themes.bgPageDefault.getRGB(), Themes.oneConfigUIRounding);
         scissorHelper.resetScissor(vg, contentPanel);
 
-        nanoVGHelper.drawLine(vg, x + 224, y + 72, x + 1280, y + 72, 1, Colors.GRAY_700);
-        nanoVGHelper.drawLine(vg, x + 224, y, x + 222, y + 800, 1, Colors.GRAY_700);
+        nanoVGHelper.drawLine(vg, x + 224, y + 72, x + 1280, y + 72, 1, Themes.borderBorder10.getRGB());
+        nanoVGHelper.drawLine(vg, x + 224, y, x + 222, y + 800, 1, Themes.borderBorder10.getRGB());
 
         nanoVGHelper.drawSvg(vg, SVGs.ONECONFIG_FULL_DARK, x + 33f, y + 22f, 158f, 34f);
 
