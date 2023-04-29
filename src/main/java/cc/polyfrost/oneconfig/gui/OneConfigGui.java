@@ -262,7 +262,9 @@ public class OneConfigGui extends OneUIScreen {
         scissorHelper.resetScissor(vg, contentPanel);
 
         nanoVGHelper.drawLine(vg, x + 224, y + 72, x + 1280, y + 72, 1, Themes.borderBorder10.getRGB());
-        nanoVGHelper.drawLine(vg, x + 224, y, x + 222, y + 800, 1, Themes.borderBorder10.getRGB());
+        if (!popoutSidebar) {
+            nanoVGHelper.drawLine(vg, x + 224, y, x + 222, y + 800, 1, Themes.borderBorder10.getRGB());
+        }
 
         int sideBarY = y - 55;
         if (Themes.oneConfigLogo) {
