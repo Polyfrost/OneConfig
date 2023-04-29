@@ -53,7 +53,6 @@ import cc.polyfrost.oneconfig.internal.renderer.NanoVGHelperImpl;
 import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
 import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
 import cc.polyfrost.oneconfig.libs.universal.UResolution;
-import cc.polyfrost.oneconfig.libs.universal.UScreen;
 import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
@@ -240,19 +239,28 @@ public class OneConfigGui extends OneUIScreen {
 
         boolean popoutSidebar = Themes.dissosciateSidebar;
         float dissosciateAmount = 0;
+        if (Preferences.sidebarSlideIn) {
+            final float slideInValue = 224f / 3f;
+            dissosciateAmount = -slideInValue + (slideInValue * transparencyFactor);
+        }
         if (popoutSidebar) {
-            dissosciateAmount = Themes.separationWidth;
+            dissosciateAmount += (Themes.separationWidth) *
+                    (Preferences.sidebarSlideIn
+                            ? transparencyFactor
+                            : 1);
         }
 
         float rounding = Themes.oneConfigUIRounding;
         boolean hideInnerRounding = !popoutSidebar;
 
-        nanoVGHelper.drawDropShadow(vg, x + (popoutSidebar ? 224 : 0), y, 1280 - (popoutSidebar ? 224 : 0), 800, Themes.backdropIntensity, Themes.backdropSpread, rounding);
+        nanoVGHelper.drawDropShadow(vg, x + (popoutSidebar ? 224 : -dissosciateAmount), y, 1280 - (popoutSidebar ? 224 : -dissosciateAmount), 800, Themes.backdropIntensity, Themes.backdropSpread, rounding);
         if (popoutSidebar) {
+            Scissor dropShadowScissor = scissorHelper.scissor(vg, 0, 0, x + 224, UResolution.getWindowHeight());
             nanoVGHelper.drawDropShadow(vg, x - dissosciateAmount, y, 224, 800, Themes.backdropIntensity, Themes.backdropSpread, rounding);
+            scissorHelper.resetScissor(vg, dropShadowScissor);
         }
 
-        Scissor mainPanel = scissorHelper.scissor(vg, x - dissosciateAmount, y, 224, 800);
+        Scissor mainPanel = scissorHelper.scissor(vg, x - dissosciateAmount, y, 224 + dissosciateAmount , 800);
         nanoVGHelper.drawRoundedRect(vg, x - dissosciateAmount, y, 224 + (hideInnerRounding ? rounding : 0), 800, Themes.bgSidebarOverlay.getRGB(), rounding);
         scissorHelper.resetScissor(vg, mainPanel);
 
@@ -266,14 +274,17 @@ public class OneConfigGui extends OneUIScreen {
             nanoVGHelper.drawLine(vg, x + 224, y, x + 222, y + 800, 1, Themes.borderBorder10.getRGB());
         }
 
+        textInputField.draw(vg, x + 1020, y + 16, inputHandler);
+
+        Scissor sideBarScissor = scissorHelper.scissor(vg, x - dissosciateAmount, y, 224 + dissosciateAmount , 800);
         int sideBarY = y - 55;
         if (Themes.oneConfigLogo) {
             nanoVGHelper.drawSvg(vg, SVGs.ONECONFIG_FULL_DARK, x + 33f - dissosciateAmount, y + 22f, 158f, 34f);
             sideBarY += 55;
         }
-
-        textInputField.draw(vg, x + 1020, y + 16, inputHandler);
         sideBar.draw(vg, (int) (x - dissosciateAmount), sideBarY, inputHandler);
+        scissorHelper.resetScissor(vg, sideBarScissor);
+
         backArrow.update(x + 240, y + 16, inputHandler);
         forwardArrow.update(x + 280, y + 16, inputHandler);
 
@@ -338,7 +349,9 @@ public class OneConfigGui extends OneUIScreen {
         if (currentColorSelector != null) {
             currentColorSelector.draw(vg);
         }
+
         GuiNotifications.INSTANCE.draw(vg, x + 224 + ((1280 - 224) / 2), y + 720 + 72, inputHandler);
+
         nanoVGHelper.resetTransform(vg);
         isDrawing = false;
     }

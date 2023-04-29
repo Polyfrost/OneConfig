@@ -152,6 +152,14 @@ public class Preferences extends InternalConfig {
     public static int animationType = 0;
 
     @Switch(
+            name = "Sidebar Slide-in",
+            description = "Enables or disables the sidebar slide-in animation",
+            category = "Animations",
+            subcategory = "Sidebar"
+    )
+    public static boolean sidebarSlideIn = true;
+
+    @Switch(
             name = "Show Page Animations",
             description = "Enables or disables the page switch animation",
             category = "Animations",
