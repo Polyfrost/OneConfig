@@ -130,11 +130,12 @@ public class TextInputField extends BasicElement {
         this.vg = vg;
         try {
             int colorOutline = errored ? Colors.ERROR_700 : Colors.GRAY_700;
+            float radius = 12f;
             if (!toggled)
-                nanoVGHelper.drawHollowRoundRect(vg, x, y, width - 0.5f, height - 0.5f, colorOutline, 12f, 1);
+                nanoVGHelper.drawHollowRoundRect(vg, x, y, width - 0.5f, height - 0.5f, colorOutline, radius, 1);
             else {
                 nanoVGHelper.setAlpha(vg, 1f);
-                nanoVGHelper.drawHollowRoundRect(vg, x, y, width - 0.5f, height - 0.5f, errored ? Colors.ERROR_600 : Colors.PRIMARY_600, 12f, 1);
+                nanoVGHelper.drawHollowRoundRect(vg, x, y, width - 0.5f, height - 0.5f, errored ? Colors.ERROR_600 : Colors.PRIMARY_600, radius, 1);
             }
             Scissor scissor = scissorHelper.scissor(vg, x, y, width, height);
             super.update(x, y, inputHandler);

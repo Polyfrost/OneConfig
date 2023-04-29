@@ -90,6 +90,12 @@ public class Themes extends InternalConfig {
     public static OneColor componentBgElevated = new OneColor(23, 31, 37, 255);
 
 
+    @Switch(
+            name = "OneConfig logo",
+            description = "Toggle the visibility of the OneConfig logo",
+            category = "Interface"
+    )
+    public static boolean oneConfigLogo = true;
 
     // ROUNDING
     @Slider(
@@ -101,12 +107,42 @@ public class Themes extends InternalConfig {
     public static float oneConfigUIRounding = 20f;
 
     @Switch(
-            name = "OneConfig logo",
-            description = "Toggle the visibility of the OneConfig logo",
+            name = "Dissosciate Sidebar",
+            description = "Dissosciate the sidebar from the main page",
             category = "Interface"
     )
-    public static boolean oneConfigLogo = true;
+    public static boolean dissosciateSidebar = false;
 
+    @Slider(
+            name = "Separation Width",
+            description = "Width of the separation between the sidebar and the main page",
+            category = "Interface",
+            min = 0f, max = 100f
+    )
+    public static float separationWidth = 20f;
+
+    @Slider(
+            name = "Backdrop Intensity",
+            description = "Intensity of the backdrop",
+            category = "Interface",
+            min = 0f, max = 100f
+    )
+    public static float backdropIntensity = 64f;
+
+    @Slider(
+            name = "Backdrop Spread",
+            description = "Spread of the backdrop",
+            category = "Interface",
+            min = 0f, max = 100f
+    )
+    public static float backdropSpread = 0f;
+
+    @Color(
+            name = "Backdrop Color",
+            description = "The backdrop color",
+            category = "Interface"
+    )
+    public static OneColor backdropColor = new OneColor(0, 0, 0, 63);
 
     // Initialize the config
 

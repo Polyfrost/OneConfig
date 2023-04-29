@@ -53,6 +53,7 @@ import cc.polyfrost.oneconfig.internal.renderer.NanoVGHelperImpl;
 import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
 import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
 import cc.polyfrost.oneconfig.libs.universal.UResolution;
+import cc.polyfrost.oneconfig.libs.universal.UScreen;
 import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
@@ -237,15 +238,21 @@ public class OneConfigGui extends OneUIScreen {
         nanoVGHelper.scale(vg, scale, scale);
         inputHandler.scale(scale, scale);
 
-        nanoVGHelper.drawDropShadow(vg, x, y, 1280, 800, 64, 0, Themes.oneConfigUIRounding);
+        boolean popoutSidebar = Themes.dissosciateSidebar;
+        float dissosciateAmount = Themes.separationWidth;
+
+        float rounding = Themes.oneConfigUIRounding;
+        boolean hideInnerRounding = !popoutSidebar;
+
+        nanoVGHelper.drawDropShadow(vg, x, y, 1280, 800, Themes.backdropIntensity, Themes.backdropSpread, rounding);
 
         Scissor mainPanel = scissorHelper.scissor(vg, x, y, 224, 800);
-        nanoVGHelper.drawRoundedRect(vg, x, y, 244, 800, Themes.bgSidebarOverlay.getRGB(), Themes.oneConfigUIRounding);
+        nanoVGHelper.drawRoundedRect(vg, x, y, 224 + (hideInnerRounding ? rounding : 0), 800, Themes.bgSidebarOverlay.getRGB(), rounding);
         scissorHelper.resetScissor(vg, mainPanel);
 
         Scissor contentPanel = scissorHelper.scissor(vg, x + 224, y, 1056, 800);
         //nanoVGHelper.drawRoundedRect(vg, x + 224 - 20, y, 1056 + 20, 800, Colors.GRAY_800, Themes.oneConfigUIRounding);
-        nanoVGHelper.drawRoundedRect(vg, x + 224 - 20, y, 1056 + 20, 800, Themes.bgPageDefault.getRGB(), Themes.oneConfigUIRounding);
+        nanoVGHelper.drawRoundedRect(vg, x + 224 - (hideInnerRounding ? rounding : 0), y, 1056 + (hideInnerRounding ? rounding : 0), 800, Themes.bgPageDefault.getRGB(), rounding);
         scissorHelper.resetScissor(vg, contentPanel);
 
         nanoVGHelper.drawLine(vg, x + 224, y + 72, x + 1280, y + 72, 1, Themes.borderBorder10.getRGB());

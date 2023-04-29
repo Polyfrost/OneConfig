@@ -26,6 +26,7 @@
 
 package cc.polyfrost.oneconfig.internal.renderer;
 
+import cc.polyfrost.oneconfig.config.core.OneColor;
 import cc.polyfrost.oneconfig.config.data.InfoType;
 import cc.polyfrost.oneconfig.events.EventManager;
 import cc.polyfrost.oneconfig.events.event.FramebufferRenderEvent;
@@ -33,6 +34,7 @@ import cc.polyfrost.oneconfig.events.event.Stage;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
+import cc.polyfrost.oneconfig.internal.config.Themes;
 import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
 import cc.polyfrost.oneconfig.libs.universal.UGraphics;
 import cc.polyfrost.oneconfig.libs.universal.UResolution;
@@ -636,7 +638,12 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
              NVGColor firstColor = NVGColor.calloc();  // allocating memory to pass color to nanovg wrapper
              NVGColor secondColor = NVGColor.calloc()  // allocating memory to pass color to nanovg wrapper
         ) {
-            fillNVGColorWithRGBA(0, 0, 0, 0.5f, firstColor); // filling allocated memory
+            OneColor backdropColor = Themes.backdropColor;
+            float red = backdropColor.getRed() / 255f;
+            float green = backdropColor.getGreen() / 255f;
+            float blue = backdropColor.getBlue() / 255f;
+            float alpha = backdropColor.getAlpha() / 255f;
+            fillNVGColorWithRGBA(red, green, blue, alpha, firstColor); // filling allocated memory
             fillNVGColorWithRGBA(0, 0, 0, 0, secondColor); // filling allocated memory
 
             // creating gradient and put it to shadowPaint
