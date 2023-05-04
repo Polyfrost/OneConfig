@@ -1,27 +1,41 @@
-![OneConfig_banner](https://user-images.githubusercontent.com/62163840/193199250-6e28836d-cdb4-4967-9f6f-3f25e2dec19d.png)
+![OneConfig_banner_wide](https://user-images.githubusercontent.com/62163840/226811571-ffe7a524-c96a-4b6e-9ca9-d29439f5174f.png)
 
+# OneConfig
+![Dev Worflow Status](https://img.shields.io/github/actions/workflow/status/Polyfrost/OneConfig/release.yml?style=for-the-badge&color=1452cc&label=release)
+![Dev Worflow Status](https://img.shields.io/github/actions/workflow/status/Polyfrost/OneConfig/build.yml?style=for-the-badge&color=1452cc&label=build)
 
+OneConfig is a free, open sourced configuration library by [Polyfrost](https://polyfrost.cc), designed to give developers a simple config API, which users can interact with in an elegant user interface.
 
-# Introducing OneConfig
-Easy, stunning, expandable, open source. That sums it up quite well. We built OneConfig for the developer, to completly eliminate the hassle of making tools to configure their mods. Our API is elegant, and easy to learn. OneConfig was built from the ground up for this purpose. As for the user experience, it was our top priority. All of their mods will appear in one place, and they don't even need to install anything extra. The visual design is stunning, and is ready to grow whenever needed.
+## ❔ General information
 
-## Developer documentation
-For a guide of how to use OneConfig please see our wiki at https://docs.polyfrost.cc. It's very thorough, and written by the people who develop OneConfig.
-
-## Screenshots
 <details>
   <summary>Click to view screenshots</summary>
+  <img src="https://user-images.githubusercontent.com/62163840/226493559-8cf2e7a9-99fe-4388-a479-8463132260ac.png">
   <img src="https://user-images.githubusercontent.com/62163840/196335017-0ef66813-1500-4279-a6b1-565ec0741816.png">
   <img src="https://user-images.githubusercontent.com/62163840/196335021-2df9bf19-d8d8-4872-ac57-1f6a53769cdd.png">
   <img src="https://user-images.githubusercontent.com/62163840/196335012-9c0f098e-4214-42cf-a83a-9bcbe65a240b.png">
 </details>
 
-# How do I get it?
+### How to get:
+For beginners, we recommend using [SkyClient](https://skyclient.co/), a free and open-sourced mod installer. For more technical users, all of our mods, including [Hytils](https://github.com/Polyfrost/Hytils-Reborn), [CrashPatch](https://github.com/Polyfrost/crashpatch), [EvergreenHUD](https://github.com/Polyfrost/EvergreenHUD), and [Chatting](https://github.com/Polyfrost/chatting) have full support, and come with OneConfig. Mods which use [Vigilance](https://github.com/EssentialGG/Vigilance) are also supported through our [compatability layer](https://docs.polyfrost.cc/oneconfig/config/compatibility).
 
-OneConfig's open beta just released for everyone! If you want to be the first to receive news of new OneConfig updates, or new supported mods, check out our [**Discord server**](https://polyfrost.cc/discord). We're always in there so feel free to say hi!
+### Is it a client?
+While it may look like OneConfig is a client, in reality it's actually a standalone mod. You can actually [see for yourself](https://github.com/Polyfrost/OneConfig-Bootstrap), it doesn't come with any mods of it's own. It's left up to the user to decide which mods they want to actually use.
 
-## Licenses and Supporting Projects
 
+## ⚡️ Getting started
+Almost everything you could need to start using OneConfig can be found in [our documentation](https://docs.polyfrost.cc). For further questions, feel free to make a developer ticket in [our discord](https://polyfrost.cc/discord).
+
+- Start a new project with our [mod template](https://github.com/Polyfrost/OneConfigExampleMod/), add OneConfig to an [existing project](https://docs.polyfrost.cc/oneconfig/getting-started), or [migrate](https://docs.polyfrost.cc/oneconfig/config/compatibility) from ``JSON``, ``Vigilance``, or ``.cfg`` (Forge) files.
+- [Register a config](https://docs.polyfrost.cc/oneconfig/config/creating-a-config)
+- [Add config options](https://docs.polyfrost.cc/oneconfig/config/adding-options)
+- [HUD system](https://docs.polyfrost.cc/oneconfig/huds/creating-a-hud)
+- Check out other [utilities](https://docs.polyfrost.cc/oneconfig/utils/oneconfigs-utilities) like [events](https://docs.polyfrost.cc/oneconfig/events/event-basics), [commands](https://docs.polyfrost.cc/oneconfig/commands/commands), and [custom rendering](https://docs.polyfrost.cc/oneconfig/gui/render-manager).
+
+## ℹ️ Example mod
+Please check out our [example mod](https://github.com/Polyfrost/OneConfigExampleMod/).
+
+## 📄 Licenses and Supporting Projects
 <details>
   <summary>License</summary>
   OneConfig is free and open-source. Except where noted otherwise (below and/or in individual files), all code is licensed under BOTH 
