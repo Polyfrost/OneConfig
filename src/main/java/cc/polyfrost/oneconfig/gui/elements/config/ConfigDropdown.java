@@ -52,7 +52,7 @@ public class ConfigDropdown extends BasicOption {
     private final String[] options;
     private final ColorAnimation backgroundColor = new ColorAnimation(ColorPalette.SECONDARY);
     private final ColorAnimation atomColor = new ColorAnimation(new ColorPalette(Colors.PRIMARY_600, Colors.PRIMARY_500, Colors.PRIMARY_500));
-    private final ColorAnimation colorAnimation = new ColorAnimation(new ColorPalette(Colors.GRAY_400_60, Colors.GRAY_400_80, Colors.GRAY_400_80), 200);
+    private final ColorAnimation colorAnimation = new ColorAnimation(new ColorPalette(Colors.GRAY_400_80, Colors.GRAY_400, Colors.GRAY_400), 200);
     private final TextInputField textInputField;
     private boolean opened = false;
     private Scissor inputScissor = null;
