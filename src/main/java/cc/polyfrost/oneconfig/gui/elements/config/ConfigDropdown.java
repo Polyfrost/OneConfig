@@ -88,14 +88,16 @@ public class ConfigDropdown extends BasicOption {
         if (size == 1) hovered = inputHandler.isAreaHovered(x + 224, y, 256, 32) && isEnabled();
         else hovered = inputHandler.isAreaHovered(x + 352, y, 640, 32) && isEnabled();
 
-        if (hovered && inputHandler.isClicked() || opened && inputHandler.isClicked(!dragging) && (size == 1 && !inputHandler.isAreaHovered(x + 224, y + 40, 256, options.length * 32, true) || size == 2 && !inputHandler.isAreaHovered(x + 352, y + 40, 640, options.length * 32, true))) {
+        if (hovered && inputHandler.isClicked() || opened && inputHandler.isClicked(!dragging) &&
+                (size == 1 && !inputHandler.isAreaHovered(x + 224, y + 40, 256, options.length * 32, true) ||
+                        size == 2 && !inputHandler.isAreaHovered(x + 352, y + 40, 640, options.length * 32, true))) {
             opened = !opened;
             if (!opened) {
                 inputHandler.unblockDWheel();
                 inputHandler.stopBlockingInput();
                 if (inputScissor != null) inputHandler.stopBlock(inputScissor);
             } else {
-                inputHandler.blockAllInput();
+                inputScissor = inputHandler.blockAllInput();
                 textInputField.onClick();
             }
             backgroundColor.setPalette(opened ? ColorPalette.PRIMARY : ColorPalette.SECONDARY);
@@ -180,11 +182,12 @@ public class ConfigDropdown extends BasicOption {
                 }
                 if (optionHovered && inputHandler.isClicked(!dragging)) {
                     try {
-                        set(Arrays.asList(options).indexOf(option));
+                        set(ArraysKt.indexOf(this.options, option));
                     } catch (IllegalAccessException ignored) {
                     }
                     opened = false;
                     backgroundColor.setPalette(ColorPalette.SECONDARY);
+                    inputHandler.unblockDWheel();
                     if (inputScissor != null && !dragging) inputHandler.stopBlock(inputScissor);
                 }
 
@@ -216,7 +219,7 @@ public class ConfigDropdown extends BasicOption {
                 }
                 NanoVGHelper.INSTANCE.drawRoundedRect(vg, x + 476, y - scrollBarY, 4, scrollBarLength - 5, colorAnimation.getColor(scrollHover || scrollTimePeriod, dragging), 4f);
             }
-            if (inputHandler.isAreaHovered(x + 224, y + 40, 256, Math.min(options.length, 10) * 32 + 8, true)) {
+            if (inputHandler.isAreaHovered(x + 224, y + 40, 256, Math.min(options.length, 10) * 32 + 8, true) && opened) {
                 inputHandler.blockDWheel();
             }
         } else {
@@ -261,11 +264,12 @@ public class ConfigDropdown extends BasicOption {
 
                 if (optionHovered && inputHandler.isClicked(!dragging)) {
                     try {
-                        set(Arrays.asList(options).indexOf(option));
+                        set(ArraysKt.indexOf(this.options, option));
                     } catch (IllegalAccessException ignored) {
                     }
                     opened = false;
                     backgroundColor.setPalette(ColorPalette.SECONDARY);
+                    inputHandler.unblockDWheel();
                     if (inputScissor != null && !dragging) inputHandler.stopBlock(inputScissor);
                 }
                 optionY += 32;
@@ -296,7 +300,7 @@ public class ConfigDropdown extends BasicOption {
                 }
                 NanoVGHelper.INSTANCE.drawRoundedRect(vg, x + 988, y - scrollBarY, 4, scrollBarLength - 5, colorAnimation.getColor(scrollHover || scrollTimePeriod, dragging), 4f);
             }
-            if (inputHandler.isAreaHovered(x + 352, y + 40, 640, Math.min(options.length, 10) * 32 + 8, true)) {
+            if (inputHandler.isAreaHovered(x + 352, y + 40, 640, Math.min(options.length, 10) * 32 + 8, true) && opened) {
                 inputHandler.blockDWheel();
             }
         }
