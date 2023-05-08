@@ -102,6 +102,7 @@ public class ConfigDropdown extends BasicOption {
 
     @Override
     public void drawLast(long vg, int x, int y, InputHandler inputHandler) {
+        super.drawLast(vg, x, y, inputHandler);
         if (!opened) return;
         final NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
 

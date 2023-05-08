@@ -130,7 +130,7 @@ public class ModCard extends BasicElement {
             if (modData.modIcon.toLowerCase().endsWith(".svg")) {
                 nanoVGHelper.drawSvg(vg, modData.modIcon, x + 122 - (width / 2f), y + 43 - (height / 2f), width, height);
             } else {
-                nanoVGHelper.drawImage(vg, modData.modIcon, x + 122 - (width / 2f), y + 43 - (height / 2f), width, height);
+                nanoVGHelper.drawRoundImage(vg, modData.modIcon, x + 122 - (width / 2f), y + 43 - (height / 2f), width, height, 12f);
             }
         } else {
             nanoVGHelper.drawText(vg, cleanName, x + Math.max(0, (244 - nanoVGHelper.getTextWidth(vg, cleanName, 16, Fonts.MINECRAFT_BOLD))) / 2f, y + 44, ColorUtils.setAlpha(Colors.WHITE, (int) (colorFrame.getAlpha() * 255)), 16, Fonts.MINECRAFT_BOLD);

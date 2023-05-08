@@ -105,8 +105,12 @@ public class OneConfig {
             //#if MC<=11202
             for (ModContainer mod : Loader.instance().getActiveModList()) {
                 if (mod == null) continue;
-                handleForgeCommand(mod);
-                handleForgeGui(mod);
+                try {
+                    handleForgeCommand(mod);
+                    handleForgeGui(mod);
+                } catch (Throwable t) {
+                    LOGGER.error("Failed to handle Forge compatibility for {}", mod.getModId(), t);
+                }
             }
             //#else
             //$$ try {
@@ -207,12 +211,13 @@ public class OneConfig {
         //#endif
         if (IgnoredGuiFactory.class.isAssignableFrom(factory.getClass())) return;
 
+        boolean isForgeContainer = "forge".equalsIgnoreCase(mod.getModId());
         ModMetadata metadata = mod.getMetadata();
         String modLogoFile =
                 metadata.logoFile == null || metadata.logoFile.isEmpty()
                         ? null
                         : metadata.logoFile;
-        if (modLogoFile != null) {
+        if (modLogoFile != null && !isForgeContainer) {
             if (modLogoFile.startsWith("/")) {
                 modLogoFile = modLogoFile.substring(1);
             }
@@ -226,7 +231,6 @@ public class OneConfig {
             }
         }
 
-        boolean isForgeContainer = "forge".equalsIgnoreCase(mod.getModId());
         String icon = isForgeContainer
                 ? "/assets/oneconfig/icons/forge_logo.png"
                 : modLogoFile;
