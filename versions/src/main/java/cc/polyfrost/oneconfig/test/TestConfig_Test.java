@@ -45,6 +45,7 @@ import cc.polyfrost.oneconfig.renderer.asset.Icon;
 import cc.polyfrost.oneconfig.test.huds.TestBasicHud_Test;
 import cc.polyfrost.oneconfig.test.huds.TestHud_Test;
 import cc.polyfrost.oneconfig.test.huds.TestMultilineHud_Test;
+import cc.polyfrost.oneconfig.test.inherit.ToggleableAndBoldElement_Test;
 import cc.polyfrost.oneconfig.utils.Notifications;
 
 public class TestConfig_Test extends Config {
@@ -72,6 +73,13 @@ public class TestConfig_Test extends Config {
             location = PageLocation.BOTTOM
     )
     private final cc.polyfrost.oneconfig.gui.pages.Page page = new HomePage();
+
+    @Page(
+            name = "An inheriting page",
+            description = "uwu",
+            location = PageLocation.BOTTOM
+    )
+    private final ToggleableAndBoldElement_Test inheritPage = new ToggleableAndBoldElement_Test();
 
     @Button(
             name = "hello",
