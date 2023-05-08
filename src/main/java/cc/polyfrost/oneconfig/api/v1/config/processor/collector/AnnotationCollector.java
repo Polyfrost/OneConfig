@@ -41,8 +41,17 @@ import java.util.List;
 public class AnnotationCollector implements Collector {
     @Override
     public List<OptionHolder> collect(OneConfig config) {
-        Field[] fields = config.getClass().getDeclaredFields();
-        Method[] methods = config.getClass().getDeclaredMethods();
+        return collect(config, config.getClass());
+    }
+
+    private List<OptionHolder> collect(OneConfig config, Class<?> targetClass) {
+        Class<?> superclass = targetClass.getSuperclass();
+        if (superclass != Object.class) {
+            collect(config, superclass);
+        }
+
+        Field[] fields = targetClass.getDeclaredFields();
+        Method[] methods = targetClass.getDeclaredMethods();
         List<OptionHolder> options = new ArrayList<>(fields.length + methods.length);
         for (Field field : fields) {
             OptionType.TypeTarget annotation = ConfigUtils.findAnnotation(field, OptionType.TypeTarget.class);
