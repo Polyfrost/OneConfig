@@ -49,11 +49,11 @@ public @interface Text {
 
     String description() default "";
 
-    int size() default 1;
-
     String category() default "General";
 
     String subcategory() default "";
+
+    int size() default 1;
 
     String[] tags() default {};
 }

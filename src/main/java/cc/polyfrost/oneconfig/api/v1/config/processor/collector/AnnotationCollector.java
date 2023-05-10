@@ -56,7 +56,7 @@ public class AnnotationCollector implements Collector {
         for (Field field : fields) {
             OptionType.TypeTarget annotation = ConfigUtils.findAnnotation(field, OptionType.TypeTarget.class);
             if (annotation != null) {
-                OptionType optionType = OptionManager.INSTANCE.getOption(annotation.value());
+                OptionType optionType = OptionManager.INSTANCE.getOption(annotation.value(), field);
                 if (optionType == null) {
                     throw new RuntimeException("Option " + annotation.value() + " does not exist!");
                 }
@@ -66,7 +66,7 @@ public class AnnotationCollector implements Collector {
         for (Method method : methods) {
             OptionType.TypeTarget annotation = ConfigUtils.findAnnotation(method, OptionType.TypeTarget.class);
             if (annotation != null) {
-                OptionType optionType = OptionManager.INSTANCE.getOption(annotation.value());
+                OptionType optionType = OptionManager.INSTANCE.getOption(annotation.value(), method);
                 if (optionType == null) {
                     throw new RuntimeException("Option " + annotation.value() + " does not exist!");
                 }

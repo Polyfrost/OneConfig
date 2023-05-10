@@ -52,6 +52,7 @@ public class TestMod_Test
     //#endif
     {
         new TestConfig_Test();
+        new NewConfigTest_Test();
         CommandManager.INSTANCE.registerCommand(new TestCommand_Test());
     }
 }

@@ -27,10 +27,69 @@
 package cc.polyfrost.oneconfig.api.v1.config.option.type.options.dropdown;
 
 import cc.polyfrost.oneconfig.api.v1.config.option.type.OptionType;
+import cc.polyfrost.oneconfig.api.v1.config.option.type.annotations.Dropdown;
 
-public abstract class DropdownOptionType implements OptionType {
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+
+public class DropdownOptionType implements OptionType {
     @Override
     public String name() {
         return "Dropdown";
+    }
+
+    @Override
+    public boolean isSupportedClass(Class<?> type) {
+        return (type.isAssignableFrom(Integer.class) || type.isAssignableFrom(Integer.TYPE)) || type.isEnum();
+    }
+
+    @Override
+    public String getName(Field field) {
+        return field.getAnnotation(Dropdown.class).name();
+    }
+
+    @Override
+    public String getName(Method method) {
+        return method.getAnnotation(Dropdown.class).name();
+    }
+
+    @Override
+    public String getDescription(Field field) {
+        return field.getAnnotation(Dropdown.class).description();
+    }
+
+    @Override
+    public String getDescription(Method method) {
+        return method.getAnnotation(Dropdown.class).description();
+    }
+
+    @Override
+    public String getCategory(Field field) {
+        return field.getAnnotation(Dropdown.class).category();
+    }
+
+    @Override
+    public String getCategory(Method method) {
+        return method.getAnnotation(Dropdown.class).category();
+    }
+
+    @Override
+    public String getSubcategory(Field field) {
+        return field.getAnnotation(Dropdown.class).subcategory();
+    }
+
+    @Override
+    public String getSubcategory(Method method) {
+        return method.getAnnotation(Dropdown.class).subcategory();
+    }
+
+    @Override
+    public String[] getTags(Field field) {
+        return field.getAnnotation(Dropdown.class).tags();
+    }
+
+    @Override
+    public String[] getTags(Method method) {
+        return method.getAnnotation(Dropdown.class).tags();
     }
 }

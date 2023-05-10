@@ -52,5 +52,7 @@ public @interface Slider {
 
     String subcategory() default "";
 
+    int size() default 1;
+
     String[] tags() default {};
 }

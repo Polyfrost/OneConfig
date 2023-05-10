@@ -26,7 +26,6 @@
 
 package cc.polyfrost.oneconfig.config.annotations;
 
-import cc.polyfrost.oneconfig.api.v1.config.option.type.annotations.OrdinalDropdown;
 import cc.polyfrost.oneconfig.config.data.OptionType;
 import cc.polyfrost.oneconfig.internal.config.annotations.Option;
 
@@ -36,8 +35,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * @deprecated Use {@link OrdinalDropdown} instead,
- * or the new {@link cc.polyfrost.oneconfig.api.v1.config.option.type.annotations.EnumDropdown} if you want to use enums.
+ * @deprecated Use {@link cc.polyfrost.oneconfig.api.v1.config.option.type.annotations.Dropdown} instead
  */
 @Deprecated
 @Retention(RetentionPolicy.RUNTIME)

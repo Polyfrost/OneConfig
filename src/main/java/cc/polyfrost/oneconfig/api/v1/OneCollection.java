@@ -38,7 +38,7 @@ import java.util.List;
  *
  * @param <T> The type of the collection.
  */
-public class OneCollection<T extends Namable> {
+public class OneCollection<T extends Nameable> {
     private final List<T> elements = new ArrayList<>();
 
     @SafeVarargs

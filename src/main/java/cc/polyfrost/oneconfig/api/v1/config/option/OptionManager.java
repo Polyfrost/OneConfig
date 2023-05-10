@@ -33,15 +33,18 @@ import cc.polyfrost.oneconfig.api.v1.config.option.type.options.IncludeOptionTyp
 import cc.polyfrost.oneconfig.api.v1.config.option.type.options.SliderOptionType;
 import cc.polyfrost.oneconfig.api.v1.config.option.type.options.BooleanOptionType;
 import cc.polyfrost.oneconfig.api.v1.config.option.type.options.TextOptionType;
-import cc.polyfrost.oneconfig.api.v1.config.option.type.options.dropdown.EnumDropdownOptionType;
-import cc.polyfrost.oneconfig.api.v1.config.option.type.options.dropdown.OrdinalDropdownOptionType;
+import cc.polyfrost.oneconfig.api.v1.config.option.type.options.dropdown.DropdownOptionType;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
  * Manages {@link OptionType}s.
  * To register an {@link OptionType}, use {@link #register(Class, OptionType)}.
+ *
  * @see OptionHolder
  * @see OptionType
  */
@@ -52,20 +55,28 @@ public class OptionManager {
     public OptionManager() {
         register(ButtonOptionType.class, new ButtonOptionType());
         register(ColorOptionType.class, new ColorOptionType());
-        register(EnumDropdownOptionType.class, new EnumDropdownOptionType());
+        register(DropdownOptionType.class, new DropdownOptionType());
         register(IncludeOptionType.class, new IncludeOptionType());
-        register(OrdinalDropdownOptionType.class, new OrdinalDropdownOptionType());
         register(SliderOptionType.class, new SliderOptionType());
         register(BooleanOptionType.class, new BooleanOptionType());
         register(TextOptionType.class, new TextOptionType());
+    }
+
+    public OptionType getOption(Class<? extends OptionType> optionClass, Field field) {
+        return getOption(optionClass);
+    }
+
+    public OptionType getOption(Class<? extends OptionType> optionClass, Method method) {
+        return getOption(optionClass);
     }
 
     public OptionType getOption(Class<? extends OptionType> optionClass) {
         return options.computeIfAbsent(optionClass, clazz -> {
             System.out.println("OptionManager: Trying to instantiate unknown option type " + clazz.getName());
             try {
-                return clazz.newInstance();
-            } catch (InstantiationException | IllegalAccessException e) {
+                return clazz.getConstructor().newInstance();
+            } catch (InstantiationException | IllegalAccessException | InvocationTargetException |
+                     NoSuchMethodException e) {
                 e.printStackTrace();
             }
             return null;

@@ -26,7 +26,7 @@
 
 package cc.polyfrost.oneconfig.api.v1.config.property;
 
-import cc.polyfrost.oneconfig.api.v1.Namable;
+import cc.polyfrost.oneconfig.api.v1.Nameable;
 import cc.polyfrost.oneconfig.api.v1.OneCollection;
 import cc.polyfrost.oneconfig.api.v1.config.OneConfig;
 
@@ -36,7 +36,7 @@ import cc.polyfrost.oneconfig.api.v1.config.OneConfig;
  *
  * @see OneCollection
  */
-public class Property implements Namable {
+public class Property implements Nameable {
     public static final Property NO_CATEGORY_SERIALIZATION = new Property("no_category_serialization", true);
     public static final Property SERIALIZE_BASED_ON_NAME = new Property("serialize_based_on_name", true);
     public static final Property SERIALIZE_BASED_ON_FIELD = new Property("serialize_based_on_field", true);

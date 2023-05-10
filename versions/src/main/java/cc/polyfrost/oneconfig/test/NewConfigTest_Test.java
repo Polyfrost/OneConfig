@@ -30,6 +30,7 @@ import cc.polyfrost.oneconfig.api.v1.config.category.Category;
 import cc.polyfrost.oneconfig.api.v1.config.OneConfig;
 import cc.polyfrost.oneconfig.api.v1.config.option.type.annotations.Accordion;
 import cc.polyfrost.oneconfig.api.v1.config.option.type.annotations.Button;
+import cc.polyfrost.oneconfig.api.v1.config.option.type.annotations.Dropdown;
 import cc.polyfrost.oneconfig.api.v1.config.option.type.annotations.Slider;
 import cc.polyfrost.oneconfig.api.v1.config.option.type.annotations.Boolean;
 import cc.polyfrost.oneconfig.api.v1.config.option.type.annotations.Text;
@@ -72,6 +73,18 @@ public class NewConfigTest_Test extends OneConfig {
         System.out.println("Test button pressed!");
     }
 
+    @Dropdown(
+            name = "Test Dropdown",
+            options = {"Option 1", "Option 2", "Option 3"}
+    )
+    public int testDropdown = 0;
+
+    @Dropdown(
+            name = "Test Dropdown 2",
+            options = {}
+    )
+    public TestEnum testDropdown2 = TestEnum.YES;
+
     @Slider(
             name = "Test Slider",
             min = 0,
@@ -84,9 +97,14 @@ public class NewConfigTest_Test extends OneConfig {
     )
     public String testText = "Hello, World!";
 
-
     public NewConfigTest_Test() {
         super("Test Config", new File("test.json"), Category.UTIL_QOL);
         init();
+    }
+
+    public enum TestEnum {
+        YES,
+        NO,
+        MAYBE;
     }
 }

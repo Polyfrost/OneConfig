@@ -24,12 +24,35 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.api.v1;
+package cc.polyfrost.oneconfig.api.v1.config.option.type.annotations;
 
-/**
- * A {@link Namable} trait.
- */
-@FunctionalInterface
-public interface Namable {
-    String getName();
+import cc.polyfrost.oneconfig.api.v1.config.option.type.options.dropdown.DropdownOptionType;
+import cc.polyfrost.oneconfig.api.v1.config.option.type.OptionType;
+
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.FIELD)
+@OptionType.TypeTarget(DropdownOptionType.class)
+public @interface Dropdown {
+    String name();
+
+    /**
+     * Can be empty if dropdown uses enum values
+     * @return dropdown options
+     */
+    String[] options();
+
+    String description() default "";
+
+    String category() default "General";
+
+    String subcategory() default "";
+
+    int size() default 1;
+
+    String[] tags() default {};
 }
