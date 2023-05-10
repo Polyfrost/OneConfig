@@ -45,7 +45,8 @@ import kotlin.collections.ArraysKt;
 
 import java.awt.*;
 import java.lang.reflect.Field;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 public class ConfigDropdown extends BasicOption {
@@ -141,23 +142,39 @@ public class ConfigDropdown extends BasicOption {
         if (size == 1) hovered = inputHandler.isAreaHovered(x + 224, y, 256, 32, true);
         else hovered = inputHandler.isAreaHovered(x + 352, y, 640, 32, true);
 
-        String[] options = ArraysKt.filter(this.options, s -> s.toLowerCase(Locale.ENGLISH).startsWith(textInputField.getInput().toLowerCase(Locale.ENGLISH))).toArray(new String[0]);
+        //TODO: cache this on typing
+        List<String> options = new ArrayList<>();
+        for (String option : this.options) {
+            if (option.toLowerCase(Locale.ENGLISH).startsWith(textInputField.getInput().toLowerCase(Locale.ENGLISH))) {
+                options.add(option);
+            }
+        }
 
+        textInputField.setErrored(options.isEmpty());
         if (hovered && Platform.getMousePlatform().isButtonDown(0)) nanoVGHelper.setAlpha(vg, 0.8f);
+
         if (size == 1) {
             textInputField.draw(vg, x + 224, y, inputHandler);
+        } else {
+            textInputField.draw(vg, x + 352, y, inputHandler);
+        }
+        if (options.isEmpty()) {
+            return;
+        }
+
+        if (size == 1) {
             nanoVGHelper.setAlpha(vg, 1f);
-            nanoVGHelper.drawRoundedRect(vg, x + 224, y + 40, 256, Math.min(options.length, 10) * 32 + 8, Colors.GRAY_700, 12);
-            nanoVGHelper.drawHollowRoundRect(vg, x + 223, y + 39, 258, Math.min(options.length, 10) * 32 + 10, new Color(204, 204, 204, 77).getRGB(), 12, 1);
+            nanoVGHelper.drawRoundedRect(vg, x + 224, y + 40, 256, Math.min(options.size(), 10) * 32 + 8, Colors.GRAY_700, 12);
+            nanoVGHelper.drawHollowRoundRect(vg, x + 223, y + 39, 258, Math.min(options.size(), 10) * 32 + 10, new Color(204, 204, 204, 77).getRGB(), 12, 1);
             ScissorHelper scissorHelper = ScissorHelper.INSTANCE;
             Scissor scissor = null;
-            if (options.length > 10) {
+            if (options.size() > 10) {
                 scissor = scissorHelper.scissor(vg, x + 224, y + 40, 256, 328);
             }
             inputHandler.unblockDWheel();
             scroll = scrollAnimation == null ? scrollTarget : scrollAnimation.get();
-            maxHeight = options.length * 32 + 8;
-            float scrollWidth = Math.min(options.length, 10) * 32 + 8;
+            maxHeight = options.size() * 32 + 8;
+            float scrollWidth = Math.min(options.size(), 10) * 32 + 8;
             final float scrollBarLength = (scrollWidth / maxHeight) * scrollWidth;
             float dWheel = (float) inputHandler.getDWheel(true);
             if (dWheel != 0) {
@@ -219,24 +236,23 @@ public class ConfigDropdown extends BasicOption {
                 }
                 NanoVGHelper.INSTANCE.drawRoundedRect(vg, x + 476, y - scrollBarY, 4, scrollBarLength - 5, colorAnimation.getColor(scrollHover || scrollTimePeriod, dragging), 4f);
             }
-            if (inputHandler.isAreaHovered(x + 224, y + 40, 256, Math.min(options.length, 10) * 32 + 8, true) && opened) {
+            if (inputHandler.isAreaHovered(x + 224, y + 40, 256, Math.min(options.size(), 10) * 32 + 8, true) && opened) {
                 inputHandler.blockDWheel();
             }
         } else {
-            textInputField.draw(vg, x + 352, y, inputHandler);
 
             nanoVGHelper.setAlpha(vg, 1f);
-            nanoVGHelper.drawRoundedRect(vg, x + 352, y + 40, 640, Math.min(options.length, 10) * 32 + 8, Colors.GRAY_700, 12);
-            nanoVGHelper.drawHollowRoundRect(vg, x + 351, y + 39, 642, Math.min(options.length, 10) * 32 + 10, new Color(204, 204, 204, 77).getRGB(), 12, 1);
+            nanoVGHelper.drawRoundedRect(vg, x + 352, y + 40, 640, Math.min(options.size(), 10) * 32 + 8, Colors.GRAY_700, 12);
+            nanoVGHelper.drawHollowRoundRect(vg, x + 351, y + 39, 642, Math.min(options.size(), 10) * 32 + 10, new Color(204, 204, 204, 77).getRGB(), 12, 1);
             ScissorHelper scissorHelper = ScissorHelper.INSTANCE;
             Scissor scissor = null;
-            if (options.length > 10) {
+            if (options.size() > 10) {
                 scissor = scissorHelper.scissor(vg, x + 352, y + 40, 640, 328);
             }
             inputHandler.unblockDWheel();
             scroll = scrollAnimation == null ? scrollTarget : scrollAnimation.get();
-            maxHeight = options.length * 32 + 8;
-            float scrollWidth = Math.min(options.length, 10) * 32 + 8;
+            maxHeight = options.size() * 32 + 8;
+            float scrollWidth = Math.min(options.size(), 10) * 32 + 8;
             final float scrollBarLength = (scrollWidth / maxHeight) * scrollWidth;
             float dWheel = (float) inputHandler.getDWheel(true);
             if (dWheel != 0) {
@@ -300,7 +316,7 @@ public class ConfigDropdown extends BasicOption {
                 }
                 NanoVGHelper.INSTANCE.drawRoundedRect(vg, x + 988, y - scrollBarY, 4, scrollBarLength - 5, colorAnimation.getColor(scrollHover || scrollTimePeriod, dragging), 4f);
             }
-            if (inputHandler.isAreaHovered(x + 352, y + 40, 640, Math.min(options.length, 10) * 32 + 8, true) && opened) {
+            if (inputHandler.isAreaHovered(x + 352, y + 40, 640, Math.min(options.size(), 10) * 32 + 8, true) && opened) {
                 inputHandler.blockDWheel();
             }
         }
