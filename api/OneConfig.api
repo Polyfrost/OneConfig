@@ -3,7 +3,7 @@ public class cc/polyfrost/oneconfig/config/Config {
 	protected final field configFile Ljava/lang/String;
 	public field enabled Z
 	protected final field gson Lcom/google/gson/Gson;
-	public field mod Lcc/polyfrost/oneconfig/config/data/Mod;
+	public final field mod Lcc/polyfrost/oneconfig/config/data/Mod;
 	protected final field nonProfileSpecificGson Lcom/google/gson/Gson;
 	public final field optionNames Ljava/util/HashMap;
 	public fun <init> (Lcc/polyfrost/oneconfig/config/data/Mod;Ljava/lang/String;)V
@@ -16,6 +16,7 @@ public class cc/polyfrost/oneconfig/config/Config {
 	protected fun addGsonOptions (Lcom/google/gson/GsonBuilder;)Lcom/google/gson/GsonBuilder;
 	protected final fun addListener (Ljava/lang/String;Ljava/lang/Runnable;)V
 	protected final fun generateOptionList (Ljava/lang/Object;Lcc/polyfrost/oneconfig/config/elements/OptionPage;Lcc/polyfrost/oneconfig/config/data/Mod;Z)V
+	protected final fun generateOptionList (Ljava/lang/Object;Ljava/lang/Class;Lcc/polyfrost/oneconfig/config/elements/OptionPage;Lcc/polyfrost/oneconfig/config/data/Mod;Z)V
 	protected fun getCustomOption (Ljava/lang/reflect/Field;Lcc/polyfrost/oneconfig/config/annotations/CustomOption;Lcc/polyfrost/oneconfig/config/elements/OptionPage;Lcc/polyfrost/oneconfig/config/data/Mod;Z)Lcc/polyfrost/oneconfig/config/elements/BasicOption;
 	protected final fun hideIf (Ljava/lang/String;Ljava/lang/String;)V
 	protected final fun hideIf (Ljava/lang/String;Ljava/util/function/Supplier;)V
