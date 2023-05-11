@@ -1,19 +1,19 @@
-public abstract interface class cc/polyfrost/oneconfig/api/v1/Namable {
+public abstract interface class cc/polyfrost/oneconfig/api/v1/Nameable {
 	public abstract fun getName ()Ljava/lang/String;
 }
 
 public class cc/polyfrost/oneconfig/api/v1/OneCollection {
-	public fun <init> ([Lcc/polyfrost/oneconfig/api/v1/Namable;)V
-	public fun add (Lcc/polyfrost/oneconfig/api/v1/Namable;)V
+	public fun <init> ([Lcc/polyfrost/oneconfig/api/v1/Nameable;)V
+	public fun add (Lcc/polyfrost/oneconfig/api/v1/Nameable;)V
 	public fun add (Ljava/util/Collection;)V
-	public final fun add ([Lcc/polyfrost/oneconfig/api/v1/Namable;)V
+	public final fun add ([Lcc/polyfrost/oneconfig/api/v1/Nameable;)V
 	public fun clear ()V
-	public fun contains (Lcc/polyfrost/oneconfig/api/v1/Namable;)Z
+	public fun contains (Lcc/polyfrost/oneconfig/api/v1/Nameable;)Z
 	public fun contains (Ljava/lang/String;)Z
 	public fun getElements ()Ljava/util/List;
-	public fun remove (Lcc/polyfrost/oneconfig/api/v1/Namable;)V
+	public fun remove (Lcc/polyfrost/oneconfig/api/v1/Nameable;)V
 	public fun remove (Ljava/util/Collection;)V
-	public final fun remove ([Lcc/polyfrost/oneconfig/api/v1/Namable;)V
+	public final fun remove ([Lcc/polyfrost/oneconfig/api/v1/Nameable;)V
 }
 
 public class cc/polyfrost/oneconfig/api/v1/config/OneConfig {
@@ -70,6 +70,8 @@ public class cc/polyfrost/oneconfig/api/v1/config/option/OptionManager {
 	public static final field INSTANCE Lcc/polyfrost/oneconfig/api/v1/config/option/OptionManager;
 	public fun <init> ()V
 	public fun getOption (Ljava/lang/Class;)Lcc/polyfrost/oneconfig/api/v1/config/option/type/OptionType;
+	public fun getOption (Ljava/lang/Class;Ljava/lang/reflect/Field;)Lcc/polyfrost/oneconfig/api/v1/config/option/type/OptionType;
+	public fun getOption (Ljava/lang/Class;Ljava/lang/reflect/Method;)Lcc/polyfrost/oneconfig/api/v1/config/option/type/OptionType;
 	public fun register (Ljava/lang/Class;Lcc/polyfrost/oneconfig/api/v1/config/option/type/OptionType;)Lcc/polyfrost/oneconfig/api/v1/config/option/type/OptionType;
 }
 
@@ -136,10 +138,11 @@ public abstract interface annotation class cc/polyfrost/oneconfig/api/v1/config/
 	public abstract fun tags ()[Ljava/lang/String;
 }
 
-public abstract interface annotation class cc/polyfrost/oneconfig/api/v1/config/option/type/annotations/EnumDropdown : java/lang/annotation/Annotation {
+public abstract interface annotation class cc/polyfrost/oneconfig/api/v1/config/option/type/annotations/Dropdown : java/lang/annotation/Annotation {
 	public abstract fun category ()Ljava/lang/String;
 	public abstract fun description ()Ljava/lang/String;
 	public abstract fun name ()Ljava/lang/String;
+	public abstract fun options ()[Ljava/lang/String;
 	public abstract fun size ()I
 	public abstract fun subcategory ()Ljava/lang/String;
 	public abstract fun tags ()[Ljava/lang/String;
@@ -152,22 +155,13 @@ public abstract interface annotation class cc/polyfrost/oneconfig/api/v1/config/
 	public abstract fun subcategory ()Ljava/lang/String;
 }
 
-public abstract interface annotation class cc/polyfrost/oneconfig/api/v1/config/option/type/annotations/OrdinalDropdown : java/lang/annotation/Annotation {
-	public abstract fun category ()Ljava/lang/String;
-	public abstract fun description ()Ljava/lang/String;
-	public abstract fun name ()Ljava/lang/String;
-	public abstract fun options ()[Ljava/lang/String;
-	public abstract fun size ()I
-	public abstract fun subcategory ()Ljava/lang/String;
-	public abstract fun tags ()[Ljava/lang/String;
-}
-
 public abstract interface annotation class cc/polyfrost/oneconfig/api/v1/config/option/type/annotations/Slider : java/lang/annotation/Annotation {
 	public abstract fun category ()Ljava/lang/String;
 	public abstract fun description ()Ljava/lang/String;
 	public abstract fun max ()F
 	public abstract fun min ()F
 	public abstract fun name ()Ljava/lang/String;
+	public abstract fun size ()I
 	public abstract fun step ()F
 	public abstract fun subcategory ()Ljava/lang/String;
 	public abstract fun tags ()[Ljava/lang/String;
@@ -282,39 +276,20 @@ public class cc/polyfrost/oneconfig/api/v1/config/option/type/options/TextOption
 	public fun name ()Ljava/lang/String;
 }
 
-public abstract class cc/polyfrost/oneconfig/api/v1/config/option/type/options/dropdown/DropdownOptionType : cc/polyfrost/oneconfig/api/v1/config/option/type/OptionType {
+public class cc/polyfrost/oneconfig/api/v1/config/option/type/options/dropdown/DropdownOptionType : cc/polyfrost/oneconfig/api/v1/config/option/type/OptionType {
 	public fun <init> ()V
+	public fun getCategory (Ljava/lang/reflect/Field;)Ljava/lang/String;
+	public fun getCategory (Ljava/lang/reflect/Method;)Ljava/lang/String;
+	public fun getDescription (Ljava/lang/reflect/Field;)Ljava/lang/String;
+	public fun getDescription (Ljava/lang/reflect/Method;)Ljava/lang/String;
+	public fun getName (Ljava/lang/reflect/Field;)Ljava/lang/String;
+	public fun getName (Ljava/lang/reflect/Method;)Ljava/lang/String;
+	public fun getSubcategory (Ljava/lang/reflect/Field;)Ljava/lang/String;
+	public fun getSubcategory (Ljava/lang/reflect/Method;)Ljava/lang/String;
+	public fun getTags (Ljava/lang/reflect/Field;)[Ljava/lang/String;
+	public fun getTags (Ljava/lang/reflect/Method;)[Ljava/lang/String;
+	public fun isSupportedClass (Ljava/lang/Class;)Z
 	public fun name ()Ljava/lang/String;
-}
-
-public class cc/polyfrost/oneconfig/api/v1/config/option/type/options/dropdown/EnumDropdownOptionType : cc/polyfrost/oneconfig/api/v1/config/option/type/options/dropdown/DropdownOptionType {
-	public fun <init> ()V
-	public fun getCategory (Ljava/lang/reflect/Field;)Ljava/lang/String;
-	public fun getCategory (Ljava/lang/reflect/Method;)Ljava/lang/String;
-	public fun getDescription (Ljava/lang/reflect/Field;)Ljava/lang/String;
-	public fun getDescription (Ljava/lang/reflect/Method;)Ljava/lang/String;
-	public fun getName (Ljava/lang/reflect/Field;)Ljava/lang/String;
-	public fun getName (Ljava/lang/reflect/Method;)Ljava/lang/String;
-	public fun getSubcategory (Ljava/lang/reflect/Field;)Ljava/lang/String;
-	public fun getSubcategory (Ljava/lang/reflect/Method;)Ljava/lang/String;
-	public fun getTags (Ljava/lang/reflect/Field;)[Ljava/lang/String;
-	public fun getTags (Ljava/lang/reflect/Method;)[Ljava/lang/String;
-	public fun isSupportedClass (Ljava/lang/Class;)Z
-}
-
-public class cc/polyfrost/oneconfig/api/v1/config/option/type/options/dropdown/OrdinalDropdownOptionType : cc/polyfrost/oneconfig/api/v1/config/option/type/options/dropdown/DropdownOptionType {
-	public fun <init> ()V
-	public fun getCategory (Ljava/lang/reflect/Field;)Ljava/lang/String;
-	public fun getCategory (Ljava/lang/reflect/Method;)Ljava/lang/String;
-	public fun getDescription (Ljava/lang/reflect/Field;)Ljava/lang/String;
-	public fun getDescription (Ljava/lang/reflect/Method;)Ljava/lang/String;
-	public fun getName (Ljava/lang/reflect/Field;)Ljava/lang/String;
-	public fun getName (Ljava/lang/reflect/Method;)Ljava/lang/String;
-	public fun getSubcategory (Ljava/lang/reflect/Field;)Ljava/lang/String;
-	public fun getSubcategory (Ljava/lang/reflect/Method;)Ljava/lang/String;
-	public fun getTags (Ljava/lang/reflect/Field;)[Ljava/lang/String;
-	public fun getTags (Ljava/lang/reflect/Method;)[Ljava/lang/String;
-	public fun isSupportedClass (Ljava/lang/Class;)Z
 }
 
 public class cc/polyfrost/oneconfig/api/v1/config/processor/OptionProcessor {
@@ -344,7 +319,7 @@ public abstract interface class cc/polyfrost/oneconfig/api/v1/config/processor/s
 	public abstract fun serialize (Lcc/polyfrost/oneconfig/api/v1/config/OneConfig;Ljava/util/List;)V
 }
 
-public class cc/polyfrost/oneconfig/api/v1/config/property/Property : cc/polyfrost/oneconfig/api/v1/Namable {
+public class cc/polyfrost/oneconfig/api/v1/config/property/Property : cc/polyfrost/oneconfig/api/v1/Nameable {
 	public static final field GSON_SERIALIZATION Lcc/polyfrost/oneconfig/api/v1/config/property/Property;
 	public static final field NO_CATEGORY_SERIALIZATION Lcc/polyfrost/oneconfig/api/v1/config/property/Property;
 	public static final field SERIALIZE_BASED_ON_FIELD Lcc/polyfrost/oneconfig/api/v1/config/property/Property;
