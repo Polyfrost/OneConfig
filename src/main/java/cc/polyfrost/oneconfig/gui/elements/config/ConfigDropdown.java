@@ -46,11 +46,13 @@ import kotlin.collections.ArraysKt;
 import java.awt.*;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
 public class ConfigDropdown extends BasicOption {
-    private final String[] options;
+    private final String[] originalOptions;
+    private final List<String> options;
     private final ColorAnimation backgroundColor = new ColorAnimation(ColorPalette.SECONDARY);
     private final ColorAnimation atomColor = new ColorAnimation(new ColorPalette(Colors.PRIMARY_600, Colors.PRIMARY_500, Colors.PRIMARY_500));
     private final ColorAnimation colorAnimation = new ColorAnimation(new ColorPalette(Colors.GRAY_400_80, Colors.GRAY_400, Colors.GRAY_400), 200);
@@ -64,12 +66,13 @@ public class ConfigDropdown extends BasicOption {
     private boolean dragging = false;
     private float yStart = 0;
     private float scroll = 0;
-    private float maxHeight = 0;
     private InputHandler inputHandler;
 
     public ConfigDropdown(Field field, Object parent, String name, String description, String category, String subcategory, int size, String[] options) {
         super(field, parent, name, description, category, subcategory, size);
-        this.options = options;
+        this.originalOptions = options;
+        this.options = new ArrayList<>(options.length);
+        this.options.addAll(Arrays.asList(options));
         this.textInputField = new TextInputField((size == 1) ? 256 : 640, 32, "Search...", false, false, SVGs.SEARCH_SM);
     }
 
@@ -90,8 +93,8 @@ public class ConfigDropdown extends BasicOption {
         else hovered = inputHandler.isAreaHovered(x + 352, y, 640, 32) && isEnabled();
 
         if (hovered && inputHandler.isClicked() || opened && inputHandler.isClicked(!dragging) &&
-                (size == 1 && !inputHandler.isAreaHovered(x + 224, y + 40, 256, options.length * 32, true) ||
-                        size == 2 && !inputHandler.isAreaHovered(x + 352, y + 40, 640, options.length * 32, true))) {
+                (size == 1 && !inputHandler.isAreaHovered(x + 224, y + 40, 256, options.size() * 32, true) ||
+                        size == 2 && !inputHandler.isAreaHovered(x + 352, y + 40, 640, options.size() * 32, true))) {
             opened = !opened;
             if (!opened) {
                 inputHandler.unblockDWheel();
@@ -100,6 +103,12 @@ public class ConfigDropdown extends BasicOption {
             } else {
                 inputScissor = inputHandler.blockAllInput();
                 textInputField.onClick();
+                options.clear();
+                for (String option : this.originalOptions) {
+                    if (option.toLowerCase(Locale.ENGLISH).contains(textInputField.getInput().toLowerCase(Locale.ENGLISH))) {
+                        options.add(option);
+                    }
+                }
             }
             backgroundColor.setPalette(opened ? ColorPalette.PRIMARY : ColorPalette.SECONDARY);
         }
@@ -114,12 +123,12 @@ public class ConfigDropdown extends BasicOption {
         if (hovered && Platform.getMousePlatform().isButtonDown(0)) nanoVGHelper.setAlpha(vg, 0.8f);
         if (size == 1) {
             nanoVGHelper.drawRoundedRect(vg, x + 224, y, 256, 32, backgroundColor.getColor(hovered, hovered && Platform.getMousePlatform().isButtonDown(0)), 12);
-            nanoVGHelper.drawText(vg, options[selected], x + 236, y + 16, Colors.WHITE_80, 14f, Fonts.MEDIUM);
+            nanoVGHelper.drawText(vg, originalOptions[selected], x + 236, y + 16, Colors.WHITE_80, 14f, Fonts.MEDIUM);
             nanoVGHelper.drawRoundedRect(vg, x + 452, y + 4, 24, 24, atomColor.getColor(hovered, false), 8);
             nanoVGHelper.drawSvg(vg, SVGs.DROPDOWN_LIST, x + 452, y + 4, 24, 24);
         } else {
             nanoVGHelper.drawRoundedRect(vg, x + 352, y, 640, 32, backgroundColor.getColor(hovered, hovered && Platform.getMousePlatform().isButtonDown(0)), 12);
-            nanoVGHelper.drawText(vg, options[selected], x + 364, y + 16, Colors.WHITE_80, 14f, Fonts.MEDIUM);
+            nanoVGHelper.drawText(vg, originalOptions[selected], x + 364, y + 16, Colors.WHITE_80, 14f, Fonts.MEDIUM);
             nanoVGHelper.drawRoundedRect(vg, x + 964, y + 4, 24, 24, atomColor.getColor(hovered, false), 8);
             nanoVGHelper.drawSvg(vg, SVGs.DROPDOWN_LIST, x + 964, y + 4, 24, 24);
         }
@@ -142,13 +151,6 @@ public class ConfigDropdown extends BasicOption {
         if (size == 1) hovered = inputHandler.isAreaHovered(x + 224, y, 256, 32, true);
         else hovered = inputHandler.isAreaHovered(x + 352, y, 640, 32, true);
 
-        //TODO: cache this on typing
-        List<String> options = new ArrayList<>();
-        for (String option : this.options) {
-            if (option.toLowerCase(Locale.ENGLISH).startsWith(textInputField.getInput().toLowerCase(Locale.ENGLISH))) {
-                options.add(option);
-            }
-        }
 
         textInputField.setErrored(options.isEmpty());
         if (hovered && Platform.getMousePlatform().isButtonDown(0)) nanoVGHelper.setAlpha(vg, 0.8f);
@@ -162,6 +164,7 @@ public class ConfigDropdown extends BasicOption {
             return;
         }
 
+        float maxHeight;
         if (size == 1) {
             nanoVGHelper.setAlpha(vg, 1f);
             nanoVGHelper.drawRoundedRect(vg, x + 224, y + 40, 256, Math.min(options.size(), 10) * 32 + 8, Colors.GRAY_700, 12);
@@ -199,7 +202,7 @@ public class ConfigDropdown extends BasicOption {
                 }
                 if (optionHovered && inputHandler.isClicked(!dragging)) {
                     try {
-                        set(ArraysKt.indexOf(this.options, option));
+                        set(ArraysKt.indexOf(originalOptions, option));
                     } catch (IllegalAccessException ignored) {
                     }
                     opened = false;
@@ -280,7 +283,7 @@ public class ConfigDropdown extends BasicOption {
 
                 if (optionHovered && inputHandler.isClicked(!dragging)) {
                     try {
-                        set(ArraysKt.indexOf(this.options, option));
+                        set(ArraysKt.indexOf(originalOptions, option));
                     } catch (IllegalAccessException ignored) {
                     }
                     opened = false;
@@ -327,6 +330,14 @@ public class ConfigDropdown extends BasicOption {
     public void keyTyped(char key, int keyCode) {
         super.keyTyped(key, keyCode);
         textInputField.keyTyped(key, keyCode);
+        if (opened) {
+            options.clear();
+            for (String option : this.originalOptions) {
+                if (option.toLowerCase(Locale.ENGLISH).contains(textInputField.getInput().toLowerCase(Locale.ENGLISH))) {
+                    options.add(option);
+                }
+            }
+        }
     }
 
     @Override

@@ -44,7 +44,7 @@ public class SearchUtils {
         s1 = s1.toLowerCase(Locale.ENGLISH);
         s2 = s2.toLowerCase(Locale.ENGLISH);
         if (s1.length() <= searchDistance) {
-            return s1.startsWith(s2);
+            return s1.contains(s2);
         }
         boolean similar = false;
         for (String a : StringUtils.split(s1)) {
