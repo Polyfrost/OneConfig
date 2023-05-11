@@ -332,6 +332,7 @@ public abstract class cc/polyfrost/oneconfig/config/elements/BasicOption {
 	public abstract fun draw (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
 	public fun drawDescription (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
 	public fun drawLast (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
+	public fun finishUpAndClose ()V
 	public fun get ()Ljava/lang/Object;
 	public fun getField ()Ljava/lang/reflect/Field;
 	public abstract fun getHeight ()I
@@ -821,7 +822,9 @@ public class cc/polyfrost/oneconfig/gui/elements/config/ConfigDropdown : cc/poly
 	public static fun create (Ljava/lang/reflect/Field;Ljava/lang/Object;)Lcc/polyfrost/oneconfig/gui/elements/config/ConfigDropdown;
 	public fun draw (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
 	public fun drawLast (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
+	public fun finishUpAndClose ()V
 	public fun getHeight ()I
+	public fun keyTyped (CI)V
 	protected fun shouldDrawDescription ()Z
 }
 
@@ -1480,7 +1483,10 @@ public final class cc/polyfrost/oneconfig/utils/IOUtils {
 public class cc/polyfrost/oneconfig/utils/InputHandler {
 	public fun <init> ()V
 	public fun blockAllInput ()Lcc/polyfrost/oneconfig/renderer/scissor/Scissor;
+	public fun blockDWheel ()V
 	public fun blockInputArea (FFFF)Lcc/polyfrost/oneconfig/renderer/scissor/Scissor;
+	public fun getDWheel ()D
+	public fun getDWheel (Z)D
 	public fun isAreaClicked (FFFF)Z
 	public fun isAreaClicked (FFFFZ)Z
 	public fun isAreaHovered (FFFF)Z
@@ -1496,6 +1502,7 @@ public class cc/polyfrost/oneconfig/utils/InputHandler {
 	public fun scale (DD)V
 	public fun stopBlock (Lcc/polyfrost/oneconfig/renderer/scissor/Scissor;)V
 	public fun stopBlockingInput ()V
+	public fun unblockDWheel ()V
 }
 
 public final class cc/polyfrost/oneconfig/utils/JsonUtils {
@@ -1563,6 +1570,7 @@ public final class cc/polyfrost/oneconfig/utils/Notifications {
 public class cc/polyfrost/oneconfig/utils/SearchUtils {
 	public fun <init> ()V
 	public static fun isSimilar (Ljava/lang/String;Ljava/lang/String;)Z
+	public static fun isSimilar (Ljava/lang/String;Ljava/lang/String;I)Z
 }
 
 public final class cc/polyfrost/oneconfig/utils/SimpleProfiler {
