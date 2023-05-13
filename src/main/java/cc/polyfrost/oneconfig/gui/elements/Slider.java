@@ -55,6 +55,9 @@ public class Slider extends BasicElement {
 
         if(!disabled) update(x, y, inputHandler);
         else nanoVGHelper.setAlpha(vg, 0.5f);
+        if (dragging) {
+            inputHandler.stopBlockingInput();
+        }
 
         if(mode == HORIZONTAL) {
             nanoVGHelper.drawRoundedRect(vg, x, y + 2, width, height - 4, Colors.GRAY_300, 3f);
@@ -66,6 +69,9 @@ public class Slider extends BasicElement {
             nanoVGHelper.drawRoundedRect(vg, x - 8, currentDragPoint - dragPointerSize / 2, 24, 24, Colors.WHITE, 12f);
         }
         nanoVGHelper.setAlpha(vg, 1f);
+        if (dragging) {
+            inputHandler.blockAllInput();
+        }
     }
 
     public void update(float x, float y, InputHandler inputHandler) {
@@ -83,6 +89,7 @@ public class Slider extends BasicElement {
         }
         if (dragging && inputHandler.isClicked(true)) {
             dragging = false;
+            inputHandler.stopBlockingInput();
             if(mode == HORIZONTAL) value = (inputHandler.mouseX() - x) / width;
             else value = (inputHandler.mouseY() - y) / height;
         }

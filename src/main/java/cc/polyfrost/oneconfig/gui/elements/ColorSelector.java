@@ -59,13 +59,16 @@ public class ColorSelector {
         }
     };
     private static final BasicButton pickerBtn = new BasicButton(32, 32, SVGs.COPY, BasicButton.ALIGNMENT_CENTER, ColorPalette.TERTIARY);
-    private final Dropdown modeDropdown = new Dropdown(128, 36, new String[]{"Solid Color"}, 0, ColorPalette.TERTIARY) {
+    private final Dropdown modeDropdown = new Dropdown(128, 36, new String[]{"Solid Color", "Chroma"}, 0, ColorPalette.TERTIARY) {
         @Override
         public void onChange(int changedTo) {
             switch (changedTo) {
                 default:
                 case 0:
                     picker = new SolidColorPicker();
+                    break;
+                case 1:
+                    picker = new ChromaColorPicker();
             }
         }
     };
@@ -89,9 +92,10 @@ public class ColorSelector {
     private float dragX, dragY;
     @NotNull
     private ColorInput colorInput;
+    @SuppressWarnings("NotNullFieldNotInitialized")
     @NotNull
     private ColorPicker picker;
-    private static final float width = 296, height = 398;
+    private static float width = 296, height = 398;
     private boolean pickerIsActive, mouseWasDown, dragging;
     private final boolean hasAlpha;
     private Scissor inputScissor;
@@ -112,10 +116,14 @@ public class ColorSelector {
         while (recentColors.size() < 6) recentColors.add(new ColorBox(new OneColor(0, 0, 0, 0)));
         this.color = color;
         this.hasAlpha = hasAlpha;
+        if (color.getDataBit() != -1) {
+            modeDropdown.select(1);
+        } else {
+            picker = new SolidColorPicker();
+        }
         this.x = mouseX - width / 2;
         this.y = Math.max(0, mouseY - height);
         faveBtn.setToggleable(true);
-        picker = new SolidColorPicker();
         colorInput = new HexInput();
     }
 
@@ -139,6 +147,10 @@ public class ColorSelector {
         closeBtn.draw(vg, x + 248, y + 8, inputHandler);
 
         picker.drawAndUpdate(vg, x + 16, y + 48, inputHandler);
+
+        if (modeDropdown.getSelected() == 1) {
+            NanoVGHelper.INSTANCE.translate(vg, 0, 10);
+        }
 
         colorInput.drawAndUpdate(vg, x + 100, y + 260, inputHandler);
 
@@ -166,8 +178,12 @@ public class ColorSelector {
             }
         }
 
-        modeDropdown.draw(vg, x + 16, y + 8, inputHandler);
         inputTypeDropdown.draw(vg, x + 2, y + 260, inputHandler);
+
+        if (modeDropdown.getSelected() == 1) {
+            NanoVGHelper.INSTANCE.translate(vg, 0, -10);
+        }
+        modeDropdown.draw(vg, x + 16, y + 8, inputHandler);
 
         final boolean hovered = Platform.getMousePlatform().isButtonDown(0) && inputHandler.isAreaHovered(x, y, width, 48);
         if (hovered && Platform.getMousePlatform().isButtonDown(0) && !mouseWasDown) {
@@ -383,10 +399,13 @@ public class ColorSelector {
         private final ColorSlider alphaSlider, hueSlider;
 
         public SolidColorPicker() {
+            width = 296;
+            height = 398;
             cursorX = (color.getSaturation() / 100f * 200);
             cursorY = (1 - (color.getBrightness() / 100f)) * 200;
             alphaSlider = new ColorSlider(200, 0, 255, 255 - color.getAlpha(), Colors.TRANSPARENT, color.getRGBMax(true));
             hueSlider = new ColorSlider(200, 0, 360, 360 - color.getHue());
+            color.setChromaSpeed(-1);
             if (!hasAlpha) alphaSlider.disable(true);
         }
 
@@ -424,6 +443,62 @@ public class ColorSelector {
             alphaSlider.setValueInverted(color.getAlpha());
             hueSlider.setValueInverted(color.getHue());
             alphaSlider.setGradient(color.getRGBNoAlpha(), Colors.TRANSPARENT);
+        }
+    }
+
+    private final class ChromaColorPicker implements ColorPicker {
+        private float cursorX, cursorY;
+        private final ColorSlider alphaSlider;
+        private final Slider speedSlider = new Slider(200, 1, 30, 1, Slider.HORIZONTAL);
+
+        public ChromaColorPicker() {
+            width = 296;
+            height = 408;
+            cursorX = (color.getSaturation() / 100f * 200);
+            cursorY = (1 - (color.getBrightness() / 100f)) * 200;
+            alphaSlider = new ColorSlider(200, 0, 255, 255 - color.getAlpha(), Colors.TRANSPARENT, color.getRGBMax(true));
+            if (color.getDataBit() == -1) color.setChromaSpeed(30);
+            speedSlider.setValue(30 - color.getDataBit());
+            if (!hasAlpha) alphaSlider.disable(true);
+        }
+
+        @Override
+        public void drawAndUpdate(long vg, float x, float y, InputHandler inputHandler) {
+            speedSlider.draw(vg, x, y, inputHandler);
+            y += speedSlider.height + 12;
+            NanoVGHelper.INSTANCE.drawHSBBox(vg, x, y, 200, 200, color.getRGBMax(true));
+            drawCursor(vg, x + cursorX, y + cursorY, color.getRGB());
+            alphaSlider.draw(vg, x + 216, y, inputHandler);
+            alphaSlider.setGradient(color.getRGBNoAlpha(), Colors.TRANSPARENT);
+
+            if (alphaSlider.isDragging() || speedSlider.isDragging()) {
+                color.setHSBA(color.getHue(), color.getSaturation(), color.getBrightness(), (int) alphaSlider.getValueInverted());
+                color.setChromaSpeed(Math.round(Math.abs(speedSlider.getValue() - 31)));
+                speedSlider.setValue(color.getDataBit());
+            }
+            colorInput.onColorChanged();
+
+            final boolean hovered = Platform.getMousePlatform().isButtonDown(0) && inputHandler.isAreaHovered(x, y, 200, 200);
+            if (hovered && Platform.getMousePlatform().isButtonDown(0) && !mouseWasDown) pickerIsActive = true;
+            if (!pickerIsActive) return;
+            cursorX = inputHandler.mouseX() - x;
+            cursorY = inputHandler.mouseY() - y;
+            if (cursorX < 0) cursorX = 0;
+            if (cursorY < 0) cursorY = 0;
+            if (cursorX > 200) cursorX = 200;
+            if (cursorY > 200) cursorY = 200;
+            final float progressX = cursorX / 200f;
+            final float progressY = Math.abs(cursorY / 200f - 1f);
+            color.setHSBA(color.getHue(), Math.round(progressX * 100), Math.round(progressY * 100), (int) alphaSlider.getValueInverted());
+        }
+
+        @Override
+        public void onColorChanged() {
+            cursorX = (color.getSaturation() / 100f * 200);
+            cursorY = (1 - (color.getBrightness() / 100f)) * 200;
+            alphaSlider.setValueInverted(color.getAlpha());
+            alphaSlider.setGradient(color.getRGBNoAlpha(), Colors.TRANSPARENT);
+            speedSlider.setValue(color.getDataBit());
         }
     }
 

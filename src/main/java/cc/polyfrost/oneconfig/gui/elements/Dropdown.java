@@ -47,6 +47,8 @@ public class Dropdown extends BasicButton {
     private float rotation;
     private EaseOutQuad anim = null;
 
+    private InputHandler inputHandler;
+
     public Dropdown(int width, int size, String[] opts, int selected, ColorPalette palette) {
         super(width, size, opts[selected], null, SVGs.CHEVRON_DOWN, ALIGNMENT_LEFT, palette);
         this.selected = selected;
@@ -60,6 +62,7 @@ public class Dropdown extends BasicButton {
     @Override
     public void draw(long vg, float x, float y, InputHandler inputHandler) {
         final NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
+        this.inputHandler = inputHandler;
         if (optsWidth == -1) {              // lateinit
             for (String s : opts.keySet()) {
                 optsWidth = Math.max(optsWidth, nanoVGHelper.getTextWidth(vg, s, 12, Fonts.REGULAR));
@@ -70,6 +73,10 @@ public class Dropdown extends BasicButton {
         }
         super.draw(vg, x, y, inputHandler);
         if (opts.size() == 1) return;
+
+        if (toggled) {
+            inputHandler.stopBlockingInput();
+        }
 
         if (anim != null) {
             final float val = anim.get();
@@ -96,6 +103,18 @@ public class Dropdown extends BasicButton {
                 }
             }
         }
+
+        if (toggled) {
+            inputHandler.blockAllInput();
+        }
+    }
+
+    @Override
+    public void setToggled(boolean toggled) {
+        super.setToggled(toggled);
+        if (!toggled) {
+            inputHandler.blockAllInput();
+        }
     }
 
     @Override
@@ -118,7 +137,10 @@ public class Dropdown extends BasicButton {
     @Override
     public void update(float x, float y, InputHandler inputHandler) {
         super.update(x, y, inputHandler);
-        if(inputHandler.isClicked() && !inputHandler.isAreaHovered(x, y, optsWidth, opts.size() * 24 + height) && toggled) toggled = false;
+        if(inputHandler.isClicked(true) && !inputHandler.isAreaHovered(x, y, optsWidth, opts.size() * 24 + height) && toggled) {
+            toggled = false;
+            inputHandler.stopBlockingInput();
+        }
         if (toggled && anim == null) {
             anim = new EaseOutQuad(200, 0, opts.size() * 24, false);
         }

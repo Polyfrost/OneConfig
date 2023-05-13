@@ -74,7 +74,7 @@ public class ConfigColorElement extends BasicOption {
 
         element.update(x1 + 416, y, inputHandler);
         nanoVGHelper.drawHollowRoundRect(vg, x1 + 415, y - 1, 64, 32, Colors.GRAY_300, 12f, 2f);
-        nanoVGHelper.drawRoundImage(vg, Images.ALPHA_GRID.filePath, x1 + 420, y + 4, 56, 24, 8f);
+        nanoVGHelper.drawRoundImage(vg, Images.ALPHA_GRID.filePath, x1 + 420, y + 4, 56, 24, 8f, getClass());
         nanoVGHelper.drawRoundedRect(vg, x1 + 420, y + 4, 56, 24, color.getRGB(), 8f);
         if (element.isClicked() && !open) {
             open = true;
