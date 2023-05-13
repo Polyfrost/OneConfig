@@ -71,39 +71,37 @@ public class Dropdown extends BasicButton {
             optsWidth = Math.max(optsWidth, width);
             width = (int) optsWidth;
         }
-        super.draw(vg, x, y, inputHandler);
-        if (opts.size() == 1) return;
-
         if (toggled) {
             inputHandler.stopBlockingInput();
         }
+        if (opts.size() != 1) {
+            if (anim != null) {
+                final float val = anim.get();
+                rotation = val / (opts.size() * 24) * 180;
+                nanoVGHelper.drawRoundedRect(vg, x, y + height, optsWidth, val, colorPalette == ColorPalette.TERTIARY ? ColorPalette.SECONDARY.getNormalColor() : currentColor, 8);
+                if (anim.isFinished() && !anim.isReversed() && toggled) {
+                    float i = y + height;
+                    for (Map.Entry<String, ColorAnimation> entry : opts.entrySet()) {
+                        final String s = entry.getKey();
+                        final ColorAnimation anim = entry.getValue();
 
-        if (anim != null) {
-            final float val = anim.get();
-            rotation = val / (opts.size() * 24) * 180;
-            nanoVGHelper.drawRoundedRect(vg, x, y + height, optsWidth, val, colorPalette == ColorPalette.TERTIARY ? ColorPalette.SECONDARY.getNormalColor() : currentColor, 8);
-            if (anim.isFinished() && !anim.isReversed() && toggled) {
-                float i = y + height;
-                for (Map.Entry<String, ColorAnimation> entry : opts.entrySet()) {
-                    final String s = entry.getKey();
-                    final ColorAnimation anim = entry.getValue();
-
-                    final boolean hovered = inputHandler.isAreaHovered(x, i, optsWidth, 24);
-                    final boolean clicked = hovered && inputHandler.isClicked(true);
-                    nanoVGHelper.drawRoundedRect(vg, x, i, optsWidth, 24, anim.getColor(hovered, clicked), 8);
-                    nanoVGHelper.drawText(vg, s, x + 8, i + 12, Colors.WHITE_90, 12, Fonts.REGULAR);
-                    if (clicked) {
-                        // yes I could just add a tracker variable but those 32 bytes are worth it
-                        selected = (int) ((i - y - height) / 24);
-                        onChange(selected);
-                        super.text = s;
-                        toggled = false;
+                        final boolean hovered = inputHandler.isAreaHovered(x, i, optsWidth, 24);
+                        final boolean clicked = hovered && inputHandler.isClicked(true);
+                        nanoVGHelper.drawRoundedRect(vg, x, i, optsWidth, 24, anim.getColor(hovered, clicked), 8);
+                        nanoVGHelper.drawText(vg, s, x + 8, i + 12, Colors.WHITE_90, 12, Fonts.REGULAR);
+                        if (clicked) {
+                            // yes I could just add a tracker variable but those 32 bytes are worth it
+                            selected = (int) ((i - y - height) / 24);
+                            onChange(selected);
+                            super.text = s;
+                            toggled = false;
+                        }
+                        i += 24;
                     }
-                    i += 24;
                 }
             }
         }
-
+        super.draw(vg, x, y, inputHandler);
         if (toggled) {
             inputHandler.blockAllInput();
         }
@@ -137,7 +135,7 @@ public class Dropdown extends BasicButton {
     @Override
     public void update(float x, float y, InputHandler inputHandler) {
         super.update(x, y, inputHandler);
-        if(inputHandler.isClicked(true) && !inputHandler.isAreaHovered(x, y, optsWidth, opts.size() * 24 + height) && toggled) {
+        if(inputHandler.isClicked() && !inputHandler.isAreaHovered(x, y, optsWidth, height) && toggled) {
             toggled = false;
             inputHandler.stopBlockingInput();
         }

@@ -149,7 +149,8 @@ public class ColorSelector {
         picker.drawAndUpdate(vg, x + 16, y + 48, inputHandler);
 
         if (modeDropdown.getSelected() == 1) {
-            NanoVGHelper.INSTANCE.translate(vg, 0, 10);
+            y += 20;
+            inputHandler.stopBlockingInput();
         }
 
         colorInput.drawAndUpdate(vg, x + 100, y + 260, inputHandler);
@@ -181,7 +182,7 @@ public class ColorSelector {
         inputTypeDropdown.draw(vg, x + 2, y + 260, inputHandler);
 
         if (modeDropdown.getSelected() == 1) {
-            NanoVGHelper.INSTANCE.translate(vg, 0, -10);
+            y -= 20;
         }
         modeDropdown.draw(vg, x + 16, y + 8, inputHandler);
 
@@ -465,7 +466,7 @@ public class ColorSelector {
         @Override
         public void drawAndUpdate(long vg, float x, float y, InputHandler inputHandler) {
             speedSlider.draw(vg, x, y, inputHandler);
-            y += speedSlider.height + 12;
+            y += 8 + 12;
             NanoVGHelper.INSTANCE.drawHSBBox(vg, x, y, 200, 200, color.getRGBMax(true));
             drawCursor(vg, x + cursorX, y + cursorY, color.getRGB());
             alphaSlider.draw(vg, x + 216, y, inputHandler);
