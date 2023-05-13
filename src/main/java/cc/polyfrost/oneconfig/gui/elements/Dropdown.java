@@ -89,7 +89,7 @@ public class Dropdown extends BasicButton {
                     final ColorAnimation anim = entry.getValue();
 
                     final boolean hovered = inputHandler.isAreaHovered(x, i, optsWidth, 24);
-                    final boolean clicked = hovered && inputHandler.isClicked();
+                    final boolean clicked = hovered && inputHandler.isClicked(true);
                     nanoVGHelper.drawRoundedRect(vg, x, i, optsWidth, 24, anim.getColor(hovered, clicked), 8);
                     nanoVGHelper.drawText(vg, s, x + 8, i + 12, Colors.WHITE_90, 12, Fonts.REGULAR);
                     if (clicked) {
