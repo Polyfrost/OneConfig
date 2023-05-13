@@ -1527,10 +1527,10 @@ public class cc/polyfrost/oneconfig/utils/InputHandler {
 	public fun blockDWheel ()V
 	public fun blockInputArea (FFFF)Lcc/polyfrost/oneconfig/renderer/scissor/Scissor;
 	public fun blockInputArea (Lcc/polyfrost/oneconfig/renderer/scissor/Scissor;)V
-	public fun getXScaleFactor ()D
-	public fun getYScaleFactor ()D
 	public fun getDWheel ()D
 	public fun getDWheel (Z)D
+	public fun getXScaleFactor ()D
+	public fun getYScaleFactor ()D
 	public fun isAreaClicked (FFFF)Z
 	public fun isAreaClicked (FFFFZ)Z
 	public fun isAreaHovered (FFFF)Z

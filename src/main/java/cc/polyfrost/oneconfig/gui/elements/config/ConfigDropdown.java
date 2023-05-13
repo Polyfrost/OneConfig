@@ -73,7 +73,7 @@ public class ConfigDropdown extends BasicOption {
         this.originalOptions = options;
         this.options = new ArrayList<>(options.length);
         this.options.addAll(Arrays.asList(options));
-        this.textInputField = new TextInputField((size == 1) ? 256 : 640, 32, "Search...", false, false, SVGs.SEARCH_SM);
+        this.textInputField = new TextInputField((size == 1) ? 256 : 640, 32, "Search...", false, false, SVGs.SEARCH_SM, 12f);
     }
 
     public static ConfigDropdown create(Field field, Object parent) {
