@@ -778,6 +778,7 @@ public class cc/polyfrost/oneconfig/gui/elements/Dropdown : cc/polyfrost/oneconf
 	public fun getSelected ()I
 	public fun onChange (I)V
 	public fun select (I)V
+	public fun setToggled (Z)V
 	public fun update (FFLcc/polyfrost/oneconfig/utils/InputHandler;)V
 }
 
