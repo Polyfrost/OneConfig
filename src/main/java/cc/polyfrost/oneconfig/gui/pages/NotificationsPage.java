@@ -51,15 +51,18 @@ public class NotificationsPage extends Page {
     public void draw(long vg, int x, int y, InputHandler inputHandler) {
         int originalY = y;
         y += 16;
-        for (Map.Entry<Notification, Long> entry : Notifications.INSTANCE.getAllNotifications().entrySet()) {
-            // convert to readable time
-            NanoVGHelper.INSTANCE.drawText(vg, "Sent: " + sdf.format(new Date(entry.getValue())), x + 16, y + 2, Colors.WHITE, 16, Fonts.BOLD);
-            y += 16;
-            y += entry.getKey().draw(vg, x + 16, y, 1, 0, false) + 24;
+        if (Notifications.INSTANCE.getAllNotifications().isEmpty()) {
+            NanoVGHelper.INSTANCE.drawText(vg, "No notifications have been sent!", x + 16, y + 2, Colors.WHITE, 16, Fonts.REGULAR);
+        } else {
+            for (Map.Entry<Notification, Long> entry : Notifications.INSTANCE.getAllNotifications().entrySet()) {
+                // convert to readable time
+                NanoVGHelper.INSTANCE.drawText(vg, "Sent: " + sdf.format(new Date(entry.getValue())), x + 16, y + 2, Colors.WHITE, 16, Fonts.BOLD);
+                y += 16;
+                y += entry.getKey().draw(vg, x + 16, y, 1, 0, false) + 24;
+            }
         }
-        size = y - originalY;
+        size = Math.max(y - originalY, 728);
         if (first || (prevSize != size && scroll == -(prevSize - 728))) {
-            System.out.println("ASJFFAM");
             scroll = scrollTarget = -(size - 728);
             scrollAnimation = null;
             if (scroll == -(size - 728)) {
