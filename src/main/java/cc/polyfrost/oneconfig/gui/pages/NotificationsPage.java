@@ -38,7 +38,7 @@ import java.util.Date;
 import java.util.Map;
 
 public class NotificationsPage extends Page {
-    private static final SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    private static final SimpleDateFormat sdf = new java.text.SimpleDateFormat("HH:mm:ss");
     private int size = 728;
     private boolean first = true;
     private int prevSize;
