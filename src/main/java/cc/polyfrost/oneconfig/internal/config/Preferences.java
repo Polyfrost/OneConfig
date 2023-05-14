@@ -52,6 +52,13 @@ public class Preferences extends InternalConfig {
     public static OneKeyBind oneConfigKeyBind = new OneKeyBind(UKeyboard.KEY_RSHIFT);
 
     @Switch(
+            name = "Disable Notifications",
+            subcategory = "GUI Settings",
+            description = "Disable all notifications from OneConfig and OneConfig mods."
+    )
+    public static boolean disableNotifications = false;
+
+    @Switch(
             name = "Enable Blur",
             subcategory = "GUI Settings"
     )

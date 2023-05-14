@@ -270,7 +270,9 @@ public class TestConfig_Test extends Config {
                     "Title",
                     "Very epic long message that will need to wrap because yes.",
                     new Icon(SVGs.APERTURE_FILL),
-                    () -> barAnimation.get()
+                    6000,
+                    () -> barAnimation.get(),
+                    () -> Notifications.INSTANCE.send("Another one", "yeah")
             );
         });
     }

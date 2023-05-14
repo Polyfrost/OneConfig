@@ -68,16 +68,18 @@ public final class Notification {
     }
 
     public float draw(final long vg, float y, float scale, float deltaTime) {
-        NanoVGHelper renderer = NanoVGHelper.INSTANCE;
+        return draw(vg, (UResolution.getWindowWidth() / scale - animation.get(hovered ? 0 : deltaTime)), y, scale, deltaTime, true);
+    }
 
+    public float draw(final long vg, float x, float y, float scale, float deltaTime, boolean doYOffset) {
+        NanoVGHelper renderer = NanoVGHelper.INSTANCE;
         renderer.scale(vg, scale, scale);
         inputHandler.scale(scale, scale);
-        float x = (UResolution.getWindowWidth() / scale - animation.get(hovered ? 0 : deltaTime));
         float textX = icon == null ? x + 16 : x + 64;
         float textMaxLength = icon == null ? 268 : 220;
         float messageHeight = renderer.getWrappedStringHeight(vg, message, textMaxLength, 12f, 1f, Fonts.REGULAR);
         float height = getHeight(messageHeight);
-        y -= height;
+        if (doYOffset) y -= height;
         hovered = inputHandler.isAreaHovered(x, y, 314, height);
         if (hovered && inputHandler.isClicked() && action != null) action.run();
         int bgColor = this.bgColor.getColor(hovered, hovered && inputHandler.isMouseDown());

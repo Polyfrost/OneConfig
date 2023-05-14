@@ -32,6 +32,7 @@ import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.animations.Animation;
 import cc.polyfrost.oneconfig.gui.animations.DummyAnimation;
 import cc.polyfrost.oneconfig.gui.animations.EaseInOutQuad;
+import cc.polyfrost.oneconfig.internal.config.Preferences;
 import cc.polyfrost.oneconfig.internal.utils.Notification;
 import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
 import cc.polyfrost.oneconfig.libs.universal.UResolution;
@@ -40,6 +41,7 @@ import cc.polyfrost.oneconfig.renderer.asset.Icon;
 import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -48,6 +50,7 @@ public final class Notifications {
     public static final Notifications INSTANCE = new Notifications();
     // animation stores the bottom y of the notification
     private final LinkedHashMap<Notification, Animation> notifications = new LinkedHashMap<>();
+    private final LinkedHashMap<Notification, Long> pastNotifications = new LinkedHashMap<>();
     private final float DEFAULT_DURATION = 4000;
 
     private Notifications() {
@@ -65,7 +68,12 @@ public final class Notifications {
      */
     public void send(String title, String message, @Nullable Icon icon, float duration, @Nullable Callable<Float> progressbar, @Nullable Runnable action) {
         Notification notification = new Notification(title, message, icon, duration, progressbar, action);
-        notifications.put(notification, new DummyAnimation(-1));
+        // just in case
+        new TickDelay(() -> {
+            pastNotifications.put(notification, new Date().getTime());
+            if (Preferences.disableNotifications) return;
+            notifications.put(notification, new DummyAnimation(-1));
+        }, 1);
     }
 
     /**
@@ -221,6 +229,10 @@ public final class Notifications {
         send(title, message, (Callable<Float>) null);
     }
 
+    public LinkedHashMap<Notification, Long> getAllNotifications() {
+        return pastNotifications;
+    }
+
     private float deltaTime = 0;
 
     @Subscribe
@@ -229,7 +241,7 @@ public final class Notifications {
             deltaTime += GuiUtils.getDeltaTime(); // add up deltatime since we might not render every frame because of hud caching
             return;
         }
-        if (notifications.size() == 0) return;
+        if (notifications.size() == 0 || Preferences.disableNotifications) return;
         NanoVGHelper.INSTANCE.setupAndDraw((vg) -> {
             float desiredPosition = -16f;
             float scale = OneConfigGui.getScaleFactor();

@@ -994,6 +994,13 @@ public class cc/polyfrost/oneconfig/gui/pages/ModsPage : cc/polyfrost/oneconfig/
 	public fun reloadMods ()V
 }
 
+public class cc/polyfrost/oneconfig/gui/pages/NotificationsPage : cc/polyfrost/oneconfig/gui/pages/Page {
+	public fun <init> ()V
+	public fun draw (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
+	public fun getMaxScrollHeight ()I
+	public fun isBase ()Z
+}
+
 public abstract class cc/polyfrost/oneconfig/gui/pages/Page {
 	public final field parents Ljava/util/ArrayList;
 	protected field scroll F
@@ -1551,6 +1558,7 @@ public final class cc/polyfrost/oneconfig/utils/NetworkUtils {
 
 public final class cc/polyfrost/oneconfig/utils/Notifications {
 	public static final field INSTANCE Lcc/polyfrost/oneconfig/utils/Notifications;
+	public fun getAllNotifications ()Ljava/util/LinkedHashMap;
 	public fun send (Ljava/lang/String;Ljava/lang/String;)V
 	public fun send (Ljava/lang/String;Ljava/lang/String;F)V
 	public fun send (Ljava/lang/String;Ljava/lang/String;FLjava/lang/Runnable;)V
