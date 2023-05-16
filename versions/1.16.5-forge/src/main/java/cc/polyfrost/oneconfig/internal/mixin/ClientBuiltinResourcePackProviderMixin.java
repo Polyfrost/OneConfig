@@ -49,7 +49,7 @@ public class ClientBuiltinResourcePackProviderMixin {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> EventManager.INSTANCE.post(new ShutdownEvent())));
         //#if FABRIC
         //$$ EventManager.INSTANCE.post(new InitializationEvent());
-        //$$ cc.polyfrost.oneconfig.internal.OneConfig.init();
+        //$$ cc.polyfrost.oneconfig.internal.OneConfig.INSTANCE.init();
         //#endif
     }
 }

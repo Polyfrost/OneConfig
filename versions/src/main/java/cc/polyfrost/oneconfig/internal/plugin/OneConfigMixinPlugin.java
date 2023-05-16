@@ -115,6 +115,10 @@ public class OneConfigMixinPlugin implements IMixinConfigPlugin {
             mixins.add("MouseMixin");
         }
 
+        if (version <= 11202) {
+            mixins.add("GuiScreenMixin");
+        }
+
         return mixins.isEmpty() ? null : mixins;
     }
 

@@ -31,6 +31,8 @@ import cc.polyfrost.oneconfig.events.event.*;
 import cc.polyfrost.oneconfig.internal.OneConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Timer;
+import org.lwjgl.input.Keyboard;
+import org.lwjgl.input.Mouse;
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -71,7 +73,7 @@ public class MinecraftMixin {
     @Inject(method = "startGame", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/client/FMLClientHandler;onInitializationComplete()V", shift = At.Shift.AFTER, remap = false), remap = true)
     private void onInit(CallbackInfo ci) {
         EventManager.INSTANCE.post(new InitializationEvent());
-        OneConfig.init();
+        OneConfig.INSTANCE.init();
     }
     //#endif
 
@@ -168,47 +170,119 @@ public class MinecraftMixin {
     //#if MC<=11202
     //#if FORGE==1
     //#if MC<=10809
-    @Inject(method = "runTick", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/FMLCommonHandler;fireKeyInput()V", remap = false), remap = true)
+    @Inject(method = "runTick", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/settings/KeyBinding;setKeyBindState(IZ)V", ordinal = 1))
     private void onKeyEvent(CallbackInfo ci) {
+        int state = 0;
+        if (Keyboard.getEventKeyState()) {
+            if (Keyboard.isRepeatEvent()) {
+                state = 2;
+            } else {
+                state = 1;
+            }
+        }
+        EventManager.INSTANCE.post(new RawKeyEvent(Keyboard.getEventKey(), state));
+    }
+
+    @Inject(method = "runTick", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/FMLCommonHandler;fireKeyInput()V", remap = false), remap = true)
+    private void onKeyInputEvent(CallbackInfo ci) {
         EventManager.INSTANCE.post(new KeyInputEvent());
     }
 
-    @Inject(method = "runTick", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/FMLCommonHandler;fireMouseInput()V", remap = false), remap = true)
+    @Inject(method = "runTick", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/client/ForgeHooksClient;postMouseEvent()Z", remap = false), remap = true)
     private void onMouseEvent(CallbackInfo ci) {
-        EventManager.INSTANCE.post(new MouseInputEvent());
+        EventManager.INSTANCE.post(new RawMouseEvent(Mouse.getEventButton(), Mouse.getEventButtonState() ? 1 : 0));
+    }
+
+    @Inject(method = "runTick", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/FMLCommonHandler;fireMouseInput()V", remap = false), remap = true)
+    private void onMouseInputEvent(CallbackInfo ci) {
+        EventManager.INSTANCE.post(new MouseInputEvent(Mouse.getEventButton()));
     }
     //#else
-    //$$  @Inject(method = "runTickKeyboard", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/FMLCommonHandler;fireKeyInput()V", remap = false), remap = true)
-    //$$  private void onKeyEvent(CallbackInfo ci) {
-    //$$      EventManager.INSTANCE.post(new KeyInputEvent());
-    //$$  }
+    //$$ @Inject(method = "runTickKeyboard", at = @At(value = "FIELD", target = "Lnet/minecraft/client/Minecraft;debugCrashKeyPressTime:J", opcode = Opcodes.PUTFIELD))
+    //$$ private void onKeyEvent(CallbackInfo ci) {
+    //$$     int state = 0;
+    //$$     if (Keyboard.getEventKeyState()) {
+    //$$         if (Keyboard.isRepeatEvent()) {
+    //$$             state = 2;
+    //$$         } else {
+    //$$             state = 1;
+    //$$         }
+    //$$     }
+    //$$     EventManager.INSTANCE.post(new RawKeyEvent(Keyboard.getEventKey(), state));
+    //$$ }
     //$$
-    //$$  @Inject(method = "runTickMouse", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/FMLCommonHandler;fireMouseInput()V", remap = false), remap = true)
-    //$$  private void onMouseEvent(CallbackInfo ci) {
-    //$$      EventManager.INSTANCE.post(new MouseInputEvent());
-    //$$  }
+    //$$ @Inject(method = "runTickKeyboard", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/FMLCommonHandler;fireKeyInput()V", remap = false), remap = true)
+    //$$ private void onKeyInputEvent(CallbackInfo ci) {
+    //$$     EventManager.INSTANCE.post(new KeyInputEvent());
+    //$$ }
+    //$$
+    //$$ @Inject(method = "runTickMouse", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/client/ForgeHooksClient;postMouseEvent()Z", remap = false), remap = true)
+    //$$ private void onMouseEvent(CallbackInfo ci) {
+    //$$     EventManager.INSTANCE.post(new RawMouseEvent(Mouse.getEventButton(), Mouse.getEventButtonState() ? 1 : 0));
+    //$$ }
+    //$$
+    //$$ @Inject(method = "runTickMouse", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/FMLCommonHandler;fireMouseInput()V", remap = false), remap = true)
+    //$$ private void onMouseInputEvent(CallbackInfo ci) {
+    //$$     EventManager.INSTANCE.post(new MouseInputEvent(Mouse.getEventButton()));
+    //$$ }
     //#endif
     //#else
     //#if MC<=10809
+    //$$ @Inject(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/options/KeyBinding;setKeyPressed(IZ)V", ordinal = 1))
+    //$$ private void onKeyEvent(CallbackInfo ci) {
+    //$$     int state = 0;
+    //$$     if (Keyboard.getEventKeyState()) {
+    //$$         if (Keyboard.isRepeatEvent()) {
+    //$$             state = 2;
+    //$$         } else {
+    //$$             state = 1;
+    //$$         }
+    //$$     }
+    //$$     EventManager.INSTANCE.post(new RawKeyEvent(Keyboard.getEventKey(), state));
+    //$$ }
+    //$$
     //$$ @Inject(method = "tick", at = @At(value = "JUMP", opcode = Opcodes.GOTO, ordinal = 22, by = 2, shift = At.Shift.BY))
-    //$$  private void onKeyEvent(CallbackInfo ci) {
-    //$$      EventManager.INSTANCE.post(new KeyInputEvent());
-    //$$  }
+    //$$ private void onKeyInputEvent(CallbackInfo ci) {
+    //$$     EventManager.INSTANCE.post(new KeyInputEvent());
+    //$$ }
     //$$
-    //$$  @Inject(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/Screen;handleMouse()V", shift = At.Shift.BY, by = 2))
-    //$$  private void onMouseEvent(CallbackInfo ci) {
-    //$$      EventManager.INSTANCE.post(new MouseInputEvent());
-    //$$  }
+    //$$ @Inject(method = "tick", at = @At(value = "INVOKE", target = "Lorg/lwjgl/input/Mouse;getEventButton()I"))
+    //$$ private void onMouseEvent(CallbackInfo ci) {
+    //$$     EventManager.INSTANCE.post(new RawMouseEvent(Mouse.getEventButton(), Mouse.getEventButtonState() ? 1 : 0));
+    //$$ }
+    //$$
+    //$$ @Inject(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/Screen;handleMouse()V", shift = At.Shift.BY, by = 2))
+    //$$ private void onMouseInputEvent(CallbackInfo ci) {
+    //$$     EventManager.INSTANCE.post(new MouseInputEvent(Mouse.getEventButton()));
+    //$$ }
     //#else
-    //$$ @Inject(method = "method_12145", at = @At(value = "FIELD", target = "Lnet/minecraft/client/options/GameOptions;debugFpsEnabled:Z", opcode = Opcodes.PUTFIELD, shift = At.Shift.BY, by = 2))
-    //$$  private void onKeyEvent(CallbackInfo ci) {
-    //$$      EventManager.INSTANCE.post(new KeyInputEvent());
-    //$$  }
+    //$$ @Inject(method = "method_12145", at = @At(value = "FIELD", target = "Lnet/minecraft/client/MinecraftClient;f3CTime:J", opcode = Opcodes.PUTFIELD))
+    //$$ private void onKeyEvent(CallbackInfo ci) {
+    //$$     int state = 0;
+    //$$     if (Keyboard.getEventKeyState()) {
+    //$$         if (Keyboard.isRepeatEvent()) {
+    //$$             state = 2;
+    //$$         } else {
+    //$$             state = 1;
+    //$$         }
+    //$$     }
+    //$$     EventManager.INSTANCE.post(new RawKeyEvent(Keyboard.getEventKey(), state));
+    //$$ }
     //$$
-    //$$  @Inject(method = "method_12141", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/Screen;handleMouse()V", shift = At.Shift.AFTER))
-    //$$  private void onMouseEvent(CallbackInfo ci) {
-    //$$      EventManager.INSTANCE.post(new MouseInputEvent());
-    //$$  }
+    //$$ @Inject(method = "method_12145", at = @At(value = "FIELD", target = "Lnet/minecraft/client/options/GameOptions;debugFpsEnabled:Z", opcode = Opcodes.PUTFIELD, shift = At.Shift.BY, by = 2))
+    //$$ private void onKeyInputEvent(CallbackInfo ci) {
+    //$$     EventManager.INSTANCE.post(new KeyInputEvent());
+    //$$ }
+    //$$
+    //$$ @Inject(method = "method_12141", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/options/KeyBinding;setKeyPressed(IZ)V"))
+    //$$ private void onMouseEvent(CallbackInfo ci) {
+    //$$     EventManager.INSTANCE.post(new RawMouseEvent(Mouse.getEventButton(), Mouse.getEventButtonState() ? 1 : 0));
+    //$$ }
+    //$$
+    //$$ @Inject(method = "method_12141", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/Screen;handleMouse()V", shift = At.Shift.AFTER))
+    //$$ private void onMouseInputEvent(CallbackInfo ci) {
+    //$$     EventManager.INSTANCE.post(new MouseInputEvent(Mouse.getEventButton()));
+    //$$ }
     //#endif
     //#endif
     //#endif
