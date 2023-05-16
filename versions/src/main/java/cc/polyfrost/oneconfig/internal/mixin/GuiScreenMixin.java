@@ -25,7 +25,7 @@
  */
 
 package cc.polyfrost.oneconfig.internal.mixin;
-
+//#if MC<=11202
 import cc.polyfrost.oneconfig.events.EventManager;
 import cc.polyfrost.oneconfig.events.event.RawKeyEvent;
 import cc.polyfrost.oneconfig.events.event.RawMouseEvent;
@@ -37,7 +37,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-//#if MC<=11202
 @Mixin(GuiScreen.class)
 public class GuiScreenMixin {
     @Inject(method = "handleInput", at = @At(value = "INVOKE",

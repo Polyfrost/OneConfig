@@ -31,8 +31,6 @@ import cc.polyfrost.oneconfig.events.event.*;
 import cc.polyfrost.oneconfig.internal.OneConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Timer;
-import org.lwjgl.input.Keyboard;
-import org.lwjgl.input.Mouse;
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -40,6 +38,11 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+//#if MC<=11202
+import org.lwjgl.input.Keyboard;
+import org.lwjgl.input.Mouse;
+//#endif
 
 //#if FORGE==1
 import net.minecraftforge.client.event.GuiOpenEvent;

@@ -43,7 +43,7 @@ public class MouseMixin {
         EventManager.INSTANCE.post(new RawMouseEvent(button, action));
     }
     //#else
-    //$$ @ModifyVariable(method = "onMouseButton", at = @At("STORE"), ordinal = 0)
+    //$$ @org.spongepowered.asm.mixin.injection.ModifyVariable(method = "onMouseButton", at = @At("STORE"), ordinal = 0)
     //$$ private int onMouse(int button, long handle, int b, int action, int mods) {
     //$$      EventManager.INSTANCE.post(new RawMouseEvent(button, action));
     //$$      return button;
