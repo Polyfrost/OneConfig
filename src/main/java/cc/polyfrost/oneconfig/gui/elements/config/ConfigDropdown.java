@@ -363,7 +363,7 @@ public class ConfigDropdown extends BasicOption {
         scrollTarget = 0;
         scrollTime = 0;
         scrollAnimation = null;
-        if (unblock) {
+        if (unblock && inputHandler != null) {
             inputHandler.unblockDWheel();
             inputHandler.stopBlockingInput();
         }
