@@ -1,7 +1,7 @@
 /*
  * This file is part of OneConfig.
  * OneConfig - Next Generation Config Library for Minecraft: Java Edition
- * Copyright (C) 2021, 2022 Polyfrost.
+ * Copyright (C) 2021~2023 Polyfrost.
  *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -186,7 +186,7 @@ public class VigilanceConfig extends Config {
     public void addDependency(PropertyData property, PropertyData dependency) {
         BasicOption option = optionNames.get(PropertyKt.fullPropertyPath(property.getAttributesExt()));
         if (option != null) {
-            option.addDependency(() -> Objects.equals(dependency.getValue().getValue(vigilant), true));
+            option.addDependency(getName(dependency.getAttributesExt()), () -> Objects.equals(dependency.getValue().getValue(vigilant), true));
         }
     }
 

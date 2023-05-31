@@ -1,7 +1,7 @@
 /*
  * This file is part of OneConfig.
  * OneConfig - Next Generation Config Library for Minecraft: Java Edition
- * Copyright (C) 2021, 2022 Polyfrost.
+ * Copyright (C) 2021~2023 Polyfrost.
  *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -31,7 +31,6 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 import java.awt.datatransfer.*;
 import java.io.*;
-import java.net.URL;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -44,11 +43,17 @@ import java.security.MessageDigest;
 public final class IOUtils {
 
     /**
+     * @deprecated Use {@link #resourceToByteBufferNullable(String, Class)}
+     */
+    public static ByteBuffer resourceToByteBuffer(String path) throws IOException {
+        return resourceToByteBuffer(path, IOUtils.class);
+    }
+
+    /**
      * Taken from legui under MIT License
      * <a href="https://github.com/SpinyOwl/legui/blob/develop/LICENSE">https://github.com/SpinyOwl/legui/blob/develop/LICENSE</a>
      */
-    @SuppressWarnings("RedundantCast")
-    public static ByteBuffer resourceToByteBuffer(String path) throws IOException {
+    public static ByteBuffer resourceToByteBuffer(String path, Class<?> clazz) throws IOException {
         byte[] bytes;
         path = path.trim();
         if (path.startsWith("http")) {
@@ -61,7 +66,7 @@ public final class IOUtils {
             if (file.exists() && file.isFile()) {
                 stream = Files.newInputStream(file.toPath());
             } else {
-                stream = IOUtils.class.getResourceAsStream(path);
+                stream = clazz.getResourceAsStream(path);
             }
             if (stream == null) {
                 throw new FileNotFoundException(path);
@@ -74,9 +79,21 @@ public final class IOUtils {
         return data;
     }
 
+    /**
+     * @deprecated Use {@link #resourceToByteBufferNullable(String, Class)}
+     */
+    @Deprecated
     public static ByteBuffer resourceToByteBufferNullable(String path) {
         try {
             return resourceToByteBuffer(path);
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    public static ByteBuffer resourceToByteBufferNullable(String path, Class<?> clazz) {
+        try {
+            return resourceToByteBuffer(path, clazz);
         } catch (Exception ignored) {
             return null;
         }

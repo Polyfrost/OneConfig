@@ -1,7 +1,7 @@
 /*
  * This file is part of OneConfig.
  * OneConfig - Next Generation Config Library for Minecraft: Java Edition
- * Copyright (C) 2021, 2022 Polyfrost.
+ * Copyright (C) 2021~2023 Polyfrost.
  *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -83,7 +83,7 @@ public abstract class Page {
         final float scrollBarLength = (728f / maxScroll) * 728f;
         Scissor scissor = scissorHelper.scissor(vg, x, y + scissorOffset, x + 1056, y + 728 - scissorOffset);
         Scissor inputScissor = inputHandler.blockInputArea(x, y,1056, scissorOffset);
-        float dWheel = (float) Platform.getMousePlatform().getDWheel();
+        float dWheel = (float) inputHandler.getDWheel();
         if (dWheel != 0) {
             scrollTarget += dWheel;
 
@@ -111,7 +111,6 @@ public abstract class Page {
             final boolean isMouseDown = Platform.getMousePlatform().isButtonDown(0);
             final boolean scrollHover = inputHandler.isAreaHovered(x + 1042, (int) (y - scrollBarY), 12, (int) scrollBarLength);
             final boolean scrollTimePeriod = (System.currentTimeMillis() - scrollTime < 1000);
-            final boolean hovered = (scrollHover || scrollTimePeriod) && Platform.getMousePlatform().isButtonDown(0);
             if (scrollHover && isMouseDown && !mouseWasDown) {
                 yStart = inputHandler.mouseY();
                 dragging = true;

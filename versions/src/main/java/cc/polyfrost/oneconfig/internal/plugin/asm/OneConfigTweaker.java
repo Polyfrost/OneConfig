@@ -1,7 +1,7 @@
 /*
  * This file is part of OneConfig.
  * OneConfig - Next Generation Config Library for Minecraft: Java Edition
- * Copyright (C) 2021, 2022 Polyfrost.
+ * Copyright (C) 2021~2023 Polyfrost.
  *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -64,7 +64,7 @@ public class OneConfigTweaker implements ITweaker {
                         if (jarFile.getManifest() != null) {
                             Attributes attributes = jarFile.getManifest().getMainAttributes();
                             String tweakerClass = attributes.getValue("TweakClass");
-                            if (Objects.equals(tweakerClass, "cc.polyfrost.oneconfigwrapper.OneConfigWrapper")) {
+                            if (Objects.equals(tweakerClass, "cc.polyfrost.oneconfigwrapper.OneConfigWrapper") || Objects.equals(tweakerClass, "cc.polyfrost.oneconfig.loader.stage0.LaunchWrapperTweaker")) {
                                 CoreModManager.getIgnoredMods().remove(file.getName());
                                 CoreModManager.getReparseableCoremods().add(file.getName());
                                 String mixinConfig = attributes.getValue("MixinConfigs");

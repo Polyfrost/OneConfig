@@ -1,7 +1,7 @@
 /*
  * This file is part of OneConfig.
  * OneConfig - Next Generation Config Library for Minecraft: Java Edition
- * Copyright (C) 2021, 2022 Polyfrost.
+ * Copyright (C) 2021~2023 Polyfrost.
  *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -131,6 +131,11 @@ public class ModConfigPage extends Page {
     public void finishUpAndClose() {
         page.mod.config.save();
         OneConfigGui.INSTANCE.closeColorSelector();
+        for (OptionSubcategory subCategory : getSubcategories()) {
+            for (BasicOption option : subCategory.options) {
+                option.finishUpAndClose();
+            }
+        }
     }
 
     @Override

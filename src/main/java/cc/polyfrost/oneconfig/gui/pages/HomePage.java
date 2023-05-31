@@ -1,7 +1,7 @@
 /*
  * This file is part of OneConfig.
  * OneConfig - Next Generation Config Library for Minecraft: Java Edition
- * Copyright (C) 2021, 2022 Polyfrost.
+ * Copyright (C) 2021~2023 Polyfrost.
  *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -67,6 +67,7 @@ public class HomePage extends Page {
         nanoVGHelper.drawText(vg, "Info", x + 52, y + 618, Colors.WHITE_90, 24f, Fonts.MEDIUM);
         nanoVGHelper.drawRoundedRect(vg, x + 16, y + 644, 1024, 64, Colors.GRAY_700, 20f);
 
+        // fuck you to whoever put that here
         nanoVGHelper.drawURL(vg, "https://www.youtube.com/watch?v=dQw4w9WgXcQ", x + 100, y + 205, 24, Fonts.MEDIUM, inputHandler);
 
         /*discordBtn.draw(vg, x + 32, y + 658);

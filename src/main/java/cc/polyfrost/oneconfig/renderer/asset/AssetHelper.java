@@ -1,7 +1,7 @@
 /*
  * This file is part of OneConfig.
  * OneConfig - Next Generation Config Library for Minecraft: Java Edition
- * Copyright (C) 2021, 2022 Polyfrost.
+ * Copyright (C) 2021~2023 Polyfrost.
  *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -28,8 +28,6 @@ package cc.polyfrost.oneconfig.renderer.asset;
 
 import cc.polyfrost.oneconfig.renderer.LwjglManager;
 
-import java.nio.IntBuffer;
-
 public interface AssetHelper {
     AssetHelper INSTANCE = LwjglManager.INSTANCE.getAssetHelper();
 
@@ -41,9 +39,10 @@ public interface AssetHelper {
      * @param vg       The NanoVG context.
      * @param fileName The name of the file to load.
      * @param flags    The image flags
+     * @param clazz    The class to use for loading the resource.
      * @return Whether the asset was loaded successfully.
      */
-    boolean loadImage(long vg, String fileName, int flags);
+    boolean loadImage(long vg, String fileName, int flags, Class<?> clazz);
 
     /**
      * Loads an assets from resources.
@@ -57,11 +56,22 @@ public interface AssetHelper {
     /**
      * Loads an assets from resources.
      *
-     * @param vg       The NanoVG context.
-     * @param fileName The name of the file to load.
+     * @param vg    The NanoVG context.
+     * @param image The Image
+     * @param clazz The class to use for loading the resource.
      * @return Whether the asset was loaded successfully.
      */
-    boolean loadImage(long vg, String fileName);
+    boolean loadImage(long vg, Image image, Class<?> clazz);
+
+    /**
+     * Loads an assets from resources.
+     *
+     * @param vg       The NanoVG context.
+     * @param fileName The name of the file to load.
+     * @param clazz    The class to load the resource from.
+     * @return Whether the asset was loaded successfully.
+     */
+    boolean loadImage(long vg, String fileName, Class<?> clazz);
 
     /**
      * Loads an SVG from resources.
@@ -71,9 +81,10 @@ public interface AssetHelper {
      * @param width    The width of the SVG.
      * @param height   The height of the SVG.
      * @param flags    The image flags
+     * @param clazz    The class to use for loading the resource.
      * @return Whether the SVG was loaded successfully.
      */
-    boolean loadSVG(long vg, String fileName, float width, float height, int flags);
+    boolean loadSVG(long vg, String fileName, float width, float height, int flags, Class<?> clazz);
 
     /**
      * Loads an assets from resources.
@@ -87,15 +98,28 @@ public interface AssetHelper {
     boolean loadSVG(long vg, SVG svg, float width, float height);
 
     /**
+     * Loads an assets from resources.
+     *
+     * @param vg     The NanoVG context.
+     * @param svg    The SVG
+     * @param width  The width of the SVG.
+     * @param height The height of the SVG.
+     * @param clazz  The class to use for loading the resource.
+     * @return Whether the asset was loaded successfully.
+     */
+    boolean loadSVG(long vg, SVG svg, float width, float height, Class<?> clazz);
+
+    /**
      * Loads an SVG from resources.
      *
      * @param vg       The NanoVG context.
      * @param fileName The name of the file to load.
      * @param width    The width of the SVG.
      * @param height   The height of the SVG.
+     * @param clazz    The class to load the resource from.
      * @return Whether the SVG was loaded successfully.
      */
-    boolean loadSVG(long vg, String fileName, float width, float height);
+    boolean loadSVG(long vg, String fileName, float width, float height, Class<?> clazz);
 
     /**
      * Get a loaded assets from the cache.
@@ -103,7 +127,7 @@ public interface AssetHelper {
      *
      * @param fileName The name of the file to load.
      * @return The assets
-     * @see AssetHelper#loadImage(long, String)
+     * @see AssetHelper#loadImage(long, String, Class)
      */
     int getImage(String fileName);
 
@@ -115,7 +139,7 @@ public interface AssetHelper {
      *
      * @param vg       The NanoVG context.
      * @param fileName The name of the file to remove.
-     * @see AssetHelper#loadImage(long, String)
+     * @see AssetHelper#loadImage(long, String, Class)
      */
     void removeImage(long vg, String fileName);
 
@@ -133,7 +157,7 @@ public interface AssetHelper {
      *
      * @param fileName The name of the file to load.
      * @return The SVG
-     * @see AssetHelper#loadSVG(long, String, float, float)
+     * @see AssetHelper#loadSVG(long, String, float, float, Class)
      */
     int getSVG(String fileName, float width, float height);
 
@@ -145,7 +169,7 @@ public interface AssetHelper {
      *
      * @param vg       The NanoVG context.
      * @param fileName The name of the file to remove.
-     * @see AssetHelper#loadSVG(long, String, float, float)
+     * @see AssetHelper#loadSVG(long, String, float, float, Class)
      */
     void removeSVG(long vg, String fileName, float width, float height);
 
@@ -156,13 +180,4 @@ public interface AssetHelper {
      * @param vg The NanoVG context.
      */
     void clearSVGs(long vg);
-
-    /**
-     * Convert the given image (as a quantified path) to an IntBuffer, of its pixels, in order, stored as integers in ARGB format.
-     * Mostly an internal method; used by LWJGL.
-     *
-     * @param fileName quantified path to the image
-     * @return intBuffer of the image's pixels in ARGB format
-     */
-    IntBuffer imageToIntBuffer(String fileName);
 }

@@ -1,7 +1,7 @@
 /*
  * This file is part of OneConfig.
  * OneConfig - Next Generation Config Library for Minecraft: Java Edition
- * Copyright (C) 2021, 2022 Polyfrost.
+ * Copyright (C) 2021~2023 Polyfrost.
  *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -43,6 +43,8 @@ public class InputHandler {
     private final ArrayList<Scissor> blockScissors = new ArrayList<>();
     private double scaleX = 1d;
     private double scaleY = 1d;
+
+    private boolean blockDWheel = false;
 
     /**
      * Push a scale for the input utils to use
@@ -218,6 +220,22 @@ public class InputHandler {
      */
     public boolean isBlockingInput() {
         return blockScissors.size() > 0;
+    }
+
+    public double getDWheel(boolean ignoreBlock) {
+        return ignoreBlock ? Platform.getMousePlatform().getDWheel() : (blockDWheel ? 0.0 : Platform.getMousePlatform().getDWheel());
+    }
+
+    public double getDWheel() {
+        return getDWheel(false);
+    }
+
+    public void blockDWheel() {
+        blockDWheel = true;
+    }
+
+    public void unblockDWheel() {
+        blockDWheel = false;
     }
 
     private boolean shouldBlock(float x, float y) {

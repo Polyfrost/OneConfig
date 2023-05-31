@@ -1,7 +1,7 @@
 /*
  * This file is part of OneConfig.
  * OneConfig - Next Generation Config Library for Minecraft: Java Edition
- * Copyright (C) 2021, 2022 Polyfrost.
+ * Copyright (C) 2021~2023 Polyfrost.
  *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -37,13 +37,20 @@ import java.util.Locale;
 public class SearchUtils {
 
     public static boolean isSimilar(String s1, String s2) {
+        return isSimilar(s1, s2, Preferences.searchDistance);
+    }
+
+    public static boolean isSimilar(String s1, String s2, int searchDistance) {
         s1 = s1.toLowerCase(Locale.ENGLISH);
         s2 = s2.toLowerCase(Locale.ENGLISH);
+        if (s1.length() <= searchDistance) {
+            return s1.contains(s2);
+        }
         boolean similar = false;
         for (String a : StringUtils.split(s1)) {
-            similar = a.contains(s2) || StringUtils.getLevenshteinDistance(a, s2) <= Preferences.searchDistance;
+            similar = a.contains(s2) || StringUtils.getLevenshteinDistance(a, s2) <= searchDistance;
             if (similar) break;
         }
-        return similar || s1.contains(s2) || StringUtils.getLevenshteinDistance(s1, s2) <= Preferences.searchDistance;
+        return similar || s1.contains(s2) || StringUtils.getLevenshteinDistance(s1, s2) <= searchDistance;
     }
 }

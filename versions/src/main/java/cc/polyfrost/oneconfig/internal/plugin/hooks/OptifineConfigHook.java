@@ -1,7 +1,7 @@
 /*
  * This file is part of OneConfig.
  * OneConfig - Next Generation Config Library for Minecraft: Java Edition
- * Copyright (C) 2021, 2022 Polyfrost.
+ * Copyright (C) 2021~2023 Polyfrost.
  *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -26,11 +26,14 @@
 
 package cc.polyfrost.oneconfig.internal.plugin.hooks;
 
+import cc.polyfrost.oneconfig.libs.universal.UScreen;
 import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
+import cc.polyfrost.oneconfig.utils.gui.BlurScreen;
 
 public class OptifineConfigHook {
 
     public static boolean shouldNotApplyFastRender() {
-        return NanoVGHelper.INSTANCE.isDrawing();
+        return NanoVGHelper.INSTANCE.isDrawing() ||
+                UScreen.getCurrentScreen() instanceof BlurScreen && ((BlurScreen) UScreen.getCurrentScreen()).hasBackgroundBlur();
     }
 }

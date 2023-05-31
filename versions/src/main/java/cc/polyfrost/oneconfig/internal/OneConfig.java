@@ -1,7 +1,7 @@
 /*
  * This file is part of OneConfig.
  * OneConfig - Next Generation Config Library for Minecraft: Java Edition
- * Copyright (C) 2021, 2022 Polyfrost.
+ * Copyright (C) 2021~2023 Polyfrost.
  *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -62,6 +62,7 @@ import net.minecraftforge.fml.common.versioning.ArtifactVersion;
 import net.minecraftforge.fml.client.FMLClientHandler;
 import net.minecraftforge.fml.client.IModGuiFactory;
 import net.minecraftforge.fml.common.Loader;
+import net.minecraftforge.fml.common.ModMetadata;
 //#endif
 
 import java.util.Locale;
@@ -103,8 +104,13 @@ public class OneConfig {
         //#if FORGE==1
             //#if MC<=11202
             for (ModContainer mod : Loader.instance().getActiveModList()) {
-                handleForgeCommand(mod);
-                handleForgeGui(mod);
+                if (mod == null) continue;
+                try {
+                    handleForgeCommand(mod);
+                    handleForgeGui(mod);
+                } catch (Throwable t) {
+                    LOGGER.error("Failed to handle Forge compatibility for {}", mod.getModId(), t);
+                }
             }
             //#else
             //$$ try {
@@ -193,6 +199,10 @@ public class OneConfig {
     }
 
     private static void handleForgeGui(ModContainer mod) {
+        if ("fml".equalsIgnoreCase(mod.getModId())) {
+            return;
+        }
+
         IModGuiFactory factory = FMLClientHandler.instance().getGuiFactoryFor(mod);
         //#if MC<=10809
         if (factory == null || factory.mainConfigGuiClass() == null) return;
@@ -200,7 +210,32 @@ public class OneConfig {
         //$$ if (factory == null || !factory.hasConfigGui()) return;
         //#endif
         if (IgnoredGuiFactory.class.isAssignableFrom(factory.getClass())) return;
-        ForgeCompat.compatMods.put(new ForgeCompat.ForgeCompatMod(mod.getName(), ModType.THIRD_PARTY), () -> {
+
+        boolean isForgeContainer = "forge".equalsIgnoreCase(mod.getModId());
+        ModMetadata metadata = mod.getMetadata();
+        String modLogoFile =
+                metadata.logoFile == null || metadata.logoFile.isEmpty()
+                        ? null
+                        : metadata.logoFile;
+        if (modLogoFile != null && !isForgeContainer) {
+            if (modLogoFile.startsWith("/")) {
+                modLogoFile = modLogoFile.substring(1);
+            }
+            if (!modLogoFile.startsWith("assets/")) {
+                modLogoFile = "/assets/" + modLogoFile;
+            }
+
+            if (OneConfig.class.getResource(modLogoFile) == null) {
+                LOGGER.warn("Mod '{}' has an invalid logo file: {}", mod.getName(), modLogoFile);
+                modLogoFile = null;
+            }
+        }
+
+        String icon = isForgeContainer
+                ? "/assets/oneconfig/icons/forge_logo.png"
+                : modLogoFile;
+
+        ForgeCompat.compatMods.put(new ForgeCompat.ForgeCompatMod(mod.getName(), ModType.THIRD_PARTY, icon), () -> {
             try {
                 GuiUtils.displayScreen(
                         //#if MC<=10809

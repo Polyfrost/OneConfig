@@ -1,7 +1,7 @@
 /*
  * This file is part of OneConfig.
  * OneConfig - Next Generation Config Library for Minecraft: Java Edition
- * Copyright (C) 2021, 2022 Polyfrost.
+ * Copyright (C) 2021~2023 Polyfrost.
  *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -335,7 +335,7 @@ public class HudGui extends UScreen implements GuiPause {
         superSecretString = "";
         AtomicBoolean loaded = new AtomicBoolean();
         AssetHelper assetHelper = AssetHelper.INSTANCE;
-        NanoVGHelper.INSTANCE.setupAndDraw((vg) -> loaded.set(assetHelper.loadImage(vg, url)));
+        NanoVGHelper.INSTANCE.setupAndDraw((vg) -> loaded.set(assetHelper.loadImage(vg, url, HudGui.class)));
         if (!loaded.get()) return;
         NVGAsset image = assetHelper.getNVGImage(url);
         int w = image.getWidth();

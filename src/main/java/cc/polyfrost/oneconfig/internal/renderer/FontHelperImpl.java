@@ -1,7 +1,7 @@
 /*
  * This file is part of OneConfig.
  * OneConfig - Next Generation Config Library for Minecraft: Java Edition
- * Copyright (C) 2021, 2022 Polyfrost.
+ * Copyright (C) 2021~2023 Polyfrost.
  *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -68,7 +68,7 @@ public class FontHelperImpl implements FontHelper {
         if (font.isLoaded()) return;
         int loaded = -1;
         try {
-            ByteBuffer buffer = IOUtils.resourceToByteBuffer(font.getFileName());
+            ByteBuffer buffer = IOUtils.resourceToByteBuffer(font.getFileName(), font.getClass());
             loaded = nvgCreateFontMem(vg, font.getName(), buffer, 0);
             font.setBuffer(buffer);
         } catch (IOException e) {

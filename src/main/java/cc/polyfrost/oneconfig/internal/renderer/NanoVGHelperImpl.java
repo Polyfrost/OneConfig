@@ -1,7 +1,7 @@
 /*
  * This file is part of OneConfig.
  * OneConfig - Next Generation Config Library for Minecraft: Java Edition
- * Copyright (C) 2021, 2022 Polyfrost.
+ * Copyright (C) 2021~2023 Polyfrost.
  *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -34,6 +34,7 @@ import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
+import cc.polyfrost.oneconfig.libs.universal.UGraphics;
 import cc.polyfrost.oneconfig.libs.universal.UResolution;
 import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
@@ -43,6 +44,7 @@ import cc.polyfrost.oneconfig.renderer.asset.Image;
 import cc.polyfrost.oneconfig.renderer.asset.SVG;
 import cc.polyfrost.oneconfig.renderer.font.Font;
 import cc.polyfrost.oneconfig.renderer.font.FontHelper;
+import cc.polyfrost.oneconfig.utils.IOUtils;
 import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.NetworkUtils;
 import org.lwjgl.nanovg.NVGColor;
@@ -112,7 +114,7 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
 
         Platform.getGLPlatform().enableStencil();
         GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
-        GL11.glDisable(GL11.GL_ALPHA_TEST);
+        UGraphics.disableAlpha();
 
         if (mcScaling) {
             nvgBeginFrame(vg, (float) UResolution.getScaledWidth(), (float) UResolution.getScaledHeight(), (float) UResolution.getScaleFactor());
@@ -123,7 +125,7 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
         consumer.accept(vg);
 
         nvgEndFrame(vg);
-
+        UGraphics.enableAlpha();
         GL11.glPopAttrib();
     }
 
@@ -456,9 +458,15 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
      * @see NanoVGHelperImpl#drawImage(long, String, float, float, float, float, int)
      */
     @Override
+    @Deprecated
     public void drawImage(long vg, String filePath, float x, float y, float width, float height) {
+        drawImage(vg, filePath, x, y, width, height, IOUtils.class);
+    }
+
+    @Override
+    public void drawImage(long vg, String filePath, float x, float y, float width, float height, Class<?> clazz) {
         AssetHelper assetHelper = AssetHelper.INSTANCE;
-        if (assetHelper.loadImage(vg, filePath)) {
+        if (assetHelper.loadImage(vg, filePath, clazz)) {
             NVGPaint imagePaint = NVGPaint.calloc();
             int image = assetHelper.getImage(filePath);
             nvgBeginPath(vg);
@@ -470,21 +478,16 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
         }
     }
 
-    /**
-     * Draws an image with the provided file path.
-     *
-     * @param vg       The NanoVG context.
-     * @param filePath The file path.
-     * @param x        The x position.
-     * @param y        The y position.
-     * @param width    The width.
-     * @param height   The height.
-     * @param color    The color.
-     */
     @Override
+    @Deprecated
     public void drawImage(long vg, String filePath, float x, float y, float width, float height, int color) {
+        drawImage(vg, filePath, x, y, width, height, color, IOUtils.class);
+    }
+
+    @Override
+    public void drawImage(long vg, String filePath, float x, float y, float width, float height, int color, Class<?> clazz) {
         AssetHelper assetHelper = AssetHelper.INSTANCE;
-        if (assetHelper.loadImage(vg, filePath)) {
+        if (assetHelper.loadImage(vg, filePath, clazz)) {
             NVGPaint imagePaint = NVGPaint.calloc();
             int image = assetHelper.getImage(filePath);
             nvgBeginPath(vg);
@@ -512,7 +515,7 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
     public void drawImage(long vg, Image image, float x, float y, float width, float height) {
         AssetHelper assetHelper = AssetHelper.INSTANCE;
         if (assetHelper.loadImage(vg, image)) {
-            drawImage(vg, image.filePath, x, y, width, height);
+            drawImage(vg, image.filePath, x, y, width, height, image.getClass());
         }
     }
 
@@ -525,7 +528,7 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
     public void drawImage(long vg, Image image, float x, float y, float width, float height, int color) {
         AssetHelper assetHelper = AssetHelper.INSTANCE;
         if (assetHelper.loadImage(vg, image)) {
-            drawImage(vg, image.filePath, x, y, width, height, color);
+            drawImage(vg, image.filePath, x, y, width, height, color, image.getClass());
         }
     }
 
@@ -541,9 +544,15 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
      * @param radius   The radius.
      */
     @Override
+    @Deprecated
     public void drawRoundImage(long vg, String filePath, float x, float y, float width, float height, float radius) {
+        drawRoundImage(vg, filePath, x, y, width, height, radius, IOUtils.class);
+    }
+
+    @Override
+    public void drawRoundImage(long vg, String filePath, float x, float y, float width, float height, float radius, Class<?> clazz) {
         AssetHelper assetHelper = AssetHelper.INSTANCE;
-        if (assetHelper.loadImage(vg, filePath)) {
+        if (assetHelper.loadImage(vg, filePath, clazz)) {
             NVGPaint imagePaint = NVGPaint.calloc();
             int image = assetHelper.getImage(filePath);
             nvgBeginPath(vg);
@@ -561,9 +570,10 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
      * @see NanoVGHelperImpl#drawRoundImage(long, String, float, float, float, float, float)
      */
     @Override
+    @Deprecated
     public void drawRoundImage(long vg, Image image, float x, float y, float width, float height, float radius) {
         if (AssetHelper.INSTANCE.loadImage(vg, image)) {
-            drawRoundImage(vg, image.filePath, x, y, width, height, radius);
+            drawRoundImage(vg, image.filePath, x, y, width, height, radius, image.getClass());
         }
     }
 
@@ -719,7 +729,7 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
      */
     @Override
     public void setAlpha(long vg, float alpha) {
-        if (OneConfigGui.INSTANCE.isDrawing()) {
+        if (OneConfigGui.INSTANCE != null && OneConfigGui.INSTANCE.isDrawing()) {
             if (alpha > OneConfigGui.INSTANCE.transparencyFactor) {
                 alpha = OneConfigGui.INSTANCE.transparencyFactor;
             }
@@ -739,11 +749,17 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
      * @param scale    The scale
      */
     @Override
+    @Deprecated
     public void drawSvg(long vg, String filePath, float x, float y, float width, float height, float scale) {
+        drawSvg(vg, filePath, x, y, width, height, scale, IOUtils.class);
+    }
+
+    @Override
+    public void drawSvg(long vg, String filePath, float x, float y, float width, float height, float scale, Class<?> clazz) {
         float w = width * scale;
         float h = height * scale;
         AssetHelper assetHelper = AssetHelper.INSTANCE;
-        if (assetHelper.loadSVG(vg, filePath, w, h)) {
+        if (assetHelper.loadSVG(vg, filePath, w, h, clazz)) {
             NVGPaint imagePaint = NVGPaint.calloc();
             int image = assetHelper.getSVG(filePath, w, h);
             nvgBeginPath(vg);
@@ -765,10 +781,26 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
      * @param width    The width.
      * @param height   The height.
      */
+    @Deprecated
     @Override
     public void drawSvg(long vg, String filePath, float x, float y, float width, float height) {
-        if (OneConfigGui.isOpen()) drawSvg(vg, filePath, x, y, width, height, OneConfigGui.getScaleFactor());
-        else drawSvg(vg, filePath, x, y, width, height, 1f);
+        drawSvg(vg, filePath, x, y, width, height, IOUtils.class);
+    }
+
+    /**
+     * Draws a SVG with the provided file path and parameters.
+     *
+     * @param vg       The NanoVG context.
+     * @param filePath The file path.
+     * @param x        The x position.
+     * @param y        The y position.
+     * @param width    The width.
+     * @param height   The height.
+     */
+    @Override
+    public void drawSvg(long vg, String filePath, float x, float y, float width, float height, Class<?> clazz) {
+        if (OneConfigGui.isOpen()) drawSvg(vg, filePath, x, y, width, height, OneConfigGui.getScaleFactor(), clazz);
+        else drawSvg(vg, filePath, x, y, width, height, 1f, clazz);
     }
 
     /**
@@ -785,10 +817,15 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
      */
     @Override
     public void drawSvg(long vg, String filePath, float x, float y, float width, float height, int color, float scale) {
+        drawSvg(vg, filePath, x, y, width, height, color, scale, IOUtils.class);
+    }
+
+    @Override
+    public void drawSvg(long vg, String filePath, float x, float y, float width, float height, int color, float scale, Class<?> clazz) {
         float w = width * scale;
         float h = height * scale;
         AssetHelper assetHelper = AssetHelper.INSTANCE;
-        if (assetHelper.loadSVG(vg, filePath, w, h)) {
+        if (assetHelper.loadSVG(vg, filePath, w, h, clazz)) {
             NVGPaint imagePaint = NVGPaint.calloc();
             int image = assetHelper.getSVG(filePath, w, h);
             nvgBeginPath(vg);
@@ -811,8 +848,24 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
      */
     @Override
     public void drawSvg(long vg, String filePath, float x, float y, float width, float height, int color) {
-        if (OneConfigGui.isOpen()) drawSvg(vg, filePath, x, y, width, height, color, OneConfigGui.getScaleFactor());
-        else drawSvg(vg, filePath, x, y, width, height, color, 1f);
+        drawSvg(vg, filePath, x, y, width, height, color, IOUtils.class);
+    }
+
+    /**
+     * Draws an SVG with the provided file path and parameters.
+     *
+     * @param vg       The NanoVG context.
+     * @param filePath The file path.
+     * @param x        The x position.
+     * @param y        The y position.
+     * @param width    The width.
+     * @param height   The height.
+     * @param color    The color.
+     */
+    @Override
+    public void drawSvg(long vg, String filePath, float x, float y, float width, float height, int color, Class<?> clazz) {
+        if (OneConfigGui.isOpen()) drawSvg(vg, filePath, x, y, width, height, color, OneConfigGui.getScaleFactor(), clazz);
+        else drawSvg(vg, filePath, x, y, width, height, color, 1f, clazz);
     }
 
     /**
@@ -822,7 +875,7 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
      */
     @Override
     public void drawSvg(long vg, SVG svg, float x, float y, float width, float height, float scale) {
-        drawSvg(vg, svg.filePath, x, y, width, height, scale);
+        drawSvg(vg, svg.filePath, x, y, width, height, scale, svg.getClass());
     }
 
     /**
@@ -832,7 +885,7 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
      */
     @Override
     public void drawSvg(long vg, SVG svg, float x, float y, float width, float height) {
-        drawSvg(vg, svg.filePath, x, y, width, height);
+        drawSvg(vg, svg.filePath, x, y, width, height, svg.getClass());
     }
 
     /**
@@ -842,7 +895,7 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
      */
     @Override
     public void drawSvg(long vg, SVG svg, float x, float y, float width, float height, int color, float scale) {
-        drawSvg(vg, svg.filePath, x, y, width, height, color, scale);
+        drawSvg(vg, svg.filePath, x, y, width, height, color, scale, svg.getClass());
     }
 
     /**

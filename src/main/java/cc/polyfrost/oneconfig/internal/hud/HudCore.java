@@ -1,7 +1,7 @@
 /*
  * This file is part of OneConfig.
  * OneConfig - Next Generation Config Library for Minecraft: Java Edition
- * Copyright (C) 2021, 2022 Polyfrost.
+ * Copyright (C) 2021~2023 Polyfrost.
  *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -46,6 +46,7 @@ public class HudCore {
         if (editing) return;
         for (Hud hud : huds.values()) {
             if (!hud.isEnabled()) continue;
+            hud.deltaTicks = event.deltaTicks;
             hud.drawAll(event.matrices, false);
         }
     }

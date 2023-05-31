@@ -1,7 +1,7 @@
 /*
  * This file is part of OneConfig.
  * OneConfig - Next Generation Config Library for Minecraft: Java Edition
- * Copyright (C) 2021, 2022 Polyfrost.
+ * Copyright (C) 2021~2023 Polyfrost.
  *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -53,13 +53,17 @@ import cc.polyfrost.oneconfig.internal.config.core.ConfigCore;
 import cc.polyfrost.oneconfig.internal.config.core.KeyBindHandler;
 import cc.polyfrost.oneconfig.internal.utils.Deprecator;
 import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
-import com.google.gson.*;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.lang.reflect.Field;
@@ -67,22 +71,25 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.function.Supplier;
 
 @SuppressWarnings({"unused", "ResultOfMethodCallIgnored"})
 public class Config {
     public final transient HashMap<String, BasicOption> optionNames = new HashMap<>();
-    transient protected final String configFile;
-    transient protected final Gson gson = addGsonOptions(new GsonBuilder()
+    protected final transient String configFile;
+    protected final transient Gson gson = addGsonOptions(new GsonBuilder()
             .setExclusionStrategies(new ProfileExclusionStrategy()))
             .create();
-    transient protected final Gson nonProfileSpecificGson = addGsonOptions(new GsonBuilder()
+    protected final transient Gson nonProfileSpecificGson = addGsonOptions(new GsonBuilder()
             .setExclusionStrategies(new NonProfileSpecificExclusionStrategy()))
             .create();
-    transient public Mod mod;
+    public final transient Mod mod;
     public boolean enabled;
     public final boolean canToggle;
+
+    private final transient Logger logger;
 
     /**
      * @param modData    information about the mod
@@ -94,6 +101,8 @@ public class Config {
         this.mod = modData;
         this.enabled = enabled;
         this.canToggle = canToggle;
+
+        this.logger = LogManager.getLogger(getClass());
     }
 
     public Config(Mod modData, String configFile, boolean enabled) {
@@ -109,6 +118,8 @@ public class Config {
     }
 
     public void initialize() {
+        logger.trace("Initializing config for {}...", mod.name);
+
         boolean migrate = false;
         File profileFile = ConfigUtils.getProfileFile(configFile);
         if (profileFile.exists()) load();
@@ -116,13 +127,20 @@ public class Config {
             if (mod.migrator != null) migrate = true;
             else save();
         }
+
+        logger.trace("Should migrate: {}", migrate);
+
         mod.config = this;
         generateOptionList(this, mod.defaultPage, mod, migrate);
         if (migrate) save();
+
+        logger.trace("Config for {} initialized", mod.name);
         ConfigCore.mods.add(mod);
     }
 
     public void reInitialize() {
+        logger.trace("Reinitializing config for {}...", mod.name);
+
         File profileFile = ConfigUtils.getProfileFile(configFile);
         if (profileFile.exists()) load();
         if (!profileFile.exists()) {
@@ -134,14 +152,26 @@ public class Config {
      * Save current config to file
      */
     public void save() {
-        ConfigUtils.getProfileFile(configFile).getParentFile().mkdirs();
-        ConfigUtils.getNonProfileSpecificFile(configFile).getParentFile().mkdirs();
-        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(Files.newOutputStream(ConfigUtils.getProfileFile(configFile).toPath()), StandardCharsets.UTF_8))) {
+        logger.trace("Saving config for {}...", mod.name);
+
+        Path profilePath = ConfigUtils.getProfileFile(configFile).toPath();
+        Path nonProfileSpecificPath = ConfigUtils.getNonProfileSpecificFile(configFile).toPath();
+
+        logger.trace("Saving to:\n\t{}\n\t{}", profilePath, nonProfileSpecificPath);
+
+        try {
+            Files.createDirectories(profilePath.getParent());
+            Files.createDirectories(nonProfileSpecificPath.getParent());
+        } catch (IOException e) {
+            logger.error("Failed to create directories for config file", e);
+        }
+
+        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(Files.newOutputStream(profilePath), StandardCharsets.UTF_8))) {
             writer.write(gson.toJson(this));
         } catch (Exception e) {
             e.printStackTrace();
         }
-        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(Files.newOutputStream(ConfigUtils.getNonProfileSpecificFile(configFile).toPath()), StandardCharsets.UTF_8))) {
+        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(Files.newOutputStream(nonProfileSpecificPath), StandardCharsets.UTF_8))) {
             writer.write(nonProfileSpecificGson.toJson(this));
         } catch (Exception e) {
             e.printStackTrace();
@@ -152,14 +182,21 @@ public class Config {
      * Load file and overwrite current values
      */
     public void load() {
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(Files.newInputStream(ConfigUtils.getProfileFile(configFile).toPath()), StandardCharsets.UTF_8))) {
+        logger.trace("Loading config for {}...", mod.name);
+
+        Path profilePath = ConfigUtils.getProfileFile(configFile).toPath();
+        Path nonProfileSpecificPath = ConfigUtils.getNonProfileSpecificFile(configFile).toPath();
+
+        logger.trace("Loading from:\n\t{}\n\t{}", profilePath, nonProfileSpecificPath);
+
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(Files.newInputStream(profilePath), StandardCharsets.UTF_8))) {
             gson.fromJson(reader, this.getClass());
         } catch (Exception e) {
             e.printStackTrace();
             File file = ConfigUtils.getProfileFile(configFile);
             file.renameTo(new File(file.getParentFile(), file.getName() + ".corrupted"));
         }
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(Files.newInputStream(ConfigUtils.getNonProfileSpecificFile(configFile).toPath()), StandardCharsets.UTF_8))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(Files.newInputStream(nonProfileSpecificPath), StandardCharsets.UTF_8))) {
             nonProfileSpecificGson.fromJson(reader, this.getClass());
         } catch (Exception e) {
             e.printStackTrace();
@@ -177,8 +214,28 @@ public class Config {
      * @param migrate  whether the migrator should be run
      */
     protected final void generateOptionList(Object instance, OptionPage page, Mod mod, boolean migrate) {
+        generateOptionList(instance, instance.getClass(), page, mod, migrate);
+    }
+
+    /**
+     * Generate the option list, for internal use only
+     *
+     * @param instance    instance of target class
+     * @param targetClass which class to lookup into
+     * @param page        page to add options too
+     * @param mod         data about the mod
+     * @param migrate     whether the migrator should be run
+     */
+    protected final void generateOptionList(Object instance, Class<?> targetClass, OptionPage page, Mod mod, boolean migrate) {
+        logger.trace("Generating option list for {}... (targetting={})", mod.name, targetClass.getName());
+
+        Class<?> superclass = targetClass.getSuperclass();
+        if (superclass != Object.class) {
+            generateOptionList(instance, superclass, page, mod, migrate);
+        }
+
         String pagePath = page.equals(mod.defaultPage) ? "" : page.name + ".";
-        for (Field field : instance.getClass().getDeclaredFields()) {
+        for (Field field : targetClass.getDeclaredFields()) {
             Option option = ConfigUtils.findAnnotation(field, Option.class);
             CustomOption customOption = ConfigUtils.findAnnotation(field, CustomOption.class);
             boolean isHypixelKey = field.isAnnotationPresent(HypixelKey.class);
@@ -218,7 +275,7 @@ public class Config {
                 throw new IllegalStateException("Field " + field.getName() + " is missing @Text annotation! This is required for Hypixel keys!");
             }
         }
-        for (Method method : instance.getClass().getDeclaredMethods()) {
+        for (Method method : targetClass.getDeclaredMethods()) {
             Button button = ConfigUtils.findAnnotation(method, Button.class);
             String optionName = pagePath + method.getName();
             if (button != null) {
@@ -226,6 +283,7 @@ public class Config {
                 optionNames.put(optionName, option);
             }
         }
+        logger.trace("Finished generating option list for {} (targetting={})", mod.name, targetClass.getName());
     }
 
     /**
@@ -260,10 +318,24 @@ public class Config {
     /**
      * Disable an option if a certain condition is not met
      *
+     * @param option        The name of the field, or if the field is in a page "pageName.fieldName"
+     * @param conditionName The name of the condition, this is used in the GUI
+     * @param condition     The condition that has to be met for the option to be enabled
+     */
+    protected final void addDependency(String option, String conditionName, Supplier<Boolean> condition) {
+        if (!optionNames.containsKey(option)) return;
+        optionNames.get(option).addDependency(conditionName, condition);
+    }
+
+    /**
+     * Disable an option if a certain condition is not met
+     *
      * @param option    The name of the field, or if the field is in a page "pageName.fieldName"
      * @param condition The condition that has to be met for the option to be enabled
      */
+    @Deprecated
     protected final void addDependency(String option, Supplier<Boolean> condition) {
+        Deprecator.markDeprecated();
         if (!optionNames.containsKey(option)) return;
         optionNames.get(option).addDependency(condition);
     }
@@ -387,15 +459,15 @@ public class Config {
     /**
      * Register a mod to be managed by OneConfig. <br>
      * <b>NOTE: DO NOT USE THIS METHOD UNLESS YOU ARE USING A CUSTOM IMPLEMENTATION!</b> This function is normally completed by initializing a Config. <br>
-     * @implNote null -> null, if already registered -> old mod, if registered successfully -> null
      *
      * @param mod The mod to be registered
+     * @implNote null -> null, if already registered -> old mod, if registered successfully -> null
      */
     @ApiStatus.Experimental
     @Contract("null -> null")
     public static Mod register(Mod mod) {
-        if(mod == null) return null;
-        if(ConfigCore.mods.contains(mod)) return mod;
+        if (mod == null) return null;
+        if (ConfigCore.mods.contains(mod)) return mod;
         ConfigCore.mods.add(mod);
         ConfigCore.sortMods();
         return null;

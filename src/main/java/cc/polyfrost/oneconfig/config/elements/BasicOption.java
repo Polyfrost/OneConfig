@@ -1,7 +1,7 @@
 /*
  * This file is part of OneConfig.
  * OneConfig - Next Generation Config Library for Minecraft: Java Edition
- * Copyright (C) 2021, 2022 Polyfrost.
+ * Copyright (C) 2021~2023 Polyfrost.
  *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -126,6 +126,7 @@ public abstract class BasicOption {
      * @param y  y position
      */
     public void drawLast(long vg, int x, int y, InputHandler inputHandler) {
+        drawDescription(vg, x, y, inputHandler);
     }
 
     /**
@@ -275,5 +276,8 @@ public abstract class BasicOption {
      */
     public void setParent(Object parent) {
         this.parent = parent;
+    }
+
+    public void finishUpAndClose() {
     }
 }

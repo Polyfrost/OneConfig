@@ -1,7 +1,7 @@
 /*
  * This file is part of OneConfig.
  * OneConfig - Next Generation Config Library for Minecraft: Java Edition
- * Copyright (C) 2021, 2022 Polyfrost.
+ * Copyright (C) 2021~2023 Polyfrost.
  *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -45,6 +45,7 @@ import cc.polyfrost.oneconfig.renderer.asset.Icon;
 import cc.polyfrost.oneconfig.test.huds.TestBasicHud_Test;
 import cc.polyfrost.oneconfig.test.huds.TestHud_Test;
 import cc.polyfrost.oneconfig.test.huds.TestMultilineHud_Test;
+import cc.polyfrost.oneconfig.test.inherit.ToggleableAndBoldElement_Test;
 import cc.polyfrost.oneconfig.utils.Notifications;
 
 public class TestConfig_Test extends Config {
@@ -72,6 +73,13 @@ public class TestConfig_Test extends Config {
             location = PageLocation.BOTTOM
     )
     private final cc.polyfrost.oneconfig.gui.pages.Page page = new HomePage();
+
+    @Page(
+            name = "An inheriting page",
+            description = "uwu",
+            location = PageLocation.BOTTOM
+    )
+    private final ToggleableAndBoldElement_Test inheritPage = new ToggleableAndBoldElement_Test();
 
     @Button(
             name = "hello",
@@ -109,6 +117,19 @@ public class TestConfig_Test extends Config {
             size = OptionSize.DUAL
     )
     private static int testDropdown = 0;
+
+    @Dropdown(
+            name = "REALLY BIG Dropdown",
+            options = {"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"}
+    )
+    private static int bigDropdown = 0;
+
+    @Dropdown(
+            name = "Literally the same thing but on a dual size dropdown",
+            options = {"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"},
+            size = OptionSize.DUAL
+    )
+    private static int dualSizeBigDropdown = 0;
 
     @Color(
             name = "Test Color",
@@ -240,7 +261,7 @@ public class TestConfig_Test extends Config {
     public TestBasicHud_Test basicHud = new TestBasicHud_Test();
 
     public TestConfig_Test() {
-        super(new Mod("Test Mod", ModType.UTIL_QOL, new VigilanceMigrator("./config/testConfig.toml")), "hacksConfig.json");
+        super(new Mod("Test Mod", ModType.UTIL_QOL, "/testmod_dark.svg", new VigilanceMigrator("./config/testConfig.toml")), "hacksConfig.json");
         initialize();
         addDependency("testCheckBox", "testSwitch");
         registerKeyBind(testKeyBind, () -> {

@@ -1,7 +1,7 @@
 /*
  * This file is part of OneConfig.
  * OneConfig - Next Generation Config Library for Minecraft: Java Edition
- * Copyright (C) 2021, 2022 Polyfrost.
+ * Copyright (C) 2021~2023 Polyfrost.
  *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -42,7 +42,7 @@ import org.jetbrains.annotations.NotNull;
  * <p></p>
  * Use GuiUtils to display a screen; and GuiUtils.closeScreen to close it.
  */
-public abstract class OneUIScreen extends UScreen implements GuiPause {
+public abstract class OneUIScreen extends UScreen implements GuiPause, BlurScreen {
     private final boolean useMinecraftScale;
     private final InputHandler inputHandler = new InputHandler();
 
@@ -94,6 +94,7 @@ public abstract class OneUIScreen extends UScreen implements GuiPause {
     /**
      * @return If this gui has background blur
      */
+    @Override
     public boolean hasBackgroundBlur() {
         return false;
     }

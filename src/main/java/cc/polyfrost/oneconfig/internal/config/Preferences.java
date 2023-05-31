@@ -1,7 +1,7 @@
 /*
  * This file is part of OneConfig.
  * OneConfig - Next Generation Config Library for Minecraft: Java Edition
- * Copyright (C) 2021, 2022 Polyfrost.
+ * Copyright (C) 2021~2023 Polyfrost.
  *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -269,7 +269,7 @@ public class Preferences extends InternalConfig {
             }
         });
         addDependency("guiClosingAnimation", "guiOpenAnimation");
-        addDependency("timeUntilReset", () -> openingBehavior == 3);
+        addDependency("timeUntilReset", "Smart Opening Behavior", () -> openingBehavior == 3);
         addDependency("pageAnimationDuration", "showPageAnimations");
         INSTANCE = this;
     }

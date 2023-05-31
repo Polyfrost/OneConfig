@@ -1,7 +1,7 @@
 /*
  * This file is part of OneConfig.
  * OneConfig - Next Generation Config Library for Minecraft: Java Edition
- * Copyright (C) 2021, 2022 Polyfrost.
+ * Copyright (C) 2021~2023 Polyfrost.
  *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -92,7 +92,7 @@ public class OneConfigGui extends OneUIScreen {
     public float transparencyFactor = 0f;
     public float animationScaleFactor = 0f;
     /**
-     * Used for global transparency animation in {@link NanoVGHelperImpl}
+     * Used for global transparency animation in {@link NanoVGHelperImpl#setAlpha(long, float)}
      */
     private boolean isDrawing;
 
