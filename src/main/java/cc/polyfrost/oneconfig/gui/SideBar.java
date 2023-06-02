@@ -56,9 +56,9 @@ public class SideBar {
         add(new BasicButton(width, SIZE_36, "Credits", SVGs.COPYRIGHT_FILL, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY));
 
         add(new BasicButton(width, SIZE_36, "Mods", SVGs.FADERS_HORIZONTAL_BOLD, null, ALIGNMENT_LEFT, ColorPalette.PRIMARY));
-        add(new BasicButton(width, SIZE_36, "Profiles", SVGs.USERS_02, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY));
+        add(new BasicButton(width, SIZE_36, "Profiles", "SOON", SVGs.USERS_02, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY));
 
-        add(new BasicButton(width, SIZE_36, "Themes", SVGs.BRUSH, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY));
+        add(new BasicButton(width, SIZE_36, "Themes", "BETA", SVGs.BRUSH, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY));
         add(new BasicButton(width, SIZE_36, "Preferences", SVGs.SETTINGS_02, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY));
     }};
     private final BasicButton hudButton = new BasicButton(192, SIZE_36, "Edit HUD", SVGs.LAYOUT_ALT, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY);

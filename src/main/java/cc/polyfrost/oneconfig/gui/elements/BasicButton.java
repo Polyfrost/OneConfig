@@ -35,11 +35,14 @@ import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 import cc.polyfrost.oneconfig.utils.color.ColorUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class BasicButton extends BasicElement {
 
     protected String text;
+    private @Nullable String badgeText;
     protected SVG icon1, icon2;
     private final int alignment;
     private final float fontSize, cornerRadius;
@@ -59,8 +62,14 @@ public class BasicButton extends BasicElement {
     private Runnable runnable;
 
     public BasicButton(int width, int size, String text, SVG icon1, SVG icon2, int align, @NotNull ColorPalette colorPalette) {
+        this(width, size, text, null, icon1, icon2, align, colorPalette);
+    }
+
+    @ApiStatus.Internal
+    public BasicButton(int width, int size, String text, @Nullable String badge, SVG icon1, SVG icon2, int align, @NotNull ColorPalette colorPalette) {
         super(width, 32, colorPalette, true);
         if (text != null) this.text = text;
+        this.badgeText = badge;
         if (icon1 != null) this.icon1 = icon1;
         if (icon2 != null) this.icon2 = icon2;
         this.colorPalette = colorPalette;
@@ -136,6 +145,14 @@ public class BasicButton extends BasicElement {
             }
             if (text != null) {
                 nanoVGHelper.drawText(vg, text, x + contentWidth, middleYText, color, fontSize, Fonts.MEDIUM);
+                if (badgeText != null) {
+                    //FIXME: This is a poor, case-specific implementation
+                    float textWidth = nanoVGHelper.getTextWidth(vg, text, fontSize, Fonts.MEDIUM);
+                    float badgeWidth = nanoVGHelper.getTextWidth(vg, badgeText, fontSize, Fonts.SEMIBOLD);
+                    float xBadgePadding = 5f;
+                    nanoVGHelper.drawRoundedRect(vg, x + contentWidth + textWidth + xBadgePadding, y + height / 2f - fontSize / 2f - xBadgePadding / 2f, badgeWidth + (xBadgePadding * 2), fontSize + xBadgePadding, Colors.PRIMARY_500, 8f);
+                    nanoVGHelper.drawText(vg, badgeText, x + contentWidth + textWidth + xBadgePadding * 2, middleYText, Colors.WHITE, fontSize, Fonts.SEMIBOLD);
+                }
             }
             if (icon2 != null)
                 nanoVGHelper.drawSvg(vg, icon2, x + width - xPadding - iconSize, middleYIcon, iconSize, iconSize, color);
