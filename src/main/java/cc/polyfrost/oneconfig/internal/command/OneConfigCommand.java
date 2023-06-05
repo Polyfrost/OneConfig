@@ -27,6 +27,7 @@
 package cc.polyfrost.oneconfig.internal.command;
 
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
+import cc.polyfrost.oneconfig.gui.pages.NotificationsPage;
 import cc.polyfrost.oneconfig.internal.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.internal.config.profiles.Profiles;
 import cc.polyfrost.oneconfig.internal.gui.HudGui;
@@ -54,6 +55,11 @@ public class OneConfigCommand {
     @SubCommand(description = "Destroy the currently open OneConfig GUI.")
     private void destroy() {
         OneConfigGui.INSTANCE = null;
+    }
+
+    @SubCommand(description = "Opens debug notifications GUI.", aliases = {"debug"})
+    private void notifications() {
+        GuiUtils.displayScreen(new NotificationsPage());
     }
 
     @SubCommandGroup(value = "Profile", aliases = {"profiles"})

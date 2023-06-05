@@ -60,6 +60,9 @@ public class NotificationsPage extends Page {
                 y += 16;
                 y += entry.getKey().draw(vg, x + 16, y, 1, 0, false) + 24;
             }
+            y += 16;
+            NanoVGHelper.INSTANCE.drawText(vg, "This is a really bad GUI and should only be used for debug purposes.", x + 16, y + 2, Colors.WHITE, 16, Fonts.BOLD);
+            y += 16;
         }
         size = Math.max(y - originalY, 728);
         if (first || (prevSize != size && scroll == -(prevSize - 728))) {

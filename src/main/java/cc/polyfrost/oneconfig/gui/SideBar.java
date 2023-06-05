@@ -57,7 +57,6 @@ public class SideBar {
 
         add(new BasicButton(width, SIZE_36, "Mods", SVGs.FADERS_HORIZONTAL_BOLD, null, ALIGNMENT_LEFT, ColorPalette.PRIMARY));
         add(new BasicButton(width, SIZE_36, "Profiles", SVGs.USERS_02, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY));
-        add(new BasicButton(width, SIZE_36, "Notifications", SVGs.INFO_ARROW, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY));
 
         add(new BasicButton(width, SIZE_36, "Themes", SVGs.BRUSH, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY));
         add(new BasicButton(width, SIZE_36, "Preferences", SVGs.SETTINGS_02, null, ALIGNMENT_LEFT, ColorPalette.TERTIARY));
@@ -73,8 +72,7 @@ public class SideBar {
     public SideBar() {
         buttons.get(0).setClickAction(new CreditsPage());
         buttons.get(1).setClickAction(new ModsPage());
-        buttons.get(3).setClickAction(() -> OneConfigGui.INSTANCE.openPage(new NotificationsPage()));
-        buttons.get(5).setClickAction(new ModConfigPage(Preferences.getInstance().mod.defaultPage, true));
+        buttons.get(4).setClickAction(new ModConfigPage(Preferences.getInstance().mod.defaultPage, true));
         hudButton.setClickAction(() -> GuiUtils.displayScreen(new HudGui()));
         closeButton.setClickAction(GuiUtils::closeScreen);
         for (BasicButton button : buttons) {
@@ -108,12 +106,11 @@ public class SideBar {
         sidebarY = sidebarY - 26;
         buttons.get(1).draw(vg, x + 16, calcAndIncrementLn(sidebarY), inputHandler);
         buttons.get(2).draw(vg, x + 16, calcAndIncrementLn(sidebarY), inputHandler);
-        buttons.get(3).draw(vg, x + 16, calcAndIncrementLn(sidebarY), inputHandler);
 //        buttons.get(5).draw(vg, x + 16, listNewLn(sidebarY), inputHandler);
         nanoVGHelper.drawText(vg, "PERSONALIZATION", x + 16, calcAndIncrementLn(sidebarY + 26), Colors.WHITE_50, 12, Fonts.SEMIBOLD);
         sidebarY = sidebarY - 26;
+        buttons.get(3).draw(vg, x + 16, calcAndIncrementLn(sidebarY), inputHandler);
         buttons.get(4).draw(vg, x + 16, calcAndIncrementLn(sidebarY), inputHandler);
-        buttons.get(5).draw(vg, x + 16, calcAndIncrementLn(sidebarY), inputHandler);
         sidebarY = 0;
 
         hudButton.draw(vg, x + 16, y + 704, inputHandler);
