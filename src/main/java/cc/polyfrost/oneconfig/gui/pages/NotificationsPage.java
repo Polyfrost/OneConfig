@@ -76,6 +76,12 @@ public class NotificationsPage extends Page {
     }
 
     @Override
+    public int drawStatic(long vg, int x, int y, InputHandler inputHandler) {
+        NanoVGHelper.INSTANCE.drawImage(vg, "/assets/oneconfig/icons/jani.png", x + 1000, y + 728 - 128, 95, 128, getClass());
+        return 0;
+    }
+
+    @Override
     public int getMaxScrollHeight() {
         return size;
     }

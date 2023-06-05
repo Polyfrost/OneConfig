@@ -59,7 +59,8 @@ public class OneConfigCommand {
 
     @SubCommand(description = "Opens debug notifications GUI.", aliases = {"debug"})
     private void notifications() {
-        GuiUtils.displayScreen(new NotificationsPage());
+        GuiUtils.displayScreen(OneConfigGui.create());
+        OneConfigGui.INSTANCE.openPage(new NotificationsPage());
     }
 
     @SubCommandGroup(value = "Profile", aliases = {"profiles"})
