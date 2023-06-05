@@ -33,6 +33,7 @@ import cc.polyfrost.oneconfig.internal.config.profiles.Profiles;
 import cc.polyfrost.oneconfig.internal.gui.HudGui;
 import cc.polyfrost.oneconfig.libs.universal.ChatColor;
 import cc.polyfrost.oneconfig.libs.universal.UChat;
+import cc.polyfrost.oneconfig.utils.TickDelay;
 import cc.polyfrost.oneconfig.utils.commands.annotations.*;
 import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 
@@ -60,7 +61,7 @@ public class OneConfigCommand {
     @SubCommand(description = "Opens debug notifications GUI.", aliases = {"debug"})
     private void notifications() {
         GuiUtils.displayScreen(OneConfigGui.create());
-        OneConfigGui.INSTANCE.openPage(new NotificationsPage());
+        new TickDelay(() -> OneConfigGui.INSTANCE.openPage(new NotificationsPage()), 3);
     }
 
     @SubCommandGroup(value = "Profile", aliases = {"profiles"})
