@@ -131,6 +131,11 @@ public class ModConfigPage extends Page {
     public void finishUpAndClose() {
         page.mod.config.save();
         OneConfigGui.INSTANCE.closeColorSelector();
+        for (OptionSubcategory subCategory : getSubcategories()) {
+            for (BasicOption option : subCategory.options) {
+                option.finishUpAndClose();
+            }
+        }
     }
 
     @Override
