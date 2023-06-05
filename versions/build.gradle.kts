@@ -121,14 +121,6 @@ val shadeOnly: Configuration by configurations.creating
 
 val shadeNoJar: Configuration by configurations.creating
 
-sourceSets {
-    main {
-        if (project.platform.isForge) {
-            output.setResourcesDir(java.classesDirectory)
-        }
-    }
-}
-
 private enum class RepackedVersion(val string: String) {
     LEGACY("legacy"), PRE119NOARM("pre-1.19-noarm"), PRE119ARM("pre-1.19-arm"), POST119("post-1.19");
 
@@ -151,18 +143,7 @@ dependencies {
     include(libs.caffeine, relocate = true)
 
     // for other mods and universalcraft
-    api(libs.bundles.kotlin)
-    shadeOnly(libs.bundles.kotlin)
-
-    constraints {
-        fun requireShadedVersion(name: String, requestedVersion: String) =
-            add("shadeOnly", name) {
-                version {
-                    require(requestedVersion)
-                }
-            }
-        requireShadedVersion("org.jetbrains.kotlin:kotlin-stdlib", "1.8.10")
-    }
+    include(libs.bundles.kotlin)
 
     if (platform.isLegacyForge) {
         implementationNoPom(shadeNoJar(libs.mixin.get().run { "$group:$name:$version" }) {
@@ -198,7 +179,7 @@ dependencies {
 
     modRuntimeOnly("me.djtheredstoner:DevAuth-" +
             (if (platform.isForge) { if (platform.isLegacyForge) "forge-legacy" else "forge-latest" } else "fabric")
-            + ":1.1.0")
+            + ":1.1.2")
 
     configurations.named(JavaPlugin.COMPILE_CLASSPATH_CONFIGURATION_NAME) { extendsFrom(shadeProject) }
     configurations.named(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME) { extendsFrom(shadeProject) }
