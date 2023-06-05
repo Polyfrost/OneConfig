@@ -33,7 +33,7 @@ import cc.polyfrost.oneconfig.api.v1.config.option.type.options.IncludeOptionTyp
 import cc.polyfrost.oneconfig.api.v1.config.option.type.options.SliderOptionType;
 import cc.polyfrost.oneconfig.api.v1.config.option.type.options.BooleanOptionType;
 import cc.polyfrost.oneconfig.api.v1.config.option.type.options.TextOptionType;
-import cc.polyfrost.oneconfig.api.v1.config.option.type.options.dropdown.DropdownOptionType;
+import cc.polyfrost.oneconfig.api.v1.config.option.type.options.DropdownOptionType;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;

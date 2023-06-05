@@ -24,72 +24,73 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.api.v1.config.option.type.options.dropdown;
+package cc.polyfrost.oneconfig.api.v1.config.option.type.options;
 
 import cc.polyfrost.oneconfig.api.v1.config.option.type.OptionType;
-import cc.polyfrost.oneconfig.api.v1.config.option.type.annotations.Dropdown;
+import cc.polyfrost.oneconfig.api.v1.config.option.type.annotations.DualOption;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
-public class DropdownOptionType implements OptionType {
+public class DualOptionType implements OptionType {
+
     @Override
     public String name() {
-        return "Dropdown";
+        return "Dual Option";
     }
 
     @Override
     public boolean isSupportedClass(Class<?> type) {
-        return (type.isAssignableFrom(Integer.class) || type.isAssignableFrom(Integer.TYPE)) || type.isEnum();
+        return (type.isAssignableFrom(Integer.class) || type.isAssignableFrom(Integer.TYPE)) || type.isEnum() || type.isAssignableFrom(Boolean.TYPE) || type.isAssignableFrom(Boolean.class);
     }
 
     @Override
     public String getName(Field field) {
-        return field.getAnnotation(Dropdown.class).name();
+        return field.getAnnotation(DualOption.class).name();
     }
 
     @Override
     public String getName(Method method) {
-        return method.getAnnotation(Dropdown.class).name();
+        return method.getAnnotation(DualOption.class).name();
     }
 
     @Override
     public String getDescription(Field field) {
-        return field.getAnnotation(Dropdown.class).description();
+        return field.getAnnotation(DualOption.class).description();
     }
 
     @Override
     public String getDescription(Method method) {
-        return method.getAnnotation(Dropdown.class).description();
+        return method.getAnnotation(DualOption.class).description();
     }
 
     @Override
     public String getCategory(Field field) {
-        return field.getAnnotation(Dropdown.class).category();
+        return field.getAnnotation(DualOption.class).category();
     }
 
     @Override
     public String getCategory(Method method) {
-        return method.getAnnotation(Dropdown.class).category();
+        return method.getAnnotation(DualOption.class).category();
     }
 
     @Override
     public String getSubcategory(Field field) {
-        return field.getAnnotation(Dropdown.class).subcategory();
+        return field.getAnnotation(DualOption.class).subcategory();
     }
 
     @Override
     public String getSubcategory(Method method) {
-        return method.getAnnotation(Dropdown.class).subcategory();
+        return method.getAnnotation(DualOption.class).subcategory();
     }
 
     @Override
     public String[] getTags(Field field) {
-        return field.getAnnotation(Dropdown.class).tags();
+        return field.getAnnotation(DualOption.class).tags();
     }
 
     @Override
     public String[] getTags(Method method) {
-        return method.getAnnotation(Dropdown.class).tags();
+        return method.getAnnotation(DualOption.class).tags();
     }
 }

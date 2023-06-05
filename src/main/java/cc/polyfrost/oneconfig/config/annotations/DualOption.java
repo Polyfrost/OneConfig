@@ -34,6 +34,10 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * @deprecated Use {@link cc.polyfrost.oneconfig.api.v1.config.option.type.annotations.DualOption} instead
+ */
+@Deprecated
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 @Option(type = OptionType.DUAL_OPTION)

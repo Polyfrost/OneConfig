@@ -24,31 +24,36 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.config.annotations;
+package cc.polyfrost.oneconfig.api.v1.config.option.type.annotations;
 
-import cc.polyfrost.oneconfig.config.data.OptionType;
-import cc.polyfrost.oneconfig.internal.config.annotations.Option;
+import cc.polyfrost.oneconfig.api.v1.config.option.type.OptionType;
+import cc.polyfrost.oneconfig.api.v1.config.option.type.options.NumberOptionType;
+import cc.polyfrost.oneconfig.api.v1.config.option.type.options.SliderOptionType;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-/**
- * @deprecated See {@link cc.polyfrost.oneconfig.api.v1.config.option.type.annotations.KeyBind}
- */
-@Deprecated
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
-@Option(type = OptionType.KEYBIND)
-public @interface KeyBind {
+@OptionType.TypeTarget(NumberOptionType.class)
+public @interface Number {
     String name();
 
-    String description() default "";
+    float min();
 
-    int size() default 1;
+    float max();
+
+    float step() default 0;
+
+    String description() default "";
 
     String category() default "General";
 
     String subcategory() default "";
+
+    int size() default 1;
+
+    String[] tags() default {};
 }

@@ -24,31 +24,30 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.config.annotations;
+package cc.polyfrost.oneconfig.api.v1.config.option.type.annotations;
 
-import cc.polyfrost.oneconfig.config.data.OptionType;
-import cc.polyfrost.oneconfig.internal.config.annotations.Option;
+import cc.polyfrost.oneconfig.api.v1.config.option.type.OptionType;
+import cc.polyfrost.oneconfig.api.v1.config.option.type.options.KeyBindOptionType;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-/**
- * @deprecated See {@link cc.polyfrost.oneconfig.api.v1.config.option.type.annotations.KeyBind}
- */
-@Deprecated
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
-@Option(type = OptionType.KEYBIND)
+@OptionType.TypeTarget(KeyBindOptionType.class)
 public @interface KeyBind {
+
     String name();
 
     String description() default "";
 
-    int size() default 1;
-
     String category() default "General";
 
     String subcategory() default "";
+
+    int size() default 1;
+
+    String[] tags() default {};
 }

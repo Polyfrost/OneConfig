@@ -33,7 +33,9 @@ import java.lang.annotation.Target;
 
 /**
  * For documentation please see: <a href="https://docs.polyfrost.cc/oneconfig/config/adding-options/custom-options">https://docs.polyfrost.cc/oneconfig/config/adding-options/custom-options</a>
+ * @deprecated See {@link cc.polyfrost.oneconfig.api.v1.config.option.type.OptionType}
  */
+@Deprecated
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.FIELD, ElementType.ANNOTATION_TYPE})
 public @interface CustomOption {

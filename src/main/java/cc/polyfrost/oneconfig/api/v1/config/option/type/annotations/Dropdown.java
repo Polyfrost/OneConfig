@@ -26,7 +26,7 @@
 
 package cc.polyfrost.oneconfig.api.v1.config.option.type.annotations;
 
-import cc.polyfrost.oneconfig.api.v1.config.option.type.options.dropdown.DropdownOptionType;
+import cc.polyfrost.oneconfig.api.v1.config.option.type.options.DropdownOptionType;
 import cc.polyfrost.oneconfig.api.v1.config.option.type.OptionType;
 
 import java.lang.annotation.ElementType;

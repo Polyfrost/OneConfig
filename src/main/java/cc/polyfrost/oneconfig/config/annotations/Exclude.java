@@ -35,7 +35,9 @@ import java.lang.annotation.Target;
  * Excludes fields from being serialized or deserialized by OneConfig's Config and HUD
  * system.
  * This can be used interchangeably with the transient modifier built into Java.
+ * @deprecated Config V1 does not serialize fields by default, see {@link cc.polyfrost.oneconfig.api.v1.config.option.type.annotations.Include} for more information.
  */
+@Deprecated
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.FIELD, ElementType.TYPE})
 public @interface Exclude {
