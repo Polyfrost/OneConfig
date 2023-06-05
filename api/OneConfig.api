@@ -148,11 +148,42 @@ public abstract interface annotation class cc/polyfrost/oneconfig/api/v1/config/
 	public abstract fun tags ()[Ljava/lang/String;
 }
 
+public abstract interface annotation class cc/polyfrost/oneconfig/api/v1/config/option/type/annotations/DualOption : java/lang/annotation/Annotation {
+	public abstract fun category ()Ljava/lang/String;
+	public abstract fun description ()Ljava/lang/String;
+	public abstract fun name ()Ljava/lang/String;
+	public abstract fun options ()[Ljava/lang/String;
+	public abstract fun size ()I
+	public abstract fun subcategory ()Ljava/lang/String;
+	public abstract fun tags ()[Ljava/lang/String;
+}
+
 public abstract interface annotation class cc/polyfrost/oneconfig/api/v1/config/option/type/annotations/Include : java/lang/annotation/Annotation {
 	public abstract fun category ()Ljava/lang/String;
 	public abstract fun description ()Ljava/lang/String;
 	public abstract fun name ()Ljava/lang/String;
 	public abstract fun subcategory ()Ljava/lang/String;
+}
+
+public abstract interface annotation class cc/polyfrost/oneconfig/api/v1/config/option/type/annotations/KeyBind : java/lang/annotation/Annotation {
+	public abstract fun category ()Ljava/lang/String;
+	public abstract fun description ()Ljava/lang/String;
+	public abstract fun name ()Ljava/lang/String;
+	public abstract fun size ()I
+	public abstract fun subcategory ()Ljava/lang/String;
+	public abstract fun tags ()[Ljava/lang/String;
+}
+
+public abstract interface annotation class cc/polyfrost/oneconfig/api/v1/config/option/type/annotations/Number : java/lang/annotation/Annotation {
+	public abstract fun category ()Ljava/lang/String;
+	public abstract fun description ()Ljava/lang/String;
+	public abstract fun max ()F
+	public abstract fun min ()F
+	public abstract fun name ()Ljava/lang/String;
+	public abstract fun size ()I
+	public abstract fun step ()F
+	public abstract fun subcategory ()Ljava/lang/String;
+	public abstract fun tags ()[Ljava/lang/String;
 }
 
 public abstract interface annotation class cc/polyfrost/oneconfig/api/v1/config/option/type/annotations/Slider : java/lang/annotation/Annotation {
@@ -228,7 +259,71 @@ public class cc/polyfrost/oneconfig/api/v1/config/option/type/options/ColorOptio
 	public fun name ()Ljava/lang/String;
 }
 
+public class cc/polyfrost/oneconfig/api/v1/config/option/type/options/DropdownOptionType : cc/polyfrost/oneconfig/api/v1/config/option/type/OptionType {
+	public fun <init> ()V
+	public fun getCategory (Ljava/lang/reflect/Field;)Ljava/lang/String;
+	public fun getCategory (Ljava/lang/reflect/Method;)Ljava/lang/String;
+	public fun getDescription (Ljava/lang/reflect/Field;)Ljava/lang/String;
+	public fun getDescription (Ljava/lang/reflect/Method;)Ljava/lang/String;
+	public fun getName (Ljava/lang/reflect/Field;)Ljava/lang/String;
+	public fun getName (Ljava/lang/reflect/Method;)Ljava/lang/String;
+	public fun getSubcategory (Ljava/lang/reflect/Field;)Ljava/lang/String;
+	public fun getSubcategory (Ljava/lang/reflect/Method;)Ljava/lang/String;
+	public fun getTags (Ljava/lang/reflect/Field;)[Ljava/lang/String;
+	public fun getTags (Ljava/lang/reflect/Method;)[Ljava/lang/String;
+	public fun isSupportedClass (Ljava/lang/Class;)Z
+	public fun name ()Ljava/lang/String;
+}
+
+public class cc/polyfrost/oneconfig/api/v1/config/option/type/options/DualOptionType : cc/polyfrost/oneconfig/api/v1/config/option/type/OptionType {
+	public fun <init> ()V
+	public fun getCategory (Ljava/lang/reflect/Field;)Ljava/lang/String;
+	public fun getCategory (Ljava/lang/reflect/Method;)Ljava/lang/String;
+	public fun getDescription (Ljava/lang/reflect/Field;)Ljava/lang/String;
+	public fun getDescription (Ljava/lang/reflect/Method;)Ljava/lang/String;
+	public fun getName (Ljava/lang/reflect/Field;)Ljava/lang/String;
+	public fun getName (Ljava/lang/reflect/Method;)Ljava/lang/String;
+	public fun getSubcategory (Ljava/lang/reflect/Field;)Ljava/lang/String;
+	public fun getSubcategory (Ljava/lang/reflect/Method;)Ljava/lang/String;
+	public fun getTags (Ljava/lang/reflect/Field;)[Ljava/lang/String;
+	public fun getTags (Ljava/lang/reflect/Method;)[Ljava/lang/String;
+	public fun isSupportedClass (Ljava/lang/Class;)Z
+	public fun name ()Ljava/lang/String;
+}
+
 public class cc/polyfrost/oneconfig/api/v1/config/option/type/options/IncludeOptionType : cc/polyfrost/oneconfig/api/v1/config/option/type/OptionType {
+	public fun <init> ()V
+	public fun getCategory (Ljava/lang/reflect/Field;)Ljava/lang/String;
+	public fun getCategory (Ljava/lang/reflect/Method;)Ljava/lang/String;
+	public fun getDescription (Ljava/lang/reflect/Field;)Ljava/lang/String;
+	public fun getDescription (Ljava/lang/reflect/Method;)Ljava/lang/String;
+	public fun getName (Ljava/lang/reflect/Field;)Ljava/lang/String;
+	public fun getName (Ljava/lang/reflect/Method;)Ljava/lang/String;
+	public fun getSubcategory (Ljava/lang/reflect/Field;)Ljava/lang/String;
+	public fun getSubcategory (Ljava/lang/reflect/Method;)Ljava/lang/String;
+	public fun getTags (Ljava/lang/reflect/Field;)[Ljava/lang/String;
+	public fun getTags (Ljava/lang/reflect/Method;)[Ljava/lang/String;
+	public fun isSupportedClass (Ljava/lang/Class;)Z
+	public fun name ()Ljava/lang/String;
+}
+
+public class cc/polyfrost/oneconfig/api/v1/config/option/type/options/KeyBindOptionType : cc/polyfrost/oneconfig/api/v1/config/option/type/OptionType {
+	public fun <init> ()V
+	public fun getCategory (Ljava/lang/reflect/Field;)Ljava/lang/String;
+	public fun getCategory (Ljava/lang/reflect/Method;)Ljava/lang/String;
+	public fun getDescription (Ljava/lang/reflect/Field;)Ljava/lang/String;
+	public fun getDescription (Ljava/lang/reflect/Method;)Ljava/lang/String;
+	public fun getName (Ljava/lang/reflect/Field;)Ljava/lang/String;
+	public fun getName (Ljava/lang/reflect/Method;)Ljava/lang/String;
+	public fun getSubcategory (Ljava/lang/reflect/Field;)Ljava/lang/String;
+	public fun getSubcategory (Ljava/lang/reflect/Method;)Ljava/lang/String;
+	public fun getTags (Ljava/lang/reflect/Field;)[Ljava/lang/String;
+	public fun getTags (Ljava/lang/reflect/Method;)[Ljava/lang/String;
+	public fun isSupportedClass (Ljava/lang/Class;)Z
+	public fun name ()Ljava/lang/String;
+}
+
+public class cc/polyfrost/oneconfig/api/v1/config/option/type/options/NumberOptionType : cc/polyfrost/oneconfig/api/v1/config/option/type/OptionType {
 	public fun <init> ()V
 	public fun getCategory (Ljava/lang/reflect/Field;)Ljava/lang/String;
 	public fun getCategory (Ljava/lang/reflect/Method;)Ljava/lang/String;
@@ -261,22 +356,6 @@ public class cc/polyfrost/oneconfig/api/v1/config/option/type/options/SliderOpti
 }
 
 public class cc/polyfrost/oneconfig/api/v1/config/option/type/options/TextOptionType : cc/polyfrost/oneconfig/api/v1/config/option/type/OptionType {
-	public fun <init> ()V
-	public fun getCategory (Ljava/lang/reflect/Field;)Ljava/lang/String;
-	public fun getCategory (Ljava/lang/reflect/Method;)Ljava/lang/String;
-	public fun getDescription (Ljava/lang/reflect/Field;)Ljava/lang/String;
-	public fun getDescription (Ljava/lang/reflect/Method;)Ljava/lang/String;
-	public fun getName (Ljava/lang/reflect/Field;)Ljava/lang/String;
-	public fun getName (Ljava/lang/reflect/Method;)Ljava/lang/String;
-	public fun getSubcategory (Ljava/lang/reflect/Field;)Ljava/lang/String;
-	public fun getSubcategory (Ljava/lang/reflect/Method;)Ljava/lang/String;
-	public fun getTags (Ljava/lang/reflect/Field;)[Ljava/lang/String;
-	public fun getTags (Ljava/lang/reflect/Method;)[Ljava/lang/String;
-	public fun isSupportedClass (Ljava/lang/Class;)Z
-	public fun name ()Ljava/lang/String;
-}
-
-public class cc/polyfrost/oneconfig/api/v1/config/option/type/options/dropdown/DropdownOptionType : cc/polyfrost/oneconfig/api/v1/config/option/type/OptionType {
 	public fun <init> ()V
 	public fun getCategory (Ljava/lang/reflect/Field;)Ljava/lang/String;
 	public fun getCategory (Ljava/lang/reflect/Method;)Ljava/lang/String;
