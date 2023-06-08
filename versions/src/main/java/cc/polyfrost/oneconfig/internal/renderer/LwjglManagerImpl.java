@@ -357,7 +357,7 @@ public class LwjglManagerImpl
         ;
         //#if MC>11202 && MC<=11900
         //$$ String osArch = System.getProperty("os.arch");
-        //$$ jarName = jarName + "-" + ((osArch.startsWith("arm") || osArch.startsWith("aarch64")) ? "arm" : "noarm");
+        //$$ jarName = jarName + "-" + ((osArch.startsWith("arm") || osArch.startsWith("aarch64") || !osArch.contains("64")) ? "arm" : "noarm");
         //#endif
         try (InputStream in = LwjglManagerImpl.class.getResourceAsStream("/" + jarName + ".jar")) {
             assert in != null;
