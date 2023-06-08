@@ -3,7 +3,7 @@ public class cc/polyfrost/oneconfig/config/Config {
 	protected final field configFile Ljava/lang/String;
 	public field enabled Z
 	protected final field gson Lcom/google/gson/Gson;
-	public field mod Lcc/polyfrost/oneconfig/config/data/Mod;
+	public final field mod Lcc/polyfrost/oneconfig/config/data/Mod;
 	protected final field nonProfileSpecificGson Lcom/google/gson/Gson;
 	public final field optionNames Ljava/util/HashMap;
 	public fun <init> (Lcc/polyfrost/oneconfig/config/data/Mod;Ljava/lang/String;)V
@@ -16,6 +16,7 @@ public class cc/polyfrost/oneconfig/config/Config {
 	protected fun addGsonOptions (Lcom/google/gson/GsonBuilder;)Lcom/google/gson/GsonBuilder;
 	protected final fun addListener (Ljava/lang/String;Ljava/lang/Runnable;)V
 	protected final fun generateOptionList (Ljava/lang/Object;Lcc/polyfrost/oneconfig/config/elements/OptionPage;Lcc/polyfrost/oneconfig/config/data/Mod;Z)V
+	protected final fun generateOptionList (Ljava/lang/Object;Ljava/lang/Class;Lcc/polyfrost/oneconfig/config/elements/OptionPage;Lcc/polyfrost/oneconfig/config/data/Mod;Z)V
 	protected fun getCustomOption (Ljava/lang/reflect/Field;Lcc/polyfrost/oneconfig/config/annotations/CustomOption;Lcc/polyfrost/oneconfig/config/elements/OptionPage;Lcc/polyfrost/oneconfig/config/data/Mod;Z)Lcc/polyfrost/oneconfig/config/elements/BasicOption;
 	protected final fun hideIf (Ljava/lang/String;Ljava/lang/String;)V
 	protected final fun hideIf (Ljava/lang/String;Ljava/util/function/Supplier;)V
@@ -225,15 +226,32 @@ public class cc/polyfrost/oneconfig/config/core/OneKeyBind {
 	protected field hasRun Z
 	protected final field keyBinds Ljava/util/ArrayList;
 	protected field runnable Ljava/lang/Runnable;
+	public fun <init> ()V
 	public fun <init> ([I)V
+	public fun <init> ([Lcc/polyfrost/oneconfig/config/core/OneKeyBind$Key;)V
 	public fun addKey (I)V
+	public fun addKey (Lcc/polyfrost/oneconfig/config/core/OneKeyBind$Key;)V
 	public fun clearKeys ()V
 	public fun getDisplay ()Ljava/lang/String;
 	public fun getKeyBinds ()Ljava/util/ArrayList;
+	public fun getKeys ()Ljava/util/ArrayList;
 	public fun getSize ()I
 	public fun isActive ()Z
 	public fun run ()V
 	public fun setRunnable (Ljava/lang/Runnable;)V
+}
+
+public class cc/polyfrost/oneconfig/config/core/OneKeyBind$Key {
+	public fun <init> (ILcc/polyfrost/oneconfig/config/core/OneKeyBind$Key$Type;)V
+	public fun getKey ()I
+	public fun getRawKey ()I
+}
+
+public final class cc/polyfrost/oneconfig/config/core/OneKeyBind$Key$Type : java/lang/Enum {
+	public static final field KEYBOARD Lcc/polyfrost/oneconfig/config/core/OneKeyBind$Key$Type;
+	public static final field MOUSE Lcc/polyfrost/oneconfig/config/core/OneKeyBind$Key$Type;
+	public static fun valueOf (Ljava/lang/String;)Lcc/polyfrost/oneconfig/config/core/OneKeyBind$Key$Type;
+	public static fun values ()[Lcc/polyfrost/oneconfig/config/core/OneKeyBind$Key$Type;
 }
 
 public class cc/polyfrost/oneconfig/config/core/exceptions/InvalidTypeException : java/lang/RuntimeException {
@@ -331,6 +349,7 @@ public abstract class cc/polyfrost/oneconfig/config/elements/BasicOption {
 	public abstract fun draw (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
 	public fun drawDescription (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
 	public fun drawLast (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
+	public fun finishUpAndClose ()V
 	public fun get ()Ljava/lang/Object;
 	public fun getField ()Ljava/lang/reflect/Field;
 	public abstract fun getHeight ()I
@@ -485,11 +504,24 @@ public class cc/polyfrost/oneconfig/events/event/LocrawEvent {
 }
 
 public class cc/polyfrost/oneconfig/events/event/MouseInputEvent {
-	public fun <init> ()V
+	public final field button I
+	public fun <init> (I)V
 }
 
 public class cc/polyfrost/oneconfig/events/event/PreShutdownEvent {
 	public fun <init> ()V
+}
+
+public class cc/polyfrost/oneconfig/events/event/RawKeyEvent {
+	public final field key I
+	public final field state I
+	public fun <init> (II)V
+}
+
+public class cc/polyfrost/oneconfig/events/event/RawMouseEvent {
+	public final field button I
+	public final field state I
+	public fun <init> (II)V
 }
 
 public class cc/polyfrost/oneconfig/events/event/ReceivePacketEvent : cc/polyfrost/oneconfig/events/event/CancellableEvent {
@@ -820,7 +852,9 @@ public class cc/polyfrost/oneconfig/gui/elements/config/ConfigDropdown : cc/poly
 	public static fun create (Ljava/lang/reflect/Field;Ljava/lang/Object;)Lcc/polyfrost/oneconfig/gui/elements/config/ConfigDropdown;
 	public fun draw (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
 	public fun drawLast (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
+	public fun finishUpAndClose ()V
 	public fun getHeight ()I
+	public fun keyTyped (CI)V
 	protected fun shouldDrawDescription ()Z
 }
 
@@ -1479,7 +1513,10 @@ public final class cc/polyfrost/oneconfig/utils/IOUtils {
 public class cc/polyfrost/oneconfig/utils/InputHandler {
 	public fun <init> ()V
 	public fun blockAllInput ()Lcc/polyfrost/oneconfig/renderer/scissor/Scissor;
+	public fun blockDWheel ()V
 	public fun blockInputArea (FFFF)Lcc/polyfrost/oneconfig/renderer/scissor/Scissor;
+	public fun getDWheel ()D
+	public fun getDWheel (Z)D
 	public fun isAreaClicked (FFFF)Z
 	public fun isAreaClicked (FFFFZ)Z
 	public fun isAreaHovered (FFFF)Z
@@ -1495,6 +1532,7 @@ public class cc/polyfrost/oneconfig/utils/InputHandler {
 	public fun scale (DD)V
 	public fun stopBlock (Lcc/polyfrost/oneconfig/renderer/scissor/Scissor;)V
 	public fun stopBlockingInput ()V
+	public fun unblockDWheel ()V
 }
 
 public final class cc/polyfrost/oneconfig/utils/JsonUtils {
@@ -1562,6 +1600,7 @@ public final class cc/polyfrost/oneconfig/utils/Notifications {
 public class cc/polyfrost/oneconfig/utils/SearchUtils {
 	public fun <init> ()V
 	public static fun isSimilar (Ljava/lang/String;Ljava/lang/String;)Z
+	public static fun isSimilar (Ljava/lang/String;Ljava/lang/String;I)Z
 }
 
 public final class cc/polyfrost/oneconfig/utils/SimpleProfiler {

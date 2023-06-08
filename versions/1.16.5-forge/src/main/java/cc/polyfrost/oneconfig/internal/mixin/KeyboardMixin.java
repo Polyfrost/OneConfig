@@ -28,14 +28,23 @@ package cc.polyfrost.oneconfig.internal.mixin;
 
 import cc.polyfrost.oneconfig.events.EventManager;
 import cc.polyfrost.oneconfig.events.event.KeyInputEvent;
+import cc.polyfrost.oneconfig.events.event.RawKeyEvent;
 import net.minecraft.client.KeyboardListener;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(KeyboardListener.class)
 public class KeyboardMixin {
+
+    @ModifyVariable(method = "onKeyEvent", at = @At(value = "STORE"), ordinal = 0)
+    private boolean onKeyEvent(boolean original, long windowPointer, int key, int scanCode, int action, int modifiers) {
+        EventManager.INSTANCE.register(new RawKeyEvent(key, action));
+        return original;
+    }
+
     @Inject(method = "onKeyEvent", at = @At(
             //#if FORGE
             value = "INVOKE", target = "Lnet/minecraftforge/client/ForgeHooksClient;fireKeyInput(IIII)V", remap = false
@@ -43,7 +52,7 @@ public class KeyboardMixin {
             //$$ "TAIL"
             //#endif
     ), remap = true)
-    private void onKeyEvent(long windowPointer, int key, int scanCode, int action, int modifiers, CallbackInfo ci) {
+    private void onKeyInputEvent(long windowPointer, int key, int scanCode, int action, int modifiers, CallbackInfo ci) {
         EventManager.INSTANCE.post(new KeyInputEvent());
     }
 }
