@@ -57,12 +57,14 @@ import net.minecraftforge.fml.common.ModContainer;
 import cc.polyfrost.oneconfig.utils.IgnoredGuiFactory;
 //#endif
 
-//#if MC<=11202 && FORGE==1
+//#if MC<=11202
+//#if FORGE==1
 import net.minecraftforge.fml.common.versioning.ArtifactVersion;
 import net.minecraftforge.fml.client.FMLClientHandler;
 import net.minecraftforge.fml.client.IModGuiFactory;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.ModMetadata;
+//#endif
 //#endif
 
 import java.util.Locale;
@@ -81,6 +83,8 @@ import java.util.Objects;
 //#endif
 public class OneConfig {
 
+    public static final OneConfig INSTANCE = new OneConfig();
+
     public OneConfig() {
         EventManager.INSTANCE.register(this);
     }
@@ -93,7 +97,7 @@ public class OneConfig {
      * <p><b>SHOULD NOT BE CALLED!</b></p>
      */
     @SuppressWarnings("ResultOfMethodCallIgnored")
-    public static void init() {
+    public void init() {
         if (initialized) return;
         if (OneConfigConfig.getInstance() == null) {
             OneConfigConfig.getInstance();
@@ -158,7 +162,7 @@ public class OneConfig {
 
     //#if FORGE==1 && MC<=11202
 
-    private static void handleForgeCommand(ModContainer mod) {
+    private void handleForgeCommand(ModContainer mod) {
         for (Mod configMod : ConfigCore.mods) {
             final String configModName = configMod.name.toLowerCase(Locale.ENGLISH).replace(" ", "");
             if (Objects.equals(configModName, mod.getName().toLowerCase(Locale.ENGLISH)) || Objects.equals(configModName, mod.getModId())) {
@@ -198,7 +202,7 @@ public class OneConfig {
         }
     }
 
-    private static void handleForgeGui(ModContainer mod) {
+    private void handleForgeGui(ModContainer mod) {
         if ("fml".equalsIgnoreCase(mod.getModId())) {
             return;
         }

@@ -31,19 +31,33 @@ import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
 import cc.polyfrost.oneconfig.platform.Platform;
 
 import java.util.ArrayList;
+import java.util.Collections;
 
 public class OneKeyBind {
-    protected final ArrayList<Integer> keyBinds = new ArrayList<>();
+    protected final ArrayList<Key> keyBinds = new ArrayList<>();
     protected transient Runnable runnable;
     protected transient boolean hasRun;
 
     /**
      * @param keys  The bound keys
+     * @deprecated Use {@link #OneKeyBind(Key...)} instead
      */
+    @Deprecated
     public OneKeyBind(int... keys) {
         for (int key : keys) {
-            keyBinds.add(key);
+            keyBinds.add(new Key(key, Key.Type.KEYBOARD));
         }
+    }
+
+    /**
+     * @param keys  The bound keys
+     */
+    public OneKeyBind(Key... keys) {
+        Collections.addAll(keyBinds, keys);
+    }
+
+    public OneKeyBind() {
+
     }
 
     /**
@@ -51,8 +65,8 @@ public class OneKeyBind {
      */
     public boolean isActive() {
         if (keyBinds.size() == 0) return false;
-        for (int keyBind : keyBinds) {
-            if (!UKeyboard.isKeyDown(keyBind)) {
+        for (Key keyBind : keyBinds) {
+            if (!UKeyboard.isKeyDown(keyBind.getKey())) {
                 hasRun = false;
                 return false;
             }
@@ -74,18 +88,30 @@ public class OneKeyBind {
      */
     public String getDisplay() {
         StringBuilder sb = new StringBuilder();
-        for (int keyBind : keyBinds) {
+        for (Key keyBind : keyBinds) {
             if (sb.length() != 0) sb.append(" + ");
-            sb.append(Platform.getI18nPlatform().getKeyName(keyBind, -1));
+            sb.append(Platform.getI18nPlatform().getKeyName(keyBind.getKey(), -1));
         }
         return sb.toString().trim();
     }
 
     /**
      * @param key   Add a Key to keys
+     * @deprecated Use {@link #addKey(Key)} instead
      */
     public void addKey(int key) {
-        if (!keyBinds.contains(key)) keyBinds.add(key);
+        for (Key keyBind : keyBinds) {
+            if (keyBind.getRawKey() == key) return;
+        }
+        keyBinds.add(new Key(key, Key.Type.KEYBOARD));
+    }
+
+    /**
+     * @param key   Add a Key to keys
+     */
+    public void addKey(Key key) {
+        if (keyBinds.contains(key)) return;
+        keyBinds.add(key);
     }
 
     /**
@@ -112,8 +138,44 @@ public class OneKeyBind {
 
     /**
      * @return The key in the keys List
+     * @deprecated Use {@link #getKeys()} instead
      */
     public ArrayList<Integer> getKeyBinds() {
+        ArrayList<Integer> keyBinds = new ArrayList<>();
+        for (Key keyBind : this.keyBinds) {
+            keyBinds.add(keyBind.getRawKey());
+        }
         return keyBinds;
+    }
+
+    /**
+     * @return The key in the keys List
+     */
+    public ArrayList<Key> getKeys() {
+        return keyBinds;
+    }
+
+    public static class Key {
+        private final int key;
+        private final Type type;
+
+        public Key(int key, Type type) {
+            this.key = key;
+            this.type = type;
+        }
+
+        public int getRawKey() {
+            return key;
+        }
+
+        public int getKey() {
+            if (Platform.getInstance().getMinecraftVersion() < 11300 && type == Type.MOUSE) return key - 100;
+            return key;
+        }
+
+        public enum Type {
+            KEYBOARD,
+            MOUSE
+        }
     }
 }
