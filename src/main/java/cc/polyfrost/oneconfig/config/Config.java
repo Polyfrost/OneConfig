@@ -499,7 +499,7 @@ public class Config {
      * }
      * }</pre>
      */
-    public void preload() {
+    public final void preload() {
 
     }
 }
