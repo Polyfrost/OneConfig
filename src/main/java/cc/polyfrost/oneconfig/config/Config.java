@@ -472,4 +472,34 @@ public class Config {
         ConfigCore.sortMods();
         return null;
     }
+
+    /**
+     * Literally does nothing.
+     * <p>
+     *     As configs HAVE to be initialized before your mod loader's post-init, instances need to be created before that.
+     *     Hence, this method exists so config instances which are located in the actual class instead of the main mod class can be created.
+     * </p>
+     * For example:
+     * <pre>{@code
+     * public class MyConfig {
+     *     // The INSTANCE class is located here, and initialize is called in the constructor.
+     *     // This means that if we do not call preload, the config will not be initialized in time.
+     *     public static final MyConfig INSTANCE = new MyConfig();
+     *
+     *     public MyConfig() {
+     *         super(whatever);
+     *         initialize();
+     *     }
+     * }
+     *
+     * public class MyMod {
+     *     public void initialize() {
+     *         MyConfig.INSTANCE.preload(); // This makes sure the config is initialized before the mod loader's post-init.
+     *     }
+     * }
+     * }</pre>
+     */
+    public void preload() {
+
+    }
 }
