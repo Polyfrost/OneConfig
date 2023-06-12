@@ -62,14 +62,16 @@ import java.util.function.Supplier;
 public class OneConfig {
     private final String name;
     private final Path path;
+    private final String[] tags;
     private final Category[] categories;
     private final OneCollection<Property> properties;
     private final OptionProcessor optionProcessor = new OptionProcessor();
     private List<OptionHolder> optionHolders;
 
-    public OneConfig(String name, Path path, OneCollection<Property> properties, Category... categories) {
+    public OneConfig(String name, Path path, String[] tags, OneCollection<Property> properties, Category... categories) {
         this.name = name;
         this.path = path;
+        this.tags = tags == null ? new String[0] : tags;
         this.properties = properties;
         this.categories = categories;
         if (!properties.contains(Property.SERIALIZE_BASED_ON_NAME) && !properties.contains(Property.SERIALIZE_BASED_ON_FIELD)) {
@@ -80,8 +82,12 @@ public class OneConfig {
         }
     }
 
+    public OneConfig(String name, File file, String[] tags, Category... categories) {
+        this(name, file.toPath(), tags, new OneCollection<>(), categories);
+    }
+
     public OneConfig(String name, File file, Category... categories) {
-        this(name, file.toPath(), new OneCollection<>(), categories);
+        this(name, file.toPath(), null, new OneCollection<>(), categories);
     }
 
     /**
