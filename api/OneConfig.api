@@ -24,7 +24,7 @@ public class cc/polyfrost/oneconfig/config/Config {
 	public fun initialize ()V
 	public fun load ()V
 	public fun openGui ()V
-	public fun preload ()V
+	public final fun preload ()V
 	public fun reInitialize ()V
 	public static fun register (Lcc/polyfrost/oneconfig/config/data/Mod;)Lcc/polyfrost/oneconfig/config/data/Mod;
 	protected final fun registerKeyBind (Lcc/polyfrost/oneconfig/config/core/OneKeyBind;Ljava/lang/Runnable;)V
