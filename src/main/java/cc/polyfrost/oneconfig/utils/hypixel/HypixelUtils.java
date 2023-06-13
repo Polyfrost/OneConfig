@@ -28,8 +28,6 @@ package cc.polyfrost.oneconfig.utils.hypixel;
 
 import cc.polyfrost.oneconfig.internal.utils.Deprecator;
 import cc.polyfrost.oneconfig.platform.Platform;
-import cc.polyfrost.oneconfig.utils.NetworkUtils;
-import com.google.gson.JsonObject;
 
 import java.util.Locale;
 
@@ -59,13 +57,12 @@ public class HypixelUtils {
         return serverBrand.toLowerCase(Locale.ENGLISH).contains("hypixel");
     }
 
+    /**
+     * @deprecated Hypixel has drastically changed their API, and `/api new` no longer works. <a href="https://hypixel.net/threads/hypixel-developer-dashboard-public-api-changes-june-2023.5364455/">See Hypixel's API changes here.</a>
+     */
+    @Deprecated
     public boolean isValidKey(String key) {
-        if (key == null || key.trim().isEmpty()) return false;
-        try {
-            JsonObject gotten = NetworkUtils.getJsonElement("https://api.hypixel.net/key?key=" + key).getAsJsonObject();
-            return gotten.has("success") && gotten.get("success").getAsBoolean();
-        } catch (Exception ignored) {
-        }
+        Deprecator.markDeprecated();
         return false;
     }
 

@@ -144,14 +144,6 @@ public class TestConfig_Test extends Config {
     private static String testText = "Epic Text";
 
     @Text(
-            name = "Api Key",
-            size = OptionSize.DUAL,
-            description = "This is a secret key"
-    )
-    @HypixelKey
-    private static String apiKey = "";
-
-    @Text(
             name = "Test Text 2",
             secure = true
     )
