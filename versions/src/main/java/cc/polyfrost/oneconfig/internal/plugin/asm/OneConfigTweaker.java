@@ -48,11 +48,14 @@ import java.util.jar.JarFile;
 
 public class OneConfigTweaker implements ITweaker {
     public OneConfigTweaker() {
-        for (URL url : Launch.classLoader.getSources()) {
-            doMagicMixinStuff(url);
+        try {
+            for (URL url : Launch.classLoader.getSources()) {
+                doMagicMixinStuff(url);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
-
     @SuppressWarnings("unchecked")
     private void doMagicMixinStuff(URL url) {
         try {
