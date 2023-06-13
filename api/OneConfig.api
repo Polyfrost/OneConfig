@@ -1025,14 +1025,6 @@ public class cc/polyfrost/oneconfig/gui/pages/ModsPage : cc/polyfrost/oneconfig/
 	public fun reloadMods ()V
 }
 
-public class cc/polyfrost/oneconfig/gui/pages/NotificationsPage : cc/polyfrost/oneconfig/gui/pages/Page {
-	public fun <init> ()V
-	public fun draw (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
-	public fun drawStatic (JIILcc/polyfrost/oneconfig/utils/InputHandler;)I
-	public fun getMaxScrollHeight ()I
-	public fun isBase ()Z
-}
-
 public abstract class cc/polyfrost/oneconfig/gui/pages/Page {
 	public final field parents Ljava/util/ArrayList;
 	protected field scroll F
