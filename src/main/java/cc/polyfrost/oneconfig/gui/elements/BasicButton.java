@@ -58,7 +58,7 @@ public class BasicButton extends BasicElement {
     private Page page;
     private Runnable runnable;
 
-    public BasicButton(int width, int size, String text, SVG icon1, SVG icon2, int align, @NotNull ColorPalette colorPalette) {
+    public BasicButton(int width, int size, int iconSize, int xSpacing, int xPadding, String text, SVG icon1, SVG icon2, int align, @NotNull ColorPalette colorPalette) {
         super(width, 32, colorPalette, true);
         if (text != null) this.text = text;
         if (icon1 != null) this.icon1 = icon1;
@@ -66,14 +66,16 @@ public class BasicButton extends BasicElement {
         this.colorPalette = colorPalette;
         this.alignment = align;
         this.cornerRadius = size == SIZE_48 ? 14f : 10f; // radius was originally 16f and 12f respectively, decreased both by two.
-                                                         // SIZE_48 doesn't seem to be used anywhere, so I'm not sure if this is correct.
-        this.xSpacing = size == SIZE_48 ? 12 : 8;
-        if (size == SIZE_36 || size == SIZE_40) {
-            this.xPadding = 16;
-        } else this.xPadding = size == SIZE_48 ? 20 : 12;
+        // SIZE_48 doesn't seem to be used anywhere, so I'm not sure if this is correct.
+        this.xSpacing = xSpacing;
+        this.xPadding = xPadding;
         this.height = size;
-        this.iconSize = this.height / 2;
+        this.iconSize = iconSize;
         this.fontSize = size == SIZE_48 ? 20 : (float) (size / 2 - 4);
+    }
+
+    public BasicButton(int width, int size, String text, SVG icon1, SVG icon2, int align, @NotNull ColorPalette colorPalette) {
+        this(width, size, size / 2, size == SIZE_48 ? 12 : 8, (size == SIZE_36 || size == SIZE_40) ? 16 : size == SIZE_48 ? 20 : 12, text, icon1, icon2, align, colorPalette);
     }
 
     public BasicButton(int width, int size, SVG icon, int align, @NotNull ColorPalette colorPalette) {

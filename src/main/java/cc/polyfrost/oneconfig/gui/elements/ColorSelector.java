@@ -46,7 +46,7 @@ import java.util.ArrayList;
 
 public class ColorSelector {
     private OneColor color;
-    private static final BasicButton closeBtn = new BasicButton(32, 32, SVGs.ARROW_LEFT, BasicButton.ALIGNMENT_CENTER, ColorPalette.TERTIARY_DESTRUCTIVE);
+    private static final BasicButton closeBtn = new BasicButton(32, 32, SVGs.X_CLOSE, BasicButton.ALIGNMENT_CENTER, ColorPalette.TERTIARY_DESTRUCTIVE);
     private final BasicButton faveBtn = new BasicButton(32, 32, SVGs.HEART_OUTLINE, BasicButton.ALIGNMENT_CENTER, ColorPalette.SECONDARY);
     private final BasicButton recentBtn = new BasicButton(32, 32, SVGs.HISTORY, BasicButton.ALIGNMENT_CENTER, ColorPalette.SECONDARY) {
         @Override
@@ -58,8 +58,8 @@ public class ColorSelector {
             recentColors.add(0, new ColorBox(color.clone()));
         }
     };
-    private static final BasicButton pickerBtn = new BasicButton(32, 32, SVGs.COPY, BasicButton.ALIGNMENT_CENTER, ColorPalette.TERTIARY);
-    private final Dropdown modeDropdown = new Dropdown(128, 36, new String[]{"Solid Color", "Chroma"}, 0, ColorPalette.TERTIARY) {
+    private static final BasicButton pickerBtn = new BasicButton(32, 32, SVGs.PICKER, BasicButton.ALIGNMENT_CENTER, ColorPalette.TERTIARY);
+    private final Dropdown modeDropdown = new Dropdown(128, 36, 18, new String[]{"Solid Color", "Chroma"}, 0, ColorPalette.TERTIARY) {
         @Override
         public void onChange(int changedTo) {
             switch (changedTo) {
@@ -72,7 +72,7 @@ public class ColorSelector {
             }
         }
     };
-    private final Dropdown inputTypeDropdown = new Dropdown(90, 36, new String[]{"HEX", "HSBA"}, 0, ColorPalette.TERTIARY) {
+    private final Dropdown inputTypeDropdown = new Dropdown(90, 36, 20, new String[]{"HEX", "HSBA"}, 0, ColorPalette.TERTIARY) {
         @Override
         public void onChange(int changedTo) {
             switch (changedTo) {
@@ -123,7 +123,6 @@ public class ColorSelector {
         }
         this.x = mouseX - width / 2;
         this.y = Math.max(0, mouseY - height);
-        faveBtn.setToggleable(true);
         colorInput = new HexInput();
     }
 
@@ -158,33 +157,34 @@ public class ColorSelector {
         pickerBtn.draw(vg, x + 252, y + 260, inputHandler);
 
         faveBtn.draw(vg, x + 12, y + 304, inputHandler);
+
+        if (faveBtn.isClicked()) {
+            favoriteColors.remove(5);
+            favoriteColors.add(0, new ColorBox(color.clone()));
+        }
+
         recentBtn.draw(vg, x + 12, y + 348, inputHandler);
+
         for (int i = 0; i < 6; i++) {
             final ColorBox box = favoriteColors.get(i);
             box.draw(vg, x + 52 + i * 40, y + 304, inputHandler);
             if (box.isClicked()) {
-                if (faveBtn.isToggled()) {
-                    box.setColor(color);
-                    // remove tie
-                    __setColor(color.clone());
-                    faveBtn.setToggled(false);
-                } else {
-                    __setColor(box.getColor());
-                }
+                __setColor(box.getColor().clone());
             }
+
             final ColorBox rBox = recentColors.get(i);
             rBox.draw(vg, x + 52 + i * 40, y + 348, inputHandler);
             if (rBox.isClicked()) {
-                __setColor(rBox.getColor());
+                __setColor(rBox.getColor().clone());
             }
         }
 
-        inputTypeDropdown.draw(vg, x + 2, y + 260, inputHandler);
+        inputTypeDropdown.draw(vg, x - 2, y + 260, inputHandler);
 
         if (modeDropdown.getSelected() == 1) {
             y -= 20;
         }
-        modeDropdown.draw(vg, x + 16, y + 8, inputHandler);
+        modeDropdown.draw(vg, x - 2, y + 8, inputHandler);
 
         final boolean hovered = Platform.getMousePlatform().isButtonDown(0) && inputHandler.isAreaHovered(x, y, width, 48);
         if (hovered && Platform.getMousePlatform().isButtonDown(0) && !mouseWasDown) {
@@ -273,7 +273,7 @@ public class ColorSelector {
         private final TextInputField alphaInput = new TextInputField(56, 32, true, 4f) {
             @Override
             public void onClose() {
-                alphaInput.setInput((int) (color.getAlpha() / 2.55f) + "%");
+                alphaInput.setInput(Math.round(color.getAlpha() / 2.55f) + "%");
             }
         };
         private final TextInputField hexInput = new TextInputField(80, 32, true, 4f) {
@@ -287,7 +287,7 @@ public class ColorSelector {
             hexInput.setBoarderThickness(1f);
             alphaInput.setBoarderThickness(1f);
             hexInput.setInput("#" + color.getHex());
-            alphaInput.setInput((int) (color.getAlpha() / 2.55f) + "%");
+            alphaInput.setInput(Math.round(color.getAlpha() / 2.55f) + "%");
             if (!hasAlpha) alphaInput.disable(true);
         }
 
@@ -308,7 +308,7 @@ public class ColorSelector {
             if (alphaInput.isToggled()) {
                 final String s = alphaInput.getInput().endsWith("%") ? alphaInput.getInput().substring(0, alphaInput.getInput().length() - 1) : alphaInput.getInput();
                 try {
-                    color.setAlpha((int) (Float.parseFloat(s) * 2.55f));
+                    color.setAlpha(Math.round(Math.max(0, Math.min(Float.parseFloat(s), 100)) * 2.55f));
                     picker.onColorChanged();
                 } catch (Exception e) {
                     alphaInput.setErrored(true);
@@ -319,7 +319,7 @@ public class ColorSelector {
         @Override
         public void onColorChanged() {
             hexInput.setInput("#" + color.getHex());
-            alphaInput.setInput((int) (color.getAlpha() / 2.55f) + "%");
+            alphaInput.setInput(Math.round(color.getAlpha() / 2.55f) + "%");
         }
 
         @Override

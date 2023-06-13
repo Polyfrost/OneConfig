@@ -49,6 +49,7 @@ public class SVGs {
     public static final SVG LAYOUT_ALT = new SVG("/assets/oneconfig/icons/layout-alt.svg");
     public static final SVG X_CLOSE = new SVG("/assets/oneconfig/icons/x-close.svg");
     public static final SVG BRUSH = new SVG("/assets/oneconfig/icons/brush.svg");
+    public static final SVG PICKER = new SVG("/assets/oneconfig/icons/Picker.svg");
     public static final SVG SEARCH_SM = new SVG("/assets/oneconfig/icons/search-sm.svg");
     public static final SVG SETTINGS_02 = new SVG("/assets/oneconfig/icons/settings-02.svg");
     public static final SVG USERS_02 = new SVG("/assets/oneconfig/icons/users-02.svg");

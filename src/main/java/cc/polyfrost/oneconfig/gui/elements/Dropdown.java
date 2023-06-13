@@ -49,8 +49,8 @@ public class Dropdown extends BasicButton {
 
     private InputHandler inputHandler;
 
-    public Dropdown(int width, int size, String[] opts, int selected, ColorPalette palette) {
-        super(width, size, opts[selected], null, SVGs.CHEVRON_DOWN, ALIGNMENT_LEFT, palette);
+    public Dropdown(int width, int size, int xPadding, String[] opts, int selected, ColorPalette palette) {
+        super(width, size, (size - 8) / 2, 8, xPadding, opts[selected], null, SVGs.CHEVRON_DOWN, ALIGNMENT_LEFT, palette);
         this.selected = selected;
         this.opts = new LinkedHashMap<>(opts.length);
         for (String opt : opts) {

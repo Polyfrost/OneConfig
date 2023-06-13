@@ -736,6 +736,7 @@ public class cc/polyfrost/oneconfig/gui/elements/BasicButton : cc/polyfrost/onec
 	protected field text Ljava/lang/String;
 	public field x F
 	public field y F
+	public fun <init> (IIIIILjava/lang/String;Lcc/polyfrost/oneconfig/renderer/asset/SVG;Lcc/polyfrost/oneconfig/renderer/asset/SVG;ILcc/polyfrost/oneconfig/utils/color/ColorPalette;)V
 	public fun <init> (IILcc/polyfrost/oneconfig/renderer/asset/SVG;ILcc/polyfrost/oneconfig/utils/color/ColorPalette;)V
 	public fun <init> (IILjava/lang/String;ILcc/polyfrost/oneconfig/utils/color/ColorPalette;)V
 	public fun <init> (IILjava/lang/String;Lcc/polyfrost/oneconfig/renderer/asset/SVG;Lcc/polyfrost/oneconfig/renderer/asset/SVG;ILcc/polyfrost/oneconfig/utils/color/ColorPalette;)V
@@ -804,7 +805,7 @@ public class cc/polyfrost/oneconfig/gui/elements/ColorSelector {
 }
 
 public class cc/polyfrost/oneconfig/gui/elements/Dropdown : cc/polyfrost/oneconfig/gui/elements/BasicButton {
-	public fun <init> (II[Ljava/lang/String;ILcc/polyfrost/oneconfig/utils/color/ColorPalette;)V
+	public fun <init> (III[Ljava/lang/String;ILcc/polyfrost/oneconfig/utils/color/ColorPalette;)V
 	public fun draw (JFFLcc/polyfrost/oneconfig/utils/InputHandler;)V
 	public fun drawIcon (JLcc/polyfrost/oneconfig/renderer/asset/SVG;FFFFI)V
 	public fun getSelected ()I
