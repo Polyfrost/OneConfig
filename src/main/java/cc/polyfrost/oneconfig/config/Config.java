@@ -29,12 +29,10 @@ package cc.polyfrost.oneconfig.config;
 import cc.polyfrost.oneconfig.config.annotations.Button;
 import cc.polyfrost.oneconfig.config.annotations.CustomOption;
 import cc.polyfrost.oneconfig.config.annotations.HUD;
-import cc.polyfrost.oneconfig.config.annotations.HypixelKey;
 import cc.polyfrost.oneconfig.config.annotations.Page;
 import cc.polyfrost.oneconfig.config.core.ConfigUtils;
 import cc.polyfrost.oneconfig.config.core.OneKeyBind;
 import cc.polyfrost.oneconfig.config.data.Mod;
-import cc.polyfrost.oneconfig.config.data.OptionType;
 import cc.polyfrost.oneconfig.config.data.PageLocation;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
 import cc.polyfrost.oneconfig.config.elements.OptionPage;
@@ -47,7 +45,6 @@ import cc.polyfrost.oneconfig.gui.elements.config.ConfigKeyBind;
 import cc.polyfrost.oneconfig.gui.elements.config.ConfigPageButton;
 import cc.polyfrost.oneconfig.gui.pages.ModConfigPage;
 import cc.polyfrost.oneconfig.hud.HUDUtils;
-import cc.polyfrost.oneconfig.internal.config.HypixelKeys;
 import cc.polyfrost.oneconfig.internal.config.annotations.Option;
 import cc.polyfrost.oneconfig.internal.config.core.ConfigCore;
 import cc.polyfrost.oneconfig.internal.config.core.KeyBindHandler;
@@ -238,18 +235,10 @@ public class Config {
         for (Field field : targetClass.getDeclaredFields()) {
             Option option = ConfigUtils.findAnnotation(field, Option.class);
             CustomOption customOption = ConfigUtils.findAnnotation(field, CustomOption.class);
-            boolean isHypixelKey = field.isAnnotationPresent(HypixelKey.class);
             String optionName = pagePath + field.getName();
             if (option != null) {
                 BasicOption configOption = ConfigUtils.addOptionToPage(page, option, field, instance, migrate ? mod.migrator : null);
                 optionNames.put(optionName, configOption);
-                if (isHypixelKey) {
-                    if (option.type() == OptionType.TEXT) {
-                        HypixelKeys.INSTANCE.addOption(configOption, mod);
-                    } else {
-                        throw new IllegalStateException("Field " + field.getName() + " is missing @Text annotation! This is required for Hypixel keys!");
-                    }
-                }
             } else if (customOption != null) {
                 BasicOption configOption = getCustomOption(field, customOption, page, mod, migrate);
                 if (configOption == null) continue;
@@ -271,8 +260,6 @@ public class Config {
                 else subcategory.bottomButtons.add(button);
             } else if (field.isAnnotationPresent(HUD.class)) {
                 HUDUtils.addHudOptions(page, field, instance, this);
-            } else if (isHypixelKey) {
-                throw new IllegalStateException("Field " + field.getName() + " is missing @Text annotation! This is required for Hypixel keys!");
             }
         }
         for (Method method : targetClass.getDeclaredMethods()) {
