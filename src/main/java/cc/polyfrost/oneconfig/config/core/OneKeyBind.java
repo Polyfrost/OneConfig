@@ -61,7 +61,7 @@ public class OneKeyBind {
     public boolean isActive() {
         if (keyBinds.size() == 0) return false;
         for (int keyBind : keyBinds) {
-            if (!UKeyboard.isKeyDown(Platform.getInstance().getMinecraftVersion() >= 11300 ? keyBind + 100 : keyBind)) {
+            if (!UKeyboard.isKeyDown(Platform.getInstance().getMinecraftVersion() >= 11300 && keyBind < 0 ? keyBind + 100 : keyBind)) {
                 hasRun = false;
                 return false;
             }
