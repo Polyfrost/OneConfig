@@ -33,6 +33,7 @@ import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.animations.Animation;
 import cc.polyfrost.oneconfig.gui.animations.DummyAnimation;
 import cc.polyfrost.oneconfig.gui.animations.EaseInOutQuad;
+import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.internal.config.Preferences;
 import cc.polyfrost.oneconfig.internal.utils.Notification;
 import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
@@ -250,6 +251,7 @@ public final class Notifications {
     }
 
     private Animation dummyAnimation;
+    private static final Icon DEFAULT_ICON = new Icon(SVGs.ONECONFIG_HEAD_DARK);
 
     @Subscribe
     private void onTickEvent(TickEvent event) {
@@ -258,7 +260,7 @@ public final class Notifications {
                 Preferences.firstLaunch = false;
                 Preferences.getInstance().save();
                 dummyAnimation = new EaseInOutQuad(4000, 0, 1, false);
-                send("OneConfig installed!", "Press '" + Preferences.oneConfigKeyBind.getDisplay() + "' to open.", -1f, () -> {
+                send("OneConfig installed!", "Press '" + Preferences.oneConfigKeyBind.getDisplay() + "' to open.", DEFAULT_ICON, -1f, () -> {
                     if (Platform.getGuiPlatform().getCurrentScreen() instanceof OneConfigGui || Preferences.oneconfigOpened) {
                         Preferences.oneconfigOpened = true;
                         Preferences.getInstance().save();
