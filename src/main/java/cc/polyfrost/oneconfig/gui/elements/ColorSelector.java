@@ -33,6 +33,8 @@ import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.internal.assets.Images;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.internal.config.OneConfigConfig;
+import cc.polyfrost.oneconfig.libs.universal.UMouse;
+import cc.polyfrost.oneconfig.libs.universal.UResolution;
 import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
 import cc.polyfrost.oneconfig.renderer.scissor.Scissor;
@@ -130,7 +132,7 @@ public class ColorSelector {
         if (inputScissor != null) inputHandler.stopBlock(inputScissor);
         if (pickerBtn.toggled) {
             inputHandler.blockAllInput();
-            final int color = NanoVGHelper.INSTANCE.readPixels((int) (inputHandler.mouseX()), (int) ((Platform.getMousePlatform().getMouseY() / inputHandler.getYScaleFactor())), 1, 1)[0];
+            final int color = NanoVGHelper.INSTANCE.readPixels((int) (UMouse.Raw.getX()), UResolution.getViewportHeight() - (int) UMouse.Raw.getY(), 1, 1)[0];
             NanoVGHelper.INSTANCE.drawRoundedRect(vg, inputHandler.mouseX() - 16, inputHandler.mouseY() - 33, 32, 32, -1, 16f);
             NanoVGHelper.INSTANCE.drawRoundedRect(vg, inputHandler.mouseX() - 15, inputHandler.mouseY() - 32, 30, 30, color, 15f);
             if (inputHandler.isClicked(true)) {
