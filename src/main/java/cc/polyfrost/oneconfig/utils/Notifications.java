@@ -260,7 +260,7 @@ public final class Notifications {
                 Preferences.firstLaunch = false;
                 Preferences.getInstance().save();
                 dummyAnimation = new EaseInOutQuad(4000, 0, 1, false);
-                send("OneConfig installed!", "Press '" + Preferences.oneConfigKeyBind.getDisplay() + "' to open.", DEFAULT_ICON, -1f, () -> {
+                send("Welcome to OneConfig!", "Press '" + Preferences.oneConfigKeyBind.getDisplay() + "' to open.", DEFAULT_ICON, -1f, () -> {
                     if (Platform.getGuiPlatform().getCurrentScreen() instanceof OneConfigGui || Preferences.oneconfigOpened) {
                         Preferences.oneconfigOpened = true;
                         Preferences.getInstance().save();
