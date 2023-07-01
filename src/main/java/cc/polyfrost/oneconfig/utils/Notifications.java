@@ -255,8 +255,8 @@ public final class Notifications {
 
     @Subscribe
     private void onTickEvent(TickEvent event) {
-        if (Platform.getServerPlatform().doesPlayerExist() && event.stage == Stage.START) {
-            if (Preferences.firstLaunch && !(Platform.getGuiPlatform().getCurrentScreen() instanceof OneConfigGui)) {
+        if (Preferences.firstLaunch) {
+            if (event.stage == Stage.START && !(Platform.getGuiPlatform().getCurrentScreen() instanceof OneConfigGui) && Platform.getServerPlatform().doesPlayerExist()) {
                 Preferences.firstLaunch = false;
                 Preferences.getInstance().save();
                 dummyAnimation = new EaseInOutQuad(4000, 0, 1, false);
