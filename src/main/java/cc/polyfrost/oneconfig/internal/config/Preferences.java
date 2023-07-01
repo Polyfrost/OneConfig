@@ -26,6 +26,7 @@
 
 package cc.polyfrost.oneconfig.internal.config;
 
+import cc.polyfrost.oneconfig.config.annotations.Button;
 import cc.polyfrost.oneconfig.config.annotations.Dropdown;
 import cc.polyfrost.oneconfig.config.annotations.Exclude;
 import cc.polyfrost.oneconfig.config.annotations.KeyBind;
@@ -47,7 +48,7 @@ public class Preferences extends InternalConfig {
             description = "Choose what key opens the OneConfig UI",
             size = 2
     )
-    public static OneKeyBind oneConfigKeyBind = new OneKeyBind(new OneKeyBind.Key(UKeyboard.KEY_RSHIFT, OneKeyBind.Key.Type.KEYBOARD));
+    public static OneKeyBind oneConfigKeyBind = new OneKeyBind(UKeyboard.KEY_RSHIFT);
 
     @Switch(
             name = "Enable Blur",
@@ -195,6 +196,20 @@ public class Preferences extends InternalConfig {
             name = "Debug Mode"
     )
     public static boolean DEBUG = false;
+
+    @Button(
+            name = "Show First Launch Message",
+            description = "Shows the first launch message again",
+            text = "Show"
+    )
+    public void showFirstLaunchMessage() {
+        firstLaunch = true;
+        oneconfigOpened = false;
+        save();
+    }
+
+    public static boolean firstLaunch = true;
+    public static transient boolean oneconfigOpened = false;
 
     @Exclude
     private static Preferences INSTANCE;
