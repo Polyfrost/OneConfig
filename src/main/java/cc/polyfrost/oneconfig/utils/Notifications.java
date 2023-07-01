@@ -28,13 +28,16 @@ package cc.polyfrost.oneconfig.utils;
 
 import cc.polyfrost.oneconfig.events.event.RenderEvent;
 import cc.polyfrost.oneconfig.events.event.Stage;
+import cc.polyfrost.oneconfig.events.event.TickEvent;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.animations.Animation;
 import cc.polyfrost.oneconfig.gui.animations.DummyAnimation;
 import cc.polyfrost.oneconfig.gui.animations.EaseInOutQuad;
+import cc.polyfrost.oneconfig.internal.config.Preferences;
 import cc.polyfrost.oneconfig.internal.utils.Notification;
 import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
 import cc.polyfrost.oneconfig.libs.universal.UResolution;
+import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
 import cc.polyfrost.oneconfig.renderer.asset.Icon;
 import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
@@ -244,5 +247,16 @@ public final class Notifications {
             notifications.entrySet().removeIf(entry -> entry.getKey().isFinished());
         });
         deltaTime = 0;
+    }
+
+    @Subscribe
+    private void onTickEvent(TickEvent event) {
+        if (Platform.getServerPlatform().doesPlayerExist() && event.stage == Stage.START) {
+            if (Preferences.firstLaunch) {
+                Preferences.firstLaunch = false;
+                Preferences.getInstance().save();
+                send("OneConfig installed!", "Click " + Preferences.oneConfigKeyBind.getDisplay() + "or click here to open.", 86400000, () -> GuiUtils.displayScreen(OneConfigGui.create()));
+            }
+        }
     }
 }

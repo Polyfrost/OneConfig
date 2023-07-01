@@ -26,6 +26,7 @@
 
 package cc.polyfrost.oneconfig.internal.config;
 
+import cc.polyfrost.oneconfig.config.annotations.Button;
 import cc.polyfrost.oneconfig.config.annotations.Dropdown;
 import cc.polyfrost.oneconfig.config.annotations.Exclude;
 import cc.polyfrost.oneconfig.config.annotations.KeyBind;
@@ -195,6 +196,18 @@ public class Preferences extends InternalConfig {
             name = "Debug Mode"
     )
     public static boolean DEBUG = false;
+
+    @Button(
+            name = "Show First Launch Message",
+            description = "Shows the first launch message again",
+            text = "Show"
+    )
+    public void showFirstLaunchMessage() {
+        firstLaunch = true;
+        save();
+    }
+
+    public static boolean firstLaunch = true;
 
     @Exclude
     private static Preferences INSTANCE;
