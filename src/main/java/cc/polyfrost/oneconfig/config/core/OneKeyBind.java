@@ -31,40 +31,24 @@ import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
 import cc.polyfrost.oneconfig.platform.Platform;
 
 import java.util.ArrayList;
-import java.util.Collections;
 
 public class OneKeyBind {
-    // basically since a lot of mods still use `keyBinds` instead of `keys` we have to keep it
-    // so keyBinds is used for internal stuff and keys is used for storing the actual keys in the config
-    protected transient final ArrayList<Integer> keyBinds = new ArrayList<>();
-    private final ArrayList<Key> keys = new ArrayList<>();
+
+    protected final ArrayList<Integer> keyBinds = new ArrayList<>();
     protected transient Runnable runnable;
     protected transient boolean hasRun;
 
     /**
      * @param keys  The bound keys
-     * @deprecated Use {@link #OneKeyBind(Key...)} instead
      */
-    @Deprecated
-    public OneKeyBind(int... keys) {
-        this();
+    public OneKeyBind(boolean mouse, int... keys) {
         for (int key : keys) {
-            this.keys.add(new Key(key, Key.Type.KEYBOARD));
-        }
-        for (Key key : this.keys) {
-            keyBinds.add(key.getKey());
+            keyBinds.add(mouse ? key - 100 : key);
         }
     }
 
-    /**
-     * @param keys  The bound keys
-     */
-    public OneKeyBind(Key... keys) {
-        this();
-        Collections.addAll(this.keys, keys);
-        for (Key key : this.keys) {
-            keyBinds.add(key.getKey());
-        }
+    public OneKeyBind(int... keys) {
+        this(false, keys);
     }
 
     public OneKeyBind() {
@@ -77,7 +61,7 @@ public class OneKeyBind {
     public boolean isActive() {
         if (keyBinds.size() == 0) return false;
         for (int keyBind : keyBinds) {
-            if (!UKeyboard.isKeyDown(keyBind)) {
+            if (!UKeyboard.isKeyDown(Platform.getInstance().getMinecraftVersion() >= 11300 ? keyBind + 100 : keyBind)) {
                 hasRun = false;
                 return false;
             }
@@ -101,29 +85,25 @@ public class OneKeyBind {
         StringBuilder sb = new StringBuilder();
         for (int keyBind : keyBinds) {
             if (sb.length() != 0) sb.append(" + ");
-            sb.append(Platform.getI18nPlatform().getKeyName(keyBind, -1));
+            sb.append(Platform.getI18nPlatform().getKeyName(Platform.getInstance().getMinecraftVersion() >= 11300 ? keyBind + 100 : keyBind, -1));
         }
         return sb.toString().trim();
     }
 
     /**
      * @param key   Add a Key to keys
-     * @deprecated Use {@link #addKey(Key)} instead
      */
     public void addKey(int key) {
-        if (keyBinds.contains(key)) return;
-        Key keyClass = new Key(key, Key.Type.KEYBOARD);
-        keys.add(keyClass);
-        keyBinds.add(keyClass.getKey());
+        addKey(key, false);
     }
 
     /**
      * @param key   Add a Key to keys
+     * @param mouse If the key is a mouse button
      */
-    public void addKey(Key key) {
-        if (keys.contains(key)) return;
-        keys.add(key);
-        keyBinds.add(key.getKey());
+    public void addKey(int key, boolean mouse) {
+        if (keyBinds.contains(key)) return;
+        keyBinds.add(mouse ? key - 100 : key);
     }
 
     /**
@@ -131,7 +111,6 @@ public class OneKeyBind {
      */
     public void clearKeys() {
         keyBinds.clear();
-        keys.clear();
     }
 
     /**
@@ -151,41 +130,8 @@ public class OneKeyBind {
 
     /**
      * @return The keys in the key List
-     * @deprecated Use {@link #getKeys()} instead
      */
-    @Deprecated
     public ArrayList<Integer> getKeyBinds() {
         return keyBinds;
-    }
-
-    /**
-     * @return The keys in the key List
-     */
-    public Key[] getKeys() {
-        return keys.toArray(new Key[0]);
-    }
-
-    public static class Key {
-        private final int key;
-        private final Type type;
-
-        public Key(int key, Type type) {
-            this.key = key;
-            this.type = type;
-        }
-
-        public int getRawKey() {
-            return key;
-        }
-
-        public int getKey() {
-            if (Platform.getInstance().getMinecraftVersion() < 11300 && type == Type.MOUSE) return key - 100;
-            return key;
-        }
-
-        public enum Type {
-            KEYBOARD,
-            MOUSE
-        }
     }
 }

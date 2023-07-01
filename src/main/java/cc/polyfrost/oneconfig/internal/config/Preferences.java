@@ -48,7 +48,7 @@ public class Preferences extends InternalConfig {
             description = "Choose what key opens the OneConfig UI",
             size = 2
     )
-    public static OneKeyBind oneConfigKeyBind = new OneKeyBind(new OneKeyBind.Key(UKeyboard.KEY_RSHIFT, OneKeyBind.Key.Type.KEYBOARD));
+    public static OneKeyBind oneConfigKeyBind = new OneKeyBind(UKeyboard.KEY_RSHIFT);
 
     @Switch(
             name = "Enable Blur",
@@ -204,10 +204,12 @@ public class Preferences extends InternalConfig {
     )
     public void showFirstLaunchMessage() {
         firstLaunch = true;
+        oneconfigOpened = false;
         save();
     }
 
     public static boolean firstLaunch = true;
+    public static transient boolean oneconfigOpened = false;
 
     @Exclude
     private static Preferences INSTANCE;
