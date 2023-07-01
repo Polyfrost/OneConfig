@@ -8,6 +8,8 @@ import cc.polyfrost.oneconfig.renderer.asset.AssetHelper;
 import cc.polyfrost.oneconfig.renderer.font.FontHelper;
 import cc.polyfrost.oneconfig.renderer.scissor.ScissorHelper;
 import org.apache.commons.io.IOUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
@@ -49,6 +51,7 @@ public class LwjglManagerImpl
         extends URLClassLoader
         implements LwjglManager {
 
+    private static final Logger LOGGER = LogManager.getLogger("OneConfig LWJGL Manager");
     private static final boolean isPojav = checkPojav();
 
     private static final Object unsafeInstance;
@@ -387,6 +390,7 @@ public class LwjglManagerImpl
     private static boolean checkPojav() {
         try {
             Class.forName("org.lwjgl.glfw.CallbackBridge");
+            LOGGER.warn("Pojav detected, letting Pojav handle LWJGL.");
             return true;
         } catch (ClassNotFoundException e) {
             return false;
