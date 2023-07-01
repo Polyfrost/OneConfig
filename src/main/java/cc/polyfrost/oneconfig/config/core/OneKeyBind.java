@@ -34,7 +34,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 public class OneKeyBind {
-    protected final ArrayList<Key> keyBinds = new ArrayList<>();
+    // basically since a lot of mods still use `keyBinds` instead of `keys` we have to keep it
+    // so keyBinds is used for internal stuff and keys is used for storing the actual keys in the config
+    protected transient final ArrayList<Integer> keyBinds = new ArrayList<>();
+    private final ArrayList<Key> keys = new ArrayList<>();
     protected transient Runnable runnable;
     protected transient boolean hasRun;
 
@@ -44,8 +47,12 @@ public class OneKeyBind {
      */
     @Deprecated
     public OneKeyBind(int... keys) {
+        this();
         for (int key : keys) {
-            keyBinds.add(new Key(key, Key.Type.KEYBOARD));
+            this.keys.add(new Key(key, Key.Type.KEYBOARD));
+        }
+        for (Key key : this.keys) {
+            keyBinds.add(key.getKey());
         }
     }
 
@@ -53,7 +60,11 @@ public class OneKeyBind {
      * @param keys  The bound keys
      */
     public OneKeyBind(Key... keys) {
-        Collections.addAll(keyBinds, keys);
+        this();
+        Collections.addAll(this.keys, keys);
+        for (Key key : this.keys) {
+            keyBinds.add(key.getKey());
+        }
     }
 
     public OneKeyBind() {
@@ -65,8 +76,8 @@ public class OneKeyBind {
      */
     public boolean isActive() {
         if (keyBinds.size() == 0) return false;
-        for (Key keyBind : keyBinds) {
-            if (!UKeyboard.isKeyDown(keyBind.getKey())) {
+        for (int keyBind : keyBinds) {
+            if (!UKeyboard.isKeyDown(keyBind)) {
                 hasRun = false;
                 return false;
             }
@@ -88,9 +99,9 @@ public class OneKeyBind {
      */
     public String getDisplay() {
         StringBuilder sb = new StringBuilder();
-        for (Key keyBind : keyBinds) {
+        for (int keyBind : keyBinds) {
             if (sb.length() != 0) sb.append(" + ");
-            sb.append(Platform.getI18nPlatform().getKeyName(keyBind.getKey(), -1));
+            sb.append(Platform.getI18nPlatform().getKeyName(keyBind, -1));
         }
         return sb.toString().trim();
     }
@@ -100,18 +111,19 @@ public class OneKeyBind {
      * @deprecated Use {@link #addKey(Key)} instead
      */
     public void addKey(int key) {
-        for (Key keyBind : keyBinds) {
-            if (keyBind.getRawKey() == key) return;
-        }
-        keyBinds.add(new Key(key, Key.Type.KEYBOARD));
+        if (keyBinds.contains(key)) return;
+        Key keyClass = new Key(key, Key.Type.KEYBOARD);
+        keys.add(keyClass);
+        keyBinds.add(keyClass.getKey());
     }
 
     /**
      * @param key   Add a Key to keys
      */
     public void addKey(Key key) {
-        if (keyBinds.contains(key)) return;
-        keyBinds.add(key);
+        if (keys.contains(key)) return;
+        keys.add(key);
+        keyBinds.add(key.getKey());
     }
 
     /**
@@ -119,6 +131,7 @@ public class OneKeyBind {
      */
     public void clearKeys() {
         keyBinds.clear();
+        keys.clear();
     }
 
     /**
@@ -137,22 +150,19 @@ public class OneKeyBind {
     }
 
     /**
-     * @return The key in the keys List
+     * @return The keys in the key List
      * @deprecated Use {@link #getKeys()} instead
      */
+    @Deprecated
     public ArrayList<Integer> getKeyBinds() {
-        ArrayList<Integer> keyBinds = new ArrayList<>();
-        for (Key keyBind : this.keyBinds) {
-            keyBinds.add(keyBind.getRawKey());
-        }
         return keyBinds;
     }
 
     /**
-     * @return The key in the keys List
+     * @return The keys in the key List
      */
-    public ArrayList<Key> getKeys() {
-        return keyBinds;
+    public Key[] getKeys() {
+        return keys.toArray(new Key[0]);
     }
 
     public static class Key {
