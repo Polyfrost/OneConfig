@@ -249,13 +249,24 @@ public final class Notifications {
         deltaTime = 0;
     }
 
+    private Animation dummyAnimation;
+
     @Subscribe
     private void onTickEvent(TickEvent event) {
         if (Platform.getServerPlatform().doesPlayerExist() && event.stage == Stage.START) {
-            if (Preferences.firstLaunch) {
+            if (Preferences.firstLaunch && !(Platform.getGuiPlatform().getCurrentScreen() instanceof OneConfigGui)) {
                 Preferences.firstLaunch = false;
                 Preferences.getInstance().save();
-                send("OneConfig installed!", "Click " + Preferences.oneConfigKeyBind.getDisplay() + "or click here to open.", 86400000, () -> GuiUtils.displayScreen(OneConfigGui.create()));
+                dummyAnimation = new EaseInOutQuad(4000, 0, 1, false);
+                send("OneConfig installed!", "Press '" + Preferences.oneConfigKeyBind.getDisplay() + "' to open.", -1f, () -> {
+                    if (Platform.getGuiPlatform().getCurrentScreen() instanceof OneConfigGui || Preferences.oneconfigOpened) {
+                        Preferences.oneconfigOpened = true;
+                        Preferences.getInstance().save();
+                        return dummyAnimation.get(GuiUtils.getDeltaTime());
+                    } else {
+                        return 0f;
+                    }
+                }, () -> GuiUtils.displayScreen(OneConfigGui.create()));
             }
         }
     }
