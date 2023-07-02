@@ -3,7 +3,7 @@ pluginManagement {
         gradlePluginPortal()
         maven("https://repo.polyfrost.cc/releases")
     }
-    val pgtVersion = "0.1.29"
+    val pgtVersion = "0.2.0"
     plugins {
         id("cc.polyfrost.multi-version.root") version pgtVersion
         id("cc.polyfrost.defaults") version pgtVersion

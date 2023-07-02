@@ -51,9 +51,9 @@ base {
 
 loom {
     noServerRunConfigs()
-    launchConfigs.named("client") {
+    runs.named("client") {
         if (project.platform.isLegacyForge) {
-            arg("--tweakClass", "cc.polyfrost.oneconfig.internal.plugin.asm.OneConfigTweaker")
+            programArgs("--tweakClass", "cc.polyfrost.oneconfig.internal.plugin.asm.OneConfigTweaker")
         }
         property("mixin.debug.export", "true")
         property("debugBytecode", "true")
@@ -293,7 +293,7 @@ tasks {
     }
 
     remapJar {
-        input.set(shadowJar.get().archiveFile)
+        inputFile.set(shadowJar.get().archiveFile)
         archiveClassifier.set("full")
     }
 
@@ -506,12 +506,7 @@ fun DependencyHandlerScope.include(
             } else {
                 shadeNoPom(dependency) { isTransitive = transitive }
                 implementationNoPom(dependency) {
-                    isTransitive = transitive; if (relocate) attributes {
-                    attribute(
-                        relocated,
-                        true
-                    )
-                }
+                    isTransitive = transitive;
                 }
             }
         }

@@ -60,7 +60,7 @@ public class ConfigKeyBind extends BasicOption implements IFocusable {
     private void onMouse(RawMouseEvent event) {
         if (button.isToggled() && event.state == 1) {
             OneKeyBind keyBind = getKeyBind();
-            keyBind.addKey(new OneKeyBind.Key(event.button, OneKeyBind.Key.Type.MOUSE));
+            keyBind.addKey(event.button, true);
             setKeyBind(keyBind);
         }
     }
@@ -110,7 +110,7 @@ public class ConfigKeyBind extends BasicOption implements IFocusable {
             OneConfigGui.INSTANCE.allowClose = true;
             clicked = false;
             inputHandler.stopBlockingInput();
-        } else keyBind.addKey(new OneKeyBind.Key(keyCode, OneKeyBind.Key.Type.KEYBOARD));
+        } else keyBind.addKey(keyCode);
         setKeyBind(keyBind);
     }
 
