@@ -51,9 +51,9 @@ base {
 
 loom {
     noServerRunConfigs()
-    runs.named("client") {
+    launchConfigs.named("client") {
         if (project.platform.isLegacyForge) {
-            programArgs("--tweakClass", "cc.polyfrost.oneconfig.internal.plugin.asm.OneConfigTweaker")
+            arg("--tweakClass", "cc.polyfrost.oneconfig.internal.plugin.asm.OneConfigTweaker")
         }
         property("mixin.debug.export", "true")
         property("debugBytecode", "true")
@@ -293,7 +293,7 @@ tasks {
     }
 
     remapJar {
-        inputFile.set(shadowJar.get().archiveFile)
+        input.set(shadowJar.get().archiveFile)
         archiveClassifier.set("full")
     }
 
