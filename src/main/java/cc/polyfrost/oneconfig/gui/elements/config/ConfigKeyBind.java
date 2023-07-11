@@ -94,7 +94,7 @@ public class ConfigKeyBind extends BasicOption implements IFocusable {
                 OneConfigGui.INSTANCE.allowClose = true;
                 inputHandler.stopBlockingInput();
             }
-        } else if (text.equals("")) text = "None";
+        } else if (text.equals("")) text = "NONE";
         button.setText(text);
         button.draw(vg, x + (size == 1 ? 224 : 736), y, inputHandler);
         nanoVGHelper.setAlpha(vg, 1f);
