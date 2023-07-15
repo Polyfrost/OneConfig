@@ -67,6 +67,7 @@ public class HomePage extends Page {
         nanoVGHelper.drawText(vg, "Info", x + 52, y + 618, Colors.WHITE_90, 24f, Fonts.MEDIUM);
         nanoVGHelper.drawRoundedRect(vg, x + 16, y + 644, 1024, 64, Colors.GRAY_700, 20f);
 
+        // fuck you to whoever put that here
         nanoVGHelper.drawURL(vg, "https://www.youtube.com/watch?v=dQw4w9WgXcQ", x + 100, y + 205, 24, Fonts.MEDIUM, inputHandler);
 
         /*discordBtn.draw(vg, x + 32, y + 658);

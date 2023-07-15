@@ -44,6 +44,8 @@ public class InputHandler {
     private double scaleX = 1d;
     private double scaleY = 1d;
 
+    private boolean blockDWheel = false;
+
     /**
      * Push a scale for the input utils to use
      *
@@ -218,6 +220,22 @@ public class InputHandler {
      */
     public boolean isBlockingInput() {
         return blockScissors.size() > 0;
+    }
+
+    public double getDWheel(boolean ignoreBlock) {
+        return ignoreBlock ? Platform.getMousePlatform().getDWheel() : (blockDWheel ? 0.0 : Platform.getMousePlatform().getDWheel());
+    }
+
+    public double getDWheel() {
+        return getDWheel(false);
+    }
+
+    public void blockDWheel() {
+        blockDWheel = true;
+    }
+
+    public void unblockDWheel() {
+        blockDWheel = false;
     }
 
     private boolean shouldBlock(float x, float y) {

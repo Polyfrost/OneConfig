@@ -83,7 +83,7 @@ public class LocrawUtil {
         }
 
         this.tick++;
-        if (this.tick == 20 || this.tick % 500 == 0) {
+        if (this.tick == 40 || this.tick % 520 == 0) {
             sendLocraw(false);
         }
     }

@@ -24,12 +24,14 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.events.event;
+package cc.polyfrost.oneconfig.test.inherit;
 
-public class MouseInputEvent {
-    public final int button;
+import cc.polyfrost.oneconfig.config.annotations.Switch;
 
-    public MouseInputEvent(int button) {
-        this.button = button;
+public class ToggleableElement_Test {
+    @Switch(name = "Toggles the thing")
+    public boolean toggle = true;
+
+    public ToggleableElement_Test() {
     }
 }

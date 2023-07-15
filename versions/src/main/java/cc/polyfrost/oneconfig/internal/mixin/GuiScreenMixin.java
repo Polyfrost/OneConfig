@@ -25,39 +25,48 @@
  */
 
 package cc.polyfrost.oneconfig.internal.mixin;
-
+//#if MC<=11202
 import cc.polyfrost.oneconfig.events.EventManager;
+import cc.polyfrost.oneconfig.events.event.RawKeyEvent;
 import cc.polyfrost.oneconfig.events.event.RawMouseEvent;
-import cc.polyfrost.oneconfig.events.event.MouseInputEvent;
-import net.minecraft.client.MouseHelper;
+import net.minecraft.client.gui.GuiScreen;
+import org.lwjgl.input.Keyboard;
+import org.lwjgl.input.Mouse;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(MouseHelper.class)
-public class MouseMixin {
-    //#if FORGE
-    @Inject(method = "mouseButtonCallback", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/client/ForgeHooksClient;onRawMouseClicked(III)Z", remap = false), remap = true)
-    private void onMouse(long handle, int button, int action, int mods, CallbackInfo ci) {
-        EventManager.INSTANCE.post(new RawMouseEvent(button, action));
-    }
-    //#else
-    //$$ @org.spongepowered.asm.mixin.injection.ModifyVariable(method = "onMouseButton", at = @At("STORE"), ordinal = 0)
-    //$$ private int onMouse(int button, long handle, int b, int action, int mods) {
-    //$$      EventManager.INSTANCE.post(new RawMouseEvent(button, action));
-    //$$      return button;
-    //$$  }
-    //#endif
-
-    @Inject(method = "mouseButtonCallback", at = @At(
+@Mixin(GuiScreen.class)
+public class GuiScreenMixin {
+    @Inject(method = "handleInput", at = @At(value = "INVOKE",
             //#if FORGE
-            value = "INVOKE", target = "Lnet/minecraftforge/client/ForgeHooksClient;fireMouseInput(III)V", remap = false
+            target = "Lnet/minecraftforge/fml/common/eventhandler/EventBus;post(Lnet/minecraftforge/fml/common/eventhandler/Event;)Z", ordinal = 0, remap = false
             //#else
-            //$$ "TAIL"
+            //$$ target = "Lnet/minecraft/client/gui/screen/Screen;handleMouse()V"
             //#endif
-    ), remap = true)
-    private void onMouseInput(long handle, int button, int action, int mods, CallbackInfo ci) {
-        EventManager.INSTANCE.post(new MouseInputEvent(button));
+    ))
+    private void onMouseInput(CallbackInfo ci) {
+        EventManager.INSTANCE.post(new RawMouseEvent(Mouse.getEventButton(), Mouse.getEventButtonState() ? 1 : 0));
+    }
+
+    @Inject(method = "handleInput", at = @At(value = "INVOKE",
+            //#if FORGE
+            target = "Lnet/minecraftforge/fml/common/eventhandler/EventBus;post(Lnet/minecraftforge/fml/common/eventhandler/Event;)Z", ordinal = 2, remap = false
+            //#else
+            //$$ target = "Lnet/minecraft/client/gui/screen/Screen;handleKeyboard()V"
+            //#endif
+    ))
+    private void onKeyInput(CallbackInfo ci) {
+        int state = 0;
+        if (Keyboard.getEventKeyState()) {
+            if (Keyboard.isRepeatEvent()) {
+                state = 2;
+            } else {
+                state = 1;
+            }
+        }
+        EventManager.INSTANCE.post(new RawKeyEvent(Keyboard.getEventKey(), state));
     }
 }
+//#endif

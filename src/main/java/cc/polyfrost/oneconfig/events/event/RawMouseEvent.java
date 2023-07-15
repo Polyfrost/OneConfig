@@ -26,10 +26,12 @@
 
 package cc.polyfrost.oneconfig.events.event;
 
-public class MouseInputEvent {
+public class RawMouseEvent {
     public final int button;
+    public final int state;
 
-    public MouseInputEvent(int button) {
+    public RawMouseEvent(int button, int state) {
         this.button = button;
+        this.state = state;
     }
 }

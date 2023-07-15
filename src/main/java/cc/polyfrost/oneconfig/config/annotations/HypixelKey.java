@@ -49,7 +49,10 @@ import java.lang.annotation.Target;
  * <p>
  *     Adding this annotation marks the field as non profile specific, see {@link NonProfileSpecific}.
  * </p>
+ *
+ * @deprecated Hypixel has drastically changed their API, and `/api new` no longer works. <a href="https://hypixel.net/threads/hypixel-developer-dashboard-public-api-changes-june-2023.5364455/">See Hypixel's API changes here.</a>
  */
+@Deprecated
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 public @interface HypixelKey {

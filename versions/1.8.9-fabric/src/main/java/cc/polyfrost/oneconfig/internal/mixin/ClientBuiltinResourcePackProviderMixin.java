@@ -52,6 +52,6 @@ public class ClientBuiltinResourcePackProviderMixin {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> EventManager.INSTANCE.post(new ShutdownEvent())));
 
         EventManager.INSTANCE.post(new InitializationEvent());
-        OneConfig.init();
+        OneConfig.INSTANCE.init();
     }
 }

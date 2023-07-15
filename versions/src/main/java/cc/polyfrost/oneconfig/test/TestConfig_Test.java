@@ -45,6 +45,7 @@ import cc.polyfrost.oneconfig.renderer.asset.Icon;
 import cc.polyfrost.oneconfig.test.huds.TestBasicHud_Test;
 import cc.polyfrost.oneconfig.test.huds.TestHud_Test;
 import cc.polyfrost.oneconfig.test.huds.TestMultilineHud_Test;
+import cc.polyfrost.oneconfig.test.inherit.ToggleableAndBoldElement_Test;
 import cc.polyfrost.oneconfig.utils.Notifications;
 
 public class TestConfig_Test extends Config {
@@ -72,6 +73,13 @@ public class TestConfig_Test extends Config {
             location = PageLocation.BOTTOM
     )
     private final cc.polyfrost.oneconfig.gui.pages.Page page = new HomePage();
+
+    @Page(
+            name = "An inheriting page",
+            description = "uwu",
+            location = PageLocation.BOTTOM
+    )
+    private final ToggleableAndBoldElement_Test inheritPage = new ToggleableAndBoldElement_Test();
 
     @Button(
             name = "hello",
@@ -110,6 +118,19 @@ public class TestConfig_Test extends Config {
     )
     private static int testDropdown = 0;
 
+    @Dropdown(
+            name = "REALLY BIG Dropdown",
+            options = {"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"}
+    )
+    private static int bigDropdown = 0;
+
+    @Dropdown(
+            name = "Literally the same thing but on a dual size dropdown",
+            options = {"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"},
+            size = OptionSize.DUAL
+    )
+    private static int dualSizeBigDropdown = 0;
+
     @Color(
             name = "Test Color",
             size = OptionSize.DUAL
@@ -121,14 +142,6 @@ public class TestConfig_Test extends Config {
             size = OptionSize.DUAL
     )
     private static String testText = "Epic Text";
-
-    @Text(
-            name = "Api Key",
-            size = OptionSize.DUAL,
-            description = "This is a secret key"
-    )
-    @HypixelKey
-    private static String apiKey = "";
 
     @Text(
             name = "Test Text 2",

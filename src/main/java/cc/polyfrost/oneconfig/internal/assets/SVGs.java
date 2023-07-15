@@ -30,6 +30,7 @@ import cc.polyfrost.oneconfig.renderer.asset.SVG;
 
 public class SVGs {
     public static final SVG ONECONFIG_FULL_DARK = new SVG("/assets/oneconfig/icons/OneConfigFullDark.svg");
+    public static final SVG ONECONFIG_HEAD_DARK = new SVG("/assets/oneconfig/icons/OneConfigHeadDark.svg");
     public static final SVG COPYRIGHT_FILL = new SVG("/assets/oneconfig/icons/CopyrightFill.svg");
     public static final SVG APERTURE_FILL = new SVG("/assets/oneconfig/icons/ApertureFill.svg");
     public static final SVG ARROWS_CLOCKWISE_BOLD = new SVG("/assets/oneconfig/icons/ArrowsClockwiseBold.svg");
