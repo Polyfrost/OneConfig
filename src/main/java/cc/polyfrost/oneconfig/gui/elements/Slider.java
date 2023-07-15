@@ -62,11 +62,11 @@ public class Slider extends BasicElement {
         if(mode == HORIZONTAL) {
             nanoVGHelper.drawRoundedRect(vg, x, y + 2, width, height - 4, Colors.GRAY_300, 3f);
             nanoVGHelper.drawRoundedRect(vg, x, y + 2, width * value, height - 4, Colors.PRIMARY_500, 3f);
-            nanoVGHelper.drawRoundedRect(vg, currentDragPoint - dragPointerSize / 2, y - 8, 24, 24, Colors.WHITE, 12f);
+            nanoVGHelper.drawRoundedRect(vg, currentDragPoint - dragPointerSize / 2, y - 8 + 6, 12, 12, Colors.WHITE, 12f);
         } else {
             nanoVGHelper.drawRoundedRect(vg, x + 2, y, width - 4, height, Colors.GRAY_300, 3f);
             nanoVGHelper.drawRoundedRect(vg, x + 2, y + height - height * value, width - 4, height * value, Colors.PRIMARY_500, 3f);
-            nanoVGHelper.drawRoundedRect(vg, x - 8, currentDragPoint - dragPointerSize / 2, 24, 24, Colors.WHITE, 12f);
+            nanoVGHelper.drawRoundedRect(vg, x - 8 + 6, currentDragPoint - dragPointerSize / 2, 12, 12, Colors.WHITE, 12f);
         }
         nanoVGHelper.setAlpha(vg, 1f);
         if (dragging) {

@@ -140,12 +140,13 @@ public class ColorSelector {
                 pickerBtn.toggled = false;
                 inputHandler.stopBlockingInput();
             }
+            return;
         }
 
         Scissor scissor = ScissorHelper.INSTANCE.scissor(vg, x - 3, y - 3, width + 6, height + 6);
         NanoVGHelper.INSTANCE.drawHollowRoundRect(vg, x - 3, y - 3, width + 3, height + 3, Colors.GRAY_700, 20f, 3);
         NanoVGHelper.INSTANCE.drawRoundedRect(vg, x, y, width, height, Colors.GRAY_800, 20f);
-        closeBtn.draw(vg, x + 248, y + 8, inputHandler);
+        closeBtn.draw(vg, x + 248 + 8, y + 12, inputHandler);
 
         picker.drawAndUpdate(vg, x + 16, y + 48, inputHandler);
 
