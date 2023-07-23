@@ -341,6 +341,30 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
         nvgColor.free();
     }
 
+    /**
+     * Draws a String with the given parameters.
+     *
+     * @param vg    The NanoVG context.
+     * @param text  The text.
+     * @param x     The x position.
+     * @param y     The y position.
+     * @param color The color.
+     * @param size  The size.
+     * @param font  The font.
+     * @see cc.polyfrost.oneconfig.renderer.font.Font
+     */
+    @Override
+    public void drawCenteredText(long vg, String text, float x, float y, int color, float size, Font font) {
+        nvgBeginPath(vg);
+        nvgFontSize(vg, size);
+        nvgFontFace(vg, font.getName());
+        nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
+        NVGColor nvgColor = color(vg, color);
+        nvgText(vg, x, y, text);
+        nvgFill(vg);
+        nvgColor.free();
+    }
+
 
     @Override
     public void drawWrappedString(long vg, String text, float x, float y, float width, int color, float size, Font font) {
