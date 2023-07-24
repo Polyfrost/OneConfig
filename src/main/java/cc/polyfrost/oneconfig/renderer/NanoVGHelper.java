@@ -178,7 +178,7 @@ public interface NanoVGHelper {
     void drawText(long vg, String text, float x, float y, int color, float size, Font font);
 
     /**
-     * Draws a Centered String with the given parameters.
+     * Draws a centered String with the given parameters.
      *
      * @param vg    The NanoVG context.
      * @param text  The text.
