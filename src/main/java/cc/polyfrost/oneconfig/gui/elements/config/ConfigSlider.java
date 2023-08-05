@@ -69,6 +69,10 @@ public class ConfigSlider extends BasicOption implements IFocusable {
     private boolean animReset;
     private float lastX = -1;
 
+    public ConfigSlider(Field field, Object parent, String name, String description, String category, String subcategory, float min, float max, int step) {
+        this(field, parent, name, description, category, subcategory, min, max, step, false);
+    }
+
     public ConfigSlider(Field field, Object parent, String name, String description, String category, String subcategory, float min, float max, int step, boolean instant) {
         super(field, parent, name, description, category, subcategory, 2);
         this.min = min;

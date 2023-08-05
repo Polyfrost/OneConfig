@@ -896,6 +896,7 @@ public class cc/polyfrost/oneconfig/gui/elements/config/ConfigPageButton : cc/po
 }
 
 public class cc/polyfrost/oneconfig/gui/elements/config/ConfigSlider : cc/polyfrost/oneconfig/config/elements/BasicOption, cc/polyfrost/oneconfig/gui/elements/IFocusable {
+	public fun <init> (Ljava/lang/reflect/Field;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;FFI)V
 	public fun <init> (Ljava/lang/reflect/Field;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;FFIZ)V
 	public static fun create (Ljava/lang/reflect/Field;Ljava/lang/Object;)Lcc/polyfrost/oneconfig/gui/elements/config/ConfigSlider;
 	public fun draw (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
