@@ -59,6 +59,7 @@ public class ConfigSlider extends BasicOption implements IFocusable {
     private final NumberInputField inputField;
     private final float min, max;
     private final int step;
+    private final boolean instant;
     private boolean isFloat = true;
     private boolean dragging = false;
     private boolean mouseWasDown = false;
@@ -68,11 +69,12 @@ public class ConfigSlider extends BasicOption implements IFocusable {
     private boolean animReset;
     private float lastX = -1;
 
-    public ConfigSlider(Field field, Object parent, String name, String description, String category, String subcategory, float min, float max, int step) {
+    public ConfigSlider(Field field, Object parent, String name, String description, String category, String subcategory, float min, float max, int step, boolean instant) {
         super(field, parent, name, description, category, subcategory, 2);
         this.min = min;
         this.max = max;
         this.step = step;
+        this.instant = instant;
         this.inputField = new NumberInputField(84, 32, 0, min, max, step == 0 ? 1 : step);
         this.stepsAnimation = new DummyAnimation(0);
         this.targetAnimation = new DummyAnimation(0);
@@ -81,7 +83,7 @@ public class ConfigSlider extends BasicOption implements IFocusable {
 
     public static ConfigSlider create(Field field, Object parent) {
         Slider slider = field.getAnnotation(Slider.class);
-        return new ConfigSlider(field, parent, slider.name(), slider.description(), slider.category(), slider.subcategory(), slider.min(), slider.max(), slider.step());
+        return new ConfigSlider(field, parent, slider.name(), slider.description(), slider.category(), slider.subcategory(), slider.min(), slider.max(), slider.step(), slider.instant());
     }
 
     @Override
@@ -112,6 +114,8 @@ public class ConfigSlider extends BasicOption implements IFocusable {
                 xCoordinate = getStepCoordinate(xCoordinate, x);
                 value = MathUtils.map(xCoordinate, x + 352, x + 864, min, max);
             }
+            setValue(value);
+        } else if (dragging && instant) {
             setValue(value);
         }
 

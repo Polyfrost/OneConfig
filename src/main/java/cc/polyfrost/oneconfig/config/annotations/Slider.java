@@ -51,4 +51,10 @@ public @interface Slider {
     String category() default "General";
 
     String subcategory() default "";
+
+    /**
+     * Whether the slider should be updated instantly when the user drags it.
+     * @return Whether the slider should be updated instantly when the user drags it.
+     */
+    boolean instant() default false;
 }
