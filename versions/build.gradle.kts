@@ -51,15 +51,17 @@ base {
 
 loom {
     noServerRunConfigs()
-    launchConfigs.named("client") {
-        if (project.platform.isLegacyForge) {
-            arg("--tweakClass", "cc.polyfrost.oneconfig.internal.plugin.asm.OneConfigTweaker")
-        }
-        property("mixin.debug.export", "true")
-        property("debugBytecode", "true")
-        property("forge.logging.console.level", "debug")
-        if (org.gradle.internal.os.OperatingSystem.current().isMacOsX) {
-            property("fml.earlyprogresswindow", "false")
+    runConfigs {
+        "client" {
+            if (project.platform.isLegacyForge) {
+                programArgs("--tweakClass", "cc.polyfrost.oneconfig.internal.plugin.asm.OneConfigTweaker")
+            }
+            property("mixin.debug.export", "true")
+            property("debugBytecode", "true")
+            property("forge.logging.console.level", "debug")
+            if (org.gradle.internal.os.OperatingSystem.current().isMacOsX) {
+                property("fml.earlyprogresswindow", "false")
+            }
         }
     }
     if (project.platform.isForge) {
@@ -293,7 +295,7 @@ tasks {
     }
 
     remapJar {
-        input.set(shadowJar.get().archiveFile)
+        inputFile.set(shadowJar.get().archiveFile)
         archiveClassifier.set("full")
     }
 
