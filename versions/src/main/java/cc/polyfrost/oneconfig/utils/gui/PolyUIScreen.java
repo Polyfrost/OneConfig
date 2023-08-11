@@ -41,7 +41,6 @@ import cc.polyfrost.polyui.renderer.Renderer;
 import cc.polyfrost.polyui.renderer.data.Cursor;
 import cc.polyfrost.polyui.renderer.impl.MCWindow;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.GlStateManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Consumer;
@@ -80,10 +79,10 @@ public class PolyUIScreen extends UScreen {
         settings.setFramebuffersEnabled(false);
         settings.setRenderPausingEnabled(false);
         settings.setDebug(false);
-        //#if MC>=11300
-        //$$ polyUI = new PolyUI("", new NVGRenderer(UResolution.getWindowWidth(), UResolution.getWindowHeight()), settings, colors, drawables);
-        //#else
         Renderer renderer = LwjglManager.INSTANCE.getRenderer(UResolution.getWindowWidth(), UResolution.getWindowHeight());
+        //#if MC>=11300
+        //$$ polyUI = new PolyUI("", renderer, settings, colors, drawables);
+        //#else
         renderer.setWidth(UResolution.getWindowWidth());
         renderer.setHeight(UResolution.getWindowHeight());
         polyUI = new PolyUI("", renderer, settings, colors, drawables);
@@ -111,7 +110,7 @@ public class PolyUIScreen extends UScreen {
         //todo what's blend in 1.13+
         //#else
         net.minecraft.client.renderer.GlStateManager.disableCull();
-        GlStateManager.enableBlend();
+        net.minecraft.client.renderer.GlStateManager.enableBlend();
         if (mouseX != mx || mouseY != my) {
             mx = mouseX;
             my = mouseY;
@@ -156,7 +155,7 @@ public class PolyUIScreen extends UScreen {
 
     @Override
     //#if MC>=11300
-    //$$ public boolean shouldPause()
+    //$$ public boolean isPauseScreen()
     //#else
     public boolean doesGuiPauseGame()
     //#endif

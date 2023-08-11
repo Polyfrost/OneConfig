@@ -114,3 +114,41 @@ public final class cc/polyfrost/oneconfig/utils/gui/GuiUtils {
 	public static fun wasMouseDown ()Z
 }
 
+public class cc/polyfrost/oneconfig/utils/gui/PolyUIScreen : cc/polyfrost/oneconfig/libs/universal/UScreen {
+	public fun <init> (Lcc/polyfrost/polyui/color/Colors;Ljava/util/function/Consumer;[Lcc/polyfrost/polyui/component/Drawable;)V
+	public fun <init> (Lcc/polyfrost/polyui/color/Colors;[Lcc/polyfrost/polyui/component/Drawable;)V
+	public fun <init> ([Lcc/polyfrost/polyui/component/Drawable;)V
+	public final fun get ()Lcc/polyfrost/polyui/PolyUI;
+	public final fun getInstance ()Lcc/polyfrost/polyui/PolyUI;
+	public final fun getPolyUI ()Lcc/polyfrost/polyui/PolyUI;
+	protected fun init (Lcc/polyfrost/polyui/PolyUI;)V
+	public final fun initScreen (II)V
+	public fun isPauseScreen ()Z
+	public final fun mouseMoved (DD)V
+	public final fun onDrawScreen (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;IIF)V
+	public final fun onKeyPressed (ICLcc/polyfrost/oneconfig/libs/universal/UKeyboard$Modifiers;)V
+	public final fun onKeyReleased (ICLcc/polyfrost/oneconfig/libs/universal/UKeyboard$Modifiers;)V
+	public final fun onMouseClicked (DDI)V
+	public fun onMouseDragged (DDIJ)V
+	public final fun onMouseReleased (DDI)V
+	public final fun onMouseScrolled (D)V
+	public fun onScreenClose ()V
+	public final fun polyUI ()Lcc/polyfrost/polyui/PolyUI;
+	protected final fun pressInternal (ICZ)V
+	public final fun resize (Lnet/minecraft/client/MinecraftClient;II)V
+	public fun shouldCloseOnEsc ()Z
+	public fun useMinecraftUIScaling ()Z
+}
+
+public final class cc/polyfrost/polyui/renderer/impl/MCWindow : cc/polyfrost/polyui/renderer/Window {
+	public fun <init> (Lnet/minecraft/client/MinecraftClient;)V
+	public fun close ()V
+	public fun createCallbacks ()V
+	public fun getClipboard ()Ljava/lang/String;
+	public fun getKeyName (I)Ljava/lang/String;
+	public fun open (Lcc/polyfrost/polyui/PolyUI;)Lcc/polyfrost/polyui/renderer/Window;
+	public fun setClipboard (Ljava/lang/String;)V
+	public fun setCursor (Lcc/polyfrost/polyui/renderer/data/Cursor;)V
+	public fun videoSettingsChanged ()V
+}
+

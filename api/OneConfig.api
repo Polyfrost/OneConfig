@@ -1273,6 +1273,7 @@ public abstract interface class cc/polyfrost/oneconfig/renderer/LwjglManager {
 	public abstract fun getAssetHelper ()Lcc/polyfrost/oneconfig/renderer/asset/AssetHelper;
 	public abstract fun getFontHelper ()Lcc/polyfrost/oneconfig/renderer/font/FontHelper;
 	public abstract fun getNanoVGHelper ()Lcc/polyfrost/oneconfig/renderer/NanoVGHelper;
+	public abstract fun getRenderer (FF)Lcc/polyfrost/polyui/renderer/Renderer;
 	public abstract fun getScissorHelper ()Lcc/polyfrost/oneconfig/renderer/scissor/ScissorHelper;
 	public abstract fun getTinyFD ()Lcc/polyfrost/oneconfig/renderer/TinyFD;
 }
@@ -1994,5 +1995,86 @@ public class cc/polyfrost/oneconfig/utils/hypixel/LocrawUtil {
 	public fun getLastLocrawInfo ()Lcc/polyfrost/oneconfig/utils/hypixel/LocrawInfo;
 	public fun getLocrawInfo ()Lcc/polyfrost/oneconfig/utils/hypixel/LocrawInfo;
 	public fun isInGame ()Z
+}
+
+public final class cc/polyfrost/polyui/renderer/impl/NVGRenderer : cc/polyfrost/polyui/renderer/Renderer {
+	public fun <init> (FF)V
+	public fun beginFrame ()V
+	public fun bindFramebuffer (Lcc/polyfrost/polyui/renderer/data/Framebuffer;)V
+	public fun cleanup ()V
+	public fun createFramebuffer (FF)Lcc/polyfrost/polyui/renderer/data/Framebuffer;
+	public fun delete (Lcc/polyfrost/polyui/renderer/data/Font;)V
+	public fun delete (Lcc/polyfrost/polyui/renderer/data/Framebuffer;)V
+	public fun delete (Lcc/polyfrost/polyui/renderer/data/PolyImage;)V
+	public fun drawFramebuffer (Lcc/polyfrost/polyui/renderer/data/Framebuffer;FFFF)V
+	public final fun drawImage (IFFFFI)V
+	public static synthetic fun drawImage$default (Lcc/polyfrost/polyui/renderer/impl/NVGRenderer;IFFFFIILjava/lang/Object;)V
+	public fun dropShadow (FFFFFFF)V
+	public fun endFrame ()V
+	public fun hollowRect (FFFFLcc/polyfrost/polyui/color/Color;FFFFF)V
+	public fun image (Lcc/polyfrost/polyui/renderer/data/PolyImage;FFFFIFFFF)V
+	public fun init ()V
+	public fun initImage (Lcc/polyfrost/polyui/renderer/data/PolyImage;)V
+	public fun line (FFFFLcc/polyfrost/polyui/color/Color;F)V
+	public fun pop ()V
+	public fun popScissor ()V
+	public fun push ()V
+	public fun pushScissor (FFFF)V
+	public fun rect (FFFFLcc/polyfrost/polyui/color/Color;FFFF)V
+	public fun rotate (D)V
+	public fun scale (FF)V
+	public fun skewX (D)V
+	public fun skewY (D)V
+	public fun text (Lcc/polyfrost/polyui/renderer/data/Font;FFLjava/lang/String;Lcc/polyfrost/polyui/color/Color;FLcc/polyfrost/polyui/unit/TextAlign;)V
+	public fun textBounds (Lcc/polyfrost/polyui/renderer/data/Font;Ljava/lang/String;FLcc/polyfrost/polyui/unit/TextAlign;)Lcc/polyfrost/polyui/unit/Vec2;
+	public fun translate (FF)V
+	public fun unbindFramebuffer (Lcc/polyfrost/polyui/renderer/data/Framebuffer;)V
+}
+
+public final class cc/polyfrost/polyui/renderer/impl/NVGRenderer$NVGFont {
+	public fun <init> (ILjava/nio/ByteBuffer;)V
+	public final fun component1 ()I
+	public final fun component2 ()Ljava/nio/ByteBuffer;
+	public final fun copy (ILjava/nio/ByteBuffer;)Lcc/polyfrost/polyui/renderer/impl/NVGRenderer$NVGFont;
+	public static synthetic fun copy$default (Lcc/polyfrost/polyui/renderer/impl/NVGRenderer$NVGFont;ILjava/nio/ByteBuffer;ILjava/lang/Object;)Lcc/polyfrost/polyui/renderer/impl/NVGRenderer$NVGFont;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getData ()Ljava/nio/ByteBuffer;
+	public final fun getId ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class cc/polyfrost/polyui/renderer/impl/NVGRenderer$NVGImage {
+	public fun <init> (IFFLjava/nio/ByteBuffer;)V
+	public final fun component1 ()I
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun component4 ()Ljava/nio/ByteBuffer;
+	public final fun copy (IFFLjava/nio/ByteBuffer;)Lcc/polyfrost/polyui/renderer/impl/NVGRenderer$NVGImage;
+	public static synthetic fun copy$default (Lcc/polyfrost/polyui/renderer/impl/NVGRenderer$NVGImage;IFFLjava/nio/ByteBuffer;ILjava/lang/Object;)Lcc/polyfrost/polyui/renderer/impl/NVGRenderer$NVGImage;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getData ()Ljava/nio/ByteBuffer;
+	public final fun getHeight ()F
+	public final fun getId ()I
+	public final fun getWidth ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class cc/polyfrost/polyui/test/Test {
+	public static final field INSTANCE Lcc/polyfrost/polyui/test/Test;
+	public static final field brand Lcc/polyfrost/polyui/property/impl/BrandBlockProperties;
+	public static final field danger Lcc/polyfrost/polyui/property/impl/StateBlockProperties;
+	public static final field moon Lcc/polyfrost/polyui/renderer/data/PolyImage;
+	public static final field success Lcc/polyfrost/polyui/property/impl/StateBlockProperties;
+	public static final field sun Lcc/polyfrost/polyui/renderer/data/PolyImage;
+	public static final field text Lcc/polyfrost/polyui/property/impl/TextProperties;
+	public static final field warning Lcc/polyfrost/polyui/property/impl/StateBlockProperties;
+	public final fun block ()Lcc/polyfrost/polyui/component/impl/Block;
+	public final fun blocks (I)[Lcc/polyfrost/polyui/component/impl/Block;
+	public static synthetic fun blocks$default (Lcc/polyfrost/polyui/test/Test;IILjava/lang/Object;)[Lcc/polyfrost/polyui/component/impl/Block;
+	public static final fun create ()[Lcc/polyfrost/polyui/component/Drawable;
+	public final fun create (Lcc/polyfrost/polyui/unit/Vec2;Z)Lcc/polyfrost/polyui/layout/impl/PixelLayout;
+	public final fun prop ()Lcc/polyfrost/polyui/property/impl/DefaultBlockProperties;
 }
 
