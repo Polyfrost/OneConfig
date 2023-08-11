@@ -84,6 +84,9 @@ dependencies {
         isTransitive = false
     }
 
+    shade(files(project.rootDir.resolve("polyui-0.21.3.jar")))
+    shade("org.slf4j:slf4j-api:2.0.1")
+
     compileOnly("cc.polyfrost:universalcraft-1.8.9-forge:${libs.versions.universalcraft.get()}") {
         attributes { attribute(common, true) }
         isTransitive = false

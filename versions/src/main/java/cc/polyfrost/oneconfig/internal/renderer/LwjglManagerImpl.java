@@ -7,6 +7,7 @@ import cc.polyfrost.oneconfig.renderer.TinyFD;
 import cc.polyfrost.oneconfig.renderer.asset.AssetHelper;
 import cc.polyfrost.oneconfig.renderer.font.FontHelper;
 import cc.polyfrost.oneconfig.renderer.scissor.ScissorHelper;
+import cc.polyfrost.polyui.renderer.Renderer;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -84,6 +85,7 @@ public class LwjglManagerImpl
             classLoaderInclude.add("cc.polyfrost.oneconfig.internal.renderer.NanoVGHelperImpl");
             classLoaderInclude.add("cc.polyfrost.oneconfig.internal.renderer.AssetHelperImpl");
             classLoaderInclude.add("cc.polyfrost.oneconfig.internal.renderer.TinyFDImpl");
+            classLoaderInclude.add("cc.polyfrost.polyui.renderer.impl.NVGRenderer");
             // Provider
             classLoaderInclude.add(LWJGL_FUNCTION_PROVIDER);
             // Lwjgl
@@ -394,6 +396,16 @@ public class LwjglManagerImpl
             return true;
         } catch (ClassNotFoundException e) {
             return false;
+        }
+    }
+
+    @Override
+    public Renderer getRenderer(float width, float height) {
+        try {
+            return (Renderer) Class.forName("cc.polyfrost.polyui.renderer.impl.NVGRenderer", true, isPojav ? getClass().getClassLoader() : this).getConstructor(float.class, float.class).newInstance(width, height);
+        } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException |
+                 ClassNotFoundException e) {
+            throw new RuntimeException(e);
         }
     }
 

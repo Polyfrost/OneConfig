@@ -29,21 +29,21 @@ package cc.polyfrost.oneconfig.renderer;
 import cc.polyfrost.oneconfig.renderer.asset.AssetHelper;
 import cc.polyfrost.oneconfig.renderer.font.FontHelper;
 import cc.polyfrost.oneconfig.renderer.scissor.ScissorHelper;
+import cc.polyfrost.polyui.renderer.Renderer;
 
 import java.util.ServiceLoader;
 
 /**
  * Abstraction over the LWJGL3 implementation & loading.
- *
- * @deprecated Use the direct interface instances instead.
  */
 @SuppressWarnings("DeprecatedIsStillUsed"/*, reason = "Methods are still used internally in their respective interfaces" */)
-@Deprecated
 public interface LwjglManager {
     LwjglManager INSTANCE = ServiceLoader.load(
             LwjglManager.class,
             LwjglManager.class.getClassLoader()
     ).iterator().next();
+
+    Renderer getRenderer(float width, float height);
 
     /**
      * @return the {@link NanoVGHelper} platform implementation.

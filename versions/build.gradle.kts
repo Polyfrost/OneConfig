@@ -144,6 +144,13 @@ dependencies {
 
     include(libs.caffeine, relocate = true)
 
+    include(files(project.rootDir.resolve("polyui-0.21.3.jar")))
+
+    if (platform.isForge || platform.isLegacyFabric) {
+        include("org.slf4j:slf4j-api:2.0.1")
+        include("org.slf4j:slf4j-simple:2.0.1")
+    }
+
     // for other mods and universalcraft
     include(libs.bundles.kotlin)
 
