@@ -3,7 +3,7 @@
 kotlin = "1.8.22"
 coroutines = "1.7.2"
 serialization = "1.5.1"
-atomicfu = "0.21.0"
+atomicfu = "0.22.0"
 abi = "0.13.2"
 
 blossom = "1.3.1"
