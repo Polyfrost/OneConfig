@@ -2,7 +2,7 @@
 [versions]
 kotlin = "1.8.22"
 coroutines = "1.7.2"
-serialization = "1.5.1"
+serialization = "1.6.0"
 atomicfu = "0.21.0"
 abi = "0.13.2"
 
