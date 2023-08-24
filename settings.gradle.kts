@@ -3,23 +3,23 @@ pluginManagement {
         gradlePluginPortal()
         maven("https://repo.polyfrost.cc/releases")
     }
-    val pgtVersion = "0.2.5"
+    val pgtVersion = "0.2.6"
     plugins {
-        id("cc.polyfrost.multi-version.root") version pgtVersion
-        id("cc.polyfrost.defaults") version pgtVersion
-        id("cc.polyfrost.defaults.repo") version pgtVersion
-        id("cc.polyfrost.defaults.java") version pgtVersion
-        id("cc.polyfrost.multi-version.api-validation") version pgtVersion
+        id("org.polyfrost.multi-version.root") version pgtVersion
+        id("org.polyfrost.defaults") version pgtVersion
+        id("org.polyfrost.defaults.repo") version pgtVersion
+        id("org.polyfrost.defaults.java") version pgtVersion
+        id("org.polyfrost.multi-version.api-validation") version pgtVersion
     }
     dependencyResolutionManagement {
         versionCatalogs {
             create("pgtLibs") {
-                plugin("pgtRoot", "cc.polyfrost.multi-version.root").version(pgtVersion)
-                plugin("pgt", "cc.polyfrost.multi-version").version(pgtVersion)
-                plugin("pgtDefaults", "cc.polyfrost.defaults").version(pgtVersion)
-                plugin("pgtDefaultRepo", "cc.polyfrost.defaults.repo").version(pgtVersion)
-                plugin("pgtDefaultJava", "cc.polyfrost.defaults.java").version(pgtVersion)
-                plugin("pgtAbi", "cc.polyfrost.multi-version.api-validation").version(pgtVersion)
+                plugin("pgtRoot", "org.polyfrost.multi-version.root").version(pgtVersion)
+                plugin("pgt", "org.polyfrost.multi-version").version(pgtVersion)
+                plugin("pgtDefaults", "org.polyfrost.defaults").version(pgtVersion)
+                plugin("pgtDefaultRepo", "org.polyfrost.defaults.repo").version(pgtVersion)
+                plugin("pgtDefaultJava", "org.polyfrost.defaults.java").version(pgtVersion)
+                plugin("pgtAbi", "org.polyfrost.multi-version.api-validation").version(pgtVersion)
             }
         }
     }

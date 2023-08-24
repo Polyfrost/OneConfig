@@ -1,8 +1,8 @@
 @file:Suppress("DSL_SCOPE_VIOLATION")
 
-import cc.polyfrost.gradle.util.RelocationTransform.Companion.registerRelocationAttribute
-import cc.polyfrost.gradle.util.noServerRunConfigs
-import cc.polyfrost.gradle.util.prebundle
+import org.polyfrost.gradle.util.RelocationTransform.Companion.registerRelocationAttribute
+import org.polyfrost.gradle.util.noServerRunConfigs
+import org.polyfrost.gradle.util.prebundle
 import net.fabricmc.loom.task.RemapSourcesJarTask
 import java.text.SimpleDateFormat
 import java.util.concurrent.atomic.AtomicReference
@@ -37,7 +37,7 @@ preprocess {
 }
 
 version = "$modMajor$modMinor"
-group = "cc.polyfrost"
+group = "org.polyfrost"
 
 blossom {
     replaceToken("@VER@", version)
@@ -54,7 +54,7 @@ loom {
     runConfigs {
         "client" {
             if (project.platform.isLegacyForge) {
-                programArgs("--tweakClass", "cc.polyfrost.oneconfig.internal.plugin.asm.OneConfigTweaker")
+                programArgs("--tweakClass", "org.polyfrost.oneconfig.internal.plugin.asm.OneConfigTweaker")
             }
             property("mixin.debug.export", "true")
             property("debugBytecode", "true")
@@ -84,12 +84,12 @@ val relocatedCommonProject = registerRelocationAttribute("common-lwjgl") {
 }
 
 val relocated = registerRelocationAttribute("relocate") {
-    relocate("gg.essential", "cc.polyfrost.oneconfig.libs")
-    relocate("me.kbrewster", "cc.polyfrost.oneconfig.libs")
-    relocate("com.github.benmanes", "cc.polyfrost.oneconfig.libs")
-    relocate("com.google", "cc.polyfrost.oneconfig.libs")
-    relocate("org.checkerframework", "cc.polyfrost.oneconfig.libs")
-    relocate("dev.xdark", "cc.polyfrost.oneconfig.libs")
+    relocate("gg.essential", "org.polyfrost.oneconfig.libs")
+    relocate("me.kbrewster", "org.polyfrost.oneconfig.libs")
+    relocate("com.github.benmanes", "org.polyfrost.oneconfig.libs")
+    relocate("com.google", "org.polyfrost.oneconfig.libs")
+    relocate("org.checkerframework", "org.polyfrost.oneconfig.libs")
+    relocate("dev.xdark", "org.polyfrost.oneconfig.libs")
 
     remapStringsIn("com.github.benmanes.caffeine.cache.LocalCacheFactory")
     remapStringsIn("com.github.benmanes.caffeine.cache.NodeFactory")
@@ -136,7 +136,7 @@ dependencies {
         isTransitive = false
     }
 
-    include("cc.polyfrost:universalcraft-$platform:${libs.versions.universalcraft.get()}", transitive = false, mod = true)
+    include("org.polyfrost:universalcraft-$platform:${libs.versions.universalcraft.get()}", transitive = false, mod = true)
 
     include(libs.deencapsulation, relocate = true, transitive = false, mod = false)
 
@@ -144,7 +144,7 @@ dependencies {
 
     include(libs.caffeine, relocate = true)
 
-    include(files(project.rootDir.resolve("polyui-0.21.3.jar")))
+    include(files(project.rootDir.resolve("polyui-0.23.2.jar")))
 
     if (platform.isForge || platform.isLegacyFabric) {
         include("org.slf4j:slf4j-api:2.0.1")
@@ -324,7 +324,7 @@ tasks {
                             "ForceLoadAsMod" to true,
                             "TweakOrder" to "0",
                             "MixinConfigs" to "mixins.oneconfig.json",
-                            "TweakClass" to "cc.polyfrost.oneconfig.internal.plugin.asm.OneConfigTweaker"
+                            "TweakClass" to "org.polyfrost.oneconfig.internal.plugin.asm.OneConfigTweaker"
                         )
                     } else {
                         mapOf(
@@ -379,7 +379,7 @@ tasks {
 publishing {
     publications {
         register<MavenPublication>("oneconfig-$platform") {
-            groupId = "cc.polyfrost"
+            groupId = "org.polyfrost"
             artifactId = base.archivesName.get()
 
             artifact(tasks["jar"])

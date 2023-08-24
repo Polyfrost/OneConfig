@@ -19,11 +19,11 @@
   ],
   "entrypoints": {
     "preLaunch": [
-      "cc.polyfrost.oneconfig.internal.plugin.OneConfigPreLaunch"
+      "org.polyfrost.oneconfig.internal.plugin.OneConfigPreLaunch"
     ],
-    "client": [ "cc.polyfrost.oneconfig.test.TestMod_Test" ], "_warning": [ "This line is automatically removed by Gradle's jar task" ],
+    "client": [ "org.polyfrost.oneconfig.test.TestMod_Test" ], "_warning": [ "This line is automatically removed by Gradle's jar task" ],
     "mm:early_risers": [
-      "cc.polyfrost.oneconfig.internal.plugin.asm.ClassTransformer"
+      "org.polyfrost.oneconfig.internal.plugin.asm.ClassTransformer"
     ]
   },
   "depends": {

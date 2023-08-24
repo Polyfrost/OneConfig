@@ -2,9 +2,9 @@
 // are bundled with Minecraft, which are not the latest versions.
 @file:Suppress("GradlePackageUpdate", "VulnerableLibrariesLocal", "DSL_SCOPE_VIOLATION")
 
-import cc.polyfrost.gradle.multiversion.StripReferencesTransform.Companion.registerStripReferencesAttribute
-import cc.polyfrost.gradle.util.RelocationTransform.Companion.registerRelocationAttribute
-import cc.polyfrost.gradle.util.prebundle
+import org.polyfrost.gradle.multiversion.StripReferencesTransform.Companion.registerStripReferencesAttribute
+import org.polyfrost.gradle.util.RelocationTransform.Companion.registerRelocationAttribute
+import org.polyfrost.gradle.util.prebundle
 
 plugins {
     alias(libs.plugins.kotlin)
@@ -31,7 +31,7 @@ val modMinor = project.properties["mod_minor_version"]
 val modId = project.properties["mod_id"] as String
 
 version = "$modMajor$modMinor"
-group = "cc.polyfrost"
+group = "org.polyfrost"
 
 blossom {
     replaceToken("@VER@", project.version)
@@ -44,11 +44,11 @@ repositories {
 }
 
 val relocated = registerRelocationAttribute("relocate") {
-    relocate("gg.essential", "cc.polyfrost.oneconfig.libs")
-    relocate("me.kbrewster", "cc.polyfrost.oneconfig.libs")
-    relocate("com.github.benmanes", "cc.polyfrost.oneconfig.libs")
-    relocate("com.google", "cc.polyfrost.oneconfig.libs")
-    relocate("org.checkerframework", "cc.polyfrost.oneconfig.libs")
+    relocate("gg.essential", "org.polyfrost.oneconfig.libs")
+    relocate("me.kbrewster", "org.polyfrost.oneconfig.libs")
+    relocate("com.github.benmanes", "org.polyfrost.oneconfig.libs")
+    relocate("com.google", "org.polyfrost.oneconfig.libs")
+    relocate("org.checkerframework", "org.polyfrost.oneconfig.libs")
     remapStringsIn("com.github.benmanes.caffeine.cache.LocalCacheFactory")
     remapStringsIn("com.github.benmanes.caffeine.cache.NodeFactory")
 }
@@ -84,10 +84,10 @@ dependencies {
         isTransitive = false
     }
 
-    shade(files(project.rootDir.resolve("polyui-0.21.3.jar")))
+    shade(files(project.rootDir.resolve("polyui-0.23.2.jar")))
     shade("org.slf4j:slf4j-api:2.0.1")
 
-    compileOnly("cc.polyfrost:universalcraft-1.8.9-forge:${libs.versions.universalcraft.get()}") {
+    compileOnly("org.polyfrost:universalcraft-1.8.9-forge:${libs.versions.universalcraft.get()}") {
         attributes { attribute(common, true) }
         isTransitive = false
     }
@@ -137,7 +137,7 @@ tasks {
 
 apiValidation {
     ignoredPackages.add("org.lwjgl")
-    ignoredPackages.add("cc.polyfrost.oneconfig.libs")
-    ignoredPackages.add("cc.polyfrost.oneconfig.internal")
-    ignoredPackages.add("cc.polyfrost.oneconfig.test")
+    ignoredPackages.add("org.polyfrost.oneconfig.libs")
+    ignoredPackages.add("org.polyfrost.oneconfig.internal")
+    ignoredPackages.add("org.polyfrost.oneconfig.test")
 }
