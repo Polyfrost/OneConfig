@@ -26,7 +26,6 @@
 
 package org.polyfrost.oneconfig.utils;
 
-import org.polyfrost.oneconfig.internal.config.Preferences;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Locale;
@@ -37,7 +36,7 @@ import java.util.Locale;
 public class SearchUtils {
 
     public static boolean isSimilar(String s1, String s2) {
-        return isSimilar(s1, s2, Preferences.searchDistance);
+        return isSimilar(s1, s2, 2);
     }
 
     public static boolean isSimilar(String s1, String s2, int searchDistance) {

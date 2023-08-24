@@ -24,12 +24,8 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-// Retrocompatibility
-@file:JvmName("RenderManagerDSLKt")
-
 package org.polyfrost.oneconfig.utils.dsl
 
-import org.polyfrost.oneconfig.config.data.InfoType
 import org.polyfrost.oneconfig.renderer.NanoVGHelper
 import org.polyfrost.oneconfig.renderer.asset.Image
 import org.polyfrost.oneconfig.renderer.asset.SVG
@@ -174,11 +170,11 @@ fun Long.drawWrappedString(text: String, x: Number, y: Number, width: Number, co
 fun VG.drawWrappedString(text: String, x: Number, y: Number, width: Number, color: Int, size: Number, lineHeight: Number, font: Font) =
     instance.drawWrappedString(text, x, y, width, color, size, lineHeight, font)
 
-fun Long.drawURL(url: String, x: Number, y: Number, size: Number, font: Font, inputHandler: InputHandler) =
-    nanoVGHelper.drawURL(this, url, x.toFloat(), y.toFloat(), size.toFloat(), font, inputHandler)
+fun Long.drawURL(url: String, x: Number, y: Number, color: Int, size: Number, font: Font, inputHandler: InputHandler) =
+    nanoVGHelper.drawURL(this, url, x.toFloat(), y.toFloat(), color, size.toFloat(), font, inputHandler)
 
-fun VG.drawURL(url: String, x: Number, y: Number, size: Number, font: Font, inputHandler: InputHandler) =
-    instance.drawURL(url, x, y, size, font, inputHandler)
+fun VG.drawURL(url: String, x: Number, y: Number, color: Int, size: Number, font: Font, inputHandler: InputHandler) =
+    instance.drawURL(url, x, y, color, size, font, inputHandler)
 
 
 @Deprecated(message = "Doesn't pass class to load resource with", replaceWith = ReplaceWith("drawImage(filePath, x, y, width, height, javaClass)"))
@@ -362,9 +358,3 @@ fun Long.drawSVG(svg: SVG, x: Number, y: Number, width: Number, height: Number, 
 
 fun VG.drawSVG(svg: SVG, x: Number, y: Number, width: Number, height: Number, color: Int) =
     instance.drawSVG(svg, x, y, width, height, color)
-
-
-fun Long.drawInfo(type: InfoType, x: Number, y: Number, size: Number) =
-    nanoVGHelper.drawInfo(this, type, x.toFloat(), y.toFloat(), size.toFloat())
-
-fun VG.drawInfo(type: InfoType, x: Number, y: Number, size: Number) = instance.drawInfo(type, x, y, size)

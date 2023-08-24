@@ -40,7 +40,7 @@ public class TickDelay {
     private final Runnable function;
     private int delay;
 
-    public TickDelay(Runnable function, int ticks) {
+    public TickDelay(int ticks, Runnable function) {
         if (ticks < 1) {
             function.run();
         } else {

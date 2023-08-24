@@ -26,7 +26,6 @@
 
 package org.polyfrost.oneconfig.events;
 
-import org.polyfrost.oneconfig.config.core.exceptions.InvalidTypeException;
 import org.polyfrost.oneconfig.libs.eventbus.EventBus;
 import org.polyfrost.oneconfig.libs.eventbus.exception.ExceptionHandler;
 import org.polyfrost.oneconfig.libs.eventbus.invokers.LMFInvoker;
@@ -100,12 +99,21 @@ public final class EventManager {
     private static class OneConfigExceptionHandler implements ExceptionHandler {
         @Override
         public void handle(@NotNull Exception e) {
-            if (e instanceof InvalidTypeException) {
-                throw (InvalidTypeException) e;
+            if (e instanceof EventException) {
+                throw (EventException) e;
             }
             if (e instanceof IllegalArgumentException) {
                 throw (IllegalArgumentException) e;
             } else e.printStackTrace();
+        }
+    }
+
+    /**
+     * Exception thrown in an event if the game should crash.
+     */
+    public static class EventException extends RuntimeException {
+        public EventException(String message) {
+            super(message);
         }
     }
 }

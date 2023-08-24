@@ -26,5 +26,7 @@
 
 package org.polyfrost.oneconfig.renderer;
 
+
 public interface TinyFD {
+    TinyFD INSTANCE = LwjglManager.INSTANCE.getTinyFD();
 }

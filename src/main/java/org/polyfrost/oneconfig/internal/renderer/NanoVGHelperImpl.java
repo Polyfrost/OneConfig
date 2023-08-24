@@ -26,13 +26,9 @@
 
 package org.polyfrost.oneconfig.internal.renderer;
 
-import org.polyfrost.oneconfig.config.data.InfoType;
 import org.polyfrost.oneconfig.events.EventManager;
 import org.polyfrost.oneconfig.events.event.FramebufferRenderEvent;
 import org.polyfrost.oneconfig.events.event.Stage;
-import org.polyfrost.oneconfig.gui.OneConfigGui;
-import org.polyfrost.oneconfig.internal.assets.Colors;
-import org.polyfrost.oneconfig.internal.assets.SVGs;
 import org.polyfrost.oneconfig.libs.eventbus.Subscribe;
 import org.polyfrost.oneconfig.libs.universal.UGraphics;
 import org.polyfrost.oneconfig.libs.universal.UResolution;
@@ -51,6 +47,7 @@ import org.lwjgl.nanovg.NVGColor;
 import org.lwjgl.nanovg.NVGPaint;
 import org.lwjgl.nanovg.NanoVGGL2;
 import org.lwjgl.opengl.GL11;
+import org.polyfrost.oneconfig.utils.color.ColorUtils;
 
 import java.util.function.LongConsumer;
 
@@ -282,7 +279,7 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
         nvgBeginPath(vg);
         nvgRoundedRect(vg, x, y, width, height, 8f);
         NVGColor nvgColor = color(vg, -1);
-        NVGColor nvgColor2 = color(vg, Colors.TRANSPARENT);
+        NVGColor nvgColor2 = color(vg, ColorUtils.getColor(0, 0, 0, 0));
         nvgFillPaint(vg, nvgLinearGradient(vg, x, y, x + width, y, nvgColor, nvgColor2, bg));
         nvgFill(vg);
         nvgColor.free();
@@ -291,8 +288,8 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
         NVGPaint bg2 = NVGPaint.create();
         nvgBeginPath(vg);
         nvgRoundedRect(vg, x, y, width, height, 8f);
-        NVGColor nvgColor3 = color(vg, Colors.TRANSPARENT);
-        NVGColor nvgColor4 = color(vg, Colors.BLACK);
+        NVGColor nvgColor3 = color(vg, ColorUtils.getColor(0, 0, 0, 0));
+        NVGColor nvgColor4 = color(vg, ColorUtils.getColor(0, 0, 0, 255));
         nvgFillPaint(vg, nvgLinearGradient(vg, x, y, x, y + height, nvgColor3, nvgColor4, bg2));
         nvgFill(vg);
         nvgColor3.free();
@@ -437,10 +434,10 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
      * @see InputHandler#isAreaClicked(float, float, float, float)
      */
     @Override
-    public void drawURL(long vg, String url, float x, float y, float size, Font font, InputHandler inputHandler) {
-        drawText(vg, url, x, y, Colors.PRIMARY_500, size, font);
+    public void drawURL(long vg, String url, float x, float y, int color, float size, Font font, InputHandler inputHandler) {
+        drawText(vg, url, x, y, color, size, font);
         float length = getTextWidth(vg, url, size, font);
-        drawRect(vg, x, y + size / 2, length, 1, Colors.PRIMARY_500);
+        drawRect(vg, x, y + size / 2, length, 1, color);
         if (inputHandler.isAreaClicked((int) (x - 2), (int) (y - 1), (int) (length + 4), (int) (size / 2 + 3))) {
             NetworkUtils.browseLink(url);
         }
@@ -729,11 +726,6 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
      */
     @Override
     public void setAlpha(long vg, float alpha) {
-        if (OneConfigGui.INSTANCE != null && OneConfigGui.INSTANCE.isDrawing()) {
-            if (alpha > OneConfigGui.INSTANCE.transparencyFactor) {
-                alpha = OneConfigGui.INSTANCE.transparencyFactor;
-            }
-        }
         nvgGlobalAlpha(vg, alpha);
     }
 
@@ -799,8 +791,7 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
      */
     @Override
     public void drawSvg(long vg, String filePath, float x, float y, float width, float height, Class<?> clazz) {
-        if (OneConfigGui.isOpen()) drawSvg(vg, filePath, x, y, width, height, OneConfigGui.getScaleFactor(), clazz);
-        else drawSvg(vg, filePath, x, y, width, height, 1f, clazz);
+        drawSvg(vg, filePath, x, y, width, height, 1f, clazz);
     }
 
     /**
@@ -864,8 +855,7 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
      */
     @Override
     public void drawSvg(long vg, String filePath, float x, float y, float width, float height, int color, Class<?> clazz) {
-        if (OneConfigGui.isOpen()) drawSvg(vg, filePath, x, y, width, height, color, OneConfigGui.getScaleFactor(), clazz);
-        else drawSvg(vg, filePath, x, y, width, height, color, 1f, clazz);
+        drawSvg(vg, filePath, x, y, width, height, color, 1f, clazz);
     }
 
     /**
@@ -905,51 +895,7 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
      */
     @Override
     public void drawSvg(long vg, SVG svg, float x, float y, float width, float height, int color) {
-        if (OneConfigGui.isOpen()) drawSvg(vg, svg, x, y, width, height, color, OneConfigGui.getScaleFactor());
-        else drawSvg(vg, svg, x, y, width, height, color, 1f);
-    }
-
-    /**
-     * Draw a circle with an info icon inside it
-     *
-     * @param vg   The NanoVG context.
-     * @param type The icon type.
-     * @param x    The x position.
-     * @param y    The y position.
-     * @param size The diameter.
-     */
-    public void drawInfo(long vg, InfoType type, float x, float y, float size) {
-        SVG icon = null;
-        int colorOuter = 0;
-        int colorInner = 0;
-        switch (type) {
-            case INFO:
-                icon = SVGs.INFO_CIRCLE;
-                colorOuter = Colors.GRAY_400;
-                colorInner = Colors.GRAY_300;
-                break;
-            case SUCCESS:
-                icon = SVGs.CHECK_CIRCLE;
-                colorOuter = Colors.SUCCESS_700;
-                colorInner = Colors.SUCCESS_600;
-                break;
-            case WARNING:
-                icon = SVGs.WARNING;
-                colorOuter = Colors.WARNING_600;
-                colorInner = Colors.WARNING_500;
-                break;
-            case ERROR:
-                icon = SVGs.ERROR;
-                colorOuter = Colors.ERROR_700;
-                colorInner = Colors.ERROR_600;
-                break;
-        }
-        float centerX = x + size / 2f;
-        float centerY = y + size / 2f;
-        drawCircle(vg, centerX, centerY, size / 2, colorOuter);
-        drawCircle(vg, centerX, centerY, size / 2 - size / 12, colorInner);
-        float iconSize = size / 1.75f;
-        drawSvg(vg, icon, centerX - iconSize / 2f, centerY - iconSize / 2f, iconSize, iconSize);
+        drawSvg(vg, svg, x, y, width, height, color, 1f);
     }
 
     @Override

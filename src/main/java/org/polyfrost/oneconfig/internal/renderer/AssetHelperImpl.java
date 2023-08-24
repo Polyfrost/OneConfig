@@ -26,8 +26,6 @@
 
 package org.polyfrost.oneconfig.internal.renderer;
 
-import org.polyfrost.oneconfig.internal.assets.Images;
-import org.polyfrost.oneconfig.internal.assets.SVGs;
 import org.polyfrost.oneconfig.renderer.asset.AssetHelper;
 import org.polyfrost.oneconfig.renderer.asset.Image;
 import org.polyfrost.oneconfig.renderer.asset.NVGAsset;
@@ -50,8 +48,6 @@ import java.util.Map;
  * Loads images and SVGs from resources into NanoVG.
  *
  * @see NanoVGHelperImpl
- * @see Images
- * @see SVGs
  */
 public final class AssetHelperImpl implements AssetHelper {
     public static final int DEFAULT_FLAGS = NanoVG.NVG_IMAGE_REPEATX | NanoVG.NVG_IMAGE_REPEATY | NanoVG.NVG_IMAGE_GENERATE_MIPMAPS;

@@ -29,7 +29,6 @@ package org.polyfrost.oneconfig.utils.gui;
 import org.polyfrost.oneconfig.events.EventManager;
 import org.polyfrost.oneconfig.events.event.RenderEvent;
 import org.polyfrost.oneconfig.events.event.Stage;
-import org.polyfrost.oneconfig.gui.OneConfigGui;
 import org.polyfrost.oneconfig.libs.eventbus.Subscribe;
 import org.polyfrost.oneconfig.libs.universal.UMinecraft;
 import org.polyfrost.oneconfig.platform.Platform;
@@ -55,7 +54,7 @@ public final class GuiUtils {
      */
     @Deprecated
     public static void displayScreen(Object screen) {
-        displayScreen(screen, screen instanceof OneConfigGui ? 2 : 1);
+        displayScreen(screen, 1);
     }
 
     /**
@@ -65,7 +64,7 @@ public final class GuiUtils {
      * @param ticks the amount of ticks to wait for before displaying the screen.
      */
     public static void displayScreen(Object screen, int ticks) {
-        new TickDelay(() -> Platform.getGuiPlatform().setCurrentScreen(screen), ticks);
+        new TickDelay(ticks, () -> Platform.getGuiPlatform().setCurrentScreen(screen));
     }
 
     /**

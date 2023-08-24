@@ -26,50 +26,14 @@
 
 package org.polyfrost.oneconfig.internal;
 
-import org.polyfrost.oneconfig.config.data.Mod;
-import org.polyfrost.oneconfig.config.data.ModType;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.polyfrost.oneconfig.events.EventManager;
-import org.polyfrost.oneconfig.events.event.ShutdownEvent;
 import org.polyfrost.oneconfig.internal.command.OneConfigCommand;
-import org.polyfrost.oneconfig.internal.config.OneConfigConfig;
-import org.polyfrost.oneconfig.internal.config.Preferences;
-import org.polyfrost.oneconfig.internal.config.compatibility.forge.ForgeCompat;
-import org.polyfrost.oneconfig.internal.config.core.ConfigCore;
-import org.polyfrost.oneconfig.internal.config.core.KeyBindHandler;
 import org.polyfrost.oneconfig.internal.gui.BlurHandler;
-import org.polyfrost.oneconfig.internal.hud.HudCore;
-import org.polyfrost.oneconfig.libs.eventbus.Subscribe;
-import org.polyfrost.oneconfig.libs.universal.ChatColor;
-import org.polyfrost.oneconfig.libs.universal.UChat;
-import org.polyfrost.oneconfig.libs.universal.UScreen;
-import org.polyfrost.oneconfig.libs.universal.wrappers.UPlayer;
-import org.polyfrost.oneconfig.utils.TickDelay;
 import org.polyfrost.oneconfig.utils.commands.CommandManager;
 import org.polyfrost.oneconfig.utils.gui.GuiUtils;
 import org.polyfrost.oneconfig.utils.hypixel.HypixelUtils;
-import org.polyfrost.oneconfig.utils.Notifications;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiScreen;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-//#if FORGE==1
-import net.minecraftforge.fml.common.ModContainer;
-import org.polyfrost.oneconfig.utils.IgnoredGuiFactory;
-//#endif
-
-//#if MC<=11202
-//#if FORGE==1
-import net.minecraftforge.fml.common.versioning.ArtifactVersion;
-import net.minecraftforge.fml.client.FMLClientHandler;
-import net.minecraftforge.fml.client.IModGuiFactory;
-import net.minecraftforge.fml.common.Loader;
-import net.minecraftforge.fml.common.ModMetadata;
-//#endif
-//#endif
-
-import java.util.Locale;
-import java.util.Map;
-import java.util.Objects;
 
 /**
  * The main class of OneConfig.
@@ -99,52 +63,6 @@ public class OneConfig {
     @SuppressWarnings("ResultOfMethodCallIgnored")
     public void init() {
         if (initialized) return;
-        if (OneConfigConfig.getInstance() == null) {
-            OneConfigConfig.getInstance();
-        }
-        if (Preferences.getInstance() == null) {
-            Preferences.getInstance();
-        }
-        //#if FORGE==1
-            //#if MC<=11202
-            for (ModContainer mod : Loader.instance().getActiveModList()) {
-                if (mod == null) continue;
-                try {
-                    handleForgeCommand(mod);
-                    handleForgeGui(mod);
-                } catch (Throwable t) {
-                    LOGGER.error("Failed to handle Forge compatibility for {}", mod.getModId(), t);
-                }
-            }
-            //#else
-            //$$ try {
-            //$$     java.lang.reflect.Field mods = net.minecraftforge.fml.ModList.class.getDeclaredField("mods");
-            //$$     mods.setAccessible(true);
-            //$$     for (ModContainer container : ((java.util.List<ModContainer>) mods.get(net.minecraftforge.fml.ModList.get()))) {
-            //$$         try {
-            //$$             java.util.Optional<java.util.function.BiFunction<Minecraft, net.minecraft.client.gui.screen.Screen, net.minecraft.client.gui.screen.Screen>> gui = container.getCustomExtension(net.minecraftforge.fml.ExtensionPoint.CONFIGGUIFACTORY);
-            //$$             gui.ifPresent(minecraftScreenScreenBiFunction -> ForgeCompat.compatMods.put(new ForgeCompat.ForgeCompatMod(container.getModId(), ModType.THIRD_PARTY), () -> {
-            //$$                 net.minecraft.client.gui.screen.Screen screen = minecraftScreenScreenBiFunction.apply(Minecraft.getInstance(), Minecraft.getInstance().currentScreen);
-            //$$                 if (screen != null) {
-            //$$                     GuiUtils.displayScreen(screen);
-            //$$                 }
-            //$$             }));
-            //$$         } catch (Exception e) {
-            //$$             e.printStackTrace();
-            //$$         }
-            //$$     }
-            //$$ } catch (Exception e) {
-            //$$     e.printStackTrace();
-            //$$ }
-            //#endif
-
-        for (Map.Entry<Mod, Runnable> entry : ForgeCompat.compatMods.entrySet()) {
-            ConfigCore.mods.add(entry.getKey());
-        }
-        //#endif
-        // called to make sure static initializer is called
-        Notifications.INSTANCE.getClass();
-        EventManager.INSTANCE.register(Notifications.INSTANCE);
         GuiUtils.getDeltaTime();
         try {
             EventManager.INSTANCE.register(BlurHandler.INSTANCE);
@@ -152,111 +70,8 @@ public class OneConfig {
             e.printStackTrace();
         }
         CommandManager.INSTANCE.registerCommand(new OneConfigCommand());
-        EventManager.INSTANCE.register(new HudCore());
         HypixelUtils.INSTANCE.initialize();
-        EventManager.INSTANCE.register(KeyBindHandler.INSTANCE);
-        ConfigCore.sortMods();
 
         initialized = true;
-    }
-
-    //#if FORGE==1 && MC<=11202
-
-    private void handleForgeCommand(ModContainer mod) {
-        for (Mod configMod : ConfigCore.mods) {
-            final String configModName = configMod.name.toLowerCase(Locale.ENGLISH).replace(" ", "");
-            if (Objects.equals(configModName, mod.getName().toLowerCase(Locale.ENGLISH)) || Objects.equals(configModName, mod.getModId())) {
-                return;
-            }
-        }
-
-        for (ArtifactVersion dependency : mod.getDependencies()) {
-            if (Objects.equals("oneconfig", dependency.getLabel())) {
-                return;
-            }
-        }
-        for (net.minecraft.command.ICommand command : net.minecraftforge.client.ClientCommandHandler.instance.getCommands().values()) {
-            if (Objects.equals(command.getCommandName(), mod.getModId())) {
-                for (String alias : command.getCommandAliases()) {
-                    for (Mod configMod : ConfigCore.mods) {
-                        if (Objects.equals(configMod.name.toLowerCase(Locale.ENGLISH).replace(" ", ""), alias.toLowerCase(Locale.ENGLISH))) {
-                            return;
-                        }
-                    }
-                }
-                ForgeCompat.compatMods.put(new ForgeCompat.ForgeCompatMod(mod.getName(), ModType.THIRD_PARTY), () -> new TickDelay(() -> {
-                    UScreen.displayScreen(null);
-                    try {
-                        //execute
-                        //#if MC<=10809
-                        command.processCommand(UPlayer.getPlayer(), new String[]{});
-                        //#else
-                        //$$ command.execute(net.minecraft.client.Minecraft.getMinecraft().getIntegratedServer(), UPlayer.getPlayer(), new String[]{});
-                        //#endif
-                    } catch (Exception e) {
-                        UChat.chat(ChatColor.RED + "Forge command compat has failed! Please report this to Polyfrost at https://polyfrost.cc/discord");
-                    }
-                }, 1));
-                return;
-            }
-        }
-    }
-
-    private void handleForgeGui(ModContainer mod) {
-        if ("fml".equalsIgnoreCase(mod.getModId())) {
-            return;
-        }
-
-        IModGuiFactory factory = FMLClientHandler.instance().getGuiFactoryFor(mod);
-        //#if MC<=10809
-        if (factory == null || factory.mainConfigGuiClass() == null) return;
-        //#else
-        //$$ if (factory == null || !factory.hasConfigGui()) return;
-        //#endif
-        if (IgnoredGuiFactory.class.isAssignableFrom(factory.getClass())) return;
-
-        boolean isForgeContainer = "forge".equalsIgnoreCase(mod.getModId());
-        ModMetadata metadata = mod.getMetadata();
-        String modLogoFile =
-                metadata.logoFile == null || metadata.logoFile.isEmpty()
-                        ? null
-                        : metadata.logoFile;
-        if (modLogoFile != null && !isForgeContainer) {
-            if (modLogoFile.startsWith("/")) {
-                modLogoFile = modLogoFile.substring(1);
-            }
-            if (!modLogoFile.startsWith("assets/")) {
-                modLogoFile = "/assets/" + modLogoFile;
-            }
-
-            if (OneConfig.class.getResource(modLogoFile) == null) {
-                LOGGER.warn("Mod '{}' has an invalid logo file: {}", mod.getName(), modLogoFile);
-                modLogoFile = null;
-            }
-        }
-
-        String icon = isForgeContainer
-                ? "/assets/oneconfig/icons/forge_logo.png"
-                : modLogoFile;
-
-        ForgeCompat.compatMods.put(new ForgeCompat.ForgeCompatMod(mod.getName(), ModType.THIRD_PARTY, icon), () -> {
-            try {
-                GuiUtils.displayScreen(
-                        //#if MC<=10809
-                        factory.mainConfigGuiClass().getConstructor(GuiScreen.class).newInstance(Minecraft.getMinecraft().currentScreen)
-                        //#else
-                        //$$ factory.createConfigGui(Minecraft.getMinecraft().currentScreen)
-                        //#endif
-                );
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
-    }
-    //#endif
-
-    @Subscribe
-    private void onShutdown(ShutdownEvent event) {
-        ConfigCore.saveAll();
     }
 }

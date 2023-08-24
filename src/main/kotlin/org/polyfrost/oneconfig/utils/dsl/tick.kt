@@ -24,9 +24,6 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-// Retrocompatibility
-@file:JvmName("TickDelayDSLKt")
-
 package org.polyfrost.oneconfig.utils.dsl
 
 import org.polyfrost.oneconfig.utils.TickDelay
@@ -36,4 +33,4 @@ import org.polyfrost.oneconfig.utils.TickDelay
  *
  * @see TickDelay
  */
-fun tick(ticks: Int, block: () -> Unit) = TickDelay(block, ticks)
+fun tick(ticks: Int, block: () -> Unit) = TickDelay(ticks, block)

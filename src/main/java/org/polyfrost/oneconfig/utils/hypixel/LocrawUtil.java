@@ -70,10 +70,10 @@ public class LocrawUtil {
     }
 
     private void sendLocraw(boolean delay) {
-        new TickDelay(() -> {
+        new TickDelay((delay ? 20 : 0), () -> {
             this.listening = true;
             UChat.say("/locraw");
-        }, (delay ? 20 : 0));
+        });
     }
 
     @Subscribe

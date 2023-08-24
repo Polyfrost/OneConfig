@@ -24,9 +24,6 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-// Retrocompatibility
-@file:JvmName("DSLsKt")
-
 package org.polyfrost.oneconfig.utils.dsl
 
 import org.polyfrost.oneconfig.libs.universal.UMinecraft

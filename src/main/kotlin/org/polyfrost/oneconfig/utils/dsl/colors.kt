@@ -24,20 +24,9 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-// Retrocompatibility
-@file:JvmName("ColorUtilsDSLKt")
-
 package org.polyfrost.oneconfig.utils.dsl
 
-import org.polyfrost.oneconfig.config.core.OneColor
 import org.polyfrost.oneconfig.utils.color.ColorUtils
-
-/**
- * Creates a new [OneColor] from the given RGBA integer.
- *
- * @see OneColor
- */
-fun Int.toColor() = OneColor(this)
 
 /**
  * Get the red component of the given RGBA value.

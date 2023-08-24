@@ -48,7 +48,6 @@
 
 package org.polyfrost.oneconfig.utils;
 
-import org.polyfrost.oneconfig.internal.config.Preferences;
 import org.polyfrost.oneconfig.platform.LoaderPlatform;
 import org.polyfrost.oneconfig.platform.Platform;
 import org.apache.logging.log4j.LogManager;
@@ -142,7 +141,7 @@ public class LogScanner {
     }
 
     private static void debug(Supplier<String> message) {
-        if (Preferences.DEBUG) LOGGER.info(message.get());
+        //if (Preferences.DEBUG) LOGGER.info(message.get());
     }
 
     // TODO: get a list of mixin transformers that affected the class and blame those too

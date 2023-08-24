@@ -26,7 +26,6 @@
 
 package org.polyfrost.oneconfig.renderer;
 
-import org.polyfrost.oneconfig.config.data.InfoType;
 import org.polyfrost.oneconfig.renderer.asset.Image;
 import org.polyfrost.oneconfig.renderer.asset.SVG;
 import org.polyfrost.oneconfig.renderer.font.Font;
@@ -224,7 +223,7 @@ public interface NanoVGHelper {
      * @see NanoVGHelper#drawText(long, String, float, float, int, float, Font)
      * @see InputHandler#isAreaClicked(float, float, float, float)
      */
-    void drawURL(long vg, String url, float x, float y, float size, Font font, InputHandler inputHandler);
+    void drawURL(long vg, String url, float x, float y, int color, float size, Font font, InputHandler inputHandler);
 
     /**
      * Draws an image with the provided file path.
@@ -475,16 +474,6 @@ public interface NanoVGHelper {
      */
     void drawSvg(long vg, SVG svg, float x, float y, float width, float height, int color);
 
-    /**
-     * Draw a circle with an info icon inside of it
-     *
-     * @param vg   The NanoVG context.
-     * @param type The icon type.
-     * @param x    The x position.
-     * @param y    The y position.
-     * @param size The diameter.
-     */
-    void drawInfo(long vg, InfoType type, float x, float y, float size);
 
     boolean isDrawing();
 

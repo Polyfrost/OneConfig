@@ -73,7 +73,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
-@SuppressWarnings("deprecation")
 public class LwjglManagerImpl
         extends URLClassLoader
         implements LwjglManager {
@@ -458,5 +457,20 @@ public class LwjglManagerImpl
     @Override
     public TinyFD getTinyFD() {
         return tinyFD;
+    }
+
+    @Override
+    public boolean addIsolatedClass(String className) {
+        return classLoaderInclude.add(className);
+    }
+
+    @Override
+    public Object getIsolatedClass(String className) {
+        try {
+            return Class.forName(className, true, isPojav ? getClass().getClassLoader() : this).getConstructor().newInstance();
+        } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException |
+                 ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

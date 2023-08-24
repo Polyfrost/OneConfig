@@ -27,7 +27,6 @@
 package org.polyfrost.oneconfig.internal.utils;
 
 import org.polyfrost.oneconfig.utils.LogScanner;
-import org.polyfrost.oneconfig.utils.Notifications;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -59,7 +58,7 @@ public final class Deprecator {
             if (culprit.equals("OneConfig")) return;
 
             if (warned.add(culprit)) {
-                Notifications.INSTANCE.send("Deprecation Warning", "The mod '" + culprit + "' is using a deprecated method, and will no longer work in the future. Please report this to the mod author.");
+                //Notifications.INSTANCE.send("Deprecation Warning", "The mod '" + culprit + "' is using a deprecated method, and will no longer work in the future. Please report this to the mod author.");
                 try {
                     throw new UnsupportedOperationException("Method " + e.getStackTrace()[1].getClassName() + "." + e.getStackTrace()[1].getMethodName() + "() is deprecated; but is still being used by mod " + culprit + "!");
                 } catch (UnsupportedOperationException e1) {

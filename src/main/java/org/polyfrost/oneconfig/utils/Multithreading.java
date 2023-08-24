@@ -28,18 +28,23 @@ package org.polyfrost.oneconfig.utils;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Allows for easy multithreading.
  * <p>
- * Taken from Seraph by Scherso under LGPL-2.1
+ * Modified from Seraph by Scherso under LGPL-2.1
  * <a href="https://github.com/Scherso/Seraph/blob/master/LICENSE">https://github.com/Scherso/Seraph/blob/master/LICENSE</a>
  * </p>
  */
 public class Multithreading {
-    private static final ExecutorService executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("OneConfig-%d").build());
-    private static final ScheduledExecutorService runnableExecutor = new ScheduledThreadPoolExecutor(Runtime.getRuntime().availableProcessors() + 1);
+    private static ExecutorService executorService = null; /* by lazy { Executors.newCachedThreadPool(ThreadFactoryBuilder().setNameFormat("OneConfig-%d").build()) } */
+    private static ScheduledExecutorService runnableExecutor = null;
 
     /**
      * Runs the runnable asynchronously.
@@ -71,6 +76,7 @@ public class Multithreading {
      * @see ExecutorService#submit(Runnable)
      */
     public static Future<?> submit(Runnable runnable) {
+        if (executorService == null) executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("OneConfig-%d").build());
         return executorService.submit(runnable);
     }
 
@@ -96,6 +102,17 @@ public class Multithreading {
      * @see ScheduledExecutorService#schedule(Runnable, long, TimeUnit)
      */
     public static ScheduledFuture<?> submitScheduled(Runnable runnable, long delay, TimeUnit timeUnit) {
+        if (runnableExecutor == null) runnableExecutor = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors() + 1);
         return runnableExecutor.schedule(runnable, delay, timeUnit);
+    }
+
+    public static ExecutorService getExecutorService() {
+        if (executorService == null) executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("OneConfig-%d").build());
+        return executorService;
+    }
+
+    public static ScheduledExecutorService getRunnableExecutor() {
+        if (runnableExecutor == null) runnableExecutor = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors() + 1);
+        return runnableExecutor;
     }
 }

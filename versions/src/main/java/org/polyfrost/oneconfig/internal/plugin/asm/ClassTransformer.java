@@ -26,7 +26,6 @@
 //#disable-remap
 package org.polyfrost.oneconfig.internal.plugin.asm;
 
-import org.polyfrost.oneconfig.internal.plugin.asm.tweakers.VigilantTransformer;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import org.apache.logging.log4j.LogManager;
@@ -60,7 +59,7 @@ public class ClassTransformer
     //#endif
 
     public ClassTransformer() {
-        registerTransformer(new VigilantTransformer());
+        //registerTransformer(new VigilantTransformer());
     }
 
     private void registerTransformer(ITransformer transformer) {

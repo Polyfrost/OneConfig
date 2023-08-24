@@ -29,7 +29,6 @@ package org.polyfrost.oneconfig.utils.gui;
 import org.polyfrost.oneconfig.events.EventManager;
 import org.polyfrost.oneconfig.events.event.RenderEvent;
 import org.polyfrost.oneconfig.events.event.Stage;
-import org.polyfrost.oneconfig.gui.OneConfigGui;
 import org.polyfrost.oneconfig.libs.eventbus.Subscribe;
 import org.polyfrost.oneconfig.libs.universal.UMinecraft;
 import org.polyfrost.oneconfig.libs.universal.UScreen;
@@ -73,7 +72,7 @@ public final class GuiUtils {
      */
     public static void displayScreen(GuiScreen screen) {
         //noinspection ConstantConditions
-        displayScreen(screen, screen instanceof OneConfigGui ? 2 : 1);
+        displayScreen(screen, 1);
     }
 
     /**
@@ -85,10 +84,10 @@ public final class GuiUtils {
     public static void displayScreen(GuiScreen screen, int ticks) {
         Optional<GuiScreen> optional = Optional.of(screen);
         screenQueue.add(optional);
-        new TickDelay(() -> {
+        new TickDelay(ticks, () -> {
             UScreen.displayScreen(screen);
             screenQueue.remove(optional);
-        }, ticks);
+        });
     }
 
     public static Deque<Optional<GuiScreen>> getScreenQueue() {

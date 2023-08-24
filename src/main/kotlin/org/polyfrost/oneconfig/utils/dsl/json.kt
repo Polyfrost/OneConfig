@@ -24,9 +24,6 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-// Retrocompatibility
-@file:JvmName("JsonUtilsDSLKt")
-
 package org.polyfrost.oneconfig.utils.dsl
 
 import org.polyfrost.oneconfig.utils.JsonUtils

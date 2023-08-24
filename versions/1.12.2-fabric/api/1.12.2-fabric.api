@@ -111,13 +111,13 @@ public class org/polyfrost/oneconfig/utils/commands/arguments/PlayerArgumentPars
 	public synthetic fun parse (Ljava/lang/String;)Ljava/lang/Object;
 }
 
-public final class org/polyfrost/oneconfig/utils/dsl/DSLsKt {
-	public static final fun getMc ()Lnet/minecraft/client/MinecraftClient;
-}
-
-public final class org/polyfrost/oneconfig/utils/dsl/GuiUtilsDSLKt {
+public final class org/polyfrost/oneconfig/utils/dsl/GuiKt {
 	public static final fun openScreen (Lnet/minecraft/client/gui/screen/Screen;I)V
 	public static synthetic fun openScreen$default (Lnet/minecraft/client/gui/screen/Screen;IILjava/lang/Object;)V
+}
+
+public final class org/polyfrost/oneconfig/utils/dsl/McKt {
+	public static final fun getMc ()Lnet/minecraft/client/MinecraftClient;
 }
 
 public final class org/polyfrost/oneconfig/utils/gui/GuiUtils {
