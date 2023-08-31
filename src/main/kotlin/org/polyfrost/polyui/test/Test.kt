@@ -134,11 +134,11 @@ object Test {
                         MouseClicked(0) to {
                             if (t) {
                                 this.layout.changeColors(LightTheme())
-                                this.layout.getComponent<Text>(1).text = "text.light".localised()
+                                this.layout.getComponent<Text>(1).initialText = "text.light".localised()
                                 this.leftImage!!.image = moon
                             } else {
                                 this.layout.changeColors(DarkTheme())
-                                this.layout.getComponent<Text>(1).text = "text.dark".localised()
+                                this.layout.getComponent<Text>(1).initialText = "text.dark".localised()
                                 this.leftImage!!.image = sun
                             }
                             t = !t

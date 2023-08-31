@@ -26,10 +26,10 @@
 
 package org.polyfrost.oneconfig.internal.mixin.commands;
 
-import org.polyfrost.oneconfig.utils.commands.ClientCommandHandler;
 import net.minecraft.client.gui.screen.ChatScreen;
 import net.minecraft.util.Formatting;
 import org.apache.commons.lang3.StringUtils;
+import org.polyfrost.oneconfig.utils.commands.ClientCommandHandler;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;

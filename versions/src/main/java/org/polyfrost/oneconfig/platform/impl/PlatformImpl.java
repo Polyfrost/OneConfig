@@ -26,8 +26,8 @@
 
 package org.polyfrost.oneconfig.platform.impl;
 
-import org.polyfrost.oneconfig.platform.Platform;
 import net.minecraft.client.Minecraft;
+import org.polyfrost.oneconfig.platform.Platform;
 
 public class PlatformImpl implements Platform {
     @Override

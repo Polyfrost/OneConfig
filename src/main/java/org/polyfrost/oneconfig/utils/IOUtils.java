@@ -29,8 +29,15 @@ package org.polyfrost.oneconfig.utils;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
-import java.awt.datatransfer.*;
-import java.io.*;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.StringSelection;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;

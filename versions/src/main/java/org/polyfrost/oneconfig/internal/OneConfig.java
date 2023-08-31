@@ -69,7 +69,7 @@ public class OneConfig {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        CommandManager.INSTANCE.registerCommand(new OneConfigCommand());
+        CommandManager.registerCommand(new OneConfigCommand());
         HypixelUtils.INSTANCE.initialize();
 
         initialized = true;

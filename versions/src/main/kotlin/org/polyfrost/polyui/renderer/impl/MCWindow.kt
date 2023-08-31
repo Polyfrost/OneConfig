@@ -26,12 +26,12 @@
 
 package org.polyfrost.polyui.renderer.impl
 
+import net.minecraft.client.Minecraft
 import org.polyfrost.oneconfig.libs.universal.UResolution
 import org.polyfrost.oneconfig.libs.universal.UScreen
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.renderer.Window
 import org.polyfrost.polyui.renderer.data.Cursor
-import net.minecraft.client.Minecraft
 
 //#if MC>=11300
 //$$ import org.lwjgl.glfw.GLFW.*
@@ -43,7 +43,7 @@ class MCWindow(private val mc: Minecraft) : Window(
 
     //#if MC>=11300
     //$$ private val handle =
-        //#if MC>=11700
+    //#if MC>=11700
     //$$     mc.window.handle
     //#else
     //$$ mc.mainWindow.handle

@@ -26,10 +26,10 @@
 
 package org.polyfrost.oneconfig.internal.mixin;
 
+import net.minecraft.client.KeyboardListener;
 import org.polyfrost.oneconfig.events.EventManager;
 import org.polyfrost.oneconfig.events.event.KeyInputEvent;
 import org.polyfrost.oneconfig.events.event.RawKeyEvent;
-import net.minecraft.client.KeyboardListener;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;

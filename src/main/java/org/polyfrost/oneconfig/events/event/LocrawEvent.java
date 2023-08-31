@@ -26,8 +26,8 @@
 
 package org.polyfrost.oneconfig.events.event;
 
-import org.polyfrost.oneconfig.utils.hypixel.LocrawInfo;
 import org.polyfrost.oneconfig.utils.hypixel.HypixelUtils;
+import org.polyfrost.oneconfig.utils.hypixel.LocrawInfo;
 
 /**
  * Called when the player's location in Hypixel is received via the /locraw command.

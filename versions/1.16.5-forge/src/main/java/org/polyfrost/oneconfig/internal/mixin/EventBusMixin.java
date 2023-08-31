@@ -27,12 +27,12 @@
 //#if FORGE==1
 package org.polyfrost.oneconfig.internal.mixin;
 
-import org.polyfrost.oneconfig.events.EventManager;
-import org.polyfrost.oneconfig.events.event.ChatReceiveEvent;
 import net.minecraft.util.text.ChatType;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.eventbus.EventBus;
 import net.minecraftforge.eventbus.api.Event;
+import org.polyfrost.oneconfig.events.EventManager;
+import org.polyfrost.oneconfig.events.event.ChatReceiveEvent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -43,7 +43,7 @@ public class EventBusMixin {
 
     @Inject(method = "post", at = @At(value = "HEAD"), remap = false)
     private void post(Event e, CallbackInfoReturnable<Boolean> cir) {
-        if(!(e instanceof ClientChatReceivedEvent)) return;
+        if (!(e instanceof ClientChatReceivedEvent)) return;
         ClientChatReceivedEvent event = (ClientChatReceivedEvent) e;
         if (event.getType() == ChatType.CHAT) {
             ChatReceiveEvent customEvent = new ChatReceiveEvent(event.getMessage());

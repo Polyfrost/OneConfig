@@ -26,8 +26,8 @@
 
 package org.polyfrost.oneconfig.utils.dsl
 
-import org.polyfrost.oneconfig.utils.JsonUtils
 import com.google.gson.JsonElement
+import org.polyfrost.oneconfig.utils.JsonUtils
 
 /**
  * Returns the [JsonElement] of the given [String].

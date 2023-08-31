@@ -25,10 +25,10 @@
  */
 package org.polyfrost.oneconfig.internal.mixin;
 
+import net.minecraftforge.client.GuiIngameForge;
 import org.polyfrost.oneconfig.events.EventManager;
 import org.polyfrost.oneconfig.events.event.HudRenderEvent;
 import org.polyfrost.oneconfig.libs.universal.UMatrixStack;
-import net.minecraftforge.client.GuiIngameForge;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -42,7 +42,7 @@ public class GuiIngameForgeMixin {
     //#else
     @Inject(method = "renderGameOverlay", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/client/GuiIngameForge;post(Lnet/minecraftforge/client/event/RenderGameOverlayEvent$ElementType;)V", shift = At.Shift.AFTER, remap = false), remap = true)
     private void onRenderGameOverlay(float partialTicks, CallbackInfo ci) {
-    //#endif
+        //#endif
         EventManager.INSTANCE.post(new HudRenderEvent(new UMatrixStack(), partialTicks));
     }
 }

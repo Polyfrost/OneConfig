@@ -3,7 +3,6 @@
  * OneConfig - Next Generation Config Library for Minecraft: Java Edition
  * Copyright (C) 2021~2023 Polyfrost.
  *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
- * Co-author: Pinkulu <pinkulumc@gmail.com> <https://github.com/pinkulu>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -27,7 +26,12 @@
 
 package org.polyfrost.oneconfig.utils.commands;
 
-public abstract class PlatformCommandManager {
+import org.polyfrost.oneconfig.api.commands.internal.CommandTree;
 
-    abstract void createCommand(CommandManager.OCCommand command);
+/**
+ * @see org.polyfrost.oneconfig.api.commands.CommandManager
+ */
+@FunctionalInterface
+public interface PlatformCommandManager {
+    void createCommand(CommandTree command);
 }

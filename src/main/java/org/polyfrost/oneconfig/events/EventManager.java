@@ -26,12 +26,12 @@
 
 package org.polyfrost.oneconfig.events;
 
-import org.polyfrost.oneconfig.libs.eventbus.EventBus;
-import org.polyfrost.oneconfig.libs.eventbus.exception.ExceptionHandler;
-import org.polyfrost.oneconfig.libs.eventbus.invokers.LMFInvoker;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
+import org.polyfrost.oneconfig.libs.eventbus.EventBus;
+import org.polyfrost.oneconfig.libs.eventbus.exception.ExceptionHandler;
+import org.polyfrost.oneconfig.libs.eventbus.invokers.LMFInvoker;
 
 import java.util.HashSet;
 import java.util.Set;

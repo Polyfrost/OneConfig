@@ -26,23 +26,20 @@
 
 package org.polyfrost.oneconfig.internal.gui.impl;
 
-import org.polyfrost.oneconfig.events.event.RenderEvent;
-import org.polyfrost.oneconfig.events.event.ScreenOpenEvent;
-import org.polyfrost.oneconfig.events.event.Stage;
-import org.polyfrost.oneconfig.internal.gui.BlurHandler;
-import org.polyfrost.oneconfig.internal.mixin.ShaderGroupAccessor;
-//#if FABRIC==1
-//$$ import org.polyfrost.oneconfig.internal.mixin.GameRendererAccessor;
-//#endif
-import org.polyfrost.oneconfig.libs.eventbus.Subscribe;
-import org.polyfrost.oneconfig.libs.universal.UMinecraft;
-import org.polyfrost.oneconfig.libs.universal.UScreen;
-import org.polyfrost.oneconfig.utils.gui.BlurScreen;
 import net.minecraft.client.shader.Shader;
 import net.minecraft.client.shader.ShaderUniform;
 import net.minecraft.util.ResourceLocation;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.polyfrost.oneconfig.events.event.RenderEvent;
+import org.polyfrost.oneconfig.events.event.ScreenOpenEvent;
+import org.polyfrost.oneconfig.events.event.Stage;
+import org.polyfrost.oneconfig.internal.gui.BlurHandler;
+import org.polyfrost.oneconfig.internal.mixin.ShaderGroupAccessor;
+import org.polyfrost.oneconfig.libs.eventbus.Subscribe;
+import org.polyfrost.oneconfig.libs.universal.UMinecraft;
+import org.polyfrost.oneconfig.libs.universal.UScreen;
+import org.polyfrost.oneconfig.utils.gui.BlurScreen;
 
 import java.util.List;
 
@@ -166,6 +163,6 @@ public class BlurHandlerImpl implements BlurHandler {
                 //#if MC<=11202
                 && net.minecraft.client.renderer.OpenGlHelper.shadersSupported
                 //#endif
-        ;
+                ;
     }
 }

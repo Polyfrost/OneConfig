@@ -28,8 +28,12 @@ package org.polyfrost.oneconfig.platform;
 
 public interface GuiPlatform {
     Object getCurrentScreen();
+
     void setCurrentScreen(Object screen);
+
     boolean isInChat();
+
     boolean isInDebug();
+
     void playClickSound();
 }

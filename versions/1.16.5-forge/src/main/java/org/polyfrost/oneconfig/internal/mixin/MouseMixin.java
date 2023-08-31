@@ -26,10 +26,10 @@
 
 package org.polyfrost.oneconfig.internal.mixin;
 
-import org.polyfrost.oneconfig.events.EventManager;
-import org.polyfrost.oneconfig.events.event.RawMouseEvent;
-import org.polyfrost.oneconfig.events.event.MouseInputEvent;
 import net.minecraft.client.MouseHelper;
+import org.polyfrost.oneconfig.events.EventManager;
+import org.polyfrost.oneconfig.events.event.MouseInputEvent;
+import org.polyfrost.oneconfig.events.event.RawMouseEvent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;

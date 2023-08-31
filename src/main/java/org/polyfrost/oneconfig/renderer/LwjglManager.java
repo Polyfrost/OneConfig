@@ -26,9 +26,6 @@
 
 package org.polyfrost.oneconfig.renderer;
 
-import org.polyfrost.oneconfig.renderer.asset.AssetHelper;
-import org.polyfrost.oneconfig.renderer.font.FontHelper;
-import org.polyfrost.oneconfig.renderer.scissor.ScissorHelper;
 import org.polyfrost.polyui.renderer.Renderer;
 
 import java.util.ServiceLoader;
@@ -45,35 +42,11 @@ public interface LwjglManager {
 
     Renderer getRenderer(float width, float height);
 
-    /**
-     * @return the {@link NanoVGHelper} platform implementation.
-     * @deprecated Use {@link NanoVGHelper#INSTANCE} instead.
-     */
-    @Deprecated
-    NanoVGHelper getNanoVGHelper();
-
-    /**
-     * @return the {@link ScissorHelper} platform implementation.
-     * @deprecated Use {@link ScissorHelper#INSTANCE} instead.
-     */
-    @Deprecated
-    ScissorHelper getScissorHelper();
-
-    /**
-     * @return the {@link AssetHelper} platform implementation.
-     * @deprecated Use {@link AssetHelper#INSTANCE} instead.
-     */
-    @Deprecated
-    AssetHelper getAssetHelper();
-
-    @Deprecated
-    FontHelper getFontHelper();
-
-    @Deprecated
     TinyFD getTinyFD();
 
     /**
      * Adds a class to the isolated class loader. Used when any LWJGL3 class is loaded.
+     *
      * @param className the class name (e.g org.polyfrost.oneconfig.internal.renderer.NanoVGHelperImpl)
      * @return true if the class was added, false if it was already added or something went wrong
      */
@@ -81,6 +54,7 @@ public interface LwjglManager {
 
     /**
      * Gets a class from the isolated class loader.
+     *
      * @param className the class name (e.g org.polyfrost.oneconfig.internal.renderer.NanoVGHelperImpl)
      * @return the class if it was found, null if it was not found or something went wrong
      */

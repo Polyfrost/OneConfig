@@ -26,8 +26,8 @@
 
 package org.polyfrost.oneconfig.events.event;
 
-import org.polyfrost.oneconfig.libs.universal.wrappers.message.UTextComponent;
 import net.minecraft.util.IChatComponent;
+import org.polyfrost.oneconfig.libs.universal.wrappers.message.UTextComponent;
 
 /**
  * Called when a chat message is received.

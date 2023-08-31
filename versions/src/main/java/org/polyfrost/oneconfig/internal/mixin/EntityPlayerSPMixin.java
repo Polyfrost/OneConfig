@@ -26,9 +26,9 @@
 
 package org.polyfrost.oneconfig.internal.mixin;
 
+import net.minecraft.client.entity.EntityPlayerSP;
 import org.polyfrost.oneconfig.events.EventManager;
 import org.polyfrost.oneconfig.events.event.ChatSendEvent;
-import net.minecraft.client.entity.EntityPlayerSP;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;

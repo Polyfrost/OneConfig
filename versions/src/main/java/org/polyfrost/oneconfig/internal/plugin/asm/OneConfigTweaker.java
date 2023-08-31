@@ -27,11 +27,11 @@
 //#if FORGE==1 && MC<=11202
 package org.polyfrost.oneconfig.internal.plugin.asm;
 
-import org.polyfrost.oneconfig.internal.init.OneConfigInit;
 import net.minecraft.launchwrapper.ITweaker;
 import net.minecraft.launchwrapper.Launch;
 import net.minecraft.launchwrapper.LaunchClassLoader;
 import net.minecraftforge.fml.relauncher.CoreModManager;
+import org.polyfrost.oneconfig.internal.init.OneConfigInit;
 import org.spongepowered.asm.launch.MixinBootstrap;
 import org.spongepowered.asm.launch.MixinTweaker;
 import org.spongepowered.asm.mixin.Mixins;
@@ -56,6 +56,7 @@ public class OneConfigTweaker implements ITweaker {
             e.printStackTrace();
         }
     }
+
     @SuppressWarnings("unchecked")
     private void doMagicMixinStuff(URL url) {
         try {

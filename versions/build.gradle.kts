@@ -1,9 +1,9 @@
 @file:Suppress("DSL_SCOPE_VIOLATION")
 
+import net.fabricmc.loom.task.RemapSourcesJarTask
 import org.polyfrost.gradle.util.RelocationTransform.Companion.registerRelocationAttribute
 import org.polyfrost.gradle.util.noServerRunConfigs
 import org.polyfrost.gradle.util.prebundle
-import net.fabricmc.loom.task.RemapSourcesJarTask
 import java.text.SimpleDateFormat
 import java.util.concurrent.atomic.AtomicReference
 
@@ -144,7 +144,7 @@ dependencies {
 
     include(libs.caffeine, relocate = true)
 
-    include(files(project.rootDir.resolve("polyui-0.23.2.jar")))
+    include(files(project.rootDir.resolve("polyui-0.24.0.jar")))
 
     if (platform.isForge || platform.isLegacyFabric) {
         include("org.slf4j:slf4j-api:2.0.1")
@@ -162,6 +162,8 @@ dependencies {
     shadeProject(project(":")) {
         isTransitive = false
     }
+    shadeProject(project(":config"))
+    shadeProject(project(":commands"))
 
     if (platform.isFabric) {
         include(libs.fabricAsm)
@@ -180,15 +182,19 @@ dependencies {
     repackedVersions.forEachIndexed { index, version ->
         val configuration = configurations.create("tempLwjglConfiguration$index")
 
-        compileOnly(configuration("cc.polyfrost:lwjgl-$version:${libs.versions.lwjgl.get()}"){
+        compileOnly(configuration("cc.polyfrost:lwjgl-$version:${libs.versions.lwjgl.get()}") {
             isTransitive = false
         })
         shadeNoPom(implementationNoPom(prebundle(configuration, "lwjgl-$version.jar"))!!)
     }
 
-    modRuntimeOnly("me.djtheredstoner:DevAuth-" +
-            (if (platform.isForge) { if (platform.isLegacyForge) "forge-legacy" else "forge-latest" } else "fabric")
-            + ":1.1.2")
+    modRuntimeOnly(
+        "me.djtheredstoner:DevAuth-" +
+                (if (platform.isForge) {
+                    if (platform.isLegacyForge) "forge-legacy" else "forge-latest"
+                } else "fabric")
+                + ":1.1.2"
+    )
 
     configurations.named(JavaPlugin.COMPILE_CLASSPATH_CONFIGURATION_NAME) { extendsFrom(shadeProject) }
     configurations.named(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME) { extendsFrom(shadeProject) }

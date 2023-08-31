@@ -26,14 +26,6 @@
 
 package org.polyfrost.oneconfig.internal.renderer;
 
-import org.polyfrost.oneconfig.libs.deencapsulation.Deencapsulation;
-import org.polyfrost.oneconfig.renderer.LwjglManager;
-import org.polyfrost.oneconfig.renderer.NanoVGHelper;
-import org.polyfrost.oneconfig.renderer.TinyFD;
-import org.polyfrost.oneconfig.renderer.asset.AssetHelper;
-import org.polyfrost.oneconfig.renderer.font.FontHelper;
-import org.polyfrost.oneconfig.renderer.scissor.ScissorHelper;
-import org.polyfrost.polyui.renderer.Renderer;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -41,11 +33,7 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.Remapper;
-//#if FORGE==1 && MC<=11202
 import org.objectweb.asm.commons.RemappingClassAdapter;
-//#else
-//$$ import org.objectweb.asm.commons.ClassRemapper;
-//#endif
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.InsnNode;
@@ -53,10 +41,17 @@ import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.TypeInsnNode;
 import org.objectweb.asm.tree.VarInsnNode;
+import org.polyfrost.oneconfig.libs.deencapsulation.Deencapsulation;
+import org.polyfrost.oneconfig.renderer.LwjglManager;
+import org.polyfrost.oneconfig.renderer.TinyFD;
+import org.polyfrost.polyui.renderer.Renderer;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -86,17 +81,14 @@ public class LwjglManagerImpl
 
     private static final String LWJGL_FUNCTION_PROVIDER =
             "org.polyfrost.oneconfig.internal.plugin.hooks.Lwjgl2FunctionProvider";
+    private static final String LWJGL_FUNCTION_PROVIDER_ASM = LWJGL_FUNCTION_PROVIDER.replace('.', '/');
 
     private final Set<String> classLoaderInclude = new CopyOnWriteArraySet<>();
     private final Map<String, Class<?>> classCache = new HashMap<>();
+    private final MethodHandle rendererCtor;
 
     private static final String JAR_NAME = "oneconfig-lwjgl3.jar";
     private static final URL jarFile = getJarFile();
-
-    private final AssetHelper assetHelper;
-    private final NanoVGHelper nanoVGHelper;
-    private final ScissorHelper scissorHelper;
-    private final FontHelper fontHelper;
     private final TinyFD tinyFD;
 
     public LwjglManagerImpl() throws ReflectiveOperationException {
@@ -105,23 +97,23 @@ public class LwjglManagerImpl
         ClassLoader classLoader = isPojav ? getClass().getClassLoader() : this;
         if (!isPojav) {
             // Internal accessors
-            classLoaderInclude.add("org.polyfrost.oneconfig.internal.renderer.FontHelperImpl");
-            classLoaderInclude.add("org.polyfrost.oneconfig.internal.renderer.ScissorHelperImpl");
-            classLoaderInclude.add("org.polyfrost.oneconfig.internal.renderer.NanoVGHelperImpl");
-            classLoaderInclude.add("org.polyfrost.oneconfig.internal.renderer.AssetHelperImpl");
-            classLoaderInclude.add("org.polyfrost.oneconfig.internal.renderer.TinyFDImpl");
+
+            // todo deprecated
+            classLoaderInclude.add("cc.polyfrost.oneconfig.internal.renderer.FontHelperImpl");
+            classLoaderInclude.add("cc.polyfrost.oneconfig.internal.renderer.ScissorHelperImpl");
+            classLoaderInclude.add("cc.polyfrost.oneconfig.internal.renderer.NanoVGHelperImpl");
+            classLoaderInclude.add("cc.polyfrost.oneconfig.internal.renderer.AssetHelperImpl");
+            classLoaderInclude.add("cc.polyfrost.oneconfig.internal.renderer.TinyFDImpl");
+
             classLoaderInclude.add("org.polyfrost.polyui.renderer.impl.NVGRenderer");
             // Provider
             classLoaderInclude.add(LWJGL_FUNCTION_PROVIDER);
             // Lwjgl
-            Arrays.asList("nanovg", "actually3"
-                    //#if MC<=11202
-                    , "stb", "util.tinyfd", "system"
-                    //#endif
+            //                                          todo dep
+            Arrays.asList("nanovg", "actually3", "stb", "util.tinyfd", "system"
             ).forEach(it -> classLoaderInclude.add("org.lwjgl." + it + "."));
             classLoaderInclude.add("org.lwjgl.Version"); // won't work when remapped
 
-            //#if MC<=11202
             // Keep the path somewhere for LWJGL2 after initializing LWJGL3
             // (this is read in the Lwjgl2FunctionProvider class)
             String libraryPath = System.getProperty("org.lwjgl.librarypath", "");
@@ -139,19 +131,16 @@ public class LwjglManagerImpl
             // stop trying to Class.forName("true") ffs
             Object debugStreamField = configClass.getField("DEBUG_STREAM").get(null);
             setMethod.invoke(debugStreamField, System.err);
-            //#endif
         }
 
-        // Initialize helper instances
         try {
-            nanoVGHelper = (NanoVGHelper) Class.forName("org.polyfrost.oneconfig.internal.renderer.NanoVGHelperImpl", true, classLoader).getConstructor().newInstance();
-            scissorHelper = (ScissorHelper) Class.forName("org.polyfrost.oneconfig.internal.renderer.ScissorHelperImpl", true, classLoader).getConstructor().newInstance();
-            assetHelper = (AssetHelper) Class.forName("org.polyfrost.oneconfig.internal.renderer.AssetHelperImpl", true, classLoader).getConstructor().newInstance();
-            fontHelper = (FontHelper) Class.forName("org.polyfrost.oneconfig.internal.renderer.FontHelperImpl", true, classLoader).getConstructor().newInstance();
+            Constructor<?> ctor = Class.forName("org.polyfrost.polyui.renderer.impl.NVGRenderer", true, classLoader).getConstructor(float.class, float.class);
+            ctor.setAccessible(true);
+            rendererCtor = MethodHandles.lookup().unreflectConstructor(ctor);
+
             tinyFD = (TinyFD) Class.forName("org.polyfrost.oneconfig.internal.renderer.TinyFDImpl", true, classLoader).getConstructor().newInstance();
-        } catch (ReflectiveOperationException exception) {
-            exception.printStackTrace();
-            throw new RuntimeException("fuck", exception);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to get constructor for PolyUI", e);
         }
     }
 
@@ -264,15 +253,10 @@ public class LwjglManagerImpl
             }
         };
         ClassWriter classWriter = new ClassWriter(classReader, ClassWriter.COMPUTE_MAXS);
-        //#if FORGE==1 && MC<=11202
         RemappingClassAdapter classRemapper = new RemappingClassAdapter(classWriter, remapper);
-        //#else
-        //$$ ClassRemapper classRemapper = new ClassRemapper(classWriter, remapper);
-        //#endif
         classReader.accept(classRemapper, ClassReader.EXPAND_FRAMES);
         b = classWriter.toByteArray();
 
-        //#if MC<=11202
         if (name.equalsIgnoreCase("org.lwjgl.nanovg.NanoVGGLConfig")) {
             ClassNode node = new ClassNode();
             classReader = new ClassReader(b);
@@ -284,7 +268,6 @@ public class LwjglManagerImpl
             node.accept(classWriter);
             b = classWriter.toByteArray();
         }
-        //#endif
 
         try {
             return (Class<?>) defineClassMethod.invoke(unsafeInstance, name, b, 0, b.length, /*classLoader = */this, null);
@@ -293,18 +276,17 @@ public class LwjglManagerImpl
         }
     }
 
-    //#if MC<=11202
     private void transform(ClassNode node) {
         for (MethodNode method : node.methods) {
             if (method.name.equals("configGL")) {
                 InsnList list = new InsnList();
 
                 list.add(new VarInsnNode(Opcodes.LLOAD, 0));
-                list.add(new TypeInsnNode(Opcodes.NEW, "org/polyfrost/oneconfig/internal/plugin/hooks/Lwjgl2FunctionProvider"));
+                list.add(new TypeInsnNode(Opcodes.NEW, LWJGL_FUNCTION_PROVIDER_ASM));
                 list.add(new InsnNode(Opcodes.DUP));
                 list.add(new MethodInsnNode(
                         Opcodes.INVOKESPECIAL,
-                        "org/polyfrost/oneconfig/internal/plugin/hooks/Lwjgl2FunctionProvider",
+                        LWJGL_FUNCTION_PROVIDER_ASM,
                         "<init>",
                         "()V",
                         false
@@ -323,18 +305,15 @@ public class LwjglManagerImpl
             }
         }
     }
-    //#endif
 
     static {
         registerAsParallelCapable();
 
         if (!isPojav) {
             remappingMap = new HashMap<>();
-            //#if MC<=11202
             remappingMap.put("org/lwjgl/BufferUtils", "org/lwjgl/actually3/BufferUtils");
             remappingMap.put("org/lwjgl/PointerBuffer", "org/lwjgl/actually3/PointerBuffer");
             remappingMap.put("org/lwjgl/CLongBuffer", "org/lwjgl/actually3/CLongBuffer");
-            //#endif
 
             Class<?> unsafeClass;
             try {
@@ -388,20 +367,7 @@ public class LwjglManagerImpl
             e.printStackTrace();
         }
         tempJar.deleteOnExit();
-        String jarName =
-                //#if MC<=11202
-                "lwjgl-legacy"
-                //#elseif MC<=11900
-                //$$ "lwjgl-pre-1.19"
-                //#else
-                //$$ "lwjgl-post-1.19"
-                //#endif
-        ;
-        //#if MC>11202 && MC<=11900
-        //$$ String osArch = System.getProperty("os.arch");
-        //$$ jarName = jarName + "-" + ((osArch.startsWith("arm") || osArch.startsWith("aarch64") || !osArch.contains("64")) ? "arm" : "noarm");
-        //#endif
-        try (InputStream in = LwjglManagerImpl.class.getResourceAsStream("/" + jarName + ".jar")) {
+        try (InputStream in = LwjglManagerImpl.class.getResourceAsStream("/lwjgl-legacy.jar")) {
             assert in != null;
             Files.copy(in, tempJar.toPath(), StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
@@ -427,31 +393,10 @@ public class LwjglManagerImpl
     @Override
     public Renderer getRenderer(float width, float height) {
         try {
-            return (Renderer) Class.forName("org.polyfrost.polyui.renderer.impl.NVGRenderer", true, isPojav ? getClass().getClassLoader() : this).getConstructor(float.class, float.class).newInstance(width, height);
-        } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException |
-                 ClassNotFoundException e) {
-            throw new RuntimeException(e);
+            return (Renderer) rendererCtor.invoke(width, height);
+        } catch (Throwable e) {
+            throw new RuntimeException("Failed to create NVGRenderer!", e);
         }
-    }
-
-    @Override
-    public NanoVGHelper getNanoVGHelper() {
-        return nanoVGHelper;
-    }
-
-    @Override
-    public ScissorHelper getScissorHelper() {
-        return scissorHelper;
-    }
-
-    @Override
-    public AssetHelper getAssetHelper() {
-        return assetHelper;
-    }
-
-    @Override
-    public FontHelper getFontHelper() {
-        return fontHelper;
     }
 
     @Override

@@ -26,16 +26,16 @@
 
 package org.polyfrost.oneconfig.utils.gui;
 
+import net.minecraft.client.gui.GuiScreen;
 import org.polyfrost.oneconfig.events.EventManager;
 import org.polyfrost.oneconfig.events.event.RenderEvent;
 import org.polyfrost.oneconfig.events.event.Stage;
+import org.polyfrost.oneconfig.events.event.TimerUpdateEvent;
 import org.polyfrost.oneconfig.libs.eventbus.Subscribe;
 import org.polyfrost.oneconfig.libs.universal.UMinecraft;
 import org.polyfrost.oneconfig.libs.universal.UScreen;
 import org.polyfrost.oneconfig.platform.Platform;
 import org.polyfrost.oneconfig.utils.TickDelay;
-import net.minecraft.client.gui.GuiScreen;
-import org.polyfrost.oneconfig.events.event.TimerUpdateEvent;
 
 import java.util.Deque;
 import java.util.Optional;
@@ -79,7 +79,7 @@ public final class GuiUtils {
      * Displays a screen after the specified amount of ticks.
      *
      * @param screen the screen to display.
-     * @param ticks the amount of ticks to wait for before displaying the screen.
+     * @param ticks  the amount of ticks to wait for before displaying the screen.
      */
     public static void displayScreen(GuiScreen screen, int ticks) {
         Optional<GuiScreen> optional = Optional.of(screen);

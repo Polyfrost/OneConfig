@@ -26,7 +26,6 @@
 
 package org.polyfrost.oneconfig.utils.hypixel;
 
-import org.polyfrost.oneconfig.internal.utils.Deprecator;
 import org.polyfrost.oneconfig.platform.Platform;
 
 import java.util.Locale;
@@ -55,52 +54,5 @@ public class HypixelUtils {
         if (serverBrand == null) return false;
 
         return serverBrand.toLowerCase(Locale.ENGLISH).contains("hypixel");
-    }
-
-    /**
-     * @deprecated Hypixel has drastically changed their API, and `/api new` no longer works. <a href="https://hypixel.net/threads/hypixel-developer-dashboard-public-api-changes-june-2023.5364455/">See Hypixel's API changes here.</a>
-     */
-    @Deprecated
-    public boolean isValidKey(String key) {
-        Deprecator.markDeprecated();
-        return false;
-    }
-
-    /**
-     * Returns whether the player is in game.
-     *
-     * @return Whether the player is in game.
-     * @deprecated Moved to {@link LocrawUtil}
-     */
-    @Deprecated
-    public boolean isInGame() {
-        Deprecator.markDeprecated();
-        return LocrawUtil.INSTANCE.isInGame();
-    }
-
-    /**
-     * Returns the current {@link LocrawInfo}.
-     *
-     * @return The current {@link LocrawInfo}.
-     * @deprecated Moved to {@link LocrawUtil}
-     * @see LocrawInfo
-     */
-    @Deprecated
-    public LocrawInfo getLocrawInfo() {
-        Deprecator.markDeprecated();
-        return LocrawUtil.INSTANCE.getLocrawInfo();
-    }
-
-    /**
-     * Returns the previous {@link LocrawInfo}.
-     *
-     * @return The previous {@link LocrawInfo}.
-     * @deprecated Moved to {@link LocrawUtil}
-     * @see LocrawInfo
-     */
-    @Deprecated
-    public LocrawInfo getPreviousLocraw() {
-        Deprecator.markDeprecated();
-        return LocrawUtil.INSTANCE.getLastLocrawInfo();
     }
 }

@@ -27,11 +27,11 @@
 //#if FORGE==1
 package org.polyfrost.oneconfig.internal.mixin;
 
+import net.minecraftforge.fml.client.ClientModLoader;
 import org.polyfrost.oneconfig.events.EventManager;
 import org.polyfrost.oneconfig.events.event.InitializationEvent;
 import org.polyfrost.oneconfig.internal.OneConfig;
 import org.polyfrost.oneconfig.internal.init.OneConfigInit;
-import net.minecraftforge.fml.client.ClientModLoader;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;

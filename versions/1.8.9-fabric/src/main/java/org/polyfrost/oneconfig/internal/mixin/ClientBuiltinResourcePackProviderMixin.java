@@ -26,12 +26,12 @@
 
 package org.polyfrost.oneconfig.internal.mixin;
 
+import net.minecraft.resource.DefaultResourcePack;
 import org.polyfrost.oneconfig.events.EventManager;
 import org.polyfrost.oneconfig.events.event.InitializationEvent;
 import org.polyfrost.oneconfig.events.event.ShutdownEvent;
 import org.polyfrost.oneconfig.events.event.StartEvent;
 import org.polyfrost.oneconfig.internal.OneConfig;
-import net.minecraft.resource.DefaultResourcePack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;

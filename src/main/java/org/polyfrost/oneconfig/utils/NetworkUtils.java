@@ -27,10 +27,15 @@
 package org.polyfrost.oneconfig.utils;
 
 import com.google.gson.JsonElement;
-import org.polyfrost.oneconfig.libs.universal.UDesktop;
 import org.apache.commons.io.IOUtils;
+import org.polyfrost.oneconfig.libs.universal.UDesktop;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;

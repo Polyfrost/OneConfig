@@ -26,11 +26,11 @@
 
 package org.polyfrost.oneconfig.internal.mixin;
 
-import org.polyfrost.oneconfig.events.EventManager;
-import org.polyfrost.oneconfig.events.event.ChatReceiveEvent;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.network.packet.s2c.play.GameMessageS2CPacket;
 import net.minecraft.text.Text;
+import org.polyfrost.oneconfig.events.EventManager;
+import org.polyfrost.oneconfig.events.event.ChatReceiveEvent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;

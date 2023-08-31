@@ -26,13 +26,13 @@
 
 package org.polyfrost.oneconfig.internal.mixin;
 
-import org.polyfrost.oneconfig.events.EventManager;
-import org.polyfrost.oneconfig.events.event.WorldLoadEvent;
 import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.client.network.NetHandlerPlayClient;
 import net.minecraft.profiler.Profiler;
 import net.minecraft.world.EnumDifficulty;
 import net.minecraft.world.WorldSettings;
+import org.polyfrost.oneconfig.events.EventManager;
+import org.polyfrost.oneconfig.events.event.WorldLoadEvent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;

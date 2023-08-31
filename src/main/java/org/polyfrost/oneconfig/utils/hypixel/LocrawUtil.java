@@ -33,6 +33,8 @@
 
 package org.polyfrost.oneconfig.utils.hypixel;
 
+import com.google.gson.Gson;
+import org.jetbrains.annotations.Nullable;
 import org.polyfrost.oneconfig.events.EventManager;
 import org.polyfrost.oneconfig.events.event.ChatReceiveEvent;
 import org.polyfrost.oneconfig.events.event.ChatSendEvent;
@@ -44,8 +46,6 @@ import org.polyfrost.oneconfig.libs.eventbus.Subscribe;
 import org.polyfrost.oneconfig.libs.universal.UChat;
 import org.polyfrost.oneconfig.platform.Platform;
 import org.polyfrost.oneconfig.utils.TickDelay;
-import com.google.gson.Gson;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * <p>

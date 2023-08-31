@@ -26,12 +26,13 @@
 
 package org.polyfrost.oneconfig.internal.mixin;
 //#if MC<=11202
-import org.polyfrost.oneconfig.events.EventManager;
-import org.polyfrost.oneconfig.events.event.RawKeyEvent;
-import org.polyfrost.oneconfig.events.event.RawMouseEvent;
+
 import net.minecraft.client.gui.GuiScreen;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
+import org.polyfrost.oneconfig.events.EventManager;
+import org.polyfrost.oneconfig.events.event.RawKeyEvent;
+import org.polyfrost.oneconfig.events.event.RawMouseEvent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;

@@ -26,9 +26,9 @@
 
 package org.polyfrost.oneconfig.platform.impl;
 
+import net.minecraft.client.entity.EntityPlayerSP;
 import org.polyfrost.oneconfig.libs.universal.UMinecraft;
 import org.polyfrost.oneconfig.platform.ServerPlatform;
-import net.minecraft.client.entity.EntityPlayerSP;
 
 public class ServerPlatformImpl implements ServerPlatform {
 

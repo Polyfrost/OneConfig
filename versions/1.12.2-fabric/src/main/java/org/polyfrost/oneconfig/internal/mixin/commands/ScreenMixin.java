@@ -26,9 +26,10 @@
 
 package org.polyfrost.oneconfig.internal.mixin.commands;
 //#if FABRIC==1 && MC<=11200
-import org.polyfrost.oneconfig.utils.commands.ClientCommandHandler;
+
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
+import org.polyfrost.oneconfig.utils.commands.ClientCommandHandler;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;

@@ -27,23 +27,10 @@
 package org.polyfrost.oneconfig.internal.plugin;
 
 import org.polyfrost.oneconfig.platform.Platform;
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
-import org.spongepowered.asm.lib.tree.FieldInsnNode;
-import org.spongepowered.asm.lib.tree.InsnList;
-import org.spongepowered.asm.lib.tree.InsnNode;
-import org.spongepowered.asm.lib.tree.JumpInsnNode;
-import org.spongepowered.asm.lib.tree.LabelNode;
 import org.spongepowered.asm.lib.tree.ClassNode;
-import org.spongepowered.asm.lib.tree.FieldNode;
-import org.spongepowered.asm.lib.tree.LineNumberNode;
-import org.spongepowered.asm.lib.tree.MethodInsnNode;
-import org.spongepowered.asm.lib.tree.MethodNode;
-import org.spongepowered.asm.lib.tree.VarInsnNode;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;

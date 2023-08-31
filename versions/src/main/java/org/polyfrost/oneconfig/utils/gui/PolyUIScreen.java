@@ -26,6 +26,9 @@
 
 package org.polyfrost.oneconfig.utils.gui;
 
+import net.minecraft.client.Minecraft;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.polyfrost.oneconfig.libs.universal.UKeyboard;
 import org.polyfrost.oneconfig.libs.universal.UMatrixStack;
 import org.polyfrost.oneconfig.libs.universal.UResolution;
@@ -40,8 +43,6 @@ import org.polyfrost.polyui.property.Settings;
 import org.polyfrost.polyui.renderer.Renderer;
 import org.polyfrost.polyui.renderer.data.Cursor;
 import org.polyfrost.polyui.renderer.impl.MCWindow;
-import net.minecraft.client.Minecraft;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Consumer;
 
@@ -70,7 +71,6 @@ public class PolyUIScreen extends UScreen {
         this(null, null, drawables);
     }
 
-    @SuppressWarnings("ConstantConditions") // may produce NullPointerException
     @Override
     public final void initScreen(int w, int h) {
         if (polyUI != null) return;
@@ -126,24 +126,32 @@ public class PolyUIScreen extends UScreen {
         super.onDrawScreen(matrices, mouseX, mouseY, delta);
     }
 
-    //#if MC>=11300
     @Override
+    //#if MC>=11300
     //$$ public final void resize
     //#else
     public final void onResize
-    //#endif
+        //#endif
     (Minecraft client, int width, int height) {
         polyUI.resize(UResolution.getWindowWidth(), UResolution.getWindowHeight(), useMinecraftUIScaling() ? (float) UResolution.getScaleFactor() : 1f, false);
     }
 
     @Override
-    public final void onKeyPressed(int keyCode, char typedChar, UKeyboard.Modifiers modifiers) {
-        pressInternal(keyCode, typedChar, true);
+    public boolean uKeyPressed(int keyCode, int scanCode, @Nullable UKeyboard.Modifiers modifiers) {
+        pressInternal(keyCode, (char) 0, true);
+        return true;
     }
 
     @Override
-    public final void onKeyReleased(int keyCode, char typedChar, UKeyboard.Modifiers modifiers) {
-        pressInternal(keyCode, typedChar, false);
+    public boolean uKeyReleased(int keyCode, int scanCode, @Nullable UKeyboard.Modifiers modifiers) {
+        pressInternal(keyCode, (char) 0, false);
+        return true;
+    }
+
+    @Override
+    public boolean uCharTyped(char c, @Nullable UKeyboard.Modifiers modifiers) {
+        pressInternal(0, c, true);
+        return true;
     }
 
     //#if MC>=11300
@@ -166,88 +174,91 @@ public class PolyUIScreen extends UScreen {
     protected final void pressInternal(int keyCode, char typedChar, boolean down) {
         if (typedChar != 0) {
             polyUI.getEventManager().keyTyped(typedChar);
+            return;
         }
         if (keyCode == UKeyboard.KEY_ESCAPE && shouldCloseOnEsc()) {
-            UScreen.displayScreen(null);
+            polyUI.window.close();
             return;
         }
+        if (keyCode == UKeyboard.KEY_LSHIFT) mod(Modifiers.LSHIFT.getValue(), down);
+        else if (keyCode == UKeyboard.KEY_RSHIFT) mod(Modifiers.RSHIFT.getValue(), down);
+        else if (keyCode == UKeyboard.KEY_LCONTROL) mod(Modifiers.LCONTROL.getValue(), down);
+        else if (keyCode == UKeyboard.KEY_RCONTROL) mod(Modifiers.RCONTROL.getValue(), down);
+        else if (keyCode == UKeyboard.KEY_LMENU) mod(Modifiers.LALT.getValue(), down);
+        else if (keyCode == UKeyboard.KEY_RMENU) mod(Modifiers.RALT.getValue(), down);
+        else if (keyCode == UKeyboard.KEY_LMETA) mod(Modifiers.LMETA.getValue(), down);
+        else if (keyCode == UKeyboard.KEY_RMETA) mod(Modifiers.RMETA.getValue(), down);
+        else {
+            Keys k;
+            // you can't switch because of the stupid noInline stuff
+            if (keyCode == UKeyboard.KEY_F1) k = Keys.F1;
+            else if (keyCode == UKeyboard.KEY_F2) k = Keys.F2;
+            else if (keyCode == UKeyboard.KEY_F3) k = Keys.F3;
+            else if (keyCode == UKeyboard.KEY_F4) k = Keys.F4;
+            else if (keyCode == UKeyboard.KEY_F5) k = Keys.F5;
+            else if (keyCode == UKeyboard.KEY_F6) k = Keys.F6;
+            else if (keyCode == UKeyboard.KEY_F7) k = Keys.F7;
+            else if (keyCode == UKeyboard.KEY_F8) k = Keys.F8;
+            else if (keyCode == UKeyboard.KEY_F9) k = Keys.F9;
+            else if (keyCode == UKeyboard.KEY_F10) k = Keys.F10;
+            else if (keyCode == UKeyboard.KEY_F11) k = Keys.F11;
+            else if (keyCode == UKeyboard.KEY_F12) k = Keys.F12;
+            else if (keyCode == UKeyboard.KEY_ESCAPE) k = Keys.ESCAPE;
+            else if (keyCode == UKeyboard.KEY_ENTER) k = Keys.ENTER;
+            else if (keyCode == UKeyboard.KEY_BACKSPACE) k = Keys.BACKSPACE;
+            else if (keyCode == UKeyboard.KEY_TAB) k = Keys.TAB;
+//            else if (keyCode == UKeyboard.KEY_PRIOR) k = Keys.PAGE_UP;
+//            else if (keyCode == UKeyboard.KEY_NEXT) k = Keys.PAGE_DOWN;
+            else if (keyCode == UKeyboard.KEY_END) k = Keys.END;
+            else if (keyCode == UKeyboard.KEY_HOME) k = Keys.HOME;
+            else if (keyCode == UKeyboard.KEY_LEFT) k = Keys.LEFT;
+            else if (keyCode == UKeyboard.KEY_UP) k = Keys.UP;
+            else if (keyCode == UKeyboard.KEY_RIGHT) k = Keys.RIGHT;
+            else if (keyCode == UKeyboard.KEY_DOWN) k = Keys.DOWN;
+//            else if (keyCode == UKeyboard.KEY_INSERT) k = Keys.INSERT;
+            else k = Keys.UNKNOWN;
 
-        if (keyCode >= 255 && keyCode <= 348) {
-            if (keyCode < 340) {
-                Keys key;
-                // insert, pg down, etc
-                if (keyCode >= 256 && keyCode <= 261) {
-                    key = Keys.fromValue(keyCode - 156);
-                } else if (keyCode >= 266 && keyCode <= 269) { // end, home, etc
-                    key = Keys.fromValue(keyCode - 160);
-                } else if (keyCode >= 262 && keyCode <= 265) { // arrows
-                    key = Keys.fromValue(keyCode - 62);
-                } else if (keyCode >= 290 && keyCode <= 314) { // function keys
-                    key = Keys.fromValue(keyCode - 289);
-                } else {
-                    key = Keys.UNKNOWN;
-                }
-
+            if (k == Keys.UNKNOWN) {
                 if (down) {
-                    polyUI.getEventManager().keyDown(key);
+                    polyUI.getEventManager().keyDown(keyCode);
                 } else {
-                    polyUI.getEventManager().keyUp(key);
+                    polyUI.getEventManager().keyUp(keyCode);
                 }
-            } else if (keyCode < 348) {
-                Modifiers key;
-                if (keyCode == 340) {
-                    key = Modifiers.LSHIFT;
-                } else if (keyCode == 341) {
-                    key = Modifiers.LCONTROL;
-                } else if (keyCode == 342) {
-                    key = Modifiers.LALT;
-                } else if (keyCode == 343) {
-                    key = Modifiers.LMETA;
-                } else if (keyCode == 344) {
-                    key = Modifiers.RSHIFT;
-                } else if (keyCode == 345) {
-                    key = Modifiers.RCONTROL;
-                } else if (keyCode == 346) {
-                    key = Modifiers.RALT;
-                } else {
-                    key = Modifiers.RMETA;
-                }
-                if (down) {
-                    polyUI.getEventManager().addModifier(key.getValue());
-                } else {
-                    polyUI.getEventManager().removeModifier(key.getValue());
-                }
+            } else if (down) {
+                polyUI.getEventManager().keyDown(k);
+            } else {
+                polyUI.getEventManager().keyUp(k);
             }
-            return;
         }
+    }
+
+    private void mod(short v, boolean down) {
         if (down) {
-            polyUI.getEventManager().keyDown(keyCode);
+            polyUI.getEventManager().addModifier(v);
         } else {
-            polyUI.getEventManager().keyUp(keyCode);
+            polyUI.getEventManager().removeModifier(v);
         }
     }
 
     @Override
-    public final void onMouseClicked(double mouseX, double mouseY, int button) {
-        polyUI.getEventManager().mousePressed(button);
+    public boolean uMouseClicked(double mouseX, double mouseY, int mouseButton) {
+        polyUI.getEventManager().mousePressed(mouseButton);
+        return true;
     }
 
     @Override
-    public final void onMouseReleased(double mouseX, double mouseY, int button) {
-        polyUI.getEventManager().mouseReleased(button);
+    public boolean uMouseReleased(double mouseX, double mouseY, int mouseButton) {
+        polyUI.getEventManager().mouseReleased(mouseButton);
+        return true;
     }
 
     @Override
-    public final void onMouseScrolled(double amount) {
-        polyUI.getEventManager().mouseScrolled(0, (int) amount);
+    public boolean uMouseScrolled(double delta) {
+        polyUI.getEventManager().mouseScrolled(0, (int) delta);
+        return true;
     }
 
-    @Override
-    public void onMouseDragged(double x, double y, int clickedButton, long timeSinceLastClick) {
-        super.onMouseDragged(x, y, clickedButton, timeSinceLastClick);
-    }
 
-    @SuppressWarnings("ConstantConditions") // may produce NullPointerException
     //#if MC>=11300
     //$$ @Override
     //#endif

@@ -26,18 +26,15 @@
 
 package org.polyfrost.oneconfig.platform.impl;
 
-import org.polyfrost.oneconfig.platform.LoaderPlatform;
+import net.minecraftforge.fml.common.Loader;
+import net.minecraftforge.fml.common.ModContainer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.polyfrost.oneconfig.platform.LoaderPlatform;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
-//#if FABRIC==1
-//$$ import net.fabricmc.loader.api.FabricLoader;
-//#else
-import net.minecraftforge.fml.common.Loader;
-import net.minecraftforge.fml.common.ModContainer;
 //#endif
 //#if FORGE==1 && MC>11202
 //$$ import net.minecraftforge.fml.ModList;
@@ -48,11 +45,11 @@ public class LoaderPlatformImpl implements LoaderPlatform {
     @Override
     public boolean isModLoaded(String id) {
         //#if MC>=11600
-            //#if FORGE==1
-            //$$ return ModList.get().isLoaded(id);
-            //#else
-            //$$ return FabricLoader.getInstance().isModLoaded(id);
-            //#endif
+        //#if FORGE==1
+        //$$ return ModList.get().isLoaded(id);
+        //#else
+        //$$ return FabricLoader.getInstance().isModLoaded(id);
+        //#endif
         //#elseif FORGE==1
         return Loader.isModLoaded(id);
         //#else
@@ -76,12 +73,12 @@ public class LoaderPlatformImpl implements LoaderPlatform {
                     //#if FORGE==1
                     //#if MC<=11202
                     Loader.instance().getActiveModList().stream().map
-                    //#else
-                    //$$ ModList.get().applyForEachModContainer
-                    //#endif
-                    //#else
-                    //$$ FabricLoader.getInstance().getAllMods().stream().map
-                    //#endif
+                            //#else
+                            //$$ ModList.get().applyForEachModContainer
+                            //#endif
+                            //#else
+                            //$$ FabricLoader.getInstance().getAllMods().stream().map
+                            //#endif
                                     (this::toActiveMod).collect(Collectors.toList());
         } catch (Exception e) {
             return Collections.emptyList();
@@ -113,9 +110,9 @@ public class LoaderPlatformImpl implements LoaderPlatform {
             //$$ return new ActiveMod(container.getMetadata().getName(), container.getMetadata().getId(), container.getMetadata().getVersion().getFriendlyString(), container.getRootPaths().get(0));
             //#endif
         } catch (Exception e) {
-        //#endif
+            //#endif
             return null;
-        //#if FORGE==1
+            //#if FORGE==1
         }
         //#endif
     }

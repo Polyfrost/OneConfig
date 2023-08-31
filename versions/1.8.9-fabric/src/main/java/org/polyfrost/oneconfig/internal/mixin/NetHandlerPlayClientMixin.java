@@ -26,11 +26,11 @@
 
 package org.polyfrost.oneconfig.internal.mixin;
 
-import org.polyfrost.oneconfig.events.EventManager;
-import org.polyfrost.oneconfig.events.event.ChatReceiveEvent;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.network.packet.s2c.play.ChatMessageS2CPacket;
 import net.minecraft.text.Text;
+import org.polyfrost.oneconfig.events.EventManager;
+import org.polyfrost.oneconfig.events.event.ChatReceiveEvent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -44,9 +44,9 @@ public class NetHandlerPlayClientMixin {
     private static final String TARGET =
             //#if MC<=10809
             "Lnet/minecraft/client/gui/hud/ChatHud;addMessage(Lnet/minecraft/text/Text;)V";
-            //#else
-            //$$ "Lnet/minecraft/client/gui/hud/InGameHud;method_14471(Lnet/minecraft/util/ChatMessageType;Lnet/minecraft/text/Text;)V";
-            //#endif
+    //#else
+    //$$ "Lnet/minecraft/client/gui/hud/InGameHud;method_14471(Lnet/minecraft/util/ChatMessageType;Lnet/minecraft/text/Text;)V";
+    //#endif
 
     @Unique
     private ChatReceiveEvent oneconfig$event = null;

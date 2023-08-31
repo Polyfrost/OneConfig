@@ -26,9 +26,10 @@
 
 package org.polyfrost.oneconfig.internal.mixin;
 
-import org.polyfrost.oneconfig.events.EventManager;
 import net.minecraft.client.resources.DownloadingPackFinder;
-import org.polyfrost.oneconfig.events.event.*;
+import org.polyfrost.oneconfig.events.EventManager;
+import org.polyfrost.oneconfig.events.event.ShutdownEvent;
+import org.polyfrost.oneconfig.events.event.StartEvent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;

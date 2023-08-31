@@ -115,8 +115,8 @@ public class LocrawInfo implements Serializable {
     public enum GameType {
         UNKNOWN(""), LIMBO("LIMBO"), BEDWARS("BEDWARS"), SKYWARS("SKYWARS"), PROTOTYPE("PROTOTYPE"), SKYBLOCK("SKYBLOCK"), MAIN("MAIN"), MURDER_MYSTERY("MURDER_MYSTERY"), HOUSING("HOUSING"), ARCADE_GAMES("ARCADE"), BUILD_BATTLE("BUILD_BATTLE"), DUELS("DUELS"), PIT("PIT"), UHC_CHAMPIONS("UHC"), SPEED_UHC("SPEED_UHC"), TNT_GAMES("TNTGAMES"), CLASSIC_GAMES("LEGACY"), COPS_AND_CRIMS("MCGO"), BLITZ_SG("SURVIVAL_GAMES"), MEGA_WALLS("WALLS3"), SMASH_HEROES("SUPER_SMASH"), WARLORDS("BATTLEGROUND"),
         /**
-         * @deprecated Moved to a PROTOTYPE gamemode
          * @see #getGameMode()
+         * @deprecated Moved to a PROTOTYPE gamemode
          */
         @Deprecated
         DROPPER(""),

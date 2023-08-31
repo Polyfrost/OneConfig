@@ -43,7 +43,8 @@ public final class JsonUtils {
 
     /**
      * Runs the provided consumer if the given string is a valid JSON string.
-     * @param json The JSON string to check.
+     *
+     * @param json     The JSON string to check.
      * @param consumer The consumer to run if the string is a valid JSON.
      * @return Whether the string is a valid JSON string.
      */
@@ -58,6 +59,7 @@ public final class JsonUtils {
 
     /**
      * Checks whether the given string is a valid JSON.
+     *
      * @param json The string to check.
      * @return Whether the string is a valid JSON.
      */

@@ -26,51 +26,49 @@
 
 package org.polyfrost.oneconfig.test;
 
-import org.polyfrost.oneconfig.libs.universal.ChatColor;
+import com.mojang.authlib.GameProfile;
+import org.polyfrost.oneconfig.api.commands.factories.annotated.annotations.Command;
+import org.polyfrost.oneconfig.api.commands.factories.annotated.annotations.Parameter;
 import org.polyfrost.oneconfig.libs.universal.UChat;
-import org.polyfrost.oneconfig.utils.commands.annotations.Command;
-import org.polyfrost.oneconfig.utils.commands.annotations.Description;
-import org.polyfrost.oneconfig.utils.commands.annotations.Greedy;
-import org.polyfrost.oneconfig.utils.commands.annotations.SubCommand;
 import org.polyfrost.oneconfig.utils.gui.GuiUtils;
 import org.polyfrost.oneconfig.utils.gui.PolyUIScreen;
 import org.polyfrost.polyui.color.LightTheme;
 import org.polyfrost.polyui.test.Test;
-import com.mojang.authlib.GameProfile;
 
-@Command(value = "test", aliases = {"t"}, description = "Description of the test command", chatColor = ChatColor.GREEN)
+@Command(value = {"test", "t"}, description = "Description of the test command")
 public class TestCommand_Test {
 
+    @Command
     private static void main() {  // /test
         UChat.chat("Main command");
     }
 
-    @Command(value = "subcommand", aliases = {"s"}, description = "Subcommand 1.")
+    @Command(value = {"subcommand", "s"}, description = "Subcommand 1.", greedy = true)
     private static class TestSubCommand {
-        private static void main(int a, float b, @Description("GREEDY c") @Greedy String c) { // /test subcommand <a> <b> <c>
+        private static void main(int a, float b, @Parameter(value = "GREEDY c") String c) { // /test subcommand <a> <b> <c>
             UChat.chat("Integer main: " + (a + b) + " " + c);
         }
 
-        @SubCommand(aliases = {"yesNo"}, description = "A method description")
-        private void yes(@Description("first number") double a, double b, @Description("named c") String c) { // /test subcommand <a> <b> <c>
+        @Command(value = {"yesNo"}, description = "A method description")
+        private void yes(@Parameter("first number") double a, double b, @Parameter("named c") String c) { // /test subcommand <a> <b> <c>
             UChat.chat("Double main: " + a + " " + b + " " + c);
         }
 
-        @Command(value = "subSub", aliases = {"ss"}, description = "SubSubcommand 1.")
+        @Command(value = {"subSub", "ss"}, description = "SubSubcommand 1.")
         private static class TestSubSubCommand {
-            private void wow(int a, float b, @Description("named c") String c) { // /test subSub <a> <b> <c>
+            private void wow(int a, float b, @Parameter("named c") String c) { // /test subSub <a> <b> <c>
                 UChat.chat("Integer subSub: " + (a + b) + " " + c);
             }
         }
     }
 
-    @SubCommand
+    @Command
     private void polyui() {
         UChat.chat("PolyUI test");
         GuiUtils.displayScreen(new PolyUIScreen(new LightTheme(), Test.create()));
     }
 
-    @SubCommand
+    @Command
     private void playerTest(GameProfile profile) {
         UChat.chat("Player test: " + profile.getName());
         UChat.chat(profile.getId());

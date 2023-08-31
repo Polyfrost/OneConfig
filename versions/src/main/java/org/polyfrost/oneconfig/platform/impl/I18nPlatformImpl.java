@@ -26,8 +26,8 @@
 
 package org.polyfrost.oneconfig.platform.impl;
 
-import org.polyfrost.oneconfig.platform.I18nPlatform;
 import net.minecraft.client.resources.I18n;
+import org.polyfrost.oneconfig.platform.I18nPlatform;
 
 public class I18nPlatformImpl implements I18nPlatform {
 
@@ -39,13 +39,13 @@ public class I18nPlatformImpl implements I18nPlatform {
     @Override
     public String getKeyName(int key, int scanCode) {
         //#if MC>=11600
-            //#if FABRIC==1
-            //$$ final String s = net.minecraft.client.util.InputUtil.fromKeyCode(key, scanCode).getLocalizedText().asString();
-            //#else
-            //$$ final String s = net.minecraft.client.util.InputMappings.getInputByCode(key, scanCode).func_237520_d_().getString();
-            //#endif
-            //$$ if (s == null) return "Unknown";
-            //$$ else return s.length() == 1 ? s.toUpperCase() : s;
+        //#if FABRIC==1
+        //$$ final String s = net.minecraft.client.util.InputUtil.fromKeyCode(key, scanCode).getLocalizedText().asString();
+        //#else
+        //$$ final String s = net.minecraft.client.util.InputMappings.getInputByCode(key, scanCode).func_237520_d_().getString();
+        //#endif
+        //$$ if (s == null) return "Unknown";
+        //$$ else return s.length() == 1 ? s.toUpperCase() : s;
         //#else
         final String s = net.minecraft.client.settings.GameSettings.getKeyDisplayString(key);
         return s == null ? "Unknown" : s;

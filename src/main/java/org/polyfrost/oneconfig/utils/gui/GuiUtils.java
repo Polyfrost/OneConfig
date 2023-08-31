@@ -29,11 +29,11 @@ package org.polyfrost.oneconfig.utils.gui;
 import org.polyfrost.oneconfig.events.EventManager;
 import org.polyfrost.oneconfig.events.event.RenderEvent;
 import org.polyfrost.oneconfig.events.event.Stage;
+import org.polyfrost.oneconfig.events.event.TimerUpdateEvent;
 import org.polyfrost.oneconfig.libs.eventbus.Subscribe;
 import org.polyfrost.oneconfig.libs.universal.UMinecraft;
 import org.polyfrost.oneconfig.platform.Platform;
 import org.polyfrost.oneconfig.utils.TickDelay;
-import org.polyfrost.oneconfig.events.event.TimerUpdateEvent;
 
 /**
  * A class containing utility methods for working with GuiScreens.
@@ -61,7 +61,7 @@ public final class GuiUtils {
      * Displays a screen after the specified amount of ticks.
      *
      * @param screen the screen to display.
-     * @param ticks the amount of ticks to wait for before displaying the screen.
+     * @param ticks  the amount of ticks to wait for before displaying the screen.
      */
     public static void displayScreen(Object screen, int ticks) {
         new TickDelay(ticks, () -> Platform.getGuiPlatform().setCurrentScreen(screen));

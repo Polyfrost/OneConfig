@@ -29,6 +29,8 @@ package org.polyfrost.oneconfig.platform;
 public interface I18nPlatform {
     String format(String key, Object... args);
 
-    /** Return the localized name of the key given. */
+    /**
+     * Return the localized name of the key given.
+     */
     String getKeyName(int key, int scanCode);
 }

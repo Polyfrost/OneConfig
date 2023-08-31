@@ -26,22 +26,20 @@
 
 package org.polyfrost.oneconfig.internal.command;
 
-import org.polyfrost.oneconfig.utils.commands.annotations.Command;
-import org.polyfrost.oneconfig.utils.commands.annotations.Main;
-import org.polyfrost.oneconfig.utils.commands.annotations.SubCommand;
+import org.polyfrost.oneconfig.api.commands.factories.annotated.annotations.Command;
 
 /**
  * The main OneConfig command.
  */
-@Command(value = "oneconfig", aliases = {"ocfg"})
+@Command(value = {"oneconfig", "ocfg"})
 public class OneConfigCommand {
 
-    @Main(description = "Opens the OneConfig GUI")
+    @Command(description = "Opens the OneConfig GUI")
     private void main() {
         //GuiUtils.displayScreen(OneConfigGui.create());
     }
 
-    @SubCommand(description = "Opens the OneConfig HUD configurator.", aliases = {"edithud"})
+    @Command(description = "Opens the OneConfig HUD configurator.", value = "edithud")
     private void hud() {
         //GuiUtils.displayScreen(new HudGui());
     }

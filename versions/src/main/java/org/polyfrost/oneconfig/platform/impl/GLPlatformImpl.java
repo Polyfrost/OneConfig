@@ -26,16 +26,14 @@
 
 package org.polyfrost.oneconfig.platform.impl;
 
+import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.client.renderer.WorldRenderer;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import net.minecraft.client.shader.Framebuffer;
 import org.polyfrost.oneconfig.libs.universal.UGraphics;
 import org.polyfrost.oneconfig.libs.universal.UMatrixStack;
 import org.polyfrost.oneconfig.libs.universal.UMinecraft;
 import org.polyfrost.oneconfig.platform.GLPlatform;
-import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.WorldRenderer;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-
-//#if FORGE==1
-import net.minecraft.client.shader.Framebuffer;
 //#else
 //$$ import org.polyfrost.oneconfig.internal.hook.FramebufferHook;
 //#endif
@@ -56,10 +54,10 @@ public class GLPlatformImpl implements GLPlatform {
             y2 = i;
         }
 
-        float f = (float)(color >> 24 & 0xFF) / 255.0F;
-        float g = (float)(color >> 16 & 0xFF) / 255.0F;
-        float h = (float)(color >> 8 & 0xFF) / 255.0F;
-        float j = (float)(color & 0xFF) / 255.0F;
+        float f = (float) (color >> 24 & 0xFF) / 255.0F;
+        float g = (float) (color >> 16 & 0xFF) / 255.0F;
+        float h = (float) (color >> 8 & 0xFF) / 255.0F;
+        float j = (float) (color & 0xFF) / 255.0F;
         Tessellator tessellator = Tessellator.getInstance();
         WorldRenderer worldRenderer = tessellator.getWorldRenderer();
         UGraphics.enableBlend();

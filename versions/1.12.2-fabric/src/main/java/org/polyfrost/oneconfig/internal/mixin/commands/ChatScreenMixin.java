@@ -26,12 +26,17 @@
 
 package org.polyfrost.oneconfig.internal.mixin.commands;
 //#if FABRIC==1 && MC<=11200
-import org.polyfrost.oneconfig.utils.commands.ClientCommandHandler;
+
 import net.minecraft.entity.ai.pathing.PathNodeMaker;
 import net.minecraft.util.Formatting;
 import org.apache.commons.lang3.StringUtils;
+import org.polyfrost.oneconfig.utils.commands.ClientCommandHandler;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.injection.*;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyArg;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(PathNodeMaker.class)
