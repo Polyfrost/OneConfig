@@ -26,9 +26,14 @@
 
 package org.polyfrost.oneconfig.platform.impl;
 
-import org.lwjgl.input.Mouse;
 import org.polyfrost.oneconfig.libs.universal.UMouse;
 import org.polyfrost.oneconfig.platform.MousePlatform;
+//#if MC>=11600
+//$$ import org.polyfrost.oneconfig.libs.universal.UMinecraft;
+//$$ import org.polyfrost.oneconfig.internal.mixin.MouseAccessor;
+//$$ import org.lwjgl.glfw.GLFW;
+//#else
+import org.lwjgl.input.Mouse;
 //#endif
 
 public class MousePlatformImpl implements MousePlatform {

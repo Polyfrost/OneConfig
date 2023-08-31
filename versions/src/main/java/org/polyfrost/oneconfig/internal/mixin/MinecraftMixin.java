@@ -26,35 +26,27 @@
 
 package org.polyfrost.oneconfig.internal.mixin;
 
+import org.polyfrost.oneconfig.events.EventManager;
+import org.polyfrost.oneconfig.events.event.*;
+import org.polyfrost.oneconfig.internal.OneConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Timer;
-import net.minecraftforge.client.event.GuiOpenEvent;
-import net.minecraftforge.fml.common.eventhandler.Event;
-import org.lwjgl.input.Keyboard;
-import org.lwjgl.input.Mouse;
 import org.objectweb.asm.Opcodes;
-import org.polyfrost.oneconfig.events.EventManager;
-import org.polyfrost.oneconfig.events.event.FramebufferRenderEvent;
-import org.polyfrost.oneconfig.events.event.InitializationEvent;
-import org.polyfrost.oneconfig.events.event.KeyInputEvent;
-import org.polyfrost.oneconfig.events.event.MouseInputEvent;
-import org.polyfrost.oneconfig.events.event.PreShutdownEvent;
-import org.polyfrost.oneconfig.events.event.RawKeyEvent;
-import org.polyfrost.oneconfig.events.event.RawMouseEvent;
-import org.polyfrost.oneconfig.events.event.RenderEvent;
-import org.polyfrost.oneconfig.events.event.ScreenOpenEvent;
-import org.polyfrost.oneconfig.events.event.ShutdownEvent;
-import org.polyfrost.oneconfig.events.event.Stage;
-import org.polyfrost.oneconfig.events.event.StartEvent;
-import org.polyfrost.oneconfig.events.event.TickEvent;
-import org.polyfrost.oneconfig.events.event.TimerUpdateEvent;
-import org.polyfrost.oneconfig.internal.OneConfig;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+//#if MC<=11202
+import org.lwjgl.input.Keyboard;
+import org.lwjgl.input.Mouse;
+//#endif
+
+//#if FORGE==1
+import net.minecraftforge.client.event.GuiOpenEvent;
+import net.minecraftforge.fml.common.eventhandler.Event;
 //#endif
 
 @Mixin(Minecraft.class)

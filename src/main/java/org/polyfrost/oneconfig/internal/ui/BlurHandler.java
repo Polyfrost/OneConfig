@@ -24,14 +24,12 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.utils.commands;
+package org.polyfrost.oneconfig.internal.ui;
 
-import org.polyfrost.oneconfig.api.commands.CommandManager;
-import org.polyfrost.oneconfig.internal.command.PlatformCommandManager;
+import java.util.ServiceLoader;
 
-public class PlatformCommandManagerImpl extends PlatformCommandManager {
-    @Override
-    void createCommand(CommandManager.OCCommand command) {
+public interface BlurHandler {
+    BlurHandler INSTANCE = ServiceLoader.load(BlurHandler.class, BlurHandler.class.getClassLoader()).iterator().next();
 
-    }
+    void reloadBlur(Object screen);
 }

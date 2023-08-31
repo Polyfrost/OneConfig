@@ -29,7 +29,7 @@ package org.polyfrost.oneconfig.test;
 import org.polyfrost.oneconfig.events.EventManager;
 import org.polyfrost.oneconfig.events.event.InitializationEvent;
 import org.polyfrost.oneconfig.libs.eventbus.Subscribe;
-import org.polyfrost.oneconfig.utils.commands.CommandManager;
+import org.polyfrost.oneconfig.api.commands.CommandManager;
 
 //#if MC<=11202 && FORGE==1
 @net.minecraftforge.fml.common.Mod(modid = "oneconfig-test-mod", name = "Test Mod", version = "0")

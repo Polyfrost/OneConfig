@@ -26,12 +26,13 @@
 
 package org.polyfrost.oneconfig.platform.impl;
 
-import net.minecraft.client.gui.GuiButton;
-import net.minecraft.client.gui.GuiChat;
-import net.minecraft.client.gui.GuiScreen;
 import org.polyfrost.oneconfig.libs.universal.UMinecraft;
 import org.polyfrost.oneconfig.libs.universal.UScreen;
 import org.polyfrost.oneconfig.platform.GuiPlatform;
+import net.minecraft.client.gui.GuiChat;
+import net.minecraft.client.gui.GuiScreen;
+//#if MC<=11202
+import net.minecraft.client.gui.GuiButton;
 //#elseif MC<=11605
 //$$ import net.minecraft.client.gui.widget.button.Button;
 //#endif

@@ -24,14 +24,13 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.utils.commands;
+package org.polyfrost.oneconfig.ui;
 
-import org.polyfrost.oneconfig.api.commands.CommandManager;
-import org.polyfrost.oneconfig.internal.command.PlatformCommandManager;
-
-public class PlatformCommandManagerImpl extends PlatformCommandManager {
-    @Override
-    void createCommand(CommandManager.OCCommand command) {
-
-    }
+/**
+ * Hack that allows GUIs to set whether the game should pause when the GUI is displayed without depending on
+ * Minecraft itself.
+ */
+public interface GuiPause {
+    @SuppressWarnings("unused")
+    boolean doesGuiPauseGame();
 }

@@ -26,7 +26,7 @@
 
 package org.polyfrost.oneconfig.utils.dsl
 
-import org.polyfrost.oneconfig.utils.color.ColorUtils
+import org.polyfrost.oneconfig.utils.ColorUtils
 
 /**
  * Get the red component of the given RGBA value.

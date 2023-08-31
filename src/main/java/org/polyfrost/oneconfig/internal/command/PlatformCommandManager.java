@@ -24,14 +24,14 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.utils.commands;
+package org.polyfrost.oneconfig.internal.command;
 
-import org.polyfrost.oneconfig.api.commands.CommandManager;
-import org.polyfrost.oneconfig.internal.command.PlatformCommandManager;
+import org.polyfrost.oneconfig.api.commands.internal.CommandTree;
 
-public class PlatformCommandManagerImpl extends PlatformCommandManager {
-    @Override
-    void createCommand(CommandManager.OCCommand command) {
-
-    }
+/**
+ * @see org.polyfrost.oneconfig.api.commands.CommandManager
+ */
+@FunctionalInterface
+public interface PlatformCommandManager {
+    void createCommand(CommandTree command);
 }

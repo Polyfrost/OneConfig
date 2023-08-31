@@ -24,14 +24,11 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.utils.commands;
+package org.polyfrost.oneconfig.ui;
 
-import org.polyfrost.oneconfig.api.commands.CommandManager;
-import org.polyfrost.oneconfig.internal.command.PlatformCommandManager;
-
-public class PlatformCommandManagerImpl extends PlatformCommandManager {
-    @Override
-    void createCommand(CommandManager.OCCommand command) {
-
-    }
+public interface BlurScreen {
+    /**
+     * @return If this ui has background blur
+     */
+    boolean hasBackgroundBlur();
 }

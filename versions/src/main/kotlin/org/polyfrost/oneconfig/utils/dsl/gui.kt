@@ -27,7 +27,7 @@
 package org.polyfrost.oneconfig.utils.dsl
 
 import net.minecraft.client.gui.GuiScreen
-import org.polyfrost.oneconfig.utils.gui.GuiUtils
+import org.polyfrost.oneconfig.utils.GuiUtils
 
 /**
  * Displays a screen after the specified amount of ticks.

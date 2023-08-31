@@ -26,6 +26,9 @@
 
 package org.polyfrost.oneconfig.utils.commands;
 
+import org.polyfrost.oneconfig.api.commands.CommandManager;
+import org.polyfrost.oneconfig.internal.command.PlatformCommandManager;
+
 public class PlatformCommandManagerImpl extends PlatformCommandManager {
     @Override
     void createCommand(CommandManager.OCCommand command) {

@@ -26,8 +26,6 @@
 
 package org.polyfrost.oneconfig.platform.impl;
 
-import net.minecraftforge.fml.common.Loader;
-import net.minecraftforge.fml.common.ModContainer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.polyfrost.oneconfig.platform.LoaderPlatform;
@@ -35,6 +33,11 @@ import org.polyfrost.oneconfig.platform.LoaderPlatform;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+//#if FABRIC==1
+//$$ import net.fabricmc.loader.api.FabricLoader;
+//#else
+import net.minecraftforge.fml.common.Loader;
+import net.minecraftforge.fml.common.ModContainer;
 //#endif
 //#if FORGE==1 && MC>11202
 //$$ import net.minecraftforge.fml.ModList;
@@ -110,9 +113,7 @@ public class LoaderPlatformImpl implements LoaderPlatform {
             //$$ return new ActiveMod(container.getMetadata().getName(), container.getMetadata().getId(), container.getMetadata().getVersion().getFriendlyString(), container.getRootPaths().get(0));
             //#endif
         } catch (Exception e) {
-            //#endif
             return null;
-            //#if FORGE==1
         }
         //#endif
     }

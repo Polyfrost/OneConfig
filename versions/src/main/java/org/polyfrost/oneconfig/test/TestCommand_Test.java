@@ -30,8 +30,8 @@ import com.mojang.authlib.GameProfile;
 import org.polyfrost.oneconfig.api.commands.factories.annotated.annotations.Command;
 import org.polyfrost.oneconfig.api.commands.factories.annotated.annotations.Parameter;
 import org.polyfrost.oneconfig.libs.universal.UChat;
-import org.polyfrost.oneconfig.utils.gui.GuiUtils;
-import org.polyfrost.oneconfig.utils.gui.PolyUIScreen;
+import org.polyfrost.oneconfig.utils.GuiUtils;
+import org.polyfrost.oneconfig.ui.PolyUIScreen;
 import org.polyfrost.polyui.color.LightTheme;
 import org.polyfrost.polyui.test.Test;
 

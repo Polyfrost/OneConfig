@@ -30,9 +30,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.polyfrost.oneconfig.events.EventManager;
 import org.polyfrost.oneconfig.internal.command.OneConfigCommand;
-import org.polyfrost.oneconfig.internal.gui.BlurHandler;
-import org.polyfrost.oneconfig.utils.commands.CommandManager;
-import org.polyfrost.oneconfig.utils.gui.GuiUtils;
+import org.polyfrost.oneconfig.internal.ui.BlurHandler;
+import org.polyfrost.oneconfig.api.commands.CommandManager;
+import org.polyfrost.oneconfig.utils.GuiUtils;
 import org.polyfrost.oneconfig.utils.hypixel.HypixelUtils;
 
 /**
