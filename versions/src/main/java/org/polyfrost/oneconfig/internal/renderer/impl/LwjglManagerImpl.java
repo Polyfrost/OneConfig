@@ -2,7 +2,7 @@
  * This file is part of OneConfig.
  * OneConfig - Next Generation Config Library for Minecraft: Java Edition
  * Copyright (C) 2021~2023 Polyfrost.
- *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
+ *   <https://polyfrost.org> <https://github.com/Polyfrost/>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -21,7 +21,7 @@
  * License.  If not, see <https://www.gnu.org/licenses/>. You should
  * have also received a copy of the Additional Terms Applicable
  * to OneConfig, as published by Polyfrost. If not, see
- * <https://polyfrost.cc/legal/oneconfig/additional-terms>
+ * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
 package org.polyfrost.oneconfig.internal.renderer.impl;
@@ -33,7 +33,11 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.Remapper;
+//#if FORGE==1 && MC<=11202
 import org.objectweb.asm.commons.RemappingClassAdapter;
+//#else
+//$$ import org.objectweb.asm.commons.ClassRemapper;
+//#endif
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.InsnNode;
@@ -253,10 +257,15 @@ public class LwjglManagerImpl
             }
         };
         ClassWriter classWriter = new ClassWriter(classReader, ClassWriter.COMPUTE_MAXS);
+        //#if FORGE==1 && MC<=11202
         RemappingClassAdapter classRemapper = new RemappingClassAdapter(classWriter, remapper);
+        //#else
+        //$$ ClassRemapper classRemapper = new ClassRemapper(classWriter, remapper);
+        //#endif
         classReader.accept(classRemapper, ClassReader.EXPAND_FRAMES);
         b = classWriter.toByteArray();
 
+        //#if MC<=11202
         if (name.equalsIgnoreCase("org.lwjgl.nanovg.NanoVGGLConfig")) {
             ClassNode node = new ClassNode();
             classReader = new ClassReader(b);
@@ -268,6 +277,7 @@ public class LwjglManagerImpl
             node.accept(classWriter);
             b = classWriter.toByteArray();
         }
+        //#endif
 
         try {
             return (Class<?>) defineClassMethod.invoke(unsafeInstance, name, b, 0, b.length, /*classLoader = */this, null);
@@ -276,6 +286,7 @@ public class LwjglManagerImpl
         }
     }
 
+    //#if MC<=11202
     private void transform(ClassNode node) {
         for (MethodNode method : node.methods) {
             if (method.name.equals("configGL")) {
@@ -305,15 +316,18 @@ public class LwjglManagerImpl
             }
         }
     }
+    //#endif
 
     static {
         registerAsParallelCapable();
 
         if (!isPojav) {
             remappingMap = new HashMap<>();
+            //#if MC<=11202
             remappingMap.put("org/lwjgl/BufferUtils", "org/lwjgl/actually3/BufferUtils");
             remappingMap.put("org/lwjgl/PointerBuffer", "org/lwjgl/actually3/PointerBuffer");
             remappingMap.put("org/lwjgl/CLongBuffer", "org/lwjgl/actually3/CLongBuffer");
+            //#endif
 
             Class<?> unsafeClass;
             try {

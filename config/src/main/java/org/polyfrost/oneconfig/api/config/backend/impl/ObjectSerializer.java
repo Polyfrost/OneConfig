@@ -2,7 +2,7 @@
  * This file is part of OneConfig.
  * OneConfig - Next Generation Config Library for Minecraft: Java Edition
  * Copyright (C) 2021~2023 Polyfrost.
- *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
+ *   <https://polyfrost.org> <https://github.com/Polyfrost/>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -21,7 +21,7 @@
  * License.  If not, see <https://www.gnu.org/licenses/>. You should
  * have also received a copy of the Additional Terms Applicable
  * to OneConfig, as published by Polyfrost. If not, see
- * <https://polyfrost.cc/legal/oneconfig/additional-terms>
+ * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
 package org.polyfrost.oneconfig.api.config.backend.impl;
@@ -178,7 +178,7 @@ public class ObjectSerializer {
     public static Object unboxFully(Object in, Class<?> target) {
         if (in instanceof List<?>) {
             List<?> list = (List<?>) in;
-            if (target == null && list.isEmpty()) throw new IllegalStateException("Cannot unbox empty list to array https://docs.polyfrost.cc/oneconfig/config/unbox-empty-list");
+            if (target == null && list.isEmpty()) throw new IllegalStateException("Cannot unbox empty list to array https://docs.polyfrost.org/oneconfig/config/unbox-empty-list");
             Object[] arr = list.toArray((Object[]) Array.newInstance(list.get(0).getClass(), 0));
             // cast arr to target
             return unbox(arr, target);

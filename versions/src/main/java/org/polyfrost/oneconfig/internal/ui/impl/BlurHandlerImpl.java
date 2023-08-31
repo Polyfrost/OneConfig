@@ -2,7 +2,7 @@
  * This file is part of OneConfig.
  * OneConfig - Next Generation Config Library for Minecraft: Java Edition
  * Copyright (C) 2021~2023 Polyfrost.
- *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
+ *   <https://polyfrost.org> <https://github.com/Polyfrost/>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -21,7 +21,7 @@
  * License.  If not, see <https://www.gnu.org/licenses/>. You should
  * have also received a copy of the Additional Terms Applicable
  * to OneConfig, as published by Polyfrost. If not, see
- * <https://polyfrost.cc/legal/oneconfig/additional-terms>
+ * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
 package org.polyfrost.oneconfig.internal.ui.impl;
@@ -128,7 +128,7 @@ public class BlurHandlerImpl implements BlurHandler {
 
         if (!isShaderActive() && (gui instanceof BlurScreen && ((BlurScreen) gui).hasBackgroundBlur())) {
             //#if FABRIC==1
-            //$$ ((GameRendererAccessor) UMinecraft.getMinecraft().gameRenderer).invokeLoadShader(this.blurShader);
+            //$$ ((org.polyfrost.oneconfig.internal.mixin.GameRendererAccessor) UMinecraft.getMinecraft().gameRenderer).invokeLoadShader(this.blurShader);
             //#else
             UMinecraft.getMinecraft().entityRenderer.loadShader(this.blurShader);
             //#endif

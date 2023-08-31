@@ -2,7 +2,7 @@
  * This file is part of OneConfig.
  * OneConfig - Next Generation Config Library for Minecraft: Java Edition
  * Copyright (C) 2021~2023 Polyfrost.
- *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
+ *   <https://polyfrost.org> <https://github.com/Polyfrost/>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -21,7 +21,7 @@
  * License.  If not, see <https://www.gnu.org/licenses/>. You should
  * have also received a copy of the Additional Terms Applicable
  * to OneConfig, as published by Polyfrost. If not, see
- * <https://polyfrost.cc/legal/oneconfig/additional-terms>
+ * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
 package org.polyfrost.oneconfig.internal.mixin;
@@ -44,16 +44,16 @@ public class NetHandlerPlayClientMixin {
     private static final String TARGET =
             //#if MC<=10809
             "Lnet/minecraft/client/gui/hud/ChatHud;addMessage(Lnet/minecraft/text/Text;)V";
-    //#else
-    //$$ "Lnet/minecraft/client/gui/hud/InGameHud;method_14471(Lnet/minecraft/util/ChatMessageType;Lnet/minecraft/text/Text;)V";
-    //#endif
+            //#else
+            //$$ "Lnet/minecraft/client/gui/hud/InGameHud;method_14471(Lnet/minecraft/util/ChatMessageType;Lnet/minecraft/text/Text;)V";
+            //#endif
 
     @Unique
     private ChatReceiveEvent oneconfig$event = null;
 
     @Inject(method = "onChatMessage", at = @At(value = "INVOKE", target = TARGET), cancellable = true)
     private void onClientChat(ChatMessageS2CPacket packet, CallbackInfo ci) {
-        if (oneconfig$event.isCancelled) {
+        if (oneconfig$event != null && oneconfig$event.isCancelled) {
             ci.cancel();
         }
     }
@@ -62,7 +62,7 @@ public class NetHandlerPlayClientMixin {
     private Text onClientChatRedirect(ChatMessageS2CPacket packet) {
         if (
             //#if MC<=10809
-                packet.getType() == 0
+            packet.getType() == 0
             //#else
             //$$ !packet.isNonChat()
             //#endif

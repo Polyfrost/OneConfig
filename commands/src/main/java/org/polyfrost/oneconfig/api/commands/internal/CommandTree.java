@@ -2,7 +2,7 @@
  * This file is part of OneConfig.
  * OneConfig - Next Generation Config Library for Minecraft: Java Edition
  * Copyright (C) 2021~2023 Polyfrost.
- *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
+ *   <https://polyfrost.org> <https://github.com/Polyfrost/>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -21,7 +21,7 @@
  * License.  If not, see <https://www.gnu.org/licenses/>. You should
  * have also received a copy of the Additional Terms Applicable
  * to OneConfig, as published by Polyfrost. If not, see
- * <https://polyfrost.cc/legal/oneconfig/additional-terms>
+ * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
 package org.polyfrost.oneconfig.api.commands.internal;
@@ -104,7 +104,7 @@ public class CommandTree implements Node {
             commands.put(key, nodes);
         } else {
             if (commands.put(key, Collections.singletonList(tree)) != null)
-                throw new CommandCreationException("Invalid command: " + this + ": see https://docs.polyfrost.cc/oneconfig/commands/overloaded-subcommands");
+                throw new CommandCreationException("Invalid command: " + this + ": see https://docs.polyfrost.org/oneconfig/commands/overloaded-subcommands");
         }
     }
 
@@ -143,7 +143,7 @@ public class CommandTree implements Node {
                             }
                         }
                         if (same)
-                            throw new CommandCreationException("Ambiguous command overload: " + a.names[0] + ": see https://docs.polyfrost.cc/oneconfig/commands/ambiguous-overload");
+                            throw new CommandCreationException("Ambiguous command overload: " + a.names[0] + ": see https://docs.polyfrost.org/oneconfig/commands/ambiguous-overload");
                     }
                 }
             }

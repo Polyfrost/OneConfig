@@ -40,7 +40,7 @@ blossom {
 }
 
 repositories {
-    maven("https://repo.polyfrost.cc/releases")
+    maven("https://repo.polyfrost.org/releases")
 }
 
 val relocated = registerRelocationAttribute("relocate") {
@@ -84,7 +84,7 @@ dependencies {
         isTransitive = false
     }
 
-    shade(files(project.rootDir.resolve("polyui-0.24.0.jar")))
+    shade("org.polyfrost:polyui:0.24.1")
     shade("org.slf4j:slf4j-api:2.0.1")
     compileOnly(project(":config"))
     compileOnly(project(":commands"))

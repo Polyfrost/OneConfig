@@ -74,7 +74,7 @@ loom {
 }
 
 repositories {
-    maven("https://repo.polyfrost.cc/releases")
+    maven("https://repo.polyfrost.org/releases")
 }
 
 val relocatedCommonProject = registerRelocationAttribute("common-lwjgl") {
@@ -144,7 +144,7 @@ dependencies {
 
     include(libs.caffeine, relocate = true)
 
-    include(files(project.rootDir.resolve("polyui-0.24.0.jar")))
+    include("org.polyfrost:polyui:0.24.1")
 
     if (platform.isForge || platform.isLegacyFabric) {
         include("org.slf4j:slf4j-api:2.0.1")
@@ -398,7 +398,7 @@ publishing {
     repositories {
         maven {
             name = "releases"
-            url = uri("https://repo.polyfrost.cc/releases")
+            url = uri("https://repo.polyfrost.org/releases")
             credentials(PasswordCredentials::class)
             authentication {
                 create<BasicAuthentication>("basic")
@@ -406,7 +406,7 @@ publishing {
         }
         maven {
             name = "snapshots"
-            url = uri("https://repo.polyfrost.cc/snapshots")
+            url = uri("https://repo.polyfrost.org/snapshots")
             credentials(PasswordCredentials::class)
             authentication {
                 create<BasicAuthentication>("basic")
@@ -414,7 +414,7 @@ publishing {
         }
         maven {
             name = "private"
-            url = uri("https://repo.polyfrost.cc/private")
+            url = uri("https://repo.polyfrost.org/private")
             credentials(PasswordCredentials::class)
             authentication {
                 create<BasicAuthentication>("basic")
