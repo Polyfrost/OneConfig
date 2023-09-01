@@ -2,7 +2,7 @@
  * This file is part of OneConfig.
  * OneConfig - Next Generation Config Library for Minecraft: Java Edition
  * Copyright (C) 2021~2023 Polyfrost.
- *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
+ *   <https://polyfrost.org> <https://github.com/Polyfrost/>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -21,12 +21,14 @@
  * License.  If not, see <https://www.gnu.org/licenses/>. You should
  * have also received a copy of the Additional Terms Applicable
  * to OneConfig, as published by Polyfrost. If not, see
- * <https://polyfrost.cc/legal/oneconfig/additional-terms>
+ * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
 package org.polyfrost.oneconfig.internal.command;
 //#if MC<=11202 && FABRIC==1
 
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiChat;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.CommandHandler;
 import net.minecraft.command.ICommand;
@@ -34,6 +36,11 @@ import net.minecraft.command.ICommandSender;
 import net.minecraft.command.WrongUsageException;
 import net.minecraft.util.ChatComponentTranslation;
 import net.minecraft.util.EnumChatFormatting;
+
+import java.util.List;
+
+import static net.minecraft.util.EnumChatFormatting.GRAY;
+import static net.minecraft.util.EnumChatFormatting.RESET;
 
 /**
  * The class that handles client-side chat commands. You should register any
@@ -108,6 +115,32 @@ public class ClientCommandHandler extends CommandHandler {
         ChatComponentTranslation ret = new ChatComponentTranslation(str, args);
         ret.getChatStyle().setColor(EnumChatFormatting.RED);
         return ret;
+    }
+
+    public void autoComplete(String leftOfCursor) {
+        latestAutoComplete = null;
+
+        if (leftOfCursor.charAt(0) == '/') {
+            leftOfCursor = leftOfCursor.substring(1);
+
+            Minecraft mc = Minecraft.getMinecraft();
+            if (mc.currentScreen instanceof GuiChat) {
+                List<String> commands = getTabCompletionOptions(mc.thePlayer, leftOfCursor, mc.thePlayer.getPosition());
+                if (commands != null && !commands.isEmpty()) {
+                    if (leftOfCursor.indexOf(' ') == -1) {
+                        for (int i = 0; i < commands.size(); i++) {
+                            commands.set(i, GRAY + "/" + commands.get(i) + RESET);
+                        }
+                    } else {
+                        for (int i = 0; i < commands.size(); i++) {
+                            commands.set(i, GRAY + commands.get(i) + RESET);
+                        }
+                    }
+
+                    latestAutoComplete = commands.toArray(new String[0]);
+                }
+            }
+        }
     }
 
     //#if MC>10809

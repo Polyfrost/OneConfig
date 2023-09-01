@@ -7,7 +7,7 @@ The only supported version is the latest from the master and develop branch. All
 
 **Do not submit an issue or pull request**: this might reveal the vulnerability.
 
-Instead, you should contact Polyfrost directly at [our discord server](https://polyfrost.cc/discord), in a ticket.
+Instead, you should contact Polyfrost directly at [our discord server](https://polyfrost.org/discord), in a ticket.
 
 We will deal with the vulnerability privately and submit a patch as soon as possible.
 

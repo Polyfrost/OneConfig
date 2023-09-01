@@ -1,7 +1,7 @@
 pluginManagement {
     repositories {
         gradlePluginPortal()
-        maven("https://repo.polyfrost.cc/releases")
+        maven("https://repo.polyfrost.org/releases")
     }
     val pgtVersion = "0.2.6"
     plugins {

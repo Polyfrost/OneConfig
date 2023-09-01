@@ -2,7 +2,7 @@
  * This file is part of OneConfig.
  * OneConfig - Next Generation Config Library for Minecraft: Java Edition
  * Copyright (C) 2021~2023 Polyfrost.
- *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
+ *   <https://polyfrost.org> <https://github.com/Polyfrost/>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -21,7 +21,7 @@
  * License.  If not, see <https://www.gnu.org/licenses/>. You should
  * have also received a copy of the Additional Terms Applicable
  * to OneConfig, as published by Polyfrost. If not, see
- * <https://polyfrost.cc/legal/oneconfig/additional-terms>
+ * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
 //#if FORGE==1 && MC<=11202
@@ -96,7 +96,7 @@ public class OneConfigTweaker implements ITweaker {
                                                 MixinBootstrap.getPlatform().getClass().getDeclaredMethod("addContainer", containerClass).invoke(MixinBootstrap.getPlatform(), container);
                                             } catch (Exception e) {
                                                 e.printStackTrace();
-                                                throw new RuntimeException("OneConfig's Mixin loading failed. Please contact https://polyfrost.cc/discord to resolve this issue!");
+                                                throw new RuntimeException("OneConfig's Mixin loading failed. Please contact https://polyfrost.org/discord to resolve this issue!");
                                             }
                                         }
                                     } catch (Exception ignored) {

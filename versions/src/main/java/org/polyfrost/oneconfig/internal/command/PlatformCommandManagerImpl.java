@@ -2,7 +2,7 @@
  * This file is part of OneConfig.
  * OneConfig - Next Generation Config Library for Minecraft: Java Edition
  * Copyright (C) 2021~2023 Polyfrost.
- *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
+ *   <https://polyfrost.org> <https://github.com/Polyfrost/>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -21,7 +21,7 @@
  * License.  If not, see <https://www.gnu.org/licenses/>. You should
  * have also received a copy of the Additional Terms Applicable
  * to OneConfig, as published by Polyfrost. If not, see
- * <https://polyfrost.cc/legal/oneconfig/additional-terms>
+ * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
 //#if MC<=11202
@@ -29,9 +29,6 @@ package org.polyfrost.oneconfig.internal.command;
 
 import net.minecraft.command.CommandBase;
 import net.minecraft.util.BlockPos;
-//#if FABRIC==0
-import net.minecraftforge.client.ClientCommandHandler;
-//#endif
 import org.polyfrost.oneconfig.api.commands.CommandManager;
 import org.polyfrost.oneconfig.api.commands.exceptions.CommandExecutionException;
 import org.polyfrost.oneconfig.api.commands.internal.CommandTree;
@@ -41,6 +38,10 @@ import org.polyfrost.oneconfig.api.commands.arguments.PlayerArgumentParser;
 
 import java.util.ArrayList;
 import java.util.List;
+
+//#if FORGE==1
+import net.minecraftforge.client.ClientCommandHandler;
+//#endif
 
 public class PlatformCommandManagerImpl implements PlatformCommandManager {
 

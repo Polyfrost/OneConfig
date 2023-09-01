@@ -1,5 +1,5 @@
 Copyright (C) 2021-2023 Polyfrost and contributors.
-  <https://polyfrost.cc> <https://github.com/Polyfrost>
+  <https://polyfrost.org> <https://github.com/Polyfrost>
 
   OneConfig is licensed under the terms of version 3 of the GNU Lesser 
 General Public License as published by the Free Software Foundation, AND 
@@ -857,7 +857,7 @@ Library.
                       Version 1.0, 6 August 2022
 
  Copyright (C) 2022 Polyfrost 
-   <https://polyfrost.cc> <https://github.com/Polyfrost>
+   <https://polyfrost.org> <https://github.com/Polyfrost>
 
  Everyone is permitted to copy and distribute verbatim copies
  of this license document, but changing it is not allowed.
@@ -941,7 +941,7 @@ interface produced using the Library and/or covered by this License,
 and in the Appropriate Legal Notices, the following text:
 
 "Powered by OneConfig - get OneConfig from the original creators 
-at <https://polyfrost.cc/oneconfig>"
+at <https://polyfrost.org/oneconfig>"
 
   On all user interface screens that use the Library, this text 
 must be visibly and clearly displayed directly in the view that is 
