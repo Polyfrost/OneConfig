@@ -40,15 +40,15 @@ java {
 }
 
 dependencies {
-    implementation("com.electronwill.night-config:core:3.6.5")
-    implementation("com.electronwill.night-config:json:3.6.5")
-    implementation("com.electronwill.night-config:toml:3.6.5")
-    implementation("com.electronwill.night-config:yaml:3.6.5")
-    implementation("com.electronwill.night-config:hocon:3.6.5")
+    implementation(libs.nightConfigCore)
+    implementation(libs.nightConfigToml)
+    implementation(libs.nightConfigHocon)
+    implementation(libs.nightConfigYaml)
+    implementation(libs.nightConfigJson)
     testImplementation(platform("org.junit:junit-bom:5.9.1"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     implementation("org.jetbrains:annotations:24.0.1")
-    implementation("org.slf4j:slf4j-simple:2.0.7")
+    implementation(libs.slf4jSimple)
 }
 
 tasks.test {

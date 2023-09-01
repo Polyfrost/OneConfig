@@ -29,7 +29,7 @@ package org.polyfrost.oneconfig.internal.config;
 import org.jetbrains.annotations.NotNull;
 import org.polyfrost.oneconfig.api.config.Config;
 import org.polyfrost.oneconfig.api.config.Tree;
-import org.polyfrost.oneconfig.api.config.backend.Backend;
+import org.polyfrost.oneconfig.api.config.backend.impl.NightConfigSerializer;
 import org.polyfrost.oneconfig.api.config.backend.impl.file.FileBackend;
 import org.polyfrost.oneconfig.api.config.collector.PropertyCollector;
 import org.polyfrost.oneconfig.api.config.data.Category;
@@ -49,17 +49,18 @@ public class ConfigManager {
     public static final ConfigManager INSTANCE = new ConfigManager();
     private final List<PropertyCollector> collectors = new ArrayList<>(5);
     private final Map<Object, Mod> mods = new HashMap<>();
-    private final Backend backend;
+    private final FileBackend backend;
 
 
     private ConfigManager() {
         collectors.add(new AnnotationReflectiveCollector());
         backend = new FileBackend(ONECONFIG_DIR.resolve("default"));
+        backend.addSerializers(NightConfigSerializer.ALL);
     }
 
     public void openProfile(String profile) {
-        if (backend instanceof FileBackend) {
-            ((FileBackend) backend).setDirectory(ONECONFIG_DIR.resolve(profile));
+        if (backend != null) {
+            backend.setDirectory(ONECONFIG_DIR.resolve(profile));
         } else throw new UnsupportedOperationException("Cannot change backend directory for non-file backend");
     }
 

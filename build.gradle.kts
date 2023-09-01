@@ -84,8 +84,8 @@ dependencies {
         isTransitive = false
     }
 
-    shade("org.polyfrost:polyui:0.24.1")
-    shade("org.slf4j:slf4j-api:2.0.1")
+    shade(libs.polyui)
+    shade(libs.slf4jApi)
     compileOnly(project(":config"))
     compileOnly(project(":commands"))
 

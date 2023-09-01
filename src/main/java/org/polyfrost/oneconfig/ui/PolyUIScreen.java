@@ -33,7 +33,7 @@ import org.polyfrost.polyui.component.Drawable;
 
 import java.util.function.Consumer;
 
-public class PolyUIScreen extends UScreen implements GuiPause {
+public class PolyUIScreen extends UScreen {
     public PolyUIScreen(Colors colors, Consumer<PolyUI> initFunction, Drawable... drawables) {
         super(true);
         throw new UnsupportedOperationException("implementation is intrinsic");
@@ -45,10 +45,5 @@ public class PolyUIScreen extends UScreen implements GuiPause {
 
     public PolyUIScreen(Drawable... drawables) {
         this(null, null, drawables);
-    }
-
-    @Override
-    public boolean doesGuiPauseGame() {
-        return false;
     }
 }

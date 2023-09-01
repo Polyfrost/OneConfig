@@ -28,6 +28,7 @@ package org.polyfrost.oneconfig.test;
 
 import org.polyfrost.oneconfig.events.EventManager;
 import org.polyfrost.oneconfig.events.event.InitializationEvent;
+import org.polyfrost.oneconfig.internal.config.ConfigManager;
 import org.polyfrost.oneconfig.libs.eventbus.Subscribe;
 import org.polyfrost.oneconfig.api.commands.CommandManager;
 
@@ -52,5 +53,6 @@ public class TestMod_Test
     //#endif
     {
         CommandManager.INSTANCE.registerCommand(new TestCommand_Test());
+        ConfigManager.INSTANCE.registerConfig(new TestConfig_Test());
     }
 }

@@ -48,6 +48,6 @@ public class Config {
     }
 
     public Config(String id, String name, Category category) {
-        this(id, null, name, category);
+        this(id, null, new Translator.Text(name), category);
     }
 }

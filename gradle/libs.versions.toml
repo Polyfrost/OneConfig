@@ -19,6 +19,12 @@ mixin = "0.7.11-SNAPSHOT"
 lwjgl = "1.0.0-alpha26"
 fabric-asm = "v2.3"
 
+polyui = "0.24.2"
+
+slf4j = "2.0.1"
+
+night-config = "3.6.5"
+
 [libraries]
 
 vigilance = { module = "gg.essential:vigilance-1.8.9-forge", version.ref = "vigilance" }
@@ -43,6 +49,17 @@ kotlinxAtomicfu = { module = "org.jetbrains.kotlinx:atomicfu-jvm", version.ref =
 mixin = { module = "org.spongepowered:mixin", version.ref = "mixin" }
 
 fabricAsm = { module = "com.github.Chocohead:Fabric-ASM", version.ref = "fabric-asm" }
+
+polyui = { module = "org.polyfrost:polyui", version.ref = "polyui" }
+
+slf4jApi = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
+slf4jSimple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
+
+nightConfigCore = { module = "com.electronwill.night-config:core", version.ref = "night-config" }
+nightConfigToml = { module = "com.electronwill.night-config:toml", version.ref = "night-config" }
+nightConfigHocon = { module = "com.electronwill.night-config:hocon", version.ref = "night-config" }
+nightConfigYaml = { module = "com.electronwill.night-config:yaml", version.ref = "night-config" }
+nightConfigJson = { module = "com.electronwill.night-config:json", version.ref = "night-config" }
 
 [bundles]
 kotlin = ["kotlinReflect", "kotlinStdlib", "kotlinStdlibJdk8", "kotlinStdlibJdk7", "kotlinxCoroutinesCore", "kotlinxCoroutinesCoreJvm", "kotlinxCoroutinesJdk8", "kotlinxSerializationCore", "kotlinxSerializationJson", "kotlinxSerializationCbor", "kotlinxAtomicfu"]

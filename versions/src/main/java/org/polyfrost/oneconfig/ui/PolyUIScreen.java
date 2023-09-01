@@ -50,7 +50,7 @@ import org.slf4j.LoggerFactory;
 import java.util.function.Consumer;
 
 @SuppressWarnings("unused")
-public class PolyUIScreen extends UScreen implements GuiPause {
+public class PolyUIScreen extends UScreen {
     public static final Logger LOGGER = LoggerFactory.getLogger("PolyUIScreen");
     private PolyUI polyUI;
     private Drawable[] drawables;

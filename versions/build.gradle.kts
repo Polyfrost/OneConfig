@@ -136,11 +136,11 @@ dependencies {
 
     include(libs.caffeine, relocate = true)
 
-    include("org.polyfrost:polyui:0.24.1")
+    include(libs.polyui)
 
     if (platform.isForge || platform.isLegacyFabric) {
-        include("org.slf4j:slf4j-api:2.0.1")
-        include("org.slf4j:slf4j-simple:2.0.1")
+        include(libs.slf4jApi)
+        include(libs.slf4jSimple)
     }
 
     // for other mods and universalcraft
