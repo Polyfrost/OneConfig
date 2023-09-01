@@ -138,10 +138,8 @@ dependencies {
 
     include(libs.polyui)
 
-    if (platform.isForge || platform.isLegacyFabric) {
-        include(libs.slf4jApi)
-        include(libs.slf4jSimple)
-    }
+    include(libs.slf4jApi)
+    include(libs.slf4jSimple)
 
     // for other mods and universalcraft
     include(libs.bundles.kotlin)

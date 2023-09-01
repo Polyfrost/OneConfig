@@ -39,6 +39,7 @@ import org.polyfrost.oneconfig.api.config.annotations.Number;
 import org.polyfrost.oneconfig.api.config.annotations.Text;
 import org.polyfrost.oneconfig.api.config.data.Category;
 import org.polyfrost.oneconfig.libs.universal.UChat;
+import org.polyfrost.polyui.color.PolyColor;
 import org.polyfrost.polyui.input.KeyBinder;
 import org.polyfrost.polyui.input.Modifiers;
 import org.polyfrost.polyui.unit.SlideDirection;
@@ -61,7 +62,7 @@ public class TestConfig_Test extends Config {
     });
 
     @Color(title = "color", category = "bob")
-    org.polyfrost.polyui.color.Color color = Utils.rgba(255, 0, 100, 1f);
+    PolyColor color = Utils.rgba(255, 0, 100, 1f);
 
     @Button(title = "Test")
     private static void main() {

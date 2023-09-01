@@ -23,7 +23,7 @@ package org.polyfrost.oneconfig.ui.elements
 
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.animate.Animations
-import org.polyfrost.polyui.color.Color
+import org.polyfrost.polyui.color.PolyColor as Color
 import org.polyfrost.polyui.component.impl.*
 import org.polyfrost.polyui.event.*
 import org.polyfrost.polyui.input.Translator.Companion.localised

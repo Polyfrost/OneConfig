@@ -10,6 +10,15 @@ public class org/polyfrost/oneconfig/api/commands/CommandManager {
 	public fun registerParser (Lorg/polyfrost/oneconfig/api/commands/arguments/ArgumentParser;)V
 }
 
+public class org/polyfrost/oneconfig/api/config/Config {
+	public final field id Ljava/lang/String;
+	public final field mod Lorg/polyfrost/oneconfig/api/config/data/Mod;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/config/data/Category;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/config/data/Category;)V
+	public fun <init> (Ljava/lang/String;Lorg/polyfrost/polyui/input/Translator$Text;Lorg/polyfrost/oneconfig/api/config/data/Category;)V
+	public fun <init> (Ljava/lang/String;Lorg/polyfrost/polyui/renderer/data/PolyImage;Lorg/polyfrost/polyui/input/Translator$Text;Lorg/polyfrost/oneconfig/api/config/data/Category;)V
+}
+
 public abstract interface annotation class org/polyfrost/oneconfig/api/config/annotations/Accordion : java/lang/annotation/Annotation {
 	public abstract fun canBeEnabled ()Z
 	public abstract fun category ()Ljava/lang/String;
@@ -106,6 +115,31 @@ public abstract interface annotation class org/polyfrost/oneconfig/api/config/an
 	public abstract fun placeholder ()Ljava/lang/String;
 	public abstract fun subcategory ()Ljava/lang/String;
 	public abstract fun title ()Ljava/lang/String;
+}
+
+public final class org/polyfrost/oneconfig/api/config/data/Category : java/lang/Enum {
+	public static final field COMBAT Lorg/polyfrost/oneconfig/api/config/data/Category;
+	public static final field HUD Lorg/polyfrost/oneconfig/api/config/data/Category;
+	public static final field HYPIXEL Lorg/polyfrost/oneconfig/api/config/data/Category;
+	public static final field OTHER Lorg/polyfrost/oneconfig/api/config/data/Category;
+	public static final field QOL Lorg/polyfrost/oneconfig/api/config/data/Category;
+	public final field iconPath Ljava/lang/String;
+	public final field name Ljava/lang/String;
+	public static fun valueOf (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/data/Category;
+	public static fun values ()[Lorg/polyfrost/oneconfig/api/config/data/Category;
+}
+
+public class org/polyfrost/oneconfig/api/config/data/Mod {
+	public final field category Lorg/polyfrost/oneconfig/api/config/data/Category;
+	public field data Ljava/util/ArrayList;
+	public field enabled Z
+	public field favorite Z
+	public field hasUpdate Z
+	public final field icon Lorg/polyfrost/polyui/renderer/data/PolyImage;
+	public final field name Lorg/polyfrost/polyui/input/Translator$Text;
+	public fun <init> (Lorg/polyfrost/polyui/renderer/data/PolyImage;Lorg/polyfrost/polyui/input/Translator$Text;Lorg/polyfrost/oneconfig/api/config/data/Category;Lorg/polyfrost/oneconfig/api/config/Tree;)V
+	public fun getConfig ()Lorg/polyfrost/oneconfig/api/config/Tree;
+	public fun setConfig (Lorg/polyfrost/oneconfig/api/config/Tree;)V
 }
 
 public final class org/polyfrost/oneconfig/api/config/elements/AccordionOption : org/polyfrost/polyui/component/ContainingComponent {
@@ -492,7 +526,104 @@ public abstract interface class org/polyfrost/oneconfig/ui/GuiPause {
 	public abstract fun doesGuiPauseGame ()Z
 }
 
-public abstract interface class org/polyfrost/oneconfig/ui/Page {
+public final class org/polyfrost/oneconfig/ui/OneConfigUI {
+	public static final fun create ()Lorg/polyfrost/oneconfig/ui/PolyUIScreen;
+}
+
+public class org/polyfrost/oneconfig/ui/PolyUIScreen : org/polyfrost/oneconfig/libs/universal/UScreen {
+	public fun <init> (Lorg/polyfrost/polyui/color/Colors;Ljava/util/function/Consumer;[Lorg/polyfrost/polyui/component/Drawable;)V
+	public fun <init> (Lorg/polyfrost/polyui/color/Colors;[Lorg/polyfrost/polyui/component/Drawable;)V
+	public fun <init> ([Lorg/polyfrost/polyui/component/Drawable;)V
+}
+
+public final class org/polyfrost/oneconfig/ui/SidebarProperties : org/polyfrost/polyui/property/impl/ButtonProperties {
+	public fun <init> ()V
+	public fun clone ()Ljava/lang/Object;
+	public fun getHasBackground ()Z
+	public fun getPalette ()Lorg/polyfrost/polyui/color/Colors$Palette;
+	public fun getRecolorsAll ()Z
+}
+
+public final class org/polyfrost/oneconfig/ui/elements/Card : org/polyfrost/polyui/component/ContainingComponent {
+	public fun <init> (Lorg/polyfrost/polyui/unit/Vec2;Lorg/polyfrost/oneconfig/api/config/data/Mod;Lkotlin/jvm/functions/Function1;)V
+	public synthetic fun <init> (Lorg/polyfrost/polyui/unit/Vec2;Lorg/polyfrost/oneconfig/api/config/data/Mod;Lkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun calculateBounds ()V
+	public final fun getEnabled ()Z
+	public final fun getIcon ()Lorg/polyfrost/polyui/component/impl/Image;
+	public fun getProperties ()Lorg/polyfrost/oneconfig/ui/elements/Card$CardProperties;
+	public synthetic fun getProperties ()Lorg/polyfrost/polyui/property/Properties;
+	public final fun getTitle ()Lorg/polyfrost/polyui/component/impl/Text;
+	public fun render ()V
+	public final fun setEnabled (Z)V
+}
+
+public final class org/polyfrost/oneconfig/ui/elements/Card$CardProperties : org/polyfrost/polyui/property/impl/BlockProperties {
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/ui/elements/Card$CardProperties;
+	public fun clone ()Ljava/lang/Object;
+	public final fun getBackgroundProps ()Lorg/polyfrost/polyui/property/impl/BlockProperties;
+	public final fun getBarProps ()Lorg/polyfrost/polyui/property/impl/BlockProperties;
+	public final fun getBgColor ()Lorg/polyfrost/polyui/color/PolyColor;
+	public final fun getLateralPadding ()F
+}
+
+public final class org/polyfrost/oneconfig/ui/elements/ColorPicker : org/polyfrost/polyui/layout/impl/PixelLayout {
+	public fun <init> (Lorg/polyfrost/polyui/unit/Vec2;ZLorg/polyfrost/polyui/color/PolyColor;[Lorg/polyfrost/polyui/color/PolyColor;Lkotlin/jvm/functions/Function2;)V
+	public synthetic fun <init> (Lorg/polyfrost/polyui/unit/Vec2;ZLorg/polyfrost/polyui/color/PolyColor;[Lorg/polyfrost/polyui/color/PolyColor;Lkotlin/jvm/functions/Function2;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getColor ()Lorg/polyfrost/polyui/color/PolyColor;
+	public fun onInitComplete ()V
+	public final fun setColor (Lorg/polyfrost/polyui/color/PolyColor;)V
+}
+
+public final class org/polyfrost/oneconfig/ui/elements/ColorPicker$ColorBox : org/polyfrost/polyui/component/impl/Block {
+	public fun <init> (Lorg/polyfrost/polyui/unit/Vec2;Lorg/polyfrost/polyui/color/PolyColor$Animated;Lkotlin/jvm/functions/Function1;)V
+	public synthetic fun <init> (Lorg/polyfrost/polyui/unit/Vec2;Lorg/polyfrost/polyui/color/PolyColor$Animated;Lkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun accept (Lorg/polyfrost/polyui/event/Event;)Z
+	public fun render ()V
+	public final fun set (Lorg/polyfrost/polyui/color/PolyColor$Animated;)V
+	public fun setup (Lorg/polyfrost/polyui/renderer/Renderer;Lorg/polyfrost/polyui/PolyUI;)V
+}
+
+public final class org/polyfrost/oneconfig/ui/elements/ColorPicker$ColorInputProperties : org/polyfrost/polyui/property/impl/TextInputProperties {
+	public fun <init> (Lkotlin/jvm/functions/Function1;)V
+	public fun clone ()Ljava/lang/Object;
+	public fun getOutlineColor ()Lorg/polyfrost/polyui/color/PolyColor;
+	public fun getOutlineThickness ()Lorg/polyfrost/polyui/unit/Unit$Pixel;
+	public synthetic fun getOutlineThickness ()Lorg/polyfrost/polyui/unit/Unit;
+}
+
+public final class org/polyfrost/oneconfig/ui/elements/ColorPicker$ColorSlider : org/polyfrost/polyui/component/impl/Slider {
+	public fun <init> (Lorg/polyfrost/polyui/unit/Vec2;Lorg/polyfrost/polyui/unit/Vec2;Lorg/polyfrost/polyui/renderer/data/PolyImage;Lorg/polyfrost/polyui/color/PolyColor$Animated;ZFFLkotlin/jvm/functions/Function1;)V
+	public synthetic fun <init> (Lorg/polyfrost/polyui/unit/Vec2;Lorg/polyfrost/polyui/unit/Vec2;Lorg/polyfrost/polyui/renderer/data/PolyImage;Lorg/polyfrost/polyui/color/PolyColor$Animated;ZFFLkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun calculateBounds ()V
+	public fun render ()V
+}
+
+public final class org/polyfrost/oneconfig/ui/elements/ColorPicker$ColorSlider$ColorSliderProperties : org/polyfrost/polyui/property/impl/SliderProperties {
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/ui/elements/ColorPicker$ColorSlider$ColorSliderProperties;
+	public fun clone ()Ljava/lang/Object;
+	public fun getSetInstantly ()Z
+}
+
+public final class org/polyfrost/oneconfig/ui/elements/ColorPicker$Properties {
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/ui/elements/ColorPicker$Properties;
+	public final fun getGradient1 ()Lorg/polyfrost/polyui/color/PolyColor$Gradient;
+	public final fun getGradient2 ()Lorg/polyfrost/polyui/color/PolyColor$Gradient;
+	public final fun getWhite ()Lorg/polyfrost/polyui/color/PolyColor;
+}
+
+public final class org/polyfrost/oneconfig/ui/pages/ModsPage {
+	public fun <init> (Ljava/util/Collection;Lorg/polyfrost/polyui/layout/impl/SwitchingLayout;)V
+	public final fun getButtonProps ()Lorg/polyfrost/polyui/property/impl/ButtonProperties;
+	public final fun getCache ()Ljava/util/HashMap;
+	public final fun getContent ()Lorg/polyfrost/polyui/layout/Layout;
+	public final fun getHeader ()Lorg/polyfrost/polyui/layout/impl/FlexLayout;
+	public final fun getNoIconProps ()Lorg/polyfrost/polyui/property/impl/ButtonProperties;
+	public final fun getOwner ()Lorg/polyfrost/polyui/layout/impl/SwitchingLayout;
+	public final fun getSelf ()Lorg/polyfrost/polyui/layout/Layout;
+	public final fun open ()V
+}
+
+public abstract interface class org/polyfrost/oneconfig/ui/pages/Page {
 	public abstract fun filter (Ljava/lang/String;Lkotlin/jvm/functions/Function2;)V
 }
 
@@ -753,22 +884,22 @@ public final class org/polyfrost/polyui/renderer/impl/NVGRenderer : org/polyfros
 	public static synthetic fun drawImage$default (Lorg/polyfrost/polyui/renderer/impl/NVGRenderer;IFFFFIILjava/lang/Object;)V
 	public fun dropShadow (FFFFFFF)V
 	public fun endFrame ()V
-	public fun hollowRect (FFFFLorg/polyfrost/polyui/color/Color;FFFFF)V
+	public fun hollowRect (FFFFLorg/polyfrost/polyui/color/PolyColor;FFFFF)V
 	public fun image (Lorg/polyfrost/polyui/renderer/data/PolyImage;FFFFIFFFF)V
 	public fun init ()V
 	public fun initImage (Lorg/polyfrost/polyui/renderer/data/PolyImage;)V
-	public fun line (FFFFLorg/polyfrost/polyui/color/Color;F)V
+	public fun line (FFFFLorg/polyfrost/polyui/color/PolyColor;F)V
 	public fun pop ()V
 	public fun popScissor ()V
 	public fun push ()V
 	public fun pushScissor (FFFF)V
 	public fun pushScissorIntersecting (FFFF)V
-	public fun rect (FFFFLorg/polyfrost/polyui/color/Color;FFFF)V
+	public fun rect (FFFFLorg/polyfrost/polyui/color/PolyColor;FFFF)V
 	public fun rotate (D)V
 	public fun scale (FF)V
 	public fun skewX (D)V
 	public fun skewY (D)V
-	public fun text (Lorg/polyfrost/polyui/renderer/data/Font;FFLjava/lang/String;Lorg/polyfrost/polyui/color/Color;F)V
+	public fun text (Lorg/polyfrost/polyui/renderer/data/Font;FFLjava/lang/String;Lorg/polyfrost/polyui/color/PolyColor;F)V
 	public fun textBounds (Lorg/polyfrost/polyui/renderer/data/Font;Ljava/lang/String;F)Lorg/polyfrost/polyui/unit/Vec2;
 	public fun translate (FF)V
 	public fun unbindFramebuffer (Lorg/polyfrost/polyui/renderer/data/Framebuffer;)V

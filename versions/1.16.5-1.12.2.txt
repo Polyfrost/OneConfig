@@ -1,6 +1,7 @@
 net.minecraft.util.text.ITextComponent getUnformattedComponentText() getUnformattedText()
 net.minecraft.network.IPacket net.minecraft.network.Packet
 net.minecraft.client.gui.screen.Screen net.minecraft.client.gui.GuiScreen
+net.minecraft.client.gui.screen.Screen isPauseScreen() doesGuiPauseGame()
 net.minecraft.client.gui.screen.ChatScreen net.minecraft.client.gui.GuiChat
 net.minecraft.client.Minecraft getInstance() getMinecraft()
 net.minecraft.client.Minecraft isOnExecutionThread() isCallingFromMinecraftThread()

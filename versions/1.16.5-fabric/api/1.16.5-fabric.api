@@ -91,6 +91,7 @@ public class org/polyfrost/oneconfig/platform/impl/ServerPlatformImpl : org/poly
 }
 
 public class org/polyfrost/oneconfig/ui/PolyUIScreen : org/polyfrost/oneconfig/libs/universal/UScreen {
+	public static final field LOGGER Lorg/slf4j/Logger;
 	public fun <init> (Lorg/polyfrost/polyui/color/Colors;Ljava/util/function/Consumer;[Lorg/polyfrost/polyui/component/Drawable;)V
 	public fun <init> (Lorg/polyfrost/polyui/color/Colors;[Lorg/polyfrost/polyui/component/Drawable;)V
 	public fun <init> ([Lorg/polyfrost/polyui/component/Drawable;)V

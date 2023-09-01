@@ -66,8 +66,13 @@ public class org/polyfrost/oneconfig/api/config/Tree$Builder {
 
 public abstract interface class org/polyfrost/oneconfig/api/config/backend/Backend {
 	public static final field LOGGER Lorg/slf4j/Logger;
+	public abstract fun exists (Ljava/lang/String;)Z
+	public fun exists (Lorg/polyfrost/oneconfig/api/config/Tree;)Z
 	public abstract fun get (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/Tree;
 	public abstract fun put (Lorg/polyfrost/oneconfig/api/config/Tree;)V
+	public abstract fun refresh ()V
+	public abstract fun remove (Ljava/lang/String;)Z
+	public fun remove (Lorg/polyfrost/oneconfig/api/config/Tree;)Z
 }
 
 public abstract interface class org/polyfrost/oneconfig/api/config/backend/Serializer {
@@ -106,8 +111,11 @@ public class org/polyfrost/oneconfig/api/config/backend/impl/file/FileBackend : 
 	public fun addSerializer (Lorg/polyfrost/oneconfig/api/config/backend/impl/file/FileSerializer;)Lorg/polyfrost/oneconfig/api/config/backend/impl/file/FileBackend;
 	public fun addSerializers (Ljava/util/Collection;)Lorg/polyfrost/oneconfig/api/config/backend/impl/file/FileBackend;
 	public fun addSerializers ([Lorg/polyfrost/oneconfig/api/config/backend/impl/file/FileSerializer;)Lorg/polyfrost/oneconfig/api/config/backend/impl/file/FileBackend;
+	public fun exists (Ljava/lang/String;)Z
 	public fun get (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/Tree;
 	public fun put (Lorg/polyfrost/oneconfig/api/config/Tree;)V
+	public fun refresh ()V
+	public fun remove (Ljava/lang/String;)Z
 	public fun setDirectory (Ljava/nio/file/Path;)V
 }
 
