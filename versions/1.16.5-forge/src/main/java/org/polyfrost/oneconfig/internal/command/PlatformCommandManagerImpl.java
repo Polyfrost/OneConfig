@@ -24,14 +24,20 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.utils.commands;
+package org.polyfrost.oneconfig.internal.command;
 
 import org.polyfrost.oneconfig.api.commands.CommandManager;
-import org.polyfrost.oneconfig.internal.command.PlatformCommandManager;
+import org.polyfrost.oneconfig.api.commands.arguments.PlayerArgumentParser;
+import org.polyfrost.oneconfig.api.commands.internal.CommandTree;
 
-public class PlatformCommandManagerImpl extends PlatformCommandManager {
+public class PlatformCommandManagerImpl implements PlatformCommandManager {
+
+    static {
+        CommandManager.INSTANCE.registerParser(new PlayerArgumentParser());
+    }
+
     @Override
-    void createCommand(CommandManager.OCCommand command) {
+    public void createCommand(CommandTree command) {
 
     }
 }

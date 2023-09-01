@@ -65,8 +65,11 @@ public class CommandTree implements Node {
     }
 
     public void setDescription(String description) {
-        if (init) throw new CommandCreationException("Cannot set description after initialization!");
         this.description = description;
+        if(init) {
+            help = null;
+            getHelp();
+        }
     }
 
     public String getDescription() {
@@ -78,10 +81,6 @@ public class CommandTree implements Node {
     }
 
     public void putAll(Stream<Executable> executables) {
-        executables.forEach(this::put);
-    }
-
-    public void putAll(Collection<Executable> executables) {
         executables.forEach(this::put);
     }
 
@@ -97,14 +96,14 @@ public class CommandTree implements Node {
     }
 
     private void put(String key, CommandTree tree) {
-        if (init) throw new CommandCreationException("Cannot add executables after initialization!");
+        if (init) throw new CommandCreationException("Cannot add trees after initialization!");
         if (!commands.containsKey(key)) {
             List<Node> nodes = new ArrayList<>(1);
             nodes.add(tree);
             commands.put(key, nodes);
         } else {
             if (commands.put(key, Collections.singletonList(tree)) != null)
-                throw new CommandCreationException("Invalid command: " + this + ": see https://docs.polyfrost.cc/oneconfig/commands/overloaded-subcommands");
+                throw new CommandCreationException("Invalid command: " + this + ": see https://docs.polyfrost.org/oneconfig/commands/overloaded-subcommand");
         }
     }
 
@@ -132,8 +131,8 @@ public class CommandTree implements Node {
                         Executable a = executables.get(i);
                         Executable b = executables.get(j);
                         if (a.parameters.length != b.parameters.length) continue;
-                        ArgumentParser[] aParsers = Arrays.stream(a.parameters).map(p -> p.parser).toArray(ArgumentParser[]::new);
-                        ArgumentParser[] bParsers = Arrays.stream(b.parameters).map(p -> p.parser).toArray(ArgumentParser[]::new);
+                        ArgumentParser<?>[] aParsers = Arrays.stream(a.parameters).map(p -> p.parser).toArray(ArgumentParser[]::new);
+                        ArgumentParser<?>[] bParsers = Arrays.stream(b.parameters).map(p -> p.parser).toArray(ArgumentParser[]::new);
 
                         boolean same = true;
                         for (int k = 0; k < aParsers.length; k++) {
@@ -143,7 +142,7 @@ public class CommandTree implements Node {
                             }
                         }
                         if (same)
-                            throw new CommandCreationException("Ambiguous command overload: " + a.names[0] + ": see https://docs.polyfrost.cc/oneconfig/commands/ambiguous-overload");
+                            throw new CommandCreationException("Ambiguous command overload: " + a.names[0] + ": see https://docs.polyfrost.org/oneconfig/commands/ambiguous-overload");
                     }
                 }
             }

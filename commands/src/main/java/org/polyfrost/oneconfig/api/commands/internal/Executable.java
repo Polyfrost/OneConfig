@@ -144,10 +144,10 @@ public class Executable implements Node {
         @Nullable
         public final String description;
         @NotNull
-        final ArgumentParser parser;
+        final ArgumentParser<?> parser;
         public int arity;
 
-        public Param(@NotNull String name, @Nullable String description, int arity, @NotNull ArgumentParser parser) {
+        public Param(@NotNull String name, @Nullable String description, int arity, @NotNull ArgumentParser<?> parser) {
             this.name = name;
             this.description = description;
             this.parser = parser;

@@ -29,7 +29,9 @@ package org.polyfrost.oneconfig.internal.command;
 
 import net.minecraft.command.CommandBase;
 import net.minecraft.util.BlockPos;
+//#if FABRIC==0
 import net.minecraftforge.client.ClientCommandHandler;
+//#endif
 import org.polyfrost.oneconfig.api.commands.CommandManager;
 import org.polyfrost.oneconfig.api.commands.exceptions.CommandExecutionException;
 import org.polyfrost.oneconfig.api.commands.internal.CommandTree;
@@ -61,7 +63,7 @@ public class PlatformCommandManagerImpl implements PlatformCommandManager {
 
             @Override
             public void
-                //#if MC<=10809
+            //#if MC<=10809
             processCommand(net.minecraft.command.ICommandSender sender, String[] args)
             //#elseif FABRIC==1
             //$$ method_3279(net.minecraft.server.MinecraftServer var1, net.minecraft.command.CommandSource sender, String[] args)
@@ -82,7 +84,7 @@ public class PlatformCommandManagerImpl implements PlatformCommandManager {
                 } catch (CommandExecutionException c) {
                     UChat.chat("&c" + c.getMessage());
                 } catch (Exception e) {
-                    UChat.chat("an unknown error occurred while executing this command, please report this to the mod author");
+                    UChat.chat("&cAn unknown error occurred while executing this command, please report this to the mod author!");
                     e.printStackTrace();
                 }
             }
@@ -99,7 +101,7 @@ public class PlatformCommandManagerImpl implements PlatformCommandManager {
 
             @Override
             public List<String>
-                //#if MC<=10809
+            //#if MC<=10809
             addTabCompletionOptions(net.minecraft.command.ICommandSender sender, String[] args, BlockPos pos)
             //#elseif FABRIC==1
             //$$ method_10738(net.minecraft.server.MinecraftServer server, net.minecraft.command.CommandSource sender, String[] args, BlockPos targetPos)

@@ -128,7 +128,7 @@ public class BlurHandlerImpl implements BlurHandler {
 
         if (!isShaderActive() && (gui instanceof BlurScreen && ((BlurScreen) gui).hasBackgroundBlur())) {
             //#if FABRIC==1
-            //$$ ((GameRendererAccessor) UMinecraft.getMinecraft().gameRenderer).invokeLoadShader(this.blurShader);
+            //$$ ((org.polyfrost.oneconfig.internal.mixin.GameRendererAccessor) UMinecraft.getMinecraft().gameRenderer).invokeLoadShader(this.blurShader);
             //#else
             UMinecraft.getMinecraft().entityRenderer.loadShader(this.blurShader);
             //#endif

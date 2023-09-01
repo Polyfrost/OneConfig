@@ -30,7 +30,7 @@ package org.polyfrost.oneconfig.internal.mixin.commands;
 import net.minecraft.entity.ai.pathing.PathNodeMaker;
 import net.minecraft.util.Formatting;
 import org.apache.commons.lang3.StringUtils;
-import org.polyfrost.oneconfig.utils.commands.ClientCommandHandler;
+import org.polyfrost.oneconfig.internal.command.ClientCommandHandler;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -46,10 +46,11 @@ public class ChatScreenMixin {
         return Formatting.strip(par1);
     }
 
-    @Inject(method = "method_12184", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayNetworkHandler;sendPacket(Lnet/minecraft/network/Packet;)V"))
-    private void addAutoComplete(String string, CallbackInfo ci) {
-        ClientCommandHandler.instance.autoComplete(string);
-    }
+//    @Inject(method = "method_12184", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayNetworkHandler;sendPacket(Lnet/minecraft/network/Packet;)V"))
+//    private void addAutoComplete(String string, CallbackInfo ci) {
+//        ClientCommandHandler.instance.autoComplete(string);
+//    }
+//    todo
 
     @ModifyVariable(method = "method_12185", at = @At(value = "INVOKE", target = "Ljava/util/List;clear()V", shift = At.Shift.AFTER), argsOnly = true, index = 1)
     private String[] addAutoComplete(String[] suggestions) {

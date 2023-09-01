@@ -24,7 +24,7 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.internal.renderer;
+package org.polyfrost.oneconfig.internal.renderer.impl;
 
 import org.polyfrost.oneconfig.renderer.TinyFD;
 

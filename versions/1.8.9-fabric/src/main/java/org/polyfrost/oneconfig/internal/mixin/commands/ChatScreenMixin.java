@@ -29,14 +29,12 @@ package org.polyfrost.oneconfig.internal.mixin.commands;
 import net.minecraft.client.gui.screen.ChatScreen;
 import net.minecraft.util.Formatting;
 import org.apache.commons.lang3.StringUtils;
-import org.polyfrost.oneconfig.utils.commands.ClientCommandHandler;
+import org.polyfrost.oneconfig.internal.command.ClientCommandHandler;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.Redirect;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(ChatScreen.class)
 public class ChatScreenMixin {
@@ -46,10 +44,11 @@ public class ChatScreenMixin {
         return Formatting.strip(par1);
     }
 
-    @Inject(method = "method_908", at = @At(value = "FIELD", target = "Lnet/minecraft/client/gui/screen/ChatScreen;client:Lnet/minecraft/client/MinecraftClient;", ordinal = 0))
-    private void addAutoComplete(String string, String string2, CallbackInfo ci) {
-        ClientCommandHandler.instance.autoComplete(string);
-    }
+//    @Inject(method = "method_908", at = @At(value = "FIELD", target = "Lnet/minecraft/client/gui/screen/ChatScreen;client:Lnet/minecraft/client/MinecraftClient;", ordinal = 0))
+//    private void addAutoComplete(String string, String string2, CallbackInfo ci) {
+//        ClientCommandHandler.instance.autoComplete(string);
+//    }
+//    todo
 
     @ModifyVariable(method = "setSuggestions", at = @At(value = "INVOKE", target = "Ljava/util/List;clear()V", shift = At.Shift.AFTER), argsOnly = true, index = 1)
     private String[] addAutoComplete(String[] suggestions) {

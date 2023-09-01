@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 //#if FABRIC==1
 //$$ import net.fabricmc.loader.api.FabricLoader;
+//$$ import net.fabricmc.loader.api.ModContainer;
 //#else
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.ModContainer;
@@ -99,7 +100,6 @@ public class LoaderPlatformImpl implements LoaderPlatform {
 
     @Override
     public ActiveMod toActiveMod(@Nullable Object in) {
-        //#if FORGE==1
         try {
             ModContainer container = (ModContainer) in;
             if (container == null) return null;
@@ -115,6 +115,5 @@ public class LoaderPlatformImpl implements LoaderPlatform {
         } catch (Exception e) {
             return null;
         }
-        //#endif
     }
 }

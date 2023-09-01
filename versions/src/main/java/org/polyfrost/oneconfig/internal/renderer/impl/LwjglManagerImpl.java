@@ -23,17 +23,17 @@
  * to OneConfig, as published by Polyfrost. If not, see
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
-
+//#if MC<=11202
 package org.polyfrost.oneconfig.internal.renderer.impl;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.Remapper;
-import org.objectweb.asm.commons.RemappingClassAdapter;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.InsnNode;
@@ -98,18 +98,12 @@ public class LwjglManagerImpl
         if (!isPojav) {
             // Internal accessors
 
-            // todo deprecated
-            classLoaderInclude.add("cc.polyfrost.oneconfig.internal.renderer.FontHelperImpl");
-            classLoaderInclude.add("cc.polyfrost.oneconfig.internal.renderer.ScissorHelperImpl");
-            classLoaderInclude.add("cc.polyfrost.oneconfig.internal.renderer.NanoVGHelperImpl");
-            classLoaderInclude.add("cc.polyfrost.oneconfig.internal.renderer.AssetHelperImpl");
-            classLoaderInclude.add("cc.polyfrost.oneconfig.internal.renderer.TinyFDImpl");
 
+            classLoaderInclude.add("org.polyfrost.oneconfig.internal.renderer.TinyFDImpl");
             classLoaderInclude.add("org.polyfrost.polyui.renderer.impl.NVGRenderer");
             // Provider
             classLoaderInclude.add(LWJGL_FUNCTION_PROVIDER);
             // Lwjgl
-            //                                          todo dep
             Arrays.asList("nanovg", "actually3", "stb", "util.tinyfd", "system"
             ).forEach(it -> classLoaderInclude.add("org.lwjgl." + it + "."));
             classLoaderInclude.add("org.lwjgl.Version"); // won't work when remapped
@@ -138,7 +132,7 @@ public class LwjglManagerImpl
             ctor.setAccessible(true);
             rendererCtor = MethodHandles.lookup().unreflectConstructor(ctor);
 
-            tinyFD = (TinyFD) Class.forName("org.polyfrost.oneconfig.internal.renderer.TinyFDImpl", true, classLoader).getConstructor().newInstance();
+            tinyFD = (TinyFD) Class.forName("org.polyfrost.oneconfig.internal.renderer.impl.TinyFDImpl", true, classLoader).getConstructor().newInstance();
         } catch (Exception e) {
             throw new RuntimeException("Failed to get constructor for PolyUI", e);
         }
@@ -253,7 +247,12 @@ public class LwjglManagerImpl
             }
         };
         ClassWriter classWriter = new ClassWriter(classReader, ClassWriter.COMPUTE_MAXS);
-        RemappingClassAdapter classRemapper = new RemappingClassAdapter(classWriter, remapper);
+        ClassVisitor classRemapper =
+                //#if FABRIC==1
+                //$$ new org.objectweb.asm.commons.ClassRemapper(classWriter, remapper);
+                //#else
+                new org.objectweb.asm.commons.RemappingClassAdapter(classWriter, remapper);
+                //#endif
         classReader.accept(classRemapper, ClassReader.EXPAND_FRAMES);
         b = classWriter.toByteArray();
 
@@ -419,3 +418,4 @@ public class LwjglManagerImpl
         }
     }
 }
+//#endif

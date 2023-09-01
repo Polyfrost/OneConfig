@@ -1,3 +1,10 @@
+public class org/polyfrost/oneconfig/api/commands/arguments/PlayerArgumentParser : org/polyfrost/oneconfig/api/commands/arguments/ArgumentParser {
+	public fun <init> ()V
+	public fun canParse (Ljava/lang/Class;)Z
+	public fun parse (Ljava/lang/String;)Lcom/mojang/authlib/GameProfile;
+	public synthetic fun parse (Ljava/lang/String;)Ljava/lang/Object;
+}
+
 public class org/polyfrost/oneconfig/events/event/ChatReceiveEvent : org/polyfrost/oneconfig/events/event/CancellableEvent {
 	public field message Lnet/minecraft/text/Text;
 	public fun <init> (Lnet/minecraft/text/Text;)V
@@ -83,55 +90,7 @@ public class org/polyfrost/oneconfig/platform/impl/ServerPlatformImpl : org/poly
 	public fun inMultiplayer ()Z
 }
 
-public class org/polyfrost/oneconfig/utils/commands/ClientCommandHandler : net/minecraft/server/command/CommandRegistry {
-	public static final field instance Lorg/polyfrost/oneconfig/utils/commands/ClientCommandHandler;
-	public field latestAutoComplete [Ljava/lang/String;
-	public fun <init> ()V
-	public fun autoComplete (Ljava/lang/String;)V
-	public fun execute (Lnet/minecraft/command/CommandSource;Ljava/lang/String;)I
-	protected fun getServer ()Lnet/minecraft/server/MinecraftServer;
-}
-
-public class org/polyfrost/oneconfig/utils/commands/PlatformCommandManagerImpl : org/polyfrost/oneconfig/utils/commands/PlatformCommandManager {
-	public fun <init> ()V
-	public fun createCommand (Lorg/polyfrost/oneconfig/utils/commands/CommandManager$OCCommand;)V
-}
-
-public class org/polyfrost/oneconfig/utils/commands/arguments/EntityPlayerArgumentParser : org/polyfrost/oneconfig/utils/commands/arguments/ArgumentParser {
-	public fun <init> ()V
-	public fun complete (Ljava/lang/String;Ljava/lang/reflect/Parameter;)Ljava/util/List;
-	public synthetic fun parse (Ljava/lang/String;)Ljava/lang/Object;
-	public fun parse (Ljava/lang/String;)Lnet/minecraft/entity/player/PlayerEntity;
-}
-
-public class org/polyfrost/oneconfig/utils/commands/arguments/PlayerArgumentParser : org/polyfrost/oneconfig/utils/commands/arguments/ArgumentParser {
-	public fun <init> ()V
-	public fun complete (Ljava/lang/String;Ljava/lang/reflect/Parameter;)Ljava/util/List;
-	public fun parse (Ljava/lang/String;)Lcom/mojang/authlib/GameProfile;
-	public synthetic fun parse (Ljava/lang/String;)Ljava/lang/Object;
-}
-
-public final class org/polyfrost/oneconfig/utils/dsl/GuiKt {
-	public static final fun openScreen (Lnet/minecraft/client/gui/screen/Screen;I)V
-	public static synthetic fun openScreen$default (Lnet/minecraft/client/gui/screen/Screen;IILjava/lang/Object;)V
-}
-
-public final class org/polyfrost/oneconfig/utils/dsl/McKt {
-	public static final fun getMc ()Lnet/minecraft/client/MinecraftClient;
-}
-
-public final class org/polyfrost/oneconfig/utils/gui/GuiUtils {
-	public fun <init> ()V
-	public static fun closeScreen ()V
-	public static fun displayScreen (Ljava/lang/Object;)V
-	public static fun displayScreen (Lnet/minecraft/client/gui/screen/Screen;)V
-	public static fun displayScreen (Lnet/minecraft/client/gui/screen/Screen;I)V
-	public static fun getDeltaTime ()F
-	public static fun getScreenQueue ()Ljava/util/Deque;
-	public static fun wasMouseDown ()Z
-}
-
-public class org/polyfrost/oneconfig/utils/gui/PolyUIScreen : org/polyfrost/oneconfig/libs/universal/UScreen {
+public class org/polyfrost/oneconfig/ui/PolyUIScreen : org/polyfrost/oneconfig/libs/universal/UScreen {
 	public fun <init> (Lorg/polyfrost/polyui/color/Colors;Ljava/util/function/Consumer;[Lorg/polyfrost/polyui/component/Drawable;)V
 	public fun <init> (Lorg/polyfrost/polyui/color/Colors;[Lorg/polyfrost/polyui/component/Drawable;)V
 	public fun <init> ([Lorg/polyfrost/polyui/component/Drawable;)V
@@ -142,19 +101,39 @@ public class org/polyfrost/oneconfig/utils/gui/PolyUIScreen : org/polyfrost/onec
 	public final fun initScreen (II)V
 	public final fun mouseMoved (DD)V
 	public final fun onDrawScreen (Lorg/polyfrost/oneconfig/libs/universal/UMatrixStack;IIF)V
-	public final fun onKeyPressed (ICLorg/polyfrost/oneconfig/libs/universal/UKeyboard$Modifiers;)V
-	public final fun onKeyReleased (ICLorg/polyfrost/oneconfig/libs/universal/UKeyboard$Modifiers;)V
-	public final fun onMouseClicked (DDI)V
-	public fun onMouseDragged (DDIJ)V
-	public final fun onMouseReleased (DDI)V
-	public final fun onMouseScrolled (D)V
 	public fun onScreenClose ()V
 	public final fun polyUI ()Lorg/polyfrost/polyui/PolyUI;
 	protected final fun pressInternal (ICZ)V
 	public final fun resize (Lnet/minecraft/client/MinecraftClient;II)V
 	public fun shouldCloseOnEsc ()Z
 	public fun shouldPauseGame ()Z
+	public fun uCharTyped (CLorg/polyfrost/oneconfig/libs/universal/UKeyboard$Modifiers;)Z
+	public fun uKeyPressed (IILorg/polyfrost/oneconfig/libs/universal/UKeyboard$Modifiers;)Z
+	public fun uKeyReleased (IILorg/polyfrost/oneconfig/libs/universal/UKeyboard$Modifiers;)Z
+	public fun uMouseClicked (DDI)Z
+	public fun uMouseReleased (DDI)Z
+	public fun uMouseScrolled (D)Z
 	public fun useMinecraftUIScaling ()Z
+}
+
+public final class org/polyfrost/oneconfig/utils/GuiUtils {
+	public fun <init> ()V
+	public static fun closeScreen ()V
+	public static fun displayScreen (Ljava/lang/Object;)V
+	public static fun displayScreen (Lnet/minecraft/client/gui/screen/Screen;)V
+	public static fun displayScreen (Lnet/minecraft/client/gui/screen/Screen;I)V
+	public static fun getDeltaTime ()F
+	public static fun getScreenQueue ()Ljava/util/Deque;
+	public static fun wasMouseDown ()Z
+}
+
+public final class org/polyfrost/oneconfig/utils/dsl/GuiKt {
+	public static final fun openScreen (Lnet/minecraft/client/gui/screen/Screen;I)V
+	public static synthetic fun openScreen$default (Lnet/minecraft/client/gui/screen/Screen;IILjava/lang/Object;)V
+}
+
+public final class org/polyfrost/oneconfig/utils/dsl/McKt {
+	public static final fun getMc ()Lnet/minecraft/client/MinecraftClient;
 }
 
 public final class org/polyfrost/polyui/renderer/impl/MCWindow : org/polyfrost/polyui/renderer/Window {

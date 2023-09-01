@@ -436,13 +436,13 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
             )
 
             is Color.Gradient.Type.Radial -> {
+                val t = color.type as Color.Gradient.Type.Radial
                 nvgRadialGradient(
                     vg,
-                    // smart-cast impossible: [x] is a public API property declared in different module (bit cringe)
-                    if ((color.type as Color.Gradient.Type.Radial).centerX == -1f) x + (width / 2f) else (color.type as Color.Gradient.Type.Radial).centerX,
-                    if ((color.type as Color.Gradient.Type.Radial).centerY == -1f) y + (height / 2f) else (color.type as Color.Gradient.Type.Radial).centerY,
-                    (color.type as Color.Gradient.Type.Radial).innerRadius,
-                    (color.type as Color.Gradient.Type.Radial).outerRadius,
+                    if (t.centerX == -1f) x + (width / 2f) else t.centerX,
+                    if (t.centerY == -1f) y + (height / 2f) else t.centerY,
+                    t.innerRadius,
+                    t.outerRadius,
                     nvgColor,
                     nvgColor2,
                     nvgPaint,
@@ -467,17 +467,12 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
 
     private fun getFont(font: Font): NVGFont {
         return fonts[font] ?: run {
-            val data =
-                font.stream?.use {
-                    it.toByteBuffer()
-                } ?: if (settings.resourcePolicy == Settings.ResourcePolicy.WARN) {
-                    PolyUI.defaultFonts.regular.get().use {
-                        PolyUI.LOGGER.warn(
-                            "Failed to get font: {}, falling back to default font!",
-                            font.resourcePath,
-                        )
-                        it.toByteBuffer()
-                    }
+            val data = font.stream?.toByteBuffer() ?: if (settings.resourcePolicy == Settings.ResourcePolicy.WARN) {
+                    PolyUI.LOGGER.warn(
+                        "Failed to get font: {}, falling back to default font!",
+                        font.resourcePath,
+                    )
+                    PolyUI.defaultFonts.regular.get().toByteBuffer()
                 } else {
                     throw ExceptionInInitializerError("Failed to get font: ${font.resourcePath}")
                 }
