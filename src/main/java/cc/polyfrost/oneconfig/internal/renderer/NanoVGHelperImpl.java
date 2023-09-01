@@ -112,7 +112,11 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
             FontHelper.INSTANCE.initialize(vg);
         }
 
-        Platform.getGLPlatform().enableStencil();
+        try {
+            Platform.getGLPlatform().enableStencil();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
         UGraphics.disableAlpha();
 
