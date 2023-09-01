@@ -38,7 +38,7 @@ import org.slf4j.LoggerFactory;
  * It is responsible for getting and putting ConfigTrees, and by extension, serializing/deserializing them.
  */
 public interface Backend {
-    Logger LOGGER = LoggerFactory.getLogger("OneConfig Config API");
+    Logger LOGGER = LoggerFactory.getLogger("OneConfig Config API Backend");
 
     /**
      * Put a ConfigTree into the storage system.
@@ -52,4 +52,21 @@ public interface Backend {
      * @return the ConfigTree, or null if it does not exist.
      */
     @Nullable Tree get(@NotNull String id);
+
+    boolean remove(@NotNull String id);
+
+    default boolean remove(@NotNull Tree tree) {
+        return remove(tree.id);
+    }
+
+    boolean exists(@NotNull String id);
+
+    default boolean exists(@NotNull Tree tree) {
+        return exists(tree.id);
+    }
+
+    /**
+     * Refresh all currently registered ConfigTrees.
+     */
+    void refresh();
 }

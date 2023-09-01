@@ -2,7 +2,7 @@
  * This file is part of OneConfig.
  * OneConfig - Next Generation Config Library for Minecraft: Java Edition
  * Copyright (C) 2021~2023 Polyfrost.
- *   <https://polyfrost.org> <https://github.com/Polyfrost/>
+ *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -21,29 +21,34 @@
  * License.  If not, see <https://www.gnu.org/licenses/>. You should
  * have also received a copy of the Additional Terms Applicable
  * to OneConfig, as published by Polyfrost. If not, see
- * <https://polyfrost.org/legal/oneconfig/additional-terms>
+ * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.internal.command;
+package org.polyfrost.oneconfig.ui;
 
-import org.polyfrost.oneconfig.api.commands.factories.annotated.annotations.Command;
-import org.polyfrost.oneconfig.ui.OneConfigUI;
-import org.polyfrost.oneconfig.utils.GuiUtils;
+import org.polyfrost.oneconfig.libs.universal.UScreen;
+import org.polyfrost.polyui.PolyUI;
+import org.polyfrost.polyui.color.Colors;
+import org.polyfrost.polyui.component.Drawable;
 
-/**
- * The main OneConfig command.
- */
-@Command(value = {"oneconfig", "ocfg"})
-public class OneConfigCommand {
+import java.util.function.Consumer;
 
-    @Command(description = "Opens the OneConfig GUI")
-    private void main() {
-        GuiUtils.displayScreen(OneConfigUI.create());
+public class PolyUIScreen extends UScreen implements GuiPause {
+    public PolyUIScreen(Colors colors, Consumer<PolyUI> initFunction, Drawable... drawables) {
+        super(true);
+        throw new UnsupportedOperationException("implementation is intrinsic");
     }
 
-    @Command(description = "Opens the OneConfig HUD configurator.", value = "edithud")
-    private void hud() {
-        //GuiUtils.displayScreen(new HudGui());
+    public PolyUIScreen(Colors colors, Drawable... drawables) {
+        this(colors, null, drawables);
     }
 
+    public PolyUIScreen(Drawable... drawables) {
+        this(null, null, drawables);
+    }
+
+    @Override
+    public boolean doesGuiPauseGame() {
+        return false;
+    }
 }

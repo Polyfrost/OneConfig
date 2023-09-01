@@ -24,26 +24,8 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.internal.command;
+package org.polyfrost.oneconfig.ui.pages
 
-import org.polyfrost.oneconfig.api.commands.factories.annotated.annotations.Command;
-import org.polyfrost.oneconfig.ui.OneConfigUI;
-import org.polyfrost.oneconfig.utils.GuiUtils;
-
-/**
- * The main OneConfig command.
- */
-@Command(value = {"oneconfig", "ocfg"})
-public class OneConfigCommand {
-
-    @Command(description = "Opens the OneConfig GUI")
-    private void main() {
-        GuiUtils.displayScreen(OneConfigUI.create());
-    }
-
-    @Command(description = "Opens the OneConfig HUD configurator.", value = "edithud")
-    private void hud() {
-        //GuiUtils.displayScreen(new HudGui());
-    }
-
+fun interface Page {
+    fun filter(query: String, search: Any.(String) -> Boolean)
 }

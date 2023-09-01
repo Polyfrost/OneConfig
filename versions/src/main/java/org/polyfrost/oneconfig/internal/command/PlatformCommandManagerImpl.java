@@ -84,6 +84,7 @@ public class PlatformCommandManagerImpl implements PlatformCommandManager {
                     }
                 } catch (CommandExecutionException c) {
                     UChat.chat("&c" + c.getMessage());
+                    c.printStackTrace();
                 } catch (Exception e) {
                     UChat.chat("&cAn unknown error occurred while executing this command, please report this to the mod author!");
                     e.printStackTrace();

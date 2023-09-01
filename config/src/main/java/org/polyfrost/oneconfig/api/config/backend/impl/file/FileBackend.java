@@ -57,7 +57,7 @@ public class FileBackend implements Backend {
     private Path folder;
     private WatchService service;
 
-    private boolean dodge = false;
+    private volatile boolean dodge = false;
     private final List<FileSerializer> serializers = new ArrayList<>();
 
     private final Map<String, Triple<File, Serializer, Tree>> configs = new HashMap<>();
@@ -194,6 +194,26 @@ public class FileBackend implements Backend {
             folder.register(service, StandardWatchEventKinds.ENTRY_MODIFY, StandardWatchEventKinds.ENTRY_DELETE);
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    @Override
+    public boolean exists(@NotNull String id) {
+        return configs.containsKey(id);
+    }
+
+    @Override
+    public boolean remove(@NotNull String id) {
+        Triple<File, Serializer, Tree> t = configs.remove(id);
+        if (t == null) return false;
+        dodge = true;
+        return t.first.delete();
+    }
+
+    @Override
+    public void refresh() {
+        for(Map.Entry<String, Triple<File, Serializer, Tree>> e : configs.entrySet()) {
+            get(e.getKey());
         }
     }
 }

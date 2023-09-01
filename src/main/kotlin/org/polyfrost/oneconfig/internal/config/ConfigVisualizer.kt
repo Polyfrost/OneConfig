@@ -52,7 +52,7 @@ import org.polyfrost.oneconfig.api.config.Tree
 import org.polyfrost.oneconfig.api.config.annotations.Accordion
 import org.polyfrost.oneconfig.api.config.elements.AccordionOption
 import org.polyfrost.oneconfig.api.config.elements.Option
-import org.polyfrost.oneconfig.ui.Page
+import org.polyfrost.oneconfig.ui.pages.Page
 import org.polyfrost.polyui.animate.Animations
 import org.polyfrost.polyui.color.Colors
 import org.polyfrost.polyui.component.Component

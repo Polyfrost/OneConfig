@@ -36,6 +36,7 @@ import org.polyfrost.oneconfig.libs.universal.UScreen;
 import org.polyfrost.oneconfig.renderer.LwjglManager;
 import org.polyfrost.polyui.PolyUI;
 import org.polyfrost.polyui.color.Colors;
+import org.polyfrost.polyui.color.DarkTheme;
 import org.polyfrost.polyui.component.Drawable;
 import org.polyfrost.polyui.input.Keys;
 import org.polyfrost.polyui.input.Modifiers;
@@ -43,11 +44,14 @@ import org.polyfrost.polyui.property.Settings;
 import org.polyfrost.polyui.renderer.Renderer;
 import org.polyfrost.polyui.renderer.data.Cursor;
 import org.polyfrost.polyui.renderer.impl.MCWindow;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.function.Consumer;
 
 @SuppressWarnings("unused")
-public class PolyUIScreen extends UScreen {
+public class PolyUIScreen extends UScreen implements GuiPause {
+    public static final Logger LOGGER = LoggerFactory.getLogger("PolyUIScreen");
     private PolyUI polyUI;
     private Drawable[] drawables;
     private final Consumer<PolyUI> func;
@@ -58,7 +62,7 @@ public class PolyUIScreen extends UScreen {
 
     public PolyUIScreen(Colors colors, Consumer<PolyUI> initFunction, Drawable... drawables) {
         super(true);
-        this.colors = colors;
+        this.colors = colors == null ? new DarkTheme() : colors;
         this.drawables = drawables;
         this.func = initFunction;
     }
@@ -74,25 +78,29 @@ public class PolyUIScreen extends UScreen {
     @Override
     public final void initScreen(int w, int h) {
         if (polyUI != null) return;
-        Settings settings = new Settings();
-        settings.setCleanupAfterInit(false);
-        settings.setFramebuffersEnabled(false);
-        settings.setRenderPausingEnabled(false);
-        settings.setDebug(false);
-        Renderer renderer = LwjglManager.INSTANCE.getRenderer(UResolution.getWindowWidth(), UResolution.getWindowHeight());
-        //#if MC>=11300
-        //$$ polyUI = new PolyUI("", renderer, settings, colors, drawables);
-        //#else
-        renderer.setWidth(UResolution.getWindowWidth());
-        renderer.setHeight(UResolution.getWindowHeight());
-        polyUI = new PolyUI("", renderer, settings, colors, drawables);
-        //#endif
-        if (useMinecraftUIScaling())
-            polyUI.getRenderer().setPixelRatio$polyui((float) UResolution.getScaleFactor());
-        drawables = null;
-        polyUI.window = new MCWindow(Minecraft.getMinecraft());
-        if (func != null) func.accept(polyUI);
-        init(polyUI);
+        try {
+            Settings settings = new Settings();
+            settings.setCleanupAfterInit(false);
+            settings.setFramebuffersEnabled(false);
+            settings.setRenderPausingEnabled(false);
+            settings.setDebug(false);
+            Renderer renderer = LwjglManager.INSTANCE.getRenderer(UResolution.getWindowWidth(), UResolution.getWindowHeight());
+            //#if MC>=11300
+            //$$ polyUI = new PolyUI("", renderer, settings, colors, drawables);
+            //#else
+            renderer.setWidth(UResolution.getWindowWidth());
+            renderer.setHeight(UResolution.getWindowHeight());
+            polyUI = new PolyUI("", renderer, settings, colors, drawables);
+            //#endif
+            if (useMinecraftUIScaling())
+                polyUI.getRenderer().setPixelRatio$polyui((float) UResolution.getScaleFactor());
+            drawables = null;
+            polyUI.window = new MCWindow(Minecraft.getMinecraft());
+            if (func != null) func.accept(polyUI);
+            init(polyUI);
+        } catch (Exception e) {
+            LOGGER.error("Failed to create screen!", e);
+        }
     }
 
     protected void init(PolyUI polyUI) {
@@ -162,11 +170,7 @@ public class PolyUIScreen extends UScreen {
     }
 
     @Override
-    //#if MC>=11300
-    //$$ public boolean isPauseScreen()
-    //#else
     public boolean doesGuiPauseGame()
-    //#endif
     {
         return false;
     }
