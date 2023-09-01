@@ -1,16 +1,20 @@
 import org.junit.jupiter.api.Test;
+import org.polyfrost.oneconfig.api.commands.arguments.ArgumentParser;
+import org.polyfrost.oneconfig.api.commands.factories.annotated.AnnotationCommandFactory;
 import org.polyfrost.oneconfig.api.commands.factories.annotated.annotations.Command;
 import org.polyfrost.oneconfig.api.commands.factories.annotated.annotations.Parameter;
-import org.polyfrost.oneconfig.api.commands.internal.CommandTree;
+import org.polyfrost.oneconfig.api.commands.CommandTree;
+
+import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 public class AnnotationTest {
     @Test
     void test() {
-        // todo
-//        new AnnotationCommandFactory().create()
-        CommandTree tree = null;
+        CommandTree tree = new AnnotationCommandFactory().create(Arrays.asList(ArgumentParser.defaultParsers), new TestCommand());
+        assertNotNull(tree);
+        tree.init();
 
         tree.execute("test");
         tree.execute("test3", "1", "2", "3.0", "4.0", "bobFISH");
@@ -24,15 +28,29 @@ public class AnnotationTest {
         assertThrows(Exception.class, () -> tree.execute("test2", "1", "4idahui"));
         assertThrows(Exception.class, () -> tree.execute("test", "aaaaa"));
 
+        tree.execute();
+        tree.execute("32", "53");
+        tree.execute("test4");
         for (String s : tree.getHelp()) {
             System.out.println(s);
         }
+        System.out.println("OK");
     }
 
 
     @SuppressWarnings({"unused", "InnerClassMayBeStatic"})
     @Command("testing")
     public static class TestCommand {
+        @Command
+        public void main() {
+            System.out.println("main method a");
+        }
+
+        @Command
+        public void main(int a, int b) {
+            System.out.println("main method with args " + (a + b));
+        }
+
         @Command(value = {"test", "t"}, description = "Test command")
         public static void test() {
             System.out.println("hey");
@@ -66,6 +84,11 @@ public class AnnotationTest {
 
         @Command(value = {"test4", "t4"}, description = "Test command 4")
         private static class TestClass {
+            @Command
+            public void main() {
+                System.out.println("main method");
+            }
+
             @Command(value = {"test5", "t5"}, description = "Test command 5")
             public void test5() {
                 System.out.println("hey5");

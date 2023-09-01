@@ -34,7 +34,6 @@ import org.polyfrost.oneconfig.api.commands.factories.builder.BuilderFactory;
 import org.polyfrost.oneconfig.api.commands.factories.builder.CommandBuilder;
 import org.polyfrost.oneconfig.api.commands.factories.dsl.CommandDSL;
 import org.polyfrost.oneconfig.api.commands.factories.dsl.DSLFactory;
-import org.polyfrost.oneconfig.api.commands.internal.CommandTree;
 import org.polyfrost.oneconfig.internal.command.PlatformCommandManager;
 
 import java.util.ArrayList;

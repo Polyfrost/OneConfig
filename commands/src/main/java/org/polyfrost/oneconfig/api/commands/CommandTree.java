@@ -2,7 +2,7 @@
  * This file is part of OneConfig.
  * OneConfig - Next Generation Config Library for Minecraft: Java Edition
  * Copyright (C) 2021~2023 Polyfrost.
- *   <https://polyfrost.org> <https://github.com/Polyfrost/>
+ *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -21,10 +21,10 @@
  * License.  If not, see <https://www.gnu.org/licenses/>. You should
  * have also received a copy of the Additional Terms Applicable
  * to OneConfig, as published by Polyfrost. If not, see
- * <https://polyfrost.org/legal/oneconfig/additional-terms>
+ * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.api.commands.internal;
+package org.polyfrost.oneconfig.api.commands;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,7 +66,7 @@ public class CommandTree implements Node {
 
     public void setDescription(String description) {
         this.description = description;
-        if(init) {
+        if (init) {
             help = null;
             getHelp();
         }
@@ -86,6 +86,9 @@ public class CommandTree implements Node {
 
     private void put(String key, Executable node) {
         if (init) throw new CommandCreationException("Cannot add executables after initialization!");
+        if (key.equals("main")) {
+            key = "";
+        }
         if (!commands.containsKey(key)) {
             List<Node> nodes = new ArrayList<>(1);
             nodes.add(node);
@@ -97,14 +100,8 @@ public class CommandTree implements Node {
 
     private void put(String key, CommandTree tree) {
         if (init) throw new CommandCreationException("Cannot add trees after initialization!");
-        if (!commands.containsKey(key)) {
-            List<Node> nodes = new ArrayList<>(1);
-            nodes.add(tree);
-            commands.put(key, nodes);
-        } else {
-            if (commands.put(key, Collections.singletonList(tree)) != null)
-                throw new CommandCreationException("Invalid command: " + this + ": see https://docs.polyfrost.org/oneconfig/commands/overloaded-subcommand");
-        }
+        if (commands.put(key, Collections.singletonList(tree)) != null)
+            throw new CommandCreationException("Invalid command: " + this + ": see https://docs.polyfrost.org/oneconfig/commands/overloaded-subcommand");
     }
 
     public void put(Executable executable) {
@@ -114,6 +111,7 @@ public class CommandTree implements Node {
     }
 
     public void init() {
+        // todo optimize: replace arraylists with singleton lists where applicable?
         if (init) return;
         init = true;
         List<Executable> executables = new ArrayList<>(5);
@@ -167,7 +165,7 @@ public class CommandTree implements Node {
     }
 
     static List<Node> cullList(Collection<List<Node>> lists, List<Node> theList) {
-        List<Node> out = new ArrayList<>();
+        List<Node> out = new ArrayList<>(1);
         for (Node node : theList) {
             boolean found = false;
             for (List<Node> list : lists) {
@@ -293,12 +291,29 @@ public class CommandTree implements Node {
             List<Node> res = self.get(s);
             if (res != null) {
                 ls = res;
-            } else break;
+            } else {
+                // asm: attempt to grab the default command on this tree, if we have not found any yet
+                if (self.get("") != null && ls == null) {
+                    ls = self.get("");
+                    i--;
+                } else break;
+            }
             for (Node node : ls) {
                 if (node instanceof CommandTree) {
                     self = (CommandTree) node;
                     i++;
                     break;
+                }
+            }
+        }
+        // asm: if this is trying to return a tree, check if there is a main method on it, and return that instead.
+        if (ls != null && ls.size() == 1) {
+            Node n = ls.get(0);
+            if (n instanceof CommandTree) {
+                List<Node> nodes = ((CommandTree) n).get("");
+                if (nodes != null) {
+                    ls = nodes;
+                    i--;
                 }
             }
         }
@@ -330,6 +345,7 @@ public class CommandTree implements Node {
      * @throws CommandExecutionException if the command could not be found or if the arguments were invalid, or if the command threw an exception
      */
     public Object execute(String... usage) {
+        if (usage.length == 0) usage = new String[]{""};
         Pair<List<Node>, String[]> pair = getWithArgs(usage);
         if (pair.first == null) throw new CommandExecutionException("Command not found!");
         String[] args = pair.second;

@@ -31,8 +31,8 @@ import net.minecraft.command.CommandBase;
 import net.minecraft.util.BlockPos;
 import org.polyfrost.oneconfig.api.commands.CommandManager;
 import org.polyfrost.oneconfig.api.commands.exceptions.CommandExecutionException;
-import org.polyfrost.oneconfig.api.commands.internal.CommandTree;
-import org.polyfrost.oneconfig.api.commands.internal.Node;
+import org.polyfrost.oneconfig.api.commands.CommandTree;
+import org.polyfrost.oneconfig.api.commands.Node;
 import org.polyfrost.oneconfig.libs.universal.UChat;
 import org.polyfrost.oneconfig.api.commands.arguments.PlayerArgumentParser;
 

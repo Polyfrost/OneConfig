@@ -3,7 +3,7 @@ public class org/polyfrost/oneconfig/api/commands/CommandManager {
 	public final field parsers Ljava/util/List;
 	public static fun builder ([Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder;
 	public fun create (Ljava/lang/Object;)Z
-	public fun createTree (Ljava/lang/Object;)Lorg/polyfrost/oneconfig/api/commands/internal/CommandTree;
+	public fun createTree (Ljava/lang/Object;)Lorg/polyfrost/oneconfig/api/commands/CommandTree;
 	public static fun dsl ([Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/commands/factories/dsl/CommandDSL;
 	public static fun registerCommand (Ljava/lang/Object;)Z
 	public fun registerFactory (Lorg/polyfrost/oneconfig/api/commands/factories/CommandFactory;)V

@@ -1,12 +1,13 @@
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import org.polyfrost.oneconfig.api.commands.arguments.ArgumentParser
 import org.polyfrost.oneconfig.api.commands.factories.dsl.CommandDSL.Companion.command
 import org.polyfrost.oneconfig.api.commands.factories.dsl.CommandDSL.Companion.meta
 
 class DSLTest {
     @Test
     fun main() {
-        val tree = command("test") {
+        val tree = command(ArgumentParser.defaultParsers.toList(),"test") {
             command(
                 "sup", "hello", metadata = listOf(
                     meta(0, "a", "an integer"),
@@ -33,7 +34,7 @@ class DSLTest {
                     }
                 }
             }
-        }.registerTree()
+        }.tree
 
         tree.execute("sup", "1", "hello", "3.5", "4.2", "1", "4.5")
         tree.execute("jeff", "chicken")

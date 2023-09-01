@@ -27,8 +27,8 @@
 package org.polyfrost.oneconfig.api.commands.factories.builder;
 
 import org.polyfrost.oneconfig.api.commands.arguments.ArgumentParser;
-import org.polyfrost.oneconfig.api.commands.internal.CommandTree;
-import org.polyfrost.oneconfig.api.commands.internal.Executable;
+import org.polyfrost.oneconfig.api.commands.CommandTree;
+import org.polyfrost.oneconfig.api.commands.Executable;
 
 import java.util.ArrayList;
 import java.util.Arrays;

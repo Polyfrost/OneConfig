@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.polyfrost.oneconfig.api.commands.arguments.ArgumentParser;
 import org.polyfrost.oneconfig.api.commands.factories.CommandFactory;
-import org.polyfrost.oneconfig.api.commands.internal.CommandTree;
+import org.polyfrost.oneconfig.api.commands.CommandTree;
 
 import java.util.List;
 

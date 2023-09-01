@@ -30,9 +30,9 @@ import org.polyfrost.oneconfig.api.commands.arguments.ArgumentParser
 import org.polyfrost.oneconfig.api.commands.exceptions.CommandCreationException
 import org.polyfrost.oneconfig.api.commands.factories.dsl.CommandDSL.Companion.meta
 import org.polyfrost.oneconfig.api.commands.factories.dsl.CommandDSL.ParamData
-import org.polyfrost.oneconfig.api.commands.internal.CommandTree
-import org.polyfrost.oneconfig.api.commands.internal.Executable
-import org.polyfrost.oneconfig.api.commands.internal.Executable.Param
+import org.polyfrost.oneconfig.api.commands.CommandTree
+import org.polyfrost.oneconfig.api.commands.Executable
+import org.polyfrost.oneconfig.api.commands.Executable.Param
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
 import java.lang.reflect.Method

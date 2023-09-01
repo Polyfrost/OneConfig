@@ -35,8 +35,8 @@ import org.polyfrost.oneconfig.api.commands.exceptions.WrongArgumentsException;
 import org.polyfrost.oneconfig.api.commands.factories.CommandFactory;
 import org.polyfrost.oneconfig.api.commands.factories.annotated.annotations.Command;
 import org.polyfrost.oneconfig.api.commands.factories.annotated.annotations.Parameter;
-import org.polyfrost.oneconfig.api.commands.internal.CommandTree;
-import org.polyfrost.oneconfig.api.commands.internal.Executable;
+import org.polyfrost.oneconfig.api.commands.CommandTree;
+import org.polyfrost.oneconfig.api.commands.Executable;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -102,16 +102,14 @@ public class AnnotationCommandFactory implements CommandFactory {
         String[] names = c.value();
         if (names.length == 0) names = new String[]{method.getName()};
 
-        Function<Object[], Object> cmd = getFunction(m);
-        return new Executable(names, c.description().isEmpty() ? null : c.description(), createParameterInfos(method, parsers), c.greedy(), cmd);
+        return new Executable(names, c.description().isEmpty() ? null : c.description(), createParameterInfos(method, parsers), c.greedy(), getFunction(m));
     }
 
     @Contract(pure = true)
-    static @NotNull Function<Object[], Object> getFunction(MethodHandle m) {
-        final MethodHandle handle = m;
+    static @NotNull Function<Object[], Object> getFunction(MethodHandle mh) {
         return args -> {
             try {
-                return handle.invokeWithArguments(args);
+                return mh.invokeWithArguments(args);
             } catch (WrongMethodTypeException | ClassCastException e) {
                 // should've been caught earlier
                 throw new WrongArgumentsException("InternalError while executing command: CommandTree method argument mismatch!", e);

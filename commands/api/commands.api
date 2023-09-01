@@ -1,0 +1,249 @@
+public class org/polyfrost/oneconfig/api/commands/CommandTree : org/polyfrost/oneconfig/api/commands/Node {
+	public fun <init> ([Ljava/lang/String;Ljava/lang/String;)V
+	public static fun append (Ljava/lang/StringBuilder;Ljava/lang/String;I)V
+	public fun equals (Ljava/lang/Object;)Z
+	public fun execute ([Ljava/lang/String;)Ljava/lang/Object;
+	public fun get (Ljava/lang/String;)Ljava/util/List;
+	public fun get ([Ljava/lang/String;)Ljava/util/List;
+	public fun getDedupedCommands ()Ljava/util/Map;
+	public fun getDescription ()Ljava/lang/String;
+	public fun getHelp ()[Ljava/lang/String;
+	public fun getTree ([Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/commands/CommandTree;
+	public fun getWithArgs ([Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/commands/util/Pair;
+	public fun hashCode ()I
+	public fun helpString ()Ljava/lang/String;
+	public fun init ()V
+	public fun isInitialized ()Z
+	public fun name ()Ljava/lang/String;
+	public fun onExecs (Ljava/util/function/Consumer;[Ljava/lang/String;)V
+	public fun printFull ()Ljava/lang/String;
+	public fun put (Lorg/polyfrost/oneconfig/api/commands/CommandTree;)V
+	public fun put (Lorg/polyfrost/oneconfig/api/commands/Executable;)V
+	public fun putAll (Ljava/util/stream/Stream;)V
+	public fun setDescription (Ljava/lang/String;)V
+	public fun toString ()Ljava/lang/String;
+}
+
+public class org/polyfrost/oneconfig/api/commands/Executable : org/polyfrost/oneconfig/api/commands/Node {
+	public final field arity I
+	public final field description Ljava/lang/String;
+	public final field isGreedy Z
+	public final field names [Ljava/lang/String;
+	public final field parameters [Lorg/polyfrost/oneconfig/api/commands/Executable$Param;
+	public fun <init> ([Ljava/lang/String;Ljava/lang/String;[Lorg/polyfrost/oneconfig/api/commands/Executable$Param;ZLjava/util/function/Function;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public fun execute ([Ljava/lang/String;)Ljava/lang/Object;
+	public fun hashCode ()I
+	public fun helpString ()Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class org/polyfrost/oneconfig/api/commands/Executable$Param {
+	public field arity I
+	public final field description Ljava/lang/String;
+	public final field name Ljava/lang/String;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;ILorg/polyfrost/oneconfig/api/commands/arguments/ArgumentParser;)V
+	public static fun create (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Class;ILjava/util/List;)Lorg/polyfrost/oneconfig/api/commands/Executable$Param;
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class org/polyfrost/oneconfig/api/commands/Node {
+	public abstract fun helpString ()Ljava/lang/String;
+}
+
+public abstract interface class org/polyfrost/oneconfig/api/commands/arguments/ArgumentParser {
+	public static final field booleanParser Lorg/polyfrost/oneconfig/api/commands/arguments/ArgumentParser;
+	public static final field byteParser Lorg/polyfrost/oneconfig/api/commands/arguments/ArgumentParser;
+	public static final field charParser Lorg/polyfrost/oneconfig/api/commands/arguments/ArgumentParser;
+	public static final field defaultParsers [Lorg/polyfrost/oneconfig/api/commands/arguments/ArgumentParser;
+	public static final field doubleParser Lorg/polyfrost/oneconfig/api/commands/arguments/ArgumentParser;
+	public static final field floatParser Lorg/polyfrost/oneconfig/api/commands/arguments/ArgumentParser;
+	public static final field intParser Lorg/polyfrost/oneconfig/api/commands/arguments/ArgumentParser;
+	public static final field longParser Lorg/polyfrost/oneconfig/api/commands/arguments/ArgumentParser;
+	public static final field shortParser Lorg/polyfrost/oneconfig/api/commands/arguments/ArgumentParser;
+	public static final field stringParser Lorg/polyfrost/oneconfig/api/commands/arguments/ArgumentParser;
+	public abstract fun canParse (Ljava/lang/Class;)Z
+	public abstract fun parse (Ljava/lang/String;)Ljava/lang/Object;
+}
+
+public class org/polyfrost/oneconfig/api/commands/exceptions/CommandCreationException : java/lang/RuntimeException {
+	public fun <init> (Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/Throwable;)V
+}
+
+public class org/polyfrost/oneconfig/api/commands/exceptions/CommandExecutionException : java/lang/RuntimeException {
+	public fun <init> (Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/Throwable;)V
+}
+
+public class org/polyfrost/oneconfig/api/commands/exceptions/WrongArgumentsException : org/polyfrost/oneconfig/api/commands/exceptions/CommandExecutionException {
+	public fun <init> (Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/Throwable;)V
+}
+
+public abstract interface class org/polyfrost/oneconfig/api/commands/factories/CommandFactory {
+	public abstract fun create (Ljava/util/List;Ljava/lang/Object;)Lorg/polyfrost/oneconfig/api/commands/CommandTree;
+}
+
+public class org/polyfrost/oneconfig/api/commands/factories/annotated/AnnotationCommandFactory : org/polyfrost/oneconfig/api/commands/factories/CommandFactory {
+	public fun <init> ()V
+	public fun create (Ljava/util/List;Ljava/lang/Object;)Lorg/polyfrost/oneconfig/api/commands/CommandTree;
+}
+
+public abstract interface annotation class org/polyfrost/oneconfig/api/commands/factories/annotated/annotations/Command : java/lang/annotation/Annotation {
+	public abstract fun description ()Ljava/lang/String;
+	public abstract fun greedy ()Z
+	public abstract fun value ()[Ljava/lang/String;
+}
+
+public abstract interface annotation class org/polyfrost/oneconfig/api/commands/factories/annotated/annotations/Parameter : java/lang/annotation/Annotation {
+	public abstract fun arity ()I
+	public abstract fun description ()Ljava/lang/String;
+	public abstract fun value ()Ljava/lang/String;
+}
+
+public class org/polyfrost/oneconfig/api/commands/factories/builder/BuilderFactory : org/polyfrost/oneconfig/api/commands/factories/CommandFactory {
+	public fun <init> ()V
+	public fun create (Ljava/util/List;Ljava/lang/Object;)Lorg/polyfrost/oneconfig/api/commands/CommandTree;
+}
+
+public final class org/polyfrost/oneconfig/api/commands/factories/builder/BuilderUtils {
+	public static final fun arg (Ljava/lang/Class;)Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$Arg;
+	public static final fun arg (Ljava/lang/String;Ljava/lang/Class;)Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$Arg;
+	public static final fun arg (Ljava/lang/String;Ljava/lang/String;ILjava/lang/Class;)Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$Arg;
+	public static final fun arg (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Class;)Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$Arg;
+	public static synthetic fun arg$default (Ljava/lang/String;Ljava/lang/String;ILjava/lang/Class;ILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$Arg;
+	public static final fun booleanArg ()Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$Arg;
+	public static final fun booleanArg (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$Arg;
+	public static final fun booleanArg (Ljava/lang/String;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$Arg;
+	public static final fun booleanArg (Ljava/lang/String;Ljava/lang/String;I)Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$Arg;
+	public static synthetic fun booleanArg$default (Ljava/lang/String;Ljava/lang/String;IILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$Arg;
+	public static final fun byteArg ()Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$Arg;
+	public static final fun byteArg (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$Arg;
+	public static final fun byteArg (Ljava/lang/String;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$Arg;
+	public static final fun byteArg (Ljava/lang/String;Ljava/lang/String;I)Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$Arg;
+	public static synthetic fun byteArg$default (Ljava/lang/String;Ljava/lang/String;IILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$Arg;
+	public static final fun charArg ()Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$Arg;
+	public static final fun charArg (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$Arg;
+	public static final fun charArg (Ljava/lang/String;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$Arg;
+	public static final fun charArg (Ljava/lang/String;Ljava/lang/String;I)Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$Arg;
+	public static synthetic fun charArg$default (Ljava/lang/String;Ljava/lang/String;IILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$Arg;
+	public static final fun doubleArg ()Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$Arg;
+	public static final fun doubleArg (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$Arg;
+	public static final fun doubleArg (Ljava/lang/String;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$Arg;
+	public static final fun doubleArg (Ljava/lang/String;Ljava/lang/String;I)Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$Arg;
+	public static synthetic fun doubleArg$default (Ljava/lang/String;Ljava/lang/String;IILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$Arg;
+	public static final fun floatArg ()Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$Arg;
+	public static final fun floatArg (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$Arg;
+	public static final fun floatArg (Ljava/lang/String;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$Arg;
+	public static final fun floatArg (Ljava/lang/String;Ljava/lang/String;I)Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$Arg;
+	public static synthetic fun floatArg$default (Ljava/lang/String;Ljava/lang/String;IILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$Arg;
+	public static final fun intArg ()Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$Arg;
+	public static final fun intArg (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$Arg;
+	public static final fun intArg (Ljava/lang/String;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$Arg;
+	public static final fun intArg (Ljava/lang/String;Ljava/lang/String;I)Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$Arg;
+	public static synthetic fun intArg$default (Ljava/lang/String;Ljava/lang/String;IILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$Arg;
+	public static final fun longArg ()Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$Arg;
+	public static final fun longArg (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$Arg;
+	public static final fun longArg (Ljava/lang/String;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$Arg;
+	public static final fun longArg (Ljava/lang/String;Ljava/lang/String;I)Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$Arg;
+	public static synthetic fun longArg$default (Ljava/lang/String;Ljava/lang/String;IILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$Arg;
+	public static final fun shortArg ()Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$Arg;
+	public static final fun shortArg (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$Arg;
+	public static final fun shortArg (Ljava/lang/String;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$Arg;
+	public static final fun shortArg (Ljava/lang/String;Ljava/lang/String;I)Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$Arg;
+	public static synthetic fun shortArg$default (Ljava/lang/String;Ljava/lang/String;IILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$Arg;
+	public static final fun stringArg ()Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$Arg;
+	public static final fun stringArg (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$Arg;
+	public static final fun stringArg (Ljava/lang/String;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$Arg;
+	public static final fun stringArg (Ljava/lang/String;Ljava/lang/String;I)Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$Arg;
+	public static synthetic fun stringArg$default (Ljava/lang/String;Ljava/lang/String;IILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$Arg;
+}
+
+public class org/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder {
+	public fun <init> (Ljava/util/List;[Ljava/lang/String;)V
+	public fun <init> (Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder;Ljava/util/List;[Ljava/lang/String;)V
+	public static fun command (Ljava/util/List;[Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder;
+	public fun description (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder;
+	public static fun runs ([Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$ExeBuilder;
+	public fun subcmd ([Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder;
+	public fun subcommand ([Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder;
+	public fun then (Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$ExeBuilder;)Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder;
+}
+
+public final class org/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$Arg {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;ILjava/lang/Class;)V
+	public static fun get (Ljava/lang/Object;)Ljava/lang/Object;
+	public static fun getBoolean (Ljava/lang/Object;)Z
+	public static fun getByte (Ljava/lang/Object;)B
+	public static fun getChar (Ljava/lang/Object;)C
+	public static fun getDouble (Ljava/lang/Object;)D
+	public static fun getFloat (Ljava/lang/Object;)F
+	public static fun getInt (Ljava/lang/Object;)I
+	public static fun getLong (Ljava/lang/Object;)J
+	public static fun getShort (Ljava/lang/Object;)S
+	public static fun getString (Ljava/lang/Object;)Ljava/lang/String;
+}
+
+public final class org/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$ExeBuilder {
+	public fun alias ([Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$ExeBuilder;
+	public fun description (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$ExeBuilder;
+	public fun does (Ljava/util/function/Consumer;)Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$ExeBuilder;
+	public fun does (Ljava/util/function/Function;)Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$ExeBuilder;
+	public fun greedy ()Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$ExeBuilder;
+	public fun with ([Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$Arg;)Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$ExeBuilder;
+}
+
+public final class org/polyfrost/oneconfig/api/commands/factories/dsl/CommandDSL {
+	public static final field Companion Lorg/polyfrost/oneconfig/api/commands/factories/dsl/CommandDSL$Companion;
+	public fun <init> (Ljava/util/List;[Ljava/lang/String;)V
+	public fun <init> (Ljava/util/List;[Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/util/List;[Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun cmd ([Ljava/lang/String;Ljava/lang/String;ZLjava/util/List;Lkotlin/Function;)V
+	public static synthetic fun cmd$default (Lorg/polyfrost/oneconfig/api/commands/factories/dsl/CommandDSL;[Ljava/lang/String;Ljava/lang/String;ZLjava/util/List;Lkotlin/Function;ILjava/lang/Object;)V
+	public static final fun command (Ljava/util/List;[Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Lorg/polyfrost/oneconfig/api/commands/factories/dsl/CommandDSL;
+	public final fun command ([Ljava/lang/String;Ljava/lang/String;ZLjava/util/List;Lkotlin/Function;)V
+	public static synthetic fun command$default (Lorg/polyfrost/oneconfig/api/commands/factories/dsl/CommandDSL;[Ljava/lang/String;Ljava/lang/String;ZLjava/util/List;Lkotlin/Function;ILjava/lang/Object;)V
+	public final fun getDescription ()Ljava/lang/String;
+	public static final fun meta (ILjava/lang/String;Ljava/lang/String;I)Lorg/polyfrost/oneconfig/api/commands/factories/dsl/CommandDSL$ParamData;
+	public final fun setDescription (Ljava/lang/String;)V
+	public final fun subcmd ([Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
+	public final fun subcommand ([Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
+}
+
+public final class org/polyfrost/oneconfig/api/commands/factories/dsl/CommandDSL$Companion {
+	public final fun command (Ljava/util/List;[Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Lorg/polyfrost/oneconfig/api/commands/factories/dsl/CommandDSL;
+	public static synthetic fun command$default (Lorg/polyfrost/oneconfig/api/commands/factories/dsl/CommandDSL$Companion;Ljava/util/List;[Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/commands/factories/dsl/CommandDSL;
+	public final fun meta (ILjava/lang/String;Ljava/lang/String;I)Lorg/polyfrost/oneconfig/api/commands/factories/dsl/CommandDSL$ParamData;
+	public static synthetic fun meta$default (Lorg/polyfrost/oneconfig/api/commands/factories/dsl/CommandDSL$Companion;ILjava/lang/String;Ljava/lang/String;IILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/commands/factories/dsl/CommandDSL$ParamData;
+}
+
+public final class org/polyfrost/oneconfig/api/commands/factories/dsl/CommandDSL$ParamData {
+	public fun <init> (ILjava/lang/String;Ljava/lang/String;I)V
+	public synthetic fun <init> (ILjava/lang/String;Ljava/lang/String;IILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()I
+	public final fun copy (ILjava/lang/String;Ljava/lang/String;I)Lorg/polyfrost/oneconfig/api/commands/factories/dsl/CommandDSL$ParamData;
+	public static synthetic fun copy$default (Lorg/polyfrost/oneconfig/api/commands/factories/dsl/CommandDSL$ParamData;ILjava/lang/String;Ljava/lang/String;IILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/commands/factories/dsl/CommandDSL$ParamData;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getArity ()I
+	public final fun getDescription ()Ljava/lang/String;
+	public final fun getIndex ()I
+	public final fun getName ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class org/polyfrost/oneconfig/api/commands/factories/dsl/DSLFactory : org/polyfrost/oneconfig/api/commands/factories/CommandFactory {
+	public fun <init> ()V
+	public fun create (Ljava/util/List;Ljava/lang/Object;)Lorg/polyfrost/oneconfig/api/commands/CommandTree;
+}
+
+public class org/polyfrost/oneconfig/api/commands/util/Pair {
+	public field first Ljava/lang/Object;
+	public field second Ljava/lang/Object;
+	public fun <init> (Ljava/lang/Object;Ljava/lang/Object;)V
+}
+

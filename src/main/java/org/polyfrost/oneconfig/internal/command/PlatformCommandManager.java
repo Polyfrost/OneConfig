@@ -26,7 +26,7 @@
 
 package org.polyfrost.oneconfig.internal.command;
 
-import org.polyfrost.oneconfig.api.commands.internal.CommandTree;
+import org.polyfrost.oneconfig.api.commands.CommandTree;
 
 /**
  * @see org.polyfrost.oneconfig.api.commands.CommandManager
