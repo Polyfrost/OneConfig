@@ -2,16 +2,16 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.polyfrost.oneconfig.api.commands.arguments.ArgumentParser
 import org.polyfrost.oneconfig.api.commands.factories.dsl.CommandDSL.Companion.command
-import org.polyfrost.oneconfig.api.commands.factories.dsl.CommandDSL.Companion.meta
+import org.polyfrost.oneconfig.api.commands.factories.dsl.CommandDSL.Companion.param
 
 class DSLTest {
     @Test
     fun main() {
         val tree = command(ArgumentParser.defaultParsers.toList(),"test") {
             command(
-                "sup", "hello", metadata = listOf(
-                    meta(0, "a", "an integer"),
-                    meta(3, "some float", "a float"),
+                "sup", "hello", paramData = listOf(
+                    param(0, "a", "an integer"),
+                    param(3, "some float", "a float"),
                 )
             ) { a: Int, b: String, c: Float, d: Double, e: Byte, f: Float ->
                 println(a)

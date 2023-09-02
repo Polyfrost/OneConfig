@@ -169,7 +169,9 @@ public class PolyUIScreen extends UScreen {
         return true;
     }
 
+    //#if MC<=11300
     @Override
+    //#endif
     public boolean doesGuiPauseGame()
     {
         return false;

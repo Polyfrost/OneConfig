@@ -296,7 +296,9 @@ public class CommandTree implements Node {
                 if (self.get("") != null && ls == null) {
                     ls = self.get("");
                     i--;
-                } else break;
+                } else {
+                    break;
+                }
             }
             for (Node node : ls) {
                 if (node instanceof CommandTree) {

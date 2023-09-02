@@ -35,34 +35,40 @@ import java.util.Arrays;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.polyfrost.oneconfig.api.commands.factories.builder.CommandBuilder.Arg.*;
+import static org.polyfrost.oneconfig.api.commands.factories.builder.BuilderUtils.*;
 import static org.polyfrost.oneconfig.api.commands.factories.builder.CommandBuilder.command;
 import static org.polyfrost.oneconfig.api.commands.factories.builder.CommandBuilder.runs;
 
 public class BuilderTest {
     @Test
     void test() {
-        CommandTree t = command(Arrays.asList(ArgumentParser.defaultParsers), "test")
-                .then(
-                        runs("chicken").with(BuilderUtils.intArg(), BuilderUtils.intArg()).does(args -> {
+        CommandBuilder b = command(Arrays.asList(ArgumentParser.defaultParsers), "test");
+        b.then(
+                runs("chicken").with(intArg(), intArg())
+                        .does(args -> {
                             int res = getInt(args[0]) + getInt(args[1]);
                             System.out.println(res);
                             return res;
                         })
-                ).then(
-                        runs("bob").with(BuilderUtils.shortArg()).does(args -> {
+        ).then(
+                runs("bob").with(shortArg())
+                        .does(args -> {
                             System.out.println(getShort(args[0]));
                         })
-                ).subcommand("something")
+        ).subcommand("something")
                 .then(
-                        runs("a").with(BuilderUtils.stringArg()).does(args -> {
-                            System.out.println(getString(args[0]));
-                        })
+                        runs("a").with(stringArg())
+                                .does(args -> {
+                                    System.out.println(getString(args[0]));
+                                })
                 ).then(
-                        runs("a").with(BuilderUtils.stringArg(), BuilderUtils.stringArg()).does(args -> {
-                            System.out.println(getString(args[0]) + getString(args[1]));
-                            return 0;
+                        runs("a").with(stringArg(), stringArg())
+                                .does(args -> {
+                                    System.out.println(getString(args[0]) + getString(args[1]));
+                                return 0;
                         })
-                ).tree;
+                );
+        CommandTree t = b.tree;
 
         assertEquals(3, t.execute("chicken", "1", "2"));
         assertNull(t.execute("bob", "42"));

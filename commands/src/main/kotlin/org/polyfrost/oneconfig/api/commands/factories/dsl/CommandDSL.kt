@@ -28,7 +28,7 @@ package org.polyfrost.oneconfig.api.commands.factories.dsl
 
 import org.polyfrost.oneconfig.api.commands.arguments.ArgumentParser
 import org.polyfrost.oneconfig.api.commands.exceptions.CommandCreationException
-import org.polyfrost.oneconfig.api.commands.factories.dsl.CommandDSL.Companion.meta
+import org.polyfrost.oneconfig.api.commands.factories.dsl.CommandDSL.Companion.param
 import org.polyfrost.oneconfig.api.commands.factories.dsl.CommandDSL.ParamData
 import org.polyfrost.oneconfig.api.commands.CommandTree
 import org.polyfrost.oneconfig.api.commands.Executable
@@ -42,7 +42,7 @@ import java.util.function.Function
  * Command DSL for Kotlin.
  *
  * Uses some 'interesting' hacks to get the method handle of the function passed to the DSL. Unfortunately, at the moment, lambda parameters cannot be annotated,
- * so the [ParamData] class and [meta] function are used to provide metadata for the parameters.
+ * so the [ParamData] class and [param] function are used to provide metadata for the parameters.
  */
 @Suppress("unused")
 class CommandDSL @JvmOverloads constructor(private val parsers: List<ArgumentParser<*>>, vararg name: String, description: String? = null) {
@@ -57,7 +57,7 @@ class CommandDSL @JvmOverloads constructor(private val parsers: List<ArgumentPar
         vararg aliases: String,
         description: String? = null,
         greedy: Boolean = false,
-        metadata: List<ParamData> = listOf(),
+        paramData: List<ParamData> = listOf(),
         func: kotlin.Function<*>
     ) {
         // asm: kotlin compiler produces two methods: public synthetic bridge invoke(Object): Object
@@ -74,7 +74,7 @@ class CommandDSL @JvmOverloads constructor(private val parsers: List<ArgumentPar
             Executable(
                 aliases,
                 description,
-                mapParams(method, metadata, parsers),
+                mapParams(method, paramData, parsers),
                 greedy,
                 Function { return@Function m.invokeWithArguments(*it) })
         )
@@ -84,10 +84,10 @@ class CommandDSL @JvmOverloads constructor(private val parsers: List<ArgumentPar
         vararg aliases: String,
         description: String? = null,
         greedy: Boolean = false,
-        metadata: List<ParamData> = listOf(),
+        paramData: List<ParamData> = listOf(),
         func: kotlin.Function<*>
     ) =
-        command(*aliases, description = description, greedy = greedy, metadata = metadata, func = func)
+        command(*aliases, description = description, greedy = greedy, paramData = paramData, func = func)
 
     fun subcommand(vararg aliases: String, func: CommandDSL.() -> Unit) {
         tree.put(CommandDSL(parsers, *aliases).apply(func).tree)
@@ -99,15 +99,15 @@ class CommandDSL @JvmOverloads constructor(private val parsers: List<ArgumentPar
 
     companion object {
         @JvmStatic
+        @JvmSynthetic
         fun command(parsers: List<ArgumentParser<*>>, vararg name: String, description: String? = null, func: CommandDSL.() -> Unit) = CommandDSL(
             parsers, *name, description = description
         ).apply(func)
 
         @JvmStatic
-        fun meta(index: Int, name: String, description: String? = null, arity: Int = 1) =
+        fun param(index: Int, name: String, description: String? = null, arity: Int = 1) =
             ParamData(index, name, description, arity)
 
-        @JvmStatic
         private fun mapParams(method: Method, metadata: List<ParamData>, parsers: List<ArgumentParser<*>>): Array<Param> {
             val params = method.parameters
             return Array(method.parameterCount) {
