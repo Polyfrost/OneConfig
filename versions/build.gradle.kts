@@ -154,6 +154,7 @@ dependencies {
     }
     shadeProject(project(":config"))
     shadeProject(project(":commands"))
+    shadeProject(project(":hud"))
 
     if (platform.isFabric) {
         include(libs.fabricAsm)

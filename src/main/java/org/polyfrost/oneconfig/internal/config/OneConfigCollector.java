@@ -27,13 +27,12 @@
 package org.polyfrost.oneconfig.internal.config;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.polyfrost.oneconfig.api.config.Property;
 import org.polyfrost.oneconfig.api.config.Tree;
 import org.polyfrost.oneconfig.api.config.annotations.Accordion;
 import org.polyfrost.oneconfig.api.config.annotations.Button;
 import org.polyfrost.oneconfig.api.config.annotations.Option;
-import org.polyfrost.oneconfig.api.config.collector.PropertyCollector;
+import org.polyfrost.oneconfig.api.config.collector.ReflectiveCollector;
 
 import java.lang.annotation.Annotation;
 import java.lang.invoke.MethodHandle;
@@ -52,27 +51,18 @@ import static org.polyfrost.oneconfig.api.config.backend.impl.ObjectSerializer.u
  * Collects properties from an object using reflection, and from its inner classes.
  * Ignores transient and synthetic fields.
  */
-public class ReflectiveCollector implements PropertyCollector {
-    protected final int maxDepth;
+public class OneConfigCollector extends ReflectiveCollector {
 
-    public ReflectiveCollector(int maxDepth) {
-        this.maxDepth = maxDepth;
+    public OneConfigCollector(int maxDepth) {
+        super(maxDepth);
     }
 
-    public ReflectiveCollector() {
-        this(1);
+    public OneConfigCollector() {
+        super(1);
     }
 
 
     @Override
-    public @Nullable Tree collect(@Nullable String id, @NotNull Object src) {
-        // if(!(src instanceof Config)) return null;
-        Tree.Builder b = Tree.tree(id == null ? src.getClass().getSimpleName() : id);
-        handle(b, src, 0);
-        return b.build();
-    }
-
-
     public void handleField(@NotNull Field f, @NotNull Object src, @NotNull Tree.Builder builder) {
         for (Annotation a : f.getAnnotations()) {
             for (Annotation aa : a.annotationType().getAnnotations()) {
@@ -103,6 +93,7 @@ public class ReflectiveCollector implements PropertyCollector {
         }
     }
 
+    @Override
     public void handleMethod(@NotNull Method m, @NotNull Object src, @NotNull Tree.Builder builder) {
         Button b = m.getDeclaredAnnotation(Button.class);
         if (b == null) return;
@@ -134,6 +125,7 @@ public class ReflectiveCollector implements PropertyCollector {
         builder.put(p);
     }
 
+    @Override
     public void handleInnerClass(@NotNull Class<?> c, @NotNull Object src, int depth, @NotNull Tree.Builder builder) {
         Accordion a = c.getDeclaredAnnotation(Accordion.class);
         if (a == null) return;
@@ -158,31 +150,79 @@ public class ReflectiveCollector implements PropertyCollector {
         }
     }
 
-
-    public final void handle(@NotNull Tree.Builder builder, @NotNull Object src, int depth) {
-        for (Field f : src.getClass().getDeclaredFields()) {
-            handleField(f, src, builder);
-        }
-        for (Method m : src.getClass().getDeclaredMethods()) {
-            handleMethod(m, src, builder);
-        }
-        for (Class<?> c : src.getClass().getDeclaredClasses()) {
-            if (depth == maxDepth) {
-                LOGGER.warn("Reached max depth for tree " + builder.id + " ignoring further subclasses!");
-                return;
-            }
-            handleInnerClass(c, src, depth, builder);
-        }
-    }
-
-    /**
-     * Handle metadata for the property.
-     *
-     * @param property the property
-     * @param f        the backing field
-     */
     public void handleMetadata(@NotNull Property<?> property, @NotNull Field f) {
+        for (Annotation a : f.getDeclaredAnnotations()) {
+            Option opt = a.annotationType().getAnnotation(Option.class);
+            property.addMetadata("annotation", a);
+            property.addMetadata("visualizer", opt.display());
+            String title = null;
+            String description = "";
+            String icon = "";
+            String category = "General";
+            String subcategory = "General";
+            for (Method m : a.getClass().getDeclaredMethods()) {
+                if (m.getName().equals("title")) {
+                    title = (String) invoke(m, a);
+                }
+                if (m.getName().equals("description")) {
+                    description = (String) invoke(m, a);
+                }
+                if (m.getName().equals("icon")) {
+                    icon = (String) invoke(m, a);
+                }
+                if (m.getName().equals("category")) {
+                    category = (String) invoke(m, a);
+                }
+                if (m.getName().equals("subcategory")) {
+                    subcategory = (String) invoke(m, a);
+                }
+            }
+            if (title == null) throw new IllegalArgumentException("Property annotation " + a.getClass().getSimpleName() + " must have a property String title() / cannot be empty");
+            property.addMetadata("title", title);
+            if (!description.isEmpty()) property.addMetadata("description", description);
+            if (!icon.isEmpty()) property.addMetadata("icon", icon);
+            property.addMetadata("category", category);
+            property.addMetadata("subcategory", subcategory);
+        }
     }
+
+    private static Object invoke(Method m, Object o) {
+        try {
+            return m.invoke(o);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+	/*
+	I LIKED IT WHEN I COULD REFLECT ANYTHING I WANTED WHY DID THEY CHANGE IT
+		InvocationHandler h = Proxy.getInvocationHandler(a);
+		Map<String, Object> memberValues;
+		try {
+			Field ff = h.getClass().getDeclaredField("memberValues");
+			ff.setAccessible(true); // SHUT UP FUCKING MODULE SYSTEM
+			memberValues = (Map<String, Object>) ff.get(h);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+		for(Map.Entry<String, Object> entry : memberValues.entrySet()) {
+			if(entry.getKey().equals("title")) {
+				title = (String) entry.getValue();
+			}
+			if(entry.getKey().equals("description")) {
+				description = (String) entry.getValue();
+			}
+			if(entry.getKey().equals("icon")) {
+				icon = (String) entry.getValue();
+			}
+			if(entry.getKey().equals("category")) {
+				category = (String) entry.getValue();
+			}
+			if(entry.getKey().equals("subcategory")) {
+				subcategory = (String) entry.getValue();
+			}
+		}
+	}*/
 
 
 }

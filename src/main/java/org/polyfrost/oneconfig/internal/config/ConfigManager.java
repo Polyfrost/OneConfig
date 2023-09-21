@@ -53,7 +53,7 @@ public class ConfigManager {
 
 
     private ConfigManager() {
-        collectors.add(new AnnotationReflectiveCollector());
+        collectors.add(new OneConfigCollector());
         backend = new FileBackend(ONECONFIG_DIR.resolve("default"));
         backend.addSerializers(NightConfigSerializer.ALL);
     }
