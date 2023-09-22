@@ -33,13 +33,16 @@ import java.util.ServiceLoader;
 /**
  * Abstraction over the LWJGL3 implementation & loading.
  */
-@SuppressWarnings("DeprecatedIsStillUsed"/*, reason = "Methods are still used internally in their respective interfaces" */)
 public interface LwjglManager {
     LwjglManager INSTANCE = ServiceLoader.load(
             LwjglManager.class,
             LwjglManager.class.getClassLoader()
     ).iterator().next();
 
+    /**
+     * Return a new Renderer instance.
+     * This instance is completely isolated from any other instances that have been created or will be created.
+     */
     Renderer getRenderer(float width, float height);
 
     TinyFD getTinyFD();

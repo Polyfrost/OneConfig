@@ -48,8 +48,6 @@
 package org.polyfrost.oneconfig.api.config.visualize
 
 import org.polyfrost.oneconfig.api.config.Property
-import org.polyfrost.oneconfig.api.config.annotations.Color
-import org.polyfrost.oneconfig.api.config.annotations.Text
 import org.polyfrost.polyui.component.Component
 import org.polyfrost.polyui.component.impl.*
 import org.polyfrost.polyui.event.MouseClicked
@@ -65,19 +63,17 @@ fun interface Visualizer {
     companion object {
         val switchOn = "oneconfig.switch.enabled".localised()
         val switchOff = "oneconfig.switch.disabled".localised()
-        fun <A> getAnnotation(prop: Property<*>): A {
-            return prop.getMetadata<A>("annotation")!!
-        }
+        val click = "oneconfig.click".localised()
     }
 
     class ButtonVisualizer : Visualizer {
         override fun visualize(prop: Property<*>): Component {
-            val a = getAnnotation<org.polyfrost.oneconfig.api.config.annotations.Button>(prop)
+            val text = prop.getMetadata<String>("text")?.ifEmpty { null }
             val action = prop.getMetadata<Runnable>("runnable") ?: prop.getAs()
             return Button(
                 at = origin,
                 size = 300.px * 34.px,
-                text = a.text.localised(),
+                text = text?.localised() ?: click,
                 events = {
                     MouseClicked(0) to {
                         action.run()
@@ -90,16 +86,15 @@ fun interface Visualizer {
 
     class ColorVisualizer : Visualizer {
         override fun visualize(prop: Property<*>): Component {
-            val a = getAnnotation<Color>(prop)
             return Block(at = origin, size = origin)
         }
     }
 
     class DropdownVisualizer : Visualizer {
         override fun visualize(prop: Property<*>): Component {
-            val a = getAnnotation<org.polyfrost.oneconfig.api.config.annotations.Dropdown>(prop)
+            val options: Array<String> = prop.getMetadata("options") ?: emptyArray()
             if (prop.type.isEnum) {
-                require(a.options.isEmpty()) { "Dropdowns cannot have options when used with enums" }
+                require(options.isEmpty()) { "Dropdowns cannot have options when used with enums" }
                 val index = prop.type.enumConstants.indexOf(prop.get())
                 return Dropdown(
                     at = origin,
@@ -109,12 +104,12 @@ fun interface Visualizer {
                 )
             } else {
                 require(prop.type == java.lang.Integer::class.java) { "Dropdowns can only be used with enums or integers" }
-                require(a.options.size >= 2) { "Dropdowns must have at least two options" }
+                require(options.size >= 2) { "Dropdowns must have at least two options" }
                 return Dropdown(
                     at = origin,
                     size = 300.px * 32.px,
                     default = prop.getAs(),
-                    entries = Dropdown.from(a.options),
+                    entries = Dropdown.from(options),
                 )
             }
         }
@@ -132,13 +127,16 @@ fun interface Visualizer {
 
     class NumberVisualizer : Visualizer {
         override fun visualize(prop: Property<*>): Component {
-            val a = getAnnotation<org.polyfrost.oneconfig.api.config.annotations.Number>(prop)
+            val placeholder = prop.getMetadata<String>("placeholder") ?: "0"
+            val unit = prop.getMetadata<String>("unit")
+            val min = prop.getMetadata<Float>("min") ?: 0f
+            val max = prop.getMetadata<Float>("max") ?: 100f
             val notFloating = prop.type == java.lang.Integer::class.java || prop.type == java.lang.Long::class.java
             val s = TextInput(
-                properties = TextInputProperties.numberProperties(!notFloating, a.min, a.max),
+                properties = TextInputProperties.numberProperties(!notFloating, min, max),
                 initialText = prop.getAs<Number>().toString().localised(),
-                placeholder = a.placeholder.localised(),
-                hint = a.unit.ifEmpty { null }?.localised(),
+                placeholder = placeholder.localised(),
+                hint = unit?.localised(),
                 at = origin,
                 size = 300.px * 32.px,
                 events = {
@@ -155,9 +153,9 @@ fun interface Visualizer {
 
     class RadioVisualizer : Visualizer {
         override fun visualize(prop: Property<*>): Component {
-            val a = getAnnotation<org.polyfrost.oneconfig.api.config.annotations.RadioButton>(prop)
+            val options: Array<String> = prop.getMetadata("options") ?: emptyArray()
             if (prop.type.isEnum) {
-                require(a.options.isEmpty()) { "Radio buttons cannot have options when used with enums" }
+                require(options.isEmpty()) { "Radio buttons cannot have options when used with enums" }
                 val r = RadioButton(
                     at = origin,
                     size = 300.px * 32.px,
@@ -170,11 +168,11 @@ fun interface Visualizer {
                 return r
             } else {
                 require(prop.type == java.lang.Integer::class.java) { "Radio buttons can only be used with enums or integers" }
-                require(a.options.size >= 2) { "Radio buttons must have at least two options" }
+                require(options.size >= 2) { "Radio buttons must have at least two options" }
                 return RadioButton(
                     at = origin,
                     size = 300.px * 32.px,
-                    values = a.options,
+                    values = options,
                     defaultIndex = prop.getAs(),
                     onChange = {
                         prop.setAs(this.selectedIndex)
@@ -186,14 +184,15 @@ fun interface Visualizer {
 
     class SliderVisualizer : Visualizer {
         override fun visualize(prop: Property<*>): Component {
-            val a = getAnnotation<org.polyfrost.oneconfig.api.config.annotations.Slider>(prop)
+            val min = prop.getMetadata<Float>("min") ?: 0f
+            val max = prop.getMetadata<Float>("max") ?: 100f
             // todo steps and lil boi inside the slider head
             val notFloating = prop.type == java.lang.Integer::class.java || prop.type == java.lang.Long::class.java
             val s = Slider(
                 at = origin,
                 size = 300.px * 32.px,
-                min = a.min,
-                max = a.max,
+                min = min,
+                max = max,
                 events = {
                     Slider.ChangedEvent() to {
                         prop.setAs(if (notFloating) it.value.toInt() else it.value)
@@ -223,12 +222,12 @@ fun interface Visualizer {
 
     class TextVisualizer : Visualizer {
         override fun visualize(prop: Property<*>): Component {
-            val a = getAnnotation<Text>(prop)
+            val placeholder = prop.getMetadata("placeholder") ?: ""
             val s = TextInput(
                 at = origin,
                 size = 300.px * 32.px,
                 initialText = prop.getAs<String>().localised(),
-                placeholder = a.placeholder.localised(),
+                placeholder = placeholder.localised(),
                 events = {
                     TextInput.ChangedEvent() to {
                         prop.setAs(it.value)

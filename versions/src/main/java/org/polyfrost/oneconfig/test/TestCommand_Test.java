@@ -65,7 +65,7 @@ public class TestCommand_Test {
     @Command
     private void polyui() {
         UChat.chat("PolyUI test");
-        GuiUtils.displayScreen(new PolyUIScreen(new LightTheme(), Test.create()));
+        GuiUtils.displayScreen(new PolyUIScreen(800f, 500f, new LightTheme(), Test.create()));
     }
 
     @Command

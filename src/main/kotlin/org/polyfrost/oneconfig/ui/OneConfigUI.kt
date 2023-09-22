@@ -19,6 +19,7 @@
  * License.  If not, see <https://www.gnu.org/licenses/>.
  */
 @file:JvmName("OneConfigUI")
+
 package org.polyfrost.oneconfig.ui
 
 import org.polyfrost.oneconfig.internal.config.ConfigManager
@@ -266,17 +267,21 @@ fun create(): PolyUIScreen {
 
 
 
-    return PolyUIScreen(null, {
-        it.settings.debug = false
-        back.disabled = true
-        modsPage.open()
-        it.keyBinder.add(
-            KeyBinder.Bind('P', mods = mods(Modifiers.LCONTROL)) {
-                it.debugPrint()
-                true
-            },
-        )
-    }, sidebar, header, content)
+    return PolyUIScreen(
+        1400f, 700f,
+        null, {
+            it.settings.debug = false
+            back.disabled = true
+            modsPage.open()
+            it.keyBinder.add(
+                KeyBinder.Bind('P', mods = mods(Modifiers.LCONTROL)) {
+                    it.debugPrint()
+                    true
+                },
+            )
+        },
+        Block(properties = BlockProperties.backgroundBlock, at = origin, size = 1400.px * 700.px), sidebar, header, content
+    )
 }
 
 class SidebarProperties : ButtonProperties() {

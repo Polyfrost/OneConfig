@@ -41,7 +41,6 @@ import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.TypeInsnNode;
 import org.objectweb.asm.tree.VarInsnNode;
-import org.polyfrost.oneconfig.libs.deencapsulation.Deencapsulation;
 import org.polyfrost.oneconfig.renderer.LwjglManager;
 import org.polyfrost.oneconfig.renderer.TinyFD;
 import org.polyfrost.polyui.renderer.Renderer;
@@ -99,7 +98,7 @@ public class LwjglManagerImpl
             // Internal accessors
 
 
-            classLoaderInclude.add("org.polyfrost.oneconfig.internal.renderer.TinyFDImpl");
+            classLoaderInclude.add("org.polyfrost.oneconfig.internal.renderer.impl.TinyFDImpl");
             classLoaderInclude.add("org.polyfrost.polyui.renderer.impl.NVGRenderer");
             // Provider
             classLoaderInclude.add(LWJGL_FUNCTION_PROVIDER);
@@ -326,11 +325,13 @@ public class LwjglManagerImpl
             }
 
             try {
-                try {
-                    Deencapsulation.deencapsulate(Object.class);
-                    Deencapsulation.deencapsulate(unsafeClass);
-                } catch (Throwable ignored) {
-                }
+                //#if FABRIC==1
+                //$$ try {
+                //$$     org.polyfrost.oneconfig.libs.deencapsulation.Deencapsulation.deencapsulate(Object.class);
+                //$$     org.polyfrost.oneconfig.libs.deencapsulation.Deencapsulation.deencapsulate(unsafeClass);
+                //$$ } catch (Throwable ignored) {
+                //$$ }
+                //#endif
 
                 Field unsafeField = unsafeClass.getDeclaredField("theUnsafe");
                 unsafeField.setAccessible(true);

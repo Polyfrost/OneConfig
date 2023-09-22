@@ -143,7 +143,6 @@ public class OneConfigCollector extends ReflectiveCollector {
             Tree.Builder innerBuilder = Tree.tree(c.getSimpleName());
             handle(innerBuilder, innerObject, depth + 1);
             Tree t = innerBuilder.build();
-            t.addMetadata("annotation", a);
             builder.put(t);
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -153,36 +152,12 @@ public class OneConfigCollector extends ReflectiveCollector {
     public void handleMetadata(@NotNull Property<?> property, @NotNull Field f) {
         for (Annotation a : f.getDeclaredAnnotations()) {
             Option opt = a.annotationType().getAnnotation(Option.class);
-            property.addMetadata("annotation", a);
+            if(opt == null) continue;
             property.addMetadata("visualizer", opt.display());
-            String title = null;
-            String description = "";
-            String icon = "";
-            String category = "General";
-            String subcategory = "General";
             for (Method m : a.getClass().getDeclaredMethods()) {
-                if (m.getName().equals("title")) {
-                    title = (String) invoke(m, a);
-                }
-                if (m.getName().equals("description")) {
-                    description = (String) invoke(m, a);
-                }
-                if (m.getName().equals("icon")) {
-                    icon = (String) invoke(m, a);
-                }
-                if (m.getName().equals("category")) {
-                    category = (String) invoke(m, a);
-                }
-                if (m.getName().equals("subcategory")) {
-                    subcategory = (String) invoke(m, a);
-                }
+                property.addMetadata(m.getName(), invoke(m, a));
             }
-            if (title == null) throw new IllegalArgumentException("Property annotation " + a.getClass().getSimpleName() + " must have a property String title() / cannot be empty");
-            property.addMetadata("title", title);
-            if (!description.isEmpty()) property.addMetadata("description", description);
-            if (!icon.isEmpty()) property.addMetadata("icon", icon);
-            property.addMetadata("category", category);
-            property.addMetadata("subcategory", subcategory);
+            break;
         }
     }
 

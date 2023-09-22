@@ -34,16 +34,20 @@ import org.polyfrost.polyui.component.Drawable;
 import java.util.function.Consumer;
 
 public class PolyUIScreen extends UScreen {
-    public PolyUIScreen(Colors colors, Consumer<PolyUI> initFunction, Drawable... drawables) {
+    // expose width and height
+    public final float width, height;
+    public PolyUIScreen(float width, float height, Colors colors, Consumer<PolyUI> initFunction, Drawable... drawables) {
         super(true);
+        this.width = width;
+        this.height = height;
         throw new UnsupportedOperationException("implementation is intrinsic");
     }
 
-    public PolyUIScreen(Colors colors, Drawable... drawables) {
-        this(colors, null, drawables);
+    public PolyUIScreen(float width, float height, Colors colors, Drawable... drawables) {
+        this(width, height, colors, null, drawables);
     }
 
-    public PolyUIScreen(Drawable... drawables) {
-        this(null, null, drawables);
+    public PolyUIScreen(float width, float height, Drawable... drawables) {
+        this(width, height, null, null, drawables);
     }
 }

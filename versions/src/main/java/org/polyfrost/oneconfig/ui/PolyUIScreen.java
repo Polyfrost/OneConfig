@@ -51,6 +51,7 @@ import java.util.function.Consumer;
 
 @SuppressWarnings("unused")
 public class PolyUIScreen extends UScreen {
+    public final float width, height;
     public static final Logger LOGGER = LoggerFactory.getLogger("PolyUIScreen");
     private PolyUI polyUI;
     private Drawable[] drawables;
@@ -60,19 +61,21 @@ public class PolyUIScreen extends UScreen {
     private float mx, my;
     //#endif
 
-    public PolyUIScreen(Colors colors, Consumer<PolyUI> initFunction, Drawable... drawables) {
+    public PolyUIScreen(float width, float height, Colors colors, Consumer<PolyUI> initFunction, Drawable... drawables) {
         super(true);
+        this.width = width;
+        this.height = height;
         this.colors = colors == null ? new DarkTheme() : colors;
         this.drawables = drawables;
         this.func = initFunction;
     }
 
-    public PolyUIScreen(Colors colors, Drawable... drawables) {
-        this(colors, null, drawables);
+    public PolyUIScreen(float width, float height, Colors colors, Drawable... drawables) {
+        this(width, height, colors, null, drawables);
     }
 
-    public PolyUIScreen(Drawable... drawables) {
-        this(null, null, drawables);
+    public PolyUIScreen(float width, float height, Drawable... drawables) {
+        this(width, height, null, null, drawables);
     }
 
     @Override
@@ -85,13 +88,10 @@ public class PolyUIScreen extends UScreen {
             settings.setRenderPausingEnabled(false);
             settings.setDebug(false);
             Renderer renderer = LwjglManager.INSTANCE.getRenderer(UResolution.getWindowWidth(), UResolution.getWindowHeight());
-            //#if MC>=11300
-            //$$ polyUI = new PolyUI("", renderer, settings, colors, drawables);
-            //#else
-            renderer.setWidth(UResolution.getWindowWidth());
-            renderer.setHeight(UResolution.getWindowHeight());
             polyUI = new PolyUI("", renderer, settings, colors, drawables);
-            //#endif
+            //polyUI.beforeRender(() -> {
+            //   renderer.translate(UResolution.getWindowWidth() / 2f - width / 2f, UResolution.getWindowHeight() / 2f - height / 2f);
+            //});
             if (useMinecraftUIScaling())
                 polyUI.getRenderer().setPixelRatio$polyui((float) UResolution.getScaleFactor());
             drawables = null;

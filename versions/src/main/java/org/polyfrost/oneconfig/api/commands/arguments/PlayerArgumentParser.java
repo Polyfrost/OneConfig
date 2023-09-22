@@ -33,7 +33,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.network.NetworkPlayerInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.polyfrost.oneconfig.api.commands.arguments.ArgumentParser;
 import org.polyfrost.oneconfig.utils.NetworkUtils;
 
 import java.util.HashMap;
@@ -44,7 +43,7 @@ import java.util.stream.Collectors;
 /**
  * The player argument parser. Returns a {@link GameProfile}.
  */
-public class PlayerArgumentParser implements ArgumentParser<GameProfile> {
+public class PlayerArgumentParser extends ArgumentParser<GameProfile> {
     private static final HashMap<String, UUID> uuidCache = new HashMap<>();
 
     @Override

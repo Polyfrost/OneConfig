@@ -173,6 +173,10 @@ public class Executable implements Node {
             }
         }
 
+        @Nullable List<@NotNull String> tryAutoComplete(String arg) {
+            return parser.getAutoCompletions(arg);
+        }
+
         @Override
         public String toString() {
             StringBuilder sb = new StringBuilder();

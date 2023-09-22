@@ -72,6 +72,12 @@ public class PlatformCommandManagerImpl implements PlatformCommandManager {
             //$$ execute(net.minecraft.server.MinecraftServer server, net.minecraft.command.ICommandSender sender, String[] args)
             //#endif
             {
+                if(args.length == 1 && args[0].equals("help")) {
+                    for(String s : tree.getHelp()) {
+                        UChat.chat(s);
+                    }
+                    return;
+                }
                 try {
                     Object out = tree.execute(args);
                     if (out == null) return;
@@ -84,7 +90,7 @@ public class PlatformCommandManagerImpl implements PlatformCommandManager {
                     }
                 } catch (CommandExecutionException c) {
                     UChat.chat("&c" + c.getMessage());
-                    c.printStackTrace();
+                    if(!c.getMessage().equals("Command not found!")) c.printStackTrace();
                 } catch (Exception e) {
                     UChat.chat("&cAn unknown error occurred while executing this command, please report this to the mod author!");
                     e.printStackTrace();

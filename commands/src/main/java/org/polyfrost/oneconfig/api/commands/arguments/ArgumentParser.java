@@ -27,20 +27,25 @@
 package org.polyfrost.oneconfig.api.commands.arguments;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * A parser for command arguments, which takes a String and returns the parsed object as the correct type.
  * <br>
- * Implementations of this interface should be registered with {@link CommandManager#registerParser(ArgumentParser)}. <br>
+ * Implementations of this interface should be registered with CommandManager.registerParser(ArgumentParser). <br>
  * <b>Only one parser should only ever be registered for a given type!</b> This is to avoid ambiguity when parsing arguments. <br>
  */
-public interface ArgumentParser<T> {
+public abstract class ArgumentParser<T> {
     /**
      * Parse the given argument into the correct type.
      *
      * @return the parsed object
      */
-    T parse(@NotNull String arg);
+    public abstract T parse(@NotNull String arg);
 
     /**
      * Check if this parser can parse the given type. <br>
@@ -49,10 +54,18 @@ public interface ArgumentParser<T> {
      * @param type the type to check
      * @return true if this parser can parse the given type, false otherwise
      */
-    boolean canParse(Class<?> type);
+    public abstract boolean canParse(Class<?> type);
+
+    /**
+     * Return a list of autocompletion options for the given argument.
+     * @return the populated list, or null if not applicable to the given argument.
+     */
+    public @Nullable List<@NotNull String> getAutoCompletions(String input) {
+        return null;
+    }
 
 
-    ArgumentParser<Double> doubleParser = new ArgumentParser<Double>() {
+    public static final ArgumentParser<Double> doubleParser = new ArgumentParser<Double>() {
         @Override
         public @NotNull Double parse(@NotNull String arg) {
             return Double.parseDouble(arg);
@@ -64,7 +77,7 @@ public interface ArgumentParser<T> {
         }
     };
 
-    ArgumentParser<Float> floatParser = new ArgumentParser<Float>() {
+    public static final ArgumentParser<Float> floatParser = new ArgumentParser<Float>() {
         @Override
         public @NotNull Float parse(@NotNull String arg) {
             return Float.parseFloat(arg);
@@ -76,7 +89,7 @@ public interface ArgumentParser<T> {
         }
     };
 
-    ArgumentParser<Integer> intParser = new ArgumentParser<Integer>() {
+    public static final ArgumentParser<Integer> intParser = new ArgumentParser<Integer>() {
         @Override
         public @NotNull Integer parse(@NotNull String arg) {
             return Integer.parseInt(arg);
@@ -88,7 +101,7 @@ public interface ArgumentParser<T> {
         }
     };
 
-    ArgumentParser<Long> longParser = new ArgumentParser<Long>() {
+    public static final ArgumentParser<Long> longParser = new ArgumentParser<Long>() {
         @Override
         public @NotNull Long parse(@NotNull String arg) {
             return Long.parseLong(arg);
@@ -100,7 +113,7 @@ public interface ArgumentParser<T> {
         }
     };
 
-    ArgumentParser<Short> shortParser = new ArgumentParser<Short>() {
+    public static final ArgumentParser<Short> shortParser = new ArgumentParser<Short>() {
         @Override
         public @NotNull Short parse(@NotNull String arg) {
             return Short.parseShort(arg);
@@ -112,7 +125,7 @@ public interface ArgumentParser<T> {
         }
     };
 
-    ArgumentParser<Byte> byteParser = new ArgumentParser<Byte>() {
+    public static final ArgumentParser<Byte> byteParser = new ArgumentParser<Byte>() {
         @Override
         public @NotNull Byte parse(@NotNull String arg) {
             return Byte.parseByte(arg);
@@ -124,7 +137,10 @@ public interface ArgumentParser<T> {
         }
     };
 
-    ArgumentParser<Boolean> booleanParser = new ArgumentParser<Boolean>() {
+    public static final ArgumentParser<Boolean> booleanParser = new ArgumentParser<Boolean>() {
+        private final List<String> TRUE = Collections.singletonList("true");
+        private final List<String> FALSE = Collections.singletonList("false");
+        private final List<String> TRUEFALSE = Arrays.asList("true", "false");
         @Override
         public @NotNull Boolean parse(@NotNull String arg) {
             return Boolean.parseBoolean(arg);
@@ -134,9 +150,22 @@ public interface ArgumentParser<T> {
         public boolean canParse(Class<?> type) {
             return type == boolean.class || type == Boolean.class;
         }
+
+        @Override
+        public @Nullable List<@NotNull String> getAutoCompletions(String input) {
+            if(input.isEmpty()) {
+                return TRUEFALSE;
+            } else if (input.charAt(0) == 't') {
+                return TRUE;
+            } else if (input.charAt(0) == 'f') {
+                return FALSE;
+            } else {
+                return null;
+            }
+        }
     };
 
-    ArgumentParser<String> stringParser = new ArgumentParser<String>() {
+    public static final ArgumentParser<String> stringParser = new ArgumentParser<String>() {
         @Override
         public @NotNull String parse(@NotNull String arg) {
             return arg;
@@ -148,7 +177,7 @@ public interface ArgumentParser<T> {
         }
     };
 
-    ArgumentParser<Character> charParser = new ArgumentParser<Character>() {
+    public static final ArgumentParser<Character> charParser = new ArgumentParser<Character>() {
         @Override
         public @NotNull Character parse(@NotNull String arg) {
             return arg.charAt(0);
@@ -160,7 +189,7 @@ public interface ArgumentParser<T> {
         }
     };
 
-    ArgumentParser<?>[] defaultParsers = {
+    public static final ArgumentParser<?>[] defaultParsers = {
             doubleParser,
             floatParser,
             intParser,
