@@ -32,7 +32,7 @@ import org.polyfrost.oneconfig.api.config.Tree;
 import org.polyfrost.oneconfig.api.config.backend.Backend;
 import org.polyfrost.oneconfig.api.config.backend.Serializer;
 import org.polyfrost.oneconfig.api.config.exceptions.SerializationException;
-import org.polyfrost.oneconfig.api.config.util.Triple;
+import org.polyfrost.oneconfig.api.config.util.Pair;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -48,10 +48,12 @@ import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class FileBackend implements Backend {
     private Path folder;
@@ -59,11 +61,12 @@ public class FileBackend implements Backend {
 
     private volatile boolean dodge = false;
     private final List<FileSerializer> serializers = new ArrayList<>();
-
-    private final Map<String, Triple<File, Serializer, Tree>> configs = new HashMap<>();
+    private final Map<String, File> fileCache = new HashMap<>();
+    private final Map<String, Pair<Serializer, Tree>> configs = new HashMap<>();
 
     @SuppressWarnings({"CallToPrintStackTrace", "ResultOfMethodCallIgnored"})
-    public FileBackend(Path folder) {
+    public FileBackend(Path folder, Serializer... serializers) {
+        addSerializers(serializers);
         setDirectory(folder);
         Thread t = new Thread(() -> {
             while (true) {
@@ -82,10 +85,10 @@ public class FileBackend implements Backend {
 
                         if (event.kind() == StandardWatchEventKinds.ENTRY_DELETE) {
                             f.createNewFile();
-                            get(idByFile(f));
+                            get(f.getName());
                         }
                         if (event.kind() == StandardWatchEventKinds.ENTRY_MODIFY) {
-                            get(idByFile(f));
+                            get(f.getName());
                         }
                     }
                     if (!key.reset()) {
@@ -106,59 +109,58 @@ public class FileBackend implements Backend {
         this(Paths.get(folder));
     }
 
-    public FileBackend addSerializer(FileSerializer serializer) {
-        serializers.add(serializer);
-        return this;
-    }
-
-    public FileBackend addSerializers(FileSerializer... serializers) {
-        for (FileSerializer serializer : serializers) {
-            addSerializer(serializer);
+    @Override
+    public FileBackend addSerializers(Serializer... serializers) {
+        for (Serializer s : serializers) {
+            if (s instanceof FileSerializer) this.serializers.add((FileSerializer) s);
         }
         return this;
     }
 
-    public FileBackend addSerializers(Collection<FileSerializer> serializers) {
-        serializers.forEach(this::addSerializer);
-        return this;
+    public Path getDirectory() {
+        return folder;
     }
 
 
     @Override
     public void put(@NotNull Tree tree) {
         dodge = true;
-        Triple<File, Serializer, Tree> t = null;
+        Pair<Serializer, Tree> t = null;
+        File file = getFile(tree.id);
         if (!configs.containsKey(tree.id)) {
-            File file = folder.resolve(tree.id).toFile();
             for (FileSerializer serializer : serializers) {
                 if (serializer.supports(file)) {
-                    t = new Triple<>(file, serializer, tree);
+                    t = new Pair<>(serializer, tree);
                     configs.put(tree.id, t);
                     break;
                 }
             }
         } else t = configs.get(tree.id);
         if (t == null) throw new SerializationException("No serializer found for " + tree.id);
-        assert t.third == tree;
-        File file = t.first;
+        assert t.second == tree;
         try {
             file.createNewFile();
         } catch (IOException e) {
             throw new SerializationException("Failed to create file", e);
         }
         try (BufferedWriter w = new BufferedWriter(new FileWriter(file))) {
-            w.write(t.second.serialize(t.third));
+            w.write(t.first.serialize(t.second));
         } catch (Exception e) {
             throw new SerializationException("Failed to serialize!", e);
         }
     }
 
+    private File getFile(String id) {
+        return fileCache.computeIfAbsent(id, it -> folder.resolve(it).toFile());
+    }
+
     @Override
     public @Nullable Tree get(@NotNull String id) {
-        Triple<File, Serializer, Tree> t = configs.get(id);
-        if (t == null) return null;
+        Pair<Serializer, Tree> t = configs.get(id);
         StringBuilder str = new StringBuilder();
-        try (BufferedReader r = new BufferedReader(new FileReader(t.first))) {
+        File f = getFile(id);
+        if (!f.exists()) return null;
+        try (BufferedReader r = new BufferedReader(new FileReader(f))) {
             String l;
             while ((l = r.readLine()) != null) {
                 str.append(l).append("\n");
@@ -166,34 +168,37 @@ public class FileBackend implements Backend {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        if (t.third != null) t.third.overwriteWith(t.second.deserialize(id, str.toString()), true);
-        else t.third = t.second.deserialize(id, str.toString());
-        return t.third;
-    }
-
-
-    String idByFile(File f) {
-        for (Map.Entry<String, Triple<File, Serializer, Tree>> e : configs.entrySet()) {
-            if (e.getValue().first == f) {
-                return e.getKey();
+        if (t == null) {
+            for (FileSerializer serializer : serializers) {
+                if (serializer.supports(f)) {
+                    t = new Pair<>(serializer, null);
+                    configs.put(id, t);
+                    break;
+                }
             }
+            if (t == null) return null;
         }
-        return null;
+        if (t.second != null) t.second.merge(t.first.deserialize(id, str.toString()), true, true);
+        else t.second = t.first.deserialize(id, str.toString());
+        return t.second;
     }
 
     /**
-     * Change the directory where the configs are stored. This will update the watcher.
+     * Change the directory where the configs are stored. This will update the watcher and refresh all tracked trees.
      */
     @SuppressWarnings("CallToPrintStackTrace")
     public void setDirectory(@NotNull Path folder) {
         this.folder = folder;
         try {
             folder.toFile().mkdirs();
-            if (service != null) service.close();
             service = FileSystems.getDefault().newWatchService();
             folder.register(service, StandardWatchEventKinds.ENTRY_MODIFY, StandardWatchEventKinds.ENTRY_DELETE);
         } catch (Exception e) {
             e.printStackTrace();
+        }
+        fileCache.clear();
+        for (String id : configs.keySet()) {
+            get(id);
         }
     }
 
@@ -204,16 +209,31 @@ public class FileBackend implements Backend {
 
     @Override
     public boolean remove(@NotNull String id) {
-        Triple<File, Serializer, Tree> t = configs.remove(id);
+        Pair<Serializer, Tree> t = configs.remove(id);
         if (t == null) return false;
         dodge = true;
-        return t.first.delete();
+        return getFile(id).delete();
     }
 
     @Override
     public void refresh() {
-        for(Map.Entry<String, Triple<File, Serializer, Tree>> e : configs.entrySet()) {
-            get(e.getKey());
+        for (String s : configs.keySet()) {
+            File f = getFile(s);
+            if (f.isDirectory()) continue;
+            get(f.getName());
         }
+    }
+
+    @SuppressWarnings("DataFlowIssue")
+    public void registerAllFiles() {
+        for (File f : folder.toFile().listFiles()) {
+            if (f.isDirectory()) continue;
+            get(f.getName());
+        }
+    }
+
+    @Override
+    public Collection<Tree> getTrees() {
+        return configs.values().stream().map(t -> t.second).collect(Collectors.toList());
     }
 }

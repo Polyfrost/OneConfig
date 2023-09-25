@@ -24,34 +24,14 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.test;
+package org.polyfrost.oneconfig.api.config.util;
 
-import org.polyfrost.oneconfig.events.EventManager;
-import org.polyfrost.oneconfig.events.event.InitializationEvent;
-import org.polyfrost.oneconfig.libs.eventbus.Subscribe;
-import org.polyfrost.oneconfig.api.commands.CommandManager;
+public class Pair<A, B> {
+    public A first;
+    public B second;
 
-//#if MC<=11202 && FORGE==1
-@net.minecraftforge.fml.common.Mod(modid = "oneconfig-test-mod", name = "Test Mod", version = "0")
-//#endif
-public class TestMod_Test
-//#if FABRIC==1
-//$$ implements net.fabricmc.api.ClientModInitializer
-//#endif
-{
-    public TestMod_Test() {
-        EventManager.INSTANCE.register(this);
-    }
-
-    //#if FABRIC==1
-    //$$ @Override
-    //$$ public void onInitializeClient()
-    //#else
-    @Subscribe
-    public void init(InitializationEvent e)
-    //#endif
-    {
-        CommandManager.registerCommand(new TestCommand_Test());
-        new TestConfig_Test();
+    public Pair(A first, B second) {
+        this.first = first;
+        this.second = second;
     }
 }

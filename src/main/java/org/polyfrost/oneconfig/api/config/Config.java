@@ -26,17 +26,34 @@
 
 package org.polyfrost.oneconfig.api.config;
 
-import org.polyfrost.oneconfig.api.config.data.Category;
-import org.polyfrost.oneconfig.api.config.data.Mod;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.polyfrost.polyui.input.Translator;
 import org.polyfrost.polyui.renderer.data.PolyImage;
 
+import java.util.ArrayList;
+import java.util.function.Supplier;
+
 public class Config {
-    public final String id;
-    public final Mod mod;
-    public Config(String id, PolyImage icon, Translator.Text name, Category category) {
+    public transient final String id;
+    public transient final PolyImage icon;
+    public transient final Translator.Text name;
+    public boolean enabled = true;
+    public boolean favorite = false;
+    // todo(?) public transient boolean hasUpdate = true;
+    @ApiStatus.Internal
+    public transient final ArrayList<PolyImage> data = new ArrayList<>(3);
+    public transient final Category category;
+    @ApiStatus.Internal
+    public transient final Tree tree;
+
+    public Config(@NotNull String id, @Nullable PolyImage icon, @NotNull Translator.Text name, Category category) {
         this.id = id;
-        mod = new Mod(icon, name, category, null);
+        this.icon = icon;
+        this.name = name;
+        this.category = category;
+        this.tree = ConfigManager.INSTANCE.register(this);
     }
 
     public Config(String id, Translator.Text name, Category category) {
@@ -44,10 +61,45 @@ public class Config {
     }
 
     public Config(String id, String iconPath, String name, Category category) {
-        this(id, new PolyImage(iconPath), new Translator.Text(name), category);
+        this(id, iconPath == null ? null : new PolyImage(iconPath), new Translator.Text(name), category);
     }
 
     public Config(String id, String name, Category category) {
         this(id, null, new Translator.Text(name), category);
+    }
+
+
+    public void addDependency(String option, Supplier<Boolean> condition) {
+        Property<?> p = tree.get(option);
+        if(p == null) throw new IllegalArgumentException("Attempted to specify a condition for property " + option + " but it was not found");
+        p.addDisplayCondition(condition);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Config config = (Config) o;
+        return id.equals(config.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return id.hashCode();
+    }
+
+    public enum Category {
+        HUD("hud.svg", "oneconfig.hud"),
+        COMBAT("console.svg", "oneconfig.combat"),
+        QOL("spanner.svg", "oneconfig.qol"),
+        HYPIXEL("hypixel.svg", "oneconfig.hypixel"),
+        OTHER(null, "oneconfig.other");
+
+        public final String name;
+        public final String iconPath;
+        Category(String iconPath, String name) {
+            this.iconPath = iconPath;
+            this.name = name;
+        }
     }
 }

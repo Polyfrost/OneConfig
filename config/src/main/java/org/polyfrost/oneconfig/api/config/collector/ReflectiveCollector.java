@@ -49,7 +49,6 @@ public abstract class ReflectiveCollector implements PropertyCollector {
 
     @Override
     public @Nullable Tree collect(@Nullable String id, @NotNull Object src) {
-        // if(!(src instanceof Config)) return null;
         Tree.Builder b = Tree.tree(id == null ? src.getClass().getSimpleName() : id);
         handle(b, src, 0);
         return b.build();

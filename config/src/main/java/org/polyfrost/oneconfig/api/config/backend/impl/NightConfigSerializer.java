@@ -42,8 +42,10 @@ import org.polyfrost.oneconfig.api.config.Property;
 import org.polyfrost.oneconfig.api.config.Tree;
 import org.polyfrost.oneconfig.api.config.backend.impl.file.FileSerializer;
 
+import java.awt.*;
 import java.io.File;
-import java.util.List;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Map;
 
 import static org.polyfrost.oneconfig.api.config.Property.prop;
@@ -81,9 +83,16 @@ public class NightConfigSerializer implements FileSerializer {
 
     protected void add(Tree c, Config cfg) {
         for (Property<?> p : c.values) {
+            if(p.getMetadata("synthetic") != null) continue;
             Object o = p.get();
-            if (!(p.isPrimitiveArray() || o instanceof CharSequence || o instanceof Number || o instanceof Boolean || o instanceof Enum || o instanceof Config || o instanceof Object[] || o instanceof List<?>)) {
-                cfg.add(p.name, ObjectSerializer.INSTANCE.convertFromField(o));
+            if(o == null) continue;
+            if(o instanceof Color) {
+                Color color = (Color) o;
+                cfg.add(p.name, Arrays.asList(color.getRed(), color.getBlue(), color.getGreen(), color.getAlpha()));
+                continue;
+            }
+            if (!ObjectSerializer.isNightConfigSerializable(o)) {
+                cfg.add(p.name, ObjectSerializer.serialize(o));
             } else cfg.add(p.name, p.get());
         }
         for (Tree t : c.children) {
@@ -103,10 +112,19 @@ public class NightConfigSerializer implements FileSerializer {
         for (Map.Entry<String, Object> e : cfg.entrySet()) {
             if (e.getValue() instanceof Config) {
                 if (((Config) e.getValue()).get("classType") != null) {
-                    b.put(prop(e.getKey(), ObjectSerializer.INSTANCE.convertToField((Config) e.getValue())));
+                    b.put(prop(e.getKey(), ObjectSerializer.deserializeComplexObject((Config) e.getValue())));
                 } else b.put(read(((Config) e.getValue()).valueMap(), tree(e.getKey())));
             } else {
-                b.put(prop(e.getKey(), e.getValue()));
+                Object v = e.getValue();
+                if(v instanceof ArrayList) {
+                    ArrayList<?> l = (ArrayList<?>) v;
+                    if(l.size() == 4 && l.get(0) instanceof Integer) {
+                        ArrayList<Integer> ll = (ArrayList<Integer>) l;
+                        b.put(prop(e.getKey(), new Color(ll.get(0), ll.get(1), ll.get(2), ll.get(3))));
+                        continue;
+                    }
+                }
+                b.put(prop(e.getKey(), v));
             }
         }
         return b.build();

@@ -47,7 +47,7 @@
 
 package org.polyfrost.oneconfig.ui.elements
 
-import org.polyfrost.oneconfig.api.config.data.Mod
+import org.polyfrost.oneconfig.api.config.Config
 import org.polyfrost.polyui.component.ContainingComponent
 import org.polyfrost.polyui.component.impl.Block
 import org.polyfrost.polyui.component.impl.Image
@@ -62,7 +62,7 @@ import org.polyfrost.polyui.utils.fastEachIndexed
 @Suppress("UNCHECKED_CAST")
 class Card(
     at: Vec2<Unit>,
-    private val mod: Mod,
+    private val configData: Config,
     events: EventDSL<Card>.() -> kotlin.Unit = {},
 ) : ContainingComponent(
     properties = CardProperties,
@@ -83,12 +83,12 @@ class Card(
     events = events as EventDSL<ContainingComponent>.() -> kotlin.Unit,
 ) {
     var enabled: Boolean
-        get() = mod.enabled
+        get() = configData.enabled
         set(value) {
-            mod.enabled = value
+            configData.enabled = value
         }
-    val icon = if (mod.icon != null) Image(image = mod.icon, at = origin, acceptInput = false) else null
-    val title = Text(at = origin, initialText = mod.name, acceptInput = false, fontSize = 16.px)
+    val icon = if (configData.icon != null) Image(image = configData.icon, at = origin, acceptInput = false) else null
+    val title = Text(at = origin, initialText = configData.name, acceptInput = false, fontSize = 16.px)
     override val properties
         get() = super.properties as CardProperties
 
@@ -102,9 +102,9 @@ class Card(
             icon.x = width / 2f - icon.width / 2f
             icon.y = 104f / 2f - icon.height / 2f
         }
-        title.x = if (mod.favorite) CardProperties.lateralPadding else width / 2f - title.width / 2f
+        title.x = if (configData.favorite) CardProperties.lateralPadding else width / 2f - title.width / 2f
         title.y = 104f + 36f / 2f - title.height / 2f
-        mod.data.fastEach {
+        configData.data.fastEach {
             it.width = 16f
             it.height = 16f
         }
@@ -112,10 +112,10 @@ class Card(
 
     override fun render() {
         super.render()
-        if (mod.data.size != 0) {
-            val height = mod.data.size * 16f + (mod.data.size + 1) * 6f
+        if (configData.data.size != 0) {
+            val height = configData.data.size * 16f + (configData.data.size + 1) * 6f
             renderer.rect(width - 37f, 6f, 28f, height, CardProperties.bgColor, 14f)
-            mod.data.fastEachIndexed { i, it ->
+            configData.data.fastEachIndexed { i, it ->
                 renderer.image(it, width - 37f + 6f, 6f + 6f + i * 22f)
             }
         }

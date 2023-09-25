@@ -22,7 +22,7 @@
 
 package org.polyfrost.oneconfig.ui
 
-import org.polyfrost.oneconfig.internal.config.ConfigManager
+import org.polyfrost.oneconfig.api.config.ConfigManager
 import org.polyfrost.oneconfig.ui.elements.ColorPicker
 import org.polyfrost.oneconfig.ui.pages.ModsPage
 import org.polyfrost.oneconfig.ui.pages.Page
@@ -60,7 +60,7 @@ fun create(): PolyUIScreen {
         makesScrolling = true,
     )
 
-    val modsPage = ModsPage(ConfigManager.INSTANCE.mods, content)
+    val modsPage = ModsPage(ConfigManager.INSTANCE.trees(), content)
 
     val slideyBoi = Block(
         properties = BlockProperties(cornerRadii = 7f.radii(), outlineThickness = 2f),

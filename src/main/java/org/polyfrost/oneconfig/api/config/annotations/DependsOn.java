@@ -2,7 +2,7 @@
  * This file is part of OneConfig.
  * OneConfig - Next Generation Config Library for Minecraft: Java Edition
  * Copyright (C) 2021~2023 Polyfrost.
- *   <https://polyfrost.org> <https://github.com/Polyfrost/>
+ *   <https://polyfrost.cc> <https://github.com/Polyfrost/>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -21,19 +21,29 @@
  * License.  If not, see <https://www.gnu.org/licenses/>. You should
  * have also received a copy of the Additional Terms Applicable
  * to OneConfig, as published by Polyfrost. If not, see
- * <https://polyfrost.org/legal/oneconfig/additional-terms>
+ * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.api.config.util;
+package org.polyfrost.oneconfig.api.config.annotations;
 
-public class Triple<A, B, C> {
-    public A first;
-    public B second;
-    public C third;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+import java.util.function.Supplier;
+import org.polyfrost.oneconfig.api.config.Config;
+import org.polyfrost.oneconfig.api.config.Property;
 
-    public Triple(A first, B second, C third) {
-        this.first = first;
-        this.second = second;
-        this.third = third;
-    }
+/**
+ * Annotation used to specify conditions for this property. Apply this annotation to a field or button method.
+ * <br>
+ * The value contains an array of strings, with each string being the fully qualified path using dots '.' to the condition property.
+ * Any property in the array must be a {@link Boolean}.
+ * <br><br>
+ * For complex conditions, use {@link Config#addDependency(String, Supplier)} or {@link Property#addDisplayCondition(Supplier)}.
+ */
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.METHOD, ElementType.FIELD})
+public @interface DependsOn {
+    String[] value();
 }

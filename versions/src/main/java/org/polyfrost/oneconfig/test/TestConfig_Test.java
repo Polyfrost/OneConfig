@@ -30,6 +30,7 @@ import org.polyfrost.oneconfig.api.config.Config;
 import org.polyfrost.oneconfig.api.config.annotations.Accordion;
 import org.polyfrost.oneconfig.api.config.annotations.Button;
 import org.polyfrost.oneconfig.api.config.annotations.Color;
+import org.polyfrost.oneconfig.api.config.annotations.DependsOn;
 import org.polyfrost.oneconfig.api.config.annotations.Dropdown;
 import org.polyfrost.oneconfig.api.config.annotations.Keybind;
 import org.polyfrost.oneconfig.api.config.annotations.RadioButton;
@@ -37,7 +38,6 @@ import org.polyfrost.oneconfig.api.config.annotations.Slider;
 import org.polyfrost.oneconfig.api.config.annotations.Switch;
 import org.polyfrost.oneconfig.api.config.annotations.Number;
 import org.polyfrost.oneconfig.api.config.annotations.Text;
-import org.polyfrost.oneconfig.api.config.data.Category;
 import org.polyfrost.oneconfig.libs.universal.UChat;
 import org.polyfrost.polyui.color.PolyColor;
 import org.polyfrost.polyui.input.KeyBinder;
@@ -45,7 +45,14 @@ import org.polyfrost.polyui.input.Modifiers;
 import org.polyfrost.polyui.unit.SlideDirection;
 import org.polyfrost.polyui.utils.Utils;
 
+@SuppressWarnings("unused")
 public class TestConfig_Test extends Config {
+
+    public static void main(String[] args) {
+        TestConfig_Test t = new TestConfig_Test();
+        System.out.println(t.tree.toString());
+    }
+
     @Switch(
             title = "Chicken",
             subcategory = "Chick"
@@ -56,10 +63,35 @@ public class TestConfig_Test extends Config {
     public static boolean cow = false;
 
     @Keybind(title = "keybinding", description = "please send help")
-    KeyBinder.Bind b = new KeyBinder.Bind('A', null, null, Modifiers.mods(Modifiers.LCONTROL, Modifiers.LSHIFT), () -> {
+    KeyBinder.Bind bind0 = new KeyBinder.Bind('A', null, null, Modifiers.mods(Modifiers.LCONTROL, Modifiers.LSHIFT), () -> {
         UChat.chat("you pressed a bind");
         return true;
     });
+
+    @Dropdown(title = "drop")
+    public static int[] dropint = new int[]{23, 2, 24};
+
+    @Dropdown(title = "drop")
+    public static String[] dropstr = new String[]{"23", "2", "24"};
+
+    @Dropdown(title = "drop")
+    public static boolean[] dropbool = new boolean[]{true, false, true};
+
+    @Dropdown(title = "drop")
+    public static float[] dropfloat = new float[]{23f, 2f, 24f};
+
+    @Dropdown(title = "drop")
+    public static double[] dropdouble = new double[]{23d, 2d, 24d};
+
+    @Dropdown(title = "drop")
+    public static long[] droplong = new long[]{23L, 2L, 24L};
+
+    @Dropdown(title = "drop")
+    public static short[] dropshort = new short[]{23, 2, 24};
+
+    @Dropdown(title = "drop")
+    public static Boolean[] dropboolean = new Boolean[]{true, false, true};
+
 
     @Color(title = "color", category = "bob")
     PolyColor color = Utils.rgba(255, 0, 100, 1f);
@@ -72,7 +104,7 @@ public class TestConfig_Test extends Config {
     @Number(title = "number", unit = "px", category = "bob")
     public static int number = 50;
 
-    @Slider(title = "Slide", min = 0f, max = 100f, icon = "paintbrush.svg", description = "I do sliding", category = "bob")
+    @Slider(title = "Slide", min = 10f, max = 110f, icon = "paintbrush.svg", description = "I do sliding", category = "bob")
     public static float p = 50f;
 
     @Text(title = "Text")
@@ -123,6 +155,7 @@ public class TestConfig_Test extends Config {
         public static String text = "Hello world!";
 
         @Switch(title = "Cow", description = "Something that is way too long and is going to be trimmed (I hope) because that is what its meant to do")
+        @DependsOn("cow2")
         public static boolean cbow = false;
 
         @RadioButton(title = "radio when me when me when me:", description = "send help")

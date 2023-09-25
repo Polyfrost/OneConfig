@@ -43,7 +43,7 @@ public class Property<T> implements Serializable {
     /**
      * This is the actual value of the property, and is what is stored.
      */
-    @NotNull
+    @Nullable
     private T value;
 
     public final Class<T> type;
@@ -55,16 +55,20 @@ public class Property<T> implements Serializable {
     @NotNull
     public final String name;
 
-    private transient final ArrayList<@NotNull Consumer<@NotNull T>> callbacks = new ArrayList<>(3);
+    transient final ArrayList<@NotNull Consumer<@NotNull T>> callbacks = new ArrayList<>(3);
     private transient boolean display = true;
     private transient final ArrayList<Supplier<Boolean>> conditions = new ArrayList<>(2);
-    private transient final Map<String, Object> metadata = new HashMap<>(10);
+    transient final Map<String, Object> metadata = new HashMap<>(10);
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "ConstantConditions"})
     public Property(@NotNull String name, @NotNull T value) {
+        this(name, value, (Class<T>) value.getClass());
+    }
+
+    public Property(@NotNull String name, @Nullable T value, @NotNull Class<T> type) {
         this.value = value;
         this.name = name;
-        this.type = (Class<T>) value.getClass();
+        this.type = type;
     }
 
     public Property(@NotNull T value) {
@@ -80,17 +84,12 @@ public class Property<T> implements Serializable {
         return display;
     }
 
-    /**
-     * Add multiple display conditions to this property.
-     */
-    public void addDisplayConditions(@NotNull Collection<Supplier<Boolean>> conditions) {
-        this.conditions.addAll(conditions);
-        display = conditions.stream().allMatch(Supplier::get);
-        this.conditions.trimToSize();
-    }
-
     public void addMetadata(@NotNull String key, @Nullable Object value) {
         metadata.put(key, value);
+    }
+
+    public void addMetadata(@NotNull Map<String, Object> metadata) {
+        this.metadata.putAll(metadata);
     }
 
     public void removeMetadata(@NotNull String key) {
@@ -106,6 +105,16 @@ public class Property<T> implements Serializable {
      */
     public void addDisplayCondition(@NotNull Supplier<Boolean> condition) {
         conditions.add(condition);
+        evaluateDisplay();
+    }
+
+    @SafeVarargs
+    public final void addDisplayCondition(@NotNull Supplier<Boolean>... conditions) {
+        this.conditions.addAll(Arrays.asList(conditions));
+        evaluateDisplay();
+    }
+
+    public void evaluateDisplay() {
         display = conditions.stream().allMatch(Supplier::get);
     }
 
@@ -114,7 +123,7 @@ public class Property<T> implements Serializable {
      */
     public void removeDisplayCondition(@NotNull Supplier<Boolean> condition) {
         conditions.remove(condition);
-        display = conditions.stream().allMatch(Supplier::get);
+        evaluateDisplay();
     }
 
     /**
@@ -140,11 +149,13 @@ public class Property<T> implements Serializable {
 
     /**
      * Add multiple callbacks to this property.
+     * <br> Due to type erasure, the signature of this method is wildcard-ed. It should be {@code Collection<Consumer<T>>}, but that is not possible.
      *
      * @see #addCallback(Consumer)
      */
-    public void addCallbacks(@NotNull Collection<@NotNull Consumer<@NotNull T>> callbacks) {
-        this.callbacks.addAll(callbacks);
+    @SuppressWarnings("unchecked")
+    public void addCallbacks(@NotNull Collection<? extends @NotNull Consumer<?>> callbacks) {
+        this.callbacks.addAll((Collection<Consumer<T>>) callbacks);
     }
 
     /**
@@ -194,7 +205,7 @@ public class Property<T> implements Serializable {
     /**
      * Get the value of this property.
      */
-    @NotNull
+    @Nullable
     public T get() {
         return value;
     }
@@ -289,22 +300,29 @@ public class Property<T> implements Serializable {
      * @return true if the value is a primitive array.
      */
     public boolean isPrimitiveArray() {
-        return value.getClass().isArray() && value.getClass().getComponentType().isPrimitive();
+        return type.isArray() && type.getComponentType().isPrimitive();
     }
 
     /**
      * @return true if the value is an array.
      */
     public boolean isArray() {
-        return value.getClass().isArray();
+        return type.isArray();
     }
 
-    public static <T> Property<T> prop(T value) {
+    public static <T> Property<T> prop(@NotNull T value) {
         return new Property<>(value);
     }
 
-    public static <T> Property<T> prop(String name, T value) {
+    @SuppressWarnings("ConstantConditions")
+    public static <T> Property<T> prop(@NotNull String name, @NotNull T value) {
+        if(value == null) throw new IllegalArgumentException("Cannot create a property with a null value");
         return new Property<>(name, value);
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T> Property<T> prop(@NotNull String name, @Nullable T value, @NotNull Class<?> type) {
+        return new Property<>(name, value, (Class<T>) type);
     }
 
 

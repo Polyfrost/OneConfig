@@ -100,7 +100,7 @@ class TreeTest {
                 )
         ).build();
         Tree correct = tree("a").put(
-                prop(2),        // !
+                prop(7),        // !
                 prop("test"),
                 prop("newThing", "yes"),
                 prop("newPointer", 394891),
@@ -110,18 +110,18 @@ class TreeTest {
         ).put(
                 tree("bob").put(
                         prop("test2"),
-                        prop(false),        // !
-                        prop("fish", 4000) // !
+                        prop(true),        // !
+                        prop("fish", 2000) // !
                 ).put(
                         tree("bob2").put(
-                                prop("GL"),        // !
+                                prop("c"),        // !
                                 prop("lc", "d"),
                                 prop("anotherNewThing", new float[]{42f, 52f, 62f}),
                                 prop(new int[]{23, 42, 52})
                         )
                 )
         ).build();
-        tree.overwriteWith(tree2, true);
+        tree.merge(tree2, true, true);
         Util.assertContentEquals(correct, tree);
     }
 

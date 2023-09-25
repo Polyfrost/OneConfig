@@ -78,6 +78,7 @@ public class ReflectiveHudCollector extends OneConfigCollector {
 		if (!ps[7].getType().equals(double.class)) throw new IllegalArgumentException("CustomComponent method " + m.getName() + " must have last parameter of type double");
 
 		Property<?> p = prop(m.getName() + "$synthetic", m);
+        p.addMetadata("synthetic", true);
 		m.setAccessible(true);
 		MethodHandle methodHandle;
 		try {

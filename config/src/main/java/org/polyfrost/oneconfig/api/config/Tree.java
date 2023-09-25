@@ -39,6 +39,7 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 
 /**
  * The Tree class represents a tree structure that contains properties and other trees as children.
@@ -71,12 +72,26 @@ public class Tree implements Serializable {
 
     @Nullable
     public Property<?> get(@NotNull String name) {
-        for (Property<?> p : values) {
-            if (p.name.equals(name)) {
-                return p;
+        if (name.contains(".")) {
+            String[] names = name.split("\\.");
+            Tree t = this;
+            int i = 0;
+            while (i < names.length - 1) {
+                t = t.getChild(names[i]);
+                if (t == null) {
+                    return null;
+                }
+                i++;
             }
+            return t.get(names[i + 1]);
+        } else {
+            for (Property<?> p : values) {
+                if (p.name.equals(name)) {
+                    return p;
+                }
+            }
+            return null;
         }
-        return null;
     }
 
     @Nullable
@@ -89,8 +104,25 @@ public class Tree implements Serializable {
         return null;
     }
 
+    public void onAll(Consumer<Property<?>> action) {
+        _onAll(this, action);
+    }
+
+    private static void _onAll(Tree t, Consumer<Property<?>> action) {
+        for(Property<?> p : t.values) {
+            action.accept(p);
+        }
+        for(Tree tt : t.children) {
+            _onAll(tt, action);
+        }
+    }
+
     public void addMetadata(@NotNull String key, @Nullable Object value) {
         metadata.put(key, value);
+    }
+
+    public void addMetadata(@NotNull Map<String, Object> metadata) {
+        this.metadata.putAll(metadata);
     }
 
     public void removeMetadata(@NotNull String key) {
@@ -167,29 +199,41 @@ public class Tree implements Serializable {
 
 
     /**
-     * Overwrite all matching properties in this tree with the properties from the given tree.
+     * Merge two trees into one. This method is very powerful and should be used with care.
      * <br>
-     * If the input tree contains values that are not in this tree, it will be added to this tree if add is true.
+     * If the input tree contains values that are not in this tree, it will be added to this tree.
+     * <br>
+     * If overwrite is true, all values that are in both trees will be overwritten from the provided tree into this tree.
+     * <br>
+     * This tree should have identical structure to the passed tree when this method is completed.
+     * <br>
+     * copyMeta will mean that the metadata from the input tree will be copied into this tree.
      *
-     * @throws ClassCastException if the types of the properties (with the same name) do not match
+     * @throws ClassCastException        if the types of the properties (with the same name) do not match
+     * @throws IndexOutOfBoundsException if the trees are not somewhat similar in structure.
      */
-    public void overwriteWith(Tree tree, boolean add) {
+    public void merge(Tree tree, boolean overwrite, boolean copyMeta) {
         if (tree == null) return;
-        for (int i = 0; i < this.values.size(); i++) {
+        for (int i = 0; i < tree.values.size(); i++) {
             Property<?> value = tree.values.get(i);
             Property<?> p = this.get(value.name);
             if (p != null) {
-                p.setUnchecked(value.get());
-            } else if (add) {
+                if (overwrite) p.setUnchecked(value.get());
+                if (copyMeta) {
+                    p.addMetadata(value.metadata);
+                    p.addCallbacks(value.callbacks);
+                }
+            } else {
                 this.values.add(i, value);
             }
         }
-        for (int i = 0; i < this.children.size(); i++) {
+        for (int i = 0; i < tree.children.size(); i++) {
             Tree child = tree.children.get(i);
             Tree c = this.getChild(child.id);
             if (c != null) {
-                c.overwriteWith(child, add);
-            } else if (add) {
+                c.merge(child, overwrite, copyMeta);
+                if (copyMeta) c.addMetadata(child.metadata);
+            } else {
                 this.children.add(child);
             }
         }

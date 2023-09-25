@@ -32,6 +32,8 @@ import org.polyfrost.oneconfig.api.config.Tree;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collection;
+
 /**
  * A backend is a storage system for ConfigTrees.
  * <br>
@@ -39,6 +41,8 @@ import org.slf4j.LoggerFactory;
  */
 public interface Backend {
     Logger LOGGER = LoggerFactory.getLogger("OneConfig Config API Backend");
+
+    Backend addSerializers(Serializer... serializers);
 
     /**
      * Put a ConfigTree into the storage system.
@@ -69,4 +73,6 @@ public interface Backend {
      * Refresh all currently registered ConfigTrees.
      */
     void refresh();
+
+    Collection<Tree> getTrees();
 }

@@ -75,7 +75,6 @@ class FileBackendTest {
         Util.assertContentEquals(toml, hocon);
     }
 
-    @Test
     void putAndGetAreEqual() {
         Tree tree = newTree("test." + type);
         backend.put(tree);

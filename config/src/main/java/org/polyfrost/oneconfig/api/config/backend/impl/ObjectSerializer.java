@@ -46,20 +46,29 @@ import java.util.List;
  * all the fields back to the object.
  */
 public class ObjectSerializer {
-    public static final ObjectSerializer INSTANCE = new ObjectSerializer();
     private static final Unsafe theUnsafe = getUnsafe();
 
-    public Object convertToField(Config value) {
+    public static Object deserializeComplexObject(Config value) {
         String s = value.get("classType");
+        Class<?> cls;
+        try {
+            cls = Class.forName(s);
+        } catch (Exception e) {
+            throw new SerializationException("Failed to deserialize object: Target class not found", e);
+        }
         Object o;
         try {
-            Constructor<?> ctor = Class.forName(s).getDeclaredConstructor();
+            Constructor<?> ctor = cls.getDeclaredConstructor();
             ctor.setAccessible(true);
             o = ctor.newInstance();
         } catch (NoSuchMethodException ignored) {
             if (theUnsafe != null) {
                 try {
-                    o = theUnsafe.allocateInstance(Class.forName(s));
+                    if(cls.isArray()) {
+                        o = new ArrayList<>();
+                    } else {
+                        o = theUnsafe.allocateInstance(Class.forName(s));
+                    }
                 } catch (Exception e) {
                     throw new SerializationException("Failed to allocate deserializing object", e);
                 }
@@ -73,31 +82,14 @@ public class ObjectSerializer {
             if (e.getKey().equals("classType")) continue;
             try {
                 Field f = getDeclaredField(o.getClass(), e.getKey());
+                if(f == null) continue;
                 f.setAccessible(true);
-                Class<?> type = f.getType();
                 if (f.getType().isEnum()) {
-                    f.set(o, Enum.valueOf((Class<Enum>) f.getType(), e.getValue()));
-                } else if (type.equals(float.class) || type.equals(Float.class)) {
-                    f.set(o, ((Number) e.getValue()).floatValue());
+                    f.set(o, Enum.valueOf((Class) f.getType(), e.getValue()));
                 } else if (e.getValue() instanceof Config) {
-                    f.set(o, convertToField(e.getValue()));
+                    f.set(o, deserializeComplexObject(e.getValue()));
                 } else {
-                    Object out = unboxFully(e.getValue(), getPrimitiveWrapperFor(type));
-                    if (out instanceof Number[]) {
-                        Number[] a = ((Number[]) out);
-                        if (type.equals(float[].class) || type.equals(Float[].class)) {
-                            for (int i = 0; i < a.length; i++) {
-                                a[i] = ((Number) e.getValue()).floatValue();
-                            }
-                        }
-                    } else if (List.class.isAssignableFrom(type)) {
-                        List<?> list = e.getValue();
-                        ArrayList<Object> arr = new ArrayList<>(list.size());
-                        for (int i = 0; i < list.size(); i++) {
-                            arr.add(i, ObjectSerializer.INSTANCE.convertFromField(list.get(i)));
-                        }
-                        out = arr;
-                    }
+                    Object out = unbox(e.getValue());
                     f.set(o, out);
                 }
             } catch (Exception ex) {
@@ -107,26 +99,15 @@ public class ObjectSerializer {
         return o;
     }
 
-    public static Class<?> getPrimitiveWrapperFor(Class<?> cls) {
-        if (cls.isArray() && cls.getComponentType().isPrimitive()) {
-            return getPrimitiveWrapperFor(cls.getComponentType());
-        }
-        if (!cls.isPrimitive()) return cls;
-        if (cls.equals(boolean.class)) return Boolean.class;
-        if (cls.equals(byte.class)) return Byte.class;
-        if (cls.equals(short.class)) return Short.class;
-        if (cls.equals(int.class)) return Integer.class;
-        if (cls.equals(long.class)) return Long.class;
-        if (cls.equals(float.class)) return Float.class;
-        if (cls.equals(double.class)) return Double.class;
-        if (cls.equals(char.class)) return Character.class;
-        return cls;
-    }
-
     /**
      * Because casting arrays by default would be stupid!
      */
-    public static Object unbox(@NotNull Object in, Class<?> typ) {
+    public static Object unbox(@NotNull Object in) {
+        if (in instanceof List<?>) {
+            List<?> list = (List<?>) in;
+            if (list.isEmpty()) throw new IllegalStateException("Cannot unbox empty list to array https://docs.polyfrost.org/oneconfig/config/unbox-empty-list");
+            in = list.toArray((Object[]) Array.newInstance(list.get(0).getClass(), 0));
+        }
         if (!(in instanceof Object[])) return in;
         Object out;
         if (in instanceof Number[]) {
@@ -175,18 +156,7 @@ public class ObjectSerializer {
         return out;
     }
 
-    public static Object unboxFully(Object in, Class<?> target) {
-        if (in instanceof List<?>) {
-            List<?> list = (List<?>) in;
-            if (target == null && list.isEmpty()) throw new IllegalStateException("Cannot unbox empty list to array https://docs.polyfrost.org/oneconfig/config/unbox-empty-list");
-            Object[] arr = list.toArray((Object[]) Array.newInstance(list.get(0).getClass(), 0));
-            // cast arr to target
-            return unbox(arr, target);
-        }
-        return unbox(in, target);
-    }
-
-    private static Field getDeclaredField(Class<?> cls, String name) {
+    public static Field getDeclaredField(Class<?> cls, String name) {
         for (Field f : cls.getDeclaredFields()) {
             if (f.getName().equals(name)) return f;
         }
@@ -200,50 +170,63 @@ public class ObjectSerializer {
         return null;
     }
 
-    public Config convertFromField(Object value) {
+    public static Config serialize(Object value) {
         Config cfg = Config.inMemory();
         cfg.add("classType", value.getClass().getName());
-        convertInternal(value.getClass(), value, cfg);
+        _serialize(value.getClass(), value, cfg);
         return cfg;
     }
 
-    public static void convertInternal(Class<?> cls, Object value, Config cfg) {
+    private static void _serialize(Class<?> cls, Object value, Config cfg) {
         for (Field f : cls.getDeclaredFields()) {
             if (f.isSynthetic() || Modifier.isTransient(f.getModifiers()) || Modifier.isStatic(f.getModifiers()))
                 continue;
             f.setAccessible(true);
             try {
                 Object o = f.get(value);
+                System.out.println("serializing " + o + " source=");
+                // skip self references
+                if (o == value) continue;
                 if (o != null) {
                     if (o instanceof List<?>) {
                         List<?> list = (List<?>) o;
+                        if (list.isEmpty()) continue;
                         Object t = list.get(0);
-                        if (!(isPrimitiveArray(t) || t instanceof CharSequence || t instanceof Number || t instanceof Boolean || t instanceof Enum || t instanceof Config || t instanceof Object[])) {
+                        if (!isNightConfigSerializable(t)) {
                             Object[] out = list.toArray();
                             for (int i = 0; i < out.length; i++) {
-                                out[i] = ObjectSerializer.INSTANCE.convertFromField(out[i]);
+                                out[i] = serialize(out[i]);
                             }
                             cfg.add(f.getName(), out);
                         } else cfg.add(f.getName(), o);
                     }
-                    if (!(isPrimitiveArray(o) || o instanceof CharSequence || o instanceof Number || o instanceof Boolean || o instanceof Enum || o instanceof Config || o instanceof Object[])) {
-                        cfg.add(f.getName(), ObjectSerializer.INSTANCE.convertFromField(o));
+                    if (!isNightConfigSerializable(o)) {
+                        cfg.add(f.getName(), serialize(o));
                     } else cfg.add(f.getName(), o);
                 }
-            } catch (IllegalAccessException e) {
-                throw new SerializationException("Failed to serialize object", e);
+            } catch (Exception e) {
+                throw new SerializationException("Failed to serialize object " + value, e);
             }
         }
         for (Class<?> c : cls.getInterfaces()) {
-            convertInternal(c, value, cfg);
+            _serialize(c, value, cfg);
         }
         if (cls.getSuperclass() != null) {
-            convertInternal(cls.getSuperclass(), value, cfg);
+            _serialize(cls.getSuperclass(), value, cfg);
         }
     }
 
-    private static boolean isPrimitiveArray(Object o) {
+    public static boolean isNightConfigSerializable(Object o) {
+        if(o == null) return true;
         Class<?> cls = o.getClass();
+        return isPrimitiveArray(cls) && cls.isEnum() || isPrimitiveWrapper(o) || o instanceof CharSequence || o instanceof Config;
+    }
+
+    public static boolean isPrimitiveWrapper(Object o) {
+        return o instanceof Number || o instanceof Boolean || o instanceof Character;
+    }
+
+    public static boolean isPrimitiveArray(Class<?> cls) {
         return cls.isArray() && cls.getComponentType().isPrimitive();
     }
 

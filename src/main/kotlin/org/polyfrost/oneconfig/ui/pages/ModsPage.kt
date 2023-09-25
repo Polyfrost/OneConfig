@@ -21,8 +21,8 @@
 
 package org.polyfrost.oneconfig.ui.pages
 
-import org.polyfrost.oneconfig.api.config.data.Category
-import org.polyfrost.oneconfig.api.config.data.Mod
+import org.polyfrost.oneconfig.api.config.Config
+import org.polyfrost.oneconfig.api.config.Tree
 import org.polyfrost.oneconfig.internal.config.ConfigVisualizer
 import org.polyfrost.oneconfig.internal.config.ConfigVisualizer.addEventHandler
 import org.polyfrost.oneconfig.ui.elements.Card
@@ -39,8 +39,8 @@ import org.polyfrost.polyui.renderer.data.PolyImage
 import org.polyfrost.polyui.unit.*
 import org.polyfrost.polyui.utils.fastEach
 
-class ModsPage(mods: Collection<Mod>, val owner: SwitchingLayout) {
-    val cache = HashMap<Mod, Layout>()
+class ModsPage(trees: Collection<Tree>, val owner: SwitchingLayout) {
+    val cache = HashMap<Tree, Layout>()
     val noIconProps = object : ButtonProperties() {
         override val verticalPadding: Float
             get() = 8.5f
@@ -62,7 +62,7 @@ class ModsPage(mods: Collection<Mod>, val owner: SwitchingLayout) {
                 text = "oneconfig.mods".localised(),
                 fontSize = 16.px,
             ),
-            *Category.values().map {
+            *Config.Category.values().map {
                 val icon = if (it.iconPath != null) PolyImage(it.iconPath, 17f, 17f) else null
                 Button(
                     properties = if (icon == null) noIconProps else null,
@@ -81,21 +81,22 @@ class ModsPage(mods: Collection<Mod>, val owner: SwitchingLayout) {
             at = 0.px * 40.px,
             size = 1136.px * 0.px,
             gap = Gap(12.px, 12.px),
-            drawables = mods.map { mod ->
+            drawables = trees.mapNotNull { tree ->
+                val meta: Config = tree.getMetadata("meta") ?: return@mapNotNull null
                 val c = Card(
                     at = flex(),
-                    mod = mod,
+                    configData = meta,
                 )
                 c.children[0].addEventHandler(MouseClicked(0)) {
                     if (!c.enabled) return@addEventHandler false
-                    owner.switch(cache.getOrPut(mod) { ConfigVisualizer.create(owner.layout, mod.config) })
+                    owner.switch(cache.getOrPut(tree) { ConfigVisualizer.create(owner.layout, tree) })
                     true
                 }
                 c.children[1].addEventHandler(MouseClicked(0)) {
                     c.enabled = !c.enabled
                     true
                 }
-                return@map c
+                return@mapNotNull c
             }.toTypedArray(),
         ).scrolling(1126.px * 600.px)
     }
