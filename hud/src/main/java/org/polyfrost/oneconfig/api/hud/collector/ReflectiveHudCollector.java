@@ -45,8 +45,8 @@ import static org.polyfrost.oneconfig.api.config.Property.prop;
 
 public class ReflectiveHudCollector extends OneConfigCollector {
 	@Override
-	public void handleField(@NotNull Field f, @NotNull Object src, Tree.@NotNull Builder builder) {
-		super.handleField(f, src, builder);
+	public void handleField(@NotNull Field f, @NotNull Object src, @NotNull Tree tree) {
+		super.handleField(f, src, tree);
 		HudComponent c = f.getDeclaredAnnotation(HudComponent.class);
 		if (c == null) return;
 		try {
@@ -57,15 +57,15 @@ public class ReflectiveHudCollector extends OneConfigCollector {
 			Property<?> p = prop(f.getName(), f.get(src));
 			p.addMetadata("annotation", c);
 			p.addMetadata("isHud", "");
-			builder.put(p);
+			tree.put(p);
 		} catch (Exception e) {
 			throw new RuntimeException("Failed to get value of " + f.getName() + " for HUD component", e);
 		}
 	}
 
 	@Override
-	public void handleMethod(@NotNull Method m, @NotNull Object src, Tree.@NotNull Builder builder) {
-		super.handleMethod(m, src, builder);
+	public void handleMethod(@NotNull Method m, @NotNull Object src, @NotNull Tree tree) {
+		super.handleMethod(m, src, tree);
 		CustomComponent c = m.getDeclaredAnnotation(CustomComponent.class);
 		if (c == null) return;
 		if (m.getParameterCount() != 8) throw new IllegalArgumentException("CustomComponent method " + m.getName() + " must have signature of (UMatrixStack stack, float x, float y, float w, float h, float sx, float sy, double rotation");
@@ -89,6 +89,6 @@ public class ReflectiveHudCollector extends OneConfigCollector {
 		}
 		p.addMetadata("annotation", c);
 		p.addMetadata("render", methodHandle);
-		builder.put(p);
+		tree.put(p);
 	}
 }

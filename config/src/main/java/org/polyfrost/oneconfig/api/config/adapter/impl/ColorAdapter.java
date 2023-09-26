@@ -24,31 +24,29 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-plugins {
-    java
-    kotlin("jvm")
-}
+package org.polyfrost.oneconfig.api.config.adapter.impl;
 
-repositories {
-    mavenCentral()
-    maven("https://repo.polyfrost.org/releases")
-}
+import org.polyfrost.oneconfig.api.config.adapter.Adapter;
 
-java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(8))
+import java.awt.Color;
+import java.util.Arrays;
+import java.util.List;
+
+public class ColorAdapter extends Adapter<Color> {
+    @Override
+    @SuppressWarnings("unchecked")
+    public Color deserialize(Object in) {
+        List<Integer> l = (List<Integer>) in;
+        return new Color(l.get(0), l.get(1), l.get(2), l.get(3));
+    }
+
+    @Override
+    public Object serialize(Color in) {
+        return Arrays.asList(in.getRed(), in.getGreen(), in.getBlue(), in.getAlpha());
+    }
+
+    @Override
+    public Class<Color> getTargetClass() {
+        return Color.class;
     }
 }
-
-dependencies {
-    implementation("org.jetbrains:annotations:24.0.1")
-    implementation(libs.slf4jSimple)
-    implementation(rootProject.project(":config"))
-    implementation(libs.polyui)
-    implementation(project(":"))
-    compileOnly("org.polyfrost:universalcraft-1.8.9-forge:${libs.versions.universalcraft.get()}") {
-        isTransitive = false
-    }
-}
-
-

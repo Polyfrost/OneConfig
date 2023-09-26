@@ -52,8 +52,8 @@ class TreeTest {
                                 prop(new int[]{23, 42, 52})
                         )
                 )
-        ).build();
-        Util.assertContentEquals(tree, tree(tree).build());
+        );
+        Util.assertContentEquals(tree, tree(tree));
     }
 
     @Test
@@ -76,7 +76,7 @@ class TreeTest {
                                 prop(new int[]{23, 42, 52})
                         )
                 )
-        ).build();
+        );
         Tree tree2 = tree("g").put(
                 prop(7),
                 prop("test"),
@@ -98,7 +98,7 @@ class TreeTest {
                                 prop(new int[]{23, 42, 52})
                         )
                 )
-        ).build();
+        );
         Tree correct = tree("a").put(
                 prop(7),        // !
                 prop("test"),
@@ -120,7 +120,7 @@ class TreeTest {
                                 prop(new int[]{23, 42, 52})
                         )
                 )
-        ).build();
+        );
         tree.merge(tree2, true, true);
         Util.assertContentEquals(correct, tree);
     }

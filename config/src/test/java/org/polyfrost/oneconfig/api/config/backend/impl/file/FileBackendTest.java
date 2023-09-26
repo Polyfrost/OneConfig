@@ -104,6 +104,6 @@ class FileBackendTest {
                                 prop(l)
                         )
                 )
-        ).build();
+        );
     }
 }

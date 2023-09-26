@@ -38,14 +38,13 @@ import com.electronwill.nightconfig.yaml.YamlFormat;
 import com.electronwill.nightconfig.yaml.YamlParser;
 import com.electronwill.nightconfig.yaml.YamlWriter;
 import org.jetbrains.annotations.NotNull;
+import org.polyfrost.oneconfig.api.config.Node;
 import org.polyfrost.oneconfig.api.config.Property;
 import org.polyfrost.oneconfig.api.config.Tree;
 import org.polyfrost.oneconfig.api.config.backend.impl.file.FileSerializer;
+import org.polyfrost.oneconfig.api.config.util.ObjectSerializer;
 
-import java.awt.*;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Map;
 
 import static org.polyfrost.oneconfig.api.config.Property.prop;
@@ -70,9 +69,19 @@ public class NightConfigSerializer implements FileSerializer {
 
 
     @Override
+    @SuppressWarnings("unchecked")
     public @NotNull String serialize(@NotNull Tree c) {
         Config cfg = Config.inMemory();
         add(c, cfg);
+        for (Map.Entry<String, Object> e : cfg.valueMap().entrySet()) {
+            if (e.getValue() instanceof Map) {
+                Config cc = Config.inMemory();
+                for (Map.Entry<String, Object> ee : ((Map<String, Object>) e.getValue()).entrySet()) {
+                    cc.add(ee.getKey(), ee.getValue());
+                }
+                e.setValue(cc);
+            }
+        }
         return writer.writeToString(cfg);
     }
 
@@ -82,23 +91,22 @@ public class NightConfigSerializer implements FileSerializer {
     }
 
     protected void add(Tree c, Config cfg) {
-        for (Property<?> p : c.values) {
-            if(p.getMetadata("synthetic") != null) continue;
-            Object o = p.get();
-            if(o == null) continue;
-            if(o instanceof Color) {
-                Color color = (Color) o;
-                cfg.add(p.name, Arrays.asList(color.getRed(), color.getBlue(), color.getGreen(), color.getAlpha()));
-                continue;
+        for (Map.Entry<String, Node> e : c.map.entrySet()) {
+            Node n = e.getValue();
+            if (n.getMetadata("synthetic") != null) continue;
+            if (n instanceof Property<?>) {
+                Property<?> p = (Property<?>) n;
+                Object o = p.get();
+                if (o == null) continue;
+                if (!ObjectSerializer.isSimpleObject(o)) {
+                    cfg.add(p.getID(), ObjectSerializer.INSTANCE.serialize(o));
+                } else cfg.add(p.getID(), p.get());
+            } else {
+                Tree in = (Tree) n;
+                Config child = cfg.createSubConfig();
+                add(in, child);
+                cfg.add(in.getID(), child);
             }
-            if (!ObjectSerializer.isNightConfigSerializable(o)) {
-                cfg.add(p.name, ObjectSerializer.serialize(o));
-            } else cfg.add(p.name, p.get());
-        }
-        for (Tree t : c.children) {
-            Config child = cfg.createSubConfig();
-            add(t, child);
-            cfg.add(t.id, child);
         }
     }
 
@@ -108,25 +116,18 @@ public class NightConfigSerializer implements FileSerializer {
         return read(cfg.valueMap(), tree(id));
     }
 
-    protected static Tree read(Map<String, Object> cfg, Tree.Builder b) {
+    protected static Tree read(Map<String, Object> cfg, Tree b) {
         for (Map.Entry<String, Object> e : cfg.entrySet()) {
             if (e.getValue() instanceof Config) {
-                if (((Config) e.getValue()).get("classType") != null) {
-                    b.put(prop(e.getKey(), ObjectSerializer.deserializeComplexObject((Config) e.getValue())));
-                } else b.put(read(((Config) e.getValue()).valueMap(), tree(e.getKey())));
+                Config c = (Config) e.getValue();
+                if (c.get("classType") != null) {
+                    b.put(prop(e.getKey(), ObjectSerializer.INSTANCE.deserialize(((Config) e.getValue()).valueMap())));
+                } else b.put(read(c.valueMap(), tree(e.getKey())));
             } else {
                 Object v = e.getValue();
-                if(v instanceof ArrayList) {
-                    ArrayList<?> l = (ArrayList<?>) v;
-                    if(l.size() == 4 && l.get(0) instanceof Integer) {
-                        ArrayList<Integer> ll = (ArrayList<Integer>) l;
-                        b.put(prop(e.getKey(), new Color(ll.get(0), ll.get(1), ll.get(2), ll.get(3))));
-                        continue;
-                    }
-                }
                 b.put(prop(e.getKey(), v));
             }
         }
-        return b.build();
+        return b;
     }
 }

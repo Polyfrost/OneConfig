@@ -53,11 +53,11 @@ import static org.polyfrost.oneconfig.api.config.Tree.tree;
 public abstract class VigilantMixin {
     @Inject(method = "<init>(Ljava/io/File;Ljava/lang/String;Lgg/essential/vigilance/data/PropertyCollector;Lgg/essential/vigilance/data/SortingBehavior;ILkotlin/jvm/internal/DefaultConstructorMarker;)V", at = @At("TAIL"))
     public void oneconfig$compat(File file, String title, PropertyCollector collector, SortingBehavior par4, int par5, DefaultConstructorMarker par6, CallbackInfo ci) {
-        Tree.Builder b = tree(file.getName());
+        Tree b = tree(file.getName());
         for (PropertyData data : collector.getProperties()) {
             PropertyAttributesExt attrs = data.getAttributesExt();
             String sub = attrs.getSubcategory();
-            Tree.Builder bt = tree(attrs.getName());
+            Tree bt = tree(attrs.getName());
             bt.put(
                     prop("description", attrs.getDescription()),
                     prop("title", attrs.getName()),
@@ -115,12 +115,12 @@ public abstract class VigilantMixin {
                     // todo
                     break;
                 default:
-                    System.out.println("[OneConfig VCAL] Unknown type: " + data.getDataType());
+                    System.err.println("[OneConfig VCAL] Unknown type: " + data.getDataType());
                     break;
             }
             b.put(bt);
         }
-        ConfigManager.INSTANCE.supplyMetadata(file.getName(), b.build(), false);
+        ConfigManager.INSTANCE.supplyMetadata(file.getName(), b, false);
     }
 
 }

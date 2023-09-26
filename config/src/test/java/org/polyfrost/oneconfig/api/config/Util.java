@@ -30,7 +30,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 public class Util {
     public static void assertContentEquals(Tree t, Tree t2) {
-        if (!t.contentEquals(t2, true)) {
+        if (!t.deepEquals(t2)) {
             fail("Trees are not equal!\n" + t + "\n" + t2);
         }
     }

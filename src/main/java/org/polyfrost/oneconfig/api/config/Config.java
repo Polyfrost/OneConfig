@@ -35,6 +35,8 @@ import org.polyfrost.polyui.renderer.data.PolyImage;
 import java.util.ArrayList;
 import java.util.function.Supplier;
 
+import static org.polyfrost.oneconfig.api.config.Tree.LOGGER;
+
 public class Config {
     public transient final String id;
     public transient final PolyImage icon;
@@ -46,14 +48,13 @@ public class Config {
     public transient final ArrayList<PolyImage> data = new ArrayList<>(3);
     public transient final Category category;
     @ApiStatus.Internal
-    public transient final Tree tree;
+    private transient Tree tree = null;
 
     public Config(@NotNull String id, @Nullable PolyImage icon, @NotNull Translator.Text name, Category category) {
         this.id = id;
         this.icon = icon;
         this.name = name;
         this.category = category;
-        this.tree = ConfigManager.INSTANCE.register(this);
     }
 
     public Config(String id, Translator.Text name, Category category) {
@@ -68,9 +69,23 @@ public class Config {
         this(id, null, new Translator.Text(name), category);
     }
 
+    public Tree getTree() {
+        if(tree == null) throw new NullPointerException("Illegal access to config " + id + "'s tree: Not registered yet");
+        return tree;
+    }
+
+    public boolean register() {
+        if(tree != null) {
+            LOGGER.error("Config attempted to be registered twice: " + id);
+            return false;
+        }
+        tree = ConfigManager.INSTANCE.register(this);
+        return true;
+    }
+
 
     public void addDependency(String option, Supplier<Boolean> condition) {
-        Property<?> p = tree.get(option);
+        Property<?> p = tree.getProperty(option);
         if(p == null) throw new IllegalArgumentException("Attempted to specify a condition for property " + option + " but it was not found");
         p.addDisplayCondition(condition);
     }

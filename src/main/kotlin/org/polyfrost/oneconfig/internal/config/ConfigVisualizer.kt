@@ -226,7 +226,7 @@ object ConfigVisualizer {
     }
 
     fun visualize(prop: Property<*>): Component {
-        val visualizer = prop.getMetadata<Class<*>>("visualizer") ?: throw IllegalArgumentException("Property ${prop.name} is missing required metadata 'visualizer'")
+        val visualizer = prop.getMetadata<Class<*>>("visualizer") ?: throw IllegalArgumentException("Property ${prop.id} is missing required metadata 'visualizer'")
         val m = cache[visualizer] ?: run {
             val m = MethodHandles.lookup().unreflect(visualizer.declaredMethods[0]).bindTo(visualizer.getDeclaredConstructor().newInstance())
             cache[visualizer] = m
@@ -236,60 +236,62 @@ object ConfigVisualizer {
     }
 
     private fun createInternal(config: Tree, map: HashMap<String, Layout>, owner: Layout) {
-        for (prop in config.values) {
-            val cmp = visualize(prop)
-            val title = prop.getMetadata<String>("title") ?: throw IllegalArgumentException("Property ${prop.name} is missing required metadata 'title'")
-            val desc = prop.getMetadata<String>("description")
-            val iconPath = prop.getMetadata<String>("icon") ?: ""
-            val category = prop.getMetadata<String>("category") ?: "General"
-            val subcategory = prop.getMetadata<String>("subcategory") ?: "General"
-            val icon = if (iconPath.isEmpty()) null else PolyImage(iconPath, 32f, 32f)
-            put(map, category, subcategory, icon, title, desc, cmp)
-        }
-        for (c in config.children) {
-            val a = c.getMetadata<Accordion>("annotation")
-            if (a != null) {
-                var open = true
-                var oldSize: Vec2<Unit>? = null
-                val title = a.title.ifEmpty { c.id }
-                val icon = if (a.icon.isEmpty()) null else PolyImage(a.icon, 32f, 32f)
-                val option = put(
-                    map,
-                    a.category,
-                    a.subcategory,
-                    icon,
-                    title,
-                    a.description.ifEmpty { null },
-                    Image(
-                        properties = ImageProperties(true),
-                        image = PolyImage("chevron-down.svg", 16f, 16f),
-                        at = origin,
-                    ),
-                    a.index,
-                )
-                option.addEventHandler(MouseClicked(0)) self@{
-                    var b = false
-                    // allow clicking anywhere on top bar
-                    if (polyUI.mouseX !in trueX..(trueX + width) || polyUI.mouseY !in trueY..(trueY + 64f)) return@self false
-                    if (oldSize == null) oldSize = option.size!!.clone()
-                    option.option.rotateTo(if (open) 0.0 else 180.0, Animations.EaseOutExpo, 0.4.seconds)
-                    option.resize(if (!open) oldSize!! else oldSize!!.a * 64.px, Animations.EaseOutExpo, 0.4.seconds) {
-                        b = true
+        for ((_, node) in config.map) {
+            if(node is Tree) {
+                val a = node.getMetadata<Accordion>("annotation")
+                if (a != null) {
+                    var open = true
+                    var oldSize: Vec2<Unit>? = null
+                    val title = a.title.ifEmpty { node.id }
+                    val icon = if (a.icon.isEmpty()) null else PolyImage(a.icon, 32f, 32f)
+                    val option = put(
+                        map,
+                        a.category,
+                        a.subcategory,
+                        icon,
+                        title,
+                        a.description.ifEmpty { null },
+                        Image(
+                            properties = ImageProperties(true),
+                            image = PolyImage("chevron-down.svg", 16f, 16f),
+                            at = origin,
+                        ),
+                        a.index,
+                    )
+                    option.addEventHandler(MouseClicked(0)) self@{
+                        var b = false
+                        // allow clicking anywhere on top bar
+                        if (polyUI.mouseX !in trueX..(trueX + width) || polyUI.mouseY !in trueY..(trueY + 64f)) return@self false
+                        if (oldSize == null) oldSize = option.size!!.clone()
+                        option.option.rotateTo(if (open) 0.0 else 180.0, Animations.EaseOutExpo, 0.4.seconds)
+                        option.resize(if (!open) oldSize!! else oldSize!!.a * 64.px, Animations.EaseOutExpo, 0.4.seconds) {
+                            b = true
+                        }
+                        polyUI.addHook {
+                            layout.calculateBounds()
+                            this@self.x = x
+                            this@self.y = y
+                            b
+                        }
+                        open = !open
+                        true
                     }
-                    polyUI.addHook {
-                        layout.calculateBounds()
-                        this@self.x = x
-                        this@self.y = y
-                        b
-                    }
-                    open = !open
-                    true
+                    option.simpleName = "AccordionHeader" + option.simpleName
+                    if (open) option.option.rotation = PI
+                    createAccordion(node, option)
+                } else {
+                    createInternal(node, map, owner)
                 }
-                option.simpleName = "AccordionHeader" + option.simpleName
-                if (open) option.option.rotation = PI
-                createAccordion(c, option)
             } else {
-                createInternal(c, map, owner)
+                val prop = node as Property<*>
+                val cmp = visualize(prop)
+                val title = prop.getMetadata<String>("title") ?: throw IllegalArgumentException("Property ${prop.id} is missing required metadata 'title'")
+                val desc = prop.getMetadata<String>("description")
+                val iconPath = prop.getMetadata<String>("icon") ?: ""
+                val category = prop.getMetadata<String>("category") ?: "General"
+                val subcategory = prop.getMetadata<String>("subcategory") ?: "General"
+                val icon = if (iconPath.isEmpty()) null else PolyImage(iconPath, 32f, 32f)
+                put(map, category, subcategory, icon, title, desc, cmp)
             }
         }
     }
@@ -300,13 +302,12 @@ object ConfigVisualizer {
         this.addEventHandler(event, function as Drawable.(Event) -> Boolean)
     }
 
-    private fun createAccordion(config: Tree, o: Option) {
-        require(config.children.size == 0) { "Configs cannot have accordions inside accordions!" }
-        var s = false
+    private fun createAccordion(config: Tree, o: Option) { var s = false
         var yy = 66f
-        config.values.fastEach {
+        config.map.forEach { (_, it) ->
+            if(it !is Property<*>) throw IllegalArgumentException("Accordions cannot contain sub-trees/sub-accordions")
             val cmp = visualize(it)
-            val optTitle = it.getMetadata<String>("title") ?: throw IllegalArgumentException("Property ${it.name} is missing required metadata 'title'")
+            val optTitle = it.getMetadata<String>("title") ?: throw IllegalArgumentException("Property ${it.id} is missing required metadata 'title'")
             val opt = AccordionOption(
                 at = (if (s) 534f else 22f).px * yy.px,
                 title = optTitle.localised(),

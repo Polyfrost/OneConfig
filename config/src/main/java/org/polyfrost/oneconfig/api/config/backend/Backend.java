@@ -60,13 +60,13 @@ public interface Backend {
     boolean remove(@NotNull String id);
 
     default boolean remove(@NotNull Tree tree) {
-        return remove(tree.id);
+        return remove(tree.getID());
     }
 
     boolean exists(@NotNull String id);
 
     default boolean exists(@NotNull Tree tree) {
-        return exists(tree.id);
+        return exists(tree.getID());
     }
 
     /**

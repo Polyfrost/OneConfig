@@ -50,7 +50,8 @@ public class TestConfig_Test extends Config {
 
     public static void main(String[] args) {
         TestConfig_Test t = new TestConfig_Test();
-        System.out.println(t.tree.toString());
+        t.register();
+        System.out.println(t.getTree().toString());
     }
 
     @Switch(

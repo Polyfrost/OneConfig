@@ -22,6 +22,7 @@
 package org.polyfrost.oneconfig.api.hud
 
 import org.jetbrains.annotations.ApiStatus
+import org.polyfrost.oneconfig.api.config.Property
 import org.polyfrost.oneconfig.api.config.Tree
 import org.polyfrost.oneconfig.api.hud.HudManager.LOGGER
 import org.polyfrost.oneconfig.api.hud.elements.InferringCComponent
@@ -63,13 +64,12 @@ abstract class Hud() {
     fun init(tree: Tree, polyUI: PolyUI) {
         if (::tree.isInitialized) throw IllegalStateException("Hud already initialised!")
         this.tree = tree
-        require(tree.children.size == 0) { "Hud cannot have children!" }
-        tree.values.fastEach {
+        tree.map.forEach { (_ , it) ->
             val mh = it.getMetadata<MethodHandle>("render")
             if (mh != null) {
                 require(getDefaultSize() != null) { "Hud with @CustomComponent must specify a default size" }
                 customs.add(mh)
-                return@fastEach
+                return@forEach
             }
         }
         // we were de-serialized
@@ -77,7 +77,8 @@ abstract class Hud() {
             if (ver != getVersion()) {
                 if (getVersion() < 0) throw IllegalStateException("Hud ${this::class.simpleName} has invalid version number ${getVersion()} (cannot be negative)")
                 LOGGER.warn("Update detected for HUD $this, re-initialising...")
-                tree.values.fastEach {
+                tree.map.forEach { (_, it) ->
+                    if(it !is Property<*>) throw IllegalArgumentException("HUDs cannot have children!")
                     self.children.clear()
                     if (it.getMetadata<String>("isHud") != null) {
                         self.children.add(it.getAs())
@@ -86,7 +87,8 @@ abstract class Hud() {
             }
         } else {
             val components = ArrayList<Component>()
-            tree.values.fastEach {
+            tree.map.forEach { (_, it) ->
+                if(it !is Property<*>) throw IllegalArgumentException("HUDs cannot have children!")
                 if (it.getMetadata<String>("isHud") != null) {
                     val out = it.getAs<Component>()
                     components.add(out)
@@ -135,7 +137,7 @@ abstract class Hud() {
      *
      * Provided as an alternative to [custom components][org.polyfrost.oneconfig.api.hud.annotations.CustomComponent] with the annotation.
      */
-    open fun customRender(/* matrixStack: UMatrixStack? */ x: Float, y: Float, width: Float, height: Float, scaleX: Float, scaleY: Float, rotation: Double) {
+    open fun customRender(/* matrixStack: UMatrixStack?, */ x: Float, y: Float, width: Float, height: Float, scaleX: Float, scaleY: Float, rotation: Double) {
         // no-op
     }
 

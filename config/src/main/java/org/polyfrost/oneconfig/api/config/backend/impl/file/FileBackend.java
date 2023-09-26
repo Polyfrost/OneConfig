@@ -34,25 +34,9 @@ import org.polyfrost.oneconfig.api.config.backend.Serializer;
 import org.polyfrost.oneconfig.api.config.exceptions.SerializationException;
 import org.polyfrost.oneconfig.api.config.util.Pair;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.nio.file.FileSystems;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardWatchEventKinds;
-import java.nio.file.WatchEvent;
-import java.nio.file.WatchKey;
-import java.nio.file.WatchService;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.io.*;
+import java.nio.file.*;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class FileBackend implements Backend {
@@ -126,17 +110,17 @@ public class FileBackend implements Backend {
     public void put(@NotNull Tree tree) {
         dodge = true;
         Pair<Serializer, Tree> t = null;
-        File file = getFile(tree.id);
-        if (!configs.containsKey(tree.id)) {
+        File file = getFile(tree.getID());
+        if (!configs.containsKey(tree.getID())) {
             for (FileSerializer serializer : serializers) {
                 if (serializer.supports(file)) {
                     t = new Pair<>(serializer, tree);
-                    configs.put(tree.id, t);
+                    configs.put(tree.getID(), t);
                     break;
                 }
             }
-        } else t = configs.get(tree.id);
-        if (t == null) throw new SerializationException("No serializer found for " + tree.id);
+        } else t = configs.get(tree.getID());
+        if (t == null) throw new SerializationException("No serializer found for " + tree.getID());
         assert t.second == tree;
         try {
             file.createNewFile();

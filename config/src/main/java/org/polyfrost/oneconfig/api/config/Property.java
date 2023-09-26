@@ -32,43 +32,34 @@ import org.jetbrains.annotations.Nullable;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 @SuppressWarnings("unused")
-public class Property<T> implements Serializable {
+public class Property<T> extends Node implements Serializable {
     /**
      * This is the actual value of the property, and is what is stored.
      */
     @Nullable
     private T value;
 
-    public final Class<T> type;
-
-
     /**
-     * This is the name of the property, and is what is displayed.
+     * This is the type of the property, and is used for casting.
      */
-    @NotNull
-    public final String name;
-
-    transient final ArrayList<@NotNull Consumer<@NotNull T>> callbacks = new ArrayList<>(3);
+    public final Class<T> type;
+    transient final ArrayList<@NotNull Consumer<@NotNull T>> callbacks = new ArrayList<>(0);
     private transient boolean display = true;
-    private transient final ArrayList<Supplier<Boolean>> conditions = new ArrayList<>(2);
-    transient final Map<String, Object> metadata = new HashMap<>(10);
+    private transient final ArrayList<Supplier<Boolean>> conditions = new ArrayList<>(0);
 
-    @SuppressWarnings({"unchecked", "ConstantConditions"})
-    public Property(@NotNull String name, @NotNull T value) {
-        this(name, value, (Class<T>) value.getClass());
+    public Property(@NotNull String id, @Nullable T value, @NotNull Class<T> type) {
+        super(id);
+        this.value = value;
+        this.type = type;
     }
 
-    public Property(@NotNull String name, @Nullable T value, @NotNull Class<T> type) {
-        this.value = value;
-        this.name = name;
-        this.type = type;
+    @SuppressWarnings({"unchecked", "ConstantConditions"})
+    public Property(@NotNull String id, @NotNull T value) {
+        this(id, value, (Class<T>) value.getClass());
     }
 
     public Property(@NotNull T value) {
@@ -84,21 +75,6 @@ public class Property<T> implements Serializable {
         return display;
     }
 
-    public void addMetadata(@NotNull String key, @Nullable Object value) {
-        metadata.put(key, value);
-    }
-
-    public void addMetadata(@NotNull Map<String, Object> metadata) {
-        this.metadata.putAll(metadata);
-    }
-
-    public void removeMetadata(@NotNull String key) {
-        metadata.remove(key);
-    }
-
-    void clearMetadata() {
-        metadata.clear();
-    }
 
     /**
      * Add a display condition to this property.
@@ -139,23 +115,11 @@ public class Property<T> implements Serializable {
      * Add a callback to this property, which is called when the value changes.
      *
      * @param callback the callback to add. The new value is passed to the callback.
-     * @see #addCallbacks(Collection)
      * @see #removeCallback(Consumer)
      */
     public Property<T> addCallback(@NotNull Consumer<@NotNull T> callback) {
         callbacks.add(callback);
         return this;
-    }
-
-    /**
-     * Add multiple callbacks to this property.
-     * <br> Due to type erasure, the signature of this method is wildcard-ed. It should be {@code Collection<Consumer<T>>}, but that is not possible.
-     *
-     * @see #addCallback(Consumer)
-     */
-    @SuppressWarnings("unchecked")
-    public void addCallbacks(@NotNull Collection<? extends @NotNull Consumer<?>> callbacks) {
-        this.callbacks.addAll((Collection<Consumer<T>>) callbacks);
     }
 
     /**
@@ -183,7 +147,7 @@ public class Property<T> implements Serializable {
         try {
             callbacks.forEach(c -> c.accept(value));
         } catch (Exception e) {
-            Tree.LOGGER.error("Error while calling callbacks for property " + name, e);
+            Tree.LOGGER.error("Error while calling callbacks for property " + id, e);
         }
         this.value = value;
     }
@@ -199,7 +163,7 @@ public class Property<T> implements Serializable {
 
     @Override
     public String toString() {
-        return "Property: " + name + "=" + value;
+        return id + ": " + value;
     }
 
     /**
@@ -230,7 +194,7 @@ public class Property<T> implements Serializable {
     public boolean equals(Object obj) {
         if (obj instanceof Property) {
             Property<?> property = (Property<?>) obj;
-            return property.name.equals(name);
+            return id.equals(property.id);
         }
         return false;
     }
@@ -240,7 +204,9 @@ public class Property<T> implements Serializable {
      * <br>
      * In pretty much every case, you should use {@link #equals(Object)} instead. This is used for testing.
      */
+    @SuppressWarnings("ConstantConditions")
     public boolean deepEquals(Object obj) {
+        if(get() == null) return obj == null;
         if (obj instanceof Property) {
             Property<?> p = (Property<?>) obj;
             if (isPrimitiveArray()) {
@@ -267,33 +233,8 @@ public class Property<T> implements Serializable {
             } else if (isArray()) {
                 return Arrays.equals((Object[]) get(), (Object[]) p.get());
             }
-            return equals(p) && get() == p.get();
+            return get().equals(p.get());
         } else return false;
-    }
-
-    /**
-     * Return some metadata attached to this property.
-     *
-     * @param key the key of the metadata
-     * @param M   the type of the metadata
-     * @return the metadata, or null if it doesn't exist
-     */
-    @SuppressWarnings("unchecked")
-    @Nullable
-    public <M> M getMetadata(@NotNull String key) {
-        return (M) metadata.get(key);
-    }
-
-    @Override
-    public int hashCode() {
-        return name.hashCode();
-    }
-
-    /**
-     * @return true if the value is a primitive type wrapper (Number, String, Boolean, Character)
-     */
-    public boolean isPrimitive() {
-        return value instanceof Number || value instanceof String || value instanceof Boolean || value instanceof Character;
     }
 
     /**
@@ -316,7 +257,7 @@ public class Property<T> implements Serializable {
 
     @SuppressWarnings("ConstantConditions")
     public static <T> Property<T> prop(@NotNull String name, @NotNull T value) {
-        if(value == null) throw new IllegalArgumentException("Cannot create a property with a null value");
+        if (value == null) throw new IllegalArgumentException("Cannot create a property with a null value");
         return new Property<>(name, value);
     }
 

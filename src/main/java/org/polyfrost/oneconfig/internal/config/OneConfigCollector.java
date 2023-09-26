@@ -51,7 +51,7 @@ import java.util.Map;
 
 import static org.polyfrost.oneconfig.api.config.Property.prop;
 import static org.polyfrost.oneconfig.api.config.Tree.LOGGER;
-import static org.polyfrost.oneconfig.api.config.backend.impl.ObjectSerializer.unbox;
+import static org.polyfrost.oneconfig.api.config.util.ObjectSerializer.unbox;
 
 /**
  * Collects properties from an object using reflection, and from its inner classes.
@@ -72,22 +72,24 @@ public class OneConfigCollector extends ReflectiveCollector {
         if(!(src instanceof Config)) return null;
         Tree tree = super.collect(id == null ? ((Config) src).id : id, src);
         assert tree != null;
-        tree.onAll((p) -> {
-            String[] conditions = p.getMetadata("conditions");
+        tree.onAll((s, n) -> {
+            if(!(n instanceof Property)) return;
+            Property<?> p = (Property<?>) n;
+            String[] conditions = n.getMetadata("conditions");
             if(conditions == null) return;
-            for (String s : conditions) {
-                Property<?> condition = tree.get(s);
-                if (condition == null) throw new IllegalArgumentException("Property " + p.name + " is dependant on property " + s + ", but that property does not exist");
+            for (String cond : conditions) {
+                Property<?> condition = tree.getProperty(cond);
+                if (condition == null) throw new IllegalArgumentException("Property " + n.getID() + " is dependant on property " + cond + ", but that property does not exist");
                 if (condition.type == Boolean.class || condition.type == boolean.class) {
                     p.addDisplayCondition(condition::getAs);
-                } else throw new IllegalArgumentException("Property " + p.name + " is dependant on property " + s + ", but it is not a boolean property");
+                } else throw new IllegalArgumentException("Property " + n.getID() + " is dependant on property " + cond + ", but it is not a boolean property");
             }
         });
         return tree;
     }
 
     @Override
-    public void handleField(@NotNull Field f, @NotNull Object src, @NotNull Tree.Builder builder) {
+    public void handleField(@NotNull Field f, @NotNull Object src, @NotNull Tree builder) {
         for (Annotation a : f.getAnnotations()) {
             for (Annotation aa : a.annotationType().getAnnotations()) {
                 if (aa.annotationType().equals(Option.class)) {
@@ -101,7 +103,7 @@ public class OneConfigCollector extends ReflectiveCollector {
                             try {
                                 System.out.println("glSET " + f.getName() + " -> " + v);
                                 if (f.getType().isArray() && v instanceof List<?>) {
-                                    setter.invoke(unbox(v));
+                                    setter.invoke(unbox(v, f.getType()));
                                 } else setter.invoke(v);
                             } catch (Throwable e) {
                                 throw new RuntimeException("[internal failure] Failed to setback field", e);
@@ -119,7 +121,7 @@ public class OneConfigCollector extends ReflectiveCollector {
     }
 
     @Override
-    public void handleMethod(@NotNull Method m, @NotNull Object src, @NotNull Tree.Builder builder) {
+    public void handleMethod(@NotNull Method m, @NotNull Object src, @NotNull Tree builder) {
         Button b = m.getDeclaredAnnotation(Button.class);
         if (b == null) return;
         if (m.getParameterCount() != 0) throw new IllegalArgumentException("Button method " + m.getName() + " must have no parameters");
@@ -153,7 +155,7 @@ public class OneConfigCollector extends ReflectiveCollector {
     }
 
     @Override
-    public void handleInnerClass(@NotNull Class<?> c, @NotNull Object src, int depth, @NotNull Tree.Builder builder) {
+    public void handleInnerClass(@NotNull Class<?> c, @NotNull Object src, int depth, @NotNull Tree builder) {
         Accordion a = c.getDeclaredAnnotation(Accordion.class);
         if (a == null) return;
         try {
@@ -167,9 +169,8 @@ public class OneConfigCollector extends ReflectiveCollector {
                 ctor.setAccessible(true);
                 innerObject = ctor.newInstance(src);
             }
-            Tree.Builder innerBuilder = Tree.tree(c.getSimpleName());
-            handle(innerBuilder, innerObject, depth + 1);
-            Tree t = innerBuilder.build();
+            Tree t = Tree.tree(c.getSimpleName());
+            handle(t, innerObject, depth + 1);
             builder.put(t);
         } catch (Exception e) {
             throw new RuntimeException(e);

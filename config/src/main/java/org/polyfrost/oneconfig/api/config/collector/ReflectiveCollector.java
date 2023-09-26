@@ -49,32 +49,32 @@ public abstract class ReflectiveCollector implements PropertyCollector {
 
     @Override
     public @Nullable Tree collect(@Nullable String id, @NotNull Object src) {
-        Tree.Builder b = Tree.tree(id == null ? src.getClass().getSimpleName() : id);
+        Tree b = Tree.tree(id == null ? src.getClass().getSimpleName() : id);
         handle(b, src, 0);
-        return b.build();
+        return b;
     }
 
 
-    public abstract void handleField(@NotNull Field f, @NotNull Object src, @NotNull Tree.Builder builder);
+    public abstract void handleField(@NotNull Field f, @NotNull Object src, @NotNull Tree tree);
 
-    public abstract void handleMethod(@NotNull Method m, @NotNull Object src, @NotNull Tree.Builder builder);
+    public abstract void handleMethod(@NotNull Method m, @NotNull Object src, @NotNull Tree tree);
 
-    public abstract void handleInnerClass(@NotNull Class<?> c, @NotNull Object src, int depth, @NotNull Tree.Builder builder);
+    public abstract void handleInnerClass(@NotNull Class<?> c, @NotNull Object src, int depth, @NotNull Tree tree);
 
 
-    public final void handle(@NotNull Tree.Builder builder, @NotNull Object src, int depth) {
+    public final void handle(@NotNull Tree tree, @NotNull Object src, int depth) {
         for (Field f : src.getClass().getDeclaredFields()) {
-            handleField(f, src, builder);
+            handleField(f, src, tree);
         }
         for (Method m : src.getClass().getDeclaredMethods()) {
-            handleMethod(m, src, builder);
+            handleMethod(m, src, tree);
         }
         for (Class<?> c : src.getClass().getDeclaredClasses()) {
             if (depth == maxDepth) {
-                LOGGER.warn("Reached max depth for tree " + builder.id + " ignoring further subclasses!");
+                LOGGER.warn("Reached max depth for tree " + tree.getID() + " ignoring further subclasses!");
                 return;
             }
-            handleInnerClass(c, src, depth, builder);
+            handleInnerClass(c, src, depth, tree);
         }
     }
 }

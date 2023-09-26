@@ -33,168 +33,112 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
 import java.util.Map;
-import java.util.Set;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 
 /**
  * The Tree class represents a tree structure that contains properties and other trees as children.
- * It provides various methods to access, modify, and compare the tree and its elements. The properties in a tree are modifiable, but the tree itself is not.
+ * It provides various methods to access, modify, and compare the tree and its elements.
  */
-public class Tree implements Serializable {
+public class Tree extends Node implements Serializable {
     public static final Logger LOGGER = LoggerFactory.getLogger("OneConfig Config API");
     @NotNull
-    public String id;
-    @NotNull
-    public final ArrayList<Property<?>> values;
-    @NotNull
-    public final ArrayList<Tree> children;
-    private transient final Map<String, Object> metadata = new HashMap<>(4);
+    public final Map<String, Node> map;
 
-    public Tree(@NotNull String id, @Nullable ArrayList<Property<?>> values, @Nullable ArrayList<Tree> children) {
-        this.id = id;
-        this.values = values == null ? new ArrayList<>() : values;
-        this.children = children == null ? new ArrayList<>(5) : children;
+    public Tree(@NotNull String id, @Nullable Map<String, Node> items) {
+        super(id);
+        this.map = items == null ? new HashMap<>() : items;
     }
 
-    @Override
-    public boolean equals(Object obj) {
-        if (obj instanceof Tree) {
-            Tree tree = (Tree) obj;
-            return id.equals(tree.id);
+    public Tree put(@NotNull Node... nodes) {
+        for(Node n : nodes) {
+            map.put(n.getID(), n);
         }
-        return false;
+        return this;
+    }
+
+    public Tree put(Node n) {
+        map.put(n.getID(), n);
+        return this;
     }
 
     @Nullable
-    public Property<?> get(@NotNull String name) {
-        if (name.contains(".")) {
-            String[] names = name.split("\\.");
-            Tree t = this;
-            int i = 0;
-            while (i < names.length - 1) {
-                t = t.getChild(names[i]);
-                if (t == null) {
-                    return null;
-                }
-                i++;
-            }
-            return t.get(names[i + 1]);
-        } else {
-            for (Property<?> p : values) {
-                if (p.name.equals(name)) {
-                    return p;
-                }
-            }
-            return null;
-        }
+    public Node get(String name) {
+        return map.get(name);
     }
 
     @Nullable
-    public Tree getChild(@NotNull String id) {
-        for (Tree child : children) {
-            if (child.id.equals(id)) {
-                return child;
-            }
+    public Node get(@NotNull String... name) {
+        Tree t = this;
+        Node n = null;
+        for(String s : name) {
+            n = t.get(s);
+            if (n instanceof Tree) t = (Tree) n;
+            else return n;
         }
-        return null;
+        return n;
     }
 
-    public void onAll(Consumer<Property<?>> action) {
+    @Nullable
+    public Tree getChild(@NotNull String... name) {
+        Node n = get(name);
+        return n instanceof Tree ? (Tree) n : null;
+    }
+
+    @Nullable
+    public Property<?> getProperty(@NotNull String... name) {
+        Node n = get(name);
+        return n instanceof Property ? (Property<?>) n : null;
+    }
+
+    public void onAll(BiConsumer<String, Node> action) {
         _onAll(this, action);
     }
 
-    private static void _onAll(Tree t, Consumer<Property<?>> action) {
-        for(Property<?> p : t.values) {
-            action.accept(p);
+    public void onAllProperties(BiConsumer<String, Property<?>> action) {
+        _onAllProp(this, action);
+    }
+
+    private static void _onAll(Tree t, BiConsumer<String, Node> action) {
+        for(Map.Entry<String, Node> e : t.map.entrySet()) {
+            action.accept(e.getKey(), e.getValue());
         }
-        for(Tree tt : t.children) {
-            _onAll(tt, action);
+    }
+
+    private static void _onAllProp(Tree t, BiConsumer<String, Property<?>> action) {
+        for(Map.Entry<String, Node> e : t.map.entrySet()) {
+            if(e.getValue() instanceof Property) action.accept(e.getKey(), (Property<?>) e.getValue());
         }
-    }
-
-    public void addMetadata(@NotNull String key, @Nullable Object value) {
-        metadata.put(key, value);
-    }
-
-    public void addMetadata(@NotNull Map<String, Object> metadata) {
-        this.metadata.putAll(metadata);
-    }
-
-    public void removeMetadata(@NotNull String key) {
-        metadata.remove(key);
-    }
-
-    void clearMetadata() {
-        metadata.clear();
     }
 
     /**
-     * Return some metadata attached to this tree.
-     *
-     * @param key the key of the metadata
-     * @param M   the type of the metadata
-     * @return the metadata, or null if it doesn't exist
-     */
-    @SuppressWarnings("unchecked")
-    @Nullable
-    public <M> M getMetadata(@NotNull String key) {
-        return (M) metadata.get(key);
-    }
-
-    /**
-     * Check if the tree's contents equals another tree's. This will check the name, values, and children of the tree.
+     * Check if the tree's contents equals another tree's. This will check the values and children of the tree.
      *
      * @param obj the tree to check against
-     * @param log whether to log the differences
      * @return whether the trees are equal
      */
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")
-    public boolean contentEquals(@Nullable Object obj, boolean log) {
-        if (obj instanceof Tree) {
-            Tree tree = (Tree) obj;
-            if (!id.equals(tree.id)) {
-                if (log) LOGGER.warn("Tree {} has different name (expected {}, got {})", id, this.id, tree.id);
-            }
-            if (tree.values.size() != this.values.size()) {
-                if (log)
-                    LOGGER.error("Tree {} has different amount of values (expected {}, got {})", id, this.values.size(), tree.values.size());
-                return false;
-            }
-            if (tree.children.size() != this.children.size()) {
-                if (log)
-                    LOGGER.error("Tree {} has different amount of children (expected {}, got {})", id, this.children.size(), tree.children.size());
-                return false;
-            }
-            for (int i = 0; i < values.size(); i++) {
-                Property<?> p = tree.values.get(i);
-
-                if (p.isArray()) {
-                    if (!this.values.get(i).deepEquals(p)) {
-                        if (log)
-                            LOGGER.error("Tree {} has different array value at index {} (expected {}, got {})", id, i, this.values.get(i).get(), p.get());
-//                        return false;
-                    }
-                } else if (!p.get().equals(this.values.get(i).get())) {
-                    if (log)
-                        LOGGER.error("Tree {} has different value at index {} (expected {}, got {})", id, i, this.values.get(i).get(), p.get());
-                    return false;
-                }
-            }
-            for (int i = 0; i < children.size(); i++) {
-                if (!tree.children.get(i).contentEquals(this.children.get(i), log)) {
-                    if (log)
-                        LOGGER.error("Tree {} has different child at index {} (expected {}, got {})", id, i, this.children.get(i).id, tree.children.get(i).id);
-                    return false;
-                }
-            }
-            return true;
+    public boolean deepEquals(@Nullable Object obj) {
+        if(obj == null) return false;
+        if(!(obj instanceof Tree)) return false;
+        Tree tree = (Tree) obj;
+        if(map.size() != tree.map.size()) {
+//            System.err.println("trees are not the same size " + map.size());
+            return false;
         }
-        return false;
+        for(Map.Entry<String, Node> e : map.entrySet()) {
+            Node n = tree.get(e.getKey());
+            if(n == null) {
+//                System.err.println("Second tree does not contain " + e);
+                return false;
+            }
+            if(!e.getValue().deepEquals(n)) {
+//                System.err.println(e.getValue() + " does not equal " + n);
+                return false;
+            }
+        }
+        return true;
     }
 
 
@@ -210,159 +154,72 @@ public class Tree implements Serializable {
      * copyMeta will mean that the metadata from the input tree will be copied into this tree.
      *
      * @throws ClassCastException        if the types of the properties (with the same name) do not match
-     * @throws IndexOutOfBoundsException if the trees are not somewhat similar in structure.
      */
     public void merge(Tree tree, boolean overwrite, boolean copyMeta) {
-        if (tree == null) return;
-        for (int i = 0; i < tree.values.size(); i++) {
-            Property<?> value = tree.values.get(i);
-            Property<?> p = this.get(value.name);
-            if (p != null) {
-                if (overwrite) p.setUnchecked(value.get());
-                if (copyMeta) {
-                    p.addMetadata(value.metadata);
-                    p.addCallbacks(value.callbacks);
-                }
-            } else {
-                this.values.add(i, value);
-            }
-        }
-        for (int i = 0; i < tree.children.size(); i++) {
-            Tree child = tree.children.get(i);
-            Tree c = this.getChild(child.id);
-            if (c != null) {
-                c.merge(child, overwrite, copyMeta);
-                if (copyMeta) c.addMetadata(child.metadata);
-            } else {
-                this.children.add(child);
-            }
-        }
+        if(tree == null) return;
+        _merge(this, tree, overwrite, copyMeta);
     }
 
-
-    @Override
-    public int hashCode() {
-        return id.hashCode();
+    private static void _merge(Tree t, Tree in, boolean overwrite, boolean withMeta) {
+        for(Map.Entry<String, Node> e : in.map.entrySet()) {
+            Node n = t.get(e.getKey());
+            if(n == null) {
+                t.put(e.getValue());
+            } else {
+                if(n instanceof Tree && e.getValue() instanceof Tree) {
+                    _merge((Tree) n, (Tree) e.getValue(), overwrite, withMeta);
+                } else {
+                    if(overwrite) {
+                        t.put(e.getValue());
+                    }
+                    if(withMeta) {
+                        n.addMetadata(e.getValue().getMetadata());
+                    }
+                }
+            }
+        }
     }
 
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        builder.append("Tree '").append(id).append("':\n");
-        for (Property<?> value : values) {
-            builder.append("  ").append(value).append("\n");
-        }
-        for (Tree child : children) {
-            builder.append("  ").append(child).append("\n");
-        }
+        _toString(builder, 0, this);
         return builder.toString();
     }
 
-    public static class Builder {
-        private final Set<Property<?>> values;
-        private final Set<Tree> children;
-        public String id;
-
-        @NotNull
-        @Contract("_ -> this")
-        public Builder putTrees(@NotNull Collection<Tree> trees) {
-            for (Tree tree : trees) {
-                put(tree);
+    private static void _toString(StringBuilder sb, int depth, Tree t) {
+        for(int i = 0; i < depth; i++) sb.append('\t');
+        sb.append(t.id).append(":\n");
+        for(Map.Entry<String, Node> e : t.map.entrySet()) {
+            if(e.getValue() instanceof Property) {
+                for(int i = 0; i < depth + 1; i++) sb.append('\t');
+                sb.append(e.getValue()).append('\n');
+            } else {
+                _toString(sb, depth + 1, (Tree) e.getValue());
             }
-            return this;
-        }
-
-        @NotNull
-        @Contract("_ -> this")
-        public Builder put(@NotNull Collection<Property<?>> properties) {
-            for (Property<?> p : properties) {
-                put(p);
-            }
-            return this;
-        }
-
-        @NotNull
-        @Contract("_ -> this")
-        public Builder put(@NotNull Tree tree) {
-            if (!children.add(tree)) {
-                throw new IllegalArgumentException("Tree with name " + tree.id + " already exists in this tree!");
-            }
-            return this;
-        }
-
-        @NotNull
-        @Contract("_ -> this")
-        public Builder put(Tree @NotNull ... trees) {
-            for (Tree tree : trees) {
-                put(tree);
-            }
-            return this;
-        }
-
-        @NotNull
-        @Contract("_ -> this")
-        public Builder put(@NotNull Builder tree) {
-            put(tree.build());
-            return this;
-        }
-
-        @NotNull
-        @Contract("_ -> this")
-        public Builder put(Builder @NotNull ... trees) {
-            for (Builder tree : trees) {
-                put(tree.build());
-            }
-            return this;
-        }
-
-        @NotNull
-        @Contract("_ -> this")
-        public Builder put(@NotNull Property<?> property) {
-            if (!values.add(property)) {
-                throw new IllegalArgumentException("Property with name " + property.name + " already exists in this tree!");
-            }
-            return this;
-        }
-
-        @NotNull
-        @Contract("_ -> this")
-        public Builder put(Property<?> @NotNull ... properties) {
-            for (Property<?> property : properties) {
-                put(property);
-            }
-            return this;
-        }
-
-        @NotNull
-        @Contract("_ -> this")
-        public Builder setId(@NotNull String id) {
-            this.id = id;
-            return this;
-        }
-
-        public Builder(String id) {
-            this.id = id;
-            values = new LinkedHashSet<>();
-            children = new LinkedHashSet<>();
-        }
-
-        @Contract(value = " -> new", pure = true)
-        public Tree build() {
-            return new Tree(id, new ArrayList<>(values), new ArrayList<>(children));
         }
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof Tree) {
+            Tree tree = (Tree) obj;
+            return id.equals(tree.id);
+        }
+        return false;
+    }
+
     @Contract("_ -> new")
-    public static @NotNull Builder tree(@NotNull String id) {
-        return new Builder(id);
+    public static @NotNull Tree tree(@NotNull String id) {
+        return new Tree(id, null);
     }
 
     /**
      * Create a new builder from the given tree. This will copy all the data from the tree into the builder.
      */
     @Contract("_ -> new")
-    public static @NotNull Builder tree(@NotNull Tree src) {
-        return new Builder(src.id).putTrees(src.children).put(src.values);
+    public static @NotNull Tree tree(@NotNull Tree src) {
+        return new Tree(src.id, src.map);
     }
 }
 

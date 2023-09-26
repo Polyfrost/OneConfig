@@ -42,6 +42,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 public class ConfigManager {
     public static final Path CONFIG_DIR = new File("./config").toPath();
@@ -127,7 +128,7 @@ public class ConfigManager {
         Tree t = backend.get(id);
         if(t == null) return false;
         if(save) {
-            metaTree.id = id + DEFAULT_META_EXT;
+            //metaTree.id = id + DEFAULT_META_EXT;
             Tree old = backend.get(metaTree.id);
             if(old != null) {
                 old.merge(metaTree, false, false);
@@ -139,17 +140,14 @@ public class ConfigManager {
     }
 
     private static void _supplyMetadata(Tree tree, Tree meta) {
-        for(Property<?> p : tree.values) {
-            Tree t = meta.getChild(p.name);
-            if(t == null) continue;
-            for(Property<?> pp : t.values) {
-                p.addMetadata(pp.name, pp.get());
+        for(Map.Entry<String, Node> e : tree.map.entrySet()) {
+            Node n = meta.get(e.getKey());
+            if(n == null) continue;
+            Node c = e.getValue();
+            c.addMetadata(n.getMetadata());
+            if(c instanceof Tree) {
+                _supplyMetadata((Tree) c, (Tree) n);
             }
-        }
-        for(Tree sub : tree.children) {
-            Tree t = meta.getChild(sub.id);
-            if(t == null) continue;
-            _supplyMetadata(sub, t);
         }
     }
 
