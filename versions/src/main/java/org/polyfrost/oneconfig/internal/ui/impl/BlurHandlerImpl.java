@@ -44,7 +44,7 @@ import org.polyfrost.oneconfig.ui.BlurScreen;
 import java.util.List;
 
 /**
- * An implementation of the BlurMC mod by tterrag1098.
+ * An adapted implementation of the BlurMC mod by tterrag1098.
  * <p>
  * For the original source see <a href="https://github.com/tterrag1098/Blur/blob/1.8.9/src/main/java/com/tterrag/blur/Blur.java">...</a>
  * For the public license, see <a href="https://github.com/tterrag1098/Blur/blob/1.8.9/LICENSE">...</a>
@@ -59,6 +59,7 @@ import java.util.List;
 public class BlurHandlerImpl implements BlurHandler {
     private final ResourceLocation blurShader = new ResourceLocation("shaders/post/fade_in_blur.json");
     private final Logger logger = LogManager.getLogger("OneConfig - Blur");
+    private ShaderUniform su;
     private long start;
     private float progress = 0;
 
@@ -82,34 +83,8 @@ public class BlurHandlerImpl implements BlurHandler {
         if (!isShaderActive()) {
             return;
         }
-        if (progress >= 5) return;
-        progress = getBlurStrengthProgress();
-
-        // This is hilariously bad, and could cause frame issues on low-end computers.
-        // Why is this being computed every tick? Surely there is a better way?
-        // This needs to be optimized.
-        try {
-            final List<Shader> listShaders = ((ShaderGroupAccessor) UMinecraft.getMinecraft().entityRenderer.getShaderGroup()).getListShaders();
-
-            // Should not happen. Something bad happened.
-            if (listShaders == null) {
-                return;
-            }
-
-            // Iterate through the list of shaders.
-            for (Shader shader : listShaders) {
-                ShaderUniform su = shader.getShaderManager().getShaderUniform("Progress");
-
-                if (su == null) {
-                    continue;
-                }
-
-                // All this for this.
-                su.set(progress);
-            }
-        } catch (IllegalArgumentException ex) {
-            this.logger.error("An error.png occurred while updating OneConfig's blur. Please report this!", ex);
-        }
+        if (progress >= 5 || su == null) return;
+        su.set(getBlurStrengthProgress());
     }
 
     /**
@@ -122,31 +97,57 @@ public class BlurHandlerImpl implements BlurHandler {
         if (UMinecraft.getWorld() == null) {
             return;
         }
+        if(gui == null) {
+            tryStop();
+            return;
+        }
 
         // If a shader is not already active and the UI is
         // a one of ours, we should load our own blur!
+        if(gui instanceof BlurScreen && ((BlurScreen) gui).hasBackgroundBlur()) {
+            if(!isShaderActive()) {
+                //#if FABRIC==1
+                //$$ ((org.polyfrost.oneconfig.internal.mixin.GameRendererAccessor) UMinecraft.getMinecraft().gameRenderer).invokeLoadShader(this.blurShader);
+                //#else
+                UMinecraft.getMinecraft().entityRenderer.loadShader(this.blurShader);
+                //#endif
 
-        if (!isShaderActive() && (gui instanceof BlurScreen && ((BlurScreen) gui).hasBackgroundBlur())) {
-            //#if FABRIC==1
-            //$$ ((org.polyfrost.oneconfig.internal.mixin.GameRendererAccessor) UMinecraft.getMinecraft().gameRenderer).invokeLoadShader(this.blurShader);
-            //#else
-            UMinecraft.getMinecraft().entityRenderer.loadShader(this.blurShader);
-            //#endif
+                this.start = System.currentTimeMillis();
+                this.progress = 0;
+                try {
+                    final List<Shader> listShaders = ((ShaderGroupAccessor) UMinecraft.getMinecraft().entityRenderer.getShaderGroup()).getListShaders();
 
-            this.start = System.currentTimeMillis();
-            this.progress = 0;
+                    // Should not happen. Something bad happened.
+                    if (listShaders == null) {
+                        return;
+                    }
 
-            // If a shader is active and the incoming UI is null or we have blur disabled, stop using the shader.
-        } else if (isShaderActive() && (gui == null || (gui instanceof BlurScreen && ((BlurScreen) gui).hasBackgroundBlur()))) {
-            String name = UMinecraft.getMinecraft().entityRenderer.getShaderGroup().getShaderGroupName();
+                    // Iterate through the list of shaders.
+                    for (Shader shader : listShaders) {
+                        ShaderUniform su = shader.getShaderManager().getShaderUniform("Progress");
+                        if (su == null) continue;
 
-            // Only stop our specific blur ;)
-            if (!name.endsWith("fade_in_blur.json")) {
-                return;
+                        this.su = su;
+                    }
+                    if(su == null) throw new IllegalStateException("Failed to get ShaderUniform for blur on GUI " + gui.getClass().getName());
+                } catch (Exception ex) {
+                    this.logger.error("An error.png occurred while updating OneConfig's blur. Please report this!", ex);
+                }
+            } else {
+                tryStop();
             }
-
-            UMinecraft.getMinecraft().entityRenderer.stopUseShader();
         }
+    }
+
+    private void tryStop() {
+        String name = UMinecraft.getMinecraft().entityRenderer.getShaderGroup().getShaderGroupName();
+
+        // Only stop our specific blur ;)
+        if (!name.endsWith("fade_in_blur.json")) {
+            return;
+        }
+        su = null;
+        UMinecraft.getMinecraft().entityRenderer.stopUseShader();
     }
 
     /**

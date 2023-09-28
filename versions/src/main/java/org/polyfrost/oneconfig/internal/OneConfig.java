@@ -28,10 +28,10 @@ package org.polyfrost.oneconfig.internal;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.polyfrost.oneconfig.api.commands.CommandManager;
 import org.polyfrost.oneconfig.events.EventManager;
 import org.polyfrost.oneconfig.internal.command.OneConfigCommand;
 import org.polyfrost.oneconfig.internal.ui.BlurHandler;
-import org.polyfrost.oneconfig.api.commands.CommandManager;
 import org.polyfrost.oneconfig.utils.GuiUtils;
 import org.polyfrost.oneconfig.utils.hypixel.HypixelUtils;
 
@@ -60,10 +60,8 @@ public class OneConfig {
      * Called after mods are loaded.
      * <p><b>SHOULD NOT BE CALLED!</b></p>
      */
-    @SuppressWarnings("ResultOfMethodCallIgnored")
     public void init() {
         if (initialized) return;
-        GuiUtils.getDeltaTime();
         try {
             EventManager.INSTANCE.register(BlurHandler.INSTANCE);
         } catch (Exception e) {

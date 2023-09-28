@@ -70,6 +70,15 @@ public class ObjectSerializer {
         if (isSimpleObject(in)) {
             return in;
         }
+        if(cls.isArray()) {
+            in = Arrays.asList((Object[]) box(in));
+        }
+        if(cls.isEnum()) {
+            Map<String, Object> enumMap = new HashMap<>(2);
+            enumMap.put("classType", cls.getName());
+            enumMap.put("value", ((Enum<?>) in).name());
+            return enumMap;
+        }
         if (in instanceof Collection) {
             Collection<?> c = (Collection<?>) in;
             if (c.isEmpty()) return new Object[]{};
@@ -81,7 +90,7 @@ public class ObjectSerializer {
         }
         if (in instanceof Map) {
             Map<?, ?> m = (Map<?, ?>) in;
-            if (m.isEmpty()) return Collections.emptyList();
+            if (m.isEmpty()) return Collections.emptyMap();
             Iterator<? extends Map.Entry<?, ?>> iter = m.entrySet().iterator();
             Map.Entry<?, ?> first = iter.next();
             if ((isSimpleObject(first.getKey()) || isPrimitiveArray(first.getKey().getClass())) && (isSimpleObject(first.getValue()) || isPrimitiveArray(first.getValue().getClass()))) {
@@ -95,9 +104,6 @@ public class ObjectSerializer {
             }
             return out;
         }
-        if (in instanceof Object[]) {
-            return serialize(Arrays.asList((Object[]) in));
-        }
 
         for (Adapter<?> a : adapters) {
             if (a.getTargetClass().equals(cls)) {
@@ -106,10 +112,13 @@ public class ObjectSerializer {
                 boolean isMap = out instanceof Map;
                 // ClassCastException when the Map does not have String keys (the doc explains required types)
                 Map<String, Object> outMap = isMap ? (Map<String, Object>) out : new HashMap<>(2);
-                outMap.put("classType", ad.getTargetClass().getName());
                 if (!isMap) {
                     outMap.put("value", out);
+                } else {
+                    if(outMap.get("classType") != null) throw new IllegalArgumentException("Failed to serialize " + out + ": 'classType' is a reserved key!");
+                    if(outMap.get("value") != null) throw new IllegalArgumentException("Failed to serialize " + out + ": 'value' is a reserved key!");
                 }
+                outMap.put("classType", ad.getTargetClass().getName());
                 return outMap;
             }
         }
@@ -120,6 +129,9 @@ public class ObjectSerializer {
         return cfg;
     }
 
+    /**
+     * Simple object serializer. Serializes, the object and its parents' classes non-synthetic, non-transient and non-static fields.
+     */
     private void _serialize(Class<?> cls, Object value, Map<String, Object> cfg) {
         for (Field f : cls.getDeclaredFields()) {
             if (f.isSynthetic() || Modifier.isTransient(f.getModifiers()) || Modifier.isStatic(f.getModifiers()))
@@ -146,6 +158,7 @@ public class ObjectSerializer {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public Object deserialize(Map<String, Object> in) {
         if (in == null) return null;
         String clsName = (String) in.get("classType");
@@ -173,7 +186,7 @@ public class ObjectSerializer {
         return _deserialize(in, cls);
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     private Object _deserialize(Map<String, Object> in, Class<?> cls) {
         Object o;
         try {
@@ -259,6 +272,29 @@ public class ObjectSerializer {
         return in;
     }
 
+    public static Class<?> getPrimitiveWrapper(Class<?> prim) {
+        if(prim == boolean.class) return Boolean.class;
+        if(prim == int.class) return Integer.class;
+        if(prim == float.class) return Float.class;
+        if(prim == short.class) return Short.class;
+        if(prim == long.class) return Long.class;
+        if(prim == byte.class) return Byte.class;
+        if(prim == double.class) return Double.class;
+        if(prim == char.class) return Character.class;
+        return prim;
+    }
+
+    public static Object box(Object in) {
+        Class<?> type = in.getClass().getComponentType();
+        if(type == null || !type.isPrimitive()) return in;
+        int len = Array.getLength(in);
+        Object out = Array.newInstance(getPrimitiveWrapper(type), len);
+        for(int i = 0; i < len; i++) {
+            Array.set(out, i, Array.get(in, i));
+        }
+        return out;
+    }
+
 
     public static void mapToString(Map<String, Object> map) {
         for (Map.Entry<String, Object> e : map.entrySet()) {
@@ -269,8 +305,7 @@ public class ObjectSerializer {
 
     public static boolean isSimpleObject(Object o) {
         if (o == null) return true;
-        Class<?> cls = o.getClass();
-        return isPrimitiveArray(cls) || cls.isEnum() || isPrimitiveWrapper(o) || o instanceof CharSequence;
+        return isPrimitiveWrapper(o) || o instanceof CharSequence;
     }
 
     public static boolean isPrimitiveWrapper(Object o) {

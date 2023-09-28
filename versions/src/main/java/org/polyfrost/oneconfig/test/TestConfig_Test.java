@@ -27,23 +27,17 @@
 package org.polyfrost.oneconfig.test;
 
 import org.polyfrost.oneconfig.api.config.Config;
-import org.polyfrost.oneconfig.api.config.annotations.Accordion;
-import org.polyfrost.oneconfig.api.config.annotations.Button;
-import org.polyfrost.oneconfig.api.config.annotations.Color;
-import org.polyfrost.oneconfig.api.config.annotations.DependsOn;
-import org.polyfrost.oneconfig.api.config.annotations.Dropdown;
-import org.polyfrost.oneconfig.api.config.annotations.Keybind;
-import org.polyfrost.oneconfig.api.config.annotations.RadioButton;
-import org.polyfrost.oneconfig.api.config.annotations.Slider;
-import org.polyfrost.oneconfig.api.config.annotations.Switch;
 import org.polyfrost.oneconfig.api.config.annotations.Number;
-import org.polyfrost.oneconfig.api.config.annotations.Text;
+import org.polyfrost.oneconfig.api.config.annotations.*;
 import org.polyfrost.oneconfig.libs.universal.UChat;
 import org.polyfrost.polyui.color.PolyColor;
 import org.polyfrost.polyui.input.KeyBinder;
 import org.polyfrost.polyui.input.Modifiers;
 import org.polyfrost.polyui.unit.SlideDirection;
 import org.polyfrost.polyui.utils.Utils;
+
+import java.util.Arrays;
+import java.util.List;
 
 @SuppressWarnings("unused")
 public class TestConfig_Test extends Config {
@@ -53,6 +47,9 @@ public class TestConfig_Test extends Config {
         t.register();
         System.out.println(t.getTree().toString());
     }
+
+    @Switch(title = "t")
+    public boolean added = false;
 
     @Switch(
             title = "Chicken",
@@ -68,6 +65,9 @@ public class TestConfig_Test extends Config {
         UChat.chat("you pressed a bind");
         return true;
     });
+
+    @Dropdown(title = "d")
+    public List<Integer> intList = Arrays.asList(32, 54, 2);
 
     @Dropdown(title = "drop")
     public static int[] dropint = new int[]{23, 2, 24};
@@ -160,7 +160,7 @@ public class TestConfig_Test extends Config {
         public static boolean cbow = false;
 
         @RadioButton(title = "radio when me when me when me:", description = "send help")
-        public static SlideDirection radio = SlideDirection.FromTop;
+        public static SlideDirection radio2 = SlideDirection.FromTop;
 
         @Switch(title = "Cow", description = "Something that is way too long and is going to be trimmed (I hope) because that is what its meant to do")
         public static boolean cbo2w = false;
@@ -170,6 +170,6 @@ public class TestConfig_Test extends Config {
     }
 
     public TestConfig_Test() {
-        super("test_mod.json", "Test Mod", Category.QOL);
+        super("test_mod.yaml", "Test Mod", Category.QOL);
     }
 }

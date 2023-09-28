@@ -88,6 +88,7 @@ dependencies {
     shade(libs.slf4jApi)
     compileOnly(project(":config"))
     compileOnly(project(":commands"))
+    compileOnly(project(":notifications"))
 
     compileOnly("org.polyfrost:universalcraft-1.8.9-forge:${libs.versions.universalcraft.get()}") {
         attributes { attribute(common, true) }

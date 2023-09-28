@@ -58,21 +58,6 @@ public final class JsonUtils {
     }
 
     /**
-     * Checks whether the given string is a valid JSON.
-     *
-     * @param json The string to check.
-     * @return Whether the string is a valid JSON.
-     */
-    public static boolean isValid(String json) {
-        try {
-            PARSER.parse(json);
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    /**
      * Parses a string into a {@link JsonElement}.
      *
      * @param string          The string to parse.

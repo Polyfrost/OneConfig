@@ -155,6 +155,7 @@ dependencies {
     shadeProject(project(":config"))
     shadeProject(project(":commands"))
     shadeProject(project(":hud"))
+    shadeProject(project(":notifications"))
 
     if (platform.isFabric) {
         include(libs.fabricAsm)
@@ -512,7 +513,7 @@ fun DependencyHandlerScope.include(
             } else {
                 shadeNoPom(dependency) { isTransitive = transitive }
                 implementationNoPom(dependency) {
-                    isTransitive = transitive;
+                    isTransitive = transitive
                 }
             }
         }

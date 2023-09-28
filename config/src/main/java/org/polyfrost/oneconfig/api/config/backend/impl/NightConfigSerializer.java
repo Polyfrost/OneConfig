@@ -69,20 +69,24 @@ public class NightConfigSerializer implements FileSerializer {
 
 
     @Override
-    @SuppressWarnings("unchecked")
     public @NotNull String serialize(@NotNull Tree c) {
         Config cfg = Config.inMemory();
         add(c, cfg);
-        for (Map.Entry<String, Object> e : cfg.valueMap().entrySet()) {
-            if (e.getValue() instanceof Map) {
-                Config cc = Config.inMemory();
-                for (Map.Entry<String, Object> ee : ((Map<String, Object>) e.getValue()).entrySet()) {
-                    cc.add(ee.getKey(), ee.getValue());
-                }
-                e.setValue(cc);
+        return writer.writeToString(mapToConfig(cfg.valueMap()));
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Config mapToConfig(Map<String, Object> map) {
+        Config c = Config.inMemory();
+        for(Map.Entry<String, Object> e : map.entrySet()) {
+            if(e.getValue() instanceof Map) {
+                Config cc = mapToConfig((Map<String, Object>) e.getValue());
+                c.set(e.getKey(), cc);
+            } else {
+                c.add(e.getKey(), e.getValue());
             }
         }
-        return writer.writeToString(cfg);
+        return c;
     }
 
     @Override
@@ -105,7 +109,7 @@ public class NightConfigSerializer implements FileSerializer {
                 Tree in = (Tree) n;
                 Config child = cfg.createSubConfig();
                 add(in, child);
-                cfg.add(in.getID(), child);
+                cfg.add(in.getID(), mapToConfig(child.valueMap()));
             }
         }
     }

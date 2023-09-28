@@ -27,40 +27,20 @@
 package org.polyfrost.oneconfig.utils;
 
 import net.minecraft.client.gui.GuiScreen;
-import org.polyfrost.oneconfig.events.EventManager;
-import org.polyfrost.oneconfig.events.event.RenderEvent;
-import org.polyfrost.oneconfig.events.event.Stage;
-import org.polyfrost.oneconfig.events.event.TimerUpdateEvent;
-import org.polyfrost.oneconfig.libs.eventbus.Subscribe;
-import org.polyfrost.oneconfig.libs.universal.UMinecraft;
+import org.jetbrains.annotations.ApiStatus;
 import org.polyfrost.oneconfig.libs.universal.UScreen;
-import org.polyfrost.oneconfig.platform.Platform;
-import org.polyfrost.oneconfig.utils.TickDelay;
-
-import java.util.Deque;
-import java.util.Optional;
-import java.util.concurrent.ConcurrentLinkedDeque;
 
 /**
  * A class containing utility methods for working with GuiScreens.
  */
 public final class GuiUtils {
-    private static long time = -1L;
-    private static long deltaTime = 17L;
-    private static boolean wasMouseDown = false;
-    private static final Deque<Optional<GuiScreen>> screenQueue = new ConcurrentLinkedDeque<>();
-
-    static {
-        EventManager.INSTANCE.register(new org.polyfrost.oneconfig.utils.GuiUtils());
-    }
-
     /**
      * Displays a screen after a tick, preventing mouse sync issues.
      *
      * @param screen the screen to display.
-     * @deprecated Not actually deprecated, but should not be used.
+     * @deprecated Not actually deprecated, but should not be used as is not type-checked.
      */
-    @Deprecated
+    @ApiStatus.Internal
     public static void displayScreen(Object screen) {
         displayScreen(((GuiScreen) screen));
     }
@@ -82,56 +62,14 @@ public final class GuiUtils {
      * @param ticks  the amount of ticks to wait for before displaying the screen.
      */
     public static void displayScreen(GuiScreen screen, int ticks) {
-        Optional<GuiScreen> optional = Optional.of(screen);
-        screenQueue.add(optional);
-        new TickDelay(ticks, () -> {
-            UScreen.displayScreen(screen);
-            screenQueue.remove(optional);
-        });
+        new TickDelay(ticks, () -> UScreen.displayScreen(screen));
     }
 
-    public static Deque<Optional<GuiScreen>> getScreenQueue() {
-        return screenQueue;
-    }
 
     /**
      * Close the current open GUI screen.
      */
     public static void closeScreen() {
         UScreen.displayScreen(null);
-    }
-
-    /**
-     * Gets the delta time (in milliseconds) between frames.
-     * <p><b>
-     * Not to be confused with Minecraft deltaTicks / renderPartialTicks, which can be gotten via
-     * {@link TimerUpdateEvent}
-     * </b></p>
-     *
-     * @return the delta time.
-     */
-    public static float getDeltaTime() {
-        return deltaTime;
-    }
-
-    /**
-     * @return If the mouse was down last frame
-     */
-    public static boolean wasMouseDown() {
-        return wasMouseDown;
-    }
-
-    @Subscribe
-    private void onRenderEvent(RenderEvent event) {
-        if (event.stage == Stage.START) {
-            if (time == -1) time = UMinecraft.getTime();
-            else {
-                long currentTime = UMinecraft.getTime();
-                deltaTime = currentTime - time;
-                time = currentTime;
-            }
-        } else if (event.stage == Stage.END) {
-            wasMouseDown = Platform.getMousePlatform().isButtonDown(0);
-        }
     }
 }

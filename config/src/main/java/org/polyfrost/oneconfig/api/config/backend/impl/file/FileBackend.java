@@ -193,10 +193,17 @@ public class FileBackend implements Backend {
 
     @Override
     public boolean remove(@NotNull String id) {
+        return remove(id, false);
+    }
+
+    public boolean remove(String id, boolean keepFile) {
         Pair<Serializer, Tree> t = configs.remove(id);
         if (t == null) return false;
         dodge = true;
-        return getFile(id).delete();
+        File f = getFile(id);
+        if(keepFile) {
+            return f.renameTo(new File(f.getAbsolutePath() + ".corrupted"));
+        } else return f.delete();
     }
 
     @Override

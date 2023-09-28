@@ -47,7 +47,7 @@ import java.util.Map;
 public class ConfigManager {
     public static final Path CONFIG_DIR = new File("./config").toPath();
     public static final ConfigManager INSTANCE = new ConfigManager();
-    public static final String DEFAULT_EXT = ".json";
+    public static final String DEFAULT_EXT = ".yaml";
     public static final String DEFAULT_META_EXT = "-meta.toml";
     private static final Logger LOGGER = LoggerFactory.getLogger("OneConfig Config Manager");
     private final List<PropertyCollector> collectors = new ArrayList<>(4);
@@ -107,13 +107,22 @@ public class ConfigManager {
      */
     public Tree register(@NotNull Object source, @Nullable Config cfg) {
         cfg = cfg == null ? new Config(source.getClass().getSimpleName() + DEFAULT_EXT, null, source.getClass().getSimpleName(), Config.Category.OTHER) : cfg;
-        Tree t = backend.get(cfg.id);
+        Tree t = null;
+        try {
+            t = backend.get(cfg.id);
+        } catch (Exception e) {
+            LOGGER.error("Failed to read config! Data will be ignored", e);
+            backend.remove(cfg.id, true);
+        }
         // brand-new config to the system
         if (t == null) {
             LOGGER.info("Registering new config " + cfg.id);
             t = collect(source);
             backend.put(t);
-        } else t.merge(collect(source), false, true);
+        } else {
+            t.merge(collect(source), false, true);
+            backend.put(t);
+        }
         t.addMetadata("meta", cfg);
         // check and potentially add metadata
         Tree metaTree = backend.get(cfg.id + DEFAULT_META_EXT);
