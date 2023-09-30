@@ -26,10 +26,11 @@
 
 package org.polyfrost.oneconfig.utils;
 
-import org.polyfrost.oneconfig.events.EventManager;
-import org.polyfrost.oneconfig.events.event.Stage;
-import org.polyfrost.oneconfig.events.event.TickEvent;
-import org.polyfrost.oneconfig.libs.eventbus.Subscribe;
+
+import org.polyfrost.oneconfig.api.events.EventManager;
+import org.polyfrost.oneconfig.api.events.event.Stage;
+import org.polyfrost.oneconfig.api.events.event.TickEvent;
+import org.polyfrost.oneconfig.api.events.invoke.impl.Subscribe;
 
 /**
  * Schedules a Runnable to be called after a certain amount of ticks.
@@ -51,7 +52,7 @@ public class TickDelay {
     }
 
     @Subscribe
-    protected void onTick(TickEvent event) {
+    private void onTick(TickEvent event) {
         if (event.stage == Stage.START) {
             // Delay expired
             if (delay < 1) {

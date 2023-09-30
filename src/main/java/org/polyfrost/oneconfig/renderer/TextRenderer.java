@@ -31,6 +31,7 @@ import org.polyfrost.oneconfig.platform.Platform;
 
 import java.util.regex.Pattern;
 
+@Deprecated
 public class TextRenderer {
     private static final Pattern regex = Pattern.compile("(?i)\u00A7[0-9a-f]");
     private static boolean drawingBorder = false;

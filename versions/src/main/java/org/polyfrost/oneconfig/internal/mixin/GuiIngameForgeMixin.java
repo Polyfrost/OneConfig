@@ -26,8 +26,8 @@
 package org.polyfrost.oneconfig.internal.mixin;
 
 import net.minecraftforge.client.GuiIngameForge;
-import org.polyfrost.oneconfig.events.EventManager;
-import org.polyfrost.oneconfig.events.event.HudRenderEvent;
+import org.polyfrost.oneconfig.api.events.EventManager;
+import org.polyfrost.oneconfig.api.events.event.HudRenderEvent;
 import org.polyfrost.oneconfig.libs.universal.UMatrixStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;

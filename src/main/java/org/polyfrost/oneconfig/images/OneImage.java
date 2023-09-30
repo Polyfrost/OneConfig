@@ -28,10 +28,10 @@ package org.polyfrost.oneconfig.images;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.ApiStatus;
 import org.polyfrost.oneconfig.utils.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -58,7 +58,7 @@ import java.util.Objects;
 @SuppressWarnings("unused")
 @ApiStatus.Experimental
 public class OneImage {
-    private static final Logger LOGGER = LogManager.getLogger("OneConfig Images");
+    private static final Logger LOGGER = LoggerFactory.getLogger("OneConfig Images");
     private BufferedImage image;
     private Graphics2D graphics = null;
     private final int width, height;

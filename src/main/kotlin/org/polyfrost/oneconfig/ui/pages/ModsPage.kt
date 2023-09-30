@@ -1,30 +1,9 @@
-/*
- * This file is part of PolyUI
- * PolyUI - Fast and lightweight UI framework
- * Copyright (C) 2023 Polyfrost and its contributors.
- *   <https://polyfrost.cc> <https://github.com/Polyfrost/polui-jvm>
- *
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
- *
- *     PolyUI is licensed under the terms of version 3 of the GNU Lesser
- * General Public License as published by the Free Software Foundation,
- * AND the simple request that you adequately accredit us if you use PolyUI.
- * See details here <https://github.com/Polyfrost/polyui-jvm/ACCREDITATION.md>.
- *     This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- *
- *   You should have received a copy of the GNU Lesser General Public
- * License.  If not, see <https://www.gnu.org/licenses/>.
- */
-
 package org.polyfrost.oneconfig.ui.pages
 
 import org.polyfrost.oneconfig.api.config.Config
 import org.polyfrost.oneconfig.api.config.Tree
-import org.polyfrost.oneconfig.internal.config.ConfigVisualizer
-import org.polyfrost.oneconfig.internal.config.ConfigVisualizer.addEventHandler
+import org.polyfrost.oneconfig.api.config.ConfigVisualizer
+import org.polyfrost.oneconfig.api.config.ConfigVisualizer.addEventHandler
 import org.polyfrost.oneconfig.ui.elements.Card
 import org.polyfrost.polyui.component.impl.Button
 import org.polyfrost.polyui.event.MouseClicked
@@ -39,9 +18,9 @@ import org.polyfrost.polyui.renderer.data.PolyImage
 import org.polyfrost.polyui.unit.*
 import org.polyfrost.polyui.utils.fastEach
 
-class ModsPage(trees: Collection<Tree>, val owner: SwitchingLayout) {
-    val cache = HashMap<Tree, Layout>()
-    val noIconProps = object : ButtonProperties() {
+class ModsPage(trees: Collection<Tree>, private val owner: SwitchingLayout) {
+    private val cache = HashMap<Tree, Layout>()
+    private val noIconProps = object : ButtonProperties() {
         override val verticalPadding: Float
             get() = 8.5f
     }

@@ -26,27 +26,36 @@
 
 package org.polyfrost.oneconfig.internal.mixin;
 
-import org.polyfrost.oneconfig.events.EventManager;
-import org.polyfrost.oneconfig.events.event.*;
-import org.polyfrost.oneconfig.internal.OneConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Timer;
+import net.minecraftforge.client.event.GuiOpenEvent;
+import net.minecraftforge.fml.common.eventhandler.Event;
+import org.lwjgl.input.Keyboard;
+import org.lwjgl.input.Mouse;
 import org.objectweb.asm.Opcodes;
+import org.polyfrost.oneconfig.api.events.EventManager;
+import org.polyfrost.oneconfig.api.events.event.FramebufferRenderEvent;
+import org.polyfrost.oneconfig.api.events.event.InitializationEvent;
+import org.polyfrost.oneconfig.api.events.event.KeyInputEvent;
+import org.polyfrost.oneconfig.api.events.event.MouseInputEvent;
+import org.polyfrost.oneconfig.api.events.event.PreShutdownEvent;
+import org.polyfrost.oneconfig.api.events.event.RawKeyEvent;
+import org.polyfrost.oneconfig.api.events.event.RawMouseEvent;
+import org.polyfrost.oneconfig.api.events.event.RenderEvent;
+import org.polyfrost.oneconfig.api.events.event.ScreenOpenEvent;
+import org.polyfrost.oneconfig.api.events.event.ShutdownEvent;
+import org.polyfrost.oneconfig.api.events.event.Stage;
+import org.polyfrost.oneconfig.api.events.event.StartEvent;
+import org.polyfrost.oneconfig.api.events.event.TickEvent;
+import org.polyfrost.oneconfig.api.events.event.TimerUpdateEvent;
+import org.polyfrost.oneconfig.internal.OneConfig;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-//#if MC<=11202
-import org.lwjgl.input.Keyboard;
-import org.lwjgl.input.Mouse;
-//#endif
-
-//#if FORGE==1
-import net.minecraftforge.client.event.GuiOpenEvent;
-import net.minecraftforge.fml.common.eventhandler.Event;
 //#endif
 
 @Mixin(Minecraft.class)
@@ -54,6 +63,7 @@ public class MinecraftMixin {
     @Shadow
     private Timer timer;
 
+    @Unique
     private static final String UPDATE_CAMERA_AND_RENDER =
             //#if MC>=11300
             //$$ "Lnet/minecraft/client/renderer/GameRenderer;updateCameraAndRender(FJZ)V";
@@ -73,7 +83,7 @@ public class MinecraftMixin {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> EventManager.INSTANCE.post(new ShutdownEvent())));
     }
 
-    @Inject(method = "startGame", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/client/FMLClientHandler;onInitializationComplete()V", shift = At.Shift.AFTER, remap = false), remap = true)
+    @Inject(method = "startGame", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/client/FMLClientHandler;onInitializationComplete()V", shift = At.Shift.AFTER, remap = false))
     private void onInit(CallbackInfo ci) {
         EventManager.INSTANCE.post(new InitializationEvent());
         OneConfig.INSTANCE.init();
@@ -111,7 +121,7 @@ public class MinecraftMixin {
     }
 
     //#if FORGE==1
-    @ModifyArg(method = "displayGuiScreen", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/eventhandler/EventBus;post(Lnet/minecraftforge/fml/common/eventhandler/Event;)Z", remap = false), remap = true)
+    @ModifyArg(method = "displayGuiScreen", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/eventhandler/EventBus;post(Lnet/minecraftforge/fml/common/eventhandler/Event;)Z", remap = false))
     private Event onGuiOpenEvent(Event a) {
         if (a instanceof GuiOpenEvent) {
             GuiOpenEvent forgeEvent = (GuiOpenEvent) a;
@@ -123,7 +133,7 @@ public class MinecraftMixin {
                     //#endif
             );
             EventManager.INSTANCE.post(event);
-            if (event.isCancelled) {
+            if (event.cancelled) {
                 forgeEvent.setCanceled(true);
             }
             return forgeEvent;
@@ -186,17 +196,17 @@ public class MinecraftMixin {
         EventManager.INSTANCE.post(new RawKeyEvent(Keyboard.getEventKey(), state));
     }
 
-    @Inject(method = "runTick", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/FMLCommonHandler;fireKeyInput()V", remap = false), remap = true)
+    @Inject(method = "runTick", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/FMLCommonHandler;fireKeyInput()V", remap = false))
     private void onKeyInputEvent(CallbackInfo ci) {
         EventManager.INSTANCE.post(new KeyInputEvent());
     }
 
-    @Inject(method = "runTick", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/client/ForgeHooksClient;postMouseEvent()Z", remap = false), remap = true)
+    @Inject(method = "runTick", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/client/ForgeHooksClient;postMouseEvent()Z", remap = false))
     private void onMouseEvent(CallbackInfo ci) {
         EventManager.INSTANCE.post(new RawMouseEvent(Mouse.getEventButton(), Mouse.getEventButtonState() ? 1 : 0));
     }
 
-    @Inject(method = "runTick", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/FMLCommonHandler;fireMouseInput()V", remap = false), remap = true)
+    @Inject(method = "runTick", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/FMLCommonHandler;fireMouseInput()V", remap = false))
     private void onMouseInputEvent(CallbackInfo ci) {
         EventManager.INSTANCE.post(new MouseInputEvent(Mouse.getEventButton()));
     }

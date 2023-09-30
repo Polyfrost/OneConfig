@@ -27,12 +27,11 @@
 package org.polyfrost.oneconfig.utils;
 
 import com.google.gson.JsonElement;
-import org.apache.commons.io.IOUtils;
 import org.polyfrost.oneconfig.libs.universal.UDesktop;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -40,6 +39,8 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 
 /**
  * Utility class for accessing the internet.
@@ -56,12 +57,17 @@ public final class NetworkUtils {
      * @return The contents of the URL.
      */
     public static String getString(String url, String userAgent, int timeout, boolean useCaches) {
-        try (InputStreamReader input = new InputStreamReader(setupConnection(url, userAgent, timeout, useCaches), StandardCharsets.UTF_8)) {
-            return IOUtils.toString(input);
+        StringBuilder sb = new StringBuilder();
+        try (BufferedReader input = new BufferedReader(new InputStreamReader(setupConnection(url, userAgent, timeout, useCaches), StandardCharsets.UTF_8))) {
+            String line;
+            while ((line = input.readLine()) != null) {
+                sb.append(line).append('\n');
+            }
         } catch (Exception e) {
             e.printStackTrace();
             return null;
         }
+        return sb.toString();
     }
 
     /**
@@ -113,8 +119,8 @@ public final class NetworkUtils {
      */
     public static boolean downloadFile(String url, File file, String userAgent, int timeout, boolean useCaches) {
         url = url.replace(" ", "%20");
-        try (FileOutputStream fileOut = new FileOutputStream(file); BufferedInputStream in = new BufferedInputStream(setupConnection(url, userAgent, timeout, useCaches))) {
-            IOUtils.copy(in, fileOut);
+        try (BufferedInputStream in = new BufferedInputStream(setupConnection(url, userAgent, timeout, useCaches))) {
+            Files.copy(in, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
         } catch (Exception e) {
             e.printStackTrace();
             return false;

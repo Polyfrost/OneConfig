@@ -31,9 +31,9 @@ import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.Packet;
-import org.polyfrost.oneconfig.events.EventManager;
-import org.polyfrost.oneconfig.events.event.ReceivePacketEvent;
-import org.polyfrost.oneconfig.events.event.SendPacketEvent;
+import org.polyfrost.oneconfig.api.events.EventManager;
+import org.polyfrost.oneconfig.api.events.event.ReceivePacketEvent;
+import org.polyfrost.oneconfig.api.events.event.SendPacketEvent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -56,7 +56,7 @@ public class NetworkManagerMixin {
     private void onSendPacket(Packet<?> packetIn, CallbackInfo ci) {
         SendPacketEvent event = new SendPacketEvent(packetIn);
         EventManager.INSTANCE.post(event);
-        if (event.isCancelled) {
+        if (event.cancelled) {
             ci.cancel();
         }
     }
@@ -65,7 +65,7 @@ public class NetworkManagerMixin {
     private void onReceivePacket(ChannelHandlerContext p_channelRead0_1_, Packet<?> p_channelRead0_2_, CallbackInfo ci) {
         ReceivePacketEvent event = new ReceivePacketEvent(p_channelRead0_2_);
         EventManager.INSTANCE.post(event);
-        if (event.isCancelled) {
+        if (event.cancelled) {
             ci.cancel();
         }
     }

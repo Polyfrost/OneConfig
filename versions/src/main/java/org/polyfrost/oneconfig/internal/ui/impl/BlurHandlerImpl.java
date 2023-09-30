@@ -27,19 +27,20 @@
 package org.polyfrost.oneconfig.internal.ui.impl;
 
 import net.minecraft.client.shader.Shader;
+import net.minecraft.client.shader.ShaderGroup;
 import net.minecraft.client.shader.ShaderUniform;
 import net.minecraft.util.ResourceLocation;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.polyfrost.oneconfig.events.event.RenderEvent;
-import org.polyfrost.oneconfig.events.event.ScreenOpenEvent;
-import org.polyfrost.oneconfig.events.event.Stage;
+import org.polyfrost.oneconfig.api.events.event.RenderEvent;
+import org.polyfrost.oneconfig.api.events.event.ScreenOpenEvent;
+import org.polyfrost.oneconfig.api.events.event.Stage;
+import org.polyfrost.oneconfig.api.events.invoke.impl.Subscribe;
 import org.polyfrost.oneconfig.internal.ui.BlurHandler;
 import org.polyfrost.oneconfig.internal.mixin.ShaderGroupAccessor;
-import org.polyfrost.oneconfig.libs.eventbus.Subscribe;
 import org.polyfrost.oneconfig.libs.universal.UMinecraft;
 import org.polyfrost.oneconfig.libs.universal.UScreen;
-import org.polyfrost.oneconfig.ui.BlurScreen;
+import org.polyfrost.oneconfig.ui.screen.BlurScreen;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
@@ -58,18 +59,18 @@ import java.util.List;
  */
 public class BlurHandlerImpl implements BlurHandler {
     private final ResourceLocation blurShader = new ResourceLocation("shaders/post/fade_in_blur.json");
-    private final Logger logger = LogManager.getLogger("OneConfig - Blur");
+    private final Logger logger = LoggerFactory.getLogger("OneConfig Blur");
     private ShaderUniform su;
     private long start;
     private float progress = 0;
 
     @Subscribe
-    private void onGuiChange(ScreenOpenEvent event) {
+    public void onGuiChange(ScreenOpenEvent event) {
         reloadBlur(event.screen);
     }
 
     @Subscribe
-    private void onRenderTick(RenderEvent event) {
+    public void onRenderTick(RenderEvent event) {
         if (event.stage != Stage.END) {
             return;
         }
@@ -140,7 +141,9 @@ public class BlurHandlerImpl implements BlurHandler {
     }
 
     private void tryStop() {
-        String name = UMinecraft.getMinecraft().entityRenderer.getShaderGroup().getShaderGroupName();
+        ShaderGroup sg = UMinecraft.getMinecraft().entityRenderer.getShaderGroup();
+        if (sg == null) return;
+        String name = sg.getShaderGroupName();
 
         // Only stop our specific blur ;)
         if (!name.endsWith("fade_in_blur.json")) {

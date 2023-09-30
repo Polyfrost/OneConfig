@@ -31,7 +31,7 @@ import org.polyfrost.oneconfig.api.commands.factories.annotated.annotations.Comm
 import org.polyfrost.oneconfig.api.commands.factories.annotated.annotations.Parameter;
 import org.polyfrost.oneconfig.libs.universal.UChat;
 import org.polyfrost.oneconfig.utils.GuiUtils;
-import org.polyfrost.oneconfig.ui.PolyUIScreen;
+import org.polyfrost.oneconfig.ui.screen.PolyUIScreen;
 import org.polyfrost.polyui.color.LightTheme;
 import org.polyfrost.polyui.test.Test;
 

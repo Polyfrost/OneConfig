@@ -44,11 +44,8 @@ repositories {
 }
 
 val relocated = registerRelocationAttribute("relocate") {
-    relocate("gg.essential", "org.polyfrost.oneconfig.libs")
-    relocate("me.kbrewster", "org.polyfrost.oneconfig.libs")
     relocate("com.github.benmanes", "org.polyfrost.oneconfig.libs")
-    relocate("com.google", "org.polyfrost.oneconfig.libs")
-    relocate("org.checkerframework", "org.polyfrost.oneconfig.libs")
+    relocate("dev.xdark", "org.polyfrost.oneconfig.libs")
     remapStringsIn("com.github.benmanes.caffeine.cache.LocalCacheFactory")
     remapStringsIn("com.github.benmanes.caffeine.cache.NodeFactory")
 }
@@ -70,36 +67,22 @@ val common = registerStripReferencesAttribute("common") {
 
 dependencies {
     compileOnly("com.google.code.gson:gson:2.2.4")
-    compileOnly("commons-io:commons-io:2.4")
-    compileOnly("com.google.guava:guava:17.0")
     compileOnly("org.lwjgl:lwjgl-opengl:3.3.1")
-    compileOnly("org.apache.logging.log4j:log4j-core:2.0-beta9")
-    compileOnly("org.apache.logging.log4j:log4j-api:2.0-beta9")
     compileOnly("org.ow2.asm:asm-debug-all:5.0.3")
-    compileOnly("org.apache.commons:commons-lang3:3.3.2")
     compileOnly("org.jetbrains:annotations:24.0.1")
-
-    compileOnly(libs.vigilance) {
-        attributes { attribute(common, true) }
-        isTransitive = false
-    }
 
     shade(libs.polyui)
     shade(libs.slf4jApi)
     compileOnly(project(":config"))
     compileOnly(project(":commands"))
-    compileOnly(project(":notifications"))
+    compileOnly(project(":events"))
+    compileOnly(project(":config-impl"))
+    compileOnly(project(":ui")) {
+        isTransitive = false
+    }
 
     compileOnly("org.polyfrost:universalcraft-1.8.9-forge:${libs.versions.universalcraft.get()}") {
         attributes { attribute(common, true) }
-        isTransitive = false
-    }
-
-    shadeRelocated(libs.keventbus) {
-        isTransitive = false
-    }
-
-    shadeRelocated(libs.deencapsulation) {
         isTransitive = false
     }
 

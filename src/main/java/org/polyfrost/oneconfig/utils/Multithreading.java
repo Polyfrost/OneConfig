@@ -26,14 +26,17 @@
 
 package org.polyfrost.oneconfig.utils;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
+
+import org.jetbrains.annotations.NotNull;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Allows for easy multithreading.
@@ -64,7 +67,7 @@ public class Multithreading {
      */
     public static void runAsync(Runnable... runnables) {
         for (Runnable runnable : runnables) {
-            runAsync(runnable);
+            submit(runnable);
         }
     }
 
@@ -76,8 +79,7 @@ public class Multithreading {
      * @see ExecutorService#submit(Runnable)
      */
     public static Future<?> submit(Runnable runnable) {
-        if (executorService == null) executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("OneConfig-%d").build());
-        return executorService.submit(runnable);
+        return getExecutor().submit(runnable);
     }
 
     /**
@@ -102,17 +104,24 @@ public class Multithreading {
      * @see ScheduledExecutorService#schedule(Runnable, long, TimeUnit)
      */
     public static ScheduledFuture<?> submitScheduled(Runnable runnable, long delay, TimeUnit timeUnit) {
-        if (runnableExecutor == null) runnableExecutor = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors() + 1);
-        return runnableExecutor.schedule(runnable, delay, timeUnit);
+        return getScheduledExecutor().schedule(runnable, delay, timeUnit);
     }
 
-    public static ExecutorService getExecutorService() {
-        if (executorService == null) executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("OneConfig-%d").build());
+    public static ExecutorService getExecutor() {
+        if (executorService == null) executorService = Executors.newCachedThreadPool(new ThreadFactory() {
+            private final AtomicInteger ai = new AtomicInteger();
+            @Override
+            public Thread newThread(@NotNull Runnable r) {
+                Thread t = Executors.defaultThreadFactory().newThread(r);
+                t.setName("OneConfig-" + ai.getAndIncrement());
+                return t;
+            }
+        });
         return executorService;
     }
 
-    public static ScheduledExecutorService getRunnableExecutor() {
-        if (runnableExecutor == null) runnableExecutor = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors() + 1);
+    public static ScheduledExecutorService getScheduledExecutor() {
+        if (runnableExecutor == null) runnableExecutor = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors() - 2);
         return runnableExecutor;
     }
 }

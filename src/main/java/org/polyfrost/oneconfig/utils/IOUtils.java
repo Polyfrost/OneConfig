@@ -65,7 +65,7 @@ public final class IOUtils {
         path = path.trim();
         if (path.startsWith("http")) {
             try (InputStream in = NetworkUtils.setupConnection(path, "OneConfig", 5000, true)) {
-                bytes = org.apache.commons.io.IOUtils.toByteArray(in);
+                bytes = org.polyfrost.polyui.utils.IOUtils.toByteArray(in);
             }
         } else {
             InputStream stream;
@@ -78,7 +78,7 @@ public final class IOUtils {
             if (stream == null) {
                 throw new FileNotFoundException(path);
             }
-            bytes = org.apache.commons.io.IOUtils.toByteArray(stream);
+            bytes = org.polyfrost.polyui.utils.IOUtils.toByteArray(stream);
         }
         ByteBuffer data = ByteBuffer.allocateDirect(bytes.length).order(ByteOrder.nativeOrder())
                 .put(bytes);

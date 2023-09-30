@@ -27,8 +27,8 @@
 package org.polyfrost.oneconfig.internal.plugin.hooks;
 
 import org.polyfrost.oneconfig.libs.universal.UScreen;
-import org.polyfrost.oneconfig.ui.BlurScreen;
-import org.polyfrost.oneconfig.ui.PolyUIScreen;
+import org.polyfrost.oneconfig.ui.screen.BlurScreen;
+import org.polyfrost.oneconfig.ui.screen.PolyUIScreen;
 
 public class OptifineConfigHook {
 

@@ -35,14 +35,9 @@ package org.polyfrost.oneconfig.utils.hypixel;
 
 import com.google.gson.Gson;
 import org.jetbrains.annotations.Nullable;
-import org.polyfrost.oneconfig.events.EventManager;
-import org.polyfrost.oneconfig.events.event.ChatReceiveEvent;
-import org.polyfrost.oneconfig.events.event.ChatSendEvent;
-import org.polyfrost.oneconfig.events.event.LocrawEvent;
-import org.polyfrost.oneconfig.events.event.Stage;
-import org.polyfrost.oneconfig.events.event.TickEvent;
-import org.polyfrost.oneconfig.events.event.WorldLoadEvent;
-import org.polyfrost.oneconfig.libs.eventbus.Subscribe;
+import org.polyfrost.oneconfig.api.events.EventManager;
+import org.polyfrost.oneconfig.api.events.event.*;
+import org.polyfrost.oneconfig.api.events.invoke.impl.Subscribe;
 import org.polyfrost.oneconfig.libs.universal.UChat;
 import org.polyfrost.oneconfig.platform.Platform;
 import org.polyfrost.oneconfig.utils.TickDelay;
@@ -77,7 +72,7 @@ public class LocrawUtil {
     }
 
     @Subscribe
-    private void onTick(TickEvent event) {
+    public void onTick(TickEvent event) {
         if (event.stage != Stage.START || !Platform.getServerPlatform().doesPlayerExist() || !HypixelUtils.INSTANCE.isHypixel()) {
             return;
         }
@@ -89,7 +84,7 @@ public class LocrawUtil {
     }
 
     @Subscribe
-    private void onWorldLoad(WorldLoadEvent event) {
+    public void onWorldLoad(WorldLoadEvent event) {
         if (locrawInfo != null) {
             lastLocrawInfo = locrawInfo;
         }
@@ -98,14 +93,14 @@ public class LocrawUtil {
     }
 
     @Subscribe
-    private void onMessageSent(ChatSendEvent event) {
+    public void onMessageSent(ChatSendEvent event) {
         if (event.message.startsWith("/locraw") && !this.listening) {
             playerSentCommand = true;
         }
     }
 
     @Subscribe
-    private void onMessageReceived(ChatReceiveEvent event) {
+    public void onMessageReceived(ChatReceiveEvent event) {
         try {
             // Had some false positives while testing, so this is here just to be safe.
             final String msg = event.getFullyUnformattedMessage();
@@ -125,7 +120,7 @@ public class LocrawUtil {
 
                     // Stop listening for locraw and cancel the message.
                     if (!this.playerSentCommand) {
-                        event.isCancelled = true;
+                        event.cancelled = true;
                     }
                     EventManager.INSTANCE.post(new LocrawEvent(locrawInfo));
 

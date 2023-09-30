@@ -27,8 +27,8 @@
 package org.polyfrost.oneconfig.internal.mixin;
 
 import net.minecraft.client.entity.EntityPlayerSP;
-import org.polyfrost.oneconfig.events.EventManager;
-import org.polyfrost.oneconfig.events.event.ChatSendEvent;
+import org.polyfrost.oneconfig.api.events.EventManager;
+import org.polyfrost.oneconfig.api.events.event.ChatSendEvent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -47,7 +47,7 @@ public class EntityPlayerSPMixin {
 
         EventManager.INSTANCE.post(oneconfig$sendchatevent);
 
-        if (oneconfig$sendchatevent.isCancelled) {
+        if (oneconfig$sendchatevent.cancelled) {
             ci.cancel();
         }
     }

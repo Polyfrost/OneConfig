@@ -30,8 +30,8 @@ package org.polyfrost.oneconfig.internal.mixin;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.fml.common.eventhandler.Event;
 import net.minecraftforge.fml.common.eventhandler.EventBus;
-import org.polyfrost.oneconfig.events.EventManager;
-import org.polyfrost.oneconfig.events.event.ChatReceiveEvent;
+import org.polyfrost.oneconfig.api.events.EventManager;
+import org.polyfrost.oneconfig.api.events.event.ChatReceiveEvent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -48,7 +48,7 @@ public class EventBusMixin {
             ChatReceiveEvent customEvent = new ChatReceiveEvent(event.message);
             EventManager.INSTANCE.post(customEvent);
             event.message = customEvent.message;
-            if (customEvent.isCancelled) {
+            if (customEvent.cancelled) {
                 e.setCanceled(true);
             }
         }

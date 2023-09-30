@@ -84,13 +84,8 @@ val relocatedCommonProject = registerRelocationAttribute("common-lwjgl") {
 }
 
 val relocated = registerRelocationAttribute("relocate") {
-    relocate("gg.essential", "org.polyfrost.oneconfig.libs")
-    relocate("me.kbrewster", "org.polyfrost.oneconfig.libs")
     relocate("com.github.benmanes", "org.polyfrost.oneconfig.libs")
-    relocate("com.google", "org.polyfrost.oneconfig.libs")
-    relocate("org.checkerframework", "org.polyfrost.oneconfig.libs")
     relocate("dev.xdark", "org.polyfrost.oneconfig.libs")
-
     remapStringsIn("com.github.benmanes.caffeine.cache.LocalCacheFactory")
     remapStringsIn("com.github.benmanes.caffeine.cache.NodeFactory")
 }
@@ -124,15 +119,13 @@ val shadeOnly: Configuration by configurations.creating
 val shadeNoJar: Configuration by configurations.creating
 
 dependencies {
-    compileOnly(libs.vigilance) {
+    compileOnly("gg.essential:vigilance-1.8.9-forge:${libs.versions.vigilance.get()}") {
         isTransitive = false
     }
 
     include("org.polyfrost:universalcraft-$platform:${libs.versions.universalcraft.get()}", transitive = false, mod = true)
 
-    include(libs.deencapsulation, relocate = true, transitive = false, mod = false)
-
-    include(libs.keventbus, relocate = true, transitive = false)
+    if (platform.isLegacyFabric) include(libs.deencapsulation, relocate = true, transitive = false, mod = false)
 
     include(libs.caffeine, relocate = true)
 
@@ -155,14 +148,14 @@ dependencies {
     shadeProject(project(":config"))
     shadeProject(project(":commands"))
     shadeProject(project(":hud"))
-    shadeProject(project(":notifications"))
+    shadeProject(project(":events"))
+    shadeProject(project(":config-impl"))
+    shadeProject(project(":ui")) {
+        isTransitive = false
+    }
 
     if (platform.isFabric) {
         include(libs.fabricAsm)
-        if (platform.mcVersion <= 11202) {
-            compileOnly(runtimeOnly("org.apache.logging.log4j:log4j-core:2.8.1")!!)
-            compileOnly(runtimeOnly("org.apache.logging.log4j:log4j-api:2.8.1")!!)
-        }
     }
 
     if(platform.isLegacyForge || platform.isLegacyFabric) {
@@ -174,6 +167,9 @@ dependencies {
         shadeNoPom(implementationNoPom(prebundle(configuration, "lwjgl-legacy.jar"))!!)
     } else {
         shade("org.lwjgl:lwjgl-nanovg:3.3.1") {
+            isTransitive = false
+        }
+        shade("org.lwjgl:lwjgl-tinyfd:3.3.1") {
             isTransitive = false
         }
     }
@@ -301,7 +297,7 @@ tasks {
 
     remapJar {
         inputFile.set(shadowJar.get().archiveFile)
-        archiveClassifier.set("full")
+        archiveClassifier = "full"
     }
 
     fun Jar.excludeInternal() {
@@ -341,9 +337,6 @@ tasks {
                 }
             )
         }
-        /*/
-
-         */
         excludeInternal()
         archiveClassifier.set("")
     }
@@ -438,57 +431,6 @@ fun DependencyHandlerScope.include(dependency: Any, pom: Boolean = true, mod: Bo
             }
         }
         "include"(dependency)
-    }
-}
-
-fun DependencyHandlerScope.include(
-    dependency: ModuleDependency,
-    pom: Boolean = true,
-    mod: Boolean = false,
-    relocate: Boolean = false,
-    transitive: Boolean = true,
-) {
-    if (platform.isForge) {
-        if (relocate) {
-            shadeRelocated(dependency) { isTransitive = transitive }
-            implementationNoPom(dependency) { isTransitive = transitive; attributes { attribute(relocated, true) } }
-        } else {
-            if (pom) {
-                shade(dependency) { isTransitive = transitive }
-            } else {
-                shadeNoPom(dependency) { isTransitive = transitive }
-                implementationNoPom(dependency) { isTransitive = transitive }
-            }
-        }
-    } else {
-        if (pom && !relocate) {
-            if (mod) {
-                modApi(dependency) { isTransitive = transitive }
-            } else {
-                api(dependency) { isTransitive = transitive }
-            }
-        } else {
-            if (mod) {
-                modImplementationNoPom(dependency) {
-                    isTransitive = transitive; if (relocate) attributes {
-                    attribute(
-                        relocated,
-                        true
-                    )
-                }
-                }
-            } else {
-                implementationNoPom(dependency) {
-                    isTransitive = transitive; if (relocate) attributes {
-                    attribute(
-                        relocated,
-                        true
-                    )
-                }
-                }
-            }
-        }
-        "include"(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
     }
 }
 

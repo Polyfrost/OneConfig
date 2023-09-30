@@ -40,18 +40,6 @@ java {
 }
 
 dependencies {
-    implementation(libs.nightConfigCore)
-    implementation(libs.nightConfigToml)
-    implementation(libs.nightConfigHocon)
-    implementation(libs.nightConfigYaml)
-    implementation(libs.nightConfigJson)
-    testImplementation(platform("org.junit:junit-bom:5.9.1"))
-    testImplementation("org.junit.jupiter:junit-jupiter")
     implementation("org.jetbrains:annotations:24.0.1")
     implementation(libs.slf4jSimple)
 }
-
-tasks.test {
-    useJUnitPlatform()
-}
-

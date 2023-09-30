@@ -48,11 +48,11 @@
 
 package org.polyfrost.oneconfig.utils;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.polyfrost.oneconfig.platform.LoaderPlatform;
 import org.polyfrost.oneconfig.platform.Platform;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
@@ -74,7 +74,7 @@ import java.util.stream.Collectors;
  * Adapted from <a href="https://github.com/natanfudge/Not-Enough-Crashes">NotEnoughCrashes</a> under the <a href="https://opensource.org/licenses/MIT">MIT License</a>
  */
 public class LogScanner {
-    static final Logger LOGGER = LogManager.getLogger("OneConfig Log Scanner");
+    static final Logger LOGGER = LoggerFactory.getLogger("OneConfig Log Scanner");
 
     /**
      * Return a set of ActiveMods that have been blamed for the given stacktrace.
