@@ -27,6 +27,7 @@ java {
     withJavadocJar()
 }
 
+val availablePlatforms = listOf("windows", "windows-arm64", "linux", "macos", "macos-arm64")
 val modName = project.properties["mod_name"]
 val modMajor = project.properties["mod_major_version"]
 val modMinor = project.properties["mod_minor_version"]
@@ -158,19 +159,33 @@ dependencies {
         include(libs.fabricAsm)
     }
 
-    if(platform.isLegacyForge || platform.isLegacyFabric) {
-        val configuration = configurations.create("legacyLwjglConfiguration")
-
-        compileOnly(configuration("cc.polyfrost:lwjgl-legacy:${libs.versions.lwjgl.get()}") {
-            isTransitive = false
-        })
-        shadeNoPom(implementationNoPom(prebundle(configuration, "lwjgl-legacy.jar"))!!)
-    } else {
-        shade("org.lwjgl:lwjgl-nanovg:3.3.1") {
-            isTransitive = false
+    val isLegacy = platform.isLegacyForge || platform.isLegacyFabric
+    val lwjglVersion = libs.versions.lwjgl.get()
+    if(isLegacy) {
+        val cfg = configurations.create("bundledLwjgl")
+        for(dep in listOf("nanovg", "tinyfd", "stb", null)) {
+            val lwjglDep = if(dep == null) "org.lwjgl:lwjgl:$lwjglVersion" else "org.lwjgl:lwjgl-$dep:$lwjglVersion"
+            compileOnly(cfg(lwjglDep) {
+                isTransitive = false
+            })
+            for(native in availablePlatforms) {
+                runtimeOnly(cfg("$lwjglDep:natives-$native") {
+                    isTransitive = false
+                })
+            }
         }
-        shade("org.lwjgl:lwjgl-tinyfd:3.3.1") {
-            isTransitive = false
+        shadeNoPom(implementationNoPom(prebundle(cfg, "lwjgl-legacy.jar"))!!)
+    } else {
+        for(dep in listOf("nanovg", "tinyfd")) {
+            val lwjglDep = "org.lwjgl:lwjgl-$dep:$lwjglVersion"
+            shade(lwjglDep) {
+                isTransitive = false
+            }
+            for(native in availablePlatforms) {
+                shade("$lwjglDep:natives-$native") {
+                    isTransitive = false
+                }
+            }
         }
     }
 

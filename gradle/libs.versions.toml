@@ -15,7 +15,7 @@ deencapsulation = "42b829f373"
 caffeine = "2.9.3"
 mixin = "0.7.11-SNAPSHOT"
 
-lwjgl = "1.0.0-alpha26"
+lwjgl = "3.3.1"
 fabric-asm = "v2.3"
 
 polyui = "0.24.3"

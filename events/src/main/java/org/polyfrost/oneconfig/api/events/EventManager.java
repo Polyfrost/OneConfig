@@ -61,15 +61,23 @@ public final class EventManager {
     }
 
     /**
-     * Registers an object to the event manager.
+     * Registers an object to the event manager. If you wish to be able to remove/unregister you events, make sure you set removable to true.
      *
      * @param object The object to register.
      */
     public void register(Object object) {
+        register(object, false);
+    }
+
+    /**
+     * Register an object to the event manager.
+     * @param removable weather this object's event handlers can be removed.
+     */
+    public void register(Object object, boolean removable) {
         for (EventMapper m : mappers) {
             List<EventHandler<?>> h = m.map(object);
             if (h == null) continue;
-            cache.put(object, h);
+            if (removable) cache.put(object, h);
             for (EventHandler<?> handler : h) {
                 register(handler);
             }
@@ -109,13 +117,20 @@ public final class EventManager {
         return true;
     }
 
+    /**
+     * Remove the event handler's that were provided by the given object.
+     * <br><b>This method only works if the object was registered with removable true!</b>
+     */
     public boolean unregister(Object object) {
         List<EventHandler<?>> h = cache.remove(object);
         if (h == null) return false;
+        boolean state = true;
         for (EventHandler<?> handler : h) {
-            unregister(handler);
+            if(!unregister(handler)) {
+                state = false;
+            }
         }
-        return true;
+        return state;
     }
 
     public void registerMapper(EventMapper mapper) {

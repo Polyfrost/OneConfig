@@ -69,7 +69,7 @@ public class MHHandler<T extends Event> extends EventHandler<T> {
         return h.name.equals(name);
     }
 
-    public static EventHandler ofMethod(Method m, Object owner) {
+    public static EventHandler<?> ofMethod(Method m, Object owner) {
         try {
             m.setAccessible(true);
             MethodHandle handle = lookup.unreflect(m);

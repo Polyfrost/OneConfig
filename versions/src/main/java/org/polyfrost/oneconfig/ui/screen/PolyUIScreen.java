@@ -82,6 +82,7 @@ public class PolyUIScreen extends UScreen {
     public final void initScreen(int w, int h) {
         if (polyUI != null) return;
         try {
+            LOGGER.info("Creating screen");
             Settings settings = new Settings();
             settings.setCleanupAfterInit(false);
             settings.setFramebuffersEnabled(false);

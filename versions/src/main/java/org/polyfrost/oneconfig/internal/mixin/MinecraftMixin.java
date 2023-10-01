@@ -28,10 +28,6 @@ package org.polyfrost.oneconfig.internal.mixin;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Timer;
-import net.minecraftforge.client.event.GuiOpenEvent;
-import net.minecraftforge.fml.common.eventhandler.Event;
-import org.lwjgl.input.Keyboard;
-import org.lwjgl.input.Mouse;
 import org.objectweb.asm.Opcodes;
 import org.polyfrost.oneconfig.api.events.EventManager;
 import org.polyfrost.oneconfig.api.events.event.FramebufferRenderEvent;
@@ -56,6 +52,15 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+//#if MC<=11202
+import org.lwjgl.input.Keyboard;
+import org.lwjgl.input.Mouse;
+//#endif
+
+//#if FORGE==1
+import net.minecraftforge.client.event.GuiOpenEvent;
+import net.minecraftforge.fml.common.eventhandler.Event;
 //#endif
 
 @Mixin(Minecraft.class)
@@ -153,7 +158,7 @@ public class MinecraftMixin {
     //$$  private void onGuiOpenEvent(net.minecraft.client.gui.screen.Screen screen, CallbackInfo ci) {
     //$$      ScreenOpenEvent event = new ScreenOpenEvent(screen);
     //$$      EventManager.INSTANCE.post(event);
-    //$$      if (event.isCancelled) {
+    //$$      if (event.cancelled) {
     //$$          ci.cancel();
     //$$      }
     //$$  }

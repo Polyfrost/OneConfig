@@ -51,7 +51,7 @@ import static org.polyfrost.oneconfig.api.config.Tree.tree;
 @Mixin(Vigilant.class)
 @Pseudo
 public abstract class VigilantMixin {
-    @Inject(method = "<init>(Ljava/io/File;Ljava/lang/String;Lgg/essential/vigilance/data/PropertyCollector;Lgg/essential/vigilance/data/SortingBehavior;ILkotlin/jvm/internal/DefaultConstructorMarker;)V", at = @At("TAIL"))
+    @Inject(method = "<init>(Ljava/io/File;Ljava/lang/String;Lgg/essential/vigilance/data/PropertyCollector;Lgg/essential/vigilance/data/SortingBehavior;ILkotlin/jvm/internal/DefaultConstructorMarker;)V", at = @At("TAIL"), remap = false)
     public void oneconfig$compat(File file, String title, PropertyCollector collector, SortingBehavior par4, int par5, DefaultConstructorMarker par6, CallbackInfo ci) {
         Tree b = tree(file.getName());
         for (PropertyData data : collector.getProperties()) {

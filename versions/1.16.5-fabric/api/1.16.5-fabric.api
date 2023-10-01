@@ -5,28 +5,28 @@ public class org/polyfrost/oneconfig/api/commands/arguments/PlayerArgumentParser
 	public synthetic fun parse (Ljava/lang/String;)Ljava/lang/Object;
 }
 
-public class org/polyfrost/oneconfig/events/event/ChatReceiveEvent : org/polyfrost/oneconfig/events/event/CancellableEvent {
+public class org/polyfrost/oneconfig/api/events/event/ChatReceiveEvent : org/polyfrost/oneconfig/api/events/event/Event$Cancellable {
 	public field message Lnet/minecraft/text/Text;
 	public fun <init> (Lnet/minecraft/text/Text;)V
 	public fun getFullyUnformattedMessage ()Ljava/lang/String;
 }
 
-public class org/polyfrost/oneconfig/events/event/ReceivePacketEvent : org/polyfrost/oneconfig/events/event/CancellableEvent {
+public class org/polyfrost/oneconfig/api/events/event/ReceivePacketEvent : org/polyfrost/oneconfig/api/events/event/Event$Cancellable {
 	public final field packet Lnet/minecraft/network/Packet;
 	public fun <init> (Lnet/minecraft/network/Packet;)V
 }
 
-public class org/polyfrost/oneconfig/events/event/ScreenOpenEvent : org/polyfrost/oneconfig/events/event/CancellableEvent {
+public class org/polyfrost/oneconfig/api/events/event/ScreenOpenEvent : org/polyfrost/oneconfig/api/events/event/Event$Cancellable {
 	public final field screen Lnet/minecraft/client/gui/screen/Screen;
 	public fun <init> (Lnet/minecraft/client/gui/screen/Screen;)V
 }
 
-public class org/polyfrost/oneconfig/events/event/SendPacketEvent : org/polyfrost/oneconfig/events/event/CancellableEvent {
+public class org/polyfrost/oneconfig/api/events/event/SendPacketEvent : org/polyfrost/oneconfig/api/events/event/Event$Cancellable {
 	public final field packet Lnet/minecraft/network/Packet;
 	public fun <init> (Lnet/minecraft/network/Packet;)V
 }
 
-public class org/polyfrost/oneconfig/events/event/TimerUpdateEvent {
+public class org/polyfrost/oneconfig/api/events/event/TimerUpdateEvent : org/polyfrost/oneconfig/api/events/event/Event {
 	public final field timer Lnet/minecraft/client/render/RenderTickCounter;
 	public final field updatedDeltaTicks Z
 	public fun <init> (Lnet/minecraft/client/render/RenderTickCounter;Z)V
@@ -90,11 +90,13 @@ public class org/polyfrost/oneconfig/platform/impl/ServerPlatformImpl : org/poly
 	public fun inMultiplayer ()Z
 }
 
-public class org/polyfrost/oneconfig/ui/PolyUIScreen : org/polyfrost/oneconfig/libs/universal/UScreen {
+public class org/polyfrost/oneconfig/ui/screen/PolyUIScreen : org/polyfrost/oneconfig/libs/universal/UScreen {
 	public static final field LOGGER Lorg/slf4j/Logger;
-	public fun <init> (Lorg/polyfrost/polyui/color/Colors;Ljava/util/function/Consumer;[Lorg/polyfrost/polyui/component/Drawable;)V
-	public fun <init> (Lorg/polyfrost/polyui/color/Colors;[Lorg/polyfrost/polyui/component/Drawable;)V
-	public fun <init> ([Lorg/polyfrost/polyui/component/Drawable;)V
+	public final field height F
+	public final field width F
+	public fun <init> (FFLorg/polyfrost/polyui/color/Colors;Ljava/util/function/Consumer;[Lorg/polyfrost/polyui/component/Drawable;)V
+	public fun <init> (FFLorg/polyfrost/polyui/color/Colors;[Lorg/polyfrost/polyui/component/Drawable;)V
+	public fun <init> (FF[Lorg/polyfrost/polyui/component/Drawable;)V
 	public final fun get ()Lorg/polyfrost/polyui/PolyUI;
 	public final fun getInstance ()Lorg/polyfrost/polyui/PolyUI;
 	public final fun getPolyUI ()Lorg/polyfrost/polyui/PolyUI;
@@ -123,9 +125,6 @@ public final class org/polyfrost/oneconfig/utils/GuiUtils {
 	public static fun displayScreen (Ljava/lang/Object;)V
 	public static fun displayScreen (Lnet/minecraft/client/gui/screen/Screen;)V
 	public static fun displayScreen (Lnet/minecraft/client/gui/screen/Screen;I)V
-	public static fun getDeltaTime ()F
-	public static fun getScreenQueue ()Ljava/util/Deque;
-	public static fun wasMouseDown ()Z
 }
 
 public final class org/polyfrost/oneconfig/utils/dsl/GuiKt {

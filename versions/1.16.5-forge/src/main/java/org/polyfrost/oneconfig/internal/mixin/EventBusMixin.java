@@ -31,8 +31,8 @@ import net.minecraft.util.text.ChatType;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.eventbus.EventBus;
 import net.minecraftforge.eventbus.api.Event;
-import org.polyfrost.oneconfig.events.EventManager;
-import org.polyfrost.oneconfig.events.event.ChatReceiveEvent;
+import org.polyfrost.oneconfig.api.events.EventManager;
+import org.polyfrost.oneconfig.api.events.event.ChatReceiveEvent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -49,7 +49,7 @@ public class EventBusMixin {
             ChatReceiveEvent customEvent = new ChatReceiveEvent(event.getMessage());
             EventManager.INSTANCE.post(customEvent);
             event.setMessage(customEvent.message);
-            if (customEvent.isCancelled) {
+            if (customEvent.cancelled) {
                 e.setCanceled(true);
             }
         }

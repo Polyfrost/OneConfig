@@ -29,8 +29,8 @@ package org.polyfrost.oneconfig.internal.mixin;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.network.packet.s2c.play.ChatMessageS2CPacket;
 import net.minecraft.text.Text;
-import org.polyfrost.oneconfig.events.EventManager;
-import org.polyfrost.oneconfig.events.event.ChatReceiveEvent;
+import org.polyfrost.oneconfig.api.events.EventManager;
+import org.polyfrost.oneconfig.api.events.event.ChatReceiveEvent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -53,7 +53,7 @@ public class NetHandlerPlayClientMixin {
 
     @Inject(method = "onChatMessage", at = @At(value = "INVOKE", target = TARGET), cancellable = true)
     private void onClientChat(ChatMessageS2CPacket packet, CallbackInfo ci) {
-        if (oneconfig$event != null && oneconfig$event.isCancelled) {
+        if (oneconfig$event != null && oneconfig$event.cancelled) {
             ci.cancel();
         }
     }

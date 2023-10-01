@@ -67,9 +67,14 @@ val common = registerStripReferencesAttribute("common") {
 
 dependencies {
     compileOnly("com.google.code.gson:gson:2.2.4")
-    compileOnly("org.lwjgl:lwjgl-opengl:3.3.1")
     compileOnly("org.ow2.asm:asm-debug-all:5.0.3")
     compileOnly("org.jetbrains:annotations:24.0.1")
+
+    val lwjglVer = libs.versions.lwjgl.get()
+    compileOnly("org.lwjgl:lwjgl-nanovg:$lwjglVer")
+    compileOnly("org.lwjgl:lwjgl-tinyfd:$lwjglVer")
+    compileOnly("org.lwjgl:lwjgl-stb:$lwjglVer")
+    compileOnly("org.lwjgl:lwjgl-opengl:$lwjglVer")
 
     shade(libs.polyui)
     shade(libs.slf4jApi)
@@ -93,9 +98,6 @@ dependencies {
     shade(libs.bundles.kotlin)
 
     shade(libs.mixin) {
-        isTransitive = false
-    }
-    compileOnly("cc.polyfrost:lwjgl-legacy:${libs.versions.lwjgl.get()}") {
         isTransitive = false
     }
     shadeNoPom(prebundle(shadeRelocated))

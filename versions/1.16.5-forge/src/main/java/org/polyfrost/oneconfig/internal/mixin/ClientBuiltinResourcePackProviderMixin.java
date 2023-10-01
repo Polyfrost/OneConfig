@@ -27,9 +27,9 @@
 package org.polyfrost.oneconfig.internal.mixin;
 
 import net.minecraft.client.resources.DownloadingPackFinder;
-import org.polyfrost.oneconfig.events.EventManager;
-import org.polyfrost.oneconfig.events.event.ShutdownEvent;
-import org.polyfrost.oneconfig.events.event.StartEvent;
+import org.polyfrost.oneconfig.api.events.EventManager;
+import org.polyfrost.oneconfig.api.events.event.ShutdownEvent;
+import org.polyfrost.oneconfig.api.events.event.StartEvent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -49,7 +49,7 @@ public class ClientBuiltinResourcePackProviderMixin {
         EventManager.INSTANCE.post(new StartEvent());
         Runtime.getRuntime().addShutdownHook(new Thread(() -> EventManager.INSTANCE.post(new ShutdownEvent())));
         //#if FABRIC
-        //$$ EventManager.INSTANCE.post(new org.polyfrost.oneconfig.events.event.InitializationEvent());
+        //$$ EventManager.INSTANCE.post(new org.polyfrost.oneconfig.api.events.event.InitializationEvent());
         //$$ org.polyfrost.oneconfig.internal.OneConfig.INSTANCE.init();
         //#endif
     }
