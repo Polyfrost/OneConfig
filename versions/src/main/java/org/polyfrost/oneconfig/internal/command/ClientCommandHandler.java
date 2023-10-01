@@ -49,7 +49,7 @@ import static net.minecraft.util.EnumChatFormatting.RESET;
  * If there is a command with the same name registered both on the server and
  * client, the client takes precedence!
  * <p>
- * Taken from https://github.com/MinecraftForge/MinecraftForge/tree/1.8.9/ under LGPL 2.1 and the Minecraft Forge Public Licence with additional terms specified in the LICENSE file.
+ * Taken from <a href="https://github.com/MinecraftForge/MinecraftForge/tree/1.8.9/">...</a> under LGPL 2.1 and the Minecraft Forge Public Licence with additional terms specified in the LICENSE file.
  */
 public class ClientCommandHandler extends CommandHandler {
     public static final ClientCommandHandler instance = new ClientCommandHandler();

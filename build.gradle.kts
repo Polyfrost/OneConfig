@@ -45,7 +45,6 @@ repositories {
 
 val relocated = registerRelocationAttribute("relocate") {
     relocate("com.github.benmanes", "org.polyfrost.oneconfig.libs")
-    relocate("dev.xdark", "org.polyfrost.oneconfig.libs")
     remapStringsIn("com.github.benmanes.caffeine.cache.LocalCacheFactory")
     remapStringsIn("com.github.benmanes.caffeine.cache.NodeFactory")
 }
@@ -68,16 +67,11 @@ val common = registerStripReferencesAttribute("common") {
 dependencies {
     compileOnly("com.google.code.gson:gson:2.2.4")
     compileOnly("org.ow2.asm:asm-debug-all:5.0.3")
-    compileOnly("org.jetbrains:annotations:24.0.1")
 
-    val lwjglVer = libs.versions.lwjgl.get()
-    compileOnly("org.lwjgl:lwjgl-nanovg:$lwjglVer")
-    compileOnly("org.lwjgl:lwjgl-tinyfd:$lwjglVer")
-    compileOnly("org.lwjgl:lwjgl-stb:$lwjglVer")
-    compileOnly("org.lwjgl:lwjgl-opengl:$lwjglVer")
+    compileOnly(libs.bundles.lwjgl)
 
     shade(libs.polyui)
-    shade(libs.slf4jApi)
+    shade(libs.bundles.core)
     compileOnly(project(":config"))
     compileOnly(project(":commands"))
     compileOnly(project(":events"))

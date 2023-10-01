@@ -1,0 +1,63 @@
+public abstract class org/polyfrost/oneconfig/api/hud/Hud {
+	public field self Lorg/polyfrost/oneconfig/api/hud/elements/InferringCComponent;
+	public field tree Lorg/polyfrost/oneconfig/api/config/Tree;
+	public fun <init> ()V
+	public fun customRender (FFFFFFD)V
+	protected final fun getCustoms ()Ljava/util/ArrayList;
+	public fun getDefaultPosition ()Lorg/polyfrost/polyui/unit/Vec2;
+	public fun getDefaultSize ()Lorg/polyfrost/polyui/unit/Vec2;
+	protected final fun getGroupIndex ()I
+	public final fun getSelf ()Lorg/polyfrost/oneconfig/api/hud/elements/InferringCComponent;
+	public final fun getTree ()Lorg/polyfrost/oneconfig/api/config/Tree;
+	public fun getUpdateFrequency ()J
+	protected final fun getVer ()I
+	public abstract fun getVersion ()I
+	public final fun init (Lorg/polyfrost/oneconfig/api/config/Tree;Lorg/polyfrost/polyui/PolyUI;)V
+	public final fun renderCustoms ()V
+	public final fun setSelf (Lorg/polyfrost/oneconfig/api/hud/elements/InferringCComponent;)V
+	public final fun setTree (Lorg/polyfrost/oneconfig/api/config/Tree;)V
+	public fun update ()V
+}
+
+public final class org/polyfrost/oneconfig/api/hud/HudManager {
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/hud/HudManager;
+	public static final field LOGGER Lorg/slf4j/Logger;
+	public final fun init (Lorg/polyfrost/polyui/renderer/Renderer;)V
+	public final fun register (Lorg/polyfrost/oneconfig/api/hud/Hud;)V
+	public final fun render ()V
+}
+
+public abstract interface annotation class org/polyfrost/oneconfig/api/hud/annotations/CustomComponent : java/lang/annotation/Annotation {
+}
+
+public abstract interface annotation class org/polyfrost/oneconfig/api/hud/annotations/HudComponent : java/lang/annotation/Annotation {
+}
+
+public class org/polyfrost/oneconfig/api/hud/collector/ReflectiveHudCollector : org/polyfrost/oneconfig/api/config/collector/impl/OneConfigCollector {
+	public fun <init> ()V
+	public fun handleField (Ljava/lang/reflect/Field;Ljava/lang/Object;Lorg/polyfrost/oneconfig/api/config/Tree;)V
+	public fun handleMethod (Ljava/lang/reflect/Method;Ljava/lang/Object;Lorg/polyfrost/oneconfig/api/config/Tree;)V
+}
+
+public final class org/polyfrost/oneconfig/api/hud/elements/InferringCComponent : org/polyfrost/polyui/component/ContainingComponent {
+	public fun <init> (Lorg/polyfrost/polyui/property/Properties;Lorg/polyfrost/polyui/unit/Vec2;Lorg/polyfrost/polyui/unit/Vec2;ZZ[Lorg/polyfrost/polyui/component/Component;Lkotlin/jvm/functions/Function1;)V
+	public synthetic fun <init> (Lorg/polyfrost/polyui/property/Properties;Lorg/polyfrost/polyui/unit/Vec2;Lorg/polyfrost/polyui/unit/Vec2;ZZ[Lorg/polyfrost/polyui/component/Component;Lkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun calculateSize ()Lorg/polyfrost/polyui/unit/Vec2;
+}
+
+public final class org/polyfrost/oneconfig/api/hud/properties/ICComponentProperties : org/polyfrost/polyui/property/Properties {
+	public fun <init> ()V
+	public fun clone ()Ljava/lang/Object;
+	public fun getPalette ()Lorg/polyfrost/polyui/color/Colors$Palette;
+}
+
+public final class org/polyfrost/oneconfig/api/hud/visualize/Designer {
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/hud/visualize/Designer;
+	public final fun createBlockUnit (Lorg/polyfrost/polyui/component/impl/Block;)Lorg/polyfrost/polyui/component/ContainingComponent;
+	public final fun createImageUnit (Lorg/polyfrost/polyui/component/impl/Image;)Lorg/polyfrost/polyui/component/ContainingComponent;
+	public final fun createTextUnit (Lorg/polyfrost/polyui/component/impl/Text;)Lorg/polyfrost/polyui/component/ContainingComponent;
+	public final fun createUnit (Ljava/lang/String;[Lorg/polyfrost/polyui/component/Component;)Lorg/polyfrost/polyui/component/ContainingComponent;
+	public final fun createUnits (Lorg/polyfrost/oneconfig/api/hud/elements/InferringCComponent;)[Lorg/polyfrost/polyui/component/ContainingComponent;
+	public static final fun design (Lorg/polyfrost/oneconfig/api/hud/Hud;Lorg/polyfrost/polyui/layout/Layout;)Lorg/polyfrost/polyui/layout/Layout;
+}
+

@@ -42,6 +42,6 @@ repositories {
 
 dependencies {
     implementation(libs.polyui)
-    compileOnly("org.lwjgl:lwjgl-nanovg:3.3.1")
-    compileOnly("org.lwjgl:lwjgl-tinyfd:3.3.1")
+    compileOnly(libs.lwjglNanoVG)
+    compileOnly(libs.lwjglTinyfd)
 }

@@ -20,7 +20,10 @@ fabric-asm = "v2.3"
 
 polyui = "0.24.3"
 
-slf4j = "2.0.1"
+slf4j = "2.0.9"
+annotations = "24.0.1"
+
+junit-bom = "5.9.1"
 
 night-config = "3.6.5"
 
@@ -28,6 +31,9 @@ night-config = "3.6.5"
 
 deencapsulation = { module = "com.github.xtrm-en:deencapsulation", version.ref = "deencapsulation" }
 caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "caffeine" }
+
+junit = { module = "org.junit.jupiter:junit-jupiter" }
+junitBom = { module = "org.junit:junit-bom", version.ref = "junit-bom" }
 
 kotlinReflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
 kotlinStdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
@@ -50,7 +56,14 @@ fabricAsm = { module = "com.github.Chocohead:Fabric-ASM", version.ref = "fabric-
 polyui = { module = "org.polyfrost:polyui", version.ref = "polyui" }
 
 slf4jApi = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
+annotations = { module = "org.jetbrains:annotations", version.ref = "annotations" }
+
 slf4jSimple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
+
+lwjglNanoVG = { module = "org.lwjgl:lwjgl-nanovg", version.ref = "lwjgl" }
+lwjglStb = { module = "org.lwjgl:lwjgl-stb", version.ref = "lwjgl" }
+lwjglTinyfd = { module = "org.lwjgl:lwjgl-tinyfd", version.ref = "lwjgl" }
+lwjglOpenGl = { module = "org.lwjgl:lwjgl-opengl", version.ref = "lwjgl" }
 
 nightConfigCore = { module = "com.electronwill.night-config:core", version.ref = "night-config" }
 nightConfigToml = { module = "com.electronwill.night-config:toml", version.ref = "night-config" }
@@ -61,6 +74,9 @@ nightConfigJson = { module = "com.electronwill.night-config:json", version.ref =
 [bundles]
 kotlin = ["kotlinReflect", "kotlinStdlib", "kotlinStdlibJdk8", "kotlinStdlibJdk7", "kotlinxCoroutinesCore", "kotlinxCoroutinesCoreJvm", "kotlinxCoroutinesJdk8", "kotlinxSerializationCore", "kotlinxSerializationJson", "kotlinxSerializationCbor", "kotlinxAtomicfu"]
 nightConfig = ["nightConfigCore", "nightConfigHocon", "nightConfigJson", "nightConfigToml", "nightConfigYaml"]
+core = ["annotations", "slf4jApi"]
+testCore = ["junit", "slf4jSimple"]
+lwjgl = ["lwjglNanoVG", "lwjglStb", "lwjglTinyfd", "lwjglOpenGl"]
 
 [plugins]
 

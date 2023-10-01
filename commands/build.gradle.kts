@@ -40,10 +40,9 @@ repositories {
 }
 
 dependencies {
-    testImplementation(platform("org.junit:junit-bom:5.9.1"))
-    testImplementation("org.junit.jupiter:junit-jupiter")
-    implementation("org.jetbrains:annotations:24.0.1")
-    implementation(libs.slf4jSimple)
+    testImplementation(platform(libs.junitBom))
+    testImplementation(libs.bundles.testCore)
+    implementation(libs.bundles.core)
 }
 
 tasks.test {

@@ -40,9 +40,8 @@ java {
 }
 
 dependencies {
-    implementation("org.jetbrains:annotations:24.0.1")
     compileOnly("org.polyfrost:universalcraft-1.8.9-forge:${libs.versions.universalcraft.get()}")
-    implementation(libs.slf4jSimple)
+    implementation(libs.bundles.core)
 }
 
 

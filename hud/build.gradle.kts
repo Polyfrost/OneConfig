@@ -41,10 +41,9 @@ java {
 }
 
 dependencies {
-    implementation("org.jetbrains:annotations:24.0.1")
-    implementation(libs.slf4jSimple)
-    implementation(rootProject.project(":config"))
-    implementation(rootProject.project(":config-impl"))
+    implementation(libs.bundles.core)
+    implementation(project(":config"))
+    implementation(project(":config-impl"))
     implementation(libs.polyui)
     compileOnly("org.polyfrost:universalcraft-1.8.9-forge:${libs.versions.universalcraft.get()}") {
         isTransitive = false

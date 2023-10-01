@@ -26,8 +26,6 @@
 //#if MC<=11202
 package org.polyfrost.oneconfig.internal.ui.impl;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
@@ -43,6 +41,8 @@ import org.objectweb.asm.tree.VarInsnNode;
 import org.polyfrost.oneconfig.ui.LwjglManager;
 import org.polyfrost.oneconfig.ui.TinyFD;
 import org.polyfrost.polyui.renderer.Renderer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -70,7 +70,7 @@ public class LwjglManagerImpl
         extends URLClassLoader
         implements LwjglManager {
 
-    private static final Logger LOGGER = LogManager.getLogger("OneConfig LWJGL Manager");
+    private static final Logger LOGGER = LoggerFactory.getLogger("OneConfig LWJGL Manager");
     private static final boolean isPojav = checkPojav();
 
     private static final Object unsafeInstance;
@@ -269,7 +269,7 @@ public class LwjglManagerImpl
         try {
             return (Class<?>) defineClassMethod.invoke(unsafeInstance, name, b, 0, b.length, /*classLoader = */this, null);
         } catch (IllegalAccessException | InvocationTargetException e) {
-            throw new RuntimeException("whoops...", e);
+            throw new RuntimeException("failed to define class " + name, e);
         }
     }
 
@@ -359,18 +359,14 @@ public class LwjglManagerImpl
     private static synchronized URL getJarFile() {
         if (isPojav) return null;
         final File tempJar = new File("./OneConfig/temp/" + JAR_NAME);
-        tempJar.mkdirs();
-        try {
-            tempJar.createNewFile();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        tempJar.deleteOnExit();
         try (InputStream in = LwjglManagerImpl.class.getResourceAsStream("/lwjgl-legacy.jar")) {
-            assert in != null;
+            tempJar.mkdirs();
+            tempJar.createNewFile();
+            tempJar.deleteOnExit();
+            if(in == null) throw new IOException("Failed to get NanoVG jar file!");
             Files.copy(in, tempJar.toPath(), StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
         try {
             return tempJar.toURI().toURL();

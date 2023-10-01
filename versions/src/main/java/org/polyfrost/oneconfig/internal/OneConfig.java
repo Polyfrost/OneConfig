@@ -64,11 +64,12 @@ public class OneConfig {
         try {
             EventManager.INSTANCE.register(BlurHandler.INSTANCE);
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error("Failed to register blur handler", e);
         }
         CommandManager.registerCommand(new OneConfigCommand());
         HypixelUtils.INSTANCE.initialize();
 
         initialized = true;
+        LOGGER.info("OneConfig initialized!");
     }
 }

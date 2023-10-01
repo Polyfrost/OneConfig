@@ -27,7 +27,7 @@ java {
     withJavadocJar()
 }
 
-val availablePlatforms = listOf("windows", "windows-arm64", "linux", "macos", "macos-arm64")
+val natives = listOf("windows", "windows-arm64", "linux", "macos", "macos-arm64")
 val modName = project.properties["mod_name"]
 val modMajor = project.properties["mod_major_version"]
 val modMinor = project.properties["mod_minor_version"]
@@ -168,7 +168,7 @@ dependencies {
             compileOnly(cfg(lwjglDep) {
                 isTransitive = false
             })
-            for(native in availablePlatforms) {
+            for(native in natives) {
                 runtimeOnly(cfg("$lwjglDep:natives-$native") {
                     isTransitive = false
                 })
@@ -181,7 +181,7 @@ dependencies {
             shade(lwjglDep) {
                 isTransitive = false
             }
-            for(native in availablePlatforms) {
+            for(native in natives) {
                 shade("$lwjglDep:natives-$native") {
                     isTransitive = false
                 }

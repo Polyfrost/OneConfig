@@ -28,11 +28,11 @@ package org.polyfrost.oneconfig.internal.plugin.asm;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.tree.ClassNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -52,7 +52,7 @@ public class ClassTransformer
         //$$ implements Runnable
         //#endif
 {
-    private static final Logger logger = LogManager.getLogger("OneConfig ASM");
+    private static final Logger logger = LoggerFactory.getLogger("OneConfig ASM");
     private final Multimap<String, ITransformer> transformerMap = ArrayListMultimap.create();
     //#if FORGE==1 && MC<=11202
     private static final boolean outputBytecode = Boolean.parseBoolean(System.getProperty("debugBytecode", "false"));
@@ -99,8 +99,7 @@ public class ClassTransformer
         try {
             node.accept(cw);
         } catch (Throwable t) {
-            logger.error("Exception when transforming " + transformedName + " : " + t.getClass().getSimpleName());
-            t.printStackTrace();
+            logger.error("Exception when transforming " + transformedName, t);
         }
 
         if (outputBytecode) {
@@ -125,7 +124,7 @@ public class ClassTransformer
                     bytecodeOutput.createNewFile();
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.error("failed to create bytecode output file", e);
             }
 
             try (FileOutputStream os = new FileOutputStream(bytecodeOutput)) {
@@ -133,7 +132,7 @@ public class ClassTransformer
                 // with the class bytes from transforming
                 os.write(cw.toByteArray());
             } catch (IOException e) {
-                e.printStackTrace();
+                logger.error("failed to write bytecode output file", e);
             }
         }
 

@@ -226,8 +226,7 @@ public class OneImage {
 
             return object;
         } catch (Exception e) {
-            e.printStackTrace();
-            LOGGER.error("Error uploading image to Imgur.");
+            LOGGER.error("Error uploading image to Imgur!", e);
             return null;
         }
     }

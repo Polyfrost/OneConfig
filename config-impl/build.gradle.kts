@@ -41,14 +41,13 @@ java {
 }
 
 dependencies {
+    testImplementation(platform(libs.junitBom))
+    testImplementation(libs.bundles.testCore)
     implementation(libs.bundles.nightConfig)
-    testImplementation(platform("org.junit:junit-bom:5.9.1"))
-    testImplementation("org.junit.jupiter:junit-jupiter")
-    implementation("org.jetbrains:annotations:24.0.1")
-    implementation(libs.slf4jSimple)
+    implementation(libs.bundles.core)
     implementation(libs.polyui)
-    implementation(rootProject.project(":config"))
-    implementation(rootProject.project(":ui"))
+    implementation(project(":config"))
+    implementation(project(":ui"))
 }
 
 tasks.test {
