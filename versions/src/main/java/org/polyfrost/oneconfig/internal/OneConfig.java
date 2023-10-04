@@ -30,7 +30,12 @@ import org.polyfrost.oneconfig.api.commands.CommandManager;
 import org.polyfrost.oneconfig.api.events.EventManager;
 import org.polyfrost.oneconfig.internal.command.OneConfigCommand;
 import org.polyfrost.oneconfig.internal.ui.BlurHandler;
+import org.polyfrost.oneconfig.ui.LwjglManager;
 import org.polyfrost.oneconfig.utils.hypixel.HypixelUtils;
+import org.polyfrost.polyui.PolyUI;
+import org.polyfrost.polyui.component.impl.Button;
+import org.polyfrost.polyui.layout.impl.FlexLayout;
+import org.polyfrost.polyui.property.impl.BlockProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,15 +50,12 @@ import org.slf4j.LoggerFactory;
 //#endif
 //#endif
 public class OneConfig {
-
+    public static final Logger LOGGER = LoggerFactory.getLogger("@NAME@");
     public static final OneConfig INSTANCE = new OneConfig();
+    private static boolean initialized = false;
 
     public OneConfig() {
-        EventManager.INSTANCE.register(this);
     }
-
-    public static final Logger LOGGER = LoggerFactory.getLogger("@NAME@");
-    private static boolean initialized = false;
 
     /**
      * Called after mods are loaded.
@@ -66,10 +68,25 @@ public class OneConfig {
         } catch (Exception e) {
             LOGGER.error("Failed to register blur handler", e);
         }
+        preload();
         CommandManager.registerCommand(new OneConfigCommand());
         HypixelUtils.INSTANCE.initialize();
 
         initialized = true;
         LOGGER.info("OneConfig initialized!");
+    }
+
+    private void preload() {
+        long t1 = System.nanoTime();
+        try {
+            Class.forName(PolyUI.class.getName());
+            Class.forName(Button.class.getName());
+            Class.forName(FlexLayout.class.getName());
+            Class.forName(BlockProperties.class.getName());
+            LwjglManager.INSTANCE.getRenderer(100f, 100f);
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to preload necessary PolyUI classes", e);
+        }
+        LOGGER.info("PolyUI preload took {}ms", (System.nanoTime() - t1) / 1_000_000.0);
     }
 }

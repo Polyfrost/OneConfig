@@ -128,7 +128,7 @@ dependencies {
 
     if (platform.isLegacyFabric) include(libs.deencapsulation, relocate = true, transitive = false, mod = false)
 
-    include(libs.caffeine, relocate = true)
+    include(libs.caffeine, relocate = true, transitive = false)
 
     include(libs.polyui)
 

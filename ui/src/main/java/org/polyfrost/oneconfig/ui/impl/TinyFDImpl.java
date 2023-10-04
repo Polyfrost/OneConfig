@@ -39,7 +39,7 @@ public class TinyFDImpl implements TinyFD {
     @Override
     public File openSaveSelector(String title, @NotNull String defaultFilePath, String[] filterPatterns, String filterDescription) {
         PointerBuffer p = null;
-        if(filterPatterns != null && filterPatterns.length != 0) {
+        if (filterPatterns != null && filterPatterns.length != 0) {
             p = stringsToPointerBuffer(filterPatterns);
         }
         String out = TinyFileDialogs.tinyfd_saveFileDialog(title == null ? "Save" : title, defaultFilePath, p, filterDescription);
@@ -49,7 +49,7 @@ public class TinyFDImpl implements TinyFD {
     @Override
     public File openFileSelector(String title, @NotNull String defaultFilePath, String[] filterPatterns, String filterDescription) {
         PointerBuffer p = null;
-        if(filterPatterns != null && filterPatterns.length != 0) {
+        if (filterPatterns != null && filterPatterns.length != 0) {
             p = stringsToPointerBuffer(filterPatterns);
         }
         String out = TinyFileDialogs.tinyfd_openFileDialog(title == null ? "Open file" : title, defaultFilePath, p, filterDescription, false);
@@ -59,11 +59,11 @@ public class TinyFDImpl implements TinyFD {
     @Override
     public File[] openMultiFileSelector(String title, @NotNull String defaultFilePath, String[] filterPatterns, String filterDescription) {
         PointerBuffer p = null;
-        if(filterPatterns != null && filterPatterns.length != 0) {
+        if (filterPatterns != null && filterPatterns.length != 0) {
             p = stringsToPointerBuffer(filterPatterns);
         }
         String out = TinyFileDialogs.tinyfd_openFileDialog(title == null ? "Open files" : title, defaultFilePath, p, filterDescription, true);
-        if(out == null) {
+        if (out == null) {
             return null;
         }
         String[] split = out.split("\\|");

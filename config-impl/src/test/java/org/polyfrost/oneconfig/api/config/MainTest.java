@@ -26,10 +26,15 @@
 
 package org.polyfrost.oneconfig.api.config;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 public class MainTest {
     @org.junit.jupiter.api.Test
     void test() {
-        // todo rewrite tests
-
+        Tree t = ConfigManager.INSTANCE.register(new TestConfig());
+        assertEquals(t, ConfigManager.INSTANCE.backend.get(t.id));
+        assertNotNull(t.get("chicken").getMetadata("visualizer"));
+        System.err.println(t);
     }
 }

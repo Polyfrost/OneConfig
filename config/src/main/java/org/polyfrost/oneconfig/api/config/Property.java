@@ -190,15 +190,6 @@ public class Property<T> extends Node implements Serializable {
         setUnchecked(value);
     }
 
-    @Override
-    public boolean equals(Object obj) {
-        if (obj instanceof Property) {
-            Property<?> property = (Property<?>) obj;
-            return id.equals(property.id);
-        }
-        return false;
-    }
-
     /**
      * Deep equals for a property, meaning it will check {@link #equals(Object)} and the value of this property with the given obj.
      * <br>
@@ -206,7 +197,7 @@ public class Property<T> extends Node implements Serializable {
      */
     @SuppressWarnings("ConstantConditions")
     public boolean deepEquals(Object obj) {
-        if(get() == null) return obj == null;
+        if (get() == null) return obj == null;
         if (obj instanceof Property) {
             Property<?> p = (Property<?>) obj;
             if (isPrimitiveArray()) {

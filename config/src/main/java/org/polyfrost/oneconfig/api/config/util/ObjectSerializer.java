@@ -37,7 +37,16 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.polyfrost.oneconfig.api.config.Tree.LOGGER;
@@ -70,10 +79,10 @@ public class ObjectSerializer {
         if (isSimpleObject(in)) {
             return in;
         }
-        if(cls.isArray()) {
+        if (cls.isArray()) {
             in = Arrays.asList((Object[]) box(in));
         }
-        if(cls.isEnum()) {
+        if (cls.isEnum()) {
             Map<String, Object> enumMap = new HashMap<>(2);
             enumMap.put("classType", cls.getName());
             enumMap.put("value", ((Enum<?>) in).name());
@@ -115,8 +124,8 @@ public class ObjectSerializer {
                 if (!isMap) {
                     outMap.put("value", out);
                 } else {
-                    if(outMap.get("classType") != null) throw new IllegalArgumentException("Failed to serialize " + out + ": 'classType' is a reserved key!");
-                    if(outMap.get("value") != null) throw new IllegalArgumentException("Failed to serialize " + out + ": 'value' is a reserved key!");
+                    if (outMap.get("classType") != null) throw new IllegalArgumentException("Failed to serialize " + out + ": 'classType' is a reserved key!");
+                    if (outMap.get("value") != null) throw new IllegalArgumentException("Failed to serialize " + out + ": 'value' is a reserved key!");
                 }
                 outMap.put("classType", ad.getTargetClass().getName());
                 return outMap;
@@ -247,11 +256,11 @@ public class ObjectSerializer {
     }
 
     public static Object unbox(@NotNull Object in, Class<?> target) {
-        if(target == null) return in;
+        if (target == null) return in;
         if (in instanceof List && target.isArray()) {
             List<?> list = (List<?>) in;
             if (list.isEmpty()) throw new IllegalStateException("Cannot unbox empty list to array https://docs.polyfrost.org/oneconfig/config/unbox-empty-list");
-            if(target.getComponentType().isPrimitive()) {
+            if (target.getComponentType().isPrimitive()) {
                 Class<?> cType = target.getComponentType();
                 Object array = Array.newInstance(cType, list.size());
                 for (int i = 0; i < list.size(); i++) {
@@ -260,36 +269,36 @@ public class ObjectSerializer {
                 return array;
             }
         }
-        if(in instanceof Number) {
+        if (in instanceof Number) {
             Number n = (Number) in;
-            if(target == float.class || target == Float.class) return n.floatValue();
-            if(target == double.class || target == Double.class) return n.doubleValue();
-            if(target == byte.class || target == Byte.class) return n.byteValue();
-            if(target == short.class || target == Short.class) return n.shortValue();
-            if(target == int.class || target == Integer.class) return n.intValue();
-            if(target == long.class || target == Long.class) return n.longValue();
+            if (target == float.class || target == Float.class) return n.floatValue();
+            if (target == double.class || target == Double.class) return n.doubleValue();
+            if (target == byte.class || target == Byte.class) return n.byteValue();
+            if (target == short.class || target == Short.class) return n.shortValue();
+            if (target == int.class || target == Integer.class) return n.intValue();
+            if (target == long.class || target == Long.class) return n.longValue();
         }
         return in;
     }
 
     public static Class<?> getPrimitiveWrapper(Class<?> prim) {
-        if(prim == boolean.class) return Boolean.class;
-        if(prim == int.class) return Integer.class;
-        if(prim == float.class) return Float.class;
-        if(prim == short.class) return Short.class;
-        if(prim == long.class) return Long.class;
-        if(prim == byte.class) return Byte.class;
-        if(prim == double.class) return Double.class;
-        if(prim == char.class) return Character.class;
+        if (prim == boolean.class) return Boolean.class;
+        if (prim == int.class) return Integer.class;
+        if (prim == float.class) return Float.class;
+        if (prim == short.class) return Short.class;
+        if (prim == long.class) return Long.class;
+        if (prim == byte.class) return Byte.class;
+        if (prim == double.class) return Double.class;
+        if (prim == char.class) return Character.class;
         return prim;
     }
 
     public static Object box(Object in) {
         Class<?> type = in.getClass().getComponentType();
-        if(type == null || !type.isPrimitive()) return in;
+        if (type == null || !type.isPrimitive()) return in;
         int len = Array.getLength(in);
         Object out = Array.newInstance(getPrimitiveWrapper(type), len);
-        for(int i = 0; i < len; i++) {
+        for (int i = 0; i < len; i++) {
             Array.set(out, i, Array.get(in, i));
         }
         return out;

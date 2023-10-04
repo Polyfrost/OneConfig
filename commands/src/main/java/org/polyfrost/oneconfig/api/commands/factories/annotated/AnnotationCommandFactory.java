@@ -28,6 +28,8 @@ package org.polyfrost.oneconfig.api.commands.factories.annotated;
 
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.polyfrost.oneconfig.api.commands.CommandTree;
+import org.polyfrost.oneconfig.api.commands.Executable;
 import org.polyfrost.oneconfig.api.commands.arguments.ArgumentParser;
 import org.polyfrost.oneconfig.api.commands.exceptions.CommandCreationException;
 import org.polyfrost.oneconfig.api.commands.exceptions.CommandExecutionException;
@@ -35,8 +37,6 @@ import org.polyfrost.oneconfig.api.commands.exceptions.WrongArgumentsException;
 import org.polyfrost.oneconfig.api.commands.factories.CommandFactory;
 import org.polyfrost.oneconfig.api.commands.factories.annotated.annotations.Command;
 import org.polyfrost.oneconfig.api.commands.factories.annotated.annotations.Parameter;
-import org.polyfrost.oneconfig.api.commands.CommandTree;
-import org.polyfrost.oneconfig.api.commands.Executable;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -49,6 +49,8 @@ import java.util.List;
 import java.util.function.Function;
 
 public class AnnotationCommandFactory implements CommandFactory {
+    private static final MethodHandles.Lookup lookup = MethodHandles.lookup();
+
     @Override
     public CommandTree create(@NotNull List<ArgumentParser<?>> parsers, @NotNull Object obj) {
         if (!obj.getClass().isAnnotationPresent(Command.class))
@@ -93,7 +95,7 @@ public class AnnotationCommandFactory implements CommandFactory {
         try {
             if (!method.isAccessible()) method.setAccessible(true);
             c = method.getAnnotation(Command.class);
-            m = MethodHandles.lookup().unreflect(method);
+            m = lookup.unreflect(method);
             if (!Modifier.isStatic(method.getModifiers())) m = m.bindTo(it);
         } catch (Exception e) {
             throw new CommandCreationException("Error while creating command!", e);

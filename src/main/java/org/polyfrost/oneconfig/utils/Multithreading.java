@@ -27,8 +27,8 @@
 package org.polyfrost.oneconfig.utils;
 
 
-
 import org.jetbrains.annotations.NotNull;
+
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -110,6 +110,7 @@ public class Multithreading {
     public static ExecutorService getExecutor() {
         if (executorService == null) executorService = Executors.newCachedThreadPool(new ThreadFactory() {
             private final AtomicInteger ai = new AtomicInteger();
+
             @Override
             public Thread newThread(@NotNull Runnable r) {
                 Thread t = Executors.defaultThreadFactory().newThread(r);

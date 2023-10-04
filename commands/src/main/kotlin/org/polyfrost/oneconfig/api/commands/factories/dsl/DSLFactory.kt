@@ -26,9 +26,9 @@
 
 package org.polyfrost.oneconfig.api.commands.factories.dsl
 
+import org.polyfrost.oneconfig.api.commands.CommandTree
 import org.polyfrost.oneconfig.api.commands.arguments.ArgumentParser
 import org.polyfrost.oneconfig.api.commands.factories.CommandFactory
-import org.polyfrost.oneconfig.api.commands.CommandTree
 
 class DSLFactory : CommandFactory {
     override fun create(parsers: List<ArgumentParser<*>>, obj: Any): CommandTree? {

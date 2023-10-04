@@ -67,7 +67,7 @@ public abstract class VigilantMixin {
             if (data.getDataType() == PropertyType.BUTTON) {
                 Runnable r = () -> ((CallablePropertyValue) data.getValue()).invoke(data.getInstance());
                 bt.put(
-                        prop("display", Visualizer.ButtonVisualizer.class),
+                        prop("visualizer", Visualizer.ButtonVisualizer.class),
                         prop("runnable", r),
                         prop("text", attrs.getPlaceholder())
                 );
@@ -97,21 +97,21 @@ public abstract class VigilantMixin {
                     bt.put(
                             prop("min", min),
                             prop("max", max),
-                            prop("display", Visualizer.SliderVisualizer.class)
+                            prop("visualizer", Visualizer.SliderVisualizer.class)
                     );
                     break;
                 case SWITCH:
                 case CHECKBOX: // todo
-                    bt.put(prop("display", Visualizer.SwitchVisualizer.class));
+                    bt.put(prop("visualizer", Visualizer.SwitchVisualizer.class));
                     break;
                 case SELECTOR:
                     bt.put(
                             prop("options", attrs.getOptions()),
-                            prop("display", Visualizer.DropdownVisualizer.class)
+                            prop("visualizer", Visualizer.DropdownVisualizer.class)
                     );
                     break;
                 case COLOR:
-                    bt.put(prop("display", Visualizer.ColorVisualizer.class));
+                    bt.put(prop("visualizer", Visualizer.ColorVisualizer.class));
                     // todo
                     break;
                 default:

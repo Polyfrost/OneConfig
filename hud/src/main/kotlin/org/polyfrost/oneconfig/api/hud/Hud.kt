@@ -69,7 +69,7 @@ abstract class Hud() {
     fun init(tree: Tree, polyUI: PolyUI) {
         if (::tree.isInitialized) throw IllegalStateException("Hud already initialised!")
         this.tree = tree
-        tree.map.forEach { (_ , it) ->
+        tree.map.forEach { (_, it) ->
             val mh = it.getMetadata<MethodHandle>("render")
             if (mh != null) {
                 require(getDefaultSize() != null) { "Hud with @CustomComponent must specify a default size" }
@@ -83,7 +83,7 @@ abstract class Hud() {
                 if (getVersion() < 0) throw IllegalStateException("Hud ${this::class.simpleName} has invalid version number ${getVersion()} (cannot be negative)")
                 LOGGER.warn("Update detected for HUD $this, re-initialising...")
                 tree.map.forEach { (_, it) ->
-                    if(it !is Property<*>) throw IllegalArgumentException("HUDs cannot have children!")
+                    if (it !is Property<*>) throw IllegalArgumentException("HUDs cannot have children!")
                     self.children.clear()
                     if (it.getMetadata<String>("isHud") != null) {
                         self.children.add(it.getAs())
@@ -93,7 +93,7 @@ abstract class Hud() {
         } else {
             val components = ArrayList<Component>()
             tree.map.forEach { (_, it) ->
-                if(it !is Property<*>) throw IllegalArgumentException("HUDs cannot have children!")
+                if (it !is Property<*>) throw IllegalArgumentException("HUDs cannot have children!")
                 if (it.getMetadata<String>("isHud") != null) {
                     val out = it.getAs<Component>()
                     components.add(out)

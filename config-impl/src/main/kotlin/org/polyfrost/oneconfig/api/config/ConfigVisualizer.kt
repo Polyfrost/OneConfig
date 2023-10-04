@@ -61,6 +61,7 @@ object ConfigVisualizer {
     private const val OPT_OPT_GAP = 8f
     private const val HEADER_HEIGHT = 40f
     private const val HEIGHT = 600f
+    private val lookup = MethodHandles.lookup()
     private val cache = HashMap<Class<*>, MethodHandle>(10)
 
     @JvmStatic
@@ -202,10 +203,10 @@ object ConfigVisualizer {
         return layout.components.size - 1
     }
 
-    fun visualize(prop: Property<*>): Component {
-        val visualizer = prop.getMetadata<Class<*>>("visualizer") ?: throw IllegalArgumentException("Property ${prop.id} is missing required metadata 'visualizer'")
+    fun visualize(prop: Property<*>): Component? {
+        val visualizer = prop.getMetadata<Class<*>>("visualizer") ?: return null
         val m = cache[visualizer] ?: run {
-            val m = MethodHandles.lookup().unreflect(visualizer.declaredMethods[0]).bindTo(visualizer.getDeclaredConstructor().newInstance())
+            val m = lookup.unreflect(visualizer.declaredMethods[0]).bindTo(visualizer.getDeclaredConstructor().newInstance())
             cache[visualizer] = m
             m
         }
@@ -214,7 +215,7 @@ object ConfigVisualizer {
 
     private fun createInternal(config: Tree, map: HashMap<String, Layout>, owner: Layout) {
         for ((_, node) in config.map) {
-            if(node is Tree) {
+            if (node is Tree) {
                 val a = node.getMetadata<Accordion>("annotation")
                 if (a != null) {
                     var open = true
@@ -261,7 +262,7 @@ object ConfigVisualizer {
                 }
             } else {
                 val prop = node as Property<*>
-                val cmp = visualize(prop)
+                val cmp = visualize(prop) ?: continue
                 val title = prop.getMetadata<String>("title") ?: throw IllegalArgumentException("Property ${prop.id} is missing required metadata 'title'")
                 val desc = prop.getMetadata<String>("description")
                 val iconPath = prop.getMetadata<String>("icon") ?: ""
@@ -279,11 +280,12 @@ object ConfigVisualizer {
         this.addEventHandler(event, function as Drawable.(Event) -> Boolean)
     }
 
-    private fun createAccordion(config: Tree, o: Option) { var s = false
+    private fun createAccordion(config: Tree, o: Option) {
+        var s = false
         var yy = 66f
         config.map.forEach { (_, it) ->
-            if(it !is Property<*>) throw IllegalArgumentException("Accordions cannot contain sub-trees/sub-accordions")
-            val cmp = visualize(it)
+            if (it !is Property<*>) throw IllegalArgumentException("Accordions cannot contain sub-trees/sub-accordions")
+            val cmp = visualize(it) ?: return@forEach
             val optTitle = it.getMetadata<String>("title") ?: throw IllegalArgumentException("Property ${it.id} is missing required metadata 'title'")
             val opt = AccordionOption(
                 at = (if (s) 534f else 22f).px * yy.px,

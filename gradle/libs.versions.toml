@@ -18,7 +18,7 @@ mixin = "0.7.11-SNAPSHOT"
 lwjgl = "3.3.1"
 fabric-asm = "v2.3"
 
-polyui = "0.24.3"
+polyui = "0.24.4"
 
 slf4j = "2.0.9"
 annotations = "24.0.1"
@@ -67,13 +67,12 @@ lwjglOpenGl = { module = "org.lwjgl:lwjgl-opengl", version.ref = "lwjgl" }
 
 nightConfigCore = { module = "com.electronwill.night-config:core", version.ref = "night-config" }
 nightConfigToml = { module = "com.electronwill.night-config:toml", version.ref = "night-config" }
-nightConfigHocon = { module = "com.electronwill.night-config:hocon", version.ref = "night-config" }
 nightConfigYaml = { module = "com.electronwill.night-config:yaml", version.ref = "night-config" }
 nightConfigJson = { module = "com.electronwill.night-config:json", version.ref = "night-config" }
 
 [bundles]
 kotlin = ["kotlinReflect", "kotlinStdlib", "kotlinStdlibJdk8", "kotlinStdlibJdk7", "kotlinxCoroutinesCore", "kotlinxCoroutinesCoreJvm", "kotlinxCoroutinesJdk8", "kotlinxSerializationCore", "kotlinxSerializationJson", "kotlinxSerializationCbor", "kotlinxAtomicfu"]
-nightConfig = ["nightConfigCore", "nightConfigHocon", "nightConfigJson", "nightConfigToml", "nightConfigYaml"]
+nightConfig = ["nightConfigCore", "nightConfigJson", "nightConfigToml", "nightConfigYaml"]
 core = ["annotations", "slf4jApi"]
 testCore = ["junit", "slf4jSimple"]
 lwjgl = ["lwjglNanoVG", "lwjglStb", "lwjglTinyfd", "lwjglOpenGl"]

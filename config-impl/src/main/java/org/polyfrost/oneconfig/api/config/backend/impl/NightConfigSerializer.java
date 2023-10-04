@@ -29,8 +29,6 @@ package org.polyfrost.oneconfig.api.config.backend.impl;
 import com.electronwill.nightconfig.core.Config;
 import com.electronwill.nightconfig.core.io.ConfigParser;
 import com.electronwill.nightconfig.core.io.ConfigWriter;
-import com.electronwill.nightconfig.hocon.HoconParser;
-import com.electronwill.nightconfig.hocon.HoconWriter;
 import com.electronwill.nightconfig.json.JsonFormat;
 import com.electronwill.nightconfig.toml.TomlParser;
 import com.electronwill.nightconfig.toml.TomlWriter;
@@ -48,11 +46,11 @@ import java.io.File;
 import java.util.Map;
 
 public class NightConfigSerializer implements FileSerializer {
-    public static final FileSerializer TOML = new NightConfigSerializer(new TomlWriter(), new TomlParser(), ".toml");
-    public static final FileSerializer JSON = new NightConfigSerializer(JsonFormat.fancyInstance().createWriter(), JsonFormat.fancyInstance().createParser(), ".json");
-    public static final FileSerializer HOCON = new NightConfigSerializer(new HoconWriter(), new HoconParser(), ".hocon");
-    public static final FileSerializer YAML = new NightConfigSerializer(new YamlWriter(), new YamlParser(YamlFormat.defaultInstance()), ".yaml");
-    public static final FileSerializer[] ALL = {TOML, JSON, HOCON, YAML};
+    public static final FileSerializer TOML = new NightConfigSerializer(new TomlWriter(), new TomlParser(), ".toml");       // 90 KB
+    public static final FileSerializer JSON = new NightConfigSerializer(JsonFormat.fancyInstance().createWriter(), JsonFormat.fancyInstance().createParser(), ".json");  // 55KB
+    // public static final FileSerializer HOCON = new NightConfigSerializer(new HoconWriter(), new HoconParser(), ".hocon");        // 1.1MB
+    public static final FileSerializer YAML = new NightConfigSerializer(new YamlWriter(), new YamlParser(YamlFormat.defaultInstance()), ".yaml");       // 1.2MB
+    public static final FileSerializer[] ALL = {TOML, JSON, YAML};
 
     final ConfigWriter writer;
     final ConfigParser<?> reader;

@@ -71,6 +71,7 @@ public final class EventManager {
 
     /**
      * Register an object to the event manager.
+     *
      * @param removable weather this object's event handlers can be removed.
      */
     public void register(Object object, boolean removable) {
@@ -126,7 +127,7 @@ public final class EventManager {
         if (h == null) return false;
         boolean state = true;
         for (EventHandler<?> handler : h) {
-            if(!unregister(handler)) {
+            if (!unregister(handler)) {
                 state = false;
             }
         }
@@ -161,8 +162,6 @@ public final class EventManager {
             }
         }
     }
-
-
 
 
 }

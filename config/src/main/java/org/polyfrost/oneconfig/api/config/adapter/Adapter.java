@@ -26,20 +26,23 @@
 
 package org.polyfrost.oneconfig.api.config.adapter;
 
-import java.util.Map;
-import java.util.List;
 import org.polyfrost.oneconfig.api.config.util.ObjectSerializer;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * While the Config API is equipped with an automatic deserializer (see {@link ObjectSerializer#serialize(Object)})
  * It is not perfect, and may produce ugly looking results. <br>
  * For this reason, the Adapter API exists, where you can create your own custom serializer for an object into a map of "simple" objects and string keys.
+ *
  * @param <T> the type of this adapter
  * @see Adapter#serialize(Object)
  */
 public abstract class Adapter<T> {
     /**
      * Deserialize your object. The form will be identical to what you made in the {@link #serialize(Object)} method.
+     *
      * @param in the object (same as deserialize) to create your object from
      * @return the complete object
      */
@@ -56,6 +59,7 @@ public abstract class Adapter<T> {
      *     <li>A {@link Map}{@code <String, Object>} of the above types, mapped to Strings, which are used as keys.</li>
      *     <li>Lists containing lists or maps containing maps (or lists) are also supported.</li>
      * </ul>
+     *
      * @param in the object to serialize
      */
     public abstract Object serialize(T in);
@@ -67,7 +71,7 @@ public abstract class Adapter<T> {
     public abstract Class<T> getTargetClass();
 
     public final boolean equals(Object obj) {
-        if(obj instanceof Adapter<?>) {
+        if (obj instanceof Adapter<?>) {
             return ((Adapter<?>) obj).getTargetClass() == this.getTargetClass();
         }
         return false;

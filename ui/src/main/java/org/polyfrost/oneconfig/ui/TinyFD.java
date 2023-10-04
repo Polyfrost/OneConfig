@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
+@SuppressWarnings("unused")
 public interface TinyFD {
     String QUESTION_ICON = "question";
     String ERROR_ICON = "error";
@@ -53,13 +54,15 @@ public interface TinyFD {
 
     /**
      * Open a file selection prompt.
-     * @param title the title of the prompt
-     * @param defaultFilePath the path to the default file to select
-     * @param filterPatterns the file extensions to filter by. e.g. new String[]{"*.png", "*.jpg"}
+     *
+     * @param title             the title of the prompt
+     * @param defaultFilePath   the path to the default file to select
+     * @param filterPatterns    the file extensions to filter by. e.g. new String[]{"*.png", "*.jpg"}
      * @param filterDescription the description for said filter. e.g. "Images"
      * @return the selected file, or null if the user cancelled.
      */
-    @Nullable File openFileSelector(@Nullable String title, @NotNull String defaultFilePath, @Nullable String[] filterPatterns, @Nullable String filterDescription);
+    @Nullable
+    File openFileSelector(@Nullable String title, @NotNull String defaultFilePath, @Nullable String[] filterPatterns, @Nullable String filterDescription);
 
     /**
      * Open a multi file selection prompt.
@@ -75,9 +78,10 @@ public interface TinyFD {
 
     /**
      * Shows a message box.
-     * @param message the message. may contain \n and \t
-     * @param dialog the type of message box to show. <br>One of: {@link #OK_DIALOG}, {@link #OK_CANCEL_DIALOG}, {@link #YES_NO_DIALOG}, {@link #YES_NO_CANCEL_DIALOG}
-     * @param icon the icon to use. <br>One of: {@link #QUESTION_ICON}, {@link #ERROR_ICON}, {@link #WARNING_ICON}, {@link #INFO_ICON}
+     *
+     * @param message      the message. may contain \n and \t
+     * @param dialog       the type of message box to show. <br>One of: {@link #OK_DIALOG}, {@link #OK_CANCEL_DIALOG}, {@link #YES_NO_DIALOG}, {@link #YES_NO_CANCEL_DIALOG}
+     * @param icon         the icon to use. <br>One of: {@link #QUESTION_ICON}, {@link #ERROR_ICON}, {@link #WARNING_ICON}, {@link #INFO_ICON}
      * @param defaultValue the default value to return if the user closes the dialog without clicking a button
      * @return true if the user clicked the "ok" or "yes" button, false for "cancel" or "no"
      */
@@ -85,6 +89,7 @@ public interface TinyFD {
 
     /**
      * Shows a notification.
+     *
      * @param icon the icon to use. One of: {@link #QUESTION_ICON}, {@link #ERROR_ICON}, {@link #WARNING_ICON}, {@link #INFO_ICON}
      * @return 0 if the user clicked the "ok" button, 1 for "cancel"
      */

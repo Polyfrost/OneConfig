@@ -33,6 +33,7 @@ import java.util.function.Consumer;
 
 /**
  * Class which represents an event handler.
+ *
  * @param <T> The event type
  */
 public abstract class EventHandler<T extends Event> {
@@ -55,8 +56,6 @@ public abstract class EventHandler<T extends Event> {
     public int hashCode() {
         return this.getEventClass().hashCode() + (31 * super.hashCode());
     }
-
-
 
 
     public static <E extends Event> EventHandler<E> create(Class<E> cls, Consumer<E> handler) {

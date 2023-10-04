@@ -159,7 +159,6 @@ public abstract interface annotation class org/polyfrost/oneconfig/api/config/an
 
 public class org/polyfrost/oneconfig/api/config/backend/impl/NightConfigSerializer : org/polyfrost/oneconfig/api/config/backend/impl/file/FileSerializer {
 	public static final field ALL [Lorg/polyfrost/oneconfig/api/config/backend/impl/file/FileSerializer;
-	public static final field HOCON Lorg/polyfrost/oneconfig/api/config/backend/impl/file/FileSerializer;
 	public static final field JSON Lorg/polyfrost/oneconfig/api/config/backend/impl/file/FileSerializer;
 	public static final field TOML Lorg/polyfrost/oneconfig/api/config/backend/impl/file/FileSerializer;
 	public static final field YAML Lorg/polyfrost/oneconfig/api/config/backend/impl/file/FileSerializer;
@@ -193,12 +192,13 @@ public abstract interface class org/polyfrost/oneconfig/api/config/backend/impl/
 }
 
 public class org/polyfrost/oneconfig/api/config/collector/impl/OneConfigCollector : org/polyfrost/oneconfig/api/config/collector/impl/ReflectiveCollector {
+	protected static final field lookup Ljava/lang/invoke/MethodHandles$Lookup;
 	public fun <init> ()V
 	public fun <init> (I)V
 	public fun collect (Ljava/lang/String;Ljava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/Tree;
 	public fun handleField (Ljava/lang/reflect/Field;Ljava/lang/Object;Lorg/polyfrost/oneconfig/api/config/Tree;)V
 	public fun handleInnerClass (Ljava/lang/Class;Ljava/lang/Object;ILorg/polyfrost/oneconfig/api/config/Tree;)V
-	public fun handleMetadata (Lorg/polyfrost/oneconfig/api/config/Property;Ljava/lang/reflect/Field;)V
+	public fun handleMetadata (Lorg/polyfrost/oneconfig/api/config/Property;Ljava/lang/annotation/Annotation;Lorg/polyfrost/oneconfig/api/config/annotations/Option;Ljava/lang/reflect/Field;)V
 	public fun handleMethod (Ljava/lang/reflect/Method;Ljava/lang/Object;Lorg/polyfrost/oneconfig/api/config/Tree;)V
 }
 

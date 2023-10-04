@@ -26,8 +26,6 @@
 
 package org.polyfrost.oneconfig.utils;
 
-import org.polyfrost.oneconfig.utils.LogScanner;
-
 import java.util.HashSet;
 import java.util.Set;
 

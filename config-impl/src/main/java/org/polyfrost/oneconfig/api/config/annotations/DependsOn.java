@@ -26,13 +26,14 @@
 
 package org.polyfrost.oneconfig.api.config.annotations;
 
+import org.polyfrost.oneconfig.api.config.Config;
+import org.polyfrost.oneconfig.api.config.Property;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.util.function.Supplier;
-import org.polyfrost.oneconfig.api.config.Config;
-import org.polyfrost.oneconfig.api.config.Property;
 
 /**
  * Annotation used to specify conditions for this property. Apply this annotation to a field or button method.

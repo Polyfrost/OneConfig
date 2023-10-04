@@ -24,14 +24,22 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.api.hud.annotations;
+package org.polyfrost.oneconfig.internal.mixin;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import org.polyfrost.oneconfig.internal.command.PlatformCommandManagerImpl;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
-public @interface CustomComponent {
+import net.minecraft.client.network.ClientPlayerEntity;
+
+@Mixin(ClientPlayerEntity.class)
+abstract class ClientPlayerEntityMixin {
+    @Inject(method = "sendChatMessage", at = @At("HEAD"), cancellable = true)
+    private void onSendChatMessage(String message, CallbackInfo info) {
+        if (PlatformCommandManagerImpl.executeCommand(message)) {
+            info.cancel();
+        }
+    }
 }

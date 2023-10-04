@@ -36,16 +36,9 @@ import java.util.List;
 import java.util.Set;
 
 public class OneConfigMixinPlugin implements IMixinConfigPlugin {
-    private static boolean isVigilance = false;
 
     @Override
     public void onLoad(String mixinPackage) {
-        try {
-            Class.forName("gg.essential.vigilance.Vigilant");
-            isVigilance = true;
-        } catch (Exception e) {
-            isVigilance = false;
-        }
     }
 
     @Override
@@ -55,7 +48,7 @@ public class OneConfigMixinPlugin implements IMixinConfigPlugin {
 
     @Override
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
-        return !targetClassName.contains("vigilance") || isVigilance;
+        return true;
     }
 
     @Override

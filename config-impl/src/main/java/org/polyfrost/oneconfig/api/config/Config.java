@@ -70,12 +70,12 @@ public class Config {
     }
 
     public Tree getTree() {
-        if(tree == null) throw new NullPointerException("Illegal access to config " + id + "'s tree: Not registered yet");
+        if (tree == null) throw new NullPointerException("Illegal access to config " + id + "'s tree: Not registered yet");
         return tree;
     }
 
     public boolean register() {
-        if(tree != null) {
+        if (tree != null) {
             LOGGER.error("Config attempted to be registered twice: " + id);
             return false;
         }
@@ -86,7 +86,7 @@ public class Config {
 
     public void addDependency(String option, Supplier<Boolean> condition) {
         Property<?> p = tree.getProperty(option);
-        if(p == null) throw new IllegalArgumentException("Attempted to specify a condition for property " + option + " but it was not found");
+        if (p == null) throw new IllegalArgumentException("Attempted to specify a condition for property " + option + " but it was not found");
         p.addDisplayCondition(condition);
     }
 
@@ -112,6 +112,7 @@ public class Config {
 
         public final String name;
         public final String iconPath;
+
         Category(String iconPath, String name) {
             this.iconPath = iconPath;
             this.name = name;

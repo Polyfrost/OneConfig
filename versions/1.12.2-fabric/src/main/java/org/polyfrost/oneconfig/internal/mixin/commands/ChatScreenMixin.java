@@ -33,11 +33,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.polyfrost.oneconfig.internal.command.ClientCommandHandler;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.Redirect;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(PathNodeMaker.class)
 public class ChatScreenMixin {
@@ -61,7 +59,7 @@ public class ChatScreenMixin {
         return suggestions;
     }
 
-    @Redirect(method = "method_12185", at = @At(value = "INVOKE", target = "Lorg/apache/commons/lang3/StringUtils;getCommonPrefix([Ljava/lang/String;)Ljava/lang/String;"))
+    @Redirect(method = "method_12185", at = @At(value = "INVOKE", target = "Lorg/apache/commons/lang3/StringUtils;getCommonPrefix([Ljava/lang/String;)Ljava/lang/String;", remap = false))
     private String removeFormatting2(String[] strs) {
         return Formatting.strip(StringUtils.getCommonPrefix(strs));
     }

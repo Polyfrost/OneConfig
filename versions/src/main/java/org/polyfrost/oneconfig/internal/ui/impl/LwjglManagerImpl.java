@@ -72,9 +72,8 @@ public class LwjglManagerImpl
 
     private static final Logger LOGGER = LoggerFactory.getLogger("OneConfig LWJGL Manager");
     private static final boolean isPojav = checkPojav();
-
-    private static final Object unsafeInstance;
-    private static final Method defineClassMethod;
+    private static final MethodHandles.Lookup lookup = MethodHandles.lookup();
+    private static final MethodHandle defineClassMethod;
     private static final Map<String, String> remappingMap;
 
     private static final String LWJGL_FUNCTION_PROVIDER =
@@ -128,7 +127,8 @@ public class LwjglManagerImpl
         try {
             Constructor<?> ctor = Class.forName("org.polyfrost.polyui.renderer.impl.NVGRenderer", true, classLoader).getConstructor(float.class, float.class);
             ctor.setAccessible(true);
-            rendererCtor = MethodHandles.lookup().unreflectConstructor(ctor);
+            MethodHandle mh = lookup.unreflectConstructor(ctor);
+            rendererCtor = mh.asType(mh.type().changeReturnType(Renderer.class));
 
             tinyFD = (TinyFD) Class.forName("org.polyfrost.oneconfig.ui.impl.TinyFDImpl", true, classLoader).getConstructor().newInstance();
         } catch (Exception e) {
@@ -267,8 +267,8 @@ public class LwjglManagerImpl
         }
 
         try {
-            return (Class<?>) defineClassMethod.invoke(unsafeInstance, name, b, 0, b.length, /*classLoader = */this, null);
-        } catch (IllegalAccessException | InvocationTargetException e) {
+            return (Class<?>) defineClassMethod.invokeExact(name, b, 0, b.length, /*classLoader = */(ClassLoader) this, (ProtectionDomain) null);
+        } catch (Throwable e) {
             throw new RuntimeException("failed to define class " + name, e);
         }
     }
@@ -334,9 +334,9 @@ public class LwjglManagerImpl
 
                 Field unsafeField = unsafeClass.getDeclaredField("theUnsafe");
                 unsafeField.setAccessible(true);
-                unsafeInstance = unsafeField.get(null);
+                Object theUnsafe = unsafeField.get(null);
 
-                defineClassMethod = unsafeClass.getDeclaredMethod(
+                Method defineClass = unsafeClass.getDeclaredMethod(
                         "defineClass",
                         String.class,
                         byte[].class,
@@ -345,13 +345,13 @@ public class LwjglManagerImpl
                         ClassLoader.class,
                         ProtectionDomain.class
                 );
-                defineClassMethod.setAccessible(true);
+                defineClass.setAccessible(true);
+                defineClassMethod = lookup.unreflect(defineClass).bindTo(theUnsafe);
             } catch (ReflectiveOperationException exception) {
                 throw new RuntimeException("Error while fetching Unsafe instance.", exception);
             }
         } else {
             remappingMap = null;
-            unsafeInstance = null;
             defineClassMethod = null;
         }
     }
@@ -363,7 +363,7 @@ public class LwjglManagerImpl
             tempJar.mkdirs();
             tempJar.createNewFile();
             tempJar.deleteOnExit();
-            if(in == null) throw new IOException("Failed to get NanoVG jar file!");
+            if (in == null) throw new IOException("Failed to get NanoVG jar file!");
             Files.copy(in, tempJar.toPath(), StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -388,7 +388,7 @@ public class LwjglManagerImpl
     @Override
     public Renderer getRenderer(float width, float height) {
         try {
-            return (Renderer) rendererCtor.invoke(width, height);
+            return (Renderer) rendererCtor.invokeExact(width, height);
         } catch (Throwable e) {
             throw new RuntimeException("Failed to create NVGRenderer!", e);
         }

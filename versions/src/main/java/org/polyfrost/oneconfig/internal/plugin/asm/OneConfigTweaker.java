@@ -132,12 +132,21 @@ public class OneConfigTweaker implements ITweaker {
         OneConfigInit.initialize(new String[]{});
         Launch.blackboard.put("oneconfig.init.initialized", true);
         Launch.classLoader.addClassLoaderExclusion("org.polyfrost.oneconfig.internal.plugin.asm.");
+
+        // performance fix
+        Launch.classLoader.addTransformerExclusion("kotlin.");
+        Launch.classLoader.addTransformerExclusion("org.polyfrost.oneconfig.ui.");
+        Launch.classLoader.addTransformerExclusion("org.polyfrost.polyui.");
+
+        // remove log spam
+        Launch.classLoader.addTransformerExclusion("org.lwjgl.");
     }
 
     /**
      * Taken from LWJGLTwoPointFive under The Unlicense
      * <a href="https://github.com/DJtheRedstoner/LWJGLTwoPointFive/blob/master/LICENSE/">https://github.com/DJtheRedstoner/LWJGLTwoPointFive/blob/master/LICENSE/</a>
      */
+    @SuppressWarnings("unchecked")
     private void removeLWJGLException() {
         try {
             Field f_exceptions = LaunchClassLoader.class.getDeclaredField("classLoaderExceptions");

@@ -99,6 +99,7 @@ class Card(
             }
         }
     }
+
     object CardProperties : BlockProperties() {
         val backgroundProps = BlockProperties(withStates = true, cornerRadii = floatArrayOf(12f, 12f, 0f, 0f))
         val barProps = brand(cornerRadii = floatArrayOf(0f, 0f, 12f, 12f))

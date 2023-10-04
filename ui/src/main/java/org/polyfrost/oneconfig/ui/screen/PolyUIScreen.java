@@ -35,6 +35,7 @@ import java.util.function.Consumer;
 public class PolyUIScreen {
     // expose width and height
     public final float width, height;
+
     public PolyUIScreen(float width, float height, Colors colors, Consumer<PolyUI> initFunction, Drawable... drawables) {
         this.width = width;
         this.height = height;

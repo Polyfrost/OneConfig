@@ -37,7 +37,8 @@ import java.util.function.Function
 
 object Notifications {
     private val queue = ArrayDeque<Layout>()
-//    private val renderer= LwjglManager.INSTANCE.getRenderer(UResolution.windowWidth.toFloat(), UResolution.windowHeight.toFloat())!!
+
+    //    private val renderer= LwjglManager.INSTANCE.getRenderer(UResolution.windowWidth.toFloat(), UResolution.windowHeight.toFloat())!!
 //    private val polyUI = PolyUI(renderer = renderer)
     @JvmOverloads
     fun send(title: String, message: String, icon: PolyImage? = null, durationNanos: Long = 4.seconds, progressFunction: Function<Long, Float>? = null, action: Runnable? = null) {

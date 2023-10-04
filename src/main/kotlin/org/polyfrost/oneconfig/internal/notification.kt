@@ -62,7 +62,7 @@ fun create(title: Translator.Text, message: Translator.Text, icon: PolyImage?, p
                 }
             ).also {
                 it.consumesHover = false
-                if(action != null) it.properties.withStates()
+                if (action != null) it.properties.withStates()
             },
             Block(
                 properties = brandBlock,
@@ -70,9 +70,9 @@ fun create(title: Translator.Text, message: Translator.Text, icon: PolyImage?, p
                 size = 400.px * 10.px,
             ),
 
-        )
+            )
     )
-    if(progressFunction != null) {
+    if (progressFunction != null) {
         l.every(0.seconds) {
             this.getComponent<Block>(1).width = 400f * progressFunction.apply(this.polyUI.delta)
         }

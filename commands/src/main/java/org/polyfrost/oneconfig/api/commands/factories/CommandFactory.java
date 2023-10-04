@@ -28,8 +28,8 @@ package org.polyfrost.oneconfig.api.commands.factories;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.polyfrost.oneconfig.api.commands.arguments.ArgumentParser;
 import org.polyfrost.oneconfig.api.commands.CommandTree;
+import org.polyfrost.oneconfig.api.commands.arguments.ArgumentParser;
 
 import java.util.List;
 

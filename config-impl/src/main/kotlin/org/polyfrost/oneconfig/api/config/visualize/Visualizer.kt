@@ -73,7 +73,7 @@ fun interface Visualizer {
         override fun visualize(prop: Property<*>): Component {
             val options: Array<String> = prop.getMetadata("options") ?: emptyArray()
             if (prop.type.isEnum) {
-                require(options.isEmpty()) { "Dropdowns cannot have options when used with enums" }
+                require(options.isEmpty()) { "Dropdowns should not have options when used with enums (offender=${prop.id}" }
                 val index = prop.type.enumConstants.indexOf(prop.get())
                 return Dropdown(
                     at = origin,
@@ -82,8 +82,8 @@ fun interface Visualizer {
                     entries = Dropdown.from(prop.type),
                 )
             } else {
-                require(prop.type == java.lang.Integer::class.java) { "Dropdowns can only be used with enums or integers" }
-                require(options.size >= 2) { "Dropdowns must have at least two options" }
+                require(prop.type == java.lang.Integer::class.java) { "Dropdowns can only be used with enums or integers (offender=${prop.id}" }
+                require(options.size >= 2) { "Dropdowns must have at least two options (offender=${prop.id}" }
                 return Dropdown(
                     at = origin,
                     size = 300.px * 32.px,

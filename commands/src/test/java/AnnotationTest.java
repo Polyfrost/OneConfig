@@ -1,9 +1,9 @@
 import org.junit.jupiter.api.Test;
+import org.polyfrost.oneconfig.api.commands.CommandTree;
 import org.polyfrost.oneconfig.api.commands.arguments.ArgumentParser;
 import org.polyfrost.oneconfig.api.commands.factories.annotated.AnnotationCommandFactory;
 import org.polyfrost.oneconfig.api.commands.factories.annotated.annotations.Command;
 import org.polyfrost.oneconfig.api.commands.factories.annotated.annotations.Parameter;
-import org.polyfrost.oneconfig.api.commands.CommandTree;
 
 import java.util.Arrays;
 

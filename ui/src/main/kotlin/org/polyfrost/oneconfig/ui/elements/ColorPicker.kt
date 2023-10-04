@@ -49,7 +49,6 @@ package org.polyfrost.oneconfig.ui.elements
 
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.animate.Animations
-import org.polyfrost.polyui.color.PolyColor as Color
 import org.polyfrost.polyui.component.impl.*
 import org.polyfrost.polyui.event.*
 import org.polyfrost.polyui.input.Translator.Companion.localised
@@ -64,6 +63,7 @@ import org.polyfrost.polyui.unit.*
 import org.polyfrost.polyui.unit.Unit
 import org.polyfrost.polyui.utils.radii
 import org.polyfrost.polyui.utils.rgba
+import org.polyfrost.polyui.color.PolyColor as Color
 
 class ColorPicker(
     at: Vec2<Unit>,

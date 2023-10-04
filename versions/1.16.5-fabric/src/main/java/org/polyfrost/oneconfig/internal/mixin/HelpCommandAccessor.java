@@ -24,14 +24,21 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.api.hud.annotations;
+package org.polyfrost.oneconfig.internal.mixin;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
+import net.minecraft.server.command.HelpCommand;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.gen.Accessor;
 
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
-public @interface CustomComponent {
+/**
+ * Taken from the Fabric API under the <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache License 2.0</a>.
+ * Source: <a href="https://github.com/FabricMC/fabric/blob/1.20.2/fabric-command-api-v2/src/main/java/net/fabricmc/fabric/mixin/command/HelpCommandAccessor.java">click here</a>
+ */
+@Mixin(HelpCommand.class)
+public interface HelpCommandAccessor {
+    @Accessor("FAILED_EXCEPTION")
+    static SimpleCommandExceptionType getFailedException() {
+        throw new AssertionError("mixin");
+    }
 }

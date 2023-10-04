@@ -40,7 +40,12 @@ import org.polyfrost.oneconfig.api.config.util.ObjectSerializer;
 import java.lang.annotation.Annotation;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
-import java.lang.reflect.*;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.lang.reflect.Proxy;
 import java.util.List;
 import java.util.Map;
 
@@ -49,6 +54,7 @@ import java.util.Map;
  * Ignores transient and synthetic fields.
  */
 public class OneConfigCollector extends ReflectiveCollector {
+    protected static final MethodHandles.Lookup lookup = MethodHandles.lookup();
 
     public OneConfigCollector(int maxDepth) {
         super(maxDepth);
@@ -87,7 +93,7 @@ public class OneConfigCollector extends ReflectiveCollector {
                     try {
                         f.setAccessible(true);
                         // asm: use method handle as it fails NOW instead of at set time, and is faster
-                        MethodHandle mh = MethodHandles.lookup().unreflectSetter(f);
+                        MethodHandle mh = lookup.unreflectSetter(f);
                         if (!Modifier.isStatic(f.getModifiers())) mh = mh.bindTo(src);
                         final MethodHandle setter = mh;
                         Property<?> p = Property.prop(f.getName(), f.get(src), f.getType()).addCallback(v -> {
@@ -100,7 +106,7 @@ public class OneConfigCollector extends ReflectiveCollector {
                                 throw new RuntimeException("[internal failure] Failed to setback field", e);
                             }
                         });
-                        handleMetadata(p, f);
+                        handleMetadata(p, a, (Option) aa, f);
                         builder.put(p);
                     } catch (IllegalAccessException e) {
                         throw new RuntimeException("Failed to create setter for field " + f.getName() + "; ensure it is not static final", e);
@@ -121,7 +127,7 @@ public class OneConfigCollector extends ReflectiveCollector {
         m.setAccessible(true);
         MethodHandle methodHandle;
         try {
-            methodHandle = MethodHandles.lookup().unreflect(m);
+            methodHandle = lookup.unreflect(m);
             if (!Modifier.isStatic(m.getModifiers())) methodHandle = methodHandle.bindTo(src);
         } catch (Exception e) {
             throw new RuntimeException("Failed to unreflect " + m + " for button " + b.title(), e);
@@ -168,23 +174,20 @@ public class OneConfigCollector extends ReflectiveCollector {
         }
     }
 
-    public void handleMetadata(@NotNull Property<?> property, @NotNull Field f) {
-        for (Annotation a : f.getDeclaredAnnotations()) {
-            Option opt = a.annotationType().getAnnotation(Option.class);
-            if (opt == null) continue;
-            property.addMetadata("visualizer", opt.display());
-            InvocationHandler ih = Proxy.getInvocationHandler(a);
-            Map<String, Object> memberValues;
-            try {
-                // dynamic way of getting all the values off an annotation
-                Field ff = ih.getClass().getDeclaredField("memberValues");
-                ff.setAccessible(true);
-                memberValues = (Map<String, Object>) ff.get(ih);
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to steal metadata from annotation", e);
-            }
-            property.addMetadata(memberValues);
+    public void handleMetadata(@NotNull Property<?> property, @NotNull Annotation a, Option opt, Field f) {
+        property.addMetadata("visualizer", opt.display());
+        InvocationHandler ih = Proxy.getInvocationHandler(a);
+        Map<String, Object> memberValues;
+        try {
+            // dynamic way of getting all the values off an annotation
+            Field ff = ih.getClass().getDeclaredField("memberValues");
+            ff.setAccessible(true);
+            memberValues = (Map<String, Object>) ff.get(ih);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to steal metadata from annotation", e);
         }
+        property.addMetadata(memberValues);
+
         DependsOn d = f.getDeclaredAnnotation(DependsOn.class);
         if (d != null) {
             property.addMetadata("conditions", d.value());

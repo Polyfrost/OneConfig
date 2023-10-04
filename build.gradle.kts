@@ -18,7 +18,7 @@ plugins {
 }
 
 kotlin.jvmToolchain {
-    (this as JavaToolchainSpec).languageVersion.set(JavaLanguageVersion.of(8))
+    this.languageVersion.set(JavaLanguageVersion.of(8))
 }
 
 java {
@@ -86,7 +86,9 @@ dependencies {
     }
 
     @Suppress("GradlePackageUpdate")
-    shadeRelocated(libs.caffeine)
+    shadeRelocated(libs.caffeine) {
+        isTransitive = false
+    }
 
     // for other mods and universalcraft
     shade(libs.bundles.kotlin)

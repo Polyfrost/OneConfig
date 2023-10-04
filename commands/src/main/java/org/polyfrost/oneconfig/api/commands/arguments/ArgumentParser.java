@@ -58,6 +58,7 @@ public abstract class ArgumentParser<T> {
 
     /**
      * Return a list of autocompletion options for the given argument.
+     *
      * @return the populated list, or null if not applicable to the given argument.
      */
     public @Nullable List<@NotNull String> getAutoCompletions(String input) {
@@ -141,6 +142,7 @@ public abstract class ArgumentParser<T> {
         private final List<String> TRUE = Collections.singletonList("true");
         private final List<String> FALSE = Collections.singletonList("false");
         private final List<String> TRUEFALSE = Arrays.asList("true", "false");
+
         @Override
         public @NotNull Boolean parse(@NotNull String arg) {
             return Boolean.parseBoolean(arg);
@@ -153,7 +155,7 @@ public abstract class ArgumentParser<T> {
 
         @Override
         public @Nullable List<@NotNull String> getAutoCompletions(String input) {
-            if(input.isEmpty()) {
+            if (input.isEmpty()) {
                 return TRUEFALSE;
             } else if (input.charAt(0) == 't') {
                 return TRUE;

@@ -1,6 +1,7 @@
 public class org/polyfrost/oneconfig/api/commands/CommandTree : org/polyfrost/oneconfig/api/commands/Node {
 	public fun <init> ([Ljava/lang/String;Ljava/lang/String;)V
 	public static fun append (Ljava/lang/StringBuilder;Ljava/lang/String;I)V
+	public fun autocomplete ([Ljava/lang/String;)Ljava/util/List;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun execute ([Ljava/lang/String;)Ljava/lang/Object;
 	public fun get (Ljava/lang/String;)Ljava/util/List;
@@ -15,6 +16,7 @@ public class org/polyfrost/oneconfig/api/commands/CommandTree : org/polyfrost/on
 	public fun init ()V
 	public fun isInitialized ()Z
 	public fun name ()Ljava/lang/String;
+	public fun names ()[Ljava/lang/String;
 	public fun onExecs (Ljava/util/function/Consumer;[Ljava/lang/String;)V
 	public fun printFull ()Ljava/lang/String;
 	public fun put (Lorg/polyfrost/oneconfig/api/commands/CommandTree;)V

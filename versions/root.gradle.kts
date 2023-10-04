@@ -1,8 +1,5 @@
 @file:Suppress("DSL_SCOPE_VIOLATION")
 
-/**
- * WHATEVER HAPPENS HERE MUST ALSO BE APPLIED IN lwjgl-repacked
- */
 plugins {
     alias(libs.plugins.kotlin) apply false
     id(pgtLibs.plugins.pgtRoot.get().pluginId)

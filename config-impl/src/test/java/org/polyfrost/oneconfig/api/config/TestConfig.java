@@ -24,9 +24,8 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.test;
+package org.polyfrost.oneconfig.api.config;
 
-import org.polyfrost.oneconfig.api.config.Config;
 import org.polyfrost.oneconfig.api.config.annotations.Accordion;
 import org.polyfrost.oneconfig.api.config.annotations.Button;
 import org.polyfrost.oneconfig.api.config.annotations.Color;
@@ -38,15 +37,17 @@ import org.polyfrost.oneconfig.api.config.annotations.RadioButton;
 import org.polyfrost.oneconfig.api.config.annotations.Slider;
 import org.polyfrost.oneconfig.api.config.annotations.Switch;
 import org.polyfrost.oneconfig.api.config.annotations.Text;
-import org.polyfrost.oneconfig.libs.universal.UChat;
 import org.polyfrost.polyui.color.PolyColor;
 import org.polyfrost.polyui.input.KeyBinder;
 import org.polyfrost.polyui.input.Modifiers;
 import org.polyfrost.polyui.unit.SlideDirection;
 import org.polyfrost.polyui.utils.Utils;
 
+import java.util.Arrays;
+import java.util.List;
+
 @SuppressWarnings("unused")
-public class TestConfig_Test extends Config {
+public class TestConfig extends Config {
 
     @Switch(title = "t")
     public boolean added = false;
@@ -62,17 +63,43 @@ public class TestConfig_Test extends Config {
 
     @Keybind(title = "keybinding", description = "please send help")
     KeyBinder.Bind bind0 = new KeyBinder.Bind('A', null, null, Modifiers.mods(Modifiers.LCONTROL, Modifiers.LSHIFT), () -> {
-        UChat.chat("you pressed a bind");
+        System.out.println("you pressed a bind");
         return true;
     });
+
+    @Dropdown(title = "d")
+    public List<Integer> intList = Arrays.asList(32, 54, 2);
+
+    @Dropdown(title = "drop")
+    public static int[] dropint = new int[]{23, 2, 24};
+
+    @Dropdown(title = "drop")
+    public static String[] dropstr = new String[]{"23", "2", "24"};
+
+    @Dropdown(title = "drop")
+    public static boolean[] dropbool = new boolean[]{true, false, true};
+
+    @Dropdown(title = "drop")
+    public static float[] dropfloat = new float[]{23f, 2f, 24f};
+
+    @Dropdown(title = "drop")
+    public static double[] dropdouble = new double[]{23d, 2d, 24d};
+
+    @Dropdown(title = "drop")
+    public static long[] droplong = new long[]{23L, 2L, 24L};
+
+    @Dropdown(title = "drop")
+    public static short[] dropshort = new short[]{23, 2, 24};
+
+    @Dropdown(title = "drop")
+    public static Boolean[] dropboolean = new Boolean[]{true, false, true};
 
 
     @Color(title = "color", category = "bob")
     PolyColor color = Utils.rgba(255, 0, 100, 1f);
 
     @Button(title = "Test")
-    private static void main() {
-        UChat.chat("button pressed");
+    private static void testBtn() {
     }
 
     @Number(title = "number", unit = "px", category = "bob")
@@ -142,7 +169,7 @@ public class TestConfig_Test extends Config {
         public static boolean cbogw = false;
     }
 
-    public TestConfig_Test() {
+    public TestConfig() {
         super("test_mod.yaml", "Test Mod", Category.QOL);
     }
 }

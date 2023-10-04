@@ -52,7 +52,7 @@ public class Tree extends Node implements Serializable {
     }
 
     public Tree put(@NotNull Node... nodes) {
-        for(Node n : nodes) {
+        for (Node n : nodes) {
             map.put(n.getID(), n);
         }
         return this;
@@ -72,7 +72,7 @@ public class Tree extends Node implements Serializable {
     public Node get(@NotNull String... name) {
         Tree t = this;
         Node n = null;
-        for(String s : name) {
+        for (String s : name) {
             n = t.get(s);
             if (n instanceof Tree) t = (Tree) n;
             else return n;
@@ -101,14 +101,14 @@ public class Tree extends Node implements Serializable {
     }
 
     private static void _onAll(Tree t, BiConsumer<String, Node> action) {
-        for(Map.Entry<String, Node> e : t.map.entrySet()) {
+        for (Map.Entry<String, Node> e : t.map.entrySet()) {
             action.accept(e.getKey(), e.getValue());
         }
     }
 
     private static void _onAllProp(Tree t, BiConsumer<String, Property<?>> action) {
-        for(Map.Entry<String, Node> e : t.map.entrySet()) {
-            if(e.getValue() instanceof Property) action.accept(e.getKey(), (Property<?>) e.getValue());
+        for (Map.Entry<String, Node> e : t.map.entrySet()) {
+            if (e.getValue() instanceof Property) action.accept(e.getKey(), (Property<?>) e.getValue());
         }
     }
 
@@ -120,20 +120,20 @@ public class Tree extends Node implements Serializable {
      */
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     public boolean deepEquals(@Nullable Object obj) {
-        if(obj == null) return false;
-        if(!(obj instanceof Tree)) return false;
+        if (obj == null) return false;
+        if (!(obj instanceof Tree)) return false;
         Tree tree = (Tree) obj;
-        if(map.size() != tree.map.size()) {
+        if (map.size() != tree.map.size()) {
 //            System.err.println("trees are not the same size " + map.size());
             return false;
         }
-        for(Map.Entry<String, Node> e : map.entrySet()) {
+        for (Map.Entry<String, Node> e : map.entrySet()) {
             Node n = tree.get(e.getKey());
-            if(n == null) {
+            if (n == null) {
 //                System.err.println("Second tree does not contain " + e);
                 return false;
             }
-            if(!e.getValue().deepEquals(n)) {
+            if (!e.getValue().deepEquals(n)) {
 //                System.err.println(e.getValue() + " does not equal " + n);
                 return false;
             }
@@ -151,29 +151,32 @@ public class Tree extends Node implements Serializable {
      * <br>
      * This tree should have identical structure to the passed tree when this method is completed.
      * <br>
-     * copyMeta will mean that the metadata from the input tree will be copied into this tree.
+     * copyMeta will mean that the metadata from the input tree will be copied into this tree, and if overwrite is true, t
+     * he metadata from the origin value before overwriting is preserved as well
      *
-     * @throws ClassCastException        if the types of the properties (with the same name) do not match
+     * @throws ClassCastException if the types of the properties (with the same name) do not match
      */
     public void merge(Tree tree, boolean overwrite, boolean copyMeta) {
-        if(tree == null) return;
+        if (tree == null || tree == this) return;
         _merge(this, tree, overwrite, copyMeta);
     }
 
-    private static void _merge(Tree t, Tree in, boolean overwrite, boolean withMeta) {
-        for(Map.Entry<String, Node> e : in.map.entrySet()) {
-            Node n = t.get(e.getKey());
-            if(n == null) {
-                t.put(e.getValue());
+    private static void _merge(Tree self, Tree in, boolean overwrite, boolean copyMeta) {
+        for (Map.Entry<String, Node> toAdd : in.map.entrySet()) {
+            Node current = self.get(toAdd.getKey());
+            if (current == null) {
+                self.put(toAdd.getValue());
             } else {
-                if(n instanceof Tree && e.getValue() instanceof Tree) {
-                    _merge((Tree) n, (Tree) e.getValue(), overwrite, withMeta);
+                if (current instanceof Tree && toAdd.getValue() instanceof Tree) {
+                    _merge((Tree) current, (Tree) toAdd.getValue(), overwrite, copyMeta);
                 } else {
-                    if(overwrite) {
-                        t.put(e.getValue());
+                    if (overwrite) {
+                        if (copyMeta) toAdd.getValue().addMetadata(self.getMetadata());
+                        self.put(toAdd.getValue());
+                        continue;
                     }
-                    if(withMeta) {
-                        n.addMetadata(e.getValue().getMetadata());
+                    if (copyMeta) {
+                        current.addMetadata(toAdd.getValue().getMetadata());
                     }
                 }
             }
@@ -188,25 +191,16 @@ public class Tree extends Node implements Serializable {
     }
 
     private static void _toString(StringBuilder sb, int depth, Tree t) {
-        for(int i = 0; i < depth; i++) sb.append('\t');
+        for (int i = 0; i < depth; i++) sb.append('\t');
         sb.append(t.id).append(":\n");
-        for(Map.Entry<String, Node> e : t.map.entrySet()) {
-            if(e.getValue() instanceof Property) {
-                for(int i = 0; i < depth + 1; i++) sb.append('\t');
+        for (Map.Entry<String, Node> e : t.map.entrySet()) {
+            if (e.getValue() instanceof Property) {
+                for (int i = 0; i < depth + 1; i++) sb.append('\t');
                 sb.append(e.getValue()).append('\n');
             } else {
                 _toString(sb, depth + 1, (Tree) e.getValue());
             }
         }
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (obj instanceof Tree) {
-            Tree tree = (Tree) obj;
-            return id.equals(tree.id);
-        }
-        return false;
     }
 
     @Contract("_ -> new")

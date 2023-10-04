@@ -41,6 +41,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -208,6 +209,10 @@ public class CommandTree implements Node {
 
     public String name() {
         return names[0];
+    }
+
+    public String[] names() {
+        return names;
     }
 
     @Override
@@ -384,6 +389,67 @@ public class CommandTree implements Node {
             }
         }
         return null;
+    }
+
+    /**
+     * Return a list of valid autocompletion options for a given path, with arguments.
+     *
+     * @return the list of args, or null
+     * @see #getWithArgs(String...)
+     * @see #execute(String...)
+     */
+    public List<String> autocomplete(String... current) {
+        if (current.length == 0) return null;
+        Node n;
+        String thisArg = current[current.length - 1];
+        Pair<List<Node>, String[]> res = getWithArgs(current);
+        if (res == null) {
+            String[] last = new String[current.length - 1];
+            System.arraycopy(current, 0, last, 0, last.length);
+            // move back, check if we have something valid available on the last
+            // like /hello gj where gj is not valid, check /hello for if it can match any
+            n = getTree(last);
+            if (n == null) return null;
+        } else {
+            n = res.first.get(0);
+        }
+        if (n instanceof CommandTree) {
+            CommandTree c = (CommandTree) n;
+            Set<String> cmds = c.commands.keySet();
+            // same, move onto next arg
+            if (contains(c.names, thisArg)) thisArg = "";
+            List<String> ls = new ArrayList<>(cmds.size());
+            for (String s : cmds) {
+                if (s.startsWith(thisArg)) ls.add(s);
+            }
+            return ls.isEmpty() ? null : ls;
+        } else {
+            if (res.second.length == 0) thisArg = "";
+            Executable e = (Executable) n;
+            // fast path: we already past the end of this command, don't try
+            if (res.second.length > e.parameters.length) return null;
+            Executable.Param param = e.parameters[Math.max(0, res.second.length - 1)];
+            List<String> l = param.tryAutoComplete(thisArg);
+            if (l == null || l.isEmpty()) return null;
+            if (l.contains(thisArg)) {
+                // returned same, move onto next arg
+                return autocomplete(withEmpty(current));
+            } else return l;
+        }
+    }
+
+    static <T> boolean contains(T[] array, T item) {
+        for (T x : array) {
+            if (x.equals(item)) return true;
+        }
+        return false;
+    }
+
+    static String[] withEmpty(String[] current) {
+        String[] out = new String[current.length + 1];
+        System.arraycopy(current, 0, out, 0, current.length);
+        out[current.length] = "";
+        return out;
     }
 
     @Override

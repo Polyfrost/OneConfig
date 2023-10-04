@@ -36,22 +36,27 @@ import java.util.Map;
 public abstract class Node {
     protected final String id;
     private Map<String, Object> metadata = null;
+
     public Node(String id) {
         this.id = id;
     }
+
     public final @NotNull String getID() {
         return id;
     }
+
     public final void addMetadata(String key, Object value) {
-        if(metadata == null) metadata = new HashMap<>();
+        if (metadata == null) metadata = new HashMap<>();
         metadata.put(key, value);
     }
+
     public final void addMetadata(Map<String, Object> metadata) {
-        if(this.metadata == null) this.metadata = new HashMap<>();
-        this.metadata.putAll(metadata);
+        if (this.metadata == null) this.metadata = metadata;
+        else this.metadata.putAll(metadata);
     }
+
     public final boolean removeMetadata(String key) {
-        if(metadata == null) return false;
+        if (metadata == null) return false;
         return metadata.remove(key) != null;
     }
 
@@ -64,11 +69,13 @@ public abstract class Node {
      */
     @SuppressWarnings("unchecked")
     public final @Nullable <M> M getMetadata(String key) {
-        if(metadata == null) return null;
+        if (metadata == null) return null;
         return (M) metadata.get(key);
     }
+
     public final @NotNull Map<String, Object> getMetadata() {
-        return metadata == null ? new HashMap<>() : metadata;
+        if (metadata == null) metadata = new HashMap<>();
+        return metadata;
     }
 
     public abstract boolean deepEquals(Object other);
@@ -76,5 +83,10 @@ public abstract class Node {
     @Override
     public final int hashCode() {
         return id.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return obj instanceof Node && ((Node) obj).getID().equals(this.getID());
     }
 }

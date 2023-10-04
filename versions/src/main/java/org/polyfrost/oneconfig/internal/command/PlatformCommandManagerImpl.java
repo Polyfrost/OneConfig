@@ -32,11 +32,10 @@ import net.minecraft.util.BlockPos;
 import org.polyfrost.oneconfig.api.commands.CommandManager;
 import org.polyfrost.oneconfig.api.commands.exceptions.CommandExecutionException;
 import org.polyfrost.oneconfig.api.commands.CommandTree;
-import org.polyfrost.oneconfig.api.commands.Node;
 import org.polyfrost.oneconfig.libs.universal.UChat;
 import org.polyfrost.oneconfig.api.commands.arguments.PlayerArgumentParser;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 //#if FORGE==1
@@ -99,7 +98,7 @@ public class PlatformCommandManagerImpl implements PlatformCommandManager {
 
             @Override
             public List<String> getCommandAliases() {
-                return new ArrayList<>(tree.getDedupedCommands().keySet());
+                return Arrays.asList(tree.names());
             }
 
             @Override
@@ -117,15 +116,7 @@ public class PlatformCommandManagerImpl implements PlatformCommandManager {
             //$$ getTabCompletions(net.minecraft.server.MinecraftServer server, net.minecraft.command.ICommandSender sender, String[] args, BlockPos targetPos)
             //#endif
             {
-                List<String> opts = new ArrayList<>();
-                List<Node> nodes = tree.get(args);
-                if (nodes == null) return null;
-                for (Node n : nodes) {
-                    if (n instanceof CommandTree) {
-                        opts.addAll(((CommandTree) n).getDedupedCommands().keySet());
-                    }
-                }
-                return opts;
+                return tree.autocomplete(args);
             }
         });
     }

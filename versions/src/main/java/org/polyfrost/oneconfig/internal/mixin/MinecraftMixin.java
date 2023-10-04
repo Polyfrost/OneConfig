@@ -264,7 +264,7 @@ public class MinecraftMixin {
     //$$     EventManager.INSTANCE.post(new KeyInputEvent());
     //$$ }
     //$$
-    //$$ @Inject(method = "tick", at = @At(value = "INVOKE", target = "Lorg/lwjgl/input/Mouse;getEventButton()I"))
+    //$$ @Inject(method = "tick", at = @At(value = "INVOKE", target = "Lorg/lwjgl/input/Mouse;getEventButton()I", remap = false))
     //$$ private void onMouseEvent(CallbackInfo ci) {
     //$$     EventManager.INSTANCE.post(new RawMouseEvent(Mouse.getEventButton(), Mouse.getEventButtonState() ? 1 : 0));
     //$$ }

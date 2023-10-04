@@ -1,9 +1,9 @@
 package org.polyfrost.oneconfig.ui.pages
 
 import org.polyfrost.oneconfig.api.config.Config
-import org.polyfrost.oneconfig.api.config.Tree
 import org.polyfrost.oneconfig.api.config.ConfigVisualizer
 import org.polyfrost.oneconfig.api.config.ConfigVisualizer.addEventHandler
+import org.polyfrost.oneconfig.api.config.Tree
 import org.polyfrost.oneconfig.ui.elements.Card
 import org.polyfrost.polyui.component.impl.Button
 import org.polyfrost.polyui.event.MouseClicked

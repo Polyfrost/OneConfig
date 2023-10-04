@@ -49,9 +49,9 @@ public class ConfigManager {
     public static final ConfigManager INSTANCE = new ConfigManager();
     public static final String DEFAULT_EXT = ".yaml";
     public static final String DEFAULT_META_EXT = "-meta.toml";
-    private static final Logger LOGGER = LoggerFactory.getLogger("OneConfig Config Manager");
-    private final List<PropertyCollector> collectors = new ArrayList<>(4);
-    private final FileBackend backend;
+    static final Logger LOGGER = LoggerFactory.getLogger("OneConfig Config Manager");
+    final List<PropertyCollector> collectors = new ArrayList<>(4);
+    final FileBackend backend;
 
     private ConfigManager() {
         collectors.add(new OneConfigCollector());
@@ -120,13 +120,14 @@ public class ConfigManager {
             t = collect(source);
             backend.put(t);
         } else {
+            // todo something wrong with this
             t.merge(collect(source), false, true);
             backend.put(t);
         }
         t.addMetadata("meta", cfg);
         // check and potentially add metadata
         Tree metaTree = backend.get(cfg.id + DEFAULT_META_EXT);
-        if(metaTree != null) {
+        if (metaTree != null) {
             LOGGER.info("Registering metadata for config " + cfg.id);
             _supplyMetadata(t, metaTree);
         }
@@ -135,11 +136,11 @@ public class ConfigManager {
 
     public boolean supplyMetadata(String id, Tree metaTree, boolean save) {
         Tree t = backend.get(id);
-        if(t == null) return false;
-        if(save) {
+        if (t == null) return false;
+        if (save) {
             //metaTree.id = id + DEFAULT_META_EXT;
             Tree old = backend.get(metaTree.id);
-            if(old != null) {
+            if (old != null) {
                 old.merge(metaTree, false, false);
                 metaTree = old;
             } else backend.put(metaTree);
@@ -149,12 +150,12 @@ public class ConfigManager {
     }
 
     private static void _supplyMetadata(Tree tree, Tree meta) {
-        for(Map.Entry<String, Node> e : tree.map.entrySet()) {
+        for (Map.Entry<String, Node> e : tree.map.entrySet()) {
             Node n = meta.get(e.getKey());
-            if(n == null) continue;
+            if (n == null) continue;
             Node c = e.getValue();
             c.addMetadata(n.getMetadata());
-            if(c instanceof Tree) {
+            if (c instanceof Tree) {
                 _supplyMetadata((Tree) c, (Tree) n);
             }
         }

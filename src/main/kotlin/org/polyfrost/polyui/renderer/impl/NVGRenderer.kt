@@ -37,7 +37,6 @@ import org.lwjgl.stb.STBImage
 import org.lwjgl.stb.STBImageResize
 import org.lwjgl.system.MemoryUtil
 import org.polyfrost.polyui.PolyUI
-import org.polyfrost.polyui.color.PolyColor as Color
 import org.polyfrost.polyui.property.Settings
 import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.renderer.data.Font
@@ -52,6 +51,7 @@ import java.io.InputStreamReader
 import java.nio.ByteBuffer
 import java.util.*
 import kotlin.math.max
+import org.polyfrost.polyui.color.PolyColor as Color
 
 class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
     private val nvgPaint: NVGPaint = NVGPaint.malloc()
@@ -445,18 +445,18 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
     }
 
     private fun getFont(font: Font): NVGFont {
-        return fonts[font] ?: run {
+        return fonts.getOrPut(font) {
             val data = font.stream?.toByteBuffer() ?: if (settings.resourcePolicy == Settings.ResourcePolicy.WARN) {
-                    PolyUI.LOGGER.warn(
-                        "Failed to get font: {}, falling back to default font!",
-                        font.resourcePath,
-                    )
-                    PolyUI.defaultFonts.regular.get().toByteBuffer()
-                } else {
-                    throw ExceptionInInitializerError("Failed to get font: ${font.resourcePath}")
-                }
+                PolyUI.LOGGER.warn(
+                    "Failed to get font: {}, falling back to default font!",
+                    font.resourcePath,
+                )
+                PolyUI.defaultFonts.regular.get().toByteBuffer()
+            } else {
+                throw ExceptionInInitializerError("Failed to get font: ${font.resourcePath}")
+            }
             val ft = nvgCreateFontMem(vg, font.name, data, 0)
-            NVGFont(ft, data).also { fonts[font] = it }
+            NVGFont(ft, data)
         }
     }
 

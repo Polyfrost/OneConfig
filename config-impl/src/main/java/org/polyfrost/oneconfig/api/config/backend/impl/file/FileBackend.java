@@ -34,9 +34,24 @@ import org.polyfrost.oneconfig.api.config.backend.Serializer;
 import org.polyfrost.oneconfig.api.config.exceptions.SerializationException;
 import org.polyfrost.oneconfig.api.config.util.Pair;
 
-import java.io.*;
-import java.nio.file.*;
-import java.util.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardWatchEventKinds;
+import java.nio.file.WatchEvent;
+import java.nio.file.WatchKey;
+import java.nio.file.WatchService;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class FileBackend implements Backend {
@@ -162,7 +177,7 @@ public class FileBackend implements Backend {
             }
             if (t == null) return null;
         }
-        if (t.second != null) t.second.merge(t.first.deserialize(id, str.toString()), true, true);
+        if (t.second != null) t.second.merge(t.first.deserialize(id, str.toString()), false, true);
         else t.second = t.first.deserialize(id, str.toString());
         return t.second;
     }
@@ -201,7 +216,7 @@ public class FileBackend implements Backend {
         if (t == null) return false;
         dodge = true;
         File f = getFile(id);
-        if(keepFile) {
+        if (keepFile) {
             return f.renameTo(new File(f.getAbsolutePath() + ".corrupted"));
         } else return f.delete();
     }

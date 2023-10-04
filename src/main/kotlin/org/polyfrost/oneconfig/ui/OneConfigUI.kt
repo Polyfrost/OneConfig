@@ -52,7 +52,10 @@ import org.polyfrost.polyui.property.impl.ImageProperties
 import org.polyfrost.polyui.property.impl.TextProperties
 import org.polyfrost.polyui.renderer.data.Cursor
 import org.polyfrost.polyui.renderer.data.PolyImage
-import org.polyfrost.polyui.unit.*
+import org.polyfrost.polyui.unit.origin
+import org.polyfrost.polyui.unit.px
+import org.polyfrost.polyui.unit.seconds
+import org.polyfrost.polyui.unit.times
 import org.polyfrost.polyui.utils.radii
 import org.polyfrost.polyui.utils.rgba
 

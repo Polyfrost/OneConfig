@@ -26,13 +26,13 @@
 
 package org.polyfrost.oneconfig.api.commands.factories.dsl
 
+import org.polyfrost.oneconfig.api.commands.CommandTree
+import org.polyfrost.oneconfig.api.commands.Executable
+import org.polyfrost.oneconfig.api.commands.Executable.Param
 import org.polyfrost.oneconfig.api.commands.arguments.ArgumentParser
 import org.polyfrost.oneconfig.api.commands.exceptions.CommandCreationException
 import org.polyfrost.oneconfig.api.commands.factories.dsl.CommandDSL.Companion.param
 import org.polyfrost.oneconfig.api.commands.factories.dsl.CommandDSL.ParamData
-import org.polyfrost.oneconfig.api.commands.CommandTree
-import org.polyfrost.oneconfig.api.commands.Executable
-import org.polyfrost.oneconfig.api.commands.Executable.Param
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
 import java.lang.reflect.Method
@@ -47,6 +47,7 @@ import java.util.function.Function
 @Suppress("unused")
 class CommandDSL @JvmOverloads constructor(private val parsers: List<ArgumentParser<*>>, vararg name: String, description: String? = null) {
     internal val tree = CommandTree(name, description)
+    private val lookup = MethodHandles.lookup()
     var description: String?
         get() = tree.description
         set(value) {
@@ -66,7 +67,7 @@ class CommandDSL @JvmOverloads constructor(private val parsers: List<ArgumentPar
         val m: MethodHandle
         try {
             if (!method.isAccessible) method.isAccessible = true
-            m = MethodHandles.lookup().unreflect(method).bindTo(func)
+            m = lookup.unreflect(method).bindTo(func)
         } catch (e: Exception) {
             throw CommandCreationException("Error while creating command!", e)
         }
