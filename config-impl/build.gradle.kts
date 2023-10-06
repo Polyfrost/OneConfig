@@ -46,6 +46,7 @@ dependencies {
     implementation(libs.bundles.nightConfig)
     implementation(libs.bundles.core)
     implementation(libs.polyui)
+    implementation(project(":utils"))
     implementation(project(":config"))
     implementation(project(":ui"))
 }

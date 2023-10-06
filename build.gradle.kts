@@ -76,6 +76,7 @@ dependencies {
     compileOnly(project(":commands"))
     compileOnly(project(":events"))
     compileOnly(project(":config-impl"))
+    compileOnly(project(":utils"))
     compileOnly(project(":ui")) {
         isTransitive = false
     }

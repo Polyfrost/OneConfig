@@ -27,10 +27,12 @@
 package org.polyfrost.oneconfig.internal.plugin.hooks;
 //#if MC<=11202
 
+import org.jetbrains.annotations.NotNull;
 import org.lwjgl.system.FunctionProvider;
 import org.polyfrost.oneconfig.internal.OneConfig;
+import org.polyfrost.oneconfig.utils.MHUtils;
 
-import java.lang.reflect.Method;
+import java.lang.invoke.MethodHandle;
 import java.nio.ByteBuffer;
 
 /**
@@ -39,7 +41,7 @@ import java.nio.ByteBuffer;
  */
 public class Lwjgl2FunctionProvider implements FunctionProvider {
     private static final Class<?> GL_CONTEXT;
-    private final Method getFunctionAddress;
+    private final MethodHandle getFunctionAddress;
 
     static {
         String libraryPath = System.getProperty("oneconfig.lwjgl2.librarypath", "");
@@ -50,33 +52,29 @@ public class Lwjgl2FunctionProvider implements FunctionProvider {
         try {
             GL_CONTEXT = Class.forName("org.lwjgl.opengl.GLContext", true, OneConfig.class.getClassLoader());
         } catch (ReflectiveOperationException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Error initializing Lwjgl2FunctionProvider", e);
         }
     }
 
     public Lwjgl2FunctionProvider() {
         try {
-            getFunctionAddress = GL_CONTEXT.getDeclaredMethod("getFunctionAddress", String.class);
-            getFunctionAddress.setAccessible(true);
-        } catch (ReflectiveOperationException exception) {
+            getFunctionAddress = MHUtils.getStaticMethodHandle(GL_CONTEXT, "getFunctionAddress", long.class, String.class);
+        } catch (Throwable exception) {
             throw new RuntimeException("Error initializing LWJGL2FunctionProvider", exception);
         }
     }
 
     @Override
-    public long getFunctionAddress(CharSequence functionName) {
+    public long getFunctionAddress(@NotNull CharSequence functionName) {
         try {
-            return (long) getFunctionAddress.invoke(
-                    null,
-                    functionName.toString()
-            );
-        } catch (ReflectiveOperationException exception) {
+            return (long) getFunctionAddress.invokeExact(functionName.toString());
+        } catch (Throwable exception) {
             throw new RuntimeException(exception);
         }
     }
 
     @Override
-    public long getFunctionAddress(ByteBuffer byteBuffer) {
+    public long getFunctionAddress(@NotNull ByteBuffer byteBuffer) {
         throw new UnsupportedOperationException(
                 "LWJGL 2 does not support this method"
         );

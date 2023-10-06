@@ -32,12 +32,12 @@ import org.polyfrost.oneconfig.api.config.Tree;
 import org.polyfrost.oneconfig.api.config.collector.impl.OneConfigCollector;
 import org.polyfrost.oneconfig.api.hud.annotations.CustomComponent;
 import org.polyfrost.oneconfig.api.hud.annotations.HudComponent;
+import org.polyfrost.oneconfig.utils.MHUtils;
 import org.polyfrost.polyui.component.Component;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
 
 import static org.polyfrost.oneconfig.api.config.Property.prop;
@@ -49,7 +49,6 @@ public class ReflectiveHudCollector extends OneConfigCollector {
         HudComponent c = f.getDeclaredAnnotation(HudComponent.class);
         if (c == null) return;
         try {
-            f.setAccessible(true);
             if (!Component.class.isAssignableFrom(f.getType())) {
                 throw new IllegalArgumentException("@HudComponent " + f.getName() + " must be of type Component");
             }
@@ -78,14 +77,7 @@ public class ReflectiveHudCollector extends OneConfigCollector {
 
         Property<?> p = prop(m.getName() + "$synthetic", m);
         p.addMetadata("synthetic", true);
-        m.setAccessible(true);
-        MethodHandle methodHandle;
-        try {
-            methodHandle = lookup.unreflect(m);
-            if (!Modifier.isStatic(m.getModifiers())) methodHandle = methodHandle.bindTo(src);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to unreflect " + m.getName() + "() for custom component", e);
-        }
+        MethodHandle methodHandle = MHUtils.getMethodHandle(m, src);
         p.addMetadata("annotation", c);
         p.addMetadata("render", methodHandle);
         tree.put(p);

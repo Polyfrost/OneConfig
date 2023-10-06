@@ -30,6 +30,7 @@ import org.polyfrost.oneconfig.api.config.annotations.Accordion
 import org.polyfrost.oneconfig.api.config.elements.AccordionOption
 import org.polyfrost.oneconfig.api.config.elements.Option
 import org.polyfrost.oneconfig.ui.pages.Page
+import org.polyfrost.oneconfig.utils.MHUtils
 import org.polyfrost.polyui.animate.Animations
 import org.polyfrost.polyui.color.Colors
 import org.polyfrost.polyui.component.Component
@@ -53,7 +54,6 @@ import org.polyfrost.polyui.unit.Unit
 import org.polyfrost.polyui.utils.fastEach
 import org.polyfrost.polyui.utils.fastEachIndexed
 import java.lang.invoke.MethodHandle
-import java.lang.invoke.MethodHandles
 import kotlin.math.PI
 
 object ConfigVisualizer {
@@ -61,7 +61,6 @@ object ConfigVisualizer {
     private const val OPT_OPT_GAP = 8f
     private const val HEADER_HEIGHT = 40f
     private const val HEIGHT = 600f
-    private val lookup = MethodHandles.lookup()
     private val cache = HashMap<Class<*>, MethodHandle>(10)
 
     @JvmStatic
@@ -205,10 +204,11 @@ object ConfigVisualizer {
 
     fun visualize(prop: Property<*>): Component? {
         val visualizer = prop.getMetadata<Class<*>>("visualizer") ?: return null
-        val m = cache[visualizer] ?: run {
-            val m = lookup.unreflect(visualizer.declaredMethods[0]).bindTo(visualizer.getDeclaredConstructor().newInstance())
-            cache[visualizer] = m
-            m
+        val m = cache.getOrPut(visualizer) {
+            val it = MHUtils.instantiate(visualizer, false) ?: throw IllegalArgumentException("Visualizer $visualizer could not be instantiated")
+            val mh = MHUtils.getMethodHandle(it, "visualize", Component::class.java, Property::class.java)
+                ?: throw IllegalArgumentException("Visualizer $visualizer does not have a method 'visualize(Component, Property)'")
+            mh
         }
         return m.invoke(prop) as Component
     }

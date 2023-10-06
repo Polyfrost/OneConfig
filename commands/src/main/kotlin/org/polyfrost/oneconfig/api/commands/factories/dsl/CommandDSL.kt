@@ -30,13 +30,10 @@ import org.polyfrost.oneconfig.api.commands.CommandTree
 import org.polyfrost.oneconfig.api.commands.Executable
 import org.polyfrost.oneconfig.api.commands.Executable.Param
 import org.polyfrost.oneconfig.api.commands.arguments.ArgumentParser
-import org.polyfrost.oneconfig.api.commands.exceptions.CommandCreationException
 import org.polyfrost.oneconfig.api.commands.factories.dsl.CommandDSL.Companion.param
 import org.polyfrost.oneconfig.api.commands.factories.dsl.CommandDSL.ParamData
-import java.lang.invoke.MethodHandle
-import java.lang.invoke.MethodHandles
+import org.polyfrost.oneconfig.utils.MHUtils
 import java.lang.reflect.Method
-import java.util.function.Function
 
 /**
  * Command DSL for Kotlin.
@@ -47,7 +44,6 @@ import java.util.function.Function
 @Suppress("unused")
 class CommandDSL @JvmOverloads constructor(private val parsers: List<ArgumentParser<*>>, vararg name: String, description: String? = null) {
     internal val tree = CommandTree(name, description)
-    private val lookup = MethodHandles.lookup()
     var description: String?
         get() = tree.description
         set(value) {
@@ -64,20 +60,14 @@ class CommandDSL @JvmOverloads constructor(private val parsers: List<ArgumentPar
         // asm: kotlin compiler produces two methods: public synthetic bridge invoke(Object): Object
         // public final invoke(Object...): Object which is what we want
         val method = func.javaClass.declaredMethods[1]
-        val m: MethodHandle
-        try {
-            if (!method.isAccessible) method.isAccessible = true
-            m = lookup.unreflect(method).bindTo(func)
-        } catch (e: Exception) {
-            throw CommandCreationException("Error while creating command!", e)
-        }
+        val m = MHUtils.getMethodHandle(method, func) ?: throw IllegalArgumentException("Could not get method handle for $method")
         tree.put(
             Executable(
                 aliases,
                 description,
                 mapParams(method, paramData, parsers),
-                greedy,
-                Function { return@Function m.invokeWithArguments(*it) })
+                greedy
+            ) { m.invokeWithArguments(*it) }
         )
     }
 

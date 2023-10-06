@@ -43,6 +43,7 @@ dependencies {
     testImplementation(platform(libs.junitBom))
     testImplementation(libs.bundles.testCore)
     implementation(libs.bundles.core)
+    implementation(project(":utils"))
 }
 
 tasks.test {

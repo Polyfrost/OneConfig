@@ -29,14 +29,12 @@ package org.polyfrost.oneconfig.api.events.invoke.impl;
 import org.polyfrost.oneconfig.api.events.EventException;
 import org.polyfrost.oneconfig.api.events.event.Event;
 import org.polyfrost.oneconfig.api.events.invoke.EventHandler;
+import org.polyfrost.oneconfig.utils.MHUtils;
 
 import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 
 public class MHHandler<T extends Event> extends EventHandler<T> {
-    private static final MethodHandles.Lookup lookup = MethodHandles.lookup();
     private final MethodHandle mh;
     private final Class<T> cls;
     private final String name;
@@ -70,23 +68,15 @@ public class MHHandler<T extends Event> extends EventHandler<T> {
     }
 
     public static EventHandler<?> ofMethod(Method m, Object owner) {
-        try {
-            m.setAccessible(true);
-            MethodHandle handle = lookup.unreflect(m);
-            if (m.getParameterCount() != 1) {
-                throw new EventException("Failed to register event handler: Method annotated with @Subscribe must have 1 parameter of type Event");
-            }
-            Class<?> eventClass = m.getParameterTypes()[0];
-            if (!Event.class.isAssignableFrom(eventClass)) {
-                throw new EventException("Failed to register event handler: Method annotated with @Subscribe must have 1 parameter of type Event");
-            }
-            if (!Modifier.isStatic(m.getModifiers())) {
-                handle = handle.bindTo(owner);
-            }
-            handle = handle.asType(handle.type().changeParameterType(0, Event.class));
-            return new MHHandler(handle, eventClass, m.getName());
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to create event handler", e);
+        MethodHandle handle = MHUtils.getMethodHandle(m, owner);
+        if (m.getParameterCount() != 1) {
+            throw new EventException("Failed to register event handler: Method annotated with @Subscribe must have 1 parameter of type Event");
         }
+        Class<?> eventClass = m.getParameterTypes()[0];
+        if (!Event.class.isAssignableFrom(eventClass)) {
+            throw new EventException("Failed to register event handler: Method annotated with @Subscribe must have 1 parameter of type Event");
+        }
+        handle = handle.asType(handle.type().changeParameterType(0, Event.class));
+        return new MHHandler(handle, eventClass, m.getName());
     }
 }

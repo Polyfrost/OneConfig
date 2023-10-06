@@ -44,6 +44,7 @@ dependencies {
     implementation(libs.bundles.core)
     implementation(project(":config"))
     implementation(project(":config-impl"))
+    implementation(project(":utils"))
     implementation(libs.polyui)
     compileOnly("org.polyfrost:universalcraft-1.8.9-forge:${libs.versions.universalcraft.get()}") {
         isTransitive = false

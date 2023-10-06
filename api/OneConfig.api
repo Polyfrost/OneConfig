@@ -191,21 +191,6 @@ public final class org/polyfrost/oneconfig/ui/pages/ModsPage {
 	public final fun open ()V
 }
 
-public final class org/polyfrost/oneconfig/utils/ColorUtils {
-	public fun <init> ()V
-	public static fun getAlpha (I)I
-	public static fun getBlue (I)I
-	public static fun getColor (FFFF)I
-	public static fun getColor (III)I
-	public static fun getColor (IIII)I
-	public static fun getGreen (I)I
-	public static fun getRed (I)I
-	public static fun setAlpha (II)I
-	public static fun setBlue (II)I
-	public static fun setGreen (II)I
-	public static fun setRed (II)I
-}
-
 public final class org/polyfrost/oneconfig/utils/Deprecator {
 	public fun <init> ()V
 	public static fun markDeprecated ()V
@@ -218,55 +203,12 @@ public final class org/polyfrost/oneconfig/utils/GuiUtils {
 	public static fun displayScreen (Ljava/lang/Object;I)V
 }
 
-public final class org/polyfrost/oneconfig/utils/IOUtils {
-	public fun <init> ()V
-	public static fun copyImageToClipboard (Ljava/awt/Image;)V
-	public static fun copyStringToClipboard (Ljava/lang/String;)V
-	public static fun getFileChecksum (Ljava/io/File;)Ljava/lang/String;
-	public static fun getImageFromClipboard ()Ljava/awt/Image;
-	public static fun getStringFromClipboard ()Ljava/lang/String;
-	public static fun resourceToByteBuffer (Ljava/lang/String;)Ljava/nio/ByteBuffer;
-	public static fun resourceToByteBuffer (Ljava/lang/String;Ljava/lang/Class;)Ljava/nio/ByteBuffer;
-	public static fun resourceToByteBufferNullable (Ljava/lang/String;)Ljava/nio/ByteBuffer;
-	public static fun resourceToByteBufferNullable (Ljava/lang/String;Ljava/lang/Class;)Ljava/nio/ByteBuffer;
-}
-
-public final class org/polyfrost/oneconfig/utils/JsonUtils {
-	public static final field PARSER Lcom/google/gson/JsonParser;
-	public fun <init> ()V
-	public static fun ifValid (Ljava/lang/String;Ljava/util/function/Consumer;)Z
-	public static fun parseString (Ljava/lang/String;)Lcom/google/gson/JsonElement;
-	public static fun parseString (Ljava/lang/String;Z)Lcom/google/gson/JsonElement;
-}
-
 public class org/polyfrost/oneconfig/utils/LogScanner {
 	public fun <init> ()V
 	public static fun identifyCallerFromStacktrace (Ljava/lang/Throwable;)Ljava/util/Set;
+	public static fun identifyFromClass (Ljava/lang/Class;)Ljava/util/Set;
 	public static fun identifyFromClass (Ljava/lang/String;)Ljava/util/Set;
 	public static fun identifyFromStacktrace (Ljava/lang/Throwable;)Ljava/util/Set;
-}
-
-public class org/polyfrost/oneconfig/utils/Multithreading {
-	public fun <init> ()V
-	public static fun getExecutor ()Ljava/util/concurrent/ExecutorService;
-	public static fun getScheduledExecutor ()Ljava/util/concurrent/ScheduledExecutorService;
-	public static fun runAsync (Ljava/lang/Runnable;)V
-	public static fun runAsync ([Ljava/lang/Runnable;)V
-	public static fun schedule (Ljava/lang/Runnable;JLjava/util/concurrent/TimeUnit;)V
-	public static fun submit (Ljava/lang/Runnable;)Ljava/util/concurrent/Future;
-	public static fun submitScheduled (Ljava/lang/Runnable;JLjava/util/concurrent/TimeUnit;)Ljava/util/concurrent/ScheduledFuture;
-}
-
-public final class org/polyfrost/oneconfig/utils/NetworkUtils {
-	public fun <init> ()V
-	public static fun browseLink (Ljava/lang/String;)V
-	public static fun downloadFile (Ljava/lang/String;Ljava/io/File;)Z
-	public static fun downloadFile (Ljava/lang/String;Ljava/io/File;Ljava/lang/String;IZ)Z
-	public static fun getJsonElement (Ljava/lang/String;)Lcom/google/gson/JsonElement;
-	public static fun getJsonElement (Ljava/lang/String;Ljava/lang/String;IZ)Lcom/google/gson/JsonElement;
-	public static fun getString (Ljava/lang/String;)Ljava/lang/String;
-	public static fun getString (Ljava/lang/String;Ljava/lang/String;IZ)Ljava/lang/String;
-	public static fun setupConnection (Ljava/lang/String;Ljava/lang/String;IZ)Ljava/io/InputStream;
 }
 
 public final class org/polyfrost/oneconfig/utils/Notifications {
@@ -283,29 +225,6 @@ public final class org/polyfrost/oneconfig/utils/Notifications {
 	public final fun send (Lorg/polyfrost/polyui/input/Translator$Text;Lorg/polyfrost/polyui/input/Translator$Text;Lorg/polyfrost/polyui/renderer/data/PolyImage;JLjava/util/function/Function;Ljava/lang/Runnable;)V
 	public static synthetic fun send$default (Lorg/polyfrost/oneconfig/utils/Notifications;Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/polyui/renderer/data/PolyImage;JLjava/util/function/Function;Ljava/lang/Runnable;ILjava/lang/Object;)V
 	public static synthetic fun send$default (Lorg/polyfrost/oneconfig/utils/Notifications;Lorg/polyfrost/polyui/input/Translator$Text;Lorg/polyfrost/polyui/input/Translator$Text;Lorg/polyfrost/polyui/renderer/data/PolyImage;JLjava/util/function/Function;Ljava/lang/Runnable;ILjava/lang/Object;)V
-}
-
-public final class org/polyfrost/oneconfig/utils/SimpleProfiler {
-	public fun <init> ()V
-	public static fun pop (Ljava/lang/String;)F
-	public static fun pop (Ljava/lang/String;Lorg/slf4j/event/Level;)F
-	public static fun push (Ljava/lang/String;)Z
-}
-
-public final class org/polyfrost/oneconfig/utils/StringUtils {
-	public fun <init> ()V
-	public static fun addStringAt (Ljava/lang/String;ILjava/lang/String;)Ljava/lang/String;
-	public static fun isValidSequence (Ljava/lang/String;II)Z
-	public static fun nullToEmpty (Ljava/lang/String;)Ljava/lang/String;
-	public static fun substringIf (Ljava/lang/String;IIZ)Ljava/lang/String;
-	public static fun substringOrDont (Ljava/lang/String;II)Ljava/lang/String;
-	public static fun substringOrElse (Ljava/lang/String;IILjava/lang/String;)Ljava/lang/String;
-	public static fun substringOrEmpty (Ljava/lang/String;II)Ljava/lang/String;
-	public static fun substringSafe (Ljava/lang/String;I)Ljava/lang/String;
-	public static fun substringSafe (Ljava/lang/String;II)Ljava/lang/String;
-	public static fun substringTo (Ljava/lang/String;I)Ljava/lang/String;
-	public static fun substringTo (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
-	public static fun substringToLastIndexOf (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
 }
 
 public class org/polyfrost/oneconfig/utils/TickDelay {

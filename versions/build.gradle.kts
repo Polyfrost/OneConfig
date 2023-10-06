@@ -126,8 +126,6 @@ dependencies {
 
     include("org.polyfrost:universalcraft-$platform:${libs.versions.universalcraft.get()}", transitive = false, mod = true)
 
-    if (platform.isLegacyFabric) include(libs.deencapsulation, relocate = true, transitive = false, mod = false)
-
     include(libs.caffeine, relocate = true, transitive = false)
 
     include(libs.polyui)
@@ -151,6 +149,9 @@ dependencies {
     shadeProject(project(":hud"))
     shadeProject(project(":events"))
     shadeProject(project(":config-impl"))
+    shadeProject(project(":utils")) {
+        isTransitive = false
+    }
     shadeProject(project(":ui")) {
         isTransitive = false
     }

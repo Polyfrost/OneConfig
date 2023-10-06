@@ -23,7 +23,6 @@
  * to OneConfig, as published by Polyfrost. If not, see
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
-//#if MC<=11202
 package org.polyfrost.oneconfig.internal.ui.impl;
 
 import org.objectweb.asm.ClassReader;
@@ -31,15 +30,10 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.Remapper;
-import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.InsnList;
-import org.objectweb.asm.tree.InsnNode;
-import org.objectweb.asm.tree.MethodInsnNode;
-import org.objectweb.asm.tree.MethodNode;
-import org.objectweb.asm.tree.TypeInsnNode;
-import org.objectweb.asm.tree.VarInsnNode;
+import org.objectweb.asm.tree.*;
 import org.polyfrost.oneconfig.ui.LwjglManager;
 import org.polyfrost.oneconfig.ui.TinyFD;
+import org.polyfrost.oneconfig.utils.MHUtils;
 import org.polyfrost.polyui.renderer.Renderer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,22 +42,13 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.security.ProtectionDomain;
-import java.util.Arrays;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 public class LwjglManagerImpl
@@ -72,7 +57,6 @@ public class LwjglManagerImpl
 
     private static final Logger LOGGER = LoggerFactory.getLogger("OneConfig LWJGL Manager");
     private static final boolean isPojav = checkPojav();
-    private static final MethodHandles.Lookup lookup = MethodHandles.lookup();
     private static final MethodHandle defineClassMethod;
     private static final Map<String, String> remappingMap;
 
@@ -88,7 +72,7 @@ public class LwjglManagerImpl
     private static final URL jarFile = getJarFile();
     private final TinyFD tinyFD;
 
-    public LwjglManagerImpl() throws ReflectiveOperationException {
+    public LwjglManagerImpl() throws Throwable {
         super(new URL[]{jarFile}, LwjglManager.class.getClassLoader());
 
         ClassLoader classLoader = isPojav ? getClass().getClassLoader() : this;
@@ -114,7 +98,8 @@ public class LwjglManagerImpl
 
             // Setup LW3 config
             Class<?> configClass = Class.forName("org.lwjgl.system.Configuration", true, classLoader);
-            Method setMethod = configClass.getMethod("set", Object.class);
+            MethodHandle setMethod = MHUtils.getMethodHandle(configClass, "set", void.class, Object.class);
+            if (setMethod == null) throw new NullPointerException("failed to get set method");
 
             Object extractDirField = configClass.getField("SHARED_LIBRARY_EXTRACT_DIRECTORY").get(null);
             setMethod.invoke(extractDirField, new File("./OneConfig/temp").getAbsolutePath());
@@ -125,9 +110,9 @@ public class LwjglManagerImpl
         }
 
         try {
-            Constructor<?> ctor = Class.forName("org.polyfrost.polyui.renderer.impl.NVGRenderer", true, classLoader).getConstructor(float.class, float.class);
-            ctor.setAccessible(true);
-            MethodHandle mh = lookup.unreflectConstructor(ctor);
+            Class<?> cls = Class.forName("org.polyfrost.polyui.renderer.impl.NVGRenderer", true, classLoader);
+            MethodHandle mh = MHUtils.getConstructorHandle(cls, float.class, float.class);
+            assert mh != null;
             rendererCtor = mh.asType(mh.type().changeReturnType(Renderer.class));
 
             tinyFD = (TinyFD) Class.forName("org.polyfrost.oneconfig.ui.impl.TinyFDImpl", true, classLoader).getConstructor().newInstance();
@@ -219,7 +204,7 @@ public class LwjglManagerImpl
                 }
             }
 
-            byte[] classBuffer = org.polyfrost.polyui.utils.IOUtils.toByteArray(classUrl.openStream());
+            byte[] classBuffer = org.polyfrost.polyui.utils.IOUtils.toByteArray(classUrl.openStream(), true);
 
             // define class through Unsafe to bypass package seal checking
             Class<?> clazz = defineClassBypass(unmappedName, classBuffer);
@@ -250,7 +235,7 @@ public class LwjglManagerImpl
                 //$$ new org.objectweb.asm.commons.ClassRemapper(classWriter, remapper);
                 //#else
                 new org.objectweb.asm.commons.RemappingClassAdapter(classWriter, remapper);
-                //#endif
+        //#endif
         classReader.accept(classRemapper, ClassReader.EXPAND_FRAMES);
         b = classWriter.toByteArray();
 
@@ -267,7 +252,7 @@ public class LwjglManagerImpl
         }
 
         try {
-            return (Class<?>) defineClassMethod.invokeExact(name, b, 0, b.length, /*classLoader = */(ClassLoader) this, (ProtectionDomain) null);
+            return (Class<?>) defineClassMethod.invokeExact(name, b, 0, b.length, (ClassLoader) this, (ProtectionDomain) null);
         } catch (Throwable e) {
             throw new RuntimeException("failed to define class " + name, e);
         }
@@ -323,33 +308,18 @@ public class LwjglManagerImpl
                 }
             }
 
-            try {
-                //#if FABRIC==1
-                //$$ try {
-                //$$     org.polyfrost.oneconfig.libs.deencapsulation.Deencapsulation.deencapsulate(Object.class);
-                //$$     org.polyfrost.oneconfig.libs.deencapsulation.Deencapsulation.deencapsulate(unsafeClass);
-                //$$ } catch (Throwable ignored) {
-                //$$ }
-                //#endif
-
-                Field unsafeField = unsafeClass.getDeclaredField("theUnsafe");
-                unsafeField.setAccessible(true);
-                Object theUnsafe = unsafeField.get(null);
-
-                Method defineClass = unsafeClass.getDeclaredMethod(
-                        "defineClass",
-                        String.class,
-                        byte[].class,
-                        int.class,
-                        int.class,
-                        ClassLoader.class,
-                        ProtectionDomain.class
-                );
-                defineClass.setAccessible(true);
-                defineClassMethod = lookup.unreflect(defineClass).bindTo(theUnsafe);
-            } catch (ReflectiveOperationException exception) {
-                throw new RuntimeException("Error while fetching Unsafe instance.", exception);
-            }
+            Object theUnsafe = MHUtils.getStaticField(unsafeClass, "theUnsafe");
+            defineClassMethod = MHUtils.getMethodHandle(
+                    theUnsafe,
+                    "defineClass",
+                    /* returns */ Class.class,
+                    String.class,
+                    byte[].class,
+                    int.class,
+                    int.class,
+                    ClassLoader.class,
+                    ProtectionDomain.class
+            );
         } else {
             remappingMap = null;
             defineClassMethod = null;
@@ -408,10 +378,8 @@ public class LwjglManagerImpl
     public Object getIsolatedClass(String className) {
         try {
             return Class.forName(className, true, isPojav ? getClass().getClassLoader() : this).getConstructor().newInstance();
-        } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException |
-                 ClassNotFoundException e) {
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 }
-//#endif

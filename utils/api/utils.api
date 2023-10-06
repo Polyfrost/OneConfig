@@ -1,0 +1,113 @@
+public final class org/polyfrost/oneconfig/utils/ColorUtils {
+	public fun <init> ()V
+	public static fun getAlpha (I)I
+	public static fun getBlue (I)I
+	public static fun getColor (FFFF)I
+	public static fun getColor (III)I
+	public static fun getColor (IIII)I
+	public static fun getGreen (I)I
+	public static fun getRed (I)I
+	public static fun setAlpha (II)I
+	public static fun setBlue (II)I
+	public static fun setGreen (II)I
+	public static fun setRed (II)I
+}
+
+public final class org/polyfrost/oneconfig/utils/IOUtils {
+	public fun <init> ()V
+	public static fun copyImageToClipboard (Ljava/awt/Image;)V
+	public static fun copyStringToClipboard (Ljava/lang/String;)V
+	public static fun getFileChecksum (Ljava/io/File;)Ljava/lang/String;
+	public static fun getImageFromClipboard ()Ljava/awt/Image;
+	public static fun getStringFromClipboard ()Ljava/lang/String;
+	public static fun resourceToByteBuffer (Ljava/lang/String;)Ljava/nio/ByteBuffer;
+	public static fun resourceToByteBuffer (Ljava/lang/String;Ljava/lang/Class;)Ljava/nio/ByteBuffer;
+	public static fun resourceToByteBufferNullable (Ljava/lang/String;)Ljava/nio/ByteBuffer;
+	public static fun resourceToByteBufferNullable (Ljava/lang/String;Ljava/lang/Class;)Ljava/nio/ByteBuffer;
+}
+
+public final class org/polyfrost/oneconfig/utils/JsonUtils {
+	public static final field PARSER Lcom/google/gson/JsonParser;
+	public fun <init> ()V
+	public static fun ifValid (Ljava/lang/String;Ljava/util/function/Consumer;)Z
+	public static fun parseString (Ljava/lang/String;)Lcom/google/gson/JsonElement;
+	public static fun parseString (Ljava/lang/String;Z)Lcom/google/gson/JsonElement;
+}
+
+public class org/polyfrost/oneconfig/utils/MHUtils {
+	public static final field trustedLookup Ljava/lang/invoke/MethodHandles$Lookup;
+	public fun <init> ()V
+	public static fun getAnnotationValues (Ljava/lang/annotation/Annotation;)Ljava/util/Map;
+	public static fun getConstructorHandle (Ljava/lang/Class;[Ljava/lang/Class;)Ljava/lang/invoke/MethodHandle;
+	public static fun getConstructorHandle (Ljava/lang/reflect/Constructor;)Ljava/lang/invoke/MethodHandle;
+	public static fun getField (Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/Object;
+	public static fun getFieldGetter (Ljava/lang/Class;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/invoke/MethodHandle;
+	public static fun getFieldGetter (Ljava/lang/String;Ljava/lang/Object;)Ljava/lang/invoke/MethodHandle;
+	public static fun getFieldGetter (Ljava/lang/reflect/Field;Ljava/lang/Object;)Ljava/lang/invoke/MethodHandle;
+	public static fun getFieldSetter (Ljava/lang/Class;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/invoke/MethodHandle;
+	public static fun getFieldSetter (Ljava/lang/String;Ljava/lang/Object;)Ljava/lang/invoke/MethodHandle;
+	public static fun getFieldSetter (Ljava/lang/reflect/Field;Ljava/lang/Object;)Ljava/lang/invoke/MethodHandle;
+	public static fun getMethodHandle (Ljava/lang/Class;Ljava/lang/String;Ljava/lang/Class;[Ljava/lang/Class;)Ljava/lang/invoke/MethodHandle;
+	public static fun getMethodHandle (Ljava/lang/Object;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/invoke/MethodHandle;
+	public static fun getMethodHandle (Ljava/lang/Object;Ljava/lang/String;Ljava/lang/Class;[Ljava/lang/Class;)Ljava/lang/invoke/MethodHandle;
+	public static fun getMethodHandle (Ljava/lang/reflect/Method;Ljava/lang/Object;)Ljava/lang/invoke/MethodHandle;
+	public static fun getStaticField (Ljava/lang/Class;Ljava/lang/String;)Ljava/lang/Object;
+	public static fun getStaticFieldGetter (Ljava/lang/Class;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/invoke/MethodHandle;
+	public static fun getStaticFieldSetter (Ljava/lang/Class;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/invoke/MethodHandle;
+	public static fun getStaticMethodHandle (Ljava/lang/Class;Ljava/lang/String;Ljava/lang/Class;[Ljava/lang/Class;)Ljava/lang/invoke/MethodHandle;
+	public static fun instantiate (Ljava/lang/Class;Z)Ljava/lang/Object;
+	public static fun instantiate (Ljava/lang/Class;[Ljava/lang/Object;)Ljava/lang/Object;
+	public static fun invoke (Ljava/lang/Object;Ljava/lang/String;Ljava/lang/Class;[Ljava/lang/Object;)Ljava/lang/Object;
+	public static fun invokeCatching (Ljava/lang/invoke/MethodHandle;[Ljava/lang/Object;)Ljava/lang/Object;
+	public static fun invokeExactCatching (Ljava/lang/invoke/MethodHandle;[Ljava/lang/Object;)Ljava/lang/Object;
+	public static fun invokeStatic (Ljava/lang/Class;Ljava/lang/String;Ljava/lang/Class;[Ljava/lang/Object;)Ljava/lang/Object;
+	public static fun setField (Ljava/lang/Object;Ljava/lang/String;Ljava/lang/Object;)Z
+	public static fun setStaticField (Ljava/lang/Class;Ljava/lang/String;Ljava/lang/Object;)Z
+}
+
+public class org/polyfrost/oneconfig/utils/Multithreading {
+	public fun <init> ()V
+	public static fun getExecutor ()Ljava/util/concurrent/ExecutorService;
+	public static fun getScheduledExecutor ()Ljava/util/concurrent/ScheduledExecutorService;
+	public static fun runAsync (Ljava/lang/Runnable;)V
+	public static fun runAsync ([Ljava/lang/Runnable;)V
+	public static fun schedule (Ljava/lang/Runnable;JLjava/util/concurrent/TimeUnit;)V
+	public static fun submit (Ljava/lang/Runnable;)Ljava/util/concurrent/Future;
+	public static fun submitScheduled (Ljava/lang/Runnable;JLjava/util/concurrent/TimeUnit;)Ljava/util/concurrent/ScheduledFuture;
+}
+
+public final class org/polyfrost/oneconfig/utils/NetworkUtils {
+	public fun <init> ()V
+	public static fun browseLink (Ljava/lang/String;)V
+	public static fun downloadFile (Ljava/lang/String;Ljava/io/File;)Z
+	public static fun downloadFile (Ljava/lang/String;Ljava/io/File;Ljava/lang/String;IZ)Z
+	public static fun getJsonElement (Ljava/lang/String;)Lcom/google/gson/JsonElement;
+	public static fun getJsonElement (Ljava/lang/String;Ljava/lang/String;IZ)Lcom/google/gson/JsonElement;
+	public static fun getString (Ljava/lang/String;)Ljava/lang/String;
+	public static fun getString (Ljava/lang/String;Ljava/lang/String;IZ)Ljava/lang/String;
+	public static fun setupConnection (Ljava/lang/String;Ljava/lang/String;IZ)Ljava/io/InputStream;
+}
+
+public final class org/polyfrost/oneconfig/utils/SimpleProfiler {
+	public fun <init> ()V
+	public static fun pop (Ljava/lang/String;)F
+	public static fun pop (Ljava/lang/String;Lorg/slf4j/event/Level;)F
+	public static fun push (Ljava/lang/String;)Z
+}
+
+public final class org/polyfrost/oneconfig/utils/StringUtils {
+	public fun <init> ()V
+	public static fun addStringAt (Ljava/lang/String;ILjava/lang/String;)Ljava/lang/String;
+	public static fun isValidSequence (Ljava/lang/String;II)Z
+	public static fun nullToEmpty (Ljava/lang/String;)Ljava/lang/String;
+	public static fun substringIf (Ljava/lang/String;IIZ)Ljava/lang/String;
+	public static fun substringOrDont (Ljava/lang/String;II)Ljava/lang/String;
+	public static fun substringOrElse (Ljava/lang/String;IILjava/lang/String;)Ljava/lang/String;
+	public static fun substringOrEmpty (Ljava/lang/String;II)Ljava/lang/String;
+	public static fun substringSafe (Ljava/lang/String;I)Ljava/lang/String;
+	public static fun substringSafe (Ljava/lang/String;II)Ljava/lang/String;
+	public static fun substringTo (Ljava/lang/String;I)Ljava/lang/String;
+	public static fun substringTo (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+	public static fun substringToLastIndexOf (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+}
+

@@ -26,6 +26,7 @@
 
 package org.polyfrost.oneconfig.ui.screen;
 
+import kotlin.Pair;
 import net.minecraft.client.Minecraft;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -93,6 +94,9 @@ public class PolyUIScreen extends UScreen {
             //polyUI.beforeRender(() -> {
             //   renderer.translate(UResolution.getWindowWidth() / 2f - width / 2f, UResolution.getWindowHeight() / 2f - height / 2f);
             //});
+            //#if MC<=11300
+            settings.setScrollMultiplier(new Pair<>(0.3f, 0.3f));
+            //#endif
             if (useMinecraftUIScaling())
                 polyUI.getRenderer().setPixelRatio$polyui((float) UResolution.getScaleFactor());
             drawables = null;

@@ -11,14 +11,13 @@ shadow = "8.1.1"
 
 vigilance = "+"
 universalcraft = "249"
-deencapsulation = "42b829f373"
 caffeine = "2.9.3"
 mixin = "0.7.11-SNAPSHOT"
 
 lwjgl = "3.3.1"
 fabric-asm = "v2.3"
 
-polyui = "0.24.4"
+polyui = "0.24.5"
 
 slf4j = "2.0.9"
 annotations = "24.0.1"
@@ -29,7 +28,6 @@ night-config = "3.6.5"
 
 [libraries]
 
-deencapsulation = { module = "com.github.xtrm-en:deencapsulation", version.ref = "deencapsulation" }
 caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "caffeine" }
 
 junit = { module = "org.junit.jupiter:junit-jupiter" }

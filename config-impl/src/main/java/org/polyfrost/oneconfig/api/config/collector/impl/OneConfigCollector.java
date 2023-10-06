@@ -36,16 +36,12 @@ import org.polyfrost.oneconfig.api.config.annotations.Button;
 import org.polyfrost.oneconfig.api.config.annotations.DependsOn;
 import org.polyfrost.oneconfig.api.config.annotations.Option;
 import org.polyfrost.oneconfig.api.config.util.ObjectSerializer;
+import org.polyfrost.oneconfig.utils.MHUtils;
 
 import java.lang.annotation.Annotation;
 import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.lang.reflect.Proxy;
 import java.util.List;
 import java.util.Map;
 
@@ -54,8 +50,6 @@ import java.util.Map;
  * Ignores transient and synthetic fields.
  */
 public class OneConfigCollector extends ReflectiveCollector {
-    protected static final MethodHandles.Lookup lookup = MethodHandles.lookup();
-
     public OneConfigCollector(int maxDepth) {
         super(maxDepth);
     }
@@ -91,12 +85,10 @@ public class OneConfigCollector extends ReflectiveCollector {
             for (Annotation aa : a.annotationType().getAnnotations()) {
                 if (aa.annotationType().equals(Option.class)) {
                     try {
-                        f.setAccessible(true);
                         // asm: use method handle as it fails NOW instead of at set time, and is faster
-                        MethodHandle mh = lookup.unreflectSetter(f);
-                        if (!Modifier.isStatic(f.getModifiers())) mh = mh.bindTo(src);
-                        final MethodHandle setter = mh;
-                        Property<?> p = Property.prop(f.getName(), f.get(src), f.getType()).addCallback(v -> {
+                        final MethodHandle setter = MHUtils.getFieldSetter(f, src);
+                        if (setter == null) throw new NullPointerException();
+                        Property<?> p = Property.prop(f.getName(), MHUtils.getFieldGetter(f, src).invoke(), f.getType()).addCallback(v -> {
                             try {
                                 System.out.println("glSET " + f.getName() + " -> " + v);
                                 if (f.getType().isArray() && v instanceof List<?>) {
@@ -108,7 +100,7 @@ public class OneConfigCollector extends ReflectiveCollector {
                         });
                         handleMetadata(p, a, (Option) aa, f);
                         builder.put(p);
-                    } catch (IllegalAccessException e) {
+                    } catch (Throwable e) {
                         throw new RuntimeException("Failed to create setter for field " + f.getName() + "; ensure it is not static final", e);
                     }
                     break;
@@ -124,15 +116,8 @@ public class OneConfigCollector extends ReflectiveCollector {
         if (m.getParameterCount() != 0) throw new IllegalArgumentException("Button method " + m.getName() + " must have no parameters");
         Property<?> p = Property.prop(m.getName() + "$synthetic", m);
         p.addMetadata("synthetic", true);
-        m.setAccessible(true);
-        MethodHandle methodHandle;
-        try {
-            methodHandle = lookup.unreflect(m);
-            if (!Modifier.isStatic(m.getModifiers())) methodHandle = methodHandle.bindTo(src);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to unreflect " + m + " for button " + b.title(), e);
-        }
-        final MethodHandle mh = methodHandle;
+        final MethodHandle mh = MHUtils.getMethodHandle(m, src);
+        assert mh != null;
         final String methodString = m.toString();
         p.addMetadata("runnable", (Runnable) () -> {
             try {
@@ -156,18 +141,8 @@ public class OneConfigCollector extends ReflectiveCollector {
         Accordion a = c.getDeclaredAnnotation(Accordion.class);
         if (a == null) return;
         try {
-            Object innerObject;
-            if (Modifier.isStatic(c.getModifiers())) {
-                Constructor<?> ctor = c.getDeclaredConstructor();
-                ctor.setAccessible(true);
-                innerObject = ctor.newInstance();
-            } else {
-                Constructor<?> ctor = c.getDeclaredConstructor(src.getClass());
-                ctor.setAccessible(true);
-                innerObject = ctor.newInstance(src);
-            }
             Tree t = Tree.tree(c.getSimpleName());
-            handle(t, innerObject, depth + 1);
+            handle(t, MHUtils.instantiate(c, false), depth + 1);
             builder.put(t);
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -176,23 +151,13 @@ public class OneConfigCollector extends ReflectiveCollector {
 
     public void handleMetadata(@NotNull Property<?> property, @NotNull Annotation a, Option opt, Field f) {
         property.addMetadata("visualizer", opt.display());
-        InvocationHandler ih = Proxy.getInvocationHandler(a);
-        Map<String, Object> memberValues;
-        try {
-            // dynamic way of getting all the values off an annotation
-            Field ff = ih.getClass().getDeclaredField("memberValues");
-            ff.setAccessible(true);
-            memberValues = (Map<String, Object>) ff.get(ih);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to steal metadata from annotation", e);
-        }
+        Map<String, Object> memberValues = MHUtils.getAnnotationValues(a);
+        assert memberValues != null;
         property.addMetadata(memberValues);
-
         DependsOn d = f.getDeclaredAnnotation(DependsOn.class);
         if (d != null) {
             property.addMetadata("conditions", d.value());
         }
     }
-
 
 }

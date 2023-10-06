@@ -55,6 +55,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
@@ -67,7 +68,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -145,8 +145,16 @@ public class LogScanner {
         return mods;
     }
 
-    private static void debug(Supplier<String> message) {
-        //if (Preferences.DEBUG) LOGGER.info(message.get());
+    public static Set<LoaderPlatform.ActiveMod> identifyFromClass(String className) {
+        try {
+            // Skip identification for Mixin, one's mod copy of the library is shared with all other mods
+            if (className.startsWith("org.spongepowered.asm.mixin.")) {
+                return Collections.emptySet();
+            }
+            return identifyFromClass(Class.forName(className, false, LogScanner.class.getClassLoader()));
+        } catch (Exception e) {
+            return Collections.emptySet(); // we cannot do it
+        }
     }
 
     // TODO: get a list of mixin transformers that affected the class and blame those too
@@ -155,48 +163,35 @@ public class LogScanner {
      * Return a set of ActiveMods that have been associated with the given class.
      */
     @NotNull
-    public static Set<LoaderPlatform.ActiveMod> identifyFromClass(String className) {
+    public static Set<LoaderPlatform.ActiveMod> identifyFromClass(Class<?> clazz) {
         List<LoaderPlatform.ActiveMod> modMap = Platform.getLoaderPlatform().getLoadedMods();
         modMap.removeIf(Objects::isNull);
-        // Skip identification for Mixin, one's mod copy of the library is shared with all other mods
-        if (className.startsWith("org.spongepowered.asm.mixin.")) {
-            debug(() -> "Ignoring class " + className + " for identification because it is a mixin class");
-            return Collections.emptySet();
-        }
 
         try {
-            // Get the URL of the class (don't initialize classes, though)
-            Class<?> clazz = Class.forName(className, false, LogScanner.class.getClassLoader());
             CodeSource codeSource = clazz.getProtectionDomain().getCodeSource();
             if (codeSource == null) {
-                debug(() -> "Ignoring class " + className + " for identification because the code source could not be found");
                 return Collections.emptySet(); // Some internal native sun classes
             }
             URL url = codeSource.getLocation();
 
             if (url == null) {
-                LOGGER.warn("Failed to identify mod for " + className);
+                LOGGER.warn("Failed to identify mod for " + clazz.getName());
                 return Collections.emptySet();
             }
 
             // Transform JAR URL to a file URL
-            if (url.toURI().toString().startsWith("jar:")) {
-                url = new URL(url.toURI().toString().substring(4, url.toURI().toString().lastIndexOf("!")));
+            URI uri = url.toURI();
+            if (uri.toString().startsWith("jar:")) {
+                String s = uri.toString();
+                uri = new URL(s.substring(4, s.lastIndexOf("!"))).toURI();
             }
-            if (url.toURI().toString().endsWith(".class") && Platform.getInstance().isDevelopmentEnvironment()) {
+            if (uri.toString().endsWith(".class") && Platform.getInstance().isDevelopmentEnvironment()) {
                 LOGGER.error("The mod you are currently developing caused this issue, or another class file. Returning 'this'.");
-                LOGGER.error("Class: " + className);
+                LOGGER.error("Class: " + clazz.getName());
                 return Collections.singleton(new LoaderPlatform.ActiveMod("this", "this", "Unknown", null));
             }
-            Set<LoaderPlatform.ActiveMod> mods = getModsAt(Paths.get(url.toURI()), modMap);
-            if (!mods.isEmpty()) {
-                //noinspection OptionalGetWithoutIsPresent
-                debug(() -> "Successfully placed blame of '" + className + "' on '"
-                        + mods.stream().findFirst().get().name + "'");
-            }
-            return mods;
-        } catch (URISyntaxException | ClassNotFoundException | NoClassDefFoundError | MalformedURLException e) {
-            debug(() -> "Ignoring class " + className + " for identification because an error occurred");
+            return getModsAt(Paths.get(uri), modMap);
+        } catch (URISyntaxException | MalformedURLException e) {
             return Collections.emptySet(); // we cannot do it
         }
     }
@@ -216,8 +211,6 @@ public class LogScanner {
             Path resourcesPath = Paths.get(resourcesPathString);
             return modMap.stream().filter(m -> m.source.equals(resourcesPath)).collect(Collectors.toSet());
         } else {
-            debug(() -> "Mod at path '" + path.toAbsolutePath() + "' is at fault," +
-                    " but it could not be found in the map of mod paths: " /*+ modMap*/);
             return Collections.emptySet();
         }
     }

@@ -32,12 +32,12 @@ import net.minecraft.launchwrapper.Launch;
 import net.minecraft.launchwrapper.LaunchClassLoader;
 import net.minecraftforge.fml.relauncher.CoreModManager;
 import org.polyfrost.oneconfig.internal.init.OneConfigInit;
+import org.polyfrost.oneconfig.utils.MHUtils;
 import org.spongepowered.asm.launch.MixinBootstrap;
 import org.spongepowered.asm.launch.MixinTweaker;
 import org.spongepowered.asm.mixin.Mixins;
 
 import java.io.File;
-import java.lang.reflect.Field;
 import java.net.URI;
 import java.net.URL;
 import java.util.List;
@@ -149,11 +149,9 @@ public class OneConfigTweaker implements ITweaker {
     @SuppressWarnings("unchecked")
     private void removeLWJGLException() {
         try {
-            Field f_exceptions = LaunchClassLoader.class.getDeclaredField("classLoaderExceptions");
-            f_exceptions.setAccessible(true);
-            Set<String> exceptions = (Set<String>) f_exceptions.get(Launch.classLoader);
+            Set<String> exceptions = (Set<String>) MHUtils.getFieldGetter(LaunchClassLoader.class, "classLoaderExceptions", Set.class).invokeExact(Launch.classLoader);
             exceptions.remove("org.lwjgl.");
-        } catch (Exception e) {
+        } catch (Throwable e) {
             throw new RuntimeException(e);
         }
     }

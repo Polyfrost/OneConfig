@@ -42,6 +42,7 @@ java {
 dependencies {
     compileOnly("org.polyfrost:universalcraft-1.8.9-forge:${libs.versions.universalcraft.get()}")
     implementation(libs.bundles.core)
+    implementation(project(":utils"))
 }
 
 

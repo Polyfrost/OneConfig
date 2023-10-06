@@ -24,21 +24,35 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-plugins {
-    java
-}
+package org.polyfrost.oneconfig.internal.ui.impl;
 
-repositories {
-    mavenCentral()
-}
+import org.polyfrost.oneconfig.ui.LwjglManager;
+import org.polyfrost.oneconfig.ui.TinyFD;
+import org.polyfrost.oneconfig.ui.impl.TinyFDImpl;
+import org.polyfrost.polyui.renderer.Renderer;
+import org.polyfrost.polyui.renderer.impl.NVGRenderer;
 
-java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(8))
+public class LwjglManagerImpl implements LwjglManager {
+    private static final TinyFD impl = new TinyFDImpl();
+    @Override
+    public Renderer getRenderer(float width, float height) {
+        return new NVGRenderer(width, height);
     }
-}
 
-dependencies {
-    implementation(libs.bundles.core)
-    implementation(project(":utils"))
+    @Override
+    public TinyFD getTinyFD() {
+        return impl;
+    }
+
+    @Override
+    @Deprecated
+    public boolean addIsolatedClass(String className) {
+        return false;
+    }
+
+    @Override
+    @Deprecated
+    public Object getIsolatedClass(String className) {
+        throw new UnsupportedOperationException("method only exists in legacy");
+    }
 }

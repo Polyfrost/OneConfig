@@ -192,7 +192,6 @@ public abstract interface class org/polyfrost/oneconfig/api/config/backend/impl/
 }
 
 public class org/polyfrost/oneconfig/api/config/collector/impl/OneConfigCollector : org/polyfrost/oneconfig/api/config/collector/impl/ReflectiveCollector {
-	protected static final field lookup Ljava/lang/invoke/MethodHandles$Lookup;
 	public fun <init> ()V
 	public fun <init> (I)V
 	public fun collect (Ljava/lang/String;Ljava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/Tree;

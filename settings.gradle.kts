@@ -30,7 +30,7 @@ val mod_name: String by settings
 
 rootProject.name = mod_name
 
-include(":platform", ":config", ":config-impl", ":commands", ":hud", "events", ":ui")
+include(":platform", ":config", ":config-impl", ":commands", ":hud", "events", ":ui", ":utils")
 project(":platform").apply {
     projectDir = file("versions/")
     buildFileName = "root.gradle.kts"

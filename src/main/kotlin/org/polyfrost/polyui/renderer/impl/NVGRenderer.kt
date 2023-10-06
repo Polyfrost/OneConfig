@@ -446,12 +446,12 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
 
     private fun getFont(font: Font): NVGFont {
         return fonts.getOrPut(font) {
-            val data = font.stream?.toByteBuffer() ?: if (settings.resourcePolicy == Settings.ResourcePolicy.WARN) {
+            val data = font.stream?.toByteBuffer(font === PolyUI.defaultFonts.regular) ?: if (settings.resourcePolicy == Settings.ResourcePolicy.WARN) {
                 PolyUI.LOGGER.warn(
                     "Failed to get font: {}, falling back to default font!",
                     font.resourcePath,
                 )
-                PolyUI.defaultFonts.regular.get().toByteBuffer()
+                PolyUI.defaultFonts.regular.get().toByteBuffer(false)
             } else {
                 throw ExceptionInInitializerError("Failed to get font: ${font.resourcePath}")
             }
@@ -461,14 +461,15 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
     }
 
     private fun getImage(image: PolyImage): NVGImage {
-        return images[image] ?: run {
+        return images.getOrPut(image) {
+            var def = true
             val stream = image.stream ?: if (settings.resourcePolicy == Settings.ResourcePolicy.WARN) {
-                PolyUI.defaultImage.stream.also {
-                    PolyUI.LOGGER.warn(
-                        "Failed to get image: {}, falling back to default image!",
-                        image.resourcePath,
-                    )
-                } ?: throw IllegalStateException("Default image not found!")
+                PolyUI.LOGGER.warn(
+                    "Failed to get image: {}, falling back to default image!",
+                    image.resourcePath,
+                )
+                def = false
+                PolyUI.defaultImage.stream ?: throw IllegalStateException("Default image not found!")
             } else {
                 throw ExceptionInInitializerError("Failed to get image: ${image.resourcePath}")
             }
@@ -479,9 +480,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
                     val w = IntArray(1)
                     val h = IntArray(1)
                     data = STBImage.stbi_load_from_memory(
-                        stream.use {
-                            it.toByteBuffer()
-                        },
+                        stream.toByteBuffer(def),
                         w,
                         h,
                         IntArray(1),

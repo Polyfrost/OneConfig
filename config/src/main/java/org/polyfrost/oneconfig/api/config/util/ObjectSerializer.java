@@ -29,12 +29,11 @@ package org.polyfrost.oneconfig.api.config.util;
 import org.jetbrains.annotations.NotNull;
 import org.polyfrost.oneconfig.api.config.adapter.Adapter;
 import org.polyfrost.oneconfig.api.config.adapter.impl.ColorAdapter;
-import org.polyfrost.oneconfig.api.config.backend.Backend;
 import org.polyfrost.oneconfig.api.config.exceptions.SerializationException;
-import sun.misc.Unsafe;
+import org.polyfrost.oneconfig.utils.MHUtils;
 
+import java.lang.invoke.MethodHandle;
 import java.lang.reflect.Array;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
@@ -54,7 +53,6 @@ import static org.polyfrost.oneconfig.api.config.Tree.LOGGER;
 public class ObjectSerializer {
     public static final ObjectSerializer INSTANCE = new ObjectSerializer();
     private final Set<Adapter<?>> adapters = new HashSet<>();
-    private static final Unsafe theUnsafe = getUnsafe();
 
     static {
         INSTANCE.registerTypeAdapter(new ColorAdapter());
@@ -145,9 +143,8 @@ public class ObjectSerializer {
         for (Field f : cls.getDeclaredFields()) {
             if (f.isSynthetic() || Modifier.isTransient(f.getModifiers()) || Modifier.isStatic(f.getModifiers()))
                 continue;
-            f.setAccessible(true);
             try {
-                Object o = f.get(value);
+                Object o = MHUtils.getFieldGetter(f, value).invoke();
                 // skip self references
                 if (o == value) continue;
                 if (o != null) {
@@ -155,7 +152,7 @@ public class ObjectSerializer {
                         cfg.put(f.getName(), serialize(o));
                     } else cfg.put(f.getName(), o);
                 }
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 throw new SerializationException("Failed to serialize object " + value, e);
             }
         }
@@ -198,43 +195,29 @@ public class ObjectSerializer {
     @SuppressWarnings({"unchecked", "rawtypes"})
     private Object _deserialize(Map<String, Object> in, Class<?> cls) {
         Object o;
-        try {
-            Constructor<?> ctor = cls.getDeclaredConstructor();
-            ctor.setAccessible(true);
-            o = ctor.newInstance();
-        } catch (NoSuchMethodException ignored) {
-            if (theUnsafe != null) {
-                try {
-                    if (cls.isArray()) {
-                        o = new ArrayList<>();
-                    } else {
-                        o = theUnsafe.allocateInstance(cls);
-                    }
-                } catch (Exception e) {
-                    throw new SerializationException("Failed to allocate deserializing object", e);
-                }
-            } else {
-                throw new SerializationException("Failed to deserialize object: no no-args constructor found!");
-            }
-        } catch (Exception e) {
-            throw new SerializationException("Failed to allocate deserializing object", e);
+        if (cls.isArray()) {
+            o = new ArrayList<>();
+        } else o = MHUtils.instantiate(cls, true);
+        if (o == null) {
+            throw new SerializationException("Failed to deserialize object: Failed to instantiate " + cls.getName());
         }
         for (Map.Entry<String, Object> e : in.entrySet()) {
             if (e.getKey().equals("classType")) continue;
             try {
                 Field f = getDeclaredField(o.getClass(), e.getKey());
                 if (f == null) continue;
-                f.setAccessible(true);
+                MethodHandle setter = MHUtils.getFieldSetter(f, o);
+                if (setter == null) continue;
                 if (f.getType().isEnum()) {
-                    f.set(o, Enum.valueOf((Class) f.getType(), (String) e.getValue()));
+                    setter.invoke(Enum.valueOf((Class) f.getType(), (String) e.getValue()));
                 } else if (e.getValue() instanceof Map) {
                     Map<String, Object> m = (Map<String, Object>) e.getValue();
-                    f.set(o, _deserialize(m, m.getClass()));
+                    setter.invoke(_deserialize(m, m.getClass()));
                 } else {
                     Object out = unbox(e.getValue(), f.getType());
-                    f.set(o, out);
+                    setter.invoke(out);
                 }
-            } catch (Exception ex) {
+            } catch (Throwable ex) {
                 throw new SerializationException("Failed to deserialize object", ex);
             }
         }
@@ -323,16 +306,5 @@ public class ObjectSerializer {
 
     public static boolean isPrimitiveArray(Class<?> cls) {
         return cls.isArray() && cls.getComponentType().isPrimitive();
-    }
-
-    private static Unsafe getUnsafe() {
-        try {
-            Field f = Unsafe.class.getDeclaredField("theUnsafe");
-            f.setAccessible(true);
-            return (Unsafe) f.get(null);
-        } catch (Exception e) {
-            Backend.LOGGER.warn("Failed to get unsafe instance, classes without no-args constructors will fail to deserialize!");
-            return null;
-        }
     }
 }

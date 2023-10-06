@@ -65,7 +65,7 @@ public final class IOUtils {
         path = path.trim();
         if (path.startsWith("http")) {
             try (InputStream in = NetworkUtils.setupConnection(path, "OneConfig", 5000, true)) {
-                bytes = org.polyfrost.polyui.utils.IOUtils.toByteArray(in);
+                bytes = kotlin.io.ByteStreamsKt.readBytes(in);
             }
         } else {
             InputStream stream;
@@ -78,7 +78,8 @@ public final class IOUtils {
             if (stream == null) {
                 throw new FileNotFoundException(path);
             }
-            bytes = org.polyfrost.polyui.utils.IOUtils.toByteArray(stream);
+            bytes = kotlin.io.ByteStreamsKt.readBytes(stream);
+            stream.close();
         }
         ByteBuffer data = ByteBuffer.allocateDirect(bytes.length).order(ByteOrder.nativeOrder())
                 .put(bytes);
