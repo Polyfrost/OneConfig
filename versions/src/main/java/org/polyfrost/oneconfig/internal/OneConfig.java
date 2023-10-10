@@ -30,10 +30,16 @@ import org.polyfrost.oneconfig.api.commands.CommandManager;
 import org.polyfrost.oneconfig.api.events.EventManager;
 import org.polyfrost.oneconfig.internal.command.OneConfigCommand;
 import org.polyfrost.oneconfig.internal.ui.BlurHandler;
+import org.polyfrost.oneconfig.ui.KeybindManager;
 import org.polyfrost.oneconfig.ui.LwjglManager;
+import org.polyfrost.oneconfig.ui.OneConfigUI;
+import org.polyfrost.oneconfig.utils.GuiUtils;
 import org.polyfrost.oneconfig.utils.hypixel.HypixelUtils;
 import org.polyfrost.polyui.PolyUI;
 import org.polyfrost.polyui.component.impl.Button;
+import org.polyfrost.polyui.input.KeyBinder;
+import org.polyfrost.polyui.input.Keys;
+import org.polyfrost.polyui.input.Modifiers;
 import org.polyfrost.polyui.layout.impl.FlexLayout;
 import org.polyfrost.polyui.property.impl.BlockProperties;
 import org.slf4j.Logger;
@@ -70,12 +76,19 @@ public class OneConfig {
         }
         preload();
         CommandManager.registerCommand(new OneConfigCommand());
+        KeybindManager.registerKeybind(new KeyBinder.Bind((int[]) null, null, (int[]) null, Modifiers.RSHIFT.getValue(), 0L, () -> {
+            GuiUtils.displayScreen(OneConfigUI.create());
+            return true;
+        }));
         HypixelUtils.INSTANCE.initialize();
 
         initialized = true;
         LOGGER.info("OneConfig initialized!");
     }
 
+    /**
+     * Ensure that key PolyUI classes are loaded to prevent lag-spikes when loading PolyUI for the first time.
+     */
     private void preload() {
         long t1 = System.nanoTime();
         try {

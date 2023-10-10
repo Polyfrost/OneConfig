@@ -67,7 +67,7 @@ public class GuiScreenMixin {
                 state = 1;
             }
         }
-        EventManager.INSTANCE.post(new RawKeyEvent(Keyboard.getEventKey(), state));
+        EventManager.INSTANCE.post(new RawKeyEvent(Keyboard.getEventKey(), Keyboard.getEventCharacter(), state));
     }
 }
 //#endif

@@ -26,12 +26,32 @@
 
 package org.polyfrost.oneconfig.api.events.event;
 
+/**
+ * Raw key event dispatched by the Minecraft instance.
+ * <br>
+ * If you want to translate this into something usable by PolyUI, have a look at {@code KeybindManager.translateKey(EventManager, keyCode, character, down)}
+ */
 public class RawKeyEvent implements Event {
+    /**
+     * The keycode that created this event.
+     * A value of 0 indicates this was not a coded event but a character event (see {@link #character})
+     */
     public final int key;
+    /**
+     * The character that created this event.<br>
+     * A value of 0 indicates this was not a character event but a coded event (see {@link #key})
+     */
+    public final char character;
+    /**
+     * 0 = up <br>
+     * 1 = down <br>
+     * 2 = repeat
+     */
     public final int state;
 
-    public RawKeyEvent(int key, int state) {
+    public RawKeyEvent(int key, char character, int state) {
         this.key = key;
+        this.character = character;
         this.state = state;
     }
 }

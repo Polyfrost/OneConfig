@@ -35,12 +35,11 @@ import org.polyfrost.oneconfig.libs.universal.UMatrixStack;
 import org.polyfrost.oneconfig.libs.universal.UResolution;
 import org.polyfrost.oneconfig.libs.universal.UScreen;
 import org.polyfrost.oneconfig.ui.LwjglManager;
+import org.polyfrost.oneconfig.utils.GuiUtils;
 import org.polyfrost.polyui.PolyUI;
 import org.polyfrost.polyui.color.Colors;
 import org.polyfrost.polyui.color.DarkTheme;
 import org.polyfrost.polyui.component.Drawable;
-import org.polyfrost.polyui.input.Keys;
-import org.polyfrost.polyui.input.Modifiers;
 import org.polyfrost.polyui.property.Settings;
 import org.polyfrost.polyui.renderer.Renderer;
 import org.polyfrost.polyui.renderer.data.Cursor;
@@ -49,6 +48,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.function.Consumer;
+
+import static org.polyfrost.oneconfig.ui.KeybindManager.translateKey;
 
 @SuppressWarnings("unused")
 public class PolyUIScreen extends UScreen {
@@ -85,12 +86,12 @@ public class PolyUIScreen extends UScreen {
         try {
             LOGGER.info("Creating screen");
             Settings settings = new Settings();
-            settings.setCleanupAfterInit(false);
-            settings.setFramebuffersEnabled(false);
-            settings.setRenderPausingEnabled(false);
-            settings.setDebug(false);
+            settings.enableInitCleanup(false);
+            settings.enableFramebuffers(false);
+            settings.enableRenderPausing(false);
+            settings.enableDebug(false);
             Renderer renderer = LwjglManager.INSTANCE.getRenderer(UResolution.getWindowWidth(), UResolution.getWindowHeight());
-            polyUI = new PolyUI("", renderer, settings, colors, drawables);
+            polyUI = new PolyUI(renderer, settings, null, GuiUtils.translator, colors, drawables);
             //polyUI.beforeRender(() -> {
             //   renderer.translate(UResolution.getWindowWidth() / 2f - width / 2f, UResolution.getWindowHeight() / 2f - height / 2f);
             //});
@@ -151,19 +152,23 @@ public class PolyUIScreen extends UScreen {
 
     @Override
     public boolean uKeyPressed(int keyCode, int scanCode, @Nullable UKeyboard.Modifiers modifiers) {
-        pressInternal(keyCode, (char) 0, true);
+        if(keyCode == UKeyboard.KEY_ESCAPE && shouldCloseOnEsc()) {
+            UScreen.displayScreen(null);
+            return true;
+        }
+        translateKey(polyUI.getEventManager(), keyCode, (char) 0, true);
         return true;
     }
 
     @Override
     public boolean uKeyReleased(int keyCode, int scanCode, @Nullable UKeyboard.Modifiers modifiers) {
-        pressInternal(keyCode, (char) 0, false);
+        translateKey(polyUI.getEventManager(), keyCode, (char) 0, false);
         return true;
     }
 
     @Override
     public boolean uCharTyped(char c, @Nullable UKeyboard.Modifiers modifiers) {
-        pressInternal(0, c, true);
+        translateKey(polyUI.getEventManager(), 0, c, true);
         return true;
     }
 
@@ -179,75 +184,6 @@ public class PolyUIScreen extends UScreen {
     //#endif
     public boolean doesGuiPauseGame() {
         return false;
-    }
-
-    protected final void pressInternal(int keyCode, char typedChar, boolean down) {
-        if (typedChar != 0) {
-            polyUI.getEventManager().keyTyped(typedChar);
-            return;
-        }
-        if (keyCode == UKeyboard.KEY_ESCAPE && shouldCloseOnEsc()) {
-            polyUI.window.close();
-            return;
-        }
-        if (keyCode == UKeyboard.KEY_LSHIFT) mod(Modifiers.LSHIFT.getValue(), down);
-        else if (keyCode == UKeyboard.KEY_RSHIFT) mod(Modifiers.RSHIFT.getValue(), down);
-        else if (keyCode == UKeyboard.KEY_LCONTROL) mod(Modifiers.LCONTROL.getValue(), down);
-        else if (keyCode == UKeyboard.KEY_RCONTROL) mod(Modifiers.RCONTROL.getValue(), down);
-        else if (keyCode == UKeyboard.KEY_LMENU) mod(Modifiers.LALT.getValue(), down);
-        else if (keyCode == UKeyboard.KEY_RMENU) mod(Modifiers.RALT.getValue(), down);
-        else if (keyCode == UKeyboard.KEY_LMETA) mod(Modifiers.LMETA.getValue(), down);
-        else if (keyCode == UKeyboard.KEY_RMETA) mod(Modifiers.RMETA.getValue(), down);
-        else {
-            Keys k;
-            // you can't switch because of the stupid noInline stuff
-            if (keyCode == UKeyboard.KEY_F1) k = Keys.F1;
-            else if (keyCode == UKeyboard.KEY_F2) k = Keys.F2;
-            else if (keyCode == UKeyboard.KEY_F3) k = Keys.F3;
-            else if (keyCode == UKeyboard.KEY_F4) k = Keys.F4;
-            else if (keyCode == UKeyboard.KEY_F5) k = Keys.F5;
-            else if (keyCode == UKeyboard.KEY_F6) k = Keys.F6;
-            else if (keyCode == UKeyboard.KEY_F7) k = Keys.F7;
-            else if (keyCode == UKeyboard.KEY_F8) k = Keys.F8;
-            else if (keyCode == UKeyboard.KEY_F9) k = Keys.F9;
-            else if (keyCode == UKeyboard.KEY_F10) k = Keys.F10;
-            else if (keyCode == UKeyboard.KEY_F11) k = Keys.F11;
-            else if (keyCode == UKeyboard.KEY_F12) k = Keys.F12;
-            else if (keyCode == UKeyboard.KEY_ESCAPE) k = Keys.ESCAPE;
-            else if (keyCode == UKeyboard.KEY_ENTER) k = Keys.ENTER;
-            else if (keyCode == UKeyboard.KEY_BACKSPACE) k = Keys.BACKSPACE;
-            else if (keyCode == UKeyboard.KEY_TAB) k = Keys.TAB;
-//            else if (keyCode == UKeyboard.KEY_PRIOR) k = Keys.PAGE_UP;
-//            else if (keyCode == UKeyboard.KEY_NEXT) k = Keys.PAGE_DOWN;
-            else if (keyCode == UKeyboard.KEY_END) k = Keys.END;
-            else if (keyCode == UKeyboard.KEY_HOME) k = Keys.HOME;
-            else if (keyCode == UKeyboard.KEY_LEFT) k = Keys.LEFT;
-            else if (keyCode == UKeyboard.KEY_UP) k = Keys.UP;
-            else if (keyCode == UKeyboard.KEY_RIGHT) k = Keys.RIGHT;
-            else if (keyCode == UKeyboard.KEY_DOWN) k = Keys.DOWN;
-//            else if (keyCode == UKeyboard.KEY_INSERT) k = Keys.INSERT;
-            else k = Keys.UNKNOWN;
-
-            if (k == Keys.UNKNOWN) {
-                if (down) {
-                    polyUI.getEventManager().keyDown(keyCode);
-                } else {
-                    polyUI.getEventManager().keyUp(keyCode);
-                }
-            } else if (down) {
-                polyUI.getEventManager().keyDown(k);
-            } else {
-                polyUI.getEventManager().keyUp(k);
-            }
-        }
-    }
-
-    private void mod(short v, boolean down) {
-        if (down) {
-            polyUI.getEventManager().addModifier(v);
-        } else {
-            polyUI.getEventManager().removeModifier(v);
-        }
     }
 
     @Override

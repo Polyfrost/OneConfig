@@ -29,11 +29,15 @@ package org.polyfrost.oneconfig.utils;
 import net.minecraft.client.gui.GuiScreen;
 import org.jetbrains.annotations.ApiStatus;
 import org.polyfrost.oneconfig.libs.universal.UScreen;
+import org.polyfrost.polyui.input.Translator;
+import org.polyfrost.polyui.property.Settings;
 
 /**
  * A class containing utility methods for working with GuiScreens.
  */
 public final class GuiUtils {
+    public static final Translator translator = new Translator(new Settings(), "");
+
     /**
      * Displays a screen after a tick, preventing mouse sync issues.
      *

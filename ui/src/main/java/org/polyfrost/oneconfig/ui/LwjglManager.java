@@ -45,6 +45,10 @@ public interface LwjglManager {
      */
     Renderer getRenderer(float width, float height);
 
+    /**
+     * Return the TinyFD implementation instance. This interface specifies operations for opening native
+     * file dialogs, and showing notifications.
+     */
     TinyFD getTinyFD();
 
     /**

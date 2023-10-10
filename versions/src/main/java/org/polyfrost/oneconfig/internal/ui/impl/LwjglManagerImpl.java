@@ -78,15 +78,13 @@ public class LwjglManagerImpl
         ClassLoader classLoader = isPojav ? getClass().getClassLoader() : this;
         if (!isPojav) {
             // Internal accessors
-
-
             classLoaderInclude.add("org.polyfrost.oneconfig.internal.renderer.impl.TinyFDImpl");
             classLoaderInclude.add("org.polyfrost.polyui.renderer.impl.NVGRenderer");
             // Provider
             classLoaderInclude.add(LWJGL_FUNCTION_PROVIDER);
             // Lwjgl
-            Arrays.asList("nanovg", "actually3", "stb", "util.tinyfd", "system"
-            ).forEach(it -> classLoaderInclude.add("org.lwjgl." + it + "."));
+            Arrays.asList("nanovg", "actually3", "stb", "util.tinyfd", "system")
+                    .forEach(it -> classLoaderInclude.add("org.lwjgl." + it + "."));
             classLoaderInclude.add("org.lwjgl.Version"); // won't work when remapped
 
             // Keep the path somewhere for LWJGL2 after initializing LWJGL3

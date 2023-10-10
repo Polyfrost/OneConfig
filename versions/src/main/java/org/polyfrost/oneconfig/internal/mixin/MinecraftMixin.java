@@ -198,7 +198,7 @@ public class MinecraftMixin {
                 state = 1;
             }
         }
-        EventManager.INSTANCE.post(new RawKeyEvent(Keyboard.getEventKey(), state));
+        EventManager.INSTANCE.post(new RawKeyEvent(Keyboard.getEventKey(), Keyboard.getEventCharacter(), state));
     }
 
     @Inject(method = "runTick", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/FMLCommonHandler;fireKeyInput()V", remap = false))
@@ -226,7 +226,7 @@ public class MinecraftMixin {
     //$$             state = 1;
     //$$         }
     //$$     }
-    //$$     EventManager.INSTANCE.post(new RawKeyEvent(Keyboard.getEventKey(), state));
+    //$$     EventManager.INSTANCE.post(new RawKeyEvent(Keyboard.getEventKey(), Keyboard.getEventCharacter(), state));
     //$$ }
     //$$
     //$$ @Inject(method = "runTickKeyboard", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/FMLCommonHandler;fireKeyInput()V", remap = false), remap = true)
@@ -256,7 +256,7 @@ public class MinecraftMixin {
     //$$             state = 1;
     //$$         }
     //$$     }
-    //$$     EventManager.INSTANCE.post(new RawKeyEvent(Keyboard.getEventKey(), state));
+    //$$     EventManager.INSTANCE.post(new RawKeyEvent(Keyboard.getEventKey(), Keyboard.getEventCharacter(), state));
     //$$ }
     //$$
     //$$ @Inject(method = "tick", at = @At(value = "JUMP", opcode = Opcodes.GOTO, ordinal = 22, by = 2, shift = At.Shift.BY))
@@ -284,7 +284,7 @@ public class MinecraftMixin {
     //$$             state = 1;
     //$$         }
     //$$     }
-    //$$     EventManager.INSTANCE.post(new RawKeyEvent(Keyboard.getEventKey(), state));
+    //$$     EventManager.INSTANCE.post(new RawKeyEvent(Keyboard.getEventKey(), Keyboard.getEventCharacter(), state));
     //$$ }
     //$$
     //$$ @Inject(method = "method_12145", at = @At(value = "FIELD", target = "Lnet/minecraft/client/options/GameOptions;debugFpsEnabled:Z", opcode = Opcodes.PUTFIELD, shift = At.Shift.BY, by = 2))

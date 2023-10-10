@@ -59,7 +59,7 @@ import java.util.List;
  */
 public class BlurHandlerImpl implements BlurHandler {
     private final ResourceLocation blurShader = new ResourceLocation("shaders/post/fade_in_blur.json");
-    private final Logger logger = LoggerFactory.getLogger("OneConfig Blur");
+    private final Logger logger = LoggerFactory.getLogger("OneConfig/Blur");
     private ShaderUniform su;
     private long start;
     private float progress = 0;

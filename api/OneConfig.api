@@ -132,20 +132,12 @@ public abstract interface class org/polyfrost/oneconfig/platform/ServerPlatform 
 	public abstract fun inMultiplayer ()Z
 }
 
-public class org/polyfrost/oneconfig/renderer/TextRenderer {
-	public fun <init> ()V
-	public static fun drawBorderedText (Ljava/lang/String;FFII)I
-	public static fun drawScaledString (Ljava/lang/String;FFILorg/polyfrost/oneconfig/renderer/TextRenderer$TextType;F)V
-	public static fun isDrawingTextBorder ()Z
-}
-
-public final class org/polyfrost/oneconfig/renderer/TextRenderer$TextType : java/lang/Enum {
-	public static final field FULL Lorg/polyfrost/oneconfig/renderer/TextRenderer$TextType;
-	public static final field NONE Lorg/polyfrost/oneconfig/renderer/TextRenderer$TextType;
-	public static final field SHADOW Lorg/polyfrost/oneconfig/renderer/TextRenderer$TextType;
-	public static fun toType (I)Lorg/polyfrost/oneconfig/renderer/TextRenderer$TextType;
-	public static fun valueOf (Ljava/lang/String;)Lorg/polyfrost/oneconfig/renderer/TextRenderer$TextType;
-	public static fun values ()[Lorg/polyfrost/oneconfig/renderer/TextRenderer$TextType;
+public class org/polyfrost/oneconfig/ui/KeybindManager {
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/ui/KeybindManager;
+	public final field keyBinder Lorg/polyfrost/polyui/input/KeyBinder;
+	public final field settings Lorg/polyfrost/polyui/property/Settings;
+	public static fun registerKeybind (Lorg/polyfrost/polyui/input/KeyBinder$Bind;)V
+	public static fun translateKey (Lorg/polyfrost/polyui/event/EventManager;ICZ)V
 }
 
 public final class org/polyfrost/oneconfig/ui/OneConfigUI {

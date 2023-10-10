@@ -54,18 +54,14 @@ object Designer {
             at = 24.px * 74.px,
             size = 500.px * 1000.px,
         )
-        val propertyManager = PropertyManager(owner.polyUI)
-        propertyManager.addPropertyType(InferringCComponent::class, ICComponentProperties())
         val designerPage by lazy {
             FlexLayout(
-                propertyManager = propertyManager,
                 at = origin,
                 drawables = createUnits(hud.self),
             )
         }
         val settingsPage by lazy {
             FlexLayout(
-                propertyManager = propertyManager,
                 at = origin,
                 drawables = createUnits(hud.self),
             )

@@ -41,7 +41,13 @@ public class KeyboardMixin {
 
     @ModifyVariable(method = "onKeyEvent", at = @At(value = "STORE"), ordinal = 0)
     private boolean onKeyEvent(boolean original, long windowPointer, int key, int scanCode, int action, int modifiers) {
-        EventManager.INSTANCE.register(new RawKeyEvent(key, action));
+        EventManager.INSTANCE.post(new RawKeyEvent(key, (char) 0, action));
+        return original;
+    }
+
+    @ModifyVariable(method = "onCharEvent", at = @At(value = "STORE"), ordinal = 0)
+    private boolean onKeyEvent(boolean original, long windowPointer, char key, int code, int modifiers) {
+        EventManager.INSTANCE.post(new RawKeyEvent(0, key, 1));
         return original;
     }
 

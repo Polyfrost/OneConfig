@@ -25,22 +25,22 @@
  */
 
 package org.polyfrost.oneconfig.internal.command;
-//#if MC<=11202 && FABRIC==1
+//#if MC<=11202
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiChat;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.screen.ChatScreen;
 import net.minecraft.command.CommandException;
-import net.minecraft.command.CommandHandler;
-import net.minecraft.command.ICommand;
-import net.minecraft.command.ICommandSender;
-import net.minecraft.command.WrongUsageException;
-import net.minecraft.util.ChatComponentTranslation;
-import net.minecraft.util.EnumChatFormatting;
+import net.minecraft.server.command.CommandRegistry;
+import net.minecraft.command.Command;
+import net.minecraft.command.CommandSource;
+import net.minecraft.command.IncorrectUsageException;
+import net.minecraft.text.TranslatableText;
+import net.minecraft.util.Formatting;
 
 import java.util.List;
 
-import static net.minecraft.util.EnumChatFormatting.GRAY;
-import static net.minecraft.util.EnumChatFormatting.RESET;
+import static net.minecraft.util.Formatting.GRAY;
+import static net.minecraft.util.Formatting.RESET;
 
 /**
  * The class that handles client-side chat commands. You should register any
@@ -51,7 +51,7 @@ import static net.minecraft.util.EnumChatFormatting.RESET;
  * <p>
  * Taken from <a href="https://github.com/MinecraftForge/MinecraftForge/tree/1.8.9/">...</a> under LGPL 2.1 and the Minecraft Forge Public Licence with additional terms specified in the LICENSE file.
  */
-public class ClientCommandHandler extends CommandHandler {
+public class ClientCommandHandler extends CommandRegistry {
     public static final ClientCommandHandler instance = new ClientCommandHandler();
 
     public String[] latestAutoComplete = null;
@@ -61,7 +61,7 @@ public class ClientCommandHandler extends CommandHandler {
      * 0 if it doesn't exist or it was canceled (it's sent to the server)
      */
     @Override
-    public int executeCommand(ICommandSender sender, String message) {
+    public int execute(CommandSource sender, String message) {
         message = message.trim();
 
         if (message.startsWith("/")) {
@@ -72,7 +72,7 @@ public class ClientCommandHandler extends CommandHandler {
         String[] args = new String[temp.length - 1];
         String commandName = temp[0];
         System.arraycopy(temp, 1, args, 0, args.length);
-        ICommand icommand = getCommands().get(commandName);
+        Command icommand = getCommandMap().get(commandName);
 
         try {
             if (icommand == null) {
@@ -81,7 +81,7 @@ public class ClientCommandHandler extends CommandHandler {
 
             if (icommand.
                     //#if MC<=10809
-                            canCommandSenderUseCommand(sender)
+                            isAccessible(sender)
                 //#else
                 //$$ method_3278(getServer(), sender)
                 //#endif
@@ -89,21 +89,21 @@ public class ClientCommandHandler extends CommandHandler {
 
                 icommand.
                         //#if MC<=10809
-                                processCommand(sender, args)
+                                execute(sender, args)
                 //#else
                 //$$ method_3279(getServer(), sender, args)
                 //#endif
                 ;
                 return 1;
             } else {
-                sender.addChatMessage(format("commands.generic.permission"));
+                sender.sendMessage(format("commands.generic.permission"));
             }
-        } catch (WrongUsageException wue) {
-            sender.addChatMessage(format("commands.generic.usage", format(wue.getMessage(), wue.getErrorObjects())));
+        } catch (IncorrectUsageException wue) {
+            sender.sendMessage(format("commands.generic.usage", format(wue.getMessage(), wue.getArgs())));
         } catch (CommandException ce) {
-            sender.addChatMessage(format(ce.getMessage(), ce.getErrorObjects()));
+            sender.sendMessage(format(ce.getMessage(), ce.getArgs()));
         } catch (Throwable t) {
-            sender.addChatMessage(format("commands.generic.exception"));
+            sender.sendMessage(format("commands.generic.exception"));
             t.printStackTrace();
         }
 
@@ -111,9 +111,9 @@ public class ClientCommandHandler extends CommandHandler {
     }
 
     //Couple of helpers because the mcp names are stupid and long...
-    private static ChatComponentTranslation format(String str, Object... args) {
-        ChatComponentTranslation ret = new ChatComponentTranslation(str, args);
-        ret.getChatStyle().setColor(EnumChatFormatting.RED);
+    private static TranslatableText format(String str, Object... args) {
+        TranslatableText ret = new TranslatableText(str, args);
+        ret.getStyle().setFormatting(Formatting.RED);
         return ret;
     }
 
@@ -123,9 +123,9 @@ public class ClientCommandHandler extends CommandHandler {
         if (leftOfCursor.charAt(0) == '/') {
             leftOfCursor = leftOfCursor.substring(1);
 
-            Minecraft mc = Minecraft.getMinecraft();
-            if (mc.currentScreen instanceof GuiChat) {
-                List<String> commands = getTabCompletionOptions(mc.thePlayer, leftOfCursor, mc.thePlayer.getPosition());
+            MinecraftClient mc = MinecraftClient.getInstance();
+            if (mc.currentScreen instanceof ChatScreen) {
+                List<String> commands = getCompletions(mc.player, leftOfCursor, mc.player.getBlockPos());
                 if (commands != null && !commands.isEmpty()) {
                     if (leftOfCursor.indexOf(' ') == -1) {
                         for (int i = 0; i < commands.size(); i++) {

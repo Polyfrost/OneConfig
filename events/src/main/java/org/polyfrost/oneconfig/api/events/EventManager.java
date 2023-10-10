@@ -34,6 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayDeque;
+import java.util.ConcurrentModificationException;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -50,7 +51,7 @@ public final class EventManager {
      * The instance of the {@link EventManager}.
      */
     public static final EventManager INSTANCE = new EventManager();
-    public static final Logger LOGGER = LoggerFactory.getLogger("OneConfig/EventManager");
+    private static final Logger LOGGER = LoggerFactory.getLogger("OneConfig/EventManager");
     private final Deque<EventMapper> mappers = new ArrayDeque<>(2);
     private final Map<Object, List<EventHandler<?>>> cache = new WeakHashMap<>(5);
     private final Map<Class<?>, Set<EventHandler<?>>> handlers = new HashMap<>();
@@ -148,19 +149,24 @@ public final class EventManager {
      * @param event The event to post.
      */
     public <T extends Event> void post(T event) {
+        if (event == null) return;
         Set<EventHandler<?>> set = handlers.get(event.getClass());
         if (set == null) return;
         boolean isCancellable = event instanceof Event.Cancellable;
-        for (EventHandler<?> ev : set) {
-            if (isCancellable && ((Event.Cancellable) event).cancelled) break;
-            try {
-                ((EventHandler<T>) ev).handle(event);
-            } catch (EventException e) {
-                throw e;
-            } catch (Throwable throwable) {
-                LOGGER.error("Failed to invoke event handler!", throwable);
+        try {
+            for (EventHandler<?> ev : set) {
+                if (isCancellable && ((Event.Cancellable) event).cancelled) break;
+                try {
+                    ((EventHandler<T>) ev).handle(event);
+                } catch (EventException e) {
+                    throw e;
+                } catch (Throwable throwable) {
+                    LOGGER.error("Failed to invoke event handler!", throwable);
+                }
             }
-        }
+        } catch (ConcurrentModificationException ignored0) {
+            LOGGER.error("Handler modified event handlers when calling, failed to dispatch " + event.getClass().getName());
+        } catch (Exception ignored) {}
     }
 
 

@@ -47,13 +47,9 @@ import java.util.Map;
 
 /**
  * Collects properties from an object using reflection, and from its inner classes.
- * Ignores transient and synthetic fields.
+ * Ignores fields without an annotation with the {@link Option} annotation.
  */
 public class OneConfigCollector extends ReflectiveCollector {
-    public OneConfigCollector(int maxDepth) {
-        super(maxDepth);
-    }
-
     public OneConfigCollector() {
         super();
     }
@@ -82,30 +78,28 @@ public class OneConfigCollector extends ReflectiveCollector {
     @Override
     public void handleField(@NotNull Field f, @NotNull Object src, @NotNull Tree builder) {
         for (Annotation a : f.getAnnotations()) {
-            for (Annotation aa : a.annotationType().getAnnotations()) {
-                if (aa.annotationType().equals(Option.class)) {
+            Option opt = a.annotationType().getAnnotation(Option.class);
+            if (opt == null) continue;
+            try {
+                // asm: use method handle as it fails NOW instead of at set time, and is faster
+                final MethodHandle setter = MHUtils.getFieldSetter(f, src);
+                if (setter == null) throw new NullPointerException();
+                Property<?> p = Property.prop(f.getName(), MHUtils.getFieldGetter(f, src).invoke(), f.getType()).addCallback(v -> {
                     try {
-                        // asm: use method handle as it fails NOW instead of at set time, and is faster
-                        final MethodHandle setter = MHUtils.getFieldSetter(f, src);
-                        if (setter == null) throw new NullPointerException();
-                        Property<?> p = Property.prop(f.getName(), MHUtils.getFieldGetter(f, src).invoke(), f.getType()).addCallback(v -> {
-                            try {
-                                System.out.println("glSET " + f.getName() + " -> " + v);
-                                if (f.getType().isArray() && v instanceof List<?>) {
-                                    setter.invoke(ObjectSerializer.unbox(v, f.getType()));
-                                } else setter.invoke(v);
-                            } catch (Throwable e) {
-                                throw new RuntimeException("[internal failure] Failed to setback field", e);
-                            }
-                        });
-                        handleMetadata(p, a, (Option) aa, f);
-                        builder.put(p);
+                        System.out.println("glSET " + f.getName() + " -> " + v);
+                        if (f.getType().isArray() && v instanceof List<?>) {
+                            setter.invoke(ObjectSerializer.unbox(v, f.getType()));
+                        } else setter.invoke(v);
                     } catch (Throwable e) {
-                        throw new RuntimeException("Failed to create setter for field " + f.getName() + "; ensure it is not static final", e);
+                        throw new RuntimeException("[internal failure] Failed to setback field", e);
                     }
-                    break;
-                }
+                });
+                handleMetadata(p, a, opt, f);
+                builder.put(p);
+            } catch (Throwable e) {
+                throw new RuntimeException("Failed to create setter for field " + f.getName() + "; ensure it is not static final", e);
             }
+            break;
         }
     }
 

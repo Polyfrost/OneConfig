@@ -193,7 +193,6 @@ public abstract interface class org/polyfrost/oneconfig/api/config/backend/impl/
 
 public class org/polyfrost/oneconfig/api/config/collector/impl/OneConfigCollector : org/polyfrost/oneconfig/api/config/collector/impl/ReflectiveCollector {
 	public fun <init> ()V
-	public fun <init> (I)V
 	public fun collect (Ljava/lang/String;Ljava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/Tree;
 	public fun handleField (Ljava/lang/reflect/Field;Ljava/lang/Object;Lorg/polyfrost/oneconfig/api/config/Tree;)V
 	public fun handleInnerClass (Ljava/lang/Class;Ljava/lang/Object;ILorg/polyfrost/oneconfig/api/config/Tree;)V

@@ -26,6 +26,7 @@
 
 package org.polyfrost.polyui.renderer.impl
 
+import org.jetbrains.annotations.ApiStatus
 import org.lwjgl.nanovg.NVGColor
 import org.lwjgl.nanovg.NVGLUFramebuffer
 import org.lwjgl.nanovg.NVGPaint
@@ -46,6 +47,7 @@ import org.polyfrost.polyui.unit.Unit
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.unit.px
 import org.polyfrost.polyui.utils.clearUsing
+import org.polyfrost.polyui.utils.stdout
 import org.polyfrost.polyui.utils.toByteBuffer
 import java.io.InputStreamReader
 import java.nio.ByteBuffer
@@ -53,6 +55,12 @@ import java.util.*
 import kotlin.math.max
 import org.polyfrost.polyui.color.PolyColor as Color
 
+/**
+ * Directly referencing this class will probably fail due to class-loading issues with LWJGL in a legacy environment.
+ *
+ * For this reason, please never directly refer to this class, instead just use the [Renderer] interface.
+ */
+@ApiStatus.Internal
 class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
     private val nvgPaint: NVGPaint = NVGPaint.malloc()
     private val nvgColor: NVGColor = NVGColor.malloc()
@@ -446,7 +454,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
 
     private fun getFont(font: Font): NVGFont {
         return fonts.getOrPut(font) {
-            val data = font.stream?.toByteBuffer(font === PolyUI.defaultFonts.regular) ?: if (settings.resourcePolicy == Settings.ResourcePolicy.WARN) {
+            val data = font.stream?.toByteBuffer(false) ?: if (settings.resourcePolicy == Settings.ResourcePolicy.WARN) {
                 PolyUI.LOGGER.warn(
                     "Failed to get font: {}, falling back to default font!",
                     font.resourcePath,

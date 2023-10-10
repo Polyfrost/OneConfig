@@ -45,7 +45,7 @@ public class TickDelay {
         if (ticks < 1) {
             function.run();
         } else {
-            EventManager.INSTANCE.register(this);
+            EventManager.INSTANCE.register(this, true);
             delay = ticks;
         }
         this.function = function;

@@ -50,7 +50,7 @@ public interface TinyFD {
      * Open a save file selection prompt.
      * Same as {@link #openFileSelector(String, String, String[], String)} but says save instead of open.
      */
-    File openSaveSelector(@Nullable String title, @NotNull String defaultFilePath, @Nullable String[] filterPatterns, @Nullable String filterDescription);
+    File openSaveSelector(@Nullable String title, @Nullable String defaultFilePath, @Nullable String[] filterPatterns, @Nullable String filterDescription);
 
     /**
      * Open a file selection prompt.
@@ -62,19 +62,19 @@ public interface TinyFD {
      * @return the selected file, or null if the user cancelled.
      */
     @Nullable
-    File openFileSelector(@Nullable String title, @NotNull String defaultFilePath, @Nullable String[] filterPatterns, @Nullable String filterDescription);
+    File openFileSelector(@Nullable String title, @Nullable String defaultFilePath, @Nullable String[] filterPatterns, @Nullable String filterDescription);
 
     /**
      * Open a multi file selection prompt.
      * Same as {@link #openFileSelector(String, String, String[], String)} but allows the user to select multiple files.
      */
-    File[] openMultiFileSelector(@Nullable String title, @NotNull String defaultFilePath, @Nullable String[] filterPatterns, @Nullable String filterDescription);
+    File[] openMultiFileSelector(@Nullable String title, @Nullable String defaultFilePath, @Nullable String[] filterPatterns, @Nullable String filterDescription);
 
     /**
      * Open a folder selection prompt.
      * Same as {@link #openFileSelector(String, String, String[], String)} but allows the user to select a folder.
      */
-    File openFolderSelector(@Nullable String title, @NotNull String defaultFolderPath);
+    File openFolderSelector(@Nullable String title, @Nullable String defaultFolderPath);
 
     /**
      * Shows a message box.
@@ -85,7 +85,7 @@ public interface TinyFD {
      * @param defaultValue the default value to return if the user closes the dialog without clicking a button
      * @return true if the user clicked the "ok" or "yes" button, false for "cancel" or "no"
      */
-    boolean showMessageBox(String title, String message, String dialog, String icon, boolean defaultValue);
+    boolean showMessageBox(String title, String message, @NotNull String dialog, String icon, boolean defaultValue);
 
     /**
      * Shows a notification.

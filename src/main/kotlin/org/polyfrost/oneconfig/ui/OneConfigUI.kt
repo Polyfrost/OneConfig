@@ -281,7 +281,7 @@ fun create(): org.polyfrost.oneconfig.ui.screen.PolyUIScreen {
             it.settings.debug = false
             back.disabled = true
             modsPage.open()
-            it.keyBinder.add(
+            it.keyBinder?.add(
                 KeyBinder.Bind('P', mods = mods(Modifiers.LCONTROL)) {
                     it.debugPrint()
                     true

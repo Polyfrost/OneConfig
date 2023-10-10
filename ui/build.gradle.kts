@@ -44,4 +44,11 @@ dependencies {
     implementation(libs.polyui)
     compileOnly(libs.lwjglNanoVG)
     compileOnly(libs.lwjglTinyfd)
+    testImplementation(libs.lwjglTinyfd)
+    testImplementation(platform(libs.junitBom))
+    testImplementation(libs.bundles.testCore)
+}
+
+tasks.test {
+    useJUnitPlatform()
 }

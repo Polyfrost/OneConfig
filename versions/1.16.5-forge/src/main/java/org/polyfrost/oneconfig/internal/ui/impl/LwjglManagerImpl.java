@@ -29,6 +29,7 @@ package org.polyfrost.oneconfig.internal.ui.impl;
 import org.polyfrost.oneconfig.ui.LwjglManager;
 import org.polyfrost.oneconfig.ui.TinyFD;
 import org.polyfrost.oneconfig.ui.impl.TinyFDImpl;
+import org.polyfrost.oneconfig.utils.Deprecator;
 import org.polyfrost.polyui.renderer.Renderer;
 import org.polyfrost.polyui.renderer.impl.NVGRenderer;
 
@@ -44,15 +45,25 @@ public class LwjglManagerImpl implements LwjglManager {
         return impl;
     }
 
+    /**
+     * @deprecated this method only works in legacy (1.12 or below) versions of OneConfig.
+     * @return false
+     */
     @Override
     @Deprecated
     public boolean addIsolatedClass(String className) {
+        Deprecator.markDeprecated();
         return false;
     }
 
+    /**
+     * @deprecated this method only works in legacy (1.12 or below) versions of OneConfig.
+     * @return null
+     */
     @Override
     @Deprecated
     public Object getIsolatedClass(String className) {
-        throw new UnsupportedOperationException("method only exists in legacy");
+        Deprecator.markDeprecated();
+        return null;
     }
 }
