@@ -29,6 +29,7 @@ package org.polyfrost.oneconfig.ui
 
 import org.polyfrost.oneconfig.api.config.ConfigManager
 import org.polyfrost.oneconfig.ui.elements.ColorPicker
+import org.polyfrost.oneconfig.ui.pages.ChangelogsPage
 import org.polyfrost.oneconfig.ui.pages.ModsPage
 import org.polyfrost.oneconfig.ui.pages.Page
 import org.polyfrost.polyui.animate.Animations
@@ -69,6 +70,7 @@ fun create(): org.polyfrost.oneconfig.ui.screen.PolyUIScreen {
     )
 
     val modsPage = ModsPage(ConfigManager.INSTANCE.trees(), content)
+    val changelogsPage = ChangelogsPage(content)
 
     val slideyBoi = Block(
         properties = BlockProperties(cornerRadii = 7f.radii(), outlineThickness = 2f),
@@ -183,6 +185,12 @@ fun create(): org.polyfrost.oneconfig.ui.screen.PolyUIScreen {
                 text = "oneconfig.changelog".localised(),
                 fontSize = 14.px,
                 size = 225.px * 33.px,
+                events = {
+                    MouseClicked(0) to {
+                        changelogsPage.open()
+                        false
+                    }
+                },
             ),
             Button(
                 properties = sidebarProperties,

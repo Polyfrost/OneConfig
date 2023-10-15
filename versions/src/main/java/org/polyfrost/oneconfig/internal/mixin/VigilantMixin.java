@@ -48,7 +48,7 @@ import java.io.File;
 import static org.polyfrost.oneconfig.api.config.Property.prop;
 import static org.polyfrost.oneconfig.api.config.Tree.tree;
 
-@Mixin(Vigilant.class)
+@Mixin(value = Vigilant.class, remap = false)
 @Pseudo
 public abstract class VigilantMixin {
     @Inject(method = "<init>(Ljava/io/File;Ljava/lang/String;Lgg/essential/vigilance/data/PropertyCollector;Lgg/essential/vigilance/data/SortingBehavior;ILkotlin/jvm/internal/DefaultConstructorMarker;)V", at = @At("TAIL"), remap = false)
