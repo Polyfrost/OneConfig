@@ -93,22 +93,22 @@ public class VigilanceConfig extends Config {
                     break;
                 case PARAGRAPH:
                 case TEXT:
-                    options.add(new ConfigTextBox(getFieldOfProperty(option), option.getInstance(), getName(attributes), attributes.getDescription(), getCategory(attributes), getSubcategory(attributes), 2, attributes.getPlaceholder(), attributes.getProtected(), attributes.getType() == PropertyType.PARAGRAPH, false));
+                    options.add(new ConfigTextBox(getFieldOfProperty(option), option.getInstance(), getName(attributes), attributes.getDescription(), getCategory(attributes), getSubcategory(attributes), 2, attributes.getPlaceholder(), attributes.getProtected(), attributes.getType() == PropertyType.PARAGRAPH));
                     break;
                 case SELECTOR:
                     options.add(new ConfigDropdown(getFieldOfProperty(option), option.getInstance(), getName(attributes), attributes.getDescription(), getCategory(attributes), getSubcategory(attributes), 2, attributes.getOptions().toArray(new String[0])));
                     break;
                 case PERCENT_SLIDER:
-                    options.add(new ConfigSlider(getFieldOfProperty(option), option.getInstance(), getName(attributes), attributes.getDescription(), getCategory(attributes), getSubcategory(attributes), 0, 1, 0));
+                    options.add(new ConfigSlider(getFieldOfProperty(option), option.getInstance(), getName(attributes), attributes.getDescription(), getCategory(attributes), getSubcategory(attributes), 0, 1, 0, false));
                     break;
                 case DECIMAL_SLIDER:
-                    options.add(new ConfigSlider(getFieldOfProperty(option), option.getInstance(), getName(attributes), attributes.getDescription(), getCategory(attributes), getSubcategory(attributes), attributes.getMinF(), attributes.getMaxF(), 0));
+                    options.add(new ConfigSlider(getFieldOfProperty(option), option.getInstance(), getName(attributes), attributes.getDescription(), getCategory(attributes), getSubcategory(attributes), attributes.getMinF(), attributes.getMaxF(), 0, false));
                     break;
                 case NUMBER:
                     options.add(new ConfigNumber(getFieldOfProperty(option), option.getInstance(), getName(attributes), attributes.getDescription(), getCategory(attributes), getSubcategory(attributes), attributes.getMin(), attributes.getMax(), attributes.getIncrement(), 2));
                     break;
                 case SLIDER:
-                    options.add(new ConfigSlider(getFieldOfProperty(option), option.getInstance(), getName(attributes), attributes.getDescription(), getCategory(attributes), getSubcategory(attributes), attributes.getMin(), attributes.getMax(), 0));
+                    options.add(new ConfigSlider(getFieldOfProperty(option), option.getInstance(), getName(attributes), attributes.getDescription(), getCategory(attributes), getSubcategory(attributes), attributes.getMin(), attributes.getMax(), 0, false));
                     break;
                 case COLOR:
                     options.add(new CompatConfigColorElement(getFieldOfProperty(option), option.getInstance(), getName(attributes), attributes.getDescription(), getCategory(attributes), getSubcategory(attributes), 2, attributes.getAllowAlpha()));

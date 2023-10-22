@@ -8,6 +8,8 @@ import cc.polyfrost.oneconfig.renderer.asset.AssetHelper;
 import cc.polyfrost.oneconfig.renderer.font.FontHelper;
 import cc.polyfrost.oneconfig.renderer.scissor.ScissorHelper;
 import org.apache.commons.io.IOUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
@@ -49,6 +51,9 @@ public class LwjglManagerImpl
         extends URLClassLoader
         implements LwjglManager {
 
+    private static final Logger LOGGER = LogManager.getLogger("OneConfig LWJGL Manager");
+    private static final boolean isPojav = checkPojav();
+
     private static final Object unsafeInstance;
     private static final Method defineClassMethod;
     private static final Map<String, String> remappingMap;
@@ -70,45 +75,45 @@ public class LwjglManagerImpl
 
     public LwjglManagerImpl() throws ReflectiveOperationException {
         super(new URL[]{jarFile}, LwjglManager.class.getClassLoader());
-        // Internal accessors
-        classLoaderInclude.add("cc.polyfrost.oneconfig.internal.renderer.FontHelperImpl");
-        classLoaderInclude.add("cc.polyfrost.oneconfig.internal.renderer.ScissorHelperImpl");
-        classLoaderInclude.add("cc.polyfrost.oneconfig.internal.renderer.NanoVGHelperImpl");
-        classLoaderInclude.add("cc.polyfrost.oneconfig.internal.renderer.AssetHelperImpl");
-        classLoaderInclude.add("cc.polyfrost.oneconfig.internal.renderer.TinyFDImpl");
-        // Provider
-        classLoaderInclude.add(LWJGL_FUNCTION_PROVIDER);
-        // Lwjgl
-        Arrays.asList("nanovg", "actually3"
-                        //#if MC<=11202
-                        , "stb", "util.tinyfd", "system"
-                        //#endif
-                ).forEach(it -> classLoaderInclude.add("org.lwjgl." + it + "."));
-        classLoaderInclude.add("org.lwjgl.Version"); // won't work when remapped
 
-        ClassLoader classLoader =
-                this
-                ;
+        ClassLoader classLoader = isPojav ? getClass().getClassLoader() : this;
+        if (!isPojav) {
+            // Internal accessors
+            classLoaderInclude.add("cc.polyfrost.oneconfig.internal.renderer.FontHelperImpl");
+            classLoaderInclude.add("cc.polyfrost.oneconfig.internal.renderer.ScissorHelperImpl");
+            classLoaderInclude.add("cc.polyfrost.oneconfig.internal.renderer.NanoVGHelperImpl");
+            classLoaderInclude.add("cc.polyfrost.oneconfig.internal.renderer.AssetHelperImpl");
+            classLoaderInclude.add("cc.polyfrost.oneconfig.internal.renderer.TinyFDImpl");
+            // Provider
+            classLoaderInclude.add(LWJGL_FUNCTION_PROVIDER);
+            // Lwjgl
+            Arrays.asList("nanovg", "actually3"
+                    //#if MC<=11202
+                    , "stb", "util.tinyfd", "system"
+                    //#endif
+            ).forEach(it -> classLoaderInclude.add("org.lwjgl." + it + "."));
+            classLoaderInclude.add("org.lwjgl.Version"); // won't work when remapped
 
-        //#if MC<=11202
-        // Keep the path somewhere for LWJGL2 after initializing LWJGL3
-        // (this is read in the Lwjgl2FunctionProvider class)
-        String libraryPath = System.getProperty("org.lwjgl.librarypath", "");
-        if (!libraryPath.isEmpty()) {
-            System.setProperty("oneconfig.lwjgl2.librarypath", libraryPath);
+            //#if MC<=11202
+            // Keep the path somewhere for LWJGL2 after initializing LWJGL3
+            // (this is read in the Lwjgl2FunctionProvider class)
+            String libraryPath = System.getProperty("org.lwjgl.librarypath", "");
+            if (!libraryPath.isEmpty()) {
+                System.setProperty("oneconfig.lwjgl2.librarypath", libraryPath);
+            }
+
+            // Setup LW3 config
+            Class<?> configClass = Class.forName("org.lwjgl.system.Configuration", true, classLoader);
+            Method setMethod = configClass.getMethod("set", Object.class);
+
+            Object extractDirField = configClass.getField("SHARED_LIBRARY_EXTRACT_DIRECTORY").get(null);
+            setMethod.invoke(extractDirField, new File("./OneConfig/temp").getAbsolutePath());
+
+            // stop trying to Class.forName("true") ffs
+            Object debugStreamField = configClass.getField("DEBUG_STREAM").get(null);
+            setMethod.invoke(debugStreamField, System.err);
+            //#endif
         }
-
-        // Setup LW3 config
-        Class<?> configClass = Class.forName("org.lwjgl.system.Configuration", true, classLoader);
-        Method setMethod = configClass.getMethod("set", Object.class);
-
-        Object extractDirField = configClass.getField("SHARED_LIBRARY_EXTRACT_DIRECTORY").get(null);
-        setMethod.invoke(extractDirField, new File("./OneConfig/temp").getAbsolutePath());
-
-        // stop trying to Class.forName("true") ffs
-        Object debugStreamField = configClass.getField("DEBUG_STREAM").get(null);
-        setMethod.invoke(debugStreamField, System.err);
-        //#endif
 
         // Initialize helper instances
         try {
@@ -134,7 +139,7 @@ public class LwjglManagerImpl
 
     @Override
     protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
-        if (!canBeSharedWithMc(name)) {
+        if (!canBeSharedWithMc(name) && !isPojav) {
             synchronized (getClassLoadingLock(name)) {
                 Class<?> cls = findLoadedClass(name);
                 if (cls == null) {
@@ -151,6 +156,9 @@ public class LwjglManagerImpl
 
     @Override
     protected Class<?> findClass(String name) throws ClassNotFoundException {
+        if (isPojav) {
+            return getParent().loadClass(name);
+        }
         String remappedName = remappingMap.getOrDefault(
                 name.replace('.', '/'),
                 name
@@ -293,51 +301,58 @@ public class LwjglManagerImpl
     static {
         registerAsParallelCapable();
 
-        remappingMap = new HashMap<>();
-        //#if MC<=11202
-        remappingMap.put("org/lwjgl/BufferUtils", "org/lwjgl/actually3/BufferUtils");
-        remappingMap.put("org/lwjgl/PointerBuffer", "org/lwjgl/actually3/PointerBuffer");
-        remappingMap.put("org/lwjgl/CLongBuffer", "org/lwjgl/actually3/CLongBuffer");
-        //#endif
+        if (!isPojav) {
+            remappingMap = new HashMap<>();
+            //#if MC<=11202
+            remappingMap.put("org/lwjgl/BufferUtils", "org/lwjgl/actually3/BufferUtils");
+            remappingMap.put("org/lwjgl/PointerBuffer", "org/lwjgl/actually3/PointerBuffer");
+            remappingMap.put("org/lwjgl/CLongBuffer", "org/lwjgl/actually3/CLongBuffer");
+            //#endif
 
-        Class<?> unsafeClass;
-        try {
-            unsafeClass = Class.forName("jdk.internal.misc.Unsafe");
-        } catch (Throwable throwable) {
+            Class<?> unsafeClass;
             try {
-                unsafeClass = Class.forName("sun.misc.Unsafe");
-            } catch (Throwable throwable1) {
-                throw new RuntimeException("Could not find Unsafe class", throwable);
-            }
-        }
-
-        try {
-            try {
-                Deencapsulation.deencapsulate(Object.class);
-                Deencapsulation.deencapsulate(unsafeClass);
-            } catch (Throwable ignored) {
+                unsafeClass = Class.forName("jdk.internal.misc.Unsafe");
+            } catch (Throwable throwable) {
+                try {
+                    unsafeClass = Class.forName("sun.misc.Unsafe");
+                } catch (Throwable throwable1) {
+                    throw new RuntimeException("Could not find Unsafe class", throwable);
+                }
             }
 
-            Field unsafeField = unsafeClass.getDeclaredField("theUnsafe");
-            unsafeField.setAccessible(true);
-            unsafeInstance = unsafeField.get(null);
+            try {
+                try {
+                    Deencapsulation.deencapsulate(Object.class);
+                    Deencapsulation.deencapsulate(unsafeClass);
+                } catch (Throwable ignored) {
+                }
 
-            defineClassMethod = unsafeClass.getDeclaredMethod(
-                    "defineClass",
-                    String.class,
-                    byte[].class,
-                    int.class,
-                    int.class,
-                    ClassLoader.class,
-                    ProtectionDomain.class
-            );
-            defineClassMethod.setAccessible(true);
-        } catch (ReflectiveOperationException exception) {
-            throw new RuntimeException("Error while fetching Unsafe instance.", exception);
+                Field unsafeField = unsafeClass.getDeclaredField("theUnsafe");
+                unsafeField.setAccessible(true);
+                unsafeInstance = unsafeField.get(null);
+
+                defineClassMethod = unsafeClass.getDeclaredMethod(
+                        "defineClass",
+                        String.class,
+                        byte[].class,
+                        int.class,
+                        int.class,
+                        ClassLoader.class,
+                        ProtectionDomain.class
+                );
+                defineClassMethod.setAccessible(true);
+            } catch (ReflectiveOperationException exception) {
+                throw new RuntimeException("Error while fetching Unsafe instance.", exception);
+            }
+        } else {
+            remappingMap = null;
+            unsafeInstance = null;
+            defineClassMethod = null;
         }
     }
 
     private static synchronized URL getJarFile() {
+        if (isPojav) return null;
         final File tempJar = new File("./OneConfig/temp/" + JAR_NAME);
         tempJar.mkdirs();
         try {
@@ -357,7 +372,7 @@ public class LwjglManagerImpl
         ;
         //#if MC>11202 && MC<=11900
         //$$ String osArch = System.getProperty("os.arch");
-        //$$ jarName = jarName + "-" + ((osArch.startsWith("arm") || osArch.startsWith("aarch64")) ? "arm" : "noarm");
+        //$$ jarName = jarName + "-" + ((osArch.startsWith("arm") || osArch.startsWith("aarch64") || !osArch.contains("64")) ? "arm" : "noarm");
         //#endif
         try (InputStream in = LwjglManagerImpl.class.getResourceAsStream("/" + jarName + ".jar")) {
             assert in != null;
@@ -369,6 +384,16 @@ public class LwjglManagerImpl
             return tempJar.toURI().toURL();
         } catch (MalformedURLException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    private static boolean checkPojav() {
+        try {
+            Class.forName("org.lwjgl.glfw.CallbackBridge");
+            LOGGER.warn("Pojav detected, letting Pojav handle LWJGL.");
+            return true;
+        } catch (ClassNotFoundException e) {
+            return false;
         }
     }
 

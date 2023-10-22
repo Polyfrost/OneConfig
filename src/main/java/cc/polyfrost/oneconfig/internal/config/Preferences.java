@@ -33,7 +33,6 @@ import cc.polyfrost.oneconfig.config.annotations.KeyBind;
 import cc.polyfrost.oneconfig.config.annotations.Number;
 import cc.polyfrost.oneconfig.config.annotations.Slider;
 import cc.polyfrost.oneconfig.config.annotations.Switch;
-import cc.polyfrost.oneconfig.config.annotations.Text;
 import cc.polyfrost.oneconfig.config.core.OneKeyBind;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.internal.gui.BlurHandler;
@@ -187,57 +186,6 @@ public class Preferences extends InternalConfig {
     )
     public static float trackerResponseDuration = 60;
 
-    @Switch(
-            name = "Automatically Detect Hypixel API Key",
-            description = "Automatically detect your Hypixel API key from running /api new in chat.",
-            category = "Hypixel"
-    )
-    public static boolean autoSetHypixelKey = true;
-
-    @Switch(
-            name = "Sync Hypixel API Keys on Startup",
-            description = "Automatically sync your Hypixel API keys across all options marked as Hypixel API keys in OneConfig.",
-            category = "Hypixel"
-    )
-    public static boolean syncHypixelKeys = true;
-
-    @Button(
-            name = "Sync Hypixel API Keys",
-            description = "Sync your Hypixel API keys across all options marked as Hypixel API keys in OneConfig.",
-            category = "Hypixel",
-            text = "Sync"
-    )
-    private static void syncHypixelKeys() {
-        HypixelKeys.INSTANCE.syncKeys(true);
-    }
-
-    @Button(
-            name = "Test Hypixel API Keys",
-            description = "Test to see if all your Hypixel API keys in OneConfig are valid.",
-            category = "Hypixel",
-            text = "Test"
-    )
-    private static void testAllHypixelKeys() {
-        HypixelKeys.INSTANCE.testKeys();
-    }
-
-    @Button(
-            name = "Remove All Syncable Hypixel API Keys",
-            description = "Remove all (and only) fields marked as Hypixel API keys in OneConfig.",
-            category = "Hypixel",
-            text = "Remove"
-    )
-    private static void removeAllHypixelKeys() {
-        HypixelKeys.INSTANCE.setAllKeys("");
-    }
-
-    @Text(
-            name = "Hypixel API Key",
-            description = "Set all options marked as Hypixel API keys by the developer to this value.",
-            category = "Hypixel"
-    )
-    private static String hypixelKey = "";
-
     @Dropdown(
             name = "Release Channel",
             options = {"Releases", "Pre-Releases"}
@@ -248,6 +196,20 @@ public class Preferences extends InternalConfig {
             name = "Debug Mode"
     )
     public static boolean DEBUG = false;
+
+    @Button(
+            name = "Show First Launch Message",
+            description = "Shows the first launch message again",
+            text = "Show"
+    )
+    public void showFirstLaunchMessage() {
+        firstLaunch = true;
+        oneconfigOpened = false;
+        save();
+    }
+
+    public static boolean firstLaunch = true;
+    public static transient boolean oneconfigOpened = false;
 
     @Exclude
     private static Preferences INSTANCE;
@@ -261,7 +223,6 @@ public class Preferences extends InternalConfig {
             OneConfigConfig.updateChannel = updateChannel;
             OneConfigConfig.getInstance().save();
         });
-        addListener("hypixelKey", () -> HypixelKeys.INSTANCE.setAllKeys(hypixelKey));
         addListener("animationType", () -> {
             if (Preferences.guiOpenAnimation) {
                 // Force reset the animation
@@ -272,12 +233,6 @@ public class Preferences extends InternalConfig {
         addDependency("timeUntilReset", "Smart Opening Behavior", () -> openingBehavior == 3);
         addDependency("pageAnimationDuration", "showPageAnimations");
         INSTANCE = this;
-    }
-
-    @Override
-    public void save() {
-        hypixelKey = "";
-        super.save();
     }
 
     public static Preferences getInstance() {

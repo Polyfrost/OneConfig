@@ -29,10 +29,13 @@ package cc.polyfrost.oneconfig.gui.elements.config;
 import cc.polyfrost.oneconfig.config.annotations.KeyBind;
 import cc.polyfrost.oneconfig.config.core.OneKeyBind;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
+import cc.polyfrost.oneconfig.events.EventManager;
+import cc.polyfrost.oneconfig.events.event.RawMouseEvent;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.elements.BasicButton;
 import cc.polyfrost.oneconfig.gui.elements.IFocusable;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
+import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
 import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
 import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
@@ -44,11 +47,22 @@ import java.lang.reflect.Field;
 public class ConfigKeyBind extends BasicOption implements IFocusable {
     private final BasicButton button;
     private boolean clicked = false;
+    private InputHandler inputHandler;
 
     public ConfigKeyBind(Field field, Object parent, String name, String description, String category, String subcategory, int size) {
         super(field, parent, name, description, category, subcategory, size);
         button = new BasicButton(256, 32, "", SVGs.KEYSTROKE, null, BasicButton.ALIGNMENT_JUSTIFIED, ColorPalette.SECONDARY);
         button.setToggleable(true);
+        EventManager.INSTANCE.register(this);
+    }
+
+    @Subscribe
+    private void onMouse(RawMouseEvent event) {
+        if (button.isToggled() && event.state == 1) {
+            OneKeyBind keyBind = getKeyBind();
+            keyBind.addKey(event.button, true);
+            setKeyBind(keyBind);
+        }
     }
 
     public static ConfigKeyBind create(Field field, Object parent) {
@@ -59,12 +73,14 @@ public class ConfigKeyBind extends BasicOption implements IFocusable {
     @Override
     public void draw(long vg, int x, int y, InputHandler inputHandler) {
         final NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
+        this.inputHandler = inputHandler;
         if (!isEnabled()) nanoVGHelper.setAlpha(vg, 0.5f);
         nanoVGHelper.drawText(vg, name, x, y + 17, nameColor, 14f, Fonts.MEDIUM);
         OneKeyBind keyBind = getKeyBind();
         String text = keyBind.getDisplay();
         button.disable(!isEnabled());
         if (button.isToggled()) {
+            inputHandler.blockAllInput();
             if (text.equals("")) text = "Recording... (ESC to clear)";
             if (!clicked) {
                 keyBind.clearKeys();
@@ -76,8 +92,9 @@ public class ConfigKeyBind extends BasicOption implements IFocusable {
                 button.setToggled(false);
                 clicked = false;
                 OneConfigGui.INSTANCE.allowClose = true;
+                inputHandler.stopBlockingInput();
             }
-        } else if (text.equals("")) text = "None";
+        } else if (text.equals("")) text = "NONE";
         button.setText(text);
         button.draw(vg, x + (size == 1 ? 224 : 736), y, inputHandler);
         nanoVGHelper.setAlpha(vg, 1f);
@@ -92,6 +109,7 @@ public class ConfigKeyBind extends BasicOption implements IFocusable {
             button.setToggled(false);
             OneConfigGui.INSTANCE.allowClose = true;
             clicked = false;
+            inputHandler.stopBlockingInput();
         } else keyBind.addKey(keyCode);
         setKeyBind(keyBind);
     }

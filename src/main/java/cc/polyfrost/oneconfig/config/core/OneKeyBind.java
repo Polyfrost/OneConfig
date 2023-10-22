@@ -33,6 +33,7 @@ import cc.polyfrost.oneconfig.platform.Platform;
 import java.util.ArrayList;
 
 public class OneKeyBind {
+
     protected final ArrayList<Integer> keyBinds = new ArrayList<>();
     protected transient Runnable runnable;
     protected transient boolean hasRun;
@@ -40,10 +41,18 @@ public class OneKeyBind {
     /**
      * @param keys  The bound keys
      */
-    public OneKeyBind(int... keys) {
+    public OneKeyBind(boolean mouse, int... keys) {
         for (int key : keys) {
-            keyBinds.add(key);
+            keyBinds.add(mouse ? key - 100 : key);
         }
+    }
+
+    public OneKeyBind(int... keys) {
+        this(false, keys);
+    }
+
+    public OneKeyBind() {
+
     }
 
     /**
@@ -52,7 +61,7 @@ public class OneKeyBind {
     public boolean isActive() {
         if (keyBinds.size() == 0) return false;
         for (int keyBind : keyBinds) {
-            if (!UKeyboard.isKeyDown(keyBind)) {
+            if (!UKeyboard.isKeyDown(Platform.getInstance().getMinecraftVersion() >= 11300 && keyBind < 0 ? keyBind + 100 : keyBind)) {
                 hasRun = false;
                 return false;
             }
@@ -76,7 +85,7 @@ public class OneKeyBind {
         StringBuilder sb = new StringBuilder();
         for (int keyBind : keyBinds) {
             if (sb.length() != 0) sb.append(" + ");
-            sb.append(Platform.getI18nPlatform().getKeyName(keyBind, -1));
+            sb.append(Platform.getI18nPlatform().getKeyName(Platform.getInstance().getMinecraftVersion() >= 11300 ? keyBind + 100 : keyBind, -1));
         }
         return sb.toString().trim();
     }
@@ -85,7 +94,16 @@ public class OneKeyBind {
      * @param key   Add a Key to keys
      */
     public void addKey(int key) {
-        if (!keyBinds.contains(key)) keyBinds.add(key);
+        addKey(key, false);
+    }
+
+    /**
+     * @param key   Add a Key to keys
+     * @param mouse If the key is a mouse button
+     */
+    public void addKey(int key, boolean mouse) {
+        if (keyBinds.contains(key)) return;
+        keyBinds.add(mouse ? key - 100 : key);
     }
 
     /**
@@ -111,7 +129,7 @@ public class OneKeyBind {
     }
 
     /**
-     * @return The key in the keys List
+     * @return The keys in the key List
      */
     public ArrayList<Integer> getKeyBinds() {
         return keyBinds;

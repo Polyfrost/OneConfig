@@ -28,13 +28,17 @@ package cc.polyfrost.oneconfig.utils;
 
 import cc.polyfrost.oneconfig.events.event.RenderEvent;
 import cc.polyfrost.oneconfig.events.event.Stage;
+import cc.polyfrost.oneconfig.events.event.TickEvent;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.animations.Animation;
 import cc.polyfrost.oneconfig.gui.animations.DummyAnimation;
 import cc.polyfrost.oneconfig.gui.animations.EaseInOutQuad;
+import cc.polyfrost.oneconfig.internal.assets.SVGs;
+import cc.polyfrost.oneconfig.internal.config.Preferences;
 import cc.polyfrost.oneconfig.internal.utils.Notification;
 import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
 import cc.polyfrost.oneconfig.libs.universal.UResolution;
+import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
 import cc.polyfrost.oneconfig.renderer.asset.Icon;
 import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
@@ -244,5 +248,28 @@ public final class Notifications {
             notifications.entrySet().removeIf(entry -> entry.getKey().isFinished());
         });
         deltaTime = 0;
+    }
+
+    private Animation dummyAnimation;
+    private static final Icon DEFAULT_ICON = new Icon(SVGs.ONECONFIG_HEAD_DARK);
+
+    @Subscribe
+    private void onTickEvent(TickEvent event) {
+        if (Preferences.firstLaunch) {
+            if (event.stage == Stage.START && !(Platform.getGuiPlatform().getCurrentScreen() instanceof OneConfigGui) && Platform.getServerPlatform().doesPlayerExist()) {
+                Preferences.firstLaunch = false;
+                Preferences.getInstance().save();
+                dummyAnimation = new EaseInOutQuad(4000, 0, 1, false);
+                send("Welcome to OneConfig!", "Press '" + Preferences.oneConfigKeyBind.getDisplay() + "' to open.", DEFAULT_ICON, -1f, () -> {
+                    if (Platform.getGuiPlatform().getCurrentScreen() instanceof OneConfigGui || Preferences.oneconfigOpened) {
+                        Preferences.oneconfigOpened = true;
+                        Preferences.getInstance().save();
+                        return dummyAnimation.get(GuiUtils.getDeltaTime());
+                    } else {
+                        return 0f;
+                    }
+                }, () -> GuiUtils.displayScreen(OneConfigGui.create()));
+            }
+        }
     }
 }
