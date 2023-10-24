@@ -27,6 +27,7 @@
 package cc.polyfrost.oneconfig.config;
 
 import cc.polyfrost.oneconfig.config.annotations.Button;
+import cc.polyfrost.oneconfig.config.annotations.Category;
 import cc.polyfrost.oneconfig.config.annotations.CustomOption;
 import cc.polyfrost.oneconfig.config.annotations.HUD;
 import cc.polyfrost.oneconfig.config.annotations.Page;
@@ -260,6 +261,15 @@ public class Config {
                 else subcategory.bottomButtons.add(button);
             } else if (field.isAnnotationPresent(HUD.class)) {
                 HUDUtils.addHudOptions(page, field, instance, this);
+            }
+            else if(field.isAnnotationPresent(Category.class)){
+                Category categoryAnnotation = field.getAnnotation(Category.class);
+                String name = categoryAnnotation.name();
+                Object categoryInstance = ConfigUtils.getField(field, instance);
+                if(categoryInstance == null) continue;
+                if(categoryInstance instanceof cc.polyfrost.oneconfig.config.elements.OptionCategory) {
+                    page.categories.put(name, (cc.polyfrost.oneconfig.config.elements.OptionCategory) categoryInstance);
+                }
             }
         }
         for (Method method : targetClass.getDeclaredMethods()) {

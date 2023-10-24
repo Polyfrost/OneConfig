@@ -33,6 +33,7 @@ import cc.polyfrost.oneconfig.config.core.OneKeyBind;
 import cc.polyfrost.oneconfig.config.data.*;
 import cc.polyfrost.oneconfig.config.Config;
 import cc.polyfrost.oneconfig.config.data.ModType;
+import cc.polyfrost.oneconfig.config.elements.OptionCategory;
 import cc.polyfrost.oneconfig.config.migration.VigilanceMigrator;
 import cc.polyfrost.oneconfig.gui.GuiNotifications;
 import cc.polyfrost.oneconfig.gui.animations.Animation;
@@ -57,6 +58,8 @@ public class TestConfig_Test extends Config {
     )
     public boolean testSwitch = false;
 
+    @Category(name = "dd")
+    public OptionCategory testCategory = new TestCategory_Test("dd");
     @Checkbox(
             name = "Check box",
             size = OptionSize.DUAL,
