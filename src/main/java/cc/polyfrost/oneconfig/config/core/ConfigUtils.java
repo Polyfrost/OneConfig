@@ -131,9 +131,50 @@ public class ConfigUtils {
         return configOption;
     }
 
+    public static BasicOption addOptionToPage(OptionPage page, Option option, Field field, Object instance, String category, @Nullable Migrator migrator) {
+        BasicOption configOption = getOption(option, field, instance);
+        if (configOption == null) return null;
+        configOption.category = category;
+        if (migrator != null) {
+            Object value = migrator.getValue(field, configOption.name, configOption.category, configOption.subcategory);
+            if (value != null) setField(field, value, instance);
+        }
+        getSubCategory(page, category, configOption.subcategory).options.add(configOption);
+        return configOption;
+    }
+
+    public static BasicOption addOptionToPage(OptionPage page, Option option, Field field, Object instance, String category, String subcategory, @Nullable Migrator migrator) {
+        BasicOption configOption = getOption(option, field, instance);
+        if (configOption == null) return null;
+        configOption.category = category;
+        configOption.subcategory = subcategory;
+        if (migrator != null) {
+            Object value = migrator.getValue(field, configOption.name, configOption.category, configOption.subcategory);
+            if (value != null) setField(field, value, instance);
+        }
+        getSubCategory(page, category, subcategory).options.add(configOption);
+        return configOption;
+    }
+
+
     public static BasicOption addOptionToPage(OptionPage page, Method method, Object instance) {
         BasicOption configOption = ConfigButton.create(method, instance);
         getSubCategory(page, configOption.category, configOption.subcategory).options.add(configOption);
+        return configOption;
+    }
+
+    public static BasicOption addOptionToPage(OptionPage page, Method method, Object instance, String category) {
+        BasicOption configOption = ConfigButton.create(method, instance);
+        configOption.category = category;
+        getSubCategory(page, category, configOption.subcategory).options.add(configOption);
+        return configOption;
+    }
+
+    public static BasicOption addOptionToPage(OptionPage page, Method method, Object instance, String category, String subcategory) {
+        BasicOption configOption = ConfigButton.create(method, instance);
+        configOption.category = category;
+        configOption.subcategory = subcategory;
+        getSubCategory(page, category, subcategory).options.add(configOption);
         return configOption;
     }
 

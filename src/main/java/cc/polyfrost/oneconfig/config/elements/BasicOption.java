@@ -54,8 +54,8 @@ public abstract class BasicOption {
     protected Object parent;
     public final String name;
     public final String description;
-    public final String category;
-    public final String subcategory;
+    public String category;
+    public String subcategory;
     private final ColorAnimation nameColorAnimation = new ColorAnimation(new ColorPalette(Colors.WHITE_90, Colors.WHITE, Colors.WHITE_90));
     protected int nameColor = Colors.WHITE_90;
     private final Map<String, Supplier<Boolean>> dependencies = new HashMap<>();

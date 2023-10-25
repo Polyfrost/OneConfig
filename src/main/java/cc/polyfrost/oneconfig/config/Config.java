@@ -31,6 +31,7 @@ import cc.polyfrost.oneconfig.config.annotations.Category;
 import cc.polyfrost.oneconfig.config.annotations.CustomOption;
 import cc.polyfrost.oneconfig.config.annotations.HUD;
 import cc.polyfrost.oneconfig.config.annotations.Page;
+import cc.polyfrost.oneconfig.config.annotations.SubCategory;
 import cc.polyfrost.oneconfig.config.core.ConfigUtils;
 import cc.polyfrost.oneconfig.config.core.OneKeyBind;
 import cc.polyfrost.oneconfig.config.data.Mod;
@@ -270,6 +271,9 @@ public class Config {
                 if(categoryInstance instanceof cc.polyfrost.oneconfig.config.elements.OptionCategory) {
                     page.categories.put(name, (cc.polyfrost.oneconfig.config.elements.OptionCategory) categoryInstance);
                 }
+                else{
+                    addCategory(categoryInstance,categoryInstance.getClass(),page,mod, name,migrate);
+                }
             }
         }
         for (Method method : targetClass.getDeclaredMethods()) {
@@ -281,6 +285,131 @@ public class Config {
             }
         }
         logger.trace("Finished generating option list for {} (targetting={})", mod.name, targetClass.getName());
+    }
+
+    /**
+     * Adds a category to the option list, for internal use only
+     *
+     * @param instance    instance of target class
+     * @param targetClass which class to lookup into
+     * @param page        page to add options too
+     * @param mod         data about the mod
+     * @param category    category name
+     * @param migrate     whether the migrator should be run
+     */
+    void addCategory(Object instance, Class<?> targetClass, OptionPage page, Mod mod, String category, boolean migrate){
+        logger.trace("Generating option list for {}... category (targetting={})", mod.name, targetClass.getName());
+
+        String pagePath = page.equals(mod.defaultPage) ? "" : page.name + ".";
+        for (Field field : targetClass.getDeclaredFields()) {
+            Option option = ConfigUtils.findAnnotation(field, Option.class);
+            CustomOption customOption = ConfigUtils.findAnnotation(field, CustomOption.class);
+            String optionName = pagePath + field.getName();
+            if (option != null) {
+
+                BasicOption configOption = ConfigUtils.addOptionToPage(page, option, field, instance,category, migrate ? mod.migrator : null);
+                optionNames.put(optionName, configOption);
+            } else if (customOption != null) {
+                BasicOption configOption = getCustomOption(field, customOption, page, mod, migrate);
+                if (configOption == null) continue;
+                optionNames.put(optionName, configOption);
+            } else if (field.isAnnotationPresent(Page.class)) {
+                Page optionPage = field.getAnnotation(Page.class);
+                OptionSubcategory subcategory = ConfigUtils.getSubCategory(page, category, optionPage.subcategory());
+                Object pageInstance = ConfigUtils.getField(field, instance);
+                if (pageInstance == null) continue;
+                ConfigPageButton button;
+                if (pageInstance instanceof cc.polyfrost.oneconfig.gui.pages.Page) {
+                    button = new ConfigPageButton(field, instance, optionPage.name(), optionPage.description(), category, optionPage.subcategory(), (cc.polyfrost.oneconfig.gui.pages.Page) pageInstance);
+                } else {
+                    OptionPage newPage = new OptionPage(optionPage.name(), mod);
+                    generateOptionList(pageInstance, newPage, mod, migrate);
+                    button = new ConfigPageButton(field, instance, optionPage.name(), optionPage.description(), category, optionPage.subcategory(), newPage);
+                }
+                if (optionPage.location() == PageLocation.TOP) subcategory.topButtons.add(button);
+                else subcategory.bottomButtons.add(button);
+            } else if (field.isAnnotationPresent(HUD.class)) {
+                HUDUtils.addHudOptions(page, field, instance, this);
+            }
+            else if (field.isAnnotationPresent(SubCategory.class)){
+                SubCategory subcategoryAnnotation = field.getAnnotation(SubCategory.class);
+                String name = subcategoryAnnotation.name();
+                Object categoryInstance = ConfigUtils.getField(field, instance);
+
+                if(categoryInstance == null) continue;
+                if(categoryInstance instanceof cc.polyfrost.oneconfig.config.elements.OptionSubcategory) {
+                    page.categories.get(category).subcategories.add((cc.polyfrost.oneconfig.config.elements.OptionSubcategory) categoryInstance);
+                }
+                else{
+                    addSubCategory(categoryInstance,categoryInstance.getClass(),page,mod,category,name, migrate);
+                }
+            }
+        }
+        for (Method method : targetClass.getDeclaredMethods()) {
+            Button button = ConfigUtils.findAnnotation(method, Button.class);
+            String optionName = pagePath + method.getName();
+            if (button != null) {
+                BasicOption option = ConfigUtils.addOptionToPage(page, method, instance,category);
+                optionNames.put(optionName, option);
+            }
+        }
+        logger.trace("Finished generating option list for {} category (targetting={})", mod.name, targetClass.getName());
+    }
+
+    /**
+     * Adds a subcategory to the option list, for internal use only
+     *
+     * @param instance    instance of target class
+     * @param targetClass which class to lookup into
+     * @param page        page to add options too
+     * @param mod         data about the mod
+     * @param category    category name
+     * @param subcategory subcategory name
+     * @param migrate     whether the migrator should be run
+     */
+    void addSubCategory(Object instance, Class<?> targetClass, OptionPage page, Mod mod, String category, String subcategory, boolean migrate){
+        logger.trace("Generating option list for {}... subcategory (targetting={})", mod.name, targetClass.getName());
+
+        String pagePath = page.equals(mod.defaultPage) ? "" : page.name + ".";
+        for (Field field : targetClass.getDeclaredFields()) {
+            Option option = ConfigUtils.findAnnotation(field, Option.class);
+            CustomOption customOption = ConfigUtils.findAnnotation(field, CustomOption.class);
+            String optionName = pagePath + field.getName();
+            if (option != null) {
+                BasicOption configOption = ConfigUtils.addOptionToPage(page, option, field, instance, category, subcategory, migrate ? mod.migrator : null);
+                optionNames.put(optionName, configOption);
+            } else if (customOption != null) {
+                BasicOption configOption = getCustomOption(field, customOption, page, mod, migrate);
+                if (configOption == null) continue;
+                optionNames.put(optionName, configOption);
+            } else if (field.isAnnotationPresent(Page.class)) {
+                Page optionPage = field.getAnnotation(Page.class);
+                OptionSubcategory pageSubcategory = ConfigUtils.getSubCategory(page, category, subcategory);
+                Object pageInstance = ConfigUtils.getField(field, instance);
+                if (pageInstance == null) continue;
+                ConfigPageButton button;
+                if (pageInstance instanceof cc.polyfrost.oneconfig.gui.pages.Page) {
+                    button = new ConfigPageButton(field, instance, optionPage.name(), optionPage.description(), category, subcategory, (cc.polyfrost.oneconfig.gui.pages.Page) pageInstance);
+                } else {
+                    OptionPage newPage = new OptionPage(optionPage.name(), mod);
+                    generateOptionList(pageInstance, newPage, mod, migrate);
+                    button = new ConfigPageButton(field, instance, optionPage.name(), optionPage.description(), category, subcategory, newPage);
+                }
+                if (optionPage.location() == PageLocation.TOP) pageSubcategory.topButtons.add(button);
+                else pageSubcategory.bottomButtons.add(button);
+            } else if (field.isAnnotationPresent(HUD.class)) {
+                HUDUtils.addHudOptions(page, field, instance, this);
+            }
+        }
+        for (Method method : targetClass.getDeclaredMethods()) {
+            Button button = ConfigUtils.findAnnotation(method, Button.class);
+            String optionName = pagePath + method.getName();
+            if (button != null) {
+                BasicOption option = ConfigUtils.addOptionToPage(page, method, instance, category, subcategory);
+                optionNames.put(optionName, option);
+            }
+        }
+        logger.trace("Finished generating option list for {} subcategory (targetting={})", mod.name, targetClass.getName());
     }
 
     /**

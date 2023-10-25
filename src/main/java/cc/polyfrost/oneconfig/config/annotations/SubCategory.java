@@ -24,31 +24,16 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.test;
+package cc.polyfrost.oneconfig.config.annotations;
 
-import cc.polyfrost.oneconfig.config.annotations.Page;
-import cc.polyfrost.oneconfig.config.annotations.Switch;
-import cc.polyfrost.oneconfig.config.data.OptionSize;
-import cc.polyfrost.oneconfig.config.data.PageLocation;
-import cc.polyfrost.oneconfig.config.elements.BasicOption;
-import cc.polyfrost.oneconfig.config.elements.OptionSubcategory;
-import cc.polyfrost.oneconfig.gui.elements.config.ConfigSlider;
-import cc.polyfrost.oneconfig.utils.color.ColorPalette;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-import java.lang.reflect.Field;
-
-public class TestSubCategory_Test {
-    @Page(
-            name = "Test Page 2",
-            description = "Test Description",
-            location = PageLocation.BOTTOM
-
-    )
-    public TestPage2_Test testPage2 = new TestPage2_Test();
-
-    @Switch(
-            name = "Test Switch",
-            size = OptionSize.DUAL
-    )
-    boolean testSwitch1 = false;
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.FIELD)
+public @interface SubCategory {
+    String name();
+    
 }
