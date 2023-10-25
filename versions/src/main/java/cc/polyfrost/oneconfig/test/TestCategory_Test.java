@@ -47,7 +47,7 @@ public class TestCategory_Test{
     )
     public TestPage2_Test testPage2 = new TestPage2_Test();
 
-    @SubCategory(name ="idk")
+    @SubCategory(name ="test nested subcategory")
     TestSubCategory_Test subCategoryTest = new TestSubCategory_Test();
 
     @Switch(

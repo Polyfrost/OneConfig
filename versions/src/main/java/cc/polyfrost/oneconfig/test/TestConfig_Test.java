@@ -57,7 +57,7 @@ public class TestConfig_Test extends Config {
     )
     public boolean testSwitch = false;
 
-    @Category(name = "dd")
+    @Category(name = "test custom category")
     public TestCategory_Test testCategory = new TestCategory_Test();
     @Checkbox(
             name = "Check box",
@@ -112,8 +112,6 @@ public class TestConfig_Test extends Config {
             size = OptionSize.DUAL
     )
     boolean ignored1;
-
-
 
     @Dropdown(
             name = "Test Dropdown",
