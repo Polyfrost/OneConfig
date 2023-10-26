@@ -26,9 +26,12 @@
 
 package cc.polyfrost.oneconfig.test;
 
+import cc.polyfrost.oneconfig.config.annotations.Category;
 import cc.polyfrost.oneconfig.config.annotations.Switch;
 
 public class TestPage2_Test {
+    @Category(name = "test category")
+    TestCategory_Test category = new TestCategory_Test();
 
     @Switch(
             name = "Epic Test Switch",

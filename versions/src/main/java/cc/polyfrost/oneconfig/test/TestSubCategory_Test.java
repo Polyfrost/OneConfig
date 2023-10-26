@@ -26,25 +26,10 @@
 
 package cc.polyfrost.oneconfig.test;
 
-import cc.polyfrost.oneconfig.config.annotations.Page;
 import cc.polyfrost.oneconfig.config.annotations.Switch;
 import cc.polyfrost.oneconfig.config.data.OptionSize;
-import cc.polyfrost.oneconfig.config.data.PageLocation;
-import cc.polyfrost.oneconfig.config.elements.BasicOption;
-import cc.polyfrost.oneconfig.config.elements.OptionSubcategory;
-import cc.polyfrost.oneconfig.gui.elements.config.ConfigSlider;
-import cc.polyfrost.oneconfig.utils.color.ColorPalette;
-
-import java.lang.reflect.Field;
 
 public class TestSubCategory_Test {
-    @Page(
-            name = "Test Page 2",
-            description = "Test Description",
-            location = PageLocation.BOTTOM
-
-    )
-    public TestPage2_Test testPage2 = new TestPage2_Test();
 
     @Switch(
             name = "Test Switch",

@@ -39,13 +39,6 @@ import cc.polyfrost.oneconfig.libs.universal.UChat;
 import cc.polyfrost.oneconfig.test.inherit.ToggleableAndBoldElement_Test;
 
 public class TestCategory_Test{
-    @Page(
-            name = "Test Page 2",
-            description = "Test Description",
-            location = PageLocation.BOTTOM
-
-    )
-    public TestPage2_Test testPage2 = new TestPage2_Test();
 
     @SubCategory(name ="test nested subcategory")
     TestSubCategory_Test subCategoryTest = new TestSubCategory_Test();

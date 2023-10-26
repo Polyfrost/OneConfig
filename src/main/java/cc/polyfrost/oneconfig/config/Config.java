@@ -37,6 +37,7 @@ import cc.polyfrost.oneconfig.config.core.OneKeyBind;
 import cc.polyfrost.oneconfig.config.data.Mod;
 import cc.polyfrost.oneconfig.config.data.PageLocation;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
+import cc.polyfrost.oneconfig.config.elements.OptionCategory;
 import cc.polyfrost.oneconfig.config.elements.OptionPage;
 import cc.polyfrost.oneconfig.config.elements.OptionSubcategory;
 import cc.polyfrost.oneconfig.config.gson.InstanceSupplier;
@@ -73,6 +74,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.function.Supplier;
+
 
 @SuppressWarnings({"unused", "ResultOfMethodCallIgnored"})
 public class Config {
@@ -217,7 +219,7 @@ public class Config {
     }
 
     /**
-     * Generate the option list, for internal use only
+     * Generate the option list, for   use only
      *
      * @param instance    instance of target class
      * @param targetClass which class to lookup into
@@ -268,8 +270,8 @@ public class Config {
                 String name = categoryAnnotation.name();
                 Object categoryInstance = ConfigUtils.getField(field, instance);
                 if(categoryInstance == null) continue;
-                if(categoryInstance instanceof cc.polyfrost.oneconfig.config.elements.OptionCategory) {
-                    page.categories.put(name, (cc.polyfrost.oneconfig.config.elements.OptionCategory) categoryInstance);
+                if(categoryInstance instanceof OptionCategory) {
+                    page.categories.put(name, (OptionCategory) categoryInstance);
                 }
                 else{
                     addCategory(categoryInstance,categoryInstance.getClass(),page,mod, name,migrate);
@@ -287,17 +289,8 @@ public class Config {
         logger.trace("Finished generating option list for {} (targetting={})", mod.name, targetClass.getName());
     }
 
-    /**
-     * Adds a category to the option list, for internal use only
-     *
-     * @param instance    instance of target class
-     * @param targetClass which class to lookup into
-     * @param page        page to add options too
-     * @param mod         data about the mod
-     * @param category    category name
-     * @param migrate     whether the migrator should be run
-     */
-    void addCategory(Object instance, Class<?> targetClass, OptionPage page, Mod mod, String category, boolean migrate){
+
+    private void addCategory(Object instance, Class<?> targetClass, OptionPage page, Mod mod, String category, boolean migrate){
         logger.trace("Generating option list for {}... category (targetting={})", mod.name, targetClass.getName());
 
         String pagePath = page.equals(mod.defaultPage) ? "" : page.name + ".";
@@ -330,15 +323,14 @@ public class Config {
                 else subcategory.bottomButtons.add(button);
             } else if (field.isAnnotationPresent(HUD.class)) {
                 HUDUtils.addHudOptions(page, field, instance, this);
-            }
-            else if (field.isAnnotationPresent(SubCategory.class)){
+            } else if (field.isAnnotationPresent(SubCategory.class)){
                 SubCategory subcategoryAnnotation = field.getAnnotation(SubCategory.class);
                 String name = subcategoryAnnotation.name();
                 Object categoryInstance = ConfigUtils.getField(field, instance);
 
                 if(categoryInstance == null) continue;
-                if(categoryInstance instanceof cc.polyfrost.oneconfig.config.elements.OptionSubcategory) {
-                    page.categories.get(category).subcategories.add((cc.polyfrost.oneconfig.config.elements.OptionSubcategory) categoryInstance);
+                if(categoryInstance instanceof OptionSubcategory) {
+                    page.categories.get(category).subcategories.add((OptionSubcategory) categoryInstance);
                 }
                 else{
                     addSubCategory(categoryInstance,categoryInstance.getClass(),page,mod,category,name, migrate);
@@ -356,18 +348,7 @@ public class Config {
         logger.trace("Finished generating option list for {} category (targetting={})", mod.name, targetClass.getName());
     }
 
-    /**
-     * Adds a subcategory to the option list, for internal use only
-     *
-     * @param instance    instance of target class
-     * @param targetClass which class to lookup into
-     * @param page        page to add options too
-     * @param mod         data about the mod
-     * @param category    category name
-     * @param subcategory subcategory name
-     * @param migrate     whether the migrator should be run
-     */
-    void addSubCategory(Object instance, Class<?> targetClass, OptionPage page, Mod mod, String category, String subcategory, boolean migrate){
+    private void addSubCategory(Object instance, Class<?> targetClass, OptionPage page, Mod mod, String category, String subcategory, boolean migrate){
         logger.trace("Generating option list for {}... subcategory (targetting={})", mod.name, targetClass.getName());
 
         String pagePath = page.equals(mod.defaultPage) ? "" : page.name + ".";
