@@ -84,7 +84,7 @@ dependencies {
         isTransitive = false
     }
 
-    compileOnly("cc.polyfrost:universalcraft-1.8.9-forge:${libs.versions.universalcraft.get()}") {
+    shade("cc.polyfrost:universalcraft-1.8.9-forge:${libs.versions.universalcraft.get()}") {
         attributes { attribute(common, true) }
         isTransitive = false
     }
