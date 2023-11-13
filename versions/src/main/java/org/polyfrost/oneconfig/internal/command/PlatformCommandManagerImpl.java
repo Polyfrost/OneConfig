@@ -34,14 +34,14 @@ import org.polyfrost.oneconfig.api.commands.exceptions.CommandExecutionException
 import org.polyfrost.oneconfig.api.commands.CommandTree;
 import org.polyfrost.oneconfig.libs.universal.UChat;
 import org.polyfrost.oneconfig.api.commands.arguments.PlayerArgumentParser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.List;
 
 //#if FORGE==1
 import net.minecraftforge.client.ClientCommandHandler;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 //#endif
 
 public class PlatformCommandManagerImpl implements PlatformCommandManager {
