@@ -26,21 +26,20 @@
 
 package org.polyfrost.oneconfig.api.events.invoke.impl;
 
-import org.polyfrost.oneconfig.api.events.event.Event;
 import org.polyfrost.oneconfig.api.events.invoke.EventHandler;
-import org.polyfrost.oneconfig.api.events.invoke.EventMapper;
+import org.polyfrost.oneconfig.api.events.invoke.EventCollector;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AnnotationEventMapper implements EventMapper {
+public class AnnotationEventMapper implements EventCollector {
     @Override
-    public List<EventHandler<?>> map(Object object) {
-        List<EventHandler<? extends Event>> list = new ArrayList<>();
+    public List<EventHandler<?>> collect(Object object) {
+        List<EventHandler<?>> list = new ArrayList<>();
         for (Method m : object.getClass().getDeclaredMethods()) {
             if (m.getAnnotation(Subscribe.class) != null) {
-                list.add(MHHandler.ofMethod(m, object));
+                list.add(EventHandler.of(m, object));
             }
         }
         return list.isEmpty() ? null : list;

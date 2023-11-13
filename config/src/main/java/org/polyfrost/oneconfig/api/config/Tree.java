@@ -48,7 +48,10 @@ public class Tree extends Node implements Serializable {
 
     public Tree(@NotNull String id, @Nullable Map<String, Node> items) {
         super(id);
-        this.map = items == null ? new HashMap<>() : items;
+        if(items != null) {
+            map = new HashMap<>(items.size());
+            map.putAll(items);
+        } else map = new HashMap<>();
     }
 
     public Tree put(@NotNull Node... nodes) {
@@ -112,23 +115,26 @@ public class Tree extends Node implements Serializable {
         }
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if(obj == null) return false;
+        if(obj == this) return true;
+        if(!(obj instanceof Tree)) return false;
+        Tree that = (Tree) obj;
+        return this.map.size() == that.map.size() && this.id.equals(that.id);
+    }
+
     /**
      * Check if the tree's contents equals another tree's. This will check the values and children of the tree.
      *
      * @param obj the tree to check against
      * @return whether the trees are equal
      */
-    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     public boolean deepEquals(@Nullable Object obj) {
-        if (obj == null) return false;
-        if (!(obj instanceof Tree)) return false;
-        Tree tree = (Tree) obj;
-        if (map.size() != tree.map.size()) {
-//            System.err.println("trees are not the same size " + map.size());
-            return false;
-        }
-        for (Map.Entry<String, Node> e : map.entrySet()) {
-            Node n = tree.get(e.getKey());
+        if(!equals(obj)) return false;
+        Tree that = (Tree) obj;
+        for (Map.Entry<String, Node> e : this.map.entrySet()) {
+            Node n = that.get(e.getKey());
             if (n == null) {
 //                System.err.println("Second tree does not contain " + e);
                 return false;
@@ -147,12 +153,11 @@ public class Tree extends Node implements Serializable {
      * <br>
      * If the input tree contains values that are not in this tree, it will be added to this tree.
      * <br>
-     * If overwrite is true, all values that are in both trees will be overwritten from the provided tree into this tree.
-     * <br>
      * This tree should have identical structure to the passed tree when this method is completed.
-     * <br>
-     * copyMeta will mean that the metadata from the input tree will be copied into this tree, and if overwrite is true, t
-     * he metadata from the origin value before overwriting is preserved as well
+     * @param tree the input tree
+     * @param overwrite if true, all values that are in both trees will be overwritten from the input tree into this tree.
+     * @param copyMeta the metadata from the input tree will be copied into this tree, and if overwrite is true,
+     *                 the metadata from the origin value before overwriting is preserved as well
      *
      * @throws ClassCastException if the types of the properties (with the same name) do not match
      */

@@ -5,14 +5,12 @@ import org.polyfrost.oneconfig.api.commands.factories.annotated.AnnotationComman
 import org.polyfrost.oneconfig.api.commands.factories.annotated.annotations.Command;
 import org.polyfrost.oneconfig.api.commands.factories.annotated.annotations.Parameter;
 
-import java.util.Arrays;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 public class AnnotationTest {
     @Test
     void test() {
-        CommandTree tree = new AnnotationCommandFactory().create(Arrays.asList(ArgumentParser.defaultParsers), new TestCommand());
+        CommandTree tree = new AnnotationCommandFactory().create(ArgumentParser.defaultParsers, new TestCommand());
         assertNotNull(tree);
         tree.init();
 
@@ -42,12 +40,12 @@ public class AnnotationTest {
     @Command("testing")
     public static class TestCommand {
         @Command
-        public void main() {
+        public void perform() {
             System.out.println("main method a");
         }
 
         @Command
-        public void main(int a, int b) {
+        public void perform(int a, int b) {
             System.out.println("main method with args " + (a + b));
         }
 
@@ -85,7 +83,7 @@ public class AnnotationTest {
         @Command(value = {"test4", "t4"}, description = "Test command 4")
         private static class TestClass {
             @Command
-            public void main() {
+            public void test23() {
                 System.out.println("main method");
             }
 

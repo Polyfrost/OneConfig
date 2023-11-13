@@ -56,8 +56,8 @@ public class PlayerArgumentParser extends ArgumentParser<GameProfile> {
     }
 
     @Override
-    public boolean canParse(Class<?> type) {
-        return type == GameProfile.class;
+    public Class<GameProfile> getType() {
+        return GameProfile.class;
     }
 
     // checks mojang api for player uuid from name

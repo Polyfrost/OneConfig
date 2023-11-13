@@ -31,7 +31,7 @@ import org.polyfrost.oneconfig.api.commands.arguments.ArgumentParser
 import org.polyfrost.oneconfig.api.commands.factories.CommandFactory
 
 class DSLFactory : CommandFactory {
-    override fun create(parsers: List<ArgumentParser<*>>, obj: Any): CommandTree? {
+    override fun create(parsers: Map<Class<*>, ArgumentParser<*>>, obj: Any): CommandTree? {
         if (obj !is CommandDSL) return null
         return obj.tree
     }

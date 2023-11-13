@@ -26,20 +26,35 @@
 
 package org.polyfrost.oneconfig.api.events.invoke;
 
+import org.polyfrost.oneconfig.api.events.EventException;
 import org.polyfrost.oneconfig.api.events.EventManager;
 import org.polyfrost.oneconfig.api.events.event.Event;
+import org.polyfrost.oneconfig.utils.MHUtils;
 
+import java.lang.reflect.Method;
 import java.util.function.Consumer;
 
 /**
  * Class which represents an event handler.
  *
- * @param <T> The event type
+ * @see #of(Class, Consumer)
+ * @param <E> The event type
  */
-public abstract class EventHandler<T extends Event> {
-    public abstract void handle(T event) throws Throwable;
+public abstract class EventHandler<E extends Event> {
+    public abstract void handle(E event) throws Throwable;
 
-    public abstract Class<T> getEventClass();
+    public abstract Class<E> getEventClass();
+
+    /**
+     * Convenience method for registering this event handler.
+     * Equivalent to {@code EventManager.INSTANCE.register(this)}.
+     *
+     * @return this
+     */
+    public final EventHandler<E> register() {
+        EventManager.INSTANCE.register(this);
+        return this;
+    }
 
     @Override
     public final boolean equals(Object obj) {
@@ -53,12 +68,20 @@ public abstract class EventHandler<T extends Event> {
     }
 
     @Override
-    public int hashCode() {
+    public final int hashCode() {
         return this.getEventClass().hashCode() + (31 * super.hashCode());
     }
 
 
-    public static <E extends Event> EventHandler<E> create(Class<E> cls, Consumer<E> handler) {
+    /**
+     * Create an event handler from a consumer, in a fabric-style way.
+     *
+     * @param cls     the event class
+     * @param handler the consumer
+     * @param <E>     the event type
+     * @return the event handler
+     */
+    public static <E extends Event> EventHandler<E> of(Class<E> cls, Consumer<E> handler) {
         return new EventHandler<E>() {
             @Override
             public void handle(E event) {
@@ -73,12 +96,36 @@ public abstract class EventHandler<T extends Event> {
     }
 
     /**
-     * Convenience method for registering an event handler. Equal to
-     * {@link EventManager#INSTANCE}{@code .register(}{@link EventHandler#create(Class, Consumer)}{@code )}
+     * Create an event handler from a method. <br>
+     * Note the intended usage of this is using the {@link org.polyfrost.oneconfig.api.events.invoke.impl.Subscribe} annotation, and not this method directly.
+     *
+     * @param m     the method. Can be of any visibility; static or non-static; and must take exactly 1 parameter of type {@link Event}.
+     * @param owner the instance where the method is located. If the method is static, this can be null.
+     * @return the event handler
      */
-    public static <E extends Event> EventHandler<E> register(Class<E> cls, Consumer<E> handler) {
-        EventHandler<E> h = create(cls, handler);
-        EventManager.INSTANCE.register(h);
-        return h;
+    @SuppressWarnings("unchecked")
+    public static EventHandler<?> of(Method m, Object owner) {
+        try {
+            if (m.getParameterCount() != 1) {
+                throw new EventException("Failed to register event handler: Method must have 1 parameter of type Event");
+            }
+            Class<Event> eventClass = (Class<Event>) m.getParameterTypes()[0];
+            Consumer<Event> f = MHUtils.getConsumerFunctionHandle(owner, m.getName(), eventClass);
+            if (f == null) throw new NullPointerException("Failed to resolve " + m + " for event handler");
+            return new EventHandler<Event>() {
+                @Override
+                public void handle(Event event) {
+                    f.accept(event);
+                }
+
+                @Override
+                public Class<Event> getEventClass() {
+                    return eventClass;
+                }
+            };
+        } catch (Throwable e) {
+            throw new EventException("Failed to register event handler", e);
+        }
     }
+
 }

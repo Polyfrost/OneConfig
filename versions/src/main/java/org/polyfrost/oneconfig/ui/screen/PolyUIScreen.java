@@ -27,11 +27,14 @@
 package org.polyfrost.oneconfig.ui.screen;
 
 import kotlin.Pair;
+import kotlin.Unit;
 import net.minecraft.client.Minecraft;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.polyfrost.oneconfig.libs.universal.UKeyboard;
 import org.polyfrost.oneconfig.libs.universal.UMatrixStack;
+import org.polyfrost.oneconfig.libs.universal.UMinecraft;
+import org.polyfrost.oneconfig.libs.universal.UMouse;
 import org.polyfrost.oneconfig.libs.universal.UResolution;
 import org.polyfrost.oneconfig.libs.universal.UScreen;
 import org.polyfrost.oneconfig.ui.LwjglManager;
@@ -54,6 +57,7 @@ import static org.polyfrost.oneconfig.ui.KeybindManager.translateKey;
 @SuppressWarnings("unused")
 public class PolyUIScreen extends UScreen {
     public final float width, height;
+    private float ofsX, ofsY;
     public static final Logger LOGGER = LoggerFactory.getLogger("PolyUIScreen");
     private PolyUI polyUI;
     private Drawable[] drawables;
@@ -92,16 +96,19 @@ public class PolyUIScreen extends UScreen {
             settings.enableDebug(false);
             Renderer renderer = LwjglManager.INSTANCE.getRenderer(UResolution.getWindowWidth(), UResolution.getWindowHeight());
             polyUI = new PolyUI(renderer, settings, null, GuiUtils.translator, colors, drawables);
-            //polyUI.beforeRender(() -> {
-            //   renderer.translate(UResolution.getWindowWidth() / 2f - width / 2f, UResolution.getWindowHeight() / 2f - height / 2f);
-            //});
+            ofsX = UResolution.getWindowWidth() / 2f - width / 2f;
+            ofsY = UResolution.getWindowHeight() / 2f - height / 2f;
+            polyUI.beforeRender(self -> {
+               self.translate(ofsX, ofsY);
+               return Unit.INSTANCE;
+            });
             //#if MC<=11300
             settings.setScrollMultiplier(new Pair<>(0.3f, 0.3f));
             //#endif
             if (useMinecraftUIScaling())
                 polyUI.getRenderer().setPixelRatio$polyui((float) UResolution.getScaleFactor());
             drawables = null;
-            polyUI.window = new MCWindow(Minecraft.getMinecraft());
+            polyUI.window = new MCWindow(UMinecraft.getMinecraft());
             if (func != null) func.accept(polyUI);
             init(polyUI);
         } catch (Exception e) {
@@ -119,24 +126,33 @@ public class PolyUIScreen extends UScreen {
 
     @Override
     public final void onDrawScreen(@NotNull UMatrixStack matrices, int mouseX, int mouseY, float delta) {
+        ofsX = UResolution.getWindowWidth() / 2f - width / 2f;
+        ofsY = UResolution.getWindowHeight() / 2f - height / 2f;
+
         //#if MC>=11300
         //$$ com.mojang.blaze3d.systems.RenderSystem.disableCull();
-        //todo what's blend in 1.13+
+        //$$ com.mojang.blaze3d.systems.RenderSystem.enableBlend();
         //#else
         net.minecraft.client.renderer.GlStateManager.disableCull();
         net.minecraft.client.renderer.GlStateManager.enableBlend();
+
         if (mouseX != mx || mouseY != my) {
             mx = mouseX;
             my = mouseY;
             this.mouseMoved(mx, my);
         }
         //#endif
+
         polyUI.render();
+
         //#if MC>=11300
+        //$$ com.mojang.blaze3d.systems.RenderSystem.disableBlend();
         //$$ com.mojang.blaze3d.systems.RenderSystem.enableCull();
         //#else
+        net.minecraft.client.renderer.GlStateManager.disableBlend();
         net.minecraft.client.renderer.GlStateManager.enableCull();
         //#endif
+
         super.onDrawScreen(matrices, mouseX, mouseY, delta);
     }
 
@@ -152,7 +168,7 @@ public class PolyUIScreen extends UScreen {
 
     @Override
     public boolean uKeyPressed(int keyCode, int scanCode, @Nullable UKeyboard.Modifiers modifiers) {
-        if(keyCode == UKeyboard.KEY_ESCAPE && shouldCloseOnEsc()) {
+        if (keyCode == UKeyboard.KEY_ESCAPE && shouldCloseOnEsc()) {
             UScreen.displayScreen(null);
             return true;
         }
@@ -210,11 +226,11 @@ public class PolyUIScreen extends UScreen {
     //#endif
     public final void mouseMoved(double mouseX, double mouseY) {
         if (useMinecraftUIScaling()) {
-            polyUI.getEventManager().mouseMoved((float) mouseX, (float) mouseY);
+            polyUI.getEventManager().mouseMoved((float) mouseX - ofsX, (float) mouseY - ofsY);
             return;
         }
-        float mx = (float) (mouseX * UResolution.getScaleFactor());
-        float my = (float) (mouseY * UResolution.getScaleFactor());
+        float mx = (float) UMouse.Raw.getX() - ofsX;
+        float my = (float) UMouse.Raw.getY() - ofsY;
         polyUI.getEventManager().mouseMoved(mx, my);
     }
 

@@ -37,7 +37,7 @@ public class PlatformCommandManagerImpl implements PlatformCommandManager {
     }
 
     @Override
-    public void createCommand(CommandTree command) {
-
+    public boolean createCommand(CommandTree command) {
+        return false;
     }
 }

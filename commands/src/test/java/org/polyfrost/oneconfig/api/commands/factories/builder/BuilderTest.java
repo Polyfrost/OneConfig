@@ -30,9 +30,8 @@ import org.junit.jupiter.api.Test;
 import org.polyfrost.oneconfig.api.commands.CommandTree;
 import org.polyfrost.oneconfig.api.commands.arguments.ArgumentParser;
 
-import java.util.Arrays;
-
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.polyfrost.oneconfig.api.commands.factories.builder.BuilderUtils.*;
 import static org.polyfrost.oneconfig.api.commands.factories.builder.CommandBuilder.Arg.*;
 import static org.polyfrost.oneconfig.api.commands.factories.builder.CommandBuilder.command;
@@ -41,7 +40,7 @@ import static org.polyfrost.oneconfig.api.commands.factories.builder.CommandBuil
 public class BuilderTest {
     @Test
     void test() {
-        CommandBuilder b = command(Arrays.asList(ArgumentParser.defaultParsers), "test");
+        CommandBuilder b = command(ArgumentParser.defaultParsers, "test");
         b.then(
                         runs("chicken").with(intArg(), intArg())
                                 .does(args -> {

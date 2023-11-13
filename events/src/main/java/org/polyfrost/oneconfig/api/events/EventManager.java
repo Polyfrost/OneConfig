@@ -28,11 +28,12 @@ package org.polyfrost.oneconfig.api.events;
 
 import org.polyfrost.oneconfig.api.events.event.Event;
 import org.polyfrost.oneconfig.api.events.invoke.EventHandler;
-import org.polyfrost.oneconfig.api.events.invoke.EventMapper;
+import org.polyfrost.oneconfig.api.events.invoke.EventCollector;
 import org.polyfrost.oneconfig.api.events.invoke.impl.AnnotationEventMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Method;
 import java.util.ArrayDeque;
 import java.util.ConcurrentModificationException;
 import java.util.Deque;
@@ -42,6 +43,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
+import java.util.function.Consumer;
 
 /**
  * Manages all events from OneConfig.
@@ -52,13 +54,13 @@ public final class EventManager {
      */
     public static final EventManager INSTANCE = new EventManager();
     private static final Logger LOGGER = LoggerFactory.getLogger("OneConfig/EventManager");
-    private final Deque<EventMapper> mappers = new ArrayDeque<>(2);
+    private final Deque<EventCollector> collectors = new ArrayDeque<>(2);
     private final Map<Object, List<EventHandler<?>>> cache = new WeakHashMap<>(5);
     private final Map<Class<?>, Set<EventHandler<?>>> handlers = new HashMap<>();
 
 
     private EventManager() {
-        mappers.add(new AnnotationEventMapper());
+        collectors.add(new AnnotationEventMapper());
     }
 
     /**
@@ -76,8 +78,8 @@ public final class EventManager {
      * @param removable weather this object's event handlers can be removed.
      */
     public void register(Object object, boolean removable) {
-        for (EventMapper m : mappers) {
-            List<EventHandler<?>> h = m.map(object);
+        for (EventCollector m : collectors) {
+            List<EventHandler<?>> h = m.collect(object);
             if (h == null) continue;
             if (removable) cache.put(object, h);
             for (EventHandler<?> handler : h) {
@@ -88,12 +90,17 @@ public final class EventManager {
 
     @SafeVarargs
     public final void register(EventHandler<? extends Event>... handlers) {
-        for (EventHandler<? extends Event> handler : handlers) {
+        for (EventHandler<?> handler : handlers) {
             register(handler);
         }
     }
 
-    public boolean register(EventHandler<? extends Event> handler) {
+    /**
+     * Register an event handler.
+     * @param handler The handler to register.
+     * @return true if the handler was registered successfully; false if it was already registered.
+     */
+    public boolean register(EventHandler<?> handler) {
         Set<EventHandler<?>> set = handlers.computeIfAbsent(handler.getEventClass(), k -> new HashSet<>());
         if (!set.add(handler)) {
             LOGGER.warn("Attempted to register a handler twice!");
@@ -104,12 +111,12 @@ public final class EventManager {
 
     @SafeVarargs
     public final void unregister(EventHandler<? extends Event>... handlers) {
-        for (EventHandler<? extends Event> handler : handlers) {
+        for (EventHandler<?> handler : handlers) {
             unregister(handler);
         }
     }
 
-    public boolean unregister(EventHandler<? extends Event> handler) {
+    public boolean unregister(EventHandler<?> handler) {
         Set<EventHandler<?>> set = handlers.get(handler.getEventClass());
         if (set == null) return false;
         if (!set.remove(handler)) {
@@ -135,12 +142,12 @@ public final class EventManager {
         return state;
     }
 
-    public void registerMapper(EventMapper mapper) {
-        mappers.addFirst(mapper);
+    public void registerCollector(EventCollector collector) {
+        collectors.addFirst(collector);
     }
 
-    public void unregisterMapper(EventMapper mapper) {
-        mappers.remove(mapper);
+    public void unregisterCollector(EventCollector collector) {
+        collectors.remove(collector);
     }
 
     /**
@@ -148,16 +155,17 @@ public final class EventManager {
      *
      * @param event The event to post.
      */
-    public <T extends Event> void post(T event) {
+    @SuppressWarnings("unchecked")
+    public <E extends Event> void post(E event) {
         if (event == null) return;
         Set<EventHandler<?>> set = handlers.get(event.getClass());
         if (set == null) return;
-        boolean isCancellable = event instanceof Event.Cancellable;
+        Event.Cancellable evc = event instanceof Event.Cancellable ? (Event.Cancellable) event : null;
         try {
             for (EventHandler<?> ev : set) {
-                if (isCancellable && ((Event.Cancellable) event).cancelled) break;
+                if (evc != null && evc.cancelled) break;
                 try {
-                    ((EventHandler<T>) ev).handle(event);
+                    ((EventHandler<E>) ev).handle(event);
                 } catch (EventException e) {
                     throw e;
                 } catch (Throwable throwable) {
@@ -167,6 +175,35 @@ public final class EventManager {
         } catch (ConcurrentModificationException ignored0) {
             LOGGER.error("Handler modified event handlers when calling, failed to dispatch " + event.getClass().getName());
         } catch (Exception ignored) {}
+    }
+
+
+
+    /**
+     * Convenience method for registering an event handler. Equal to
+     * {@link EventManager#INSTANCE}{@code .register(}{@link EventHandler#of(Class, Consumer)}{@code )}
+     */
+    public static <E extends Event> EventHandler<E> register(Class<E> cls, Consumer<E> handler) {
+        return EventHandler.of(cls, handler).register();
+    }
+
+    /**
+     * Convenience method for registering an event handler. Equal to
+     * {@link EventManager#INSTANCE}{@code .register(}{@link EventHandler#of(Class, Consumer)}{@code )}
+     */
+    public static <E extends Event> EventHandler<E> register(kotlin.reflect.KClass<E> cls, Consumer<E> handler) {
+        return EventHandler.of(kotlin.jvm.JvmClassMappingKt.getJavaClass(cls), handler).register();
+    }
+
+
+
+    /**
+     * Convenience method for registering an event handler. Equal to
+     * {@link EventManager#INSTANCE}{@code .register(}{@link EventHandler#of(Method, Object)}{@code )}
+     */
+    @SuppressWarnings("unchecked")
+    public static <E extends Event> EventHandler<E> register(Method m, Object owner) {
+        return (EventHandler<E>) EventHandler.of(m, owner).register();
     }
 
 

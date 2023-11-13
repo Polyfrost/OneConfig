@@ -28,13 +28,17 @@ package org.polyfrost.oneconfig.api.commands;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.polyfrost.oneconfig.api.commands.arguments.ArgumentParser;
 import org.polyfrost.oneconfig.api.commands.exceptions.CommandCreationException;
 import org.polyfrost.oneconfig.api.commands.exceptions.CommandExecutionException;
 
 import java.lang.reflect.Array;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 
@@ -43,8 +47,23 @@ public class Executable implements Node {
     public final String description;
     public final Param[] parameters;
     public final int arity;
-    final Function<Object[], Object> function;
+    public final Function<Object[], Object> function;
     public final boolean isGreedy;
+    @Unmodifiable
+    public static final Map<Class<?>, Class<?>> primitiveWrappers;
+
+    static {
+        Map<Class<?>, Class<?>> m = new HashMap<>(8, 1f);
+        m.put(double.class, Double.class);
+        m.put(long.class, Long.class);
+        m.put(float.class, Float.class);
+        m.put(int.class, Integer.class);
+        m.put(char.class, Character.class);
+        m.put(byte.class, Byte.class);
+        m.put(boolean.class, Boolean.class);
+        m.put(short.class, Short.class);
+        primitiveWrappers = Collections.unmodifiableMap(m);
+    }
 
     public Executable(@NotNull String[] names, @Nullable String description, @NotNull Param[] parameters, boolean isGreedy, @NotNull Function<Object[], Object> function) {
         this.names = names;
@@ -66,6 +85,8 @@ public class Executable implements Node {
         int offset = 0;
         for (int i = 0; i < parameters.length; i++) {
             Param p = parameters[i];
+            // if this is greedy, and we are doing last param, force the arity of the last parameter to be the remaining
+            // number of arguments so it consumes all of them
             if (isGreedy && i == parameters.length - 1) {
                 p.arity = args.length - offset;
             }
@@ -110,6 +131,15 @@ public class Executable implements Node {
         return out;
     }
 
+    public String[] names() {
+        return names;
+    }
+
+    @Override
+    public String description() {
+        return description;
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -128,7 +158,8 @@ public class Executable implements Node {
 
     @Override
     public int hashCode() {
-        int result = Objects.hash(description, arity);
+        int result = (description == null) ? 0 : description.hashCode();
+        result = 31 * result + arity;
         result = 31 * result + Arrays.hashCode(names);
         result = 31 * result + Arrays.hashCode(parameters);
         return result;
@@ -144,7 +175,7 @@ public class Executable implements Node {
         @Nullable
         public final String description;
         @NotNull
-        final ArgumentParser<?> parser;
+        public final ArgumentParser<?> parser;
         public int arity;
 
         public Param(@NotNull String name, @Nullable String description, int arity, @NotNull ArgumentParser<?> parser) {
@@ -185,15 +216,13 @@ public class Executable implements Node {
             return sb.toString();
         }
 
-        public static Param create(@NotNull String name, @Nullable String description, @NotNull Class<?> type, int arity, @NotNull List<ArgumentParser<?>> parsers) {
+        public Class<?> getType() {
+            return parser.getType();
+        }
+
+        public static Param create(@NotNull String name, @Nullable String description, @NotNull Class<?> type, int arity, @NotNull Map<Class<?>, ArgumentParser<?>> parsers) {
             if (type.isArray()) type = type.getComponentType();
-            ArgumentParser<?> parser = null;
-            for (ArgumentParser<?> p : parsers) {
-                if (p.canParse(type)) {
-                    parser = p;
-                    break;
-                }
-            }
+            ArgumentParser<?> parser = parsers.get(primitiveWrappers.getOrDefault(type, type));
             if (parser == null) {
                 throw new CommandCreationException("No parser found for type " + type.getSimpleName() + "! Register with CommandManager#registerParser");
             }

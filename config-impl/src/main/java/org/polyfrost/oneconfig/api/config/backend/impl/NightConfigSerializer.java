@@ -92,13 +92,13 @@ public class NightConfigSerializer implements FileSerializer {
     protected void add(Tree c, Config cfg) {
         for (Map.Entry<String, Node> e : c.map.entrySet()) {
             Node n = e.getValue();
-            if (n.getMetadata("synthetic") != null) continue;
             if (n instanceof Property<?>) {
                 Property<?> p = (Property<?>) n;
+                if (p.synthetic) continue;
                 Object o = p.get();
                 if (o == null) continue;
                 if (!ObjectSerializer.isSimpleObject(o)) {
-                    cfg.add(p.getID(), ObjectSerializer.INSTANCE.serialize(o));
+                    cfg.add(p.getID(), ObjectSerializer.INSTANCE.serialize(o, true));
                 } else cfg.add(p.getID(), p.get());
             } else {
                 Tree in = (Tree) n;

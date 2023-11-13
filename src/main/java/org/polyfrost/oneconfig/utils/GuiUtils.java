@@ -48,7 +48,7 @@ public final class GuiUtils {
      * @param ticks  the amount of ticks to wait for before displaying the screen.
      */
     public static void displayScreen(Object screen, int ticks) {
-        new TickDelay(ticks, () -> Platform.getGuiPlatform().setCurrentScreen(screen));
+        TickDelay.of(ticks, () -> Platform.getGuiPlatform().setCurrentScreen(screen));
     }
 
     /**

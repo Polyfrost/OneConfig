@@ -55,7 +55,7 @@ public class NetHandlerPlayClientMixin {
 
     @Inject(method = "onGameMessage", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/hud/InGameHud;addChatMessage(Lnet/minecraft/network/MessageType;Lnet/minecraft/text/Text;Ljava/util/UUID;)V"), cancellable = true)
     private void onClientChat(GameMessageS2CPacket packet, CallbackInfo ci) {
-        if (oneconfig$event.cancelled) {
+        if (oneconfig$event != null && oneconfig$event.cancelled) {
             ci.cancel();
         }
     }

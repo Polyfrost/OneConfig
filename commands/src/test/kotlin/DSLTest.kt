@@ -7,7 +7,7 @@ import org.polyfrost.oneconfig.api.commands.factories.dsl.CommandDSL.Companion.p
 class DSLTest {
     @Test
     fun main() {
-        val tree = command(ArgumentParser.defaultParsers.toList(), "test") {
+        val tree = command(ArgumentParser.defaultParsers, "test") {
             command(
                 "sup", "hello", paramData = listOf(
                     param(0, "a", "an integer"),

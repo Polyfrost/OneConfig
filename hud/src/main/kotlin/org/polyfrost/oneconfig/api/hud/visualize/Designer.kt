@@ -28,7 +28,6 @@ package org.polyfrost.oneconfig.api.hud.visualize
 
 import org.polyfrost.oneconfig.api.hud.Hud
 import org.polyfrost.oneconfig.api.hud.elements.InferringCComponent
-import org.polyfrost.oneconfig.api.hud.properties.ICComponentProperties
 import org.polyfrost.polyui.component.Component
 import org.polyfrost.polyui.component.ContainingComponent
 import org.polyfrost.polyui.component.impl.*
@@ -38,7 +37,6 @@ import org.polyfrost.polyui.layout.Layout.Companion.drawables
 import org.polyfrost.polyui.layout.impl.FlexLayout
 import org.polyfrost.polyui.layout.impl.PixelLayout
 import org.polyfrost.polyui.layout.impl.SwitchingLayout
-import org.polyfrost.polyui.property.PropertyManager
 import org.polyfrost.polyui.property.impl.TextInputProperties
 import org.polyfrost.polyui.renderer.data.PolyImage
 import org.polyfrost.polyui.unit.flex
@@ -91,7 +89,7 @@ object Designer {
         return out
     }
 
-    fun createUnits(cmp: InferringCComponent): Array<out ContainingComponent> {
+    fun createUnits(cmp: ContainingComponent): Array<out ContainingComponent> {
         val out = ArrayList<ContainingComponent>(5)
         val pxHint = "oneconfig.hint.px".localised()
         val numHint = "0".localised()

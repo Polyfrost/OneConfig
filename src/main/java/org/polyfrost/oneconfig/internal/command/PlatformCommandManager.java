@@ -33,5 +33,5 @@ import org.polyfrost.oneconfig.api.commands.CommandTree;
  */
 @FunctionalInterface
 public interface PlatformCommandManager {
-    void createCommand(CommandTree command);
+    boolean createCommand(CommandTree command);
 }

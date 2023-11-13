@@ -45,7 +45,6 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Internal representation of a command in OneConfig.
@@ -53,7 +52,7 @@ import java.util.stream.Stream;
 @SuppressWarnings("unused")
 public class CommandTree implements Node {
     final String[] names;
-    private String description;
+    public String description;
 
     private final Map<String, List<Node>> commands = new HashMap<>();
     private Map<String, List<Node>> dedupedCommands = null;
@@ -73,7 +72,7 @@ public class CommandTree implements Node {
         }
     }
 
-    public String getDescription() {
+    public String description() {
         return description;
     }
 
@@ -81,9 +80,6 @@ public class CommandTree implements Node {
         return init;
     }
 
-    public void putAll(Stream<Executable> executables) {
-        executables.forEach(this::put);
-    }
 
     private void put(String key, Executable node) {
         if (init) throw new CommandCreationException("Cannot add executables after initialization!");
@@ -218,25 +214,6 @@ public class CommandTree implements Node {
     @Override
     public String toString() {
         return "CommandTree" + Arrays.toString(names) + (description == null ? "" : ": " + description);
-    }
-
-    @SuppressWarnings("UnusedReturnValue")
-    public String printFull() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(this);
-        if (description != null) sb.append(": ").append(description);
-        getDedupedCommands().values().forEach((ls) -> {
-            for (Node value : ls) {
-                if (value instanceof Executable) {
-                    sb.append("\n\t").append(value);
-                } else {
-                    fullString((CommandTree) value, 1, sb, false);
-                }
-            }
-        });
-        String s = sb.toString();
-        System.out.println(s);
-        return s;
     }
 
     private void fullString(CommandTree it, int depth, StringBuilder sb, boolean isHelp) {
@@ -462,7 +439,7 @@ public class CommandTree implements Node {
 
     @Override
     public int hashCode() {
-        int result = Objects.hash(description);
+        int result = description.hashCode();
         result = 31 * result + Arrays.hashCode(names);
         return result;
     }

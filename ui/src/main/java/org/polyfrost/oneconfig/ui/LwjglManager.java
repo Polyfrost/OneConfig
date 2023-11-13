@@ -50,20 +50,4 @@ public interface LwjglManager {
      * file dialogs, and showing notifications.
      */
     TinyFD getTinyFD();
-
-    /**
-     * Adds a class to the isolated class loader. Used when any LWJGL3 class is loaded.
-     *
-     * @param className the class name (e.g org.polyfrost.oneconfig.internal.renderer.NanoVGHelperImpl)
-     * @return true if the class was added, false if it was already added or something went wrong
-     */
-    boolean addIsolatedClass(String className);
-
-    /**
-     * Gets a class from the isolated class loader.
-     *
-     * @param className the class name (e.g org.polyfrost.oneconfig.internal.renderer.NanoVGHelperImpl)
-     * @return the class if it was found, null if it was not found or something went wrong
-     */
-    Object getIsolatedClass(String className);
 }

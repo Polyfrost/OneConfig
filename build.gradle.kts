@@ -4,7 +4,6 @@
 
 import org.polyfrost.gradle.multiversion.StripReferencesTransform.Companion.registerStripReferencesAttribute
 import org.polyfrost.gradle.util.RelocationTransform.Companion.registerRelocationAttribute
-import org.polyfrost.gradle.util.prebundle
 
 plugins {
     alias(libs.plugins.kotlin)
@@ -43,35 +42,14 @@ repositories {
     maven("https://repo.polyfrost.org/releases")
 }
 
-val relocated = registerRelocationAttribute("relocate") {
-    relocate("com.github.benmanes", "org.polyfrost.oneconfig.libs")
-    remapStringsIn("com.github.benmanes.caffeine.cache.LocalCacheFactory")
-    remapStringsIn("com.github.benmanes.caffeine.cache.NodeFactory")
-}
-
-val shadeRelocated: Configuration by configurations.creating {
-    attributes { attribute(relocated, true) }
-}
-
-val shade: Configuration by configurations.creating {
-    configurations.api.get().extendsFrom(this)
-}
-
-val shadeNoPom: Configuration by configurations.creating
-
-val common = registerStripReferencesAttribute("common") {
-    excludes.add("net.minecraft")
-    excludes.add("net.minecraftforge")
-}
-
 dependencies {
     compileOnly("com.google.code.gson:gson:2.2.4")
     compileOnly("org.ow2.asm:asm-debug-all:5.0.3")
 
     compileOnly(libs.bundles.lwjgl)
 
-    shade(libs.polyui)
-    shade(libs.bundles.core)
+    compileOnly(libs.polyui)
+    compileOnly(libs.bundles.core)
     compileOnly(project(":config"))
     compileOnly(project(":commands"))
     compileOnly(project(":events"))
@@ -82,25 +60,33 @@ dependencies {
     }
 
     compileOnly("org.polyfrost:universalcraft-1.8.9-forge:${libs.versions.universalcraft.get()}") {
-        attributes { attribute(common, true) }
+        attributes {
+            // prevent errors with classpath conflicts
+            attribute(registerStripReferencesAttribute("strip-uc") {
+                excludes.add("net.minecraft")
+                excludes.add("net.minecraftforge")
+            }, true)
+        }
         isTransitive = false
     }
 
     @Suppress("GradlePackageUpdate")
-    shadeRelocated(libs.caffeine) {
+    compileOnly(libs.caffeine) {
         isTransitive = false
+        attributes {
+            attribute(registerRelocationAttribute("relocate-caffeine") {
+                relocate("com.github.benmanes", "org.polyfrost.oneconfig.libs")
+                remapStringsIn("com.github.benmanes.caffeine.cache.LocalCacheFactory")
+                remapStringsIn("com.github.benmanes.caffeine.cache.NodeFactory")
+            }, true)
+        }
     }
 
-    // for other mods and universalcraft
-    shade(libs.bundles.kotlin)
+    compileOnly(libs.bundles.kotlin)
 
-    shade(libs.mixin) {
+    compileOnly(libs.mixin) {
         isTransitive = false
     }
-    shadeNoPom(prebundle(shadeRelocated))
-
-    configurations.named(JavaPlugin.COMPILE_CLASSPATH_CONFIGURATION_NAME) { extendsFrom(shadeNoPom) }
-    configurations.named(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME) { extendsFrom(shadeNoPom) }
 }
 
 tasks {

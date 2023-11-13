@@ -41,10 +41,9 @@ import org.polyfrost.polyui.unit.origin
 import org.polyfrost.polyui.unit.px
 import org.polyfrost.polyui.unit.seconds
 import org.polyfrost.polyui.unit.times
-import java.util.function.Function
 
 @ApiStatus.Internal
-fun create(title: Translator.Text, message: Translator.Text, icon: PolyImage?, progressFunction: Function<Long, Float>?, action: Runnable?): Layout {
+fun create(title: Translator.Text, message: Translator.Text, icon: PolyImage?, progressFunction: java.util.function.Function<Long, Float>?, action: Runnable?): Layout {
     val l = PixelLayout(
         at = origin,
         size = 400.px * 200.px,

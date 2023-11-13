@@ -42,13 +42,13 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.WrongMethodTypeException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
-import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 
 public class AnnotationCommandFactory implements CommandFactory {
 
     @Override
-    public CommandTree create(@NotNull List<ArgumentParser<?>> parsers, @NotNull Object obj) {
+    public CommandTree create(@NotNull Map<Class<?>, ArgumentParser<?>> parsers, @NotNull Object obj) {
         if (!obj.getClass().isAnnotationPresent(Command.class))
             return null;
         Command c = obj.getClass().getAnnotation(Command.class);
@@ -57,19 +57,21 @@ public class AnnotationCommandFactory implements CommandFactory {
         return tree;
     }
 
-    static void create(List<ArgumentParser<?>> parsers, CommandTree tree, Object it) {
-        tree.putAll(Arrays.stream(it.getClass().getDeclaredMethods()).filter(m -> m.isAnnotationPresent(Command.class)).map(m -> map(it, m, parsers)));
+    static void create(Map<Class<?>, ArgumentParser<?>> parsers, CommandTree tree, Object it) {
+        Arrays.stream(it.getClass().getDeclaredMethods()).filter(m -> m.isAnnotationPresent(Command.class)).map(m -> map(it, m, parsers)).forEach(tree::put);
         for (Class<?> cls : it.getClass().getDeclaredClasses()) {
             if (cls.isAnnotationPresent(Command.class)) {
                 Command c = cls.getAnnotation(Command.class);
                 CommandTree sub = new CommandTree(c.value().length == 0 ? new String[]{cls.getSimpleName()} : c.value(), c.description().isEmpty() ? null : c.description());
-                create(parsers, sub, MHUtils.instantiate(cls, false));
+                Object instance = MHUtils.instantiate(cls, false);
+                if (instance == null) throw new NullPointerException("failed to instantiate " + cls);
+                create(parsers, sub, instance);
                 tree.put(sub);
             }
         }
     }
 
-    static Executable map(Object it, Method method, List<ArgumentParser<?>> parsers) {
+    static Executable map(Object it, Method method, Map<Class<?>, ArgumentParser<?>> parsers) {
         Command c = method.getAnnotation(Command.class);
         MethodHandle m = MHUtils.getMethodHandle(method, it);
         String[] names = c.value();
@@ -92,7 +94,7 @@ public class AnnotationCommandFactory implements CommandFactory {
         };
     }
 
-    static Executable.Param createParameterInfo(java.lang.reflect.Parameter parameter, List<ArgumentParser<?>> parsers) {
+    static Executable.Param createParameterInfo(java.lang.reflect.Parameter parameter, Map<Class<?>, ArgumentParser<?>> parsers) {
         String name = "";
         String desc = "";
         int arity = 1;
@@ -106,7 +108,7 @@ public class AnnotationCommandFactory implements CommandFactory {
         return Executable.Param.create(name, desc.isEmpty() ? null : desc, parameter.getType(), arity, parsers);
     }
 
-    static Executable.Param[] createParameterInfos(Method method, List<ArgumentParser<?>> parsers) {
+    static Executable.Param[] createParameterInfos(Method method, Map<Class<?>, ArgumentParser<?>> parsers) {
         java.lang.reflect.Parameter[] parameters = method.getParameters();
         Executable.Param[] infos = new Executable.Param[parameters.length];
         for (int i = 0; i < parameters.length; i++) {

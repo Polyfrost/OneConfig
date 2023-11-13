@@ -32,8 +32,10 @@ import org.jetbrains.annotations.Nullable;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 @SuppressWarnings("unused")
 public class Property<T> extends Node implements Serializable {
@@ -46,20 +48,29 @@ public class Property<T> extends Node implements Serializable {
     /**
      * This is the type of the property, and is used for casting.
      */
-    public final Class<T> type;
-    transient final ArrayList<@NotNull Consumer<@NotNull T>> callbacks = new ArrayList<>(0);
+    public transient final Class<T> type;
+    /**
+     * If this is true, the value is not real and should not be written.
+     */
+    public transient final boolean synthetic;
+    private transient List<@NotNull Consumer<@Nullable T>> callbacks = null;
     private transient boolean display = true;
-    private transient final ArrayList<Supplier<Boolean>> conditions = new ArrayList<>(0);
+    private transient List<BooleanSupplier> conditions = null;
 
-    public Property(@NotNull String id, @Nullable T value, @NotNull Class<T> type) {
-        super(id);
+    public Property(@NotNull String id, @Nullable T value, @NotNull Class<T> type, boolean synthetic) {
+        super(synthetic ? id + "$synthetic" : id);
         this.value = value;
         this.type = type;
+        this.synthetic = synthetic;
     }
 
-    @SuppressWarnings({"unchecked", "ConstantConditions"})
+    public Property(@NotNull String id, @Nullable T value, @NotNull Class<T> type) {
+        this(id, value, type, false);
+    }
+
+    @SuppressWarnings("unchecked")
     public Property(@NotNull String id, @NotNull T value) {
-        this(id, value, (Class<T>) value.getClass());
+        this(id, value, (Class<T>) value.getClass(), false);
     }
 
     public Property(@NotNull T value) {
@@ -69,7 +80,7 @@ public class Property<T> extends Node implements Serializable {
     /**
      * This is used by the frontend to know if this property is able to be displayed, which is controlled by {@link #conditions}.
      *
-     * @see #addDisplayCondition(Supplier)
+     * @see #addDisplayCondition(BooleanSupplier)
      */
     public boolean canDisplay() {
         return display;
@@ -79,25 +90,36 @@ public class Property<T> extends Node implements Serializable {
     /**
      * Add a display condition to this property.
      */
-    public void addDisplayCondition(@NotNull Supplier<Boolean> condition) {
+    public void addDisplayCondition(@NotNull BooleanSupplier condition) {
+        if (conditions == null) conditions = new ArrayList<>(5);
         conditions.add(condition);
         evaluateDisplay();
     }
 
-    @SafeVarargs
-    public final void addDisplayCondition(@NotNull Supplier<Boolean>... conditions) {
-        this.conditions.addAll(Arrays.asList(conditions));
+    public final void addDisplayCondition(@NotNull BooleanSupplier... conditions) {
+        if (this.conditions == null) this.conditions = Arrays.asList(conditions);
+        else {
+            this.conditions.addAll(Arrays.asList(conditions));
+        }
         evaluateDisplay();
     }
 
-    public void evaluateDisplay() {
-        display = conditions.stream().allMatch(Supplier::get);
+    private void evaluateDisplay() {
+        display = true;
+        if (conditions == null) return;
+        for (BooleanSupplier s : conditions) {
+            if (!s.getAsBoolean()) {
+                display = false;
+                break;
+            }
+        }
     }
 
     /**
      * Remove a display condition from this property.
      */
-    public void removeDisplayCondition(@NotNull Supplier<Boolean> condition) {
+    public void removeDisplayCondition(@NotNull BooleanSupplier condition) {
+        if (conditions == null) return;
         conditions.remove(condition);
         evaluateDisplay();
     }
@@ -106,8 +128,7 @@ public class Property<T> extends Node implements Serializable {
      * Remove all display conditions from this property.
      */
     void clearDisplayConditions() {
-        conditions.clear();
-        conditions.trimToSize();
+        conditions = null;
         display = true;
     }
 
@@ -117,15 +138,26 @@ public class Property<T> extends Node implements Serializable {
      * @param callback the callback to add. The new value is passed to the callback.
      * @see #removeCallback(Consumer)
      */
-    public Property<T> addCallback(@NotNull Consumer<@NotNull T> callback) {
+    public Property<T> addCallback(@NotNull Consumer<@Nullable T> callback) {
+        if (callbacks == null) callbacks = new ArrayList<>();
         callbacks.add(callback);
+        return this;
+    }
+
+    @SafeVarargs
+    public final Property<T> addCallback(@NotNull Consumer<@Nullable T>... callbacks) {
+        if (this.callbacks == null) this.callbacks = Arrays.asList(callbacks);
+        else {
+            this.callbacks.addAll(Arrays.asList(callbacks));
+        }
         return this;
     }
 
     /**
      * Remove a callback.
      */
-    public void removeCallback(@NotNull Consumer<@NotNull T> callback) {
+    public void removeCallback(@NotNull Consumer<@Nullable T> callback) {
+        if (callbacks == null) return;
         callbacks.remove(callback);
     }
 
@@ -133,8 +165,7 @@ public class Property<T> extends Node implements Serializable {
      * Remove all callbacks.
      */
     void clearCallbacks() {
-        callbacks.clear();
-        callbacks.trimToSize();
+        callbacks = null;
     }
 
     /**
@@ -142,24 +173,20 @@ public class Property<T> extends Node implements Serializable {
      * <br>
      * The value (and callbacks) are only set/called if the value is different from the previous value (using {@link Object#equals(Object)}).
      */
-    public void set(@NotNull T value) {
-        if (value == this.value) return;
-        try {
-            callbacks.forEach(c -> c.accept(value));
-        } catch (Exception e) {
-            Tree.LOGGER.error("Error while calling callbacks for property " + id, e);
+    public void set(@Nullable T value) {
+        if (value != null && value.equals(this.value)) return;
+        if (callbacks != null) {
+            try {
+                for(Consumer<T> c : callbacks) {
+                    c.accept(value);
+                }
+            } catch (Exception e) {
+                Tree.LOGGER.error("Error while calling callbacks for property " + id, e);
+            }
         }
         this.value = value;
     }
 
-    /**
-     * Set the value of this property. This will call all callbacks.
-     * This method is unsafe, and will throw a {@link ClassCastException} if the value is not of the specified type.
-     */
-    @SuppressWarnings("unchecked")
-    public void setUnchecked(@NotNull Object value) {
-        set((T) value);
-    }
 
     @Override
     public String toString() {
@@ -176,56 +203,42 @@ public class Property<T> extends Node implements Serializable {
 
     /**
      * Get the value of this property, cast to the specified type.
+     * This method is unsafe, and will throw a {@link ClassCastException} if the value is not of the correct type.
      */
-    @SuppressWarnings({"unchecked", "TypeParameterHidesVisibleType"})
-    public <T> T getAs() {
-        return (T) value;
+    @SuppressWarnings("unchecked")
+    public <V> V getAs() {
+        return (V) value;
     }
 
     /**
-     * Set the value of this property, cast to the specified type.
+     * Set the value of this property. This will call all callbacks.
+     * This method is unsafe, and will throw a {@link ClassCastException} if the value is not of the correct type.
      */
-    @SuppressWarnings("TypeParameterHidesVisibleType")
-    public <T> void setAs(T value) {
-        setUnchecked(value);
+    @SuppressWarnings("unchecked")
+    public <V> void setAs(V value) {
+        set((T) value);
     }
 
     /**
      * Deep equals for a property, meaning it will check {@link #equals(Object)} and the value of this property with the given obj.
      * <br>
-     * In pretty much every case, you should use {@link #equals(Object)} instead. This is used for testing.
+     * In pretty much every case, you should use {@link #equals(Object)} instead. This is used for testing. Note that primitive arrays are not checked.
      */
-    @SuppressWarnings("ConstantConditions")
     public boolean deepEquals(Object obj) {
-        if (get() == null) return obj == null;
-        if (obj instanceof Property) {
-            Property<?> p = (Property<?>) obj;
-            if (isPrimitiveArray()) {
-                // i hate java
-                if (get() instanceof int[]) {
-                    return Arrays.equals((int[]) get(), (int[]) p.get());
-                } else if (get() instanceof double[]) {
-                    return Arrays.equals((double[]) get(), (double[]) p.get());
-                } else if (get() instanceof float[]) {
-                    return Arrays.equals((float[]) get(), (float[]) p.get());
-                } else if (get() instanceof boolean[]) {
-                    return Arrays.equals((boolean[]) get(), (boolean[]) p.get());
-                } else if (get() instanceof char[]) {
-                    return Arrays.equals((char[]) get(), (char[]) p.get());
-                } else if (get() instanceof byte[]) {
-                    return Arrays.equals((byte[]) get(), (byte[]) p.get());
-                } else if (get() instanceof long[]) {
-                    return Arrays.equals((long[]) get(), (long[]) p.get());
-                } else if (get() instanceof short[]) {
-                    return Arrays.equals((short[]) get(), (short[]) p.get());
-                } else {
-                    throw new IllegalStateException("wow");
-                }
-            } else if (isArray()) {
-                return Arrays.equals((Object[]) get(), (Object[]) p.get());
-            }
-            return get().equals(p.get());
-        } else return false;
+        if (!equals(obj)) return false;
+        if (!this.isArray() || this.isPrimitiveArray()) return false;
+        Property<?> that = (Property<?>) obj;
+        return Arrays.equals((Object[]) this.value, (Object[]) that.value);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) return false;
+        if (obj == this) return true;
+        if (!(obj instanceof Property)) return false;
+        Property<?> that = (Property<?>) obj;
+        if (this.type != that.type) return false;
+        return Objects.equals(value, that.value) && this.id.equals(that.id);
     }
 
     /**
@@ -248,7 +261,7 @@ public class Property<T> extends Node implements Serializable {
 
     @SuppressWarnings("ConstantConditions")
     public static <T> Property<T> prop(@NotNull String name, @NotNull T value) {
-        if (value == null) throw new IllegalArgumentException("Cannot create a property with a null value");
+        if (value == null) throw new IllegalArgumentException("Cannot create a property with a null value and no class");
         return new Property<>(name, value);
     }
 

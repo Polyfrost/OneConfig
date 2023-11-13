@@ -37,7 +37,7 @@ public abstract class Node {
     protected final String id;
     private Map<String, Object> metadata = null;
 
-    public Node(String id) {
+    public Node(@NotNull String id) {
         this.id = id;
     }
 
@@ -46,18 +46,21 @@ public abstract class Node {
     }
 
     public final void addMetadata(String key, Object value) {
-        if (metadata == null) metadata = new HashMap<>();
+        if (metadata == null) metadata = new HashMap<>(8);
         metadata.put(key, value);
     }
 
     public final void addMetadata(Map<String, Object> metadata) {
-        if (this.metadata == null) this.metadata = metadata;
-        else this.metadata.putAll(metadata);
+        if (metadata == null) return;
+        if (this.metadata == null) this.metadata = new HashMap<>(metadata.size());
+        this.metadata.putAll(metadata);
     }
 
     public final boolean removeMetadata(String key) {
         if (metadata == null) return false;
-        return metadata.remove(key) != null;
+        boolean res = metadata.remove(key) != null;
+        if (metadata.isEmpty()) metadata = null;
+        return res;
     }
 
     /**
@@ -73,20 +76,20 @@ public abstract class Node {
         return (M) metadata.get(key);
     }
 
-    public final @NotNull Map<String, Object> getMetadata() {
-        if (metadata == null) metadata = new HashMap<>();
+    public final @Nullable Map<String, Object> getMetadata() {
         return metadata;
     }
 
+    public final boolean hasMetadata() {
+        return metadata != null;
+    }
+
+
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     public abstract boolean deepEquals(Object other);
 
     @Override
     public final int hashCode() {
         return id.hashCode();
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        return obj instanceof Node && ((Node) obj).getID().equals(this.getID());
     }
 }

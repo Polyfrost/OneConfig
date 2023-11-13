@@ -32,16 +32,17 @@ import java.awt.Color;
 import java.util.Arrays;
 import java.util.List;
 
-public class ColorAdapter extends Adapter<Color> {
+/**
+ * The only bundled adapter in the config system, which makes colors a lot more readable when serialized.
+ */
+public class ColorAdapter extends Adapter<Color, List<Integer>> {
     @Override
-    @SuppressWarnings("unchecked")
-    public Color deserialize(Object in) {
-        List<Integer> l = (List<Integer>) in;
+    public Color deserialize(List<Integer> l) {
         return new Color(l.get(0), l.get(1), l.get(2), l.get(3));
     }
 
     @Override
-    public Object serialize(Color in) {
+    public List<Integer> serialize(Color in) {
         return Arrays.asList(in.getRed(), in.getGreen(), in.getBlue(), in.getAlpha());
     }
 

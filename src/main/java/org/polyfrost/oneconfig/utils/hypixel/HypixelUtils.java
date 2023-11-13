@@ -35,6 +35,10 @@ import java.util.Locale;
  */
 public class HypixelUtils {
     public static final HypixelUtils INSTANCE = new HypixelUtils();
+    /**
+     * Alias for {@link LocrawUtil#INSTANCE}.
+     */
+    public static final LocrawUtil LOCRAW = LocrawUtil.INSTANCE;
 
     public void initialize() {
         LocrawUtil.INSTANCE.initialize();

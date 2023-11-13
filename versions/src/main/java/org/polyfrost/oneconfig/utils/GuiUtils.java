@@ -66,7 +66,7 @@ public final class GuiUtils {
      * @param ticks  the amount of ticks to wait for before displaying the screen.
      */
     public static void displayScreen(GuiScreen screen, int ticks) {
-        new TickDelay(ticks, () -> UScreen.displayScreen(screen));
+        TickDelay.of(ticks, () -> UScreen.displayScreen(screen));
     }
 
 

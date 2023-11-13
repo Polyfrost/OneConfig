@@ -41,4 +41,10 @@ java {
 dependencies {
     implementation(libs.bundles.core)
     implementation(project(":utils"))
+    testImplementation(platform(libs.junitBom))
+    testImplementation(libs.bundles.testCore)
+}
+
+tasks.test {
+    useJUnitPlatform()
 }

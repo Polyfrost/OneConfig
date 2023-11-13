@@ -26,14 +26,13 @@
 
 package org.polyfrost.oneconfig.utils
 
+import org.polyfrost.oneconfig.api.events.EventManager
 import org.polyfrost.oneconfig.api.events.event.RenderEvent
 import org.polyfrost.oneconfig.api.events.event.Stage
-import org.polyfrost.oneconfig.api.events.invoke.EventHandler
 import org.polyfrost.oneconfig.internal.create
 import org.polyfrost.oneconfig.libs.universal.UResolution
 import org.polyfrost.oneconfig.ui.LwjglManager
 import org.polyfrost.polyui.PolyUI
-//import org.polyfrost.oneconfig.renderer.LwjglManager
 import org.polyfrost.polyui.input.Translator
 import org.polyfrost.polyui.input.Translator.Companion.localised
 import org.polyfrost.polyui.layout.Layout
@@ -48,7 +47,7 @@ object Notifications {
     private const val HEIGHT = 100f
     private const val MAX_NOTIFS = 3
 
-    private val renderer= LwjglManager.INSTANCE.getRenderer(UResolution.windowWidth.toFloat(), UResolution.windowHeight.toFloat())!!
+    private val renderer = LwjglManager.INSTANCE.getRenderer(UResolution.windowWidth.toFloat(), UResolution.windowHeight.toFloat())!!
     private val settings = Settings().apply {
         cleanupAfterInit = false
         framebuffersEnabled = false
@@ -58,8 +57,8 @@ object Notifications {
     private val polyUI = PolyUI(renderer = renderer, settings = settings)
 
     init {
-        EventHandler.register(RenderEvent::class.java) {
-            if(it.stage == Stage.START || queue.isEmpty()) return@register
+        EventManager.register(RenderEvent::class) {
+            if (it.stage == Stage.START || queue.isEmpty()) return@register
             polyUI.render()
         }
     }

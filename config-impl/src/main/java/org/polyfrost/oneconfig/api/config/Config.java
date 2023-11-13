@@ -33,7 +33,7 @@ import org.polyfrost.polyui.input.Translator;
 import org.polyfrost.polyui.renderer.data.PolyImage;
 
 import java.util.ArrayList;
-import java.util.function.Supplier;
+import java.util.function.BooleanSupplier;
 
 import static org.polyfrost.oneconfig.api.config.Tree.LOGGER;
 
@@ -84,7 +84,7 @@ public class Config {
     }
 
 
-    public void addDependency(String option, Supplier<Boolean> condition) {
+    public void addDependency(String option, BooleanSupplier condition) {
         Property<?> p = tree.getProperty(option);
         if (p == null) throw new IllegalArgumentException("Attempted to specify a condition for property " + option + " but it was not found");
         p.addDisplayCondition(condition);

@@ -42,10 +42,10 @@ import java.lang.reflect.Method
  * so the [ParamData] class and [param] function are used to provide metadata for the parameters.
  */
 @Suppress("unused")
-class CommandDSL @JvmOverloads constructor(private val parsers: List<ArgumentParser<*>>, vararg name: String, description: String? = null) {
+class CommandDSL @JvmOverloads constructor(private val parsers: Map<Class<*>, ArgumentParser<*>>, vararg name: String, description: String? = null) {
     internal val tree = CommandTree(name, description)
     var description: String?
-        get() = tree.description
+        get() = tree.description()
         set(value) {
             tree.description = value
         }
@@ -55,7 +55,7 @@ class CommandDSL @JvmOverloads constructor(private val parsers: List<ArgumentPar
         description: String? = null,
         greedy: Boolean = false,
         paramData: List<ParamData> = listOf(),
-        func: kotlin.Function<*>
+        func: Function<*>
     ) {
         // asm: kotlin compiler produces two methods: public synthetic bridge invoke(Object): Object
         // public final invoke(Object...): Object which is what we want
@@ -76,7 +76,7 @@ class CommandDSL @JvmOverloads constructor(private val parsers: List<ArgumentPar
         description: String? = null,
         greedy: Boolean = false,
         paramData: List<ParamData> = listOf(),
-        func: kotlin.Function<*>
+        func: Function<*>
     ) =
         command(*aliases, description = description, greedy = greedy, paramData = paramData, func = func)
 
@@ -91,7 +91,7 @@ class CommandDSL @JvmOverloads constructor(private val parsers: List<ArgumentPar
     companion object {
         @JvmStatic
         @JvmSynthetic
-        fun command(parsers: List<ArgumentParser<*>>, vararg name: String, description: String? = null, func: CommandDSL.() -> Unit) = CommandDSL(
+        fun command(parsers: Map<Class<*>, ArgumentParser<*>>, vararg name: String, description: String? = null, func: CommandDSL.() -> Unit) = CommandDSL(
             parsers, *name, description = description
         ).apply(func)
 
@@ -99,7 +99,7 @@ class CommandDSL @JvmOverloads constructor(private val parsers: List<ArgumentPar
         fun param(index: Int, name: String, description: String? = null, arity: Int = 1) =
             ParamData(index, name, description, arity)
 
-        private fun mapParams(method: Method, metadata: List<ParamData>, parsers: List<ArgumentParser<*>>): Array<Param> {
+        private fun mapParams(method: Method, metadata: List<ParamData>, parsers: Map<Class<*>, ArgumentParser<*>>): Array<Param> {
             val params = method.parameters
             return Array(method.parameterCount) {
                 val m = metadata.find { data -> data.index == it }

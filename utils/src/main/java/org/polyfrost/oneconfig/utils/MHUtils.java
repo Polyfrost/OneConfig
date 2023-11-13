@@ -34,6 +34,7 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Retention;
+import java.lang.invoke.LambdaMetafactory;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
@@ -43,6 +44,8 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Proxy;
 import java.util.Map;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * A collection of (naughty) MethodHandle utilities.
@@ -54,12 +57,13 @@ import java.util.Map;
 @SuppressWarnings({"unused", "unchecked"})
 public class MHUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger("OneConfig/MHUtils");
-    private static final sun.misc.Unsafe theUnsafe = getUnsafe();
+    private static final sun.misc.Unsafe theUnsafe;
     /**
      * A reference to the trusted IMPL_LOOKUP field in {@link MethodHandles.Lookup}.
+     * <br> this field was extracted using unsupported methods, which breaks Java security checks. please be careful with it.
      */
     @ApiStatus.Internal
-    public static final MethodHandles.Lookup trustedLookup = getTrustedLookup();
+    public static final MethodHandles.Lookup trustedLookup;
     /**
      * <h1>gav</h1>
      */
@@ -290,7 +294,8 @@ public class MHUtils {
      */
     public static @Nullable MethodHandle getConstructorHandle(Class<?> owner, Class<?>... params) {
         try {
-            return trustedLookup.findConstructor(owner, MethodType.methodType(void.class, params));
+            MethodType mt = params.length == 0 ? MethodType.methodType(void.class) : MethodType.methodType(void.class, params);
+            return trustedLookup.findConstructor(owner, mt);
         } catch (Exception e) {
             if (params.length != 0) LOGGER.error("Failed to get constructor handle for " + owner, e);
             return null;
@@ -307,6 +312,68 @@ public class MHUtils {
             return trustedLookup.unreflectConstructor(ctor);
         } catch (Exception e) {
             LOGGER.error("Failed to get constructor handle for " + ctor, e);
+            return null;
+        }
+    }
+
+
+    // -- lambda -- //
+
+    /**
+     * Returns a direct, fast lambda call site to the given consumer type method: void method(Object param)
+     *
+     * @param object the object on which the method is located - if it is static, pass a class instance here.
+     * @return a fast wrapped method handle, or null if it failed.
+     */
+    public static <T> @Nullable Consumer<T> getConsumerFunctionHandle(Object object, String methodName, Class<T> paramType) {
+        try {
+            boolean isStatic = object instanceof Class;
+            Class<?> cls = isStatic ? (Class<?>) object : object.getClass();
+            MethodType mt = MethodType.methodType(void.class, paramType);
+            MethodHandle mh = isStatic ? trustedLookup.findStatic(cls, methodName, mt) : trustedLookup.findVirtual(cls, methodName, mt);
+            MethodHandle target = LambdaMetafactory.metafactory(
+                    // asm: due to the fact we use the trusted lookup, the only visible classes are ones on the bootstrap class loader,
+                    // as it is the lookup of java.lang.Object. therefore to access the object's class, we must make sure the lookup
+                    // has the access to the classloader of the object to avoid NoDefErrors, unfortunately meaning we have to lookup.in(cls)
+                    // fortunately we keep all privileges thanks to the short path of lookup.in(cls) so it still works
+                    // https://stackoverflow.com/questions/60144712/noclassdeffounderror-for-my-own-class-when-creating-callsite-with-lambdametafact
+                    trustedLookup.in(cls),
+                    "accept",
+                    MethodType.methodType(Consumer.class, cls),
+                    MethodType.methodType(void.class, Object.class),
+                    mh,
+                    mt
+            ).getTarget();
+            return (Consumer<T>) (isStatic ? target.invokeExact() : target.invoke(object));
+        } catch (Throwable e) {
+            LOGGER.error("Failed to get wrapped method handle for " + methodName + " from " + object, e);
+            return null;
+        }
+    }
+
+    /**
+     * Returns a direct, fast lambda call site to the given one arg, object returning method.
+     *
+     * @param object the object on which the method is located - if static, pass a class instance here.
+     * @return a fast wrapped method handle, or null if it failed.
+     */
+    public static <T, R> @Nullable Function<T, R> getFunctionHandle(Object object, String methodName, Class<R> returnType, Class<T> paramType) {
+        try {
+            boolean isStatic = object instanceof Class;
+            Class<?> cls = isStatic ? (Class<?>) object : object.getClass();
+            MethodType mt = MethodType.methodType(returnType, paramType);
+            MethodHandle mh = isStatic ? trustedLookup.findStatic(cls, methodName, mt) : trustedLookup.findVirtual(cls, methodName, mt);
+            MethodHandle target = LambdaMetafactory.metafactory(
+                    trustedLookup.in(cls),
+                    "apply",
+                    MethodType.methodType(Function.class, cls),
+                    MethodType.methodType(Object.class, Object.class),
+                    mh,
+                    mt
+            ).getTarget();
+            return (Function<T, R>) (isStatic ? target.invokeExact() : target.invoke(object));
+        } catch (Throwable e) {
+            LOGGER.error("Failed to get wrapped method handle for " + methodName + " from " + object, e);
             return null;
         }
     }
@@ -458,7 +525,7 @@ public class MHUtils {
             try {
                 return theUnsafe.allocateInstance(cls);
             } catch (Exception ee) {
-                ee.addSuppressed(e);
+                ee.initCause(e);
                 LOGGER.error("Failed to Unsafe allocate " + cls, ee);
                 return null;
             }
@@ -512,24 +579,26 @@ public class MHUtils {
         }
     }
 
-    private static sun.misc.Unsafe getUnsafe() {
+    static {
+        sun.misc.Unsafe unsafe;
         try {
             Field f = sun.misc.Unsafe.class.getDeclaredField("theUnsafe");
             f.setAccessible(true);
-            return (sun.misc.Unsafe) f.get(null);
+            unsafe = (sun.misc.Unsafe) f.get(null);
         } catch (Exception e) {
             throw new RuntimeException("Failed to get unsafe instance", e);
         }
-    }
+        theUnsafe = unsafe;
 
-    private static MethodHandles.Lookup getTrustedLookup() {
+        MethodHandles.Lookup lookup;
         try {
             // tee hee
             Field implLookup = MethodHandles.Lookup.class.getDeclaredField("IMPL_LOOKUP");
-            return (MethodHandles.Lookup) theUnsafe.getObject(theUnsafe.staticFieldBase(implLookup), theUnsafe.staticFieldOffset(implLookup));
+            lookup = (MethodHandles.Lookup) unsafe.getObject(unsafe.staticFieldBase(implLookup), unsafe.staticFieldOffset(implLookup));
         } catch (Exception e) {
             LOGGER.error("Failed to get trusted lookup, things may break!", e);
-            return MethodHandles.lookup();
+            lookup = MethodHandles.lookup();
         }
+        trustedLookup = lookup;
     }
 }

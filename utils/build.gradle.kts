@@ -46,4 +46,10 @@ dependencies {
         isTransitive = false
     }
     implementation(libs.bundles.core)
+    testImplementation(libs.bundles.testCore)
+    testImplementation(platform(libs.junitBom))
+}
+
+tasks.test {
+    useJUnitPlatform()
 }

@@ -40,16 +40,19 @@ import java.util.List;
 
 //#if FORGE==1
 import net.minecraftforge.client.ClientCommandHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 //#endif
 
 public class PlatformCommandManagerImpl implements PlatformCommandManager {
+    private static final Logger LOGGER = LoggerFactory.getLogger("OneConfig/Commands");
 
     static {
         CommandManager.INSTANCE.registerParser(new PlayerArgumentParser());
     }
 
     @Override
-    public void createCommand(CommandTree tree) {
+    public boolean createCommand(CommandTree tree) {
         ClientCommandHandler.instance.registerCommand(new CommandBase() {
             @Override
             public String getCommandName() {
@@ -89,10 +92,10 @@ public class PlatformCommandManagerImpl implements PlatformCommandManager {
                     }
                 } catch (CommandExecutionException c) {
                     UChat.chat("&c" + c.getMessage());
-                    if(!c.getMessage().equals("Command not found!")) c.printStackTrace();
+                    LOGGER.warn(c.getMessage());
                 } catch (Exception e) {
                     UChat.chat("&cAn unknown error occurred while executing this command, please report this to the mod author!");
-                    e.printStackTrace();
+                    LOGGER.error("failed to run command method", e);
                 }
             }
 
@@ -119,6 +122,7 @@ public class PlatformCommandManagerImpl implements PlatformCommandManager {
                 return tree.autocomplete(args);
             }
         });
+        return true;
     }
 }
 //#endif

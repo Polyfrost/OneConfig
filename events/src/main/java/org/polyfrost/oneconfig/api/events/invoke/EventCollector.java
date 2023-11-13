@@ -24,23 +24,15 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.api.commands.factories;
+package org.polyfrost.oneconfig.api.events.invoke;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.polyfrost.oneconfig.api.commands.CommandTree;
-import org.polyfrost.oneconfig.api.commands.arguments.ArgumentParser;
-
-import java.util.Map;
+import java.util.List;
 
 @FunctionalInterface
-public interface CommandFactory {
+public interface EventCollector {
     /**
-     * Create a command tree from the given object.
-     *
-     * @param parsers a list of argument parsers available for use
-     * @param obj     the object to create the command tree from
-     * @return the command tree, or null if this factory cannot create a command tree from the given object. Ideally this is fail-fast.
+     * Take an object and collect any valid event handlers that may exist inside the object.
+     * @return a list of handlers, or null if the object cannot be collected by this collector
      */
-    @Nullable CommandTree create(@NotNull Map<Class<?>, ArgumentParser<?>> parsers, @NotNull Object obj);
+    List<EventHandler<?>> collect(Object object);
 }

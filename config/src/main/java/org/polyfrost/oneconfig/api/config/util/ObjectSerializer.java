@@ -27,6 +27,7 @@
 package org.polyfrost.oneconfig.api.config.util;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 import org.polyfrost.oneconfig.api.config.adapter.Adapter;
 import org.polyfrost.oneconfig.api.config.adapter.impl.ColorAdapter;
 import org.polyfrost.oneconfig.api.config.exceptions.SerializationException;
@@ -41,153 +42,258 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.function.Function;
 
 import static org.polyfrost.oneconfig.api.config.Tree.LOGGER;
 
 public class ObjectSerializer {
     public static final ObjectSerializer INSTANCE = new ObjectSerializer();
-    private final Set<Adapter<?>> adapters = new HashSet<>();
+    @Unmodifiable
+    public static final Map<Class<?>, Class<?>> primitiveWrappers;
+    @Unmodifiable
+    public static final Map<Class<?>, Function<Number, Number>> numberSuppliers;
+    private final HashMap<Class<?>, Adapter<Object, Object>> adapters = new HashMap<>();
+
+    static {
+        Map<Class<?>, Class<?>> pw = new HashMap<>(8, 1f);
+        pw.put(boolean.class, Boolean.class);
+        pw.put(int.class, Integer.class);
+        pw.put(float.class, Float.class);
+        pw.put(short.class, Short.class);
+        pw.put(long.class, Long.class);
+        pw.put(byte.class, Byte.class);
+        pw.put(double.class, Double.class);
+        pw.put(char.class, Character.class);
+        primitiveWrappers = Collections.unmodifiableMap(pw);
+
+        Map<Class<?>, Function<Number, Number>> ns = new HashMap<>(6, 1f);
+        ns.put(Integer.class, Number::intValue);
+        ns.put(Float.class, Number::floatValue);
+        ns.put(Short.class, Number::shortValue);
+        ns.put(Long.class, Number::longValue);
+        ns.put(Byte.class, Number::byteValue);
+        ns.put(Double.class, Number::doubleValue);
+        numberSuppliers = Collections.unmodifiableMap(ns);
+    }
+
+    private ObjectSerializer() {
+    }
 
     static {
         INSTANCE.registerTypeAdapter(new ColorAdapter());
     }
 
-    public void registerTypeAdapter(Adapter<?> adapter) {
-        if (!this.adapters.add(adapter)) {
+    @SuppressWarnings("unchecked")
+    public void registerTypeAdapter(Adapter<?, ?> adapter) {
+        if (this.adapters.put(adapter.getTargetClass(), (Adapter<Object, Object>) adapter) != null) {
             LOGGER.warn("Failed to register type adapter: An adapter for type {} is already registered", adapter.getTargetClass());
         }
     }
 
-    public void registerTypeAdapter(Adapter<?>... adapters) {
-        for (Adapter<?> a : adapters) {
+    public void registerTypeAdapter(Adapter<?, ?>... adapters) {
+        for (Adapter<?, ?> a : adapters) {
             registerTypeAdapter(a);
         }
     }
 
+    public void unregisterTypeAdapter(Adapter<?, ?> adapter) {
+        if (this.adapters.remove(adapter.getTargetClass()) == null) {
+            LOGGER.warn("Failed to remove type adapter for {}: Not registered/already removed", adapter.getTargetClass());
+        }
+    }
+
+    /**
+     * Convert the given object into a series of simple values that should be supported by most backend serializers.
+     *
+     * @param in       the object
+     * @param useLists if your serializer uses lists instead of arrays for collections of items
+     * @return the source object, in a simple form
+     * @see Adapter#serialize(Object)
+     */
     @SuppressWarnings("unchecked")
-    public Object serialize(Object in) {
+    public Object serialize(Object in, boolean useLists) {
         if (in == null) return null;
         Class<?> cls = in.getClass();
+
+        // check 1: return Number, CharSequence or Boolean
         if (isSimpleObject(in)) {
             return in;
         }
-        if (cls.isArray()) {
-            in = Arrays.asList((Object[]) box(in));
-        }
+
+        // check 2: box up Enums and return those
         if (cls.isEnum()) {
-            Map<String, Object> enumMap = new HashMap<>(2);
+            Map<String, Object> enumMap = new HashMap<>(2, 1f);
             enumMap.put("classType", cls.getName());
             enumMap.put("value", ((Enum<?>) in).name());
             return enumMap;
         }
-        if (in instanceof Collection) {
-            Collection<?> c = (Collection<?>) in;
-            if (c.isEmpty()) return new Object[]{};
-            Object first = c.iterator().next();
-            if (isSimpleObject(first)) {
-                return c;
-            }
-            return c.stream().map(this::serialize).collect(Collectors.toList());
+
+        // check 3: array
+        if (cls.isArray()) {
+            return _serializeArray(in, cls.getComponentType(), useLists);
         }
+        // check 4: collection
+        if (in instanceof Collection) {
+            return _serializeCollection((Collection<?>) in, useLists);
+        }
+
+        // check 5: maps
         if (in instanceof Map) {
             Map<?, ?> m = (Map<?, ?>) in;
             if (m.isEmpty()) return Collections.emptyMap();
             Iterator<? extends Map.Entry<?, ?>> iter = m.entrySet().iterator();
             Map.Entry<?, ?> first = iter.next();
-            if ((isSimpleObject(first.getKey()) || isPrimitiveArray(first.getKey().getClass())) && (isSimpleObject(first.getValue()) || isPrimitiveArray(first.getValue().getClass()))) {
+            if (isSimpleObject(first.getKey()) && isSimpleObject(first.getValue())) {
                 return m;
             }
-            Map<Object, Object> out = new HashMap<>();
-            out.put(serialize(first.getKey()), serialize(first.getValue()));
+            Map<Object, Object> out = new HashMap<>(m.size(), 1f);
+            out.put(serialize(first.getKey(), useLists), serialize(first.getValue(), useLists));
             while (iter.hasNext()) {
                 Map.Entry<?, ?> e = iter.next();
-                out.put(serialize(e.getKey()), serialize(e.getValue()));
+                out.put(serialize(e.getKey(), useLists), serialize(e.getValue(), useLists));
             }
             return out;
         }
 
-        for (Adapter<?> a : adapters) {
-            if (a.getTargetClass().equals(cls)) {
-                Adapter<Object> ad = (Adapter<Object>) a;
-                Object out = ad.serialize(in);
-                boolean isMap = out instanceof Map;
-                // ClassCastException when the Map does not have String keys (the doc explains required types)
-                Map<String, Object> outMap = isMap ? (Map<String, Object>) out : new HashMap<>(2);
-                if (!isMap) {
-                    outMap.put("value", out);
-                } else {
-                    if (outMap.get("classType") != null) throw new IllegalArgumentException("Failed to serialize " + out + ": 'classType' is a reserved key!");
-                    if (outMap.get("value") != null) throw new IllegalArgumentException("Failed to serialize " + out + ": 'value' is a reserved key!");
-                }
-                outMap.put("classType", ad.getTargetClass().getName());
-                return outMap;
+        // check 6: complex object, do we have a adapter available?
+        Adapter<Object, Object> ad = adapters.get(cls);
+        if (ad != null) {
+            Object out = ad.serialize(in);
+            if (out == null) throw new SerializationException("Failed to serialize " + in + ": adapter for it (" + cls.getName() + ") returned null");
+            boolean isMap = out instanceof Map;
+            // ClassCastException when the Map does not have String keys (the doc explains required types)
+            Map<String, Object> outMap = isMap ? (Map<String, Object>) out : new HashMap<>(2, 1f);
+            if (!isMap) {
+                outMap.put("value", out);
+            } else {
+                if (outMap.get("classType") != null) throw new IllegalArgumentException("Failed to serialize " + out + ": 'classType' is a reserved key!");
+                if (outMap.get("value") != null) throw new IllegalArgumentException("Failed to serialize " + out + ": 'value' is a reserved key!");
             }
+            outMap.put("classType", cls.getName());
+            return outMap;
         }
+
         // we have a complex type with no adapter, amazing.
         Map<String, Object> cfg = new HashMap<>();
         cfg.put("classType", cls.getName());
-        _serialize(cls, in, cfg);
+        _serialize(cls, in, cfg, useLists);
         return cfg;
     }
+
+    private Object _serializeArray(Object in, Class<?> cType, boolean useLists) {
+        // primitive array, just box
+        if (!(in instanceof Object[])) {
+            Object[] out = (Object[]) box(in);
+            return useLists ? Arrays.asList(out) : out;
+        }
+        Object[] arr = (Object[]) in;
+        if (isSimpleClass(cType)) {
+            return useLists ? Arrays.asList(arr) : arr;
+        }
+        if (useLists) {
+            List<Object> out = new ArrayList<>(arr.length);
+            for (Object o : arr) {
+                out.add(serialize(o, true));
+            }
+            return out;
+        } else {
+            Object[] out = new Object[arr.length];
+            for (int i = 0; i < arr.length; i++) {
+                out[i] = serialize(arr[i], false);
+            }
+            return out;
+        }
+    }
+
+    private Object _serializeCollection(Collection<?> c, boolean useLists) {
+        if (c.isEmpty()) return useLists ? c : new Object[0];
+        Iterator<?> iter = c.iterator();
+        Object first = iter.next();
+        if (isSimpleObject(first)) {
+            return useLists ? c : c.toArray();
+        }
+        if (useLists) {
+            List<Object> out = new ArrayList<>(c.size());
+            out.add(first);
+            while (iter.hasNext()) {
+                out.add(serialize(iter.next(), true));
+            }
+            return out;
+        } else {
+            Object[] out = new Object[c.size()];
+            out[0] = first;
+            int i = 1;
+            while (iter.hasNext()) {
+                out[i] = serialize(iter.next(), false);
+                i++;
+            }
+            return out;
+        }
+    }
+
 
     /**
      * Simple object serializer. Serializes, the object and its parents' classes non-synthetic, non-transient and non-static fields.
      */
-    private void _serialize(Class<?> cls, Object value, Map<String, Object> cfg) {
+    private void _serialize(Class<?> cls, Object value, Map<String, Object> cfg, boolean useLists) {
         for (Field f : cls.getDeclaredFields()) {
-            if (f.isSynthetic() || Modifier.isTransient(f.getModifiers()) || Modifier.isStatic(f.getModifiers()))
+            //                       Modifier.SYNTHETIC (not public for some reason)
+            if ((f.getModifiers() & (0x00001000 | Modifier.TRANSIENT | Modifier.STATIC)) != 0) {
                 continue;
+            }
             try {
+                // asm: never null
+                @SuppressWarnings("DataFlowIssue")
                 Object o = MHUtils.getFieldGetter(f, value).invoke();
                 // skip self references
                 if (o == value) continue;
-                if (o != null) {
-                    if (!isSimpleObject(o)) {
-                        cfg.put(f.getName(), serialize(o));
-                    } else cfg.put(f.getName(), o);
-                }
+                if (o == null) continue;
+                cfg.put(f.getName(), serialize(o, useLists));
             } catch (Throwable e) {
-                throw new SerializationException("Failed to serialize object " + value, e);
+                throw new SerializationException("Failed to serialize object " + value + ": no detail message (potential field access issue, try making " + f + " public?)", e);
             }
         }
         for (Class<?> c : cls.getInterfaces()) {
-            _serialize(c, value, cfg);
+            _serialize(c, value, cfg, useLists);
         }
         if (cls.getSuperclass() != null) {
-            _serialize(cls.getSuperclass(), value, cfg);
+            _serialize(cls.getSuperclass(), value, cfg, useLists);
         }
     }
 
-    @SuppressWarnings("unchecked")
+    /**
+     * Deserialize the given complex object map. The map must contain the classType field.
+     *
+     * @param in the map
+     * @return the completed object
+     */
+
     public Object deserialize(Map<String, Object> in) {
         if (in == null) return null;
         String clsName = (String) in.get("classType");
         if (clsName == null) {
             System.err.println("Offending map: " + in);
-            mapToString(in);
-            throw new SerializationException("Cannot deserialize object: missing classType field!");
-        }
-        for (Adapter<?> a : adapters) {
-            if (a.getTargetClass().getName().equals(clsName)) {
-                Adapter<Object> ad = (Adapter<Object>) a;
-                Object value = in.get("value");
-                if (value == null) {
-                    value = in;
-                }
-                return ad.deserialize(value);
-            }
+            stderrMap(in);
+            throw new SerializationException("Cannot deserialize object: missing classType field (internal error)!");
         }
         Class<?> cls;
         try {
-            cls = Class.forName(clsName);
+            cls = Class.forName(clsName, true, ObjectSerializer.class.getClassLoader());
         } catch (Exception e) {
-            throw new SerializationException("Failed to deserialize object: Target class not found", e);
+            throw new SerializationException("Failed to deserialize object: Class " + clsName + " not found, potential classloading issue?", e);
+        }
+        Adapter<Object, Object> ad = adapters.get(cls);
+        if (ad != null) {
+            Object value = in.get("value");
+            if (value == null) {
+                value = in;
+            }
+            Object out = ad.deserialize(value);
+            if (out == null) throw new SerializationException("Failed to deserialize " + value + ": adapter for it (" + cls + ") returned null");
+            return out;
         }
         return _deserialize(in, cls);
     }
@@ -218,7 +324,7 @@ public class ObjectSerializer {
                     setter.invoke(out);
                 }
             } catch (Throwable ex) {
-                throw new SerializationException("Failed to deserialize object", ex);
+                throw new SerializationException("Failed to deserialize " + cls.getName() + ": no detail message (potential field access issue?)", ex);
             }
         }
         return o;
@@ -240,11 +346,11 @@ public class ObjectSerializer {
 
     public static Object unbox(@NotNull Object in, Class<?> target) {
         if (target == null) return in;
-        if (in instanceof List && target.isArray()) {
+        if (in instanceof Number) return numberSuppliers.get(getPrimitiveWrapper(target)).apply((Number) in);
+        if (target.isArray() && in instanceof List) {
             List<?> list = (List<?>) in;
-            if (list.isEmpty()) throw new IllegalStateException("Cannot unbox empty list to array https://docs.polyfrost.org/oneconfig/config/unbox-empty-list");
-            if (target.getComponentType().isPrimitive()) {
-                Class<?> cType = target.getComponentType();
+            Class<?> cType = target.getComponentType();
+            if (cType.isPrimitive()) {
                 Object array = Array.newInstance(cType, list.size());
                 for (int i = 0; i < list.size(); i++) {
                     Array.set(array, i, unbox(list.get(i), cType));
@@ -252,58 +358,64 @@ public class ObjectSerializer {
                 return array;
             }
         }
-        if (in instanceof Number) {
-            Number n = (Number) in;
-            if (target == float.class || target == Float.class) return n.floatValue();
-            if (target == double.class || target == Double.class) return n.doubleValue();
-            if (target == byte.class || target == Byte.class) return n.byteValue();
-            if (target == short.class || target == Short.class) return n.shortValue();
-            if (target == int.class || target == Integer.class) return n.intValue();
-            if (target == long.class || target == Long.class) return n.longValue();
-        }
         return in;
     }
 
-    public static Class<?> getPrimitiveWrapper(Class<?> prim) {
-        if (prim == boolean.class) return Boolean.class;
-        if (prim == int.class) return Integer.class;
-        if (prim == float.class) return Float.class;
-        if (prim == short.class) return Short.class;
-        if (prim == long.class) return Long.class;
-        if (prim == byte.class) return Byte.class;
-        if (prim == double.class) return Double.class;
-        if (prim == char.class) return Character.class;
-        return prim;
-    }
-
+    /**
+     * box the specified primitive array into its primitive wrapper, e.g. int[] -> Integer[]
+     *
+     * @param in an object, null -> null, not a primitive array -> same, or the boxed array/
+     */
     public static Object box(Object in) {
-        Class<?> type = in.getClass().getComponentType();
-        if (type == null || !type.isPrimitive()) return in;
+        if (in == null) return null;
+        Class<?> cType = in.getClass().getComponentType();
+        if (cType == null || !cType.isPrimitive()) return in;
         int len = Array.getLength(in);
-        Object out = Array.newInstance(getPrimitiveWrapper(type), len);
+        Object out = Array.newInstance(getPrimitiveWrapper(cType), len);
         for (int i = 0; i < len; i++) {
             Array.set(out, i, Array.get(in, i));
         }
         return out;
     }
 
+    public static Class<?> getPrimitiveWrapper(Class<?> cls) {
+        Class<?> c = primitiveWrappers.get(cls);
+        return c == null ? cls : c;
+    }
 
-    public static void mapToString(Map<String, Object> map) {
+
+    public static void stderrMap(Map<String, Object> map) {
         for (Map.Entry<String, Object> e : map.entrySet()) {
             System.err.println("  " + e.getKey() + ": " + e.getValue());
         }
     }
 
 
+    /**
+     * returns true if: <br>
+     * - the object is a primitive wrapper <br>
+     * - the object is a CharSequence <br>
+     */
     public static boolean isSimpleObject(Object o) {
         if (o == null) return true;
         return isPrimitiveWrapper(o) || o instanceof CharSequence;
     }
 
+    public static boolean isSimpleClass(Class<?> c) {
+        if (c == null) return true;
+        return Number.class.isAssignableFrom(c) || CharSequence.class.isAssignableFrom(c) || c == Boolean.class;
+    }
+
+    /**
+     * returns true if the object is a primitive wrapper
+     */
     public static boolean isPrimitiveWrapper(Object o) {
         return o instanceof Number || o instanceof Boolean || o instanceof Character;
     }
 
+    /**
+     * returns true if the class is a primitive array type
+     */
     public static boolean isPrimitiveArray(Class<?> cls) {
         return cls.isArray() && cls.getComponentType().isPrimitive();
     }

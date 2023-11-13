@@ -51,6 +51,7 @@ import java.security.ProtectionDomain;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
 
+@SuppressWarnings("unused")
 public class LwjglManagerImpl
         extends URLClassLoader
         implements LwjglManager {
@@ -307,6 +308,8 @@ public class LwjglManagerImpl
             }
 
             Object theUnsafe = MHUtils.getStaticField(unsafeClass, "theUnsafe");
+            if (theUnsafe == null) throw new NullPointerException("Failed to get unsafe instance");
+
             defineClassMethod = MHUtils.getMethodHandle(
                     theUnsafe,
                     "defineClass",
@@ -324,6 +327,8 @@ public class LwjglManagerImpl
         }
     }
 
+
+    @SuppressWarnings("ResultOfMethodCallIgnored")
     private static synchronized URL getJarFile() {
         if (isPojav) return null;
         final File tempJar = new File("./OneConfig/temp/" + JAR_NAME);
@@ -331,7 +336,7 @@ public class LwjglManagerImpl
             tempJar.mkdirs();
             tempJar.createNewFile();
             tempJar.deleteOnExit();
-            if (in == null) throw new IOException("Failed to get NanoVG jar file!");
+            if (in == null) throw new IOException("Failed to get lwjgl-legacy.jar!");
             Files.copy(in, tempJar.toPath(), StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -365,19 +370,5 @@ public class LwjglManagerImpl
     @Override
     public TinyFD getTinyFD() {
         return tinyFD;
-    }
-
-    @Override
-    public boolean addIsolatedClass(String className) {
-        return classLoaderInclude.add(className);
-    }
-
-    @Override
-    public Object getIsolatedClass(String className) {
-        try {
-            return Class.forName(className, true, isPojav ? getClass().getClassLoader() : this).getConstructor().newInstance();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
     }
 }

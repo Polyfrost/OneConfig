@@ -42,7 +42,7 @@ import org.polyfrost.oneconfig.api.events.event.LocrawEvent;
 import org.polyfrost.oneconfig.api.events.event.Stage;
 import org.polyfrost.oneconfig.api.events.event.TickEvent;
 import org.polyfrost.oneconfig.api.events.event.WorldLoadEvent;
-import org.polyfrost.oneconfig.api.events.invoke.impl.Subscribe;
+import org.polyfrost.oneconfig.api.events.invoke.EventHandler;
 import org.polyfrost.oneconfig.libs.universal.UChat;
 import org.polyfrost.oneconfig.platform.Platform;
 import org.polyfrost.oneconfig.utils.TickDelay;
@@ -66,45 +66,43 @@ public class LocrawUtil {
     private boolean inGame = false;
 
     void initialize() {
-        EventManager.INSTANCE.register(this);
+        EventHandler.of(TickEvent.class, (event) -> {
+            if (event.stage == Stage.END) {
+                if (!Platform.getServerPlatform().doesPlayerExist() || !HypixelUtils.INSTANCE.isHypixel()) {
+                    return;
+                }
+
+                this.tick++;
+                if (this.tick == 40 || this.tick % 520 == 0) {
+                    sendLocraw(false);
+                }
+            }
+        }).register();
+
+        EventHandler.of(WorldLoadEvent.class, (event) -> {
+            if (locrawInfo != null) {
+                lastLocrawInfo = locrawInfo;
+            }
+            locrawInfo = null;
+            tick = 0;
+        }).register();
+
+        EventHandler.of(ChatSendEvent.class, (event) -> {
+            if (event.message.startsWith("/locraw") && !this.listening) {
+                playerSentCommand = true;
+            }
+        }).register();
+
+        EventHandler.of(ChatReceiveEvent.class, this::onMessageReceived).register();
     }
 
     private void sendLocraw(boolean delay) {
-        new TickDelay((delay ? 20 : 0), () -> {
+        TickDelay.of((delay ? 20 : 0), () -> {
             this.listening = true;
             UChat.say("/locraw");
         });
     }
 
-    @Subscribe
-    public void onTick(TickEvent event) {
-        if (event.stage != Stage.START || !Platform.getServerPlatform().doesPlayerExist() || !HypixelUtils.INSTANCE.isHypixel()) {
-            return;
-        }
-
-        this.tick++;
-        if (this.tick == 40 || this.tick % 520 == 0) {
-            sendLocraw(false);
-        }
-    }
-
-    @Subscribe
-    public void onWorldLoad(WorldLoadEvent event) {
-        if (locrawInfo != null) {
-            lastLocrawInfo = locrawInfo;
-        }
-        locrawInfo = null;
-        tick = 0;
-    }
-
-    @Subscribe
-    public void onMessageSent(ChatSendEvent event) {
-        if (event.message.startsWith("/locraw") && !this.listening) {
-            playerSentCommand = true;
-        }
-    }
-
-    @Subscribe
     public void onMessageReceived(ChatReceiveEvent event) {
         try {
             // Had some false positives while testing, so this is here just to be safe.

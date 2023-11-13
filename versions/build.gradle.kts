@@ -19,7 +19,7 @@ plugins {
 }
 
 kotlin.jvmToolchain {
-    (this as JavaToolchainSpec).languageVersion.set(JavaLanguageVersion.of(8))
+    languageVersion.set(JavaLanguageVersion.of(8))
 }
 
 java {
@@ -27,18 +27,19 @@ java {
     withJavadocJar()
 }
 
-val natives = listOf("windows", "windows-arm64", "linux", "macos", "macos-arm64")
-val modName = project.properties["mod_name"]
-val modMajor = project.properties["mod_major_version"]
-val modMinor = project.properties["mod_minor_version"]
+val modName = project.properties["mod_name"] as String
+val modMajor = project.properties["mod_major_version"] as String
+val modMinor = project.properties["mod_minor_version"] as String
 val modId = project.properties["mod_id"] as String
+version = "$modMajor$modMinor"
+group = "org.polyfrost"
+
+val natives = listOf("windows", "windows-arm64", "linux", "macos", "macos-arm64")
+val tweakClass = "org.polyfrost.oneconfig.internal.plugin.asm.OneConfigTweaker"
 
 preprocess {
     vars.put("MODERN", if (project.platform.mcMinor >= 16) 1 else 0)
 }
-
-version = "$modMajor$modMinor"
-group = "org.polyfrost"
 
 blossom {
     replaceToken("@VER@", version)
@@ -55,7 +56,7 @@ loom {
     runConfigs {
         "client" {
             if (project.platform.isLegacyForge) {
-                programArgs("--tweakClass", "org.polyfrost.oneconfig.internal.plugin.asm.OneConfigTweaker")
+                programArgs("--tweakClass", tweakClass)
             }
             property("mixin.debug.export", "true")
             property("debugBytecode", "true")
@@ -78,111 +79,84 @@ repositories {
     maven("https://repo.polyfrost.org/releases")
 }
 
-val relocatedCommonProject = registerRelocationAttribute("common-lwjgl") {
-    if (platform.isModLauncher || platform.isFabric) {
-        relocate("org.lwjgl3.buffer", "org.lwjgl3")
-    }
-}
-
-val relocated = registerRelocationAttribute("relocate") {
-    relocate("com.github.benmanes", "org.polyfrost.oneconfig.libs")
-    relocate("dev.xdark", "org.polyfrost.oneconfig.libs")
-    remapStringsIn("com.github.benmanes.caffeine.cache.LocalCacheFactory")
-    remapStringsIn("com.github.benmanes.caffeine.cache.NodeFactory")
-}
-
-val implementationNoPom: Configuration by configurations.creating {
-    configurations.named(JavaPlugin.COMPILE_CLASSPATH_CONFIGURATION_NAME) { extendsFrom(this@creating) }
-    configurations.named(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME) { extendsFrom(this@creating) }
-}
-
-val modImplementationNoPom: Configuration by configurations.creating {
-    configurations.modImplementation.get().extendsFrom(this)
-    configurations.modRuntimeOnly.get().extendsFrom(this)
-}
-
-val shadeProject: Configuration by configurations.creating {
-    attributes { attribute(relocatedCommonProject, false) }
-}
-
-val shadeRelocated: Configuration by configurations.creating {
-    attributes { attribute(relocated, true) }
-}
-
 val shade: Configuration by configurations.creating {
     configurations.api.get().extendsFrom(this)
 }
-
-val shadeNoPom: Configuration by configurations.creating
-
-val shadeOnly: Configuration by configurations.creating
-
-val shadeNoJar: Configuration by configurations.creating
 
 dependencies {
     compileOnly("gg.essential:vigilance-1.8.9-forge:${libs.versions.vigilance.get()}") {
         isTransitive = false
     }
 
-    include("org.polyfrost:universalcraft-$platform:${libs.versions.universalcraft.get()}", transitive = false, mod = true)
+    shadeMod("org.polyfrost:universalcraft-$platform:${libs.versions.universalcraft.get()}", transitive = false)
 
-    include(libs.caffeine, relocate = true, transitive = false)
+    @Suppress("UnstableApiUsage")
+    shade(libs.caffeine) {
+        isTransitive = false
+        attributes {
+            attribute(registerRelocationAttribute("relocate-caffeine") {
+                relocate("com.github.benmanes", "org.polyfrost.oneconfig.libs")
+                remapStringsIn("com.github.benmanes.caffeine.cache.LocalCacheFactory")
+                remapStringsIn("com.github.benmanes.caffeine.cache.NodeFactory")
+            }, true)
+        }
+    }
 
-    include(libs.polyui)
+    shade(libs.polyui)
 
-    include(libs.slf4jApi)
-    include(libs.slf4jSimple)
+    shade(libs.slf4jApi)
+    shade(libs.slf4jSimple)
 
     // for other mods and universalcraft
-    include(libs.bundles.kotlin)
+    shade(libs.bundles.kotlin)
 
     if (platform.isLegacyForge) {
-        implementationNoPom(shadeNoJar(libs.mixin.get().run { "$group:$name:$version" }) {
+        shade(libs.mixin.get().run { "$group:$name:$version" }) {
             isTransitive = false
-        })
+        }
     }
-    shadeProject(project(":")) {
+    shade(project(":")) {
         isTransitive = false
     }
-    shadeProject(project(":config"))
-    shadeProject(project(":commands"))
-    shadeProject(project(":hud"))
-    shadeProject(project(":events"))
-    shadeProject(project(":config-impl"))
-    shadeProject(project(":utils")) {
+    shade(project(":config"))
+    shade(project(":commands"))
+    shade(project(":hud"))
+    shade(project(":events"))
+    shade(project(":config-impl"))
+    shade(project(":utils")) {
         isTransitive = false
     }
-    shadeProject(project(":ui")) {
+    shade(project(":ui")) {
         isTransitive = false
     }
 
     if (platform.isFabric) {
-        include(libs.fabricAsm)
+        shade(libs.fabricAsm)
     }
 
     val isLegacy = platform.isLegacyForge || platform.isLegacyFabric
     val lwjglVersion = libs.versions.lwjgl.get()
-    if(isLegacy) {
-        val cfg = configurations.create("bundledLwjgl")
-        for(dep in listOf("nanovg", "tinyfd", "stb", null)) {
-            val lwjglDep = if(dep == null) "org.lwjgl:lwjgl:$lwjglVersion" else "org.lwjgl:lwjgl-$dep:$lwjglVersion"
+    if (isLegacy) {
+        val cfg = configurations.create("lwjglBundleForLegacy")
+        for (dep in listOf("nanovg", "tinyfd", "stb", null)) {
+            val lwjglDep = if (dep == null) "org.lwjgl:lwjgl:$lwjglVersion" else "org.lwjgl:lwjgl-$dep:$lwjglVersion"
             compileOnly(cfg(lwjglDep) {
                 isTransitive = false
             })
-            for(native in natives) {
+            for (native in natives) {
                 runtimeOnly(cfg("$lwjglDep:natives-$native") {
                     isTransitive = false
                 })
             }
         }
-        shadeNoPom(implementationNoPom(prebundle(cfg, "lwjgl-legacy.jar"))!!)
+        shade(prebundle(cfg, "lwjgl-legacy.jar"))
     } else {
-        for(dep in listOf("nanovg", "tinyfd")) {
+        for (dep in listOf("nanovg", "tinyfd")) {
             val lwjglDep = "org.lwjgl:lwjgl-$dep:$lwjglVersion"
             shade(lwjglDep) {
                 isTransitive = false
             }
-            for(native in natives) {
+            for (native in natives) {
                 shade("$lwjglDep:natives-$native") {
                     isTransitive = false
                 }
@@ -190,7 +164,7 @@ dependencies {
         }
     }
 
-    if(!platform.isLegacyFabric) {
+    if (!platform.isLegacyFabric) {
         modRuntimeOnly(
             "me.djtheredstoner:DevAuth-" +
                     (if (platform.isForge) {
@@ -199,9 +173,6 @@ dependencies {
                     + ":1.1.2"
         )
     }
-
-    configurations.named(JavaPlugin.COMPILE_CLASSPATH_CONFIGURATION_NAME) { extendsFrom(shadeProject) }
-    configurations.named(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME) { extendsFrom(shadeProject) }
 }
 
 tasks {
@@ -306,7 +277,7 @@ tasks {
 
     shadowJar {
         archiveClassifier.set("full-dev")
-        configurations = listOf(shade, shadeNoPom, shadeNoJar, shadeProject, shadeRelocated, shadeOnly)
+        configurations = listOf(shade)
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
         dependsOn(jar)
     }
@@ -322,9 +293,6 @@ tasks {
     }
     jar {
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-        dependsOn(shadeNoPom, shadeProject, shadeRelocated)
-        from(ArrayList<File>().run { addAll(shadeNoPom); addAll(shadeProject); addAll(shadeRelocated); this }
-            .map { if (it.isDirectory) it else zipTree(it) })
         manifest {
             attributes(
                 if (platform.isForge) {
@@ -333,18 +301,18 @@ tasks {
                             "ModSide" to "CLIENT",
                             "ForceLoadAsMod" to true,
                             "TweakOrder" to "0",
-                            "MixinConfigs" to "mixins.oneconfig.json",
-                            "TweakClass" to "org.polyfrost.oneconfig.internal.plugin.asm.OneConfigTweaker"
+                            "MixinConfigs" to "mixins.$modId.json",
+                            "TweakClass" to tweakClass
                         )
                     } else {
                         mapOf(
-                            "MixinConfigs" to "mixins.oneconfig.json",
+                            "MixinConfigs" to "mixins.$modId.json",
                             "Specification-Title" to modId,
-                            "Specification-Vendor" to modId,
+                            "Specification-Vendor" to "Polyfrost",
                             "Specification-Version" to "1", // We are version 1 of ourselves, whatever the hell that means
                             "Implementation-Title" to modName,
                             "Implementation-Version" to project.version,
-                            "Implementation-Vendor" to modId,
+                            "Implementation-Vendor" to "Polyfrost",
                             "Implementation-Timestamp" to SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").format(`java.util`.Date())
                         )
                     }
@@ -385,8 +353,8 @@ tasks {
 
 publishing {
     publications {
-        register<MavenPublication>("oneconfig-$platform") {
-            groupId = "org.polyfrost"
+        register<MavenPublication>("$modId-$platform") {
+            groupId = group.toString()
             artifactId = base.archivesName.get()
 
             artifact(tasks["jar"])
@@ -424,85 +392,14 @@ publishing {
     }
 }
 
-fun DependencyHandlerScope.include(dependency: Any, pom: Boolean = true, mod: Boolean = false) {
-    if (platform.isForge) {
-        if (pom) {
-            shade(dependency)
-        } else {
-            shadeNoPom(dependency)
-            implementationNoPom(dependency)
-        }
-    } else {
-        if (pom) {
-            if (mod) {
-                modApi(dependency)
-            } else {
-                api(dependency)
-            }
-        } else {
-            if (mod) {
-                modImplementationNoPom(dependency)
-            } else {
-                implementationNoPom(dependency)
-            }
-        }
-        "include"(dependency)
-    }
-}
-
-fun DependencyHandlerScope.include(dependency: Provider<MinimalExternalModuleDependency>, pom: Boolean = true, mod: Boolean = false, relocate: Boolean = false, transitive: Boolean = true) {
-    include(dependency.get().run { "$group:$name:$version" }, pom, mod, relocate, transitive)
-}
-
-fun DependencyHandlerScope.include(
+fun DependencyHandlerScope.shadeMod(
     dependency: String,
-    pom: Boolean = true,
-    mod: Boolean = false,
-    relocate: Boolean = false,
     transitive: Boolean = true,
 ) {
     if (platform.isForge) {
-        if (relocate) {
-            shadeRelocated(dependency) { isTransitive = transitive }
-            implementationNoPom(dependency) { isTransitive = transitive; attributes { attribute(relocated, true) } }
-        } else {
-            if (pom) {
-                shade(dependency) { isTransitive = transitive }
-            } else {
-                shadeNoPom(dependency) { isTransitive = transitive }
-                implementationNoPom(dependency) {
-                    isTransitive = transitive
-                }
-            }
-        }
+        shade(dependency) { isTransitive = transitive }
     } else {
-        if (pom && !relocate) {
-            if (mod) {
-                modApi(dependency) { isTransitive = transitive }
-            } else {
-                api(dependency) { isTransitive = transitive }
-            }
-        } else {
-            if (mod) {
-                modImplementationNoPom(dependency) {
-                    isTransitive = transitive; if (relocate) attributes {
-                    attribute(
-                        relocated,
-                        true
-                    )
-                }
-                }
-            } else {
-                implementationNoPom(dependency) {
-                    isTransitive = transitive; if (relocate) attributes {
-                    attribute(
-                        relocated,
-                        true
-                    )
-                }
-                }
-            }
-        }
-        "include"(dependency) { isTransitive = transitive; if (relocate) attributes { attribute(relocated, true) } }
+        modApi(dependency) { isTransitive = transitive }
     }
 }
+

@@ -33,7 +33,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-@Option(display = Visualizer.ColorVisualizer.class) // todo
+@Option(display = Visualizer.ColorVisualizer.class)
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 public @interface Color {

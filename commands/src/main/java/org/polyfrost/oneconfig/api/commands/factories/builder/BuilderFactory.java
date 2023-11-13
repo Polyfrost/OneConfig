@@ -32,11 +32,11 @@ import org.polyfrost.oneconfig.api.commands.CommandTree;
 import org.polyfrost.oneconfig.api.commands.arguments.ArgumentParser;
 import org.polyfrost.oneconfig.api.commands.factories.CommandFactory;
 
-import java.util.List;
+import java.util.Map;
 
 public class BuilderFactory implements CommandFactory {
     @Override
-    public @Nullable CommandTree create(@NotNull List<ArgumentParser<?>> parsers, @NotNull Object obj) {
+    public @Nullable CommandTree create(@NotNull Map<Class<?>, ArgumentParser<?>> parsers, @NotNull Object obj) {
         if (obj instanceof CommandBuilder) {
             return ((CommandBuilder) obj).tree;
         } else {

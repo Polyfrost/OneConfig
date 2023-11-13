@@ -30,36 +30,41 @@ package org.polyfrost.oneconfig.utils;
 import org.polyfrost.oneconfig.api.events.EventManager;
 import org.polyfrost.oneconfig.api.events.event.Stage;
 import org.polyfrost.oneconfig.api.events.event.TickEvent;
-import org.polyfrost.oneconfig.api.events.invoke.impl.Subscribe;
+import org.polyfrost.oneconfig.api.events.invoke.EventHandler;
 
-/**
- * Schedules a Runnable to be called after a certain amount of ticks.
- * <p>
- * If the amount of ticks is below 1, the Runnable will be called immediately.
- */
 public class TickDelay {
-    private final Runnable function;
-    private int delay;
+    
+    private TickDelay() {}
 
-    public TickDelay(int ticks, Runnable function) {
+    /**
+     * Schedules a Runnable to be called after a certain amount of ticks.
+     * <p>
+     * If the amount of ticks is below 1, the Runnable will be called immediately.
+     */
+    public static void of(int ticks, Runnable function) {
         if (ticks < 1) {
             function.run();
         } else {
-            EventManager.INSTANCE.register(this, true);
-            delay = ticks;
-        }
-        this.function = function;
-    }
+            new EventHandler<TickEvent>() {
+                private int delay = ticks;
+                @Override
+                public void handle(TickEvent event) {
+                    if (event.stage == Stage.START) {
+                        // Delay expired
+                        if (delay < 1) {
+                            function.run();
+                            EventManager.INSTANCE.unregister(this);
+                        } else {
+                            delay--;
+                        }
+                    }
+                }
 
-    @Subscribe
-    private void onTick(TickEvent event) {
-        if (event.stage == Stage.START) {
-            // Delay expired
-            if (delay < 1) {
-                function.run();
-                EventManager.INSTANCE.unregister(this);
-            }
-            delay--;
+                @Override
+                public Class<TickEvent> getEventClass() {
+                    return TickEvent.class;
+                }
+            }.register();
         }
     }
 }

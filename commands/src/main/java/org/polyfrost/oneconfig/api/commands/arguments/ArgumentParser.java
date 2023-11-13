@@ -28,10 +28,13 @@ package org.polyfrost.oneconfig.api.commands.arguments;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * A parser for command arguments, which takes a String and returns the parsed object as the correct type.
@@ -47,14 +50,7 @@ public abstract class ArgumentParser<T> {
      */
     public abstract T parse(@NotNull String arg);
 
-    /**
-     * Check if this parser can parse the given type. <br>
-     * This type should also be the same type that is returned by {@link #parse(String)}.
-     *
-     * @param type the type to check
-     * @return true if this parser can parse the given type, false otherwise
-     */
-    public abstract boolean canParse(Class<?> type);
+    public abstract Class<T> getType();
 
     /**
      * Return a list of autocompletion options for the given argument.
@@ -73,8 +69,8 @@ public abstract class ArgumentParser<T> {
         }
 
         @Override
-        public boolean canParse(Class<?> type) {
-            return type == double.class || type == Double.class;
+        public Class<Double> getType() {
+            return Double.class;
         }
     };
 
@@ -85,8 +81,8 @@ public abstract class ArgumentParser<T> {
         }
 
         @Override
-        public boolean canParse(Class<?> type) {
-            return type == float.class || type == Float.class;
+        public Class<Float> getType() {
+            return Float.class;
         }
     };
 
@@ -97,8 +93,8 @@ public abstract class ArgumentParser<T> {
         }
 
         @Override
-        public boolean canParse(Class<?> type) {
-            return type == int.class || type == Integer.class;
+        public Class<Integer> getType() {
+            return Integer.class;
         }
     };
 
@@ -109,8 +105,8 @@ public abstract class ArgumentParser<T> {
         }
 
         @Override
-        public boolean canParse(Class<?> type) {
-            return type == long.class || type == Long.class;
+        public Class<Long> getType() {
+            return Long.class;
         }
     };
 
@@ -121,8 +117,8 @@ public abstract class ArgumentParser<T> {
         }
 
         @Override
-        public boolean canParse(Class<?> type) {
-            return type == short.class || type == Short.class;
+        public Class<Short> getType() {
+            return Short.class;
         }
     };
 
@@ -133,8 +129,8 @@ public abstract class ArgumentParser<T> {
         }
 
         @Override
-        public boolean canParse(Class<?> type) {
-            return type == byte.class || type == Byte.class;
+        public Class<Byte> getType() {
+            return Byte.class;
         }
     };
 
@@ -149,8 +145,8 @@ public abstract class ArgumentParser<T> {
         }
 
         @Override
-        public boolean canParse(Class<?> type) {
-            return type == boolean.class || type == Boolean.class;
+        public Class<Boolean> getType() {
+            return Boolean.class;
         }
 
         @Override
@@ -174,8 +170,8 @@ public abstract class ArgumentParser<T> {
         }
 
         @Override
-        public boolean canParse(Class<?> type) {
-            return type == String.class;
+        public Class<String> getType() {
+            return String.class;
         }
     };
 
@@ -186,20 +182,25 @@ public abstract class ArgumentParser<T> {
         }
 
         @Override
-        public boolean canParse(Class<?> type) {
-            return type == char.class || type == Character.class;
+        public Class<Character> getType() {
+            return Character.class;
         }
     };
 
-    public static final ArgumentParser<?>[] defaultParsers = {
-            doubleParser,
-            floatParser,
-            intParser,
-            longParser,
-            shortParser,
-            byteParser,
-            booleanParser,
-            charParser,
-            stringParser
-    };
+    @Unmodifiable
+    public static final Map<Class<?>, ArgumentParser<?>> defaultParsers;
+
+    static {
+        Map<Class<?>, ArgumentParser<?>> m = new HashMap<>();
+        m.put(Double.class, doubleParser);
+        m.put(Float.class, floatParser);
+        m.put(Integer.class, intParser);
+        m.put(Long.class, longParser);
+        m.put(Short.class, shortParser);
+        m.put(Byte.class, byteParser);
+        m.put(Boolean.class, booleanParser);
+        m.put(String.class, stringParser);
+        m.put(Character.class, charParser);
+        defaultParsers = Collections.unmodifiableMap(m);
+    }
 }

@@ -33,4 +33,4 @@ import org.polyfrost.oneconfig.utils.TickDelay
  *
  * @see TickDelay
  */
-fun tick(ticks: Int, block: () -> Unit) = TickDelay(ticks, block)
+fun tick(ticks: Int, block: () -> Unit) = TickDelay.of(ticks, block)

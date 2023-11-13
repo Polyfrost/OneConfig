@@ -36,10 +36,9 @@ import org.polyfrost.oneconfig.api.commands.factories.dsl.CommandDSL;
 import org.polyfrost.oneconfig.api.commands.factories.dsl.DSLFactory;
 import org.polyfrost.oneconfig.internal.command.PlatformCommandManager;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
+import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.Set;
 
@@ -59,7 +58,7 @@ public class CommandManager {
      * use {@link #registerParser(ArgumentParser)} to register a parser
      */
     @ApiStatus.Internal
-    public final List<ArgumentParser<?>> parsers = new ArrayList<>();
+    public final Map<Class<?>, ArgumentParser<?>> parsers = new HashMap<>();
 
     /**
      * Register a factory which can be used to create commands from objects in the {@link #create(Object)} method.
@@ -72,11 +71,17 @@ public class CommandManager {
      * Register a parser which can be used to parse arguments needed by commands.
      */
     public void registerParser(ArgumentParser<?> parser) {
-        parsers.add(parser);
+        parsers.put(parser.getType(), parser);
+    }
+
+    public void registerParser(ArgumentParser<?>... parsers) {
+        for (ArgumentParser<?> p : parsers) {
+            registerParser(p);
+        }
     }
 
     private CommandManager() {
-        Arrays.stream(ArgumentParser.defaultParsers).forEach(this::registerParser);
+        parsers.putAll(ArgumentParser.defaultParsers);
         registerFactory(new DSLFactory());
         registerFactory(new AnnotationCommandFactory());
         registerFactory(new BuilderFactory());
@@ -107,12 +112,9 @@ public class CommandManager {
 
     /**
      * Create a command from the given object
-     * <br>
-     * Marked as internal as CommandTree is internal API and should not be used directly.
      *
      * @see #create(Object)
      */
-    @ApiStatus.Internal
     public CommandTree createTree(Object obj) {
         for (CommandFactory f : factories) {
             CommandTree t = f.create(parsers, obj);

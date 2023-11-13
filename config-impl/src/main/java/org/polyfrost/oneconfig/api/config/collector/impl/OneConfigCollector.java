@@ -75,6 +75,7 @@ public class OneConfigCollector extends ReflectiveCollector {
         return tree;
     }
 
+    @SuppressWarnings("DataFlowIssue")
     @Override
     public void handleField(@NotNull Field f, @NotNull Object src, @NotNull Tree builder) {
         for (Annotation a : f.getAnnotations()) {
@@ -83,12 +84,12 @@ public class OneConfigCollector extends ReflectiveCollector {
             try {
                 // asm: use method handle as it fails NOW instead of at set time, and is faster
                 final MethodHandle setter = MHUtils.getFieldSetter(f, src);
+                Class<?> type = f.getType();
                 if (setter == null) throw new NullPointerException();
-                Property<?> p = Property.prop(f.getName(), MHUtils.getFieldGetter(f, src).invoke(), f.getType()).addCallback(v -> {
+                Property<?> p = Property.prop(f.getName(), MHUtils.getFieldGetter(f, src).invoke(), type).addCallback(v -> {
                     try {
-                        System.out.println("glSET " + f.getName() + " -> " + v);
-                        if (f.getType().isArray() && v instanceof List<?>) {
-                            setter.invoke(ObjectSerializer.unbox(v, f.getType()));
+                        if (type.isArray() && v instanceof List<?>) {
+                            setter.invoke(ObjectSerializer.unbox(v, type));
                         } else setter.invoke(v);
                     } catch (Throwable e) {
                         throw new RuntimeException("[internal failure] Failed to setback field", e);
@@ -108,8 +109,7 @@ public class OneConfigCollector extends ReflectiveCollector {
         Button b = m.getDeclaredAnnotation(Button.class);
         if (b == null) return;
         if (m.getParameterCount() != 0) throw new IllegalArgumentException("Button method " + m.getName() + " must have no parameters");
-        Property<?> p = Property.prop(m.getName() + "$synthetic", m);
-        p.addMetadata("synthetic", true);
+        Property<?> p = new Property<>(m.getName(), m, Method.class, true);
         final MethodHandle mh = MHUtils.getMethodHandle(m, src);
         assert mh != null;
         final String methodString = m.toString();

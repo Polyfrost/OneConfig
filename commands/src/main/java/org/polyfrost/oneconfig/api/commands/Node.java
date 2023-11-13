@@ -28,4 +28,8 @@ package org.polyfrost.oneconfig.api.commands;
 
 public interface Node {
     String helpString();
+
+    String[] names();
+
+    String description();
 }

@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -43,17 +44,17 @@ import java.util.function.Function;
  */
 @SuppressWarnings({"unused", "UnusedReturnValue"})
 public class CommandBuilder {
-    final List<ArgumentParser<?>> parsers;
+    final Map<Class<?>, ArgumentParser<?>> parsers;
     final CommandTree tree;
     final CommandBuilder parent;
 
-    public CommandBuilder(CommandBuilder parent, List<ArgumentParser<?>> parsers, String... aliases) {
+    public CommandBuilder(CommandBuilder parent, Map<Class<?>, ArgumentParser<?>> parsers, String... aliases) {
         this.parsers = parsers;
         this.parent = parent;
         this.tree = new CommandTree(aliases, null);
     }
 
-    public CommandBuilder(List<ArgumentParser<?>> parsers, String... aliases) {
+    public CommandBuilder(Map<Class<?>, ArgumentParser<?>> parsers, String... aliases) {
         this(null, parsers, aliases);
     }
 
@@ -87,7 +88,7 @@ public class CommandBuilder {
         return new ExeBuilder(aliases);
     }
 
-    public static CommandBuilder command(List<ArgumentParser<?>> parsers, String... aliases) {
+    public static CommandBuilder command(Map<Class<?>, ArgumentParser<?>> parsers, String... aliases) {
         return new CommandBuilder(parsers, aliases);
     }
 

@@ -24,10 +24,15 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.api.events.invoke;
+package org.polyfrost.oneconfig.api.config;
 
-import java.util.List;
+import org.junit.jupiter.api.Test;
+import org.polyfrost.oneconfig.api.config.util.ObjectSerializer;
 
-public interface EventMapper {
-    List<EventHandler<?>> map(Object object);
+
+public class ObjectSerializerTest {
+    @Test
+    void mainTest() {
+
+    }
 }
