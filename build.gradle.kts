@@ -2,9 +2,9 @@
 // are bundled with Minecraft, which are not the latest versions.
 @file:Suppress("GradlePackageUpdate", "VulnerableLibrariesLocal", "DSL_SCOPE_VIOLATION")
 
-import cc.polyfrost.gradle.multiversion.StripReferencesTransform.Companion.registerStripReferencesAttribute
-import cc.polyfrost.gradle.util.RelocationTransform.Companion.registerRelocationAttribute
-import cc.polyfrost.gradle.util.prebundle
+import org.polyfrost.gradle.multiversion.StripReferencesTransform.Companion.registerStripReferencesAttribute
+import org.polyfrost.gradle.util.RelocationTransform.Companion.registerRelocationAttribute
+import org.polyfrost.gradle.util.prebundle
 
 plugins {
     alias(libs.plugins.kotlin)
