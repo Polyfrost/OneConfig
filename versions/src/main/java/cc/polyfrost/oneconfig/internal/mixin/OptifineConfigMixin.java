@@ -26,7 +26,6 @@
 
 package cc.polyfrost.oneconfig.internal.mixin;
 
-import cc.polyfrost.oneconfig.internal.plugin.hooks.OptifineConfigHook;
 import org.spongepowered.asm.mixin.Dynamic;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
@@ -40,8 +39,18 @@ public class OptifineConfigMixin {
     @Dynamic("OptiFine")
     @Inject(method = "isFastRender", at = @At("HEAD"), cancellable = true)
     private static void cancelFastRender(CallbackInfoReturnable<Boolean> cir) {
-        if (OptifineConfigHook.shouldNotApplyFastRender()) {
-            cir.setReturnValue(false);
-        }
+        cir.setReturnValue(false);
+    }
+
+    @Dynamic("OptiFine")
+    @Inject(method = "getAntialiasingLevel", at = @At("HEAD"), cancellable = true)
+    private static void cancelAntialiasing(CallbackInfoReturnable<Integer> cir) {
+        cir.setReturnValue(0);
+    }
+
+    @Dynamic("OptiFine")
+    @Inject(method = "isAntialiasingConfigured", at = @At("HEAD"), cancellable = true)
+    private static void cancelAntialiasingConfigured(CallbackInfoReturnable<Boolean> cir) {
+        cir.setReturnValue(false);
     }
 }
