@@ -1388,6 +1388,21 @@ public final class cc/polyfrost/oneconfig/renderer/TextRenderer$TextType : java/
 }
 
 public abstract interface class cc/polyfrost/oneconfig/renderer/TinyFD {
+	public static final field ERROR_ICON Ljava/lang/String;
+	public static final field INFO_ICON Ljava/lang/String;
+	public static final field INSTANCE Lcc/polyfrost/oneconfig/renderer/TinyFD;
+	public static final field OK_CANCEL_DIALOG Ljava/lang/String;
+	public static final field OK_DIALOG Ljava/lang/String;
+	public static final field QUESTION_ICON Ljava/lang/String;
+	public static final field WARNING_ICON Ljava/lang/String;
+	public static final field YES_NO_CANCEL_DIALOG Ljava/lang/String;
+	public static final field YES_NO_DIALOG Ljava/lang/String;
+	public abstract fun openFileSelector (Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;Ljava/lang/String;)Ljava/io/File;
+	public abstract fun openFolderSelector (Ljava/lang/String;Ljava/lang/String;)Ljava/io/File;
+	public abstract fun openMultiFileSelector (Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;Ljava/lang/String;)[Ljava/io/File;
+	public abstract fun openSaveSelector (Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;Ljava/lang/String;)Ljava/io/File;
+	public abstract fun showMessageBox (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Z)Z
+	public abstract fun showNotification (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I
 }
 
 public abstract interface class cc/polyfrost/oneconfig/renderer/asset/AssetHelper {
