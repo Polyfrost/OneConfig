@@ -41,6 +41,10 @@ public abstract interface annotation class cc/polyfrost/oneconfig/config/annotat
 	public abstract fun text ()Ljava/lang/String;
 }
 
+public abstract interface annotation class cc/polyfrost/oneconfig/config/annotations/Category : java/lang/annotation/Annotation {
+	public abstract fun name ()Ljava/lang/String;
+}
+
 public abstract interface annotation class cc/polyfrost/oneconfig/config/annotations/Checkbox : java/lang/annotation/Annotation {
 	public abstract fun category ()Ljava/lang/String;
 	public abstract fun description ()Ljava/lang/String;
@@ -150,6 +154,10 @@ public abstract interface annotation class cc/polyfrost/oneconfig/config/annotat
 	public abstract fun subcategory ()Ljava/lang/String;
 }
 
+public abstract interface annotation class cc/polyfrost/oneconfig/config/annotations/SubCategory : java/lang/annotation/Annotation {
+	public abstract fun name ()Ljava/lang/String;
+}
+
 public abstract interface annotation class cc/polyfrost/oneconfig/config/annotations/Switch : java/lang/annotation/Annotation {
 	public abstract fun category ()Ljava/lang/String;
 	public abstract fun description ()Ljava/lang/String;
@@ -172,7 +180,11 @@ public abstract interface annotation class cc/polyfrost/oneconfig/config/annotat
 public class cc/polyfrost/oneconfig/config/core/ConfigUtils {
 	public fun <init> ()V
 	public static fun addOptionToPage (Lcc/polyfrost/oneconfig/config/elements/OptionPage;Lcc/polyfrost/oneconfig/internal/config/annotations/Option;Ljava/lang/reflect/Field;Ljava/lang/Object;Lcc/polyfrost/oneconfig/config/migration/Migrator;)Lcc/polyfrost/oneconfig/config/elements/BasicOption;
+	public static fun addOptionToPage (Lcc/polyfrost/oneconfig/config/elements/OptionPage;Lcc/polyfrost/oneconfig/internal/config/annotations/Option;Ljava/lang/reflect/Field;Ljava/lang/Object;Ljava/lang/String;Lcc/polyfrost/oneconfig/config/migration/Migrator;)Lcc/polyfrost/oneconfig/config/elements/BasicOption;
+	public static fun addOptionToPage (Lcc/polyfrost/oneconfig/config/elements/OptionPage;Lcc/polyfrost/oneconfig/internal/config/annotations/Option;Ljava/lang/reflect/Field;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Lcc/polyfrost/oneconfig/config/migration/Migrator;)Lcc/polyfrost/oneconfig/config/elements/BasicOption;
 	public static fun addOptionToPage (Lcc/polyfrost/oneconfig/config/elements/OptionPage;Ljava/lang/reflect/Method;Ljava/lang/Object;)Lcc/polyfrost/oneconfig/config/elements/BasicOption;
+	public static fun addOptionToPage (Lcc/polyfrost/oneconfig/config/elements/OptionPage;Ljava/lang/reflect/Method;Ljava/lang/Object;Ljava/lang/String;)Lcc/polyfrost/oneconfig/config/elements/BasicOption;
+	public static fun addOptionToPage (Lcc/polyfrost/oneconfig/config/elements/OptionPage;Ljava/lang/reflect/Method;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;)Lcc/polyfrost/oneconfig/config/elements/BasicOption;
 	public static fun check (Ljava/lang/String;Ljava/lang/reflect/Field;[Ljava/lang/Class;)V
 	public static fun findAnnotation (Lcom/google/gson/FieldAttributes;Ljava/lang/Class;)Ljava/lang/annotation/Annotation;
 	public static fun findAnnotation (Ljava/lang/Class;Ljava/lang/Class;)Ljava/lang/annotation/Annotation;
@@ -321,14 +333,14 @@ public final class cc/polyfrost/oneconfig/config/data/PageLocation : java/lang/E
 }
 
 public abstract class cc/polyfrost/oneconfig/config/elements/BasicOption {
-	public final field category Ljava/lang/String;
+	public field category Ljava/lang/String;
 	public final field description Ljava/lang/String;
 	protected final field field Ljava/lang/reflect/Field;
 	public final field name Ljava/lang/String;
 	protected field nameColor I
 	protected field parent Ljava/lang/Object;
 	public final field size I
-	public final field subcategory Ljava/lang/String;
+	public field subcategory Ljava/lang/String;
 	public fun <init> (Ljava/lang/reflect/Field;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;I)V
 	public fun addDependency (Ljava/lang/String;Ljava/util/function/Supplier;)V
 	public fun addDependency (Ljava/util/function/Supplier;)V
