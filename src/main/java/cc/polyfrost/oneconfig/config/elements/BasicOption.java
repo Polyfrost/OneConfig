@@ -139,7 +139,7 @@ public abstract class BasicOption {
     }
 
     public void drawDescription(long vg, int x, int y, InputHandler inputHandler) {
-        if (description.trim().equals("")) return;
+        if (description.trim().isEmpty() && dependencies.isEmpty()) return;
         boolean hovered = inputHandler.isAreaHovered(getNameX(x), y, NanoVGHelper.INSTANCE.getTextWidth(vg, name, 14f, Fonts.MEDIUM), 32f);
         nameColor = nameColorAnimation.getColor(hovered, false);
         if (hovered) hoverTime += GuiUtils.getDeltaTime();
