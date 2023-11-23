@@ -222,8 +222,8 @@ public class OneConfig {
                         ? null
                         : metadata.logoFile;
         if (modLogoFile != null && !isForgeContainer) {
-            if (modLogoFile.startsWith("/")) {
-                modLogoFile = modLogoFile.substring(1);
+            if (!modLogoFile.startsWith("/") || !modLogoFile.startsWith("http://") || !modLogoFile.startsWith("https://")) {
+                modLogoFile = "/" + modLogoFile;
             }
             if (!modLogoFile.startsWith("assets/")) {
                 modLogoFile = "/assets/" + modLogoFile;
