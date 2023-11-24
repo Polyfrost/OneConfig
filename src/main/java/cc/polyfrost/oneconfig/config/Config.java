@@ -322,7 +322,7 @@ public class Config {
                 }
                 if (optionPage.location() == PageLocation.TOP) pageSubcategory.topButtons.add(button);
                 else pageSubcategory.bottomButtons.add(button);
-            } else if (field.isAnnotationPresent(SubCategory.class)) {
+            } else if (field.isAnnotationPresent(SubCategory.class) && subcategory == null) {
                 SubCategory subcategoryAnnotation = field.getAnnotation(SubCategory.class);
                 String name = subcategoryAnnotation.name();
                 Object categoryInstance = ConfigUtils.getField(field, instance);
@@ -332,16 +332,6 @@ public class Config {
                     page.categories.get(category).subcategories.add((OptionSubcategory) categoryInstance);
                 } else {
                     addSubCategory(categoryInstance, categoryInstance.getClass(), page, mod, category, name, migrate);
-                }
-            } else if (field.isAnnotationPresent(Category.class)) {
-                Category categoryAnnotation = field.getAnnotation(Category.class);
-                String name = categoryAnnotation.name();
-                Object categoryInstance = ConfigUtils.getField(field, instance);
-                if (categoryInstance == null) continue;
-                if (categoryInstance instanceof OptionCategory) {
-                    page.categories.put(name, (OptionCategory) categoryInstance);
-                } else {
-                    addCategory(categoryInstance, categoryInstance.getClass(), page, mod, name, migrate);
                 }
             }
         }
