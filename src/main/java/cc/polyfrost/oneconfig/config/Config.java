@@ -219,7 +219,7 @@ public class Config {
     }
 
     /**
-     * Generate the option list, for   use only
+     * Generate the option list, for internal use only
      *
      * @param instance    instance of target class
      * @param targetClass which class to lookup into
@@ -264,17 +264,15 @@ public class Config {
                 else subcategory.bottomButtons.add(button);
             } else if (field.isAnnotationPresent(HUD.class)) {
                 HUDUtils.addHudOptions(page, field, instance, this);
-            }
-            else if(field.isAnnotationPresent(Category.class)){
+            } else if (field.isAnnotationPresent(Category.class)) {
                 Category categoryAnnotation = field.getAnnotation(Category.class);
                 String name = categoryAnnotation.name();
                 Object categoryInstance = ConfigUtils.getField(field, instance);
-                if(categoryInstance == null) continue;
-                if(categoryInstance instanceof OptionCategory) {
+                if (categoryInstance == null) continue;
+                if (categoryInstance instanceof OptionCategory) {
                     page.categories.put(name, (OptionCategory) categoryInstance);
-                }
-                else{
-                    addCategory(categoryInstance,categoryInstance.getClass(),page,mod, name,migrate);
+                } else {
+                    addCategory(categoryInstance, categoryInstance.getClass(), page, mod, name, migrate);
                 }
             }
         }
@@ -290,65 +288,11 @@ public class Config {
     }
 
 
-    private void addCategory(Object instance, Class<?> targetClass, OptionPage page, Mod mod, String category, boolean migrate){
-        logger.trace("Generating option list for {}... category (targetting={})", mod.name, targetClass.getName());
-
-        String pagePath = page.equals(mod.defaultPage) ? "" : page.name + ".";
-        for (Field field : targetClass.getDeclaredFields()) {
-            Option option = ConfigUtils.findAnnotation(field, Option.class);
-            CustomOption customOption = ConfigUtils.findAnnotation(field, CustomOption.class);
-            String optionName = pagePath + field.getName();
-            if (option != null) {
-
-                BasicOption configOption = ConfigUtils.addOptionToPage(page, option, field, instance,category, migrate ? mod.migrator : null);
-                optionNames.put(optionName, configOption);
-            } else if (customOption != null) {
-                BasicOption configOption = getCustomOption(field, customOption, page, mod, migrate);
-                if (configOption == null) continue;
-                optionNames.put(optionName, configOption);
-            } else if (field.isAnnotationPresent(Page.class)) {
-                Page optionPage = field.getAnnotation(Page.class);
-                OptionSubcategory subcategory = ConfigUtils.getSubCategory(page, category, optionPage.subcategory());
-                Object pageInstance = ConfigUtils.getField(field, instance);
-                if (pageInstance == null) continue;
-                ConfigPageButton button;
-                if (pageInstance instanceof cc.polyfrost.oneconfig.gui.pages.Page) {
-                    button = new ConfigPageButton(field, instance, optionPage.name(), optionPage.description(), category, optionPage.subcategory(), (cc.polyfrost.oneconfig.gui.pages.Page) pageInstance);
-                } else {
-                    OptionPage newPage = new OptionPage(optionPage.name(), mod);
-                    generateOptionList(pageInstance, newPage, mod, migrate);
-                    button = new ConfigPageButton(field, instance, optionPage.name(), optionPage.description(), category, optionPage.subcategory(), newPage);
-                }
-                if (optionPage.location() == PageLocation.TOP) subcategory.topButtons.add(button);
-                else subcategory.bottomButtons.add(button);
-            } else if (field.isAnnotationPresent(HUD.class)) {
-                HUDUtils.addHudOptions(page, field, instance, this);
-            } else if (field.isAnnotationPresent(SubCategory.class)){
-                SubCategory subcategoryAnnotation = field.getAnnotation(SubCategory.class);
-                String name = subcategoryAnnotation.name();
-                Object categoryInstance = ConfigUtils.getField(field, instance);
-
-                if(categoryInstance == null) continue;
-                if(categoryInstance instanceof OptionSubcategory) {
-                    page.categories.get(category).subcategories.add((OptionSubcategory) categoryInstance);
-                }
-                else{
-                    addSubCategory(categoryInstance,categoryInstance.getClass(),page,mod,category,name, migrate);
-                }
-            }
-        }
-        for (Method method : targetClass.getDeclaredMethods()) {
-            Button button = ConfigUtils.findAnnotation(method, Button.class);
-            String optionName = pagePath + method.getName();
-            if (button != null) {
-                BasicOption option = ConfigUtils.addOptionToPage(page, method, instance,category);
-                optionNames.put(optionName, option);
-            }
-        }
-        logger.trace("Finished generating option list for {} category (targetting={})", mod.name, targetClass.getName());
+    private void addCategory(Object instance, Class<?> targetClass, OptionPage page, Mod mod, String category, boolean migrate) {
+        addSubCategory(instance, targetClass, page, mod, category, null, migrate);
     }
 
-    private void addSubCategory(Object instance, Class<?> targetClass, OptionPage page, Mod mod, String category, String subcategory, boolean migrate){
+    private void addSubCategory(Object instance, Class<?> targetClass, OptionPage page, Mod mod, String category, String subcategory, boolean migrate) {
         logger.trace("Generating option list for {}... subcategory (targetting={})", mod.name, targetClass.getName());
 
         String pagePath = page.equals(mod.defaultPage) ? "" : page.name + ".";
@@ -378,8 +322,27 @@ public class Config {
                 }
                 if (optionPage.location() == PageLocation.TOP) pageSubcategory.topButtons.add(button);
                 else pageSubcategory.bottomButtons.add(button);
-            } else if (field.isAnnotationPresent(HUD.class)) {
-                HUDUtils.addHudOptions(page, field, instance, this);
+            } else if (field.isAnnotationPresent(SubCategory.class)) {
+                SubCategory subcategoryAnnotation = field.getAnnotation(SubCategory.class);
+                String name = subcategoryAnnotation.name();
+                Object categoryInstance = ConfigUtils.getField(field, instance);
+
+                if (categoryInstance == null) continue;
+                if (categoryInstance instanceof OptionSubcategory) {
+                    page.categories.get(category).subcategories.add((OptionSubcategory) categoryInstance);
+                } else {
+                    addSubCategory(categoryInstance, categoryInstance.getClass(), page, mod, category, name, migrate);
+                }
+            } else if (field.isAnnotationPresent(Category.class)) {
+                Category categoryAnnotation = field.getAnnotation(Category.class);
+                String name = categoryAnnotation.name();
+                Object categoryInstance = ConfigUtils.getField(field, instance);
+                if (categoryInstance == null) continue;
+                if (categoryInstance instanceof OptionCategory) {
+                    page.categories.put(name, (OptionCategory) categoryInstance);
+                } else {
+                    addCategory(categoryInstance, categoryInstance.getClass(), page, mod, name, migrate);
+                }
             }
         }
         for (Method method : targetClass.getDeclaredMethods()) {
@@ -583,8 +546,8 @@ public class Config {
     /**
      * Literally does nothing.
      * <p>
-     *     As configs HAVE to be initialized before your mod loader's post-init, instances need to be created before that.
-     *     Hence, this method exists so config instances which are located in the actual class instead of the main mod class can be created.
+     * As configs HAVE to be initialized before your mod loader's post-init, instances need to be created before that.
+     * Hence, this method exists so config instances which are located in the actual class instead of the main mod class can be created.
      * </p>
      * For example:
      * <pre>{@code

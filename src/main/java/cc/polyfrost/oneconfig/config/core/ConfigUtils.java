@@ -33,7 +33,18 @@ import cc.polyfrost.oneconfig.config.elements.OptionCategory;
 import cc.polyfrost.oneconfig.config.elements.OptionPage;
 import cc.polyfrost.oneconfig.config.elements.OptionSubcategory;
 import cc.polyfrost.oneconfig.config.migration.Migrator;
-import cc.polyfrost.oneconfig.gui.elements.config.*;
+import cc.polyfrost.oneconfig.gui.elements.config.ConfigButton;
+import cc.polyfrost.oneconfig.gui.elements.config.ConfigCheckbox;
+import cc.polyfrost.oneconfig.gui.elements.config.ConfigColorElement;
+import cc.polyfrost.oneconfig.gui.elements.config.ConfigDropdown;
+import cc.polyfrost.oneconfig.gui.elements.config.ConfigDualOption;
+import cc.polyfrost.oneconfig.gui.elements.config.ConfigHeader;
+import cc.polyfrost.oneconfig.gui.elements.config.ConfigInfo;
+import cc.polyfrost.oneconfig.gui.elements.config.ConfigKeyBind;
+import cc.polyfrost.oneconfig.gui.elements.config.ConfigNumber;
+import cc.polyfrost.oneconfig.gui.elements.config.ConfigSlider;
+import cc.polyfrost.oneconfig.gui.elements.config.ConfigSwitch;
+import cc.polyfrost.oneconfig.gui.elements.config.ConfigTextBox;
 import cc.polyfrost.oneconfig.internal.config.annotations.Option;
 import cc.polyfrost.oneconfig.internal.config.profiles.Profiles;
 import com.google.gson.FieldAttributes;
@@ -132,6 +143,7 @@ public class ConfigUtils {
     }
 
     public static BasicOption addOptionToPage(OptionPage page, Option option, Field field, Object instance, String category, @Nullable Migrator migrator) {
+        if (category == null) return addOptionToPage(page, option, field, instance, migrator);
         BasicOption configOption = getOption(option, field, instance);
         if (configOption == null) return null;
         configOption.category = category;
@@ -144,6 +156,7 @@ public class ConfigUtils {
     }
 
     public static BasicOption addOptionToPage(OptionPage page, Option option, Field field, Object instance, String category, String subcategory, @Nullable Migrator migrator) {
+        if (subcategory == null) return addOptionToPage(page, option, field, instance, category, migrator);
         BasicOption configOption = getOption(option, field, instance);
         if (configOption == null) return null;
         configOption.category = category;
@@ -164,6 +177,9 @@ public class ConfigUtils {
     }
 
     public static BasicOption addOptionToPage(OptionPage page, Method method, Object instance, String category) {
+        if (category == null) {
+            addOptionToPage(page, method, instance);
+        }
         BasicOption configOption = ConfigButton.create(method, instance);
         configOption.category = category;
         getSubCategory(page, category, configOption.subcategory).options.add(configOption);
@@ -171,6 +187,11 @@ public class ConfigUtils {
     }
 
     public static BasicOption addOptionToPage(OptionPage page, Method method, Object instance, String category, String subcategory) {
+
+        if (subcategory == null) {
+            addOptionToPage(page, method, instance, category);
+        }
+
         BasicOption configOption = ConfigButton.create(method, instance);
         configOption.category = category;
         configOption.subcategory = subcategory;
