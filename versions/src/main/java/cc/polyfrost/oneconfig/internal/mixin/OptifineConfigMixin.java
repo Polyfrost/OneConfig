@@ -36,21 +36,4 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Pseudo
 @Mixin(targets = "Config", remap = false)
 public class OptifineConfigMixin {
-    @Dynamic("OptiFine")
-    @Inject(method = "isFastRender", at = @At("HEAD"), cancellable = true)
-    private static void cancelFastRender(CallbackInfoReturnable<Boolean> cir) {
-        cir.setReturnValue(false);
-    }
-
-    @Dynamic("OptiFine")
-    @Inject(method = "getAntialiasingLevel", at = @At("HEAD"), cancellable = true)
-    private static void cancelAntialiasing(CallbackInfoReturnable<Integer> cir) {
-        cir.setReturnValue(0);
-    }
-
-    @Dynamic("OptiFine")
-    @Inject(method = "isAntialiasingConfigured", at = @At("HEAD"), cancellable = true)
-    private static void cancelAntialiasingConfigured(CallbackInfoReturnable<Boolean> cir) {
-        cir.setReturnValue(false);
-    }
 }
