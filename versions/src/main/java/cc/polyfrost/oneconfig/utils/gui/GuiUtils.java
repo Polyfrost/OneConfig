@@ -82,10 +82,10 @@ public final class GuiUtils {
      * @param ticks the amount of ticks to wait for before displaying the screen.
      */
     public static void displayScreen(GuiScreen screen, int ticks) {
-        Optional<GuiScreen> optional = Optional.of(screen);
+        Optional<GuiScreen> optional = screen == null ? Optional.empty() : Optional.of(screen);
         screenQueue.add(optional);
         new TickDelay(() -> {
-            UScreen.displayScreen(screen);
+            UScreen.displayScreen(optional.orElse(null));
             screenQueue.remove(optional);
         }, ticks);
     }
