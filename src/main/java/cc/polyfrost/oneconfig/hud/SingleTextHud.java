@@ -97,12 +97,12 @@ public abstract class SingleTextHud extends TextHud {
     @Override
     public void draw(UMatrixStack matrices, float x, float y, float scale, boolean example) {
         float textX = x;
-        if (brackets){
+        if (brackets) {
             drawLine("[", textX, y, bracketsColor, scale);
             textX += getLineWidth("[", scale);
         }
         drawLine(lines.get(0), textX, y, scale);
-        if (brackets){
+        if (brackets) {
             textX += getLineWidth(lines.get(0), scale);
             drawLine("]", textX, y, bracketsColor, scale);
         }
@@ -131,27 +131,29 @@ public abstract class SingleTextHud extends TextHud {
 
     @Override
     protected float getWidth(float scale, boolean example) {
-        return getLineWidth((brackets? "[" : 0) + lines.get(0) + (brackets? "]" : 0), scale);
+        if (lines == null) return 0f;
+        if (!brackets) return getLineWidth(lines.get(0), scale);
+        return getLineWidth("[" + lines.get(0) + "]", scale);
     }
 
     @Switch(
-            name = "Brackets"
+        name = "Brackets"
     )
     protected boolean brackets = false;
 
     @Color(
-            name = "Brackets Color"
+        name = "Brackets Color"
     )
     protected OneColor bracketsColor = new OneColor(0xFFFFFFFF);
 
     @Text(
-            name = "Title"
+        name = "Title"
     )
     protected String title;
 
     @Dropdown(
-            name = "Title Location",
-            options = {"Left", "Right"}
+        name = "Title Location",
+        options = {"Left", "Right"}
     )
     protected int titleLocation = 0;
 }
