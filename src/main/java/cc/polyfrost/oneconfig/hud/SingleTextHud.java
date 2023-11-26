@@ -101,14 +101,18 @@ public abstract class SingleTextHud extends TextHud {
             drawLine("[", textX, y, bracketsColor, scale);
             textX += TextRenderer.getStringWidth("[") * scale;
         }
-        drawLine(lines.get(0), textX, y, color, scale);
+        drawLine(lines.get(0), textX, y, scale);
         if (brackets){
             textX += TextRenderer.getStringWidth(lines.get(0)) * scale;
             drawLine("]", textX, y, bracketsColor, scale);
         }
     }
 
-        protected final String getCompleteText(String text) {
+    protected void drawLine(String line, float x, float y, OneColor color, float scale) {
+        TextRenderer.drawScaledString(line, x, y, color.getRGB(), TextRenderer.TextType.toType(textType), scale);
+    }
+
+    protected final String getCompleteText(String text) {
         boolean showTitle = !title.trim().isEmpty();
         StringBuilder builder = new StringBuilder();
 
