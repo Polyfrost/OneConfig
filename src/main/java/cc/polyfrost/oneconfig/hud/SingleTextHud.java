@@ -99,11 +99,11 @@ public abstract class SingleTextHud extends TextHud {
         float textX = x;
         if (brackets){
             drawLine("[", textX, y, bracketsColor, scale);
-            textX += TextRenderer.getStringWidth("[") * scale;
+            textX += getLineWidth("[", scale);
         }
         drawLine(lines.get(0), textX, y, scale);
         if (brackets){
-            textX += TextRenderer.getStringWidth(lines.get(0)) * scale;
+            textX += getLineWidth(lines.get(0), scale);
             drawLine("]", textX, y, bracketsColor, scale);
         }
     }
@@ -129,6 +129,10 @@ public abstract class SingleTextHud extends TextHud {
         return builder.toString();
     }
 
+    @Override
+    protected float getWidth(float scale, boolean example) {
+        return getLineWidth((brackets? "[" : 0) + lines.get(0) + (brackets? "]" : 0), scale);
+    }
 
     @Switch(
             name = "Brackets"
