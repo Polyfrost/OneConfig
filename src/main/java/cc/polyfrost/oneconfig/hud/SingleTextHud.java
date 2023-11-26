@@ -26,10 +26,13 @@
 
 package cc.polyfrost.oneconfig.hud;
 
+import cc.polyfrost.oneconfig.config.annotations.Color;
 import cc.polyfrost.oneconfig.config.annotations.Dropdown;
 import cc.polyfrost.oneconfig.config.annotations.Switch;
 import cc.polyfrost.oneconfig.config.annotations.Text;
 import cc.polyfrost.oneconfig.config.core.OneColor;
+import cc.polyfrost.oneconfig.libs.universal.UMatrixStack;
+import cc.polyfrost.oneconfig.renderer.TextRenderer;
 
 import java.util.List;
 
@@ -91,12 +94,27 @@ public abstract class SingleTextHud extends TextHud {
         lines.add(getCompleteText(text));
     }
 
+    @Override
+    public void draw(UMatrixStack matrices, float x, float y, float scale, boolean example) {
+        float textX = x;
+        if (brackets){
+            drawLine("[", textX, y, bracketsColor, scale);
+            textX += TextRenderer.getStringWidth("[") * scale;
+        }
+        drawLine(lines.get(0), textX, y, scale);
+        if (brackets){
+            textX += TextRenderer.getStringWidth(lines.get(0)) * scale;
+            drawLine("]", textX, y, bracketsColor, scale);
+        }
+    }
+
+    protected void drawLine(String line, float x, float y, OneColor color, float scale) {
+        TextRenderer.drawScaledString(line, x, y, color.getRGB(), TextRenderer.TextType.toType(textType), scale);
+    }
+
     protected final String getCompleteText(String text) {
         boolean showTitle = !title.trim().isEmpty();
         StringBuilder builder = new StringBuilder();
-        if (brackets) {
-            builder.append("[");
-        }
 
         if (showTitle && titleLocation == 0) {
             builder.append(title).append(": ");
@@ -108,9 +126,6 @@ public abstract class SingleTextHud extends TextHud {
             builder.append(" ").append(title);
         }
 
-        if (brackets) {
-            builder.append("]");
-        }
         return builder.toString();
     }
 
@@ -119,6 +134,11 @@ public abstract class SingleTextHud extends TextHud {
             name = "Brackets"
     )
     protected boolean brackets = false;
+
+    @Color(
+            name = "Brackets Color"
+    )
+    protected OneColor bracketsColor = new OneColor(0xFFFFFFFF);
 
     @Text(
             name = "Title"

@@ -60,6 +60,10 @@ public class TextRenderer {
         return yes;
     }
 
+    public static float getStringWidth(String text){
+        return Platform.getGLPlatform().getStringWidth(text);
+    }
+
     public static void drawScaledString(String text, float x, float y, int color, TextType type, float scale) {
         UGraphics.GL.pushMatrix();
         UGraphics.GL.scale(scale, scale, 1);

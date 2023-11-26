@@ -1121,11 +1121,14 @@ public final class cc/polyfrost/oneconfig/hud/Position$AnchorPosition : java/lan
 
 public abstract class cc/polyfrost/oneconfig/hud/SingleTextHud : cc/polyfrost/oneconfig/hud/TextHud {
 	protected field brackets Z
+	protected field bracketsColor Lcc/polyfrost/oneconfig/config/core/OneColor;
 	protected field title Ljava/lang/String;
 	protected field titleLocation I
 	public fun <init> (Ljava/lang/String;Z)V
 	public fun <init> (Ljava/lang/String;ZFFFZZFFFLcc/polyfrost/oneconfig/config/core/OneColor;ZFLcc/polyfrost/oneconfig/config/core/OneColor;)V
 	public fun <init> (Ljava/lang/String;ZII)V
+	public fun draw (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;FFFZ)V
+	protected fun drawLine (Ljava/lang/String;FFLcc/polyfrost/oneconfig/config/core/OneColor;F)V
 	protected final fun getCompleteText (Ljava/lang/String;)Ljava/lang/String;
 	protected fun getLines (Ljava/util/List;Z)V
 	protected fun getLinesFrequent (Ljava/util/List;Z)V
@@ -1363,6 +1366,7 @@ public class cc/polyfrost/oneconfig/renderer/TextRenderer {
 	public fun <init> ()V
 	public static fun drawBorderedText (Ljava/lang/String;FFII)I
 	public static fun drawScaledString (Ljava/lang/String;FFILcc/polyfrost/oneconfig/renderer/TextRenderer$TextType;F)V
+	public static fun getStringWidth (Ljava/lang/String;)F
 	public static fun isDrawingTextBorder ()Z
 }
 
