@@ -90,7 +90,7 @@ public abstract class TextHud extends BasicHud {
 
         float textY = y;
         for (String line : lines) {
-            drawLine(line, x, textY, scale);
+            drawLine(line, x, textY, color, scale);
             textY += 12 * scale;
         }
     }
@@ -103,7 +103,7 @@ public abstract class TextHud extends BasicHud {
      * @param y     The Y coordinate
      * @param scale The scale
      */
-    protected void drawLine(String line, float x, float y, float scale) {
+    protected void drawLine(String line, float x, float y, OneColor color, float scale) {
         TextRenderer.drawScaledString(line, x, y, color.getRGB(), TextRenderer.TextType.toType(textType), scale);
     }
 
