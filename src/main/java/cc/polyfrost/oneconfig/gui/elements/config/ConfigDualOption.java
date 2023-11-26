@@ -82,7 +82,6 @@ public class ConfigDualOption extends BasicOption {
         nanoVGHelper.setAlpha(vg, 1);
         if ((hoveredLeft && toggled || hoveredRight && !toggled) && inputHandler.isClicked()) {
             toggled = !toggled;
-            posAnimation = new EaseOutExpo(300, 228, 356, !toggled);
             try {
                 set(toggled);
             } catch (IllegalAccessException e) {
@@ -90,5 +89,6 @@ public class ConfigDualOption extends BasicOption {
                 e.printStackTrace();
             }
         }
+        if (toggled == posAnimation.isReversed()) posAnimation = new EaseOutExpo(300, 228, 356, !toggled);
     }
 }

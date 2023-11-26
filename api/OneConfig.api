@@ -1134,6 +1134,7 @@ public abstract class cc/polyfrost/oneconfig/hud/SingleTextHud : cc/polyfrost/on
 	protected fun getLinesFrequent (Ljava/util/List;Z)V
 	protected abstract fun getText (Z)Ljava/lang/String;
 	protected fun getTextFrequent (Z)Ljava/lang/String;
+	protected fun getWidth (FZ)F
 }
 
 public abstract class cc/polyfrost/oneconfig/hud/TextHud : cc/polyfrost/oneconfig/hud/BasicHud {
