@@ -44,6 +44,8 @@ public @interface Slider {
 
     float max();
 
+    float size() default 1;
+
     int step() default 0;
 
     String description() default "";

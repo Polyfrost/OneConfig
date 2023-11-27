@@ -37,6 +37,7 @@ import cc.polyfrost.oneconfig.gui.elements.IFocusable;
 import cc.polyfrost.oneconfig.gui.elements.text.NumberInputField;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.internal.config.Preferences;
+import cc.polyfrost.oneconfig.libs.universal.UMath;
 import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
@@ -57,7 +58,9 @@ public class ConfigSlider extends BasicOption implements IFocusable {
     private static final float TOUCH_TARGET_DRAG = 10;
 
     private final NumberInputField inputField;
-    private final float min, max;
+    private final float min;
+    private final float max;
+    private float sizedWidth;
     private final int step;
     private final boolean instant;
     private boolean isFloat = true;
@@ -69,14 +72,15 @@ public class ConfigSlider extends BasicOption implements IFocusable {
     private boolean animReset;
     private float lastX = -1;
 
-    public ConfigSlider(Field field, Object parent, String name, String description, String category, String subcategory, float min, float max, int step) {
-        this(field, parent, name, description, category, subcategory, min, max, step, false);
+    public ConfigSlider(Field field, Object parent, String name, String description, String category, String subcategory, float min, float max, float size, int step) {
+        this(field, parent, name, description, category, subcategory, min, max, size, step, false);
     }
 
-    public ConfigSlider(Field field, Object parent, String name, String description, String category, String subcategory, float min, float max, int step, boolean instant) {
+    public ConfigSlider(Field field, Object parent, String name, String description, String category, String subcategory, float min, float max, float size, int step, boolean instant) {
         super(field, parent, name, description, category, subcategory, 2);
         this.min = min;
         this.max = max;
+        this.sizedWidth = 512 * MathUtils.clamp(size, 0.1f, 1f);
         this.step = step;
         this.instant = instant;
         this.inputField = new NumberInputField(84, 32, 0, min, max, step == 0 ? 1 : step);
@@ -87,7 +91,7 @@ public class ConfigSlider extends BasicOption implements IFocusable {
 
     public static ConfigSlider create(Field field, Object parent) {
         Slider slider = field.getAnnotation(Slider.class);
-        return new ConfigSlider(field, parent, slider.name(), slider.description(), slider.category(), slider.subcategory(), slider.min(), slider.max(), slider.step(), slider.instant());
+        return new ConfigSlider(field, parent, slider.name(), slider.description(), slider.category(), slider.subcategory(), slider.min(), slider.max(), slider.size(), slider.step(), slider.instant());
     }
 
     @Override
@@ -95,7 +99,7 @@ public class ConfigSlider extends BasicOption implements IFocusable {
         final NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
         int xCoordinate = 0;
         float value = 0;
-        boolean hovered = inputHandler.isAreaHovered(x + 352, y, 512, 32) && isEnabled();
+        boolean hovered = inputHandler.isAreaHovered(x + 352, y, sizedWidth, 32) && isEnabled();
 
         inputField.disable(!isEnabled());
         if (!isEnabled()) nanoVGHelper.setAlpha(vg, 0.5f);
@@ -105,18 +109,18 @@ public class ConfigSlider extends BasicOption implements IFocusable {
         boolean startedDragging = !mouseWasDown && isMouseDown;
         mouseWasDown = isMouseDown;
         if (dragging) {
-            xCoordinate = (int) MathUtils.clamp(inputHandler.mouseX(), x + 352, x + 864);
+            xCoordinate = (int) MathUtils.clamp(inputHandler.mouseX(), x + 352, x + 352 + sizedWidth);
             if (step > 0) xCoordinate = getStepCoordinate(xCoordinate, x);
-            value = MathUtils.map(xCoordinate, x + 352, x + 864, min, max);
+            value = MathUtils.map(xCoordinate, x + 352, x + 352 + sizedWidth, min, max);
         } else if (inputField.isToggled() || inputField.arrowsClicked()) {
             value = inputField.getCurrentValue();
-            xCoordinate = (int) MathUtils.clamp(MathUtils.map(value, min, max, x + 352, x + 864), x + 352, x + 864);
+            xCoordinate = (int) MathUtils.clamp(MathUtils.map(value, min, max, x + 352, x + 352 + sizedWidth), x + 352, x + 352 + sizedWidth);
         }
         if (dragging && inputHandler.isClicked() || inputField.isToggled() || inputField.arrowsClicked()) {
             dragging = false;
             if (step > 0) {
                 xCoordinate = getStepCoordinate(xCoordinate, x);
-                value = MathUtils.map(xCoordinate, x + 352, x + 864, min, max);
+                value = MathUtils.map(xCoordinate, x + 352, x + 352 + sizedWidth, min, max);
             }
             setValue(value);
         } else if (dragging && instant) {
@@ -150,7 +154,7 @@ public class ConfigSlider extends BasicOption implements IFocusable {
                     isFloat = false;
                 if (isFloat) value = (float) object;
                 else value = (int) object;
-                xCoordinate = (int) MathUtils.clamp(MathUtils.map(value, min, max, x + 352, x + 864), x + 352, x + 864);
+                xCoordinate = (int) MathUtils.clamp(MathUtils.map(value, min, max, x + 352, x + 352 + sizedWidth), x + 352, x + 352 + sizedWidth);
             } catch (IllegalAccessException ignored) {
             }
         }
@@ -175,12 +179,12 @@ public class ConfigSlider extends BasicOption implements IFocusable {
         }
 
         nanoVGHelper.drawText(vg, name, x, y + 17, nameColor, 14f, Fonts.MEDIUM);
-        nanoVGHelper.drawRoundedRect(vg, x + 352, y + 13, 512, 4, Colors.GRAY_300, radius);
+        nanoVGHelper.drawRoundedRect(vg, x + 352, y + 13, sizedWidth, 4, Colors.GRAY_300, radius);
         nanoVGHelper.drawRoundedRect(vg, x + 352, y + 13 - 1, xCoordinate - x - 352, 6, Colors.PRIMARY_500, 4f);
 
         if (step > 0 && stepPercent > 0.05f) {
             float stepOffset = stepPercent * 16;
-            for (float i = x + 354; i <= x + 864; i += 512 / ((max - min) / step)) {
+            for (float i = x + 354; i <= x + 352 + sizedWidth; i += sizedWidth / ((max - min) / step)) {
                 int color = xCoordinate > i - 2 ? Colors.PRIMARY_500 : Colors.GRAY_300;
                 nanoVGHelper.drawRoundedRect(vg, i - 2, y + 16 - 1 - (stepOffset / 2f), 4, stepOffset, color, 2f);
             }
@@ -191,13 +195,13 @@ public class ConfigSlider extends BasicOption implements IFocusable {
             nanoVGHelper.drawRoundedRect(vg, xCoordinate - (TOUCH_TARGET_HOVER / 2 * targetPercent), y + 16 - (TOUCH_TARGET_HOVER / 2 * targetPercent), TOUCH_TARGET_HOVER * targetPercent, TOUCH_TARGET_HOVER * targetPercent, Colors.PRIMARY_500, 12f);
         }
 
-        inputField.draw(vg, x + 892, y, inputHandler);
+        inputField.draw(vg, x + 380 + sizedWidth, y, inputHandler);
         nanoVGHelper.setAlpha(vg, 1f);
     }
 
     private int getStepCoordinate(int xCoordinate, int x) {
         Integer nearest = null;
-        for (float i = x + 352; i <= x + 864; i += 512 / ((max - min) / step)) {
+        for (float i = x + 352; i <= x + 352 + sizedWidth; i += sizedWidth / ((max - min) / step)) {
             if (nearest == null || Math.abs(xCoordinate - i) < Math.abs(xCoordinate - nearest))
                 nearest = (int) i;
         }
