@@ -37,7 +37,6 @@ import cc.polyfrost.oneconfig.gui.elements.IFocusable;
 import cc.polyfrost.oneconfig.gui.elements.text.NumberInputField;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.internal.config.Preferences;
-import cc.polyfrost.oneconfig.libs.universal.UMath;
 import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
@@ -58,9 +57,7 @@ public class ConfigSlider extends BasicOption implements IFocusable {
     private static final float TOUCH_TARGET_DRAG = 10;
 
     private final NumberInputField inputField;
-    private final float min;
-    private final float max;
-    private float sizedWidth;
+    private final float min, max, sizedWidth;
     private final int step;
     private final boolean instant;
     private boolean isFloat = true;
