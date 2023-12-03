@@ -462,7 +462,7 @@ public class ColorSelector {
             cursorY = (1 - (color.getBrightness() / 100f)) * 200;
             alphaSlider = new ColorSlider(200, 0, 255, 255 - color.getAlpha(), Colors.TRANSPARENT, color.getRGBMax(true));
             if (color.getDataBit() == -1) color.setChromaSpeed(30);
-            speedSlider.setValue(30 - color.getDataBit());
+            speedSlider.setValueInverted(color.getDataBit());
             if (!hasAlpha) alphaSlider.disable(true);
         }
 
@@ -477,8 +477,8 @@ public class ColorSelector {
 
             if (alphaSlider.isDragging() || speedSlider.isDragging()) {
                 color.setHSBA(color.getHue(), color.getSaturation(), color.getBrightness(), (int) alphaSlider.getValueInverted());
-                color.setChromaSpeed(Math.round(Math.abs(speedSlider.getValue() - 31)));
-                speedSlider.setValue(color.getDataBit());
+                color.setChromaSpeed(Math.round(speedSlider.getValueInverted()));
+//                speedSlider.setValueInverted(color.getDataBit());
             }
             colorInput.onColorChanged();
 
@@ -502,7 +502,7 @@ public class ColorSelector {
             cursorY = (1 - (color.getBrightness() / 100f)) * 200;
             alphaSlider.setValueInverted(color.getAlpha());
             alphaSlider.setGradient(color.getRGBNoAlpha(), Colors.TRANSPARENT);
-            speedSlider.setValue(color.getDataBit());
+            speedSlider.setValueInverted(color.getDataBit());
         }
     }
 
