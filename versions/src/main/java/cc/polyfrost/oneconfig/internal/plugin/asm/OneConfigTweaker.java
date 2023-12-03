@@ -84,7 +84,20 @@ public class OneConfigTweaker implements ITweaker {
                                         } catch (Exception ignored) {
                                             // if it fails i *think* we can just ignore it
                                         }
-                                        MixinBootstrap.getPlatform().addContainer(uri);
+                                        try {
+                                            MixinBootstrap.getPlatform().addContainer(uri);
+                                        } catch (Exception ignore) {
+                                            // fuck you essential
+                                            try {
+                                                Class<?> containerClass = Class.forName("org.spongepowered.asm.launch.platform.container.IContainerHandle");
+                                                Class<?> urlContainerClass = Class.forName("org.spongepowered.asm.launch.platform.container.ContainerHandleURI");
+                                                Object container = urlContainerClass.getConstructor(URI.class).newInstance(uri);
+                                                MixinBootstrap.getPlatform().getClass().getDeclaredMethod("addContainer", containerClass).invoke(MixinBootstrap.getPlatform(), container);
+                                            } catch (Exception e) {
+                                                e.printStackTrace();
+                                                throw new RuntimeException("OneConfig's Mixin loading failed. Please contact https://polyfrost.cc/discord to resolve this issue!");
+                                            }
+                                        }
                                     } catch (Exception ignored) {
 
                                     }

@@ -78,18 +78,20 @@ public class ConfigSwitch extends BasicOption {
 
         if (inputHandler.isAreaClicked(x, y, 42, 32) && isEnabled()) {
             toggled = !toggled;
-            if (Preferences.toggleSwitchBounce) {
-                animation = new EaseOutBump(200, 0, 1, !toggled);
-            } else {
-                animation = new EaseInOutQuad(150, 0, 1, !toggled);
-            }
-            color.setPalette(toggled ? ColorPalette.PRIMARY : ColorPalette.SECONDARY);
             try {
                 set(toggled);
             } catch (IllegalAccessException e) {
                 System.err.println("failed to write config value: class=" + this + " fieldWatching=" + field + " valueWrite=" + toggled);
                 e.printStackTrace();
             }
+        }
+        if (toggled == animation.isReversed()) {
+            if (Preferences.toggleSwitchBounce) {
+                animation = new EaseOutBump(200, 0, 1, !toggled);
+            } else {
+                animation = new EaseInOutQuad(150, 0, 1, !toggled);
+            }
+            color.setPalette(toggled ? ColorPalette.PRIMARY : ColorPalette.SECONDARY);
         }
         nanoVGHelper.setAlpha(vg, 1f);
     }

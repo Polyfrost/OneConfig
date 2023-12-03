@@ -117,7 +117,11 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
             FontHelper.INSTANCE.initialize(vg);
         }
 
-        Platform.getGLPlatform().enableStencil();
+        try {
+            Platform.getGLPlatform().enableStencil();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
         UGraphics.disableAlpha();
 
@@ -354,7 +358,6 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
         nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
         NVGColor nvgColor = color(vg, color);
         nvgText(vg, x, y, text);
-        nvgFill(vg);
         nvgColor.free();
     }
 
@@ -367,7 +370,6 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
         nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE); // Align top because center is weird with wrapping
         NVGColor nvgColor = color(vg, color);
         nvgTextBox(vg, x, y, width, text);
-        nvgFill(vg);
         nvgColor.free();
     }
 
@@ -393,7 +395,6 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
         nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE); // Align top because center is weird with wrapping
         NVGColor nvgColor = color(vg, color);
         nvgTextBox(vg, x, y, width, text);
-        nvgFill(vg);
         nvgColor.free();
     }
 

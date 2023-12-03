@@ -33,6 +33,7 @@ import cc.polyfrost.oneconfig.internal.config.core.ConfigCore;
 import cc.polyfrost.oneconfig.libs.universal.ChatColor;
 import cc.polyfrost.oneconfig.platform.Platform;
 import gg.essential.vigilance.Vigilant;
+import kotlin.text.StringsKt;
 
 import java.io.File;
 
@@ -41,6 +42,7 @@ public class VigilantHook {
     public static VigilanceConfig returnNewConfig(Vigilant vigilant, File file) {
         if (vigilant != null && Platform.getInstance().isCallingFromMinecraftThread()) {
             String name = !vigilant.getGuiTitle().equals("Settings") ? vigilant.getGuiTitle() : !Platform.getLoaderPlatform().hasActiveModContainer() ? "Unknown" : Platform.getLoaderPlatform().getActiveModContainer().name;
+            if (StringsKt.isBlank(name)) return null;
             if (name.equals("OneConfig")) name = "Essential";
             if (name.equals("Patcher")) return null;
             String finalName = ChatColor.Companion.stripControlCodes(name);

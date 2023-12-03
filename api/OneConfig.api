@@ -142,6 +142,7 @@ public abstract interface annotation class cc/polyfrost/oneconfig/config/annotat
 public abstract interface annotation class cc/polyfrost/oneconfig/config/annotations/Slider : java/lang/annotation/Annotation {
 	public abstract fun category ()Ljava/lang/String;
 	public abstract fun description ()Ljava/lang/String;
+	public abstract fun instant ()Z
 	public abstract fun max ()F
 	public abstract fun min ()F
 	public abstract fun name ()Ljava/lang/String;
@@ -922,6 +923,7 @@ public class cc/polyfrost/oneconfig/gui/elements/config/ConfigPageButton : cc/po
 
 public class cc/polyfrost/oneconfig/gui/elements/config/ConfigSlider : cc/polyfrost/oneconfig/config/elements/BasicOption, cc/polyfrost/oneconfig/gui/elements/IFocusable {
 	public fun <init> (Ljava/lang/reflect/Field;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;FFI)V
+	public fun <init> (Ljava/lang/reflect/Field;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;FFIZ)V
 	public static fun create (Ljava/lang/reflect/Field;Ljava/lang/Object;)Lcc/polyfrost/oneconfig/gui/elements/config/ConfigSlider;
 	public fun draw (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
 	public fun getHeight ()I
@@ -1148,16 +1150,20 @@ public final class cc/polyfrost/oneconfig/hud/Position$AnchorPosition : java/lan
 
 public abstract class cc/polyfrost/oneconfig/hud/SingleTextHud : cc/polyfrost/oneconfig/hud/TextHud {
 	protected field brackets Z
+	protected field bracketsColor Lcc/polyfrost/oneconfig/config/core/OneColor;
 	protected field title Ljava/lang/String;
 	protected field titleLocation I
 	public fun <init> (Ljava/lang/String;Z)V
 	public fun <init> (Ljava/lang/String;ZFFFZZFFFLcc/polyfrost/oneconfig/config/core/OneColor;ZFLcc/polyfrost/oneconfig/config/core/OneColor;)V
 	public fun <init> (Ljava/lang/String;ZII)V
+	public fun draw (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;FFFZ)V
+	protected fun drawLine (Ljava/lang/String;FFLcc/polyfrost/oneconfig/config/core/OneColor;F)V
 	protected final fun getCompleteText (Ljava/lang/String;)Ljava/lang/String;
 	protected fun getLines (Ljava/util/List;Z)V
 	protected fun getLinesFrequent (Ljava/util/List;Z)V
 	protected abstract fun getText (Z)Ljava/lang/String;
 	protected fun getTextFrequent (Z)Ljava/lang/String;
+	protected fun getWidth (FZ)F
 }
 
 public abstract class cc/polyfrost/oneconfig/hud/TextHud : cc/polyfrost/oneconfig/hud/BasicHud {
@@ -1403,6 +1409,7 @@ public class cc/polyfrost/oneconfig/renderer/TextRenderer {
 	public fun <init> ()V
 	public static fun drawBorderedText (Ljava/lang/String;FFII)I
 	public static fun drawScaledString (Ljava/lang/String;FFILcc/polyfrost/oneconfig/renderer/TextRenderer$TextType;F)V
+	public static fun getStringWidth (Ljava/lang/String;)F
 	public static fun isDrawingTextBorder ()Z
 }
 
@@ -1416,6 +1423,21 @@ public final class cc/polyfrost/oneconfig/renderer/TextRenderer$TextType : java/
 }
 
 public abstract interface class cc/polyfrost/oneconfig/renderer/TinyFD {
+	public static final field ERROR_ICON Ljava/lang/String;
+	public static final field INFO_ICON Ljava/lang/String;
+	public static final field INSTANCE Lcc/polyfrost/oneconfig/renderer/TinyFD;
+	public static final field OK_CANCEL_DIALOG Ljava/lang/String;
+	public static final field OK_DIALOG Ljava/lang/String;
+	public static final field QUESTION_ICON Ljava/lang/String;
+	public static final field WARNING_ICON Ljava/lang/String;
+	public static final field YES_NO_CANCEL_DIALOG Ljava/lang/String;
+	public static final field YES_NO_DIALOG Ljava/lang/String;
+	public abstract fun openFileSelector (Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;Ljava/lang/String;)Ljava/io/File;
+	public abstract fun openFolderSelector (Ljava/lang/String;Ljava/lang/String;)Ljava/io/File;
+	public abstract fun openMultiFileSelector (Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;Ljava/lang/String;)[Ljava/io/File;
+	public abstract fun openSaveSelector (Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;Ljava/lang/String;)Ljava/io/File;
+	public abstract fun showMessageBox (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Z)Z
+	public abstract fun showNotification (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I
 }
 
 public abstract interface class cc/polyfrost/oneconfig/renderer/asset/AssetHelper {
