@@ -538,7 +538,7 @@ public class ColorSelector {
             if (img) {
                 NanoVGHelper.INSTANCE.drawRoundImage(vg, Images.HUE_GRADIENT.filePath, x + 1, y + 1, width - 2, height - 2, 8f);
             } else {
-                NanoVGHelper.INSTANCE.drawRoundImage(vg, Images.ALPHA_GRID, x + 1, y + 1, width - 2, height - 2, 8f);
+                NanoVGHelper.INSTANCE.drawRoundImage(vg, Images.VERTICAL_ALPHA_GRID, x + 1, y + 1, width - 2, height - 2, 8f);
                 NanoVGHelper.INSTANCE.drawGradientRoundedRect(vg, x, y, width, height, gradColorStart, gradColorEnd, 8f, NanoVGHelper.GradientDirection.DOWN);
             }
             // I actually hate this
