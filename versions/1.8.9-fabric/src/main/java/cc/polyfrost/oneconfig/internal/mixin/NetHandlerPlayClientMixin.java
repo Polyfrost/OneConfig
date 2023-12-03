@@ -53,8 +53,9 @@ public class NetHandlerPlayClientMixin {
 
     @Inject(method = "onChatMessage", at = @At(value = "INVOKE", target = TARGET), cancellable = true)
     private void onClientChat(ChatMessageS2CPacket packet, CallbackInfo ci) {
-        if (oneconfig$event.isCancelled) {
+        if (oneconfig$event != null && oneconfig$event.isCancelled) {
             ci.cancel();
+            oneconfig$event = null;
         }
     }
 
