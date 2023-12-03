@@ -72,7 +72,6 @@ public class ConfigCheckbox extends BasicOption {
         boolean clicked = inputHandler.isClicked() && hover;
         if (clicked && isEnabled()) {
             toggled = !toggled;
-            animation = new EaseInOutQuad(100, 0, 1, !toggled);
             try {
                 set(toggled);
             } catch (IllegalAccessException e) {
@@ -80,6 +79,7 @@ public class ConfigCheckbox extends BasicOption {
                 e.printStackTrace();
             }
         }
+        if (toggled == animation.isReversed()) animation = new EaseInOutQuad(100, 0, 1, !toggled);
         float percentOn = animation.get();
 
         nanoVGHelper.drawText(vg, name, x + 32, y + 17, nameColor, 14f, Fonts.MEDIUM);

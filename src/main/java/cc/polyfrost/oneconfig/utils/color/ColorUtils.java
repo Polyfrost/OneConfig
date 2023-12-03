@@ -109,6 +109,14 @@ public final class ColorUtils {
     }
 
     /**
+     * Return the RGBA color from the given bytes (0-255)
+     * @return the color
+     */
+    public static int getColor(byte red, byte green, byte blue, byte alpha) {
+        return getColor((red & 0xFF), (green & 0xFF), (blue & 0xFF), (alpha & 0xFF));
+    }
+
+    /**
      * Return the color with the given red component.
      *
      * @param color the color.

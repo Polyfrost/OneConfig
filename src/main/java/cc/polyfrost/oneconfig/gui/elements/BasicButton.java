@@ -58,7 +58,7 @@ public class BasicButton extends BasicElement {
     private Page page;
     private Runnable runnable;
 
-    public BasicButton(int width, int size, String text, SVG icon1, SVG icon2, int align, @NotNull ColorPalette colorPalette) {
+    public BasicButton(int width, int size, int iconSize, int xSpacing, int xPadding, String text, SVG icon1, SVG icon2, int align, @NotNull ColorPalette colorPalette) {
         super(width, 32, colorPalette, true);
         if (text != null) this.text = text;
         if (icon1 != null) this.icon1 = icon1;
@@ -66,14 +66,16 @@ public class BasicButton extends BasicElement {
         this.colorPalette = colorPalette;
         this.alignment = align;
         this.cornerRadius = size == SIZE_48 ? 14f : 10f; // radius was originally 16f and 12f respectively, decreased both by two.
-                                                         // SIZE_48 doesn't seem to be used anywhere, so I'm not sure if this is correct.
-        this.xSpacing = size == SIZE_48 ? 12 : 8;
-        if (size == SIZE_36 || size == SIZE_40) {
-            this.xPadding = 16;
-        } else this.xPadding = size == SIZE_48 ? 20 : 12;
+        // SIZE_48 doesn't seem to be used anywhere, so I'm not sure if this is correct.
+        this.xSpacing = xSpacing;
+        this.xPadding = xPadding;
         this.height = size;
-        this.iconSize = this.height / 2;
+        this.iconSize = iconSize;
         this.fontSize = size == SIZE_48 ? 20 : (float) (size / 2 - 4);
+    }
+
+    public BasicButton(int width, int size, String text, SVG icon1, SVG icon2, int align, @NotNull ColorPalette colorPalette) {
+        this(width, size, size / 2, size == SIZE_48 ? 12 : 8, (size == SIZE_36 || size == SIZE_40) ? 16 : size == SIZE_48 ? 20 : 12, text, icon1, icon2, align, colorPalette);
     }
 
     public BasicButton(int width, int size, SVG icon, int align, @NotNull ColorPalette colorPalette) {
@@ -108,7 +110,7 @@ public class BasicButton extends BasicElement {
         }
         if (alignment == ALIGNMENT_CENTER) {
             if (icon1 != null && icon2 == null && text == null) {
-                nanoVGHelper.drawSvg(vg, icon1, middle - iconSize / 2f, middleYIcon, iconSize, iconSize, color);
+                drawIcon(vg, icon1, middle - iconSize / 2f, middleYIcon, iconSize, iconSize, color);
             } else {
                 if (icon1 != null)
                     contentWidth += iconSize + xSpacing;
@@ -117,35 +119,43 @@ public class BasicButton extends BasicElement {
                 if (text != null)
                     nanoVGHelper.drawText(vg, text, middle - contentWidth / 2 + (icon1 == null ? 0 : iconSize + xSpacing), middleYText, color, fontSize, Fonts.MEDIUM);
                 if (icon1 != null)
-                    nanoVGHelper.drawSvg(vg, icon1, middle - contentWidth / 2, middleYIcon, iconSize, iconSize, color);
+                    drawIcon(vg, icon1, middle - contentWidth / 2, middleYIcon, iconSize, iconSize, color);
                 if (icon2 != null)
-                    nanoVGHelper.drawSvg(vg, icon2, middle + contentWidth / 2 - iconSize, middleYIcon, iconSize, iconSize, color);
+                    drawIcon(vg, icon2, middle + contentWidth / 2 - iconSize, middleYIcon, iconSize, iconSize, color);
             }
         } else if (alignment == ALIGNMENT_JUSTIFIED) {
             if (text != null)
                 nanoVGHelper.drawText(vg, text, middle - contentWidth / 2, middleYText, color, fontSize, Fonts.MEDIUM);
             if (icon1 != null)
-                nanoVGHelper.drawSvg(vg, icon1, x + xPadding, middleYIcon, iconSize, iconSize, color);
+                drawIcon(vg, icon1, x + xPadding, middleYIcon, iconSize, iconSize, color);
             if (icon2 != null)
-                nanoVGHelper.drawSvg(vg, icon2, x + width - xPadding - iconSize, middleYIcon, iconSize, iconSize, color);
+                drawIcon(vg, icon2, x + width - xPadding - iconSize, middleYIcon, iconSize, iconSize, color);
         } else if (alignment == ALIGNMENT_LEFT) {
             contentWidth = xPadding;
             if (icon1 != null) {
-                nanoVGHelper.drawSvg(vg, icon1, x + contentWidth, middleYIcon, iconSize, iconSize, color);
+                drawIcon(vg, icon1, x + contentWidth, middleYIcon, iconSize, iconSize, color);
                 contentWidth += iconSize + xSpacing;
             }
             if (text != null) {
                 nanoVGHelper.drawText(vg, text, x + contentWidth, middleYText, color, fontSize, Fonts.MEDIUM);
             }
             if (icon2 != null)
-                nanoVGHelper.drawSvg(vg, icon2, x + width - xPadding - iconSize, middleYIcon, iconSize, iconSize, color);
+                drawIcon(vg, icon2, x + width - xPadding - iconSize, middleYIcon, iconSize, iconSize, color);
         }
         if (disabled) nanoVGHelper.setAlpha(vg, 1f);
     }
 
+    /**
+     * Override this method to perform transformations on the icon before it is drawn. <br>
+     * Make sure to reset your transformations afterwards.
+     */
+    protected void drawIcon(long vg, SVG icon, float x, float y, float width, float height, int color) {
+        NanoVGHelper.INSTANCE.drawSvg(vg, icon, x, y, width, height, color);
+    }
+
     @Override
     public void onClick() {
-        if(disabled) return;
+        if (disabled) return;
         if (this.page != null && OneConfigGui.INSTANCE != null) {
             OneConfigGui.INSTANCE.openPage(page);
         } else if (this.runnable != null) {

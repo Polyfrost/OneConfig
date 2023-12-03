@@ -10,10 +10,9 @@ OneConfig is a free, open sourced configuration library by [Polyfrost](https://p
 
 <details>
   <summary>Click to view screenshots</summary>
-  <img src="https://user-images.githubusercontent.com/62163840/226493559-8cf2e7a9-99fe-4388-a479-8463132260ac.png">
-  <img src="https://user-images.githubusercontent.com/62163840/196335017-0ef66813-1500-4279-a6b1-565ec0741816.png">
-  <img src="https://user-images.githubusercontent.com/62163840/196335021-2df9bf19-d8d8-4872-ac57-1f6a53769cdd.png">
-  <img src="https://user-images.githubusercontent.com/62163840/196335012-9c0f098e-4214-42cf-a83a-9bcbe65a240b.png">
+  <img width="1512" alt="OneConfig-Screenshot-1" src="https://github.com/Polyfrost/OneConfig/assets/45589059/f0ac63b1-824b-406d-b62e-402954b409f5">
+  <img width="1512" alt="OneConfig-Screenshot-2" src="https://github.com/Polyfrost/OneConfig/assets/45589059/99e484b3-e54f-4953-ad04-a265b5e9e007">
+  <img width="1512" alt="OneConfig-Screenshot-3" src="https://github.com/Polyfrost/OneConfig/assets/45589059/7eae718a-5189-40b3-bb8d-36f577f01c9e">
 </details>
 
 ### How to get:

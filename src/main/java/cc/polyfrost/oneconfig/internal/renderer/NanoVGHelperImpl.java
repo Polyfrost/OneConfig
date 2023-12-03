@@ -47,11 +47,14 @@ import cc.polyfrost.oneconfig.renderer.font.FontHelper;
 import cc.polyfrost.oneconfig.utils.IOUtils;
 import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.NetworkUtils;
+import cc.polyfrost.oneconfig.utils.color.ColorUtils;
+import org.lwjgl.BufferUtils;
 import org.lwjgl.nanovg.NVGColor;
 import org.lwjgl.nanovg.NVGPaint;
 import org.lwjgl.nanovg.NanoVGGL2;
 import org.lwjgl.opengl.GL11;
 
+import java.nio.ByteBuffer;
 import java.util.function.LongConsumer;
 
 import static org.lwjgl.nanovg.NanoVG.*;
@@ -61,6 +64,8 @@ import static org.lwjgl.nanovg.NanoVG.*;
  */
 public final class NanoVGHelperImpl implements NanoVGHelper {
     private long vg = -1;
+    private static int[] readingPixels = null;
+    private static int[] readColors = new int[]{0};
     private boolean drawing = false;
     private boolean goingToCancel = false;
 
@@ -131,6 +136,16 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
         nvgEndFrame(vg);
         UGraphics.enableAlpha();
         GL11.glPopAttrib();
+
+        if (readingPixels != null) {
+            final int amount = readingPixels[2] * readingPixels[3];
+            readColors = new int[amount];
+            final ByteBuffer buf = BufferUtils.createByteBuffer(readingPixels[2] * readingPixels[3] * 4);
+            GL11.glReadPixels(readingPixels[0], readingPixels[1], readingPixels[2], readingPixels[3], GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, buf);
+            for (int i = 0; i < amount; i++)
+                readColors[i] = ColorUtils.getColor(buf.get(), buf.get(), buf.get(), buf.get());
+            readingPixels = null;
+        }
     }
 
     /**
@@ -230,13 +245,14 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
      * @param color2 The second color of the gradient.
      */
     @Override
-    public void drawGradientRect(long vg, float x, float y, float width, float height, int color, int color2) {
+    public void drawGradientRect(long vg, float x, float y, float width, float height, int color, int color2, NanoVGHelper.GradientDirection direction) {
         NVGPaint bg = NVGPaint.create();
         nvgBeginPath(vg);
         nvgRect(vg, x, y, width, height);
         NVGColor nvgColor = color(vg, color);
         NVGColor nvgColor2 = color(vg, color2);
-        nvgFillPaint(vg, nvgLinearGradient(vg, x, y, x, y + width, nvgColor, nvgColor2, bg));
+        final float[] pts = GradientDirection.getValues(x, y, width, height, direction);
+        nvgFillPaint(vg, nvgLinearGradient(vg, pts[0], pts[1], pts[2], pts[3], nvgColor, nvgColor2, bg));
         nvgFillPaint(vg, bg);
         nvgFill(vg);
         nvgColor.free();
@@ -256,13 +272,14 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
      * @param radius The corner radius.
      */
     @Override
-    public void drawGradientRoundedRect(long vg, float x, float y, float width, float height, int color, int color2, float radius) {
+    public void drawGradientRoundedRect(long vg, float x, float y, float width, float height, int color, int color2, float radius, NanoVGHelper.GradientDirection direction) {
         NVGPaint bg = NVGPaint.create();
         nvgBeginPath(vg);
         nvgRoundedRect(vg, x, y, width, height, radius);
         NVGColor nvgColor = color(vg, color);
         NVGColor nvgColor2 = color(vg, color2);
-        nvgFillPaint(vg, nvgLinearGradient(vg, x, y, x + width, y, nvgColor, nvgColor2, bg));
+        final float[] pts = GradientDirection.getValues(x, y, width, height, direction);
+        nvgFillPaint(vg, nvgLinearGradient(vg, pts[0], pts[1], pts[2], pts[3], nvgColor, nvgColor2, bg));
         nvgFill(vg);
         nvgColor.free();
         nvgColor2.free();
@@ -341,7 +358,6 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
         nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
         NVGColor nvgColor = color(vg, color);
         nvgText(vg, x, y, text);
-        nvgFill(vg);
         nvgColor.free();
     }
 
@@ -354,7 +370,6 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
         nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE); // Align top because center is weird with wrapping
         NVGColor nvgColor = color(vg, color);
         nvgTextBox(vg, x, y, width, text);
-        nvgFill(vg);
         nvgColor.free();
     }
 
@@ -380,7 +395,6 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
         nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE); // Align top because center is weird with wrapping
         NVGColor nvgColor = color(vg, color);
         nvgTextBox(vg, x, y, width, text);
-        nvgFill(vg);
         nvgColor.free();
     }
 
@@ -711,8 +725,8 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
     }
 
     @Override
-    public void rotate(long vg, float angle) {
-        nvgRotate(vg, angle);
+    public void rotate(long vg, double angle) {
+        nvgRotate(vg, (float) Math.toRadians(angle));
     }
 
     /**
@@ -954,6 +968,14 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
         drawCircle(vg, centerX, centerY, size / 2 - size / 12, colorInner);
         float iconSize = size / 1.75f;
         drawSvg(vg, icon, centerX - iconSize / 2f, centerY - iconSize / 2f, iconSize, iconSize);
+    }
+
+    @Override
+    public int[] readPixels(int x, int y, int width, int height) {
+        readingPixels = new int[]{x, y, width, height};
+        final int[] colors = readColors;
+        readColors = new int[]{0};
+        return colors;
     }
 
     @Override
