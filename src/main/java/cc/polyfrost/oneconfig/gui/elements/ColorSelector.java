@@ -462,7 +462,7 @@ public class ColorSelector {
             cursorY = (1 - (color.getBrightness() / 100f)) * 200;
             alphaSlider = new ColorSlider(200, 0, 255, 255 - color.getAlpha(), Colors.TRANSPARENT, color.getRGBMax(true));
             if (color.getDataBit() == -1) color.setChromaSpeed(30);
-            speedSlider.setValue(30 - color.getDataBit());
+            speedSlider.setValueInverted(color.getDataBit());
             if (!hasAlpha) alphaSlider.disable(true);
         }
 
@@ -477,8 +477,8 @@ public class ColorSelector {
 
             if (alphaSlider.isDragging() || speedSlider.isDragging()) {
                 color.setHSBA(color.getHue(), color.getSaturation(), color.getBrightness(), (int) alphaSlider.getValueInverted());
-                color.setChromaSpeed(Math.round(Math.abs(speedSlider.getValue() - 31)));
-                speedSlider.setValue(color.getDataBit());
+                color.setChromaSpeed(Math.round(speedSlider.getValueInverted()));
+//                speedSlider.setValueInverted(color.getDataBit());
             }
             colorInput.onColorChanged();
 
@@ -502,7 +502,7 @@ public class ColorSelector {
             cursorY = (1 - (color.getBrightness() / 100f)) * 200;
             alphaSlider.setValueInverted(color.getAlpha());
             alphaSlider.setGradient(color.getRGBNoAlpha(), Colors.TRANSPARENT);
-            speedSlider.setValue(color.getDataBit());
+            speedSlider.setValueInverted(color.getDataBit());
         }
     }
 
@@ -538,7 +538,7 @@ public class ColorSelector {
             if (img) {
                 NanoVGHelper.INSTANCE.drawRoundImage(vg, Images.HUE_GRADIENT.filePath, x + 1, y + 1, width - 2, height - 2, 8f);
             } else {
-                NanoVGHelper.INSTANCE.drawRoundImage(vg, Images.ALPHA_GRID, x + 1, y + 1, width - 2, height - 2, 8f);
+                NanoVGHelper.INSTANCE.drawRoundImage(vg, Images.VERTICAL_ALPHA_GRID, x + 1, y + 1, width - 2, height - 2, 8f);
                 NanoVGHelper.INSTANCE.drawGradientRoundedRect(vg, x, y, width, height, gradColorStart, gradColorEnd, 8f, NanoVGHelper.GradientDirection.DOWN);
             }
             // I actually hate this
