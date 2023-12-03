@@ -353,7 +353,6 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
         nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE); // Align top because center is weird with wrapping
         NVGColor nvgColor = color(vg, color);
         nvgTextBox(vg, x, y, width, text);
-        nvgFill(vg);
         nvgColor.free();
     }
 
@@ -379,7 +378,6 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
         nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE); // Align top because center is weird with wrapping
         NVGColor nvgColor = color(vg, color);
         nvgTextBox(vg, x, y, width, text);
-        nvgFill(vg);
         nvgColor.free();
     }
 
