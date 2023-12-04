@@ -515,7 +515,7 @@ public class ColorSelector {
         public ColorSlider(int length, float min, float max, float startValue, int gradColorStart, int gradColorEnd) {
             super(length, min, max, startValue, VERTICAL);
             super.width = 16;
-            super.dragPointerSize = 12f;
+            super.dragPointerSize = width;
             if (gradColorEnd == 0 && gradColorStart == 0) {
                 this.gradColorStart = 0;
                 this.gradColorEnd = 0;
@@ -536,13 +536,13 @@ public class ColorSelector {
             if (!disabled) super.update(x, y, inputHandler);
             else NanoVGHelper.INSTANCE.setAlpha(vg, 0.5f);
             if (img) {
-                NanoVGHelper.INSTANCE.drawRoundImage(vg, Images.HUE_GRADIENT.filePath, x + 1, y + 1, width - 2, height - 2, 8f);
+                NanoVGHelper.INSTANCE.drawRoundImage(vg, Images.HUE_GRADIENT, x, y, width, height, 8f);
             } else {
                 NanoVGHelper.INSTANCE.drawRoundImage(vg, Images.VERTICAL_ALPHA_GRID, x + 1, y + 1, width - 2, height - 2, 8f);
                 NanoVGHelper.INSTANCE.drawGradientRoundedRect(vg, x, y, width, height, gradColorStart, gradColorEnd, 8f, NanoVGHelper.GradientDirection.DOWN);
             }
             // I actually hate this
-            NanoVGHelper.INSTANCE.drawHollowRoundRect(vg, x + 1.5f, currentDragPoint, 12, 12, Colors.WHITE, 6f, 1f);
+            NanoVGHelper.INSTANCE.drawHollowRoundRect(vg, x, currentDragPoint, width - 1, width - 1, Colors.WHITE, 8f, 1f);
             NanoVGHelper.INSTANCE.setAlpha(vg, 1f);
         }
 
