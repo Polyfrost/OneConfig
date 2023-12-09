@@ -1364,6 +1364,7 @@ public abstract interface class cc/polyfrost/oneconfig/renderer/NanoVGHelper {
 	public abstract fun rotate (JD)V
 	public abstract fun scale (JFF)V
 	public abstract fun setAlpha (JF)V
+	public abstract fun setupAndDraw (IZLjava/util/function/LongConsumer;)V
 	public abstract fun setupAndDraw (Ljava/util/function/LongConsumer;)V
 	public abstract fun setupAndDraw (ZLjava/util/function/LongConsumer;)V
 	public abstract fun translate (JFF)V
