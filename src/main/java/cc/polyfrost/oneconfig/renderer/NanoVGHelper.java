@@ -47,7 +47,7 @@ public interface NanoVGHelper {
      * Sets up rendering, calls the consumer with the NanoVG context, and then cleans up.
      *
      * @param consumer The consumer to call.
-     * @see NanoVGHelper#setupAndDraw(boolean, LongConsumer)
+     * @see NanoVGHelper#setupAndDraw(int, boolean, LongConsumer)
      */
     void setupAndDraw(LongConsumer consumer);
 
@@ -55,9 +55,19 @@ public interface NanoVGHelper {
      * Sets up rendering, calls the consumer with the NanoVG context, and then cleans up.
      *
      * @param mcScaling Whether to render with Minecraft's scaling.
-     * @param consumer  The consumer to call.
+     * @param consumer The consumer to call.
+     * @see NanoVGHelper#setupAndDraw(int, boolean, LongConsumer)
      */
     void setupAndDraw(boolean mcScaling, LongConsumer consumer);
+
+    /**
+     * Sets up rendering, calls the consumer with the NanoVG context, and then cleans up.
+     *
+     * @param nvgFlags  The NanoVG flags.
+     * @param mcScaling Whether to render with Minecraft's scaling.
+     * @param consumer  The consumer to call.
+     */
+    void setupAndDraw(int nvgFlags, boolean mcScaling, LongConsumer consumer);
 
     /**
      * Draws a rectangle with the given parameters.
