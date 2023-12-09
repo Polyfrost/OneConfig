@@ -55,7 +55,7 @@ public interface NanoVGHelper {
      * Sets up rendering, calls the consumer with the NanoVG context, and then cleans up.
      *
      * @param mcScaling Whether to render with Minecraft's scaling.
-     * @param consumer The consumer to call.
+     * @param consumer  The consumer to call.
      * @see NanoVGHelper#setupAndDraw(int, boolean, LongConsumer)
      */
     void setupAndDraw(boolean mcScaling, LongConsumer consumer);
