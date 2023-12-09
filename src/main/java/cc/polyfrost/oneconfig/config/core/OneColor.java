@@ -115,10 +115,10 @@ public final class OneColor implements Serializable, Cloneable, Comparable<OneCo
      * Create a new Chroma OneColor. The speed should be a max of 30s and a min of 1s.
      */
     public OneColor(int saturation, int brightness, int alpha, float chromaSpeed) {
-        this(System.currentTimeMillis() % (int) chromaSpeed / chromaSpeed, saturation, brightness, alpha);
+        this(System.currentTimeMillis() % (int) (chromaSpeed * 1000) / (chromaSpeed * 1000) * 360, saturation, brightness, alpha);
         if (chromaSpeed < 1) chromaSpeed = 1;
         if (chromaSpeed > 30) chromaSpeed = 30;
-        this.dataBit = (int) chromaSpeed;
+        this.dataBit = (int) chromaSpeed * 1000;
     }
 
     // internal constructor
