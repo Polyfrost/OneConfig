@@ -1316,9 +1316,11 @@ public abstract interface class cc/polyfrost/oneconfig/renderer/NanoVGHelper {
 	public abstract fun drawBorderedText (Ljava/lang/String;FFII)I
 	public abstract fun drawCircle (JFFFI)V
 	public abstract fun drawDropShadow (JFFFFFFF)V
+	public abstract fun drawEllipse (JFFFFI)V
 	public abstract fun drawGradientRect (JFFFFIILcc/polyfrost/oneconfig/renderer/NanoVGHelper$GradientDirection;)V
 	public abstract fun drawGradientRoundedRect (JFFFFIIFLcc/polyfrost/oneconfig/renderer/NanoVGHelper$GradientDirection;)V
 	public abstract fun drawHSBBox (JFFFFI)V
+	public abstract fun drawHollowEllipse (JFFFFIF)V
 	public abstract fun drawHollowRoundRect (JFFFFIFF)V
 	public abstract fun drawImage (JLcc/polyfrost/oneconfig/renderer/asset/Image;FFFF)V
 	public abstract fun drawImage (JLcc/polyfrost/oneconfig/renderer/asset/Image;FFFFI)V

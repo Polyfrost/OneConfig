@@ -175,6 +175,31 @@ public interface NanoVGHelper {
     void drawCircle(long vg, float x, float y, float radius, int color);
 
     /**
+     * Draws a hollow circle with the given parameters.
+     *
+     * @param vg        The NanoVG context.
+     * @param x         The x position.
+     * @param y         The y position.
+     * @param radiusX   The x radius.
+     * @param radiusY   The y radius.
+     * @param color     The color.
+     */
+    void drawEllipse(long vg, float x, float y, float radiusX, float radiusY, int color);
+
+    /**
+     * Draws a hollow circle with the given parameters.
+     *
+     * @param vg        The NanoVG context.
+     * @param x         The x position.
+     * @param y         The y position.
+     * @param radiusX   The x radius.
+     * @param radiusY   The y radius.
+     * @param color     The color.
+     * @param thickness The thickness.
+     */
+    void drawHollowEllipse(long vg, float x, float y, float radiusX, float radiusY, int color, float thickness);
+
+    /**
      * Draws a String with the given parameters.
      *
      * @param vg    The NanoVG context.
