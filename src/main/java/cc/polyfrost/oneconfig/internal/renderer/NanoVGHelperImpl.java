@@ -351,6 +351,48 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
     }
 
     /**
+     * Draws a hollow circle with the given parameters.
+     *
+     * @param vg        The NanoVG context.
+     * @param x         The x position.
+     * @param y         The y position.
+     * @param radiusX   The x radius.
+     * @param radiusY   The y radius.
+     * @param color     The color.
+     */
+    @Override
+    public void drawEllipse(long vg, float x, float y, float radiusX, float radiusY, int color) {
+        nvgBeginPath(vg);
+        nvgEllipse(vg, x, y, radiusX, radiusY);
+        NVGColor nvgColor = color(vg, color);
+        nvgFill(vg);
+        nvgColor.free();
+    }
+
+    /**
+     * Draws a hollow circle with the given parameters.
+     *
+     * @param vg        The NanoVG context.
+     * @param x         The x position.
+     * @param y         The y position.
+     * @param radiusX   The x radius.
+     * @param radiusY   The y radius.
+     * @param color     The color.
+     * @param thickness The thickness.
+     */
+    @Override
+    public void drawHollowEllipse(long vg, float x, float y, float radiusX, float radiusY, int color, float thickness) {
+        nvgBeginPath(vg);
+        nvgEllipse(vg, x, y, radiusX, radiusY);
+        nvgStrokeWidth(vg, thickness + 0.5f);
+        nvgPathWinding(vg, NVG_HOLE);
+        NVGColor nvgColor = color(vg, color);
+        nvgStrokeColor(vg, nvgColor);
+        nvgStroke(vg);
+        nvgColor.free();
+    }
+
+    /**
      * Draws a String with the given parameters.
      *
      * @param vg    The NanoVG context.
