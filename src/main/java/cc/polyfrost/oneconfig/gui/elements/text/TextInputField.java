@@ -147,7 +147,7 @@ public class TextInputField extends BasicElement {
             }
             Scissor scissor = scissorHelper.scissor(vg, x, y, width, height);
             super.update(x, y, inputHandler);
-            if (Platform.getMousePlatform().isButtonDown(0) && !inputHandler.isAreaHovered(x - 40, y - 20, width + 90, height + 20)) {
+            if (Platform.getMousePlatform().isButtonDown(0) && !hovered) {
                 onClose();
                 toggled = false;
             }
