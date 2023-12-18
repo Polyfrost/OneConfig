@@ -181,7 +181,9 @@ public abstract class BasicOption {
             warningDescription = builder.toString();
         }
 
-        DescriptionRenderer.drawDescription(vg, x, y, description, warningDescription, () -> descriptionAnimation, (a) -> descriptionAnimation = a, null, shouldDrawDescription(), (UResolution.getWindowWidth() / 2f < inputHandler.mouseX()) ? DescriptionRenderer.DescriptionPosition.RIGHT : DescriptionRenderer.DescriptionPosition.LEFT, inputHandler);
+        if (!description.trim().isEmpty()) {
+            DescriptionRenderer.drawDescription(vg, x, y, description, warningDescription, () -> descriptionAnimation, (a) -> descriptionAnimation = a, null, shouldDrawDescription(), (UResolution.getWindowWidth() / 2f < inputHandler.mouseX()) ? DescriptionRenderer.DescriptionPosition.RIGHT : DescriptionRenderer.DescriptionPosition.LEFT, inputHandler);
+        }
     }
 
     /**
