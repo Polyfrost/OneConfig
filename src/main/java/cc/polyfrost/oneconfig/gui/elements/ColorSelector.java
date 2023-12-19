@@ -270,6 +270,8 @@ public class ColorSelector {
         void onColorChanged();
 
         void keyTyped(char typedChar, int keyCode);
+
+        boolean isEditing();
     }
 
     final class HexInput implements ColorInput {
@@ -294,13 +296,17 @@ public class ColorSelector {
             if (!hasAlpha) alphaInput.disable(true);
         }
 
+        private boolean editing = false;
+
         @Override
         public void drawAndUpdate(long vg, float x, float y, InputHandler inputHandler) {
             hexInput.draw(vg, x, y, inputHandler);
             alphaInput.draw(vg, x + 88, y, inputHandler);
             hexInput.setErrored(false);
             alphaInput.setErrored(false);
+            editing = false;
             if (hexInput.isToggled()) {
+                editing = true;
                 try {
                     color.setColorFromHex(hexInput.getInput());
                     picker.onColorChanged();
@@ -309,6 +315,7 @@ public class ColorSelector {
                 }
             }
             if (alphaInput.isToggled()) {
+                editing = true;
                 final String s = alphaInput.getInput().endsWith("%") ? alphaInput.getInput().substring(0, alphaInput.getInput().length() - 1) : alphaInput.getInput();
                 try {
                     color.setAlpha(Math.round(Math.max(0, Math.min(Float.parseFloat(s), 100)) * 2.55f));
@@ -330,6 +337,11 @@ public class ColorSelector {
             hexInput.keyTyped(typedChar, keyCode);
             alphaInput.keyTyped(typedChar, keyCode);
         }
+
+        @Override
+        public boolean isEditing() {
+            return editing;
+        }
     }
 
     final class HSBAInput implements ColorInput {
@@ -350,13 +362,17 @@ public class ColorSelector {
             if (!hasAlpha) inputs[3].disable(true);
         }
 
+        private boolean editing = false;
+
         @Override
         public void drawAndUpdate(long vg, float x, float y, InputHandler inputHandler) {
+            editing = false;
             for (int i = 0; i < 4; i++) {
                 final TextInputField in = inputs[i];
                 in.setErrored(false);
                 in.draw(vg, x - 12 + (42 * i), y, inputHandler);
                 if (in.isToggled()) {
+                    editing = true;
                     color.setHSBA(i, parseIntOrElse(in.getInput(), color.getHSBA()[i]));
                     picker.onColorChanged();
                 }
@@ -374,6 +390,10 @@ public class ColorSelector {
         @Override
         public void keyTyped(char typedChar, int keyCode) {
             for (TextInputField i : inputs) i.keyTyped(typedChar, keyCode);
+        }
+
+        public boolean isEditing() {
+            return editing;
         }
 
         int parseIntOrElse(String s, int orElse) {
@@ -480,11 +500,14 @@ public class ColorSelector {
                 color.setChromaSpeed(Math.round(speedSlider.getValueInverted()));
 //                speedSlider.setValueInverted(color.getDataBit());
             }
-            colorInput.onColorChanged();
+
+            if (!colorInput.isEditing()) {
+                colorInput.onColorChanged();
+            }
 
             final boolean hovered = Platform.getMousePlatform().isButtonDown(0) && inputHandler.isAreaHovered(x, y, 200, 200);
             if (hovered && Platform.getMousePlatform().isButtonDown(0) && !mouseWasDown) pickerIsActive = true;
-            if (!pickerIsActive) return;
+            if (!pickerIsActive || colorInput.isEditing()) return;
             cursorX = inputHandler.mouseX() - x;
             cursorY = inputHandler.mouseY() - y;
             if (cursorX < 0) cursorX = 0;
