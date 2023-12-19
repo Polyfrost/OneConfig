@@ -43,6 +43,7 @@ import java.lang.reflect.Field;
 public class ConfigColorElement extends BasicOption {
     private final BasicElement element = new BasicElement(64, 32, false);
     private final boolean allowAlpha;
+    private ColorSelector colorSelector;
     private boolean open = false;
 
     public ConfigColorElement(Field field, Object parent, String name, String description, String category, String subcategory, int size, boolean allowAlpha) {
@@ -78,9 +79,10 @@ public class ConfigColorElement extends BasicOption {
         nanoVGHelper.drawRoundedRect(vg, x1 + 420, y + 4, 56, 24, color.getRGB(), 8f);
         if (element.isClicked() && !open) {
             open = true;
-            OneConfigGui.INSTANCE.initColorSelector(new ColorSelector(color, inputHandler.mouseX(), inputHandler.mouseY(), allowAlpha, inputHandler));
+            colorSelector = new ColorSelector(color, inputHandler.mouseX(), inputHandler.mouseY(), allowAlpha, inputHandler);
+            OneConfigGui.INSTANCE.initColorSelector(colorSelector);
         }
-        if (OneConfigGui.INSTANCE.currentColorSelector == null) open = false;
+        if (OneConfigGui.INSTANCE.currentColorSelector != colorSelector) open = false;
         else if (open) color = (OneConfigGui.INSTANCE.getColor());
         setColor(color);
         nanoVGHelper.setAlpha(vg, 1f);

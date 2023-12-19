@@ -57,9 +57,8 @@ public class CreditsPage extends Page {
         nanoVGHelper.drawText(vg, " - NanoVG (memononen) - NanoVG Library", x + 20, y + 385, -1, 12, Fonts.REGULAR);
         nanoVGHelper.drawText(vg, " - UniversalCraft (Essential team) - Multiversioning bindings", x + 20, y + 400, -1, 12, Fonts.REGULAR);
         nanoVGHelper.drawText(vg, " - https://easings.net/ - Easing functions", x + 20, y + 415, -1, 12, Fonts.REGULAR);
-        nanoVGHelper.drawText(vg, " - Quiltflower (Quilt Team) - Gradle decompiler", x + 20, y + 430, -1, 12, Fonts.REGULAR);
-        nanoVGHelper.drawText(vg, " - Seraph (Scherso) - Locraw and Multithreading utilities", x + 20, y + 445, -1, 12, Fonts.REGULAR);
-        nanoVGHelper.drawText(vg, " - Deencapsulation (xDark) - Java 9+ utilities", x + 20, y + 460, -1, 12, Fonts.REGULAR);
+        nanoVGHelper.drawText(vg, " - Seraph (Scherso) - Locraw and Multithreading utilities", x + 20, y + 430, -1, 12, Fonts.REGULAR);
+        nanoVGHelper.drawText(vg, " - Deencapsulation (xDark) - Java 9+ utilities", x + 20, y + 445, -1, 12, Fonts.REGULAR);
     }
 
     @Override

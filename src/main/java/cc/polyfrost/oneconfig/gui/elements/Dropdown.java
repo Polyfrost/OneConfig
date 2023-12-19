@@ -45,17 +45,20 @@ public class Dropdown extends BasicButton {
     private int selected;
     private /* lateinit */ float optsWidth = -1;
     private float rotation;
+    private final float xPadding, fontSize;
     private EaseOutQuad anim = null;
 
     private InputHandler inputHandler;
 
     public Dropdown(int width, int size, int xPadding, String[] opts, int selected, ColorPalette palette) {
         super(width, size, (size - 8) / 2, 8, xPadding, opts[selected], null, SVGs.CHEVRON_DOWN, ALIGNMENT_LEFT, palette);
+        this.xPadding = xPadding;
         this.selected = selected;
         this.opts = new LinkedHashMap<>(opts.length);
         for (String opt : opts) {
             this.opts.put(opt, new ColorAnimation(palette == ColorPalette.TERTIARY ? ColorPalette.SECONDARY : palette));
         }
+        this.fontSize = size == SIZE_48 ? 20 : (float) (size / 2 - 4);
     }
 
 
@@ -65,7 +68,7 @@ public class Dropdown extends BasicButton {
         this.inputHandler = inputHandler;
         if (optsWidth == -1) {              // lateinit
             for (String s : opts.keySet()) {
-                optsWidth = Math.max(optsWidth, nanoVGHelper.getTextWidth(vg, s, 12, Fonts.REGULAR));
+                optsWidth = Math.max(optsWidth, nanoVGHelper.getTextWidth(vg, s, fontSize, Fonts.REGULAR));
             }
             // just in case the options are hella short
             optsWidth = Math.max(optsWidth, width);
@@ -77,26 +80,32 @@ public class Dropdown extends BasicButton {
         if (opts.size() != 1) {
             if (anim != null) {
                 final float val = anim.get();
-                rotation = val / (opts.size() * 24) * 180;
+                rotation = val / ((opts.size() - 1) * fontSize * 2) * 180;
                 nanoVGHelper.drawRoundedRect(vg, x, y + height, optsWidth, val, colorPalette == ColorPalette.TERTIARY ? ColorPalette.SECONDARY.getNormalColor() : currentColor, 8);
                 if (anim.isFinished() && !anim.isReversed() && toggled) {
                     float i = y + height;
+                    int index = 0;
                     for (Map.Entry<String, ColorAnimation> entry : opts.entrySet()) {
                         final String s = entry.getKey();
                         final ColorAnimation anim = entry.getValue();
+                        if (index == selected) {
+                            index++;
+                            continue;
+                        }
 
                         final boolean hovered = inputHandler.isAreaHovered(x, i, optsWidth, 24);
                         final boolean clicked = hovered && inputHandler.isClicked(true);
-                        nanoVGHelper.drawRoundedRect(vg, x, i, optsWidth, 24, anim.getColor(hovered, clicked), 8);
-                        nanoVGHelper.drawText(vg, s, x + 8, i + 12, Colors.WHITE_90, 12, Fonts.REGULAR);
+                        nanoVGHelper.drawRoundedRect(vg, x, i, optsWidth, fontSize * 2, anim.getColor(hovered, clicked), 8);
+                        nanoVGHelper.drawText(vg, s, x + xPadding, i + fontSize, Colors.WHITE_90, fontSize, Fonts.REGULAR);
                         if (clicked) {
                             // yes I could just add a tracker variable but those 32 bytes are worth it
-                            selected = (int) ((i - y - height) / 24);
+                            selected = index;
                             onChange(selected);
                             super.text = s;
                             toggled = false;
                         }
-                        i += 24;
+                        index ++;
+                        i += fontSize * 2;
                     }
                 }
             }
@@ -140,13 +149,13 @@ public class Dropdown extends BasicButton {
             inputHandler.stopBlockingInput();
         }
         if (toggled && anim == null) {
-            anim = new EaseOutQuad(200, 0, opts.size() * 24, false);
+            anim = new EaseOutQuad(200, 0, (opts.size() - 1) * fontSize * 2, false);
         }
         if (anim != null && anim.isFinished() && anim.isReversed()) {
             anim = null;
         }
         if (!toggled && anim != null && !anim.isReversed()) {
-            anim = new EaseOutQuad(200, 0, opts.size() * 24, true);
+            anim = new EaseOutQuad(200, 0, (opts.size() - 1) * fontSize * 2, true);
         }
     }
 

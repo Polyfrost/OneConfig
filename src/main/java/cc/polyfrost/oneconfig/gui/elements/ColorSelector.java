@@ -270,6 +270,8 @@ public class ColorSelector {
         void onColorChanged();
 
         void keyTyped(char typedChar, int keyCode);
+
+        boolean isEditing();
     }
 
     final class HexInput implements ColorInput {
@@ -294,13 +296,17 @@ public class ColorSelector {
             if (!hasAlpha) alphaInput.disable(true);
         }
 
+        private boolean editing = false;
+
         @Override
         public void drawAndUpdate(long vg, float x, float y, InputHandler inputHandler) {
             hexInput.draw(vg, x, y, inputHandler);
             alphaInput.draw(vg, x + 88, y, inputHandler);
             hexInput.setErrored(false);
             alphaInput.setErrored(false);
+            editing = false;
             if (hexInput.isToggled()) {
+                editing = true;
                 try {
                     color.setColorFromHex(hexInput.getInput());
                     picker.onColorChanged();
@@ -309,6 +315,7 @@ public class ColorSelector {
                 }
             }
             if (alphaInput.isToggled()) {
+                editing = true;
                 final String s = alphaInput.getInput().endsWith("%") ? alphaInput.getInput().substring(0, alphaInput.getInput().length() - 1) : alphaInput.getInput();
                 try {
                     color.setAlpha(Math.round(Math.max(0, Math.min(Float.parseFloat(s), 100)) * 2.55f));
@@ -330,6 +337,11 @@ public class ColorSelector {
             hexInput.keyTyped(typedChar, keyCode);
             alphaInput.keyTyped(typedChar, keyCode);
         }
+
+        @Override
+        public boolean isEditing() {
+            return editing;
+        }
     }
 
     final class HSBAInput implements ColorInput {
@@ -350,13 +362,17 @@ public class ColorSelector {
             if (!hasAlpha) inputs[3].disable(true);
         }
 
+        private boolean editing = false;
+
         @Override
         public void drawAndUpdate(long vg, float x, float y, InputHandler inputHandler) {
+            editing = false;
             for (int i = 0; i < 4; i++) {
                 final TextInputField in = inputs[i];
                 in.setErrored(false);
                 in.draw(vg, x - 12 + (42 * i), y, inputHandler);
                 if (in.isToggled()) {
+                    editing = true;
                     color.setHSBA(i, parseIntOrElse(in.getInput(), color.getHSBA()[i]));
                     picker.onColorChanged();
                 }
@@ -374,6 +390,10 @@ public class ColorSelector {
         @Override
         public void keyTyped(char typedChar, int keyCode) {
             for (TextInputField i : inputs) i.keyTyped(typedChar, keyCode);
+        }
+
+        public boolean isEditing() {
+            return editing;
         }
 
         int parseIntOrElse(String s, int orElse) {
@@ -462,7 +482,7 @@ public class ColorSelector {
             cursorY = (1 - (color.getBrightness() / 100f)) * 200;
             alphaSlider = new ColorSlider(200, 0, 255, 255 - color.getAlpha(), Colors.TRANSPARENT, color.getRGBMax(true));
             if (color.getDataBit() == -1) color.setChromaSpeed(30);
-            speedSlider.setValue(30 - color.getDataBit());
+            speedSlider.setValueInverted(color.getDataBit());
             if (!hasAlpha) alphaSlider.disable(true);
         }
 
@@ -477,14 +497,17 @@ public class ColorSelector {
 
             if (alphaSlider.isDragging() || speedSlider.isDragging()) {
                 color.setHSBA(color.getHue(), color.getSaturation(), color.getBrightness(), (int) alphaSlider.getValueInverted());
-                color.setChromaSpeed(Math.round(Math.abs(speedSlider.getValue() - 31)));
-                speedSlider.setValue(color.getDataBit());
+                color.setChromaSpeed(Math.round(speedSlider.getValueInverted()));
+//                speedSlider.setValueInverted(color.getDataBit());
             }
-            colorInput.onColorChanged();
+
+            if (!colorInput.isEditing()) {
+                colorInput.onColorChanged();
+            }
 
             final boolean hovered = Platform.getMousePlatform().isButtonDown(0) && inputHandler.isAreaHovered(x, y, 200, 200);
             if (hovered && Platform.getMousePlatform().isButtonDown(0) && !mouseWasDown) pickerIsActive = true;
-            if (!pickerIsActive) return;
+            if (!pickerIsActive || colorInput.isEditing()) return;
             cursorX = inputHandler.mouseX() - x;
             cursorY = inputHandler.mouseY() - y;
             if (cursorX < 0) cursorX = 0;
@@ -502,7 +525,7 @@ public class ColorSelector {
             cursorY = (1 - (color.getBrightness() / 100f)) * 200;
             alphaSlider.setValueInverted(color.getAlpha());
             alphaSlider.setGradient(color.getRGBNoAlpha(), Colors.TRANSPARENT);
-            speedSlider.setValue(color.getDataBit());
+            speedSlider.setValueInverted(color.getDataBit());
         }
     }
 
@@ -515,7 +538,7 @@ public class ColorSelector {
         public ColorSlider(int length, float min, float max, float startValue, int gradColorStart, int gradColorEnd) {
             super(length, min, max, startValue, VERTICAL);
             super.width = 16;
-            super.dragPointerSize = 12f;
+            super.dragPointerSize = width;
             if (gradColorEnd == 0 && gradColorStart == 0) {
                 this.gradColorStart = 0;
                 this.gradColorEnd = 0;
@@ -536,13 +559,13 @@ public class ColorSelector {
             if (!disabled) super.update(x, y, inputHandler);
             else NanoVGHelper.INSTANCE.setAlpha(vg, 0.5f);
             if (img) {
-                NanoVGHelper.INSTANCE.drawRoundImage(vg, Images.HUE_GRADIENT.filePath, x + 1, y + 1, width - 2, height - 2, 8f);
+                NanoVGHelper.INSTANCE.drawRoundImage(vg, Images.HUE_GRADIENT, x, y, width, height, 8f);
             } else {
-                NanoVGHelper.INSTANCE.drawRoundImage(vg, Images.ALPHA_GRID, x + 1, y + 1, width - 2, height - 2, 8f);
+                NanoVGHelper.INSTANCE.drawRoundImage(vg, Images.VERTICAL_ALPHA_GRID, x + 1, y + 1, width - 2, height - 2, 8f);
                 NanoVGHelper.INSTANCE.drawGradientRoundedRect(vg, x, y, width, height, gradColorStart, gradColorEnd, 8f, NanoVGHelper.GradientDirection.DOWN);
             }
             // I actually hate this
-            NanoVGHelper.INSTANCE.drawHollowRoundRect(vg, x + 1.5f, currentDragPoint, 12, 12, Colors.WHITE, 6f, 1f);
+            NanoVGHelper.INSTANCE.drawHollowRoundRect(vg, x, currentDragPoint, width - 1, width - 1, Colors.WHITE, 8f, 1f);
             NanoVGHelper.INSTANCE.setAlpha(vg, 1f);
         }
 

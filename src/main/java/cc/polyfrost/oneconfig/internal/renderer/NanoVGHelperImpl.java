@@ -93,24 +93,36 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
      * Sets up rendering, calls the consumer with the NanoVG context, and then cleans up.
      *
      * @param consumer The consumer to call.
-     * @see NanoVGHelperImpl#setupAndDraw(boolean, LongConsumer)
+     * @see NanoVGHelperImpl#setupAndDraw(int, boolean, LongConsumer)
      */
     @Override
     public void setupAndDraw(LongConsumer consumer) {
-        setupAndDraw(false, consumer);
+        setupAndDraw(NanoVGGL2.NVG_ANTIALIAS, false, consumer);
+    }
+    /**
+     * Sets up rendering, calls the consumer with the NanoVG context, and then cleans up.
+     *
+     * @param mcScaling Whether to render with Minecraft's scaling.
+     * @param consumer The consumer to call.
+     * @see NanoVGHelperImpl#setupAndDraw(int, boolean, LongConsumer)
+     */
+    @Override
+    public void setupAndDraw(boolean mcScaling, LongConsumer consumer) {
+        setupAndDraw(NanoVGGL2.NVG_ANTIALIAS, mcScaling, consumer);
     }
 
     /**
      * Sets up rendering, calls the consumer with the NanoVG context, and then cleans up.
      *
+     * @param nvgFlags  The NanoVG flags.
      * @param mcScaling Whether to render with Minecraft's scaling.
      * @param consumer  The consumer to call.
      */
     @Override
-    public void setupAndDraw(boolean mcScaling, LongConsumer consumer) {
+    public void setupAndDraw(int nvgFlags, boolean mcScaling, LongConsumer consumer) {
         drawing = true;
         if (vg == -1) {
-            vg = NanoVGGL2.nvgCreate(NanoVGGL2.NVG_ANTIALIAS);
+            vg = NanoVGGL2.nvgCreate(nvgFlags);
             if (vg == -1) {
                 throw new RuntimeException("Failed to create nvg context");
             }
@@ -335,6 +347,48 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
         nvgCircle(vg, x, y, radius);
         NVGColor nvgColor = color(vg, color);
         nvgFill(vg);
+        nvgColor.free();
+    }
+
+    /**
+     * Draws a hollow circle with the given parameters.
+     *
+     * @param vg        The NanoVG context.
+     * @param x         The x position.
+     * @param y         The y position.
+     * @param radiusX   The x radius.
+     * @param radiusY   The y radius.
+     * @param color     The color.
+     */
+    @Override
+    public void drawEllipse(long vg, float x, float y, float radiusX, float radiusY, int color) {
+        nvgBeginPath(vg);
+        nvgEllipse(vg, x, y, radiusX, radiusY);
+        NVGColor nvgColor = color(vg, color);
+        nvgFill(vg);
+        nvgColor.free();
+    }
+
+    /**
+     * Draws a hollow circle with the given parameters.
+     *
+     * @param vg        The NanoVG context.
+     * @param x         The x position.
+     * @param y         The y position.
+     * @param radiusX   The x radius.
+     * @param radiusY   The y radius.
+     * @param color     The color.
+     * @param thickness The thickness.
+     */
+    @Override
+    public void drawHollowEllipse(long vg, float x, float y, float radiusX, float radiusY, int color, float thickness) {
+        nvgBeginPath(vg);
+        nvgEllipse(vg, x, y, radiusX, radiusY);
+        nvgStrokeWidth(vg, thickness + 0.5f);
+        nvgPathWinding(vg, NVG_HOLE);
+        NVGColor nvgColor = color(vg, color);
+        nvgStrokeColor(vg, nvgColor);
+        nvgStroke(vg);
         nvgColor.free();
     }
 
