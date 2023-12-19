@@ -32,6 +32,8 @@ import cc.polyfrost.oneconfig.config.annotations.Switch;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.libs.universal.UMatrixStack;
 import cc.polyfrost.oneconfig.platform.Platform;
+import cc.polyfrost.oneconfig.utils.hypixel.LocrawInfo;
+import cc.polyfrost.oneconfig.utils.hypixel.LocrawUtil;
 
 /**
  * Represents a HUD element in OneConfig.
@@ -150,6 +152,10 @@ public abstract class Hud {
         if (!showInGuis && Platform.getGuiPlatform().getCurrentScreen() != null && !(Platform.getGuiPlatform().getCurrentScreen() instanceof OneConfigGui))
             return false;
         if (!showInChat && Platform.getGuiPlatform().isInChat()) return false;
+        if (!showInSkyBlock) {
+            LocrawInfo locrawInfo = LocrawUtil.INSTANCE.getLocrawInfo();
+            if (locrawInfo != null && locrawInfo.getGameType() == LocrawInfo.GameType.SKYBLOCK) return false;
+        }
         return showInDebug || !Platform.getGuiPlatform().isInDebug();
     }
 
@@ -208,4 +214,9 @@ public abstract class Hud {
             name = "Show in GUIs"
     )
     public boolean showInGuis = true;
+
+    @Switch(
+            name = "Show in SkyBlock"
+    )
+    public boolean showInSkyBlock = true;
 }
