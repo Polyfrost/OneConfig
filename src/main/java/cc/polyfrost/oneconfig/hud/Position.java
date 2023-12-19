@@ -29,6 +29,7 @@ package cc.polyfrost.oneconfig.hud;
 import cc.polyfrost.oneconfig.config.annotations.Exclude;
 import cc.polyfrost.oneconfig.libs.universal.UResolution;
 import com.google.gson.annotations.SerializedName;
+import org.jetbrains.annotations.Nullable;
 
 public class Position {
     public AnchorPosition anchor;
@@ -38,6 +39,9 @@ public class Position {
     private float width;
     @Exclude
     private float height;
+    @Exclude
+    @Nullable
+    private Hud hud;
 
     /**
      * Position object used for huds
@@ -49,7 +53,8 @@ public class Position {
      * @param screenWidth  The width of the screen to initialize the position width
      * @param screenHeight The height of the screen to initialize the position width
      */
-    public Position(float x, float y, float width, float height, float screenWidth, float screenHeight) {
+    public Position(Hud hud, float x, float y, float width, float height, float screenWidth, float screenHeight) {
+        this.hud = hud;
         setSize(width, height);
         setPosition(x, y, screenWidth, screenHeight);
     }
@@ -62,8 +67,8 @@ public class Position {
      * @param width  The width of the HUD
      * @param height The height of the HUD
      */
-    public Position(float x, float y, float width, float height) {
-        this(x, y, width, height, 1920, 1080);
+    public Position(Hud hud, float x, float y, float width, float height) {
+        this(hud, x, y, width, height, 1920, 1080);
     }
 
     /**
@@ -97,6 +102,65 @@ public class Position {
         else
             this.anchor = AnchorPosition.MIDDLE_CENTER;
 
+        if (hud != null) {
+            switch (hud.alignment) {
+                case 1:
+                    switch (anchor) {
+                        case TOP_LEFT:
+                        case TOP_RIGHT:
+                        case TOP_CENTER:
+                            anchor = AnchorPosition.TOP_LEFT;
+                            break;
+                        case MIDDLE_LEFT:
+                        case MIDDLE_RIGHT:
+                        case MIDDLE_CENTER:
+                            anchor = AnchorPosition.MIDDLE_LEFT;
+                            break;
+                        case BOTTOM_LEFT:
+                        case BOTTOM_RIGHT:
+                        case BOTTOM_CENTER:
+                            anchor = AnchorPosition.BOTTOM_LEFT;
+                    }
+                    break;
+                case 2:
+                    switch (anchor) {
+                        case TOP_LEFT:
+                        case TOP_RIGHT:
+                        case TOP_CENTER:
+                            anchor = AnchorPosition.TOP_CENTER;
+                            break;
+                        case MIDDLE_LEFT:
+                        case MIDDLE_RIGHT:
+                        case MIDDLE_CENTER:
+                            anchor = AnchorPosition.MIDDLE_CENTER;
+                            break;
+                        case BOTTOM_LEFT:
+                        case BOTTOM_RIGHT:
+                        case BOTTOM_CENTER:
+                            anchor = AnchorPosition.BOTTOM_CENTER;
+                    }
+                    break;
+                case 3:
+                    switch (anchor) {
+                        case TOP_LEFT:
+                        case TOP_RIGHT:
+                        case TOP_CENTER:
+                            anchor = AnchorPosition.TOP_RIGHT;
+                            break;
+                        case MIDDLE_LEFT:
+                        case MIDDLE_RIGHT:
+                        case MIDDLE_CENTER:
+                            anchor = AnchorPosition.MIDDLE_RIGHT;
+                            break;
+                        case BOTTOM_LEFT:
+                        case BOTTOM_RIGHT:
+                        case BOTTOM_CENTER:
+                            anchor = AnchorPosition.BOTTOM_RIGHT;
+                    }
+                    break;
+            }
+        }
+
         this.x = x - getAnchorX(screenWidth) + getAnchorX(width);
         this.y = y - getAnchorY(screenHeight) + getAnchorY(height);
     }
@@ -120,6 +184,10 @@ public class Position {
     public void setSize(float width, float height) {
         this.width = width;
         this.height = height;
+    }
+
+    public void setHud(Hud hud) {
+        this.hud = hud;
     }
 
     /**

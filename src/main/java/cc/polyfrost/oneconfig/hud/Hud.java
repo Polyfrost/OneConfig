@@ -70,6 +70,7 @@ public abstract class Hud {
     transient private Config config;
     public final Position position;
     protected float scale;
+    public int alignment;
     @Exclude
     public float deltaTicks;
 
@@ -77,12 +78,18 @@ public abstract class Hud {
      * @param enabled If the hud is enabled
      * @param x       X-coordinate of hud on a 1080p display
      * @param y       Y-coordinate of hud on a 1080p display
+     * @param alignment Alignment of the hud
      * @param scale   Scale of the hud
      */
-    public Hud(boolean enabled, float x, float y, float scale) {
+    public Hud(boolean enabled, float x, float y, int alignment, float scale) {
         this.enabled = enabled;
         this.scale = scale;
-        position = new Position(x, y, getWidth(scale, true), getHeight(scale, true));
+        this.alignment = alignment;
+        position = new Position(this, x, y, getWidth(scale, true), getHeight(scale, true));
+    }
+
+    public Hud(boolean enabled, float x, float y, float scale) {
+        this(enabled, x, y, 0, scale);
     }
 
     /**
