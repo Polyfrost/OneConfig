@@ -1084,6 +1084,7 @@ public class cc/polyfrost/oneconfig/hud/HUDUtils {
 }
 
 public abstract class cc/polyfrost/oneconfig/hud/Hud {
+	public field alignment I
 	public field deltaTicks F
 	protected field enabled Z
 	public final field position Lcc/polyfrost/oneconfig/hud/Position;
@@ -1091,10 +1092,12 @@ public abstract class cc/polyfrost/oneconfig/hud/Hud {
 	public field showInChat Z
 	public field showInDebug Z
 	public field showInGuis Z
+	public field showInSkyBlock Z
 	public fun <init> ()V
 	public fun <init> (Z)V
 	public fun <init> (ZFF)V
 	public fun <init> (ZFFF)V
+	public fun <init> (ZFFIF)V
 	protected abstract fun draw (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;FFFZ)V
 	public fun drawAll (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;Z)V
 	public fun getConfig ()Lcc/polyfrost/oneconfig/config/Config;
@@ -1110,8 +1113,8 @@ public abstract class cc/polyfrost/oneconfig/hud/Hud {
 
 public class cc/polyfrost/oneconfig/hud/Position {
 	public field anchor Lcc/polyfrost/oneconfig/hud/Position$AnchorPosition;
-	public fun <init> (FFFF)V
-	public fun <init> (FFFFFF)V
+	public fun <init> (Lcc/polyfrost/oneconfig/hud/Hud;FFFF)V
+	public fun <init> (Lcc/polyfrost/oneconfig/hud/Hud;FFFFFF)V
 	public fun getBottomY ()F
 	public fun getBottomY (F)F
 	public fun getCenterX ()F
@@ -1126,6 +1129,7 @@ public class cc/polyfrost/oneconfig/hud/Position {
 	public fun getX (F)F
 	public fun getY ()F
 	public fun getY (F)F
+	public fun setHud (Lcc/polyfrost/oneconfig/hud/Hud;)V
 	public fun setPosition (FF)V
 	public fun setPosition (FFFF)V
 	public fun setSize (FF)V
