@@ -1318,6 +1318,7 @@ public abstract interface class cc/polyfrost/oneconfig/renderer/NanoVGHelper {
 	public static final field INSTANCE Lcc/polyfrost/oneconfig/renderer/NanoVGHelper;
 	public abstract fun color (JI)Lorg/lwjgl/nanovg/NVGColor;
 	public abstract fun drawBorderedText (Ljava/lang/String;FFII)I
+	public abstract fun drawCenteredText (JLjava/lang/String;FFIFLcc/polyfrost/oneconfig/renderer/font/Font;)V
 	public abstract fun drawCircle (JFFFI)V
 	public abstract fun drawDropShadow (JFFFFFFF)V
 	public abstract fun drawEllipse (JFFFFI)V
