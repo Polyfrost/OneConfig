@@ -74,7 +74,7 @@ public class HUDUtils {
             options.add(new ConfigHeader(field, hud, hudAnnotation.name(), category, subcategory, 2));
             options.add(new ConfigSwitch(fields.get("enabled"), hud, "Enabled", "If the HUD is enabled", category, subcategory, 2));
             options.add(new ConfigSlider(fields.get("scale"), hud, "Scale", "The scale of the HUD", category, subcategory, 0.3f, 10f, 0, false));
-            ConfigDropdown dropdown = new ConfigDropdown(fields.get("alignment"), hud, "Alignment", "The alignment of the HUD", category, subcategory, 2, new String[]{"Auto", "Left", "Center", "Right"});
+            ConfigDropdown dropdown = new ConfigDropdown(fields.get("positionAlignment"), hud, "Position Alignment", "The alignment of the HUD", category, subcategory, 2, new String[]{"Auto", "Left", "Center", "Right"});
             dropdown.addListener(() -> hud.setScale(hud.scale, Platform.getGuiPlatform().getCurrentScreen() instanceof HudGui));
             options.add(dropdown);
             options.addAll(ConfigUtils.getClassOptions(hud));

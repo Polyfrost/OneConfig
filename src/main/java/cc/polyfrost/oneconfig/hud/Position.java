@@ -103,7 +103,7 @@ public class Position {
             this.anchor = AnchorPosition.MIDDLE_CENTER;
 
         if (hud != null) {
-            switch (hud.alignment) {
+            switch (hud.positionAlignment) {
                 case 1:
                     switch (anchor) {
                         case TOP_LEFT:
