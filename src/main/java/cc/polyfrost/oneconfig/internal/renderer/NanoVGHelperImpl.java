@@ -435,7 +435,6 @@ public final class NanoVGHelperImpl implements NanoVGHelper {
         nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
         NVGColor nvgColor = color(vg, color);
         nvgText(vg, x, y, text);
-        nvgFill(vg);
         nvgColor.free();
     }
 
