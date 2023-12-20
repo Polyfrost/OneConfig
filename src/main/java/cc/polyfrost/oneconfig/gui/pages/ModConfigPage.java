@@ -140,7 +140,7 @@ public class ModConfigPage extends Page {
 
     @Override
     public void keyTyped(char key, int keyCode) {
-        if (page.categories.size() == 0) return;
+        if (page.categories.isEmpty()) return;
         for (OptionSubcategory subCategory : getSubcategories()) {
             for (BasicOption option : subCategory.options) {
                 option.keyTyped(key, keyCode);
@@ -148,9 +148,12 @@ public class ModConfigPage extends Page {
         }
     }
 
+    private final ArrayList<OptionSubcategory> empty = new ArrayList<>();
+
     private List<OptionSubcategory> getSubcategories() {
         if (OneConfigGui.INSTANCE.getSearchValue().isEmpty()) {
-            return page.categories.get(selectedCategory).subcategories;
+            if (page.categories.isEmpty()) return empty;
+            else return page.categories.get(selectedCategory).subcategories;
         } else {
             List<OptionSubcategory> subcategories = new ArrayList<>();
             for (Map.Entry<String, OptionCategory> category : page.categories.entrySet()) {

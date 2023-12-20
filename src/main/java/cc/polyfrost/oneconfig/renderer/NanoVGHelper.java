@@ -31,6 +31,7 @@ import cc.polyfrost.oneconfig.renderer.asset.Image;
 import cc.polyfrost.oneconfig.renderer.asset.SVG;
 import cc.polyfrost.oneconfig.renderer.font.Font;
 import cc.polyfrost.oneconfig.utils.InputHandler;
+import org.jetbrains.annotations.NotNull;
 import org.lwjgl.nanovg.NVGColor;
 
 import java.util.function.LongConsumer;
@@ -46,7 +47,7 @@ public interface NanoVGHelper {
      * Sets up rendering, calls the consumer with the NanoVG context, and then cleans up.
      *
      * @param consumer The consumer to call.
-     * @see NanoVGHelper#setupAndDraw(boolean, LongConsumer)
+     * @see NanoVGHelper#setupAndDraw(int, boolean, LongConsumer)
      */
     void setupAndDraw(LongConsumer consumer);
 
@@ -55,8 +56,18 @@ public interface NanoVGHelper {
      *
      * @param mcScaling Whether to render with Minecraft's scaling.
      * @param consumer  The consumer to call.
+     * @see NanoVGHelper#setupAndDraw(int, boolean, LongConsumer)
      */
     void setupAndDraw(boolean mcScaling, LongConsumer consumer);
+
+    /**
+     * Sets up rendering, calls the consumer with the NanoVG context, and then cleans up.
+     *
+     * @param nvgFlags  The NanoVG flags.
+     * @param mcScaling Whether to render with Minecraft's scaling.
+     * @param consumer  The consumer to call.
+     */
+    void setupAndDraw(int nvgFlags, boolean mcScaling, LongConsumer consumer);
 
     /**
      * Draws a rectangle with the given parameters.
@@ -124,7 +135,7 @@ public interface NanoVGHelper {
      * @param color  The first color of the gradient.
      * @param color2 The second color of the gradient.
      */
-    void drawGradientRect(long vg, float x, float y, float width, float height, int color, int color2);
+    void drawGradientRect(long vg, float x, float y, float width, float height, int color, int color2, GradientDirection direction);
 
     /**
      * Draws a rounded gradient rectangle with the given parameters.
@@ -138,7 +149,7 @@ public interface NanoVGHelper {
      * @param color2 The second color of the gradient.
      * @param radius The corner radius.
      */
-    void drawGradientRoundedRect(long vg, float x, float y, float width, float height, int color, int color2, float radius);
+    void drawGradientRoundedRect(long vg, float x, float y, float width, float height, int color, int color2, float radius, GradientDirection direction);
 
     /**
      * Draw a HSB box
@@ -162,6 +173,31 @@ public interface NanoVGHelper {
      * @param color  The color.
      */
     void drawCircle(long vg, float x, float y, float radius, int color);
+
+    /**
+     * Draws a hollow circle with the given parameters.
+     *
+     * @param vg        The NanoVG context.
+     * @param x         The x position.
+     * @param y         The y position.
+     * @param radiusX   The x radius.
+     * @param radiusY   The y radius.
+     * @param color     The color.
+     */
+    void drawEllipse(long vg, float x, float y, float radiusX, float radiusY, int color);
+
+    /**
+     * Draws a hollow circle with the given parameters.
+     *
+     * @param vg        The NanoVG context.
+     * @param x         The x position.
+     * @param y         The y position.
+     * @param radiusX   The x radius.
+     * @param radiusY   The y radius.
+     * @param color     The color.
+     * @param thickness The thickness.
+     */
+    void drawHollowEllipse(long vg, float x, float y, float radiusX, float radiusY, int color, float thickness);
 
     /**
      * Draws a String with the given parameters.
@@ -500,6 +536,14 @@ public interface NanoVGHelper {
      */
     void drawInfo(long vg, InfoType type, float x, float y, float size);
 
+    /**
+     * Reads pixel colors from the screen. <br>
+     * Due to the nature of how this works, this will <b>return the previous frame's data</b>, because the read operation has to be executed OUTSIDE the vg frame.
+     *
+     * @return the previous frame's data. For the first call, this method will return 0 (transparent).
+     */
+    int[] readPixels(int x, int y, int width, int height);
+
     boolean isDrawing();
 
     /**
@@ -516,13 +560,63 @@ public interface NanoVGHelper {
 
     void translate(long vg, float x, float y);
 
-    void rotate(long vg, float angle);
+    void rotate(long vg, double angle);
 
     enum TextType {
         NONE, SHADOW, FULL;
 
         public static TextType toType(int type) {
             return values()[type];
+        }
+    }
+
+    enum GradientDirection {
+        /**
+         * Top to bottom
+         */
+        DOWN,
+        /**
+         * Bottom to top
+         */
+        UP,
+        /**
+         * Left to right
+         */
+        LEFT,
+        /**
+         * Right to left
+         */
+        RIGHT,
+        /**
+         * Top left to bottom right
+         */
+        DIAGONAL_DOWN,
+        /**
+         * Bottom right to top left
+         */
+        DIAGONAL_UP;
+
+        /**
+         * return the positions needed for the gradient to work, based on the given rectangle.
+         *
+         * @return float array of positions, in the order of sx, sy, ex, ey
+         */
+        public static float[] getValues(float x, float y, float width, float height, @NotNull GradientDirection direction) {
+            switch (direction) {
+                case DOWN:
+                default:
+                    return new float[]{x, y, x, y + height};
+                case UP:
+                    return new float[]{x, y + height, x, y};
+                case LEFT:
+                    return new float[]{x + width, y, x, y};
+                case RIGHT:
+                    return new float[]{x, y, x + width, y};
+                case DIAGONAL_DOWN:
+                    return new float[]{x, y, x + width, y + height};
+                case DIAGONAL_UP:
+                    return new float[]{x, y + height, x + width, y};
+            }
         }
     }
 }

@@ -73,9 +73,9 @@ public class OneConfigGui extends OneUIScreen {
     public static OneConfigGui INSTANCE;
 
     private final SideBar sideBar = new SideBar();
-    private final TextInputField textInputField = new TextInputField(248, 40, "Search...", false, false, SVGs.SEARCH_SM);
-    private final List<Page> previousPages = new ArrayList<>();
-    private final List<Page> nextPages = new ArrayList<>();
+    private final TextInputField textInputField = new TextInputField(248, 40, "Search...", false, false, SVGs.SEARCH_SM, 12);
+    private final ArrayList<Page> previousPages = new ArrayList<>();
+    private final ArrayList<Page> nextPages = new ArrayList<>();
     private final BasicElement backArrow = new BasicElement(40, 40, ColorPalette.TERTIARY, true);
     private final BasicElement forwardArrow = new BasicElement(40, 40, ColorPalette.TERTIARY, true);
     public ColorSelector currentColorSelector;
@@ -223,7 +223,7 @@ public class OneConfigGui extends OneUIScreen {
 
         if (OneConfigConfig.australia) {
             nanoVGHelper.translate(vg, UResolution.getWindowWidth(), UResolution.getWindowHeight());
-            nanoVGHelper.rotate(vg, (float) Math.toRadians(180));
+            nanoVGHelper.rotate(vg, 180);
         }
 
         if (inputHandler == null) {

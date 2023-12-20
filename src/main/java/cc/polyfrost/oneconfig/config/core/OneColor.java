@@ -29,6 +29,7 @@ package cc.polyfrost.oneconfig.config.core;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
+import java.io.Serializable;
 
 /**
  * OneColor is a class for storing colors in HSBA format. This format is used to allow the color selectors to work correctly.
@@ -41,7 +42,7 @@ import java.awt.*;
  * </code>
  */
 @SuppressWarnings("unused")
-public final class OneColor {
+public final class OneColor implements Serializable, Cloneable, Comparable<OneColor> {
     transient private Integer argb = null;
     private short[] hsba;
     private int dataBit = -1;
@@ -114,10 +115,10 @@ public final class OneColor {
      * Create a new Chroma OneColor. The speed should be a max of 30s and a min of 1s.
      */
     public OneColor(int saturation, int brightness, int alpha, float chromaSpeed) {
-        this(System.currentTimeMillis() % (int) chromaSpeed / chromaSpeed, saturation, brightness, alpha);
+        this(System.currentTimeMillis() % (int) (chromaSpeed * 1000) / (chromaSpeed * 1000) * 360, saturation, brightness, alpha);
         if (chromaSpeed < 1) chromaSpeed = 1;
         if (chromaSpeed > 30) chromaSpeed = 30;
-        this.dataBit = (int) chromaSpeed;
+        this.dataBit = (int) chromaSpeed * 1000;
     }
 
     // internal constructor
@@ -240,6 +241,16 @@ public final class OneColor {
         this.argb = HSBAtoARGB(this.hsba[0], this.hsba[1], this.hsba[2], this.hsba[3]);
     }
 
+    /** Set a part of this color based on the index in the array,<br> for example where hue is index 0, saturation is index 1... */
+    public void setHSBA(int index, final int val) {
+        this.hsba[index] = (short) val;
+    }
+
+    /** get the HSBA values for this color. */
+    public short[] getHSBA() {
+        return hsba;
+    }
+
     public void setFromOneColor(OneColor color) {
         setHSBA(color.hsba[0], color.hsba[1], color.hsba[2], color.hsba[3]);
     }
@@ -332,6 +343,43 @@ public final class OneColor {
 
     @Override
     public String toString() {
-        return "OneColor{rgba=[r=" + getRed() + ", g=" + getGreen() + ", b=" + getBlue() + ", a=" + getAlpha() + "], hsba=[h=" + getHue() + ", s=" + getSaturation() + ", b=" + getBrightness() + ", a=" + getAlpha() + "], hex=" + getHex() + "}";
+        return "OneColor{rgba=[r=" + getRed() + ", g=" + getGreen() + ", b=" + getBlue() + ", a=" + getAlpha() + "], " +
+                "hsba=[h=" + getHue() + ", s=" + getSaturation() + ", b=" + getBrightness() + ", a=" + getAlpha() + "], hex=" + getHex() + "}";
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null) return false;
+        if (o == this) return true;
+        if (o instanceof OneColor) {
+            final OneColor color = (OneColor) o;
+            // can't just check the RGB because of chroma, so we just check the HSBA + the data bit
+            return getHue() == color.getHue() && getSaturation() == color.getSaturation() &&
+                    getBrightness() == color.getBrightness() && getAlpha() == color.getAlpha() && getDataBit() == color.getDataBit();
+        } else return false;
+    }
+
+    @Override
+    public int compareTo(@NotNull OneColor o) {
+        return getHue() - o.getHue() + getSaturation() - o.getSaturation() + getBrightness() - o.getBrightness() + getAlpha() - o.getAlpha();
+    }
+
+    /**
+     * Return a "safe" copy of this OneColor. The precise meaning of this is that the returned OneColor will not be affected by any changes made to this OneColor.
+     */
+    @NotNull
+    @Override
+    public OneColor clone() {
+        return new OneColor((float) getHue(), getSaturation(), getBrightness(), getAlpha());
+    }
+
+    /**
+     * Return a "safe" copy of this OneColor. The precise meaning of this is that the returned OneColor will not be affected by any changes made to this OneColor.
+     * <br> same as {@link #clone()}
+     * @see #clone()
+     */
+    @NotNull
+    public OneColor copy() {
+        return clone();
     }
 }

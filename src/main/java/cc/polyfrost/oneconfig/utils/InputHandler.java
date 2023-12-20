@@ -65,6 +65,14 @@ public class InputHandler {
         scaleY = 1d;
     }
 
+    public double getXScaleFactor() {
+        return scaleX;
+    }
+
+    public double getYScaleFactor() {
+        return scaleY;
+    }
+
 
     /**
      * function to determine weather the mouse is currently over a specific region. Uses the current nvgScale to fix to any scale.
@@ -191,6 +199,14 @@ public class InputHandler {
     }
 
     /**
+     * THIS SHOULD ONLY BE USED WITH SCISSORS FROM {@link #blockInputArea(float, float, float, float)}
+     * @param inputScissor The scissor area
+     */
+    public void blockInputArea(Scissor inputScissor) {
+        blockScissors.add(inputScissor);
+    }
+
+    /**
      * Should be used if there is something above other components and you don't want it clicking trough
      */
     public Scissor blockAllInput() {
@@ -219,7 +235,7 @@ public class InputHandler {
      * @return true if clicks are blocked, false if not
      */
     public boolean isBlockingInput() {
-        return blockScissors.size() > 0;
+        return !blockScissors.isEmpty();
     }
 
     public double getDWheel(boolean ignoreBlock) {

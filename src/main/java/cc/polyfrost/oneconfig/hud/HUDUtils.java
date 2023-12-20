@@ -32,7 +32,9 @@ import cc.polyfrost.oneconfig.config.core.ConfigUtils;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
 import cc.polyfrost.oneconfig.config.elements.OptionPage;
 import cc.polyfrost.oneconfig.gui.elements.config.*;
+import cc.polyfrost.oneconfig.internal.gui.HudGui;
 import cc.polyfrost.oneconfig.internal.hud.HudCore;
+import cc.polyfrost.oneconfig.platform.Platform;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -44,6 +46,7 @@ public class HUDUtils {
         HUD hudAnnotation = field.getAnnotation(HUD.class);
         Hud hud = (Hud) ConfigUtils.getField(field, instance);
         if (hud == null) return;
+        hud.position.setHud(hud);
         hud.setConfig(config);
         HudCore.huds.put(new Map.Entry<Field, Object>() {
             @Override
@@ -70,7 +73,10 @@ public class HUDUtils {
             for (Field f : fieldArrayList) fields.put(f.getName(), f);
             options.add(new ConfigHeader(field, hud, hudAnnotation.name(), category, subcategory, 2));
             options.add(new ConfigSwitch(fields.get("enabled"), hud, "Enabled", "If the HUD is enabled", category, subcategory, 2));
-            options.add(new ConfigSlider(fields.get("scale"), hud, "Scale", "The scale of the HUD", category, subcategory, 0.3f, 10f, 0));
+            options.add(new ConfigSlider(fields.get("scale"), hud, "Scale", "The scale of the HUD", category, subcategory, 0.3f, 10f, 0, false));
+            ConfigDropdown dropdown = new ConfigDropdown(fields.get("positionAlignment"), hud, "Position Alignment", "The alignment of the HUD", category, subcategory, 2, new String[]{"Auto", "Left", "Center", "Right"});
+            dropdown.addListener(() -> hud.setScale(hud.scale, Platform.getGuiPlatform().getCurrentScreen() instanceof HudGui));
+            options.add(dropdown);
             options.addAll(ConfigUtils.getClassOptions(hud));
             if (hud instanceof BasicHud) {
                 options.add(new ConfigCheckbox(fields.get("background"), hud, "Background", "If the background of the HUD is enabled.", category, subcategory, 1));
@@ -81,9 +87,9 @@ public class HUDUtils {
                 options.get(options.size() - 1).addDependency("Background", () -> ((BasicHud) hud).background);
                 options.add(new ConfigColorElement(fields.get("borderColor"), hud, "Border color:", "The color of the border.", category, subcategory, 1, true));
                 options.get(options.size() - 1).addDependency("Border", () -> ((BasicHud) hud).border);
-                options.add(new ConfigSlider(fields.get("cornerRadius"), hud, "Corner radius:", "The corner radius of the background.", category, subcategory, 0, 10, 0));
+                options.add(new ConfigSlider(fields.get("cornerRadius"), hud, "Corner radius:", "The corner radius of the background.", category, subcategory, 0, 10, 0, false));
                 options.get(options.size() - 1).addDependency("Rounded", () -> ((BasicHud) hud).rounded);
-                options.add(new ConfigSlider(fields.get("borderSize"), hud, "Border thickness:", "The thickness of the outline.", category, subcategory, 0, 10, 0));
+                options.add(new ConfigSlider(fields.get("borderSize"), hud, "Border thickness:", "The thickness of the outline.", category, subcategory, 0, 10, 0, false));
                 options.get(options.size() - 1).addDependency("Border", () -> ((BasicHud) hud).border);
                 Field paddingX = fields.get("paddingX");
                 Field paddingY = fields.get("paddingY");
@@ -101,8 +107,8 @@ public class HUDUtils {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-                options.add(new ConfigSlider(paddingX, hud, "X-Padding", "The horizontal padding of the HUD.", category, subcategory, 0, 10, 0));
-                options.add(new ConfigSlider(paddingY, hud, "Y-Padding", "The vertical padding of the HUD.", category, subcategory, 0, 10, 0));
+                options.add(new ConfigSlider(paddingX, hud, "X-Padding", "The horizontal padding of the HUD.", category, subcategory, 0, 10, 0, false));
+                options.add(new ConfigSlider(paddingY, hud, "Y-Padding", "The vertical padding of the HUD.", category, subcategory, 0, 10, 0, false));
                 options.get(options.size() - 2).addDependency("Background or Border", () -> ((BasicHud) hud).background || ((BasicHud) hud).border);
                 options.get(options.size() - 1).addDependency("Background or Border", () -> ((BasicHud) hud).background || ((BasicHud) hud).border);
             }

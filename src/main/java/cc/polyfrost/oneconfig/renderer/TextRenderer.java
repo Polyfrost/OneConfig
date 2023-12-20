@@ -39,25 +39,24 @@ public class TextRenderer {
         String noColors = regex.matcher(text).replaceAll("\u00A7r");
         drawingBorder = true;
         int yes = 0;
-        if (opacity > 3) {
-            int xOff = -3;
-            while (xOff < 3) {
-                xOff++;
-                int yOff = -3;
-                while (yOff < 3) {
-                    yOff++;
+        if (opacity / 4 > 3) {
+            for (int xOff = -2; xOff <= 2; xOff++) {
+                for (int yOff = -2; yOff <= 2; yOff++) {
                     if (xOff * xOff != yOff * yOff) {
-                        yes +=
-                                Platform.getGLPlatform().drawText(
-                                        noColors, (xOff / 2f) + x, (yOff / 2f) + y, (opacity) << 24, false
-                                );
+                        yes += Platform.getGLPlatform().drawText(
+                                noColors, (xOff / 2f) + x, (yOff / 2f) + y, (opacity / 4) << 24, false
+                        );
                     }
                 }
             }
         }
-        yes += Platform.getGLPlatform().drawText(text, x, y, color, false);
+        yes += (int) Platform.getGLPlatform().drawText(text, x, y, color, false);
         drawingBorder = false;
         return yes;
+    }
+
+    public static float getStringWidth(String text) {
+        return Platform.getGLPlatform().getStringWidth(text);
     }
 
     public static void drawScaledString(String text, float x, float y, int color, TextType type, float scale) {
@@ -71,7 +70,7 @@ public class TextRenderer {
                 Platform.getGLPlatform().drawText(text, x * (1 / scale), y * (1 / scale), color, true);
                 break;
             case FULL:
-                drawBorderedText(text, x * (1 / scale), y * (1 / scale), color, 100);
+                drawBorderedText(text, x * (1 / scale), y * (1 / scale), color, 255);
                 break;
         }
         UGraphics.GL.popMatrix();
