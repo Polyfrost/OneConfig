@@ -1092,7 +1092,6 @@ public abstract class cc/polyfrost/oneconfig/hud/Hud {
 	public field showInChat Z
 	public field showInDebug Z
 	public field showInGuis Z
-	public field showInSkyBlock Z
 	public fun <init> ()V
 	public fun <init> (Z)V
 	public fun <init> (ZFF)V
