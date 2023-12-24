@@ -50,7 +50,7 @@ public class ConfigTextBox extends BasicOption implements IFocusable {
         super(field, parent, name, description, category, subcategory, size);
         this.secure = secure;
         this.multiLine = multiLine;
-        this.textField = new TextInputField(size == 1 ? 256 : 640, multiLine ? 64 : 32, placeholder, multiLine, secure, SVGs.TEXT_INPUT);
+        this.textField = new TextInputField(size == 1 ? 256 : 640, multiLine ? 64 : 32, placeholder, multiLine, secure, SVGs.TEXT_INPUT, 12f);
     }
 
     public static ConfigTextBox create(Field field, Object parent) {

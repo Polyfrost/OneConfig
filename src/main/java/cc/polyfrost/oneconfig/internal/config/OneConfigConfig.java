@@ -40,8 +40,8 @@ public class OneConfigConfig extends InternalConfig {
      */
     public static int updateChannel = 0;
     public static List<String> favoriteMods = new ArrayList<>();
-    public static List<OneColor> favoriteColors = new ArrayList<>();
-    public static List<OneColor> recentColors = new ArrayList<>();
+    public static List<OneColor> favoriteColors = new ArrayList<>(6);
+    public static List<OneColor> recentColors = new ArrayList<>(6);
     public static boolean australia = false;
 
     private static OneConfigConfig INSTANCE;

@@ -42,8 +42,9 @@ import java.lang.reflect.Field;
 
 public class ConfigColorElement extends BasicOption {
     private final BasicElement element = new BasicElement(64, 32, false);
-    private boolean open = false;
     private final boolean allowAlpha;
+    private ColorSelector colorSelector;
+    private boolean open = false;
 
     public ConfigColorElement(Field field, Object parent, String name, String description, String category, String subcategory, int size, boolean allowAlpha) {
         super(field, parent, name, description, category, subcategory, size);
@@ -57,7 +58,7 @@ public class ConfigColorElement extends BasicOption {
 
     @Override
     public void draw(long vg, int x, int y, InputHandler inputHandler) {
-        if(OneConfigGui.INSTANCE == null) return;
+        if (OneConfigGui.INSTANCE == null) return;
         final NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
 
         if (!isEnabled()) nanoVGHelper.setAlpha(vg, 0.5f);
@@ -74,13 +75,14 @@ public class ConfigColorElement extends BasicOption {
 
         element.update(x1 + 416, y, inputHandler);
         nanoVGHelper.drawHollowRoundRect(vg, x1 + 415, y - 1, 64, 32, Colors.GRAY_300, 12f, 2f);
-        nanoVGHelper.drawRoundImage(vg, Images.ALPHA_GRID.filePath, x1 + 420, y + 4, 56, 24, 8f);
+        nanoVGHelper.drawRoundImage(vg, Images.ALPHA_GRID.filePath, x1 + 420, y + 4, 56, 24, 8f, getClass());
         nanoVGHelper.drawRoundedRect(vg, x1 + 420, y + 4, 56, 24, color.getRGB(), 8f);
         if (element.isClicked() && !open) {
             open = true;
-            OneConfigGui.INSTANCE.initColorSelector(new ColorSelector(color, inputHandler.mouseX(), inputHandler.mouseY(), allowAlpha, inputHandler));
+            colorSelector = new ColorSelector(color, inputHandler.mouseX(), inputHandler.mouseY(), allowAlpha, inputHandler);
+            OneConfigGui.INSTANCE.initColorSelector(colorSelector);
         }
-        if (OneConfigGui.INSTANCE.currentColorSelector == null) open = false;
+        if (OneConfigGui.INSTANCE.currentColorSelector != colorSelector) open = false;
         else if (open) color = (OneConfigGui.INSTANCE.getColor());
         setColor(color);
         nanoVGHelper.setAlpha(vg, 1f);
