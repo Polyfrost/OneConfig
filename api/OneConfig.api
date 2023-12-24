@@ -984,6 +984,7 @@ public class cc/polyfrost/oneconfig/gui/elements/text/TextInputField : cc/polyfr
 	protected field x F
 	protected field y F
 	public fun <init> (IILjava/lang/String;ZZ)V
+	public fun <init> (IILjava/lang/String;ZZLcc/polyfrost/oneconfig/renderer/asset/SVG;)V
 	public fun <init> (IILjava/lang/String;ZZLcc/polyfrost/oneconfig/renderer/asset/SVG;F)V
 	public fun <init> (IIZF)V
 	public fun <init> (IIZLjava/lang/String;)V
