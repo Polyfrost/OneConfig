@@ -78,6 +78,10 @@ public class TextInputField extends BasicElement {
         this.radius = radius;
     }
 
+    public TextInputField(int width, int height, String defaultText, boolean multiLine, boolean password, SVG icon) {
+        this(width, height, defaultText, multiLine, password, null, 12);
+    }
+
     public TextInputField(int width, int height, String defaultText, boolean multiLine, boolean password) {
         this(width, height, defaultText, multiLine, password, null, 12);
     }

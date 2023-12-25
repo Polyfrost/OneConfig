@@ -996,6 +996,7 @@ public class cc/polyfrost/oneconfig/gui/elements/text/TextInputField : cc/polyfr
 	protected field x F
 	protected field y F
 	public fun <init> (IILjava/lang/String;ZZ)V
+	public fun <init> (IILjava/lang/String;ZZLcc/polyfrost/oneconfig/renderer/asset/SVG;)V
 	public fun <init> (IILjava/lang/String;ZZLcc/polyfrost/oneconfig/renderer/asset/SVG;F)V
 	public fun <init> (IIZF)V
 	public fun <init> (IIZLjava/lang/String;)V
@@ -1096,15 +1097,14 @@ public class cc/polyfrost/oneconfig/hud/HUDUtils {
 }
 
 public abstract class cc/polyfrost/oneconfig/hud/Hud {
-	public field alignment I
 	public field deltaTicks F
 	protected field enabled Z
 	public final field position Lcc/polyfrost/oneconfig/hud/Position;
+	public field positionAlignment I
 	protected field scale F
 	public field showInChat Z
 	public field showInDebug Z
 	public field showInGuis Z
-	public field showInSkyBlock Z
 	public fun <init> ()V
 	public fun <init> (Z)V
 	public fun <init> (ZFF)V
@@ -1330,6 +1330,7 @@ public abstract interface class cc/polyfrost/oneconfig/renderer/NanoVGHelper {
 	public static final field INSTANCE Lcc/polyfrost/oneconfig/renderer/NanoVGHelper;
 	public abstract fun color (JI)Lorg/lwjgl/nanovg/NVGColor;
 	public abstract fun drawBorderedText (Ljava/lang/String;FFII)I
+	public abstract fun drawCenteredText (JLjava/lang/String;FFIFLcc/polyfrost/oneconfig/renderer/font/Font;)V
 	public abstract fun drawCircle (JFFFI)V
 	public abstract fun drawDropShadow (JFFFFFFF)V
 	public abstract fun drawEllipse (JFFFFI)V

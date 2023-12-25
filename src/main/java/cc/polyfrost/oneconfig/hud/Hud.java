@@ -32,8 +32,6 @@ import cc.polyfrost.oneconfig.config.annotations.Switch;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.libs.universal.UMatrixStack;
 import cc.polyfrost.oneconfig.platform.Platform;
-import cc.polyfrost.oneconfig.utils.hypixel.LocrawInfo;
-import cc.polyfrost.oneconfig.utils.hypixel.LocrawUtil;
 
 /**
  * Represents a HUD element in OneConfig.
@@ -70,7 +68,7 @@ public abstract class Hud {
     transient private Config config;
     public final Position position;
     protected float scale;
-    public int alignment;
+    public int positionAlignment;
     @Exclude
     public float deltaTicks;
 
@@ -78,13 +76,13 @@ public abstract class Hud {
      * @param enabled If the hud is enabled
      * @param x       X-coordinate of hud on a 1080p display
      * @param y       Y-coordinate of hud on a 1080p display
-     * @param alignment Alignment of the hud
+     * @param positionAlignment Alignment of the hud
      * @param scale   Scale of the hud
      */
-    public Hud(boolean enabled, float x, float y, int alignment, float scale) {
+    public Hud(boolean enabled, float x, float y, int positionAlignment, float scale) {
         this.enabled = enabled;
         this.scale = scale;
-        this.alignment = alignment;
+        this.positionAlignment = positionAlignment;
         position = new Position(this, x, y, getWidth(scale, true), getHeight(scale, true));
     }
 
@@ -159,10 +157,6 @@ public abstract class Hud {
         if (!showInGuis && Platform.getGuiPlatform().getCurrentScreen() != null && !(Platform.getGuiPlatform().getCurrentScreen() instanceof OneConfigGui))
             return false;
         if (!showInChat && Platform.getGuiPlatform().isInChat()) return false;
-        if (!showInSkyBlock) {
-            LocrawInfo locrawInfo = LocrawUtil.INSTANCE.getLocrawInfo();
-            if (locrawInfo != null && locrawInfo.getGameType() == LocrawInfo.GameType.SKYBLOCK) return false;
-        }
         return showInDebug || !Platform.getGuiPlatform().isInDebug();
     }
 
@@ -221,9 +215,4 @@ public abstract class Hud {
             name = "Show in GUIs"
     )
     public boolean showInGuis = true;
-
-    @Switch(
-            name = "Show in SkyBlock"
-    )
-    public boolean showInSkyBlock = true;
 }
