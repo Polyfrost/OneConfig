@@ -348,10 +348,12 @@ public class OneConfigGui extends OneUIScreen {
                 }
             }
 
-            handleHistoryMovement(
-                    keyCode == UKeyboard.KEY_LEFT,
-                    keyCode == UKeyboard.KEY_RIGHT
-            );
+            if (!TextInputField.isAnySelected()) {
+                handleHistoryMovement(
+                        keyCode == UKeyboard.KEY_LEFT,
+                        keyCode == UKeyboard.KEY_RIGHT
+                );
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }

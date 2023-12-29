@@ -26,8 +26,12 @@
 
 package cc.polyfrost.oneconfig.gui.elements.text;
 
+import cc.polyfrost.oneconfig.events.EventManager;
+import cc.polyfrost.oneconfig.events.event.RenderEvent;
+import cc.polyfrost.oneconfig.events.event.Stage;
 import cc.polyfrost.oneconfig.gui.elements.BasicElement;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
+import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
 import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
 import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
@@ -67,9 +71,15 @@ public class TextInputField extends BasicElement {
     protected ArrayList<String> wrappedText = null;
     private long clickTimeD1;
     private int lines = 1;
+    private static boolean anyCheckInit = false;
+    private static boolean isAnySelected = false;
 
     public TextInputField(int width, int height, String defaultText, boolean multiLine, boolean password, SVG icon, float radius) {
         super(width, height, false);
+        if (!anyCheckInit) {
+            anyCheckInit = true;
+            EventManager.INSTANCE.register(new TextInputSelectionChecker());
+        }
         this.multiLine = multiLine;
         this.defaultText = defaultText;
         this.password = password;
@@ -286,6 +296,9 @@ public class TextInputField extends BasicElement {
             scissorHelper.resetScissor(vg, scissor);
         } catch (Exception e) {
             e.printStackTrace();
+        }
+        if (toggled) {
+            isAnySelected = true;
         }
     }
 
@@ -574,5 +587,18 @@ public class TextInputField extends BasicElement {
 
     public void setFontSize(float textSize) {
         this.textSize = textSize;
+    }
+
+    public static boolean isAnySelected() {
+        return isAnySelected;
+    }
+
+    private static class TextInputSelectionChecker {
+        @Subscribe
+        private void onRender(RenderEvent event) {
+            if (event.stage == Stage.START) {
+                isAnySelected = false;
+            }
+        }
     }
 }
