@@ -43,7 +43,6 @@ import java.lang.invoke.MethodHandle;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Collects properties from an object using reflection, and from its inner classes.
@@ -136,6 +135,8 @@ public class OneConfigCollector extends ReflectiveCollector {
         if (a == null) return;
         try {
             Tree t = Tree.tree(c.getSimpleName());
+            t.addMetadata(MHUtils.getAnnotationValues(a));
+            // noinspection DataFlowIssue
             handle(t, MHUtils.instantiate(c, false), depth + 1);
             builder.put(t);
         } catch (Exception e) {
@@ -145,9 +146,7 @@ public class OneConfigCollector extends ReflectiveCollector {
 
     public void handleMetadata(@NotNull Property<?> property, @NotNull Annotation a, Option opt, Field f) {
         property.addMetadata("visualizer", opt.display());
-        Map<String, Object> memberValues = MHUtils.getAnnotationValues(a);
-        assert memberValues != null;
-        property.addMetadata(memberValues);
+        property.addMetadata(MHUtils.getAnnotationValues(a));
         DependsOn d = f.getDeclaredAnnotation(DependsOn.class);
         if (d != null) {
             property.addMetadata("conditions", d.value());

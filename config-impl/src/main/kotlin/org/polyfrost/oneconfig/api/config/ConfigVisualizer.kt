@@ -26,295 +26,220 @@
 
 package org.polyfrost.oneconfig.api.config
 
-import org.polyfrost.oneconfig.api.config.annotations.Accordion
-import org.polyfrost.oneconfig.api.config.elements.AccordionOption
-import org.polyfrost.oneconfig.api.config.elements.Option
-import org.polyfrost.oneconfig.ui.pages.Page
-import org.polyfrost.oneconfig.utils.MHUtils
+import org.polyfrost.oneconfig.api.config.visualize.Visualizer
+import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.animate.Animations
-import org.polyfrost.polyui.color.Colors
-import org.polyfrost.polyui.component.Component
-import org.polyfrost.polyui.component.Drawable
-import org.polyfrost.polyui.component.impl.Button
-import org.polyfrost.polyui.component.impl.Dropdown
-import org.polyfrost.polyui.component.impl.Image
-import org.polyfrost.polyui.component.impl.Text
+import org.polyfrost.polyui.color.PolyColor
+import org.polyfrost.polyui.component.*
+import org.polyfrost.polyui.component.impl.*
 import org.polyfrost.polyui.event.Event
-import org.polyfrost.polyui.event.MouseClicked
-import org.polyfrost.polyui.input.Translator.Companion.localised
-import org.polyfrost.polyui.layout.Layout
-import org.polyfrost.polyui.layout.impl.FlexLayout
-import org.polyfrost.polyui.layout.impl.PixelLayout
-import org.polyfrost.polyui.layout.impl.SwitchingLayout
-import org.polyfrost.polyui.property.impl.ImageProperties
-import org.polyfrost.polyui.renderer.data.FontFamily
+import org.polyfrost.polyui.operations.DrawableOp
+import org.polyfrost.polyui.operations.Resize
+import org.polyfrost.polyui.operations.Rotate
 import org.polyfrost.polyui.renderer.data.PolyImage
-import org.polyfrost.polyui.unit.*
-import org.polyfrost.polyui.unit.Unit
-import org.polyfrost.polyui.utils.fastEach
-import org.polyfrost.polyui.utils.fastEachIndexed
-import java.lang.invoke.MethodHandle
+import org.polyfrost.polyui.unit.Align
+import org.polyfrost.polyui.unit.Vec2
+import org.polyfrost.polyui.unit.seconds
+import org.polyfrost.polyui.utils.LinkedList
+import org.polyfrost.polyui.utils.image
+import org.polyfrost.polyui.utils.rgba
 import kotlin.math.PI
 
 object ConfigVisualizer {
-    private const val WIDTH = 1126f
-    private const val OPT_OPT_GAP = 8f
-    private const val HEADER_HEIGHT = 40f
-    private const val HEIGHT = 600f
-    private val cache = HashMap<Class<*>, MethodHandle>(10)
+    private val visCache = HashMap<Class<*>, Visualizer>()
+    private val configCache = HashMap<Tree, Drawable>()
+    private val verticalAlign = Align(cross = Align.Cross.Start, mode = Align.Mode.Vertical)
+    private val optBg = rgba(39, 49, 55, 0.50f)
 
     @JvmStatic
-    fun create(owner: Layout, config: Tree, initialPage: String = "General"): Layout {
-        val now = System.nanoTime()
-        owner.polyUI.translator.dontWarn = true
-        val map = HashMap<String, Layout>()
-        createInternal(config, map, owner)
-        val s = SwitchingLayout(
-            at = 0.px * HEADER_HEIGHT.px,
-            size = WIDTH.px * HEIGHT.px,
-        )
-        val fl = FlexLayout(
-            at = origin,
-            gap = Gap(5.px, 12.px),
-            wrapDirection = FlexLayout.Wrap.NoWrap,
-            drawables = createHeaders(map, s),
-        )
-        val out = object :
-            PixelLayout(
-                size = WIDTH.px * (HEIGHT + HEADER_HEIGHT).px,
-                drawables = drawables(fl, s),
-            ),
-            Page {
-            override var simpleName = "OptionPage@${config.id}"
+    fun get(config: Tree) = configCache.getOrPut(config) { create(config) }
 
-            override fun filter(query: String, search: Any.(String) -> Boolean) {
-                children[0].components.fastEach {
-                    if (it !is Button) return@fastEach
-                    it.exists = it.text!!.string.run { search(query) }
+    private fun create(
+        config: Tree,
+        initialPage: String = "General",
+    ): Drawable {
+        val now = System.nanoTime()
+        val options = LinkedHashMap<String, HashMap<String, LinkedList<Drawable>>>(4)
+
+        // asm: step 1: sort the tree into a map of:
+        // categories
+        //   -> subcategories
+        //      -> list of options
+        for ((_, node) in config.map) {
+            val title = node.getMetadata<String>("title")?.ifEmpty { null }
+            require(title != null) { "Property ${node.id} is missing required metadata 'title' (provided by ${config.id})" }
+            val desc = node.getMetadata<String>("description")?.ifEmpty { null }
+            val icon =
+                when (val it = node.getMetadata<Any?>("icon")) {
+                    null -> null
+                    is PolyImage -> it
+                    is String -> it.image()
+                    else -> throw IllegalArgumentException(
+                        "Property ${node.id} has invalid icon type ${it::class.java.name} (provided by ${config.id}) - must be a PolyImage or String path",
+                    )
                 }
-                children[0].calculateBounds()
-                children[1].components.fastEach self@{
-                    if (it is Text) {
-                        it.exists = query.isEmpty()
+            val category = node.getMetadata<String>("category")?.ifEmpty { null } ?: "General"
+            val subcategory = node.getMetadata<String>("subcategory")?.ifEmpty { null } ?: "General"
+
+            val list = options.getOrPut(category) { HashMap(4) }.getOrPut(subcategory) { LinkedList() }
+            if (node is Property<*>) {
+                list.add(make(node).wrap(title, desc, icon))
+            } else {
+                list.add(makeAccordion(node as Tree, title, desc, icon))
+            }
+        }
+
+        // asm: step 2: build the actual structure
+        val categories =
+            options.mapValues { (_, subcategories) ->
+                Group(
+                    alignment = verticalAlign,
+                    children =
+                    subcategories.map { (header, options) ->
+                        Group(
+                            alignment = verticalAlign,
+                            children =
+                            arrayOf(
+                                Text(header, fontSize = 22f),
+                                *options.toTypedArray(),
+                            ),
+                        )
+                    }.toTypedArray(),
+                )
+            }
+
+        PolyUI.LOGGER.info("creating config page ${config.id} took ${(System.nanoTime() - now) / 1_000_000f}ms")
+        return Group(
+            alignment = Align(cross = Align.Cross.Start),
+            visibleSize = Vec2(1130f, 635f),
+            children =
+            arrayOf(
+                createHeaders(categories),
+                categories[initialPage] ?: throw IllegalArgumentException("Initial page $initialPage does not exist"),
+            ),
+        )
+    }
+
+    private fun createHeaders(categories: Map<String, Drawable>): Drawable {
+        return Group(
+            children =
+            categories.map { (category, options) ->
+                Button(text = category).events {
+                    Event.Mouse.Clicked(0) then {
+                        parent!![0] = options
                     }
-                    if (it is Option) {
-                        it.exists = it.title.string.run { search(query) } ||
-                                (it.description != null && it.description.string.run { search(query) })
-                        if (!it.exists) {
-                            if (it.children.size > 4) {
-                                it.children.fastEach(3) { opt ->
-                                    opt as AccordionOption
-                                    it.exists = opt.title.string.run { search(query) } ||
-                                            (opt.description != null && opt.description.string.run { search(query) })
-                                    if (it.exists) return@self
-                                    it.exists = false
-                                    if (check(opt.option, query, search)) {
-                                        it.exists = true
-                                        return@self
+                }
+            }.toTypedArray(),
+        )
+    }
+
+    private fun makeAccordion(
+        tree: Tree,
+        title: String,
+        desc: String?,
+        icon: PolyImage?,
+    ): Drawable {
+        val options =
+            tree.map.map { (_, node) ->
+                node as? Property<*> ?: throw IllegalArgumentException("Sub-tree ${tree.id} contains sub-tree node ${node.id} - only properties are allowed in sub-trees")
+                val optTitle =
+                    node.getMetadata<String>("title")?.ifEmpty {
+                        null
+                    } ?: throw IllegalArgumentException("Property ${node.id} is missing required metadata 'title' (child of sub-tree ${tree.id})")
+                val optDesc = node.getMetadata<String>("description")?.ifEmpty { null }
+                make(node).wrapForAccordion(optTitle, optDesc)
+            }
+        return Block(
+            color = optBg,
+            alignment = Align(mode = Align.Mode.Vertical, padding = Vec2.ZERO, cross = Align.Cross.Start),
+            children =
+            arrayOf(
+                Image("chevron-down.svg".image()).also { it.rotation = PI }.wrap(title, desc, icon).events {
+                    self.color = PolyColor.TRANSPARENT.toAnimatable()
+                    var open = false
+                    Event.Mouse.Clicked(0) then {
+                        open = !open
+                        Rotate(this[1], if (!open) PI else 0.0, false, Animations.EaseOutQuad.create(0.2.seconds)).add()
+                        val value = parent!![1].size.y
+                        val anim = Animations.EaseOutQuad.create(0.4.seconds)
+                        val operation = Resize(parent!!, width = 0f, height = if (open) -value else value, add = true, anim)
+                        addOperation(
+                            object : DrawableOp.Animatable<Drawable>(parent!!, anim) {
+                                override fun apply(value: Float) {
+                                    operation.apply()
+                                    // asm: instruct parent (options list) to replace all its children so that they move with it closing
+                                    self.parent!!.repositionChildren()
+                                    // asm: instruct all children of this accordion to update their visibility based on THIS, NOT its parent
+                                    self[1].children!!.fastEach {
+                                        it.renders = it.intersects(self.x, self.y, self.width, self.height)
                                     }
                                 }
-                            } else {
-                                if (check(it.option, query, search)) {
-                                    it.exists = true
-                                }
-                            }
-                        }
-                    }
-                }
-                children[1].calculateBounds()
-            }
-
-            override fun onColorsChanged(colors: Colors) {
-                super.onColorsChanged(colors)
-                map.forEach { (_, v) ->
-                    v.onColorsChanged(colors)
-                }
-            }
-
-            override fun onFontsChanged(fonts: FontFamily) {
-                super.onFontsChanged(fonts)
-                map.forEach { (_, v) ->
-                    v.onFontsChanged(fonts)
-                }
-            }
-        }
-        owner.add(out)
-        // assert width is correct
-        for (layout in map.values) {
-            layout.width = WIDTH
-        }
-        s.switch(map[initialPage] ?: throw IllegalArgumentException("Tried to switch to non-existent page $initialPage"))
-        owner.polyUI.translator.dontWarn = false
-        println("Creating config page took ${(System.nanoTime() - now) / 1_000_000f}ms")
-        return out
-    }
-
-    private fun check(cmp: Component, q: String, f: Any.(String) -> Boolean): Boolean {
-        if (cmp is Dropdown) {
-            cmp.dropdown.components.fastEach {
-                if (it !is Dropdown.Entry) return@fastEach
-                println(it.text.string)
-                if (it.text.string.run { f(q) }) return true
-            }
-        }
-        return false
-    }
-
-    private fun put(map: HashMap<String, Layout>, category: String, subcategory: String, icon: PolyImage?, title: String, desc: String?, component: Component, index: Int = -1): Option {
-        val opt = Option(
-            icon = icon,
-            title = title.localised(),
-            desc = desc?.localised(),
-            option = component,
-        )
-        val sub = map[category] ?: FlexLayout(
-            at = origin,
-            resizesChildren = true,
-            drawables = arrayOf(
-                Text(
-                    // 22x0
-                    at = flex(endRowAfter = true),
-                    fontSize = 22.px,
-                    initialText = subcategory.localised(),
-                    acceptInput = false,
-                ),
-            ),
-        ).scrolling(WIDTH.px * HEIGHT.px)
-        val i = addSubcategoryTitle(sub, subcategory)
-        sub.add(opt, if (index != -1) index + i else -1)
-        map[category] = sub
-        return opt
-    }
-
-    fun addSubcategoryTitle(layout: Layout, subcategory: String): Int {
-        layout.components.fastEachIndexed { i, it ->
-            if (it is Text && it.initialText.string == subcategory) return i
-        }
-        layout.add(
-            Text(
-                // 22x0
-                at = flex(endRowAfter = true),
-                fontSize = 22.px,
-                initialText = subcategory.localised(),
-                acceptInput = false,
-            ),
-        )
-        return layout.components.size - 1
-    }
-
-    fun visualize(prop: Property<*>): Component? {
-        val visualizer = prop.getMetadata<Class<*>>("visualizer") ?: return null
-        val m = cache.getOrPut(visualizer) {
-            val it = MHUtils.instantiate(visualizer, false) ?: throw IllegalArgumentException("Visualizer $visualizer could not be instantiated")
-            val mh = MHUtils.getMethodHandle(it, "visualize", Component::class.java, Property::class.java)
-                ?: throw IllegalArgumentException("Visualizer $visualizer does not have a method 'visualize(Component, Property)'")
-            mh
-        }
-        return m.invoke(prop) as Component
-    }
-
-    private fun createInternal(config: Tree, map: HashMap<String, Layout>, owner: Layout) {
-        for ((_, node) in config.map) {
-            if (node is Tree) {
-                val a = node.getMetadata<Accordion>("annotation")
-                if (a != null) {
-                    var open = true
-                    var oldSize: Vec2<Unit>? = null
-                    val title = a.title.ifEmpty { node.id }
-                    val icon = if (a.icon.isEmpty()) null else PolyImage(a.icon, 32f, 32f)
-                    val option = put(
-                        map,
-                        a.category,
-                        a.subcategory,
-                        icon,
-                        title,
-                        a.description.ifEmpty { null },
-                        Image(
-                            properties = ImageProperties(true),
-                            image = PolyImage("chevron-down.svg", 16f, 16f),
-                            at = origin,
-                        ),
-                        a.index,
-                    )
-                    option.addEventHandler(MouseClicked(0)) self@{
-                        var b = false
-                        // allow clicking anywhere on top bar
-                        if (polyUI.mouseX !in trueX..(trueX + width) || polyUI.mouseY !in trueY..(trueY + 64f)) return@self false
-                        if (oldSize == null) oldSize = option.size!!.clone()
-                        option.option.rotateTo(if (open) 0.0 else 180.0, Animations.EaseOutExpo, 0.4.seconds)
-                        option.resize(if (!open) oldSize!! else oldSize!!.a * 64.px, Animations.EaseOutExpo, 0.4.seconds) {
-                            b = true
-                        }
-                        polyUI.addHook {
-                            layout.calculateBounds()
-                            this@self.x = x
-                            this@self.y = y
-                            b
-                        }
-                        open = !open
+                            },
+                        )
                         true
                     }
-                    option.simpleName = "AccordionHeader" + option.simpleName
-                    if (open) option.option.rotation = PI
-                    createAccordion(node, option)
-                } else {
-                    createInternal(node, map, owner)
-                }
-            } else {
-                val prop = node as Property<*>
-                val cmp = visualize(prop) ?: continue
-                val title = prop.getMetadata<String>("title") ?: throw IllegalArgumentException("Property ${prop.id} is missing required metadata 'title'")
-                val desc = prop.getMetadata<String>("description")
-                val iconPath = prop.getMetadata<String>("icon") ?: ""
-                val category = prop.getMetadata<String>("category") ?: "General"
-                val subcategory = prop.getMetadata<String>("subcategory") ?: "General"
-                val icon = if (iconPath.isEmpty()) null else PolyImage(iconPath, 32f, 32f)
-                put(map, category, subcategory, icon, title, desc, cmp)
-            }
-        }
-    }
-
-    // todo wierd kotlin bug????? it can't resolve it for some reason
-    @Suppress("UNCHECKED_CAST")
-    fun <S : Drawable, E : Event> S.addEventHandler(event: E, function: S.(E) -> Boolean) {
-        this.addEventHandler(event, function as Drawable.(Event) -> Boolean)
-    }
-
-    private fun createAccordion(config: Tree, o: Option) {
-        var s = false
-        var yy = 66f
-        config.map.forEach { (_, it) ->
-            if (it !is Property<*>) throw IllegalArgumentException("Accordions cannot contain sub-trees/sub-accordions")
-            val cmp = visualize(it) ?: return@forEach
-            val optTitle = it.getMetadata<String>("title") ?: throw IllegalArgumentException("Property ${it.id} is missing required metadata 'title'")
-            val opt = AccordionOption(
-                at = (if (s) 534f else 22f).px * yy.px,
-                title = optTitle.localised(),
-                desc = it.getMetadata<String>("description")?.localised(),
-                option = cmp,
-            )
-            if (s) yy += opt.height + OPT_OPT_GAP
-            s = !s
-            o.addComponents(opt)
-        }
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    private fun createHeaders(map: HashMap<String, Layout>, s: SwitchingLayout): Array<Button> {
-        val a = arrayOfNulls<Button>(map.size)
-        var i = map.size - 1
-        for (e in map.entries) {
-            a[i] = Button(
-                at = flex(),
-                text = e.key.localised(),
-                events = {
-                    MouseClicked(0) to {
-                        s.switch(e.value)
-                    }
                 },
-            )
-            i--
-        }
-        return a as Array<Button>
+                Group(
+                    size = Vec2(1078f, 0f),
+                    alignment = Align(padding = Vec2(24f, 12f), cross = Align.Cross.Start),
+                    children = options.toTypedArray(),
+                ).namedId("AccordionContent"),
+            ),
+        ).namedId("AccordionHeader")
+    }
+
+    fun make(property: Property<*>): Drawable {
+        val cls = property.getMetadata<Class<*>>("visualizer") ?: throw IllegalArgumentException("Property ${property.id} is missing required metadata 'visualizer'")
+        return visCache.getOrPut(cls) {
+            val it = cls.getDeclaredConstructor().newInstance() ?: throw IllegalArgumentException("Visualizer ${cls.name} could not be instantiated")
+            it as? Visualizer ?: throw IllegalArgumentException("Visualizer ${cls.name} does not implement Visualizer")
+        }.visualize(property)
+    }
+
+    private fun Drawable.wrap(
+        title: String,
+        desc: String?,
+        icon: PolyImage?,
+    ): Drawable {
+        return Block(
+            alignment = Align(main = Align.Main.SpaceBetween, padding = Vec2(16f, 8f)),
+            size = Vec2(1078f, 64f),
+            color = optBg,
+            children =
+            arrayOf(
+                Group(
+                    alignment = Align(padding = Vec2(0f, 12f)),
+                    children =
+                    arrayOf(
+                        if (icon != null) Image(icon).onInit { image.size.max(32f, 32f) } else null,
+                        Group(
+                            alignment = Align(cross = Align.Cross.Start, mode = Align.Mode.Vertical, padding = Vec2(6f, 6f)),
+                            children =
+                            arrayOf(
+                                Text(title, fontSize = 22f, font = PolyUI.defaultFonts.medium),
+                                if (desc != null) Text(desc, visibleSize = Vec2(500f, 12f)) else null,
+                            ),
+                        ),
+                    ),
+                ),
+                this,
+            ),
+        )
+    }
+
+    private fun Drawable.wrapForAccordion(
+        title: String,
+        desc: String?,
+    ): Drawable {
+        return Group(
+            alignment = Align(main = Align.Main.SpaceBetween, padding = Vec2.ZERO),
+            size = Vec2(503f, 32f),
+            children =
+            arrayOf(
+                Text(title, fontSize = 16f),
+                this,
+            ),
+        ).addHoverInfo(desc)
     }
 }
+

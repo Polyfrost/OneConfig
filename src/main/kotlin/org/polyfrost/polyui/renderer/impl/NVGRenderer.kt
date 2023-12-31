@@ -28,12 +28,11 @@ package org.polyfrost.polyui.renderer.impl
 
 import org.jetbrains.annotations.ApiStatus
 import org.lwjgl.nanovg.NVGColor
-import org.lwjgl.nanovg.NVGLUFramebuffer
 import org.lwjgl.nanovg.NVGPaint
 import org.lwjgl.nanovg.NanoSVG
 import org.lwjgl.nanovg.NanoVG.*
-import org.lwjgl.nanovg.NanoVGGL2.*
-import org.lwjgl.opengl.GL20.*
+import org.lwjgl.nanovg.NanoVGGL2.NVG_ANTIALIAS
+import org.lwjgl.nanovg.NanoVGGL2.nvgCreate
 import org.lwjgl.stb.STBImage
 import org.lwjgl.stb.STBImageResize
 import org.lwjgl.system.MemoryUtil
@@ -43,15 +42,11 @@ import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.renderer.data.Font
 import org.polyfrost.polyui.renderer.data.Framebuffer
 import org.polyfrost.polyui.renderer.data.PolyImage
-import org.polyfrost.polyui.unit.Unit
 import org.polyfrost.polyui.unit.Vec2
-import org.polyfrost.polyui.unit.px
-import org.polyfrost.polyui.utils.clearUsing
 import org.polyfrost.polyui.utils.toByteBuffer
 import java.io.InputStreamReader
 import java.nio.ByteBuffer
 import java.util.*
-import kotlin.collections.HashMap
 import kotlin.math.max
 import org.polyfrost.polyui.color.PolyColor as Color
 
@@ -61,11 +56,10 @@ import org.polyfrost.polyui.color.PolyColor as Color
  * For this reason, please never directly refer to this class, instead just use the [Renderer] interface.
  */
 @ApiStatus.Internal
-class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
+class NVGRenderer(size: Vec2) : Renderer(size) {
     private val nvgPaint: NVGPaint = NVGPaint.malloc()
     private val nvgColor: NVGColor = NVGColor.malloc()
     private val nvgColor2: NVGColor = NVGColor.malloc()
-    private val fbos = IdentityHashMap<Framebuffer, NVGLUFramebuffer>()
     private val images = IdentityHashMap<PolyImage, Int>()
     private val fonts = IdentityHashMap<Font, Int>()
     private var vg: Long = -1
@@ -75,9 +69,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
         require(vg != -1L) { "Could not initialize NanoVG" }
     }
 
-    override fun beginFrame() {
-        nvgBeginFrame(vg, width, height, pixelRatio)
-    }
+    override fun beginFrame() = nvgBeginFrame(vg, size.x, size.y, pixelRatio)
 
     override fun endFrame() = nvgEndFrame(vg)
 
@@ -102,11 +94,6 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
     override fun pushScissorIntersecting(x: Float, y: Float, width: Float, height: Float) = nvgIntersectScissor(vg, x, y, width, height)
 
     override fun popScissor() = nvgResetScissor(vg)
-
-    override fun drawFramebuffer(fbo: Framebuffer, x: Float, y: Float, width: Float, height: Float) {
-        val framebuffer = fbos[fbo] ?: throw IllegalStateException("unknown framebuffer!")
-        drawImage(framebuffer.image(), x, y, width, height, 0)
-    }
 
     override fun text(
         font: Font,
@@ -165,43 +152,17 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
         nvgFill(vg)
     }
 
-    fun drawImage(img: Int, x: Float, y: Float, width: Float, height: Float, colorMask: Int = 0) {
-        nvgImagePattern(vg, x, y, width, height, 0f, img, 1f, nvgPaint)
-        if (colorMask != 0) {
-            nvgRGBA(
-                (colorMask shr 16 and 0xFF).toByte(),
-                (colorMask shr 8 and 0xFF).toByte(),
-                (colorMask and 0xFF).toByte(),
-                (colorMask shr 24 and 0xFF).toByte(),
-                nvgPaint.innerColor(),
-            )
-        }
-        nvgBeginPath(vg)
-        nvgRect(vg, x, y, width, height)
-        nvgFillPaint(vg, nvgPaint)
-        nvgFill(vg)
-    }
+    override fun drawFramebuffer(fbo: Framebuffer, x: Float, y: Float, width: Float, height: Float): Unit = throw NotImplementedError()
 
-    override fun createFramebuffer(width: Float, height: Float): Framebuffer {
-        val f = Framebuffer(width, height)
-        fbos[f] = nvgluCreateFramebuffer(
-            vg,
-            width.toInt(),
-            height.toInt(),
-            0,
-        ) ?: throw ExceptionInInitializerError("Could not create: $f (possibly an invalid sized layout?)")
-        return f
-    }
+    override fun supportsFramebuffers() = false
 
-    override fun delete(fbo: Framebuffer?) {
-        fbos.remove(fbo).also {
-            if (it == null) {
-                PolyUI.LOGGER.error("Framebuffer not found when deleting it, already cleaned?")
-                return
-            }
-            nvgluDeleteFramebuffer(vg, it)
-        }
-    }
+    override fun createFramebuffer(width: Float, height: Float) = throw NotImplementedError()
+
+    override fun bindFramebuffer(fbo: Framebuffer?) = throw NotImplementedError()
+
+    override fun unbindFramebuffer(fbo: Framebuffer?) = throw NotImplementedError()
+
+    override fun delete(fbo: Framebuffer?) = throw NotImplementedError()
 
     override fun delete(font: Font?) {
         fonts.remove(font)
@@ -209,23 +170,6 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
 
     override fun delete(image: PolyImage?) {
         images.remove(image)
-    }
-
-    override fun bindFramebuffer(fbo: Framebuffer?) {
-        if (fbo == null) return
-        nvgEndFrame(vg)
-        nvgluBindFramebuffer(vg, fbos[fbo] ?: throw NullPointerException("Cannot bind: $fbo does not exist!"))
-        glViewport(0, 0, fbo.width.toInt(), fbo.height.toInt())
-        glClearColor(0f, 0f, 0f, 0f)
-        glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT or GL_STENCIL_BUFFER_BIT)
-        nvgBeginFrame(vg, fbo.width, fbo.height, pixelRatio)
-    }
-
-    override fun unbindFramebuffer(fbo: Framebuffer?) {
-        nvgEndFrame(vg)
-        nvgluBindFramebuffer(vg, null)
-        glViewport(0, 0, width.toInt(), height.toInt())
-        nvgBeginFrame(vg, width, height, pixelRatio)
     }
 
     override fun initImage(image: PolyImage) {
@@ -332,7 +276,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
     }
 
     @Suppress("NAME_SHADOWING")
-    override fun textBounds(font: Font, text: String, fontSize: Float): Vec2<Unit.Pixel> {
+    override fun textBounds(font: Font, text: String, fontSize: Float): Vec2 {
         // nanovg trims single whitespace, so add an extra one (lol)
         var text = text
         if (text.endsWith(' ')) {
@@ -345,7 +289,7 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
         nvgTextBounds(vg, 0f, 0f, text, out)
         val w = out[2] - out[0]
         val h = out[3] - out[1]
-        return Vec2(w.px, h.px)
+        return Vec2(w, h)
     }
 
     private fun color(color: Color) {
@@ -556,7 +500,6 @@ class NVGRenderer(width: Float, height: Float) : Renderer(width, height) {
     }
 
     override fun cleanup() {
-        fbos.keys.clearUsing { delete(it) }
         images.clear()
         fonts.clear()
         nvgColor.free()

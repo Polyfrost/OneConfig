@@ -27,10 +27,10 @@
 package org.polyfrost.oneconfig.ui.screen;
 
 import kotlin.Pair;
-import kotlin.Unit;
 import net.minecraft.client.Minecraft;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.lwjgl.opengl.Display;
 import org.polyfrost.oneconfig.libs.universal.UKeyboard;
 import org.polyfrost.oneconfig.libs.universal.UMatrixStack;
 import org.polyfrost.oneconfig.libs.universal.UMinecraft;
@@ -52,6 +52,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.function.Consumer;
 
+import static org.lwjgl.opengl.GL11.*;
 import static org.polyfrost.oneconfig.ui.KeybindManager.translateKey;
 
 @SuppressWarnings("unused")
@@ -91,16 +92,14 @@ public class PolyUIScreen extends UScreen {
             LOGGER.info("Creating screen");
             Settings settings = new Settings();
             settings.enableInitCleanup(false);
-            settings.enableFramebuffers(false);
-            settings.enableRenderPausing(false);
-            settings.enableDebug(false);
             Renderer renderer = LwjglManager.INSTANCE.getRenderer(UResolution.getWindowWidth(), UResolution.getWindowHeight());
-            polyUI = new PolyUI(renderer, settings, null, GuiUtils.translator, colors, drawables);
+            polyUI = new PolyUI(renderer, settings, null, GuiUtils.translator, null, null, colors, drawables);
             ofsX = UResolution.getWindowWidth() / 2f - width / 2f;
             ofsY = UResolution.getWindowHeight() / 2f - height / 2f;
+            System.out.println(Display.getPixelScaleFactor());
             polyUI.beforeRender(self -> {
-               self.translate(ofsX, ofsY);
-               return Unit.INSTANCE;
+                self.translate(ofsX, ofsY);
+                return false;
             });
             //#if MC<=11300
             settings.setScrollMultiplier(new Pair<>(0.3f, 0.3f));
@@ -128,14 +127,11 @@ public class PolyUIScreen extends UScreen {
     public final void onDrawScreen(@NotNull UMatrixStack matrices, int mouseX, int mouseY, float delta) {
         ofsX = UResolution.getWindowWidth() / 2f - width / 2f;
         ofsY = UResolution.getWindowHeight() / 2f - height / 2f;
+        glPushAttrib(GL_ALL_ATTRIB_BITS);
+        glDisable(GL_ALPHA_TEST);
+        glPointSize(1f);
 
-        //#if MC>=11300
-        //$$ com.mojang.blaze3d.systems.RenderSystem.disableCull();
-        //$$ com.mojang.blaze3d.systems.RenderSystem.enableBlend();
-        //#else
-        net.minecraft.client.renderer.GlStateManager.disableCull();
-        net.minecraft.client.renderer.GlStateManager.enableBlend();
-
+        //#if MC<=11300
         if (mouseX != mx || mouseY != my) {
             mx = mouseX;
             my = mouseY;
@@ -145,13 +141,8 @@ public class PolyUIScreen extends UScreen {
 
         polyUI.render();
 
-        //#if MC>=11300
-        //$$ com.mojang.blaze3d.systems.RenderSystem.disableBlend();
-        //$$ com.mojang.blaze3d.systems.RenderSystem.enableCull();
-        //#else
-        net.minecraft.client.renderer.GlStateManager.disableBlend();
-        net.minecraft.client.renderer.GlStateManager.enableCull();
-        //#endif
+        glPopAttrib();
+
 
         super.onDrawScreen(matrices, mouseX, mouseY, delta);
     }
@@ -240,15 +231,11 @@ public class PolyUIScreen extends UScreen {
 //        this.polyUI.cleanup(); // todo: UScreen hooks at a time where it actually isn't the last frame, so this segfaults (lol)
     }
 
+    public final Drawable getMaster() {
+        return polyUI.getMaster();
+    }
+
     public final PolyUI get() {
-        return polyUI;
-    }
-
-    public final PolyUI polyUI() {
-        return polyUI;
-    }
-
-    public final PolyUI getInstance() {
         return polyUI;
     }
 

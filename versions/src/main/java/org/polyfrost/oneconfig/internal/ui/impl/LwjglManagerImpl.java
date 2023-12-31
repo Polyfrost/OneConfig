@@ -35,6 +35,7 @@ import org.polyfrost.oneconfig.ui.LwjglManager;
 import org.polyfrost.oneconfig.ui.TinyFD;
 import org.polyfrost.oneconfig.utils.MHUtils;
 import org.polyfrost.polyui.renderer.Renderer;
+import org.polyfrost.polyui.unit.Vec2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -110,7 +111,7 @@ public class LwjglManagerImpl
 
         try {
             Class<?> cls = Class.forName("org.polyfrost.polyui.renderer.impl.NVGRenderer", true, classLoader);
-            MethodHandle mh = MHUtils.getConstructorHandle(cls, float.class, float.class);
+            MethodHandle mh = MHUtils.getConstructorHandle(cls, Vec2.class);
             assert mh != null;
             rendererCtor = mh.asType(mh.type().changeReturnType(Renderer.class));
 
@@ -361,7 +362,7 @@ public class LwjglManagerImpl
     @Override
     public Renderer getRenderer(float width, float height) {
         try {
-            return (Renderer) rendererCtor.invokeExact(width, height);
+            return (Renderer) rendererCtor.invokeExact(new Vec2(width, height));
         } catch (Throwable e) {
             throw new RuntimeException("Failed to create NVGRenderer!", e);
         }

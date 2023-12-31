@@ -42,7 +42,7 @@ import org.polyfrost.oneconfig.libs.universal.UChat;
 import org.polyfrost.polyui.color.PolyColor;
 import org.polyfrost.polyui.input.KeyBinder;
 import org.polyfrost.polyui.input.Modifiers;
-import org.polyfrost.polyui.unit.SlideDirection;
+import org.polyfrost.polyui.unit.Align;
 import org.polyfrost.polyui.utils.Utils;
 
 @SuppressWarnings("unused")
@@ -121,10 +121,10 @@ public class TestConfig_Test extends Config {
     public static boolean c5ow = false;
 
     @RadioButton(title = "radio", description = "send help")
-    public static SlideDirection radio = SlideDirection.FromTop;
+    public static Align.Main radio = Align.Main.Center;
 
     @Accordion(title = "an accordion", description = "AAAAAAAAAAAAAAAAAAAAAAAAAAH", index = 4)
-    public static class AAAAA {
+    public static class AinnerAAAA {
         @Text(title = "Text")
         public static String text = "Hello world!";
 
@@ -133,7 +133,7 @@ public class TestConfig_Test extends Config {
         public static boolean cbow = false;
 
         @RadioButton(title = "radio when me when me when me:", description = "send help")
-        public static SlideDirection radio2 = SlideDirection.FromTop;
+        public static Align.Cross radio2 = Align.Cross.Start;
 
         @Switch(title = "Cow", description = "Something that is way too long and is going to be trimmed (I hope) because that is what its meant to do")
         public static boolean cbo2w = false;

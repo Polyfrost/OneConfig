@@ -27,192 +27,182 @@
 package org.polyfrost.oneconfig.api.config.visualize
 
 import org.polyfrost.oneconfig.api.config.Property
-import org.polyfrost.polyui.component.Component
+import org.polyfrost.polyui.component.Drawable
+import org.polyfrost.polyui.component.events
 import org.polyfrost.polyui.component.impl.*
-import org.polyfrost.polyui.event.MouseClicked
-import org.polyfrost.polyui.input.Translator.Companion.localised
-import org.polyfrost.polyui.property.impl.TextInputProperties
-import org.polyfrost.polyui.unit.origin
-import org.polyfrost.polyui.unit.px
-import org.polyfrost.polyui.unit.times
+import org.polyfrost.polyui.event.Event
+import org.polyfrost.polyui.unit.Vec2
 
 fun interface Visualizer {
-    fun visualize(prop: Property<*>): Component
-
-    companion object {
-        val switchOn = "oneconfig.switch.enabled".localised()
-        val switchOff = "oneconfig.switch.disabled".localised()
-        val click = "oneconfig.click".localised()
-    }
+    fun visualize(prop: Property<*>): Drawable
 
     class ButtonVisualizer : Visualizer {
-        override fun visualize(prop: Property<*>): Component {
+        override fun visualize(prop: Property<*>): Drawable {
             val text = prop.getMetadata<String>("text")?.ifEmpty { null }
             val action = prop.getMetadata<Runnable>("runnable") ?: prop.getAs()
             return Button(
-                at = origin,
-                size = 300.px * 34.px,
-                text = text?.localised() ?: click,
-                events = {
-                    MouseClicked(0) to {
-                        action.run()
-                        true
-                    }
-                },
-            )
+                size = Vec2(300f, 32f),
+                text = text ?: "oneconfig.button.default",
+            ).events {
+                Event.Mouse.Clicked(0) then {
+                    action.run()
+                }
+            }
         }
     }
 
     class ColorVisualizer : Visualizer {
-        override fun visualize(prop: Property<*>): Component {
-            return Block(at = origin, size = origin)
+        override fun visualize(prop: Property<*>): Drawable {
+            return Block()
         }
     }
 
     class DropdownVisualizer : Visualizer {
-        override fun visualize(prop: Property<*>): Component {
+        override fun visualize(prop: Property<*>): Drawable {
             val options: Array<String> = prop.getMetadata("options") ?: emptyArray()
             if (prop.type.isEnum) {
                 require(options.isEmpty()) { "Dropdowns should not have options when used with enums (offender=${prop.id})" }
                 val index = prop.type.enumConstants.indexOf(prop.get())
                 return Dropdown(
-                    at = origin,
-                    size = 300.px * 32.px,
-                    default = index,
-                    entries = Dropdown.from(prop.type),
+                    padding = 24f,
+                    initial = index,
+                    entries = prop.type.enumConstants.map {
+                        it as Enum<*>
+                        null to (it::class.java.fields[0].get(it) as? String ?: it.name)
+                    }.toTypedArray(),
                 )
             } else {
-                require(prop.type == java.lang.Integer::class.java) { "Dropdowns can only be used with enums or integers (offender=${prop.id})" }
+                require(
+                    prop.type == java.lang.Integer::class.java,
+                ) { "Dropdowns can only be used with enums or integers (offender=${prop.id})" }
                 require(options.size >= 2) { "Dropdowns must have at least two options (offender=${prop.id})" }
                 return Dropdown(
-                    at = origin,
-                    size = 300.px * 32.px,
-                    default = prop.getAs(),
-                    entries = Dropdown.from(options),
+                    padding = 24f,
+                    initial = prop.getAs(),
+                    entries = options.map { null to it }.toTypedArray(),
                 )
             }
         }
     }
 
     class KeybindVisualizer : Visualizer {
-        override fun visualize(prop: Property<*>): Component {
-            return Keybind(
-                at = origin,
-                size = 300.px * 32.px,
-                bind = prop.getAs(),
+        override fun visualize(prop: Property<*>): Drawable {
+//            val bind: KeyBinder.Bind = prop.getAs()
+            return Block(
+                size = Vec2(300f, 32f),
             )
         }
     }
 
     class NumberVisualizer : Visualizer {
-        override fun visualize(prop: Property<*>): Component {
-            val placeholder = prop.getMetadata<String>("placeholder") ?: "0"
-            val unit = prop.getMetadata<String>("unit")
+        override fun visualize(prop: Property<*>): Drawable {
+//            val placeholder = prop.getMetadata<String>("placeholder") ?: "0"
+//            val unit = prop.getMetadata<String>("unit")
             val min = prop.getMetadata<Float>("min") ?: 0f
             val max = prop.getMetadata<Float>("max") ?: 100f
             val notFloating = prop.type == java.lang.Integer::class.java || prop.type == java.lang.Long::class.java
-            val s = TextInput(
-                properties = TextInputProperties.numberProperties(!notFloating, min, max),
-                initialText = prop.getAs<Number>().toString().localised(),
-                placeholder = placeholder.localised(),
-                hint = unit?.localised(),
-                at = origin,
-                size = 300.px * 32.px,
-                events = {
-                    TextInput.ChangedEvent() to event@{
-                        if (it.value.isEmpty()) return@event
-                        val v = it.value.toFloat()
-                        prop.setAs(if (notFloating) v.toInt() else v)
+            val s =
+                TextInput(
+                    visibleSize = Vec2(300f, 32f),
+                    text = prop.getAs<Number>().toString(),
+                ).events {
+                    Event.Change.Text() then {
+                        if (it.text.isEmpty()) return@then
+                        try {
+                            val v = it.text.toFloat()
+                            if (v < min || v > max) throw NumberFormatException("Out of range")
+                            prop.setAs(if (notFloating) v.toInt() else v)
+                        } catch (_: NumberFormatException) {
+                            // todo show error
+                        }
                     }
-                },
-            )
+                }
             return s
         }
     }
 
     class RadioVisualizer : Visualizer {
-        override fun visualize(prop: Property<*>): Component {
+        override fun visualize(prop: Property<*>): Drawable {
             val options: Array<String> = prop.getMetadata("options") ?: emptyArray()
             if (prop.type.isEnum) {
                 require(options.isEmpty()) { "Radio buttons cannot have options when used with enums" }
-                val r = RadioButton(
-                    at = origin,
-                    size = 300.px * 32.px,
-                    values = prop.type.enumConstants,
-                    onChange = {
-                        prop.setAs(it)
-                    },
-                )
-                r.set(prop.get())
+                val r =
+                    Radiobutton(
+                        entries = prop.type.enumConstants.map {
+                            it as Enum<*>
+                            null to (it::class.java.fields[0].get(it) as? String ?: it.name)
+                        }.toTypedArray(),
+                        initial = prop.type.enumConstants.indexOf(prop.get()),
+                        optionLateralPadding = 20f,
+                    ).events {
+                        Event.Change.Number() then {
+                            prop.setAs(it.amount)
+                        }
+                    }
                 return r
             } else {
                 require(prop.type == java.lang.Integer::class.java) { "Radio buttons can only be used with enums or integers" }
                 require(options.size >= 2) { "Radio buttons must have at least two options" }
-                return RadioButton(
-                    at = origin,
-                    size = 300.px * 32.px,
-                    values = options,
-                    defaultIndex = prop.getAs(),
-                    onChange = {
-                        prop.setAs(this.selectedIndex)
-                    },
-                )
+                return Radiobutton(
+                    entries = options.map { null to it }.toTypedArray(),
+                    initial = prop.getAs(),
+                    optionLateralPadding = 20f,
+                ).events {
+                    Event.Change.Number() then {
+                        prop.setAs(it.amount)
+                    }
+                }
             }
         }
     }
 
     class SliderVisualizer : Visualizer {
-        override fun visualize(prop: Property<*>): Component {
+        override fun visualize(prop: Property<*>): Drawable {
             val min = prop.getMetadata<Float>("min") ?: 0f
             val max = prop.getMetadata<Float>("max") ?: 100f
-            // todo steps and lil boi inside the slider head
-            val notFloating = prop.type == java.lang.Integer::class.java || prop.type == java.lang.Long::class.java
-            val s = Slider(
-                at = origin,
-                size = 300.px * 32.px,
-                min = min,
-                max = max,
-                events = {
-                    Slider.ChangedEvent() to {
-                        prop.setAs(if (notFloating) it.value.toInt() else it.value)
+            // todo stepped
+            val s =
+                Slider(
+                    min = min,
+                    max = max,
+                    initialValue = prop.getAs<Number>().toFloat(),
+                ).events {
+                    Event.Change.Number() then {
+                        prop.setAs(it.amount)
                     }
-                },
-            )
-            s.value = prop.getAs<Number>().toFloat()
+                }
             return s
         }
     }
 
     class SwitchVisualizer : Visualizer {
-        override fun visualize(prop: Property<*>): Component {
+        override fun visualize(prop: Property<*>): Drawable {
             val state = prop.getAs<Boolean>()
             return Switch(
-                at = origin,
-                switchSize = 40.px * 20.px,
-                enabled = state,
-                label = if (state) switchOn else switchOff,
-                onSwitch = {
-                    prop.setAs(it)
-                    label = if (it) switchOn else switchOff
-                },
-            )
+                lateralStretch = 2f,
+                size = 21f,
+                state = state,
+            ).events {
+                Event.Change.State() then {
+                    prop.setAs(it.state)
+                }
+            }
         }
     }
 
     class TextVisualizer : Visualizer {
-        override fun visualize(prop: Property<*>): Component {
+        override fun visualize(prop: Property<*>): Drawable {
             val placeholder = prop.getMetadata("placeholder") ?: ""
-            val s = TextInput(
-                at = origin,
-                size = 300.px * 32.px,
-                initialText = prop.getAs<String>().localised(),
-                placeholder = placeholder.localised(),
-                events = {
-                    TextInput.ChangedEvent() to {
-                        prop.setAs(it.value)
+            val s =
+                TextInput(
+                    placeholder = placeholder,
+                    visibleSize = Vec2(300f, 12f),
+                    text = prop.getAs(),
+                ).events {
+                    Event.Change.Text() then {
+                        prop.setAs(it.text)
                     }
-                },
-            )
+                }
             return s
         }
     }

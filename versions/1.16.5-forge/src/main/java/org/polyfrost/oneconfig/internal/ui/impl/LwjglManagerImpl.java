@@ -31,6 +31,7 @@ import org.polyfrost.oneconfig.ui.TinyFD;
 import org.polyfrost.oneconfig.ui.impl.TinyFDImpl;
 import org.polyfrost.polyui.renderer.Renderer;
 import org.polyfrost.polyui.renderer.impl.NVGRenderer;
+import org.polyfrost.polyui.unit.Vec2;
 
 @SuppressWarnings("unused")
 public class LwjglManagerImpl implements LwjglManager {
@@ -38,7 +39,7 @@ public class LwjglManagerImpl implements LwjglManager {
 
     @Override
     public Renderer getRenderer(float width, float height) {
-        return new NVGRenderer(width, height);
+        return new NVGRenderer(new Vec2(width, height));
     }
 
     @Override

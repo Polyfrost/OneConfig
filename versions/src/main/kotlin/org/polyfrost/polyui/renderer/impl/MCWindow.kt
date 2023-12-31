@@ -99,4 +99,6 @@ class MCWindow(private val mc: Minecraft) : Window(
         //$$ )
         //#endif
     }
+
+    override fun supportsRenderPausing() = false
 }

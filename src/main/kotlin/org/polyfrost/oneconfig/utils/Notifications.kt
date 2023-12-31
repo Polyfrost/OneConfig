@@ -33,19 +33,14 @@ import org.polyfrost.oneconfig.internal.create
 import org.polyfrost.oneconfig.libs.universal.UResolution
 import org.polyfrost.oneconfig.ui.LwjglManager
 import org.polyfrost.polyui.PolyUI
-import org.polyfrost.polyui.input.Translator
-import org.polyfrost.polyui.input.Translator.Companion.localised
-import org.polyfrost.polyui.layout.Layout
+import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.property.Settings
 import org.polyfrost.polyui.renderer.data.PolyImage
 import org.polyfrost.polyui.unit.seconds
 import java.util.function.Function
 
 object Notifications {
-    private val queue = ArrayDeque<Layout>()
-    private const val WIDTH = 400f
-    private const val HEIGHT = 100f
-    private const val MAX_NOTIFS = 3
+    private val queue = ArrayDeque<Drawable>()
 
     private val renderer = LwjglManager.INSTANCE.getRenderer(UResolution.windowWidth.toFloat(), UResolution.windowHeight.toFloat())!!
     private val settings = Settings().apply {
@@ -65,11 +60,6 @@ object Notifications {
 
     @JvmOverloads
     fun send(title: String, message: String, icon: PolyImage? = null, durationNanos: Long = 4.seconds, progressFunction: Function<Long, Float>? = null, action: Runnable? = null) {
-        send(title.localised(), message.localised(), icon, durationNanos, progressFunction, action)
-    }
-
-    @JvmOverloads
-    fun send(title: Translator.Text, message: Translator.Text, icon: PolyImage? = null, durationNanos: Long = 4.seconds, progressFunction: Function<Long, Float>? = null, action: Runnable? = null) {
         queue.addLast(create(title, message, icon, progressFunction, action))
     }
 }

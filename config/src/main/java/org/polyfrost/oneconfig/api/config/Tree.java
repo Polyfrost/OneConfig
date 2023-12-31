@@ -48,7 +48,7 @@ public class Tree extends Node implements Serializable {
 
     public Tree(@NotNull String id, @Nullable Map<String, Node> items) {
         super(id);
-        if(items != null) {
+        if (items != null) {
             map = new HashMap<>(items.size());
             map.putAll(items);
         } else map = new HashMap<>();
@@ -117,9 +117,9 @@ public class Tree extends Node implements Serializable {
 
     @Override
     public boolean equals(Object obj) {
-        if(obj == null) return false;
-        if(obj == this) return true;
-        if(!(obj instanceof Tree)) return false;
+        if (obj == null) return false;
+        if (obj == this) return true;
+        if (!(obj instanceof Tree)) return false;
         Tree that = (Tree) obj;
         return this.map.size() == that.map.size() && this.id.equals(that.id);
     }
@@ -131,7 +131,7 @@ public class Tree extends Node implements Serializable {
      * @return whether the trees are equal
      */
     public boolean deepEquals(@Nullable Object obj) {
-        if(!equals(obj)) return false;
+        if (!equals(obj)) return false;
         Tree that = (Tree) obj;
         for (Map.Entry<String, Node> e : this.map.entrySet()) {
             Node n = that.get(e.getKey());
@@ -154,11 +154,11 @@ public class Tree extends Node implements Serializable {
      * If the input tree contains values that are not in this tree, it will be added to this tree.
      * <br>
      * This tree should have identical structure to the passed tree when this method is completed.
-     * @param tree the input tree
-     * @param overwrite if true, all values that are in both trees will be overwritten from the input tree into this tree.
-     * @param copyMeta the metadata from the input tree will be copied into this tree, and if overwrite is true,
-     *                 the metadata from the origin value before overwriting is preserved as well
      *
+     * @param tree      the input tree
+     * @param overwrite if true, all values that are in both trees will be overwritten from the input tree into this tree.
+     * @param copyMeta  the metadata from the input tree will be copied into this tree, and if overwrite is true,
+     *                  the metadata from the origin value before overwriting is preserved as well
      * @throws ClassCastException if the types of the properties (with the same name) do not match
      */
     public void merge(Tree tree, boolean overwrite, boolean copyMeta) {
@@ -168,22 +168,33 @@ public class Tree extends Node implements Serializable {
 
     private static void _merge(Tree self, Tree in, boolean overwrite, boolean copyMeta) {
         for (Map.Entry<String, Node> toAdd : in.map.entrySet()) {
-            Node current = self.get(toAdd.getKey());
-            if (current == null) {
-                self.put(toAdd.getValue());
-            } else {
-                if (current instanceof Tree && toAdd.getValue() instanceof Tree) {
-                    _merge((Tree) current, (Tree) toAdd.getValue(), overwrite, copyMeta);
+            Node that = toAdd.getValue();
+            Node _this = self.get(toAdd.getKey());
+            boolean thisIsTree = _this instanceof Tree;
+            boolean thatIsTree = that instanceof Tree;
+            if (_this == null) {
+                self.put(that);
+                continue;
+            }
+
+            if (thisIsTree) {
+                if (!thatIsTree) {
+                    LOGGER.warn("Overwriting tree {} with property {}, is this intended?", _this.getID(), that.getID());
+                    self.put(that);
                 } else {
-                    if (overwrite) {
-                        if (copyMeta) toAdd.getValue().addMetadata(self.getMetadata());
-                        self.put(toAdd.getValue());
-                        continue;
-                    }
-                    if (copyMeta) {
-                        current.addMetadata(toAdd.getValue().getMetadata());
-                    }
+                    _merge((Tree) _this, (Tree) that, overwrite, copyMeta);
+                    if (copyMeta) _this.addMetadata(that.getMetadata());
                 }
+                continue;
+            } else if (thatIsTree) {
+                LOGGER.warn("Overwriting property {} with tree {}, is this intended?", _this.getID(), that.getID());
+                self.put(that);
+                continue;
+            }
+            if (overwrite) {
+                self.put(that);
+            } else if (copyMeta) {
+                _this.addMetadata(that.getMetadata());
             }
         }
     }

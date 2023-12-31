@@ -27,40 +27,36 @@
 package org.polyfrost.oneconfig.api.hud
 
 import org.polyfrost.oneconfig.api.hud.collector.ReflectiveHudCollector
-import org.polyfrost.oneconfig.api.hud.elements.InferringCComponent
-import org.polyfrost.oneconfig.api.hud.properties.ICComponentProperties
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.renderer.Renderer
-import org.polyfrost.polyui.utils.fastEach
+import org.polyfrost.polyui.utils.LinkedList
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
+
+// NOTE:
+// do not touch! I have not attached the remaining classes for the HUD UI as it is not in a state which I am happy pushing.
+// I will push it when I am happy with it.
 object HudManager {
-    private val huds = ArrayList<Hud>()
+    private val huds = LinkedList<Hud<*>>()
     private lateinit var polyUI: PolyUI
     private val collector = ReflectiveHudCollector()
 
     @JvmField
     val LOGGER: Logger = LoggerFactory.getLogger("OneConfig HUD API")
 
-    fun register(hud: Hud) {
+    fun register(hud: Hud<*>) {
         huds.add(hud)
     }
 
     fun init(renderer: Renderer) {
         if (::polyUI.isInitialized) throw IllegalStateException("HudManager already initialised!")
         polyUI = PolyUI(renderer = renderer)
-        polyUI.master.propertyManager.addPropertyType(InferringCComponent::class, ICComponentProperties())
-        huds.fastEach {
-            it.init(collector.collect(it), polyUI)
-        }
+
     }
 
     fun render() {
         if (huds.size == 0) return
         polyUI.render()
-        huds.fastEach {
-            it.renderCustoms()
-        }
     }
 }

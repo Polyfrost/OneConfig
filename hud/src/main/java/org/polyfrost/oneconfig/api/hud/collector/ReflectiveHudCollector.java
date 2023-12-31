@@ -33,7 +33,7 @@ import org.polyfrost.oneconfig.api.config.collector.impl.OneConfigCollector;
 import org.polyfrost.oneconfig.api.hud.annotations.CustomComponent;
 import org.polyfrost.oneconfig.api.hud.annotations.HudComponent;
 import org.polyfrost.oneconfig.utils.MHUtils;
-import org.polyfrost.polyui.component.Component;
+import org.polyfrost.polyui.component.Drawable;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.reflect.Field;
@@ -49,7 +49,7 @@ public class ReflectiveHudCollector extends OneConfigCollector {
         HudComponent c = f.getDeclaredAnnotation(HudComponent.class);
         if (c == null) return;
         try {
-            if (!Component.class.isAssignableFrom(f.getType())) {
+            if (!Drawable.class.isAssignableFrom(f.getType())) {
                 throw new IllegalArgumentException("@HudComponent " + f.getName() + " must be of type Component");
             }
             Property<?> p = prop(f.getName(), f.get(src));

@@ -38,7 +38,7 @@ public class OneConfigCommand {
 
     @Command(description = "Opens the OneConfig GUI")
     private void main() {
-        GuiUtils.displayScreen(OneConfigUI.create());
+        GuiUtils.displayScreen(OneConfigUI.INSTANCE.create());
     }
 
     @Command(description = "Opens the OneConfig HUD configurator.", value = "edithud")

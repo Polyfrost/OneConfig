@@ -27,54 +27,48 @@
 package org.polyfrost.oneconfig.internal
 
 import org.jetbrains.annotations.ApiStatus
+import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.component.impl.Block
-import org.polyfrost.polyui.event.MouseClicked
-import org.polyfrost.polyui.input.Translator
-import org.polyfrost.polyui.layout.Layout
-import org.polyfrost.polyui.layout.Layout.Companion.drawables
-import org.polyfrost.polyui.layout.impl.PixelLayout
-import org.polyfrost.polyui.property.impl.BlockProperties.Companion.backgroundBlock
-import org.polyfrost.polyui.property.impl.BlockProperties.Companion.brandBlock
-import org.polyfrost.polyui.property.impl.BlockProperties.Companion.withStates
 import org.polyfrost.polyui.renderer.data.PolyImage
-import org.polyfrost.polyui.unit.origin
-import org.polyfrost.polyui.unit.px
-import org.polyfrost.polyui.unit.seconds
-import org.polyfrost.polyui.unit.times
+import org.polyfrost.polyui.utils.image
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneId
+
+object NotificationManager {
+
+}
 
 @ApiStatus.Internal
-fun create(title: Translator.Text, message: Translator.Text, icon: PolyImage?, progressFunction: java.util.function.Function<Long, Float>?, action: Runnable?): Layout {
-    val l = PixelLayout(
-        at = origin,
-        size = 400.px * 200.px,
-        drawables = drawables(
-            Block(
-                properties = backgroundBlock,
-                at = origin,
-                size = 400.px * 200.px,
-                events = {
-                    if (action != null) {
-                        MouseClicked(0) to {
-                            action.run()
-                        }
-                    }
-                }
-            ).also {
-                it.consumesHover = false
-                if (action != null) it.properties.withStates()
-            },
-            Block(
-                properties = brandBlock,
-                at = 0.px * 190.px,
-                size = 400.px * 10.px,
-            ),
+fun create(title: String, message: String, icon: PolyImage?, progressFunction: java.util.function.Function<Long, Float>?, action: Runnable?): Drawable {
+    return Block()
+}
 
-            )
-    )
-    if (progressFunction != null) {
-        l.every(0.seconds) {
-            this.getComponent<Block>(1).width = 400f * progressFunction.apply(this.polyUI.delta)
+class Notification(vararg val extras: Drawable?, val title: String, val description: String, time: Long, val state: Byte = 0, val icon: PolyImage = "cog.svg".image()) {
+    val time = System.currentTimeMillis() - time
+    val timeString: String
+        get() {
+            return if (this.time < 15_000L) {
+                "Just now"
+            } else {
+                val ldt = LocalDateTime.ofInstant(Instant.ofEpochSecond(this.time), ZoneId.systemDefault())
+                if (ldt.monthValue == 0) {
+                    if (ldt.dayOfMonth == 0) {
+                        if (ldt.hour == 0) {
+                            if (ldt.minute == 0) {
+                                "${ldt.second}s ago"
+                            } else {
+                                "${ldt.minute}m ago"
+                            }
+                        } else {
+                            "${ldt.hour}h ago"
+                        }
+                    } else {
+                        "${ldt.dayOfMonth}d ago"
+                    }
+                } else {
+                    "${ldt.monthValue}mo ago"
+                }
+            }
         }
-    }
-    return l
 }

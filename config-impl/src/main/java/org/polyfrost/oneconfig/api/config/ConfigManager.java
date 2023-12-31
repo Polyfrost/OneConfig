@@ -106,7 +106,7 @@ public class ConfigManager {
      * @throws IllegalArgumentException if no registered collector is able to collect from the source object
      */
     public Tree register(@NotNull Object source, @Nullable Config cfg) {
-        cfg = cfg == null ? new Config(source.getClass().getSimpleName() + DEFAULT_EXT, null, source.getClass().getSimpleName(), Config.Category.OTHER) : cfg;
+        cfg = cfg == null ? new Config(source.getClass().getSimpleName() + DEFAULT_EXT, (String) null, source.getClass().getSimpleName(), Config.Category.OTHER) : cfg;
         Tree t = null;
         try {
             t = backend.get(cfg.id);

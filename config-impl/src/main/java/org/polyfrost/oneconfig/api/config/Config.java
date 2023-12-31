@@ -29,7 +29,6 @@ package org.polyfrost.oneconfig.api.config;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.polyfrost.polyui.input.Translator;
 import org.polyfrost.polyui.renderer.data.PolyImage;
 
 import java.util.ArrayList;
@@ -38,35 +37,36 @@ import java.util.function.BooleanSupplier;
 import static org.polyfrost.oneconfig.api.config.Tree.LOGGER;
 
 public class Config {
+    @NotNull
     public transient final String id;
+    @Nullable
     public transient final PolyImage icon;
-    public transient final Translator.Text name;
+    @NotNull
+    public transient final String name;
     public boolean enabled = true;
     public boolean favorite = false;
     // todo(?) public transient boolean hasUpdate = true;
     @ApiStatus.Internal
+    @NotNull
     public transient final ArrayList<PolyImage> data = new ArrayList<>(3);
+    @NotNull
     public transient final Category category;
     @ApiStatus.Internal
     private transient Tree tree = null;
 
-    public Config(@NotNull String id, @Nullable PolyImage icon, @NotNull Translator.Text name, Category category) {
+    public Config(@NotNull String id, @Nullable PolyImage icon, @NotNull String name, @NotNull Category category) {
         this.id = id;
         this.icon = icon;
         this.name = name;
         this.category = category;
     }
 
-    public Config(String id, Translator.Text name, Category category) {
-        this(id, null, name, category);
-    }
-
     public Config(String id, String iconPath, String name, Category category) {
-        this(id, iconPath == null ? null : new PolyImage(iconPath), new Translator.Text(name), category);
+        this(id, iconPath != null ? new PolyImage(iconPath) : null, name, category);
     }
 
     public Config(String id, String name, Category category) {
-        this(id, null, new Translator.Text(name), category);
+        this(id, (PolyImage) null, name, category);
     }
 
     public Tree getTree() {

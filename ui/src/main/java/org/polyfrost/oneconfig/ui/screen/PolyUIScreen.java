@@ -40,6 +40,7 @@ public class PolyUIScreen {
         this.width = width;
         this.height = height;
         throw new UnsupportedOperationException("implementation is intrinsic");
+        // see versions/src/main/java/org/polyfrost/oneconfig/ui/screen/PolyUIScreen.java for the actual implementation //
     }
 
     public PolyUIScreen(float width, float height, Colors colors, Drawable... drawables) {
@@ -48,5 +49,15 @@ public class PolyUIScreen {
 
     public PolyUIScreen(float width, float height, Drawable... drawables) {
         this(width, height, null, null, drawables);
+    }
+
+    public final Drawable getMaster() {
+        // intrinsic //
+        return null;
+    }
+
+    public final PolyUI getPolyUI() {
+        // intrinsic //
+        return null;
     }
 }

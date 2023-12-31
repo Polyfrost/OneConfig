@@ -1,29 +1,23 @@
-polyui.test=Kotlin...        {}!    and image
-polyui.button=I am a button.
 polyui.search.placeholder=Write something here...
 polyui.colorpicker.solid=Solid color
 polyui.colorpicker.gradient=Gradient
 polyui.colorpicker.chroma=Chroma
 polyui.colorpicker.hex=HEX
 polyui.colorpicker.rgb=RGB
-polyfrost.copyright=© Polyfrost 2023. All rights reserved.
-button.randomize=Randomize order
-text.light=Flashbang mode
-text.dark=Boring mode
-button.text=A {0} button
 
 oneconfig=OneConfig
-oneconfig.sidebar.title.mods=MODS & OPTIONS
+oneconfig.sidebar.title.options=MODS & OPTIONS
 oneconfig.mods=Mods
 oneconfig.profiles=Profiles
 oneconfig.keybinds=Keybinds
-oneconfig.sidebar.title.personalization=PERSONALIZATION
+oneconfig.sidebar.title.personal=PERSONALIZATION
 oneconfig.themes=Themes
 oneconfig.preferences=Preferences
-oneconfig.sidebar.title.oneconfig=ONECONFIG RELATED
+oneconfig.sidebar.title.extra=ONECONFIG RELATED
 oneconfig.changelog=Changelog
 oneconfig.feedback=Feedback
 oneconfig.edithud=Edit HUD
+
 oneconfig.switch.disabled=Off
 oneconfig.switch.enabled=On
 oneconfig.keybind.editing=Recording... Press ESC to exit

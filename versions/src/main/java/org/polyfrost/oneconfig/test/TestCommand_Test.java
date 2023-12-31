@@ -30,10 +30,6 @@ import com.mojang.authlib.GameProfile;
 import org.polyfrost.oneconfig.api.commands.factories.annotated.annotations.Command;
 import org.polyfrost.oneconfig.api.commands.factories.annotated.annotations.Parameter;
 import org.polyfrost.oneconfig.libs.universal.UChat;
-import org.polyfrost.oneconfig.utils.GuiUtils;
-import org.polyfrost.oneconfig.ui.screen.PolyUIScreen;
-import org.polyfrost.polyui.color.LightTheme;
-import org.polyfrost.polyui.test.Test;
 
 @Command(value = {"test", "t"}, description = "Description of the test command")
 public class TestCommand_Test {
@@ -60,12 +56,6 @@ public class TestCommand_Test {
                 UChat.chat("Integer subSub: " + (a + b) + " " + c);
             }
         }
-    }
-
-    @Command
-    private void polyui() {
-        UChat.chat("PolyUI test");
-        GuiUtils.displayScreen(new PolyUIScreen(800f, 500f, new LightTheme(), Test.create()));
     }
 
     @Command
