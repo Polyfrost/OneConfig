@@ -26,6 +26,7 @@
 
 package cc.polyfrost.oneconfig.gui.pages;
 
+import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.animations.Animation;
 import cc.polyfrost.oneconfig.gui.animations.ColorAnimation;
 import cc.polyfrost.oneconfig.gui.animations.EaseOutQuad;
@@ -38,6 +39,7 @@ import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
 /**
  * A page is a 1056x728 rectangle of the GUI. It is the main content of the gui, and can be switched back and forwards easily. All the content of OneConfig is in a page.
@@ -52,6 +54,7 @@ public abstract class Page {
     private float yStart;
     protected float scroll;
     public final ArrayList<Page> parents = new ArrayList<>();
+    private String previousSearch = "";
 
     public Page(String title) {
         this.title = title;
@@ -79,6 +82,12 @@ public abstract class Page {
         ScissorHelper scissorHelper = ScissorHelper.INSTANCE;
         int maxScroll = getMaxScrollHeight();
         int scissorOffset = drawStatic(vg, x, y, inputHandler);
+        if (OneConfigGui.INSTANCE != null) {
+            if (!Objects.equals(previousSearch, OneConfigGui.INSTANCE.getSearchValue())) {
+                previousSearch = OneConfigGui.INSTANCE.getSearchValue();
+                finishUpAndClose();
+            }
+        }
         scroll = scrollAnimation == null ? scrollTarget : scrollAnimation.get();
         final float scrollBarLength = (728f / maxScroll) * 728f;
         Scissor scissor = scissorHelper.scissor(vg, x, y + scissorOffset, x + 1056, y + 728 - scissorOffset);
