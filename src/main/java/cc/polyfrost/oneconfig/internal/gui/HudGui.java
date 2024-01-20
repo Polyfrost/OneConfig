@@ -101,9 +101,7 @@ public class HudGui extends UScreen implements GuiPause {
                 nanoVGHelper.setupAndDraw(true, vg -> nanoVGHelper.drawRect(vg, position.getX(), position.getY(), position.getWidth(), position.getHeight(), new Color(0, 128, 128, 60).getRGB()));
             }
             if (hud.isLocked()) {
-                nanoVGHelper.setupAndDraw(true, vg -> {
-                    nanoVGHelper.drawRect(vg, position.getX(), position.getY(), position.getWidth(), position.getHeight(), new Color(238, 36, 36, 60).getRGB());
-                });
+                nanoVGHelper.setupAndDraw(true, vg -> nanoVGHelper.drawRect(vg, position.getX(), position.getY(), position.getWidth(), position.getHeight(), new Color(238, 36, 36, 60).getRGB()));
             }
             nanoVGHelper.setupAndDraw(vg -> {
                 nanoVGHelper.drawLine(vg, position.getX() * scaleFactor - lineWidth / 2f, position.getY() * scaleFactor - lineWidth / 2f, position.getRightX() * scaleFactor + lineWidth / 2f, position.getY() * scaleFactor - lineWidth / 2f, lineWidth, new Color(255, 255, 255).getRGB());
