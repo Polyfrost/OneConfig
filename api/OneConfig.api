@@ -1088,6 +1088,7 @@ public class cc/polyfrost/oneconfig/hud/HUDUtils {
 public abstract class cc/polyfrost/oneconfig/hud/Hud {
 	public field deltaTicks F
 	protected field enabled Z
+	protected field locked Z
 	public final field position Lcc/polyfrost/oneconfig/hud/Position;
 	public field positionAlignment I
 	protected field scale F
@@ -1106,6 +1107,7 @@ public abstract class cc/polyfrost/oneconfig/hud/Hud {
 	public fun getScale ()F
 	protected abstract fun getWidth (FZ)F
 	public fun isEnabled ()Z
+	public fun isLocked ()Z
 	protected fun preRender (Z)V
 	public fun setConfig (Lcc/polyfrost/oneconfig/config/Config;)V
 	public fun setScale (FZ)V

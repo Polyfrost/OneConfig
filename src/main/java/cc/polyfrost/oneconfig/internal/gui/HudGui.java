@@ -100,6 +100,11 @@ public class HudGui extends UScreen implements GuiPause {
             if (editingHuds.containsKey(hud)) {
                 nanoVGHelper.setupAndDraw(true, vg -> nanoVGHelper.drawRect(vg, position.getX(), position.getY(), position.getWidth(), position.getHeight(), new Color(0, 128, 128, 60).getRGB()));
             }
+            if (hud.isLocked()) {
+                nanoVGHelper.setupAndDraw(true, vg -> {
+                    nanoVGHelper.drawRect(vg, position.getX(), position.getY(), position.getWidth(), position.getHeight(), new Color(238, 36, 36, 60).getRGB());
+                });
+            }
             nanoVGHelper.setupAndDraw(vg -> {
                 nanoVGHelper.drawLine(vg, position.getX() * scaleFactor - lineWidth / 2f, position.getY() * scaleFactor - lineWidth / 2f, position.getRightX() * scaleFactor + lineWidth / 2f, position.getY() * scaleFactor - lineWidth / 2f, lineWidth, new Color(255, 255, 255).getRGB());
                 nanoVGHelper.drawLine(vg, position.getX() * scaleFactor - lineWidth / 2f, position.getBottomY() * scaleFactor + lineWidth / 2f, position.getRightX() * scaleFactor + lineWidth / 2f, position.getBottomY() * scaleFactor + lineWidth / 2f, lineWidth, new Color(255, 255, 255).getRGB());
@@ -131,7 +136,7 @@ public class HudGui extends UScreen implements GuiPause {
             }
         }
         for (Hud hud : HudCore.huds.values()) {
-            if (!hud.isEnabled() || !mouseClickedHud(hud, (float) mouseX, (float) mouseY)) continue;
+            if (!hud.isEnabled() || !mouseClickedHud(hud, (float) mouseX, (float) mouseY) || hud.isLocked()) continue;
             if (!editingHuds.containsKey(hud)) {
                 if (!UKeyboard.isCtrlKeyDown()) editingHuds.clear();
                 editingHuds.put(hud, new GrabOffset());
@@ -198,7 +203,7 @@ public class HudGui extends UScreen implements GuiPause {
 
         editingHuds.clear();
         for (Hud hud : HudCore.huds.values()) {
-            if (!hud.isEnabled()) continue;
+            if (!hud.isEnabled() || hud.isLocked()) continue;
             Position pos = hud.position;
             if ((x1 <= pos.getX() && x2 >= pos.getX() || x1 <= pos.getRightX() && x2 >= pos.getRightX())
                     && (y1 <= pos.getY() && y2 >= pos.getY() || y1 <= pos.getBottomY() && y2 >= pos.getBottomY()))

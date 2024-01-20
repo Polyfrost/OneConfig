@@ -65,6 +65,7 @@ import cc.polyfrost.oneconfig.platform.Platform;
  */
 public abstract class Hud {
     protected boolean enabled;
+    protected boolean locked;
     transient private Config config;
     public final Position position;
     protected float scale;
@@ -165,6 +166,13 @@ public abstract class Hud {
      */
     public boolean isEnabled() {
         return enabled && (config == null || config.enabled);
+    }
+
+    /**
+     * @return If the hud is locked
+     */
+    public boolean isLocked() {
+        return locked && (config == null || config.enabled);
     }
 
     /**

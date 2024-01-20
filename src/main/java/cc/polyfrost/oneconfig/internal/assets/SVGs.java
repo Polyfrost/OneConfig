@@ -54,6 +54,7 @@ public class SVGs {
     public static final SVG SEARCH_SM = new SVG("/assets/oneconfig/icons/search-sm.svg");
     public static final SVG SETTINGS_02 = new SVG("/assets/oneconfig/icons/settings-02.svg");
     public static final SVG USERS_02 = new SVG("/assets/oneconfig/icons/users-02.svg");
+    public static final SVG LOCKED = new SVG("/assets/oneconfig/icons/locked.svg");
 
     public static final SVG TEXT_INPUT = new SVG("/assets/oneconfig/icons/text-input.svg");
 
