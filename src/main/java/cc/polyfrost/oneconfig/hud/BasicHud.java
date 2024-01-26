@@ -42,10 +42,6 @@ public abstract class BasicHud extends Hud {
     protected float borderSize;
     protected float paddingX;
     protected float paddingY;
-    @Exclude
-    private float defaultPaddingX, defaultPaddingY;
-    @Exclude
-    private boolean loaded;
 
     /**
      * @param enabled      If the hud is enabled
@@ -74,11 +70,6 @@ public abstract class BasicHud extends Hud {
         this.borderSize = borderSize;
         this.borderColor = borderColor;
         position.setSize(getWidth(scale, true) + paddingX * scale * 2f, getHeight(scale, true) + paddingY * scale * 2f);
-        if (!loaded) {
-            defaultPaddingX = paddingX;
-            defaultPaddingY = paddingY;
-            loaded = true;
-        }
     }
 
     /**
@@ -123,9 +114,13 @@ public abstract class BasicHud extends Hud {
 
     @Override
     protected void resetPosition() {
-        this.paddingX = defaultPaddingX;
-        this.paddingY = defaultPaddingY;
+        float paddingX = this.paddingX;
+        float paddingY = this.paddingY;
+        this.paddingX = 0;
+        this.paddingY = 0;
         super.resetPosition();
+        this.paddingX = paddingX;
+        this.paddingY = paddingY;
     }
 
     /**
