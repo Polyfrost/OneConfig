@@ -30,7 +30,24 @@ val mod_name: String by settings
 
 rootProject.name = mod_name
 
-include(":platform", ":config", ":config-impl", ":commands", ":hud", "events", ":ui", ":utils")
+listOf(
+    "config",
+    "config-impl",
+    "commands",
+    "hud",
+    "events",
+    "ui",
+    "utils"
+).forEach { module ->
+    val proj = ":$module"
+    include(proj)
+    project(proj).apply {
+        projectDir = file("modules/$module")
+    }
+}
+
+
+include(":platform")
 project(":platform").apply {
     projectDir = file("versions/")
     buildFileName = "root.gradle.kts"
