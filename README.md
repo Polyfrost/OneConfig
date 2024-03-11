@@ -4,6 +4,8 @@
 ![Dev Worflow Status](https://img.shields.io/github/actions/workflow/status/Polyfrost/OneConfig/release.yml?style=for-the-badge&color=1452cc&label=release)
 ![Dev Worflow Status](https://img.shields.io/github/actions/workflow/status/Polyfrost/OneConfig/build.yml?style=for-the-badge&color=1452cc&label=build)
 
+## Are you someone who knows nothing about programming and just want to use OneConfig? Check out our website [here](https://polyfrost.org/projects/oneconfig/)!
+
 OneConfig is a free, open sourced configuration library by [Polyfrost](https://polyfrost.cc), designed to give developers a simple config API, which users can interact with in an elegant user interface.
 
 ## ❔ General information
