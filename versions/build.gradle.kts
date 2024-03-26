@@ -194,7 +194,7 @@ tasks {
         // This removes the 24th line in fabric.mod.json,
         // aka the TestMod entrypoint, for production builds.
         doFirst {
-            val fabricModJson = buildDir.resolve("resources")
+            val fabricModJson = layout.buildDirectory.asFile.get().resolve("resources")
                 .resolve("main")
                 .resolve("fabric.mod.json")
             if (fabricModJson.exists()) {
@@ -217,7 +217,7 @@ tasks {
             val lines = atomicLines.get()
             if (lines.isEmpty()) return@doLast
 
-            val fabricModJson = buildDir.resolve("resources")
+            val fabricModJson = layout.buildDirectory.asFile.get().resolve("resources")
                 .resolve("main")
                 .resolve("fabric.mod.json")
 
