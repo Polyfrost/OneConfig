@@ -26,6 +26,7 @@
 
 package cc.polyfrost.oneconfig.hud;
 
+import cc.polyfrost.oneconfig.config.annotations.Exclude;
 import cc.polyfrost.oneconfig.config.core.OneColor;
 import cc.polyfrost.oneconfig.libs.universal.UMatrixStack;
 import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
@@ -109,6 +110,17 @@ public abstract class BasicHud extends Hud {
         if (shouldDrawBackground() && background)
             drawBackground(position.getX(), position.getY(), position.getWidth(), position.getHeight(), scale);
         draw(matrices, position.getX() + paddingX * scale, position.getY() + paddingY * scale, scale, example);
+    }
+
+    @Override
+    protected void resetPosition() {
+        float paddingX = this.paddingX;
+        float paddingY = this.paddingY;
+        this.paddingX = 0;
+        this.paddingY = 0;
+        super.resetPosition();
+        this.paddingX = paddingX;
+        this.paddingY = paddingY;
     }
 
     /**

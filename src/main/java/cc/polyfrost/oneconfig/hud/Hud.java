@@ -32,6 +32,9 @@ import cc.polyfrost.oneconfig.config.annotations.Switch;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.libs.universal.UMatrixStack;
 import cc.polyfrost.oneconfig.platform.Platform;
+import cc.polyfrost.oneconfig.utils.TickDelay;
+
+import javax.swing.*;
 
 /**
  * Represents a HUD element in OneConfig.
@@ -65,12 +68,17 @@ import cc.polyfrost.oneconfig.platform.Platform;
  */
 public abstract class Hud {
     protected boolean enabled;
+    protected boolean locked;
     transient private Config config;
-    public final Position position;
+    public Position position;
     protected float scale;
     public int positionAlignment;
     @Exclude
-    public float deltaTicks;
+    public float deltaTicks, defaultX, defaultY, defaultScale;
+    @Exclude
+    private boolean loaded = false;
+    @Exclude
+    private Position defaultPosition;
 
     /**
      * @param enabled If the hud is enabled
@@ -84,6 +92,13 @@ public abstract class Hud {
         this.scale = scale;
         this.positionAlignment = positionAlignment;
         position = new Position(this, x, y, getWidth(scale, true), getHeight(scale, true));
+        if (!loaded) {
+            defaultPosition = position;
+            defaultX = x;
+            defaultY = y;
+            defaultScale = scale;
+            loaded = true;
+        }
     }
 
     public Hud(boolean enabled, float x, float y, float scale) {
@@ -143,6 +158,15 @@ public abstract class Hud {
     protected void preRender(boolean example) {
     }
 
+    protected void resetPosition() {
+        scale = defaultScale;
+        new TickDelay(() -> {
+            Position pos = defaultPosition;
+            position.setSize(pos.getWidth(), position.getHeight());
+            position.setPosition(defaultX, defaultY, 1920, 1080);
+        }, 1);
+    }
+
     /**
      * Draw the background, the hud and all childed huds, used by HudCore
      */
@@ -165,6 +189,13 @@ public abstract class Hud {
      */
     public boolean isEnabled() {
         return enabled && (config == null || config.enabled);
+    }
+
+    /**
+     * @return If the hud is locked
+     */
+    public boolean isLocked() {
+        return locked && (config == null || config.enabled);
     }
 
     /**
