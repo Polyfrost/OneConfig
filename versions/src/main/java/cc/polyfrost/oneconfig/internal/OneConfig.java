@@ -110,8 +110,26 @@ public class OneConfig {
             for (ModContainer mod : Loader.instance().getActiveModList()) {
                 if (mod == null) continue;
                 try {
-                    handleForgeCommand(mod);
-                    handleForgeGui(mod);
+                    boolean shouldAttempt = true;
+                    for (Mod configMod : ConfigCore.mods) {
+                        final String configModName = configMod.name.toLowerCase(Locale.ENGLISH);
+                        final String spacelessConfigModName = configModName.replace(" ", "");
+                        if (Objects.equals(configModName, mod.getName().toLowerCase(Locale.ENGLISH)) || Objects.equals(configModName, mod.getModId()) ||
+                                Objects.equals(spacelessConfigModName, mod.getName().toLowerCase(Locale.ENGLISH)) || Objects.equals(spacelessConfigModName, mod.getModId())) {
+                            shouldAttempt = false;
+                        }
+                    }
+
+                    for (ArtifactVersion dependency : mod.getDependencies()) {
+                        if (Objects.equals("oneconfig", dependency.getLabel())) {
+                            shouldAttempt = false;
+                        }
+                    }
+                    if (shouldAttempt) {
+                        if (!handleForgeGui(mod)) {
+                            handleForgeCommand(mod);
+                        }
+                    }
                 } catch (Throwable t) {
                     LOGGER.error("Failed to handle Forge compatibility for {}", mod.getModId(), t);
                 }
@@ -163,18 +181,6 @@ public class OneConfig {
     //#if FORGE==1 && MC<=11202
 
     private void handleForgeCommand(ModContainer mod) {
-        for (Mod configMod : ConfigCore.mods) {
-            final String configModName = configMod.name.toLowerCase(Locale.ENGLISH).replace(" ", "");
-            if (Objects.equals(configModName, mod.getName().toLowerCase(Locale.ENGLISH)) || Objects.equals(configModName, mod.getModId())) {
-                return;
-            }
-        }
-
-        for (ArtifactVersion dependency : mod.getDependencies()) {
-            if (Objects.equals("oneconfig", dependency.getLabel())) {
-                return;
-            }
-        }
         for (net.minecraft.command.ICommand command : net.minecraftforge.client.ClientCommandHandler.instance.getCommands().values()) {
             if (Objects.equals(command.getCommandName(), mod.getModId())) {
                 for (String alias : command.getCommandAliases()) {
@@ -187,7 +193,6 @@ public class OneConfig {
                 ForgeCompat.compatMods.put(new ForgeCompat.ForgeCompatMod(mod.getName(), ModType.THIRD_PARTY), () -> new TickDelay(() -> {
                     UScreen.displayScreen(null);
                     try {
-                        //execute
                         //#if MC<=10809
                         command.processCommand(UPlayer.getPlayer(), new String[]{});
                         //#else
@@ -202,18 +207,18 @@ public class OneConfig {
         }
     }
 
-    private void handleForgeGui(ModContainer mod) {
+    private boolean handleForgeGui(ModContainer mod) {
         if ("fml".equalsIgnoreCase(mod.getModId())) {
-            return;
+            return false;
         }
 
         IModGuiFactory factory = FMLClientHandler.instance().getGuiFactoryFor(mod);
         //#if MC<=10809
-        if (factory == null || factory.mainConfigGuiClass() == null) return;
+        if (factory == null || factory.mainConfigGuiClass() == null) return false;
         //#else
-        //$$ if (factory == null || !factory.hasConfigGui()) return;
+        //$$ if (factory == null || !factory.hasConfigGui()) return false;
         //#endif
-        if (IgnoredGuiFactory.class.isAssignableFrom(factory.getClass())) return;
+        if (IgnoredGuiFactory.class.isAssignableFrom(factory.getClass())) return false;
 
         boolean isForgeContainer = "forge".equalsIgnoreCase(mod.getModId());
         ModMetadata metadata = mod.getMetadata();
@@ -252,6 +257,7 @@ public class OneConfig {
                 e.printStackTrace();
             }
         });
+        return true;
     }
     //#endif
 
