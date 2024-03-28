@@ -223,6 +223,15 @@ public class Position {
     }
 
     /**
+     * Set the X coordinate scaled to the size of the screen
+     *
+     * @param x The X coordinate
+     */
+    public void setX(float x) {
+        this.x = x - getAnchorX(UResolution.getScaledWidth()) + getAnchorX(width);
+    }
+
+    /**
      * Get the Y coordinate scaled to the size of the screen
      *
      * @param screenHeight The height of the screen
@@ -239,6 +248,15 @@ public class Position {
      */
     public float getY() {
         return getY(UResolution.getScaledHeight());
+    }
+
+    /**
+     * Set the Y coordinate scaled to the size of the screen
+     *
+     * @param y The Y coordinate
+     */
+    public void setY(float y) {
+        this.y = y - getAnchorY(UResolution.getScaledHeight()) + getAnchorY(height);
     }
 
     /**

@@ -1066,6 +1066,8 @@ public abstract class cc/polyfrost/oneconfig/hud/BasicHud : cc/polyfrost/oneconf
 	protected field borderColor Lcc/polyfrost/oneconfig/config/core/OneColor;
 	protected field borderSize F
 	protected field cornerRadius F
+	protected field defaultPaddingX F
+	protected field defaultPaddingY F
 	protected field paddingX F
 	protected field paddingY F
 	protected field rounded Z
@@ -1087,9 +1089,6 @@ public class cc/polyfrost/oneconfig/hud/HUDUtils {
 }
 
 public abstract class cc/polyfrost/oneconfig/hud/Hud {
-	public field defaultScale F
-	public field defaultX F
-	public field defaultY F
 	public field deltaTicks F
 	protected field enabled Z
 	protected field locked Z
@@ -1141,6 +1140,8 @@ public class cc/polyfrost/oneconfig/hud/Position {
 	public fun setPosition (FF)V
 	public fun setPosition (FFFF)V
 	public fun setSize (FF)V
+	public fun setX (F)V
+	public fun setY (F)V
 	public fun updateSizePosition (FF)V
 }
 
