@@ -32,9 +32,6 @@ import cc.polyfrost.oneconfig.config.annotations.Switch;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.libs.universal.UMatrixStack;
 import cc.polyfrost.oneconfig.platform.Platform;
-import cc.polyfrost.oneconfig.utils.TickDelay;
-
-import javax.swing.*;
 
 /**
  * Represents a HUD element in OneConfig.
@@ -74,7 +71,13 @@ public abstract class Hud {
     protected float scale;
     public int positionAlignment;
     @Exclude
-    public float deltaTicks, defaultX, defaultY, defaultScale;
+    private int defaultAlignment;
+    @Exclude
+    public float deltaTicks;
+    @Exclude
+    private float defaultScale;
+    @Exclude
+    private final Runnable resetPosition = this::resetPosition;
     @Exclude
     private boolean loaded = false;
     @Exclude
@@ -94,8 +97,7 @@ public abstract class Hud {
         position = new Position(this, x, y, getWidth(scale, true), getHeight(scale, true));
         if (!loaded) {
             defaultPosition = position;
-            defaultX = x;
-            defaultY = y;
+            defaultAlignment = positionAlignment;
             defaultScale = scale;
             loaded = true;
         }
@@ -159,12 +161,28 @@ public abstract class Hud {
     }
 
     protected void resetPosition() {
+        Position pos = defaultPosition;
+        float width = position.getWidth();
+        float height = position.getHeight();
+        positionAlignment = defaultAlignment;
         scale = defaultScale;
-        new TickDelay(() -> {
-            Position pos = defaultPosition;
-            position.setSize(pos.getWidth(), position.getHeight());
-            position.setPosition(defaultX, defaultY, 1920, 1080);
-        }, 1);
+        position.anchor = pos.anchor;
+        float anchorX = position.anchor.x;
+        float anchorY = position.anchor.y;
+        if (anchorX == 0f) {
+            position.setX(pos.getX());
+        } else if (anchorX == 0.5f) {
+            position.setX(pos.getCenterX() - width / 2f);
+        } else {
+            position.setX(pos.getRightX() - width);
+        }
+        if (anchorY == 0f) {
+            position.setY(pos.getY());
+        } else if (anchorY == 0.5f) {
+            position.setY(pos.getCenterY() - height / 2f);
+        } else {
+            position.setY(pos.getBottomY() - height);
+        }
     }
 
     /**
