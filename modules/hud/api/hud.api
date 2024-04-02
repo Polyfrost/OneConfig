@@ -1,30 +1,85 @@
-public abstract class org/polyfrost/oneconfig/api/hud/Hud {
-	public field self Lorg/polyfrost/oneconfig/api/hud/elements/InferringCComponent;
-	public field tree Lorg/polyfrost/oneconfig/api/config/Tree;
+public abstract class org/polyfrost/oneconfig/api/hud/Hud : java/lang/Cloneable {
 	public fun <init> ()V
-	public fun customRender (FFFFFFD)V
-	protected final fun getCustoms ()Ljava/util/ArrayList;
-	public fun getDefaultPosition ()Lorg/polyfrost/polyui/unit/Vec2;
-	public fun getDefaultSize ()Lorg/polyfrost/polyui/unit/Vec2;
-	protected final fun getGroupIndex ()I
-	public final fun getSelf ()Lorg/polyfrost/oneconfig/api/hud/elements/InferringCComponent;
-	public final fun getTree ()Lorg/polyfrost/oneconfig/api/config/Tree;
-	public fun getUpdateFrequency ()J
-	protected final fun getVer ()I
-	public abstract fun getVersion ()I
-	public final fun init (Lorg/polyfrost/oneconfig/api/config/Tree;Lorg/polyfrost/polyui/PolyUI;)V
-	public final fun renderCustoms ()V
-	public final fun setSelf (Lorg/polyfrost/oneconfig/api/hud/elements/InferringCComponent;)V
-	public final fun setTree (Lorg/polyfrost/oneconfig/api/config/Tree;)V
-	public fun update ()V
+	public fun backgroundColor ()Lorg/polyfrost/polyui/color/PolyColor;
+	public synthetic fun clone ()Ljava/lang/Object;
+	public fun clone ()Lorg/polyfrost/oneconfig/api/hud/Hud;
+	protected abstract fun create ()Lorg/polyfrost/polyui/component/Drawable;
+	public fun desiredScreenResolution ()Lorg/polyfrost/polyui/unit/Vec2;
+	public final fun equals (Ljava/lang/Object;)Z
+	public final fun get ()Lorg/polyfrost/polyui/component/Drawable;
+	public final fun getHidden ()Z
+	protected final fun setHidden (Z)V
+	public abstract fun update ()Z
+	public abstract fun updateFrequency ()J
 }
 
 public final class org/polyfrost/oneconfig/api/hud/HudManager {
 	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/hud/HudManager;
-	public static final field LOGGER Lorg/slf4j/Logger;
-	public final fun init (Lorg/polyfrost/polyui/renderer/Renderer;)V
+	public static field polyUI Lorg/polyfrost/polyui/PolyUI;
+	public final fun canAutoOpen ()Z
+	public final fun getHudsPage ()Lorg/polyfrost/polyui/component/Drawable;
+	public final fun getOpen ()Z
+	public final fun getPanel ()Lorg/polyfrost/polyui/component/impl/Block;
+	public final fun getPolyUI ()Lorg/polyfrost/polyui/PolyUI;
+	public final fun getSlinex ()F
+	public final fun getSliney ()F
+	public final fun load (Lorg/polyfrost/polyui/unit/Vec2;Lorg/polyfrost/polyui/color/PolyColor;Lorg/polyfrost/polyui/unit/Vec2;[FLorg/polyfrost/polyui/unit/Align;[Lorg/polyfrost/oneconfig/api/hud/Hud;)V
+	public static synthetic fun load$default (Lorg/polyfrost/oneconfig/api/hud/HudManager;Lorg/polyfrost/polyui/unit/Vec2;Lorg/polyfrost/polyui/color/PolyColor;Lorg/polyfrost/polyui/unit/Vec2;[FLorg/polyfrost/polyui/unit/Align;[Lorg/polyfrost/oneconfig/api/hud/Hud;ILjava/lang/Object;)V
+	public final fun openHudEditor (Lorg/polyfrost/oneconfig/api/hud/Hud;)V
 	public final fun register (Lorg/polyfrost/oneconfig/api/hud/Hud;)V
-	public final fun render ()V
+	public final fun register ([Lorg/polyfrost/oneconfig/api/hud/Hud;)V
+	public final fun setPolyUI (Lorg/polyfrost/polyui/PolyUI;)V
+	public final fun setSlinex (F)V
+	public final fun setSliney (F)V
+	public final fun toggle ()V
+	public final fun toggleHudPicker ()V
+}
+
+public final class org/polyfrost/oneconfig/api/hud/ImageHud : org/polyfrost/oneconfig/api/hud/Hud {
+	public fun <init> (Ljava/lang/String;)V
+	public synthetic fun create ()Lorg/polyfrost/polyui/component/Drawable;
+	public final fun getAddress ()Ljava/lang/String;
+	public fun update ()Z
+	public fun updateFrequency ()J
+}
+
+public abstract class org/polyfrost/oneconfig/api/hud/LegacyHud : org/polyfrost/oneconfig/api/hud/Hud {
+	public fun <init> ()V
+	protected fun create ()Lorg/polyfrost/polyui/component/Drawable;
+	protected final fun createLegacy ()Lorg/polyfrost/polyui/component/Drawable;
+	public abstract fun getHeight ()F
+	public abstract fun getWidth ()F
+	public abstract fun render (FF)V
+	public abstract fun setHeight (F)V
+	public abstract fun setWidth (F)V
+}
+
+public abstract class org/polyfrost/oneconfig/api/hud/TextHud : org/polyfrost/oneconfig/api/hud/Hud {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;J)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;JILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun create ()Lorg/polyfrost/polyui/component/Drawable;
+	protected fun create ()Lorg/polyfrost/polyui/component/impl/Text;
+	public final fun getPrefix ()Ljava/lang/String;
+	public final fun getSuffix ()Ljava/lang/String;
+	protected abstract fun getText ()Ljava/lang/String;
+	public final fun setPrefix (Ljava/lang/String;)V
+	public final fun setSuffix (Ljava/lang/String;)V
+	public fun update ()Z
+	public fun updateFrequency ()J
+}
+
+public final class org/polyfrost/oneconfig/api/hud/TextHud$DateTime : org/polyfrost/oneconfig/api/hud/TextHud {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getString ()Ljava/lang/String;
+	public final fun setString (Ljava/lang/String;)V
+}
+
+public final class org/polyfrost/oneconfig/api/hud/TextHud$Supplier : org/polyfrost/oneconfig/api/hud/TextHud {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;JLjava/util/function/Supplier;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;JLjava/util/function/Supplier;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;JLkotlin/jvm/functions/Function0;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;JLkotlin/jvm/functions/Function0;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 }
 
 public abstract interface annotation class org/polyfrost/oneconfig/api/hud/annotations/CustomComponent : java/lang/annotation/Annotation {
@@ -39,25 +94,21 @@ public class org/polyfrost/oneconfig/api/hud/collector/ReflectiveHudCollector : 
 	public fun handleMethod (Ljava/lang/reflect/Method;Ljava/lang/Object;Lorg/polyfrost/oneconfig/api/config/Tree;)V
 }
 
-public final class org/polyfrost/oneconfig/api/hud/elements/InferringCComponent : org/polyfrost/polyui/component/ContainingComponent {
-	public fun <init> (Lorg/polyfrost/polyui/property/Properties;Lorg/polyfrost/polyui/unit/Vec2;Lorg/polyfrost/polyui/unit/Vec2;ZZ[Lorg/polyfrost/polyui/component/Component;Lkotlin/jvm/functions/Function1;)V
-	public synthetic fun <init> (Lorg/polyfrost/polyui/property/Properties;Lorg/polyfrost/polyui/unit/Vec2;Lorg/polyfrost/polyui/unit/Vec2;ZZ[Lorg/polyfrost/polyui/component/Component;Lkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public fun calculateSize ()Lorg/polyfrost/polyui/unit/Vec2;
+public final class org/polyfrost/oneconfig/api/hud/internal/Hud_utilsKt {
+	public static final fun build (Lorg/polyfrost/oneconfig/api/hud/Hud;)Lorg/polyfrost/polyui/component/impl/Block;
+	public static final fun buildNew (Lorg/polyfrost/oneconfig/api/hud/Hud;)Lorg/polyfrost/polyui/component/impl/Block;
+	public static final fun snapHandler (Lorg/polyfrost/polyui/component/Drawable;)V
+	public static final fun snapHandlerNew (Lorg/polyfrost/polyui/component/Drawable;)V
 }
 
-public final class org/polyfrost/oneconfig/api/hud/properties/ICComponentProperties : org/polyfrost/polyui/property/Properties {
-	public fun <init> ()V
-	public fun clone ()Ljava/lang/Object;
-	public fun getPalette ()Lorg/polyfrost/polyui/color/Colors$Palette;
-}
-
-public final class org/polyfrost/oneconfig/api/hud/visualize/Designer {
-	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/hud/visualize/Designer;
-	public final fun createBlockUnit (Lorg/polyfrost/polyui/component/impl/Block;)Lorg/polyfrost/polyui/component/ContainingComponent;
-	public final fun createImageUnit (Lorg/polyfrost/polyui/component/impl/Image;)Lorg/polyfrost/polyui/component/ContainingComponent;
-	public final fun createTextUnit (Lorg/polyfrost/polyui/component/impl/Text;)Lorg/polyfrost/polyui/component/ContainingComponent;
-	public final fun createUnit (Ljava/lang/String;[Lorg/polyfrost/polyui/component/Component;)Lorg/polyfrost/polyui/component/ContainingComponent;
-	public final fun createUnits (Lorg/polyfrost/oneconfig/api/hud/elements/InferringCComponent;)[Lorg/polyfrost/polyui/component/ContainingComponent;
-	public static final fun design (Lorg/polyfrost/oneconfig/api/hud/Hud;Lorg/polyfrost/polyui/layout/Layout;)Lorg/polyfrost/polyui/layout/Layout;
+public final class org/polyfrost/oneconfig/api/hud/internal/HudpagesKt {
+	public static final field angleSnapMargin D
+	public static final field minMargin F
+	public static final field snapMargin F
+	public static final fun HudsPage (Lorg/polyfrost/polyui/utils/LinkedList;)Lorg/polyfrost/polyui/component/Drawable;
+	public static final fun createInspectionsScreen (Lorg/polyfrost/oneconfig/api/hud/Hud;)Lorg/polyfrost/polyui/component/Drawable;
+	public static final fun getAlignC ()Lorg/polyfrost/polyui/unit/Align;
+	public static final fun textOptions (Lorg/polyfrost/polyui/component/impl/Text;)Lorg/polyfrost/polyui/component/Drawable;
+	public static final fun titled (Lorg/polyfrost/polyui/component/Drawable;Ljava/lang/String;)Lorg/polyfrost/polyui/component/Drawable;
 }
 

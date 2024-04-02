@@ -27,7 +27,6 @@
 package org.polyfrost.oneconfig.ui.screen;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.GlStateManager;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.MustBeInvokedByOverriders;
@@ -156,8 +155,8 @@ public class PolyUIScreen extends UScreen implements UIPause, BlurScreen {
         //$$ com.mojang.blaze3d.systems.RenderSystem.disableCull();
         //$$ com.mojang.blaze3d.systems.RenderSystem.enableBlend();
         //#else
-        GlStateManager.disableCull();
-        GlStateManager.enableBlend();
+        net.minecraft.client.renderer.GlStateManager.disableCull();
+        net.minecraft.client.renderer.GlStateManager.enableBlend();
 
         if (mouseX != mx || mouseY != my) {
             mx = mouseX;
@@ -172,8 +171,8 @@ public class PolyUIScreen extends UScreen implements UIPause, BlurScreen {
         //$$ com.mojang.blaze3d.systems.RenderSystem.disableBlend();
         //$$ com.mojang.blaze3d.systems.RenderSystem.enableCull();
         //#else
-        GlStateManager.disableBlend();
-        GlStateManager.enableCull();
+        net.minecraft.client.renderer.GlStateManager.disableBlend();
+        net.minecraft.client.renderer.GlStateManager.enableCull();
         //#endif
 
 

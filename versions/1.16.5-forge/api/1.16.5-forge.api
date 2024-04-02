@@ -1,6 +1,6 @@
 public class org/polyfrost/oneconfig/api/commands/arguments/PlayerArgumentParser : org/polyfrost/oneconfig/api/commands/arguments/ArgumentParser {
 	public fun <init> ()V
-	public fun canParse (Ljava/lang/Class;)Z
+	public fun getType ()Ljava/lang/Class;
 	public fun parse (Ljava/lang/String;)Lcom/mojang/authlib/GameProfile;
 	public synthetic fun parse (Ljava/lang/String;)Ljava/lang/Object;
 }
@@ -90,24 +90,27 @@ public class org/polyfrost/oneconfig/platform/impl/ServerPlatformImpl : org/poly
 	public fun inMultiplayer ()Z
 }
 
-public class org/polyfrost/oneconfig/ui/screen/PolyUIScreen : org/polyfrost/oneconfig/libs/universal/UScreen {
-	public static final field LOGGER Lorg/slf4j/Logger;
-	public final field height F
-	public final field width F
-	public fun <init> (FFLorg/polyfrost/polyui/color/Colors;Ljava/util/function/Consumer;[Lorg/polyfrost/polyui/component/Drawable;)V
-	public fun <init> (FFLorg/polyfrost/polyui/color/Colors;[Lorg/polyfrost/polyui/component/Drawable;)V
-	public fun <init> (FF[Lorg/polyfrost/polyui/component/Drawable;)V
-	public final fun get ()Lorg/polyfrost/polyui/PolyUI;
-	public final fun getInstance ()Lorg/polyfrost/polyui/PolyUI;
-	public final fun getPolyUI ()Lorg/polyfrost/polyui/PolyUI;
-	protected fun init (Lorg/polyfrost/polyui/PolyUI;)V
-	public final fun initScreen (II)V
+public class org/polyfrost/oneconfig/ui/screen/PolyUIScreen : org/polyfrost/oneconfig/libs/universal/UScreen, org/polyfrost/oneconfig/ui/screen/BlurScreen, org/polyfrost/oneconfig/ui/screen/UIPause {
+	public field blurs Z
+	public final field desiredResolution Lorg/polyfrost/polyui/unit/Vec2;
+	public final field inputManager Lorg/polyfrost/polyui/event/InputManager;
+	public field pauses Z
+	public final field polyUI Lorg/polyfrost/polyui/PolyUI;
+	public fun <init> (Lorg/polyfrost/polyui/PolyUI;)V
+	public fun <init> (Lorg/polyfrost/polyui/event/InputManager;)V
+	public fun <init> (Lorg/polyfrost/polyui/property/Settings;Lorg/polyfrost/polyui/event/InputManager;Lorg/polyfrost/polyui/input/Translator;Lorg/polyfrost/polyui/unit/Align;Lorg/polyfrost/polyui/color/Colors;Lorg/polyfrost/polyui/color/PolyColor;Lorg/polyfrost/polyui/unit/Vec2;[Lorg/polyfrost/polyui/component/Drawable;)V
+	public fun <init> (Lorg/polyfrost/polyui/unit/Align;[Lorg/polyfrost/polyui/component/Drawable;)V
+	public fun <init> ([Lorg/polyfrost/polyui/component/Drawable;)V
+	public fun doesUIPauseGame ()Z
+	public fun getMaster ()Lorg/polyfrost/polyui/component/Drawable;
+	public fun hasBackgroundBlur ()Z
+	public fun height ()F
 	public fun isPauseScreen ()Z
-	public final fun mouseMoved (DD)V
-	public final fun onDrawScreen (Lorg/polyfrost/oneconfig/libs/universal/UMatrixStack;IIF)V
+	public fun mouseMoved (DD)V
+	public fun onDrawScreen (Lorg/polyfrost/oneconfig/libs/universal/UMatrixStack;IIF)V
 	public fun onScreenClose ()V
-	public final fun polyUI ()Lorg/polyfrost/polyui/PolyUI;
 	public final fun resize (Lnet/minecraft/client/Minecraft;II)V
+	public fun scale ()F
 	public fun shouldCloseOnEsc ()Z
 	public fun uCharTyped (CLorg/polyfrost/oneconfig/libs/universal/UKeyboard$Modifiers;)Z
 	public fun uKeyPressed (IILorg/polyfrost/oneconfig/libs/universal/UKeyboard$Modifiers;)Z
@@ -116,6 +119,7 @@ public class org/polyfrost/oneconfig/ui/screen/PolyUIScreen : org/polyfrost/onec
 	public fun uMouseReleased (DDI)Z
 	public fun uMouseScrolled (D)Z
 	public fun useMinecraftUIScaling ()Z
+	public fun width ()F
 }
 
 public final class org/polyfrost/oneconfig/utils/GuiUtils {
@@ -142,11 +146,17 @@ public final class org/polyfrost/oneconfig/utils/dsl/McKt {
 public final class org/polyfrost/polyui/renderer/impl/MCWindow : org/polyfrost/polyui/renderer/Window {
 	public fun <init> (Lnet/minecraft/client/Minecraft;)V
 	public fun close ()V
-	public fun createCallbacks ()V
 	public fun getClipboard ()Ljava/lang/String;
 	public fun getKeyName (I)Ljava/lang/String;
-	public fun open (Lorg/polyfrost/polyui/PolyUI;)Lorg/polyfrost/polyui/renderer/Window;
+	public final fun getXOffset ()F
+	public final fun getYOffset ()F
+	public fun open (Lorg/polyfrost/polyui/PolyUI;)Ljava/lang/Void;
+	public synthetic fun open (Lorg/polyfrost/polyui/PolyUI;)Lorg/polyfrost/polyui/renderer/Window;
+	public fun preRender (Lorg/polyfrost/polyui/renderer/Renderer;)V
 	public fun setClipboard (Ljava/lang/String;)V
 	public fun setCursor (Lorg/polyfrost/polyui/renderer/data/Cursor;)V
+	public final fun setXOffset (F)V
+	public final fun setYOffset (F)V
+	public fun supportsRenderPausing ()Z
 }
 

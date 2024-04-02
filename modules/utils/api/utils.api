@@ -40,6 +40,7 @@ public class org/polyfrost/oneconfig/utils/MHUtils {
 	public static fun getAnnotationValues (Ljava/lang/annotation/Annotation;)Ljava/util/Map;
 	public static fun getConstructorHandle (Ljava/lang/Class;[Ljava/lang/Class;)Ljava/lang/invoke/MethodHandle;
 	public static fun getConstructorHandle (Ljava/lang/reflect/Constructor;)Ljava/lang/invoke/MethodHandle;
+	public static fun getConsumerFunctionHandle (Ljava/lang/Object;Ljava/lang/String;Ljava/lang/Class;)Ljava/util/function/Consumer;
 	public static fun getField (Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/Object;
 	public static fun getFieldGetter (Ljava/lang/Class;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/invoke/MethodHandle;
 	public static fun getFieldGetter (Ljava/lang/String;Ljava/lang/Object;)Ljava/lang/invoke/MethodHandle;
@@ -47,6 +48,7 @@ public class org/polyfrost/oneconfig/utils/MHUtils {
 	public static fun getFieldSetter (Ljava/lang/Class;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/invoke/MethodHandle;
 	public static fun getFieldSetter (Ljava/lang/String;Ljava/lang/Object;)Ljava/lang/invoke/MethodHandle;
 	public static fun getFieldSetter (Ljava/lang/reflect/Field;Ljava/lang/Object;)Ljava/lang/invoke/MethodHandle;
+	public static fun getFunctionHandle (Ljava/lang/Object;Ljava/lang/String;Ljava/lang/Class;Ljava/lang/Class;)Ljava/util/function/Function;
 	public static fun getMethodHandle (Ljava/lang/Class;Ljava/lang/String;Ljava/lang/Class;[Ljava/lang/Class;)Ljava/lang/invoke/MethodHandle;
 	public static fun getMethodHandle (Ljava/lang/Object;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/invoke/MethodHandle;
 	public static fun getMethodHandle (Ljava/lang/Object;Ljava/lang/String;Ljava/lang/Class;[Ljava/lang/Class;)Ljava/lang/invoke/MethodHandle;

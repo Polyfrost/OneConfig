@@ -1,6 +1,6 @@
 public class org/polyfrost/oneconfig/api/commands/CommandManager {
 	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/commands/CommandManager;
-	public final field parsers Ljava/util/List;
+	public final field parsers Ljava/util/Map;
 	public static fun builder ([Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder;
 	public fun create (Ljava/lang/Object;)Z
 	public fun createTree (Ljava/lang/Object;)Lorg/polyfrost/oneconfig/api/commands/CommandTree;
@@ -8,6 +8,7 @@ public class org/polyfrost/oneconfig/api/commands/CommandManager {
 	public static fun registerCommand (Ljava/lang/Object;)Z
 	public fun registerFactory (Lorg/polyfrost/oneconfig/api/commands/factories/CommandFactory;)V
 	public fun registerParser (Lorg/polyfrost/oneconfig/api/commands/arguments/ArgumentParser;)V
+	public fun registerParser ([Lorg/polyfrost/oneconfig/api/commands/arguments/ArgumentParser;)V
 }
 
 public class org/polyfrost/oneconfig/api/events/event/LocrawEvent : org/polyfrost/oneconfig/api/events/event/Event {
@@ -132,55 +133,41 @@ public abstract interface class org/polyfrost/oneconfig/platform/ServerPlatform 
 	public abstract fun inMultiplayer ()Z
 }
 
-public class org/polyfrost/oneconfig/ui/KeybindManager {
+public final class org/polyfrost/oneconfig/ui/KeybindManager {
 	public static final field INSTANCE Lorg/polyfrost/oneconfig/ui/KeybindManager;
-	public final field keyBinder Lorg/polyfrost/polyui/input/KeyBinder;
-	public final field settings Lorg/polyfrost/polyui/property/Settings;
-	public static fun registerKeybind (Lorg/polyfrost/polyui/input/KeyBinder$Bind;)V
-	public static fun translateKey (Lorg/polyfrost/polyui/event/EventManager;ICZ)V
+	public final fun getInputManager ()Lorg/polyfrost/polyui/event/InputManager;
+	public final fun getKeyBinder ()Lorg/polyfrost/polyui/input/KeyBinder;
+	public static final fun getKeysMap ()Ljava/util/Map;
+	public static final fun getModsMap ()Ljava/util/Map;
+	public final fun getSettings ()Lorg/polyfrost/polyui/property/Settings;
+	public static final fun registerKeybind (Lorg/polyfrost/polyui/input/KeyBinder$Bind;)V
+	public static final fun translateKey (Lorg/polyfrost/polyui/event/InputManager;ICZ)V
 }
 
 public final class org/polyfrost/oneconfig/ui/OneConfigUI {
-	public static final fun create ()Lorg/polyfrost/oneconfig/ui/screen/PolyUIScreen;
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/ui/OneConfigUI;
+	public static field ui Lorg/polyfrost/polyui/component/Drawable;
+	public final fun SidebarButton (Lorg/polyfrost/polyui/renderer/data/PolyImage;Ljava/lang/String;Lorg/polyfrost/polyui/component/Drawable;)Lorg/polyfrost/polyui/component/impl/Group;
+	public static synthetic fun SidebarButton$default (Lorg/polyfrost/oneconfig/ui/OneConfigUI;Lorg/polyfrost/polyui/renderer/data/PolyImage;Ljava/lang/String;Lorg/polyfrost/polyui/component/Drawable;ILjava/lang/Object;)Lorg/polyfrost/polyui/component/impl/Group;
+	public final fun SidebarButton0 (Lorg/polyfrost/polyui/renderer/data/PolyImage;Ljava/lang/String;Lorg/polyfrost/polyui/component/Drawable;)Lorg/polyfrost/polyui/component/impl/Group;
+	public static synthetic fun SidebarButton0$default (Lorg/polyfrost/oneconfig/ui/OneConfigUI;Lorg/polyfrost/polyui/renderer/data/PolyImage;Ljava/lang/String;Lorg/polyfrost/polyui/component/Drawable;ILjava/lang/Object;)Lorg/polyfrost/polyui/component/impl/Group;
+	public final fun create ()Lorg/polyfrost/oneconfig/ui/screen/PolyUIScreen;
+	public final fun getSidebarBtnAlign ()Lorg/polyfrost/polyui/unit/Align;
+	public final fun getUi ()Lorg/polyfrost/polyui/component/Drawable;
+	public final fun getUsername ()Ljava/lang/String;
+	public final fun label (Ljava/lang/String;)Lorg/polyfrost/polyui/component/Drawable;
+	public final fun openPage (Lorg/polyfrost/polyui/component/Drawable;Ljava/lang/String;)V
+	public final fun setUi (Lorg/polyfrost/polyui/component/Drawable;)V
+	public final fun setUsername (Ljava/lang/String;)V
 }
 
-public final class org/polyfrost/oneconfig/ui/SidebarProperties : org/polyfrost/polyui/property/impl/ButtonProperties {
-	public fun <init> ()V
-	public fun clone ()Ljava/lang/Object;
-	public fun getHasBackground ()Z
-	public fun getPalette ()Lorg/polyfrost/polyui/color/Colors$Palette;
-	public fun getRecolorsAll ()Z
-}
-
-public final class org/polyfrost/oneconfig/ui/elements/Card : org/polyfrost/polyui/component/ContainingComponent {
-	public fun <init> (Lorg/polyfrost/polyui/unit/Vec2;Lorg/polyfrost/oneconfig/api/config/Config;Lkotlin/jvm/functions/Function1;)V
-	public synthetic fun <init> (Lorg/polyfrost/polyui/unit/Vec2;Lorg/polyfrost/oneconfig/api/config/Config;Lkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public fun calculateBounds ()V
-	public final fun getEnabled ()Z
-	public final fun getIcon ()Lorg/polyfrost/polyui/component/impl/Image;
-	public fun getProperties ()Lorg/polyfrost/oneconfig/ui/elements/Card$CardProperties;
-	public synthetic fun getProperties ()Lorg/polyfrost/polyui/property/Properties;
-	public final fun getTitle ()Lorg/polyfrost/polyui/component/impl/Text;
-	public fun render ()V
-	public final fun setEnabled (Z)V
-}
-
-public final class org/polyfrost/oneconfig/ui/elements/Card$CardProperties : org/polyfrost/polyui/property/impl/BlockProperties {
-	public static final field INSTANCE Lorg/polyfrost/oneconfig/ui/elements/Card$CardProperties;
-	public fun clone ()Ljava/lang/Object;
-	public final fun getBackgroundProps ()Lorg/polyfrost/polyui/property/impl/BlockProperties;
-	public final fun getBarProps ()Lorg/polyfrost/polyui/property/impl/BlockProperties;
-	public final fun getBgColor ()Lorg/polyfrost/polyui/color/PolyColor;
-	public final fun getLateralPadding ()F
-}
-
-public final class org/polyfrost/oneconfig/ui/pages/ModsPage {
-	public fun <init> (Ljava/util/Collection;Lorg/polyfrost/polyui/layout/impl/SwitchingLayout;)V
-	public final fun getButtonProps ()Lorg/polyfrost/polyui/property/impl/ButtonProperties;
-	public final fun getContent ()Lorg/polyfrost/polyui/layout/Layout;
-	public final fun getHeader ()Lorg/polyfrost/polyui/layout/impl/FlexLayout;
-	public final fun getSelf ()Lorg/polyfrost/polyui/layout/Layout;
-	public final fun open ()V
+public final class org/polyfrost/oneconfig/ui/pages/PagesKt {
+	public static final fun ChangelogPage (Ljava/util/Collection;)Lorg/polyfrost/polyui/component/Drawable;
+	public static final fun FeedbackPage ()Lorg/polyfrost/polyui/component/Drawable;
+	public static final fun ModsPage (Ljava/util/Collection;)Lorg/polyfrost/polyui/component/Drawable;
+	public static final fun NotificationsPopup (Lorg/polyfrost/polyui/PolyUI;Ljava/util/List;)V
+	public static final fun ProfilesPage ()Lorg/polyfrost/polyui/component/Drawable;
+	public static final fun ThemesPage ()Lorg/polyfrost/polyui/component/Drawable;
 }
 
 public final class org/polyfrost/oneconfig/utils/Deprecator {
@@ -210,17 +197,11 @@ public final class org/polyfrost/oneconfig/utils/Notifications {
 	public final fun send (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/polyui/renderer/data/PolyImage;J)V
 	public final fun send (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/polyui/renderer/data/PolyImage;JLjava/util/function/Function;)V
 	public final fun send (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/polyui/renderer/data/PolyImage;JLjava/util/function/Function;Ljava/lang/Runnable;)V
-	public final fun send (Lorg/polyfrost/polyui/input/Translator$Text;Lorg/polyfrost/polyui/input/Translator$Text;)V
-	public final fun send (Lorg/polyfrost/polyui/input/Translator$Text;Lorg/polyfrost/polyui/input/Translator$Text;Lorg/polyfrost/polyui/renderer/data/PolyImage;)V
-	public final fun send (Lorg/polyfrost/polyui/input/Translator$Text;Lorg/polyfrost/polyui/input/Translator$Text;Lorg/polyfrost/polyui/renderer/data/PolyImage;J)V
-	public final fun send (Lorg/polyfrost/polyui/input/Translator$Text;Lorg/polyfrost/polyui/input/Translator$Text;Lorg/polyfrost/polyui/renderer/data/PolyImage;JLjava/util/function/Function;)V
-	public final fun send (Lorg/polyfrost/polyui/input/Translator$Text;Lorg/polyfrost/polyui/input/Translator$Text;Lorg/polyfrost/polyui/renderer/data/PolyImage;JLjava/util/function/Function;Ljava/lang/Runnable;)V
 	public static synthetic fun send$default (Lorg/polyfrost/oneconfig/utils/Notifications;Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/polyui/renderer/data/PolyImage;JLjava/util/function/Function;Ljava/lang/Runnable;ILjava/lang/Object;)V
-	public static synthetic fun send$default (Lorg/polyfrost/oneconfig/utils/Notifications;Lorg/polyfrost/polyui/input/Translator$Text;Lorg/polyfrost/polyui/input/Translator$Text;Lorg/polyfrost/polyui/renderer/data/PolyImage;JLjava/util/function/Function;Ljava/lang/Runnable;ILjava/lang/Object;)V
 }
 
 public class org/polyfrost/oneconfig/utils/TickDelay {
-	public fun <init> (ILjava/lang/Runnable;)V
+	public static fun of (ILjava/lang/Runnable;)V
 }
 
 public final class org/polyfrost/oneconfig/utils/dsl/ColorsKt {
@@ -270,11 +251,12 @@ public final class org/polyfrost/oneconfig/utils/dsl/StringsKt {
 }
 
 public final class org/polyfrost/oneconfig/utils/dsl/TickKt {
-	public static final fun tick (ILkotlin/jvm/functions/Function0;)Lorg/polyfrost/oneconfig/utils/TickDelay;
+	public static final fun tick (ILkotlin/jvm/functions/Function0;)V
 }
 
 public class org/polyfrost/oneconfig/utils/hypixel/HypixelUtils {
 	public static final field INSTANCE Lorg/polyfrost/oneconfig/utils/hypixel/HypixelUtils;
+	public static final field LOCRAW Lorg/polyfrost/oneconfig/utils/hypixel/LocrawUtil;
 	public fun <init> ()V
 	public fun initialize ()V
 	public fun isHypixel ()Z
@@ -338,90 +320,5 @@ public class org/polyfrost/oneconfig/utils/hypixel/LocrawUtil {
 	public fun getLocrawInfo ()Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo;
 	public fun isInGame ()Z
 	public fun onMessageReceived (Lorg/polyfrost/oneconfig/api/events/event/ChatReceiveEvent;)V
-	public fun onMessageSent (Lorg/polyfrost/oneconfig/api/events/event/ChatSendEvent;)V
-	public fun onTick (Lorg/polyfrost/oneconfig/api/events/event/TickEvent;)V
-	public fun onWorldLoad (Lorg/polyfrost/oneconfig/api/events/event/WorldLoadEvent;)V
-}
-
-public final class org/polyfrost/polyui/renderer/impl/NVGRenderer : org/polyfrost/polyui/renderer/Renderer {
-	public fun <init> (FF)V
-	public fun beginFrame ()V
-	public fun bindFramebuffer (Lorg/polyfrost/polyui/renderer/data/Framebuffer;)V
-	public fun cleanup ()V
-	public fun createFramebuffer (FF)Lorg/polyfrost/polyui/renderer/data/Framebuffer;
-	public fun delete (Lorg/polyfrost/polyui/renderer/data/Font;)V
-	public fun delete (Lorg/polyfrost/polyui/renderer/data/Framebuffer;)V
-	public fun delete (Lorg/polyfrost/polyui/renderer/data/PolyImage;)V
-	public fun drawFramebuffer (Lorg/polyfrost/polyui/renderer/data/Framebuffer;FFFF)V
-	public final fun drawImage (IFFFFI)V
-	public static synthetic fun drawImage$default (Lorg/polyfrost/polyui/renderer/impl/NVGRenderer;IFFFFIILjava/lang/Object;)V
-	public fun dropShadow (FFFFFFF)V
-	public fun endFrame ()V
-	public fun hollowRect (FFFFLorg/polyfrost/polyui/color/PolyColor;FFFFF)V
-	public fun image (Lorg/polyfrost/polyui/renderer/data/PolyImage;FFFFIFFFF)V
-	public fun init ()V
-	public fun initImage (Lorg/polyfrost/polyui/renderer/data/PolyImage;)V
-	public fun line (FFFFLorg/polyfrost/polyui/color/PolyColor;F)V
-	public fun pop ()V
-	public fun popScissor ()V
-	public fun push ()V
-	public fun pushScissor (FFFF)V
-	public fun pushScissorIntersecting (FFFF)V
-	public fun rect (FFFFLorg/polyfrost/polyui/color/PolyColor;FFFF)V
-	public fun rotate (D)V
-	public fun scale (FF)V
-	public fun skewX (D)V
-	public fun skewY (D)V
-	public fun text (Lorg/polyfrost/polyui/renderer/data/Font;FFLjava/lang/String;Lorg/polyfrost/polyui/color/PolyColor;F)V
-	public fun textBounds (Lorg/polyfrost/polyui/renderer/data/Font;Ljava/lang/String;F)Lorg/polyfrost/polyui/unit/Vec2;
-	public fun translate (FF)V
-	public fun unbindFramebuffer (Lorg/polyfrost/polyui/renderer/data/Framebuffer;)V
-}
-
-public final class org/polyfrost/polyui/renderer/impl/NVGRenderer$NVGFont {
-	public fun <init> (ILjava/nio/ByteBuffer;)V
-	public final fun component1 ()I
-	public final fun component2 ()Ljava/nio/ByteBuffer;
-	public final fun copy (ILjava/nio/ByteBuffer;)Lorg/polyfrost/polyui/renderer/impl/NVGRenderer$NVGFont;
-	public static synthetic fun copy$default (Lorg/polyfrost/polyui/renderer/impl/NVGRenderer$NVGFont;ILjava/nio/ByteBuffer;ILjava/lang/Object;)Lorg/polyfrost/polyui/renderer/impl/NVGRenderer$NVGFont;
-	public fun equals (Ljava/lang/Object;)Z
-	public final fun getData ()Ljava/nio/ByteBuffer;
-	public final fun getId ()I
-	public fun hashCode ()I
-	public fun toString ()Ljava/lang/String;
-}
-
-public final class org/polyfrost/polyui/renderer/impl/NVGRenderer$NVGImage {
-	public fun <init> (IFFLjava/nio/ByteBuffer;)V
-	public final fun component1 ()I
-	public final fun component2 ()F
-	public final fun component3 ()F
-	public final fun component4 ()Ljava/nio/ByteBuffer;
-	public final fun copy (IFFLjava/nio/ByteBuffer;)Lorg/polyfrost/polyui/renderer/impl/NVGRenderer$NVGImage;
-	public static synthetic fun copy$default (Lorg/polyfrost/polyui/renderer/impl/NVGRenderer$NVGImage;IFFLjava/nio/ByteBuffer;ILjava/lang/Object;)Lorg/polyfrost/polyui/renderer/impl/NVGRenderer$NVGImage;
-	public fun equals (Ljava/lang/Object;)Z
-	public final fun getData ()Ljava/nio/ByteBuffer;
-	public final fun getHeight ()F
-	public final fun getId ()I
-	public final fun getWidth ()F
-	public fun hashCode ()I
-	public fun toString ()Ljava/lang/String;
-}
-
-public final class org/polyfrost/polyui/test/Test {
-	public static final field INSTANCE Lorg/polyfrost/polyui/test/Test;
-	public static final field brand Lorg/polyfrost/polyui/property/impl/BlockProperties;
-	public static final field danger Lorg/polyfrost/polyui/property/impl/BlockProperties;
-	public static final field moon Lorg/polyfrost/polyui/renderer/data/PolyImage;
-	public static final field success Lorg/polyfrost/polyui/property/impl/BlockProperties;
-	public static final field sun Lorg/polyfrost/polyui/renderer/data/PolyImage;
-	public static final field text Lorg/polyfrost/polyui/property/impl/TextProperties;
-	public static final field warning Lorg/polyfrost/polyui/property/impl/BlockProperties;
-	public final fun block ()Lorg/polyfrost/polyui/component/impl/Block;
-	public final fun blocks (I)[Lorg/polyfrost/polyui/component/impl/Block;
-	public static synthetic fun blocks$default (Lorg/polyfrost/polyui/test/Test;IILjava/lang/Object;)[Lorg/polyfrost/polyui/component/impl/Block;
-	public static final fun create ()[Lorg/polyfrost/polyui/component/Drawable;
-	public final fun create (Lorg/polyfrost/polyui/unit/Vec2;Z)Lorg/polyfrost/polyui/layout/impl/PixelLayout;
-	public final fun prop ()Lorg/polyfrost/polyui/property/impl/BlockProperties;
 }
 
