@@ -41,7 +41,7 @@ import java.util.function.Consumer;
  * @param <E> The event type
  */
 public abstract class EventHandler<E extends Event> {
-    public abstract void handle(E event) throws Throwable;
+    public abstract void handle(E event);
 
     public abstract Class<E> getEventClass();
 

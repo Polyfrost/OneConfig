@@ -7,9 +7,8 @@ import org.polyfrost.gradle.util.RelocationTransform.Companion.registerRelocatio
 
 plugins {
     alias(libs.plugins.kotlin)
-    alias(libs.plugins.kotlinAbi)
-    alias(pgtLibs.plugins.pgtDefaultJava)
-    alias(pgtLibs.plugins.pgtDefaultRepo)
+    alias(libs.plugins.kotlinx.abi)
+    alias(libs.plugins.pgt.defaults.repo)
     alias(libs.plugins.blossom)
     id("maven-publish")
     id("signing")
@@ -39,6 +38,8 @@ blossom {
 }
 
 repositories {
+    mavenLocal()
+    mavenCentral()
     maven("https://repo.polyfrost.org/releases")
 }
 
@@ -50,12 +51,12 @@ dependencies {
 
     compileOnly(libs.polyui)
     compileOnly(libs.bundles.core)
-    compileOnly(project(":config"))
-    compileOnly(project(":commands"))
-    compileOnly(project(":events"))
-    compileOnly(project(":config-impl"))
-    compileOnly(project(":utils"))
-    compileOnly(project(":ui")) {
+    compileOnly(project(":modules:config"))
+    compileOnly(project(":modules:commands"))
+    compileOnly(project(":modules:events"))
+    compileOnly(project(":modules:config-impl"))
+    compileOnly(project(":modules:utils"))
+    compileOnly(project(":modules:ui")) {
         isTransitive = false
     }
 
@@ -70,7 +71,6 @@ dependencies {
         isTransitive = false
     }
 
-    @Suppress("GradlePackageUpdate")
     compileOnly(libs.caffeine) {
         isTransitive = false
         attributes {
@@ -83,6 +83,7 @@ dependencies {
     }
 
     compileOnly(libs.bundles.kotlin)
+    compileOnly(libs.bundles.kotlinx)
 
     compileOnly(libs.mixin) {
         isTransitive = false

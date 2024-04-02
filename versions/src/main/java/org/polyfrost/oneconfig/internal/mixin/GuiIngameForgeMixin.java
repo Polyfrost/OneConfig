@@ -35,7 +35,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(value = GuiIngameForge.class, remap = false)
-public class GuiIngameForgeMixin {
+public abstract class GuiIngameForgeMixin {
     //#if MC>=11600
     //$$     @Inject(method = "renderIngameGui", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/client/gui/ForgeIngameGui;post(Lnet/minecraftforge/client/event/RenderGameOverlayEvent$ElementType;Lcom/mojang/blaze3d/matrix/MatrixStack;)V", shift = At.Shift.AFTER, remap = false), remap = true)
     //$$     private void onRenderGameOverlay(com.mojang.blaze3d.matrix.MatrixStack matrices, float partialTicks, CallbackInfo ci) {

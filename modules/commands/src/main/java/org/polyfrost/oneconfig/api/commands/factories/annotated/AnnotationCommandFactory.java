@@ -31,7 +31,6 @@ import org.jetbrains.annotations.NotNull;
 import org.polyfrost.oneconfig.api.commands.CommandTree;
 import org.polyfrost.oneconfig.api.commands.Executable;
 import org.polyfrost.oneconfig.api.commands.arguments.ArgumentParser;
-import org.polyfrost.oneconfig.api.commands.exceptions.CommandExecutionException;
 import org.polyfrost.oneconfig.api.commands.exceptions.WrongArgumentsException;
 import org.polyfrost.oneconfig.api.commands.factories.CommandFactory;
 import org.polyfrost.oneconfig.api.commands.factories.annotated.annotations.Command;
@@ -49,9 +48,8 @@ public class AnnotationCommandFactory implements CommandFactory {
 
     @Override
     public CommandTree create(@NotNull Map<Class<?>, ArgumentParser<?>> parsers, @NotNull Object obj) {
-        if (!obj.getClass().isAnnotationPresent(Command.class))
-            return null;
         Command c = obj.getClass().getAnnotation(Command.class);
+        if (c == null) return null;
         CommandTree tree = new CommandTree(c.value().length == 0 ? new String[]{obj.getClass().getSimpleName()} : c.value(), c.description().isEmpty() ? null : c.description());
         create(parsers, tree, obj);
         return tree;
@@ -88,8 +86,8 @@ public class AnnotationCommandFactory implements CommandFactory {
             } catch (WrongMethodTypeException | ClassCastException e) {
                 // should've been caught earlier
                 throw new WrongArgumentsException("InternalError while executing command: CommandTree method argument mismatch!", e);
-            } catch (Throwable throwable) {
-                throw new CommandExecutionException("Error while executing command!", throwable);
+            } catch (Throwable e) {
+                throw new RuntimeException("Error while executing command!", e);
             }
         };
     }

@@ -1,10 +1,8 @@
 package org.polyfrost.oneconfig.api.hud.internal
 
 
-import jdk.javadoc.internal.doclets.toolkit.util.DocPath.parent
 import org.polyfrost.oneconfig.api.hud.Hud
 import org.polyfrost.oneconfig.api.hud.HudManager
-import org.polyfrost.oneconfig.api.hud.HudManager.polyUI
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.component.*
@@ -243,13 +241,13 @@ fun Drawable.snapHandler() {
 
     // asm: process screen edge snaps + center snap
     // checking center snaps first seems to make it easier to use
-    var hran = trySnapX(polyUI.size.width / 2f)
+    var hran = trySnapX(polyUI.size.x / 2f)
             || trySnapX(1f)
-            || trySnapX(polyUI.size.width - 1f)
+            || trySnapX(polyUI.size.x - 1f)
 
-    var vran = trySnapY(polyUI.size.height / 2f)
+    var vran = trySnapY(polyUI.size.y / 2f)
             || trySnapY(1f)
-            || trySnapY(polyUI.size.height - 1f)
+            || trySnapY(polyUI.size.y - 1f)
 
     // yipee!
     if (hran && vran) return
@@ -278,7 +276,7 @@ fun Drawable.snapHandler() {
 
 fun Drawable.snapHandlerNew() {
     // closes the hud manager and prepares the hud to be added once it is dragged outside of it
-    if (polyUI.mouseX !in (polyUI.size.width - HudManager.panel.width)..polyUI.size.width) {
+    if (polyUI.mouseX !in (polyUI.size.x - HudManager.panel.width)..polyUI.size.x) {
         if (HudManager.open) HudManager.toggle()
     }
     snapHandler()

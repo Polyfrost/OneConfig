@@ -26,38 +26,58 @@
 
 package org.polyfrost.oneconfig.ui.screen;
 
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.polyfrost.polyui.PolyUI;
 import org.polyfrost.polyui.color.Colors;
+import org.polyfrost.polyui.color.PolyColor;
 import org.polyfrost.polyui.component.Drawable;
-
-import java.util.function.Consumer;
+import org.polyfrost.polyui.event.InputManager;
+import org.polyfrost.polyui.input.Translator;
+import org.polyfrost.polyui.property.Settings;
+import org.polyfrost.polyui.unit.Align;
+import org.polyfrost.polyui.unit.Vec2;
 
 public class PolyUIScreen {
-    // expose width and height
-    public final float width, height;
+    // PolyUIScreen.h
+    @NotNull
+    public final InputManager inputManager;
+    @Nullable
+    public final PolyUI polyUI;
 
-    public PolyUIScreen(float width, float height, Colors colors, Consumer<PolyUI> initFunction, Drawable... drawables) {
-        this.width = width;
-        this.height = height;
-        throw new UnsupportedOperationException("implementation is intrinsic");
+    public boolean pauses, blurs;
+
+    @Nullable
+    public final Vec2 desiredResolution;
+
+    @Contract("_, null, _, _, _, _, _, null -> fail")
+    public PolyUIScreen(@Nullable Settings settings,
+                        @Nullable InputManager inputManager,
+                        @Nullable Translator translator,
+                        @Nullable Align alignment,
+                        @Nullable Colors colors,
+                        @Nullable PolyColor backgroundColor,
+                        @Nullable Vec2 desiredResolution,
+                        Drawable... drawables) {
+        // version-specific workaround //
         // see versions/src/main/java/org/polyfrost/oneconfig/ui/screen/PolyUIScreen.java for the actual implementation //
+        throw new UnsupportedOperationException("implementation is intrinsic");
     }
 
-    public PolyUIScreen(float width, float height, Colors colors, Drawable... drawables) {
-        this(width, height, colors, null, drawables);
+    public PolyUIScreen(Drawable... drawables) {
+        this(null, null, null, null, null, null, null, drawables);
     }
 
-    public PolyUIScreen(float width, float height, Drawable... drawables) {
-        this(width, height, null, null, drawables);
+    public PolyUIScreen(@Nullable Align alignment, Drawable... drawables) {
+        this(null, null, null, alignment, null, null, null, drawables);
     }
 
-    public final Drawable getMaster() {
-        // intrinsic //
-        return null;
+    public PolyUIScreen(@NotNull InputManager inputManager) {
+        this(null, inputManager, null, null, null, null, null);
     }
 
-    public final PolyUI getPolyUI() {
-        // intrinsic //
-        return null;
+    public PolyUIScreen(@NotNull PolyUI polyUI) {
+        this((Settings) null, null, null, null, null, null, null);
     }
 }

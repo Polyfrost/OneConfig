@@ -36,7 +36,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(Screen.class)
-public class ScreenMixin {
+public abstract class ScreenMixin {
     @Inject(method = "sendMessage(Ljava/lang/String;Z)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/player/ClientPlayerEntity;sendChatMessage(Ljava/lang/String;)V"), cancellable = true)
     private void execute(String text, boolean toHud, CallbackInfo ci) {
         if (ClientCommandHandler.instance.execute(MinecraftClient.getInstance().player, text) != 0) {

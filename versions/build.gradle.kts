@@ -9,8 +9,8 @@ import java.util.concurrent.atomic.AtomicReference
 
 plugins {
     alias(libs.plugins.kotlin)
-    id(pgtLibs.plugins.pgt.get().pluginId)
-    id(pgtLibs.plugins.pgtDefaults.get().pluginId)
+    id(libs.plugins.pgt.main.get().pluginId)
+    id(libs.plugins.pgt.default.get().pluginId)
     id(libs.plugins.blossom.get().pluginId)
     id(libs.plugins.shadow.get().pluginId)
     id("maven-publish")
@@ -27,10 +27,10 @@ java {
     withJavadocJar()
 }
 
-val modName = project.properties["mod_name"] as String
-val modMajor = project.properties["mod_major_version"] as String
-val modMinor = project.properties["mod_minor_version"] as String
-val modId = project.properties["mod_id"] as String
+val modName = properties["mod_name"] as String
+val modMajor = properties["mod_major_version"] as String
+val modMinor = properties["mod_minor_version"] as String
+val modId = properties["mod_id"] as String
 version = "$modMajor$modMinor"
 group = "org.polyfrost"
 
@@ -38,7 +38,7 @@ val natives = listOf("windows", "windows-arm64", "linux", "macos", "macos-arm64"
 val tweakClass = "org.polyfrost.oneconfig.internal.plugin.asm.OneConfigTweaker"
 
 preprocess {
-    vars.put("MODERN", if (project.platform.mcMinor >= 16) 1 else 0)
+    vars.put("MODERN", if (platform.mcMinor >= 16) 1 else 0)
 }
 
 blossom {
@@ -76,6 +76,8 @@ loom {
 }
 
 repositories {
+    mavenLocal()
+    mavenCentral()
     maven("https://repo.polyfrost.org/releases")
 }
 
@@ -104,11 +106,12 @@ dependencies {
 
     shade(libs.polyui)
 
-    shade(libs.slf4jApi)
-    shade(libs.slf4jSimple)
+    shade(libs.slf4j.api)
+    shade(libs.slf4j.simple)
 
     // for other mods and universalcraft
     shade(libs.bundles.kotlin)
+    shade(libs.bundles.kotlinx)
 
     if (platform.isLegacyForge) {
         shade(libs.mixin.get().run { "$group:$name:$version" }) {
@@ -118,28 +121,28 @@ dependencies {
     shade(project(":")) {
         isTransitive = false
     }
-    shade(project(":config"))
-    shade(project(":commands"))
-    shade(project(":hud"))
-    shade(project(":events"))
-    shade(project(":config-impl"))
-    shade(project(":utils")) {
+    shade(project(":modules:config"))
+    shade(project(":modules:commands"))
+    shade(project(":modules:hud"))
+    shade(project(":modules:events"))
+    shade(project(":modules:config-impl"))
+    shade(project(":modules:utils")) {
         isTransitive = false
     }
-    shade(project(":ui")) {
+    shade(project(":modules:ui")) {
         isTransitive = false
     }
 
     if (platform.isFabric) {
-        shade(libs.fabricAsm)
+        shade(libs.fabric.asm)
     }
 
     val isLegacy = platform.isLegacyForge || platform.isLegacyFabric
     val lwjglVersion = libs.versions.lwjgl.get()
     if (isLegacy) {
         val cfg = configurations.create("lwjglBundleForLegacy")
-        for (dep in listOf("nanovg", "tinyfd", "stb", null)) {
-            val lwjglDep = if (dep == null) "org.lwjgl:lwjgl:$lwjglVersion" else "org.lwjgl:lwjgl-$dep:$lwjglVersion"
+        for (dep in listOf("-nanovg", "-tinyfd", "-stb", "")) {
+            val lwjglDep = "org.lwjgl:lwjgl$dep:$lwjglVersion"
             compileOnly(cfg(lwjglDep) {
                 isTransitive = false
             })
@@ -151,8 +154,8 @@ dependencies {
         }
         shade(prebundle(cfg, "lwjgl-legacy.jar"))
     } else {
-        for (dep in listOf("nanovg", "tinyfd")) {
-            val lwjglDep = "org.lwjgl:lwjgl-$dep:$lwjglVersion"
+        for (dep in listOf("-nanovg", "-tinyfd")) {
+            val lwjglDep = "org.lwjgl:lwjgl$dep:$lwjglVersion"
             shade(lwjglDep) {
                 isTransitive = false
             }

@@ -24,25 +24,9 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-plugins {
-    java
-}
-
-repositories {
-    mavenCentral()
-    maven("https://repo.polyfrost.org/releases")
-}
-
-java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(8))
-    }
-}
-
 dependencies {
     compileOnly("org.polyfrost:universalcraft-1.8.9-forge:${libs.versions.universalcraft.get()}")
-    implementation(libs.bundles.core)
-    implementation(project(":utils"))
+    implementation(project(":modules:utils"))
 }
 
 

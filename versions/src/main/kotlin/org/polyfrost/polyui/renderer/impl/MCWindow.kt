@@ -30,6 +30,7 @@ import net.minecraft.client.Minecraft
 import org.polyfrost.oneconfig.libs.universal.UResolution
 import org.polyfrost.oneconfig.libs.universal.UScreen
 import org.polyfrost.polyui.PolyUI
+import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.renderer.Window
 import org.polyfrost.polyui.renderer.data.Cursor
 
@@ -40,6 +41,8 @@ import org.polyfrost.polyui.renderer.data.Cursor
 class MCWindow(private val mc: Minecraft) : Window(
     UResolution.viewportWidth, UResolution.viewportHeight
 ) {
+    var xOffset = 0f
+    var yOffset = 0f
 
     //#if MC>=11300
     //$$ private val handle =
@@ -54,7 +57,8 @@ class MCWindow(private val mc: Minecraft) : Window(
         UScreen.displayScreen(null)
     }
 
-    override fun createCallbacks() {
+    override fun preRender(renderer: Renderer) {
+        renderer.translate(xOffset, yOffset)
     }
 
     override fun getClipboard(): String? {
@@ -73,9 +77,7 @@ class MCWindow(private val mc: Minecraft) : Window(
         //#endif
     }
 
-    override fun open(polyUI: PolyUI): Window {
-        throw UnsupportedOperationException("cannot be opened")
-    }
+    override fun open(polyUI: PolyUI) = throw UnsupportedOperationException("MCWindow cannot be opened in this way")
 
     override fun setClipboard(text: String?) {
         //#if MC>=11300

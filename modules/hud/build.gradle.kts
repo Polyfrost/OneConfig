@@ -24,27 +24,10 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-plugins {
-    java
-    kotlin("jvm")
-}
-
-repositories {
-    mavenCentral()
-    maven("https://repo.polyfrost.org/releases")
-}
-
-java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(8))
-    }
-}
-
 dependencies {
-    implementation(libs.bundles.core)
-    implementation(project(":config"))
-    implementation(project(":config-impl"))
-    implementation(project(":utils"))
+    implementation(project(":modules:config"))
+    implementation(project(":modules:config-impl"))
+    implementation(project(":modules:utils"))
     implementation(libs.polyui)
     compileOnly("org.polyfrost:universalcraft-1.8.9-forge:${libs.versions.universalcraft.get()}") {
         isTransitive = false

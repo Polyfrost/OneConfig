@@ -32,7 +32,6 @@ import org.polyfrost.oneconfig.api.config.annotations.Button;
 import org.polyfrost.oneconfig.api.config.annotations.Color;
 import org.polyfrost.oneconfig.api.config.annotations.DependsOn;
 import org.polyfrost.oneconfig.api.config.annotations.Dropdown;
-import org.polyfrost.oneconfig.api.config.annotations.Keybind;
 import org.polyfrost.oneconfig.api.config.annotations.Number;
 import org.polyfrost.oneconfig.api.config.annotations.RadioButton;
 import org.polyfrost.oneconfig.api.config.annotations.Slider;
@@ -40,8 +39,6 @@ import org.polyfrost.oneconfig.api.config.annotations.Switch;
 import org.polyfrost.oneconfig.api.config.annotations.Text;
 import org.polyfrost.oneconfig.libs.universal.UChat;
 import org.polyfrost.polyui.color.PolyColor;
-import org.polyfrost.polyui.input.KeyBinder;
-import org.polyfrost.polyui.input.Modifiers;
 import org.polyfrost.polyui.unit.Align;
 import org.polyfrost.polyui.utils.Utils;
 
@@ -60,11 +57,11 @@ public class TestConfig_Test extends Config {
     @Switch(title = "Cow", description = "Something that is way too long and is going to be trimmed (I hope) because that is what its meant to do", subcategory = "Chick")
     public static boolean cow = false;
 
-    @Keybind(title = "keybinding", description = "please send help")
-    KeyBinder.Bind bind0 = new KeyBinder.Bind('A', null, null, Modifiers.mods(Modifiers.LCONTROL, Modifiers.LSHIFT), () -> {
-        UChat.chat("you pressed a bind");
-        return true;
-    });
+//    @Keybind(title = "keybinding", description = "please send help")
+//    KeyBinder.Bind bind0 = new KeyBinder.Bind('A', null, null, Modifiers.mods(Modifiers.LCONTROL, Modifiers.LSHIFT), () -> {
+//        UChat.chat("you pressed a bind");
+//        return true;
+//    });
 
 
     @Color(title = "color", category = "bob")

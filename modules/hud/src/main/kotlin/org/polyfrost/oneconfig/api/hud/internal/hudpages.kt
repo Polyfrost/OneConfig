@@ -28,7 +28,7 @@ import org.polyfrost.polyui.color.Colors
 import org.polyfrost.polyui.component.*
 import org.polyfrost.polyui.component.impl.*
 import org.polyfrost.polyui.renderer.data.Font
-import org.polyfrost.polyui.renderer.data.PolyImage
+import org.polyfrost.polyui.utils.LinkedList
 import org.polyfrost.polyui.unit.*
 import org.polyfrost.polyui.utils.image
 import org.polyfrost.polyui.utils.radii
@@ -41,7 +41,7 @@ const val angleSnapMargin = PI / 12.0
 const val minMargin = 4f
 const val snapMargin = 12f
 
-fun HudsPage(huds: Collection<Hud<out Drawable>>): Drawable {
+fun HudsPage(huds: LinkedList<Hud<out Drawable>>): Drawable {
     return Group(
         Group(
             HudButton("oneconfig.all"),
@@ -72,7 +72,7 @@ fun HudsPage(huds: Collection<Hud<out Drawable>>): Drawable {
         if (huds.isNotEmpty()) {
             polyUI.every(1.seconds) {
                 if (parent?.renders != true) return@every
-                huds.forEach {
+                huds.fastEach {
                     if (it.update()) {
                         it.get().parent?.recalculateChildren()
                     }
@@ -82,11 +82,9 @@ fun HudsPage(huds: Collection<Hud<out Drawable>>): Drawable {
     }.namedId("HudsPage")
 }
 
-
 private fun HudButton(text: String): Block {
     return Button(text = text, fontSize = 14f, font = PolyUI.defaultFonts.medium, radii = 6f.radii(), padding = Vec2(12f, 8f)).withBoarder()
 }
-
 
 fun createInspectionsScreen(hud: Hud<out Drawable>): Drawable {
     val isLegacy = hud is LegacyHud
@@ -143,7 +141,7 @@ private fun interactiveAlignment(hud: Hud<out Drawable>): Drawable {
     return Block(
         size = 125f by 125f,
         children = arrayOf(
-            Image("alignment2.svg".image(), at = ignored).draggable(
+            Image("alignment2.svg".image(), at = 19f by 19f).draggable(
                 withX = false, withY = false,
                 onStart = {
                     px = polyUI.mouseX
@@ -173,17 +171,15 @@ private fun interactiveAlignment(hud: Hud<out Drawable>): Drawable {
                         it.skewX = sx
                         it.skewY = sy
                     }
-                }
+                },
             ).withStates().setPalette {
                 Colors.Palette(
                     text.secondary.normal,
                     brand.fg.normal,
                     brand.fg.pressed,
-                    text.secondary.disabled
+                    text.secondary.disabled,
                 )
             }.afterParentInit {
-                x = 19f
-                y = 19f
                 val bg = hud.get().parent ?: return@afterParentInit
                 this.parent?.get(2)?.let {
                     it.skewX = bg.skewX
@@ -195,7 +191,7 @@ private fun interactiveAlignment(hud: Hud<out Drawable>): Drawable {
                     text.secondary.disabled,
                     brand.fg.disabled,
                     brand.fg.disabled,
-                    text.secondary.disabled
+                    text.secondary.disabled,
                 )
             }.withStates().draggable(
                 withX = false, withY = false,
@@ -215,23 +211,22 @@ private fun interactiveAlignment(hud: Hud<out Drawable>): Drawable {
                         bg.radii[i] = m
                         display[i] = m
                     }
-                }
+                },
             ).onInit {
                 val p = (parent?.get(2) as? Block)?.radii ?: return@onInit
                 val bg = (hud.get().parent as? Block)?.radii ?: return@onInit
-                for(i in 0..3) {
+                for (i in 0..3) {
                     p[i] = bg[i]
                 }
             },
             Block(
-                at = 68f by 68f,
                 size = 57f by 57f,
                 children = arrayOf(
                     Image(
                         "alignment1.svg".image(),
-                        at = 16f by 16f
-                    )
+                    ),
                 ),
+                alignment = alignC,
             ).withBoarder().withStates().draggable(
                 withX = false, withY = false,
                 onStart = {
@@ -252,12 +247,12 @@ private fun interactiveAlignment(hud: Hud<out Drawable>): Drawable {
                     }
                     rotation = rot
                     hud.get().parent?.rotation = rot
-                }
+                },
             ).apply {
                 rotation = hud.get().parent?.rotation ?: 0.0
-            }
+            },
         ),
-        alignment = alignC
+        alignment = alignC,
     ).withBoarder()
 }
 
@@ -272,38 +267,39 @@ fun textOptions(text: Text): Drawable {
         Block(
             size = Vec2(452f, 58f),
             children = arrayOf(
-                Text("oneconfig.hudeditor.text.example", fontSize = 16f)
+                Text("oneconfig.hudeditor.text.example", fontSize = 16f),
             ),
-            alignment = alignC
+            alignment = alignC,
         ),
         Dropdown(
             entries = arrayOf(
                 "Poppins",
                 "JetBrains Mono",
-                "Minecraft"
-            )
+                "Minecraft",
+            ),
         ).onChange { it: Int ->
-            text.font = when(it) {
+            text.font = when (it) {
                 1 -> PolyUI.monospaceFont
-                /* 2 -> mc */
+                // 2 -> mc
                 else -> PolyUI.defaultFonts.regular
             }
             text.parent?.recalculate()
-            val ex = (parent?.parent?.get(1)?.get(0) as? Text) ?: return@onChange
+            val ex = (parent?.parent?.get(1)?.get(0) as? Text) ?: return@onChange false
             ex.font = text.font
             ex.parent?.recalculateChildren()
+            false
         }.titled("oneconfig.hudeditor.text.font"),
         BoxedTextInput("info.svg".image(), "12px", text.fontSize.toString()).titled("oneconfig.hudeditor.text.size"),
         Radiobutton(
             entries = arrayOf(
                 "info.svg".image(),
                 "info.svg".image(),
-                "info.svg".image()
+                "info.svg".image(),
             ),
             optionLateralPadding = 2f,
-            optionVerticalPadding = 2f
+            optionVerticalPadding = 2f,
         ).onChange { it: Int ->
-
+            false
         }.titled("oneconfig.align"),
         Dropdown(
             entries = arrayOf(
@@ -315,43 +311,29 @@ fun textOptions(text: Text): Drawable {
                 "oneconfig.fweight.600",
                 "oneconfig.fweight.700",
                 "oneconfig.fweight.800",
-                "oneconfig.fweight.900"
-            )
+                "oneconfig.fweight.900",
+            ),
         ).onChange { it: Int ->
             text.fontWeight = Font.byWeight((it + 1) * 100)
             text.parent?.recalculate()
-            val ex = (parent?.parent?.get(1)?.get(0) as? Text) ?: return@onChange
+            val ex = (parent?.parent?.get(1)?.get(0) as? Text) ?: return@onChange false
             ex.fontWeight = text.fontWeight
             ex.parent?.recalculateChildren()
+            false
         }.titled("oneconfig.hudeditor.text.weight"),
         Radiobutton(
             entries = arrayOf(
                 "info.svg".image(),
                 "info.svg".image(),
-                "info.svg".image()
+                "info.svg".image(),
             ),
             optionLateralPadding = 2f,
-            optionVerticalPadding = 2f
+            optionVerticalPadding = 2f,
         ).onChange { it: Int ->
-
+            false
         }.titled("oneconfig.hudeditor.text.effects"),
         size = Vec2(375f, 0f),
     ).namedId("TextOptions")
-}
-
-fun BoxedTextInput(
-    image: PolyImage? = null,
-    placeholder: String = "",
-    initialValue: String = "",
-    size: Vec2? = null,
-): Drawable {
-    return Block(
-        size = size,
-        children = arrayOf(
-            if (image != null) Image(image) else null,
-            TextInput(placeholder = placeholder, text = initialValue, wrap = size?.x ?: 0f),
-        ),
-    ).withBoarder()
 }
 
 fun Drawable.titled(title: String): Drawable {

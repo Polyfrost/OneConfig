@@ -24,34 +24,11 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-plugins {
-    java
-    kotlin("jvm")
-}
-
-repositories {
-    mavenCentral()
-    maven("https://repo.polyfrost.org/releases")
-}
-
-java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(8))
-    }
-}
-
 dependencies {
-    testImplementation(platform(libs.junitBom))
-    testImplementation(libs.bundles.testCore)
-    implementation(libs.bundles.nightConfig)
-    implementation(libs.bundles.core)
+    implementation(libs.bundles.nightconfig)
     implementation(libs.polyui)
-    implementation(project(":utils"))
-    implementation(project(":config"))
-    implementation(project(":ui"))
-}
-
-tasks.test {
-    useJUnitPlatform()
+    implementation(project(":modules:utils"))
+    implementation(project(":modules:config"))
+    implementation(project(":modules:ui"))
 }
 

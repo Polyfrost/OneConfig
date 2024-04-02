@@ -37,7 +37,7 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(EntityPlayerSP.class)
-public class EntityPlayerSPMixin {
+public abstract class EntityPlayerSPMixin {
     @Unique
     private ChatSendEvent oneconfig$sendchatevent;
 

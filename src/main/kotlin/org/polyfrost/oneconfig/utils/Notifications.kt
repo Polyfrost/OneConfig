@@ -30,7 +30,6 @@ import org.polyfrost.oneconfig.api.events.EventManager
 import org.polyfrost.oneconfig.api.events.event.RenderEvent
 import org.polyfrost.oneconfig.api.events.event.Stage
 import org.polyfrost.oneconfig.internal.create
-import org.polyfrost.oneconfig.libs.universal.UResolution
 import org.polyfrost.oneconfig.ui.LwjglManager
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.component.Drawable
@@ -42,14 +41,13 @@ import java.util.function.Function
 object Notifications {
     private val queue = ArrayDeque<Drawable>()
 
-    private val renderer = LwjglManager.INSTANCE.getRenderer(UResolution.windowWidth.toFloat(), UResolution.windowHeight.toFloat())!!
     private val settings = Settings().apply {
         cleanupAfterInit = false
         framebuffersEnabled = false
         renderPausingEnabled = false
         debug = false
     }
-    private val polyUI = PolyUI(renderer = renderer, settings = settings)
+    private val polyUI = PolyUI(renderer = LwjglManager.INSTANCE.renderer, settings = settings)
 
     init {
         EventManager.register(RenderEvent::class) {

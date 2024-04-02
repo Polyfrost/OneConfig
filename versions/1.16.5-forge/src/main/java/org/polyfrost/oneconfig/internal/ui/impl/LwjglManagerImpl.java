@@ -28,18 +28,17 @@ package org.polyfrost.oneconfig.internal.ui.impl;
 
 import org.polyfrost.oneconfig.ui.LwjglManager;
 import org.polyfrost.oneconfig.ui.TinyFD;
+import org.polyfrost.oneconfig.ui.impl.RendererImpl;
 import org.polyfrost.oneconfig.ui.impl.TinyFDImpl;
 import org.polyfrost.polyui.renderer.Renderer;
-import org.polyfrost.polyui.renderer.impl.NVGRenderer;
-import org.polyfrost.polyui.unit.Vec2;
 
 @SuppressWarnings("unused")
 public class LwjglManagerImpl implements LwjglManager {
     private static final TinyFD impl = new TinyFDImpl();
 
     @Override
-    public Renderer getRenderer(float width, float height) {
-        return new NVGRenderer(new Vec2(width, height));
+    public Renderer getRenderer() {
+        return RendererImpl.INSTANCE;
     }
 
     @Override

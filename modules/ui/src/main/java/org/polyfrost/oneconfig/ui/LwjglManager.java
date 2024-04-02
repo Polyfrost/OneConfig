@@ -40,10 +40,9 @@ public interface LwjglManager {
     ).iterator().next();
 
     /**
-     * Return a new Renderer instance.
-     * This instance is completely isolated from any other instances that have been created or will be created.
+     * Return the renderer instance. This interface specifies operations for rendering UI components. See PolyUI for more information.
      */
-    Renderer getRenderer(float width, float height);
+    Renderer getRenderer();
 
     /**
      * Return the TinyFD implementation instance. This interface specifies operations for opening native

@@ -37,7 +37,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Pseudo
 @Mixin(targets = "club.sk1er.patcher.screen.render.caching.HUDCaching", remap = false)
-public class HudCachingMixin {
+public abstract class HudCachingMixin {
 
     @Dynamic
     @Inject(method = "checkFramebufferSizes", at = @At(value = "RETURN", ordinal = 0), remap = false)

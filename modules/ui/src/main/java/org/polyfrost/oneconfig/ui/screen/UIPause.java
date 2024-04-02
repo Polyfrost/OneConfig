@@ -32,5 +32,5 @@ package org.polyfrost.oneconfig.ui.screen;
  */
 public interface UIPause {
     @SuppressWarnings("unused")
-    boolean doesGuiPauseGame();
+    boolean doesUIPauseGame();
 }

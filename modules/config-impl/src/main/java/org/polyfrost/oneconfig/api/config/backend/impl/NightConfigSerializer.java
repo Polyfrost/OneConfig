@@ -26,7 +26,10 @@
 
 package org.polyfrost.oneconfig.api.config.backend.impl;
 
+import com.electronwill.nightconfig.core.AbstractConfig;
 import com.electronwill.nightconfig.core.Config;
+import com.electronwill.nightconfig.core.ConfigFormat;
+import com.electronwill.nightconfig.core.InMemoryFormat;
 import com.electronwill.nightconfig.core.io.ConfigParser;
 import com.electronwill.nightconfig.core.io.ConfigWriter;
 import com.electronwill.nightconfig.json.JsonFormat;
@@ -43,6 +46,7 @@ import org.polyfrost.oneconfig.api.config.backend.impl.file.FileSerializer;
 import org.polyfrost.oneconfig.api.config.util.ObjectSerializer;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.Map;
 
 public class NightConfigSerializer implements FileSerializer {
@@ -67,12 +71,12 @@ public class NightConfigSerializer implements FileSerializer {
     public @NotNull String serialize(@NotNull Tree c) {
         Config cfg = Config.inMemory();
         add(c, cfg);
-        return writer.writeToString(mapToConfig(cfg.valueMap()));
+        return writer.writeToString(cfg);
     }
 
     @SuppressWarnings("unchecked")
     private static Config mapToConfig(Map<String, Object> map) {
-        Config c = Config.inMemory();
+        Config c = new BackedConfig(map);
         for (Map.Entry<String, Object> e : map.entrySet()) {
             if (e.getValue() instanceof Map) {
                 Config cc = mapToConfig((Map<String, Object>) e.getValue());
@@ -89,7 +93,8 @@ public class NightConfigSerializer implements FileSerializer {
         return file.getName().endsWith(format);
     }
 
-    protected void add(Tree c, Config cfg) {
+    @SuppressWarnings("unchecked")
+    protected static void add(Tree c, Config cfg) {
         for (Map.Entry<String, Node> e : c.map.entrySet()) {
             Node n = e.getValue();
             if (n instanceof Property<?>) {
@@ -98,13 +103,15 @@ public class NightConfigSerializer implements FileSerializer {
                 Object o = p.get();
                 if (o == null) continue;
                 if (!ObjectSerializer.isSimpleObject(o)) {
-                    cfg.add(p.getID(), ObjectSerializer.INSTANCE.serialize(o, true));
-                } else cfg.add(p.getID(), p.get());
+                    Object out = ObjectSerializer.INSTANCE.serialize(o, true);
+                    if (out instanceof Map) cfg.add(n.getID(), mapToConfig((Map<String, Object>) out));
+                    else cfg.add(n.getID(), out);
+                } else cfg.add(n.getID(), o);
             } else {
                 Tree in = (Tree) n;
-                Config child = cfg.createSubConfig();
+                Config child = new BackedConfig(new HashMap<>(in.map.size(), 1f));
                 add(in, child);
-                cfg.add(in.getID(), mapToConfig(child.valueMap()));
+                cfg.add(n.getID(), child);
             }
         }
     }
@@ -128,5 +135,26 @@ public class NightConfigSerializer implements FileSerializer {
             }
         }
         return b;
+    }
+
+    protected static class BackedConfig extends AbstractConfig {
+        BackedConfig(Map<String, Object> map) {
+            super(map);
+        }
+
+        @Override
+        public AbstractConfig clone() {
+            return new BackedConfig(valueMap());
+        }
+
+        @Override
+        public Config createSubConfig() {
+            return new BackedConfig(new HashMap<>());
+        }
+
+        @Override
+        public ConfigFormat<?> configFormat() {
+            return InMemoryFormat.withUniversalSupport();
+        }
     }
 }

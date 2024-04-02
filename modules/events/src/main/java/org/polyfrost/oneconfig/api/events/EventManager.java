@@ -174,7 +174,7 @@ public final class EventManager {
             }
         } catch (ConcurrentModificationException ignored0) {
             LOGGER.error("Handler modified event handlers when calling, failed to dispatch {}", event.getClass().getName());
-        } catch (Exception ignored) {}
+        }
     }
 
 

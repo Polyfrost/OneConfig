@@ -1,7 +1,0 @@
-<component name="CopyrightManager">
-  <copyright>
-    <option name="keyword" value="This file is part of OneConfig." />
-    <option name="notice" value="This file is part of OneConfig.&#10;OneConfig - Next Generation Config Library for Minecraft: Java Edition&#10;Copyright (C) 2021~2023 Polyfrost.&#10;  &lt;https://polyfrost.org&gt; &lt;https://github.com/Polyfrost/&gt;&#10;&#10;DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.&#10;&#10;  OneConfig is licensed under the terms of version 3 of the GNU Lesser&#10;General Public License as published by the Free Software Foundation, AND&#10;under the Additional Terms Applicable to OneConfig, as published by Polyfrost,&#10;either version 1.0 of the Additional Terms, or (at your option) any later&#10;version.&#10;&#10;  This program is distributed in the hope that it will be useful,&#10;but WITHOUT ANY WARRANTY; without even the implied warranty of&#10;MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU&#10;Lesser General Public License for more details.&#10;&#10;  You should have received a copy of the GNU Lesser General Public &#10;License.  If not, see &lt;https://www.gnu.org/licenses/&gt;. You should &#10;have also received a copy of the Additional Terms Applicable&#10;to OneConfig, as published by Polyfrost. If not, see &#10;&lt;https://polyfrost.org/legal/oneconfig/additional-terms&gt;" />
-    <option name="myName" value="OneConfig" />
-  </copyright>
-</component>

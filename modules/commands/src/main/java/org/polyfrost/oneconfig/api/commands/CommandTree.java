@@ -26,6 +26,7 @@
 
 package org.polyfrost.oneconfig.api.commands;
 
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.polyfrost.oneconfig.api.commands.arguments.ArgumentParser;
@@ -35,7 +36,6 @@ import org.polyfrost.oneconfig.api.commands.util.Pair;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -161,17 +161,22 @@ public class CommandTree implements Node {
         return dedupedCommands;
     }
 
-    static List<Node> cullList(Collection<List<Node>> lists, List<Node> theList) {
-        List<Node> out = new ArrayList<>(1);
-        for (Node node : theList) {
+    /**
+     * Return a copy of in with all elements that are in any of the lists removed.
+     * <br>both lists and in are not modified.
+     */
+    @Contract(pure = true)
+    static <T> @NotNull List<T> cullList(@NotNull Iterable<List<T>> lists, @NotNull List<T> in) {
+        List<T> out = new ArrayList<>(1);
+        for (T obj : in) {
             boolean found = false;
-            for (List<Node> list : lists) {
-                if (list.contains(node)) {
+            for (List<T> list : lists) {
+                if (list.contains(obj)) {
                     found = true;
                     break;
                 }
             }
-            if (!found) out.add(node);
+            if (!found) out.add(obj);
         }
         return out;
     }
@@ -247,6 +252,9 @@ public class CommandTree implements Node {
         return commands.get(path);
     }
 
+    /**
+     * Get a list of all matching nodes.
+     */
     public @Nullable List<Node> get(String... path) {
         CommandTree self = this;
         List<Node> ls = null;
@@ -265,6 +273,13 @@ public class CommandTree implements Node {
         return ls;
     }
 
+    /**
+     * Get a list of all matching nodes and the remaining arguments.<br>
+     * This method has additional checks so that it prefers to return the default command if it is available.<br>
+     * The returned list will be null if no matching nodes were found. The returned array will be empty if there are no remaining arguments.
+     *
+     * @see #get(String...)
+     */
     public Pair<@Nullable List<Node>, @NotNull String[]> getWithArgs(String... path) {
         CommandTree self = this;
         List<Node> ls = null;

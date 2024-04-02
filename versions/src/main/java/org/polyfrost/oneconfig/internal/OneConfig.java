@@ -30,15 +30,9 @@ import org.polyfrost.oneconfig.api.commands.CommandManager;
 import org.polyfrost.oneconfig.api.events.EventManager;
 import org.polyfrost.oneconfig.internal.command.OneConfigCommand;
 import org.polyfrost.oneconfig.internal.ui.BlurHandler;
-import org.polyfrost.oneconfig.ui.KeybindManager;
-import org.polyfrost.oneconfig.ui.LwjglManager;
-import org.polyfrost.oneconfig.ui.OneConfigUI;
-import org.polyfrost.oneconfig.utils.GuiUtils;
 import org.polyfrost.oneconfig.utils.hypixel.HypixelUtils;
 import org.polyfrost.polyui.PolyUI;
 import org.polyfrost.polyui.component.Drawable;
-import org.polyfrost.polyui.input.KeyBinder;
-import org.polyfrost.polyui.input.Modifiers;
 import org.polyfrost.polyui.input.Translator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,10 +68,10 @@ public class OneConfig {
         }
         preload();
         CommandManager.registerCommand(new OneConfigCommand());
-        KeybindManager.registerKeybind(new KeyBinder.Bind((int[]) null, null, (int[]) null, Modifiers.RSHIFT.getValue(), 0L, () -> {
-            GuiUtils.displayScreen(OneConfigUI.INSTANCE.create());
-            return true;
-        }));
+//        KeybindManager.registerKeybind(new KeyBinder.Bind((int[]) null, null, (int[]) null, KeyModifiers.RSHIFT.getValue(), 0L, () -> {
+//            GuiUtils.displayScreen(OneConfigUI.INSTANCE.create());
+//            return true;
+//        }));
         HypixelUtils.INSTANCE.initialize();
 
         initialized = true;
@@ -93,7 +87,6 @@ public class OneConfig {
             Class.forName(PolyUI.class.getName());
             Class.forName(Drawable.class.getName());
             Class.forName(Translator.class.getName());
-            LwjglManager.INSTANCE.getRenderer(100f, 100f);
         } catch (Exception e) {
             throw new IllegalStateException("Failed to preload necessary PolyUI classes", e);
         }

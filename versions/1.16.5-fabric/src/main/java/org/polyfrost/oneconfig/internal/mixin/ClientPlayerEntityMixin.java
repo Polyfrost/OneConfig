@@ -35,7 +35,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import net.minecraft.client.network.ClientPlayerEntity;
 
 @Mixin(ClientPlayerEntity.class)
-abstract class ClientPlayerEntityMixin {
+public abstract class ClientPlayerEntityMixin {
     @Inject(method = "sendChatMessage", at = @At("HEAD"), cancellable = true)
     private void onSendChatMessage(String message, CallbackInfo info) {
         if (PlatformCommandManagerImpl.executeCommand(message)) {

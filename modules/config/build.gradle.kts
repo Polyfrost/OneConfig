@@ -24,27 +24,6 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-plugins {
-    java
-}
-
-repositories {
-    mavenCentral()
-}
-
-java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(8))
-    }
-}
-
 dependencies {
-    implementation(libs.bundles.core)
-    implementation(project(":utils"))
-    testImplementation(platform(libs.junitBom))
-    testImplementation(libs.bundles.testCore)
-}
-
-tasks.test {
-    useJUnitPlatform()
+    implementation(project(":modules:utils"))
 }

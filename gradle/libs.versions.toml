@@ -1,84 +1,87 @@
-# PGT-related stuff is in settings.gradle.kts
 [versions]
 kotlin = "1.8.22"
-coroutines = "1.7.2"
-serialization = "1.5.1"
-atomicfu = "0.21.0"
-abi = "0.13.2"
+kotlinx-coroutines = "1.7.2"
+kotlinx-serialization = "1.5.1"
+kotlinx-atomicfu = "0.21.0"
+kotlinx-abi = "0.13.2"
 
 blossom = "1.3.1"
 shadow = "8.1.1"
 
-vigilance = "+"
-universalcraft = "249"
+pgt = "0.2.6"
+
 caffeine = "2.9.3"
 mixin = "0.7.11-SNAPSHOT"
 
 lwjgl = "3.3.1"
 fabric-asm = "v2.3"
 
-polyui = "1.0.7"
+polyui = "1.1.3"
 
 slf4j = "2.0.9"
 annotations = "24.0.1"
 
 junit-bom = "5.9.1"
 
-night-config = "3.6.5"
+nightconfig = "3.6.5"
+
+vigilance = "295"
+universalcraft = "249"
 
 [libraries]
 
 caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "caffeine" }
 
 junit = { module = "org.junit.jupiter:junit-jupiter" }
-junitBom = { module = "org.junit:junit-bom", version.ref = "junit-bom" }
-
-kotlinReflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
-kotlinStdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
-kotlinStdlibJdk8 = { module = "org.jetbrains.kotlin:kotlin-stdlib-jdk8", version.ref = "kotlin" }
-kotlinStdlibJdk7 = { module = "org.jetbrains.kotlin:kotlin-stdlib-jdk7", version.ref = "kotlin" }
-kotlinxCoroutinesCore = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
-kotlinxCoroutinesCoreJvm = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm", version.ref = "coroutines" }
-kotlinxCoroutinesJdk8 = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-jdk8", version.ref = "coroutines" }
-
-kotlinxSerializationCore = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core-jvm", version.ref = "serialization" }
-kotlinxSerializationJson = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json-jvm", version.ref = "serialization" }
-kotlinxSerializationCbor = { module = "org.jetbrains.kotlinx:kotlinx-serialization-cbor-jvm", version.ref = "serialization" }
-
-kotlinxAtomicfu = { module = "org.jetbrains.kotlinx:atomicfu-jvm", version.ref = "atomicfu" }
+junit-bom = { module = "org.junit:junit-bom", version.ref = "junit-bom" }
 
 mixin = { module = "org.spongepowered:mixin", version.ref = "mixin" }
 
-fabricAsm = { module = "com.github.Chocohead:Fabric-ASM", version.ref = "fabric-asm" }
+fabric-asm = { module = "com.github.chocohead:fabric-asm", version.ref = "fabric-asm" }
 
 polyui = { module = "org.polyfrost:polyui", version.ref = "polyui" }
 
-slf4jApi = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 annotations = { module = "org.jetbrains:annotations", version.ref = "annotations" }
 
-slf4jSimple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
+slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
+slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
 
-lwjglNanoVG = { module = "org.lwjgl:lwjgl-nanovg", version.ref = "lwjgl" }
-lwjglStb = { module = "org.lwjgl:lwjgl-stb", version.ref = "lwjgl" }
-lwjglTinyfd = { module = "org.lwjgl:lwjgl-tinyfd", version.ref = "lwjgl" }
-lwjglOpenGl = { module = "org.lwjgl:lwjgl-opengl", version.ref = "lwjgl" }
+lwjgl = { module = "org.lwjgl:lwjgl", version.ref = "lwjgl" }
+lwjgl-nvg = { module = "org.lwjgl:lwjgl-nanovg", version.ref = "lwjgl" }
+lwjgl-stb = { module = "org.lwjgl:lwjgl-stb", version.ref = "lwjgl" }
+lwjgl-tinyfd = { module = "org.lwjgl:lwjgl-tinyfd", version.ref = "lwjgl" }
+lwjgl-opengl = { module = "org.lwjgl:lwjgl-opengl", version.ref = "lwjgl" }
 
-nightConfigCore = { module = "com.electronwill.night-config:core", version.ref = "night-config" }
-nightConfigToml = { module = "com.electronwill.night-config:toml", version.ref = "night-config" }
-nightConfigYaml = { module = "com.electronwill.night-config:yaml", version.ref = "night-config" }
-nightConfigJson = { module = "com.electronwill.night-config:json", version.ref = "night-config" }
+nightconfig = { module = "com.electronwill.night-config:core", version.ref = "nightconfig" }
+nightconfig-toml = { module = "com.electronwill.night-config:toml", version.ref = "nightconfig" }
+nightconfig-yaml = { module = "com.electronwill.night-config:yaml", version.ref = "nightconfig" }
+nightconfig-json = { module = "com.electronwill.night-config:json", version.ref = "nightconfig" }
+
+kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
+kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib-jdk8", version.ref = "kotlin" }
+kotlinx-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
+kotlinx-serialization = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core-jvm", version.ref = "kotlinx-serialization" }
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json-jvm", version.ref = "kotlinx-serialization" }
+kotlinx-serialization-cbor = { module = "org.jetbrains.kotlinx:kotlinx-serialization-cbor-jvm", version.ref = "kotlinx-serialization" }
+kotlinx-atomicfu = { module = "org.jetbrains.kotlinx:atomicfu-jvm", version.ref = "kotlinx-atomicfu" }
 
 [bundles]
-kotlin = ["kotlinReflect", "kotlinStdlib", "kotlinStdlibJdk8", "kotlinStdlibJdk7", "kotlinxCoroutinesCore", "kotlinxCoroutinesCoreJvm", "kotlinxCoroutinesJdk8", "kotlinxSerializationCore", "kotlinxSerializationJson", "kotlinxSerializationCbor", "kotlinxAtomicfu"]
-nightConfig = ["nightConfigCore", "nightConfigJson", "nightConfigToml", "nightConfigYaml"]
-core = ["annotations", "slf4jApi"]
-testCore = ["junit", "slf4jSimple"]
-lwjgl = ["lwjglNanoVG", "lwjglStb", "lwjglTinyfd", "lwjglOpenGl"]
+kotlin = ["kotlin-reflect", "kotlin-stdlib"]
+kotlinx = ["kotlinx-coroutines", "kotlinx-serialization", "kotlinx-serialization-json", "kotlinx-serialization-cbor", "kotlinx-atomicfu"]
+lwjgl = ["lwjgl", "lwjgl-nvg", "lwjgl-opengl", "lwjgl-stb", "lwjgl-tinyfd"]
+nightconfig = ["nightconfig", "nightconfig-json", "nightconfig-toml", "nightconfig-yaml"]
+core = ["annotations", "slf4j-api"]
+test-core = ["junit", "slf4j-simple"]
 
 [plugins]
-
 kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
-kotlinAbi = { id = "org.jetbrains.kotlinx.binary-compatibility-validator", version.ref = "abi" }
+kotlinx-abi = { id = "org.jetbrains.kotlinx.binary-compatibility-validator", version.ref = "kotlinx-abi" }
+
+pgt-main = { id = "org.polyfrost.multi-version", version.ref = "pgt" }
+pgt-root = { id = "org.polyfrost.multi-version.root", version.ref = "pgt" }
+pgt-default = { id = "org.polyfrost.defaults", version.ref = "pgt" }
+pgt-defaults-repo = { id = "org.polyfrost.defaults.repo", version.ref = "pgt" }
+pgt-defaults-java = { id = "org.polyfrost.defaults.java", version.ref = "pgt" }
 
 blossom = { id = "net.kyori.blossom", version.ref = "blossom" }
 

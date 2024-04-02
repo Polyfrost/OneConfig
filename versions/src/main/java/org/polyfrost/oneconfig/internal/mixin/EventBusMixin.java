@@ -38,7 +38,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(EventBus.class)
-public class EventBusMixin {
+public abstract class EventBusMixin {
 
     @Inject(method = "post", at = @At(value = "HEAD"), remap = false)
     private void postReceiveEvent(Event e, CallbackInfoReturnable<Boolean> cir) {

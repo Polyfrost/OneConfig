@@ -64,7 +64,7 @@ import net.minecraftforge.fml.common.eventhandler.Event;
 //#endif
 
 @Mixin(Minecraft.class)
-public class MinecraftMixin {
+public abstract class MinecraftMixin {
     @Shadow
     private Timer timer;
 

@@ -84,7 +84,7 @@ public class BlurHandlerImpl implements BlurHandler {
         if (!isShaderActive()) {
             return;
         }
-        if (progress >= 5 || su == null) return;
+        if (progress >= 5f || su == null) return;
         su.set(getBlurStrengthProgress());
     }
 
@@ -130,7 +130,7 @@ public class BlurHandlerImpl implements BlurHandler {
 
                         this.su = su;
                     }
-                    if(su == null) throw new IllegalStateException("Failed to get ShaderUniform for blur on GUI " + gui.getClass().getName());
+                    if (su == null) throw new IllegalStateException("Failed to get ShaderUniform for blur on GUI " + gui.getClass().getName());
                 } catch (Exception ex) {
                     this.logger.error("An error.png occurred while updating OneConfig's blur. Please report this!", ex);
                 }

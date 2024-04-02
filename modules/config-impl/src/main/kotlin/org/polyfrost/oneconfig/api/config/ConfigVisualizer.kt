@@ -66,8 +66,10 @@ object ConfigVisualizer {
         //   -> subcategories
         //      -> list of options
         for ((_, node) in config.map) {
-            val title = node.getMetadata<String>("title")?.ifEmpty { null }
-            require(title != null) { "Property ${node.id} is missing required metadata 'title' (provided by ${config.id})" }
+            val title = node.getMetadata<String>("title")?.ifEmpty { null } ?: run {
+                Tree.LOGGER.warn("Property ${node.id} is missing required metadata 'title' (provided by ${config.id}); using ID")
+                node.id
+            }
             val desc = node.getMetadata<String>("description")?.ifEmpty { null }
             val icon =
                 when (val it = node.getMetadata<Any?>("icon")) {
@@ -143,9 +145,10 @@ object ConfigVisualizer {
             tree.map.map { (_, node) ->
                 node as? Property<*> ?: throw IllegalArgumentException("Sub-tree ${tree.id} contains sub-tree node ${node.id} - only properties are allowed in sub-trees")
                 val optTitle =
-                    node.getMetadata<String>("title")?.ifEmpty {
-                        null
-                    } ?: throw IllegalArgumentException("Property ${node.id} is missing required metadata 'title' (child of sub-tree ${tree.id})")
+                    node.getMetadata<String>("title")?.ifEmpty { null } ?: run {
+                        Tree.LOGGER.warn("Property ${node.id} is missing required metadata 'title' (child of sub-tree ${tree.id}); using ID")
+                        node.id
+                    }
                 val optDesc = node.getMetadata<String>("description")?.ifEmpty { null }
                 make(node).wrapForAccordion(optTitle, optDesc)
             }
@@ -168,7 +171,7 @@ object ConfigVisualizer {
                                 override fun apply(value: Float) {
                                     operation.apply()
                                     // asm: instruct parent (options list) to replace all its children so that they move with it closing
-                                    self.parent!!.repositionChildren()
+                                    self.parent!!.recalculateChildren()
                                     // asm: instruct all children of this accordion to update their visibility based on THIS, NOT its parent
                                     self[1].children!!.fastEach {
                                         it.renders = it.intersects(self.x, self.y, self.width, self.height)

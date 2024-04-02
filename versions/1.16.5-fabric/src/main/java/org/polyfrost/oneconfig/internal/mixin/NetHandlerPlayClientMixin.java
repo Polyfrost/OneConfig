@@ -48,7 +48,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(value = ClientPlayNetworkHandler.class, priority = Integer.MAX_VALUE)
-public class NetHandlerPlayClientMixin {
+public abstract class NetHandlerPlayClientMixin {
 
     @Unique
     private ChatReceiveEvent oneconfig$event = null;

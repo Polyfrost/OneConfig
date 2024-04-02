@@ -15,7 +15,6 @@ import org.polyfrost.polyui.operations.DrawableOp
 import org.polyfrost.polyui.operations.Fade
 import org.polyfrost.polyui.operations.Move
 import org.polyfrost.polyui.renderer.data.Cursor
-import org.polyfrost.polyui.renderer.impl.NVGRenderer
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.AlignDefault
 import org.polyfrost.polyui.unit.Vec2
@@ -28,7 +27,7 @@ import kotlin.math.PI
 import kotlin.system.exitProcess
 
 object HudManager {
-    val polyUI = PolyUI(NVGRenderer(Vec2(1920f, 1080f)))
+    lateinit var polyUI: PolyUI
 
     private val huds = LinkedList<Hud<out Drawable>>()
 
@@ -126,8 +125,8 @@ object HudManager {
         object : DrawableOp(b) {
             override fun apply() {
                 if (self.polyUI.mouseDown) {
-                    if (slinex != -1f) self.renderer.line(slinex, 0f, slinex, self.polyUI.size.height, snapLineColor, 1f)
-                    if (sliney != -1f) self.renderer.line(0f, sliney, self.polyUI.size.width, sliney, snapLineColor, 1f)
+                    if (slinex != -1f) self.renderer.line(slinex, 0f, slinex, self.polyUI.size.y, snapLineColor, 1f)
+                    if (sliney != -1f) self.renderer.line(0f, sliney, self.polyUI.size.x, sliney, snapLineColor, 1f)
                 } else {
                     slinex = -1f
                     sliney = -1f
@@ -185,11 +184,11 @@ object HudManager {
         val pg = panel
         val arrow = pg.children!!.last()[0] as Image
         if (!open) {
-            Move(pg, polyUI.size.width - 32f, pg.y, false, Animations.EaseInOutExpo.create(0.2.seconds)).add()
+            Move(pg, polyUI.size.x - 32f, pg.y, false, Animations.EaseInOutExpo.create(0.2.seconds)).add()
             Fade(pg, 0.8f, false, Animations.EaseInOutExpo.create(0.2.seconds)).add()
             arrow.rotation = PI
         } else {
-            Move(pg, polyUI.size.width - pg.width - 8f, pg.y, false, Animations.EaseInOutExpo.create(0.2.seconds)).add()
+            Move(pg, polyUI.size.x - pg.width - 8f, pg.y, false, Animations.EaseInOutExpo.create(0.2.seconds)).add()
             arrow.rotation = 0.0
             pg.alpha = 1f
             pg.prioritize()
@@ -215,9 +214,9 @@ object HudManager {
         }
         pg.alpha = 0f
         Fade(pg, 1f, false, Animations.EaseInOutQuad.create(0.2.seconds)).add()
-        pg.x = polyUI.size.width - 32f
+        pg.x = polyUI.size.x - 32f
         toggle()
     }
 
-    fun canAutoOpen(): Boolean = !polyUI.master.hasChildIn(polyUI.size.width - panel.width - 34f, 0f, panel.width, polyUI.size.height)
+    fun canAutoOpen(): Boolean = !polyUI.master.hasChildIn(polyUI.size.x - panel.width - 34f, 0f, panel.width, polyUI.size.y)
 }

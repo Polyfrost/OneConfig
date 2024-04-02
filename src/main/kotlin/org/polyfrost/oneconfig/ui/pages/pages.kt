@@ -22,7 +22,7 @@ import org.polyfrost.polyui.utils.image
 import org.polyfrost.polyui.utils.radii
 import org.polyfrost.polyui.utils.translated
 
-private val heart = PolyImage("plus.svg", Vec2(16f, 16f))
+private val heart = PolyImage("plus.svg")
 private val defaultModImage = "chatting.svg".image()
 private val modBoxTopRad = radii(8f, 8f, 0f, 0f)
 private val modBoxBotRad = radii(0f, 0f, 8f, 8f)

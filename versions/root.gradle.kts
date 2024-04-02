@@ -2,7 +2,7 @@
 
 plugins {
     alias(libs.plugins.kotlin) apply false
-    id(pgtLibs.plugins.pgtRoot.get().pluginId)
+    id(libs.plugins.pgt.root.get().pluginId)
 }
 
 preprocess {

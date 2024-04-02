@@ -55,6 +55,10 @@ public class ObjectSerializer {
     public static final Map<Class<?>, Class<?>> primitiveWrappers;
     @Unmodifiable
     public static final Map<Class<?>, Function<Number, Number>> numberSuppliers;
+    /**
+     * Modifier.SYNTHETIC | Modifier.TRANSIENT | Modifier.STATIC
+     */
+    public static final int FIELD_SKIP_MODIFIERS = Modifier.STATIC | Modifier.TRANSIENT | 0x00001000;
     private final HashMap<Class<?>, Adapter<Object, Object>> adapters = new HashMap<>();
 
     static {
@@ -69,7 +73,7 @@ public class ObjectSerializer {
         pw.put(char.class, Character.class);
         primitiveWrappers = Collections.unmodifiableMap(pw);
 
-        Map<Class<?>, Function<Number, Number>> ns = new HashMap<>(6, 1f);
+        Map<Class<?>, Function<Number, Number>> ns = new HashMap<>(8, 1f);
         ns.put(Integer.class, Number::intValue);
         ns.put(Float.class, Number::floatValue);
         ns.put(Short.class, Number::shortValue);
@@ -146,19 +150,28 @@ public class ObjectSerializer {
             if (m.isEmpty()) return Collections.emptyMap();
             Iterator<? extends Map.Entry<?, ?>> iter = m.entrySet().iterator();
             Map.Entry<?, ?> first = iter.next();
-            if (isSimpleObject(first.getKey()) && isSimpleObject(first.getValue())) {
+            boolean keysSimple = isSimpleObject(first.getKey());
+            if (keysSimple && isSimpleObject(first.getValue())) {
                 return m;
             }
             Map<Object, Object> out = new HashMap<>(m.size(), 1f);
-            out.put(serialize(first.getKey(), useLists), serialize(first.getValue(), useLists));
-            while (iter.hasNext()) {
-                Map.Entry<?, ?> e = iter.next();
-                out.put(serialize(e.getKey(), useLists), serialize(e.getValue(), useLists));
+            if (keysSimple) {
+                out.put(first.getKey(), serialize(first.getValue(), useLists));
+                while (iter.hasNext()) {
+                    Map.Entry<?, ?> e = iter.next();
+                    out.put(e.getKey(), serialize(e.getValue(), useLists));
+                }
+            } else {
+                out.put(serialize(first.getKey(), useLists), serialize(first.getValue(), useLists));
+                while (iter.hasNext()) {
+                    Map.Entry<?, ?> e = iter.next();
+                    out.put(serialize(e.getKey(), useLists), serialize(e.getValue(), useLists));
+                }
             }
             return out;
         }
 
-        // check 6: complex object, do we have a adapter available?
+        // check 6: complex object, do we have an adapter available?
         Adapter<Object, Object> ad = adapters.get(cls);
         if (ad != null) {
             Object out = ad.serialize(in);
@@ -240,8 +253,7 @@ public class ObjectSerializer {
      */
     private void _serialize(Class<?> cls, Object value, Map<String, Object> cfg, boolean useLists) {
         for (Field f : cls.getDeclaredFields()) {
-            //                       Modifier.SYNTHETIC (not public for some reason)
-            if ((f.getModifiers() & (0x00001000 | Modifier.TRANSIENT | Modifier.STATIC)) != 0) {
+            if ((f.getModifiers() & FIELD_SKIP_MODIFIERS) != 0) {
                 continue;
             }
             try {
@@ -300,10 +312,10 @@ public class ObjectSerializer {
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     private Object _deserialize(Map<String, Object> in, Class<?> cls) {
-        Object o;
         if (cls.isArray()) {
-            o = new ArrayList<>();
-        } else o = MHUtils.instantiate(cls, true);
+            throw new SerializationException("Failed to deserialize object: Cannot deserialize into an array type " + cls.getName());
+        }
+        Object o = MHUtils.instantiate(cls, true);
         if (o == null) {
             throw new SerializationException("Failed to deserialize object: Failed to instantiate " + cls.getName());
         }
@@ -346,7 +358,7 @@ public class ObjectSerializer {
 
     public static Object unbox(@NotNull Object in, Class<?> target) {
         if (target == null) return in;
-        if (in instanceof Number) return numberSuppliers.get(getPrimitiveWrapper(target)).apply((Number) in);
+        if (in instanceof Number) return numberSuppliers.get(getWrapped(target)).apply((Number) in);
         if (target.isArray() && in instanceof List) {
             List<?> list = (List<?>) in;
             Class<?> cType = target.getComponentType();
@@ -364,21 +376,21 @@ public class ObjectSerializer {
     /**
      * box the specified primitive array into its primitive wrapper, e.g. int[] -> Integer[]
      *
-     * @param in an object, null -> null, not a primitive array -> same, or the boxed array/
+     * @param in an object, null -> null, not a primitive array -> same, or the boxed array.
      */
     public static Object box(Object in) {
         if (in == null) return null;
         Class<?> cType = in.getClass().getComponentType();
         if (cType == null || !cType.isPrimitive()) return in;
         int len = Array.getLength(in);
-        Object out = Array.newInstance(getPrimitiveWrapper(cType), len);
+        Object out = Array.newInstance(getWrapped(cType), len);
         for (int i = 0; i < len; i++) {
             Array.set(out, i, Array.get(in, i));
         }
         return out;
     }
 
-    public static Class<?> getPrimitiveWrapper(Class<?> cls) {
+    public static Class<?> getWrapped(Class<?> cls) {
         Class<?> c = primitiveWrappers.get(cls);
         return c == null ? cls : c;
     }

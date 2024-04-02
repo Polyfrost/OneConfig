@@ -42,10 +42,7 @@ import org.polyfrost.polyui.operations.Move
 import org.polyfrost.polyui.operations.Recolor
 import org.polyfrost.polyui.renderer.data.Cursor
 import org.polyfrost.polyui.renderer.data.PolyImage
-import org.polyfrost.polyui.unit.Align
-import org.polyfrost.polyui.unit.Vec2
-import org.polyfrost.polyui.unit.ignored
-import org.polyfrost.polyui.unit.seconds
+import org.polyfrost.polyui.unit.*
 import org.polyfrost.polyui.utils.image
 import org.polyfrost.polyui.utils.radii
 import org.polyfrost.polyui.utils.rgba
@@ -63,7 +60,8 @@ object OneConfigUI {
         val vertical = Align(cross = Align.Cross.Start, mode = Align.Mode.Vertical)
 
         return PolyUIScreen(
-            1400f, 700f, Group(
+            null, null, null, null, null, rgba(21, 21, 21), 1920f by 1080f,
+            Group(
                 size = Vec2(273f, 700f),
                 alignment = Align(mode = Align.Mode.Vertical, padding = Vec2(12f, 16f)),
                 children = arrayOf(
@@ -72,7 +70,7 @@ object OneConfigUI {
                         at = ignored,
                     ).afterParentInit {
                         val modsBtn = parent!![2][1]
-                        Move(this, modsBtn.at, false).add()
+                        Move(this, modsBtn.x, modsBtn.y, false).add()
                     },
                     Image("oneconfig.svg".image()).named("Logo"),
                     Group(
@@ -190,7 +188,7 @@ object OneConfigUI {
                 ),
             )
         ).also {
-            ui = it.master
+            ui = it.polyUI!!.master
         }
     }
 
@@ -218,7 +216,7 @@ object OneConfigUI {
         return SidebarButton0(image, text, extra).events {
             Event.Mouse.Clicked(0) then { _ ->
                 val it = parent!!.parent!![0]
-                Move(it, this.at, false, Animations.EaseOutQuad.create(0.15.seconds)).add()
+                Move(it, this.x, this.y, false, Animations.EaseOutQuad.create(0.15.seconds)).add()
                 false
             }
         }
