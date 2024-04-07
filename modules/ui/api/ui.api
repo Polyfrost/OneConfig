@@ -4,6 +4,36 @@ public abstract interface class org/polyfrost/oneconfig/ui/LwjglManager {
 	public abstract fun getTinyFD ()Lorg/polyfrost/oneconfig/ui/TinyFD;
 }
 
+public final class org/polyfrost/oneconfig/ui/Notification {
+	public fun <init> ([Lorg/polyfrost/polyui/component/Drawable;Ljava/lang/String;Ljava/lang/String;JBLorg/polyfrost/polyui/renderer/data/PolyImage;)V
+	public synthetic fun <init> ([Lorg/polyfrost/polyui/component/Drawable;Ljava/lang/String;Ljava/lang/String;JBLorg/polyfrost/polyui/renderer/data/PolyImage;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getDescription ()Ljava/lang/String;
+	public final fun getExtras ()[Lorg/polyfrost/polyui/component/Drawable;
+	public final fun getIcon ()Lorg/polyfrost/polyui/renderer/data/PolyImage;
+	public final fun getState ()B
+	public final fun getTime ()J
+	public final fun getTimeString ()Ljava/lang/String;
+	public final fun getTitle ()Ljava/lang/String;
+}
+
+public final class org/polyfrost/oneconfig/ui/NotificationKt {
+	public static final fun create (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/polyui/renderer/data/PolyImage;Ljava/util/function/Function;Ljava/lang/Runnable;)Lorg/polyfrost/polyui/component/Drawable;
+}
+
+public final class org/polyfrost/oneconfig/ui/NotificationManager {
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/ui/NotificationManager;
+}
+
+public final class org/polyfrost/oneconfig/ui/Notifications {
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/ui/Notifications;
+	public final fun send (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun send (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/polyui/renderer/data/PolyImage;)V
+	public final fun send (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/polyui/renderer/data/PolyImage;J)V
+	public final fun send (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/polyui/renderer/data/PolyImage;JLjava/util/function/Function;)V
+	public final fun send (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/polyui/renderer/data/PolyImage;JLjava/util/function/Function;Ljava/lang/Runnable;)V
+	public static synthetic fun send$default (Lorg/polyfrost/oneconfig/ui/Notifications;Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/polyui/renderer/data/PolyImage;JLjava/util/function/Function;Ljava/lang/Runnable;ILjava/lang/Object;)V
+}
+
 public abstract interface class org/polyfrost/oneconfig/ui/TinyFD {
 	public static final field ERROR_ICON Ljava/lang/String;
 	public static final field INFO_ICON Ljava/lang/String;

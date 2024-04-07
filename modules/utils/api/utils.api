@@ -1,3 +1,77 @@
+public abstract interface class org/polyfrost/oneconfig/platform/GLPlatform {
+	public abstract fun drawRect (FFFFI)V
+	public fun drawText (Ljava/lang/String;FFIZ)F
+	public abstract fun drawText (Lorg/polyfrost/oneconfig/libs/universal/UMatrixStack;Ljava/lang/String;FFIZ)F
+	public abstract fun enableStencil ()V
+	public abstract fun getStringWidth (Ljava/lang/String;)I
+}
+
+public abstract interface class org/polyfrost/oneconfig/platform/GuiPlatform {
+	public abstract fun getCurrentScreen ()Ljava/lang/Object;
+	public abstract fun isInChat ()Z
+	public abstract fun isInDebug ()Z
+	public abstract fun playClickSound ()V
+	public abstract fun setCurrentScreen (Ljava/lang/Object;)V
+}
+
+public abstract interface class org/polyfrost/oneconfig/platform/I18nPlatform {
+	public abstract fun format (Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;
+	public abstract fun getKeyName (II)Ljava/lang/String;
+}
+
+public abstract interface class org/polyfrost/oneconfig/platform/LoaderPlatform {
+	public abstract fun getActiveModContainer ()Lorg/polyfrost/oneconfig/platform/LoaderPlatform$ActiveMod;
+	public abstract fun getLoadedMods ()Ljava/util/List;
+	public abstract fun hasActiveModContainer ()Z
+	public abstract fun isModLoaded (Ljava/lang/String;)Z
+	public abstract fun toActiveMod (Ljava/lang/Object;)Lorg/polyfrost/oneconfig/platform/LoaderPlatform$ActiveMod;
+}
+
+public class org/polyfrost/oneconfig/platform/LoaderPlatform$ActiveMod {
+	public final field id Ljava/lang/String;
+	public final field name Ljava/lang/String;
+	public final field source Ljava/nio/file/Path;
+	public final field version Ljava/lang/String;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/nio/file/Path;)V
+}
+
+public abstract interface class org/polyfrost/oneconfig/platform/MousePlatform {
+	public abstract fun getButtonState (I)I
+	public abstract fun getMouseX ()D
+	public abstract fun getMouseY ()D
+	public abstract fun isButtonDown (I)Z
+}
+
+public abstract interface class org/polyfrost/oneconfig/platform/Platform {
+	public static fun getGLPlatform ()Lorg/polyfrost/oneconfig/platform/GLPlatform;
+	public static fun getGuiPlatform ()Lorg/polyfrost/oneconfig/platform/GuiPlatform;
+	public static fun getI18nPlatform ()Lorg/polyfrost/oneconfig/platform/I18nPlatform;
+	public static fun getInstance ()Lorg/polyfrost/oneconfig/platform/Platform;
+	public abstract fun getLoader ()Lorg/polyfrost/oneconfig/platform/Platform$Loader;
+	public static fun getLoaderPlatform ()Lorg/polyfrost/oneconfig/platform/LoaderPlatform;
+	public abstract fun getMinecraftVersion ()I
+	public static fun getMousePlatform ()Lorg/polyfrost/oneconfig/platform/MousePlatform;
+	public static fun getServerPlatform ()Lorg/polyfrost/oneconfig/platform/ServerPlatform;
+	public abstract fun isCallingFromMinecraftThread ()Z
+	public abstract fun isDevelopmentEnvironment ()Z
+}
+
+public final class org/polyfrost/oneconfig/platform/Platform$Loader : java/lang/Enum {
+	public static final field FABRIC Lorg/polyfrost/oneconfig/platform/Platform$Loader;
+	public static final field FORGE Lorg/polyfrost/oneconfig/platform/Platform$Loader;
+	public static fun valueOf (Ljava/lang/String;)Lorg/polyfrost/oneconfig/platform/Platform$Loader;
+	public static fun values ()[Lorg/polyfrost/oneconfig/platform/Platform$Loader;
+}
+
+public class org/polyfrost/oneconfig/platform/Platform$PlatformHolder {
+}
+
+public abstract interface class org/polyfrost/oneconfig/platform/ServerPlatform {
+	public abstract fun doesPlayerExist ()Z
+	public abstract fun getServerBrand ()Ljava/lang/String;
+	public abstract fun inMultiplayer ()Z
+}
+
 public final class org/polyfrost/oneconfig/utils/ColorUtils {
 	public fun <init> ()V
 	public static fun getAlpha (I)I
@@ -11,6 +85,11 @@ public final class org/polyfrost/oneconfig/utils/ColorUtils {
 	public static fun setBlue (II)I
 	public static fun setGreen (II)I
 	public static fun setRed (II)I
+}
+
+public final class org/polyfrost/oneconfig/utils/Deprecator {
+	public fun <init> ()V
+	public static fun markDeprecated ()V
 }
 
 public final class org/polyfrost/oneconfig/utils/IOUtils {
@@ -32,6 +111,14 @@ public final class org/polyfrost/oneconfig/utils/JsonUtils {
 	public static fun ifValid (Ljava/lang/String;Ljava/util/function/Consumer;)Z
 	public static fun parseString (Ljava/lang/String;)Lcom/google/gson/JsonElement;
 	public static fun parseString (Ljava/lang/String;Z)Lcom/google/gson/JsonElement;
+}
+
+public class org/polyfrost/oneconfig/utils/LogScanner {
+	public fun <init> ()V
+	public static fun identifyCallerFromStacktrace (Ljava/lang/Throwable;)Ljava/util/Set;
+	public static fun identifyFromClass (Ljava/lang/Class;)Ljava/util/Set;
+	public static fun identifyFromClass (Ljava/lang/String;)Ljava/util/Set;
+	public static fun identifyFromStacktrace (Ljava/lang/Throwable;)Ljava/util/Set;
 }
 
 public final class org/polyfrost/oneconfig/utils/MHUtils {
@@ -112,6 +199,46 @@ public final class org/polyfrost/oneconfig/utils/NetworkUtils {
 	public static fun setupConnection (Ljava/lang/String;Ljava/lang/String;IZ)Ljava/io/InputStream;
 }
 
+public class org/polyfrost/oneconfig/utils/OneImage {
+	public fun <init> (II)V
+	public fun <init> (Ljava/awt/image/BufferedImage;)V
+	public fun <init> (Ljava/io/File;)V
+	public fun <init> (Ljava/io/InputStream;)V
+	public fun <init> (Ljava/lang/String;)V
+	public fun copyToClipboard ()V
+	public fun crop (IIII)V
+	public fun dispose ()V
+	public fun drawCircle (IIII)V
+	public fun drawLine (IIIII)V
+	public fun drawLine (Ljava/awt/Stroke;IIII)V
+	public fun drawOval (IIIII)V
+	public fun drawPolygon (IILjava/awt/Polygon;I)V
+	public fun drawRect (IIIII)V
+	public fun drawRoundedRect (IIIIII)V
+	public fun drawString (Ljava/lang/String;IILjava/awt/Font;I)V
+	public fun drawTexturedRect (Ljava/awt/TexturePaint;IIII)V
+	public fun drawTriangle (Ljava/awt/Point;Ljava/awt/Point;Ljava/awt/Point;I)V
+	public fun flipHorizontal ()V
+	public fun flipVertical ()V
+	public fun getColorAtPos (II)V
+	public fun getG2D ()Ljava/awt/Graphics2D;
+	public fun getHeight ()I
+	public fun getImage ()Ljava/awt/image/BufferedImage;
+	public fun getWidth ()I
+	public fun maskColor (Ljava/awt/Color;)V
+	public fun maskPaint (Ljava/awt/Paint;)V
+	public fun rotate (D)V
+	public fun save (Ljava/lang/String;)V
+	public fun scale (DD)V
+	public fun setBrightness (F)V
+	public fun setColorAtPos (III)V
+	protected fun setImage (Ljava/awt/image/BufferedImage;)V
+	public fun setSize (II)V
+	public fun translate (II)V
+	public fun uploadToImgur ()Lcom/google/gson/JsonObject;
+	public fun uploadToImgur (Z)Ljava/lang/String;
+}
+
 public final class org/polyfrost/oneconfig/utils/SimpleProfiler {
 	public fun <init> ()V
 	public static fun pop (Ljava/lang/String;)F
@@ -133,5 +260,36 @@ public final class org/polyfrost/oneconfig/utils/StringUtils {
 	public static fun substringTo (Ljava/lang/String;I)Ljava/lang/String;
 	public static fun substringTo (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
 	public static fun substringToLastIndexOf (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+}
+
+public final class org/polyfrost/oneconfig/utils/dsl/ColorsKt {
+	public static final fun getAlpha (I)I
+	public static final fun getBlue (I)I
+	public static final fun getGreen (I)I
+	public static final fun getRed (I)I
+	public static final fun setAlpha (II)I
+	public static final fun setBlue (II)I
+	public static final fun setGreen (II)I
+	public static final fun setRed (II)I
+}
+
+public final class org/polyfrost/oneconfig/utils/dsl/IoKt {
+	public static final fun checksum (Ljava/io/File;)Ljava/lang/String;
+}
+
+public final class org/polyfrost/oneconfig/utils/dsl/JsonKt {
+	public static final fun asJsonElement (Ljava/lang/String;Z)Lcom/google/gson/JsonElement;
+	public static synthetic fun asJsonElement$default (Ljava/lang/String;ZILjava/lang/Object;)Lcom/google/gson/JsonElement;
+}
+
+public final class org/polyfrost/oneconfig/utils/dsl/MultithreadingKt {
+	public static final fun runAsync (Lkotlin/jvm/functions/Function0;)V
+	public static final fun schedule (JLjava/util/concurrent/TimeUnit;Lkotlin/jvm/functions/Function0;)V
+}
+
+public final class org/polyfrost/oneconfig/utils/dsl/NetworkKt {
+	public static final fun browseLink (Lorg/polyfrost/oneconfig/libs/universal/UDesktop;Ljava/lang/String;)V
+	public static final fun download (Ljava/io/File;Ljava/lang/String;Ljava/lang/String;IZ)Z
+	public static synthetic fun download$default (Ljava/io/File;Ljava/lang/String;Ljava/lang/String;IZILjava/lang/Object;)Z
 }
 

@@ -200,6 +200,7 @@ public final class org/polyfrost/oneconfig/api/commands/factories/builder/Comman
 public final class org/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$ExeBuilder {
 	public fun alias ([Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$ExeBuilder;
 	public fun description (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$ExeBuilder;
+	public fun does (Ljava/lang/Runnable;)Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$ExeBuilder;
 	public fun does (Ljava/util/function/Consumer;)Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$ExeBuilder;
 	public fun does (Ljava/util/function/Function;)Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$ExeBuilder;
 	public fun greedy ()Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder$ExeBuilder;
