@@ -27,47 +27,50 @@
 package org.polyfrost.oneconfig.api.config.backend.impl.file;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.polyfrost.oneconfig.api.config.Tree;
 import org.polyfrost.oneconfig.api.config.backend.Backend;
-import org.polyfrost.oneconfig.api.config.backend.Serializer;
+import org.polyfrost.oneconfig.api.config.backend.impl.NightConfigSerializer;
 import org.polyfrost.oneconfig.api.config.exceptions.SerializationException;
-import org.polyfrost.oneconfig.api.config.util.Pair;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.nio.file.FileSystems;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
-public class FileBackend implements Backend {
-    private Path folder;
-    private WatchService service;
-
+public class FileBackend extends Backend {
+    public final Path folder;
+    public final FileSerializer<String> serializer;
+    public final boolean isPhysicalFolder;
     private volatile boolean dodge = false;
-    private final List<FileSerializer> serializers = new ArrayList<>();
-    private final Map<String, File> fileCache = new HashMap<>();
-    private final Map<String, Pair<Serializer, Tree>> configs = new HashMap<>();
 
-    @SuppressWarnings({"CallToPrintStackTrace", "ResultOfMethodCallIgnored"})
-    public FileBackend(Path folder, Serializer... serializers) {
-        addSerializers(serializers);
-        setDirectory(folder);
+    public FileBackend(Path folder, FileSerializer<String> serializer) {
+        this.serializer = serializer;
+        this.folder = folder;
+
+        boolean is = true;
+        WatchService ser;
+        try {
+            //noinspection ResultOfMethodCallIgnored
+            folder.toFile().mkdirs();
+            ser = folder.getFileSystem().newWatchService();
+            folder.register(ser, StandardWatchEventKinds.ENTRY_MODIFY, StandardWatchEventKinds.ENTRY_DELETE);
+        } catch (Exception e) {
+            is = false;
+            ser = null;
+            LOGGER.warn("Failed to setup file backend watcher onto {}", folder, e);
+        }
+        this.isPhysicalFolder = is;
+        if (ser == null) return;
+
+        final WatchService service = ser;
         Thread t = new Thread(() -> {
+            int i = 0;
             while (true) {
                 try {
                     WatchKey key = service.take();
@@ -80,22 +83,31 @@ public class FileBackend implements Backend {
                         if (event.kind() == StandardWatchEventKinds.OVERFLOW) {
                             continue;
                         }
-                        File f = folder.resolve((Path) event.context()).toFile();
+                        Path p = folder.resolve((Path) event.context());
+                        String id = removeExt(p.toString());
+                        if (!exists(id)) continue;
 
                         if (event.kind() == StandardWatchEventKinds.ENTRY_DELETE) {
-                            f.createNewFile();
-                            get(f.getName());
+                            LOGGER.info("config {} deleted? saving", id);
+                            save(id);
+                            dodge();
                         }
                         if (event.kind() == StandardWatchEventKinds.ENTRY_MODIFY) {
-                            get(f.getName());
+                            LOGGER.info("config {} modified, update requested", id);
+                            requestUpdate(id);
                         }
                     }
                     if (!key.reset()) {
-                        // AAAA
+                        LOGGER.error("Failed to reset key, file watcher is off!");
                         break;
                     }
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    i++;
+                    LOGGER.error("error with config file watcher (error no. {})", i, e);
+                    if (i > 10) {
+                        LOGGER.error("Too many errors, shutting down file watcher!");
+                        break;
+                    }
                 }
             }
         });
@@ -105,141 +117,55 @@ public class FileBackend implements Backend {
     }
 
     public FileBackend(String folder) {
-        this(Paths.get(folder));
+        this(Paths.get(folder), NightConfigSerializer.YAML);
     }
 
-    @Override
-    public FileBackend addSerializers(Serializer... serializers) {
-        for (Serializer s : serializers) {
-            if (s instanceof FileSerializer) this.serializers.add((FileSerializer) s);
-        }
-        return this;
+    private String removeExt(String s) {
+        int st = s.lastIndexOf(folder.getFileSystem().getSeparator()) + 1;
+        return s.substring(st, s.lastIndexOf('.'));
     }
 
-    public Path getDirectory() {
-        return folder;
-    }
-
-
-    @Override
-    public void put(@NotNull Tree tree) {
+    public void dodge() {
         dodge = true;
-        Pair<Serializer, Tree> t = null;
-        File file = getFile(tree.getID());
-        if (!configs.containsKey(tree.getID())) {
-            for (FileSerializer serializer : serializers) {
-                if (serializer.supports(file)) {
-                    t = new Pair<>(serializer, tree);
-                    configs.put(tree.getID(), t);
-                    break;
-                }
-            }
-        } else t = configs.get(tree.getID());
-        if (t == null) throw new SerializationException("No serializer found for " + tree.getID());
-        assert t.second == tree;
-        try {
-            file.createNewFile();
-        } catch (IOException e) {
-            throw new SerializationException("Failed to create file", e);
-        }
-        try (BufferedWriter w = new BufferedWriter(new FileWriter(file))) {
-            w.write(t.first.serialize(t.second));
-        } catch (Exception e) {
-            throw new SerializationException("Failed to serialize!", e);
-        }
-    }
-
-    private File getFile(String id) {
-        return fileCache.computeIfAbsent(id, it -> folder.resolve(it).toFile());
     }
 
     @Override
-    public @Nullable Tree get(@NotNull String id) {
-        Pair<Serializer, Tree> t = configs.get(id);
-        StringBuilder str = new StringBuilder();
-        File f = getFile(id);
-        if (!f.exists()) return null;
-        try (BufferedReader r = new BufferedReader(new FileReader(f))) {
-            String l;
-            while ((l = r.readLine()) != null) {
-                str.append(l).append("\n");
+    protected Tree load0(@NotNull String id) {
+        Path p = folder.resolve(id + serializer.getExtension());
+        if (isPhysicalFolder && !p.toFile().exists()) return null;
+        return serializer.deserialize(read(p));
+    }
+
+    @Override
+    protected boolean save0(@NotNull Tree tree) {
+        Path p = folder.resolve(tree.getID() + serializer.getExtension());
+        write(p, serializer.serialize(tree));
+        return true;
+    }
+
+    private static String read(Path p) {
+        StringBuilder buf = new StringBuilder();
+        try (BufferedReader r = Files.newBufferedReader(p)) {
+            String o;
+            while ((o = r.readLine()) != null) {
+                buf.append(o).append('\n');
             }
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new SerializationException("Failed to read file", e);
         }
-        if (t == null) {
-            for (FileSerializer serializer : serializers) {
-                if (serializer.supports(f)) {
-                    t = new Pair<>(serializer, null);
-                    configs.put(id, t);
-                    break;
-                }
-            }
-            if (t == null) return null;
-        }
-        if (t.second != null) t.second.merge(t.first.deserialize(id, str.toString()), false, true);
-        else t.second = t.first.deserialize(id, str.toString());
-        return t.second;
+        return buf.toString();
     }
 
-    /**
-     * Change the directory where the configs are stored. This will update the watcher and refresh all tracked trees.
-     */
-    @SuppressWarnings("CallToPrintStackTrace")
-    public void setDirectory(@NotNull Path folder) {
-        this.folder = folder;
-        try {
-            folder.toFile().mkdirs();
-            service = FileSystems.getDefault().newWatchService();
-            folder.register(service, StandardWatchEventKinds.ENTRY_MODIFY, StandardWatchEventKinds.ENTRY_DELETE);
+    private static void write(Path p, String s) {
+        try (BufferedWriter w = Files.newBufferedWriter(p, StandardOpenOption.CREATE)) {
+            w.write(s);
         } catch (Exception e) {
-            e.printStackTrace();
-        }
-        fileCache.clear();
-        for (String id : configs.keySet()) {
-            get(id);
+            throw new SerializationException("Failed to write file", e);
         }
     }
 
     @Override
-    public boolean exists(@NotNull String id) {
-        return configs.containsKey(id);
-    }
-
-    @Override
-    public boolean remove(@NotNull String id) {
-        return remove(id, false);
-    }
-
-    public boolean remove(String id, boolean keepFile) {
-        Pair<Serializer, Tree> t = configs.remove(id);
-        if (t == null) return false;
-        dodge = true;
-        File f = getFile(id);
-        if (keepFile) {
-            return f.renameTo(new File(f.getAbsolutePath() + ".corrupted"));
-        } else return f.delete();
-    }
-
-    @Override
-    public void refresh() {
-        for (String s : configs.keySet()) {
-            File f = getFile(s);
-            if (f.isDirectory()) continue;
-            get(f.getName());
-        }
-    }
-
-    @SuppressWarnings("DataFlowIssue")
-    public void registerAllFiles() {
-        for (File f : folder.toFile().listFiles()) {
-            if (f.isDirectory()) continue;
-            get(f.getName());
-        }
-    }
-
-    @Override
-    public Collection<Tree> getTrees() {
-        return configs.values().stream().map(t -> t.second).collect(Collectors.toList());
+    public boolean exists(String id) {
+        return super.exists(id) || (isPhysicalFolder && folder.resolve(id + serializer.getExtension()).toFile().exists());
     }
 }

@@ -26,10 +26,8 @@
 
 package org.polyfrost.oneconfig.api.config.backend.impl.file;
 
-import org.polyfrost.oneconfig.api.config.backend.Serializer;
+import org.polyfrost.oneconfig.api.config.serialize.Serializer;
 
-import java.io.File;
-
-public interface FileSerializer extends Serializer {
-    boolean supports(File file);
+public interface FileSerializer<T> extends Serializer<T> {
+    String getExtension();
 }

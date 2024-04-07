@@ -30,8 +30,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.polyfrost.oneconfig.api.config.backend.impl.NightConfigSerializer;
 import org.polyfrost.oneconfig.api.config.backend.impl.file.FileBackend;
-import org.polyfrost.oneconfig.api.config.collector.PropertyCollector;
-import org.polyfrost.oneconfig.api.config.collector.impl.OneConfigCollector;
+import org.polyfrost.oneconfig.api.config.backend.impl.file.FileSerializer;
+import org.polyfrost.oneconfig.api.config.collect.PropertyCollector;
+import org.polyfrost.oneconfig.api.config.collect.impl.OneConfigCollector;
+import org.polyfrost.oneconfig.api.events.EventManager;
+import org.polyfrost.oneconfig.api.events.event.PreShutdownEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,21 +45,21 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 public class ConfigManager {
+    public static final Logger LOGGER = LoggerFactory.getLogger("OneConfig Config Manager");
     public static final Path CONFIG_DIR = new File("./config").toPath();
-    public static final ConfigManager INSTANCE = new ConfigManager();
-    public static final String DEFAULT_EXT = ".yaml";
+    public static final FileSerializer<String> DEFAULT_SERIALIZER = NightConfigSerializer.JSON;
     public static final String DEFAULT_META_EXT = "-meta.toml";
-    static final Logger LOGGER = LoggerFactory.getLogger("OneConfig Config Manager");
-    final List<PropertyCollector> collectors = new ArrayList<>(4);
-    final FileBackend backend;
+    public static final ConfigManager INSTANCE = new ConfigManager();
+    private final List<PropertyCollector> collectors = new ArrayList<>(4);
+    private static volatile boolean shutdown = false;
+    private FileBackend backend;
 
     private ConfigManager() {
-        collectors.add(new OneConfigCollector());
-        backend = new FileBackend(CONFIG_DIR, NightConfigSerializer.ALL);
+        registerCollector(new OneConfigCollector());
         defaultProfile();
+        registerShutdownHook();
     }
 
     public void defaultProfile() {
@@ -66,7 +69,7 @@ public class ConfigManager {
     public void openProfile(String profile) {
         Path p = CONFIG_DIR.resolve(profile);
         p.toFile().mkdirs();
-        //LOGGER.info("Opening profile at " + p);
+        LOGGER.info("Opening profile at {}", p);
         File[] files = CONFIG_DIR.toFile().listFiles();
         assert files != null;
         for (File cfg : files) {
@@ -78,7 +81,23 @@ public class ConfigManager {
                 throw new RuntimeException("Failed to copy over config file " + cfg.getName() + " to profile " + p, e);
             }
         }
-        backend.setDirectory(p);
+        if (backend == null) backend = new FileBackend(p, DEFAULT_SERIALIZER);
+        else backend = new FileBackend(p, backend.serializer);
+    }
+
+    private void registerShutdownHook() {
+        // two hooks that guarantee that we save lol
+        Runtime.getRuntime().addShutdownHook(new Thread(this::shutdownHook));
+        EventManager.register(PreShutdownEvent.class, this::shutdownHook);
+    }
+
+    private void shutdownHook() {
+        if (shutdown) return;
+        shutdown = true;
+        LOGGER.info("shutdown requested; saving all configs...");
+        for (Tree t : backend.getTrees()) {
+            backend.save(t);
+        }
     }
 
     public Tree get(String id) {
@@ -90,14 +109,6 @@ public class ConfigManager {
     }
 
 
-    public void refresh() {
-        backend.refresh();
-    }
-
-    public boolean refresh(String id) {
-        return backend.get(id) != null;
-    }
-
     /**
      * Register a config to OneConfig. This method essentially will merge the provided config with a file in the config backend.
      *
@@ -106,59 +117,18 @@ public class ConfigManager {
      * @throws IllegalArgumentException if no registered collector is able to collect from the source object
      */
     public Tree register(@NotNull Object source, @Nullable Config cfg) {
-        cfg = cfg == null ? new Config(source.getClass().getSimpleName() + DEFAULT_EXT, (String) null, source.getClass().getSimpleName(), Config.Category.OTHER) : cfg;
-        Tree t = null;
-        try {
-            t = backend.get(cfg.id);
-        } catch (Exception e) {
-            LOGGER.error("Failed to read config! Data will be ignored", e);
-            backend.remove(cfg.id, true);
-        }
-        // brand-new config to the system
-        if (t == null) {
-            LOGGER.info("Registering new config {}", cfg.id);
-            t = collect(source);
-            backend.put(t);
+        long now = System.nanoTime();
+        cfg = cfg == null ? new Config(source.getClass().getSimpleName(), (String) null, source.getClass().getSimpleName(), Config.Category.OTHER) : cfg;
+        Tree t = collect(source);
+        t.setID(cfg.id);
+        t.lock();
+        if (backend.load(t)) {
+            LOGGER.info("Loaded config {} from backend (took {}ms)", cfg.id, (System.nanoTime() - now) / 1_000_000f);
         } else {
-            // todo something wrong with this
-            t.merge(collect(source), false, true);
-            backend.put(t);
-        }
-        t.addMetadata("meta", cfg);
-        // check and potentially add metadata
-        Tree metaTree = backend.get(cfg.id + DEFAULT_META_EXT);
-        if (metaTree != null) {
-            LOGGER.info("Registering metadata for config {}", cfg.id);
-            _supplyMetadata(t, metaTree);
+            LOGGER.info("Config {} not found in backend, saving...", cfg.id);
+            backend.save(t);
         }
         return t;
-    }
-
-    public boolean supplyMetadata(String id, Tree metaTree, boolean save) {
-        Tree t = backend.get(id);
-        if (t == null) return false;
-        if (save) {
-            //metaTree.id = id + DEFAULT_META_EXT;
-            Tree old = backend.get(metaTree.id);
-            if (old != null) {
-                old.merge(metaTree, false, false);
-                metaTree = old;
-            } else backend.put(metaTree);
-        }
-        _supplyMetadata(t, metaTree);
-        return true;
-    }
-
-    private static void _supplyMetadata(Tree tree, Tree meta) {
-        for (Map.Entry<String, Node> e : tree.map.entrySet()) {
-            Node n = meta.get(e.getKey());
-            if (n == null) continue;
-            Node c = e.getValue();
-            c.addMetadata(n.getMetadata());
-            if (c instanceof Tree) {
-                _supplyMetadata((Tree) c, (Tree) n);
-            }
-        }
     }
 
     public Tree register(@NotNull Config config) {

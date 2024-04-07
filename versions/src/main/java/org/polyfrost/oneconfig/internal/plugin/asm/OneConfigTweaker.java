@@ -149,7 +149,7 @@ public class OneConfigTweaker implements ITweaker {
     @SuppressWarnings("unchecked")
     private void removeLWJGLException() {
         try {
-            Set<String> exceptions = (Set<String>) MHUtils.getFieldGetter(LaunchClassLoader.class, "classLoaderExceptions", Set.class).invokeExact(Launch.classLoader);
+            Set<String> exceptions = (Set<String>) MHUtils.getFieldGetter(LaunchClassLoader.class, "classLoaderExceptions", Set.class).getOrThrow().invokeExact(Launch.classLoader);
             exceptions.remove("org.lwjgl.");
         } catch (Throwable e) {
             throw new RuntimeException(e);

@@ -57,11 +57,7 @@ public class Lwjgl2FunctionProvider implements FunctionProvider {
     }
 
     public Lwjgl2FunctionProvider() {
-        try {
-            getFunctionAddress = MHUtils.getStaticMethodHandle(GL_CONTEXT, "getFunctionAddress", long.class, String.class);
-        } catch (Throwable exception) {
-            throw new RuntimeException("Error initializing LWJGL2FunctionProvider", exception);
-        }
+        getFunctionAddress = MHUtils.getStaticMethodHandle(GL_CONTEXT, "getFunctionAddress", long.class, String.class).getOrThrow();
     }
 
     @Override

@@ -24,12 +24,12 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.api.config.collector.impl;
+package org.polyfrost.oneconfig.api.config.collect.impl;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.polyfrost.oneconfig.api.config.Tree;
-import org.polyfrost.oneconfig.api.config.collector.PropertyCollector;
+import org.polyfrost.oneconfig.api.config.collect.PropertyCollector;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -47,8 +47,8 @@ public abstract class ReflectiveCollector implements PropertyCollector {
 
 
     @Override
-    public @Nullable Tree collect(@Nullable String id, @NotNull Object src) {
-        Tree b = Tree.tree(id == null ? src.getClass().getSimpleName() : id);
+    public @Nullable Tree collect(@NotNull Object src) {
+        Tree b = Tree.tree();
         handle(b, src, 0);
         return b;
     }

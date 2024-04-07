@@ -30,5 +30,6 @@ dependencies {
     implementation(project(":modules:utils"))
     implementation(project(":modules:config"))
     implementation(project(":modules:ui"))
+    implementation(project(":modules:events"))
 }
 

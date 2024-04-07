@@ -187,6 +187,10 @@ public final class EventManager {
         return EventHandler.of(cls, handler).register();
     }
 
+    public static <E extends Event> EventHandler<E> register(Class<E> cls, Runnable handler) {
+        return EventHandler.of(cls, handler).register();
+    }
+
     /**
      * Convenience method for registering an event handler. Equal to
      * {@link EventManager#INSTANCE}{@code .register(}{@link EventHandler#of(Class, Consumer)}{@code )}

@@ -24,7 +24,7 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.api.config.collector.impl;
+package org.polyfrost.oneconfig.api.config.collect.impl;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,6 +44,9 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.List;
 
+import static org.polyfrost.oneconfig.api.config.DummyProperty.dummy;
+import static org.polyfrost.oneconfig.api.config.Node.strv;
+
 /**
  * Collects properties from an object using reflection, and from its inner classes.
  * Ignores fields without an annotation with the {@link Option} annotation.
@@ -54,9 +57,9 @@ public class OneConfigCollector extends ReflectiveCollector {
     }
 
     @Override
-    public @Nullable Tree collect(@Nullable String id, @NotNull Object src) {
+    public @Nullable Tree collect(@NotNull Object src) {
         if (!(src instanceof Config)) return null;
-        Tree tree = super.collect(id == null ? ((Config) src).id : id, src);
+        Tree tree = super.collect(src);
         assert tree != null;
         tree.onAll((s, n) -> {
             if (!(n instanceof Property)) return;
@@ -64,7 +67,7 @@ public class OneConfigCollector extends ReflectiveCollector {
             String[] conditions = n.getMetadata("conditions");
             if (conditions == null) return;
             for (String cond : conditions) {
-                Property<?> condition = tree.getProperty(cond);
+                Property<?> condition = tree.getProp(cond);
                 if (condition == null) throw new IllegalArgumentException("Property " + n.getID() + " is dependant on property " + cond + ", but that property does not exist");
                 if (condition.type == Boolean.class || condition.type == boolean.class) {
                     p.addDisplayCondition(condition::getAs);
@@ -74,7 +77,6 @@ public class OneConfigCollector extends ReflectiveCollector {
         return tree;
     }
 
-    @SuppressWarnings("DataFlowIssue")
     @Override
     public void handleField(@NotNull Field f, @NotNull Object src, @NotNull Tree builder) {
         for (Annotation a : f.getAnnotations()) {
@@ -82,10 +84,9 @@ public class OneConfigCollector extends ReflectiveCollector {
             if (opt == null) continue;
             try {
                 // asm: use method handle as it fails NOW instead of at set time, and is faster
-                final MethodHandle setter = MHUtils.getFieldSetter(f, src);
+                final MethodHandle setter = MHUtils.getFieldSetter(f, src).getOrThrow();
                 Class<?> type = f.getType();
-                if (setter == null) throw new NullPointerException();
-                Property<?> p = Property.prop(f.getName(), MHUtils.getFieldGetter(f, src).invoke(), type).addCallback(v -> {
+                Property<?> p = Property.prop(f.getName(), null, MHUtils.getFieldGetter(f, src).getOrThrow().invoke(), type).addCallback(v -> {
                     try {
                         if (type.isArray() && v instanceof List<?>) {
                             setter.invoke(ObjectSerializer.unbox(v, type));
@@ -108,9 +109,8 @@ public class OneConfigCollector extends ReflectiveCollector {
         Button b = m.getDeclaredAnnotation(Button.class);
         if (b == null) return;
         if (m.getParameterCount() != 0) throw new IllegalArgumentException("Button method " + m.getName() + " must have no parameters");
-        Property<?> p = new Property<>(m.getName(), m, Method.class, true);
-        final MethodHandle mh = MHUtils.getMethodHandle(m, src);
-        assert mh != null;
+        Property<?> p = dummy(m.getName(), b.title(), b.description());
+        final MethodHandle mh = MHUtils.getMethodHandle(m, src).getOrThrow();
         final String methodString = m.toString();
         p.addMetadata("runnable", (Runnable) () -> {
             try {
@@ -120,10 +120,8 @@ public class OneConfigCollector extends ReflectiveCollector {
             }
         });
         p.addMetadata("visualizer", b.annotationType().getAnnotation(Option.class).display());
-        p.addMetadata("text", b.text());
-        p.addMetadata("title", b.title());
-        p.addMetadata("description", b.description().isEmpty() ? null : b.description());
-        p.addMetadata("icon", b.icon());
+        p.addMetadata("text", strv(b.text()));
+        p.addMetadata("icon", strv(b.icon()));
         p.addMetadata("category", b.category());
         p.addMetadata("subcategory", b.subcategory());
         builder.put(p);
@@ -135,9 +133,8 @@ public class OneConfigCollector extends ReflectiveCollector {
         if (a == null) return;
         try {
             Tree t = Tree.tree(c.getSimpleName());
-            t.addMetadata(MHUtils.getAnnotationValues(a));
-            // noinspection DataFlowIssue
-            handle(t, MHUtils.instantiate(c, false), depth + 1);
+            t.addMetadata(MHUtils.getAnnotationValues(a).getOrThrow());
+            handle(t, MHUtils.instantiate(c, false).getOrThrow(), depth + 1);
             builder.put(t);
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -146,7 +143,7 @@ public class OneConfigCollector extends ReflectiveCollector {
 
     public void handleMetadata(@NotNull Property<?> property, @NotNull Annotation a, Option opt, Field f) {
         property.addMetadata("visualizer", opt.display());
-        property.addMetadata(MHUtils.getAnnotationValues(a));
+        property.addMetadata(MHUtils.getAnnotationValues(a).getOrThrow());
         DependsOn d = f.getDeclaredAnnotation(DependsOn.class);
         if (d != null) {
             property.addMetadata("conditions", d.value());

@@ -34,37 +34,59 @@ public final class org/polyfrost/oneconfig/utils/JsonUtils {
 	public static fun parseString (Ljava/lang/String;Z)Lcom/google/gson/JsonElement;
 }
 
-public class org/polyfrost/oneconfig/utils/MHUtils {
+public final class org/polyfrost/oneconfig/utils/MHUtils {
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/utils/MHUtils;
 	public static final field trustedLookup Ljava/lang/invoke/MethodHandles$Lookup;
-	public fun <init> ()V
-	public static fun getAnnotationValues (Ljava/lang/annotation/Annotation;)Ljava/util/Map;
-	public static fun getConstructorHandle (Ljava/lang/Class;[Ljava/lang/Class;)Ljava/lang/invoke/MethodHandle;
-	public static fun getConstructorHandle (Ljava/lang/reflect/Constructor;)Ljava/lang/invoke/MethodHandle;
-	public static fun getConsumerFunctionHandle (Ljava/lang/Object;Ljava/lang/String;Ljava/lang/Class;)Ljava/util/function/Consumer;
-	public static fun getField (Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/Object;
-	public static fun getFieldGetter (Ljava/lang/Class;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/invoke/MethodHandle;
-	public static fun getFieldGetter (Ljava/lang/String;Ljava/lang/Object;)Ljava/lang/invoke/MethodHandle;
-	public static fun getFieldGetter (Ljava/lang/reflect/Field;Ljava/lang/Object;)Ljava/lang/invoke/MethodHandle;
-	public static fun getFieldSetter (Ljava/lang/Class;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/invoke/MethodHandle;
-	public static fun getFieldSetter (Ljava/lang/String;Ljava/lang/Object;)Ljava/lang/invoke/MethodHandle;
-	public static fun getFieldSetter (Ljava/lang/reflect/Field;Ljava/lang/Object;)Ljava/lang/invoke/MethodHandle;
-	public static fun getFunctionHandle (Ljava/lang/Object;Ljava/lang/String;Ljava/lang/Class;Ljava/lang/Class;)Ljava/util/function/Function;
-	public static fun getMethodHandle (Ljava/lang/Class;Ljava/lang/String;Ljava/lang/Class;[Ljava/lang/Class;)Ljava/lang/invoke/MethodHandle;
-	public static fun getMethodHandle (Ljava/lang/Object;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/invoke/MethodHandle;
-	public static fun getMethodHandle (Ljava/lang/Object;Ljava/lang/String;Ljava/lang/Class;[Ljava/lang/Class;)Ljava/lang/invoke/MethodHandle;
-	public static fun getMethodHandle (Ljava/lang/reflect/Method;Ljava/lang/Object;)Ljava/lang/invoke/MethodHandle;
-	public static fun getStaticField (Ljava/lang/Class;Ljava/lang/String;)Ljava/lang/Object;
-	public static fun getStaticFieldGetter (Ljava/lang/Class;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/invoke/MethodHandle;
-	public static fun getStaticFieldSetter (Ljava/lang/Class;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/invoke/MethodHandle;
-	public static fun getStaticMethodHandle (Ljava/lang/Class;Ljava/lang/String;Ljava/lang/Class;[Ljava/lang/Class;)Ljava/lang/invoke/MethodHandle;
-	public static fun instantiate (Ljava/lang/Class;Z)Ljava/lang/Object;
-	public static fun instantiate (Ljava/lang/Class;[Ljava/lang/Object;)Ljava/lang/Object;
-	public static fun invoke (Ljava/lang/Object;Ljava/lang/String;Ljava/lang/Class;[Ljava/lang/Object;)Ljava/lang/Object;
-	public static fun invokeCatching (Ljava/lang/invoke/MethodHandle;[Ljava/lang/Object;)Ljava/lang/Object;
-	public static fun invokeExactCatching (Ljava/lang/invoke/MethodHandle;[Ljava/lang/Object;)Ljava/lang/Object;
-	public static fun invokeStatic (Ljava/lang/Class;Ljava/lang/String;Ljava/lang/Class;[Ljava/lang/Object;)Ljava/lang/Object;
-	public static fun setField (Ljava/lang/Object;Ljava/lang/String;Ljava/lang/Object;)Z
-	public static fun setStaticField (Ljava/lang/Class;Ljava/lang/String;Ljava/lang/Object;)Z
+	public static final fun getAnnotationValues (Ljava/lang/annotation/Annotation;)Lorg/polyfrost/oneconfig/utils/MHUtils$Result;
+	public static final fun getConstructorHandle (Ljava/lang/Class;[Ljava/lang/Class;)Lorg/polyfrost/oneconfig/utils/MHUtils$Result;
+	public static final fun getConstructorHandle (Ljava/lang/reflect/Constructor;)Lorg/polyfrost/oneconfig/utils/MHUtils$Result;
+	public static final fun getConsumerFunctionHandle (Ljava/lang/Object;Ljava/lang/String;Ljava/lang/Class;)Lorg/polyfrost/oneconfig/utils/MHUtils$Result;
+	public static final fun getField (Ljava/lang/Object;Ljava/lang/String;)Lorg/polyfrost/oneconfig/utils/MHUtils$Result;
+	public static final fun getFieldGetter (Ljava/lang/Class;Ljava/lang/String;Ljava/lang/Class;)Lorg/polyfrost/oneconfig/utils/MHUtils$Result;
+	public static final fun getFieldGetter (Ljava/lang/String;Ljava/lang/Object;)Lorg/polyfrost/oneconfig/utils/MHUtils$Result;
+	public static final fun getFieldGetter (Ljava/lang/reflect/Field;Ljava/lang/Object;)Lorg/polyfrost/oneconfig/utils/MHUtils$Result;
+	public static final fun getFieldSetter (Ljava/lang/Class;Ljava/lang/String;Ljava/lang/Class;)Lorg/polyfrost/oneconfig/utils/MHUtils$Result;
+	public static final fun getFieldSetter (Ljava/lang/String;Ljava/lang/Object;)Lorg/polyfrost/oneconfig/utils/MHUtils$Result;
+	public static final fun getFieldSetter (Ljava/lang/reflect/Field;Ljava/lang/Object;)Lorg/polyfrost/oneconfig/utils/MHUtils$Result;
+	public static final fun getFunctionHandle (Ljava/lang/Object;Ljava/lang/String;Ljava/lang/Class;Ljava/lang/Class;)Lorg/polyfrost/oneconfig/utils/MHUtils$Result;
+	public static final fun getMethodHandle (Ljava/lang/Class;Ljava/lang/String;Ljava/lang/Class;[Ljava/lang/Class;)Lorg/polyfrost/oneconfig/utils/MHUtils$Result;
+	public static final fun getMethodHandle (Ljava/lang/Object;Ljava/lang/String;Ljava/lang/Class;[Ljava/lang/Class;)Lorg/polyfrost/oneconfig/utils/MHUtils$Result;
+	public static final fun getMethodHandle (Ljava/lang/reflect/Method;Ljava/lang/Object;)Lorg/polyfrost/oneconfig/utils/MHUtils$Result;
+	public static final fun getStaticField (Ljava/lang/Class;Ljava/lang/String;)Lorg/polyfrost/oneconfig/utils/MHUtils$Result;
+	public static final fun getStaticFieldGetter (Ljava/lang/Class;Ljava/lang/String;Ljava/lang/Class;)Lorg/polyfrost/oneconfig/utils/MHUtils$Result;
+	public static final fun getStaticFieldSetter (Ljava/lang/Class;Ljava/lang/String;Ljava/lang/Class;)Lorg/polyfrost/oneconfig/utils/MHUtils$Result;
+	public static final fun getStaticMethodHandle (Ljava/lang/Class;Ljava/lang/String;Ljava/lang/Class;[Ljava/lang/Class;)Lorg/polyfrost/oneconfig/utils/MHUtils$Result;
+	public static final fun instantiate (Ljava/lang/Class;Z)Lorg/polyfrost/oneconfig/utils/MHUtils$Result;
+	public static final fun instantiate (Ljava/lang/Class;[Ljava/lang/Object;)Lorg/polyfrost/oneconfig/utils/MHUtils$Result;
+	public static final fun invoke (Ljava/lang/Object;Ljava/lang/String;Ljava/lang/Class;[Ljava/lang/Object;)Lorg/polyfrost/oneconfig/utils/MHUtils$Result;
+	public static final fun invokeCatching (Ljava/lang/invoke/MethodHandle;[Ljava/lang/Object;)Lorg/polyfrost/oneconfig/utils/MHUtils$Result;
+	public static final fun invokeExactCatching (Ljava/lang/invoke/MethodHandle;[Ljava/lang/Object;)Lorg/polyfrost/oneconfig/utils/MHUtils$Result;
+	public static final fun invokeStatic (Ljava/lang/Class;Ljava/lang/String;Ljava/lang/Class;[Ljava/lang/Object;)Lorg/polyfrost/oneconfig/utils/MHUtils$Result;
+	public static final fun setField (Ljava/lang/Object;Ljava/lang/String;Ljava/lang/Object;)Lorg/polyfrost/oneconfig/utils/MHUtils$Result;
+	public static final fun setStaticField (Ljava/lang/Class;Ljava/lang/String;Ljava/lang/Object;)Lorg/polyfrost/oneconfig/utils/MHUtils$Result;
+}
+
+public final class org/polyfrost/oneconfig/utils/MHUtils$Result {
+	public static final field Companion Lorg/polyfrost/oneconfig/utils/MHUtils$Result$Companion;
+	public fun <init> (Ljava/lang/Object;)V
+	public static final fun failure (Ljava/lang/Throwable;)Lorg/polyfrost/oneconfig/utils/MHUtils$Result;
+	public final fun getOrElse (Ljava/lang/Object;)Ljava/lang/Object;
+	public final fun getOrNull ()Ljava/lang/Object;
+	public final fun getOrThrow ()Ljava/lang/Object;
+	public final fun getValue ()Ljava/lang/Object;
+	public final fun isFailure ()Z
+	public final fun isSuccess ()Z
+	public static final fun success (Ljava/lang/Object;)Lorg/polyfrost/oneconfig/utils/MHUtils$Result;
+}
+
+public final class org/polyfrost/oneconfig/utils/MHUtils$Result$Companion {
+	public final fun failure (Ljava/lang/Throwable;)Lorg/polyfrost/oneconfig/utils/MHUtils$Result;
+	public final fun success (Ljava/lang/Object;)Lorg/polyfrost/oneconfig/utils/MHUtils$Result;
+}
+
+public final class org/polyfrost/oneconfig/utils/MHUtils$Result$Failure {
+	public fun <init> (Ljava/lang/Throwable;)V
+	public final fun getT ()Ljava/lang/Throwable;
 }
 
 public class org/polyfrost/oneconfig/utils/Multithreading {

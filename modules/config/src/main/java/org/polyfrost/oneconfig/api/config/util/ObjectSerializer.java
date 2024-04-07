@@ -28,8 +28,8 @@ package org.polyfrost.oneconfig.api.config.util;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
-import org.polyfrost.oneconfig.api.config.adapter.Adapter;
-import org.polyfrost.oneconfig.api.config.adapter.impl.ColorAdapter;
+import org.polyfrost.oneconfig.api.config.serialize.adapter.Adapter;
+import org.polyfrost.oneconfig.api.config.serialize.adapter.impl.ColorAdapter;
 import org.polyfrost.oneconfig.api.config.exceptions.SerializationException;
 import org.polyfrost.oneconfig.utils.MHUtils;
 
@@ -130,7 +130,7 @@ public class ObjectSerializer {
         // check 2: box up Enums and return those
         if (cls.isEnum()) {
             Map<String, Object> enumMap = new HashMap<>(2, 1f);
-            enumMap.put("classType", cls.getName());
+            enumMap.put("class", cls.getName());
             enumMap.put("value", ((Enum<?>) in).name());
             return enumMap;
         }
@@ -182,16 +182,16 @@ public class ObjectSerializer {
             if (!isMap) {
                 outMap.put("value", out);
             } else {
-                if (outMap.get("classType") != null) throw new IllegalArgumentException("Failed to serialize " + out + ": 'classType' is a reserved key!");
+                if (outMap.get("class") != null) throw new IllegalArgumentException("Failed to serialize " + out + ": 'class' is a reserved key!");
                 if (outMap.get("value") != null) throw new IllegalArgumentException("Failed to serialize " + out + ": 'value' is a reserved key!");
             }
-            outMap.put("classType", cls.getName());
+            outMap.put("class", cls.getName());
             return outMap;
         }
 
         // we have a complex type with no adapter, amazing.
         Map<String, Object> cfg = new HashMap<>();
-        cfg.put("classType", cls.getName());
+        cfg.put("class", cls.getName());
         _serialize(cls, in, cfg, useLists);
         return cfg;
     }
@@ -257,9 +257,7 @@ public class ObjectSerializer {
                 continue;
             }
             try {
-                // asm: never null
-                @SuppressWarnings("DataFlowIssue")
-                Object o = MHUtils.getFieldGetter(f, value).invoke();
+                Object o = MHUtils.getFieldGetter(f, value).getOrThrow().invoke();
                 // skip self references
                 if (o == value) continue;
                 if (o == null) continue;
@@ -277,7 +275,7 @@ public class ObjectSerializer {
     }
 
     /**
-     * Deserialize the given complex object map. The map must contain the classType field.
+     * Deserialize the given complex object map. The map must contain the class field.
      *
      * @param in the map
      * @return the completed object
@@ -285,11 +283,11 @@ public class ObjectSerializer {
 
     public Object deserialize(Map<String, Object> in) {
         if (in == null) return null;
-        String clsName = (String) in.get("classType");
+        String clsName = (String) in.get("class");
         if (clsName == null) {
             System.err.println("Offending map: " + in);
             stderrMap(in);
-            throw new SerializationException("Cannot deserialize object: missing classType field (internal error)!");
+            throw new SerializationException("Cannot deserialize object: missing class field (internal error)!");
         }
         Class<?> cls;
         try {
@@ -315,16 +313,16 @@ public class ObjectSerializer {
         if (cls.isArray()) {
             throw new SerializationException("Failed to deserialize object: Cannot deserialize into an array type " + cls.getName());
         }
-        Object o = MHUtils.instantiate(cls, true);
+        Object o = MHUtils.instantiate(cls, true).getOrNull();
         if (o == null) {
             throw new SerializationException("Failed to deserialize object: Failed to instantiate " + cls.getName());
         }
         for (Map.Entry<String, Object> e : in.entrySet()) {
-            if (e.getKey().equals("classType")) continue;
+            if (e.getKey().equals("class")) continue;
             try {
                 Field f = getDeclaredField(o.getClass(), e.getKey());
                 if (f == null) continue;
-                MethodHandle setter = MHUtils.getFieldSetter(f, o);
+                MethodHandle setter = MHUtils.getFieldSetter(f, o).getOrNull();
                 if (setter == null) continue;
                 if (f.getType().isEnum()) {
                     setter.invoke(Enum.valueOf((Class) f.getType(), (String) e.getValue()));
@@ -415,7 +413,7 @@ public class ObjectSerializer {
 
     public static boolean isSimpleClass(Class<?> c) {
         if (c == null) return true;
-        return Number.class.isAssignableFrom(c) || CharSequence.class.isAssignableFrom(c) || c == Boolean.class;
+        return Number.class.isAssignableFrom(c) || CharSequence.class.isAssignableFrom(c) || c == Boolean.class || c == Character.class;
     }
 
     /**

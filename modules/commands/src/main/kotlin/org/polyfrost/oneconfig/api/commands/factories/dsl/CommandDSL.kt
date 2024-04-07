@@ -60,7 +60,7 @@ class CommandDSL @JvmOverloads constructor(private val parsers: Map<Class<*>, Ar
         // asm: kotlin compiler produces two methods: public synthetic bridge invoke(Object): Object
         // public final invoke(Object...): Object which is what we want
         val method = func.javaClass.declaredMethods[1]
-        val m = MHUtils.getMethodHandle(method, func) ?: throw IllegalArgumentException("Could not get method handle for $method")
+        val m = MHUtils.getMethodHandle(method, func).getOrThrow()
         tree.put(
             Executable(
                 aliases,

@@ -19,10 +19,7 @@ import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.AlignDefault
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.unit.seconds
-import org.polyfrost.polyui.utils.LinkedList
-import org.polyfrost.polyui.utils.image
-import org.polyfrost.polyui.utils.radii
-import org.polyfrost.polyui.utils.rgba
+import org.polyfrost.polyui.utils.*
 import kotlin.math.PI
 import kotlin.system.exitProcess
 
@@ -76,7 +73,9 @@ object HudManager {
                     alignment = Align(main = Align.Main.SpaceBetween, padding = Vec2.ZERO),
                     size = Vec2(468f, 32f),
                 ),
-                Text("oneconfig.hudeditor.title", fontSize = 24f, font = PolyUI.defaultFonts.medium),
+                Text("oneconfig.hudeditor.title", fontSize = 24f, font = PolyUI.defaultFonts.medium).onClick {
+                    ColorPicker(rgba(32, 53, 41).toAnimatable().ref(), mutableListOf(), mutableListOf(), polyUI)
+                },
                 hudsPage,
             ),
             alignment = Align(cross = Align.Cross.Start, padding = Vec2(24f, 17f)),
@@ -93,15 +92,15 @@ object HudManager {
                             PolyColor.Gradient(
                                 rgba(100, 100, 100, 0.4f),
                                 TRANSPARENT,
-                                type = PolyColor.Gradient.Type.LeftToRight
+                                type = PolyColor.Gradient.Type.LeftToRight,
                             ),
                             PolyColor.Gradient(
                                 rgba(100, 100, 100, 0.3f),
                                 TRANSPARENT,
-                                type = PolyColor.Gradient.Type.LeftToRight
+                                type = PolyColor.Gradient.Type.LeftToRight,
                             ),
                             TRANSPARENT,
-                        )
+                        ),
                     ).events {
                         Event.Mouse.Entered then {
                             Fade(this[0], 1f, false, Animations.EaseInOutQuad.create(0.08.seconds)).add()
@@ -118,7 +117,8 @@ object HudManager {
                                 true
                             }
                         }
-                    }, reposition = false
+                    },
+                    reposition = false,
                 )
             }
         }
@@ -154,7 +154,7 @@ object HudManager {
                 alignment = align,
                 color = bg,
                 radii = bgRadii,
-                children = huds.map { it.build() }.toTypedArray()
+                children = huds.map { it.build() }.toTypedArray(),
             ).draggable(
                 onStart = {
                     if (open) toggle()
@@ -169,8 +169,8 @@ object HudManager {
                     if (canAutoOpen()) {
                         if (!open) toggle()
                     }
-                }
-            )
+                },
+            ),
         )
     }
 
@@ -206,7 +206,7 @@ object HudManager {
         }
         if (pg.parent == null) {
             polyUI.master.addChild(
-                pg, reposition = false
+                pg, reposition = false,
             )
         } else {
             pg.prioritize()

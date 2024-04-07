@@ -1,40 +1,67 @@
+public class org/polyfrost/oneconfig/api/config/DummyProperty : org/polyfrost/oneconfig/api/config/Property {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public fun addCallback (Ljava/util/Collection;)Lorg/polyfrost/oneconfig/api/config/Property;
+	public fun addCallback (Ljava/util/function/Consumer;)Lorg/polyfrost/oneconfig/api/config/Property;
+	public static fun dummy (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/DummyProperty;
+	public static fun dummy (Ljava/lang/String;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/DummyProperty;
+	public static fun dummy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/DummyProperty;
+	public synthetic fun get ()Ljava/lang/Object;
+	public fun get ()Ljava/lang/Void;
+	public fun getAs ()Ljava/lang/Object;
+	public fun isArray ()Z
+	public fun isPrimitiveArray ()Z
+	public fun removeCallback (Ljava/util/function/Consumer;)V
+	public synthetic fun set (Ljava/lang/Object;)V
+	public fun set (Ljava/lang/Void;)V
+	public fun setAs (Ljava/lang/Object;)V
+}
+
 public abstract class org/polyfrost/oneconfig/api/config/Node {
-	protected final field id Ljava/lang/String;
-	public fun <init> (Ljava/lang/String;)V
+	public field description Ljava/lang/String;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
 	public final fun addMetadata (Ljava/lang/String;Ljava/lang/Object;)V
 	public final fun addMetadata (Ljava/util/Map;)V
 	public abstract fun deepEquals (Ljava/lang/Object;)Z
-	public final fun getID ()Ljava/lang/String;
+	public fun getID ()Ljava/lang/String;
 	public final fun getMetadata ()Ljava/util/Map;
 	public final fun getMetadata (Ljava/lang/String;)Ljava/lang/Object;
+	public fun getTitle ()Ljava/lang/String;
 	public final fun hasMetadata ()Z
 	public final fun hashCode ()I
+	public abstract fun overwrite (Lorg/polyfrost/oneconfig/api/config/Node;)V
 	public final fun removeMetadata (Ljava/lang/String;)Z
+	public fun setID (Ljava/lang/String;)V
+	public fun setTitle (Ljava/lang/String;)V
+	public static fun strv (Ljava/lang/String;)Ljava/lang/String;
 }
 
 public class org/polyfrost/oneconfig/api/config/Property : org/polyfrost/oneconfig/api/config/Node, java/io/Serializable {
-	public final field synthetic Z
 	public final field type Ljava/lang/Class;
 	public fun <init> (Ljava/lang/Object;)V
-	public fun <init> (Ljava/lang/String;Ljava/lang/Object;)V
-	public fun <init> (Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Class;)V
-	public fun <init> (Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Class;Z)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Object;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Class;)V
+	public fun addCallback (Ljava/util/Collection;)Lorg/polyfrost/oneconfig/api/config/Property;
 	public fun addCallback (Ljava/util/function/Consumer;)Lorg/polyfrost/oneconfig/api/config/Property;
 	public final fun addCallback ([Ljava/util/function/Consumer;)Lorg/polyfrost/oneconfig/api/config/Property;
-	public fun addDisplayCondition (Ljava/util/function/BooleanSupplier;)V
-	public final fun addDisplayCondition ([Ljava/util/function/BooleanSupplier;)V
+	public final fun addDisplayCondition (Ljava/util/Collection;)Lorg/polyfrost/oneconfig/api/config/Property;
+	public final fun addDisplayCondition (Ljava/util/function/BooleanSupplier;)Lorg/polyfrost/oneconfig/api/config/Property;
+	public final fun addDisplayCondition ([Ljava/util/function/BooleanSupplier;)Lorg/polyfrost/oneconfig/api/config/Property;
 	public fun canDisplay ()Z
 	public fun deepEquals (Ljava/lang/Object;)Z
 	public fun equals (Ljava/lang/Object;)Z
+	protected fun evaluateDisplay ()V
 	public fun get ()Ljava/lang/Object;
 	public fun getAs ()Ljava/lang/Object;
 	public fun isArray ()Z
 	public fun isPrimitiveArray ()Z
-	public static fun prop (Ljava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/Property;
+	protected final fun nconvert (Ljava/lang/Object;)Ljava/lang/Object;
+	public fun overwrite (Lorg/polyfrost/oneconfig/api/config/Node;)V
 	public static fun prop (Ljava/lang/String;Ljava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/Property;
-	public static fun prop (Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Class;)Lorg/polyfrost/oneconfig/api/config/Property;
+	public static fun prop (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/Property;
+	public static fun prop (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Class;)Lorg/polyfrost/oneconfig/api/config/Property;
+	public static fun recast (Lorg/polyfrost/oneconfig/api/config/Property;)Lorg/polyfrost/oneconfig/api/config/Property;
 	public fun removeCallback (Ljava/util/function/Consumer;)V
-	public fun removeDisplayCondition (Ljava/util/function/BooleanSupplier;)V
+	public final fun removeDisplayCondition (Ljava/util/function/BooleanSupplier;)V
 	public fun set (Ljava/lang/Object;)V
 	public fun setAs (Ljava/lang/Object;)V
 	public fun toString ()Ljava/lang/String;
@@ -43,61 +70,44 @@ public class org/polyfrost/oneconfig/api/config/Property : org/polyfrost/oneconf
 public class org/polyfrost/oneconfig/api/config/Tree : org/polyfrost/oneconfig/api/config/Node, java/io/Serializable {
 	public static final field LOGGER Lorg/slf4j/Logger;
 	public final field map Ljava/util/Map;
-	public fun <init> (Ljava/lang/String;Ljava/util/Map;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;)V
 	public fun deepEquals (Ljava/lang/Object;)Z
 	public fun equals (Ljava/lang/Object;)Z
 	public fun get (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/Node;
 	public fun get ([Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/Node;
+	public fun getChild (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/Tree;
 	public fun getChild ([Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/Tree;
-	public fun getProperty ([Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/Property;
-	public fun merge (Lorg/polyfrost/oneconfig/api/config/Tree;ZZ)V
+	public fun getProp (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/Property;
+	public fun getProp ([Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/Property;
+	public fun isLocked ()Z
+	public fun lock ()V
 	public fun onAll (Ljava/util/function/BiConsumer;)V
-	public fun onAllProperties (Ljava/util/function/BiConsumer;)V
+	public fun onAllProps (Ljava/util/function/BiConsumer;)V
+	public fun overwrite (Lorg/polyfrost/oneconfig/api/config/Node;)V
 	public fun put (Lorg/polyfrost/oneconfig/api/config/Node;)Lorg/polyfrost/oneconfig/api/config/Tree;
 	public fun put ([Lorg/polyfrost/oneconfig/api/config/Node;)Lorg/polyfrost/oneconfig/api/config/Tree;
 	public fun toString ()Ljava/lang/String;
+	public static fun tree ()Lorg/polyfrost/oneconfig/api/config/Tree;
 	public static fun tree (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/Tree;
 	public static fun tree (Lorg/polyfrost/oneconfig/api/config/Tree;)Lorg/polyfrost/oneconfig/api/config/Tree;
 }
 
-public abstract class org/polyfrost/oneconfig/api/config/adapter/Adapter {
-	public fun <init> ()V
-	public abstract fun deserialize (Ljava/lang/Object;)Ljava/lang/Object;
-	public final fun equals (Ljava/lang/Object;)Z
-	public abstract fun getTargetClass ()Ljava/lang/Class;
-	public abstract fun serialize (Ljava/lang/Object;)Ljava/lang/Object;
-}
-
-public class org/polyfrost/oneconfig/api/config/adapter/impl/ColorAdapter : org/polyfrost/oneconfig/api/config/adapter/Adapter {
-	public fun <init> ()V
-	public synthetic fun deserialize (Ljava/lang/Object;)Ljava/lang/Object;
-	public fun deserialize (Ljava/util/List;)Ljava/awt/Color;
-	public fun getTargetClass ()Ljava/lang/Class;
-	public fun serialize (Ljava/awt/Color;)Ljava/util/List;
-	public synthetic fun serialize (Ljava/lang/Object;)Ljava/lang/Object;
-}
-
-public abstract interface class org/polyfrost/oneconfig/api/config/backend/Backend {
+public abstract class org/polyfrost/oneconfig/api/config/backend/Backend {
 	public static final field LOGGER Lorg/slf4j/Logger;
-	public abstract fun addSerializers ([Lorg/polyfrost/oneconfig/api/config/backend/Serializer;)Lorg/polyfrost/oneconfig/api/config/backend/Backend;
-	public abstract fun exists (Ljava/lang/String;)Z
-	public fun exists (Lorg/polyfrost/oneconfig/api/config/Tree;)Z
-	public abstract fun get (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/Tree;
-	public abstract fun getTrees ()Ljava/util/Collection;
-	public abstract fun put (Lorg/polyfrost/oneconfig/api/config/Tree;)V
-	public abstract fun refresh ()V
-	public abstract fun remove (Ljava/lang/String;)Z
-	public fun remove (Lorg/polyfrost/oneconfig/api/config/Tree;)Z
+	public fun <init> ()V
+	public fun exists (Ljava/lang/String;)Z
+	public fun get (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/Tree;
+	public fun getTrees ()Ljava/util/Collection;
+	public final fun load (Lorg/polyfrost/oneconfig/api/config/Tree;)Z
+	protected abstract fun load0 (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/Tree;
+	protected fun requestUpdate (Ljava/lang/String;)V
+	public final fun save (Ljava/lang/String;)Z
+	public final fun save (Lorg/polyfrost/oneconfig/api/config/Tree;)Z
+	protected abstract fun save0 (Lorg/polyfrost/oneconfig/api/config/Tree;)Z
 }
 
-public abstract interface class org/polyfrost/oneconfig/api/config/backend/Serializer {
-	public abstract fun deserialize (Ljava/lang/String;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/Tree;
-	public abstract fun serialize (Lorg/polyfrost/oneconfig/api/config/Tree;)Ljava/lang/String;
-}
-
-public abstract interface class org/polyfrost/oneconfig/api/config/collector/PropertyCollector {
-	public fun collect (Ljava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/Tree;
-	public abstract fun collect (Ljava/lang/String;Ljava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/Tree;
+public abstract interface class org/polyfrost/oneconfig/api/config/collect/PropertyCollector {
+	public abstract fun collect (Ljava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/Tree;
 }
 
 public class org/polyfrost/oneconfig/api/config/exceptions/SerializationException : java/lang/RuntimeException {
@@ -105,8 +115,27 @@ public class org/polyfrost/oneconfig/api/config/exceptions/SerializationExceptio
 	public fun <init> (Ljava/lang/String;Ljava/lang/Throwable;)V
 }
 
-public abstract interface class org/polyfrost/oneconfig/api/config/frontend/Visualizer {
-	public abstract fun display (Lorg/polyfrost/oneconfig/api/config/Tree;)Z
+public abstract interface class org/polyfrost/oneconfig/api/config/serialize/Serializer {
+	public abstract fun deserialize (Ljava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/Tree;
+	public abstract fun serialize (Lorg/polyfrost/oneconfig/api/config/Tree;)Ljava/lang/Object;
+}
+
+public abstract class org/polyfrost/oneconfig/api/config/serialize/adapter/Adapter {
+	public fun <init> ()V
+	public abstract fun deserialize (Ljava/lang/Object;)Ljava/lang/Object;
+	public final fun equals (Ljava/lang/Object;)Z
+	public abstract fun getTargetClass ()Ljava/lang/Class;
+	public final fun hashCode ()I
+	public abstract fun serialize (Ljava/lang/Object;)Ljava/lang/Object;
+}
+
+public class org/polyfrost/oneconfig/api/config/serialize/adapter/impl/ColorAdapter : org/polyfrost/oneconfig/api/config/serialize/adapter/Adapter {
+	public fun <init> ()V
+	public synthetic fun deserialize (Ljava/lang/Object;)Ljava/lang/Object;
+	public fun deserialize ([I)Ljava/awt/Color;
+	public fun getTargetClass ()Ljava/lang/Class;
+	public fun serialize (Ljava/awt/Color;)[I
+	public synthetic fun serialize (Ljava/lang/Object;)Ljava/lang/Object;
 }
 
 public class org/polyfrost/oneconfig/api/config/util/ObjectSerializer {
@@ -122,12 +151,12 @@ public class org/polyfrost/oneconfig/api/config/util/ObjectSerializer {
 	public static fun isPrimitiveWrapper (Ljava/lang/Object;)Z
 	public static fun isSimpleClass (Ljava/lang/Class;)Z
 	public static fun isSimpleObject (Ljava/lang/Object;)Z
-	public fun registerTypeAdapter (Lorg/polyfrost/oneconfig/api/config/adapter/Adapter;)V
-	public fun registerTypeAdapter ([Lorg/polyfrost/oneconfig/api/config/adapter/Adapter;)V
+	public fun registerTypeAdapter (Lorg/polyfrost/oneconfig/api/config/serialize/adapter/Adapter;)V
+	public fun registerTypeAdapter ([Lorg/polyfrost/oneconfig/api/config/serialize/adapter/Adapter;)V
 	public fun serialize (Ljava/lang/Object;Z)Ljava/lang/Object;
 	public static fun stderrMap (Ljava/util/Map;)V
 	public static fun unbox (Ljava/lang/Object;Ljava/lang/Class;)Ljava/lang/Object;
-	public fun unregisterTypeAdapter (Lorg/polyfrost/oneconfig/api/config/adapter/Adapter;)V
+	public fun unregisterTypeAdapter (Lorg/polyfrost/oneconfig/api/config/serialize/adapter/Adapter;)V
 }
 
 public class org/polyfrost/oneconfig/api/config/util/Pair {

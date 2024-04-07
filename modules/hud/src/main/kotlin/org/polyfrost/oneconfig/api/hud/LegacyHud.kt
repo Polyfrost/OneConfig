@@ -1,6 +1,7 @@
 package org.polyfrost.oneconfig.api.hud
 
 import org.jetbrains.annotations.ApiStatus
+import org.polyfrost.oneconfig.libs.universal.UMatrixStack
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.component.namedId
@@ -24,8 +25,7 @@ abstract class LegacyHud : Hud<Drawable>() {
 
     override fun create() = createLegacy()
 
-    abstract fun render(/*todo stack: UMatrixStack, */ x: Float, y: Float)
-
+    abstract fun render(stack: UMatrixStack, x: Float, y: Float)
 
     /**
      * Wraps the [render] method in a [Drawable] instance, with the [Drawable.size] property delegating to [width] and [height].
@@ -48,7 +48,7 @@ abstract class LegacyHud : Hud<Drawable>() {
             override fun preRender() {}
 
             override fun render() {
-                render(x, y)
+                render(UMatrixStack.Compat.get(), x, y)
             }
 
             override fun postRender() {}

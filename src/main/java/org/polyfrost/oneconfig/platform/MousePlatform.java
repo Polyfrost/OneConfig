@@ -31,12 +31,6 @@ public interface MousePlatform {
 
     double getMouseY();
 
-    double getDWheel();
-
-    double getMouseDX();
-
-    double getMouseDY();
-
     int getButtonState(int button);
 
     boolean isButtonDown(int button);

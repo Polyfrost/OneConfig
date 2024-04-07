@@ -41,15 +41,10 @@ import java.util.function.Function;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class MHUtilsTest {
-    private static final MethodHandle STATIC_MH = MHUtils.getStaticMethodHandle(String.class, "valueOf", String.class, char[].class, int.class, int.class);
-    private static final MethodHandle INSTANCE_MH = MHUtils.getMethodHandle(String.class, "substring", String.class, int.class, int.class);
-    private static final MethodHandle CTOR = MHUtils.getConstructorHandle(String.class, char[].class);
+    private static final MethodHandle STATIC_MH = MHUtils.getStaticMethodHandle(String.class, "valueOf", String.class, char[].class, int.class, int.class).getOrThrow();
+    private static final MethodHandle INSTANCE_MH = MHUtils.getMethodHandle(String.class, "substring", String.class, int.class, int.class).getOrThrow();
+    private static final MethodHandle CTOR = MHUtils.getConstructorHandle(String.class, char[].class).getOrThrow();
 
-    static {
-        assertNotNull(STATIC_MH);
-        assertNotNull(INSTANCE_MH);
-        assertNotNull(CTOR);
-    }
 
     @Test
     void works() {
@@ -75,8 +70,7 @@ public class MHUtilsTest {
     void annotationThingWorks() {
         try {
             Deprecated d = this.getClass().getDeclaredMethod("annotationThingWorks").getAnnotation(Deprecated.class);
-            Map<String, Object> m = MHUtils.getAnnotationValues(d);
-            assertNotNull(m);
+            Map<String, Object> m = MHUtils.getAnnotationValues(d).getOrThrow();
             assertEquals("test", m.get("message"));
             assertEquals(DeprecationLevel.HIDDEN, m.get("level"));
             ReplaceWith r = (ReplaceWith) m.get("replaceWith");
@@ -89,8 +83,7 @@ public class MHUtilsTest {
 
     @Test
     void wrapWorks() {
-        Function<Integer, String> f2 = MHUtils.getFunctionHandle(String.class, "valueOf", String.class, int.class);
-        assertNotNull(f2);
+        Function<Integer, String> f2 = MHUtils.getFunctionHandle(String.class, "valueOf", String.class, int.class).getOrThrow();
         assertEquals("123", f2.apply(123));
     }
 
@@ -98,24 +91,20 @@ public class MHUtilsTest {
     void unreflectWorks() {
         try {
             Method m = String.class.getDeclaredMethod("substring", int.class, int.class);
-            MethodHandle mh = MHUtils.getMethodHandle(m, "hello, world");
-            assertNotNull(mh);
+            MethodHandle mh = MHUtils.getMethodHandle(m, "hello, world").getOrThrow();
             assertEquals(mh.invoke(0, 5), "hello");
 
             String s = "abc123";
             Field f = String.class.getDeclaredField("value");
-            MethodHandle getter = MHUtils.getFieldGetter(f, s);
-            assertNotNull(getter);
+            MethodHandle getter = MHUtils.getFieldGetter(f, s).getOrThrow();
             assertArrayEquals((char[]) getter.invoke(), "abc123".toCharArray());
 
-            MethodHandle setter = MHUtils.getFieldSetter(f, s);
-            assertNotNull(setter);
+            MethodHandle setter = MHUtils.getFieldSetter(f, s).getOrThrow();
             setter.invoke("p2".toCharArray());
             assertArrayEquals(new char[]{'p', '2'}, (char[]) getter.invoke());
 
             Constructor<String> ctor = String.class.getDeclaredConstructor(char[].class);
-            MethodHandle ctorHandle = MHUtils.getConstructorHandle(ctor);
-            assertNotNull(ctorHandle);
+            MethodHandle ctorHandle = MHUtils.getConstructorHandle(ctor).getOrThrow();
             assertEquals(ctorHandle.invoke("abc1234".toCharArray()), "abc1234");
 
         } catch (Throwable e) {

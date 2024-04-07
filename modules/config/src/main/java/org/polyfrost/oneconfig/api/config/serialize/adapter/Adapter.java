@@ -24,7 +24,7 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.api.config.adapter;
+package org.polyfrost.oneconfig.api.config.serialize.adapter;
 
 import org.polyfrost.oneconfig.api.config.util.ObjectSerializer;
 
@@ -57,8 +57,9 @@ public abstract class Adapter<Type, Output> {
      *     <li>Primitive wrappers (any {@link Number}, {@link Character}, {@link Boolean})</li>
      *     <li>A {@link String} literal or any class implementing {@link CharSequence}</li>
      *     <li>An {@link Enum}</li>
+     *     <li>An array of the above types, including primitives (e.g. {@code byte[]}, {@code int[]}..)</li>
      *     <li>A {@link List} of the above types</li>
-     *     <li>A {@link Map}{@code <String, Object>} of the above types, mapped to Strings, which are used as keys. <br>Note that 'classType' and 'value' are reserved keys and cannot be used.</li>
+     *     <li>A {@link Map}{@code <}{@link String}{@code , }{@link Object}{@code >} of the above types, mapped to Strings, which are used as keys. <br>Note that 'class' and 'value' are reserved keys and cannot be used.</li>
      *     <li>Lists containing lists or maps containing maps (or lists) are also supported.</li>
      * </ul>
      *
@@ -72,10 +73,16 @@ public abstract class Adapter<Type, Output> {
      */
     public abstract Class<Type> getTargetClass();
 
+    @Override
     public final boolean equals(Object obj) {
         if (obj instanceof Adapter<?, ?>) {
             return ((Adapter<?, ?>) obj).getTargetClass() == this.getTargetClass();
         }
         return false;
+    }
+
+    @Override
+    public final int hashCode() {
+        return getTargetClass().hashCode();
     }
 }

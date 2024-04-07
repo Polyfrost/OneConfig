@@ -29,7 +29,7 @@ package org.polyfrost.oneconfig.api.hud.collector;
 import org.jetbrains.annotations.NotNull;
 import org.polyfrost.oneconfig.api.config.Property;
 import org.polyfrost.oneconfig.api.config.Tree;
-import org.polyfrost.oneconfig.api.config.collector.impl.OneConfigCollector;
+import org.polyfrost.oneconfig.api.config.collect.impl.OneConfigCollector;
 import org.polyfrost.oneconfig.api.hud.annotations.CustomComponent;
 import org.polyfrost.oneconfig.api.hud.annotations.HudComponent;
 import org.polyfrost.oneconfig.utils.MHUtils;
@@ -52,7 +52,7 @@ public class ReflectiveHudCollector extends OneConfigCollector {
             if (!Drawable.class.isAssignableFrom(f.getType())) {
                 throw new IllegalArgumentException("@HudComponent " + f.getName() + " must be of type Component");
             }
-            Property<?> p = prop(f.getName(), f.get(src));
+            Property<?> p = prop(f.getName(), null, f.get(src));
             p.addMetadata("annotation", c);
             p.addMetadata("isHud", "");
             tree.put(p);
@@ -75,8 +75,8 @@ public class ReflectiveHudCollector extends OneConfigCollector {
         }
         if (!ps[7].getType().equals(double.class)) throw new IllegalArgumentException("CustomComponent method " + m.getName() + " must have last parameter of type double");
 
-        Property<?> p = new Property<>(m.getName(), m, Method.class, true);
-        MethodHandle methodHandle = MHUtils.getMethodHandle(m, src);
+        Property<?> p = new Property<>(m.getName(), m.getName(), null, m, Method.class);
+        MethodHandle methodHandle = MHUtils.getMethodHandle(m, src).getOrThrow();
         p.addMetadata("annotation", c);
         p.addMetadata("render", methodHandle);
         tree.put(p);

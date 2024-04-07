@@ -45,16 +45,18 @@ import org.polyfrost.oneconfig.api.config.Tree;
 import org.polyfrost.oneconfig.api.config.backend.impl.file.FileSerializer;
 import org.polyfrost.oneconfig.api.config.util.ObjectSerializer;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
-public class NightConfigSerializer implements FileSerializer {
-    public static final FileSerializer TOML = new NightConfigSerializer(new TomlWriter(), new TomlParser(), ".toml");       // 90 KB
-    public static final FileSerializer JSON = new NightConfigSerializer(JsonFormat.fancyInstance().createWriter(), JsonFormat.fancyInstance().createParser(), ".json");  // 55KB
+import static org.polyfrost.oneconfig.api.config.Property.prop;
+import static org.polyfrost.oneconfig.api.config.Tree.tree;
+
+public class NightConfigSerializer implements FileSerializer<String> {
+    public static final FileSerializer<String> TOML = new NightConfigSerializer(new TomlWriter(), new TomlParser(), ".toml");       // 90 KB
+    public static final FileSerializer<String> JSON = new NightConfigSerializer(JsonFormat.fancyInstance().createWriter(), JsonFormat.fancyInstance().createParser(), ".json");  // 55KB
     // public static final FileSerializer HOCON = new NightConfigSerializer(new HoconWriter(), new HoconParser(), ".hocon");        // 1.1MB
-    public static final FileSerializer YAML = new NightConfigSerializer(new YamlWriter(), new YamlParser(YamlFormat.defaultInstance()), ".yaml");       // 1.2MB
-    public static final FileSerializer[] ALL = {TOML, JSON, YAML};
+    public static final FileSerializer<String> YAML = new NightConfigSerializer(new YamlWriter(), new YamlParser(YamlFormat.defaultInstance()), ".yaml");       // 1.2MB
+    public static final FileSerializer<?>[] ALL = {TOML, JSON, YAML};
 
     final ConfigWriter writer;
     final ConfigParser<?> reader;
@@ -66,20 +68,70 @@ public class NightConfigSerializer implements FileSerializer {
         this.format = format;
     }
 
+    @Override
+    public String getExtension() {
+        return format;
+    }
 
     @Override
     public @NotNull String serialize(@NotNull Tree c) {
         Config cfg = Config.inMemory();
-        add(c, cfg);
+        write(c, cfg);
         return writer.writeToString(cfg);
     }
 
     @SuppressWarnings("unchecked")
-    private static Config mapToConfig(Map<String, Object> map) {
+    private static void write(Tree c, Config cfg) {
+        for (Map.Entry<String, Node> e : c.map.entrySet()) {
+            Node n = e.getValue();
+            if (n instanceof Property<?>) {
+                Property<?> p = (Property<?>) n;
+                // dummy
+                if (p.type == Void.class) continue;
+                Object o = p.get();
+                if (o == null) continue;
+                if (!ObjectSerializer.isSimpleObject(o)) {
+                    Object out = ObjectSerializer.INSTANCE.serialize(o, true);
+                    if (out instanceof Map) cfg.add(n.getID(), mapsToConfigs((Map<String, Object>) out));
+                    else cfg.add(n.getID(), out);
+                } else cfg.add(n.getID(), o);
+            } else {
+                Tree in = (Tree) n;
+                Config child = new BackedConfig(new HashMap<>(in.map.size(), 1f));
+                write(in, child);
+                cfg.add(n.getID(), child);
+            }
+        }
+    }
+
+    @Override
+    public @NotNull Tree deserialize(@NotNull String src) {
+        if (src.isEmpty()) throw new IllegalArgumentException("cannot deserialize empty string");
+        Config cfg = reader.parse(src);
+        return read(cfg.valueMap(), tree());
+    }
+
+    private static Tree read(Map<String, Object> cfg, Tree b) {
+        for (Map.Entry<String, Object> e : cfg.entrySet()) {
+            if (e.getValue() instanceof Config) {
+                Config c = (Config) e.getValue();
+                if (c.get("class") != null) {
+                    b.put(prop(e.getKey(), null, ObjectSerializer.INSTANCE.deserialize(((Config) e.getValue()).valueMap())));
+                } else b.put(read(c.valueMap(), tree(e.getKey())));
+            } else {
+                Object v = e.getValue();
+                b.put(prop(e.getKey(), null, v));
+            }
+        }
+        return b;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Config mapsToConfigs(Map<String, Object> map) {
         Config c = new BackedConfig(map);
         for (Map.Entry<String, Object> e : map.entrySet()) {
             if (e.getValue() instanceof Map) {
-                Config cc = mapToConfig((Map<String, Object>) e.getValue());
+                Config cc = mapsToConfigs((Map<String, Object>) e.getValue());
                 c.set(e.getKey(), cc);
             } else {
                 c.add(e.getKey(), e.getValue());
@@ -88,56 +140,7 @@ public class NightConfigSerializer implements FileSerializer {
         return c;
     }
 
-    @Override
-    public boolean supports(File file) {
-        return file.getName().endsWith(format);
-    }
-
-    @SuppressWarnings("unchecked")
-    protected static void add(Tree c, Config cfg) {
-        for (Map.Entry<String, Node> e : c.map.entrySet()) {
-            Node n = e.getValue();
-            if (n instanceof Property<?>) {
-                Property<?> p = (Property<?>) n;
-                if (p.synthetic) continue;
-                Object o = p.get();
-                if (o == null) continue;
-                if (!ObjectSerializer.isSimpleObject(o)) {
-                    Object out = ObjectSerializer.INSTANCE.serialize(o, true);
-                    if (out instanceof Map) cfg.add(n.getID(), mapToConfig((Map<String, Object>) out));
-                    else cfg.add(n.getID(), out);
-                } else cfg.add(n.getID(), o);
-            } else {
-                Tree in = (Tree) n;
-                Config child = new BackedConfig(new HashMap<>(in.map.size(), 1f));
-                add(in, child);
-                cfg.add(n.getID(), child);
-            }
-        }
-    }
-
-    @Override
-    public @NotNull Tree deserialize(@NotNull String id, @NotNull String src) {
-        Config cfg = reader.parse(src);
-        return read(cfg.valueMap(), Tree.tree(id));
-    }
-
-    protected static Tree read(Map<String, Object> cfg, Tree b) {
-        for (Map.Entry<String, Object> e : cfg.entrySet()) {
-            if (e.getValue() instanceof Config) {
-                Config c = (Config) e.getValue();
-                if (c.get("classType") != null) {
-                    b.put(Property.prop(e.getKey(), ObjectSerializer.INSTANCE.deserialize(((Config) e.getValue()).valueMap())));
-                } else b.put(read(c.valueMap(), Tree.tree(e.getKey())));
-            } else {
-                Object v = e.getValue();
-                b.put(Property.prop(e.getKey(), v));
-            }
-        }
-        return b;
-    }
-
-    protected static class BackedConfig extends AbstractConfig {
+    private static class BackedConfig extends AbstractConfig {
         BackedConfig(Map<String, Object> map) {
             super(map);
         }

@@ -91,7 +91,6 @@ public class OneConfigMixinPlugin implements IMixinConfigPlugin {
         // Inter-loader mixins
         if (version >= 11600) {
             mixins.add("KeyboardMixin");
-            mixins.add("MouseAccessor");
             mixins.add("MouseMixin");
         }
 

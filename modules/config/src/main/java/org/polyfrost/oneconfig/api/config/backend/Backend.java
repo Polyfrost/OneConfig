@@ -26,53 +26,80 @@
 
 package org.polyfrost.oneconfig.api.config.backend;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.polyfrost.oneconfig.api.config.Tree;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * A backend is a storage system for ConfigTrees.
  * <br>
  * It is responsible for getting and putting ConfigTrees, and by extension, serializing/deserializing them.
  */
-public interface Backend {
-    Logger LOGGER = LoggerFactory.getLogger("OneConfig Config API Backend");
-
-    Backend addSerializers(Serializer... serializers);
-
-    /**
-     * Put a ConfigTree into the storage system.
-     */
-    void put(@NotNull Tree tree);
+public abstract class Backend {
+    public static final Logger LOGGER = LoggerFactory.getLogger("OneConfig Config API Backend");
+    private final Map<String, Tree> trees = new HashMap<>();
 
     /**
-     * Get a ConfigTree from the storage system.
-     *
-     * @param id the ID of the ConfigTree to get.
-     * @return the ConfigTree, or null if it does not exist.
+     * Load in a tree with the given ID. if the tree does not exist, return null.
      */
-    @Nullable Tree get(@NotNull String id);
+    protected abstract Tree load0(@NotNull String id);
 
-    boolean remove(@NotNull String id);
-
-    default boolean remove(@NotNull Tree tree) {
-        return remove(tree.getID());
+    /**
+     * Load a tree with data stored in this backend.
+     */
+    public final boolean load(Tree tree) {
+        if (tree.getID() == null) throw new IllegalArgumentException("tree must be master (have a valid ID)");
+        Tree t = load0(tree.getID());
+        if (t == null) return false;
+        tree.overwrite(t);
+        trees.putIfAbsent(tree.getID(), tree);
+        return true;
     }
 
-    boolean exists(@NotNull String id);
+    protected abstract boolean save0(@NotNull Tree tree);
 
-    default boolean exists(@NotNull Tree tree) {
-        return exists(tree.getID());
+    public final boolean save(String id) {
+        if (id == null) throw new NullPointerException("id cannot be null");
+        Tree tree = trees.get(id);
+        if (tree == null) throw new IllegalArgumentException("no registered tree with ID " + id);
+        return save0(tree);
+    }
+
+    public final boolean save(Tree tree) {
+        if (tree.getID() == null) throw new IllegalArgumentException("tree must be master (have a valid ID)");
+        trees.putIfAbsent(tree.getID(), tree);
+        return save0(tree);
+    }
+
+    public boolean exists(String id) {
+        return trees.containsKey(id);
+    }
+
+    public Tree get(String id) {
+        return trees.get(id);
+    }
+
+    public Collection<Tree> getTrees() {
+        return trees.values();
     }
 
     /**
-     * Refresh all currently registered ConfigTrees.
+     * Request that the tree with the given ID needs to be updated, for example, the file has been edited externally.
      */
-    void refresh();
+    @ApiStatus.Experimental
+    protected void requestUpdate(String id) {
+        Tree tree = trees.get(id);
+        if (tree == null) {
+            LOGGER.warn("can't update: no registered tree with ID {}", id);
+            return;
+        }
+        load(tree);
+    }
 
-    Collection<Tree> getTrees();
 }

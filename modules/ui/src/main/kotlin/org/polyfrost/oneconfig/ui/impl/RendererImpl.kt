@@ -55,8 +55,8 @@ object RendererImpl : Renderer {
     private var drawing = false
 
     override fun init() {
-        vg = nvgCreate(NVG_ANTIALIAS)
-        raster = nsvgCreateRasterizer()
+        if (vg == 0L) vg = nvgCreate(NVG_ANTIALIAS)
+        if (raster == 0L) raster = nsvgCreateRasterizer()
         require(vg != 0L) { "Could not initialize NanoVG" }
         require(raster != 0L) { "Could not initialize NanoSVG" }
     }
@@ -479,13 +479,8 @@ object RendererImpl : Renderer {
         return nvgCreateImageRGBA(vg, w[0], h[0], 0, d)
     }
 
-    override fun cleanup() {
-        nvgColor.free()
-        nvgColor2.free()
-        nvgPaint.free()
-        nsvgDeleteRasterizer(raster)
-        nvgDelete(vg)
-    }
+    // asm: renderer is persistent
+    override fun cleanup() {}
 
     private data class NVGFont(val id: Int, val data: ByteBuffer)
 }

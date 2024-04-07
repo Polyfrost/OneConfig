@@ -61,8 +61,7 @@ public class AnnotationCommandFactory implements CommandFactory {
             if (cls.isAnnotationPresent(Command.class)) {
                 Command c = cls.getAnnotation(Command.class);
                 CommandTree sub = new CommandTree(c.value().length == 0 ? new String[]{cls.getSimpleName()} : c.value(), c.description().isEmpty() ? null : c.description());
-                Object instance = MHUtils.instantiate(cls, false);
-                if (instance == null) throw new NullPointerException("failed to instantiate " + cls);
+                Object instance = MHUtils.instantiate(cls, false).getOrThrow();
                 create(parsers, sub, instance);
                 tree.put(sub);
             }
@@ -71,7 +70,7 @@ public class AnnotationCommandFactory implements CommandFactory {
 
     static Executable map(Object it, Method method, Map<Class<?>, ArgumentParser<?>> parsers) {
         Command c = method.getAnnotation(Command.class);
-        MethodHandle m = MHUtils.getMethodHandle(method, it);
+        MethodHandle m = MHUtils.getMethodHandle(method, it).getOrThrow();
         String[] names = c.value();
         if (names.length == 0) names = new String[]{method.getName()};
 
@@ -87,10 +86,20 @@ public class AnnotationCommandFactory implements CommandFactory {
                 // should've been caught earlier
                 throw new WrongArgumentsException("InternalError while executing command: CommandTree method argument mismatch!", e);
             } catch (Throwable e) {
-                throw new RuntimeException("Error while executing command!", e);
+                throw sneakyThrow(e);
             }
         };
     }
+
+    public static RuntimeException sneakyThrow(Throwable t) {
+        return sneakyThrow0(t);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T extends Throwable> T sneakyThrow0(Throwable t) throws T {
+        throw (T)t;
+    }
+
 
     static Executable.Param createParameterInfo(java.lang.reflect.Parameter parameter, Map<Class<?>, ArgumentParser<?>> parsers) {
         String name = "";

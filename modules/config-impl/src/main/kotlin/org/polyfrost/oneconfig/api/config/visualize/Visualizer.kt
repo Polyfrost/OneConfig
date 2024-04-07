@@ -26,6 +26,7 @@
 
 package org.polyfrost.oneconfig.api.config.visualize
 
+import org.polyfrost.oneconfig.api.config.ConfigVisualizer.strv
 import org.polyfrost.oneconfig.api.config.Property
 import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.component.events
@@ -33,12 +34,15 @@ import org.polyfrost.polyui.component.impl.*
 import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.unit.Vec2
 
+/**
+ * Visualizers are procedures that take a property, and return a drawable that represents it.
+ */
 fun interface Visualizer {
     fun visualize(prop: Property<*>): Drawable
 
     class ButtonVisualizer : Visualizer {
         override fun visualize(prop: Property<*>): Drawable {
-            val text = prop.getMetadata<String>("text")?.ifEmpty { null }
+            val text = prop.getMetadata<String>("text")?.strv()
             val action = prop.getMetadata<Runnable>("runnable") ?: prop.getAs()
             return Button(
                 size = Vec2(300f, 32f),
@@ -74,7 +78,7 @@ fun interface Visualizer {
             } else {
                 require(
                     prop.type == java.lang.Integer::class.java,
-                ) { "Dropdowns can only be used with enums or integers (offender=${prop.id})" }
+                ) { "Dropdowns can only be used with enums or integers (offender=${prop.id}, type=${prop.type})" }
                 require(options.size >= 2) { "Dropdowns must have at least two options (offender=${prop.id})" }
                 return Dropdown(
                     padding = 24f,
@@ -125,7 +129,7 @@ fun interface Visualizer {
         override fun visualize(prop: Property<*>): Drawable {
             val options: Array<String> = prop.getMetadata("options") ?: emptyArray()
             if (prop.type.isEnum) {
-                require(options.isEmpty()) { "Radio buttons cannot have options when used with enums" }
+                require(options.isEmpty()) { "Radio button ${prop.id} cannot have options when used with enums" }
                 val r =
                     Radiobutton(
                         entries = prop.type.enumConstants.map {
@@ -141,8 +145,8 @@ fun interface Visualizer {
                     }
                 return r
             } else {
-                require(prop.type == java.lang.Integer::class.java) { "Radio buttons can only be used with enums or integers" }
-                require(options.size >= 2) { "Radio buttons must have at least two options" }
+                require(prop.type == java.lang.Integer::class.java) { "Radio buttons ${prop.id} can only be used with enum or integer types (type=${prop.type}" }
+                require(options.size >= 2) { "Radio button ${prop.id} must have at least two options" }
                 return Radiobutton(
                     entries = options.map { null to it }.toTypedArray(),
                     initial = prop.getAs(),

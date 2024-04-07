@@ -1,7 +1,7 @@
 /*
  * This file is part of PolyUI
  * PolyUI - Fast and lightweight UI framework
- * Copyright (C) 2023 Polyfrost and its contributors.
+ * Copyright (C) 2023-2024 Polyfrost and its contributors.
  *   <https://polyfrost.org> <https://github.com/Polyfrost/polui-jvm>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -28,8 +28,8 @@ import org.polyfrost.polyui.color.Colors
 import org.polyfrost.polyui.component.*
 import org.polyfrost.polyui.component.impl.*
 import org.polyfrost.polyui.renderer.data.Font
-import org.polyfrost.polyui.utils.LinkedList
 import org.polyfrost.polyui.unit.*
+import org.polyfrost.polyui.utils.LinkedList
 import org.polyfrost.polyui.utils.image
 import org.polyfrost.polyui.utils.radii
 import kotlin.math.PI
@@ -343,4 +343,3 @@ fun Drawable.titled(title: String): Drawable {
         alignment = Align(cross = Align.Cross.Start, mode = Align.Mode.Vertical, padding = Vec2(2f, 3f)),
     )
 }
-

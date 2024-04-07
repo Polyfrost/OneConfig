@@ -24,14 +24,28 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.internal.mixin;
+package org.polyfrost.oneconfig.api.config.serialize.adapter.impl;
 
-import net.minecraft.client.MouseHelper;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.gen.Accessor;
+import org.polyfrost.oneconfig.api.config.serialize.adapter.Adapter;
 
-@Mixin(MouseHelper.class)
-public interface MouseAccessor {
-    @Accessor("accumulatedScrollDelta")
-    double getEventDeltaWheel();
+import java.awt.*;
+
+/**
+ * The only bundled adapter in the config system, which makes colors a lot more readable when serialized.
+ */
+public class ColorAdapter extends Adapter<Color, int[]> {
+    @Override
+    public Color deserialize(int[] l) {
+        return new Color(l[0], l[1], l[2], l[3]);
+    }
+
+    @Override
+    public int[] serialize(Color in) {
+        return new int[]{in.getRed(), in.getGreen(), in.getBlue(), in.getAlpha()};
+    }
+
+    @Override
+    public Class<Color> getTargetClass() {
+        return Color.class;
+    }
 }

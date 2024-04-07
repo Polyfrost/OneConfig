@@ -34,7 +34,6 @@ import gg.essential.vigilance.data.PropertyData;
 import gg.essential.vigilance.data.PropertyType;
 import gg.essential.vigilance.data.SortingBehavior;
 import kotlin.jvm.internal.DefaultConstructorMarker;
-import org.polyfrost.oneconfig.api.config.ConfigManager;
 import org.polyfrost.oneconfig.api.config.Tree;
 import org.polyfrost.oneconfig.api.config.visualize.Visualizer;
 import org.spongepowered.asm.mixin.Mixin;
@@ -46,21 +45,19 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.io.File;
 
 import static org.polyfrost.oneconfig.api.config.Property.prop;
-import static org.polyfrost.oneconfig.api.config.Tree.tree;
 
+// todo rewrite
 @Mixin(value = Vigilant.class, remap = false)
 @Pseudo
 public abstract class VigilantMixin {
     @Inject(method = "<init>(Ljava/io/File;Ljava/lang/String;Lgg/essential/vigilance/data/PropertyCollector;Lgg/essential/vigilance/data/SortingBehavior;ILkotlin/jvm/internal/DefaultConstructorMarker;)V", at = @At("TAIL"), remap = false)
     public void oneconfig$compat(File file, String title, PropertyCollector collector, SortingBehavior par4, int par5, DefaultConstructorMarker par6, CallbackInfo ci) {
-        Tree b = tree(file.getName());
+        Tree b = new Tree(file.getName(), title, null, null);
         for (PropertyData data : collector.getProperties()) {
             PropertyAttributesExt attrs = data.getAttributesExt();
             String sub = attrs.getSubcategory();
-            Tree bt = tree(attrs.getName());
+            Tree bt = new Tree(attrs.getName(), attrs.getName(), attrs.getDescription(), null);
             bt.put(
-                    prop("description", attrs.getDescription()),
-                    prop("title", attrs.getName()),
                     prop("category", attrs.getCategory()),
                     prop("subcategory", sub.isEmpty() ? "General" : sub)
             );
@@ -120,7 +117,7 @@ public abstract class VigilantMixin {
             }
             b.put(bt);
         }
-        ConfigManager.INSTANCE.supplyMetadata(file.getName(), b, false);
+//        ConfigManager.INSTANCE.supplyMetadata(file.getName(), b, false);
     }
 
 }

@@ -4,10 +4,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.MustBeInvokedByOverriders
 import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.component.Drawable
-import org.polyfrost.polyui.component.impl.Block
 import org.polyfrost.polyui.unit.Vec2
-import org.polyfrost.polyui.unit.seconds
-
 
 /**
  * HUD (Heads Up Display) is a component that is rendered on top of the screen. They are used for displaying information to the user, such as the time, or the player's health.
@@ -32,8 +29,6 @@ abstract class Hud<T : Drawable> : Cloneable {
      * Return the instance of your HUD element, made by calling [create].
      * @see get
      */
-    @Suppress("invisible_member", "invisible_reference")
-    @kotlin.internal.InlineOnly
     inline val hud: T
         get() = get()
 

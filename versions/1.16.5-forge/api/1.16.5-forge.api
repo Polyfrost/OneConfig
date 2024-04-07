@@ -67,9 +67,6 @@ public class org/polyfrost/oneconfig/platform/impl/LoaderPlatformImpl : org/poly
 public class org/polyfrost/oneconfig/platform/impl/MousePlatformImpl : org/polyfrost/oneconfig/platform/MousePlatform {
 	public fun <init> ()V
 	public fun getButtonState (I)I
-	public fun getDWheel ()D
-	public fun getMouseDX ()D
-	public fun getMouseDY ()D
 	public fun getMouseX ()D
 	public fun getMouseY ()D
 	public fun isButtonDown (I)Z
@@ -148,15 +145,10 @@ public final class org/polyfrost/polyui/renderer/impl/MCWindow : org/polyfrost/p
 	public fun close ()V
 	public fun getClipboard ()Ljava/lang/String;
 	public fun getKeyName (I)Ljava/lang/String;
-	public final fun getXOffset ()F
-	public final fun getYOffset ()F
 	public fun open (Lorg/polyfrost/polyui/PolyUI;)Ljava/lang/Void;
 	public synthetic fun open (Lorg/polyfrost/polyui/PolyUI;)Lorg/polyfrost/polyui/renderer/Window;
-	public fun preRender (Lorg/polyfrost/polyui/renderer/Renderer;)V
 	public fun setClipboard (Ljava/lang/String;)V
 	public fun setCursor (Lorg/polyfrost/polyui/renderer/data/Cursor;)V
-	public final fun setXOffset (F)V
-	public final fun setYOffset (F)V
 	public fun supportsRenderPausing ()Z
 }
 

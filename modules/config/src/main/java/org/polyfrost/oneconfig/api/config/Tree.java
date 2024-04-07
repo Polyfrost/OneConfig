@@ -29,10 +29,12 @@ package org.polyfrost.oneconfig.api.config;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.UnmodifiableView;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
@@ -43,39 +45,46 @@ import java.util.function.BiConsumer;
  */
 public class Tree extends Node implements Serializable {
     public static final Logger LOGGER = LoggerFactory.getLogger("OneConfig Config API");
-    @NotNull
+
+    @UnmodifiableView
     public final Map<String, Node> map;
 
-    public Tree(@NotNull String id, @Nullable Map<String, Node> items) {
-        super(id);
+    private final Map<String, Node> theMap;
+    private boolean locked;
+
+    public Tree(@Nullable String id, @Nullable String name, @Nullable String description, @Nullable Map<String, Node> items) {
+        super(id, name, description);
         if (items != null) {
-            map = new HashMap<>(items.size());
-            map.putAll(items);
-        } else map = new HashMap<>();
+            theMap = new HashMap<>(items.size());
+            theMap.putAll(items);
+        } else theMap = new HashMap<>();
+        map = Collections.unmodifiableMap(theMap);
     }
+
 
     public Tree put(@NotNull Node... nodes) {
         for (Node n : nodes) {
-            map.put(n.getID(), n);
+            put(n);
         }
         return this;
     }
 
     public Tree put(Node n) {
-        map.put(n.getID(), n);
+        // security and sanity check.
+        if (theMap.put(n.getID(), n) == null && locked) throw new IllegalStateException("Cannot add new nodes to a locked tree!");
         return this;
     }
 
     @Nullable
-    public Node get(String name) {
-        return map.get(name);
+    public Node get(String id) {
+        return theMap.get(id);
     }
 
     @Nullable
-    public Node get(@NotNull String... name) {
+    public Node get(@NotNull String... id) {
         Tree t = this;
         Node n = null;
-        for (String s : name) {
+        for (String s : id) {
             n = t.get(s);
             if (n instanceof Tree) t = (Tree) n;
             else return n;
@@ -84,14 +93,26 @@ public class Tree extends Node implements Serializable {
     }
 
     @Nullable
-    public Tree getChild(@NotNull String... name) {
-        Node n = get(name);
+    public Tree getChild(@NotNull String... id) {
+        Node n = get(id);
         return n instanceof Tree ? (Tree) n : null;
     }
 
     @Nullable
-    public Property<?> getProperty(@NotNull String... name) {
-        Node n = get(name);
+    public Tree getChild(@NotNull String id) {
+        Node n = get(id);
+        return n instanceof Tree ? (Tree) n : null;
+    }
+
+    @Nullable
+    public Property<?> getProp(@NotNull String... id) {
+        Node n = get(id);
+        return n instanceof Property ? (Property<?>) n : null;
+    }
+
+    @Nullable
+    public Property<?> getProp(@NotNull String id) {
+        Node n = get(id);
         return n instanceof Property ? (Property<?>) n : null;
     }
 
@@ -99,18 +120,18 @@ public class Tree extends Node implements Serializable {
         _onAll(this, action);
     }
 
-    public void onAllProperties(BiConsumer<String, Property<?>> action) {
+    public void onAllProps(BiConsumer<String, Property<?>> action) {
         _onAllProp(this, action);
     }
 
     private static void _onAll(Tree t, BiConsumer<String, Node> action) {
-        for (Map.Entry<String, Node> e : t.map.entrySet()) {
+        for (Map.Entry<String, Node> e : t.theMap.entrySet()) {
             action.accept(e.getKey(), e.getValue());
         }
     }
 
     private static void _onAllProp(Tree t, BiConsumer<String, Property<?>> action) {
-        for (Map.Entry<String, Node> e : t.map.entrySet()) {
+        for (Map.Entry<String, Node> e : t.theMap.entrySet()) {
             if (e.getValue() instanceof Property) action.accept(e.getKey(), (Property<?>) e.getValue());
         }
     }
@@ -121,7 +142,7 @@ public class Tree extends Node implements Serializable {
         if (obj == this) return true;
         if (!(obj instanceof Tree)) return false;
         Tree that = (Tree) obj;
-        return this.map.size() == that.map.size() && this.id.equals(that.id);
+        return this.theMap.size() == that.theMap.size() && this.getID().equals(that.getID());
     }
 
     /**
@@ -133,7 +154,7 @@ public class Tree extends Node implements Serializable {
     public boolean deepEquals(@Nullable Object obj) {
         if (!equals(obj)) return false;
         Tree that = (Tree) obj;
-        for (Map.Entry<String, Node> e : this.map.entrySet()) {
+        for (Map.Entry<String, Node> e : this.theMap.entrySet()) {
             Node n = that.get(e.getKey());
             if (n == null) {
 //                System.err.println("Second tree does not contain " + e);
@@ -148,68 +169,57 @@ public class Tree extends Node implements Serializable {
     }
 
 
-    /**
-     * Merge two trees into one. This method is very powerful and should be used with care.
-     * <br>
-     * If the input tree contains values that are not in this tree, it will be added to this tree.
-     * <br>
-     * This tree should have identical structure to the passed tree when this method is completed.
-     *
-     * @param tree      the input tree
-     * @param overwrite if true, all values that are in both trees will be overwritten from the input tree into this tree.
-     * @param copyMeta  the metadata from the input tree will be copied into this tree, and if overwrite is true,
-     *                  the metadata from the origin value before overwriting is preserved as well
-     * @throws ClassCastException if the types of the properties (with the same name) do not match
-     */
-    public void merge(Tree tree, boolean overwrite, boolean copyMeta) {
-        if (tree == null || tree == this) return;
-        _merge(this, tree, overwrite, copyMeta);
+    @Override
+    public void overwrite(@NotNull Node with) {
+        if (!(with instanceof Tree)) throw new IllegalArgumentException("Cannot overwrite a tree with a non-tree node!");
+        _overwrite(this, (Tree) with);
     }
 
-    private static void _merge(Tree self, Tree in, boolean overwrite, boolean copyMeta) {
-        for (Map.Entry<String, Node> toAdd : in.map.entrySet()) {
-            Node that = toAdd.getValue();
-            Node _this = self.get(toAdd.getKey());
-            boolean thisIsTree = _this instanceof Tree;
-            boolean thatIsTree = that instanceof Tree;
-            if (_this == null) {
-                self.put(that);
-                continue;
-            }
+    /**
+     * Lock this tree, preventing any new data from being added to it. Nodes may still be overwritten by the {@link #put(Node)} methods.
+     * <br><b>this operation is permanent!</b>
+     */
+    public void lock() {
+        locked = true;
+    }
 
-            if (thisIsTree) {
-                if (!thatIsTree) {
-                    LOGGER.warn("Overwriting tree {} with property {}, is this intended?", _this.getID(), that.getID());
-                    self.put(that);
-                } else {
-                    _merge((Tree) _this, (Tree) that, overwrite, copyMeta);
-                    if (copyMeta) _this.addMetadata(that.getMetadata());
+    public boolean isLocked() {
+        return locked;
+    }
+
+    private static void _overwrite(Tree self, Tree in) {
+        for (Map.Entry<String, Node> e : in.theMap.entrySet()) {
+            Node _this = self.get(e.getKey());
+            Node that = e.getValue();
+            if (_this == null) {
+                // nop. means that the node has been removed.
+                continue;
+            }
+            if (_this instanceof Tree) {
+                if (that instanceof Tree) {
+                    // if both are trees, recursively overwrite
+                    _overwrite((Tree) _this, (Tree) that);
+                    _this.addMetadata(that.getMetadata());
                 }
-                continue;
-            } else if (thatIsTree) {
-                LOGGER.warn("Overwriting property {} with tree {}, is this intended?", _this.getID(), that.getID());
-                self.put(that);
-                continue;
+                // nop. do not attempt to overwrite a tree with a property
+                else continue;
             }
-            if (overwrite) {
-                self.put(that);
-            } else if (copyMeta) {
-                _this.addMetadata(that.getMetadata());
-            }
+            if (_this.equals(that)) continue;
+            _this.overwrite(that);
         }
     }
 
     @Override
     public String toString() {
-        StringBuilder builder = new StringBuilder();
+        StringBuilder builder = new StringBuilder(96);
         _toString(builder, 0, this);
         return builder.toString();
     }
 
     private static void _toString(StringBuilder sb, int depth, Tree t) {
         for (int i = 0; i < depth; i++) sb.append('\t');
-        sb.append(t.id).append(":\n");
-        for (Map.Entry<String, Node> e : t.map.entrySet()) {
+        sb.append(t.getTitle()).append(":\n");
+        for (Map.Entry<String, Node> e : t.theMap.entrySet()) {
             if (e.getValue() instanceof Property) {
                 for (int i = 0; i < depth + 1; i++) sb.append('\t');
                 sb.append(e.getValue()).append('\n');
@@ -219,9 +229,13 @@ public class Tree extends Node implements Serializable {
         }
     }
 
-    @Contract("_ -> new")
+    public static @NotNull Tree tree() {
+        return new Tree(null, null, null, null);
+    }
+
+    @Contract("_, -> new")
     public static @NotNull Tree tree(@NotNull String id) {
-        return new Tree(id, null);
+        return new Tree(id, null, null, null);
     }
 
     /**
@@ -229,7 +243,7 @@ public class Tree extends Node implements Serializable {
      */
     @Contract("_ -> new")
     public static @NotNull Tree tree(@NotNull Tree src) {
-        return new Tree(src.id, src.map);
+        return new Tree(src.getID(), src.getTitle(), src.description, src.theMap);
     }
 }
 

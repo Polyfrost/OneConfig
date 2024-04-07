@@ -48,7 +48,7 @@ public class Config {
     // todo(?) public transient boolean hasUpdate = true;
     @ApiStatus.Internal
     @NotNull
-    public transient final ArrayList<PolyImage> data = new ArrayList<>(3);
+    public transient final ArrayList<PolyImage> data = new ArrayList<>(0);
     @NotNull
     public transient final Category category;
     @ApiStatus.Internal
@@ -85,7 +85,7 @@ public class Config {
 
 
     public void addDependency(String option, BooleanSupplier condition) {
-        Property<?> p = tree.getProperty(option);
+        Property<?> p = tree.getProp(option);
         if (p == null) throw new IllegalArgumentException("Attempted to specify a condition for property " + option + " but it was not found");
         p.addDisplayCondition(condition);
     }

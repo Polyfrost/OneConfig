@@ -43,63 +43,68 @@ import org.polyfrost.polyui.unit.seconds
 import org.polyfrost.polyui.utils.LinkedList
 import org.polyfrost.polyui.utils.image
 import org.polyfrost.polyui.utils.rgba
+import org.slf4j.LoggerFactory
 import kotlin.math.PI
 
 object ConfigVisualizer {
+    private val LOGGER = LoggerFactory.getLogger("OneConfig Config Visualizer")
     private val visCache = HashMap<Class<*>, Visualizer>()
     private val configCache = HashMap<Tree, Drawable>()
-    private val verticalAlign = Align(cross = Align.Cross.Start, mode = Align.Mode.Vertical)
-    private val optBg = rgba(39, 49, 55, 0.50f)
+    private val optBg = rgba(39, 49, 55, 0.2f)
 
+    private val alignC = Align(cross = Align.Cross.Start)
+    private val alignCV = Align(cross = Align.Cross.Start, mode = Align.Mode.Vertical)
+    private val alignVNoPad = Align(cross = Align.Cross.Start, mode = Align.Mode.Vertical, padding = Vec2.ZERO)
+    private val stdAlign = Align(main = Align.Main.SpaceBetween, padding = Vec2(16f, 8f))
+    private val stdAccord = Align(main = Align.Main.SpaceBetween, padding = Vec2.ZERO)
+    private val padVOnly = Align(padding = Vec2(0f, 12f))
+    private val stdOpt = Align(cross = Align.Cross.Start, mode = Align.Mode.Vertical, padding = Vec2(6f, 6f))
+    private val accordOpt = Align(cross = Align.Cross.Start, padding = Vec2(24f, 12f))
+
+    /**
+     * For information, see [create].
+     */
     @JvmStatic
-    fun get(config: Tree) = configCache.getOrPut(config) { create(config) }
+    fun get(config: Tree) = create(config) // configCache.getOrPut(config) { create(config) }
 
+    /**
+     * Turn the given config tree into a PolyUI representation.
+     *
+     * This method will skip:
+     * - `Property` that do not have `"visualizer"` metadata
+     * - any `Tree` that is deeper than 2 levels
+     *
+     *
+     * This method uses the following metadata:
+     * - `"icon"`: optional. specifies the icon shown only on full-size options. ignored on accordion properties. must be either a valid [PolyImage] or a `String path` to an image. **Fails** if this is invalid.
+     * - `"category"`: optional. specifies the category of the option. defaults to "General".
+     * - `"subcategory"`: optional. specifies the subcategory of option. defaults to "General".
+     * - `"visualizer"`: required for `Property`. specifies the method to convert a Property to a PolyUI component. must be a class that implements [Visualizer]. **Fails** if this is invalid.
+     */
     private fun create(
         config: Tree,
         initialPage: String = "General",
     ): Drawable {
         val now = System.nanoTime()
-        val options = LinkedHashMap<String, HashMap<String, LinkedList<Drawable>>>(4)
+        val options = HashMap<String, HashMap<String, LinkedList<Drawable>>>(4)
 
         // asm: step 1: sort the tree into a map of:
         // categories
         //   -> subcategories
         //      -> list of options
         for ((_, node) in config.map) {
-            val title = node.getMetadata<String>("title")?.ifEmpty { null } ?: run {
-                Tree.LOGGER.warn("Property ${node.id} is missing required metadata 'title' (provided by ${config.id}); using ID")
-                node.id
-            }
-            val desc = node.getMetadata<String>("description")?.ifEmpty { null }
-            val icon =
-                when (val it = node.getMetadata<Any?>("icon")) {
-                    null -> null
-                    is PolyImage -> it
-                    is String -> it.image()
-                    else -> throw IllegalArgumentException(
-                        "Property ${node.id} has invalid icon type ${it::class.java.name} (provided by ${config.id}) - must be a PolyImage or String path",
-                    )
-                }
-            val category = node.getMetadata<String>("category")?.ifEmpty { null } ?: "General"
-            val subcategory = node.getMetadata<String>("subcategory")?.ifEmpty { null } ?: "General"
-
-            val list = options.getOrPut(category) { HashMap(4) }.getOrPut(subcategory) { LinkedList() }
-            if (node is Property<*>) {
-                list.add(make(node).wrap(title, desc, icon))
-            } else {
-                list.add(makeAccordion(node as Tree, title, desc, icon))
-            }
+            processNode(node, options)
         }
 
         // asm: step 2: build the actual structure
         val categories =
             options.mapValues { (_, subcategories) ->
                 Group(
-                    alignment = verticalAlign,
+                    alignment = alignCV,
                     children =
                     subcategories.map { (header, options) ->
                         Group(
-                            alignment = verticalAlign,
+                            alignment = alignCV,
                             children =
                             arrayOf(
                                 Text(header, fontSize = 22f),
@@ -110,9 +115,9 @@ object ConfigVisualizer {
                 )
             }
 
-        PolyUI.LOGGER.info("creating config page ${config.id} took ${(System.nanoTime() - now) / 1_000_000f}ms")
+        PolyUI.LOGGER.info("creating config page ${config.title} took ${(System.nanoTime() - now) / 1_000_000f}ms")
         return Group(
-            alignment = Align(cross = Align.Cross.Start),
+            alignment = alignC,
             visibleSize = Vec2(1130f, 635f),
             children =
             arrayOf(
@@ -120,6 +125,33 @@ object ConfigVisualizer {
                 categories[initialPage] ?: throw IllegalArgumentException("Initial page $initialPage does not exist"),
             ),
         )
+    }
+
+    private /* suspend? */ fun processNode(node: Node, options: HashMap<String, HashMap<String, LinkedList<Drawable>>>) {
+        val icon =
+            when (val it = node.getMetadata<Any?>("icon")) {
+                null -> null
+                is PolyImage -> it
+                is String -> it.strv()?.image()
+                else -> throw IllegalArgumentException(
+                    "Property ${node.id} has invalid icon type ${it::class.java.name} (provided by ${node.id}) - must be a PolyImage or String path",
+                )
+            }
+        val category = node.getMetadata<String>("category")?.strv() ?: "General"
+        val subcategory = node.getMetadata<String>("subcategory")?.strv() ?: "General"
+
+        val list = options.getOrPut(category) { HashMap(4) }.getOrPut(subcategory) { LinkedList() }
+        if (node is Property<*>) {
+            val vis = node.getVisualizer() ?: return
+            list.add(vis.visualize(node).wrap(node.title, node.description, icon))
+        } else {
+            node as Tree
+            if (node.map.isEmpty()) {
+                LOGGER.warn("sub-tree ${node.id} is empty; ignoring")
+                return
+            }
+            list.add(makeAccordion(node, node.title, node.description, icon))
+        }
     }
 
     private fun createHeaders(categories: Map<String, Drawable>): Drawable {
@@ -142,19 +174,14 @@ object ConfigVisualizer {
         icon: PolyImage?,
     ): Drawable {
         val options =
-            tree.map.map { (_, node) ->
-                node as? Property<*> ?: throw IllegalArgumentException("Sub-tree ${tree.id} contains sub-tree node ${node.id} - only properties are allowed in sub-trees")
-                val optTitle =
-                    node.getMetadata<String>("title")?.ifEmpty { null } ?: run {
-                        Tree.LOGGER.warn("Property ${node.id} is missing required metadata 'title' (child of sub-tree ${tree.id}); using ID")
-                        node.id
-                    }
-                val optDesc = node.getMetadata<String>("description")?.ifEmpty { null }
-                make(node).wrapForAccordion(optTitle, optDesc)
+            tree.map.mapNotNull map@{ (_, node) ->
+                if (node !is Property<*>) return@map null
+                val vis = node.getVisualizer() ?: return@map null
+                vis.visualize(node).wrapForAccordion(node.title, node.description)
             }
         return Block(
             color = optBg,
-            alignment = Align(mode = Align.Mode.Vertical, padding = Vec2.ZERO, cross = Align.Cross.Start),
+            alignment = alignVNoPad,
             children =
             arrayOf(
                 Image("chevron-down.svg".image()).also { it.rotation = PI }.wrap(title, desc, icon).events {
@@ -163,7 +190,7 @@ object ConfigVisualizer {
                     Event.Mouse.Clicked(0) then {
                         open = !open
                         Rotate(this[1], if (!open) PI else 0.0, false, Animations.EaseOutQuad.create(0.2.seconds)).add()
-                        val value = parent!![1].size.y
+                        val value = parent!![1].height
                         val anim = Animations.EaseOutQuad.create(0.4.seconds)
                         val operation = Resize(parent!!, width = 0f, height = if (open) -value else value, add = true, anim)
                         addOperation(
@@ -184,19 +211,11 @@ object ConfigVisualizer {
                 },
                 Group(
                     size = Vec2(1078f, 0f),
-                    alignment = Align(padding = Vec2(24f, 12f), cross = Align.Cross.Start),
+                    alignment = accordOpt,
                     children = options.toTypedArray(),
                 ).namedId("AccordionContent"),
             ),
         ).namedId("AccordionHeader")
-    }
-
-    fun make(property: Property<*>): Drawable {
-        val cls = property.getMetadata<Class<*>>("visualizer") ?: throw IllegalArgumentException("Property ${property.id} is missing required metadata 'visualizer'")
-        return visCache.getOrPut(cls) {
-            val it = cls.getDeclaredConstructor().newInstance() ?: throw IllegalArgumentException("Visualizer ${cls.name} could not be instantiated")
-            it as? Visualizer ?: throw IllegalArgumentException("Visualizer ${cls.name} does not implement Visualizer")
-        }.visualize(property)
     }
 
     private fun Drawable.wrap(
@@ -205,18 +224,18 @@ object ConfigVisualizer {
         icon: PolyImage?,
     ): Drawable {
         return Block(
-            alignment = Align(main = Align.Main.SpaceBetween, padding = Vec2(16f, 8f)),
+            alignment = stdAlign,
             size = Vec2(1078f, 64f),
             color = optBg,
             children =
             arrayOf(
                 Group(
-                    alignment = Align(padding = Vec2(0f, 12f)),
+                    alignment = padVOnly,
                     children =
                     arrayOf(
-                        if (icon != null) Image(icon).onInit { image.size.max(32f, 32f) } else null,
+                        if (icon != null) Image(icon).onInit { /*image.size.max(32f, 32f)*/ } else null,
                         Group(
-                            alignment = Align(cross = Align.Cross.Start, mode = Align.Mode.Vertical, padding = Vec2(6f, 6f)),
+                            alignment = stdOpt,
                             children =
                             arrayOf(
                                 Text(title, fontSize = 22f, font = PolyUI.defaultFonts.medium),
@@ -235,7 +254,7 @@ object ConfigVisualizer {
         desc: String?,
     ): Drawable {
         return Group(
-            alignment = Align(main = Align.Main.SpaceBetween, padding = Vec2.ZERO),
+            alignment = stdAccord,
             size = Vec2(503f, 32f),
             children =
             arrayOf(
@@ -244,5 +263,14 @@ object ConfigVisualizer {
             ),
         ).addHoverInfo(desc)
     }
-}
 
+    fun Property<*>.getVisualizer(): Visualizer? {
+        val vis = this.getMetadata<Class<*>>("visualizer") ?: return null
+        return visCache.getOrPut(vis) {
+            val it = vis.getDeclaredConstructor().newInstance() ?: throw IllegalStateException("Visualizer $vis could not be instantiated; ensure it has a public no-args constructor")
+            it as? Visualizer ?: throw IllegalArgumentException("Visualizer $vis does not implement Visualizer")
+        }
+    }
+
+    fun String?.strv() = this?.trim()?.ifEmpty { null }
+}

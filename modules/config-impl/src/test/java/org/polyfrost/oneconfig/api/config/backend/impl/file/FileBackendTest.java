@@ -60,7 +60,7 @@ class FileBackendTest {
     @Test
     void formatsMakeEqualTrees() {
         Tree json = newTree("test2.json");
-        Tree yaml = newTree("test2.yaml");
+        Tree yaml = newTree("test2");
         Tree toml = newTree("test2.toml");
         Tree hocon = newTree("test2.hocon");
         backend.put(json);

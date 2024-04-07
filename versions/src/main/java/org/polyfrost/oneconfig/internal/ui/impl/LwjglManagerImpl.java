@@ -105,8 +105,7 @@ public class LwjglManagerImpl
 
             // Setup LW3 config
             Class<?> configClass = Class.forName("org.lwjgl.system.Configuration", true, classLoader);
-            MethodHandle setMethod = MHUtils.getMethodHandle(configClass, "set", void.class, Object.class);
-            if (setMethod == null) throw new NullPointerException("failed to get set method");
+            MethodHandle setMethod = MHUtils.getMethodHandle(configClass, "set", void.class, Object.class).getOrThrow();
 
             Object extractDirField = configClass.getField("SHARED_LIBRARY_EXTRACT_DIRECTORY").get(null);
             setMethod.invoke(extractDirField, new File("./OneConfig/temp").getAbsolutePath());
@@ -316,8 +315,7 @@ public class LwjglManagerImpl
                 }
             }
 
-            Object theUnsafe = MHUtils.getStaticField(unsafeClass, "theUnsafe");
-            if (theUnsafe == null) throw new NullPointerException("Failed to get unsafe instance");
+            Object theUnsafe = MHUtils.getStaticField(unsafeClass, "theUnsafe").getOrThrow();
 
             defineClassMethod = MHUtils.getMethodHandle(
                     theUnsafe,
@@ -329,7 +327,7 @@ public class LwjglManagerImpl
                     int.class,
                     ClassLoader.class,
                     ProtectionDomain.class
-            );
+            ).getOrThrow();
         }
     }
 

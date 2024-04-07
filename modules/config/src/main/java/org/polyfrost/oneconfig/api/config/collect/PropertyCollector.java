@@ -24,20 +24,25 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.internal.mixin;
+package org.polyfrost.oneconfig.api.config.collect;
 
-import net.minecraft.client.Mouse;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.gen.Accessor;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.polyfrost.oneconfig.api.config.Tree;
 
-@Mixin(Mouse.class)
-public interface MouseAccessor {
-    @Accessor("eventDeltaWheel")
-    double getEventDeltaWheel();
+/**
+ * This functional interface represents a 'translator' which will take an object and return a {@link Tree} representing the serializable representation of the object.
+ * <br>
+ * Changes to the tree should be reflected in the object, and vice-versa.
+ */
+@FunctionalInterface
+public interface PropertyCollector {
+    /**
+     * Attempt to collect the properties of the given object.
+     *
+     * @param src the object to collect from
+     * @return the tree, or null if this collector cannot parse it. If null is returned, the next collector will be tried. This operation should be fail-fast.
+     */
+    @Nullable Tree collect(@NotNull Object src);
 
-    @Accessor
-    double getCursorDeltaX();
-
-    @Accessor
-    double getCursorDeltaY();
 }

@@ -1,6 +1,5 @@
 package org.polyfrost.oneconfig.api.hud.internal
 
-
 import org.polyfrost.oneconfig.api.hud.Hud
 import org.polyfrost.oneconfig.api.hud.HudManager
 import org.polyfrost.polyui.PolyUI
@@ -15,7 +14,6 @@ import org.polyfrost.polyui.unit.Point
 import org.polyfrost.polyui.unit.by
 import org.polyfrost.polyui.utils.image
 import org.polyfrost.polyui.utils.radii
-
 
 private val scaleBlob by lazy {
     var sx = 0f
@@ -51,10 +49,10 @@ private val scaleBlob by lazy {
                 it.scaleX = 1f
                 it.scaleY = 1f
             }
-        }
+        },
     ).apply {
         addEventHandler(Event.Mouse.Pressed(0)) {
-            //if(!polyUI.inputManager.hasFocused) polyUI.focus(this)
+            // if(!polyUI.inputManager.hasFocused) polyUI.focus(this)
         }
         addEventHandler(Event.Focused.Lost) {
             renders = false
@@ -142,7 +140,7 @@ fun Hud<out Drawable>.build(): Block {
             if (HudManager.canAutoOpen()) {
                 if (!HudManager.open) HudManager.toggle()
             }
-        }
+        },
     ).events {
         Event.Mouse.Clicked(0, amountClicks = 2) then {
             HudManager.openHudEditor(this@build)
@@ -160,7 +158,7 @@ fun Hud<out Drawable>.build(): Block {
                     if (HudManager.panel[2] !== HudManager.hudsPage) HudManager.panel[2] = HudManager.hudsPage
                 },
                 polyUI = HudManager.polyUI,
-                position = Point.Above
+                position = Point.Above,
             )
             true
         }
@@ -187,7 +185,6 @@ private fun Block.addScaler(): Block {
     }
     return this
 }
-
 
 private fun Drawable.trySnapX(lx: Float): Boolean {
     val low = lx - snapMargin
@@ -241,13 +238,13 @@ fun Drawable.snapHandler() {
 
     // asm: process screen edge snaps + center snap
     // checking center snaps first seems to make it easier to use
-    var hran = trySnapX(polyUI.size.x / 2f)
-            || trySnapX(1f)
-            || trySnapX(polyUI.size.x - 1f)
+    var hran = trySnapX(polyUI.size.x / 2f) ||
+        trySnapX(1f) ||
+        trySnapX(polyUI.size.x - 1f)
 
-    var vran = trySnapY(polyUI.size.y / 2f)
-            || trySnapY(1f)
-            || trySnapY(polyUI.size.y - 1f)
+    var vran = trySnapY(polyUI.size.y / 2f) ||
+        trySnapY(1f) ||
+        trySnapY(polyUI.size.y - 1f)
 
     // yipee!
     if (hran && vran) return
@@ -259,14 +256,14 @@ fun Drawable.snapHandler() {
         if (!it.renders) return@fastEach
 
         if (!hran) {
-            hran = trySnapX(it.x + (it.width / 2f))
-                    || trySnapX(it.x)
-                    || trySnapX(it.x + it.width)
+            hran = trySnapX(it.x + (it.width / 2f)) ||
+                trySnapX(it.x) ||
+                trySnapX(it.x + it.width)
         }
         if (!vran) {
-            vran = trySnapY(it.y + (it.height / 2f))
-                    || trySnapY(it.y)
-                    || trySnapY(it.y + it.height)
+            vran = trySnapY(it.y + (it.height / 2f)) ||
+                trySnapY(it.y) ||
+                trySnapY(it.y + it.height)
         }
 
         // YIPEEE!

@@ -52,6 +52,7 @@ import org.polyfrost.polyui.renderer.impl.MCWindow;
 import org.polyfrost.polyui.unit.Align;
 import org.polyfrost.polyui.unit.Vec2;
 
+import static org.lwjgl.opengl.GL11.glViewport;
 import static org.polyfrost.oneconfig.ui.KeybindManager.translateKey;
 
 @SuppressWarnings("unused")
@@ -73,6 +74,8 @@ public class PolyUIScreen extends UScreen implements UIPause, BlurScreen {
     private float mx, my;
     //#endif
 
+    private float ox, oy;
+
 
     @Contract("_, null, _, _, _, _, _, null -> fail")
     public PolyUIScreen(@Nullable Settings settings,
@@ -86,17 +89,18 @@ public class PolyUIScreen extends UScreen implements UIPause, BlurScreen {
         super(true);
 
         Settings s = settings == null ? new Settings() : settings;
+        s.enableInitCleanup(false);
         if (drawables == null || drawables.length == 0) {
             if (inputManager == null) throw new IllegalArgumentException("Must be created with an inputManager or drawables");
             this.inputManager = inputManager;
             this.polyUI = null;
             this.desiredResolution = null;
-            window = null;
+            this.window = null;
         } else {
             Colors c = colors == null ? new DarkTheme() : colors;
             this.polyUI = new PolyUI(LwjglManager.INSTANCE.getRenderer(), settings, inputManager, translator, backgroundColor, alignment, null, c, drawables);
-            window = new MCWindow(UMinecraft.getMinecraft());
-            window.setPixelRatio(2f);
+            this.window = new MCWindow(UMinecraft.getMinecraft());
+            this.window.setPixelRatio(scale());
             this.polyUI.setWindow(window);
             this.inputManager = this.polyUI.getInputManager();
             this.desiredResolution = desiredResolution;
@@ -130,9 +134,8 @@ public class PolyUIScreen extends UScreen implements UIPause, BlurScreen {
         // however, inside minecraft, the actual content is smaller than the window size, so resizing it directly would just fuck it up.
         // so instead, the developer specifies a resolution that their UI was designed for, and we resize accordingly.
         if (polyUI == null || desiredResolution == null) return;
-        float sx = UResolution.getViewportWidth() / desiredResolution.getX();
-        float sy = UResolution.getViewportHeight() / desiredResolution.getY();
-        System.out.println("sx=" + sx + " sy=" + sy);
+        float sx = width() / desiredResolution.getX();
+        float sy = height() / desiredResolution.getY();
         if (sx == 1f && sy == 1f) return;
         Vec2 size = polyUI.getMaster().getSize();
         polyUI.resize(size.getX() * sx, size.getY() * sy, false);
@@ -147,9 +150,12 @@ public class PolyUIScreen extends UScreen implements UIPause, BlurScreen {
     @Override
     public void onDrawScreen(@NotNull UMatrixStack matrices, int mouseX, int mouseY, float delta) {
         if (polyUI == null) return;
+
         Vec2 size = polyUI.getMaster().getSize();
-        window.setXOffset(UResolution.getViewportWidth() / 2f - size.getX() / 2f);
-        window.setYOffset(UResolution.getViewportHeight() / 2f - size.getY() / 2f);
+        ox = width() / 2f - size.getX() / 2f;
+        oy = height() / 2f - size.getY() / 2f;
+        glViewport((int) ox, (int) oy, (int) size.getX(), (int) size.getY());
+
 
         //#if MC>=11300
         //$$ com.mojang.blaze3d.systems.RenderSystem.disableCull();
@@ -175,8 +181,7 @@ public class PolyUIScreen extends UScreen implements UIPause, BlurScreen {
         net.minecraft.client.renderer.GlStateManager.enableCull();
         //#endif
 
-
-        // super.onDrawScreen(matrices, mouseX, mouseY, delta);
+        glViewport(0,0, (int) width(), (int) height());
     }
 
     @Override
@@ -184,10 +189,10 @@ public class PolyUIScreen extends UScreen implements UIPause, BlurScreen {
     //$$ public final void resize
     //#else
     public final void onResize
-        //#endif
+    //#endif
     (Minecraft client, int width, int height) {
         if (polyUI == null) return;
-        polyUI.resize(UResolution.getViewportWidth(), UResolution.getViewportHeight(), false);
+        polyUI.resize(width(), height(), false);
     }
 
     @Override
@@ -260,11 +265,11 @@ public class PolyUIScreen extends UScreen implements UIPause, BlurScreen {
     //#endif
     public void mouseMoved(double mouseX, double mouseY) {
         if (useMinecraftUIScaling()) {
-            inputManager.mouseMoved((float) mouseX - window.getXOffset(), (float) mouseY - window.getYOffset());
+            inputManager.mouseMoved((float) mouseX - ox, (float) mouseY - oy);
             return;
         }
-        float mx = (float) UMouse.Raw.getX() - window.getXOffset();
-        float my = (float) UMouse.Raw.getY() - window.getYOffset();
+        float mx = (float) UMouse.Raw.getX() - ox;
+        float my = (float) UMouse.Raw.getY() - oy;
         inputManager.mouseMoved(mx, my);
     }
 
@@ -272,6 +277,7 @@ public class PolyUIScreen extends UScreen implements UIPause, BlurScreen {
     @MustBeInvokedByOverriders
     public void onScreenClose() {
         if (polyUI == null) return;
+        // noinspection DataFlowIssue
         this.polyUI.getWindow().setCursor(Cursor.Pointer);
     }
 
@@ -281,13 +287,11 @@ public class PolyUIScreen extends UScreen implements UIPause, BlurScreen {
     }
 
     public float width() {
-        float w = useMinecraftUIScaling() ? (float) ((double) UResolution.getViewportWidth() * UResolution.getScaleFactor()) : UResolution.getViewportWidth();
-        return PolyUI.isOnMac ? w * 2f : w;
+        return useMinecraftUIScaling() ? (float) (UResolution.getViewportWidth() * UResolution.getScaleFactor()) : UResolution.getViewportWidth();
     }
 
     public float height() {
-        float h = useMinecraftUIScaling() ? (float) ((double) UResolution.getViewportHeight() * UResolution.getScaleFactor()) : UResolution.getViewportHeight();
-        return PolyUI.isOnMac ? h * 2f : h;
+        return useMinecraftUIScaling() ? (float) (UResolution.getViewportHeight() * UResolution.getScaleFactor()) : UResolution.getViewportHeight();
     }
 
     public float scale() {

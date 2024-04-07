@@ -140,6 +140,6 @@ public class TestConfig_Test extends Config {
     }
 
     public TestConfig_Test() {
-        super("test_mod.yaml", "Test Mod", Category.QOL);
+        super("test_mod", "Test Mod", Category.QOL);
     }
 }

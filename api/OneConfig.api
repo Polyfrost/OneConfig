@@ -95,9 +95,6 @@ public class org/polyfrost/oneconfig/platform/LoaderPlatform$ActiveMod {
 
 public abstract interface class org/polyfrost/oneconfig/platform/MousePlatform {
 	public abstract fun getButtonState (I)I
-	public abstract fun getDWheel ()D
-	public abstract fun getMouseDX ()D
-	public abstract fun getMouseDY ()D
 	public abstract fun getMouseX ()D
 	public abstract fun getMouseY ()D
 	public abstract fun isButtonDown (I)Z

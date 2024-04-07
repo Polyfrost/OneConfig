@@ -95,6 +95,20 @@ public abstract class EventHandler<E extends Event> {
         };
     }
 
+    public static <E extends Event> EventHandler<E> of(Class<E> cls, Runnable handler) {
+        return new EventHandler<E>() {
+            @Override
+            public void handle(E event) {
+                handler.run();
+            }
+
+            @Override
+            public Class<E> getEventClass() {
+                return cls;
+            }
+        };
+    }
+
     /**
      * Create an event handler from a method. <br>
      * Note the intended usage of this is using the {@link org.polyfrost.oneconfig.api.events.invoke.impl.Subscribe} annotation, and not this method directly.
@@ -110,8 +124,7 @@ public abstract class EventHandler<E extends Event> {
                 throw new EventException("Failed to register event handler: Method must have 1 parameter of type Event");
             }
             Class<Event> eventClass = (Class<Event>) m.getParameterTypes()[0];
-            Consumer<Event> f = MHUtils.getConsumerFunctionHandle(owner, m.getName(), eventClass);
-            if (f == null) throw new NullPointerException("Failed to resolve " + m + " for event handler");
+            Consumer<Event> f = MHUtils.getConsumerFunctionHandle(owner, m.getName(), eventClass).getOrThrow();
             return new EventHandler<Event>() {
                 @Override
                 public void handle(Event event) {

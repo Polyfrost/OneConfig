@@ -25,7 +25,6 @@ abstract class TextHud(var prefix: String, var suffix: String = "", private val 
 
     protected abstract fun getText(): String
 
-
     /**
      * [TextHud] which uses the given [supplier] to get the text.
      */
@@ -46,7 +45,7 @@ abstract class TextHud(var prefix: String, var suffix: String = "", private val 
         if (template.contains('S')) 100.milliseconds
         else if (template.contains('s')) 1.seconds
         else if (template.contains('m')) 1.minutes
-        else 5.minutes // asm: updating every 5 minutes is reasonable
+        else 5.minutes, // asm: updating every 5 minutes is reasonable
     ) {
         var string = template
             set(value) {
@@ -59,4 +58,3 @@ abstract class TextHud(var prefix: String, var suffix: String = "", private val 
         override fun getText() = LocalDateTime.now().format(template)
     }
 }
-
