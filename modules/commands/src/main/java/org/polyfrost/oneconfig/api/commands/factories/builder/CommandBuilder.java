@@ -111,6 +111,14 @@ public class CommandBuilder {
             return this;
         }
 
+        public ExeBuilder does(Runnable function) {
+            this.function = args -> {
+                function.run();
+                return null;
+            };
+            return this;
+        }
+
         public ExeBuilder does(Function<Object[], Object> function) {
             this.function = function;
             return this;

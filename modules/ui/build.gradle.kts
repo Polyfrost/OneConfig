@@ -28,4 +28,5 @@ dependencies {
     implementation(libs.polyui)
     compileOnly(libs.bundles.lwjgl)
     testImplementation(libs.lwjgl.tinyfd)
+    implementation(project(":modules:events"))
 }

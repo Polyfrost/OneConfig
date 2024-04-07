@@ -1,4 +1,4 @@
-package org.polyfrost.oneconfig.internal
+package org.polyfrost.oneconfig.ui.pages
 
 import org.polyfrost.polyui.renderer.data.PolyImage
 import java.time.Instant

@@ -27,15 +27,19 @@
 package org.polyfrost.oneconfig.internal;
 
 import org.polyfrost.oneconfig.api.commands.CommandManager;
+import org.polyfrost.oneconfig.api.commands.factories.builder.CommandBuilder;
 import org.polyfrost.oneconfig.api.events.EventManager;
-import org.polyfrost.oneconfig.internal.command.OneConfigCommand;
 import org.polyfrost.oneconfig.internal.ui.BlurHandler;
+import org.polyfrost.oneconfig.ui.OneConfigUI;
+import org.polyfrost.oneconfig.utils.GuiUtils;
 import org.polyfrost.oneconfig.utils.hypixel.HypixelUtils;
 import org.polyfrost.polyui.PolyUI;
 import org.polyfrost.polyui.component.Drawable;
 import org.polyfrost.polyui.input.Translator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static org.polyfrost.oneconfig.api.commands.factories.builder.CommandBuilder.runs;
 
 /**
  * The main class of OneConfig.
@@ -67,7 +71,10 @@ public class OneConfig {
             LOGGER.error("Failed to register blur handler", e);
         }
         preload();
-        CommandManager.registerCommand(new OneConfigCommand());
+        CommandBuilder b = CommandManager.builder("oneconfig", "ocfg").description("OneConfig main command");
+        b.then(runs().does(() -> GuiUtils.displayScreen(OneConfigUI.INSTANCE.create())).description("Opens the OneConfig GUI"));
+        b.then(runs("hud").does(() -> System.out.println("eek")).description("Opens the OneConfig HUD editor"));
+        CommandManager.registerCommand(b);
 //        KeybindManager.registerKeybind(new KeyBinder.Bind((int[]) null, null, (int[]) null, KeyModifiers.RSHIFT.getValue(), 0L, () -> {
 //            GuiUtils.displayScreen(OneConfigUI.INSTANCE.create());
 //            return true;

@@ -24,37 +24,30 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.utils;
+package org.polyfrost.oneconfig.internal.init;
 
-import org.polyfrost.oneconfig.platform.Platform;
+import org.spongepowered.asm.mixin.Mixins;
 
-/**
- * A class containing utility methods for working with GuiScreens.
- */
-public final class GuiUtils {
-    /**
-     * Displays a screen after a tick, preventing mouse sync issues.
-     *
-     * @param screen the screen to display.
-     */
-    public static void displayScreen(Object screen) {
-        displayScreen(screen, 1);
-    }
+import java.io.File;
 
-    /**
-     * Displays a screen after the specified amount of ticks.
-     *
-     * @param screen the screen to display.
-     * @param ticks  the amount of ticks to wait for before displaying the screen.
-     */
-    public static void displayScreen(Object screen, int ticks) {
-        TickDelay.of(ticks, () -> Platform.getGuiPlatform().setCurrentScreen(screen));
-    }
+@SuppressWarnings("unused")
+public class OneConfigInit
+    //#if FABRIC==1
+    //$$ implements net.fabricmc.loader.api.entrypoint.PreLaunchEntrypoint
+    //#endif
+{
 
-    /**
-     * Close the current open GUI screen.
-     */
-    public static void closeScreen() {
-        Platform.getGuiPlatform().setCurrentScreen(null);
+    //#if FABRIC==1
+    //$$ @Override
+    //$$ public void onPreLaunch() {
+    //$$     initialize(new String[]{});
+    //$$ }
+    //#endif
+
+    public static void initialize(String[] args) {
+        Mixins.addConfiguration("mixins.oneconfig.json");
+        final File oneConfigDir = new File("./OneConfig");
+        oneConfigDir.mkdirs();
+        new File(oneConfigDir, "profiles").mkdirs();
     }
 }

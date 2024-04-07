@@ -118,9 +118,6 @@ dependencies {
             isTransitive = false
         }
     }
-    shade(project(":")) {
-        isTransitive = false
-    }
     shade(project(":modules:config"))
     shade(project(":modules:commands"))
     shade(project(":modules:hud"))

@@ -23,21 +23,25 @@ public class DummyProperty extends Property<Void> {
 
 
     @Override
+    @Deprecated
     public @Nullable Void get() {
         return null;
     }
 
     @Override
+    @Deprecated
     public void set(@Nullable Void value) {
         // good luck getting a void instance to set this with
     }
 
     @Override
+    @Deprecated
     public <V> void setAs(V value) {
         // nop so that overwrite works
     }
 
     @Override
+    @Deprecated
     public <V> V getAs() {
         return null;
     }
@@ -53,14 +57,17 @@ public class DummyProperty extends Property<Void> {
     }
 
     @Override
+    @Deprecated
     public void removeCallback(@NotNull Consumer<@Nullable Void> callback) {}
 
     @Override
+    @Deprecated
     public Property<Void> addCallback(@NotNull Consumer<@Nullable Void> callback) {
         return this;
     }
 
     @Override
+    @Deprecated
     public Property<Void> addCallback(@NotNull Collection<Consumer<@Nullable Void>> callbacks) {
         return this;
     }

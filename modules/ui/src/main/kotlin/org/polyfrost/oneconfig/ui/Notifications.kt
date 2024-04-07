@@ -24,13 +24,11 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.utils
+package org.polyfrost.oneconfig.ui
 
 import org.polyfrost.oneconfig.api.events.EventManager
 import org.polyfrost.oneconfig.api.events.event.RenderEvent
 import org.polyfrost.oneconfig.api.events.event.Stage
-import org.polyfrost.oneconfig.internal.create
-import org.polyfrost.oneconfig.ui.LwjglManager
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.property.Settings
