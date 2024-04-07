@@ -76,6 +76,8 @@ import java.util.stream.Collectors;
 public class LogScanner {
     static final Logger LOGGER = LoggerFactory.getLogger("OneConfig Log Scanner");
 
+    private LogScanner() {}
+
     /**
      * Return a set of ActiveMods that have been blamed for the given stacktrace.
      * This will be an empty set if no mods are blamed.
