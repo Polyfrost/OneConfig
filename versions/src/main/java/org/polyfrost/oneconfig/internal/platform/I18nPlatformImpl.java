@@ -24,22 +24,31 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.internal.mixin.commands;
+package org.polyfrost.oneconfig.internal.platform;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.Screen;
-import org.polyfrost.oneconfig.internal.commands.ClientCommandHandler;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import net.minecraft.client.resources.I18n;
+import org.polyfrost.oneconfig.platform.I18nPlatform;
 
-@Mixin(Screen.class)
-public abstract class ScreenMixin {
-    @Inject(method = "sendMessage(Ljava/lang/String;Z)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/player/ClientPlayerEntity;sendChatMessage(Ljava/lang/String;)V"), cancellable = true)
-    private void execute(String text, boolean toHud, CallbackInfo ci) {
-        if (ClientCommandHandler.instance.execute(MinecraftClient.getInstance().player, text) != 0) {
-            ci.cancel();
-        }
+public class I18nPlatformImpl implements I18nPlatform {
+
+    @Override
+    public String format(String key, Object... args) {
+        return I18n.format(key, args);
+    }
+
+    @Override
+    public String getKeyName(int key, int scanCode) {
+        //#if MC>=11600
+        //#if FABRIC==1
+        //$$ final String s = net.minecraft.client.util.InputUtil.fromKeyCode(key, scanCode).getLocalizedText().asString();
+        //#else
+        //$$ final String s = net.minecraft.client.util.InputMappings.getInputByCode(key, scanCode).func_237520_d_().getString();
+        //#endif
+        //$$ if (s == null) return "Unknown";
+        //$$ else return s.length() == 1 ? s.toUpperCase() : s;
+        //#else
+        final String s = net.minecraft.client.settings.GameSettings.getKeyDisplayString(key);
+        return s == null ? "Unknown" : s;
+        //#endif
     }
 }

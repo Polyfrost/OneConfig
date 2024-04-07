@@ -1,3 +1,16 @@
+public class org/polyfrost/oneconfig/api/commands/CommandManager {
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/commands/CommandManager;
+	public final field parsers Ljava/util/Map;
+	public static fun builder ([Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder;
+	public fun create (Ljava/lang/Object;)Z
+	public fun createTree (Ljava/lang/Object;)Lorg/polyfrost/oneconfig/api/commands/CommandTree;
+	public static fun dsl ([Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/commands/factories/dsl/CommandDSL;
+	public static fun registerCommand (Ljava/lang/Object;)Z
+	public fun registerFactory (Lorg/polyfrost/oneconfig/api/commands/factories/CommandFactory;)V
+	public fun registerParser (Lorg/polyfrost/oneconfig/api/commands/arguments/ArgumentParser;)V
+	public fun registerParser ([Lorg/polyfrost/oneconfig/api/commands/arguments/ArgumentParser;)V
+}
+
 public class org/polyfrost/oneconfig/api/commands/CommandTree : org/polyfrost/oneconfig/api/commands/Node {
 	public field description Ljava/lang/String;
 	public fun <init> ([Ljava/lang/String;Ljava/lang/String;)V
@@ -252,6 +265,10 @@ public final class org/polyfrost/oneconfig/api/commands/factories/dsl/CommandDSL
 public final class org/polyfrost/oneconfig/api/commands/factories/dsl/DSLFactory : org/polyfrost/oneconfig/api/commands/factories/CommandFactory {
 	public fun <init> ()V
 	public fun create (Ljava/util/Map;Ljava/lang/Object;)Lorg/polyfrost/oneconfig/api/commands/CommandTree;
+}
+
+public abstract interface class org/polyfrost/oneconfig/api/commands/internal/PlatformCommandManager {
+	public abstract fun createCommand (Lorg/polyfrost/oneconfig/api/commands/CommandTree;)Z
 }
 
 public class org/polyfrost/oneconfig/api/commands/util/Pair {

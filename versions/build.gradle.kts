@@ -35,7 +35,7 @@ version = "$modMajor$modMinor"
 group = "org.polyfrost"
 
 val natives = listOf("windows", "windows-arm64", "linux", "macos", "macos-arm64")
-val tweakClass = "org.polyfrost.oneconfig.internal.plugin.asm.OneConfigTweaker"
+val tweakClass = "org.polyfrost.oneconfig.internal.init.OneConfigTweaker"
 
 preprocess {
     vars.put("MODERN", if (platform.mcMinor >= 16) 1 else 0)
@@ -128,10 +128,6 @@ dependencies {
     }
     shade(project(":modules:ui")) {
         isTransitive = false
-    }
-
-    if (platform.isFabric) {
-        shade(libs.fabric.asm)
     }
 
     val isLegacy = platform.isLegacyForge || platform.isLegacyFabric

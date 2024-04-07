@@ -36,8 +36,8 @@ import net.minecraft.text.Text;
 import org.polyfrost.oneconfig.api.events.EventManager;
 import org.polyfrost.oneconfig.api.events.event.ChatReceiveEvent;
 
-import org.polyfrost.oneconfig.internal.command.ClientCommandSource;
-import org.polyfrost.oneconfig.internal.command.PlatformCommandManagerImpl;
+import org.polyfrost.oneconfig.internal.commands.ClientCommandSource;
+import org.polyfrost.oneconfig.internal.commands.PlatformCommandManagerImpl;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;

@@ -26,7 +26,7 @@
 
 package org.polyfrost.oneconfig.internal.mixin;
 
-import org.polyfrost.oneconfig.internal.command.PlatformCommandManagerImpl;
+import org.polyfrost.oneconfig.internal.commands.PlatformCommandManagerImpl;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;

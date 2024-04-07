@@ -24,22 +24,44 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.internal.mixin.commands;
+package org.polyfrost.oneconfig.internal.platform;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.Screen;
-import org.polyfrost.oneconfig.internal.commands.ClientCommandHandler;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.polyfrost.oneconfig.libs.universal.UMouse;
+import org.polyfrost.oneconfig.platform.MousePlatform;
+//#if MC>=11600
+//$$ import org.polyfrost.oneconfig.libs.universal.UMinecraft;
+//$$ import org.lwjgl.glfw.GLFW;
+//#else
+import org.lwjgl.input.Mouse;
+//#endif
 
-@Mixin(Screen.class)
-public abstract class ScreenMixin {
-    @Inject(method = "sendMessage(Ljava/lang/String;Z)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/player/ClientPlayerEntity;sendChatMessage(Ljava/lang/String;)V"), cancellable = true)
-    private void execute(String text, boolean toHud, CallbackInfo ci) {
-        if (ClientCommandHandler.instance.execute(MinecraftClient.getInstance().player, text) != 0) {
-            ci.cancel();
-        }
+public class MousePlatformImpl implements MousePlatform {
+
+    @Override
+    public double getMouseX() {
+        return UMouse.Raw.getX();
+    }
+
+    @Override
+    public double getMouseY() {
+        return UMouse.Raw.getY();
+    }
+
+    @Override
+    public int getButtonState(int button) {
+        //#if MC>=11600
+        //$$ return GLFW.glfwGetMouseButton(UMinecraft.getMinecraft().getMainWindow().getHandle(), button);
+        //#else
+        return Mouse.isButtonDown(button) ? 1 : 0;
+        //#endif
+    }
+
+    @Override
+    public boolean isButtonDown(int button) {
+        //#if MC>=11600
+        //$$ return GLFW.glfwGetMouseButton(UMinecraft.getMinecraft().getMainWindow().getHandle(), button) == GLFW.GLFW_PRESS;
+        //#else
+        return Mouse.isButtonDown(button);
+        //#endif
     }
 }

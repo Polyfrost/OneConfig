@@ -24,22 +24,29 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.internal.mixin.commands;
+package org.polyfrost.oneconfig.internal.platform;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.Screen;
-import org.polyfrost.oneconfig.internal.commands.ClientCommandHandler;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import net.minecraft.client.entity.EntityPlayerSP;
+import org.polyfrost.oneconfig.libs.universal.UMinecraft;
+import org.polyfrost.oneconfig.platform.ServerPlatform;
 
-@Mixin(Screen.class)
-public abstract class ScreenMixin {
-    @Inject(method = "sendMessage(Ljava/lang/String;Z)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/player/ClientPlayerEntity;sendChatMessage(Ljava/lang/String;)V"), cancellable = true)
-    private void execute(String text, boolean toHud, CallbackInfo ci) {
-        if (ClientCommandHandler.instance.execute(MinecraftClient.getInstance().player, text) != 0) {
-            ci.cancel();
-        }
+public class ServerPlatformImpl implements ServerPlatform {
+
+    @Override
+    public boolean inMultiplayer() {
+        return UMinecraft.getWorld() != null && !UMinecraft.getMinecraft().isSingleplayer();
+    }
+
+    @Override
+    public String getServerBrand() {
+        EntityPlayerSP player = UMinecraft.getPlayer();
+        if (player == null)
+            return null;
+        return player.getClientBrand();
+    }
+
+    @Override
+    public boolean doesPlayerExist() {
+        return UMinecraft.getPlayer() != null;
     }
 }

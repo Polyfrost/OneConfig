@@ -114,7 +114,6 @@ public final class org/polyfrost/oneconfig/utils/JsonUtils {
 }
 
 public class org/polyfrost/oneconfig/utils/LogScanner {
-	public fun <init> ()V
 	public static fun identifyCallerFromStacktrace (Ljava/lang/Throwable;)Ljava/util/Set;
 	public static fun identifyFromClass (Ljava/lang/Class;)Ljava/util/Set;
 	public static fun identifyFromClass (Ljava/lang/String;)Ljava/util/Set;
@@ -244,22 +243,6 @@ public final class org/polyfrost/oneconfig/utils/SimpleProfiler {
 	public static fun pop (Ljava/lang/String;)F
 	public static fun pop (Ljava/lang/String;Lorg/slf4j/event/Level;)F
 	public static fun push (Ljava/lang/String;)Z
-}
-
-public final class org/polyfrost/oneconfig/utils/StringUtils {
-	public fun <init> ()V
-	public static fun addStringAt (Ljava/lang/String;ILjava/lang/String;)Ljava/lang/String;
-	public static fun isValidSequence (Ljava/lang/String;II)Z
-	public static fun nullToEmpty (Ljava/lang/String;)Ljava/lang/String;
-	public static fun substringIf (Ljava/lang/String;IIZ)Ljava/lang/String;
-	public static fun substringOrDont (Ljava/lang/String;II)Ljava/lang/String;
-	public static fun substringOrElse (Ljava/lang/String;IILjava/lang/String;)Ljava/lang/String;
-	public static fun substringOrEmpty (Ljava/lang/String;II)Ljava/lang/String;
-	public static fun substringSafe (Ljava/lang/String;I)Ljava/lang/String;
-	public static fun substringSafe (Ljava/lang/String;II)Ljava/lang/String;
-	public static fun substringTo (Ljava/lang/String;I)Ljava/lang/String;
-	public static fun substringTo (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
-	public static fun substringToLastIndexOf (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
 }
 
 public final class org/polyfrost/oneconfig/utils/dsl/ColorsKt {

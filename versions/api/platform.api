@@ -1,3 +1,16 @@
+public class org/polyfrost/oneconfig/api/commands/CommandManager {
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/commands/CommandManager;
+	public final field parsers Ljava/util/Map;
+	public static fun builder ([Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/commands/factories/builder/CommandBuilder;
+	public fun create (Ljava/lang/Object;)Z
+	public fun createTree (Ljava/lang/Object;)Lorg/polyfrost/oneconfig/api/commands/CommandTree;
+	public static fun dsl ([Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/commands/factories/dsl/CommandDSL;
+	public static fun registerCommand (Ljava/lang/Object;)Z
+	public fun registerFactory (Lorg/polyfrost/oneconfig/api/commands/factories/CommandFactory;)V
+	public fun registerParser (Lorg/polyfrost/oneconfig/api/commands/arguments/ArgumentParser;)V
+	public fun registerParser ([Lorg/polyfrost/oneconfig/api/commands/arguments/ArgumentParser;)V
+}
+
 public class org/polyfrost/oneconfig/api/commands/arguments/PlayerArgumentParser : org/polyfrost/oneconfig/api/commands/arguments/ArgumentParser {
 	public fun <init> ()V
 	public fun getType ()Ljava/lang/Class;
@@ -63,18 +76,6 @@ public final class org/polyfrost/oneconfig/ui/OneConfigUI {
 	public final fun openPage (Lorg/polyfrost/polyui/component/Drawable;Ljava/lang/String;)V
 	public final fun setUi (Lorg/polyfrost/polyui/component/Drawable;)V
 	public final fun setUsername (Ljava/lang/String;)V
-}
-
-public final class org/polyfrost/oneconfig/ui/impl/MCWindow : org/polyfrost/polyui/renderer/Window {
-	public fun <init> (Lnet/minecraft/client/Minecraft;)V
-	public fun close ()V
-	public fun getClipboard ()Ljava/lang/String;
-	public fun getKeyName (I)Ljava/lang/String;
-	public fun open (Lorg/polyfrost/polyui/PolyUI;)Ljava/lang/Void;
-	public synthetic fun open (Lorg/polyfrost/polyui/PolyUI;)Lorg/polyfrost/polyui/renderer/Window;
-	public fun setClipboard (Ljava/lang/String;)V
-	public fun setCursor (Lorg/polyfrost/polyui/renderer/data/Cursor;)V
-	public fun supportsRenderPausing ()Z
 }
 
 public final class org/polyfrost/oneconfig/ui/pages/News {
@@ -237,5 +238,17 @@ public class org/polyfrost/oneconfig/utils/hypixel/LocrawUtil {
 	public fun getLocrawInfo ()Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo;
 	public fun isInGame ()Z
 	public fun onMessageReceived (Lorg/polyfrost/oneconfig/api/events/event/ChatReceiveEvent;)V
+}
+
+public final class org/polyfrost/polyui/renderer/impl/MCWindow : org/polyfrost/polyui/renderer/Window {
+	public fun <init> (Lnet/minecraft/client/Minecraft;)V
+	public fun close ()V
+	public fun getClipboard ()Ljava/lang/String;
+	public fun getKeyName (I)Ljava/lang/String;
+	public fun open (Lorg/polyfrost/polyui/PolyUI;)Ljava/lang/Void;
+	public synthetic fun open (Lorg/polyfrost/polyui/PolyUI;)Lorg/polyfrost/polyui/renderer/Window;
+	public fun setClipboard (Ljava/lang/String;)V
+	public fun setCursor (Lorg/polyfrost/polyui/renderer/data/Cursor;)V
+	public fun supportsRenderPausing ()Z
 }
 

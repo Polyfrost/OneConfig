@@ -30,7 +30,7 @@ package org.polyfrost.oneconfig.internal.mixin.commands;
 import net.minecraft.entity.ai.pathing.PathNodeMaker;
 import net.minecraft.util.Formatting;
 import org.apache.commons.lang3.StringUtils;
-import org.polyfrost.oneconfig.internal.command.ClientCommandHandler;
+import org.polyfrost.oneconfig.internal.commands.ClientCommandHandler;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;

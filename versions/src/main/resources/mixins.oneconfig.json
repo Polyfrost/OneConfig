@@ -3,7 +3,7 @@
     "minVersion": "0.7",
     "package": "org.polyfrost.oneconfig.internal.mixin",
     "refmap": "mixins.oneconfig.refmap.json",
-    "plugin": "org.polyfrost.oneconfig.internal.plugin.OneConfigMixinPlugin",
+    "plugin": "org.polyfrost.oneconfig.internal.init.OneConfigMixinPlugin",
     "injectors": {
         "maxShiftBy": 5
     },
