@@ -69,6 +69,7 @@ import org.polyfrost.oneconfig.api.commands.CommandTree;
 import org.polyfrost.oneconfig.api.commands.Executable;
 import org.polyfrost.oneconfig.api.commands.Node;
 import org.polyfrost.oneconfig.api.commands.arguments.ArgumentParser;
+import org.polyfrost.oneconfig.api.commands.internal.PlatformCommandManager;
 import org.polyfrost.oneconfig.internal.mixin.HelpCommandAccessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -29,6 +29,7 @@ package org.polyfrost.oneconfig.internal.commands;
 import org.polyfrost.oneconfig.api.commands.CommandManager;
 import org.polyfrost.oneconfig.api.commands.arguments.PlayerArgumentParser;
 import org.polyfrost.oneconfig.api.commands.CommandTree;
+import org.polyfrost.oneconfig.api.commands.internal.PlatformCommandManager;
 
 public class PlatformCommandManagerImpl implements PlatformCommandManager {
 

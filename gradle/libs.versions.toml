@@ -1,28 +1,28 @@
 [versions]
 kotlin = "1.8.22"
-kotlinx-coroutines = "1.7.2"
-kotlinx-serialization = "1.5.1"
-kotlinx-atomicfu = "0.21.0"
-kotlinx-abi = "0.13.2"
+kotlinx-coroutines = "1.8.0"
+kotlinx-serialization = "1.6.3"
+kotlinx-atomicfu = "0.23.2"
+kotlinx-abi = "0.14.0"
 
 blossom = "1.3.1"
 shadow = "8.1.1"
 
-pgt = "0.2.6"
+pgt = "0.4.1"
 
-caffeine = "2.9.3"
+caffeine = "3.1.8"
 mixin = "0.7.11-SNAPSHOT"
 
 lwjgl = "3.3.1"
 
 polyui = "1.1.3"
 
-slf4j = "2.0.9"
-annotations = "24.0.1"
+slf4j = "2.0.12"
+annotations = "24.1.0"
 
-junit-bom = "5.9.1"
+junit-bom = "5.10.2"
 
-nightconfig = "3.6.5"
+nightconfig = "3.6.6"
 
 vigilance = "295"
 universalcraft = "249"
