@@ -419,7 +419,7 @@ public class CommandTree implements Node {
             if (res.second.length == 0) thisArg = "";
             Executable e = (Executable) n;
             // fast path: we already past the end of this command, don't try
-            if (res.second.length > e.parameters.length) return null;
+            if (res.second.length > e.parameters.length || e.parameters.length == 0) return null;
             Executable.Param param = e.parameters[Math.max(0, res.second.length - 1)];
             List<String> l = param.tryAutoComplete(thisArg);
             if (l == null || l.isEmpty()) return null;
