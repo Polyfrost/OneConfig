@@ -313,6 +313,9 @@ public class ObjectSerializer {
         if (cls.isArray()) {
             throw new SerializationException("Failed to deserialize object: Cannot deserialize into an array type " + cls.getName());
         }
+        if (cls.isEnum()){
+            return Enum.valueOf((Class) cls, (String) in.get("value"));
+        }
         Object o = MHUtils.instantiate(cls, true).getOrNull();
         if (o == null) {
             throw new SerializationException("Failed to deserialize object: Failed to instantiate " + cls.getName());
@@ -324,9 +327,7 @@ public class ObjectSerializer {
                 if (f == null) continue;
                 MethodHandle setter = MHUtils.getFieldSetter(f, o).getOrNull();
                 if (setter == null) continue;
-                if (f.getType().isEnum()) {
-                    setter.invoke(Enum.valueOf((Class) f.getType(), (String) e.getValue()));
-                } else if (e.getValue() instanceof Map) {
+                if (e.getValue() instanceof Map) {
                     Map<String, Object> m = (Map<String, Object>) e.getValue();
                     setter.invoke(_deserialize(m, m.getClass()));
                 } else {
