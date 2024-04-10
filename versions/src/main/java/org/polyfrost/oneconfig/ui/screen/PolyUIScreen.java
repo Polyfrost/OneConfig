@@ -48,7 +48,6 @@ import org.polyfrost.polyui.event.InputManager;
 import org.polyfrost.polyui.input.Translator;
 import org.polyfrost.polyui.property.Settings;
 import org.polyfrost.polyui.renderer.data.Cursor;
-import org.polyfrost.oneconfig.ui.impl.MCWindow;
 import org.polyfrost.polyui.unit.Align;
 import org.polyfrost.polyui.unit.Vec2;
 

@@ -30,4 +30,6 @@ package org.polyfrost.oneconfig.api.events.event;
  * Called when the Minecraft instance is starting.
  */
 public class StartEvent implements Event {
+    public static final StartEvent INSTANCE = new StartEvent();
+    private StartEvent() {}
 }

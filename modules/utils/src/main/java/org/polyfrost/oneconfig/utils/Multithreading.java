@@ -45,7 +45,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * <a href="https://github.com/Scherso/Seraph/blob/master/LICENSE">https://github.com/Scherso/Seraph/blob/master/LICENSE</a>
  * </p>
  */
-public class Multithreading {
+public final class Multithreading {
     private static ExecutorService executorService = null; /* by lazy { Executors.newCachedThreadPool(ThreadFactoryBuilder().setNameFormat("OneConfig-%d").build()) } */
     private static ScheduledExecutorService runnableExecutor = null;
 

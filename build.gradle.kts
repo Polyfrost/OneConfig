@@ -54,10 +54,6 @@ tasks {
 
 apiValidation {
     ignoredProjects.add("OneConfig")
-    for (project in project(":platform").subprojects) {
-        ignoredProjects.add(project.name)
-    }
-    ignoredProjects.remove("1.8.9-forge")
     ignoredPackages.add("org.polyfrost.oneconfig.libs")
     ignoredPackages.add("org.polyfrost.oneconfig.internal")
     ignoredPackages.add("org.polyfrost.oneconfig.test")

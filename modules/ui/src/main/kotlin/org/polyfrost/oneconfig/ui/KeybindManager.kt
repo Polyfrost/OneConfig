@@ -1,7 +1,6 @@
 package org.polyfrost.oneconfig.ui
 
 import org.polyfrost.oneconfig.api.events.event.RawKeyEvent
-import org.polyfrost.oneconfig.api.events.event.Stage
 import org.polyfrost.oneconfig.api.events.event.TickEvent
 import org.polyfrost.oneconfig.api.events.eventHandler
 import org.polyfrost.oneconfig.libs.universal.UKeyboard
@@ -31,10 +30,8 @@ object KeybindManager {
                 translateKey(inputManager, event.key, event.character, event.state != 0)
             }
         }.register()
-        eventHandler { event: TickEvent ->
-            if (event.stage == Stage.START) {
-                keyBinder.update(50_000L, inputManager.mods)
-            }
+        eventHandler { _: TickEvent.End ->
+            keyBinder.update(50_000L, inputManager.mods)
         }.register()
 
         modsMap = hashMapOf(

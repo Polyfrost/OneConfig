@@ -29,6 +29,8 @@ package org.polyfrost.oneconfig.ui
 
 import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.oneconfig.api.config.ConfigManager
+import org.polyfrost.oneconfig.api.hud.HudManager
+import org.polyfrost.oneconfig.libs.universal.UScreen
 import org.polyfrost.oneconfig.ui.pages.FeedbackPage
 import org.polyfrost.oneconfig.ui.pages.ModsPage
 import org.polyfrost.oneconfig.ui.pages.ThemesPage
@@ -46,7 +48,6 @@ import org.polyfrost.polyui.unit.*
 import org.polyfrost.polyui.utils.image
 import org.polyfrost.polyui.utils.radii
 import org.polyfrost.polyui.utils.rgba
-import kotlin.system.exitProcess
 
 
 object OneConfigUI {
@@ -114,7 +115,9 @@ object OneConfigUI {
                         ),
                     ),
                     Spacer(size = Vec2(200f, 170f)),
-                    SidebarButton0("hud.svg".image(), "oneconfig.edithud"),
+                    SidebarButton0("hud.svg".image(), "oneconfig.edithud").onClick {
+                        UScreen.displayScreen(PolyUIScreen(HudManager.polyUI))
+                    },
                 ),
             ).named("Sidebar"), Group(
                 size = Vec2(1127f, 700f),
@@ -179,7 +182,7 @@ object OneConfigUI {
                                     ).named("SearchField"),
                                     Image(
                                         "close.svg".image(),
-                                    ).named("Close").onClick { exitProcess(0) }.withStates().setDestructivePalette(),
+                                    ).named("Close").onClick { UScreen.displayScreen(null) }.withStates().setDestructivePalette(),
                                 ),
                             ),
                         ),

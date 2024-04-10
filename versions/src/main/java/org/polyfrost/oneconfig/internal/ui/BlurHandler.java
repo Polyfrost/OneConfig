@@ -32,7 +32,6 @@ import net.minecraft.client.shader.ShaderUniform;
 import net.minecraft.util.ResourceLocation;
 import org.polyfrost.oneconfig.api.events.event.RenderEvent;
 import org.polyfrost.oneconfig.api.events.event.ScreenOpenEvent;
-import org.polyfrost.oneconfig.api.events.event.Stage;
 import org.polyfrost.oneconfig.api.events.invoke.EventHandler;
 import org.polyfrost.oneconfig.internal.mixin.ShaderGroupAccessor;
 import org.polyfrost.oneconfig.libs.universal.UMinecraft;
@@ -71,10 +70,7 @@ public class BlurHandler {
 
     private BlurHandler() {
         EventHandler.of(ScreenOpenEvent.class, e -> reloadBlur(e.screen)).register();
-        EventHandler.of(RenderEvent.class, e -> {
-            if (e.stage != Stage.END) {
-                return;
-            }
+        EventHandler.of(RenderEvent.End.class, e -> {
             if (UScreen.getCurrentScreen() == null) {
                 return;
             }

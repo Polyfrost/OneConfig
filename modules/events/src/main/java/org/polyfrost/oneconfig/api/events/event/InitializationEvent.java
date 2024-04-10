@@ -30,4 +30,6 @@ package org.polyfrost.oneconfig.api.events.event;
  * Called when the game is initialized.
  */
 public class InitializationEvent implements Event {
+    public static final InitializationEvent INSTANCE = new InitializationEvent();
+    private InitializationEvent() {}
 }

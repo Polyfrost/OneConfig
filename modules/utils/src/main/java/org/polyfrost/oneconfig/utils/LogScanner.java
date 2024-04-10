@@ -73,7 +73,7 @@ import java.util.stream.Collectors;
 /**
  * Adapted from <a href="https://github.com/natanfudge/Not-Enough-Crashes">NotEnoughCrashes</a> under the <a href="https://opensource.org/licenses/MIT">MIT License</a>
  */
-public class LogScanner {
+public final class LogScanner {
     static final Logger LOGGER = LoggerFactory.getLogger("OneConfig Log Scanner");
 
     private LogScanner() {}

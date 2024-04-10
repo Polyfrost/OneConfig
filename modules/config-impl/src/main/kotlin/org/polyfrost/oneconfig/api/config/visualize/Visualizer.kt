@@ -77,7 +77,7 @@ fun interface Visualizer {
                 )
             } else {
                 require(
-                    prop.type == java.lang.Integer::class.java,
+                    prop.type == java.lang.Integer::class.java || prop.type == Int::class.java,
                 ) { "Dropdowns can only be used with enums or integers (offender=${prop.id}, type=${prop.type})" }
                 require(options.size >= 2) { "Dropdowns must have at least two options (offender=${prop.id})" }
                 return Dropdown(
@@ -105,6 +105,7 @@ fun interface Visualizer {
             val min = prop.getMetadata<Float>("min") ?: 0f
             val max = prop.getMetadata<Float>("max") ?: 100f
             val notFloating = prop.type == java.lang.Integer::class.java || prop.type == java.lang.Long::class.java
+                    || prop.type == Int::class.java || prop.type == Long::class.java
             val s =
                 TextInput(
                     visibleSize = Vec2(300f, 32f),
@@ -145,7 +146,8 @@ fun interface Visualizer {
                     }
                 return r
             } else {
-                require(prop.type == java.lang.Integer::class.java) { "Radio buttons ${prop.id} can only be used with enum or integer types (type=${prop.type}" }
+                require(prop.type == java.lang.Integer::class.java
+                        || prop.type == Int::class.java) { "Radio buttons ${prop.id} can only be used with enum or integer types (type=${prop.type}" }
                 require(options.size >= 2) { "Radio button ${prop.id} must have at least two options" }
                 return Radiobutton(
                     entries = options.map { null to it }.toTypedArray(),

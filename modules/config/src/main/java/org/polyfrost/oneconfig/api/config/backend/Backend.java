@@ -55,7 +55,13 @@ public abstract class Backend {
      */
     public final boolean load(Tree tree) {
         if (tree.getID() == null) throw new IllegalArgumentException("tree must be master (have a valid ID)");
-        Tree t = load0(tree.getID());
+        Tree t;
+        try {
+            t = load0(tree.getID());
+        } catch (Exception e) {
+            LOGGER.error("error loading tree with ID {}!", tree.getID(), e);
+            return false;
+        }
         if (t == null) return false;
         tree.overwrite(t);
         trees.putIfAbsent(tree.getID(), tree);
@@ -68,13 +74,23 @@ public abstract class Backend {
         if (id == null) throw new NullPointerException("id cannot be null");
         Tree tree = trees.get(id);
         if (tree == null) throw new IllegalArgumentException("no registered tree with ID " + id);
-        return save0(tree);
+        try {
+            return save0(tree);
+        } catch (Exception e) {
+            LOGGER.error("error saving tree with ID {}!", id, e);
+            return false;
+        }
     }
 
     public final boolean save(Tree tree) {
         if (tree.getID() == null) throw new IllegalArgumentException("tree must be master (have a valid ID)");
         trees.putIfAbsent(tree.getID(), tree);
-        return save0(tree);
+        try {
+            return save0(tree);
+        } catch (Exception e) {
+            LOGGER.error("error saving tree with ID {}!", tree.getID(), e);
+            return false;
+        }
     }
 
     public boolean exists(String id) {

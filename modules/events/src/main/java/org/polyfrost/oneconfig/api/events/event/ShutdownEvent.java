@@ -32,4 +32,6 @@ package org.polyfrost.oneconfig.api.events.event;
  * @see PreShutdownEvent
  */
 public class ShutdownEvent implements Event {
+    public static final ShutdownEvent INSTANCE = new ShutdownEvent();
+    private ShutdownEvent() {}
 }

@@ -313,7 +313,7 @@ public class ObjectSerializer {
         if (cls.isArray()) {
             throw new SerializationException("Failed to deserialize object: Cannot deserialize into an array type " + cls.getName());
         }
-        if (cls.isEnum()){
+        if (cls.isEnum()) {
             return Enum.valueOf((Class) cls, (String) in.get("value"));
         }
         Object o = MHUtils.instantiate(cls, true).getOrNull();

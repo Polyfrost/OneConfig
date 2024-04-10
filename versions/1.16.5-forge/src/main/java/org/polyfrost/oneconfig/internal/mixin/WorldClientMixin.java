@@ -46,6 +46,6 @@ import java.util.function.Supplier;
 public class WorldClientMixin {
     @Inject(method = "<init>", at = @At("RETURN"))
     private void onWorldLoad(ClientPlayNetHandler arg, ClientWorld.ClientWorldInfo arg2, RegistryKey<World> arg3, DimensionType arg4, int i, Supplier<IProfiler> supplier, WorldRenderer arg5, boolean bl, long l, CallbackInfo ci) {
-        EventManager.INSTANCE.post(new WorldLoadEvent());
+        EventManager.INSTANCE.post(WorldLoadEvent.INSTANCE);
     }
 }

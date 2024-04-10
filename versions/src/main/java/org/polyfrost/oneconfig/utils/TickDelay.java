@@ -28,13 +28,13 @@ package org.polyfrost.oneconfig.utils;
 
 
 import org.polyfrost.oneconfig.api.events.EventManager;
-import org.polyfrost.oneconfig.api.events.event.Stage;
 import org.polyfrost.oneconfig.api.events.event.TickEvent;
 import org.polyfrost.oneconfig.api.events.invoke.EventHandler;
 
 public class TickDelay {
-    
-    private TickDelay() {}
+
+    private TickDelay() {
+    }
 
     /**
      * Schedules a Runnable to be called after a certain amount of ticks.
@@ -45,24 +45,23 @@ public class TickDelay {
         if (ticks < 1) {
             function.run();
         } else {
-            new EventHandler<TickEvent>() {
+            new EventHandler<TickEvent.End>() {
                 private int delay = ticks;
+
                 @Override
-                public void handle(TickEvent event) {
-                    if (event.stage == Stage.START) {
-                        // Delay expired
-                        if (delay < 1) {
-                            function.run();
-                            EventManager.INSTANCE.unregister(this);
-                        } else {
-                            delay--;
-                        }
+                public void handle(TickEvent.End event) {
+                    // Delay expired
+                    if (delay < 1) {
+                        function.run();
+                        EventManager.INSTANCE.unregister(this);
+                    } else {
+                        delay--;
                     }
                 }
 
                 @Override
-                public Class<TickEvent> getEventClass() {
-                    return TickEvent.class;
+                public Class<TickEvent.End> getEventClass() {
+                    return TickEvent.End.class;
                 }
             }.register();
         }

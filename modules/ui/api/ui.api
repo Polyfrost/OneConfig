@@ -1,3 +1,14 @@
+public final class org/polyfrost/oneconfig/ui/KeybindManager {
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/ui/KeybindManager;
+	public final fun getInputManager ()Lorg/polyfrost/polyui/event/InputManager;
+	public final fun getKeyBinder ()Lorg/polyfrost/polyui/input/KeyBinder;
+	public static final fun getKeysMap ()Ljava/util/Map;
+	public static final fun getModsMap ()Ljava/util/Map;
+	public final fun getSettings ()Lorg/polyfrost/polyui/property/Settings;
+	public static final fun registerKeybind (Lorg/polyfrost/polyui/input/KeyBinder$Bind;)V
+	public static final fun translateKey (Lorg/polyfrost/polyui/event/InputManager;ICZ)V
+}
+
 public abstract interface class org/polyfrost/oneconfig/ui/LwjglManager {
 	public static final field INSTANCE Lorg/polyfrost/oneconfig/ui/LwjglManager;
 	public abstract fun getRenderer ()Lorg/polyfrost/polyui/renderer/Renderer;

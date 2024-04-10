@@ -48,10 +48,10 @@ public class ClientBuiltinResourcePackProviderMixin {
         if (initialized) return;
         initialized = true;
 
-        EventManager.INSTANCE.post(new StartEvent());
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> EventManager.INSTANCE.post(new ShutdownEvent())));
+        EventManager.INSTANCE.post(StartEvent.INSTANCE);
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> EventManager.INSTANCE.post(ShutdownEvent.INSTANCE)));
 
-        EventManager.INSTANCE.post(new InitializationEvent());
+        EventManager.INSTANCE.post(InitializationEvent.INSTANCE);
         OneConfig.INSTANCE.init();
     }
 }

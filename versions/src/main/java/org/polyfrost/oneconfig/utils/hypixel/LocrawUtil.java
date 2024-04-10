@@ -39,7 +39,6 @@ import org.polyfrost.oneconfig.api.events.EventManager;
 import org.polyfrost.oneconfig.api.events.event.ChatReceiveEvent;
 import org.polyfrost.oneconfig.api.events.event.ChatSendEvent;
 import org.polyfrost.oneconfig.api.events.event.LocrawEvent;
-import org.polyfrost.oneconfig.api.events.event.Stage;
 import org.polyfrost.oneconfig.api.events.event.TickEvent;
 import org.polyfrost.oneconfig.api.events.event.WorldLoadEvent;
 import org.polyfrost.oneconfig.api.events.invoke.EventHandler;
@@ -66,16 +65,14 @@ public class LocrawUtil {
     private boolean inGame = false;
 
     void initialize() {
-        EventHandler.of(TickEvent.class, (event) -> {
-            if (event.stage == Stage.END) {
-                if (!Platform.getServerPlatform().doesPlayerExist() || !HypixelUtils.INSTANCE.isHypixel()) {
-                    return;
-                }
+        EventHandler.of(TickEvent.End.class, (event) -> {
+            if (!Platform.getServerPlatform().doesPlayerExist() || !HypixelUtils.INSTANCE.isHypixel()) {
+                return;
+            }
 
-                this.tick++;
-                if (this.tick == 40 || this.tick % 520 == 0) {
-                    sendLocraw(false);
-                }
+            this.tick++;
+            if (this.tick == 40 || this.tick % 520 == 0) {
+                sendLocraw(false);
             }
         }).register();
 
@@ -103,7 +100,7 @@ public class LocrawUtil {
         });
     }
 
-    public void onMessageReceived(ChatReceiveEvent event) {
+    private void onMessageReceived(ChatReceiveEvent event) {
         try {
             // Had some false positives while testing, so this is here just to be safe.
             final String msg = event.getFullyUnformattedMessage();

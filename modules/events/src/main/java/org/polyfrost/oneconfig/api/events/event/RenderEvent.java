@@ -27,21 +27,27 @@
 package org.polyfrost.oneconfig.api.events.event;
 
 /**
- * Called when a game tick is started / ended, represented by a {@link Stage}
+ * Called when a game tick is started / ended.
  */
-public class RenderEvent implements Event {
+public abstract class RenderEvent implements Event {
     /**
-     * Whether the tick is starting or ending.
-     */
-    public final Stage stage;
-
-    /**
-     * How much time has elapsed since the last tick, in ticks. Used for animations.
+     * How much time has elapsed since the last tick, in a fraction of a tick. Used for animations.
      */
     public final float deltaTicks;
 
-    public RenderEvent(Stage stage, float deltaTicks) {
-        this.stage = stage;
+    RenderEvent(float deltaTicks) {
         this.deltaTicks = deltaTicks;
+    }
+
+    public static class Start extends RenderEvent {
+        public Start(float deltaTicks) {
+            super(deltaTicks);
+        }
+    }
+
+    public static class End extends RenderEvent {
+        public End(float deltaTicks) {
+            super(deltaTicks);
+        }
     }
 }

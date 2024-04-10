@@ -40,7 +40,6 @@ import org.polyfrost.oneconfig.api.events.event.RawMouseEvent;
 import org.polyfrost.oneconfig.api.events.event.RenderEvent;
 import org.polyfrost.oneconfig.api.events.event.ScreenOpenEvent;
 import org.polyfrost.oneconfig.api.events.event.ShutdownEvent;
-import org.polyfrost.oneconfig.api.events.event.Stage;
 import org.polyfrost.oneconfig.api.events.event.StartEvent;
 import org.polyfrost.oneconfig.api.events.event.TickEvent;
 import org.polyfrost.oneconfig.api.events.event.TimerUpdateEvent;
@@ -78,51 +77,51 @@ public abstract class MinecraftMixin {
 
     @Inject(method = "shutdownMinecraftApplet", at = @At("HEAD"))
     private void onShutdown(CallbackInfo ci) {
-        EventManager.INSTANCE.post(new PreShutdownEvent());
+        EventManager.INSTANCE.post(PreShutdownEvent.INSTANCE);
     }
 
     //#if FORGE==1 && MC<=11202
     @Inject(method = "startGame", at = @At("HEAD"))
     private void onStart(CallbackInfo ci) {
-        EventManager.INSTANCE.post(new StartEvent());
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> EventManager.INSTANCE.post(new ShutdownEvent())));
+        EventManager.INSTANCE.post(StartEvent.INSTANCE);
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> EventManager.INSTANCE.post(ShutdownEvent.INSTANCE)));
     }
 
     @Inject(method = "startGame", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/client/FMLClientHandler;onInitializationComplete()V", shift = At.Shift.AFTER, remap = false))
     private void onInit(CallbackInfo ci) {
-        EventManager.INSTANCE.post(new InitializationEvent());
+        EventManager.INSTANCE.post(InitializationEvent.INSTANCE);
         OneConfig.INSTANCE.init();
     }
     //#endif
 
     @Inject(method = "runGameLoop", at = @At(value = "INVOKE", target = UPDATE_CAMERA_AND_RENDER))
     private void onRenderTickStart(CallbackInfo ci) {
-        EventManager.INSTANCE.post(new RenderEvent(Stage.START, this.timer.renderPartialTicks));
+        EventManager.INSTANCE.post(new RenderEvent.Start(this.timer.renderPartialTicks));
     }
 
     @Inject(method = "runGameLoop", at = @At(value = "INVOKE", target = UPDATE_CAMERA_AND_RENDER, shift = At.Shift.AFTER))
     private void onRenderTickEnd(CallbackInfo ci) {
-        EventManager.INSTANCE.post(new RenderEvent(Stage.END, this.timer.renderPartialTicks));
+        EventManager.INSTANCE.post(new RenderEvent.End(this.timer.renderPartialTicks));
     }
 
     @Inject(method = "runGameLoop", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/shader/Framebuffer;framebufferRender(II)V"))
     private void onFramebufferStart(CallbackInfo ci) {
-        EventManager.INSTANCE.post(new FramebufferRenderEvent(Stage.START));
+        EventManager.INSTANCE.post(FramebufferRenderEvent.Start.INSTANCE);
     }
 
     @Inject(method = "runGameLoop", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/shader/Framebuffer;framebufferRender(II)V", shift = At.Shift.AFTER))
     private void onFramebufferEnd(CallbackInfo ci) {
-        EventManager.INSTANCE.post(new FramebufferRenderEvent(Stage.END));
+        EventManager.INSTANCE.post(FramebufferRenderEvent.End.INSTANCE);
     }
 
     @Inject(method = "runTick", at = @At(value = "INVOKE", target = "Lnet/minecraft/profiler/Profiler;startSection(Ljava/lang/String;)V", ordinal = 0))
     private void onClientTickStart(CallbackInfo ci) {
-        EventManager.INSTANCE.post(new TickEvent(Stage.START));
+        EventManager.INSTANCE.post(TickEvent.Start.INSTANCE);
     }
 
     @Inject(method = "runTick", at = @At("TAIL"))
     private void onClientTickEnd(CallbackInfo ci) {
-        EventManager.INSTANCE.post(new TickEvent(Stage.END));
+        EventManager.INSTANCE.post(TickEvent.End.INSTANCE);
     }
 
     //#if FORGE==1
@@ -203,7 +202,7 @@ public abstract class MinecraftMixin {
 
     @Inject(method = "runTick", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/FMLCommonHandler;fireKeyInput()V", remap = false))
     private void onKeyInputEvent(CallbackInfo ci) {
-        EventManager.INSTANCE.post(new KeyInputEvent());
+        EventManager.INSTANCE.post(KeyInputEvent.INSTANCE);
     }
 
     @Inject(method = "runTick", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/client/ForgeHooksClient;postMouseEvent()Z", remap = false))
@@ -231,7 +230,7 @@ public abstract class MinecraftMixin {
     //$$
     //$$ @Inject(method = "runTickKeyboard", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/FMLCommonHandler;fireKeyInput()V", remap = false), remap = true)
     //$$ private void onKeyInputEvent(CallbackInfo ci) {
-    //$$     EventManager.INSTANCE.post(new KeyInputEvent());
+    //$$     EventManager.INSTANCE.post(KeyInputEvent.INSTANCE);
     //$$ }
     //$$
     //$$ @Inject(method = "runTickMouse", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/client/ForgeHooksClient;postMouseEvent()Z", remap = false), remap = true)
@@ -261,7 +260,7 @@ public abstract class MinecraftMixin {
     //$$
     //$$ @Inject(method = "tick", at = @At(value = "JUMP", opcode = Opcodes.GOTO, ordinal = 22, by = 2, shift = At.Shift.BY))
     //$$ private void onKeyInputEvent(CallbackInfo ci) {
-    //$$     EventManager.INSTANCE.post(new KeyInputEvent());
+    //$$     EventManager.INSTANCE.post(KeyInputEvent.INSTANCE);
     //$$ }
     //$$
     //$$ @Inject(method = "tick", at = @At(value = "INVOKE", target = "Lorg/lwjgl/input/Mouse;getEventButton()I", remap = false))
@@ -289,7 +288,7 @@ public abstract class MinecraftMixin {
     //$$
     //$$ @Inject(method = "method_12145", at = @At(value = "FIELD", target = "Lnet/minecraft/client/options/GameOptions;debugFpsEnabled:Z", opcode = Opcodes.PUTFIELD, shift = At.Shift.BY, by = 2))
     //$$ private void onKeyInputEvent(CallbackInfo ci) {
-    //$$     EventManager.INSTANCE.post(new KeyInputEvent());
+    //$$     EventManager.INSTANCE.post(KeyInputEvent.INSTANCE);
     //$$ }
     //$$
     //$$ @Inject(method = "method_12141", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/options/KeyBinding;setKeyPressed(IZ)V"))

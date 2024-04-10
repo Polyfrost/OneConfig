@@ -30,4 +30,6 @@ package org.polyfrost.oneconfig.api.events.event;
  * Called when the world is loaded.
  */
 public class WorldLoadEvent implements Event {
+    public static final WorldLoadEvent INSTANCE = new WorldLoadEvent();
+    private WorldLoadEvent() {}
 }

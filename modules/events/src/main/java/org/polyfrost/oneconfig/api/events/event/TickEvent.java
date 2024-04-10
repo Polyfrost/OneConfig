@@ -26,16 +26,14 @@
 
 package org.polyfrost.oneconfig.api.events.event;
 
-/**
- * Called when a game tick is started / ended, represented by a {@link Stage}
- */
-public class TickEvent implements Event {
-    /**
-     * Whether the tick is starting or ending.
-     */
-    public final Stage stage;
 
-    public TickEvent(Stage stage) {
-        this.stage = stage;
+public interface TickEvent extends Event {
+    class Start implements TickEvent {
+        public static final Start INSTANCE = new Start();
+        private Start() {}
+    }
+    class End implements TickEvent {
+        public static final End INSTANCE = new End();
+        private End() {}
     }
 }

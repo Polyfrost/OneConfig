@@ -27,4 +27,6 @@
 package org.polyfrost.oneconfig.api.events.event;
 
 public class KeyInputEvent implements Event {
+    public static final KeyInputEvent INSTANCE = new KeyInputEvent();
+    private KeyInputEvent() {}
 }

@@ -46,7 +46,7 @@ public class ClientModLoaderMixin {
 
     @Inject(method = "lambda$finishModLoading$9", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/GameSettings;loadOptions()V", remap = true), remap = false)
     private static void onFinishModLoading(CallbackInfo ci) {
-        EventManager.INSTANCE.post(new InitializationEvent());
+        EventManager.INSTANCE.post(InitializationEvent.INSTANCE);
         OneConfig.INSTANCE.init();
     }
 }

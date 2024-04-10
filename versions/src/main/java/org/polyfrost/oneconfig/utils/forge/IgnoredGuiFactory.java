@@ -24,14 +24,19 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.utils.dsl
-
-import net.minecraft.client.gui.GuiScreen
-import org.polyfrost.oneconfig.utils.GuiUtils
+//#if FORGE==1
+package org.polyfrost.oneconfig.utils.forge;
+//#if MC<=11202
 
 /**
- * Displays a screen after the specified amount of ticks.
- *
- * @param ticks the amount of ticks to wait for before displaying the screen.
+ * Use this interface to ignore a {@link net.minecraftforge.fml.client.IModGuiFactory} during processing of automatic GUI handling in OneConfig. <br>
+ * Commonly used if you don't want to use the default behavior (opening this GUI upon pressing) and instead want to use your own system.
  */
-fun GuiScreen.openScreen(ticks: Int = 1) = GuiUtils.displayScreen(this, ticks)
+//#else
+//$$ /** Use this interface to ignore the `CONFIGGUIFACTORY` {@link net.minecraftforge.fml.ExtensionPoint} during processing of automatic GUI handling in OneConfig. <br>
+//$$  * Commonly used if you don't want to use the default behavior (opening this GUI upon pressing) and instead want to use your own system.
+//$$  */
+//#endif
+public interface IgnoredGuiFactory {
+}
+//#endif

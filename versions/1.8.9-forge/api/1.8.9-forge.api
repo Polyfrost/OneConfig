@@ -11,11 +11,6 @@ public class org/polyfrost/oneconfig/api/events/event/ChatReceiveEvent : org/pol
 	public fun getFullyUnformattedMessage ()Ljava/lang/String;
 }
 
-public class org/polyfrost/oneconfig/api/events/event/LocrawEvent : org/polyfrost/oneconfig/api/events/event/Event {
-	public final field info Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo;
-	public fun <init> (Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo;)V
-}
-
 public class org/polyfrost/oneconfig/api/events/event/ReceivePacketEvent : org/polyfrost/oneconfig/api/events/event/Event$Cancellable {
 	public final field packet Lnet/minecraft/network/Packet;
 	public fun <init> (Lnet/minecraft/network/Packet;)V
@@ -37,17 +32,6 @@ public class org/polyfrost/oneconfig/api/events/event/TimerUpdateEvent : org/pol
 	public fun <init> (Lnet/minecraft/util/Timer;Z)V
 }
 
-public final class org/polyfrost/oneconfig/ui/KeybindManager {
-	public static final field INSTANCE Lorg/polyfrost/oneconfig/ui/KeybindManager;
-	public final fun getInputManager ()Lorg/polyfrost/polyui/event/InputManager;
-	public final fun getKeyBinder ()Lorg/polyfrost/polyui/input/KeyBinder;
-	public static final fun getKeysMap ()Ljava/util/Map;
-	public static final fun getModsMap ()Ljava/util/Map;
-	public final fun getSettings ()Lorg/polyfrost/polyui/property/Settings;
-	public static final fun registerKeybind (Lorg/polyfrost/polyui/input/KeyBinder$Bind;)V
-	public static final fun translateKey (Lorg/polyfrost/polyui/event/InputManager;ICZ)V
-}
-
 public final class org/polyfrost/oneconfig/ui/OneConfigUI {
 	public static final field INSTANCE Lorg/polyfrost/oneconfig/ui/OneConfigUI;
 	public static field ui Lorg/polyfrost/polyui/component/Drawable;
@@ -63,18 +47,6 @@ public final class org/polyfrost/oneconfig/ui/OneConfigUI {
 	public final fun openPage (Lorg/polyfrost/polyui/component/Drawable;Ljava/lang/String;)V
 	public final fun setUi (Lorg/polyfrost/polyui/component/Drawable;)V
 	public final fun setUsername (Ljava/lang/String;)V
-}
-
-public final class org/polyfrost/oneconfig/ui/impl/MCWindow : org/polyfrost/polyui/renderer/Window {
-	public fun <init> (Lnet/minecraft/client/Minecraft;)V
-	public fun close ()V
-	public fun getClipboard ()Ljava/lang/String;
-	public fun getKeyName (I)Ljava/lang/String;
-	public fun open (Lorg/polyfrost/polyui/PolyUI;)Ljava/lang/Void;
-	public synthetic fun open (Lorg/polyfrost/polyui/PolyUI;)Lorg/polyfrost/polyui/renderer/Window;
-	public fun setClipboard (Ljava/lang/String;)V
-	public fun setCursor (Lorg/polyfrost/polyui/renderer/data/Cursor;)V
-	public fun supportsRenderPausing ()Z
 }
 
 public final class org/polyfrost/oneconfig/ui/pages/News {
@@ -100,6 +72,17 @@ public final class org/polyfrost/oneconfig/ui/pages/PagesKt {
 	public static final fun NotificationsPopup (Lorg/polyfrost/polyui/PolyUI;Ljava/util/List;)V
 	public static final fun ProfilesPage ()Lorg/polyfrost/polyui/component/Drawable;
 	public static final fun ThemesPage ()Lorg/polyfrost/polyui/component/Drawable;
+}
+
+public class org/polyfrost/oneconfig/ui/screen/MCWindow : org/polyfrost/polyui/renderer/Window {
+	public fun <init> (Lnet/minecraft/client/Minecraft;)V
+	public fun close ()V
+	public fun getClipboard ()Ljava/lang/String;
+	public fun getKeyName (I)Ljava/lang/String;
+	public fun open (Lorg/polyfrost/polyui/PolyUI;)Lorg/polyfrost/polyui/renderer/Window;
+	public fun setClipboard (Ljava/lang/String;)V
+	public fun setCursor (Lorg/polyfrost/polyui/renderer/data/Cursor;)V
+	public fun supportsRenderPausing ()Z
 }
 
 public class org/polyfrost/oneconfig/ui/screen/PolyUIScreen : org/polyfrost/oneconfig/libs/universal/UScreen, org/polyfrost/oneconfig/ui/screen/BlurScreen, org/polyfrost/oneconfig/ui/screen/UIPause {
@@ -135,99 +118,25 @@ public class org/polyfrost/oneconfig/ui/screen/PolyUIScreen : org/polyfrost/onec
 }
 
 public final class org/polyfrost/oneconfig/utils/GuiUtils {
-	public static final field translator Lorg/polyfrost/polyui/input/Translator;
 	public fun <init> ()V
 	public static fun closeScreen ()V
-	public static fun displayScreen (Ljava/lang/Object;)V
 	public static fun displayScreen (Lnet/minecraft/client/gui/GuiScreen;)V
 	public static fun displayScreen (Lnet/minecraft/client/gui/GuiScreen;I)V
-}
-
-public abstract interface class org/polyfrost/oneconfig/utils/IgnoredGuiFactory {
-}
-
-public final class org/polyfrost/oneconfig/utils/KotlinLanguageAdapter : net/minecraftforge/fml/common/ILanguageAdapter {
-	public fun <init> ()V
-	public fun getNewInstance (Lnet/minecraftforge/fml/common/FMLModContainer;Ljava/lang/Class;Ljava/lang/ClassLoader;Ljava/lang/reflect/Method;)Ljava/lang/Object;
-	public fun setInternalProxies (Lnet/minecraftforge/fml/common/ModContainer;Lnet/minecraftforge/fml/relauncher/Side;Ljava/lang/ClassLoader;)V
-	public fun setProxy (Ljava/lang/reflect/Field;Ljava/lang/Class;Ljava/lang/Object;)V
-	public fun supportsStatics ()Z
 }
 
 public class org/polyfrost/oneconfig/utils/TickDelay {
 	public static fun of (ILjava/lang/Runnable;)V
 }
 
-public final class org/polyfrost/oneconfig/utils/dsl/GuiKt {
-	public static final fun openScreen (Lnet/minecraft/client/gui/GuiScreen;I)V
-	public static synthetic fun openScreen$default (Lnet/minecraft/client/gui/GuiScreen;IILjava/lang/Object;)V
+public abstract interface class org/polyfrost/oneconfig/utils/forge/IgnoredGuiFactory {
 }
 
-public final class org/polyfrost/oneconfig/utils/dsl/McKt {
-	public static final fun getMc ()Lnet/minecraft/client/Minecraft;
-}
-
-public final class org/polyfrost/oneconfig/utils/dsl/TickKt {
-	public static final fun tick (ILkotlin/jvm/functions/Function0;)V
-}
-
-public class org/polyfrost/oneconfig/utils/hypixel/HypixelUtils {
-	public static final field INSTANCE Lorg/polyfrost/oneconfig/utils/hypixel/HypixelUtils;
-	public static final field LOCRAW Lorg/polyfrost/oneconfig/utils/hypixel/LocrawUtil;
+public class org/polyfrost/oneconfig/utils/forge/KotlinLanguageAdapter : net/minecraftforge/fml/common/ILanguageAdapter {
 	public fun <init> ()V
-	public fun initialize ()V
-	public fun isHypixel ()Z
-}
-
-public class org/polyfrost/oneconfig/utils/hypixel/LocrawInfo : java/io/Serializable {
-	public fun <init> ()V
-	public fun equals (Ljava/lang/Object;)Z
-	public fun getGameMode ()Ljava/lang/String;
-	public fun getGameType ()Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public fun getMapName ()Ljava/lang/String;
-	public fun getRawGameType ()Ljava/lang/String;
-	public fun getServerId ()Ljava/lang/String;
-	public fun hashCode ()I
-	public fun setGameType (Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;)V
-	public fun toString ()Ljava/lang/String;
-}
-
-public final class org/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType : java/lang/Enum {
-	public static final field ARCADE_GAMES Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static final field ARENA Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static final field BEDWARS Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static final field BLITZ_SG Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static final field BUILD_BATTLE Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static final field CLASSIC_GAMES Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static final field COPS_AND_CRIMS Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static final field DROPPER Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static final field DUELS Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static final field HOUSING Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static final field LIMBO Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static final field MAIN Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static final field MEGA_WALLS Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static final field MURDER_MYSTERY Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static final field PAINTBALL Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static final field PIT Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static final field PROTOTYPE Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static final field QUAKE Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static final field REPLAY Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static final field SKYBLOCK Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static final field SKYWARS Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static final field SMASH_HEROES Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static final field SPEED_UHC Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static final field TNT_GAMES Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static final field TURBO_KART_RACERS Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static final field UHC_CHAMPIONS Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static final field UNKNOWN Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static final field VAMPIREZ Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static final field WALLS Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static final field WARLORDS Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static final field WOOL_WARS Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static fun getFromLocraw (Ljava/lang/String;)Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public fun getServerName ()Ljava/lang/String;
-	public static fun valueOf (Ljava/lang/String;)Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static fun values ()[Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
+	public fun getNewInstance (Lnet/minecraftforge/fml/common/FMLModContainer;Ljava/lang/Class;Ljava/lang/ClassLoader;Ljava/lang/reflect/Method;)Ljava/lang/Object;
+	public fun setInternalProxies (Lnet/minecraftforge/fml/common/ModContainer;Lnet/minecraftforge/fml/relauncher/Side;Ljava/lang/ClassLoader;)V
+	public fun setProxy (Ljava/lang/reflect/Field;Ljava/lang/Class;Ljava/lang/Object;)V
+	public fun supportsStatics ()Z
 }
 
 public class org/polyfrost/oneconfig/utils/hypixel/LocrawUtil {
@@ -236,6 +145,5 @@ public class org/polyfrost/oneconfig/utils/hypixel/LocrawUtil {
 	public fun getLastLocrawInfo ()Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo;
 	public fun getLocrawInfo ()Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo;
 	public fun isInGame ()Z
-	public fun onMessageReceived (Lorg/polyfrost/oneconfig/api/events/event/ChatReceiveEvent;)V
 }
 

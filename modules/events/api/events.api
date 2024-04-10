@@ -42,9 +42,15 @@ public abstract class org/polyfrost/oneconfig/api/events/event/Event$Cancellable
 	public fun <init> ()V
 }
 
-public class org/polyfrost/oneconfig/api/events/event/FramebufferRenderEvent : org/polyfrost/oneconfig/api/events/event/Event {
-	public final field stage Lorg/polyfrost/oneconfig/api/events/event/Stage;
-	public fun <init> (Lorg/polyfrost/oneconfig/api/events/event/Stage;)V
+public abstract interface class org/polyfrost/oneconfig/api/events/event/FramebufferRenderEvent : org/polyfrost/oneconfig/api/events/event/Event {
+}
+
+public class org/polyfrost/oneconfig/api/events/event/FramebufferRenderEvent$End : org/polyfrost/oneconfig/api/events/event/FramebufferRenderEvent {
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/events/event/FramebufferRenderEvent$End;
+}
+
+public class org/polyfrost/oneconfig/api/events/event/FramebufferRenderEvent$Start : org/polyfrost/oneconfig/api/events/event/FramebufferRenderEvent {
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/events/event/FramebufferRenderEvent$Start;
 }
 
 public class org/polyfrost/oneconfig/api/events/event/HudRenderEvent : org/polyfrost/oneconfig/api/events/event/Event {
@@ -54,11 +60,16 @@ public class org/polyfrost/oneconfig/api/events/event/HudRenderEvent : org/polyf
 }
 
 public class org/polyfrost/oneconfig/api/events/event/InitializationEvent : org/polyfrost/oneconfig/api/events/event/Event {
-	public fun <init> ()V
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/events/event/InitializationEvent;
 }
 
 public class org/polyfrost/oneconfig/api/events/event/KeyInputEvent : org/polyfrost/oneconfig/api/events/event/Event {
-	public fun <init> ()V
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/events/event/KeyInputEvent;
+}
+
+public class org/polyfrost/oneconfig/api/events/event/LocrawEvent : org/polyfrost/oneconfig/api/events/event/Event {
+	public final field info Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo;
+	public fun <init> (Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo;)V
 }
 
 public class org/polyfrost/oneconfig/api/events/event/MouseInputEvent : org/polyfrost/oneconfig/api/events/event/Event {
@@ -67,7 +78,7 @@ public class org/polyfrost/oneconfig/api/events/event/MouseInputEvent : org/poly
 }
 
 public class org/polyfrost/oneconfig/api/events/event/PreShutdownEvent : org/polyfrost/oneconfig/api/events/event/Event {
-	public fun <init> ()V
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/events/event/PreShutdownEvent;
 }
 
 public class org/polyfrost/oneconfig/api/events/event/RawKeyEvent : org/polyfrost/oneconfig/api/events/event/Event {
@@ -88,10 +99,16 @@ public class org/polyfrost/oneconfig/api/events/event/ReceivePacketEvent : org/p
 	public fun <init> (Ljava/lang/Object;)V
 }
 
-public class org/polyfrost/oneconfig/api/events/event/RenderEvent : org/polyfrost/oneconfig/api/events/event/Event {
+public abstract class org/polyfrost/oneconfig/api/events/event/RenderEvent : org/polyfrost/oneconfig/api/events/event/Event {
 	public final field deltaTicks F
-	public final field stage Lorg/polyfrost/oneconfig/api/events/event/Stage;
-	public fun <init> (Lorg/polyfrost/oneconfig/api/events/event/Stage;F)V
+}
+
+public class org/polyfrost/oneconfig/api/events/event/RenderEvent$End : org/polyfrost/oneconfig/api/events/event/RenderEvent {
+	public fun <init> (F)V
+}
+
+public class org/polyfrost/oneconfig/api/events/event/RenderEvent$Start : org/polyfrost/oneconfig/api/events/event/RenderEvent {
+	public fun <init> (F)V
 }
 
 public class org/polyfrost/oneconfig/api/events/event/ScreenOpenEvent : org/polyfrost/oneconfig/api/events/event/Event$Cancellable {
@@ -105,23 +122,22 @@ public class org/polyfrost/oneconfig/api/events/event/SendPacketEvent : org/poly
 }
 
 public class org/polyfrost/oneconfig/api/events/event/ShutdownEvent : org/polyfrost/oneconfig/api/events/event/Event {
-	public fun <init> ()V
-}
-
-public final class org/polyfrost/oneconfig/api/events/event/Stage : java/lang/Enum {
-	public static final field END Lorg/polyfrost/oneconfig/api/events/event/Stage;
-	public static final field START Lorg/polyfrost/oneconfig/api/events/event/Stage;
-	public static fun valueOf (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/events/event/Stage;
-	public static fun values ()[Lorg/polyfrost/oneconfig/api/events/event/Stage;
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/events/event/ShutdownEvent;
 }
 
 public class org/polyfrost/oneconfig/api/events/event/StartEvent : org/polyfrost/oneconfig/api/events/event/Event {
-	public fun <init> ()V
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/events/event/StartEvent;
 }
 
-public class org/polyfrost/oneconfig/api/events/event/TickEvent : org/polyfrost/oneconfig/api/events/event/Event {
-	public final field stage Lorg/polyfrost/oneconfig/api/events/event/Stage;
-	public fun <init> (Lorg/polyfrost/oneconfig/api/events/event/Stage;)V
+public abstract interface class org/polyfrost/oneconfig/api/events/event/TickEvent : org/polyfrost/oneconfig/api/events/event/Event {
+}
+
+public class org/polyfrost/oneconfig/api/events/event/TickEvent$End : org/polyfrost/oneconfig/api/events/event/TickEvent {
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/events/event/TickEvent$End;
+}
+
+public class org/polyfrost/oneconfig/api/events/event/TickEvent$Start : org/polyfrost/oneconfig/api/events/event/TickEvent {
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/events/event/TickEvent$Start;
 }
 
 public class org/polyfrost/oneconfig/api/events/event/TimerUpdateEvent : org/polyfrost/oneconfig/api/events/event/Event {
@@ -131,7 +147,7 @@ public class org/polyfrost/oneconfig/api/events/event/TimerUpdateEvent : org/pol
 }
 
 public class org/polyfrost/oneconfig/api/events/event/WorldLoadEvent : org/polyfrost/oneconfig/api/events/event/Event {
-	public fun <init> ()V
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/events/event/WorldLoadEvent;
 }
 
 public abstract interface class org/polyfrost/oneconfig/api/events/invoke/EventCollector {

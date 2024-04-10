@@ -28,7 +28,7 @@ package org.polyfrost.oneconfig.ui
 
 import org.polyfrost.oneconfig.api.events.EventManager
 import org.polyfrost.oneconfig.api.events.event.RenderEvent
-import org.polyfrost.oneconfig.api.events.event.Stage
+import org.polyfrost.oneconfig.api.events.eventHandler
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.property.Settings
@@ -48,9 +48,8 @@ object Notifications {
     private val polyUI = PolyUI(renderer = LwjglManager.INSTANCE.renderer, settings = settings)
 
     init {
-        EventManager.register(RenderEvent::class) {
-            if (it.stage == Stage.START || queue.isEmpty()) return@register
-            polyUI.render()
+        eventHandler { _: RenderEvent.End ->
+            if (queue.isNotEmpty()) polyUI.render()
         }
     }
 

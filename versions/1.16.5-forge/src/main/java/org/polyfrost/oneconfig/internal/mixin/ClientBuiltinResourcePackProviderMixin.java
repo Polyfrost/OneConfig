@@ -39,17 +39,17 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(DownloadingPackFinder.class)
 public class ClientBuiltinResourcePackProviderMixin {
     @Unique
-    private boolean initialized;
+    private boolean oc$init;
 
     @Inject(method = "<init>", at = @At("RETURN"))
     private void onStart(CallbackInfo ci) {
-        if (initialized) return;
-        initialized = true;
+        if (oc$init) return;
+        oc$init = true;
 
-        EventManager.INSTANCE.post(new StartEvent());
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> EventManager.INSTANCE.post(new ShutdownEvent())));
+        EventManager.INSTANCE.post(StartEvent.INSTANCE);
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> EventManager.INSTANCE.post(ShutdownEvent.INSTANCE)));
         //#if FABRIC
-        //$$ EventManager.INSTANCE.post(new org.polyfrost.oneconfig.api.events.event.InitializationEvent());
+        //$$ EventManager.INSTANCE.post(org.polyfrost.oneconfig.api.events.event.InitializationEvent.INSTANCE);
         //$$ org.polyfrost.oneconfig.internal.OneConfig.INSTANCE.init();
         //#endif
     }

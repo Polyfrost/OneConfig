@@ -26,13 +26,13 @@
 
 package org.polyfrost.oneconfig.api.events.event;
 
-public class FramebufferRenderEvent implements Event {
-    /**
-     * Whether the tick is starting or ending.
-     */
-    public final Stage stage;
-
-    public FramebufferRenderEvent(Stage stage) {
-        this.stage = stage;
+public interface FramebufferRenderEvent extends Event {
+    class Start implements FramebufferRenderEvent {
+        private Start() {}
+        public static final Start INSTANCE = new Start();
+    }
+    class End implements FramebufferRenderEvent {
+        private End() {}
+        public static final End INSTANCE = new End();
     }
 }

@@ -24,15 +24,25 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.api.events.event;
+package org.polyfrost.oneconfig.internal.ui;
 
-/**
- * Represents whether the event is called when the specified action is started or ended.
- *
- * @see TickEvent
- * @see RenderEvent
- */
-public enum Stage {
-    START,
-    END
+import org.polyfrost.oneconfig.ui.LwjglManager;
+import org.polyfrost.oneconfig.ui.TinyFD;
+import org.polyfrost.oneconfig.ui.impl.RendererImpl;
+import org.polyfrost.oneconfig.ui.impl.TinyFDImpl;
+import org.polyfrost.polyui.renderer.Renderer;
+
+@SuppressWarnings("unused")
+public class LwjglManagerImpl implements LwjglManager {
+    private static final TinyFD impl = new TinyFDImpl();
+
+    @Override
+    public Renderer getRenderer() {
+        return RendererImpl.INSTANCE;
+    }
+
+    @Override
+    public TinyFD getTinyFD() {
+        return impl;
+    }
 }

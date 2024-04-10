@@ -16,7 +16,6 @@ public abstract class org/polyfrost/oneconfig/api/hud/Hud : java/lang/Cloneable 
 
 public final class org/polyfrost/oneconfig/api/hud/HudManager {
 	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/hud/HudManager;
-	public static field polyUI Lorg/polyfrost/polyui/PolyUI;
 	public final fun canAutoOpen ()Z
 	public final fun getHudsPage ()Lorg/polyfrost/polyui/component/Drawable;
 	public final fun getOpen ()Z
@@ -29,7 +28,6 @@ public final class org/polyfrost/oneconfig/api/hud/HudManager {
 	public final fun openHudEditor (Lorg/polyfrost/oneconfig/api/hud/Hud;)V
 	public final fun register (Lorg/polyfrost/oneconfig/api/hud/Hud;)V
 	public final fun register ([Lorg/polyfrost/oneconfig/api/hud/Hud;)V
-	public final fun setPolyUI (Lorg/polyfrost/polyui/PolyUI;)V
 	public final fun setSlinex (F)V
 	public final fun setSliney (F)V
 	public final fun toggle ()V
