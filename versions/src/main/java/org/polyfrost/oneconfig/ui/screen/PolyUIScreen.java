@@ -76,7 +76,7 @@ public class PolyUIScreen extends UScreen implements UIPause, BlurScreen {
     private float ox, oy;
 
 
-    @Contract("_, null, _, _, _, _, _, null -> fail")
+    @Contract("_, null, _, _, _, _, _, _, null -> fail")
     public PolyUIScreen(@Nullable Settings settings,
                         @Nullable InputManager inputManager,
                         @Nullable Translator translator,
@@ -84,6 +84,7 @@ public class PolyUIScreen extends UScreen implements UIPause, BlurScreen {
                         @Nullable Colors colors,
                         @Nullable PolyColor backgroundColor,
                         @Nullable Vec2 desiredResolution,
+                        @Nullable Vec2 size,
                         Drawable... drawables) {
         super(true);
 
@@ -97,7 +98,8 @@ public class PolyUIScreen extends UScreen implements UIPause, BlurScreen {
             this.window = null;
         } else {
             Colors c = colors == null ? new DarkTheme() : colors;
-            this.polyUI = new PolyUI(LwjglManager.INSTANCE.getRenderer(), settings, inputManager, translator, backgroundColor, alignment, null, c, drawables);
+            Align a = alignment == null ? new Align(Align.Main.Start, Align.Cross.Start, Align.Mode.Horizontal, Vec2.ZERO, 50) : alignment;
+            this.polyUI = new PolyUI(LwjglManager.INSTANCE.getRenderer(), s, inputManager, translator, backgroundColor, a, c, size, drawables);
             this.window = new MCWindow(UMinecraft.getMinecraft());
             this.window.setPixelRatio(scale());
             this.polyUI.setWindow(window);
@@ -108,15 +110,15 @@ public class PolyUIScreen extends UScreen implements UIPause, BlurScreen {
     }
 
     public PolyUIScreen(Drawable... drawables) {
-        this(null, null, null, null, null, null, null, drawables);
+        this(null, null, null, null, null, null, null, null, drawables);
     }
 
-    public PolyUIScreen(@Nullable Align alignment, Drawable... drawables) {
-        this(null, null, null, alignment, null, null, null, drawables);
+    public PolyUIScreen(@Nullable Align alignment, Vec2 size, Drawable... drawables) {
+        this(null, null, null, alignment, null, null, null, size, drawables);
     }
 
     public PolyUIScreen(@NotNull InputManager inputManager) {
-        this(null, inputManager, null, null, null, null, null);
+        this(null, inputManager, null, null, null, null, null, null);
     }
 
     @ApiStatus.Internal
@@ -125,7 +127,8 @@ public class PolyUIScreen extends UScreen implements UIPause, BlurScreen {
         this.polyUI = polyUI;
         this.inputManager = polyUI.getInputManager();
         desiredResolution = null;
-        window = null;
+        window = new MCWindow(UMinecraft.getMinecraft());
+        polyUI.setWindow(window);
     }
 
     private void adjustResolution() {
@@ -230,7 +233,7 @@ public class PolyUIScreen extends UScreen implements UIPause, BlurScreen {
 
     @Override
     public boolean uMouseScrolled(double delta) {
-        inputManager.mouseScrolled(0f, (float) delta);
+        inputManager.mouseScrolled(0f, delta > 0.0 ? -1f : 1f);
         return true;
     }
 

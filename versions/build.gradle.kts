@@ -41,10 +41,16 @@ preprocess {
     vars.put("MODERN", if (platform.mcMinor >= 16) 1 else 0)
 }
 
-blossom {
-    replaceToken("@VER@", version)
-    replaceToken("@NAME@", modName)
-    replaceToken("@ID@", modId)
+sourceSets {
+    main {
+        blossom {
+            javaSources {
+                property("@VER@", version.toString())
+                property("@NAME@", modName)
+                property("@ID@", modId)
+            }
+        }
+    }
 }
 
 base {
@@ -280,7 +286,6 @@ tasks {
 
     fun Jar.excludeInternal() {
         exclude("**/internal/**")
-        exclude("**/commands/ClientCommandHandler.**")
     }
     jar {
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE

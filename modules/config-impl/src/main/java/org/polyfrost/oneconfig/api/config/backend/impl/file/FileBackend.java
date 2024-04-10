@@ -46,26 +46,21 @@ import java.nio.file.WatchService;
 public class FileBackend extends Backend {
     public final Path folder;
     public final FileSerializer<String> serializer;
-    public final boolean isPhysicalFolder;
     private volatile boolean dodge = false;
 
     public FileBackend(Path folder, FileSerializer<String> serializer) {
         this.serializer = serializer;
         this.folder = folder;
 
-        boolean is = true;
         WatchService ser;
         try {
-            //noinspection ResultOfMethodCallIgnored
-            folder.toFile().mkdirs();
+            Files.createDirectories(folder);
             ser = folder.getFileSystem().newWatchService();
             folder.register(ser, StandardWatchEventKinds.ENTRY_MODIFY, StandardWatchEventKinds.ENTRY_DELETE);
         } catch (Exception e) {
-            is = false;
             ser = null;
             LOGGER.warn("Failed to setup file backend watcher onto {}", folder, e);
         }
-        this.isPhysicalFolder = is;
         if (ser == null) return;
 
         final WatchService service = ser;
@@ -75,12 +70,12 @@ public class FileBackend extends Backend {
                 try {
                     WatchKey key = service.take();
                     for (WatchEvent<?> event : key.pollEvents()) {
+                        if (event.kind() == StandardWatchEventKinds.OVERFLOW) {
+                            continue;
+                        }
                         if (dodge) {
                             Backend.LOGGER.debug("Dodged self-created event!");
                             dodge = false;
-                            continue;
-                        }
-                        if (event.kind() == StandardWatchEventKinds.OVERFLOW) {
                             continue;
                         }
                         Path p = folder.resolve((Path) event.context());
@@ -98,7 +93,7 @@ public class FileBackend extends Backend {
                         }
                     }
                     if (!key.reset()) {
-                        LOGGER.error("Failed to reset key, file watcher is off!");
+                        LOGGER.error("file watcher is invalid; disabled!");
                         break;
                     }
                 } catch (Exception e) {
@@ -111,7 +106,7 @@ public class FileBackend extends Backend {
                 }
             }
         });
-        t.setName("Config Watcher");
+        t.setName("OneConfig Config Watcher");
         t.setDaemon(true);
         t.start();
     }
@@ -130,10 +125,16 @@ public class FileBackend extends Backend {
     }
 
     @Override
-    protected Tree load0(@NotNull String id) {
+    protected Tree load0(@NotNull String id) throws Exception {
         Path p = folder.resolve(id + serializer.getExtension());
-        if (isPhysicalFolder && !p.toFile().exists()) return null;
-        return serializer.deserialize(read(p));
+        if (!Files.exists(p)) return null;
+        try {
+            return serializer.deserialize(read(p));
+        } catch (Exception e) {
+            LOGGER.error("Failed to load config ID {}, marking file as corrupted, config will be reset!", id);
+            Files.move(p, folder.resolve(id + ".corrupted" + serializer.getExtension()));
+            return null;
+        }
     }
 
     @Override
@@ -166,6 +167,6 @@ public class FileBackend extends Backend {
 
     @Override
     public boolean exists(String id) {
-        return super.exists(id) || (isPhysicalFolder && folder.resolve(id + serializer.getExtension()).toFile().exists());
+        return super.exists(id);// || Files.exists(folder.resolve(id + serializer.getExtension()));
     }
 }

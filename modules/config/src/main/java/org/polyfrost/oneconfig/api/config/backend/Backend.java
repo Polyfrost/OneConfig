@@ -48,7 +48,7 @@ public abstract class Backend {
     /**
      * Load in a tree with the given ID. if the tree does not exist, return null.
      */
-    protected abstract Tree load0(@NotNull String id);
+    protected abstract Tree load0(@NotNull String id) throws Exception;
 
     /**
      * Load a tree with data stored in this backend.
@@ -68,7 +68,7 @@ public abstract class Backend {
         return true;
     }
 
-    protected abstract boolean save0(@NotNull Tree tree);
+    protected abstract boolean save0(@NotNull Tree tree) throws Exception;
 
     public final boolean save(String id) {
         if (id == null) throw new NullPointerException("id cannot be null");

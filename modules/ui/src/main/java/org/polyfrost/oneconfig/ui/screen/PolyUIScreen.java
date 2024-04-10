@@ -41,6 +41,8 @@ import org.polyfrost.polyui.unit.Vec2;
 
 public class PolyUIScreen {
     // PolyUIScreen.h
+    // version-specific workaround //
+    // see versions/src/main/java/org/polyfrost/oneconfig/ui/screen/PolyUIScreen.java for the actual implementation //
     @NotNull
     public final InputManager inputManager;
     @Nullable
@@ -51,7 +53,7 @@ public class PolyUIScreen {
     @Nullable
     public final Vec2 desiredResolution;
 
-    @Contract("_, null, _, _, _, _, _, null -> fail")
+    @Contract("_, null, _, _, _, _, _, _, null -> fail")
     public PolyUIScreen(@Nullable Settings settings,
                         @Nullable InputManager inputManager,
                         @Nullable Translator translator,
@@ -59,25 +61,24 @@ public class PolyUIScreen {
                         @Nullable Colors colors,
                         @Nullable PolyColor backgroundColor,
                         @Nullable Vec2 desiredResolution,
+                        @Nullable Vec2 size,
                         Drawable... drawables) {
-        // version-specific workaround //
-        // see versions/src/main/java/org/polyfrost/oneconfig/ui/screen/PolyUIScreen.java for the actual implementation //
         throw new UnsupportedOperationException("implementation is intrinsic");
     }
 
     public PolyUIScreen(Drawable... drawables) {
-        this(null, null, null, null, null, null, null, drawables);
+        this(null, null, null, null, null, null, null, null, drawables);
     }
 
-    public PolyUIScreen(@Nullable Align alignment, Drawable... drawables) {
-        this(null, null, null, alignment, null, null, null, drawables);
+    public PolyUIScreen(@Nullable Align alignment, Vec2 size, Drawable... drawables) {
+        this(null, null, null, alignment, null, null, null, size, drawables);
     }
 
     public PolyUIScreen(@NotNull InputManager inputManager) {
-        this(null, inputManager, null, null, null, null, null);
+        this(null, inputManager, null, null, null, null, null, null);
     }
 
     public PolyUIScreen(@NotNull PolyUI polyUI) {
-        this((Settings) null, null, null, null, null, null, null);
+        this((Settings) null, null, null, null, null, null, null, null);
     }
 }

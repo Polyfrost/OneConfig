@@ -93,7 +93,7 @@ fun ChangelogPage(news: Collection<News>): Drawable {
         alignment = Align(cross = Align.Cross.Center, padding = Vec2(60f, 20f)),
         children = news.map {
             Group(
-                if (it.image != null) Image(it.image!!).onInit { image.size.max(325f, 111f) } else null,
+                if (it.image != null) Image(it.image).onInit { image.size.max(325f, 111f) } else null,
                 Group(
                     Text(it.title, font = PolyUI.defaultFonts.medium, fontSize = 16f),
                     Text(it.summary, visibleSize = Vec2(612f, 166f)),
@@ -103,7 +103,7 @@ fun ChangelogPage(news: Collection<News>): Drawable {
                             Event.Mouse.Clicked(0) then { _ ->
                                 val page =
                                     Group(
-                                        if (it.image != null) Image(it.image!!).onInit { image.size.max(325f, 111f) } else null,
+                                        if (it.image != null) Image(it.image).onInit { image.size.max(325f, 111f) } else null,
                                         Group(
                                             Text(it.title, font = PolyUI.defaultFonts.medium, fontSize = 24f),
                                             Text("oneconfig.writtenby".translated(it.author)),

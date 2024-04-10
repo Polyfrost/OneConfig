@@ -44,7 +44,10 @@ import org.polyfrost.polyui.operations.Move
 import org.polyfrost.polyui.operations.Recolor
 import org.polyfrost.polyui.renderer.data.Cursor
 import org.polyfrost.polyui.renderer.data.PolyImage
-import org.polyfrost.polyui.unit.*
+import org.polyfrost.polyui.unit.Align
+import org.polyfrost.polyui.unit.Vec2
+import org.polyfrost.polyui.unit.by
+import org.polyfrost.polyui.unit.seconds
 import org.polyfrost.polyui.utils.image
 import org.polyfrost.polyui.utils.radii
 import org.polyfrost.polyui.utils.rgba
@@ -61,15 +64,16 @@ object OneConfigUI {
         val vertical = Align(cross = Align.Cross.Start, mode = Align.Mode.Vertical)
 
         return PolyUIScreen(
-            null, null, null, null, null, rgba(21, 21, 21), 1920f by 1080f,
+            null, null, null, null, null, rgba(21, 21, 21),
+            1920f by 1080f, 1400f by 700f,
             Group(
                 size = Vec2(273f, 700f),
                 alignment = Align(mode = Align.Mode.Vertical, padding = Vec2(12f, 16f)),
                 children = arrayOf(
                     Block(
                         size = Vec2(225f, 32f),
-                        at = ignored,
-                    ).afterParentInit {
+                    ).hide().afterParentInit {
+                        renders = true
                         val modsBtn = parent!![2][1]
                         Move(this, modsBtn.x, modsBtn.y, false).add()
                     },
@@ -119,9 +123,10 @@ object OneConfigUI {
                         UScreen.displayScreen(PolyUIScreen(HudManager.polyUI))
                     },
                 ),
-            ).named("Sidebar"), Group(
+            ).named("Sidebar"),
+            Group(
                 size = Vec2(1127f, 700f),
-                alignment = Align(mode = Align.Mode.Vertical, padding = Vec2(24f, 0f)),
+                alignment = Align(padding = Vec2.ZERO),
                 children = arrayOf(
                     Group(
                         size = Vec2(1130f, 64f),

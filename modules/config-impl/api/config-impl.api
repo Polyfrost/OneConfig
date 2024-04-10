@@ -167,7 +167,6 @@ public class org/polyfrost/oneconfig/api/config/backend/impl/NightConfigSerializ
 
 public class org/polyfrost/oneconfig/api/config/backend/impl/file/FileBackend : org/polyfrost/oneconfig/api/config/backend/Backend {
 	public final field folder Ljava/nio/file/Path;
-	public final field isPhysicalFolder Z
 	public final field serializer Lorg/polyfrost/oneconfig/api/config/backend/impl/file/FileSerializer;
 	public fun <init> (Ljava/lang/String;)V
 	public fun <init> (Ljava/nio/file/Path;Lorg/polyfrost/oneconfig/api/config/backend/impl/file/FileSerializer;)V

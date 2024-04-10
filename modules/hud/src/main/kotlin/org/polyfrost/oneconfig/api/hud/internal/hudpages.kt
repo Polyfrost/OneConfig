@@ -191,7 +191,7 @@ private fun interactiveAlignment(hud: Hud<out Drawable>): Drawable {
                     it.skewY = bg.skewY
                 }
             },
-            Image("alignment3.svg".image(), at = ignored).setPalette {
+            Image("alignment3.svg".image()).setPalette {
                 Colors.Palette(
                     text.secondary.disabled,
                     brand.fg.disabled,
