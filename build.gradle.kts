@@ -11,6 +11,7 @@ plugins {
     alias(libs.plugins.kotlinx.abi)
     alias(libs.plugins.pgt.defaults.repo)
     alias(libs.plugins.blossom)
+    alias(libs.plugins.licenser)
     id("maven-publish")
     id("signing")
     java
@@ -24,6 +25,16 @@ group = "org.polyfrost"
 
 java {
     withSourcesJar()
+}
+
+
+allprojects {
+    apply(plugin = rootProject.libs.plugins.licenser.get().pluginId)
+    license {
+        rule("${rootProject.rootDir}/FILEHEADER")
+        include("**/*.kt")
+        include("**/*.java")
+    }
 }
 
 tasks {

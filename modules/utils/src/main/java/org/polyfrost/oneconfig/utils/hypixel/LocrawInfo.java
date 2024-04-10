@@ -1,12 +1,8 @@
 /*
  * This file is part of OneConfig.
  * OneConfig - Next Generation Config Library for Minecraft: Java Edition
- * Copyright (C) 2021~2023 Polyfrost.
+ * Copyright (C) 2021~2024 Polyfrost.
  *   <https://polyfrost.org> <https://github.com/Polyfrost/>
- * Co-author: lyndseyy (Lyndsey Winter) <https://github.com/lyndseyy>
- * Co-author: asbyth <cyronize@gmail.com> (non-copyrightable contribution, deleted GitHub account)
- * Co-author: GamingGeek (Jake Ward) <https://github.com/GamingGeek> (non-copyrightable contribution)
- * Co-author: MicrocontrollersDev <https://github.com/MicrocontrollersDev> (non-copyrightable contribution)
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
