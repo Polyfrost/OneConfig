@@ -264,4 +264,9 @@ public abstract class Hud {
             name = "Show in GUIs"
     )
     public boolean showInGuis = true;
+
+    @Switch(
+            name = "Ignore Hud Caching"
+    )
+    public boolean ignoreCaching = false;
 }
