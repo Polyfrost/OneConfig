@@ -66,6 +66,7 @@ import cc.polyfrost.oneconfig.platform.Platform;
 public abstract class Hud {
     protected boolean enabled;
     protected boolean locked;
+    protected boolean ignoreCaching;
     transient private Config config;
     public Position position;
     protected float scale;
@@ -217,6 +218,13 @@ public abstract class Hud {
     }
 
     /**
+     * @return If the hud is ignored from hud caching
+     */
+    public boolean isIgnored() {
+        return ignoreCaching && (config == null || config.enabled) && Platform.getLoaderPlatform().isModLoaded("patcher");
+    }
+
+    /**
      * Set the config to disable accordingly, intended for internal use
      *
      * @param config The config instance
@@ -265,8 +273,4 @@ public abstract class Hud {
     )
     public boolean showInGuis = true;
 
-    @Switch(
-            name = "Ignore Hud Caching"
-    )
-    public boolean ignoreCaching = false;
 }

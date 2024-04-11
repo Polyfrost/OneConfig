@@ -47,7 +47,7 @@ public class HudCore {
         for (Hud hud : huds.values()) {
             if (!hud.isEnabled()) continue;
             //#if FORGE==1 && MC<=11202
-            if (hud.ignoreCaching) continue;
+            if (hud.isIgnored()) continue;
             //#endif
             hud.deltaTicks = event.deltaTicks;
             hud.drawAll(event.matrices, false);
