@@ -57,7 +57,7 @@ import java.util.Objects;
 @SuppressWarnings("unused")
 @ApiStatus.Experimental
 public class OneImage {
-    private static final Logger LOGGER = LoggerFactory.getLogger("OneConfig Images");
+    private static final Logger LOGGER = LoggerFactory.getLogger("OneConfig/Images");
     private BufferedImage image;
     private Graphics2D graphics = null;
     private final int width, height;

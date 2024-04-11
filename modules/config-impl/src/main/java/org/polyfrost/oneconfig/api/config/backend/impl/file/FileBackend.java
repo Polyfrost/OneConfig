@@ -29,41 +29,46 @@ package org.polyfrost.oneconfig.api.config.backend.impl.file;
 import org.jetbrains.annotations.NotNull;
 import org.polyfrost.oneconfig.api.config.Tree;
 import org.polyfrost.oneconfig.api.config.backend.Backend;
-import org.polyfrost.oneconfig.api.config.backend.impl.NightConfigSerializer;
 import org.polyfrost.oneconfig.api.config.exceptions.SerializationException;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
+import java.util.HashMap;
+import java.util.Map;
 
 public class FileBackend extends Backend {
     public final Path folder;
-    public final FileSerializer<String> serializer;
+    private final Map<String, FileSerializer<String>> serializers = new HashMap<>(8);
+    private boolean hasWatcher = false;
     private volatile boolean dodge = false;
 
-    public FileBackend(Path folder, FileSerializer<String> serializer) {
-        this.serializer = serializer;
+    @SafeVarargs
+    public FileBackend(Path folder, FileSerializer<String>... serializers) {
         this.folder = folder;
-
-        WatchService ser;
+        for (FileSerializer<String> s : serializers) {
+            this.serializers.put(s.getExtension(), s);
+        }
         try {
             Files.createDirectories(folder);
-            ser = folder.getFileSystem().newWatchService();
-            folder.register(ser, StandardWatchEventKinds.ENTRY_MODIFY, StandardWatchEventKinds.ENTRY_DELETE);
         } catch (Exception e) {
-            ser = null;
-            LOGGER.warn("Failed to setup file backend watcher onto {}", folder, e);
+            LOGGER.error("Failed to create config folder!", e);
         }
-        if (ser == null) return;
+    }
 
-        final WatchService service = ser;
+    public FileBackend addWatcher() throws IOException {
+        if (hasWatcher) return this;
+        WatchService service = folder.getFileSystem().newWatchService();
+        folder.register(service, StandardWatchEventKinds.ENTRY_MODIFY, StandardWatchEventKinds.ENTRY_DELETE);
+        hasWatcher = true;
+
         Thread t = new Thread(() -> {
             int i = 0;
             while (true) {
@@ -79,7 +84,7 @@ public class FileBackend extends Backend {
                             continue;
                         }
                         Path p = folder.resolve((Path) event.context());
-                        String id = removeExt(p.toString());
+                        String id = p.getFileName().toString();
                         if (!exists(id)) continue;
 
                         if (event.kind() == StandardWatchEventKinds.ENTRY_DELETE) {
@@ -109,15 +114,7 @@ public class FileBackend extends Backend {
         t.setName("OneConfig Config Watcher");
         t.setDaemon(true);
         t.start();
-    }
-
-    public FileBackend(String folder) {
-        this(Paths.get(folder), NightConfigSerializer.YAML);
-    }
-
-    private String removeExt(String s) {
-        int st = s.lastIndexOf(folder.getFileSystem().getSeparator()) + 1;
-        return s.substring(st, s.lastIndexOf('.'));
+        return this;
     }
 
     public void dodge() {
@@ -126,20 +123,22 @@ public class FileBackend extends Backend {
 
     @Override
     protected Tree load0(@NotNull String id) throws Exception {
-        Path p = folder.resolve(id + serializer.getExtension());
+        Path p = folder.resolve(id);
         if (!Files.exists(p)) return null;
+        FileSerializer<String> serializer = getSerializer(p);
         try {
             return serializer.deserialize(read(p));
         } catch (Exception e) {
             LOGGER.error("Failed to load config ID {}, marking file as corrupted, config will be reset!", id);
-            Files.move(p, folder.resolve(id + ".corrupted" + serializer.getExtension()));
+            Files.move(p, folder.resolve(id + ".corrupted"));
             return null;
         }
     }
 
     @Override
     protected boolean save0(@NotNull Tree tree) {
-        Path p = folder.resolve(tree.getID() + serializer.getExtension());
+        Path p = folder.resolve(tree.getID());
+        FileSerializer<String> serializer = getSerializer(p);
         write(p, serializer.serialize(tree));
         return true;
     }
@@ -165,8 +164,17 @@ public class FileBackend extends Backend {
         }
     }
 
-    @Override
-    public boolean exists(String id) {
-        return super.exists(id);// || Files.exists(folder.resolve(id + serializer.getExtension()));
+    public void addSerializer(FileSerializer<String> serializer) {
+        serializers.putIfAbsent(serializer.getExtension(), serializer);
+    }
+
+    private FileSerializer<String> getSerializer(Path p) {
+        String path = p.toString();
+        int i = path.lastIndexOf('.');
+        if (i == -1) throw new IllegalArgumentException();
+        String ext = path.substring(i);
+        FileSerializer<String> s = serializers.get(ext);
+        if (s == null) throw new IllegalArgumentException("No serializer found for extension " + ext);
+        return s;
     }
 }

@@ -32,6 +32,8 @@ import net.minecraft.launchwrapper.Launch;
 import net.minecraft.launchwrapper.LaunchClassLoader;
 import net.minecraftforge.fml.relauncher.CoreModManager;
 import org.polyfrost.oneconfig.utils.MHUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.spongepowered.asm.launch.MixinBootstrap;
 import org.spongepowered.asm.launch.MixinTweaker;
 import org.spongepowered.asm.mixin.Mixins;
@@ -47,13 +49,15 @@ import java.util.jar.JarFile;
 
 @SuppressWarnings("unused")
 public class OneConfigTweaker implements ITweaker {
+    private static final Logger LOGGER = LoggerFactory.getLogger("OneConfig/Tweaker");
+
     public OneConfigTweaker() {
         try {
             for (URL url : Launch.classLoader.getSources()) {
                 doMagicMixinStuff(url);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.warn("(potential) failure while performing mixin patch!", e);
         }
     }
 
@@ -128,7 +132,7 @@ public class OneConfigTweaker implements ITweaker {
     @Override
     public void injectIntoClassLoader(LaunchClassLoader classLoader) {
         removeLWJGLException();
-        OneConfigInit.initialize(new String[]{});
+        OneConfigInit.initialize();
         Launch.blackboard.put("oneconfig.init.initialized", true);
         Launch.classLoader.addClassLoaderExclusion("org.polyfrost.oneconfig.internal.plugin.asm.");
 

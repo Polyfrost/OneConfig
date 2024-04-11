@@ -52,7 +52,7 @@ public class ReflectiveHudCollector extends OneConfigCollector {
             if (!Drawable.class.isAssignableFrom(f.getType())) {
                 throw new IllegalArgumentException("@HudComponent " + f.getName() + " must be of type Component");
             }
-            Property<?> p = prop(f.getName(), null, f.get(src));
+            Property<?> p = prop(f.getName(), f.get(src));
             p.addMetadata("annotation", c);
             p.addMetadata("isHud", "");
             tree.put(p);

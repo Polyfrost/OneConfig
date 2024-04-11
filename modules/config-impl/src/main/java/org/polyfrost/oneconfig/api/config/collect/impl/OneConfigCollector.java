@@ -61,17 +61,15 @@ public class OneConfigCollector extends ReflectiveCollector {
         if (!(src instanceof Config)) return null;
         Tree tree = super.collect(src);
         assert tree != null;
-        tree.onAll((s, n) -> {
-            if (!(n instanceof Property)) return;
-            Property<?> p = (Property<?>) n;
-            String[] conditions = n.getMetadata("conditions");
+        tree.onAllProps((s, p) -> {
+            String[] conditions = p.consumeMetadata("conditions");
             if (conditions == null) return;
             for (String cond : conditions) {
                 Property<?> condition = tree.getProp(cond);
-                if (condition == null) throw new IllegalArgumentException("Property " + n.getID() + " is dependant on property " + cond + ", but that property does not exist");
+                if (condition == null) throw new IllegalArgumentException("Property " + p.getID() + " is dependant on property " + cond + ", but that property does not exist");
                 if (condition.type == Boolean.class || condition.type == boolean.class) {
                     p.addDisplayCondition(condition::getAs);
-                } else throw new IllegalArgumentException("Property " + n.getID() + " is dependant on property " + cond + ", but it is not a boolean property");
+                } else throw new IllegalArgumentException("Property " + p.getID() + " is dependant on property " + cond + ", but it is not a boolean property");
             }
         });
         return tree;
@@ -86,7 +84,7 @@ public class OneConfigCollector extends ReflectiveCollector {
                 // asm: use method handle as it fails NOW instead of at set time, and is faster
                 final MethodHandle setter = MHUtils.getFieldSetter(f, src).getOrThrow();
                 Class<?> type = f.getType();
-                Property<?> p = Property.prop(f.getName(), null, MHUtils.getFieldGetter(f, src).getOrThrow().invoke(), type).addCallback(v -> {
+                Property<?> p = Property.prop(f.getName(), MHUtils.getFieldGetter(f, src).getOrThrow().invoke(), type).addCallback(v -> {
                     try {
                         if (type.isArray() && v instanceof List<?>) {
                             setter.invoke(ObjectSerializer.unbox(v, type));

@@ -10,7 +10,6 @@ plugins {
     alias(libs.plugins.kotlin)
     alias(libs.plugins.kotlinx.abi)
     alias(libs.plugins.pgt.defaults.repo)
-    alias(libs.plugins.blossom)
     alias(libs.plugins.licenser)
     id("maven-publish")
     id("signing")

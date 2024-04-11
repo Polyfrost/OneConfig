@@ -116,11 +116,11 @@ public class NightConfigSerializer implements FileSerializer<String> {
             if (e.getValue() instanceof Config) {
                 Config c = (Config) e.getValue();
                 if (c.get("class") != null) {
-                    b.put(prop(e.getKey(), null, ObjectSerializer.INSTANCE.deserialize(((Config) e.getValue()).valueMap())));
+                    b.put(prop(e.getKey(), ObjectSerializer.INSTANCE.deserialize(((Config) e.getValue()).valueMap())));
                 } else b.put(read(c.valueMap(), tree(e.getKey())));
             } else {
                 Object v = e.getValue();
-                b.put(prop(e.getKey(), null, v));
+                b.put(prop(e.getKey(), v));
             }
         }
         return b;

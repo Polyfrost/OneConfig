@@ -43,7 +43,7 @@ fun ModsPage(trees: Collection<Tree>): Drawable {
                         radii = modBoxTopRad,
                         alignment = imageAlign,
                         size = Vec2(256f, 104f),
-                        children = arrayOf(Image(defaultModImage)),
+                        children = arrayOf(Image(it.getMetadata<String>("icon")?.image() ?: defaultModImage)),
                     ).withStates(),
                     Block(
                         radii = modBoxBotRad,
@@ -51,7 +51,7 @@ fun ModsPage(trees: Collection<Tree>): Drawable {
                         size = Vec2(256f, 36f),
                         children =
                         arrayOf(
-                            Text("Chatting", font = PolyUI.defaultFonts.medium, fontSize = 14f),
+                            Text(it.title, font = PolyUI.defaultFonts.medium, fontSize = 14f),
                             Image(heart),
                         ),
                     ).setPalette { brand.fg },

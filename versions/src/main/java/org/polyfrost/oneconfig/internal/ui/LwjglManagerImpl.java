@@ -67,7 +67,7 @@ public class LwjglManagerImpl
         extends URLClassLoader
         implements LwjglManager {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger("OneConfig LWJGL Manager");
+    private static final Logger LOGGER = LoggerFactory.getLogger("OneConfig/LWJGL");
     private static final boolean isPojav = checkPojav();
     private static final MethodHandle defineClassMethod;
     private static final Map<String, String> remappingMap;

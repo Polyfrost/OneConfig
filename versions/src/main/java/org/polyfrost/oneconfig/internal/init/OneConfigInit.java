@@ -26,9 +26,7 @@
 
 package org.polyfrost.oneconfig.internal.init;
 
-import org.spongepowered.asm.mixin.Mixins;
-
-import java.io.File;
+// todo useless??
 
 @SuppressWarnings("unused")
 public class OneConfigInit
@@ -40,14 +38,11 @@ public class OneConfigInit
     //#if FABRIC==1
     //$$ @Override
     //$$ public void onPreLaunch() {
-    //$$     initialize(new String[]{});
+    //$$     initialize();
     //$$ }
     //#endif
 
-    public static void initialize(String[] args) {
-        Mixins.addConfiguration("mixins.oneconfig.json");
-        final File oneConfigDir = new File("./OneConfig");
-        oneConfigDir.mkdirs();
-        new File(oneConfigDir, "profiles").mkdirs();
+    public static void initialize() {
+//        Mixins.addConfiguration("mixins.oneconfig.json");
     }
 }

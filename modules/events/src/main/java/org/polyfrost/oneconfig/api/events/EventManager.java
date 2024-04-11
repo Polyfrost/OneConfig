@@ -53,14 +53,14 @@ public final class EventManager {
      * The instance of the {@link EventManager}.
      */
     public static final EventManager INSTANCE = new EventManager();
-    private static final Logger LOGGER = LoggerFactory.getLogger("OneConfig/EventManager");
+    private static final Logger LOGGER = LoggerFactory.getLogger("OneConfig/Events");
     private final Deque<EventCollector> collectors = new ArrayDeque<>(2);
     private final Map<Object, List<EventHandler<?>>> cache = new WeakHashMap<>(5);
     private final Map<Class<?>, Set<EventHandler<?>>> handlers = new HashMap<>();
 
 
     private EventManager() {
-        collectors.add(new AnnotationEventMapper());
+        registerCollector(new AnnotationEventMapper());
     }
 
     /**
@@ -144,10 +144,6 @@ public final class EventManager {
 
     public void registerCollector(EventCollector collector) {
         collectors.addFirst(collector);
-    }
-
-    public void unregisterCollector(EventCollector collector) {
-        collectors.remove(collector);
     }
 
     /**

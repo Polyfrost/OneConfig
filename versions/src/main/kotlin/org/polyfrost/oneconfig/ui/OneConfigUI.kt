@@ -85,7 +85,7 @@ object OneConfigUI {
                             SidebarButton(
                                 "settings.svg".image(),
                                 "oneconfig.mods",
-                            ).onClick { openPage(ModsPage(ConfigManager.INSTANCE.trees()), "oneconfig.mods") },
+                            ).onClick { openPage(ModsPage(ConfigManager.active().trees()), "oneconfig.mods") },
                             SidebarButton(
                                 "profiles.svg".image(),
                                 "oneconfig.profiles",
@@ -192,7 +192,7 @@ object OneConfigUI {
                             ),
                         ),
                     ).named("Header"),
-                    ModsPage(ConfigManager.INSTANCE.trees()),
+                    ModsPage(ConfigManager.active().trees()),
                 ),
             )
         ).also {

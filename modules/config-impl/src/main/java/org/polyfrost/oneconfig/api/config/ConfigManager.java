@@ -26,8 +26,9 @@
 
 package org.polyfrost.oneconfig.api.config;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.UnmodifiableView;
 import org.polyfrost.oneconfig.api.config.backend.impl.NightConfigSerializer;
 import org.polyfrost.oneconfig.api.config.backend.impl.file.FileBackend;
 import org.polyfrost.oneconfig.api.config.backend.impl.file.FileSerializer;
@@ -38,113 +39,140 @@ import org.polyfrost.oneconfig.api.events.event.PreShutdownEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class ConfigManager {
-    public static final Logger LOGGER = LoggerFactory.getLogger("OneConfig Config Manager");
-    public static final Path CONFIG_DIR = new File("./config").toPath();
-    public static final FileSerializer<String> DEFAULT_SERIALIZER = NightConfigSerializer.JSON;
-    public static final String DEFAULT_META_EXT = "-meta.toml";
-    public static final ConfigManager INSTANCE = new ConfigManager();
-    private final List<PropertyCollector> collectors = new ArrayList<>(4);
-    private static volatile boolean shutdown = false;
-    private FileBackend backend;
+import static org.polyfrost.oneconfig.api.config.Property.prop;
+import static org.polyfrost.oneconfig.api.config.Tree.tree;
 
-    private ConfigManager() {
+public final class ConfigManager {
+    private static final Logger LOGGER = LoggerFactory.getLogger("OneConfig/Config");
+    public static final Path PROFILES_DIR = Paths.get("profiles");
+
+    private static final List<PropertyCollector> collectors = new ArrayList<>(1);
+    private static final ConfigManager internal = new ConfigManager(Paths.get("OneConfig"), NightConfigSerializer.JSON).withHook().withWatcher();
+    private static final ConfigManager core = new ConfigManager(Paths.get("config"), NightConfigSerializer.ALL);
+    private static ConfigManager active;
+
+    static {
         registerCollector(new OneConfigCollector());
-        defaultProfile();
-        registerShutdownHook();
     }
 
-    public void defaultProfile() {
-        openProfile("");
+    private volatile boolean shutdown = false;
+    private final FileBackend backend;
+
+
+    @SuppressWarnings("unchecked")
+    private ConfigManager(Path onto, FileSerializer<?>... serializers) {
+        backend = new FileBackend(onto, (FileSerializer<String>[]) serializers);
     }
 
-    public void openProfile(String profile) {
-        Path p = CONFIG_DIR.resolve(profile);
-        p.toFile().mkdirs();
-        LOGGER.info("Opening profile at {}", p);
-        File[] files = CONFIG_DIR.toFile().listFiles();
-        assert files != null;
-        for (File cfg : files) {
-            if (cfg.isDirectory()) continue;
-            try {
-                Files.copy(cfg.toPath(), p.resolve(cfg.getName()));
-            } catch (FileAlreadyExistsException ignored) {
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to copy over config file " + cfg.getName() + " to profile " + p, e);
-            }
+    /**
+     * Returns a reference to the internal config manager, which is mounted onto the ./OneConfig directory.
+     */
+    @ApiStatus.Internal
+    static ConfigManager internal() {
+        return internal;
+    }
+
+    /**
+     * Returns a reference to the active config manager, which is mounted to the current active profile.
+     */
+    public static ConfigManager active() {
+        if (active == null) initialize();
+        return active;
+    }
+
+    private static void initialize() {
+        internal().backend.register(
+                tree("profiles.json").put(
+                        prop("activeProfile", "")
+                )
+        );
+        String activeProfile = internal().get("profiles.json").getProp("activeProfile").getAs();
+        openProfile(activeProfile);
+    }
+
+    public static void openProfile(String profile) {
+        internal().get("profiles.json").getProp("activeProfile").setAs(profile);
+        if (profile.isEmpty()) active = core();
+        else {
+            LOGGER.info("opening profile {}", profile);
+            active = new ConfigManager(PROFILES_DIR.resolve(profile), NightConfigSerializer.ALL).withHook().withWatcher();
         }
-        if (backend == null) backend = new FileBackend(p, DEFAULT_SERIALIZER);
-        else backend = new FileBackend(p, backend.serializer);
     }
 
-    private void registerShutdownHook() {
-        // two hooks that guarantee that we save lol
-        Runtime.getRuntime().addShutdownHook(new Thread(this::shutdownHook));
-        EventManager.register(PreShutdownEvent.class, this::shutdownHook);
+    /**
+     * Returns a reference to the core config manager, which is mounted onto the ./config directory.
+     */
+    public static ConfigManager core() {
+        return core;
     }
 
-    private void shutdownHook() {
-        if (shutdown) return;
-        shutdown = true;
-        LOGGER.info("shutdown requested; saving all configs...");
-        for (Tree t : backend.getTrees()) {
-            backend.save(t);
-        }
+    @UnmodifiableView
+    public Collection<Tree> trees() {
+        return backend.getTrees();
     }
 
     public Tree get(String id) {
         return backend.get(id);
     }
 
-    public Collection<Tree> trees() {
-        return backend.getTrees();
-    }
 
-
-    /**
-     * Register a config to OneConfig. This method essentially will merge the provided config with a file in the config backend.
-     *
-     * @param source the object to register as a config. If it is a Tree, then it is used directly, else, it is collected using a valid collector
-     * @param cfg    the metadata instance for the config. If null, then a default one is created using the source's class name.
-     * @throws IllegalArgumentException if no registered collector is able to collect from the source object
-     */
-    public Tree register(@NotNull Object source, @Nullable Config cfg) {
-        long now = System.nanoTime();
-        cfg = cfg == null ? new Config(source.getClass().getSimpleName(), (String) null, source.getClass().getSimpleName(), Config.Category.OTHER) : cfg;
-        Tree t = collect(source);
-        t.setID(cfg.id);
-        t.lock();
-        if (backend.load(t)) {
-            LOGGER.info("Loaded config {} from backend (took {}ms)", cfg.id, (System.nanoTime() - now) / 1_000_000f);
-        } else {
-            LOGGER.info("Config {} not found in backend, saving...", cfg.id);
-            backend.save(t);
-        }
+    public Tree register(@NotNull Object o, @NotNull String id) {
+        Tree t = collect(o, id);
+        if (t == null) return null;
+        if (!backend.register(t)) return null;
         return t;
     }
 
-    public Tree register(@NotNull Config config) {
-        return register(config, config);
-    }
-
-    private Tree collect(Object o) {
+    @ApiStatus.Internal
+    public static Tree collect(@NotNull Object o, @NotNull String id) {
         if (o instanceof Tree) return (Tree) o;
         for (PropertyCollector collector : collectors) {
             Tree t = collector.collect(o);
-            if (t != null) return t;
+            if (t != null) {
+                t.setID(id);
+                t.lock();
+                return t;
+            }
         }
-        throw new IllegalArgumentException("No registered collector for object " + o.getClass().getName() + "!");
+        LOGGER.error("No registered collector for object {}", o.getClass().getName());
+        return null;
     }
 
-    public void registerCollector(PropertyCollector collector) {
+    /**
+     * Register a collector that can be used to collect trees from objects. these are shared between all config managers.
+     */
+    public static void registerCollector(PropertyCollector collector) {
         collectors.add(collector);
+    }
+
+    private ConfigManager withHook() {
+        // two hooks that guarantee that we save lol
+        Runtime.getRuntime().addShutdownHook(new Thread(this::hook));
+        EventManager.register(PreShutdownEvent.class, this::hook);
+        return this;
+    }
+
+    private ConfigManager withWatcher() {
+        try {
+            backend.addWatcher();
+        } catch (Exception e) {
+            LOGGER.error("Failed to register watcher onto {}", backend.folder, e);
+        }
+        return this;
+    }
+
+    private void hook() {
+        if (shutdown) return;
+        shutdown = true;
+        LOGGER.info("shutdown requested; saving all configs...");
+        for (Tree t : backend.getTrees()) {
+            backend.save(t);
+        }
     }
 }

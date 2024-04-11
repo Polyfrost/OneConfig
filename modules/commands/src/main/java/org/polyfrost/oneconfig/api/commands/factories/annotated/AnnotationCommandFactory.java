@@ -40,7 +40,6 @@ import org.polyfrost.oneconfig.utils.MHUtils;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.WrongMethodTypeException;
 import java.lang.reflect.Method;
-import java.util.Arrays;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -56,7 +55,11 @@ public class AnnotationCommandFactory implements CommandFactory {
     }
 
     static void create(Map<Class<?>, ArgumentParser<?>> parsers, CommandTree tree, Object it) {
-        Arrays.stream(it.getClass().getDeclaredMethods()).filter(m -> m.isAnnotationPresent(Command.class)).map(m -> map(it, m, parsers)).forEach(tree::put);
+        for (Method m : it.getClass().getDeclaredMethods()) {
+            if (m.isAnnotationPresent(Command.class)) {
+                tree.put(map(it, m, parsers));
+            }
+        }
         for (Class<?> cls : it.getClass().getDeclaredClasses()) {
             if (cls.isAnnotationPresent(Command.class)) {
                 Command c = cls.getAnnotation(Command.class);
@@ -97,7 +100,7 @@ public class AnnotationCommandFactory implements CommandFactory {
 
     @SuppressWarnings("unchecked")
     private static <T extends Throwable> T sneakyThrow0(Throwable t) throws T {
-        throw (T)t;
+        throw (T) t;
     }
 
 

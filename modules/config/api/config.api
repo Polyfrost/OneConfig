@@ -21,6 +21,7 @@ public abstract class org/polyfrost/oneconfig/api/config/Node {
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
 	public final fun addMetadata (Ljava/lang/String;Ljava/lang/Object;)V
 	public final fun addMetadata (Ljava/util/Map;)V
+	public final fun consumeMetadata (Ljava/lang/String;)Ljava/lang/Object;
 	public abstract fun deepEquals (Ljava/lang/Object;)Z
 	public fun getID ()Ljava/lang/String;
 	public final fun getMetadata ()Ljava/util/Map;
@@ -57,7 +58,7 @@ public class org/polyfrost/oneconfig/api/config/Property : org/polyfrost/oneconf
 	protected final fun nconvert (Ljava/lang/Object;)Ljava/lang/Object;
 	public fun overwrite (Lorg/polyfrost/oneconfig/api/config/Node;)V
 	public static fun prop (Ljava/lang/String;Ljava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/Property;
-	public static fun prop (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/Property;
+	public static fun prop (Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Class;)Lorg/polyfrost/oneconfig/api/config/Property;
 	public static fun prop (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Class;)Lorg/polyfrost/oneconfig/api/config/Property;
 	public static fun recast (Lorg/polyfrost/oneconfig/api/config/Property;)Lorg/polyfrost/oneconfig/api/config/Property;
 	public fun removeCallback (Ljava/util/function/Consumer;)V
@@ -100,6 +101,7 @@ public abstract class org/polyfrost/oneconfig/api/config/backend/Backend {
 	public fun getTrees ()Ljava/util/Collection;
 	public final fun load (Lorg/polyfrost/oneconfig/api/config/Tree;)Z
 	protected abstract fun load0 (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/Tree;
+	public final fun register (Lorg/polyfrost/oneconfig/api/config/Tree;)Z
 	protected fun requestUpdate (Ljava/lang/String;)V
 	public final fun save (Ljava/lang/String;)Z
 	public final fun save (Lorg/polyfrost/oneconfig/api/config/Tree;)Z
@@ -157,11 +159,5 @@ public class org/polyfrost/oneconfig/api/config/util/ObjectSerializer {
 	public static fun stderrMap (Ljava/util/Map;)V
 	public static fun unbox (Ljava/lang/Object;Ljava/lang/Class;)Ljava/lang/Object;
 	public fun unregisterTypeAdapter (Lorg/polyfrost/oneconfig/api/config/serialize/adapter/Adapter;)V
-}
-
-public class org/polyfrost/oneconfig/api/config/util/Pair {
-	public field first Ljava/lang/Object;
-	public field second Ljava/lang/Object;
-	public fun <init> (Ljava/lang/Object;Ljava/lang/Object;)V
 }
 

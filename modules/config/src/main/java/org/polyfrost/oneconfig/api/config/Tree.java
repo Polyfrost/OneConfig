@@ -43,8 +43,9 @@ import java.util.function.BiConsumer;
  * The Tree class represents a tree structure that contains properties and other trees as children.
  * It provides various methods to access, modify, and compare the tree and its elements.
  */
+@SuppressWarnings("unused")
 public class Tree extends Node implements Serializable {
-    public static final Logger LOGGER = LoggerFactory.getLogger("OneConfig Config API");
+    public static final Logger LOGGER = LoggerFactory.getLogger("OneConfig/Config");
 
     @UnmodifiableView
     public final Map<String, Node> map;
@@ -92,25 +93,21 @@ public class Tree extends Node implements Serializable {
         return n;
     }
 
-    @Nullable
     public Tree getChild(@NotNull String... id) {
         Node n = get(id);
         return n instanceof Tree ? (Tree) n : null;
     }
 
-    @Nullable
     public Tree getChild(@NotNull String id) {
         Node n = get(id);
         return n instanceof Tree ? (Tree) n : null;
     }
 
-    @Nullable
     public Property<?> getProp(@NotNull String... id) {
         Node n = get(id);
         return n instanceof Property ? (Property<?>) n : null;
     }
 
-    @Nullable
     public Property<?> getProp(@NotNull String id) {
         Node n = get(id);
         return n instanceof Property ? (Property<?>) n : null;

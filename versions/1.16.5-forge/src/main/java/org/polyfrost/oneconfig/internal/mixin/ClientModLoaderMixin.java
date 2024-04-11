@@ -41,7 +41,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class ClientModLoaderMixin {
     @Inject(method = "begin", at = @At("HEAD"))
     private static void onBegin(CallbackInfo ci) {
-        OneConfigInit.initialize(new String[]{});
+        OneConfigInit.initialize();
     }
 
     @Inject(method = "lambda$finishModLoading$9", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/GameSettings;loadOptions()V", remap = true), remap = false)

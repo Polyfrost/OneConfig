@@ -76,7 +76,7 @@ public abstract class Node {
     public void setID(String id) {
         if (id == null) throw new IllegalArgumentException("input ID cannot be null");
         if (this.id != null) throw new IllegalStateException("ID is already set");
-        String s = id.trim().replaceAll("\\W", "_");
+        String s = id.trim().replaceAll("[^a-zA-Z0-9_.]", "_");
         if (s.isEmpty()) throw new IllegalArgumentException("ID cannot be empty (or contain only whitespace)");
         this.id = s;
     }
@@ -121,6 +121,19 @@ public abstract class Node {
     public final @Nullable <M> M getMetadata(String key) {
         if (metadata == null) return null;
         return (M) metadata.get(key);
+    }
+
+    /**
+     * Consume some metadata attached to this tree, meaning it will be removed.
+     *
+     * @param key the key of the metadata
+     * @param <M> the type of the metadata
+     * @return the metadata, or null if it doesn't exist
+     */
+    @SuppressWarnings("unchecked")
+    public final @Nullable <M> M consumeMetadata(String key) {
+        if (metadata == null) return null;
+        return (M) metadata.remove(key);
     }
 
     public final @UnmodifiableView @Nullable Map<String, Object> getMetadata() {

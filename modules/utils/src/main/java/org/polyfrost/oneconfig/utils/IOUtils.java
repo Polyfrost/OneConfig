@@ -27,6 +27,8 @@
 package org.polyfrost.oneconfig.utils;
 
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
@@ -48,6 +50,7 @@ import java.security.MessageDigest;
  * Utility class for I/O operations.
  */
 public final class IOUtils {
+    private static final Logger LOGGER = LoggerFactory.getLogger("OneConfig/IO");
 
     /**
      * @deprecated Use {@link #resourceToByteBufferNullable(String, Class)}
@@ -171,7 +174,7 @@ public final class IOUtils {
 
             return convertByteArrayToHexString(digest.digest());
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error("Failed to get {} checksum", file.getName(), e);
         }
         return "";
     }

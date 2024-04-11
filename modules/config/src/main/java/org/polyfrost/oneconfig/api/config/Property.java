@@ -288,15 +288,14 @@ public class Property<T> extends Node implements Serializable {
     }
 
     @SuppressWarnings("ConstantConditions")
-    public static <T> Property<T> prop(@Nullable String id, @Nullable String name, @NotNull T value) {
-        if (value == null) throw new IllegalArgumentException("Cannot create a property with a null value and no class");
-        return new Property<>(id, name, null, value);
-    }
-
-    @SuppressWarnings("ConstantConditions")
     public static <T> Property<T> prop(@Nullable String id, @NotNull T value) {
         if (value == null) throw new IllegalArgumentException("Cannot create a property with a null value and no class");
         return new Property<>(id, null, null, value);
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T> Property<T> prop(@Nullable String id, @Nullable T value, Class<?> type) {
+        return new Property<>(id, null, null, value, (Class<T>) type);
     }
 
     @SuppressWarnings("unchecked")

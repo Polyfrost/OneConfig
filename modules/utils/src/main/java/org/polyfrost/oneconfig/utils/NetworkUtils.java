@@ -28,6 +28,8 @@ package org.polyfrost.oneconfig.utils;
 
 import com.google.gson.JsonElement;
 import org.polyfrost.oneconfig.libs.universal.UDesktop;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
@@ -46,6 +48,7 @@ import java.nio.file.StandardCopyOption;
  * Utility class for accessing the internet.
  */
 public final class NetworkUtils {
+    private static final Logger LOGGER = LoggerFactory.getLogger("OneConfig/Network");
 
     /**
      * Gets the contents of a URL as a String.
@@ -64,7 +67,7 @@ public final class NetworkUtils {
                 sb.append(line).append('\n');
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error("Failed to getString from {}", url, e);
             return null;
         }
         return sb.toString();
@@ -122,7 +125,7 @@ public final class NetworkUtils {
         try (BufferedInputStream in = new BufferedInputStream(setupConnection(url, userAgent, timeout, useCaches))) {
             Files.copy(in, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error("Failed to download file from {}", url, e);
             return false;
         }
         return true;

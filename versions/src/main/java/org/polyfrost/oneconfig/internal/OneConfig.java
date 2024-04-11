@@ -47,13 +47,13 @@ import static org.polyfrost.oneconfig.api.commands.factories.builder.CommandBuil
  */
 //#if FORGE==1
 //#if MC<=11202
-@net.minecraftforge.fml.common.Mod(modid = "@ID@", name = "@NAME@", version = "@VER@")
+@net.minecraftforge.fml.common.Mod(modid = "oneconfig", name = "OneConfig", version = "1.0.0-alpha")
 //#else
-//$$ @net.minecraftforge.fml.common.Mod("@ID@")
+//$$ @net.minecraftforge.fml.common.Mod("oneconfig")
 //#endif
 //#endif
 public class OneConfig {
-    public static final Logger LOGGER = LoggerFactory.getLogger("@NAME@");
+    public static final Logger LOGGER = LoggerFactory.getLogger("OneConfig");
     public static final OneConfig INSTANCE = new OneConfig();
     private static boolean initialized = false;
 

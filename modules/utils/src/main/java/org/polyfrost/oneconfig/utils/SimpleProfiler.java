@@ -38,7 +38,7 @@ import java.util.HashMap;
  */
 public final class SimpleProfiler {
     static final HashMap<String, Long> startTimes = new HashMap<>();
-    static final Logger LOGGER = LoggerFactory.getLogger("OneConfig Profiler");
+    static final Logger LOGGER = LoggerFactory.getLogger("OneConfig/Profiler");
 
     /**
      * Push a profiler start time to the map. <br>

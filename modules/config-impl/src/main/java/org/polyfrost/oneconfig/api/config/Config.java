@@ -26,82 +26,43 @@
 
 package org.polyfrost.oneconfig.api.config;
 
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.polyfrost.polyui.renderer.data.PolyImage;
 
-import java.util.ArrayList;
 import java.util.function.BooleanSupplier;
 
-import static org.polyfrost.oneconfig.api.config.Tree.LOGGER;
+public abstract class Config {
+    protected final Tree tree;
 
-public class Config {
-    @NotNull
-    public transient final String id;
-    @Nullable
-    public transient final PolyImage icon;
-    @NotNull
-    public transient final String name;
-    public boolean enabled = true;
-    public boolean favorite = false;
-    // todo(?) public transient boolean hasUpdate = true;
-    @ApiStatus.Internal
-    @NotNull
-    public transient final ArrayList<PolyImage> data = new ArrayList<>(0);
-    @NotNull
-    public transient final Category category;
-    @ApiStatus.Internal
-    private transient Tree tree = null;
-
-    public Config(@NotNull String id, @Nullable PolyImage icon, @NotNull String name, @NotNull Category category) {
-        this.id = id;
-        this.icon = icon;
-        this.name = name;
-        this.category = category;
+    public Config(@NotNull String id, @Nullable PolyImage icon, @NotNull String title, @NotNull Category category) {
+        tree = ConfigManager.active().register(this, id);
+        tree.setTitle(title);
+        if (icon != null) tree.addMetadata("icon", icon);
+        tree.addMetadata("category", category);
     }
 
-    public Config(String id, String iconPath, String name, Category category) {
-        this(id, iconPath != null ? new PolyImage(iconPath) : null, name, category);
+    public Config(@NotNull String id, @NotNull String title, @NotNull Category category) {
+        this(id, null, title, category);
     }
-
-    public Config(String id, String name, Category category) {
-        this(id, (PolyImage) null, name, category);
-    }
-
-    public Tree getTree() {
-        if (tree == null) throw new NullPointerException("Illegal access to config " + id + "'s tree: Not registered yet");
-        return tree;
-    }
-
-    public boolean register() {
-        if (tree != null) {
-            LOGGER.error("Config attempted to be registered twice: {}", id);
-            return false;
-        }
-        tree = ConfigManager.INSTANCE.register(this);
-        return true;
-    }
-
 
     public void addDependency(String option, BooleanSupplier condition) {
-        Property<?> p = tree.getProp(option);
-        if (p == null) throw new IllegalArgumentException("Attempted to specify a condition for property " + option + " but it was not found");
-        p.addDisplayCondition(condition);
+        getProperty(option).addDisplayCondition(condition);
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Config config = (Config) o;
-        return id.equals(config.id);
+    public void addDependency(String option, String condition) {
+        Property<?> cond = getProperty(condition);
+        if (cond.type != boolean.class && cond.type != Boolean.class) throw new IllegalArgumentException("Condition property must be boolean");
+        getProperty(option).addDisplayCondition(cond::getAs);
     }
 
-    @Override
-    public int hashCode() {
-        return id.hashCode();
+
+    public Property<?> getProperty(String option) {
+        Property<?> p = option.indexOf('.') >= 0 ? tree.getProp(option.split("\\.")) : tree.getProp(option);
+        if (p == null) throw new IllegalArgumentException("Config does not contain property: " + option);
+        return p;
     }
+
 
     public enum Category {
         HUD("hud.svg", "oneconfig.hud"),

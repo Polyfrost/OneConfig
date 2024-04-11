@@ -47,7 +47,7 @@ import org.slf4j.LoggerFactory
 import kotlin.math.PI
 
 object ConfigVisualizer {
-    private val LOGGER = LoggerFactory.getLogger("OneConfig Config Visualizer")
+    private val LOGGER = LoggerFactory.getLogger("OneConfig/Config")
     private val visCache = HashMap<Class<*>, Visualizer>()
     private val configCache = HashMap<Tree, Drawable>()
     private val optBg = rgba(39, 49, 55, 0.2f)
@@ -194,7 +194,10 @@ object ConfigVisualizer {
                         val anim = Animations.EaseOutQuad.create(0.4.seconds)
                         val operation = Resize(parent!!, width = 0f, height = if (open) -value else value, add = true, anim)
                         addOperation(
-                            object : DrawableOp.Animatable<Drawable>(parent!!, anim) {
+                            object : DrawableOp.Animatable<Drawable>(parent!!, anim, onFinish = {
+                                this[1].renders = !open
+                                this[1].enabled = !open
+                            }) {
                                 override fun apply(value: Float) {
                                     operation.apply()
                                     // asm: instruct parent (options list) to replace all its children so that they move with it closing

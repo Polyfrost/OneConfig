@@ -42,8 +42,27 @@ import java.util.Map;
  * It is responsible for getting and putting ConfigTrees, and by extension, serializing/deserializing them.
  */
 public abstract class Backend {
-    public static final Logger LOGGER = LoggerFactory.getLogger("OneConfig Config API Backend");
+    public static final Logger LOGGER = LoggerFactory.getLogger("OneConfig/Config");
     private final Map<String, Tree> trees = new HashMap<>();
+
+
+    /**
+     * Register the given config with the system. This is a hybrid of the load and save methods, depending on the state of the given tree.
+     * <br>
+     * New trees will be saved to the backend, while existing trees will be loaded and data overwritten on them with the backend data.
+     */
+    public final boolean register(@NotNull Tree t) {
+        if (t.getID() == null) throw new IllegalArgumentException("ID must be set before registering");
+        if (trees.get(t.getID()) != null) throw new IllegalArgumentException("Tree with ID " + t.getID() + " already registered");
+        t.lock();
+        if (load(t)) {
+            LOGGER.info("Loaded config {} from backend", t.getID());
+            return true;
+        } else {
+            LOGGER.info("Config {} not found in backend, saving...", t.getID());
+            return save(t);
+        }
+    }
 
     /**
      * Load in a tree with the given ID. if the tree does not exist, return null.
@@ -64,7 +83,7 @@ public abstract class Backend {
         }
         if (t == null) return false;
         tree.overwrite(t);
-        trees.putIfAbsent(tree.getID(), tree);
+        trees.put(tree.getID(), tree);
         return true;
     }
 
@@ -84,7 +103,7 @@ public abstract class Backend {
 
     public final boolean save(Tree tree) {
         if (tree.getID() == null) throw new IllegalArgumentException("tree must be master (have a valid ID)");
-        trees.putIfAbsent(tree.getID(), tree);
+        trees.put(tree.getID(), tree);
         try {
             return save0(tree);
         } catch (Exception e) {

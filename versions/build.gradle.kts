@@ -11,7 +11,6 @@ plugins {
     alias(libs.plugins.kotlin)
     id(libs.plugins.pgt.main.get().pluginId)
     id(libs.plugins.pgt.default.get().pluginId)
-    id(libs.plugins.blossom.get().pluginId)
     id(libs.plugins.shadow.get().pluginId)
     id("maven-publish")
     id("signing")
@@ -39,18 +38,6 @@ val tweakClass = "org.polyfrost.oneconfig.internal.init.OneConfigTweaker"
 
 preprocess {
     vars.put("MODERN", if (platform.mcMinor >= 16) 1 else 0)
-}
-
-sourceSets {
-    main {
-        blossom {
-            javaSources {
-                property("@VER@", version.toString())
-                property("@NAME@", modName)
-                property("@ID@", modId)
-            }
-        }
-    }
 }
 
 base {

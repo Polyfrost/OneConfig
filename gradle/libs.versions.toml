@@ -5,7 +5,6 @@ kotlinx-serialization = "1.6.3"
 kotlinx-atomicfu = "0.23.2"
 kotlinx-abi = "0.14.0"
 
-blossom = "2.1.0"
 shadow = "8.1.1"
 licenser = "2.0.1"
 
@@ -80,6 +79,5 @@ pgt-default = { id = "org.polyfrost.defaults", version.ref = "pgt" }
 pgt-defaults-repo = { id = "org.polyfrost.defaults.repo", version.ref = "pgt" }
 pgt-defaults-java = { id = "org.polyfrost.defaults.java", version.ref = "pgt" }
 
-blossom = { id = "net.kyori.blossom", version.ref = "blossom" }
 shadow = { id = "com.github.johnrengelman.shadow", version.ref = "shadow" }
 licenser = { id = "org.quiltmc.gradle.licenser", version.ref = "licenser" }

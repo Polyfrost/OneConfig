@@ -26,7 +26,6 @@
 
 package org.polyfrost.oneconfig.ui
 
-import org.polyfrost.oneconfig.api.events.EventManager
 import org.polyfrost.oneconfig.api.events.event.RenderEvent
 import org.polyfrost.oneconfig.api.events.eventHandler
 import org.polyfrost.polyui.PolyUI

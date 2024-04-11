@@ -27,8 +27,8 @@
 package org.polyfrost.oneconfig.api.hud
 
 import org.jetbrains.annotations.ApiStatus
+import org.polyfrost.oneconfig.api.hud.collector.ReflectiveHudCollector
 import org.polyfrost.oneconfig.api.hud.internal.*
-import org.polyfrost.oneconfig.libs.universal.UScreen
 import org.polyfrost.oneconfig.ui.LwjglManager
 import org.polyfrost.oneconfig.utils.GuiUtils
 import org.polyfrost.polyui.PolyUI
@@ -44,14 +44,17 @@ import org.polyfrost.polyui.operations.DrawableOp
 import org.polyfrost.polyui.operations.Fade
 import org.polyfrost.polyui.operations.Move
 import org.polyfrost.polyui.renderer.data.Cursor
-import org.polyfrost.polyui.unit.*
+import org.polyfrost.polyui.unit.Align
+import org.polyfrost.polyui.unit.AlignDefault
+import org.polyfrost.polyui.unit.Vec2
+import org.polyfrost.polyui.unit.seconds
 import org.polyfrost.polyui.utils.*
 import kotlin.math.PI
 
 object HudManager {
 
     private val huds = LinkedList<Hud<out Drawable>>()
-
+    private val collector = ReflectiveHudCollector()
     private val snapLineColor = rgba(170, 170, 170, 0.8f)
 
     /**

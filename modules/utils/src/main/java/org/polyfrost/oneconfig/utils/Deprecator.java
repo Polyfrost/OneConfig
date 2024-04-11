@@ -26,6 +26,9 @@
 
 package org.polyfrost.oneconfig.utils;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.HashSet;
 import java.util.Set;
 
@@ -33,6 +36,7 @@ import java.util.Set;
  * Class used by OneConfig for deprecation related utilities.
  */
 public final class Deprecator {
+    private static final Logger LOGGER = LoggerFactory.getLogger("OneConfig/Deprecator");
     private static final Set<String> warned = new HashSet<>();
 
     /**
@@ -57,11 +61,8 @@ public final class Deprecator {
 
             if (warned.add(culprit)) {
                 //Notifications.INSTANCE.send("Deprecation Warning", "The mod '" + culprit + "' is using a deprecated method, and will no longer work in the future. Please report this to the mod author.");
-                try {
-                    throw new UnsupportedOperationException("Method " + e.getStackTrace()[1].getClassName() + "." + e.getStackTrace()[1].getMethodName() + "() is deprecated; but is still being used by mod " + culprit + "!");
-                } catch (UnsupportedOperationException e1) {
-                    e1.printStackTrace();
-                }
+                LOGGER.warn("Method {}.{}() is deprecated; but is still being used by mod {}!", e.getStackTrace()[1].getClassName(), e.getStackTrace()[1].getMethodName(), culprit, e);
+
             }
         }
     }

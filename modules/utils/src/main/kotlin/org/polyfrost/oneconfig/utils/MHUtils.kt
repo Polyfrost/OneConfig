@@ -45,17 +45,18 @@ import java.util.function.Function
  * <br></br>
  * MethodHandles also are "directly supported by the VM" and are "more efficient than the equivalent reflective operations", according to the documentation.
  */
+@Suppress("unused")
 object MHUtils {
     private val LOGGER: Logger = LoggerFactory.getLogger("OneConfig/MHUtils")
 
     @Suppress("UNCHECKED_CAST")
-    class Result<out T>(@PublishedApi @JvmSynthetic internal val value: Any?) {
+    class Result<T>(@PublishedApi @JvmSynthetic internal val value: Any?) {
         inline val isSuccess get() = value !is Failure
         inline val isFailure get() = value is Failure
 
         inline fun getOrThrow() = if (isSuccess) value as T else throw (value as Failure).t
         inline fun getOrNull() = if (isSuccess) value as T else null
-        inline fun getOrElse(default: @UnsafeVariance T) = if (isSuccess) value as T else default
+        inline fun getOrElse(default: T) = if (isSuccess) value as T else default
 
 
 

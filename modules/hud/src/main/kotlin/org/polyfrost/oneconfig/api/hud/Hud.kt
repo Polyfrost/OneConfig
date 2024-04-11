@@ -49,6 +49,7 @@ import org.polyfrost.polyui.unit.Vec2
  */
 @Suppress("EqualsOrHashCode")
 abstract class Hud<T : Drawable> : Cloneable {
+    @Transient
     private var it: T? = null
 
     /**
