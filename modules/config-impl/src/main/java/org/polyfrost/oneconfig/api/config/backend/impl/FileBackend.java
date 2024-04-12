@@ -24,16 +24,18 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.api.config.backend.impl.file;
+package org.polyfrost.oneconfig.api.config.backend.impl;
 
 import org.jetbrains.annotations.NotNull;
 import org.polyfrost.oneconfig.api.config.Tree;
 import org.polyfrost.oneconfig.api.config.backend.Backend;
 import org.polyfrost.oneconfig.api.config.exceptions.SerializationException;
+import org.polyfrost.oneconfig.api.config.serialize.impl.FileSerializer;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -41,7 +43,9 @@ import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class FileBackend extends Backend {
@@ -99,12 +103,14 @@ public class FileBackend extends Backend {
                     }
                     if (!key.reset()) {
                         LOGGER.error("file watcher is invalid; disabled!");
+                        hasWatcher = false;
                         break;
                     }
                 } catch (Exception e) {
                     i++;
                     LOGGER.error("error with config file watcher (error no. {})", i, e);
                     if (i > 10) {
+                        hasWatcher = false;
                         LOGGER.error("Too many errors, shutting down file watcher!");
                         break;
                     }
@@ -114,7 +120,12 @@ public class FileBackend extends Backend {
         t.setName("OneConfig Config Watcher");
         t.setDaemon(true);
         t.start();
+        LOGGER.info("installed watcher to {}", folder);
         return this;
+    }
+
+    public boolean hasWatcher() {
+        return hasWatcher;
     }
 
     public void dodge() {
@@ -126,6 +137,10 @@ public class FileBackend extends Backend {
         Path p = folder.resolve(id);
         if (!Files.exists(p)) return null;
         FileSerializer<String> serializer = getSerializer(p);
+        if (serializer == null) {
+            LOGGER.error("No serializer found for loading file {}", p);
+            return null;
+        }
         try {
             return serializer.deserialize(read(p));
         } catch (Exception e) {
@@ -139,11 +154,15 @@ public class FileBackend extends Backend {
     protected boolean save0(@NotNull Tree tree) {
         Path p = folder.resolve(tree.getID());
         FileSerializer<String> serializer = getSerializer(p);
+        if (serializer == null) {
+            LOGGER.error("No serializer found for saving file {}", p);
+            return false;
+        }
         write(p, serializer.serialize(tree));
         return true;
     }
 
-    private static String read(Path p) {
+    protected static String read(Path p) {
         StringBuilder buf = new StringBuilder();
         try (BufferedReader r = Files.newBufferedReader(p)) {
             String o;
@@ -156,7 +175,7 @@ public class FileBackend extends Backend {
         return buf.toString();
     }
 
-    private static void write(Path p, String s) {
+    protected static void write(Path p, String s) {
         try (BufferedWriter w = Files.newBufferedWriter(p, StandardOpenOption.CREATE)) {
             w.write(s);
         } catch (Exception e) {
@@ -164,17 +183,39 @@ public class FileBackend extends Backend {
         }
     }
 
-    public void addSerializer(FileSerializer<String> serializer) {
-        serializers.putIfAbsent(serializer.getExtension(), serializer);
+    /**
+     * Inspect all files in this directory and make trees of them where possible.
+     */
+    public List<Tree> gatherAll() {
+        ArrayList<Tree> out = new ArrayList<>();
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(folder)) {
+            for (Path p : stream) {
+                if (!Files.isRegularFile(p)) continue;
+                FileSerializer<String> serializer = getSerializer(p);
+                if (serializer == null) continue;
+                try {
+                    Tree t = serializer.deserialize(read(p));
+                    t.setID(p.getFileName().toString());
+                    t.lock();
+                    out.add(t);
+                } catch (Exception ignored) {
+                }
+            }
+        } catch (IOException e) {
+            LOGGER.error("Failed to gather all configs", e);
+        }
+        out.trimToSize();
+        return out;
     }
 
-    private FileSerializer<String> getSerializer(Path p) {
+    public void addSerializer(FileSerializer<String> serializer) {
+        serializers.put(serializer.getExtension(), serializer);
+    }
+
+    protected FileSerializer<String> getSerializer(Path p) {
         String path = p.toString();
         int i = path.lastIndexOf('.');
-        if (i == -1) throw new IllegalArgumentException();
-        String ext = path.substring(i);
-        FileSerializer<String> s = serializers.get(ext);
-        if (s == null) throw new IllegalArgumentException("No serializer found for extension " + ext);
-        return s;
+        if (i == -1) return null;
+        return serializers.get(path.substring(i));
     }
 }

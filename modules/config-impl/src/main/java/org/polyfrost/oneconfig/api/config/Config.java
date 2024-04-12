@@ -37,6 +37,7 @@ public abstract class Config {
 
     public Config(@NotNull String id, @Nullable PolyImage icon, @NotNull String title, @NotNull Category category) {
         tree = ConfigManager.active().register(this, id);
+        if(tree == null) throw new IllegalStateException("hm.");
         tree.setTitle(title);
         if (icon != null) tree.addMetadata("icon", icon);
         tree.addMetadata("category", category);
@@ -65,7 +66,6 @@ public abstract class Config {
 
 
     public enum Category {
-        HUD("hud.svg", "oneconfig.hud"),
         COMBAT("console.svg", "oneconfig.combat"),
         QOL("spanner.svg", "oneconfig.qol"),
         HYPIXEL("hypixel.svg", "oneconfig.hypixel"),

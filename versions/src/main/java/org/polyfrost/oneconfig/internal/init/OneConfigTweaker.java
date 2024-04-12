@@ -72,7 +72,7 @@ public class OneConfigTweaker implements ITweaker {
                         if (jarFile.getManifest() != null) {
                             Attributes attributes = jarFile.getManifest().getMainAttributes();
                             String tweakerClass = attributes.getValue("TweakClass");
-                            if (Objects.equals(tweakerClass, "cc.polyfrost.oneconfigwrapper.OneConfigWrapper") || Objects.equals(tweakerClass, "cc.polyfrost.oneconfig.loader.stage0.LaunchWrapperTweaker") || Objects.equals(tweakerClass, "org.polyfrost.oneconfig.loader.stage0.OneConfigTweaker")) {
+                            if (Objects.equals(tweakerClass, OneConfigTweaker.class.getName())) {
                                 CoreModManager.getIgnoredMods().remove(file.getName());
                                 CoreModManager.getReparseableCoremods().add(file.getName());
                                 String mixinConfig = attributes.getValue("MixinConfigs");
@@ -80,7 +80,7 @@ public class OneConfigTweaker implements ITweaker {
                                     try {
                                         try {
                                             List<String> tweakClasses = (List<String>) Launch.blackboard.get("TweakClasses"); // tweak classes before other mod trolling
-                                            if (tweakClasses.contains("org.spongepowered.asm.launch.MixinTweaker")) { // if there's already a mixin tweaker, we'll just load it like "usual"
+                                            if (tweakClasses.contains(MixinTweaker.class.getName())) { // if there's already a mixin tweaker, we'll just load it like "usual"
                                                 new MixinTweaker(); // also we might not need to make a new mixin tweawker all the time but im just making sure
                                             } else if (!Launch.blackboard.containsKey("mixin.initialised")) { // if there isnt, we do our own trolling
                                                 List<ITweaker> tweaks = (List<ITweaker>) Launch.blackboard.get("Tweaks");
@@ -132,7 +132,6 @@ public class OneConfigTweaker implements ITweaker {
     @Override
     public void injectIntoClassLoader(LaunchClassLoader classLoader) {
         removeLWJGLException();
-        OneConfigInit.initialize();
         Launch.blackboard.put("oneconfig.init.initialized", true);
         Launch.classLoader.addClassLoaderExclusion("org.polyfrost.oneconfig.internal.plugin.asm.");
 
@@ -152,7 +151,7 @@ public class OneConfigTweaker implements ITweaker {
     @SuppressWarnings("unchecked")
     private void removeLWJGLException() {
         try {
-            Set<String> exceptions = (Set<String>) MHUtils.getFieldGetter(LaunchClassLoader.class, "classLoaderExceptions", Set.class).getOrThrow().invokeExact(Launch.classLoader);
+            Set<String> exceptions = (Set<String>) MHUtils.getField(Launch.classLoader, "classLoaderExceptions").getOrThrow();
             exceptions.remove("org.lwjgl.");
         } catch (Throwable e) {
             throw new RuntimeException(e);

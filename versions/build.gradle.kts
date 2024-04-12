@@ -1,7 +1,6 @@
 @file:Suppress("DSL_SCOPE_VIOLATION")
 
 import net.fabricmc.loom.task.RemapSourcesJarTask
-import org.polyfrost.gradle.util.RelocationTransform.Companion.registerRelocationAttribute
 import org.polyfrost.gradle.util.noServerRunConfigs
 import org.polyfrost.gradle.util.prebundle
 import java.text.SimpleDateFormat
@@ -79,23 +78,11 @@ val shade: Configuration by configurations.creating {
 }
 
 dependencies {
-    compileOnly("gg.essential:vigilance-1.8.9-forge:${libs.versions.vigilance.get()}") {
+    compileOnly("gg.essential:vigilance-1.8.9-forge:295") {
         isTransitive = false
     }
 
     shadeMod("org.polyfrost:universalcraft-$platform:${libs.versions.universalcraft.get()}", transitive = false)
-
-    @Suppress("UnstableApiUsage")
-    shade(libs.caffeine) {
-        isTransitive = false
-        attributes {
-            attribute(registerRelocationAttribute("relocate-caffeine") {
-                relocate("com.github.benmanes", "org.polyfrost.oneconfig.libs")
-                remapStringsIn("com.github.benmanes.caffeine.cache.LocalCacheFactory")
-                remapStringsIn("com.github.benmanes.caffeine.cache.NodeFactory")
-            }, true)
-        }
-    }
 
     shade(libs.polyui)
 
@@ -168,7 +155,7 @@ tasks {
     withType(Jar::class) {
         val atomicLines = AtomicReference(listOf<String>())
 
-        // This removes the 24th line in fabric.mod.json,
+        // This removes the 21st line in fabric.mod.json,
         // aka the TestMod entrypoint, for production builds.
         val fabricModJson = layout.buildDirectory.get().asFile.resolve("resources")
             .resolve("main")
@@ -176,13 +163,13 @@ tasks {
         doFirst {
             if (fabricModJson.exists()) {
                 val lines = fabricModJson.readLines()
-                if (lines[23].contains("TestMod")) {
+                if (lines[20].contains("TestMod")) {
                     atomicLines.set(lines)
 
                     fabricModJson.delete()
                     fabricModJson.writeText(
-                        lines.subList(0, 23).joinToString("\n") + "\n" + lines.subList(
-                            24,
+                        lines.subList(0, 20).joinToString("\n") + "\n" + lines.subList(
+                            22,
                             lines.size
                         ).joinToString("\n")
                     )
@@ -308,7 +295,6 @@ tasks {
         archiveClassifier.set("")
     }
     named<Jar>("sourcesJar") {
-        from(project(":").sourceSets.main.map { it.allSource })
         excludeInternal()
         archiveClassifier.set("sources")
         doFirst {

@@ -24,7 +24,7 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.api.config.backend.impl;
+package org.polyfrost.oneconfig.api.config.serialize.impl;
 
 import com.electronwill.nightconfig.core.AbstractConfig;
 import com.electronwill.nightconfig.core.Config;
@@ -42,7 +42,6 @@ import org.jetbrains.annotations.NotNull;
 import org.polyfrost.oneconfig.api.config.Node;
 import org.polyfrost.oneconfig.api.config.Property;
 import org.polyfrost.oneconfig.api.config.Tree;
-import org.polyfrost.oneconfig.api.config.backend.impl.file.FileSerializer;
 import org.polyfrost.oneconfig.api.config.util.ObjectSerializer;
 
 import java.util.HashMap;

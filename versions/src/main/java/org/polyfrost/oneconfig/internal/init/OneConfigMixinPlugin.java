@@ -81,6 +81,8 @@ public class OneConfigMixinPlugin implements IMixinConfigPlugin {
             if (version <= 11202) {
                 mixins.add("commands.ChatScreenMixin");
                 mixins.add("commands.ScreenMixin");
+            } else {
+                mixins.add("ClientCommandSourceMixin");
             }
         }
 

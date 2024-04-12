@@ -97,8 +97,8 @@ public abstract class org/polyfrost/oneconfig/api/config/backend/Backend {
 	public static final field LOGGER Lorg/slf4j/Logger;
 	public fun <init> ()V
 	public fun exists (Ljava/lang/String;)Z
-	public fun get (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/Tree;
-	public fun getTrees ()Ljava/util/Collection;
+	public final fun get (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/Tree;
+	public final fun getTrees ()Ljava/util/Collection;
 	public final fun load (Lorg/polyfrost/oneconfig/api/config/Tree;)Z
 	protected abstract fun load0 (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/Tree;
 	public final fun register (Lorg/polyfrost/oneconfig/api/config/Tree;)Z
@@ -158,6 +158,5 @@ public class org/polyfrost/oneconfig/api/config/util/ObjectSerializer {
 	public fun serialize (Ljava/lang/Object;Z)Ljava/lang/Object;
 	public static fun stderrMap (Ljava/util/Map;)V
 	public static fun unbox (Ljava/lang/Object;Ljava/lang/Class;)Ljava/lang/Object;
-	public fun unregisterTypeAdapter (Lorg/polyfrost/oneconfig/api/config/serialize/adapter/Adapter;)V
 }
 

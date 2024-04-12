@@ -29,7 +29,8 @@ package org.polyfrost.oneconfig.api.config.backend.impl.file;
 import org.junit.jupiter.api.Test;
 import org.polyfrost.oneconfig.api.config.Tree;
 import org.polyfrost.oneconfig.api.config.Util;
-import org.polyfrost.oneconfig.api.config.backend.impl.NightConfigSerializer;
+import org.polyfrost.oneconfig.api.config.backend.impl.FileBackend;
+import org.polyfrost.oneconfig.api.config.serialize.impl.NightConfigSerializer;
 
 import java.awt.*;
 import java.util.ArrayList;

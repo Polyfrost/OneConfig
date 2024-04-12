@@ -36,8 +36,9 @@ import net.minecraft.text.Text;
 import org.polyfrost.oneconfig.api.events.EventManager;
 import org.polyfrost.oneconfig.api.events.event.ChatReceiveEvent;
 
-import org.polyfrost.oneconfig.internal.commands.ClientCommandSource;
-import org.polyfrost.oneconfig.internal.commands.PlatformCommandManagerImpl;
+import org.polyfrost.oneconfig.internal.commands.RegisterCommandsEvent;
+import org.polyfrost.oneconfig.internal.libs.fabric.ClientCommandInternals;
+import org.polyfrost.oneconfig.internal.libs.fabric.ClientCommandSource;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -84,8 +85,9 @@ public abstract class NetHandlerPlayClientMixin {
     @Inject(method = "onGameJoin", at = @At("RETURN"))
     private void onGameJoin(GameJoinS2CPacket packet, CallbackInfo info) {
         final CommandDispatcher<ClientCommandSource> dispatcher = new CommandDispatcher<>();
-        PlatformCommandManagerImpl.setActiveDispatcher(dispatcher);
-        PlatformCommandManagerImpl.finalizeInit();
+        ClientCommandInternals.setActiveDispatcher(dispatcher);
+        EventManager.INSTANCE.post(new RegisterCommandsEvent(dispatcher));
+        ClientCommandInternals.finalizeInit();
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -94,6 +96,6 @@ public abstract class NetHandlerPlayClientMixin {
         // Add the commands to the vanilla dispatcher for completion.
         // It's done here because both the server and the client commands have
         // to be in the same dispatcher and completion results.
-        PlatformCommandManagerImpl.addCommands((CommandDispatcher) commandDispatcher, (ClientCommandSource) commandSource);
+        ClientCommandInternals.addCommands((CommandDispatcher) commandDispatcher, (ClientCommandSource) commandSource);
     }
 }

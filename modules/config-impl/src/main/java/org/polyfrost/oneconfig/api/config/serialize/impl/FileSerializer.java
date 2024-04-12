@@ -24,22 +24,10 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.internal.mixin;
+package org.polyfrost.oneconfig.api.config.serialize.impl;
 
-import org.polyfrost.oneconfig.internal.commands.PlatformCommandManagerImpl;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.polyfrost.oneconfig.api.config.serialize.Serializer;
 
-import net.minecraft.client.network.ClientPlayerEntity;
-
-@Mixin(ClientPlayerEntity.class)
-public abstract class ClientPlayerEntityMixin {
-    @Inject(method = "sendChatMessage", at = @At("HEAD"), cancellable = true)
-    private void onSendChatMessage(String message, CallbackInfo info) {
-        if (PlatformCommandManagerImpl.executeCommand(message)) {
-            info.cancel();
-        }
-    }
+public interface FileSerializer<T> extends Serializer<T> {
+    String getExtension();
 }

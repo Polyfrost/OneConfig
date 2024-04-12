@@ -55,13 +55,8 @@ public abstract class Backend {
         if (t.getID() == null) throw new IllegalArgumentException("ID must be set before registering");
         if (trees.get(t.getID()) != null) throw new IllegalArgumentException("Tree with ID " + t.getID() + " already registered");
         t.lock();
-        if (load(t)) {
-            LOGGER.info("Loaded config {} from backend", t.getID());
-            return true;
-        } else {
-            LOGGER.info("Config {} not found in backend, saving...", t.getID());
-            return save(t);
-        }
+        if (load(t)) return true;
+        else return save(t);
     }
 
     /**
@@ -116,11 +111,11 @@ public abstract class Backend {
         return trees.containsKey(id);
     }
 
-    public Tree get(String id) {
+    public final Tree get(String id) {
         return trees.get(id);
     }
 
-    public Collection<Tree> getTrees() {
+    public final Collection<Tree> getTrees() {
         return trees.values();
     }
 

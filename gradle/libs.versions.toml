@@ -1,35 +1,26 @@
 [versions]
 kotlin = "1.9.22"
 kotlinx-coroutines = "1.8.0"
-kotlinx-serialization = "1.6.3"
 kotlinx-atomicfu = "0.23.2"
 kotlinx-abi = "0.14.0"
 
+pgt = "0.4.1"
 shadow = "8.1.1"
 licenser = "2.0.1"
-
-pgt = "0.4.1"
-
-caffeine = "3.1.8"
-mixin = "0.7.11-SNAPSHOT"
-
-lwjgl = "3.3.1"
 
 polyui = "1.1.42"
 
 slf4j = "2.0.12"
 annotations = "24.1.0"
+nightconfig = "3.6.6"
+
+lwjgl = "3.3.1"
+universalcraft = "249"
+mixin = "0.7.11-SNAPSHOT"
 
 junit-bom = "5.10.2"
 
-nightconfig = "3.6.6"
-
-vigilance = "295"
-universalcraft = "249"
-
 [libraries]
-caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "caffeine" }
-
 junit = { module = "org.junit.jupiter:junit-jupiter" }
 junit-bom = { module = "org.junit:junit-bom", version.ref = "junit-bom" }
 
@@ -56,14 +47,11 @@ nightconfig-json = { module = "com.electronwill.night-config:json", version.ref 
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib-jdk8", version.ref = "kotlin" }
 kotlinx-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
-kotlinx-serialization = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core-jvm", version.ref = "kotlinx-serialization" }
-kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json-jvm", version.ref = "kotlinx-serialization" }
-kotlinx-serialization-cbor = { module = "org.jetbrains.kotlinx:kotlinx-serialization-cbor-jvm", version.ref = "kotlinx-serialization" }
 kotlinx-atomicfu = { module = "org.jetbrains.kotlinx:atomicfu-jvm", version.ref = "kotlinx-atomicfu" }
 
 [bundles]
 kotlin = ["kotlin-reflect", "kotlin-stdlib"]
-kotlinx = ["kotlinx-coroutines", "kotlinx-serialization", "kotlinx-serialization-json", "kotlinx-serialization-cbor", "kotlinx-atomicfu"]
+kotlinx = ["kotlinx-coroutines", "kotlinx-atomicfu"]
 lwjgl = ["lwjgl", "lwjgl-nvg", "lwjgl-opengl", "lwjgl-stb", "lwjgl-tinyfd"]
 nightconfig = ["nightconfig", "nightconfig-json", "nightconfig-toml", "nightconfig-yaml"]
 core = ["annotations", "slf4j-api"]

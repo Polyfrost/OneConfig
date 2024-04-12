@@ -33,23 +33,27 @@ import sun.misc.Unsafe
 import java.lang.invoke.LambdaMetafactory
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
-import java.lang.invoke.MethodType
+import java.lang.invoke.MethodType.methodType
 import java.lang.reflect.*
 import java.util.function.Consumer
 import java.util.function.Function
 
 /**
  * A collection of (naughty) MethodHandle utilities.
- * <br></br>
+ *
  * This class allows for Java 8 and below style reflection-type methods, in modern Java versions due to a simple exploit to get the trusted method handle lookup instance.
- * <br></br>
+ *
  * MethodHandles also are "directly supported by the VM" and are "more efficient than the equivalent reflective operations", according to the documentation.
+ *
+ * This class is split into two main parts:
+ * - direct access methods [getField], [setField], [invoke], etc. which use reflection and [setAccessible] to directly access fields and methods.
+ * - method handle methods [getFieldGetter], [getFieldSetter], [getMethodHandle], etc. which use the trusted lookup to get method handles for fields and methods - these are reusable.
  */
 @Suppress("unused")
 object MHUtils {
     private val LOGGER: Logger = LoggerFactory.getLogger("OneConfig/MHUtils")
 
-    @Suppress("UNCHECKED_CAST")
+    @Suppress("UNCHECKED_CAST", "NOTHING_TO_INLINE")
     class Result<T>(@PublishedApi @JvmSynthetic internal val value: Any?) {
         inline val isSuccess get() = value !is Failure
         inline val isFailure get() = value is Failure
@@ -81,7 +85,8 @@ object MHUtils {
 
     /**
      * A reference to the trusted IMPL_LOOKUP field in [MethodHandles.Lookup].
-     * <br></br> this field was extracted using unsupported methods, which breaks Java security checks. please be careful with it.
+     *
+     * this field was extracted using unsupported methods, which breaks Java security checks. please be careful with it.
      */
     @ApiStatus.Internal
     @JvmField
@@ -100,6 +105,7 @@ object MHUtils {
     private val gav: MethodHandle by lazy {
         trustedLookup.unreflectGetter(Proxy.getInvocationHandler(Deprecated::class.java.getAnnotation(Target::class.java)).javaClass.getDeclaredField("memberValues"))
     }
+
 
 
     // --- get --- //
@@ -224,7 +230,7 @@ object MHUtils {
      */
     @JvmStatic
     fun getMethodHandle(owner: Any, methodName: String, returnType: Class<*>, vararg params: Class<*>?) = try {
-        Result.success(trustedLookup.findVirtual(owner.javaClass, methodName, MethodType.methodType(returnType, params)).bindTo(owner))
+        Result.success(trustedLookup.findVirtual(owner.javaClass, methodName, methodType(returnType, params)).bindTo(owner))
     } catch (e: Exception) {
         Result.failure(ReflectiveOperationException("Failed to get method handle for $methodName from $owner", e))
     }
@@ -237,7 +243,7 @@ object MHUtils {
      */
     @JvmStatic
     fun getMethodHandle(owner: Class<*>, methodName: String, returnType: Class<*>, vararg params: Class<*>?) = try {
-        Result.success(trustedLookup.findVirtual(owner, methodName, MethodType.methodType(returnType, params)))
+        Result.success(trustedLookup.findVirtual(owner, methodName, methodType(returnType, params)))
     } catch (e: Exception) {
         Result.failure(ReflectiveOperationException("Failed to get method handle for $methodName from $owner", e))
     }
@@ -249,7 +255,7 @@ object MHUtils {
      */
     @JvmStatic
     fun getStaticMethodHandle(owner: Class<*>, methodName: String, returnType: Class<*>, vararg params: Class<*>?) = try {
-        Result.success(trustedLookup.findStatic(owner, methodName, MethodType.methodType(returnType, params)))
+        Result.success(trustedLookup.findStatic(owner, methodName, methodType(returnType, params)))
     } catch (e: Exception) {
         Result.failure(ReflectiveOperationException("Failed to get static method handle for $methodName from $owner", e))
     }
@@ -279,7 +285,7 @@ object MHUtils {
      */
     @JvmStatic
     fun getConstructorHandle(owner: Class<*>, vararg params: Class<*>?) = try {
-        Result.success(trustedLookup.findConstructor(owner, MethodType.methodType(Void.TYPE, params)))
+        Result.success(trustedLookup.findConstructor(owner, methodType(Void.TYPE, params)))
     } catch (e: Exception) {
         Result.failure(ReflectiveOperationException("Failed to get constructor handle for $owner", e))
     }
@@ -309,7 +315,7 @@ object MHUtils {
     fun <T> getConsumerFunctionHandle(it: Any, methodName: String, paramType: Class<T>) = try {
         val isStatic = it is Class<*>
         val cls = if (isStatic) it as Class<*> else it.javaClass
-        val mt = MethodType.methodType(Void.TYPE, paramType)
+        val mt = methodType(Void.TYPE, paramType)
         val mh = if (isStatic) trustedLookup.findStatic(cls, methodName, mt) else trustedLookup.findVirtual(cls, methodName, mt)
         val target = LambdaMetafactory.metafactory(
             // asm: due to the fact we use the trusted lookup, the only visible classes are ones on the bootstrap class loader,
@@ -319,8 +325,8 @@ object MHUtils {
             // https://stackoverflow.com/questions/60144712/noclassdeffounderror-for-my-own-class-when-creating-callsite-with-lambdametafact
             trustedLookup.`in`(cls),
             "accept",
-            MethodType.methodType(Consumer::class.java, cls),
-            MethodType.methodType(Void.TYPE, Any::class.java),
+            methodType(Consumer::class.java, cls),
+            methodType(Void.TYPE, Any::class.java),
             mh,
             mt
         ).target
@@ -342,13 +348,13 @@ object MHUtils {
     fun <T, R> getFunctionHandle(it: Any, methodName: String, returnType: Class<R>, paramType: Class<T>) = try {
         val isStatic = it is Class<*>
         val cls = if (isStatic) it as Class<*> else it.javaClass
-        val mt = MethodType.methodType(returnType, paramType)
+        val mt = methodType(returnType, paramType)
         val mh = if (isStatic) trustedLookup.findStatic(cls, methodName, mt) else trustedLookup.findVirtual(cls, methodName, mt)
         val target = LambdaMetafactory.metafactory(
             trustedLookup.`in`(cls),
             "apply",
-            MethodType.methodType(Function::class.java, cls),
-            MethodType.methodType(Any::class.java, Any::class.java),
+            methodType(Function::class.java, cls),
+            methodType(Any::class.java, Any::class.java),
             mh,
             mt
         ).target
@@ -366,21 +372,23 @@ object MHUtils {
      * @return a field value, or null if it failed.
      */
     @JvmStatic
-    fun getField(owner: Any, fieldName: String) = try {
-        Result.success(trustedLookup.unreflectGetter(owner.javaClass.getDeclaredField(fieldName)).invoke(owner))
+    @Suppress("UNCHECKED_CAST")
+    fun <T> getField(owner: Any, fieldName: String) = try {
+        Result.success(owner.javaClass.getDeclaredField(fieldName).setAccessible().get(owner) as T)
     } catch (e: Throwable) {
         Result.failure(ReflectiveOperationException("Failed to get field value for $fieldName from $owner", e))
     }
 
 
     /**
-     * Return a static field value using reflection and the trusted lookup.
+     * Return a static field value using reflection.
      *
      * @return a field value, or null if it failed.
      */
     @JvmStatic
-    fun getStaticField(cls: Class<*>, fieldName: String) = try {
-        Result.success(trustedLookup.unreflectGetter(cls.getDeclaredField(fieldName)).invoke())
+    @Suppress("UNCHECKED_CAST")
+    fun <T> getStatic(cls: Class<*>, fieldName: String) = try {
+        Result.success(cls.getDeclaredField(fieldName).setAccessible().get(null) as T)
     } catch (e: Throwable) {
         Result.failure(ReflectiveOperationException("Failed to get static field value for $fieldName from $cls", e))
     }
@@ -392,10 +400,11 @@ object MHUtils {
      * @return true if it succeeded.
      */
     @JvmStatic
-    fun setField(owner: Any, fieldName: String, value: Any?): Result<Any?> = try {
-        Result.success(getFieldSetter(fieldName, owner).getOrThrow().invoke(value))
+    fun setField(owner: Any, fieldName: String, value: Any?) = try {
+        owner.javaClass.getDeclaredField(fieldName).setAccessible().set(owner, value)
+        true
     } catch (e: Throwable) {
-        Result.failure(ReflectiveOperationException("Failed to set field value for $fieldName from $owner", e))
+        false
     }
 
     /**
@@ -404,39 +413,38 @@ object MHUtils {
      * @return true if it succeeded.
      */
     @JvmStatic
-    fun setStaticField(cls: Class<*>, fieldName: String, value: Any): Result<Any?> = try {
-        Result.success(getStaticFieldSetter(cls, fieldName, value.javaClass).getOrThrow().invoke(value))
+    fun setStatic(cls: Class<*>, fieldName: String, value: Any) = try {
+        cls.getDeclaredField(fieldName).setAccessible().set(null, value)
+        true
     } catch (e: Throwable) {
-        Result.failure(ReflectiveOperationException("Failed to set static field value for $fieldName from $cls", e))
+        false
     }
 
     /**
-     * Invoke a method using the trusted lookup.
+     * Invoke a method using reflection.
      *
      * @param owner the object instance where the method is located
      * @return the return value of the method, or null if it failed.
      */
     @JvmStatic
     @Suppress("UNCHECKED_CAST")
-    fun <T> invoke(owner: Any, methodName: String, returnType: Class<T>, vararg params: Any) = try {
+    fun <T> invoke(owner: Any, methodName: String, vararg params: Any) = try {
         val classes = Array<Class<*>>(params.size) { params[it].javaClass }
-        val mh = getMethodHandle(owner, methodName, returnType, *classes).getOrThrow()
-        Result.success(mh.invoke(params) as T)
+        Result.success(owner.javaClass.getDeclaredMethod(methodName, *classes).setAccessible().invoke(owner, *params) as T)
     } catch (e: Throwable) {
         Result.failure(ReflectiveOperationException("Failed to invoke method $methodName from $owner", e))
     }
 
     /**
-     * Invoke a static method using the trusted lookup.
+     * Invoke a static method using reflection.
      *
      * @return the return value of the method, or null if it failed.
      */
     @JvmStatic
     @Suppress("UNCHECKED_CAST")
-    fun <T> invokeStatic(owner: Class<*>, methodName: String, returnType: Class<T>, vararg params: Any) = try {
+    fun <T> invokeStatic(owner: Class<*>, methodName: String, vararg params: Any) = try {
         val classes = Array<Class<*>>(params.size) { params[it].javaClass }
-        val mh = getStaticMethodHandle(owner, methodName, returnType, *classes).getOrThrow()
-        Result.success(mh.invoke(params) as T)
+        Result.success(owner.getDeclaredMethod(methodName, *classes).setAccessible().invoke(null, *params) as T)
     } catch (e: Throwable) {
         Result.failure(ReflectiveOperationException("Failed to invoke static method $methodName from $owner", e))
     }
@@ -445,10 +453,9 @@ object MHUtils {
      * Instantiate a class using the ctor matching the given params.
      */
     @JvmStatic
-    fun instantiate(cls: Class<*>, vararg params: Any) = try {
+    fun <T> instantiate(cls: Class<T>, vararg params: Any) = try {
         val classes = Array<Class<*>>(params.size) { params[it].javaClass }
-        val mh = getConstructorHandle(cls, *classes).getOrThrow()
-        Result.success(mh.invoke(params))
+        Result.success(cls.getDeclaredConstructor(*classes).setAccessible().newInstance(*params) as T)
     } catch (e: Throwable) {
         Result.failure(ReflectiveOperationException("Failed to instantiate $cls", e))
     }
@@ -457,9 +464,8 @@ object MHUtils {
      * Instantiate a class using the no-args ctor. If allocateAnyway is true and there is no no-args ctor, it will be allocated using the unsafe.
      */
     @JvmStatic
-    fun instantiate(cls: Class<*>, allocateAnyway: Boolean) = try {
-        val mh = getConstructorHandle(cls).getOrThrow()
-        Result.success(mh.invoke())
+    fun <T> instantiate(cls: Class<T>, allocateAnyway: Boolean) = try {
+        Result.success(cls.getDeclaredConstructor().setAccessible().newInstance() as T)
     } catch (e: Throwable) {
         if (!allocateAnyway) {
             Result.failure(ReflectiveOperationException("Failed to instantiate $cls", e))
@@ -485,6 +491,21 @@ object MHUtils {
         Result.success(mh.invokeExact(args) as T)
     } catch (e: Throwable) {
         Result.failure(ReflectiveOperationException("Failed to invoke exact method handle $mh", e))
+    }
+
+    private val accessibleSetter = trustedLookup.findVirtual(AccessibleObject::class.java, "setAccessible", methodType(Void.TYPE, Boolean::class.java))
+
+    /**
+     * are you tired of **cringe** access checks ruining your reflection fun? well, this method is for you!
+     */
+    @Suppress("DEPRECATION")
+    @JvmStatic
+    fun <T : AccessibleObject> T.setAccessible() = try {
+        accessibleSetter.invoke(this, true)
+        require(isAccessible) { "Failed to set accessible for $this" }
+        this
+    } catch (e: Throwable) {
+        this
     }
 
 // --- annotation --- //

@@ -24,7 +24,7 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.internal.commands;
+package org.polyfrost.oneconfig.internal.libs.fabric;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
@@ -42,6 +42,7 @@ import net.minecraft.util.math.Vec3d;
  * Taken from the Fabric API under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache 2.0 License</a>;
  * <a href="https://github.com/FabricMC/fabric/blob/1.20.2/fabric-command-api-v2/src/client/java/net/fabricmc/fabric/api/client/command/v2/FabricClientCommandSource.java">Click here for source</a>
  */
+@SuppressWarnings("unused")
 public interface ClientCommandSource extends CommandSource {
     /**
      * Sends a feedback message to the player.

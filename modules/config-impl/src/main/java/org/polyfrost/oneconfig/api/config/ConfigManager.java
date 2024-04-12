@@ -29,9 +29,9 @@ package org.polyfrost.oneconfig.api.config;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.UnmodifiableView;
-import org.polyfrost.oneconfig.api.config.backend.impl.NightConfigSerializer;
-import org.polyfrost.oneconfig.api.config.backend.impl.file.FileBackend;
-import org.polyfrost.oneconfig.api.config.backend.impl.file.FileSerializer;
+import org.polyfrost.oneconfig.api.config.serialize.impl.NightConfigSerializer;
+import org.polyfrost.oneconfig.api.config.backend.impl.FileBackend;
+import org.polyfrost.oneconfig.api.config.serialize.impl.FileSerializer;
 import org.polyfrost.oneconfig.api.config.collect.PropertyCollector;
 import org.polyfrost.oneconfig.api.config.collect.impl.OneConfigCollector;
 import org.polyfrost.oneconfig.api.events.EventManager;
@@ -53,7 +53,7 @@ public final class ConfigManager {
     public static final Path PROFILES_DIR = Paths.get("profiles");
 
     private static final List<PropertyCollector> collectors = new ArrayList<>(1);
-    private static final ConfigManager internal = new ConfigManager(Paths.get("OneConfig"), NightConfigSerializer.JSON).withHook().withWatcher();
+    private static final ConfigManager internal = new ConfigManager(Paths.get("OneConfig"), NightConfigSerializer.JSON);
     private static final ConfigManager core = new ConfigManager(Paths.get("config"), NightConfigSerializer.ALL);
     private static ConfigManager active;
 
@@ -87,7 +87,7 @@ public final class ConfigManager {
     }
 
     private static void initialize() {
-        internal().backend.register(
+        internal().register(
                 tree("profiles.json").put(
                         prop("activeProfile", "")
                 )
@@ -98,6 +98,7 @@ public final class ConfigManager {
 
     public static void openProfile(String profile) {
         internal().get("profiles.json").getProp("activeProfile").setAs(profile);
+        internal().save("profiles.json");
         if (profile.isEmpty()) active = core();
         else {
             LOGGER.info("opening profile {}", profile);
@@ -107,7 +108,9 @@ public final class ConfigManager {
 
     /**
      * Returns a reference to the core config manager, which is mounted onto the ./config directory.
+     * <b>internal use only!</b>
      */
+    @ApiStatus.Internal
     public static ConfigManager core() {
         return core;
     }
@@ -119,6 +122,18 @@ public final class ConfigManager {
 
     public Tree get(String id) {
         return backend.get(id);
+    }
+
+    public boolean save(String id) {
+        return backend.save(id);
+    }
+
+    public Path getFolder() {
+        return backend.folder;
+    }
+
+    public boolean register(Tree t) {
+        return backend.register(t);
     }
 
 
@@ -170,7 +185,7 @@ public final class ConfigManager {
     private void hook() {
         if (shutdown) return;
         shutdown = true;
-        LOGGER.info("shutdown requested; saving all configs...");
+        LOGGER.info("shutdown requested; saving all configs in {}", backend.folder.getFileName());
         for (Tree t : backend.getTrees()) {
             backend.save(t);
         }

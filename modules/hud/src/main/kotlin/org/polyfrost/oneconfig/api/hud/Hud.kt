@@ -167,4 +167,10 @@ abstract class Hud<T : Drawable> : Cloneable {
         }
         return false
     }
+
+    enum class Category {
+        COMBAT,
+        INFO,
+        PLAYER
+    }
 }

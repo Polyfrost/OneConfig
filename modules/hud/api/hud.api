@@ -14,20 +14,31 @@ public abstract class org/polyfrost/oneconfig/api/hud/Hud : java/lang/Cloneable 
 	public abstract fun updateFrequency ()J
 }
 
+public final class org/polyfrost/oneconfig/api/hud/Hud$Category : java/lang/Enum {
+	public static final field COMBAT Lorg/polyfrost/oneconfig/api/hud/Hud$Category;
+	public static final field INFO Lorg/polyfrost/oneconfig/api/hud/Hud$Category;
+	public static final field PLAYER Lorg/polyfrost/oneconfig/api/hud/Hud$Category;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/hud/Hud$Category;
+	public static fun values ()[Lorg/polyfrost/oneconfig/api/hud/Hud$Category;
+}
+
 public final class org/polyfrost/oneconfig/api/hud/HudManager {
 	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/hud/HudManager;
+	public static field backend Lorg/polyfrost/oneconfig/api/config/backend/impl/FileBackend;
 	public final fun canAutoOpen ()Z
+	public final fun getBackend ()Lorg/polyfrost/oneconfig/api/config/backend/impl/FileBackend;
 	public final fun getHudsPage ()Lorg/polyfrost/polyui/component/Drawable;
 	public final fun getOpen ()Z
 	public final fun getPanel ()Lorg/polyfrost/polyui/component/impl/Block;
 	public final fun getPolyUI ()Lorg/polyfrost/polyui/PolyUI;
 	public final fun getSlinex ()F
 	public final fun getSliney ()F
-	public final fun load (Lorg/polyfrost/polyui/unit/Vec2;Lorg/polyfrost/polyui/color/PolyColor;Lorg/polyfrost/polyui/unit/Vec2;[FLorg/polyfrost/polyui/unit/Align;[Lorg/polyfrost/oneconfig/api/hud/Hud;)V
-	public static synthetic fun load$default (Lorg/polyfrost/oneconfig/api/hud/HudManager;Lorg/polyfrost/polyui/unit/Vec2;Lorg/polyfrost/polyui/color/PolyColor;Lorg/polyfrost/polyui/unit/Vec2;[FLorg/polyfrost/polyui/unit/Align;[Lorg/polyfrost/oneconfig/api/hud/Hud;ILjava/lang/Object;)V
+	public final fun loadInAll ()V
 	public final fun openHudEditor (Lorg/polyfrost/oneconfig/api/hud/Hud;)V
-	public final fun register (Lorg/polyfrost/oneconfig/api/hud/Hud;)V
-	public final fun register ([Lorg/polyfrost/oneconfig/api/hud/Hud;)V
+	public static final fun register (Lorg/polyfrost/oneconfig/api/hud/Hud;)V
+	public static final fun register ([Lorg/polyfrost/oneconfig/api/hud/Hud;)V
+	public final fun setBackend (Lorg/polyfrost/oneconfig/api/config/backend/impl/FileBackend;)V
 	public final fun setSlinex (F)V
 	public final fun setSliney (F)V
 	public final fun toggle ()V
@@ -79,18 +90,6 @@ public final class org/polyfrost/oneconfig/api/hud/TextHud$Supplier : org/polyfr
 	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;JLjava/util/function/Supplier;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;JLkotlin/jvm/functions/Function0;)V
 	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;JLkotlin/jvm/functions/Function0;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-}
-
-public abstract interface annotation class org/polyfrost/oneconfig/api/hud/annotations/CustomComponent : java/lang/annotation/Annotation {
-}
-
-public abstract interface annotation class org/polyfrost/oneconfig/api/hud/annotations/HudComponent : java/lang/annotation/Annotation {
-}
-
-public class org/polyfrost/oneconfig/api/hud/collector/ReflectiveHudCollector : org/polyfrost/oneconfig/api/config/collect/impl/OneConfigCollector {
-	public fun <init> ()V
-	public fun handleField (Ljava/lang/reflect/Field;Ljava/lang/Object;Lorg/polyfrost/oneconfig/api/config/Tree;)V
-	public fun handleMethod (Ljava/lang/reflect/Method;Ljava/lang/Object;Lorg/polyfrost/oneconfig/api/config/Tree;)V
 }
 
 public final class org/polyfrost/oneconfig/api/hud/internal/Hud_utilsKt {

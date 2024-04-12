@@ -84,7 +84,7 @@ public class OneConfigCollector extends ReflectiveCollector {
                 // asm: use method handle as it fails NOW instead of at set time, and is faster
                 final MethodHandle setter = MHUtils.getFieldSetter(f, src).getOrThrow();
                 Class<?> type = f.getType();
-                Property<?> p = Property.prop(f.getName(), MHUtils.getFieldGetter(f, src).getOrThrow().invoke(), type).addCallback(v -> {
+                Property<?> p = Property.prop(f.getName(), MHUtils.setAccessible(f).get(src), type).addCallback(v -> {
                     try {
                         if (type.isArray() && v instanceof List<?>) {
                             setter.invoke(ObjectSerializer.unbox(v, type));

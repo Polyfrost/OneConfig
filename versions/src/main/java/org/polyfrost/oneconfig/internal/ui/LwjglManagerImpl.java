@@ -316,7 +316,7 @@ public class LwjglManagerImpl
                 }
             }
 
-            Object theUnsafe = MHUtils.getStaticField(unsafeClass, "theUnsafe").getOrThrow();
+            Object theUnsafe = MHUtils.getStatic(unsafeClass, "theUnsafe").getOrThrow();
 
             defineClassMethod = MHUtils.getMethodHandle(
                     theUnsafe,

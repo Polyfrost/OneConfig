@@ -20,7 +20,6 @@ public final class org/polyfrost/oneconfig/api/events/EventManager {
 	public fun unregister (Ljava/lang/Object;)Z
 	public fun unregister (Lorg/polyfrost/oneconfig/api/events/invoke/EventHandler;)Z
 	public final fun unregister ([Lorg/polyfrost/oneconfig/api/events/invoke/EventHandler;)V
-	public fun unregisterCollector (Lorg/polyfrost/oneconfig/api/events/invoke/EventCollector;)V
 }
 
 public class org/polyfrost/oneconfig/api/events/event/ChatReceiveEvent : org/polyfrost/oneconfig/api/events/event/Event$Cancellable {

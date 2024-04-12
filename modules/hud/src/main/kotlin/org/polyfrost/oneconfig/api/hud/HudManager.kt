@@ -27,13 +27,18 @@
 package org.polyfrost.oneconfig.api.hud
 
 import org.jetbrains.annotations.ApiStatus
-import org.polyfrost.oneconfig.api.hud.collector.ReflectiveHudCollector
-import org.polyfrost.oneconfig.api.hud.internal.*
+import org.polyfrost.oneconfig.api.config.ConfigManager
+import org.polyfrost.oneconfig.api.config.Node
+import org.polyfrost.oneconfig.api.config.backend.impl.FileBackend
+import org.polyfrost.oneconfig.api.config.util.ObjectSerializer
+import org.polyfrost.oneconfig.api.hud.internal.HudsPage
+import org.polyfrost.oneconfig.api.hud.internal.alignC
+import org.polyfrost.oneconfig.api.hud.internal.build
+import org.polyfrost.oneconfig.api.hud.internal.createInspectionsScreen
 import org.polyfrost.oneconfig.ui.LwjglManager
 import org.polyfrost.oneconfig.utils.GuiUtils
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.animate.Animations
-import org.polyfrost.polyui.color.Color
 import org.polyfrost.polyui.color.Colors
 import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.color.PolyColor.Companion.TRANSPARENT
@@ -45,16 +50,19 @@ import org.polyfrost.polyui.operations.Fade
 import org.polyfrost.polyui.operations.Move
 import org.polyfrost.polyui.renderer.data.Cursor
 import org.polyfrost.polyui.unit.Align
-import org.polyfrost.polyui.unit.AlignDefault
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.unit.seconds
-import org.polyfrost.polyui.utils.*
+import org.polyfrost.polyui.utils.LinkedList
+import org.polyfrost.polyui.utils.image
+import org.polyfrost.polyui.utils.ref
+import org.polyfrost.polyui.utils.rgba
+import org.slf4j.LoggerFactory
 import kotlin.math.PI
 
 object HudManager {
-
+    private val LOGGER = LoggerFactory.getLogger("OneConfig/HUD")
+    lateinit var backend: FileBackend
     private val huds = LinkedList<Hud<out Drawable>>()
-    private val collector = ReflectiveHudCollector()
     private val snapLineColor = rgba(170, 170, 170, 0.8f)
 
     /**
@@ -166,40 +174,27 @@ object HudManager {
     val polyUI: PolyUI = PolyUI(LwjglManager.INSTANCE.renderer, drawables = arrayOf(panel))
 
 
+    @JvmStatic
     fun register(hud: Hud<out Drawable>) {
         huds.add(hud)
     }
 
+    @JvmStatic
     fun register(vararg huds: Hud<out Drawable>) {
-        HudManager.huds.addAll(huds)
+        this.huds.addAll(huds)
     }
 
-    fun load(pos: Vec2, bg: Color? = null, size: Vec2? = null, bgRadii: FloatArray = 6f.radii(), align: Align = AlignDefault, vararg huds: Hud<out Drawable>) {
-        polyUI.master.addChild(
-            Block(
-                at = pos,
-                size = size,
-                alignment = align,
-                color = bg,
-                radii = bgRadii,
-                children = huds.map { it.build() }.toTypedArray(),
-            ).draggable(
-                onStart = {
-                    if (open) toggle()
-                },
-                onDrag = { snapHandler() },
-                onDrop = {
-                    if (!intersects(minMargin, minMargin, polyUI.size.x - (minMargin * 2f), polyUI.size.y - (minMargin * 2f))) {
-                        PolyUI.LOGGER.warn("cannot place HUD element out of bounds!")
-                        x = polyUI.size.x / 2f - width / 2f
-                        y = polyUI.size.y / 2f - height / 2f
-                    }
-                    if (canAutoOpen()) {
-                        if (!open) toggle()
-                    }
-                },
-            ),
-        )
+    fun loadInAll() {
+        polyUI.master.children?.fastEach {
+            if (it !== panel) polyUI.master.children?.remove(it)
+        }
+        backend = FileBackend(ConfigManager.active().folder.resolve("huds"))
+        backend.gatherAll().forEach { tree ->
+            if (tree.getProp("class")?.get() !is String) return@forEach
+            val it = ObjectSerializer.INSTANCE.deserialize(tree.map as Map<String, Node>) as Hud<*>
+            // todo scale..
+            polyUI.master.addChild(it.build(), false)
+        }
     }
 
     fun openHudEditor(hud: Hud<out Drawable>) {

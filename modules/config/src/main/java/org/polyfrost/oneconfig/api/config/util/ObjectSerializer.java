@@ -33,7 +33,6 @@ import org.polyfrost.oneconfig.api.config.serialize.adapter.impl.ColorAdapter;
 import org.polyfrost.oneconfig.api.config.exceptions.SerializationException;
 import org.polyfrost.oneconfig.utils.MHUtils;
 
-import java.lang.invoke.MethodHandle;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -100,12 +99,6 @@ public class ObjectSerializer {
     public void registerTypeAdapter(Adapter<?, ?>... adapters) {
         for (Adapter<?, ?> a : adapters) {
             registerTypeAdapter(a);
-        }
-    }
-
-    public void unregisterTypeAdapter(Adapter<?, ?> adapter) {
-        if (this.adapters.remove(adapter.getTargetClass()) == null) {
-            LOGGER.warn("Failed to remove type adapter for {}: Not registered/already removed", adapter.getTargetClass());
         }
     }
 
@@ -257,7 +250,7 @@ public class ObjectSerializer {
                 continue;
             }
             try {
-                Object o = MHUtils.getFieldGetter(f, value).getOrThrow().invoke();
+                Object o = MHUtils.setAccessible(f).get(value);
                 // skip self references
                 if (o == value) continue;
                 if (o == null) continue;
@@ -325,14 +318,13 @@ public class ObjectSerializer {
             try {
                 Field f = getDeclaredField(o.getClass(), e.getKey());
                 if (f == null) continue;
-                MethodHandle setter = MHUtils.getFieldSetter(f, o).getOrNull();
-                if (setter == null) continue;
+                MHUtils.setAccessible(f);
                 if (e.getValue() instanceof Map) {
                     Map<String, Object> m = (Map<String, Object>) e.getValue();
-                    setter.invoke(_deserialize(m, m.getClass()));
+                    f.set(o, _deserialize(m, m.getClass()));
                 } else {
                     Object out = unbox(e.getValue(), f.getType());
-                    setter.invoke(out);
+                    f.set(o, out);
                 }
             } catch (Throwable ex) {
                 throw new SerializationException("Failed to deserialize " + cls.getName() + ": no detail message (potential field access issue?)", ex);
@@ -345,12 +337,13 @@ public class ObjectSerializer {
         for (Field f : cls.getDeclaredFields()) {
             if (f.getName().equals(name)) return f;
         }
+        if (cls.getSuperclass() != null) {
+            Field f = getDeclaredField(cls.getSuperclass(), name);
+            if (f != null) return f;
+        }
         for (Class<?> c : cls.getInterfaces()) {
             Field f = getDeclaredField(c, name);
             if (f != null) return f;
-        }
-        if (cls.getSuperclass() != null) {
-            return getDeclaredField(cls.getSuperclass(), name);
         }
         return null;
     }
