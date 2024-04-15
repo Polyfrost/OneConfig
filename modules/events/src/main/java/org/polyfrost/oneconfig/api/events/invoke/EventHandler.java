@@ -37,42 +37,10 @@ import java.util.function.Consumer;
 /**
  * Class which represents an event handler.
  *
- * @see #of(Class, Consumer)
  * @param <E> The event type
+ * @see #of(Class, Consumer)
  */
 public abstract class EventHandler<E extends Event> {
-    public abstract void handle(E event);
-
-    public abstract Class<E> getEventClass();
-
-    /**
-     * Convenience method for registering this event handler.
-     * Equivalent to {@code EventManager.INSTANCE.register(this)}.
-     *
-     * @return this
-     */
-    public final EventHandler<E> register() {
-        EventManager.INSTANCE.register(this);
-        return this;
-    }
-
-    @Override
-    public final boolean equals(Object obj) {
-        if (obj == this) return true;
-        if (!(obj instanceof EventHandler)) return false;
-        return this.equals((EventHandler<?>) obj);
-    }
-
-    public boolean equals(EventHandler<?> other) {
-        return false;
-    }
-
-    @Override
-    public final int hashCode() {
-        return this.getEventClass().hashCode() + (31 * super.hashCode());
-    }
-
-
     /**
      * Create an event handler from a consumer, in a fabric-style way.
      *
@@ -139,6 +107,37 @@ public abstract class EventHandler<E extends Event> {
         } catch (Throwable e) {
             throw new EventException("Failed to register event handler", e);
         }
+    }
+
+    public abstract void handle(E event);
+
+    public abstract Class<E> getEventClass();
+
+    /**
+     * Convenience method for registering this event handler.
+     * Equivalent to {@code EventManager.INSTANCE.register(this)}.
+     *
+     * @return this
+     */
+    public final EventHandler<E> register() {
+        EventManager.INSTANCE.register(this);
+        return this;
+    }
+
+    @Override
+    public final boolean equals(Object obj) {
+        if (obj == this) return true;
+        if (!(obj instanceof EventHandler)) return false;
+        return this.equals((EventHandler<?>) obj);
+    }
+
+    public boolean equals(EventHandler<?> other) {
+        return false;
+    }
+
+    @Override
+    public final int hashCode() {
+        return this.getEventClass().hashCode() + (31 * super.hashCode());
     }
 
 }

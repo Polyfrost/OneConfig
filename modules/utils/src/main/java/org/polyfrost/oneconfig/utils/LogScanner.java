@@ -74,9 +74,10 @@ import java.util.stream.Collectors;
  * Adapted from <a href="https://github.com/natanfudge/Not-Enough-Crashes">NotEnoughCrashes</a> under the <a href="https://opensource.org/licenses/MIT">MIT License</a>
  */
 public final class LogScanner {
-    static final Logger LOGGER = LoggerFactory.getLogger("OneConfig Log Scanner");
+    private static final Logger LOGGER = LoggerFactory.getLogger("OneConfig/Log Scanner");
 
-    private LogScanner() {}
+    private LogScanner() {
+    }
 
     /**
      * Return a set of ActiveMods that have been blamed for the given stacktrace.
@@ -105,22 +106,21 @@ public final class LogScanner {
     public static Set<LoaderPlatform.ActiveMod> identifyCallerFromStacktrace(Throwable e) {
         // first is this method name, second is the method it called, third is what called it
         StackTraceElement target = null;
-        int i = 0;
-        for (StackTraceElement element : e.getStackTrace()) {
-            // ignore the first two
-            if (i > 2) {
-                // remove any that are native, or called from a system package
-                if (!element.isNativeMethod() && !element.getClassName().startsWith("sun.") && !element.getClassName().startsWith("java.")
-                        && !element.getClassName().startsWith("javax.") && !element.getClassName().startsWith("jdk.") && !element.getClassName().startsWith("com.sun.")) {
-                    target = element;
-                    break;
-                }
-            }
-            i++;
+
+        StackTraceElement[] trace = e.getStackTrace();
+        if (trace.length < 3) return Collections.emptySet();
+        // ignore the first two elements, as they are this method and the method that was marked
+        for (int i = 2; i < trace.length; i++) {
+            StackTraceElement element = trace[i];
+            // remove any that are native, or called from a system package
+            String cls = element.getClassName();
+            if (element.isNativeMethod()) continue;
+            if (cls.startsWith("sun.") || cls.startsWith("com.sun.")) continue;
+            if (cls.startsWith("java.") || cls.startsWith("javax.") || cls.startsWith("jdk.")) continue;
+            target = element;
+            break;
         }
-        if (target == null) {
-            return Collections.emptySet();
-        }
+        if (target == null) return Collections.emptySet();
         Set<LoaderPlatform.ActiveMod> classMods = identifyFromClass(target.getClassName());
         return classMods.isEmpty() ? Collections.emptySet() : classMods;
     }
@@ -177,7 +177,7 @@ public final class LogScanner {
             URL url = codeSource.getLocation();
 
             if (url == null) {
-                LOGGER.warn("Failed to identify mod for " + clazz.getName());
+                LOGGER.warn("Failed to identify mod for {}", clazz.getName());
                 return Collections.emptySet();
             }
 
@@ -189,7 +189,7 @@ public final class LogScanner {
             }
             if (uri.toString().endsWith(".class") && Platform.getInstance().isDevelopmentEnvironment()) {
                 LOGGER.error("The mod you are currently developing caused this issue, or another class file. Returning 'this'.");
-                LOGGER.error("Class: " + clazz.getName());
+                LOGGER.error("Class: {}", clazz.getName());
                 return Collections.singleton(new LoaderPlatform.ActiveMod("this", "this", "Unknown", null));
             }
             return getModsAt(Paths.get(uri), modMap);

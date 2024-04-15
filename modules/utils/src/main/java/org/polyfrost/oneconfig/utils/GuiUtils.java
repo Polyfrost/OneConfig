@@ -26,13 +26,19 @@
 
 package org.polyfrost.oneconfig.utils;
 
+import org.polyfrost.oneconfig.api.DeclaredInPlatform;
+
 /**
  * A class containing utility methods for working with GuiScreens.
  */
 @SuppressWarnings("unused")
+@DeclaredInPlatform
 public final class GuiUtils {
     // GuiUtils.h -- version specific workaround
     // see versions/src/main/java/org/polyfrost/oneconfig/utils/GuiUtils.java for the real implementation
+
+    private GuiUtils() {
+    }
 
     /**
      * Displays a screen after a tick, preventing mouse sync issues.
@@ -49,7 +55,8 @@ public final class GuiUtils {
      * @param screen the screen to display.
      * @param ticks  the amount of ticks to wait for before displaying the screen.
      */
-    public static void displayScreen(Object screen, int ticks) {}
+    public static void displayScreen(Object screen, int ticks) {
+    }
 
 
     /**

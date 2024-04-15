@@ -146,8 +146,10 @@ fun interface Visualizer {
                     }
                 return r
             } else {
-                require(prop.type == java.lang.Integer::class.java
-                        || prop.type == Int::class.java) { "Radio buttons ${prop.id} can only be used with enum or integer types (type=${prop.type}" }
+                require(
+                    prop.type == java.lang.Integer::class.java
+                            || prop.type == Int::class.java
+                ) { "Radio buttons ${prop.id} can only be used with enum or integer types (type=${prop.type}" }
                 require(options.size >= 2) { "Radio button ${prop.id} must have at least two options" }
                 return Radiobutton(
                     entries = options.map { null to it }.toTypedArray(),

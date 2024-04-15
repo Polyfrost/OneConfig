@@ -26,6 +26,9 @@
 
 package org.polyfrost.oneconfig.api.events.event;
 
+import org.polyfrost.oneconfig.api.DeclaredInPlatform;
+
+@DeclaredInPlatform
 public class TimerUpdateEvent implements Event {
 
     public final boolean updatedDeltaTicks;

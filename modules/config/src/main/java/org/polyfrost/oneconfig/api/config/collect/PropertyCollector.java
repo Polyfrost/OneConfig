@@ -43,6 +43,7 @@ public interface PropertyCollector {
      * @param src the object to collect from
      * @return the tree, or null if this collector cannot parse it. If null is returned, the next collector will be tried. This operation should be fail-fast.
      */
-    @Nullable Tree collect(@NotNull Object src);
+    @Nullable
+    Tree collect(@NotNull Object src);
 
 }

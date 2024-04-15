@@ -44,6 +44,9 @@ import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.security.MessageDigest;
 
 /**
@@ -51,6 +54,9 @@ import java.security.MessageDigest;
  */
 public final class IOUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger("OneConfig/IO");
+
+    private IOUtils() {
+    }
 
     /**
      * @deprecated Use {@link #resourceToByteBufferNullable(String, Class)}
@@ -72,9 +78,9 @@ public final class IOUtils {
             }
         } else {
             InputStream stream;
-            File file = new File(path);
-            if (file.exists() && file.isFile()) {
-                stream = Files.newInputStream(file.toPath());
+            Path p = Paths.get(path);
+            if (Files.isRegularFile(p)) {
+                stream = Files.newInputStream(p, StandardOpenOption.CREATE);
             } else {
                 stream = clazz.getResourceAsStream(path);
             }

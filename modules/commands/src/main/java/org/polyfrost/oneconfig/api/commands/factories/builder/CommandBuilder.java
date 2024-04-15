@@ -30,12 +30,7 @@ import org.polyfrost.oneconfig.api.commands.CommandTree;
 import org.polyfrost.oneconfig.api.commands.Executable;
 import org.polyfrost.oneconfig.api.commands.arguments.ArgumentParser;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -58,6 +53,13 @@ public class CommandBuilder {
         this(null, parsers, aliases);
     }
 
+    public static ExeBuilder runs(String... aliases) {
+        return new ExeBuilder(aliases);
+    }
+
+    public static CommandBuilder command(Map<Class<?>, ArgumentParser<?>> parsers, String... aliases) {
+        return new CommandBuilder(parsers, aliases);
+    }
 
     public CommandBuilder subcommand(String... aliases) {
         CommandBuilder b = new CommandBuilder(this, this.parsers, aliases);
@@ -82,14 +84,6 @@ public class CommandBuilder {
     public CommandBuilder description(String description) {
         tree.setDescription(description);
         return this;
-    }
-
-    public static ExeBuilder runs(String... aliases) {
-        return new ExeBuilder(aliases);
-    }
-
-    public static CommandBuilder command(Map<Class<?>, ArgumentParser<?>> parsers, String... aliases) {
-        return new CommandBuilder(parsers, aliases);
     }
 
     public static final class ExeBuilder {

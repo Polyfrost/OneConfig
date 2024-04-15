@@ -41,16 +41,15 @@ import java.util.function.Consumer;
 @SuppressWarnings("unused")
 public class Property<T> extends Node implements Serializable {
     /**
-     * This is the actual value of the property, and is what is stored.
-     */
-    @Nullable
-    private T value;
-
-    /**
      * This is the type of the property, and is used for casting.
      */
     @NotNull
     public transient final Class<T> type;
+    /**
+     * This is the actual value of the property, and is what is stored.
+     */
+    @Nullable
+    private T value;
     private transient List<@NotNull Consumer<@Nullable T>> callbacks = null;
     private transient boolean display = true;
     private transient List<BooleanSupplier> conditions = null;
@@ -70,6 +69,27 @@ public class Property<T> extends Node implements Serializable {
         this(value.getClass().getSimpleName(), value.getClass().getSimpleName(), null, value);
     }
 
+    @SuppressWarnings("ConstantConditions")
+    public static <T> Property<T> prop(@Nullable String id, @NotNull T value) {
+        if (value == null) throw new IllegalArgumentException("Cannot create a property with a null value and no class");
+        return new Property<>(id, null, null, value);
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T> Property<T> prop(@Nullable String id, @Nullable T value, Class<?> type) {
+        return new Property<>(id, null, null, value, (Class<T>) type);
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T> Property<T> prop(@Nullable String id, @Nullable String name, @Nullable T value, @NotNull Class<?> type) {
+        return new Property<>(id, name, null, value, (Class<T>) type);
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T> Property<T> recast(@NotNull Property<?> prop) {
+        return (Property<T>) prop;
+    }
+
     /**
      * This is used by the frontend to know if this property is able to be displayed, which is controlled by {@link #conditions}.
      *
@@ -78,7 +98,6 @@ public class Property<T> extends Node implements Serializable {
     public boolean canDisplay() {
         return display;
     }
-
 
     /**
      * Add a display condition to this property.
@@ -157,7 +176,7 @@ public class Property<T> extends Node implements Serializable {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public void overwrite(Node with) {
         if (!(with instanceof Property)) throw new IllegalArgumentException("Cannot overwrite a property with a non-property");
         if (!Objects.equals(this.getID(), with.getID())) throw new IllegalArgumentException("ID should be the same for overwrite");
@@ -165,7 +184,7 @@ public class Property<T> extends Node implements Serializable {
         this.addMetadata(that.getMetadata());
         this.setAs(that.get());
         if (that.conditions != null) this.addDisplayCondition(that.conditions);
-        if (that.callbacks != null && type == that.type) addCallback((Consumer<T>) that.callbacks);
+        if (that.callbacks != null) addCallback((Collection) that.callbacks);
     }
 
     /**
@@ -196,12 +215,11 @@ public class Property<T> extends Node implements Serializable {
                     c.accept(value);
                 }
             } catch (Exception e) {
-                Tree.LOGGER.error("Error while calling callbacks for property {}", getID(), e);
+                LOGGER.error("Error while calling callbacks for property {}", getID(), e);
             }
         }
         this.value = value;
     }
-
 
     @Override
     public String toString() {
@@ -285,26 +303,5 @@ public class Property<T> extends Node implements Serializable {
      */
     public boolean isArray() {
         return type.isArray();
-    }
-
-    @SuppressWarnings("ConstantConditions")
-    public static <T> Property<T> prop(@Nullable String id, @NotNull T value) {
-        if (value == null) throw new IllegalArgumentException("Cannot create a property with a null value and no class");
-        return new Property<>(id, null, null, value);
-    }
-
-    @SuppressWarnings("unchecked")
-    public static <T> Property<T> prop(@Nullable String id, @Nullable T value, Class<?> type) {
-        return new Property<>(id, null, null, value, (Class<T>) type);
-    }
-
-    @SuppressWarnings("unchecked")
-    public static <T> Property<T> prop(@Nullable String id, @Nullable String name, @Nullable T value, @NotNull Class<?> type) {
-        return new Property<>(id, name, null, value, (Class<T>) type);
-    }
-
-    @SuppressWarnings("unchecked")
-    public static <T> Property<T> recast(@NotNull Property<?> prop) {
-        return (Property<T>) prop;
     }
 }

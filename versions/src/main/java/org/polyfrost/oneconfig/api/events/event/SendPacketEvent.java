@@ -27,7 +27,9 @@
 package org.polyfrost.oneconfig.api.events.event;
 
 import net.minecraft.network.Packet;
+import org.polyfrost.oneconfig.api.PlatformDeclaration;
 
+@PlatformDeclaration
 public class SendPacketEvent extends Event.Cancellable {
     public final Packet<?> packet;
 

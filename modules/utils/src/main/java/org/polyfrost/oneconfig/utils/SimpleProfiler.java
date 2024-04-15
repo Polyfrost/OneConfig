@@ -37,8 +37,11 @@ import java.util.HashMap;
  * A simple class that can be used to profile code.
  */
 public final class SimpleProfiler {
-    static final HashMap<String, Long> startTimes = new HashMap<>();
-    static final Logger LOGGER = LoggerFactory.getLogger("OneConfig/Profiler");
+    private static final HashMap<String, Long> startTimes = new HashMap<>();
+    private static final Logger LOGGER = LoggerFactory.getLogger("OneConfig/Profiler");
+
+    private SimpleProfiler() {
+    }
 
     /**
      * Push a profiler start time to the map. <br>

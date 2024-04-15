@@ -31,7 +31,8 @@ import org.lwjgl.nanovg.NVGColor
 import org.lwjgl.nanovg.NVGPaint
 import org.lwjgl.nanovg.NanoSVG.*
 import org.lwjgl.nanovg.NanoVG.*
-import org.lwjgl.nanovg.NanoVGGL2.*
+import org.lwjgl.nanovg.NanoVGGL2.NVG_ANTIALIAS
+import org.lwjgl.nanovg.NanoVGGL2.nvgCreate
 import org.lwjgl.stb.STBImage.stbi_failure_reason
 import org.lwjgl.stb.STBImage.stbi_load_from_memory
 import org.lwjgl.system.MemoryUtil

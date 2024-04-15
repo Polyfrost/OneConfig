@@ -27,8 +27,8 @@
 package org.polyfrost.oneconfig.api.events;
 
 import org.polyfrost.oneconfig.api.events.event.Event;
-import org.polyfrost.oneconfig.api.events.invoke.EventHandler;
 import org.polyfrost.oneconfig.api.events.invoke.EventCollector;
+import org.polyfrost.oneconfig.api.events.invoke.EventHandler;
 import org.polyfrost.oneconfig.api.events.invoke.impl.AnnotationEventMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,6 +61,35 @@ public final class EventManager {
 
     private EventManager() {
         registerCollector(new AnnotationEventMapper());
+    }
+
+    /**
+     * Convenience method for registering an event handler. Equal to
+     * {@link EventManager#INSTANCE}{@code .register(}{@link EventHandler#of(Class, Consumer)}{@code )}
+     */
+    public static <E extends Event> EventHandler<E> register(Class<E> cls, Consumer<E> handler) {
+        return EventHandler.of(cls, handler).register();
+    }
+
+    public static <E extends Event> EventHandler<E> register(Class<E> cls, Runnable handler) {
+        return EventHandler.of(cls, handler).register();
+    }
+
+    /**
+     * Convenience method for registering an event handler. Equal to
+     * {@link EventManager#INSTANCE}{@code .register(}{@link EventHandler#of(Class, Consumer)}{@code )}
+     */
+    public static <E extends Event> EventHandler<E> register(kotlin.reflect.KClass<E> cls, Consumer<E> handler) {
+        return EventHandler.of(kotlin.jvm.JvmClassMappingKt.getJavaClass(cls), handler).register();
+    }
+
+    /**
+     * Convenience method for registering an event handler. Equal to
+     * {@link EventManager#INSTANCE}{@code .register(}{@link EventHandler#of(Method, Object)}{@code )}
+     */
+    @SuppressWarnings("unchecked")
+    public static <E extends Event> EventHandler<E> register(Method m, Object owner) {
+        return (EventHandler<E>) EventHandler.of(m, owner).register();
     }
 
     /**
@@ -97,6 +126,7 @@ public final class EventManager {
 
     /**
      * Register an event handler.
+     *
      * @param handler The handler to register.
      * @return true if the handler was registered successfully; false if it was already registered.
      */
@@ -171,39 +201,6 @@ public final class EventManager {
         } catch (ConcurrentModificationException ignored0) {
             LOGGER.error("Handler modified event handlers when calling, failed to dispatch {}", event.getClass().getName());
         }
-    }
-
-
-
-    /**
-     * Convenience method for registering an event handler. Equal to
-     * {@link EventManager#INSTANCE}{@code .register(}{@link EventHandler#of(Class, Consumer)}{@code )}
-     */
-    public static <E extends Event> EventHandler<E> register(Class<E> cls, Consumer<E> handler) {
-        return EventHandler.of(cls, handler).register();
-    }
-
-    public static <E extends Event> EventHandler<E> register(Class<E> cls, Runnable handler) {
-        return EventHandler.of(cls, handler).register();
-    }
-
-    /**
-     * Convenience method for registering an event handler. Equal to
-     * {@link EventManager#INSTANCE}{@code .register(}{@link EventHandler#of(Class, Consumer)}{@code )}
-     */
-    public static <E extends Event> EventHandler<E> register(kotlin.reflect.KClass<E> cls, Consumer<E> handler) {
-        return EventHandler.of(kotlin.jvm.JvmClassMappingKt.getJavaClass(cls), handler).register();
-    }
-
-
-
-    /**
-     * Convenience method for registering an event handler. Equal to
-     * {@link EventManager#INSTANCE}{@code .register(}{@link EventHandler#of(Method, Object)}{@code )}
-     */
-    @SuppressWarnings("unchecked")
-    public static <E extends Event> EventHandler<E> register(Method m, Object owner) {
-        return (EventHandler<E>) EventHandler.of(m, owner).register();
     }
 
 

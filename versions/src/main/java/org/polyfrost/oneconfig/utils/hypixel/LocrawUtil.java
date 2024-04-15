@@ -35,6 +35,7 @@ package org.polyfrost.oneconfig.utils.hypixel;
 
 import com.google.gson.Gson;
 import org.jetbrains.annotations.Nullable;
+import org.polyfrost.oneconfig.api.PlatformDeclaration;
 import org.polyfrost.oneconfig.api.events.EventManager;
 import org.polyfrost.oneconfig.api.events.event.ChatReceiveEvent;
 import org.polyfrost.oneconfig.api.events.event.ChatSendEvent;
@@ -53,10 +54,15 @@ import org.polyfrost.oneconfig.utils.TickDelay;
  * Modified from Hytilities by Sk1erLLC
  * <a href="https://github.com/Sk1erLLC/Hytilities/blob/master/LICENSE">https://github.com/Sk1erLLC/Hytilities/blob/master/LICENSE</a>
  */
-public class LocrawUtil {
+@PlatformDeclaration
+public final class LocrawUtil {
     public static final LocrawUtil INSTANCE = new LocrawUtil();
+    private static final Gson GSON = new Gson();
 
-    private final Gson GSON = new Gson();
+    private LocrawUtil() {
+        initialize();
+    }
+
     private LocrawInfo locrawInfo;
     private LocrawInfo lastLocrawInfo;
     private boolean listening;
@@ -101,6 +107,7 @@ public class LocrawUtil {
     }
 
     private void onMessageReceived(ChatReceiveEvent event) {
+        if (HypixelUtils.INSTANCE.isHypixel()) return;
         try {
             // Had some false positives while testing, so this is here just to be safe.
             final String msg = event.getFullyUnformattedMessage();

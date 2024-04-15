@@ -50,6 +50,9 @@ import java.nio.file.StandardCopyOption;
 public final class NetworkUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger("OneConfig/Network");
 
+    private NetworkUtils() {
+    }
+
     /**
      * Gets the contents of a URL as a String.
      *

@@ -37,9 +37,11 @@ public interface LoaderPlatform {
 
     boolean hasActiveModContainer();
 
-    @Nullable ActiveMod getActiveModContainer();
+    @Nullable
+    ActiveMod getActiveModContainer();
 
-    @Nullable ActiveMod toActiveMod(@Nullable Object in);
+    @Nullable
+    ActiveMod toActiveMod(@Nullable Object in);
 
     /**
      * Note: the list may contain null elements

@@ -17,10 +17,12 @@ public class org/polyfrost/oneconfig/api/config/DummyProperty : org/polyfrost/on
 }
 
 public abstract class org/polyfrost/oneconfig/api/config/Node {
+	protected static final field LOGGER Lorg/slf4j/Logger;
 	public field description Ljava/lang/String;
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
 	public final fun addMetadata (Ljava/lang/String;Ljava/lang/Object;)V
 	public final fun addMetadata (Ljava/util/Map;)V
+	protected final fun clearMetadata ()V
 	public final fun consumeMetadata (Ljava/lang/String;)Ljava/lang/Object;
 	public abstract fun deepEquals (Ljava/lang/Object;)Z
 	public fun getID ()Ljava/lang/String;
@@ -69,9 +71,9 @@ public class org/polyfrost/oneconfig/api/config/Property : org/polyfrost/oneconf
 }
 
 public class org/polyfrost/oneconfig/api/config/Tree : org/polyfrost/oneconfig/api/config/Node, java/io/Serializable {
-	public static final field LOGGER Lorg/slf4j/Logger;
 	public final field map Ljava/util/Map;
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;)V
+	public fun clear ()V
 	public fun deepEquals (Ljava/lang/Object;)Z
 	public fun equals (Ljava/lang/Object;)Z
 	public fun get (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/Node;
@@ -80,8 +82,6 @@ public class org/polyfrost/oneconfig/api/config/Tree : org/polyfrost/oneconfig/a
 	public fun getChild ([Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/Tree;
 	public fun getProp (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/Property;
 	public fun getProp ([Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/Property;
-	public fun isLocked ()Z
-	public fun lock ()V
 	public fun onAll (Ljava/util/function/BiConsumer;)V
 	public fun onAllProps (Ljava/util/function/BiConsumer;)V
 	public fun overwrite (Lorg/polyfrost/oneconfig/api/config/Node;)V
@@ -94,14 +94,14 @@ public class org/polyfrost/oneconfig/api/config/Tree : org/polyfrost/oneconfig/a
 }
 
 public abstract class org/polyfrost/oneconfig/api/config/backend/Backend {
-	public static final field LOGGER Lorg/slf4j/Logger;
+	protected static final field LOGGER Lorg/slf4j/Logger;
 	public fun <init> ()V
 	public fun exists (Ljava/lang/String;)Z
 	public final fun get (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/Tree;
 	public final fun getTrees ()Ljava/util/Collection;
 	public final fun load (Lorg/polyfrost/oneconfig/api/config/Tree;)Z
 	protected abstract fun load0 (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/Tree;
-	public final fun register (Lorg/polyfrost/oneconfig/api/config/Tree;)Z
+	public final fun register (Lorg/polyfrost/oneconfig/api/config/Tree;)Lorg/polyfrost/oneconfig/api/config/Tree;
 	protected fun requestUpdate (Ljava/lang/String;)V
 	public final fun save (Ljava/lang/String;)Z
 	public final fun save (Lorg/polyfrost/oneconfig/api/config/Tree;)Z
@@ -143,20 +143,15 @@ public class org/polyfrost/oneconfig/api/config/serialize/adapter/impl/ColorAdap
 public class org/polyfrost/oneconfig/api/config/util/ObjectSerializer {
 	public static final field FIELD_SKIP_MODIFIERS I
 	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/config/util/ObjectSerializer;
-	public static final field numberSuppliers Ljava/util/Map;
-	public static final field primitiveWrappers Ljava/util/Map;
 	public static fun box (Ljava/lang/Object;)Ljava/lang/Object;
 	public fun deserialize (Ljava/util/Map;)Ljava/lang/Object;
-	public static fun getDeclaredField (Ljava/lang/Class;Ljava/lang/String;)Ljava/lang/reflect/Field;
 	public static fun getWrapped (Ljava/lang/Class;)Ljava/lang/Class;
-	public static fun isPrimitiveArray (Ljava/lang/Class;)Z
 	public static fun isPrimitiveWrapper (Ljava/lang/Object;)Z
 	public static fun isSimpleClass (Ljava/lang/Class;)Z
 	public static fun isSimpleObject (Ljava/lang/Object;)Z
 	public fun registerTypeAdapter (Lorg/polyfrost/oneconfig/api/config/serialize/adapter/Adapter;)V
 	public fun registerTypeAdapter ([Lorg/polyfrost/oneconfig/api/config/serialize/adapter/Adapter;)V
 	public fun serialize (Ljava/lang/Object;Z)Ljava/lang/Object;
-	public static fun stderrMap (Ljava/util/Map;)V
 	public static fun unbox (Ljava/lang/Object;Ljava/lang/Class;)Ljava/lang/Object;
 }
 

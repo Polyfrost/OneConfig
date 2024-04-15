@@ -49,6 +49,9 @@ public final class Multithreading {
     private static ExecutorService executorService = null; /* by lazy { Executors.newCachedThreadPool(ThreadFactoryBuilder().setNameFormat("OneConfig-%d").build()) } */
     private static ScheduledExecutorService runnableExecutor = null;
 
+    private Multithreading() {
+    }
+
     /**
      * Runs the runnable asynchronously.
      *

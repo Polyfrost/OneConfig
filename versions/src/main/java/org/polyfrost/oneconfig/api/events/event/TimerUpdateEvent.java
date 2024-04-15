@@ -27,12 +27,14 @@
 package org.polyfrost.oneconfig.api.events.event;
 
 import net.minecraft.util.Timer;
+import org.polyfrost.oneconfig.api.PlatformDeclaration;
 
 /**
  * Called when the {@link Timer} is updated.
  * Can be used as an alternative to getting instances of {@link Timer}
  * via Mixin or Access Wideners / Transformers
  */
+@PlatformDeclaration
 public class TimerUpdateEvent implements Event {
     /**
      * Whether the deltaTicks / renderPartialTicks was updated

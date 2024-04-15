@@ -33,7 +33,10 @@ import org.polyfrost.polyui.color.Colors
 import org.polyfrost.polyui.component.*
 import org.polyfrost.polyui.component.impl.*
 import org.polyfrost.polyui.renderer.data.Font
-import org.polyfrost.polyui.unit.*
+import org.polyfrost.polyui.unit.Align
+import org.polyfrost.polyui.unit.Vec2
+import org.polyfrost.polyui.unit.by
+import org.polyfrost.polyui.unit.seconds
 import org.polyfrost.polyui.utils.LinkedList
 import org.polyfrost.polyui.utils.image
 import org.polyfrost.polyui.utils.radii

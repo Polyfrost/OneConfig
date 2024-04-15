@@ -63,9 +63,9 @@ tasks {
 }
 
 apiValidation {
+    nonPublicMarkers.add("org.polyfrost.oneconfig.api.PlatformDeclaration")
     ignoredProjects.add("OneConfig")
     ignoredPackages.add("org.polyfrost.oneconfig.libs")
     ignoredPackages.add("org.polyfrost.oneconfig.internal")
     ignoredPackages.add("org.polyfrost.oneconfig.test")
-    ignoredPackages.add("org.polyfrost.oneconfig.platform.impl")
 }

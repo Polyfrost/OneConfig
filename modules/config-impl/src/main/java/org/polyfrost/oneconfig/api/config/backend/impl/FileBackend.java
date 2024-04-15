@@ -67,6 +67,27 @@ public class FileBackend extends Backend {
         }
     }
 
+    protected static String read(Path p) {
+        StringBuilder buf = new StringBuilder();
+        try (BufferedReader r = Files.newBufferedReader(p)) {
+            String o;
+            while ((o = r.readLine()) != null) {
+                buf.append(o).append('\n');
+            }
+        } catch (Exception e) {
+            throw new SerializationException("Failed to read file", e);
+        }
+        return buf.toString();
+    }
+
+    protected static void write(Path p, String s) {
+        try (BufferedWriter w = Files.newBufferedWriter(p, StandardOpenOption.CREATE)) {
+            w.write(s);
+        } catch (Exception e) {
+            throw new SerializationException("Failed to write file", e);
+        }
+    }
+
     public FileBackend addWatcher() throws IOException {
         if (hasWatcher) return this;
         WatchService service = folder.getFileSystem().newWatchService();
@@ -162,27 +183,6 @@ public class FileBackend extends Backend {
         return true;
     }
 
-    protected static String read(Path p) {
-        StringBuilder buf = new StringBuilder();
-        try (BufferedReader r = Files.newBufferedReader(p)) {
-            String o;
-            while ((o = r.readLine()) != null) {
-                buf.append(o).append('\n');
-            }
-        } catch (Exception e) {
-            throw new SerializationException("Failed to read file", e);
-        }
-        return buf.toString();
-    }
-
-    protected static void write(Path p, String s) {
-        try (BufferedWriter w = Files.newBufferedWriter(p, StandardOpenOption.CREATE)) {
-            w.write(s);
-        } catch (Exception e) {
-            throw new SerializationException("Failed to write file", e);
-        }
-    }
-
     /**
      * Inspect all files in this directory and make trees of them where possible.
      */
@@ -196,7 +196,6 @@ public class FileBackend extends Backend {
                 try {
                     Tree t = serializer.deserialize(read(p));
                     t.setID(p.getFileName().toString());
-                    t.lock();
                     out.add(t);
                 } catch (Exception ignored) {
                 }

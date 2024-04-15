@@ -43,12 +43,6 @@ import java.util.Objects;
 import java.util.function.Function;
 
 public class Executable implements Node {
-    public final String[] names;
-    public final String description;
-    public final Param[] parameters;
-    public final int arity;
-    public final Function<Object[], Object> function;
-    public final boolean isGreedy;
     @Unmodifiable
     public static final Map<Class<?>, Class<?>> primitiveWrappers;
 
@@ -65,6 +59,13 @@ public class Executable implements Node {
         primitiveWrappers = Collections.unmodifiableMap(m);
     }
 
+    public final String[] names;
+    public final String description;
+    public final Param[] parameters;
+    public final int arity;
+    public final Function<Object[], Object> function;
+    public final boolean isGreedy;
+
     public Executable(@NotNull String[] names, @Nullable String description, @NotNull Param[] parameters, boolean isGreedy, @NotNull Function<Object[], Object> function) {
         this.names = names;
         this.description = description;
@@ -76,24 +77,6 @@ public class Executable implements Node {
             arity += p.arity;
         }
         this.arity = arity;
-    }
-
-    public Object execute(String... args) {
-        if (!isGreedy && args.length != arity) throw new CommandExecutionException("Invalid number of arguments!");
-        Object[] parsed = new Object[parameters.length];
-        if (arity == 0) return function.apply(parsed);
-        int offset = 0;
-        for (int i = 0; i < parameters.length; i++) {
-            Param p = parameters[i];
-            // if this is greedy, and we are doing last param, force the arity of the last parameter to be the remaining
-            // number of arguments so it consumes all of them
-            if (isGreedy && i == parameters.length - 1) {
-                p.arity = args.length - offset;
-            }
-            parsed[i] = unbox(p.parsed(offset, args));
-            offset += p.arity;
-        }
-        return function.apply(parsed);
     }
 
     /**
@@ -129,6 +112,24 @@ public class Executable implements Node {
             }
         } else out = in;
         return out;
+    }
+
+    public Object execute(String... args) {
+        if (!isGreedy && args.length != arity) throw new CommandExecutionException("Invalid number of arguments!");
+        Object[] parsed = new Object[parameters.length];
+        if (arity == 0) return function.apply(parsed);
+        int offset = 0;
+        for (int i = 0; i < parameters.length; i++) {
+            Param p = parameters[i];
+            // if this is greedy, and we are doing last param, force the arity of the last parameter to be the remaining
+            // number of arguments so it consumes all of them
+            if (isGreedy && i == parameters.length - 1) {
+                p.arity = args.length - offset;
+            }
+            parsed[i] = unbox(p.parsed(offset, args));
+            offset += p.arity;
+        }
+        return function.apply(parsed);
     }
 
     public String[] names() {
@@ -185,6 +186,15 @@ public class Executable implements Node {
             this.arity = arity;
         }
 
+        public static Param create(@NotNull String name, @Nullable String description, @NotNull Class<?> type, int arity, @NotNull Map<Class<?>, ArgumentParser<?>> parsers) {
+            if (type.isArray()) type = type.getComponentType();
+            ArgumentParser<?> parser = parsers.get(primitiveWrappers.getOrDefault(type, type));
+            if (parser == null) {
+                throw new CommandCreationException("No parser found for type " + type.getSimpleName() + "! Register with CommandManager#registerParser");
+            }
+            return new Param(name, description, arity, parser);
+        }
+
         Object parsed(int offset, String[] args) {
             if (arity == 1) return parser.parse(args[offset]);
             Object first = parser.parse(args[offset]);
@@ -204,7 +214,8 @@ public class Executable implements Node {
             }
         }
 
-        @Nullable List<@NotNull String> tryAutoComplete(String arg) {
+        @Nullable
+        List<@NotNull String> tryAutoComplete(String arg) {
             return parser.getAutoCompletions(arg);
         }
 
@@ -218,15 +229,6 @@ public class Executable implements Node {
 
         public Class<?> getType() {
             return parser.getType();
-        }
-
-        public static Param create(@NotNull String name, @Nullable String description, @NotNull Class<?> type, int arity, @NotNull Map<Class<?>, ArgumentParser<?>> parsers) {
-            if (type.isArray()) type = type.getComponentType();
-            ArgumentParser<?> parser = parsers.get(primitiveWrappers.getOrDefault(type, type));
-            if (parser == null) {
-                throw new CommandCreationException("No parser found for type " + type.getSimpleName() + "! Register with CommandManager#registerParser");
-            }
-            return new Param(name, description, arity, parser);
         }
     }
 }

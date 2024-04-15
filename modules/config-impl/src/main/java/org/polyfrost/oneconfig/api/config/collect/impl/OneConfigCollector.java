@@ -53,7 +53,7 @@ import static org.polyfrost.oneconfig.api.config.Node.strv;
  */
 public class OneConfigCollector extends ReflectiveCollector {
     public OneConfigCollector() {
-        super();
+        super(1);
     }
 
     @Override
@@ -76,7 +76,7 @@ public class OneConfigCollector extends ReflectiveCollector {
     }
 
     @Override
-    public void handleField(@NotNull Field f, @NotNull Object src, @NotNull Tree builder) {
+    protected void handleField(@NotNull Field f, @NotNull Object src, @NotNull Tree builder) {
         for (Annotation a : f.getAnnotations()) {
             Option opt = a.annotationType().getAnnotation(Option.class);
             if (opt == null) continue;
@@ -103,7 +103,7 @@ public class OneConfigCollector extends ReflectiveCollector {
     }
 
     @Override
-    public void handleMethod(@NotNull Method m, @NotNull Object src, @NotNull Tree builder) {
+    protected void handleMethod(@NotNull Method m, @NotNull Object src, @NotNull Tree builder) {
         Button b = m.getDeclaredAnnotation(Button.class);
         if (b == null) return;
         if (m.getParameterCount() != 0) throw new IllegalArgumentException("Button method " + m.getName() + " must have no parameters");
@@ -114,7 +114,7 @@ public class OneConfigCollector extends ReflectiveCollector {
             try {
                 mh.invokeExact();
             } catch (Throwable e) {
-                Tree.LOGGER.error("Failed to invoke method for button {}", methodString, e);
+                LOGGER.error("Failed to invoke method for button {}", methodString, e);
             }
         });
         p.addMetadata("visualizer", b.annotationType().getAnnotation(Option.class).display());
@@ -126,7 +126,7 @@ public class OneConfigCollector extends ReflectiveCollector {
     }
 
     @Override
-    public void handleInnerClass(@NotNull Class<?> c, @NotNull Object src, int depth, @NotNull Tree builder) {
+    protected void handleInnerClass(@NotNull Class<?> c, @NotNull Object src, int depth, @NotNull Tree builder) {
         Accordion a = c.getDeclaredAnnotation(Accordion.class);
         if (a == null) return;
         try {
@@ -139,7 +139,7 @@ public class OneConfigCollector extends ReflectiveCollector {
         }
     }
 
-    public void handleMetadata(@NotNull Property<?> property, @NotNull Annotation a, Option opt, Field f) {
+    protected void handleMetadata(@NotNull Property<?> property, @NotNull Annotation a, Option opt, Field f) {
         property.addMetadata("visualizer", opt.display());
         property.addMetadata(MHUtils.getAnnotationValues(a).getOrThrow());
         DependsOn d = f.getDeclaredAnnotation(DependsOn.class);

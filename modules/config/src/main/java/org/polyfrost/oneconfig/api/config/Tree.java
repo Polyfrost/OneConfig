@@ -26,12 +26,11 @@
 
 package org.polyfrost.oneconfig.api.config;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
 import java.util.Collections;
@@ -45,13 +44,10 @@ import java.util.function.BiConsumer;
  */
 @SuppressWarnings("unused")
 public class Tree extends Node implements Serializable {
-    public static final Logger LOGGER = LoggerFactory.getLogger("OneConfig/Config");
-
     @UnmodifiableView
     public final Map<String, Node> map;
 
     private final Map<String, Node> theMap;
-    private boolean locked;
 
     public Tree(@Nullable String id, @Nullable String name, @Nullable String description, @Nullable Map<String, Node> items) {
         super(id, name, description);
@@ -62,6 +58,68 @@ public class Tree extends Node implements Serializable {
         map = Collections.unmodifiableMap(theMap);
     }
 
+    private static void _onAll(Tree t, BiConsumer<String, Node> action) {
+        for (Map.Entry<String, Node> e : t.theMap.entrySet()) {
+            action.accept(e.getKey(), e.getValue());
+        }
+    }
+
+    private static void _onAllProp(Tree t, BiConsumer<String, Property<?>> action) {
+        for (Map.Entry<String, Node> e : t.theMap.entrySet()) {
+            if (e.getValue() instanceof Property) action.accept(e.getKey(), (Property<?>) e.getValue());
+        }
+    }
+
+    private static void _overwrite(Tree self, Tree in) {
+        for (Map.Entry<String, Node> e : in.theMap.entrySet()) {
+            Node _this = self.get(e.getKey());
+            Node that = e.getValue();
+            if (_this == null) {
+                // nop. means that the node has been removed.
+                continue;
+            }
+            if (_this instanceof Tree) {
+                if (that instanceof Tree) {
+                    // if both are trees, recursively overwrite
+                    _overwrite((Tree) _this, (Tree) that);
+                    _this.addMetadata(that.getMetadata());
+                }
+                // nop. do not attempt to overwrite a tree with a property
+                else continue;
+            }
+            _this.overwrite(that);
+        }
+    }
+
+    private static void _toString(StringBuilder sb, int depth, Tree t) {
+        for (int i = 0; i < depth; i++) sb.append('\t');
+        sb.append(t.getTitle()).append(":\n");
+        for (Map.Entry<String, Node> e : t.theMap.entrySet()) {
+            if (e.getValue() instanceof Property) {
+                for (int i = 0; i < depth + 1; i++) sb.append('\t');
+                sb.append(e.getValue()).append('\n');
+            } else {
+                _toString(sb, depth + 1, (Tree) e.getValue());
+            }
+        }
+    }
+
+    public static @NotNull Tree tree() {
+        return new Tree(null, null, null, null);
+    }
+
+    @Contract("_, -> new")
+    public static @NotNull Tree tree(@NotNull String id) {
+        return new Tree(id, null, null, null);
+    }
+
+    /**
+     * Create a new builder from the given tree. This will copy all the data from the tree into the builder.
+     */
+    @Contract("_ -> new")
+    public static @NotNull Tree tree(@NotNull Tree src) {
+        return new Tree(src.getID(), src.getTitle(), src.description, src.theMap);
+    }
 
     public Tree put(@NotNull Node... nodes) {
         for (Node n : nodes) {
@@ -71,8 +129,7 @@ public class Tree extends Node implements Serializable {
     }
 
     public Tree put(Node n) {
-        // security and sanity check.
-        if (theMap.put(n.getID(), n) == null && locked) throw new IllegalStateException("Cannot add new nodes to a locked tree!");
+        theMap.put(n.getID(), n);
         return this;
     }
 
@@ -121,18 +178,6 @@ public class Tree extends Node implements Serializable {
         _onAllProp(this, action);
     }
 
-    private static void _onAll(Tree t, BiConsumer<String, Node> action) {
-        for (Map.Entry<String, Node> e : t.theMap.entrySet()) {
-            action.accept(e.getKey(), e.getValue());
-        }
-    }
-
-    private static void _onAllProp(Tree t, BiConsumer<String, Property<?>> action) {
-        for (Map.Entry<String, Node> e : t.theMap.entrySet()) {
-            if (e.getValue() instanceof Property) action.accept(e.getKey(), (Property<?>) e.getValue());
-        }
-    }
-
     @Override
     public boolean equals(Object obj) {
         if (obj == null) return false;
@@ -165,45 +210,10 @@ public class Tree extends Node implements Serializable {
         return true;
     }
 
-
     @Override
     public void overwrite(@NotNull Node with) {
         if (!(with instanceof Tree)) throw new IllegalArgumentException("Cannot overwrite a tree with a non-tree node!");
         _overwrite(this, (Tree) with);
-    }
-
-    /**
-     * Lock this tree, preventing any new data from being added to it. Nodes may still be overwritten by the {@link #put(Node)} methods.
-     * <br><b>this operation is permanent!</b>
-     */
-    public void lock() {
-        locked = true;
-    }
-
-    public boolean isLocked() {
-        return locked;
-    }
-
-    private static void _overwrite(Tree self, Tree in) {
-        for (Map.Entry<String, Node> e : in.theMap.entrySet()) {
-            Node _this = self.get(e.getKey());
-            Node that = e.getValue();
-            if (_this == null) {
-                // nop. means that the node has been removed.
-                continue;
-            }
-            if (_this instanceof Tree) {
-                if (that instanceof Tree) {
-                    // if both are trees, recursively overwrite
-                    _overwrite((Tree) _this, (Tree) that);
-                    _this.addMetadata(that.getMetadata());
-                }
-                // nop. do not attempt to overwrite a tree with a property
-                else continue;
-            }
-            if (_this.equals(that)) continue;
-            _this.overwrite(that);
-        }
     }
 
     @Override
@@ -213,34 +223,15 @@ public class Tree extends Node implements Serializable {
         return builder.toString();
     }
 
-    private static void _toString(StringBuilder sb, int depth, Tree t) {
-        for (int i = 0; i < depth; i++) sb.append('\t');
-        sb.append(t.getTitle()).append(":\n");
-        for (Map.Entry<String, Node> e : t.theMap.entrySet()) {
-            if (e.getValue() instanceof Property) {
-                for (int i = 0; i < depth + 1; i++) sb.append('\t');
-                sb.append(e.getValue()).append('\n');
-            } else {
-                _toString(sb, depth + 1, (Tree) e.getValue());
-            }
-        }
-    }
-
-    public static @NotNull Tree tree() {
-        return new Tree(null, null, null, null);
-    }
-
-    @Contract("_, -> new")
-    public static @NotNull Tree tree(@NotNull String id) {
-        return new Tree(id, null, null, null);
-    }
-
     /**
-     * Create a new builder from the given tree. This will copy all the data from the tree into the builder.
+     * Clear this tree of all its members.
+     * <br>
+     * This function is used internally to discard trees to prevent illegal usage of 'dead' trees.
      */
-    @Contract("_ -> new")
-    public static @NotNull Tree tree(@NotNull Tree src) {
-        return new Tree(src.getID(), src.getTitle(), src.description, src.theMap);
+    @ApiStatus.Internal
+    public void clear() {
+        theMap.clear();
+        clearMetadata();
     }
 }
 

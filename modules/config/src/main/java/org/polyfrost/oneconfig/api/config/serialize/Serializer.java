@@ -46,6 +46,7 @@ import org.polyfrost.oneconfig.api.config.Tree;
  *     <li>Map (containing the above types).</li>
  * </ul>
  * If you don't want to use this facility, you can create your own complex object serializer and use that instead.
+ *
  * @param <T> the type of data that your serializer outputs and accepts as input.
  */
 public interface Serializer<T> {

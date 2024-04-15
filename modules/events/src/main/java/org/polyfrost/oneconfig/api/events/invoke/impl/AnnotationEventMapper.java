@@ -26,8 +26,8 @@
 
 package org.polyfrost.oneconfig.api.events.invoke.impl;
 
-import org.polyfrost.oneconfig.api.events.invoke.EventHandler;
 import org.polyfrost.oneconfig.api.events.invoke.EventCollector;
+import org.polyfrost.oneconfig.api.events.invoke.EventHandler;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;

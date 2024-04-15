@@ -28,11 +28,13 @@ package org.polyfrost.oneconfig.api.events.event;
 
 import net.minecraft.client.gui.GuiScreen;
 import org.jetbrains.annotations.Nullable;
+import org.polyfrost.oneconfig.api.PlatformDeclaration;
 
 /**
  * Called when a screen is opened or closed.
  * If the screen is closed, {@link ScreenOpenEvent#screen} will be null.
  */
+@PlatformDeclaration
 public class ScreenOpenEvent extends Event.Cancellable {
     @Nullable
     public final GuiScreen screen;

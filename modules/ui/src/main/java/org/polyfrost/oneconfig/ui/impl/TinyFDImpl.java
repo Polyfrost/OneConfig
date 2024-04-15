@@ -37,6 +37,16 @@ import java.io.File;
 
 public class TinyFDImpl implements TinyFD {
 
+    private static PointerBuffer stringsToPointerBuffer(String[] strings) {
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            PointerBuffer p = stack.mallocPointer(strings.length);
+            for (int i = 0; i < strings.length; i++) {
+                p.put(i, stack.UTF8(strings[i]));
+            }
+            return p.flip();
+        }
+    }
+
     @Override
     public File openSaveSelector(String title, @Nullable String defaultFilePath, String[] filterPatterns, String filterDescription) {
         PointerBuffer p = null;
@@ -89,15 +99,5 @@ public class TinyFDImpl implements TinyFD {
     @Override
     public int showNotification(String title, String message, String icon) {
         return TinyFileDialogs.tinyfd_notifyPopup(title, message, icon);
-    }
-
-    private static PointerBuffer stringsToPointerBuffer(String[] strings) {
-        try (MemoryStack stack = MemoryStack.stackPush()) {
-            PointerBuffer p = stack.mallocPointer(strings.length);
-            for (int i = 0; i < strings.length; i++) {
-                p.put(i, stack.UTF8(strings[i]));
-            }
-            return p.flip();
-        }
     }
 }

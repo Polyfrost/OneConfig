@@ -53,12 +53,31 @@ public class CommandManager {
      */
     public static final CommandManager INSTANCE = new CommandManager();
     private static final PlatformCommandManager platform = ServiceLoader.load(PlatformCommandManager.class, PlatformCommandManager.class.getClassLoader()).iterator().next();
-    private final Set<CommandFactory> factories = new HashSet<>();
     /**
      * use {@link #registerParser(ArgumentParser)} to register a parser
      */
     @ApiStatus.Internal
     public final Map<Class<?>, ArgumentParser<?>> parsers = new HashMap<>();
+    private final Set<CommandFactory> factories = new HashSet<>();
+
+    private CommandManager() {
+        parsers.putAll(ArgumentParser.defaultParsers);
+        registerFactory(new DSLFactory());
+        registerFactory(new AnnotationCommandFactory());
+        registerFactory(new BuilderFactory());
+    }
+
+    public static CommandDSL dsl(String... aliases) {
+        return new CommandDSL(INSTANCE.parsers, aliases);
+    }
+
+    public static CommandBuilder builder(String... aliases) {
+        return new CommandBuilder(INSTANCE.parsers, aliases);
+    }
+
+    public static boolean registerCommand(Object obj) {
+        return INSTANCE.create(obj);
+    }
 
     /**
      * Register a factory which can be used to create commands from objects in the {@link #create(Object)} method.
@@ -80,13 +99,6 @@ public class CommandManager {
         }
     }
 
-    private CommandManager() {
-        parsers.putAll(ArgumentParser.defaultParsers);
-        registerFactory(new DSLFactory());
-        registerFactory(new AnnotationCommandFactory());
-        registerFactory(new BuilderFactory());
-    }
-
     /**
      * Create a command from the provided object.
      * <br>
@@ -96,18 +108,6 @@ public class CommandManager {
      */
     public boolean create(Object obj) {
         return createTree(obj) != null;
-    }
-
-    public static CommandDSL dsl(String... aliases) {
-        return new CommandDSL(INSTANCE.parsers, aliases);
-    }
-
-    public static CommandBuilder builder(String... aliases) {
-        return new CommandBuilder(INSTANCE.parsers, aliases);
-    }
-
-    public static boolean registerCommand(Object obj) {
-        return INSTANCE.create(obj);
     }
 
     /**

@@ -45,15 +45,6 @@ import java.util.function.Function;
 
 public class AnnotationCommandFactory implements CommandFactory {
 
-    @Override
-    public CommandTree create(@NotNull Map<Class<?>, ArgumentParser<?>> parsers, @NotNull Object obj) {
-        Command c = obj.getClass().getAnnotation(Command.class);
-        if (c == null) return null;
-        CommandTree tree = new CommandTree(c.value().length == 0 ? new String[]{obj.getClass().getSimpleName()} : c.value(), c.description().isEmpty() ? null : c.description());
-        create(parsers, tree, obj);
-        return tree;
-    }
-
     static void create(Map<Class<?>, ArgumentParser<?>> parsers, CommandTree tree, Object it) {
         for (Method m : it.getClass().getDeclaredMethods()) {
             if (m.isAnnotationPresent(Command.class)) {
@@ -103,7 +94,6 @@ public class AnnotationCommandFactory implements CommandFactory {
         throw (T) t;
     }
 
-
     static Executable.Param createParameterInfo(java.lang.reflect.Parameter parameter, Map<Class<?>, ArgumentParser<?>> parsers) {
         String name = "";
         String desc = "";
@@ -125,5 +115,14 @@ public class AnnotationCommandFactory implements CommandFactory {
             infos[i] = createParameterInfo(parameters[i], parsers);
         }
         return infos;
+    }
+
+    @Override
+    public CommandTree create(@NotNull Map<Class<?>, ArgumentParser<?>> parsers, @NotNull Object obj) {
+        Command c = obj.getClass().getAnnotation(Command.class);
+        if (c == null) return null;
+        CommandTree tree = new CommandTree(c.value().length == 0 ? new String[]{obj.getClass().getSimpleName()} : c.value(), c.description().isEmpty() ? null : c.description());
+        create(parsers, tree, obj);
+        return tree;
     }
 }

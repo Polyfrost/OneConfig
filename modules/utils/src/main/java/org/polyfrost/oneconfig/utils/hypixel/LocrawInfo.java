@@ -79,7 +79,7 @@ public class LocrawInfo implements Serializable {
     /**
      * @param gameType The GameType to set it to.
      */
-    public void setGameType(GameType gameType) {
+    void setGameType(GameType gameType) {
         this.gameType = gameType;
     }
 

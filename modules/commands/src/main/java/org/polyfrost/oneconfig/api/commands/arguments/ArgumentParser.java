@@ -43,25 +43,6 @@ import java.util.Map;
  * <b>Only one parser should only ever be registered for a given type!</b> This is to avoid ambiguity when parsing arguments. <br>
  */
 public abstract class ArgumentParser<T> {
-    /**
-     * Parse the given argument into the correct type.
-     *
-     * @return the parsed object
-     */
-    public abstract T parse(@NotNull String arg);
-
-    public abstract Class<T> getType();
-
-    /**
-     * Return a list of autocompletion options for the given argument.
-     *
-     * @return the populated list, or null if not applicable to the given argument.
-     */
-    public @Nullable List<@NotNull String> getAutoCompletions(String input) {
-        return null;
-    }
-
-
     public static final ArgumentParser<Double> doubleParser = new ArgumentParser<Double>() {
         @Override
         public @NotNull Double parse(@NotNull String arg) {
@@ -73,7 +54,6 @@ public abstract class ArgumentParser<T> {
             return Double.class;
         }
     };
-
     public static final ArgumentParser<Float> floatParser = new ArgumentParser<Float>() {
         @Override
         public @NotNull Float parse(@NotNull String arg) {
@@ -85,7 +65,6 @@ public abstract class ArgumentParser<T> {
             return Float.class;
         }
     };
-
     public static final ArgumentParser<Integer> intParser = new ArgumentParser<Integer>() {
         @Override
         public @NotNull Integer parse(@NotNull String arg) {
@@ -97,7 +76,6 @@ public abstract class ArgumentParser<T> {
             return Integer.class;
         }
     };
-
     public static final ArgumentParser<Long> longParser = new ArgumentParser<Long>() {
         @Override
         public @NotNull Long parse(@NotNull String arg) {
@@ -109,7 +87,6 @@ public abstract class ArgumentParser<T> {
             return Long.class;
         }
     };
-
     public static final ArgumentParser<Short> shortParser = new ArgumentParser<Short>() {
         @Override
         public @NotNull Short parse(@NotNull String arg) {
@@ -121,7 +98,6 @@ public abstract class ArgumentParser<T> {
             return Short.class;
         }
     };
-
     public static final ArgumentParser<Byte> byteParser = new ArgumentParser<Byte>() {
         @Override
         public @NotNull Byte parse(@NotNull String arg) {
@@ -133,7 +109,6 @@ public abstract class ArgumentParser<T> {
             return Byte.class;
         }
     };
-
     public static final ArgumentParser<Boolean> booleanParser = new ArgumentParser<Boolean>() {
         private final List<String> TRUE = Collections.singletonList("true");
         private final List<String> FALSE = Collections.singletonList("false");
@@ -162,7 +137,6 @@ public abstract class ArgumentParser<T> {
             }
         }
     };
-
     public static final ArgumentParser<String> stringParser = new ArgumentParser<String>() {
         @Override
         public @NotNull String parse(@NotNull String arg) {
@@ -174,7 +148,6 @@ public abstract class ArgumentParser<T> {
             return String.class;
         }
     };
-
     public static final ArgumentParser<Character> charParser = new ArgumentParser<Character>() {
         @Override
         public @NotNull Character parse(@NotNull String arg) {
@@ -186,7 +159,6 @@ public abstract class ArgumentParser<T> {
             return Character.class;
         }
     };
-
     @Unmodifiable
     public static final Map<Class<?>, ArgumentParser<?>> defaultParsers;
 
@@ -202,5 +174,23 @@ public abstract class ArgumentParser<T> {
         m.put(String.class, stringParser);
         m.put(Character.class, charParser);
         defaultParsers = Collections.unmodifiableMap(m);
+    }
+
+    /**
+     * Parse the given argument into the correct type.
+     *
+     * @return the parsed object
+     */
+    public abstract T parse(@NotNull String arg);
+
+    public abstract Class<T> getType();
+
+    /**
+     * Return a list of autocompletion options for the given argument.
+     *
+     * @return the populated list, or null if not applicable to the given argument.
+     */
+    public @Nullable List<@NotNull String> getAutoCompletions(String input) {
+        return null;
     }
 }

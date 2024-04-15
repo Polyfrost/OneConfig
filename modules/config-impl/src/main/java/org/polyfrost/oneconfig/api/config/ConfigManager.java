@@ -29,11 +29,11 @@ package org.polyfrost.oneconfig.api.config;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.UnmodifiableView;
-import org.polyfrost.oneconfig.api.config.serialize.impl.NightConfigSerializer;
 import org.polyfrost.oneconfig.api.config.backend.impl.FileBackend;
-import org.polyfrost.oneconfig.api.config.serialize.impl.FileSerializer;
 import org.polyfrost.oneconfig.api.config.collect.PropertyCollector;
 import org.polyfrost.oneconfig.api.config.collect.impl.OneConfigCollector;
+import org.polyfrost.oneconfig.api.config.serialize.impl.FileSerializer;
+import org.polyfrost.oneconfig.api.config.serialize.impl.NightConfigSerializer;
 import org.polyfrost.oneconfig.api.events.EventManager;
 import org.polyfrost.oneconfig.api.events.event.PreShutdownEvent;
 import org.slf4j.Logger;
@@ -49,9 +49,8 @@ import static org.polyfrost.oneconfig.api.config.Property.prop;
 import static org.polyfrost.oneconfig.api.config.Tree.tree;
 
 public final class ConfigManager {
-    private static final Logger LOGGER = LoggerFactory.getLogger("OneConfig/Config");
     public static final Path PROFILES_DIR = Paths.get("profiles");
-
+    private static final Logger LOGGER = LoggerFactory.getLogger("OneConfig/Config");
     private static final List<PropertyCollector> collectors = new ArrayList<>(1);
     private static final ConfigManager internal = new ConfigManager(Paths.get("OneConfig"), NightConfigSerializer.JSON);
     private static final ConfigManager core = new ConfigManager(Paths.get("config"), NightConfigSerializer.ALL);
@@ -61,8 +60,8 @@ public final class ConfigManager {
         registerCollector(new OneConfigCollector());
     }
 
-    private volatile boolean shutdown = false;
     private final FileBackend backend;
+    private volatile boolean shutdown = false;
 
 
     @SuppressWarnings("unchecked")
@@ -99,7 +98,10 @@ public final class ConfigManager {
     public static void openProfile(String profile) {
         internal().get("profiles.json").getProp("activeProfile").setAs(profile);
         internal().save("profiles.json");
-        if (profile.isEmpty()) active = core();
+        if (profile.isEmpty()) {
+            LOGGER.info("opened config manager onto root (no profile)");
+            active = core().withWatcher().withHook();
+        }
         else {
             LOGGER.info("opening profile {}", profile);
             active = new ConfigManager(PROFILES_DIR.resolve(profile), NightConfigSerializer.ALL).withHook().withWatcher();
@@ -113,6 +115,27 @@ public final class ConfigManager {
     @ApiStatus.Internal
     public static ConfigManager core() {
         return core;
+    }
+
+    @ApiStatus.Internal
+    public static Tree collect(@NotNull Object o, @NotNull String id) {
+        if (o instanceof Tree) return (Tree) o;
+        for (PropertyCollector collector : collectors) {
+            Tree t = collector.collect(o);
+            if (t != null) {
+                t.setID(id);
+                return t;
+            }
+        }
+        LOGGER.error("No registered collector for object {}", o.getClass().getName());
+        return null;
+    }
+
+    /**
+     * Register a collector that can be used to collect trees from objects. these are shared between all config managers.
+     */
+    public static void registerCollector(PropertyCollector collector) {
+        collectors.add(collector);
     }
 
     @UnmodifiableView
@@ -132,38 +155,14 @@ public final class ConfigManager {
         return backend.folder;
     }
 
-    public boolean register(Tree t) {
+    public Tree register(Tree t) {
         return backend.register(t);
     }
-
 
     public Tree register(@NotNull Object o, @NotNull String id) {
         Tree t = collect(o, id);
         if (t == null) return null;
-        if (!backend.register(t)) return null;
-        return t;
-    }
-
-    @ApiStatus.Internal
-    public static Tree collect(@NotNull Object o, @NotNull String id) {
-        if (o instanceof Tree) return (Tree) o;
-        for (PropertyCollector collector : collectors) {
-            Tree t = collector.collect(o);
-            if (t != null) {
-                t.setID(id);
-                t.lock();
-                return t;
-            }
-        }
-        LOGGER.error("No registered collector for object {}", o.getClass().getName());
-        return null;
-    }
-
-    /**
-     * Register a collector that can be used to collect trees from objects. these are shared between all config managers.
-     */
-    public static void registerCollector(PropertyCollector collector) {
-        collectors.add(collector);
+        return backend.register(t);
     }
 
     private ConfigManager withHook() {

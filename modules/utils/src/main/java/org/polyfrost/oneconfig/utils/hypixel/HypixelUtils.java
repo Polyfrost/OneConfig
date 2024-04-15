@@ -33,15 +33,17 @@ import java.util.Locale;
 /**
  * Various utilities for Hypixel.
  */
-public class HypixelUtils {
+public final class HypixelUtils {
     public static final HypixelUtils INSTANCE = new HypixelUtils();
+
+    private HypixelUtils() {
+    }
+
     /**
      * Alias for {@link LocrawUtil#INSTANCE}.
      */
-    public static final LocrawUtil LOCRAW = LocrawUtil.INSTANCE;
-
-    public void initialize() {
-        LocrawUtil.INSTANCE.initialize();
+    public static LocrawUtil getLocraw() {
+        return LocrawUtil.INSTANCE;
     }
 
     /**

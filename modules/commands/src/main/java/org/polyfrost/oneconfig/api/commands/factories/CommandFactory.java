@@ -42,5 +42,6 @@ public interface CommandFactory {
      * @param obj     the object to create the command tree from
      * @return the command tree, or null if this factory cannot create a command tree from the given object. Ideally this is fail-fast.
      */
-    @Nullable CommandTree create(@NotNull Map<Class<?>, ArgumentParser<?>> parsers, @NotNull Object obj);
+    @Nullable
+    CommandTree create(@NotNull Map<Class<?>, ArgumentParser<?>> parsers, @NotNull Object obj);
 }

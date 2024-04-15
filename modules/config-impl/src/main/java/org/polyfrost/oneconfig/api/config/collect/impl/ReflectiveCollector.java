@@ -30,21 +30,19 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.polyfrost.oneconfig.api.config.Tree;
 import org.polyfrost.oneconfig.api.config.collect.PropertyCollector;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 public abstract class ReflectiveCollector implements PropertyCollector {
+    protected static final Logger LOGGER = LoggerFactory.getLogger("OneConfig/Config");
     protected final int maxDepth;
 
     public ReflectiveCollector(int maxDepth) {
         this.maxDepth = maxDepth;
     }
-
-    public ReflectiveCollector() {
-        this(1);
-    }
-
 
     @Override
     public @Nullable Tree collect(@NotNull Object src) {
@@ -54,14 +52,14 @@ public abstract class ReflectiveCollector implements PropertyCollector {
     }
 
 
-    public abstract void handleField(@NotNull Field f, @NotNull Object src, @NotNull Tree tree);
+    protected abstract void handleField(@NotNull Field f, @NotNull Object src, @NotNull Tree tree);
 
-    public abstract void handleMethod(@NotNull Method m, @NotNull Object src, @NotNull Tree tree);
+    protected abstract void handleMethod(@NotNull Method m, @NotNull Object src, @NotNull Tree tree);
 
-    public abstract void handleInnerClass(@NotNull Class<?> c, @NotNull Object src, int depth, @NotNull Tree tree);
+    protected abstract void handleInnerClass(@NotNull Class<?> c, @NotNull Object src, int depth, @NotNull Tree tree);
 
 
-    public final void handle(@NotNull Tree tree, @NotNull Object src, int depth) {
+    public void handle(@NotNull Tree tree, @NotNull Object src, int depth) {
         for (Field f : src.getClass().getDeclaredFields()) {
             handleField(f, src, tree);
         }
@@ -69,11 +67,11 @@ public abstract class ReflectiveCollector implements PropertyCollector {
             handleMethod(m, src, tree);
         }
         for (Class<?> c : src.getClass().getDeclaredClasses()) {
-            if (depth == maxDepth) {
-                Tree.LOGGER.warn("Reached max depth for tree {} ignoring further subclasses!", tree.getID());
+            if (depth >= maxDepth) {
+                LOGGER.warn("Reached max depth for tree {} ignoring further subclasses!", tree.getID());
                 return;
             }
-            handleInnerClass(c, src, depth, tree);
+            handleInnerClass(c, src, depth + 1, tree);
         }
     }
 }

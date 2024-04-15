@@ -220,10 +220,6 @@ public class ObjectSerializerTest {
         assertArrayEquals(new int[]{20, 30, 40, 50}, (int[]) ((Map<?, ?>) mapColor).get("value"));
     }
 
-    enum TestEnum {
-        TEST1
-    }
-
     @Test
     public void testEnum() {
         // Test Serialization
@@ -248,5 +244,9 @@ public class ObjectSerializerTest {
 
         Object deserializedNull = objectSerializer.deserialize(null);
         assertNull(deserializedNull);
+    }
+
+    enum TestEnum {
+        TEST1
     }
 }

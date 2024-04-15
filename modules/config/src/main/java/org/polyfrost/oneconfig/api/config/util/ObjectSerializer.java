@@ -28,10 +28,12 @@ package org.polyfrost.oneconfig.api.config.util;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
+import org.polyfrost.oneconfig.api.config.exceptions.SerializationException;
 import org.polyfrost.oneconfig.api.config.serialize.adapter.Adapter;
 import org.polyfrost.oneconfig.api.config.serialize.adapter.impl.ColorAdapter;
-import org.polyfrost.oneconfig.api.config.exceptions.SerializationException;
 import org.polyfrost.oneconfig.utils.MHUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
@@ -46,19 +48,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
-import static org.polyfrost.oneconfig.api.config.Tree.LOGGER;
 
 public class ObjectSerializer {
     public static final ObjectSerializer INSTANCE = new ObjectSerializer();
-    @Unmodifiable
-    public static final Map<Class<?>, Class<?>> primitiveWrappers;
-    @Unmodifiable
-    public static final Map<Class<?>, Function<Number, Number>> numberSuppliers;
     /**
      * Modifier.SYNTHETIC | Modifier.TRANSIENT | Modifier.STATIC
      */
     public static final int FIELD_SKIP_MODIFIERS = Modifier.STATIC | Modifier.TRANSIENT | 0x00001000;
-    private final HashMap<Class<?>, Adapter<Object, Object>> adapters = new HashMap<>();
+    private static final Logger LOGGER = LoggerFactory.getLogger("OneConfig/Config");
+    @Unmodifiable
+    private static final Map<Class<?>, Class<?>> primitiveWrappers;
+    @Unmodifiable
+    private static final Map<Class<?>, Function<Number, Number>> numberSuppliers;
 
     static {
         Map<Class<?>, Class<?>> pw = new HashMap<>(8, 1f);
@@ -82,11 +83,95 @@ public class ObjectSerializer {
         numberSuppliers = Collections.unmodifiableMap(ns);
     }
 
+    static {
+        INSTANCE.registerTypeAdapter(new ColorAdapter());
+    }
+
+    private final HashMap<Class<?>, Adapter<Object, Object>> adapters = new HashMap<>();
+
     private ObjectSerializer() {
     }
 
-    static {
-        INSTANCE.registerTypeAdapter(new ColorAdapter());
+    private static Field getDeclaredField(Class<?> cls, String name) {
+        for (Field f : cls.getDeclaredFields()) {
+            if (f.getName().equals(name)) return f;
+        }
+        if (cls.getSuperclass() != null) {
+            Field f = getDeclaredField(cls.getSuperclass(), name);
+            if (f != null) return f;
+        }
+        for (Class<?> c : cls.getInterfaces()) {
+            Field f = getDeclaredField(c, name);
+            if (f != null) return f;
+        }
+        return null;
+    }
+
+    public static Object unbox(@NotNull Object in, Class<?> target) {
+        if (target == null) return in;
+        if (in instanceof Number) return numberSuppliers.get(getWrapped(target)).apply((Number) in);
+        if (target.isArray() && in instanceof List) {
+            List<?> list = (List<?>) in;
+            Class<?> cType = target.getComponentType();
+            if (cType.isPrimitive()) {
+                Object array = Array.newInstance(cType, list.size());
+                for (int i = 0; i < list.size(); i++) {
+                    Array.set(array, i, unbox(list.get(i), cType));
+                }
+                return array;
+            }
+        }
+        return in;
+    }
+
+    /**
+     * box the specified primitive array into its primitive wrapper, e.g. int[] -> Integer[]
+     *
+     * @param in an object, null -> null, not a primitive array -> same, or the boxed array.
+     */
+    public static Object box(Object in) {
+        if (in == null) return null;
+        Class<?> cType = in.getClass().getComponentType();
+        if (cType == null || !cType.isPrimitive()) return in;
+        int len = Array.getLength(in);
+        Object out = Array.newInstance(getWrapped(cType), len);
+        for (int i = 0; i < len; i++) {
+            Array.set(out, i, Array.get(in, i));
+        }
+        return out;
+    }
+
+    public static Class<?> getWrapped(Class<?> cls) {
+        Class<?> c = primitiveWrappers.get(cls);
+        return c == null ? cls : c;
+    }
+
+    private static void stderrMap(Map<String, Object> map) {
+        for (Map.Entry<String, Object> e : map.entrySet()) {
+            System.err.println("  " + e.getKey() + ": " + e.getValue());
+        }
+    }
+
+    /**
+     * returns true if: <br>
+     * - the object is a primitive wrapper <br>
+     * - the object is a CharSequence <br>
+     */
+    public static boolean isSimpleObject(Object o) {
+        if (o == null) return true;
+        return isPrimitiveWrapper(o) || o instanceof CharSequence;
+    }
+
+    public static boolean isSimpleClass(Class<?> c) {
+        if (c == null) return true;
+        return Number.class.isAssignableFrom(c) || CharSequence.class.isAssignableFrom(c) || c == Boolean.class || c == Character.class;
+    }
+
+    /**
+     * returns true if the object is a primitive wrapper
+     */
+    public static boolean isPrimitiveWrapper(Object o) {
+        return o instanceof Number || o instanceof Boolean || o instanceof Character;
     }
 
     @SuppressWarnings("unchecked")
@@ -240,7 +325,6 @@ public class ObjectSerializer {
         }
     }
 
-
     /**
      * Simple object serializer. Serializes, the object and its parents' classes non-synthetic, non-transient and non-static fields.
      */
@@ -333,94 +417,4 @@ public class ObjectSerializer {
         return o;
     }
 
-    public static Field getDeclaredField(Class<?> cls, String name) {
-        for (Field f : cls.getDeclaredFields()) {
-            if (f.getName().equals(name)) return f;
-        }
-        if (cls.getSuperclass() != null) {
-            Field f = getDeclaredField(cls.getSuperclass(), name);
-            if (f != null) return f;
-        }
-        for (Class<?> c : cls.getInterfaces()) {
-            Field f = getDeclaredField(c, name);
-            if (f != null) return f;
-        }
-        return null;
-    }
-
-    public static Object unbox(@NotNull Object in, Class<?> target) {
-        if (target == null) return in;
-        if (in instanceof Number) return numberSuppliers.get(getWrapped(target)).apply((Number) in);
-        if (target.isArray() && in instanceof List) {
-            List<?> list = (List<?>) in;
-            Class<?> cType = target.getComponentType();
-            if (cType.isPrimitive()) {
-                Object array = Array.newInstance(cType, list.size());
-                for (int i = 0; i < list.size(); i++) {
-                    Array.set(array, i, unbox(list.get(i), cType));
-                }
-                return array;
-            }
-        }
-        return in;
-    }
-
-    /**
-     * box the specified primitive array into its primitive wrapper, e.g. int[] -> Integer[]
-     *
-     * @param in an object, null -> null, not a primitive array -> same, or the boxed array.
-     */
-    public static Object box(Object in) {
-        if (in == null) return null;
-        Class<?> cType = in.getClass().getComponentType();
-        if (cType == null || !cType.isPrimitive()) return in;
-        int len = Array.getLength(in);
-        Object out = Array.newInstance(getWrapped(cType), len);
-        for (int i = 0; i < len; i++) {
-            Array.set(out, i, Array.get(in, i));
-        }
-        return out;
-    }
-
-    public static Class<?> getWrapped(Class<?> cls) {
-        Class<?> c = primitiveWrappers.get(cls);
-        return c == null ? cls : c;
-    }
-
-
-    public static void stderrMap(Map<String, Object> map) {
-        for (Map.Entry<String, Object> e : map.entrySet()) {
-            System.err.println("  " + e.getKey() + ": " + e.getValue());
-        }
-    }
-
-
-    /**
-     * returns true if: <br>
-     * - the object is a primitive wrapper <br>
-     * - the object is a CharSequence <br>
-     */
-    public static boolean isSimpleObject(Object o) {
-        if (o == null) return true;
-        return isPrimitiveWrapper(o) || o instanceof CharSequence;
-    }
-
-    public static boolean isSimpleClass(Class<?> c) {
-        if (c == null) return true;
-        return Number.class.isAssignableFrom(c) || CharSequence.class.isAssignableFrom(c) || c == Boolean.class || c == Character.class;
-    }
-
-    /**
-     * returns true if the object is a primitive wrapper
-     */
-    public static boolean isPrimitiveWrapper(Object o) {
-        return o instanceof Number || o instanceof Boolean || o instanceof Character;
-    }
-
-    /**
-     * returns true if the class is a primitive array type
-     */
-    public static boolean isPrimitiveArray(Class<?> cls) {
-        return cls.isArray() && cls.getComponentType().isPrimitive();
-    }
 }

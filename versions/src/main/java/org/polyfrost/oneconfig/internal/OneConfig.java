@@ -28,12 +28,14 @@ package org.polyfrost.oneconfig.internal;
 
 import org.polyfrost.oneconfig.api.commands.CommandManager;
 import org.polyfrost.oneconfig.api.commands.factories.builder.CommandBuilder;
+import org.polyfrost.oneconfig.api.events.EventManager;
+import org.polyfrost.oneconfig.api.events.event.InitializationEvent;
 import org.polyfrost.oneconfig.api.hud.HudManager;
 import org.polyfrost.oneconfig.internal.ui.BlurHandler;
+import org.polyfrost.oneconfig.ui.LwjglManager;
 import org.polyfrost.oneconfig.ui.OneConfigUI;
 import org.polyfrost.oneconfig.ui.screen.PolyUIScreen;
 import org.polyfrost.oneconfig.utils.GuiUtils;
-import org.polyfrost.oneconfig.utils.hypixel.HypixelUtils;
 import org.polyfrost.polyui.PolyUI;
 import org.polyfrost.polyui.component.Drawable;
 import org.polyfrost.polyui.input.Translator;
@@ -53,7 +55,7 @@ import static org.polyfrost.oneconfig.api.commands.factories.builder.CommandBuil
 //#endif
 //#endif
 public class OneConfig {
-    public static final Logger LOGGER = LoggerFactory.getLogger("OneConfig");
+    private static final Logger LOGGER = LoggerFactory.getLogger("OneConfig");
     public static final OneConfig INSTANCE = new OneConfig();
     private static boolean initialized = false;
 
@@ -66,6 +68,7 @@ public class OneConfig {
      */
     public void init() {
         if (initialized) return;
+        EventManager.INSTANCE.post(InitializationEvent.INSTANCE);
         BlurHandler.init();
         preload();
         CommandBuilder b = CommandManager.builder("oneconfig", "ocfg").description("OneConfig main command");
@@ -76,7 +79,6 @@ public class OneConfig {
 //            GuiUtils.displayScreen(OneConfigUI.INSTANCE.create());
 //            return true;
 //        }));
-        HypixelUtils.INSTANCE.initialize();
 
         initialized = true;
         LOGGER.info("OneConfig initialized!");
@@ -91,6 +93,7 @@ public class OneConfig {
             Class.forName(PolyUI.class.getName());
             Class.forName(Drawable.class.getName());
             Class.forName(Translator.class.getName());
+            LwjglManager.INSTANCE.getRenderer();
         } catch (Exception e) {
             throw new IllegalStateException("Failed to preload necessary PolyUI classes", e);
         }

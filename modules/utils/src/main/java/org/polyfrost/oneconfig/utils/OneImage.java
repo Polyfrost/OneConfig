@@ -56,11 +56,11 @@ import java.util.Objects;
  */
 @SuppressWarnings("unused")
 @ApiStatus.Experimental
-public class OneImage {
+public final class OneImage {
     private static final Logger LOGGER = LoggerFactory.getLogger("OneConfig/Images");
+    private final int width, height;
     private BufferedImage image;
     private Graphics2D graphics = null;
-    private final int width, height;
 
     /**
      * Create a new OneImage from the file. This can be as a resource location inside your JAR.

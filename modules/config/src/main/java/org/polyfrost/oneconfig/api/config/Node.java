@@ -30,18 +30,20 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
 import org.jetbrains.annotations.VisibleForTesting;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
 
 
 public abstract class Node {
+    protected static final Logger LOGGER = LoggerFactory.getLogger("OneConfig/Config");
+    public transient String description;
     // @jdk.internal.vm.annotation.Stable
     private transient String id;
     // @jdk.internal.vm.annotation.Stable
     private transient String title;
-
-    public transient String description;
     private transient Map<String, Object> metadata = null;
 
     public Node(@Nullable String id, @Nullable String title, @Nullable String description) {
@@ -51,21 +53,21 @@ public abstract class Node {
     }
 
     /**
+     * validate and trim the given string, returning null if it is empty.
+     */
+    @Contract("null -> null")
+    public static String strv(String s) {
+        if (s == null) return null;
+        String s1 = s.trim();
+        if (s1.isEmpty()) return null;
+        return s1;
+    }
+
+    /**
      * The ID of a tree
      */
     public String getID() {
         return id;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        if (this.title != null) throw new IllegalArgumentException("title is already set");
-        title = strv(title);
-        if (title == null) throw new IllegalArgumentException("title cannot be null or empty");
-        this.title = title;
     }
 
     /**
@@ -79,6 +81,17 @@ public abstract class Node {
         String s = id.trim().replaceAll("[^a-zA-Z0-9_.]", "_");
         if (s.isEmpty()) throw new IllegalArgumentException("ID cannot be empty (or contain only whitespace)");
         this.id = s;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        if (this.title != null) throw new IllegalArgumentException("title is already set");
+        title = strv(title);
+        if (title == null) throw new IllegalArgumentException("title cannot be null or empty");
+        this.title = title;
     }
 
     public final void addMetadata(String key, Object value) {
@@ -140,12 +153,16 @@ public abstract class Node {
         return metadata;
     }
 
+    protected final void clearMetadata() {
+        metadata.clear();
+        metadata = null;
+    }
+
     public final boolean hasMetadata() {
         return metadata != null;
     }
 
     public abstract void overwrite(Node with);
-
 
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     @VisibleForTesting
@@ -155,16 +172,5 @@ public abstract class Node {
     @Override
     public final int hashCode() {
         return id == null ? System.identityHashCode(this) : id.hashCode();
-    }
-
-    /**
-     * validate and trim the given string, returning null if it is empty.
-     */
-    @Contract("null -> null")
-    public static String strv(String s) {
-        if (s == null) return null;
-        String s1 = s.trim();
-        if (s1.isEmpty()) return null;
-        return s1;
     }
 }

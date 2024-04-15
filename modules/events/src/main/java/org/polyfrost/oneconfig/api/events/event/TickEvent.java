@@ -30,10 +30,15 @@ package org.polyfrost.oneconfig.api.events.event;
 public interface TickEvent extends Event {
     class Start implements TickEvent {
         public static final Start INSTANCE = new Start();
-        private Start() {}
+
+        private Start() {
+        }
     }
+
     class End implements TickEvent {
         public static final End INSTANCE = new End();
-        private End() {}
+
+        private End() {
+        }
     }
 }

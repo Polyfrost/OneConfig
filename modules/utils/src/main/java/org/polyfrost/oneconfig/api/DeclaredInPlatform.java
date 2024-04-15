@@ -24,37 +24,28 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.utils.hypixel;
+package org.polyfrost.oneconfig.api;
 
-import org.jetbrains.annotations.Nullable;
-import org.polyfrost.oneconfig.api.DeclaredInPlatform;
+import kotlin.annotation.MustBeDocumented;
+import org.jetbrains.annotations.ApiStatus;
 
-@SuppressWarnings("unused")
-@DeclaredInPlatform
-public final class LocrawUtil {
-    public static final LocrawUtil INSTANCE = new LocrawUtil();
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-    // LocrawUtils.h -- version specific workaround
-    // see versions/src/main/java/org/polyfrost/oneconfig/utils/hypixel/LocrawUtil.java for the real implementation
-    private LocrawUtil() {
-    }
-
-    void initialize() {
-    }
-
-    public boolean isInGame() {
-        return false;
-    }
-
-    @Nullable
-    public LocrawInfo getLocrawInfo() {
-        return null;
-    }
-
-    @Nullable
-    public LocrawInfo getLastLocrawInfo() {
-        return null;
-    }
-
-
+/**
+ * Internal marker for the 'header; classes in the modules/ directory, with their
+ * real implementation being found in the platform/ directory.
+ * This is used for API validation reasons and for improved readability of the codebase.
+ *
+ * @see PlatformDeclaration
+ */
+@Retention(RetentionPolicy.SOURCE)
+@Target(ElementType.TYPE)
+@Documented
+@MustBeDocumented
+@ApiStatus.Internal
+public @interface DeclaredInPlatform {
 }

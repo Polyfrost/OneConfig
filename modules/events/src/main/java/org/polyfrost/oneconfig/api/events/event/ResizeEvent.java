@@ -24,37 +24,13 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.utils.hypixel;
+package org.polyfrost.oneconfig.api.events.event;
 
-import org.jetbrains.annotations.Nullable;
-import org.polyfrost.oneconfig.api.DeclaredInPlatform;
+public class ResizeEvent implements Event {
+    public final int newWidth, newHeight;
 
-@SuppressWarnings("unused")
-@DeclaredInPlatform
-public final class LocrawUtil {
-    public static final LocrawUtil INSTANCE = new LocrawUtil();
-
-    // LocrawUtils.h -- version specific workaround
-    // see versions/src/main/java/org/polyfrost/oneconfig/utils/hypixel/LocrawUtil.java for the real implementation
-    private LocrawUtil() {
+    public ResizeEvent(int newWidth, int newHeight) {
+        this.newWidth = newWidth;
+        this.newHeight = newHeight;
     }
-
-    void initialize() {
-    }
-
-    public boolean isInGame() {
-        return false;
-    }
-
-    @Nullable
-    public LocrawInfo getLocrawInfo() {
-        return null;
-    }
-
-    @Nullable
-    public LocrawInfo getLastLocrawInfo() {
-        return null;
-    }
-
-
 }

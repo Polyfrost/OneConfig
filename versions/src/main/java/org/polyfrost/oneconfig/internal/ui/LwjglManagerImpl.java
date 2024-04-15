@@ -53,6 +53,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.security.ProtectionDomain;
 import java.util.Arrays;
@@ -79,13 +81,13 @@ public class LwjglManagerImpl
     private final Set<String> classLoaderInclude = new HashSet<>();
     private final Map<String, Class<?>> classCache = new HashMap<>();
 
-    private static final String JAR_NAME = "oneconfig-lwjgl3.jar";
-    private static final URL jarFile = getJarFile();
+    private static final String JAR_NAME = "lwjgl-legacy.jar";
+    private static final Path TEMP_DIR = Paths.get("OneConfig", "lwjgl").toAbsolutePath();
     private final TinyFD tinyFD;
     private final Renderer renderer;
 
     public LwjglManagerImpl() throws Throwable {
-        super(new URL[]{jarFile}, LwjglManager.class.getClassLoader());
+        super(new URL[]{getJarFile()}, LwjglManager.class.getClassLoader());
 
         ClassLoader classLoader = isPojav ? getClass().getClassLoader() : this;
         if (!isPojav) {
@@ -109,7 +111,7 @@ public class LwjglManagerImpl
             MethodHandle setMethod = MHUtils.getMethodHandle(configClass, "set", void.class, Object.class).getOrThrow();
 
             Object extractDirField = configClass.getField("SHARED_LIBRARY_EXTRACT_DIRECTORY").get(null);
-            setMethod.invoke(extractDirField, new File("./OneConfig/temp").getAbsolutePath());
+            setMethod.invoke(extractDirField, TEMP_DIR.toString());
 
             // stop trying to Class.forName("true") ffs
             Object debugStreamField = configClass.getField("DEBUG_STREAM").get(null);
@@ -236,6 +238,7 @@ public class LwjglManagerImpl
             }
         };
         ClassWriter classWriter = new ClassWriter(classReader, ClassWriter.COMPUTE_MAXS);
+        @SuppressWarnings({"deprecation", "RedundantSuppression"})
         ClassVisitor classRemapper =
                 //#if FABRIC==1
                 //$$ new org.objectweb.asm.commons.ClassRemapper(classWriter, remapper);
@@ -333,15 +336,13 @@ public class LwjglManagerImpl
     }
 
 
-    @SuppressWarnings("ResultOfMethodCallIgnored")
     private static synchronized URL getJarFile() {
         if (isPojav) return null;
-        final File tempJar = new File("./OneConfig/temp/" + JAR_NAME);
-        try (InputStream in = LwjglManagerImpl.class.getResourceAsStream("/lwjgl-legacy.jar")) {
-            tempJar.mkdirs();
-            tempJar.createNewFile();
-            tempJar.deleteOnExit();
-            if (in == null) throw new IOException("Failed to get lwjgl-legacy.jar!");
+        final File tempJar = TEMP_DIR.resolve(JAR_NAME).toFile();
+        try (InputStream in = LwjglManagerImpl.class.getResourceAsStream("/" + JAR_NAME)) {
+            if (in == null) throw new IOException("Failed to get " + JAR_NAME);
+            Files.createDirectories(TEMP_DIR);
+            TEMP_DIR.toFile().deleteOnExit();
             Files.copy(in, tempJar.toPath(), StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
             throw new RuntimeException(e);

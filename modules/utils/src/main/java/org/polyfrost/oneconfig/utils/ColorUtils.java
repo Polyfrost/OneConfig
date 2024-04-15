@@ -30,6 +30,9 @@ package org.polyfrost.oneconfig.utils;
  * A class to help with color manipulation.
  */
 public final class ColorUtils {
+    private ColorUtils() {
+    }
+
     /**
      * Get the red component of an RGB color.
      *

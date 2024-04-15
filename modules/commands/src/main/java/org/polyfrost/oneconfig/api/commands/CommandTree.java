@@ -52,9 +52,8 @@ import java.util.stream.Collectors;
 @SuppressWarnings("unused")
 public class CommandTree implements Node {
     final String[] names;
-    public String description;
-
     private final Map<String, List<Node>> commands = new HashMap<>();
+    public String description;
     private Map<String, List<Node>> dedupedCommands = null;
     private String[] help = null;
     private boolean init = false;
@@ -62,6 +61,46 @@ public class CommandTree implements Node {
     public CommandTree(@NotNull String[] names, @Nullable String description) {
         this.names = names;
         this.description = description;
+    }
+
+    /**
+     * Return a copy of in with all elements that are in any of the lists removed.
+     * <br>both lists and in are not modified.
+     */
+    @Contract(pure = true)
+    static <T> @NotNull List<T> cullList(@NotNull Iterable<List<T>> lists, @NotNull List<T> in) {
+        List<T> out = new ArrayList<>(1);
+        for (T obj : in) {
+            boolean found = false;
+            for (List<T> list : lists) {
+                if (list.contains(obj)) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) out.add(obj);
+        }
+        return out;
+    }
+
+    public static void append(StringBuilder sb, String toAppend, int amount) {
+        for (int i = 0; i < amount; i++) {
+            sb.append(toAppend);
+        }
+    }
+
+    static <T> boolean contains(T[] array, T item) {
+        for (T x : array) {
+            if (x.equals(item)) return true;
+        }
+        return false;
+    }
+
+    static String[] withEmpty(String[] current) {
+        String[] out = new String[current.length + 1];
+        System.arraycopy(current, 0, out, 0, current.length);
+        out[current.length] = "";
+        return out;
     }
 
     public void setDescription(String description) {
@@ -79,7 +118,6 @@ public class CommandTree implements Node {
     public boolean isInitialized() {
         return init;
     }
-
 
     private void put(String key, Executable node) {
         if (init) throw new CommandCreationException("Cannot add executables after initialization!");
@@ -161,26 +199,6 @@ public class CommandTree implements Node {
         return dedupedCommands;
     }
 
-    /**
-     * Return a copy of in with all elements that are in any of the lists removed.
-     * <br>both lists and in are not modified.
-     */
-    @Contract(pure = true)
-    static <T> @NotNull List<T> cullList(@NotNull Iterable<List<T>> lists, @NotNull List<T> in) {
-        List<T> out = new ArrayList<>(1);
-        for (T obj : in) {
-            boolean found = false;
-            for (List<T> list : lists) {
-                if (list.contains(obj)) {
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) out.add(obj);
-        }
-        return out;
-    }
-
     @NotNull
     public String[] getHelp() {
         if (help == null) {
@@ -236,12 +254,6 @@ public class CommandTree implements Node {
                 }
             }
         });
-    }
-
-    public static void append(StringBuilder sb, String toAppend, int amount) {
-        for (int i = 0; i < amount; i++) {
-            sb.append(toAppend);
-        }
     }
 
     public String helpString() {
@@ -428,20 +440,6 @@ public class CommandTree implements Node {
                 return autocomplete(withEmpty(current));
             } else return l;
         }
-    }
-
-    static <T> boolean contains(T[] array, T item) {
-        for (T x : array) {
-            if (x.equals(item)) return true;
-        }
-        return false;
-    }
-
-    static String[] withEmpty(String[] current) {
-        String[] out = new String[current.length + 1];
-        System.arraycopy(current, 0, out, 0, current.length);
-        out[current.length] = "";
-        return out;
     }
 
     @Override

@@ -139,9 +139,8 @@ public class org/polyfrost/oneconfig/utils/forge/KotlinLanguageAdapter : net/min
 	public fun supportsStatics ()Z
 }
 
-public class org/polyfrost/oneconfig/utils/hypixel/LocrawUtil {
+public final class org/polyfrost/oneconfig/utils/hypixel/LocrawUtil {
 	public static final field INSTANCE Lorg/polyfrost/oneconfig/utils/hypixel/LocrawUtil;
-	public fun <init> ()V
 	public fun getLastLocrawInfo ()Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo;
 	public fun getLocrawInfo ()Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo;
 	public fun isInGame ()Z

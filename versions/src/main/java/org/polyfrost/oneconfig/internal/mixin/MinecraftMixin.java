@@ -31,13 +31,13 @@ import net.minecraft.util.Timer;
 import org.objectweb.asm.Opcodes;
 import org.polyfrost.oneconfig.api.events.EventManager;
 import org.polyfrost.oneconfig.api.events.event.FramebufferRenderEvent;
-import org.polyfrost.oneconfig.api.events.event.InitializationEvent;
 import org.polyfrost.oneconfig.api.events.event.KeyInputEvent;
 import org.polyfrost.oneconfig.api.events.event.MouseInputEvent;
 import org.polyfrost.oneconfig.api.events.event.PreShutdownEvent;
 import org.polyfrost.oneconfig.api.events.event.RawKeyEvent;
 import org.polyfrost.oneconfig.api.events.event.RawMouseEvent;
 import org.polyfrost.oneconfig.api.events.event.RenderEvent;
+import org.polyfrost.oneconfig.api.events.event.ResizeEvent;
 import org.polyfrost.oneconfig.api.events.event.ScreenOpenEvent;
 import org.polyfrost.oneconfig.api.events.event.ShutdownEvent;
 import org.polyfrost.oneconfig.api.events.event.StartEvent;
@@ -80,18 +80,36 @@ public abstract class MinecraftMixin {
         EventManager.INSTANCE.post(PreShutdownEvent.INSTANCE);
     }
 
-    //#if FORGE==1 && MC<=11202
-    @Inject(method = "startGame", at = @At("HEAD"))
+    @Inject(method = "<init>", at = @At("TAIL"))
     private void onStart(CallbackInfo ci) {
         EventManager.INSTANCE.post(StartEvent.INSTANCE);
         Runtime.getRuntime().addShutdownHook(new Thread(() -> EventManager.INSTANCE.post(ShutdownEvent.INSTANCE)));
+        //#if MC>=11300
+        //$$ OneConfig.INSTANCE.init();
+        //#endif
     }
 
-    @Inject(method = "startGame", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/client/FMLClientHandler;onInitializationComplete()V", shift = At.Shift.AFTER, remap = false))
+    //#if MC<=11300
+    @Inject(method = "startGame", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Minecraft;checkGLError(Ljava/lang/String;)V", shift = At.Shift.AFTER, ordinal = 2))
     private void onInit(CallbackInfo ci) {
-        EventManager.INSTANCE.post(InitializationEvent.INSTANCE);
         OneConfig.INSTANCE.init();
     }
+    //#endif
+
+    //#if MC<=11300
+    @Inject(method = "resize", at = @At("HEAD"))
+    private void onResize(int width, int height, CallbackInfo ci) {
+        EventManager.INSTANCE.post(new ResizeEvent(width, height));
+    }
+    //#else
+    //$$ @Shadow
+    //$$ public abstract net.minecraft.client.MainWindow getMainWindow();
+    //$$
+    //$$ @Inject(method = "updateWindowSize", at = @At("HEAD"))
+    //$$ private void onResize(CallbackInfo ci) {
+    //$$     net.minecraft.client.MainWindow win = this.getMainWindow();
+    //$$     EventManager.INSTANCE.post(new ResizeEvent(win.getWidth(), win.getHeight()));
+    //$$ }
     //#endif
 
     @Inject(method = "runGameLoop", at = @At(value = "INVOKE", target = UPDATE_CAMERA_AND_RENDER))

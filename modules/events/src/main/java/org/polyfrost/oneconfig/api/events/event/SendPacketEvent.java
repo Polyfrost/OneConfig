@@ -26,7 +26,9 @@
 
 package org.polyfrost.oneconfig.api.events.event;
 
+import org.polyfrost.oneconfig.api.DeclaredInPlatform;
 
+@DeclaredInPlatform
 public class SendPacketEvent extends Event.Cancellable {
     public final Object packet;
 

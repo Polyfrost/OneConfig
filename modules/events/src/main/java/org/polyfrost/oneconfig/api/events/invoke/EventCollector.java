@@ -32,6 +32,7 @@ import java.util.List;
 public interface EventCollector {
     /**
      * Take an object and collect any valid event handlers that may exist inside the object.
+     *
      * @return a list of handlers, or null if the object cannot be collected by this collector
      */
     List<EventHandler<?>> collect(Object object);

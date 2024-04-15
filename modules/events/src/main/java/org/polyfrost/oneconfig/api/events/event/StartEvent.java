@@ -31,5 +31,7 @@ package org.polyfrost.oneconfig.api.events.event;
  */
 public class StartEvent implements Event {
     public static final StartEvent INSTANCE = new StartEvent();
-    private StartEvent() {}
+
+    private StartEvent() {
+    }
 }

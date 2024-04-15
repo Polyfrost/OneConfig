@@ -26,9 +26,12 @@
 
 package org.polyfrost.oneconfig.api.events.event;
 
+import org.polyfrost.oneconfig.api.DeclaredInPlatform;
+
 /**
  * Called when a chat message is received.
  */
+@DeclaredInPlatform
 public class ChatReceiveEvent extends Event.Cancellable {
     /**
      * The message that was received.

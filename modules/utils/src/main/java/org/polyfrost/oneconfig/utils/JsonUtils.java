@@ -35,11 +35,13 @@ import java.util.function.Consumer;
  * Various utility methods for working with JSON.
  */
 public final class JsonUtils {
-
     /**
      * The instance of the parser.
      */
     public static final JsonParser PARSER = new JsonParser();
+
+    private JsonUtils() {
+    }
 
     /**
      * Runs the provided consumer if the given string is a valid JSON string.

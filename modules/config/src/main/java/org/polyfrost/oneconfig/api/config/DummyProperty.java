@@ -47,6 +47,17 @@ public class DummyProperty extends Property<Void> {
         super(id, name, description, null, Void.class);
     }
 
+    public static DummyProperty dummy(String id, String name, String description) {
+        return new DummyProperty(id, name, description);
+    }
+
+    public static DummyProperty dummy(String id, String name) {
+        return new DummyProperty(id, name, null);
+    }
+
+    public static DummyProperty dummy(String id) {
+        return new DummyProperty(id, null, null);
+    }
 
     @Override
     @Deprecated
@@ -62,14 +73,14 @@ public class DummyProperty extends Property<Void> {
 
     @Override
     @Deprecated
-    public <V> void setAs(V value) {
-        // nop so that overwrite works
+    public <V> V getAs() {
+        return null;
     }
 
     @Override
     @Deprecated
-    public <V> V getAs() {
-        return null;
+    public <V> void setAs(V value) {
+        // nop so that overwrite works
     }
 
     @Override
@@ -84,7 +95,8 @@ public class DummyProperty extends Property<Void> {
 
     @Override
     @Deprecated
-    public void removeCallback(@NotNull Consumer<@Nullable Void> callback) {}
+    public void removeCallback(@NotNull Consumer<@Nullable Void> callback) {
+    }
 
     @Override
     @Deprecated
@@ -96,17 +108,5 @@ public class DummyProperty extends Property<Void> {
     @Deprecated
     public Property<Void> addCallback(@NotNull Collection<Consumer<@Nullable Void>> callbacks) {
         return this;
-    }
-
-    public static DummyProperty dummy(String id, String name, String description) {
-        return new DummyProperty(id, name, description);
-    }
-
-    public static DummyProperty dummy(String id, String name) {
-        return new DummyProperty(id, name, null);
-    }
-
-    public static DummyProperty dummy(String id) {
-        return new DummyProperty(id, null, null);
     }
 }

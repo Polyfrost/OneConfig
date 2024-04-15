@@ -39,6 +39,9 @@ public final class Deprecator {
     private static final Logger LOGGER = LoggerFactory.getLogger("OneConfig/Deprecator");
     private static final Set<String> warned = new HashSet<>();
 
+    private Deprecator() {
+    }
+
     /**
      * mark a method as deprecated. When a method has this call, it will
      * throw a new exception to grab the name (or package) of the mod that

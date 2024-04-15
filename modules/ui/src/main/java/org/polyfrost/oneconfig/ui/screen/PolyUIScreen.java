@@ -29,6 +29,7 @@ package org.polyfrost.oneconfig.ui.screen;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.polyfrost.oneconfig.api.DeclaredInPlatform;
 import org.polyfrost.polyui.PolyUI;
 import org.polyfrost.polyui.color.Colors;
 import org.polyfrost.polyui.color.PolyColor;
@@ -39,6 +40,7 @@ import org.polyfrost.polyui.property.Settings;
 import org.polyfrost.polyui.unit.Align;
 import org.polyfrost.polyui.unit.Vec2;
 
+@DeclaredInPlatform
 public class PolyUIScreen {
     // PolyUIScreen.h
     // version-specific workaround //
@@ -47,11 +49,9 @@ public class PolyUIScreen {
     public final InputManager inputManager;
     @Nullable
     public final PolyUI polyUI;
-
-    public boolean pauses, blurs;
-
     @Nullable
     public final Vec2 desiredResolution;
+    public boolean pauses, blurs;
 
     @Contract("_, null, _, _, _, _, _, _, null -> fail")
     public PolyUIScreen(@Nullable Settings settings,

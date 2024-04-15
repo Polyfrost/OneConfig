@@ -28,11 +28,16 @@ package org.polyfrost.oneconfig.api.events.event;
 
 public interface FramebufferRenderEvent extends Event {
     class Start implements FramebufferRenderEvent {
-        private Start() {}
         public static final Start INSTANCE = new Start();
+
+        private Start() {
+        }
     }
+
     class End implements FramebufferRenderEvent {
-        private End() {}
         public static final End INSTANCE = new End();
+
+        private End() {
+        }
     }
 }

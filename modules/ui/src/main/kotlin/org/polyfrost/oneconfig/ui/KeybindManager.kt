@@ -38,8 +38,8 @@ import org.polyfrost.polyui.input.Keys
 import org.polyfrost.polyui.property.Settings
 
 object KeybindManager {
-    val settings = Settings()
-    val keyBinder = KeyBinder(settings)
+    private val settings = Settings()
+    private val keyBinder = KeyBinder(settings)
     val inputManager = InputManager(null, keyBinder, settings)
 
     @JvmStatic

@@ -36,8 +36,8 @@ import java.util.Map;
  * It is not perfect, and may produce ugly looking results. <br>
  * For this reason, the Adapter API exists, where you can create your own custom serializer for an object into a map of "simple" objects and string keys.
  *
- * @param <Type> the type of this adapter
- * @param <Output>  the output type of this adapter, used to avoid unsafe casts for prettier code.
+ * @param <Type>   the type of this adapter
+ * @param <Output> the output type of this adapter, used to avoid unsafe casts for prettier code.
  * @see Adapter#serialize(Object)
  */
 public abstract class Adapter<Type, Output> {

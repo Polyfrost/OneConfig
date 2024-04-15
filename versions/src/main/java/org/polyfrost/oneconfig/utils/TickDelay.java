@@ -27,10 +27,12 @@
 package org.polyfrost.oneconfig.utils;
 
 
+import org.polyfrost.oneconfig.api.PlatformDeclaration;
 import org.polyfrost.oneconfig.api.events.EventManager;
 import org.polyfrost.oneconfig.api.events.event.TickEvent;
 import org.polyfrost.oneconfig.api.events.invoke.EventHandler;
 
+@PlatformDeclaration
 public class TickDelay {
 
     private TickDelay() {

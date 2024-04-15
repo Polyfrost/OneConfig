@@ -27,11 +27,13 @@
 package org.polyfrost.oneconfig.utils;
 
 import net.minecraft.client.gui.GuiScreen;
+import org.polyfrost.oneconfig.api.PlatformDeclaration;
 import org.polyfrost.oneconfig.libs.universal.UScreen;
 
 /**
  * A class containing utility methods for working with GuiScreens.
  */
+@PlatformDeclaration
 public final class GuiUtils {
 
     /**

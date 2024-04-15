@@ -71,11 +71,12 @@ public interface Platform {
 
     Loader getLoader();
 
+    enum Loader {
+        FORGE,
+        FABRIC
+    }
+
     class PlatformHolder {
-        private PlatformHolder() {
-
-        }
-
         static PlatformHolder INSTANCE = new PlatformHolder();
         Platform platform = ServiceLoader.load(Platform.class, Platform.class.getClassLoader()).iterator().next();
         MousePlatform mousePlatform = ServiceLoader.load(MousePlatform.class, MousePlatform.class.getClassLoader()).iterator().next();
@@ -84,10 +85,8 @@ public interface Platform {
         GLPlatform glPlatform = ServiceLoader.load(GLPlatform.class, GLPlatform.class.getClassLoader()).iterator().next();
         GuiPlatform guiPlatform = ServiceLoader.load(GuiPlatform.class, GuiPlatform.class.getClassLoader()).iterator().next();
         I18nPlatform i18nPlatform = ServiceLoader.load(I18nPlatform.class, I18nPlatform.class.getClassLoader()).iterator().next();
-    }
+        private PlatformHolder() {
 
-    enum Loader {
-        FORGE,
-        FABRIC
+        }
     }
 }

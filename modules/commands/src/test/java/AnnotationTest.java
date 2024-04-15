@@ -65,6 +65,11 @@ public class AnnotationTest {
     @SuppressWarnings({"unused", "InnerClassMayBeStatic"})
     @Command("testing")
     public static class TestCommand {
+        @Command(value = {"test", "t"}, description = "Test command")
+        public static void test() {
+            System.out.println("hey");
+        }
+
         @Command
         public void perform() {
             System.out.println("main method a");
@@ -73,11 +78,6 @@ public class AnnotationTest {
         @Command
         public void perform(int a, int b) {
             System.out.println("main method with args " + (a + b));
-        }
-
-        @Command(value = {"test", "t"}, description = "Test command")
-        public static void test() {
-            System.out.println("hey");
         }
 
         @Command(value = {"test2", "t2"}, description = "Test command 2")
@@ -108,6 +108,11 @@ public class AnnotationTest {
 
         @Command(value = {"test4", "t4"}, description = "Test command 4")
         private static class TestClass {
+            @Command(value = {"test6", "t6"}, description = "Test command 6")
+            public static void test6() {
+                System.out.println("hey6");
+            }
+
             @Command
             public void test23() {
                 System.out.println("main method");
@@ -116,11 +121,6 @@ public class AnnotationTest {
             @Command(value = {"test5", "t5"}, description = "Test command 5")
             public void test5() {
                 System.out.println("hey5");
-            }
-
-            @Command(value = {"test6", "t6"}, description = "Test command 6")
-            public static void test6() {
-                System.out.println("hey6");
             }
 
             @Command(value = {"test7", "t7"}, description = "Test command 7")

@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.MustBeInvokedByOverriders;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.polyfrost.oneconfig.api.PlatformDeclaration;
 import org.polyfrost.oneconfig.libs.universal.UKeyboard;
 import org.polyfrost.oneconfig.libs.universal.UMatrixStack;
 import org.polyfrost.oneconfig.libs.universal.UMinecraft;
@@ -55,6 +56,7 @@ import static org.lwjgl.opengl.GL11.glViewport;
 import static org.polyfrost.oneconfig.ui.KeybindManager.translateKey;
 
 @SuppressWarnings("unused")
+@PlatformDeclaration
 public class PolyUIScreen extends UScreen implements UIPause, BlurScreen {
     @Nullable
     public final PolyUI polyUI;
@@ -73,10 +75,7 @@ public class PolyUIScreen extends UScreen implements UIPause, BlurScreen {
     private float mx, my;
     //#endif
 
-    private float ox, oy;
-
-
-    @Contract("_, null, _, _, _, _, _, _, null -> fail")
+     @Contract("_, null, _, _, _, _, _, _, null -> fail")
     public PolyUIScreen(@Nullable Settings settings,
                         @Nullable InputManager inputManager,
                         @Nullable Translator translator,
@@ -105,7 +104,7 @@ public class PolyUIScreen extends UScreen implements UIPause, BlurScreen {
             this.polyUI.setWindow(window);
             this.inputManager = this.polyUI.getInputManager();
             this.desiredResolution = desiredResolution;
-            adjustResolution();
+            adjustResolution(width(), height());
         }
     }
 
@@ -131,13 +130,13 @@ public class PolyUIScreen extends UScreen implements UIPause, BlurScreen {
         polyUI.setWindow(window);
     }
 
-    private void adjustResolution() {
+    private void adjustResolution(float w, float h) {
         // asm: normally, a polyui instance is as big as its window and that is it.
         // however, inside minecraft, the actual content is smaller than the window size, so resizing it directly would just fuck it up.
         // so instead, the developer specifies a resolution that their UI was designed for, and we resize accordingly.
         if (polyUI == null || desiredResolution == null) return;
-        float sx = width() / desiredResolution.getX();
-        float sy = height() / desiredResolution.getY();
+        float sx = w / desiredResolution.getX();
+        float sy = h / desiredResolution.getY();
         if (sx == 1f && sy == 1f) return;
         Vec2 size = polyUI.getMaster().getSize();
         polyUI.resize(size.getX() * sx, size.getY() * sy, false);
@@ -154,9 +153,10 @@ public class PolyUIScreen extends UScreen implements UIPause, BlurScreen {
         if (polyUI == null) return;
 
         Vec2 size = polyUI.getMaster().getSize();
-        ox = width() / 2f - size.getX() / 2f;
-        oy = height() / 2f - size.getY() / 2f;
-        glViewport((int) ox, (int) oy, (int) size.getX(), (int) size.getY());
+        float scale = scale();
+        float ox = (width() / 2f - size.getX() / 2f) * scale;
+        float oy = (height() / 2f - size.getY() / 2f) * scale;
+        glViewport((int) ox, (int) oy, (int) (size.getX() * scale), (int) (size.getY() * scale));
 
 
         //#if MC>=11300
@@ -183,7 +183,7 @@ public class PolyUIScreen extends UScreen implements UIPause, BlurScreen {
         net.minecraft.client.renderer.GlStateManager.enableCull();
         //#endif
 
-        glViewport(0,0, (int) width(), (int) height());
+        glViewport(0, 0, UResolution.getViewportWidth(), UResolution.getViewportHeight());
     }
 
     @Override
@@ -194,7 +194,9 @@ public class PolyUIScreen extends UScreen implements UIPause, BlurScreen {
     //#endif
     (Minecraft client, int width, int height) {
         if (polyUI == null) return;
-        polyUI.resize(width(), height(), false);
+        float w = (float) UResolution.getViewportWidth();
+        float h = (float) UResolution.getViewportHeight();
+        adjustResolution(w, h);
     }
 
     @Override
@@ -233,7 +235,7 @@ public class PolyUIScreen extends UScreen implements UIPause, BlurScreen {
 
     @Override
     public boolean uMouseScrolled(double delta) {
-        inputManager.mouseScrolled(0f, delta > 0.0 ? -1f : 1f);
+        inputManager.mouseScrolled(0f, (float) delta);
         return true;
     }
 
@@ -266,13 +268,11 @@ public class PolyUIScreen extends UScreen implements UIPause, BlurScreen {
     //$$ @Override
     //#endif
     public void mouseMoved(double mouseX, double mouseY) {
-        if (useMinecraftUIScaling()) {
-            inputManager.mouseMoved((float) mouseX - ox, (float) mouseY - oy);
-            return;
-        }
-        float mx = (float) UMouse.Raw.getX() - ox;
-        float my = (float) UMouse.Raw.getY() - oy;
-        inputManager.mouseMoved(mx, my);
+        if (polyUI == null) return;
+        Vec2 size = polyUI.getMaster().getSize();
+        float ox = (float) UResolution.getWindowWidth() / 2f - size.getX() / 2f;
+        float oy = (float) UResolution.getWindowHeight() / 2f - size.getY() / 2f;
+        inputManager.mouseMoved((float) UMouse.Raw.getX() - ox, (float) UMouse.Raw.getY() - oy);
     }
 
     @Override
@@ -289,15 +289,14 @@ public class PolyUIScreen extends UScreen implements UIPause, BlurScreen {
     }
 
     public float width() {
-        return useMinecraftUIScaling() ? (float) (UResolution.getViewportWidth() * UResolution.getScaleFactor()) : UResolution.getViewportWidth();
+        return useMinecraftUIScaling() ? UResolution.getScaledWidth() : UResolution.getWindowWidth();
     }
 
     public float height() {
-        return useMinecraftUIScaling() ? (float) (UResolution.getViewportHeight() * UResolution.getScaleFactor()) : UResolution.getViewportHeight();
+        return useMinecraftUIScaling() ? UResolution.getScaledHeight() : UResolution.getWindowHeight();
     }
 
     public float scale() {
-        float s = useMinecraftUIScaling() ? (float) UResolution.getScaleFactor() : 1f;
-        return PolyUI.isOnMac ? s * 2f : s;
+        return (float) UResolution.getViewportWidth() / UResolution.getWindowWidth();
     }
 }

@@ -36,6 +36,7 @@ import gg.essential.vigilance.data.SortingBehavior;
 import kotlin.jvm.internal.DefaultConstructorMarker;
 import org.polyfrost.oneconfig.api.config.Tree;
 import org.polyfrost.oneconfig.api.config.visualize.Visualizer;
+import org.spongepowered.asm.mixin.Dynamic;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.injection.At;
@@ -50,6 +51,7 @@ import static org.polyfrost.oneconfig.api.config.Property.prop;
 @Mixin(value = Vigilant.class, remap = false)
 @Pseudo
 public abstract class VigilantMixin {
+    @Dynamic("Vigilant")
     @Inject(method = "<init>(Ljava/io/File;Ljava/lang/String;Lgg/essential/vigilance/data/PropertyCollector;Lgg/essential/vigilance/data/SortingBehavior;ILkotlin/jvm/internal/DefaultConstructorMarker;)V", at = @At("TAIL"), remap = false)
     public void oneconfig$compat(File file, String title, PropertyCollector collector, SortingBehavior par4, int par5, DefaultConstructorMarker par6, CallbackInfo ci) {
         Tree b = new Tree(file.getName(), title, null, null);

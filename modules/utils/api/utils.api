@@ -1,3 +1,9 @@
+public abstract interface annotation class org/polyfrost/oneconfig/api/DeclaredInPlatform : java/lang/annotation/Annotation {
+}
+
+public abstract interface annotation class org/polyfrost/oneconfig/api/PlatformDeclaration : java/lang/annotation/Annotation {
+}
+
 public abstract interface class org/polyfrost/oneconfig/platform/GLPlatform {
 	public abstract fun drawRect (FFFFI)V
 	public fun drawText (Ljava/lang/String;FFIZ)F
@@ -73,7 +79,6 @@ public abstract interface class org/polyfrost/oneconfig/platform/ServerPlatform 
 }
 
 public final class org/polyfrost/oneconfig/utils/ColorUtils {
-	public fun <init> ()V
 	public static fun getAlpha (I)I
 	public static fun getBlue (I)I
 	public static fun getColor (FFFF)I
@@ -88,19 +93,16 @@ public final class org/polyfrost/oneconfig/utils/ColorUtils {
 }
 
 public final class org/polyfrost/oneconfig/utils/Deprecator {
-	public fun <init> ()V
 	public static fun markDeprecated ()V
 }
 
 public final class org/polyfrost/oneconfig/utils/GuiUtils {
-	public fun <init> ()V
 	public static fun closeScreen ()V
 	public static fun displayScreen (Ljava/lang/Object;)V
 	public static fun displayScreen (Ljava/lang/Object;I)V
 }
 
 public final class org/polyfrost/oneconfig/utils/IOUtils {
-	public fun <init> ()V
 	public static fun copyImageToClipboard (Ljava/awt/Image;)V
 	public static fun copyStringToClipboard (Ljava/lang/String;)V
 	public static fun getFileChecksum (Ljava/io/File;)Ljava/lang/String;
@@ -114,7 +116,6 @@ public final class org/polyfrost/oneconfig/utils/IOUtils {
 
 public final class org/polyfrost/oneconfig/utils/JsonUtils {
 	public static final field PARSER Lcom/google/gson/JsonParser;
-	public fun <init> ()V
 	public static fun ifValid (Ljava/lang/String;Ljava/util/function/Consumer;)Z
 	public static fun parseString (Ljava/lang/String;)Lcom/google/gson/JsonElement;
 	public static fun parseString (Ljava/lang/String;Z)Lcom/google/gson/JsonElement;
@@ -184,7 +185,6 @@ public final class org/polyfrost/oneconfig/utils/MHUtils$Result$Failure {
 }
 
 public final class org/polyfrost/oneconfig/utils/Multithreading {
-	public fun <init> ()V
 	public static fun getExecutor ()Ljava/util/concurrent/ExecutorService;
 	public static fun getScheduledExecutor ()Ljava/util/concurrent/ScheduledExecutorService;
 	public static fun runAsync (Ljava/lang/Runnable;)V
@@ -195,7 +195,6 @@ public final class org/polyfrost/oneconfig/utils/Multithreading {
 }
 
 public final class org/polyfrost/oneconfig/utils/NetworkUtils {
-	public fun <init> ()V
 	public static fun browseLink (Ljava/lang/String;)V
 	public static fun downloadFile (Ljava/lang/String;Ljava/io/File;)Z
 	public static fun downloadFile (Ljava/lang/String;Ljava/io/File;Ljava/lang/String;IZ)Z
@@ -206,7 +205,7 @@ public final class org/polyfrost/oneconfig/utils/NetworkUtils {
 	public static fun setupConnection (Ljava/lang/String;Ljava/lang/String;IZ)Ljava/io/InputStream;
 }
 
-public class org/polyfrost/oneconfig/utils/OneImage {
+public final class org/polyfrost/oneconfig/utils/OneImage {
 	public fun <init> (II)V
 	public fun <init> (Ljava/awt/image/BufferedImage;)V
 	public fun <init> (Ljava/io/File;)V
@@ -239,7 +238,6 @@ public class org/polyfrost/oneconfig/utils/OneImage {
 	public fun scale (DD)V
 	public fun setBrightness (F)V
 	public fun setColorAtPos (III)V
-	protected fun setImage (Ljava/awt/image/BufferedImage;)V
 	public fun setSize (II)V
 	public fun translate (II)V
 	public fun uploadToImgur ()Lcom/google/gson/JsonObject;
@@ -247,7 +245,6 @@ public class org/polyfrost/oneconfig/utils/OneImage {
 }
 
 public final class org/polyfrost/oneconfig/utils/SimpleProfiler {
-	public fun <init> ()V
 	public static fun pop (Ljava/lang/String;)F
 	public static fun pop (Ljava/lang/String;Lorg/slf4j/event/Level;)F
 	public static fun push (Ljava/lang/String;)Z
@@ -288,11 +285,9 @@ public final class org/polyfrost/oneconfig/utils/dsl/NetworkKt {
 	public static synthetic fun download$default (Ljava/io/File;Ljava/lang/String;Ljava/lang/String;IZILjava/lang/Object;)Z
 }
 
-public class org/polyfrost/oneconfig/utils/hypixel/HypixelUtils {
+public final class org/polyfrost/oneconfig/utils/hypixel/HypixelUtils {
 	public static final field INSTANCE Lorg/polyfrost/oneconfig/utils/hypixel/HypixelUtils;
-	public static final field LOCRAW Lorg/polyfrost/oneconfig/utils/hypixel/LocrawUtil;
-	public fun <init> ()V
-	public fun initialize ()V
+	public static fun getLocraw ()Lorg/polyfrost/oneconfig/utils/hypixel/LocrawUtil;
 	public fun isHypixel ()Z
 }
 
@@ -305,7 +300,6 @@ public class org/polyfrost/oneconfig/utils/hypixel/LocrawInfo : java/io/Serializ
 	public fun getRawGameType ()Ljava/lang/String;
 	public fun getServerId ()Ljava/lang/String;
 	public fun hashCode ()I
-	public fun setGameType (Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;)V
 	public fun toString ()Ljava/lang/String;
 }
 

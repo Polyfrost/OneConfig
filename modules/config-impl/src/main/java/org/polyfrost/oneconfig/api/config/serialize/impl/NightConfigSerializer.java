@@ -67,18 +67,6 @@ public class NightConfigSerializer implements FileSerializer<String> {
         this.format = format;
     }
 
-    @Override
-    public String getExtension() {
-        return format;
-    }
-
-    @Override
-    public @NotNull String serialize(@NotNull Tree c) {
-        Config cfg = Config.inMemory();
-        write(c, cfg);
-        return writer.writeToString(cfg);
-    }
-
     @SuppressWarnings("unchecked")
     private static void write(Tree c, Config cfg) {
         for (Map.Entry<String, Node> e : c.map.entrySet()) {
@@ -101,13 +89,6 @@ public class NightConfigSerializer implements FileSerializer<String> {
                 cfg.add(n.getID(), child);
             }
         }
-    }
-
-    @Override
-    public @NotNull Tree deserialize(@NotNull String src) {
-        if (src.isEmpty()) throw new IllegalArgumentException("cannot deserialize empty string");
-        Config cfg = reader.parse(src);
-        return read(cfg.valueMap(), tree());
     }
 
     private static Tree read(Map<String, Object> cfg, Tree b) {
@@ -137,6 +118,25 @@ public class NightConfigSerializer implements FileSerializer<String> {
             }
         }
         return c;
+    }
+
+    @Override
+    public String getExtension() {
+        return format;
+    }
+
+    @Override
+    public @NotNull String serialize(@NotNull Tree c) {
+        Config cfg = Config.inMemory();
+        write(c, cfg);
+        return writer.writeToString(cfg);
+    }
+
+    @Override
+    public @NotNull Tree deserialize(@NotNull String src) {
+        if (src.isEmpty()) throw new IllegalArgumentException("cannot deserialize empty string");
+        Config cfg = reader.parse(src);
+        return read(cfg.valueMap(), tree());
     }
 
     private static class BackedConfig extends AbstractConfig {

@@ -110,6 +110,12 @@ public class org/polyfrost/oneconfig/api/events/event/RenderEvent$Start : org/po
 	public fun <init> (F)V
 }
 
+public class org/polyfrost/oneconfig/api/events/event/ResizeEvent : org/polyfrost/oneconfig/api/events/event/Event {
+	public final field newHeight I
+	public final field newWidth I
+	public fun <init> (II)V
+}
+
 public class org/polyfrost/oneconfig/api/events/event/ScreenOpenEvent : org/polyfrost/oneconfig/api/events/event/Event$Cancellable {
 	public final field screen Ljava/lang/Object;
 	public fun <init> (Ljava/lang/Object;)V

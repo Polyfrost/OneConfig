@@ -265,12 +265,12 @@ fun Drawable.snapHandler() {
     // asm: process screen edge snaps + center snap
     // checking center snaps first seems to make it easier to use
     var hran = trySnapX(polyUI.size.x / 2f) ||
-        trySnapX(1f) ||
-        trySnapX(polyUI.size.x - 1f)
+            trySnapX(1f) ||
+            trySnapX(polyUI.size.x - 1f)
 
     var vran = trySnapY(polyUI.size.y / 2f) ||
-        trySnapY(1f) ||
-        trySnapY(polyUI.size.y - 1f)
+            trySnapY(1f) ||
+            trySnapY(polyUI.size.y - 1f)
 
     // yipee!
     if (hran && vran) return
@@ -283,13 +283,13 @@ fun Drawable.snapHandler() {
 
         if (!hran) {
             hran = trySnapX(it.x + (it.width / 2f)) ||
-                trySnapX(it.x) ||
-                trySnapX(it.x + it.width)
+                    trySnapX(it.x) ||
+                    trySnapX(it.x + it.width)
         }
         if (!vran) {
             vran = trySnapY(it.y + (it.height / 2f)) ||
-                trySnapY(it.y) ||
-                trySnapY(it.y + it.height)
+                    trySnapY(it.y) ||
+                    trySnapY(it.y + it.height)
         }
 
         // YIPEEE!

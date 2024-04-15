@@ -86,10 +86,6 @@ public class OneConfigMixinPlugin implements IMixinConfigPlugin {
             }
         }
 
-        if (version >= 11600 || loader == Platform.Loader.FABRIC) {
-            mixins.add("ClientBuiltinResourcePackProviderMixin");
-        }
-
         // Inter-loader mixins
         if (version >= 11600) {
             mixins.add("KeyboardMixin");

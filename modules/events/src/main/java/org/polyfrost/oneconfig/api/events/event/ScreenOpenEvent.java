@@ -27,11 +27,13 @@
 package org.polyfrost.oneconfig.api.events.event;
 
 import org.jetbrains.annotations.Nullable;
+import org.polyfrost.oneconfig.api.DeclaredInPlatform;
 
 /**
  * Called when a screen is opened or closed.
  * If the screen is closed, {@link ScreenOpenEvent#screen} will be null.
  */
+@DeclaredInPlatform
 public class ScreenOpenEvent extends Event.Cancellable {
     @Nullable
     public final Object screen;

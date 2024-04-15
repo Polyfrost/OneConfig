@@ -27,11 +27,13 @@
 package org.polyfrost.oneconfig.api.events.event;
 
 import net.minecraft.util.IChatComponent;
+import org.polyfrost.oneconfig.api.PlatformDeclaration;
 import org.polyfrost.oneconfig.libs.universal.wrappers.message.UTextComponent;
 
 /**
  * Called when a chat message is received.
  */
+@PlatformDeclaration
 public class ChatReceiveEvent extends Event.Cancellable {
     /**
      * The message that was received.

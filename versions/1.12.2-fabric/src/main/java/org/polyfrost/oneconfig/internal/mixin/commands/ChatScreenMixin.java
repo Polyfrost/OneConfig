@@ -40,7 +40,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(PathNodeMaker.class)
-public class ChatScreenMixin {
+public abstract class ChatScreenMixin {
     @ModifyArg(method = "method_12183", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/widget/TextFieldWidget;write(Ljava/lang/String;)V"), index = 0)
     private String removeFormatting1(String par1) {
         return Formatting.strip(par1);

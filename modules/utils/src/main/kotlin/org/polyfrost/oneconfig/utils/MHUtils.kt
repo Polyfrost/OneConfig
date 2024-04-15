@@ -27,6 +27,13 @@
 package org.polyfrost.oneconfig.utils
 
 import org.jetbrains.annotations.ApiStatus
+import org.polyfrost.oneconfig.utils.MHUtils.getField
+import org.polyfrost.oneconfig.utils.MHUtils.getFieldGetter
+import org.polyfrost.oneconfig.utils.MHUtils.getFieldSetter
+import org.polyfrost.oneconfig.utils.MHUtils.getMethodHandle
+import org.polyfrost.oneconfig.utils.MHUtils.invoke
+import org.polyfrost.oneconfig.utils.MHUtils.setAccessible
+import org.polyfrost.oneconfig.utils.MHUtils.setField
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import sun.misc.Unsafe
@@ -63,10 +70,10 @@ object MHUtils {
         inline fun getOrElse(default: T) = if (isSuccess) value as T else default
 
 
-
         companion object {
             @JvmStatic
             fun <T> success(value: T) = Result<T>(value)
+
             @JvmStatic
             fun <T> failure(e: Throwable) = Result<T>(Failure(e))
         }
@@ -105,7 +112,6 @@ object MHUtils {
     private val gav: MethodHandle by lazy {
         trustedLookup.unreflectGetter(Proxy.getInvocationHandler(Deprecated::class.java.getAnnotation(Target::class.java)).javaClass.getDeclaredField("memberValues"))
     }
-
 
 
     // --- get --- //
@@ -493,7 +499,7 @@ object MHUtils {
         Result.failure(ReflectiveOperationException("Failed to invoke exact method handle $mh", e))
     }
 
-    private val accessibleSetter = trustedLookup.findVirtual(AccessibleObject::class.java, "setAccessible", methodType(Void.TYPE, Boolean::class.java))
+    private val accessibleSetter = trustedLookup.findSetter(AccessibleObject::class.java, "override", Boolean::class.java)
 
     /**
      * are you tired of **cringe** access checks ruining your reflection fun? well, this method is for you!

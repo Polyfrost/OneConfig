@@ -42,7 +42,7 @@ import java.util.Map;
  * It is responsible for getting and putting ConfigTrees, and by extension, serializing/deserializing them.
  */
 public abstract class Backend {
-    public static final Logger LOGGER = LoggerFactory.getLogger("OneConfig/Config");
+    protected static final Logger LOGGER = LoggerFactory.getLogger("OneConfig/Config");
     private final Map<String, Tree> trees = new HashMap<>();
 
 
@@ -50,13 +50,24 @@ public abstract class Backend {
      * Register the given config with the system. This is a hybrid of the load and save methods, depending on the state of the given tree.
      * <br>
      * New trees will be saved to the backend, while existing trees will be loaded and data overwritten on them with the backend data.
+     * <br>
+     * <b>NOTE:</b> do NOT use the parameter tree after this method is called, as it may have been cleared. Use the returned tree instead.
      */
-    public final boolean register(@NotNull Tree t) {
+    public final Tree register(@NotNull Tree t) {
         if (t.getID() == null) throw new IllegalArgumentException("ID must be set before registering");
-        if (trees.get(t.getID()) != null) throw new IllegalArgumentException("Tree with ID " + t.getID() + " already registered");
-        t.lock();
-        if (load(t)) return true;
-        else return save(t);
+        Tree current = trees.get(t.getID());
+        if (current != null) {
+            LOGGER.info("performing tree merge between {} and {}", current, t);
+            current.overwrite(t);
+            // clear the old tree to prevent illegal usage.
+            t.clear();
+            save(current);
+            return current;
+        } else {
+            if (load(t)) return t;
+            else save(t);
+            return t;
+        }
     }
 
     /**
@@ -78,7 +89,8 @@ public abstract class Backend {
         }
         if (t == null) return false;
         tree.overwrite(t);
-        trees.put(tree.getID(), tree);
+
+        putSafe(tree);
         return true;
     }
 
@@ -98,7 +110,7 @@ public abstract class Backend {
 
     public final boolean save(Tree tree) {
         if (tree.getID() == null) throw new IllegalArgumentException("tree must be master (have a valid ID)");
-        trees.put(tree.getID(), tree);
+        putSafe(tree);
         try {
             return save0(tree);
         } catch (Exception e) {
@@ -124,6 +136,7 @@ public abstract class Backend {
      */
     @ApiStatus.Experimental
     protected void requestUpdate(String id) {
+        if (id == null) throw new NullPointerException("id cannot be null");
         Tree tree = trees.get(id);
         if (tree == null) {
             LOGGER.warn("can't update: no registered tree with ID {}", id);
@@ -132,4 +145,15 @@ public abstract class Backend {
         load(tree);
     }
 
+    private void putSafe(Tree in) {
+        // sanity check.
+        // the tree here should either be new, or be the same tree as the one that was here before.
+        // if it's not, then something wierd must've happened. this prevents wierd issues with backend desync.
+        Tree out = trees.put(in.getID(), in);
+        // new: OK
+        if (out == null) return;
+        if (out != in) {
+            throw new IllegalStateException("Backend desync detected for tree " + in.getID());
+        }
+    }
 }

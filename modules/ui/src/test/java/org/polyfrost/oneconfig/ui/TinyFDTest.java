@@ -33,7 +33,7 @@ import org.polyfrost.oneconfig.ui.impl.TinyFDImpl;
 import java.io.File;
 import java.util.Arrays;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class TinyFDTest {
     private static final TinyFD tinyFD = new TinyFDImpl();
@@ -53,7 +53,7 @@ public class TinyFDTest {
     @Test
     void testFolderSelect() {
         File folder = tinyFD.openFolderSelector("Open some folder", ".");
-        if(folder == null) return;
+        if (folder == null) return;
         assertTrue(folder.isDirectory());
         System.out.println(folder);
     }
