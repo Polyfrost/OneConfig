@@ -3,7 +3,7 @@
     "minVersion": "0.7",
     "package": "org.polyfrost.oneconfig.internal.mixin",
     "refmap": "mixins.oneconfig.refmap.json",
-    "plugin": "org.polyfrost.oneconfig.internal.init.OneConfigMixinPlugin",
+    "plugin": "org.polyfrost.oneconfig.internal.init.OneConfigMixinInit",
     "injectors": {
         "maxShiftBy": 5
     },
@@ -13,9 +13,9 @@
       "GuiIngameForgeMixin",
       "MinecraftMixin",
       "NetworkManagerMixin",
-      "OptifineConfigMixin",
+      "compat.OptifineConfigMixin",
       "ShaderGroupAccessor",
-      "VigilantMixin",
+      "compat.VigilantMixin",
       "WorldClientMixin"
     ]
 }

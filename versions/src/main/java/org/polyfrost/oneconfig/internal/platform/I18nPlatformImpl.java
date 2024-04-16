@@ -39,7 +39,7 @@ public class I18nPlatformImpl implements I18nPlatform {
     @Override
     public String getKeyName(int key, int scanCode) {
         //#if MC>=11600
-        //#if FABRIC==1
+        //#if FABRIC
         //$$ final String s = net.minecraft.client.util.InputUtil.fromKeyCode(key, scanCode).getLocalizedText().asString();
         //#else
         //$$ final String s = net.minecraft.client.util.InputMappings.getInputByCode(key, scanCode).func_237520_d_().getString();

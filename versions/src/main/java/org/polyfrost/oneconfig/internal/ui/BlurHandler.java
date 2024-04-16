@@ -55,7 +55,7 @@ import java.util.List;
  * Taken from ToggleChat
  * <a href="https://github.com/boomboompower/ToggleChat/blob/master/LICENSE">...</a>
  */
-public class BlurHandler {
+public final class BlurHandler {
     public static final BlurHandler INSTANCE = new BlurHandler();
     private static final Logger LOGGER = LoggerFactory.getLogger("OneConfig/Blur");
 
@@ -101,7 +101,7 @@ public class BlurHandler {
         // a one of ours, we should load our own blur!
         if (gui instanceof BlurScreen && ((BlurScreen) gui).hasBackgroundBlur()) {
             if (!isShaderActive()) {
-                //#if FABRIC==1
+                //#if FABRIC
                 //$$ ((org.polyfrost.oneconfig.internal.mixin.GameRendererAccessor) UMinecraft.getMinecraft().gameRenderer).invokeLoadShader(this.blurShader);
                 //#else
                 UMinecraft.getMinecraft().entityRenderer.loadShader(this.blurShader);

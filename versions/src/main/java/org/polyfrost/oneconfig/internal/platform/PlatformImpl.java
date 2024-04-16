@@ -64,16 +64,25 @@ public class PlatformImpl implements Platform {
         //#endif
     }
 
-    @Override
-    public boolean isDevelopmentEnvironment() {
-        //#if FORGE==1 && MC<=11202
+    //#if FORGE && MC<=11300
+    private static final boolean isDev;
+    static {
+        boolean dev;
         try {
             Class.forName("net.minecraft.block.BlockDirt");
-            return true;
+            dev = true;
         } catch (Exception ignored) {
-            return false;
+            dev = false;
         }
-        //#elseif FABRIC==1
+        isDev = dev;
+    }
+    //#endif
+
+    @Override
+    public boolean isDevelopmentEnvironment() {
+        //#if FORGE && MC<=11202
+        return isDev;
+        //#elseif FABRIC
         //$$ return net.fabricmc.loader.api.FabricLoader.getInstance().isDevelopmentEnvironment();
         //#else
         //$$ return !net.minecraftforge.fml.loading.FMLLoader.isProduction();
@@ -82,10 +91,15 @@ public class PlatformImpl implements Platform {
 
     @Override
     public Loader getLoader() {
-        //#if FORGE==1
+        //#if FORGE
         return Loader.FORGE;
         //#else
         //$$ return Loader.FABRIC;
         //#endif
+    }
+
+    @Override
+    public String getPlayerName() {
+        return Minecraft.getMinecraft().getSession().getUsername();
     }
 }

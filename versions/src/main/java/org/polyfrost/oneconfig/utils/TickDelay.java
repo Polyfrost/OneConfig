@@ -33,7 +33,7 @@ import org.polyfrost.oneconfig.api.events.event.TickEvent;
 import org.polyfrost.oneconfig.api.events.invoke.EventHandler;
 
 @PlatformDeclaration
-public class TickDelay {
+public final class TickDelay {
 
     private TickDelay() {
     }

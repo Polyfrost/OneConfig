@@ -27,6 +27,7 @@
 package org.polyfrost.oneconfig.utils;
 
 import net.minecraft.client.gui.GuiScreen;
+import org.jetbrains.annotations.ApiStatus;
 import org.polyfrost.oneconfig.api.PlatformDeclaration;
 import org.polyfrost.oneconfig.libs.universal.UScreen;
 
@@ -35,6 +36,12 @@ import org.polyfrost.oneconfig.libs.universal.UScreen;
  */
 @PlatformDeclaration
 public final class GuiUtils {
+
+    // correct signature for platform compatibility
+    @ApiStatus.Internal
+    public static void displayScreen(Object o) {
+        displayScreen((GuiScreen) o);
+    }
 
     /**
      * Displays a screen after a tick, preventing mouse sync issues.

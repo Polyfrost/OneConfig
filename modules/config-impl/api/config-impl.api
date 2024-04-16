@@ -28,6 +28,7 @@ public final class org/polyfrost/oneconfig/api/config/ConfigManager {
 	public fun register (Lorg/polyfrost/oneconfig/api/config/Tree;)Lorg/polyfrost/oneconfig/api/config/Tree;
 	public static fun registerCollector (Lorg/polyfrost/oneconfig/api/config/collect/PropertyCollector;)V
 	public fun save (Ljava/lang/String;)Z
+	public fun save (Lorg/polyfrost/oneconfig/api/config/Tree;)Z
 	public fun trees ()Ljava/util/Collection;
 }
 

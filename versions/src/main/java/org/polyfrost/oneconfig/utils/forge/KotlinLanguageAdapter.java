@@ -24,7 +24,7 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-//#if MC<=11202 && FORGE==1
+//#if MC<=11202 && FORGE
 package org.polyfrost.oneconfig.utils.forge;
 
 import net.minecraftforge.fml.common.FMLModContainer;

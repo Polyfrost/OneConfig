@@ -26,7 +26,7 @@
 
 package org.polyfrost.oneconfig.ui
 
-import org.polyfrost.oneconfig.api.events.event.RawKeyEvent
+import org.polyfrost.oneconfig.api.events.event.KeyInputEvent
 import org.polyfrost.oneconfig.api.events.event.TickEvent
 import org.polyfrost.oneconfig.api.events.eventHandler
 import org.polyfrost.oneconfig.libs.universal.UKeyboard
@@ -50,7 +50,7 @@ object KeybindManager {
 
 
     init {
-        eventHandler { event: RawKeyEvent ->
+        eventHandler { event: KeyInputEvent ->
             // keybindings only work when in game (todo maybe change)?
             if (Platform.getGuiPlatform().currentScreen == null) {
                 translateKey(inputManager, event.key, event.character, event.state != 0)

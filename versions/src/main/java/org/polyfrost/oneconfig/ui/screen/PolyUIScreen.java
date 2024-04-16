@@ -71,6 +71,8 @@ public class PolyUIScreen extends UScreen implements UIPause, BlurScreen {
 
     private final MCWindow window;
 
+    private Runnable close;
+
     //#if MC<=11300
     private float mx, my;
     //#endif
@@ -127,10 +129,11 @@ public class PolyUIScreen extends UScreen implements UIPause, BlurScreen {
         this.inputManager = polyUI.getInputManager();
         desiredResolution = null;
         window = new MCWindow(UMinecraft.getMinecraft());
+        window.setPixelRatio(scale());
         polyUI.setWindow(window);
     }
 
-    private void adjustResolution(float w, float h) {
+    protected final void adjustResolution(float w, float h) {
         // asm: normally, a polyui instance is as big as its window and that is it.
         // however, inside minecraft, the actual content is smaller than the window size, so resizing it directly would just fuck it up.
         // so instead, the developer specifies a resolution that their UI was designed for, and we resize accordingly.
@@ -145,6 +148,11 @@ public class PolyUIScreen extends UScreen implements UIPause, BlurScreen {
 
     public boolean useMinecraftUIScaling() {
         return false;
+    }
+
+    public final PolyUIScreen closeCallback(Runnable r) {
+         close = r;
+         return this;
     }
 
 
@@ -187,12 +195,8 @@ public class PolyUIScreen extends UScreen implements UIPause, BlurScreen {
     }
 
     @Override
-    //#if MC>=11300
-    //$$ public final void resize
-    //#else
-    public final void onResize
-    //#endif
-    (Minecraft client, int width, int height) {
+    @MustBeInvokedByOverriders
+    public final void onResize(Minecraft client, int width, int height) {
         if (polyUI == null) return;
         float w = (float) UResolution.getViewportWidth();
         float h = (float) UResolution.getViewportHeight();
@@ -200,6 +204,7 @@ public class PolyUIScreen extends UScreen implements UIPause, BlurScreen {
     }
 
     @Override
+    @MustBeInvokedByOverriders
     public boolean uKeyPressed(int keyCode, int scanCode, @Nullable UKeyboard.Modifiers modifiers) {
         if (keyCode == UKeyboard.KEY_ESCAPE && shouldCloseOnEsc()) {
             UScreen.displayScreen(null);
@@ -210,30 +215,35 @@ public class PolyUIScreen extends UScreen implements UIPause, BlurScreen {
     }
 
     @Override
+    @MustBeInvokedByOverriders
     public boolean uKeyReleased(int keyCode, int scanCode, @Nullable UKeyboard.Modifiers modifiers) {
         translateKey(inputManager, keyCode, (char) 0, false);
         return true;
     }
 
     @Override
+    @MustBeInvokedByOverriders
     public boolean uCharTyped(char c, @Nullable UKeyboard.Modifiers modifiers) {
         translateKey(inputManager, 0, c, true);
         return true;
     }
 
     @Override
+    @MustBeInvokedByOverriders
     public boolean uMouseClicked(double mouseX, double mouseY, int mouseButton) {
         inputManager.mousePressed(mouseButton);
         return true;
     }
 
     @Override
+    @MustBeInvokedByOverriders
     public boolean uMouseReleased(double mouseX, double mouseY, int mouseButton) {
         inputManager.mouseReleased(mouseButton);
         return true;
     }
 
     @Override
+    @MustBeInvokedByOverriders
     public boolean uMouseScrolled(double delta) {
         inputManager.mouseScrolled(0f, (float) delta);
         return true;
@@ -267,6 +277,7 @@ public class PolyUIScreen extends UScreen implements UIPause, BlurScreen {
     //#if MC>=11300
     //$$ @Override
     //#endif
+    @MustBeInvokedByOverriders
     public void mouseMoved(double mouseX, double mouseY) {
         if (polyUI == null) return;
         Vec2 size = polyUI.getMaster().getSize();
@@ -278,25 +289,26 @@ public class PolyUIScreen extends UScreen implements UIPause, BlurScreen {
     @Override
     @MustBeInvokedByOverriders
     public void onScreenClose() {
+        if (close != null) close.run();
         if (polyUI == null) return;
         // noinspection DataFlowIssue
         this.polyUI.getWindow().setCursor(Cursor.Pointer);
     }
 
-    public Drawable getMaster() {
+    public final Drawable getMaster() {
         if (polyUI == null) throw new IllegalArgumentException("no drawables attached this way");
         return polyUI.getMaster();
     }
 
-    public float width() {
+    public final float width() {
         return useMinecraftUIScaling() ? UResolution.getScaledWidth() : UResolution.getWindowWidth();
     }
 
-    public float height() {
+    public final float height() {
         return useMinecraftUIScaling() ? UResolution.getScaledHeight() : UResolution.getWindowHeight();
     }
 
-    public float scale() {
+    public final float scale() {
         return (float) UResolution.getViewportWidth() / UResolution.getWindowWidth();
     }
 }

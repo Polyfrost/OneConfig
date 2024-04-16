@@ -31,11 +31,11 @@ import org.polyfrost.oneconfig.api.commands.CommandManager;
 import org.polyfrost.oneconfig.api.events.event.InitializationEvent;
 import org.polyfrost.oneconfig.api.events.invoke.impl.Subscribe;
 
-//#if MC<=11202 && FORGE==1
+//#if MC<=11202 && FORGE
 @net.minecraftforge.fml.common.Mod(modid = "oneconfig-test-mod", name = "Test Mod", version = "0")
 //#endif
 public class TestMod_Test
-//#if FABRIC==1
+//#if FABRIC
 //$$ implements net.fabricmc.api.ClientModInitializer
 //#endif
 {
@@ -43,7 +43,7 @@ public class TestMod_Test
         EventManager.INSTANCE.register(this);
     }
 
-    //#if FABRIC==1
+    //#if FABRIC
     //$$ @Override
     //$$ public void onInitializeClient()
     //#else

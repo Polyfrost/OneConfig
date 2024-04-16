@@ -131,6 +131,7 @@ public class org/polyfrost/oneconfig/ui/screen/PolyUIScreen {
 	public fun <init> (Lorg/polyfrost/polyui/property/Settings;Lorg/polyfrost/polyui/event/InputManager;Lorg/polyfrost/polyui/input/Translator;Lorg/polyfrost/polyui/unit/Align;Lorg/polyfrost/polyui/color/Colors;Lorg/polyfrost/polyui/color/PolyColor;Lorg/polyfrost/polyui/unit/Vec2;Lorg/polyfrost/polyui/unit/Vec2;[Lorg/polyfrost/polyui/component/Drawable;)V
 	public fun <init> (Lorg/polyfrost/polyui/unit/Align;Lorg/polyfrost/polyui/unit/Vec2;[Lorg/polyfrost/polyui/component/Drawable;)V
 	public fun <init> ([Lorg/polyfrost/polyui/component/Drawable;)V
+	public final fun closeCallback (Ljava/lang/Runnable;)Lorg/polyfrost/oneconfig/ui/screen/PolyUIScreen;
 }
 
 public abstract interface class org/polyfrost/oneconfig/ui/screen/UIPause {

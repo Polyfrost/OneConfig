@@ -50,4 +50,8 @@ public abstract class RenderEvent implements Event {
             super(deltaTicks);
         }
     }
+
+    public float component1() {
+        return deltaTicks;
+    }
 }

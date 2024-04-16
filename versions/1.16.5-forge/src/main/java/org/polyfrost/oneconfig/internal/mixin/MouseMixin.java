@@ -29,7 +29,6 @@ package org.polyfrost.oneconfig.internal.mixin;
 import net.minecraft.client.MouseHelper;
 import org.polyfrost.oneconfig.api.events.EventManager;
 import org.polyfrost.oneconfig.api.events.event.MouseInputEvent;
-import org.polyfrost.oneconfig.api.events.event.RawMouseEvent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -40,24 +39,13 @@ public class MouseMixin {
     //#if FORGE
     @Inject(method = "mouseButtonCallback", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/client/ForgeHooksClient;onRawMouseClicked(III)Z", remap = false), remap = true)
     private void onMouse(long handle, int button, int action, int mods, CallbackInfo ci) {
-        EventManager.INSTANCE.post(new RawMouseEvent(button, action));
+        EventManager.INSTANCE.post(new MouseInputEvent(button, action));
     }
     //#else
     //$$ @org.spongepowered.asm.mixin.injection.ModifyVariable(method = "onMouseButton", at = @At("STORE"), ordinal = 0)
     //$$ private int onMouse(int button, long handle, int b, int action, int mods) {
-    //$$      EventManager.INSTANCE.post(new RawMouseEvent(button, action));
+    //$$      EventManager.INSTANCE.post(new MouseInputEvent(button, action));
     //$$      return button;
     //$$  }
     //#endif
-
-    @Inject(method = "mouseButtonCallback", at = @At(
-            //#if FORGE
-            value = "INVOKE", target = "Lnet/minecraftforge/client/ForgeHooksClient;fireMouseInput(III)V", remap = false
-            //#else
-            //$$ "TAIL"
-            //#endif
-    ), remap = true)
-    private void onMouseInput(long handle, int button, int action, int mods, CallbackInfo ci) {
-        EventManager.INSTANCE.post(new MouseInputEvent(button));
-    }
 }

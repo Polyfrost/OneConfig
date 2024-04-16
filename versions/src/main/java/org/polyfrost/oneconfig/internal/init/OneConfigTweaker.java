@@ -24,7 +24,7 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-//#if FORGE==1 && MC<=11202
+//#if FORGE && MC<=11202
 package org.polyfrost.oneconfig.internal.init;
 
 import net.minecraft.launchwrapper.ITweaker;

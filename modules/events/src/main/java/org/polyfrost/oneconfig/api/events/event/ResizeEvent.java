@@ -33,4 +33,12 @@ public class ResizeEvent implements Event {
         this.newWidth = newWidth;
         this.newHeight = newHeight;
     }
+
+    public int component1() {
+        return newWidth;
+    }
+
+    public int component2() {
+        return newHeight;
+    }
 }

@@ -41,7 +41,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Arrays;
 import java.util.List;
 
-//#if FORGE==1
+//#if FORGE
 import net.minecraftforge.client.ClientCommandHandler;
 //#endif
 
@@ -69,7 +69,7 @@ public class PlatformCommandManagerImpl implements PlatformCommandManager {
             public void
             //#if MC<=10809
             processCommand(net.minecraft.command.ICommandSender sender, String[] args)
-            //#elseif FABRIC==1
+            //#elseif FABRIC
             //$$ method_3279(net.minecraft.server.MinecraftServer var1, net.minecraft.command.CommandSource sender, String[] args)
             //#else
             //$$ execute(net.minecraft.server.MinecraftServer server, net.minecraft.command.ICommandSender sender, String[] args)
@@ -114,7 +114,7 @@ public class PlatformCommandManagerImpl implements PlatformCommandManager {
             public List<String>
             //#if MC<=10809
             addTabCompletionOptions(net.minecraft.command.ICommandSender sender, String[] args, BlockPos pos)
-            //#elseif FABRIC==1
+            //#elseif FABRIC
             //$$ method_10738(net.minecraft.server.MinecraftServer server, net.minecraft.command.CommandSource sender, String[] args, BlockPos targetPos)
             //#else
             //$$ getTabCompletions(net.minecraft.server.MinecraftServer server, net.minecraft.command.ICommandSender sender, String[] args, BlockPos targetPos)

@@ -30,10 +30,11 @@ import org.polyfrost.oneconfig.api.commands.CommandManager;
 import org.polyfrost.oneconfig.api.commands.factories.builder.CommandBuilder;
 import org.polyfrost.oneconfig.api.events.EventManager;
 import org.polyfrost.oneconfig.api.events.event.InitializationEvent;
+import org.polyfrost.oneconfig.api.events.event.JvmShutdownEvent;
 import org.polyfrost.oneconfig.api.hud.HudManager;
 import org.polyfrost.oneconfig.internal.ui.BlurHandler;
+import org.polyfrost.oneconfig.internal.ui.OneConfigUI;
 import org.polyfrost.oneconfig.ui.LwjglManager;
-import org.polyfrost.oneconfig.ui.OneConfigUI;
 import org.polyfrost.oneconfig.ui.screen.PolyUIScreen;
 import org.polyfrost.oneconfig.utils.GuiUtils;
 import org.polyfrost.polyui.PolyUI;
@@ -47,7 +48,7 @@ import static org.polyfrost.oneconfig.api.commands.factories.builder.CommandBuil
 /**
  * The main class of OneConfig.
  */
-//#if FORGE==1
+//#if FORGE
 //#if MC<=11202
 @net.minecraftforge.fml.common.Mod(modid = "oneconfig", name = "OneConfig", version = "1.0.0-alpha")
 //#else
@@ -68,18 +69,17 @@ public class OneConfig {
      */
     public void init() {
         if (initialized) return;
-        EventManager.INSTANCE.post(InitializationEvent.INSTANCE);
         BlurHandler.init();
         preload();
         CommandBuilder b = CommandManager.builder("oneconfig", "ocfg").description("OneConfig main command");
         b.then(runs("").does(() -> GuiUtils.displayScreen(OneConfigUI.INSTANCE.create())).description("Opens the OneConfig GUI"));
-        b.then(runs("hud").does(() -> GuiUtils.displayScreen(new PolyUIScreen(HudManager.INSTANCE.getPolyUI()))).description("Opens the OneConfig HUD editor"));
+        b.then(runs("hud").does(() -> GuiUtils.displayScreen(HudManager.INSTANCE.getWithEditor())).description("Opens the OneConfig HUD editor"));
         CommandManager.registerCommand(b);
 //        KeybindManager.registerKeybind(new KeyBinder.Bind((int[]) null, null, (int[]) null, KeyModifiers.RSHIFT.getValue(), 0L, () -> {
 //            GuiUtils.displayScreen(OneConfigUI.INSTANCE.create());
 //            return true;
 //        }));
-
+        EventManager.INSTANCE.post(InitializationEvent.INSTANCE);
         initialized = true;
         LOGGER.info("OneConfig initialized!");
     }

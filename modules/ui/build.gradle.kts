@@ -30,7 +30,5 @@ dependencies {
     testImplementation(libs.lwjgl.tinyfd)
     implementation(project(":modules:events"))
     implementation(project(":modules:utils"))
-    compileOnly("org.polyfrost:universalcraft-1.8.9-forge:${libs.versions.universalcraft.get()}") {
-        isTransitive = false
-    }
+    compileOnly("org.polyfrost:universalcraft-1.8.9-forge:${libs.versions.universalcraft.get()}")
 }

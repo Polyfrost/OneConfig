@@ -77,12 +77,18 @@ val shade: Configuration by configurations.creating {
     configurations.api.get().extendsFrom(this)
 }
 
+val shadeMod: Configuration by configurations.creating {
+    configurations.modApi.get().extendsFrom(this)
+}
+
 dependencies {
     compileOnly("gg.essential:vigilance-1.8.9-forge:295") {
         isTransitive = false
     }
 
-    shadeMod("org.polyfrost:universalcraft-$platform:${libs.versions.universalcraft.get()}", transitive = false)
+    shadeMod("org.polyfrost:universalcraft-$platform:${libs.versions.universalcraft.get()}") {
+        isTransitive = false
+    }
 
     shade(libs.polyui)
 
@@ -93,22 +99,17 @@ dependencies {
     shade(libs.bundles.kotlin)
     shade(libs.bundles.kotlinx)
 
+    for(project in rootProject.project(":modules").subprojects) {
+        shade(project(project.path))
+    }
+
     if (platform.isLegacyForge) {
-        shade(libs.mixin.get().run { "$group:$name:$version" }) {
+        shade(libs.mixin) {
             isTransitive = false
         }
     }
-    shade(project(":modules:config"))
-    shade(project(":modules:commands"))
-    shade(project(":modules:hud"))
-    shade(project(":modules:events"))
-    shade(project(":modules:config-impl"))
-    shade(project(":modules:utils")) {
-        isTransitive = false
-    }
-    shade(project(":modules:ui")) {
-        isTransitive = false
-    }
+
+
 
     val isLegacy = platform.isLegacyForge || platform.isLegacyFabric
     val lwjglVersion = libs.versions.lwjgl.get()
@@ -358,17 +359,6 @@ publishing {
                 create<BasicAuthentication>("basic")
             }
         }
-    }
-}
-
-fun DependencyHandlerScope.shadeMod(
-    dependency: String,
-    transitive: Boolean = true,
-) {
-    if (platform.isForge) {
-        shade(dependency) { isTransitive = transitive }
-    } else {
-        modApi(dependency) { isTransitive = transitive }
     }
 }
 

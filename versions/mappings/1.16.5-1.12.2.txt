@@ -1,6 +1,7 @@
 net.minecraft.util.text.ITextComponent getUnformattedComponentText() getUnformattedText()
 net.minecraft.network.IPacket net.minecraft.network.Packet
 net.minecraft.client.gui.screen.Screen net.minecraft.client.gui.GuiScreen
+net.minecraft.client.gui.screen.Screen resize() onResize()
 net.minecraft.client.gui.screen.Screen isPauseScreen() doesGuiPauseGame()
 net.minecraft.client.gui.screen.ChatScreen net.minecraft.client.gui.GuiChat
 net.minecraft.client.Minecraft getInstance() getMinecraft()
@@ -18,6 +19,7 @@ net.minecraftforge.fml.common.Loader getActiveContainer() activeModContainer()
 net.minecraftforge.fml.ModLoadingContext net.minecraftforge.fml.common.Loader
 net.minecraftforge.fml.ModContainer net.minecraftforge.fml.common.ModContainer
 net.minecraftforge.client.gui.ForgeIngameGui net.minecraftforge.client.GuiIngameForge
+net.minecraftforge.eventbus.EventBus net.minecraftforge.fml.common.eventhandler.EventBus
 net.minecraftforge.eventbus.api.Event net.minecraftforge.fml.common.eventhandler.Event
 
 org.objectweb.asm.tree.ClassNode org.spongepowered.asm.lib.tree.ClassNode

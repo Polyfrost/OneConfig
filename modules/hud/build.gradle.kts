@@ -26,13 +26,12 @@
 
 dependencies {
     implementation(project(":modules:config"))
+    implementation(project(":modules:events"))
     implementation(project(":modules:config-impl"))
     implementation(project(":modules:utils"))
     implementation(project(":modules:ui"))
     implementation(libs.polyui)
-    compileOnly("org.polyfrost:universalcraft-1.8.9-forge:${libs.versions.universalcraft.get()}") {
-        isTransitive = false
-    }
+    compileOnly("org.polyfrost:universalcraft-1.8.9-forge:${libs.versions.universalcraft.get()}")
 }
 
 

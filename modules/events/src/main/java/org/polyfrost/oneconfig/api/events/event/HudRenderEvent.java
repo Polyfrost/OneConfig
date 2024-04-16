@@ -42,4 +42,12 @@ public class HudRenderEvent implements Event {
         this.matrices = matrices;
         this.deltaTicks = deltaTicks;
     }
+
+    public UMatrixStack component1() {
+        return matrices;
+    }
+
+    public float component2() {
+        return deltaTicks;
+    }
 }

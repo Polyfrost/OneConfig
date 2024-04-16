@@ -36,6 +36,7 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.LongArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.ArgumentBuilder;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.Suggestions;
@@ -59,6 +60,7 @@ import org.polyfrost.oneconfig.api.commands.arguments.ArgumentParser;
 import org.polyfrost.oneconfig.api.commands.internal.PlatformCommandManager;
 import org.polyfrost.oneconfig.api.events.invoke.EventHandler;
 import org.polyfrost.oneconfig.internal.libs.fabric.ClientCommandSource;
+import org.polyfrost.oneconfig.libs.universal.UChat;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -101,11 +103,15 @@ public class PlatformCommandManagerImpl implements PlatformCommandManager {
 
     @Override
     public boolean createCommand(CommandTree command) {
-        ArgumentBuilder<ClientCommandSource, ?> master = literal(command.name());
-        // master.then(literal("help").executes(context -> {
-        //     UChat.say(command.helpString());
-        //     return 0;
-        // }).build());
+        LiteralArgumentBuilder<ClientCommandSource> master = literal(command.name());
+        LiteralArgumentBuilder<ClientCommandSource> help = literal("help");
+        help.executes(context -> {
+            for (String s : command.getHelp()) {
+                UChat.chat(s);
+            }
+            return 0;
+        });
+        master.then(help);
         _create(master, command.getDedupedCommands().values());
         // build, and wait to be added to the dispatcher
         nodes.add(master.build());
@@ -137,7 +143,7 @@ public class PlatformCommandManagerImpl implements PlatformCommandManager {
                     _create(builder, ((CommandTree) n).getDedupedCommands().values());
                     self = builder.build();
                 }
-                if(!builder.equals(parent)) parent.then(self);
+                if (!builder.equals(parent)) parent.then(self);
                 for (int i = 1; i < names.length; i++) {
                     ArgumentBuilder<S, ?> builder2 = literal(names[i]);
                     parent.then(builder2.redirect(self));

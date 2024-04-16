@@ -40,7 +40,7 @@ import net.minecraft.client.gui.GuiButton;
 public class GuiPlatformImpl implements GuiPlatform {
 
     @Override
-    public Object getCurrentScreen() {
+    public GuiScreen getCurrentScreen() {
         return UScreen.getCurrentScreen();
     }
 

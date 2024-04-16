@@ -24,12 +24,10 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-//#if FORGE==1
+//#if FORGE
 package org.polyfrost.oneconfig.internal.mixin;
 
 import net.minecraftforge.fml.client.ClientModLoader;
-import org.polyfrost.oneconfig.api.events.EventManager;
-import org.polyfrost.oneconfig.api.events.event.InitializationEvent;
 import org.polyfrost.oneconfig.internal.OneConfig;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -41,7 +39,6 @@ public class ClientModLoaderMixin {
 
     @Inject(method = "lambda$finishModLoading$9", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/GameSettings;loadOptions()V", remap = true), remap = false)
     private static void onFinishModLoading(CallbackInfo ci) {
-        EventManager.INSTANCE.post(InitializationEvent.INSTANCE);
         OneConfig.INSTANCE.init();
     }
 }

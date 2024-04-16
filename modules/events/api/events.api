@@ -31,6 +31,7 @@ public class org/polyfrost/oneconfig/api/events/event/ChatReceiveEvent : org/pol
 public class org/polyfrost/oneconfig/api/events/event/ChatSendEvent : org/polyfrost/oneconfig/api/events/event/Event$Cancellable {
 	public field message Ljava/lang/String;
 	public fun <init> (Ljava/lang/String;)V
+	public fun component1 ()Ljava/lang/String;
 }
 
 public abstract interface class org/polyfrost/oneconfig/api/events/event/Event {
@@ -56,38 +57,35 @@ public class org/polyfrost/oneconfig/api/events/event/HudRenderEvent : org/polyf
 	public final field deltaTicks F
 	public final field matrices Lorg/polyfrost/oneconfig/libs/universal/UMatrixStack;
 	public fun <init> (Lorg/polyfrost/oneconfig/libs/universal/UMatrixStack;F)V
+	public fun component1 ()Lorg/polyfrost/oneconfig/libs/universal/UMatrixStack;
+	public fun component2 ()F
 }
 
 public class org/polyfrost/oneconfig/api/events/event/InitializationEvent : org/polyfrost/oneconfig/api/events/event/Event {
 	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/events/event/InitializationEvent;
 }
 
+public class org/polyfrost/oneconfig/api/events/event/JvmShutdownEvent : org/polyfrost/oneconfig/api/events/event/Event {
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/events/event/JvmShutdownEvent;
+}
+
 public class org/polyfrost/oneconfig/api/events/event/KeyInputEvent : org/polyfrost/oneconfig/api/events/event/Event {
-	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/events/event/KeyInputEvent;
+	public final field character C
+	public final field key I
+	public final field state I
+	public fun <init> (ICI)V
+	public fun component1 ()I
+	public fun component2 ()C
+	public fun component3 ()I
 }
 
 public class org/polyfrost/oneconfig/api/events/event/LocrawEvent : org/polyfrost/oneconfig/api/events/event/Event {
 	public final field info Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo;
 	public fun <init> (Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo;)V
+	public fun component1 ()Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo;
 }
 
 public class org/polyfrost/oneconfig/api/events/event/MouseInputEvent : org/polyfrost/oneconfig/api/events/event/Event {
-	public final field button I
-	public fun <init> (I)V
-}
-
-public class org/polyfrost/oneconfig/api/events/event/PreShutdownEvent : org/polyfrost/oneconfig/api/events/event/Event {
-	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/events/event/PreShutdownEvent;
-}
-
-public class org/polyfrost/oneconfig/api/events/event/RawKeyEvent : org/polyfrost/oneconfig/api/events/event/Event {
-	public final field character C
-	public final field key I
-	public final field state I
-	public fun <init> (ICI)V
-}
-
-public class org/polyfrost/oneconfig/api/events/event/RawMouseEvent : org/polyfrost/oneconfig/api/events/event/Event {
 	public final field button I
 	public final field state I
 	public fun <init> (II)V
@@ -100,6 +98,7 @@ public class org/polyfrost/oneconfig/api/events/event/ReceivePacketEvent : org/p
 
 public abstract class org/polyfrost/oneconfig/api/events/event/RenderEvent : org/polyfrost/oneconfig/api/events/event/Event {
 	public final field deltaTicks F
+	public fun component1 ()F
 }
 
 public class org/polyfrost/oneconfig/api/events/event/RenderEvent$End : org/polyfrost/oneconfig/api/events/event/RenderEvent {
@@ -114,6 +113,8 @@ public class org/polyfrost/oneconfig/api/events/event/ResizeEvent : org/polyfros
 	public final field newHeight I
 	public final field newWidth I
 	public fun <init> (II)V
+	public fun component1 ()I
+	public fun component2 ()I
 }
 
 public class org/polyfrost/oneconfig/api/events/event/ScreenOpenEvent : org/polyfrost/oneconfig/api/events/event/Event$Cancellable {

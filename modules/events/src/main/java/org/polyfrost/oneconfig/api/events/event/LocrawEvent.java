@@ -41,4 +41,8 @@ public class LocrawEvent implements Event {
     public LocrawEvent(LocrawInfo info) {
         this.info = info;
     }
+
+    public LocrawInfo component1() {
+        return info;
+    }
 }

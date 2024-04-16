@@ -32,4 +32,8 @@ public class ChatSendEvent extends Event.Cancellable {
     public ChatSendEvent(String message) {
         this.message = message;
     }
+
+    public String component1() {
+        return message;
+    }
 }

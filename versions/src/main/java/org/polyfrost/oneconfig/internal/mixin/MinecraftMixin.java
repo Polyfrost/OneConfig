@@ -33,13 +33,10 @@ import org.polyfrost.oneconfig.api.events.EventManager;
 import org.polyfrost.oneconfig.api.events.event.FramebufferRenderEvent;
 import org.polyfrost.oneconfig.api.events.event.KeyInputEvent;
 import org.polyfrost.oneconfig.api.events.event.MouseInputEvent;
-import org.polyfrost.oneconfig.api.events.event.PreShutdownEvent;
-import org.polyfrost.oneconfig.api.events.event.RawKeyEvent;
-import org.polyfrost.oneconfig.api.events.event.RawMouseEvent;
+import org.polyfrost.oneconfig.api.events.event.ShutdownEvent;
 import org.polyfrost.oneconfig.api.events.event.RenderEvent;
 import org.polyfrost.oneconfig.api.events.event.ResizeEvent;
 import org.polyfrost.oneconfig.api.events.event.ScreenOpenEvent;
-import org.polyfrost.oneconfig.api.events.event.ShutdownEvent;
 import org.polyfrost.oneconfig.api.events.event.StartEvent;
 import org.polyfrost.oneconfig.api.events.event.TickEvent;
 import org.polyfrost.oneconfig.api.events.event.TimerUpdateEvent;
@@ -57,7 +54,7 @@ import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 //#endif
 
-//#if FORGE==1
+//#if FORGE
 import net.minecraftforge.client.event.GuiOpenEvent;
 import net.minecraftforge.fml.common.eventhandler.Event;
 //#endif
@@ -77,13 +74,12 @@ public abstract class MinecraftMixin {
 
     @Inject(method = "shutdownMinecraftApplet", at = @At("HEAD"))
     private void onShutdown(CallbackInfo ci) {
-        EventManager.INSTANCE.post(PreShutdownEvent.INSTANCE);
+        EventManager.INSTANCE.post(ShutdownEvent.INSTANCE);
     }
 
     @Inject(method = "<init>", at = @At("TAIL"))
     private void onStart(CallbackInfo ci) {
         EventManager.INSTANCE.post(StartEvent.INSTANCE);
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> EventManager.INSTANCE.post(ShutdownEvent.INSTANCE)));
         //#if MC>=11300
         //$$ OneConfig.INSTANCE.init();
         //#endif
@@ -142,7 +138,7 @@ public abstract class MinecraftMixin {
         EventManager.INSTANCE.post(TickEvent.End.INSTANCE);
     }
 
-    //#if FORGE==1
+    //#if FORGE
     @ModifyArg(method = "displayGuiScreen", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/eventhandler/EventBus;post(Lnet/minecraftforge/fml/common/eventhandler/Event;)Z", remap = false))
     private Event onGuiOpenEvent(Event a) {
         if (a instanceof GuiOpenEvent) {
@@ -203,7 +199,7 @@ public abstract class MinecraftMixin {
     }
 
     //#if MC<=11202
-    //#if FORGE==1
+    //#if FORGE
     //#if MC<=10809
     @Inject(method = "runTick", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/settings/KeyBinding;setKeyBindState(IZ)V", ordinal = 1))
     private void onKeyEvent(CallbackInfo ci) {
@@ -215,23 +211,15 @@ public abstract class MinecraftMixin {
                 state = 1;
             }
         }
-        EventManager.INSTANCE.post(new RawKeyEvent(Keyboard.getEventKey(), Keyboard.getEventCharacter(), state));
+        EventManager.INSTANCE.post(new KeyInputEvent(Keyboard.getEventKey(), Keyboard.getEventCharacter(), state));
     }
 
-    @Inject(method = "runTick", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/FMLCommonHandler;fireKeyInput()V", remap = false))
-    private void onKeyInputEvent(CallbackInfo ci) {
-        EventManager.INSTANCE.post(KeyInputEvent.INSTANCE);
-    }
 
     @Inject(method = "runTick", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/client/ForgeHooksClient;postMouseEvent()Z", remap = false))
     private void onMouseEvent(CallbackInfo ci) {
-        EventManager.INSTANCE.post(new RawMouseEvent(Mouse.getEventButton(), Mouse.getEventButtonState() ? 1 : 0));
+        EventManager.INSTANCE.post(new MouseInputEvent(Mouse.getEventButton(), Mouse.getEventButtonState() ? 1 : 0));
     }
 
-    @Inject(method = "runTick", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/FMLCommonHandler;fireMouseInput()V", remap = false))
-    private void onMouseInputEvent(CallbackInfo ci) {
-        EventManager.INSTANCE.post(new MouseInputEvent(Mouse.getEventButton()));
-    }
     //#else
     //$$ @Inject(method = "runTickKeyboard", at = @At(value = "FIELD", target = "Lnet/minecraft/client/Minecraft;debugCrashKeyPressTime:J", opcode = Opcodes.PUTFIELD))
     //$$ private void onKeyEvent(CallbackInfo ci) {
@@ -243,23 +231,14 @@ public abstract class MinecraftMixin {
     //$$             state = 1;
     //$$         }
     //$$     }
-    //$$     EventManager.INSTANCE.post(new RawKeyEvent(Keyboard.getEventKey(), Keyboard.getEventCharacter(), state));
-    //$$ }
-    //$$
-    //$$ @Inject(method = "runTickKeyboard", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/FMLCommonHandler;fireKeyInput()V", remap = false), remap = true)
-    //$$ private void onKeyInputEvent(CallbackInfo ci) {
-    //$$     EventManager.INSTANCE.post(KeyInputEvent.INSTANCE);
+    //$$     EventManager.INSTANCE.post(new KeyInputEvent(Keyboard.getEventKey(), Keyboard.getEventCharacter(), state));
     //$$ }
     //$$
     //$$ @Inject(method = "runTickMouse", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/client/ForgeHooksClient;postMouseEvent()Z", remap = false), remap = true)
     //$$ private void onMouseEvent(CallbackInfo ci) {
-    //$$     EventManager.INSTANCE.post(new RawMouseEvent(Mouse.getEventButton(), Mouse.getEventButtonState() ? 1 : 0));
+    //$$     EventManager.INSTANCE.post(new MouseInputEvent(Mouse.getEventButton(), Mouse.getEventButtonState() ? 1 : 0));
     //$$ }
     //$$
-    //$$ @Inject(method = "runTickMouse", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/FMLCommonHandler;fireMouseInput()V", remap = false), remap = true)
-    //$$ private void onMouseInputEvent(CallbackInfo ci) {
-    //$$     EventManager.INSTANCE.post(new MouseInputEvent(Mouse.getEventButton()));
-    //$$ }
     //#endif
     //#else
     //#if MC<=10809
@@ -273,23 +252,14 @@ public abstract class MinecraftMixin {
     //$$             state = 1;
     //$$         }
     //$$     }
-    //$$     EventManager.INSTANCE.post(new RawKeyEvent(Keyboard.getEventKey(), Keyboard.getEventCharacter(), state));
-    //$$ }
-    //$$
-    //$$ @Inject(method = "tick", at = @At(value = "JUMP", opcode = Opcodes.GOTO, ordinal = 22, by = 2, shift = At.Shift.BY))
-    //$$ private void onKeyInputEvent(CallbackInfo ci) {
-    //$$     EventManager.INSTANCE.post(KeyInputEvent.INSTANCE);
+    //$$     EventManager.INSTANCE.post(new KeyInputEvent(Keyboard.getEventKey(), Keyboard.getEventCharacter(), state));
     //$$ }
     //$$
     //$$ @Inject(method = "tick", at = @At(value = "INVOKE", target = "Lorg/lwjgl/input/Mouse;getEventButton()I", remap = false))
     //$$ private void onMouseEvent(CallbackInfo ci) {
-    //$$     EventManager.INSTANCE.post(new RawMouseEvent(Mouse.getEventButton(), Mouse.getEventButtonState() ? 1 : 0));
+    //$$     EventManager.INSTANCE.post(new MouseInputEvent(Mouse.getEventButton(), Mouse.getEventButtonState() ? 1 : 0));
     //$$ }
     //$$
-    //$$ @Inject(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/Screen;handleMouse()V", shift = At.Shift.BY, by = 2))
-    //$$ private void onMouseInputEvent(CallbackInfo ci) {
-    //$$     EventManager.INSTANCE.post(new MouseInputEvent(Mouse.getEventButton()));
-    //$$ }
     //#else
     //$$ @Inject(method = "method_12145", at = @At(value = "FIELD", target = "Lnet/minecraft/client/MinecraftClient;f3CTime:J", opcode = Opcodes.PUTFIELD))
     //$$ private void onKeyEvent(CallbackInfo ci) {
@@ -301,23 +271,14 @@ public abstract class MinecraftMixin {
     //$$             state = 1;
     //$$         }
     //$$     }
-    //$$     EventManager.INSTANCE.post(new RawKeyEvent(Keyboard.getEventKey(), Keyboard.getEventCharacter(), state));
-    //$$ }
-    //$$
-    //$$ @Inject(method = "method_12145", at = @At(value = "FIELD", target = "Lnet/minecraft/client/options/GameOptions;debugFpsEnabled:Z", opcode = Opcodes.PUTFIELD, shift = At.Shift.BY, by = 2))
-    //$$ private void onKeyInputEvent(CallbackInfo ci) {
-    //$$     EventManager.INSTANCE.post(KeyInputEvent.INSTANCE);
+    //$$     EventManager.INSTANCE.post(new KeyInputEvent(Keyboard.getEventKey(), Keyboard.getEventCharacter(), state));
     //$$ }
     //$$
     //$$ @Inject(method = "method_12141", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/options/KeyBinding;setKeyPressed(IZ)V"))
     //$$ private void onMouseEvent(CallbackInfo ci) {
-    //$$     EventManager.INSTANCE.post(new RawMouseEvent(Mouse.getEventButton(), Mouse.getEventButtonState() ? 1 : 0));
+    //$$     EventManager.INSTANCE.post(new MouseInputEvent(Mouse.getEventButton(), Mouse.getEventButtonState() ? 1 : 0));
     //$$ }
     //$$
-    //$$ @Inject(method = "method_12141", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/Screen;handleMouse()V", shift = At.Shift.AFTER))
-    //$$ private void onMouseInputEvent(CallbackInfo ci) {
-    //$$     EventManager.INSTANCE.post(new MouseInputEvent(Mouse.getEventButton()));
-    //$$ }
     //#endif
     //#endif
     //#endif

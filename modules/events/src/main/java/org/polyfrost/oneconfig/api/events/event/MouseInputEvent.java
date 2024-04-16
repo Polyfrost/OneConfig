@@ -28,8 +28,18 @@ package org.polyfrost.oneconfig.api.events.event;
 
 public class MouseInputEvent implements Event {
     public final int button;
+    public final int state;
 
-    public MouseInputEvent(int button) {
+    public MouseInputEvent(int button, int state) {
         this.button = button;
+        this.state = state;
+    }
+
+    public int component1() {
+        return button;
+    }
+
+    public int component2() {
+        return state;
     }
 }

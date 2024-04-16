@@ -34,6 +34,7 @@ public final class org/polyfrost/oneconfig/api/hud/HudManager {
 	public final fun getPolyUI ()Lorg/polyfrost/polyui/PolyUI;
 	public final fun getSlinex ()F
 	public final fun getSliney ()F
+	public final fun getWithEditor ()Lorg/polyfrost/oneconfig/ui/screen/PolyUIScreen;
 	public final fun loadInAll ()V
 	public final fun openHudEditor (Lorg/polyfrost/oneconfig/api/hud/Hud;)V
 	public static final fun register (Lorg/polyfrost/oneconfig/api/hud/Hud;)V

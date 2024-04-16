@@ -31,6 +31,7 @@ import net.minecraft.client.gl.Framebuffer;
 import org.polyfrost.oneconfig.internal.hook.FramebufferHook;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
@@ -48,6 +49,7 @@ public abstract class FramebufferMixin implements FramebufferHook {
     public int viewportWidth;
     @Shadow
     public int viewportHeight;
+    @Unique
     private boolean oneconfig$stencilEnabled = false;
 
     @Redirect(method = "attachTexture", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/platform/GLX;advancedRenderBufferStorage(IIII)V"))

@@ -240,7 +240,7 @@ public class LwjglManagerImpl
         ClassWriter classWriter = new ClassWriter(classReader, ClassWriter.COMPUTE_MAXS);
         @SuppressWarnings({"deprecation", "RedundantSuppression"})
         ClassVisitor classRemapper =
-                //#if FABRIC==1
+                //#if FABRIC
                 //$$ new org.objectweb.asm.commons.ClassRemapper(classWriter, remapper);
                 //#else
                 new org.objectweb.asm.commons.RemappingClassAdapter(classWriter, remapper);

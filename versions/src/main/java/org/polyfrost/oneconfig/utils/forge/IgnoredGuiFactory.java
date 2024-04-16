@@ -24,7 +24,7 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-//#if FORGE==1
+//#if FORGE
 package org.polyfrost.oneconfig.utils.forge;
 //#if MC<=11202
 

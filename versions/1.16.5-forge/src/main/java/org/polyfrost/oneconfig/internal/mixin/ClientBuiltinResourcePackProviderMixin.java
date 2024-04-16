@@ -28,28 +28,19 @@ package org.polyfrost.oneconfig.internal.mixin;
 
 import net.minecraft.client.resources.DownloadingPackFinder;
 import org.polyfrost.oneconfig.api.events.EventManager;
-import org.polyfrost.oneconfig.api.events.event.ShutdownEvent;
 import org.polyfrost.oneconfig.api.events.event.StartEvent;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(DownloadingPackFinder.class)
 public class ClientBuiltinResourcePackProviderMixin {
-    @Unique
-    private boolean oc$init;
 
     @Inject(method = "<init>", at = @At("RETURN"))
     private void onStart(CallbackInfo ci) {
-        if (oc$init) return;
-        oc$init = true;
-
         EventManager.INSTANCE.post(StartEvent.INSTANCE);
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> EventManager.INSTANCE.post(ShutdownEvent.INSTANCE)));
         //#if FABRIC
-        //$$ EventManager.INSTANCE.post(org.polyfrost.oneconfig.api.events.event.InitializationEvent.INSTANCE);
         //$$ org.polyfrost.oneconfig.internal.OneConfig.INSTANCE.init();
         //#endif
     }

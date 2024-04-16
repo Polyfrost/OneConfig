@@ -26,31 +26,58 @@
 
 package org.polyfrost.oneconfig.internal.mixin.commands;
 
-import net.minecraft.client.gui.screen.ChatScreen;
 import net.minecraft.util.Formatting;
 import org.apache.commons.lang3.StringUtils;
 import org.polyfrost.oneconfig.internal.commands.ClientCommandHandler;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(ChatScreen.class)
+@Mixin(
+//#if MC==10809
+        net.minecraft.client.gui.screen.ChatScreen.class
+//#else
+//$$ net.minecraft.entity.ai.pathing.PathNodeMaker.class
+//#endif
+)
 public abstract class ChatScreenMixin {
+    private static final String m_showSuggestion =
+            //#if MC==10809
+            "showSuggestion";
+            //#else
+            //$$ "method_12183";
+            //#endif
 
-    @ModifyArg(method = "showSuggestion", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/widget/TextFieldWidget;write(Ljava/lang/String;)V"), index = 0)
+    private static final String m_setSuggestions =
+            //#if MC==10809
+            "setSuggestions";
+            //#else
+            //$$ "method_12185";
+            //#endif
+
+    private static final String m_complete =
+            //#if MC==10809
+            "method_908";
+            //#else
+            //$$ "method_12184";
+            //#endif
+
+
+    @ModifyArg(method = m_showSuggestion, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/widget/TextFieldWidget;write(Ljava/lang/String;)V"), index = 0)
     private String removeFormatting1(String par1) {
         return Formatting.strip(par1);
     }
 
-//    @Inject(method = "method_908", at = @At(value = "FIELD", target = "Lnet/minecraft/client/gui/screen/ChatScreen;client:Lnet/minecraft/client/MinecraftClient;", ordinal = 0))
-//    private void addAutoComplete(String string, String string2, CallbackInfo ci) {
-//        ClientCommandHandler.instance.autoComplete(string);
-//    }
-//    todo
+    @Inject(method = m_complete, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayNetworkHandler;sendPacket(Lnet/minecraft/network/Packet;)V"))
+    private void addAutoComplete(String string, String string2, CallbackInfo ci) {
+        ClientCommandHandler.instance.autoComplete(string);
+    }
 
-    @ModifyVariable(method = "setSuggestions", at = @At(value = "INVOKE", target = "Ljava/util/List;clear()V", shift = At.Shift.AFTER), argsOnly = true, index = 1)
+    @ModifyVariable(method = m_setSuggestions, at = @At(value = "INVOKE", target = "Ljava/util/List;clear()V", shift = At.Shift.AFTER), argsOnly = true, index = 1)
     private String[] addAutoComplete(String[] suggestions) {
         String[] complete = ClientCommandHandler.instance.latestAutoComplete;
         if (complete != null) {
@@ -59,7 +86,7 @@ public abstract class ChatScreenMixin {
         return suggestions;
     }
 
-    @Redirect(method = "setSuggestions", at = @At(value = "INVOKE", target = "Lorg/apache/commons/lang3/StringUtils;getCommonPrefix([Ljava/lang/String;)Ljava/lang/String;", remap = false))
+    @Redirect(method = m_setSuggestions, at = @At(value = "INVOKE", target = "Lorg/apache/commons/lang3/StringUtils;getCommonPrefix([Ljava/lang/String;)Ljava/lang/String;", remap = false))
     private String removeFormatting2(String[] strs) {
         return Formatting.strip(StringUtils.getCommonPrefix(strs));
     }

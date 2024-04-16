@@ -32,48 +32,6 @@ public class org/polyfrost/oneconfig/api/events/event/TimerUpdateEvent : org/pol
 	public fun <init> (Lnet/minecraft/util/Timer;Z)V
 }
 
-public final class org/polyfrost/oneconfig/ui/OneConfigUI {
-	public static final field INSTANCE Lorg/polyfrost/oneconfig/ui/OneConfigUI;
-	public static field ui Lorg/polyfrost/polyui/component/Drawable;
-	public final fun SidebarButton (Lorg/polyfrost/polyui/renderer/data/PolyImage;Ljava/lang/String;Lorg/polyfrost/polyui/component/Drawable;)Lorg/polyfrost/polyui/component/impl/Group;
-	public static synthetic fun SidebarButton$default (Lorg/polyfrost/oneconfig/ui/OneConfigUI;Lorg/polyfrost/polyui/renderer/data/PolyImage;Ljava/lang/String;Lorg/polyfrost/polyui/component/Drawable;ILjava/lang/Object;)Lorg/polyfrost/polyui/component/impl/Group;
-	public final fun SidebarButton0 (Lorg/polyfrost/polyui/renderer/data/PolyImage;Ljava/lang/String;Lorg/polyfrost/polyui/component/Drawable;)Lorg/polyfrost/polyui/component/impl/Group;
-	public static synthetic fun SidebarButton0$default (Lorg/polyfrost/oneconfig/ui/OneConfigUI;Lorg/polyfrost/polyui/renderer/data/PolyImage;Ljava/lang/String;Lorg/polyfrost/polyui/component/Drawable;ILjava/lang/Object;)Lorg/polyfrost/polyui/component/impl/Group;
-	public final fun create ()Lorg/polyfrost/oneconfig/ui/screen/PolyUIScreen;
-	public final fun getSidebarBtnAlign ()Lorg/polyfrost/polyui/unit/Align;
-	public final fun getUi ()Lorg/polyfrost/polyui/component/Drawable;
-	public final fun getUsername ()Ljava/lang/String;
-	public final fun label (Ljava/lang/String;)Lorg/polyfrost/polyui/component/Drawable;
-	public final fun openPage (Lorg/polyfrost/polyui/component/Drawable;Ljava/lang/String;)V
-	public final fun setUi (Lorg/polyfrost/polyui/component/Drawable;)V
-	public final fun setUsername (Ljava/lang/String;)V
-}
-
-public final class org/polyfrost/oneconfig/ui/pages/News {
-	public fun <init> (Ljava/lang/String;Lorg/polyfrost/polyui/renderer/data/PolyImage;Ljava/lang/String;Ljava/lang/String;JLjava/lang/String;)V
-	public synthetic fun <init> (Ljava/lang/String;Lorg/polyfrost/polyui/renderer/data/PolyImage;Ljava/lang/String;Ljava/lang/String;JLjava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun getAuthor ()Ljava/lang/String;
-	public final fun getContent ()Ljava/lang/String;
-	public final fun getDate ()Ljava/time/LocalDateTime;
-	public final fun getDateString ()Ljava/lang/String;
-	public final fun getImage ()Lorg/polyfrost/polyui/renderer/data/PolyImage;
-	public final fun getSummary ()Ljava/lang/String;
-	public final fun getTitle ()Ljava/lang/String;
-}
-
-public final class org/polyfrost/oneconfig/ui/pages/NewsManager {
-	public static final field INSTANCE Lorg/polyfrost/oneconfig/ui/pages/NewsManager;
-}
-
-public final class org/polyfrost/oneconfig/ui/pages/PagesKt {
-	public static final fun ChangelogPage (Ljava/util/Collection;)Lorg/polyfrost/polyui/component/Drawable;
-	public static final fun FeedbackPage ()Lorg/polyfrost/polyui/component/Drawable;
-	public static final fun ModsPage (Ljava/util/Collection;)Lorg/polyfrost/polyui/component/Drawable;
-	public static final fun NotificationsPopup (Lorg/polyfrost/polyui/PolyUI;Ljava/util/List;)V
-	public static final fun ProfilesPage ()Lorg/polyfrost/polyui/component/Drawable;
-	public static final fun ThemesPage ()Lorg/polyfrost/polyui/component/Drawable;
-}
-
 public class org/polyfrost/oneconfig/ui/screen/MCWindow : org/polyfrost/polyui/renderer/Window {
 	public fun <init> (Lnet/minecraft/client/Minecraft;)V
 	public fun close ()V
@@ -96,16 +54,18 @@ public class org/polyfrost/oneconfig/ui/screen/PolyUIScreen : org/polyfrost/onec
 	public fun <init> (Lorg/polyfrost/polyui/property/Settings;Lorg/polyfrost/polyui/event/InputManager;Lorg/polyfrost/polyui/input/Translator;Lorg/polyfrost/polyui/unit/Align;Lorg/polyfrost/polyui/color/Colors;Lorg/polyfrost/polyui/color/PolyColor;Lorg/polyfrost/polyui/unit/Vec2;Lorg/polyfrost/polyui/unit/Vec2;[Lorg/polyfrost/polyui/component/Drawable;)V
 	public fun <init> (Lorg/polyfrost/polyui/unit/Align;Lorg/polyfrost/polyui/unit/Vec2;[Lorg/polyfrost/polyui/component/Drawable;)V
 	public fun <init> ([Lorg/polyfrost/polyui/component/Drawable;)V
+	protected final fun adjustResolution (FF)V
+	public final fun closeCallback (Ljava/lang/Runnable;)Lorg/polyfrost/oneconfig/ui/screen/PolyUIScreen;
 	public fun doesGuiPauseGame ()Z
 	public fun doesUIPauseGame ()Z
-	public fun getMaster ()Lorg/polyfrost/polyui/component/Drawable;
+	public final fun getMaster ()Lorg/polyfrost/polyui/component/Drawable;
 	public fun hasBackgroundBlur ()Z
-	public fun height ()F
+	public final fun height ()F
 	public fun mouseMoved (DD)V
 	public fun onDrawScreen (Lorg/polyfrost/oneconfig/libs/universal/UMatrixStack;IIF)V
 	public final fun onResize (Lnet/minecraft/client/Minecraft;II)V
 	public fun onScreenClose ()V
-	public fun scale ()F
+	public final fun scale ()F
 	public fun shouldCloseOnEsc ()Z
 	public fun uCharTyped (CLorg/polyfrost/oneconfig/libs/universal/UKeyboard$Modifiers;)Z
 	public fun uKeyPressed (IILorg/polyfrost/oneconfig/libs/universal/UKeyboard$Modifiers;)Z
@@ -114,17 +74,18 @@ public class org/polyfrost/oneconfig/ui/screen/PolyUIScreen : org/polyfrost/onec
 	public fun uMouseReleased (DDI)Z
 	public fun uMouseScrolled (D)Z
 	public fun useMinecraftUIScaling ()Z
-	public fun width ()F
+	public final fun width ()F
 }
 
 public final class org/polyfrost/oneconfig/utils/GuiUtils {
 	public fun <init> ()V
 	public static fun closeScreen ()V
+	public static fun displayScreen (Ljava/lang/Object;)V
 	public static fun displayScreen (Lnet/minecraft/client/gui/GuiScreen;)V
 	public static fun displayScreen (Lnet/minecraft/client/gui/GuiScreen;I)V
 }
 
-public class org/polyfrost/oneconfig/utils/TickDelay {
+public final class org/polyfrost/oneconfig/utils/TickDelay {
 	public static fun of (ILjava/lang/Runnable;)V
 }
 

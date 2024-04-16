@@ -41,13 +41,6 @@ public class org/polyfrost/oneconfig/platform/LoaderPlatform$ActiveMod {
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/nio/file/Path;)V
 }
 
-public abstract interface class org/polyfrost/oneconfig/platform/MousePlatform {
-	public abstract fun getButtonState (I)I
-	public abstract fun getMouseX ()D
-	public abstract fun getMouseY ()D
-	public abstract fun isButtonDown (I)Z
-}
-
 public abstract interface class org/polyfrost/oneconfig/platform/Platform {
 	public static fun getGLPlatform ()Lorg/polyfrost/oneconfig/platform/GLPlatform;
 	public static fun getGuiPlatform ()Lorg/polyfrost/oneconfig/platform/GuiPlatform;
@@ -56,7 +49,7 @@ public abstract interface class org/polyfrost/oneconfig/platform/Platform {
 	public abstract fun getLoader ()Lorg/polyfrost/oneconfig/platform/Platform$Loader;
 	public static fun getLoaderPlatform ()Lorg/polyfrost/oneconfig/platform/LoaderPlatform;
 	public abstract fun getMinecraftVersion ()I
-	public static fun getMousePlatform ()Lorg/polyfrost/oneconfig/platform/MousePlatform;
+	public abstract fun getPlayerName ()Ljava/lang/String;
 	public static fun getServerPlatform ()Lorg/polyfrost/oneconfig/platform/ServerPlatform;
 	public abstract fun isCallingFromMinecraftThread ()Z
 	public abstract fun isDevelopmentEnvironment ()Z

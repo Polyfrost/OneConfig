@@ -34,7 +34,7 @@ import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 
-//#if FORGE==1
+//#if FORGE
 import net.minecraft.client.shader.Framebuffer;
 //#else
 //$$ import org.polyfrost.oneconfig.internal.hook.FramebufferHook;
@@ -79,7 +79,7 @@ public class GLPlatformImpl implements GLPlatform {
 
     @Override
     public void enableStencil() {
-        //#if FORGE==1
+        //#if FORGE
         Framebuffer framebuffer = UMinecraft.getMinecraft().getFramebuffer();
         //#else
         //$$ FramebufferHook framebuffer = ((FramebufferHook) UMinecraft.getMinecraft().getFramebuffer());

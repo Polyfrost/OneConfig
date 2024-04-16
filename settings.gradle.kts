@@ -29,6 +29,7 @@ listOf(
     "hud",
     "events",
     "ui",
+    "ui-impl",
     "utils"
 ).forEach { module ->
     include(":modules:$module")

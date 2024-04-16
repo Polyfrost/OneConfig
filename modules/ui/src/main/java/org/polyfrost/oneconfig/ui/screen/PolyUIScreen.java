@@ -81,4 +81,8 @@ public class PolyUIScreen {
     public PolyUIScreen(@NotNull PolyUI polyUI) {
         this((Settings) null, null, null, null, null, null, null, null);
     }
+
+    public final PolyUIScreen closeCallback(Runnable r) {
+        return this;
+    }
 }

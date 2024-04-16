@@ -208,7 +208,7 @@ public class CommandTree implements Node {
             new TreeMap<>(getDedupedCommands()).values().forEach((ls) -> {
                 for (Node value : ls) {
                     if (value instanceof Executable) {
-                        sb.append("\n\t").append(value.helpString());
+                        sb.append("\n  ").append(value.helpString());
                     } else {
                         fullString((CommandTree) value, 1, sb, true);
                     }
@@ -241,13 +241,13 @@ public class CommandTree implements Node {
 
     private void fullString(CommandTree it, int depth, StringBuilder sb, boolean isHelp) {
         sb.append("\n");
-        append(sb, "\t", depth);
+        append(sb, "  ", depth);
         sb.append(isHelp ? it.helpString() : it);
         it.getDedupedCommands().values().forEach((ls) -> {
             for (Node value : ls) {
                 if (value instanceof Executable) {
                     sb.append("\n");
-                    append(sb, "\t", depth + 2);
+                    append(sb, "  ", depth + 2);
                     sb.append(isHelp ? value.helpString() : value);
                 } else {
                     fullString((CommandTree) value, depth + 1, sb, isHelp);

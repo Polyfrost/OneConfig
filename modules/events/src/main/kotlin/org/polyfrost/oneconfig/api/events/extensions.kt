@@ -36,7 +36,7 @@ import org.polyfrost.oneconfig.api.events.invoke.EventHandler
  * Kotlin specific API for registering of event handlers. Intended usage:
  *
  * ```
- * eventHandler { event: RawKeyEvent ->
+ * eventHandler { event: KeyInputEvent ->
  *     println("Key event: $event")
  * }.register()
  * ```

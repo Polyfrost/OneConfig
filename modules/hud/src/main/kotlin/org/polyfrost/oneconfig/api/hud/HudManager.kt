@@ -31,11 +31,16 @@ import org.polyfrost.oneconfig.api.config.ConfigManager
 import org.polyfrost.oneconfig.api.config.Node
 import org.polyfrost.oneconfig.api.config.backend.impl.FileBackend
 import org.polyfrost.oneconfig.api.config.util.ObjectSerializer
+import org.polyfrost.oneconfig.api.events.event.HudRenderEvent
+import org.polyfrost.oneconfig.api.events.event.ResizeEvent
+import org.polyfrost.oneconfig.api.events.eventHandler
 import org.polyfrost.oneconfig.api.hud.internal.HudsPage
 import org.polyfrost.oneconfig.api.hud.internal.alignC
 import org.polyfrost.oneconfig.api.hud.internal.build
 import org.polyfrost.oneconfig.api.hud.internal.createInspectionsScreen
+import org.polyfrost.oneconfig.libs.universal.UResolution
 import org.polyfrost.oneconfig.ui.LwjglManager
+import org.polyfrost.oneconfig.ui.screen.PolyUIScreen
 import org.polyfrost.oneconfig.utils.GuiUtils
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.animate.Animations
@@ -48,9 +53,11 @@ import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.operations.DrawableOp
 import org.polyfrost.polyui.operations.Fade
 import org.polyfrost.polyui.operations.Move
+import org.polyfrost.polyui.property.Settings
 import org.polyfrost.polyui.renderer.data.Cursor
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.Vec2
+import org.polyfrost.polyui.unit.by
 import org.polyfrost.polyui.unit.seconds
 import org.polyfrost.polyui.utils.LinkedList
 import org.polyfrost.polyui.utils.image
@@ -84,7 +91,6 @@ object HudManager {
     val hudsPage by lazy { HudsPage(huds) }
 
     val panel = Block(
-        at = Vec2(1404f, 16f),
         size = Vec2(500f, 1048f),
         children = arrayOf(
             Group(
@@ -120,7 +126,7 @@ object HudManager {
                     size = Vec2(32f, 1048f),
                     alignment = alignC,
                     children = arrayOf(Image("right-arrow.svg".image()).setAlpha(0.1f)),
-                ).withStates().setPalette(
+                ).named("CloseArea").withStates().setPalette(
                     Colors.Palette(
                         TRANSPARENT,
                         PolyColor.Gradient(
@@ -171,7 +177,36 @@ object HudManager {
         }.add()
     }
 
-    val polyUI: PolyUI = PolyUI(LwjglManager.INSTANCE.renderer, drawables = arrayOf(panel))
+    init {
+        eventHandler { (w, h): ResizeEvent ->
+            polyUI.resize(w.toFloat(), h.toFloat())
+        }
+        eventHandler { _: HudRenderEvent ->
+
+        }
+    }
+
+    val polyUI: PolyUI = PolyUI(
+        LwjglManager.INSTANCE.renderer,
+        size = UResolution.windowWidth by UResolution.windowHeight,
+        settings = Settings().apply {
+            cleanupAfterInit = false
+            aspectRatio = 125 to 262
+        }
+    )
+
+    fun getWithEditor(): PolyUIScreen {
+        return PolyUIScreen(polyUI.also {
+            it.master.addChild(panel, reposition = false)
+            panel.x = it.size.x - 32f
+            toggleHudPicker()
+        }).closeCallback(this::editorClose)
+    }
+
+    private fun editorClose() {
+        if(open) toggleHudPicker()
+        polyUI.master.removeChild(panel)
+    }
 
 
     @JvmStatic

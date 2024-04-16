@@ -31,8 +31,8 @@ import net.minecraft.client.gui.GuiScreen;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.polyfrost.oneconfig.api.events.EventManager;
-import org.polyfrost.oneconfig.api.events.event.RawKeyEvent;
-import org.polyfrost.oneconfig.api.events.event.RawMouseEvent;
+import org.polyfrost.oneconfig.api.events.event.KeyInputEvent;
+import org.polyfrost.oneconfig.api.events.event.MouseInputEvent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -48,7 +48,7 @@ public abstract class GuiScreenMixin {
             //#endif
     ))
     private void onMouseInput(CallbackInfo ci) {
-        EventManager.INSTANCE.post(new RawMouseEvent(Mouse.getEventButton(), Mouse.getEventButtonState() ? 1 : 0));
+        EventManager.INSTANCE.post(new MouseInputEvent(Mouse.getEventButton(), Mouse.getEventButtonState() ? 1 : 0));
     }
 
     @Inject(method = "handleInput", at = @At(value = "INVOKE",
@@ -67,7 +67,16 @@ public abstract class GuiScreenMixin {
                 state = 1;
             }
         }
-        EventManager.INSTANCE.post(new RawKeyEvent(Keyboard.getEventKey(), Keyboard.getEventCharacter(), state));
+        EventManager.INSTANCE.post(new KeyInputEvent(Keyboard.getEventKey(), Keyboard.getEventCharacter(), state));
     }
+
+    //#if MC<=11300 && FABRIC
+    //$$ @Inject(method = "sendMessage(Ljava/lang/String;Z)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/player/ClientPlayerEntity;sendChatMessage(Ljava/lang/String;)V"), cancellable = true)
+    //$$ private void execute(String text, boolean toHud, CallbackInfo ci) {
+    //$$    if (org.polyfrost.oneconfig.internal.commands.ClientCommandHandler.instance.execute(net.minecraft.client.MinecraftClient.getInstance().player, text) != 0) {
+    //$$        ci.cancel();
+    //$$    }
+    //$$ }
+    //#endif
 }
 //#endif

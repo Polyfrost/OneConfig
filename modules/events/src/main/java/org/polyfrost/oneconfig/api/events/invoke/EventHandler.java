@@ -105,7 +105,7 @@ public abstract class EventHandler<E extends Event> {
                 }
             };
         } catch (Throwable e) {
-            throw new EventException("Failed to register event handler", e);
+            throw new EventException("Failed to register event handler: signature should be public void method(Event event) {}", e);
         }
     }
 

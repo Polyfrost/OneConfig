@@ -33,14 +33,14 @@ import org.polyfrost.oneconfig.platform.LoaderPlatform;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
-//#if FABRIC==1
+//#if FABRIC
 //$$ import net.fabricmc.loader.api.FabricLoader;
 //$$ import net.fabricmc.loader.api.ModContainer;
 //#else
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.ModContainer;
 //#endif
-//#if FORGE==1 && MC>11202
+//#if FORGE && MC>11202
 //$$ import net.minecraftforge.fml.ModList;
 //$$ import net.minecraftforge.fml.ModLoadingContext;
 //#endif
@@ -49,12 +49,12 @@ public class LoaderPlatformImpl implements LoaderPlatform {
     @Override
     public boolean isModLoaded(String id) {
         //#if MC>=11600
-        //#if FORGE==1
+        //#if FORGE
         //$$ return ModList.get().isLoaded(id);
         //#else
         //$$ return FabricLoader.getInstance().isModLoaded(id);
         //#endif
-        //#elseif FORGE==1
+        //#elseif FORGE
         return Loader.isModLoaded(id);
         //#else
         //$$ return FabricLoader.getInstance().isModLoaded(id);
@@ -63,7 +63,7 @@ public class LoaderPlatformImpl implements LoaderPlatform {
 
     @Override
     public boolean hasActiveModContainer() {
-        //#if FORGE==1
+        //#if FORGE
         return Loader.instance().activeModContainer() != null;
         //#else
         //$$ return false;
@@ -74,7 +74,7 @@ public class LoaderPlatformImpl implements LoaderPlatform {
     public @NotNull List<ActiveMod> getLoadedMods() {
         try {
             return
-                    //#if FORGE==1
+                    //#if FORGE
                     //#if MC<=11202
                     Loader.instance().getActiveModList().stream().map
                             //#else
@@ -91,7 +91,7 @@ public class LoaderPlatformImpl implements LoaderPlatform {
 
     @Override
     public ActiveMod getActiveModContainer() {
-        //#if FORGE==1
+        //#if FORGE
         return toActiveMod(Loader.instance().activeModContainer());
         //#else
         //$$ return null;
@@ -103,7 +103,7 @@ public class LoaderPlatformImpl implements LoaderPlatform {
         try {
             ModContainer container = (ModContainer) in;
             if (container == null) return null;
-            //#if FORGE==1
+            //#if FORGE
             //#if MC==11202
             return new ActiveMod(container.getName(), container.getModId(), container.getVersion(), container.getSource().toPath());
             //#else
