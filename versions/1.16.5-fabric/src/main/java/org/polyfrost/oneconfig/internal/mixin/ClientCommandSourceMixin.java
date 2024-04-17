@@ -64,16 +64,16 @@ abstract class ClientCommandSourceMixin implements ClientCommandSource {
 
     @Override
     public MinecraftClient getClient() {
-        return client;
+        return this.client;
     }
 
     @Override
     public ClientPlayerEntity getPlayer() {
-        return client.player;
+        return this.client.player;
     }
 
     @Override
     public ClientWorld getWorld() {
-        return client.world;
+        return this.client.world;
     }
 }

@@ -32,7 +32,6 @@ import org.lwjgl.nanovg.NVGPaint
 import org.lwjgl.nanovg.NanoSVG.*
 import org.lwjgl.nanovg.NanoVG.*
 import org.lwjgl.nanovg.NanoVGGL2.NVG_ANTIALIAS
-import org.lwjgl.nanovg.NanoVGGL2.nvgCreate
 import org.lwjgl.stb.STBImage.stbi_failure_reason
 import org.lwjgl.stb.STBImage.stbi_load_from_memory
 import org.lwjgl.system.MemoryUtil
@@ -61,7 +60,15 @@ object RendererImpl : Renderer {
     private var drawing = false
 
     override fun init() {
-        if (vg == 0L) vg = nvgCreate(NVG_ANTIALIAS)
+        if (vg == 0L) {
+            vg = org.lwjgl.nanovg.
+                //#if MC<11700
+                NanoVGGL2
+                //#else
+                //$$ NanoVGGL3
+                //#endif
+                .nvgCreate(NVG_ANTIALIAS)
+        }
         if (raster == 0L) raster = nsvgCreateRasterizer()
         require(vg != 0L) { "Could not initialize NanoVG" }
         require(raster != 0L) { "Could not initialize NanoSVG" }

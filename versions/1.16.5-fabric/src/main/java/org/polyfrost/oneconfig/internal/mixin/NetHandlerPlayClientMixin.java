@@ -63,7 +63,13 @@ public abstract class NetHandlerPlayClientMixin {
 
     @Redirect(method = "onGameMessage", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/packet/s2c/play/GameMessageS2CPacket;getMessage()Lnet/minecraft/text/Text;"))
     private Text onClientChatRedirect(GameMessageS2CPacket packet) {
-        if (!packet.isNonChat()) {
+        if (
+                //#if MC<11700
+                !packet.isNonChat()
+                //#else
+                //$$ packet.getLocation() == net.minecraft.network.MessageType.CHAT
+                //#endif
+        ) {
             oneconfig$event = new ChatReceiveEvent(packet.getMessage());
             EventManager.INSTANCE.post(oneconfig$event);
             return oneconfig$event.message;
@@ -96,6 +102,6 @@ public abstract class NetHandlerPlayClientMixin {
         // Add the commands to the vanilla dispatcher for completion.
         // It's done here because both the server and the client commands have
         // to be in the same dispatcher and completion results.
-        ClientCommandInternals.addCommands((CommandDispatcher) commandDispatcher, (ClientCommandSource) commandSource);
+        ClientCommandInternals.addCommands((CommandDispatcher) this.commandDispatcher, (ClientCommandSource) this.commandSource);
     }
 }

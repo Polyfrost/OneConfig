@@ -104,7 +104,13 @@ public final class BlurHandler {
                 //#if FABRIC
                 //$$ ((org.polyfrost.oneconfig.internal.mixin.GameRendererAccessor) UMinecraft.getMinecraft().gameRenderer).invokeLoadShader(this.blurShader);
                 //#else
-                UMinecraft.getMinecraft().entityRenderer.loadShader(this.blurShader);
+                UMinecraft.getMinecraft().entityRenderer.
+                        //#if MC<11700
+                        loadShader
+                        //#else
+                        //$$ loadEffect
+                        //#endif
+                                (this.blurShader);
                 //#endif
 
                 this.start = System.currentTimeMillis();

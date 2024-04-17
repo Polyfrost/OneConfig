@@ -24,10 +24,21 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.internal.hook;
+package org.polyfrost.oneconfig.internal.mixin;
 
-public interface FramebufferHook {
-    boolean isStencilEnabled();
+import net.minecraft.client.gui.hud.InGameHud;
+import org.polyfrost.oneconfig.api.events.EventManager;
+import org.polyfrost.oneconfig.api.events.event.HudRenderEvent;
+import org.polyfrost.oneconfig.libs.universal.UMatrixStack;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-    void enableStencil();
+@Mixin(InGameHud.class)
+public abstract class GuiIngameMixin {
+    @Inject(method = "render", at = @At("TAIL"))
+    private void onRenderGameOverlay(float partialTicks, CallbackInfo ci) {
+        EventManager.INSTANCE.post(new HudRenderEvent(new UMatrixStack(), partialTicks));
+    }
 }

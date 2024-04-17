@@ -24,19 +24,22 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.api.events.event;
+package org.polyfrost.oneconfig.internal.mixin;
 
-import org.polyfrost.oneconfig.api.DeclaredInPlatform;
+import net.minecraft.client.gui.hud.InGameHud;
+import net.minecraft.client.util.math.MatrixStack;
+import org.polyfrost.oneconfig.api.events.EventManager;
+import org.polyfrost.oneconfig.api.events.event.HudRenderEvent;
+import org.polyfrost.oneconfig.libs.universal.UMatrixStack;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@DeclaredInPlatform
-public class TimerUpdateEvent implements Event {
-
-    public final boolean updatedDeltaTicks;
-
-    public final Object timer;
-
-    public TimerUpdateEvent(Object timer, boolean updatedDeltaTicks) {
-        this.timer = timer;
-        this.updatedDeltaTicks = updatedDeltaTicks;
+@Mixin(InGameHud.class)
+public abstract class GuiIngameMixin {
+    @Inject(method = "render", at = @At("TAIL"))
+    private void onRenderGameOverlay(MatrixStack matrices, float tickDelta, CallbackInfo ci) {
+        EventManager.INSTANCE.post(new HudRenderEvent(new UMatrixStack(matrices), tickDelta));
     }
 }

@@ -1,0 +1,2 @@
+com.mojang.blaze3d.platform.GlStateManager _texImage2D() texImage2D()
+com.mojang.blaze3d.platform.GlStateManager _glFramebufferTexture2D() framebufferTexture2D()

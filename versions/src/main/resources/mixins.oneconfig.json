@@ -10,7 +10,7 @@
     "verbose": true,
     "client": [
       "EntityPlayerSPMixin",
-      "GuiIngameForgeMixin",
+      "GuiIngameMixin",
       "MinecraftMixin",
       "NetworkManagerMixin",
       "compat.OptifineConfigMixin",

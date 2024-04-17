@@ -180,6 +180,7 @@ public class FileBackend extends Backend {
             return false;
         }
         write(p, serializer.serialize(tree));
+        dodge();
         return true;
     }
 

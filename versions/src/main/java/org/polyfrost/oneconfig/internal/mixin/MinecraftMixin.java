@@ -28,18 +28,16 @@ package org.polyfrost.oneconfig.internal.mixin;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Timer;
-import org.objectweb.asm.Opcodes;
 import org.polyfrost.oneconfig.api.events.EventManager;
 import org.polyfrost.oneconfig.api.events.event.FramebufferRenderEvent;
 import org.polyfrost.oneconfig.api.events.event.KeyInputEvent;
 import org.polyfrost.oneconfig.api.events.event.MouseInputEvent;
-import org.polyfrost.oneconfig.api.events.event.ShutdownEvent;
 import org.polyfrost.oneconfig.api.events.event.RenderEvent;
 import org.polyfrost.oneconfig.api.events.event.ResizeEvent;
 import org.polyfrost.oneconfig.api.events.event.ScreenOpenEvent;
+import org.polyfrost.oneconfig.api.events.event.ShutdownEvent;
 import org.polyfrost.oneconfig.api.events.event.StartEvent;
 import org.polyfrost.oneconfig.api.events.event.TickEvent;
-import org.polyfrost.oneconfig.api.events.event.TimerUpdateEvent;
 import org.polyfrost.oneconfig.internal.OneConfig;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -77,7 +75,7 @@ public abstract class MinecraftMixin {
         EventManager.INSTANCE.post(ShutdownEvent.INSTANCE);
     }
 
-    @Inject(method = "<init>", at = @At("TAIL"))
+    @Inject(method = "<init>", at = @At("RETURN"))
     private void onStart(CallbackInfo ci) {
         EventManager.INSTANCE.post(StartEvent.INSTANCE);
         //#if MC>=11300
@@ -110,12 +108,16 @@ public abstract class MinecraftMixin {
 
     @Inject(method = "runGameLoop", at = @At(value = "INVOKE", target = UPDATE_CAMERA_AND_RENDER))
     private void onRenderTickStart(CallbackInfo ci) {
-        EventManager.INSTANCE.post(new RenderEvent.Start(this.timer.renderPartialTicks));
+        RenderEvent e = RenderEvent.Start.INSTANCE;
+        e.deltaTicks = this.timer.renderPartialTicks;
+        EventManager.INSTANCE.post(e);
     }
 
     @Inject(method = "runGameLoop", at = @At(value = "INVOKE", target = UPDATE_CAMERA_AND_RENDER, shift = At.Shift.AFTER))
     private void onRenderTickEnd(CallbackInfo ci) {
-        EventManager.INSTANCE.post(new RenderEvent.End(this.timer.renderPartialTicks));
+        RenderEvent e = RenderEvent.End.INSTANCE;
+        e.deltaTicks = this.timer.renderPartialTicks;
+        EventManager.INSTANCE.post(e);
     }
 
     @Inject(method = "runGameLoop", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/shader/Framebuffer;framebufferRender(II)V"))
@@ -139,7 +141,13 @@ public abstract class MinecraftMixin {
     }
 
     //#if FORGE
-    @ModifyArg(method = "displayGuiScreen", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/eventhandler/EventBus;post(Lnet/minecraftforge/fml/common/eventhandler/Event;)Z", remap = false))
+    @ModifyArg(method =
+            //#if MC>11700
+            //$$ "setScreen", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/eventbus/api/IEventBus;post(Lnet/minecraftforge/eventbus/api/Event;)Z"
+            //#else
+            "displayGuiScreen", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/eventhandler/EventBus;post(Lnet/minecraftforge/fml/common/eventhandler/Event;)Z"
+            //#endif
+            , remap = false))
     private Event onGuiOpenEvent(Event a) {
         if (a instanceof GuiOpenEvent) {
             GuiOpenEvent forgeEvent = (GuiOpenEvent) a;
@@ -159,13 +167,13 @@ public abstract class MinecraftMixin {
         return a;
     }
     //#else
-    //$$  @Inject(method = "openScreen", at = @At(
+    //$$  @Inject(method = "openScreen", at = @At(value = "INVOKE", target =
     //#if MC>=11300
-    //$$  value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayerEntity;requestRespawn()V", shift = At.Shift.BY, by = 2
+    //$$  "Lnet/minecraft/client/network/ClientPlayerEntity;requestRespawn()V", shift = At.Shift.BY, by = 2
     //#elseif MC>=11200
-    //$$  value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/DeathScreen;<init>(Lnet/minecraft/text/Text;)V", shift = At.Shift.BY, by = 3
+    //$$  "Lnet/minecraft/client/gui/screen/DeathScreen;<init>(Lnet/minecraft/text/Text;)V", shift = At.Shift.BY, by = 3
     //#else
-    //$$  value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/DeathScreen;<init>()V", shift = At.Shift.BY, by = 3
+    //$$  "Lnet/minecraft/client/gui/screen/DeathScreen;<init>()V", shift = At.Shift.BY, by = 3
     //#endif
     //$$  ), cancellable = true)
     //$$  private void onGuiOpenEvent(net.minecraft.client.gui.screen.Screen screen, CallbackInfo ci) {
@@ -177,26 +185,6 @@ public abstract class MinecraftMixin {
     //$$  }
     //#endif
 
-    //#if MC<=11202
-    @Inject(method = "runGameLoop", at = @At(value = "FIELD", target = "Lnet/minecraft/util/Timer;renderPartialTicks:F", opcode = Opcodes.PUTFIELD, shift = At.Shift.AFTER))
-    private void onNonDeltaTickTimerUpdate(CallbackInfo ci) {
-        EventManager.INSTANCE.post(new TimerUpdateEvent(this.timer, false));
-    }
-    //#endif
-
-    @Inject(method = "runGameLoop", at = @At(value = "INVOKE",
-            //#if MC<=11202
-            target = "Lnet/minecraft/util/Timer;updateTimer()V"
-            //#if MC<=10809
-            , shift = At.Shift.AFTER, ordinal = 1
-            //#endif
-            //#else
-            //$$ target = "Lnet/minecraft/util/Timer;getPartialTicks(J)I"
-            //#endif
-    ))
-    private void onDeltaTickTimerUpdate(CallbackInfo ci) {
-        EventManager.INSTANCE.post(new TimerUpdateEvent(this.timer, true));
-    }
 
     //#if MC<=11202
     //#if FORGE
@@ -221,7 +209,7 @@ public abstract class MinecraftMixin {
     }
 
     //#else
-    //$$ @Inject(method = "runTickKeyboard", at = @At(value = "FIELD", target = "Lnet/minecraft/client/Minecraft;debugCrashKeyPressTime:J", opcode = Opcodes.PUTFIELD))
+    //$$ @Inject(method = "runTickKeyboard", at = @At(value = "FIELD", target = "Lnet/minecraft/client/Minecraft;debugCrashKeyPressTime:J", opcode = org.objectweb.asm.Opcodes.PUTFIELD))
     //$$ private void onKeyEvent(CallbackInfo ci) {
     //$$     int state = 0;
     //$$     if (Keyboard.getEventKeyState()) {
@@ -261,7 +249,7 @@ public abstract class MinecraftMixin {
     //$$ }
     //$$
     //#else
-    //$$ @Inject(method = "method_12145", at = @At(value = "FIELD", target = "Lnet/minecraft/client/MinecraftClient;f3CTime:J", opcode = Opcodes.PUTFIELD))
+    //$$ @Inject(method = "method_12145", at = @At(value = "FIELD", target = "Lnet/minecraft/client/MinecraftClient;f3CTime:J", opcode = org.objectweb.asm.Opcodes.PUTFIELD))
     //$$ private void onKeyEvent(CallbackInfo ci) {
     //$$     int state = 0;
     //$$     if (Keyboard.getEventKeyState()) {

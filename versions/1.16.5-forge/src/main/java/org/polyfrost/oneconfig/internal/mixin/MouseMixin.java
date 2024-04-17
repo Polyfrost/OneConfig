@@ -37,7 +37,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(MouseHelper.class)
 public class MouseMixin {
     //#if FORGE
-    @Inject(method = "mouseButtonCallback", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/client/ForgeHooksClient;onRawMouseClicked(III)Z", remap = false), remap = true)
+    @Inject(method =
+            //#if MC>11700
+            //$$ "onPress"
+            //#else
+            "mouseButtonCallback"
+            //#endif
+            , at = @At(value = "INVOKE", target = "Lnet/minecraftforge/client/ForgeHooksClient;onRawMouseClicked(III)Z", remap = false), remap = true)
     private void onMouse(long handle, int button, int action, int mods, CallbackInfo ci) {
         EventManager.INSTANCE.post(new MouseInputEvent(button, action));
     }

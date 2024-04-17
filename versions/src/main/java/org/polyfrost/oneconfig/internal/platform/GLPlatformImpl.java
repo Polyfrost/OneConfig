@@ -34,12 +34,6 @@ import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 
-//#if FORGE
-import net.minecraft.client.shader.Framebuffer;
-//#else
-//$$ import org.polyfrost.oneconfig.internal.hook.FramebufferHook;
-//#endif
-
 public class GLPlatformImpl implements GLPlatform {
 
     @Override
@@ -67,7 +61,13 @@ public class GLPlatformImpl implements GLPlatform {
         UGraphics.disableTexture2D();
         UGraphics.tryBlendFuncSeparate(770, 771, 1, 0);
         UGraphics.color4f(g, h, j, f);
-        worldRenderer.begin(7, DefaultVertexFormats.POSITION);
+        worldRenderer.begin(
+                //#if MC<11700
+                7,
+                //#else
+                //$$ net.minecraft.client.render.VertexFormat.DrawMode.QUADS,
+                //#endif
+                DefaultVertexFormats.POSITION);
         worldRenderer.pos(x, y2, 0.0).endVertex();
         worldRenderer.pos(x2, y2, 0.0).endVertex();
         worldRenderer.pos(x2, y, 0.0).endVertex();
@@ -75,18 +75,6 @@ public class GLPlatformImpl implements GLPlatform {
         tessellator.draw();
         UGraphics.enableTexture2D();
         UGraphics.disableBlend();
-    }
-
-    @Override
-    public void enableStencil() {
-        //#if FORGE
-        Framebuffer framebuffer = UMinecraft.getMinecraft().getFramebuffer();
-        //#else
-        //$$ FramebufferHook framebuffer = ((FramebufferHook) UMinecraft.getMinecraft().getFramebuffer());
-        //#endif
-        if (!framebuffer.isStencilEnabled()) {
-            framebuffer.enableStencil();
-        }
     }
 
     @Override

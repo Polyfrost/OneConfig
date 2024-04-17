@@ -27,7 +27,11 @@
 //#if FORGE
 package org.polyfrost.oneconfig.internal.mixin;
 
+//#if MC<11700
 import net.minecraftforge.fml.client.ClientModLoader;
+//#else
+//$$ import net.minecraftforge.fmlclient.ClientModLoader;
+//#endif
 import org.polyfrost.oneconfig.internal.OneConfig;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -37,7 +41,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(value = ClientModLoader.class, remap = false)
 public class ClientModLoaderMixin {
 
-    @Inject(method = "lambda$finishModLoading$9", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/GameSettings;loadOptions()V", remap = true), remap = false)
+    @Inject(method = "finishModLoading", at = @At(value = "TAIL"), remap = false)
     private static void onFinishModLoading(CallbackInfo ci) {
         OneConfig.INSTANCE.init();
     }

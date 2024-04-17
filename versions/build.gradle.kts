@@ -16,13 +16,16 @@ plugins {
     java
 }
 
-kotlin.jvmToolchain {
-    languageVersion.set(JavaLanguageVersion.of(8))
-}
-
 java {
     withSourcesJar()
     withJavadocJar()
+}
+
+val java = if (project.platform.mcMinor > 17) 17
+else if (project.platform.mcMinor == 17) 16 else 8
+
+kotlin.jvmToolchain {
+    languageVersion.set(JavaLanguageVersion.of(java))
 }
 
 val modName = properties["mod_name"] as String
@@ -34,10 +37,6 @@ group = "org.polyfrost"
 
 val natives = listOf("windows", "windows-arm64", "linux", "macos", "macos-arm64")
 val tweakClass = "org.polyfrost.oneconfig.internal.init.OneConfigTweaker"
-
-preprocess {
-    vars.put("MODERN", if (platform.mcMinor >= 16) 1 else 0)
-}
 
 base {
     archivesName.set("$modId-$platform")
@@ -99,7 +98,7 @@ dependencies {
     shade(libs.bundles.kotlin)
     shade(libs.bundles.kotlinx)
 
-    for(project in rootProject.project(":modules").subprojects) {
+    for (project in rootProject.project(":modules").subprojects) {
         shade(project(project.path))
     }
 
@@ -108,7 +107,6 @@ dependencies {
             isTransitive = false
         }
     }
-
 
 
     val isLegacy = platform.isLegacyForge || platform.isLegacyFabric
@@ -188,11 +186,6 @@ tasks {
     processResources {
         inputs.property("id", modId)
         inputs.property("name", modName)
-        val java = if (project.platform.mcMinor >= 18) {
-            17
-        } else {
-            if (project.platform.mcMinor == 17) 16 else 8
-        }
         val compatLevel = "JAVA_${java}"
         inputs.property("java", java)
         inputs.property("java_level", compatLevel)

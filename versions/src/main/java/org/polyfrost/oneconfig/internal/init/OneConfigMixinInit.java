@@ -75,7 +75,6 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         if (loader == Platform.Loader.FABRIC) {
             mixins.add("GameRendererAccessor");
             mixins.add("NetHandlerPlayClientMixin");
-            mixins.add("FramebufferMixin");
 
             if (version <= 11202) {
                 mixins.add("commands.ChatScreenMixin");

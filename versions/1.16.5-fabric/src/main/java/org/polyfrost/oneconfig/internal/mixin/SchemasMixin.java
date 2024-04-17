@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 
 import java.util.concurrent.Executor;
 
-//#if MC<=11904
+//#if MC<11904
 /**
  * Modified from LazyDFU under the MIT licence.
  * Source: <a href="https://github.com/astei/lazydfu/blob/master/LICENSE">here</a>
@@ -17,7 +17,7 @@ import java.util.concurrent.Executor;
 @Mixin(Schemas.class)
 public abstract class SchemasMixin {
 
-    @Redirect(method = "create", at = @At(value = "NEW", target = "com/mojang/datafixers/DataFixerBuilder"))
+    @Redirect(method = "create", at = @At(value = "NEW", target = "com/mojang/datafixers/DataFixerBuilder", remap = false))
     private static DataFixerBuilder create$replaceBuilder(int dataVersion) {
         return new DataFixerBuilder(dataVersion) {
             @Override

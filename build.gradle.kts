@@ -2,9 +2,6 @@
 // are bundled with Minecraft, which are not the latest versions.
 @file:Suppress("GradlePackageUpdate", "VulnerableLibrariesLocal", "DSL_SCOPE_VIOLATION")
 
-import java.nio.file.Files
-import java.nio.file.StandardCopyOption
-
 
 plugins {
     alias(libs.plugins.kotlin)
@@ -51,20 +48,12 @@ tasks {
             archiveClassifier.set("sources")
         }
     }
-
-    apiDump.get().doLast {
-        val dir = project(":platform").projectDir.also { it.resolve("api").mkdir() }.toPath()
-        Files.copy(
-            dir.resolve("1.8.9-forge").resolve("api").resolve("1.8.9-forge.api"),
-            dir.resolve("api").resolve("platform.api"),
-            StandardCopyOption.REPLACE_EXISTING
-        )
-    }
 }
 
 apiValidation {
     nonPublicMarkers.add("org.polyfrost.oneconfig.api.PlatformDeclaration")
     ignoredProjects.add("OneConfig")
+    ignoredProjects.add("ui-impl")
     ignoredPackages.add("org.polyfrost.oneconfig.libs")
     ignoredPackages.add("org.polyfrost.oneconfig.internal")
     ignoredPackages.add("org.polyfrost.oneconfig.test")

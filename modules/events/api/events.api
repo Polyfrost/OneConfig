@@ -77,6 +77,7 @@ public class org/polyfrost/oneconfig/api/events/event/KeyInputEvent : org/polyfr
 	public fun component1 ()I
 	public fun component2 ()C
 	public fun component3 ()I
+	public fun isPressed ()Z
 }
 
 public class org/polyfrost/oneconfig/api/events/event/LocrawEvent : org/polyfrost/oneconfig/api/events/event/Event {
@@ -89,6 +90,8 @@ public class org/polyfrost/oneconfig/api/events/event/MouseInputEvent : org/poly
 	public final field button I
 	public final field state I
 	public fun <init> (II)V
+	public fun component1 ()I
+	public fun component2 ()I
 }
 
 public class org/polyfrost/oneconfig/api/events/event/ReceivePacketEvent : org/polyfrost/oneconfig/api/events/event/Event$Cancellable {
@@ -97,16 +100,17 @@ public class org/polyfrost/oneconfig/api/events/event/ReceivePacketEvent : org/p
 }
 
 public abstract class org/polyfrost/oneconfig/api/events/event/RenderEvent : org/polyfrost/oneconfig/api/events/event/Event {
-	public final field deltaTicks F
+	public field deltaTicks F
+	public fun <init> ()V
 	public fun component1 ()F
 }
 
 public class org/polyfrost/oneconfig/api/events/event/RenderEvent$End : org/polyfrost/oneconfig/api/events/event/RenderEvent {
-	public fun <init> (F)V
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/events/event/RenderEvent$End;
 }
 
 public class org/polyfrost/oneconfig/api/events/event/RenderEvent$Start : org/polyfrost/oneconfig/api/events/event/RenderEvent {
-	public fun <init> (F)V
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/events/event/RenderEvent$Start;
 }
 
 public class org/polyfrost/oneconfig/api/events/event/ResizeEvent : org/polyfrost/oneconfig/api/events/event/Event {
@@ -144,12 +148,6 @@ public class org/polyfrost/oneconfig/api/events/event/TickEvent$End : org/polyfr
 
 public class org/polyfrost/oneconfig/api/events/event/TickEvent$Start : org/polyfrost/oneconfig/api/events/event/TickEvent {
 	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/events/event/TickEvent$Start;
-}
-
-public class org/polyfrost/oneconfig/api/events/event/TimerUpdateEvent : org/polyfrost/oneconfig/api/events/event/Event {
-	public final field timer Ljava/lang/Object;
-	public final field updatedDeltaTicks Z
-	public fun <init> (Ljava/lang/Object;Z)V
 }
 
 public class org/polyfrost/oneconfig/api/events/event/WorldLoadEvent : org/polyfrost/oneconfig/api/events/event/Event {

@@ -39,11 +39,15 @@ public class I18nPlatformImpl implements I18nPlatform {
     @Override
     public String getKeyName(int key, int scanCode) {
         //#if MC>=11600
-        //#if FABRIC
-        //$$ final String s = net.minecraft.client.util.InputUtil.fromKeyCode(key, scanCode).getLocalizedText().asString();
-        //#else
-        //$$ final String s = net.minecraft.client.util.InputMappings.getInputByCode(key, scanCode).func_237520_d_().getString();
-        //#endif
+            //#if FABRIC
+            //$$ final String s = net.minecraft.client.util.InputUtil.fromKeyCode(key, scanCode).getLocalizedText().asString();
+            //#else
+                //#if MC>=11700
+                //$$ final String s = com.mojang.blaze3d.platform.InputConstants.getKey(key, scanCode).getDisplayName().getString();
+                //#else
+                //$$ final String s = net.minecraft.client.util.InputMappings.getInputByCode(key, scanCode).func_237520_d_().getString();
+                //#endif
+            //#endif
         //$$ if (s == null) return "Unknown";
         //$$ else return s.length() == 1 ? s.toUpperCase() : s;
         //#else

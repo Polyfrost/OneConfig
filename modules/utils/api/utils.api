@@ -8,7 +8,6 @@ public abstract interface class org/polyfrost/oneconfig/platform/GLPlatform {
 	public abstract fun drawRect (FFFFI)V
 	public fun drawText (Ljava/lang/String;FFIZ)F
 	public abstract fun drawText (Lorg/polyfrost/oneconfig/libs/universal/UMatrixStack;Ljava/lang/String;FFIZ)F
-	public abstract fun enableStencil ()V
 	public abstract fun getStringWidth (Ljava/lang/String;)I
 }
 

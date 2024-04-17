@@ -66,4 +66,8 @@ public class KeyInputEvent implements Event {
     public int component3() {
         return state;
     }
+
+    public boolean isPressed() {
+        return state > 0;
+    }
 }

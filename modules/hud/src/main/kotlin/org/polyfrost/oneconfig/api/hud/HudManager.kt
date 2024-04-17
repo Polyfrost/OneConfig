@@ -88,7 +88,9 @@ object HudManager {
     var open = false
         private set
 
-    val hudsPage by lazy { HudsPage(huds) }
+    private var exists = false
+
+    val hudsPage = HudsPage(huds)
 
     val panel = Block(
         size = Vec2(500f, 1048f),
@@ -182,13 +184,13 @@ object HudManager {
             polyUI.resize(w.toFloat(), h.toFloat())
         }
         eventHandler { _: HudRenderEvent ->
-
+            if (!exists && !polyUI.master.children.isNullOrEmpty()) polyUI.render()
         }
     }
 
     val polyUI: PolyUI = PolyUI(
         LwjglManager.INSTANCE.renderer,
-        size = UResolution.windowWidth by UResolution.windowHeight,
+        size = 1920f by 1080f,
         settings = Settings().apply {
             cleanupAfterInit = false
             aspectRatio = 125 to 262
@@ -198,7 +200,9 @@ object HudManager {
     fun getWithEditor(): PolyUIScreen {
         return PolyUIScreen(polyUI.also {
             it.master.addChild(panel, reposition = false)
+            exists = true
             panel.x = it.size.x - 32f
+            it.resize(UResolution.windowWidth.toFloat(), UResolution.windowHeight.toFloat())
             toggleHudPicker()
         }).closeCallback(this::editorClose)
     }
@@ -206,6 +210,7 @@ object HudManager {
     private fun editorClose() {
         if(open) toggleHudPicker()
         polyUI.master.removeChild(panel)
+        exists = false
     }
 
 

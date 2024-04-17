@@ -26,10 +26,45 @@ public class org/polyfrost/oneconfig/api/events/event/SendPacketEvent : org/poly
 	public fun <init> (Lnet/minecraft/network/Packet;)V
 }
 
-public class org/polyfrost/oneconfig/api/events/event/TimerUpdateEvent : org/polyfrost/oneconfig/api/events/event/Event {
-	public final field timer Lnet/minecraft/util/Timer;
-	public final field updatedDeltaTicks Z
-	public fun <init> (Lnet/minecraft/util/Timer;Z)V
+public final class org/polyfrost/oneconfig/ui/impl/RendererImpl : org/polyfrost/polyui/renderer/Renderer {
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/ui/impl/RendererImpl;
+	public fun beginFrame (FFF)V
+	public fun bindFramebuffer (Lorg/polyfrost/polyui/renderer/data/Framebuffer;)Ljava/lang/Void;
+	public synthetic fun bindFramebuffer (Lorg/polyfrost/polyui/renderer/data/Framebuffer;)V
+	public fun cleanup ()V
+	public fun createFramebuffer (FF)Ljava/lang/Void;
+	public synthetic fun createFramebuffer (FF)Lorg/polyfrost/polyui/renderer/data/Framebuffer;
+	public fun delete (Lorg/polyfrost/polyui/renderer/data/Font;)V
+	public fun delete (Lorg/polyfrost/polyui/renderer/data/Framebuffer;)Ljava/lang/Void;
+	public synthetic fun delete (Lorg/polyfrost/polyui/renderer/data/Framebuffer;)V
+	public fun delete (Lorg/polyfrost/polyui/renderer/data/PolyImage;)V
+	public fun drawFramebuffer (Lorg/polyfrost/polyui/renderer/data/Framebuffer;FFFF)V
+	public fun dropShadow (FFFFFFF)V
+	public fun endFrame ()V
+	public fun globalAlpha (F)V
+	public fun hollowRect (FFFFLorg/polyfrost/polyui/color/PolyColor;FFFFF)V
+	public fun image (Lorg/polyfrost/polyui/renderer/data/PolyImage;FFFFIFFFF)V
+	public fun init ()V
+	public fun initImage (Lorg/polyfrost/polyui/renderer/data/PolyImage;)V
+	public fun line (FFFFLorg/polyfrost/polyui/color/PolyColor;F)V
+	public fun pop ()V
+	public fun popScissor ()V
+	public fun push ()V
+	public fun pushScissor (FFFF)V
+	public fun pushScissorIntersecting (FFFF)V
+	public fun rect (FFFFLorg/polyfrost/polyui/color/PolyColor;FFFF)V
+	public fun rotate (DFF)V
+	public fun scale (FFFF)V
+	public fun setAlphaCap (F)V
+	public fun skewX (DFF)V
+	public fun skewY (DFF)V
+	public fun supportsFramebuffers ()Z
+	public fun text (Lorg/polyfrost/polyui/renderer/data/Font;FFLjava/lang/String;Lorg/polyfrost/polyui/color/PolyColor;F)V
+	public fun textBounds (Lorg/polyfrost/polyui/renderer/data/Font;Ljava/lang/String;F)Lorg/polyfrost/polyui/unit/Vec2;
+	public fun transformsWithPoint ()Z
+	public fun translate (FF)V
+	public fun unbindFramebuffer ()Ljava/lang/Void;
+	public synthetic fun unbindFramebuffer ()V
 }
 
 public class org/polyfrost/oneconfig/ui/screen/MCWindow : org/polyfrost/polyui/renderer/Window {

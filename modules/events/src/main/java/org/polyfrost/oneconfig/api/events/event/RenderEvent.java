@@ -32,23 +32,19 @@ package org.polyfrost.oneconfig.api.events.event;
 public abstract class RenderEvent implements Event {
     /**
      * How much time has elapsed since the last tick, in a fraction of a tick. Used for animations.
+     * <b>DO NOT</b> set this value. you will do nothing except potentially interfere with other mods.
      */
-    public final float deltaTicks;
+    public float deltaTicks;
 
-    RenderEvent(float deltaTicks) {
-        this.deltaTicks = deltaTicks;
-    }
 
     public static class Start extends RenderEvent {
-        public Start(float deltaTicks) {
-            super(deltaTicks);
-        }
+        public static final Start INSTANCE = new Start();
+        private Start() {}
     }
 
     public static class End extends RenderEvent {
-        public End(float deltaTicks) {
-            super(deltaTicks);
-        }
+        public static final End INSTANCE = new End();
+        private End() {}
     }
 
     public float component1() {
