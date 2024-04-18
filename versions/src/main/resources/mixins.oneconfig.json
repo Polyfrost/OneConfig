@@ -9,7 +9,6 @@
     },
     "verbose": true,
     "client": [
-      "EntityPlayerSPMixin",
       "GuiIngameMixin",
       "MinecraftMixin",
       "NetworkManagerMixin",

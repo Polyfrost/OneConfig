@@ -56,7 +56,9 @@ public abstract class EventBusMixin {
         if (event.type != 0) return;
         ChatReceiveEvent ev = new ChatReceiveEvent(event.message);
         //#else
+        //#if MC<11900
         //$$ if(event.getType() != ChatType.CHAT) return;
+        //#endif
         //$$ ChatReceiveEvent ev = new ChatReceiveEvent(event.getMessage());
         //#endif
 

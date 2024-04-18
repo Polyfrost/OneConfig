@@ -85,13 +85,19 @@ public class PlatformCommandManagerImpl implements PlatformCommandManager {
         argTypeMap.put(Entity.class, EntityArgumentType::entity);
         argTypeMap.put(GameProfile.class, GameProfileArgumentType::gameProfile);
         argTypeMap.put(BlockPos.class, BlockPosArgumentType::blockPos);
-        argTypeMap.put(ItemStack.class, ItemStackArgumentType::itemStack);
         argTypeMap.put(Integer.class, IntegerArgumentType::integer);
         argTypeMap.put(Float.class, FloatArgumentType::floatArg);
         argTypeMap.put(Double.class, DoubleArgumentType::doubleArg);
         argTypeMap.put(Long.class, LongArgumentType::longArg);
         argTypeMap.put(Boolean.class, BoolArgumentType::bool);
         argTypeMap.put(String.class, StringArgumentType::word);
+        //#if MC<11900
+        argTypeMap.put(ItemStack.class, ItemStackArgumentType::itemStack);
+        //#else
+        //$$ net.minecraft.command.CommandRegistryAccess a = net.minecraft.server.command.CommandManager.createRegistryAccess(
+        //$$        net.minecraft.registry.BuiltinRegistries.createWrapperLookup());
+        //$$ argTypeMap.put(ItemStack.class, () -> ItemStackArgumentType.itemStack(a));
+        //#endif
 
         EventHandler.of(RegisterCommandsEvent.class, e -> {
             for (CommandNode<ClientCommandSource> n : nodes) {

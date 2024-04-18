@@ -78,9 +78,6 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
 
             if (version <= 11202) {
                 mixins.add("commands.ChatScreenMixin");
-            } else {
-                mixins.add("ClientCommandSourceMixin");
-                mixins.add("SchemasMixin");
             }
         }
 
@@ -88,13 +85,22 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         if (version >= 11600) {
             mixins.add("KeyboardMixin");
             mixins.add("MouseMixin");
+            mixins.add("commands.ClientCommandSourceMixin");
+            mixins.add("commands.ClientPlayNetworkHandlerMixin");
+            mixins.add("commands.HelpCommandAccessor");
         }
+
+        if (version < 11900) mixins.add("SchemasMixin");
 
         if (version <= 11202) {
             mixins.add("GuiScreenMixin");
         }
 
-        return mixins.isEmpty() ? null : mixins;
+        if (version < 11900) {
+            mixins.add("EntityPlayerSPMixin");
+        }
+
+        return mixins;
     }
 
     @Override

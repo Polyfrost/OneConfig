@@ -23,7 +23,7 @@
  * to OneConfig, as published by Polyfrost. If not, see
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
-
+//#if MC<11900
 package org.polyfrost.oneconfig.internal.mixin;
 
 import net.minecraft.client.entity.EntityPlayerSP;
@@ -62,3 +62,4 @@ public abstract class EntityPlayerSPMixin {
         return oneconfig$sendchatevent.message;
     }
 }
+//#endif

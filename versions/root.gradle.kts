@@ -12,14 +12,37 @@ preprocess {
     val fabric11202 = createNode("1.12.2-fabric", 11202, "yarn")
     val forge11605 = createNode("1.16.5-forge", 11605, "srg")
     val fabric11605 = createNode("1.16.5-fabric", 11605, "yarn")
-    val forge11710 = createNode("1.17.1-forge", 11710, "srg")
-    val fabric11710 = createNode("1.17.1-fabric", 11710, "yarn")
+    val forge11701 = createNode("1.17.1-forge", 11701, "srg")
+    val fabric11701 = createNode("1.17.1-fabric", 11701, "yarn")
+    val forge11801 = createNode("1.18.1-forge", 11801, "srg")
+    val fabric11801 = createNode("1.18.1-fabric", 11801, "yarn")
+    val forge11904 = createNode("1.19.4-forge", 11904, "srg")
+    val fabric11904 = createNode("1.19.4-fabric", 11904, "yarn")
 
-    forge11710.link(fabric11710)
-    fabric11710.link(fabric11605, file("mappings/1.17.1-1.16.5.txt"))
+    // graph of the mappings:
+    // forge 1.8.9
+    //    -> fabric 1.8.9
+    //       -> fabric 1.12.2
+    //    -> forge 1.12.2
+    //       -> forge 1.16.5
+    //          -> fabric 1.16.5
+    //             -> fabric 1.17.1
+    //                -> forge 1.17.1
+    //                  -> forge 1.18.1
+    //                -> fabric 1.18.1
+    //                   -> fabric 1.19.4
+    //                      -> forge 1.19.4
+
+    forge11904.link(fabric11904)
+    fabric11904.link(fabric11801, file("mappings/fabric-1.19.4-1.18.1.txt"))
+    forge11801.link(forge11701, file("mappings/forge-1.18.1-1.17.1.txt"))
+    fabric11801.link(fabric11701)
+    forge11701.link(fabric11701)
+    fabric11701.link(fabric11605, file("mappings/fabric-1.17.1-1.16.5.txt"))
     fabric11605.link(forge11605, file("mappings/fabric-forge-1.16.5.txt"))
-    forge11605.link(forge11202, file("mappings/1.16.5-1.12.2.txt"))
+    forge11605.link(forge11202, file("mappings/forge-1.16.5-1.12.2.txt"))
+
     fabric11202.link(fabric10809)
-    forge11202.link(forge10809, file("mappings/1.12.2-1.8.9.txt"))
     fabric10809.link(forge10809, file("mappings/fabric-forge-1.8.9.txt"))
+    forge11202.link(forge10809, file("mappings/forge-1.12.2-1.8.9.txt"))
 }

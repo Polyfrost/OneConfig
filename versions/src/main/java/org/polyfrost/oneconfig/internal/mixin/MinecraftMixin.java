@@ -34,7 +34,6 @@ import org.polyfrost.oneconfig.api.events.event.KeyInputEvent;
 import org.polyfrost.oneconfig.api.events.event.MouseInputEvent;
 import org.polyfrost.oneconfig.api.events.event.RenderEvent;
 import org.polyfrost.oneconfig.api.events.event.ResizeEvent;
-import org.polyfrost.oneconfig.api.events.event.ScreenOpenEvent;
 import org.polyfrost.oneconfig.api.events.event.ShutdownEvent;
 import org.polyfrost.oneconfig.api.events.event.StartEvent;
 import org.polyfrost.oneconfig.api.events.event.TickEvent;
@@ -53,8 +52,14 @@ import org.lwjgl.input.Mouse;
 //#endif
 
 //#if FORGE
+//#if MC<11900
 import net.minecraftforge.client.event.GuiOpenEvent;
+//#else
+//$$ import net.minecraftforge.client.event.ScreenEvent.Opening;
+//#endif
 import net.minecraftforge.fml.common.eventhandler.Event;
+//#else
+//$$ import org.polyfrost.oneconfig.api.events.event.ScreenOpenEvent;
 //#endif
 
 @Mixin(Minecraft.class)
@@ -149,15 +154,31 @@ public abstract class MinecraftMixin {
             //#endif
             , remap = false))
     private Event onGuiOpenEvent(Event a) {
-        if (a instanceof GuiOpenEvent) {
+        if (a instanceof
+                //#if MC<11900
+                GuiOpenEvent
+                //#else
+                //$$ Opening
+                //#endif
+        ) {
+            // w: not imported because 1.18+ they renamed it to be the same (breh)
+            //#if MC<11900
             GuiOpenEvent forgeEvent = (GuiOpenEvent) a;
-            ScreenOpenEvent event = new ScreenOpenEvent(forgeEvent.
-                    //#if MC<=10809
-                    gui
-                    //#else
-                    //$$ getGui()
-                    //#endif
-            );
+            //#else
+            //$$ Opening forgeEvent = (Opening) a;
+            //#endif
+            org.polyfrost.oneconfig.api.events.event.ScreenOpenEvent event =
+                    new org.polyfrost.oneconfig.api.events.event.ScreenOpenEvent(forgeEvent.
+                            //#if MC<=10809
+                            gui
+                            //#else
+                            //#if MC<11900
+                            //$$ getGui()
+                            //#else
+                            //$$ getNewScreen()
+                            //#endif
+                            //#endif
+                    );
             EventManager.INSTANCE.post(event);
             if (event.cancelled) {
                 forgeEvent.setCanceled(true);

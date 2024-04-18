@@ -24,9 +24,8 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.internal.mixin;
+package org.polyfrost.oneconfig.internal.mixin.commands;
 
-import net.minecraft.text.LiteralText;
 import org.polyfrost.oneconfig.internal.libs.fabric.ClientCommandSource;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -59,7 +58,18 @@ abstract class ClientCommandSourceMixin implements ClientCommandSource {
 
     @Override
     public void sendError(Text message) {
-        sendFeedback(new LiteralText("").append(message).formatted(Formatting.RED));
+        sendFeedback(
+                //#if MC<11900
+                new net.minecraft.text.LiteralText("")
+                //#else
+                //#if FORGE
+                //$$ net.minecraft.network.chat.Component
+                //#else
+                //$$ net.minecraft.text.Text
+                //#endif
+                    //$$ .empty()
+                //#endif
+                        .append(message).formatted(Formatting.RED));
     }
 
     @Override

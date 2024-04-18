@@ -47,7 +47,7 @@ import net.minecraft.text.Text;
 import net.minecraft.text.Texts;
 import net.minecraft.text.TranslatableText;
 import org.jetbrains.annotations.Nullable;
-import org.polyfrost.oneconfig.internal.mixin.HelpCommandAccessor;
+import org.polyfrost.oneconfig.internal.mixin.commands.HelpCommandAccessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -101,7 +101,7 @@ public final class ClientCommandInternals {
     public static boolean executeCommand(String command) {
         if(command.startsWith("/")) {
             command = command.substring(1);
-        } else return false;
+        }
         MinecraftClient client = MinecraftClient.getInstance();
 
         // The interface is implemented on ClientCommandSource with a mixin.
@@ -157,7 +157,13 @@ public final class ClientCommandInternals {
         Text message = Texts.toText(e.getRawMessage());
         String context = e.getContext();
 
-        return context != null ? new TranslatableText("command.context.parse_error", message, e.getCursor(), context) : message;
+        return context != null ?
+                //#if MC<11900
+                new TranslatableText
+                //#else
+                //$$ Text.translatable
+                //#endif
+                        ("command.context.parse_error", message.getString(), e.getCursor(), context) : message;
     }
 
     /**
@@ -200,7 +206,13 @@ public final class ClientCommandInternals {
         Map<CommandNode<ClientCommandSource>, String> commands = activeDispatcher.getSmartUsage(startNode, context.getSource());
 
         for (String command : commands.values()) {
-            context.getSource().sendFeedback(new LiteralText("/" + command));
+            context.getSource().sendFeedback(
+                    //#if MC<11900
+                    new LiteralText
+                    //#else
+                    //$$ Text.of
+                    //#endif
+                            ("/" + command));
         }
 
         return commands.size();

@@ -27,10 +27,16 @@
 //#if FORGE
 package org.polyfrost.oneconfig.internal.mixin;
 
+// guys MAKE UP YOUR FUCKING MINDS like what?? three times consecutively??
+// i swear if i have to change this for 1.20 as well im going to start throwing hands
 //#if MC<11700
 import net.minecraftforge.fml.client.ClientModLoader;
 //#else
+//#if MC<11900
 //$$ import net.minecraftforge.fmlclient.ClientModLoader;
+//#else
+//$$ import net.minecraftforge.client.loading.ClientModLoader;
+//#endif
 //#endif
 import org.polyfrost.oneconfig.internal.OneConfig;
 import org.spongepowered.asm.mixin.Mixin;
