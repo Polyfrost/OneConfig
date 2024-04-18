@@ -30,6 +30,7 @@ import cc.polyfrost.oneconfig.config.Config;
 import cc.polyfrost.oneconfig.config.annotations.Exclude;
 import cc.polyfrost.oneconfig.config.annotations.Switch;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
+import cc.polyfrost.oneconfig.internal.hud.HudCore;
 import cc.polyfrost.oneconfig.libs.universal.UMatrixStack;
 import cc.polyfrost.oneconfig.platform.Platform;
 
@@ -80,7 +81,7 @@ public abstract class Hud {
     @Exclude
     private final Runnable resetPosition = this::resetPosition;
     @Exclude
-    private boolean loaded = false, isPatcher = Platform.getLoaderPlatform().isModLoaded("patcher");
+    private boolean loaded = false;
     @Exclude
     private Position defaultPosition;
 
@@ -221,7 +222,7 @@ public abstract class Hud {
      * @return If the hud is ignored from hud caching
      */
     public boolean isIgnored() {
-        return ignoreCaching && (config == null || config.enabled) && isPatcher;
+        return ignoreCaching && (config == null || config.enabled) && HudCore.isPatcher;
     }
 
     /**
