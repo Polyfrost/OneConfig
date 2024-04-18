@@ -80,7 +80,7 @@ public abstract class Hud {
     @Exclude
     private final Runnable resetPosition = this::resetPosition;
     @Exclude
-    private boolean loaded = false;
+    private boolean loaded = false, isPatcher = Platform.getLoaderPlatform().isModLoaded("patcher");
     @Exclude
     private Position defaultPosition;
 
@@ -221,7 +221,7 @@ public abstract class Hud {
      * @return If the hud is ignored from hud caching
      */
     public boolean isIgnored() {
-        return ignoreCaching && (config == null || config.enabled) && Platform.getLoaderPlatform().isModLoaded("patcher");
+        return ignoreCaching && (config == null || config.enabled) && isPatcher;
     }
 
     /**
