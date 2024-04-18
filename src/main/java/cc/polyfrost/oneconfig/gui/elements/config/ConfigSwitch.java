@@ -63,7 +63,7 @@ public class ConfigSwitch extends BasicOption {
         try {
             toggled = (boolean) get();
             if (animation == null) {
-                animation = new DummyAnimation(toggled ? 1 : 0);
+                animation = new EaseInOutQuad(0, 0, 1, !toggled);
                 color = new ColorAnimation(toggled ? ColorPalette.PRIMARY : ColorPalette.SECONDARY);
             }
         } catch (IllegalAccessException ignored) {
