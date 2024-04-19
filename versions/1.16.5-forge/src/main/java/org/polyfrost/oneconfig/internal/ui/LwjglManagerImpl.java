@@ -32,7 +32,6 @@ import org.polyfrost.oneconfig.ui.impl.RendererImpl;
 import org.polyfrost.oneconfig.ui.impl.TinyFDImpl;
 import org.polyfrost.polyui.renderer.Renderer;
 
-@SuppressWarnings("unused")
 public class LwjglManagerImpl implements LwjglManager {
     private static final TinyFD impl = new TinyFDImpl();
 

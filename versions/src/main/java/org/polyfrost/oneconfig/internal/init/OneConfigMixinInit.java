@@ -69,7 +69,7 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
                 mixins.add("compat.HudCachingMixin");
             }
             if (version > 11600) {
-                mixins.add("ClientModLoaderMixin");
+                mixins.add("forge.ClientModLoaderMixin");
             }
         }
         if (loader == Platform.Loader.FABRIC) {

@@ -25,7 +25,7 @@
  */
 
 //#if FORGE
-package org.polyfrost.oneconfig.internal.mixin;
+package org.polyfrost.oneconfig.internal.mixin.forge;
 
 // guys MAKE UP YOUR FUCKING MINDS like what?? three times consecutively??
 // i swear if i have to change this for 1.20 as well im going to start throwing hands
