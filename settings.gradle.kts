@@ -47,7 +47,9 @@ listOf(
     "1.18.1-forge",
     "1.18.1-fabric",
     "1.19.4-forge",
-    "1.19.4-fabric"
+    "1.19.4-fabric",
+    "1.20.4-fabric",
+    "1.20.4-forge"
 ).forEach { version ->
     val proj = ":platform:$version"
     include(proj)

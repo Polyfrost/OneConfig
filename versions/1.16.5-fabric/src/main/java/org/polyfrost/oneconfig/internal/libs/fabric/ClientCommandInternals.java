@@ -42,7 +42,6 @@ import com.mojang.brigadier.exceptions.CommandExceptionType;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.tree.CommandNode;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
 import net.minecraft.text.Texts;
 import net.minecraft.text.TranslatableText;
@@ -208,7 +207,7 @@ public final class ClientCommandInternals {
         for (String command : commands.values()) {
             context.getSource().sendFeedback(
                     //#if MC<11900
-                    new LiteralText
+                    new net.minecraft.text.LiteralText
                     //#else
                     //$$ Text.of
                     //#endif

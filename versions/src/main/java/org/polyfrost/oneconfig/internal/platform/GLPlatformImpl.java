@@ -79,12 +79,18 @@ public class GLPlatformImpl implements GLPlatform {
 
     @Override
     public float drawText(UMatrixStack matrixStack, String text, float x, float y, int color, boolean shadow) {
+        //#if MC>12000
+        //$$ return UMinecraft.getFontRenderer().draw(text, x, y, color, shadow,
+        //$$    matrixStack.toMC().peek().getPositionMatrix(), UMinecraft.getMinecraft().getBufferBuilders().getEntityVertexConsumers(),
+        //$$    net.minecraft.client.font.TextRenderer.TextLayerType.NORMAL, 0, 15728880);
+        //#else
         //#if MC<=11202
         return UMinecraft.getFontRenderer().drawString(text, x, y, color, shadow);
         //#else
         //$$ if(shadow) {
         //$$    return UMinecraft.getFontRenderer().drawStringWithShadow(matrixStack.toMC(), text, x, y, color);
         //$$ } else return UMinecraft.getFontRenderer().drawString(matrixStack.toMC(), text, x, y, color);
+        //#endif
         //#endif
     }
 

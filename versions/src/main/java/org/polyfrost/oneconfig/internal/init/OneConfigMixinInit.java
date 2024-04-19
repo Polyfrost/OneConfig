@@ -68,7 +68,7 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
                 // Patcher mixin
                 mixins.add("compat.HudCachingMixin");
             }
-            if (version >= 11600) {
+            if (version > 11600) {
                 mixins.add("ClientModLoaderMixin");
             }
         }
@@ -76,13 +76,13 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
             mixins.add("GameRendererAccessor");
             mixins.add("NetHandlerPlayClientMixin");
 
-            if (version <= 11202) {
+            if (version < 11300) {
                 mixins.add("commands.ChatScreenMixin");
             }
         }
 
         // Inter-loader mixins
-        if (version >= 11600) {
+        if (version > 11600) {
             mixins.add("KeyboardMixin");
             mixins.add("MouseMixin");
             mixins.add("commands.ClientCommandSourceMixin");
@@ -90,13 +90,16 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
             mixins.add("commands.HelpCommandAccessor");
         }
 
-        if (version < 11900) mixins.add("SchemasMixin");
+        if (version > 12000) {
+            mixins.add("DebugHudAccessor");
+        }
 
-        if (version <= 11202) {
+        if (version < 11300) {
             mixins.add("GuiScreenMixin");
         }
 
         if (version < 11900) {
+            mixins.add("SchemasMixin");
             mixins.add("EntityPlayerSPMixin");
         }
 

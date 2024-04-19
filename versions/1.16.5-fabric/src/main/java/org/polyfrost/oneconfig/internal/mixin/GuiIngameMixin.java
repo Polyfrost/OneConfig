@@ -39,7 +39,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(InGameHud.class)
 public abstract class GuiIngameMixin {
     @Inject(method = "render", at = @At("TAIL"))
+    //#if MC>12000
+    //$$ private void onRenderGameOverlay(net.minecraft.client.gui.DrawContext context, float tickDelta, CallbackInfo ci) {
+    //$$     EventManager.INSTANCE.post(new HudRenderEvent(new UMatrixStack(context.getMatrices()), tickDelta));
+    //$$ }
+    //#else
     private void onRenderGameOverlay(MatrixStack matrices, float tickDelta, CallbackInfo ci) {
         EventManager.INSTANCE.post(new HudRenderEvent(new UMatrixStack(matrices), tickDelta));
     }
+    //#endif
 }

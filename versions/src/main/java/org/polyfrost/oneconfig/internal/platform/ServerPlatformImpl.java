@@ -42,7 +42,12 @@ public class ServerPlatformImpl implements ServerPlatform {
         EntityPlayerSP player = UMinecraft.getPlayer();
         if (player == null)
             return null;
+        //#if MC<12000
         return player.getClientBrand();
+        //#else
+        //$$ net.minecraft.server.MinecraftServer server = player.getServer();
+        //$$ return server == null ? null : server.getName();
+        //#endif
     }
 
     @Override
