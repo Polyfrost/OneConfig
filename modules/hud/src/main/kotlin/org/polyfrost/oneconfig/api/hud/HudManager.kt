@@ -266,14 +266,17 @@ object HudManager {
         }
         // first open
         if (pg.parent == null) {
+            val sx = polyUI.size.x / 1920f
+            val sy = polyUI.size.y / 1080f
             polyUI.master.addChild(
                 pg, reposition = false,
             )
+            pg.rescale(sx, sy, true)
         } else {
             pg.prioritize()
             pg.renders = true
         }
-        if(exists) {
+        if (exists) {
             Fade(pg, 0f, false, Animations.EaseInOutQuad.create(0.2.seconds)) {
                 renders = false
             }.add()

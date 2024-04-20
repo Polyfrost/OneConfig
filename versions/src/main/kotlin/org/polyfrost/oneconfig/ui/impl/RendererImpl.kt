@@ -79,7 +79,7 @@ object RendererImpl : Renderer {
     override fun beginFrame(width: Float, height: Float, pixelRatio: Float) {
         if (drawing) throw IllegalStateException("Already drawing")
         // todo: (1.17+) fix in evening time (12800) the sky looks wierd af when rendering
-        // see https://docs.gl/gl2/glPushAttrib for the GL_COLOR_BUFFER_BIT stored values
+        // see https://docs.gl/gl2/glPushAttrib for the stored values
         // it will be one of those states that we need to save and restore
 
         // why 1.17+: cannot pushAttrib in 1.17 because core profile, and it is not available
@@ -90,7 +90,7 @@ object RendererImpl : Renderer {
         //#endif
 
         //#if MC<11700
-        glPushAttrib(GL_COLOR_BUFFER_BIT)
+        glPushAttrib(GL_ALL_ATTRIB_BITS)
         //#endif
         UGraphics.disableAlpha()
         nvgBeginFrame(vg, width, height, pixelRatio)

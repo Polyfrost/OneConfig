@@ -44,6 +44,7 @@ import org.polyfrost.polyui.utils.radii
 private val scaleBlob by lazy {
     var sx = 0f
     var sy = 0f
+    var st = 1f
     val b = Block(
         size = 20f by 20f,
         radii = 10f.radii(),
@@ -52,12 +53,13 @@ private val scaleBlob by lazy {
         onStart = {
             sx = polyUI.mouseX
             sy = polyUI.mouseY
+            st = scaleX
         },
         onDrag = {
             cur?.let {
                 val dx = polyUI.mouseX - sx
                 val dy = polyUI.mouseY - sy
-                val s = (scaleX + ((dx + dy) / (it.width + it.height))).coerceIn(0.5f, 3f)
+                val s = st + (((dx + dy) / (it.width + it.height))).coerceIn(0.5f, 3f)
                 it.scaleX = s
                 it.scaleY = s
                 x = it.x + (it.width * s) - (width / 2f)

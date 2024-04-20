@@ -106,8 +106,10 @@ public abstract class MinecraftMixin {
     //$$
     //$$ @Inject(method = "updateWindowSize", at = @At("HEAD"))
     //$$ private void onResize(CallbackInfo ci) {
-    //$$     net.minecraft.client.MainWindow win = this.getMainWindow();
-    //$$     EventManager.INSTANCE.post(new ResizeEvent(win.getWidth(), win.getHeight()));
+    //$$     int[] w = new int[1];
+    //$$     int[] h = new int[1];
+    //$$     org.lwjgl.glfw.GLFW.glfwGetWindowSize(getWindow().getHandle(), w, h);
+    //$$     EventManager.INSTANCE.post(new ResizeEvent(w[0], h[0]));
     //$$ }
     //#endif
 
