@@ -108,7 +108,7 @@ public abstract class MinecraftMixin {
     //$$ private void onResize(CallbackInfo ci) {
     //$$     int[] w = new int[1];
     //$$     int[] h = new int[1];
-    //$$     org.lwjgl.glfw.GLFW.glfwGetWindowSize(getWindow().getHandle(), w, h);
+    //$$     org.lwjgl.glfw.GLFW.glfwGetWindowSize(this.getMainWindow().getHandle(), w, h);
     //$$     EventManager.INSTANCE.post(new ResizeEvent(w[0], h[0]));
     //$$ }
     //#endif

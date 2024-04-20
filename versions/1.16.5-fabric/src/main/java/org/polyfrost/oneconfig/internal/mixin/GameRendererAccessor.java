@@ -33,6 +33,11 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 
 @Mixin(GameRenderer.class)
 public interface GameRendererAccessor {
+    //#if MC<11900
     @Invoker
+    //#else
+    //$$ @Invoker("loadPostProcessor")
+    //#endif
     void invokeLoadShader(Identifier identifier);
+
 }
