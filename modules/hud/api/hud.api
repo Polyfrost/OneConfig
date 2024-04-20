@@ -40,6 +40,7 @@ public final class org/polyfrost/oneconfig/api/hud/HudManager {
 	public static final fun register (Lorg/polyfrost/oneconfig/api/hud/Hud;)V
 	public static final fun register ([Lorg/polyfrost/oneconfig/api/hud/Hud;)V
 	public final fun setBackend (Lorg/polyfrost/oneconfig/api/config/backend/impl/FileBackend;)V
+	public final fun setHudsPage (Lorg/polyfrost/polyui/component/Drawable;)V
 	public final fun setSlinex (F)V
 	public final fun setSliney (F)V
 	public final fun toggle ()V
@@ -84,6 +85,13 @@ public final class org/polyfrost/oneconfig/api/hud/TextHud$DateTime : org/polyfr
 	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun getString ()Ljava/lang/String;
 	public final fun setString (Ljava/lang/String;)V
+}
+
+public final class org/polyfrost/oneconfig/api/hud/TextHud$Field : org/polyfrost/oneconfig/api/hud/TextHud {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getTheText ()Ljava/lang/String;
+	public final fun setTheText (Ljava/lang/String;)V
 }
 
 public final class org/polyfrost/oneconfig/api/hud/TextHud$Supplier : org/polyfrost/oneconfig/api/hud/TextHud {

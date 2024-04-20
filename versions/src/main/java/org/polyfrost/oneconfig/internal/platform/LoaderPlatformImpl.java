@@ -48,25 +48,14 @@ import net.minecraftforge.fml.common.ModContainer;
 public class LoaderPlatformImpl implements LoaderPlatform {
     @Override
     public boolean isModLoaded(String id) {
+        //#if FABRIC
+        //$$ return FabricLoader.getInstance().isModLoaded(id);
+        //#else
         //#if MC>=11600
-        //#if FORGE
         //$$ return ModList.get().isLoaded(id);
         //#else
-        //$$ return FabricLoader.getInstance().isModLoaded(id);
-        //#endif
-        //#elseif FORGE
         return Loader.isModLoaded(id);
-        //#else
-        //$$ return FabricLoader.getInstance().isModLoaded(id);
         //#endif
-    }
-
-    @Override
-    public boolean hasActiveModContainer() {
-        //#if FORGE
-        return Loader.instance().activeModContainer() != null;
-        //#else
-        //$$ return false;
         //#endif
     }
 
@@ -87,15 +76,6 @@ public class LoaderPlatformImpl implements LoaderPlatform {
         } catch (Exception e) {
             return Collections.emptyList();
         }
-    }
-
-    @Override
-    public ActiveMod getActiveModContainer() {
-        //#if FORGE
-        return toActiveMod(Loader.instance().activeModContainer());
-        //#else
-        //$$ return null;
-        //#endif
     }
 
     @Override

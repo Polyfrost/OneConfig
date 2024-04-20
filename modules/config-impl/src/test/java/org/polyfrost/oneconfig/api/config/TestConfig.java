@@ -77,7 +77,7 @@ public class TestConfig extends Config {
     public static Boolean[] dropboolean = new Boolean[]{true, false, true};
     @Number(title = "number", unit = "px", category = "bob")
     public static int number = 50;
-    @Slider(title = "Slide", min = 10f, max = 110f, icon = "paintbrush.svg", description = "I do sliding", category = "bob")
+    @Slider(title = "Slide", min = 10f, max = 110f, icon = "assets/oneconfig/ico/paintbrush.svg", description = "I do sliding", category = "bob")
     public static float p = 50f;
     @Text(title = "Text")
     public static String text = "Hello world!";

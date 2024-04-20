@@ -166,14 +166,7 @@ public class PolyUIScreen extends UScreen implements UIPause, BlurScreen {
         float oy = (height() / 2f - size.getY() / 2f) * scale;
         glViewport((int) ox, (int) oy, (int) (size.getX() * scale), (int) (size.getY() * scale));
 
-
-        //#if MC>=11300
-        //$$ com.mojang.blaze3d.systems.RenderSystem.disableCull();
-        //$$ com.mojang.blaze3d.systems.RenderSystem.enableBlend();
-        //#else
-        net.minecraft.client.renderer.GlStateManager.disableCull();
-        net.minecraft.client.renderer.GlStateManager.enableBlend();
-
+        //#if MC<11300
         if (mouseX != mx || mouseY != my) {
             mx = mouseX;
             my = mouseY;
@@ -182,14 +175,6 @@ public class PolyUIScreen extends UScreen implements UIPause, BlurScreen {
         //#endif
 
         polyUI.render();
-
-        //#if MC>=11300
-        //$$ com.mojang.blaze3d.systems.RenderSystem.disableBlend();
-        //$$ com.mojang.blaze3d.systems.RenderSystem.enableCull();
-        //#else
-        net.minecraft.client.renderer.GlStateManager.disableBlend();
-        net.minecraft.client.renderer.GlStateManager.enableCull();
-        //#endif
 
         glViewport(0, 0, UResolution.getViewportWidth(), UResolution.getViewportHeight());
     }

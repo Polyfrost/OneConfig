@@ -60,6 +60,15 @@ abstract class TextHud(var prefix: String, var suffix: String = "", private val 
         override fun getText() = supplier()
     }
 
+    class Field(prefix: String, text: String, suffix: String = "") : TextHud(prefix, suffix, 0L) {
+        var theText = text
+            set(value) {
+                field = value
+                update()
+            }
+        override fun getText() = theText
+    }
+
     /**
      * [TextHud] which displays the date/time information.
      * @param template the template to use for the time. See [DateTimeFormatter] for an explanation of the different keywords.

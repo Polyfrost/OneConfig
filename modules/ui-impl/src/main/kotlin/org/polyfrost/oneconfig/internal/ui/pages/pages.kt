@@ -47,7 +47,7 @@ import org.polyfrost.polyui.utils.image
 import org.polyfrost.polyui.utils.radii
 import org.polyfrost.polyui.utils.translated
 
-private val heart = PolyImage("plus.svg")
+private val heart = PolyImage("assets/oneconfig/ico/plus.svg")
 private val defaultModImage = "chatting.svg".image()
 private val modBoxTopRad = radii(8f, 8f, 0f, 0f)
 private val modBoxBotRad = radii(0f, 0f, 8f, 8f)
@@ -97,7 +97,7 @@ fun ThemesPage(): Drawable {
 
 fun FeedbackPage(): Drawable {
     return Group(
-        Image(PolyImage("polyfrost.png")).onInit { image.size.min(298f, 50f) },
+        Image(PolyImage("assets/oneconfig/brand/polyfrost.png")).onInit { image.size.min(298f, 50f) },
         Text("oneconfig.feedback.title", fontSize = 24f, font = PolyUI.defaultFonts.medium),
         Text("oneconfig.feedback.credits", fontSize = 14f),
         Text("oneconfig.feedback.bugreport", fontSize = 24f, font = PolyUI.defaultFonts.medium),
@@ -181,10 +181,10 @@ fun NotificationsPopup(polyUI: PolyUI, notifications: List<Notification>) {
             ),
             Group(
                 Group(
-                    Image("close.svg".image()),
+                    Image("assets/oneconfig/ico/close.svg".image()),
                     Text("oneconfig.clearall"),
                 ),
-                Image("cog.svg".image()),
+                Image("assets/oneconfig/ico/cog.svg".image()),
             ),
         ),
     ).events {

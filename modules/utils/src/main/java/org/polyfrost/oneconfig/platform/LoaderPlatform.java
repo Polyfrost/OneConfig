@@ -35,11 +35,6 @@ import java.util.List;
 public interface LoaderPlatform {
     boolean isModLoaded(String id);
 
-    boolean hasActiveModContainer();
-
-    @Nullable
-    ActiveMod getActiveModContainer();
-
     @Nullable
     ActiveMod toActiveMod(@Nullable Object in);
 

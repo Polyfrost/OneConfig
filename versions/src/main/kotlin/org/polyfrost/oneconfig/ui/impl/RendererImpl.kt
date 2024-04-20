@@ -32,9 +32,11 @@ import org.lwjgl.nanovg.NVGPaint
 import org.lwjgl.nanovg.NanoSVG.*
 import org.lwjgl.nanovg.NanoVG.*
 import org.lwjgl.nanovg.NanoVGGL2.NVG_ANTIALIAS
+import org.lwjgl.opengl.GL11.*
 import org.lwjgl.stb.STBImage.stbi_failure_reason
 import org.lwjgl.stb.STBImage.stbi_load_from_memory
 import org.lwjgl.system.MemoryUtil
+import org.polyfrost.oneconfig.libs.universal.UGraphics
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.renderer.data.Font
@@ -76,6 +78,21 @@ object RendererImpl : Renderer {
 
     override fun beginFrame(width: Float, height: Float, pixelRatio: Float) {
         if (drawing) throw IllegalStateException("Already drawing")
+        // todo: (1.17+) fix in evening time (12800) the sky looks wierd af when rendering
+        // see https://docs.gl/gl2/glPushAttrib for the GL_COLOR_BUFFER_BIT stored values
+        // it will be one of those states that we need to save and restore
+
+        // why 1.17+: cannot pushAttrib in 1.17 because core profile, and it is not available
+        //#if MC<11300
+        net.minecraft.client.renderer.GlStateManager.disableCull()
+        //#else
+        //$$ com.mojang.blaze3d.systems.RenderSystem.disableCull()
+        //#endif
+
+        //#if MC<11700
+        glPushAttrib(GL_COLOR_BUFFER_BIT)
+        //#endif
+        UGraphics.disableAlpha()
         nvgBeginFrame(vg, width, height, pixelRatio)
         drawing = true
     }
@@ -83,6 +100,14 @@ object RendererImpl : Renderer {
     override fun endFrame() {
         if (!drawing) throw IllegalStateException("Not drawing")
         nvgEndFrame(vg)
+        //#if MC<11700
+        glPopAttrib()
+        //#endif
+        //#if MC<11300
+        net.minecraft.client.renderer.GlStateManager.enableCull()
+        //#else
+        //$$ com.mojang.blaze3d.systems.RenderSystem.enableCull()
+        //#endif
         drawing = false
     }
 
@@ -451,7 +476,7 @@ object RendererImpl : Renderer {
     }
 
     private fun svgLoad(image: PolyImage, vec: String?): Int {
-        val raw = vec ?: image.stream?.bufferedReader()?.readText() ?: throw NullPointerException()
+        val raw = vec ?: image.stream?.bufferedReader()?.readText() ?: throw NullPointerException(image.toString())
         val svg = nsvgParse(raw, "px", 96f) ?: throw IllegalStateException("Failed to parse SVG: ${image.resourcePath}")
         image.size = Vec2.Immutable(svg.width(), svg.height())
         val map = HashMap<Int, Int>(2)

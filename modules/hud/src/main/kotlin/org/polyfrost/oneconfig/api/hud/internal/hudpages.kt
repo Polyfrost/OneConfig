@@ -100,7 +100,7 @@ fun createInspectionsScreen(hud: Hud<out Drawable>): Drawable {
         Text("oneconfig.hudeditor.general.title", font = PolyUI.defaultFonts.medium, fontSize = 16f),
         Group(
             Text("oneconfig.hudeditor.padding.title").secondary(),
-            Image("info.svg".image()).withStates(showClicker = false).addHoverInfo("oneconfig.hudeditor.padding.info"),
+            Image("assets/oneconfig/ico/info.svg".image()).withStates(showClicker = false).addHoverInfo("oneconfig.hudeditor.padding.info"),
             size = Vec2(450f, 18f),
             alignment = Align(main = Align.Main.SpaceBetween, padding = Vec2.ZERO),
         ),
@@ -120,8 +120,8 @@ fun createInspectionsScreen(hud: Hud<out Drawable>): Drawable {
                     padding = 32f,
                     entries = arrayOf("oneconfig.align.start", "oneconfig.align.center", "oneconfig.align.end"),
                 ).titled("oneconfig.hudeditor.padding.mode.cross"),
-                BoxedTextInput("info.svg".image(), placeholder = "8px", size = Vec2(140f, 32f)).titled("oneconfig.hudeditor.padding.main"),
-                BoxedTextInput("info.svg".image(), placeholder = "6px", size = Vec2(140f, 32f)).titled("oneconfig.hudeditor.padding.cross"),
+                BoxedTextInput("assets/oneconfig/ico/info.svg".image(), placeholder = "8px", size = Vec2(140f, 32f)).titled("oneconfig.hudeditor.padding.main"),
+                BoxedTextInput("assets/oneconfig/ico/info.svg".image(), placeholder = "6px", size = Vec2(140f, 32f)).titled("oneconfig.hudeditor.padding.cross"),
                 size = Vec2(375f, 0f),
                 alignment = Align(main = Align.Main.SpaceBetween, padding = Vec2.ZERO),
             ),
@@ -149,7 +149,7 @@ private fun interactiveAlignment(hud: Hud<out Drawable>): Drawable {
     return Block(
         size = 125f by 125f,
         children = arrayOf(
-            Image("alignment2.svg".image(), at = 19f by 19f).draggable(
+            Image("assets/oneconfig/ico/align/alignment2.svg".image(), at = 19f by 19f).draggable(
                 withX = false, withY = false,
                 onStart = {
                     px = polyUI.mouseX
@@ -194,7 +194,7 @@ private fun interactiveAlignment(hud: Hud<out Drawable>): Drawable {
                     it.skewY = bg.skewY
                 }
             },
-            Image("alignment3.svg".image()).setPalette {
+            Image("assets/oneconfig/ico/align/alignment3.svg".image()).setPalette {
                 Colors.Palette(
                     text.secondary.disabled,
                     brand.fg.disabled,
@@ -231,7 +231,7 @@ private fun interactiveAlignment(hud: Hud<out Drawable>): Drawable {
                 size = 57f by 57f,
                 children = arrayOf(
                     Image(
-                        "alignment1.svg".image(),
+                        "assets/oneconfig/ico/align/alignment1.svg".image(),
                     ),
                 ),
                 alignment = alignC,
@@ -268,7 +268,7 @@ fun textOptions(text: Text): Drawable {
     return Group(
         Group(
             Text("oneconfig.hudeditor.text.title").secondary(),
-            Image("info.svg".image()).addHoverInfo("oneconfig.hudeditor.text.description"),
+            Image("assets/oneconfig/ico/info.svg".image()).addHoverInfo("oneconfig.hudeditor.text.description"),
             alignment = Align(main = Align.Main.SpaceBetween, padding = Vec2.ZERO),
             size = Vec2(450f, 18f),
         ),
@@ -297,12 +297,12 @@ fun textOptions(text: Text): Drawable {
             ex.parent?.recalculateChildren()
             false
         }.titled("oneconfig.hudeditor.text.font"),
-        BoxedTextInput("info.svg".image(), "12px", text.fontSize.toString()).titled("oneconfig.hudeditor.text.size"),
+        BoxedTextInput("assets/oneconfig/ico/info.svg".image(), "12px", text.fontSize.toString()).titled("oneconfig.hudeditor.text.size"),
         Radiobutton(
             entries = arrayOf(
-                "info.svg".image(),
-                "info.svg".image(),
-                "info.svg".image(),
+                "assets/oneconfig/ico/info.svg".image(),
+                "assets/oneconfig/ico/info.svg".image(),
+                "assets/oneconfig/ico/info.svg".image(),
             ),
             optionLateralPadding = 2f,
             optionVerticalPadding = 2f,
@@ -331,9 +331,9 @@ fun textOptions(text: Text): Drawable {
         }.titled("oneconfig.hudeditor.text.weight"),
         Radiobutton(
             entries = arrayOf(
-                "info.svg".image(),
-                "info.svg".image(),
-                "info.svg".image(),
+                "assets/oneconfig/ico/info.svg".image(),
+                "assets/oneconfig/ico/info.svg".image(),
+                "assets/oneconfig/ico/info.svg".image(),
             ),
             optionLateralPadding = 2f,
             optionVerticalPadding = 2f,

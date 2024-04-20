@@ -91,6 +91,22 @@ public class Tree extends Node implements Serializable {
         }
     }
 
+    private static void _unpack(Map<String, Object> out, Tree t) {
+        for (Map.Entry<String, Node> e : t.theMap.entrySet()) {
+            Node n = e.getValue();
+            if (n instanceof Tree) {
+                Tree tt = (Tree) n;
+                Map<String, Object> sub = new HashMap<>(tt.theMap.size());
+                _unpack(sub, tt);
+                out.put(e.getKey(), sub);
+            } else {
+                Property<?> p = (Property<?>) n;
+                if(p.type == Void.class) continue;
+                out.put(e.getKey(), p.get());
+            }
+        }
+    }
+
     private static void _toString(StringBuilder sb, int depth, Tree t) {
         for (int i = 0; i < depth; i++) sb.append('\t');
         sb.append(t.getTitle()).append(":\n");
@@ -214,6 +230,15 @@ public class Tree extends Node implements Serializable {
     public void overwrite(@NotNull Node with) {
         if (!(with instanceof Tree)) throw new IllegalArgumentException("Cannot overwrite a tree with a non-tree node!");
         _overwrite(this, (Tree) with);
+    }
+
+    /**
+     * Unpack this tree into a map of objects, containing either more Maps or the values of the properties of this tree.
+     */
+    public Map<String, Object> unpack() {
+        Map<String, Object> out = new HashMap<>(theMap.size());
+        _unpack(out, this);
+        return out;
     }
 
     @Override

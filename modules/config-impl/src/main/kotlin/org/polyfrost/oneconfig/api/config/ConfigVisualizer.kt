@@ -184,7 +184,7 @@ object ConfigVisualizer {
             alignment = alignVNoPad,
             children =
             arrayOf(
-                Image("chevron-down.svg".image()).also { it.rotation = PI }.wrap(title, desc, icon).events {
+                Image("assets/oneconfig/ico/chevron-down.svg".image()).also { it.rotation = PI }.wrap(title, desc, icon).events {
                     self.color = PolyColor.TRANSPARENT.toAnimatable()
                     var open = false
                     Event.Mouse.Clicked(0) then {

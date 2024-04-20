@@ -44,7 +44,6 @@ import org.polyfrost.polyui.utils.radii
 private val scaleBlob by lazy {
     var sx = 0f
     var sy = 0f
-    var s = Float.NaN
     val b = Block(
         size = 20f by 20f,
         radii = 10f.radii(),
@@ -53,27 +52,16 @@ private val scaleBlob by lazy {
         onStart = {
             sx = polyUI.mouseX
             sy = polyUI.mouseY
-            s = Float.NaN
         },
         onDrag = {
             cur?.let {
                 val dx = polyUI.mouseX - sx
                 val dy = polyUI.mouseY - sy
-                s = (1f + ((dx + dy) / (it.width + it.height))).coerceIn(0.5f, 3f)
-                if (!s.isNaN()) {
-                    it.scaleX = s
-                    it.scaleY = s
-                    x = it.x + (it.width * s) - (width / 2f)
-                    y = it.y + (it.height * s) - (height / 2f)
-                }
-            }
-        },
-        onDrop = {
-            if (!s.isNaN()) cur?.let {
-                // asm: finalize the scaling
-                it.rescale(s, s, false)
-                it.scaleX = 1f
-                it.scaleY = 1f
+                val s = (scaleX + ((dx + dy) / (it.width + it.height))).coerceIn(0.5f, 3f)
+                it.scaleX = s
+                it.scaleY = s
+                x = it.x + (it.width * s) - (width / 2f)
+                y = it.y + (it.height * s) - (height / 2f)
             }
         },
     ).apply {
@@ -177,7 +165,7 @@ fun Hud<out Drawable>.build(): Block {
                     HudManager.openHudEditor(this@build)
                     HudManager.polyUI.unfocus()
                 },
-                Image("close.svg".image()).setDestructivePalette().withStates(consume = true).onClick {
+                Image("assets/oneconfig/ico/close.svg".image()).setDestructivePalette().withStates(consume = true).onClick {
                     HudManager.polyUI.master.removeChild(this@events.self)
                     HudManager.polyUI.removeExecutor(exe)
                     HudManager.polyUI.unfocus()
@@ -205,8 +193,8 @@ private fun Block.addScaler(): Block {
     this.addEventHandler(Event.Mouse.Clicked(0)) {
         val sb = scaleBlob
         sb.renders = true
-        sb.x = x + width - (sb.width / 2f)
-        sb.y = y + height - (sb.height / 2f)
+        sb.x = x + (width * scaleX) - (sb.width / 2f)
+        sb.y = y + (height * scaleY) - (sb.height / 2f)
         cur = this
     }
     return this

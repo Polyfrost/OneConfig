@@ -52,6 +52,12 @@ import org.polyfrost.polyui.utils.rgba
 
 
 object OneConfigUI {
+    private val playerHead = PolyImage(
+        "https://mc-heads.net/avatar/${Platform.getInstance().playerName}/24",
+        type = PolyImage.Type.Raster,
+    ).also {
+        it.size = (24f by 24f).immutable()
+    }
     lateinit var ui: Drawable
 
 
@@ -72,30 +78,30 @@ object OneConfigUI {
                         val modsBtn = parent!![2][1]
                         Move(this, modsBtn.x, modsBtn.y, false).add()
                     },
-                    Image("oneconfig.svg".image()).named("Logo"),
+                    Image("assets/oneconfig/brand/oneconfig.svg".image()).named("Logo"),
                     Group(
                         alignment = vertical,
                         children = arrayOf(
                             Text("oneconfig.sidebar.title.options", fontSize = 11f).setPalette { text.secondary },
                             SidebarButton(
-                                "settings.svg".image(),
+                                "assets/oneconfig/ico/settings.svg".image(),
                                 "oneconfig.mods",
                             ).onClick { openPage(ModsPage(ConfigManager.active().trees()), "oneconfig.mods") },
                             SidebarButton(
-                                "profiles.svg".image(),
+                                "assets/oneconfig/ico/profiles.svg".image(),
                                 "oneconfig.profiles",
                             ).disable().addHoverInfo("this feature is experimental and is coming soon!"),
-                            SidebarButton("keyboard.svg".image(), "oneconfig.keybinds").disable(),
+                            SidebarButton("assets/oneconfig/ico/keyboard.svg".image(), "oneconfig.keybinds").disable(),
                         ),
                     ),
                     Group(
                         alignment = vertical,
                         children = arrayOf(
                             Text("oneconfig.sidebar.title.personal", fontSize = 11f).setPalette { text.secondary },
-                            SidebarButton("paintbrush.svg".image(), "oneconfig.themes", label("oneconfig.soon")).onClick {
+                            SidebarButton("assets/oneconfig/ico/paintbrush.svg".image(), "oneconfig.themes", label("oneconfig.soon")).onClick {
                                 openPage(ThemesPage(), "oneconfig.themes")
                             }.disable(),
-                            SidebarButton("cog.svg".image(), "oneconfig.preferences"),
+                            SidebarButton("assets/oneconfig/ico/cog.svg".image(), "oneconfig.preferences"),
                         ),
                     ),
                     Group(
@@ -103,18 +109,18 @@ object OneConfigUI {
                         children = arrayOf(
                             Text("oneconfig.sidebar.title.extra", fontSize = 11f).setPalette { text.secondary },
                             SidebarButton(
-                                "refresh.svg".image(),
+                                "assets/oneconfig/ico/refresh.svg".image(),
                                 "oneconfig.changelog",
                             ),//.onClick { openPage(ChangelogPage(NewsManager.getNews()), "oneconfig.changelog") },
                             SidebarButton(
-                                "text.svg".image(),
+                                "assets/oneconfig/ico/text.svg".image(),
                                 "oneconfig.feedback",
                                 label("oneconfig.beta"),
                             ).onClick { openPage(FeedbackPage(), "oneconfig.feedback") },
                         ),
                     ),
                     Spacer(size = Vec2(200f, 170f)),
-                    SidebarButton0("hud.svg".image(), "oneconfig.edithud").onClick {
+                    SidebarButton0("assets/oneconfig/ico/hud.svg".image(), "oneconfig.edithud").onClick {
                         GuiUtils.displayScreen(HudManager.getWithEditor())
                     },
                 ),
@@ -130,8 +136,8 @@ object OneConfigUI {
                             Group(
                                 alignment = Align(padding = Vec2(16f, 8f)),
                                 children = arrayOf(
-                                    Image("left-arrow.svg".image()).named("Back").disable(),
-                                    Image("right-arrow.svg".image()).named("Forward").disable(),
+                                    Image("assets/oneconfig/ico/left-arrow.svg".image()).named("Back").disable(),
+                                    Image("assets/oneconfig/ico/right-arrow.svg".image()).named("Forward").disable(),
                                     Text(
                                         "oneconfig.mods",
                                         font = PolyUI.defaultFonts.medium,
@@ -145,19 +151,11 @@ object OneConfigUI {
                                     Group(
                                         alignment = Align(padding = Vec2(16f, 8f)),
                                         children = arrayOf(
-                                            Image("cloud.svg".image()),
+                                            Image("assets/oneconfig/ico/cloud.svg".image()),
                                             Image(
-                                                "bell.svg".image(),
+                                                "assets/oneconfig/ico/bell.svg".image(),
                                             ),//.onClick { showNotifications(polyUI, NotificationsManager.getNotifications()) },
-                                            Image(
-                                                PolyImage(
-                                                    "https://mc-heads.net/avatar/${Platform.getInstance().playerName}/24",
-                                                    type = PolyImage.Type.Raster,
-                                                ).also {
-                                                    it.size = (24f by 24f).immutable()
-                                                },
-                                                radii = 6f.radii(),
-                                            ).named("ProfileImage").withBoarder(
+                                            Image(playerHead, radii = 6f.radii()).named("ProfileImage").withBoarder(
                                                 rgba(255, 255, 255, 0.14f),
                                                 width = 1f,
                                             ).addHoverInfo(Platform.getInstance().playerName.ifEmpty { "null" }),
@@ -167,7 +165,7 @@ object OneConfigUI {
                                         size = Vec2(256f, 32f),
                                         alignment = Align(padding = Vec2(10f, 8f)),
                                         children = arrayOf(
-                                            Image("search.svg".image()),
+                                            Image("assets/oneconfig/ico/search.svg".image()),
                                             TextInput(
                                                 placeholder = "oneconfig.search.placeholder",
                                                 visibleSize = Vec2(210f, 12f),
@@ -175,7 +173,7 @@ object OneConfigUI {
                                         ),
                                     ).named("SearchField"),
                                     Image(
-                                        "close.svg".image(),
+                                        "assets/oneconfig/ico/close.svg".image(),
                                     ).named("Close").onClick { GuiUtils.closeScreen() }.withStates().setDestructivePalette(),
                                 ),
                             ),

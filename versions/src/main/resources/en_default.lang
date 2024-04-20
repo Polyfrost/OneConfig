@@ -1,29 +1,85 @@
-polyui.search.placeholder=Write something here...
-polyui.colorpicker.solid=Solid color
-polyui.colorpicker.gradient=Gradient
-polyui.colorpicker.chroma=Chroma
-polyui.colorpicker.hex=HEX
-polyui.colorpicker.rgb=RGB
+polyui.test=Kotlin...        {}!    and image
+polyui.button=I am a button.
+polyui.textinput.placeholder=Write something...
+polyui.color.solid=Solid color
+polyui.color.gradient=Gradient color
+polyui.color.chroma=Chroma color
+polyui.color.hex=HEX
+polyfrost.copyright=© Polyfrost 2023. All rights reserved.
+button.randomize=Randomize order
+text.light=Flashbang mode
+text.dark=Boring mode
+button.text=A {0} button
 
-oneconfig=OneConfig
-oneconfig.sidebar.title.options=MODS & OPTIONS
+oneconfig.search.placeholder=Search for something...
+oneconfig.button.default=Click
+
+oneconfig.edithud=Edit HUD
+oneconfig.all=All
+oneconfig.pvp=PvP
+oneconfig.huds.info=World & Server
+oneconfig.huds.player=Player
+
+oneconfig.hudeditor.title=HUD Editor
+oneconfig.hudeditor.general.title=Background Options
+oneconfig.hudeditor.choosesomething=Click on an element to continue.
+oneconfig.hudeditor.cantedit.aslegacy=This HUD is running in legacy compatibility mode and cannot be edited.
+
+oneconfig.hudeditor.padding.title=ALIGNMENT & PADDING
+oneconfig.hudeditor.padding.info=These settings control the distance between the edge of the background and the HUD, as well as its alignment.
+oneconfig.hudeditor.padding.mode.main=Main-axis alignment
+oneconfig.hudeditor.padding.mode.cross=Cross-axis alignment
+oneconfig.hudeditor.padding.main=Main-axis padding
+oneconfig.hudeditor.padding.cross=Cross-axis padding
+
+oneconfig.hudeditor.component.title=Component settings
+oneconfig.hudeditor.component.info=These settings control the size and alignment of the component.
+
+oneconfig.hudeditor.color.fill=Fill color
+oneconfig.hudeditor.color.border=Border color
+
+oneconfig.hudeditor.opacity=Opacity
+oneconfig.hudeditor.rotation=Rotation
+oneconfig.hudeditor.radii=Corner radius
+oneconfig.hudeditor.skew=Skew
+
+oneconfig.hudeditor.text.title=TEXT OPTIONS
+oneconfig.hudeditor.text.example=The quick brown fox jumps over the lazy dog
+oneconfig.hudeditor.text.size=Font size
+oneconfig.hudeditor.text.weight=Weight
+oneconfig.hudeditor.text.font=Font
+oneconfig.hudeditor.text.effects=Case type
+
+oneconfig.align=Align
+oneconfig.align.start=Start
+oneconfig.align.center=Center
+oneconfig.align.end=End
+oneconfig.align.spacebetween=Space Between
+oneconfig.align.spaceevenly=Space Evenly
+
+oneconfig.fweight.100=Thin
+oneconfig.fweight.200=Extra light
+oneconfig.fweight.300=Light
+oneconfig.fweight.400=Regular
+oneconfig.fweight.500=Medium
+oneconfig.fweight.600=Semi bold
+oneconfig.fweight.700=Bold
+oneconfig.fweight.800=Extra bold
+oneconfig.fweight.900=Black
+
+oneconfig.sidebar.title.options=OPTIONS
 oneconfig.mods=Mods
 oneconfig.profiles=Profiles
 oneconfig.keybinds=Keybinds
 oneconfig.sidebar.title.personal=PERSONALIZATION
 oneconfig.themes=Themes
 oneconfig.preferences=Preferences
-oneconfig.sidebar.title.extra=ONECONFIG RELATED
+oneconfig.sidebar.title.extra=HELP & FEEDBACK
 oneconfig.changelog=Changelog
-oneconfig.feedback=Feedback
-oneconfig.edithud=Edit HUD
 
-oneconfig.switch.disabled=Off
-oneconfig.switch.enabled=On
-oneconfig.keybind.editing=Recording... Press ESC to exit
-oneconfig.numberinput.placeholder=Number
-oneconfig.hud=HUD
-oneconfig.combat=Combat
-oneconfig.qol=Quality of Life
-oneconfig.hypixel=Hypixel
-oneconfig.other=Other
+oneconfig.feedback=Feedback
+
+oneconfig.beta=BETA
+oneconfig.soon=SOON
+oneconfig.readmore=Read more
+oneconfig.writtenby=Written by {0}

@@ -25,9 +25,7 @@ public abstract interface class org/polyfrost/oneconfig/platform/I18nPlatform {
 }
 
 public abstract interface class org/polyfrost/oneconfig/platform/LoaderPlatform {
-	public abstract fun getActiveModContainer ()Lorg/polyfrost/oneconfig/platform/LoaderPlatform$ActiveMod;
 	public abstract fun getLoadedMods ()Ljava/util/List;
-	public abstract fun hasActiveModContainer ()Z
 	public abstract fun isModLoaded (Ljava/lang/String;)Z
 	public abstract fun toActiveMod (Ljava/lang/Object;)Lorg/polyfrost/oneconfig/platform/LoaderPlatform$ActiveMod;
 }

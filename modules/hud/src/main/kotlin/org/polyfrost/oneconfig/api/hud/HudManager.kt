@@ -28,9 +28,7 @@ package org.polyfrost.oneconfig.api.hud
 
 import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.oneconfig.api.config.ConfigManager
-import org.polyfrost.oneconfig.api.config.Node
 import org.polyfrost.oneconfig.api.config.backend.impl.FileBackend
-import org.polyfrost.oneconfig.api.config.util.ObjectSerializer
 import org.polyfrost.oneconfig.api.events.event.HudRenderEvent
 import org.polyfrost.oneconfig.api.events.event.ResizeEvent
 import org.polyfrost.oneconfig.api.events.eventHandler
@@ -90,13 +88,19 @@ object HudManager {
 
     private var exists = false
 
-    val hudsPage = HudsPage(huds)
+    init {
+        register(TextHud.DateTime("Date:", "yyyy-MM-dd"))
+        register(TextHud.DateTime("Time:", "HH:mm:ss"))
+        register(TextHud.Field("", "Text"))
+    }
+
+    var hudsPage = HudsPage(huds)
 
     val panel = Block(
         size = Vec2(500f, 1048f),
         children = arrayOf(
             Group(
-                Image("left-arrow.svg".image()).setDestructivePalette().withStates().onClick {
+                Image("assets/oneconfig/ico/left-arrow.svg".image()).setDestructivePalette().withStates().onClick {
                     if (parent!!.parent!![2] !== hudsPage) {
                         parent!!.parent!![2] = hudsPage
                     } else {
@@ -105,7 +109,7 @@ object HudManager {
                 },
                 Block(
                     children = arrayOf(
-                        Image("search.svg".image()),
+                        Image("assets/oneconfig/ico/search.svg".image()),
                         TextInput(placeholder = "oneconfig.search.placeholder"),
                     ),
                     size = Vec2(256f, 32f),
@@ -127,7 +131,7 @@ object HudManager {
                 Block(
                     size = Vec2(32f, 1048f),
                     alignment = alignC,
-                    children = arrayOf(Image("right-arrow.svg".image()).setAlpha(0.1f)),
+                    children = arrayOf(Image("assets/oneconfig/ico/right-arrow.svg".image()).setAlpha(0.1f)),
                 ).named("CloseArea").withStates().setPalette(
                     Colors.Palette(
                         TRANSPARENT,
@@ -182,10 +186,10 @@ object HudManager {
     init {
         eventHandler { (w, h): ResizeEvent ->
             polyUI.resize(w.toFloat(), h.toFloat())
-        }
+        }.register()
         eventHandler { _: HudRenderEvent ->
-            if (!exists && !polyUI.master.children.isNullOrEmpty()) polyUI.render()
-        }
+            if (!exists) polyUI.render()
+        }.register()
     }
 
     val polyUI: PolyUI = PolyUI(
@@ -193,23 +197,22 @@ object HudManager {
         size = 1920f by 1080f,
         settings = Settings().apply {
             cleanupAfterInit = false
-            aspectRatio = 125 to 262
+            debug = false
         }
-    )
+    ).also {
+        it.master.rawResize = true
+        it.resize(UResolution.windowWidth.toFloat(), UResolution.windowHeight.toFloat())
+    }
 
     fun getWithEditor(): PolyUIScreen {
         return PolyUIScreen(polyUI.also {
-            it.master.addChild(panel, reposition = false)
-            exists = true
-            panel.x = it.size.x - 32f
-            it.resize(UResolution.windowWidth.toFloat(), UResolution.windowHeight.toFloat())
             toggleHudPicker()
+            exists = true
         }).closeCallback(this::editorClose)
     }
 
     private fun editorClose() {
-        if(open) toggleHudPicker()
-        polyUI.master.removeChild(panel)
+        toggleHudPicker()
         exists = false
     }
 
@@ -230,9 +233,7 @@ object HudManager {
         }
         backend = FileBackend(ConfigManager.active().folder.resolve("huds"))
         backend.gatherAll().forEach { tree ->
-            if (tree.getProp("class")?.get() !is String) return@forEach
-            val it = ObjectSerializer.INSTANCE.deserialize(tree.map as Map<String, Node>) as Hud<*>
-            // todo scale..
+            val it: Hud<*> = tree.getProp("hud")?.getAs() ?: return@forEach
             polyUI.master.addChild(it.build(), false)
         }
     }
@@ -262,11 +263,8 @@ object HudManager {
         val pg = panel
         if (open) {
             toggle()
-            Fade(pg, 0f, false, Animations.EaseInOutQuad.create(0.2.seconds)) {
-                renders = false
-            }.add()
-            return
         }
+        // first open
         if (pg.parent == null) {
             polyUI.master.addChild(
                 pg, reposition = false,
@@ -275,10 +273,16 @@ object HudManager {
             pg.prioritize()
             pg.renders = true
         }
-        pg.alpha = 0f
-        Fade(pg, 1f, false, Animations.EaseInOutQuad.create(0.2.seconds)).add()
-        pg.x = polyUI.size.x - 32f
-        toggle()
+        if(exists) {
+            Fade(pg, 0f, false, Animations.EaseInOutQuad.create(0.2.seconds)) {
+                renders = false
+            }.add()
+        } else {
+            pg.alpha = 0f
+            Fade(pg, 1f, false, Animations.EaseInOutQuad.create(0.2.seconds)).add()
+            pg.x = polyUI.size.x - 32f
+            toggle()
+        }
     }
 
     fun canAutoOpen(): Boolean = !polyUI.master.hasChildIn(polyUI.size.x - panel.width - 34f, 0f, panel.width, polyUI.size.y)
