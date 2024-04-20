@@ -70,12 +70,12 @@ public class AnnotationTest {
             System.out.println("hey");
         }
 
-        @Command
+        @Command("")
         public void perform() {
             System.out.println("main method a");
         }
 
-        @Command
+        @Command("")
         public void perform(int a, int b) {
             System.out.println("main method with args " + (a + b));
         }
@@ -113,7 +113,7 @@ public class AnnotationTest {
                 System.out.println("hey6");
             }
 
-            @Command
+            @Command("")
             public void test23() {
                 System.out.println("main method");
             }

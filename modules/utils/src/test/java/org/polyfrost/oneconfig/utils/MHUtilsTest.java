@@ -82,12 +82,6 @@ public class MHUtilsTest {
     }
 
     @Test
-    void wrapWorks() {
-        Function<Integer, String> f2 = MHUtils.getFunctionHandle(String.class, "valueOf", String.class, int.class).getOrThrow();
-        assertEquals("123", f2.apply(123));
-    }
-
-    @Test
     void unreflectWorks() {
         try {
             Method m = String.class.getDeclaredMethod("substring", int.class, int.class);

@@ -91,6 +91,7 @@ public class org/polyfrost/oneconfig/api/config/Tree : org/polyfrost/oneconfig/a
 	public static fun tree ()Lorg/polyfrost/oneconfig/api/config/Tree;
 	public static fun tree (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/Tree;
 	public static fun tree (Lorg/polyfrost/oneconfig/api/config/Tree;)Lorg/polyfrost/oneconfig/api/config/Tree;
+	public fun unpack ()Ljava/util/Map;
 }
 
 public abstract class org/polyfrost/oneconfig/api/config/backend/Backend {

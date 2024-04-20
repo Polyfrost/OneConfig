@@ -21,12 +21,6 @@ java {
     withJavadocJar()
 }
 
-val java = if (project.platform.mcMinor > 17) 17
-else if (project.platform.mcMinor == 17) 16 else 8
-
-kotlin.jvmToolchain {
-    languageVersion.set(JavaLanguageVersion.of(java))
-}
 
 val modName = properties["mod_name"] as String
 val modMajor = properties["mod_major_version"] as String
@@ -186,8 +180,8 @@ tasks {
     processResources {
         inputs.property("id", modId)
         inputs.property("name", modName)
-        val compatLevel = "JAVA_${java}"
-        inputs.property("java", java)
+        val compatLevel = "JAVA_8"
+        inputs.property("java", 8)
         inputs.property("java_level", compatLevel)
         inputs.property("version", project.version)
         inputs.property("mcVersionStr", project.platform.mcVersionStr)
@@ -197,7 +191,7 @@ tasks {
                 mapOf(
                     "id" to modId,
                     "name" to modName,
-                    "java" to java,
+                    "java" to 8,
                     "java_level" to compatLevel,
                     "version" to project.version,
                     "mcVersionStr" to project.platform.mcVersionStr
@@ -209,7 +203,7 @@ tasks {
                 mapOf(
                     "id" to modId,
                     "name" to modName,
-                    "java" to java,
+                    "java" to 8,
                     "java_level" to compatLevel,
                     "version" to project.version,
                     "mcVersionStr" to project.platform.mcVersionStr.substringBeforeLast(".") + ".x"

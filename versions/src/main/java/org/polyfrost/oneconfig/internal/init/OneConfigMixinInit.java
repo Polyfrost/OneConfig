@@ -88,6 +88,7 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
             mixins.add("commands.ClientCommandSourceMixin");
             mixins.add("commands.ClientPlayNetworkHandlerMixin");
             mixins.add("commands.HelpCommandAccessor");
+            if (version <= 11904) mixins.add("SchemasMixin");
         }
 
         if (version >= 12000) {
@@ -99,7 +100,6 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         }
 
         if (version <= 11900) {
-            mixins.add("SchemasMixin");
             mixins.add("EntityPlayerSPMixin");
         }
 

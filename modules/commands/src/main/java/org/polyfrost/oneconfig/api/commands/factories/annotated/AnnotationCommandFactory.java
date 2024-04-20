@@ -55,7 +55,7 @@ public class AnnotationCommandFactory implements CommandFactory {
             if (cls.isAnnotationPresent(Command.class)) {
                 Command c = cls.getAnnotation(Command.class);
                 CommandTree sub = new CommandTree(c.value().length == 0 ? new String[]{cls.getSimpleName()} : c.value(), c.description().isEmpty() ? null : c.description());
-                Object instance = MHUtils.instantiate(cls, false).getOrThrow();
+                Object instance = MHUtils.instantiate(cls, true).getOrThrow();
                 create(parsers, sub, instance);
                 tree.put(sub);
             }
