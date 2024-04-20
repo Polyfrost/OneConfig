@@ -4,13 +4,6 @@
  * Copyright (C) 2021~2024 Polyfrost.
  *   <https://polyfrost.org> <https://github.com/Polyfrost/>
  *
- * Co-author: lyndseyy (Lyndsey Winter) <https://github.com/lyndseyy>
- * Co-author: asbyth <cyronize@gmail.com> (deleted GitHub account)
- * Co-author: Moire9 (Moiré) <https://github.com/Moire9> (non-copyrightable contribution)
- * Co-author: Sk1er (Mitchell Katz) <https://github.com/Sk1er>
- * Co-author: Cubxity <https://github.com/Cubxity> (non-copyrightable contribution)
- * Co-author: UserTeemu <https://github.com/UserTeemu> (non-copyrightable contribution)
- * Co-author: PyICoder (Befell) <https://github.com/PyICoder> (non-copyrightable contribution)
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  *   OneConfig is licensed under the terms of version 3 of the GNU Lesser
@@ -29,6 +22,16 @@
  * have also received a copy of the Additional Terms Applicable
  * to OneConfig, as published by Polyfrost. If not, see
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
+ */
+
+/*
+ * Co-author: lyndseyy (Lyndsey Winter) <https://github.com/lyndseyy>
+ * Co-author: asbyth <cyronize@gmail.com> (deleted GitHub account)
+ * Co-author: Moire9 (Moiré) <https://github.com/Moire9> (non-copyrightable contribution)
+ * Co-author: Sk1er (Mitchell Katz) <https://github.com/Sk1er>
+ * Co-author: Cubxity <https://github.com/Cubxity> (non-copyrightable contribution)
+ * Co-author: UserTeemu <https://github.com/UserTeemu> (non-copyrightable contribution)
+ * Co-author: PyICoder (Befell) <https://github.com/PyICoder> (non-copyrightable contribution)
  */
 
 package org.polyfrost.oneconfig.utils.hypixel;
