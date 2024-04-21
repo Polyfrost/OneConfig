@@ -13,9 +13,13 @@ concurrency:
 
 jobs:
   build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+
     name: Build
 
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
 
     steps:
       - name: Checkout
@@ -23,26 +27,30 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up JDK 17
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          java-version: 17
+          java-version: |
+            8
+            16
+            17
           distribution: temurin
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          add-job-summary-as-pr-comment: on-failure
+          validate-wrappers: true
 
       - uses: actions/cache@v4
         with:
           path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
             **/loom-cache
             **/prebundled-jars
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          key: ${{ runner.os }}-loom-v1-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
-            ${{ runner.os }}-gradle-
-
-      - name: Chmod Gradle
-        run: chmod +x ./gradlew
-
+            ${{ runner.os }}-loom-v1
+            
       - name: Get version number
         run: echo '::set-output name=VERSION_NUMBER::$(( ${{ secrets.BUILD_OFFSET }} + ${{ github.run_number }}))'
         id: version
