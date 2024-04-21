@@ -124,9 +124,6 @@ public final class org/polyfrost/oneconfig/utils/TickDelay {
 	public static fun of (ILjava/lang/Runnable;)V
 }
 
-public abstract interface class org/polyfrost/oneconfig/utils/forge/IgnoredGuiFactory {
-}
-
 public final class org/polyfrost/oneconfig/utils/hypixel/LocrawUtil {
 	public static final field INSTANCE Lorg/polyfrost/oneconfig/utils/hypixel/LocrawUtil;
 	public fun getLastLocrawInfo ()Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo;

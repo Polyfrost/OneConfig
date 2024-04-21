@@ -74,6 +74,10 @@ val shadeMod: Configuration by configurations.creating {
     configurations.modApi.get().extendsFrom(this)
 }
 
+subprojects {
+    tasks.javadoc.get().enabled = false
+}
+
 dependencies {
     compileOnly("gg.essential:vigilance-1.8.9-forge:295") {
         isTransitive = false
@@ -162,7 +166,7 @@ tasks {
                     fabricModJson.delete()
                     fabricModJson.writeText(
                         lines.subList(0, 20).joinToString("\n") + "\n" + lines.subList(
-                            22,
+                            21,
                             lines.size
                         ).joinToString("\n")
                     )
