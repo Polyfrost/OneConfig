@@ -8,6 +8,7 @@ on:
   push:
     branches-ignore:
       - master
+      - main
     paths-ignore:
       - 'README.md'
       - '.github/**'
@@ -58,6 +59,7 @@ jobs:
         with:
           add-job-summary-as-pr-comment: on-failure
           validate-wrappers: true
+          cache-read-only: ${{ github.ref != 'refs/heads/master' && github.ref != 'refs/heads/v1' }}
 
       - uses: actions/cache@v4
         with:
