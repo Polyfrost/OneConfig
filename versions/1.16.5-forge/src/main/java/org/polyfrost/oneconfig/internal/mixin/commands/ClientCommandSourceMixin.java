@@ -26,16 +26,15 @@
 
 package org.polyfrost.oneconfig.internal.mixin.commands;
 
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.entity.player.ClientPlayerEntity;
+import net.minecraft.client.world.ClientWorld;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TextFormatting;
 import org.polyfrost.oneconfig.internal.libs.fabric.ClientCommandSource;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
-
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
 
 /**
  * Fabric Client-side command manager implementation.
@@ -44,46 +43,46 @@ import net.minecraft.util.Formatting;
  * <a href="https://github.com/FabricMC/fabric/blob/1.20.2/fabric-command-api-v2/src/client/java/net/fabricmc/fabric/impl/command/client/ClientCommandInternals.java">Click here for source</a>
  */
 @SuppressWarnings("AddedMixinMembersNamePattern")
-@Mixin(net.minecraft.client.network.ClientCommandSource.class)
+@Mixin(net.minecraft.client.multiplayer.ClientSuggestionProvider.class)
 abstract class ClientCommandSourceMixin implements ClientCommandSource {
     @Shadow
     @Final
-    private MinecraftClient client;
+    private Minecraft mc;
 
     @Override
-    public void sendFeedback(Text message) {
-        this.client.inGameHud.getChatHud().addMessage(message);
+    public void sendFeedback(ITextComponent message) {
+        this.mc.ingameGUI.getChatGUI().printChatMessage(message);
 //        this.client.getNarratorManager().narrate(message);
     }
 
     @Override
-    public void sendError(Text message) {
+    public void sendError(ITextComponent message) {
         sendFeedback(
                 //#if MC<11900
-                new net.minecraft.text.LiteralText("")
+                new net.minecraft.util.text.StringTextComponent("")
                 //#else
                 //#if FORGE
                 //$$ net.minecraft.network.chat.Component
                 //#else
                 //$$ net.minecraft.text.Text
                 //#endif
-                    //$$ .empty()
+                //$$ .empty()
                 //#endif
-                        .append(message).formatted(Formatting.RED));
+                        .append(message).mergeStyle(TextFormatting.RED));
     }
 
     @Override
-    public MinecraftClient getClient() {
-        return this.client;
+    public Minecraft getClient() {
+        return this.mc;
     }
 
     @Override
     public ClientPlayerEntity getPlayer() {
-        return this.client.player;
+        return this.mc.player;
     }
 
     @Override
     public ClientWorld getWorld() {
-        return this.client.world;
+        return this.mc.world;
     }
 }

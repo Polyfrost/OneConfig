@@ -27,10 +27,10 @@
 package org.polyfrost.oneconfig.internal.mixin.commands;
 
 import com.mojang.brigadier.CommandDispatcher;
-import net.minecraft.client.network.ClientPlayNetworkHandler;
+import net.minecraft.client.network.play.ClientPlayNetHandler;
 import net.minecraft.command.CommandSource;
-import net.minecraft.network.packet.s2c.play.CommandTreeS2CPacket;
-import net.minecraft.network.packet.s2c.play.GameJoinS2CPacket;
+import net.minecraft.network.play.server.SCommandListPacket;
+import net.minecraft.network.play.server.SJoinGamePacket;
 import org.polyfrost.oneconfig.api.events.EventManager;
 import org.polyfrost.oneconfig.internal.commands.RegisterCommandsEvent;
 import org.polyfrost.oneconfig.internal.libs.fabric.ClientCommandInternals;
@@ -42,7 +42,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(ClientPlayNetworkHandler.class)
+@Mixin(ClientPlayNetHandler.class)
 public class ClientPlayNetworkHandlerMixin {
     // Command API //
     // Taken from Fabric API under the Apache 2.0 License //
@@ -50,12 +50,12 @@ public class ClientPlayNetworkHandlerMixin {
     @Shadow
     private CommandDispatcher<CommandSource> commandDispatcher;
 
-    @Shadow
+    @Shadow(aliases = {"clientSuggestionProvider"})
     @Final
-    private net.minecraft.client.network.ClientCommandSource commandSource;
+    private net.minecraft.client.multiplayer.ClientSuggestionProvider commandSource;
 
-    @Inject(method = "onGameJoin", at = @At("RETURN"))
-    private void onGameJoin(GameJoinS2CPacket packet, CallbackInfo info) {
+    @Inject(method = "handleJoinGame", at = @At("RETURN"))
+    private void onGameJoin(SJoinGamePacket packet, CallbackInfo info) {
         final CommandDispatcher<ClientCommandSource> dispatcher = new CommandDispatcher<>();
         ClientCommandInternals.setActiveDispatcher(dispatcher);
         EventManager.INSTANCE.post(new RegisterCommandsEvent(dispatcher));
@@ -63,8 +63,8 @@ public class ClientPlayNetworkHandlerMixin {
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
-    @Inject(method = "onCommandTree", at = @At("RETURN"))
-    private void onOnCommandTree(CommandTreeS2CPacket packet, CallbackInfo info) {
+    @Inject(method = "handleCommandList", at = @At("RETURN"))
+    private void onOnCommandTree(SCommandListPacket packet, CallbackInfo info) {
         // Add the commands to the vanilla dispatcher for completion.
         // It's done here because both the server and the client commands have
         // to be in the same dispatcher and completion results.

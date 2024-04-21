@@ -41,10 +41,10 @@ import com.mojang.brigadier.exceptions.BuiltInExceptionProvider;
 import com.mojang.brigadier.exceptions.CommandExceptionType;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.tree.CommandNode;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.text.Text;
-import net.minecraft.text.Texts;
-import net.minecraft.text.TranslatableText;
+import net.minecraft.client.Minecraft;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TextComponentUtils;
+import net.minecraft.util.text.TranslationTextComponent;
 import org.jetbrains.annotations.Nullable;
 import org.polyfrost.oneconfig.internal.mixin.commands.HelpCommandAccessor;
 import org.slf4j.Logger;
@@ -101,13 +101,13 @@ public final class ClientCommandInternals {
         if(command.startsWith("/")) {
             command = command.substring(1);
         }
-        MinecraftClient client = MinecraftClient.getInstance();
+        Minecraft client = Minecraft.getInstance();
 
         // The interface is implemented on ClientCommandSource with a mixin.
         // noinspection ConstantConditions
-        ClientCommandSource commandSource = (ClientCommandSource) client.getNetworkHandler().getCommandSource();
+        ClientCommandSource commandSource = (ClientCommandSource) client.getConnection().getSuggestionProvider();
 
-        client.getProfiler().push(command);
+        client.getProfiler().startSection(command);
 
         try {
             // TODO: Check for server commands before executing.
@@ -128,10 +128,10 @@ public final class ClientCommandInternals {
             return true;
         } catch (Exception e) {
             LOGGER.warn("Error while executing client-sided command '{}'", command, e);
-            commandSource.sendError(Text.of(e.getMessage()));
+            commandSource.sendError(ITextComponent.getTextComponentOrEmpty(e.getMessage()));
             return true;
         } finally {
-            client.getProfiler().pop();
+            client.getProfiler().endSection();
         }
     }
 
@@ -152,13 +152,13 @@ public final class ClientCommandInternals {
     }
 
     // See ChatInputSuggestor.formatException. That cannot be used directly as it returns an OrderedText instead of a Text.
-    private static Text getErrorMessage(CommandSyntaxException e) {
-        Text message = Texts.toText(e.getRawMessage());
+    private static ITextComponent getErrorMessage(CommandSyntaxException e) {
+        ITextComponent message = TextComponentUtils.toTextComponent(e.getRawMessage());
         String context = e.getContext();
 
         return context != null ?
                 //#if MC<11900
-                new TranslatableText
+                new TranslationTextComponent
                 //#else
                 //$$ Text.translatable
                 //#endif
@@ -205,13 +205,7 @@ public final class ClientCommandInternals {
         Map<CommandNode<ClientCommandSource>, String> commands = activeDispatcher.getSmartUsage(startNode, context.getSource());
 
         for (String command : commands.values()) {
-            context.getSource().sendFeedback(
-                    //#if MC<11900
-                    new net.minecraft.text.LiteralText
-                    //#else
-                    //$$ Text.of
-                    //#endif
-                            ("/" + command));
+            context.getSource().sendFeedback(ITextComponent.getTextComponentOrEmpty("/" + command));
         }
 
         return commands.size();

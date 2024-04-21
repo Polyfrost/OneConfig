@@ -29,7 +29,7 @@ package org.polyfrost.oneconfig.internal.mixin;
 
 import com.mojang.datafixers.DataFixer;
 import com.mojang.datafixers.DataFixerBuilder;
-import net.minecraft.datafixer.Schemas;
+import net.minecraft.util.datafix.DataFixesManager;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
@@ -40,10 +40,10 @@ import java.util.concurrent.Executor;
  * Modified from LazyDFU under the MIT licence.
  * Source: <a href="https://github.com/astei/lazydfu/blob/master/LICENSE">here</a>
  */
-@Mixin(Schemas.class)
+@Mixin(DataFixesManager.class)
 public abstract class SchemasMixin {
 
-    @Redirect(method = "create", at = @At(value = "NEW", target = "com/mojang/datafixers/DataFixerBuilder", remap = false))
+    @Redirect(method = "createFixer", at = @At(value = "NEW", target = "com/mojang/datafixers/DataFixerBuilder", remap = false))
     private static DataFixerBuilder create$replaceBuilder(int dataVersion) {
         return new DataFixerBuilder(dataVersion) {
             @Override

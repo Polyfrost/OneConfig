@@ -27,7 +27,7 @@
 package org.polyfrost.oneconfig.internal.mixin.commands;
 
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
-import net.minecraft.server.command.HelpCommand;
+import net.minecraft.command.impl.HelpCommand;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 

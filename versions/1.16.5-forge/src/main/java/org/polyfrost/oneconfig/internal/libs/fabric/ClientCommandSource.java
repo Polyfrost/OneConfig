@@ -26,14 +26,15 @@
 
 package org.polyfrost.oneconfig.internal.libs.fabric;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.command.CommandSource;
+import net.minecraft.command.ISuggestionProvider;
 import net.minecraft.entity.Entity;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.Vec2f;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.vector.Vector2f;
+import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.util.text.ITextComponent;
 
 /**
  * Fabric Client-side command manager implementation.
@@ -43,27 +44,27 @@ import net.minecraft.util.math.Vec3d;
  * <a href="https://github.com/FabricMC/fabric/blob/1.20.2/fabric-command-api-v2/src/client/java/net/fabricmc/fabric/api/client/command/v2/FabricClientCommandSource.java">Click here for source</a>
  */
 @SuppressWarnings("unused")
-public interface ClientCommandSource extends CommandSource {
+public interface ClientCommandSource extends ISuggestionProvider {
     /**
      * Sends a feedback message to the player.
      *
      * @param message the feedback message
      */
-    void sendFeedback(Text message);
+    void sendFeedback(ITextComponent message);
 
     /**
      * Sends an error message to the player.
      *
      * @param message the error message
      */
-    void sendError(Text message);
+    void sendError(ITextComponent message);
 
     /**
      * Gets the client instance used to run the command.
      *
      * @return the client
      */
-    MinecraftClient getClient();
+    Minecraft getClient();
 
     /**
      * Gets the player that used the command.
@@ -86,8 +87,8 @@ public interface ClientCommandSource extends CommandSource {
      *
      * @return the position
      */
-    default Vec3d getPosition() {
-        return getPlayer().getPos();
+    default Vector3d getPosition() {
+        return getPlayer().getPositionVec();
     }
 
     /**
@@ -95,8 +96,8 @@ public interface ClientCommandSource extends CommandSource {
      *
      * @return the rotation
      */
-    default Vec2f getRotation() {
-        return getPlayer().getRotationClient();
+    default Vector2f getRotation() {
+        return getPlayer().getPitchYaw();
     }
 
     /**
