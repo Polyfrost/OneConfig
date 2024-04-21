@@ -152,7 +152,7 @@ tasks {
     withType(Jar::class) {
         val atomicLines = AtomicReference(listOf<String>())
 
-        // This removes the 21st line in fabric.mod.json,
+        // This removes the 23rd line in fabric.mod.json,
         // aka the TestMod entrypoint, for production builds.
         val fabricModJson = layout.buildDirectory.get().asFile.resolve("resources")
             .resolve("main")
@@ -165,8 +165,8 @@ tasks {
 
                     fabricModJson.delete()
                     fabricModJson.writeText(
-                        lines.subList(0, 20).joinToString("\n") + "\n" + lines.subList(
-                            21,
+                        lines.subList(0, 22).joinToString("\n") + "\n" + lines.subList(
+                            23,
                             lines.size
                         ).joinToString("\n")
                     )

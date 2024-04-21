@@ -25,6 +25,7 @@
  */
 
 package org.polyfrost.oneconfig.internal.mixin;
+//#if MC<11904
 
 import com.mojang.datafixers.DataFixer;
 import com.mojang.datafixers.DataFixerBuilder;
@@ -35,7 +36,6 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 
 import java.util.concurrent.Executor;
 
-//#if MC<11904
 /**
  * Modified from LazyDFU under the MIT licence.
  * Source: <a href="https://github.com/astei/lazydfu/blob/master/LICENSE">here</a>

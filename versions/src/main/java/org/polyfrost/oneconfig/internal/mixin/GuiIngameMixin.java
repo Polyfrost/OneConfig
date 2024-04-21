@@ -44,6 +44,6 @@ public abstract class GuiIngameMixin {
     @Inject(method = "renderGameOverlay", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/client/GuiIngameForge;post(Lnet/minecraftforge/client/event/RenderGameOverlayEvent$ElementType;)V", shift = At.Shift.AFTER, remap = false), remap = true)
     private void onRenderGameOverlay(float partialTicks, CallbackInfo ci) {
         //#endif
-        EventManager.INSTANCE.post(new HudRenderEvent(new UMatrixStack(), partialTicks));
+        EventManager.INSTANCE.post(new HudRenderEvent(UMatrixStack.Compat.INSTANCE.get(), partialTicks));
     }
 }

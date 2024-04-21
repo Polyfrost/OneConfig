@@ -35,9 +35,7 @@ import org.polyfrost.oneconfig.api.events.event.MouseInputEvent;
 import org.polyfrost.oneconfig.api.events.event.RenderEvent;
 import org.polyfrost.oneconfig.api.events.event.ResizeEvent;
 import org.polyfrost.oneconfig.api.events.event.ShutdownEvent;
-import org.polyfrost.oneconfig.api.events.event.StartEvent;
 import org.polyfrost.oneconfig.api.events.event.TickEvent;
-import org.polyfrost.oneconfig.internal.OneConfig;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -79,21 +77,6 @@ public abstract class MinecraftMixin {
     private void onShutdown(CallbackInfo ci) {
         EventManager.INSTANCE.post(ShutdownEvent.INSTANCE);
     }
-
-    @Inject(method = "<init>", at = @At("RETURN"))
-    private void onStart(CallbackInfo ci) {
-        EventManager.INSTANCE.post(StartEvent.INSTANCE);
-        //#if MC>=11300
-        //$$ OneConfig.INSTANCE.init();
-        //#endif
-    }
-
-    //#if MC<=11300
-    @Inject(method = "startGame", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Minecraft;checkGLError(Ljava/lang/String;)V", shift = At.Shift.AFTER, ordinal = 2))
-    private void onInit(CallbackInfo ci) {
-        OneConfig.INSTANCE.init();
-    }
-    //#endif
 
     //#if MC<=11300
     @Inject(method = "resize", at = @At("HEAD"))

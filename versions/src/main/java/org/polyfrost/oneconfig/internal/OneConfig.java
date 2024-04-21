@@ -55,19 +55,34 @@ import static org.polyfrost.oneconfig.api.commands.factories.builder.CommandBuil
 //$$ @net.minecraftforge.fml.common.Mod("oneconfig")
 //#endif
 //#endif
-public class OneConfig {
+public class OneConfig
+    //#if FABRIC
+    //$$ implements net.fabricmc.api.ClientModInitializer
+    //#endif
+{
     private static final Logger LOGGER = LoggerFactory.getLogger("OneConfig");
     public static final OneConfig INSTANCE = new OneConfig();
     private static boolean initialized = false;
 
-    public OneConfig() {
+    //#if FORGE
+    //#if MC<=11202
+    @net.minecraftforge.fml.common.Mod.EventHandler
+    private void onInit(net.minecraftforge.fml.common.event.FMLPostInitializationEvent ev)
+    //#else
+    //$$ private void onInit(net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent ev)
+    //#endif
+    {
+        init();
     }
+    //#else
+    //$$ @Override
+    //$$ public void onInitializeClient() {
+    //$$     init();
+    //$$ }
+    //#endif
 
-    /**
-     * Called after mods are loaded.
-     * <p><b>SHOULD NOT BE CALLED!</b></p>
-     */
-    public void init() {
+
+    private void init() {
         if (initialized) return;
         BlurHandler.init();
         preload();
@@ -87,7 +102,7 @@ public class OneConfig {
     /**
      * Ensure that key PolyUI classes are loaded to prevent lag-spikes when loading PolyUI for the first time.
      */
-    private void preload() {
+    private static void preload() {
         long t1 = System.nanoTime();
         try {
             Class.forName(PolyUI.class.getName());

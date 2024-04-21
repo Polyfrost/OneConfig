@@ -18,7 +18,10 @@
     "mixins.oneconfig.json"
   ],
   "entrypoints": {
-    "client": [ "org.polyfrost.oneconfig.test.TestMod_Test" ], "_warning": [ "This line is automatically removed by Gradle's jar task" ]
+    "client": [
+      "org.polyfrost.oneconfig.internal.OneConfig",
+      "org.polyfrost.oneconfig.test.TestMod_Test"
+    ]
   },
   "depends": {
     "fabricloader": ">=0.12.0",

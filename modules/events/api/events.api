@@ -135,10 +135,6 @@ public class org/polyfrost/oneconfig/api/events/event/ShutdownEvent : org/polyfr
 	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/events/event/ShutdownEvent;
 }
 
-public class org/polyfrost/oneconfig/api/events/event/StartEvent : org/polyfrost/oneconfig/api/events/event/Event {
-	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/events/event/StartEvent;
-}
-
 public abstract interface class org/polyfrost/oneconfig/api/events/event/TickEvent : org/polyfrost/oneconfig/api/events/event/Event {
 }
 
