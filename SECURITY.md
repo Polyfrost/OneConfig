@@ -1,8 +1,11 @@
 # Security Policy
 
+Please be sure to read our [official security disclosure](https://polyfrost.org/legal/security), as the following inline docs will be removed soon.
+
 ## Supported Versions
 
 The only supported version is the latest from the master and develop branch. All other versions will NOT be supported.
+
 ## Reporting a Vulnerability
 
 **Do not submit an issue or pull request**: this might reveal the vulnerability.

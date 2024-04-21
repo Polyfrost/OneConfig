@@ -1,4 +1,7 @@
 # Contributing
+
+Please be sure to read our [official OneConfig contributing documentation](https://contributing.polyfrost.org/oneconfig), as the following inline docs will be removed soon.
+
 We recommend the use of an IDE, specifically [IntelliJ IDEA](https://www.jetbrains.com/idea/). This guide will be based on IntelliJ and might be slightly different for other IDE's.
 
 ### Prerequisites
