@@ -222,7 +222,7 @@ public abstract class Hud {
      * @return If the hud is ignored from hud caching
      */
     public boolean isCachingIgnored() {
-        return ignoreCaching && (config == null || config.enabled) && HudCore.isPatcher;
+        return ignoreCaching && (config == null || config.enabled) && HudCore.isPatcher();
     }
 
     /**
