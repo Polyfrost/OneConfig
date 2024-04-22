@@ -1091,6 +1091,7 @@ public class cc/polyfrost/oneconfig/hud/HUDUtils {
 public abstract class cc/polyfrost/oneconfig/hud/Hud {
 	public field deltaTicks F
 	protected field enabled Z
+	protected field ignoreCaching Z
 	protected field locked Z
 	public field position Lcc/polyfrost/oneconfig/hud/Position;
 	public field positionAlignment I
@@ -1109,6 +1110,7 @@ public abstract class cc/polyfrost/oneconfig/hud/Hud {
 	protected abstract fun getHeight (FZ)F
 	public fun getScale ()F
 	protected abstract fun getWidth (FZ)F
+	public fun isCachingIgnored ()Z
 	public fun isEnabled ()Z
 	public fun isLocked ()Z
 	protected fun preRender (Z)V

@@ -30,6 +30,7 @@ import cc.polyfrost.oneconfig.config.Config;
 import cc.polyfrost.oneconfig.config.annotations.Exclude;
 import cc.polyfrost.oneconfig.config.annotations.Switch;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
+import cc.polyfrost.oneconfig.internal.hud.HudCore;
 import cc.polyfrost.oneconfig.libs.universal.UMatrixStack;
 import cc.polyfrost.oneconfig.platform.Platform;
 
@@ -66,6 +67,7 @@ import cc.polyfrost.oneconfig.platform.Platform;
 public abstract class Hud {
     protected boolean enabled;
     protected boolean locked;
+    protected boolean ignoreCaching;
     transient private Config config;
     public Position position;
     protected float scale;
@@ -217,6 +219,13 @@ public abstract class Hud {
     }
 
     /**
+     * @return If the hud is ignored from hud caching
+     */
+    public boolean isCachingIgnored() {
+        return ignoreCaching && (config == null || config.enabled) && HudCore.isPatcher;
+    }
+
+    /**
      * Set the config to disable accordingly, intended for internal use
      *
      * @param config The config instance
@@ -264,4 +273,5 @@ public abstract class Hud {
             name = "Show in GUIs"
     )
     public boolean showInGuis = true;
+
 }
