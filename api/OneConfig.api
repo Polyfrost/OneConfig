@@ -1110,8 +1110,8 @@ public abstract class cc/polyfrost/oneconfig/hud/Hud {
 	protected abstract fun getHeight (FZ)F
 	public fun getScale ()F
 	protected abstract fun getWidth (FZ)F
+	public fun isCachingIgnored ()Z
 	public fun isEnabled ()Z
-	public fun isIgnored ()Z
 	public fun isLocked ()Z
 	protected fun preRender (Z)V
 	protected fun resetPosition ()V

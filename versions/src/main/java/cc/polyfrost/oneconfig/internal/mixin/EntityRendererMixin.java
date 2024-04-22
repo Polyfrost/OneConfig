@@ -44,7 +44,7 @@ public class EntityRendererMixin {
     private void drawHud(float partialTicks, long nanoTime, CallbackInfo ci) {
         if (editing) return;
         for (Hud hud : huds.values()) {
-            if (!hud.isEnabled() || !hud.isIgnored()) continue;
+            if (!hud.isEnabled() || !hud.isCachingIgnored()) continue;
             hud.deltaTicks = partialTicks;
             hud.drawAll(new UMatrixStack(), false);
         }
