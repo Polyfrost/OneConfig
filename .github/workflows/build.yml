@@ -57,7 +57,7 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
         with:
-          add-job-summary-as-pr-comment: on-failure
+          add-job-summary-as-pr-comment: always
           validate-wrappers: true
           cache-read-only: ${{ github.ref != 'refs/heads/master' && github.ref != 'refs/heads/v1' }}
 
