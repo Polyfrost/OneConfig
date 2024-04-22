@@ -45,14 +45,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(ClientPlayNetHandler.class)
 public class ClientPlayNetworkHandlerMixin {
     // Command API //
-    // Taken from Fabric API under the Apache 2.0 License //
+    // Modified from Fabric API under the Apache 2.0 License //
     // Source: https://github.com/FabricMC/fabric/blob/1.20.2/fabric-command-api-v2/src/client/java/net/fabricmc/fabric/mixin/command/client/ClientPlayNetworkHandlerMixin.java //
     @Shadow
     private CommandDispatcher<CommandSource> commandDispatcher;
 
-    @Shadow(aliases = {"clientSuggestionProvider"})
+    @Shadow
     @Final
-    private net.minecraft.client.multiplayer.ClientSuggestionProvider commandSource;
+    private net.minecraft.client.multiplayer.ClientSuggestionProvider clientSuggestionProvider;
 
     @Inject(method = "handleJoinGame", at = @At("RETURN"))
     private void onGameJoin(SJoinGamePacket packet, CallbackInfo info) {
@@ -68,6 +68,6 @@ public class ClientPlayNetworkHandlerMixin {
         // Add the commands to the vanilla dispatcher for completion.
         // It's done here because both the server and the client commands have
         // to be in the same dispatcher and completion results.
-        ClientCommandInternals.addCommands((CommandDispatcher) this.commandDispatcher, (ClientCommandSource) this.commandSource);
+        ClientCommandInternals.addCommands((CommandDispatcher) this.commandDispatcher, (ClientCommandSource) this.clientSuggestionProvider);
     }
 }

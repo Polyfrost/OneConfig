@@ -35,7 +35,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(MouseHelper.class)
-public class MouseMixin {
+public abstract class MouseMixin {
     //#if FORGE
     @Inject(method =
             //#if MC>11700

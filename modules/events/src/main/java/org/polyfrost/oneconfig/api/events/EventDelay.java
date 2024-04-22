@@ -24,34 +24,33 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.utils;
+package org.polyfrost.oneconfig.api.events;
 
 
-import org.polyfrost.oneconfig.api.PlatformDeclaration;
-import org.polyfrost.oneconfig.api.events.EventManager;
+import org.polyfrost.oneconfig.api.events.event.Event;
+import org.polyfrost.oneconfig.api.events.event.RenderEvent;
 import org.polyfrost.oneconfig.api.events.event.TickEvent;
 import org.polyfrost.oneconfig.api.events.invoke.EventHandler;
 
-@PlatformDeclaration
-public final class TickDelay {
+public final class EventDelay {
 
-    private TickDelay() {
+    private EventDelay() {
     }
 
     /**
-     * Schedules a Runnable to be called after a certain amount of ticks.
+     * Schedules a Runnable to be called after a certain amount polls from the given event.
      * <p>
-     * If the amount of ticks is below 1, the Runnable will be called immediately.
+     * If the amount of polls is below 1, the Runnable will be called immediately.
      */
-    public static void of(int ticks, Runnable function) {
-        if (ticks < 1) {
+    public static <E extends Event> void of(Class<E> cls, int polls, Runnable function) {
+        if (polls < 1) {
             function.run();
         } else {
-            new EventHandler<TickEvent.End>() {
-                private int delay = ticks;
+            new EventHandler<E>() {
+                private int delay = polls;
 
                 @Override
-                public void handle(TickEvent.End event) {
+                public void handle(E event) {
                     // Delay expired
                     if (delay < 1) {
                         function.run();
@@ -62,10 +61,24 @@ public final class TickDelay {
                 }
 
                 @Override
-                public Class<TickEvent.End> getEventClass() {
-                    return TickEvent.End.class;
+                public Class<E> getEventClass() {
+                    return cls;
                 }
             }.register();
         }
+    }
+
+    /**
+     * {@link #of(Class, int, Runnable)} with TickEvent.End.
+     */
+    public static void tick(int ticks, Runnable function) {
+        of(TickEvent.End.class, ticks, function);
+    }
+
+    /**
+     * {@link #of(Class, int, Runnable)} with RenderEvent.End.
+     */
+    public static void render(int ticks, Runnable function) {
+        of(RenderEvent.End.class, ticks, function);
     }
 }

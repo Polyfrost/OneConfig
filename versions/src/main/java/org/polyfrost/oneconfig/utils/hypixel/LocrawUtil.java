@@ -39,6 +39,7 @@ package org.polyfrost.oneconfig.utils.hypixel;
 import com.google.gson.Gson;
 import org.jetbrains.annotations.Nullable;
 import org.polyfrost.oneconfig.api.PlatformDeclaration;
+import org.polyfrost.oneconfig.api.events.EventDelay;
 import org.polyfrost.oneconfig.api.events.EventManager;
 import org.polyfrost.oneconfig.api.events.event.ChatReceiveEvent;
 import org.polyfrost.oneconfig.api.events.event.ChatSendEvent;
@@ -48,7 +49,6 @@ import org.polyfrost.oneconfig.api.events.event.WorldLoadEvent;
 import org.polyfrost.oneconfig.api.events.invoke.EventHandler;
 import org.polyfrost.oneconfig.libs.universal.UChat;
 import org.polyfrost.oneconfig.platform.Platform;
-import org.polyfrost.oneconfig.utils.TickDelay;
 
 /**
  * <p>
@@ -62,10 +62,6 @@ public final class LocrawUtil {
     public static final LocrawUtil INSTANCE = new LocrawUtil();
     private static final Gson GSON = new Gson();
 
-    private LocrawUtil() {
-        initialize();
-    }
-
     private LocrawInfo locrawInfo;
     private LocrawInfo lastLocrawInfo;
     private boolean listening;
@@ -73,9 +69,9 @@ public final class LocrawUtil {
     private boolean playerSentCommand = false;
     private boolean inGame = false;
 
-    void initialize() {
+    private LocrawUtil() {
         EventHandler.of(TickEvent.End.class, (event) -> {
-            if (!Platform.getServerPlatform().doesPlayerExist() || !HypixelUtils.INSTANCE.isHypixel()) {
+            if (!Platform.getServerPlatform().doesPlayerExist() || !HypixelUtils.isHypixel()) {
                 return;
             }
 
@@ -103,14 +99,14 @@ public final class LocrawUtil {
     }
 
     private void sendLocraw(boolean delay) {
-        TickDelay.of((delay ? 20 : 0), () -> {
+        EventDelay.tick((delay ? 20 : 0), () -> {
             this.listening = true;
             UChat.say("/locraw");
         });
     }
 
     private void onMessageReceived(ChatReceiveEvent event) {
-        if (HypixelUtils.INSTANCE.isHypixel()) return;
+        if (HypixelUtils.isHypixel()) return;
         try {
             // Had some false positives while testing, so this is here just to be safe.
             final String msg = event.getFullyUnformattedMessage();

@@ -145,7 +145,7 @@ public abstract class Backend {
         load(tree);
     }
 
-    private void putSafe(Tree in) {
+    protected void putSafe(Tree in) {
         // sanity check.
         // the tree here should either be new, or be the same tree as the one that was here before.
         // if it's not, then something wierd must've happened. this prevents wierd issues with backend desync.

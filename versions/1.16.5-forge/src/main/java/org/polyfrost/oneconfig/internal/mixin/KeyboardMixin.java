@@ -34,7 +34,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
 @Mixin(KeyboardListener.class)
-public class KeyboardMixin {
+public abstract class KeyboardMixin {
 
     @ModifyVariable(method = "onKeyEvent", at = @At(value = "STORE"), ordinal = 0)
     private boolean onKeyEvent(boolean original, long windowPointer, int key, int scanCode, int action, int modifiers) {

@@ -36,27 +36,27 @@ import java.util.ServiceLoader;
 public interface Platform {
 
     static Platform getInstance() {
-        return PlatformHolder.INSTANCE.platform;
+        return Holder.INSTANCE.platform;
     }
 
     static LoaderPlatform getLoaderPlatform() {
-        return PlatformHolder.INSTANCE.loaderPlatform;
+        return Holder.INSTANCE.loaderPlatform;
     }
 
     static ServerPlatform getServerPlatform() {
-        return PlatformHolder.INSTANCE.serverPlatform;
+        return Holder.INSTANCE.serverPlatform;
     }
 
     static GLPlatform getGLPlatform() {
-        return PlatformHolder.INSTANCE.glPlatform;
+        return Holder.INSTANCE.glPlatform;
     }
 
     static GuiPlatform getGuiPlatform() {
-        return PlatformHolder.INSTANCE.guiPlatform;
+        return Holder.INSTANCE.guiPlatform;
     }
 
     static I18nPlatform getI18nPlatform() {
-        return PlatformHolder.INSTANCE.i18nPlatform;
+        return Holder.INSTANCE.i18nPlatform;
     }
 
     boolean isCallingFromMinecraftThread();
@@ -74,15 +74,15 @@ public interface Platform {
         FABRIC
     }
 
-    class PlatformHolder {
-        static PlatformHolder INSTANCE = new PlatformHolder();
+    final class Holder {
+        static Holder INSTANCE = new Holder();
         Platform platform = ServiceLoader.load(Platform.class, Platform.class.getClassLoader()).iterator().next();
         LoaderPlatform loaderPlatform = ServiceLoader.load(LoaderPlatform.class, LoaderPlatform.class.getClassLoader()).iterator().next();
         ServerPlatform serverPlatform = ServiceLoader.load(ServerPlatform.class, ServerPlatform.class.getClassLoader()).iterator().next();
         GLPlatform glPlatform = ServiceLoader.load(GLPlatform.class, GLPlatform.class.getClassLoader()).iterator().next();
         GuiPlatform guiPlatform = ServiceLoader.load(GuiPlatform.class, GuiPlatform.class.getClassLoader()).iterator().next();
         I18nPlatform i18nPlatform = ServiceLoader.load(I18nPlatform.class, I18nPlatform.class.getClassLoader()).iterator().next();
-        private PlatformHolder() {
+        private Holder() {
 
         }
     }

@@ -39,9 +39,6 @@ public final class LocrawUtil {
     private LocrawUtil() {
     }
 
-    void initialize() {
-    }
-
     public boolean isInGame() {
         return false;
     }

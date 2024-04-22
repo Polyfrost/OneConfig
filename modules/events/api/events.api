@@ -1,3 +1,9 @@
+public final class org/polyfrost/oneconfig/api/events/EventDelay {
+	public static fun of (Ljava/lang/Class;ILjava/lang/Runnable;)V
+	public static fun render (ILjava/lang/Runnable;)V
+	public static fun tick (ILjava/lang/Runnable;)V
+}
+
 public class org/polyfrost/oneconfig/api/events/EventException : java/lang/RuntimeException {
 	public fun <init> ()V
 	public fun <init> (Ljava/lang/String;)V

@@ -29,6 +29,7 @@ package org.polyfrost.oneconfig.utils;
 import net.minecraft.client.gui.GuiScreen;
 import org.jetbrains.annotations.ApiStatus;
 import org.polyfrost.oneconfig.api.PlatformDeclaration;
+import org.polyfrost.oneconfig.api.events.EventDelay;
 import org.polyfrost.oneconfig.libs.universal.UScreen;
 
 /**
@@ -60,7 +61,7 @@ public final class GuiUtils {
      */
     public static void displayScreen(GuiScreen screen, int ticks) {
         if (ticks < 1) UScreen.displayScreen(screen);
-        else TickDelay.of(ticks, () -> UScreen.displayScreen(screen));
+        else EventDelay.tick(ticks, () -> UScreen.displayScreen(screen));
     }
 
 

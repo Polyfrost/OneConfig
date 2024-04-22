@@ -252,6 +252,7 @@ object HudManager {
             Fade(pg, 0.8f, false, Animations.EaseInOutExpo.create(0.2.seconds)).add()
             arrow.rotation = PI
         } else {
+            panel.y = UResolution.windowHeight.toFloat() / 2f - panel.height / 2f
             Move(pg, polyUI.size.x - pg.width - 8f, pg.y, false, Animations.EaseInOutExpo.create(0.2.seconds)).add()
             arrow.rotation = 0.0
             pg.alpha = 1f

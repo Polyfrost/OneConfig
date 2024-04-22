@@ -120,10 +120,6 @@ public final class org/polyfrost/oneconfig/utils/GuiUtils {
 	public static fun displayScreen (Lnet/minecraft/client/gui/GuiScreen;I)V
 }
 
-public final class org/polyfrost/oneconfig/utils/TickDelay {
-	public static fun of (ILjava/lang/Runnable;)V
-}
-
 public abstract interface class org/polyfrost/oneconfig/utils/forge/IgnoredGuiFactory {
 }
 

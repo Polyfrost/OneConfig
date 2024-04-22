@@ -45,7 +45,6 @@ import org.polyfrost.polyui.renderer.Renderer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.invoke.MethodHandle;
@@ -87,6 +86,10 @@ public class LwjglManagerImpl
     private final Renderer renderer;
 
     public LwjglManagerImpl() throws Throwable {
+        this(false);
+    }
+
+    public LwjglManagerImpl(boolean onlyTinyFD) throws Throwable {
         super(new URL[]{getJarFile()}, LwjglManager.class.getClassLoader());
 
         ClassLoader classLoader = isPojav ? getClass().getClassLoader() : this;
@@ -119,10 +122,12 @@ public class LwjglManagerImpl
         }
 
         try {
-            renderer = (Renderer) Class.forName(RENDERER_IMPL_PACKAGE + "RendererImpl", true, classLoader).getField("INSTANCE").get(null);
-            // w: twoconfig change: will crash immediately on startup if the LWJGL setup is invalid and init() will fail
-            // i think this is a good thing
-            renderer.init();
+            if (!onlyTinyFD) {
+                renderer = (Renderer) Class.forName(RENDERER_IMPL_PACKAGE + "RendererImpl", true, classLoader).getField("INSTANCE").get(null);
+                // w: twoconfig change: will crash immediately on startup if the LWJGL setup is invalid and init() will fail
+                // i think this is a good thing
+                renderer.init();
+            } else renderer = null;
             tinyFD = (TinyFD) Class.forName(RENDERER_IMPL_PACKAGE + "TinyFDImpl", true, classLoader).getConstructor().newInstance();
         } catch (Exception e) {
             throw new RuntimeException("Failed to get valid rendering implementation", e);
@@ -338,17 +343,17 @@ public class LwjglManagerImpl
 
     private static synchronized URL getJarFile() {
         if (isPojav) return null;
-        final File tempJar = TEMP_DIR.resolve(JAR_NAME).toFile();
+        final Path tempJar = TEMP_DIR.resolve(JAR_NAME);
         try (InputStream in = LwjglManagerImpl.class.getResourceAsStream("/" + JAR_NAME)) {
             if (in == null) throw new IOException("Failed to get " + JAR_NAME);
             Files.createDirectories(TEMP_DIR);
             TEMP_DIR.toFile().deleteOnExit();
-            Files.copy(in, tempJar.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            Files.copy(in, tempJar, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
         try {
-            return tempJar.toURI().toURL();
+            return tempJar.toUri().toURL();
         } catch (MalformedURLException e) {
             throw new RuntimeException(e);
         }

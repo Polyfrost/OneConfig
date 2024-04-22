@@ -37,7 +37,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(InGameHud.class)
 public abstract class GuiIngameMixin {
-    @Inject(method = "render", at = @At("TAIL"))
+    @Inject(method = "render", at = @At(value = "TAIL", shift = At.Shift.BY, by = -4))
     private void onRenderGameOverlay(float partialTicks, CallbackInfo ci) {
         EventManager.INSTANCE.post(new HudRenderEvent(UMatrixStack.Compat.INSTANCE.get(), partialTicks));
     }

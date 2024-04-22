@@ -34,7 +34,6 @@ import java.util.Locale;
  * Various utilities for Hypixel.
  */
 public final class HypixelUtils {
-    public static final HypixelUtils INSTANCE = new HypixelUtils();
 
     private HypixelUtils() {
     }
@@ -52,7 +51,7 @@ public final class HypixelUtils {
      * @return Whether the player is on Hypixel.
      * @see <a href="https://canary.discord.com/channels/864592657572560958/945075920664928276/978649312013725747">this discord message from discord.gg/essential</a>
      */
-    public boolean isHypixel() {
+    public static boolean isHypixel() {
         if (!Platform.getServerPlatform().inMultiplayer()) return false;
 
         String serverBrand = Platform.getServerPlatform().getServerBrand();

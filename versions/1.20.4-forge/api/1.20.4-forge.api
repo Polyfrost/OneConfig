@@ -120,10 +120,6 @@ public final class org/polyfrost/oneconfig/utils/GuiUtils {
 	public static fun displayScreen (Lnet/minecraft/client/gui/screens/Screen;I)V
 }
 
-public final class org/polyfrost/oneconfig/utils/TickDelay {
-	public static fun of (ILjava/lang/Runnable;)V
-}
-
 public final class org/polyfrost/oneconfig/utils/hypixel/LocrawUtil {
 	public static final field INSTANCE Lorg/polyfrost/oneconfig/utils/hypixel/LocrawUtil;
 	public fun getLastLocrawInfo ()Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo;

@@ -38,7 +38,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(InGameHud.class)
 public abstract class GuiIngameMixin {
-    @Inject(method = "render", at = @At("TAIL"))
+    // asm: due to versions it is much easier just to arbitrarily shift back than target something specifically
+    // the purpose as it puts us inside the push/pop matrix calls
+    @Inject(method = "render", at = @At(value = "TAIL", shift = At.Shift.BY, by = -4))
     //#if MC>=12000
     //$$ private void onRenderGameOverlay(net.minecraft.client.gui.DrawContext context, float tickDelta, CallbackInfo ci) {
     //$$     EventManager.INSTANCE.post(new HudRenderEvent(new UMatrixStack(context.getMatrices()), tickDelta));

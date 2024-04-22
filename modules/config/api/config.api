@@ -102,6 +102,7 @@ public abstract class org/polyfrost/oneconfig/api/config/backend/Backend {
 	public final fun getTrees ()Ljava/util/Collection;
 	public final fun load (Lorg/polyfrost/oneconfig/api/config/Tree;)Z
 	protected abstract fun load0 (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/Tree;
+	protected fun putSafe (Lorg/polyfrost/oneconfig/api/config/Tree;)V
 	public final fun register (Lorg/polyfrost/oneconfig/api/config/Tree;)Lorg/polyfrost/oneconfig/api/config/Tree;
 	protected fun requestUpdate (Ljava/lang/String;)V
 	public final fun save (Ljava/lang/String;)Z

@@ -87,12 +87,11 @@ public final class ConfigManager {
     }
 
     private static void initialize() {
-        internal().register(
+        String activeProfile = internal().register(
                 tree("profiles.json").put(
                         prop("activeProfile", "")
                 )
-        );
-        String activeProfile = internal().get("profiles.json").getProp("activeProfile").getAs();
+        ).getProp("activeProfile").getAs();
         openProfile(activeProfile);
     }
 

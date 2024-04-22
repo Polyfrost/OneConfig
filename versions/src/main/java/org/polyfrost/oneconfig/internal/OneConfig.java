@@ -30,12 +30,10 @@ import org.polyfrost.oneconfig.api.commands.CommandManager;
 import org.polyfrost.oneconfig.api.commands.factories.builder.CommandBuilder;
 import org.polyfrost.oneconfig.api.events.EventManager;
 import org.polyfrost.oneconfig.api.events.event.InitializationEvent;
-import org.polyfrost.oneconfig.api.events.event.JvmShutdownEvent;
 import org.polyfrost.oneconfig.api.hud.HudManager;
 import org.polyfrost.oneconfig.internal.ui.BlurHandler;
 import org.polyfrost.oneconfig.internal.ui.OneConfigUI;
 import org.polyfrost.oneconfig.ui.LwjglManager;
-import org.polyfrost.oneconfig.ui.screen.PolyUIScreen;
 import org.polyfrost.oneconfig.utils.GuiUtils;
 import org.polyfrost.polyui.PolyUI;
 import org.polyfrost.polyui.component.Drawable;
@@ -62,7 +60,6 @@ public class OneConfig
 {
     private static final Logger LOGGER = LoggerFactory.getLogger("OneConfig");
     public static final OneConfig INSTANCE = new OneConfig();
-    private static boolean initialized = false;
 
     //#if FORGE
     //#if MC<=11202
@@ -83,7 +80,6 @@ public class OneConfig
 
 
     private void init() {
-        if (initialized) return;
         BlurHandler.init();
         preload();
         CommandBuilder b = CommandManager.builder("oneconfig", "ocfg").description("OneConfig main command");
@@ -95,7 +91,6 @@ public class OneConfig
 //            return true;
 //        }));
         EventManager.INSTANCE.post(InitializationEvent.INSTANCE);
-        initialized = true;
         LOGGER.info("OneConfig initialized!");
     }
 

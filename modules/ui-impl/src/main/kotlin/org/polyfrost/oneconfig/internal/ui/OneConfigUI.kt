@@ -184,10 +184,17 @@ object OneConfigUI {
             )
         ).also {
             ui = it.polyUI!!.master
+            (ui as Block).radii.assign(8f)
         }.closeCallback {
             for(t in ConfigManager.active().trees()) {
                 ConfigManager.active().save(t)
             }
+        }
+    }
+
+    private fun FloatArray.assign(value: Float) {
+        for(i in indices) {
+            this[i] = value
         }
     }
 

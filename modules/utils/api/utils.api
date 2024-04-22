@@ -52,14 +52,14 @@ public abstract interface class org/polyfrost/oneconfig/platform/Platform {
 	public abstract fun isDevelopmentEnvironment ()Z
 }
 
+public final class org/polyfrost/oneconfig/platform/Platform$Holder {
+}
+
 public final class org/polyfrost/oneconfig/platform/Platform$Loader : java/lang/Enum {
 	public static final field FABRIC Lorg/polyfrost/oneconfig/platform/Platform$Loader;
 	public static final field FORGE Lorg/polyfrost/oneconfig/platform/Platform$Loader;
 	public static fun valueOf (Ljava/lang/String;)Lorg/polyfrost/oneconfig/platform/Platform$Loader;
 	public static fun values ()[Lorg/polyfrost/oneconfig/platform/Platform$Loader;
-}
-
-public class org/polyfrost/oneconfig/platform/Platform$PlatformHolder {
 }
 
 public abstract interface class org/polyfrost/oneconfig/platform/ServerPlatform {
@@ -240,10 +240,6 @@ public final class org/polyfrost/oneconfig/utils/SimpleProfiler {
 	public static fun push (Ljava/lang/String;)Z
 }
 
-public final class org/polyfrost/oneconfig/utils/TickDelay {
-	public static fun of (ILjava/lang/Runnable;)V
-}
-
 public final class org/polyfrost/oneconfig/utils/dsl/ColorsKt {
 	public static final fun getAlpha (I)I
 	public static final fun getBlue (I)I
@@ -276,9 +272,8 @@ public final class org/polyfrost/oneconfig/utils/dsl/NetworkKt {
 }
 
 public final class org/polyfrost/oneconfig/utils/hypixel/HypixelUtils {
-	public static final field INSTANCE Lorg/polyfrost/oneconfig/utils/hypixel/HypixelUtils;
 	public static fun getLocraw ()Lorg/polyfrost/oneconfig/utils/hypixel/LocrawUtil;
-	public fun isHypixel ()Z
+	public static fun isHypixel ()Z
 }
 
 public class org/polyfrost/oneconfig/utils/hypixel/LocrawInfo : java/io/Serializable {
