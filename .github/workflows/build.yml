@@ -58,6 +58,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
         with:
           add-job-summary-as-pr-comment: always
+          gradle-home-cache-cleanup: true
           validate-wrappers: true
           cache-read-only: ${{ github.ref != 'refs/heads/master' && github.ref != 'refs/heads/v1' }}
 
