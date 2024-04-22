@@ -64,7 +64,7 @@ public class ConfigDualOption extends BasicOption {
         boolean toggled = false;
         try {
             toggled = (boolean) get();
-            if (posAnimation == null) posAnimation = new DummyAnimation(toggled ? 356 : 228);
+            if (posAnimation == null) posAnimation = new EaseOutExpo(0, 228, 356, !toggled);
         } catch (IllegalAccessException ignored) {
         }
         if (!isEnabled()) nanoVGHelper.setAlpha(vg, 0.5f);

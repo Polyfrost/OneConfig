@@ -64,7 +64,7 @@ public class ConfigCheckbox extends BasicOption {
         boolean toggled = false;
         try {
             toggled = (boolean) get();
-            if (animation == null) animation = new DummyAnimation(toggled ? 1 : 0);
+            if (animation == null) animation = new EaseInOutQuad(0, 0, 1, !toggled);
         } catch (IllegalAccessException ignored) {
         }
         boolean hover = inputHandler.isAreaHovered(x, y + 4, 24, 24);

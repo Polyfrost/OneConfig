@@ -23,25 +23,31 @@
  * to OneConfig, as published by Polyfrost. If not, see
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
+//#if FORGE==1 && MC<=11202
+package cc.polyfrost.oneconfig.internal.mixin;
 
-// Retrocompatibility
-@file:JvmName("TickDelayDSLKt")
+import cc.polyfrost.oneconfig.hud.Hud;
+import cc.polyfrost.oneconfig.libs.universal.UMatrixStack;
+import net.minecraft.client.renderer.EntityRenderer;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-package cc.polyfrost.oneconfig.utils.dsl
+import static cc.polyfrost.oneconfig.internal.hud.HudCore.editing;
+import static cc.polyfrost.oneconfig.internal.hud.HudCore.huds;
 
-import cc.polyfrost.oneconfig.utils.RenderTickDelay
-import cc.polyfrost.oneconfig.utils.TickDelay
+@Mixin(EntityRenderer.class)
+public class EntityRendererMixin {
 
-/**
- * Schedules a Runnable to be called after a certain amount of ticks.
- *
- * @see TickDelay
- */
-fun tick(ticks: Int, block: () -> Unit) = TickDelay(block, ticks)
-
-/**
- * Schedules a Runnable to be called after a certain amount of RENDER ticks (frames)
- *
- * @see RenderTickDelay
- */
-fun renderTick(ticks: Int, block: () -> Unit) = RenderTickDelay(block, ticks)
+    @Inject(method = "updateCameraAndRender", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/GuiIngame;renderGameOverlay(F)V", shift = At.Shift.AFTER))
+    private void drawHud(float partialTicks, long nanoTime, CallbackInfo ci) {
+        if (editing) return;
+        for (Hud hud : huds.values()) {
+            if (!hud.isEnabled() || !hud.isCachingIgnored()) continue;
+            hud.deltaTicks = partialTicks;
+            hud.drawAll(new UMatrixStack(), false);
+        }
+    }
+}
+//#endif

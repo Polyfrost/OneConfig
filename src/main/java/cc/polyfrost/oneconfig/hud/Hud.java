@@ -30,6 +30,7 @@ import cc.polyfrost.oneconfig.config.Config;
 import cc.polyfrost.oneconfig.config.annotations.Exclude;
 import cc.polyfrost.oneconfig.config.annotations.Switch;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
+import cc.polyfrost.oneconfig.internal.hud.HudCore;
 import cc.polyfrost.oneconfig.libs.universal.UMatrixStack;
 import cc.polyfrost.oneconfig.platform.Platform;
 
@@ -65,12 +66,24 @@ import cc.polyfrost.oneconfig.platform.Platform;
  */
 public abstract class Hud {
     protected boolean enabled;
+    protected boolean locked;
+    protected boolean ignoreCaching;
     transient private Config config;
-    public final Position position;
+    public Position position;
     protected float scale;
     public int positionAlignment;
     @Exclude
+    private int defaultAlignment;
+    @Exclude
     public float deltaTicks;
+    @Exclude
+    private float defaultScale;
+    @Exclude
+    private final Runnable resetPosition = this::resetPosition;
+    @Exclude
+    private boolean loaded = false;
+    @Exclude
+    private Position defaultPosition;
 
     /**
      * @param enabled If the hud is enabled
@@ -84,6 +97,12 @@ public abstract class Hud {
         this.scale = scale;
         this.positionAlignment = positionAlignment;
         position = new Position(this, x, y, getWidth(scale, true), getHeight(scale, true));
+        if (!loaded) {
+            defaultPosition = position;
+            defaultAlignment = positionAlignment;
+            defaultScale = scale;
+            loaded = true;
+        }
     }
 
     public Hud(boolean enabled, float x, float y, float scale) {
@@ -143,6 +162,31 @@ public abstract class Hud {
     protected void preRender(boolean example) {
     }
 
+    protected void resetPosition() {
+        Position pos = defaultPosition;
+        float width = position.getWidth();
+        float height = position.getHeight();
+        positionAlignment = defaultAlignment;
+        scale = defaultScale;
+        position.anchor = pos.anchor;
+        float anchorX = position.anchor.x;
+        float anchorY = position.anchor.y;
+        if (anchorX == 0f) {
+            position.setX(pos.getX());
+        } else if (anchorX == 0.5f) {
+            position.setX(pos.getCenterX() - width / 2f);
+        } else {
+            position.setX(pos.getRightX() - width);
+        }
+        if (anchorY == 0f) {
+            position.setY(pos.getY());
+        } else if (anchorY == 0.5f) {
+            position.setY(pos.getCenterY() - height / 2f);
+        } else {
+            position.setY(pos.getBottomY() - height);
+        }
+    }
+
     /**
      * Draw the background, the hud and all childed huds, used by HudCore
      */
@@ -165,6 +209,20 @@ public abstract class Hud {
      */
     public boolean isEnabled() {
         return enabled && (config == null || config.enabled);
+    }
+
+    /**
+     * @return If the hud is locked
+     */
+    public boolean isLocked() {
+        return locked && (config == null || config.enabled);
+    }
+
+    /**
+     * @return If the hud is ignored from hud caching
+     */
+    public boolean isCachingIgnored() {
+        return ignoreCaching && (config == null || config.enabled) && HudCore.isPatcher;
     }
 
     /**
@@ -215,4 +273,5 @@ public abstract class Hud {
             name = "Show in GUIs"
     )
     public boolean showInGuis = true;
+
 }

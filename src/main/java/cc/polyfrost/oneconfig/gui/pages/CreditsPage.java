@@ -43,13 +43,13 @@ public class CreditsPage extends Page {
         y -= 32;
 
         nanoVGHelper.drawText(vg, "Development Team", x + 20, y + 180, -1, 24, Fonts.SEMIBOLD);
-        nanoVGHelper.drawText(vg, " - Wyvest - Gradle, NanoVGHelper, VCAL, Utilities, GUI Frontend", x + 20, y + 205, -1, 12, Fonts.REGULAR);
+        nanoVGHelper.drawText(vg, " - Wyvest - OG Team - Gradle, NanoVGHelper, VCAL, Utilities, GUI Frontend", x + 20, y + 205, -1, 12, Fonts.REGULAR);
         nanoVGHelper.drawText(vg, " - Caledonian - Designer", x + 20, y + 220, -1, 12, Fonts.REGULAR);        // +15/line
-        nanoVGHelper.drawText(vg, " - nextdaydelivery - GUI Frontend, NanoVGHelper, Utilities", x + 20, y + 235, -1, 12, Fonts.REGULAR);
+        nanoVGHelper.drawText(vg, " - nextdaydelivery - OG Team - GUI Frontend, NanoVGHelper, Utilities", x + 20, y + 235, -1, 12, Fonts.REGULAR);
         nanoVGHelper.drawText(vg, " - Pauline - Utilities", x + 20, y + 250, -1, 12, Fonts.REGULAR);
+        nanoVGHelper.drawText(vg, " - DeDiamondPro - OG Team -  Config Backend, GUI Frontend, HUD", x + 20, y + 295, -1, 12, Fonts.REGULAR);
         nanoVGHelper.drawText(vg, " - xtrm - Multiversion support, GUI Frontend", x + 20, y + 265, -1, 12, Fonts.REGULAR);
-        nanoVGHelper.drawText(vg, " - MoonTidez - Founder, Designer", x + 20, y + 280, -1, 12, Fonts.REGULAR);
-        nanoVGHelper.drawText(vg, " - DeDiamondPro - Founder, Config Backend, GUI Frontend, HUD", x + 20, y + 295, -1, 12, Fonts.REGULAR);
+        nanoVGHelper.drawText(vg, " - MoonTidez - OG Team - Designer", x + 20, y + 280, -1, 12, Fonts.REGULAR);
 
         nanoVGHelper.drawText(vg, "Libraries", x + 20, y + 333, -1, 24, Fonts.SEMIBOLD);
         nanoVGHelper.drawText(vg, " - LWJGLTwoPointFive (DJTheRedstoner) - LWJGL2 function provider", x + 20, y + 355, -1, 12, Fonts.REGULAR);

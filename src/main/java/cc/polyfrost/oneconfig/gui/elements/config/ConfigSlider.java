@@ -66,6 +66,8 @@ public class ConfigSlider extends BasicOption implements IFocusable {
     private Animation stepsAnimation;
     private Animation targetAnimation;
     private Animation stepSlideAnimation;
+    private float animationStart;
+    private float lastSliderTarget = 1;
     private boolean animReset;
     private float lastX = -1;
 
@@ -82,7 +84,7 @@ public class ConfigSlider extends BasicOption implements IFocusable {
         this.inputField = new NumberInputField(84, 32, 0, min, max, step == 0 ? 1 : step);
         this.stepsAnimation = new DummyAnimation(0);
         this.targetAnimation = new DummyAnimation(0);
-        this.stepSlideAnimation = new DummyAnimation(-1);
+        this.stepSlideAnimation = new DummyAnimation(1);
     }
 
     public static ConfigSlider create(Field field, Object parent) {
@@ -159,14 +161,14 @@ public class ConfigSlider extends BasicOption implements IFocusable {
         }
 
         // Animate sliding
-        if (stepSlideAnimation.get() == -1 || lastX != x) {
-            stepSlideAnimation = new DummyAnimation(xCoordinate);
-        } else {
-            stepSlideAnimation = new EaseInOutCubic((int) Preferences.trackerResponseDuration, stepSlideAnimation.get(), xCoordinate, false);
+        if (stepSlideAnimation.isFinished() && lastSliderTarget != -1 && lastSliderTarget != xCoordinate && (!dragging || startedDragging || step > 0) && lastX == x) {
+            animationStart = lastSliderTarget;
+            stepSlideAnimation = new EaseInOutCubic((int) Preferences.trackerResponseDuration, 0f, 1f, false);
         }
-        xCoordinate = (int) stepSlideAnimation.get();
-
+        float progress = stepSlideAnimation.get();
+        lastSliderTarget = xCoordinate;
         lastX = x;
+        xCoordinate = (int) (xCoordinate * progress + animationStart * (1 - progress));
 
         // Ease-out the radius when the steps are in view
         float radius = 4;

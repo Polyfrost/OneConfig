@@ -72,7 +72,10 @@ public class HUDUtils {
             HashMap<String, Field> fields = new HashMap<>();
             for (Field f : fieldArrayList) fields.put(f.getName(), f);
             options.add(new ConfigHeader(field, hud, hudAnnotation.name(), category, subcategory, 2));
-            options.add(new ConfigSwitch(fields.get("enabled"), hud, "Enabled", "If the HUD is enabled", category, subcategory, 2));
+            options.add(new ConfigSwitch(fields.get("enabled"), hud, "Enabled", "If the HUD is enabled", category, subcategory, 1));
+            options.add(new ConfigButton(fields.get("resetPosition"), hud, "Position", "Reset HUD to default position", category, subcategory, 1, "Reset"));
+            options.add(new ConfigSwitch(fields.get("locked"), hud, "Locked", "If the position is locked", category, subcategory, HudCore.isPatcher ? 1 : 2));
+            if (HudCore.isPatcher) options.add(new ConfigSwitch(fields.get("ignoreCaching"), hud, "Ignore HUD Caching", "Ignore Patcher's HUD Caching feature, which limits HUDs to a specific FPS.", category, subcategory, 1));
             options.add(new ConfigSlider(fields.get("scale"), hud, "Scale", "The scale of the HUD", category, subcategory, 0.3f, 10f, 0, false));
             ConfigDropdown dropdown = new ConfigDropdown(fields.get("positionAlignment"), hud, "Position Alignment", "The alignment of the HUD", category, subcategory, 2, new String[]{"Auto", "Left", "Center", "Right"});
             dropdown.addListener(() -> hud.setScale(hud.scale, Platform.getGuiPlatform().getCurrentScreen() instanceof HudGui));

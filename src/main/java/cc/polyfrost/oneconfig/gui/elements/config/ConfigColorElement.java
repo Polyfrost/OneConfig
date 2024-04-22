@@ -37,6 +37,7 @@ import cc.polyfrost.oneconfig.internal.assets.Images;
 import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
 import cc.polyfrost.oneconfig.renderer.font.Fonts;
 import cc.polyfrost.oneconfig.utils.InputHandler;
+import cc.polyfrost.oneconfig.utils.RenderTickDelay;
 
 import java.lang.reflect.Field;
 
@@ -78,9 +79,12 @@ public class ConfigColorElement extends BasicOption {
         nanoVGHelper.drawRoundImage(vg, Images.ALPHA_GRID.filePath, x1 + 420, y + 4, 56, 24, 8f, getClass());
         nanoVGHelper.drawRoundedRect(vg, x1 + 420, y + 4, 56, 24, color.getRGB(), 8f);
         if (element.isClicked() && !open) {
-            open = true;
-            colorSelector = new ColorSelector(color, inputHandler.mouseX(), inputHandler.mouseY(), allowAlpha, inputHandler);
-            OneConfigGui.INSTANCE.initColorSelector(colorSelector);
+            OneColor finalColor = color;
+            new RenderTickDelay(() -> {
+                open = true;
+                colorSelector = new ColorSelector(finalColor, inputHandler.mouseX(), inputHandler.mouseY(), allowAlpha, inputHandler);
+                OneConfigGui.INSTANCE.initColorSelector(colorSelector);
+            }, 1);
         }
         if (OneConfigGui.INSTANCE.currentColorSelector != colorSelector) open = false;
         else if (open) color = (OneConfigGui.INSTANCE.getColor());

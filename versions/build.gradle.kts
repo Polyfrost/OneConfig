@@ -181,7 +181,7 @@ dependencies {
 
     modRuntimeOnly("me.djtheredstoner:DevAuth-" +
             (if (platform.isForge) { if (platform.isLegacyForge) "forge-legacy" else "forge-latest" } else "fabric")
-            + ":1.1.2")
+            + ":1.2.0")
 
     configurations.named(JavaPlugin.COMPILE_CLASSPATH_CONFIGURATION_NAME) { extendsFrom(shadeProject) }
     configurations.named(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME) { extendsFrom(shadeProject) }
@@ -194,7 +194,7 @@ tasks {
         // This removes the 24th line in fabric.mod.json,
         // aka the TestMod entrypoint, for production builds.
         doFirst {
-            val fabricModJson = buildDir.resolve("resources")
+            val fabricModJson = layout.buildDirectory.asFile.get().resolve("resources")
                 .resolve("main")
                 .resolve("fabric.mod.json")
             if (fabricModJson.exists()) {
@@ -217,7 +217,7 @@ tasks {
             val lines = atomicLines.get()
             if (lines.isEmpty()) return@doLast
 
-            val fabricModJson = buildDir.resolve("resources")
+            val fabricModJson = layout.buildDirectory.asFile.get().resolve("resources")
                 .resolve("main")
                 .resolve("fabric.mod.json")
 

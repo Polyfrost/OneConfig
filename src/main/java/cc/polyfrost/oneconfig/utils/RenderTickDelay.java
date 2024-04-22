@@ -24,24 +24,41 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-// Retrocompatibility
-@file:JvmName("TickDelayDSLKt")
+package cc.polyfrost.oneconfig.utils;
 
-package cc.polyfrost.oneconfig.utils.dsl
-
-import cc.polyfrost.oneconfig.utils.RenderTickDelay
-import cc.polyfrost.oneconfig.utils.TickDelay
-
-/**
- * Schedules a Runnable to be called after a certain amount of ticks.
- *
- * @see TickDelay
- */
-fun tick(ticks: Int, block: () -> Unit) = TickDelay(block, ticks)
+import cc.polyfrost.oneconfig.events.EventManager;
+import cc.polyfrost.oneconfig.events.event.RenderEvent;
+import cc.polyfrost.oneconfig.events.event.Stage;
+import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
 
 /**
- * Schedules a Runnable to be called after a certain amount of RENDER ticks (frames)
+ * Schedules a Runnable to be called after a certain amount of RENDER ticks (frames).
  *
- * @see RenderTickDelay
+ * If the amount of ticks is below 1, the Runnable will be called immediately.
  */
-fun renderTick(ticks: Int, block: () -> Unit) = RenderTickDelay(block, ticks)
+public class RenderTickDelay {
+    private final Runnable function;
+    private int delay;
+
+    public RenderTickDelay(Runnable function, int ticks) {
+        if (ticks < 1) {
+            function.run();
+        } else {
+            EventManager.INSTANCE.register(this);
+            delay = ticks;
+        }
+        this.function = function;
+    }
+
+    @Subscribe
+    protected void onTick(RenderEvent event) {
+        if (event.stage == Stage.START) {
+            // Delay expired
+            if (delay < 1) {
+                function.run();
+                EventManager.INSTANCE.unregister(this);
+            }
+            delay--;
+        }
+    }
+}
