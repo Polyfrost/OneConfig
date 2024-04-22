@@ -375,10 +375,7 @@ publishing {
             groupId = "cc.polyfrost"
             artifactId = base.archivesName.get()
 
-            artifact(tasks["jar"])
-            artifact(tasks["remapJar"])
-            artifact(tasks["sourcesJar"])
-            artifact(tasks["javadocJar"])
+            from(components["java"])
         }
     }
 
