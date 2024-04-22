@@ -1,7 +1,7 @@
 # PGT-related stuff is in settings.gradle.kts
 [versions]
 kotlin = "1.9.10"
-coroutines = "1.7.3"
+coroutines = "1.8.0"
 serialization = "1.6.0"
 atomicfu = "0.22.0"
 abi = "0.13.2"
