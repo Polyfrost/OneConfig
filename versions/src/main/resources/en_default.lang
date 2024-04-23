@@ -77,6 +77,9 @@ oneconfig.preferences=Preferences
 oneconfig.sidebar.title.extra=HELP & FEEDBACK
 oneconfig.changelog=Changelog
 
+oneconfig.mods.none=No mods installed!
+oneconfig.mods.none.desc=You don't have any compatible mods installed.\nInstall some to configure them here. Visit https://polyfrost.org/mods to get some!
+
 oneconfig.feedback=Feedback
 
 oneconfig.beta=BETA

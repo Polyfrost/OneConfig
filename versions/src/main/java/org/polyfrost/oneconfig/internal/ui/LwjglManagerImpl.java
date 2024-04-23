@@ -124,9 +124,6 @@ public class LwjglManagerImpl
         try {
             if (!onlyTinyFD) {
                 renderer = (Renderer) Class.forName(RENDERER_IMPL_PACKAGE + "RendererImpl", true, classLoader).getField("INSTANCE").get(null);
-                // w: twoconfig change: will crash immediately on startup if the LWJGL setup is invalid and init() will fail
-                // i think this is a good thing
-                renderer.init();
             } else renderer = null;
             tinyFD = (TinyFD) Class.forName(RENDERER_IMPL_PACKAGE + "TinyFDImpl", true, classLoader).getConstructor().newInstance();
         } catch (Exception e) {

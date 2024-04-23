@@ -56,6 +56,16 @@ private val imageAlign = Align(main = Align.Main.Center, padding = Vec2.ZERO)
 private val barAlign = Align(padding = Vec2(14f, 6f), main = Align.Main.SpaceBetween)
 
 fun ModsPage(trees: Collection<Tree>): Drawable {
+    if(trees.isEmpty()) {
+        return Group(
+            size = Vec2(1130f, 635f),
+            alignment = Align(main = Align.Main.Center, padding = Vec2(18f, 18f), maxRowSize = 1),
+            children = arrayOf(
+                Text("oneconfig.mods.none", fontSize = 24f, font = PolyUI.defaultFonts.medium),
+                Text("oneconfig.mods.none.desc", fontSize = 14f),
+            ),
+        ).namedId("EmptyModsPage")
+    }
     // todo add categories
     return Group(
         size = Vec2(1130f, 0f),
