@@ -24,14 +24,14 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.api.commands.factories.dsl
+package org.polyfrost.oneconfig.api.commands.v1.factories.dsl
 
 import org.polyfrost.oneconfig.api.commands.v1.CommandTree
 import org.polyfrost.oneconfig.api.commands.v1.Executable
 import org.polyfrost.oneconfig.api.commands.v1.Executable.Param
 import org.polyfrost.oneconfig.api.commands.v1.arguments.ArgumentParser
-import org.polyfrost.oneconfig.api.commands.factories.dsl.CommandDSL.Companion.param
-import org.polyfrost.oneconfig.api.commands.factories.dsl.CommandDSL.ParamData
+import org.polyfrost.oneconfig.api.commands.v1.factories.dsl.CommandDSL.Companion.param
+import org.polyfrost.oneconfig.api.commands.v1.factories.dsl.CommandDSL.ParamData
 import org.polyfrost.oneconfig.utils.v1.MHUtils
 import java.lang.reflect.Method
 

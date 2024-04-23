@@ -24,7 +24,7 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.api.commands.factories.dsl
+package org.polyfrost.oneconfig.api.commands.v1.factories.dsl
 
 import org.polyfrost.oneconfig.api.commands.v1.CommandTree
 import org.polyfrost.oneconfig.api.commands.v1.arguments.ArgumentParser
