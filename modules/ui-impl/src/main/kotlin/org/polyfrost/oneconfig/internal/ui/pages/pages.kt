@@ -29,7 +29,7 @@ package org.polyfrost.oneconfig.internal.ui.pages
 import org.polyfrost.oneconfig.api.config.ConfigVisualizer
 import org.polyfrost.oneconfig.api.config.Tree
 import org.polyfrost.oneconfig.internal.ui.OneConfigUI
-import org.polyfrost.oneconfig.ui.Notification
+import org.polyfrost.oneconfig.ui.notifications.Notification
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.animate.Animations
 import org.polyfrost.polyui.component.*
@@ -84,7 +84,7 @@ fun ModsPage(trees: Collection<Tree>): Drawable {
                 ),
             ).events {
                 Event.Mouse.Clicked(0) then { _ ->
-                    OneConfigUI.openPage(ConfigVisualizer.get(it), (this[1][0] as Text).text)
+                    OneConfigUI.openPage(ConfigVisualizer.INSTANCE.get(it), (this[1][0] as Text).text)
                 }
             }.namedId("ModCard")
         }.toTypedArray(),

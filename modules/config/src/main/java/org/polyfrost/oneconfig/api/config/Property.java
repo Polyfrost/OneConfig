@@ -75,6 +75,10 @@ public class Property<T> extends Node implements Serializable {
         return new Property<>(id, null, null, value);
     }
 
+    public static <T> Property<T> prop(@NotNull T value) {
+        return new Property<>(null, null, null, value);
+    }
+
     @SuppressWarnings("unchecked")
     public static <T> Property<T> prop(@Nullable String id, @Nullable T value, Class<?> type) {
         return new Property<>(id, null, null, value, (Class<T>) type);

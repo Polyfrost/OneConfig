@@ -9,7 +9,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/Hud : java/lang/Cloneable 
 	public final fun get ()Lorg/polyfrost/polyui/component/Drawable;
 	public final fun getHidden ()Z
 	public final fun getHud ()Lorg/polyfrost/polyui/component/Drawable;
-	protected final fun setHidden (Z)V
+	public final fun setHidden (Z)V
 	public abstract fun update ()Z
 	public abstract fun updateFrequency ()J
 }
@@ -99,6 +99,12 @@ public final class org/polyfrost/oneconfig/api/hud/TextHud$Supplier : org/polyfr
 	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;JLjava/util/function/Supplier;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;JLkotlin/jvm/functions/Function0;)V
 	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;JLkotlin/jvm/functions/Function0;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+}
+
+public final class org/polyfrost/oneconfig/api/hud/internal/Hud_savingKt {
+	public static final fun get (Lorg/polyfrost/oneconfig/api/config/Node;Ljava/lang/Object;)Ljava/lang/Object;
+	public static final fun readIn (Lorg/polyfrost/oneconfig/api/hud/Hud;Lorg/polyfrost/oneconfig/api/config/Tree;)V
+	public static final fun writeOut (Lorg/polyfrost/oneconfig/api/hud/Hud;)Lorg/polyfrost/oneconfig/api/config/Tree;
 }
 
 public final class org/polyfrost/oneconfig/api/hud/internal/Hud_utilsKt {

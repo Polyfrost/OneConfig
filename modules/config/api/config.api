@@ -59,6 +59,7 @@ public class org/polyfrost/oneconfig/api/config/Property : org/polyfrost/oneconf
 	public fun isPrimitiveArray ()Z
 	protected final fun nconvert (Ljava/lang/Object;)Ljava/lang/Object;
 	public fun overwrite (Lorg/polyfrost/oneconfig/api/config/Node;)V
+	public static fun prop (Ljava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/Property;
 	public static fun prop (Ljava/lang/String;Ljava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/Property;
 	public static fun prop (Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Class;)Lorg/polyfrost/oneconfig/api/config/Property;
 	public static fun prop (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Class;)Lorg/polyfrost/oneconfig/api/config/Property;
@@ -87,6 +88,7 @@ public class org/polyfrost/oneconfig/api/config/Tree : org/polyfrost/oneconfig/a
 	public fun overwrite (Lorg/polyfrost/oneconfig/api/config/Node;)V
 	public fun put (Lorg/polyfrost/oneconfig/api/config/Node;)Lorg/polyfrost/oneconfig/api/config/Tree;
 	public fun put ([Lorg/polyfrost/oneconfig/api/config/Node;)Lorg/polyfrost/oneconfig/api/config/Tree;
+	public fun set (Ljava/lang/String;Lorg/polyfrost/oneconfig/api/config/Node;)Lorg/polyfrost/oneconfig/api/config/Tree;
 	public fun toString ()Ljava/lang/String;
 	public static fun tree ()Lorg/polyfrost/oneconfig/api/config/Tree;
 	public static fun tree (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/Tree;

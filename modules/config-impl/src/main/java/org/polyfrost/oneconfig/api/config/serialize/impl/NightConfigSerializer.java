@@ -54,17 +54,17 @@ public class NightConfigSerializer implements FileSerializer<String> {
     public static final FileSerializer<String> TOML = new NightConfigSerializer(new TomlWriter(), new TomlParser(), ".toml");       // 90 KB
     public static final FileSerializer<String> JSON = new NightConfigSerializer(JsonFormat.fancyInstance().createWriter(), JsonFormat.fancyInstance().createParser(), ".json");  // 55KB
     // public static final FileSerializer HOCON = new NightConfigSerializer(new HoconWriter(), new HoconParser(), ".hocon");        // 1.1MB
-    public static final FileSerializer<String> YAML = new NightConfigSerializer(new YamlWriter(), new YamlParser(YamlFormat.defaultInstance()), ".yaml");       // 1.2MB
+    public static final FileSerializer<String> YAML = new NightConfigSerializer(new YamlWriter(), new YamlParser(YamlFormat.defaultInstance()), ".yaml", ".yml");       // 1.2MB
     public static final FileSerializer<?>[] ALL = {TOML, JSON, YAML};
 
     final ConfigWriter writer;
     final ConfigParser<?> reader;
-    final String format;
+    final String[] formats;
 
-    public NightConfigSerializer(ConfigWriter writer, ConfigParser<?> reader, String format) {
+    public NightConfigSerializer(ConfigWriter writer, ConfigParser<?> reader, String... formats) {
         this.writer = writer;
         this.reader = reader;
-        this.format = format;
+        this.formats = formats;
     }
 
     @SuppressWarnings("unchecked")
@@ -121,8 +121,8 @@ public class NightConfigSerializer implements FileSerializer<String> {
     }
 
     @Override
-    public String getExtension() {
-        return format;
+    public String[] getExtensions() {
+        return formats;
     }
 
     @Override

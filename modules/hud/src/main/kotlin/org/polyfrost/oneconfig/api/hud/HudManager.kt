@@ -281,6 +281,8 @@ object HudManager {
             Fade(pg, 0f, false, Animations.EaseInOutQuad.create(0.2.seconds)) {
                 renders = false
             }.add()
+            // remove scale blob
+            polyUI.focus(null)
         } else {
             pg.alpha = 0f
             Fade(pg, 1f, false, Animations.EaseInOutQuad.create(0.2.seconds)).add()

@@ -35,6 +35,8 @@ import org.polyfrost.oneconfig.api.config.serialize.impl.FileSerializer;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -49,6 +51,7 @@ import java.util.List;
 import java.util.Map;
 
 public class FileBackend extends Backend {
+    private static final Charset CHARSET = StandardCharsets.UTF_8;
     public final Path folder;
     private final Map<String, FileSerializer<String>> serializers = new HashMap<>(8);
     private boolean hasWatcher = false;
@@ -58,7 +61,7 @@ public class FileBackend extends Backend {
     public FileBackend(Path folder, FileSerializer<String>... serializers) {
         this.folder = folder;
         for (FileSerializer<String> s : serializers) {
-            this.serializers.put(s.getExtension(), s);
+            addSerializer(s);
         }
         try {
             Files.createDirectories(folder);
@@ -68,20 +71,21 @@ public class FileBackend extends Backend {
     }
 
     protected static String read(Path p) {
-        StringBuilder buf = new StringBuilder();
-        try (BufferedReader r = Files.newBufferedReader(p)) {
-            String o;
-            while ((o = r.readLine()) != null) {
-                buf.append(o).append('\n');
+        try (BufferedReader r = Files.newBufferedReader(p, CHARSET)) {
+            StringBuilder buf = new StringBuilder((int) Files.size(p));
+            for (; ; ) {
+                String l = r.readLine();
+                if (l == null) break;
+                buf.append(l).append('\n');
             }
+            return buf.toString();
         } catch (Exception e) {
             throw new SerializationException("Failed to read file", e);
         }
-        return buf.toString();
     }
 
     protected static void write(Path p, String s) {
-        try (BufferedWriter w = Files.newBufferedWriter(p, StandardOpenOption.CREATE)) {
+        try (BufferedWriter w = Files.newBufferedWriter(p, CHARSET, StandardOpenOption.CREATE)) {
             w.write(s);
         } catch (Exception e) {
             throw new SerializationException("Failed to write file", e);
@@ -141,7 +145,7 @@ public class FileBackend extends Backend {
         t.setName("OneConfig Config Watcher");
         t.setDaemon(true);
         t.start();
-        LOGGER.info("installed watcher to {}", folder);
+        LOGGER.info("installed watcher to ./{}", folder);
         return this;
     }
 
@@ -209,7 +213,10 @@ public class FileBackend extends Backend {
     }
 
     public void addSerializer(FileSerializer<String> serializer) {
-        serializers.put(serializer.getExtension(), serializer);
+        for (String ext : serializer.getExtensions()) {
+            FileSerializer<?> out = this.serializers.putIfAbsent(ext, serializer);
+            if (out != null) LOGGER.warn("Serializer already registered for extension {}", ext);
+        }
     }
 
     protected FileSerializer<String> getSerializer(Path p) {

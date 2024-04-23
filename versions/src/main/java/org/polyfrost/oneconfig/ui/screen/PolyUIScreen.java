@@ -53,7 +53,7 @@ import org.polyfrost.polyui.unit.Align;
 import org.polyfrost.polyui.unit.Vec2;
 
 import static org.lwjgl.opengl.GL11.glViewport;
-import static org.polyfrost.oneconfig.ui.KeybindManager.translateKey;
+import static org.polyfrost.oneconfig.ui.keybind.KeybindManager.translateKey;
 
 @SuppressWarnings("unused")
 @PlatformDeclaration

@@ -34,9 +34,11 @@ import org.polyfrost.oneconfig.api.hud.HudManager;
 import org.polyfrost.oneconfig.internal.ui.BlurHandler;
 import org.polyfrost.oneconfig.internal.ui.OneConfigUI;
 import org.polyfrost.oneconfig.ui.LwjglManager;
+import org.polyfrost.oneconfig.ui.keybind.KeybindHelper;
 import org.polyfrost.oneconfig.utils.GuiUtils;
 import org.polyfrost.polyui.PolyUI;
 import org.polyfrost.polyui.component.Drawable;
+import org.polyfrost.polyui.input.KeyModifiers;
 import org.polyfrost.polyui.input.Translator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -86,10 +88,7 @@ public class OneConfig
         b.then(runs("").does(() -> GuiUtils.displayScreen(OneConfigUI.INSTANCE.create())).description("Opens the OneConfig GUI"));
         b.then(runs("hud").does(() -> GuiUtils.displayScreen(HudManager.INSTANCE.getWithEditor())).description("Opens the OneConfig HUD editor"));
         CommandManager.registerCommand(b);
-//        KeybindManager.registerKeybind(new KeyBinder.Bind((int[]) null, null, (int[]) null, KeyModifiers.RSHIFT.getValue(), 0L, () -> {
-//            GuiUtils.displayScreen(OneConfigUI.INSTANCE.create());
-//            return true;
-//        }));
+        KeybindHelper.builder().mods(KeyModifiers.RSHIFT).does(() -> GuiUtils.displayScreen(OneConfigUI.INSTANCE.create())).register();
         EventManager.INSTANCE.post(InitializationEvent.INSTANCE);
         LOGGER.info("OneConfig initialized!");
     }

@@ -24,7 +24,7 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.ui
+package org.polyfrost.oneconfig.ui.keybind
 
 import org.polyfrost.oneconfig.api.events.event.KeyInputEvent
 import org.polyfrost.oneconfig.api.events.event.TickEvent
@@ -50,13 +50,17 @@ object KeybindManager {
 
 
     init {
-        eventHandler { event: KeyInputEvent ->
+        eventHandler { (key, char, state): KeyInputEvent ->
+            if (state == 2) return@eventHandler
             // keybindings only work when in game (todo maybe change)?
             if (Platform.getGuiPlatform().currentScreen == null) {
-                translateKey(inputManager, event.key, event.character, event.state != 0)
+                translateKey(inputManager, key, char, state == 1)
+                @Suppress("UnstableApiUsage")
+                keyBinder.update(0L, inputManager.mods)
             }
         }.register()
         eventHandler { _: TickEvent.End ->
+            @Suppress("UnstableApiUsage")
             keyBinder.update(50_000L, inputManager.mods)
         }.register()
 
@@ -101,8 +105,14 @@ object KeybindManager {
     }
 
     @JvmStatic
-    fun registerKeybind(bind: KeyBinder.Bind) {
+    fun registerKeybind(bind: KeyBinder.Bind): KeyBinder.Bind {
         keyBinder.add(bind)
+        return bind
+    }
+
+    @JvmStatic
+    fun builder(): KeybindHelper {
+        return KeybindHelper()
     }
 
     @JvmStatic

@@ -101,7 +101,7 @@ public class Tree extends Node implements Serializable {
                 out.put(e.getKey(), sub);
             } else {
                 Property<?> p = (Property<?>) n;
-                if(p.type == Void.class) continue;
+                if (p.type == Void.class) continue;
                 out.put(e.getKey(), p.get());
             }
         }
@@ -145,6 +145,13 @@ public class Tree extends Node implements Serializable {
     }
 
     public Tree put(Node n) {
+        theMap.put(n.getID(), n);
+        return this;
+    }
+
+    public Tree set(String id, Node n) {
+        if (n.getID() == null) n.setID(id);
+        else if (!id.equals(n.getID())) throw new IllegalStateException("ID does not match node ID");
         theMap.put(n.getID(), n);
         return this;
     }

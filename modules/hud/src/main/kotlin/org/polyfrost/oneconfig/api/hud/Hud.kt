@@ -66,7 +66,7 @@ abstract class Hud<T : Drawable> : Cloneable {
      */
     var hidden: Boolean
         get() = it?.enabled == false
-        protected set(new) {
+        set(new) {
             val value = !new
             // useless null-safety checks, but I don't want to risk dumb errors
             val it = it ?: return

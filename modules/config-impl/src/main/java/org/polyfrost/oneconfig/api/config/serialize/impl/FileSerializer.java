@@ -29,5 +29,5 @@ package org.polyfrost.oneconfig.api.config.serialize.impl;
 import org.polyfrost.oneconfig.api.config.serialize.Serializer;
 
 public interface FileSerializer<T> extends Serializer<T> {
-    String getExtension();
+    String[] getExtensions();
 }

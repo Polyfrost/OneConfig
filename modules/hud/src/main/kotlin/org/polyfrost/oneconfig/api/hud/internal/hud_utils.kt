@@ -142,6 +142,7 @@ fun Hud<out Drawable>.build(): Block {
             }
         }
     }
+
     return get().addDefaultBackground(backgroundColor()).addScaler().draggable(
         onStart = {
             if (HudManager.open) HudManager.toggle()

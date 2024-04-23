@@ -32,10 +32,34 @@ public final class org/polyfrost/oneconfig/api/config/ConfigManager {
 	public fun trees ()Ljava/util/Collection;
 }
 
-public final class org/polyfrost/oneconfig/api/config/ConfigVisualizer {
-	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/config/ConfigVisualizer;
-	public static final fun get (Lorg/polyfrost/oneconfig/api/config/Tree;)Lorg/polyfrost/polyui/component/Drawable;
+public class org/polyfrost/oneconfig/api/config/ConfigVisualizer {
+	public static final field Companion Lorg/polyfrost/oneconfig/api/config/ConfigVisualizer$Companion;
+	public fun <init> ()V
+	protected fun create (Lorg/polyfrost/oneconfig/api/config/Tree;Ljava/lang/String;)Lorg/polyfrost/polyui/component/Drawable;
+	public static synthetic fun create$default (Lorg/polyfrost/oneconfig/api/config/ConfigVisualizer;Lorg/polyfrost/oneconfig/api/config/Tree;Ljava/lang/String;ILjava/lang/Object;)Lorg/polyfrost/polyui/component/Drawable;
+	protected fun createHeaders (Ljava/util/Map;)Lorg/polyfrost/polyui/component/Drawable;
+	protected fun flattenSubcategories (Ljava/util/Map;)Ljava/util/Map;
+	public final fun get (Lorg/polyfrost/oneconfig/api/config/Tree;)Lorg/polyfrost/polyui/component/Drawable;
+	protected final fun getAccordOpt ()Lorg/polyfrost/polyui/unit/Align;
+	protected final fun getAlignC ()Lorg/polyfrost/polyui/unit/Align;
+	protected final fun getAlignCV ()Lorg/polyfrost/polyui/unit/Align;
+	protected final fun getAlignVNoPad ()Lorg/polyfrost/polyui/unit/Align;
+	protected final fun getConfigCache ()Ljava/util/HashMap;
+	protected final fun getOptBg ()Lorg/polyfrost/polyui/color/PolyColor;
+	protected final fun getPadVOnly ()Lorg/polyfrost/polyui/unit/Align;
+	protected final fun getStdAccord ()Lorg/polyfrost/polyui/unit/Align;
+	protected final fun getStdAlign ()Lorg/polyfrost/polyui/unit/Align;
+	protected final fun getStdOpt ()Lorg/polyfrost/polyui/unit/Align;
 	public final fun getVisualizer (Lorg/polyfrost/oneconfig/api/config/Property;)Lorg/polyfrost/oneconfig/api/config/visualize/Visualizer;
+	protected fun makeAccordion (Lorg/polyfrost/oneconfig/api/config/Tree;Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/polyui/renderer/data/PolyImage;)Lorg/polyfrost/polyui/component/Drawable;
+	protected fun makeFinal (Ljava/util/Map;Ljava/lang/String;)Lorg/polyfrost/polyui/component/Drawable;
+	protected fun processNode (Lorg/polyfrost/oneconfig/api/config/Node;Ljava/util/HashMap;)V
+	protected fun wrap (Lorg/polyfrost/polyui/component/Drawable;Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/polyui/renderer/data/PolyImage;)Lorg/polyfrost/polyui/component/Drawable;
+	protected fun wrapForAccordion (Lorg/polyfrost/polyui/component/Drawable;Ljava/lang/String;Ljava/lang/String;)Lorg/polyfrost/polyui/component/Drawable;
+}
+
+public final class org/polyfrost/oneconfig/api/config/ConfigVisualizer$Companion {
+	public final fun getINSTANCE ()Lorg/polyfrost/oneconfig/api/config/ConfigVisualizer;
 	public final fun strv (Ljava/lang/String;)Ljava/lang/String;
 }
 
@@ -177,7 +201,7 @@ public abstract class org/polyfrost/oneconfig/api/config/collect/impl/Reflective
 }
 
 public abstract interface class org/polyfrost/oneconfig/api/config/serialize/impl/FileSerializer : org/polyfrost/oneconfig/api/config/serialize/Serializer {
-	public abstract fun getExtension ()Ljava/lang/String;
+	public abstract fun getExtensions ()[Ljava/lang/String;
 }
 
 public class org/polyfrost/oneconfig/api/config/serialize/impl/NightConfigSerializer : org/polyfrost/oneconfig/api/config/serialize/impl/FileSerializer {
@@ -185,10 +209,10 @@ public class org/polyfrost/oneconfig/api/config/serialize/impl/NightConfigSerial
 	public static final field JSON Lorg/polyfrost/oneconfig/api/config/serialize/impl/FileSerializer;
 	public static final field TOML Lorg/polyfrost/oneconfig/api/config/serialize/impl/FileSerializer;
 	public static final field YAML Lorg/polyfrost/oneconfig/api/config/serialize/impl/FileSerializer;
-	public fun <init> (Lcom/electronwill/nightconfig/core/io/ConfigWriter;Lcom/electronwill/nightconfig/core/io/ConfigParser;Ljava/lang/String;)V
+	public fun <init> (Lcom/electronwill/nightconfig/core/io/ConfigWriter;Lcom/electronwill/nightconfig/core/io/ConfigParser;[Ljava/lang/String;)V
 	public synthetic fun deserialize (Ljava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/Tree;
 	public fun deserialize (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/Tree;
-	public fun getExtension ()Ljava/lang/String;
+	public fun getExtensions ()[Ljava/lang/String;
 	public synthetic fun serialize (Lorg/polyfrost/oneconfig/api/config/Tree;)Ljava/lang/Object;
 	public fun serialize (Lorg/polyfrost/oneconfig/api/config/Tree;)Ljava/lang/String;
 }

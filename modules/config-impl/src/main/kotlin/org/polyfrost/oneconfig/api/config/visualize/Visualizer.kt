@@ -26,7 +26,7 @@
 
 package org.polyfrost.oneconfig.api.config.visualize
 
-import org.polyfrost.oneconfig.api.config.ConfigVisualizer.strv
+import org.polyfrost.oneconfig.api.config.ConfigVisualizer.Companion.strv
 import org.polyfrost.oneconfig.api.config.Property
 import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.component.events
