@@ -26,10 +26,10 @@
 
 package org.polyfrost.oneconfig.internal.ui.pages
 
-import org.polyfrost.oneconfig.api.config.ConfigVisualizer
-import org.polyfrost.oneconfig.api.config.Tree
+import org.polyfrost.oneconfig.api.config.v1.ConfigVisualizer
+import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.internal.ui.OneConfigUI
-import org.polyfrost.oneconfig.ui.notifications.Notification
+import org.polyfrost.oneconfig.ui.v1.notifications.Notification
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.animate.Animations
 import org.polyfrost.polyui.component.*

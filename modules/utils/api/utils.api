@@ -4,14 +4,14 @@ public abstract interface annotation class org/polyfrost/oneconfig/api/DeclaredI
 public abstract interface annotation class org/polyfrost/oneconfig/api/PlatformDeclaration : java/lang/annotation/Annotation {
 }
 
-public abstract interface class org/polyfrost/oneconfig/platform/GLPlatform {
+public abstract interface class org/polyfrost/oneconfig/api/platform/v1/GLPlatform {
 	public abstract fun drawRect (FFFFI)V
 	public fun drawText (Ljava/lang/String;FFIZ)F
 	public abstract fun drawText (Lorg/polyfrost/oneconfig/libs/universal/UMatrixStack;Ljava/lang/String;FFIZ)F
 	public abstract fun getStringWidth (Ljava/lang/String;)I
 }
 
-public abstract interface class org/polyfrost/oneconfig/platform/GuiPlatform {
+public abstract interface class org/polyfrost/oneconfig/api/platform/v1/GuiPlatform {
 	public abstract fun getCurrentScreen ()Ljava/lang/Object;
 	public abstract fun isInChat ()Z
 	public abstract fun isInDebug ()Z
@@ -19,18 +19,18 @@ public abstract interface class org/polyfrost/oneconfig/platform/GuiPlatform {
 	public abstract fun setCurrentScreen (Ljava/lang/Object;)V
 }
 
-public abstract interface class org/polyfrost/oneconfig/platform/I18nPlatform {
+public abstract interface class org/polyfrost/oneconfig/api/platform/v1/I18nPlatform {
 	public abstract fun format (Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;
 	public abstract fun getKeyName (II)Ljava/lang/String;
 }
 
-public abstract interface class org/polyfrost/oneconfig/platform/LoaderPlatform {
+public abstract interface class org/polyfrost/oneconfig/api/platform/v1/LoaderPlatform {
 	public abstract fun getLoadedMods ()Ljava/util/List;
 	public abstract fun isModLoaded (Ljava/lang/String;)Z
-	public abstract fun toActiveMod (Ljava/lang/Object;)Lorg/polyfrost/oneconfig/platform/LoaderPlatform$ActiveMod;
+	public abstract fun toActiveMod (Ljava/lang/Object;)Lorg/polyfrost/oneconfig/api/platform/v1/LoaderPlatform$ActiveMod;
 }
 
-public class org/polyfrost/oneconfig/platform/LoaderPlatform$ActiveMod {
+public class org/polyfrost/oneconfig/api/platform/v1/LoaderPlatform$ActiveMod {
 	public final field id Ljava/lang/String;
 	public final field name Ljava/lang/String;
 	public final field source Ljava/nio/file/Path;
@@ -38,37 +38,37 @@ public class org/polyfrost/oneconfig/platform/LoaderPlatform$ActiveMod {
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/nio/file/Path;)V
 }
 
-public abstract interface class org/polyfrost/oneconfig/platform/Platform {
-	public static fun getGLPlatform ()Lorg/polyfrost/oneconfig/platform/GLPlatform;
-	public static fun getGuiPlatform ()Lorg/polyfrost/oneconfig/platform/GuiPlatform;
-	public static fun getI18nPlatform ()Lorg/polyfrost/oneconfig/platform/I18nPlatform;
-	public static fun getInstance ()Lorg/polyfrost/oneconfig/platform/Platform;
-	public abstract fun getLoader ()Lorg/polyfrost/oneconfig/platform/Platform$Loader;
-	public static fun getLoaderPlatform ()Lorg/polyfrost/oneconfig/platform/LoaderPlatform;
+public abstract interface class org/polyfrost/oneconfig/api/platform/v1/Platform {
+	public static fun getGLPlatform ()Lorg/polyfrost/oneconfig/api/platform/v1/GLPlatform;
+	public static fun getGuiPlatform ()Lorg/polyfrost/oneconfig/api/platform/v1/GuiPlatform;
+	public static fun getI18nPlatform ()Lorg/polyfrost/oneconfig/api/platform/v1/I18nPlatform;
+	public static fun getInstance ()Lorg/polyfrost/oneconfig/api/platform/v1/Platform;
+	public abstract fun getLoader ()Lorg/polyfrost/oneconfig/api/platform/v1/Platform$Loader;
+	public static fun getLoaderPlatform ()Lorg/polyfrost/oneconfig/api/platform/v1/LoaderPlatform;
 	public abstract fun getMinecraftVersion ()I
 	public abstract fun getPlayerName ()Ljava/lang/String;
-	public static fun getServerPlatform ()Lorg/polyfrost/oneconfig/platform/ServerPlatform;
+	public static fun getServerPlatform ()Lorg/polyfrost/oneconfig/api/platform/v1/ServerPlatform;
 	public abstract fun isCallingFromMinecraftThread ()Z
 	public abstract fun isDevelopmentEnvironment ()Z
 }
 
-public final class org/polyfrost/oneconfig/platform/Platform$Holder {
+public final class org/polyfrost/oneconfig/api/platform/v1/Platform$Holder {
 }
 
-public final class org/polyfrost/oneconfig/platform/Platform$Loader : java/lang/Enum {
-	public static final field FABRIC Lorg/polyfrost/oneconfig/platform/Platform$Loader;
-	public static final field FORGE Lorg/polyfrost/oneconfig/platform/Platform$Loader;
-	public static fun valueOf (Ljava/lang/String;)Lorg/polyfrost/oneconfig/platform/Platform$Loader;
-	public static fun values ()[Lorg/polyfrost/oneconfig/platform/Platform$Loader;
+public final class org/polyfrost/oneconfig/api/platform/v1/Platform$Loader : java/lang/Enum {
+	public static final field FABRIC Lorg/polyfrost/oneconfig/api/platform/v1/Platform$Loader;
+	public static final field FORGE Lorg/polyfrost/oneconfig/api/platform/v1/Platform$Loader;
+	public static fun valueOf (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/platform/v1/Platform$Loader;
+	public static fun values ()[Lorg/polyfrost/oneconfig/api/platform/v1/Platform$Loader;
 }
 
-public abstract interface class org/polyfrost/oneconfig/platform/ServerPlatform {
+public abstract interface class org/polyfrost/oneconfig/api/platform/v1/ServerPlatform {
 	public abstract fun doesPlayerExist ()Z
 	public abstract fun getServerBrand ()Ljava/lang/String;
 	public abstract fun inMultiplayer ()Z
 }
 
-public final class org/polyfrost/oneconfig/utils/ColorUtils {
+public final class org/polyfrost/oneconfig/utils/v1/ColorUtils {
 	public static fun getAlpha (I)I
 	public static fun getBlue (I)I
 	public static fun getColor (FFFF)I
@@ -82,17 +82,17 @@ public final class org/polyfrost/oneconfig/utils/ColorUtils {
 	public static fun setRed (II)I
 }
 
-public final class org/polyfrost/oneconfig/utils/Deprecator {
+public final class org/polyfrost/oneconfig/utils/v1/Deprecator {
 	public static fun markDeprecated ()V
 }
 
-public final class org/polyfrost/oneconfig/utils/GuiUtils {
+public final class org/polyfrost/oneconfig/utils/v1/GuiUtils {
 	public static fun closeScreen ()V
 	public static fun displayScreen (Ljava/lang/Object;)V
 	public static fun displayScreen (Ljava/lang/Object;I)V
 }
 
-public final class org/polyfrost/oneconfig/utils/IOUtils {
+public final class org/polyfrost/oneconfig/utils/v1/IOUtils {
 	public static fun copyImageToClipboard (Ljava/awt/Image;)V
 	public static fun copyStringToClipboard (Ljava/lang/String;)V
 	public static fun getFileChecksum (Ljava/io/File;)Ljava/lang/String;
@@ -104,77 +104,77 @@ public final class org/polyfrost/oneconfig/utils/IOUtils {
 	public static fun resourceToByteBufferNullable (Ljava/lang/String;Ljava/lang/Class;)Ljava/nio/ByteBuffer;
 }
 
-public final class org/polyfrost/oneconfig/utils/JsonUtils {
+public final class org/polyfrost/oneconfig/utils/v1/JsonUtils {
 	public static final field PARSER Lcom/google/gson/JsonParser;
 	public static fun ifValid (Ljava/lang/String;Ljava/util/function/Consumer;)Z
 	public static fun parseString (Ljava/lang/String;)Lcom/google/gson/JsonElement;
 	public static fun parseString (Ljava/lang/String;Z)Lcom/google/gson/JsonElement;
 }
 
-public final class org/polyfrost/oneconfig/utils/LogScanner {
+public final class org/polyfrost/oneconfig/utils/v1/LogScanner {
 	public static fun identifyCallerFromStacktrace (Ljava/lang/Throwable;)Ljava/util/Set;
 	public static fun identifyFromClass (Ljava/lang/Class;)Ljava/util/Set;
 	public static fun identifyFromClass (Ljava/lang/String;)Ljava/util/Set;
 	public static fun identifyFromStacktrace (Ljava/lang/Throwable;)Ljava/util/Set;
 }
 
-public final class org/polyfrost/oneconfig/utils/MHUtils {
-	public static final field INSTANCE Lorg/polyfrost/oneconfig/utils/MHUtils;
+public final class org/polyfrost/oneconfig/utils/v1/MHUtils {
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/utils/v1/MHUtils;
 	public static final field trustedLookup Ljava/lang/invoke/MethodHandles$Lookup;
-	public static final fun getAnnotationValues (Ljava/lang/annotation/Annotation;)Lorg/polyfrost/oneconfig/utils/MHUtils$Result;
-	public static final fun getConstructorHandle (Ljava/lang/Class;[Ljava/lang/Class;)Lorg/polyfrost/oneconfig/utils/MHUtils$Result;
-	public static final fun getConstructorHandle (Ljava/lang/reflect/Constructor;)Lorg/polyfrost/oneconfig/utils/MHUtils$Result;
-	public static final fun getConsumerFunctionHandle (Ljava/lang/Object;Ljava/lang/String;Ljava/lang/Class;)Lorg/polyfrost/oneconfig/utils/MHUtils$Result;
-	public static final fun getField (Ljava/lang/Object;Ljava/lang/String;)Lorg/polyfrost/oneconfig/utils/MHUtils$Result;
-	public static final fun getFieldGetter (Ljava/lang/Class;Ljava/lang/String;Ljava/lang/Class;)Lorg/polyfrost/oneconfig/utils/MHUtils$Result;
-	public static final fun getFieldGetter (Ljava/lang/String;Ljava/lang/Object;)Lorg/polyfrost/oneconfig/utils/MHUtils$Result;
-	public static final fun getFieldGetter (Ljava/lang/reflect/Field;Ljava/lang/Object;)Lorg/polyfrost/oneconfig/utils/MHUtils$Result;
-	public static final fun getFieldSetter (Ljava/lang/Class;Ljava/lang/String;Ljava/lang/Class;)Lorg/polyfrost/oneconfig/utils/MHUtils$Result;
-	public static final fun getFieldSetter (Ljava/lang/String;Ljava/lang/Object;)Lorg/polyfrost/oneconfig/utils/MHUtils$Result;
-	public static final fun getFieldSetter (Ljava/lang/reflect/Field;Ljava/lang/Object;)Lorg/polyfrost/oneconfig/utils/MHUtils$Result;
-	public static final fun getFunctionHandle (Ljava/lang/Object;Ljava/lang/String;Ljava/lang/Class;Ljava/lang/Class;)Lorg/polyfrost/oneconfig/utils/MHUtils$Result;
-	public static final fun getMethodHandle (Ljava/lang/Class;Ljava/lang/String;Ljava/lang/Class;[Ljava/lang/Class;)Lorg/polyfrost/oneconfig/utils/MHUtils$Result;
-	public static final fun getMethodHandle (Ljava/lang/Object;Ljava/lang/String;Ljava/lang/Class;[Ljava/lang/Class;)Lorg/polyfrost/oneconfig/utils/MHUtils$Result;
-	public static final fun getMethodHandle (Ljava/lang/reflect/Method;Ljava/lang/Object;)Lorg/polyfrost/oneconfig/utils/MHUtils$Result;
-	public static final fun getStatic (Ljava/lang/Class;Ljava/lang/String;)Lorg/polyfrost/oneconfig/utils/MHUtils$Result;
-	public static final fun getStaticFieldGetter (Ljava/lang/Class;Ljava/lang/String;Ljava/lang/Class;)Lorg/polyfrost/oneconfig/utils/MHUtils$Result;
-	public static final fun getStaticFieldSetter (Ljava/lang/Class;Ljava/lang/String;Ljava/lang/Class;)Lorg/polyfrost/oneconfig/utils/MHUtils$Result;
-	public static final fun getStaticMethodHandle (Ljava/lang/Class;Ljava/lang/String;Ljava/lang/Class;[Ljava/lang/Class;)Lorg/polyfrost/oneconfig/utils/MHUtils$Result;
-	public static final fun instantiate (Ljava/lang/Class;Z)Lorg/polyfrost/oneconfig/utils/MHUtils$Result;
-	public static final fun instantiate (Ljava/lang/Class;[Ljava/lang/Object;)Lorg/polyfrost/oneconfig/utils/MHUtils$Result;
-	public static final fun invoke (Ljava/lang/Object;Ljava/lang/String;[Ljava/lang/Object;)Lorg/polyfrost/oneconfig/utils/MHUtils$Result;
-	public static final fun invokeCatching (Ljava/lang/invoke/MethodHandle;[Ljava/lang/Object;)Lorg/polyfrost/oneconfig/utils/MHUtils$Result;
-	public static final fun invokeExactCatching (Ljava/lang/invoke/MethodHandle;[Ljava/lang/Object;)Lorg/polyfrost/oneconfig/utils/MHUtils$Result;
-	public static final fun invokeStatic (Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Lorg/polyfrost/oneconfig/utils/MHUtils$Result;
+	public static final fun getAnnotationValues (Ljava/lang/annotation/Annotation;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
+	public static final fun getConstructorHandle (Ljava/lang/Class;[Ljava/lang/Class;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
+	public static final fun getConstructorHandle (Ljava/lang/reflect/Constructor;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
+	public static final fun getConsumerFunctionHandle (Ljava/lang/Object;Ljava/lang/String;Ljava/lang/Class;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
+	public static final fun getField (Ljava/lang/Object;Ljava/lang/String;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
+	public static final fun getFieldGetter (Ljava/lang/Class;Ljava/lang/String;Ljava/lang/Class;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
+	public static final fun getFieldGetter (Ljava/lang/String;Ljava/lang/Object;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
+	public static final fun getFieldGetter (Ljava/lang/reflect/Field;Ljava/lang/Object;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
+	public static final fun getFieldSetter (Ljava/lang/Class;Ljava/lang/String;Ljava/lang/Class;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
+	public static final fun getFieldSetter (Ljava/lang/String;Ljava/lang/Object;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
+	public static final fun getFieldSetter (Ljava/lang/reflect/Field;Ljava/lang/Object;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
+	public static final fun getFunctionHandle (Ljava/lang/Object;Ljava/lang/String;Ljava/lang/Class;Ljava/lang/Class;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
+	public static final fun getMethodHandle (Ljava/lang/Class;Ljava/lang/String;Ljava/lang/Class;[Ljava/lang/Class;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
+	public static final fun getMethodHandle (Ljava/lang/Object;Ljava/lang/String;Ljava/lang/Class;[Ljava/lang/Class;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
+	public static final fun getMethodHandle (Ljava/lang/reflect/Method;Ljava/lang/Object;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
+	public static final fun getStatic (Ljava/lang/Class;Ljava/lang/String;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
+	public static final fun getStaticFieldGetter (Ljava/lang/Class;Ljava/lang/String;Ljava/lang/Class;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
+	public static final fun getStaticFieldSetter (Ljava/lang/Class;Ljava/lang/String;Ljava/lang/Class;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
+	public static final fun getStaticMethodHandle (Ljava/lang/Class;Ljava/lang/String;Ljava/lang/Class;[Ljava/lang/Class;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
+	public static final fun instantiate (Ljava/lang/Class;Z)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
+	public static final fun instantiate (Ljava/lang/Class;[Ljava/lang/Object;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
+	public static final fun invoke (Ljava/lang/Object;Ljava/lang/String;[Ljava/lang/Object;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
+	public static final fun invokeCatching (Ljava/lang/invoke/MethodHandle;[Ljava/lang/Object;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
+	public static final fun invokeExactCatching (Ljava/lang/invoke/MethodHandle;[Ljava/lang/Object;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
+	public static final fun invokeStatic (Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
 	public static final fun setAccessible (Ljava/lang/reflect/AccessibleObject;)Ljava/lang/reflect/AccessibleObject;
 	public static final fun setField (Ljava/lang/Object;Ljava/lang/String;Ljava/lang/Object;)Z
 	public static final fun setStatic (Ljava/lang/Class;Ljava/lang/String;Ljava/lang/Object;)Z
 }
 
-public final class org/polyfrost/oneconfig/utils/MHUtils$Result {
-	public static final field Companion Lorg/polyfrost/oneconfig/utils/MHUtils$Result$Companion;
+public final class org/polyfrost/oneconfig/utils/v1/MHUtils$Result {
+	public static final field Companion Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result$Companion;
 	public fun <init> (Ljava/lang/Object;)V
-	public static final fun failure (Ljava/lang/Throwable;)Lorg/polyfrost/oneconfig/utils/MHUtils$Result;
+	public static final fun failure (Ljava/lang/Throwable;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
 	public final fun getOrElse (Ljava/lang/Object;)Ljava/lang/Object;
 	public final fun getOrNull ()Ljava/lang/Object;
 	public final fun getOrThrow ()Ljava/lang/Object;
 	public final fun getValue ()Ljava/lang/Object;
 	public final fun isFailure ()Z
 	public final fun isSuccess ()Z
-	public static final fun success (Ljava/lang/Object;)Lorg/polyfrost/oneconfig/utils/MHUtils$Result;
+	public static final fun success (Ljava/lang/Object;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
 }
 
-public final class org/polyfrost/oneconfig/utils/MHUtils$Result$Companion {
-	public final fun failure (Ljava/lang/Throwable;)Lorg/polyfrost/oneconfig/utils/MHUtils$Result;
-	public final fun success (Ljava/lang/Object;)Lorg/polyfrost/oneconfig/utils/MHUtils$Result;
+public final class org/polyfrost/oneconfig/utils/v1/MHUtils$Result$Companion {
+	public final fun failure (Ljava/lang/Throwable;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
+	public final fun success (Ljava/lang/Object;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
 }
 
-public final class org/polyfrost/oneconfig/utils/MHUtils$Result$Failure {
+public final class org/polyfrost/oneconfig/utils/v1/MHUtils$Result$Failure {
 	public fun <init> (Ljava/lang/Throwable;)V
 	public final fun getT ()Ljava/lang/Throwable;
 }
 
-public final class org/polyfrost/oneconfig/utils/Multithreading {
+public final class org/polyfrost/oneconfig/utils/v1/Multithreading {
 	public static fun getExecutor ()Ljava/util/concurrent/ExecutorService;
 	public static fun getScheduledExecutor ()Ljava/util/concurrent/ScheduledExecutorService;
 	public static fun runAsync (Ljava/lang/Runnable;)V
@@ -184,7 +184,7 @@ public final class org/polyfrost/oneconfig/utils/Multithreading {
 	public static fun submitScheduled (Ljava/lang/Runnable;JLjava/util/concurrent/TimeUnit;)Ljava/util/concurrent/ScheduledFuture;
 }
 
-public final class org/polyfrost/oneconfig/utils/NetworkUtils {
+public final class org/polyfrost/oneconfig/utils/v1/NetworkUtils {
 	public static fun browseLink (Ljava/lang/String;)V
 	public static fun downloadFile (Ljava/lang/String;Ljava/io/File;)Z
 	public static fun downloadFile (Ljava/lang/String;Ljava/io/File;Ljava/lang/String;IZ)Z
@@ -195,7 +195,7 @@ public final class org/polyfrost/oneconfig/utils/NetworkUtils {
 	public static fun setupConnection (Ljava/lang/String;Ljava/lang/String;IZ)Ljava/io/InputStream;
 }
 
-public final class org/polyfrost/oneconfig/utils/OneImage {
+public final class org/polyfrost/oneconfig/utils/v1/OneImage {
 	public fun <init> (II)V
 	public fun <init> (Ljava/awt/image/BufferedImage;)V
 	public fun <init> (Ljava/io/File;)V
@@ -234,13 +234,13 @@ public final class org/polyfrost/oneconfig/utils/OneImage {
 	public fun uploadToImgur (Z)Ljava/lang/String;
 }
 
-public final class org/polyfrost/oneconfig/utils/SimpleProfiler {
+public final class org/polyfrost/oneconfig/utils/v1/SimpleProfiler {
 	public static fun pop (Ljava/lang/String;)F
 	public static fun pop (Ljava/lang/String;Lorg/slf4j/event/Level;)F
 	public static fun push (Ljava/lang/String;)Z
 }
 
-public final class org/polyfrost/oneconfig/utils/dsl/ColorsKt {
+public final class org/polyfrost/oneconfig/utils/v1/dsl/ColorsKt {
 	public static final fun getAlpha (I)I
 	public static final fun getBlue (I)I
 	public static final fun getGreen (I)I
@@ -251,36 +251,36 @@ public final class org/polyfrost/oneconfig/utils/dsl/ColorsKt {
 	public static final fun setRed (II)I
 }
 
-public final class org/polyfrost/oneconfig/utils/dsl/IoKt {
+public final class org/polyfrost/oneconfig/utils/v1/dsl/IoKt {
 	public static final fun checksum (Ljava/io/File;)Ljava/lang/String;
 }
 
-public final class org/polyfrost/oneconfig/utils/dsl/JsonKt {
+public final class org/polyfrost/oneconfig/utils/v1/dsl/JsonKt {
 	public static final fun asJsonElement (Ljava/lang/String;Z)Lcom/google/gson/JsonElement;
 	public static synthetic fun asJsonElement$default (Ljava/lang/String;ZILjava/lang/Object;)Lcom/google/gson/JsonElement;
 }
 
-public final class org/polyfrost/oneconfig/utils/dsl/MultithreadingKt {
+public final class org/polyfrost/oneconfig/utils/v1/dsl/MultithreadingKt {
 	public static final fun runAsync (Lkotlin/jvm/functions/Function0;)V
 	public static final fun schedule (JLjava/util/concurrent/TimeUnit;Lkotlin/jvm/functions/Function0;)V
 }
 
-public final class org/polyfrost/oneconfig/utils/dsl/NetworkKt {
+public final class org/polyfrost/oneconfig/utils/v1/dsl/NetworkKt {
 	public static final fun browseLink (Lorg/polyfrost/oneconfig/libs/universal/UDesktop;Ljava/lang/String;)V
 	public static final fun download (Ljava/io/File;Ljava/lang/String;Ljava/lang/String;IZ)Z
 	public static synthetic fun download$default (Ljava/io/File;Ljava/lang/String;Ljava/lang/String;IZILjava/lang/Object;)Z
 }
 
-public final class org/polyfrost/oneconfig/utils/hypixel/HypixelUtils {
-	public static fun getLocraw ()Lorg/polyfrost/oneconfig/utils/hypixel/LocrawUtil;
+public final class org/polyfrost/oneconfig/utils/v1/hypixel/HypixelUtils {
+	public static fun getLocraw ()Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawUtil;
 	public static fun isHypixel ()Z
 }
 
-public class org/polyfrost/oneconfig/utils/hypixel/LocrawInfo : java/io/Serializable {
+public class org/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo : java/io/Serializable {
 	public fun <init> ()V
 	public fun equals (Ljava/lang/Object;)Z
 	public fun getGameMode ()Ljava/lang/String;
-	public fun getGameType ()Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
+	public fun getGameType ()Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
 	public fun getMapName ()Ljava/lang/String;
 	public fun getRawGameType ()Ljava/lang/String;
 	public fun getServerId ()Ljava/lang/String;
@@ -288,48 +288,48 @@ public class org/polyfrost/oneconfig/utils/hypixel/LocrawInfo : java/io/Serializ
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class org/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType : java/lang/Enum {
-	public static final field ARCADE_GAMES Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static final field ARENA Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static final field BEDWARS Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static final field BLITZ_SG Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static final field BUILD_BATTLE Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static final field CLASSIC_GAMES Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static final field COPS_AND_CRIMS Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static final field DROPPER Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static final field DUELS Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static final field HOUSING Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static final field LIMBO Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static final field MAIN Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static final field MEGA_WALLS Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static final field MURDER_MYSTERY Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static final field PAINTBALL Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static final field PIT Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static final field PROTOTYPE Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static final field QUAKE Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static final field REPLAY Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static final field SKYBLOCK Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static final field SKYWARS Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static final field SMASH_HEROES Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static final field SPEED_UHC Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static final field TNT_GAMES Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static final field TURBO_KART_RACERS Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static final field UHC_CHAMPIONS Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static final field UNKNOWN Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static final field VAMPIREZ Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static final field WALLS Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static final field WARLORDS Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static final field WOOL_WARS Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static fun getFromLocraw (Ljava/lang/String;)Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
+public final class org/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType : java/lang/Enum {
+	public static final field ARCADE_GAMES Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
+	public static final field ARENA Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
+	public static final field BEDWARS Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
+	public static final field BLITZ_SG Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
+	public static final field BUILD_BATTLE Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
+	public static final field CLASSIC_GAMES Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
+	public static final field COPS_AND_CRIMS Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
+	public static final field DROPPER Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
+	public static final field DUELS Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
+	public static final field HOUSING Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
+	public static final field LIMBO Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
+	public static final field MAIN Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
+	public static final field MEGA_WALLS Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
+	public static final field MURDER_MYSTERY Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
+	public static final field PAINTBALL Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
+	public static final field PIT Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
+	public static final field PROTOTYPE Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
+	public static final field QUAKE Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
+	public static final field REPLAY Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
+	public static final field SKYBLOCK Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
+	public static final field SKYWARS Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
+	public static final field SMASH_HEROES Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
+	public static final field SPEED_UHC Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
+	public static final field TNT_GAMES Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
+	public static final field TURBO_KART_RACERS Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
+	public static final field UHC_CHAMPIONS Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
+	public static final field UNKNOWN Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
+	public static final field VAMPIREZ Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
+	public static final field WALLS Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
+	public static final field WARLORDS Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
+	public static final field WOOL_WARS Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
+	public static fun getFromLocraw (Ljava/lang/String;)Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
 	public fun getServerName ()Ljava/lang/String;
-	public static fun valueOf (Ljava/lang/String;)Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static fun values ()[Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
+	public static fun valueOf (Ljava/lang/String;)Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
+	public static fun values ()[Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
 }
 
-public final class org/polyfrost/oneconfig/utils/hypixel/LocrawUtil {
-	public static final field INSTANCE Lorg/polyfrost/oneconfig/utils/hypixel/LocrawUtil;
-	public fun getLastLocrawInfo ()Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo;
-	public fun getLocrawInfo ()Lorg/polyfrost/oneconfig/utils/hypixel/LocrawInfo;
+public final class org/polyfrost/oneconfig/utils/v1/hypixel/LocrawUtil {
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawUtil;
+	public fun getLastLocrawInfo ()Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo;
+	public fun getLocrawInfo ()Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo;
 	public fun isInGame ()Z
 }
 

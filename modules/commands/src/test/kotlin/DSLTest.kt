@@ -26,7 +26,7 @@
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import org.polyfrost.oneconfig.api.commands.arguments.ArgumentParser
+import org.polyfrost.oneconfig.api.commands.v1.arguments.ArgumentParser
 import org.polyfrost.oneconfig.api.commands.factories.dsl.CommandDSL.Companion.command
 import org.polyfrost.oneconfig.api.commands.factories.dsl.CommandDSL.Companion.param
 

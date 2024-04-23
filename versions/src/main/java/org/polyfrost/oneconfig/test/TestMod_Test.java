@@ -26,10 +26,10 @@
 
 package org.polyfrost.oneconfig.test;
 
-import org.polyfrost.oneconfig.api.events.EventManager;
-import org.polyfrost.oneconfig.api.commands.CommandManager;
-import org.polyfrost.oneconfig.api.events.event.InitializationEvent;
-import org.polyfrost.oneconfig.api.events.invoke.impl.Subscribe;
+import org.polyfrost.oneconfig.api.event.v1.EventManager;
+import org.polyfrost.oneconfig.api.commands.v1.CommandManager;
+import org.polyfrost.oneconfig.api.event.v1.events.InitializationEvent;
+import org.polyfrost.oneconfig.api.event.v1.invoke.impl.Subscribe;
 
 //#if MC<=11202 && FORGE
 @net.minecraftforge.fml.common.Mod(modid = "oneconfig-test-mod", name = "Test Mod", version = "0")

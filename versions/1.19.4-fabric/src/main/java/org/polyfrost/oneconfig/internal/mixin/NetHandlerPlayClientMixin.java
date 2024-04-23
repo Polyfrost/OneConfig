@@ -28,9 +28,9 @@ package org.polyfrost.oneconfig.internal.mixin;
 
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.network.packet.s2c.play.ChatMessageS2CPacket;
-import org.polyfrost.oneconfig.api.events.EventManager;
-import org.polyfrost.oneconfig.api.events.event.ChatReceiveEvent;
-import org.polyfrost.oneconfig.api.events.event.ChatSendEvent;
+import org.polyfrost.oneconfig.api.event.v1.EventManager;
+import org.polyfrost.oneconfig.api.event.v1.events.ChatReceiveEvent;
+import org.polyfrost.oneconfig.api.event.v1.events.ChatSendEvent;
 import org.polyfrost.oneconfig.internal.libs.fabric.ClientCommandInternals;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;

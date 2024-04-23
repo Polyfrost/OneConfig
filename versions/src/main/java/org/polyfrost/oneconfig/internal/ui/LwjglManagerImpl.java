@@ -38,9 +38,9 @@ import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.TypeInsnNode;
 import org.objectweb.asm.tree.VarInsnNode;
-import org.polyfrost.oneconfig.ui.LwjglManager;
-import org.polyfrost.oneconfig.ui.TinyFD;
-import org.polyfrost.oneconfig.utils.MHUtils;
+import org.polyfrost.oneconfig.api.ui.v1.LwjglManager;
+import org.polyfrost.oneconfig.api.ui.v1.TinyFD;
+import org.polyfrost.oneconfig.utils.v1.MHUtils;
 import org.polyfrost.polyui.renderer.Renderer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,7 +73,7 @@ public class LwjglManagerImpl
     private static final MethodHandle defineClassMethod;
     private static final Map<String, String> remappingMap;
 
-    private static final String RENDERER_IMPL_PACKAGE = "org.polyfrost.oneconfig.ui.impl.";
+    private static final String RENDERER_IMPL_PACKAGE = "org.polyfrost.oneconfig.internal.ui.impl.";
     private static final String LWJGL_FUNCTION_PROVIDER = "org.polyfrost.oneconfig.internal.ui.provider.Lwjgl2FunctionProvider";
     private static final String LWJGL_FUNCTION_PROVIDER_ASM = LWJGL_FUNCTION_PROVIDER.replace('.', '/');
 

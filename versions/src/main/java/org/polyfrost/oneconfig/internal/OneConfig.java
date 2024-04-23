@@ -26,16 +26,16 @@
 
 package org.polyfrost.oneconfig.internal;
 
-import org.polyfrost.oneconfig.api.commands.CommandManager;
-import org.polyfrost.oneconfig.api.commands.factories.builder.CommandBuilder;
-import org.polyfrost.oneconfig.api.events.EventManager;
-import org.polyfrost.oneconfig.api.events.event.InitializationEvent;
-import org.polyfrost.oneconfig.api.hud.HudManager;
+import org.polyfrost.oneconfig.api.commands.v1.CommandManager;
+import org.polyfrost.oneconfig.api.commands.v1.factories.builder.CommandBuilder;
+import org.polyfrost.oneconfig.api.event.v1.EventManager;
+import org.polyfrost.oneconfig.api.event.v1.events.InitializationEvent;
+import org.polyfrost.oneconfig.api.hud.v1.HudManager;
 import org.polyfrost.oneconfig.internal.ui.BlurHandler;
 import org.polyfrost.oneconfig.internal.ui.OneConfigUI;
-import org.polyfrost.oneconfig.ui.LwjglManager;
-import org.polyfrost.oneconfig.ui.keybind.KeybindHelper;
-import org.polyfrost.oneconfig.utils.GuiUtils;
+import org.polyfrost.oneconfig.api.ui.v1.LwjglManager;
+import org.polyfrost.oneconfig.ui.v1.keybind.KeybindHelper;
+import org.polyfrost.oneconfig.utils.v1.GuiUtils;
 import org.polyfrost.polyui.PolyUI;
 import org.polyfrost.polyui.component.Drawable;
 import org.polyfrost.polyui.input.KeyModifiers;
@@ -43,7 +43,7 @@ import org.polyfrost.polyui.input.Translator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.polyfrost.oneconfig.api.commands.factories.builder.CommandBuilder.runs;
+import static org.polyfrost.oneconfig.api.commands.v1.factories.builder.CommandBuilder.runs;
 
 /**
  * The main class of OneConfig.

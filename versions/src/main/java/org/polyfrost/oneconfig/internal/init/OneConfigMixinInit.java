@@ -26,7 +26,7 @@
 
 package org.polyfrost.oneconfig.internal.init;
 
-import org.polyfrost.oneconfig.platform.Platform;
+import org.polyfrost.oneconfig.api.platform.v1.Platform;
 import org.spongepowered.asm.lib.tree.ClassNode;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;

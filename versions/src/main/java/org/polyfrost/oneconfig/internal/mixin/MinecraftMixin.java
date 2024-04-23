@@ -28,14 +28,14 @@ package org.polyfrost.oneconfig.internal.mixin;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Timer;
-import org.polyfrost.oneconfig.api.events.EventManager;
-import org.polyfrost.oneconfig.api.events.event.FramebufferRenderEvent;
-import org.polyfrost.oneconfig.api.events.event.KeyInputEvent;
-import org.polyfrost.oneconfig.api.events.event.MouseInputEvent;
-import org.polyfrost.oneconfig.api.events.event.RenderEvent;
-import org.polyfrost.oneconfig.api.events.event.ResizeEvent;
-import org.polyfrost.oneconfig.api.events.event.ShutdownEvent;
-import org.polyfrost.oneconfig.api.events.event.TickEvent;
+import org.polyfrost.oneconfig.api.event.v1.EventManager;
+import org.polyfrost.oneconfig.api.event.v1.events.FramebufferRenderEvent;
+import org.polyfrost.oneconfig.api.event.v1.events.KeyInputEvent;
+import org.polyfrost.oneconfig.api.event.v1.events.MouseInputEvent;
+import org.polyfrost.oneconfig.api.event.v1.events.RenderEvent;
+import org.polyfrost.oneconfig.api.event.v1.events.ResizeEvent;
+import org.polyfrost.oneconfig.api.event.v1.events.ShutdownEvent;
+import org.polyfrost.oneconfig.api.event.v1.events.TickEvent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -57,7 +57,7 @@ import net.minecraftforge.client.event.GuiOpenEvent;
 //#endif
 import net.minecraftforge.fml.common.eventhandler.Event;
 //#else
-//$$ import org.polyfrost.oneconfig.api.events.event.ScreenOpenEvent;
+//$$ import org.polyfrost.oneconfig.api.event.v1.events.ScreenOpenEvent;
 //#endif
 
 @Mixin(Minecraft.class)
@@ -152,8 +152,8 @@ public abstract class MinecraftMixin {
             //#else
             //$$ Opening forgeEvent = (Opening) a;
             //#endif
-            org.polyfrost.oneconfig.api.events.event.ScreenOpenEvent event =
-                    new org.polyfrost.oneconfig.api.events.event.ScreenOpenEvent(forgeEvent.
+            org.polyfrost.oneconfig.api.event.v1.events.ScreenOpenEvent event =
+                    new org.polyfrost.oneconfig.api.event.v1.events.ScreenOpenEvent(forgeEvent.
                             //#if MC<=10809
                             gui
                             //#else

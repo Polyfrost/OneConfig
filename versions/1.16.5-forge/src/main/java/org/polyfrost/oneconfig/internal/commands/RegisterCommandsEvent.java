@@ -27,7 +27,7 @@
 package org.polyfrost.oneconfig.internal.commands;
 
 import com.mojang.brigadier.CommandDispatcher;
-import org.polyfrost.oneconfig.api.events.event.Event;
+import org.polyfrost.oneconfig.api.event.v1.events.Event;
 import org.polyfrost.oneconfig.internal.libs.fabric.ClientCommandSource;
 
 public class RegisterCommandsEvent implements Event {

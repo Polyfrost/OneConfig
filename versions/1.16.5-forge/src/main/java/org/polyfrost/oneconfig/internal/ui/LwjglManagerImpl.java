@@ -26,10 +26,10 @@
 
 package org.polyfrost.oneconfig.internal.ui;
 
-import org.polyfrost.oneconfig.ui.LwjglManager;
-import org.polyfrost.oneconfig.ui.TinyFD;
-import org.polyfrost.oneconfig.ui.impl.RendererImpl;
-import org.polyfrost.oneconfig.ui.impl.TinyFDImpl;
+import org.polyfrost.oneconfig.internal.ui.impl.RendererImpl;
+import org.polyfrost.oneconfig.internal.ui.impl.TinyFDImpl;
+import org.polyfrost.oneconfig.api.ui.v1.LwjglManager;
+import org.polyfrost.oneconfig.api.ui.v1.TinyFD;
 import org.polyfrost.polyui.renderer.Renderer;
 
 public class LwjglManagerImpl implements LwjglManager {

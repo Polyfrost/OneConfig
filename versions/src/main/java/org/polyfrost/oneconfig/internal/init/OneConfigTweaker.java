@@ -31,7 +31,7 @@ import net.minecraft.launchwrapper.ITweaker;
 import net.minecraft.launchwrapper.Launch;
 import net.minecraft.launchwrapper.LaunchClassLoader;
 import net.minecraftforge.fml.relauncher.CoreModManager;
-import org.polyfrost.oneconfig.utils.MHUtils;
+import org.polyfrost.oneconfig.utils.v1.MHUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongepowered.asm.launch.MixinBootstrap;

@@ -26,17 +26,17 @@
 
 package org.polyfrost.oneconfig.test;
 
-import org.polyfrost.oneconfig.api.config.Config;
-import org.polyfrost.oneconfig.api.config.annotations.Accordion;
-import org.polyfrost.oneconfig.api.config.annotations.Button;
-import org.polyfrost.oneconfig.api.config.annotations.Color;
-import org.polyfrost.oneconfig.api.config.annotations.DependsOn;
-import org.polyfrost.oneconfig.api.config.annotations.Dropdown;
-import org.polyfrost.oneconfig.api.config.annotations.Number;
-import org.polyfrost.oneconfig.api.config.annotations.RadioButton;
-import org.polyfrost.oneconfig.api.config.annotations.Slider;
-import org.polyfrost.oneconfig.api.config.annotations.Switch;
-import org.polyfrost.oneconfig.api.config.annotations.Text;
+import org.polyfrost.oneconfig.api.config.v1.Config;
+import org.polyfrost.oneconfig.api.config.v1.annotations.Accordion;
+import org.polyfrost.oneconfig.api.config.v1.annotations.Button;
+import org.polyfrost.oneconfig.api.config.v1.annotations.Color;
+import org.polyfrost.oneconfig.api.config.v1.annotations.DependsOn;
+import org.polyfrost.oneconfig.api.config.v1.annotations.Dropdown;
+import org.polyfrost.oneconfig.api.config.v1.annotations.Number;
+import org.polyfrost.oneconfig.api.config.v1.annotations.RadioButton;
+import org.polyfrost.oneconfig.api.config.v1.annotations.Slider;
+import org.polyfrost.oneconfig.api.config.v1.annotations.Switch;
+import org.polyfrost.oneconfig.api.config.v1.annotations.Text;
 import org.polyfrost.oneconfig.libs.universal.UChat;
 import org.polyfrost.polyui.color.PolyColor;
 import org.polyfrost.polyui.unit.Align;

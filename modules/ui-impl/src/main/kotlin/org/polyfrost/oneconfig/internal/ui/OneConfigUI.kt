@@ -28,14 +28,14 @@
 
 package org.polyfrost.oneconfig.internal.ui
 
-import org.polyfrost.oneconfig.api.config.ConfigManager
-import org.polyfrost.oneconfig.api.hud.HudManager
+import org.polyfrost.oneconfig.api.config.v1.ConfigManager
+import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.internal.ui.pages.FeedbackPage
 import org.polyfrost.oneconfig.internal.ui.pages.ModsPage
 import org.polyfrost.oneconfig.internal.ui.pages.ThemesPage
-import org.polyfrost.oneconfig.platform.Platform
-import org.polyfrost.oneconfig.ui.screen.PolyUIScreen
-import org.polyfrost.oneconfig.utils.GuiUtils
+import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.polyfrost.oneconfig.api.ui.v1.screen.PolyUIScreen
+import org.polyfrost.oneconfig.utils.v1.GuiUtils
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.animate.Animations
 import org.polyfrost.polyui.component.*

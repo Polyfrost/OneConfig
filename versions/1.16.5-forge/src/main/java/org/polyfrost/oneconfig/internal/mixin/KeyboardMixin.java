@@ -27,8 +27,8 @@
 package org.polyfrost.oneconfig.internal.mixin;
 
 import net.minecraft.client.KeyboardListener;
-import org.polyfrost.oneconfig.api.events.EventManager;
-import org.polyfrost.oneconfig.api.events.event.KeyInputEvent;
+import org.polyfrost.oneconfig.api.event.v1.EventManager;
+import org.polyfrost.oneconfig.api.event.v1.events.KeyInputEvent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;

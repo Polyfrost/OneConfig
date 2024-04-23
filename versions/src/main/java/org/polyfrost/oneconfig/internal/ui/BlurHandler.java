@@ -30,13 +30,13 @@ import net.minecraft.client.shader.Shader;
 import net.minecraft.client.shader.ShaderGroup;
 import net.minecraft.client.shader.ShaderUniform;
 import net.minecraft.util.ResourceLocation;
-import org.polyfrost.oneconfig.api.events.event.RenderEvent;
-import org.polyfrost.oneconfig.api.events.event.ScreenOpenEvent;
-import org.polyfrost.oneconfig.api.events.invoke.EventHandler;
+import org.polyfrost.oneconfig.api.event.v1.events.RenderEvent;
+import org.polyfrost.oneconfig.api.event.v1.events.ScreenOpenEvent;
+import org.polyfrost.oneconfig.api.event.v1.invoke.EventHandler;
 import org.polyfrost.oneconfig.internal.mixin.ShaderGroupAccessor;
 import org.polyfrost.oneconfig.libs.universal.UMinecraft;
 import org.polyfrost.oneconfig.libs.universal.UScreen;
-import org.polyfrost.oneconfig.ui.screen.BlurScreen;
+import org.polyfrost.oneconfig.api.ui.v1.screen.BlurScreen;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

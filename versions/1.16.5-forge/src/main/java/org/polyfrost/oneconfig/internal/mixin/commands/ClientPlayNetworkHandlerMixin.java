@@ -31,7 +31,7 @@ import net.minecraft.client.network.play.ClientPlayNetHandler;
 import net.minecraft.command.CommandSource;
 import net.minecraft.network.play.server.SCommandListPacket;
 import net.minecraft.network.play.server.SJoinGamePacket;
-import org.polyfrost.oneconfig.api.events.EventManager;
+import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.internal.commands.RegisterCommandsEvent;
 import org.polyfrost.oneconfig.internal.libs.fabric.ClientCommandInternals;
 import org.polyfrost.oneconfig.internal.libs.fabric.ClientCommandSource;

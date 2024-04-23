@@ -30,7 +30,7 @@ package org.polyfrost.oneconfig.internal.ui.provider;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.system.FunctionProvider;
 import org.polyfrost.oneconfig.internal.OneConfig;
-import org.polyfrost.oneconfig.utils.MHUtils;
+import org.polyfrost.oneconfig.utils.v1.MHUtils;
 
 import java.lang.invoke.MethodHandle;
 import java.nio.ByteBuffer;

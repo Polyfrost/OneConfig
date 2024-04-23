@@ -28,8 +28,8 @@ package org.polyfrost.oneconfig.internal.mixin;
 //#if MC<11900
 
 import net.minecraft.client.entity.EntityPlayerSP;
-import org.polyfrost.oneconfig.api.events.EventManager;
-import org.polyfrost.oneconfig.api.events.event.ChatSendEvent;
+import org.polyfrost.oneconfig.api.event.v1.EventManager;
+import org.polyfrost.oneconfig.api.event.v1.events.ChatSendEvent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;

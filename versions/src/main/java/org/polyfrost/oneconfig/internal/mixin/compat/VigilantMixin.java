@@ -34,8 +34,8 @@ import gg.essential.vigilance.data.PropertyData;
 import gg.essential.vigilance.data.PropertyType;
 import gg.essential.vigilance.data.SortingBehavior;
 import kotlin.jvm.internal.DefaultConstructorMarker;
-import org.polyfrost.oneconfig.api.config.Tree;
-import org.polyfrost.oneconfig.api.config.visualize.Visualizer;
+import org.polyfrost.oneconfig.api.config.v1.Tree;
+import org.polyfrost.oneconfig.api.config.v1.visualize.Visualizer;
 import org.spongepowered.asm.mixin.Dynamic;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
@@ -45,7 +45,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.io.File;
 
-import static org.polyfrost.oneconfig.api.config.Property.prop;
+import static org.polyfrost.oneconfig.api.config.v1.Property.prop;
 
 // todo rewrite
 @Mixin(value = Vigilant.class, remap = false)

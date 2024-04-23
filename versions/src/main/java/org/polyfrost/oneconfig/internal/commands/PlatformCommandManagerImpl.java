@@ -29,12 +29,12 @@ package org.polyfrost.oneconfig.internal.commands;
 
 import net.minecraft.command.CommandBase;
 import net.minecraft.util.BlockPos;
-import org.polyfrost.oneconfig.api.commands.CommandManager;
-import org.polyfrost.oneconfig.api.commands.exceptions.CommandExecutionException;
-import org.polyfrost.oneconfig.api.commands.CommandTree;
-import org.polyfrost.oneconfig.api.commands.internal.PlatformCommandManager;
+import org.polyfrost.oneconfig.api.commands.v1.CommandManager;
+import org.polyfrost.oneconfig.api.commands.v1.exceptions.CommandExecutionException;
+import org.polyfrost.oneconfig.api.commands.v1.CommandTree;
+import org.polyfrost.oneconfig.api.commands.v1.internal.PlatformCommandManager;
 import org.polyfrost.oneconfig.libs.universal.UChat;
-import org.polyfrost.oneconfig.api.commands.arguments.PlayerArgumentParser;
+import org.polyfrost.oneconfig.api.commands.v1.arguments.PlayerArgumentParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
