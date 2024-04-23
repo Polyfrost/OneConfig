@@ -19,8 +19,8 @@
   ],
   "entrypoints": {
     "client": [
-      "org.polyfrost.oneconfig.internal.OneConfig",
-      "org.polyfrost.oneconfig.test.TestMod_Test"
+      "org.polyfrost.oneconfig.test.TestMod_Test",
+      "org.polyfrost.oneconfig.internal.OneConfig"
     ]
   },
   "depends": {

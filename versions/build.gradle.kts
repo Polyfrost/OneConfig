@@ -83,9 +83,7 @@ dependencies {
         isTransitive = false
     }
 
-    shadeMod("org.polyfrost:universalcraft-$platform:${libs.versions.universalcraft.get()}") {
-        isTransitive = false
-    }
+    shadeMod("org.polyfrost:universalcraft-$platform:${libs.versions.universalcraft.get()}")
 
     shade(libs.polyui)
 
@@ -124,15 +122,13 @@ dependencies {
         }
         shade(prebundle(cfg, "lwjgl-legacy.jar"))
     } else {
-        for (dep in listOf("-nanovg", "-tinyfd")) {
-            val lwjglDep = "org.lwjgl:lwjgl$dep:$lwjglVersion"
-            shade(lwjglDep) {
+        val nvgDep = "org.lwjgl:lwjgl-nanovg:$lwjglVersion"
+        shade(nvgDep) {
+            isTransitive = false
+        }
+        for(native in natives) {
+            shade("$nvgDep:natives-$native") {
                 isTransitive = false
-            }
-            for (native in natives) {
-                shade("$lwjglDep:natives-$native") {
-                    isTransitive = false
-                }
             }
         }
     }
@@ -152,7 +148,7 @@ tasks {
     withType(Jar::class) {
         val atomicLines = AtomicReference(listOf<String>())
 
-        // This removes the 23rd line in fabric.mod.json,
+        // This removes the 22rd line in fabric.mod.json,
         // aka the TestMod entrypoint, for production builds.
         val fabricModJson = layout.buildDirectory.get().asFile.resolve("resources")
             .resolve("main")
@@ -160,13 +156,13 @@ tasks {
         doFirst {
             if (fabricModJson.exists()) {
                 val lines = fabricModJson.readLines()
-                if (lines[20].contains("TestMod")) {
+                if (lines[21].contains("TestMod")) {
                     atomicLines.set(lines)
 
                     fabricModJson.delete()
                     fabricModJson.writeText(
-                        lines.subList(0, 22).joinToString("\n") + "\n" + lines.subList(
-                            23,
+                        lines.subList(0, 21).joinToString("\n") + "\n" + lines.subList(
+                            22,
                             lines.size
                         ).joinToString("\n")
                     )
@@ -240,7 +236,7 @@ tasks {
 
     shadowJar {
         archiveClassifier.set("full-dev")
-        configurations = listOf(shade)
+        configurations = listOf(shade, shadeMod)
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
         dependsOn(jar)
     }
