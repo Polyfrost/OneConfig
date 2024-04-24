@@ -87,8 +87,8 @@ dependencies {
 
     shade(libs.polyui)
 
-    shade(libs.slf4j.api)
-    shade(libs.slf4j.simple)
+    shade(libs.logging.api)
+    shade(libs.logging.impl)
 
     // for other mods and universalcraft
     shade(libs.bundles.kotlin)

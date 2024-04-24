@@ -30,7 +30,7 @@ import net.minecraft.client.gui.GuiScreen;
 import org.jetbrains.annotations.ApiStatus;
 import org.polyfrost.oneconfig.api.PlatformDeclaration;
 import org.polyfrost.oneconfig.api.event.v1.EventDelay;
-import org.polyfrost.oneconfig.libs.universal.UScreen;
+import org.polyfrost.universal.UScreen;
 
 /**
  * A class containing utility methods for working with GuiScreens.

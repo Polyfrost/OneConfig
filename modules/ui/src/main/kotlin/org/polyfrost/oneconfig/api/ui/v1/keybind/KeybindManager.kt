@@ -24,12 +24,12 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.ui.v1.keybind
+package org.polyfrost.oneconfig.api.ui.v1.keybind
 
 import org.polyfrost.oneconfig.api.event.v1.events.KeyInputEvent
 import org.polyfrost.oneconfig.api.event.v1.events.TickEvent
 import org.polyfrost.oneconfig.api.event.v1.eventHandler
-import org.polyfrost.oneconfig.libs.universal.UKeyboard
+import org.polyfrost.universal.UKeyboard
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.polyui.event.InputManager
 import org.polyfrost.polyui.input.KeyBinder

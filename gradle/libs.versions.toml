@@ -15,7 +15,7 @@ annotations = "24.1.0"
 nightconfig = "3.6.6"
 
 lwjgl = "3.3.1"
-universalcraft = "295"
+universalcraft = "296"
 mixin = "0.7.11-SNAPSHOT"
 
 junit-bom = "5.10.2"
@@ -30,8 +30,9 @@ polyui = { module = "org.polyfrost:polyui", version.ref = "polyui" }
 
 annotations = { module = "org.jetbrains:annotations", version.ref = "annotations" }
 
-slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
-slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
+logging-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
+logging-impl = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
+log4j-bridge = { module = "org.apache.logging.log4j:log4j-slf4j2-impl", version = "2.8.1" }
 
 lwjgl = { module = "org.lwjgl:lwjgl", version.ref = "lwjgl" }
 lwjgl-nvg = { module = "org.lwjgl:lwjgl-nanovg", version.ref = "lwjgl" }
@@ -46,7 +47,7 @@ nightconfig-json = { module = "com.electronwill.night-config:json", version.ref 
 
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib-jdk8", version.ref = "kotlin" }
-kotlinx-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
+kotlinx-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm", version.ref = "kotlinx-coroutines" }
 kotlinx-atomicfu = { module = "org.jetbrains.kotlinx:atomicfu-jvm", version.ref = "kotlinx-atomicfu" }
 
 [bundles]
@@ -54,8 +55,8 @@ kotlin = ["kotlin-reflect", "kotlin-stdlib"]
 kotlinx = ["kotlinx-coroutines", "kotlinx-atomicfu"]
 lwjgl = ["lwjgl", "lwjgl-nvg", "lwjgl-opengl", "lwjgl-stb", "lwjgl-tinyfd"]
 nightconfig = ["nightconfig", "nightconfig-json", "nightconfig-toml", "nightconfig-yaml"]
-core = ["annotations", "slf4j-api"]
-test-core = ["junit", "slf4j-simple"]
+core = ["annotations", "logging-api"]
+test-core = ["junit", "logging-impl"]
 
 [plugins]
 kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

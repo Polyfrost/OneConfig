@@ -33,12 +33,12 @@ import org.jetbrains.annotations.MustBeInvokedByOverriders;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.polyfrost.oneconfig.api.PlatformDeclaration;
-import org.polyfrost.oneconfig.libs.universal.UKeyboard;
-import org.polyfrost.oneconfig.libs.universal.UMatrixStack;
-import org.polyfrost.oneconfig.libs.universal.UMinecraft;
-import org.polyfrost.oneconfig.libs.universal.UMouse;
-import org.polyfrost.oneconfig.libs.universal.UResolution;
-import org.polyfrost.oneconfig.libs.universal.UScreen;
+import org.polyfrost.universal.UKeyboard;
+import org.polyfrost.universal.UMatrixStack;
+import org.polyfrost.universal.UMinecraft;
+import org.polyfrost.universal.UMouse;
+import org.polyfrost.universal.UResolution;
+import org.polyfrost.universal.UScreen;
 import org.polyfrost.oneconfig.api.ui.v1.LwjglManager;
 import org.polyfrost.polyui.PolyUI;
 import org.polyfrost.polyui.color.Colors;
@@ -53,7 +53,7 @@ import org.polyfrost.polyui.unit.Align;
 import org.polyfrost.polyui.unit.Vec2;
 
 import static org.lwjgl.opengl.GL11.glViewport;
-import static org.polyfrost.oneconfig.ui.v1.keybind.KeybindManager.translateKey;
+import static org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager.translateKey;
 
 @SuppressWarnings("unused")
 @PlatformDeclaration

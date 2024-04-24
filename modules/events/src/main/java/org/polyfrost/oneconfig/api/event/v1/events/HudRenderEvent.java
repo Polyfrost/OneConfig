@@ -26,7 +26,7 @@
 
 package org.polyfrost.oneconfig.api.event.v1.events;
 
-import org.polyfrost.oneconfig.libs.universal.UMatrixStack;
+import org.polyfrost.universal.UMatrixStack;
 
 /**
  * Called when external HUDs can be rendered.

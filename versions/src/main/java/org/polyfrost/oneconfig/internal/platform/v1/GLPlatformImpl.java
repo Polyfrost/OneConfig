@@ -26,9 +26,9 @@
 
 package org.polyfrost.oneconfig.internal.platform.v1;
 
-import org.polyfrost.oneconfig.libs.universal.UGraphics;
-import org.polyfrost.oneconfig.libs.universal.UMatrixStack;
-import org.polyfrost.oneconfig.libs.universal.UMinecraft;
+import org.polyfrost.universal.UGraphics;
+import org.polyfrost.universal.UMatrixStack;
+import org.polyfrost.universal.UMinecraft;
 import org.polyfrost.oneconfig.api.platform.v1.GLPlatform;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.WorldRenderer;

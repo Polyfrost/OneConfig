@@ -26,8 +26,8 @@
 
 package org.polyfrost.oneconfig.internal.platform.v1;
 
-import org.polyfrost.oneconfig.libs.universal.UMinecraft;
-import org.polyfrost.oneconfig.libs.universal.UScreen;
+import org.polyfrost.universal.UMinecraft;
+import org.polyfrost.universal.UScreen;
 import org.polyfrost.oneconfig.api.platform.v1.GuiPlatform;
 import net.minecraft.client.gui.GuiChat;
 import net.minecraft.client.gui.GuiScreen;

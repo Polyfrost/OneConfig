@@ -27,7 +27,7 @@
 package org.polyfrost.oneconfig.utils.v1;
 
 import com.google.gson.JsonElement;
-import org.polyfrost.oneconfig.libs.universal.UDesktop;
+import org.polyfrost.universal.UDesktop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

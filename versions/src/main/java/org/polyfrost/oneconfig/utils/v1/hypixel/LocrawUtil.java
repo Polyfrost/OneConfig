@@ -47,7 +47,7 @@ import org.polyfrost.oneconfig.api.event.v1.events.LocrawEvent;
 import org.polyfrost.oneconfig.api.event.v1.events.TickEvent;
 import org.polyfrost.oneconfig.api.event.v1.events.WorldLoadEvent;
 import org.polyfrost.oneconfig.api.event.v1.invoke.EventHandler;
-import org.polyfrost.oneconfig.libs.universal.UChat;
+import org.polyfrost.universal.UChat;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
 
 /**

@@ -33,7 +33,7 @@ import org.polyfrost.oneconfig.api.commands.v1.CommandManager;
 import org.polyfrost.oneconfig.api.commands.v1.exceptions.CommandExecutionException;
 import org.polyfrost.oneconfig.api.commands.v1.CommandTree;
 import org.polyfrost.oneconfig.api.commands.v1.internal.PlatformCommandManager;
-import org.polyfrost.oneconfig.libs.universal.UChat;
+import org.polyfrost.universal.UChat;
 import org.polyfrost.oneconfig.api.commands.v1.arguments.PlayerArgumentParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -37,7 +37,7 @@ public class org/polyfrost/oneconfig/api/ui/v1/screen/MCWindow : org/polyfrost/p
 	public fun supportsRenderPausing ()Z
 }
 
-public class org/polyfrost/oneconfig/api/ui/v1/screen/PolyUIScreen : org/polyfrost/oneconfig/libs/universal/UScreen, org/polyfrost/oneconfig/api/ui/v1/screen/BlurScreen, org/polyfrost/oneconfig/api/ui/v1/screen/UIPause {
+public class org/polyfrost/oneconfig/api/ui/v1/screen/PolyUIScreen : org/polyfrost/universal/UScreen, org/polyfrost/oneconfig/api/ui/v1/screen/BlurScreen, org/polyfrost/oneconfig/api/ui/v1/screen/UIPause {
 	public field blurs Z
 	public final field desiredResolution Lorg/polyfrost/polyui/unit/Vec2;
 	public final field inputManager Lorg/polyfrost/polyui/event/InputManager;
@@ -56,14 +56,14 @@ public class org/polyfrost/oneconfig/api/ui/v1/screen/PolyUIScreen : org/polyfro
 	public final fun height ()F
 	public fun isPauseScreen ()Z
 	public fun mouseMoved (DD)V
-	public fun onDrawScreen (Lorg/polyfrost/oneconfig/libs/universal/UMatrixStack;IIF)V
+	public fun onDrawScreen (Lorg/polyfrost/universal/UMatrixStack;IIF)V
 	public fun onScreenClose ()V
 	public final fun resize (Lnet/minecraft/client/Minecraft;II)V
 	public final fun scale ()F
 	public fun shouldCloseOnEsc ()Z
-	public fun uCharTyped (CLorg/polyfrost/oneconfig/libs/universal/UKeyboard$Modifiers;)Z
-	public fun uKeyPressed (IILorg/polyfrost/oneconfig/libs/universal/UKeyboard$Modifiers;)Z
-	public fun uKeyReleased (IILorg/polyfrost/oneconfig/libs/universal/UKeyboard$Modifiers;)Z
+	public fun uCharTyped (CLorg/polyfrost/universal/UKeyboard$Modifiers;)Z
+	public fun uKeyPressed (IILorg/polyfrost/universal/UKeyboard$Modifiers;)Z
+	public fun uKeyReleased (IILorg/polyfrost/universal/UKeyboard$Modifiers;)Z
 	public fun uMouseClicked (DDI)Z
 	public fun uMouseReleased (DDI)Z
 	public fun uMouseScrolled (D)Z

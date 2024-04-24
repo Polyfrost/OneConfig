@@ -24,7 +24,7 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.ui.v1.notifications
+package org.polyfrost.oneconfig.api.ui.v1.notifications
 
 import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.polyui.component.Drawable

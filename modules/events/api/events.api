@@ -61,9 +61,9 @@ public class org/polyfrost/oneconfig/api/event/v1/events/FramebufferRenderEvent$
 
 public class org/polyfrost/oneconfig/api/event/v1/events/HudRenderEvent : org/polyfrost/oneconfig/api/event/v1/events/Event {
 	public final field deltaTicks F
-	public final field matrices Lorg/polyfrost/oneconfig/libs/universal/UMatrixStack;
-	public fun <init> (Lorg/polyfrost/oneconfig/libs/universal/UMatrixStack;F)V
-	public fun component1 ()Lorg/polyfrost/oneconfig/libs/universal/UMatrixStack;
+	public final field matrices Lorg/polyfrost/universal/UMatrixStack;
+	public fun <init> (Lorg/polyfrost/universal/UMatrixStack;F)V
+	public fun component1 ()Lorg/polyfrost/universal/UMatrixStack;
 	public fun component2 ()F
 }
 

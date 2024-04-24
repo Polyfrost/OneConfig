@@ -27,7 +27,7 @@
 package org.polyfrost.oneconfig.api.hud.v1
 
 import org.jetbrains.annotations.ApiStatus
-import org.polyfrost.oneconfig.libs.universal.UMatrixStack
+import org.polyfrost.universal.UMatrixStack
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.component.namedId

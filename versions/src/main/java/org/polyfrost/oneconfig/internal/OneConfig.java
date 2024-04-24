@@ -34,7 +34,7 @@ import org.polyfrost.oneconfig.api.hud.v1.HudManager;
 import org.polyfrost.oneconfig.internal.ui.BlurHandler;
 import org.polyfrost.oneconfig.internal.ui.OneConfigUI;
 import org.polyfrost.oneconfig.api.ui.v1.LwjglManager;
-import org.polyfrost.oneconfig.ui.v1.keybind.KeybindHelper;
+import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindHelper;
 import org.polyfrost.oneconfig.utils.v1.GuiUtils;
 import org.polyfrost.polyui.PolyUI;
 import org.polyfrost.polyui.component.Drawable;

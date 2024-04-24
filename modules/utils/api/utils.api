@@ -7,7 +7,7 @@ public abstract interface annotation class org/polyfrost/oneconfig/api/PlatformD
 public abstract interface class org/polyfrost/oneconfig/api/platform/v1/GLPlatform {
 	public abstract fun drawRect (FFFFI)V
 	public fun drawText (Ljava/lang/String;FFIZ)F
-	public abstract fun drawText (Lorg/polyfrost/oneconfig/libs/universal/UMatrixStack;Ljava/lang/String;FFIZ)F
+	public abstract fun drawText (Lorg/polyfrost/universal/UMatrixStack;Ljava/lang/String;FFIZ)F
 	public abstract fun getStringWidth (Ljava/lang/String;)I
 }
 
@@ -266,7 +266,7 @@ public final class org/polyfrost/oneconfig/utils/v1/dsl/MultithreadingKt {
 }
 
 public final class org/polyfrost/oneconfig/utils/v1/dsl/NetworkKt {
-	public static final fun browseLink (Lorg/polyfrost/oneconfig/libs/universal/UDesktop;Ljava/lang/String;)V
+	public static final fun browseLink (Lorg/polyfrost/universal/UDesktop;Ljava/lang/String;)V
 	public static final fun download (Ljava/io/File;Ljava/lang/String;Ljava/lang/String;IZ)Z
 	public static synthetic fun download$default (Ljava/io/File;Ljava/lang/String;Ljava/lang/String;IZILjava/lang/Object;)Z
 }

@@ -26,7 +26,7 @@
 
 package org.polyfrost.oneconfig.api.platform.v1;
 
-import org.polyfrost.oneconfig.libs.universal.UMatrixStack;
+import org.polyfrost.universal.UMatrixStack;
 
 public interface GLPlatform {
     void drawRect(float x, float y, float x2, float y2, int color);

@@ -24,7 +24,7 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.ui.v1.pages
+package org.polyfrost.oneconfig.api.ui.v1.pages
 
 fun interface Page {
     fun filter(query: String, search: Any.(String) -> Boolean)

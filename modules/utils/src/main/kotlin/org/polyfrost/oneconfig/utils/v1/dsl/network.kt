@@ -26,7 +26,7 @@
 
 package org.polyfrost.oneconfig.utils.v1.dsl
 
-import org.polyfrost.oneconfig.libs.universal.UDesktop
+import org.polyfrost.universal.UDesktop
 import org.polyfrost.oneconfig.utils.v1.NetworkUtils
 import java.io.File
 

@@ -37,7 +37,7 @@ import org.polyfrost.oneconfig.api.config.v1.annotations.RadioButton;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Slider;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Switch;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Text;
-import org.polyfrost.oneconfig.libs.universal.UChat;
+import org.polyfrost.universal.UChat;
 import org.polyfrost.polyui.color.PolyColor;
 import org.polyfrost.polyui.unit.Align;
 import org.polyfrost.polyui.utils.Utils;

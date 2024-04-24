@@ -60,7 +60,7 @@ import org.polyfrost.oneconfig.api.commands.v1.arguments.ArgumentParser;
 import org.polyfrost.oneconfig.api.commands.v1.internal.PlatformCommandManager;
 import org.polyfrost.oneconfig.api.event.v1.invoke.EventHandler;
 import org.polyfrost.oneconfig.internal.libs.fabric.ClientCommandSource;
-import org.polyfrost.oneconfig.libs.universal.UChat;
+import org.polyfrost.universal.UChat;
 
 import java.util.ArrayList;
 import java.util.Collection;

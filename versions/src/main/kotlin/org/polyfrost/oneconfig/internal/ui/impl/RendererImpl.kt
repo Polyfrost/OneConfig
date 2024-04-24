@@ -36,7 +36,7 @@ import org.lwjgl.opengl.GL11.*
 import org.lwjgl.stb.STBImage.stbi_failure_reason
 import org.lwjgl.stb.STBImage.stbi_load_from_memory
 import org.lwjgl.system.MemoryUtil
-import org.polyfrost.oneconfig.libs.universal.UGraphics
+import org.polyfrost.universal.UGraphics
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.renderer.data.Font
