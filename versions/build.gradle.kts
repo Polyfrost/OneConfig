@@ -86,7 +86,18 @@ dependencies {
     shadeMod("org.polyfrost:universalcraft-$platform:${libs.versions.universalcraft.get()}")
 
     shade(libs.polyui)
-    shade(libs.bundles.nightconfig)
+    if (platform.isLegacyForge || platform.isFabric) {
+        shade(libs.bundles.nightconfig)
+    } else {
+        // modern forge includes nightconfig-core and nightconfig-toml
+        // so, we can just include the ones we need
+        shade(libs.nightconfig.json) {
+            isTransitive = false
+        }
+        shade(libs.nightconfig.yaml) {
+            isTransitive = false
+        }
+    }
 
     // for other mods and universalcraft
     shade(libs.bundles.kotlin)

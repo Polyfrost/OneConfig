@@ -26,6 +26,8 @@
 
 package org.polyfrost.oneconfig.api.config.v1;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.UnmodifiableView;
@@ -37,8 +39,6 @@ import org.polyfrost.oneconfig.api.config.v1.serialize.impl.NightConfigSerialize
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.JvmShutdownEvent;
 import org.polyfrost.oneconfig.api.event.v1.events.ShutdownEvent;
-import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.LogManager;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -101,8 +101,7 @@ public final class ConfigManager {
         if (profile.isEmpty()) {
             LOGGER.info("opened config manager onto root (no profile)");
             active = core().withWatcher().withHook();
-        }
-        else {
+        } else {
             LOGGER.info("opening profile {}", profile);
             active = new ConfigManager(PROFILES_DIR.resolve(profile), NightConfigSerializer.ALL).withHook().withWatcher();
         }

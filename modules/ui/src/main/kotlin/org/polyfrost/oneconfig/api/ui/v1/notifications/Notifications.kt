@@ -26,8 +26,8 @@
 
 package org.polyfrost.oneconfig.api.ui.v1.notifications
 
-import org.polyfrost.oneconfig.api.event.v1.events.RenderEvent
 import org.polyfrost.oneconfig.api.event.v1.eventHandler
+import org.polyfrost.oneconfig.api.event.v1.events.RenderEvent
 import org.polyfrost.oneconfig.api.ui.v1.LwjglManager
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.component.Drawable

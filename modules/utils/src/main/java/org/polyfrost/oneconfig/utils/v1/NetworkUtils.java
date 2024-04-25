@@ -27,9 +27,9 @@
 package org.polyfrost.oneconfig.utils.v1;
 
 import com.google.gson.JsonElement;
-import org.polyfrost.universal.UDesktop;
-import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.polyfrost.universal.UDesktop;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;

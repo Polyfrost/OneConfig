@@ -69,7 +69,7 @@ class KeybindHelper {
 
     fun mods(vararg mods: KeyModifiers): KeybindHelper {
         var b = 0
-        for(mod in mods) {
+        for (mod in mods) {
             b = b or mod.value.toInt()
         }
         this.mods = Modifiers(b.toByte())

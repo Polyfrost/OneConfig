@@ -36,18 +36,21 @@ public abstract class RenderEvent implements Event {
      */
     public float deltaTicks;
 
+    public float component1() {
+        return deltaTicks;
+    }
 
     public static class Start extends RenderEvent {
         public static final Start INSTANCE = new Start();
-        private Start() {}
+
+        private Start() {
+        }
     }
 
     public static class End extends RenderEvent {
         public static final End INSTANCE = new End();
-        private End() {}
-    }
 
-    public float component1() {
-        return deltaTicks;
+        private End() {
+        }
     }
 }

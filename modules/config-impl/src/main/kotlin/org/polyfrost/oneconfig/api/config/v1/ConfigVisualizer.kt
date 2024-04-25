@@ -26,6 +26,7 @@
 
 package org.polyfrost.oneconfig.api.config.v1
 
+import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.config.v1.visualize.Visualizer
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.animate.Animations
@@ -43,7 +44,6 @@ import org.polyfrost.polyui.unit.seconds
 import org.polyfrost.polyui.utils.LinkedList
 import org.polyfrost.polyui.utils.image
 import org.polyfrost.polyui.utils.rgba
-import org.apache.logging.log4j.LogManager
 import kotlin.math.PI
 
 open class ConfigVisualizer {

@@ -26,6 +26,7 @@
 
 package org.polyfrost.oneconfig.api.hud.v1
 
+import org.apache.logging.log4j.LogManager
 import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.backend.impl.FileBackend
@@ -38,7 +39,6 @@ import org.polyfrost.oneconfig.api.hud.v1.internal.build
 import org.polyfrost.oneconfig.api.hud.v1.internal.createInspectionsScreen
 import org.polyfrost.oneconfig.api.ui.v1.LwjglManager
 import org.polyfrost.oneconfig.api.ui.v1.screen.PolyUIScreen
-import org.polyfrost.universal.UResolution
 import org.polyfrost.oneconfig.utils.v1.GuiUtils
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.animate.Animations
@@ -61,7 +61,7 @@ import org.polyfrost.polyui.utils.LinkedList
 import org.polyfrost.polyui.utils.image
 import org.polyfrost.polyui.utils.ref
 import org.polyfrost.polyui.utils.rgba
-import org.apache.logging.log4j.LogManager
+import org.polyfrost.universal.UResolution
 import kotlin.math.PI
 
 object HudManager {

@@ -26,6 +26,8 @@
 
 package org.polyfrost.oneconfig.utils.v1
 
+import org.apache.logging.log4j.LogManager
+import org.apache.logging.log4j.Logger
 import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.oneconfig.utils.v1.MHUtils.getField
 import org.polyfrost.oneconfig.utils.v1.MHUtils.getFieldGetter
@@ -34,8 +36,6 @@ import org.polyfrost.oneconfig.utils.v1.MHUtils.getMethodHandle
 import org.polyfrost.oneconfig.utils.v1.MHUtils.invoke
 import org.polyfrost.oneconfig.utils.v1.MHUtils.setAccessible
 import org.polyfrost.oneconfig.utils.v1.MHUtils.setField
-import org.apache.logging.log4j.Logger
-import org.apache.logging.log4j.LogManager
 import sun.misc.Unsafe
 import java.lang.invoke.LambdaMetafactory
 import java.lang.invoke.MethodHandle

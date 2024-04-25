@@ -33,9 +33,9 @@ import org.polyfrost.oneconfig.api.commands.v1.factories.annotated.AnnotationCom
 import org.polyfrost.oneconfig.api.commands.v1.factories.annotated.annotations.Command;
 import org.polyfrost.oneconfig.api.commands.v1.factories.builder.BuilderFactory;
 import org.polyfrost.oneconfig.api.commands.v1.factories.builder.CommandBuilder;
-import org.polyfrost.oneconfig.api.commands.v1.internal.PlatformCommandManager;
 import org.polyfrost.oneconfig.api.commands.v1.factories.dsl.CommandDSL;
 import org.polyfrost.oneconfig.api.commands.v1.factories.dsl.DSLFactory;
+import org.polyfrost.oneconfig.api.commands.v1.internal.PlatformCommandManager;
 
 import java.util.HashMap;
 import java.util.HashSet;

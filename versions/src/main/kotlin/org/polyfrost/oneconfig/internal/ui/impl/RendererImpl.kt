@@ -456,7 +456,7 @@ object RendererImpl : Renderer {
                 LOGGER.warn("Failed to get font: ${font.resourcePath}, falling back to default font!")
                 PolyUI.defaultFonts.regular.get().toByteBuffer(false)
             }
-            val ft = nvgCreateFontMem(vg, font.name, data, 0)
+            val ft = nvgCreateFontMem(vg, font.name, data, false)
             NVGFont(ft, data)
         }
     }

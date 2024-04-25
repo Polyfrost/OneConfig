@@ -30,7 +30,6 @@ import kotlin.Deprecated;
 import kotlin.DeprecationLevel;
 import kotlin.ReplaceWith;
 import org.junit.jupiter.api.Test;
-import org.polyfrost.oneconfig.utils.v1.MHUtils;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.reflect.Constructor;

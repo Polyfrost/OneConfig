@@ -28,8 +28,8 @@ package org.polyfrost.oneconfig.internal.ui.pages
 
 import org.polyfrost.oneconfig.api.config.v1.ConfigVisualizer
 import org.polyfrost.oneconfig.api.config.v1.Tree
-import org.polyfrost.oneconfig.internal.ui.OneConfigUI
 import org.polyfrost.oneconfig.api.ui.v1.notifications.Notification
+import org.polyfrost.oneconfig.internal.ui.OneConfigUI
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.animate.Animations
 import org.polyfrost.polyui.component.*
@@ -56,7 +56,7 @@ private val imageAlign = Align(main = Align.Main.Center, padding = Vec2.ZERO)
 private val barAlign = Align(padding = Vec2(14f, 6f), main = Align.Main.SpaceBetween)
 
 fun ModsPage(trees: Collection<Tree>): Drawable {
-    if(trees.isEmpty()) {
+    if (trees.isEmpty()) {
         return Group(
             size = Vec2(1130f, 635f),
             alignment = Align(main = Align.Main.Center, padding = Vec2(18f, 18f), maxRowSize = 1),

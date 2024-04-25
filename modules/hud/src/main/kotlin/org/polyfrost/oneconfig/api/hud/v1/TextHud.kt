@@ -66,6 +66,7 @@ abstract class TextHud(var prefix: String, var suffix: String = "", private val 
                 field = value
                 update()
             }
+
         override fun getText() = theText
     }
 

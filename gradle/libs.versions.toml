@@ -1,7 +1,7 @@
 [versions]
-kotlin = "1.9.22"
+kotlin = "1.9.23"
 kotlinx-coroutines = "1.8.0"
-kotlinx-atomicfu = "0.23.2"
+kotlinx-atomicfu = "0.24.0"
 kotlinx-abi = "0.14.0"
 
 pgt = "0.4.1"
@@ -10,11 +10,11 @@ licenser = "2.0.1"
 
 polyui = "1.1.44"
 
-log4j = "2.8.1"
+log4j = "2.23.1"
 annotations = "24.1.0"
 nightconfig = "3.6.6"
 
-lwjgl = "3.3.1"
+lwjgl = "3.3.3"
 universalcraft = "296"
 mixin = "0.7.11-SNAPSHOT"
 
