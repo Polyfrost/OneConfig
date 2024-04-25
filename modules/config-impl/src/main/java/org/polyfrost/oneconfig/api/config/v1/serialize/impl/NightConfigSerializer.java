@@ -43,6 +43,7 @@ import org.polyfrost.oneconfig.api.config.v1.Node;
 import org.polyfrost.oneconfig.api.config.v1.Property;
 import org.polyfrost.oneconfig.api.config.v1.Tree;
 import org.polyfrost.oneconfig.api.config.v1.util.ObjectSerializer;
+import org.polyfrost.oneconfig.utils.v1.WrappingUtils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -77,7 +78,7 @@ public class NightConfigSerializer implements FileSerializer<String> {
                 if (p.type == Void.class) continue;
                 Object o = p.get();
                 if (o == null) continue;
-                if (!ObjectSerializer.isSimpleObject(o)) {
+                if (!WrappingUtils.isSimpleObject(o)) {
                     Object out = ObjectSerializer.INSTANCE.serialize(o, true);
                     if (out instanceof Map) cfg.add(n.getID(), mapsToConfigs((Map<String, Object>) out));
                     else cfg.add(n.getID(), out);

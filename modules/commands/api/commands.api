@@ -12,12 +12,9 @@ public class org/polyfrost/oneconfig/api/commands/v1/CommandManager {
 }
 
 public class org/polyfrost/oneconfig/api/commands/v1/CommandTree : org/polyfrost/oneconfig/api/commands/v1/Node {
-	public field description Ljava/lang/String;
 	public fun <init> ([Ljava/lang/String;Ljava/lang/String;)V
 	public static fun append (Ljava/lang/StringBuilder;Ljava/lang/String;I)V
 	public fun autocomplete ([Ljava/lang/String;)Ljava/util/List;
-	public fun description ()Ljava/lang/String;
-	public fun equals (Ljava/lang/Object;)Z
 	public fun execute ([Ljava/lang/String;)Ljava/lang/Object;
 	public fun get (Ljava/lang/String;)Ljava/util/List;
 	public fun get ([Ljava/lang/String;)Ljava/util/List;
@@ -25,12 +22,8 @@ public class org/polyfrost/oneconfig/api/commands/v1/CommandTree : org/polyfrost
 	public fun getHelp ()[Ljava/lang/String;
 	public fun getTree ([Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/commands/v1/CommandTree;
 	public fun getWithArgs ([Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/commands/v1/util/Pair;
-	public fun hashCode ()I
-	public fun helpString ()Ljava/lang/String;
 	public fun init ()V
 	public fun isInitialized ()Z
-	public fun name ()Ljava/lang/String;
-	public fun names ()[Ljava/lang/String;
 	public fun onExecs (Ljava/util/function/Consumer;[Ljava/lang/String;)V
 	public fun put (Lorg/polyfrost/oneconfig/api/commands/v1/CommandTree;)V
 	public fun put (Lorg/polyfrost/oneconfig/api/commands/v1/Executable;)V
@@ -40,19 +33,13 @@ public class org/polyfrost/oneconfig/api/commands/v1/CommandTree : org/polyfrost
 
 public class org/polyfrost/oneconfig/api/commands/v1/Executable : org/polyfrost/oneconfig/api/commands/v1/Node {
 	public final field arity I
-	public final field description Ljava/lang/String;
 	public final field function Ljava/util/function/Function;
 	public final field isGreedy Z
-	public final field names [Ljava/lang/String;
 	public final field parameters [Lorg/polyfrost/oneconfig/api/commands/v1/Executable$Param;
-	public static final field primitiveWrappers Ljava/util/Map;
 	public fun <init> ([Ljava/lang/String;Ljava/lang/String;[Lorg/polyfrost/oneconfig/api/commands/v1/Executable$Param;ZLjava/util/function/Function;)V
-	public fun description ()Ljava/lang/String;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun execute ([Ljava/lang/String;)Ljava/lang/Object;
 	public fun hashCode ()I
-	public fun helpString ()Ljava/lang/String;
-	public fun names ()[Ljava/lang/String;
 	public fun toString ()Ljava/lang/String;
 }
 
@@ -67,10 +54,17 @@ public final class org/polyfrost/oneconfig/api/commands/v1/Executable$Param {
 	public fun toString ()Ljava/lang/String;
 }
 
-public abstract interface class org/polyfrost/oneconfig/api/commands/v1/Node {
-	public abstract fun description ()Ljava/lang/String;
-	public abstract fun helpString ()Ljava/lang/String;
-	public abstract fun names ()[Ljava/lang/String;
+public abstract class org/polyfrost/oneconfig/api/commands/v1/Node {
+	protected field description Ljava/lang/String;
+	protected final field names [Ljava/lang/String;
+	public fun <init> ([Ljava/lang/String;Ljava/lang/String;)V
+	public final fun description ()Ljava/lang/String;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public final fun name ()Ljava/lang/String;
+	public final fun names ()[Ljava/lang/String;
+	public fun setDescription (Ljava/lang/String;)V
+	public abstract fun toString ()Ljava/lang/String;
 }
 
 public abstract class org/polyfrost/oneconfig/api/commands/v1/arguments/ArgumentParser {
@@ -115,13 +109,13 @@ public class org/polyfrost/oneconfig/api/commands/v1/factories/annotated/Annotat
 	public static fun sneakyThrow (Ljava/lang/Throwable;)Ljava/lang/RuntimeException;
 }
 
-public abstract interface annotation class org/polyfrost/oneconfig/api/commands/v1/factories/annotated/annotations/Command : java/lang/annotation/Annotation {
+public abstract interface annotation class org/polyfrost/oneconfig/api/commands/v1/factories/annotated/Command : java/lang/annotation/Annotation {
 	public abstract fun description ()Ljava/lang/String;
 	public abstract fun greedy ()Z
 	public abstract fun value ()[Ljava/lang/String;
 }
 
-public abstract interface annotation class org/polyfrost/oneconfig/api/commands/v1/factories/annotated/annotations/Parameter : java/lang/annotation/Annotation {
+public abstract interface annotation class org/polyfrost/oneconfig/api/commands/v1/factories/annotated/Parameter : java/lang/annotation/Annotation {
 	public abstract fun arity ()I
 	public abstract fun description ()Ljava/lang/String;
 	public abstract fun value ()Ljava/lang/String;
@@ -190,6 +184,7 @@ public class org/polyfrost/oneconfig/api/commands/v1/factories/builder/CommandBu
 	public fun <init> (Lorg/polyfrost/oneconfig/api/commands/v1/factories/builder/CommandBuilder;Ljava/util/Map;[Ljava/lang/String;)V
 	public static fun command (Ljava/util/Map;[Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/commands/v1/factories/builder/CommandBuilder;
 	public fun description (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/commands/v1/factories/builder/CommandBuilder;
+	public static fun runs ()Lorg/polyfrost/oneconfig/api/commands/v1/factories/builder/CommandBuilder$ExeBuilder;
 	public static fun runs ([Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/commands/v1/factories/builder/CommandBuilder$ExeBuilder;
 	public fun subcmd ([Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/commands/v1/factories/builder/CommandBuilder;
 	public fun subcommand ([Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/commands/v1/factories/builder/CommandBuilder;

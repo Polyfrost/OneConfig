@@ -62,6 +62,10 @@ public class CommandBuilder {
         return new ExeBuilder(aliases);
     }
 
+    public static ExeBuilder runs() {
+        return new ExeBuilder("");
+    }
+
     public static CommandBuilder command(Map<Class<?>, ArgumentParser<?>> parsers, String... aliases) {
         return new CommandBuilder(parsers, aliases);
     }

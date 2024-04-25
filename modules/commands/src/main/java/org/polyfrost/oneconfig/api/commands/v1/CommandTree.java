@@ -40,7 +40,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Consumer;
@@ -50,17 +49,15 @@ import java.util.stream.Collectors;
  * Internal representation of a command in OneConfig.
  */
 @SuppressWarnings("unused")
-public class CommandTree implements Node {
-    final String[] names;
+// todo: change the main method so that the CommandTree itself has a List<Executable> attached to it instead
+public class CommandTree extends Node {
     private final Map<String, List<Node>> commands = new HashMap<>();
-    public String description;
     private Map<String, List<Node>> dedupedCommands = null;
     private String[] help = null;
     private boolean init = false;
 
     public CommandTree(@NotNull String[] names, @Nullable String description) {
-        this.names = names;
-        this.description = description;
+        super(names, description);
     }
 
     /**
@@ -103,16 +100,13 @@ public class CommandTree implements Node {
         return out;
     }
 
+    @Override
     public void setDescription(String description) {
-        this.description = description;
+        super.setDescription(description);
         if (init) {
             help = null;
             getHelp();
         }
-    }
-
-    public String description() {
-        return description;
     }
 
     public boolean isInitialized() {
@@ -208,9 +202,9 @@ public class CommandTree implements Node {
             new TreeMap<>(getDedupedCommands()).values().forEach((ls) -> {
                 for (Node value : ls) {
                     if (value instanceof Executable) {
-                        sb.append("\n  ").append(value.helpString());
+                        sb.append("\n  ").append(value);
                     } else {
-                        fullString((CommandTree) value, 1, sb, true);
+                        _getHelp((CommandTree) value, 1, sb);
                     }
                 }
             });
@@ -226,37 +220,25 @@ public class CommandTree implements Node {
         }
     }
 
-    public String name() {
-        return names[0];
-    }
-
-    public String[] names() {
-        return names;
-    }
-
-    @Override
-    public String toString() {
-        return "CommandTree" + Arrays.toString(names) + (description == null ? "" : ": " + description);
-    }
-
-    private void fullString(CommandTree it, int depth, StringBuilder sb, boolean isHelp) {
+    private static void _getHelp(CommandTree it, int depth, StringBuilder sb) {
         sb.append("\n");
         append(sb, "  ", depth);
-        sb.append(isHelp ? it.helpString() : it);
+        sb.append(it);
         it.getDedupedCommands().values().forEach((ls) -> {
             for (Node value : ls) {
                 if (value instanceof Executable) {
                     sb.append("\n");
                     append(sb, "  ", depth + 2);
-                    sb.append(isHelp ? value.helpString() : value);
+                    sb.append(value);
                 } else {
-                    fullString((CommandTree) value, depth + 1, sb, isHelp);
+                    _getHelp((CommandTree) value, depth + 1, sb);
                 }
             }
         });
     }
 
-    public String helpString() {
+    @Override
+    public String toString() {
         return String.join(", ", names) + (description == null ? "" : ": " + description);
     }
 
@@ -440,20 +422,5 @@ public class CommandTree implements Node {
                 return autocomplete(withEmpty(current));
             } else return l;
         }
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        CommandTree that = (CommandTree) o;
-        return Arrays.equals(names, that.names) && Objects.equals(description, that.description);
-    }
-
-    @Override
-    public int hashCode() {
-        int result = description.hashCode();
-        result = 31 * result + Arrays.hashCode(names);
-        return result;
     }
 }

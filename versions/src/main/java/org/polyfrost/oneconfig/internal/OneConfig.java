@@ -66,13 +66,14 @@ public class OneConfig
     //#if FORGE
     //#if MC<=11202
     @net.minecraftforge.fml.common.Mod.EventHandler
-    private void onInit(net.minecraftforge.fml.common.event.FMLPostInitializationEvent ev)
-    //#else
-    //$$ private void onInit(net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent ev)
-    //#endif
-    {
+    private void onInit(net.minecraftforge.fml.common.event.FMLPostInitializationEvent ev) {
         init();
     }
+    //#else
+    //$$ static {
+    //$$     INSTANCE.init();
+    //$$ }
+    //#endif
     //#else
     //$$ @Override
     //$$ public void onInitializeClient() {
@@ -85,7 +86,7 @@ public class OneConfig
         BlurHandler.init();
         preload();
         CommandBuilder b = CommandManager.builder("oneconfig", "ocfg").description("OneConfig main command");
-        b.then(runs("").does(() -> GuiUtils.displayScreen(OneConfigUI.INSTANCE.create())).description("Opens the OneConfig GUI"));
+        b.then(runs().does(() -> GuiUtils.displayScreen(OneConfigUI.INSTANCE.create())).description("Opens the OneConfig GUI"));
         b.then(runs("hud").does(() -> GuiUtils.displayScreen(HudManager.INSTANCE.getWithEditor())).description("Opens the OneConfig HUD editor"));
         CommandManager.registerCommand(b);
         KeybindHelper.builder().mods(KeyModifiers.RSHIFT).does(() -> GuiUtils.displayScreen(OneConfigUI.INSTANCE.create())).register();

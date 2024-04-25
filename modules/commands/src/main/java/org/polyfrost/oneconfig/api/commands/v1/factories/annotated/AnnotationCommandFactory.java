@@ -33,8 +33,6 @@ import org.polyfrost.oneconfig.api.commands.v1.Executable;
 import org.polyfrost.oneconfig.api.commands.v1.arguments.ArgumentParser;
 import org.polyfrost.oneconfig.api.commands.v1.exceptions.WrongArgumentsException;
 import org.polyfrost.oneconfig.api.commands.v1.factories.CommandFactory;
-import org.polyfrost.oneconfig.api.commands.v1.factories.annotated.annotations.Command;
-import org.polyfrost.oneconfig.api.commands.v1.factories.annotated.annotations.Parameter;
 import org.polyfrost.oneconfig.utils.v1.MHUtils;
 
 import java.lang.invoke.MethodHandle;

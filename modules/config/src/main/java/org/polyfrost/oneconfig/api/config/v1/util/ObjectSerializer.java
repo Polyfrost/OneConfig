@@ -28,14 +28,11 @@ package org.polyfrost.oneconfig.api.config.v1.util;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Unmodifiable;
 import org.polyfrost.oneconfig.api.config.v1.exceptions.SerializationException;
 import org.polyfrost.oneconfig.api.config.v1.serialize.adapter.Adapter;
 import org.polyfrost.oneconfig.api.config.v1.serialize.adapter.impl.ColorAdapter;
 import org.polyfrost.oneconfig.utils.v1.MHUtils;
 
-import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
@@ -46,7 +43,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
+
+import static org.polyfrost.oneconfig.utils.v1.WrappingUtils.*;
 
 
 public class ObjectSerializer {
@@ -56,32 +54,6 @@ public class ObjectSerializer {
      */
     public static final int FIELD_SKIP_MODIFIERS = Modifier.STATIC | Modifier.TRANSIENT | 0x00001000;
     private static final Logger LOGGER = LogManager.getLogger("OneConfig/Config");
-    @Unmodifiable
-    private static final Map<Class<?>, Class<?>> primitiveWrappers;
-    @Unmodifiable
-    private static final Map<Class<?>, Function<Number, Number>> numberSuppliers;
-
-    static {
-        Map<Class<?>, Class<?>> pw = new HashMap<>(8, 1f);
-        pw.put(boolean.class, Boolean.class);
-        pw.put(int.class, Integer.class);
-        pw.put(float.class, Float.class);
-        pw.put(short.class, Short.class);
-        pw.put(long.class, Long.class);
-        pw.put(byte.class, Byte.class);
-        pw.put(double.class, Double.class);
-        pw.put(char.class, Character.class);
-        primitiveWrappers = Collections.unmodifiableMap(pw);
-
-        Map<Class<?>, Function<Number, Number>> ns = new HashMap<>(8, 1f);
-        ns.put(Integer.class, Number::intValue);
-        ns.put(Float.class, Number::floatValue);
-        ns.put(Short.class, Number::shortValue);
-        ns.put(Long.class, Number::longValue);
-        ns.put(Byte.class, Number::byteValue);
-        ns.put(Double.class, Number::doubleValue);
-        numberSuppliers = Collections.unmodifiableMap(ns);
-    }
 
     static {
         INSTANCE.registerTypeAdapter(new ColorAdapter());
@@ -107,71 +79,10 @@ public class ObjectSerializer {
         return null;
     }
 
-    public static Object unbox(@NotNull Object in, Class<?> target) {
-        if (target == null) return in;
-        if (in instanceof Number) return numberSuppliers.get(getWrapped(target)).apply((Number) in);
-        if (target.isArray() && in instanceof List) {
-            List<?> list = (List<?>) in;
-            Class<?> cType = target.getComponentType();
-            if (cType.isPrimitive()) {
-                Object array = Array.newInstance(cType, list.size());
-                for (int i = 0; i < list.size(); i++) {
-                    Array.set(array, i, unbox(list.get(i), cType));
-                }
-                return array;
-            }
-        }
-        return in;
-    }
-
-    /**
-     * box the specified primitive array into its primitive wrapper, e.g. int[] -> Integer[]
-     *
-     * @param in an object, null -> null, not a primitive array -> same, or the boxed array.
-     */
-    public static Object box(Object in) {
-        if (in == null) return null;
-        Class<?> cType = in.getClass().getComponentType();
-        if (cType == null || !cType.isPrimitive()) return in;
-        int len = Array.getLength(in);
-        Object out = Array.newInstance(getWrapped(cType), len);
-        for (int i = 0; i < len; i++) {
-            Array.set(out, i, Array.get(in, i));
-        }
-        return out;
-    }
-
-    public static Class<?> getWrapped(Class<?> cls) {
-        Class<?> c = primitiveWrappers.get(cls);
-        return c == null ? cls : c;
-    }
-
     private static void stderrMap(Map<String, Object> map) {
         for (Map.Entry<String, Object> e : map.entrySet()) {
             System.err.println("  " + e.getKey() + ": " + e.getValue());
         }
-    }
-
-    /**
-     * returns true if: <br>
-     * - the object is a primitive wrapper <br>
-     * - the object is a CharSequence <br>
-     */
-    public static boolean isSimpleObject(Object o) {
-        if (o == null) return true;
-        return isPrimitiveWrapper(o) || o instanceof CharSequence;
-    }
-
-    public static boolean isSimpleClass(Class<?> c) {
-        if (c == null) return true;
-        return Number.class.isAssignableFrom(c) || CharSequence.class.isAssignableFrom(c) || c == Boolean.class || c == Character.class;
-    }
-
-    /**
-     * returns true if the object is a primitive wrapper
-     */
-    public static boolean isPrimitiveWrapper(Object o) {
-        return o instanceof Number || o instanceof Boolean || o instanceof Character;
     }
 
     @SuppressWarnings("unchecked")
@@ -276,9 +187,8 @@ public class ObjectSerializer {
 
     private Object _serializeArray(Object in, Class<?> cType, boolean useLists) {
         // primitive array, just box
-        if (!(in instanceof Object[])) {
-            Object[] out = (Object[]) box(in);
-            return useLists ? Arrays.asList(out) : out;
+        if (in.getClass().getComponentType().isPrimitive()) {
+            return useLists ? boxToList(in) : box(in);
         }
         Object[] arr = (Object[]) in;
         if (isSimpleClass(cType)) {
@@ -407,7 +317,7 @@ public class ObjectSerializer {
                     Map<String, Object> m = (Map<String, Object>) e.getValue();
                     f.set(o, _deserialize(m, m.getClass()));
                 } else {
-                    Object out = unbox(e.getValue(), f.getType());
+                    Object out = unbox(e.getValue());
                     f.set(o, out);
                 }
             } catch (Throwable ex) {

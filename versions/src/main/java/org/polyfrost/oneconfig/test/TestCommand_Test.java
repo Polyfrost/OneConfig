@@ -27,8 +27,8 @@
 package org.polyfrost.oneconfig.test;
 
 import com.mojang.authlib.GameProfile;
-import org.polyfrost.oneconfig.api.commands.v1.factories.annotated.annotations.Command;
-import org.polyfrost.oneconfig.api.commands.v1.factories.annotated.annotations.Parameter;
+import org.polyfrost.oneconfig.api.commands.v1.factories.annotated.Command;
+import org.polyfrost.oneconfig.api.commands.v1.factories.annotated.Parameter;
 import org.polyfrost.universal.UChat;
 
 @Command(value = {"test", "t"}, description = "Description of the test command")

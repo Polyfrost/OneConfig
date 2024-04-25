@@ -147,15 +147,9 @@ public class org/polyfrost/oneconfig/api/config/v1/serialize/adapter/impl/ColorA
 public class org/polyfrost/oneconfig/api/config/v1/util/ObjectSerializer {
 	public static final field FIELD_SKIP_MODIFIERS I
 	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/config/v1/util/ObjectSerializer;
-	public static fun box (Ljava/lang/Object;)Ljava/lang/Object;
 	public fun deserialize (Ljava/util/Map;)Ljava/lang/Object;
-	public static fun getWrapped (Ljava/lang/Class;)Ljava/lang/Class;
-	public static fun isPrimitiveWrapper (Ljava/lang/Object;)Z
-	public static fun isSimpleClass (Ljava/lang/Class;)Z
-	public static fun isSimpleObject (Ljava/lang/Object;)Z
 	public fun registerTypeAdapter (Lorg/polyfrost/oneconfig/api/config/v1/serialize/adapter/Adapter;)V
 	public fun registerTypeAdapter ([Lorg/polyfrost/oneconfig/api/config/v1/serialize/adapter/Adapter;)V
 	public fun serialize (Ljava/lang/Object;Z)Ljava/lang/Object;
-	public static fun unbox (Ljava/lang/Object;Ljava/lang/Class;)Ljava/lang/Object;
 }
 

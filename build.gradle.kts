@@ -1,8 +1,3 @@
-// These inspections trigger because we're using the library versions that
-// are bundled with Minecraft, which are not the latest versions.
-@file:Suppress("GradlePackageUpdate", "VulnerableLibrariesLocal", "DSL_SCOPE_VIOLATION")
-
-
 plugins {
     alias(libs.plugins.kotlin)
     alias(libs.plugins.kotlinx.abi)
@@ -30,23 +25,6 @@ allprojects {
         rule("${rootProject.rootDir}/FILEHEADER")
         include("**/*.kt")
         include("**/*.java")
-    }
-}
-
-tasks {
-    withType(Jar::class.java) {
-        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-        if (!name.contains("sourcesjar", ignoreCase = true) || !name.contains("dokka", ignoreCase = true)) {
-            exclude("**/**_Test.**")
-            exclude("**/**_Test$**.**")
-        }
-    }
-    named<Jar>("sourcesJar") {
-        exclude("**/internal/**")
-        archiveClassifier.set("sources")
-        doFirst {
-            archiveClassifier.set("sources")
-        }
     }
 }
 

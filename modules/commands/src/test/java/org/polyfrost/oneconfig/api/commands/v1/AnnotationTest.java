@@ -29,8 +29,8 @@ package org.polyfrost.oneconfig.api.commands.v1;
 import org.junit.jupiter.api.Test;
 import org.polyfrost.oneconfig.api.commands.v1.arguments.ArgumentParser;
 import org.polyfrost.oneconfig.api.commands.v1.factories.annotated.AnnotationCommandFactory;
-import org.polyfrost.oneconfig.api.commands.v1.factories.annotated.annotations.Command;
-import org.polyfrost.oneconfig.api.commands.v1.factories.annotated.annotations.Parameter;
+import org.polyfrost.oneconfig.api.commands.v1.factories.annotated.Command;
+import org.polyfrost.oneconfig.api.commands.v1.factories.annotated.Parameter;
 
 import static org.junit.jupiter.api.Assertions.*;
 

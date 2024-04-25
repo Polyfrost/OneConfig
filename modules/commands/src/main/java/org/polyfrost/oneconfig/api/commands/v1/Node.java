@@ -26,10 +26,53 @@
 
 package org.polyfrost.oneconfig.api.commands.v1;
 
-public interface Node {
-    String helpString();
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-    String[] names();
+import java.util.Arrays;
 
-    String description();
+public abstract class Node {
+    protected final String[] names;
+    protected String description;
+
+    public Node(@NotNull String[] names, @Nullable String description) {
+        this.names = names;
+        this.description = description;
+    }
+
+    @NotNull
+    public final String description() {
+        return description == null ? "" : description;
+    }
+
+    @NotNull
+    public final String[] names() {
+        return names;
+    }
+
+    @NotNull
+    public final String name() {
+        return names[0];
+    }
+
+    public void setDescription(String description) {
+        if (description == null) throw new NullPointerException("cannot set non-nullable field 'this.description' in class 'Node' to 'null'");
+        this.description = description;
+    }
+
+    @Override
+    public int hashCode() {
+        return Arrays.hashCode(names) * 31 + description().hashCode();
+    }
+
+    @Override
+    public abstract String toString();
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Node)) return false;
+        Node node = (Node) o;
+        return Arrays.equals(names, node.names) && description().equals(node.description());
+    }
 }

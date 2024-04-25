@@ -1,4 +1,4 @@
-@file:Suppress("DSL_SCOPE_VIOLATION")
+@file:Suppress("DSL_SCOPE_VIOLATION", "UnstableApiUsage")
 
 import net.fabricmc.loom.task.RemapSourcesJarTask
 import org.polyfrost.gradle.util.noServerRunConfigs
@@ -72,10 +72,6 @@ val shade: Configuration by configurations.creating {
 
 val shadeMod: Configuration by configurations.creating {
     configurations.modApi.get().extendsFrom(this)
-}
-
-subprojects {
-    tasks.javadoc.get().enabled = false
 }
 
 dependencies {

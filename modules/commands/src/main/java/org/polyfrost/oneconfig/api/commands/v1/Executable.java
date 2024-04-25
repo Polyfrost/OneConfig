@@ -28,47 +28,27 @@ package org.polyfrost.oneconfig.api.commands.v1;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 import org.polyfrost.oneconfig.api.commands.v1.arguments.ArgumentParser;
 import org.polyfrost.oneconfig.api.commands.v1.exceptions.CommandCreationException;
 import org.polyfrost.oneconfig.api.commands.v1.exceptions.CommandExecutionException;
+import org.polyfrost.oneconfig.utils.v1.WrappingUtils;
 
 import java.lang.reflect.Array;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.function.Function;
 
-public class Executable implements Node {
-    @Unmodifiable
-    public static final Map<Class<?>, Class<?>> primitiveWrappers;
+import static org.polyfrost.oneconfig.utils.v1.WrappingUtils.unbox;
 
-    static {
-        Map<Class<?>, Class<?>> m = new HashMap<>(8, 1f);
-        m.put(double.class, Double.class);
-        m.put(long.class, Long.class);
-        m.put(float.class, Float.class);
-        m.put(int.class, Integer.class);
-        m.put(char.class, Character.class);
-        m.put(byte.class, Byte.class);
-        m.put(boolean.class, Boolean.class);
-        m.put(short.class, Short.class);
-        primitiveWrappers = Collections.unmodifiableMap(m);
-    }
-
-    public final String[] names;
-    public final String description;
+public class Executable extends Node {
     public final Param[] parameters;
     public final int arity;
     public final Function<Object[], Object> function;
     public final boolean isGreedy;
 
     public Executable(@NotNull String[] names, @Nullable String description, @NotNull Param[] parameters, boolean isGreedy, @NotNull Function<Object[], Object> function) {
-        this.names = names;
-        this.description = description;
+        super(names, description);
         this.parameters = parameters;
         this.function = function;
         this.isGreedy = isGreedy;
@@ -77,41 +57,6 @@ public class Executable implements Node {
             arity += p.arity;
         }
         this.arity = arity;
-    }
-
-    /**
-     * Because casting arrays by default would be stupid!
-     */
-    private static Object unbox(Object in) {
-        if (!(in instanceof Object[])) return in;
-        Object out;
-        if (in instanceof Number[]) {
-            Number[] a = ((Number[]) in);
-            Number type = a[0];
-            Class<?> c;
-            if (type instanceof Float) c = float.class;
-            else if (type instanceof Double) c = double.class;
-            else if (type instanceof Byte) c = byte.class;
-            else if (type instanceof Short) c = short.class;
-            else if (type instanceof Integer) c = int.class;
-            else if (type instanceof Long) c = long.class;
-            else c = null;
-            out = Array.newInstance(c, a.length);
-            for (int i = 0; i < a.length; i++) {
-                Array.set(out, i, a[i]);
-            }
-        } else if (in instanceof Boolean[]) {
-            out = new boolean[((Boolean[]) in).length];
-            for (int i = 0; i < ((Boolean[]) in).length; i++) {
-                Array.setBoolean(out, i, ((Boolean[]) in)[i]);
-            }
-        } else if (in instanceof Character[]) {
-            out = new char[((Character[]) in).length];
-            for (int i = 0; i < ((Character[]) in).length; i++) {
-                Array.setChar(out, i, ((Character[]) in)[i]);
-            }
-        } else out = in;
-        return out;
     }
 
     public Object execute(String... args) {
@@ -132,41 +77,24 @@ public class Executable implements Node {
         return function.apply(parsed);
     }
 
-    public String[] names() {
-        return names;
-    }
-
-    @Override
-    public String description() {
-        return description;
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("Executable").append(Arrays.toString(names));
-        if (description != null) sb.append(": ").append(description).append(" ").append(Arrays.toString(parameters));
-        return sb.toString();
-    }
-
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (super.equals(o)) return true;
+        if (getClass() != o.getClass()) return false;
         Executable that = (Executable) o;
-        return arity == that.arity && Arrays.equals(names, that.names) && Objects.equals(description, that.description) && Arrays.equals(parameters, that.parameters);
+        return arity == that.arity && Arrays.equals(parameters, that.parameters);
     }
 
     @Override
     public int hashCode() {
-        int result = (description == null) ? 0 : description.hashCode();
-        result = 31 * result + arity;
-        result = 31 * result + Arrays.hashCode(names);
+        int result = super.hashCode();
+        result = 31 * result + arity * 31;
         result = 31 * result + Arrays.hashCode(parameters);
         return result;
     }
 
-    public String helpString() {
+    @Override
+    public String toString() {
         return String.join(", ", names) + (parameters.length == 0 ? "" : " " + Arrays.toString(parameters)) + (description == null ? "" : ": " + description);
     }
 
@@ -188,7 +116,7 @@ public class Executable implements Node {
 
         public static Param create(@NotNull String name, @Nullable String description, @NotNull Class<?> type, int arity, @NotNull Map<Class<?>, ArgumentParser<?>> parsers) {
             if (type.isArray()) type = type.getComponentType();
-            ArgumentParser<?> parser = parsers.get(primitiveWrappers.getOrDefault(type, type));
+            ArgumentParser<?> parser = parsers.get(WrappingUtils.getWrapped(type));
             if (parser == null) {
                 throw new CommandCreationException("No parser found for type " + type.getSimpleName() + "! Register with CommandManager#registerParser");
             }

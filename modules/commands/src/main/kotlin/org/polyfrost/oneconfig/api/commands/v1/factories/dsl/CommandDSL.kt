@@ -47,7 +47,7 @@ class CommandDSL @JvmOverloads constructor(private val parsers: Map<Class<*>, Ar
     var description: String?
         get() = tree.description()
         set(value) {
-            tree.description = value
+            tree.setDescription(value)
         }
 
     fun command(

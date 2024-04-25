@@ -30,7 +30,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.polyfrost.oneconfig.api.commands.v1.arguments.ArgumentParser;
 import org.polyfrost.oneconfig.api.commands.v1.factories.CommandFactory;
 import org.polyfrost.oneconfig.api.commands.v1.factories.annotated.AnnotationCommandFactory;
-import org.polyfrost.oneconfig.api.commands.v1.factories.annotated.annotations.Command;
+import org.polyfrost.oneconfig.api.commands.v1.factories.annotated.Command;
 import org.polyfrost.oneconfig.api.commands.v1.factories.builder.BuilderFactory;
 import org.polyfrost.oneconfig.api.commands.v1.factories.builder.CommandBuilder;
 import org.polyfrost.oneconfig.api.commands.v1.factories.dsl.CommandDSL;

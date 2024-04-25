@@ -35,8 +35,8 @@ import org.polyfrost.oneconfig.api.config.v1.annotations.Accordion;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Button;
 import org.polyfrost.oneconfig.api.config.v1.annotations.DependsOn;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Option;
-import org.polyfrost.oneconfig.api.config.v1.util.ObjectSerializer;
 import org.polyfrost.oneconfig.utils.v1.MHUtils;
+import org.polyfrost.oneconfig.utils.v1.WrappingUtils;
 
 import java.lang.annotation.Annotation;
 import java.lang.invoke.MethodHandle;
@@ -87,7 +87,7 @@ public class OneConfigCollector extends ReflectiveCollector {
                 Property<?> p = Property.prop(f.getName(), MHUtils.setAccessible(f).get(src), type).addCallback(v -> {
                     try {
                         if (type.isArray() && v instanceof List<?>) {
-                            setter.invoke(ObjectSerializer.unbox(v, type));
+                            setter.invoke(WrappingUtils.unbox(v));
                         } else setter.invoke(v);
                     } catch (Throwable e) {
                         throw new RuntimeException("[internal failure] Failed to setback field", e);
