@@ -52,7 +52,7 @@ public class OneConfigTweaker implements ITweaker {
             for (URL url : Launch.classLoader.getSources()) {
                 doMagicMixinStuff(url);
             }
-        } catch (Exception t) {
+        } catch (Throwable t) {
             t.printStackTrace();
         }
     }
