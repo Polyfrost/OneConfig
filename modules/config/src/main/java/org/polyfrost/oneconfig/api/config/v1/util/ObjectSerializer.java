@@ -32,8 +32,8 @@ import org.polyfrost.oneconfig.api.config.v1.exceptions.SerializationException;
 import org.polyfrost.oneconfig.api.config.v1.serialize.adapter.Adapter;
 import org.polyfrost.oneconfig.api.config.v1.serialize.adapter.impl.ColorAdapter;
 import org.polyfrost.oneconfig.utils.v1.MHUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
@@ -55,7 +55,7 @@ public class ObjectSerializer {
      * Modifier.SYNTHETIC | Modifier.TRANSIENT | Modifier.STATIC
      */
     public static final int FIELD_SKIP_MODIFIERS = Modifier.STATIC | Modifier.TRANSIENT | 0x00001000;
-    private static final Logger LOGGER = LoggerFactory.getLogger("OneConfig/Config");
+    private static final Logger LOGGER = LogManager.getLogger("OneConfig/Config");
     @Unmodifiable
     private static final Map<Class<?>, Class<?>> primitiveWrappers;
     @Unmodifiable

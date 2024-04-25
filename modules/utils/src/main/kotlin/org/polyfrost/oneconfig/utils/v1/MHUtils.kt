@@ -34,8 +34,8 @@ import org.polyfrost.oneconfig.utils.v1.MHUtils.getMethodHandle
 import org.polyfrost.oneconfig.utils.v1.MHUtils.invoke
 import org.polyfrost.oneconfig.utils.v1.MHUtils.setAccessible
 import org.polyfrost.oneconfig.utils.v1.MHUtils.setField
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import org.apache.logging.log4j.Logger
+import org.apache.logging.log4j.LogManager
 import sun.misc.Unsafe
 import java.lang.invoke.LambdaMetafactory
 import java.lang.invoke.MethodHandle
@@ -58,7 +58,7 @@ import java.util.function.Function
  */
 @Suppress("unused")
 object MHUtils {
-    private val LOGGER: Logger = LoggerFactory.getLogger("OneConfig/MHUtils")
+    private val LOGGER: Logger = LogManager.getLogger("OneConfig/MHUtils")
 
     @Suppress("UNCHECKED_CAST", "NOTHING_TO_INLINE")
     class Result<T>(@PublishedApi @JvmSynthetic internal val value: Any?) {

@@ -43,11 +43,11 @@ import org.polyfrost.polyui.unit.seconds
 import org.polyfrost.polyui.utils.LinkedList
 import org.polyfrost.polyui.utils.image
 import org.polyfrost.polyui.utils.rgba
-import org.slf4j.LoggerFactory
+import org.apache.logging.log4j.LogManager
 import kotlin.math.PI
 
 open class ConfigVisualizer {
-    private val LOGGER = LoggerFactory.getLogger("OneConfig/Config")
+    private val LOGGER = LogManager.getLogger("OneConfig/Config")
     protected val configCache = HashMap<Tree, Drawable>()
     protected val optBg = rgba(39, 49, 55, 0.2f)
     protected val alignC = Align(cross = Align.Cross.Start)
@@ -92,7 +92,7 @@ open class ConfigVisualizer {
         for ((_, node) in config.map) {
             processNode(node, options)
         }
-        PolyUI.LOGGER.info("creating config page ${config.title} took ${(System.nanoTime() - now) / 1_000_000f}ms")
+        LOGGER.info("creating config page ${config.title} took ${(System.nanoTime() - now) / 1_000_000f}ms")
         return makeFinal(flattenSubcategories(options), initialPage)
     }
 
@@ -184,7 +184,7 @@ open class ConfigVisualizer {
             alignment = alignVNoPad,
             children =
             arrayOf(
-                wrap(Image("assets/oneconfig/ico/chevron-down.svg".image()).also { it.rotation = PI }, title, desc, icon).events {
+                wrap(Image("chevron-down.svg".image()).also { it.rotation = PI }, title, desc, icon).events {
                     self.color = PolyColor.TRANSPARENT.toAnimatable()
                     var open = false
                     Event.Mouse.Clicked(0) then {

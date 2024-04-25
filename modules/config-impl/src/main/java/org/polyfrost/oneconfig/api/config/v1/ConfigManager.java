@@ -37,8 +37,8 @@ import org.polyfrost.oneconfig.api.config.v1.serialize.impl.NightConfigSerialize
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.JvmShutdownEvent;
 import org.polyfrost.oneconfig.api.event.v1.events.ShutdownEvent;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -51,7 +51,7 @@ import static org.polyfrost.oneconfig.api.config.v1.Tree.tree;
 
 public final class ConfigManager {
     public static final Path PROFILES_DIR = Paths.get("profiles");
-    private static final Logger LOGGER = LoggerFactory.getLogger("OneConfig/Config");
+    private static final Logger LOGGER = LogManager.getLogger("OneConfig/Config");
     private static final List<PropertyCollector> collectors = new ArrayList<>(1);
     private static final ConfigManager internal = new ConfigManager(Paths.get("OneConfig"), NightConfigSerializer.JSON);
     private static final ConfigManager core = new ConfigManager(Paths.get("config"), NightConfigSerializer.ALL);

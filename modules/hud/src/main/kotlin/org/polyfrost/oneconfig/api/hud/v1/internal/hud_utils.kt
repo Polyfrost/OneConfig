@@ -26,9 +26,9 @@
 
 package org.polyfrost.oneconfig.api.hud.v1.internal
 
+import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.hud.v1.Hud
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
-import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.component.*
 import org.polyfrost.polyui.component.impl.Block
@@ -40,6 +40,8 @@ import org.polyfrost.polyui.unit.Point
 import org.polyfrost.polyui.unit.by
 import org.polyfrost.polyui.utils.image
 import org.polyfrost.polyui.utils.radii
+
+private val LOGGER = LogManager.getLogger("OneConfig/HUD")
 
 private val scaleBlob by lazy {
     var sx = 0f
@@ -150,7 +152,7 @@ fun Hud<out Drawable>.build(): Block {
         onDrag = { snapHandler() },
         onDrop = {
             if (!intersects(minMargin, minMargin, polyUI.size.x - (minMargin * 2f), polyUI.size.y - (minMargin * 2f))) {
-                PolyUI.LOGGER.warn("cannot place HUD element out of bounds!")
+                LOGGER.warn("cannot place HUD element out of bounds!")
                 x = polyUI.size.x / 2f - width / 2f
                 y = polyUI.size.y / 2f - height / 2f
             }

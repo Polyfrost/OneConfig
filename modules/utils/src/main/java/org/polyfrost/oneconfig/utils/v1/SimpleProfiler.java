@@ -26,10 +26,10 @@
 
 package org.polyfrost.oneconfig.utils.v1;
 
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.slf4j.event.Level;
+import org.apache.logging.log4j.LogManager;
 
 import java.util.HashMap;
 
@@ -38,7 +38,7 @@ import java.util.HashMap;
  */
 public final class SimpleProfiler {
     private static final HashMap<String, Long> startTimes = new HashMap<>();
-    private static final Logger LOGGER = LoggerFactory.getLogger("OneConfig/Profiler");
+    private static final Logger LOGGER = LogManager.getLogger("OneConfig/Profiler");
 
     private SimpleProfiler() {
     }
@@ -77,7 +77,7 @@ public final class SimpleProfiler {
      */
     public static float pop(@NotNull final String msg, @NotNull Level level) {
         final float time = (System.nanoTime() - startTimes.remove(msg)) / 1000000f;
-        LOGGER.atLevel(level).log(msg + " took " + time + "ms");
+        LOGGER.log(level, "{} took {}ms", msg, time);
         return time;
     }
 }

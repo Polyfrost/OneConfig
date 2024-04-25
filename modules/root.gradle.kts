@@ -13,7 +13,8 @@ subprojects {
     }
 
     dependencies {
-        implementation(rootProject.libs.bundles.core)
+        implementation(rootProject.libs.annotations)
+        compileOnly(rootProject.libs.logging.api)
         testImplementation(rootProject.libs.bundles.test.core)
         testImplementation(platform(rootProject.libs.junit.bom))
     }

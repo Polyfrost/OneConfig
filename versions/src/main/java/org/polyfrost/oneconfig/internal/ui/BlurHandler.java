@@ -37,8 +37,8 @@ import org.polyfrost.oneconfig.internal.mixin.ShaderGroupAccessor;
 import org.polyfrost.universal.UMinecraft;
 import org.polyfrost.universal.UScreen;
 import org.polyfrost.oneconfig.api.ui.v1.screen.BlurScreen;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 import java.util.List;
 
@@ -57,7 +57,7 @@ import java.util.List;
  */
 public final class BlurHandler {
     public static final BlurHandler INSTANCE = new BlurHandler();
-    private static final Logger LOGGER = LoggerFactory.getLogger("OneConfig/Blur");
+    private static final Logger LOGGER = LogManager.getLogger("OneConfig/Blur");
 
     private final ResourceLocation blurShader = new ResourceLocation("shaders/post/fade_in_blur.json");
     private ShaderUniform su;

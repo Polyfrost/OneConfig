@@ -61,11 +61,11 @@ import org.polyfrost.polyui.utils.LinkedList
 import org.polyfrost.polyui.utils.image
 import org.polyfrost.polyui.utils.ref
 import org.polyfrost.polyui.utils.rgba
-import org.slf4j.LoggerFactory
+import org.apache.logging.log4j.LogManager
 import kotlin.math.PI
 
 object HudManager {
-    private val LOGGER = LoggerFactory.getLogger("OneConfig/HUD")
+    private val LOGGER = LogManager.getLogger("OneConfig/HUD")
     lateinit var backend: FileBackend
     private val huds = LinkedList<Hud<out Drawable>>()
     private val snapLineColor = rgba(170, 170, 170, 0.8f)

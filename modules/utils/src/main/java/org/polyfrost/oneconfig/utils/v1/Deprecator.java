@@ -26,8 +26,8 @@
 
 package org.polyfrost.oneconfig.utils.v1;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -36,7 +36,7 @@ import java.util.Set;
  * Class used by OneConfig for deprecation related utilities.
  */
 public final class Deprecator {
-    private static final Logger LOGGER = LoggerFactory.getLogger("OneConfig/Deprecator");
+    private static final Logger LOGGER = LogManager.getLogger("OneConfig/Deprecator");
     private static final Set<String> warned = new HashSet<>();
 
     private Deprecator() {

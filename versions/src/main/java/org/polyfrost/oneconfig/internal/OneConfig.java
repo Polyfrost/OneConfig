@@ -40,8 +40,8 @@ import org.polyfrost.polyui.PolyUI;
 import org.polyfrost.polyui.component.Drawable;
 import org.polyfrost.polyui.input.KeyModifiers;
 import org.polyfrost.polyui.input.Translator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 import static org.polyfrost.oneconfig.api.commands.v1.factories.builder.CommandBuilder.runs;
 
@@ -60,7 +60,7 @@ public class OneConfig
     //$$ implements net.fabricmc.api.ClientModInitializer
     //#endif
 {
-    private static final Logger LOGGER = LoggerFactory.getLogger("OneConfig");
+    private static final Logger LOGGER = LogManager.getLogger("OneConfig");
     public static final OneConfig INSTANCE = new OneConfig();
 
     //#if FORGE

@@ -17,7 +17,7 @@ public class org/polyfrost/oneconfig/api/config/v1/DummyProperty : org/polyfrost
 }
 
 public abstract class org/polyfrost/oneconfig/api/config/v1/Node {
-	protected static final field LOGGER Lorg/slf4j/Logger;
+	protected static final field LOGGER Lorg/apache/logging/log4j/Logger;
 	public field description Ljava/lang/String;
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
 	public final fun addMetadata (Ljava/lang/String;Ljava/lang/Object;)V
@@ -97,7 +97,7 @@ public class org/polyfrost/oneconfig/api/config/v1/Tree : org/polyfrost/oneconfi
 }
 
 public abstract class org/polyfrost/oneconfig/api/config/v1/backend/Backend {
-	protected static final field LOGGER Lorg/slf4j/Logger;
+	protected static final field LOGGER Lorg/apache/logging/log4j/Logger;
 	public fun <init> ()V
 	public fun exists (Ljava/lang/String;)Z
 	public final fun get (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;

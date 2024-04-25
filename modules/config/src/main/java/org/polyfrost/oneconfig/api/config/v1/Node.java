@@ -30,15 +30,15 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
 import org.jetbrains.annotations.VisibleForTesting;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 import java.util.HashMap;
 import java.util.Map;
 
 
 public abstract class Node {
-    protected static final Logger LOGGER = LoggerFactory.getLogger("OneConfig/Config");
+    protected static final Logger LOGGER = LogManager.getLogger("OneConfig/Config");
     public transient String description;
     // @jdk.internal.vm.annotation.Stable
     private transient String id;

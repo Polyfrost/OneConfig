@@ -42,8 +42,8 @@ import org.polyfrost.oneconfig.api.ui.v1.LwjglManager;
 import org.polyfrost.oneconfig.api.ui.v1.TinyFD;
 import org.polyfrost.oneconfig.utils.v1.MHUtils;
 import org.polyfrost.polyui.renderer.Renderer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -68,7 +68,7 @@ public class LwjglManagerImpl
         extends URLClassLoader
         implements LwjglManager {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger("OneConfig/LWJGL");
+    private static final Logger LOGGER = LogManager.getLogger("OneConfig/LWJGL");
     private static final boolean isPojav = checkPojav();
     private static final MethodHandle defineClassMethod;
     private static final Map<String, String> remappingMap;

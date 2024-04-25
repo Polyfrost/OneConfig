@@ -32,8 +32,8 @@ import net.minecraft.launchwrapper.Launch;
 import net.minecraft.launchwrapper.LaunchClassLoader;
 import net.minecraftforge.fml.relauncher.CoreModManager;
 import org.polyfrost.oneconfig.utils.v1.MHUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 import org.spongepowered.asm.launch.MixinBootstrap;
 import org.spongepowered.asm.launch.MixinTweaker;
 import org.spongepowered.asm.mixin.Mixins;
@@ -49,7 +49,7 @@ import java.util.jar.JarFile;
 
 @SuppressWarnings("unused")
 public class OneConfigTweaker implements ITweaker {
-    private static final Logger LOGGER = LoggerFactory.getLogger("OneConfig/Tweaker");
+    private static final Logger LOGGER = LogManager.getLogger("OneConfig/Tweaker");
 
     public OneConfigTweaker() {
         try {

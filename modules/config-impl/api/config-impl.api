@@ -190,7 +190,7 @@ public class org/polyfrost/oneconfig/api/config/v1/collect/impl/OneConfigCollect
 }
 
 public abstract class org/polyfrost/oneconfig/api/config/v1/collect/impl/ReflectiveCollector : org/polyfrost/oneconfig/api/config/v1/collect/PropertyCollector {
-	protected static final field LOGGER Lorg/slf4j/Logger;
+	protected static final field LOGGER Lorg/apache/logging/log4j/Logger;
 	protected final field maxDepth I
 	public fun <init> (I)V
 	public fun collect (Ljava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;

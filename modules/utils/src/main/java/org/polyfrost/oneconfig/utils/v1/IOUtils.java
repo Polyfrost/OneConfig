@@ -27,8 +27,8 @@
 package org.polyfrost.oneconfig.utils.v1;
 
 import org.jetbrains.annotations.NotNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
@@ -53,7 +53,7 @@ import java.security.MessageDigest;
  * Utility class for I/O operations.
  */
 public final class IOUtils {
-    private static final Logger LOGGER = LoggerFactory.getLogger("OneConfig/IO");
+    private static final Logger LOGGER = LogManager.getLogger("OneConfig/IO");
 
     private IOUtils() {
     }

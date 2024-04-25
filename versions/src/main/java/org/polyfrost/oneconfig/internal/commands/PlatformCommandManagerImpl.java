@@ -35,8 +35,8 @@ import org.polyfrost.oneconfig.api.commands.v1.CommandTree;
 import org.polyfrost.oneconfig.api.commands.v1.internal.PlatformCommandManager;
 import org.polyfrost.universal.UChat;
 import org.polyfrost.oneconfig.api.commands.v1.arguments.PlayerArgumentParser;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 import java.util.Arrays;
 import java.util.List;
@@ -46,7 +46,7 @@ import net.minecraftforge.client.ClientCommandHandler;
 //#endif
 
 public class PlatformCommandManagerImpl implements PlatformCommandManager {
-    private static final Logger LOGGER = LoggerFactory.getLogger("OneConfig/Commands");
+    private static final Logger LOGGER = LogManager.getLogger("OneConfig/Commands");
 
     static {
         CommandManager.INSTANCE.registerParser(new PlayerArgumentParser());

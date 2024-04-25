@@ -47,8 +47,8 @@ import net.minecraft.util.text.TextComponentUtils;
 import net.minecraft.util.text.TranslationTextComponent;
 import org.jetbrains.annotations.Nullable;
 import org.polyfrost.oneconfig.internal.mixin.commands.HelpCommandAccessor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 import java.util.HashMap;
 import java.util.List;
@@ -61,7 +61,7 @@ import java.util.Map;
  * <a href="https://github.com/FabricMC/fabric/blob/1.20.2/fabric-command-api-v2/src/client/java/net/fabricmc/fabric/impl/command/client/ClientCommandInternals.java">Click here for source</a>
  */
 public final class ClientCommandInternals {
-    private static final Logger LOGGER = LoggerFactory.getLogger("OneConfig/Commands");
+    private static final Logger LOGGER = LogManager.getLogger("OneConfig/Commands");
     private static final String API_COMMAND_NAME = "ocfgcmds";
     private static CommandDispatcher<ClientCommandSource> activeDispatcher;
 

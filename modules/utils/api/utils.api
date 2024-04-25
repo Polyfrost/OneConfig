@@ -236,7 +236,7 @@ public final class org/polyfrost/oneconfig/utils/v1/OneImage {
 
 public final class org/polyfrost/oneconfig/utils/v1/SimpleProfiler {
 	public static fun pop (Ljava/lang/String;)F
-	public static fun pop (Ljava/lang/String;Lorg/slf4j/event/Level;)F
+	public static fun pop (Ljava/lang/String;Lorg/apache/logging/log4j/Level;)F
 	public static fun push (Ljava/lang/String;)Z
 }
 

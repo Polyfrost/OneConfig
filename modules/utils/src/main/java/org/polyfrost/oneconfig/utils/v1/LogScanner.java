@@ -51,8 +51,8 @@ package org.polyfrost.oneconfig.utils.v1;
 import org.jetbrains.annotations.NotNull;
 import org.polyfrost.oneconfig.api.platform.v1.LoaderPlatform;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -74,7 +74,7 @@ import java.util.stream.Collectors;
  * Adapted from <a href="https://github.com/natanfudge/Not-Enough-Crashes">NotEnoughCrashes</a> under the <a href="https://opensource.org/licenses/MIT">MIT License</a>
  */
 public final class LogScanner {
-    private static final Logger LOGGER = LoggerFactory.getLogger("OneConfig/Log Scanner");
+    private static final Logger LOGGER = LogManager.getLogger("OneConfig/Log Scanner");
 
     private LogScanner() {
     }

@@ -86,16 +86,16 @@ dependencies {
     shadeMod("org.polyfrost:universalcraft-$platform:${libs.versions.universalcraft.get()}")
 
     shade(libs.polyui)
-
-    shade(libs.logging.api)
-    shade(libs.logging.impl)
+    shade(libs.bundles.nightconfig)
 
     // for other mods and universalcraft
     shade(libs.bundles.kotlin)
     shade(libs.bundles.kotlinx)
 
     for (project in rootProject.project(":modules").subprojects) {
-        shade(project(project.path))
+        shade(project(project.path)) {
+            isTransitive = false
+        }
     }
 
     if (platform.isLegacyForge) {
@@ -214,6 +214,8 @@ tasks {
 
     withType(Jar::class.java) {
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+        exclude("META-INF/com.android.tools/**")
+        exclude("META-INF/proguard/**")
         if (project.platform.isFabric) {
             exclude("mcmod.info", "META-INF/mods.toml")
         } else {
@@ -245,10 +247,6 @@ tasks {
         inputFile.set(shadowJar.get().archiveFile)
         archiveClassifier = "full"
     }
-
-    fun Jar.excludeInternal() {
-        exclude("**/internal/**")
-    }
     jar {
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
         manifest {
@@ -279,11 +277,11 @@ tasks {
                 }
             )
         }
-        excludeInternal()
+        exclude("**/internal/**")
         archiveClassifier.set("")
     }
     named<Jar>("sourcesJar") {
-        excludeInternal()
+        exclude("**/internal/**")
         archiveClassifier.set("sources")
         doFirst {
             archiveClassifier.set("sources")

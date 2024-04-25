@@ -29,8 +29,8 @@ package org.polyfrost.oneconfig.api.config.v1.backend;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.polyfrost.oneconfig.api.config.v1.Tree;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -42,7 +42,7 @@ import java.util.Map;
  * It is responsible for getting and putting ConfigTrees, and by extension, serializing/deserializing them.
  */
 public abstract class Backend {
-    protected static final Logger LOGGER = LoggerFactory.getLogger("OneConfig/Config");
+    protected static final Logger LOGGER = LogManager.getLogger("OneConfig/Config");
     private final Map<String, Tree> trees = new HashMap<>();
 
 

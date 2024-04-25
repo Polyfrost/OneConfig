@@ -30,8 +30,8 @@ import org.polyfrost.oneconfig.api.event.v1.events.Event;
 import org.polyfrost.oneconfig.api.event.v1.invoke.EventCollector;
 import org.polyfrost.oneconfig.api.event.v1.invoke.EventHandler;
 import org.polyfrost.oneconfig.api.event.v1.invoke.impl.AnnotationEventMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 import java.lang.reflect.Method;
 import java.util.ArrayDeque;
@@ -53,7 +53,7 @@ public final class EventManager {
      * The instance of the {@link EventManager}.
      */
     public static final EventManager INSTANCE = new EventManager();
-    private static final Logger LOGGER = LoggerFactory.getLogger("OneConfig/Events");
+    private static final Logger LOGGER = LogManager.getLogger("OneConfig/Events");
     private final Deque<EventCollector> collectors = new ArrayDeque<>(2);
     private final Map<Object, List<EventHandler<?>>> cache = new WeakHashMap<>(5);
     private final Map<Class<?>, Set<EventHandler<?>>> handlers = new HashMap<>();

@@ -26,6 +26,7 @@
 
 package org.polyfrost.oneconfig.internal.ui.impl
 
+import org.apache.logging.log4j.LogManager
 import org.lwjgl.nanovg.NSVGImage
 import org.lwjgl.nanovg.NVGColor
 import org.lwjgl.nanovg.NVGPaint
@@ -50,6 +51,8 @@ import kotlin.math.min
 import org.polyfrost.polyui.color.PolyColor as Color
 
 object RendererImpl : Renderer {
+    @JvmStatic
+    private val LOGGER = LogManager.getLogger("OneConfig/Renderer")
     private val nvgPaint: NVGPaint = NVGPaint.malloc()
     private val nvgColor: NVGColor = NVGColor.malloc()
     private val nvgColor2: NVGColor = NVGColor.malloc()
@@ -450,7 +453,7 @@ object RendererImpl : Renderer {
     private fun getFont(font: Font): NVGFont {
         return fonts.getOrPut(font) {
             val data = font.stream?.toByteBuffer() ?: run {
-                PolyUI.LOGGER.warn("Failed to get font: ${font.resourcePath}, falling back to default font!")
+                LOGGER.warn("Failed to get font: ${font.resourcePath}, falling back to default font!")
                 PolyUI.defaultFonts.regular.get().toByteBuffer(false)
             }
             val ft = nvgCreateFontMem(vg, font.name, data, 0)

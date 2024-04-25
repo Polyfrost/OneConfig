@@ -28,8 +28,8 @@ package org.polyfrost.oneconfig.utils.v1;
 
 import com.google.gson.JsonElement;
 import org.polyfrost.universal.UDesktop;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
@@ -48,7 +48,7 @@ import java.nio.file.StandardCopyOption;
  * Utility class for accessing the internet.
  */
 public final class NetworkUtils {
-    private static final Logger LOGGER = LoggerFactory.getLogger("OneConfig/Network");
+    private static final Logger LOGGER = LogManager.getLogger("OneConfig/Network");
 
     private NetworkUtils() {
     }
