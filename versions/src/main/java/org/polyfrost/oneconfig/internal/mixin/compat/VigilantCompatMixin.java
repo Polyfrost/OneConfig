@@ -50,7 +50,7 @@ import static org.polyfrost.oneconfig.api.config.v1.Property.prop;
 // todo rewrite
 @Mixin(value = Vigilant.class, remap = false)
 @Pseudo
-public abstract class VigilantMixin {
+public abstract class VigilantCompatMixin {
     @Dynamic("OneConfig VCAL Processor")
     @Inject(method = "<init>(Ljava/io/File;Ljava/lang/String;Lgg/essential/vigilance/data/PropertyCollector;Lgg/essential/vigilance/data/SortingBehavior;ILkotlin/jvm/internal/DefaultConstructorMarker;)V", at = @At("TAIL"), remap = false)
     public void oneconfig$compat(File file, String title, PropertyCollector collector, SortingBehavior par4, int par5, DefaultConstructorMarker par6, CallbackInfo ci) {

@@ -183,6 +183,15 @@ public class Tree extends Node implements Serializable {
         return n instanceof Tree ? (Tree) n : null;
     }
 
+    public Tree getOrPutChild(@NotNull String id) {
+        Tree n = getChild(id);
+        if (n == null) {
+            n = new Tree(id, null, null, null);
+            put(n);
+        }
+        return n;
+    }
+
     public Property<?> getProp(@NotNull String... id) {
         Node n = get(id);
         return n instanceof Property ? (Property<?>) n : null;
@@ -265,6 +274,8 @@ public class Tree extends Node implements Serializable {
         theMap.clear();
         clearMetadata();
     }
+
+
 }
 
 

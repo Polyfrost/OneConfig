@@ -8,7 +8,7 @@ pgt = "0.4.1"
 shadow = "8.1.1"
 licenser = "2.0.1"
 
-polyui = "1.1.44"
+polyui = "1.1.45"
 
 log4j = "2.23.1"
 annotations = "24.1.0"

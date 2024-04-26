@@ -81,6 +81,7 @@ public class org/polyfrost/oneconfig/api/config/v1/Tree : org/polyfrost/oneconfi
 	public fun get ([Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Node;
 	public fun getChild (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	public fun getChild ([Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
+	public fun getOrPutChild (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	public fun getProp (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
 	public fun getProp ([Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
 	public fun onAll (Ljava/util/function/BiConsumer;)V

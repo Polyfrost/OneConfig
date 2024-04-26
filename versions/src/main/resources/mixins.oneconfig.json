@@ -14,7 +14,7 @@
       "NetworkManagerMixin",
       "compat.OptifineConfigMixin",
       "ShaderGroupAccessor",
-      "compat.VigilantMixin",
+      "compat.VigilantCompatMixin",
       "WorldClientMixin"
     ]
 }

@@ -67,6 +67,7 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
             if (version == 10809 || version == 11202) {
                 // Patcher mixin
                 mixins.add("compat.HudCachingMixin");
+                mixins.add("compat.OneConfigV0CompatMixin");
             }
         }
         if (loader == Platform.Loader.FABRIC) {

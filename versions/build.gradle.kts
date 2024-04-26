@@ -108,6 +108,9 @@ dependencies {
         shade(libs.mixin) {
             isTransitive = false
         }
+        compileOnly("cc.polyfrost:oneconfig-${platform}:0.2.2-alpha195") {
+            isTransitive = false
+        }
     }
 
 
