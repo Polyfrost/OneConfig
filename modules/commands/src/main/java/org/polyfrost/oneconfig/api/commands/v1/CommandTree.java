@@ -26,7 +26,6 @@
 
 package org.polyfrost.oneconfig.api.commands.v1;
 
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.polyfrost.oneconfig.api.commands.v1.arguments.ArgumentParser;
@@ -52,32 +51,12 @@ import java.util.stream.Collectors;
 // todo: change the main method so that the CommandTree itself has a List<Executable> attached to it instead
 public class CommandTree extends Node {
     private final Map<String, List<Node>> commands = new HashMap<>();
-    private Map<String, List<Node>> dedupedCommands = null;
+    private final Map<String, List<Node>> commandsNoDupe = new HashMap<>();
     private String[] help = null;
     private boolean init = false;
 
     public CommandTree(@NotNull String[] names, @Nullable String description) {
         super(names, description);
-    }
-
-    /**
-     * Return a copy of in with all elements that are in any of the lists removed.
-     * <br>both lists and in are not modified.
-     */
-    @Contract(pure = true)
-    static <T> @NotNull List<T> cullList(@NotNull Iterable<List<T>> lists, @NotNull List<T> in) {
-        List<T> out = new ArrayList<>(1);
-        for (T obj : in) {
-            boolean found = false;
-            for (List<T> list : lists) {
-                if (list.contains(obj)) {
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) out.add(obj);
-        }
-        return out;
     }
 
     public static void append(StringBuilder sb, String toAppend, int amount) {
@@ -109,6 +88,12 @@ public class CommandTree extends Node {
         }
     }
 
+
+    public Map<String, List<Node>> getDedupedCommands() {
+        if (!init) throw new CommandCreationException("Cannot get deduped commands before initialization!");
+        return commandsNoDupe;
+    }
+
     public boolean isInitialized() {
         return init;
     }
@@ -118,13 +103,7 @@ public class CommandTree extends Node {
         if (key.equals("main")) {
             key = "";
         }
-        if (!commands.containsKey(key)) {
-            List<Node> nodes = new ArrayList<>(1);
-            nodes.add(node);
-            commands.put(key, nodes);
-        } else {
-            commands.get(key).add(node);
-        }
+        commands.computeIfAbsent(key, k -> new ArrayList<>(1)).add(node);
     }
 
     private void put(String key, CommandTree tree) {
@@ -137,6 +116,7 @@ public class CommandTree extends Node {
         for (String name : executable.names) {
             put(name, executable);
         }
+        commandsNoDupe.computeIfAbsent(executable.name(), k -> new ArrayList<>(1)).add(executable);
     }
 
     public void init() {
@@ -177,21 +157,6 @@ public class CommandTree extends Node {
         }
     }
 
-    /**
-     * Return the command map without duplicate entries.
-     */
-    public Map<String, List<Node>> getDedupedCommands() {
-        if (dedupedCommands == null) {
-            if (!init) throw new CommandCreationException("Command not initialized!");
-            Map<String, List<Node>> out = new HashMap<>();
-            for (Map.Entry<String, List<Node>> entry : commands.entrySet()) {
-                List<Node> nodes = cullList(out.values(), entry.getValue());
-                if (!nodes.isEmpty()) out.put(entry.getKey(), nodes);
-            }
-            dedupedCommands = out;
-        }
-        return dedupedCommands;
-    }
 
     @NotNull
     public String[] getHelp() {
@@ -199,7 +164,7 @@ public class CommandTree extends Node {
             StringBuilder sb = new StringBuilder();
             sb.append("Help for /").append(String.join(", /", names)).append(": ");
             if (description != null) sb.append(description);
-            new TreeMap<>(getDedupedCommands()).values().forEach((ls) -> {
+            new TreeMap<>(commandsNoDupe).values().forEach((ls) -> {
                 for (Node value : ls) {
                     if (value instanceof Executable) {
                         sb.append("\n  ").append(value);
@@ -218,13 +183,14 @@ public class CommandTree extends Node {
         for (String name : sub.names) {
             put(name, sub);
         }
+        commandsNoDupe.put(sub.name(), Collections.singletonList(sub));
     }
 
     private static void _getHelp(CommandTree it, int depth, StringBuilder sb) {
         sb.append("\n");
         append(sb, "  ", depth);
         sb.append(it);
-        it.getDedupedCommands().values().forEach((ls) -> {
+        it.commandsNoDupe.values().forEach((ls) -> {
             for (Node value : ls) {
                 if (value instanceof Executable) {
                     sb.append("\n");

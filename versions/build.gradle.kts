@@ -1,4 +1,5 @@
 @file:Suppress("DSL_SCOPE_VIOLATION", "UnstableApiUsage")
+// shared build logic for all versions of OneConfig.
 
 import net.fabricmc.loom.task.RemapSourcesJarTask
 import org.polyfrost.gradle.util.noServerRunConfigs
@@ -23,11 +24,9 @@ java {
 
 
 val modName = properties["mod_name"] as String
-val modMajor = properties["mod_major_version"] as String
-val modMinor = properties["mod_minor_version"] as String
 val modId = properties["mod_id"] as String
-version = "$modMajor$modMinor"
-group = "org.polyfrost"
+version = rootProject.version
+group = rootProject.group
 
 val natives = listOf("windows", "windows-arm64", "linux", "macos", "macos-arm64")
 val tweakClass = "org.polyfrost.oneconfig.internal.init.OneConfigTweaker"

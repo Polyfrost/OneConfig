@@ -174,7 +174,7 @@ public class PolyUIScreen extends UScreen implements UIPause, BlurScreen {
         }
         //#endif
 
-        polyUI.render();
+        matrices.runReplacingGlobalState(polyUI::render);
 
         glViewport(0, 0, UResolution.getViewportWidth(), UResolution.getViewportHeight());
     }

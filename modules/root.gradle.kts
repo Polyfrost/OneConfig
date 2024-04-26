@@ -1,3 +1,5 @@
+// contains shared logic between all the modules to reduce boilerplate.
+
 plugins {
     java
 }

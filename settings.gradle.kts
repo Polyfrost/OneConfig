@@ -19,7 +19,7 @@ project(":modules").apply {
 include(":platform")
 project(":platform").apply {
     projectDir = file("versions/")
-    buildFileName = "root.gradle.kts"
+    buildFileName = "preprocessor.gradle.kts"
 }
 
 listOf(
@@ -35,6 +35,8 @@ listOf(
     include(":modules:$module")
 }
 
+
+// FOR ALL NEW VERSIONS MAKE SURE TO INCLUDE THEM IN preprocessor.gradle.kts !
 listOf(
     "1.8.9-forge",
     "1.8.9-fabric",

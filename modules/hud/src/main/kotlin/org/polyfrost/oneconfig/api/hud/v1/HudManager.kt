@@ -187,8 +187,12 @@ object HudManager {
         eventHandler { (w, h): ResizeEvent ->
             polyUI.resize(w.toFloat(), h.toFloat())
         }.register()
-        eventHandler { _: HudRenderEvent ->
-            if (!exists) polyUI.render()
+        eventHandler { (stack): HudRenderEvent ->
+            if (!exists) {
+                stack.push()
+                polyUI.render()
+                stack.pop()
+            }
         }.register()
     }
 
