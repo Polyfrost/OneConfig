@@ -42,17 +42,17 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class NetHandlerPlayClientMixin {
 
     @Unique
-    private ChatReceiveEvent oneconfig$event = null;
+    private ChatReceiveEvent ocfg$chatEvent = null;
 
     @Inject(method = "onGameMessage", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/hud/InGameHud;addChatMessage(Lnet/minecraft/network/MessageType;Lnet/minecraft/text/Text;Ljava/util/UUID;)V"), cancellable = true)
-    private void onClientChat(GameMessageS2CPacket packet, CallbackInfo ci) {
-        if (oneconfig$event != null && oneconfig$event.cancelled) {
+    private void ocfg$chatCallback(GameMessageS2CPacket packet, CallbackInfo ci) {
+        if (ocfg$chatEvent != null && ocfg$chatEvent.cancelled) {
             ci.cancel();
         }
     }
 
     @Redirect(method = "onGameMessage", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/packet/s2c/play/GameMessageS2CPacket;getMessage()Lnet/minecraft/text/Text;"))
-    private Text onClientChatRedirect(GameMessageS2CPacket packet) {
+    private Text ocfg$modifyMessage(GameMessageS2CPacket packet) {
         if (
                 //#if MC<11700
                 !packet.isNonChat()
@@ -60,9 +60,9 @@ public abstract class NetHandlerPlayClientMixin {
                 //$$ packet.getLocation() == net.minecraft.network.MessageType.CHAT
                 //#endif
         ) {
-            oneconfig$event = new ChatReceiveEvent(packet.getMessage());
-            EventManager.INSTANCE.post(oneconfig$event);
-            return oneconfig$event.message;
+            ocfg$chatEvent = new ChatReceiveEvent(packet.getMessage());
+            EventManager.INSTANCE.post(ocfg$chatEvent);
+            return ocfg$chatEvent.message;
         }
         return packet.getMessage();
     }

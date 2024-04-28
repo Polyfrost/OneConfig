@@ -10,7 +10,8 @@ licenser = "2.0.1"
 
 polyui = "1.1.45"
 
-log4j = "2.23.1"
+log4j-api = "2.0-beta9" # used because this is the version that 1.8.9 supports, so we have to compile against the same (annoying)
+log4j-impl = "2.23.1" # unvulnerable version
 annotations = "24.1.0"
 nightconfig = "3.6.6"
 
@@ -30,8 +31,8 @@ polyui = { module = "org.polyfrost:polyui", version.ref = "polyui" }
 
 annotations = { module = "org.jetbrains:annotations", version.ref = "annotations" }
 
-logging-api = { module = "org.apache.logging.log4j:log4j-api", version.ref = "log4j" }
-logging-impl = { module = "org.apache.logging.log4j:log4j-core", version.ref = "log4j" }
+logging-api = { module = "org.apache.logging.log4j:log4j-api", version.ref = "log4j-api" }
+logging-impl = { module = "org.apache.logging.log4j:log4j-core", version.ref = "log4j-impl" }
 
 lwjgl = { module = "org.lwjgl:lwjgl", version.ref = "lwjgl" }
 lwjgl-nvg = { module = "org.lwjgl:lwjgl-nanovg", version.ref = "lwjgl" }

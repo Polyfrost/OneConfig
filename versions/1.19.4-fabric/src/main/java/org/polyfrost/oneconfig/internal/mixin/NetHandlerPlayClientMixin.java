@@ -46,21 +46,21 @@ public class NetHandlerPlayClientMixin {
     private ChatSendEvent ocfg$sendchatevent;
 
     @Inject(method = "sendCommand", at = @At("HEAD"), cancellable = true)
-    private void onSendCommand(String command, CallbackInfoReturnable<Boolean> cir) {
+    private void ocfg$commands$execute(String command, CallbackInfoReturnable<Boolean> cir) {
         if (ClientCommandInternals.executeCommand(command)) {
             cir.setReturnValue(true);
         }
     }
 
     @Inject(method = "sendChatCommand", at = @At("HEAD"), cancellable = true)
-    private void onSendCommand(String command, CallbackInfo info) {
+    private void ocfg$commands$execute(String command, CallbackInfo info) {
         if (ClientCommandInternals.executeCommand(command)) {
             info.cancel();
         }
     }
 
     @Inject(method = "sendChatMessage", at = @At("HEAD"), cancellable = true)
-    private void onSendChatMessage(String message, CallbackInfo ci) {
+    private void ocfg$chatCallback(String message, CallbackInfo ci) {
         ocfg$sendchatevent = new ChatSendEvent(message);
         EventManager.INSTANCE.post(ocfg$sendchatevent);
         if (ocfg$sendchatevent.cancelled) {
@@ -69,12 +69,12 @@ public class NetHandlerPlayClientMixin {
     }
 
     @ModifyVariable(method = "sendChatMessage", at = @At("HEAD"), ordinal = 0, argsOnly = true)
-    private String modifyMessage(String message) {
+    private String ocfg$modifyMessage(String message) {
         return ocfg$sendchatevent.message;
     }
 
     @Inject(method = "onChatMessage", at = @At("HEAD"), cancellable = true)
-    private void onChatMessage(ChatMessageS2CPacket packet, CallbackInfo ci) {
+    private void ocfg$chatRecieveCallback(ChatMessageS2CPacket packet, CallbackInfo ci) {
         ChatReceiveEvent ev = new ChatReceiveEvent(packet.unsignedContent());
         EventManager.INSTANCE.post(ev);
         if(ev.cancelled) {

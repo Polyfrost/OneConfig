@@ -37,11 +37,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Pseudo
 @Mixin(targets = "club.sk1er.patcher.screen.render.caching.HUDCaching", remap = false)
+// todo why?
 public abstract class HudCachingMixin {
 
     @Dynamic
     @Inject(method = "checkFramebufferSizes", at = @At(value = "RETURN", ordinal = 0), remap = false)
-    private static void checkFramebufferSizes(Framebuffer framebuffer, int width, int height, CallbackInfoReturnable<Framebuffer> cir) {
+    private static void ocfg$compat$hudCacheEnableStencil(Framebuffer framebuffer, int width, int height, CallbackInfoReturnable<Framebuffer> cir) {
         if (cir.getReturnValue() != null && !cir.getReturnValue().isStencilEnabled()) {
             cir.getReturnValue().enableStencil();
         }

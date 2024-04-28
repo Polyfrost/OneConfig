@@ -53,7 +53,7 @@ import static org.polyfrost.oneconfig.api.config.v1.Property.prop;
 public abstract class VigilantCompatMixin {
     @Dynamic("OneConfig VCAL Processor")
     @Inject(method = "<init>(Ljava/io/File;Ljava/lang/String;Lgg/essential/vigilance/data/PropertyCollector;Lgg/essential/vigilance/data/SortingBehavior;ILkotlin/jvm/internal/DefaultConstructorMarker;)V", at = @At("TAIL"), remap = false)
-    public void oneconfig$compat(File file, String title, PropertyCollector collector, SortingBehavior par4, int par5, DefaultConstructorMarker par6, CallbackInfo ci) {
+    public void ocfg$compat$vigilance(File file, String title, PropertyCollector collector, SortingBehavior par4, int par5, DefaultConstructorMarker par6, CallbackInfo ci) {
         Tree b = new Tree(file.getName(), title, null, null);
         for (PropertyData data : collector.getProperties()) {
             PropertyAttributesExt attrs = data.getAttributesExt();

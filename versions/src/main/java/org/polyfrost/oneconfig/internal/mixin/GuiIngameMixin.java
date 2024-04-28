@@ -39,10 +39,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class GuiIngameMixin {
     //#if MC>=11600
     //$$     @Inject(method = "renderIngameGui", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/client/gui/ForgeIngameGui;post(Lnet/minecraftforge/client/event/RenderGameOverlayEvent$ElementType;Lcom/mojang/blaze3d/matrix/MatrixStack;)V", shift = At.Shift.AFTER, remap = false), remap = true)
-    //$$     private void onRenderGameOverlay(com.mojang.blaze3d.matrix.MatrixStack matrices, float partialTicks, CallbackInfo ci) {
+    //$$     private void ocfg$postRenderHudEvent(com.mojang.blaze3d.matrix.MatrixStack matrices, float partialTicks, CallbackInfo ci) {
     //#else
     @Inject(method = "renderGameOverlay", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/client/GuiIngameForge;post(Lnet/minecraftforge/client/event/RenderGameOverlayEvent$ElementType;)V", shift = At.Shift.AFTER, remap = false), remap = true)
-    private void onRenderGameOverlay(float partialTicks, CallbackInfo ci) {
+    private void ocfg$renderHudCallback(float partialTicks, CallbackInfo ci) {
         //#endif
         EventManager.INSTANCE.post(new HudRenderEvent(UMatrixStack.Compat.INSTANCE.get(), partialTicks));
     }

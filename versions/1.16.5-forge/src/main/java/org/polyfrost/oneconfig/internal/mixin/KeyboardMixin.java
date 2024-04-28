@@ -37,13 +37,13 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 public abstract class KeyboardMixin {
 
     @ModifyVariable(method = "onKeyEvent", at = @At(value = "STORE"), ordinal = 0)
-    private boolean onKeyEvent(boolean original, long windowPointer, int key, int scanCode, int action, int modifiers) {
+    private boolean ocfg$keyCallback(boolean original, long windowPointer, int key, int scanCode, int action, int modifiers) {
         EventManager.INSTANCE.post(new KeyInputEvent(key, (char) 0, action));
         return original;
     }
 
     @ModifyVariable(method = "onCharEvent", at = @At(value = "STORE"), ordinal = 0)
-    private boolean onKeyEvent(boolean original, long windowPointer, char key, int code, int modifiers) {
+    private boolean ocfg$charCallback(boolean original, long windowPointer, char key, int code, int modifiers) {
         EventManager.INSTANCE.post(new KeyInputEvent(0, key, 1));
         return original;
     }

@@ -49,17 +49,17 @@ public abstract class NetHandlerPlayClientMixin {
             //#endif
 
     @Unique
-    private ChatReceiveEvent oneconfig$event = null;
+    private ChatReceiveEvent ocfg$chatEvent = null;
 
     @Inject(method = "onChatMessage", at = @At(value = "INVOKE", target = TARGET), cancellable = true)
-    private void onClientChat(ChatMessageS2CPacket packet, CallbackInfo ci) {
-        if (oneconfig$event != null && oneconfig$event.cancelled) {
+    private void ocfg$chatCallback(ChatMessageS2CPacket packet, CallbackInfo ci) {
+        if (ocfg$chatEvent != null && ocfg$chatEvent.cancelled) {
             ci.cancel();
         }
     }
 
     @Redirect(method = "onChatMessage", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/packet/s2c/play/ChatMessageS2CPacket;getMessage()Lnet/minecraft/text/Text;"))
-    private Text onClientChatRedirect(ChatMessageS2CPacket packet) {
+    private Text ocfg$modifyMessage(ChatMessageS2CPacket packet) {
         if (
             //#if MC<=10809
             packet.getType() == 0
@@ -67,9 +67,9 @@ public abstract class NetHandlerPlayClientMixin {
             //$$ !packet.isNonChat()
             //#endif
         ) {
-            oneconfig$event = new ChatReceiveEvent(packet.getMessage());
-            EventManager.INSTANCE.post(oneconfig$event);
-            return oneconfig$event.message;
+            ocfg$chatEvent = new ChatReceiveEvent(packet.getMessage());
+            EventManager.INSTANCE.post(ocfg$chatEvent);
+            return ocfg$chatEvent.message;
         }
         return packet.getMessage();
     }

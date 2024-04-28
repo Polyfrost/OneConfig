@@ -44,7 +44,7 @@ import java.util.concurrent.Executor;
 public abstract class SchemasMixin {
 
     @Redirect(method = "createFixer", at = @At(value = "NEW", target = "com/mojang/datafixers/DataFixerBuilder", remap = false))
-    private static DataFixerBuilder create$replaceBuilder(int dataVersion) {
+    private static DataFixerBuilder ocfg$optimize$lazydfu(int dataVersion) {
         return new DataFixerBuilder(dataVersion) {
             @Override
             public DataFixer build(Executor executor) {

@@ -49,7 +49,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class EventBusMixin {
 
     @Inject(method = "post", at = @At(value = "HEAD"), remap = false)
-    private void postReceiveEvent(Event e, CallbackInfoReturnable<Boolean> cir) {
+    private void ocfg$recieveEventCallback(Event e, CallbackInfoReturnable<Boolean> cir) {
         if (!(e instanceof ClientChatReceivedEvent)) return;
         ClientChatReceivedEvent event = (ClientChatReceivedEvent) e;
         //#if MC==10809

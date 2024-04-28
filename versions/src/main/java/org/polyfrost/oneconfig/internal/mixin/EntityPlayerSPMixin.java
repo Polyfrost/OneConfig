@@ -40,27 +40,27 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(EntityPlayerSP.class)
 public abstract class EntityPlayerSPMixin {
     @Unique
-    private ChatSendEvent oneconfig$sendchatevent;
+    private ChatSendEvent ocfg$chatEvent;
 
     @Inject(method = "sendChatMessage", at = @At("HEAD"), cancellable = true)
-    public void sendChatMessage(String message, CallbackInfo ci) {
+    public void ocfg$chatCallback(String message, CallbackInfo ci) {
         //#if MC>=11600 && FABRIC
         //$$ if (org.polyfrost.oneconfig.internal.libs.fabric.ClientCommandInternals.executeCommand(message)) {
         //$$     ci.cancel();
         //$$ }
         //#endif
-        oneconfig$sendchatevent = new ChatSendEvent(message);
+        ocfg$chatEvent = new ChatSendEvent(message);
 
-        EventManager.INSTANCE.post(oneconfig$sendchatevent);
+        EventManager.INSTANCE.post(ocfg$chatEvent);
 
-        if (oneconfig$sendchatevent.cancelled) {
+        if (ocfg$chatEvent.cancelled) {
             ci.cancel();
         }
     }
 
     @ModifyVariable(method = "sendChatMessage", at = @At("HEAD"), ordinal = 0, argsOnly = true)
-    public String modifyMessage(String message) {
-        return oneconfig$sendchatevent.message;
+    public String ocfg$modifyMessage(String message) {
+        return ocfg$chatEvent.message;
     }
 }
 //#endif

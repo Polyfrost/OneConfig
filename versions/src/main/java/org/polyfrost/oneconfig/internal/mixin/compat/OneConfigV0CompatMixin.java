@@ -58,7 +58,7 @@ public abstract class OneConfigV0CompatMixin {
 
     @Shadow
     @Final
-    public final HashMap<String, BasicOption> optionNames = new HashMap<>();
+    public HashMap<String, BasicOption> optionNames;
 
     @Shadow
     @Final
@@ -70,7 +70,7 @@ public abstract class OneConfigV0CompatMixin {
 
     @Inject(method = "initialize", at = @At("RETURN"))
     @Dynamic("OneConfig V0 Compat")
-    private void twoconfig$compat(CallbackInfo ci) {
+    private void ocfg$compat$v0(CallbackInfo ci) {
         try {
             Tree t = Tree.tree(configFile);
             t.setTitle(mod.name);

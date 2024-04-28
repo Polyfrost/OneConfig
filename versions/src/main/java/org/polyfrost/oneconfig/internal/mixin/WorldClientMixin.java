@@ -37,7 +37,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(WorldClient.class)
 public abstract class WorldClientMixin {
     @Inject(method = "<init>", at = @At("RETURN"))
-    private void onWorldLoad(CallbackInfo ci) {
+    private void ocfg$worldLoadCallback(CallbackInfo ci) {
         EventManager.INSTANCE.post(WorldLoadEvent.INSTANCE);
     }
 }

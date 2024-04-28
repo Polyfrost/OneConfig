@@ -99,6 +99,7 @@ dependencies {
     shade(libs.bundles.kotlinx)
 
     for (project in rootProject.project(":modules").subprojects) {
+        // TODO: ModLauncher (forge-1.17+) fail to to module export issues
         shade(project(project.path)) {
             isTransitive = false
         }

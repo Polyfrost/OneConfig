@@ -47,7 +47,7 @@ public abstract class GuiScreenMixin {
             //$$ target = "Lnet/minecraft/client/gui/screen/Screen;handleMouse()V"
             //#endif
     ))
-    private void onMouseInput(CallbackInfo ci) {
+    private void ocfg$mouseCallback(CallbackInfo ci) {
         EventManager.INSTANCE.post(new MouseInputEvent(Mouse.getEventButton(), Mouse.getEventButtonState() ? 1 : 0));
     }
 
@@ -58,7 +58,7 @@ public abstract class GuiScreenMixin {
             //$$ target = "Lnet/minecraft/client/gui/screen/Screen;handleKeyboard()V"
             //#endif
     ))
-    private void onKeyInput(CallbackInfo ci) {
+    private void ocfg$keyCallback(CallbackInfo ci) {
         int state = 0;
         if (Keyboard.getEventKeyState()) {
             if (Keyboard.isRepeatEvent()) {
@@ -72,7 +72,7 @@ public abstract class GuiScreenMixin {
 
     //#if MC<=11300 && FABRIC
     //$$ @Inject(method = "sendMessage(Ljava/lang/String;Z)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/player/ClientPlayerEntity;sendChatMessage(Ljava/lang/String;)V"), cancellable = true)
-    //$$ private void execute(String text, boolean toHud, CallbackInfo ci) {
+    //$$ private void ocfg$commands$execute(String text, boolean toHud, CallbackInfo ci) {
     //$$    if (org.polyfrost.oneconfig.internal.commands.ClientCommandHandler.instance.execute(net.minecraft.client.MinecraftClient.getInstance().player, text) != 0) {
     //$$        ci.cancel();
     //$$    }

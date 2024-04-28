@@ -68,17 +68,17 @@ public abstract class ChatScreenMixin {
 
 
     @ModifyArg(method = m_showSuggestion, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/widget/TextFieldWidget;write(Ljava/lang/String;)V"), index = 0)
-    private String removeFormatting1(String par1) {
+    private String ocfg$commands$patchRemoveFormatting(String par1) {
         return Formatting.strip(par1);
     }
 
     @Inject(method = m_complete, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayNetworkHandler;sendPacket(Lnet/minecraft/network/Packet;)V"))
-    private void addAutoComplete(String string, String string2, CallbackInfo ci) {
+    private void ocfg$coammands$processAutoComplete(String string, String string2, CallbackInfo ci) {
         ClientCommandHandler.instance.autoComplete(string);
     }
 
     @ModifyVariable(method = m_setSuggestions, at = @At(value = "INVOKE", target = "Ljava/util/List;clear()V", shift = At.Shift.AFTER), argsOnly = true, index = 1)
-    private String[] addAutoComplete(String[] suggestions) {
+    private String[] ocfg$coammands$processAutoComplete(String[] suggestions) {
         String[] complete = ClientCommandHandler.instance.latestAutoComplete;
         if (complete != null) {
             return com.google.common.collect.ObjectArrays.concat(complete, suggestions, String.class);
@@ -87,7 +87,7 @@ public abstract class ChatScreenMixin {
     }
 
     @Redirect(method = m_setSuggestions, at = @At(value = "INVOKE", target = "Lorg/apache/commons/lang3/StringUtils;getCommonPrefix([Ljava/lang/String;)Ljava/lang/String;", remap = false))
-    private String removeFormatting2(String[] strs) {
+    private String ocfg$commands$patchRemoveFormatting(String[] strs) {
         return Formatting.strip(StringUtils.getCommonPrefix(strs));
     }
 }

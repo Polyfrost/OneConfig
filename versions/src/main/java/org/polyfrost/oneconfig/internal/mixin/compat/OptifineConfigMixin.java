@@ -39,7 +39,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class OptifineConfigMixin {
     @Dynamic("OptiFine")
     @Inject(method = "isFastRender", at = @At("HEAD"), cancellable = true)
-    private static void cancelFastRender(CallbackInfoReturnable<Boolean> cir) {
+    private static void ocfg$compat$disableFastRenderIfBlur(CallbackInfoReturnable<Boolean> cir) {
         if (BlurHandler.isBlurring()) {
             cir.setReturnValue(false);
         }

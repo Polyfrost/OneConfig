@@ -55,7 +55,7 @@ public class ClientPlayNetworkHandlerMixin {
     private net.minecraft.client.multiplayer.ClientSuggestionProvider clientSuggestionProvider;
 
     @Inject(method = "handleJoinGame", at = @At("RETURN"))
-    private void onGameJoin(SJoinGamePacket packet, CallbackInfo info) {
+    private void ocfg$commands$setup(SJoinGamePacket packet, CallbackInfo info) {
         final CommandDispatcher<ClientCommandSource> dispatcher = new CommandDispatcher<>();
         ClientCommandInternals.setActiveDispatcher(dispatcher);
         EventManager.INSTANCE.post(new RegisterCommandsEvent(dispatcher));
@@ -64,7 +64,7 @@ public class ClientPlayNetworkHandlerMixin {
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     @Inject(method = "handleCommandList", at = @At("RETURN"))
-    private void onOnCommandTree(SCommandListPacket packet, CallbackInfo info) {
+    private void ocfg$commands$setupCompletion(SCommandListPacket packet, CallbackInfo info) {
         // Add the commands to the vanilla dispatcher for completion.
         // It's done here because both the server and the client commands have
         // to be in the same dispatcher and completion results.

@@ -45,17 +45,17 @@ public abstract class NetworkManagerMixin {
     //#if MC<11900
     //#if MC<=11202
     @Inject(method = "sendPacket(Lnet/minecraft/network/Packet;Lio/netty/util/concurrent/GenericFutureListener;[Lio/netty/util/concurrent/GenericFutureListener;)V", at = @At("HEAD"), cancellable = true)
-    private void onSendPacket(Packet<?> packetIn, GenericFutureListener<? extends Future<? super Void>> listener, GenericFutureListener<? extends Future<? super Void>>[] listeners, CallbackInfo ci) {
+    private void ocfg$packetSendCallbackGeneric(Packet<?> packetIn, GenericFutureListener<? extends Future<? super Void>> listener, GenericFutureListener<? extends Future<? super Void>>[] listeners, CallbackInfo ci) {
         //#else
         //$$ @Inject(method = "sendPacket(Lnet/minecraft/network/IPacket;Lio/netty/util/concurrent/GenericFutureListener;)V", at = @At("HEAD"), cancellable = true)
-        //$$ private void onSendPacket(IPacket<?> packetIn, GenericFutureListener<? extends Future<? super Void>> genericFutureListener, CallbackInfo ci) {
+        //$$ private void ocfg$packetCallback(IPacket<?> packetIn, GenericFutureListener<? extends Future<? super Void>> genericFutureListener, CallbackInfo ci) {
         //#endif
-        onSendPacket(packetIn, ci);
+        ocfg$packetSendCallback(packetIn, ci);
     }
     //#endif
 
     @Inject(method = "sendPacket(Lnet/minecraft/network/Packet;)V", at = @At("HEAD"), cancellable = true)
-    private void onSendPacket(Packet<?> packetIn, CallbackInfo ci) {
+    private void ocfg$packetSendCallback(Packet<?> packetIn, CallbackInfo ci) {
         SendPacketEvent event = new SendPacketEvent(packetIn);
         EventManager.INSTANCE.post(event);
         if (event.cancelled) {
@@ -64,7 +64,7 @@ public abstract class NetworkManagerMixin {
     }
 
     @Inject(method = "channelRead0(Lio/netty/channel/ChannelHandlerContext;Lnet/minecraft/network/Packet;)V", at = @At("HEAD"), cancellable = true)
-    private void onReceivePacket(ChannelHandlerContext p_channelRead0_1_, Packet<?> p_channelRead0_2_, CallbackInfo ci) {
+    private void ocfg$packetReadCallback(ChannelHandlerContext p_channelRead0_1_, Packet<?> p_channelRead0_2_, CallbackInfo ci) {
         ReceivePacketEvent event = new ReceivePacketEvent(p_channelRead0_2_);
         EventManager.INSTANCE.post(event);
         if (event.cancelled) {

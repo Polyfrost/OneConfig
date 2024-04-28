@@ -44,12 +44,12 @@ public abstract class MouseMixin {
             "mouseButtonCallback"
             //#endif
             , at = @At(value = "INVOKE", target = "Lnet/minecraftforge/client/ForgeHooksClient;onRawMouseClicked(III)Z", remap = false), remap = true)
-    private void onMouse(long handle, int button, int action, int mods, CallbackInfo ci) {
+    private void ocfg$mouseCallback(long handle, int button, int action, int mods, CallbackInfo ci) {
         EventManager.INSTANCE.post(new MouseInputEvent(button, action));
     }
     //#else
     //$$ @org.spongepowered.asm.mixin.injection.ModifyVariable(method = "onMouseButton", at = @At("STORE"), ordinal = 0)
-    //$$ private int onMouse(int button, long handle, int b, int action, int mods) {
+    //$$ private int ocfg$mouseCallback(int button, long handle, int b, int action, int mods) {
     //$$      EventManager.INSTANCE.post(new MouseInputEvent(button, action));
     //$$      return button;
     //$$  }
