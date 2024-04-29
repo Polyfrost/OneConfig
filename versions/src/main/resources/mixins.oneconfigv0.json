@@ -2,7 +2,7 @@
   "compatibilityLevel": "JAVA_8",
   "minVersion": "0.7",
   "package": "cc.polyfrost.oneconfig.internal.mixin",
-  "refmap": "mixins.oneconfig.refmap.json",
+  "refmap": "mixins.oneconfigv0.refmap.json",
   "plugin": "cc.polyfrost.oneconfig.internal.plugin.OneConfigMixinPlugin",
   "injectors": {
     "maxShiftBy": 5

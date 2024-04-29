@@ -316,12 +316,12 @@ tasks {
                             "ModSide" to "CLIENT",
                             "ForceLoadAsMod" to true,
                             "TweakOrder" to "0",
-                            "MixinConfigs" to "mixins.oneconfig.json",
+                            "MixinConfigs" to "mixins.oneconfigv0.json",
                             "TweakClass" to "cc.polyfrost.oneconfig.internal.plugin.asm.OneConfigTweaker"
                         )
                     } else {
                         mapOf(
-                            "MixinConfigs" to "mixins.oneconfig.json",
+                            "MixinConfigs" to "mixins.oneconfigv0.json",
                             "Specification-Title" to modId,
                             "Specification-Vendor" to modId,
                             "Specification-Version" to "1", // We are version 1 of ourselves, whatever the hell that means

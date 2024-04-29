@@ -15,7 +15,7 @@
   "license": "LGPL-3.0",
   "environment": "client",
   "mixins": [
-    "mixins.oneconfig.json"
+    "mixins.oneconfigv0.json"
   ],
   "entrypoints": {
     "preLaunch": [
