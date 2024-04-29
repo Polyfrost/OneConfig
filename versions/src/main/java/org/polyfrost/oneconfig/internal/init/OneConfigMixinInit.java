@@ -64,17 +64,16 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         // Loader-specific mixins
         if (loader == Platform.Loader.FORGE) {
             mixins.add("forge.EventBusMixin");
-            if (version == 10809 || version == 11202) {
-                // Patcher mixin
-                mixins.add("compat.HudCachingMixin");
+            if (version < 11300) {
+                // legacy forge
                 mixins.add("compat.OneConfigV0CompatMixin");
             }
-        }
-        if (loader == Platform.Loader.FABRIC) {
-            mixins.add("GameRendererAccessor");
-            mixins.add("NetHandlerPlayClientMixin");
-
+        } else {
+            // fabric specific
+            mixins.add("fabric.GameRendererAccessor");
+            mixins.add("fabric.NetHandlerPlayClientMixin");
             if (version < 11300) {
+                // legacy fabric
                 mixins.add("commands.ChatScreenMixin");
             }
         }
@@ -86,20 +85,14 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
             mixins.add("commands.ClientCommandSourceMixin");
             mixins.add("commands.ClientPlayNetworkHandlerMixin");
             mixins.add("commands.HelpCommandAccessor");
-            if (version <= 11904) mixins.add("SchemasMixin");
-        }
-
-        if (version >= 12000) {
-            mixins.add("DebugHudAccessor");
-        }
-
-        if (version <= 11300) {
-            mixins.add("GuiScreenMixin");
-        }
-
-        if (version <= 11900) {
-            mixins.add("EntityPlayerSPMixin");
-        }
+            if (version >= 12000) {
+                mixins.add("DebugHudAccessor");
+            } else {
+                // 1.16, 1.17, 1.18, 1.19
+                mixins.add("SchemasMixin");
+                mixins.add("EntityPlayerSPMixin");
+            }
+        } else mixins.add("GuiScreenMixin");
 
         return mixins;
     }

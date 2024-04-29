@@ -30,7 +30,15 @@ package org.polyfrost.oneconfig.internal.mixin.compat;
 import cc.polyfrost.oneconfig.config.Config;
 import cc.polyfrost.oneconfig.config.data.Mod;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
-import org.apache.logging.log4j.LogManager;
+import cc.polyfrost.oneconfig.gui.elements.config.ConfigButton;
+import cc.polyfrost.oneconfig.gui.elements.config.ConfigCheckbox;
+import cc.polyfrost.oneconfig.gui.elements.config.ConfigColorElement;
+import cc.polyfrost.oneconfig.gui.elements.config.ConfigDropdown;
+import cc.polyfrost.oneconfig.gui.elements.config.ConfigDualOption;
+import cc.polyfrost.oneconfig.gui.elements.config.ConfigNumber;
+import cc.polyfrost.oneconfig.gui.elements.config.ConfigSlider;
+import cc.polyfrost.oneconfig.gui.elements.config.ConfigSwitch;
+import cc.polyfrost.oneconfig.gui.elements.config.ConfigTextBox;
 import org.apache.logging.log4j.Logger;
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager;
 import org.polyfrost.oneconfig.api.config.v1.Property;
@@ -41,7 +49,6 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -53,12 +60,9 @@ import java.util.Map;
 @Mixin(value = Config.class, remap = false)
 @Pseudo
 public abstract class OneConfigV0CompatMixin {
-    @Unique
-    private static final Logger OCFG$LOGGER = LogManager.getLogger("OneConfig/Compat");
-
     @Shadow
     @Final
-    public HashMap<String, BasicOption> optionNames;
+    public transient HashMap<String, BasicOption> optionNames;
 
     @Shadow
     @Final
@@ -67,6 +71,10 @@ public abstract class OneConfigV0CompatMixin {
     @Shadow
     @Final
     public transient Mod mod;
+
+    @Shadow
+    @Final
+    private transient Logger logger;
 
     @Inject(method = "initialize", at = @At("RETURN"))
     @Dynamic("OneConfig V0 Compat")
@@ -78,10 +86,29 @@ public abstract class OneConfigV0CompatMixin {
                 String[] path = entry.getKey().split("\\.");
                 Tree target = t;
                 for (int i = 0; i < path.length - 1; i++) {
-                    target = t.getChild(path[i]);
+                    target = t.getOrPutChild(path[i]);
                 }
                 BasicOption opt = entry.getValue();
+                if (opt.getField() == null) continue;
                 Property<?> prop = Property.prop(path[path.length - 1], opt.get(), opt.getField().getType());
+                // todo
+                if (opt instanceof ConfigButton) {
+
+                } else if (opt instanceof ConfigSwitch || opt instanceof ConfigCheckbox) {
+
+                } else if (opt instanceof ConfigSlider) {
+
+                } else if (opt instanceof ConfigDropdown) {
+
+                } else if (opt instanceof ConfigDualOption) {
+
+                } else if (opt instanceof ConfigTextBox) {
+
+                } else if (opt instanceof ConfigColorElement) {
+
+                } else if (opt instanceof ConfigNumber) {
+
+                }
                 prop.setTitle(opt.name);
                 prop.description = opt.description;
                 prop.addDisplayCondition(opt::isHidden);
@@ -91,7 +118,7 @@ public abstract class OneConfigV0CompatMixin {
             }
             ConfigManager.active().register(t);
         } catch (Exception e) {
-            OCFG$LOGGER.error("Failed to perform compatibility with OneConfig V0 on {}", mod, e);
+            logger.error("[V1] Failed to perform compatibility with OneConfig V0!", e);
         }
     }
 }

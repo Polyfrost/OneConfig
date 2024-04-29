@@ -24,28 +24,20 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-//#if FORGE && MC<=11202
-package org.polyfrost.oneconfig.internal.mixin.compat;
+package org.polyfrost.oneconfig.internal.mixin.fabric;
 
-import net.minecraft.client.shader.Framebuffer;
-import org.spongepowered.asm.mixin.Dynamic;
+import net.minecraft.client.render.GameRenderer;
+import net.minecraft.util.Identifier;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Pseudo;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import org.spongepowered.asm.mixin.gen.Invoker;
 
-@Pseudo
-@Mixin(targets = "club.sk1er.patcher.screen.render.caching.HUDCaching", remap = false)
-// todo why?
-public abstract class HudCachingMixin {
+@Mixin(GameRenderer.class)
+public interface GameRendererAccessor {
+    //#if MC<11900
+    @Invoker
+    //#else
+    //$$ @Invoker("loadPostProcessor")
+    //#endif
+    void invokeLoadShader(Identifier identifier);
 
-    @Dynamic
-    @Inject(method = "checkFramebufferSizes", at = @At(value = "RETURN", ordinal = 0), remap = false)
-    private static void ocfg$compat$hudCacheEnableStencil(Framebuffer framebuffer, int width, int height, CallbackInfoReturnable<Framebuffer> cir) {
-        if (cir.getReturnValue() != null && !cir.getReturnValue().isStencilEnabled()) {
-            cir.getReturnValue().enableStencil();
-        }
-    }
 }
-//#endif

@@ -50,7 +50,7 @@ import static org.polyfrost.oneconfig.api.commands.v1.factories.builder.CommandB
  */
 //#if FORGE
 //#if MC<=11202
-@net.minecraftforge.fml.common.Mod(modid = "oneconfig", name = "OneConfig", version = "1.0.0-alpha")
+@net.minecraftforge.fml.common.Mod(modid = "oneconfig")
 //#else
 //$$ @net.minecraftforge.fml.common.Mod("oneconfig")
 //#endif
@@ -85,7 +85,7 @@ public class OneConfig
     private void init() {
         BlurHandler.init();
         preload();
-        CommandBuilder b = CommandManager.builder("oneconfig", "ocfg").description("OneConfig main command");
+        CommandBuilder b = CommandManager.builder("oneconfig", "ocfg", "ocfgv1").description("OneConfig main command");
         b.then(runs().does(() -> GuiUtils.displayScreen(OneConfigUI.INSTANCE.create())).description("Opens the OneConfig GUI"));
         b.then(runs("hud").does(() -> GuiUtils.displayScreen(HudManager.INSTANCE.getWithEditor())).description("Opens the OneConfig HUD editor"));
         CommandManager.registerCommand(b);

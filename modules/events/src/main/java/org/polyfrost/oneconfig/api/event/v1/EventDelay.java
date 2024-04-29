@@ -32,19 +32,21 @@ import org.polyfrost.oneconfig.api.event.v1.events.RenderEvent;
 import org.polyfrost.oneconfig.api.event.v1.events.TickEvent;
 import org.polyfrost.oneconfig.api.event.v1.invoke.EventHandler;
 
+import java.util.function.Consumer;
+
 public final class EventDelay {
 
     private EventDelay() {
     }
 
     /**
-     * Schedules a Runnable to be called after a certain amount polls from the given event.
+     * Schedules a Consumer to be called after a certain amount polls from the given event.
      * <p>
-     * If the amount of polls is below 1, the Runnable will be called immediately.
+     * If the amount of polls is below 1, the Consumer will be called immediately, with the event being null.
      */
-    public static <E extends Event> void of(Class<E> cls, int polls, Runnable function) {
+    public static <E extends Event> void of(Class<E> cls, int polls, Consumer<E> function) {
         if (polls < 1) {
-            function.run();
+            function.accept(null);
         } else {
             new EventHandler<E>() {
                 private int delay = polls;
@@ -53,7 +55,7 @@ public final class EventDelay {
                 public void handle(E event) {
                     // Delay expired
                     if (delay < 1) {
-                        function.run();
+                        function.accept(event);
                         EventManager.INSTANCE.unregister(this);
                     } else {
                         delay--;
@@ -66,6 +68,13 @@ public final class EventDelay {
                 }
             }.register();
         }
+    }
+
+    /**
+     * {@link #of(Class, int, Consumer)} with a Runnable.
+     */
+    public static <E extends Event> void of(Class<E> cls, int polls, Runnable function) {
+        of(cls, polls, e -> function.run());
     }
 
     /**

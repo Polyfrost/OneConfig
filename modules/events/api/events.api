@@ -1,5 +1,6 @@
 public final class org/polyfrost/oneconfig/api/event/v1/EventDelay {
 	public static fun of (Ljava/lang/Class;ILjava/lang/Runnable;)V
+	public static fun of (Ljava/lang/Class;ILjava/util/function/Consumer;)V
 	public static fun render (ILjava/lang/Runnable;)V
 	public static fun tick (ILjava/lang/Runnable;)V
 }

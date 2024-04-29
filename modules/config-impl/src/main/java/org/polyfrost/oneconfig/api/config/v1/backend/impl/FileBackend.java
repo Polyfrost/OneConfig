@@ -40,7 +40,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
@@ -85,7 +85,7 @@ public class FileBackend extends Backend {
     }
 
     protected static void write(Path p, String s) {
-        try (BufferedWriter w = Files.newBufferedWriter(p, CHARSET, StandardOpenOption.CREATE)) {
+        try (BufferedWriter w = Files.newBufferedWriter(p, CHARSET)) {
             w.write(s);
         } catch (Exception e) {
             throw new SerializationException("Failed to write file", e);
@@ -169,8 +169,8 @@ public class FileBackend extends Backend {
         try {
             return serializer.deserialize(read(p));
         } catch (Exception e) {
-            LOGGER.error("Failed to load config ID {}, marking file as corrupted, config will be reset!", id);
-            Files.move(p, folder.resolve(id + ".corrupted"));
+            LOGGER.error("Failed to load config ID {}, marking file as corrupted, config will be reset!", id, e);
+            Files.move(p, folder.resolve(id + ".corrupted"), StandardCopyOption.REPLACE_EXISTING);
             return null;
         }
     }

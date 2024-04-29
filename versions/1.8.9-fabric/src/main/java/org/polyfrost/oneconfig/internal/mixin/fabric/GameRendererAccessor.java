@@ -24,7 +24,7 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.internal.mixin;
+package org.polyfrost.oneconfig.internal.mixin.fabric;
 
 import net.minecraft.client.render.GameRenderer;
 import net.minecraft.util.Identifier;
@@ -33,11 +33,6 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 
 @Mixin(GameRenderer.class)
 public interface GameRendererAccessor {
-    //#if MC<11900
     @Invoker
-    //#else
-    //$$ @Invoker("loadPostProcessor")
-    //#endif
     void invokeLoadShader(Identifier identifier);
-
 }
