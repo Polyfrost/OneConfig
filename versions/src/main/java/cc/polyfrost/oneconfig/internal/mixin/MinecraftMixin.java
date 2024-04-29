@@ -75,8 +75,8 @@ public class MinecraftMixin {
 
     @Inject(method = "startGame", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/client/FMLClientHandler;onInitializationComplete()V", shift = At.Shift.AFTER, remap = false), remap = true)
     private void onInit(CallbackInfo ci) {
-        EventManager.INSTANCE.post(new InitializationEvent());
         OneConfig.INSTANCE.init();
+        EventManager.INSTANCE.post(new InitializationEvent());
     }
     //#endif
 

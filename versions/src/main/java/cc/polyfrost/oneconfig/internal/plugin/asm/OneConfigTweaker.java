@@ -52,8 +52,8 @@ public class OneConfigTweaker implements ITweaker {
             for (URL url : Launch.classLoader.getSources()) {
                 doMagicMixinStuff(url);
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (Throwable t) {
+            t.printStackTrace();
         }
     }
     @SuppressWarnings("unchecked")
@@ -81,25 +81,24 @@ public class OneConfigTweaker implements ITweaker {
                                                 List<ITweaker> tweaks = (List<ITweaker>) Launch.blackboard.get("Tweaks");
                                                 tweaks.add(new MixinTweaker());
                                             }
-                                        } catch (Exception ignored) {
-                                            // if it fails i *think* we can just ignore it
+                                        } catch (Throwable t) {
+                                            t.printStackTrace();
                                         }
                                         try {
                                             MixinBootstrap.getPlatform().addContainer(uri);
-                                        } catch (Exception ignore) {
-                                            // fuck you essential
+                                        } catch (Throwable ignore) {
                                             try {
                                                 Class<?> containerClass = Class.forName("org.spongepowered.asm.launch.platform.container.IContainerHandle");
                                                 Class<?> urlContainerClass = Class.forName("org.spongepowered.asm.launch.platform.container.ContainerHandleURI");
                                                 Object container = urlContainerClass.getConstructor(URI.class).newInstance(uri);
                                                 MixinBootstrap.getPlatform().getClass().getDeclaredMethod("addContainer", containerClass).invoke(MixinBootstrap.getPlatform(), container);
-                                            } catch (Exception e) {
-                                                e.printStackTrace();
+                                            } catch (Throwable t) {
+                                                t.printStackTrace();
                                                 throw new RuntimeException("OneConfig's Mixin loading failed. Please contact https://polyfrost.cc/discord to resolve this issue!");
                                             }
                                         }
-                                    } catch (Exception ignored) {
-
+                                    } catch (Throwable t) {
+                                        t.printStackTrace();
                                     }
                                 }
                             }
@@ -107,8 +106,8 @@ public class OneConfigTweaker implements ITweaker {
                     }
                 }
             }
-        } catch (Exception ignored) {
-
+        } catch (Throwable t) {
+            t.printStackTrace();
         }
     }
 
