@@ -27,7 +27,7 @@ java {
     withJavadocJar()
 }
 
-val modName = project.properties["mod_name"] as String
+val modName = project.properties["mod_name"]
 val modMajor = project.properties["mod_major_version"]
 val modMinor = project.properties["mod_minor_version"]
 val modId = project.properties["mod_id"] as String
