@@ -46,7 +46,7 @@ blossom {
 }
 
 base {
-    archivesName.set("${modName.lowercase()}-$platform")
+    archivesName.set("$modId-$platform")
 }
 
 loom {
