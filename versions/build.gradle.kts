@@ -123,6 +123,14 @@ val shadeOnly: Configuration by configurations.creating
 
 val shadeNoJar: Configuration by configurations.creating
 
+private enum class RepackedVersion(val string: String) {
+    LEGACY("legacy"), PRE119NOARM("pre-1.19-noarm"), PRE119ARM("pre-1.19-arm"), POST119("post-1.19");
+
+    override fun toString(): String {
+        return string
+    }
+}
+
 dependencies {
     compileOnly(libs.vigilance) {
         isTransitive = false
@@ -156,12 +164,20 @@ dependencies {
         }
     }
 
-    val configuration = configurations.create("tempLwjglConfiguration")
-    val version = if (platform.mcVersion < 11300) "legacy" else "modern"
-    compileOnly(configuration("cc.polyfrost:lwjgl-$version:${libs.versions.lwjgl.get()}") {
-        isTransitive = false
-    })
-    shadeNoPom(implementationNoPom(prebundle(configuration, "lwjgl-$version.jar"))!!)
+    val repackedVersions = when (platform.mcVersion) {
+        in 10809..11202 -> listOf(RepackedVersion.LEGACY)
+        in 11203..11802 -> listOf(RepackedVersion.PRE119NOARM, RepackedVersion.PRE119ARM)
+        else -> listOf(RepackedVersion.POST119)
+    }
+
+    repackedVersions.forEachIndexed { index, version ->
+        val configuration = configurations.create("tempLwjglConfiguration$index")
+
+        compileOnly(configuration("cc.polyfrost:lwjgl-$version:${libs.versions.lwjgl.get()}"){
+            isTransitive = false
+        })
+        shadeNoPom(implementationNoPom(prebundle(configuration, "lwjgl-$version.jar"))!!)
+    }
 
     modRuntimeOnly("me.djtheredstoner:DevAuth-" +
             (if (platform.isForge) { if (platform.isLegacyForge) "forge-legacy" else "forge-latest" } else "fabric")
@@ -300,12 +316,12 @@ tasks {
                             "ModSide" to "CLIENT",
                             "ForceLoadAsMod" to true,
                             "TweakOrder" to "0",
-                            "MixinConfigs" to "mixins.oneconfigv0.json",
+                            "MixinConfigs" to "mixins.oneconfig.json",
                             "TweakClass" to "cc.polyfrost.oneconfig.internal.plugin.asm.OneConfigTweaker"
                         )
                     } else {
                         mapOf(
-                            "MixinConfigs" to "mixins.oneconfigv0.json",
+                            "MixinConfigs" to "mixins.oneconfig.json",
                             "Specification-Title" to modId,
                             "Specification-Vendor" to modId,
                             "Specification-Version" to "1", // We are version 1 of ourselves, whatever the hell that means
