@@ -7,7 +7,6 @@ public class cc/polyfrost/oneconfig/config/Config {
 	protected final field nonProfileSpecificGson Lcom/google/gson/Gson;
 	public final field optionNames Ljava/util/HashMap;
 	public field subModSettings Lcc/polyfrost/oneconfig/config/data/Mod;
-	public final field subMods Ljava/util/ArrayList;
 	public field subModsPage Lcc/polyfrost/oneconfig/gui/pages/SubModsPage;
 	public fun <init> (Lcc/polyfrost/oneconfig/config/data/Mod;Ljava/lang/String;)V
 	public fun <init> (Lcc/polyfrost/oneconfig/config/data/Mod;Ljava/lang/String;Z)V
