@@ -41,10 +41,11 @@ import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class ModsPage extends Page {
 
-    private final ArrayList<ModCard> modCards = new ArrayList<>();
+    public final ArrayList<ModCard> modCards = new ArrayList<>();
     private final ArrayList<BasicButton> modCategories = new ArrayList<>();
     private int size;
 
@@ -115,6 +116,18 @@ public class ModsPage extends Page {
         modCards.clear();
         for (Mod modData : ConfigCore.mods) {
             modCards.add(new ModCard(modData, modData.config == null || modData.config.enabled, false, OneConfigConfig.favoriteMods.contains(modData.name), this));
+        }
+        if (this instanceof SubModsPage) {
+            Mod parent = ((SubModsPage) this).parentMod;
+            if (parent == null) return;
+            modCards.removeIf(modCard -> !parent.config.subMods.contains(modCard.getModData()) || parent.config.subModSettings == modCard.getModData());
+            modCards.add(0, new ModCard(parent.config.subModSettings, true, false, false, this));
+        } else {
+            for (Mod mod : ConfigCore.subMods) {
+                List<ModCard> cards = new ArrayList<>(modCards);
+                cards.removeIf(card -> !mod.config.subMods.contains(card.getModData()));
+                modCards.removeAll(cards);
+            }
         }
     }
 

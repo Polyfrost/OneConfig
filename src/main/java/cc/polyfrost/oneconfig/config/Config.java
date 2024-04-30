@@ -30,9 +30,11 @@ import cc.polyfrost.oneconfig.config.annotations.Button;
 import cc.polyfrost.oneconfig.config.annotations.CustomOption;
 import cc.polyfrost.oneconfig.config.annotations.HUD;
 import cc.polyfrost.oneconfig.config.annotations.Page;
+import cc.polyfrost.oneconfig.config.annotations.SubConfig;
 import cc.polyfrost.oneconfig.config.core.ConfigUtils;
 import cc.polyfrost.oneconfig.config.core.OneKeyBind;
 import cc.polyfrost.oneconfig.config.data.Mod;
+import cc.polyfrost.oneconfig.config.data.ModType;
 import cc.polyfrost.oneconfig.config.data.PageLocation;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
 import cc.polyfrost.oneconfig.config.elements.OptionPage;
@@ -44,7 +46,9 @@ import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.elements.config.ConfigKeyBind;
 import cc.polyfrost.oneconfig.gui.elements.config.ConfigPageButton;
 import cc.polyfrost.oneconfig.gui.pages.ModConfigPage;
+import cc.polyfrost.oneconfig.gui.pages.SubModsPage;
 import cc.polyfrost.oneconfig.hud.HUDUtils;
+import cc.polyfrost.oneconfig.internal.config.EmptyConfig;
 import cc.polyfrost.oneconfig.internal.config.annotations.Option;
 import cc.polyfrost.oneconfig.internal.config.core.ConfigCore;
 import cc.polyfrost.oneconfig.internal.config.core.KeyBindHandler;
@@ -69,12 +73,14 @@ import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.function.Supplier;
 
 @SuppressWarnings({"unused", "ResultOfMethodCallIgnored"})
 public class Config {
     public final transient HashMap<String, BasicOption> optionNames = new HashMap<>();
+    public final transient ArrayList<Mod> subMods = new ArrayList<>();
     protected final transient String configFile;
     protected final transient Gson gson = addGsonOptions(new GsonBuilder()
             .setExclusionStrategies(new ProfileExclusionStrategy()))
@@ -83,6 +89,8 @@ public class Config {
             .setExclusionStrategies(new NonProfileSpecificExclusionStrategy()))
             .create();
     public final transient Mod mod;
+    public transient Mod subModSettings = null;
+    public transient SubModsPage subModsPage = null;
     public boolean enabled;
     public final boolean canToggle;
 
@@ -260,6 +268,11 @@ public class Config {
                 else subcategory.bottomButtons.add(button);
             } else if (field.isAnnotationPresent(HUD.class)) {
                 HUDUtils.addHudOptions(page, field, instance, this);
+            } else if (field.isAnnotationPresent(SubConfig.class)) {
+                if (page != mod.defaultPage) continue;
+                Config config = (Config) ConfigUtils.getField(field, instance);
+                if (config == null) continue;
+                subMods.add(config.mod);
             }
         }
         for (Method method : targetClass.getDeclaredMethods()) {
@@ -270,6 +283,16 @@ public class Config {
                 optionNames.put(optionName, option);
             }
         }
+        if (!subMods.isEmpty()) {
+            ConfigCore.subMods.add(this.mod);
+            if (!optionNames.isEmpty() && subModSettings == null) {
+                subModSettings = new Mod("Settings", ModType.UTIL_QOL, "/assets/oneconfig/icons/settings-02.svg");
+                subModSettings.config = new EmptyConfig();
+                subMods.add(subModSettings);
+                ConfigCore.mods.add(subModSettings);
+            }
+        }
+
         logger.trace("Finished generating option list for {} (targetting={})", mod.name, targetClass.getName());
     }
 
@@ -463,8 +486,8 @@ public class Config {
     /**
      * Literally does nothing.
      * <p>
-     *     As configs HAVE to be initialized before your mod loader's post-init, instances need to be created before that.
-     *     Hence, this method exists so config instances which are located in the actual class instead of the main mod class can be created.
+     * As configs HAVE to be initialized before your mod loader's post-init, instances need to be created before that.
+     * Hence, this method exists so config instances which are located in the actual class instead of the main mod class can be created.
      * </p>
      * For example:
      * <pre>{@code

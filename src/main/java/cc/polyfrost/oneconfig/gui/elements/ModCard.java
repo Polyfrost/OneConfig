@@ -32,6 +32,8 @@ import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.animations.ColorAnimation;
 import cc.polyfrost.oneconfig.gui.pages.ModConfigPage;
 import cc.polyfrost.oneconfig.gui.pages.ModsPage;
+import cc.polyfrost.oneconfig.gui.pages.Page;
+import cc.polyfrost.oneconfig.gui.pages.SubModsPage;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.internal.config.OneConfigConfig;
@@ -146,8 +148,28 @@ public class ModCard extends BasicElement {
                     return;
                 }
             }
-            OneConfigGui.INSTANCE.openPage(new ModConfigPage(modData.defaultPage));
+
+            for (Mod mod : ConfigCore.subMods) {
+                if (modData == mod.config.subModSettings) {
+                    Page page = new ModConfigPage(mod.defaultPage);
+                    page.setTitle("Settings");
+                    open(page);
+                    return;
+                }
+            }
+
+            if (!modData.config.subMods.isEmpty()) {
+                modData.config.subModsPage = new SubModsPage(modData);
+                open(modData.config.subModsPage);
+                return;
+            }
+
+            open(new ModConfigPage(modData.defaultPage));
         }
+    }
+
+    private static void open(Page page) {
+        OneConfigGui.INSTANCE.openPage(page);
     }
 
     public Mod getModData() {

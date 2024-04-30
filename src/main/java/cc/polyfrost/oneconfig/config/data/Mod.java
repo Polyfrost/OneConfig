@@ -122,7 +122,7 @@ public class Mod implements Comparable<Mod> {
         if (obj == this) return true;
         if (obj instanceof Mod) {
             Mod mod = (Mod) obj;
-            return name.equals(mod.name);
+            return name.equals(mod.name) && config == mod.config;
         } else return false;
     }
 }

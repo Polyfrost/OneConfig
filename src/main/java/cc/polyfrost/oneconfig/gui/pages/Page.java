@@ -45,7 +45,7 @@ import java.util.Objects;
  * A page is a 1056x728 rectangle of the GUI. It is the main content of the gui, and can be switched back and forwards easily. All the content of OneConfig is in a page.
  */
 public abstract class Page {
-    protected final String title;
+    protected String title;
     protected Animation scrollAnimation;
     private final ColorAnimation colorAnimation = new ColorAnimation(new ColorPalette(Colors.TRANSPARENT, Colors.GRAY_400_60, Colors.GRAY_400_60), 200);
     protected float scrollTarget;
@@ -133,6 +133,10 @@ public abstract class Page {
             }
             NanoVGHelper.INSTANCE.drawRoundedRect(vg, x + 1048, y - scrollBarY, 4, scrollBarLength, colorAnimation.getColor(scrollHover || scrollTimePeriod, dragging), 4f);
         }
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
     }
 
     public String getTitle() {

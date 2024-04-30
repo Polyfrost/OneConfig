@@ -39,6 +39,7 @@ import java.util.stream.Collectors;
 
 public class ConfigCore {
     public static List<Mod> mods = new ArrayList<>();
+    public static List<Mod> subMods = new ArrayList<>();
 
     public static void saveAll() {
         for (Mod modData : mods) {
