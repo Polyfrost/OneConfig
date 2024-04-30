@@ -6,6 +6,9 @@ public class cc/polyfrost/oneconfig/config/Config {
 	public final field mod Lcc/polyfrost/oneconfig/config/data/Mod;
 	protected final field nonProfileSpecificGson Lcom/google/gson/Gson;
 	public final field optionNames Ljava/util/HashMap;
+	public field subModSettings Lcc/polyfrost/oneconfig/config/data/Mod;
+	public final field subMods Ljava/util/ArrayList;
+	public field subModsPage Lcc/polyfrost/oneconfig/gui/pages/SubModsPage;
 	public fun <init> (Lcc/polyfrost/oneconfig/config/data/Mod;Ljava/lang/String;)V
 	public fun <init> (Lcc/polyfrost/oneconfig/config/data/Mod;Ljava/lang/String;Z)V
 	public fun <init> (Lcc/polyfrost/oneconfig/config/data/Mod;Ljava/lang/String;ZZ)V
@@ -148,6 +151,9 @@ public abstract interface annotation class cc/polyfrost/oneconfig/config/annotat
 	public abstract fun name ()Ljava/lang/String;
 	public abstract fun step ()I
 	public abstract fun subcategory ()Ljava/lang/String;
+}
+
+public abstract interface annotation class cc/polyfrost/oneconfig/config/annotations/SubConfig : java/lang/annotation/Annotation {
 }
 
 public abstract interface annotation class cc/polyfrost/oneconfig/config/annotations/Switch : java/lang/annotation/Annotation {
@@ -1034,6 +1040,7 @@ public class cc/polyfrost/oneconfig/gui/pages/ModConfigPage : cc/polyfrost/oneco
 }
 
 public class cc/polyfrost/oneconfig/gui/pages/ModsPage : cc/polyfrost/oneconfig/gui/pages/Page {
+	public final field modCards Ljava/util/ArrayList;
 	public fun <init> ()V
 	public fun draw (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
 	public fun drawStatic (JIILcc/polyfrost/oneconfig/utils/InputHandler;)I
@@ -1047,7 +1054,7 @@ public abstract class cc/polyfrost/oneconfig/gui/pages/Page {
 	protected field scroll F
 	protected field scrollAnimation Lcc/polyfrost/oneconfig/gui/animations/Animation;
 	protected field scrollTarget F
-	protected final field title Ljava/lang/String;
+	protected field title Ljava/lang/String;
 	public fun <init> (Ljava/lang/String;)V
 	public abstract fun draw (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
 	public fun drawStatic (JIILcc/polyfrost/oneconfig/utils/InputHandler;)I
@@ -1057,6 +1064,17 @@ public abstract class cc/polyfrost/oneconfig/gui/pages/Page {
 	public fun isBase ()Z
 	public fun keyTyped (CI)V
 	public fun scrollWithDraw (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
+	public fun setTitle (Ljava/lang/String;)V
+}
+
+public class cc/polyfrost/oneconfig/gui/pages/SubModsPage : cc/polyfrost/oneconfig/gui/pages/ModsPage {
+	public field parentMod Lcc/polyfrost/oneconfig/config/data/Mod;
+	public fun <init> (Lcc/polyfrost/oneconfig/config/data/Mod;)V
+	public fun draw (JIILcc/polyfrost/oneconfig/utils/InputHandler;)V
+	public fun drawStatic (JIILcc/polyfrost/oneconfig/utils/InputHandler;)I
+	public fun getMaxScrollHeight ()I
+	public fun getTitle ()Ljava/lang/String;
+	public fun isBase ()Z
 }
 
 public abstract class cc/polyfrost/oneconfig/hud/BasicHud : cc/polyfrost/oneconfig/hud/Hud {
