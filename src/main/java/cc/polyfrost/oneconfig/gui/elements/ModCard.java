@@ -49,6 +49,8 @@ import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 import cc.polyfrost.oneconfig.utils.color.ColorUtils;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 public class ModCard extends BasicElement {
     private final Mod modData;
     private final BasicButton favoriteButton = new BasicButton(32, 32, SVGs.HEART_OUTLINE, BasicButton.ALIGNMENT_CENTER, ColorPalette.TERTIARY);
@@ -149,16 +151,18 @@ public class ModCard extends BasicElement {
                 }
             }
 
-            for (Mod mod : ConfigCore.subMods) {
+            AtomicBoolean bye = new AtomicBoolean(false);
+            ConfigCore.subMods.keySet().forEach(mod -> {
                 if (modData == mod.config.subModSettings) {
                     Page page = new ModConfigPage(mod.defaultPage);
                     page.setTitle("Settings");
                     open(page);
-                    return;
+                    bye.set(true);
                 }
-            }
+            });
+            if (bye.get()) return;
 
-            if (!modData.config.subMods.isEmpty()) {
+            if (ConfigCore.subMods.get(modData) != null) {
                 modData.config.subModsPage = new SubModsPage(modData);
                 open(modData.config.subModsPage);
                 return;

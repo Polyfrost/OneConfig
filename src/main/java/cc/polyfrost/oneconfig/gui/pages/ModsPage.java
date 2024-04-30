@@ -120,12 +120,12 @@ public class ModsPage extends Page {
         if (this instanceof SubModsPage) {
             Mod parent = ((SubModsPage) this).parentMod;
             if (parent == null) return;
-            modCards.removeIf(modCard -> !parent.config.subMods.contains(modCard.getModData()) || parent.config.subModSettings == modCard.getModData());
+            modCards.removeIf(modCard -> !ConfigCore.subMods.get(parent).contains(modCard.getModData()) || parent.config.subModSettings == modCard.getModData());
             modCards.add(0, new ModCard(parent.config.subModSettings, true, false, false, this));
         } else {
-            for (Mod mod : ConfigCore.subMods) {
+            for (List<Mod> mod : ConfigCore.subMods.values()) {
                 List<ModCard> cards = new ArrayList<>(modCards);
-                cards.removeIf(card -> !mod.config.subMods.contains(card.getModData()));
+                cards.removeIf(card -> !mod.contains(card.getModData()));
                 modCards.removeAll(cards);
             }
         }

@@ -75,12 +75,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.function.Supplier;
 
 @SuppressWarnings({"unused", "ResultOfMethodCallIgnored"})
 public class Config {
     public final transient HashMap<String, BasicOption> optionNames = new HashMap<>();
-    public final transient ArrayList<Mod> subMods = new ArrayList<>();
     protected final transient String configFile;
     protected final transient Gson gson = addGsonOptions(new GsonBuilder()
             .setExclusionStrategies(new ProfileExclusionStrategy()))
@@ -238,6 +238,7 @@ public class Config {
         if (superclass != Object.class) {
             generateOptionList(instance, superclass, page, mod, migrate);
         }
+        List<Mod> subMods = new ArrayList<>();
 
         String pagePath = page.equals(mod.defaultPage) ? "" : page.name + ".";
         for (Field field : targetClass.getDeclaredFields()) {
@@ -284,13 +285,13 @@ public class Config {
             }
         }
         if (!subMods.isEmpty()) {
-            ConfigCore.subMods.add(this.mod);
             if (!optionNames.isEmpty() && subModSettings == null) {
                 subModSettings = new Mod("Settings", ModType.UTIL_QOL, "/assets/oneconfig/icons/settings-02.svg");
                 subModSettings.config = new EmptyConfig();
                 subMods.add(subModSettings);
                 ConfigCore.mods.add(subModSettings);
             }
+            ConfigCore.subMods.put(this.mod, subMods);
         }
 
         logger.trace("Finished generating option list for {} (targetting={})", mod.name, targetClass.getName());

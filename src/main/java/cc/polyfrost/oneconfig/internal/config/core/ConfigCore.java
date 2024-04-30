@@ -32,6 +32,7 @@ import cc.polyfrost.oneconfig.internal.config.OneConfigConfig;
 import cc.polyfrost.oneconfig.internal.hud.HudCore;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -39,7 +40,7 @@ import java.util.stream.Collectors;
 
 public class ConfigCore {
     public static List<Mod> mods = new ArrayList<>();
-    public static List<Mod> subMods = new ArrayList<>();
+    public static HashMap<Mod, List<Mod>>  subMods = new HashMap<>();
 
     public static void saveAll() {
         for (Mod modData : mods) {
