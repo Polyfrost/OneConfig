@@ -29,18 +29,20 @@ package cc.polyfrost.oneconfig.internal.config.core;
 import cc.polyfrost.oneconfig.config.data.Mod;
 import cc.polyfrost.oneconfig.config.data.ModType;
 import cc.polyfrost.oneconfig.internal.config.OneConfigConfig;
+import cc.polyfrost.oneconfig.internal.config.SubMainConfig;
 import cc.polyfrost.oneconfig.internal.hud.HudCore;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public class ConfigCore {
     public static List<Mod> mods = new ArrayList<>();
-    public static HashMap<Mod, List<Mod>>  subMods = new HashMap<>();
+    public static HashMap<Mod, List<Mod>> subMods = new HashMap<>();
 
     public static void saveAll() {
         for (Mod modData : mods) {
@@ -59,12 +61,21 @@ public class ConfigCore {
 
     public static void sortMods() {
         List<Mod> mods = new ArrayList<>(ConfigCore.mods);
-        ConfigCore.mods = mods.stream().filter((mod -> OneConfigConfig.favoriteMods.contains(mod.name))).sorted().collect(Collectors.toList());
+        ConfigCore.mods = mods.stream().filter((mod -> mod.config instanceof SubMainConfig)).sorted().collect(Collectors.toList());
+        mods.removeAll(ConfigCore.mods);
+        ConfigCore.mods.addAll(mods.stream().filter((mod -> OneConfigConfig.favoriteMods.contains(mod.name))).sorted().collect(Collectors.toList()));
         mods.removeAll(ConfigCore.mods);
         ConfigCore.mods.addAll(mods.stream().filter(mod -> mod.modType != ModType.THIRD_PARTY).sorted().collect(Collectors.toList()));
         mods.removeAll(ConfigCore.mods);
         ConfigCore.mods.addAll(mods.stream().sorted().collect(Collectors.toList()));
         OneConfigConfig.getInstance().save();
+    }
+
+    public static Mod getParentMod(Mod mod) {
+        for (Map.Entry<Mod, List<Mod>> entry : subMods.entrySet()) {
+            if (entry.getValue().contains(mod)) return entry.getKey();
+        }
+        return null;
     }
 
     static {

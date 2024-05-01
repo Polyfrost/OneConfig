@@ -28,6 +28,7 @@ package cc.polyfrost.oneconfig.gui.pages;
 
 import cc.polyfrost.oneconfig.config.data.Mod;
 import cc.polyfrost.oneconfig.config.data.ModType;
+import cc.polyfrost.oneconfig.config.elements.SubConfig;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.elements.BasicButton;
 import cc.polyfrost.oneconfig.gui.elements.ModCard;
@@ -41,9 +42,6 @@ import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 public class ModsPage extends Page {
 
@@ -117,18 +115,15 @@ public class ModsPage extends Page {
     public void reloadMods() {
         modCards.clear();
         for (Mod modData : ConfigCore.mods) {
+            if (this instanceof SubModsPage) {
+                Mod parentMod = ((SubModsPage) this).parentMod;
+                if (parentMod != null && !ConfigCore.subMods.get(parentMod).contains(modData)) continue;
+            } else {
+                if (modData.config instanceof SubConfig) continue;
+            }
             modCards.add(new ModCard(modData, modData.config == null || modData.config.enabled, false, OneConfigConfig.favoriteMods.contains(modData.name), this));
         }
-        if (this instanceof SubModsPage) {
-            Mod parent = ((SubModsPage) this).parentMod;
-            if (parent == null) return;
-            modCards.removeIf(modCard -> !ConfigCore.subMods.get(parent).contains(modCard.getModData()) || parent.config.subModSettings == modCard.getModData());
-            modCards.add(0, new ModCard(parent.config.subModSettings, true, false, false, this));
-        } else {
-            for (List<Mod> mods : ConfigCore.subMods.values()) {
-                modCards.removeIf(card -> mods.contains(card.getModData()));
-            }
-        }
+        ConfigCore.sortMods();
     }
 
     @Override

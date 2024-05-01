@@ -41,11 +41,10 @@ public class SubModsPage extends ModsPage {
 
     public Mod parentMod;
     private int size;
-    private final String title;
 
     public SubModsPage(Mod parentMod) {
         this.parentMod = parentMod;
-        this.title = parentMod.name;
+        setTitle(parentMod.name);
         reloadMods();
     }
 
@@ -55,7 +54,7 @@ public class SubModsPage extends ModsPage {
         int iY = y + 16;
         ArrayList<ModCard> finalModCards = new ArrayList<>(modCards);
         for (ModCard modCard : finalModCards) {
-            if (filter.equals("") || SearchUtils.isSimilar(modCard.getModData().name, filter)) {
+            if (filter.isEmpty() || SearchUtils.isSimilar(modCard.getModData().name, filter)) {
                 if (iY + 135 >= y - scroll && iY <= y + 728 - scroll) modCard.draw(vg, iX, iY, inputHandler);
                 iX += 260;
                 if (iX > x + 796) {
@@ -70,11 +69,6 @@ public class SubModsPage extends ModsPage {
     @Override
     public int drawStatic(long vg, int x, int y, InputHandler inputHandler) {
         return 0;
-    }
-
-    @Override
-    public String getTitle() {
-        return this.title;
     }
 
     @Override

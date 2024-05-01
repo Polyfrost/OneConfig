@@ -24,30 +24,29 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.internal.config;
+package cc.polyfrost.oneconfig.config.elements;
 
 import cc.polyfrost.oneconfig.config.Config;
 import cc.polyfrost.oneconfig.config.data.Mod;
 import cc.polyfrost.oneconfig.config.data.ModType;
 
-public class EmptyConfig extends Config {
-    public EmptyConfig() {
-        super(new Mod("", ModType.UTIL_QOL, ""), "");
+public class SubConfig extends Config {
+
+    public SubConfig(String name, String configFile, String icon, boolean enabled, boolean canToggle) {
+        super(new Mod(name, ModType.UTIL_QOL, icon), configFile, enabled, canToggle);
+        initialize();
     }
 
-    @Override
-    public void initialize() {
+    public SubConfig(String name, String configFile, String icon, boolean enabled) {
+        this(name, configFile, icon, enabled, true);
     }
 
-    @Override
-    public void reInitialize() {
+    public SubConfig(String name, String configFile, String icon) {
+        this(name, configFile, icon, true, true);
     }
 
-    @Override
-    public void load() {
+    public SubConfig(String name, String configFile) {
+        this(name, configFile, null, true, true);
     }
 
-    @Override
-    public void save() {
-    }
 }

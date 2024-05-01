@@ -37,6 +37,7 @@ import cc.polyfrost.oneconfig.gui.pages.SubModsPage;
 import cc.polyfrost.oneconfig.internal.assets.Colors;
 import cc.polyfrost.oneconfig.internal.assets.SVGs;
 import cc.polyfrost.oneconfig.internal.config.OneConfigConfig;
+import cc.polyfrost.oneconfig.internal.config.SubMainConfig;
 import cc.polyfrost.oneconfig.internal.config.compatibility.forge.ForgeCompat;
 import cc.polyfrost.oneconfig.internal.config.core.ConfigCore;
 import cc.polyfrost.oneconfig.platform.Platform;
@@ -48,8 +49,6 @@ import cc.polyfrost.oneconfig.utils.InputHandler;
 import cc.polyfrost.oneconfig.utils.color.ColorPalette;
 import cc.polyfrost.oneconfig.utils.color.ColorUtils;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ModCard extends BasicElement {
     private final Mod modData;
@@ -151,24 +150,15 @@ public class ModCard extends BasicElement {
                 }
             }
 
-            AtomicBoolean bye = new AtomicBoolean(false);
-            ConfigCore.subMods.keySet().forEach(mod -> {
-                if (modData == mod.config.subModSettings) {
-                    Page page = new ModConfigPage(mod.defaultPage);
-                    page.setTitle("Settings");
-                    open(page);
-                    bye.set(true);
-                }
-            });
-            if (bye.get()) return;
-
-            if (ConfigCore.subMods.get(modData) != null) {
-                modData.config.subModsPage = new SubModsPage(modData);
-                open(modData.config.subModsPage);
-                return;
+            if (modData.config instanceof SubMainConfig) {
+                Page page = new ModConfigPage(ConfigCore.getParentMod(modData).defaultPage);
+                page.setTitle("Settings");
+                open(page);
+            } else if (ConfigCore.subMods.get(modData) != null) {
+                open(new SubModsPage(modData));
+            } else {
+                open(new ModConfigPage(modData.defaultPage));
             }
-
-            open(new ModConfigPage(modData.defaultPage));
         }
     }
 

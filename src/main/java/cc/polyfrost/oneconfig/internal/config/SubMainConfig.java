@@ -24,18 +24,32 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.test;
+package cc.polyfrost.oneconfig.internal.config;
 
-import cc.polyfrost.oneconfig.config.annotations.Button;
 import cc.polyfrost.oneconfig.config.elements.SubConfig;
-import cc.polyfrost.oneconfig.libs.universal.UChat;
+import cc.polyfrost.oneconfig.internal.config.core.ConfigCore;
 
-public class TestSubConfig extends SubConfig {
-    public TestSubConfig() {
-        super("Test Sub", "subConfig.json");
+public class SubMainConfig extends SubConfig {
+
+    public SubMainConfig() {
+        super("Settings", "", "/assets/oneconfig/icons/settings-02.svg", true, false);
+        this.mod.config = this;
+        ConfigCore.mods.add(this.mod);
     }
 
-    @Button(name = "hello", text = "Click")
-    public static Runnable hello = () -> UChat.chat("hello there");
+    @Override
+    public void initialize() {
+    }
 
+    @Override
+    public void reInitialize() {
+    }
+
+    @Override
+    public void load() {
+    }
+
+    @Override
+    public void save() {
+    }
 }

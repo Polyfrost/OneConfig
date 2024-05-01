@@ -46,9 +46,8 @@ import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.elements.config.ConfigKeyBind;
 import cc.polyfrost.oneconfig.gui.elements.config.ConfigPageButton;
 import cc.polyfrost.oneconfig.gui.pages.ModConfigPage;
-import cc.polyfrost.oneconfig.gui.pages.SubModsPage;
 import cc.polyfrost.oneconfig.hud.HUDUtils;
-import cc.polyfrost.oneconfig.internal.config.EmptyConfig;
+import cc.polyfrost.oneconfig.internal.config.SubMainConfig;
 import cc.polyfrost.oneconfig.internal.config.annotations.Option;
 import cc.polyfrost.oneconfig.internal.config.core.ConfigCore;
 import cc.polyfrost.oneconfig.internal.config.core.KeyBindHandler;
@@ -89,8 +88,6 @@ public class Config {
             .setExclusionStrategies(new NonProfileSpecificExclusionStrategy()))
             .create();
     public final transient Mod mod;
-    public transient Mod subModSettings = null;
-    public transient SubModsPage subModsPage = null;
     public boolean enabled;
     public final boolean canToggle;
 
@@ -285,11 +282,8 @@ public class Config {
             }
         }
         if (!subMods.isEmpty()) {
-            if (!optionNames.isEmpty() && subModSettings == null) {
-                subModSettings = new Mod("Settings", ModType.UTIL_QOL, "/assets/oneconfig/icons/settings-02.svg");
-                subModSettings.config = new EmptyConfig();
-                subMods.add(subModSettings);
-                ConfigCore.mods.add(subModSettings);
+            if (!optionNames.isEmpty()) {
+                subMods.add(new SubMainConfig().mod);
             }
             ConfigCore.subMods.put(this.mod, subMods);
         }
