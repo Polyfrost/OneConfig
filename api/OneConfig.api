@@ -287,7 +287,6 @@ public class cc/polyfrost/oneconfig/config/data/Mod : java/lang/Comparable {
 	public fun <init> (Ljava/lang/String;Lcc/polyfrost/oneconfig/config/data/ModType;Ljava/lang/String;Lcc/polyfrost/oneconfig/config/migration/Migrator;)V
 	public fun compareTo (Lcc/polyfrost/oneconfig/config/data/Mod;)I
 	public synthetic fun compareTo (Ljava/lang/Object;)I
-	public fun equals (Ljava/lang/Object;)Z
 }
 
 public final class cc/polyfrost/oneconfig/config/data/ModType : java/lang/Enum {
