@@ -122,13 +122,9 @@ public final class org/polyfrost/oneconfig/utils/v1/GuiUtils {
 public final class org/polyfrost/oneconfig/utils/v1/IOUtils {
 	public static fun copyImageToClipboard (Ljava/awt/Image;)V
 	public static fun copyStringToClipboard (Ljava/lang/String;)V
-	public static fun getFileChecksum (Ljava/io/File;)Ljava/lang/String;
+	public static fun getFileChecksum (Ljava/nio/file/Path;)Ljava/lang/String;
 	public static fun getImageFromClipboard ()Ljava/awt/Image;
 	public static fun getStringFromClipboard ()Ljava/lang/String;
-	public static fun resourceToByteBuffer (Ljava/lang/String;)Ljava/nio/ByteBuffer;
-	public static fun resourceToByteBuffer (Ljava/lang/String;Ljava/lang/Class;)Ljava/nio/ByteBuffer;
-	public static fun resourceToByteBufferNullable (Ljava/lang/String;)Ljava/nio/ByteBuffer;
-	public static fun resourceToByteBufferNullable (Ljava/lang/String;Ljava/lang/Class;)Ljava/nio/ByteBuffer;
 }
 
 public final class org/polyfrost/oneconfig/utils/v1/JsonUtils {
@@ -213,8 +209,8 @@ public final class org/polyfrost/oneconfig/utils/v1/Multithreading {
 
 public final class org/polyfrost/oneconfig/utils/v1/NetworkUtils {
 	public static fun browseLink (Ljava/lang/String;)V
-	public static fun downloadFile (Ljava/lang/String;Ljava/io/File;)Z
-	public static fun downloadFile (Ljava/lang/String;Ljava/io/File;Ljava/lang/String;IZ)Z
+	public static fun downloadFile (Ljava/lang/String;Ljava/nio/file/Path;)Z
+	public static fun downloadFile (Ljava/lang/String;Ljava/nio/file/Path;Ljava/lang/String;IZ)Z
 	public static fun getJsonElement (Ljava/lang/String;)Lcom/google/gson/JsonElement;
 	public static fun getJsonElement (Ljava/lang/String;Ljava/lang/String;IZ)Lcom/google/gson/JsonElement;
 	public static fun getString (Ljava/lang/String;)Ljava/lang/String;
@@ -225,9 +221,9 @@ public final class org/polyfrost/oneconfig/utils/v1/NetworkUtils {
 public final class org/polyfrost/oneconfig/utils/v1/OneImage {
 	public fun <init> (II)V
 	public fun <init> (Ljava/awt/image/BufferedImage;)V
-	public fun <init> (Ljava/io/File;)V
 	public fun <init> (Ljava/io/InputStream;)V
 	public fun <init> (Ljava/lang/String;)V
+	public fun <init> (Ljava/nio/file/Path;)V
 	public fun copyToClipboard ()V
 	public fun crop (IIII)V
 	public fun dispose ()V
@@ -251,7 +247,7 @@ public final class org/polyfrost/oneconfig/utils/v1/OneImage {
 	public fun maskColor (Ljava/awt/Color;)V
 	public fun maskPaint (Ljava/awt/Paint;)V
 	public fun rotate (D)V
-	public fun save (Ljava/lang/String;)V
+	public fun save (Ljava/nio/file/Path;)V
 	public fun scale (DD)V
 	public fun setBrightness (F)V
 	public fun setColorAtPos (III)V
@@ -270,12 +266,12 @@ public final class org/polyfrost/oneconfig/utils/v1/SimpleProfiler {
 public class org/polyfrost/oneconfig/utils/v1/WrappingUtils {
 	public fun <init> ()V
 	public static fun box (Ljava/lang/Object;)[Ljava/lang/Object;
-	public static fun boxToList (Ljava/lang/Object;)Ljava/util/Collection;
 	public static fun getUnwrapped (Ljava/lang/Class;)Ljava/lang/Class;
 	public static fun getWrapped (Ljava/lang/Class;)Ljava/lang/Class;
 	public static fun isPrimitiveWrapper (Ljava/lang/Object;)Z
 	public static fun isSimpleClass (Ljava/lang/Class;)Z
 	public static fun isSimpleObject (Ljava/lang/Object;)Z
+	public static fun ncast (Ljava/lang/Number;Ljava/lang/Class;)Ljava/lang/Number;
 	public static fun unbox (Ljava/lang/Object;)Ljava/lang/Object;
 }
 
@@ -291,7 +287,7 @@ public final class org/polyfrost/oneconfig/utils/v1/dsl/ColorsKt {
 }
 
 public final class org/polyfrost/oneconfig/utils/v1/dsl/IoKt {
-	public static final fun checksum (Ljava/io/File;)Ljava/lang/String;
+	public static final fun checksum (Ljava/nio/file/Path;)Ljava/lang/String;
 }
 
 public final class org/polyfrost/oneconfig/utils/v1/dsl/JsonKt {
@@ -306,8 +302,8 @@ public final class org/polyfrost/oneconfig/utils/v1/dsl/MultithreadingKt {
 
 public final class org/polyfrost/oneconfig/utils/v1/dsl/NetworkKt {
 	public static final fun browseLink (Lorg/polyfrost/universal/UDesktop;Ljava/lang/String;)V
-	public static final fun download (Ljava/io/File;Ljava/lang/String;Ljava/lang/String;IZ)Z
-	public static synthetic fun download$default (Ljava/io/File;Ljava/lang/String;Ljava/lang/String;IZILjava/lang/Object;)Z
+	public static final fun download (Ljava/nio/file/Path;Ljava/lang/String;Ljava/lang/String;IZ)Z
+	public static synthetic fun download$default (Ljava/nio/file/Path;Ljava/lang/String;Ljava/lang/String;IZILjava/lang/Object;)Z
 }
 
 public final class org/polyfrost/oneconfig/utils/v1/hypixel/HypixelUtils {

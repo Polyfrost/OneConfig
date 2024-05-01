@@ -1,10 +1,12 @@
 public abstract class org/polyfrost/oneconfig/api/config/v1/Config {
-	protected final field tree Lorg/polyfrost/oneconfig/api/config/v1/Tree;
+	protected field tree Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/config/v1/Config$Category;)V
 	public fun <init> (Ljava/lang/String;Lorg/polyfrost/polyui/renderer/data/PolyImage;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/config/v1/Config$Category;)V
+	public fun addCallback (Ljava/lang/String;Ljava/util/function/Consumer;)V
 	public fun addDependency (Ljava/lang/String;Ljava/lang/String;)V
 	public fun addDependency (Ljava/lang/String;Ljava/util/function/BooleanSupplier;)V
 	public fun getProperty (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
+	protected fun makeTree (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 }
 
 public final class org/polyfrost/oneconfig/api/config/v1/Config$Category : java/lang/Enum {
@@ -63,18 +65,17 @@ public final class org/polyfrost/oneconfig/api/config/v1/ConfigVisualizer$Compan
 	public final fun strv (Ljava/lang/String;)Ljava/lang/String;
 }
 
-public class org/polyfrost/oneconfig/api/config/v1/KtConfig {
+public class org/polyfrost/oneconfig/api/config/v1/KtConfig : org/polyfrost/oneconfig/api/config/v1/Config {
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/config/v1/Config$Category;Lorg/polyfrost/polyui/renderer/data/PolyImage;)V
 	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/config/v1/Config$Category;Lorg/polyfrost/polyui/renderer/data/PolyImage;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	protected final synthetic fun color (Lorg/polyfrost/polyui/color/PolyColor;Ljava/lang/String;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
 	public static synthetic fun color$default (Lorg/polyfrost/oneconfig/api/config/v1/KtConfig;Lorg/polyfrost/polyui/color/PolyColor;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
 	protected final synthetic fun dropdown ([Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
 	public static synthetic fun dropdown$default (Lorg/polyfrost/oneconfig/api/config/v1/KtConfig;[Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
-	protected final synthetic fun getProperty (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
 	protected final fun getProperty (Lkotlin/reflect/KProperty;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
-	protected final fun getTree ()Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	protected final synthetic fun keybind (Lorg/polyfrost/polyui/input/KeyBinder$Bind;Ljava/lang/String;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
 	public static synthetic fun keybind$default (Lorg/polyfrost/oneconfig/api/config/v1/KtConfig;Lorg/polyfrost/polyui/input/KeyBinder$Bind;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
+	protected final fun makeTree (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	protected final synthetic fun radiobutton ([Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
 	public static synthetic fun radiobutton$default (Lorg/polyfrost/oneconfig/api/config/v1/KtConfig;[Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
 	protected final synthetic fun slider (FFFLjava/lang/String;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
@@ -204,6 +205,7 @@ public class org/polyfrost/oneconfig/api/config/v1/backend/impl/FileBackend : or
 	protected fun getSerializer (Ljava/nio/file/Path;)Lorg/polyfrost/oneconfig/api/config/v1/serialize/impl/FileSerializer;
 	public fun hasWatcher ()Z
 	protected fun load0 (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
+	protected static fun mkdirs (Ljava/nio/file/Path;)Ljava/nio/file/Path;
 	protected static fun read (Ljava/nio/file/Path;)Ljava/lang/String;
 	protected fun save0 (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)Z
 	protected static fun write (Ljava/nio/file/Path;Ljava/lang/String;)V

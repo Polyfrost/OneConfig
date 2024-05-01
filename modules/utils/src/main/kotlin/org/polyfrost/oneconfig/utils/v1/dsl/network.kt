@@ -28,14 +28,14 @@ package org.polyfrost.oneconfig.utils.v1.dsl
 
 import org.polyfrost.oneconfig.utils.v1.NetworkUtils
 import org.polyfrost.universal.UDesktop
-import java.io.File
+import java.nio.file.Path
 
 /**
- * Downloads the given [url] to the given [File].
+ * Downloads the given [url] to the given [Path].
  *
  * @see NetworkUtils.downloadFile
  */
-fun File.download(url: String, userAgent: String = "OneConfig/1.0.0", timeout: Int = 5000, useCaches: Boolean = false) =
+fun Path.download(url: String, userAgent: String = "OneConfig/1.0.0", timeout: Int = 5000, useCaches: Boolean = false) =
     NetworkUtils.downloadFile(url, this, userAgent, timeout, useCaches)
 
 /**

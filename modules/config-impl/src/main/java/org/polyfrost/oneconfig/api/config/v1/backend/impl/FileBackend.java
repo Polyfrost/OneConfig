@@ -63,15 +63,19 @@ public class FileBackend extends Backend {
         for (FileSerializer<String> s : serializers) {
             addSerializer(s);
         }
+        mkdirs(folder);
+    }
+
+    protected static Path mkdirs(Path p) {
         try {
-            Files.createDirectories(folder);
-        } catch (Exception e) {
-            LOGGER.error("Failed to create config folder!", e);
+            return Files.createDirectories(p);
+        } catch (IOException e) {
+            throw new SerializationException("Failed to create directory", e);
         }
     }
 
     protected static String read(Path p) {
-        try (BufferedReader r = Files.newBufferedReader(p, CHARSET)) {
+        try (BufferedReader r = Files.newBufferedReader(p.toAbsolutePath(), CHARSET)) {
             StringBuilder buf = new StringBuilder((int) Files.size(p));
             for (; ; ) {
                 String l = r.readLine();
@@ -85,6 +89,7 @@ public class FileBackend extends Backend {
     }
 
     protected static void write(Path p, String s) {
+        mkdirs(p.getParent());
         try (BufferedWriter w = Files.newBufferedWriter(p, CHARSET)) {
             w.write(s);
         } catch (Exception e) {
@@ -92,7 +97,7 @@ public class FileBackend extends Backend {
         }
     }
 
-    public FileBackend addWatcher() throws IOException {
+    public synchronized FileBackend addWatcher() throws IOException {
         if (hasWatcher) return this;
         WatchService service = folder.getFileSystem().newWatchService();
         folder.register(service, StandardWatchEventKinds.ENTRY_MODIFY, StandardWatchEventKinds.ENTRY_DELETE);

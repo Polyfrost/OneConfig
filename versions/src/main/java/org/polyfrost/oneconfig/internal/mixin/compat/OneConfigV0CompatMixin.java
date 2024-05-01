@@ -27,6 +27,7 @@
 package org.polyfrost.oneconfig.internal.mixin.compat;
 
 //#if MC<=11202 && FORGE
+
 import cc.polyfrost.oneconfig.config.Config;
 import cc.polyfrost.oneconfig.config.data.Mod;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
@@ -41,8 +42,10 @@ import cc.polyfrost.oneconfig.gui.elements.config.ConfigSwitch;
 import cc.polyfrost.oneconfig.gui.elements.config.ConfigTextBox;
 import org.apache.logging.log4j.Logger;
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager;
+import org.polyfrost.oneconfig.api.config.v1.DummyProperty;
 import org.polyfrost.oneconfig.api.config.v1.Property;
 import org.polyfrost.oneconfig.api.config.v1.Tree;
+import org.polyfrost.oneconfig.api.config.v1.visualize.Visualizer;
 import org.polyfrost.oneconfig.utils.v1.MHUtils;
 import org.spongepowered.asm.mixin.Dynamic;
 import org.spongepowered.asm.mixin.Final;
@@ -90,27 +93,34 @@ public abstract class OneConfigV0CompatMixin {
                 }
                 BasicOption opt = entry.getValue();
                 if (opt.getField() == null) continue;
-                Property<?> prop = Property.prop(path[path.length - 1], opt.get(), opt.getField().getType());
-                // todo
+                String id = path[path.length - 1];
+                Property<?> prop;
+                Class<? extends Visualizer> visualizer;
                 if (opt instanceof ConfigButton) {
-
-                } else if (opt instanceof ConfigSwitch || opt instanceof ConfigCheckbox) {
-
-                } else if (opt instanceof ConfigSlider) {
-
-                } else if (opt instanceof ConfigDropdown) {
-
-                } else if (opt instanceof ConfigDualOption) {
-
-                } else if (opt instanceof ConfigTextBox) {
-
-                } else if (opt instanceof ConfigColorElement) {
-
-                } else if (opt instanceof ConfigNumber) {
-
+                    prop = DummyProperty.dummy(id);
+                    visualizer = Visualizer.ButtonVisualizer.class;
+                    prop.addMetadata("runnable", opt.get());
+                } else {
+                    prop = Property.prop(id, opt.name, opt.get(), opt.getField().getType());
+                    if (opt instanceof ConfigSwitch || opt instanceof ConfigCheckbox) {
+                        visualizer = Visualizer.SwitchVisualizer.class;
+                    } else if (opt instanceof ConfigSlider) {
+                        visualizer = Visualizer.SliderVisualizer.class;
+                    } else if (opt instanceof ConfigDropdown) {
+                        visualizer = Visualizer.DropdownVisualizer.class;
+                    } else if (opt instanceof ConfigDualOption) {
+                        visualizer = Visualizer.RadioVisualizer.class;
+                    } else if (opt instanceof ConfigTextBox) {
+                        visualizer = Visualizer.TextVisualizer.class;
+                    } else if (opt instanceof ConfigColorElement) {
+                        visualizer = Visualizer.ColorVisualizer.class;
+                    } else if (opt instanceof ConfigNumber) {
+                        visualizer = Visualizer.NumberVisualizer.class;
+                    } else continue;
                 }
-                prop.setTitle(opt.name);
+
                 prop.description = opt.description;
+                prop.addMetadata("visualizer", visualizer);
                 prop.addDisplayCondition(opt::isHidden);
                 MethodHandle setter = MHUtils.getMethodHandle(opt, "set", void.class, Object.class).getOrThrow();
                 prop.addCallback(v -> MHUtils.invokeCatching(setter, v));

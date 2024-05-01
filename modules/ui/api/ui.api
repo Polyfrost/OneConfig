@@ -13,10 +13,10 @@ public abstract interface class org/polyfrost/oneconfig/api/ui/v1/TinyFD {
 	public static final field WARNING_ICON Ljava/lang/String;
 	public static final field YES_NO_CANCEL_DIALOG Ljava/lang/String;
 	public static final field YES_NO_DIALOG Ljava/lang/String;
-	public abstract fun openFileSelector (Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;Ljava/lang/String;)Ljava/io/File;
-	public abstract fun openFolderSelector (Ljava/lang/String;Ljava/lang/String;)Ljava/io/File;
-	public abstract fun openMultiFileSelector (Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;Ljava/lang/String;)[Ljava/io/File;
-	public abstract fun openSaveSelector (Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;Ljava/lang/String;)Ljava/io/File;
+	public abstract fun openFileSelector (Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;Ljava/lang/String;)Ljava/nio/file/Path;
+	public abstract fun openFolderSelector (Ljava/lang/String;Ljava/lang/String;)Ljava/nio/file/Path;
+	public abstract fun openMultiFileSelector (Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;Ljava/lang/String;)[Ljava/nio/file/Path;
+	public abstract fun openSaveSelector (Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;Ljava/lang/String;)Ljava/nio/file/Path;
 	public abstract fun showMessageBox (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Z)Z
 	public abstract fun showNotification (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I
 }

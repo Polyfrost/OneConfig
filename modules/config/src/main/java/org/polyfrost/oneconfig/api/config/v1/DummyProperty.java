@@ -43,16 +43,16 @@ import java.util.function.Consumer;
  * So that other parts of code do not need to have special checks for these, the methods <b>are NOT crashing</b>, and instead just return null or are noop.
  */
 public class DummyProperty extends Property<Void> {
-    public DummyProperty(@Nullable String id, @Nullable String name, @Nullable String description) {
-        super(id, name, description, null, Void.class);
+    public DummyProperty(@Nullable String id, @Nullable String title, @Nullable String description) {
+        super(id, title, description, null, Void.class);
     }
 
-    public static DummyProperty dummy(String id, String name, String description) {
-        return new DummyProperty(id, name, description);
+    public static DummyProperty dummy(String id, String title, String description) {
+        return new DummyProperty(id, title, description);
     }
 
-    public static DummyProperty dummy(String id, String name) {
-        return new DummyProperty(id, name, null);
+    public static DummyProperty dummy(String id, String title) {
+        return new DummyProperty(id, title, null);
     }
 
     public static DummyProperty dummy(String id) {
@@ -84,7 +84,7 @@ public class DummyProperty extends Property<Void> {
     }
 
     @Override
-    public boolean isPrimitiveArray() {
+    public boolean isPrimitive() {
         return false;
     }
 

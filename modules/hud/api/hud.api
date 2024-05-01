@@ -1,5 +1,5 @@
-public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : java/lang/Cloneable {
-	public fun <init> ()V
+public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/oneconfig/api/config/v1/Config, java/lang/Cloneable {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/hud/v1/Hud$Category;)V
 	public fun backgroundColor ()Lorg/polyfrost/polyui/color/PolyColor;
 	public synthetic fun clone ()Ljava/lang/Object;
 	public fun clone ()Lorg/polyfrost/oneconfig/api/hud/v1/Hud;
@@ -9,6 +9,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : java/lang/Cloneab
 	public final fun get ()Lorg/polyfrost/polyui/component/Drawable;
 	public final fun getHidden ()Z
 	public final fun getHud ()Lorg/polyfrost/polyui/component/Drawable;
+	protected fun makeTree (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	public final fun setHidden (Z)V
 	public abstract fun update ()Z
 	public abstract fun updateFrequency ()J
@@ -56,7 +57,7 @@ public final class org/polyfrost/oneconfig/api/hud/v1/ImageHud : org/polyfrost/o
 }
 
 public abstract class org/polyfrost/oneconfig/api/hud/v1/LegacyHud : org/polyfrost/oneconfig/api/hud/v1/Hud {
-	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/hud/v1/Hud$Category;)V
 	protected fun create ()Lorg/polyfrost/polyui/component/Drawable;
 	protected final fun createLegacy ()Lorg/polyfrost/polyui/component/Drawable;
 	public abstract fun getHeight ()F
@@ -67,8 +68,8 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/LegacyHud : org/polyfro
 }
 
 public abstract class org/polyfrost/oneconfig/api/hud/v1/TextHud : org/polyfrost/oneconfig/api/hud/v1/Hud {
-	public fun <init> (Ljava/lang/String;Ljava/lang/String;J)V
-	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;JILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/hud/v1/Hud$Category;Ljava/lang/String;Ljava/lang/String;J)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/hud/v1/Hud$Category;Ljava/lang/String;Ljava/lang/String;JILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public synthetic fun create ()Lorg/polyfrost/polyui/component/Drawable;
 	protected fun create ()Lorg/polyfrost/polyui/component/impl/Text;
 	public final fun getPrefix ()Ljava/lang/String;
@@ -88,17 +89,17 @@ public final class org/polyfrost/oneconfig/api/hud/v1/TextHud$DateTime : org/pol
 }
 
 public final class org/polyfrost/oneconfig/api/hud/v1/TextHud$Field : org/polyfrost/oneconfig/api/hud/v1/TextHud {
-	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
-	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/hud/v1/Hud$Category;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/hud/v1/Hud$Category;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun getTheText ()Ljava/lang/String;
 	public final fun setTheText (Ljava/lang/String;)V
 }
 
 public final class org/polyfrost/oneconfig/api/hud/v1/TextHud$Supplier : org/polyfrost/oneconfig/api/hud/v1/TextHud {
-	public fun <init> (Ljava/lang/String;Ljava/lang/String;JLjava/util/function/Supplier;)V
-	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;JLjava/util/function/Supplier;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public fun <init> (Ljava/lang/String;Ljava/lang/String;JLkotlin/jvm/functions/Function0;)V
-	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;JLkotlin/jvm/functions/Function0;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/hud/v1/Hud$Category;Ljava/lang/String;Ljava/lang/String;JLjava/util/function/Supplier;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/hud/v1/Hud$Category;Ljava/lang/String;Ljava/lang/String;JLjava/util/function/Supplier;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/hud/v1/Hud$Category;Ljava/lang/String;Ljava/lang/String;JLkotlin/jvm/functions/Function0;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/hud/v1/Hud$Category;Ljava/lang/String;Ljava/lang/String;JLkotlin/jvm/functions/Function0;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 }
 
 public final class org/polyfrost/oneconfig/api/hud/v1/internal/Hud_savingKt {

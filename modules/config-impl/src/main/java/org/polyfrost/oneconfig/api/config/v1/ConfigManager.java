@@ -53,7 +53,7 @@ public final class ConfigManager {
     public static final Path PROFILES_DIR = Paths.get("profiles");
     private static final Logger LOGGER = LogManager.getLogger("OneConfig/Config");
     private static final List<PropertyCollector> collectors = new ArrayList<>(1);
-    private static final ConfigManager internal = new ConfigManager(Paths.get("OneConfig"), NightConfigSerializer.JSON);
+    private static final ConfigManager internal = new ConfigManager(Paths.get("oneconfig"), NightConfigSerializer.JSON);
     private static final ConfigManager core = new ConfigManager(Paths.get("config"), NightConfigSerializer.ALL);
     private static ConfigManager active;
 
@@ -81,12 +81,12 @@ public final class ConfigManager {
     /**
      * Returns a reference to the active config manager, which is mounted to the current active profile.
      */
-    public static ConfigManager active() {
+    public static synchronized ConfigManager active() {
         if (active == null) initialize();
         return active;
     }
 
-    private static void initialize() {
+    private static synchronized void initialize() {
         String activeProfile = internal().register(
                 tree("profiles.json").put(
                         prop("activeProfile", "")
@@ -95,7 +95,7 @@ public final class ConfigManager {
         openProfile(activeProfile);
     }
 
-    public static void openProfile(String profile) {
+    public static synchronized void openProfile(String profile) {
         internal().get("profiles.json").getProp("activeProfile").setAs(profile);
         internal().save("profiles.json");
         if (profile.isEmpty()) {
@@ -185,7 +185,7 @@ public final class ConfigManager {
         return this;
     }
 
-    private void hook() {
+    private synchronized void hook() {
         if (shutdown) return;
         shutdown = true;
         LOGGER.info("shutdown requested; saving all configs in {}", backend.folder.getFileName());

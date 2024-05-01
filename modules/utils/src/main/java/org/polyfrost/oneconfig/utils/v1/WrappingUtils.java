@@ -26,7 +26,6 @@
 
 package org.polyfrost.oneconfig.utils.v1;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
@@ -79,6 +78,20 @@ public class WrappingUtils {
      */
     public static Class<?> getUnwrapped(Class<?> cls) {
         return wrapper2Prim.getOrDefault(cls, cls);
+    }
+
+    /**
+     * Cast between number types. Used because normally you cannot cast a Double to an Integer or Double to a Float for example.
+     */
+    public static Number ncast(Number in, Class<?> target) {
+        Class<?> type = getUnwrapped(target);
+        if (type == int.class) return in.intValue();
+        if (type == float.class) return in.floatValue();
+        if (type == double.class) return in.doubleValue();
+        if (type == long.class) return in.longValue();
+        if (type == byte.class) return in.byteValue();
+        if (type == short.class) return in.shortValue();
+        throw new IllegalArgumentException("Cannot convert number to " + type);
     }
 
     /**
@@ -142,15 +155,6 @@ public class WrappingUtils {
         if (type == byte.class) return bwrap((byte[]) in);
         if (type == short.class) return swrap((short[]) in);
         throw new InternalError("wow, a void[]? congratulations");
-    }
-
-    /**
-     * Take the given primitive array and return a List of the corresponding wrapper objects.
-     *
-     * @throws IllegalArgumentException if the given object is not an array
-     */
-    public static Collection<?> boxToList(Object in) {
-        return Arrays.asList(box(in));
     }
 
 

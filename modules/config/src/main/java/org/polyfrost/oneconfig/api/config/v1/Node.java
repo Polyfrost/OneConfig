@@ -39,11 +39,13 @@ import java.util.Map;
 
 public abstract class Node {
     protected static final Logger LOGGER = LogManager.getLogger("OneConfig/Config");
+    @Nullable
     public transient String description;
     // @jdk.internal.vm.annotation.Stable
     private transient String id;
     // @jdk.internal.vm.annotation.Stable
     private transient String title;
+    @Nullable
     private transient Map<String, Object> metadata = null;
 
     public Node(@Nullable String id, @Nullable String title, @Nullable String description) {
@@ -78,7 +80,7 @@ public abstract class Node {
     public void setID(String id) {
         if (id == null) throw new IllegalArgumentException("input ID cannot be null");
         if (this.id != null) throw new IllegalStateException("ID is already set");
-        String s = id.trim().replaceAll("[^a-zA-Z0-9_.]", "_");
+        String s = id.trim().replaceAll("[^\\w$\\-./\\\\]", "_");
         if (s.isEmpty()) throw new IllegalArgumentException("ID cannot be empty (or contain only whitespace)");
         this.id = s;
     }
@@ -154,7 +156,7 @@ public abstract class Node {
     }
 
     protected final void clearMetadata() {
-        metadata.clear();
+        if (metadata != null) metadata.clear();
         metadata = null;
     }
 

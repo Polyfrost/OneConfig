@@ -28,6 +28,8 @@ package org.polyfrost.oneconfig.api.hud.v1
 
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.MustBeInvokedByOverriders
+import org.polyfrost.oneconfig.api.config.v1.Config
+import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.unit.Vec2
@@ -48,7 +50,16 @@ import org.polyfrost.polyui.unit.Vec2
  * - The easiest way to ensure that your HUD works when placed multiple times is to just not use `static` fields, so you don't abuse them.
  */
 @Suppress("EqualsOrHashCode")
-abstract class Hud<T : Drawable> : Cloneable {
+abstract class Hud<T : Drawable>(id: String, name: String, category: Category) : Cloneable, Config("huds/$id", null, name, null) {
+    init {
+        tree.addMetadata("category", category)
+    }
+
+    override fun makeTree(id: String): Tree {
+        tree = super.makeTree(id)
+        return tree
+    }
+
     @Transient
     private var it: T? = null
 
@@ -158,7 +169,7 @@ abstract class Hud<T : Drawable> : Cloneable {
      */
     @MustBeInvokedByOverriders
     @Suppress("unchecked_cast")
-    public override fun clone(): Hud<T> = (super.clone() as Hud<T>).apply { it = null }
+    public override fun clone(): Hud<T> = (super.clone() as Hud<T>).apply { it = null; makeTree(tree.id) }
 
     final override fun equals(other: Any?): Boolean {
         if (this === other) return true

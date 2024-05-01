@@ -43,6 +43,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 import static org.polyfrost.oneconfig.utils.v1.WrappingUtils.*;
 
@@ -64,24 +65,24 @@ public class ObjectSerializer {
     private ObjectSerializer() {
     }
 
+    public static boolean isSerializable(Object in) {
+        if (in == null) return true;
+        Class<?> cls = in.getClass();
+        // these classes are never serializable.
+        return !Runnable.class.isAssignableFrom(cls) && !cls.getPackage().getName().equals(Function.class.getPackage().getName());
+    }
+
     private static Field getDeclaredField(Class<?> cls, String name) {
         for (Field f : cls.getDeclaredFields()) {
             if (f.getName().equals(name)) return f;
         }
-        if (cls.getSuperclass() != null) {
-            Field f = getDeclaredField(cls.getSuperclass(), name);
-            if (f != null) return f;
-        }
-        for (Class<?> c : cls.getInterfaces()) {
-            Field f = getDeclaredField(c, name);
-            if (f != null) return f;
-        }
-        return null;
+        if (cls.getSuperclass() != null) return getDeclaredField(cls.getSuperclass(), name);
+        else return null;
     }
 
     private static void stderrMap(Map<String, Object> map) {
         for (Map.Entry<String, Object> e : map.entrySet()) {
-            System.err.println("  " + e.getKey() + ": " + e.getValue());
+            LOGGER.error("  {}: {}", e.getKey(), e.getValue());
         }
     }
 
@@ -110,6 +111,7 @@ public class ObjectSerializer {
     public Object serialize(Object in, boolean useLists) {
         if (in == null) return null;
         Class<?> cls = in.getClass();
+        if (!isSerializable(in)) return null;
 
         // check 1: return Number, CharSequence or Boolean
         if (isSimpleObject(in)) {
@@ -188,7 +190,8 @@ public class ObjectSerializer {
     private Object _serializeArray(Object in, Class<?> cType, boolean useLists) {
         // primitive array, just box
         if (in.getClass().getComponentType().isPrimitive()) {
-            return useLists ? boxToList(in) : box(in);
+            Object[] o = box(in);
+            return useLists ? Arrays.asList(o) : o;
         }
         Object[] arr = (Object[]) in;
         if (isSimpleClass(cType)) {
@@ -253,9 +256,6 @@ public class ObjectSerializer {
                 throw new SerializationException("Failed to serialize object " + value + ": no detail message (potential field access issue, try making " + f + " public?)", e);
             }
         }
-        for (Class<?> c : cls.getInterfaces()) {
-            _serialize(c, value, cfg, useLists);
-        }
         if (cls.getSuperclass() != null) {
             _serialize(cls.getSuperclass(), value, cfg, useLists);
         }
@@ -272,7 +272,7 @@ public class ObjectSerializer {
         if (in == null) return null;
         String clsName = (String) in.get("class");
         if (clsName == null) {
-            System.err.println("Offending map: " + in);
+            LOGGER.error("Offending map: {}", in);
             stderrMap(in);
             throw new SerializationException("Cannot deserialize object: missing class field (internal error)!");
         }

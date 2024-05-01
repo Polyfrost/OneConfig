@@ -26,21 +26,29 @@
 
 package org.polyfrost.oneconfig.api.config.v1;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.polyfrost.polyui.renderer.data.PolyImage;
 
 import java.util.function.BooleanSupplier;
+import java.util.function.Consumer;
 
 public abstract class Config {
-    protected final Tree tree;
+    protected Tree tree;
 
-    public Config(@NotNull String id, @Nullable PolyImage icon, @NotNull String title, @NotNull Category category) {
-        tree = ConfigManager.active().register(this, id);
+    public Config(@NotNull String id, @Nullable PolyImage icon, @NotNull String title, @Nullable Category category) {
+        tree = makeTree(id);
         if (tree == null) throw new IllegalStateException("hm.");
         tree.setTitle(title);
         if (icon != null) tree.addMetadata("icon", icon);
-        tree.addMetadata("category", category);
+        if (category != null) tree.addMetadata("category", category);
+        ConfigManager.active().register(tree);
+    }
+
+    @ApiStatus.Internal
+    protected Tree makeTree(@NotNull String id) {
+        return ConfigManager.collect(this, id);
     }
 
     public Config(@NotNull String id, @NotNull String title, @NotNull Category category) {
@@ -55,6 +63,11 @@ public abstract class Config {
         Property<?> cond = getProperty(condition);
         if (cond.type != boolean.class && cond.type != Boolean.class) throw new IllegalArgumentException("Condition property must be boolean");
         getProperty(option).addDisplayCondition(cond::getAs);
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T> void addCallback(String option, Consumer<T> callback) {
+        ((Property<T>) getProperty(option)).addCallback(callback);
     }
 
 

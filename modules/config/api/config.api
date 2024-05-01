@@ -9,7 +9,7 @@ public class org/polyfrost/oneconfig/api/config/v1/DummyProperty : org/polyfrost
 	public fun get ()Ljava/lang/Void;
 	public fun getAs ()Ljava/lang/Object;
 	public fun isArray ()Z
-	public fun isPrimitiveArray ()Z
+	public fun isPrimitive ()Z
 	public fun removeCallback (Ljava/util/function/Consumer;)V
 	public synthetic fun set (Ljava/lang/Object;)V
 	public fun set (Ljava/lang/Void;)V
@@ -50,14 +50,13 @@ public class org/polyfrost/oneconfig/api/config/v1/Property : org/polyfrost/onec
 	public final fun addDisplayCondition (Ljava/util/function/BooleanSupplier;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
 	public final fun addDisplayCondition ([Ljava/util/function/BooleanSupplier;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
 	public fun canDisplay ()Z
+	protected final fun clearDisplayConditions ()V
 	public fun deepEquals (Ljava/lang/Object;)Z
 	public fun equals (Ljava/lang/Object;)Z
-	protected fun evaluateDisplay ()V
 	public fun get ()Ljava/lang/Object;
 	public fun getAs ()Ljava/lang/Object;
 	public fun isArray ()Z
-	public fun isPrimitiveArray ()Z
-	protected final fun nconvert (Ljava/lang/Object;)Ljava/lang/Object;
+	public fun isPrimitive ()Z
 	public fun overwrite (Lorg/polyfrost/oneconfig/api/config/v1/Node;)V
 	public static fun prop (Ljava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
 	public static fun prop (Ljava/lang/String;Ljava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
@@ -66,6 +65,7 @@ public class org/polyfrost/oneconfig/api/config/v1/Property : org/polyfrost/onec
 	public static fun recast (Lorg/polyfrost/oneconfig/api/config/v1/Property;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
 	public fun removeCallback (Ljava/util/function/Consumer;)V
 	public final fun removeDisplayCondition (Ljava/util/function/BooleanSupplier;)V
+	public fun revaluateDisplay ()V
 	public fun set (Ljava/lang/Object;)V
 	public fun setAs (Ljava/lang/Object;)V
 	public fun toString ()Ljava/lang/String;
@@ -149,6 +149,7 @@ public class org/polyfrost/oneconfig/api/config/v1/util/ObjectSerializer {
 	public static final field FIELD_SKIP_MODIFIERS I
 	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/config/v1/util/ObjectSerializer;
 	public fun deserialize (Ljava/util/Map;)Ljava/lang/Object;
+	public static fun isSerializable (Ljava/lang/Object;)Z
 	public fun registerTypeAdapter (Lorg/polyfrost/oneconfig/api/config/v1/serialize/adapter/Adapter;)V
 	public fun registerTypeAdapter ([Lorg/polyfrost/oneconfig/api/config/v1/serialize/adapter/Adapter;)V
 	public fun serialize (Ljava/lang/Object;Z)Ljava/lang/Object;

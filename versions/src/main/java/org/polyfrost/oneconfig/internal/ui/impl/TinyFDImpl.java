@@ -33,7 +33,8 @@ import org.lwjgl.system.MemoryStack;
 import org.lwjgl.util.tinyfd.TinyFileDialogs;
 import org.polyfrost.oneconfig.api.ui.v1.TinyFD;
 
-import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class TinyFDImpl implements TinyFD {
 
@@ -48,27 +49,27 @@ public class TinyFDImpl implements TinyFD {
     }
 
     @Override
-    public File openSaveSelector(String title, @Nullable String defaultFilePath, String[] filterPatterns, String filterDescription) {
+    public Path openSaveSelector(String title, @Nullable String defaultFilePath, String[] filterPatterns, String filterDescription) {
         PointerBuffer p = null;
         if (filterPatterns != null && filterPatterns.length != 0) {
             p = stringsToPointerBuffer(filterPatterns);
         }
         String out = TinyFileDialogs.tinyfd_saveFileDialog(title == null ? "Save" : title, defaultFilePath, p, filterDescription);
-        return out == null ? null : new File(out);
+        return out == null ? null : Paths.get(out);
     }
 
     @Override
-    public File openFileSelector(String title, @Nullable String defaultFilePath, String[] filterPatterns, String filterDescription) {
+    public Path openFileSelector(String title, @Nullable String defaultFilePath, String[] filterPatterns, String filterDescription) {
         PointerBuffer p = null;
         if (filterPatterns != null && filterPatterns.length != 0) {
             p = stringsToPointerBuffer(filterPatterns);
         }
         String out = TinyFileDialogs.tinyfd_openFileDialog(title == null ? "Open file" : title, defaultFilePath, p, filterDescription, false);
-        return out == null ? null : new File(out);
+        return out == null ? null : Paths.get(out);
     }
 
     @Override
-    public File[] openMultiFileSelector(String title, @Nullable String defaultFilePath, String[] filterPatterns, String filterDescription) {
+    public Path[] openMultiFileSelector(String title, @Nullable String defaultFilePath, String[] filterPatterns, String filterDescription) {
         PointerBuffer p = null;
         if (filterPatterns != null && filterPatterns.length != 0) {
             p = stringsToPointerBuffer(filterPatterns);
@@ -78,17 +79,18 @@ public class TinyFDImpl implements TinyFD {
             return null;
         }
         String[] split = out.split("\\|");
-        File[] files = new File[split.length];
+        Path[] files = new Path[split.length];
         for (int i = 0; i < split.length; i++) {
-            files[i] = new File(split[i]);
+            files[i] = Paths.get(split[i]);
         }
         return files;
     }
 
+    @SuppressWarnings("DataFlowIssue")
     @Override
-    public File openFolderSelector(String title, @Nullable String defaultFolderPath) {
+    public Path openFolderSelector(String title, @Nullable String defaultFolderPath) {
         String out = TinyFileDialogs.tinyfd_selectFolderDialog(title == null ? "Select folder" : title, defaultFolderPath);
-        return out == null ? null : new File(out);
+        return out == null ? null : Paths.get(out);
     }
 
     @Override

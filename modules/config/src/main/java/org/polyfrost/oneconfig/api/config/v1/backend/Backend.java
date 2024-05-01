@@ -53,20 +53,22 @@ public abstract class Backend {
      * <br>
      * <b>NOTE:</b> do NOT use the parameter tree after this method is called, as it may have been cleared. Use the returned tree instead.
      */
-    public final Tree register(@NotNull Tree t) {
-        if (t.getID() == null) throw new IllegalArgumentException("ID must be set before registering");
-        Tree current = trees.get(t.getID());
+    public final Tree register(@NotNull Tree in) {
+        if (in.getID() == null) throw new IllegalArgumentException("ID must be set before registering");
+        Tree current = trees.get(in.getID());
         if (current != null) {
-            LOGGER.info("performing tree merge between {} and {}", current, t);
-            current.overwrite(t);
+            // no point in merging if the tree is empty.
+            if (in.map.isEmpty()) return current;
+            LOGGER.info("performing tree merge between {} and {}", current.getTitle(), in.getTitle());
+            current.overwrite(in);
             // clear the old tree to prevent illegal usage.
-            t.clear();
+            in.clear();
             save(current);
             return current;
         } else {
-            if (load(t)) return t;
-            else save(t);
-            return t;
+            if (load(in)) return in;
+            else save(in);
+            return in;
         }
     }
 

@@ -91,7 +91,7 @@ object HudManager {
     init {
         register(TextHud.DateTime("Date:", "yyyy-MM-dd"))
         register(TextHud.DateTime("Time:", "HH:mm:ss"))
-        register(TextHud.Field("", "Text"))
+        register(TextHud.Field("idk.yml", "Yeah", Hud.Category.COMBAT, "lol", "Text"))
     }
 
     var hudsPage = HudsPage(huds)

@@ -33,7 +33,6 @@ import org.polyfrost.universal.UDesktop;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -42,6 +41,7 @@ import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 
 /**
@@ -114,19 +114,19 @@ public final class NetworkUtils {
     }
 
     /**
-     * Downloads a file from a URL.
+     * Downloads a path from a URL.
      *
      * @param url       The URL to download from.
-     * @param file      The file to download to.
+     * @param path      The path to download to.
      * @param userAgent The user agent to use.
      * @param timeout   The timeout in milliseconds.
      * @param useCaches Whether to use caches.
      * @return Whether the download was successful.
      */
-    public static boolean downloadFile(String url, File file, String userAgent, int timeout, boolean useCaches) {
+    public static boolean downloadFile(String url, Path path, String userAgent, int timeout, boolean useCaches) {
         url = url.replace(" ", "%20");
         try (BufferedInputStream in = new BufferedInputStream(setupConnection(url, userAgent, timeout, useCaches))) {
-            Files.copy(in, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            Files.copy(in, path, StandardCopyOption.REPLACE_EXISTING);
         } catch (Exception e) {
             LOGGER.error("Failed to download file from {}", url, e);
             return false;
@@ -138,12 +138,12 @@ public final class NetworkUtils {
      * Downloads a file from a URL.
      *
      * @param url  The URL to download from.
-     * @param file The file to download to.
+     * @param path The file to download to.
      * @return Whether the download was successful.
-     * @see NetworkUtils#downloadFile(String, File, String, int, boolean)
+     * @see NetworkUtils#downloadFile(String, Path, String, int, boolean)
      */
-    public static boolean downloadFile(String url, File file) {
-        return downloadFile(url, file, "OneConfig/1.0.0", 5000, false);
+    public static boolean downloadFile(String url, Path path) {
+        return downloadFile(url, path, "OneConfig/1.0.0", 5000, false);
     }
 
     /**

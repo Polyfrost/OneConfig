@@ -78,7 +78,7 @@ public class NightConfigSerializer implements FileSerializer<String> {
                 if (p.type == Void.class) continue;
                 Object o = p.get();
                 if (o == null) continue;
-                if (!WrappingUtils.isSimpleObject(o)) {
+                if (!WrappingUtils.isSimpleObject(o) && ObjectSerializer.isSerializable(o)) {
                     Object out = ObjectSerializer.INSTANCE.serialize(o, true);
                     if (out instanceof Map) cfg.add(n.getID(), mapsToConfigs((Map<String, Object>) out));
                     else cfg.add(n.getID(), out);

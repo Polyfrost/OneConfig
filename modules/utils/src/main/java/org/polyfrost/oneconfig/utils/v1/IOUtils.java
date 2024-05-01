@@ -35,18 +35,9 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.InputStream;
-import java.nio.Buffer;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.security.MessageDigest;
 
 /**
@@ -56,64 +47,6 @@ public final class IOUtils {
     private static final Logger LOGGER = LogManager.getLogger("OneConfig/IO");
 
     private IOUtils() {
-    }
-
-    /**
-     * @deprecated Use {@link #resourceToByteBufferNullable(String, Class)}
-     */
-    public static ByteBuffer resourceToByteBuffer(String path) throws IOException {
-        return resourceToByteBuffer(path, IOUtils.class);
-    }
-
-    /**
-     * Taken from legui under MIT License
-     * <a href="https://github.com/SpinyOwl/legui/blob/develop/LICENSE">https://github.com/SpinyOwl/legui/blob/develop/LICENSE</a>
-     */
-    public static ByteBuffer resourceToByteBuffer(String path, Class<?> clazz) throws IOException {
-        byte[] bytes;
-        path = path.trim();
-        if (path.startsWith("http")) {
-            try (InputStream in = NetworkUtils.setupConnection(path, "OneConfig", 5000, true)) {
-                bytes = kotlin.io.ByteStreamsKt.readBytes(in);
-            }
-        } else {
-            InputStream stream;
-            Path p = Paths.get(path);
-            if (Files.isRegularFile(p)) {
-                stream = Files.newInputStream(p, StandardOpenOption.CREATE);
-            } else {
-                stream = clazz.getResourceAsStream(path);
-            }
-            if (stream == null) {
-                throw new FileNotFoundException(path);
-            }
-            bytes = kotlin.io.ByteStreamsKt.readBytes(stream);
-            stream.close();
-        }
-        ByteBuffer data = ByteBuffer.allocateDirect(bytes.length).order(ByteOrder.nativeOrder())
-                .put(bytes);
-        ((Buffer) data).flip();
-        return data;
-    }
-
-    /**
-     * @deprecated Use {@link #resourceToByteBufferNullable(String, Class)}
-     */
-    @Deprecated
-    public static ByteBuffer resourceToByteBufferNullable(String path) {
-        try {
-            return resourceToByteBuffer(path);
-        } catch (Exception ignored) {
-            return null;
-        }
-    }
-
-    public static ByteBuffer resourceToByteBufferNullable(String path, Class<?> clazz) {
-        try {
-            return resourceToByteBuffer(path, clazz);
-        } catch (Exception ignored) {
-            return null;
-        }
     }
 
     /**
@@ -165,11 +98,11 @@ public final class IOUtils {
     /**
      * Gets the SHA-256 hash of a file.
      *
-     * @param file The file to hash.
+     * @param path The file to hash.
      * @return The SHA-256 hash of the file.
      */
-    public static String getFileChecksum(File file) {
-        try (FileInputStream inputStream = new FileInputStream(file)) {
+    public static String getFileChecksum(Path path) {
+        try (InputStream inputStream = Files.newInputStream(path)) {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             byte[] bytesBuffer = new byte[1024];
             int bytesRead;
@@ -180,7 +113,7 @@ public final class IOUtils {
 
             return convertByteArrayToHexString(digest.digest());
         } catch (Exception e) {
-            LOGGER.error("Failed to get {} checksum", file.getName(), e);
+            LOGGER.error("Failed to get {} checksum", path.toString(), e);
         }
         return "";
     }

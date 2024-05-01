@@ -37,10 +37,11 @@ import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -48,6 +49,8 @@ import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Base64;
 import java.util.Objects;
 
@@ -87,10 +90,10 @@ public final class OneImage {
     /**
      * Create a new OneImage from the file.
      *
-     * @param file File to the image file.
+     * @param path path to the image file.
      */
-    public OneImage(File file) throws IOException {
-        image = ImageIO.read(Objects.requireNonNull(file));
+    public OneImage(Path path) throws IOException {
+        image = ImageIO.read(new BufferedInputStream(Files.newInputStream(path)));
         width = image.getWidth();
         height = image.getHeight();
     }
@@ -189,8 +192,8 @@ public final class OneImage {
     /**
      * Attempt to save the image to the specified file.
      */
-    public void save(String filePath) throws IOException {
-        ImageIO.write(image, "png", new File(filePath));
+    public void save(Path path) throws IOException {
+        ImageIO.write(image, "png", new BufferedOutputStream(Files.newOutputStream(path)));
     }
 
     /**
@@ -237,6 +240,7 @@ public final class OneImage {
      */
     public String uploadToImgur(boolean copy) {
         JsonObject object = uploadToImgur();
+        if (object == null) return null;
         String link = object.get("data").getAsJsonObject().get("link").getAsString();
         if (copy) IOUtils.copyStringToClipboard(link);
         return link;

@@ -40,22 +40,9 @@ import kotlin.reflect.KProperty
  *
  * **Do not use in Java sources**.
  */
-open class KtConfig(id: String, title: String, category: Config.Category, icon: PolyImage? = null) {
-    protected val tree = Tree(id, title, null, null).also {
-        if (icon != null) it.addMetadata("icon", icon)
-        it.addMetadata("category", category)
-    }
+open class KtConfig(id: String, title: String, category: Category, icon: PolyImage? = null) : Config(id, icon, title, category) {
 
-    init {
-        ConfigManager.active().register(tree)
-    }
-
-    /**
-     * return the property with the given id.
-     */
-    @JvmSynthetic
-    @Suppress("UNCHECKED_CAST")
-    protected fun <V> getProperty(id: String) = tree.getProp(id) as Property<V>
+    final override fun makeTree(id: String) = Tree.tree(id)
 
     /**
      * return the property with the given id by a kotlin property reference.

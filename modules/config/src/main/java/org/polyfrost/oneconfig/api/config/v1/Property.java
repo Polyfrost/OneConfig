@@ -28,6 +28,7 @@ package org.polyfrost.oneconfig.api.config.v1;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.polyfrost.oneconfig.utils.v1.WrappingUtils;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -54,15 +55,15 @@ public class Property<T> extends Node implements Serializable {
     private transient boolean display = true;
     private transient List<BooleanSupplier> conditions = null;
 
-    public Property(@Nullable String id, @Nullable String name, @Nullable String description, @Nullable T value, @NotNull Class<T> type) {
-        super(id, name, description);
+    public Property(@Nullable String id, @Nullable String title, @Nullable String description, @Nullable T value, @NotNull Class<T> type) {
+        super(id, title, description);
         this.value = value;
         this.type = type;
     }
 
     @SuppressWarnings("unchecked")
-    public Property(@Nullable String id, @Nullable String name, @Nullable String description, @NotNull T value) {
-        this(id, name, description, value, (Class<T>) value.getClass());
+    public Property(@Nullable String id, @Nullable String title, @Nullable String description, @NotNull T value) {
+        this(id, title, description, value, (Class<T>) value.getClass());
     }
 
     public Property(@NotNull T value) {
@@ -109,7 +110,7 @@ public class Property<T> extends Node implements Serializable {
     public final Property<T> addDisplayCondition(@NotNull BooleanSupplier condition) {
         if (conditions == null) conditions = new ArrayList<>(5);
         conditions.add(condition);
-        evaluateDisplay();
+        revaluateDisplay();
         return this;
     }
 
@@ -122,11 +123,11 @@ public class Property<T> extends Node implements Serializable {
         else {
             this.conditions.addAll(conditions);
         }
-        evaluateDisplay();
+        revaluateDisplay();
         return this;
     }
 
-    protected void evaluateDisplay() {
+    public void revaluateDisplay() {
         display = true;
         if (conditions == null) return;
         for (BooleanSupplier s : conditions) {
@@ -143,13 +144,13 @@ public class Property<T> extends Node implements Serializable {
     public final void removeDisplayCondition(@NotNull BooleanSupplier condition) {
         if (conditions == null) return;
         conditions.remove(condition);
-        evaluateDisplay();
+        revaluateDisplay();
     }
 
     /**
      * Remove all display conditions from this property.
      */
-    final void clearDisplayConditions() {
+    protected final void clearDisplayConditions() {
         conditions = null;
         display = true;
     }
@@ -251,25 +252,10 @@ public class Property<T> extends Node implements Serializable {
      * Set the value of this property. This will call all callbacks.
      * This method is unsafe, and will throw a {@link ClassCastException} if the value is not of the correct type.
      */
-    public <V> void setAs(V value) {
-        set(nconvert(value));
-    }
-
-    // i actually hate java
     @SuppressWarnings("unchecked")
-    protected final T nconvert(Object o) {
-        if (o == null) return null;
-        if (!(o instanceof Number)) return (T) o;
-        Number in = (Number) o;
-        Class<?> c = in.getClass();
-        Class<?> type = this.value == null ? this.type : this.value.getClass();
-        if (type == Integer.class) return (T) Integer.valueOf(in.intValue());
-        if (type == Float.class) return (T) Float.valueOf(in.floatValue());
-        if (type == Double.class) return (T) Double.valueOf(in.doubleValue());
-        if (type == Long.class) return (T) Long.valueOf(in.longValue());
-        if (type == Byte.class) return (T) Byte.valueOf(in.byteValue());
-        if (type == Short.class) return (T) Short.valueOf(in.shortValue());
-        throw new IllegalArgumentException("Cannot convert number to " + type);
+    public <V> void setAs(V value) {
+        if(value instanceof Number) set((T) WrappingUtils.ncast((Number) value, type));
+        else set((T) value);
     }
 
     /**
@@ -279,7 +265,7 @@ public class Property<T> extends Node implements Serializable {
      */
     public boolean deepEquals(Object obj) {
         if (!equals(obj)) return false;
-        if (!this.isArray() || this.isPrimitiveArray()) return false;
+        if (!this.isArray() || this.isPrimitive()) return false;
         Property<?> that = (Property<?>) obj;
         return Arrays.equals((Object[]) this.value, (Object[]) that.value);
     }
@@ -290,7 +276,7 @@ public class Property<T> extends Node implements Serializable {
         if (obj == this) return true;
         if (!(obj instanceof Property)) return false;
         Property<?> that = (Property<?>) obj;
-        // w: see nconvert
+        // w: see ncast
 //        if (this.type != that.type) return false;
         return Objects.equals(this.getID(), that.getID()) && Objects.equals(this.value, that.value);
     }
@@ -298,8 +284,8 @@ public class Property<T> extends Node implements Serializable {
     /**
      * @return true if the value is a primitive array.
      */
-    public boolean isPrimitiveArray() {
-        return type.isArray() && type.getComponentType().isPrimitive();
+    public boolean isPrimitive() {
+        return type.isPrimitive() || (type.isArray() && type.getComponentType().isPrimitive());
     }
 
     /**

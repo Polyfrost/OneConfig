@@ -27,11 +27,11 @@
 package org.polyfrost.oneconfig.utils.v1.dsl
 
 import org.polyfrost.oneconfig.utils.v1.IOUtils
-import java.io.File
+import java.nio.file.Path
 
 /**
- * Returns the SHA-256 hash of the given [File].
+ * Returns the SHA-256 hash of the given [Path].
  *
  * @see IOUtils.getFileChecksum
  */
-fun File.checksum() = IOUtils.getFileChecksum(this)!!
+fun Path.checksum() = IOUtils.getFileChecksum(this)!!
