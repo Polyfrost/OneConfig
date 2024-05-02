@@ -28,6 +28,7 @@ package org.polyfrost.oneconfig.api.config.v1;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.polyfrost.oneconfig.utils.v1.MHUtils;
 import org.polyfrost.oneconfig.utils.v1.WrappingUtils;
 
 import java.io.Serializable;
@@ -38,56 +39,29 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
+/**
+ * Class which represents a property in a tree.
+ * <br>
+ * <b>to actually create a property, see the {@link Properties} class.</b>
+ * @param <T>
+ */
 @SuppressWarnings("unused")
-public class Property<T> extends Node implements Serializable {
+public abstract class Property<T> extends Node implements Serializable {
     /**
      * This is the type of the property, and is used for casting.
+     * <br><b>Note that this is not {@code Class<T>}. this is because it holds the unwrapped type of the stored value.</b>
      */
     @NotNull
     public transient final Class<?> type;
-    /**
-     * This is the actual value of the property, and is what is stored.
-     */
-    @Nullable
-    private T value;
-    private transient List<@NotNull Consumer<@Nullable T>> callbacks = null;
+    protected transient List<@NotNull Consumer<@Nullable T>> callbacks = null;
     private transient boolean display = true;
     private transient List<BooleanSupplier> conditions = null;
 
-    public Property(@Nullable String id, @Nullable String title, @Nullable String description, @Nullable T value, @NotNull Class<T> type) {
+    protected Property(@Nullable String id, @Nullable String title, @Nullable String description, @NotNull Class<T> type) {
         super(id, title, description);
-        this.value = value;
         this.type = WrappingUtils.getUnwrapped(type);
-    }
-
-    @SuppressWarnings("unchecked")
-    public Property(@Nullable String id, @Nullable String title, @Nullable String description, @NotNull T value) {
-        this(id, title, description, value, (Class<T>) value.getClass());
-    }
-
-    public Property(@NotNull T value) {
-        this(value.getClass().getSimpleName(), value.getClass().getSimpleName(), null, value);
-    }
-
-    @SuppressWarnings("ConstantConditions")
-    public static <T> Property<T> prop(@Nullable String id, @NotNull T value) {
-        if (value == null) throw new IllegalArgumentException("Cannot create a property with a null value and no class");
-        return new Property<>(id, null, null, value);
-    }
-
-    public static <T> Property<T> prop(@NotNull T value) {
-        return new Property<>(null, null, null, value);
-    }
-
-    @SuppressWarnings("unchecked")
-    public static <T> Property<T> prop(@Nullable String id, @Nullable T value, Class<?> type) {
-        return new Property<>(id, null, null, value, (Class<T>) type);
-    }
-
-    @SuppressWarnings("unchecked")
-    public static <T> Property<T> prop(@Nullable String id, @Nullable String name, @Nullable T value, @NotNull Class<?> type) {
-        return new Property<>(id, name, null, value, (Class<T>) type);
     }
 
     @SuppressWarnings("unchecked")
@@ -100,7 +74,7 @@ public class Property<T> extends Node implements Serializable {
      *
      * @see #addDisplayCondition(BooleanSupplier)
      */
-    public boolean canDisplay() {
+    public final boolean canDisplay() {
         return display;
     }
 
@@ -161,7 +135,7 @@ public class Property<T> extends Node implements Serializable {
      * @param callback the callback to add. The new value is passed to the callback.
      * @see #removeCallback(Consumer)
      */
-    public Property<T> addCallback(@NotNull Consumer<@Nullable T> callback) {
+    public final Property<T> addCallback(@NotNull Consumer<@Nullable T> callback) {
         if (callbacks == null) callbacks = new ArrayList<>(2);
         callbacks.add(callback);
         return this;
@@ -172,7 +146,7 @@ public class Property<T> extends Node implements Serializable {
         return addCallback(Arrays.asList(callbacks));
     }
 
-    public Property<T> addCallback(@NotNull Collection<Consumer<@Nullable T>> callbacks) {
+    public final Property<T> addCallback(@NotNull Collection<Consumer<@Nullable T>> callbacks) {
         if (this.callbacks == null) this.callbacks = new ArrayList<>(callbacks);
         else {
             this.callbacks.addAll(callbacks);
@@ -195,7 +169,7 @@ public class Property<T> extends Node implements Serializable {
     /**
      * Remove a callback.
      */
-    public void removeCallback(@NotNull Consumer<@Nullable T> callback) {
+    public final void removeCallback(@NotNull Consumer<@Nullable T> callback) {
         if (callbacks == null) return;
         callbacks.remove(callback);
     }
@@ -203,7 +177,7 @@ public class Property<T> extends Node implements Serializable {
     /**
      * Remove all callbacks.
      */
-    void clearCallbacks() {
+    protected final void clearCallbacks() {
         callbacks = null;
     }
 
@@ -213,39 +187,39 @@ public class Property<T> extends Node implements Serializable {
      * The value (and callbacks) are only set/called if the value is different from the previous value (using {@link Object#equals(Object)}).
      */
     public void set(@Nullable T value) {
-        if (value != null && value.equals(this.value)) return;
+        if (value != null && value.equals(this.get())) return;
         if (callbacks != null) {
-            try {
-                for (Consumer<T> c : callbacks) {
+            for (Consumer<T> c : callbacks) {
+                try {
                     c.accept(value);
+                } catch (Throwable t) {
+                    LOGGER.error("failed to call callback {} on property {}", c, this.getID(), t);
                 }
-            } catch (Exception e) {
-                LOGGER.error("Error while calling callbacks for property {}", getID(), e);
             }
         }
-        this.value = value;
+        set0(value);
     }
 
+    protected abstract void set0(@Nullable T value);
+
     @Override
-    public String toString() {
-        return getID() + ": " + value;
+    public final String toString() {
+        return getID() + ": " + get();
     }
 
     /**
      * Get the value of this property.
      */
     @Nullable
-    public T get() {
-        return value;
-    }
+    public abstract T get();
 
     /**
      * Get the value of this property, cast to the specified type.
      * This method is unsafe, and will throw a {@link ClassCastException} if the value is not of the correct type.
      */
     @SuppressWarnings("unchecked")
-    public <V> V getAs() {
-        return (V) value;
+    public final <V> V getAs() {
+        return (V) get();
     }
 
     /**
@@ -253,7 +227,7 @@ public class Property<T> extends Node implements Serializable {
      * This method is unsafe, and will throw a {@link ClassCastException} if the value is not of the correct type.
      */
     @SuppressWarnings("unchecked")
-    public <V> void setAs(V value) {
+    public final <V> void setAs(V value) {
         set((T) WrappingUtils.richCast(value, type));
     }
 
@@ -262,35 +236,135 @@ public class Property<T> extends Node implements Serializable {
      * <br>
      * In pretty much every case, you should use {@link #equals(Object)} instead. This is used for testing. Note that primitive arrays are not checked.
      */
+    @Override
     public boolean deepEquals(Object obj) {
         if (!equals(obj)) return false;
         if (!this.isArray() || this.isPrimitive()) return false;
         Property<?> that = (Property<?>) obj;
-        return Arrays.equals((Object[]) this.value, (Object[]) that.value);
+        return Arrays.equals((Object[]) this.get(), (Object[]) that.get());
     }
 
     @Override
-    public boolean equals(Object obj) {
+    public final boolean equals(Object obj) {
         if (obj == null) return false;
         if (obj == this) return true;
         if (!(obj instanceof Property)) return false;
         Property<?> that = (Property<?>) obj;
-        // w: see ncast
-//        if (this.type != that.type) return false;
-        return Objects.equals(this.getID(), that.getID()) && Objects.equals(this.value, that.value);
+        if (this.type != WrappingUtils.getUnwrapped(that.type)) return false;
+        return Objects.equals(this.getID(), that.getID()) && Objects.equals(this.get(), that.get());
     }
 
     /**
      * @return true if the value is a primitive array.
      */
-    public boolean isPrimitive() {
+    public final boolean isPrimitive() {
         return type.isPrimitive() || (type.isArray() && type.getComponentType().isPrimitive());
     }
 
     /**
      * @return true if the value is an array.
      */
-    public boolean isArray() {
+    public final boolean isArray() {
         return type.isArray();
+    }
+
+
+    // classes are package-private so that NO internal implementation details are leaked to the user
+    // they can only see the Property<T> type
+    static final class Simple<T> extends Property<T> {
+        private T value;
+
+        @SuppressWarnings("unchecked")
+        Simple(@Nullable String id, @Nullable String title, @Nullable String description, @Nullable T value, @Nullable Class<T> type) {
+            super(id, title, description, type == null ? (Class<T>) Objects.requireNonNull(value).getClass() : type);
+            this.value = value;
+        }
+
+        @Override
+        protected void set0(@Nullable T value) {
+            this.value = value;
+        }
+
+        @Override
+        public @Nullable T get() {
+            return value;
+        }
+    }
+
+    static final class Functional<T> extends Property<T> {
+        private final Consumer<T> setter;
+        private final Supplier<T> getter;
+
+        @SuppressWarnings("unchecked")
+        Functional(@Nullable String id, @Nullable String title, @Nullable String description, @NotNull Consumer<T> setter, @NotNull Supplier<T> getter, @Nullable Class<T> type) {
+            super(id, title, description, type == null ? (Class<T>) getter.get().getClass() : type);
+            this.setter = setter;
+            this.getter = getter;
+        }
+
+        @Override
+        protected void set0(@Nullable T value) {
+            setter.accept(value);
+        }
+
+        @Override
+        public @Nullable T get() {
+            return getter.get();
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    static final class Field<T> extends Property<T> {
+        private final java.lang.reflect.Field field;
+        private final Object owner;
+
+        Field(@Nullable String title, @Nullable String description, @NotNull java.lang.reflect.Field field, @Nullable Object owner) {
+            super(field.getName(), title, description, (Class<T>) field.getType());
+            this.field = field;
+            this.owner = owner;
+            MHUtils.setAccessible(field);
+        }
+
+        @Override
+        public void set0(@Nullable T value) {
+            try {
+                field.set(owner, value);
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        @Override
+        public @Nullable T get() {
+            try {
+                return (T) field.get(owner);
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+
+    static final class Dummy extends Property<Void> {
+        private static short r = 0;
+
+        Dummy(@Nullable String id, @Nullable String title, @Nullable String description) {
+            super(id == null ? "dummy$" + r++ : id, title, description, void.class);
+        }
+
+        @Override
+        @Deprecated
+        public @Nullable Void get() {
+            return null;
+        }
+
+        @Override
+        @Deprecated
+        public void set(@Nullable Void value) {
+        }
+
+        @Override
+        protected void set0(@Nullable Void value) {
+        }
     }
 }

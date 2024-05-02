@@ -29,6 +29,7 @@ package org.polyfrost.oneconfig.api.config.v1.collect.impl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.polyfrost.oneconfig.api.config.v1.Config;
+import org.polyfrost.oneconfig.api.config.v1.Properties;
 import org.polyfrost.oneconfig.api.config.v1.Property;
 import org.polyfrost.oneconfig.api.config.v1.Tree;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Accordion;
@@ -36,14 +37,12 @@ import org.polyfrost.oneconfig.api.config.v1.annotations.Button;
 import org.polyfrost.oneconfig.api.config.v1.annotations.DependsOn;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Option;
 import org.polyfrost.oneconfig.utils.v1.MHUtils;
-import org.polyfrost.oneconfig.utils.v1.WrappingUtils;
 
 import java.lang.annotation.Annotation;
 import java.lang.invoke.MethodHandle;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
-import static org.polyfrost.oneconfig.api.config.v1.DummyProperty.dummy;
 import static org.polyfrost.oneconfig.api.config.v1.Node.strv;
 
 /**
@@ -80,16 +79,7 @@ public class OneConfigCollector extends ReflectiveCollector {
             Option opt = a.annotationType().getAnnotation(Option.class);
             if (opt == null) continue;
             try {
-                // asm: use method handle as it fails NOW instead of at set time, and is faster
-                final MethodHandle setter = MHUtils.getFieldSetter(f, src).getOrThrow();
-                Class<?> type = f.getType();
-                Property<?> p = Property.prop(f.getName(), MHUtils.setAccessible(f).get(src), type).addCallback(v -> {
-                    try {
-                        setter.invoke(WrappingUtils.richCast(v, type));
-                    } catch (Throwable e) {
-                        throw new RuntimeException("[internal failure] Failed to setback field", e);
-                    }
-                });
+                Property<?> p = Properties.field(null, null, f, src);
                 handleMetadata(p, a, opt, f);
                 builder.put(p);
             } catch (Throwable e) {
@@ -104,7 +94,7 @@ public class OneConfigCollector extends ReflectiveCollector {
         Button b = m.getDeclaredAnnotation(Button.class);
         if (b == null) return;
         if (m.getParameterCount() != 0) throw new IllegalArgumentException("Button method " + m.getName() + " must have no parameters");
-        Property<?> p = dummy(m.getName(), b.title(), b.description());
+        Property<?> p = Properties.dummy(m.getName(), b.title(), b.description());
         final MethodHandle mh = MHUtils.getMethodHandle(m, src).getOrThrow();
         final String methodString = m.toString();
         p.addMetadata("runnable", (Runnable) () -> {

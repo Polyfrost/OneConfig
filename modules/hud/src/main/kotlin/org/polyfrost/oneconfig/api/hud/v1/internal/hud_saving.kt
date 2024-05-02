@@ -27,23 +27,23 @@
 package org.polyfrost.oneconfig.api.hud.v1.internal
 
 import org.polyfrost.oneconfig.api.config.v1.Node
+import org.polyfrost.oneconfig.api.config.v1.Properties.simple
 import org.polyfrost.oneconfig.api.config.v1.Property
-import org.polyfrost.oneconfig.api.config.v1.Property.prop
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.hud.v1.Hud
 
 fun Hud<*>.writeOut(): Tree {
     val tree = Tree.tree()
     val hud = hud
-    tree["x"] = prop(hud.x)
-    tree["y"] = prop(hud.y)
-    tree["scaleX"] = prop(hud.scaleX)
-    tree["scaleY"] = prop(hud.scaleY)
-    tree["hidden"] = prop(hidden)
-    tree["skewX"] = prop(hud.skewX)
-    tree["skewY"] = prop(hud.skewY)
-    tree["rotation"] = prop(hud.rotation)
-    tree["opacity"] = prop(hud.alpha)
+    tree["x"] = simple(hud.x)
+    tree["y"] = simple(hud.y)
+    tree["scaleX"] = simple(hud.scaleX)
+    tree["scaleY"] = simple(hud.scaleY)
+    tree["hidden"] = simple(hidden)
+    tree["skewX"] = simple(hud.skewX)
+    tree["skewY"] = simple(hud.skewY)
+    tree["rotation"] = simple(hud.rotation)
+    tree["opacity"] = simple(hud.alpha)
     return tree
 }
 

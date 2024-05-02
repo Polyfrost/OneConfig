@@ -46,7 +46,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import static org.polyfrost.oneconfig.api.config.v1.Property.prop;
 import static org.polyfrost.oneconfig.api.config.v1.Tree.tree;
 
 public final class ConfigManager {
@@ -89,7 +88,7 @@ public final class ConfigManager {
     private static synchronized void initialize() {
         String activeProfile = internal().register(
                 tree("profiles.json").put(
-                        prop("activeProfile", "")
+                        Properties.simple("activeProfile", "Active Profile", "The profile which is currently open.", "")
                 )
         ).getProp("activeProfile").getAs();
         openProfile(activeProfile);

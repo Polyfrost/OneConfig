@@ -42,7 +42,7 @@ import cc.polyfrost.oneconfig.gui.elements.config.ConfigSwitch;
 import cc.polyfrost.oneconfig.gui.elements.config.ConfigTextBox;
 import org.apache.logging.log4j.Logger;
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager;
-import org.polyfrost.oneconfig.api.config.v1.DummyProperty;
+import org.polyfrost.oneconfig.api.config.v1.Properties;
 import org.polyfrost.oneconfig.api.config.v1.Property;
 import org.polyfrost.oneconfig.api.config.v1.Tree;
 import org.polyfrost.oneconfig.api.config.v1.visualize.Visualizer;
@@ -56,7 +56,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.lang.invoke.MethodHandle;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -97,11 +96,11 @@ public abstract class OneConfigV0CompatMixin {
                 Property<?> prop;
                 Class<? extends Visualizer> visualizer;
                 if (opt instanceof ConfigButton) {
-                    prop = DummyProperty.dummy(id);
+                    prop = Properties.dummy(id);
                     visualizer = Visualizer.ButtonVisualizer.class;
                     prop.addMetadata("runnable", opt.get());
                 } else {
-                    prop = Property.prop(id, opt.name, opt.get(), opt.getField().getType());
+                    prop = Properties.field(opt.name, opt.description, opt.getField(), MHUtils.getField(opt, "parent").getOrThrow());
                     if (opt instanceof ConfigSwitch || opt instanceof ConfigCheckbox) {
                         visualizer = Visualizer.SwitchVisualizer.class;
                     } else if (opt instanceof ConfigSlider) {
@@ -122,8 +121,6 @@ public abstract class OneConfigV0CompatMixin {
                 prop.description = opt.description;
                 prop.addMetadata("visualizer", visualizer);
                 prop.addDisplayCondition(opt::isHidden);
-                MethodHandle setter = MHUtils.getMethodHandle(opt, "set", void.class, Object.class).getOrThrow();
-                prop.addCallback(v -> MHUtils.invokeCatching(setter, v));
                 target.put(prop);
             }
             ConfigManager.active().register(t);

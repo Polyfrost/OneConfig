@@ -40,6 +40,7 @@ import com.electronwill.nightconfig.yaml.YamlParser;
 import com.electronwill.nightconfig.yaml.YamlWriter;
 import org.jetbrains.annotations.NotNull;
 import org.polyfrost.oneconfig.api.config.v1.Node;
+import org.polyfrost.oneconfig.api.config.v1.Properties;
 import org.polyfrost.oneconfig.api.config.v1.Property;
 import org.polyfrost.oneconfig.api.config.v1.Tree;
 import org.polyfrost.oneconfig.api.config.v1.util.ObjectSerializer;
@@ -48,7 +49,6 @@ import org.polyfrost.oneconfig.utils.v1.WrappingUtils;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.polyfrost.oneconfig.api.config.v1.Property.prop;
 import static org.polyfrost.oneconfig.api.config.v1.Tree.tree;
 
 public class NightConfigSerializer implements FileSerializer<String> {
@@ -97,11 +97,11 @@ public class NightConfigSerializer implements FileSerializer<String> {
             if (e.getValue() instanceof Config) {
                 Config c = (Config) e.getValue();
                 if (c.get("class") != null) {
-                    b.put(prop(e.getKey(), ObjectSerializer.INSTANCE.deserialize(((Config) e.getValue()).valueMap())));
+                    b.put(Properties.simple(e.getKey(), null, null, ObjectSerializer.INSTANCE.deserialize(((Config) e.getValue()).valueMap())));
                 } else b.put(read(c.valueMap(), tree(e.getKey())));
             } else {
                 Object v = e.getValue();
-                b.put(prop(e.getKey(), v));
+                b.put(Properties.simple(e.getKey(), null, null, v));
             }
         }
         return b;

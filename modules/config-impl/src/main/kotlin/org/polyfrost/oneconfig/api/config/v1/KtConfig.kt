@@ -97,9 +97,8 @@ open class KtConfig(id: String, title: String, category: Category, icon: PolyIma
         private val extra: (Property<T>.() -> Unit)? = null
     ) : PropertyDelegateProvider<KtConfig, ReadWriteProperty<KtConfig, T>> {
         override operator fun provideDelegate(thisRef: KtConfig, property: KProperty<*>): ReadWriteProperty<KtConfig, T> {
-            val p = Property.prop<T>(property.name, name ?: property.name, def, type)
+            val p = Properties.simple(property.name, name ?: property.name, description, def, type)
             extra?.invoke(p)
-            if (description != null) p.description = description
             p.addMetadata("visualizer", visualizer)
             thisRef.tree.put(p)
             return PropertyDelegate(p)
