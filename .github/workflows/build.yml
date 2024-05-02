@@ -19,7 +19,6 @@ on:
       - 'LICENSE'
       - '.gitattributes'
       - '.gitignore'
-      - 'format/**'
 
 concurrency:
   group: ${{ github.head_ref || format('{0}-{1}', github.ref, github.run_number) }}
@@ -35,7 +34,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
 
-    name: Build
+    name: CI/CD Build on ${{ matrix.os }}
 
     runs-on: ${{ matrix.os }}
 
@@ -58,6 +57,10 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
         with:
           add-job-summary-as-pr-comment: always
+          add-job-summary: always
+          build-scan-publish: true
+          build-scan-terms-of-use-url: "https://gradle.com/terms-of-service"
+          build-scan-terms-of-use-agree: "yes"
           gradle-home-cache-cleanup: true
           validate-wrappers: true
           cache-read-only: ${{ github.ref != 'refs/heads/master' && github.ref != 'refs/heads/v1' }}
@@ -72,7 +75,7 @@ jobs:
             ${{ runner.os }}-loom-v1
 
       - name: Build
-        run: ./gradlew build --scan
+        run: ./gradlew build
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
