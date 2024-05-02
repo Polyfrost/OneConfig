@@ -65,15 +65,6 @@ jobs:
           validate-wrappers: true
           cache-read-only: ${{ github.ref != 'refs/heads/master' && github.ref != 'refs/heads/v1' }}
 
-      - uses: actions/cache@v4
-        with:
-          path: |
-            **/loom-cache
-            **/prebundled-jars
-          key: ${{ runner.os }}-loom-v1-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-loom-v1
-
       - name: Build
         run: ./gradlew build
 
