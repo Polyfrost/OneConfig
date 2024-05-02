@@ -42,7 +42,6 @@ import java.lang.annotation.Annotation;
 import java.lang.invoke.MethodHandle;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.List;
 
 import static org.polyfrost.oneconfig.api.config.v1.DummyProperty.dummy;
 import static org.polyfrost.oneconfig.api.config.v1.Node.strv;
@@ -86,9 +85,7 @@ public class OneConfigCollector extends ReflectiveCollector {
                 Class<?> type = f.getType();
                 Property<?> p = Property.prop(f.getName(), MHUtils.setAccessible(f).get(src), type).addCallback(v -> {
                     try {
-                        if (type.isArray() && v instanceof List<?>) {
-                            setter.invoke(WrappingUtils.unbox(v));
-                        } else setter.invoke(v);
+                        setter.invoke(WrappingUtils.richCast(v, type));
                     } catch (Throwable e) {
                         throw new RuntimeException("[internal failure] Failed to setback field", e);
                     }

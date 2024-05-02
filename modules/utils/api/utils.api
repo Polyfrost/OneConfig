@@ -69,30 +69,21 @@ public abstract interface class org/polyfrost/oneconfig/api/platform/v1/ServerPl
 }
 
 public final class org/polyfrost/oneconfig/utils/v1/ArrayCastUtils {
-	public static fun bpopa ([Ljava/lang/Object;)[B
-	public static fun bpopi (Ljava/util/Iterator;IB)[B
-	public static fun bwrap ([B)[Ljava/lang/Byte;
-	public static fun cpopa ([Ljava/lang/Object;)[C
-	public static fun cpopi (Ljava/util/Iterator;IC)[C
-	public static fun cwrap ([C)[Ljava/lang/Character;
-	public static fun dpopa ([Ljava/lang/Object;)[D
-	public static fun dpopi (Ljava/util/Iterator;ID)[D
-	public static fun dwrap ([D)[Ljava/lang/Double;
-	public static fun fpopa ([Ljava/lang/Object;)[F
-	public static fun fpopi (Ljava/util/Iterator;IF)[F
-	public static fun fwrap ([F)[Ljava/lang/Float;
-	public static fun ipopa ([Ljava/lang/Object;)[I
-	public static fun ipopi (Ljava/util/Iterator;II)[I
-	public static fun iwrap ([I)[Ljava/lang/Integer;
-	public static fun lpopa ([Ljava/lang/Object;)[J
-	public static fun lpopi (Ljava/util/Iterator;IJ)[J
-	public static fun lwrap ([J)[Ljava/lang/Long;
-	public static fun spopa ([Ljava/lang/Object;)[S
-	public static fun spopi (Ljava/util/Iterator;IS)[S
-	public static fun swrap ([S)[Ljava/lang/Short;
-	public static fun zpopa ([Ljava/lang/Object;)[Z
-	public static fun zpopi (Ljava/util/Iterator;IZ)[Z
-	public static fun zwrap ([Z)[Ljava/lang/Boolean;
+	public static fun b2b ([Ljava/lang/Object;)[B
+	public static fun b2i ([B)[I
+	public static fun c2c ([Ljava/lang/Object;)[C
+	public static fun c2i ([C)[I
+	public static fun d2d ([Ljava/lang/Object;)[D
+	public static fun d2f ([D)[F
+	public static fun f2d ([F)[D
+	public static fun f2f ([Ljava/lang/Object;)[F
+	public static fun i2f ([I)[F
+	public static fun i2i ([Ljava/lang/Object;)[I
+	public static fun l2i ([J)[I
+	public static fun l2l ([Ljava/lang/Object;)[J
+	public static fun s2i ([S)[I
+	public static fun s2s ([Ljava/lang/Object;)[S
+	public static fun unboxNumberArray ([Ljava/lang/Object;Ljava/lang/Class;)Ljava/lang/Object;
 }
 
 public final class org/polyfrost/oneconfig/utils/v1/ColorUtils {
@@ -265,14 +256,12 @@ public final class org/polyfrost/oneconfig/utils/v1/SimpleProfiler {
 
 public class org/polyfrost/oneconfig/utils/v1/WrappingUtils {
 	public fun <init> ()V
-	public static fun box (Ljava/lang/Object;)[Ljava/lang/Object;
 	public static fun getUnwrapped (Ljava/lang/Class;)Ljava/lang/Class;
 	public static fun getWrapped (Ljava/lang/Class;)Ljava/lang/Class;
 	public static fun isPrimitiveWrapper (Ljava/lang/Object;)Z
 	public static fun isSimpleClass (Ljava/lang/Class;)Z
 	public static fun isSimpleObject (Ljava/lang/Object;)Z
-	public static fun ncast (Ljava/lang/Number;Ljava/lang/Class;)Ljava/lang/Number;
-	public static fun unbox (Ljava/lang/Object;)Ljava/lang/Object;
+	public static fun richCast (Ljava/lang/Object;Ljava/lang/Class;)Ljava/lang/Object;
 }
 
 public final class org/polyfrost/oneconfig/utils/v1/dsl/ColorsKt {

@@ -31,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import org.polyfrost.oneconfig.api.commands.v1.arguments.ArgumentParser;
 import org.polyfrost.oneconfig.api.commands.v1.exceptions.CommandCreationException;
 import org.polyfrost.oneconfig.api.commands.v1.exceptions.CommandExecutionException;
+import org.polyfrost.oneconfig.utils.v1.ArrayCastUtils;
 import org.polyfrost.oneconfig.utils.v1.WrappingUtils;
 
 import java.lang.reflect.Array;
@@ -38,8 +39,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
-
-import static org.polyfrost.oneconfig.utils.v1.WrappingUtils.unbox;
 
 public class Executable extends Node {
     public final Param[] parameters;
@@ -71,7 +70,10 @@ public class Executable extends Node {
             if (isGreedy && i == parameters.length - 1) {
                 p.arity = args.length - offset;
             }
-            parsed[i] = unbox(p.parsed(offset, args));
+            Object o = p.parsed(offset, args);
+            if (o instanceof Number[]) {
+                parsed[i] = ArrayCastUtils.unboxNumberArray((Object[]) o, p.getType());
+            } else parsed[i] = o;
             offset += p.arity;
         }
         return function.apply(parsed);

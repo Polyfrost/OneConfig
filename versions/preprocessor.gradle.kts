@@ -2,6 +2,7 @@
 
 plugins {
     alias(libs.plugins.kotlin) apply false
+    id(libs.plugins.pgt.api.validator.get().pluginId)
     id(libs.plugins.pgt.root.get().pluginId)
 }
 
@@ -53,4 +54,10 @@ preprocess {
     fabric11202.link(fabric10809)
     fabric10809.link(forge10809, file("mappings/fabric-forge-1.8.9.txt"))
     forge11202.link(forge10809, file("mappings/forge-1.12.2-1.8.9.txt"))
+}
+
+apiValidation {
+    nonPublicMarkers.add("org.polyfrost.oneconfig.api.PlatformDeclaration")
+    ignoredPackages.add("org.polyfrost.oneconfig.internal")
+    ignoredPackages.add("org.polyfrost.oneconfig.test")
 }

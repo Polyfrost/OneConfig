@@ -26,9 +26,9 @@
 
 package org.polyfrost.oneconfig.utils.v1;
 
+import java.lang.reflect.Array;
 import java.util.Collection;
 import java.util.IdentityHashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 import static org.polyfrost.oneconfig.utils.v1.ArrayCastUtils.*;
@@ -81,80 +81,89 @@ public class WrappingUtils {
     }
 
     /**
-     * Cast between number types. Used because normally you cannot cast a Double to an Integer or Double to a Float for example.
+     * Method that will attempt to get around the 'quirks' of casting involving primitives in java.
+     * <br>
+     * This method will do the following (note that these actions are effectively chained where applicable, so a List<Integer> can become a long[] if needed):
+     * <ul>
+     *     <li> Convert Number classes to the target type (e.g. Float -> Double)</li>
+     *     <li> Turn Object[] arrays into their actual types, by inspecting the type of the first element</li>
+     *     <li> Turn Collection<?> into their array counterparts</li>
+     *     <li> unbox boxed arrays (e.g. Integer[] -> int[])</li>
+     *     <li> cast array content to the given type if possible</li>
+     *     <li> convert between common primitve array types, e.g. int[] -> long[]</li>
+     * </ul>
      */
-    public static Number ncast(Number in, Class<?> target) {
-        Class<?> type = getUnwrapped(target);
-        if (type == int.class) return in.intValue();
-        if (type == float.class) return in.floatValue();
-        if (type == double.class) return in.doubleValue();
-        if (type == long.class) return in.longValue();
-        if (type == byte.class) return in.byteValue();
-        if (type == short.class) return in.shortValue();
-        throw new IllegalArgumentException("Cannot convert number to " + type);
-    }
-
-    /**
-     * Method, that will take the given Object[] or Collection<?> and return the corresponding primitive array.
-     * If the given object is not an array or collection, it will return the same object.
-     * <br><b>Note that if the input is a Collection and it is empty, an Object[0] will be returned.</b>
-     */
-    public static Object unbox(Object in) {
-        if (in instanceof Object[]) {
-            Class<?> cls = getUnwrapped(in.getClass().getComponentType());
-            Object[] arr = (Object[]) in;
-            if (cls.isPrimitive()) {
-                if (cls == int.class) return ipopa(arr);
-                if (cls == boolean.class) return zpopa(arr);
-                if (cls == float.class) return fpopa(arr);
-                if (cls == long.class) return lpopa(arr);
-                if (cls == double.class) return dpopa(arr);
-                if (cls == char.class) return cpopa(arr);
-                if (cls == byte.class) return bpopa(arr);
-                if (cls == short.class) return spopa(arr);
-            }
-            return in;
+    @SuppressWarnings({"unchecked", "DataFlowIssue"})
+    public static <T> T richCast(Object in, Class<T> target) {
+        if (in == null) return null;
+        Class<?> cls = in.getClass();
+        if (cls == target || cls.isInstance(target)) return (T) in;
+        if (in instanceof Number) {
+            Class<?> cp = getUnwrapped(target);
+            if (cp == double.class) return (T) (Double) ((Number) in).doubleValue();
+            if (cp == long.class) return (T) (Long) ((Number) in).longValue();
+            if (cp == float.class) return (T) (Float) ((Number) in).floatValue();
+            if (cp == int.class) return (T) (Integer) ((Number) in).intValue();
+            if (cp == short.class) return (T) (Short) ((Number) in).shortValue();
+            if (cp == byte.class) return (T) (Byte) ((Number) in).byteValue();
         }
-        if (in instanceof Collection) {
-            Collection<?> coll = (Collection<?>) in;
-            if (coll.isEmpty()) {
-                return new Object[0];
+        if (target.isArray()) {
+            Class<?> tType = target.getComponentType();
+            Class<?> cType = cls.getComponentType();
+            if (cType == null) {
+                if (in instanceof Collection) {
+                    in = ((Collection<?>) in).toArray();
+                    cType = in.getClass().getComponentType();
+                } else {
+                    throw new IllegalArgumentException("cannot convert non-array/collection to array");
+                }
+            } else if (Array.getLength(in) == 0) return (T) Array.newInstance(tType, 0);
+            if (cType == Object.class) {
+                Object[] arr = (Object[]) in;
+                if (arr.length > 0) cType = arr[0].getClass();
+                Object arr2 = Array.newInstance(cType, arr.length);
+                //noinspection SuspiciousSystemArraycopy
+                System.arraycopy(arr, 0, arr2, 0, arr.length);
+                in = arr2;
             }
-            Iterator<?> it = coll.iterator();
-            Object f = it.next();
-            Class<?> cls = getUnwrapped(f.getClass());
-            if (!cls.isPrimitive()) return in;
-            int size = coll.size();
-            if (cls == int.class) return ipopi(it, size, (int) f);
-            if (cls == boolean.class) return zpopi(it, size, (boolean) f);
-            if (cls == float.class) return fpopi(it, size, (float) f);
-            if (cls == long.class) return lpopi(it, size, (long) f);
-            if (cls == double.class) return dpopi(it, size, (double) f);
-            if (cls == char.class) return cpopi(it, size, (char) f);
-            if (cls == byte.class) return bpopi(it, size, (byte) f);
-            if (cls == short.class) return spopi(it, size, (short) f);
+            if (cType == tType) {
+                // same type, just return the input
+                return (T) in;
+            }
+            if (tType.isPrimitive()) {
+                if (!cType.isPrimitive()) {
+                    if (Number.class.isAssignableFrom(getWrapped(tType))) {
+                        return (T) unboxNumberArray((Object[]) in, tType);
+                    }
+                    Object[] arr = (Object[]) in;
+                    Object a = Array.newInstance(tType, arr.length);
+                    for (int i = 0; i < arr.length; i++) {
+                        Array.set(a, i, arr[i]);
+                    }
+                    return (T) a;
+                }
+                if (tType == int.class) {
+                    // long, short, byte, char -> int
+                    if (cType == long.class) return (T) l2i((long[]) in);
+                    if (cType == short.class) return (T) s2i((short[]) in);
+                    if (cType == byte.class) return (T) b2i((byte[]) in);
+                    if (cType == char.class) return (T) c2i((char[]) in);
+                } else if (tType == long.class) {
+                    // int, short -> long
+                    if (cType == int.class) return (T) l2i((long[]) in);
+                    if (cType == short.class) return (T) s2i((short[]) in);
+                } else if (tType == double.class) {
+                    // float -> double
+                    if (cType == float.class) return (T) f2d((float[]) in);
+                } else if (tType == float.class) {
+                    // double, int -> float
+                    if (cType == double.class) return (T) d2f((double[]) in);
+                    if (cType == int.class) return (T) i2f((int[]) in);
+                }
+                throw new ClassCastException("inconvertible array types: " + cType.getSimpleName() + " -> " + tType.getSimpleName());
+            }
         }
-        return in;
-    }
-
-    /**
-     * Take the given primitive array and return the corresponding Object[].
-     *
-     * @throws IllegalArgumentException if the given object is not an array
-     */
-    public static Object[] box(Object in) {
-        Class<?> type = in.getClass().getComponentType();
-        if (type == null) throw new IllegalArgumentException("must be array type");
-        if (!type.isPrimitive()) return (Object[]) in;
-        if (type == int.class) return iwrap((int[]) in);
-        if (type == boolean.class) return zwrap((boolean[]) in);
-        if (type == float.class) return fwrap((float[]) in);
-        if (type == long.class) return lwrap((long[]) in);
-        if (type == double.class) return dwrap((double[]) in);
-        if (type == char.class) return cwrap((char[]) in);
-        if (type == byte.class) return bwrap((byte[]) in);
-        if (type == short.class) return swrap((short[]) in);
-        throw new InternalError("wow, a void[]? congratulations");
+        return (T) in;
     }
 
 

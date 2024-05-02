@@ -59,10 +59,11 @@ test-core = ["junit", "logging-impl"]
 
 [plugins]
 kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
-kotlinx-abi = { id = "org.jetbrains.kotlinx.binary-compatibility-validator", version.ref = "kotlinx-abi" }
+kotlinx-api-validator = { id = "org.jetbrains.kotlinx.binary-compatibility-validator", version.ref = "kotlinx-abi" }
 
 pgt-main = { id = "org.polyfrost.multi-version", version.ref = "pgt" }
 pgt-root = { id = "org.polyfrost.multi-version.root", version.ref = "pgt" }
+pgt-api-validator = { id = "org.polyfrost.multi-version.api-validation", version.ref = "pgt" }
 pgt-default = { id = "org.polyfrost.defaults", version.ref = "pgt" }
 pgt-defaults-repo = { id = "org.polyfrost.defaults.repo", version.ref = "pgt" }
 pgt-defaults-java = { id = "org.polyfrost.defaults.java", version.ref = "pgt" }

@@ -34,7 +34,6 @@ git-story_media
 # Edit at https://www.toptal.com/developers/gitignore?templates=java,gradle,forgegradle,kotlin,macos,intellij,intellij+all,eclipse,visualstudiocode
 
 ### Eclipse ###
-.metadata
 bin/
 tmp/
 *.tmp
@@ -48,9 +47,6 @@ local.properties
 
 # External tool builders
 .externalToolBuilders/
-
-# Locally stored "Eclipse launch configurations"
-*.launch
 
 # PyDev specific (Python IDE for Eclipse)
 *.pydevproject
@@ -151,9 +147,6 @@ cmake-build-*/
 
 # Mongo Explorer plugin
 .idea/**/mongoSettings.xml
-
-# File-based project format
-*.iws
 
 # IntelliJ
 out/
@@ -372,7 +365,6 @@ Temporary Items
 *.code-workspace
 
 ### Gradle ###
-.gradle
 **/build/
 !src/**/build/
 
@@ -386,14 +378,9 @@ gradle-app.setting
 !gradle-wrapper.properties
 
 !*.api
+versions/*/api/
 
 # Cache of project
 .gradletasknamecache
-
-# Eclipse Gradle plugin generated files
-# Eclipse Core
-.project
-# JDT-specific (Eclipse Java Development Tools)
-.classpath
 
 # End of https://www.toptal.com/developers/gitignore/api/java,gradle,forgegradle,kotlin,macos,intellij,intellij+all,eclipse,visualstudiocode

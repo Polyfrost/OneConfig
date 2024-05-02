@@ -1,6 +1,5 @@
 plugins {
     alias(libs.plugins.kotlin) apply false
-    alias(libs.plugins.kotlinx.abi)
     alias(libs.plugins.pgt.defaults.repo) apply false
     alias(libs.plugins.licenser)
 }
@@ -18,12 +17,4 @@ allprojects {
         include("**/*.kt")
         include("**/*.java")
     }
-}
-
-apiValidation {
-    nonPublicMarkers.add("org.polyfrost.oneconfig.api.PlatformDeclaration")
-    ignoredProjects.add("OneConfig")
-    ignoredProjects.add("ui-impl")
-    ignoredPackages.add("org.polyfrost.oneconfig.internal")
-    ignoredPackages.add("org.polyfrost.oneconfig.test")
 }

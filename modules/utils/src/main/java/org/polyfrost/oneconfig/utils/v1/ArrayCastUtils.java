@@ -26,218 +26,147 @@
 
 package org.polyfrost.oneconfig.utils.v1;
 
-import java.util.Iterator;
-
 /**
- * Utility class for casting arrays.
- * <br>
- * There are three types of methods for each primitive type in Java:
- * <ul>
- *     <li>*popa: Converts an Object array to a primitive array.</li>
- *     <li>*popi: Converts an Iterator to a primitive array.</li>
- *     <li>*wrap: Converts a primitive array to an Object array.</li>
- * </ul>
+ * Utility class for casting between primitive array types.
  */
 public final class ArrayCastUtils {
-    private ArrayCastUtils() {}
-    
-    public static int[] ipopa(Object[] in) {
-        int[] out = new int[in.length];
-        for (int i = 0; i < in.length; i++) {
-            out[i] = (int) in[i];
-        }
-        return out;
+    private ArrayCastUtils() {
     }
 
-    public static int[] ipopi(Iterator<?> in, int sz, int first) {
-        int[] out = new int[sz];
-        out[0] = first;
-        for (int i = 1; i < sz; i++) {
-            out[i] = (Integer) in.next();
+    public static Object unboxNumberArray(Object[] array, Class<?> type) {
+        type = WrappingUtils.getUnwrapped(type);
+        if (type == int.class) {
+            return i2i(array);
+        } else if (type == long.class) {
+            return l2l(array);
+        } else if (type == short.class) {
+            return s2s(array);
+        } else if (type == byte.class) {
+            return b2b(array);
+        } else if (type == char.class) {
+            return c2c(array);
+        } else if (type == float.class) {
+            return f2f(array);
+        } else if (type == double.class) {
+            return d2d(array);
+        } else if (type == boolean.class) {
+            return b2b(array);
+        } else {
+            throw new IllegalArgumentException("Unsupported type: " + type);
         }
-        return out;
     }
 
-    public static Integer[] iwrap(int[] in) {
-        Integer[] out = new Integer[in.length];
-        for (int i = 0; i < in.length; i++) {
-            out[i] = in[i];
+    public static int[] i2i(Object[] arr) {
+        int[] ret = new int[arr.length];
+        for (int i = 0; i < arr.length; i++) {
+            ret[i] = ((Number) arr[i]).intValue();
         }
-        return out;
+        return ret;
     }
 
-    public static long[] lpopa(Object[] in) {
-        long[] out = new long[in.length];
-        for (int i = 0; i < in.length; i++) {
-            out[i] = (long) in[i];
+    public static int[] s2i(short[] arr) {
+        int[] ret = new int[arr.length];
+        for (int i = 0; i < arr.length; i++) {
+            ret[i] = arr[i];
         }
-        return out;
+        return ret;
     }
 
-    public static long[] lpopi(Iterator<?> in, int sz, long first) {
-        long[] out = new long[sz];
-        out[0] = first;
-        for (int i = 1; i < sz; i++) {
-            out[i] = (Long) in.next();
+    public static int[] l2i(long[] arr) {
+        int[] ret = new int[arr.length];
+        for (int i = 0; i < arr.length; i++) {
+            ret[i] = (int) arr[i];
         }
-        return out;
+        return ret;
     }
 
-    public static Long[] lwrap(long[] in) {
-        Long[] out = new Long[in.length];
-        for (int i = 0; i < in.length; i++) {
-            out[i] = in[i];
+    public static int[] b2i(byte[] arr) {
+        int[] ret = new int[arr.length];
+        for (int i = 0; i < arr.length; i++) {
+            ret[i] = arr[i];
         }
-        return out;
+        return ret;
     }
 
-    public static float[] fpopa(Object[] in) {
-        float[] out = new float[in.length];
-        for (int i = 0; i < in.length; i++) {
-            out[i] = (float) in[i];
+    public static int[] c2i(char[] arr) {
+        int[] ret = new int[arr.length];
+        for (int i = 0; i < arr.length; i++) {
+            ret[i] = arr[i];
         }
-        return out;
+        return ret;
     }
 
-    public static float[] fpopi(Iterator<?> in, int sz, float first) {
-        float[] out = new float[sz];
-        out[0] = first;
-        for (int i = 1; i < sz; i++) {
-            out[i] = (Float) in.next();
+
+    public static float[] f2f(Object[] arr) {
+        float[] ret = new float[arr.length];
+        for (int i = 0; i < arr.length; i++) {
+            ret[i] = ((Number) arr[i]).floatValue();
         }
-        return out;
+        return ret;
     }
 
-    public static Float[] fwrap(float[] in) {
-        Float[] out = new Float[in.length];
-        for (int i = 0; i < in.length; i++) {
-            out[i] = in[i];
+    public static float[] d2f(double[] arr) {
+        float[] ret = new float[arr.length];
+        for (int i = 0; i < arr.length; i++) {
+            ret[i] = (float) arr[i];
         }
-        return out;
+        return ret;
     }
 
-    public static double[] dpopa(Object[] in) {
-        double[] out = new double[in.length];
-        for (int i = 0; i < in.length; i++) {
-            out[i] = (double) in[i];
+    public static float[] i2f(int[] arr) {
+        float[] ret = new float[arr.length];
+        for (int i = 0; i < arr.length; i++) {
+            ret[i] = arr[i];
         }
-        return out;
+        return ret;
     }
 
-    public static double[] dpopi(Iterator<?> in, int sz, double first) {
-        double[] out = new double[sz];
-        out[0] = first;
-        for (int i = 1; i < sz; i++) {
-            out[i] = (Double) in.next();
+    public static double[] d2d(Object[] arr) {
+        double[] ret = new double[arr.length];
+        for (int i = 0; i < arr.length; i++) {
+            ret[i] = ((Number) arr[i]).doubleValue();
         }
-        return out;
+        return ret;
     }
 
-    public static Double[] dwrap(double[] in) {
-        Double[] out = new Double[in.length];
-        for (int i = 0; i < in.length; i++) {
-            out[i] = in[i];
+    public static double[] f2d(float[] arr) {
+        double[] ret = new double[arr.length];
+        for (int i = 0; i < arr.length; i++) {
+            ret[i] = arr[i];
         }
-        return out;
+        return ret;
     }
 
-    public static char[] cpopa(Object[] in) {
-        char[] out = new char[in.length];
-        for (int i = 0; i < in.length; i++) {
-            out[i] = (char) in[i];
+    public static long[] l2l(Object[] arr) {
+        long[] ret = new long[arr.length];
+        for (int i = 0; i < arr.length; i++) {
+            ret[i] = ((Number) arr[i]).longValue();
         }
-        return out;
+        return ret;
     }
 
-    public static char[] cpopi(Iterator<?> in, int sz, char first) {
-        char[] out = new char[sz];
-        out[0] = first;
-        for (int i = 1; i < sz; i++) {
-            out[i] = (Character) in.next();
+    public static short[] s2s(Object[] arr) {
+        short[] ret = new short[arr.length];
+        for (int i = 0; i < arr.length; i++) {
+            ret[i] = ((Number) arr[i]).shortValue();
         }
-        return out;
+        return ret;
     }
 
-    public static Character[] cwrap(char[] in) {
-        Character[] out = new Character[in.length];
-        for (int i = 0; i < in.length; i++) {
-            out[i] = in[i];
+    public static byte[] b2b(Object[] arr) {
+        byte[] ret = new byte[arr.length];
+        for (int i = 0; i < arr.length; i++) {
+            ret[i] = ((Number) arr[i]).byteValue();
         }
-        return out;
+        return ret;
     }
 
-    public static byte[] bpopa(Object[] in) {
-        byte[] out = new byte[in.length];
-        for (int i = 0; i < in.length; i++) {
-            out[i] = (byte) in[i];
+    public static char[] c2c(Object[] arr) {
+        char[] ret = new char[arr.length];
+        for (int i = 0; i < arr.length; i++) {
+            ret[i] = (char) arr[i];
         }
-        return out;
+        return ret;
     }
 
-    public static byte[] bpopi(Iterator<?> in, int sz, byte first) {
-        byte[] out = new byte[sz];
-        out[0] = first;
-        for (int i = 1; i < sz; i++) {
-            out[i] = (Byte) in.next();
-        }
-        return out;
-    }
-
-    public static Byte[] bwrap(byte[] in) {
-        Byte[] out = new Byte[in.length];
-        for (int i = 0; i < in.length; i++) {
-            out[i] = in[i];
-        }
-        return out;
-    }
-
-    public static boolean[] zpopa(Object[] in) {
-        boolean[] out = new boolean[in.length];
-        for (int i = 0; i < in.length; i++) {
-            out[i] = (boolean) in[i];
-        }
-        return out;
-    }
-
-    public static boolean[] zpopi(Iterator<?> in, int sz, boolean first) {
-        boolean[] out = new boolean[sz];
-        out[0] = first;
-        for (int i = 1; i < sz; i++) {
-            out[i] = (Boolean) in.next();
-        }
-        return out;
-    }
-
-    public static Boolean[] zwrap(boolean[] in) {
-        Boolean[] out = new Boolean[in.length];
-        for (int i = 0; i < in.length; i++) {
-            out[i] = in[i];
-        }
-        return out;
-    }
-
-    public static short[] spopa(Object[] in) {
-        short[] out = new short[in.length];
-        for (int i = 0; i < in.length; i++) {
-            out[i] = (short) in[i];
-        }
-        return out;
-    }
-
-    public static short[] spopi(Iterator<?> in, int sz, short first) {
-        short[] out = new short[sz];
-        out[0] = first;
-        for (int i = 1; i < sz; i++) {
-            out[i] = (Short) in.next();
-        }
-        return out;
-    }
-
-    public static Short[] swrap(short[] in) {
-        Short[] out = new Short[in.length];
-        for (int i = 0; i < in.length; i++) {
-            out[i] = in[i];
-        }
-        return out;
-    }
 }

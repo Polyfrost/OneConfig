@@ -2,6 +2,7 @@
 
 plugins {
     java
+    id(libs.plugins.kotlinx.api.validator.get().pluginId)
 }
 
 subprojects {
@@ -30,4 +31,9 @@ subprojects {
             languageVersion.set(JavaLanguageVersion.of(8))
         }
     }
+}
+
+apiValidation {
+    ignoredPackages.add("org.polyfrost.oneconfig.internal")
+    ignoredProjects.add("ui-impl")
 }

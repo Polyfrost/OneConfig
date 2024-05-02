@@ -45,7 +45,7 @@ public class Property<T> extends Node implements Serializable {
      * This is the type of the property, and is used for casting.
      */
     @NotNull
-    public transient final Class<T> type;
+    public transient final Class<?> type;
     /**
      * This is the actual value of the property, and is what is stored.
      */
@@ -58,7 +58,7 @@ public class Property<T> extends Node implements Serializable {
     public Property(@Nullable String id, @Nullable String title, @Nullable String description, @Nullable T value, @NotNull Class<T> type) {
         super(id, title, description);
         this.value = value;
-        this.type = type;
+        this.type = WrappingUtils.getUnwrapped(type);
     }
 
     @SuppressWarnings("unchecked")
@@ -254,8 +254,7 @@ public class Property<T> extends Node implements Serializable {
      */
     @SuppressWarnings("unchecked")
     public <V> void setAs(V value) {
-        if(value instanceof Number) set((T) WrappingUtils.ncast((Number) value, type));
-        else set((T) value);
+        set((T) WrappingUtils.richCast(value, type));
     }
 
     /**

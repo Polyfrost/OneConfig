@@ -7,28 +7,83 @@ public class org/polyfrost/oneconfig/api/commands/v1/arguments/PlayerArgumentPar
 }
 
 public class org/polyfrost/oneconfig/api/event/v1/events/ChatReceiveEvent : org/polyfrost/oneconfig/api/event/v1/events/Event$Cancellable {
+	@1.8.9-forge
 	public field message Lnet/minecraft/util/IChatComponent;
+	@1.8.9-forge
 	public fun <init> (Lnet/minecraft/util/IChatComponent;)V
+	@1.17.1-forge,1.18.1-forge,1.19.4-forge,1.20.4-forge
+	public field message Lnet/minecraft/network/chat/Component;
+	@1.17.1-forge,1.18.1-forge,1.19.4-forge,1.20.4-forge
+	public fun <init> (Lnet/minecraft/network/chat/Component;)V
+	@1.12.2-forge,1.16.5-forge
+	public field message Lnet/minecraft/util/text/ITextComponent;
+	@1.12.2-forge,1.16.5-forge
+	public fun <init> (Lnet/minecraft/util/text/ITextComponent;)V
+	@1.12.2-fabric,1.16.5-fabric,1.17.1-fabric,1.18.1-fabric,1.19.4-fabric,1.20.4-fabric,1.8.9-fabric
+	public field message Lnet/minecraft/text/Text;
+	@1.12.2-fabric,1.16.5-fabric,1.17.1-fabric,1.18.1-fabric,1.19.4-fabric,1.20.4-fabric,1.8.9-fabric
+	public fun <init> (Lnet/minecraft/text/Text;)V
 	public fun getFullyUnformattedMessage ()Ljava/lang/String;
 }
 
 public class org/polyfrost/oneconfig/api/event/v1/events/ReceivePacketEvent : org/polyfrost/oneconfig/api/event/v1/events/Event$Cancellable {
+	@1.19.4-fabric,1.20.4-fabric
+	public final field packet Lnet/minecraft/network/packet/Packet;
+	@1.19.4-fabric,1.20.4-fabric
+	public fun <init> (Lnet/minecraft/network/packet/Packet;)V
+	@1.17.1-forge,1.18.1-forge,1.19.4-forge,1.20.4-forge
+	public final field packet Lnet/minecraft/network/protocol/Packet;
+	@1.17.1-forge,1.18.1-forge,1.19.4-forge,1.20.4-forge
+	public fun <init> (Lnet/minecraft/network/protocol/Packet;)V
+	@1.16.5-forge
+	public final field packet Lnet/minecraft/network/IPacket;
+	@1.16.5-forge
+	public fun <init> (Lnet/minecraft/network/IPacket;)V
+	@1.12.2-fabric,1.12.2-forge,1.16.5-fabric,1.17.1-fabric,1.18.1-fabric,1.8.9-fabric,1.8.9-forge
 	public final field packet Lnet/minecraft/network/Packet;
+	@1.12.2-fabric,1.12.2-forge,1.16.5-fabric,1.17.1-fabric,1.18.1-fabric,1.8.9-fabric,1.8.9-forge
 	public fun <init> (Lnet/minecraft/network/Packet;)V
 }
 
 public class org/polyfrost/oneconfig/api/event/v1/events/ScreenOpenEvent : org/polyfrost/oneconfig/api/event/v1/events/Event$Cancellable {
+	@1.17.1-forge,1.18.1-forge,1.19.4-forge,1.20.4-forge
+	public final field screen Lnet/minecraft/client/gui/screens/Screen;
+	@1.17.1-forge,1.18.1-forge,1.19.4-forge,1.20.4-forge
+	public fun <init> (Lnet/minecraft/client/gui/screens/Screen;)V
+	@1.12.2-forge,1.8.9-forge
 	public final field screen Lnet/minecraft/client/gui/GuiScreen;
+	@1.12.2-forge,1.8.9-forge
 	public fun <init> (Lnet/minecraft/client/gui/GuiScreen;)V
+	@1.12.2-fabric,1.16.5-fabric,1.16.5-forge,1.17.1-fabric,1.18.1-fabric,1.19.4-fabric,1.20.4-fabric,1.8.9-fabric
+	public final field screen Lnet/minecraft/client/gui/screen/Screen;
+	@1.12.2-fabric,1.16.5-fabric,1.16.5-forge,1.17.1-fabric,1.18.1-fabric,1.19.4-fabric,1.20.4-fabric,1.8.9-fabric
+	public fun <init> (Lnet/minecraft/client/gui/screen/Screen;)V
 }
 
 public class org/polyfrost/oneconfig/api/event/v1/events/SendPacketEvent : org/polyfrost/oneconfig/api/event/v1/events/Event$Cancellable {
+	@1.19.4-fabric,1.20.4-fabric
+	public final field packet Lnet/minecraft/network/packet/Packet;
+	@1.19.4-fabric,1.20.4-fabric
+	public fun <init> (Lnet/minecraft/network/packet/Packet;)V
+	@1.17.1-forge,1.18.1-forge,1.19.4-forge,1.20.4-forge
+	public final field packet Lnet/minecraft/network/protocol/Packet;
+	@1.17.1-forge,1.18.1-forge,1.19.4-forge,1.20.4-forge
+	public fun <init> (Lnet/minecraft/network/protocol/Packet;)V
+	@1.16.5-forge
+	public final field packet Lnet/minecraft/network/IPacket;
+	@1.16.5-forge
+	public fun <init> (Lnet/minecraft/network/IPacket;)V
+	@1.12.2-fabric,1.12.2-forge,1.16.5-fabric,1.17.1-fabric,1.18.1-fabric,1.8.9-fabric,1.8.9-forge
 	public final field packet Lnet/minecraft/network/Packet;
+	@1.12.2-fabric,1.12.2-forge,1.16.5-fabric,1.17.1-fabric,1.18.1-fabric,1.8.9-fabric,1.8.9-forge
 	public fun <init> (Lnet/minecraft/network/Packet;)V
 }
 
 public class org/polyfrost/oneconfig/api/ui/v1/screen/MCWindow : org/polyfrost/polyui/renderer/Window {
+	@1.12.2-forge,1.16.5-forge,1.17.1-forge,1.18.1-forge,1.19.4-forge,1.20.4-forge,1.8.9-forge
 	public fun <init> (Lnet/minecraft/client/Minecraft;)V
+	@1.12.2-fabric,1.16.5-fabric,1.17.1-fabric,1.18.1-fabric,1.19.4-fabric,1.20.4-fabric,1.8.9-fabric
+	public fun <init> (Lnet/minecraft/client/MinecraftClient;)V
 	public fun close ()V
 	public fun getClipboard ()Ljava/lang/String;
 	public fun getKeyName (I)Ljava/lang/String;
@@ -51,17 +106,29 @@ public class org/polyfrost/oneconfig/api/ui/v1/screen/PolyUIScreen : org/polyfro
 	public fun <init> ([Lorg/polyfrost/polyui/component/Drawable;)V
 	protected final fun adjustResolution (FF)V
 	public final fun closeCallback (Ljava/lang/Runnable;)Lorg/polyfrost/oneconfig/api/ui/v1/screen/PolyUIScreen;
+	@1.12.2-forge,1.8.9-forge
 	public fun doesGuiPauseGame ()Z
 	public fun doesUIPauseGame ()Z
 	public final fun getMaster ()Lorg/polyfrost/polyui/component/Drawable;
 	public fun hasBackgroundBlur ()Z
 	public final fun height ()F
+	@1.16.5-fabric,1.16.5-forge,1.17.1-fabric,1.17.1-forge,1.18.1-forge,1.19.4-forge,1.20.4-forge
+	public fun isPauseScreen ()Z
 	public fun mouseMoved (DD)V
 	public fun onDrawScreen (Lorg/polyfrost/universal/UMatrixStack;IIF)V
+	@1.12.2-forge,1.8.9-forge
 	public final fun onResize (Lnet/minecraft/client/Minecraft;II)V
 	public fun onScreenClose ()V
+	@1.16.5-forge,1.17.1-forge,1.18.1-forge,1.19.4-forge,1.20.4-forge
+	public final fun resize (Lnet/minecraft/client/Minecraft;II)V
+	@1.12.2-fabric,1.16.5-fabric,1.17.1-fabric,1.18.1-fabric,1.19.4-fabric,1.20.4-fabric,1.8.9-fabric
+	public final fun resize (Lnet/minecraft/client/MinecraftClient;II)V
 	public final fun scale ()F
 	public fun shouldCloseOnEsc ()Z
+	@1.18.1-fabric,1.19.4-fabric,1.20.4-fabric
+	public fun shouldPause ()Z
+	@1.12.2-fabric,1.8.9-fabric
+	public fun shouldPauseGame ()Z
 	public fun uCharTyped (CLorg/polyfrost/universal/UKeyboard$Modifiers;)Z
 	public fun uKeyPressed (IILorg/polyfrost/universal/UKeyboard$Modifiers;)Z
 	public fun uKeyReleased (IILorg/polyfrost/universal/UKeyboard$Modifiers;)Z
@@ -76,13 +143,25 @@ public final class org/polyfrost/oneconfig/utils/v1/GuiUtils {
 	public fun <init> ()V
 	public static fun closeScreen ()V
 	public static fun displayScreen (Ljava/lang/Object;)V
+	@1.17.1-forge,1.18.1-forge,1.19.4-forge,1.20.4-forge
+	public static fun displayScreen (Lnet/minecraft/client/gui/screens/Screen;)V
+	@1.17.1-forge,1.18.1-forge,1.19.4-forge,1.20.4-forge
+	public static fun displayScreen (Lnet/minecraft/client/gui/screens/Screen;I)V
+	@1.12.2-forge,1.8.9-forge
 	public static fun displayScreen (Lnet/minecraft/client/gui/GuiScreen;)V
+	@1.12.2-forge,1.8.9-forge
 	public static fun displayScreen (Lnet/minecraft/client/gui/GuiScreen;I)V
+	@1.12.2-fabric,1.16.5-fabric,1.16.5-forge,1.17.1-fabric,1.18.1-fabric,1.19.4-fabric,1.20.4-fabric,1.8.9-fabric
+	public static fun displayScreen (Lnet/minecraft/client/gui/screen/Screen;)V
+	@1.12.2-fabric,1.16.5-fabric,1.16.5-forge,1.17.1-fabric,1.18.1-fabric,1.19.4-fabric,1.20.4-fabric,1.8.9-fabric
+	public static fun displayScreen (Lnet/minecraft/client/gui/screen/Screen;I)V
 }
 
+@1.12.2-forge,1.16.5-forge,1.8.9-forge
 public abstract interface class org/polyfrost/oneconfig/utils/v1/forge/IgnoredGuiFactory {
 }
 
+@1.12.2-forge,1.8.9-forge
 public class org/polyfrost/oneconfig/utils/v1/forge/KotlinLanguageAdapter : net/minecraftforge/fml/common/ILanguageAdapter {
 	public fun <init> ()V
 	public fun getNewInstance (Lnet/minecraftforge/fml/common/FMLModContainer;Ljava/lang/Class;Ljava/lang/ClassLoader;Ljava/lang/reflect/Method;)Ljava/lang/Object;
