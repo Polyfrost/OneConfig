@@ -82,6 +82,9 @@ public final class LogScanner {
     /**
      * Return a set of ActiveMods that have been blamed for the given stacktrace.
      * This will be an empty set if no mods are blamed.
+     *
+     * @param e The throwable to scan
+     * @return A set of mods that are blamed for the given stacktrace
      */
     @NotNull
     public static Set<LoaderPlatform.ActiveMod> identifyFromStacktrace(Throwable e) {
@@ -163,6 +166,9 @@ public final class LogScanner {
 
     /**
      * Return a set of ActiveMods that have been associated with the given class.
+     *
+     * @param clazz The class to scan
+     * @return A set of mods that are associated with the given class
      */
     @NotNull
     public static Set<LoaderPlatform.ActiveMod> identifyFromClass(Class<?> clazz) {

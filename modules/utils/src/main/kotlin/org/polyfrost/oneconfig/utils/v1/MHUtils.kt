@@ -55,8 +55,11 @@ import java.util.function.Function
  * This class is split into two main parts:
  * - direct access methods [getField], [setField], [invoke], etc. which use reflection and [setAccessible] to directly access fields and methods.
  * - method handle methods [getFieldGetter], [getFieldSetter], [getMethodHandle], etc. which use the trusted lookup to get method handles for fields and methods - these are reusable.
+ *
+ * ## note that these methods are inherently unsafe and in general, bad. use with caution.
  */
 @Suppress("unused")
+@ApiStatus.Internal
 object MHUtils {
     private val LOGGER: Logger = LogManager.getLogger("OneConfig/MHUtils")
 

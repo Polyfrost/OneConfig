@@ -65,15 +65,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-loom-v1
 
-      - name: Chmod Gradle
-        run: chmod +x ./gradlew
-
       - name: Get version number
         run: echo '::set-output name=VERSION_NUMBER::$(( ${{ secrets.BUILD_OFFSET }} + ${{ github.run_number }}))'
         id: version
 
       - name: Publish
-        run: ./gradlew publishAllPublicationsToReleasesRepository -Pmod_minor_version=${{ steps.version.outputs.VERSION_NUMBER }} -PreleasesUsername=${{ secrets.MAVEN_NAME }} -PreleasesPassword=${{ secrets.MAVEN_TOKEN }} -DBUILDING_CI=true --no-daemon
+        run: ./gradlew publishAllPublicationsToReleasesRepository -Pmod_minor_version=${{ steps.version.outputs.VERSION_NUMBER }} -PreleasesUsername=${{ secrets.MAVEN_NAME }} -PreleasesPassword=${{ secrets.MAVEN_TOKEN }} -DBUILDING_CI=true --scan
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4

@@ -31,7 +31,7 @@ import org.polyfrost.polyui.renderer.Renderer;
 import java.util.ServiceLoader;
 
 /**
- * Abstraction over the LWJGL3 implementation & loading.
+ * Abstraction over the LWJGL3 implementation and loading.
  */
 public interface LwjglManager {
     LwjglManager INSTANCE = ServiceLoader.load(

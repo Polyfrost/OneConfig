@@ -117,7 +117,7 @@ public final class OneImage {
     }
 
     /**
-     * Get the image as a BufferedImage.
+     * @return  the image as a BufferedImage.
      */
     public BufferedImage getImage() {
         return image;
@@ -128,7 +128,7 @@ public final class OneImage {
     }
 
     /**
-     * Get the graphics object associated with the image.
+     * @return the graphics object associated with the image.
      */
     public Graphics2D getG2D() {
         if (graphics == null) {
@@ -150,14 +150,14 @@ public final class OneImage {
     }
 
     /**
-     * Get the width of the image.
+     * @return the width of the image.
      */
     public int getWidth() {
         return width;
     }
 
     /**
-     * Get the height of the image.
+     * @return the height of the image.
      */
     public int getHeight() {
         return height;

@@ -83,14 +83,14 @@ public class WrappingUtils {
     /**
      * Method that will attempt to get around the 'quirks' of casting involving primitives in java.
      * <br>
-     * This method will do the following (note that these actions are effectively chained where applicable, so a List<Integer> can become a long[] if needed):
+     * This method will do the following (note that these actions are effectively chained where applicable, so a {@code List<Integer>} can become a long[] if needed):
      * <ul>
-     *     <li> Convert Number classes to the target type (e.g. Float -> Double)</li>
+     *     <li> Convert Number classes to the target type (e.g. Float into Double)</li>
      *     <li> Turn Object[] arrays into their actual types, by inspecting the type of the first element</li>
-     *     <li> Turn Collection<?> into their array counterparts</li>
-     *     <li> unbox boxed arrays (e.g. Integer[] -> int[])</li>
+     *     <li> Turn {@code Collection<?>} into their array counterparts</li>
+     *     <li> unbox boxed arrays (e.g. Integer[] into int[])</li>
      *     <li> cast array content to the given type if possible</li>
-     *     <li> convert between common primitve array types, e.g. int[] -> long[]</li>
+     *     <li> convert between common primitve array types, e.g. int[] into long[]</li>
      * </ul>
      */
     @SuppressWarnings({"unchecked", "DataFlowIssue"})
