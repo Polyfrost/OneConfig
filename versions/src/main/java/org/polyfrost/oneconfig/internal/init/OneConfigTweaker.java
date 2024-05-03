@@ -51,6 +51,10 @@ import java.util.Set;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 
+/**
+ * Mixin-related loading code adapted from EssentialGG's EssentialLoader under GPL-3.0
+ * https://github.com/EssentialGG/EssentialLoader/blob/master/LICENSE
+ */
 @SuppressWarnings("unused")
 public class OneConfigTweaker implements ITweaker {
     private static final Logger LOGGER = LogManager.getLogger("OneConfig/Tweaker");
