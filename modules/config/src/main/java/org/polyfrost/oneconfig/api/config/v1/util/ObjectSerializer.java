@@ -328,6 +328,7 @@ public class ObjectSerializer {
             Object value = in.get(f.getName());
             if (value == null) return;
             try {
+                MHUtils.setAccessible(f);
                 if (value instanceof Map) {
                     Map<String, Object> m = (Map<String, Object>) value;
                     f.set(o, _deserialize(m, f.getType()));

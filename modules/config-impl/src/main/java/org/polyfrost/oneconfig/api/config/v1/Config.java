@@ -38,21 +38,22 @@ public abstract class Config {
     protected Tree tree;
 
     public Config(@NotNull String id, @Nullable PolyImage icon, @NotNull String title, @Nullable Category category) {
-        tree = makeTree(id);
-        if (tree == null) throw new IllegalStateException("hm.");
-        tree.setTitle(title);
-        if (icon != null) tree.addMetadata("icon", icon);
-        if (category != null) tree.addMetadata("category", category);
-        ConfigManager.active().register(tree);
+        // written this way so that trees can be lateinit
+        if ((tree = makeTree(id)) != null) {
+            tree.setTitle(title);
+            tree.addMetadata("icon", icon);
+            tree.addMetadata("category", category);
+            ConfigManager.active().register(tree);
+        }
+    }
+
+    public Config(@NotNull String id, @NotNull String title, @NotNull Category category) {
+        this(id, null, title, category);
     }
 
     @ApiStatus.Internal
     protected Tree makeTree(@NotNull String id) {
         return ConfigManager.collect(this, id);
-    }
-
-    public Config(@NotNull String id, @NotNull String title, @NotNull Category category) {
-        this(id, null, title, category);
     }
 
     public void addDependency(String option, BooleanSupplier condition) {
@@ -72,6 +73,7 @@ public abstract class Config {
 
 
     public Property<?> getProperty(String option) {
+        if (tree == null) throw new IllegalStateException("not initialized. this should never happen in correct usage. please report to https://polyfrost.org/discord");
         Property<?> p = option.indexOf('.') >= 0 ? tree.getProp(option.split("\\.")) : tree.getProp(option);
         if (p == null) throw new IllegalArgumentException("Config does not contain property: " + option);
         return p;

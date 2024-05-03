@@ -29,10 +29,19 @@ package org.polyfrost.oneconfig.api.hud.v1
 import org.polyfrost.polyui.component.impl.Image
 import org.polyfrost.polyui.utils.image
 
-class ImageHud(val address: String) : Hud<Image>("image_hud.toml", "Image Hud", Category.INFO) {
+class ImageHud(val address: String) : Hud<Image>() {
+    override fun id() = "image_hud.toml"
+
+    override fun title() = "Image Hud"
+
+    override fun category() = Category.INFO
+
     override fun create() = Image(address.image())
 
     override fun update() = false
+
+    // no thanks <3
+    override fun initialize() = false
 
     override fun updateFrequency() = -1L
 }

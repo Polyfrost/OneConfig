@@ -45,7 +45,7 @@ import org.polyfrost.universal.UMatrixStack
  * There are currently no plans to remove this, hence it is not considered a warning. This may change in the future.
  */
 @ApiStatus.Obsolete(since = "1.0.0")
-abstract class LegacyHud(id: String, name: String, category: Category) : Hud<Drawable>(id, name, category) {
+abstract class LegacyHud : Hud<Drawable>() {
     abstract var width: Float
     abstract var height: Float
 

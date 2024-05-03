@@ -29,7 +29,6 @@ package org.polyfrost.oneconfig.api.hud.v1
 import org.apache.logging.log4j.LogManager
 import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
-import org.polyfrost.oneconfig.api.config.v1.backend.impl.FileBackend
 import org.polyfrost.oneconfig.api.event.v1.eventHandler
 import org.polyfrost.oneconfig.api.event.v1.events.HudRenderEvent
 import org.polyfrost.oneconfig.api.event.v1.events.ResizeEvent
@@ -40,6 +39,7 @@ import org.polyfrost.oneconfig.api.hud.v1.internal.createInspectionsScreen
 import org.polyfrost.oneconfig.api.ui.v1.LwjglManager
 import org.polyfrost.oneconfig.api.ui.v1.screen.PolyUIScreen
 import org.polyfrost.oneconfig.utils.v1.GuiUtils
+import org.polyfrost.oneconfig.utils.v1.MHUtils
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.animate.Animations
 import org.polyfrost.polyui.color.Colors
@@ -66,8 +66,8 @@ import kotlin.math.PI
 
 object HudManager {
     private val LOGGER = LogManager.getLogger("OneConfig/HUD")
-    lateinit var backend: FileBackend
     private val huds = LinkedList<Hud<out Drawable>>()
+    private val hudProviders = HashMap<Class<out Hud<out Drawable>>, Hud<out Drawable>>()
     private val snapLineColor = rgba(170, 170, 170, 0.8f)
 
     /**
@@ -91,10 +91,10 @@ object HudManager {
     init {
         register(TextHud.DateTime("Date:", "yyyy-MM-dd"))
         register(TextHud.DateTime("Time:", "HH:mm:ss"))
-        register(TextHud.Field("idk.yml", "Yeah", Hud.Category.COMBAT, "lol", "Text"))
     }
 
     var hudsPage = HudsPage(huds)
+        private set
 
     val panel = Block(
         size = Vec2(500f, 1048f),
@@ -208,6 +208,10 @@ object HudManager {
         it.resize(UResolution.windowWidth.toFloat(), UResolution.windowHeight.toFloat())
     }
 
+    init {
+        initialize()
+    }
+
     fun getWithEditor(): PolyUIScreen {
         return PolyUIScreen(polyUI.also {
             toggleHudPicker()
@@ -228,17 +232,28 @@ object HudManager {
 
     @JvmStatic
     fun register(vararg huds: Hud<out Drawable>) {
-        HudManager.huds.addAll(huds)
+        this.huds.addAll(huds)
     }
 
-    fun loadInAll() {
+    @Suppress("UNCHECKED_CAST")
+    fun initialize() {
         polyUI.master.children?.fastEach {
             if (it !== panel) polyUI.master.children?.remove(it)
         }
-        backend = FileBackend(ConfigManager.active().folder.resolve("huds"))
-        backend.gatherAll().forEach { tree ->
-            val it: Hud<*> = tree.getProp("hud")?.getAs() ?: return@forEach
-            polyUI.master.addChild(it.build(), false)
+        ConfigManager.active().gatherAll("huds").forEach { data ->
+            try {
+                val clsName = data.getProp("hudClass").get() as? String ?: throw IllegalArgumentException("hud tree ${data.id} is missing class name, will be ignored")
+                val cls = Class.forName(clsName) as? Class<Hud<out Drawable>> ?: throw IllegalArgumentException("hud class $clsName is not a subclass of org.polyfrost.oneconfig.api.v1.hud.Hud, will be ignored")
+                // asm: the documentation of Hud states that code should not be run in the constructor
+                // so, we are fine to (potentially) malloc the HUD here
+                // note that this is stored in a map separate to the loaded hud list.
+                // we don't want to register a HUD class ourselves, as it may lead to wierd scenarios when mods are removed.
+                val h = hudProviders.getOrPut(cls) { MHUtils.instantiate(cls, true).getOrThrow() }
+                val hud = h.make(data)
+                polyUI.master.addChild(hud.build(), reposition = false)
+            } catch (e: Exception) {
+                LOGGER.error("Failed to load HUD from ${data.id}", e)
+            }
         }
     }
 

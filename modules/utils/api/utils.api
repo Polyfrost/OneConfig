@@ -160,6 +160,7 @@ public final class org/polyfrost/oneconfig/utils/v1/MHUtils {
 	public static final fun invokeCatching (Ljava/lang/invoke/MethodHandle;[Ljava/lang/Object;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
 	public static final fun invokeExactCatching (Ljava/lang/invoke/MethodHandle;[Ljava/lang/Object;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
 	public static final fun invokeStatic (Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
+	public static final fun removeReflectionFilters ()Z
 	public static final fun setAccessible (Ljava/lang/reflect/AccessibleObject;)Ljava/lang/reflect/AccessibleObject;
 	public static final fun setField (Ljava/lang/Object;Ljava/lang/String;Ljava/lang/Object;)Z
 	public static final fun setStatic (Ljava/lang/Class;Ljava/lang/String;Ljava/lang/Object;)Z

@@ -117,7 +117,7 @@ public final class OneImage {
     }
 
     /**
-     * @return  the image as a BufferedImage.
+     * @return the image as a BufferedImage.
      */
     public BufferedImage getImage() {
         return image;

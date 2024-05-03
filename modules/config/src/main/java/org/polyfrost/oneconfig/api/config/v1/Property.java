@@ -45,6 +45,7 @@ import java.util.function.Supplier;
  * Class which represents a property in a tree.
  * <br>
  * <b>to actually create a property, see the {@link Properties} class.</b>
+ *
  * @param <T>
  */
 @SuppressWarnings("unused")
@@ -344,6 +345,26 @@ public abstract class Property<T> extends Node implements Serializable {
         }
     }
 
+    @Deprecated
+    @SuppressWarnings("DeprecatedIsStillUsed")
+    public static final class KtProperty<T> extends Property<T> {
+        private final kotlin.reflect.KMutableProperty0<T> ref;
+
+        public KtProperty(@Nullable String title, @Nullable String description, @NotNull kotlin.reflect.KMutableProperty0<T> ref, Class<T> type) {
+            super(ref.getName(), title, description, type);
+            this.ref = ref;
+        }
+
+        @Override
+        public @Nullable T get() {
+            return ref.get();
+        }
+
+        @Override
+        protected void set0(@Nullable T value) {
+            ref.set(value);
+        }
+    }
 
     static final class Dummy extends Property<Void> {
         private static short r = 0;

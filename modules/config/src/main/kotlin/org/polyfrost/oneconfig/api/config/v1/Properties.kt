@@ -28,6 +28,7 @@ package org.polyfrost.oneconfig.api.config.v1
 
 import org.jetbrains.annotations.Contract
 import java.lang.reflect.Field
+import kotlin.reflect.KMutableProperty0
 
 object Properties {
     /**
@@ -75,17 +76,30 @@ object Properties {
     ): Property<Void> = Property.Dummy(id, name, description)
 
     /**
+     * create a property which is backed by the given kotlin property reference, such as `this::foo`.
+     *
+     * for the inverse, where a property is backed by a property, see `KtConfig`.
+     */
+    @Suppress("DEPRECATION")
+    @JvmSynthetic
+    inline fun <reified T> ktProperty(
+        ref: KMutableProperty0<T>,
+        name: String? = null,
+        description: String? = null,
+    ): Property<T> = Property.KtProperty(name, description, ref, T::class.java)
+
+    /**
      * Return a property which delegates to the given [getter] and [setter].
      */
     @JvmStatic
     @JvmOverloads
     fun <T> functional(
+        getter: java.util.function.Supplier<T>,
+        setter: java.util.function.Consumer<T>,
         id: String? = null,
         name: String? = null,
         description: String? = null,
         type: Class<T>? = null,
-        getter: java.util.function.Supplier<T>,
-        setter: java.util.function.Consumer<T>
     ): Property<T> = Property.Functional(id, name, description, setter, getter, type)
 
 }

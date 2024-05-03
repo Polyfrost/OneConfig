@@ -164,6 +164,16 @@ public abstract class Node {
         return metadata != null;
     }
 
+    /**
+     * Overwrite all data in this node with the data from another node.
+     * <br><ul>
+     * <li>For a node, all metadata will be copied from the input onto this. any duplicate keys will be overwritten.</li>
+     * <li>For a {@link Property}, the value, callbacks and display conditions are copied onto this.</li>
+     * <li>For a {@link Tree}, all children and properties will be overwritten if they are present. this operation is recursive.</li>
+     * </ul>
+     *
+     * @param with the node to overwrite this with
+     */
     public abstract void overwrite(Node with);
 
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")

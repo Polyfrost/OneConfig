@@ -24,6 +24,11 @@ subprojects {
 
     tasks.test {
         useJUnitPlatform()
+        // run tests with java 17 because it is better for compatability and makes the debugger work
+        // (especially for testing of reflection due to the tighter rules)
+        javaLauncher = javaToolchains.launcherFor {
+            languageVersion = JavaLanguageVersion.of(17)
+        }
     }
 
     java {

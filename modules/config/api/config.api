@@ -32,12 +32,12 @@ public final class org/polyfrost/oneconfig/api/config/v1/Properties {
 	public static final fun field (Ljava/lang/String;Ljava/lang/reflect/Field;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
 	public static final fun field (Ljava/lang/reflect/Field;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
 	public static synthetic fun field$default (Ljava/lang/String;Ljava/lang/String;Ljava/lang/reflect/Field;Ljava/lang/Object;ILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
-	public static final fun functional (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Class;Ljava/util/function/Supplier;Ljava/util/function/Consumer;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
-	public static final fun functional (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/function/Supplier;Ljava/util/function/Consumer;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
-	public static final fun functional (Ljava/lang/String;Ljava/lang/String;Ljava/util/function/Supplier;Ljava/util/function/Consumer;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
-	public static final fun functional (Ljava/lang/String;Ljava/util/function/Supplier;Ljava/util/function/Consumer;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
 	public static final fun functional (Ljava/util/function/Supplier;Ljava/util/function/Consumer;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
-	public static synthetic fun functional$default (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Class;Ljava/util/function/Supplier;Ljava/util/function/Consumer;ILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
+	public static final fun functional (Ljava/util/function/Supplier;Ljava/util/function/Consumer;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
+	public static final fun functional (Ljava/util/function/Supplier;Ljava/util/function/Consumer;Ljava/lang/String;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
+	public static final fun functional (Ljava/util/function/Supplier;Ljava/util/function/Consumer;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
+	public static final fun functional (Ljava/util/function/Supplier;Ljava/util/function/Consumer;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Class;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
+	public static synthetic fun functional$default (Ljava/util/function/Supplier;Ljava/util/function/Consumer;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Class;ILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
 	public static final fun simple ()Lorg/polyfrost/oneconfig/api/config/v1/Property;
 	public static final fun simple (Ljava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
 	public static final fun simple (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
@@ -76,6 +76,11 @@ public abstract class org/polyfrost/oneconfig/api/config/v1/Property : org/polyf
 	protected abstract fun set0 (Ljava/lang/Object;)V
 	public final fun setAs (Ljava/lang/Object;)V
 	public final fun toString ()Ljava/lang/String;
+}
+
+public final class org/polyfrost/oneconfig/api/config/v1/Property$KtProperty : org/polyfrost/oneconfig/api/config/v1/Property {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lkotlin/reflect/KMutableProperty0;Ljava/lang/Class;)V
+	public fun get ()Ljava/lang/Object;
 }
 
 public class org/polyfrost/oneconfig/api/config/v1/Tree : org/polyfrost/oneconfig/api/config/v1/Node, java/io/Serializable {

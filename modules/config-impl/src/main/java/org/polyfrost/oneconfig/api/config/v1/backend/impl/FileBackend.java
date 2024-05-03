@@ -27,6 +27,7 @@
 package org.polyfrost.oneconfig.api.config.v1.backend.impl;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.polyfrost.oneconfig.api.config.v1.Tree;
 import org.polyfrost.oneconfig.api.config.v1.backend.Backend;
 import org.polyfrost.oneconfig.api.config.v1.exceptions.SerializationException;
@@ -46,8 +47,8 @@ import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class FileBackend extends Backend {
@@ -194,11 +195,18 @@ public class FileBackend extends Backend {
     }
 
     /**
-     * Inspect all files in this directory and make trees of them where possible.
+     * Gather all files in this directory and make trees of them where possible.
      */
-    public List<Tree> gatherAll() {
+    public Collection<Tree> gatherAll() {
+        return gatherAll(null);
+    }
+
+    /**
+     * Inspect all files in this directory (and optionally the given directory) and make trees of them where possible.
+     */
+    public Collection<Tree> gatherAll(@Nullable String sub) {
         ArrayList<Tree> out = new ArrayList<>();
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(folder)) {
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(mkdirs(sub != null ? folder.resolve(sub) : folder))) {
             for (Path p : stream) {
                 if (!Files.isRegularFile(p)) continue;
                 FileSerializer<String> serializer = getSerializer(p);
@@ -227,7 +235,10 @@ public class FileBackend extends Backend {
     protected FileSerializer<String> getSerializer(Path p) {
         String path = p.toString();
         int i = path.lastIndexOf('.');
-        if (i == -1) return null;
+        if (i == -1) {
+            LOGGER.warn("no serializer set for file {}, using YAML", path);
+            return serializers.get(".yml");
+        }
         return serializers.get(path.substring(i));
     }
 }

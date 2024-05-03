@@ -33,14 +33,20 @@ import org.polyfrost.polyui.unit.minutes
 import org.polyfrost.polyui.unit.seconds
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import org.polyfrost.oneconfig.api.config.v1.annotations.Text as TextAnnotation
 
 /**
  * Basic HUD element which displays text.
- * @see TextHud.Supplier
  * @see TextHud.DateTime
  */
-abstract class TextHud(id: String, name: String, category: Category, var prefix: String, var suffix: String = "", private val frequency: Long) : Hud<Text>(id, name, category) {
-    override fun create() = Text("$prefix${getText()}$suffix", fontSize = 16f, font = PolyUI.defaultFonts.medium)
+abstract class TextHud(
+    @TextAnnotation(title = "Text Prefix")
+    var prefix: String,
+    @TextAnnotation(title = "Text Suffix")
+    var suffix: String = "",
+    private val frequency: Long
+) : Hud<Text>() {
+    override fun create() = Text("<<null>>", fontSize = 16f, font = PolyUI.defaultFonts.medium)
 
     override fun updateFrequency() = frequency
 
@@ -49,35 +55,24 @@ abstract class TextHud(id: String, name: String, category: Category, var prefix:
         return true
     }
 
-    protected abstract fun getText(): String
+    override fun initialize() = update()
 
     /**
-     * [TextHud] which uses the given [supplier] to get the text.
+     * get the text to be shown on this HUD.
+     * **do not call this method yourself.**
      */
-    class Supplier(id: String, name: String, category: Category, prefix: String, suffix: String = "", frequency: Long, private val supplier: () -> String) : TextHud(id, name, category, prefix, suffix, frequency) {
-        constructor(id: String, name: String, category: Category, prefix: String, suffix: String = "", frequency: Long, supplier: java.util.function.Supplier<String>) : this(id, name, category, prefix, suffix, frequency, supplier::get)
-
-        override fun getText() = supplier()
-    }
-
-    class Field(id: String, name: String, category: Category, prefix: String, text: String, suffix: String = "") : TextHud(id, name, category, prefix, suffix, 0L) {
-        var theText = text
-            set(value) {
-                field = value
-                update()
-            }
-
-        override fun getText() = theText
-    }
+    protected abstract fun getText(): String
 
     /**
      * [TextHud] which displays the date/time information.
      * @param template the template to use for the time. See [DateTimeFormatter] for an explanation of the different keywords.
      */
-    class DateTime(header: String, template: String, suffix: String = "") : TextHud(
-        "date_time_hud",
-        "Date/Time Hud",
-        Category.INFO,
+    class DateTime(
+        header: String,
+        @TextAnnotation(title = "The template to use for the time.")
+        var template: String,
+        suffix: String = ""
+    ) : TextHud(
         header,
         suffix,
         frequency =
@@ -86,14 +81,23 @@ abstract class TextHud(id: String, name: String, category: Category, var prefix:
         else if (template.contains('m')) 1.minutes
         else 5.minutes, // asm: updating every 5 minutes is reasonable
     ) {
-        var string = template
-            set(value) {
-                field = value
-                template = DateTimeFormatter.ofPattern(value)
-            }
 
-        private var template = DateTimeFormatter.ofPattern(template)
+        override fun id() = "date_time_hud.yml"
 
-        override fun getText() = LocalDateTime.now().format(template)
+        override fun title() = "Date/Time Hud"
+
+        override fun category() = Category.INFO
+
+        private var _formatter: DateTimeFormatter? = null
+
+        private fun formatter(): DateTimeFormatter {
+            val formatter = _formatter
+            if (formatter != null) return formatter
+            val forMatHer = DateTimeFormatter.ofPattern(this.template)
+            this._formatter = forMatHer
+            return forMatHer
+        }
+
+        override fun getText(): String = LocalDateTime.now().format(formatter())
     }
 }

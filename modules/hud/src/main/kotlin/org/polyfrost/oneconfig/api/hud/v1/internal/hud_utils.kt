@@ -94,6 +94,9 @@ private var cur: Drawable? = null
 fun Hud<out Drawable>.buildNew(): Block {
     var tx = 0f
     var ty = 0f
+    if (initialize()) {
+        get().parent?.recalculateChildren()
+    }
     return get().addDefaultBackground(backgroundColor()).draggable(
         free = true,
         onStart = {
@@ -112,7 +115,7 @@ fun Hud<out Drawable>.buildNew(): Block {
                 polyUI.inputManager.recalculate()
                 return@draggable
             }
-            val hud = this@buildNew.clone().build()
+            val hud = this@buildNew.make().build()
 
             polyUI.master.addChild(hud, reposition = false)
             hud.x = x
@@ -143,6 +146,9 @@ fun Hud<out Drawable>.build(): Block {
                 get().parent?.recalculateChildren()
             }
         }
+    }
+    if (initialize()) {
+        get().parent?.recalculateChildren()
     }
 
     return get().addDefaultBackground(backgroundColor()).addScaler().draggable(
@@ -186,6 +192,7 @@ fun Hud<out Drawable>.build(): Block {
 
 private fun Drawable.addDefaultBackground(color: PolyColor?): Block {
     return Block(
+        at = this.x by this.y,
         alignment = alignC,
         children = arrayOf(this),
         radii = 6f.radii(),

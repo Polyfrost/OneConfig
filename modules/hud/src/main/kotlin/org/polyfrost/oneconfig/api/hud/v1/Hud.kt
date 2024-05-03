@@ -29,6 +29,9 @@ package org.polyfrost.oneconfig.api.hud.v1
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.MustBeInvokedByOverriders
 import org.polyfrost.oneconfig.api.config.v1.Config
+import org.polyfrost.oneconfig.api.config.v1.ConfigManager
+import org.polyfrost.oneconfig.api.config.v1.Properties.ktProperty
+import org.polyfrost.oneconfig.api.config.v1.Properties.simple
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.component.Drawable
@@ -50,14 +53,40 @@ import org.polyfrost.polyui.unit.Vec2
  * - The easiest way to ensure that your HUD works when placed multiple times is to just not use `static` fields, so you don't abuse them.
  */
 @Suppress("EqualsOrHashCode")
-abstract class Hud<T : Drawable>(id: String, name: String, category: Category) : Cloneable, Config("huds/$id", null, name, null) {
-    init {
-        tree.addMetadata("category", category)
-    }
+abstract class Hud<T : Drawable> : Cloneable, Config("null", null, "null", null) {
+    // effectively lateinit because of how this works (great reason ik)
+    // tree is null unless this is saved
+    final override fun makeTree(id: String) = null
 
-    override fun makeTree(id: String): Tree {
-        tree = super.makeTree(id)
-        return tree
+    abstract fun title(): String
+
+    abstract fun id(): String
+
+    abstract fun category(): Category
+
+    /**
+     * create this hud as a serializable object.
+     */
+    fun make(with: Tree? = null): Hud<T> {
+        if (tree != null) throw IllegalArgumentException("HUD already exists -> can only clone from root HUD object")
+        val out = clone()
+        val tree = ConfigManager.collect(out, "huds/${id()}")
+        tree.title = out.title()
+        tree.addMetadata("category", category())
+        tree["x"] = ktProperty(out.hud::x)
+        tree["y"] = ktProperty(out.hud::y)
+        tree["skewX"] = ktProperty(out.hud::skewX)
+        tree["skewY"] = ktProperty(out.hud::skewY)
+        tree["scaleX"] = ktProperty(out.hud::scaleX)
+        tree["scaleY"] = ktProperty(out.hud::scaleY)
+        tree["rotation"] = ktProperty(out.hud::rotation)
+        tree["alpha"] = ktProperty(out.hud::alpha)
+        tree["hidden"] = ktProperty(out::hidden)
+        tree["hudClass"] = simple(value = out::class.java.name)
+        if (with != null) tree.overwrite(with)
+        out.tree = tree
+        ConfigManager.active().register(tree)
+        return out
     }
 
     @Transient
@@ -104,6 +133,15 @@ abstract class Hud<T : Drawable>(id: String, name: String, category: Category) :
      * Create a new instance of your HUD. This should be the complete unit of your hud, **excluding** a background.
      */
     protected abstract fun create(): T
+
+    /**
+     * initialize your HUD element.
+     *
+     * this method will be called once, and once only.
+     *
+     * similar to [update], this method will re-layout the HUD element if `true` is returned.
+     */
+    abstract fun initialize(): Boolean
 
     /**
      * Update your HUD element.
@@ -169,7 +207,7 @@ abstract class Hud<T : Drawable>(id: String, name: String, category: Category) :
      */
     @MustBeInvokedByOverriders
     @Suppress("unchecked_cast")
-    public override fun clone(): Hud<T> = (super.clone() as Hud<T>).apply { it = null; makeTree(tree.id) }
+    override fun clone(): Hud<T> = (super.clone() as Hud<T>).apply { it = null }
 
     final override fun equals(other: Any?): Boolean {
         if (this === other) return true

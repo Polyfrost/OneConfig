@@ -161,6 +161,11 @@ public final class ConfigManager {
         return backend.register(t);
     }
 
+    @ApiStatus.Internal
+    public Collection<Tree> gatherAll(String sub) {
+        return backend.gatherAll(sub);
+    }
+
     public Tree register(@NotNull Object o, @NotNull String id) {
         Tree t = collect(o, id);
         if (t == null) return null;

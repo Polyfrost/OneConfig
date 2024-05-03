@@ -23,6 +23,7 @@ public final class org/polyfrost/oneconfig/api/config/v1/ConfigManager {
 	public static fun active ()Lorg/polyfrost/oneconfig/api/config/v1/ConfigManager;
 	public static fun collect (Ljava/lang/Object;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	public static fun core ()Lorg/polyfrost/oneconfig/api/config/v1/ConfigManager;
+	public fun gatherAll (Ljava/lang/String;)Ljava/util/Collection;
 	public fun get (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	public fun getFolder ()Ljava/nio/file/Path;
 	public static fun openProfile (Ljava/lang/String;)V
@@ -201,7 +202,8 @@ public class org/polyfrost/oneconfig/api/config/v1/backend/impl/FileBackend : or
 	public fun addSerializer (Lorg/polyfrost/oneconfig/api/config/v1/serialize/impl/FileSerializer;)V
 	public fun addWatcher ()Lorg/polyfrost/oneconfig/api/config/v1/backend/impl/FileBackend;
 	public fun dodge ()V
-	public fun gatherAll ()Ljava/util/List;
+	public fun gatherAll ()Ljava/util/Collection;
+	public fun gatherAll (Ljava/lang/String;)Ljava/util/Collection;
 	protected fun getSerializer (Ljava/nio/file/Path;)Lorg/polyfrost/oneconfig/api/config/v1/serialize/impl/FileSerializer;
 	public fun hasWatcher ()Z
 	protected fun load0 (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;

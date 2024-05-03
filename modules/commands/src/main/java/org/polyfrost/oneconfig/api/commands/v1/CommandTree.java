@@ -79,6 +79,23 @@ public class CommandTree extends Node {
         return out;
     }
 
+    private static void _getHelp(CommandTree it, int depth, StringBuilder sb) {
+        sb.append("\n");
+        append(sb, "  ", depth);
+        sb.append(it);
+        it.commandsNoDupe.values().forEach((ls) -> {
+            for (Node value : ls) {
+                if (value instanceof Executable) {
+                    sb.append("\n");
+                    append(sb, "  ", depth + 2);
+                    sb.append(value);
+                } else {
+                    _getHelp((CommandTree) value, depth + 1, sb);
+                }
+            }
+        });
+    }
+
     @Override
     public void setDescription(String description) {
         super.setDescription(description);
@@ -87,7 +104,6 @@ public class CommandTree extends Node {
             getHelp();
         }
     }
-
 
     public Map<String, List<Node>> getDedupedCommands() {
         if (!init) throw new CommandCreationException("Cannot get deduped commands before initialization!");
@@ -157,7 +173,6 @@ public class CommandTree extends Node {
         }
     }
 
-
     @NotNull
     public String[] getHelp() {
         if (help == null) {
@@ -184,23 +199,6 @@ public class CommandTree extends Node {
             put(name, sub);
         }
         commandsNoDupe.put(sub.name(), Collections.singletonList(sub));
-    }
-
-    private static void _getHelp(CommandTree it, int depth, StringBuilder sb) {
-        sb.append("\n");
-        append(sb, "  ", depth);
-        sb.append(it);
-        it.commandsNoDupe.values().forEach((ls) -> {
-            for (Node value : ls) {
-                if (value instanceof Executable) {
-                    sb.append("\n");
-                    append(sb, "  ", depth + 2);
-                    sb.append(value);
-                } else {
-                    _getHelp((CommandTree) value, depth + 1, sb);
-                }
-            }
-        });
     }
 
     @Override

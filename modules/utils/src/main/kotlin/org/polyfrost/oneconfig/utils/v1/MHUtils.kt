@@ -473,13 +473,14 @@ object MHUtils {
      * Instantiate a class using the no-args ctor. If allocateAnyway is true and there is no no-args ctor, it will be allocated using the unsafe.
      */
     @JvmStatic
+    @Suppress("UNCHECKED_CAST")
     fun <T> instantiate(cls: Class<T>, allocateAnyway: Boolean) = try {
         Result.success(cls.getDeclaredConstructor().setAccessible().newInstance() as T)
     } catch (e: Throwable) {
         if (!allocateAnyway) {
             Result.failure(ReflectiveOperationException("Failed to instantiate $cls", e))
         } else try {
-            Result.success(theUnsafe.allocateInstance(cls))
+            Result.success(theUnsafe.allocateInstance(cls) as T)
         } catch (ee: Exception) {
             Result.failure(ReflectiveOperationException("Failed to Unsafe allocate $cls", ee.initCause(e)))
         }
@@ -515,6 +516,27 @@ object MHUtils {
         this
     } catch (e: Throwable) {
         this
+    }
+
+    /**
+     * remove the filters that normally prevent you from reflectively accessing internal classes to the JVM. this operation is permanent.
+     *
+     * # this is a very dangerous operation and should only be used in a controlled environment.
+     *
+     * may also minorly increase performance of reflective get member operations.
+     */
+    @JvmStatic
+    @ApiStatus.Experimental
+    fun removeReflectionFilters(): Boolean {
+        return try {
+            val cls = Class.forName("jdk.internal.reflect.Reflection")
+            trustedLookup.findStaticSetter(cls, "fieldFilterMap", Map::class.java).invoke(null)
+            trustedLookup.findStaticGetter(cls, "methodFilterMap", Map::class.java).invoke(null)
+            true
+        } catch (e: Throwable) {
+            LOGGER.error("Failed to remove reflection filters", e)
+            false
+        }
     }
 
 // --- annotation --- //
