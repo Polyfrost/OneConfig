@@ -34,7 +34,6 @@ public class SubConfig extends Config {
 
     public SubConfig(String name, String configFile, String icon, boolean enabled, boolean canToggle) {
         super(new Mod(name, ModType.UTIL_QOL, icon), configFile, enabled, canToggle);
-        initialize();
     }
 
     public SubConfig(String name, String configFile, String icon, boolean enabled) {
