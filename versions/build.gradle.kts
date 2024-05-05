@@ -1,9 +1,10 @@
 @file:Suppress("DSL_SCOPE_VIOLATION")
 
+import net.fabricmc.loom.task.RemapJarTask
+import net.fabricmc.loom.task.RemapSourcesJarTask
 import org.polyfrost.gradle.util.RelocationTransform.Companion.registerRelocationAttribute
 import org.polyfrost.gradle.util.noServerRunConfigs
 import org.polyfrost.gradle.util.prebundle
-import net.fabricmc.loom.task.RemapSourcesJarTask
 import java.text.SimpleDateFormat
 import java.util.concurrent.atomic.AtomicReference
 
@@ -341,6 +342,18 @@ tasks {
          */
         excludeInternal()
         archiveClassifier.set("")
+        doLast {
+            archiveFile.orNull?.asFile?.let {
+                it.copyTo(
+                    File(
+                        File(it.parentFile.parentFile, "libs"),
+                        it.name),
+                    overwrite = true
+                )
+            }
+            artifacts.add(JavaPlugin.API_ELEMENTS_CONFIGURATION_NAME, this)
+            artifacts.add(JavaPlugin.RUNTIME_ELEMENTS_CONFIGURATION_NAME, this)
+        }
     }
     named<Jar>("sourcesJar") {
         from(project(":").sourceSets.main.map { it.allSource })
@@ -351,9 +364,16 @@ tasks {
         }
         doLast {
             archiveFile.orNull?.asFile?.let {
+                val newFile = File(
+                    File(it.parentFile.parentFile, "libs"),
+                    it.name)
+                it.copyTo(
+                    newFile,
+                    overwrite = true
+                )
                 it.copyTo(
                     File(
-                        it.parentFile,
+                        newFile.parentFile,
                         it.nameWithoutExtension + "-dev" + it.extension.let { if (it.isBlank()) "" else ".$it" }),
                     overwrite = true
                 )
@@ -366,6 +386,26 @@ tasks {
     }
     withType<RemapSourcesJarTask> {
         enabled = false
+    }
+}
+
+afterEvaluate {
+    for (configurationName in arrayOf(
+        JavaPlugin.API_ELEMENTS_CONFIGURATION_NAME,
+        JavaPlugin.RUNTIME_ELEMENTS_CONFIGURATION_NAME
+    )) {
+        val configuration = configurations.getByName(configurationName)
+        val jarTask = tasks.getByName("remapJar") as RemapJarTask
+        var removed = false
+        for (artifact in configuration.artifacts) {
+            if (artifact.file.absolutePath == jarTask.archiveFile.get().asFile.absolutePath && artifact.buildDependencies.getDependencies(null).contains(jarTask)) {
+                configuration.artifacts.remove(artifact)
+                removed = true
+            }
+        }
+        if (removed) {
+            artifacts.add(configurationName, tasks.named<Jar>("jar"))
+        }
     }
 }
 
