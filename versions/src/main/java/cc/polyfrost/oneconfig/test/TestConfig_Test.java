@@ -252,6 +252,9 @@ public class TestConfig_Test extends Config {
     )
     public TestBasicHud_Test basicHud = new TestBasicHud_Test();
 
+    @SubConfig
+    public TestSubConfig testSubConfig = new TestSubConfig();
+
     public TestConfig_Test() {
         super(new Mod("Test Mod", ModType.UTIL_QOL, "/testmod_dark.svg", new VigilanceMigrator("./config/testConfig.toml")), "hacksConfig.json");
         initialize();
