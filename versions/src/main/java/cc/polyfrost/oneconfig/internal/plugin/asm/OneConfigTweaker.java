@@ -55,6 +55,11 @@ public class OneConfigTweaker implements ITweaker {
     private static final String MIXIN_TWEAKER = "org.spongepowered.asm.launch.MixinTweaker";
 
     public OneConfigTweaker() {
+        try {
+            injectMixinTweaker();
+        } catch (Throwable t) {
+            t.printStackTrace();
+        }
         final List<SourceFile> sourceFiles = getSourceFiles();
         if (sourceFiles.isEmpty()) {
             System.out.println("Not able to determine current file. Mod will NOT work");
@@ -63,14 +68,9 @@ public class OneConfigTweaker implements ITweaker {
         for (SourceFile sourceFile : sourceFiles) {
             try {
                 setupSourceFile(sourceFile);
-            } catch (Exception e) {
-                e.printStackTrace();
+            } catch (Throwable t) {
+                t.printStackTrace();
             }
-        }
-        try {
-            injectMixinTweaker();
-        } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 
@@ -209,6 +209,13 @@ public class OneConfigTweaker implements ITweaker {
 
     @Override
     public void acceptOptions(List<String> args, File gameDir, File assetsDir, String profile) {
+        boolean captureNext = false;
+        for (String arg : args) {
+            if (captureNext) {
+                Mixins.addConfiguration(arg);
+            }
+            captureNext = "--mixin".equals(arg);
+        }
     }
 
     @Override
