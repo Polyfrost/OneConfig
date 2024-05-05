@@ -416,6 +416,7 @@ publishing {
             artifactId = base.archivesName.get()
 
             from(components["java"])
+            artifact(tasks.getByName("remapJar"))
         }
     }
 
