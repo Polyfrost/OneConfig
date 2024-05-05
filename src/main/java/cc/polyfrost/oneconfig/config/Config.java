@@ -30,9 +30,11 @@ import cc.polyfrost.oneconfig.config.annotations.Button;
 import cc.polyfrost.oneconfig.config.annotations.CustomOption;
 import cc.polyfrost.oneconfig.config.annotations.HUD;
 import cc.polyfrost.oneconfig.config.annotations.Page;
+import cc.polyfrost.oneconfig.config.annotations.SubConfig;
 import cc.polyfrost.oneconfig.config.core.ConfigUtils;
 import cc.polyfrost.oneconfig.config.core.OneKeyBind;
 import cc.polyfrost.oneconfig.config.data.Mod;
+import cc.polyfrost.oneconfig.config.data.ModType;
 import cc.polyfrost.oneconfig.config.data.PageLocation;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
 import cc.polyfrost.oneconfig.config.elements.OptionPage;
@@ -45,6 +47,7 @@ import cc.polyfrost.oneconfig.gui.elements.config.ConfigKeyBind;
 import cc.polyfrost.oneconfig.gui.elements.config.ConfigPageButton;
 import cc.polyfrost.oneconfig.gui.pages.ModConfigPage;
 import cc.polyfrost.oneconfig.hud.HUDUtils;
+import cc.polyfrost.oneconfig.internal.config.SubMainConfig;
 import cc.polyfrost.oneconfig.internal.config.annotations.Option;
 import cc.polyfrost.oneconfig.internal.config.core.ConfigCore;
 import cc.polyfrost.oneconfig.internal.config.core.KeyBindHandler;
@@ -69,7 +72,9 @@ import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.function.Supplier;
 
 @SuppressWarnings({"unused", "ResultOfMethodCallIgnored"})
@@ -230,6 +235,7 @@ public class Config {
         if (superclass != Object.class) {
             generateOptionList(instance, superclass, page, mod, migrate);
         }
+        List<Mod> subMods = new ArrayList<>();
 
         String pagePath = page.equals(mod.defaultPage) ? "" : page.name + ".";
         for (Field field : targetClass.getDeclaredFields()) {
@@ -260,6 +266,11 @@ public class Config {
                 else subcategory.bottomButtons.add(button);
             } else if (field.isAnnotationPresent(HUD.class)) {
                 HUDUtils.addHudOptions(page, field, instance, this);
+            } else if (field.isAnnotationPresent(SubConfig.class)) {
+                if (page != mod.defaultPage) continue;
+                Config config = (Config) ConfigUtils.getField(field, instance);
+                if (config == null) continue;
+                subMods.add(config.mod);
             }
         }
         for (Method method : targetClass.getDeclaredMethods()) {
@@ -270,6 +281,13 @@ public class Config {
                 optionNames.put(optionName, option);
             }
         }
+        if (!subMods.isEmpty()) {
+            if (!optionNames.isEmpty()) {
+                subMods.add(new SubMainConfig().mod);
+            }
+            ConfigCore.subMods.put(this.mod, subMods);
+        }
+
         logger.trace("Finished generating option list for {} (targetting={})", mod.name, targetClass.getName());
     }
 
@@ -463,8 +481,8 @@ public class Config {
     /**
      * Literally does nothing.
      * <p>
-     *     As configs HAVE to be initialized before your mod loader's post-init, instances need to be created before that.
-     *     Hence, this method exists so config instances which are located in the actual class instead of the main mod class can be created.
+     * As configs HAVE to be initialized before your mod loader's post-init, instances need to be created before that.
+     * Hence, this method exists so config instances which are located in the actual class instead of the main mod class can be created.
      * </p>
      * For example:
      * <pre>{@code

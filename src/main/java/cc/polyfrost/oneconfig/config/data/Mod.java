@@ -32,6 +32,8 @@ import cc.polyfrost.oneconfig.config.migration.Migrator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 public class Mod implements Comparable<Mod> {
     @NotNull
     public final String name;
@@ -116,13 +118,13 @@ public class Mod implements Comparable<Mod> {
         return name.compareTo(mod.name);
     }
 
-    @Override
-    public boolean equals(Object obj) {
-        if (obj == null) return false;
-        if (obj == this) return true;
-        if (obj instanceof Mod) {
-            Mod mod = (Mod) obj;
-            return name.equals(mod.name);
-        } else return false;
-    }
+//    @Override
+//    public boolean equals(Object obj) {
+//        if (obj == null) return false;
+//        if (obj == this) return true;
+//        if (obj instanceof Mod) {
+//            Mod mod = (Mod) obj;
+//            return name.equals(mod.name) && config == mod.config;
+//        } else return false;
+//    }
 }

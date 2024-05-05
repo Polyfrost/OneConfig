@@ -28,6 +28,7 @@ package cc.polyfrost.oneconfig.gui.pages;
 
 import cc.polyfrost.oneconfig.config.data.Mod;
 import cc.polyfrost.oneconfig.config.data.ModType;
+import cc.polyfrost.oneconfig.config.elements.SubConfig;
 import cc.polyfrost.oneconfig.gui.OneConfigGui;
 import cc.polyfrost.oneconfig.gui.elements.BasicButton;
 import cc.polyfrost.oneconfig.gui.elements.ModCard;
@@ -44,7 +45,7 @@ import java.util.ArrayList;
 
 public class ModsPage extends Page {
 
-    private final ArrayList<ModCard> modCards = new ArrayList<>();
+    public final ArrayList<ModCard> modCards = new ArrayList<>();
     private final ArrayList<BasicButton> modCategories = new ArrayList<>();
     private int size;
 
@@ -114,8 +115,15 @@ public class ModsPage extends Page {
     public void reloadMods() {
         modCards.clear();
         for (Mod modData : ConfigCore.mods) {
+            if (this instanceof SubModsPage) {
+                Mod parentMod = ((SubModsPage) this).parentMod;
+                if (parentMod != null && !ConfigCore.subMods.get(parentMod).contains(modData)) continue;
+            } else {
+                if (modData.config instanceof SubConfig) continue;
+            }
             modCards.add(new ModCard(modData, modData.config == null || modData.config.enabled, false, OneConfigConfig.favoriteMods.contains(modData.name), this));
         }
+        ConfigCore.sortMods();
     }
 
     @Override
