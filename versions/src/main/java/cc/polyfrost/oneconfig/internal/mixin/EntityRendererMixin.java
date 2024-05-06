@@ -43,10 +43,11 @@ public class EntityRendererMixin {
     @Inject(method = "updateCameraAndRender", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/GuiIngame;renderGameOverlay(F)V", shift = At.Shift.AFTER))
     private void drawHud(float partialTicks, long nanoTime, CallbackInfo ci) {
         if (editing) return;
+        UMatrixStack matrices = new UMatrixStack();
         for (Hud hud : huds.values()) {
             if (!hud.isEnabled() || !hud.isCachingIgnored()) continue;
             hud.deltaTicks = partialTicks;
-            hud.drawAll(new UMatrixStack(), false);
+            hud.drawAll(matrices, false);
         }
     }
 }
