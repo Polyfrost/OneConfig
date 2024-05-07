@@ -255,6 +255,13 @@ public final class org/polyfrost/oneconfig/utils/v1/SimpleProfiler {
 	public static fun push (Ljava/lang/String;)Z
 }
 
+public final class org/polyfrost/oneconfig/utils/v1/StringUtils {
+	public static final field ALPHANUMERIC Ljava/lang/String;
+	public static fun randomString ()Ljava/lang/String;
+	public static fun randomString (I)Ljava/lang/String;
+	public static fun randomString (Ljava/lang/String;I)Ljava/lang/String;
+}
+
 public class org/polyfrost/oneconfig/utils/v1/WrappingUtils {
 	public fun <init> ()V
 	public static fun getUnwrapped (Ljava/lang/Class;)Ljava/lang/Class;

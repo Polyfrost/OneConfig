@@ -1,5 +1,6 @@
 public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/oneconfig/api/config/v1/Config, java/lang/Cloneable {
 	public fun <init> ()V
+	protected fun addSpecifics (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)V
 	public fun backgroundColor ()Lorg/polyfrost/polyui/color/PolyColor;
 	public abstract fun category ()Lorg/polyfrost/oneconfig/api/hud/v1/Hud$Category;
 	public synthetic fun clone ()Ljava/lang/Object;
@@ -35,8 +36,9 @@ public final class org/polyfrost/oneconfig/api/hud/v1/HudManager {
 	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/hud/v1/HudManager;
 	public final fun canAutoOpen ()Z
 	public final fun getHudsPage ()Lorg/polyfrost/polyui/component/Drawable;
-	public final fun getOpen ()Z
 	public final fun getPanel ()Lorg/polyfrost/polyui/component/impl/Block;
+	public final fun getPanelExists ()Z
+	public final fun getPanelOpen ()Z
 	public final fun getPolyUI ()Lorg/polyfrost/polyui/PolyUI;
 	public final fun getSlinex ()F
 	public final fun getSliney ()F
@@ -75,8 +77,8 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/LegacyHud : org/polyfro
 }
 
 public abstract class org/polyfrost/oneconfig/api/hud/v1/TextHud : org/polyfrost/oneconfig/api/hud/v1/Hud {
-	public fun <init> (Ljava/lang/String;Ljava/lang/String;J)V
-	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;JILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public synthetic fun create ()Lorg/polyfrost/polyui/component/Drawable;
 	protected fun create ()Lorg/polyfrost/polyui/component/impl/Text;
 	public final fun getPrefix ()Ljava/lang/String;
@@ -86,7 +88,6 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/TextHud : org/polyfrost
 	public final fun setPrefix (Ljava/lang/String;)V
 	public final fun setSuffix (Ljava/lang/String;)V
 	public fun update ()Z
-	public fun updateFrequency ()J
 }
 
 public final class org/polyfrost/oneconfig/api/hud/v1/TextHud$DateTime : org/polyfrost/oneconfig/api/hud/v1/TextHud {
@@ -97,6 +98,7 @@ public final class org/polyfrost/oneconfig/api/hud/v1/TextHud$DateTime : org/pol
 	public fun id ()Ljava/lang/String;
 	public final fun setTemplate (Ljava/lang/String;)V
 	public fun title ()Ljava/lang/String;
+	public fun updateFrequency ()J
 }
 
 public final class org/polyfrost/oneconfig/api/hud/v1/internal/Hud_utilsKt {

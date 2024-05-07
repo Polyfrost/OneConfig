@@ -39,6 +39,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -124,8 +125,7 @@ public final class NetworkUtils {
      * @return Whether the download was successful.
      */
     public static boolean downloadFile(String url, Path path, String userAgent, int timeout, boolean useCaches) {
-        url = url.replace(" ", "%20");
-        try (BufferedInputStream in = new BufferedInputStream(setupConnection(url, userAgent, timeout, useCaches))) {
+        try (BufferedInputStream in = new BufferedInputStream(setupConnection(URLEncoder.encode(url, "UTF-8"), userAgent, timeout, useCaches))) {
             Files.copy(in, path, StandardCopyOption.REPLACE_EXISTING);
         } catch (Exception e) {
             LOGGER.error("Failed to download file from {}", url, e);

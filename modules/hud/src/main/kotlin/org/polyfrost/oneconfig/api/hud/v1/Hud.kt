@@ -33,6 +33,7 @@ import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Properties.ktProperty
 import org.polyfrost.oneconfig.api.config.v1.Properties.simple
 import org.polyfrost.oneconfig.api.config.v1.Tree
+import org.polyfrost.oneconfig.utils.v1.StringUtils
 import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.unit.Vec2
@@ -70,9 +71,9 @@ abstract class Hud<T : Drawable> : Cloneable, Config("null", null, "null", null)
     fun make(with: Tree? = null): Hud<T> {
         if (tree != null) throw IllegalArgumentException("HUD already exists -> can only clone from root HUD object")
         val out = clone()
-        val tree = ConfigManager.collect(out, "huds/${id()}")
+        val tree = ConfigManager.collect(out, with?.id ?: "huds/${StringUtils.randomString("0123456789", 4)}-${id()}")
         tree.title = out.title()
-        tree.addMetadata("category", category())
+        tree.addMetadata("category", out.category())
         tree["x"] = ktProperty(out.hud::x)
         tree["y"] = ktProperty(out.hud::y)
         tree["skewX"] = ktProperty(out.hud::skewX)
@@ -83,11 +84,15 @@ abstract class Hud<T : Drawable> : Cloneable, Config("null", null, "null", null)
         tree["alpha"] = ktProperty(out.hud::alpha)
         tree["hidden"] = ktProperty(out::hidden)
         tree["hudClass"] = simple(value = out::class.java.name)
+        addSpecifics(tree)
         if (with != null) tree.overwrite(with)
+        else HudManager.LOGGER.info("generated new HUD config for ${out.title()} -> ${tree.id}")
         out.tree = tree
         ConfigManager.active().register(tree)
         return out
     }
+
+    protected open fun addSpecifics(tree: Tree) {}
 
     @Transient
     private var it: T? = null
@@ -110,17 +115,16 @@ abstract class Hud<T : Drawable> : Cloneable, Config("null", null, "null", null)
             val value = !new
             // useless null-safety checks, but I don't want to risk dumb errors
             val it = it ?: return
-            val parent = it.parent ?: return
-            val siblings = parent.children ?: return
+            val siblings = it.parent.children ?: return
             if (value == it.enabled) return
 
             it.enabled = value
             if (siblings.size == 1) {
-                parent.enabled = value
+                it.parent.enabled = value
             } else if (!value && siblings.allAre { !it.enabled }) {
-                parent.enabled = false
+                it.parent.enabled = false
             }
-            parent.recalculateChildren()
+            it.parent.recalculateChildren()
         }
 
     /**

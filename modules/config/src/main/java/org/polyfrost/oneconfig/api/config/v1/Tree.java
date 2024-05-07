@@ -107,7 +107,7 @@ public class Tree extends Node implements Serializable {
         }
     }
 
-    private static void _toString(StringBuilder sb, int depth, Tree t) {
+    private static void _contentToString(StringBuilder sb, int depth, Tree t) {
         for (int i = 0; i < depth; i++) sb.append('\t');
         sb.append(t.getTitle()).append(":\n");
         for (Map.Entry<String, Node> e : t.theMap.entrySet()) {
@@ -115,7 +115,7 @@ public class Tree extends Node implements Serializable {
                 for (int i = 0; i < depth + 1; i++) sb.append('\t');
                 sb.append(e.getValue()).append('\n');
             } else {
-                _toString(sb, depth + 1, (Tree) e.getValue());
+                _contentToString(sb, depth + 1, (Tree) e.getValue());
             }
         }
     }
@@ -259,9 +259,18 @@ public class Tree extends Node implements Serializable {
 
     @Override
     public String toString() {
-        StringBuilder builder = new StringBuilder(96);
-        _toString(builder, 0, this);
-        return builder.toString();
+        StringBuilder sb = new StringBuilder(72);
+        sb.append("Tree(id=").append(getID());
+        if(getTitle() != null) sb.append(", title=").append(getTitle());
+        if(description != null) sb.append(", description=").append(description);
+        sb.append(", size=").append(theMap.size()).append(')');
+        return sb.toString();
+    }
+
+    public String contentToString() {
+        StringBuilder sb = new StringBuilder(128);
+        _contentToString(sb, 0, this);
+        return sb.toString();
     }
 
     /**

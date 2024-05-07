@@ -65,7 +65,7 @@ import org.polyfrost.universal.UResolution
 import kotlin.math.PI
 
 object HudManager {
-    private val LOGGER = LogManager.getLogger("OneConfig/HUD")
+    internal val LOGGER = LogManager.getLogger("OneConfig/HUD")
     private val huds = LinkedList<Hud<out Drawable>>()
     private val hudProviders = HashMap<Class<out Hud<out Drawable>>, Hud<out Drawable>>()
     private val snapLineColor = rgba(170, 170, 170, 0.8f)
@@ -83,10 +83,11 @@ object HudManager {
      */
     @ApiStatus.Internal
     var sliney = -1f
-    var open = false
+    var panelOpen = false
         private set
 
-    private var exists = false
+    var panelExists = false
+        private set
 
     init {
         register(TextHud.DateTime("Date:", "yyyy-MM-dd"))
@@ -97,41 +98,37 @@ object HudManager {
         private set
 
     val panel = Block(
-        size = Vec2(500f, 1048f),
-        children = arrayOf(
-            Group(
-                Image("assets/oneconfig/ico/left-arrow.svg".image()).setDestructivePalette().withStates().onClick {
-                    if (parent!!.parent!![2] !== hudsPage) {
-                        parent!!.parent!![2] = hudsPage
-                    } else {
-                        GuiUtils.closeScreen()
-                    }
-                },
-                Block(
-                    children = arrayOf(
-                        Image("assets/oneconfig/ico/search.svg".image()),
-                        TextInput(placeholder = "oneconfig.search.placeholder"),
-                    ),
-                    size = Vec2(256f, 32f),
-                ).withBoarder().withCursor(Cursor.Text).onClick {
-                    polyUI.focus(this[1])
-                },
-                alignment = Align(main = Align.Main.SpaceBetween, padding = Vec2.ZERO),
-                size = Vec2(468f, 32f),
-            ),
-            Text("oneconfig.hudeditor.title", fontSize = 24f, font = PolyUI.defaultFonts.medium).onClick {
-                ColorPicker(rgba(32, 53, 41).toAnimatable().ref(), mutableListOf(), mutableListOf(), polyUI)
+        Group(
+            Image("assets/oneconfig/ico/left-arrow.svg".image()).setDestructivePalette().withStates().onClick {
+                if (parent.parent[2] !== hudsPage) {
+                    parent.parent[2] = hudsPage
+                } else {
+                    GuiUtils.closeScreen()
+                }
             },
-            hudsPage,
+            Block(
+                Image("assets/oneconfig/ico/search.svg".image()),
+                TextInput(placeholder = "oneconfig.search.placeholder"),
+                size = Vec2(256f, 32f),
+            ).withBoarder().withCursor(Cursor.Text).onClick {
+                polyUI.focus(this[1])
+            },
+            alignment = Align(main = Align.Main.SpaceBetween, padding = Vec2.ZERO),
+            size = Vec2(468f, 32f),
         ),
+        Text("oneconfig.hudeditor.title", fontSize = 24f).setFont { medium }.onClick {
+            ColorPicker(rgba(32, 53, 41).toAnimatable().ref(), mutableListOf(), mutableListOf(), polyUI)
+        },
+        hudsPage,
+        size = Vec2(500f, 1048f),
         alignment = Align(cross = Align.Cross.Start, padding = Vec2(24f, 17f)),
     ).events {
         Event.Lifetime.Added then {
             addChild(
                 Block(
+                    Image("assets/oneconfig/ico/right-arrow.svg".image()).setAlpha(0.1f),
                     size = Vec2(32f, 1048f),
                     alignment = alignC,
-                    children = arrayOf(Image("assets/oneconfig/ico/right-arrow.svg".image()).setAlpha(0.1f)),
                 ).named("CloseArea").withStates().setPalette(
                     Colors.Palette(
                         TRANSPARENT,
@@ -188,7 +185,7 @@ object HudManager {
             polyUI.resize(w.toFloat(), h.toFloat())
         }.register()
         eventHandler { (stack): HudRenderEvent ->
-            if (!exists) {
+            if (!panelExists) {
                 stack.push()
                 polyUI.render()
                 stack.pop()
@@ -197,7 +194,7 @@ object HudManager {
     }
 
     val polyUI: PolyUI = PolyUI(
-        LwjglManager.INSTANCE.renderer,
+        renderer = LwjglManager.INSTANCE.renderer,
         size = 1920f by 1080f,
         settings = Settings().apply {
             cleanupAfterInit = false
@@ -215,13 +212,13 @@ object HudManager {
     fun getWithEditor(): PolyUIScreen {
         return PolyUIScreen(polyUI.also {
             toggleHudPicker()
-            exists = true
+            panelExists = true
         }).closeCallback(this::editorClose)
     }
 
     private fun editorClose() {
         toggleHudPicker()
-        exists = false
+        panelExists = false
     }
 
 
@@ -251,6 +248,9 @@ object HudManager {
                 val h = hudProviders.getOrPut(cls) { MHUtils.instantiate(cls, true).getOrThrow() }
                 val hud = h.make(data)
                 polyUI.master.addChild(hud.build(), reposition = false)
+                if (hud.initialize()) {
+                    hud.get().parent.recalculateChildren()
+                }
             } catch (e: Exception) {
                 LOGGER.error("Failed to load HUD from ${data.id}", e)
             }
@@ -258,15 +258,15 @@ object HudManager {
     }
 
     fun openHudEditor(hud: Hud<out Drawable>) {
-        if (!open) toggle()
+        if (!panelOpen) toggle()
         panel[2] = createInspectionsScreen(hud)
     }
 
     fun toggle() {
-        open = !open
+        panelOpen = !panelOpen
         val pg = panel
         val arrow = pg.children!!.last()[0] as Image
-        if (!open) {
+        if (!panelOpen) {
             Move(pg, polyUI.size.x - 32f, pg.y, false, Animations.EaseInOutExpo.create(0.2.seconds)).add()
             Fade(pg, 0.8f, false, Animations.EaseInOutExpo.create(0.2.seconds)).add()
             arrow.rotation = PI
@@ -281,11 +281,11 @@ object HudManager {
 
     fun toggleHudPicker() {
         val pg = panel
-        if (open) {
+        if (panelOpen) {
             toggle()
         }
         // first open
-        if (pg.parent == null) {
+        if (!pg.initialized) {
             val sx = polyUI.size.x / 1920f
             val sy = polyUI.size.y / 1080f
             polyUI.master.addChild(
@@ -296,7 +296,7 @@ object HudManager {
             pg.prioritize()
             pg.renders = true
         }
-        if (exists) {
+        if (panelExists) {
             Fade(pg, 0f, false, Animations.EaseInOutQuad.create(0.2.seconds)) {
                 renders = false
             }.add()

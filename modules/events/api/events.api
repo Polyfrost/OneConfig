@@ -73,7 +73,6 @@ public class org/polyfrost/oneconfig/api/event/v1/events/InitializationEvent : o
 }
 
 public class org/polyfrost/oneconfig/api/event/v1/events/JvmShutdownEvent : org/polyfrost/oneconfig/api/event/v1/events/Event {
-	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/event/v1/events/JvmShutdownEvent;
 }
 
 public class org/polyfrost/oneconfig/api/event/v1/events/KeyInputEvent : org/polyfrost/oneconfig/api/event/v1/events/Event {

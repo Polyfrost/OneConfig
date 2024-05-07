@@ -36,7 +36,6 @@ import org.polyfrost.oneconfig.internal.ui.pages.FeedbackPage
 import org.polyfrost.oneconfig.internal.ui.pages.ModsPage
 import org.polyfrost.oneconfig.internal.ui.pages.ThemesPage
 import org.polyfrost.oneconfig.utils.v1.GuiUtils
-import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.animate.Animations
 import org.polyfrost.polyui.component.*
 import org.polyfrost.polyui.component.impl.*
@@ -68,119 +67,97 @@ object OneConfigUI {
             null, null, null, null, null, rgba(21, 21, 21),
             1920f by 1080f, 1400f by 700f,
             Group(
+                Block(
+                    size = Vec2(225f, 32f),
+                ).hide().afterParentInit {
+                    renders = true
+                    val modsBtn = parent[2][1]
+                    Move(this, modsBtn.x, modsBtn.y, false).add()
+                },
+                Image("assets/oneconfig/brand/oneconfig.svg".image()).named("Logo"),
+                Group(
+                    Text("oneconfig.sidebar.title.options", fontSize = 11f).setPalette { text.secondary },
+                    SidebarButton(
+                        "assets/oneconfig/ico/settings.svg".image(),
+                        "oneconfig.mods",
+                    ).onClick { openPage(ModsPage(ConfigManager.active().trees()), "oneconfig.mods") },
+                    SidebarButton(
+                        "assets/oneconfig/ico/profiles.svg".image(),
+                        "oneconfig.profiles",
+                    ).disable().addHoverInfo("this feature is experimental and is coming soon!"),
+                    SidebarButton("assets/oneconfig/ico/keyboard.svg".image(), "oneconfig.keybinds").disable(),
+                    alignment = vertical,
+                ),
+                Group(
+                    Text("oneconfig.sidebar.title.personal", fontSize = 11f).setPalette { text.secondary },
+                    SidebarButton("assets/oneconfig/ico/paintbrush.svg".image(), "oneconfig.themes", label("oneconfig.soon")).onClick {
+                        openPage(ThemesPage(), "oneconfig.themes")
+                    }.disable(),
+                    SidebarButton("assets/oneconfig/ico/cog.svg".image(), "oneconfig.preferences"),
+                    alignment = vertical,
+                ),
+                Group(
+                    Text("oneconfig.sidebar.title.extra", fontSize = 11f).setPalette { text.secondary },
+                    SidebarButton(
+                        "assets/oneconfig/ico/refresh.svg".image(),
+                        "oneconfig.changelog",
+                    ),
+                    SidebarButton(
+                        "assets/oneconfig/ico/text.svg".image(),
+                        "oneconfig.feedback",
+                        label("oneconfig.beta"),
+                    ).onClick { openPage(FeedbackPage(), "oneconfig.feedback") },
+                    alignment = vertical,
+                ),
+                Spacer(size = Vec2(200f, 170f)),
+                SidebarButton0("assets/oneconfig/ico/hud.svg".image(), "oneconfig.edithud").onClick {
+                    GuiUtils.displayScreen(HudManager.getWithEditor())
+                },
                 size = Vec2(273f, 700f),
                 alignment = Align(mode = Align.Mode.Vertical, padding = Vec2(12f, 16f)),
-                children = arrayOf(
-                    Block(
-                        size = Vec2(225f, 32f),
-                    ).hide().afterParentInit {
-                        renders = true
-                        val modsBtn = parent!![2][1]
-                        Move(this, modsBtn.x, modsBtn.y, false).add()
-                    },
-                    Image("assets/oneconfig/brand/oneconfig.svg".image()).named("Logo"),
-                    Group(
-                        alignment = vertical,
-                        children = arrayOf(
-                            Text("oneconfig.sidebar.title.options", fontSize = 11f).setPalette { text.secondary },
-                            SidebarButton(
-                                "assets/oneconfig/ico/settings.svg".image(),
-                                "oneconfig.mods",
-                            ).onClick { openPage(ModsPage(ConfigManager.active().trees()), "oneconfig.mods") },
-                            SidebarButton(
-                                "assets/oneconfig/ico/profiles.svg".image(),
-                                "oneconfig.profiles",
-                            ).disable().addHoverInfo("this feature is experimental and is coming soon!"),
-                            SidebarButton("assets/oneconfig/ico/keyboard.svg".image(), "oneconfig.keybinds").disable(),
-                        ),
-                    ),
-                    Group(
-                        alignment = vertical,
-                        children = arrayOf(
-                            Text("oneconfig.sidebar.title.personal", fontSize = 11f).setPalette { text.secondary },
-                            SidebarButton("assets/oneconfig/ico/paintbrush.svg".image(), "oneconfig.themes", label("oneconfig.soon")).onClick {
-                                openPage(ThemesPage(), "oneconfig.themes")
-                            }.disable(),
-                            SidebarButton("assets/oneconfig/ico/cog.svg".image(), "oneconfig.preferences"),
-                        ),
-                    ),
-                    Group(
-                        alignment = vertical,
-                        children = arrayOf(
-                            Text("oneconfig.sidebar.title.extra", fontSize = 11f).setPalette { text.secondary },
-                            SidebarButton(
-                                "assets/oneconfig/ico/refresh.svg".image(),
-                                "oneconfig.changelog",
-                            ),//.onClick { openPage(ChangelogPage(NewsManager.getNews()), "oneconfig.changelog") },
-                            SidebarButton(
-                                "assets/oneconfig/ico/text.svg".image(),
-                                "oneconfig.feedback",
-                                label("oneconfig.beta"),
-                            ).onClick { openPage(FeedbackPage(), "oneconfig.feedback") },
-                        ),
-                    ),
-                    Spacer(size = Vec2(200f, 170f)),
-                    SidebarButton0("assets/oneconfig/ico/hud.svg".image(), "oneconfig.edithud").onClick {
-                        GuiUtils.displayScreen(HudManager.getWithEditor())
-                    },
-                ),
             ).named("Sidebar"),
             Group(
+                Group(
+                    Group(
+                        Image("assets/oneconfig/ico/left-arrow.svg".image()).named("Back").disable(), Image("assets/oneconfig/ico/right-arrow.svg".image()).named("Forward").disable(),
+                        Text(
+                            "oneconfig.mods",
+                            fontSize = 24f,
+                        ).setFont { medium }.named("Current"),
+                        alignment = Align(padding = Vec2(16f, 8f)),
+                    ).named("Controls"),
+                    Group(
+                        Group(
+                            Image("assets/oneconfig/ico/cloud.svg".image()),
+                            Image(
+                                "assets/oneconfig/ico/bell.svg".image(),
+                            ),
+                            Image(playerHead, radii = 6f.radii()).named("ProfileImage").withBoarder(
+                                rgba(255, 255, 255, 0.14f),
+                                width = 1f,
+                            ).addHoverInfo(Platform.getInstance().playerName.ifEmpty { "null" }),
+                            alignment = Align(padding = Vec2(16f, 8f)),
+                        ),
+                        Block(
+                            Image("assets/oneconfig/ico/search.svg".image()),
+                            TextInput(
+                                placeholder = "oneconfig.search.placeholder",
+                                visibleSize = Vec2(210f, 12f),
+                            ),
+                            size = Vec2(256f, 32f),
+                            alignment = Align(padding = Vec2(10f, 8f)),
+                        ).named("SearchField"),
+                        Image(
+                            "assets/oneconfig/ico/close.svg".image(),
+                        ).named("Close").onClick { GuiUtils.closeScreen() }.withStates().setDestructivePalette(),
+                        alignment = Align(padding = Vec2(24f, 8f)),
+                    ),
+                    size = Vec2(1130f, 64f),
+                    alignment = Align(main = Align.Main.SpaceBetween),
+                ).named("Header"),
+                ModsPage(ConfigManager.active().trees()),
                 size = Vec2(1127f, 700f),
                 alignment = Align(padding = Vec2.ZERO),
-                children = arrayOf(
-                    Group(
-                        size = Vec2(1130f, 64f),
-                        alignment = Align(main = Align.Main.SpaceBetween),
-                        children = arrayOf(
-                            Group(
-                                alignment = Align(padding = Vec2(16f, 8f)),
-                                children = arrayOf(
-                                    Image("assets/oneconfig/ico/left-arrow.svg".image()).named("Back").disable(),
-                                    Image("assets/oneconfig/ico/right-arrow.svg".image()).named("Forward").disable(),
-                                    Text(
-                                        "oneconfig.mods",
-                                        font = PolyUI.defaultFonts.medium,
-                                        fontSize = 24f,
-                                    ).named("Current"),
-                                ),
-                            ).named("Controls"),
-                            Group(
-                                alignment = Align(padding = Vec2(24f, 8f)),
-                                children = arrayOf(
-                                    Group(
-                                        alignment = Align(padding = Vec2(16f, 8f)),
-                                        children = arrayOf(
-                                            Image("assets/oneconfig/ico/cloud.svg".image()),
-                                            Image(
-                                                "assets/oneconfig/ico/bell.svg".image(),
-                                            ),//.onClick { showNotifications(polyUI, NotificationsManager.getNotifications()) },
-                                            Image(playerHead, radii = 6f.radii()).named("ProfileImage").withBoarder(
-                                                rgba(255, 255, 255, 0.14f),
-                                                width = 1f,
-                                            ).addHoverInfo(Platform.getInstance().playerName.ifEmpty { "null" }),
-                                        ),
-                                    ),
-                                    Block(
-                                        size = Vec2(256f, 32f),
-                                        alignment = Align(padding = Vec2(10f, 8f)),
-                                        children = arrayOf(
-                                            Image("assets/oneconfig/ico/search.svg".image()),
-                                            TextInput(
-                                                placeholder = "oneconfig.search.placeholder",
-                                                visibleSize = Vec2(210f, 12f),
-                                            ),
-                                        ),
-                                    ).named("SearchField"),
-                                    Image(
-                                        "assets/oneconfig/ico/close.svg".image(),
-                                    ).named("Close").onClick { GuiUtils.closeScreen() }.withStates().setDestructivePalette(),
-                                ),
-                            ),
-                        ),
-                    ).named("Header"),
-                    ModsPage(ConfigManager.active().trees()),
-                ),
             )
         ).also {
             ui = it.polyUI!!.master
@@ -209,19 +186,19 @@ object OneConfigUI {
 
     fun label(text: String): Drawable {
         return Block(
+            Text(text).setFont { bold },
             alignment = Align(main = Align.Main.Center),
             size = Vec2(54f, 18f),
-            children = arrayOf(Text(text, font = PolyUI.defaultFonts.bold)),
         ).setPalette { brand.fg }
     }
 
 
-    val sidebarBtnAlign = Align(padding = Vec2(16f, 6f))
+    private val sidebarBtnAlign = Align(padding = Vec2(16f, 6f))
 
     fun SidebarButton(image: PolyImage, text: String, extra: Drawable? = null): Group {
         return SidebarButton0(image, text, extra).events {
             Event.Mouse.Clicked(0) then { _ ->
-                val it = parent!!.parent!![0]
+                val it = parent.parent[0]
                 Move(it, this.x, this.y, false, Animations.EaseOutQuad.create(0.15.seconds)).add()
                 false
             }
@@ -230,13 +207,11 @@ object OneConfigUI {
 
     fun SidebarButton0(image: PolyImage, text: String, extra: Drawable? = null): Group {
         return Group(
+            Image(image),
+            Text(text, fontSize = 14f),
+            extra,
             size = Vec2(225f, 33f),
             alignment = sidebarBtnAlign,
-            children = arrayOf(
-                Image(image),
-                Text(text, fontSize = 14f),
-                extra,
-            ),
         ).namedId("SidebarButton").apply {
             addEventHandler(Event.Mouse.Entered) {
                 Recolor(this[1], this[1].palette.hovered, Animations.EaseInOutQuad.create(0.08.seconds)).add()

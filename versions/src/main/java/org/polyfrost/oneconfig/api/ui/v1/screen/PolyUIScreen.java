@@ -100,7 +100,7 @@ public class PolyUIScreen extends UScreen implements UIPause, BlurScreen {
         } else {
             Colors c = colors == null ? new DarkTheme() : colors;
             Align a = alignment == null ? new Align(Align.Main.Start, Align.Cross.Start, Align.Mode.Horizontal, Vec2.ZERO, 50) : alignment;
-            this.polyUI = new PolyUI(LwjglManager.INSTANCE.getRenderer(), s, inputManager, translator, backgroundColor, a, c, size, drawables);
+            this.polyUI = new PolyUI(drawables, LwjglManager.INSTANCE.getRenderer(), s, inputManager, translator, backgroundColor, a, c, size);
             this.window = new MCWindow(UMinecraft.getMinecraft());
             this.window.setPixelRatio(scale());
             this.polyUI.setWindow(window);

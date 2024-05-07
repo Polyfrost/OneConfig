@@ -44,6 +44,7 @@ import org.polyfrost.oneconfig.utils.v1.MHUtils;
 import org.polyfrost.polyui.renderer.Renderer;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
+import org.polyfrost.polyui.utils.IOUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -81,7 +82,7 @@ public class LwjglManagerImpl
     private final Map<String, Class<?>> classCache = new HashMap<>();
 
     private static final String JAR_NAME = "lwjgl-legacy.jar";
-    private static final Path TEMP_DIR = Paths.get("OneConfig", "lwjgl").toAbsolutePath();
+    private static final Path TEMP_DIR = Paths.get("oneconfig", "lwjgl").toAbsolutePath();
     private final TinyFD tinyFD;
     private final Renderer renderer;
 
@@ -214,7 +215,7 @@ public class LwjglManagerImpl
                 }
             }
 
-            byte[] classBuffer = org.polyfrost.polyui.utils.IOUtils.toByteArray(classUrl.openStream(), true);
+            byte[] classBuffer = IOUtils.toByteArray(classUrl.openStream());
 
             // define class through Unsafe to bypass package seal checking
             Class<?> clazz = defineClassBypass(unmappedName, classBuffer);

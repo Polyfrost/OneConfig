@@ -30,9 +30,13 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.UnmodifiableView;
+import org.polyfrost.oneconfig.api.config.v1.Node;
 import org.polyfrost.oneconfig.api.config.v1.Tree;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -110,6 +114,28 @@ public abstract class Backend {
         }
     }
 
+    /**
+     * Save all trees under the given path.
+     */
+    public final void saveAll(@Nullable String matching) {
+        String m = Node.strv(matching);
+        if(m == null) {
+            for (Tree t : trees.values()) {
+                save(t);
+            }
+        } else {
+            for (Tree t : trees.values()) {
+                if(t.getID().startsWith(m)) {
+                    save(t);
+                }
+            }
+        }
+    }
+
+    public final void saveAll() {
+        saveAll(null);
+    }
+
     public final boolean save(Tree tree) {
         if (tree.getID() == null) throw new IllegalArgumentException("tree must be master (have a valid ID)");
         putSafe(tree);
@@ -129,8 +155,9 @@ public abstract class Backend {
         return trees.get(id);
     }
 
+    @UnmodifiableView
     public final Collection<Tree> getTrees() {
-        return trees.values();
+        return Collections.unmodifiableCollection(trees.values());
     }
 
     /**
@@ -146,6 +173,21 @@ public abstract class Backend {
         }
         load(tree);
     }
+
+    /**
+     * Explicitly mark a tree as corrupted. The given tree, if present, will be untracked by this backend.
+     * <br> this method is also automatically called when a tree fails to load. <i>(implementation specific operation)</i>
+     * @param id the ID of the tree to mark as corrupted.
+     * @return true if the tree was marked as corrupted, false if the tree was not found.
+     */
+    @ApiStatus.Experimental
+    public final boolean corrupt(String id) {
+        Tree t = trees.remove(id);
+        if (t == null) return false;
+        return corrupt0(t);
+    }
+
+    protected abstract boolean corrupt0(Tree t);
 
     protected void putSafe(Tree in) {
         // sanity check.

@@ -193,8 +193,6 @@ public final class ConfigManager {
         if (shutdown) return;
         shutdown = true;
         LOGGER.info("shutdown requested; saving all configs in {}", backend.folder.getFileName());
-        for (Tree t : backend.getTrees()) {
-            backend.save(t);
-        }
+        backend.saveAll();
     }
 }

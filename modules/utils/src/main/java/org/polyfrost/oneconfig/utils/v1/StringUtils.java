@@ -24,21 +24,38 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.api.event.v1.events;
+package org.polyfrost.oneconfig.utils.v1;
 
-import org.polyfrost.oneconfig.api.event.v1.EventManager;
+public final class StringUtils {
+    public static final String ALPHANUMERIC = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
-/**
- * Called when the JVM is shutting down. This is called in a {@link Runtime#addShutdownHook(Thread) shutdown hook}.
- *
- * @see ShutdownEvent
- */
-public class JvmShutdownEvent implements Event {
-    static {
-        // <clinit> will be called if something wants to reference this
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> EventManager.INSTANCE.post(new JvmShutdownEvent())));
+    private StringUtils() {
     }
 
-    private JvmShutdownEvent() {
+    /**
+     * generate a random string of length 16, using {@link #ALPHANUMERIC} as the source.
+     */
+    public static String randomString() {
+        return randomString(ALPHANUMERIC, 16);
+    }
+
+    /**
+     * generate a random string of the given length, using {@link #ALPHANUMERIC} as the source.
+     */
+    public static String randomString(int length) {
+        return randomString(ALPHANUMERIC, length);
+    }
+
+    /**
+     * generate a random string of the given length, using the given source.
+     */
+    public static String randomString(String source, int length) {
+        if (length < 1) throw new IllegalArgumentException("length must be greater than 0");
+        StringBuilder sb = new StringBuilder(length);
+        while (length-- != 0) {
+            int idx = (int) (Math.random() * source.length());
+            sb.append(source.charAt(idx));
+        }
+        return sb.toString();
     }
 }

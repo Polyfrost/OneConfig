@@ -58,12 +58,10 @@ private val barAlign = Align(padding = Vec2(14f, 6f), main = Align.Main.SpaceBet
 fun ModsPage(trees: Collection<Tree>): Drawable {
     if (trees.isEmpty()) {
         return Group(
+            Text("oneconfig.mods.none", fontSize = 24f).setFont { medium },
+            Text("oneconfig.mods.none.desc", fontSize = 14f),
             size = Vec2(1130f, 635f),
             alignment = Align(main = Align.Main.Center, padding = Vec2(18f, 18f), maxRowSize = 1),
-            children = arrayOf(
-                Text("oneconfig.mods.none", fontSize = 24f, font = PolyUI.defaultFonts.medium),
-                Text("oneconfig.mods.none.desc", fontSize = 14f),
-            ),
         ).namedId("EmptyModsPage")
     }
     // todo add categories
@@ -73,25 +71,20 @@ fun ModsPage(trees: Collection<Tree>): Drawable {
         alignment = Align(cross = Align.Cross.Start, padding = Vec2(18f, 18f)),
         children = trees.map {
             Group(
+                Block(
+                    Image(it.getMetadata<String>("icon")?.image() ?: defaultModImage),
+                    radii = modBoxTopRad,
+                    alignment = imageAlign,
+                    size = Vec2(256f, 104f),
+                ).withStates(),
+                Block(
+                    Text(it.title, fontSize = 14f).setFont { medium },
+                    Image(heart),
+                    radii = modBoxBotRad,
+                    alignment = barAlign,
+                    size = Vec2(256f, 36f),
+                ).setPalette { brand.fg },
                 alignment = modBoxAlign,
-                children = arrayOf(
-                    Block(
-                        radii = modBoxTopRad,
-                        alignment = imageAlign,
-                        size = Vec2(256f, 104f),
-                        children = arrayOf(Image(it.getMetadata<String>("icon")?.image() ?: defaultModImage)),
-                    ).withStates(),
-                    Block(
-                        radii = modBoxBotRad,
-                        alignment = barAlign,
-                        size = Vec2(256f, 36f),
-                        children =
-                        arrayOf(
-                            Text(it.title, font = PolyUI.defaultFonts.medium, fontSize = 14f),
-                            Image(heart),
-                        ),
-                    ).setPalette { brand.fg },
-                ),
             ).events {
                 Event.Mouse.Clicked(0) then { _ ->
                     OneConfigUI.openPage(ConfigVisualizer.INSTANCE.get(it), (this[1][0] as Text).text)
@@ -108,9 +101,9 @@ fun ThemesPage(): Drawable {
 fun FeedbackPage(): Drawable {
     return Group(
         Image(PolyImage("assets/oneconfig/brand/polyfrost.png")).onInit { image.size.min(298f, 50f) },
-        Text("oneconfig.feedback.title", fontSize = 24f, font = PolyUI.defaultFonts.medium),
+        Text("oneconfig.feedback.title", fontSize = 24f).setFont { medium },
         Text("oneconfig.feedback.credits", fontSize = 14f),
-        Text("oneconfig.feedback.bugreport", fontSize = 24f, font = PolyUI.defaultFonts.medium),
+        Text("oneconfig.feedback.bugreport", fontSize = 24f).setFont { medium },
         Text("oneconfig.feedback.joindiscord", fontSize = 14f),
         size = Vec2(1130f, 0f),
         visibleSize = Vec2(1130f, 635f),
@@ -131,7 +124,7 @@ fun ChangelogPage(news: Collection<News>): Drawable {
             Group(
                 if (it.image != null) Image(it.image).onInit { image.size.max(325f, 111f) } else null,
                 Group(
-                    Text(it.title, font = PolyUI.defaultFonts.medium, fontSize = 16f),
+                    Text(it.title, fontSize = 16f).setFont { medium },
                     Text(it.summary, visibleSize = Vec2(612f, 166f)),
                     Group(
                         Text(it.dateString),
@@ -141,7 +134,7 @@ fun ChangelogPage(news: Collection<News>): Drawable {
                                     Group(
                                         if (it.image != null) Image(it.image).onInit { image.size.max(325f, 111f) } else null,
                                         Group(
-                                            Text(it.title, font = PolyUI.defaultFonts.medium, fontSize = 24f),
+                                            Text(it.title, fontSize = 24f).setFont { medium },
                                             Text("oneconfig.writtenby".translated(it.author)),
                                             Text(it.dateString),
                                         ),
@@ -166,41 +159,39 @@ fun ChangelogPage(news: Collection<News>): Drawable {
 
 fun NotificationsPopup(polyUI: PolyUI, notifications: List<Notification>) {
     val it = Block(
+        Text("oneconfig.notifications", fontSize = 16f).setFont { medium },
+        Group(
+            children = notifications.map {
+                Group(
+                    Group(
+                        Image(it.icon).onInit { image.size.resize(24f, 24f) },
+                        Group(
+                            Group(
+                                Text(it.title, fontSize = 14f).setFont { medium },
+                                Text(it.timeString).setPalette { text.secondary },
+                            ),
+                            Text(it.description).setPalette { text.secondary },
+                            alignment = Align(mode = Align.Mode.Vertical),
+                        ),
+                    ),
+                    *it.extras,
+                )
+            }.toTypedArray(),
+        ),
+        Group(
+            Group(
+                Image("assets/oneconfig/ico/close.svg".image()),
+                Text("oneconfig.clearall"),
+            ),
+            Image("assets/oneconfig/ico/cog.svg".image()),
+        ),
         focusable = true,
         visibleSize = Vec2(368f, 500f),
         size = Vec2(300f, 0f),
-        children = arrayOf(
-            Text("oneconfig.notifications", font = PolyUI.defaultFonts.medium, fontSize = 16f),
-            Group(
-                children = notifications.map {
-                    Group(
-                        Group(
-                            Image(it.icon).onInit { image.size.resize(24f, 24f) },
-                            Group(
-                                Group(
-                                    Text(it.title, font = PolyUI.defaultFonts.medium, fontSize = 14f),
-                                    Text(it.timeString).setPalette { text.secondary },
-                                ),
-                                Text(it.description).setPalette { text.secondary },
-                                alignment = Align(mode = Align.Mode.Vertical),
-                            ),
-                        ),
-                        *it.extras,
-                    )
-                }.toTypedArray(),
-            ),
-            Group(
-                Group(
-                    Image("assets/oneconfig/ico/close.svg".image()),
-                    Text("oneconfig.clearall"),
-                ),
-                Image("assets/oneconfig/ico/cog.svg".image()),
-            ),
-        ),
     ).events {
         Event.Focused.Lost then { _ ->
             Fade(this, 0f, false, Animations.EaseInOutQuad.create(0.2.seconds)) {
-                parent!!.removeChild(this)
+                parent.removeChild(this)
             }.add()
         }
     }

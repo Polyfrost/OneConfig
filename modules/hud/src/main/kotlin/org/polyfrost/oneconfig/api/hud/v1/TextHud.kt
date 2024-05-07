@@ -26,8 +26,8 @@
 
 package org.polyfrost.oneconfig.api.hud.v1
 
-import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.component.impl.Text
+import org.polyfrost.polyui.input.Translator
 import org.polyfrost.polyui.unit.milliseconds
 import org.polyfrost.polyui.unit.minutes
 import org.polyfrost.polyui.unit.seconds
@@ -43,12 +43,9 @@ abstract class TextHud(
     @TextAnnotation(title = "Text Prefix")
     var prefix: String,
     @TextAnnotation(title = "Text Suffix")
-    var suffix: String = "",
-    private val frequency: Long
+    var suffix: String = ""
 ) : Hud<Text>() {
-    override fun create() = Text("<<null>>", fontSize = 16f, font = PolyUI.defaultFonts.medium)
-
-    override fun updateFrequency() = frequency
+    override fun create() = Text(Translator.Text.Simple(""), fontSize = 16f)
 
     override fun update(): Boolean {
         get().text = "$prefix${getText()}$suffix"
@@ -72,21 +69,20 @@ abstract class TextHud(
         @TextAnnotation(title = "The template to use for the time.")
         var template: String,
         suffix: String = ""
-    ) : TextHud(
-        header,
-        suffix,
-        frequency =
-        if (template.contains('S')) 100.milliseconds
-        else if (template.contains('s')) 1.seconds
-        else if (template.contains('m')) 1.minutes
-        else 5.minutes, // asm: updating every 5 minutes is reasonable
-    ) {
+    ) : TextHud(header, suffix) {
 
         override fun id() = "date_time_hud.yml"
 
         override fun title() = "Date/Time Hud"
 
         override fun category() = Category.INFO
+
+        override fun updateFrequency(): Long {
+            return if (template.contains('S')) 100.milliseconds
+            else if (template.contains('s')) 1.seconds
+            else if (template.contains('m')) 1.minutes
+            else 5.minutes
+        }
 
         private var _formatter: DateTimeFormatter? = null
 

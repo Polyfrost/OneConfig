@@ -102,6 +102,13 @@ public class FileBackend extends Backend {
         if (hasWatcher) return this;
         WatchService service = folder.getFileSystem().newWatchService();
         folder.register(service, StandardWatchEventKinds.ENTRY_MODIFY, StandardWatchEventKinds.ENTRY_DELETE);
+//        Files.walkFileTree(folder, new SimpleFileVisitor<Path>() {
+//            @Override
+//            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+//                dir.register(service, StandardWatchEventKinds.ENTRY_MODIFY, StandardWatchEventKinds.ENTRY_DELETE);
+//                return FileVisitResult.CONTINUE;
+//            }
+//        });
         hasWatcher = true;
 
         Thread t = new Thread(() -> {
@@ -118,8 +125,8 @@ public class FileBackend extends Backend {
                             dodge = false;
                             continue;
                         }
-                        Path p = folder.resolve((Path) event.context());
-                        String id = p.getFileName().toString();
+                        Path p = (Path) event.context();
+                        String id = p.toString();
                         if (!exists(id)) continue;
 
                         if (event.kind() == StandardWatchEventKinds.ENTRY_DELETE) {
@@ -146,6 +153,11 @@ public class FileBackend extends Backend {
                         break;
                     }
                 }
+            }
+            try {
+                service.close();
+            } catch (IOException e) {
+                LOGGER.error("Failed to close file watcher service", e);
             }
         });
         t.setName("OneConfig Config Watcher");
@@ -208,12 +220,12 @@ public class FileBackend extends Backend {
         ArrayList<Tree> out = new ArrayList<>();
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(mkdirs(sub != null ? folder.resolve(sub) : folder))) {
             for (Path p : stream) {
-                if (!Files.isRegularFile(p)) continue;
+                if (!Files.isRegularFile(p) || p.toString().contains(".corrupted")) continue;
                 FileSerializer<String> serializer = getSerializer(p);
                 if (serializer == null) continue;
                 try {
                     Tree t = serializer.deserialize(read(p));
-                    t.setID(p.getFileName().toString());
+                    t.setID(folder.relativize(p).toString());
                     out.add(t);
                 } catch (Exception ignored) {
                 }
@@ -229,6 +241,18 @@ public class FileBackend extends Backend {
         for (String ext : serializer.getExtensions()) {
             FileSerializer<?> out = this.serializers.putIfAbsent(ext, serializer);
             if (out != null) LOGGER.warn("Serializer already registered for extension {}", ext);
+        }
+    }
+
+    @Override
+    protected boolean corrupt0(Tree t) {
+        Path p = folder.resolve(t.getID());
+        try {
+            Files.move(p, folder.resolve(t.getID() + ".corrupted"), StandardCopyOption.REPLACE_EXISTING);
+            return true;
+        } catch (IOException e) {
+            LOGGER.error("Failed to mark config {} as corrupted", t.getID(), e);
+            return false;
         }
     }
 

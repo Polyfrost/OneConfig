@@ -94,22 +94,18 @@ private var cur: Drawable? = null
 fun Hud<out Drawable>.buildNew(): Block {
     var tx = 0f
     var ty = 0f
-    if (initialize()) {
-        get().parent?.recalculateChildren()
-    }
     return get().addDefaultBackground(backgroundColor()).draggable(
         free = true,
         onStart = {
-            val p = parent!!
-            tx = x - p.x
-            ty = y - p.y
+            tx = x - parent.x
+            ty = y - parent.y
         },
         onDrag = { snapHandlerNew() },
         onDrop = {
-            if (HudManager.open) {
+            if (HudManager.panelOpen) {
                 // asm: the hud manager is closed when it is dragged enough
                 // if it is still open, then don't add
-                val p = parent!!
+                val p = parent
                 x = p.x + tx
                 y = p.y + ty
                 polyUI.inputManager.recalculate()
@@ -121,9 +117,8 @@ fun Hud<out Drawable>.buildNew(): Block {
             hud.x = x
             hud.y = y
 
-            val p = parent!!
-            x = p.x + tx
-            y = p.y + ty
+            x = parent.x + tx
+            y = parent.y + ty
             polyUI.inputManager.recalculate()
             if (HudManager.canAutoOpen()) {
                 HudManager.toggle()
@@ -138,22 +133,20 @@ fun Hud<out Drawable>.buildNew(): Block {
  */
 fun Hud<out Drawable>.build(): Block {
     val freq = updateFrequency()
+    if (freq == 0L) LOGGER.warn("update of HUD $this is 0, this is not recommemded!")
     val exe = if (freq < 0L) {
         null
     } else {
         HudManager.polyUI.every(freq) {
             if (update()) {
-                get().parent?.recalculateChildren()
+                get().parent.recalculateChildren()
             }
         }
-    }
-    if (initialize()) {
-        get().parent?.recalculateChildren()
     }
 
     return get().addDefaultBackground(backgroundColor()).addScaler().draggable(
         onStart = {
-            if (HudManager.open) HudManager.toggle()
+            if (HudManager.panelOpen) HudManager.toggle()
         },
         onDrag = { snapHandler() },
         onDrop = {
@@ -163,7 +156,7 @@ fun Hud<out Drawable>.build(): Block {
                 y = polyUI.size.y / 2f - height / 2f
             }
             if (HudManager.canAutoOpen()) {
-                if (!HudManager.open) HudManager.toggle()
+                if (!HudManager.panelOpen) HudManager.toggle()
             }
         },
     ).events {
@@ -192,9 +185,9 @@ fun Hud<out Drawable>.build(): Block {
 
 private fun Drawable.addDefaultBackground(color: PolyColor?): Block {
     return Block(
+        this,
         at = this.x by this.y,
         alignment = alignC,
-        children = arrayOf(this),
         radii = 6f.radii(),
     ).withBoarder().namedId("HudBackground").also {
         if (color != null) it.color = color.toAnimatable()
@@ -260,7 +253,7 @@ private fun Drawable.trySnapY(ly: Float): Boolean {
 fun Drawable.snapHandler() {
     HudManager.slinex = -1f
     HudManager.sliney = -1f
-    if (HudManager.open) return
+    if (HudManager.panelOpen) return
 
     // asm: process screen edge snaps + center snap
     // checking center snaps first seems to make it easier to use
@@ -300,7 +293,7 @@ fun Drawable.snapHandler() {
 fun Drawable.snapHandlerNew() {
     // closes the hud manager and prepares the hud to be added once it is dragged outside of it
     if (polyUI.mouseX !in (polyUI.size.x - HudManager.panel.width)..polyUI.size.x) {
-        if (HudManager.open) HudManager.toggle()
+        if (HudManager.panelOpen) HudManager.toggle()
     }
     snapHandler()
 }

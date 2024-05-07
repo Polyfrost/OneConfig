@@ -28,7 +28,6 @@ package org.polyfrost.oneconfig.api.config.v1
 
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.config.v1.visualize.Visualizer
-import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.animate.Animations
 import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.component.*
@@ -98,13 +97,10 @@ open class ConfigVisualizer {
 
     protected open fun makeFinal(categories: Map<String, Drawable>, initialPage: String): Drawable {
         return Group(
+            createHeaders(categories),
+            categories[initialPage] ?: throw IllegalArgumentException("Initial page $initialPage does not exist"),
             alignment = alignC,
             visibleSize = Vec2(1130f, 635f),
-            children =
-            arrayOf(
-                createHeaders(categories),
-                categories[initialPage] ?: throw IllegalArgumentException("Initial page $initialPage does not exist"),
-            ),
         )
     }
 
@@ -115,12 +111,9 @@ open class ConfigVisualizer {
                 children =
                 subcategories.map { (header, options) ->
                     Group(
+                        Text(header, fontSize = 22f),
+                        *options.toTypedArray(),
                         alignment = alignCV,
-                        children =
-                        arrayOf(
-                            Text(header, fontSize = 22f),
-                            *options.toTypedArray(),
-                        ),
                     )
                 }.toTypedArray(),
             )
@@ -160,7 +153,7 @@ open class ConfigVisualizer {
             categories.map { (category, options) ->
                 Button(text = category).events {
                     Event.Mouse.Clicked(0) then {
-                        parent!![0] = options
+                        parent[0] = options
                     }
                 }
             }.toTypedArray(),
@@ -180,44 +173,41 @@ open class ConfigVisualizer {
                 wrapForAccordion(vis.visualize(node), node.title, node.description)
             }
         return Block(
+            wrap(Image("chevron-down.svg".image()).also { it.rotation = PI }, title, desc, icon).events {
+                self.color = PolyColor.TRANSPARENT.toAnimatable()
+                var open = false
+                Event.Mouse.Clicked(0) then {
+                    open = !open
+                    Rotate(this[1], if (!open) PI else 0.0, false, Animations.EaseOutQuad.create(0.2.seconds)).add()
+                    val value = parent[1].height
+                    val anim = Animations.EaseOutQuad.create(0.4.seconds)
+                    val operation = Resize(parent, width = 0f, height = if (open) -value else value, add = true, anim)
+                    addOperation(
+                        object : DrawableOp.Animatable<Drawable>(parent, anim, onFinish = {
+                            this[1].renders = !open
+                            this[1].enabled = !open
+                        }) {
+                            override fun apply(value: Float) {
+                                operation.apply()
+                                // asm: instruct parent (options list) to replace all its children so that they move with it closing
+                                self.parent.recalculateChildren()
+                                // asm: instruct all children of this accordion to update their visibility based on THIS, NOT its parent
+                                self[1].children!!.fastEach {
+                                    it.renders = it.intersects(self.x, self.y, self.width, self.height)
+                                }
+                            }
+                        },
+                    )
+                    true
+                }
+            },
+            Group(
+                size = Vec2(1078f, 0f),
+                alignment = accordOpt,
+                children = options.toTypedArray(),
+            ).namedId("AccordionContent"),
             color = optBg,
             alignment = alignVNoPad,
-            children =
-            arrayOf(
-                wrap(Image("chevron-down.svg".image()).also { it.rotation = PI }, title, desc, icon).events {
-                    self.color = PolyColor.TRANSPARENT.toAnimatable()
-                    var open = false
-                    Event.Mouse.Clicked(0) then {
-                        open = !open
-                        Rotate(this[1], if (!open) PI else 0.0, false, Animations.EaseOutQuad.create(0.2.seconds)).add()
-                        val value = parent!![1].height
-                        val anim = Animations.EaseOutQuad.create(0.4.seconds)
-                        val operation = Resize(parent!!, width = 0f, height = if (open) -value else value, add = true, anim)
-                        addOperation(
-                            object : DrawableOp.Animatable<Drawable>(parent!!, anim, onFinish = {
-                                this[1].renders = !open
-                                this[1].enabled = !open
-                            }) {
-                                override fun apply(value: Float) {
-                                    operation.apply()
-                                    // asm: instruct parent (options list) to replace all its children so that they move with it closing
-                                    self.parent!!.recalculateChildren()
-                                    // asm: instruct all children of this accordion to update their visibility based on THIS, NOT its parent
-                                    self[1].children!!.fastEach {
-                                        it.renders = it.intersects(self.x, self.y, self.width, self.height)
-                                    }
-                                }
-                            },
-                        )
-                        true
-                    }
-                },
-                Group(
-                    size = Vec2(1078f, 0f),
-                    alignment = accordOpt,
-                    children = options.toTypedArray(),
-                ).namedId("AccordionContent"),
-            ),
         ).namedId("AccordionHeader")
     }
 
@@ -227,28 +217,19 @@ open class ConfigVisualizer {
         desc: String?,
         icon: PolyImage?,
     ): Drawable = Block(
+        Group(
+            if (icon != null) Image(icon) else null,
+            Group(
+                Text(title, fontSize = 22f).setFont { medium },
+                if (desc != null) Text(desc, visibleSize = Vec2(500f, 12f)) else null,
+                alignment = stdOpt,
+            ),
+            alignment = padVOnly,
+        ),
+        drawable,
         alignment = stdAlign,
         size = Vec2(1078f, 64f),
         color = optBg,
-        children =
-        arrayOf(
-            Group(
-                alignment = padVOnly,
-                children =
-                arrayOf(
-                    if (icon != null) Image(icon).onInit { /*image.size.max(32f, 32f)*/ } else null,
-                    Group(
-                        alignment = stdOpt,
-                        children =
-                        arrayOf(
-                            Text(title, fontSize = 22f, font = PolyUI.defaultFonts.medium),
-                            if (desc != null) Text(desc, visibleSize = Vec2(500f, 12f)) else null,
-                        ),
-                    ),
-                ),
-            ),
-            drawable,
-        ),
     )
 
     protected open fun wrapForAccordion(
@@ -256,13 +237,10 @@ open class ConfigVisualizer {
         title: String,
         desc: String?,
     ): Drawable = Group(
+        Text(title, fontSize = 16f),
+        drawable,
         alignment = stdAccord,
         size = Vec2(503f, 32f),
-        children =
-        arrayOf(
-            Text(title, fontSize = 16f),
-            drawable,
-        ),
     ).addHoverInfo(desc)
 
     fun Property<*>.getVisualizer(): Visualizer? {
