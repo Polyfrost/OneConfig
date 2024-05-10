@@ -91,6 +91,7 @@ public class PolyUIScreen extends UScreen implements UIPause, BlurScreen {
 
         Settings s = settings == null ? new Settings() : settings;
         s.enableInitCleanup(false);
+        s.enableForceSettingInitialSize(true);
         if (drawables == null || drawables.length == 0) {
             if (inputManager == null) throw new IllegalArgumentException("Must be created with an inputManager or drawables");
             this.inputManager = inputManager;
@@ -106,7 +107,7 @@ public class PolyUIScreen extends UScreen implements UIPause, BlurScreen {
             this.polyUI.setWindow(window);
             this.inputManager = this.polyUI.getInputManager();
             this.desiredResolution = desiredResolution;
-            adjustResolution(width(), height());
+            adjustResolution(width(), height(), true);
         }
     }
 
@@ -133,7 +134,7 @@ public class PolyUIScreen extends UScreen implements UIPause, BlurScreen {
         polyUI.setWindow(window);
     }
 
-    protected final void adjustResolution(float w, float h) {
+    protected final void adjustResolution(float w, float h, boolean force) {
         // asm: normally, a polyui instance is as big as its window and that is it.
         // however, inside minecraft, the actual content is smaller than the window size, so resizing it directly would just fuck it up.
         // so instead, the developer specifies a resolution that their UI was designed for, and we resize accordingly.
@@ -142,7 +143,7 @@ public class PolyUIScreen extends UScreen implements UIPause, BlurScreen {
         float sy = h / desiredResolution.getY();
         if (sx == 1f && sy == 1f) return;
         Vec2 size = polyUI.getMaster().getSize();
-        polyUI.resize(size.getX() * sx, size.getY() * sy, false);
+        polyUI.resize(size.getX() * sx, size.getY() * sy, force);
     }
 
 
@@ -185,7 +186,7 @@ public class PolyUIScreen extends UScreen implements UIPause, BlurScreen {
         if (polyUI == null) return;
         float w = (float) UResolution.getViewportWidth();
         float h = (float) UResolution.getViewportHeight();
-        adjustResolution(w, h);
+        adjustResolution(w, h, false);
     }
 
     @Override

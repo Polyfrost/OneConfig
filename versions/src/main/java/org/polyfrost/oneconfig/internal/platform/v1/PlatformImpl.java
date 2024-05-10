@@ -37,20 +37,20 @@ public class PlatformImpl implements Platform {
 
     @Override
     public int getMinecraftVersion() {
-        //#if MC>=12000
-        //$$ return 12000;
-        //#elseif MC>=11900
-        //$$ return 11900;
-        //#elseif MC>=11800
-        //$$ return 11800;
-        //#elseif MC>=11700
-        //$$ return 11700;
-        //#elseif MC>=11600
-        //$$ return 11600;
-        //#elseif MC>=11200
-        //$$ return 11200;
+        //#if MC==12004
+        //$$ return 12004;
+        //#elseif MC==11904
+        //$$ return 11904;
+        //#elseif MC==11801
+        //$$ return 11801;
+        //#elseif MC==11701
+        //$$ return 11701;
+        //#elseif MC==11605
+        //$$ return 11605;
+        //#elseif MC==11202
+        //$$ return 11202;
         //#else
-        return 10800;
+        return 10809;
         //#endif
     }
 

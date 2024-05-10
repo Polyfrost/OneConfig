@@ -42,6 +42,7 @@ import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.unit.seconds
 import org.polyfrost.polyui.utils.LinkedList
 import org.polyfrost.polyui.utils.image
+import org.polyfrost.polyui.utils.mapToArray
 import org.polyfrost.polyui.utils.rgba
 import kotlin.math.PI
 
@@ -109,13 +110,13 @@ open class ConfigVisualizer {
             Group(
                 alignment = alignCV,
                 children =
-                subcategories.map { (header, options) ->
+                subcategories.mapToArray { (header, options) ->
                     Group(
                         Text(header, fontSize = 22f),
                         *options.toTypedArray(),
                         alignment = alignCV,
                     )
-                }.toTypedArray(),
+                },
             )
         }
     }
@@ -149,14 +150,13 @@ open class ConfigVisualizer {
 
     protected open fun createHeaders(categories: Map<String, Drawable>): Drawable? {
         return Group(
-            children =
-            categories.map { (category, options) ->
+            children = categories.mapToArray { (category, options) ->
                 Button(text = category).events {
                     Event.Mouse.Clicked(0) then {
                         parent[0] = options
                     }
                 }
-            }.toTypedArray(),
+            },
         )
     }
 
@@ -252,6 +252,7 @@ open class ConfigVisualizer {
     }
 
     companion object {
+        @JvmField
         val INSTANCE = ConfigVisualizer()
         protected val visCache = HashMap<Class<*>, Visualizer>()
 

@@ -32,7 +32,7 @@ val natives = listOf("windows", "windows-arm64", "linux", "macos", "macos-arm64"
 val tweakClass = "org.polyfrost.oneconfig.internal.init.OneConfigTweaker"
 
 base {
-    archivesName.set("$modId-$platform")
+    archivesName.set(platform.toString())
 }
 
 loom {
@@ -321,9 +321,13 @@ tasks {
     }
 }
 
+signing {
+    sign(publishing.publications)
+}
+
 publishing {
     publications {
-        register<MavenPublication>("$modId-$platform") {
+        register<MavenPublication>(platform.toString()) {
             groupId = group.toString()
             artifactId = base.archivesName.get()
 

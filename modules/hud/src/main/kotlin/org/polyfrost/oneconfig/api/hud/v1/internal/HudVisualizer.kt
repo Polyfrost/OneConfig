@@ -24,46 +24,9 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.api.platform.v1;
+package org.polyfrost.oneconfig.api.hud.v1.internal
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.polyfrost.oneconfig.api.config.v1.ConfigVisualizer
 
-import java.nio.file.Path;
-import java.util.List;
-
-public interface LoaderPlatform {
-    boolean isModLoaded(String id);
-
-    @Nullable
-    ActiveMod toActiveMod(@Nullable Object in);
-
-    /**
-     * Note: the list may contain null elements
-     */
-    @NotNull
-    List<ActiveMod> getLoadedMods();
-
-    @Nullable
-    default ActiveMod getLoadedMod(String id) {
-        for (ActiveMod mod : getLoadedMods()) {
-            if (mod == null) continue;
-            if (id.equals(mod.id)) return mod;
-        }
-        return null;
-    }
-
-    class ActiveMod {
-        public final String name;
-        public final String id;
-        public final String version;
-        public final Path source;
-
-        public ActiveMod(String name, String id, String version, Path source) {
-            this.name = name;
-            this.id = id;
-            this.version = version;
-            this.source = source;
-        }
-    }
+class HudVisualizer : ConfigVisualizer() {
 }

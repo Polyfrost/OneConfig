@@ -25,6 +25,7 @@ public abstract interface class org/polyfrost/oneconfig/api/platform/v1/I18nPlat
 }
 
 public abstract interface class org/polyfrost/oneconfig/api/platform/v1/LoaderPlatform {
+	public fun getLoadedMod (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/platform/v1/LoaderPlatform$ActiveMod;
 	public abstract fun getLoadedMods ()Ljava/util/List;
 	public abstract fun isModLoaded (Ljava/lang/String;)Z
 	public abstract fun toActiveMod (Ljava/lang/Object;)Lorg/polyfrost/oneconfig/api/platform/v1/LoaderPlatform$ActiveMod;
@@ -45,6 +46,7 @@ public abstract interface class org/polyfrost/oneconfig/api/platform/v1/Platform
 	public static fun getInstance ()Lorg/polyfrost/oneconfig/api/platform/v1/Platform;
 	public abstract fun getLoader ()Lorg/polyfrost/oneconfig/api/platform/v1/Platform$Loader;
 	public static fun getLoaderPlatform ()Lorg/polyfrost/oneconfig/api/platform/v1/LoaderPlatform;
+	public fun getLoaderString ()Ljava/lang/String;
 	public abstract fun getMinecraftVersion ()I
 	public abstract fun getPlayerName ()Ljava/lang/String;
 	public static fun getServerPlatform ()Lorg/polyfrost/oneconfig/api/platform/v1/ServerPlatform;
@@ -208,6 +210,16 @@ public final class org/polyfrost/oneconfig/utils/v1/NetworkUtils {
 	public static fun getString (Ljava/lang/String;)Ljava/lang/String;
 	public static fun getString (Ljava/lang/String;Ljava/lang/String;IZ)Ljava/lang/String;
 	public static fun setupConnection (Ljava/lang/String;Ljava/lang/String;IZ)Ljava/io/InputStream;
+}
+
+public final class org/polyfrost/oneconfig/utils/v1/OneConfigUpdate {
+	public static final field ONECONFIG_REPO Ljava/lang/String;
+	public final field snapshot Z
+	public fun hasChecked ()Z
+	public fun hasUpdate ()Z
+	public static fun makeUpdateMarker ()V
+	public static fun release ()Lorg/polyfrost/oneconfig/utils/v1/OneConfigUpdate;
+	public static fun snapshot ()Lorg/polyfrost/oneconfig/utils/v1/OneConfigUpdate;
 }
 
 public final class org/polyfrost/oneconfig/utils/v1/OneImage {

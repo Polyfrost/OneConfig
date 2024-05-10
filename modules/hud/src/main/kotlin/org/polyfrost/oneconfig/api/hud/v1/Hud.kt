@@ -33,10 +33,11 @@ import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Properties.ktProperty
 import org.polyfrost.oneconfig.api.config.v1.Properties.simple
 import org.polyfrost.oneconfig.api.config.v1.Tree
-import org.polyfrost.oneconfig.utils.v1.StringUtils
 import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.unit.Vec2
+import kotlin.io.path.exists
+import kotlin.random.Random
 
 /**
  * HUD (Heads Up Display) is a component that is rendered on top of the screen. They are used for displaying information to the user, such as the time, or the player's health.
@@ -71,9 +72,11 @@ abstract class Hud<T : Drawable> : Cloneable, Config("null", null, "null", null)
     fun make(with: Tree? = null): Hud<T> {
         if (tree != null) throw IllegalArgumentException("HUD already exists -> can only clone from root HUD object")
         val out = clone()
-        val tree = ConfigManager.collect(out, with?.id ?: "huds/${StringUtils.randomString("0123456789", 4)}-${id()}")
+        val id = with?.id ?: genRid()
+        val tree = ConfigManager.collect(out, id)
         tree.title = out.title()
         tree.addMetadata("category", out.category())
+        tree.addMetadata("frontendIgnore", true)
         tree["x"] = ktProperty(out.hud::x)
         tree["y"] = ktProperty(out.hud::y)
         tree["skewX"] = ktProperty(out.hud::skewX)
@@ -90,6 +93,21 @@ abstract class Hud<T : Drawable> : Cloneable, Config("null", null, "null", null)
         out.tree = tree
         ConfigManager.active().register(tree)
         return out
+    }
+
+    private fun genRid(): String {
+        var p = "huds/${Random.Default.nextInt(0, 100)}-${id()}"
+        val folder = ConfigManager.active().folder
+        var i = 0
+        while (folder.resolve(p).exists()) {
+            p = "huds/${Random.Default.nextInt(0, 999)}-${id()}"
+            when (i++) {
+                100 -> HudManager.LOGGER.warn("they all say that it gets better")
+                500 -> HudManager.LOGGER.warn("yeah they all say that it gets better;; it gets better the more you grow")
+                999 -> throw IllegalStateException("... but what if i dont?")
+            }
+        }
+        return p
     }
 
     protected open fun addSpecifics(tree: Tree) {}

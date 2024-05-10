@@ -73,7 +73,7 @@ public final class ConfigManager {
      * Returns a reference to the internal config manager, which is mounted onto the ./OneConfig directory.
      */
     @ApiStatus.Internal
-    static ConfigManager internal() {
+    public static ConfigManager internal() {
         return internal;
     }
 
@@ -151,6 +151,10 @@ public final class ConfigManager {
 
     public boolean save(Tree t) {
         return backend.save(t);
+    }
+
+    public void saveAll() {
+        backend.saveAll();
     }
 
     public Path getFolder() {

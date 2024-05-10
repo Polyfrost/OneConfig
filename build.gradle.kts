@@ -8,7 +8,7 @@ val modMajor = project.properties["mod_major_version"]
 val modMinor = project.properties["mod_minor_version"]
 
 version = "$modMajor$modMinor"
-group = "org.polyfrost"
+group = "org.polyfrost.oneconfig"
 
 allprojects {
     apply(plugin = rootProject.libs.plugins.licenser.get().pluginId)

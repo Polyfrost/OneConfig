@@ -31,6 +31,7 @@ import net.minecraft.launchwrapper.ITweaker;
 import net.minecraft.launchwrapper.Launch;
 import net.minecraft.launchwrapper.LaunchClassLoader;
 import net.minecraftforge.fml.relauncher.CoreModManager;
+import org.polyfrost.oneconfig.api.platform.v1.Platform;
 import org.polyfrost.oneconfig.utils.v1.MHUtils;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
@@ -53,7 +54,7 @@ import java.util.jar.JarFile;
 
 /**
  * Mixin-related loading code adapted from EssentialGG's EssentialLoader under GPL-3.0
- * https://github.com/EssentialGG/EssentialLoader/blob/master/LICENSE
+ * <a href="https://github.com/EssentialGG/EssentialLoader/blob/master/LICENSE">here</a>
  */
 @SuppressWarnings("unused")
 public class OneConfigTweaker implements ITweaker {
@@ -72,7 +73,7 @@ public class OneConfigTweaker implements ITweaker {
     public OneConfigTweaker() {
         final List<SourceFile> sourceFiles = getSourceFiles();
         if (sourceFiles.isEmpty()) {
-            LOGGER.fatal("Not able to jar sources. mixin will NOT work!");
+            if (!Platform.getInstance().isDevelopmentEnvironment()) LOGGER.fatal("Not able to detect jar sources. mixin will NOT work!");
             return;
         }
         for (SourceFile sourceFile : sourceFiles) {

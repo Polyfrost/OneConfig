@@ -40,6 +40,7 @@ import org.polyfrost.polyui.unit.by
 import org.polyfrost.polyui.unit.seconds
 import org.polyfrost.polyui.utils.LinkedList
 import org.polyfrost.polyui.utils.image
+import org.polyfrost.polyui.utils.mapToArray
 import org.polyfrost.polyui.utils.radii
 import kotlin.math.PI
 import kotlin.math.atan2
@@ -61,7 +62,7 @@ fun HudsPage(huds: LinkedList<Hud<out Drawable>>): Drawable {
         ),
         if (huds.isNotEmpty()) {
             Group(
-                children = huds.map {
+                children = huds.mapToArray {
                     val preview = it.buildNew()
                     val size = Vec2(if (preview.width > 200f) 452f else 215f, if (preview.height > 70f) 0f else 80f)
                     Block(
@@ -69,7 +70,7 @@ fun HudsPage(huds: LinkedList<Hud<out Drawable>>): Drawable {
                         alignment = alignC,
                         size = size,
                     ).withBoarder().withStates()
-                }.toTypedArray(),
+                },
                 visibleSize = Vec2(452f, 800f),
             )
         } else {

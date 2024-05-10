@@ -33,6 +33,7 @@ import org.polyfrost.polyui.component.events
 import org.polyfrost.polyui.component.impl.*
 import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.unit.Vec2
+import org.polyfrost.polyui.utils.mapToArray
 
 /**
  * Visualizers are procedures that take a property, and return a drawable that represents it.
@@ -70,10 +71,10 @@ fun interface Visualizer {
                 return Dropdown(
                     padding = 24f,
                     initial = index,
-                    entries = prop.type.enumConstants.map {
+                    entries = prop.type.enumConstants.mapToArray {
                         it as Enum<*>
                         null to (it::class.java.fields[0].get(it) as? String ?: it.name)
-                    }.toTypedArray(),
+                    },
                 )
             } else {
                 require(
@@ -83,7 +84,7 @@ fun interface Visualizer {
                 return Dropdown(
                     padding = 24f,
                     initial = prop.getAs(),
-                    entries = options.map { null to it }.toTypedArray(),
+                    entries = options.mapToArray { null to it },
                 )
             }
         }
@@ -133,10 +134,10 @@ fun interface Visualizer {
                 require(options.isEmpty()) { "Radio button ${prop.id} cannot have options when used with enums" }
                 val r =
                     Radiobutton(
-                        entries = prop.type.enumConstants.map {
+                        entries = prop.type.enumConstants.mapToArray {
                             it as Enum<*>
                             null to (it::class.java.fields[0].get(it) as? String ?: it.name)
-                        }.toTypedArray(),
+                        },
                         initial = prop.type.enumConstants.indexOf(prop.get()),
                         optionLateralPadding = 20f,
                     ).events {
@@ -152,7 +153,7 @@ fun interface Visualizer {
                 ) { "Radio buttons ${prop.id} can only be used with enum or integer types (type=${prop.type}" }
                 require(options.size >= 2) { "Radio button ${prop.id} must have at least two options" }
                 return Radiobutton(
-                    entries = options.map { null to it }.toTypedArray(),
+                    entries = options.mapToArray { null to it },
                     initial = prop.getAs(),
                     optionLateralPadding = 20f,
                 ).events {

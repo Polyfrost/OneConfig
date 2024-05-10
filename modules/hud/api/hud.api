@@ -101,6 +101,10 @@ public final class org/polyfrost/oneconfig/api/hud/v1/TextHud$DateTime : org/pol
 	public fun updateFrequency ()J
 }
 
+public final class org/polyfrost/oneconfig/api/hud/v1/internal/HudVisualizer : org/polyfrost/oneconfig/api/config/v1/ConfigVisualizer {
+	public fun <init> ()V
+}
+
 public final class org/polyfrost/oneconfig/api/hud/v1/internal/Hud_utilsKt {
 	public static final fun build (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;)Lorg/polyfrost/polyui/component/impl/Block;
 	public static final fun buildNew (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;)Lorg/polyfrost/polyui/component/impl/Block;

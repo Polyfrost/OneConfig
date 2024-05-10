@@ -26,17 +26,20 @@ public final class org/polyfrost/oneconfig/api/config/v1/ConfigManager {
 	public fun gatherAll (Ljava/lang/String;)Ljava/util/Collection;
 	public fun get (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	public fun getFolder ()Ljava/nio/file/Path;
+	public static fun internal ()Lorg/polyfrost/oneconfig/api/config/v1/ConfigManager;
 	public static fun openProfile (Ljava/lang/String;)V
 	public fun register (Ljava/lang/Object;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	public fun register (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	public static fun registerCollector (Lorg/polyfrost/oneconfig/api/config/v1/collect/PropertyCollector;)V
 	public fun save (Ljava/lang/String;)Z
 	public fun save (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)Z
+	public fun saveAll ()V
 	public fun trees ()Ljava/util/Collection;
 }
 
 public class org/polyfrost/oneconfig/api/config/v1/ConfigVisualizer {
 	public static final field Companion Lorg/polyfrost/oneconfig/api/config/v1/ConfigVisualizer$Companion;
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/config/v1/ConfigVisualizer;
 	public fun <init> ()V
 	protected fun create (Lorg/polyfrost/oneconfig/api/config/v1/Tree;Ljava/lang/String;)Lorg/polyfrost/polyui/component/Drawable;
 	public static synthetic fun create$default (Lorg/polyfrost/oneconfig/api/config/v1/ConfigVisualizer;Lorg/polyfrost/oneconfig/api/config/v1/Tree;Ljava/lang/String;ILjava/lang/Object;)Lorg/polyfrost/polyui/component/Drawable;
@@ -62,7 +65,6 @@ public class org/polyfrost/oneconfig/api/config/v1/ConfigVisualizer {
 }
 
 public final class org/polyfrost/oneconfig/api/config/v1/ConfigVisualizer$Companion {
-	public final fun getINSTANCE ()Lorg/polyfrost/oneconfig/api/config/v1/ConfigVisualizer;
 	public final fun strv (Ljava/lang/String;)Ljava/lang/String;
 }
 

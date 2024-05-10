@@ -61,7 +61,34 @@ public interface Platform {
 
     boolean isCallingFromMinecraftThread();
 
+    /**
+     * return the minecraft version of the current instance, as per the preprocessor standard.
+     * for example, if the minecraft version is 1.16.5, this will return 11605.
+     */
     int getMinecraftVersion();
+
+    /**
+     * return a string representing the loader and the minecraft version of the current instance, as per the preprocessor standard.
+     * for example, if the loader is Forge and the minecraft version is 1.16.5, this will return "1.16.5-forge".
+     */
+    default String getLoaderString() {
+        char[] ver = String.valueOf(getMinecraftVersion()).toCharArray();
+        StringBuilder sb = new StringBuilder();
+        sb.append(ver[0]).append('.');
+        if(ver[1] == '0') {
+            sb.append(ver[2]);
+        } else {
+            sb.append(ver[1]).append(ver[2]);
+        }
+        sb.append('.');
+        if(ver[3] == '0') {
+            sb.append(ver[4]);
+        } else {
+            sb.append(ver[3]).append(ver[4]);
+        }
+        sb.append('-').append(getLoader().name().toLowerCase());
+        return sb.toString();
+    }
 
     boolean isDevelopmentEnvironment();
 

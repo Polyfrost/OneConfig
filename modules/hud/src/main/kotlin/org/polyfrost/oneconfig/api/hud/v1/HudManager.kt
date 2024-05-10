@@ -118,6 +118,7 @@ object HudManager {
         ),
         Text("oneconfig.hudeditor.title", fontSize = 24f).setFont { medium }.onClick {
             ColorPicker(rgba(32, 53, 41).toAnimatable().ref(), mutableListOf(), mutableListOf(), polyUI)
+            true
         },
         hudsPage,
         size = Vec2(500f, 1048f),
@@ -129,8 +130,8 @@ object HudManager {
                     Image("assets/oneconfig/ico/right-arrow.svg".image()).setAlpha(0.1f),
                     size = Vec2(32f, 1048f),
                     alignment = alignC,
-                ).named("CloseArea").withStates().setPalette(
-                    Colors.Palette(
+                ).named("CloseArea").withStates().also {
+                    it.palette = Colors.Palette(
                         TRANSPARENT,
                         PolyColor.Gradient(
                             rgba(100, 100, 100, 0.4f),
@@ -143,8 +144,8 @@ object HudManager {
                             type = PolyColor.Gradient.Type.LeftToRight,
                         ),
                         TRANSPARENT,
-                    ),
-                ).events {
+                    )
+                }.events {
                     Event.Mouse.Entered then {
                         Fade(this[0], 1f, false, Animations.EaseInOutQuad.create(0.08.seconds)).add()
                     }
@@ -218,6 +219,7 @@ object HudManager {
 
     private fun editorClose() {
         toggleHudPicker()
+        ConfigManager.active().saveAll()
         panelExists = false
     }
 

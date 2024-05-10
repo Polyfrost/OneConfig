@@ -44,6 +44,7 @@ import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.unit.seconds
 import org.polyfrost.polyui.utils.image
+import org.polyfrost.polyui.utils.mapToArray
 import org.polyfrost.polyui.utils.radii
 import org.polyfrost.polyui.utils.translated
 
@@ -69,7 +70,8 @@ fun ModsPage(trees: Collection<Tree>): Drawable {
         size = Vec2(1130f, 0f),
         visibleSize = Vec2(1130f, 635f),
         alignment = Align(cross = Align.Cross.Start, padding = Vec2(18f, 18f)),
-        children = trees.map {
+        children = trees.mapNotNull {
+            if (it.getMetadata<Any?>("frontendIgnore") != null) return@mapNotNull null
             Group(
                 Block(
                     Image(it.getMetadata<String>("icon")?.image() ?: defaultModImage),
@@ -120,7 +122,7 @@ fun ChangelogPage(news: Collection<News>): Drawable {
         size = Vec2(1130f, 0f),
         visibleSize = Vec2(1130f, 635f),
         alignment = Align(cross = Align.Cross.Center, padding = Vec2(60f, 20f)),
-        children = news.map {
+        children = news.mapToArray {
             Group(
                 if (it.image != null) Image(it.image).onInit { image.size.max(325f, 111f) } else null,
                 Group(
@@ -153,7 +155,7 @@ fun ChangelogPage(news: Collection<News>): Drawable {
                     alignment = Align(mode = Align.Mode.Vertical),
                 ),
             )
-        }.toTypedArray(),
+        },
     )
 }
 
@@ -161,7 +163,7 @@ fun NotificationsPopup(polyUI: PolyUI, notifications: List<Notification>) {
     val it = Block(
         Text("oneconfig.notifications", fontSize = 16f).setFont { medium },
         Group(
-            children = notifications.map {
+            children = notifications.mapToArray {
                 Group(
                     Group(
                         Image(it.icon).onInit { image.size.resize(24f, 24f) },
@@ -176,7 +178,7 @@ fun NotificationsPopup(polyUI: PolyUI, notifications: List<Notification>) {
                     ),
                     *it.extras,
                 )
-            }.toTypedArray(),
+            },
         ),
         Group(
             Group(
