@@ -12,9 +12,9 @@ plugins {
     id(libs.plugins.pgt.main.get().pluginId)
     id(libs.plugins.pgt.default.get().pluginId)
     id(libs.plugins.shadow.get().pluginId)
-    id("maven-publish")
-    id("signing")
-    java
+    `java-library`
+    `maven-publish`
+    signing
 }
 
 java {
@@ -331,10 +331,7 @@ publishing {
             groupId = group.toString()
             artifactId = base.archivesName.get()
 
-            artifact(tasks["jar"])
-            artifact(tasks["remapJar"])
-            artifact(tasks["sourcesJar"])
-            artifact(tasks["javadocJar"])
+            from(components["java"])
         }
     }
 

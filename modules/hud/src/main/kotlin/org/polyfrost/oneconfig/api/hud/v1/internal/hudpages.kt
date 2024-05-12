@@ -64,6 +64,7 @@ fun HudsPage(huds: LinkedList<Hud<out Drawable>>): Drawable {
             Group(
                 children = huds.mapToArray {
                     val preview = it.buildNew()
+                    it.initialize()
                     val size = Vec2(if (preview.width > 200f) 452f else 215f, if (preview.height > 70f) 0f else 80f)
                     Block(
                         preview,
@@ -80,14 +81,11 @@ fun HudsPage(huds: LinkedList<Hud<out Drawable>>): Drawable {
         alignment = Align(cross = Align.Cross.Start, padding = Vec2.ZERO),
     ).onInit {
         if (huds.isNotEmpty()) {
-            huds.fastEach {
-                if (it.initialize()) it.get().parent.recalculateChildren()
-            }
             polyUI.every(1.seconds) {
                 if (!HudManager.panelExists) return@every
                 huds.fastEach {
                     if (it.update()) {
-                        it.get().parent.recalculateChildren()
+                        it.get().parent.recalculate()
                     }
                 }
             }
@@ -100,6 +98,29 @@ private fun HudButton(text: String): Block {
 }
 
 fun createInspectionsScreen(hud: Hud<out Drawable>): Drawable {
+    return Group(
+        Radiobutton(
+            "assets/oneconfig/ico/paintbrush.svg".image() to "oneconfig.hudeditor.designer.title",
+            "assets/oneconfig/ico/cog.svg".image() to "oneconfig.hudeditor.settings.title",
+        ).onInit { color = polyUI.colors.component.bgDeselected.toAnimatable() }.onChange { index: Int ->
+            if (index == 0) {
+                parent[1] = createDesigner(hud)
+            } else {
+                parent[1] = createSettings(hud)
+            }
+            false
+        },
+        createDesigner(hud),
+        visibleSize = Vec2(476f, 800f),
+        alignment = Align(cross = Align.Cross.Start, mode = Align.Mode.Vertical),
+    )
+}
+
+private fun createSettings(hud: Hud<*>): Drawable {
+    return HudVisualizer().get(hud.tree)
+}
+
+private fun createDesigner(hud: Hud<*>): Drawable {
     val isLegacy = hud is LegacyHud
     return Group(
         Text("oneconfig.hudeditor.general.title", fontSize = 16f).setFont { medium },
@@ -150,52 +171,86 @@ private fun interactiveAlignment(hud: Hud<out Drawable>): Drawable {
     var s1 = 0.0
     var s2 = 0f
     return Block(
-        Image("assets/oneconfig/ico/align/alignment2.svg".image(), at = 19f by 19f).draggable(
-            withX = false, withY = false,
-            onStart = {
-                px = polyUI.mouseX
-                py = polyUI.mouseY
-                hud.get().parent.let {
-                    s0 = it.skewX
-                    s1 = it.skewY
-                }
-            },
-            onDrag = {
-                val dx = polyUI.mouseX - px
-                val dy = polyUI.mouseY - py
+        Image(
+            "assets/oneconfig/ico/align/alignment3.svg".image(),
+            alignment = alignC,
+            children = arrayOf(
+                Image(
+                    "assets/oneconfig/ico/align/alignment2.svg".image(),
+                    alignment = alignC,
+                    children = arrayOf(
+                        Block(
+                            Image("assets/oneconfig/ico/align/alignment1.svg".image()),
+                            size = 57f by 57f,
+                            alignment = alignC,
+                        ).also {
+                            it.radii = (hud.get().parent as Block).radii
+                        }.withBoarder().withStates().draggable(
+                            withX = false, withY = false,
+                            onStart = {
+                                s0 = hud.get().parent.rotation
+                            },
+                            onDrag = {
+                                var rot = s0 + (atan2(((y + height / 2f) - polyUI.mouseY).toDouble(), ((x + width / 2f) - polyUI.mouseX).toDouble()) - PI / 2.0)
+                                val low = rot - angleSnapMargin
+                                val help = rot + angleSnapMargin
+                                if (PI / 2.0 in low..help) {
+                                    rot = PI / 2.0
+                                } else if (0.0 in low..help) {
+                                    rot = 0.0
+                                } else if (-PI in low..help) {
+                                    rot = -PI
+                                } else if (-PI / 2.0 in low..help) {
+                                    rot = -PI / 2.0
+                                }
+                                rotation = rot
+                                hud.get().parent.rotation = rot
+                            },
+                        ).apply {
+                            rotation = hud.get().parent.rotation
+                        },
+                    )
+                ).draggable(
+                    withX = false, withY = false,
+                    onStart = {
+                        px = polyUI.mouseX
+                        py = polyUI.mouseY
+                        hud.get().parent.let {
+                            s0 = it.skewX
+                            s1 = it.skewY
+                        }
+                    },
+                    onDrag = {
+                        val dx = polyUI.mouseX - px
+                        val dy = polyUI.mouseY - py
 
-                var sx = (s0 + (dx.toDouble() * 0.003)).coerceIn(-(PI / 4.0), PI / 4.0)
-                var sy = (s1 + (dy.toDouble() * 0.003)).coerceIn(-(PI / 4.0), PI / 4.0)
-                if (sx in -(PI / 24.0)..(PI / 24.0)) {
-                    sx = 0.0
-                }
-                if (sy in -(PI / 24.0)..(PI / 24.0)) {
-                    sy = 0.0
-                }
-                this.parent[2].let {
-                    it.skewX = sx
-                    it.skewY = sy
-                }
-                hud.get().parent.let {
-                    it.skewX = sx
-                    it.skewY = sy
-                }
-            },
-        ).withStates().setPalette {
-            Colors.Palette(
-                text.secondary.normal,
-                brand.fg.normal,
-                brand.fg.pressed,
-                text.secondary.disabled,
+                        var sx = (s0 + (dx.toDouble() * 0.003)).coerceIn(-(PI / 4.0), PI / 4.0)
+                        var sy = (s1 + (dy.toDouble() * 0.003)).coerceIn(-(PI / 4.0), PI / 4.0)
+                        if (sx in -(PI / 24.0)..(PI / 24.0)) {
+                            sx = 0.0
+                        }
+                        if (sy in -(PI / 24.0)..(PI / 24.0)) {
+                            sy = 0.0
+                        }
+                        this[0].let {
+                            it.skewX = sx
+                            it.skewY = sy
+                        }
+                        hud.get().parent.let {
+                            it.skewX = sx
+                            it.skewY = sy
+                        }
+                    },
+                ).withStates().setPalette {
+                    Colors.Palette(
+                        text.secondary.normal,
+                        brand.fg.normal,
+                        brand.fg.pressed,
+                        text.secondary.disabled,
+                    )
+                },
             )
-        }.afterParentInit {
-            val bg = hud.get().parent
-            this.parent[2].let {
-                it.skewX = bg.skewX
-                it.skewY = bg.skewY
-            }
-        },
-        Image("assets/oneconfig/ico/align/alignment3.svg".image()).setPalette {
+        ).setPalette {
             Colors.Palette(
                 text.secondary.disabled,
                 brand.fg.disabled,
@@ -215,47 +270,13 @@ private fun interactiveAlignment(hud: Hud<out Drawable>): Drawable {
                 val dy = polyUI.mouseY - py
                 val bg = (hud.get().parent as? Block) ?: return@draggable
                 val m = (s2 + min(dx, dy) * 0.1f).coerceIn(0f, bg.height)
-                val display = (this.parent[2] as Block).radii
+                val display = (this[0][0] as Block).radii
                 for (i in 0..3) {
                     bg.radii[i] = m
                     display[i] = m
                 }
             },
-        ).onInit {
-            val p = (parent[2] as Block).radii
-            val bg = (hud.get().parent as Block).radii
-            for (i in 0..3) {
-                p[i] = bg[i]
-            }
-        },
-        Block(
-            Image("assets/oneconfig/ico/align/alignment1.svg".image()),
-            size = 57f by 57f,
-            alignment = alignC,
-        ).withBoarder().withStates().draggable(
-            withX = false, withY = false,
-            onStart = {
-                s0 = hud.get().parent.rotation
-            },
-            onDrag = {
-                var rot = s0 + (atan2(((y + height / 2f) - polyUI.mouseY).toDouble(), ((x + width / 2f) - polyUI.mouseX).toDouble()) - PI / 2.0)
-                val low = rot - angleSnapMargin
-                val help = rot + angleSnapMargin
-                if (PI / 2.0 in low..help) {
-                    rot = PI / 2.0
-                } else if (0.0 in low..help) {
-                    rot = 0.0
-                } else if (-PI in low..help) {
-                    rot = -PI
-                } else if (-PI / 2.0 in low..help) {
-                    rot = -PI / 2.0
-                }
-                rotation = rot
-                hud.get().parent.rotation = rot
-            },
-        ).apply {
-            rotation = hud.get().parent.rotation
-        },
+        ),
         size = 125f by 125f,
         alignment = alignC,
     ).withBoarder()
@@ -285,7 +306,7 @@ fun textOptions(text: Text): Drawable {
             text.parent.recalculate()
             val ex = (parent.parent[1][0] as? Text) ?: return@onChange false
             ex.font = text.font
-            ex.parent.recalculateChildren()
+            ex.parent.recalculate()
             false
         }.titled("oneconfig.hudeditor.text.font"),
         BoxedTextInput("assets/oneconfig/ico/info.svg".image(), "12px", text.fontSize.toString()).titled("oneconfig.hudeditor.text.size"),
@@ -313,7 +334,7 @@ fun textOptions(text: Text): Drawable {
             text.parent.recalculate()
             val ex = (parent.parent[1][0] as? Text) ?: return@onChange false
             ex.fontWeight = text.fontWeight
-            ex.parent.recalculateChildren()
+            ex.parent.recalculate()
             false
         }.titled("oneconfig.hudeditor.text.weight"),
         Radiobutton(

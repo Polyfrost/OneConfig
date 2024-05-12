@@ -40,24 +40,17 @@ import java.nio.file.Paths;
 public final class OneConfigUpdate {
     private static final Logger LOGGER = LogManager.getLogger("OneConfig/Updates");
     public static final String ONECONFIG_REPO = "https://repo.polyfrost.org/";
-    private static OneConfigUpdate releases;
-    private static OneConfigUpdate snapshots;
-    public final boolean snapshot;
+    public static final String GROUP = "org/polyfrost/oneconfig/";
+    private static volatile OneConfigUpdate instance;
     private volatile boolean fin = false;
     private volatile boolean hasUpdate = false;
 
-    public static OneConfigUpdate release() {
-        if (releases == null) releases = new OneConfigUpdate(false);
-        return releases;
+    public static OneConfigUpdate getInstance() {
+        if (instance == null) instance = new OneConfigUpdate();
+        return instance;
     }
 
-    public static OneConfigUpdate snapshot() {
-        if (snapshots == null) snapshots = new OneConfigUpdate(true);
-        return snapshots;
-    }
-
-    private OneConfigUpdate(boolean snapshot) {
-        this.snapshot = snapshot;
+    private OneConfigUpdate() {
         Multithreading.runAsync(this::fetchUpdateStatus);
     }
 
@@ -87,13 +80,14 @@ public final class OneConfigUpdate {
             LOGGER.warn("version check failed: failed to determine current version");
             return;
         }
+        String ver = self.version;
+        boolean snapshot = ver.contains("SNAPSHOT") || ver.contains("beta") || ver.contains("alpha");
 
         StringBuilder sb = new StringBuilder(96);
         sb.append(ONECONFIG_REPO);
         if (snapshot) sb.append("snapshot/");
         else sb.append("releases/");
-        sb.append("org/polyfrost/oneconfig-");
-        sb.append(Platform.getInstance().getLoaderString());
+        sb.append(GROUP).append(Platform.getInstance().getLoaderString());
         sb.append("/maven-metadata.xml");
         try (InputStream stream = NetworkUtils.setupConnection(sb.toString(), "OneConfig/1.0.0", 5000, false)) {
             if (stream == null) {
@@ -120,9 +114,9 @@ public final class OneConfigUpdate {
                 return;
             }
             // no bother doing any other checks to see if the version is more - latest will always be more, plus means we can downgrade server-side if needed
-            if (!latestVersion.equals(self.version)) {
+            if (!latestVersion.toLowerCase().equals(ver)) {
                 hasUpdate = true;
-                LOGGER.warn("OneConfig has an update available: {} -> {}", self.version, latestVersion);
+                LOGGER.warn("OneConfig has an update available: {} -> {}", ver, latestVersion);
             } else LOGGER.info("no update found");
         } catch (Exception e) {
             LOGGER.error("failed to check for updates! (unknown error)", e);

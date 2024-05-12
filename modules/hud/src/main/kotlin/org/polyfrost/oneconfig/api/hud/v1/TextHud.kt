@@ -27,10 +27,11 @@
 package org.polyfrost.oneconfig.api.hud.v1
 
 import org.polyfrost.polyui.component.impl.Text
-import org.polyfrost.polyui.input.Translator
 import org.polyfrost.polyui.unit.milliseconds
 import org.polyfrost.polyui.unit.minutes
 import org.polyfrost.polyui.unit.seconds
+import org.polyfrost.polyui.utils.dont
+import org.polyfrost.polyui.utils.translated
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import org.polyfrost.oneconfig.api.config.v1.annotations.Text as TextAnnotation
@@ -45,14 +46,21 @@ abstract class TextHud(
     @TextAnnotation(title = "Text Suffix")
     var suffix: String = ""
 ) : Hud<Text>() {
-    override fun create() = Text(Translator.Text.Simple(""), fontSize = 16f)
+    override fun create() = Text("".translated().dont(), fontSize = 16f)
 
     override fun update(): Boolean {
-        get().text = "$prefix${getText()}$suffix"
+        val t = getText()
+        val sb = StringBuilder(prefix.length + t.length + suffix.length + 2)
+        if (prefix.isNotEmpty()) sb.append(prefix).append(' ')
+        sb.append(t)
+        if (suffix.isNotEmpty()) sb.append(' ').append(suffix)
+        get().text = sb.toString()
         return true
     }
 
-    override fun initialize() = update()
+    override fun initialize() {
+        update()
+    }
 
     /**
      * get the text to be shown on this HUD.
@@ -66,8 +74,7 @@ abstract class TextHud(
      */
     class DateTime(
         header: String,
-        @TextAnnotation(title = "The template to use for the time.")
-        var template: String,
+        @TextAnnotation(title = "Time template") var template: String,
         suffix: String = ""
     ) : TextHud(header, suffix) {
 
@@ -78,10 +85,20 @@ abstract class TextHud(
         override fun category() = Category.INFO
 
         override fun updateFrequency(): Long {
-            return if (template.contains('S')) 100.milliseconds
-            else if (template.contains('s')) 1.seconds
-            else if (template.contains('m')) 1.minutes
+            return if ('S' in template) 100.milliseconds
+            else if ('s' in template) 1.seconds
+            else if ('m' in template) 1.minutes
             else 5.minutes
+        }
+
+        override fun initialize() {
+            super.initialize()
+            if (isReal) {
+                addCallback<Any?>("template") {
+                    _formatter = null
+                    update()
+                }
+            }
         }
 
         private var _formatter: DateTimeFormatter? = null

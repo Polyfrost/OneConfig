@@ -69,15 +69,15 @@ private val scaleBlob by lazy {
             }
         },
     ).apply {
-        addEventHandler(Event.Mouse.Pressed(0)) {
+//        addEventHandler(Event.Mouse.Pressed(0)) {
             // if(!polyUI.inputManager.hasFocused) polyUI.focus(this)
-        }
-        addEventHandler(Event.Focused.Lost) {
+//        }
+        on(Event.Focused.Lost) {
             renders = false
             cur = null
         }
     }.setPalette { brand.fg }
-    HudManager.polyUI.master.addChild(b, reposition = false)
+    HudManager.polyUI.master.addChild(b, recalculate = false)
     b.renders = false
     b
 }
@@ -113,7 +113,7 @@ fun Hud<out Drawable>.buildNew(): Block {
             }
             val hud = this@buildNew.make().build()
 
-            polyUI.master.addChild(hud, reposition = false)
+            polyUI.master.addChild(hud, recalculate = false)
             hud.x = x
             hud.y = y
 
@@ -139,12 +139,12 @@ fun Hud<out Drawable>.build(): Block {
     } else {
         HudManager.polyUI.every(freq) {
             if (update()) {
-                get().parent.recalculateChildren()
+                get().parent.recalculate()
             }
         }
     }
 
-    return get().addDefaultBackground(backgroundColor()).addScaler().draggable(
+    val o = get().addDefaultBackground(backgroundColor()).addScaler().draggable(
         onStart = {
             if (HudManager.panelOpen) HudManager.toggle()
         },
@@ -169,7 +169,7 @@ fun Hud<out Drawable>.build(): Block {
                     HudManager.openHudEditor(this@build)
                     HudManager.polyUI.unfocus()
                 },
-                Image("assets/oneconfig/ico/close.svg".image()).setDestructivePalette().withStates(consume = true).onClick {
+                Image("assets/oneconfig/ico/close.svg").setDestructivePalette().withStates(consume = true).onClick {
                     HudManager.polyUI.master.removeChild(this@events.self)
                     HudManager.polyUI.removeExecutor(exe)
                     HudManager.polyUI.unfocus()
@@ -181,12 +181,13 @@ fun Hud<out Drawable>.build(): Block {
             true
         }
     }
+    initialize()
+    return o
 }
 
 private fun Drawable.addDefaultBackground(color: PolyColor?): Block {
     return Block(
         this,
-        at = this.x by this.y,
         alignment = alignC,
         radii = 6f.radii(),
     ).withBoarder().namedId("HudBackground").also {
@@ -195,7 +196,7 @@ private fun Drawable.addDefaultBackground(color: PolyColor?): Block {
 }
 
 private fun Block.addScaler(): Block {
-    this.addEventHandler(Event.Mouse.Clicked(0)) {
+    this.on(Event.Mouse.Clicked(0)) {
         val sb = scaleBlob
         sb.renders = true
         sb.x = x + (width * scaleX) - (sb.width / 2f)

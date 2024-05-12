@@ -206,6 +206,15 @@ public class FileBackend extends Backend {
         return true;
     }
 
+    @Override
+    protected boolean delete0(@NotNull Tree tree) throws Exception {
+        Path p = folder.resolve(tree.getID());
+        if (!Files.exists(p)) return false;
+        Files.delete(p);
+        dodge();
+        return true;
+    }
+
     /**
      * Gather all files in this directory and make trees of them where possible.
      */

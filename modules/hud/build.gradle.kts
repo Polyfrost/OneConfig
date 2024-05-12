@@ -25,11 +25,11 @@
  */
 
 dependencies {
-    implementation(project(":modules:config"))
-    implementation(project(":modules:events"))
-    implementation(project(":modules:config-impl"))
-    implementation(project(":modules:utils"))
-    implementation(project(":modules:ui"))
+    api(project(":modules:config"))
+    api(project(":modules:events"))
+    api(project(":modules:config-impl"))
+    api(project(":modules:utils"))
+    api(project(":modules:ui"))
     implementation(libs.polyui)
     compileOnly("org.polyfrost:universalcraft-1.8.9-forge:${libs.versions.universalcraft.get()}")
 }

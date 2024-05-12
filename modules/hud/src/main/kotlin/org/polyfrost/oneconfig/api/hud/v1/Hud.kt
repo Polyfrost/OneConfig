@@ -44,13 +44,14 @@ import kotlin.random.Random
  *
  * - You need to register your HUD with [HudManager.register] in order for it to be available to the user.
  * - The instance you pass to [HudManager.register] is the instance that is used for the HUD picker screen. When a HUD is added to the screen, a new instance is created using [clone].
- * - HUD config files are stored in `config/oneconfig/huds/{Class.simpleName}-<number>.json`. The number is incremented each time the user adds a new HUD of the same type.
+ * - HUD config files are stored in `{profile}/huds/{rnd}-`[id], e.g. `huds/42-my_hud.toml`.
+ * - For a hud instance, the following methods are called (in order) [create], [initialize], and then [periodically][updateFrequency] [update] if required.
  * - Try not to do really long operations in [update]. The method is called on the render thread and so may cause lag. If you need to do a long operation, consider using an asynchronous task.
  * - The parent of your HUD is a [Block] which is controlled by the user. You do not need to include a background in your HUD.
  * - HUDs which are wider than 450px may have issues when displayed on the HUD picker screen, and HUDs this large are not recommended anyway as they may be very distracting.
  *
  * In this system, multiple of the same HUD can exist at once. In order for this to work correctly, there are a few rules:
- * - Do not run any code inside an `init {}` block. [clone] does not run constructors.
+ * - **Do not run any code inside an `init {}` block**. [clone] does not run constructors.
  * - For fields that are mutable references to other objects, you must set them yourself in [clone] in order for each HUD to be independent of each other.
  * - The easiest way to ensure that your HUD works when placed multiple times is to just not use `static` fields, so you don't abuse them.
  */
@@ -65,6 +66,11 @@ abstract class Hud<T : Drawable> : Cloneable, Config("null", null, "null", null)
     abstract fun id(): String
 
     abstract fun category(): Category
+
+    /**
+     * @return `true` if this property is a real HUD on the screen, and not the example instance.
+     */
+    val isReal get() = tree != null
 
     /**
      * create this hud as a serializable object.
@@ -142,7 +148,7 @@ abstract class Hud<T : Drawable> : Cloneable, Config("null", null, "null", null)
             } else if (!value && siblings.allAre { !it.enabled }) {
                 it.parent.enabled = false
             }
-            it.parent.recalculateChildren()
+            it.parent.recalculate()
         }
 
     /**
@@ -163,7 +169,7 @@ abstract class Hud<T : Drawable> : Cloneable, Config("null", null, "null", null)
      *
      * similar to [update], this method will re-layout the HUD element if `true` is returned.
      */
-    abstract fun initialize(): Boolean
+    open fun initialize() {}
 
     /**
      * Update your HUD element.

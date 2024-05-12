@@ -157,6 +157,10 @@ public final class ConfigManager {
         backend.saveAll();
     }
 
+    public boolean delete(String id) {
+        return backend.delete(id);
+    }
+
     public Path getFolder() {
         return backend.folder;
     }

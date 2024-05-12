@@ -190,7 +190,7 @@ open class ConfigVisualizer {
                             override fun apply(value: Float) {
                                 operation.apply()
                                 // asm: instruct parent (options list) to replace all its children so that they move with it closing
-                                self.parent.recalculateChildren()
+                                self.parent.repositionChildren()
                                 // asm: instruct all children of this accordion to update their visibility based on THIS, NOT its parent
                                 self[1].children!!.fastEach {
                                     it.renders = it.intersects(self.x, self.y, self.width, self.height)

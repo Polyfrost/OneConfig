@@ -27,6 +27,41 @@
 package org.polyfrost.oneconfig.api.hud.v1.internal
 
 import org.polyfrost.oneconfig.api.config.v1.ConfigVisualizer
+import org.polyfrost.polyui.component.Drawable
+import org.polyfrost.polyui.component.impl.Group
+import org.polyfrost.polyui.component.impl.Image
+import org.polyfrost.polyui.component.impl.Text
+import org.polyfrost.polyui.component.setFont
+import org.polyfrost.polyui.renderer.data.PolyImage
+import org.polyfrost.polyui.unit.Vec2
+import org.polyfrost.polyui.utils.LinkedList
 
 class HudVisualizer : ConfigVisualizer() {
+
+    override fun createHeaders(categories: Map<String, Drawable>): Drawable? {
+        return null
+    }
+
+    override fun flattenSubcategories(options: Map<String, Map<String, LinkedList<Drawable>>>): Map<String, Drawable> {
+        return if (options.values.size == 1 && options.values.first().size == 1) {
+            mapOf(options.keys.first() to Group(
+                *options.values.first().values.first().toTypedArray(),
+                alignment = alignVNoPad,
+            ))
+        } else super.flattenSubcategories(options)
+    }
+
+    override fun wrap(drawable: Drawable, title: String, desc: String?, icon: PolyImage?): Drawable {
+        return Group(
+            if (icon != null) Image(icon) else null,
+            Group(
+                Text(title, fontSize = 16f).setFont { medium },
+                if (desc != null) Text(desc, visibleSize = Vec2(240f, 12f)) else null,
+                alignment = stdOpt,
+            ),
+            drawable,
+            alignment = stdAlign,
+            size = Vec2(460f, 48f),
+        )
+    }
 }

@@ -25,5 +25,5 @@
  */
 
 dependencies {
-    implementation(project(":modules:utils"))
+    api(project(":modules:utils"))
 }

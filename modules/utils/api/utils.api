@@ -213,13 +213,12 @@ public final class org/polyfrost/oneconfig/utils/v1/NetworkUtils {
 }
 
 public final class org/polyfrost/oneconfig/utils/v1/OneConfigUpdate {
+	public static final field GROUP Ljava/lang/String;
 	public static final field ONECONFIG_REPO Ljava/lang/String;
-	public final field snapshot Z
+	public static fun getInstance ()Lorg/polyfrost/oneconfig/utils/v1/OneConfigUpdate;
 	public fun hasChecked ()Z
 	public fun hasUpdate ()Z
 	public static fun makeUpdateMarker ()V
-	public static fun release ()Lorg/polyfrost/oneconfig/utils/v1/OneConfigUpdate;
-	public static fun snapshot ()Lorg/polyfrost/oneconfig/utils/v1/OneConfigUpdate;
 }
 
 public final class org/polyfrost/oneconfig/utils/v1/OneImage {

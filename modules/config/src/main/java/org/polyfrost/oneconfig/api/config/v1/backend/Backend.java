@@ -119,13 +119,13 @@ public abstract class Backend {
      */
     public final void saveAll(@Nullable String matching) {
         String m = Node.strv(matching);
-        if(m == null) {
+        if (m == null) {
             for (Tree t : trees.values()) {
                 save(t);
             }
         } else {
             for (Tree t : trees.values()) {
-                if(t.getID().startsWith(m)) {
+                if (t.getID().startsWith(m)) {
                     save(t);
                 }
             }
@@ -143,6 +143,24 @@ public abstract class Backend {
             return save0(tree);
         } catch (Exception e) {
             LOGGER.error("error saving tree with ID {}!", tree.getID(), e);
+            return false;
+        }
+    }
+
+    protected abstract boolean delete0(@NotNull Tree tree) throws Exception;
+
+    /**
+     * Untrack and permanently delete the tree with the given ID.
+     */
+    public final boolean delete(String id) {
+        if (id == null) throw new NullPointerException("id cannot be null");
+        Tree tree = trees.remove(id);
+        if (tree == null) return false;
+        if (tree.getID() == null) throw new IllegalArgumentException("tree must be master (have a valid ID)");
+        try {
+            return delete0(tree);
+        } catch (Exception e) {
+            LOGGER.error("error deleting tree with ID {}!", tree.getID(), e);
             return false;
         }
     }
@@ -177,6 +195,7 @@ public abstract class Backend {
     /**
      * Explicitly mark a tree as corrupted. The given tree, if present, will be untracked by this backend.
      * <br> this method is also automatically called when a tree fails to load. <i>(implementation specific operation)</i>
+     *
      * @param id the ID of the tree to mark as corrupted.
      * @return true if the tree was marked as corrupted, false if the tree was not found.
      */

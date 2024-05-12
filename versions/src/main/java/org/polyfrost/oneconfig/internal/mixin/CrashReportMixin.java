@@ -58,7 +58,7 @@ public abstract class CrashReportMixin {
 
     @Unique
     private void ocfg$apiDeath(boolean certain) {
-        if(!OneConfigUpdate.release().hasUpdate()) return;
+        if(!OneConfigUpdate.getInstance().hasUpdate()) return;
         TinyFD tinyfd = LwjglManager.INSTANCE.getTinyFD();
         String title = certain ? "OneConfig API Error" : "OneConfig API Error (Possibly)";
         String message = "OneConfig has detected an crash that is potentially caused by an outdated version of OneConfig.\nYou can probably fix this by updating OneConfig by pressing OK, and restarting your game.";

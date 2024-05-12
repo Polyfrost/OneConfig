@@ -213,21 +213,21 @@ object OneConfigUI {
             size = Vec2(225f, 33f),
             alignment = sidebarBtnAlign,
         ).namedId("SidebarButton").apply {
-            addEventHandler(Event.Mouse.Entered) {
+            on(Event.Mouse.Entered) {
                 Recolor(this[1], this[1].palette.hovered, Animations.EaseInOutQuad.create(0.08.seconds)).add()
                 polyUI.cursor = Cursor.Clicker
                 false
             }
-            addEventHandler(Event.Mouse.Exited) {
+            on(Event.Mouse.Exited) {
                 Recolor(this[1], this[1].palette.normal, Animations.EaseInOutQuad.create(0.08.seconds)).add()
                 polyUI.cursor = Cursor.Pointer
                 false
             }
-            addEventHandler(Event.Mouse.Pressed(0)) {
+            on(Event.Mouse.Pressed(0)) {
                 Recolor(this[1], this[1].palette.pressed, Animations.EaseInOutQuad.create(0.08.seconds)).add()
                 false
             }
-            addEventHandler(Event.Mouse.Released(0)) {
+            on(Event.Mouse.Released(0)) {
                 Recolor(this[1], this[1].palette.hovered, Animations.EaseInOutQuad.create(0.08.seconds)).add()
                 false
             }

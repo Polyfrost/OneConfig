@@ -205,7 +205,7 @@ fun interface Visualizer {
             val s =
                 TextInput(
                     placeholder = placeholder,
-                    visibleSize = Vec2(300f, 12f),
+                    visibleSize = Vec2(200f, 12f),
                     text = prop.getAs(),
                 ).events {
                     Event.Change.Text() then {

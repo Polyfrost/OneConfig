@@ -115,6 +115,8 @@ public abstract class org/polyfrost/oneconfig/api/config/v1/backend/Backend {
 	public fun <init> ()V
 	public final fun corrupt (Ljava/lang/String;)Z
 	protected abstract fun corrupt0 (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)Z
+	public final fun delete (Ljava/lang/String;)Z
+	protected abstract fun delete0 (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)Z
 	public fun exists (Ljava/lang/String;)Z
 	public final fun get (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	public final fun getTrees ()Ljava/util/Collection;

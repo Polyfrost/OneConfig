@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.kotlin) apply false
     alias(libs.plugins.pgt.defaults.repo) apply false
     alias(libs.plugins.licenser)
+    `java-library`
 }
 
 val modMajor = project.properties["mod_major_version"]

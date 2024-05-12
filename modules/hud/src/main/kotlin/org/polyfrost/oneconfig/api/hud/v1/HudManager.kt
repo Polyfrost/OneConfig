@@ -58,7 +58,6 @@ import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.unit.by
 import org.polyfrost.polyui.unit.seconds
 import org.polyfrost.polyui.utils.LinkedList
-import org.polyfrost.polyui.utils.image
 import org.polyfrost.polyui.utils.ref
 import org.polyfrost.polyui.utils.rgba
 import org.polyfrost.universal.UResolution
@@ -99,7 +98,7 @@ object HudManager {
 
     val panel = Block(
         Group(
-            Image("assets/oneconfig/ico/left-arrow.svg".image()).setDestructivePalette().withStates().onClick {
+            Image("assets/oneconfig/ico/left-arrow.svg").setDestructivePalette().withStates().onClick {
                 if (parent.parent[2] !== hudsPage) {
                     parent.parent[2] = hudsPage
                 } else {
@@ -107,7 +106,7 @@ object HudManager {
                 }
             },
             Block(
-                Image("assets/oneconfig/ico/search.svg".image()),
+                Image("assets/oneconfig/ico/search.svg"),
                 TextInput(placeholder = "oneconfig.search.placeholder"),
                 size = Vec2(256f, 32f),
             ).withBoarder().withCursor(Cursor.Text).onClick {
@@ -127,7 +126,7 @@ object HudManager {
         Event.Lifetime.Added then {
             addChild(
                 Block(
-                    Image("assets/oneconfig/ico/right-arrow.svg".image()).setAlpha(0.1f),
+                    Image("assets/oneconfig/ico/right-arrow.svg").setAlpha(0.1f),
                     size = Vec2(32f, 1048f),
                     alignment = alignC,
                 ).named("CloseArea").withStates().also {
@@ -162,7 +161,7 @@ object HudManager {
                         }
                     }
                 },
-                reposition = false,
+                recalculate = false,
             )
         }
     }.also {
@@ -249,10 +248,13 @@ object HudManager {
                 // we don't want to register a HUD class ourselves, as it may lead to wierd scenarios when mods are removed.
                 val h = hudProviders.getOrPut(cls) { MHUtils.instantiate(cls, true).getOrThrow() }
                 val hud = h.make(data)
-                polyUI.master.addChild(hud.build(), reposition = false)
-                if (hud.initialize()) {
-                    hud.get().parent.recalculateChildren()
-                }
+                val theHud = hud.build()
+                polyUI.master.addChild(theHud, recalculate = false)
+                LOGGER.info("Loaded HUD ${hud.id()} from ${data.id}")
+                val x: Float = data.getProp("x").getAs()
+                val y: Float = data.getProp("y").getAs()
+                theHud.x = x - (hud.get().x - theHud.x)
+                theHud.y = y - (hud.get().y - theHud.y)
             } catch (e: Exception) {
                 LOGGER.error("Failed to load HUD from ${data.id}", e)
             }
@@ -273,7 +275,7 @@ object HudManager {
             Fade(pg, 0.8f, false, Animations.EaseInOutExpo.create(0.2.seconds)).add()
             arrow.rotation = PI
         } else {
-            panel.y = UResolution.windowHeight.toFloat() / 2f - panel.height / 2f
+//            panel.y = polyUI.window!!.height / 2f - panel.height / 2f
             Move(pg, polyUI.size.x - pg.width - 8f, pg.y, false, Animations.EaseInOutExpo.create(0.2.seconds)).add()
             arrow.rotation = 0.0
             pg.alpha = 1f
@@ -288,12 +290,7 @@ object HudManager {
         }
         // first open
         if (!pg.initialized) {
-            val sx = polyUI.size.x / 1920f
-            val sy = polyUI.size.y / 1080f
-            polyUI.master.addChild(
-                pg, reposition = false,
-            )
-            pg.rescale(sx, sy, true)
+            polyUI.master.addChild(pg, recalculate = false)
         } else {
             pg.prioritize()
             pg.renders = true

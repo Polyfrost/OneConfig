@@ -3,14 +3,14 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.util.archivesName
 // contains shared logic between all the modules to reduce boilerplate.
 
 plugins {
-    java
     id(libs.plugins.kotlinx.api.validator.get().pluginId)
-    signing
+    `java-library`
     `maven-publish`
+    signing
 }
 
 subprojects {
-    apply(plugin = "java")
+    apply(plugin = "java-library")
     apply(plugin = "kotlin")
 
     repositories {
@@ -54,22 +54,20 @@ subprojects {
     }
 }
 
-signing {
-    sign(publishing.publications)
-}
+//signing {
+//    sign(publishing.publications)
+//}
 
 publishing {
     publications {
-        for(project in subprojects) {
+        for (project in subprojects) {
             if (project.name == "ui-impl") return@publications
             register<MavenPublication>(project.name) {
                 groupId = rootProject.group.toString()
                 artifactId = project.archivesName.get()
                 version = rootProject.version.toString()
 
-                artifact(project.tasks["jar"])
-                artifact(project.tasks["sourcesJar"])
-                artifact(project.tasks["javadocJar"])
+                from(components["java"])
             }
         }
     }

@@ -6,6 +6,7 @@ public abstract class org/polyfrost/oneconfig/api/config/v1/Config {
 	public fun addDependency (Ljava/lang/String;Ljava/lang/String;)V
 	public fun addDependency (Ljava/lang/String;Ljava/util/function/BooleanSupplier;)V
 	public fun getProperty (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
+	public fun getTree ()Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	protected fun makeTree (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 }
 
@@ -23,6 +24,7 @@ public final class org/polyfrost/oneconfig/api/config/v1/ConfigManager {
 	public static fun active ()Lorg/polyfrost/oneconfig/api/config/v1/ConfigManager;
 	public static fun collect (Ljava/lang/Object;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	public static fun core ()Lorg/polyfrost/oneconfig/api/config/v1/ConfigManager;
+	public fun delete (Ljava/lang/String;)Z
 	public fun gatherAll (Ljava/lang/String;)Ljava/util/Collection;
 	public fun get (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	public fun getFolder ()Ljava/nio/file/Path;
@@ -204,6 +206,7 @@ public class org/polyfrost/oneconfig/api/config/v1/backend/impl/FileBackend : or
 	public fun addSerializer (Lorg/polyfrost/oneconfig/api/config/v1/serialize/impl/FileSerializer;)V
 	public fun addWatcher ()Lorg/polyfrost/oneconfig/api/config/v1/backend/impl/FileBackend;
 	protected fun corrupt0 (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)Z
+	protected fun delete0 (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)Z
 	public fun dodge ()V
 	public fun gatherAll ()Ljava/util/Collection;
 	public fun gatherAll (Ljava/lang/String;)Ljava/util/Collection;

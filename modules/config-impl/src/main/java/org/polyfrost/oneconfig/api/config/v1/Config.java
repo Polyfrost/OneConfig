@@ -71,6 +71,10 @@ public abstract class Config {
         ((Property<T>) getProperty(option)).addCallback(callback);
     }
 
+    public Tree getTree() {
+        return tree;
+    }
+
 
     public Property<?> getProperty(String option) {
         if (tree == null) throw new IllegalStateException("not initialized. this should never happen in correct usage. please report to https://polyfrost.org/discord");
