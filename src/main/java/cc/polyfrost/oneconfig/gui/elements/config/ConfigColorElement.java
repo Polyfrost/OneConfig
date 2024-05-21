@@ -89,7 +89,7 @@ public class ConfigColorElement extends BasicOption {
         if (OneConfigGui.INSTANCE.currentColorSelector != colorSelector) open = false;
         else if (open) {
             try {
-                if (!OneConfigGui.INSTANCE.getColor().equals(((OneColor) field.get(parent))))  {
+                if (!OneConfigGui.INSTANCE.getColor().equals((OneColor) field.get(parent)))  {
                     ((OneColor) field.get(parent)).setFromOneColor(OneConfigGui.INSTANCE.getColor());
                     this.triggerListeners();
                 }
