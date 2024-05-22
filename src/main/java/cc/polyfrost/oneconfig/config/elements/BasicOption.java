@@ -95,7 +95,7 @@ public abstract class BasicOption {
         this.triggerListeners();
     }
 
-    public void triggerListeners() {
+    protected void triggerListeners() {
         for (Runnable listener : listeners) listener.run();
     }
 
