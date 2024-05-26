@@ -26,6 +26,7 @@
 
 package org.polyfrost.oneconfig.internal.platform.v1;
 
+import org.polyfrost.oneconfig.utils.v1.MHUtils;
 import org.polyfrost.universal.UGraphics;
 import org.polyfrost.universal.UMatrixStack;
 import org.polyfrost.universal.UMinecraft;
@@ -97,5 +98,20 @@ public class GLPlatformImpl implements GLPlatform {
     @Override
     public int getStringWidth(String text) {
         return UMinecraft.getFontRenderer().getStringWidth(text);
+    }
+
+    //#if MC<=11202
+    private static final java.util.function.Function<String, Long> getProcAddress =
+            MHUtils.getFunctionHandle(org.lwjgl.opengl.GLContext.class, "getFunctionAddress", long.class, String.class)
+                    .logIfErr().getOrElse(v -> 0L);
+    //#endif
+
+    @Override
+    public long getFunctionAddress(String addr) {
+        //#if MC<=11202
+        return getProcAddress.apply(addr);
+        //#else
+        //$$ return org.lwjgl.glfw.GLFW.glfwGetProcAddress(addr);
+        //#endif
     }
 }

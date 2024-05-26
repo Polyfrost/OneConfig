@@ -1,6 +1,6 @@
 public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/oneconfig/api/config/v1/Config, java/lang/Cloneable {
 	public fun <init> ()V
-	protected fun addSpecifics (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)V
+	protected fun addToSerialized (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)V
 	public fun backgroundColor ()Lorg/polyfrost/polyui/color/PolyColor;
 	public abstract fun category ()Lorg/polyfrost/oneconfig/api/hud/v1/Hud$Category;
 	public synthetic fun clone ()Ljava/lang/Object;
@@ -80,6 +80,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/LegacyHud : org/polyfro
 public abstract class org/polyfrost/oneconfig/api/hud/v1/TextHud : org/polyfrost/oneconfig/api/hud/v1/Hud {
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
 	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	protected fun addToSerialized (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)V
 	public synthetic fun create ()Lorg/polyfrost/polyui/component/Drawable;
 	protected fun create ()Lorg/polyfrost/polyui/component/impl/Text;
 	public final fun getPrefix ()Ljava/lang/String;
@@ -118,7 +119,7 @@ public final class org/polyfrost/oneconfig/api/hud/v1/internal/HudpagesKt {
 	public static final field angleSnapMargin D
 	public static final field minMargin F
 	public static final field snapMargin F
-	public static final fun HudsPage (Lorg/polyfrost/polyui/utils/LinkedList;)Lorg/polyfrost/polyui/component/Drawable;
+	public static final fun HudsPage (Ljava/util/ArrayList;)Lorg/polyfrost/polyui/component/Drawable;
 	public static final fun createInspectionsScreen (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;)Lorg/polyfrost/polyui/component/Drawable;
 	public static final fun getAlignC ()Lorg/polyfrost/polyui/unit/Align;
 	public static final fun textOptions (Lorg/polyfrost/polyui/component/impl/Text;)Lorg/polyfrost/polyui/component/Drawable;

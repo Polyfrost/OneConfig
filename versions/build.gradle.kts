@@ -23,7 +23,6 @@ java {
 }
 
 
-val modName = properties["mod_name"] as String
 val modId = properties["mod_id"] as String
 version = rootProject.version
 group = rootProject.group
@@ -55,7 +54,6 @@ loom {
             mixinConfig("mixins.${modId}.json")
         }
     }
-    @Suppress("UnstableApiUsage")
     mixin.defaultRefmapName.set("mixins.${modId}.refmap.json")
 }
 
@@ -136,7 +134,7 @@ dependencies {
         shade(nvgDep) {
             isTransitive = false
         }
-        for(native in natives) {
+        for (native in natives) {
             shade("$nvgDep:natives-$native") {
                 isTransitive = false
             }
@@ -188,35 +186,39 @@ tasks {
         }
     }
     processResources {
-        inputs.property("id", modId)
-        inputs.property("name", modName)
-        val compatLevel = "JAVA_8"
+        inputs.property("id", rootProject.properties["mod_id"].toString())
+        inputs.property("name", rootProject.name)
         inputs.property("java", 8)
-        inputs.property("java_level", compatLevel)
-        inputs.property("version", project.version)
-        inputs.property("mcVersionStr", project.platform.mcVersionStr)
+        inputs.property("version", version)
+        inputs.property("mcVersionStr", platform.mcVersionStr)
+        val id = inputs.properties["id"]
+        val name = inputs.properties["name"]
+        val version = inputs.properties["version"]
+        val mcVersionStr = inputs.properties["mcVersionStr"].toString()
+        val java = inputs.properties["java"].toString().toInt()
+        val javaLevel = "JAVA-$java"
 
-        filesMatching(listOf("mcmod.info", "mixins.${modId}.json", "**/mods.toml")) {
+        filesMatching(listOf("mcmod.info", "mixins.${id}.json", "**/mods.toml")) {
             expand(
                 mapOf(
-                    "id" to modId,
-                    "name" to modName,
-                    "java" to 8,
-                    "java_level" to compatLevel,
-                    "version" to project.version,
-                    "mcVersionStr" to project.platform.mcVersionStr
+                    "id" to id,
+                    "name" to name,
+                    "java" to java,
+                    "java_level" to javaLevel,
+                    "version" to version,
+                    "mcVersionStr" to mcVersionStr
                 )
             )
         }
         filesMatching("fabric.mod.json") {
             expand(
                 mapOf(
-                    "id" to modId,
-                    "name" to modName,
-                    "java" to 8,
-                    "java_level" to compatLevel,
-                    "version" to project.version,
-                    "mcVersionStr" to project.platform.mcVersionStr.substringBeforeLast(".") + ".x"
+                    "id" to id,
+                    "name" to name,
+                    "java" to java,
+                    "java_level" to javaLevel,
+                    "version" to version,
+                    "mcVersionStr" to mcVersionStr.substringBeforeLast(".") + ".x"
                 )
             )
         }
@@ -276,7 +278,7 @@ tasks {
                             "Specification-Title" to modId,
                             "Specification-Vendor" to "Polyfrost",
                             "Specification-Version" to "1", // We are version 1 of ourselves, whatever the hell that means
-                            "Implementation-Title" to modName,
+                            "Implementation-Title" to rootProject.name,
                             "Implementation-Version" to project.version,
                             "Implementation-Vendor" to "Polyfrost",
                             "Implementation-Timestamp" to SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").format(`java.util`.Date())

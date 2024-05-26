@@ -72,6 +72,11 @@ object MHUtils {
         inline fun getOrNull() = if (isSuccess) value as T else null
         inline fun getOrElse(default: T) = if (isSuccess) value as T else default
 
+        fun logIfErr(): Result<T> {
+            if (isFailure) LOGGER.warn((value as Failure).t)
+            return this
+        }
+
 
         companion object {
             @JvmStatic

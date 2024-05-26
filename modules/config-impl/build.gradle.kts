@@ -26,10 +26,7 @@
 
 dependencies {
     implementation(libs.bundles.nightconfig)
-    implementation(libs.polyui)
-    api(project(":modules:utils"))
     api(project(":modules:config"))
     api(project(":modules:ui"))
-    api(project(":modules:events"))
 }
 

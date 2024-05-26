@@ -38,4 +38,12 @@ public interface GLPlatform {
     float drawText(UMatrixStack matrixStack, String text, float x, float y, int color, boolean shadow);
 
     int getStringWidth(String text);
+
+    /**
+     * Return the given function address for the specified function with the given name.
+     * @param addr the name of the function
+     * @return the function address, or NULL (0L) if the function could not be found.
+     * @implNote delegates to package-private {@code GLContext.getFunctionAddress(addr)} on legacy and {@code GLFW.getProcAddress(addr)} on modern.
+     */
+    long getFunctionAddress(String addr);
 }

@@ -8,6 +8,7 @@ public abstract interface class org/polyfrost/oneconfig/api/platform/v1/GLPlatfo
 	public abstract fun drawRect (FFFFI)V
 	public fun drawText (Ljava/lang/String;FFIZ)F
 	public abstract fun drawText (Lorg/polyfrost/universal/UMatrixStack;Ljava/lang/String;FFIZ)F
+	public abstract fun getFunctionAddress (Ljava/lang/String;)J
 	public abstract fun getStringWidth (Ljava/lang/String;)I
 }
 
@@ -178,6 +179,7 @@ public final class org/polyfrost/oneconfig/utils/v1/MHUtils$Result {
 	public final fun getValue ()Ljava/lang/Object;
 	public final fun isFailure ()Z
 	public final fun isSuccess ()Z
+	public final fun logIfErr ()Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
 	public static final fun success (Ljava/lang/Object;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
 }
 

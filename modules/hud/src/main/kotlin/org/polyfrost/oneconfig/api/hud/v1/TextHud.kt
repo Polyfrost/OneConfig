@@ -26,6 +26,8 @@
 
 package org.polyfrost.oneconfig.api.hud.v1
 
+import org.polyfrost.oneconfig.api.config.v1.Properties
+import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.polyui.component.impl.Text
 import org.polyfrost.polyui.unit.milliseconds
 import org.polyfrost.polyui.unit.minutes
@@ -56,6 +58,11 @@ abstract class TextHud(
         if (suffix.isNotEmpty()) sb.append(' ').append(suffix)
         get().text = sb.toString()
         return true
+    }
+
+    override fun addToSerialized(tree: Tree) {
+        tree["font"] = Properties.ktProperty(hud::_font)
+        tree["fontSize"] = Properties.ktProperty(hud::uFontSize)
     }
 
     override fun initialize() {

@@ -25,13 +25,6 @@
  */
 
 dependencies {
-    implementation(libs.polyui)
-    compileOnly(libs.bundles.lwjgl)
     testImplementation(libs.lwjgl.tinyfd)
-    implementation(project(":modules:events"))
-    implementation(project(":modules:utils"))
     implementation(project(":modules:hud"))
-    implementation(project(":modules:ui"))
-    implementation(project(":modules:config"))
-    implementation(project(":modules:config-impl"))
 }

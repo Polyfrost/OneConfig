@@ -44,8 +44,10 @@ import org.polyfrost.polyui.renderer.data.Font
 import org.polyfrost.polyui.renderer.data.Framebuffer
 import org.polyfrost.polyui.renderer.data.PolyImage
 import org.polyfrost.polyui.unit.Vec2
-import org.polyfrost.polyui.utils.LinkedList
 import org.polyfrost.polyui.utils.cl1
+import org.polyfrost.polyui.utils.fastRemoveIfReversed
+import org.polyfrost.polyui.utils.toDirectByteBuffer
+import org.polyfrost.polyui.utils.toDirectByteBufferNT
 import java.nio.ByteBuffer
 import java.util.IdentityHashMap
 import kotlin.math.min
@@ -66,7 +68,7 @@ object RendererImpl : Renderer {
     private var vg: Long = 0L
     private var raster: Long = 0L
     private var drawing = false
-    private val queue = LinkedList<() -> Unit>()
+    private val queue = ArrayList<() -> Unit>()
     private val PIXELS: ByteBuffer = run {
         val arr = "px\u0000".toByteArray()
         MemoryUtil.memAlloc(arr.size).put(arr).flip() as ByteBuffer
@@ -88,13 +90,13 @@ object RendererImpl : Renderer {
         require(raster != 0L) { "Could not initialize NanoSVG" }
 
         val font = PolyUI.defaultFonts.regular
-        val fdata = font.loadDirect()
+        val fdata = font.load().toDirectByteBuffer()
         val fit = NVGFont(nvgCreateFontMem(vg, font.name, fdata, false), fdata)
         this.defaultFont = fit
         fonts[font] = fit
 
         val img = PolyUI.defaultImage
-        val idata = img.loadDirect()
+        val idata = img.load().toDirectByteBuffer()
         val iit = nvgCreateImageRGBA(vg, img.width.toInt(), img.height.toInt(), 0, idata)
         require(iit != 0) { "NanoVG failed to initialize default image" }
         images[img] = iit
@@ -103,7 +105,7 @@ object RendererImpl : Renderer {
 
     override fun beginFrame(width: Float, height: Float, pixelRatio: Float) {
         if (drawing) throw IllegalStateException("Already drawing")
-        queue.fastRemoveIf { it(); true }
+        queue.fastRemoveIfReversed { it(); true }
         // todo: (1.17+) fix in evening time (12800) the sky looks wierd af when rendering
         // see https://docs.gl/gl2/glPushAttrib for the stored values
         // it will be one of those states that we need to save and restore
@@ -476,7 +478,8 @@ object RendererImpl : Renderer {
     private fun getFont(font: Font): Int {
         if (font.loadSync) return getFontSync(font)
         return fonts.getOrElse(font) {
-            font.loadAsyncDirect(errorHandler = errorHandler) {
+            font.loadAsync(errorHandler = errorHandler) { data ->
+                val it = data.toDirectByteBuffer()
                 queue.add { fonts[font] = NVGFont(nvgCreateFontMem(vg, font.name, it, false), it) }
             }
             defaultFont!!
@@ -485,7 +488,7 @@ object RendererImpl : Renderer {
 
     private fun getFontSync(font: Font): Int {
         return fonts.getOrPut(font) {
-            val data = font.loadDirect { errorHandler(it); return@getOrPut defaultFont!! }
+            val data = font.load { errorHandler(it); return@getOrPut defaultFont!! }.toDirectByteBuffer()
             NVGFont(nvgCreateFontMem(vg, font.name, data, false), data)
         }.id
     }
@@ -495,8 +498,8 @@ object RendererImpl : Renderer {
         return when (image.type) {
             PolyImage.Type.Vector -> {
                 val (svg, map) = svgs.getOrElse(image) {
-                    image.loadAsyncDirectNT(errorHandler) {
-                        queue.add { svgLoad(image, it) }
+                    image.loadAsync(errorHandler) {
+                        queue.add { svgLoad(image, it.toDirectByteBufferNT()) }
                     }
                     return defaultImage
                 }
@@ -506,8 +509,8 @@ object RendererImpl : Renderer {
 
             PolyImage.Type.Raster -> {
                 images.getOrElse(image) {
-                    image.loadAsyncDirect(errorHandler) {
-                        queue.add { images[image] = loadImage(image, it) }
+                    image.loadAsync(errorHandler) {
+                        queue.add { images[image] = loadImage(image, it.toDirectByteBuffer()) }
                     }
                     defaultImage
                 }
@@ -520,13 +523,13 @@ object RendererImpl : Renderer {
     private fun getImageSync(image: PolyImage, width: Float, height: Float): Int {
         return when (image.type) {
             PolyImage.Type.Vector -> {
-                val (svg, map) = svgs[image] ?: return svgLoad(image, image.loadDirectNT())
+                val (svg, map) = svgs[image] ?: return svgLoad(image, image.load().toDirectByteBufferNT())
                 if (image.invalid) image.size = Vec2.Immutable(svg.width(), svg.height())
                 map.getOrPut(width.hashCode() * 31 + height.hashCode()) { svgResize(svg, width, height) }
             }
 
             PolyImage.Type.Raster -> {
-                images.getOrPut(image) { loadImage(image, image.loadDirect()) }
+                images.getOrPut(image) { loadImage(image, image.load().toDirectByteBuffer()) }
             }
 
             else -> throw NoWhenBranchMatchedException("Please specify image type for $image")

@@ -26,15 +26,16 @@
 
 package org.polyfrost.oneconfig.api.config.v1;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
 import org.jetbrains.annotations.VisibleForTesting;
-
-import java.util.HashMap;
-import java.util.Map;
 
 
 public abstract class Node {
@@ -77,8 +78,12 @@ public abstract class Node {
      * It may only contain alphanumeric characters, and underscores.
      * <br>note that <b>this operation is permanent</b> and cannot be undone/changed!
      */
-    public void setID(String id) {
-        if (id == null) throw new IllegalArgumentException("input ID cannot be null");
+    public void setID(@NotNull String id) {
+        //noinspection ConstantValue
+        if (id == null) {
+            this.id = null;
+            return;
+        }
         if (this.id != null) throw new IllegalStateException("ID is already set");
         String s = id.trim().replaceAll("[^\\w$\\-./\\\\]", "_");
         if (s.isEmpty()) throw new IllegalArgumentException("ID cannot be empty (or contain only whitespace)");

@@ -36,6 +36,7 @@ import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.unit.Vec2
+import org.polyfrost.polyui.utils.fastAll
 import kotlin.io.path.exists
 import kotlin.random.Random
 
@@ -85,15 +86,15 @@ abstract class Hud<T : Drawable> : Cloneable, Config("null", null, "null", null)
         tree.addMetadata("frontendIgnore", true)
         tree["x"] = ktProperty(out.hud::x)
         tree["y"] = ktProperty(out.hud::y)
-        tree["skewX"] = ktProperty(out.hud::skewX)
-        tree["skewY"] = ktProperty(out.hud::skewY)
+        out.addToSerialized(tree)
+        tree["hidden"] = ktProperty(out::hidden)
+        tree["alpha"] = ktProperty(out.hud::alpha)
         tree["scaleX"] = ktProperty(out.hud::scaleX)
         tree["scaleY"] = ktProperty(out.hud::scaleY)
         tree["rotation"] = ktProperty(out.hud::rotation)
-        tree["alpha"] = ktProperty(out.hud::alpha)
-        tree["hidden"] = ktProperty(out::hidden)
+        tree["skewX"] = ktProperty(out.hud::skewX)
+        tree["skewY"] = ktProperty(out.hud::skewY)
         tree["hudClass"] = simple(value = out::class.java.name)
-        addSpecifics(tree)
         if (with != null) tree.overwrite(with)
         else HudManager.LOGGER.info("generated new HUD config for ${out.title()} -> ${tree.id}")
         out.tree = tree
@@ -116,7 +117,7 @@ abstract class Hud<T : Drawable> : Cloneable, Config("null", null, "null", null)
         return p
     }
 
-    protected open fun addSpecifics(tree: Tree) {}
+    protected open fun addToSerialized(tree: Tree) {}
 
     @Transient
     private var it: T? = null
@@ -145,7 +146,7 @@ abstract class Hud<T : Drawable> : Cloneable, Config("null", null, "null", null)
             it.enabled = value
             if (siblings.size == 1) {
                 it.parent.enabled = value
-            } else if (!value && siblings.allAre { !it.enabled }) {
+            } else if (!value && siblings.fastAll { !it.enabled }) {
                 it.parent.enabled = false
             }
             it.parent.recalculate()

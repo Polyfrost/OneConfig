@@ -33,12 +33,13 @@ import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.color.Colors
 import org.polyfrost.polyui.component.*
 import org.polyfrost.polyui.component.impl.*
+import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.renderer.data.Font
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.unit.by
 import org.polyfrost.polyui.unit.seconds
-import org.polyfrost.polyui.utils.LinkedList
+import org.polyfrost.polyui.utils.fastEach
 import org.polyfrost.polyui.utils.image
 import org.polyfrost.polyui.utils.mapToArray
 import org.polyfrost.polyui.utils.radii
@@ -51,7 +52,7 @@ const val angleSnapMargin = PI / 12.0
 const val minMargin = 4f
 const val snapMargin = 12f
 
-fun HudsPage(huds: LinkedList<Hud<out Drawable>>): Drawable {
+fun HudsPage(huds: ArrayList<Hud<out Drawable>>): Drawable {
     return Group(
         Group(
             HudButton("oneconfig.all"),
@@ -180,12 +181,19 @@ private fun interactiveAlignment(hud: Hud<out Drawable>): Drawable {
                     alignment = alignC,
                     children = arrayOf(
                         Block(
-                            Image("assets/oneconfig/ico/align/alignment1.svg".image()),
+                            Image("assets/oneconfig/ico/align/alignment1.svg".image()).withStates(true).setPalette {
+                                Colors.Palette(
+                                    text.primary.normal,
+                                    brand.fg.normal,
+                                    brand.fg.pressed,
+                                    text.primary.disabled,
+                                )
+                            },
                             size = 57f by 57f,
                             alignment = alignC,
                         ).also {
                             it.radii = (hud.get().parent as Block).radii
-                        }.withBoarder().withStates().draggable(
+                        }.withBoarder().draggable(
                             withX = false, withY = false,
                             onStart = {
                                 s0 = hud.get().parent.rotation
@@ -208,6 +216,19 @@ private fun interactiveAlignment(hud: Hud<out Drawable>): Drawable {
                             },
                         ).apply {
                             rotation = hud.get().parent.rotation
+                        }.events {
+                            Event.Mouse.Pressed then {
+                                this[0].accept(it)
+                            }
+                            Event.Mouse.Released then {
+                                this[0].accept(it)
+                            }
+                            Event.Mouse.Entered then {
+                                this[0].accept(it)
+                            }
+                            Event.Mouse.Exited then {
+                                this[0].accept(it)
+                            }
                         },
                     )
                 ).draggable(
@@ -241,7 +262,7 @@ private fun interactiveAlignment(hud: Hud<out Drawable>): Drawable {
                             it.skewY = sy
                         }
                     },
-                ).withStates().setPalette {
+                ).withStates(true).setPalette {
                     Colors.Palette(
                         text.secondary.normal,
                         brand.fg.normal,
@@ -296,7 +317,7 @@ fun textOptions(text: Text): Drawable {
             alignment = alignC,
         ),
         Dropdown(
-            "Poppins", "JetBrains Mono", "Minecraft"
+            "poppins", "JetBrains Mono", "Minecraft"
         ).onChange { it: Int ->
             text.font = when (it) {
                 1 -> PolyUI.monospaceFont

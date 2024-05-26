@@ -57,7 +57,7 @@ import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.unit.by
 import org.polyfrost.polyui.unit.seconds
-import org.polyfrost.polyui.utils.LinkedList
+import org.polyfrost.polyui.utils.fastEach
 import org.polyfrost.polyui.utils.ref
 import org.polyfrost.polyui.utils.rgba
 import org.polyfrost.universal.UResolution
@@ -65,7 +65,7 @@ import kotlin.math.PI
 
 object HudManager {
     internal val LOGGER = LogManager.getLogger("OneConfig/HUD")
-    private val huds = LinkedList<Hud<out Drawable>>()
+    private val huds = ArrayList<Hud<out Drawable>>()
     private val hudProviders = HashMap<Class<out Hud<out Drawable>>, Hud<out Drawable>>()
     private val snapLineColor = rgba(170, 170, 170, 0.8f)
 
@@ -151,7 +151,7 @@ object HudManager {
                     Event.Mouse.Exited then {
                         Fade(this[0], 0.1f, false, Animations.EaseInOutQuad.create(0.08.seconds)).add()
                     }
-                    Event.Mouse.Clicked(0) then {
+                    Event.Mouse.Clicked then {
                         // asm: makes close button easier to use
                         if (polyUI.mouseY < 40f) {
                             false
@@ -217,9 +217,9 @@ object HudManager {
     }
 
     private fun editorClose() {
+        panelExists = false
         toggleHudPicker()
         ConfigManager.active().saveAll()
-        panelExists = false
     }
 
 

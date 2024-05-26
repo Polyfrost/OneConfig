@@ -27,7 +27,6 @@
 package org.polyfrost.oneconfig.api.hud.v1
 
 import org.jetbrains.annotations.ApiStatus
-import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.component.namedId
 import org.polyfrost.polyui.unit.Vec2
@@ -71,19 +70,13 @@ abstract class LegacyHud : Hud<Drawable>() {
         }
 
         return object : Drawable(size = size) {
-            override fun preRender() {}
+            override fun preRender(delta: Long) {}
 
             override fun render() {
                 render(UMatrixStack.Compat.get(), x, y)
             }
 
             override fun postRender() {}
-
-            override fun setup(polyUI: PolyUI): Boolean {
-                if (initialized) return false
-                initialized = true
-                return true
-            }
         }.namedId("LegacyHud")
     }
 }

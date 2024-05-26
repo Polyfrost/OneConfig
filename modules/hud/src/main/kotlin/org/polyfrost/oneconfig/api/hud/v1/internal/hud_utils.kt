@@ -38,7 +38,7 @@ import org.polyfrost.polyui.component.impl.Text
 import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.unit.Point
 import org.polyfrost.polyui.unit.by
-import org.polyfrost.polyui.utils.image
+import org.polyfrost.polyui.utils.fastEach
 import org.polyfrost.polyui.utils.radii
 
 private val LOGGER = LogManager.getLogger("OneConfig/HUD")
@@ -70,7 +70,7 @@ private val scaleBlob by lazy {
         },
     ).apply {
 //        addEventHandler(Event.Mouse.Pressed(0)) {
-            // if(!polyUI.inputManager.hasFocused) polyUI.focus(this)
+        // if(!polyUI.inputManager.hasFocused) polyUI.focus(this)
 //        }
         on(Event.Focused.Lost) {
             renders = false
@@ -196,7 +196,7 @@ private fun Drawable.addDefaultBackground(color: PolyColor?): Block {
 }
 
 private fun Block.addScaler(): Block {
-    this.on(Event.Mouse.Clicked(0)) {
+    this.on(Event.Mouse.Clicked) {
         val sb = scaleBlob
         sb.renders = true
         sb.x = x + (width * scaleX) - (sb.width / 2f)

@@ -40,7 +40,7 @@ import org.polyfrost.polyui.renderer.data.PolyImage
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.unit.seconds
-import org.polyfrost.polyui.utils.LinkedList
+import org.polyfrost.polyui.utils.fastEach
 import org.polyfrost.polyui.utils.image
 import org.polyfrost.polyui.utils.mapToArray
 import org.polyfrost.polyui.utils.rgba
@@ -83,7 +83,7 @@ open class ConfigVisualizer {
         initialPage: String = "General",
     ): Drawable {
         val now = System.nanoTime()
-        val options = HashMap<String, HashMap<String, LinkedList<Drawable>>>(4)
+        val options = HashMap<String, HashMap<String, ArrayList<Drawable>>>(4)
 
         // asm: step 1: sort the tree into a map of:
         // categories
@@ -105,7 +105,7 @@ open class ConfigVisualizer {
         )
     }
 
-    protected open fun flattenSubcategories(options: Map<String, Map<String, LinkedList<Drawable>>>): Map<String, Drawable> {
+    protected open fun flattenSubcategories(options: Map<String, Map<String, ArrayList<Drawable>>>): Map<String, Drawable> {
         return options.mapValues { (_, subcategories) ->
             Group(
                 alignment = alignCV,
@@ -121,7 +121,7 @@ open class ConfigVisualizer {
         }
     }
 
-    protected open /* suspend? */ fun processNode(node: Node, options: HashMap<String, HashMap<String, LinkedList<Drawable>>>) {
+    protected open /* suspend? */ fun processNode(node: Node, options: HashMap<String, HashMap<String, ArrayList<Drawable>>>) {
         val icon =
             when (val it = node.getMetadata<Any?>("icon")) {
                 null -> null
@@ -134,7 +134,7 @@ open class ConfigVisualizer {
         val category = node.getMetadata<String>("category")?.strv() ?: "General"
         val subcategory = node.getMetadata<String>("subcategory")?.strv() ?: "General"
 
-        val list = options.getOrPut(category) { HashMap(4) }.getOrPut(subcategory) { LinkedList() }
+        val list = options.getOrPut(category) { HashMap(4) }.getOrPut(subcategory) { ArrayList(8) }
         if (node is Property<*>) {
             val vis = node.getVisualizer() ?: return
             list.add(wrap(vis.visualize(node), node.title, node.description, icon))
@@ -152,7 +152,7 @@ open class ConfigVisualizer {
         return Group(
             children = categories.mapToArray { (category, options) ->
                 Button(text = category).events {
-                    Event.Mouse.Clicked(0) then {
+                    Event.Mouse.Clicked then {
                         parent[0] = options
                     }
                 }
@@ -176,7 +176,7 @@ open class ConfigVisualizer {
             wrap(Image("chevron-down.svg".image()).also { it.rotation = PI }, title, desc, icon).events {
                 self.color = PolyColor.TRANSPARENT.toAnimatable()
                 var open = false
-                Event.Mouse.Clicked(0) then {
+                Event.Mouse.Clicked then {
                     open = !open
                     Rotate(this[1], if (!open) PI else 0.0, false, Animations.EaseOutQuad.create(0.2.seconds)).add()
                     val value = parent[1].height

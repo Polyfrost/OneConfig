@@ -6,9 +6,9 @@ pluginManagement {
     }
 }
 
-val mod_name: String by settings
+val name: String by settings
 
-rootProject.name = mod_name
+rootProject.name = name
 
 
 include(":modules")

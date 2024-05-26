@@ -5,11 +5,12 @@ plugins {
     `java-library`
 }
 
-val modMajor = project.properties["mod_major_version"]
-val modMinor = project.properties["mod_minor_version"]
+val major = project.properties["version_major"]
+val minor = project.properties["version_minor"]
+val patch = project.properties["version_patch"]
 
-version = "$modMajor$modMinor"
-group = "org.polyfrost.oneconfig"
+version = "$major.$minor.$patch"
+group = properties["group"].toString()
 
 allprojects {
     apply(plugin = rootProject.libs.plugins.licenser.get().pluginId)
