@@ -26,7 +26,7 @@
 
 package org.polyfrost.oneconfig.api.config.v1.annotations;
 
-import org.polyfrost.oneconfig.api.config.v1.visualize.Visualizer;
+import org.polyfrost.oneconfig.api.config.v1.Visualizer;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

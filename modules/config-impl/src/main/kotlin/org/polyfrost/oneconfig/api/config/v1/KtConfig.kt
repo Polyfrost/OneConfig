@@ -26,10 +26,8 @@
 
 package org.polyfrost.oneconfig.api.config.v1
 
-import org.polyfrost.oneconfig.api.config.v1.visualize.Visualizer
 import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.input.KeyBinder
-import org.polyfrost.polyui.renderer.data.PolyImage
 import org.polyfrost.polyui.utils.rgba
 import kotlin.properties.PropertyDelegateProvider
 import kotlin.properties.ReadWriteProperty
@@ -40,7 +38,7 @@ import kotlin.reflect.KProperty
  *
  * **Do not use in Java sources**.
  */
-open class KtConfig(id: String, title: String, category: Category, icon: PolyImage? = null) : Config(id, icon, title, category) {
+open class KtConfig(id: String, title: String, category: Category, icon: String? = null) : Config(id, icon, title, category) {
 
     final override fun makeTree(id: String) = Tree.tree(id)
 
@@ -86,7 +84,7 @@ open class KtConfig(id: String, title: String, category: Category, icon: PolyIma
 
 
     /**
-     * provider for the [PropertyDelegate]. for some reason this has to be a class to avoid having to pass the reference directly.
+     * legacy for the [PropertyDelegate]. for some reason this has to be a class to avoid having to pass the reference directly.
      */
     protected class Provider<T>(
         private val def: T?,

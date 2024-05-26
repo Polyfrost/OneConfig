@@ -193,7 +193,7 @@ public final class LogScanner {
                 String s = uri.toString();
                 uri = new URL(s.substring(4, s.lastIndexOf("!"))).toURI();
             }
-            if (uri.toString().endsWith(".class") && Platform.getInstance().isDevelopmentEnvironment()) {
+            if (uri.toString().endsWith(".class") && Platform.getLoaderPlatform().isDevelopmentEnvironment()) {
                 LOGGER.error("The mod you are currently developing caused this issue, or another class file. Returning 'this'.");
                 LOGGER.error("Class: {}", clazz.getName());
                 return Collections.singleton(new LoaderPlatform.ActiveMod("this", "this", "Unknown", null));
@@ -208,7 +208,7 @@ public final class LogScanner {
     private static Set<LoaderPlatform.ActiveMod> getModsAt(Path path, List<LoaderPlatform.ActiveMod> modMap) {
         Set<LoaderPlatform.ActiveMod> mods = modMap.stream().filter(m -> m.source.equals(path)).collect(Collectors.toSet());
         if (!mods.isEmpty()) return mods;
-        else if (Platform.getInstance().isDevelopmentEnvironment()) {
+        else if (Platform.getLoaderPlatform().isDevelopmentEnvironment()) {
             // For some reason, in dev, the mod being tested has the 'resources' folder as the origin instead of the 'classes' folder.
             String resourcesPathString = path.toString().replace("\\", "/")
                     // Make it work with Architectury as well

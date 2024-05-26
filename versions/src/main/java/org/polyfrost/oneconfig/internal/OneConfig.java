@@ -31,9 +31,9 @@ import org.polyfrost.oneconfig.api.commands.v1.factories.builder.CommandBuilder;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.InitializationEvent;
 import org.polyfrost.oneconfig.api.hud.v1.HudManager;
-import org.polyfrost.oneconfig.internal.ui.BlurHandler;
+import org.polyfrost.oneconfig.api.ui.v1.UIManager;
+import org.polyfrost.oneconfig.api.ui.v1.internal.BlurHandler;
 import org.polyfrost.oneconfig.internal.ui.OneConfigUI;
-import org.polyfrost.oneconfig.api.ui.v1.LwjglManager;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindHelper;
 import org.polyfrost.oneconfig.utils.v1.GuiUtils;
 import org.polyfrost.polyui.PolyUI;
@@ -103,7 +103,7 @@ public class OneConfig
             Class.forName(PolyUI.class.getName());
             Class.forName(Drawable.class.getName());
             Class.forName(Translator.class.getName());
-            LwjglManager.INSTANCE.getRenderer();
+            UIManager.INSTANCE.getRenderer();
         } catch (Exception e) {
             throw new IllegalStateException("Failed to preload necessary PolyUI classes", e);
         }

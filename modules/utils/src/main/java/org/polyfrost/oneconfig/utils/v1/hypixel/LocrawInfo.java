@@ -37,6 +37,11 @@ import java.util.Objects;
  * @see HypixelUtils
  */
 public class LocrawInfo implements Serializable {
+    /**
+     * Represents the previous location info that was used.
+     */
+    public transient LocrawInfo previous;
+
     @SerializedName("server")
     private String serverId;
     @SerializedName("mode")
@@ -79,7 +84,7 @@ public class LocrawInfo implements Serializable {
     /**
      * @param gameType The GameType to set it to.
      */
-    void setGameType(GameType gameType) {
+    public void setGameType(GameType gameType) {
         this.gameType = gameType;
     }
 
@@ -88,6 +93,10 @@ public class LocrawInfo implements Serializable {
      */
     public String getMapName() {
         return mapName;
+    }
+
+    public boolean isInGame() {
+        return !"lobby".equals(gameMode);
     }
 
     @Override

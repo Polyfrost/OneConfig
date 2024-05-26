@@ -27,6 +27,6 @@
 dependencies {
     implementation(libs.bundles.nightconfig)
     api(project(":modules:config"))
-    api(project(":modules:ui"))
+    api(libs.polyui)
 }
 

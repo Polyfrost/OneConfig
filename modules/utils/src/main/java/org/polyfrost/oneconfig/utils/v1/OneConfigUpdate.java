@@ -87,7 +87,7 @@ public final class OneConfigUpdate {
         sb.append(ONECONFIG_REPO);
         if (snapshot) sb.append("snapshot/");
         else sb.append("releases/");
-        sb.append(GROUP).append(Platform.getInstance().getLoaderString());
+        sb.append(GROUP).append(Platform.getLoaderPlatform().getLoaderString());
         sb.append("/maven-metadata.xml");
         try (InputStream stream = NetworkUtils.setupConnection(sb.toString(), "OneConfig/1.0.0", 5000, false)) {
             if (stream == null) {

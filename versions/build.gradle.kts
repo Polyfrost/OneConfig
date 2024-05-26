@@ -5,7 +5,6 @@ import net.fabricmc.loom.task.RemapSourcesJarTask
 import org.polyfrost.gradle.util.noServerRunConfigs
 import org.polyfrost.gradle.util.prebundle
 import java.text.SimpleDateFormat
-import java.util.concurrent.atomic.AtomicReference
 
 plugins {
     alias(libs.plugins.kotlin)
@@ -17,21 +16,17 @@ plugins {
     signing
 }
 
-java {
-    withSourcesJar()
-    withJavadocJar()
-}
-
+java.withSourcesJar()
 
 val modId = properties["mod_id"] as String
 version = rootProject.version
 group = rootProject.group
 
 val natives = listOf("windows", "windows-arm64", "linux", "macos", "macos-arm64")
-val tweakClass = "org.polyfrost.oneconfig.internal.init.OneConfigTweaker"
+val tweakClass = "org.polyfrost.oneconfig.internal.legacy.OneConfigTweaker"
 
 base {
-    archivesName.set(platform.toString())
+    archivesName = platform.toString()
 }
 
 loom {
@@ -54,7 +49,7 @@ loom {
             mixinConfig("mixins.${modId}.json")
         }
     }
-    mixin.defaultRefmapName.set("mixins.${modId}.refmap.json")
+    mixin.defaultRefmapName = "mixins.${modId}.refmap.json"
 }
 
 repositories {
@@ -154,34 +149,30 @@ dependencies {
 
 tasks {
     withType(Jar::class) {
-        val atomicLines = AtomicReference(listOf<String>())
-
-        // This removes the 22rd line in fabric.mod.json,
-        // aka the TestMod entrypoint, for production builds.
-        val fabricModJson = layout.buildDirectory.get().asFile.resolve("resources")
-            .resolve("main")
-            .resolve("fabric.mod.json")
-        doFirst {
-            if (fabricModJson.exists()) {
-                val lines = fabricModJson.readLines()
-                if (lines[21].contains("TestMod")) {
-                    atomicLines.set(lines)
-
-                    fabricModJson.delete()
-                    fabricModJson.writeText(
-                        lines.subList(0, 21).joinToString("\n") + "\n" + lines.subList(
-                            22,
-                            lines.size
-                        ).joinToString("\n")
-                    )
-                }
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+        exclude("META-INF/com.android.tools/**")
+        exclude("META-INF/proguard/**")
+        if (platform.isFabric) {
+            exclude("mcmod.info", "META-INF/mods.toml")
+        } else {
+            exclude("fabric.mod.json")
+            if (platform.isLegacyForge) {
+                exclude("**/mods.toml")
+                exclude("META-INF/versions/**")
+                exclude("**/module-info.class")
+                exclude("**/package-info.class")
+            } else {
+                exclude("mcmod.info")
             }
         }
 
+        // Removes the TestMod entrypoint from the generated JARs.
         doLast {
-            val lines = atomicLines.get()
-            if (lines.isEmpty()) return@doLast
-            fabricModJson.delete()
+            val fabricModJson = layout.buildDirectory.get().asFile.resolve("resources")
+                .resolve("main")
+                .resolve("fabric.mod.json")
+            val lines = fabricModJson.readLines().toMutableList()
+            lines.removeIf { it.contains("TestMod") }
             fabricModJson.writeText(lines.joinToString("\n"))
         }
     }
@@ -190,7 +181,7 @@ tasks {
         inputs.property("name", rootProject.name)
         inputs.property("java", 8)
         inputs.property("version", version)
-        inputs.property("mcVersionStr", platform.mcVersionStr)
+        inputs.property("mcVersionStr", if (platform.isFabric) platform.mcVersionStr.substringBeforeLast('.') + ".x" else platform.mcVersionStr)
         val id = inputs.properties["id"]
         val name = inputs.properties["name"]
         val version = inputs.properties["version"]
@@ -198,7 +189,7 @@ tasks {
         val java = inputs.properties["java"].toString().toInt()
         val javaLevel = "JAVA-$java"
 
-        filesMatching(listOf("mcmod.info", "mixins.${id}.json", "**/mods.toml")) {
+        filesMatching(listOf("mcmod.info", "mixins.${id}.json", "**/mods.toml", "fabric.mod.json")) {
             expand(
                 mapOf(
                     "id" to id,
@@ -210,60 +201,23 @@ tasks {
                 )
             )
         }
-        filesMatching("fabric.mod.json") {
-            expand(
-                mapOf(
-                    "id" to id,
-                    "name" to name,
-                    "java" to java,
-                    "java_level" to javaLevel,
-                    "version" to version,
-                    "mcVersionStr" to mcVersionStr.substringBeforeLast(".") + ".x"
-                )
-            )
-        }
     }
 
-    withType(Jar::class.java) {
-        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-        exclude("META-INF/com.android.tools/**")
-        exclude("META-INF/proguard/**")
-        if (project.platform.isFabric) {
-            exclude("mcmod.info", "META-INF/mods.toml")
-        } else {
-            exclude("fabric.mod.json")
-            if (project.platform.isLegacyForge) {
-                exclude("**/mods.toml")
-                exclude("META-INF/versions/**")
-                exclude("**/module-info.class")
-                exclude("**/package-info.class")
-            } else {
-                exclude("mcmod.info")
-            }
-        }
-        if (!name.contains("sourcesjar", ignoreCase = true) || !name.contains("javadoc", ignoreCase = true)) {
-            exclude("**/**_Test.**")
-            exclude("**/**_Test$**.**")
-            exclude("testmod_dark.svg")
-        }
+    jar {
+        exclude("**/internal/**")
     }
 
     shadowJar {
-        archiveClassifier.set("full-dev")
         configurations = listOf(shade, shadeMod)
-        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
         dependsOn(jar)
     }
 
     remapJar {
-        inputFile.set(shadowJar.get().archiveFile)
-        archiveClassifier = "full"
-    }
-    jar {
-        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+        dependsOn(shadowJar)
+        inputFile = shadowJar.get().archiveFile
         manifest {
-            attributes(
-                if (platform.isForge) {
+            if (platform.isForge) {
+                attributes(
                     if (platform.isLegacyForge) {
                         mapOf(
                             "ModSide" to "CLIENT",
@@ -284,42 +238,13 @@ tasks {
                             "Implementation-Timestamp" to SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").format(`java.util`.Date())
                         )
                     }
-                } else {
-                    mapOf()
-                }
-            )
-        }
-        exclude("**/internal/**")
-        archiveClassifier.set("")
-    }
-    named<Jar>("sourcesJar") {
-        exclude("**/internal/**")
-        archiveClassifier.set("sources")
-        doFirst {
-            archiveClassifier.set("sources")
-        }
-        doLast {
-            archiveFile.orNull?.asFile?.let {
-                it.copyTo(
-                    File(
-                        it.parentFile,
-                        it.nameWithoutExtension + "-dev" + it.extension.let { if (it.isBlank()) "" else ".$it" }),
-                    overwrite = true
                 )
             }
-            archiveClassifier.set("sources")
         }
     }
-    named<Jar>("javadocJar") {
-        archiveClassifier.set("javadoc")
-    }
+
     withType<RemapSourcesJarTask> {
         enabled = false
-    }
-    javadoc {
-        options {
-            (this as CoreJavadocOptions).addBooleanOption("Xdoclint:none", true)
-        }
     }
 }
 
@@ -329,11 +254,11 @@ signing {
 
 publishing {
     publications {
-        register<MavenPublication>(platform.toString()) {
+        register<MavenPublication>("full") {
             groupId = group.toString()
             artifactId = base.archivesName.get()
 
-            from(components["java"])
+            artifact(tasks.remapJar)
         }
     }
 

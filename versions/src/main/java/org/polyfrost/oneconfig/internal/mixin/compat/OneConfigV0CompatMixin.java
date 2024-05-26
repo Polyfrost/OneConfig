@@ -45,7 +45,7 @@ import org.polyfrost.oneconfig.api.config.v1.ConfigManager;
 import org.polyfrost.oneconfig.api.config.v1.Properties;
 import org.polyfrost.oneconfig.api.config.v1.Property;
 import org.polyfrost.oneconfig.api.config.v1.Tree;
-import org.polyfrost.oneconfig.api.config.v1.visualize.Visualizer;
+import org.polyfrost.oneconfig.api.config.v1.Visualizer;
 import org.polyfrost.oneconfig.utils.v1.MHUtils;
 import org.spongepowered.asm.mixin.Dynamic;
 import org.spongepowered.asm.mixin.Final;

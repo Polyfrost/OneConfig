@@ -28,7 +28,7 @@ package org.polyfrost.oneconfig.api.ui.v1.notifications
 
 import org.polyfrost.oneconfig.api.event.v1.eventHandler
 import org.polyfrost.oneconfig.api.event.v1.events.RenderEvent
-import org.polyfrost.oneconfig.api.ui.v1.LwjglManager
+import org.polyfrost.oneconfig.api.ui.v1.UIManager
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.property.Settings
@@ -45,7 +45,7 @@ object Notifications {
         renderPausingEnabled = false
         debug = false
     }
-    private val polyUI = PolyUI(renderer = LwjglManager.INSTANCE.renderer, settings = settings)
+    private val polyUI = PolyUI(renderer = UIManager.INSTANCE.renderer, settings = settings)
 
     init {
         eventHandler { _: RenderEvent.End ->

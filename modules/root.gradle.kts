@@ -26,18 +26,24 @@ subprojects {
         testImplementation(platform(rootProject.libs.junit.bom))
     }
 
-    tasks.test {
-        useJUnitPlatform()
-        // run tests with java 17 because it is better for compatability and makes the debugger work
-        // (especially for testing of reflection due to the tighter rules)
-        javaLauncher = javaToolchains.launcherFor {
-            languageVersion = JavaLanguageVersion.of(17)
+    tasks {
+        test {
+            useJUnitPlatform()
+            // run tests with java 17 because it is better for compatability and makes the debugger work
+            // (especially for testing of reflection due to the tighter rules)
+            javaLauncher = this@subprojects.javaToolchains.launcherFor {
+                languageVersion = JavaLanguageVersion.of(17)
+            }
         }
-    }
 
-    tasks.javadoc {
-        options {
-            (this as CoreJavadocOptions).addBooleanOption("Xdoclint:none", true)
+        javadoc {
+            options {
+                (this as CoreJavadocOptions).addBooleanOption("Xdoclint:none", true)
+            }
+        }
+
+        withType(Jar::class.java) {
+            exclude("**/internal/**")
         }
     }
 
@@ -101,6 +107,8 @@ publishing {
 }
 
 apiValidation {
-    ignoredPackages.add("org.polyfrost.oneconfig.internal")
-    ignoredProjects.add("ui-impl")
+    for (project in subprojects) {
+        ignoredPackages.add("org.polyfrost.oneconfig.api.${project.name}.v1.internal")
+    }
+    ignoredProjects.add("internal")
 }

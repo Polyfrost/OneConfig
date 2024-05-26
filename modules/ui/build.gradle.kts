@@ -26,7 +26,7 @@
 
 dependencies {
     api(libs.polyui)
-    api(libs.bundles.lwjgl)
+    implementation(libs.bundles.lwjgl)
     testImplementation(libs.lwjgl.tinyfd)
     api(project(":modules:events"))
     compileOnly("org.polyfrost:universalcraft-1.8.9-forge:${libs.versions.universalcraft.get()}")

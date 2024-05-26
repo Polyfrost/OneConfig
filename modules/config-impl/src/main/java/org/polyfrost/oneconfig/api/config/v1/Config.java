@@ -29,7 +29,6 @@ package org.polyfrost.oneconfig.api.config.v1;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.polyfrost.polyui.renderer.data.PolyImage;
 
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
@@ -37,11 +36,11 @@ import java.util.function.Consumer;
 public abstract class Config {
     protected Tree tree;
 
-    public Config(@NotNull String id, @Nullable PolyImage icon, @NotNull String title, @Nullable Category category) {
+    public Config(@NotNull String id, @Nullable String iconPath, @NotNull String title, @Nullable Category category) {
         // written this way so that trees can be lateinit
         if ((tree = makeTree(id)) != null) {
             tree.setTitle(title);
-            tree.addMetadata("icon", icon);
+            tree.addMetadata("icon", iconPath);
             tree.addMetadata("category", category);
             ConfigManager.active().register(tree);
         }

@@ -51,7 +51,7 @@ public class TestMod_Test
     private void init(InitializationEvent e)
     //#endif
     {
-        System.err.println("TestMod::init");
+        System.err.println("TestMod::legacy");
         CommandManager.registerCommand(new TestCommand_Test());
         new TestConfig_Test();
     }

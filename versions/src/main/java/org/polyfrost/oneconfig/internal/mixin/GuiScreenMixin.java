@@ -73,7 +73,7 @@ public abstract class GuiScreenMixin {
     //#if MC<=11300 && FABRIC
     //$$ @Inject(method = "sendMessage(Ljava/lang/String;Z)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/player/ClientPlayerEntity;sendChatMessage(Ljava/lang/String;)V"), cancellable = true)
     //$$ private void ocfg$commands$execute(String text, boolean toHud, CallbackInfo ci) {
-    //$$    if (org.polyfrost.oneconfig.internal.commands.ClientCommandHandler.instance.execute(net.minecraft.client.MinecraftClient.getInstance().player, text) != 0) {
+    //$$    if (org.polyfrost.oneconfig.api.commands.v1.internal.ClientCommandHandler.instance.execute(net.minecraft.client.MinecraftClient.getInstance().player, text) != 0) {
     //$$        ci.cancel();
     //$$    }
     //$$ }

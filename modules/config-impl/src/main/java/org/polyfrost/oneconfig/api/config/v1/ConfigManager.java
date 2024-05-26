@@ -36,9 +36,6 @@ import org.polyfrost.oneconfig.api.config.v1.collect.PropertyCollector;
 import org.polyfrost.oneconfig.api.config.v1.collect.impl.OneConfigCollector;
 import org.polyfrost.oneconfig.api.config.v1.serialize.impl.FileSerializer;
 import org.polyfrost.oneconfig.api.config.v1.serialize.impl.NightConfigSerializer;
-import org.polyfrost.oneconfig.api.event.v1.EventManager;
-import org.polyfrost.oneconfig.api.event.v1.events.JvmShutdownEvent;
-import org.polyfrost.oneconfig.api.event.v1.events.ShutdownEvent;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -183,8 +180,7 @@ public final class ConfigManager {
     private ConfigManager withHook() {
         // two hooks that guarantee that we save lol
         // seems to improve the reliability of saving when the game crashes
-        EventManager.register(JvmShutdownEvent.class, this::hook);
-        EventManager.register(ShutdownEvent.class, this::hook);
+        Runtime.getRuntime().addShutdownHook(new Thread(this::onClose));
         return this;
     }
 
@@ -197,7 +193,8 @@ public final class ConfigManager {
         return this;
     }
 
-    private synchronized void hook() {
+
+    private synchronized void onClose() {
         if (shutdown) return;
         shutdown = true;
         LOGGER.info("shutdown requested; saving all configs in {}", backend.folder.getFileName());

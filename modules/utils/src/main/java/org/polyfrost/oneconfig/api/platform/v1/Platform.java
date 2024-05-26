@@ -29,89 +29,39 @@ package org.polyfrost.oneconfig.api.platform.v1;
 import java.util.ServiceLoader;
 
 /**
- * Contains various platform-specific utilities for OneConfig.
- * <p>
- * This is meant for internal usage, however other mods may use these (unless otherwise stated).
+ * Contains various bridges for platform-specific methods, organized into a series of subclasses.
  */
-public interface Platform {
-
-    static Platform getInstance() {
-        return Holder.INSTANCE.platform;
+public final class Platform {
+    private Platform() {
     }
 
-    static LoaderPlatform getLoaderPlatform() {
-        return Holder.INSTANCE.loaderPlatform;
+    private static LoaderPlatform loaderPlatform;
+    private static PlayerPlatform playerPlatform;
+    private static GLPlatform glPlatform;
+    private static GuiPlatform guiPlatform;
+    private static I18nPlatform i18nPlatform;
+
+    public static LoaderPlatform getLoaderPlatform() {
+        return loaderPlatform == null ? loaderPlatform = load(LoaderPlatform.class) : loaderPlatform;
     }
 
-    static ServerPlatform getServerPlatform() {
-        return Holder.INSTANCE.serverPlatform;
+    public static PlayerPlatform getPlayerPlatform() {
+        return playerPlatform == null ? playerPlatform = load(PlayerPlatform.class) : playerPlatform;
     }
 
-    static GLPlatform getGLPlatform() {
-        return Holder.INSTANCE.glPlatform;
+    public static GLPlatform getGLPlatform() {
+        return glPlatform == null ? glPlatform = load(GLPlatform.class) : glPlatform;
     }
 
-    static GuiPlatform getGuiPlatform() {
-        return Holder.INSTANCE.guiPlatform;
+    public static GuiPlatform getGuiPlatform() {
+        return guiPlatform == null ? guiPlatform = load(GuiPlatform.class) : guiPlatform;
     }
 
-    static I18nPlatform getI18nPlatform() {
-        return Holder.INSTANCE.i18nPlatform;
+    public static I18nPlatform getI18nPlatform() {
+        return i18nPlatform == null ? i18nPlatform = load(I18nPlatform.class) : i18nPlatform;
     }
 
-    boolean isCallingFromMinecraftThread();
-
-    /**
-     * return the minecraft version of the current instance, as per the preprocessor standard.
-     * for example, if the minecraft version is 1.16.5, this will return 11605.
-     */
-    int getMinecraftVersion();
-
-    /**
-     * return a string representing the loader and the minecraft version of the current instance, as per the preprocessor standard.
-     * for example, if the loader is Forge and the minecraft version is 1.16.5, this will return "1.16.5-forge".
-     */
-    default String getLoaderString() {
-        char[] ver = String.valueOf(getMinecraftVersion()).toCharArray();
-        StringBuilder sb = new StringBuilder();
-        sb.append(ver[0]).append('.');
-        if(ver[1] == '0') {
-            sb.append(ver[2]);
-        } else {
-            sb.append(ver[1]).append(ver[2]);
-        }
-        sb.append('.');
-        if(ver[3] == '0') {
-            sb.append(ver[4]);
-        } else {
-            sb.append(ver[3]).append(ver[4]);
-        }
-        sb.append('-').append(getLoader().name().toLowerCase());
-        return sb.toString();
-    }
-
-    boolean isDevelopmentEnvironment();
-
-    Loader getLoader();
-
-    String getPlayerName();
-
-    enum Loader {
-        FORGE,
-        FABRIC
-    }
-
-    final class Holder {
-        static Holder INSTANCE = new Holder();
-        Platform platform = ServiceLoader.load(Platform.class, Platform.class.getClassLoader()).iterator().next();
-        LoaderPlatform loaderPlatform = ServiceLoader.load(LoaderPlatform.class, LoaderPlatform.class.getClassLoader()).iterator().next();
-        ServerPlatform serverPlatform = ServiceLoader.load(ServerPlatform.class, ServerPlatform.class.getClassLoader()).iterator().next();
-        GLPlatform glPlatform = ServiceLoader.load(GLPlatform.class, GLPlatform.class.getClassLoader()).iterator().next();
-        GuiPlatform guiPlatform = ServiceLoader.load(GuiPlatform.class, GuiPlatform.class.getClassLoader()).iterator().next();
-        I18nPlatform i18nPlatform = ServiceLoader.load(I18nPlatform.class, I18nPlatform.class.getClassLoader()).iterator().next();
-
-        private Holder() {
-
-        }
+    private static <T> T load(Class<T> cls) {
+        return ServiceLoader.load(cls, cls.getClassLoader()).iterator().next();
     }
 }

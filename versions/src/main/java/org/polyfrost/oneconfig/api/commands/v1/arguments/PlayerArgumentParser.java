@@ -25,6 +25,7 @@
  */
 
 package org.polyfrost.oneconfig.api.commands.v1.arguments;
+//#if MC<11300
 
 import com.mojang.authlib.GameProfile;
 import net.minecraft.client.Minecraft;
@@ -70,3 +71,4 @@ public class PlayerArgumentParser extends ArgumentParser<GameProfile> {
         });
     }
 }
+//#endif

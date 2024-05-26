@@ -39,22 +39,15 @@ public final class HypixelUtils {
     }
 
     /**
-     * Alias for {@link LocrawUtil#INSTANCE}.
-     */
-    public static LocrawUtil getLocraw() {
-        return LocrawUtil.INSTANCE;
-    }
-
-    /**
      * Checks whether the player is on Hypixel.
      *
      * @return Whether the player is on Hypixel.
      * @see <a href="https://canary.discord.com/channels/864592657572560958/945075920664928276/978649312013725747">this discord message from discord.gg/essential</a>
      */
     public static boolean isHypixel() {
-        if (!Platform.getServerPlatform().inMultiplayer()) return false;
+        if (!Platform.getPlayerPlatform().inMultiplayer()) return false;
 
-        String serverBrand = Platform.getServerPlatform().getServerBrand();
+        String serverBrand = Platform.getPlayerPlatform().getClientBrand();
 
         if (serverBrand == null) return false;
 

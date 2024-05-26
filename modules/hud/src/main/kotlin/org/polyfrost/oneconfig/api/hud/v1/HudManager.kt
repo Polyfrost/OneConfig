@@ -36,7 +36,7 @@ import org.polyfrost.oneconfig.api.hud.v1.internal.HudsPage
 import org.polyfrost.oneconfig.api.hud.v1.internal.alignC
 import org.polyfrost.oneconfig.api.hud.v1.internal.build
 import org.polyfrost.oneconfig.api.hud.v1.internal.createInspectionsScreen
-import org.polyfrost.oneconfig.api.ui.v1.LwjglManager
+import org.polyfrost.oneconfig.api.ui.v1.UIManager
 import org.polyfrost.oneconfig.api.ui.v1.screen.PolyUIScreen
 import org.polyfrost.oneconfig.utils.v1.GuiUtils
 import org.polyfrost.oneconfig.utils.v1.MHUtils
@@ -194,7 +194,7 @@ object HudManager {
     }
 
     val polyUI: PolyUI = PolyUI(
-        renderer = LwjglManager.INSTANCE.renderer,
+        renderer = UIManager.INSTANCE.renderer,
         size = 1920f by 1080f,
         settings = Settings().apply {
             cleanupAfterInit = false

@@ -1,9 +1,3 @@
-public abstract interface class org/polyfrost/oneconfig/api/ui/v1/LwjglManager {
-	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/ui/v1/LwjglManager;
-	public abstract fun getRenderer ()Lorg/polyfrost/polyui/renderer/Renderer;
-	public abstract fun getTinyFD ()Lorg/polyfrost/oneconfig/api/ui/v1/TinyFD;
-}
-
 public abstract interface class org/polyfrost/oneconfig/api/ui/v1/TinyFD {
 	public static final field ERROR_ICON Ljava/lang/String;
 	public static final field INFO_ICON Ljava/lang/String;
@@ -19,6 +13,12 @@ public abstract interface class org/polyfrost/oneconfig/api/ui/v1/TinyFD {
 	public abstract fun openSaveSelector (Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;Ljava/lang/String;)Ljava/nio/file/Path;
 	public abstract fun showMessageBox (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Z)Z
 	public abstract fun showNotification (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I
+}
+
+public abstract interface class org/polyfrost/oneconfig/api/ui/v1/UIManager {
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/ui/v1/UIManager;
+	public abstract fun getRenderer ()Lorg/polyfrost/polyui/renderer/Renderer;
+	public abstract fun getTinyFD ()Lorg/polyfrost/oneconfig/api/ui/v1/TinyFD;
 }
 
 public final class org/polyfrost/oneconfig/api/ui/v1/keybind/KeybindHelper {

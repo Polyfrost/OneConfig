@@ -26,6 +26,8 @@
 
 dependencies {
     api(project(":modules:config-impl"))
+    api(project(":modules:ui"))
+    api(project(":modules:events"))
     compileOnly("org.polyfrost:universalcraft-1.8.9-forge:${libs.versions.universalcraft.get()}")
 }
 

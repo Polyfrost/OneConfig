@@ -39,7 +39,7 @@ import org.polyfrost.universal.UMinecraft;
 import org.polyfrost.universal.UMouse;
 import org.polyfrost.universal.UResolution;
 import org.polyfrost.universal.UScreen;
-import org.polyfrost.oneconfig.api.ui.v1.LwjglManager;
+import org.polyfrost.oneconfig.api.ui.v1.UIManager;
 import org.polyfrost.polyui.PolyUI;
 import org.polyfrost.polyui.color.Colors;
 import org.polyfrost.polyui.color.DarkTheme;
@@ -101,7 +101,7 @@ public class PolyUIScreen extends UScreen implements UIPause, BlurScreen {
         } else {
             Colors c = colors == null ? new DarkTheme() : colors;
             Align a = alignment == null ? new Align(Align.Main.Start, Align.Cross.Start, Align.Mode.Horizontal, Vec2.ZERO, 50) : alignment;
-            this.polyUI = new PolyUI(drawables, LwjglManager.INSTANCE.getRenderer(), s, inputManager, translator, backgroundColor, a, c, size);
+            this.polyUI = new PolyUI(drawables, UIManager.INSTANCE.getRenderer(), s, inputManager, translator, backgroundColor, a, c, size);
             this.window = new MCWindow(UMinecraft.getMinecraft());
             this.window.setPixelRatio(scale());
             this.polyUI.setWindow(window);

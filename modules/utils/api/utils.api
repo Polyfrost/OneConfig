@@ -28,6 +28,10 @@ public abstract interface class org/polyfrost/oneconfig/api/platform/v1/I18nPlat
 public abstract interface class org/polyfrost/oneconfig/api/platform/v1/LoaderPlatform {
 	public fun getLoadedMod (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/platform/v1/LoaderPlatform$ActiveMod;
 	public abstract fun getLoadedMods ()Ljava/util/List;
+	public abstract fun getLoader ()Lorg/polyfrost/oneconfig/api/platform/v1/LoaderPlatform$Loaders;
+	public fun getLoaderString ()Ljava/lang/String;
+	public abstract fun getMinecraftVersion ()I
+	public abstract fun isDevelopmentEnvironment ()Z
 	public abstract fun isModLoaded (Ljava/lang/String;)Z
 	public abstract fun toActiveMod (Ljava/lang/Object;)Lorg/polyfrost/oneconfig/api/platform/v1/LoaderPlatform$ActiveMod;
 }
@@ -40,34 +44,25 @@ public class org/polyfrost/oneconfig/api/platform/v1/LoaderPlatform$ActiveMod {
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/nio/file/Path;)V
 }
 
-public abstract interface class org/polyfrost/oneconfig/api/platform/v1/Platform {
+public final class org/polyfrost/oneconfig/api/platform/v1/LoaderPlatform$Loaders : java/lang/Enum {
+	public static final field FABRIC Lorg/polyfrost/oneconfig/api/platform/v1/LoaderPlatform$Loaders;
+	public static final field FORGE Lorg/polyfrost/oneconfig/api/platform/v1/LoaderPlatform$Loaders;
+	public static fun valueOf (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/platform/v1/LoaderPlatform$Loaders;
+	public static fun values ()[Lorg/polyfrost/oneconfig/api/platform/v1/LoaderPlatform$Loaders;
+}
+
+public final class org/polyfrost/oneconfig/api/platform/v1/Platform {
 	public static fun getGLPlatform ()Lorg/polyfrost/oneconfig/api/platform/v1/GLPlatform;
 	public static fun getGuiPlatform ()Lorg/polyfrost/oneconfig/api/platform/v1/GuiPlatform;
 	public static fun getI18nPlatform ()Lorg/polyfrost/oneconfig/api/platform/v1/I18nPlatform;
-	public static fun getInstance ()Lorg/polyfrost/oneconfig/api/platform/v1/Platform;
-	public abstract fun getLoader ()Lorg/polyfrost/oneconfig/api/platform/v1/Platform$Loader;
 	public static fun getLoaderPlatform ()Lorg/polyfrost/oneconfig/api/platform/v1/LoaderPlatform;
-	public fun getLoaderString ()Ljava/lang/String;
-	public abstract fun getMinecraftVersion ()I
-	public abstract fun getPlayerName ()Ljava/lang/String;
-	public static fun getServerPlatform ()Lorg/polyfrost/oneconfig/api/platform/v1/ServerPlatform;
-	public abstract fun isCallingFromMinecraftThread ()Z
-	public abstract fun isDevelopmentEnvironment ()Z
+	public static fun getPlayerPlatform ()Lorg/polyfrost/oneconfig/api/platform/v1/PlayerPlatform;
 }
 
-public final class org/polyfrost/oneconfig/api/platform/v1/Platform$Holder {
-}
-
-public final class org/polyfrost/oneconfig/api/platform/v1/Platform$Loader : java/lang/Enum {
-	public static final field FABRIC Lorg/polyfrost/oneconfig/api/platform/v1/Platform$Loader;
-	public static final field FORGE Lorg/polyfrost/oneconfig/api/platform/v1/Platform$Loader;
-	public static fun valueOf (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/platform/v1/Platform$Loader;
-	public static fun values ()[Lorg/polyfrost/oneconfig/api/platform/v1/Platform$Loader;
-}
-
-public abstract interface class org/polyfrost/oneconfig/api/platform/v1/ServerPlatform {
+public abstract interface class org/polyfrost/oneconfig/api/platform/v1/PlayerPlatform {
 	public abstract fun doesPlayerExist ()Z
-	public abstract fun getServerBrand ()Ljava/lang/String;
+	public abstract fun getClientBrand ()Ljava/lang/String;
+	public abstract fun getPlayerName ()Ljava/lang/String;
 	public abstract fun inMultiplayer ()Z
 }
 
@@ -317,11 +312,11 @@ public final class org/polyfrost/oneconfig/utils/v1/dsl/NetworkKt {
 }
 
 public final class org/polyfrost/oneconfig/utils/v1/hypixel/HypixelUtils {
-	public static fun getLocraw ()Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawUtil;
 	public static fun isHypixel ()Z
 }
 
 public class org/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo : java/io/Serializable {
+	public field previous Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo;
 	public fun <init> ()V
 	public fun equals (Ljava/lang/Object;)Z
 	public fun getGameMode ()Ljava/lang/String;
@@ -330,6 +325,8 @@ public class org/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo : java/io/Seria
 	public fun getRawGameType ()Ljava/lang/String;
 	public fun getServerId ()Ljava/lang/String;
 	public fun hashCode ()I
+	public fun isInGame ()Z
+	public fun setGameType (Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;)V
 	public fun toString ()Ljava/lang/String;
 }
 
@@ -369,12 +366,5 @@ public final class org/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType 
 	public fun getServerName ()Ljava/lang/String;
 	public static fun valueOf (Ljava/lang/String;)Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
 	public static fun values ()[Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
-}
-
-public final class org/polyfrost/oneconfig/utils/v1/hypixel/LocrawUtil {
-	public static final field INSTANCE Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawUtil;
-	public fun getLastLocrawInfo ()Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo;
-	public fun getLocrawInfo ()Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo;
-	public fun isInGame ()Z
 }
 

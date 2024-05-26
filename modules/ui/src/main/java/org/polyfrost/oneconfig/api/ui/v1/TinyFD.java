@@ -48,7 +48,7 @@ public interface TinyFD {
      * Open a save file selection prompt.
      * Same as {@link #openFileSelector(String, String, String[], String)} but says save instead of open.
      */
-    Path openSaveSelector(@Nullable String title, @Nullable String defaultFilePath, @Nullable String[] filterPatterns, @Nullable String filterDescription);
+    Path openSaveSelector(@Nullable String title, @Nullable String defaultFilePath, String[] filterPatterns, @Nullable String filterDescription);
 
     /**
      * Open a file selection prompt.
@@ -60,13 +60,13 @@ public interface TinyFD {
      * @return the selected file, or null if the user cancelled.
      */
     @Nullable
-    Path openFileSelector(@Nullable String title, @Nullable String defaultFilePath, @Nullable String[] filterPatterns, @Nullable String filterDescription);
+    Path openFileSelector(@Nullable String title, @Nullable String defaultFilePath, String[] filterPatterns, @Nullable String filterDescription);
 
     /**
      * Open a multi file selection prompt.
      * Same as {@link #openFileSelector(String, String, String[], String)} but allows the user to select multiple files.
      */
-    Path[] openMultiFileSelector(@Nullable String title, @Nullable String defaultFilePath, @Nullable String[] filterPatterns, @Nullable String filterDescription);
+    Path[] openMultiFileSelector(@Nullable String title, @Nullable String defaultFilePath, String[] filterPatterns, @Nullable String filterDescription);
 
     /**
      * Open a folder selection prompt.

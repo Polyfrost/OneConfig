@@ -1,7 +1,7 @@
 public abstract class org/polyfrost/oneconfig/api/config/v1/Config {
 	protected field tree Lorg/polyfrost/oneconfig/api/config/v1/Tree;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/config/v1/Config$Category;)V
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/config/v1/Config$Category;)V
-	public fun <init> (Ljava/lang/String;Lorg/polyfrost/polyui/renderer/data/PolyImage;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/config/v1/Config$Category;)V
 	public fun addCallback (Ljava/lang/String;Ljava/util/function/Consumer;)V
 	public fun addDependency (Ljava/lang/String;Ljava/lang/String;)V
 	public fun addDependency (Ljava/lang/String;Ljava/util/function/BooleanSupplier;)V
@@ -39,40 +39,9 @@ public final class org/polyfrost/oneconfig/api/config/v1/ConfigManager {
 	public fun trees ()Ljava/util/Collection;
 }
 
-public class org/polyfrost/oneconfig/api/config/v1/ConfigVisualizer {
-	public static final field Companion Lorg/polyfrost/oneconfig/api/config/v1/ConfigVisualizer$Companion;
-	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/config/v1/ConfigVisualizer;
-	public fun <init> ()V
-	protected fun create (Lorg/polyfrost/oneconfig/api/config/v1/Tree;Ljava/lang/String;)Lorg/polyfrost/polyui/component/Drawable;
-	public static synthetic fun create$default (Lorg/polyfrost/oneconfig/api/config/v1/ConfigVisualizer;Lorg/polyfrost/oneconfig/api/config/v1/Tree;Ljava/lang/String;ILjava/lang/Object;)Lorg/polyfrost/polyui/component/Drawable;
-	protected fun createHeaders (Ljava/util/Map;)Lorg/polyfrost/polyui/component/Drawable;
-	protected fun flattenSubcategories (Ljava/util/Map;)Ljava/util/Map;
-	public final fun get (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)Lorg/polyfrost/polyui/component/Drawable;
-	protected final fun getAccordOpt ()Lorg/polyfrost/polyui/unit/Align;
-	protected final fun getAlignC ()Lorg/polyfrost/polyui/unit/Align;
-	protected final fun getAlignCV ()Lorg/polyfrost/polyui/unit/Align;
-	protected final fun getAlignVNoPad ()Lorg/polyfrost/polyui/unit/Align;
-	protected final fun getConfigCache ()Ljava/util/HashMap;
-	protected final fun getOptBg ()Lorg/polyfrost/polyui/color/PolyColor;
-	protected final fun getPadVOnly ()Lorg/polyfrost/polyui/unit/Align;
-	protected final fun getStdAccord ()Lorg/polyfrost/polyui/unit/Align;
-	protected final fun getStdAlign ()Lorg/polyfrost/polyui/unit/Align;
-	protected final fun getStdOpt ()Lorg/polyfrost/polyui/unit/Align;
-	public final fun getVisualizer (Lorg/polyfrost/oneconfig/api/config/v1/Property;)Lorg/polyfrost/oneconfig/api/config/v1/visualize/Visualizer;
-	protected fun makeAccordion (Lorg/polyfrost/oneconfig/api/config/v1/Tree;Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/polyui/renderer/data/PolyImage;)Lorg/polyfrost/polyui/component/Drawable;
-	protected fun makeFinal (Ljava/util/Map;Ljava/lang/String;)Lorg/polyfrost/polyui/component/Drawable;
-	protected fun processNode (Lorg/polyfrost/oneconfig/api/config/v1/Node;Ljava/util/HashMap;)V
-	protected fun wrap (Lorg/polyfrost/polyui/component/Drawable;Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/polyui/renderer/data/PolyImage;)Lorg/polyfrost/polyui/component/Drawable;
-	protected fun wrapForAccordion (Lorg/polyfrost/polyui/component/Drawable;Ljava/lang/String;Ljava/lang/String;)Lorg/polyfrost/polyui/component/Drawable;
-}
-
-public final class org/polyfrost/oneconfig/api/config/v1/ConfigVisualizer$Companion {
-	public final fun strv (Ljava/lang/String;)Ljava/lang/String;
-}
-
 public class org/polyfrost/oneconfig/api/config/v1/KtConfig : org/polyfrost/oneconfig/api/config/v1/Config {
-	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/config/v1/Config$Category;Lorg/polyfrost/polyui/renderer/data/PolyImage;)V
-	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/config/v1/Config$Category;Lorg/polyfrost/polyui/renderer/data/PolyImage;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/config/v1/Config$Category;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/config/v1/Config$Category;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	protected final synthetic fun color (Lorg/polyfrost/polyui/color/PolyColor;Ljava/lang/String;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
 	public static synthetic fun color$default (Lorg/polyfrost/oneconfig/api/config/v1/KtConfig;Lorg/polyfrost/polyui/color/PolyColor;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
 	protected final synthetic fun dropdown ([Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
@@ -96,6 +65,55 @@ protected final class org/polyfrost/oneconfig/api/config/v1/KtConfig$Provider : 
 	public synthetic fun <init> (Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Class;Ljava/lang/Class;Lkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public synthetic fun provideDelegate (Ljava/lang/Object;Lkotlin/reflect/KProperty;)Ljava/lang/Object;
 	public fun provideDelegate (Lorg/polyfrost/oneconfig/api/config/v1/KtConfig;Lkotlin/reflect/KProperty;)Lkotlin/properties/ReadWriteProperty;
+}
+
+public abstract interface class org/polyfrost/oneconfig/api/config/v1/Visualizer {
+	public abstract fun visualize (Lorg/polyfrost/oneconfig/api/config/v1/Property;)Lorg/polyfrost/polyui/component/Drawable;
+}
+
+public final class org/polyfrost/oneconfig/api/config/v1/Visualizer$ButtonVisualizer : org/polyfrost/oneconfig/api/config/v1/Visualizer {
+	public fun <init> ()V
+	public fun visualize (Lorg/polyfrost/oneconfig/api/config/v1/Property;)Lorg/polyfrost/polyui/component/Drawable;
+}
+
+public final class org/polyfrost/oneconfig/api/config/v1/Visualizer$ColorVisualizer : org/polyfrost/oneconfig/api/config/v1/Visualizer {
+	public fun <init> ()V
+	public fun visualize (Lorg/polyfrost/oneconfig/api/config/v1/Property;)Lorg/polyfrost/polyui/component/Drawable;
+}
+
+public final class org/polyfrost/oneconfig/api/config/v1/Visualizer$DropdownVisualizer : org/polyfrost/oneconfig/api/config/v1/Visualizer {
+	public fun <init> ()V
+	public fun visualize (Lorg/polyfrost/oneconfig/api/config/v1/Property;)Lorg/polyfrost/polyui/component/Drawable;
+}
+
+public final class org/polyfrost/oneconfig/api/config/v1/Visualizer$KeybindVisualizer : org/polyfrost/oneconfig/api/config/v1/Visualizer {
+	public fun <init> ()V
+	public fun visualize (Lorg/polyfrost/oneconfig/api/config/v1/Property;)Lorg/polyfrost/polyui/component/Drawable;
+}
+
+public final class org/polyfrost/oneconfig/api/config/v1/Visualizer$NumberVisualizer : org/polyfrost/oneconfig/api/config/v1/Visualizer {
+	public fun <init> ()V
+	public fun visualize (Lorg/polyfrost/oneconfig/api/config/v1/Property;)Lorg/polyfrost/polyui/component/Drawable;
+}
+
+public final class org/polyfrost/oneconfig/api/config/v1/Visualizer$RadioVisualizer : org/polyfrost/oneconfig/api/config/v1/Visualizer {
+	public fun <init> ()V
+	public fun visualize (Lorg/polyfrost/oneconfig/api/config/v1/Property;)Lorg/polyfrost/polyui/component/Drawable;
+}
+
+public final class org/polyfrost/oneconfig/api/config/v1/Visualizer$SliderVisualizer : org/polyfrost/oneconfig/api/config/v1/Visualizer {
+	public fun <init> ()V
+	public fun visualize (Lorg/polyfrost/oneconfig/api/config/v1/Property;)Lorg/polyfrost/polyui/component/Drawable;
+}
+
+public final class org/polyfrost/oneconfig/api/config/v1/Visualizer$SwitchVisualizer : org/polyfrost/oneconfig/api/config/v1/Visualizer {
+	public fun <init> ()V
+	public fun visualize (Lorg/polyfrost/oneconfig/api/config/v1/Property;)Lorg/polyfrost/polyui/component/Drawable;
+}
+
+public final class org/polyfrost/oneconfig/api/config/v1/Visualizer$TextVisualizer : org/polyfrost/oneconfig/api/config/v1/Visualizer {
+	public fun <init> ()V
+	public fun visualize (Lorg/polyfrost/oneconfig/api/config/v1/Property;)Lorg/polyfrost/polyui/component/Drawable;
 }
 
 public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1/annotations/Accordion : java/lang/annotation/Annotation {
@@ -254,54 +272,5 @@ public class org/polyfrost/oneconfig/api/config/v1/serialize/impl/NightConfigSer
 	public fun getExtensions ()[Ljava/lang/String;
 	public synthetic fun serialize (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)Ljava/lang/Object;
 	public fun serialize (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)Ljava/lang/String;
-}
-
-public abstract interface class org/polyfrost/oneconfig/api/config/v1/visualize/Visualizer {
-	public abstract fun visualize (Lorg/polyfrost/oneconfig/api/config/v1/Property;)Lorg/polyfrost/polyui/component/Drawable;
-}
-
-public final class org/polyfrost/oneconfig/api/config/v1/visualize/Visualizer$ButtonVisualizer : org/polyfrost/oneconfig/api/config/v1/visualize/Visualizer {
-	public fun <init> ()V
-	public fun visualize (Lorg/polyfrost/oneconfig/api/config/v1/Property;)Lorg/polyfrost/polyui/component/Drawable;
-}
-
-public final class org/polyfrost/oneconfig/api/config/v1/visualize/Visualizer$ColorVisualizer : org/polyfrost/oneconfig/api/config/v1/visualize/Visualizer {
-	public fun <init> ()V
-	public fun visualize (Lorg/polyfrost/oneconfig/api/config/v1/Property;)Lorg/polyfrost/polyui/component/Drawable;
-}
-
-public final class org/polyfrost/oneconfig/api/config/v1/visualize/Visualizer$DropdownVisualizer : org/polyfrost/oneconfig/api/config/v1/visualize/Visualizer {
-	public fun <init> ()V
-	public fun visualize (Lorg/polyfrost/oneconfig/api/config/v1/Property;)Lorg/polyfrost/polyui/component/Drawable;
-}
-
-public final class org/polyfrost/oneconfig/api/config/v1/visualize/Visualizer$KeybindVisualizer : org/polyfrost/oneconfig/api/config/v1/visualize/Visualizer {
-	public fun <init> ()V
-	public fun visualize (Lorg/polyfrost/oneconfig/api/config/v1/Property;)Lorg/polyfrost/polyui/component/Drawable;
-}
-
-public final class org/polyfrost/oneconfig/api/config/v1/visualize/Visualizer$NumberVisualizer : org/polyfrost/oneconfig/api/config/v1/visualize/Visualizer {
-	public fun <init> ()V
-	public fun visualize (Lorg/polyfrost/oneconfig/api/config/v1/Property;)Lorg/polyfrost/polyui/component/Drawable;
-}
-
-public final class org/polyfrost/oneconfig/api/config/v1/visualize/Visualizer$RadioVisualizer : org/polyfrost/oneconfig/api/config/v1/visualize/Visualizer {
-	public fun <init> ()V
-	public fun visualize (Lorg/polyfrost/oneconfig/api/config/v1/Property;)Lorg/polyfrost/polyui/component/Drawable;
-}
-
-public final class org/polyfrost/oneconfig/api/config/v1/visualize/Visualizer$SliderVisualizer : org/polyfrost/oneconfig/api/config/v1/visualize/Visualizer {
-	public fun <init> ()V
-	public fun visualize (Lorg/polyfrost/oneconfig/api/config/v1/Property;)Lorg/polyfrost/polyui/component/Drawable;
-}
-
-public final class org/polyfrost/oneconfig/api/config/v1/visualize/Visualizer$SwitchVisualizer : org/polyfrost/oneconfig/api/config/v1/visualize/Visualizer {
-	public fun <init> ()V
-	public fun visualize (Lorg/polyfrost/oneconfig/api/config/v1/Property;)Lorg/polyfrost/polyui/component/Drawable;
-}
-
-public final class org/polyfrost/oneconfig/api/config/v1/visualize/Visualizer$TextVisualizer : org/polyfrost/oneconfig/api/config/v1/visualize/Visualizer {
-	public fun <init> ()V
-	public fun visualize (Lorg/polyfrost/oneconfig/api/config/v1/Property;)Lorg/polyfrost/polyui/component/Drawable;
 }
 

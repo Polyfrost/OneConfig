@@ -26,7 +26,7 @@
 
 package org.polyfrost.oneconfig.api.hud.v1.internal
 
-import org.polyfrost.oneconfig.api.config.v1.ConfigVisualizer
+import org.polyfrost.oneconfig.api.config.v1.internal.ConfigVisualizer
 import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.component.impl.Group
 import org.polyfrost.polyui.component.impl.Image

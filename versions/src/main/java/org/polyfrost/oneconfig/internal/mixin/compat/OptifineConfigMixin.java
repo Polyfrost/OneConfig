@@ -26,7 +26,7 @@
 
 package org.polyfrost.oneconfig.internal.mixin.compat;
 
-import org.polyfrost.oneconfig.internal.ui.BlurHandler;
+import org.polyfrost.oneconfig.api.ui.v1.internal.BlurHandler;
 import org.spongepowered.asm.mixin.Dynamic;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;

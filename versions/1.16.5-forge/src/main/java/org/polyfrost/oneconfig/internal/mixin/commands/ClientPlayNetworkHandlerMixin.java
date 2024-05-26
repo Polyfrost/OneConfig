@@ -32,7 +32,7 @@ import net.minecraft.command.CommandSource;
 import net.minecraft.network.play.server.SCommandListPacket;
 import net.minecraft.network.play.server.SJoinGamePacket;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
-import org.polyfrost.oneconfig.internal.commands.RegisterCommandsEvent;
+import org.polyfrost.oneconfig.api.commands.v1.internal.RegisterCommandsEvent;
 import org.polyfrost.oneconfig.internal.libs.fabric.ClientCommandInternals;
 import org.polyfrost.oneconfig.internal.libs.fabric.ClientCommandSource;
 import org.spongepowered.asm.mixin.Final;

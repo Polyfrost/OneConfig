@@ -103,6 +103,10 @@ public abstract interface class org/polyfrost/oneconfig/api/commands/v1/factorie
 	public abstract fun create (Ljava/util/Map;Ljava/lang/Object;)Lorg/polyfrost/oneconfig/api/commands/v1/CommandTree;
 }
 
+public abstract interface class org/polyfrost/oneconfig/api/commands/v1/factories/PlatformCommandFactory {
+	public abstract fun createCommand (Lorg/polyfrost/oneconfig/api/commands/v1/CommandTree;)Z
+}
+
 public class org/polyfrost/oneconfig/api/commands/v1/factories/annotated/AnnotationCommandFactory : org/polyfrost/oneconfig/api/commands/v1/factories/CommandFactory {
 	public fun <init> ()V
 	public fun create (Ljava/util/Map;Ljava/lang/Object;)Lorg/polyfrost/oneconfig/api/commands/v1/CommandTree;
@@ -260,10 +264,6 @@ public final class org/polyfrost/oneconfig/api/commands/v1/factories/dsl/Command
 public final class org/polyfrost/oneconfig/api/commands/v1/factories/dsl/DSLFactory : org/polyfrost/oneconfig/api/commands/v1/factories/CommandFactory {
 	public fun <init> ()V
 	public fun create (Ljava/util/Map;Ljava/lang/Object;)Lorg/polyfrost/oneconfig/api/commands/v1/CommandTree;
-}
-
-public abstract interface class org/polyfrost/oneconfig/api/commands/v1/internal/PlatformCommandManager {
-	public abstract fun createCommand (Lorg/polyfrost/oneconfig/api/commands/v1/CommandTree;)Z
 }
 
 public class org/polyfrost/oneconfig/api/commands/v1/util/Pair {

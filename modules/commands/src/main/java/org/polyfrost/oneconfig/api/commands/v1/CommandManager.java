@@ -26,16 +26,18 @@
 
 package org.polyfrost.oneconfig.api.commands.v1;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.ApiStatus;
 import org.polyfrost.oneconfig.api.commands.v1.arguments.ArgumentParser;
 import org.polyfrost.oneconfig.api.commands.v1.factories.CommandFactory;
+import org.polyfrost.oneconfig.api.commands.v1.factories.PlatformCommandFactory;
 import org.polyfrost.oneconfig.api.commands.v1.factories.annotated.AnnotationCommandFactory;
 import org.polyfrost.oneconfig.api.commands.v1.factories.annotated.Command;
 import org.polyfrost.oneconfig.api.commands.v1.factories.builder.BuilderFactory;
 import org.polyfrost.oneconfig.api.commands.v1.factories.builder.CommandBuilder;
 import org.polyfrost.oneconfig.api.commands.v1.factories.dsl.CommandDSL;
 import org.polyfrost.oneconfig.api.commands.v1.factories.dsl.DSLFactory;
-import org.polyfrost.oneconfig.api.commands.v1.internal.PlatformCommandManager;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -49,17 +51,29 @@ import java.util.Set;
  * @see Command
  */
 public class CommandManager {
+    private static final Logger LOGGER = LogManager.getLogger("OneConfig/Commands");
     /**
      * The singleton instance of the command manager.
      */
     public static final CommandManager INSTANCE = new CommandManager();
-    private static final PlatformCommandManager platform = ServiceLoader.load(PlatformCommandManager.class, PlatformCommandManager.class.getClassLoader()).iterator().next();
+    private static final PlatformCommandFactory platform;
     /**
      * use {@link #registerParser(ArgumentParser)} to register a parser
      */
     @ApiStatus.Internal
     public final Map<Class<?>, ArgumentParser<?>> parsers = new HashMap<>();
     private final Set<CommandFactory> factories = new HashSet<>();
+
+    static {
+        PlatformCommandFactory p;
+        try {
+            p = ServiceLoader.load(PlatformCommandFactory.class, PlatformCommandFactory.class.getClassLoader()).iterator().next();
+        } catch (Throwable t) {
+            LOGGER.error("failed to load platform command manager!", t);
+            p = null;
+        }
+        platform = p;
+    }
 
     private CommandManager() {
         parsers.putAll(ArgumentParser.defaultParsers);
@@ -121,7 +135,8 @@ public class CommandManager {
             CommandTree t = f.create(parsers, obj);
             if (t != null) {
                 t.init();
-                platform.createCommand(t);
+                if (platform != null) platform.createCommand(t);
+                else LOGGER.warn("didn't create command with platform as it is missing (check logs)");
                 return t;
             }
         }

@@ -104,25 +104,3 @@ public final class org/polyfrost/oneconfig/api/hud/v1/TextHud$DateTime : org/pol
 	public fun updateFrequency ()J
 }
 
-public final class org/polyfrost/oneconfig/api/hud/v1/internal/HudVisualizer : org/polyfrost/oneconfig/api/config/v1/ConfigVisualizer {
-	public fun <init> ()V
-}
-
-public final class org/polyfrost/oneconfig/api/hud/v1/internal/Hud_utilsKt {
-	public static final fun build (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;)Lorg/polyfrost/polyui/component/impl/Block;
-	public static final fun buildNew (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;)Lorg/polyfrost/polyui/component/impl/Block;
-	public static final fun snapHandler (Lorg/polyfrost/polyui/component/Drawable;)V
-	public static final fun snapHandlerNew (Lorg/polyfrost/polyui/component/Drawable;)V
-}
-
-public final class org/polyfrost/oneconfig/api/hud/v1/internal/HudpagesKt {
-	public static final field angleSnapMargin D
-	public static final field minMargin F
-	public static final field snapMargin F
-	public static final fun HudsPage (Ljava/util/ArrayList;)Lorg/polyfrost/polyui/component/Drawable;
-	public static final fun createInspectionsScreen (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;)Lorg/polyfrost/polyui/component/Drawable;
-	public static final fun getAlignC ()Lorg/polyfrost/polyui/unit/Align;
-	public static final fun textOptions (Lorg/polyfrost/polyui/component/impl/Text;)Lorg/polyfrost/polyui/component/Drawable;
-	public static final fun titled (Lorg/polyfrost/polyui/component/Drawable;Ljava/lang/String;)Lorg/polyfrost/polyui/component/Drawable;
-}
-
