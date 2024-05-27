@@ -171,9 +171,11 @@ tasks {
             val fabricModJson = layout.buildDirectory.get().asFile.resolve("resources")
                 .resolve("main")
                 .resolve("fabric.mod.json")
-            val lines = fabricModJson.readLines().toMutableList()
-            lines.removeIf { it.contains("TestMod") }
-            fabricModJson.writeText(lines.joinToString("\n"))
+            if (fabricModJson.exists()) {
+                val lines = fabricModJson.readLines().toMutableList()
+                lines.removeIf { it.contains("TestMod") }
+                fabricModJson.writeText(lines.joinToString("\n"))
+            }
         }
     }
     processResources {

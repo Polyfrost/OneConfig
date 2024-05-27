@@ -67,7 +67,7 @@ subprojects {
 publishing {
     publications {
         for (project in subprojects) {
-            if (project.name == "ui-impl") return@publications
+            if (project.name == "internal") return@publications
             register<MavenPublication>(project.name) {
                 groupId = rootProject.group.toString()
                 artifactId = project.archivesName.get()

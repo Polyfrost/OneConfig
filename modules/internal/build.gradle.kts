@@ -25,7 +25,6 @@
  */
 
 dependencies {
-    testImplementation(libs.lwjgl.tinyfd)
     api(project(":modules:hud"))
     api(project(":modules:events"))
     api(project(":modules:commands"))

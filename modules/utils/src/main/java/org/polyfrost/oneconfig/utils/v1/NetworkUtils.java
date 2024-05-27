@@ -26,7 +26,6 @@
 
 package org.polyfrost.oneconfig.utils.v1;
 
-import com.google.gson.JsonElement;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.polyfrost.universal.UDesktop;
@@ -50,6 +49,7 @@ import java.nio.file.StandardCopyOption;
  */
 public final class NetworkUtils {
     private static final Logger LOGGER = LogManager.getLogger("OneConfig/Network");
+    public static final String DEF_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36";
 
     private NetworkUtils() {
     }
@@ -85,33 +85,7 @@ public final class NetworkUtils {
      * @see NetworkUtils#getString(String, String, int, boolean)
      */
     public static String getString(String url) {
-        return getString(url, "OneConfig/1.0.0", 5000, false);
-    }
-
-    /**
-     * Gets the contents of a URL as a JsonElement.
-     *
-     * @param url       The URL to read.
-     * @param userAgent The user agent to use.
-     * @param timeout   The timeout in milliseconds.
-     * @param useCaches Whether to use caches.
-     * @return The contents of the URL.
-     * @see NetworkUtils#getString(String, String, int, boolean)
-     * @see JsonUtils#parseString(String)
-     */
-    public static JsonElement getJsonElement(String url, String userAgent, int timeout, boolean useCaches) {
-        return JsonUtils.parseString(getString(url, userAgent, timeout, useCaches));
-    }
-
-    /**
-     * Gets the contents of a URL as a JsonElement.
-     *
-     * @param url The URL to read.
-     * @return The contents of the URL.
-     * @see NetworkUtils#getJsonElement(String, String, int, boolean)
-     */
-    public static JsonElement getJsonElement(String url) {
-        return getJsonElement(url, "OneConfig/1.0.0", 5000, false);
+        return getString(url, DEF_AGENT, 5000, false);
     }
 
     /**
@@ -143,7 +117,7 @@ public final class NetworkUtils {
      * @see NetworkUtils#downloadFile(String, Path, String, int, boolean)
      */
     public static boolean downloadFile(String url, Path path) {
-        return downloadFile(url, path, "OneConfig/1.0.0", 5000, false);
+        return downloadFile(url, path, DEF_AGENT, 5000, false);
     }
 
     /**

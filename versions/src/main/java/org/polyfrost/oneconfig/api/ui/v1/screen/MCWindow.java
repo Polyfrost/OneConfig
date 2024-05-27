@@ -30,11 +30,13 @@ import net.minecraft.client.Minecraft;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.polyfrost.universal.UResolution;
-import org.polyfrost.universal.UScreen;
+import org.polyfrost.oneconfig.api.platform.v1.Platform;
+import org.polyfrost.oneconfig.utils.v1.GuiUtils;
+import org.polyfrost.oneconfig.utils.v1.IOUtils;
 import org.polyfrost.polyui.PolyUI;
 import org.polyfrost.polyui.renderer.Window;
 import org.polyfrost.polyui.renderer.data.Cursor;
+import org.polyfrost.universal.UResolution;
 
 //#if MC>=11300
 //$$ import static org.lwjgl.glfw.GLFW.*;
@@ -42,14 +44,12 @@ import org.polyfrost.polyui.renderer.data.Cursor;
 
 @ApiStatus.Internal
 public class MCWindow extends Window {
-    private final Minecraft mc;
     //#if MC>=11300
     //$$ private final long handle;
     //#endif
 
-    public MCWindow(Minecraft minecraft) {
+    public MCWindow(Minecraft mc) {
         super(UResolution.getViewportWidth(), UResolution.getViewportHeight(), 1f);
-        this.mc = minecraft;
         //#if MC>=11300
         //$$ this.handle = mc
                 //#if MC>=11700
@@ -63,13 +63,14 @@ public class MCWindow extends Window {
 
     @Override
     public void close() {
-        UScreen.displayScreen(null);
+        GuiUtils.closeScreen();
     }
 
     @NotNull
     @Override
     public Window open(@NotNull PolyUI polyUI) {
-        throw new UnsupportedOperationException("Cannot be opened this way, see PolyUIScreen");
+        GuiUtils.displayScreen(new PolyUIScreen(polyUI));
+        return this;
     }
 
     @Override
@@ -83,11 +84,7 @@ public class MCWindow extends Window {
         //#if MC>=11300
         //$$ return glfwGetClipboardString(handle);
         //#else
-        try {
-            return java.awt.Toolkit.getDefaultToolkit().getSystemClipboard().getData(java.awt.datatransfer.DataFlavor.stringFlavor).toString();
-        } catch (Exception ignored) {
-            return null;
-        }
+        return IOUtils.getStringFromClipboard();
         //#endif
     }
 
@@ -96,7 +93,7 @@ public class MCWindow extends Window {
         //#if MC>=11300
         //$$ glfwSetClipboardString(handle, s);
         //#else
-        java.awt.Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new java.awt.datatransfer.StringSelection(s), null);
+        IOUtils.copyStringToClipboard(s);
         //#endif
     }
 
@@ -119,12 +116,7 @@ public class MCWindow extends Window {
     @NotNull
     @Override
     public String getKeyName(int i) {
-        String k =
-                //#if MC>=11300
-                //$$ glfwGetKeyName(i, 0);
-                //#else
-                org.lwjgl.input.Keyboard.getKeyName(i);
-        //#endif
+        String k = Platform.getI18nPlatform().getKeyName(i, 0);
         return k == null ? "Unknown" : k;
     }
 }

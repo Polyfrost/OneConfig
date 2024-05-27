@@ -84,7 +84,7 @@ open class KtConfig(id: String, title: String, category: Category, icon: String?
 
 
     /**
-     * legacy for the [PropertyDelegate]. for some reason this has to be a class to avoid having to pass the reference directly.
+     * provider for the [PropertyDelegate]. for some reason this has to be a class to avoid having to pass the reference directly.
      */
     protected class Provider<T>(
         private val def: T?,

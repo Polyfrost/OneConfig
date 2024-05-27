@@ -1,6 +1,6 @@
 # OneConfig Config Implementation
 
-`dependsOn("utils", "config", "polyui", "events")`
+`dependsOn("utils", "config", "polyui")`
 
 This module contains the default implementation of the configuration system used in OneConfig.
 

@@ -26,19 +26,24 @@
 
 package org.polyfrost.oneconfig.api.event.v1.invoke.impl;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.polyfrost.oneconfig.api.event.v1.events.Event;
+import org.polyfrost.oneconfig.api.event.v1.invoke.EventHandler;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.util.function.Consumer;
 
 /**
  * Annotate a method as a subscriber to an event.
  * <br>
  * The method should take one parameter, a class which extends {@link Event} and return void.
+ * @apiNote This mechanism should be replaced with the lambda-style for events (see {@link EventHandler#of(Class, Consumer)}), as it is more performant and better from a code quality perspective.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
+@ApiStatus.Obsolete
 public @interface Subscribe {
 }

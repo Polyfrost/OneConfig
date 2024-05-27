@@ -29,6 +29,7 @@ package org.polyfrost.oneconfig.internal.mixin;
 import net.minecraftforge.client.GuiIngameForge;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.HudRenderEvent;
+import org.polyfrost.oneconfig.internal.ClassHasOverwrites;
 import org.polyfrost.universal.UMatrixStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -36,6 +37,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(value = GuiIngameForge.class, remap = false)
+@ClassHasOverwrites({"1.8.9-fabric", "1.16.5-fabric"})
 public abstract class GuiIngameMixin {
     //#if MC>=11600
     //$$     @Inject(method = "renderIngameGui", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/client/gui/ForgeIngameGui;post(Lnet/minecraftforge/client/event/RenderGameOverlayEvent$ElementType;Lcom/mojang/blaze3d/matrix/MatrixStack;)V", shift = At.Shift.AFTER, remap = false), remap = true)

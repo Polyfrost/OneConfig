@@ -114,7 +114,6 @@ public final class LocrawUtil {
                 if (locrawInfo != null) {
                     // Gson does not want to parse the GameType, as some stuff is different so this
                     // is just a way around that to make it properly work :)
-                    locrawInfo.setGameType(LocrawInfo.GameType.getFromLocraw(locrawInfo.getRawGameType()));
                     locrawInfo.previous = lastLocrawInfo;
 
                     // Stop listening for locraw and cancel the message.

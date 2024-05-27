@@ -26,8 +26,6 @@
 
 package org.polyfrost.oneconfig.utils.v1;
 
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.ApiStatus;
@@ -197,9 +195,9 @@ public final class OneImage {
     }
 
     /**
-     * Attempt to upload the image to Imgur, returning the JSON that the server replied with.
+     * Attempt to upload the image to Imgur, returning the URL that the server replied with, or null if it failed for any reason.
      */
-    public JsonObject uploadToImgur() {
+    public String uploadToImgur() {
         try {
             // thanks stack overflow for the help with this :_)
             URL url = new URL("https://api.imgur.com/3/image");
@@ -207,6 +205,7 @@ public final class OneImage {
             con.setDoInput(true);
             con.setDoOutput(true);
             con.setRequestMethod("POST");
+            con.setRequestProperty("User-Agent", NetworkUtils.DEF_AGENT);
             con.setRequestProperty("Authorization", "Client-ID " + "6cfc432a9954f4d");
             con.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
             con.connect();
@@ -218,32 +217,25 @@ public final class OneImage {
             byteOut.close();
             writer.close();
             if (con.getResponseCode() != 200) {
-                LOGGER.error("Error uploading image to Imgur: " + con.getResponseCode());
+                LOGGER.error("Error uploading image to Imgur: {}", con.getResponseCode());
                 return null;
             }
 
-            BufferedReader rd = new BufferedReader(new InputStreamReader(con.getInputStream()));
-            JsonObject object = new JsonParser().parse(rd).getAsJsonObject();
-            rd.close();
+            try (BufferedReader rd = new BufferedReader(new InputStreamReader(con.getInputStream()))) {
+                String ln;
+                while ((ln = rd.readLine()) != null) {
+                    if (!ln.contains("\"link\": ")) continue;
+                    int e = ln.lastIndexOf('\"') - 1;
+                    int s = ln.lastIndexOf('\"', e);
+                    return ln.substring(s, e);
+                }
+            }
 
-            return object;
+            return null;
         } catch (Exception e) {
             LOGGER.error("Error uploading image to Imgur!", e);
             return null;
         }
-    }
-
-    /**
-     * Attempt to upload the image to Imgur, returning the URL that the image is hosted at.
-     *
-     * @param copy weather or not to copy the URL to the clipboard as well.
-     */
-    public String uploadToImgur(boolean copy) {
-        JsonObject object = uploadToImgur();
-        if (object == null) return null;
-        String link = object.get("data").getAsJsonObject().get("link").getAsString();
-        if (copy) IOUtils.copyStringToClipboard(link);
-        return link;
     }
 
     /**

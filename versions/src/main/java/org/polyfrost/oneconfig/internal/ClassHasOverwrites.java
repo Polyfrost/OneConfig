@@ -24,14 +24,21 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.utils.v1.dsl
+package org.polyfrost.oneconfig.internal;
 
-import com.google.gson.JsonElement
-import org.polyfrost.oneconfig.utils.v1.JsonUtils
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * Returns the [JsonElement] of the given [String].
- *
- * @see JsonUtils.parseString
+ * This annotation is for codebase navigation - it indicates that the given class has overwrites for different versions of Minecraft.
+ * @see org.polyfrost.oneconfig.api.DeclaredInPlatform
  */
-fun String.asJsonElement(catchExceptions: Boolean = true): JsonElement? = JsonUtils.parseString(this, catchExceptions)
+@Retention(RetentionPolicy.SOURCE)
+@Target(ElementType.TYPE)
+@Documented
+public @interface ClassHasOverwrites {
+    String[] value();
+}

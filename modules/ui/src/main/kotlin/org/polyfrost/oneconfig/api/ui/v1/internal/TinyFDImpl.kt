@@ -23,6 +23,7 @@
  * to OneConfig, as published by Polyfrost. If not, see
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
+
 package org.polyfrost.oneconfig.api.ui.v1.internal
 
 import org.lwjgl.PointerBuffer

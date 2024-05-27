@@ -25,8 +25,5 @@
  */
 
 dependencies {
-    compileOnly("com.google.code.gson:gson:2.2.4")
-    compileOnly("org.polyfrost:universalcraft-1.8.9-forge:${libs.versions.universalcraft.get()}") {
-        isTransitive = false
-    }
+    compileOnly("org.polyfrost:universalcraft-1.8.9-forge:${libs.versions.universalcraft.get()}")
 }

@@ -116,13 +116,6 @@ public final class org/polyfrost/oneconfig/utils/v1/IOUtils {
 	public static fun getStringFromClipboard ()Ljava/lang/String;
 }
 
-public final class org/polyfrost/oneconfig/utils/v1/JsonUtils {
-	public static final field PARSER Lcom/google/gson/JsonParser;
-	public static fun ifValid (Ljava/lang/String;Ljava/util/function/Consumer;)Z
-	public static fun parseString (Ljava/lang/String;)Lcom/google/gson/JsonElement;
-	public static fun parseString (Ljava/lang/String;Z)Lcom/google/gson/JsonElement;
-}
-
 public final class org/polyfrost/oneconfig/utils/v1/LogScanner {
 	public static fun identifyCallerFromStacktrace (Ljava/lang/Throwable;)Ljava/util/Set;
 	public static fun identifyFromClass (Ljava/lang/Class;)Ljava/util/Set;
@@ -199,11 +192,10 @@ public final class org/polyfrost/oneconfig/utils/v1/Multithreading {
 }
 
 public final class org/polyfrost/oneconfig/utils/v1/NetworkUtils {
+	public static final field DEF_AGENT Ljava/lang/String;
 	public static fun browseLink (Ljava/lang/String;)V
 	public static fun downloadFile (Ljava/lang/String;Ljava/nio/file/Path;)Z
 	public static fun downloadFile (Ljava/lang/String;Ljava/nio/file/Path;Ljava/lang/String;IZ)Z
-	public static fun getJsonElement (Ljava/lang/String;)Lcom/google/gson/JsonElement;
-	public static fun getJsonElement (Ljava/lang/String;Ljava/lang/String;IZ)Lcom/google/gson/JsonElement;
 	public static fun getString (Ljava/lang/String;)Ljava/lang/String;
 	public static fun getString (Ljava/lang/String;Ljava/lang/String;IZ)Ljava/lang/String;
 	public static fun setupConnection (Ljava/lang/String;Ljava/lang/String;IZ)Ljava/io/InputStream;
@@ -253,8 +245,7 @@ public final class org/polyfrost/oneconfig/utils/v1/OneImage {
 	public fun setColorAtPos (III)V
 	public fun setSize (II)V
 	public fun translate (II)V
-	public fun uploadToImgur ()Lcom/google/gson/JsonObject;
-	public fun uploadToImgur (Z)Ljava/lang/String;
+	public fun uploadToImgur ()Ljava/lang/String;
 }
 
 public final class org/polyfrost/oneconfig/utils/v1/SimpleProfiler {
@@ -295,11 +286,6 @@ public final class org/polyfrost/oneconfig/utils/v1/dsl/IoKt {
 	public static final fun checksum (Ljava/nio/file/Path;)Ljava/lang/String;
 }
 
-public final class org/polyfrost/oneconfig/utils/v1/dsl/JsonKt {
-	public static final fun asJsonElement (Ljava/lang/String;Z)Lcom/google/gson/JsonElement;
-	public static synthetic fun asJsonElement$default (Ljava/lang/String;ZILjava/lang/Object;)Lcom/google/gson/JsonElement;
-}
-
 public final class org/polyfrost/oneconfig/utils/v1/dsl/MultithreadingKt {
 	public static final fun runAsync (Lkotlin/jvm/functions/Function0;)V
 	public static final fun schedule (JLjava/util/concurrent/TimeUnit;Lkotlin/jvm/functions/Function0;)V
@@ -317,7 +303,6 @@ public final class org/polyfrost/oneconfig/utils/v1/hypixel/HypixelUtils {
 
 public class org/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo : java/io/Serializable {
 	public field previous Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo;
-	public fun <init> ()V
 	public fun equals (Ljava/lang/Object;)Z
 	public fun getGameMode ()Ljava/lang/String;
 	public fun getGameType ()Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
@@ -326,7 +311,6 @@ public class org/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo : java/io/Seria
 	public fun getServerId ()Ljava/lang/String;
 	public fun hashCode ()I
 	public fun isInGame ()Z
-	public fun setGameType (Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;)V
 	public fun toString ()Ljava/lang/String;
 }
 
@@ -362,7 +346,7 @@ public final class org/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType 
 	public static final field WALLS Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
 	public static final field WARLORDS Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
 	public static final field WOOL_WARS Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
-	public static fun getFromLocraw (Ljava/lang/String;)Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
+	public static fun fromString (Ljava/lang/String;)Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
 	public fun getServerName ()Ljava/lang/String;
 	public static fun valueOf (Ljava/lang/String;)Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
 	public static fun values ()[Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;

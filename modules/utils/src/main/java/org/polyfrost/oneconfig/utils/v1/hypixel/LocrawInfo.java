@@ -26,7 +26,8 @@
 
 package org.polyfrost.oneconfig.utils.v1.hypixel;
 
-import com.google.gson.annotations.SerializedName;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
 import java.util.Objects;
@@ -36,72 +37,76 @@ import java.util.Objects;
  *
  * @see HypixelUtils
  */
+@SuppressWarnings({"ConstantConditions", "ConstantValue"} /*, reason = "this class is serialized by GSON so values are changed by that."*/)
 public class LocrawInfo implements Serializable {
     /**
      * Represents the previous location info that was used.
      */
+    @Nullable
     public transient LocrawInfo previous;
 
-    @SerializedName("server")
-    private String serverId;
-    @SerializedName("mode")
-    private String gameMode = "lobby";
-    @SerializedName("map")
-    private String mapName;
-    @SerializedName("gametype")
-    private String rawGameType;
-    private GameType gameType;
+    @Nullable
+    private final String server = null;
+    @NotNull
+    private final String mode = "lobby";
+    @Nullable
+    private final String map = null;
+    @Nullable
+    private final String gametype = null;
+    @NotNull
+    private transient final GameType gameType;
+
+    // called by gson
+    private LocrawInfo() {
+        gameType = GameType.fromString(gametype);
+    }
 
     /**
      * @return The serverID of the server you are currently on, ex: mini121
      */
+    @Nullable
     public String getServerId() {
-        return serverId;
+        return server;
     }
 
     /**
      * @return The GameType of the server as a String.
      */
+    @Nullable
     public String getRawGameType() {
-        if (rawGameType == null) rawGameType = "UNKNOWN";
-        return rawGameType;
+        return gametype;
     }
 
     /**
      * @return The GameMode of the server, ex: solo_insane
      */
+    @NotNull
     public String getGameMode() {
-        return gameMode;
+        return mode;
     }
 
     /**
      * @return The GameType of the server as an Enum.
      */
-    public GameType getGameType() {
+    public @NotNull GameType getGameType() {
         return gameType;
-    }
-
-    /**
-     * @param gameType The GameType to set it to.
-     */
-    public void setGameType(GameType gameType) {
-        this.gameType = gameType;
     }
 
     /**
      * @return The map of the server, ex: Shire.
      */
+    @Nullable
     public String getMapName() {
-        return mapName;
+        return map;
     }
 
     public boolean isInGame() {
-        return !"lobby".equals(gameMode);
+        return !"lobby".equals(mode);
     }
 
     @Override
     public String toString() {
-        return "LocrawInfo{" + "serverId='" + serverId + '\'' + ", gameMode='" + gameMode + '\'' + ", mapName='" + mapName + '\'' + ", rawGameType='" + rawGameType + '\'' + '}';
+        return "LocrawInfo{" + "serverId='" + server + '\'' + ", gameMode='" + mode + '\'' + ", mapName='" + map + '\'' + ", rawGameType='" + gametype + '\'' + '}';
     }
 
     @Override
@@ -109,12 +114,12 @@ public class LocrawInfo implements Serializable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         LocrawInfo that = (LocrawInfo) o;
-        return Objects.equals(serverId, that.serverId) && Objects.equals(gameMode, that.gameMode) && Objects.equals(mapName, that.mapName) && Objects.equals(rawGameType, that.rawGameType);
+        return Objects.equals(server, that.server) && Objects.equals(mode, that.mode) && Objects.equals(map, that.map) && Objects.equals(gametype, that.gametype);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(serverId, gameMode, mapName, rawGameType);
+        return Objects.hash(server, mode, map, gametype);
     }
 
     public enum GameType {
@@ -133,7 +138,7 @@ public class LocrawInfo implements Serializable {
             this.serverName = serverName;
         }
 
-        public static GameType getFromLocraw(String gameType) {
+        public static GameType fromString(String gameType) {
             if (gameType == null) return UNKNOWN;
             for (GameType value : values()) {
                 if (value.serverName.equals(gameType)) {

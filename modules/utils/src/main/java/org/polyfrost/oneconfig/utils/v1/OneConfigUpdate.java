@@ -89,7 +89,7 @@ public final class OneConfigUpdate {
         else sb.append("releases/");
         sb.append(GROUP).append(Platform.getLoaderPlatform().getLoaderString());
         sb.append("/maven-metadata.xml");
-        try (InputStream stream = NetworkUtils.setupConnection(sb.toString(), "OneConfig/1.0.0", 5000, false)) {
+        try (InputStream stream = NetworkUtils.setupConnection(sb.toString(), NetworkUtils.DEF_AGENT, 2000, false)) {
             if (stream == null) {
                 LOGGER.warn("version check failed: failed to fetch metadata from {}", sb.toString());
                 return;

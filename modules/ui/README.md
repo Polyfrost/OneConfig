@@ -1,11 +1,11 @@
 # OneConfig UI
 
-`dependsOn("events", "utils", "polyui", "nanovg", "tinyfd")`
+`dependsOn("events", "utils", "polyui", "lwjgl")`
 
 This module contains the UI system used in OneConfig. It provides the methods which
 bridge the gap between PolyUI and Minecraft, as well as a simple Notifications system.
 
-By default, it uses a nanovg-based rendering implementation, which is loaded by `LwjglManager`.
+By default, it uses a nanovg-based rendering implementation, which is loaded by `UIManager`.
 The implementation details are version specific and so are in `versions/src`.
 
 For more information on how the UI works and how to use it, see the `PolyUI` project - our UI framework

@@ -251,10 +251,6 @@ public final class org/polyfrost/oneconfig/utils/v1/GuiUtils {
 	public static fun displayScreen (Lnet/minecraft/client/gui/screen/Screen;I)V
 }
 
-@1.12.2-forge,1.16.5-forge,1.8.9-forge
-public abstract interface class org/polyfrost/oneconfig/utils/v1/forge/IgnoredGuiFactory {
-}
-
 @1.12.2-forge,1.8.9-forge
 public class org/polyfrost/oneconfig/utils/v1/forge/KotlinLanguageAdapter : net/minecraftforge/fml/common/ILanguageAdapter {
 	public fun <init> ()V
