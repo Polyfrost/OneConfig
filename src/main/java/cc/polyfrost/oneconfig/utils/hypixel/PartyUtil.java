@@ -26,14 +26,36 @@
 
 package cc.polyfrost.oneconfig.utils.hypixel;
 
+import cc.polyfrost.oneconfig.events.EventManager;
+import cc.polyfrost.oneconfig.events.event.Stage;
+import cc.polyfrost.oneconfig.events.event.TickEvent;
+import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
+import cc.polyfrost.oneconfig.libs.modapi.HypixelModAPI;
 import cc.polyfrost.oneconfig.libs.modapi.packet.impl.clientbound.ClientboundPartyInfoPacket;
+import cc.polyfrost.oneconfig.libs.modapi.packet.impl.serverbound.ServerboundPartyInfoPacket;
+import cc.polyfrost.oneconfig.platform.Platform;
 
 public class PartyUtil {
     public static final PartyUtil INSTANCE = new PartyUtil();
     private PartyInfo partyInfo;
     private boolean inParty = false;
+    private int tick;
 
     public void initialize() {
+        EventManager.INSTANCE.register(this);
+    }
+
+    @Subscribe
+    private void onTick(TickEvent event) {
+        if (event.stage != Stage.START || !Platform.getServerPlatform().doesPlayerExist() || !HypixelUtils.INSTANCE.isHypixel()) {
+            return;
+        }
+
+        this.tick++;
+        if (this.tick >= 100) {
+            HypixelModAPI.getInstance().sendPacket(new ServerboundPartyInfoPacket());
+            tick = 0;
+        }
     }
 
     public void handlePartyPacket(ClientboundPartyInfoPacket packet) {

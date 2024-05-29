@@ -182,7 +182,7 @@ public class OneConfig {
         HypixelUtils.INSTANCE.initialize();
         EventManager.INSTANCE.register(KeyBindHandler.INSTANCE);
         ConfigCore.sortMods();
-        //#if FORGE==1 && MC<=11202
+        //#if FORGE==1
         HypixelModAPI.getInstance().setPacketSender(HypixelPacketUtil.getInstance()::sendPacket);
         //#endif
 

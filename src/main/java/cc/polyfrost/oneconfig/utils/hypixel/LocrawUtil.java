@@ -86,7 +86,6 @@ public class LocrawUtil {
         locrawInfo = new LocrawInfo(packet.getServerName(), packet.getMode().orElse("null"), packet.getMap().orElse("null"), packet.getServerType().map(Object::toString).orElse("null"));
         inGame = !locrawInfo.getGameMode().equals("lobby");
         EventManager.INSTANCE.post(new LocrawEvent(locrawInfo));
-        UChat.chat(locrawInfo.toString());
         listening = false;
     }
 
