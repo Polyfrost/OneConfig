@@ -45,6 +45,6 @@ public class ChatReceiveEvent extends Event.Cancellable {
     }
 
     public String getFullyUnformattedMessage() {
-        return UTextComponent.Companion.stripFormatting(message.getUnformattedText());
+        return UTextComponent.Companion.stripFormatting(message.getUnformattedText().toString());
     }
 }

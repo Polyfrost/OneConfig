@@ -94,9 +94,15 @@ public class PlatformCommandFactoryImpl implements PlatformCommandFactory {
         //#if MC<11900
         argTypeMap.put(ItemStack.class, ItemArgument::item);
         //#else
+        //#if FABRIC
         //$$ net.minecraft.command.CommandRegistryAccess a = net.minecraft.server.command.CommandManager.createRegistryAccess(
         //$$        net.minecraft.registry.BuiltinRegistries.createWrapperLookup());
         //$$ argTypeMap.put(ItemStack.class, () -> ItemStackArgumentType.itemStack(a));
+        //#else
+        //$$ net.minecraft.commands.CommandBuildContext a = net.minecraft.commands.Commands.createValidationContext(
+        //$$        net.minecraft.data.registries.VanillaRegistries.createLookup());
+        //$$ argTypeMap.put(ItemStack.class, () -> ItemArgument.item(a));
+        //#endif
         //#endif
 
         EventHandler.of(RegisterCommandsEvent.class, e -> {

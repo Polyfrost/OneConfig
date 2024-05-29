@@ -24,14 +24,10 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.internal.mixin;
+package org.polyfrost.oneconfig.hypixel.v0;
 
-import net.minecraft.client.gui.hud.DebugHud;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.gen.Accessor;
+public final class HypixelAPI {
+    private HypixelAPI() {}
 
-@Mixin(DebugHud.class)
-public interface DebugHudAccessor {
-    @Accessor
-    boolean isShowDebugHud();
+
 }

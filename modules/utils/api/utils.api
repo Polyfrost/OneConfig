@@ -66,6 +66,9 @@ public abstract interface class org/polyfrost/oneconfig/api/platform/v1/PlayerPl
 	public abstract fun inMultiplayer ()Z
 }
 
+public final class org/polyfrost/oneconfig/hypixel/v0/HypixelAPI {
+}
+
 public final class org/polyfrost/oneconfig/utils/v1/ArrayCastUtils {
 	public static fun b2b ([Ljava/lang/Object;)[B
 	public static fun b2i ([B)[I

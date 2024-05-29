@@ -29,7 +29,6 @@ package org.polyfrost.oneconfig.internal.libs.fabric;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.client.world.ClientWorld;
-import net.minecraft.command.CommandSource;
 import net.minecraft.command.ISuggestionProvider;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.math.vector.Vector2f;
@@ -38,7 +37,7 @@ import net.minecraft.util.text.ITextComponent;
 
 /**
  * Fabric Client-side command manager implementation.
- * Extensions to {@link CommandSource} for client-sided commands.
+ * Extensions to {@link ISuggestionProvider} for client-sided commands.
  * <br>
  * Taken from the Fabric API under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache 2.0 License</a>;
  * <a href="https://github.com/FabricMC/fabric/blob/1.20.2/fabric-command-api-v2/src/client/java/net/fabricmc/fabric/api/client/command/v2/FabricClientCommandSource.java">Click here for source</a>

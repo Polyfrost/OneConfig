@@ -28,7 +28,7 @@ package org.polyfrost.oneconfig.internal.mixin.commands;
 
 import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.client.network.play.ClientPlayNetHandler;
-import net.minecraft.command.CommandSource;
+import net.minecraft.command.ISuggestionProvider;
 import net.minecraft.network.play.server.SCommandListPacket;
 import net.minecraft.network.play.server.SJoinGamePacket;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
@@ -48,7 +48,7 @@ public class ClientPlayNetworkHandlerMixin {
     // Modified from Fabric API under the Apache 2.0 License //
     // Source: https://github.com/FabricMC/fabric/blob/1.20.2/fabric-command-api-v2/src/client/java/net/fabricmc/fabric/mixin/command/client/ClientPlayNetworkHandlerMixin.java //
     @Shadow
-    private CommandDispatcher<CommandSource> commandDispatcher;
+    private CommandDispatcher<ISuggestionProvider> commandDispatcher;
 
     @Shadow
     @Final

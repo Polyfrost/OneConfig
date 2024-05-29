@@ -28,6 +28,7 @@ package org.polyfrost.oneconfig.api.platform.v1.internal;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
+import net.minecraft.util.Session;
 import org.polyfrost.universal.UMinecraft;
 import org.polyfrost.oneconfig.api.platform.v1.PlayerPlatform;
 
@@ -46,8 +47,7 @@ public class PlayerPlatformImpl implements PlayerPlatform {
         //#if MC<12000
         return player.getClientBrand();
         //#else
-        //$$ net.minecraft.server.MinecraftServer server = player.getServer();
-        //$$ return server == null ? null : server.getName();
+        //$$ return null;
         //#endif
     }
 
@@ -58,6 +58,7 @@ public class PlayerPlatformImpl implements PlayerPlatform {
 
     @Override
     public String getPlayerName() {
-        return Minecraft.getMinecraft().getSession().getUsername();
+        Session s = Minecraft.getMinecraft().getSession();
+        return s.getUsername();
     }
 }

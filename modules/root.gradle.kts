@@ -17,6 +17,7 @@ subprojects {
         mavenLocal()
         mavenCentral()
         maven("https://repo.polyfrost.org/releases")
+        maven("https://repo.hypixel.net/repository/Hypixel")
     }
 
     dependencies {

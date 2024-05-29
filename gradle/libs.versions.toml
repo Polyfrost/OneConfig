@@ -18,6 +18,7 @@ nightconfig = "3.6.6"
 lwjgl = "3.3.3"
 universalcraft = "296"
 mixin = "0.7.11-SNAPSHOT"
+hypixel-modapi = "0.4.0"
 
 junit-bom = "5.10.2"
 
@@ -26,6 +27,8 @@ junit = { module = "org.junit.jupiter:junit-jupiter" }
 junit-bom = { module = "org.junit:junit-bom", version.ref = "junit-bom" }
 
 mixin = { module = "org.spongepowered:mixin", version.ref = "mixin" }
+
+hypixel-modapi = { module = "net.hypixel:mod-api", version.ref = "hypixel-modapi" }
 
 polyui = { module = "org.polyfrost:polyui", version.ref = "polyui" }
 

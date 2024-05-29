@@ -1,7 +1,7 @@
 /*
  * This file is part of OneConfig.
  * OneConfig - Next Generation Config Library for Minecraft: Java Edition
- * Copyright (C) 2021~2023 Polyfrost.
+ * Copyright (C) 2021~2024 Polyfrost.
  *   <https://polyfrost.org> <https://github.com/Polyfrost/>
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -24,7 +24,10 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-dependencies {
-    compileOnly("org.polyfrost:universalcraft-1.8.9-forge:${libs.versions.universalcraft.get()}")
-    api(libs.hypixel.modapi)
-}
+/**
+ * Experimental implementation of the <a href="https://github.com/HypixelDev/ModAPI">Hypixel Mod API</a> in OneConfig.
+ */
+@ApiStatus.Experimental
+package org.polyfrost.oneconfig.hypixel.v0;
+
+import org.jetbrains.annotations.ApiStatus;

@@ -1,0 +1,155 @@
+com.mojang.blaze3d.pipeline.RenderTarget blitToScreen() framebufferRender()
+com.mojang.blaze3d.pipeline.RenderTarget net.minecraft.client.shader.Framebuffer
+
+com.mojang.blaze3d.platform.InputConstants getKey() getInputByCode()
+com.mojang.blaze3d.platform.InputConstants net.minecraft.client.util.InputMappings
+com.mojang.blaze3d.platform.InputConstants$Key getDisplayName() func_237520_d_()
+
+com.mojang.blaze3d.platform.Window getWindow() getHandle()
+com.mojang.blaze3d.platform.Window net.minecraft.client.MainWindow
+
+com.mojang.blaze3d.shaders.AbstractUniform net.minecraft.client.shader.ShaderDefault
+
+com.mojang.blaze3d.vertex.BufferBuilder net.minecraft.client.renderer.BufferBuilder
+com.mojang.blaze3d.vertex.BufferBuilder vertex() pos()
+
+com.mojang.blaze3d.vertex.DefaultVertexFormat net.minecraft.client.renderer.vertex.DefaultVertexFormats
+com.mojang.blaze3d.vertex.PoseStack com.mojang.blaze3d.matrix.MatrixStack
+
+com.mojang.blaze3d.vertex.Tesselator end() draw()
+com.mojang.blaze3d.vertex.Tesselator getBuilder() getBuffer()
+com.mojang.blaze3d.vertex.Tesselator net.minecraft.client.renderer.Tessellator
+
+net.minecraft.ChatFormatting net.minecraft.util.text.TextFormatting
+
+net.minecraft.CrashReport net.minecraft.crash.CrashReport
+
+net.minecraft.client.KeyboardHandler charTyped() onCharEvent()
+net.minecraft.client.KeyboardHandler keyPress() onKeyEvent()
+net.minecraft.client.KeyboardHandler net.minecraft.client.KeyboardListener
+
+net.minecraft.client.Minecraft destroy() shutdownMinecraftApplet()
+net.minecraft.client.Minecraft getUser() getSession()
+net.minecraft.client.Minecraft getWindow() getMainWindow()
+net.minecraft.client.Minecraft gui ingameGUI
+net.minecraft.client.Minecraft hasSingleplayerServer() isSingleplayer()
+net.minecraft.client.Minecraft level world
+net.minecraft.client.Minecraft resizeDisplay() updateWindowSize()
+net.minecraft.client.Minecraft runTick() runGameLoop()
+
+net.minecraft.client.MouseHandler net.minecraft.client.MouseHelper
+
+net.minecraft.client.Options net.minecraft.client.GameSettings
+net.minecraft.client.Options renderDebug showDebugInfo
+
+net.minecraft.client.Timer net.minecraft.util.Timer
+net.minecraft.client.Timer partialTick renderPartialTicks
+
+net.minecraft.client.User getName() getUsername()
+net.minecraft.client.User net.minecraft.util.Session
+
+net.minecraft.client.gui.Font draw() drawString()
+net.minecraft.client.gui.Font drawShadow() drawStringWithShadow()
+net.minecraft.client.gui.Font net.minecraft.client.gui.FontRenderer
+net.minecraft.client.gui.Font width() getStringWidth()
+
+net.minecraft.client.gui.Gui getChat() getChatGUI()
+net.minecraft.client.gui.Gui net.minecraft.client.gui.IngameGui
+
+net.minecraft.client.gui.components.ChatComponent addMessage() printChatMessage()
+net.minecraft.client.gui.components.ChatComponent net.minecraft.client.gui.NewChatGui
+
+net.minecraft.client.gui.screens.ChatScreen net.minecraft.client.gui.screen.ChatScreen
+net.minecraft.client.gui.screens.Screen net.minecraft.client.gui.screen.Screen
+
+net.minecraft.client.multiplayer.ClientLevel net.minecraft.client.world.ClientWorld
+
+net.minecraft.client.multiplayer.ClientPacketListener commands commandDispatcher
+net.minecraft.client.multiplayer.ClientPacketListener getSuggestionsProvider() getSuggestionProvider()
+net.minecraft.client.multiplayer.ClientPacketListener handleCommands() handleCommandList()
+net.minecraft.client.multiplayer.ClientPacketListener handleLogin() handleJoinGame()
+net.minecraft.client.multiplayer.ClientPacketListener net.minecraft.client.network.play.ClientPlayNetHandler
+net.minecraft.client.multiplayer.ClientPacketListener send() sendPacket()
+net.minecraft.client.multiplayer.ClientPacketListener suggestionsProvider clientSuggestionProvider
+net.minecraft.client.multiplayer.ClientSuggestionProvider minecraft mc
+
+net.minecraft.client.player.LocalPlayer chat() sendChatMessage()
+net.minecraft.client.player.LocalPlayer net.minecraft.client.entity.player.ClientPlayerEntity
+
+net.minecraft.client.renderer.EffectInstance getUniform() getShaderUniform()
+net.minecraft.client.renderer.EffectInstance net.minecraft.client.shader.ShaderInstance
+
+net.minecraft.client.renderer.GameRenderer currentEffect() getShaderGroup()
+net.minecraft.client.renderer.GameRenderer loadEffect() loadShader()
+net.minecraft.client.renderer.GameRenderer render() updateCameraAndRender()
+net.minecraft.client.renderer.GameRenderer shutdownEffect() stopUseShader()
+
+net.minecraft.client.renderer.PostChain getName() getShaderGroupName()
+net.minecraft.client.renderer.PostChain net.minecraft.client.shader.ShaderGroup
+net.minecraft.client.renderer.PostChain passes listShaders
+net.minecraft.client.renderer.PostPass getEffect() getShaderManager()
+net.minecraft.client.renderer.PostPass net.minecraft.client.shader.Shader
+
+net.minecraft.client.resources.language.I18n get() format()
+net.minecraft.client.resources.language.I18n net.minecraft.client.resources.I18n
+
+net.minecraft.commands.SharedSuggestionProvider net.minecraft.command.ISuggestionProvider
+
+net.minecraft.commands.arguments.EntityArgument net.minecraft.command.arguments.EntityArgument
+net.minecraft.commands.arguments.GameProfileArgument net.minecraft.command.arguments.GameProfileArgument
+net.minecraft.commands.arguments.coordinates.BlockPosArgument net.minecraft.command.arguments.BlockPosArgument
+net.minecraft.commands.arguments.item.ItemArgument net.minecraft.command.arguments.ItemArgument
+
+net.minecraft.core.BlockPos net.minecraft.util.math.BlockPos
+
+net.minecraft.network.Connection net.minecraft.network.NetworkManager
+net.minecraft.network.Connection send() sendPacket()
+
+net.minecraft.network.FriendlyByteBuf net.minecraft.network.PacketBuffer
+
+net.minecraft.network.chat.ChatType net.minecraft.util.text.ChatType
+
+net.minecraft.network.chat.Component getContents() getUnformattedComponentText()
+net.minecraft.network.chat.Component net.minecraft.util.text.ITextComponent
+net.minecraft.network.chat.Component nullToEmpty() getTextComponentOrEmpty()
+net.minecraft.network.chat.ComponentUtils fromMessage() toTextComponent()
+net.minecraft.network.chat.ComponentUtils net.minecraft.util.text.TextComponentUtils
+
+net.minecraft.network.chat.MutableComponent net.minecraft.util.text.IFormattableTextComponent
+net.minecraft.network.chat.MutableComponent withStyle() mergeStyle()
+net.minecraft.network.chat.TextComponent net.minecraft.util.text.StringTextComponent
+net.minecraft.network.chat.TranslatableComponent net.minecraft.util.text.TranslationTextComponent
+
+net.minecraft.network.protocol.Packet net.minecraft.network.IPacket
+
+net.minecraft.network.protocol.game.ClientboundCommandsPacket net.minecraft.network.play.server.SCommandListPacket
+net.minecraft.network.protocol.game.ClientboundCustomPayloadPacket net.minecraft.network.play.client.CCustomPayloadPacket
+net.minecraft.network.protocol.game.ClientboundLoginPacket net.minecraft.network.play.server.SJoinGamePacket
+net.minecraft.network.protocol.game.ServerboundCustomPayloadPacket getData() getBufferData()
+net.minecraft.network.protocol.game.ServerboundCustomPayloadPacket getIdentifier() getChannelName()
+net.minecraft.network.protocol.game.ServerboundCustomPayloadPacket net.minecraft.network.play.server.SCustomPayloadPlayPacket
+
+net.minecraft.resources.ResourceLocation net.minecraft.util.ResourceLocation
+
+net.minecraft.server.commands.HelpCommand ERROR_FAILED FAILED_EXCEPTION
+net.minecraft.server.commands.HelpCommand net.minecraft.command.impl.HelpCommand
+
+net.minecraft.util.datafix.DataFixers createFixerUpper() createFixer()
+net.minecraft.util.datafix.DataFixers net.minecraft.util.datafix.DataFixesManager
+
+net.minecraft.util.profiling.ProfilerFiller net.minecraft.profiler.IProfiler
+net.minecraft.util.profiling.ProfilerFiller pop() endSection()
+net.minecraft.util.profiling.ProfilerFiller push() startSection()
+
+net.minecraft.world.entity.Entity getRotationVector() getPitchYaw()
+net.minecraft.world.entity.Entity net.minecraft.entity.Entity
+net.minecraft.world.entity.Entity position() getPositionVec()
+
+net.minecraft.world.entity.player.Player net.minecraft.entity.player.PlayerEntity
+
+net.minecraft.world.item.ItemStack net.minecraft.item.ItemStack
+
+net.minecraft.world.phys.Vec2 net.minecraft.util.math.vector.Vector2f
+net.minecraft.world.phys.Vec3 net.minecraft.util.math.vector.Vector3d
+
+net.minecraftforge.client.gui.ForgeIngameGui render() renderIngameGui()

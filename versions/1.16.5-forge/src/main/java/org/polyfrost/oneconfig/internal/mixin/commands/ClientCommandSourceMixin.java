@@ -51,7 +51,8 @@ abstract class ClientCommandSourceMixin implements ClientCommandSource {
 
     @Override
     public void sendFeedback(ITextComponent message) {
-        this.mc.ingameGUI.getChatGUI().printChatMessage(message);
+        net.minecraft.client.gui.IngameGui gui = this.mc.ingameGUI;
+        gui.getChatGUI().printChatMessage(message);
 //        this.client.getNarratorManager().narrate(message);
     }
 

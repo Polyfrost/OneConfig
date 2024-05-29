@@ -33,7 +33,6 @@ import org.polyfrost.universal.UMinecraft;
 import org.polyfrost.oneconfig.api.platform.v1.GLPlatform;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.WorldRenderer;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 
 public class GLPlatformImpl implements GLPlatform {
 
@@ -62,17 +61,24 @@ public class GLPlatformImpl implements GLPlatform {
         UGraphics.disableTexture2D();
         UGraphics.tryBlendFuncSeparate(770, 771, 1, 0);
         UGraphics.color4f(g, h, j, f);
-        worldRenderer.begin(
-                //#if MC<11700
-                7,
-                //#else
-                //$$ net.minecraft.client.render.VertexFormat.DrawMode.QUADS,
-                //#endif
-                DefaultVertexFormats.POSITION);
+        //#if MC<11700
+        worldRenderer.begin(7, net.minecraft.client.renderer.vertex.DefaultVertexFormats.POSITION);
+        //#elseif FORGE
+        //$$ worldRenderer.begin(com.mojang.blaze3d.vertex.VertexFormat.Mode.QUADS, com.mojang.blaze3d.vertex.DefaultVertexFormat.POSITION);
+        //#else
+        //$$ worldRenderer.begin(net.minecraft.client.render.VertexFormat.DrawMode.QUADS, net.minecraft.client.render.VertexFormats.POSITION);
+        //#endif
+        //#if FABRIC || MC<11700
         worldRenderer.pos(x, y2, 0.0).endVertex();
         worldRenderer.pos(x2, y2, 0.0).endVertex();
         worldRenderer.pos(x2, y, 0.0).endVertex();
         worldRenderer.pos(x, y, 0.0).endVertex();
+        //#else
+        //$$ worldRenderer.vertex(x, y2, 0.0).endVertex();
+        //$$ worldRenderer.vertex(x2, y2, 0.0).endVertex();
+        //$$ worldRenderer.vertex(x2, y, 0.0).endVertex();
+        //$$ worldRenderer.vertex(x, y, 0.0).endVertex();
+        //#endif
         tessellator.draw();
         UGraphics.enableTexture2D();
         UGraphics.disableBlend();
@@ -81,17 +87,22 @@ public class GLPlatformImpl implements GLPlatform {
     @Override
     public float drawText(UMatrixStack matrixStack, String text, float x, float y, int color, boolean shadow) {
         //#if MC>12000
-        //$$ return UMinecraft.getFontRenderer().draw(text, x, y, color, shadow,
-        //$$    matrixStack.toMC().peek().getPositionMatrix(), UMinecraft.getMinecraft().getBufferBuilders().getEntityVertexConsumers(),
-        //$$    net.minecraft.client.font.TextRenderer.TextLayerType.NORMAL, 0, 15728880);
-        //#else
-        //#if MC<=11202
+            //#if FABRIC
+            //$$ return UMinecraft.getFontRenderer().draw(text, x, y, color, shadow,
+            //$$    matrixStack.toMC().peek().getPositionMatrix(), UMinecraft.getMinecraft().getBufferBuilders().getEntityVertexConsumers(),
+            //$$    net.minecraft.client.font.TextRenderer.TextLayerType.NORMAL, 0, 15728880);
+            //#else
+            //$$ return UMinecraft.getFontRenderer().drawInBatch(text, x, y, color, shadow,
+            //$$         matrixStack.toMC().last().pose(), UMinecraft.getMinecraft().renderBuffers().bufferSource(),
+            //$$         net.minecraft.client.gui.Font.DisplayMode.NORMAL, 0, 15728880);
+            //#endif
+        //#elseif MC<=11202
         return UMinecraft.getFontRenderer().drawString(text, x, y, color, shadow);
         //#else
+        //$$ net.minecraft.client.gui.FontRenderer fr = UMinecraft.getFontRenderer();
         //$$ if(shadow) {
-        //$$    return UMinecraft.getFontRenderer().drawStringWithShadow(matrixStack.toMC(), text, x, y, color);
-        //$$ } else return UMinecraft.getFontRenderer().drawString(matrixStack.toMC(), text, x, y, color);
-        //#endif
+        //$$    return fr.drawStringWithShadow(matrixStack.toMC(), text, x, y, color);
+        //$$ } else return fr.drawString(matrixStack.toMC(), text, x, y, color);
         //#endif
     }
 

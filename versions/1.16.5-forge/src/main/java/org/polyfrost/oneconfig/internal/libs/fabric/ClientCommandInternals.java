@@ -42,9 +42,9 @@ import com.mojang.brigadier.exceptions.CommandExceptionType;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.tree.CommandNode;
 import net.minecraft.client.Minecraft;
+import net.minecraft.profiler.IProfiler;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentUtils;
-import net.minecraft.util.text.TranslationTextComponent;
 import org.jetbrains.annotations.Nullable;
 import org.polyfrost.oneconfig.internal.mixin.commands.HelpCommandAccessor;
 import org.apache.logging.log4j.Logger;
@@ -107,7 +107,8 @@ public final class ClientCommandInternals {
         // noinspection ConstantConditions
         ClientCommandSource commandSource = (ClientCommandSource) client.getConnection().getSuggestionProvider();
 
-        client.getProfiler().startSection(command);
+        IProfiler profiler = client.getProfiler();
+        profiler.startSection(command);
 
         try {
             // TODO: Check for server commands before executing.
@@ -131,7 +132,7 @@ public final class ClientCommandInternals {
             commandSource.sendError(ITextComponent.getTextComponentOrEmpty(e.getMessage()));
             return true;
         } finally {
-            client.getProfiler().endSection();
+            profiler.endSection();
         }
     }
 
@@ -158,9 +159,14 @@ public final class ClientCommandInternals {
 
         return context != null ?
                 //#if MC<11900
-                new TranslationTextComponent
+                new net.minecraft.util.text.TranslationTextComponent
                 //#else
-                //$$ Text.translatable
+                //#if FABRIC
+                //$$ Text
+                //#else
+                //$$ Component
+                //#endif
+                //$$ .translatable
                 //#endif
                         ("command.context.parse_error", message.getString(), e.getCursor(), context) : message;
     }

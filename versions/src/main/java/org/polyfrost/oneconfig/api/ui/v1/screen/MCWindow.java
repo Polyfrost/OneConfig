@@ -51,13 +51,7 @@ public class MCWindow extends Window {
     public MCWindow(Minecraft mc) {
         super(UResolution.getViewportWidth(), UResolution.getViewportHeight(), 1f);
         //#if MC>=11300
-        //$$ this.handle = mc
-                //#if MC>=11700
-                //$$ .getWindow()
-                //#else
-        //$$         .getMainWindow()
-                //#endif
-        //$$         .getHandle();
+        //$$ this.handle = mc.getMainWindow().getHandle();
         //#endif
     }
 

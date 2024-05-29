@@ -1,2 +1,2 @@
-net.minecraft.text.Text getString() asString()
 net.minecraft.network.packet.s2c.play.GameMessageS2CPacket content() getMessage()
+net.minecraft.text.Text getString() asString()

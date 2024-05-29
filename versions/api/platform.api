@@ -102,6 +102,11 @@ public class org/polyfrost/oneconfig/api/event/v1/events/SendPacketEvent : org/p
 	public fun <init> (Lnet/minecraft/network/Packet;)V
 }
 
+public final class org/polyfrost/oneconfig/api/hypixel/v0/internal/HypixelApiInternals {
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/hypixel/v0/internal/HypixelApiInternals;
+	public static fun init ()V
+}
+
 public class org/polyfrost/oneconfig/api/platform/v1/internal/GLPlatformImpl : org/polyfrost/oneconfig/api/platform/v1/GLPlatform {
 	public fun <init> ()V
 	public fun drawRect (FFFFI)V

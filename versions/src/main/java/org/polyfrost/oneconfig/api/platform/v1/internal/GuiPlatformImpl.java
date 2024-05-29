@@ -59,7 +59,12 @@ public class GuiPlatformImpl implements GuiPlatform {
         //#if MC<12000
         return UMinecraft.getSettings().showDebugInfo;
         //#else
-        //$$ return ((org.polyfrost.oneconfig.internal.mixin.DebugHudAccessor) UMinecraft.getMinecraft().getDebugHud()).isShowDebugHud();
+        //$$ return UMinecraft.getMinecraft()
+        //#if FABRIC
+        //$$    .getDebugHud().shouldShowDebugHud();
+        //#else
+        //$$    .getDebugOverlay().showDebugScreen();
+        //#endif
         //#endif
     }
 

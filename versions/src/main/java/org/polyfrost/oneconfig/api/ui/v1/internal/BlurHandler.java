@@ -28,6 +28,7 @@ package org.polyfrost.oneconfig.api.ui.v1.internal;
 
 import net.minecraft.client.shader.Shader;
 import net.minecraft.client.shader.ShaderGroup;
+import net.minecraft.client.shader.ShaderManager;
 import net.minecraft.client.shader.ShaderUniform;
 import net.minecraft.util.ResourceLocation;
 import org.polyfrost.oneconfig.api.event.v1.events.RenderEvent;
@@ -104,13 +105,7 @@ public final class BlurHandler {
                 //#if FABRIC
                 //$$ ((org.polyfrost.oneconfig.internal.mixin.fabric.GameRendererAccessor) UMinecraft.getMinecraft().gameRenderer).invokeLoadShader(this.blurShader);
                 //#else
-                UMinecraft.getMinecraft().entityRenderer.
-                        //#if MC<11700
-                        loadShader
-                        //#else
-                        //$$ loadEffect
-                        //#endif
-                                (this.blurShader);
+                //UMinecraft.getMinecraft().entityRenderer.loadShader(this.blurShader);
                 //#endif
 
                 this.start = System.currentTimeMillis();
@@ -125,7 +120,8 @@ public final class BlurHandler {
 
                     // Iterate through the list of shaders.
                     for (Shader shader : listShaders) {
-                        ShaderUniform su = shader.getShaderManager().getShaderUniform("Progress");
+                        ShaderManager sm = shader.getShaderManager();
+                        ShaderUniform su = sm.getShaderUniform("Progress");
                         if (su == null) continue;
 
                         this.su = su;

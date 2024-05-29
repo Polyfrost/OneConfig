@@ -24,7 +24,6 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-//#if MC<=11202
 package org.polyfrost.oneconfig.api.commands.v1.internal;
 
 import net.minecraft.command.CommandBase;
@@ -33,6 +32,7 @@ import org.polyfrost.oneconfig.api.commands.v1.CommandManager;
 import org.polyfrost.oneconfig.api.commands.v1.exceptions.CommandExecutionException;
 import org.polyfrost.oneconfig.api.commands.v1.CommandTree;
 import org.polyfrost.oneconfig.api.commands.v1.factories.PlatformCommandFactory;
+import org.polyfrost.oneconfig.internal.ClassHasOverwrites;
 import org.polyfrost.universal.UChat;
 import org.polyfrost.oneconfig.api.commands.v1.arguments.PlayerArgumentParser;
 import org.apache.logging.log4j.Logger;
@@ -45,6 +45,7 @@ import java.util.List;
 import net.minecraftforge.client.ClientCommandHandler;
 //#endif
 
+@ClassHasOverwrites("1.16.5-forge")
 public class PlatformCommandFactoryImpl implements PlatformCommandFactory {
     private static final Logger LOGGER = LogManager.getLogger("OneConfig/Commands");
 
@@ -126,4 +127,3 @@ public class PlatformCommandFactoryImpl implements PlatformCommandFactory {
         return true;
     }
 }
-//#endif
