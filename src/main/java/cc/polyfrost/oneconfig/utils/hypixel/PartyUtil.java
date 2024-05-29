@@ -38,7 +38,6 @@ import cc.polyfrost.oneconfig.platform.Platform;
 public class PartyUtil {
     public static final PartyUtil INSTANCE = new PartyUtil();
     private PartyInfo partyInfo;
-    private boolean inParty = false;
     private int tick;
 
     public void initialize() {
@@ -59,12 +58,11 @@ public class PartyUtil {
     }
 
     public void handlePartyPacket(ClientboundPartyInfoPacket packet) {
-        inParty = packet.isInParty();
         partyInfo = new PartyInfo(packet);
     }
 
     public boolean isInParty() {
-        return inParty;
+        return partyInfo.isInParty();
     }
 
     public PartyInfo getPartyInfo() {

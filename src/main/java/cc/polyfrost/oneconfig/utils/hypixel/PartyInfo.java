@@ -35,12 +35,14 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class PartyInfo {
+    private final boolean inParty;
     private final Map<UUID, ClientboundPartyInfoPacket.PartyRole> memberMap;
     private final UUID leader;
     private final List<UUID> moderators;
     private final List<UUID> members;
 
     public PartyInfo(ClientboundPartyInfoPacket packet) {
+        this.inParty = packet.isInParty();
         this.memberMap = packet.getMemberMap().entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().getRole()));
         this.members = new ArrayList<>(packet.getMembers());
@@ -55,7 +57,11 @@ public class PartyInfo {
 
     @Override
     public String toString() {
-        return "PartyInfo{" + "leader='" + leader + '\'' + ", moderators='" + moderators + '\'' + ", members='" + memberMap + '\'' + '}';
+        return "PartyInfo{" + "inParty='" + inParty + '\'' + "leader='" + leader + '\'' + ", moderators='" + moderators + '\'' + ", members='" + memberMap + '\'' + '}';
+    }
+
+    public boolean isInParty() {
+        return inParty;
     }
 
     public UUID getLeader() {
