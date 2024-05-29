@@ -2037,6 +2037,16 @@ public abstract class cc/polyfrost/oneconfig/utils/gui/OneUIScreen : cc/polyfros
 	public final fun onDrawScreen (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;IIF)V
 }
 
+public abstract interface class cc/polyfrost/oneconfig/utils/hypixel/HypixelPacketUtil {
+	public static fun getInstance ()Lcc/polyfrost/oneconfig/utils/hypixel/HypixelPacketUtil;
+	public abstract fun handle (Ljava/lang/Object;)V
+	public abstract fun sendPacket (Lcc/polyfrost/oneconfig/libs/modapi/packet/HypixelPacket;)Z
+}
+
+public class cc/polyfrost/oneconfig/utils/hypixel/HypixelPacketUtil$PacketHolder {
+	public fun <init> ()V
+}
+
 public class cc/polyfrost/oneconfig/utils/hypixel/HypixelUtils {
 	public static final field INSTANCE Lcc/polyfrost/oneconfig/utils/hypixel/HypixelUtils;
 	public fun <init> ()V

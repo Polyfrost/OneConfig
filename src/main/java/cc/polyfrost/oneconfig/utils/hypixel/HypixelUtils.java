@@ -26,7 +26,10 @@
 
 package cc.polyfrost.oneconfig.utils.hypixel;
 
+import cc.polyfrost.oneconfig.events.EventManager;
+import cc.polyfrost.oneconfig.events.event.ReceivePacketEvent;
 import cc.polyfrost.oneconfig.internal.utils.Deprecator;
+import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
 import cc.polyfrost.oneconfig.libs.modapi.HypixelModAPI;
 import cc.polyfrost.oneconfig.libs.modapi.handler.ClientboundPacketHandler;
 import cc.polyfrost.oneconfig.libs.modapi.packet.impl.clientbound.ClientboundPartyInfoPacket;
@@ -55,6 +58,12 @@ public class HypixelUtils {
                 PartyUtil.INSTANCE.handlePartyPacket(packet);
             }
         });
+        EventManager.INSTANCE.register(this);
+    }
+
+    @Subscribe
+    private void onPacket(ReceivePacketEvent event) {
+        HypixelPacketUtil.getInstance().handle(event);
     }
 
     /**

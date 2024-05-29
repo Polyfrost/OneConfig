@@ -133,3 +133,9 @@ public final class cc/polyfrost/oneconfig/utils/gui/GuiUtils {
 	public static fun wasMouseDown ()Z
 }
 
+public class cc/polyfrost/oneconfig/utils/hypixel/HypixelPacketUtilImpl : cc/polyfrost/oneconfig/utils/hypixel/HypixelPacketUtil {
+	public fun <init> ()V
+	public fun handle (Ljava/lang/Object;)V
+	public fun sendPacket (Lcc/polyfrost/oneconfig/libs/modapi/packet/HypixelPacket;)Z
+}
+

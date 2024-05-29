@@ -40,11 +40,8 @@ import cc.polyfrost.oneconfig.internal.gui.BlurHandler;
 import cc.polyfrost.oneconfig.internal.hud.HudCore;
 import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
 import cc.polyfrost.oneconfig.libs.modapi.HypixelModAPI;
-import cc.polyfrost.oneconfig.libs.modapi.packet.HypixelPacket;
-import cc.polyfrost.oneconfig.libs.modapi.serializer.PacketSerializer;
 import cc.polyfrost.oneconfig.libs.universal.ChatColor;
 import cc.polyfrost.oneconfig.libs.universal.UChat;
-import cc.polyfrost.oneconfig.libs.universal.UMinecraft;
 import cc.polyfrost.oneconfig.libs.universal.UScreen;
 import cc.polyfrost.oneconfig.libs.universal.wrappers.UPlayer;
 import cc.polyfrost.oneconfig.utils.TickDelay;
@@ -52,13 +49,11 @@ import cc.polyfrost.oneconfig.utils.commands.CommandManager;
 import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 import cc.polyfrost.oneconfig.utils.hypixel.HypixelUtils;
 import cc.polyfrost.oneconfig.utils.Notifications;
-import io.netty.buffer.Unpooled;
+import cc.polyfrost.oneconfig.utils.hypixel.HypixelPacketUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.network.PacketBuffer;
 //#if FORGE==1 && MC<=11202
 //#if MC<=10809
-import net.minecraft.network.play.client.C17PacketCustomPayload;
 //#else
 //$$ import net.minecraft.network.play.client.CPacketCustomPayload;
 //#endif
@@ -188,30 +183,13 @@ public class OneConfig {
         EventManager.INSTANCE.register(KeyBindHandler.INSTANCE);
         ConfigCore.sortMods();
         //#if FORGE==1 && MC<=11202
-        HypixelModAPI.getInstance().setPacketSender(this::sendHypixelPacket);
+        HypixelModAPI.getInstance().setPacketSender(HypixelPacketUtil.getInstance()::sendPacket);
         //#endif
 
         initialized = true;
     }
 
     //#if FORGE==1 && MC<=11202
-
-    private boolean sendHypixelPacket(HypixelPacket packet) {
-        PacketBuffer buf = new PacketBuffer(Unpooled.buffer());
-        PacketSerializer serializer = new PacketSerializer(buf);
-        packet.write(serializer);
-        net.minecraft.client.network.NetHandlerPlayClient netHandler = UMinecraft.getNetHandler();
-        if (netHandler == null) {
-            return false;
-        }
-        //#if MC<=10809
-        netHandler.addToSendQueue(new C17PacketCustomPayload(packet.getIdentifier(), buf));
-        //#else
-        //$$ netHandler.sendPacket(new CPacketCustomPayload(packet.getIdentifier(), buf));
-        //#endif
-        return true;
-    }
-
     private void handleForgeCommand(ModContainer mod) {
         for (net.minecraft.command.ICommand command : net.minecraftforge.client.ClientCommandHandler.instance.getCommands().values()) {
             if (Objects.equals(command.getCommandName(), mod.getModId())) {
