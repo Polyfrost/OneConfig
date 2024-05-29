@@ -56,6 +56,13 @@ import io.netty.buffer.Unpooled;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.network.PacketBuffer;
+//#if FORGE==1 && MC<=11202
+//#if MC<=10809
+import net.minecraft.network.play.client.C17PacketCustomPayload;
+//#else
+//$$ import net.minecraft.network.play.client.CPacketCustomPayload;
+//#endif
+//#endif
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //#if FORGE==1
@@ -198,9 +205,9 @@ public class OneConfig {
             return false;
         }
         //#if MC<=10809
-        netHandler.addToSendQueue(new net.minecraft.network.play.client.C17PacketCustomPayload(packet.getIdentifier(), buf));
+        netHandler.addToSendQueue(new C17PacketCustomPayload(packet.getIdentifier(), buf));
         //#else
-        //$$ netHandler.sendPacket(new net.minecraft.network.play.client.CPacketCustomPayload(packet.getIdentifier(), buf));
+        //$$ netHandler.sendPacket(new CPacketCustomPayload(packet.getIdentifier(), buf));
         //#endif
         return true;
     }

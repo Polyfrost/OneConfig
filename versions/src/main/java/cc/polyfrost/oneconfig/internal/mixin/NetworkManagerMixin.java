@@ -36,6 +36,13 @@ import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.Packet;
+//#if FORGE==1 && MC<=11202
+//#if MC<=10809
+import net.minecraft.network.play.server.S3FPacketCustomPayload;
+//#else
+//$$ import net.minecraft.network.play.server.SPacketCustomPayload;
+//#endif
+//#endif
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -66,9 +73,14 @@ public class NetworkManagerMixin {
     @Inject(method = "channelRead0(Lio/netty/channel/ChannelHandlerContext;Lnet/minecraft/network/Packet;)V", at = @At("HEAD"), cancellable = true)
     private void onReceivePacket(ChannelHandlerContext p_channelRead0_1_, Packet<?> p_channelRead0_2_, CallbackInfo ci) {
         ReceivePacketEvent event = new ReceivePacketEvent(p_channelRead0_2_);
-        //#if FORGE==1 && MC<11202
-        if (event.packet instanceof net.minecraft.network.play.server.S3FPacketCustomPayload) {
-            net.minecraft.network.play.server.S3FPacketCustomPayload packet = (net.minecraft.network.play.server.S3FPacketCustomPayload) event.packet;
+        //#if FORGE==1 && MC<=11202
+        //#if MC<=10809
+        if (event.packet instanceof S3FPacketCustomPayload) {
+            S3FPacketCustomPayload packet = (S3FPacketCustomPayload) event.packet;
+            //#else
+            //$$ if (event.packet instanceof SPacketCustomPayload) {
+            //$$ SPacketCustomPayload packet = (SPacketCustomPayload) event.packet;
+            //#endif
             if (!HypixelModAPI.getInstance().getRegistry().isRegistered(packet.getChannelName())) return;
 
             HypixelModAPI.getInstance().handle(packet.getChannelName(), new PacketSerializer(packet.getBufferData()));
