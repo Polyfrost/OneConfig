@@ -76,9 +76,7 @@ public class LocrawUtil {
     private void sendLocraw(boolean delay) {
         new TickDelay(() -> {
             this.listening = true;
-            //#if FORGE==1 && MC<=10809
-//            HypixelModAPI.getInstance().subscribeToEventPacket(ClientboundLocationPacket.class);
-            //#else
+            //#if FORGE==0 || MC>11202
             UChat.say("/locraw");
             //#endif
         }, (delay ? 20 : 0));

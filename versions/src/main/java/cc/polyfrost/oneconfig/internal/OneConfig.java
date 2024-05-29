@@ -44,6 +44,7 @@ import cc.polyfrost.oneconfig.libs.modapi.packet.HypixelPacket;
 import cc.polyfrost.oneconfig.libs.modapi.serializer.PacketSerializer;
 import cc.polyfrost.oneconfig.libs.universal.ChatColor;
 import cc.polyfrost.oneconfig.libs.universal.UChat;
+import cc.polyfrost.oneconfig.libs.universal.UMinecraft;
 import cc.polyfrost.oneconfig.libs.universal.UScreen;
 import cc.polyfrost.oneconfig.libs.universal.wrappers.UPlayer;
 import cc.polyfrost.oneconfig.utils.TickDelay;
@@ -179,7 +180,7 @@ public class OneConfig {
         HypixelUtils.INSTANCE.initialize();
         EventManager.INSTANCE.register(KeyBindHandler.INSTANCE);
         ConfigCore.sortMods();
-        //#if FORGE==1 && MC<=10809
+        //#if FORGE==1 && MC<=11202
         HypixelModAPI.getInstance().setPacketSender(this::sendHypixelPacket);
         //#endif
 
@@ -188,20 +189,21 @@ public class OneConfig {
 
     //#if FORGE==1 && MC<=11202
 
-    //#if MC<=10809
     private boolean sendHypixelPacket(HypixelPacket packet) {
-        net.minecraft.client.network.NetHandlerPlayClient netHandler = Minecraft.getMinecraft().getNetHandler();
-        if (netHandler == null) {
-            return false;
-        }
-
         PacketBuffer buf = new PacketBuffer(Unpooled.buffer());
         PacketSerializer serializer = new PacketSerializer(buf);
         packet.write(serializer);
+        net.minecraft.client.network.NetHandlerPlayClient netHandler = UMinecraft.getNetHandler();
+        if (netHandler == null) {
+            return false;
+        }
+        //#if MC<=10809
         netHandler.addToSendQueue(new net.minecraft.network.play.client.C17PacketCustomPayload(packet.getIdentifier(), buf));
+        //#else
+        //$$ netHandler.sendPacket(new net.minecraft.network.play.client.CPacketCustomPayload(packet.getIdentifier(), buf));
+        //#endif
         return true;
     }
-    //#endif
 
     private void handleForgeCommand(ModContainer mod) {
         for (net.minecraft.command.ICommand command : net.minecraftforge.client.ClientCommandHandler.instance.getCommands().values()) {
