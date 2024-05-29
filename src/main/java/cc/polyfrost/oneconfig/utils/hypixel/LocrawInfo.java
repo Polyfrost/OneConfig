@@ -51,6 +51,17 @@ public class LocrawInfo implements Serializable {
     private String rawGameType;
     private GameType gameType;
 
+    public LocrawInfo() {
+    }
+
+    public LocrawInfo(String serverId, String gameMode, String mapName, String rawGameType) {
+        this.serverId = serverId;
+        this.gameMode = gameMode;
+        this.mapName = mapName;
+        this.rawGameType = rawGameType;
+        setGameType(LocrawInfo.GameType.getFromLocraw(rawGameType));
+    }
+
     /**
      * @return The serverID of the server you are currently on, ex: mini121
      */

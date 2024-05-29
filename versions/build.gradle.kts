@@ -76,6 +76,7 @@ loom {
 
 repositories {
     maven("https://repo.polyfrost.cc/releases")
+    maven("https://repo.hypixel.net/repository/Hypixel/")
 }
 
 val relocatedCommonProject = registerRelocationAttribute("common-lwjgl") {
@@ -91,6 +92,7 @@ val relocated = registerRelocationAttribute("relocate") {
     relocate("com.google", "cc.polyfrost.oneconfig.libs")
     relocate("org.checkerframework", "cc.polyfrost.oneconfig.libs")
     relocate("dev.xdark", "cc.polyfrost.oneconfig.libs")
+    relocate("net.hypixel", "cc.polyfrost.oneconfig.libs")
 
     remapStringsIn("com.github.benmanes.caffeine.cache.LocalCacheFactory")
     remapStringsIn("com.github.benmanes.caffeine.cache.NodeFactory")
@@ -144,6 +146,8 @@ dependencies {
     include(libs.keventbus, relocate = true, transitive = false)
 
     include(libs.caffeine, relocate = true)
+
+    include(libs.hypixelmodapi, transitive = false, relocate = true)
 
     // for other mods and universalcraft
     include(libs.bundles.kotlin)

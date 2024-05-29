@@ -39,6 +39,9 @@ import cc.polyfrost.oneconfig.internal.config.core.KeyBindHandler;
 import cc.polyfrost.oneconfig.internal.gui.BlurHandler;
 import cc.polyfrost.oneconfig.internal.hud.HudCore;
 import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
+import cc.polyfrost.oneconfig.libs.modapi.HypixelModAPI;
+import cc.polyfrost.oneconfig.libs.modapi.packet.HypixelPacket;
+import cc.polyfrost.oneconfig.libs.modapi.serializer.PacketSerializer;
 import cc.polyfrost.oneconfig.libs.universal.ChatColor;
 import cc.polyfrost.oneconfig.libs.universal.UChat;
 import cc.polyfrost.oneconfig.libs.universal.UScreen;
@@ -48,8 +51,10 @@ import cc.polyfrost.oneconfig.utils.commands.CommandManager;
 import cc.polyfrost.oneconfig.utils.gui.GuiUtils;
 import cc.polyfrost.oneconfig.utils.hypixel.HypixelUtils;
 import cc.polyfrost.oneconfig.utils.Notifications;
+import io.netty.buffer.Unpooled;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
+import net.minecraft.network.PacketBuffer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //#if FORGE==1
@@ -174,11 +179,29 @@ public class OneConfig {
         HypixelUtils.INSTANCE.initialize();
         EventManager.INSTANCE.register(KeyBindHandler.INSTANCE);
         ConfigCore.sortMods();
+        //#if FORGE==1 && MC<=10809
+        HypixelModAPI.getInstance().setPacketSender(this::sendHypixelPacket);
+        //#endif
 
         initialized = true;
     }
 
     //#if FORGE==1 && MC<=11202
+
+    //#if MC<=10809
+    private boolean sendHypixelPacket(HypixelPacket packet) {
+        net.minecraft.client.network.NetHandlerPlayClient netHandler = Minecraft.getMinecraft().getNetHandler();
+        if (netHandler == null) {
+            return false;
+        }
+
+        PacketBuffer buf = new PacketBuffer(Unpooled.buffer());
+        PacketSerializer serializer = new PacketSerializer(buf);
+        packet.write(serializer);
+        netHandler.addToSendQueue(new net.minecraft.network.play.client.C17PacketCustomPayload(packet.getIdentifier(), buf));
+        return true;
+    }
+    //#endif
 
     private void handleForgeCommand(ModContainer mod) {
         for (net.minecraft.command.ICommand command : net.minecraftforge.client.ClientCommandHandler.instance.getCommands().values()) {

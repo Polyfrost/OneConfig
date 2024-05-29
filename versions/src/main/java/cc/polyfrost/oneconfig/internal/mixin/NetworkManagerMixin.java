@@ -29,6 +29,8 @@ package cc.polyfrost.oneconfig.internal.mixin;
 import cc.polyfrost.oneconfig.events.EventManager;
 import cc.polyfrost.oneconfig.events.event.ReceivePacketEvent;
 import cc.polyfrost.oneconfig.events.event.SendPacketEvent;
+import cc.polyfrost.oneconfig.libs.modapi.HypixelModAPI;
+import cc.polyfrost.oneconfig.libs.modapi.serializer.PacketSerializer;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
@@ -64,6 +66,14 @@ public class NetworkManagerMixin {
     @Inject(method = "channelRead0(Lio/netty/channel/ChannelHandlerContext;Lnet/minecraft/network/Packet;)V", at = @At("HEAD"), cancellable = true)
     private void onReceivePacket(ChannelHandlerContext p_channelRead0_1_, Packet<?> p_channelRead0_2_, CallbackInfo ci) {
         ReceivePacketEvent event = new ReceivePacketEvent(p_channelRead0_2_);
+        //#if FORGE==1 && MC<11202
+        if (event.packet instanceof net.minecraft.network.play.server.S3FPacketCustomPayload) {
+            net.minecraft.network.play.server.S3FPacketCustomPayload packet = (net.minecraft.network.play.server.S3FPacketCustomPayload) event.packet;
+            if (!HypixelModAPI.getInstance().getRegistry().isRegistered(packet.getChannelName())) return;
+
+            HypixelModAPI.getInstance().handle(packet.getChannelName(), new PacketSerializer(packet.getBufferData()));
+        }
+        //#endif
         EventManager.INSTANCE.post(event);
         if (event.isCancelled) {
             ci.cancel();

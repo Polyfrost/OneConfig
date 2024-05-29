@@ -27,6 +27,10 @@
 package cc.polyfrost.oneconfig.utils.hypixel;
 
 import cc.polyfrost.oneconfig.internal.utils.Deprecator;
+import cc.polyfrost.oneconfig.libs.modapi.HypixelModAPI;
+import cc.polyfrost.oneconfig.libs.modapi.handler.ClientboundPacketHandler;
+import cc.polyfrost.oneconfig.libs.modapi.packet.impl.clientbound.ClientboundPartyInfoPacket;
+import cc.polyfrost.oneconfig.libs.modapi.packet.impl.clientbound.event.ClientboundLocationPacket;
 import cc.polyfrost.oneconfig.platform.Platform;
 
 import java.util.Locale;
@@ -39,6 +43,18 @@ public class HypixelUtils {
 
     public void initialize() {
         LocrawUtil.INSTANCE.initialize();
+        PartyUtil.INSTANCE.initialize();
+        HypixelModAPI.getInstance().registerHandler(new ClientboundPacketHandler() {
+            @Override
+            public void onLocationEvent(ClientboundLocationPacket packet) {
+                LocrawUtil.INSTANCE.handleLocationPacket(packet);
+            }
+
+            @Override
+            public void onPartyInfoPacket(ClientboundPartyInfoPacket packet) {
+                PartyUtil.INSTANCE.handlePartyPacket(packet);
+            }
+        });
     }
 
     /**

@@ -41,6 +41,10 @@ import cc.polyfrost.oneconfig.events.event.Stage;
 import cc.polyfrost.oneconfig.events.event.TickEvent;
 import cc.polyfrost.oneconfig.events.event.WorldLoadEvent;
 import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
+import cc.polyfrost.oneconfig.libs.modapi.HypixelModAPI;
+import cc.polyfrost.oneconfig.libs.modapi.handler.ClientboundPacketHandler;
+import cc.polyfrost.oneconfig.libs.modapi.packet.impl.clientbound.ClientboundPartyInfoPacket;
+import cc.polyfrost.oneconfig.libs.modapi.packet.impl.clientbound.event.ClientboundLocationPacket;
 import cc.polyfrost.oneconfig.libs.universal.UChat;
 import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.utils.TickDelay;
@@ -72,8 +76,19 @@ public class LocrawUtil {
     private void sendLocraw(boolean delay) {
         new TickDelay(() -> {
             this.listening = true;
+            //#if FORGE==1 && MC<=10809
+//            HypixelModAPI.getInstance().subscribeToEventPacket(ClientboundLocationPacket.class);
+            //#else
             UChat.say("/locraw");
+            //#endif
         }, (delay ? 20 : 0));
+    }
+
+    public void handleLocationPacket(ClientboundLocationPacket packet) {
+        locrawInfo = new LocrawInfo(packet.getServerName(), packet.getMode().orElse("null"), packet.getMap().orElse("null"), packet.getServerType().map(Object::toString).orElse("null"));
+        inGame = !locrawInfo.getGameMode().equals("lobby");
+        EventManager.INSTANCE.post(new LocrawEvent(locrawInfo));
+        listening = false;
     }
 
     @Subscribe
@@ -128,7 +143,6 @@ public class LocrawUtil {
                         event.isCancelled = true;
                     }
                     EventManager.INSTANCE.post(new LocrawEvent(locrawInfo));
-
                     this.playerSentCommand = false;
                     this.listening = false;
                 }

@@ -41,6 +41,7 @@ blossom {
 
 repositories {
     maven("https://repo.polyfrost.cc/releases")
+    maven("https://repo.hypixel.net/repository/Hypixel/")
 }
 
 val relocated = registerRelocationAttribute("relocate") {
@@ -49,6 +50,7 @@ val relocated = registerRelocationAttribute("relocate") {
     relocate("com.github.benmanes", "cc.polyfrost.oneconfig.libs")
     relocate("com.google", "cc.polyfrost.oneconfig.libs")
     relocate("org.checkerframework", "cc.polyfrost.oneconfig.libs")
+    relocate("net.hypixel", "cc.polyfrost.oneconfig.libs")
     remapStringsIn("com.github.benmanes.caffeine.cache.LocalCacheFactory")
     remapStringsIn("com.github.benmanes.caffeine.cache.NodeFactory")
 }
@@ -102,6 +104,15 @@ dependencies {
 
     // for other mods and universalcraft
     shade(libs.bundles.kotlin)
+
+    shadeRelocated(libs.hypixelmodapi) {
+        isTransitive = false
+    }
+
+    shadeNoPom(libs.hypixelmodapi) {
+        isTransitive = false;
+        attributes { attribute(relocated, true) }
+    }
 
     shade(libs.mixin) {
         isTransitive = false

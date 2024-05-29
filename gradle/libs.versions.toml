@@ -40,6 +40,8 @@ kotlinxSerializationCbor = { module = "org.jetbrains.kotlinx:kotlinx-serializati
 
 kotlinxAtomicfu = { module = "org.jetbrains.kotlinx:atomicfu-jvm", version.ref = "atomicfu" }
 
+hypixelmodapi = { module = "net.hypixel:mod-api", version = "0.4.0"}
+
 mixin = { module = "org.spongepowered:mixin", version.ref = "mixin" }
 
 fabricAsm = { module = "com.github.Chocohead:Fabric-ASM", version.ref = "fabric-asm" }
