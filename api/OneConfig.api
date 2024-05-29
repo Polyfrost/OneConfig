@@ -2125,6 +2125,7 @@ public class cc/polyfrost/oneconfig/utils/hypixel/PartyInfo {
 	public fun getMemberRole (Ljava/util/UUID;)Lcc/polyfrost/oneconfig/libs/modapi/packet/impl/clientbound/ClientboundPartyInfoPacket$PartyRole;
 	public fun getMembers ()Ljava/util/List;
 	public fun getModerators ()Ljava/util/List;
+	public fun isInParty ()Z
 	public fun toString ()Ljava/lang/String;
 }
 
