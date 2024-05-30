@@ -86,12 +86,6 @@ public class org/polyfrost/oneconfig/api/event/v1/events/KeyInputEvent : org/pol
 	public fun isPressed ()Z
 }
 
-public class org/polyfrost/oneconfig/api/event/v1/events/LocrawEvent : org/polyfrost/oneconfig/api/event/v1/events/Event {
-	public final field info Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo;
-	public fun <init> (Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo;)V
-	public fun component1 ()Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo;
-}
-
 public class org/polyfrost/oneconfig/api/event/v1/events/MouseInputEvent : org/polyfrost/oneconfig/api/event/v1/events/Event {
 	public final field button I
 	public final field state I

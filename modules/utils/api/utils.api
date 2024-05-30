@@ -67,6 +67,40 @@ public abstract interface class org/polyfrost/oneconfig/api/platform/v1/PlayerPl
 }
 
 public final class org/polyfrost/oneconfig/hypixel/v0/HypixelAPI {
+	public static fun getLocation ()Lorg/polyfrost/oneconfig/hypixel/v0/HypixelAPI$Location;
+	public static fun getPartyInfo ()Lorg/polyfrost/oneconfig/hypixel/v0/HypixelAPI$PartyInfo;
+	public static fun getPlayerInfo ()Lorg/polyfrost/oneconfig/hypixel/v0/HypixelAPI$PlayerInfo;
+}
+
+public abstract class org/polyfrost/oneconfig/hypixel/v0/HypixelAPI$InfoBase {
+	public fun <init> ()V
+	public abstract fun update ()V
+}
+
+public final class org/polyfrost/oneconfig/hypixel/v0/HypixelAPI$Location : org/polyfrost/oneconfig/hypixel/v0/HypixelAPI$InfoBase {
+	public fun getGameType ()Ljava/util/Optional;
+	public fun getLobbyName ()Ljava/util/Optional;
+	public fun getMapName ()Ljava/util/Optional;
+	public fun getMode ()Ljava/util/Optional;
+	public fun getServerType ()Ljava/util/Optional;
+	public fun isGame ()Z
+	public fun isLobby ()Z
+	public fun update ()V
+}
+
+public final class org/polyfrost/oneconfig/hypixel/v0/HypixelAPI$PartyInfo : org/polyfrost/oneconfig/hypixel/v0/HypixelAPI$InfoBase {
+	public fun getMembers ()Ljava/util/Map;
+	public fun getPartySize ()I
+	public fun isInParty ()Z
+	public fun update ()V
+}
+
+public final class org/polyfrost/oneconfig/hypixel/v0/HypixelAPI$PlayerInfo : org/polyfrost/oneconfig/hypixel/v0/HypixelAPI$InfoBase {
+	public fun getMonthlyPackageRank ()Lnet/hypixel/data/rank/MonthlyPackageRank;
+	public fun getPackageRank ()Lnet/hypixel/data/rank/PackageRank;
+	public fun getPrefix ()Ljava/util/Optional;
+	public fun getRank ()Lnet/hypixel/data/rank/PlayerRank;
+	public fun update ()V
 }
 
 public final class org/polyfrost/oneconfig/utils/v1/ArrayCastUtils {
@@ -298,60 +332,5 @@ public final class org/polyfrost/oneconfig/utils/v1/dsl/NetworkKt {
 	public static final fun browseLink (Lorg/polyfrost/universal/UDesktop;Ljava/lang/String;)V
 	public static final fun download (Ljava/nio/file/Path;Ljava/lang/String;Ljava/lang/String;IZ)Z
 	public static synthetic fun download$default (Ljava/nio/file/Path;Ljava/lang/String;Ljava/lang/String;IZILjava/lang/Object;)Z
-}
-
-public final class org/polyfrost/oneconfig/utils/v1/hypixel/HypixelUtils {
-	public static fun isHypixel ()Z
-}
-
-public class org/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo : java/io/Serializable {
-	public field previous Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo;
-	public fun equals (Ljava/lang/Object;)Z
-	public fun getGameMode ()Ljava/lang/String;
-	public fun getGameType ()Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
-	public fun getMapName ()Ljava/lang/String;
-	public fun getRawGameType ()Ljava/lang/String;
-	public fun getServerId ()Ljava/lang/String;
-	public fun hashCode ()I
-	public fun isInGame ()Z
-	public fun toString ()Ljava/lang/String;
-}
-
-public final class org/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType : java/lang/Enum {
-	public static final field ARCADE_GAMES Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
-	public static final field ARENA Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
-	public static final field BEDWARS Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
-	public static final field BLITZ_SG Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
-	public static final field BUILD_BATTLE Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
-	public static final field CLASSIC_GAMES Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
-	public static final field COPS_AND_CRIMS Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
-	public static final field DROPPER Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
-	public static final field DUELS Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
-	public static final field HOUSING Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
-	public static final field LIMBO Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
-	public static final field MAIN Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
-	public static final field MEGA_WALLS Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
-	public static final field MURDER_MYSTERY Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
-	public static final field PAINTBALL Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
-	public static final field PIT Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
-	public static final field PROTOTYPE Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
-	public static final field QUAKE Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
-	public static final field REPLAY Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
-	public static final field SKYBLOCK Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
-	public static final field SKYWARS Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
-	public static final field SMASH_HEROES Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
-	public static final field SPEED_UHC Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
-	public static final field TNT_GAMES Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
-	public static final field TURBO_KART_RACERS Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
-	public static final field UHC_CHAMPIONS Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
-	public static final field UNKNOWN Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
-	public static final field VAMPIREZ Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
-	public static final field WALLS Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
-	public static final field WARLORDS Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
-	public static final field WOOL_WARS Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
-	public static fun fromString (Ljava/lang/String;)Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
-	public fun getServerName ()Ljava/lang/String;
-	public static fun valueOf (Ljava/lang/String;)Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
-	public static fun values ()[Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo$GameType;
 }
 

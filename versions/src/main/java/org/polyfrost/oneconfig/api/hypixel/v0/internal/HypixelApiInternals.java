@@ -30,25 +30,16 @@ import io.netty.buffer.Unpooled;
 import net.hypixel.modapi.HypixelModAPI;
 import net.hypixel.modapi.handler.ClientboundPacketHandler;
 import net.hypixel.modapi.packet.impl.clientbound.ClientboundHelloPacket;
-import net.hypixel.modapi.packet.impl.clientbound.ClientboundPartyInfoPacket;
-import net.hypixel.modapi.packet.impl.clientbound.ClientboundPingPacket;
-import net.hypixel.modapi.packet.impl.clientbound.ClientboundPlayerInfoPacket;
 import net.hypixel.modapi.packet.impl.clientbound.event.ClientboundLocationPacket;
-import net.hypixel.modapi.packet.impl.serverbound.ServerboundPartyInfoPacket;
-import net.hypixel.modapi.packet.impl.serverbound.ServerboundPingPacket;
-import net.hypixel.modapi.packet.impl.serverbound.ServerboundPlayerInfoPacket;
 import net.hypixel.modapi.serializer.PacketSerializer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.network.NetHandlerPlayClient;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.ApiStatus;
-import org.polyfrost.oneconfig.api.commands.v1.CommandManager;
-import org.polyfrost.oneconfig.api.commands.v1.factories.builder.CommandBuilder;
+import org.polyfrost.oneconfig.api.event.v1.EventDelay;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.ReceivePacketEvent;
-
-import static org.polyfrost.oneconfig.api.commands.v1.factories.builder.CommandBuilder.runs;
 
 /**
  * Heavily adapted from Hypixel/ForgeModAPI under the MIT licence.
@@ -72,7 +63,8 @@ public final class HypixelApiInternals {
         HypixelModAPI.getInstance().setPacketSender((packet) -> {
             NetHandlerPlayClient net = Minecraft.getMinecraft().getNetHandler();
             if (net == null) {
-                LOGGER.warn("dropping packet because no net handler is available");
+                LOGGER.warn("dropping packet {} because no net handler is available, retrying in 1s", packet);
+                EventDelay.tick(20, () -> HypixelModAPI.getInstance().sendPacket(packet));
                 return false;
             }
             net.minecraft.network.PacketBuffer buf = new net.minecraft.network.PacketBuffer(Unpooled.buffer());
@@ -102,27 +94,12 @@ public final class HypixelApiInternals {
         HypixelModAPI.getInstance().registerHandler(new ClientboundPacketHandler() {
             @Override
             public void onHelloEvent(ClientboundHelloPacket packet) {
-                System.out.println(packet);
+                HypixelModAPI.getInstance().subscribeToEventPacket(ClientboundLocationPacket.class);
             }
 
             @Override
             public void onLocationEvent(ClientboundLocationPacket packet) {
-                System.out.println(packet);
-            }
 
-            @Override
-            public void onPartyInfoPacket(ClientboundPartyInfoPacket packet) {
-                System.out.println(packet);
-            }
-
-            @Override
-            public void onPingPacket(ClientboundPingPacket packet) {
-                System.out.println(packet);
-            }
-
-            @Override
-            public void onPlayerInfoPacket(ClientboundPlayerInfoPacket packet) {
-                System.out.println(packet);
             }
         });
         EventManager.register(ReceivePacketEvent.class, (ev) -> {
@@ -142,23 +119,18 @@ public final class HypixelApiInternals {
             }
 
             try {
-                PacketSerializer s =
+                PacketSerializer s = new PacketSerializer(
                         //#if MC>12000 && FABRIC
-                        //$$ null; // todo
+                        //$$ null // todo
                         //#else
-                        new PacketSerializer(packet.getBufferData());
+                        packet.getBufferData()
                         //#endif
+                );
                 HypixelModAPI.getInstance().handle(identifier, s);
             } catch (Exception e) {
                 LOGGER.warn("Failed to handle packet {}", identifier, e);
             }
         });
-
-        CommandBuilder b = CommandManager.builder("hyp").description("hypixel api commands");
-        b.then(runs("ping").does(() -> HypixelModAPI.getInstance().sendPacket(new ServerboundPingPacket())));
-        b.then(runs("party").does(() -> HypixelModAPI.getInstance().sendPacket(new ServerboundPartyInfoPacket())));
-        b.then(runs("player").does(() -> HypixelModAPI.getInstance().sendPacket(new ServerboundPlayerInfoPacket())));
-        CommandManager.registerCommand(b);
     }
 
     //#if MC>12000 && FABRIC
