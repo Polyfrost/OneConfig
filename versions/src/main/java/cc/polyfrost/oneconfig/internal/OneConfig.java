@@ -40,6 +40,7 @@ import cc.polyfrost.oneconfig.internal.gui.BlurHandler;
 import cc.polyfrost.oneconfig.internal.hud.HudCore;
 import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
 import cc.polyfrost.oneconfig.libs.modapi.HypixelModAPI;
+import cc.polyfrost.oneconfig.libs.modapi.packet.impl.clientbound.event.ClientboundLocationPacket;
 import cc.polyfrost.oneconfig.libs.universal.ChatColor;
 import cc.polyfrost.oneconfig.libs.universal.UChat;
 import cc.polyfrost.oneconfig.libs.universal.UScreen;
@@ -184,6 +185,7 @@ public class OneConfig {
         ConfigCore.sortMods();
         //#if FORGE==1
         HypixelModAPI.getInstance().setPacketSender(HypixelPacketUtil.getInstance()::sendPacket);
+        HypixelModAPI.getInstance().subscribeToEventPacket(ClientboundLocationPacket.class);
         //#endif
 
         initialized = true;

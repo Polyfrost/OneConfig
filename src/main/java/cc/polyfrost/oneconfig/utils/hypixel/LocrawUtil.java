@@ -72,14 +72,12 @@ public class LocrawUtil {
     }
 
     private void sendLocraw(boolean delay) {
+        //#if FORGE==0
         new TickDelay(() -> {
             this.listening = true;
-            //#if FORGE==0
             UChat.say("/locraw");
-            //#else
-            HypixelModAPI.getInstance().subscribeToEventPacket(ClientboundLocationPacket.class);
-            //#endif
         }, (delay ? 20 : 0));
+        //#endif
     }
 
     public void handleLocationPacket(ClientboundLocationPacket packet) {
