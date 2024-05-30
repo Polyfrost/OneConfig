@@ -42,10 +42,6 @@ subprojects {
                 (this as CoreJavadocOptions).addBooleanOption("Xdoclint:none", true)
             }
         }
-
-        withType(Jar::class.java) {
-            exclude("**/internal/**")
-        }
     }
 
     base.archivesName = "${project.name}-api"

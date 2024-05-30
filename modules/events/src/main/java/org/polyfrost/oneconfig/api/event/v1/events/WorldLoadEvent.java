@@ -26,12 +26,18 @@
 
 package org.polyfrost.oneconfig.api.event.v1.events;
 
+import org.polyfrost.oneconfig.api.DeclaredInPlatform;
+
 /**
  * Called when the world is loaded.
  */
+@DeclaredInPlatform
 public class WorldLoadEvent implements Event {
-    public static final WorldLoadEvent INSTANCE = new WorldLoadEvent();
+    public final Object world;
+    public final Object manager;
 
-    private WorldLoadEvent() {
+    private WorldLoadEvent(Object world, Object manager) {
+        this.world = world;
+        this.manager = manager;
     }
 }

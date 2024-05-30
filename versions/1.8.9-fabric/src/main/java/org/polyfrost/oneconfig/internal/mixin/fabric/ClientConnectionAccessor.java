@@ -24,26 +24,15 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.internal.mixin;
+package org.polyfrost.oneconfig.internal.mixin.fabric;
 
-import net.minecraft.client.multiplayer.WorldClient;
-import net.minecraft.client.network.NetHandlerPlayClient;
-import net.minecraft.profiler.Profiler;
-import net.minecraft.world.EnumDifficulty;
-import net.minecraft.world.WorldSettings;
-import org.polyfrost.oneconfig.api.event.v1.EventManager;
-import org.polyfrost.oneconfig.api.event.v1.events.WorldLoadEvent;
-import org.polyfrost.oneconfig.internal.ClassHasOverwrites;
+import io.netty.channel.Channel;
+import net.minecraft.network.ClientConnection;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.gen.Accessor;
 
-@Mixin(WorldClient.class)
-@ClassHasOverwrites("1.16.5-forge")
-public abstract class WorldClientMixin {
-    @Inject(method = "<init>", at = @At("RETURN"))
-    private void ocfg$worldLoadCallback(NetHandlerPlayClient manager, WorldSettings settings, int dimensionId, EnumDifficulty difficulty, Profiler profiler, CallbackInfo ci) {
-        EventManager.INSTANCE.post(new WorldLoadEvent((WorldClient) ((Object) this), manager));
-    }
+@Mixin(ClientConnection.class)
+public interface ClientConnectionAccessor {
+    @Accessor
+    Channel getChannel();
 }

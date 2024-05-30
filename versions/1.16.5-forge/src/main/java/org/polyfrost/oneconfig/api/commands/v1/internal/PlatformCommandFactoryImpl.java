@@ -76,7 +76,7 @@ import static com.mojang.brigadier.builder.RequiredArgumentBuilder.argument;
 @ApiStatus.Internal
 public class PlatformCommandFactoryImpl implements PlatformCommandFactory {
     private static final Map<Class<?>, Supplier<ArgumentType<?>>> argTypeMap = new HashMap<>();
-    private static List<CommandNode<ClientCommandSource>> nodes = new ArrayList<>();
+    private static final List<CommandNode<ClientCommandSource>> nodes = new ArrayList<>();
 
 
     static {
@@ -109,7 +109,6 @@ public class PlatformCommandFactoryImpl implements PlatformCommandFactory {
             for (CommandNode<ClientCommandSource> n : nodes) {
                 e.dispatcher.getRoot().addChild(n);
             }
-            nodes = null;
         }).register();
     }
 

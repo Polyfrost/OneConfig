@@ -62,6 +62,7 @@ net.minecraft.client.gui.components.ChatComponent net.minecraft.client.gui.NewCh
 net.minecraft.client.gui.screens.ChatScreen net.minecraft.client.gui.screen.ChatScreen
 net.minecraft.client.gui.screens.Screen net.minecraft.client.gui.screen.Screen
 
+net.minecraft.client.multiplayer.ClientLevel$ClientLevelData  net.minecraft.client.multiplayer.ClientLevel$ClientWorldInfo
 net.minecraft.client.multiplayer.ClientLevel net.minecraft.client.world.ClientWorld
 
 net.minecraft.client.multiplayer.ClientPacketListener commands commandDispatcher
@@ -84,6 +85,8 @@ net.minecraft.client.renderer.GameRenderer loadEffect() loadShader()
 net.minecraft.client.renderer.GameRenderer render() updateCameraAndRender()
 net.minecraft.client.renderer.GameRenderer shutdownEffect() stopUseShader()
 
+net.minecraft.client.renderer.LevelRenderer net.minecraft.client.renderer.WorldRenderer
+
 net.minecraft.client.renderer.PostChain getName() getShaderGroupName()
 net.minecraft.client.renderer.PostChain net.minecraft.client.shader.ShaderGroup
 net.minecraft.client.renderer.PostChain passes listShaders
@@ -101,6 +104,8 @@ net.minecraft.commands.arguments.coordinates.BlockPosArgument net.minecraft.comm
 net.minecraft.commands.arguments.item.ItemArgument net.minecraft.command.arguments.ItemArgument
 
 net.minecraft.core.BlockPos net.minecraft.util.math.BlockPos
+
+net.minecraft.resources.ResourceKey net.minecraft.util.RegistryKey
 
 net.minecraft.network.Connection net.minecraft.network.NetworkManager
 net.minecraft.network.Connection send() sendPacket()
@@ -140,6 +145,8 @@ net.minecraft.util.datafix.DataFixers net.minecraft.util.datafix.DataFixesManage
 net.minecraft.util.profiling.ProfilerFiller net.minecraft.profiler.IProfiler
 net.minecraft.util.profiling.ProfilerFiller pop() endSection()
 net.minecraft.util.profiling.ProfilerFiller push() startSection()
+
+net.minecraft.world.level.dimension.DimensionType net.minecraft.world.DimensionType
 
 net.minecraft.world.entity.Entity getRotationVector() getPitchYaw()
 net.minecraft.world.entity.Entity net.minecraft.entity.Entity

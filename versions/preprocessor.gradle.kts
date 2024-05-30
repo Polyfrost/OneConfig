@@ -22,7 +22,7 @@ preprocess {
     val forge11904 = createNode("1.19.4-forge", 11904, "srg")
     val fabric11904 = createNode("1.19.4-fabric", 11904, "yarn")
     val fabric12004 = createNode("1.20.4-fabric", 12004, "yarn")
-    val forge120004 = createNode("1.20.4-forge", 12004, "srg")
+    val forge12004 = createNode("1.20.4-forge", 12004, "srg")
 
     fabric12004.link(fabric11904)
     fabric11904.link(fabric11801, file("mappings/fabric-1.19.4-1.18.1.txt"))
@@ -30,7 +30,7 @@ preprocess {
     fabric11701.link(fabric11605, file("mappings/fabric-1.17.1-1.16.5.txt"))
     fabric11605.link(forge11605, file("mappings/fabric-forge-1.16.5.txt"))
 
-    forge120004.link(forge11904)
+    forge12004.link(forge11904, file("mappings/forge-1.20.4-1.19.4.txt"))
     forge11904.link(forge11801, file("mappings/forge-1.19.4-1.18.1.txt"))
     forge11801.link(forge11701, file("mappings/forge-1.18.1-1.17.1.txt"))
     forge11701.link(forge11605, file("mappings/forge-1.17.1-1.16.5.txt"))

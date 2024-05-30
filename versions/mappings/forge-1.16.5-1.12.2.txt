@@ -28,10 +28,14 @@ net.minecraft.profiler.IProfiler net.minecraft.profiler.Profiler
 
 net.minecraft.util.text.ITextComponent getUnformattedComponentText() getUnformattedText()
 
+net.minecraftforge.client.event.ClientPlayerNetworkEvent getNetworkManager() getManager()
+net.minecraftforge.client.event.ClientPlayerNetworkEvent net.minecraftforge.fml.common.network.FMLNetworkEvent
+net.minecraftforge.client.event.ClientPlayerNetworkEvent$LoggedInEvent net.minecraftforge.fml.common.network.FMLNetworkEvent$ClientConnectedToServerEvent
 net.minecraftforge.client.gui.ForgeIngameGui net.minecraftforge.client.GuiIngameForge
 
 net.minecraftforge.eventbus.EventBus net.minecraftforge.fml.common.eventhandler.EventBus
 net.minecraftforge.eventbus.api.Event net.minecraftforge.fml.common.eventhandler.Event
+net.minecraftforge.eventbus.api.SubscribeEvent net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 
 net.minecraftforge.fml.ModContainer net.minecraftforge.fml.common.ModContainer
 net.minecraftforge.fml.ModLoadingContext net.minecraftforge.fml.common.Loader
