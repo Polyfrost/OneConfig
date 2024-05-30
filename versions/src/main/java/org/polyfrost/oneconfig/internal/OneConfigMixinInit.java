@@ -71,7 +71,6 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
             }
         } else {
             // fabric specific
-            mixins.add("fabric.ClientConnectionAccessor");
             mixins.add("fabric.GameRendererAccessor");
             mixins.add("fabric.NetHandlerPlayClientMixin");
             if (version < 11300) {

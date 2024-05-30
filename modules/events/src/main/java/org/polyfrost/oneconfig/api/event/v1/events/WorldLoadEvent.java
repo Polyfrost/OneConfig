@@ -34,10 +34,8 @@ import org.polyfrost.oneconfig.api.DeclaredInPlatform;
 @DeclaredInPlatform
 public class WorldLoadEvent implements Event {
     public final Object world;
-    public final Object manager;
 
-    private WorldLoadEvent(Object world, Object manager) {
+    private WorldLoadEvent(Object world) {
         this.world = world;
-        this.manager = manager;
     }
 }

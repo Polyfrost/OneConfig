@@ -27,23 +27,17 @@
 package org.polyfrost.oneconfig.internal.mixin;
 
 import net.minecraft.client.multiplayer.WorldClient;
-import net.minecraft.client.network.NetHandlerPlayClient;
-import net.minecraft.profiler.Profiler;
-import net.minecraft.world.EnumDifficulty;
-import net.minecraft.world.WorldSettings;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.WorldLoadEvent;
-import org.polyfrost.oneconfig.internal.ClassHasOverwrites;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(WorldClient.class)
-@ClassHasOverwrites("1.16.5-forge")
 public abstract class WorldClientMixin {
     @Inject(method = "<init>", at = @At("RETURN"))
-    private void ocfg$worldLoadCallback(NetHandlerPlayClient manager, WorldSettings settings, int dimensionId, EnumDifficulty difficulty, Profiler profiler, CallbackInfo ci) {
-        EventManager.INSTANCE.post(new WorldLoadEvent((WorldClient) ((Object) this), manager));
+    private void ocfg$worldLoadCallback(CallbackInfo ci) {
+        EventManager.INSTANCE.post(new WorldLoadEvent((WorldClient) ((Object) this)));
     }
 }

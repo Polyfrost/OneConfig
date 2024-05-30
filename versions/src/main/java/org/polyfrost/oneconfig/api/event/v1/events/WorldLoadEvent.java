@@ -27,7 +27,6 @@
 package org.polyfrost.oneconfig.api.event.v1.events;
 
 import net.minecraft.client.multiplayer.WorldClient;
-import net.minecraft.client.network.NetHandlerPlayClient;
 import org.polyfrost.oneconfig.api.PlatformDeclaration;
 
 /**
@@ -35,11 +34,9 @@ import org.polyfrost.oneconfig.api.PlatformDeclaration;
  */
 @PlatformDeclaration
 public class WorldLoadEvent implements Event {
-    public final NetHandlerPlayClient manager;
     public final WorldClient world;
 
-    public WorldLoadEvent(WorldClient world, NetHandlerPlayClient manager) {
+    public WorldLoadEvent(WorldClient world) {
         this.world = world;
-        this.manager = manager;
     }
 }

@@ -128,11 +128,11 @@ net.minecraft.network.chat.TranslatableComponent net.minecraft.util.text.Transla
 net.minecraft.network.protocol.Packet net.minecraft.network.IPacket
 
 net.minecraft.network.protocol.game.ClientboundCommandsPacket net.minecraft.network.play.server.SCommandListPacket
-net.minecraft.network.protocol.game.ClientboundCustomPayloadPacket net.minecraft.network.play.client.CCustomPayloadPacket
 net.minecraft.network.protocol.game.ClientboundLoginPacket net.minecraft.network.play.server.SJoinGamePacket
-net.minecraft.network.protocol.game.ServerboundCustomPayloadPacket getData() getBufferData()
-net.minecraft.network.protocol.game.ServerboundCustomPayloadPacket getIdentifier() getChannelName()
-net.minecraft.network.protocol.game.ServerboundCustomPayloadPacket net.minecraft.network.play.server.SCustomPayloadPlayPacket
+net.minecraft.network.protocol.game.ClientboundCustomPayloadPacket getData() getBufferData()
+net.minecraft.network.protocol.game.ClientboundCustomPayloadPacket getIdentifier() getChannelName()
+net.minecraft.network.protocol.game.ClientboundCustomPayloadPacket net.minecraft.network.play.server.SCustomPayloadPlayPacket
+net.minecraft.network.protocol.game.ServerboundCustomPayloadPacket net.minecraft.network.play.client.CCustomPayloadPacket
 
 net.minecraft.resources.ResourceLocation net.minecraft.util.ResourceLocation
 

@@ -102,6 +102,21 @@ public class org/polyfrost/oneconfig/api/event/v1/events/SendPacketEvent : org/p
 	public fun <init> (Lnet/minecraft/network/Packet;)V
 }
 
+public class org/polyfrost/oneconfig/api/event/v1/events/WorldLoadEvent : org/polyfrost/oneconfig/api/event/v1/events/Event {
+	@1.17.1-forge,1.18.1-forge,1.19.4-forge,1.20.4-forge
+	public final field world Lnet/minecraft/client/multiplayer/ClientLevel;
+	@1.17.1-forge,1.18.1-forge,1.19.4-forge,1.20.4-forge
+	public fun <init> (Lnet/minecraft/client/multiplayer/ClientLevel;)V
+	@1.12.2-forge,1.8.9-forge
+	public final field world Lnet/minecraft/client/multiplayer/WorldClient;
+	@1.12.2-forge,1.8.9-forge
+	public fun <init> (Lnet/minecraft/client/multiplayer/WorldClient;)V
+	@1.12.2-fabric,1.16.5-fabric,1.16.5-forge,1.17.1-fabric,1.18.1-fabric,1.19.4-fabric,1.20.4-fabric,1.8.9-fabric
+	public final field world Lnet/minecraft/client/world/ClientWorld;
+	@1.12.2-fabric,1.16.5-fabric,1.16.5-forge,1.17.1-fabric,1.18.1-fabric,1.19.4-fabric,1.20.4-fabric,1.8.9-fabric
+	public fun <init> (Lnet/minecraft/client/world/ClientWorld;)V
+}
+
 public final class org/polyfrost/oneconfig/api/hypixel/v0/internal/HypixelApiInternals {
 	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/hypixel/v0/internal/HypixelApiInternals;
 	public static fun init ()V

@@ -153,7 +153,6 @@ public class org/polyfrost/oneconfig/api/event/v1/events/TickEvent$Start : org/p
 }
 
 public class org/polyfrost/oneconfig/api/event/v1/events/WorldLoadEvent : org/polyfrost/oneconfig/api/event/v1/events/Event {
-	public final field manager Ljava/lang/Object;
 	public final field world Ljava/lang/Object;
 }
 

@@ -27,10 +27,6 @@
 package org.polyfrost.oneconfig.api.hypixel.v0.internal;
 
 import io.netty.buffer.Unpooled;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandler;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.SimpleChannelInboundHandler;
 import net.hypixel.modapi.HypixelModAPI;
 import net.hypixel.modapi.handler.ClientboundPacketHandler;
 import net.hypixel.modapi.packet.impl.clientbound.ClientboundHelloPacket;
@@ -44,22 +40,24 @@ import net.hypixel.modapi.packet.impl.serverbound.ServerboundPlayerInfoPacket;
 import net.hypixel.modapi.serializer.PacketSerializer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.network.NetHandlerPlayClient;
-import net.minecraft.network.Packet;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.ApiStatus;
 import org.polyfrost.oneconfig.api.commands.v1.CommandManager;
 import org.polyfrost.oneconfig.api.commands.v1.factories.builder.CommandBuilder;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
-import org.polyfrost.oneconfig.api.event.v1.events.WorldLoadEvent;
+import org.polyfrost.oneconfig.api.event.v1.events.ReceivePacketEvent;
 
 import static org.polyfrost.oneconfig.api.commands.v1.factories.builder.CommandBuilder.runs;
 
+/**
+ * Heavily adapted from Hypixel/ForgeModAPI under the MIT licence.
+ * <a href="https://github.com/HypixelDev/ForgeModAPI/blob/master/src/main/java/net/hypixel/modapi/forge/ForgeModAPI.java">See here</a>
+ */
 @ApiStatus.Internal
 public final class HypixelApiInternals {
     public static final HypixelApiInternals INSTANCE = new HypixelApiInternals();
     private static final Logger LOGGER = LogManager.getLogger("OneConfig/HypixelAPI");
-    private volatile NetHandlerPlayClient net;
 
     private HypixelApiInternals() {
         registerHypixelApi();
@@ -72,30 +70,31 @@ public final class HypixelApiInternals {
 
     private void registerHypixelApi() {
         HypixelModAPI.getInstance().setPacketSender((packet) -> {
+            NetHandlerPlayClient net = Minecraft.getMinecraft().getNetHandler();
             if (net == null) {
-                if (Minecraft.getMinecraft().getNetHandler() != null) {
-                    net = Minecraft.getMinecraft().getNetHandler();
-                } else {
-                    LOGGER.warn("dropping packet because no net handler is available");
-                    return false;
-                }
+                LOGGER.warn("dropping packet because no net handler is available");
+                return false;
             }
             net.minecraft.network.PacketBuffer buf = new net.minecraft.network.PacketBuffer(Unpooled.buffer());
             packet.write(new PacketSerializer(buf));
             net.addToSendQueue(new net.minecraft.network.play.client.C17PacketCustomPayload(
-                    //#if MC>12000
-                    //$$ new net.minecraft.network.protocol.common.custom.DiscardedPayload(
-                    //#endif
-                        //#if MC<=11202
-                        packet.getIdentifier(),
-                        //#else
-                        //$$ new net.minecraft.util.ResourceLocation(packet.getIdentifier()),
-                        //#endif
-                        buf
-                    //#if MC>12000
-                    //$$ )
-                    //#endif
-                )
+                            //#if MC>12000
+                            //#if FORGE
+                            //$$ new net.minecraft.network.protocol.common.custom.DiscardedPayload(
+                            //#else
+                            //$$ new Payload(
+                            //#endif
+                            //#endif
+                            //#if MC<=11202
+                            packet.getIdentifier(),
+                            //#else
+                            //$$ new net.minecraft.util.ResourceLocation(packet.getIdentifier()),
+                            //#endif
+                            buf
+                            //#if MC>12000
+                            //$$ )
+                            //#endif
+                    )
             );
             return true;
         });
@@ -126,25 +125,32 @@ public final class HypixelApiInternals {
                 System.out.println(packet);
             }
         });
-        EventManager.register(WorldLoadEvent.class, (ev) -> {
+        EventManager.register(ReceivePacketEvent.class, (ev) -> {
+            if (!(ev.packet instanceof net.minecraft.network.play.server.S3FPacketCustomPayload)) {
+                return;
+            }
+
+            net.minecraft.network.play.server.S3FPacketCustomPayload packet = (net.minecraft.network.play.server.S3FPacketCustomPayload) ev.packet;
+            //#if MC>12000
+            //$$ String identifier = packet.payload().id().toString();
+            //#else
+            //noinspection StringOperationCanBeSimplified
+            String identifier = packet.getChannelName().toString();
+            //#endif
+            if (!HypixelModAPI.getInstance().getRegistry().isRegistered(identifier)) {
+                return;
+            }
+
             try {
-                net = ev.manager;
-                HypixelModAPI.getInstance().subscribeToEventPacket(ClientboundLocationPacket.class);
-                Channel channel =
-                    //#if FORGE
-                    ev.manager.getNetworkManager().channel();
-                    //#else
-                    //$$ ((org.polyfrost.oneconfig.internal.mixin.fabric.ClientConnectionAccessor) ev.manager.
-                        //#if MC<11300
-                        //$$ getClientConnection()
+                PacketSerializer s =
+                        //#if MC>12000 && FABRIC
+                        //$$ null; // todo
                         //#else
-                        //$$ getConnection()
+                        new PacketSerializer(packet.getBufferData());
                         //#endif
-                    //$$ ).getChannel();
-                    //#endif
-                channel.pipeline().addBefore("packet_handler", "hypixel_mod_api_packet_handler", HypixelPacketHandler.INSTANCE);
+                HypixelModAPI.getInstance().handle(identifier, s);
             } catch (Exception e) {
-                // already registered.
+                LOGGER.warn("Failed to handle packet {}", identifier, e);
             }
         });
 
@@ -155,31 +161,30 @@ public final class HypixelApiInternals {
         CommandManager.registerCommand(b);
     }
 
-    @ChannelHandler.Sharable
-    private static class HypixelPacketHandler extends SimpleChannelInboundHandler<Packet<?>> {
-        private static final HypixelPacketHandler INSTANCE = new HypixelPacketHandler();
-
-        @Override
-        protected void channelRead0(ChannelHandlerContext ctx, Packet<?> msg) {
-            ctx.fireChannelRead(msg);
-
-            if (!(msg instanceof net.minecraft.network.play.server.S3FPacketCustomPayload)) {
-                return;
-            }
-
-            net.minecraft.network.play.server.S3FPacketCustomPayload packet = (net.minecraft.network.play.server.S3FPacketCustomPayload) msg;
-            // reason: needed for 1.16+
-            //noinspection StringOperationCanBeSimplified
-            String identifier = packet.getChannelName().toString();
-            if (!HypixelModAPI.getInstance().getRegistry().isRegistered(identifier)) {
-                return;
-            }
-
-            try {
-                HypixelModAPI.getInstance().handle(identifier, new PacketSerializer(packet.getBufferData()));
-            } catch (Exception e) {
-                LOGGER.warn("Failed to handle packet {}", identifier, e);
-            }
-        }
-    }
+    //#if MC>12000 && FABRIC
+    //$$ private static final class Payload implements net.minecraft.network.packet.CustomPayload {
+    //$$     private final net.minecraft.util.Identifier id;
+    //$$     private final net.minecraft.network.PacketByteBuf data;
+    //$$
+    //$$     Payload(net.minecraft.util.Identifier id, net.minecraft.network.PacketByteBuf data) {
+    //$$         this.id = id;
+    //$$         this.data = data;
+    //$$     }
+    //$$
+    //$$     public void write(net.minecraft.network.PacketByteBuf arg) {
+    //$$         if (this.data != null) {
+    //$$             arg.writeBytes(this.data.slice());
+    //$$         }
+    //$$
+    //$$     }
+    //$$
+    //$$     public net.minecraft.util.Identifier id() {
+    //$$         return this.id;
+    //$$     }
+    //$$
+    //$$     public net.minecraft.network.PacketByteBuf getData() {
+    //$$         return this.data;
+    //$$     }
+    //$$ }
+    //#endif
 }
