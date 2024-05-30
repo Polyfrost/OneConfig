@@ -24,12 +24,25 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-/**
- * Experimental implementation of the <a href="https://github.com/HypixelDev/ModAPI">Hypixel Mod API</a> in OneConfig.
- * <br>
- * This will remain experimental as long as upstream is experimental.
- */
-@ApiStatus.Experimental
-package org.polyfrost.oneconfig.hypixel.v0;
+package org.polyfrost.oneconfig.api.event.v1.events;
 
-import org.jetbrains.annotations.ApiStatus;
+import org.polyfrost.oneconfig.hypixel.v0.HypixelAPI;
+
+/**
+ * Event that is fired when the player's location is changed.
+ */
+public class HypixelLocationEvent implements Event {
+    public static final HypixelLocationEvent INSTANCE = new HypixelLocationEvent();
+
+    private HypixelLocationEvent() {
+    }
+
+    /**
+     * Get the location of the player when the event was fired.
+     * @return the same as {@link HypixelAPI#getLocation()}.
+     */
+    public HypixelAPI.Location getLocation() {
+        return HypixelAPI.getLocation();
+    }
+
+}

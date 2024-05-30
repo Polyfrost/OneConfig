@@ -68,6 +68,11 @@ public class org/polyfrost/oneconfig/api/event/v1/events/HudRenderEvent : org/po
 	public fun component2 ()F
 }
 
+public class org/polyfrost/oneconfig/api/event/v1/events/HypixelLocationEvent : org/polyfrost/oneconfig/api/event/v1/events/Event {
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/event/v1/events/HypixelLocationEvent;
+	public fun getLocation ()Lorg/polyfrost/oneconfig/hypixel/v0/HypixelAPI$Location;
+}
+
 public class org/polyfrost/oneconfig/api/event/v1/events/InitializationEvent : org/polyfrost/oneconfig/api/event/v1/events/Event {
 	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/event/v1/events/InitializationEvent;
 }

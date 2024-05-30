@@ -77,7 +77,7 @@ public abstract class org/polyfrost/oneconfig/hypixel/v0/HypixelAPI$InfoBase {
 	public abstract fun update ()V
 }
 
-public final class org/polyfrost/oneconfig/hypixel/v0/HypixelAPI$Location : org/polyfrost/oneconfig/hypixel/v0/HypixelAPI$InfoBase {
+public final class org/polyfrost/oneconfig/hypixel/v0/HypixelAPI$Location {
 	public fun getGameType ()Ljava/util/Optional;
 	public fun getLobbyName ()Ljava/util/Optional;
 	public fun getMapName ()Ljava/util/Optional;
@@ -85,13 +85,15 @@ public final class org/polyfrost/oneconfig/hypixel/v0/HypixelAPI$Location : org/
 	public fun getServerType ()Ljava/util/Optional;
 	public fun isGame ()Z
 	public fun isLobby ()Z
-	public fun update ()V
+	public fun toString ()Ljava/lang/String;
+	public fun update (Lnet/hypixel/modapi/packet/impl/clientbound/event/ClientboundLocationPacket;)V
 }
 
 public final class org/polyfrost/oneconfig/hypixel/v0/HypixelAPI$PartyInfo : org/polyfrost/oneconfig/hypixel/v0/HypixelAPI$InfoBase {
 	public fun getMembers ()Ljava/util/Map;
 	public fun getPartySize ()I
 	public fun isInParty ()Z
+	public fun toString ()Ljava/lang/String;
 	public fun update ()V
 }
 
@@ -100,6 +102,7 @@ public final class org/polyfrost/oneconfig/hypixel/v0/HypixelAPI$PlayerInfo : or
 	public fun getPackageRank ()Lnet/hypixel/data/rank/PackageRank;
 	public fun getPrefix ()Ljava/util/Optional;
 	public fun getRank ()Lnet/hypixel/data/rank/PlayerRank;
+	public fun toString ()Ljava/lang/String;
 	public fun update ()V
 }
 

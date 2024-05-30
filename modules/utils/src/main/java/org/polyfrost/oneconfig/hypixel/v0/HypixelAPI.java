@@ -38,6 +38,9 @@ import net.hypixel.modapi.packet.impl.clientbound.ClientboundPartyInfoPacket;
 import net.hypixel.modapi.packet.impl.clientbound.ClientboundPlayerInfoPacket;
 import net.hypixel.modapi.packet.impl.clientbound.event.ClientboundLocationPacket;
 import net.hypixel.modapi.packet.impl.serverbound.ServerboundPlayerInfoPacket;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.Map;
 import java.util.Optional;
@@ -50,9 +53,12 @@ import java.util.UUID;
  * are available directly from their classes.
  * <br>
  * This class is a simple wrapper around this functionality, providing a simple way to access the Hypixel API.
+ *
+ * @implNote the actual registration of the packet handlers is done in HypixelApiInternals.
  */
 @SuppressWarnings("unused")
 public final class HypixelAPI {
+    private static final Logger LOGGER = LogManager.getLogger("OneConfig/HypixelAPI");
     private static final HypixelAPI INSTANCE = new HypixelAPI();
     private PlayerInfo info;
     private PartyInfo partyInfo;
@@ -74,6 +80,7 @@ public final class HypixelAPI {
     }
 
     public static abstract class InfoBase {
+        @ApiStatus.Internal
         public abstract void update();
     }
 
@@ -106,6 +113,11 @@ public final class HypixelAPI {
 
         public Map<UUID, ClientboundPartyInfoPacket.PartyMember> getMembers() {
             return p.getMemberMap();
+        }
+
+        @Override
+        public String toString() {
+            return p.toString();
         }
     }
 
@@ -142,23 +154,27 @@ public final class HypixelAPI {
         public Optional<String> getPrefix() {
             return p.getPrefix();
         }
+
+        @Override
+        public String toString() {
+            return p.toString();
+        }
     }
 
-    public static final class Location extends InfoBase {
+    public static final class Location {
         private ClientboundLocationPacket p;
 
         private Location() {
-            HypixelModAPI.getInstance().registerHandler(new ClientboundPacketHandler() {
-                @Override
-                public void onLocationEvent(ClientboundLocationPacket packet) {
-                    p = packet;
-                }
-            });
-            update();
+            LOGGER.info("Registering location packet handler");
+            // register here so that we only ask the server about the location if someone refers to this object.
+            // we don't handle ourselves due to the fact that we can't actually reference the event class here.
+            // -> handled in HypixelApiInternals
+            HypixelModAPI.getInstance().subscribeToEventPacket(ClientboundLocationPacket.class);
         }
 
-        @Override
-        public void update() {
+        @ApiStatus.Internal
+        public void update(ClientboundLocationPacket packet) {
+            p = packet;
         }
 
         public Optional<String> getLobbyName() {
@@ -191,6 +207,11 @@ public final class HypixelAPI {
             if (!type.isPresent()) return Optional.empty();
             ServerType t = type.get();
             return t instanceof GameType ? Optional.of((GameType) t) : Optional.empty();
+        }
+
+        @Override
+        public String toString() {
+            return p.toString();
         }
     }
 }

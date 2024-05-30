@@ -29,17 +29,21 @@ package org.polyfrost.oneconfig.api.hypixel.v0.internal;
 import io.netty.buffer.Unpooled;
 import net.hypixel.modapi.HypixelModAPI;
 import net.hypixel.modapi.handler.ClientboundPacketHandler;
-import net.hypixel.modapi.packet.impl.clientbound.ClientboundHelloPacket;
 import net.hypixel.modapi.packet.impl.clientbound.event.ClientboundLocationPacket;
 import net.hypixel.modapi.serializer.PacketSerializer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.network.NetHandlerPlayClient;
+import net.minecraft.network.PacketBuffer;
+import net.minecraft.network.play.client.C17PacketCustomPayload;
+import net.minecraft.network.play.server.S3FPacketCustomPayload;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.ApiStatus;
 import org.polyfrost.oneconfig.api.event.v1.EventDelay;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
+import org.polyfrost.oneconfig.api.event.v1.events.HypixelLocationEvent;
 import org.polyfrost.oneconfig.api.event.v1.events.ReceivePacketEvent;
+import org.polyfrost.oneconfig.hypixel.v0.HypixelAPI;
 
 /**
  * Heavily adapted from Hypixel/ForgeModAPI under the MIT licence.
@@ -67,9 +71,9 @@ public final class HypixelApiInternals {
                 EventDelay.tick(20, () -> HypixelModAPI.getInstance().sendPacket(packet));
                 return false;
             }
-            net.minecraft.network.PacketBuffer buf = new net.minecraft.network.PacketBuffer(Unpooled.buffer());
+            PacketBuffer buf = new PacketBuffer(Unpooled.buffer());
             packet.write(new PacketSerializer(buf));
-            net.addToSendQueue(new net.minecraft.network.play.client.C17PacketCustomPayload(
+            net.addToSendQueue(new C17PacketCustomPayload(
                             //#if MC>12000
                             //#if FORGE
                             //$$ new net.minecraft.network.protocol.common.custom.DiscardedPayload(
@@ -93,21 +97,18 @@ public final class HypixelApiInternals {
 
         HypixelModAPI.getInstance().registerHandler(new ClientboundPacketHandler() {
             @Override
-            public void onHelloEvent(ClientboundHelloPacket packet) {
-                HypixelModAPI.getInstance().subscribeToEventPacket(ClientboundLocationPacket.class);
-            }
-
-            @Override
             public void onLocationEvent(ClientboundLocationPacket packet) {
-
+                // this happens here (unfortunately) because we can't access the EventManager from the HypixelAPI class
+                HypixelAPI.getLocation().update(packet);
+                EventManager.INSTANCE.post(HypixelLocationEvent.INSTANCE);
             }
         });
         EventManager.register(ReceivePacketEvent.class, (ev) -> {
-            if (!(ev.packet instanceof net.minecraft.network.play.server.S3FPacketCustomPayload)) {
+            if (!(ev.packet instanceof S3FPacketCustomPayload)) {
                 return;
             }
 
-            net.minecraft.network.play.server.S3FPacketCustomPayload packet = (net.minecraft.network.play.server.S3FPacketCustomPayload) ev.packet;
+            S3FPacketCustomPayload packet = (S3FPacketCustomPayload) ev.packet;
             //#if MC>12000
             //$$ String identifier = packet.payload().id().toString();
             //#else
