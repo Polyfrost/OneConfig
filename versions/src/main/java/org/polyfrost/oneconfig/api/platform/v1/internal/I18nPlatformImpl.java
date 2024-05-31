@@ -38,13 +38,13 @@ public class I18nPlatformImpl implements I18nPlatform {
 
     @Override
     public String getKeyName(int key, int scanCode) {
-        //#if MC>=11600
-        //$$ final String s = net.minecraft.client.util.InputMappings.getInputByCode(key, scanCode).toString();
-        //$$ if (s == null) return "Unknown";
-        //$$ else return s.length() == 1 ? s.toUpperCase() : s;
-        //#else
-        final String s = net.minecraft.client.settings.GameSettings.getKeyDisplayString(key);
-        return s == null ? "Unknown" : s;
-        //#endif
+        String s =
+            //#if MC>=11600
+            //$$ net.minecraft.client.util.InputMappings.getInputByCode(key, scanCode).toString();
+            //#else
+            net.minecraft.client.settings.GameSettings.getKeyDisplayString(key);
+            //#endif
+        if (s == null) return "Unknown";
+        else return s.length() == 1 ? s.toUpperCase() : s;
     }
 }

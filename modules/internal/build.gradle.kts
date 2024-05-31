@@ -29,5 +29,4 @@ dependencies {
     api(project(":modules:events"))
     api(project(":modules:commands"))
     compileOnly("org.polyfrost:universalcraft-1.8.9-forge:${libs.versions.universalcraft.get()}")
-    compileOnly("com.google.code.gson:gson:2.2.4")
 }

@@ -114,7 +114,7 @@ public final class HypixelApiInternals {
             try {
                 PacketSerializer s = new PacketSerializer(
                         //#if MC>12000 && FABRIC
-                        //$$ null // todo
+                        //$$ ((Payload) packet.payload()).data()
                         //#else
                         packet.getBufferData()
                         //#endif
@@ -132,29 +132,30 @@ public final class HypixelApiInternals {
     }
 
     //#if MC>12000 && FABRIC
-    //$$ private static final class Payload implements net.minecraft.network.packet.CustomPayload {
+    //$$ public static final class Payload implements net.minecraft.network.packet.CustomPayload {
     //$$     private final net.minecraft.util.Identifier id;
-    //$$     private final net.minecraft.network.PacketByteBuf data;
+    //$$     private final io.netty.buffer.ByteBuf data;
     //$$
-    //$$     Payload(net.minecraft.util.Identifier id, net.minecraft.network.PacketByteBuf data) {
+    //$$     public Payload(net.minecraft.util.Identifier id, net.minecraft.network.PacketByteBuf data) {
     //$$         this.id = id;
-    //$$         this.data = data;
+    //$$         this.data = data.copy();
+    //$$         data.skipBytes(data.readableBytes());
     //$$     }
     //$$
     //$$     public void write(net.minecraft.network.PacketByteBuf arg) {
     //$$         if (this.data != null) {
     //$$             arg.writeBytes(this.data.slice());
     //$$         }
-    //$$
     //$$     }
     //$$
     //$$     public net.minecraft.util.Identifier id() {
     //$$         return this.id;
     //$$     }
     //$$
-    //$$     public net.minecraft.network.PacketByteBuf getData() {
+    //$$     public io.netty.buffer.ByteBuf data() {
     //$$         return this.data;
     //$$     }
+    //$$
     //$$ }
     //#endif
 }

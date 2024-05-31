@@ -37,6 +37,8 @@ public class HypixelLocationEvent implements Event {
     public static final HypixelLocationEvent INSTANCE = new HypixelLocationEvent();
 
     private HypixelLocationEvent() {
+        // call <clinit> on HypixelAPI
+        HypixelAPI.getLocation();
     }
 
     /**

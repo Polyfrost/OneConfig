@@ -36,6 +36,7 @@ net.minecraft.client.Minecraft hasSingleplayerServer() isSingleplayer()
 net.minecraft.client.Minecraft level world
 net.minecraft.client.Minecraft resizeDisplay() updateWindowSize()
 net.minecraft.client.Minecraft runTick() runGameLoop()
+net.minecraft.client.Minecraft setScreen() displayGuiScreen()
 
 net.minecraft.client.MouseHandler net.minecraft.client.MouseHelper
 

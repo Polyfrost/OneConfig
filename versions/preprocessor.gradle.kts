@@ -30,14 +30,14 @@ preprocess {
     fabric11701.link(fabric11605, file("mappings/fabric-1.17.1-1.16.5.txt"))
     fabric11605.link(forge11605, file("mappings/fabric-forge-1.16.5.txt"))
 
+    fabric11202.link(fabric10809)
+    fabric10809.link(forge10809, file("mappings/fabric-forge-1.8.9.txt"))
+
     forge12004.link(forge11904, file("mappings/forge-1.20.4-1.19.4.txt"))
     forge11904.link(forge11801, file("mappings/forge-1.19.4-1.18.1.txt"))
     forge11801.link(forge11701, file("mappings/forge-1.18.1-1.17.1.txt"))
     forge11701.link(forge11605, file("mappings/forge-1.17.1-1.16.5.txt"))
     forge11605.link(forge11202, file("mappings/forge-1.16.5-1.12.2.txt"))
-
-    fabric11202.link(fabric10809)
-    fabric10809.link(forge10809, file("mappings/fabric-forge-1.8.9.txt"))
     forge11202.link(forge10809, file("mappings/forge-1.12.2-1.8.9.txt"))
 }
 

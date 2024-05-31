@@ -77,6 +77,9 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
                 // legacy fabric
                 mixins.add("commands.ChatScreenMixin");
             }
+            if (version > 12000) {
+                mixins.add("hypixel.CustomPayloadS2CPacketMixin");
+            }
         }
 
         // Inter-loader mixins

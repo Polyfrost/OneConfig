@@ -44,17 +44,8 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-//#if MC<=11202
-import org.lwjgl.input.Keyboard;
-import org.lwjgl.input.Mouse;
-//#endif
-
 //#if FORGE
-//#if MC<11900
 import net.minecraftforge.client.event.GuiOpenEvent;
-//#else
-//$$ import net.minecraftforge.client.event.ScreenEvent.Opening;
-//#endif
 import net.minecraftforge.fml.common.eventhandler.Event;
 //#else
 //$$ import org.polyfrost.oneconfig.api.event.v1.events.ScreenOpenEvent;
@@ -131,37 +122,17 @@ public abstract class MinecraftMixin {
     }
 
     //#if FORGE
-    @ModifyArg(method =
-            //#if MC>11700
-            //$$ "setScreen", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/eventbus/api/IEventBus;post(Lnet/minecraftforge/eventbus/api/Event;)Z"
-            //#else
-            "displayGuiScreen", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/eventhandler/EventBus;post(Lnet/minecraftforge/fml/common/eventhandler/Event;)Z"
-            //#endif
-            , remap = false))
+    @ModifyArg(method = "displayGuiScreen", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/eventhandler/EventBus;post(Lnet/minecraftforge/fml/common/eventhandler/Event;)Z", remap = false))
     private Event ocfg$screenOpenCallback(Event a) {
-        if (a instanceof
-                //#if MC<11900
-                GuiOpenEvent
-                //#else
-                //$$ Opening
-                //#endif
-        ) {
+        if (a instanceof GuiOpenEvent) {
             // w: not imported because 1.18+ they renamed it to be the same (breh)
-            //#if MC<11900
             GuiOpenEvent forgeEvent = (GuiOpenEvent) a;
-            //#else
-            //$$ Opening forgeEvent = (Opening) a;
-            //#endif
             org.polyfrost.oneconfig.api.event.v1.events.ScreenOpenEvent event =
                     new org.polyfrost.oneconfig.api.event.v1.events.ScreenOpenEvent(forgeEvent.
                             //#if MC<=10809
                             gui
                             //#else
-                            //#if MC<11900
                             //$$ getGui()
-                            //#else
-                            //$$ getNewScreen()
-                            //#endif
                             //#endif
                     );
             EventManager.INSTANCE.post(event);
@@ -193,87 +164,41 @@ public abstract class MinecraftMixin {
 
 
     //#if MC<=11202
-    //#if FORGE
+
     //#if MC<=10809
     @Inject(method = "runTick", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/settings/KeyBinding;setKeyBindState(IZ)V", ordinal = 1))
+    //#else
+        //#if FORGE
+        //$$ @Inject(method = "runTickKeyboard", at = @At(value = "FIELD", target = "Lnet/minecraft/client/Minecraft;debugCrashKeyPressTime:J", opcode = org.objectweb.asm.Opcodes.PUTFIELD))
+        //#else
+        //$$ @Inject(method = "method_12145", at = @At(value = "FIELD", target = "Lnet/minecraft/client/MinecraftClient;f3CTime:J", opcode = org.objectweb.asm.Opcodes.PUTFIELD))
+        //#endif
+    //#endif
     private void ocfg$keyCallback(CallbackInfo ci) {
         int state = 0;
-        if (Keyboard.getEventKeyState()) {
-            if (Keyboard.isRepeatEvent()) {
+        if (org.lwjgl.input.Keyboard.getEventKeyState()) {
+            if (org.lwjgl.input.Keyboard.isRepeatEvent()) {
                 state = 2;
             } else {
                 state = 1;
             }
         }
-        EventManager.INSTANCE.post(new KeyInputEvent(Keyboard.getEventKey(), Keyboard.getEventCharacter(), state));
+        EventManager.INSTANCE.post(new KeyInputEvent(org.lwjgl.input.Keyboard.getEventKey(), org.lwjgl.input.Keyboard.getEventCharacter(), state));
     }
 
 
+    //#if FORGE
     @Inject(method = "runTick", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/client/ForgeHooksClient;postMouseEvent()Z", remap = false))
+    //#else
+        //#if MC==10809
+        //$$ @Inject(method = "tick", at = @At(value = "INVOKE", target = "Lorg/lwjgl/input/Mouse;getEventButton()I", remap = false))
+        //#else
+        //$$ @Inject(method = "method_12141", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/options/KeyBinding;setKeyPressed(IZ)V"))
+        //#endif
+    //#endif
     private void ocfg$mouseCallback(CallbackInfo ci) {
-        EventManager.INSTANCE.post(new MouseInputEvent(Mouse.getEventButton(), Mouse.getEventButtonState() ? 1 : 0));
+        EventManager.INSTANCE.post(new MouseInputEvent(org.lwjgl.input.Mouse.getEventButton(), org.lwjgl.input.Mouse.getEventButtonState() ? 1 : 0));
     }
 
-    //#else
-    //$$ @Inject(method = "runTickKeyboard", at = @At(value = "FIELD", target = "Lnet/minecraft/client/Minecraft;debugCrashKeyPressTime:J", opcode = org.objectweb.asm.Opcodes.PUTFIELD))
-    //$$ private void ocfg$keyCallback(CallbackInfo ci) {
-    //$$     int state = 0;
-    //$$     if (Keyboard.getEventKeyState()) {
-    //$$         if (Keyboard.isRepeatEvent()) {
-    //$$             state = 2;
-    //$$         } else {
-    //$$             state = 1;
-    //$$         }
-    //$$     }
-    //$$     EventManager.INSTANCE.post(new KeyInputEvent(Keyboard.getEventKey(), Keyboard.getEventCharacter(), state));
-    //$$ }
-    //$$
-    //$$ @Inject(method = "runTickMouse", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/client/ForgeHooksClient;postMouseEvent()Z", remap = false), remap = true)
-    //$$ private void ocfg$mouseCallback(CallbackInfo ci) {
-    //$$     EventManager.INSTANCE.post(new MouseInputEvent(Mouse.getEventButton(), Mouse.getEventButtonState() ? 1 : 0));
-    //$$ }
-    //$$
-    //#endif
-    //#else
-    //#if MC<=10809
-    //$$ @Inject(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/options/KeyBinding;setKeyPressed(IZ)V", ordinal = 1))
-    //$$ private void ocfg$keyCallback(CallbackInfo ci) {
-    //$$     int state = 0;
-    //$$     if (Keyboard.getEventKeyState()) {
-    //$$         if (Keyboard.isRepeatEvent()) {
-    //$$             state = 2;
-    //$$         } else {
-    //$$             state = 1;
-    //$$         }
-    //$$     }
-    //$$     EventManager.INSTANCE.post(new KeyInputEvent(Keyboard.getEventKey(), Keyboard.getEventCharacter(), state));
-    //$$ }
-    //$$
-    //$$ @Inject(method = "tick", at = @At(value = "INVOKE", target = "Lorg/lwjgl/input/Mouse;getEventButton()I", remap = false))
-    //$$ private void ocfg$mouseCallback(CallbackInfo ci) {
-    //$$     EventManager.INSTANCE.post(new MouseInputEvent(Mouse.getEventButton(), Mouse.getEventButtonState() ? 1 : 0));
-    //$$ }
-    //$$
-    //#else
-    //$$ @Inject(method = "method_12145", at = @At(value = "FIELD", target = "Lnet/minecraft/client/MinecraftClient;f3CTime:J", opcode = org.objectweb.asm.Opcodes.PUTFIELD))
-    //$$ private void ocfg$keyCallback(CallbackInfo ci) {
-    //$$     int state = 0;
-    //$$     if (Keyboard.getEventKeyState()) {
-    //$$         if (Keyboard.isRepeatEvent()) {
-    //$$             state = 2;
-    //$$         } else {
-    //$$             state = 1;
-    //$$         }
-    //$$     }
-    //$$     EventManager.INSTANCE.post(new KeyInputEvent(Keyboard.getEventKey(), Keyboard.getEventCharacter(), state));
-    //$$ }
-    //$$
-    //$$ @Inject(method = "method_12141", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/options/KeyBinding;setKeyPressed(IZ)V"))
-    //$$ private void ocfg$mouseCallback(CallbackInfo ci) {
-    //$$     EventManager.INSTANCE.post(new MouseInputEvent(Mouse.getEventButton(), Mouse.getEventButtonState() ? 1 : 0));
-    //$$ }
-    //$$
-    //#endif
-    //#endif
     //#endif
 }
