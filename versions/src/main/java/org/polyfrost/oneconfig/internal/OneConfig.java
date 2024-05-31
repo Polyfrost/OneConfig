@@ -33,7 +33,6 @@ import org.polyfrost.oneconfig.api.commands.v1.factories.builder.CommandBuilder;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.InitializationEvent;
 import org.polyfrost.oneconfig.api.hud.v1.HudManager;
-import org.polyfrost.oneconfig.api.hypixel.v0.internal.HypixelApiInternals;
 import org.polyfrost.oneconfig.api.ui.v1.UIManager;
 import org.polyfrost.oneconfig.api.ui.v1.internal.BlurHandler;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindHelper;
@@ -85,7 +84,6 @@ public class OneConfig
 
     private void init() {
         BlurHandler.init();
-        HypixelApiInternals.init();
         preload();
         CommandBuilder b = CommandManager.builder("oneconfig", "ocfg", "ocfgv1").description("OneConfig main command");
         b.then(runs().does(() -> GuiUtils.displayScreen(OneConfigUI.INSTANCE.create())).description("Opens the OneConfig GUI"));

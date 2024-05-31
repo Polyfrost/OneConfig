@@ -7,28 +7,6 @@ public class org/polyfrost/oneconfig/api/commands/v1/arguments/PlayerArgumentPar
 	public synthetic fun parse (Ljava/lang/String;)Ljava/lang/Object;
 }
 
-@1.12.2-fabric,1.8.9-fabric
-public class org/polyfrost/oneconfig/api/commands/v1/internal/ClientCommandHandler : net/minecraft/server/command/CommandRegistry {
-	public static final field instance Lorg/polyfrost/oneconfig/api/commands/v1/internal/ClientCommandHandler;
-	public field latestAutoComplete [Ljava/lang/String;
-	public fun <init> ()V
-	public fun autoComplete (Ljava/lang/String;)V
-	public fun execute (Lnet/minecraft/command/CommandSource;Ljava/lang/String;)I
-	@1.12.2-fabric
-	protected fun getServer ()Lnet/minecraft/server/MinecraftServer;
-}
-
-public class org/polyfrost/oneconfig/api/commands/v1/internal/PlatformCommandFactoryImpl : org/polyfrost/oneconfig/api/commands/v1/factories/PlatformCommandFactory {
-	public fun <init> ()V
-	public fun createCommand (Lorg/polyfrost/oneconfig/api/commands/v1/CommandTree;)Z
-}
-
-@1.16.5-fabric,1.16.5-forge,1.17.1-fabric,1.17.1-forge,1.18.1-fabric,1.18.1-forge,1.19.4-fabric,1.19.4-forge,1.20.4-fabric,1.20.4-forge
-public class org/polyfrost/oneconfig/api/commands/v1/internal/RegisterCommandsEvent : org/polyfrost/oneconfig/api/event/v1/events/Event {
-	public final field dispatcher Lcom/mojang/brigadier/CommandDispatcher;
-	public fun <init> (Lcom/mojang/brigadier/CommandDispatcher;)V
-}
-
 public class org/polyfrost/oneconfig/api/event/v1/events/ChatReceiveEvent : org/polyfrost/oneconfig/api/event/v1/events/Event$Cancellable {
 	@1.8.9-forge
 	public field message Lnet/minecraft/util/IChatComponent;
@@ -115,82 +93,6 @@ public class org/polyfrost/oneconfig/api/event/v1/events/WorldLoadEvent : org/po
 	public final field world Lnet/minecraft/client/world/ClientWorld;
 	@1.12.2-fabric,1.16.5-fabric,1.16.5-forge,1.17.1-fabric,1.18.1-fabric,1.19.4-fabric,1.20.4-fabric,1.8.9-fabric
 	public fun <init> (Lnet/minecraft/client/world/ClientWorld;)V
-}
-
-public final class org/polyfrost/oneconfig/api/hypixel/v0/internal/HypixelApiInternals {
-	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/hypixel/v0/internal/HypixelApiInternals;
-	public static fun init ()V
-}
-
-public class org/polyfrost/oneconfig/api/platform/v1/internal/GLPlatformImpl : org/polyfrost/oneconfig/api/platform/v1/GLPlatform {
-	public fun <init> ()V
-	public fun drawRect (FFFFI)V
-	public fun drawText (Lorg/polyfrost/universal/UMatrixStack;Ljava/lang/String;FFIZ)F
-	public fun getFunctionAddress (Ljava/lang/String;)J
-	public fun getStringWidth (Ljava/lang/String;)I
-}
-
-public class org/polyfrost/oneconfig/api/platform/v1/internal/GuiPlatformImpl : org/polyfrost/oneconfig/api/platform/v1/GuiPlatform {
-	public fun <init> ()V
-	public synthetic fun getCurrentScreen ()Ljava/lang/Object;
-	@1.17.1-forge,1.18.1-forge,1.19.4-forge,1.20.4-forge
-	public fun getCurrentScreen ()Lnet/minecraft/client/gui/screens/Screen;
-	@1.12.2-forge,1.8.9-forge
-	public fun getCurrentScreen ()Lnet/minecraft/client/gui/GuiScreen;
-	@1.12.2-fabric,1.16.5-fabric,1.16.5-forge,1.17.1-fabric,1.18.1-fabric,1.19.4-fabric,1.20.4-fabric,1.8.9-fabric
-	public fun getCurrentScreen ()Lnet/minecraft/client/gui/screen/Screen;
-	public fun isInChat ()Z
-	public fun isInDebug ()Z
-	public fun playClickSound ()V
-	public fun setCurrentScreen (Ljava/lang/Object;)V
-}
-
-public class org/polyfrost/oneconfig/api/platform/v1/internal/I18nPlatformImpl : org/polyfrost/oneconfig/api/platform/v1/I18nPlatform {
-	public fun <init> ()V
-	public fun format (Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;
-	public fun getKeyName (II)Ljava/lang/String;
-}
-
-public class org/polyfrost/oneconfig/api/platform/v1/internal/LoaderPlatformImpl : org/polyfrost/oneconfig/api/platform/v1/LoaderPlatform {
-	public fun <init> ()V
-	public fun getLoadedMods ()Ljava/util/List;
-	public fun getLoader ()Lorg/polyfrost/oneconfig/api/platform/v1/LoaderPlatform$Loaders;
-	public fun getMinecraftVersion ()I
-	public fun isDevelopmentEnvironment ()Z
-	public fun isModLoaded (Ljava/lang/String;)Z
-	public fun toActiveMod (Ljava/lang/Object;)Lorg/polyfrost/oneconfig/api/platform/v1/LoaderPlatform$ActiveMod;
-}
-
-public class org/polyfrost/oneconfig/api/platform/v1/internal/PlayerPlatformImpl : org/polyfrost/oneconfig/api/platform/v1/PlayerPlatform {
-	public fun <init> ()V
-	public fun doesPlayerExist ()Z
-	public fun getClientBrand ()Ljava/lang/String;
-	public fun getPlayerName ()Ljava/lang/String;
-	public fun inMultiplayer ()Z
-}
-
-public final class org/polyfrost/oneconfig/api/ui/v1/internal/BlurHandler {
-	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/ui/v1/internal/BlurHandler;
-	public static fun init ()V
-	public static fun isBlurring ()Z
-	public fun isShaderActive ()Z
-}
-
-@1.16.5-fabric,1.16.5-forge,1.17.1-fabric,1.17.1-forge,1.18.1-fabric,1.18.1-forge,1.19.4-fabric,1.19.4-forge,1.20.4-fabric,1.20.4-forge
-public class org/polyfrost/oneconfig/api/ui/v1/internal/UIManagerImpl : org/polyfrost/oneconfig/api/ui/v1/UIManager {
-	public fun <init> ()V
-	public fun getRenderer ()Lorg/polyfrost/polyui/renderer/Renderer;
-	public fun getTinyFD ()Lorg/polyfrost/oneconfig/api/ui/v1/TinyFD;
-}
-
-@1.12.2-fabric,1.12.2-forge,1.8.9-fabric,1.8.9-forge
-public class org/polyfrost/oneconfig/api/ui/v1/internal/UIManagerImpl : java/net/URLClassLoader, org/polyfrost/oneconfig/api/ui/v1/UIManager {
-	public fun <init> ()V
-	public fun <init> (Z)V
-	protected fun findClass (Ljava/lang/String;)Ljava/lang/Class;
-	public fun getRenderer ()Lorg/polyfrost/polyui/renderer/Renderer;
-	public fun getTinyFD ()Lorg/polyfrost/oneconfig/api/ui/v1/TinyFD;
-	protected fun loadClass (Ljava/lang/String;Z)Ljava/lang/Class;
 }
 
 public class org/polyfrost/oneconfig/api/ui/v1/screen/MCWindow : org/polyfrost/polyui/renderer/Window {

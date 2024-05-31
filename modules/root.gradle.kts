@@ -107,5 +107,6 @@ apiValidation {
     for (project in subprojects) {
         ignoredPackages.add("org.polyfrost.oneconfig.api.${project.name}.v1.internal")
     }
+    ignoredPackages.add("org.polyfrost.oneconfig.api.hypixel.v0.internal")
     ignoredProjects.add("internal")
 }

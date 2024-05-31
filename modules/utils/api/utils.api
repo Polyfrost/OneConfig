@@ -4,6 +4,45 @@ public abstract interface annotation class org/polyfrost/oneconfig/api/DeclaredI
 public abstract interface annotation class org/polyfrost/oneconfig/api/PlatformDeclaration : java/lang/annotation/Annotation {
 }
 
+public final class org/polyfrost/oneconfig/api/hypixel/v0/HypixelAPI {
+	public static fun getLocation ()Lorg/polyfrost/oneconfig/api/hypixel/v0/HypixelAPI$Location;
+	public static fun getPartyInfo ()Lorg/polyfrost/oneconfig/api/hypixel/v0/HypixelAPI$PartyInfo;
+	public static fun getPlayerInfo ()Lorg/polyfrost/oneconfig/api/hypixel/v0/HypixelAPI$PlayerInfo;
+}
+
+public abstract class org/polyfrost/oneconfig/api/hypixel/v0/HypixelAPI$InfoBase {
+	protected field packet Lnet/hypixel/modapi/packet/impl/VersionedPacket;
+	public fun <init> ()V
+	public final fun toString ()Ljava/lang/String;
+	public abstract fun update ()V
+}
+
+public final class org/polyfrost/oneconfig/api/hypixel/v0/HypixelAPI$Location : org/polyfrost/oneconfig/api/hypixel/v0/HypixelAPI$InfoBase {
+	public fun getGameType ()Ljava/util/Optional;
+	public fun getLobbyName ()Ljava/util/Optional;
+	public fun getMapName ()Ljava/util/Optional;
+	public fun getMode ()Ljava/util/Optional;
+	public fun getServerType ()Ljava/util/Optional;
+	public fun isGame ()Z
+	public fun isLobby ()Z
+	public fun update ()V
+}
+
+public final class org/polyfrost/oneconfig/api/hypixel/v0/HypixelAPI$PartyInfo : org/polyfrost/oneconfig/api/hypixel/v0/HypixelAPI$InfoBase {
+	public fun getMembers ()Ljava/util/Map;
+	public fun getPartySize ()I
+	public fun isInParty ()Z
+	public fun update ()V
+}
+
+public final class org/polyfrost/oneconfig/api/hypixel/v0/HypixelAPI$PlayerInfo : org/polyfrost/oneconfig/api/hypixel/v0/HypixelAPI$InfoBase {
+	public fun getMonthlyPackageRank ()Lnet/hypixel/data/rank/MonthlyPackageRank;
+	public fun getPackageRank ()Lnet/hypixel/data/rank/PackageRank;
+	public fun getPrefix ()Ljava/util/Optional;
+	public fun getRank ()Lnet/hypixel/data/rank/PlayerRank;
+	public fun update ()V
+}
+
 public abstract interface class org/polyfrost/oneconfig/api/platform/v1/GLPlatform {
 	public abstract fun drawRect (FFFFI)V
 	public fun drawText (Ljava/lang/String;FFIZ)F
@@ -64,46 +103,6 @@ public abstract interface class org/polyfrost/oneconfig/api/platform/v1/PlayerPl
 	public abstract fun getClientBrand ()Ljava/lang/String;
 	public abstract fun getPlayerName ()Ljava/lang/String;
 	public abstract fun inMultiplayer ()Z
-}
-
-public final class org/polyfrost/oneconfig/hypixel/v0/HypixelAPI {
-	public static fun getLocation ()Lorg/polyfrost/oneconfig/hypixel/v0/HypixelAPI$Location;
-	public static fun getPartyInfo ()Lorg/polyfrost/oneconfig/hypixel/v0/HypixelAPI$PartyInfo;
-	public static fun getPlayerInfo ()Lorg/polyfrost/oneconfig/hypixel/v0/HypixelAPI$PlayerInfo;
-}
-
-public abstract class org/polyfrost/oneconfig/hypixel/v0/HypixelAPI$InfoBase {
-	public fun <init> ()V
-	public abstract fun update ()V
-}
-
-public final class org/polyfrost/oneconfig/hypixel/v0/HypixelAPI$Location {
-	public fun getGameType ()Ljava/util/Optional;
-	public fun getLobbyName ()Ljava/util/Optional;
-	public fun getMapName ()Ljava/util/Optional;
-	public fun getMode ()Ljava/util/Optional;
-	public fun getServerType ()Ljava/util/Optional;
-	public fun isGame ()Z
-	public fun isLobby ()Z
-	public fun toString ()Ljava/lang/String;
-	public fun update (Lnet/hypixel/modapi/packet/impl/clientbound/event/ClientboundLocationPacket;)V
-}
-
-public final class org/polyfrost/oneconfig/hypixel/v0/HypixelAPI$PartyInfo : org/polyfrost/oneconfig/hypixel/v0/HypixelAPI$InfoBase {
-	public fun getMembers ()Ljava/util/Map;
-	public fun getPartySize ()I
-	public fun isInParty ()Z
-	public fun toString ()Ljava/lang/String;
-	public fun update ()V
-}
-
-public final class org/polyfrost/oneconfig/hypixel/v0/HypixelAPI$PlayerInfo : org/polyfrost/oneconfig/hypixel/v0/HypixelAPI$InfoBase {
-	public fun getMonthlyPackageRank ()Lnet/hypixel/data/rank/MonthlyPackageRank;
-	public fun getPackageRank ()Lnet/hypixel/data/rank/PackageRank;
-	public fun getPrefix ()Ljava/util/Optional;
-	public fun getRank ()Lnet/hypixel/data/rank/PlayerRank;
-	public fun toString ()Ljava/lang/String;
-	public fun update ()V
 }
 
 public final class org/polyfrost/oneconfig/utils/v1/ArrayCastUtils {

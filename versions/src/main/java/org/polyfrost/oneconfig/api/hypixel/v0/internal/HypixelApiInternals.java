@@ -28,8 +28,6 @@ package org.polyfrost.oneconfig.api.hypixel.v0.internal;
 
 import io.netty.buffer.Unpooled;
 import net.hypixel.modapi.HypixelModAPI;
-import net.hypixel.modapi.handler.ClientboundPacketHandler;
-import net.hypixel.modapi.packet.impl.clientbound.event.ClientboundLocationPacket;
 import net.hypixel.modapi.serializer.PacketSerializer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.network.NetHandlerPlayClient;
@@ -39,31 +37,34 @@ import net.minecraft.network.play.server.S3FPacketCustomPayload;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.ApiStatus;
+import org.polyfrost.oneconfig.api.PlatformDeclaration;
 import org.polyfrost.oneconfig.api.event.v1.EventDelay;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.HypixelLocationEvent;
 import org.polyfrost.oneconfig.api.event.v1.events.ReceivePacketEvent;
-import org.polyfrost.oneconfig.hypixel.v0.HypixelAPI;
 
 /**
  * Heavily adapted from Hypixel/ForgeModAPI under the MIT licence.
  * <a href="https://github.com/HypixelDev/ForgeModAPI/blob/master/src/main/java/net/hypixel/modapi/forge/ForgeModAPI.java">See here</a>
  */
 @ApiStatus.Internal
+@PlatformDeclaration
 public final class HypixelApiInternals {
-    public static final HypixelApiInternals INSTANCE = new HypixelApiInternals();
     private static final Logger LOGGER = LogManager.getLogger("OneConfig/HypixelAPI");
 
-    private HypixelApiInternals() {
+    private HypixelApiInternals() {}
+
+    static {
         registerHypixelApi();
     }
 
     public static void init() {
-        //<clinit>
+        // <clinit>
     }
 
 
-    private void registerHypixelApi() {
+    private static void registerHypixelApi() {
+        LOGGER.info("Registering Hypixel API packet handlers");
         HypixelModAPI.getInstance().setPacketSender((packet) -> {
             NetHandlerPlayClient net = Minecraft.getMinecraft().getNetHandler();
             if (net == null) {
@@ -94,15 +95,6 @@ public final class HypixelApiInternals {
             );
             return true;
         });
-
-        HypixelModAPI.getInstance().registerHandler(new ClientboundPacketHandler() {
-            @Override
-            public void onLocationEvent(ClientboundLocationPacket packet) {
-                // this happens here (unfortunately) because we can't access the EventManager from the HypixelAPI class
-                HypixelAPI.getLocation().update(packet);
-                EventManager.INSTANCE.post(HypixelLocationEvent.INSTANCE);
-            }
-        });
         EventManager.register(ReceivePacketEvent.class, (ev) -> {
             if (!(ev.packet instanceof S3FPacketCustomPayload)) {
                 return;
@@ -132,6 +124,11 @@ public final class HypixelApiInternals {
                 LOGGER.warn("Failed to handle packet {}", identifier, e);
             }
         });
+    }
+
+    @ApiStatus.Internal
+    public static void postLocationEvent() {
+        EventManager.INSTANCE.post(HypixelLocationEvent.INSTANCE);
     }
 
     //#if MC>12000 && FABRIC

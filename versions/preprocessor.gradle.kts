@@ -44,5 +44,10 @@ preprocess {
 apiValidation {
     nonPublicMarkers.add("org.polyfrost.oneconfig.api.PlatformDeclaration")
     ignoredPackages.add("org.polyfrost.oneconfig.internal")
+    ignoredPackages.add("org.polyfrost.oneconfig.api.platform.v1.internal")
+    ignoredPackages.add("org.polyfrost.oneconfig.api.hypixel.v0.internal")
     ignoredPackages.add("org.polyfrost.oneconfig.test")
+    for (proj in rootProject.project(":modules").subprojects) {
+        ignoredPackages.add("org.polyfrost.oneconfig.api.${proj.name}.v1.internal")
+    }
 }

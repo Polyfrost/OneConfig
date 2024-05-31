@@ -24,12 +24,22 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-/**
- * Experimental implementation of the <a href="https://github.com/HypixelDev/ModAPI">Hypixel Mod API</a> in OneConfig.
- * <br>
- * This will remain experimental as long as upstream is experimental.
- */
-@ApiStatus.Experimental
-package org.polyfrost.oneconfig.hypixel.v0;
+package org.polyfrost.oneconfig.api.hypixel.v0.internal;
 
 import org.jetbrains.annotations.ApiStatus;
+import org.polyfrost.oneconfig.api.DeclaredInPlatform;
+
+@ApiStatus.Internal
+@DeclaredInPlatform
+public class HypixelApiInternals {
+    // HypixelApiUtils.h -- version specific workaround
+    // see versions/src for the actual implementation
+
+    private HypixelApiInternals() {}
+
+    @ApiStatus.Internal
+    public static void init() {}
+
+    @ApiStatus.Internal
+    public static void postLocationEvent() {}
+}

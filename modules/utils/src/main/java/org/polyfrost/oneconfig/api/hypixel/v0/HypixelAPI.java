@@ -24,7 +24,7 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.hypixel.v0;
+package org.polyfrost.oneconfig.api.hypixel.v0;
 
 import net.hypixel.data.rank.MonthlyPackageRank;
 import net.hypixel.data.rank.PackageRank;
@@ -34,6 +34,8 @@ import net.hypixel.data.type.LobbyType;
 import net.hypixel.data.type.ServerType;
 import net.hypixel.modapi.HypixelModAPI;
 import net.hypixel.modapi.handler.ClientboundPacketHandler;
+import net.hypixel.modapi.packet.ClientboundHypixelPacket;
+import net.hypixel.modapi.packet.impl.VersionedPacket;
 import net.hypixel.modapi.packet.impl.clientbound.ClientboundPartyInfoPacket;
 import net.hypixel.modapi.packet.impl.clientbound.ClientboundPlayerInfoPacket;
 import net.hypixel.modapi.packet.impl.clientbound.event.ClientboundLocationPacket;
@@ -41,6 +43,7 @@ import net.hypixel.modapi.packet.impl.serverbound.ServerboundPlayerInfoPacket;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.ApiStatus;
+import org.polyfrost.oneconfig.api.hypixel.v0.internal.HypixelApiInternals;
 
 import java.util.Map;
 import java.util.Optional;
@@ -48,13 +51,14 @@ import java.util.UUID;
 
 /**
  * Hypixel API wrapper for OneConfig.
- * <br>
- * When OneConfig is loaded, it handles loading of the Hypixel API for you. As long as OneConfig is initialized, all the methods for sending and receiving packets
- * are available directly from their classes.
- * <br>
+ * <br><br>
+ * When this class is first referenced, it will set up the Hypixel API handlers for you. After that, all the methods for sending and receiving packets
+ * are available directly from their classes, such as {@link HypixelModAPI#registerHandler(ClientboundPacketHandler)}.
+ * <br><br>
  * This class is a simple wrapper around this functionality, providing a simple way to access the Hypixel API.
  *
- * @implNote the actual registration of the packet handlers is done in HypixelApiInternals.
+ * @implNote the actual registration of the packet handlers is done in HypixelApiInternals. Note that this is lazily initialized,
+ * <b>and so this class, or HypixelApiInternals, needs to be referenced in order for the packet handlers to be registered.</b>
  */
 @SuppressWarnings("unused")
 public final class HypixelAPI {
@@ -65,6 +69,7 @@ public final class HypixelAPI {
     private Location location;
 
     private HypixelAPI() {
+        HypixelApiInternals.init();
     }
 
     public static PlayerInfo getPlayerInfo() {
@@ -79,20 +84,25 @@ public final class HypixelAPI {
         return INSTANCE.location == null ? INSTANCE.location = new Location() : INSTANCE.location;
     }
 
-    public static abstract class InfoBase {
+    public static abstract class InfoBase<T extends VersionedPacket & ClientboundHypixelPacket> {
+        protected T packet;
         @ApiStatus.Internal
         public abstract void update();
+
+        @Override
+        public final String toString() {
+            return packet.toString();
+        }
     }
 
 
-    public static final class PartyInfo extends InfoBase {
-        private ClientboundPartyInfoPacket p;
-
+    public static final class PartyInfo extends InfoBase<ClientboundPartyInfoPacket> {
         private PartyInfo() {
+            LOGGER.info("Registering party info packet handler");
             HypixelModAPI.getInstance().registerHandler(new ClientboundPacketHandler() {
                 @Override
                 public void onPartyInfoPacket(ClientboundPartyInfoPacket packet) {
-                    p = packet;
+                    PartyInfo.this.packet = packet;
                 }
             });
             update();
@@ -104,7 +114,7 @@ public final class HypixelAPI {
         }
 
         public boolean isInParty() {
-            return p.isInParty();
+            return packet.isInParty();
         }
 
         public int getPartySize() {
@@ -112,23 +122,17 @@ public final class HypixelAPI {
         }
 
         public Map<UUID, ClientboundPartyInfoPacket.PartyMember> getMembers() {
-            return p.getMemberMap();
-        }
-
-        @Override
-        public String toString() {
-            return p.toString();
+            return packet.getMemberMap();
         }
     }
 
-    public static final class PlayerInfo extends InfoBase {
-        private ClientboundPlayerInfoPacket p;
-
+    public static final class PlayerInfo extends InfoBase<ClientboundPlayerInfoPacket> {
         private PlayerInfo() {
+            LOGGER.info("Registering player info handler");
             HypixelModAPI.getInstance().registerHandler(new ClientboundPacketHandler() {
                 @Override
                 public void onPlayerInfoPacket(ClientboundPlayerInfoPacket packet) {
-                    p = packet;
+                    PlayerInfo.this.packet = packet;
                 }
             });
             update();
@@ -140,57 +144,55 @@ public final class HypixelAPI {
         }
 
         public PlayerRank getRank() {
-            return p.getPlayerRank();
+            return packet.getPlayerRank();
         }
 
         public PackageRank getPackageRank() {
-            return p.getPackageRank();
+            return packet.getPackageRank();
         }
 
         public MonthlyPackageRank getMonthlyPackageRank() {
-            return p.getMonthlyPackageRank();
+            return packet.getMonthlyPackageRank();
         }
 
         public Optional<String> getPrefix() {
-            return p.getPrefix();
-        }
-
-        @Override
-        public String toString() {
-            return p.toString();
+            return packet.getPrefix();
         }
     }
 
-    public static final class Location {
-        private ClientboundLocationPacket p;
-
+    public static final class Location extends InfoBase<ClientboundLocationPacket> {
         private Location() {
             LOGGER.info("Registering location packet handler");
-            // register here so that we only ask the server about the location if someone refers to this object.
-            // we don't handle ourselves due to the fact that we can't actually reference the event class here.
-            // -> handled in HypixelApiInternals
+            HypixelModAPI.getInstance().registerHandler(new ClientboundPacketHandler() {
+                @Override
+                public void onLocationEvent(ClientboundLocationPacket packet) {
+                    Location.this.packet = packet;
+                    // cannot access the EventManager from here, so we do it like this instead.
+                    HypixelApiInternals.postLocationEvent();
+                }
+            });
             HypixelModAPI.getInstance().subscribeToEventPacket(ClientboundLocationPacket.class);
         }
 
-        @ApiStatus.Internal
-        public void update(ClientboundLocationPacket packet) {
-            p = packet;
+        @Override
+        public void update() {
+            // no-op as event based
         }
 
         public Optional<String> getLobbyName() {
-            return p.getLobbyName();
+            return packet.getLobbyName();
         }
 
         public Optional<String> getMapName() {
-            return p.getMap();
+            return packet.getMap();
         }
 
         public Optional<String> getMode() {
-            return p.getMode();
+            return packet.getMode();
         }
 
         public Optional<ServerType> getServerType() {
-            return p.getServerType();
+            return packet.getServerType();
         }
 
         public boolean isLobby() {
@@ -207,11 +209,6 @@ public final class HypixelAPI {
             if (!type.isPresent()) return Optional.empty();
             ServerType t = type.get();
             return t instanceof GameType ? Optional.of((GameType) t) : Optional.empty();
-        }
-
-        @Override
-        public String toString() {
-            return p.toString();
         }
     }
 }
