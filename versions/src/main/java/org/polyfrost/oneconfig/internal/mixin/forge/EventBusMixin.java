@@ -36,9 +36,6 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-//#if MC<11900 && MC>10809
-//$$ import net.minecraft.util.text.ChatType;
-//#endif
 
 
 
@@ -54,7 +51,7 @@ public abstract class EventBusMixin {
         ChatReceiveEvent ev = new ChatReceiveEvent(event.message);
         //#else
             //#if MC<11900
-            //$$ if(event.getType() != ChatType.CHAT) return;
+            //$$ if(event.getType() != net.minecraft.util.text.ChatType.CHAT) return;
             //#endif
         //$$ ChatReceiveEvent ev = new ChatReceiveEvent(event.getMessage());
         //#endif

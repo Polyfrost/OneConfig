@@ -95,7 +95,7 @@ dependencies {
     shade(libs.hypixel.modapi)
 
     for (project in rootProject.project(":modules").subprojects) {
-        // TODO: ModLauncher (forge-1.17+) fail to to module export issues
+        // TODO: ModLauncher (forge-1.17+) fails due to module export issues
         shade(project(project.path)) {
             isTransitive = false
         }

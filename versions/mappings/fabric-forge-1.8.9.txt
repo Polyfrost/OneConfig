@@ -1,5 +1,6 @@
 org.objectweb.asm.tree.AbstractInsnNode org.spongepowered.asm.lib.tree.AbstractInsnNode
 org.objectweb.asm.tree.ClassNode org.spongepowered.asm.lib.tree.ClassNode
+org.objectweb.asm.commons.ClassRemapper org.objectweb.asm.commons.RemappingClassAdapter
 org.objectweb.asm.tree.FieldInsnNode org.spongepowered.asm.lib.tree.FieldInsnNode
 org.objectweb.asm.tree.FieldNode org.spongepowered.asm.lib.tree.FieldNode
 org.objectweb.asm.tree.InsnList org.spongepowered.asm.lib.tree.InsnList

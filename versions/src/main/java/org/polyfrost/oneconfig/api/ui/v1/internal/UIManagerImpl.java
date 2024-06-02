@@ -26,11 +26,14 @@
 
 package org.polyfrost.oneconfig.api.ui.v1.internal;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.Remapper;
+import org.objectweb.asm.commons.RemappingClassAdapter;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.InsnNode;
@@ -38,12 +41,11 @@ import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.TypeInsnNode;
 import org.objectweb.asm.tree.VarInsnNode;
-import org.polyfrost.oneconfig.api.ui.v1.UIManager;
+import org.polyfrost.oneconfig.api.ClassHasOverwrites;
 import org.polyfrost.oneconfig.api.ui.v1.TinyFD;
+import org.polyfrost.oneconfig.api.ui.v1.UIManager;
 import org.polyfrost.oneconfig.utils.v1.MHUtils;
 import org.polyfrost.polyui.renderer.Renderer;
-import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.LogManager;
 import org.polyfrost.polyui.utils.IOUtils;
 
 import java.io.IOException;
@@ -65,6 +67,7 @@ import java.util.Map;
 import java.util.Set;
 
 @SuppressWarnings("unused")
+@ClassHasOverwrites("1.16.5-forge")
 public class UIManagerImpl
         extends URLClassLoader
         implements UIManager {
@@ -242,13 +245,8 @@ public class UIManagerImpl
         };
         ClassWriter classWriter = new ClassWriter(classReader, ClassWriter.COMPUTE_MAXS);
         @SuppressWarnings({"deprecation", "RedundantSuppression"})
-        ClassVisitor classRemapper =
-                //#if FABRIC
-                //$$ new org.objectweb.asm.commons.ClassRemapper(classWriter, remapper);
-                //#else
-                new org.objectweb.asm.commons.RemappingClassAdapter(classWriter, remapper);
-        //#endif
-        classReader.accept(classRemapper, ClassReader.EXPAND_FRAMES);
+        ClassVisitor mapper = new RemappingClassAdapter(classWriter, remapper);
+        classReader.accept(mapper, ClassReader.EXPAND_FRAMES);
         b = classWriter.toByteArray();
 
         if (name.equalsIgnoreCase("org.lwjgl.nanovg.NanoVGGLConfig")) {
