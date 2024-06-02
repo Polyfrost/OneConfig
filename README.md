@@ -16,7 +16,7 @@ OneConfig is a free, open sourced configuration library by [Polyfrost](https://p
   <img src="https://user-images.githubusercontent.com/62163840/196335012-9c0f098e-4214-42cf-a83a-9bcbe65a240b.png">
 </details>
 
-### How to get:
+### Installation:
 For beginners, we recommend using [SkyClient](https://skyclient.co/), a free and open-sourced mod installer. For more technical users, all of our mods, including [Hytils](https://github.com/Polyfrost/Hytils-Reborn), [CrashPatch](https://github.com/Polyfrost/crashpatch), [EvergreenHUD](https://github.com/Polyfrost/EvergreenHUD), and [Chatting](https://github.com/Polyfrost/chatting) have full support, and come with OneConfig. Most of your existing mods (i.e. ones that use [Vigilance](https://github.com/EssentialGG/Vigilance)) are also supported through our [compatability layer](https://docs.polyfrost.org/oneconfig/config/compatibility).
 
 ### Is it a client?

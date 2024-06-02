@@ -1,6 +1,6 @@
 import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.util.archivesName
 
-// contains shared logic between all the modules to reduce boilerplate.
+// Shared build logic between all OneConfig modules to reduce boilerplate.
 
 plugins {
     id(libs.plugins.kotlinx.api.validator.get().pluginId)

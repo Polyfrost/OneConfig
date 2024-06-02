@@ -1,5 +1,5 @@
-@file:Suppress("DSL_SCOPE_VIOLATION", "UnstableApiUsage")
-// shared build logic for all versions of OneConfig.
+@file:Suppress("UnstableApiUsage")
+// Shared build logic for all versions of OneConfig.
 
 import net.fabricmc.loom.task.RemapSourcesJarTask
 import org.polyfrost.gradle.util.noServerRunConfigs

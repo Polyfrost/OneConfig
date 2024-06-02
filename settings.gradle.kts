@@ -2,8 +2,19 @@ pluginManagement {
     repositories {
         gradlePluginPortal()
         mavenLocal()
-        maven("https://repo.polyfrost.org/releases")
+		mavenCentral()
+        maven("https://repo.polyfrost.org/releases") {
+            name = "Polyfrost Releases"
+        }
     }
+}
+
+dependencyResolutionManagement {
+    pluginManagement.repositories.forEach { repositories.add(it) }
+}
+
+plugins {
+    id("org.gradle.toolchains.foojay-resolver-convention") version("0.8.0")
 }
 
 val name: String by settings

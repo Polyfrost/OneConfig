@@ -1,5 +1,3 @@
-@file:Suppress("DSL_SCOPE_VIOLATION")
-
 plugins {
     alias(libs.plugins.kotlin) apply false
     id(libs.plugins.pgt.api.validator.get().pluginId)
