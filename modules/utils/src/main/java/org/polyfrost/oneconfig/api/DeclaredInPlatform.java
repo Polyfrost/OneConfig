@@ -36,7 +36,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Internal marker for the 'header; classes in the modules/ directory, with their
+ * Internal marker for the 'header' classes in the modules/ directory, with their
  * real implementation being found in the platform/ directory.
  * This is used for API validation reasons and for improved readability of the codebase.
  *

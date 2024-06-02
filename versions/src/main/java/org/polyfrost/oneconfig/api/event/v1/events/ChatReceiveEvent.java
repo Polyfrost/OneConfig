@@ -26,9 +26,9 @@
 
 package org.polyfrost.oneconfig.api.event.v1.events;
 
+import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.IChatComponent;
 import org.polyfrost.oneconfig.api.PlatformDeclaration;
-import org.polyfrost.universal.wrappers.message.UTextComponent;
 
 /**
  * Called when a chat message is received.
@@ -45,6 +45,8 @@ public class ChatReceiveEvent extends Event.Cancellable {
     }
 
     public String getFullyUnformattedMessage() {
-        return UTextComponent.Companion.stripFormatting(message.getUnformattedText().toString());
+        // reason: needed on modern mc
+        // noinspection StringOperationCanBeSimplified
+        return EnumChatFormatting.getTextWithoutFormattingCodes(message.getUnformattedText().toString());
     }
 }

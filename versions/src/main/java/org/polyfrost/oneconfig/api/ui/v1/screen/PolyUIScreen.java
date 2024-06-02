@@ -33,11 +33,9 @@ import org.jetbrains.annotations.MustBeInvokedByOverriders;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.polyfrost.oneconfig.api.PlatformDeclaration;
+import org.polyfrost.oneconfig.api.platform.v1.Platform;
 import org.polyfrost.universal.UKeyboard;
 import org.polyfrost.universal.UMatrixStack;
-import org.polyfrost.universal.UMinecraft;
-import org.polyfrost.universal.UMouse;
-import org.polyfrost.universal.UResolution;
 import org.polyfrost.universal.UScreen;
 import org.polyfrost.oneconfig.api.ui.v1.UIManager;
 import org.polyfrost.polyui.PolyUI;
@@ -74,7 +72,7 @@ public class PolyUIScreen extends UScreen implements UIPause, BlurScreen {
     private Runnable close;
 
     //#if MC<=11300
-    private float mx, my;
+    private int mx, my;
     //#endif
 
      @Contract("_, null, _, _, _, _, _, _, null -> fail")
@@ -102,12 +100,11 @@ public class PolyUIScreen extends UScreen implements UIPause, BlurScreen {
             Colors c = colors == null ? new DarkTheme() : colors;
             Align a = alignment == null ? new Align(Align.Main.Start, Align.Cross.Start, Align.Mode.Horizontal, Vec2.ZERO, 50) : alignment;
             this.polyUI = new PolyUI(drawables, UIManager.INSTANCE.getRenderer(), s, inputManager, translator, backgroundColor, a, c, size);
-            this.window = new MCWindow(UMinecraft.getMinecraft());
-            this.window.setPixelRatio(scale());
+            this.window = new MCWindow(Minecraft.getMinecraft());
             this.polyUI.setWindow(window);
             this.inputManager = this.polyUI.getInputManager();
             this.desiredResolution = desiredResolution;
-            adjustResolution(width(), height(), true);
+            adjustResolution(Platform.screen().windowWidth(), Platform.screen().windowHeight(), true);
         }
     }
 
@@ -129,8 +126,7 @@ public class PolyUIScreen extends UScreen implements UIPause, BlurScreen {
         this.polyUI = polyUI;
         this.inputManager = polyUI.getInputManager();
         desiredResolution = null;
-        window = new MCWindow(UMinecraft.getMinecraft());
-        window.setPixelRatio(scale());
+        window = new MCWindow(Minecraft.getMinecraft());
         polyUI.setWindow(window);
     }
 
@@ -146,12 +142,7 @@ public class PolyUIScreen extends UScreen implements UIPause, BlurScreen {
         polyUI.resize(size.getX() * sx, size.getY() * sy, force);
     }
 
-
-    public boolean useMinecraftUIScaling() {
-        return false;
-    }
-
-    public final org.polyfrost.oneconfig.api.ui.v1.screen.PolyUIScreen closeCallback(Runnable r) {
+    public final PolyUIScreen closeCallback(Runnable r) {
          close = r;
          return this;
     }
@@ -162,9 +153,9 @@ public class PolyUIScreen extends UScreen implements UIPause, BlurScreen {
         if (polyUI == null) return;
 
         Vec2 size = polyUI.getMaster().getSize();
-        float scale = scale();
-        float ox = (width() / 2f - size.getX() / 2f) * scale;
-        float oy = (height() / 2f - size.getY() / 2f) * scale;
+        float scale = window.getPixelRatio();
+        float ox = (Platform.screen().windowWidth() / 2f - size.getX() / 2f) * scale;
+        float oy = (Platform.screen().windowHeight() / 2f - size.getY() / 2f) * scale;
         glViewport((int) ox, (int) oy, (int) (size.getX() * scale), (int) (size.getY() * scale));
 
         //#if MC<11300
@@ -177,15 +168,15 @@ public class PolyUIScreen extends UScreen implements UIPause, BlurScreen {
 
         matrices.runReplacingGlobalState(polyUI::render);
 
-        glViewport(0, 0, UResolution.getViewportWidth(), UResolution.getViewportHeight());
+        glViewport(0, 0, Platform.screen().viewportWidth(), Platform.screen().viewportHeight());
     }
 
     @Override
     @MustBeInvokedByOverriders
     public final void onResize(Minecraft client, int width, int height) {
         if (polyUI == null) return;
-        float w = (float) UResolution.getViewportWidth();
-        float h = (float) UResolution.getViewportHeight();
+        float w = (float) Platform.screen().viewportWidth();
+        float h = (float) Platform.screen().viewportHeight();
         adjustResolution(w, h, false);
     }
 
@@ -193,7 +184,7 @@ public class PolyUIScreen extends UScreen implements UIPause, BlurScreen {
     @MustBeInvokedByOverriders
     public boolean uKeyPressed(int keyCode, int scanCode, @Nullable UKeyboard.Modifiers modifiers) {
         if (keyCode == UKeyboard.KEY_ESCAPE && shouldCloseOnEsc()) {
-            UScreen.displayScreen(null);
+            Platform.screen().close();
             return true;
         }
         translateKey(inputManager, keyCode, (char) 0, true);
@@ -267,9 +258,17 @@ public class PolyUIScreen extends UScreen implements UIPause, BlurScreen {
     public void mouseMoved(double mouseX, double mouseY) {
         if (polyUI == null) return;
         Vec2 size = polyUI.getMaster().getSize();
-        float ox = (float) UResolution.getWindowWidth() / 2f - size.getX() / 2f;
-        float oy = (float) UResolution.getWindowHeight() / 2f - size.getY() / 2f;
-        inputManager.mouseMoved((float) UMouse.Raw.getX() - ox, (float) UMouse.Raw.getY() - oy);
+        float ox = (float) Platform.screen().windowWidth() / 2f - size.getX() / 2f;
+        float oy = (float) Platform.screen().windowHeight() / 2f - size.getY() / 2f;
+        float mx, my;
+        //#if MC>=11300
+        //$$ mx = (float) Minecraft.getInstance().mouseHelper.getMouseX();
+        //$$ my = (float) Minecraft.getInstance().mouseHelper.getMouseY();
+        //#else
+        mx = org.lwjgl.input.Mouse.getX();
+        my = Platform.screen().windowHeight() - org.lwjgl.input.Mouse.getY() - 1;
+        //#endif
+        inputManager.mouseMoved(mx - ox, my - oy);
     }
 
     @Override
@@ -284,17 +283,5 @@ public class PolyUIScreen extends UScreen implements UIPause, BlurScreen {
     public final Drawable getMaster() {
         if (polyUI == null) throw new IllegalArgumentException("no drawables attached this way");
         return polyUI.getMaster();
-    }
-
-    public final float width() {
-        return useMinecraftUIScaling() ? UResolution.getScaledWidth() : UResolution.getWindowWidth();
-    }
-
-    public final float height() {
-        return useMinecraftUIScaling() ? UResolution.getScaledHeight() : UResolution.getWindowHeight();
-    }
-
-    public final float scale() {
-        return (float) UResolution.getViewportWidth() / UResolution.getWindowWidth();
     }
 }

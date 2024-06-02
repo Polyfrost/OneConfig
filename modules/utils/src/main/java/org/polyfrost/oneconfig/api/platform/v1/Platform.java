@@ -38,26 +38,26 @@ public final class Platform {
     private static LoaderPlatform loaderPlatform;
     private static PlayerPlatform playerPlatform;
     private static GLPlatform glPlatform;
-    private static GuiPlatform guiPlatform;
+    private static ScreenPlatform screenPlatform;
     private static I18nPlatform i18nPlatform;
 
-    public static LoaderPlatform getLoaderPlatform() {
+    public static LoaderPlatform loader() {
         return loaderPlatform == null ? loaderPlatform = load(LoaderPlatform.class) : loaderPlatform;
     }
 
-    public static PlayerPlatform getPlayerPlatform() {
+    public static PlayerPlatform player() {
         return playerPlatform == null ? playerPlatform = load(PlayerPlatform.class) : playerPlatform;
     }
 
-    public static GLPlatform getGLPlatform() {
+    public static GLPlatform gl() {
         return glPlatform == null ? glPlatform = load(GLPlatform.class) : glPlatform;
     }
 
-    public static GuiPlatform getGuiPlatform() {
-        return guiPlatform == null ? guiPlatform = load(GuiPlatform.class) : guiPlatform;
+    public static ScreenPlatform screen() {
+        return screenPlatform == null ? screenPlatform = load(ScreenPlatform.class) : screenPlatform;
     }
 
-    public static I18nPlatform getI18nPlatform() {
+    public static I18nPlatform i18n() {
         return i18nPlatform == null ? i18nPlatform = load(I18nPlatform.class) : i18nPlatform;
     }
 

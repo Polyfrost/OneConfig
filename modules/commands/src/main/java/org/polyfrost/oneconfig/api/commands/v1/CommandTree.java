@@ -31,7 +31,6 @@ import org.jetbrains.annotations.Nullable;
 import org.polyfrost.oneconfig.api.commands.v1.arguments.ArgumentParser;
 import org.polyfrost.oneconfig.api.commands.v1.exceptions.CommandCreationException;
 import org.polyfrost.oneconfig.api.commands.v1.exceptions.CommandExecutionException;
-import org.polyfrost.oneconfig.api.commands.v1.util.Pair;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -42,7 +41,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 /**
  * Internal representation of a command in OneConfig.
@@ -238,7 +236,7 @@ public class CommandTree extends Node {
      *
      * @see #get(String...)
      */
-    public Pair<@Nullable List<Node>, @NotNull String[]> getWithArgs(String... path) {
+    public Result getWithArgs(String... path) {
         CommandTree self = this;
         List<Node> ls = null;
         int i = 1;
@@ -276,7 +274,7 @@ public class CommandTree extends Node {
         }
         String[] rest = new String[Math.max(0, path.length - i)];
         if (rest.length != 0) System.arraycopy(path, i, rest, 0, rest.length);
-        return new Pair<>(ls, rest);
+        return new Result(ls, rest);
     }
 
     /**
@@ -303,19 +301,15 @@ public class CommandTree extends Node {
      */
     public Object execute(String... usage) {
         if (usage.length == 0) usage = new String[]{""};
-        Pair<List<Node>, String[]> pair = getWithArgs(usage);
-        if (pair.first == null) throw new CommandExecutionException("Command not found!");
-        String[] args = pair.second;
-        List<Node> ls = pair.first.stream().filter(node -> node instanceof Executable && (((Executable) node).isGreedy || ((Executable) node).arity == args.length))
-                .collect(Collectors.toList());
-        if (ls.isEmpty()) throw new CommandExecutionException("Command not found!");
-        if (ls.size() == 1) {
-            Executable exe = (Executable) ls.get(0);
-            return exe.execute(args);
-        }
+        Result res = getWithArgs(usage);
+        if (res.nodes == null || res.nodes.isEmpty()) throw new CommandExecutionException("Command not found!");
+        List<Node> nodes = res.nodes;
+        String[] args = res.args;
         loop:
-        for (Node node : ls) {
+        for (Node node : nodes) {
+            if (!(node instanceof Executable)) continue;
             Executable exe = (Executable) node;
+            if (!exe.isGreedy && args.length != exe.arity) continue;
             if (exe.arity == 0 && args.length == 0) {
                 return exe.execute();
             }
@@ -352,8 +346,8 @@ public class CommandTree extends Node {
         if (current.length == 0) return null;
         Node n;
         String thisArg = current[current.length - 1];
-        Pair<List<Node>, String[]> res = getWithArgs(current);
-        if (res == null) {
+        Result res = getWithArgs(current);
+        if (res.nodes == null) {
             String[] last = new String[current.length - 1];
             System.arraycopy(current, 0, last, 0, last.length);
             // move back, check if we have something valid available on the last
@@ -361,7 +355,7 @@ public class CommandTree extends Node {
             n = getTree(last);
             if (n == null) return null;
         } else {
-            n = res.first.get(0);
+            n = res.nodes.get(0);
         }
         if (n instanceof CommandTree) {
             CommandTree c = (CommandTree) n;
@@ -374,17 +368,32 @@ public class CommandTree extends Node {
             }
             return ls.isEmpty() ? null : ls;
         } else {
-            if (res.second.length == 0) thisArg = "";
+            if (res.args.length == 0) thisArg = "";
             Executable e = (Executable) n;
             // fast path: we already past the end of this command, don't try
-            if (res.second.length > e.parameters.length || e.parameters.length == 0) return null;
-            Executable.Param param = e.parameters[Math.max(0, res.second.length - 1)];
+            if (res.args.length > e.parameters.length || e.parameters.length == 0) return null;
+            Executable.Param param = e.parameters[Math.max(0, res.args.length - 1)];
             List<String> l = param.tryAutoComplete(thisArg);
             if (l == null || l.isEmpty()) return null;
             if (l.contains(thisArg)) {
                 // returned same, move onto next arg
                 return autocomplete(withEmpty(current));
             } else return l;
+        }
+    }
+
+    /**
+     * Represents a result from a {@link #getWithArgs(String...)} call. This class is a wrapper around a set of possible candidates for the given path, and their arguments.
+     */
+    public static final class Result {
+        @Nullable
+        public final List<@NotNull Node> nodes;
+        @NotNull
+        public final String[] args;
+
+        Result(@Nullable List<@NotNull Node> nodes, @NotNull String[] args) {
+            this.nodes = nodes;
+            this.args = args;
         }
     }
 }

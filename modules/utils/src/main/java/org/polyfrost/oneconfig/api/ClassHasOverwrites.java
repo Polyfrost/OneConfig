@@ -24,16 +24,27 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.api.platform.v1;
+package org.polyfrost.oneconfig.api;
 
-public interface GuiPlatform {
-    Object getCurrentScreen();
+import kotlin.annotation.MustBeDocumented;
+import org.jetbrains.annotations.ApiStatus;
 
-    void setCurrentScreen(Object screen);
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-    boolean isInChat();
-
-    boolean isInDebug();
-
-    void playClickSound();
+/**
+ * This annotation is for codebase navigation - it indicates that the given class has overwrites for different versions of Minecraft.
+ *
+ * @see org.polyfrost.oneconfig.api.DeclaredInPlatform
+ */
+@Retention(RetentionPolicy.SOURCE)
+@Target(ElementType.TYPE)
+@Documented
+@MustBeDocumented
+@ApiStatus.Internal
+public @interface ClassHasOverwrites {
+    String[] value();
 }

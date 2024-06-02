@@ -6,6 +6,11 @@ com.mojang.blaze3d.platform.InputConstants net.minecraft.client.util.InputMappin
 com.mojang.blaze3d.platform.InputConstants$Key getDisplayName() func_237520_d_()
 
 com.mojang.blaze3d.platform.Window getWindow() getHandle()
+com.mojang.blaze3d.platform.Window getScreenWidth() getWidth()
+com.mojang.blaze3d.platform.Window getScreenHeight() getHeight()
+com.mojang.blaze3d.platform.Window getWidth() getFramebufferWidth()
+com.mojang.blaze3d.platform.Window getHeight() getFramebufferHeight()
+
 com.mojang.blaze3d.platform.Window net.minecraft.client.MainWindow
 
 com.mojang.blaze3d.shaders.AbstractUniform net.minecraft.client.shader.ShaderDefault
@@ -21,6 +26,7 @@ com.mojang.blaze3d.vertex.Tesselator getBuilder() getBuffer()
 com.mojang.blaze3d.vertex.Tesselator net.minecraft.client.renderer.Tessellator
 
 net.minecraft.ChatFormatting net.minecraft.util.text.TextFormatting
+net.minecraft.ChatFormatting stripFormatting() getTextWithoutFormattingCodes()
 
 net.minecraft.CrashReport net.minecraft.crash.CrashReport
 
@@ -29,16 +35,23 @@ net.minecraft.client.KeyboardHandler keyPress() onKeyEvent()
 net.minecraft.client.KeyboardHandler net.minecraft.client.KeyboardListener
 
 net.minecraft.client.Minecraft destroy() shutdownMinecraftApplet()
+net.minecraft.client.Minecraft font fontRenderer
+net.minecraft.client.Minecraft getSoundManager() getSoundHandler()
 net.minecraft.client.Minecraft getUser() getSession()
 net.minecraft.client.Minecraft getWindow() getMainWindow()
 net.minecraft.client.Minecraft gui ingameGUI
 net.minecraft.client.Minecraft hasSingleplayerServer() isSingleplayer()
 net.minecraft.client.Minecraft level world
+net.minecraft.client.Minecraft mouseHandler mouseHelper
+net.minecraft.client.Minecraft options gameSettings
 net.minecraft.client.Minecraft resizeDisplay() updateWindowSize()
 net.minecraft.client.Minecraft runTick() runGameLoop()
+net.minecraft.client.Minecraft screen currentScreen
 net.minecraft.client.Minecraft setScreen() displayGuiScreen()
 
 net.minecraft.client.MouseHandler net.minecraft.client.MouseHelper
+net.minecraft.client.MouseHandler xpos() getMouseX()
+net.minecraft.client.MouseHandler ypos() getMouseY()
 
 net.minecraft.client.Options net.minecraft.client.GameSettings
 net.minecraft.client.Options renderDebug showDebugInfo
@@ -57,6 +70,7 @@ net.minecraft.client.gui.Font width() getStringWidth()
 net.minecraft.client.gui.Gui getChat() getChatGUI()
 net.minecraft.client.gui.Gui net.minecraft.client.gui.IngameGui
 
+net.minecraft.client.gui.components.Button net.minecraft.client.gui.widget.button.Button
 net.minecraft.client.gui.components.ChatComponent addMessage() printChatMessage()
 net.minecraft.client.gui.components.ChatComponent net.minecraft.client.gui.NewChatGui
 

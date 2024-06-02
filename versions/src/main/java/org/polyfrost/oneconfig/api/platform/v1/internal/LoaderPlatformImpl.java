@@ -83,7 +83,7 @@ public class LoaderPlatformImpl implements LoaderPlatform {
     static {
         boolean dev;
         try {
-            Class.forName("net.minecraft.block.BlockDirt");
+            Class.forName("net.minecraft.block.BlockDirt", false, LoaderPlatformImpl.class.getClassLoader());
             dev = true;
         } catch (Exception ignored) {
             dev = false;

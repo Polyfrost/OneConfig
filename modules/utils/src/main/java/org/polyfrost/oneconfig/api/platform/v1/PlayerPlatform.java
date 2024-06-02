@@ -29,12 +29,6 @@ package org.polyfrost.oneconfig.api.platform.v1;
 public interface PlayerPlatform {
     boolean inMultiplayer();
 
-    /**
-     * @deprecated removed in 1.20
-     */
-    @Deprecated
-    String getClientBrand();
-
     boolean doesPlayerExist();
 
     String getPlayerName();

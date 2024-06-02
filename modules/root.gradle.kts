@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.util.archivesName
-
 // contains shared logic between all the modules to reduce boilerplate.
 
 plugins {
@@ -67,7 +65,7 @@ publishing {
             if (project.name == "internal") return@publications
             register<MavenPublication>(project.name) {
                 groupId = rootProject.group.toString()
-                artifactId = project.archivesName.get()
+                artifactId = project.base.archivesName.get()
                 version = rootProject.version.toString()
 
                 from(components["java"])

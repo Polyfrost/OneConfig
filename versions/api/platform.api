@@ -127,7 +127,6 @@ public class org/polyfrost/oneconfig/api/ui/v1/screen/PolyUIScreen : org/polyfro
 	public fun doesUIPauseGame ()Z
 	public final fun getMaster ()Lorg/polyfrost/polyui/component/Drawable;
 	public fun hasBackgroundBlur ()Z
-	public final fun height ()F
 	@1.16.5-fabric,1.16.5-forge,1.17.1-fabric,1.17.1-forge,1.18.1-forge,1.19.4-forge,1.20.4-forge
 	public fun isPauseScreen ()Z
 	public fun mouseMoved (DD)V
@@ -139,7 +138,6 @@ public class org/polyfrost/oneconfig/api/ui/v1/screen/PolyUIScreen : org/polyfro
 	public final fun resize (Lnet/minecraft/client/Minecraft;II)V
 	@1.12.2-fabric,1.16.5-fabric,1.17.1-fabric,1.18.1-fabric,1.19.4-fabric,1.20.4-fabric,1.8.9-fabric
 	public final fun resize (Lnet/minecraft/client/MinecraftClient;II)V
-	public final fun scale ()F
 	public fun shouldCloseOnEsc ()Z
 	@1.18.1-fabric,1.19.4-fabric,1.20.4-fabric
 	public fun shouldPause ()Z
@@ -151,26 +149,6 @@ public class org/polyfrost/oneconfig/api/ui/v1/screen/PolyUIScreen : org/polyfro
 	public fun uMouseClicked (DDI)Z
 	public fun uMouseReleased (DDI)Z
 	public fun uMouseScrolled (D)Z
-	public fun useMinecraftUIScaling ()Z
-	public final fun width ()F
-}
-
-public final class org/polyfrost/oneconfig/utils/v1/GuiUtils {
-	public fun <init> ()V
-	public static fun closeScreen ()V
-	public static fun displayScreen (Ljava/lang/Object;)V
-	@1.17.1-forge,1.18.1-forge,1.19.4-forge,1.20.4-forge
-	public static fun displayScreen (Lnet/minecraft/client/gui/screens/Screen;)V
-	@1.17.1-forge,1.18.1-forge,1.19.4-forge,1.20.4-forge
-	public static fun displayScreen (Lnet/minecraft/client/gui/screens/Screen;I)V
-	@1.12.2-forge,1.8.9-forge
-	public static fun displayScreen (Lnet/minecraft/client/gui/GuiScreen;)V
-	@1.12.2-forge,1.8.9-forge
-	public static fun displayScreen (Lnet/minecraft/client/gui/GuiScreen;I)V
-	@1.12.2-fabric,1.16.5-fabric,1.16.5-forge,1.17.1-fabric,1.18.1-fabric,1.19.4-fabric,1.20.4-fabric,1.8.9-fabric
-	public static fun displayScreen (Lnet/minecraft/client/gui/screen/Screen;)V
-	@1.12.2-fabric,1.16.5-fabric,1.16.5-forge,1.17.1-fabric,1.18.1-fabric,1.19.4-fabric,1.20.4-fabric,1.8.9-fabric
-	public static fun displayScreen (Lnet/minecraft/client/gui/screen/Screen;I)V
 }
 
 @1.12.2-forge,1.8.9-forge

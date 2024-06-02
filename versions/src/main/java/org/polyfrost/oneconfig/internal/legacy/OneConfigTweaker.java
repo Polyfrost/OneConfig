@@ -67,7 +67,7 @@ public class OneConfigTweaker implements ITweaker {
     public OneConfigTweaker() {
         final List<SourceFile> sourceFiles = getSourceFiles();
         if (sourceFiles.isEmpty()) {
-            if (!Platform.getLoaderPlatform().isDevelopmentEnvironment()) LOGGER.fatal("Not able to detect jar sources. mixin will NOT work!");
+            if (!Platform.loader().isDevelopmentEnvironment()) LOGGER.fatal("Not able to detect jar sources. mixin will NOT work!");
             return;
         }
         try {

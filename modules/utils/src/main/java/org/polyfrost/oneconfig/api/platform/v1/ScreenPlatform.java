@@ -24,45 +24,35 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.utils.v1;
+package org.polyfrost.oneconfig.api.platform.v1;
 
-import org.polyfrost.oneconfig.api.DeclaredInPlatform;
+import org.jetbrains.annotations.Nullable;
 
-/**
- * A class containing utility methods for working with GuiScreens.
- */
-@SuppressWarnings("unused")
-@DeclaredInPlatform
-public final class GuiUtils {
-    // GuiUtils.h -- version specific workaround
-    // see versions/src/main/java/org/polyfrost/oneconfig/utils/GuiUtils.java for the real implementation
+public interface ScreenPlatform {
+    boolean isInChat();
 
-    private GuiUtils() {
+    boolean isInDebug();
+
+    void playClickSound();
+
+    int viewportWidth();
+
+    int viewportHeight();
+
+    int windowWidth();
+
+    int windowHeight();
+
+    void display(@Nullable Object screen, int ticks);
+
+    default void display(Object screen) {
+        display(screen, 1);
     }
 
-    /**
-     * Displays a screen after a tick, preventing mouse sync issues.
-     *
-     * @param screen the screen to display.
-     */
-    public static void displayScreen(Object screen) {
-        displayScreen(screen, 1);
+    default void close() {
+        display(null, 0);
     }
 
-    /**
-     * Displays a screen after the specified amount of ticks.
-     *
-     * @param screen the screen to display.
-     * @param ticks  the amount of ticks to wait for before displaying the screen.
-     */
-    public static void displayScreen(Object screen, int ticks) {
-    }
-
-
-    /**
-     * Close the current open GUI screen.
-     */
-    public static void closeScreen() {
-        displayScreen(null, 0);
-    }
+    @Nullable
+    <T> T current();
 }

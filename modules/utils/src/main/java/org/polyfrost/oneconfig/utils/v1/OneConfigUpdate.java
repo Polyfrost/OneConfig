@@ -75,7 +75,7 @@ public final class OneConfigUpdate {
     }
 
     private synchronized void fetchUpdateStatus() {
-        LoaderPlatform.ActiveMod self = Platform.getLoaderPlatform().getLoadedMod("oneconfig");
+        LoaderPlatform.ActiveMod self = Platform.loader().getLoadedMod("oneconfig");
         if (self == null) {
             LOGGER.warn("version check failed: failed to determine current version");
             return;
@@ -87,7 +87,7 @@ public final class OneConfigUpdate {
         sb.append(ONECONFIG_REPO);
         if (snapshot) sb.append("snapshot/");
         else sb.append("releases/");
-        sb.append(GROUP).append(Platform.getLoaderPlatform().getLoaderString());
+        sb.append(GROUP).append(Platform.loader().getLoaderString());
         sb.append("/maven-metadata.xml");
         try (InputStream stream = NetworkUtils.setupConnection(sb.toString(), NetworkUtils.DEF_AGENT, 2000, false)) {
             if (stream == null) {

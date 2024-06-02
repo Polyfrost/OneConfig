@@ -136,7 +136,7 @@ public final class HypixelApiInternals {
     //$$     private final net.minecraft.util.Identifier id;
     //$$     private final io.netty.buffer.ByteBuf data;
     //$$
-    //$$     public Payload(net.minecraft.util.Identifier id, net.minecraft.network.PacketByteBuf data) {
+    //$$     public Payload(net.minecraft.util.Identifier id, io.netty.buffer.ByteBuf data) {
     //$$         this.id = id;
     //$$         this.data = data.copy();
     //$$         data.skipBytes(data.readableBytes());

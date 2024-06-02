@@ -11,6 +11,9 @@ net.minecraft.client.gui.screen.Screen isPauseScreen() doesGuiPauseGame()
 net.minecraft.client.gui.screen.Screen net.minecraft.client.gui.GuiScreen
 net.minecraft.client.gui.screen.Screen resize() onResize()
 
+net.minecraft.client.gui.widget.button.Button net.minecraft.client.gui.GuiButton
+net.minecraft.client.gui.widget.button.Button playDownSound() playPressSound()
+
 net.minecraft.client.network.play.ClientPlayNetHandler net.minecraft.client.network.NetHandlerPlayClient
 net.minecraft.client.network.play.NetworkPlayerInfo net.minecraft.client.network.NetworkPlayerInfo
 

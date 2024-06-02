@@ -36,9 +36,9 @@ import org.polyfrost.oneconfig.api.hud.v1.internal.HudsPage
 import org.polyfrost.oneconfig.api.hud.v1.internal.alignC
 import org.polyfrost.oneconfig.api.hud.v1.internal.build
 import org.polyfrost.oneconfig.api.hud.v1.internal.createInspectionsScreen
+import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.UIManager
 import org.polyfrost.oneconfig.api.ui.v1.screen.PolyUIScreen
-import org.polyfrost.oneconfig.utils.v1.GuiUtils
 import org.polyfrost.oneconfig.utils.v1.MHUtils
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.animate.Animations
@@ -102,7 +102,7 @@ object HudManager {
                 if (parent.parent[2] !== hudsPage) {
                     parent.parent[2] = hudsPage
                 } else {
-                    GuiUtils.closeScreen()
+                    Platform.screen().close()
                 }
             },
             Block(
@@ -151,7 +151,7 @@ object HudManager {
                     Event.Mouse.Exited then {
                         Fade(this[0], 0.1f, false, Animations.EaseInOutQuad.create(0.08.seconds)).add()
                     }
-                    Event.Mouse.Clicked then {
+                    Event.Mouse.Companion.Clicked then {
                         // asm: makes close button easier to use
                         if (polyUI.mouseY < 40f) {
                             false

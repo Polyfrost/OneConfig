@@ -29,13 +29,9 @@ package org.polyfrost.oneconfig.api.platform.v1;
 import org.polyfrost.universal.UMatrixStack;
 
 public interface GLPlatform {
-    void drawRect(float x, float y, float x2, float y2, int color);
+    void drawRect(UMatrixStack stack, double x, double y, double x2, double y2, int color);
 
-    default float drawText(String text, float x, float y, int color, boolean shadow) {
-        return drawText(null, text, x, y, color, shadow);
-    }
-
-    float drawText(UMatrixStack matrixStack, String text, float x, float y, int color, boolean shadow);
+    float drawText(UMatrixStack stack, String text, float x, float y, int color, boolean shadow);
 
     int getStringWidth(String text);
 

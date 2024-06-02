@@ -9,3 +9,4 @@ net.minecraft.network.play.server.SPacketCustomPayload net.minecraft.network.pla
 net.minecraft.util.math.BlockPos net.minecraft.util.BlockPos
 
 net.minecraft.util.text.ITextComponent net.minecraft.util.IChatComponent
+net.minecraft.util.text.TextFormatting net.minecraft.util.EnumChatFormatting

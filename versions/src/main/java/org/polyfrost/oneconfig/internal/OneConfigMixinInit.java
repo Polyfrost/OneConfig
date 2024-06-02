@@ -59,8 +59,8 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
     @Override
     public List<String> getMixins() {
         List<String> mixins = new ArrayList<>();
-        LoaderPlatform.Loaders loader = Platform.getLoaderPlatform().getLoader();
-        int version = Platform.getLoaderPlatform().getMinecraftVersion();
+        LoaderPlatform.Loaders loader = Platform.loader().getLoader();
+        int version = Platform.loader().getMinecraftVersion();
 
         // Loader-specific mixins
         if (loader == LoaderPlatform.Loaders.FORGE) {
