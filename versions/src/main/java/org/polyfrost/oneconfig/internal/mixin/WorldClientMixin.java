@@ -38,6 +38,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class WorldClientMixin {
     @Inject(method = "<init>", at = @At("RETURN"))
     private void ocfg$worldLoadCallback(CallbackInfo ci) {
+        //noinspection DataFlowIssue
         EventManager.INSTANCE.post(new WorldLoadEvent((WorldClient) ((Object) this)));
     }
 }

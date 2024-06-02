@@ -86,7 +86,6 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         if (version >= 11600) {
             mixins.add("KeyboardMixin");
             mixins.add("MouseMixin");
-            mixins.add("commands.ClientCommandSourceMixin");
             mixins.add("commands.ClientPlayNetworkHandlerMixin");
             mixins.add("commands.HelpCommandAccessor");
             if (version < 12000) {

@@ -195,7 +195,11 @@ public final class EventManager {
                 } catch (EventException e) {
                     throw e;
                 } catch (Throwable throwable) {
-                    LOGGER.error("Failed to invoke event handler!", throwable);
+                    LOGGER.error("Failed to invoke event handler for {}", event.getClass().getName(), throwable);
+                    if(ev.onError()) {
+                        LOGGER.error("removing {} as it has failed too many times", ev);
+                        set.remove(ev);
+                    }
                 }
             }
         } catch (ConcurrentModificationException ignored0) {

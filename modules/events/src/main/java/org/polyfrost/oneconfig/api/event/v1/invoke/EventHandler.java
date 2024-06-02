@@ -42,6 +42,9 @@ import java.util.function.Consumer;
  * @see #of(Class, Consumer)
  */
 public abstract class EventHandler<E extends Event> {
+    private static final int ERROR_THRESHOLD = 5;
+    private int errors = 0;
+
     /**
      * Create an event handler from a consumer, in a fabric-style way.
      *
@@ -123,6 +126,10 @@ public abstract class EventHandler<E extends Event> {
     public final EventHandler<E> register() {
         EventManager.INSTANCE.register(this);
         return this;
+    }
+
+    public final boolean onError() {
+        return !(errors++ > ERROR_THRESHOLD);
     }
 
     @Override

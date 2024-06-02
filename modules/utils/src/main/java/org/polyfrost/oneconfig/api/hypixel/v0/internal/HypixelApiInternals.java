@@ -27,19 +27,8 @@
 package org.polyfrost.oneconfig.api.hypixel.v0.internal;
 
 import org.jetbrains.annotations.ApiStatus;
-import org.polyfrost.oneconfig.api.DeclaredInPlatform;
 
 @ApiStatus.Internal
-@DeclaredInPlatform
-public class HypixelApiInternals {
-    // HypixelApiUtils.h -- version specific workaround
-    // see versions/src for the actual implementation
-
-    private HypixelApiInternals() {}
-
-    @ApiStatus.Internal
-    public static void init() {}
-
-    @ApiStatus.Internal
-    public static void postLocationEvent() {}
+public interface HypixelApiInternals {
+    void postLocationEvent();
 }

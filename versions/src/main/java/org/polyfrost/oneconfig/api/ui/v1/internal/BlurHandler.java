@@ -70,7 +70,7 @@ public final class BlurHandler {
     }
 
     private BlurHandler() {
-        EventHandler.of(ScreenOpenEvent.class, e -> reloadBlur(e.screen)).register();
+        EventHandler.of(ScreenOpenEvent.class, e -> reloadBlur(e.getScreen())).register();
         EventHandler.of(RenderEvent.End.class, e -> {
             if (Platform.screen().current() == null) {
                 return;

@@ -37,8 +37,6 @@ import java.lang.annotation.Target;
 
 /**
  * This annotation is for codebase navigation - it indicates that the given class has overwrites for different versions of Minecraft.
- *
- * @see org.polyfrost.oneconfig.api.DeclaredInPlatform
  */
 @Retention(RetentionPolicy.SOURCE)
 @Target(ElementType.TYPE)

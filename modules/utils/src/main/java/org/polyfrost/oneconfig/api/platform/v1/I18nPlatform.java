@@ -33,4 +33,9 @@ public interface I18nPlatform {
      * Return the localized name of the key given.
      */
     String getKeyName(int key, int scanCode);
+
+    /**
+     * Return the given component with all formatting codes removed.
+     */
+    String getUnformattedText(Object component);
 }

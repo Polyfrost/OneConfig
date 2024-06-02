@@ -37,7 +37,6 @@ import net.minecraft.network.play.server.S3FPacketCustomPayload;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.ApiStatus;
-import org.polyfrost.oneconfig.api.PlatformDeclaration;
 import org.polyfrost.oneconfig.api.event.v1.EventDelay;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.HypixelLocationEvent;
@@ -48,22 +47,15 @@ import org.polyfrost.oneconfig.api.event.v1.events.ReceivePacketEvent;
  * <a href="https://github.com/HypixelDev/ForgeModAPI/blob/master/src/main/java/net/hypixel/modapi/forge/ForgeModAPI.java">See here</a>
  */
 @ApiStatus.Internal
-@PlatformDeclaration
-public final class HypixelApiInternals {
+public final class HypixelApiInternalsImpl implements HypixelApiInternals {
     private static final Logger LOGGER = LogManager.getLogger("OneConfig/HypixelAPI");
 
-    private HypixelApiInternals() {}
-
-    static {
+    public HypixelApiInternalsImpl() {
         registerHypixelApi();
     }
 
-    public static void init() {
-        // <clinit>
-    }
 
-
-    private static void registerHypixelApi() {
+    private void registerHypixelApi() {
         LOGGER.info("Registering Hypixel API packet handlers");
         HypixelModAPI.getInstance().setPacketSender((packet) -> {
             NetHandlerPlayClient net = Minecraft.getMinecraft().getNetHandler();
@@ -96,11 +88,11 @@ public final class HypixelApiInternals {
             return true;
         });
         EventManager.register(ReceivePacketEvent.class, (ev) -> {
-            if (!(ev.packet instanceof S3FPacketCustomPayload)) {
+            if (!(ev.getPacket() instanceof S3FPacketCustomPayload)) {
                 return;
             }
 
-            S3FPacketCustomPayload packet = (S3FPacketCustomPayload) ev.packet;
+            S3FPacketCustomPayload packet = ev.getPacket();
             //#if MC>12000
             //$$ String identifier = packet.payload().id().toString();
             //#else
@@ -127,7 +119,7 @@ public final class HypixelApiInternals {
     }
 
     @ApiStatus.Internal
-    public static void postLocationEvent() {
+    public void postLocationEvent() {
         EventManager.INSTANCE.post(HypixelLocationEvent.INSTANCE);
     }
 

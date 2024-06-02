@@ -31,7 +31,7 @@ import net.minecraft.network.PacketByteBuf;
 import net.minecraft.network.packet.CustomPayload;
 import net.minecraft.network.packet.s2c.common.CustomPayloadS2CPacket;
 import net.minecraft.util.Identifier;
-import org.polyfrost.oneconfig.api.hypixel.v0.internal.HypixelApiInternals;
+import org.polyfrost.oneconfig.api.hypixel.v0.internal.HypixelApiInternalsImpl;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -42,7 +42,7 @@ public class CustomPayloadS2CPacketMixin {
     @Inject(method = "readPayload", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/packet/s2c/common/CustomPayloadS2CPacket;readUnknownPayload(Lnet/minecraft/util/Identifier;Lnet/minecraft/network/PacketByteBuf;)Lnet/minecraft/network/packet/UnknownCustomPayload;"), cancellable = true)
     private static void oneconfig$captureHypixelPacket(Identifier id, PacketByteBuf buf, CallbackInfoReturnable<CustomPayload> cir) {
         if (HypixelModAPI.getInstance().getRegistry().isRegistered(id.toString())) {
-            cir.setReturnValue(new HypixelApiInternals.Payload(id, buf));
+            cir.setReturnValue(new HypixelApiInternalsImpl.Payload(id, buf));
         }
     }
 }

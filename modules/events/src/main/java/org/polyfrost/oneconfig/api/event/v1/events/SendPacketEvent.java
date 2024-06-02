@@ -26,13 +26,23 @@
 
 package org.polyfrost.oneconfig.api.event.v1.events;
 
-import org.polyfrost.oneconfig.api.DeclaredInPlatform;
-
-@DeclaredInPlatform
 public class SendPacketEvent extends Event.Cancellable {
-    public final Object packet;
+    private final Object packet;
 
     public SendPacketEvent(Object packet) {
         this.packet = packet;
+    }
+
+    /**
+     * Due to differences across Minecraft versions, this is a Duck method, meaning that it will return the expected type for that minecraft version.
+     * <ul>
+     *     <li>For legacy forge, this will be a IPacket.</li>
+     *     <li>For modern forge, this will be a Packet.</li>
+     *     <li>For fabric, this will be a Packet.</li>
+     * </ul>
+     */
+    @SuppressWarnings("unchecked")
+    public <T> T getPacket() {
+        return (T) packet;
     }
 }

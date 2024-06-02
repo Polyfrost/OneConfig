@@ -2,12 +2,6 @@ public abstract interface annotation class org/polyfrost/oneconfig/api/ClassHasO
 	public abstract fun value ()[Ljava/lang/String;
 }
 
-public abstract interface annotation class org/polyfrost/oneconfig/api/DeclaredInPlatform : java/lang/annotation/Annotation {
-}
-
-public abstract interface annotation class org/polyfrost/oneconfig/api/PlatformDeclaration : java/lang/annotation/Annotation {
-}
-
 public final class org/polyfrost/oneconfig/api/hypixel/v0/HypixelAPI {
 	public static fun getLocation ()Lorg/polyfrost/oneconfig/api/hypixel/v0/HypixelAPI$Location;
 	public static fun getPartyInfo ()Lorg/polyfrost/oneconfig/api/hypixel/v0/HypixelAPI$PartyInfo;
@@ -57,6 +51,7 @@ public abstract interface class org/polyfrost/oneconfig/api/platform/v1/GLPlatfo
 public abstract interface class org/polyfrost/oneconfig/api/platform/v1/I18nPlatform {
 	public abstract fun format (Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;
 	public abstract fun getKeyName (II)Ljava/lang/String;
+	public abstract fun getUnformattedText (Ljava/lang/Object;)Ljava/lang/String;
 }
 
 public abstract interface class org/polyfrost/oneconfig/api/platform/v1/LoaderPlatform {

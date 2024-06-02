@@ -26,32 +26,25 @@
 
 package org.polyfrost.oneconfig.internal.libs.fabric;
 
-import com.google.common.collect.Iterables;
-import com.mojang.brigadier.AmbiguityConsumer;
 import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.brigadier.ParseResults;
-import com.mojang.brigadier.arguments.ArgumentType;
-import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.ArgumentBuilder;
-import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import com.mojang.brigadier.builder.RequiredArgumentBuilder;
-import com.mojang.brigadier.context.CommandContext;
-import com.mojang.brigadier.context.ParsedCommandNode;
 import com.mojang.brigadier.exceptions.BuiltInExceptionProvider;
 import com.mojang.brigadier.exceptions.CommandExceptionType;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.tree.CommandNode;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientSuggestionProvider;
 import net.minecraft.profiler.IProfiler;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentUtils;
-import org.jetbrains.annotations.Nullable;
-import org.polyfrost.oneconfig.internal.mixin.commands.HelpCommandAccessor;
-import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.Nullable;
+import org.polyfrost.oneconfig.api.commands.v1.internal.RegisterCommandsEvent;
+import org.polyfrost.oneconfig.api.event.v1.EventManager;
+import org.polyfrost.universal.UChat;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -62,33 +55,15 @@ import java.util.Map;
  */
 public final class ClientCommandInternals {
     private static final Logger LOGGER = LogManager.getLogger("OneConfig/Commands");
-    private static final String API_COMMAND_NAME = "ocfgcmds";
-    private static CommandDispatcher<ClientCommandSource> activeDispatcher;
+    private static CommandDispatcher<ClientSuggestionProvider> activeDispatcher;
 
-    public static void setActiveDispatcher(@Nullable CommandDispatcher<ClientCommandSource> dispatcher) {
+    private static void setup(@Nullable CommandDispatcher<ClientSuggestionProvider> dispatcher) {
         activeDispatcher = dispatcher;
-    }
-
-    /**
-     * Creates a literal argument builder.
-     *
-     * @param name the literal name
-     * @return the created argument builder
-     */
-    public static LiteralArgumentBuilder<ClientCommandSource> literal(String name) {
-        return LiteralArgumentBuilder.literal(name);
-    }
-
-    /**
-     * Creates a required argument builder.
-     *
-     * @param name the name of the argument
-     * @param type the type of the argument
-     * @param <T>  the type of the parsed argument value
-     * @return the created argument builder
-     */
-    public static <T> RequiredArgumentBuilder<ClientCommandSource, T> argument(String name, ArgumentType<T> type) {
-        return RequiredArgumentBuilder.argument(name, type);
+        EventManager.INSTANCE.post(new RegisterCommandsEvent(dispatcher));
+        // noinspection CodeBlock2Expr
+        activeDispatcher.findAmbiguities((parent, child, sibling, inputs) -> {
+            LOGGER.warn("Ambiguity between arguments {} and {} with inputs: {}", activeDispatcher.getPath(child), activeDispatcher.getPath(sibling), inputs);
+        });
     }
 
     /**
@@ -98,14 +73,16 @@ public final class ClientCommandInternals {
      * @return true if the command should not be sent to the server, false otherwise
      */
     public static boolean executeCommand(String command) {
-        if(command.startsWith("/")) {
+        if (command.charAt(0) == '/') {
             command = command.substring(1);
         }
         Minecraft client = Minecraft.getInstance();
+        if (client.getConnection() == null) {
+            LOGGER.warn("skipping execution of {} as cannot access suggestions provider", command);
+            return false;
+        }
 
-        // The interface is implemented on ClientCommandSource with a mixin.
-        // noinspection ConstantConditions
-        ClientCommandSource commandSource = (ClientCommandSource) client.getConnection().getSuggestionProvider();
+        ClientSuggestionProvider commandSource = client.getConnection().getSuggestionProvider();
 
         IProfiler profiler = client.getProfiler();
         profiler.startSection(command);
@@ -125,11 +102,11 @@ public final class ClientCommandInternals {
             }
 
             LOGGER.warn("Syntax exception for client-sided command '{}'", command, e);
-            commandSource.sendError(getErrorMessage(e));
+            UChat.chat("&c" + getErrorMessage(e));
             return true;
         } catch (Exception e) {
             LOGGER.warn("Error while executing client-sided command '{}'", command, e);
-            commandSource.sendError(ITextComponent.getTextComponentOrEmpty(e.getMessage()));
+            UChat.chat("&c" + e.getLocalizedMessage());
             return true;
         } finally {
             profiler.endSection();
@@ -171,54 +148,9 @@ public final class ClientCommandInternals {
                         ("command.context.parse_error", message.getString(), e.getCursor(), context) : message;
     }
 
-    /**
-     * Runs final initialization tasks such as {@link CommandDispatcher#findAmbiguities(AmbiguityConsumer)}
-     * on the command dispatcher. Also registers a {@code /fcc help} command if there are other commands present.
-     */
-    public static void finalizeInit() {
-        if (!activeDispatcher.getRoot().getChildren().isEmpty()) {
-            // Register an API command if there are other commands;
-            // these helpers are not needed if there are no client commands
-            LiteralArgumentBuilder<ClientCommandSource> help = literal("help");
-            help.executes(ClientCommandInternals::executeRootHelp);
-            help.then(argument("command", StringArgumentType.greedyString()).executes(ClientCommandInternals::executeArgumentHelp));
-
-            activeDispatcher.register(literal(API_COMMAND_NAME).then(help));
-        }
-
-        // noinspection CodeBlock2Expr
-        activeDispatcher.findAmbiguities((parent, child, sibling, inputs) -> {
-            LOGGER.warn("Ambiguity between arguments {} and {} with inputs: {}", activeDispatcher.getPath(child), activeDispatcher.getPath(sibling), inputs);
-        });
-    }
-
-    private static int executeRootHelp(CommandContext<ClientCommandSource> context) {
-        return executeHelp(activeDispatcher.getRoot(), context);
-    }
-
-    private static int executeArgumentHelp(CommandContext<ClientCommandSource> context) throws CommandSyntaxException {
-        ParseResults<ClientCommandSource> parseResults = activeDispatcher.parse(StringArgumentType.getString(context, "command"), context.getSource());
-        List<ParsedCommandNode<ClientCommandSource>> nodes = parseResults.getContext().getNodes();
-
-        if (nodes.isEmpty()) {
-            throw HelpCommandAccessor.getFailedException().create();
-        }
-
-        return executeHelp(Iterables.getLast(nodes).getNode(), context);
-    }
-
-    private static int executeHelp(CommandNode<ClientCommandSource> startNode, CommandContext<ClientCommandSource> context) {
-        Map<CommandNode<ClientCommandSource>, String> commands = activeDispatcher.getSmartUsage(startNode, context.getSource());
-
-        for (String command : commands.values()) {
-            context.getSource().sendFeedback(ITextComponent.getTextComponentOrEmpty("/" + command));
-        }
-
-        return commands.size();
-    }
-
-    public static void addCommands(CommandDispatcher<ClientCommandSource> target, ClientCommandSource source) {
-        Map<CommandNode<ClientCommandSource>, CommandNode<ClientCommandSource>> originalToCopy = new HashMap<>();
+    public static void addCommands(CommandDispatcher<ClientSuggestionProvider> target, ClientSuggestionProvider source) {
+        setup(new CommandDispatcher<>());
+        Map<CommandNode<ClientSuggestionProvider>, CommandNode<ClientSuggestionProvider>> originalToCopy = new HashMap<>();
         originalToCopy.put(activeDispatcher.getRoot(), target.getRoot());
         copyChildren(activeDispatcher.getRoot(), target.getRoot(), source, originalToCopy);
     }
@@ -234,15 +166,15 @@ public final class ClientCommandInternals {
      *                       should contain a mapping from origin to target
      */
     private static void copyChildren(
-            CommandNode<ClientCommandSource> origin,
-            CommandNode<ClientCommandSource> target,
-            ClientCommandSource source,
-            Map<CommandNode<ClientCommandSource>, CommandNode<ClientCommandSource>> originalToCopy
+            CommandNode<ClientSuggestionProvider> origin,
+            CommandNode<ClientSuggestionProvider> target,
+            ClientSuggestionProvider source,
+            Map<CommandNode<ClientSuggestionProvider>, CommandNode<ClientSuggestionProvider>> originalToCopy
     ) {
-        for (CommandNode<ClientCommandSource> child : origin.getChildren()) {
+        for (CommandNode<ClientSuggestionProvider> child : origin.getChildren()) {
             if (!child.canUse(source)) continue;
 
-            ArgumentBuilder<ClientCommandSource, ?> builder = child.createBuilder();
+            ArgumentBuilder<ClientSuggestionProvider, ?> builder = child.createBuilder();
 
             // Reset the unnecessary non-completion stuff from the builder
             builder.requires(s -> true); // This is checked with the if check above.
@@ -256,7 +188,7 @@ public final class ClientCommandInternals {
                 builder.redirect(originalToCopy.get(builder.getRedirect()));
             }
 
-            CommandNode<ClientCommandSource> result = builder.build();
+            CommandNode<ClientSuggestionProvider> result = builder.build();
             originalToCopy.put(child, result);
             target.addChild(result);
 

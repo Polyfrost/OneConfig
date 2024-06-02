@@ -24,28 +24,14 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.api;
+package org.polyfrost.oneconfig.api.ui.v1.screen;
 
-import kotlin.annotation.MustBeDocumented;
-import org.jetbrains.annotations.ApiStatus;
+import org.polyfrost.polyui.PolyUI;
+import org.polyfrost.polyui.unit.Vec2;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.util.function.Consumer;
 
-/**
- * Internal marker for the 'header' classes in the modules/ directory, with their
- * real implementation being found in the platform/ directory.
- * This is used for API validation reasons and for improved readability of the codebase.
- *
- * @see PlatformDeclaration
- */
-@Retention(RetentionPolicy.SOURCE)
-@Target(ElementType.TYPE)
-@Documented
-@MustBeDocumented
-@ApiStatus.Internal
-public @interface DeclaredInPlatform {
+@FunctionalInterface
+public interface PolyUIScreenProvider {
+    Object create(PolyUI polyUI, Vec2 desiredResolution, boolean pauses, boolean blurs, Consumer<PolyUI> onClose);
 }

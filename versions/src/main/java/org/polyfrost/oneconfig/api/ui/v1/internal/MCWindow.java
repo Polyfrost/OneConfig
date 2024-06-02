@@ -24,7 +24,7 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.api.ui.v1.screen;
+package org.polyfrost.oneconfig.api.ui.v1.internal;
 
 import net.minecraft.client.Minecraft;
 import org.jetbrains.annotations.ApiStatus;
@@ -61,7 +61,7 @@ public class MCWindow extends Window {
     @NotNull
     @Override
     public Window open(@NotNull PolyUI polyUI) {
-        Platform.screen().display(new PolyUIScreen(polyUI));
+        Platform.screen().display(new PolyUIScreen(polyUI, null, false, false, null));
         return this;
     }
 

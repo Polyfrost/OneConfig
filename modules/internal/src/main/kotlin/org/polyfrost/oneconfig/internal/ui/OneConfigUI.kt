@@ -31,7 +31,7 @@ package org.polyfrost.oneconfig.internal.ui
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.platform.v1.Platform
-import org.polyfrost.oneconfig.api.ui.v1.screen.PolyUIScreen
+import org.polyfrost.oneconfig.api.ui.v1.PolyUIBuilder
 import org.polyfrost.oneconfig.internal.ui.pages.FeedbackPage
 import org.polyfrost.oneconfig.internal.ui.pages.ModsPage
 import org.polyfrost.oneconfig.internal.ui.pages.ThemesPage
@@ -59,12 +59,15 @@ object OneConfigUI {
     lateinit var ui: Drawable
 
 
-    fun create(): PolyUIScreen {
+    fun open() {
         val vertical = Align(cross = Align.Cross.Start, mode = Align.Mode.Vertical)
-
-        return PolyUIScreen(
-            null, null, null, null, null, rgba(21, 21, 21),
-            1920f by 1080f, 1400f by 700f,
+        val builder = PolyUIBuilder.builder().blurs().backgroundColor(rgba(21, 21, 21)).atResolution(1920f by 1080f).size(1400f by 700f)
+        builder.onClose { _ ->
+            for (t in ConfigManager.active().trees()) {
+                ConfigManager.active().save(t)
+            }
+        }
+        builder.makeAndOpen(
             Group(
                 Block(
                     size = Vec2(225f, 32f),
@@ -159,13 +162,8 @@ object OneConfigUI {
                 alignment = Align(padding = Vec2.ZERO),
             )
         ).also {
-            it.blurs = true
-            ui = it.polyUI!!.master
+            ui = it.master
             (ui as Block).radii.assign(8f)
-        }.closeCallback {
-            for (t in ConfigManager.active().trees()) {
-                ConfigManager.active().save(t)
-            }
         }
     }
 

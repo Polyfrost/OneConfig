@@ -58,9 +58,9 @@ public abstract class EventBusMixin {
 
         EventManager.INSTANCE.post(ev);
         //#if MC==10809
-        event.message = ev.message;
+        event.message = ev.getMessage();
         //#else
-        //$$ event.setMessage(ev.message);
+        //$$ event.setMessage(ev.getMessage());
         //#endif
         if (ev.cancelled) {
             event.setCanceled(true);

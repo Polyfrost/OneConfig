@@ -47,6 +47,7 @@ import org.polyfrost.oneconfig.api.hypixel.v0.internal.HypixelApiInternals;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.ServiceLoader;
 import java.util.UUID;
 
 /**
@@ -64,12 +65,12 @@ import java.util.UUID;
 public final class HypixelAPI {
     private static final Logger LOGGER = LogManager.getLogger("OneConfig/HypixelAPI");
     private static final HypixelAPI INSTANCE = new HypixelAPI();
+    private static final HypixelApiInternals internals = ServiceLoader.load(HypixelApiInternals.class, HypixelApiInternals.class.getClassLoader()).iterator().next();
     private PlayerInfo info;
     private PartyInfo partyInfo;
     private Location location;
 
     private HypixelAPI() {
-        HypixelApiInternals.init();
     }
 
     public static PlayerInfo getPlayerInfo() {
@@ -168,7 +169,7 @@ public final class HypixelAPI {
                 public void onLocationEvent(ClientboundLocationPacket packet) {
                     Location.this.packet = packet;
                     // cannot access the EventManager from here, so we do it like this instead.
-                    HypixelApiInternals.postLocationEvent();
+                    internals.postLocationEvent();
                 }
             });
             HypixelModAPI.getInstance().subscribeToEventPacket(ClientboundLocationPacket.class);

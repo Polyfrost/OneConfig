@@ -24,117 +24,61 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.api.ui.v1.screen;
+package org.polyfrost.oneconfig.api.ui.v1.internal;
 
 import net.minecraft.client.Minecraft;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.MustBeInvokedByOverriders;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.polyfrost.oneconfig.api.PlatformDeclaration;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
+import org.polyfrost.oneconfig.api.ui.v1.screen.BlurScreen;
+import org.polyfrost.polyui.PolyUI;
+import org.polyfrost.polyui.renderer.data.Cursor;
+import org.polyfrost.polyui.unit.Vec2;
 import org.polyfrost.universal.UKeyboard;
 import org.polyfrost.universal.UMatrixStack;
 import org.polyfrost.universal.UScreen;
-import org.polyfrost.oneconfig.api.ui.v1.UIManager;
-import org.polyfrost.polyui.PolyUI;
-import org.polyfrost.polyui.color.Colors;
-import org.polyfrost.polyui.color.DarkTheme;
-import org.polyfrost.polyui.color.PolyColor;
-import org.polyfrost.polyui.component.Drawable;
-import org.polyfrost.polyui.event.InputManager;
-import org.polyfrost.polyui.input.Translator;
-import org.polyfrost.polyui.property.Settings;
-import org.polyfrost.polyui.renderer.data.Cursor;
-import org.polyfrost.polyui.unit.Align;
-import org.polyfrost.polyui.unit.Vec2;
+
+import java.util.function.Consumer;
 
 import static org.lwjgl.opengl.GL11.glViewport;
 import static org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager.translateKey;
 
 @SuppressWarnings("unused")
-@PlatformDeclaration
-public class PolyUIScreen extends UScreen implements UIPause, BlurScreen {
-    @Nullable
-    public final PolyUI polyUI;
-
+public class PolyUIScreen extends UScreen implements BlurScreen {
     @NotNull
-    public final InputManager inputManager;
+    public final PolyUI polyUI;
 
     @Nullable
     public final Vec2 desiredResolution;
 
-    public boolean pauses, blurs;
+    private final boolean pauses, blurs;
 
     private final MCWindow window;
 
-    private Runnable close;
+    private final Consumer<PolyUI> close;
 
     //#if MC<=11300
     private int mx, my;
     //#endif
 
-     @Contract("_, null, _, _, _, _, _, _, null -> fail")
-    public PolyUIScreen(@Nullable Settings settings,
-                        @Nullable InputManager inputManager,
-                        @Nullable Translator translator,
-                        @Nullable Align alignment,
-                        @Nullable Colors colors,
-                        @Nullable PolyColor backgroundColor,
-                        @Nullable Vec2 desiredResolution,
-                        @Nullable Vec2 size,
-                        Drawable... drawables) {
-        super(true);
-
-        Settings s = settings == null ? new Settings() : settings;
-        s.enableInitCleanup(false);
-        s.enableForceSettingInitialSize(true);
-        if (drawables == null || drawables.length == 0) {
-            if (inputManager == null) throw new IllegalArgumentException("Must be created with an inputManager or drawables");
-            this.inputManager = inputManager;
-            this.polyUI = null;
-            this.desiredResolution = null;
-            this.window = null;
-        } else {
-            Colors c = colors == null ? new DarkTheme() : colors;
-            Align a = alignment == null ? new Align(Align.Main.Start, Align.Cross.Start, Align.Mode.Horizontal, Vec2.ZERO, 50) : alignment;
-            this.polyUI = new PolyUI(drawables, UIManager.INSTANCE.getRenderer(), s, inputManager, translator, backgroundColor, a, c, size);
-            this.window = new MCWindow(Minecraft.getMinecraft());
-            this.polyUI.setWindow(window);
-            this.inputManager = this.polyUI.getInputManager();
-            this.desiredResolution = desiredResolution;
-            adjustResolution(Platform.screen().windowWidth(), Platform.screen().windowHeight(), true);
-        }
-    }
-
-    public PolyUIScreen(Drawable... drawables) {
-        this(null, null, null, null, null, null, null, null, drawables);
-    }
-
-    public PolyUIScreen(@Nullable Align alignment, Vec2 size, Drawable... drawables) {
-        this(null, null, null, alignment, null, null, null, size, drawables);
-    }
-
-    public PolyUIScreen(@NotNull InputManager inputManager) {
-        this(null, inputManager, null, null, null, null, null, null);
-    }
-
-    @ApiStatus.Internal
-    public PolyUIScreen(@NotNull PolyUI polyUI) {
+    public PolyUIScreen(@NotNull PolyUI polyUI, @Nullable Vec2 desiredResolution, boolean pauses, boolean blurs, Consumer<PolyUI> onClose) {
         super(true);
         this.polyUI = polyUI;
-        this.inputManager = polyUI.getInputManager();
-        desiredResolution = null;
-        window = new MCWindow(Minecraft.getMinecraft());
-        polyUI.setWindow(window);
+        this.window = new MCWindow(Minecraft.getMinecraft());
+        this.polyUI.setWindow(window);
+        this.desiredResolution = desiredResolution;
+        this.blurs = blurs;
+        this.pauses = pauses;
+        this.close = onClose;
+        adjustResolution(Platform.screen().windowWidth(), Platform.screen().windowHeight(), true);
     }
 
     protected final void adjustResolution(float w, float h, boolean force) {
         // asm: normally, a polyui instance is as big as its window and that is it.
         // however, inside minecraft, the actual content is smaller than the window size, so resizing it directly would just fuck it up.
         // so instead, the developer specifies a resolution that their UI was designed for, and we resize accordingly.
-        if (polyUI == null || desiredResolution == null) return;
+        if (desiredResolution == null) return;
         float sx = w / desiredResolution.getX();
         float sy = h / desiredResolution.getY();
         if (sx == 1f && sy == 1f) return;
@@ -142,16 +86,8 @@ public class PolyUIScreen extends UScreen implements UIPause, BlurScreen {
         polyUI.resize(size.getX() * sx, size.getY() * sy, force);
     }
 
-    public final PolyUIScreen closeCallback(Runnable r) {
-         close = r;
-         return this;
-    }
-
-
     @Override
     public void onDrawScreen(@NotNull UMatrixStack matrices, int mouseX, int mouseY, float delta) {
-        if (polyUI == null) return;
-
         Vec2 size = polyUI.getMaster().getSize();
         float scale = window.getPixelRatio();
         float ox = (Platform.screen().windowWidth() / 2f - size.getX() / 2f) * scale;
@@ -174,7 +110,6 @@ public class PolyUIScreen extends UScreen implements UIPause, BlurScreen {
     @Override
     @MustBeInvokedByOverriders
     public final void onResize(Minecraft client, int width, int height) {
-        if (polyUI == null) return;
         float w = (float) Platform.screen().viewportWidth();
         float h = (float) Platform.screen().viewportHeight();
         adjustResolution(w, h, false);
@@ -187,42 +122,42 @@ public class PolyUIScreen extends UScreen implements UIPause, BlurScreen {
             Platform.screen().close();
             return true;
         }
-        translateKey(inputManager, keyCode, (char) 0, true);
+        translateKey(polyUI.getInputManager(), keyCode, (char) 0, true);
         return true;
     }
 
     @Override
     @MustBeInvokedByOverriders
     public boolean uKeyReleased(int keyCode, int scanCode, @Nullable UKeyboard.Modifiers modifiers) {
-        translateKey(inputManager, keyCode, (char) 0, false);
+        translateKey(polyUI.getInputManager(), keyCode, (char) 0, false);
         return true;
     }
 
     @Override
     @MustBeInvokedByOverriders
     public boolean uCharTyped(char c, @Nullable UKeyboard.Modifiers modifiers) {
-        translateKey(inputManager, 0, c, true);
+        translateKey(polyUI.getInputManager(), 0, c, true);
         return true;
     }
 
     @Override
     @MustBeInvokedByOverriders
     public boolean uMouseClicked(double mouseX, double mouseY, int mouseButton) {
-        inputManager.mousePressed(mouseButton);
+        polyUI.getInputManager().mousePressed(mouseButton);
         return true;
     }
 
     @Override
     @MustBeInvokedByOverriders
     public boolean uMouseReleased(double mouseX, double mouseY, int mouseButton) {
-        inputManager.mouseReleased(mouseButton);
+        polyUI.getInputManager().mouseReleased(mouseButton);
         return true;
     }
 
     @Override
     @MustBeInvokedByOverriders
     public boolean uMouseScrolled(double delta) {
-        inputManager.mouseScrolled(0f, (float) delta);
+        polyUI.getInputManager().mouseScrolled(0f, (float) delta);
         return true;
     }
 
@@ -237,11 +172,6 @@ public class PolyUIScreen extends UScreen implements UIPause, BlurScreen {
     @Override
     //#endif
     public boolean doesGuiPauseGame() {
-        return doesUIPauseGame();
-    }
-
-    @Override
-    public boolean doesUIPauseGame() {
         return pauses;
     }
 
@@ -256,7 +186,6 @@ public class PolyUIScreen extends UScreen implements UIPause, BlurScreen {
     //#endif
     @MustBeInvokedByOverriders
     public void mouseMoved(double mouseX, double mouseY) {
-        if (polyUI == null) return;
         Vec2 size = polyUI.getMaster().getSize();
         float ox = (float) Platform.screen().windowWidth() / 2f - size.getX() / 2f;
         float oy = (float) Platform.screen().windowHeight() / 2f - size.getY() / 2f;
@@ -268,20 +197,14 @@ public class PolyUIScreen extends UScreen implements UIPause, BlurScreen {
         mx = org.lwjgl.input.Mouse.getX();
         my = Platform.screen().windowHeight() - org.lwjgl.input.Mouse.getY() - 1;
         //#endif
-        inputManager.mouseMoved(mx - ox, my - oy);
+        polyUI.getInputManager().mouseMoved(mx - ox, my - oy);
     }
 
     @Override
     @MustBeInvokedByOverriders
     public void onScreenClose() {
-        if (close != null) close.run();
-        if (polyUI == null) return;
+        if (close != null) close.accept(polyUI);
         // noinspection DataFlowIssue
         this.polyUI.getWindow().setCursor(Cursor.Pointer);
-    }
-
-    public final Drawable getMaster() {
-        if (polyUI == null) throw new IllegalArgumentException("no drawables attached this way");
-        return polyUI.getMaster();
     }
 }

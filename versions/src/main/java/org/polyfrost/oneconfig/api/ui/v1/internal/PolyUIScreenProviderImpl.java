@@ -24,22 +24,17 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.api.event.v1.events;
+package org.polyfrost.oneconfig.api.ui.v1.internal;
 
-import net.minecraft.client.gui.GuiScreen;
-import org.jetbrains.annotations.Nullable;
-import org.polyfrost.oneconfig.api.PlatformDeclaration;
+import org.polyfrost.oneconfig.api.ui.v1.screen.PolyUIScreenProvider;
+import org.polyfrost.polyui.PolyUI;
+import org.polyfrost.polyui.unit.Vec2;
 
-/**
- * Called when a screen is opened or closed.
- * If the screen is closed, {@link org.polyfrost.oneconfig.api.event.v1.events.ScreenOpenEvent#screen} will be null.
- */
-@PlatformDeclaration
-public class ScreenOpenEvent extends Event.Cancellable {
-    @Nullable
-    public final GuiScreen screen;
+import java.util.function.Consumer;
 
-    public ScreenOpenEvent(@Nullable GuiScreen screen) {
-        this.screen = screen;
+public final class PolyUIScreenProviderImpl implements PolyUIScreenProvider {
+    @Override
+    public Object create(PolyUI polyUI, Vec2 desiredResolution, boolean pauses, boolean blurs, Consumer<PolyUI> onClose) {
+        return new PolyUIScreen(polyUI, desiredResolution, pauses, blurs, onClose);
     }
 }
