@@ -24,16 +24,12 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.api.event.v1.events;
+/**
+ * Experimental implementation of the <a href="https://github.com/HypixelDev/ModAPI">Hypixel Mod API</a> in OneConfig.
+ * <br>
+ * This will remain experimental as long as upstream is experimental.
+ */
+@ApiStatus.Experimental
+package org.polyfrost.oneconfig.api.hypixel.v0;
 
-import net.minecraft.network.Packet;
-import org.polyfrost.oneconfig.api.PlatformDeclaration;
-
-@PlatformDeclaration
-public class ReceivePacketEvent extends Event.Cancellable {
-    public final Packet<?> packet;
-
-    public ReceivePacketEvent(Packet<?> packet) {
-        this.packet = packet;
-    }
-}
+import org.jetbrains.annotations.ApiStatus;

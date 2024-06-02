@@ -54,15 +54,15 @@ public abstract class NetHandlerPlayClientMixin {
     @Redirect(method = "onGameMessage", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/packet/s2c/play/GameMessageS2CPacket;getMessage()Lnet/minecraft/text/Text;"))
     private Text ocfg$modifyMessage(GameMessageS2CPacket packet) {
         if (
-                //#if MC<11700
-                !packet.isNonChat()
-                //#else
-                //$$ packet.getLocation() == net.minecraft.network.MessageType.CHAT
-                //#endif
+            //#if MC<11700
+            !packet.isNonChat()
+            //#else
+            //$$ packet.getLocation() == net.minecraft.network.MessageType.CHAT
+            //#endif
         ) {
             ocfg$chatEvent = new ChatReceiveEvent(packet.getMessage());
             EventManager.INSTANCE.post(ocfg$chatEvent);
-            return ocfg$chatEvent.message;
+            return ocfg$chatEvent.getMessage();
         }
         return packet.getMessage();
     }

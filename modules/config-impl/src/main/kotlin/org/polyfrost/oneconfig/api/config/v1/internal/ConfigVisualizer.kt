@@ -155,7 +155,7 @@ open class ConfigVisualizer {
         return Group(
             children = categories.mapToArray { (category, options) ->
                 Button(text = category).events {
-                    Event.Mouse.Clicked then {
+                    Event.Mouse.Companion.Clicked then {
                         parent[0] = options
                     }
                 }
@@ -179,7 +179,7 @@ open class ConfigVisualizer {
             wrap(Image("chevron-down.svg".image()).also { it.rotation = PI }, title, desc, icon).events {
                 self.color = PolyColor.TRANSPARENT.toAnimatable()
                 var open = false
-                Event.Mouse.Clicked then {
+                Event.Mouse.Companion.Clicked then {
                     open = !open
                     Rotate(this[1], if (!open) PI else 0.0, false, Animations.EaseOutQuad.create(0.2.seconds)).add()
                     val value = parent[1].height

@@ -30,8 +30,21 @@ package org.polyfrost.oneconfig.api.event.v1.events;
  * Called when the world is loaded.
  */
 public class WorldLoadEvent implements Event {
-    public static final WorldLoadEvent INSTANCE = new WorldLoadEvent();
+    private final Object world;
 
-    private WorldLoadEvent() {
+    public WorldLoadEvent(Object world) {
+        this.world = world;
+    }
+
+    /**
+     * Due to differences across Minecraft versions, this is a Duck method, meaning that it will return the expected type for that minecraft version.
+     * <ul>
+     *     <li>For modern forge, this will be a ClientLevel.</li>
+     *     <li>For fabric & forge pre-1.17, this will be a ClientWorld.</li>
+     * </ul>
+     */
+    @SuppressWarnings("unchecked")
+    public <T> T getWorld() {
+        return (T) world;
     }
 }

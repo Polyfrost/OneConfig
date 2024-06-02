@@ -24,16 +24,17 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.api.platform.v1;
+package org.polyfrost.oneconfig.api.ui.v1.internal;
 
-public interface GuiPlatform {
-    Object getCurrentScreen();
+import org.polyfrost.oneconfig.api.ui.v1.screen.PolyUIScreenProvider;
+import org.polyfrost.polyui.PolyUI;
+import org.polyfrost.polyui.unit.Vec2;
 
-    void setCurrentScreen(Object screen);
+import java.util.function.Consumer;
 
-    boolean isInChat();
-
-    boolean isInDebug();
-
-    void playClickSound();
+public final class PolyUIScreenProviderImpl implements PolyUIScreenProvider {
+    @Override
+    public Object create(PolyUI polyUI, Vec2 desiredResolution, boolean pauses, boolean blurs, Consumer<PolyUI> onClose) {
+        return new PolyUIScreen(polyUI, desiredResolution, pauses, blurs, onClose);
+    }
 }

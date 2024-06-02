@@ -59,8 +59,8 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
     @Override
     public List<String> getMixins() {
         List<String> mixins = new ArrayList<>();
-        LoaderPlatform.Loaders loader = Platform.getLoaderPlatform().getLoader();
-        int version = Platform.getLoaderPlatform().getMinecraftVersion();
+        LoaderPlatform.Loaders loader = Platform.loader().getLoader();
+        int version = Platform.loader().getMinecraftVersion();
 
         // Loader-specific mixins
         if (loader == LoaderPlatform.Loaders.FORGE) {
@@ -77,18 +77,18 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
                 // legacy fabric
                 mixins.add("commands.ChatScreenMixin");
             }
+            if (version > 12000) {
+                mixins.add("hypixel.CustomPayloadS2CPacketMixin");
+            }
         }
 
         // Inter-loader mixins
         if (version >= 11600) {
             mixins.add("KeyboardMixin");
             mixins.add("MouseMixin");
-            mixins.add("commands.ClientCommandSourceMixin");
             mixins.add("commands.ClientPlayNetworkHandlerMixin");
             mixins.add("commands.HelpCommandAccessor");
-            if (version >= 12000) {
-                mixins.add("DebugHudAccessor");
-            } else {
+            if (version < 12000) {
                 // 1.16, 1.17, 1.18, 1.19
                 mixins.add("SchemasMixin");
                 mixins.add("EntityPlayerSPMixin");

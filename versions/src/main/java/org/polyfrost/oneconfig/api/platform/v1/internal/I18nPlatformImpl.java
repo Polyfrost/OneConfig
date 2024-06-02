@@ -27,6 +27,8 @@
 package org.polyfrost.oneconfig.api.platform.v1.internal;
 
 import net.minecraft.client.resources.I18n;
+import net.minecraft.util.EnumChatFormatting;
+import net.minecraft.util.IChatComponent;
 import org.polyfrost.oneconfig.api.platform.v1.I18nPlatform;
 
 public class I18nPlatformImpl implements I18nPlatform {
@@ -38,21 +40,25 @@ public class I18nPlatformImpl implements I18nPlatform {
 
     @Override
     public String getKeyName(int key, int scanCode) {
-        //#if MC>=11600
-            //#if FABRIC
-            //$$ final String s = net.minecraft.client.util.InputUtil.fromKeyCode(key, scanCode).getLocalizedText().asString();
+        //@formatter:off
+        String s =
+            //#if MC>=11600
+            //$$ net.minecraft.client.util.InputMappings.getInputByCode(key, scanCode).toString();
             //#else
-                //#if MC>=11700
-                //$$ final String s = com.mojang.blaze3d.platform.InputConstants.getKey(key, scanCode).getDisplayName().getString();
-                //#else
-                //$$ final String s = net.minecraft.client.util.InputMappings.getInputByCode(key, scanCode).func_237520_d_().getString();
-                //#endif
+            net.minecraft.client.settings.GameSettings.getKeyDisplayString(key);
             //#endif
-        //$$ if (s == null) return "Unknown";
-        //$$ else return s.length() == 1 ? s.toUpperCase() : s;
-        //#else
-        final String s = net.minecraft.client.settings.GameSettings.getKeyDisplayString(key);
-        return s == null ? "Unknown" : s;
-        //#endif
+        //@formatter:on
+        if (s == null) return "Unknown";
+        else return s.length() == 1 ? s.toUpperCase() : s;
+    }
+
+    @Override
+    public String getUnformattedText(Object component) {
+        String s;
+        if (component instanceof IChatComponent) {
+            //noinspection StringOperationCanBeSimplified
+            s = ((IChatComponent) component).getUnformattedText().toString();
+        } else s = component.toString();
+        return EnumChatFormatting.getTextWithoutFormattingCodes(s);
     }
 }

@@ -24,19 +24,17 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.api.ui.v1.screen;
+package org.polyfrost.oneconfig.api.ui.v1.internal;
 
 import net.minecraft.client.Minecraft;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
-import org.polyfrost.oneconfig.utils.v1.GuiUtils;
 import org.polyfrost.oneconfig.utils.v1.IOUtils;
 import org.polyfrost.polyui.PolyUI;
 import org.polyfrost.polyui.renderer.Window;
 import org.polyfrost.polyui.renderer.data.Cursor;
-import org.polyfrost.universal.UResolution;
 
 //#if MC>=11300
 //$$ import static org.lwjgl.glfw.GLFW.*;
@@ -49,27 +47,21 @@ public class MCWindow extends Window {
     //#endif
 
     public MCWindow(Minecraft mc) {
-        super(UResolution.getViewportWidth(), UResolution.getViewportHeight(), 1f);
+        super(Platform.screen().viewportWidth(), Platform.screen().viewportHeight(), (float) Platform.screen().viewportWidth() / Platform.screen().windowWidth());
         //#if MC>=11300
-        //$$ this.handle = mc
-                //#if MC>=11700
-                //$$ .getWindow()
-                //#else
-        //$$         .getMainWindow()
-                //#endif
-        //$$         .getHandle();
+        //$$ this.handle = mc.getMainWindow().getHandle();
         //#endif
     }
 
     @Override
     public void close() {
-        GuiUtils.closeScreen();
+        Platform.screen().close();
     }
 
     @NotNull
     @Override
     public Window open(@NotNull PolyUI polyUI) {
-        GuiUtils.displayScreen(new PolyUIScreen(polyUI));
+        Platform.screen().display(new PolyUIScreen(polyUI, null, false, false, null));
         return this;
     }
 
@@ -116,7 +108,7 @@ public class MCWindow extends Window {
     @NotNull
     @Override
     public String getKeyName(int i) {
-        String k = Platform.getI18nPlatform().getKeyName(i, 0);
+        String k = Platform.i18n().getKeyName(i, 0);
         return k == null ? "Unknown" : k;
     }
 }

@@ -26,4 +26,5 @@
 
 dependencies {
     compileOnly("org.polyfrost:universalcraft-1.8.9-forge:${libs.versions.universalcraft.get()}")
+    api(libs.hypixel.modapi)
 }

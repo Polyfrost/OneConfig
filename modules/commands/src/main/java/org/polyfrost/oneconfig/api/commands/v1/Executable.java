@@ -58,6 +58,11 @@ public class Executable extends Node {
         this.arity = arity;
     }
 
+    public Object execute() {
+        if(arity != 0) throw new CommandExecutionException("Invalid number of arguments!");
+        return function.apply(null);
+    }
+
     public Object execute(String... args) {
         if (!isGreedy && args.length != arity) throw new CommandExecutionException("Invalid number of arguments!");
         Object[] parsed = new Object[parameters.length];

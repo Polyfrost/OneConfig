@@ -21,7 +21,7 @@ public class org/polyfrost/oneconfig/api/commands/v1/CommandTree : org/polyfrost
 	public fun getDedupedCommands ()Ljava/util/Map;
 	public fun getHelp ()[Ljava/lang/String;
 	public fun getTree ([Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/commands/v1/CommandTree;
-	public fun getWithArgs ([Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/commands/v1/util/Pair;
+	public fun getWithArgs ([Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/commands/v1/CommandTree$Result;
 	public fun init ()V
 	public fun isInitialized ()Z
 	public fun onExecs (Ljava/util/function/Consumer;[Ljava/lang/String;)V
@@ -31,6 +31,11 @@ public class org/polyfrost/oneconfig/api/commands/v1/CommandTree : org/polyfrost
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class org/polyfrost/oneconfig/api/commands/v1/CommandTree$Result {
+	public final field args [Ljava/lang/String;
+	public final field nodes Ljava/util/List;
+}
+
 public class org/polyfrost/oneconfig/api/commands/v1/Executable : org/polyfrost/oneconfig/api/commands/v1/Node {
 	public final field arity I
 	public final field function Ljava/util/function/Function;
@@ -38,6 +43,7 @@ public class org/polyfrost/oneconfig/api/commands/v1/Executable : org/polyfrost/
 	public final field parameters [Lorg/polyfrost/oneconfig/api/commands/v1/Executable$Param;
 	public fun <init> ([Ljava/lang/String;Ljava/lang/String;[Lorg/polyfrost/oneconfig/api/commands/v1/Executable$Param;ZLjava/util/function/Function;)V
 	public fun equals (Ljava/lang/Object;)Z
+	public fun execute ()Ljava/lang/Object;
 	public fun execute ([Ljava/lang/String;)Ljava/lang/Object;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
@@ -264,11 +270,5 @@ public final class org/polyfrost/oneconfig/api/commands/v1/factories/dsl/Command
 public final class org/polyfrost/oneconfig/api/commands/v1/factories/dsl/DSLFactory : org/polyfrost/oneconfig/api/commands/v1/factories/CommandFactory {
 	public fun <init> ()V
 	public fun create (Ljava/util/Map;Ljava/lang/Object;)Lorg/polyfrost/oneconfig/api/commands/v1/CommandTree;
-}
-
-public class org/polyfrost/oneconfig/api/commands/v1/util/Pair {
-	public field first Ljava/lang/Object;
-	public field second Ljava/lang/Object;
-	public fun <init> (Ljava/lang/Object;Ljava/lang/Object;)V
 }
 

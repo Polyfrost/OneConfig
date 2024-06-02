@@ -56,6 +56,7 @@ repositories {
     mavenLocal()
     mavenCentral()
     maven("https://repo.polyfrost.org/releases")
+    maven("https://repo.hypixel.net/repository/Hypixel")
 }
 
 val shade: Configuration by configurations.creating {
@@ -91,8 +92,10 @@ dependencies {
     shade(libs.bundles.kotlin)
     shade(libs.bundles.kotlinx)
 
+    shade(libs.hypixel.modapi)
+
     for (project in rootProject.project(":modules").subprojects) {
-        // TODO: ModLauncher (forge-1.17+) fail to to module export issues
+        // TODO: ModLauncher (forge-1.17+) fails due to module export issues
         shade(project(project.path)) {
             isTransitive = false
         }

@@ -24,7 +24,6 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-//#if MC<=11202
 package org.polyfrost.oneconfig.api.commands.v1.internal;
 
 import net.minecraft.command.CommandBase;
@@ -33,6 +32,7 @@ import org.polyfrost.oneconfig.api.commands.v1.CommandManager;
 import org.polyfrost.oneconfig.api.commands.v1.exceptions.CommandExecutionException;
 import org.polyfrost.oneconfig.api.commands.v1.CommandTree;
 import org.polyfrost.oneconfig.api.commands.v1.factories.PlatformCommandFactory;
+import org.polyfrost.oneconfig.api.ClassHasOverwrites;
 import org.polyfrost.universal.UChat;
 import org.polyfrost.oneconfig.api.commands.v1.arguments.PlayerArgumentParser;
 import org.apache.logging.log4j.Logger;
@@ -45,6 +45,7 @@ import java.util.List;
 import net.minecraftforge.client.ClientCommandHandler;
 //#endif
 
+@ClassHasOverwrites("1.16.5-forge")
 public class PlatformCommandFactoryImpl implements PlatformCommandFactory {
     private static final Logger LOGGER = LogManager.getLogger("OneConfig/Commands");
 
@@ -75,9 +76,9 @@ public class PlatformCommandFactoryImpl implements PlatformCommandFactory {
             //$$ execute(net.minecraft.server.MinecraftServer server, net.minecraft.command.ICommandSender sender, String[] args)
             //#endif
             {
-                if(args.length == 1 && args[0].equals("help")) {
-                    for(String s : tree.getHelp()) {
-                        UChat.chat(s);
+                if (args.length == 1 && args[0].equals("help")) {
+                    for (String s : tree.getHelp()) {
+                        chat(s);
                     }
                     return;
                 }
@@ -86,16 +87,16 @@ public class PlatformCommandFactoryImpl implements PlatformCommandFactory {
                     if (out == null) return;
                     if (out.getClass().isArray()) {
                         for (Object o : (Object[]) out) {
-                            UChat.chat(o.toString());
+                            chat(o.toString());
                         }
                     } else {
-                        UChat.chat(out.toString());
+                        chat(out.toString());
                     }
                 } catch (CommandExecutionException c) {
-                    UChat.chat("&c" + c.getMessage());
+                    chat("&c" + c.getMessage());
                     LOGGER.warn(c.getMessage());
                 } catch (Exception e) {
-                    UChat.chat("&cAn unknown error occurred while executing this command, please report this to the mod author!");
+                    chat("&cAn unknown error occurred while executing this command, please report this to the mod author!");
                     LOGGER.error("failed to run command method", e);
                 }
             }
@@ -125,5 +126,8 @@ public class PlatformCommandFactoryImpl implements PlatformCommandFactory {
         });
         return true;
     }
+
+    private static void chat(String s) {
+        UChat.chat(s);
+    }
 }
-//#endif

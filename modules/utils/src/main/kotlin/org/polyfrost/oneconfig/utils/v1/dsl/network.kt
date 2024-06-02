@@ -27,7 +27,6 @@
 package org.polyfrost.oneconfig.utils.v1.dsl
 
 import org.polyfrost.oneconfig.utils.v1.NetworkUtils
-import org.polyfrost.universal.UDesktop
 import java.nio.file.Path
 
 /**
@@ -37,11 +36,3 @@ import java.nio.file.Path
  */
 fun Path.download(url: String, userAgent: String = "OneConfig/1.0.0", timeout: Int = 5000, useCaches: Boolean = false) =
     NetworkUtils.downloadFile(url, this, userAgent, timeout, useCaches)
-
-/**
- * Launches a URL in the default browser.
- *
- * @see NetworkUtils.browseLink
- */
-@Suppress("unused", "UnusedReceiverParameter")
-fun UDesktop.browseLink(uri: String) = NetworkUtils.browseLink(uri)

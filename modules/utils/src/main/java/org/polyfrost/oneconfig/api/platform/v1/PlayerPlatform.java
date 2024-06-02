@@ -29,8 +29,6 @@ package org.polyfrost.oneconfig.api.platform.v1;
 public interface PlayerPlatform {
     boolean inMultiplayer();
 
-    String getClientBrand();
-
     boolean doesPlayerExist();
 
     String getPlayerName();

@@ -42,6 +42,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.mojang.brigadier.tree.CommandNode;
+import net.minecraft.client.multiplayer.ClientSuggestionProvider;
 import net.minecraft.command.arguments.BlockPosArgument;
 import net.minecraft.command.arguments.EntityArgument;
 import net.minecraft.command.arguments.GameProfileArgument;
@@ -59,7 +60,6 @@ import org.polyfrost.oneconfig.api.commands.v1.Node;
 import org.polyfrost.oneconfig.api.commands.v1.arguments.ArgumentParser;
 import org.polyfrost.oneconfig.api.commands.v1.factories.PlatformCommandFactory;
 import org.polyfrost.oneconfig.api.event.v1.invoke.EventHandler;
-import org.polyfrost.oneconfig.internal.libs.fabric.ClientCommandSource;
 import org.polyfrost.universal.UChat;
 
 import java.util.ArrayList;
@@ -76,7 +76,7 @@ import static com.mojang.brigadier.builder.RequiredArgumentBuilder.argument;
 @ApiStatus.Internal
 public class PlatformCommandFactoryImpl implements PlatformCommandFactory {
     private static final Map<Class<?>, Supplier<ArgumentType<?>>> argTypeMap = new HashMap<>();
-    private static List<CommandNode<ClientCommandSource>> nodes = new ArrayList<>();
+    private static final List<CommandNode<ClientSuggestionProvider>> nodes = new ArrayList<>();
 
 
     static {
@@ -94,23 +94,28 @@ public class PlatformCommandFactoryImpl implements PlatformCommandFactory {
         //#if MC<11900
         argTypeMap.put(ItemStack.class, ItemArgument::item);
         //#else
+        //#if FABRIC
         //$$ net.minecraft.command.CommandRegistryAccess a = net.minecraft.server.command.CommandManager.createRegistryAccess(
         //$$        net.minecraft.registry.BuiltinRegistries.createWrapperLookup());
         //$$ argTypeMap.put(ItemStack.class, () -> ItemStackArgumentType.itemStack(a));
+        //#else
+        //$$ net.minecraft.commands.CommandBuildContext a = net.minecraft.commands.Commands.createValidationContext(
+        //$$        net.minecraft.data.registries.VanillaRegistries.createLookup());
+        //$$ argTypeMap.put(ItemStack.class, () -> ItemArgument.item(a));
+        //#endif
         //#endif
 
         EventHandler.of(RegisterCommandsEvent.class, e -> {
-            for (CommandNode<ClientCommandSource> n : nodes) {
+            for (CommandNode<ClientSuggestionProvider> n : nodes) {
                 e.dispatcher.getRoot().addChild(n);
             }
-            nodes = null;
         }).register();
     }
 
     @Override
     public boolean createCommand(CommandTree command) {
-        LiteralArgumentBuilder<ClientCommandSource> master = literal(command.name());
-        LiteralArgumentBuilder<ClientCommandSource> help = literal("help");
+        LiteralArgumentBuilder<ClientSuggestionProvider> master = literal(command.name());
+        LiteralArgumentBuilder<ClientSuggestionProvider> help = literal("help");
         help.executes(context -> {
             for (String s : command.getHelp()) {
                 UChat.chat(s);
@@ -124,7 +129,7 @@ public class PlatformCommandFactoryImpl implements PlatformCommandFactory {
         return true;
     }
 
-    private static <S extends ClientCommandSource> void _create(ArgumentBuilder<S, ?> parent, Collection<List<Node>> nodesCollection) {
+    private static <S extends ClientSuggestionProvider> void _create(ArgumentBuilder<S, ?> parent, Collection<List<Node>> nodesCollection) {
         for (List<Node> nodes : nodesCollection) {
             for (Node n : nodes) {
                 String[] names = n.names();

@@ -69,7 +69,7 @@ public abstract class NetHandlerPlayClientMixin {
         ) {
             ocfg$chatEvent = new ChatReceiveEvent(packet.getMessage());
             EventManager.INSTANCE.post(ocfg$chatEvent);
-            return ocfg$chatEvent.message;
+            return ocfg$chatEvent.getMessage();
         }
         return packet.getMessage();
     }

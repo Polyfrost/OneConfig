@@ -31,11 +31,10 @@ package org.polyfrost.oneconfig.internal.ui
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.platform.v1.Platform
-import org.polyfrost.oneconfig.api.ui.v1.screen.PolyUIScreen
+import org.polyfrost.oneconfig.api.ui.v1.PolyUIBuilder
 import org.polyfrost.oneconfig.internal.ui.pages.FeedbackPage
 import org.polyfrost.oneconfig.internal.ui.pages.ModsPage
 import org.polyfrost.oneconfig.internal.ui.pages.ThemesPage
-import org.polyfrost.oneconfig.utils.v1.GuiUtils
 import org.polyfrost.polyui.animate.Animations
 import org.polyfrost.polyui.component.*
 import org.polyfrost.polyui.component.impl.*
@@ -52,7 +51,7 @@ import org.polyfrost.polyui.utils.rgba
 
 object OneConfigUI {
     private val playerHead = PolyImage(
-        "https://mc-heads.net/avatar/${Platform.getPlayerPlatform().playerName}/24",
+        "https://mc-heads.net/avatar/${Platform.player().playerName}/24",
         type = PolyImage.Type.Raster,
     ).also {
         it.size = (24f by 24f).immutable()
@@ -60,12 +59,15 @@ object OneConfigUI {
     lateinit var ui: Drawable
 
 
-    fun create(): PolyUIScreen {
+    fun open() {
         val vertical = Align(cross = Align.Cross.Start, mode = Align.Mode.Vertical)
-
-        return PolyUIScreen(
-            null, null, null, null, null, rgba(21, 21, 21),
-            1920f by 1080f, 1400f by 700f,
+        val builder = PolyUIBuilder.builder().blurs().backgroundColor(rgba(21, 21, 21)).atResolution(1920f by 1080f).size(1400f by 700f)
+        builder.onClose { _ ->
+            for (t in ConfigManager.active().trees()) {
+                ConfigManager.active().save(t)
+            }
+        }
+        builder.makeAndOpen(
             Group(
                 Block(
                     size = Vec2(225f, 32f),
@@ -111,7 +113,7 @@ object OneConfigUI {
                 ),
                 Spacer(size = Vec2(200f, 170f)),
                 SidebarButton0("assets/oneconfig/ico/hud.svg".image(), "oneconfig.edithud").onClick {
-                    GuiUtils.displayScreen(HudManager.getWithEditor())
+                    Platform.screen().display(HudManager.getWithEditor())
                 },
                 size = Vec2(273f, 700f),
                 alignment = Align(mode = Align.Mode.Vertical, padding = Vec2(12f, 16f)),
@@ -135,7 +137,7 @@ object OneConfigUI {
                             Image(playerHead, radii = 6f.radii()).named("ProfileImage").withBoarder(
                                 rgba(255, 255, 255, 0.14f),
                                 width = 1f,
-                            ).addHoverInfo(Platform.getPlayerPlatform().playerName.ifEmpty { "null" }),
+                            ).addHoverInfo(Platform.player().playerName.ifEmpty { "null" }),
                             alignment = Align(padding = Vec2(16f, 8f)),
                         ),
                         Block(
@@ -149,7 +151,7 @@ object OneConfigUI {
                         ).named("SearchField"),
                         Image(
                             "assets/oneconfig/ico/close.svg".image(),
-                        ).named("Close").onClick { GuiUtils.closeScreen() }.withStates().setDestructivePalette(),
+                        ).named("Close").onClick { Platform.screen().close() }.withStates().setDestructivePalette(),
                         alignment = Align(padding = Vec2(24f, 8f)),
                     ),
                     size = Vec2(1130f, 64f),
@@ -160,12 +162,8 @@ object OneConfigUI {
                 alignment = Align(padding = Vec2.ZERO),
             )
         ).also {
-            ui = it.polyUI!!.master
+            ui = it.master
             (ui as Block).radii.assign(8f)
-        }.closeCallback {
-            for (t in ConfigManager.active().trees()) {
-                ConfigManager.active().save(t)
-            }
         }
     }
 

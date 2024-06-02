@@ -26,16 +26,17 @@
 
 package org.polyfrost.oneconfig.api.ui.v1.internal;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.shader.Shader;
 import net.minecraft.client.shader.ShaderGroup;
+import net.minecraft.client.shader.ShaderManager;
 import net.minecraft.client.shader.ShaderUniform;
 import net.minecraft.util.ResourceLocation;
 import org.polyfrost.oneconfig.api.event.v1.events.RenderEvent;
 import org.polyfrost.oneconfig.api.event.v1.events.ScreenOpenEvent;
 import org.polyfrost.oneconfig.api.event.v1.invoke.EventHandler;
+import org.polyfrost.oneconfig.api.platform.v1.Platform;
 import org.polyfrost.oneconfig.internal.mixin.ShaderGroupAccessor;
-import org.polyfrost.universal.UMinecraft;
-import org.polyfrost.universal.UScreen;
 import org.polyfrost.oneconfig.api.ui.v1.screen.BlurScreen;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
@@ -59,7 +60,7 @@ public final class BlurHandler {
     public static final BlurHandler INSTANCE = new BlurHandler();
     private static final Logger LOGGER = LogManager.getLogger("OneConfig/Blur");
 
-    private final ResourceLocation blurShader = new ResourceLocation("shaders/post/fade_in_blur.json");
+    private final ResourceLocation blurShader = new ResourceLocation("oneconfig", "shaders/post/fade_in_blur.json");
     private ShaderUniform su;
     private long start;
     private float progress = 0;
@@ -69,9 +70,9 @@ public final class BlurHandler {
     }
 
     private BlurHandler() {
-        EventHandler.of(ScreenOpenEvent.class, e -> reloadBlur(e.screen)).register();
+        EventHandler.of(ScreenOpenEvent.class, e -> reloadBlur(e.getScreen())).register();
         EventHandler.of(RenderEvent.End.class, e -> {
-            if (UScreen.getCurrentScreen() == null) {
+            if (Platform.screen().current() == null) {
                 return;
             }
             if (!isShaderActive()) {
@@ -89,7 +90,7 @@ public final class BlurHandler {
      */
     private void reloadBlur(Object gui) {
         // Don't do anything if no world is loaded
-        if (UMinecraft.getWorld() == null) {
+        if (Minecraft.getMinecraft().theWorld == null) {
             return;
         }
         if (gui == null) {
@@ -102,21 +103,15 @@ public final class BlurHandler {
         if (gui instanceof BlurScreen && ((BlurScreen) gui).hasBackgroundBlur()) {
             if (!isShaderActive()) {
                 //#if FABRIC
-                //$$ ((org.polyfrost.oneconfig.internal.mixin.fabric.GameRendererAccessor) UMinecraft.getMinecraft().gameRenderer).invokeLoadShader(this.blurShader);
+                //$$ ((org.polyfrost.oneconfig.internal.mixin.fabric.GameRendererAccessor) MinecraftClient.getInstance().gameRenderer).invokeLoadShader(this.blurShader);
                 //#else
-                UMinecraft.getMinecraft().entityRenderer.
-                        //#if MC<11700
-                        loadShader
-                        //#else
-                        //$$ loadEffect
-                        //#endif
-                                (this.blurShader);
+                Minecraft.getMinecraft().entityRenderer.loadShader(this.blurShader);
                 //#endif
 
                 this.start = System.currentTimeMillis();
                 this.progress = 0;
                 try {
-                    final List<Shader> listShaders = ((ShaderGroupAccessor) UMinecraft.getMinecraft().entityRenderer.getShaderGroup()).getListShaders();
+                    final List<Shader> listShaders = ((ShaderGroupAccessor) Minecraft.getMinecraft().entityRenderer.getShaderGroup()).getListShaders();
 
                     // Should not happen. Something bad happened.
                     if (listShaders == null) {
@@ -125,7 +120,8 @@ public final class BlurHandler {
 
                     // Iterate through the list of shaders.
                     for (Shader shader : listShaders) {
-                        ShaderUniform su = shader.getShaderManager().getShaderUniform("Progress");
+                        ShaderManager sm = shader.getShaderManager();
+                        ShaderUniform su = sm.getShaderUniform("Progress");
                         if (su == null) continue;
 
                         this.su = su;
@@ -141,7 +137,7 @@ public final class BlurHandler {
     }
 
     private void tryStop() {
-        ShaderGroup sg = UMinecraft.getMinecraft().entityRenderer.getShaderGroup();
+        ShaderGroup sg = Minecraft.getMinecraft().entityRenderer.getShaderGroup();
         if (sg == null) return;
         String name = sg.getShaderGroupName();
 
@@ -150,11 +146,11 @@ public final class BlurHandler {
             return;
         }
         su = null;
-        UMinecraft.getMinecraft().entityRenderer.stopUseShader();
+        Minecraft.getMinecraft().entityRenderer.stopUseShader();
     }
 
     public static boolean isBlurring() {
-        return (UScreen.getCurrentScreen() instanceof BlurScreen && ((BlurScreen) UScreen.getCurrentScreen()).hasBackgroundBlur());
+        return (Platform.screen().current() instanceof BlurScreen && ((BlurScreen) Platform.screen().current()).hasBackgroundBlur());
     }
 
     /**
@@ -168,7 +164,7 @@ public final class BlurHandler {
 
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     public boolean isShaderActive() {
-        return UMinecraft.getMinecraft().entityRenderer.getShaderGroup() != null
+        return Minecraft.getMinecraft().entityRenderer.getShaderGroup() != null
                 //#if MC<=11202
                 && net.minecraft.client.renderer.OpenGlHelper.shadersSupported
                 //#endif

@@ -1,35 +1,60 @@
-net.minecraft.util.text.ITextComponent getUnformattedComponentText() getUnformattedText()
-net.minecraft.network.IPacket net.minecraft.network.Packet
-net.minecraft.client.gui.screen.Screen net.minecraft.client.gui.GuiScreen
-net.minecraft.client.gui.screen.Screen resize() onResize()
-net.minecraft.client.gui.screen.Screen isPauseScreen() doesGuiPauseGame()
-net.minecraft.client.gui.screen.ChatScreen net.minecraft.client.gui.GuiChat
+net.minecraft.client.Minecraft gameRenderer entityRenderer
 net.minecraft.client.Minecraft getInstance() getMinecraft()
 net.minecraft.client.Minecraft isOnExecutionThread() isCallingFromMinecraftThread()
+
 net.minecraft.client.entity.EntityPlayerSP getServerBrand() getClientBrand()
 net.minecraft.client.entity.player.ClientPlayerEntity net.minecraft.client.entity.EntityPlayerSP
-net.minecraft.client.Minecraft gameRenderer entityRenderer
-net.minecraft.client.shader.ShaderDefault net.minecraft.client.shader.ShaderUniform
-net.minecraft.client.world.ClientWorld net.minecraft.client.multiplayer.WorldClient
+
+net.minecraft.client.gui.screen.ChatScreen net.minecraft.client.gui.GuiChat
+
+net.minecraft.client.gui.screen.Screen isPauseScreen() doesGuiPauseGame()
+net.minecraft.client.gui.screen.Screen net.minecraft.client.gui.GuiScreen
+net.minecraft.client.gui.screen.Screen resize() onResize()
+
+net.minecraft.client.gui.widget.button.Button net.minecraft.client.gui.GuiButton
+net.minecraft.client.gui.widget.button.Button playDownSound() playPressSound()
+
+net.minecraft.client.network.play.ClientPlayNetHandler net.minecraft.client.network.NetHandlerPlayClient
 net.minecraft.client.network.play.NetworkPlayerInfo net.minecraft.client.network.NetworkPlayerInfo
 
-net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent net.minecraftforge.fml.common.event.FMLInitializationEvent
-net.minecraftforge.fml.common.Loader get() instance()
-net.minecraftforge.fml.common.Loader getActiveContainer() activeModContainer()
-net.minecraftforge.fml.ModLoadingContext net.minecraftforge.fml.common.Loader
-net.minecraftforge.fml.ModContainer net.minecraftforge.fml.common.ModContainer
+net.minecraft.client.shader.ShaderDefault net.minecraft.client.shader.ShaderUniform
+net.minecraft.client.shader.ShaderInstance net.minecraft.client.shader.ShaderManager
+
+net.minecraft.client.world.ClientWorld net.minecraft.client.multiplayer.WorldClient
+
+net.minecraft.network.IPacket net.minecraft.network.Packet
+
+net.minecraft.network.play.client.CCustomPayloadPacket net.minecraft.network.play.client.CPacketCustomPayload
+net.minecraft.network.play.server.SCustomPayloadPlayPacket net.minecraft.network.play.server.SPacketCustomPayload
+
+net.minecraft.profiler.IProfiler net.minecraft.profiler.Profiler
+
+net.minecraft.util.text.ITextComponent getUnformattedComponentText() getUnformattedText()
+
+net.minecraftforge.client.event.ClientPlayerNetworkEvent getNetworkManager() getManager()
+net.minecraftforge.client.event.ClientPlayerNetworkEvent net.minecraftforge.fml.common.network.FMLNetworkEvent
+net.minecraftforge.client.event.ClientPlayerNetworkEvent$LoggedInEvent net.minecraftforge.fml.common.network.FMLNetworkEvent$ClientConnectedToServerEvent
 net.minecraftforge.client.gui.ForgeIngameGui net.minecraftforge.client.GuiIngameForge
+
 net.minecraftforge.eventbus.EventBus net.minecraftforge.fml.common.eventhandler.EventBus
 net.minecraftforge.eventbus.api.Event net.minecraftforge.fml.common.eventhandler.Event
+net.minecraftforge.eventbus.api.SubscribeEvent net.minecraftforge.fml.common.eventhandler.SubscribeEvent
+
+net.minecraftforge.fml.ModContainer net.minecraftforge.fml.common.ModContainer
+net.minecraftforge.fml.ModLoadingContext net.minecraftforge.fml.common.Loader
+net.minecraftforge.fml.common.Loader get() instance()
+net.minecraftforge.fml.common.Loader getActiveContainer() activeModContainer()
+
+net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent net.minecraftforge.fml.common.event.FMLInitializationEvent
 
 org.objectweb.asm.tree.ClassNode org.spongepowered.asm.lib.tree.ClassNode
-org.objectweb.asm.tree.FieldNode org.spongepowered.asm.lib.tree.FieldNode
-org.objectweb.asm.tree.MethodNode org.spongepowered.asm.lib.tree.MethodNode
-org.objectweb.asm.tree.LabelNode org.spongepowered.asm.lib.tree.LabelNode
-org.objectweb.asm.tree.LineNumberNode org.spongepowered.asm.lib.tree.LineNumberNode
-org.objectweb.asm.tree.VarInsnNode org.spongepowered.asm.lib.tree.VarInsnNode
 org.objectweb.asm.tree.FieldInsnNode org.spongepowered.asm.lib.tree.FieldInsnNode
-org.objectweb.asm.tree.MethodInsnNode org.spongepowered.asm.lib.tree.MethodInsnNode
+org.objectweb.asm.tree.FieldNode org.spongepowered.asm.lib.tree.FieldNode
 org.objectweb.asm.tree.InsnList org.spongepowered.asm.lib.tree.InsnList
 org.objectweb.asm.tree.InsnNode org.spongepowered.asm.lib.tree.InsnNode
 org.objectweb.asm.tree.JumpInsnNode org.spongepowered.asm.lib.tree.JumpInsnNode
+org.objectweb.asm.tree.LabelNode org.spongepowered.asm.lib.tree.LabelNode
+org.objectweb.asm.tree.LineNumberNode org.spongepowered.asm.lib.tree.LineNumberNode
+org.objectweb.asm.tree.MethodInsnNode org.spongepowered.asm.lib.tree.MethodInsnNode
+org.objectweb.asm.tree.MethodNode org.spongepowered.asm.lib.tree.MethodNode
+org.objectweb.asm.tree.VarInsnNode org.spongepowered.asm.lib.tree.VarInsnNode

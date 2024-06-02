@@ -24,6 +24,8 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
+@file:Suppress("UnstableApiUsage")
+
 package org.polyfrost.oneconfig.api.hud.v1.internal
 
 import org.polyfrost.oneconfig.api.hud.v1.Hud
@@ -217,10 +219,10 @@ private fun interactiveAlignment(hud: Hud<out Drawable>): Drawable {
                         ).apply {
                             rotation = hud.get().parent.rotation
                         }.events {
-                            Event.Mouse.Pressed then {
+                            Event.Mouse.Companion.Pressed then {
                                 this[0].accept(it)
                             }
-                            Event.Mouse.Released then {
+                            Event.Mouse.Companion.Released then {
                                 this[0].accept(it)
                             }
                             Event.Mouse.Entered then {

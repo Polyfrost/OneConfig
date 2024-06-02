@@ -27,37 +27,24 @@
 package org.polyfrost.oneconfig.api.platform.v1.internal;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.entity.EntityPlayerSP;
-import org.polyfrost.universal.UMinecraft;
+import net.minecraft.util.Session;
 import org.polyfrost.oneconfig.api.platform.v1.PlayerPlatform;
 
 public class PlayerPlatformImpl implements PlayerPlatform {
 
     @Override
     public boolean inMultiplayer() {
-        return UMinecraft.getWorld() != null && !UMinecraft.getMinecraft().isSingleplayer();
-    }
-
-    @Override
-    public String getClientBrand() {
-        EntityPlayerSP player = UMinecraft.getPlayer();
-        if (player == null)
-            return null;
-        //#if MC<12000
-        return player.getClientBrand();
-        //#else
-        //$$ net.minecraft.server.MinecraftServer server = player.getServer();
-        //$$ return server == null ? null : server.getName();
-        //#endif
+        return Minecraft.getMinecraft().theWorld != null && !Minecraft.getMinecraft().isSingleplayer();
     }
 
     @Override
     public boolean doesPlayerExist() {
-        return UMinecraft.getPlayer() != null;
+        return Minecraft.getMinecraft().thePlayer != null;
     }
 
     @Override
     public String getPlayerName() {
-        return Minecraft.getMinecraft().getSession().getUsername();
+        Session s = Minecraft.getMinecraft().getSession();
+        return s.getUsername();
     }
 }

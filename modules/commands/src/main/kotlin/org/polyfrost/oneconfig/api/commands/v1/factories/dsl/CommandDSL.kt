@@ -67,7 +67,7 @@ class CommandDSL @JvmOverloads constructor(private val parsers: Map<Class<*>, Ar
                 description,
                 mapParams(method, paramData, parsers),
                 greedy
-            ) { m.invokeWithArguments(*it) }
+            ) { if (it == null) m.invoke() else m.invokeWithArguments(*it) }
         )
     }
 

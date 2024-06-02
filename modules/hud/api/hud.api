@@ -43,7 +43,7 @@ public final class org/polyfrost/oneconfig/api/hud/v1/HudManager {
 	public final fun getPolyUI ()Lorg/polyfrost/polyui/PolyUI;
 	public final fun getSlinex ()F
 	public final fun getSliney ()F
-	public final fun getWithEditor ()Lorg/polyfrost/oneconfig/api/ui/v1/screen/PolyUIScreen;
+	public final fun getWithEditor ()Ljava/lang/Object;
 	public final fun initialize ()V
 	public final fun openHudEditor (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;)V
 	public static final fun register (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;)V

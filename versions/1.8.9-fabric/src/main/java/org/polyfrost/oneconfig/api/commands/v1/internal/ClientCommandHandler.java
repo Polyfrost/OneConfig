@@ -25,7 +25,6 @@
  */
 
 package org.polyfrost.oneconfig.api.commands.v1.internal;
-//#if MC<=11202
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ChatScreen;
@@ -150,4 +149,3 @@ public class ClientCommandHandler extends CommandRegistry {
     //$$ }
     //#endif
 }
-//#endif

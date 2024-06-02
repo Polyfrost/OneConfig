@@ -32,9 +32,11 @@ import org.polyfrost.polyui.renderer.Renderer;
 
 public class UIManagerImpl implements UIManager {
     private static final TinyFD impl = new TinyFDImpl();
-    static {
-        RendererImpl.INSTANCE.setGl3(true);
-    }
+    //#if MC>=11700
+    //$$ static {
+    //$$     RendererImpl.INSTANCE.setGl3(true);
+    //$$ }
+    //#endif
 
     @Override
     public Renderer getRenderer() {

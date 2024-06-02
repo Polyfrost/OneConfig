@@ -44,7 +44,7 @@ public abstract class EntityPlayerSPMixin {
 
     @Inject(method = "sendChatMessage", at = @At("HEAD"), cancellable = true)
     public void ocfg$chatCallback(String message, CallbackInfo ci) {
-        //#if MC>=11600 && FABRIC
+        //#if MC>=11600
         //$$ if (org.polyfrost.oneconfig.internal.libs.fabric.ClientCommandInternals.executeCommand(message)) {
         //$$     ci.cancel();
         //$$ }

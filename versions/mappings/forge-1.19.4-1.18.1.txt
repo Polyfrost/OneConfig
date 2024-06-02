@@ -1,0 +1,6 @@
+net.minecraftforge.client.event.ClientPlayerNetworkEvent$LoggingIn net.minecraftforge.client.event.ClientPlayerNetworkEvent$LoggedInEvent
+
+net.minecraftforge.client.gui.overlay.ForgeGui net.minecraftforge.client.gui.ForgeIngameGui
+
+net.minecraftforge.client.event.ScreenOpenEvent getNewScreen() getScreen()
+net.minecraftforge.client.event.ScreenEvent$Opening net.minecraftforge.client.event.ScreenOpenEvent

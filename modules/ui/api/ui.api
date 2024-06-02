@@ -1,3 +1,24 @@
+public final class org/polyfrost/oneconfig/api/ui/v1/PolyUIBuilder {
+	public static final field DEFAULT Lorg/polyfrost/oneconfig/api/ui/v1/screen/PolyUIScreenProvider;
+	public fun align (Lorg/polyfrost/polyui/unit/Align;)Lorg/polyfrost/oneconfig/api/ui/v1/PolyUIBuilder;
+	public fun atResolution (Lorg/polyfrost/polyui/unit/Vec2;)Lorg/polyfrost/oneconfig/api/ui/v1/PolyUIBuilder;
+	public fun backgroundColor (Lorg/polyfrost/polyui/color/PolyColor;)Lorg/polyfrost/oneconfig/api/ui/v1/PolyUIBuilder;
+	public fun blurs ()Lorg/polyfrost/oneconfig/api/ui/v1/PolyUIBuilder;
+	public static fun builder ()Lorg/polyfrost/oneconfig/api/ui/v1/PolyUIBuilder;
+	public static fun builder (Lorg/polyfrost/oneconfig/api/ui/v1/screen/PolyUIScreenProvider;)Lorg/polyfrost/oneconfig/api/ui/v1/PolyUIBuilder;
+	public fun colors (Lorg/polyfrost/polyui/color/Colors;)Lorg/polyfrost/oneconfig/api/ui/v1/PolyUIBuilder;
+	public fun input (Lorg/polyfrost/polyui/event/InputManager;)Lorg/polyfrost/oneconfig/api/ui/v1/PolyUIBuilder;
+	public fun make ([Lorg/polyfrost/polyui/component/Drawable;)Lorg/polyfrost/polyui/PolyUI;
+	public fun makeAndOpen ([Lorg/polyfrost/polyui/component/Drawable;)Lorg/polyfrost/polyui/PolyUI;
+	public fun onClose (Ljava/lang/Runnable;)Lorg/polyfrost/oneconfig/api/ui/v1/PolyUIBuilder;
+	public fun onClose (Ljava/util/function/Consumer;)Lorg/polyfrost/oneconfig/api/ui/v1/PolyUIBuilder;
+	public fun pauses ()Lorg/polyfrost/oneconfig/api/ui/v1/PolyUIBuilder;
+	public fun renderer (Lorg/polyfrost/polyui/renderer/Renderer;)Lorg/polyfrost/oneconfig/api/ui/v1/PolyUIBuilder;
+	public fun settings (Lorg/polyfrost/polyui/property/Settings;)Lorg/polyfrost/oneconfig/api/ui/v1/PolyUIBuilder;
+	public fun size (Lorg/polyfrost/polyui/unit/Vec2;)Lorg/polyfrost/oneconfig/api/ui/v1/PolyUIBuilder;
+	public fun translator (Lorg/polyfrost/polyui/input/Translator;)Lorg/polyfrost/oneconfig/api/ui/v1/PolyUIBuilder;
+}
+
 public abstract interface class org/polyfrost/oneconfig/api/ui/v1/TinyFD {
 	public static final field ERROR_ICON Ljava/lang/String;
 	public static final field INFO_ICON Ljava/lang/String;
@@ -91,21 +112,7 @@ public abstract interface class org/polyfrost/oneconfig/api/ui/v1/screen/BlurScr
 	public abstract fun hasBackgroundBlur ()Z
 }
 
-public class org/polyfrost/oneconfig/api/ui/v1/screen/PolyUIScreen {
-	public field blurs Z
-	public final field desiredResolution Lorg/polyfrost/polyui/unit/Vec2;
-	public final field inputManager Lorg/polyfrost/polyui/event/InputManager;
-	public field pauses Z
-	public final field polyUI Lorg/polyfrost/polyui/PolyUI;
-	public fun <init> (Lorg/polyfrost/polyui/PolyUI;)V
-	public fun <init> (Lorg/polyfrost/polyui/event/InputManager;)V
-	public fun <init> (Lorg/polyfrost/polyui/property/Settings;Lorg/polyfrost/polyui/event/InputManager;Lorg/polyfrost/polyui/input/Translator;Lorg/polyfrost/polyui/unit/Align;Lorg/polyfrost/polyui/color/Colors;Lorg/polyfrost/polyui/color/PolyColor;Lorg/polyfrost/polyui/unit/Vec2;Lorg/polyfrost/polyui/unit/Vec2;[Lorg/polyfrost/polyui/component/Drawable;)V
-	public fun <init> (Lorg/polyfrost/polyui/unit/Align;Lorg/polyfrost/polyui/unit/Vec2;[Lorg/polyfrost/polyui/component/Drawable;)V
-	public fun <init> ([Lorg/polyfrost/polyui/component/Drawable;)V
-	public final fun closeCallback (Ljava/lang/Runnable;)Lorg/polyfrost/oneconfig/api/ui/v1/screen/PolyUIScreen;
-}
-
-public abstract interface class org/polyfrost/oneconfig/api/ui/v1/screen/UIPause {
-	public abstract fun doesUIPauseGame ()Z
+public abstract interface class org/polyfrost/oneconfig/api/ui/v1/screen/PolyUIScreenProvider {
+	public abstract fun create (Lorg/polyfrost/polyui/PolyUI;Lorg/polyfrost/polyui/unit/Vec2;ZZLjava/util/function/Consumer;)Ljava/lang/Object;
 }
 

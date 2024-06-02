@@ -27,13 +27,13 @@
 package org.polyfrost.oneconfig.api.commands.v1.internal;
 
 import com.mojang.brigadier.CommandDispatcher;
+import net.minecraft.client.multiplayer.ClientSuggestionProvider;
 import org.polyfrost.oneconfig.api.event.v1.events.Event;
-import org.polyfrost.oneconfig.internal.libs.fabric.ClientCommandSource;
 
 public class RegisterCommandsEvent implements Event {
-    public final CommandDispatcher<ClientCommandSource> dispatcher;
+    public final CommandDispatcher<ClientSuggestionProvider> dispatcher;
 
-    public RegisterCommandsEvent(CommandDispatcher<ClientCommandSource> dispatcher) {
+    public RegisterCommandsEvent(CommandDispatcher<ClientSuggestionProvider> dispatcher) {
         this.dispatcher = dispatcher;
     }
 }

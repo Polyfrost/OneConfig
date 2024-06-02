@@ -28,13 +28,9 @@ package org.polyfrost.oneconfig.internal.mixin.commands;
 
 import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.client.network.play.ClientPlayNetHandler;
-import net.minecraft.command.CommandSource;
+import net.minecraft.command.ISuggestionProvider;
 import net.minecraft.network.play.server.SCommandListPacket;
-import net.minecraft.network.play.server.SJoinGamePacket;
-import org.polyfrost.oneconfig.api.event.v1.EventManager;
-import org.polyfrost.oneconfig.api.commands.v1.internal.RegisterCommandsEvent;
 import org.polyfrost.oneconfig.internal.libs.fabric.ClientCommandInternals;
-import org.polyfrost.oneconfig.internal.libs.fabric.ClientCommandSource;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -48,26 +44,18 @@ public class ClientPlayNetworkHandlerMixin {
     // Modified from Fabric API under the Apache 2.0 License //
     // Source: https://github.com/FabricMC/fabric/blob/1.20.2/fabric-command-api-v2/src/client/java/net/fabricmc/fabric/mixin/command/client/ClientPlayNetworkHandlerMixin.java //
     @Shadow
-    private CommandDispatcher<CommandSource> commandDispatcher;
+    private CommandDispatcher<ISuggestionProvider> commandDispatcher;
 
     @Shadow
     @Final
     private net.minecraft.client.multiplayer.ClientSuggestionProvider clientSuggestionProvider;
 
-    @Inject(method = "handleJoinGame", at = @At("RETURN"))
-    private void ocfg$commands$setup(SJoinGamePacket packet, CallbackInfo info) {
-        final CommandDispatcher<ClientCommandSource> dispatcher = new CommandDispatcher<>();
-        ClientCommandInternals.setActiveDispatcher(dispatcher);
-        EventManager.INSTANCE.post(new RegisterCommandsEvent(dispatcher));
-        ClientCommandInternals.finalizeInit();
-    }
-
     @SuppressWarnings({"unchecked", "rawtypes"})
     @Inject(method = "handleCommandList", at = @At("RETURN"))
-    private void ocfg$commands$setupCompletion(SCommandListPacket packet, CallbackInfo info) {
+    private void ocfg$commands$setup(SCommandListPacket packet, CallbackInfo info) {
         // Add the commands to the vanilla dispatcher for completion.
         // It's done here because both the server and the client commands have
         // to be in the same dispatcher and completion results.
-        ClientCommandInternals.addCommands((CommandDispatcher) this.commandDispatcher, (ClientCommandSource) this.clientSuggestionProvider);
+        ClientCommandInternals.addCommands((CommandDispatcher) this.commandDispatcher, this.clientSuggestionProvider);
     }
 }

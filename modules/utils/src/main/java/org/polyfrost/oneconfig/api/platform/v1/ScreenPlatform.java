@@ -24,27 +24,35 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.api.event.v1.events;
+package org.polyfrost.oneconfig.api.platform.v1;
 
-import net.minecraft.util.IChatComponent;
-import org.polyfrost.oneconfig.api.PlatformDeclaration;
-import org.polyfrost.universal.wrappers.message.UTextComponent;
+import org.jetbrains.annotations.Nullable;
 
-/**
- * Called when a chat message is received.
- */
-@PlatformDeclaration
-public class ChatReceiveEvent extends Event.Cancellable {
-    /**
-     * The message that was received.
-     */
-    public IChatComponent message;
+public interface ScreenPlatform {
+    boolean isInChat();
 
-    public ChatReceiveEvent(IChatComponent message) {
-        this.message = message;
+    boolean isInDebug();
+
+    void playClickSound();
+
+    int viewportWidth();
+
+    int viewportHeight();
+
+    int windowWidth();
+
+    int windowHeight();
+
+    void display(@Nullable Object screen, int ticks);
+
+    default void display(Object screen) {
+        display(screen, 1);
     }
 
-    public String getFullyUnformattedMessage() {
-        return UTextComponent.Companion.stripFormatting(message.getUnformattedText());
+    default void close() {
+        display(null, 0);
     }
+
+    @Nullable
+    <T> T current();
 }

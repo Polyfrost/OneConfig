@@ -99,7 +99,7 @@ public final class NetworkUtils {
      * @return Whether the download was successful.
      */
     public static boolean downloadFile(String url, Path path, String userAgent, int timeout, boolean useCaches) {
-        try (BufferedInputStream in = new BufferedInputStream(setupConnection(URLEncoder.encode(url, "UTF-8"), userAgent, timeout, useCaches))) {
+        try (BufferedInputStream in = new BufferedInputStream(setupConnection(url, userAgent, timeout, useCaches))) {
             Files.copy(in, path, StandardCopyOption.REPLACE_EXISTING);
         } catch (Exception e) {
             LOGGER.error("Failed to download file from {}", url, e);
@@ -132,7 +132,7 @@ public final class NetworkUtils {
     }
 
     public static InputStream setupConnection(String url, String userAgent, int timeout, boolean useCaches) throws IOException {
-        HttpURLConnection connection = ((HttpURLConnection) new URL(url).openConnection());
+        HttpURLConnection connection = ((HttpURLConnection) new URL(URLEncoder.encode(url, "UTF-8")).openConnection());
         connection.setRequestMethod("GET");
         connection.setUseCaches(useCaches);
         connection.addRequestProperty("User-Agent", userAgent);

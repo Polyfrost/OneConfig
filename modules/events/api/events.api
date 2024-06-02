@@ -30,9 +30,10 @@ public final class org/polyfrost/oneconfig/api/event/v1/EventManager {
 }
 
 public class org/polyfrost/oneconfig/api/event/v1/events/ChatReceiveEvent : org/polyfrost/oneconfig/api/event/v1/events/Event$Cancellable {
-	public field message Ljava/lang/Object;
 	public fun <init> (Ljava/lang/Object;)V
 	public fun getFullyUnformattedMessage ()Ljava/lang/String;
+	public fun getMessage ()Ljava/lang/Object;
+	public fun setMessage (Ljava/lang/Object;)V
 }
 
 public class org/polyfrost/oneconfig/api/event/v1/events/ChatSendEvent : org/polyfrost/oneconfig/api/event/v1/events/Event$Cancellable {
@@ -68,6 +69,11 @@ public class org/polyfrost/oneconfig/api/event/v1/events/HudRenderEvent : org/po
 	public fun component2 ()F
 }
 
+public class org/polyfrost/oneconfig/api/event/v1/events/HypixelLocationEvent : org/polyfrost/oneconfig/api/event/v1/events/Event {
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/event/v1/events/HypixelLocationEvent;
+	public fun getLocation ()Lorg/polyfrost/oneconfig/api/hypixel/v0/HypixelAPI$Location;
+}
+
 public class org/polyfrost/oneconfig/api/event/v1/events/InitializationEvent : org/polyfrost/oneconfig/api/event/v1/events/Event {
 	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/event/v1/events/InitializationEvent;
 }
@@ -86,12 +92,6 @@ public class org/polyfrost/oneconfig/api/event/v1/events/KeyInputEvent : org/pol
 	public fun isPressed ()Z
 }
 
-public class org/polyfrost/oneconfig/api/event/v1/events/LocrawEvent : org/polyfrost/oneconfig/api/event/v1/events/Event {
-	public final field info Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo;
-	public fun <init> (Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo;)V
-	public fun component1 ()Lorg/polyfrost/oneconfig/utils/v1/hypixel/LocrawInfo;
-}
-
 public class org/polyfrost/oneconfig/api/event/v1/events/MouseInputEvent : org/polyfrost/oneconfig/api/event/v1/events/Event {
 	public final field button I
 	public final field state I
@@ -101,8 +101,8 @@ public class org/polyfrost/oneconfig/api/event/v1/events/MouseInputEvent : org/p
 }
 
 public class org/polyfrost/oneconfig/api/event/v1/events/ReceivePacketEvent : org/polyfrost/oneconfig/api/event/v1/events/Event$Cancellable {
-	public final field packet Ljava/lang/Object;
 	public fun <init> (Ljava/lang/Object;)V
+	public fun getPacket ()Ljava/lang/Object;
 }
 
 public abstract class org/polyfrost/oneconfig/api/event/v1/events/RenderEvent : org/polyfrost/oneconfig/api/event/v1/events/Event {
@@ -128,13 +128,13 @@ public class org/polyfrost/oneconfig/api/event/v1/events/ResizeEvent : org/polyf
 }
 
 public class org/polyfrost/oneconfig/api/event/v1/events/ScreenOpenEvent : org/polyfrost/oneconfig/api/event/v1/events/Event$Cancellable {
-	public final field screen Ljava/lang/Object;
 	public fun <init> (Ljava/lang/Object;)V
+	public fun getScreen ()Ljava/lang/Object;
 }
 
 public class org/polyfrost/oneconfig/api/event/v1/events/SendPacketEvent : org/polyfrost/oneconfig/api/event/v1/events/Event$Cancellable {
-	public final field packet Ljava/lang/Object;
 	public fun <init> (Ljava/lang/Object;)V
+	public fun getPacket ()Ljava/lang/Object;
 }
 
 public class org/polyfrost/oneconfig/api/event/v1/events/ShutdownEvent : org/polyfrost/oneconfig/api/event/v1/events/Event {
@@ -153,7 +153,8 @@ public class org/polyfrost/oneconfig/api/event/v1/events/TickEvent$Start : org/p
 }
 
 public class org/polyfrost/oneconfig/api/event/v1/events/WorldLoadEvent : org/polyfrost/oneconfig/api/event/v1/events/Event {
-	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/event/v1/events/WorldLoadEvent;
+	public fun <init> (Ljava/lang/Object;)V
+	public fun getWorld ()Ljava/lang/Object;
 }
 
 public abstract interface class org/polyfrost/oneconfig/api/event/v1/invoke/EventCollector {
@@ -170,6 +171,7 @@ public abstract class org/polyfrost/oneconfig/api/event/v1/invoke/EventHandler {
 	public static fun of (Ljava/lang/Class;Ljava/lang/Runnable;)Lorg/polyfrost/oneconfig/api/event/v1/invoke/EventHandler;
 	public static fun of (Ljava/lang/Class;Ljava/util/function/Consumer;)Lorg/polyfrost/oneconfig/api/event/v1/invoke/EventHandler;
 	public static fun of (Ljava/lang/reflect/Method;Ljava/lang/Object;)Lorg/polyfrost/oneconfig/api/event/v1/invoke/EventHandler;
+	public final fun onError ()Z
 	public final fun register ()Lorg/polyfrost/oneconfig/api/event/v1/invoke/EventHandler;
 }
 

@@ -26,22 +26,22 @@
 
 package org.polyfrost.oneconfig.internal;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.polyfrost.oneconfig.api.commands.v1.CommandManager;
 import org.polyfrost.oneconfig.api.commands.v1.factories.builder.CommandBuilder;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.InitializationEvent;
 import org.polyfrost.oneconfig.api.hud.v1.HudManager;
+import org.polyfrost.oneconfig.api.platform.v1.Platform;
 import org.polyfrost.oneconfig.api.ui.v1.UIManager;
 import org.polyfrost.oneconfig.api.ui.v1.internal.BlurHandler;
-import org.polyfrost.oneconfig.internal.ui.OneConfigUI;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindHelper;
-import org.polyfrost.oneconfig.utils.v1.GuiUtils;
+import org.polyfrost.oneconfig.internal.ui.OneConfigUI;
 import org.polyfrost.polyui.PolyUI;
 import org.polyfrost.polyui.component.Drawable;
 import org.polyfrost.polyui.input.KeyModifiers;
 import org.polyfrost.polyui.input.Translator;
-import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.LogManager;
 
 import static org.polyfrost.oneconfig.api.commands.v1.factories.builder.CommandBuilder.runs;
 
@@ -86,10 +86,10 @@ public class OneConfig
         BlurHandler.init();
         preload();
         CommandBuilder b = CommandManager.builder("oneconfig", "ocfg", "ocfgv1").description("OneConfig main command");
-        b.then(runs().does(() -> GuiUtils.displayScreen(OneConfigUI.INSTANCE.create())).description("Opens the OneConfig GUI"));
-        b.then(runs("hud").does(() -> GuiUtils.displayScreen(HudManager.INSTANCE.getWithEditor())).description("Opens the OneConfig HUD editor"));
+        b.then(runs().does(OneConfigUI.INSTANCE::open).description("Opens the OneConfig GUI"));
+        b.then(runs("hud").does(() -> Platform.screen().display(HudManager.INSTANCE.getWithEditor())).description("Opens the OneConfig HUD editor"));
         CommandManager.registerCommand(b);
-        KeybindHelper.builder().mods(KeyModifiers.RSHIFT).does(() -> GuiUtils.displayScreen(OneConfigUI.INSTANCE.create())).register();
+        KeybindHelper.builder().mods(KeyModifiers.RSHIFT).does(OneConfigUI.INSTANCE::open).register();
         EventManager.INSTANCE.post(InitializationEvent.INSTANCE);
         LOGGER.info("OneConfig initialized!");
     }

@@ -48,7 +48,7 @@ fun interface Visualizer {
                 size = Vec2(300f, 32f),
                 text = text ?: "oneconfig.button.default",
             ).events {
-                Event.Mouse.Clicked then {
+                Event.Mouse.Companion.Clicked then {
                     action.run()
                 }
             }
@@ -111,7 +111,7 @@ fun interface Visualizer {
                     visibleSize = Vec2(300f, 32f),
                     text = prop.getAs<Number>().toString(),
                 ).events {
-                    Event.Change.Text then {
+                    Event.Change.Companion.Text then {
                         if (it.text.isEmpty()) return@then
                         try {
                             val v = it.text.toFloat()
@@ -140,7 +140,7 @@ fun interface Visualizer {
                         initial = prop.type.enumConstants.indexOf(prop.get()),
                         optionLateralPadding = 20f,
                     ).events {
-                        Event.Change.Number then {
+                        Event.Change.Companion.Number then {
                             prop.setAs(it.amount)
                         }
                     }
@@ -156,7 +156,7 @@ fun interface Visualizer {
                     initial = prop.getAs(),
                     optionLateralPadding = 20f,
                 ).events {
-                    Event.Change.Number then {
+                    Event.Change.Companion.Number then {
                         prop.setAs(it.amount)
                     }
                 }
@@ -175,7 +175,7 @@ fun interface Visualizer {
                     max = max,
                     initialValue = prop.getAs<Number>().toFloat(),
                 ).events {
-                    Event.Change.Number then {
+                    Event.Change.Companion.Number then {
                         prop.setAs(it.amount)
                     }
                 }
@@ -191,7 +191,7 @@ fun interface Visualizer {
                 size = 21f,
                 state = state,
             ).events {
-                Event.Change.State then {
+                Event.Change.Companion.State then {
                     prop.setAs(it.state)
                 }
             }
@@ -207,7 +207,7 @@ fun interface Visualizer {
                     visibleSize = Vec2(200f, 12f),
                     text = prop.getAs(),
                 ).events {
-                    Event.Change.Text then {
+                    Event.Change.Companion.Text then {
                         prop.setAs(it.text)
                     }
                 }

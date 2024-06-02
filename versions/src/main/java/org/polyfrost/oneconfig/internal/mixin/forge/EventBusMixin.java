@@ -36,13 +36,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-//#if MC>=10809
-//#if FORGE && MC>11700
-//$$ import net.minecraft.network.chat.ChatType;
-//#else
-//$$ import net.minecraft.util.text.ChatType;
-//#endif
-//#endif
+
 
 
 @Mixin(EventBus.class)
@@ -56,17 +50,17 @@ public abstract class EventBusMixin {
         if (event.type != 0) return;
         ChatReceiveEvent ev = new ChatReceiveEvent(event.message);
         //#else
-        //#if MC<11900
-        //$$ if(event.getType() != ChatType.CHAT) return;
-        //#endif
+            //#if MC<11900
+            //$$ if(event.getType() != net.minecraft.util.text.ChatType.CHAT) return;
+            //#endif
         //$$ ChatReceiveEvent ev = new ChatReceiveEvent(event.getMessage());
         //#endif
 
         EventManager.INSTANCE.post(ev);
         //#if MC==10809
-        event.message = ev.message;
+        event.message = ev.getMessage();
         //#else
-        //$$ event.setMessage(ev.message);
+        //$$ event.setMessage(ev.getMessage());
         //#endif
         if (ev.cancelled) {
             event.setCanceled(true);

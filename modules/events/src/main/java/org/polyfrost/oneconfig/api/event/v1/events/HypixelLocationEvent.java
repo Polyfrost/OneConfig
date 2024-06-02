@@ -26,23 +26,27 @@
 
 package org.polyfrost.oneconfig.api.event.v1.events;
 
-import org.polyfrost.oneconfig.utils.v1.hypixel.HypixelUtils;
-import org.polyfrost.oneconfig.utils.v1.hypixel.LocrawInfo;
+import org.jetbrains.annotations.ApiStatus;
+import org.polyfrost.oneconfig.api.hypixel.v0.HypixelAPI;
 
 /**
- * Called when the player's location in Hypixel is received via the /locraw command.
- *
- * @see LocrawInfo
- * @see HypixelUtils
+ * Event that is fired when the player's location is changed.
  */
-public class LocrawEvent implements Event {
-    public final LocrawInfo info;
+@ApiStatus.Experimental
+public class HypixelLocationEvent implements Event {
+    public static final HypixelLocationEvent INSTANCE = new HypixelLocationEvent();
 
-    public LocrawEvent(LocrawInfo info) {
-        this.info = info;
+    private HypixelLocationEvent() {
+        // call <clinit> on HypixelAPI
+        HypixelAPI.getLocation();
     }
 
-    public LocrawInfo component1() {
-        return info;
+    /**
+     * Get the location of the player when the event was fired.
+     * @return the same as {@link HypixelAPI#getLocation()}.
+     */
+    public HypixelAPI.Location getLocation() {
+        return HypixelAPI.getLocation();
     }
+
 }

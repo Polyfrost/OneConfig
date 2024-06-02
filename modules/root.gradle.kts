@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.util.archivesName
-
 // Shared build logic between all OneConfig modules to reduce boilerplate.
 
 plugins {
@@ -17,6 +15,7 @@ subprojects {
         mavenLocal()
         mavenCentral()
         maven("https://repo.polyfrost.org/releases")
+        maven("https://repo.hypixel.net/repository/Hypixel")
     }
 
     dependencies {
@@ -40,10 +39,6 @@ subprojects {
             options {
                 (this as CoreJavadocOptions).addBooleanOption("Xdoclint:none", true)
             }
-        }
-
-        withType(Jar::class.java) {
-            exclude("**/internal/**")
         }
     }
 
@@ -70,7 +65,7 @@ publishing {
             if (project.name == "internal") return@publications
             register<MavenPublication>(project.name) {
                 groupId = rootProject.group.toString()
-                artifactId = project.archivesName.get()
+                artifactId = project.base.archivesName.get()
                 version = rootProject.version.toString()
 
                 from(components["java"])
@@ -110,5 +105,6 @@ apiValidation {
     for (project in subprojects) {
         ignoredPackages.add("org.polyfrost.oneconfig.api.${project.name}.v1.internal")
     }
+    ignoredPackages.add("org.polyfrost.oneconfig.api.hypixel.v0.internal")
     ignoredProjects.add("internal")
 }

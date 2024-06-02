@@ -24,16 +24,14 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.api.event.v1.events;
+package org.polyfrost.oneconfig.api.ui.v1.screen;
 
-import net.minecraft.network.Packet;
-import org.polyfrost.oneconfig.api.PlatformDeclaration;
+import org.polyfrost.polyui.PolyUI;
+import org.polyfrost.polyui.unit.Vec2;
 
-@PlatformDeclaration
-public class SendPacketEvent extends Event.Cancellable {
-    public final Packet<?> packet;
+import java.util.function.Consumer;
 
-    public SendPacketEvent(Packet<?> packet) {
-        this.packet = packet;
-    }
+@FunctionalInterface
+public interface PolyUIScreenProvider {
+    Object create(PolyUI polyUI, Vec2 desiredResolution, boolean pauses, boolean blurs, Consumer<PolyUI> onClose);
 }

@@ -31,15 +31,15 @@ import net.minecraft.launchwrapper.ITweaker;
 import net.minecraft.launchwrapper.Launch;
 import net.minecraft.launchwrapper.LaunchClassLoader;
 import net.minecraftforge.fml.relauncher.CoreModManager;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
 import org.polyfrost.oneconfig.utils.v1.MHUtils;
-import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.LogManager;
 import org.spongepowered.asm.launch.MixinBootstrap;
 import org.spongepowered.asm.mixin.Mixins;
 
 import java.io.File;
-import java.lang.reflect.Method;
+import java.lang.invoke.MethodHandle;
 import java.net.URI;
 import java.net.URL;
 import java.nio.file.Files;
@@ -49,6 +49,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 
@@ -60,38 +61,31 @@ import java.util.jar.JarFile;
 public class OneConfigTweaker implements ITweaker {
     private static final Logger LOGGER = LogManager.getLogger("OneConfig/Tweaker");
     private static final String MIXIN_TWEAKER = "org.spongepowered.asm.launch.MixinTweaker";
-    private static final Method loadCoreMod;
-
-    static {
-        try {
-            loadCoreMod = MHUtils.setAccessible(CoreModManager.class.getDeclaredMethod("loadCoreMod", LaunchClassLoader.class, String.class, File.class));
-        } catch (NoSuchMethodException e) {
-            throw new RuntimeException(e);
-        }
-    }
+    private static MethodHandle loadCoreMod;
+    private static Consumer<URI> addContainer;
 
     public OneConfigTweaker() {
         final List<SourceFile> sourceFiles = getSourceFiles();
         if (sourceFiles.isEmpty()) {
-            if (!Platform.getLoaderPlatform().isDevelopmentEnvironment()) LOGGER.fatal("Not able to detect jar sources. mixin will NOT work!");
+            if (!Platform.loader().isDevelopmentEnvironment()) LOGGER.fatal("Not able to detect jar sources. mixin will NOT work!");
             return;
-        }
-        for (SourceFile sourceFile : sourceFiles) {
-            try {
-                setupSourceFile(sourceFile);
-            } catch (Exception e) {
-                LOGGER.error("failed to setup mixin initialization for {}", sourceFile.path.toString(), e);
-            }
         }
         try {
             injectMixinTweaker();
         } catch (Exception e) {
             LOGGER.error("failed to inject mixin tweaker", e);
         }
+        for (SourceFile sourceFile : sourceFiles) {
+            try {
+                setupSourceFile(sourceFile);
+            } catch (Throwable t) {
+                LOGGER.error("failed to setup mixin for {}", sourceFile.path.toString(), t);
+            }
+        }
     }
 
     @SuppressWarnings("unchecked")
-    private static void setupSourceFile(SourceFile sourceFile) throws Exception {
+    private static void setupSourceFile(SourceFile sourceFile) throws Throwable {
         String path = sourceFile.path.toString();
         // Forge will by default ignore a mod file if it contains a tweaker
         // So we need to remove ourselves from that exclusion list
@@ -106,40 +100,49 @@ public class OneConfigTweaker implements ITweaker {
         // Mixin takes care of this as well, so we mustn't if it will.
         String coreMod = sourceFile.coreMod;
         if (coreMod != null && !sourceFile.mixin) {
-            ITweaker tweaker = (ITweaker) loadCoreMod.invoke(null, Launch.classLoader, coreMod, sourceFile.path.toFile());
+            ITweaker tweaker = loadCoreMod(Launch.classLoader, coreMod, sourceFile.path.toFile());
             ((List<ITweaker>) Launch.blackboard.get("Tweaks")).add(tweaker);
         }
 
-        // If they declared our tweaker but also want to use mixin, then we'll inject the mixin tweaker
-        // for them.
-        if (sourceFile.mixin) {
-            // Mixin will only look at jar files which declare the MixinTweaker as their tweaker class, so we need
-            // to manually add our source files for inspection.
-            try {
-                injectMixinTweaker();
+        // Mixin will only look at jar files which declare the MixinTweaker as their tweaker class, so we need
+        // to manually add our source files for inspection.
+        if (sourceFile.mixin) addContainer(sourceFile.path.toUri());
+    }
 
-                Class<?> MixinBootstrap = Class.forName("org.spongepowered.asm.launch.MixinBootstrap");
-                Class<?> MixinPlatformManager = Class.forName("org.spongepowered.asm.launch.platform.MixinPlatformManager");
-                Object platformManager = MixinBootstrap.getDeclaredMethod("getPlatform").invoke(null);
-                Method addContainer;
-                Object arg;
-                URI uri = sourceFile.path.toUri();
-                try {
-                    // Mixin 0.7
-                    addContainer = MixinPlatformManager.getDeclaredMethod("addContainer", URI.class);
-                    arg = uri;
-                } catch (NoSuchMethodException ignored) {
-                    // Mixin 0.8
-                    Class<?> IContainerHandle = Class.forName("org.spongepowered.asm.launch.platform.container.IContainerHandle");
-                    Class<?> ContainerHandleURI = Class.forName("org.spongepowered.asm.launch.platform.container.ContainerHandleURI");
-                    //noinspection JavaReflectionMemberAccess
-                    addContainer = MixinPlatformManager.getDeclaredMethod("addContainer", IContainerHandle);
-                    arg = ContainerHandleURI.getDeclaredConstructor(URI.class).newInstance(uri);
-                }
-                addContainer.invoke(platformManager, arg);
-            } catch (Exception e) {
-                LOGGER.error("failed to add mixin container for {}", path, e);
+    private static ITweaker loadCoreMod(LaunchClassLoader loader, String cls, File src) throws Throwable {
+        MethodHandle mh = loadCoreMod == null ? loadCoreMod = createLoadCoreMod() : loadCoreMod;
+        return (ITweaker) mh.invoke(loader, src, src);
+    }
+
+    private static MethodHandle createLoadCoreMod() {
+        return MHUtils.getStaticMethodHandle(CoreModManager.class, "loadCoreMod", ITweaker.class, LaunchClassLoader.class, String.class, File.class).getOrThrow();
+    }
+
+    private static void addContainer(URI uri) {
+        Consumer<URI> c = addContainer == null ? addContainer = createAddContainer() : addContainer;
+        c.accept(uri);
+    }
+
+    private static Consumer<URI> createAddContainer() {
+        try {
+            Class<?> MixinBootstrap = Class.forName("org.spongepowered.asm.launch.MixinBootstrap");
+            Class<?> MixinPlatformManager = Class.forName("org.spongepowered.asm.launch.platform.MixinPlatformManager");
+            Object platformManager = MHUtils.invokeStatic(MixinBootstrap, "getPlatform");
+            try {
+                // Mixin 0.7
+                return MHUtils.getConsumerFunctionHandle(platformManager, "addContainer", URI.class).getOrThrow();
+            } catch (Throwable ignored) {
+                // Mixin 0.8
+                Class<?> IContainerHandle = Class.forName("org.spongepowered.asm.launch.platform.container.IContainerHandle");
+                Class<?> ContainerHandleURI = Class.forName("org.spongepowered.asm.launch.platform.container.ContainerHandleURI");
+                // as we can't refer to IContainerHandle, we have to use unchecked casts here.
+                // noinspection unchecked
+                Consumer<Object> addWrappedContainer = (Consumer<Object>) MHUtils.getConsumerFunctionHandle(MixinPlatformManager, "addContainer", IContainerHandle).getOrThrow();
+                MethodHandle wrapper = MHUtils.getConstructorHandle(ContainerHandleURI, URI.class).getOrThrow();
+                return it -> addWrappedContainer.accept(MHUtils.invokeCatching(wrapper, it).getOrThrow());
             }
+        } catch (Throwable t) {
+            throw new RuntimeException("Failed to crack addContainer method. mixin will not work!", t);
         }
     }
 
@@ -152,7 +155,7 @@ public class OneConfigTweaker implements ITweaker {
                     continue;
                 }
                 Path file = Paths.get(uri);
-                if(!Files.exists(file) || !Files.isRegularFile(file)) {
+                if (!Files.exists(file) || !Files.isRegularFile(file)) {
                     continue;
                 }
                 String tweakClass = null;
@@ -170,17 +173,17 @@ public class OneConfigTweaker implements ITweaker {
                     sourceFiles.add(new SourceFile(file, coreMod, mixin));
                 }
             } catch (Exception e) {
-                LOGGER.error("failed to inspect jar file {}", url, e);
+                LOGGER.error("failed to inspect jar file {}, ignoring", url, e);
             }
         }
         return sourceFiles;
     }
 
-    private static void injectMixinTweaker() throws ClassNotFoundException, IllegalAccessException, InstantiationException {
+    private static void injectMixinTweaker() throws ClassNotFoundException {
         @SuppressWarnings("unchecked")
         List<String> tweakClasses = (List<String>) Launch.blackboard.get("TweakClasses");
 
-        // If the MixinTweaker is already queued (because of another mod), then there's nothing we need to to
+        // If the MixinTweaker is already queued (because of another mod), then there's nothing we need to do
         if (tweakClasses.contains(MIXIN_TWEAKER)) {
             // Except we do need to initialize the MixinTweaker immediately so we can add containers
             // for our mods.
@@ -205,9 +208,9 @@ public class OneConfigTweaker implements ITweaker {
         tweaks.add(initMixinTweaker());
     }
 
-    private static ITweaker initMixinTweaker() throws ClassNotFoundException, IllegalAccessException, InstantiationException {
+    private static ITweaker initMixinTweaker() throws ClassNotFoundException {
         Launch.classLoader.addClassLoaderExclusion(MIXIN_TWEAKER.substring(0, MIXIN_TWEAKER.lastIndexOf('.')));
-        return (ITweaker) Class.forName(MIXIN_TWEAKER, true, Launch.classLoader).newInstance();
+        return (ITweaker) MHUtils.instantiate(Class.forName(MIXIN_TWEAKER, true, Launch.classLoader), false).getOrThrow();
     }
 
     private static class SourceFile {
@@ -220,10 +223,6 @@ public class OneConfigTweaker implements ITweaker {
             this.coreMod = coreMod;
             this.mixin = mixin;
         }
-    }
-
-    @Override
-    public void acceptOptions(List<String> args, File gameDir, File assetsDir, String profile) {
     }
 
     @Override
@@ -253,6 +252,10 @@ public class OneConfigTweaker implements ITweaker {
         } catch (Throwable e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public void acceptOptions(List<String> args, File gameDir, File assetsDir, String profile) {
     }
 
     @Override

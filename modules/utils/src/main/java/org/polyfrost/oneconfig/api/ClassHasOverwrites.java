@@ -24,22 +24,25 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.api.event.v1.events;
+package org.polyfrost.oneconfig.api;
 
-import net.minecraft.client.gui.GuiScreen;
-import org.jetbrains.annotations.Nullable;
-import org.polyfrost.oneconfig.api.PlatformDeclaration;
+import kotlin.annotation.MustBeDocumented;
+import org.jetbrains.annotations.ApiStatus;
+
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * Called when a screen is opened or closed.
- * If the screen is closed, {@link org.polyfrost.oneconfig.api.event.v1.events.ScreenOpenEvent#screen} will be null.
+ * This annotation is for codebase navigation - it indicates that the given class has overwrites for different versions of Minecraft.
  */
-@PlatformDeclaration
-public class ScreenOpenEvent extends Event.Cancellable {
-    @Nullable
-    public final GuiScreen screen;
-
-    public ScreenOpenEvent(@Nullable GuiScreen screen) {
-        this.screen = screen;
-    }
+@Retention(RetentionPolicy.SOURCE)
+@Target(ElementType.TYPE)
+@Documented
+@MustBeDocumented
+@ApiStatus.Internal
+public @interface ClassHasOverwrites {
+    String[] value();
 }

@@ -53,11 +53,11 @@ object KeybindManager {
         eventHandler { (key, char, state): KeyInputEvent ->
             if (state == 2) return@eventHandler
             // keybindings only work when in game (todo maybe change)?
-            if (Platform.getGuiPlatform().currentScreen == null) {
+//            if (Platform.getGuiPlatform().currentScreen == null) {
                 translateKey(inputManager, key, char, state == 1)
                 @Suppress("UnstableApiUsage")
                 keyBinder.update(0L, inputManager.mods)
-            }
+//            }
         }.register()
         eventHandler { _: TickEvent.End ->
             @Suppress("UnstableApiUsage")

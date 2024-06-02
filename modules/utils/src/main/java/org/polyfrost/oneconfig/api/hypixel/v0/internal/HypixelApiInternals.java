@@ -24,45 +24,11 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.utils.v1;
+package org.polyfrost.oneconfig.api.hypixel.v0.internal;
 
-import org.polyfrost.oneconfig.api.DeclaredInPlatform;
+import org.jetbrains.annotations.ApiStatus;
 
-/**
- * A class containing utility methods for working with GuiScreens.
- */
-@SuppressWarnings("unused")
-@DeclaredInPlatform
-public final class GuiUtils {
-    // GuiUtils.h -- version specific workaround
-    // see versions/src/main/java/org/polyfrost/oneconfig/utils/GuiUtils.java for the real implementation
-
-    private GuiUtils() {
-    }
-
-    /**
-     * Displays a screen after a tick, preventing mouse sync issues.
-     *
-     * @param screen the screen to display.
-     */
-    public static void displayScreen(Object screen) {
-        displayScreen(screen, 1);
-    }
-
-    /**
-     * Displays a screen after the specified amount of ticks.
-     *
-     * @param screen the screen to display.
-     * @param ticks  the amount of ticks to wait for before displaying the screen.
-     */
-    public static void displayScreen(Object screen, int ticks) {
-    }
-
-
-    /**
-     * Close the current open GUI screen.
-     */
-    public static void closeScreen() {
-        displayScreen(null, 0);
-    }
+@ApiStatus.Internal
+public interface HypixelApiInternals {
+    void postLocationEvent();
 }
