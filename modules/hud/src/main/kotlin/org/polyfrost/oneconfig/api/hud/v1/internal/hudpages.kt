@@ -175,15 +175,15 @@ private fun interactiveAlignment(hud: Hud<out Drawable>): Drawable {
     var s2 = 0f
     return Block(
         Image(
-            "assets/oneconfig/ico/align/alignment3.svg".image(),
+            "assets/oneconfig/hud/align/alignment3.svg".image(),
             alignment = alignC,
             children = arrayOf(
                 Image(
-                    "assets/oneconfig/ico/align/alignment2.svg".image(),
+                    "assets/oneconfig/hud/align/alignment2.svg".image(),
                     alignment = alignC,
                     children = arrayOf(
                         Block(
-                            Image("assets/oneconfig/ico/align/alignment1.svg".image()).withStates(true).setPalette {
+                            Image("assets/oneconfig/hud/align/alignment1.svg".image()).withStates(true).setPalette {
                                 Colors.Palette(
                                     text.primary.normal,
                                     brand.fg.normal,

@@ -17,6 +17,7 @@ public final class org/polyfrost/oneconfig/api/ui/v1/PolyUIBuilder {
 	public fun settings (Lorg/polyfrost/polyui/property/Settings;)Lorg/polyfrost/oneconfig/api/ui/v1/PolyUIBuilder;
 	public fun size (Lorg/polyfrost/polyui/unit/Vec2;)Lorg/polyfrost/oneconfig/api/ui/v1/PolyUIBuilder;
 	public fun translator (Lorg/polyfrost/polyui/input/Translator;)Lorg/polyfrost/oneconfig/api/ui/v1/PolyUIBuilder;
+	public fun translatorDelegate (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/ui/v1/PolyUIBuilder;
 }
 
 public abstract interface class org/polyfrost/oneconfig/api/ui/v1/TinyFD {

@@ -1,0 +1,23 @@
+oneconfig.sidebar.title.options=OPTIONS
+oneconfig.mods=Mods
+oneconfig.profiles=Profiles
+oneconfig.keybinds=Keybinds
+oneconfig.sidebar.title.personal=PERSONALIZATION
+oneconfig.themes=Themes
+oneconfig.preferences=Preferences
+oneconfig.sidebar.title.extra=HELP & FEEDBACK
+oneconfig.changelog=Changelog
+oneconfig.edithud=Edit HUD
+
+oneconfig.mods.none=No mods installed!
+oneconfig.mods.none.desc=You don't have any compatible mods installed.\nInstall some to configure them here. Visit https://polyfrost.org/mods to get some!
+
+oneconfig.feedback=Feedback
+
+oneconfig.beta=BETA
+oneconfig.soon=SOON
+oneconfig.readmore=Read more
+oneconfig.writtenby=Written by {0}
+
+oneconfig.all=All
+oneconfig.pvp=PvP

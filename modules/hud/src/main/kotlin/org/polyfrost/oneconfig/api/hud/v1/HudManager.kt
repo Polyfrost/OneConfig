@@ -48,6 +48,7 @@ import org.polyfrost.polyui.color.PolyColor.Companion.TRANSPARENT
 import org.polyfrost.polyui.component.*
 import org.polyfrost.polyui.component.impl.*
 import org.polyfrost.polyui.event.Event
+import org.polyfrost.polyui.input.Translator
 import org.polyfrost.polyui.operations.DrawableOp
 import org.polyfrost.polyui.operations.Fade
 import org.polyfrost.polyui.operations.Move
@@ -192,13 +193,16 @@ object HudManager {
         }.register()
     }
 
+	private val settings = Settings().apply {
+		cleanupAfterInit = false
+		debug = false
+	}
+
     val polyUI: PolyUI = PolyUI(
         renderer = UIManager.INSTANCE.renderer,
         size = 1920f by 1080f,
-        settings = Settings().apply {
-            cleanupAfterInit = false
-            debug = false
-        }
+		translator = Translator(settings, "").also { it.addDelegate("assets/oneconfig/hud") },
+        settings = settings
     ).also {
         it.master.rawResize = true
         it.resize(Platform.screen().windowWidth().toFloat(), Platform.screen().windowHeight().toFloat())

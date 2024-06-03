@@ -1,0 +1,24 @@
+polyui.color.solid=Solid color
+polyui.color.gradient=Gradient color
+polyui.color.chroma=Chroma color
+polyui.color.hex=HEX
+
+oneconfig.search.placeholder=Search for something...
+oneconfig.button.default=Click
+
+oneconfig.align=Align
+oneconfig.align.start=Start
+oneconfig.align.center=Center
+oneconfig.align.end=End
+oneconfig.align.spacebetween=Space Between
+oneconfig.align.spaceevenly=Space Evenly
+
+oneconfig.fweight.100=Thin
+oneconfig.fweight.200=Extra light
+oneconfig.fweight.300=Light
+oneconfig.fweight.400=Regular
+oneconfig.fweight.500=Medium
+oneconfig.fweight.600=Semi bold
+oneconfig.fweight.700=Bold
+oneconfig.fweight.800=Extra bold
+oneconfig.fweight.900=Black

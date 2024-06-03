@@ -75,6 +75,12 @@ public final class PolyUIBuilder {
         return this;
     }
 
+	public PolyUIBuilder translatorDelegate(String translationDir) {
+		Translator translator = this.translator == null ? this.translator = new Translator(settings, "", null) : this.translator;
+		translator.addDelegate(translationDir);
+		return this;
+	}
+
     public PolyUIBuilder align(Align alignment) {
         this.alignment = alignment;
         return this;

@@ -62,6 +62,7 @@ object OneConfigUI {
     fun open() {
         val vertical = Align(cross = Align.Cross.Start, mode = Align.Mode.Vertical)
         val builder = PolyUIBuilder.builder().blurs().backgroundColor(rgba(21, 21, 21)).atResolution(1920f by 1080f).size(1400f by 700f)
+		builder.translatorDelegate("assets/oneconfig")
         builder.onClose { _ ->
             for (t in ConfigManager.active().trees()) {
                 ConfigManager.active().save(t)

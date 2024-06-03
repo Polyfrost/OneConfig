@@ -49,7 +49,7 @@ import org.polyfrost.polyui.utils.radii
 import org.polyfrost.polyui.utils.translated
 
 private val heart = PolyImage("assets/oneconfig/ico/plus.svg")
-private val defaultModImage = "chatting.svg".image()
+private val defaultModImage = "assets/oneconfig/ico/default_mod.svg".image()
 private val modBoxTopRad = radii(8f, 8f, 0f, 0f)
 private val modBoxBotRad = radii(0f, 0f, 8f, 8f)
 private val modBoxAlign = Align(cross = Align.Cross.Start, mode = Align.Mode.Vertical, padding = Vec2.ZERO)
