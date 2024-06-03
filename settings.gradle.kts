@@ -9,10 +9,6 @@ pluginManagement {
     }
 }
 
-dependencyResolutionManagement {
-    pluginManagement.repositories.forEach { repositories.add(it) }
-}
-
 plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version("0.8.0")
 }
@@ -41,6 +37,10 @@ listOf(
     "events",
     "ui",
     "internal",
+	"dependencies",
+	"dependencies:legacy",
+	"dependencies:modern",
+    "dependencies:bundled",
     "utils"
 ).forEach { module ->
     include(":modules:$module")

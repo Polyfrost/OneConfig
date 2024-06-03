@@ -3,7 +3,6 @@
 
 import net.fabricmc.loom.task.RemapSourcesJarTask
 import org.polyfrost.gradle.util.noServerRunConfigs
-import org.polyfrost.gradle.util.prebundle
 import java.text.SimpleDateFormat
 
 plugins {
@@ -22,7 +21,6 @@ val modId = properties["mod_id"] as String
 version = rootProject.version
 group = rootProject.group
 
-val natives = listOf("windows", "windows-arm64", "linux", "macos", "macos-arm64")
 val tweakClass = "org.polyfrost.oneconfig.internal.legacy.OneConfigTweaker"
 
 base {
@@ -59,10 +57,6 @@ repositories {
     maven("https://repo.hypixel.net/repository/Hypixel")
 }
 
-val shade: Configuration by configurations.creating {
-    configurations.api.get().extendsFrom(this)
-}
-
 val shadeMod: Configuration by configurations.creating {
     configurations.modApi.get().extendsFrom(this)
 }
@@ -74,68 +68,20 @@ dependencies {
 
     shadeMod("org.polyfrost:universalcraft-$platform:${libs.versions.universalcraft.get()}")
 
-    shade(libs.polyui)
-    if (platform.isLegacyForge || platform.isFabric) {
-        shade(libs.bundles.nightconfig)
+    if (platform.isLegacyForge || platform.isLegacyFabric) {
+        implementation(project(":modules:dependencies:legacy"))
     } else {
-        // modern forge includes nightconfig-core and nightconfig-toml
-        // so, we can just include the ones we need
-        shade(libs.nightconfig.json) {
-            isTransitive = false
-        }
-        shade(libs.nightconfig.yaml) {
-            isTransitive = false
-        }
+        implementation(project(":modules:dependencies:modern"))
     }
-
-    // for other mods and universalcraft
-    shade(libs.bundles.kotlin)
-    shade(libs.bundles.kotlinx)
-
-    shade(libs.hypixel.modapi)
-
-    for (project in rootProject.project(":modules").subprojects) {
-        // TODO: ModLauncher (forge-1.17+) fails due to module export issues
-        shade(project(project.path)) {
-            isTransitive = false
-        }
-    }
+    implementation(project(":modules:dependencies"))
+    implementation(project(":modules:dependencies:bundled"))
 
     if (platform.isLegacyForge) {
-        shade(libs.mixin) {
+        implementation(libs.mixin) {
             isTransitive = false
         }
         compileOnly("cc.polyfrost:oneconfig-${platform}:0.2.2-alpha195") {
             isTransitive = false
-        }
-    }
-
-
-    val isLegacy = platform.isLegacyForge || platform.isLegacyFabric
-    val lwjglVersion = libs.versions.lwjgl.get()
-    if (isLegacy) {
-        val cfg = configurations.create("lwjglBundleForLegacy")
-        for (dep in listOf("-nanovg", "-tinyfd", "-stb", "")) {
-            val lwjglDep = "org.lwjgl:lwjgl$dep:$lwjglVersion"
-            compileOnly(cfg(lwjglDep) {
-                isTransitive = false
-            })
-            for (native in natives) {
-                runtimeOnly(cfg("$lwjglDep:natives-$native") {
-                    isTransitive = false
-                })
-            }
-        }
-        shade(prebundle(cfg, "lwjgl-legacy.jar"))
-    } else {
-        val nvgDep = "org.lwjgl:lwjgl-nanovg:$lwjglVersion"
-        shade(nvgDep) {
-            isTransitive = false
-        }
-        for (native in natives) {
-            shade("$nvgDep:natives-$native") {
-                isTransitive = false
-            }
         }
     }
 
@@ -208,12 +154,8 @@ tasks {
         }
     }
 
-    jar {
-        exclude("**/internal/**")
-    }
-
     shadowJar {
-        configurations = listOf(shade, shadeMod)
+        configurations = listOf(shadeMod)
         dependsOn(jar)
     }
 

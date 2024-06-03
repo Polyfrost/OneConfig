@@ -107,4 +107,8 @@ apiValidation {
     }
     ignoredPackages.add("org.polyfrost.oneconfig.api.hypixel.v0.internal")
     ignoredProjects.add("internal")
+	ignoredProjects.add("dependencies")
+	ignoredProjects.add("legacy")
+	ignoredProjects.add("modern")
+    ignoredProjects.add("bundled")
 }
