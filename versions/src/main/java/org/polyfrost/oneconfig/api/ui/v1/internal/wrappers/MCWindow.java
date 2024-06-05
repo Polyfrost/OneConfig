@@ -24,7 +24,7 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.api.ui.v1.internal;
+package org.polyfrost.oneconfig.api.ui.v1.internal.wrappers;
 
 import net.minecraft.client.Minecraft;
 import org.jetbrains.annotations.ApiStatus;
@@ -47,7 +47,7 @@ public class MCWindow extends Window {
     //#endif
 
     public MCWindow(Minecraft mc) {
-        super(Platform.screen().viewportWidth(), Platform.screen().viewportHeight(), (float) Platform.screen().viewportWidth() / Platform.screen().windowWidth());
+        super(Platform.screen().viewportWidth(), Platform.screen().viewportHeight(), Platform.screen().pixelRatio());
         //#if MC>=11300
         //$$ this.handle = mc.getMainWindow().getHandle();
         //#endif

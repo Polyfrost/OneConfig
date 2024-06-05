@@ -1,11 +1,9 @@
 public final class org/polyfrost/oneconfig/api/ui/v1/PolyUIBuilder {
-	public static final field DEFAULT Lorg/polyfrost/oneconfig/api/ui/v1/screen/PolyUIScreenProvider;
 	public fun align (Lorg/polyfrost/polyui/unit/Align;)Lorg/polyfrost/oneconfig/api/ui/v1/PolyUIBuilder;
 	public fun atResolution (Lorg/polyfrost/polyui/unit/Vec2;)Lorg/polyfrost/oneconfig/api/ui/v1/PolyUIBuilder;
 	public fun backgroundColor (Lorg/polyfrost/polyui/color/PolyColor;)Lorg/polyfrost/oneconfig/api/ui/v1/PolyUIBuilder;
 	public fun blurs ()Lorg/polyfrost/oneconfig/api/ui/v1/PolyUIBuilder;
 	public static fun builder ()Lorg/polyfrost/oneconfig/api/ui/v1/PolyUIBuilder;
-	public static fun builder (Lorg/polyfrost/oneconfig/api/ui/v1/screen/PolyUIScreenProvider;)Lorg/polyfrost/oneconfig/api/ui/v1/PolyUIBuilder;
 	public fun colors (Lorg/polyfrost/polyui/color/Colors;)Lorg/polyfrost/oneconfig/api/ui/v1/PolyUIBuilder;
 	public fun input (Lorg/polyfrost/polyui/event/InputManager;)Lorg/polyfrost/oneconfig/api/ui/v1/PolyUIBuilder;
 	public fun make ([Lorg/polyfrost/polyui/component/Drawable;)Lorg/polyfrost/polyui/PolyUI;
@@ -39,6 +37,8 @@ public abstract interface class org/polyfrost/oneconfig/api/ui/v1/TinyFD {
 
 public abstract interface class org/polyfrost/oneconfig/api/ui/v1/UIManager {
 	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/ui/v1/UIManager;
+	public abstract fun createPolyUIScreen (Lorg/polyfrost/polyui/PolyUI;Lorg/polyfrost/polyui/unit/Vec2;ZZLjava/util/function/Consumer;)Ljava/lang/Object;
+	public abstract fun createWindow ()Lorg/polyfrost/polyui/renderer/Window;
 	public abstract fun getRenderer ()Lorg/polyfrost/polyui/renderer/Renderer;
 	public abstract fun getTinyFD ()Lorg/polyfrost/oneconfig/api/ui/v1/TinyFD;
 }
@@ -111,9 +111,5 @@ public abstract interface class org/polyfrost/oneconfig/api/ui/v1/pages/Page {
 
 public abstract interface class org/polyfrost/oneconfig/api/ui/v1/screen/BlurScreen {
 	public abstract fun hasBackgroundBlur ()Z
-}
-
-public abstract interface class org/polyfrost/oneconfig/api/ui/v1/screen/PolyUIScreenProvider {
-	public abstract fun create (Lorg/polyfrost/polyui/PolyUI;Lorg/polyfrost/polyui/unit/Vec2;ZZLjava/util/function/Consumer;)Ljava/lang/Object;
 }
 

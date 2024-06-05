@@ -101,6 +101,7 @@ public abstract interface class org/polyfrost/oneconfig/api/platform/v1/ScreenPl
 	public abstract fun display (Ljava/lang/Object;I)V
 	public abstract fun isInChat ()Z
 	public abstract fun isInDebug ()Z
+	public fun pixelRatio ()F
 	public abstract fun playClickSound ()V
 	public abstract fun viewportHeight ()I
 	public abstract fun viewportWidth ()I

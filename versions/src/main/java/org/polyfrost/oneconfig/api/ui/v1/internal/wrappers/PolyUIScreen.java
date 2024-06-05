@@ -24,7 +24,7 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.api.ui.v1.internal;
+package org.polyfrost.oneconfig.api.ui.v1.internal.wrappers;
 
 import net.minecraft.client.Minecraft;
 import org.jetbrains.annotations.MustBeInvokedByOverriders;
@@ -51,11 +51,7 @@ public class PolyUIScreen extends UScreen implements BlurScreen {
 
     @Nullable
     public final Vec2 desiredResolution;
-
     private final boolean pauses, blurs;
-
-    private final MCWindow window;
-
     private final Consumer<PolyUI> close;
 
     //#if MC<=11300
@@ -65,13 +61,11 @@ public class PolyUIScreen extends UScreen implements BlurScreen {
     public PolyUIScreen(@NotNull PolyUI polyUI, @Nullable Vec2 desiredResolution, boolean pauses, boolean blurs, Consumer<PolyUI> onClose) {
         super(true);
         this.polyUI = polyUI;
-        this.window = new MCWindow(Minecraft.getMinecraft());
-        this.polyUI.setWindow(window);
         this.desiredResolution = desiredResolution;
         this.blurs = blurs;
         this.pauses = pauses;
         this.close = onClose;
-        adjustResolution(Platform.screen().windowWidth(), Platform.screen().windowHeight(), true);
+        adjustResolution(Platform.screen().windowWidth(), Platform.screen().windowHeight(), false);
     }
 
     protected final void adjustResolution(float w, float h, boolean force) {
@@ -89,7 +83,8 @@ public class PolyUIScreen extends UScreen implements BlurScreen {
     @Override
     public void onDrawScreen(@NotNull UMatrixStack matrices, int mouseX, int mouseY, float delta) {
         Vec2 size = polyUI.getMaster().getSize();
-        float scale = window.getPixelRatio();
+        //noinspection DataFlowIssue
+        float scale = polyUI.getWindow().getPixelRatio();
         float ox = (Platform.screen().windowWidth() / 2f - size.getX() / 2f) * scale;
         float oy = (Platform.screen().windowHeight() / 2f - size.getY() / 2f) * scale;
         glViewport((int) ox, (int) oy, (int) (size.getX() * scale), (int) (size.getY() * scale));
@@ -189,6 +184,7 @@ public class PolyUIScreen extends UScreen implements BlurScreen {
         Vec2 size = polyUI.getMaster().getSize();
         float ox = (float) Platform.screen().windowWidth() / 2f - size.getX() / 2f;
         float oy = (float) Platform.screen().windowHeight() / 2f - size.getY() / 2f;
+
         float mx, my;
         //#if MC>=11300
         //$$ mx = (float) Minecraft.getInstance().mouseHelper.getMouseX();
@@ -197,6 +193,7 @@ public class PolyUIScreen extends UScreen implements BlurScreen {
         mx = org.lwjgl.input.Mouse.getX();
         my = Platform.screen().windowHeight() - org.lwjgl.input.Mouse.getY() - 1;
         //#endif
+
         polyUI.getInputManager().mouseMoved(mx - ox, my - oy);
     }
 

@@ -43,6 +43,10 @@ public interface ScreenPlatform {
 
     int windowHeight();
 
+    default float pixelRatio() {
+        return (float) viewportWidth() / windowWidth();
+    }
+
     void display(@Nullable Object screen, int ticks);
 
     default void display(Object screen) {

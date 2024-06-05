@@ -26,26 +26,27 @@
 
 package org.polyfrost.oneconfig.api.ui.v1.internal;
 
+import net.minecraft.client.Minecraft;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.Remapper;
 import org.objectweb.asm.commons.RemappingClassAdapter;
-import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.InsnList;
-import org.objectweb.asm.tree.InsnNode;
-import org.objectweb.asm.tree.MethodInsnNode;
-import org.objectweb.asm.tree.MethodNode;
-import org.objectweb.asm.tree.TypeInsnNode;
-import org.objectweb.asm.tree.VarInsnNode;
+import org.objectweb.asm.tree.*;
 import org.polyfrost.oneconfig.api.ClassHasOverwrites;
 import org.polyfrost.oneconfig.api.ui.v1.TinyFD;
 import org.polyfrost.oneconfig.api.ui.v1.UIManager;
+import org.polyfrost.oneconfig.api.ui.v1.internal.wrappers.MCWindow;
+import org.polyfrost.oneconfig.api.ui.v1.internal.wrappers.PolyUIScreen;
 import org.polyfrost.oneconfig.utils.v1.MHUtils;
+import org.polyfrost.polyui.PolyUI;
 import org.polyfrost.polyui.renderer.Renderer;
+import org.polyfrost.polyui.renderer.Window;
+import org.polyfrost.polyui.unit.Vec2;
 import org.polyfrost.polyui.utils.IOUtils;
 
 import java.io.IOException;
@@ -59,12 +60,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.security.ProtectionDomain;
-import java.util.Arrays;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Consumer;
 
 @SuppressWarnings("unused")
 @ClassHasOverwrites("1.16.5-forge")
@@ -77,7 +74,7 @@ public class UIManagerImpl
     private static final MethodHandle defineClassMethod;
     private static final Map<String, String> remappingMap;
 
-    private static final String RENDERER_IMPL_PACKAGE = "org.polyfrost.oneconfig.internal.ui.impl.";
+    private static final String RENDERER_IMPL_PACKAGE = "org.polyfrost.oneconfig.api.ui.v1.internal.";
     private static final String LWJGL_FUNCTION_PROVIDER = "org.polyfrost.oneconfig.internal.legacy.Lwjgl2FunctionProvider";
     private static final String LWJGL_FUNCTION_PROVIDER_ASM = LWJGL_FUNCTION_PROVIDER.replace('.', '/');
 
@@ -373,5 +370,15 @@ public class UIManagerImpl
     @Override
     public TinyFD getTinyFD() {
         return tinyFD;
+    }
+
+    @Override
+    public Object createPolyUIScreen(@NotNull PolyUI polyUI, Vec2 desiredResolution, boolean pauses, boolean blurs, Consumer<PolyUI> onClose) {
+        return new PolyUIScreen(polyUI, desiredResolution, pauses, blurs, onClose);
+    }
+
+    @Override
+    public Window createWindow() {
+        return new MCWindow(Minecraft.getMinecraft());
     }
 }

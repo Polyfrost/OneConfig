@@ -26,9 +26,15 @@
 
 package org.polyfrost.oneconfig.api.ui.v1;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.polyfrost.polyui.PolyUI;
 import org.polyfrost.polyui.renderer.Renderer;
+import org.polyfrost.polyui.renderer.Window;
+import org.polyfrost.polyui.unit.Vec2;
 
 import java.util.ServiceLoader;
+import java.util.function.Consumer;
 
 /**
  * Abstraction over the LWJGL3 implementation and loading.
@@ -49,4 +55,20 @@ public interface UIManager {
      * file dialogs, and showing notifications.
      */
     TinyFD getTinyFD();
+
+    /**
+     * Create a new window that is backed by this Minecraft instance. Returns accurate sizing and has cursor support on MC 1.13+.
+     */
+    Window createWindow();
+
+    /**
+     * Wrap this PolyUI instance in a Minecraft screen object, ready to be displayed to the user. {@link org.polyfrost.oneconfig.api.platform.v1.ScreenPlatform#display(Object) Platform.screen().display(this)}
+     * @param polyUI the PolyUI instance to use
+     * @param desiredResolution the resolution that this PolyUI instance was designed to use
+     * @param pauses weather to pause the game when the screen is opened
+     * @param blurs if true blur will be used on the background
+     * @param onClose callback to run when the screen is closed
+     * @return a Minecraft screen object. Will be a GuiScreen or Screen depending on the Minecraft version.
+     */
+    Object createPolyUIScreen(@NotNull PolyUI polyUI, @Nullable Vec2 desiredResolution, boolean pauses, boolean blurs, @Nullable Consumer<PolyUI> onClose);
 }

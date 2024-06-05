@@ -151,7 +151,11 @@ public class Tree extends Node implements Serializable {
 
     public Tree set(String id, Node n) {
         if (n.getID() == null) n.setID(id);
-        else if (!id.equals(n.getID())) throw new IllegalStateException("ID does not match node ID");
+        else if (!id.equals(n.getID())) {
+            //noinspection DataFlowIssue
+            n.setID(null);
+            n.setID(id);
+        }
         theMap.put(n.getID(), n);
         return this;
     }
@@ -261,8 +265,8 @@ public class Tree extends Node implements Serializable {
     public String toString() {
         StringBuilder sb = new StringBuilder(72);
         sb.append("Tree(id=").append(getID());
-        if(getTitle() != null) sb.append(", title=").append(getTitle());
-        if(description != null) sb.append(", description=").append(description);
+        if (getTitle() != null) sb.append(", title=").append(getTitle());
+        if (description != null) sb.append(", description=").append(description);
         sb.append(", size=").append(theMap.size()).append(')');
         return sb.toString();
     }

@@ -37,7 +37,6 @@ import org.polyfrost.oneconfig.api.hud.v1.internal.alignC
 import org.polyfrost.oneconfig.api.hud.v1.internal.build
 import org.polyfrost.oneconfig.api.hud.v1.internal.createInspectionsScreen
 import org.polyfrost.oneconfig.api.platform.v1.Platform
-import org.polyfrost.oneconfig.api.ui.v1.PolyUIBuilder
 import org.polyfrost.oneconfig.api.ui.v1.UIManager
 import org.polyfrost.oneconfig.utils.v1.MHUtils
 import org.polyfrost.polyui.PolyUI
@@ -165,6 +164,7 @@ object HudManager {
             )
         }
     }.also {
+        it.rawResize = true
         object : DrawableOp(it) {
             override fun apply() {
                 if (self.polyUI.mouseDown) {
@@ -204,6 +204,7 @@ object HudManager {
 		translator = Translator(settings, "").also { it.addDelegate("assets/oneconfig/hud") },
         settings = settings
     ).also {
+        it.window = UIManager.INSTANCE.createWindow()
         it.master.rawResize = true
         it.resize(Platform.screen().windowWidth().toFloat(), Platform.screen().windowHeight().toFloat())
     }
@@ -213,14 +214,12 @@ object HudManager {
     }
 
     fun getWithEditor(): Any {
-        return PolyUIBuilder.DEFAULT.create(polyUI.also {
+        return UIManager.INSTANCE.createPolyUIScreen(polyUI.also {
             toggleHudPicker()
-            panelExists = true
         }, null, false, true) { editorClose() }
     }
 
     private fun editorClose() {
-        panelExists = false
         toggleHudPicker()
         ConfigManager.active().saveAll()
     }
@@ -253,7 +252,7 @@ object HudManager {
                 val hud = h.make(data)
                 val theHud = hud.build()
                 polyUI.master.addChild(theHud, recalculate = false)
-                LOGGER.info("Loaded HUD ${hud.id()} from ${data.id}")
+                LOGGER.info("Loaded HUD ${hud.title()} from ${data.id}")
                 val x: Float = data.getProp("x").getAs()
                 val y: Float = data.getProp("y").getAs()
                 theHud.x = x - (hud.get().x - theHud.x)
@@ -310,6 +309,7 @@ object HudManager {
             pg.x = polyUI.size.x - 32f
             toggle()
         }
+        panelExists = !panelExists
     }
 
     fun canAutoOpen(): Boolean = !polyUI.master.hasChildIn(polyUI.size.x - panel.width - 34f, 0f, panel.width, polyUI.size.y)

@@ -27,7 +27,6 @@
 package org.polyfrost.oneconfig.api.ui.v1;
 
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
-import org.polyfrost.oneconfig.api.ui.v1.screen.PolyUIScreenProvider;
 import org.polyfrost.polyui.PolyUI;
 import org.polyfrost.polyui.color.Colors;
 import org.polyfrost.polyui.color.DarkTheme;
@@ -40,12 +39,9 @@ import org.polyfrost.polyui.renderer.Renderer;
 import org.polyfrost.polyui.unit.Align;
 import org.polyfrost.polyui.unit.Vec2;
 
-import java.util.ServiceLoader;
 import java.util.function.Consumer;
 
 public final class PolyUIBuilder {
-    public static final PolyUIScreenProvider DEFAULT = ServiceLoader.load(PolyUIScreenProvider.class, PolyUIScreenProvider.class.getClassLoader()).iterator().next();
-    private final PolyUIScreenProvider provider;
     private InputManager manager;
     private Renderer renderer;
     private Translator translator;
@@ -58,8 +54,7 @@ public final class PolyUIBuilder {
     private Vec2 size;
     private boolean pauses, blurs;
 
-    private PolyUIBuilder(PolyUIScreenProvider provider) {
-        this.provider = provider;
+    private PolyUIBuilder() {
         settings = new Settings();
         settings.enableInitCleanup(false);
         settings.enableForceSettingInitialSize(true);
@@ -140,18 +135,18 @@ public final class PolyUIBuilder {
         return new PolyUI(drawables, renderer == null ? UIManager.INSTANCE.getRenderer() : renderer, settings, manager, translator, backgroundColor, alignment, colors, size);
     }
 
+    /**
+     * create, and open a new PolyUI screen, backed by the returned instance. Additionally, a window is also created and assigned to the instance.
+     */
     public PolyUI makeAndOpen(Drawable... drawables) {
         PolyUI p = make(drawables);
-        Object screen = provider.create(p, desiredResolution, pauses, blurs, onClose);
+        Object screen = UIManager.INSTANCE.createPolyUIScreen(p, desiredResolution, pauses, blurs, onClose);
+        p.setWindow(UIManager.INSTANCE.createWindow());
         Platform.screen().display(screen);
         return p;
     }
 
     public static PolyUIBuilder builder() {
-        return new PolyUIBuilder(DEFAULT);
-    }
-
-    public static PolyUIBuilder builder(PolyUIScreenProvider provider) {
-        return new PolyUIBuilder(provider);
+        return new PolyUIBuilder();
     }
 }

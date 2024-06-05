@@ -26,9 +26,18 @@
 
 package org.polyfrost.oneconfig.api.ui.v1.internal;
 
+import net.minecraft.client.Minecraft;
+import org.jetbrains.annotations.NotNull;
 import org.polyfrost.oneconfig.api.ui.v1.UIManager;
 import org.polyfrost.oneconfig.api.ui.v1.TinyFD;
+import org.polyfrost.oneconfig.api.ui.v1.internal.wrappers.MCWindow;
+import org.polyfrost.oneconfig.api.ui.v1.internal.wrappers.PolyUIScreen;
+import org.polyfrost.polyui.PolyUI;
 import org.polyfrost.polyui.renderer.Renderer;
+import org.polyfrost.polyui.renderer.Window;
+import org.polyfrost.polyui.unit.Vec2;
+
+import java.util.function.Consumer;
 
 public class UIManagerImpl implements UIManager {
     private static final TinyFD impl = new TinyFDImpl();
@@ -46,5 +55,15 @@ public class UIManagerImpl implements UIManager {
     @Override
     public TinyFD getTinyFD() {
         return impl;
+    }
+
+    @Override
+    public Object createPolyUIScreen(@NotNull PolyUI polyUI, Vec2 desiredResolution, boolean pauses, boolean blurs, Consumer<PolyUI> onClose) {
+        return new PolyUIScreen(polyUI, desiredResolution, pauses, blurs, onClose);
+    }
+
+    @Override
+    public Window createWindow() {
+        return new MCWindow(Minecraft.getInstance());
     }
 }

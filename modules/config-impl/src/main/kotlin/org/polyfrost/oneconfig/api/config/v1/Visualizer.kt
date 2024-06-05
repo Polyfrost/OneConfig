@@ -130,18 +130,21 @@ fun interface Visualizer {
         override fun visualize(prop: Property<*>): Drawable {
             val options: Array<String> = prop.getMetadata("options") ?: emptyArray()
             if (prop.type.isEnum) {
+                val values = prop.type.enumConstants
+                var field = prop.type::class.java.fields.firstOrNull()
+                if (field?.type == String::class.java) field = null
                 require(options.isEmpty()) { "Radio button ${prop.id} cannot have options when used with enums" }
                 val r =
                     Radiobutton(
-                        entries = prop.type.enumConstants.mapToArray {
+                        entries = values.mapToArray {
                             it as Enum<*>
-                            null to (it::class.java.fields[0].get(it) as? String ?: it.name)
+                            null to (field?.get(it) as? String ?: it.name)
                         },
-                        initial = prop.type.enumConstants.indexOf(prop.get()),
+                        initial = values.indexOf(prop.get()),
                         optionLateralPadding = 20f,
                     ).events {
                         Event.Change.Companion.Number then {
-                            prop.setAs(it.amount)
+                            prop.setAs(values[it.amount.toInt()])
                         }
                     }
                 return r

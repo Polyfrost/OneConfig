@@ -28,7 +28,7 @@ package org.polyfrost.oneconfig.api.ui.v1.screen;
 
 public interface BlurScreen {
     /**
-     * @return If this ui has background blur
+     * Return true to blur the background of the screen. <b>note this is only checked when the screen is first loaded.</b>
      */
     boolean hasBackgroundBlur();
 }

@@ -32,35 +32,31 @@ import net.minecraft.client.shader.ShaderGroup;
 import net.minecraft.client.shader.ShaderManager;
 import net.minecraft.client.shader.ShaderUniform;
 import net.minecraft.util.ResourceLocation;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.polyfrost.oneconfig.api.event.v1.events.RenderEvent;
 import org.polyfrost.oneconfig.api.event.v1.events.ScreenOpenEvent;
 import org.polyfrost.oneconfig.api.event.v1.invoke.EventHandler;
-import org.polyfrost.oneconfig.api.platform.v1.Platform;
-import org.polyfrost.oneconfig.internal.mixin.ShaderGroupAccessor;
 import org.polyfrost.oneconfig.api.ui.v1.screen.BlurScreen;
-import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.LogManager;
+import org.polyfrost.oneconfig.internal.mixin.ShaderGroupAccessor;
 
 import java.util.List;
 
 /**
- * An adapted implementation of the BlurMC mod by tterrag1098.
+ * An adapted & optimized implementation of the BlurMC mod by tterrag1098, later modified by boomboompower.
  * <p>
- * For the original source see <a href="https://github.com/tterrag1098/Blur/blob/1.8.9/src/main/java/com/tterrag/blur/Blur.java">...</a>
- * For the public license, see <a href="https://github.com/tterrag1098/Blur/blob/1.8.9/LICENSE">...</a>
+ * For the original source see <a href="https://github.com/tterrag1098/Blur/blob/1.8.9/src/main/java/com/tterrag/blur/Blur.java">here.</a>
+ * taken the <a href="https://github.com/tterrag1098/Blur/blob/1.8.9/LICENSE">MIT Licence.</a>
  * <p>
- * License available under <a href="https://github.com/boomboompower/ToggleChat/blob/master/src/main/resources/licenses/BlurMC-License.txt">...</a>
+ * Modifications based on source from ToggleChat. See <a href="https://github.com/boomboompower/ToggleChat/blob/master/LICENSE">here</a> for that licence.
  *
- * @author tterrag1098, boomboompower
- * <p>
- * Taken from ToggleChat
- * <a href="https://github.com/boomboompower/ToggleChat/blob/master/LICENSE">...</a>
+ * @author tterrag1098, boomboompower, nextday
  */
 public final class BlurHandler {
-    public static final BlurHandler INSTANCE = new BlurHandler();
     private static final Logger LOGGER = LogManager.getLogger("OneConfig/Blur");
+    public static final BlurHandler INSTANCE = new BlurHandler();
 
-    private final ResourceLocation blurShader = new ResourceLocation("oneconfig", "shaders/post/fade_in_blur.json");
+    private final ResourceLocation blurShader = new ResourceLocation("shaders/post/fade_in_blur.json");
     private ShaderUniform su;
     private long start;
     private float progress = 0;
@@ -72,13 +68,8 @@ public final class BlurHandler {
     private BlurHandler() {
         EventHandler.of(ScreenOpenEvent.class, e -> reloadBlur(e.getScreen())).register();
         EventHandler.of(RenderEvent.End.class, e -> {
-            if (Platform.screen().current() == null) {
-                return;
-            }
-            if (!isShaderActive()) {
-                return;
-            }
-            if (progress >= 5f || su == null) return;
+            if (su == null) return;
+            if (progress >= 5f) return;
             su.set(getBlurStrengthProgress());
         }).register();
     }
@@ -108,25 +99,22 @@ public final class BlurHandler {
                 Minecraft.getMinecraft().entityRenderer.loadShader(this.blurShader);
                 //#endif
 
-                this.start = System.currentTimeMillis();
-                this.progress = 0;
                 try {
-                    final List<Shader> listShaders = ((ShaderGroupAccessor) Minecraft.getMinecraft().entityRenderer.getShaderGroup()).getListShaders();
-
-                    // Should not happen. Something bad happened.
-                    if (listShaders == null) {
-                        return;
-                    }
+                    ShaderGroup group = Minecraft.getMinecraft().entityRenderer.getShaderGroup();
+                    if (group == null) return;
+                    List<Shader> shaders = ((ShaderGroupAccessor) group).getListShaders();
+                    if (shaders == null) return;
 
                     // Iterate through the list of shaders.
-                    for (Shader shader : listShaders) {
+                    for (Shader shader : shaders) {
                         ShaderManager sm = shader.getShaderManager();
                         ShaderUniform su = sm.getShaderUniform("Progress");
                         if (su == null) continue;
-
                         this.su = su;
                     }
                     if (su == null) throw new IllegalStateException("Failed to get ShaderUniform for blur on GUI " + gui.getClass().getName());
+                    this.start = System.currentTimeMillis();
+                    this.progress = 0;
                 } catch (Exception ex) {
                     LOGGER.error("An error occurred while updating OneConfig's blur. Please report this!", ex);
                 }
@@ -150,13 +138,13 @@ public final class BlurHandler {
     }
 
     public static boolean isBlurring() {
-        return (Platform.screen().current() instanceof BlurScreen && ((BlurScreen) Platform.screen().current()).hasBackgroundBlur());
+        return INSTANCE.su != null;
     }
 
     /**
      * Returns the strength of the blur as determined by the duration the effect of the blur.
      * <p>
-     * The strength of the blur does not go below 5.0F.
+     * The strength of the blur does not go above 5.0F.
      */
     private float getBlurStrengthProgress() {
         return Math.min((System.currentTimeMillis() - this.start) / 50F, 5.0F);
