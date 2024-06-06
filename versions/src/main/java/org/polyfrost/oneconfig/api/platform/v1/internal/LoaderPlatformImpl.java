@@ -80,6 +80,7 @@ public class LoaderPlatformImpl implements LoaderPlatform {
 
     //#if FORGE && MC<11300
     private static final boolean isDev;
+
     static {
         boolean dev;
         try {

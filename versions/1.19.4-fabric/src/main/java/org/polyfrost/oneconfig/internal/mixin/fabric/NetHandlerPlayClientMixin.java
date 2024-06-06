@@ -77,7 +77,7 @@ public class NetHandlerPlayClientMixin {
     private void ocfg$chatRecieveCallback(ChatMessageS2CPacket packet, CallbackInfo ci) {
         ChatReceiveEvent ev = new ChatReceiveEvent(packet.unsignedContent());
         EventManager.INSTANCE.post(ev);
-        if(ev.cancelled) {
+        if (ev.cancelled) {
             ci.cancel();
         }
     }

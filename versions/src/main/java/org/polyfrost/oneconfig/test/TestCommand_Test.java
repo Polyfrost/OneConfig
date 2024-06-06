@@ -39,6 +39,20 @@ public class TestCommand_Test {
         UChat.chat("Main command");
     }
 
+    private static void joinAndChat(Object... stuff) {
+        StringBuilder builder = new StringBuilder();
+        for (Object thing : stuff) {
+            builder.append(thing).append(" ");
+        }
+        UChat.chat(builder.toString().trim());
+    }
+
+    @Command
+    private void playerTest(GameProfile profile) {
+        UChat.chat("Player test: " + profile.getName());
+        UChat.chat(profile.getId());
+    }
+
     @Command(value = {"subcommand", "s"}, description = "Subcommand 1.", greedy = true)
     private static class TestSubCommand {
         private static void main(int a, float b, @Parameter(value = "GREEDY c") String c) { // /test subcommand <a> <b> <c>
@@ -56,20 +70,5 @@ public class TestCommand_Test {
                 UChat.chat("Integer subSub: " + (a + b) + " " + c);
             }
         }
-    }
-
-    @Command
-    private void playerTest(GameProfile profile) {
-        UChat.chat("Player test: " + profile.getName());
-        UChat.chat(profile.getId());
-    }
-
-
-    private static void joinAndChat(Object... stuff) {
-        StringBuilder builder = new StringBuilder();
-        for (Object thing : stuff) {
-            builder.append(thing).append(" ");
-        }
-        UChat.chat(builder.toString().trim());
     }
 }

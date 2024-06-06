@@ -56,12 +56,12 @@ import static org.polyfrost.oneconfig.api.commands.v1.factories.builder.CommandB
 //#endif
 //#endif
 public class OneConfig
-    //#if FABRIC
-    //$$ implements net.fabricmc.api.ClientModInitializer
-    //#endif
+        //#if FABRIC
+        //$$ implements net.fabricmc.api.ClientModInitializer
+        //#endif
 {
-    private static final Logger LOGGER = LogManager.getLogger("OneConfig");
     public static final OneConfig INSTANCE = new OneConfig();
+    private static final Logger LOGGER = LogManager.getLogger("OneConfig");
 
     //#if FORGE
     //#if MC<=11202

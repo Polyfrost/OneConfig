@@ -53,17 +53,12 @@ import java.util.List;
  * @author tterrag1098, boomboompower, nextday
  */
 public final class BlurHandler {
-    private static final Logger LOGGER = LogManager.getLogger("OneConfig/Blur");
     public static final BlurHandler INSTANCE = new BlurHandler();
-
+    private static final Logger LOGGER = LogManager.getLogger("OneConfig/Blur");
     private final ResourceLocation blurShader = new ResourceLocation("shaders/post/fade_in_blur.json");
     private ShaderUniform su;
     private long start;
     private float progress = 0;
-
-    public static void init() {
-        // will call <clinit>
-    }
 
     private BlurHandler() {
         EventHandler.of(ScreenOpenEvent.class, e -> reloadBlur(e.getScreen())).register();
@@ -72,6 +67,14 @@ public final class BlurHandler {
             if (progress >= 5f) return;
             su.set(getBlurStrengthProgress());
         }).register();
+    }
+
+    public static void init() {
+        // will call <clinit>
+    }
+
+    public static boolean isBlurring() {
+        return INSTANCE.su != null;
     }
 
     /**
@@ -135,10 +138,6 @@ public final class BlurHandler {
         }
         su = null;
         Minecraft.getMinecraft().entityRenderer.stopUseShader();
-    }
-
-    public static boolean isBlurring() {
-        return INSTANCE.su != null;
     }
 
     /**

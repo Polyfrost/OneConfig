@@ -28,8 +28,8 @@ package org.polyfrost.oneconfig.api.ui.v1.internal;
 
 import net.minecraft.client.Minecraft;
 import org.jetbrains.annotations.NotNull;
-import org.polyfrost.oneconfig.api.ui.v1.UIManager;
 import org.polyfrost.oneconfig.api.ui.v1.TinyFD;
+import org.polyfrost.oneconfig.api.ui.v1.UIManager;
 import org.polyfrost.oneconfig.api.ui.v1.internal.wrappers.MCWindow;
 import org.polyfrost.oneconfig.api.ui.v1.internal.wrappers.PolyUIScreen;
 import org.polyfrost.polyui.PolyUI;

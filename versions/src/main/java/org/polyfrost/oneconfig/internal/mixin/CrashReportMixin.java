@@ -27,8 +27,8 @@
 package org.polyfrost.oneconfig.internal.mixin;
 
 import net.minecraft.crash.CrashReport;
-import org.polyfrost.oneconfig.api.ui.v1.UIManager;
 import org.polyfrost.oneconfig.api.ui.v1.TinyFD;
+import org.polyfrost.oneconfig.api.ui.v1.UIManager;
 import org.polyfrost.oneconfig.utils.v1.OneConfigUpdate;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -58,7 +58,7 @@ public abstract class CrashReportMixin {
 
     @Unique
     private void ocfg$apiDeath(boolean certain) {
-        if(!OneConfigUpdate.getInstance().hasUpdate()) return;
+        if (!OneConfigUpdate.getInstance().hasUpdate()) return;
         TinyFD tinyfd = UIManager.INSTANCE.getTinyFD();
         String title = certain ? "OneConfig API Error" : "OneConfig API Error (Possibly)";
         String message = "OneConfig has detected an crash that is potentially caused by an outdated version of OneConfig.\nYou can probably fix this by updating OneConfig by pressing OK, and restarting your game.";

@@ -123,6 +123,7 @@ public class OneConfigTweaker implements ITweaker {
         c.accept(uri);
     }
 
+    @SuppressWarnings("unchecked")
     private static Consumer<URI> createAddContainer() {
         try {
             Class<?> MixinBootstrap = Class.forName("org.spongepowered.asm.launch.MixinBootstrap");
@@ -136,7 +137,6 @@ public class OneConfigTweaker implements ITweaker {
                 Class<?> IContainerHandle = Class.forName("org.spongepowered.asm.launch.platform.container.IContainerHandle");
                 Class<?> ContainerHandleURI = Class.forName("org.spongepowered.asm.launch.platform.container.ContainerHandleURI");
                 // as we can't refer to IContainerHandle, we have to use unchecked casts here.
-                // noinspection unchecked
                 Consumer<Object> addWrappedContainer = (Consumer<Object>) MHUtils.getConsumerFunctionHandle(MixinPlatformManager, "addContainer", IContainerHandle).getOrThrow();
                 MethodHandle wrapper = MHUtils.getConstructorHandle(ContainerHandleURI, URI.class).getOrThrow();
                 return it -> addWrappedContainer.accept(MHUtils.invokeCatching(wrapper, it).getOrThrow());
@@ -213,15 +213,17 @@ public class OneConfigTweaker implements ITweaker {
         return (ITweaker) MHUtils.instantiate(Class.forName(MIXIN_TWEAKER, true, Launch.classLoader), false).getOrThrow();
     }
 
-    private static class SourceFile {
-        final Path path;
-        final String coreMod;
-        final boolean mixin;
-
-        private SourceFile(Path path, String coreMod, boolean mixin) {
-            this.path = path;
-            this.coreMod = coreMod;
-            this.mixin = mixin;
+    /**
+     * Taken from LWJGLTwoPointFive under The Unlicense
+     * <a href="https://github.com/DJtheRedstoner/LWJGLTwoPointFive/blob/master/LICENSE/">https://github.com/DJtheRedstoner/LWJGLTwoPointFive/blob/master/LICENSE/</a>
+     */
+    @SuppressWarnings("unchecked")
+    private static void removeLWJGLException() {
+        try {
+            Set<String> exceptions = (Set<String>) MHUtils.getField(Launch.classLoader, "classLoaderExceptions").getOrThrow();
+            exceptions.remove("org.lwjgl.");
+        } catch (Throwable e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -240,20 +242,6 @@ public class OneConfigTweaker implements ITweaker {
         classLoader.addTransformerExclusion("org.lwjgl.");
     }
 
-    /**
-     * Taken from LWJGLTwoPointFive under The Unlicense
-     * <a href="https://github.com/DJtheRedstoner/LWJGLTwoPointFive/blob/master/LICENSE/">https://github.com/DJtheRedstoner/LWJGLTwoPointFive/blob/master/LICENSE/</a>
-     */
-    @SuppressWarnings("unchecked")
-    private static void removeLWJGLException() {
-        try {
-            Set<String> exceptions = (Set<String>) MHUtils.getField(Launch.classLoader, "classLoaderExceptions").getOrThrow();
-            exceptions.remove("org.lwjgl.");
-        } catch (Throwable e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     @Override
     public void acceptOptions(List<String> args, File gameDir, File assetsDir, String profile) {
     }
@@ -266,6 +254,18 @@ public class OneConfigTweaker implements ITweaker {
     @Override
     public String[] getLaunchArguments() {
         return new String[0];
+    }
+
+    private static class SourceFile {
+        final Path path;
+        final String coreMod;
+        final boolean mixin;
+
+        private SourceFile(Path path, String coreMod, boolean mixin) {
+            this.path = path;
+            this.coreMod = coreMod;
+            this.mixin = mixin;
+        }
     }
 }
 //#endif

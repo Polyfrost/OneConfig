@@ -134,6 +134,7 @@ public final class ClientCommandInternals {
         ITextComponent message = TextComponentUtils.toTextComponent(e.getRawMessage());
         String context = e.getContext();
 
+        //@formatter:off
         return context != null ?
                 //#if MC<11900
                 new net.minecraft.util.text.TranslationTextComponent
@@ -146,6 +147,7 @@ public final class ClientCommandInternals {
                 //$$ .translatable
                 //#endif
                         ("command.context.parse_error", message.getString(), e.getCursor(), context) : message;
+        //@formatter:on
     }
 
     public static void addCommands(CommandDispatcher<ClientSuggestionProvider> target, ClientSuggestionProvider source) {

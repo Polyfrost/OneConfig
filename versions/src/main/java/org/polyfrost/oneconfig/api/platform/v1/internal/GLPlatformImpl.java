@@ -97,6 +97,7 @@ public class GLPlatformImpl implements GLPlatform {
         return Minecraft.getMinecraft().fontRendererObj.getStringWidth(text);
     }
 
+    //@formatter:off
     //#if MC<=11202
     private static final java.util.function.Function<String, Long> getProcAddress =
             MHUtils.getFunctionHandle(org.lwjgl.opengl.GLContext.class, "getFunctionAddress", long.class, String.class)
@@ -111,4 +112,5 @@ public class GLPlatformImpl implements GLPlatform {
         //$$ return org.lwjgl.glfw.GLFW.glfwGetProcAddress(addr);
         //#endif
     }
+    //@formatter:on
 }

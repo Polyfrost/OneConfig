@@ -88,12 +88,15 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
             mixins.add("MouseMixin");
             mixins.add("commands.ClientPlayNetworkHandlerMixin");
             mixins.add("commands.HelpCommandAccessor");
-            if (version < 12000) {
-                // 1.16, 1.17, 1.18, 1.19
+            if (version < 19000) {
+                // 1.16, 1.17, 1.18
                 mixins.add("SchemasMixin");
                 mixins.add("EntityPlayerSPMixin");
             }
-        } else mixins.add("GuiScreenMixin");
+        } else {
+            // legacy
+            mixins.add("GuiScreenMixin");
+        }
 
         return mixins;
     }

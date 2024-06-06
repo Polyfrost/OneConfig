@@ -28,11 +28,11 @@ package org.polyfrost.oneconfig.api.commands.v1.internal;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ChatScreen;
-import net.minecraft.command.CommandException;
-import net.minecraft.server.command.CommandRegistry;
 import net.minecraft.command.Command;
+import net.minecraft.command.CommandException;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.IncorrectUsageException;
+import net.minecraft.server.command.CommandRegistry;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Formatting;
 
@@ -54,6 +54,13 @@ public class ClientCommandHandler extends CommandRegistry {
     public static final ClientCommandHandler instance = new ClientCommandHandler();
 
     public String[] latestAutoComplete = null;
+
+    //Couple of helpers because the mcp names are stupid and long...
+    private static TranslatableText format(String str, Object... args) {
+        TranslatableText ret = new TranslatableText(str, args);
+        ret.getStyle().setFormatting(Formatting.RED);
+        return ret;
+    }
 
     /**
      * @return 1 if successfully executed, -1 if no permission or wrong usage,
@@ -78,25 +85,26 @@ public class ClientCommandHandler extends CommandRegistry {
                 return 0;
             }
 
+            //@formatter:off
             if (icommand.
                     //#if MC<=10809
-                            isAccessible(sender)
-                //#else
-                //$$ method_3278(getServer(), sender)
-                //#endif
+                    isAccessible(sender)
+                    //#else
+                    //$$ method_3278(getServer(), sender)
+                    //#endif
             ) {
-
                 icommand.
-                        //#if MC<=10809
-                                execute(sender, args)
-                //#else
-                //$$ method_3279(getServer(), sender, args)
-                //#endif
-                ;
+                    //#if MC<=10809
+                    execute(sender, args)
+                    //#else
+                    //$$ method_3279(getServer(), sender, args)
+                    //#endif
+                    ;
                 return 1;
             } else {
                 sender.sendMessage(format("commands.generic.permission"));
             }
+            //@formatter:on
         } catch (IncorrectUsageException wue) {
             sender.sendMessage(format("commands.generic.usage", format(wue.getMessage(), wue.getArgs())));
         } catch (CommandException ce) {
@@ -107,13 +115,6 @@ public class ClientCommandHandler extends CommandRegistry {
         }
 
         return -1;
-    }
-
-    //Couple of helpers because the mcp names are stupid and long...
-    private static TranslatableText format(String str, Object... args) {
-        TranslatableText ret = new TranslatableText(str, args);
-        ret.getStyle().setFormatting(Formatting.RED);
-        return ret;
     }
 
     public void autoComplete(String leftOfCursor) {

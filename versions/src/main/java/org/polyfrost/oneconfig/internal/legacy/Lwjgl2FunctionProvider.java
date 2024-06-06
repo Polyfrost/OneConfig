@@ -41,7 +41,6 @@ import java.nio.ByteBuffer;
  */
 public class Lwjgl2FunctionProvider implements FunctionProvider {
     private static final Class<?> GL_CONTEXT;
-    private final MethodHandle getFunctionAddress;
 
     static {
         String libraryPath = System.getProperty("oneconfig.lwjgl2.librarypath", "");
@@ -55,6 +54,8 @@ public class Lwjgl2FunctionProvider implements FunctionProvider {
             throw new RuntimeException("Error initializing Lwjgl2FunctionProvider", e);
         }
     }
+
+    private final MethodHandle getFunctionAddress;
 
     public Lwjgl2FunctionProvider() {
         getFunctionAddress = MHUtils.getStaticMethodHandle(GL_CONTEXT, "getFunctionAddress", long.class, String.class).getOrThrow();

@@ -41,12 +41,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(value = ClientPlayNetworkHandler.class, priority = Integer.MAX_VALUE)
 public abstract class NetHandlerPlayClientMixin {
 
+    //@formatter:off
     private static final String TARGET =
             //#if MC<=10809
             "Lnet/minecraft/client/gui/hud/ChatHud;addMessage(Lnet/minecraft/text/Text;)V";
             //#else
             //$$ "Lnet/minecraft/client/gui/hud/InGameHud;method_14471(Lnet/minecraft/util/ChatMessageType;Lnet/minecraft/text/Text;)V";
             //#endif
+    //@formatter:on
 
     @Unique
     private ChatReceiveEvent ocfg$chatEvent = null;
@@ -60,6 +62,7 @@ public abstract class NetHandlerPlayClientMixin {
 
     @Redirect(method = "onChatMessage", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/packet/s2c/play/ChatMessageS2CPacket;getMessage()Lnet/minecraft/text/Text;"))
     private Text ocfg$modifyMessage(ChatMessageS2CPacket packet) {
+        //@formatter:off
         if (
             //#if MC<=10809
             packet.getType() == 0
@@ -71,6 +74,7 @@ public abstract class NetHandlerPlayClientMixin {
             EventManager.INSTANCE.post(ocfg$chatEvent);
             return ocfg$chatEvent.getMessage();
         }
+        //@formatter:on
         return packet.getMessage();
     }
 }

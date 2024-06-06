@@ -44,6 +44,15 @@ import java.lang.reflect.Method;
  */
 public class KotlinLanguageAdapter implements ILanguageAdapter {
 
+    private static Object getObjectInstance(Class<?> objectClass) {
+        try {
+            Object instance = kotlin.jvm.JvmClassMappingKt.getKotlinClass(objectClass).getObjectInstance();
+            return instance == null ? objectClass.getDeclaredConstructor().newInstance() : instance;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to get object instance", e);
+        }
+    }
+
     @Override
     public boolean supportsStatics() {
         return false;
@@ -60,15 +69,6 @@ public class KotlinLanguageAdapter implements ILanguageAdapter {
             target.set(getObjectInstance(proxyTarget), proxy);
         } catch (Exception e) {
             throw new RuntimeException("Failed to set proxy", e);
-        }
-    }
-
-    private static Object getObjectInstance(Class<?> objectClass) {
-        try {
-            Object instance = kotlin.jvm.JvmClassMappingKt.getKotlinClass(objectClass).getObjectInstance();
-            return instance == null ? objectClass.getDeclaredConstructor().newInstance() : instance;
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to get object instance", e);
         }
     }
 

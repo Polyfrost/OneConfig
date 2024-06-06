@@ -27,98 +27,74 @@
 package org.polyfrost.oneconfig.test;
 
 import org.polyfrost.oneconfig.api.config.v1.Config;
-import org.polyfrost.oneconfig.api.config.v1.annotations.Accordion;
-import org.polyfrost.oneconfig.api.config.v1.annotations.Button;
-import org.polyfrost.oneconfig.api.config.v1.annotations.Color;
-import org.polyfrost.oneconfig.api.config.v1.annotations.DependsOn;
-import org.polyfrost.oneconfig.api.config.v1.annotations.Dropdown;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Number;
-import org.polyfrost.oneconfig.api.config.v1.annotations.RadioButton;
-import org.polyfrost.oneconfig.api.config.v1.annotations.Slider;
-import org.polyfrost.oneconfig.api.config.v1.annotations.Switch;
-import org.polyfrost.oneconfig.api.config.v1.annotations.Text;
-import org.polyfrost.universal.UChat;
+import org.polyfrost.oneconfig.api.config.v1.annotations.*;
 import org.polyfrost.polyui.color.PolyColor;
 import org.polyfrost.polyui.unit.Align;
 import org.polyfrost.polyui.utils.Utils;
+import org.polyfrost.universal.UChat;
 
 @SuppressWarnings("unused")
 public class TestConfig_Test extends Config {
-
-    @Switch(title = "t")
-    public boolean added = false;
 
     @Switch(
             title = "Chicken",
             subcategory = "Chick"
     )
     public static boolean chicken = true;
-
     @Switch(title = "Cow", description = "Something that is way too long and is going to be trimmed (I hope) because that is what its meant to do", subcategory = "Chick")
     public static boolean cow = false;
+    @Number(title = "number", unit = "px", category = "bob")
+    public static int number = 50;
 
 //    @Keybind(title = "keybinding", description = "please send help")
 //    KeyBinder.Bind bind0 = new KeyBinder.Bind('A', null, null, Modifiers.mods(Modifiers.LCONTROL, Modifiers.LSHIFT), () -> {
 //        UChat.chat("you pressed a bind");
 //        return true;
 //    });
-
-
+    @Slider(title = "Slide", min = 10f, max = 110f, icon = "paintbrush.svg", description = "I do sliding", category = "bob")
+    public static float p = 50f;
+    @Text(title = "Text")
+    public static String text = "Hello world!";
+    @Dropdown(title = "A dropdown", description = "I do dropping (on Tuesdays)", options = {"A", "B", "C", "SADW", "AS", "FGAW", "ASDA", "ASDFHUA", "ASHDUIW", "HAWSUDIHWAUI", "&SHAJD", "AWSHUID"})
+    public static int i = 0;
+    @Switch(title = "Cow", description = "Something that is way too long and is going to be trimmed (I hope) because that is what its meant to do")
+    public static boolean cow2 = false;
+    @Switch(title = "Cow", description = "Something that is way too long and is going to be trimmed (I hope) because that is what its meant to do")
+    public static boolean cow3 = false;
+    @Switch(title = "Cow", description = "Something that is way too long and is going to be trimmed (I hope) because that is what its meant to do")
+    public static boolean cow4 = false;
+    @Switch(title = "Cow", description = "Something that is way too long and is going to be trimmed (I hope) because that is what its meant to do")
+    public static boolean cow5 = false;
+    @Switch(title = "Cow", description = "Something that is way too long and is going to be trimmed (I hope) because that is what its meant to do")
+    public static boolean acow = false;
+    @Switch(title = "Cow", description = "Something that is way too long and is going to be trimmed (I hope) because that is what its meant to do")
+    public static boolean scow = false;
+    @Switch(title = "Cow", description = "Something that is way too long and is going to be trimmed (I hope) because that is what its meant to do")
+    public static boolean cgow = false;
+    @Switch(title = "Cow", description = "Something that is way too long and is going to be trimmed (I hope) because that is what its meant to do")
+    public static boolean c2ow = false;
+    @Switch(title = "Cow", description = "Something that is way too long and is going to be trimmed (I hope) because that is what its meant to do")
+    public static boolean c3ow = false;
+    @Switch(title = "Cow", description = "Something that is way too long and is going to be trimmed (I hope) because that is what its meant to do")
+    public static boolean c4ow = false;
+    @Switch(title = "Cow", description = "Something that is way too long and is going to be trimmed (I hope) because that is what its meant to do")
+    public static boolean c5ow = false;
+    @RadioButton(title = "radio", description = "send help")
+    public static Align.Main radio = Align.Main.Center;
+    @Switch(title = "t")
+    public boolean added = false;
     @Color(title = "color", category = "bob")
     PolyColor color = Utils.rgba(255, 0, 100, 1f);
+
+    public TestConfig_Test() {
+        super("test_mod.json", "Test Mod", Category.QOL);
+    }
 
     @Button(title = "Test")
     private static void main() {
         UChat.chat("button pressed");
     }
-
-    @Number(title = "number", unit = "px", category = "bob")
-    public static int number = 50;
-
-    @Slider(title = "Slide", min = 10f, max = 110f, icon = "paintbrush.svg", description = "I do sliding", category = "bob")
-    public static float p = 50f;
-
-    @Text(title = "Text")
-    public static String text = "Hello world!";
-
-    @Dropdown(title = "A dropdown", description = "I do dropping (on Tuesdays)", options = {"A", "B", "C", "SADW", "AS", "FGAW", "ASDA", "ASDFHUA", "ASHDUIW", "HAWSUDIHWAUI", "&SHAJD", "AWSHUID"})
-    public static int i = 0;
-
-    @Switch(title = "Cow", description = "Something that is way too long and is going to be trimmed (I hope) because that is what its meant to do")
-    public static boolean cow2 = false;
-
-    @Switch(title = "Cow", description = "Something that is way too long and is going to be trimmed (I hope) because that is what its meant to do")
-    public static boolean cow3 = false;
-
-    @Switch(title = "Cow", description = "Something that is way too long and is going to be trimmed (I hope) because that is what its meant to do")
-    public static boolean cow4 = false;
-
-    @Switch(title = "Cow", description = "Something that is way too long and is going to be trimmed (I hope) because that is what its meant to do")
-    public static boolean cow5 = false;
-
-    @Switch(title = "Cow", description = "Something that is way too long and is going to be trimmed (I hope) because that is what its meant to do")
-    public static boolean acow = false;
-
-    @Switch(title = "Cow", description = "Something that is way too long and is going to be trimmed (I hope) because that is what its meant to do")
-    public static boolean scow = false;
-
-    @Switch(title = "Cow", description = "Something that is way too long and is going to be trimmed (I hope) because that is what its meant to do")
-    public static boolean cgow = false;
-
-    @Switch(title = "Cow", description = "Something that is way too long and is going to be trimmed (I hope) because that is what its meant to do")
-    public static boolean c2ow = false;
-
-    @Switch(title = "Cow", description = "Something that is way too long and is going to be trimmed (I hope) because that is what its meant to do")
-    public static boolean c3ow = false;
-
-    @Switch(title = "Cow", description = "Something that is way too long and is going to be trimmed (I hope) because that is what its meant to do")
-    public static boolean c4ow = false;
-
-    @Switch(title = "Cow", description = "Something that is way too long and is going to be trimmed (I hope) because that is what its meant to do")
-    public static boolean c5ow = false;
-
-    @RadioButton(title = "radio", description = "send help")
-    public static Align.Main radio = Align.Main.Center;
 
     @Accordion(title = "an accordion", description = "AAAAAAAAAAAAAAAAAAAAAAAAAAH", index = 4)
     public static class AinnerAAAA {
@@ -137,9 +113,5 @@ public class TestConfig_Test extends Config {
 
         @Switch(title = "Cow", description = "Something that is way too long and is going to be trimmed (I hope) because that is what its meant to do")
         public static boolean cbogw = false;
-    }
-
-    public TestConfig_Test() {
-        super("test_mod.json", "Test Mod", Category.QOL);
     }
 }

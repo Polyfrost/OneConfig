@@ -42,6 +42,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(value = NetworkManager.class, priority = Integer.MAX_VALUE)
 public abstract class NetworkManagerMixin {
 
+    //@formatter:off
     //#if MC<11900
     //#if MC<=11202
     @Inject(method = "sendPacket(Lnet/minecraft/network/Packet;Lio/netty/util/concurrent/GenericFutureListener;[Lio/netty/util/concurrent/GenericFutureListener;)V", at = @At("HEAD"), cancellable = true)
@@ -53,6 +54,7 @@ public abstract class NetworkManagerMixin {
         ocfg$packetSendCallback(packetIn, ci);
     }
     //#endif
+    //@formatter:on
 
     @Inject(method = "sendPacket(Lnet/minecraft/network/Packet;)V", at = @At("HEAD"), cancellable = true)
     private void ocfg$packetSendCallback(Packet<?> packetIn, CallbackInfo ci) {

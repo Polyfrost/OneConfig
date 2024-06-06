@@ -31,27 +31,11 @@ package org.polyfrost.oneconfig.internal.mixin.compat;
 import cc.polyfrost.oneconfig.config.Config;
 import cc.polyfrost.oneconfig.config.data.Mod;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
-import cc.polyfrost.oneconfig.gui.elements.config.ConfigButton;
-import cc.polyfrost.oneconfig.gui.elements.config.ConfigCheckbox;
-import cc.polyfrost.oneconfig.gui.elements.config.ConfigColorElement;
-import cc.polyfrost.oneconfig.gui.elements.config.ConfigDropdown;
-import cc.polyfrost.oneconfig.gui.elements.config.ConfigDualOption;
-import cc.polyfrost.oneconfig.gui.elements.config.ConfigNumber;
-import cc.polyfrost.oneconfig.gui.elements.config.ConfigSlider;
-import cc.polyfrost.oneconfig.gui.elements.config.ConfigSwitch;
-import cc.polyfrost.oneconfig.gui.elements.config.ConfigTextBox;
+import cc.polyfrost.oneconfig.gui.elements.config.*;
 import org.apache.logging.log4j.Logger;
-import org.polyfrost.oneconfig.api.config.v1.ConfigManager;
-import org.polyfrost.oneconfig.api.config.v1.Properties;
-import org.polyfrost.oneconfig.api.config.v1.Property;
-import org.polyfrost.oneconfig.api.config.v1.Tree;
-import org.polyfrost.oneconfig.api.config.v1.Visualizer;
+import org.polyfrost.oneconfig.api.config.v1.*;
 import org.polyfrost.oneconfig.utils.v1.MHUtils;
-import org.spongepowered.asm.mixin.Dynamic;
-import org.spongepowered.asm.mixin.Final;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Pseudo;
-import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -65,15 +49,12 @@ public abstract class OneConfigV0CompatMixin {
     @Shadow
     @Final
     public transient HashMap<String, BasicOption> optionNames;
-
-    @Shadow
-    @Final
-    protected transient String configFile;
-
     @Shadow
     @Final
     public transient Mod mod;
-
+    @Shadow
+    @Final
+    protected transient String configFile;
     @Shadow
     @Final
     private transient Logger logger;

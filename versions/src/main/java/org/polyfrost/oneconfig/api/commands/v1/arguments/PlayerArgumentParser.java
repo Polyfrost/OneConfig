@@ -41,21 +41,6 @@ import java.util.stream.Stream;
  * The player argument parser. Returns a {@link GameProfile}.
  */
 public class PlayerArgumentParser extends ArgumentParser<GameProfile> {
-    @Override
-    public @Nullable GameProfile parse(@NotNull String arg) {
-        return getMatchingPlayers(arg, false).findFirst().orElse(null);
-    }
-
-    @Override
-    public @Nullable List<@NotNull String> getAutoCompletions(String input) {
-        return getMatchingPlayers(input, true).map(GameProfile::getName).collect(Collectors.toList());
-    }
-
-    @Override
-    public Class<GameProfile> getType() {
-        return GameProfile.class;
-    }
-
     private static Stream<GameProfile> getMatchingPlayers(String arg, boolean startWith) {
         if (Minecraft.getMinecraft().theWorld == null) return Stream.of();
         String l = arg.toLowerCase();
@@ -69,6 +54,21 @@ public class PlayerArgumentParser extends ArgumentParser<GameProfile> {
                 return startWith ? name.startsWith(l) : name.equals(l);
             }
         });
+    }
+
+    @Override
+    public @Nullable GameProfile parse(@NotNull String arg) {
+        return getMatchingPlayers(arg, false).findFirst().orElse(null);
+    }
+
+    @Override
+    public @Nullable List<@NotNull String> getAutoCompletions(String input) {
+        return getMatchingPlayers(input, true).map(GameProfile::getName).collect(Collectors.toList());
+    }
+
+    @Override
+    public Class<GameProfile> getType() {
+        return GameProfile.class;
     }
 }
 //#endif

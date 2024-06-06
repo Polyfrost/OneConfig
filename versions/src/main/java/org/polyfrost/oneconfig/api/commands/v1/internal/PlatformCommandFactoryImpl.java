@@ -28,15 +28,15 @@ package org.polyfrost.oneconfig.api.commands.v1.internal;
 
 import net.minecraft.command.CommandBase;
 import net.minecraft.util.BlockPos;
-import org.polyfrost.oneconfig.api.commands.v1.CommandManager;
-import org.polyfrost.oneconfig.api.commands.v1.exceptions.CommandExecutionException;
-import org.polyfrost.oneconfig.api.commands.v1.CommandTree;
-import org.polyfrost.oneconfig.api.commands.v1.factories.PlatformCommandFactory;
-import org.polyfrost.oneconfig.api.ClassHasOverwrites;
-import org.polyfrost.universal.UChat;
-import org.polyfrost.oneconfig.api.commands.v1.arguments.PlayerArgumentParser;
-import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.polyfrost.oneconfig.api.ClassHasOverwrites;
+import org.polyfrost.oneconfig.api.commands.v1.CommandManager;
+import org.polyfrost.oneconfig.api.commands.v1.CommandTree;
+import org.polyfrost.oneconfig.api.commands.v1.arguments.PlayerArgumentParser;
+import org.polyfrost.oneconfig.api.commands.v1.exceptions.CommandExecutionException;
+import org.polyfrost.oneconfig.api.commands.v1.factories.PlatformCommandFactory;
+import org.polyfrost.universal.UChat;
 
 import java.util.Arrays;
 import java.util.List;
@@ -53,6 +53,10 @@ public class PlatformCommandFactoryImpl implements PlatformCommandFactory {
         CommandManager.INSTANCE.registerParser(new PlayerArgumentParser());
     }
 
+    private static void chat(String s) {
+        UChat.chat(s);
+    }
+
     @Override
     public boolean createCommand(CommandTree tree) {
         ClientCommandHandler.instance.registerCommand(new CommandBase() {
@@ -66,6 +70,7 @@ public class PlatformCommandFactoryImpl implements PlatformCommandFactory {
                 return "/" + tree.name();
             }
 
+            //@formatter:off
             @Override
             public void
             //#if MC<=10809
@@ -75,6 +80,7 @@ public class PlatformCommandFactoryImpl implements PlatformCommandFactory {
             //#else
             //$$ execute(net.minecraft.server.MinecraftServer server, net.minecraft.command.ICommandSender sender, String[] args)
             //#endif
+            //@formatter:on
             {
                 if (args.length == 1 && args[0].equals("help")) {
                     for (String s : tree.getHelp()) {
@@ -111,6 +117,7 @@ public class PlatformCommandFactoryImpl implements PlatformCommandFactory {
                 return -1;
             }
 
+            //@formatter:off
             @Override
             public List<String>
             //#if MC<=10809
@@ -120,14 +127,11 @@ public class PlatformCommandFactoryImpl implements PlatformCommandFactory {
             //#else
             //$$ getTabCompletions(net.minecraft.server.MinecraftServer server, net.minecraft.command.ICommandSender sender, String[] args, BlockPos targetPos)
             //#endif
+            //@formatter:on
             {
                 return tree.autocomplete(args);
             }
         });
         return true;
-    }
-
-    private static void chat(String s) {
-        UChat.chat(s);
     }
 }

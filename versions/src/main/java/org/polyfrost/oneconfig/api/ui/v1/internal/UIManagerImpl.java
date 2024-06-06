@@ -77,12 +77,49 @@ public class UIManagerImpl
     private static final String RENDERER_IMPL_PACKAGE = "org.polyfrost.oneconfig.api.ui.v1.internal.";
     private static final String LWJGL_FUNCTION_PROVIDER = "org.polyfrost.oneconfig.internal.legacy.Lwjgl2FunctionProvider";
     private static final String LWJGL_FUNCTION_PROVIDER_ASM = LWJGL_FUNCTION_PROVIDER.replace('.', '/');
+    private static final String JAR_NAME = "lwjgl-legacy.jar";
+    private static final Path TEMP_DIR = Paths.get("oneconfig", "lwjgl").toAbsolutePath();
+
+    static {
+        registerAsParallelCapable();
+        if (isPojav) {
+            remappingMap = null;
+            defineClassMethod = null;
+        } else {
+            remappingMap = new HashMap<>();
+            remappingMap.put("org/lwjgl/BufferUtils", "org/lwjgl/actually3/BufferUtils");
+            remappingMap.put("org/lwjgl/PointerBuffer", "org/lwjgl/actually3/PointerBuffer");
+            remappingMap.put("org/lwjgl/CLongBuffer", "org/lwjgl/actually3/CLongBuffer");
+
+            Class<?> unsafeClass;
+            try {
+                unsafeClass = Class.forName("jdk.internal.misc.Unsafe");
+            } catch (Throwable throwable) {
+                try {
+                    unsafeClass = Class.forName("sun.misc.Unsafe");
+                } catch (Throwable throwable1) {
+                    throw new RuntimeException("Could not find Unsafe class", throwable);
+                }
+            }
+
+            Object theUnsafe = MHUtils.getStatic(unsafeClass, "theUnsafe").getOrThrow();
+
+            defineClassMethod = MHUtils.getMethodHandle(
+                    theUnsafe,
+                    "defineClass",
+                    /* returns */ Class.class,
+                    String.class,
+                    byte[].class,
+                    int.class,
+                    int.class,
+                    ClassLoader.class,
+                    ProtectionDomain.class
+            ).getOrThrow();
+        }
+    }
 
     private final Set<String> classLoaderInclude = new HashSet<>();
     private final Map<String, Class<?>> classCache = new HashMap<>();
-
-    private static final String JAR_NAME = "lwjgl-legacy.jar";
-    private static final Path TEMP_DIR = Paths.get("oneconfig", "lwjgl").toAbsolutePath();
     private final TinyFD tinyFD;
     private final Renderer renderer;
 
@@ -129,6 +166,34 @@ public class UIManagerImpl
             tinyFD = (TinyFD) Class.forName(RENDERER_IMPL_PACKAGE + "TinyFDImpl", true, classLoader).getConstructor().newInstance();
         } catch (Exception e) {
             throw new RuntimeException("Failed to get valid rendering implementation", e);
+        }
+    }
+
+    private static synchronized URL getJarFile() {
+        if (isPojav) return null;
+        final Path tempJar = TEMP_DIR.resolve(JAR_NAME);
+        try (InputStream in = UIManagerImpl.class.getResourceAsStream("/" + JAR_NAME)) {
+            if (in == null) throw new IOException("Failed to get " + JAR_NAME);
+            Files.createDirectories(TEMP_DIR);
+            TEMP_DIR.toFile().deleteOnExit();
+            Files.copy(in, tempJar, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        try {
+            return tempJar.toUri().toURL();
+        } catch (MalformedURLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static boolean checkPojav() {
+        try {
+            Class.forName("org.lwjgl.glfw.CallbackBridge");
+            LOGGER.warn("Pojav detected, letting Pojav handle LWJGL.");
+            return true;
+        } catch (ClassNotFoundException e) {
+            return false;
         }
     }
 
@@ -292,73 +357,6 @@ public class UIManagerImpl
                 method.instructions.clear();
                 method.instructions.insert(list);
             }
-        }
-    }
-
-    static {
-        registerAsParallelCapable();
-        if (isPojav) {
-            remappingMap = null;
-            defineClassMethod = null;
-        } else {
-            remappingMap = new HashMap<>();
-            remappingMap.put("org/lwjgl/BufferUtils", "org/lwjgl/actually3/BufferUtils");
-            remappingMap.put("org/lwjgl/PointerBuffer", "org/lwjgl/actually3/PointerBuffer");
-            remappingMap.put("org/lwjgl/CLongBuffer", "org/lwjgl/actually3/CLongBuffer");
-
-            Class<?> unsafeClass;
-            try {
-                unsafeClass = Class.forName("jdk.internal.misc.Unsafe");
-            } catch (Throwable throwable) {
-                try {
-                    unsafeClass = Class.forName("sun.misc.Unsafe");
-                } catch (Throwable throwable1) {
-                    throw new RuntimeException("Could not find Unsafe class", throwable);
-                }
-            }
-
-            Object theUnsafe = MHUtils.getStatic(unsafeClass, "theUnsafe").getOrThrow();
-
-            defineClassMethod = MHUtils.getMethodHandle(
-                    theUnsafe,
-                    "defineClass",
-                    /* returns */ Class.class,
-                    String.class,
-                    byte[].class,
-                    int.class,
-                    int.class,
-                    ClassLoader.class,
-                    ProtectionDomain.class
-            ).getOrThrow();
-        }
-    }
-
-
-    private static synchronized URL getJarFile() {
-        if (isPojav) return null;
-        final Path tempJar = TEMP_DIR.resolve(JAR_NAME);
-        try (InputStream in = UIManagerImpl.class.getResourceAsStream("/" + JAR_NAME)) {
-            if (in == null) throw new IOException("Failed to get " + JAR_NAME);
-            Files.createDirectories(TEMP_DIR);
-            TEMP_DIR.toFile().deleteOnExit();
-            Files.copy(in, tempJar, StandardCopyOption.REPLACE_EXISTING);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        try {
-            return tempJar.toUri().toURL();
-        } catch (MalformedURLException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private static boolean checkPojav() {
-        try {
-            Class.forName("org.lwjgl.glfw.CallbackBridge");
-            LOGGER.warn("Pojav detected, letting Pojav handle LWJGL.");
-            return true;
-        } catch (ClassNotFoundException e) {
-            return false;
         }
     }
 

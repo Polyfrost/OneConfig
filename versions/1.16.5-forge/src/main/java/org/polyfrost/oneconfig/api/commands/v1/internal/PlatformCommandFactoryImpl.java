@@ -28,13 +28,7 @@ package org.polyfrost.oneconfig.api.commands.v1.internal;
 
 import com.mojang.authlib.GameProfile;
 import com.mojang.brigadier.StringReader;
-import com.mojang.brigadier.arguments.ArgumentType;
-import com.mojang.brigadier.arguments.BoolArgumentType;
-import com.mojang.brigadier.arguments.DoubleArgumentType;
-import com.mojang.brigadier.arguments.FloatArgumentType;
-import com.mojang.brigadier.arguments.IntegerArgumentType;
-import com.mojang.brigadier.arguments.LongArgumentType;
-import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.arguments.*;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
@@ -62,11 +56,7 @@ import org.polyfrost.oneconfig.api.commands.v1.factories.PlatformCommandFactory;
 import org.polyfrost.oneconfig.api.event.v1.invoke.EventHandler;
 import org.polyfrost.universal.UChat;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
@@ -110,23 +100,6 @@ public class PlatformCommandFactoryImpl implements PlatformCommandFactory {
                 e.dispatcher.getRoot().addChild(n);
             }
         }).register();
-    }
-
-    @Override
-    public boolean createCommand(CommandTree command) {
-        LiteralArgumentBuilder<ClientSuggestionProvider> master = literal(command.name());
-        LiteralArgumentBuilder<ClientSuggestionProvider> help = literal("help");
-        help.executes(context -> {
-            for (String s : command.getHelp()) {
-                UChat.chat(s);
-            }
-            return 0;
-        });
-        master.then(help);
-        _create(master, command.getDedupedCommands().values());
-        // build, and wait to be added to the dispatcher
-        nodes.add(master.build());
-        return true;
     }
 
     private static <S extends ClientSuggestionProvider> void _create(ArgumentBuilder<S, ?> parent, Collection<List<Node>> nodesCollection) {
@@ -204,7 +177,6 @@ public class PlatformCommandFactoryImpl implements PlatformCommandFactory {
         return type;
     }
 
-
     private static void registerIntrinsics() {
         CommandManager.INSTANCE.registerParser(
                 new ArgumentParser<PlayerEntity>() {
@@ -263,5 +235,22 @@ public class PlatformCommandFactoryImpl implements PlatformCommandFactory {
                     }
                 }
         );
+    }
+
+    @Override
+    public boolean createCommand(CommandTree command) {
+        LiteralArgumentBuilder<ClientSuggestionProvider> master = literal(command.name());
+        LiteralArgumentBuilder<ClientSuggestionProvider> help = literal("help");
+        help.executes(context -> {
+            for (String s : command.getHelp()) {
+                UChat.chat(s);
+            }
+            return 0;
+        });
+        master.then(help);
+        _create(master, command.getDedupedCommands().values());
+        // build, and wait to be added to the dispatcher
+        nodes.add(master.build());
+        return true;
     }
 }

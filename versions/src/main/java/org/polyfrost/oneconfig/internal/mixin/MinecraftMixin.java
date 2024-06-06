@@ -56,13 +56,15 @@ public abstract class MinecraftMixin {
     @Shadow
     private Timer timer;
 
+    //@formatter:off
     @Unique
     private static final String UPDATE_CAMERA_AND_RENDER =
             //#if MC>=11300
             //$$ "Lnet/minecraft/client/renderer/GameRenderer;updateCameraAndRender(FJZ)V";
             //#else
             "Lnet/minecraft/client/renderer/EntityRenderer;updateCameraAndRender(FJ)V";
-    //#endif
+            //#endif
+    //@formatter:on
 
     @Inject(method = "shutdownMinecraftApplet", at = @At("HEAD"))
     private void ocfg$shutdownCallback(CallbackInfo ci) {
@@ -165,15 +167,17 @@ public abstract class MinecraftMixin {
 
     //#if MC<=11202
 
+    //@formatter:off
     //#if MC<=10809
     @Inject(method = "runTick", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/settings/KeyBinding;setKeyBindState(IZ)V", ordinal = 1))
     //#else
-        //#if FORGE
-        //$$ @Inject(method = "runTickKeyboard", at = @At(value = "FIELD", target = "Lnet/minecraft/client/Minecraft;debugCrashKeyPressTime:J", opcode = org.objectweb.asm.Opcodes.PUTFIELD))
-        //#else
-        //$$ @Inject(method = "method_12145", at = @At(value = "FIELD", target = "Lnet/minecraft/client/MinecraftClient;f3CTime:J", opcode = org.objectweb.asm.Opcodes.PUTFIELD))
-        //#endif
+    //#if FORGE
+    //$$ @Inject(method = "runTickKeyboard", at = @At(value = "FIELD", target = "Lnet/minecraft/client/Minecraft;debugCrashKeyPressTime:J", opcode = org.objectweb.asm.Opcodes.PUTFIELD))
+    //#else
+    //$$ @Inject(method = "method_12145", at = @At(value = "FIELD", target = "Lnet/minecraft/client/MinecraftClient;f3CTime:J", opcode = org.objectweb.asm.Opcodes.PUTFIELD))
     //#endif
+    //#endif
+    //@formatter:on
     private void ocfg$keyCallback(CallbackInfo ci) {
         int state = 0;
         if (org.lwjgl.input.Keyboard.getEventKeyState()) {
@@ -187,15 +191,17 @@ public abstract class MinecraftMixin {
     }
 
 
+    //@formatter:off
     //#if FORGE
     @Inject(method = "runTick", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/client/ForgeHooksClient;postMouseEvent()Z", remap = false))
     //#else
-        //#if MC==10809
-        //$$ @Inject(method = "tick", at = @At(value = "INVOKE", target = "Lorg/lwjgl/input/Mouse;getEventButton()I", remap = false))
-        //#else
-        //$$ @Inject(method = "method_12141", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/options/KeyBinding;setKeyPressed(IZ)V"))
-        //#endif
+    //#if MC==10809
+    //$$ @Inject(method = "tick", at = @At(value = "INVOKE", target = "Lorg/lwjgl/input/Mouse;getEventButton()I", remap = false))
+    //#else
+    //$$ @Inject(method = "method_12141", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/options/KeyBinding;setKeyPressed(IZ)V"))
     //#endif
+    //#endif
+    //@formatter:on
     private void ocfg$mouseCallback(CallbackInfo ci) {
         EventManager.INSTANCE.post(new MouseInputEvent(org.lwjgl.input.Mouse.getEventButton(), org.lwjgl.input.Mouse.getEventButtonState() ? 1 : 0));
     }

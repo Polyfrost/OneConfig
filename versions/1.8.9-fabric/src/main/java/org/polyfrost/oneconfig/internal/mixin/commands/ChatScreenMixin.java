@@ -30,11 +30,7 @@ import net.minecraft.util.Formatting;
 import org.apache.commons.lang3.StringUtils;
 import org.polyfrost.oneconfig.api.commands.v1.internal.ClientCommandHandler;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyArg;
-import org.spongepowered.asm.mixin.injection.ModifyVariable;
-import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.*;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(
@@ -45,6 +41,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 //#endif
 )
 public abstract class ChatScreenMixin {
+    //@formatter:off
     private static final String m_showSuggestion =
             //#if MC==10809
             "showSuggestion";
@@ -65,6 +62,7 @@ public abstract class ChatScreenMixin {
             //#else
             //$$ "method_12184";
             //#endif
+    //@formatter:on
 
 
     @ModifyArg(method = m_showSuggestion, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/widget/TextFieldWidget;write(Ljava/lang/String;)V"), index = 0)
