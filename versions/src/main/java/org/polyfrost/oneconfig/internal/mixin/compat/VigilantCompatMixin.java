@@ -29,7 +29,6 @@ package org.polyfrost.oneconfig.internal.mixin.compat;
 import gg.essential.vigilance.Vigilant;
 import gg.essential.vigilance.data.PropertyCollector;
 import gg.essential.vigilance.data.SortingBehavior;
-import kotlin.jvm.internal.DefaultConstructorMarker;
 import org.spongepowered.asm.mixin.Dynamic;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
@@ -44,8 +43,8 @@ import java.io.File;
 @Pseudo
 public abstract class VigilantCompatMixin {
     @Dynamic("OneConfig VCAL Processor")
-    @Inject(method = "<init>(Ljava/io/File;Ljava/lang/String;Lgg/essential/vigilance/data/PropertyCollector;Lgg/essential/vigilance/data/SortingBehavior;ILkotlin/jvm/internal/DefaultConstructorMarker;)V", at = @At("TAIL"), remap = false)
-    public void ocfg$compat$vigilance(File file, String title, PropertyCollector collector, SortingBehavior par4, int par5, DefaultConstructorMarker par6, CallbackInfo ci) {
+    @Inject(method = "<init>(Ljava/io/File;Ljava/lang/String;Lgg/essential/vigilance/data/PropertyCollector;Lgg/essential/vigilance/data/SortingBehavior;)V", at = @At("RETURN"), remap = false)
+    public void ocfg$compat$vigilance(File file, String title, PropertyCollector collector, SortingBehavior par4, CallbackInfo ci) {
         // todo rewrite
     }
 

@@ -236,7 +236,8 @@ public class FileBackend extends Backend {
                     Tree t = serializer.deserialize(read(p));
                     t.setID(folder.relativize(p).toString());
                     out.add(t);
-                } catch (Exception ignored) {
+                } catch (Exception e) {
+                    LOGGER.error("didn't gather tree from {}: {}", p, e.getMessage());
                 }
             }
         } catch (IOException e) {

@@ -10,3 +10,5 @@ net.minecraft.util.math.BlockPos net.minecraft.util.BlockPos
 
 net.minecraft.util.text.ITextComponent net.minecraft.util.IChatComponent
 net.minecraft.util.text.TextFormatting net.minecraft.util.EnumChatFormatting
+
+org.objectweb.asm.commons.ClassRemapper org.objectweb.asm.commons.RemappingClassAdapter

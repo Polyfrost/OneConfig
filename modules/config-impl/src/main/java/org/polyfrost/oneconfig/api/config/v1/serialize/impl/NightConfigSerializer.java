@@ -45,6 +45,7 @@ import org.polyfrost.oneconfig.api.config.v1.Property;
 import org.polyfrost.oneconfig.api.config.v1.Tree;
 import org.polyfrost.oneconfig.api.config.v1.util.ObjectSerializer;
 import org.polyfrost.oneconfig.utils.v1.WrappingUtils;
+import org.yaml.snakeyaml.DumperOptions;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -55,7 +56,13 @@ public class NightConfigSerializer implements FileSerializer<String> {
     public static final FileSerializer<String> TOML = new NightConfigSerializer(new TomlWriter(), new TomlParser(), ".toml");       // 90 KB
     public static final FileSerializer<String> JSON = new NightConfigSerializer(JsonFormat.fancyInstance().createWriter(), JsonFormat.fancyInstance().createParser(), ".json");  // 55KB
     // public static final FileSerializer HOCON = new NightConfigSerializer(new HoconWriter(), new HoconParser(), ".hocon");        // 1.1MB
-    public static final FileSerializer<String> YAML = new NightConfigSerializer(new YamlWriter(), new YamlParser(YamlFormat.defaultInstance()), ".yaml", ".yml");       // 1.2MB
+    private static final DumperOptions YAML_DUMPER_OPTIONS = new DumperOptions();
+
+    static {
+        YAML_DUMPER_OPTIONS.setPrettyFlow(true);
+    }
+
+    public static final org.polyfrost.oneconfig.api.config.v1.serialize.impl.FileSerializer<String> YAML = new NightConfigSerializer(new YamlWriter(YAML_DUMPER_OPTIONS), new YamlParser(YamlFormat.defaultInstance()), ".yaml", ".yml");       // 1.2MB
     public static final FileSerializer<?>[] ALL = {TOML, JSON, YAML};
 
     final ConfigWriter writer;
@@ -97,7 +104,10 @@ public class NightConfigSerializer implements FileSerializer<String> {
             if (e.getValue() instanceof Config) {
                 Config c = (Config) e.getValue();
                 if (c.get("class") != null) {
-                    b.put(Properties.simple(e.getKey(), null, null, ObjectSerializer.INSTANCE.deserialize(((Config) e.getValue()).valueMap())));
+                    b.put(Properties.simple(
+                            e.getKey(), null, null,
+                            ObjectSerializer.INSTANCE.deserialize(configsToMaps(c.valueMap()))
+                    ));
                 } else b.put(read(c.valueMap(), tree(e.getKey())));
             } else {
                 Object v = e.getValue();
@@ -119,6 +129,17 @@ public class NightConfigSerializer implements FileSerializer<String> {
             }
         }
         return c;
+    }
+
+    private static Map<String, Object> configsToMaps(Map<String, Object> map) {
+        Map<String, Object> out = new HashMap<>(map.size(), 1f);
+        for (Map.Entry<String, Object> e : map.entrySet()) {
+            if (e.getValue() instanceof Config) {
+                Config c = (Config) e.getValue();
+                out.put(e.getKey(), configsToMaps(c.valueMap()));
+            } else out.put(e.getKey(), e.getValue());
+        }
+        return out;
     }
 
     @Override

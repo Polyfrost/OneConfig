@@ -78,13 +78,13 @@ public class CommandTree extends Node {
     }
 
     private static void _getHelp(CommandTree it, int depth, StringBuilder sb) {
-        sb.append("\n");
+        sb.append('\n');
         append(sb, "  ", depth);
         sb.append(it);
         it.commandsNoDupe.values().forEach((ls) -> {
             for (Node value : ls) {
                 if (value instanceof Executable) {
-                    sb.append("\n");
+                    sb.append('\n');
                     append(sb, "  ", depth + 2);
                     sb.append(value);
                 } else {

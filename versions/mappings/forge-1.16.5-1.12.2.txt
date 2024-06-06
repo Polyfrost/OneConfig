@@ -2,7 +2,6 @@ net.minecraft.client.Minecraft gameRenderer entityRenderer
 net.minecraft.client.Minecraft getInstance() getMinecraft()
 net.minecraft.client.Minecraft isOnExecutionThread() isCallingFromMinecraftThread()
 
-net.minecraft.client.entity.EntityPlayerSP getServerBrand() getClientBrand()
 net.minecraft.client.entity.player.ClientPlayerEntity net.minecraft.client.entity.EntityPlayerSP
 
 net.minecraft.client.gui.screen.ChatScreen net.minecraft.client.gui.GuiChat

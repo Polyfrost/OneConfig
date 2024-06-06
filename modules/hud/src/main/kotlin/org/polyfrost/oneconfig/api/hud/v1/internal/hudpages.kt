@@ -67,7 +67,6 @@ fun HudsPage(huds: ArrayList<Hud<out Drawable>>): Drawable {
             Group(
                 children = huds.mapToArray {
                     val preview = it.buildNew()
-                    it.initialize()
                     val size = Vec2(if (preview.width > 200f) 452f else 215f, if (preview.height > 70f) 0f else 80f)
                     Block(
                         preview,

@@ -42,7 +42,7 @@ public class TestCommand_Test {
     private static void joinAndChat(Object... stuff) {
         StringBuilder builder = new StringBuilder();
         for (Object thing : stuff) {
-            builder.append(thing).append(" ");
+            builder.append(thing).append(' ');
         }
         UChat.chat(builder.toString().trim());
     }

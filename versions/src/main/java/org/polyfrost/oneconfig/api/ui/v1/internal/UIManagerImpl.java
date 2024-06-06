@@ -306,7 +306,6 @@ public class UIManagerImpl
             }
         };
         ClassWriter classWriter = new ClassWriter(classReader, ClassWriter.COMPUTE_MAXS);
-        @SuppressWarnings({"deprecation", "RedundantSuppression"})
         ClassVisitor mapper = new RemappingClassAdapter(classWriter, remapper);
         classReader.accept(mapper, ClassReader.EXPAND_FRAMES);
         b = classWriter.toByteArray();

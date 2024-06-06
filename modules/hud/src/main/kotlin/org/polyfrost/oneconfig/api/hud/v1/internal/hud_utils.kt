@@ -94,7 +94,7 @@ private var cur: Drawable? = null
 fun Hud<out Drawable>.buildNew(): Block {
     var tx = 0f
     var ty = 0f
-    return get().addDefaultBackground(backgroundColor()).draggable(
+    val o = get().addDefaultBackground(backgroundColor()).draggable(
         free = true,
         onStart = {
             tx = x - parent.x
@@ -125,6 +125,8 @@ fun Hud<out Drawable>.buildNew(): Block {
             }
         },
     )
+    initialize()
+    return o
 }
 
 /**
@@ -133,7 +135,7 @@ fun Hud<out Drawable>.buildNew(): Block {
  */
 fun Hud<out Drawable>.build(): Block {
     val freq = updateFrequency()
-    if (freq == 0L) LOGGER.warn("update of HUD $this is 0, this is not recommemded!")
+    if (freq == 0L) LOGGER.warn("update of HUD $this is 0, this is not recommended!")
     val exe = if (freq < 0L) {
         null
     } else {

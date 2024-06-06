@@ -119,51 +119,46 @@ object HudManager {
             true
         },
         hudsPage,
+        Block(
+            Image("assets/oneconfig/ico/right-arrow.svg").setAlpha(0.1f),
+            at = -.0001f by 0f,
+            size = Vec2(32f, 1048f),
+            alignment = alignC,
+        ).named("CloseArea").withStates().also {
+            it.palette = Colors.Palette(
+                TRANSPARENT,
+                PolyColor.Gradient(
+                    rgba(100, 100, 100, 0.4f),
+                    TRANSPARENT,
+                    type = PolyColor.Gradient.Type.LeftToRight,
+                ),
+                PolyColor.Gradient(
+                    rgba(100, 100, 100, 0.3f),
+                    TRANSPARENT,
+                    type = PolyColor.Gradient.Type.LeftToRight,
+                ),
+                TRANSPARENT,
+            )
+        }.events {
+            Event.Mouse.Entered then {
+                Fade(this[0], 1f, false, Animations.EaseInOutQuad.create(0.08.seconds)).add()
+            }
+            Event.Mouse.Exited then {
+                Fade(this[0], 0.1f, false, Animations.EaseInOutQuad.create(0.08.seconds)).add()
+            }
+            Event.Mouse.Companion.Clicked then {
+                // asm: makes close button easier to use
+                if (polyUI.mouseY < 40f) {
+                    false
+                } else {
+                    toggle()
+                    true
+                }
+            }
+        },
         size = Vec2(500f, 1048f),
         alignment = Align(cross = Align.Cross.Start, padding = Vec2(24f, 17f)),
-    ).events {
-        Event.Lifetime.Added then {
-            addChild(
-                Block(
-                    Image("assets/oneconfig/ico/right-arrow.svg").setAlpha(0.1f),
-                    size = Vec2(32f, 1048f),
-                    alignment = alignC,
-                ).named("CloseArea").withStates().also {
-                    it.palette = Colors.Palette(
-                        TRANSPARENT,
-                        PolyColor.Gradient(
-                            rgba(100, 100, 100, 0.4f),
-                            TRANSPARENT,
-                            type = PolyColor.Gradient.Type.LeftToRight,
-                        ),
-                        PolyColor.Gradient(
-                            rgba(100, 100, 100, 0.3f),
-                            TRANSPARENT,
-                            type = PolyColor.Gradient.Type.LeftToRight,
-                        ),
-                        TRANSPARENT,
-                    )
-                }.events {
-                    Event.Mouse.Entered then {
-                        Fade(this[0], 1f, false, Animations.EaseInOutQuad.create(0.08.seconds)).add()
-                    }
-                    Event.Mouse.Exited then {
-                        Fade(this[0], 0.1f, false, Animations.EaseInOutQuad.create(0.08.seconds)).add()
-                    }
-                    Event.Mouse.Companion.Clicked then {
-                        // asm: makes close button easier to use
-                        if (polyUI.mouseY < 40f) {
-                            false
-                        } else {
-                            toggle()
-                            true
-                        }
-                    }
-                },
-                recalculate = false,
-            )
-        }
-    }.also {
+    ).also {
         it.rawResize = true
         object : DrawableOp(it) {
             override fun apply() {
@@ -193,20 +188,23 @@ object HudManager {
         }.register()
     }
 
-	private val settings = Settings().apply {
-		cleanupAfterInit = false
-		debug = false
-	}
+    private val settings = Settings().apply {
+        cleanupAfterInit = false
+        forceSetsInitialSize = true
+        debug = false
+    }
 
     val polyUI: PolyUI = PolyUI(
+        panel,
         renderer = UIManager.INSTANCE.renderer,
         size = 1920f by 1080f,
-		translator = Translator(settings, "").also { it.addDelegate("assets/oneconfig/hud") },
+        translator = Translator(settings, "").also { it.addDelegate("assets/oneconfig/hud") },
         settings = settings
     ).also {
         it.window = UIManager.INSTANCE.createWindow()
         it.master.rawResize = true
         it.resize(Platform.screen().windowWidth().toFloat(), Platform.screen().windowHeight().toFloat())
+        panel.renders = false
     }
 
     init {
@@ -214,9 +212,8 @@ object HudManager {
     }
 
     fun getWithEditor(): Any {
-        return UIManager.INSTANCE.createPolyUIScreen(polyUI.also {
-            toggleHudPicker()
-        }, null, false, true) { editorClose() }
+        toggleHudPicker()
+        return UIManager.INSTANCE.createPolyUIScreen(polyUI, null, false, true) { editorClose() }
     }
 
     private fun editorClose() {
@@ -290,13 +287,8 @@ object HudManager {
         if (panelOpen) {
             toggle()
         }
-        // first open
-        if (!pg.initialized) {
-            polyUI.master.addChild(pg, recalculate = false)
-        } else {
-            pg.prioritize()
-            pg.renders = true
-        }
+        pg.prioritize()
+        pg.renders = true
         if (panelExists) {
             Fade(pg, 0f, false, Animations.EaseInOutQuad.create(0.2.seconds)) {
                 renders = false
