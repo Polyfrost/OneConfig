@@ -26,8 +26,6 @@
 
 package org.polyfrost.oneconfig.api.hud.v1
 
-import org.polyfrost.oneconfig.api.config.v1.Properties
-import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.polyui.component.impl.Text
 import org.polyfrost.polyui.unit.milliseconds
 import org.polyfrost.polyui.unit.minutes
@@ -48,21 +46,17 @@ abstract class TextHud(
     @TextAnnotation(title = "Text Suffix")
     var suffix: String = ""
 ) : Hud<Text>() {
+    private val sb = StringBuilder()
     override fun create() = Text("".translated().dont(), fontSize = 16f)
 
     override fun update(): Boolean {
         val t = getText()
-        val sb = StringBuilder(prefix.length + t.length + suffix.length + 2)
         if (prefix.isNotEmpty()) sb.append(prefix).append(' ')
         sb.append(t)
         if (suffix.isNotEmpty()) sb.append(' ').append(suffix)
         get().text = sb.toString()
+        sb.clear()
         return true
-    }
-
-    override fun addToSerialized(tree: Tree) {
-        tree["font"] = Properties.ktProperty(hud::_font)
-        tree["fontSize"] = Properties.ktProperty(hud::uFontSize)
     }
 
     override fun initialize() {

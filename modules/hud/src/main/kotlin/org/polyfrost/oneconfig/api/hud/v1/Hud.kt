@@ -35,8 +35,11 @@ import org.polyfrost.oneconfig.api.config.v1.Properties.simple
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.component.Drawable
+import org.polyfrost.polyui.component.impl.Block
+import org.polyfrost.polyui.component.impl.Text
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.utils.fastAll
+import org.polyfrost.polyui.utils.fastEachIndexed
 import kotlin.io.path.exists
 import kotlin.random.Random
 
@@ -44,11 +47,12 @@ import kotlin.random.Random
  * HUD (Heads Up Display) is a component that is rendered on top of the screen. They are used for displaying information to the user, such as the time, or the player's health.
  *
  * - You need to register your HUD with [HudManager.register] in order for it to be available to the user.
+ * - **Your HUD's size and positioning, if you are manually specifying it, needs to be designed for a `1920x1080` screen**.
  * - The instance you pass to [HudManager.register] is the instance that is used for the HUD picker screen. When a HUD is added to the screen, a new instance is created using [clone].
  * - HUD config files are stored in `{profile}/huds/{rnd}-`[id], e.g. `huds/42-my_hud.toml`.
  * - For a hud instance, the following methods are called (in order) [create], [initialize], and then [periodically][updateFrequency] [update] if required.
  * - Try not to do really long operations in [update]. The method is called on the render thread and so may cause lag. If you need to do a long operation, consider using an asynchronous task.
- * - The parent of your HUD is a [Block] which is controlled by the user. You do not need to include a background in your HUD.
+ * - The parent of your HUD is a [Block] which is controlled by the user. **You do not need to include a background in your HUD.**
  * - HUDs which are wider than 450px may have issues when displayed on the HUD picker screen, and HUDs this large are not recommended anyway as they may be very distracting.
  *
  * In this system, multiple of the same HUD can exist at once. In order for this to work correctly, there are a few rules:
@@ -62,8 +66,17 @@ abstract class Hud<T : Drawable> : Cloneable, Config("null", null, "null", null)
     // tree is null unless this is saved
     final override fun makeTree(id: String) = null
 
+    /**
+     * user facing title of this HUD. can be localized using translation key/values like in PolyUI.
+     */
     abstract fun title(): String
 
+    /**
+     * return the ID base used for this HUD when creating instances. It should follow the same scheme as the id for a [Config] or [Tree].
+     *
+     * HUD config files are stored in `{profile}/huds/{rnd}-`[id], e.g. `huds/42-my_hud.toml`.
+     * the random number is omitted for the first instance.
+     */
     abstract fun id(): String
 
     abstract fun category(): Category
@@ -74,8 +87,12 @@ abstract class Hud<T : Drawable> : Cloneable, Config("null", null, "null", null)
     val isReal get() = tree != null
 
     /**
-     * create this hud as a serializable object.
+     * clone, build the HUD drawable, build the tree for it, add any [custom information][addToSerialized],
+     * write in data from [with], register the tree, and return the cloned hud instance.
+     *
+     * **note:** while this method is public, it is entirely internal API and invoking it yourself is probably a bad idea, right?
      */
+    @ApiStatus.Internal
     fun make(with: Tree? = null): Hud<T> {
         if (tree != null) throw IllegalArgumentException("HUD already exists -> can only clone from root HUD object")
         val out = clone()
@@ -86,8 +103,9 @@ abstract class Hud<T : Drawable> : Cloneable, Config("null", null, "null", null)
         tree.addMetadata("frontendIgnore", true)
         tree["x"] = ktProperty(out.hud::x)
         tree["y"] = ktProperty(out.hud::y)
-        out.addToSerialized(tree)
         tree["hidden"] = ktProperty(out::hidden)
+        inspect(out.hud, tree)
+        out.addToSerialized(tree)
         tree["alpha"] = ktProperty(out.hud::alpha)
         tree["scaleX"] = ktProperty(out.hud::scaleX)
         tree["scaleY"] = ktProperty(out.hud::scaleY)
@@ -102,9 +120,31 @@ abstract class Hud<T : Drawable> : Cloneable, Config("null", null, "null", null)
         return out
     }
 
+    private fun inspect(drawable: Drawable, tree: Tree) {
+        tree["color"] = ktProperty(drawable::color)
+        when(drawable) {
+            is Block -> {
+                tree["radii"] = ktProperty(drawable::radii)
+                tree["boarderColor"] = ktProperty(drawable::boarderColor)
+                tree["boarderWidth"] = ktProperty(drawable::boarderWidth)
+            }
+            is Text -> {
+                tree["font"] = ktProperty(drawable::_font)
+                tree["fontSize"] = ktProperty(drawable::uFontSize)
+            }
+        }
+        drawable.children?.fastEachIndexed { i, it ->
+            val child = Tree.tree("$i")
+            inspect(it, child)
+            tree.put(child)
+        }
+    }
+
     private fun genRid(): String {
-        var p = "huds/${Random.Default.nextInt(0, 100)}-${id()}"
         val folder = ConfigManager.active().folder
+        val init = "huds/${id()}"
+        if (folder.resolve(init).exists()) return init
+        var p = "huds/${Random.Default.nextInt(0, 100)}-${id()}"
         var i = 0
         while (folder.resolve(p).exists()) {
             p = "huds/${Random.Default.nextInt(0, 999)}-${id()}"
@@ -117,6 +157,9 @@ abstract class Hud<T : Drawable> : Cloneable, Config("null", null, "null", null)
         return p
     }
 
+    /**
+     * Override this method to specify completely custom options that should be added to the serialized representation of this HUD.
+     */
     protected open fun addToSerialized(tree: Tree) {}
 
     @Transient
@@ -167,8 +210,6 @@ abstract class Hud<T : Drawable> : Cloneable, Config("null", null, "null", null)
      * initialize your HUD element.
      *
      * this method will be called once, and once only.
-     *
-     * similar to [update], this method will re-layout the HUD element if `true` is returned.
      */
     open fun initialize() {}
 
@@ -195,20 +236,11 @@ abstract class Hud<T : Drawable> : Cloneable, Config("null", null, "null", null)
     abstract fun updateFrequency(): Long
 
     /**
-     * Return the screen resolution you have designed this HUD for.
+     * specify a position for this HUD to be placed at.
      *
-     * The reason why this method exists is that not everyone has the same screen resolution as you may have,
-     * and so the hud may appear by default larger or smaller on their screen.
-     *
-     * So, this method means that on smaller screens for example, PolyUI will automatically resize the drawable upon startup
-     * so that it appears 1:1 to how you designed it.
-     *
-     * [Vec2]'s Companion has some fields for common screen resolutions. By default, this method returns `1920x1080`.
-     *
-     * **Marked as experimental because it is currently not used.**
+     * **this position, as will all HUD methods, should be for a position on a `1920x1080` screen.**
      */
-    @ApiStatus.Experimental
-    open fun desiredScreenResolution(): Vec2 = Vec2.RES_1080P
+    open fun defaultPosition(): Vec2? = null
 
     /**
      * Set a custom default background color for this HUD.

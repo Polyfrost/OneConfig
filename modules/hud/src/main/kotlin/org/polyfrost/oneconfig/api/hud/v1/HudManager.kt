@@ -64,7 +64,6 @@ import kotlin.math.PI
 
 object HudManager {
     internal val LOGGER = LogManager.getLogger("OneConfig/HUD")
-    private val huds = ArrayList<Hud<out Drawable>>()
     private val hudProviders = HashMap<Class<out Hud<out Drawable>>, Hud<out Drawable>>()
     private val snapLineColor = rgba(170, 170, 170, 0.8f)
 
@@ -92,7 +91,7 @@ object HudManager {
         register(TextHud.DateTime("Time:", "HH:mm:ss"))
     }
 
-    var hudsPage = HudsPage(huds)
+    var hudsPage = HudsPage(hudProviders.values)
         private set
 
     val panel = Block(
@@ -224,12 +223,14 @@ object HudManager {
 
     @JvmStatic
     fun register(hud: Hud<out Drawable>) {
-        huds.add(hud)
+        hudProviders[hud::class.java] = hud
     }
 
     @JvmStatic
     fun register(vararg huds: Hud<out Drawable>) {
-        this.huds.addAll(huds)
+        for (hud in huds) {
+            register(hud)
+        }
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -237,6 +238,7 @@ object HudManager {
         polyUI.master.children?.fastEach {
             if (it !== panel) polyUI.master.children?.remove(it)
         }
+        val used = HashSet<Class<out Hud<out Drawable>>>(hudProviders.size)
         ConfigManager.active().gatherAll("huds").forEach { data ->
             try {
                 val clsName = data.getProp("hudClass").get() as? String ?: throw IllegalArgumentException("hud tree ${data.id} is missing class name, will be ignored")
@@ -246,6 +248,7 @@ object HudManager {
                 // note that this is stored in a map separate to the loaded hud list.
                 // we don't want to register a HUD class ourselves, as it may lead to wierd scenarios when mods are removed.
                 val h = hudProviders.getOrPut(cls) { MHUtils.instantiate(cls, true).getOrThrow() }
+                used.add(cls)
                 val hud = h.make(data)
                 val theHud = hud.build()
                 polyUI.master.addChild(theHud, recalculate = false)
@@ -257,6 +260,16 @@ object HudManager {
             } catch (e: Exception) {
                 LOGGER.error("Failed to load HUD from ${data.id}", e)
             }
+        }
+        hudProviders.forEach { (cls, h) ->
+            if (used.contains(cls)) return@forEach
+            val default = h.defaultPosition() ?: return@forEach
+            val hud = h.make()
+            val theHud = hud.build()
+            theHud.x = default.x
+            theHud.y = default.y
+            polyUI.master.addChild(theHud, recalculate = false)
+            LOGGER.info("Adding HUD {} to {} (default)", hud.title(), default)
         }
     }
 

@@ -37,11 +37,11 @@ import org.polyfrost.polyui.component.*
 import org.polyfrost.polyui.component.impl.*
 import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.renderer.data.Font
+import org.polyfrost.polyui.renderer.data.FontFamily
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.unit.by
 import org.polyfrost.polyui.unit.seconds
-import org.polyfrost.polyui.utils.fastEach
 import org.polyfrost.polyui.utils.image
 import org.polyfrost.polyui.utils.mapToArray
 import org.polyfrost.polyui.utils.radii
@@ -50,11 +50,12 @@ import kotlin.math.atan2
 import kotlin.math.min
 
 val alignC = Align(main = Align.Main.Center, cross = Align.Cross.Center)
+private val mcFont = FontFamily("Minecraft", "assets/oneconfig/fonts/minecraft")
 const val angleSnapMargin = PI / 12.0
 const val minMargin = 4f
 const val snapMargin = 12f
 
-fun HudsPage(huds: ArrayList<Hud<out Drawable>>): Drawable {
+fun HudsPage(huds: Collection<Hud<out Drawable>>): Drawable {
     return Group(
         Group(
             HudButton("oneconfig.all"),
@@ -85,7 +86,7 @@ fun HudsPage(huds: ArrayList<Hud<out Drawable>>): Drawable {
         if (huds.isNotEmpty()) {
             polyUI.every(1.seconds) {
                 if (!HudManager.panelExists) return@every
-                huds.fastEach {
+                huds.forEach {
                     if (it.update()) {
                         it.get().parent.recalculate()
                     }
@@ -318,12 +319,12 @@ fun textOptions(text: Text): Drawable {
             alignment = alignC,
         ),
         Dropdown(
-            "poppins", "JetBrains Mono", "Minecraft"
+            "Poppins", "JetBrains Mono", "Minecraft"
         ).onChange { it: Int ->
             text.font = when (it) {
                 1 -> PolyUI.monospaceFont
-                // 2 -> mc
-                else -> PolyUI.defaultFonts.regular
+                2 -> mcFont.get(text.fontWeight, text.italic)
+                else -> polyUI.fonts.get(text.fontWeight, text.italic)
             }
             text.parent.recalculate()
             val ex = (parent.parent[1][0] as? Text) ?: return@onChange false
