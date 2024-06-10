@@ -105,7 +105,7 @@ fun createInspectionsScreen(hud: Hud<out Drawable>): Drawable {
         Radiobutton(
             "assets/oneconfig/ico/paintbrush.svg".image() to "oneconfig.hudeditor.designer.title",
             "assets/oneconfig/ico/cog.svg".image() to "oneconfig.hudeditor.settings.title",
-        ).onInit { color = polyUI.colors.component.bgDeselected.toAnimatable() }.onChange { index: Int ->
+        ).onInit { color = polyUI.colors.component.bgDeselected }.onChange { index: Int ->
             if (index == 0) {
                 parent[1] = createDesigner(hud)
             } else {
@@ -154,7 +154,6 @@ private fun createDesigner(hud: Hud<*>): Drawable {
             ),
         ),
         Text("oneconfig.hudeditor.component.title"),
-        textOptions(hud.get() as Text),
         Group(
             if (isLegacy) {
                 Text("oneconfig.hudeditor.cantedit.aslegacy")

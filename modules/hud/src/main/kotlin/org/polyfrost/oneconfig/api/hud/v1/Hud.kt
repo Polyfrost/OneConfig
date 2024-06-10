@@ -33,6 +33,7 @@ import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Properties.ktProperty
 import org.polyfrost.oneconfig.api.config.v1.Properties.simple
 import org.polyfrost.oneconfig.api.config.v1.Tree
+import org.polyfrost.oneconfig.api.hud.v1.HudManager.LOGGER
 import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.component.impl.Block
@@ -121,7 +122,7 @@ abstract class Hud<T : Drawable> : Cloneable, Config("null", null, "null", null)
     }
 
     private fun inspect(drawable: Drawable, tree: Tree) {
-        tree["color"] = ktProperty(drawable::color)
+        tree["color"] = ktProperty(drawable::_color)
         when(drawable) {
             is Block -> {
                 tree["radii"] = ktProperty(drawable::radii)
@@ -143,7 +144,7 @@ abstract class Hud<T : Drawable> : Cloneable, Config("null", null, "null", null)
     private fun genRid(): String {
         val folder = ConfigManager.active().folder
         val init = "huds/${id()}"
-        if (folder.resolve(init).exists()) return init
+        if (!folder.resolve(init).exists()) return init
         var p = "huds/${Random.Default.nextInt(0, 100)}-${id()}"
         var i = 0
         while (folder.resolve(p).exists()) {
@@ -212,6 +213,14 @@ abstract class Hud<T : Drawable> : Cloneable, Config("null", null, "null", null)
      * this method will be called once, and once only.
      */
     open fun initialize() {}
+
+    /**
+     * shorthand for [adding a callback][addCallback] on the given property that just calls [update].
+     */
+    protected fun updateWhenChanged(optionName: String) {
+        if (isReal) addCallback(optionName, this::update)
+        else LOGGER.warn("attempted to add callback to {}'s option '{}', but it is not real. no action has been taken.", title(), optionName)
+    }
 
     /**
      * Update your HUD element.

@@ -2,10 +2,11 @@ public abstract class org/polyfrost/oneconfig/api/config/v1/Config {
 	protected field tree Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/config/v1/Config$Category;)V
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/config/v1/Config$Category;)V
-	public fun addCallback (Ljava/lang/String;Ljava/util/function/Consumer;)V
-	public fun addDependency (Ljava/lang/String;Ljava/lang/String;)V
-	public fun addDependency (Ljava/lang/String;Ljava/util/function/BooleanSupplier;)V
-	public fun getProperty (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
+	protected fun addCallback (Ljava/lang/String;Ljava/lang/Runnable;)V
+	protected fun addCallback (Ljava/lang/String;Ljava/util/function/Consumer;)V
+	protected fun addDependency (Ljava/lang/String;Ljava/lang/String;)V
+	protected fun addDependency (Ljava/lang/String;Ljava/util/function/BooleanSupplier;)V
+	protected fun getProperty (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
 	public fun getTree ()Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	protected fun makeTree (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 }

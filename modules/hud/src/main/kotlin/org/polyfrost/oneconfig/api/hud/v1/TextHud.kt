@@ -69,6 +69,26 @@ abstract class TextHud(
      */
     protected abstract fun getText(): String
 
+
+    class Impl(prefix: String, @TextAnnotation(title = "Text") var it: String, suffix: String) : TextHud(prefix, suffix) {
+        override fun id() = "text_hud.yml"
+
+        override fun title() = "Text Hud"
+
+        override fun category() = Category.INFO
+
+        override fun getText() = it
+
+        override fun initialize() {
+            super.initialize()
+            if (isReal) {
+                updateWhenChanged("it")
+            }
+        }
+
+        override fun updateFrequency() = -1L
+    }
+
     /**
      * [TextHud] which displays the date/time information.
      * @param template the template to use for the time. See [DateTimeFormatter] for an explanation of the different keywords.
@@ -78,7 +98,6 @@ abstract class TextHud(
         @TextAnnotation(title = "Time template") var template: String,
         suffix: String = ""
     ) : TextHud(header, suffix) {
-
         override fun id() = "date_time_hud.yml"
 
         override fun title() = "Date/Time Hud"
@@ -95,7 +114,7 @@ abstract class TextHud(
         override fun initialize() {
             super.initialize()
             if (isReal) {
-                addCallback<Any?>("template") {
+                addCallback("template") {
                     _formatter = null
                     update()
                 }

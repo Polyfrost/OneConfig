@@ -22,6 +22,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public abstract fun title ()Ljava/lang/String;
 	public abstract fun update ()Z
 	public abstract fun updateFrequency ()J
+	protected final fun updateWhenChanged (Ljava/lang/String;)V
 }
 
 public final class org/polyfrost/oneconfig/api/hud/v1/Hud$Category : java/lang/Enum {
@@ -99,6 +100,17 @@ public final class org/polyfrost/oneconfig/api/hud/v1/TextHud$DateTime : org/pol
 	public fun id ()Ljava/lang/String;
 	public fun initialize ()V
 	public final fun setTemplate (Ljava/lang/String;)V
+	public fun title ()Ljava/lang/String;
+	public fun updateFrequency ()J
+}
+
+public final class org/polyfrost/oneconfig/api/hud/v1/TextHud$Impl : org/polyfrost/oneconfig/api/hud/v1/TextHud {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public fun category ()Lorg/polyfrost/oneconfig/api/hud/v1/Hud$Category;
+	public final fun getIt ()Ljava/lang/String;
+	public fun id ()Ljava/lang/String;
+	public fun initialize ()V
+	public final fun setIt (Ljava/lang/String;)V
 	public fun title ()Ljava/lang/String;
 	public fun updateFrequency ()J
 }

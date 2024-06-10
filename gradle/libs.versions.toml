@@ -8,7 +8,7 @@ pgt = "0.5.2"
 shadow = "8.1.1"
 licenser = "2.0.1"
 
-polyui = "1.2.12"
+polyui = "1.3.1"
 
 log4j-api = "2.0-beta9" # used because this is the version that 1.8.9 supports, so we have to compile against the same (annoying)
 log4j-impl = "2.23.1" # unvulnerable version

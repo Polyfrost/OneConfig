@@ -187,15 +187,12 @@ fun Hud<out Drawable>.build(): Block {
     return o
 }
 
-private fun Drawable.addDefaultBackground(color: PolyColor?): Block {
-    return Block(
-        this,
-        alignment = alignC,
-        radii = 6f.radii(),
-    ).withBoarder().namedId("HudBackground").also {
-        if (color != null) it.color = color.toAnimatable()
-    }
-}
+private fun Drawable.addDefaultBackground(color: PolyColor?) = Block(
+    this,
+    alignment = alignC,
+    radii = 6f.radii(),
+    color = color,
+).withBoarder().namedId("HudBackground")
 
 private fun Block.addScaler(): Block {
     this.on(Event.Mouse.Clicked) {
@@ -204,6 +201,7 @@ private fun Block.addScaler(): Block {
         sb.x = x + (width * scaleX) - (sb.width / 2f)
         sb.y = y + (height * scaleY) - (sb.height / 2f)
         cur = this
+        return@on false
     }
     return this
 }

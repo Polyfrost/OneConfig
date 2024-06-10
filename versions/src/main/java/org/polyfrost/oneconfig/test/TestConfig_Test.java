@@ -31,7 +31,7 @@ import org.polyfrost.oneconfig.api.config.v1.annotations.Number;
 import org.polyfrost.oneconfig.api.config.v1.annotations.*;
 import org.polyfrost.polyui.color.PolyColor;
 import org.polyfrost.polyui.unit.Align;
-import org.polyfrost.polyui.utils.Utils;
+import org.polyfrost.polyui.utils.ColorUtils;
 import org.polyfrost.universal.UChat;
 
 @SuppressWarnings("unused")
@@ -85,7 +85,7 @@ public class TestConfig_Test extends Config {
     @Switch(title = "t")
     public boolean added = false;
     @Color(title = "color", category = "bob")
-    PolyColor color = Utils.rgba(255, 0, 100, 1f);
+    PolyColor color = ColorUtils.rgba(255, 0, 100, 1f);
 
     public TestConfig_Test() {
         super("test_mod.json", "Test Mod", Category.QOL);

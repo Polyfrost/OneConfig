@@ -43,7 +43,7 @@ import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.animate.Animations
 import org.polyfrost.polyui.color.Colors
 import org.polyfrost.polyui.color.PolyColor
-import org.polyfrost.polyui.color.PolyColor.Companion.TRANSPARENT
+import org.polyfrost.polyui.color.PolyColor.Constants.TRANSPARENT
 import org.polyfrost.polyui.component.*
 import org.polyfrost.polyui.component.impl.*
 import org.polyfrost.polyui.event.Event
@@ -60,6 +60,7 @@ import org.polyfrost.polyui.unit.seconds
 import org.polyfrost.polyui.utils.fastEach
 import org.polyfrost.polyui.utils.ref
 import org.polyfrost.polyui.utils.rgba
+import org.polyfrost.polyui.utils.toMutable
 import kotlin.math.PI
 
 object HudManager {
@@ -89,6 +90,8 @@ object HudManager {
     init {
         register(TextHud.DateTime("Date:", "yyyy-MM-dd"))
         register(TextHud.DateTime("Time:", "HH:mm:ss"))
+        register(TextHud.Impl("", "Text Hud", ""))
+        register(ImageHud("assets/oneconfig/ico/hud.svg"))
     }
 
     var hudsPage = HudsPage(hudProviders.values)
@@ -114,7 +117,7 @@ object HudManager {
             size = Vec2(468f, 32f),
         ),
         Text("oneconfig.hudeditor.title", fontSize = 24f).setFont { medium }.onClick {
-            ColorPicker(rgba(32, 53, 41).toAnimatable().ref(), mutableListOf(), mutableListOf(), polyUI)
+            ColorPicker(rgba(32, 53, 41).toMutable().ref(), mutableListOf(), mutableListOf(), polyUI)
             true
         },
         hudsPage,
@@ -127,13 +130,11 @@ object HudManager {
             it.palette = Colors.Palette(
                 TRANSPARENT,
                 PolyColor.Gradient(
-                    rgba(100, 100, 100, 0.4f),
-                    TRANSPARENT,
+                    rgba(100, 100, 100, 0.4f), TRANSPARENT,
                     type = PolyColor.Gradient.Type.LeftToRight,
                 ),
                 PolyColor.Gradient(
-                    rgba(100, 100, 100, 0.3f),
-                    TRANSPARENT,
+                    rgba(100, 100, 100, 0.3f), TRANSPARENT,
                     type = PolyColor.Gradient.Type.LeftToRight,
                 ),
                 TRANSPARENT,
@@ -189,7 +190,6 @@ object HudManager {
 
     private val settings = Settings().apply {
         cleanupAfterInit = false
-        forceSetsInitialSize = true
         debug = false
     }
 
@@ -202,6 +202,11 @@ object HudManager {
     ).also {
         it.window = UIManager.INSTANCE.createWindow()
         it.master.rawResize = true
+        it.master.onClick { (x, y) ->
+            val obj = polyUI.inputManager.rayCheckUnsafe(this, x, y) ?: return@onClick false
+            // use for inspections
+            return@onClick false
+        }
         it.resize(Platform.screen().windowWidth().toFloat(), Platform.screen().windowHeight().toFloat())
         panel.renders = false
     }

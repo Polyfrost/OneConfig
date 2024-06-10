@@ -55,19 +55,38 @@ public abstract class Config {
         return ConfigManager.collect(this, id);
     }
 
-    public void addDependency(String option, BooleanSupplier condition) {
+    protected void addDependency(String option, BooleanSupplier condition) {
         getProperty(option).addDisplayCondition(condition);
     }
 
-    public void addDependency(String option, String condition) {
+    /**
+     * Add a dependency on the given option, which will gray out or hide the option unless condition is true.
+     * @param option the option to add the dependency to
+     * @param condition the <b>boolean option</b> which provides the dependency
+     */
+    protected void addDependency(String option, String condition) {
         Property<?> cond = getProperty(condition);
         if (cond.type != boolean.class && cond.type != Boolean.class) throw new IllegalArgumentException("Condition property must be boolean");
         getProperty(option).addDisplayCondition(cond::getAs);
     }
 
+    /**
+     * Add a callback to the specified option path, which is dot-separated for sub-configs.
+     * <br>
+     * The name of the option should be the name of the field.
+     */
     @SuppressWarnings("unchecked")
-    public <T> void addCallback(String option, Consumer<T> callback) {
+    protected  <T> void addCallback(String option, Consumer<T> callback) {
         ((Property<T>) getProperty(option)).addCallback(callback);
+    }
+
+    /**
+     * Add a callback to the specified option path, which is dot-separated for sub-configs.
+     * <br>
+     * The name of the option should be the name of the field.
+     */
+    protected void addCallback(String option, Runnable callback) {
+        getProperty(option).addCallback(t -> callback.run());
     }
 
     public Tree getTree() {
@@ -75,7 +94,7 @@ public abstract class Config {
     }
 
 
-    public Property<?> getProperty(String option) {
+    protected Property<?> getProperty(String option) {
         if (tree == null) throw new IllegalStateException("not initialized. this should never happen in correct usage. please report to https://polyfrost.org/discord");
         Property<?> p = option.indexOf('.') >= 0 ? tree.getProp(option.split("\\.")) : tree.getProp(option);
         if (p == null) throw new IllegalArgumentException("Config does not contain property: " + option);

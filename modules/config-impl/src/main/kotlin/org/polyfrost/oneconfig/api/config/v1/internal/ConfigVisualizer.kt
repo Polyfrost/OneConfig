@@ -177,7 +177,7 @@ open class ConfigVisualizer {
             }
         return Block(
             wrap(Image("chevron-down.svg".image()).also { it.rotation = PI }, title, desc, icon).events {
-                self.color = PolyColor.TRANSPARENT.toAnimatable()
+                self.color = PolyColor.TRANSPARENT
                 var open = false
                 Event.Mouse.Companion.Clicked then {
                     open = !open

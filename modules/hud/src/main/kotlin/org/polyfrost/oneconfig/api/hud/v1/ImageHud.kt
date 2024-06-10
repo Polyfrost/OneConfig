@@ -26,9 +26,11 @@
 
 package org.polyfrost.oneconfig.api.hud.v1
 
+import org.polyfrost.oneconfig.api.config.v1.annotations.Text
 import org.polyfrost.polyui.component.impl.Image
+import org.polyfrost.polyui.renderer.data.PolyImage
 
-class ImageHud(val address: String) : Hud<Image>() {
+class ImageHud(@Text(title = "Image Path") val address: String) : Hud<Image>() {
     override fun id() = "image_hud.toml"
 
     override fun title() = "Image Hud"
@@ -39,8 +41,13 @@ class ImageHud(val address: String) : Hud<Image>() {
 
     override fun update() = false
 
-    // no thanks <3
-    override fun initialize() {}
+    override fun initialize() {
+        if(isReal) {
+            addCallback<String>("address") {
+                get().image = PolyImage(it)
+            }
+        }
+    }
 
     override fun updateFrequency() = -1L
 }
