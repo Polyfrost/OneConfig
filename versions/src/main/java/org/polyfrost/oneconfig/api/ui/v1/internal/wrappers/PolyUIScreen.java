@@ -27,6 +27,8 @@
 package org.polyfrost.oneconfig.api.ui.v1.internal.wrappers;
 
 import net.minecraft.client.Minecraft;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.MustBeInvokedByOverriders;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,6 +48,8 @@ import static org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager.translate
 
 @SuppressWarnings("unused")
 public class PolyUIScreen extends UScreen implements BlurScreen {
+    private static final Logger LOGGER = LogManager.getLogger("OneConfig/PolyUIScreen");
+
     @NotNull
     public final PolyUI polyUI;
 
@@ -77,7 +81,11 @@ public class PolyUIScreen extends UScreen implements BlurScreen {
         float sy = h / desiredResolution.getY();
         if (sx == 1f && sy == 1f) return;
         Vec2 size = polyUI.getMaster().getSize();
-        polyUI.resize(size.getX() * sx, size.getY() * sy, force);
+        try {
+            polyUI.resize(size.getX() * sx, size.getY() * sy, force);
+        } catch (Exception e) {
+            death(e);
+        }
     }
 
     @Override
@@ -97,7 +105,13 @@ public class PolyUIScreen extends UScreen implements BlurScreen {
         }
         //#endif
 
-        matrices.runReplacingGlobalState(polyUI::render);
+        try {
+            matrices.push();
+            matrices.runReplacingGlobalState(polyUI::render);
+            matrices.pop();
+        } catch (Exception e) {
+            death(e);
+        }
 
         glViewport(0, 0, Platform.screen().viewportWidth(), Platform.screen().viewportHeight());
     }
@@ -117,42 +131,66 @@ public class PolyUIScreen extends UScreen implements BlurScreen {
             Platform.screen().close();
             return true;
         }
-        translateKey(polyUI.getInputManager(), keyCode, (char) 0, true);
+        try {
+            translateKey(polyUI.getInputManager(), keyCode, (char) 0, true);
+        } catch (Exception e) {
+            death(e);
+        }
         return true;
     }
 
     @Override
     @MustBeInvokedByOverriders
     public boolean uKeyReleased(int keyCode, int scanCode, @Nullable UKeyboard.Modifiers modifiers) {
-        translateKey(polyUI.getInputManager(), keyCode, (char) 0, false);
+        try {
+            translateKey(polyUI.getInputManager(), keyCode, (char) 0, false);
+        } catch (Exception e) {
+            death(e);
+        }
         return true;
     }
 
     @Override
     @MustBeInvokedByOverriders
     public boolean uCharTyped(char c, @Nullable UKeyboard.Modifiers modifiers) {
-        translateKey(polyUI.getInputManager(), 0, c, true);
+        try {
+            translateKey(polyUI.getInputManager(), 0, c, true);
+        } catch (Exception e) {
+            death(e);
+        }
         return true;
     }
 
     @Override
     @MustBeInvokedByOverriders
     public boolean uMouseClicked(double mouseX, double mouseY, int mouseButton) {
-        polyUI.getInputManager().mousePressed(mouseButton);
+        try {
+            polyUI.getInputManager().mousePressed(mouseButton);
+        } catch (Exception e) {
+            death(e);
+        }
         return true;
     }
 
     @Override
     @MustBeInvokedByOverriders
     public boolean uMouseReleased(double mouseX, double mouseY, int mouseButton) {
-        polyUI.getInputManager().mouseReleased(mouseButton);
+        try {
+            polyUI.getInputManager().mouseReleased(mouseButton);
+        } catch (Exception e) {
+            death(e);
+        }
         return true;
     }
 
     @Override
     @MustBeInvokedByOverriders
     public boolean uMouseScrolled(double delta) {
-        polyUI.getInputManager().mouseScrolled(0f, (float) delta);
+        try {
+            polyUI.getInputManager().mouseScrolled(0f, (float) delta);
+        } catch (Exception e) {
+            death(e);
+        }
         return true;
     }
 
@@ -194,7 +232,11 @@ public class PolyUIScreen extends UScreen implements BlurScreen {
         my = Platform.screen().windowHeight() - org.lwjgl.input.Mouse.getY() - 1;
         //#endif
 
-        polyUI.getInputManager().mouseMoved(mx - ox, my - oy);
+        try {
+            polyUI.getInputManager().mouseMoved(mx - ox, my - oy);
+        } catch (Exception e) {
+            death(e);
+        }
     }
 
     @Override
@@ -203,5 +245,11 @@ public class PolyUIScreen extends UScreen implements BlurScreen {
         if (close != null) close.accept(polyUI);
         // noinspection DataFlowIssue
         this.polyUI.getWindow().setCursor(Cursor.Pointer);
+    }
+
+    private void death(Exception e) {
+        Platform.screen().close();
+        LOGGER.error("An unexpected error occurred processing {}", getClass().getName(), e);
+        // todo notify
     }
 }

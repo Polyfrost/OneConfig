@@ -112,12 +112,11 @@ object OneConfigUI {
                     ).onClick { openPage(FeedbackPage(), "oneconfig.feedback") },
                     alignment = vertical,
                 ),
-                Spacer(size = Vec2(200f, 170f)),
                 SidebarButton0("assets/oneconfig/ico/hud.svg".image(), "oneconfig.edithud").onClick {
                     Platform.screen().display(HudManager.getWithEditor())
                 },
                 size = Vec2(273f, 700f),
-                alignment = Align(mode = Align.Mode.Vertical, padding = Vec2(12f, 16f)),
+                alignment = Align(mode = Align.Mode.Vertical, pad = Vec2(12f, 16f)),
             ).named("Sidebar"),
             Group(
                 Group(
@@ -127,7 +126,7 @@ object OneConfigUI {
                             "oneconfig.mods",
                             fontSize = 24f,
                         ).setFont { medium }.named("Current"),
-                        alignment = Align(padding = Vec2(16f, 8f)),
+                        alignment = Align(pad = Vec2(16f, 8f)),
                     ).named("Controls"),
                     Group(
                         Group(
@@ -139,7 +138,7 @@ object OneConfigUI {
                                 rgba(255, 255, 255, 0.14f),
                                 width = 1f,
                             ).addHoverInfo(Platform.player().playerName.ifEmpty { "null" }),
-                            alignment = Align(padding = Vec2(16f, 8f)),
+                            alignment = Align(pad = Vec2(16f, 8f)),
                         ),
                         Block(
                             Image("assets/oneconfig/ico/search.svg".image()),
@@ -148,19 +147,19 @@ object OneConfigUI {
                                 visibleSize = Vec2(210f, 12f),
                             ),
                             size = Vec2(256f, 32f),
-                            alignment = Align(padding = Vec2(10f, 8f)),
+                            alignment = Align(pad = Vec2(10f, 8f)),
                         ).named("SearchField"),
                         Image(
                             "assets/oneconfig/ico/close.svg".image(),
                         ).named("Close").onClick { Platform.screen().close() }.withStates().setDestructivePalette(),
-                        alignment = Align(padding = Vec2(24f, 8f)),
+                        alignment = Align(pad = Vec2(24f, 8f)),
                     ),
                     size = Vec2(1130f, 64f),
                     alignment = Align(main = Align.Main.SpaceBetween),
                 ).named("Header"),
                 ModsPage(ConfigManager.active().trees()),
                 size = Vec2(1127f, 700f),
-                alignment = Align(padding = Vec2.ZERO),
+                alignment = Align(pad = Vec2.ZERO),
             )
         ).also {
             ui = it.master
@@ -192,7 +191,7 @@ object OneConfigUI {
     }
 
 
-    private val sidebarBtnAlign = Align(padding = Vec2(16f, 6f))
+    private val sidebarBtnAlign = Align(pad = Vec2(16f, 6f))
 
     fun SidebarButton(image: PolyImage, text: String, extra: Drawable? = null): Group {
         return SidebarButton0(image, text, extra).events {

@@ -54,8 +54,8 @@ object KeybindManager {
             if (state == 2) return@eventHandler
             // keybindings only work when in game (todo maybe change)?
 //            if (Platform.getGuiPlatform().currentScreen == null) {
-                translateKey(inputManager, key, char, state == 1)
-                keyBinder.update(0L, inputManager.mods)
+            translateKey(inputManager, key, char, state == 1)
+            keyBinder.update(0L, inputManager.mods)
 //            }
         }.register()
         eventHandler { _: TickEvent.End ->
@@ -122,7 +122,11 @@ object KeybindManager {
         if (state) {
             keysMap[key]?.let { inputManager.keyDown(it); return }
             modsMap[key]?.let { inputManager.addModifier(it); return }
-            inputManager.keyDown(key)
+            // modern fix because glfwModCharCallback doesn't work correctly
+            val mods = inputManager.keyModifiers
+            if ((mods.hasControl || mods.hasMeta || mods.hasAlt) && key in 32..255) {
+                inputManager.keyTyped(key.toChar())
+            } else inputManager.keyDown(key)
         } else {
             keysMap[key]?.let { inputManager.keyUp(it); return }
             modsMap[key]?.let { inputManager.removeModifier(it); return }

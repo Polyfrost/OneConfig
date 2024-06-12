@@ -50,11 +50,15 @@ public final class org/polyfrost/oneconfig/api/config/v1/Properties {
 
 public abstract class org/polyfrost/oneconfig/api/config/v1/Property : org/polyfrost/oneconfig/api/config/v1/Node, java/io/Serializable {
 	protected field callbacks Ljava/util/List;
+	protected field predicates Ljava/util/List;
 	public final field type Ljava/lang/Class;
 	protected fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Class;)V
 	public final fun addCallback (Ljava/util/Collection;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
 	public final fun addCallback (Ljava/util/function/Consumer;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
+	public final fun addCallback (Ljava/util/function/Predicate;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
 	public final fun addCallback ([Ljava/util/function/Consumer;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
+	public final fun addCallback ([Ljava/util/function/Predicate;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
+	public final fun addCancellableCallbacks (Ljava/util/Collection;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
 	public final fun addDisplayCondition (Ljava/util/Collection;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
 	public final fun addDisplayCondition (Ljava/util/function/BooleanSupplier;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
 	public final fun addDisplayCondition ([Ljava/util/function/BooleanSupplier;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
@@ -70,6 +74,7 @@ public abstract class org/polyfrost/oneconfig/api/config/v1/Property : org/polyf
 	public fun overwrite (Lorg/polyfrost/oneconfig/api/config/v1/Node;)V
 	public static fun recast (Lorg/polyfrost/oneconfig/api/config/v1/Property;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
 	public final fun removeCallback (Ljava/util/function/Consumer;)V
+	public final fun removeCallback (Ljava/util/function/Predicate;)V
 	public final fun removeDisplayCondition (Ljava/util/function/BooleanSupplier;)V
 	public fun revaluateDisplay ()V
 	public fun set (Ljava/lang/Object;)V

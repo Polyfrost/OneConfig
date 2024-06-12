@@ -115,7 +115,7 @@ abstract class Hud<T : Drawable> : Cloneable, Config("null", null, "null", null)
         tree["skewY"] = ktProperty(out.hud::skewY)
         tree["hudClass"] = simple(value = out::class.java.name)
         if (with != null) tree.overwrite(with)
-        else HudManager.LOGGER.info("generated new HUD config for ${out.title()} -> ${tree.id}")
+        else LOGGER.info("generated new HUD config for ${out.title()} -> ${tree.id}")
         out.tree = tree
         ConfigManager.active().register(tree)
         return out
@@ -218,7 +218,9 @@ abstract class Hud<T : Drawable> : Cloneable, Config("null", null, "null", null)
      * shorthand for [adding a callback][addCallback] on the given property that just calls [update].
      */
     protected fun updateWhenChanged(optionName: String) {
-        if (isReal) addCallback(optionName, this::update)
+        if (isReal) addCallback(optionName) {
+            if (update()) get().parent.recalculate()
+        }
         else LOGGER.warn("attempted to add callback to {}'s option '{}', but it is not real. no action has been taken.", title(), optionName)
     }
 

@@ -55,12 +55,12 @@ open class ConfigVisualizer {
     protected val optBg = rgba(39, 49, 55, 0.2f)
     protected val alignC = Align(cross = Align.Cross.Start)
     protected val alignCV = Align(cross = Align.Cross.Start, mode = Align.Mode.Vertical)
-    protected val alignVNoPad = Align(cross = Align.Cross.Start, mode = Align.Mode.Vertical, padding = Vec2.ZERO)
-    protected val stdAlign = Align(main = Align.Main.SpaceBetween, padding = Vec2(16f, 8f))
-    protected val stdAccord = Align(main = Align.Main.SpaceBetween, padding = Vec2.ZERO)
-    protected val padVOnly = Align(padding = Vec2(0f, 12f))
-    protected val stdOpt = Align(cross = Align.Cross.Start, mode = Align.Mode.Vertical, padding = Vec2(6f, 6f))
-    protected val accordOpt = Align(cross = Align.Cross.Start, padding = Vec2(24f, 12f))
+    protected val alignVNoPad = Align(cross = Align.Cross.Start, mode = Align.Mode.Vertical, pad = Vec2.ZERO)
+    protected val stdAlign = Align(main = Align.Main.SpaceBetween, pad = Vec2(16f, 8f))
+    protected val stdAccord = Align(main = Align.Main.SpaceBetween, pad = Vec2.ZERO)
+    protected val padVOnly = Align(pad = Vec2(0f, 12f))
+    protected val stdOpt = Align(cross = Align.Cross.Start, mode = Align.Mode.Vertical, pad = Vec2(6f, 6f))
+    protected val accordOpt = Align(cross = Align.Cross.Start, pad = Vec2(24f, 12f))
 
     /**
      * For information, see [create].

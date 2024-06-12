@@ -113,7 +113,7 @@ object HudManager {
             ).withBoarder().withCursor(Cursor.Text).onClick {
                 polyUI.focus(this[1])
             },
-            alignment = Align(main = Align.Main.SpaceBetween, padding = Vec2.ZERO),
+            alignment = Align(main = Align.Main.SpaceBetween, pad = Vec2.ZERO),
             size = Vec2(468f, 32f),
         ),
         Text("oneconfig.hudeditor.title", fontSize = 24f).setFont { medium }.onClick {
@@ -157,7 +157,7 @@ object HudManager {
             }
         },
         size = Vec2(500f, 1048f),
-        alignment = Align(cross = Align.Cross.Start, padding = Vec2(24f, 17f)),
+        alignment = Align(cross = Align.Cross.Start, pad = Vec2(24f, 17f)),
     ).also {
         it.rawResize = true
         object : DrawableOp(it) {

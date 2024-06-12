@@ -78,10 +78,10 @@ fun HudsPage(huds: Collection<Hud<out Drawable>>): Drawable {
                 visibleSize = Vec2(452f, 800f),
             )
         } else {
-            Text("oneconfig.hudeditor.nothinghere", fontSize = 14f, wrap = 300f).secondary()
+            Text("oneconfig.hudeditor.nothinghere", fontSize = 14f).secondary()
         },
         visibleSize = Vec2(476f, 800f),
-        alignment = Align(cross = Align.Cross.Start, padding = Vec2.ZERO),
+        alignment = Align(cross = Align.Cross.Start, pad = Vec2.ZERO),
     ).onInit {
         if (huds.isNotEmpty()) {
             polyUI.every(1.seconds) {
@@ -131,7 +131,7 @@ private fun createDesigner(hud: Hud<*>): Drawable {
             Text("oneconfig.hudeditor.padding.title").secondary(),
             Image("assets/oneconfig/ico/info.svg".image()).withStates(showClicker = false).addHoverInfo("oneconfig.hudeditor.padding.info"),
             size = Vec2(450f, 18f),
-            alignment = Align(main = Align.Main.SpaceBetween, padding = Vec2.ZERO),
+            alignment = Align(main = Align.Main.SpaceBetween, pad = Vec2.ZERO),
         ),
         Group(
             interactiveAlignment(hud),
@@ -150,7 +150,7 @@ private fun createDesigner(hud: Hud<*>): Drawable {
                 BoxedTextInput("assets/oneconfig/ico/info.svg".image(), placeholder = "8px", size = Vec2(140f, 32f)).titled("oneconfig.hudeditor.padding.main"),
                 BoxedTextInput("assets/oneconfig/ico/info.svg".image(), placeholder = "6px", size = Vec2(140f, 32f)).titled("oneconfig.hudeditor.padding.cross"),
                 size = Vec2(375f, 0f),
-                alignment = Align(main = Align.Main.SpaceBetween, padding = Vec2.ZERO),
+                alignment = Align(main = Align.Main.SpaceBetween, pad = Vec2.ZERO),
             ),
         ),
         Text("oneconfig.hudeditor.component.title"),
@@ -309,7 +309,7 @@ fun textOptions(text: Text): Drawable {
         Group(
             Text("oneconfig.hudeditor.text.title").secondary(),
             Image("assets/oneconfig/ico/info.svg".image()).addHoverInfo("oneconfig.hudeditor.text.description"),
-            alignment = Align(main = Align.Main.SpaceBetween, padding = Vec2.ZERO),
+            alignment = Align(main = Align.Main.SpaceBetween, pad = Vec2.ZERO),
             size = Vec2(450f, 18f),
         ),
         Block(
@@ -376,6 +376,6 @@ fun Drawable.titled(title: String): Drawable {
     return Group(
         Text(title).secondary(),
         this,
-        alignment = Align(cross = Align.Cross.Start, mode = Align.Mode.Vertical, padding = Vec2(2f, 3f)),
+        alignment = Align(cross = Align.Cross.Start, mode = Align.Mode.Vertical, pad = Vec2(2f, 3f)),
     )
 }

@@ -52,9 +52,9 @@ private val heart = PolyImage("assets/oneconfig/ico/plus.svg")
 private val defaultModImage = "assets/oneconfig/ico/default_mod.svg".image()
 private val modBoxTopRad = radii(8f, 8f, 0f, 0f)
 private val modBoxBotRad = radii(0f, 0f, 8f, 8f)
-private val modBoxAlign = Align(cross = Align.Cross.Start, mode = Align.Mode.Vertical, padding = Vec2.ZERO)
-private val imageAlign = Align(main = Align.Main.Center, padding = Vec2.ZERO)
-private val barAlign = Align(padding = Vec2(14f, 6f), main = Align.Main.SpaceBetween)
+private val modBoxAlign = Align(cross = Align.Cross.Start, mode = Align.Mode.Vertical, pad = Vec2.ZERO)
+private val imageAlign = Align(main = Align.Main.Center, pad = Vec2.ZERO)
+private val barAlign = Align(pad = Vec2(14f, 6f), main = Align.Main.SpaceBetween)
 
 fun ModsPage(trees: Collection<Tree>): Drawable {
     if (trees.isEmpty()) {
@@ -62,14 +62,14 @@ fun ModsPage(trees: Collection<Tree>): Drawable {
             Text("oneconfig.mods.none", fontSize = 24f).setFont { medium },
             Text("oneconfig.mods.none.desc", fontSize = 14f),
             size = Vec2(1130f, 635f),
-            alignment = Align(main = Align.Main.Center, padding = Vec2(18f, 18f), maxRowSize = 1),
+            alignment = Align(main = Align.Main.Center, pad = Vec2(18f, 18f), maxRowSize = 1),
         ).namedId("EmptyModsPage")
     }
     // todo add categories
     return Group(
         size = Vec2(1130f, 0f),
         visibleSize = Vec2(1130f, 635f),
-        alignment = Align(cross = Align.Cross.Start, padding = Vec2(18f, 18f)),
+        alignment = Align(cross = Align.Cross.Start, pad = Vec2(18f, 18f)),
         children = trees.mapNotNull {
             if (it.getMetadata<Any?>("frontendIgnore") != null) return@mapNotNull null
             Group(
@@ -109,7 +109,7 @@ fun FeedbackPage(): Drawable {
         Text("oneconfig.feedback.joindiscord", fontSize = 14f),
         size = Vec2(1130f, 0f),
         visibleSize = Vec2(1130f, 635f),
-        alignment = Align(cross = Align.Cross.Start, mode = Align.Mode.Vertical, padding = Vec2(18f, 18f)),
+        alignment = Align(cross = Align.Cross.Start, mode = Align.Mode.Vertical, pad = Vec2(18f, 18f)),
     )
 }
 
@@ -121,7 +121,7 @@ fun ChangelogPage(news: Collection<News>): Drawable {
     return Group(
         size = Vec2(1130f, 0f),
         visibleSize = Vec2(1130f, 635f),
-        alignment = Align(cross = Align.Cross.Center, padding = Vec2(60f, 20f)),
+        alignment = Align(cross = Align.Cross.Center, pad = Vec2(60f, 20f)),
         children = news.mapToArray {
             Group(
                 if (it.image != null) Image(it.image).onInit { image.size.max(325f, 111f) } else null,

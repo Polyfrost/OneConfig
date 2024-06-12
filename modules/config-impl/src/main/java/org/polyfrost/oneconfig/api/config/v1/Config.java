@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 public abstract class Config {
     protected Tree tree;
@@ -61,7 +62,8 @@ public abstract class Config {
 
     /**
      * Add a dependency on the given option, which will gray out or hide the option unless condition is true.
-     * @param option the option to add the dependency to
+     *
+     * @param option    the option to add the dependency to
      * @param condition the <b>boolean option</b> which provides the dependency
      */
     protected void addDependency(String option, String condition) {
@@ -76,7 +78,19 @@ public abstract class Config {
      * The name of the option should be the name of the field.
      */
     @SuppressWarnings("unchecked")
-    protected  <T> void addCallback(String option, Consumer<T> callback) {
+    @kotlin.OverloadResolutionByLambdaReturnType
+    protected <T> void addCallback(String option, Predicate<T> callback) {
+        ((Property<T>) getProperty(option)).addCallback(callback);
+    }
+
+    /**
+     * Add a callback to the specified option path, which is dot-separated for sub-configs.
+     * <br>
+     * The name of the option should be the name of the field.
+     */
+    @SuppressWarnings("unchecked")
+    @kotlin.OverloadResolutionByLambdaReturnType
+    protected <T> void addCallback(String option, Consumer<T> callback) {
         ((Property<T>) getProperty(option)).addCallback(callback);
     }
 
@@ -86,7 +100,9 @@ public abstract class Config {
      * The name of the option should be the name of the field.
      */
     protected void addCallback(String option, Runnable callback) {
-        getProperty(option).addCallback(t -> callback.run());
+        getProperty(option).addCallback(t -> {
+            callback.run();
+        });
     }
 
     public Tree getTree() {

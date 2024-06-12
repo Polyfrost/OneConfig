@@ -32,13 +32,10 @@ import org.polyfrost.oneconfig.utils.v1.MHUtils;
 import org.polyfrost.oneconfig.utils.v1.WrappingUtils;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 /**
@@ -57,6 +54,7 @@ public abstract class Property<T> extends Node implements Serializable {
     @NotNull
     public transient final Class<?> type;
     protected transient List<@NotNull Consumer<@Nullable T>> callbacks = null;
+    protected transient List<@NotNull Predicate<@Nullable T>> predicates = null;
     private transient boolean display = true;
     private transient List<BooleanSupplier> conditions = null;
 
@@ -133,9 +131,23 @@ public abstract class Property<T> extends Node implements Serializable {
     /**
      * Add a callback to this property, which is called when the value changes.
      *
+     * @param callback the callback to add. The new value is passed to the callback. Return true if you wish to cancel the setting of the property.
+     * @see #removeCallback(Consumer)
+     */
+    @kotlin.OverloadResolutionByLambdaReturnType
+    public final Property<T> addCallback(@NotNull Predicate<@Nullable T> callback) {
+        if (predicates == null) predicates = new ArrayList<>(2);
+        predicates.add(callback);
+        return this;
+    }
+
+    /**
+     * Add a callback to this property, which is called when the value changes.
+     *
      * @param callback the callback to add. The new value is passed to the callback.
      * @see #removeCallback(Consumer)
      */
+    @kotlin.OverloadResolutionByLambdaReturnType
     public final Property<T> addCallback(@NotNull Consumer<@Nullable T> callback) {
         if (callbacks == null) callbacks = new ArrayList<>(2);
         callbacks.add(callback);
@@ -143,15 +155,28 @@ public abstract class Property<T> extends Node implements Serializable {
     }
 
     @SafeVarargs
+    @kotlin.OverloadResolutionByLambdaReturnType
+    public final Property<T> addCallback(@NotNull Predicate<@Nullable T>... callbacks) {
+        return addCancellableCallbacks(Arrays.asList(callbacks));
+    }
+
+    @SafeVarargs
+    @kotlin.OverloadResolutionByLambdaReturnType
     public final Property<T> addCallback(@NotNull Consumer<@Nullable T>... callbacks) {
         return addCallback(Arrays.asList(callbacks));
     }
 
+    @kotlin.OverloadResolutionByLambdaReturnType
+    public final Property<T> addCancellableCallbacks(@NotNull Collection<Predicate<@Nullable T>> callbacks) {
+        if (this.predicates == null) this.predicates = new ArrayList<>(callbacks);
+        else this.predicates.addAll(callbacks);
+        return this;
+    }
+
+    @kotlin.OverloadResolutionByLambdaReturnType
     public final Property<T> addCallback(@NotNull Collection<Consumer<@Nullable T>> callbacks) {
         if (this.callbacks == null) this.callbacks = new ArrayList<>(callbacks);
-        else {
-            this.callbacks.addAll(callbacks);
-        }
+        else this.callbacks.addAll(callbacks);
         return this;
     }
 
@@ -176,6 +201,14 @@ public abstract class Property<T> extends Node implements Serializable {
     }
 
     /**
+     * Remove a callback.
+     */
+    public final void removeCallback(@NotNull Predicate<@Nullable T> callback) {
+        if (predicates == null) return;
+        predicates.remove(callback);
+    }
+
+    /**
      * Remove all callbacks.
      */
     protected final void clearCallbacks() {
@@ -195,6 +228,18 @@ public abstract class Property<T> extends Node implements Serializable {
                     c.accept(value);
                 } catch (Throwable t) {
                     LOGGER.error("failed to call callback {} on property {}", c, this.getID(), t);
+                }
+            }
+        }
+        if (predicates != null) {
+            for (Predicate<T> p : predicates) {
+                try {
+                    if (p.test(value)) {
+                        LOGGER.info("property {} set cancelled by {}", this.getID(), p);
+                        return;
+                    }
+                } catch (Throwable t) {
+                    LOGGER.error("failed to call cancellable callback {} on property {}", p, this.getID(), t);
                 }
             }
         }
