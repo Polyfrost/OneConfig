@@ -34,6 +34,7 @@ import cc.polyfrost.oneconfig.internal.config.core.ConfigCore;
 import cc.polyfrost.oneconfig.internal.hud.HudCore;
 import cc.polyfrost.oneconfig.internal.hud.utils.GrabOffset;
 import cc.polyfrost.oneconfig.internal.hud.utils.SnappingLine;
+import cc.polyfrost.oneconfig.libs.universal.UGraphics;
 import cc.polyfrost.oneconfig.libs.universal.UKeyboard;
 import cc.polyfrost.oneconfig.libs.universal.UMatrixStack;
 import cc.polyfrost.oneconfig.libs.universal.UResolution;
@@ -96,6 +97,8 @@ public class HudGui extends UScreen implements GuiPause {
         for (Hud hud : HudCore.huds.values()) {
             if (!hud.isEnabled()) continue;
             Position position = hud.position;
+            UGraphics.enableAlpha();
+            UGraphics.enableBlend();
             hud.drawAll(matrixStack, true);
             if (editingHuds.containsKey(hud)) {
                 nanoVGHelper.setupAndDraw(true, vg -> nanoVGHelper.drawRect(vg, position.getX(), position.getY(), position.getWidth(), position.getHeight(), ColorUtils.getColor(0, 128, 128, 60)));

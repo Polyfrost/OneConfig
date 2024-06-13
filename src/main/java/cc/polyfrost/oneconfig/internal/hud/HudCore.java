@@ -31,6 +31,7 @@ import cc.polyfrost.oneconfig.events.event.HudRenderEvent;
 import cc.polyfrost.oneconfig.events.event.InitializationEvent;
 import cc.polyfrost.oneconfig.hud.Hud;
 import cc.polyfrost.oneconfig.libs.eventbus.Subscribe;
+import cc.polyfrost.oneconfig.libs.universal.UGraphics;
 import cc.polyfrost.oneconfig.platform.Platform;
 
 import java.lang.reflect.Field;
@@ -53,6 +54,8 @@ public class HudCore {
             if (hud.isCachingIgnored()) continue;
             //#endif
             hud.deltaTicks = event.deltaTicks;
+            UGraphics.enableAlpha();
+            UGraphics.enableBlend();
             hud.drawAll(event.matrices, false);
         }
     }
