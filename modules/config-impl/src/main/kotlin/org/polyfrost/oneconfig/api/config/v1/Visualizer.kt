@@ -28,9 +28,9 @@ package org.polyfrost.oneconfig.api.config.v1
 
 import org.polyfrost.oneconfig.api.config.v1.internal.ConfigVisualizer.Companion.strv
 import org.polyfrost.polyui.component.Drawable
-import org.polyfrost.polyui.component.events
 import org.polyfrost.polyui.component.impl.*
-import org.polyfrost.polyui.event.Event
+import org.polyfrost.polyui.component.onChange
+import org.polyfrost.polyui.component.onClick
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.utils.mapToArray
 
@@ -47,11 +47,7 @@ fun interface Visualizer {
             return Button(
                 size = Vec2(300f, 32f),
                 text = text ?: "oneconfig.button.default",
-            ).events {
-                Event.Mouse.Companion.Clicked then {
-                    action.run()
-                }
-            }
+            ).onClick { action.run() }
         }
     }
 
@@ -110,17 +106,18 @@ fun interface Visualizer {
                 TextInput(
                     visibleSize = Vec2(300f, 32f),
                     text = prop.getAs<Number>().toString(),
-                ).events {
-                    Event.Change.Companion.Text then {
-                        if (it.text.isEmpty()) return@then
-                        try {
-                            val v = it.text.toFloat()
-                            if (v < min || v > max) throw NumberFormatException("Out of range")
-                            prop.setAs(if (notFloating) v.toInt() else v)
-                        } catch (_: NumberFormatException) {
-                            // todo show error
-                        }
+                ).onChange { text: String ->
+                    if (text.isEmpty()) return@onChange false
+                    try {
+                        val v = text.toFloat()
+                        if (v < min || v > max) throw NumberFormatException("Out of range")
+                        prop.setAs(if (notFloating) v.toInt() else v)
+                        false
+                    } catch (_: NumberFormatException) {
+                        // todo show error
+                        true
                     }
+
                 }
             return s
         }
@@ -142,10 +139,9 @@ fun interface Visualizer {
                         },
                         initial = values.indexOf(prop.get()),
                         optionLateralPadding = 20f,
-                    ).events {
-                        Event.Change.Companion.Number then {
-                            prop.setAs(values[it.amount.toInt()])
-                        }
+                    ).onChange { amount: Int ->
+                        prop.setAs(values[amount])
+                        false
                     }
                 return r
             } else {
@@ -158,10 +154,9 @@ fun interface Visualizer {
                     entries = options.mapToArray { null to it },
                     initial = prop.getAs(),
                     optionLateralPadding = 20f,
-                ).events {
-                    Event.Change.Companion.Number then {
-                        prop.setAs(it.amount)
-                    }
+                ).onChange { amount: Int ->
+                    prop.setAs(amount)
+                    false
                 }
             }
         }
@@ -177,10 +172,9 @@ fun interface Visualizer {
                     min = min,
                     max = max,
                     initialValue = prop.getAs<Number>().toFloat(),
-                ).events {
-                    Event.Change.Companion.Number then {
-                        prop.setAs(it.amount)
-                    }
+                ).onChange { amount: Int ->
+                    prop.setAs(amount)
+                    false
                 }
             return s
         }
@@ -193,10 +187,9 @@ fun interface Visualizer {
                 lateralStretch = 2f,
                 size = 21f,
                 state = state,
-            ).events {
-                Event.Change.Companion.State then {
-                    prop.setAs(it.state)
-                }
+            ).onChange { state: Boolean ->
+                prop.setAs(state)
+                false
             }
         }
     }
@@ -209,10 +202,9 @@ fun interface Visualizer {
                     placeholder = placeholder,
                     visibleSize = Vec2(200f, 12f),
                     text = prop.getAs(),
-                ).events {
-                    Event.Change.Companion.Text then {
-                        prop.setAs(it.text)
-                    }
+                ).onChange { text: String ->
+                    prop.setAs(text)
+                    false
                 }
             return s
         }

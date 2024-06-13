@@ -67,9 +67,6 @@ fun ModsPage(trees: Collection<Tree>): Drawable {
     }
     // todo add categories
     return Group(
-        size = Vec2(1130f, 0f),
-        visibleSize = Vec2(1130f, 635f),
-        alignment = Align(cross = Align.Cross.Start, pad = Vec2(18f, 18f)),
         children = trees.mapNotNull {
             if (it.getMetadata<Any?>("frontendIgnore") != null) return@mapNotNull null
             Group(
@@ -87,12 +84,13 @@ fun ModsPage(trees: Collection<Tree>): Drawable {
                     size = Vec2(256f, 36f),
                 ).setPalette { brand.fg },
                 alignment = modBoxAlign,
-            ).events {
-                Event.Mouse.Clicked(0) then { _ ->
-                    OneConfigUI.openPage(ConfigVisualizer.INSTANCE.get(it), (this[1][0] as Text).text)
-                }
+            ).onClick { _ ->
+                OneConfigUI.openPage(ConfigVisualizer.INSTANCE.get(it), (this[1][0] as Text).text)
             }.namedId("ModCard")
         }.toTypedArray(),
+        size = Vec2(1130f, 0f),
+        visibleSize = Vec2(1130f, 635f),
+        alignment = Align(cross = Align.Cross.Start, pad = Vec2(18f, 18f)),
     ).namedId("ModsPage")
 }
 
@@ -130,24 +128,22 @@ fun ChangelogPage(news: Collection<News>): Drawable {
                     Text(it.summary, visibleSize = Vec2(612f, 166f)),
                     Group(
                         Text(it.dateString),
-                        Text("oneconfig.readmore").withStates().events {
-                            Event.Mouse.Clicked(0) then { _ ->
-                                val page =
+                        Text("oneconfig.readmore").withStates().onClick { _ ->
+                            val page =
+                                Group(
+                                    if (it.image != null) Image(it.image).onInit { image.size.max(325f, 111f) } else null,
                                     Group(
-                                        if (it.image != null) Image(it.image).onInit { image.size.max(325f, 111f) } else null,
-                                        Group(
-                                            Text(it.title, fontSize = 24f).setFont { medium },
-                                            Text("oneconfig.writtenby".translated(it.author)),
-                                            Text(it.dateString),
-                                        ),
-                                        Text(it.content, fontSize = 14f, visibleSize = Vec2(1100f, 0f)),
-                                        alignment = Align(cross = Align.Cross.Start),
-                                        size = Vec2(1130f, 0f),
-                                        visibleSize = Vec2(1130f, 635f),
-                                    )
-                                OneConfigUI.openPage(page, it.title)
-                                // todo switch
-                            }
+                                        Text(it.title, fontSize = 24f).setFont { medium },
+                                        Text("oneconfig.writtenby".translated(it.author)),
+                                        Text(it.dateString),
+                                    ),
+                                    Text(it.content, fontSize = 14f, visibleSize = Vec2(1100f, 0f)),
+                                    alignment = Align(cross = Align.Cross.Start),
+                                    size = Vec2(1130f, 0f),
+                                    visibleSize = Vec2(1130f, 635f),
+                                )
+                            OneConfigUI.openPage(page, it.title)
+                            // todo switch
                         },
                         size = Vec2(612f, 12f),
                         alignment = Align(main = Align.Main.SpaceBetween),

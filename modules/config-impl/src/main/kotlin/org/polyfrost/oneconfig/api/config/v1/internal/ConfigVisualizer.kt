@@ -111,15 +111,14 @@ open class ConfigVisualizer {
     protected open fun flattenSubcategories(options: Map<String, Map<String, ArrayList<Drawable>>>): Map<String, Drawable> {
         return options.mapValues { (_, subcategories) ->
             Group(
-                alignment = alignCV,
-                children =
-                subcategories.mapToArray { (header, options) ->
+                children = subcategories.mapToArray { (header, options) ->
                     Group(
                         Text(header, fontSize = 22f),
                         *options.toTypedArray(),
                         alignment = alignCV,
                     )
                 },
+                alignment = alignCV,
             )
         }
     }
@@ -154,10 +153,8 @@ open class ConfigVisualizer {
     protected open fun createHeaders(categories: Map<String, Drawable>): Drawable? {
         return Group(
             children = categories.mapToArray { (category, options) ->
-                Button(text = category).events {
-                    Event.Mouse.Companion.Clicked then {
-                        parent[0] = options
-                    }
+                Button(text = category).onClick {
+                    parent[0] = options
                 }
             },
         )
@@ -175,10 +172,10 @@ open class ConfigVisualizer {
                 val vis = node.getVisualizer() ?: return@map null
                 wrapForAccordion(vis.visualize(node), node.title, node.description)
             }
+        var open = false
         return Block(
             wrap(Image("chevron-down.svg".image()).also { it.rotation = PI }, title, desc, icon).events {
                 self.color = PolyColor.TRANSPARENT
-                var open = false
                 Event.Mouse.Companion.Clicked then {
                     open = !open
                     Rotate(this[1], if (!open) PI else 0.0, false, Animations.EaseOutQuad.create(0.2.seconds)).add()
@@ -224,7 +221,7 @@ open class ConfigVisualizer {
             if (icon != null) Image(icon) else null,
             Group(
                 Text(title, fontSize = 22f).setFont { medium },
-                if (desc != null) Text(desc, visibleSize = Vec2(500f, 12f)) else null,
+                if (desc != null) Text(desc, visibleSize = Vec2(500f, 0f)) else null,
                 alignment = stdOpt,
             ),
             alignment = padVOnly,

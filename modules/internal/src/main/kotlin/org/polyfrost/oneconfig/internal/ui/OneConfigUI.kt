@@ -60,9 +60,8 @@ object OneConfigUI {
 
 
     fun open() {
-        val vertical = Align(cross = Align.Cross.Start, mode = Align.Mode.Vertical)
         val builder = PolyUIBuilder.builder().blurs().backgroundColor(rgba(21, 21, 21)).atResolution(1920f by 1080f).size(1400f by 700f)
-		builder.translatorDelegate("assets/oneconfig")
+        builder.translatorDelegate("assets/oneconfig")
         builder.onClose { _ ->
             for (t in ConfigManager.active().trees()) {
                 ConfigManager.active().save(t)
@@ -72,46 +71,37 @@ object OneConfigUI {
             Group(
                 Block(
                     size = Vec2(225f, 32f),
-                ).hide().afterParentInit {
-                    renders = true
-                    val modsBtn = parent[2][1]
+                ).disable().afterParentInit(2) {
+                    enabled = true
+                    val modsBtn = parent[2]
                     Move(this, modsBtn.x, modsBtn.y, false).add()
                 },
                 Image("assets/oneconfig/brand/oneconfig.svg".image()).named("Logo"),
-                Group(
-                    Text("oneconfig.sidebar.title.options", fontSize = 11f).setPalette { text.secondary },
-                    SidebarButton(
-                        "assets/oneconfig/ico/settings.svg".image(),
-                        "oneconfig.mods",
-                    ).onClick { openPage(ModsPage(ConfigManager.active().trees()), "oneconfig.mods") },
-                    SidebarButton(
-                        "assets/oneconfig/ico/profiles.svg".image(),
-                        "oneconfig.profiles",
-                    ).disable().addHoverInfo("this feature is experimental and is coming soon!"),
-                    SidebarButton("assets/oneconfig/ico/keyboard.svg".image(), "oneconfig.keybinds").disable(),
-                    alignment = vertical,
+                Text("oneconfig.sidebar.title.options", fontSize = 11f).setPalette { text.secondary },
+                SidebarButton(
+                    "assets/oneconfig/ico/settings.svg".image(),
+                    "oneconfig.mods",
+                ).onClick { openPage(ModsPage(ConfigManager.active().trees()), "oneconfig.mods") },
+                SidebarButton(
+                    "assets/oneconfig/ico/profiles.svg".image(),
+                    "oneconfig.profiles",
+                ).addHoverInfo("this feature is experimental and is coming soon!"),
+                SidebarButton("assets/oneconfig/ico/keyboard.svg".image(), "oneconfig.keybinds"),
+                Text("oneconfig.sidebar.title.personal", fontSize = 11f).setPalette { text.secondary },
+                SidebarButton("assets/oneconfig/ico/paintbrush.svg".image(), "oneconfig.themes", label("oneconfig.soon")).onClick {
+                    openPage(ThemesPage(), "oneconfig.themes")
+                },
+                SidebarButton("assets/oneconfig/ico/cog.svg".image(), "oneconfig.preferences"),
+                Text("oneconfig.sidebar.title.extra", fontSize = 11f).setPalette { text.secondary },
+                SidebarButton(
+                    "assets/oneconfig/ico/refresh.svg".image(),
+                    "oneconfig.changelog",
                 ),
-                Group(
-                    Text("oneconfig.sidebar.title.personal", fontSize = 11f).setPalette { text.secondary },
-                    SidebarButton("assets/oneconfig/ico/paintbrush.svg".image(), "oneconfig.themes", label("oneconfig.soon")).onClick {
-                        openPage(ThemesPage(), "oneconfig.themes")
-                    }.disable(),
-                    SidebarButton("assets/oneconfig/ico/cog.svg".image(), "oneconfig.preferences"),
-                    alignment = vertical,
-                ),
-                Group(
-                    Text("oneconfig.sidebar.title.extra", fontSize = 11f).setPalette { text.secondary },
-                    SidebarButton(
-                        "assets/oneconfig/ico/refresh.svg".image(),
-                        "oneconfig.changelog",
-                    ),
-                    SidebarButton(
-                        "assets/oneconfig/ico/text.svg".image(),
-                        "oneconfig.feedback",
-                        label("oneconfig.beta"),
-                    ).onClick { openPage(FeedbackPage(), "oneconfig.feedback") },
-                    alignment = vertical,
-                ),
+                SidebarButton(
+                    "assets/oneconfig/ico/text.svg".image(),
+                    "oneconfig.feedback",
+                    label("oneconfig.beta"),
+                ).onClick { openPage(FeedbackPage(), "oneconfig.feedback") },
                 SidebarButton0("assets/oneconfig/ico/hud.svg".image(), "oneconfig.edithud").onClick {
                     Platform.screen().display(HudManager.getWithEditor())
                 },
@@ -194,12 +184,10 @@ object OneConfigUI {
     private val sidebarBtnAlign = Align(pad = Vec2(16f, 6f))
 
     fun SidebarButton(image: PolyImage, text: String, extra: Drawable? = null): Group {
-        return SidebarButton0(image, text, extra).events {
-            Event.Mouse.Clicked(0) then { _ ->
-                val it = parent.parent[0]
-                Move(it, this.x, this.y, false, Animations.EaseOutQuad.create(0.15.seconds)).add()
-                false
-            }
+        return SidebarButton0(image, text, extra).onClick { _ ->
+            val it = parent.parent[0]
+            Move(it, this.x, this.y, false, Animations.EaseOutQuad.create(0.15.seconds)).add()
+            false
         }
     }
 
@@ -221,11 +209,11 @@ object OneConfigUI {
                 polyUI.cursor = Cursor.Pointer
                 false
             }
-            on(Event.Mouse.Pressed(0)) {
+            on(Event.Mouse.Pressed) {
                 Recolor(this[1], this[1].palette.pressed, Animations.EaseInOutQuad.create(0.08.seconds)).add()
                 false
             }
-            on(Event.Mouse.Released(0)) {
+            on(Event.Mouse.Released) {
                 Recolor(this[1], this[1].palette.hovered, Animations.EaseInOutQuad.create(0.08.seconds)).add()
                 false
             }
