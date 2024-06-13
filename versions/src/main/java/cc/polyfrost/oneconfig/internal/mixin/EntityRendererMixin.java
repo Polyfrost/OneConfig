@@ -27,6 +27,7 @@
 package cc.polyfrost.oneconfig.internal.mixin;
 
 import cc.polyfrost.oneconfig.hud.Hud;
+import cc.polyfrost.oneconfig.libs.universal.UGraphics;
 import cc.polyfrost.oneconfig.libs.universal.UMatrixStack;
 import net.minecraft.client.renderer.EntityRenderer;
 import org.spongepowered.asm.mixin.Mixin;
@@ -47,6 +48,8 @@ public class EntityRendererMixin {
         for (Hud hud : huds.values()) {
             if (!hud.isEnabled() || !hud.isCachingIgnored()) continue;
             hud.deltaTicks = partialTicks;
+            UGraphics.enableAlpha();
+            UGraphics.enableBlend();
             hud.drawAll(matrices, false);
         }
     }
