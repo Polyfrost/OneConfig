@@ -1,5 +1,3 @@
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
-
 val shade by configurations.creating {
 	configurations.api.get().extendsFrom(this)
 }
@@ -22,11 +20,8 @@ dependencies {
 }
 
 tasks {
-	create("deps", ShadowJar::class.java) {
+	shadowJar {
 		archiveClassifier = "legacy"
 		configurations = listOf(shade)
-	}
-	build {
-		dependsOn("deps")
 	}
 }

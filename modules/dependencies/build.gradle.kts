@@ -1,11 +1,22 @@
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+plugins {
+	id("com.github.johnrengelman.shadow")
+}
 
 val shade by configurations.creating {
 	configurations.api.get().extendsFrom(this)
 }
 
 allprojects {
+	apply(plugin = "com.github.johnrengelman.shadow")
+
 	base.archivesName = "deps"
+	configurations {
+		listOf(apiElements, runtimeElements).forEach {
+			it.get().outgoing.artifacts.removeIf { it.buildDependencies.getDependencies(null).contains(tasks["jar"]) }
+			it.get().outgoing.artifact(tasks["shadowJar"])
+		}
+	}
+
 	tasks.jar.get().enabled = false
 	tasks.javadocJar.get().enabled = false
 	tasks.sourcesJar.get().enabled = false
@@ -23,10 +34,8 @@ dependencies {
 }
 
 tasks {
-	create("deps", ShadowJar::class.java) {
+	shadowJar {
+		archiveClassifier.set("")
 		configurations = listOf(shade)
-	}
-	build {
-		dependsOn("deps")
 	}
 }

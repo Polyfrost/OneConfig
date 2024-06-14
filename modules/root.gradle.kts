@@ -5,11 +5,12 @@ plugins {
     `java-library`
     `maven-publish`
     signing
+    id(libs.plugins.shadow.get().pluginId)
 }
 
 subprojects {
-    apply(plugin = "java-library")
     apply(plugin = "kotlin")
+    apply(plugin = "java-library")
 
     repositories {
         mavenLocal()
@@ -42,7 +43,7 @@ subprojects {
         }
     }
 
-    base.archivesName = "${project.name}-api"
+    base.archivesName = name
     version = rootProject.version
     group = rootProject.group
 
@@ -62,13 +63,31 @@ subprojects {
 publishing {
     publications {
         for (project in subprojects) {
-            if (project.name == "internal") return@publications
-            register<MavenPublication>(project.name) {
-                groupId = rootProject.group.toString()
-                artifactId = project.base.archivesName.get()
-                version = rootProject.version.toString()
+            if (project.name == "internal") continue
+            val hasParent = project.parent != null && project.parent != getProject()
+            val projectName = if (hasParent) {
+                project.parent!!.name + "_" + project.name
+            } else {
+                project.name
+            }
+            if (project.plugins.hasPlugin(libs.plugins.shadow.get().pluginId)) {
+                shadow {
+                    component(create<MavenPublication>(projectName) {
+                        groupId = rootProject.group.toString()
+                        artifactId = project.base.archivesName.get()
+                        version = rootProject.version.toString()
 
-                from(components["java"])
+                        from(project.components["java"])
+                    })
+                }
+            } else {
+                register<MavenPublication>(projectName) {
+                    groupId = rootProject.group.toString()
+                    artifactId = project.base.archivesName.get()
+                    version = rootProject.version.toString()
+
+                    from(project.components["java"])
+                }
             }
         }
     }
