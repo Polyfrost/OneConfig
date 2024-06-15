@@ -117,6 +117,14 @@ public abstract class Config {
         return p;
     }
 
+    public void save() {
+        ConfigManager.active().save(tree);
+    }
+
+    public void preload() {
+
+    }
+
 
     public enum Category {
         COMBAT,
