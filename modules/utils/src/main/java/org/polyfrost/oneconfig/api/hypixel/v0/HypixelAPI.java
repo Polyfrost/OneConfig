@@ -180,6 +180,10 @@ public final class HypixelAPI {
             // no-op as event based
         }
 
+        public String getServerName() {
+            return packet.getServerName();
+        }
+
         public Optional<String> getLobbyName() {
             return packet.getLobbyName();
         }
