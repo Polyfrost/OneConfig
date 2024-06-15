@@ -29,10 +29,7 @@ package org.polyfrost.oneconfig.api.config.v1.annotations;
 import org.polyfrost.oneconfig.api.config.v1.Config;
 import org.polyfrost.oneconfig.api.config.v1.Property;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.lang.annotation.*;
 import java.util.function.BooleanSupplier;
 
 /**
@@ -45,6 +42,7 @@ import java.util.function.BooleanSupplier;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD, ElementType.FIELD})
+@Documented
 public @interface DependsOn {
     String[] value();
 }

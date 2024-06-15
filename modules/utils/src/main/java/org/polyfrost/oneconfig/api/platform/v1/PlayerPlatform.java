@@ -26,10 +26,24 @@
 
 package org.polyfrost.oneconfig.api.platform.v1;
 
+import org.jetbrains.annotations.Nullable;
+
 public interface PlayerPlatform {
     boolean inMultiplayer();
 
     boolean doesPlayerExist();
 
     String getPlayerName();
+
+    @Nullable
+    Server getCurrentServer();
+
+    class Server {
+        public final String ip, name;
+
+        public Server(String ip, String name) {
+            this.ip = ip;
+            this.name = name;
+        }
+    }
 }

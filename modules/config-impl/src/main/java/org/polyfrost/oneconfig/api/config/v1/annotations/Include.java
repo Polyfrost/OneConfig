@@ -26,22 +26,10 @@
 
 package org.polyfrost.oneconfig.api.config.v1.annotations;
 
-import org.polyfrost.oneconfig.api.config.v1.Visualizer;
-
 import java.lang.annotation.*;
 
-@Option(display = Visualizer.KeybindVisualizer.class)
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 @Documented
-public @interface Keybind {
-    String title();
-
-    String description() default "";
-
-    String icon() default "";
-
-    String category() default "General";
-
-    String subcategory() default "General";
+public @interface Include {
 }

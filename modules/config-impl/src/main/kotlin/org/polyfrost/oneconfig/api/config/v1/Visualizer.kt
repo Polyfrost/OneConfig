@@ -72,9 +72,7 @@ fun interface Visualizer {
                     },
                 )
             } else {
-                require(
-                    prop.type == java.lang.Integer::class.java || prop.type == Int::class.java,
-                ) { "Dropdowns can only be used with enums or integers (offender=${prop.id}, type=${prop.type})" }
+                require(prop.type == Int::class.java) { "Dropdowns can only be used with enums or integers (offender=${prop.id}, type=${prop.type})" }
                 require(options.size >= 2) { "Dropdowns must have at least two options (offender=${prop.id})" }
                 return Dropdown(
                     padding = 24f,
@@ -100,8 +98,7 @@ fun interface Visualizer {
 //            val unit = prop.getMetadata<String>("unit")
             val min = prop.getMetadata<Float>("min") ?: 0f
             val max = prop.getMetadata<Float>("max") ?: 100f
-            val notFloating = prop.type == java.lang.Integer::class.java || prop.type == java.lang.Long::class.java
-                    || prop.type == Int::class.java || prop.type == Long::class.java
+            val notFloating = prop.type == Int::class.java || prop.type == Long::class.java
             val s =
                 TextInput(
                     visibleSize = Vec2(300f, 32f),
@@ -145,10 +142,7 @@ fun interface Visualizer {
                     }
                 return r
             } else {
-                require(
-                    prop.type == java.lang.Integer::class.java
-                            || prop.type == Int::class.java
-                ) { "Radio buttons ${prop.id} can only be used with enum or integer types (type=${prop.type}" }
+                require(prop.type == Int::class.java) { "Radio buttons ${prop.id} can only be used with enum or integer types (type=${prop.type}" }
                 require(options.size >= 2) { "Radio button ${prop.id} must have at least two options" }
                 return Radiobutton(
                     entries = options.mapToArray { null to it },
@@ -187,8 +181,21 @@ fun interface Visualizer {
                 lateralStretch = 2f,
                 size = 21f,
                 state = state,
-            ).onChange { state: Boolean ->
-                prop.setAs(state)
+            ).onChange { new: Boolean ->
+                prop.setAs(new)
+                false
+            }
+        }
+    }
+
+    class CheckboxVisualizer : Visualizer {
+        override fun visualize(prop: Property<*>): Drawable {
+            val state = prop.getAs<Boolean>()
+            return Checkbox(
+                size = 24f,
+                state = state,
+            ).onChange { new: Boolean ->
+                prop.setAs(new)
                 false
             }
         }

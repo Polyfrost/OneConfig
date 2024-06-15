@@ -6,10 +6,13 @@ public abstract class org/polyfrost/oneconfig/api/config/v1/Config {
 	protected fun addCallback (Ljava/lang/String;Ljava/util/function/Consumer;)V
 	protected fun addCallback (Ljava/lang/String;Ljava/util/function/Predicate;)V
 	protected fun addDependency (Ljava/lang/String;Ljava/lang/String;)V
+	protected fun addDependency (Ljava/lang/String;Ljava/lang/String;Ljava/util/function/BooleanSupplier;)V
 	protected fun addDependency (Ljava/lang/String;Ljava/util/function/BooleanSupplier;)V
 	protected fun getProperty (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
 	public fun getTree ()Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	protected fun makeTree (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
+	public fun preload ()V
+	public fun save ()V
 }
 
 public final class org/polyfrost/oneconfig/api/config/v1/Config$Category : java/lang/Enum {
@@ -78,6 +81,11 @@ public final class org/polyfrost/oneconfig/api/config/v1/Visualizer$ButtonVisual
 	public fun visualize (Lorg/polyfrost/oneconfig/api/config/v1/Property;)Lorg/polyfrost/polyui/component/Drawable;
 }
 
+public final class org/polyfrost/oneconfig/api/config/v1/Visualizer$CheckboxVisualizer : org/polyfrost/oneconfig/api/config/v1/Visualizer {
+	public fun <init> ()V
+	public fun visualize (Lorg/polyfrost/oneconfig/api/config/v1/Property;)Lorg/polyfrost/polyui/component/Drawable;
+}
+
 public final class org/polyfrost/oneconfig/api/config/v1/Visualizer$ColorVisualizer : org/polyfrost/oneconfig/api/config/v1/Visualizer {
 	public fun <init> ()V
 	public fun visualize (Lorg/polyfrost/oneconfig/api/config/v1/Property;)Lorg/polyfrost/polyui/component/Drawable;
@@ -137,6 +145,14 @@ public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1
 	public abstract fun title ()Ljava/lang/String;
 }
 
+public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1/annotations/Checkbox : java/lang/annotation/Annotation {
+	public abstract fun category ()Ljava/lang/String;
+	public abstract fun description ()Ljava/lang/String;
+	public abstract fun icon ()Ljava/lang/String;
+	public abstract fun subcategory ()Ljava/lang/String;
+	public abstract fun title ()Ljava/lang/String;
+}
+
 public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1/annotations/Color : java/lang/annotation/Annotation {
 	public abstract fun alpha ()Z
 	public abstract fun category ()Ljava/lang/String;
@@ -157,6 +173,9 @@ public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1
 	public abstract fun options ()[Ljava/lang/String;
 	public abstract fun subcategory ()Ljava/lang/String;
 	public abstract fun title ()Ljava/lang/String;
+}
+
+public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1/annotations/Include : java/lang/annotation/Annotation {
 }
 
 public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1/annotations/Keybind : java/lang/annotation/Annotation {
@@ -181,6 +200,10 @@ public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1
 
 public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1/annotations/Option : java/lang/annotation/Annotation {
 	public abstract fun display ()Ljava/lang/Class;
+}
+
+public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1/annotations/PreviousNames : java/lang/annotation/Annotation {
+	public abstract fun value ()[Ljava/lang/String;
 }
 
 public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1/annotations/RadioButton : java/lang/annotation/Annotation {

@@ -27,10 +27,13 @@
 package org.polyfrost.oneconfig.api.platform.v1.internal;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.util.Session;
 import org.polyfrost.oneconfig.api.platform.v1.PlayerPlatform;
 
 public class PlayerPlatformImpl implements PlayerPlatform {
+    private ServerData old;
+    private Server cache;
 
     @Override
     public boolean inMultiplayer() {
@@ -46,5 +49,14 @@ public class PlayerPlatformImpl implements PlayerPlatform {
     public String getPlayerName() {
         Session s = Minecraft.getMinecraft().getSession();
         return s.getUsername();
+    }
+
+    @Override
+    public Server getCurrentServer() {
+        ServerData d = Minecraft.getMinecraft().getCurrentServerData();
+        if (d == null) return null;
+        if (old == d) return cache;
+        old = d;
+        return cache = new Server(d.serverIP, d.serverName);
     }
 }

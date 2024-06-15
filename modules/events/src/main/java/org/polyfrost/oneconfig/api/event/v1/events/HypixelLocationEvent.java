@@ -27,7 +27,7 @@
 package org.polyfrost.oneconfig.api.event.v1.events;
 
 import org.jetbrains.annotations.ApiStatus;
-import org.polyfrost.oneconfig.api.hypixel.v0.HypixelAPI;
+import org.polyfrost.oneconfig.api.hypixel.v0.HypixelUtils;
 
 /**
  * Event that is fired when the player's location is changed.
@@ -37,16 +37,16 @@ public class HypixelLocationEvent implements Event {
     public static final HypixelLocationEvent INSTANCE = new HypixelLocationEvent();
 
     private HypixelLocationEvent() {
-        // call <clinit> on HypixelAPI
-        HypixelAPI.getLocation();
+        // call <clinit> on HypixelUtils
+        HypixelUtils.getLocation();
     }
 
     /**
      * Get the location of the player when the event was fired.
-     * @return the same as {@link HypixelAPI#getLocation()}.
+     * @return the same as {@link HypixelUtils#getLocation()}.
      */
-    public HypixelAPI.Location getLocation() {
-        return HypixelAPI.getLocation();
+    public HypixelUtils.Location getLocation() {
+        return HypixelUtils.getLocation();
     }
 
 }

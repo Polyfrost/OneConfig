@@ -2,42 +2,53 @@ public abstract interface annotation class org/polyfrost/oneconfig/api/ClassHasO
 	public abstract fun value ()[Ljava/lang/String;
 }
 
-public final class org/polyfrost/oneconfig/api/hypixel/v0/HypixelAPI {
-	public static fun getLocation ()Lorg/polyfrost/oneconfig/api/hypixel/v0/HypixelAPI$Location;
-	public static fun getPartyInfo ()Lorg/polyfrost/oneconfig/api/hypixel/v0/HypixelAPI$PartyInfo;
-	public static fun getPlayerInfo ()Lorg/polyfrost/oneconfig/api/hypixel/v0/HypixelAPI$PlayerInfo;
+public final class org/polyfrost/oneconfig/api/hypixel/v0/HypixelUtils {
+	public static fun getLocation ()Lorg/polyfrost/oneconfig/api/hypixel/v0/HypixelUtils$Location;
+	public static fun getPartyInfo ()Lorg/polyfrost/oneconfig/api/hypixel/v0/HypixelUtils$PartyInfo;
+	public static fun getPlayerInfo ()Lorg/polyfrost/oneconfig/api/hypixel/v0/HypixelUtils$PlayerInfo;
+	public static fun isHypixel ()Z
 }
 
-public abstract class org/polyfrost/oneconfig/api/hypixel/v0/HypixelAPI$InfoBase {
+public abstract class org/polyfrost/oneconfig/api/hypixel/v0/HypixelUtils$InfoBase {
 	protected field packet Lnet/hypixel/modapi/packet/impl/VersionedPacket;
 	public fun <init> ()V
+	public fun getPacket ()Lnet/hypixel/modapi/packet/impl/VersionedPacket;
 	public final fun toString ()Ljava/lang/String;
 	public abstract fun update ()V
 }
 
-public final class org/polyfrost/oneconfig/api/hypixel/v0/HypixelAPI$Location : org/polyfrost/oneconfig/api/hypixel/v0/HypixelAPI$InfoBase {
+public final class org/polyfrost/oneconfig/api/hypixel/v0/HypixelUtils$Location : org/polyfrost/oneconfig/api/hypixel/v0/HypixelUtils$InfoBase {
 	public fun getGameType ()Ljava/util/Optional;
 	public fun getLobbyName ()Ljava/util/Optional;
 	public fun getMapName ()Ljava/util/Optional;
 	public fun getMode ()Ljava/util/Optional;
+	public fun getPreviousGameType ()Ljava/util/Optional;
+	public fun getPreviousLobbyName ()Ljava/util/Optional;
+	public fun getPreviousMapName ()Ljava/util/Optional;
+	public fun getPreviousMode ()Ljava/util/Optional;
+	public fun getPreviousServerName ()Ljava/util/Optional;
+	public fun getPreviousServerType ()Ljava/util/Optional;
+	public fun getServerName ()Ljava/util/Optional;
 	public fun getServerType ()Ljava/util/Optional;
-	public fun isGame ()Z
-	public fun isLobby ()Z
+	public fun inGame ()Z
+	public fun inLobby ()Z
 	public fun update ()V
+	public fun wasInGame ()Z
+	public fun wasInLobby ()Z
 }
 
-public final class org/polyfrost/oneconfig/api/hypixel/v0/HypixelAPI$PartyInfo : org/polyfrost/oneconfig/api/hypixel/v0/HypixelAPI$InfoBase {
-	public fun getMembers ()Ljava/util/Map;
+public final class org/polyfrost/oneconfig/api/hypixel/v0/HypixelUtils$PartyInfo : org/polyfrost/oneconfig/api/hypixel/v0/HypixelUtils$InfoBase {
+	public fun getMembers ()Ljava/util/Optional;
 	public fun getPartySize ()I
 	public fun isInParty ()Z
 	public fun update ()V
 }
 
-public final class org/polyfrost/oneconfig/api/hypixel/v0/HypixelAPI$PlayerInfo : org/polyfrost/oneconfig/api/hypixel/v0/HypixelAPI$InfoBase {
-	public fun getMonthlyPackageRank ()Lnet/hypixel/data/rank/MonthlyPackageRank;
-	public fun getPackageRank ()Lnet/hypixel/data/rank/PackageRank;
+public final class org/polyfrost/oneconfig/api/hypixel/v0/HypixelUtils$PlayerInfo : org/polyfrost/oneconfig/api/hypixel/v0/HypixelUtils$InfoBase {
+	public fun getMonthlyPackageRank ()Ljava/util/Optional;
+	public fun getPackageRank ()Ljava/util/Optional;
 	public fun getPrefix ()Ljava/util/Optional;
-	public fun getRank ()Lnet/hypixel/data/rank/PlayerRank;
+	public fun getRank ()Ljava/util/Optional;
 	public fun update ()V
 }
 
@@ -90,8 +101,15 @@ public final class org/polyfrost/oneconfig/api/platform/v1/Platform {
 
 public abstract interface class org/polyfrost/oneconfig/api/platform/v1/PlayerPlatform {
 	public abstract fun doesPlayerExist ()Z
+	public abstract fun getCurrentServer ()Lorg/polyfrost/oneconfig/api/platform/v1/PlayerPlatform$Server;
 	public abstract fun getPlayerName ()Ljava/lang/String;
 	public abstract fun inMultiplayer ()Z
+}
+
+public class org/polyfrost/oneconfig/api/platform/v1/PlayerPlatform$Server {
+	public final field ip Ljava/lang/String;
+	public final field name Ljava/lang/String;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
 }
 
 public abstract interface class org/polyfrost/oneconfig/api/platform/v1/ScreenPlatform {
@@ -151,6 +169,16 @@ public final class org/polyfrost/oneconfig/utils/v1/IOUtils {
 	public static fun getFileChecksum (Ljava/nio/file/Path;)Ljava/lang/String;
 	public static fun getImageFromClipboard ()Ljava/awt/Image;
 	public static fun getStringFromClipboard ()Ljava/lang/String;
+}
+
+public final class org/polyfrost/oneconfig/utils/v1/JsonUtils {
+	public static final field PARSER Lcom/google/gson/JsonParser;
+	public static fun parse (Ljava/lang/String;)Lcom/google/gson/JsonElement;
+	public static fun parse (Ljava/lang/String;Ljava/util/function/Consumer;)V
+	public static fun parseFromURL (Ljava/lang/String;)Lcom/google/gson/JsonElement;
+	public static fun parseFromUrl (Ljava/lang/String;Ljava/util/function/Consumer;)V
+	public static fun parseFromUrlAsync (Ljava/lang/String;Ljava/util/function/Consumer;)V
+	public static fun parseOrNull (Ljava/lang/String;)Lcom/google/gson/JsonElement;
 }
 
 public final class org/polyfrost/oneconfig/utils/v1/LogScanner {

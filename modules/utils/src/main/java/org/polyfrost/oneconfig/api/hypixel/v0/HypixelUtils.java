@@ -43,7 +43,10 @@ import net.hypixel.modapi.packet.impl.serverbound.ServerboundPlayerInfoPacket;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Unmodifiable;
 import org.polyfrost.oneconfig.api.hypixel.v0.internal.HypixelApiInternals;
+import org.polyfrost.oneconfig.api.platform.v1.Platform;
+import org.polyfrost.oneconfig.api.platform.v1.PlayerPlatform;
 
 import java.util.Map;
 import java.util.Optional;
@@ -62,15 +65,21 @@ import java.util.UUID;
  * <b>and so this class, or HypixelApiInternals, needs to be referenced in order for the packet handlers to be registered.</b>
  */
 @SuppressWarnings("unused")
-public final class HypixelAPI {
-    private static final Logger LOGGER = LogManager.getLogger("OneConfig/HypixelAPI");
-    private static final HypixelAPI INSTANCE = new HypixelAPI();
+public final class HypixelUtils {
+    private static final Logger LOGGER = LogManager.getLogger("OneConfig/HypixelUtils");
+    private static final HypixelUtils INSTANCE = new HypixelUtils();
     private static final HypixelApiInternals internals = ServiceLoader.load(HypixelApiInternals.class, HypixelApiInternals.class.getClassLoader()).iterator().next();
     private PlayerInfo info;
     private PartyInfo partyInfo;
     private Location location;
 
-    private HypixelAPI() {
+    private HypixelUtils() {
+    }
+
+    public static boolean isHypixel() {
+        PlayerPlatform.Server server = Platform.player().getCurrentServer();
+        if (server == null) return false;
+        return server.ip.toLowerCase().contains("hypixel");
     }
 
     public static PlayerInfo getPlayerInfo() {
@@ -87,12 +96,18 @@ public final class HypixelAPI {
 
     public static abstract class InfoBase<T extends VersionedPacket & ClientboundHypixelPacket> {
         protected T packet;
+
         @ApiStatus.Internal
         public abstract void update();
 
         @Override
         public final String toString() {
             return packet.toString();
+        }
+
+        public T getPacket() {
+            if (packet == null) update();
+            return packet;
         }
     }
 
@@ -115,15 +130,16 @@ public final class HypixelAPI {
         }
 
         public boolean isInParty() {
-            return packet.isInParty();
+            return getPacket() != null && packet.isInParty();
         }
 
         public int getPartySize() {
-            return getMembers().size();
+            return getPacket() == null ? 0 : packet.getMemberMap().size();
         }
 
-        public Map<UUID, ClientboundPartyInfoPacket.PartyMember> getMembers() {
-            return packet.getMemberMap();
+        @Unmodifiable
+        public Optional<Map<UUID, ClientboundPartyInfoPacket.PartyMember>> getMembers() {
+            return getPacket() == null ? Optional.empty() : Optional.of(packet.getMemberMap());
         }
     }
 
@@ -144,29 +160,31 @@ public final class HypixelAPI {
             HypixelModAPI.getInstance().sendPacket(new ServerboundPlayerInfoPacket());
         }
 
-        public PlayerRank getRank() {
-            return packet.getPlayerRank();
+        public Optional<PlayerRank> getRank() {
+            return getPacket() == null ? Optional.empty() : Optional.of(packet.getPlayerRank());
         }
 
-        public PackageRank getPackageRank() {
-            return packet.getPackageRank();
+        public Optional<PackageRank> getPackageRank() {
+            return getPacket() == null ? Optional.empty() : Optional.of(packet.getPackageRank());
         }
 
-        public MonthlyPackageRank getMonthlyPackageRank() {
-            return packet.getMonthlyPackageRank();
+        public Optional<MonthlyPackageRank> getMonthlyPackageRank() {
+            return getPacket() == null ? Optional.empty() : Optional.of(packet.getMonthlyPackageRank());
         }
 
         public Optional<String> getPrefix() {
-            return packet.getPrefix();
+            return getPacket() == null ? Optional.empty() : packet.getPrefix();
         }
     }
 
     public static final class Location extends InfoBase<ClientboundLocationPacket> {
+        private ClientboundLocationPacket last;
         private Location() {
             LOGGER.info("Registering location packet handler");
             HypixelModAPI.getInstance().registerHandler(new ClientboundPacketHandler() {
                 @Override
                 public void onLocationEvent(ClientboundLocationPacket packet) {
+                    last = Location.this.packet;
                     Location.this.packet = packet;
                     // cannot access the EventManager from here, so we do it like this instead.
                     internals.postLocationEvent();
@@ -180,37 +198,72 @@ public final class HypixelAPI {
             // no-op as event based
         }
 
-        public String getServerName() {
-            return packet.getServerName();
+        public Optional<String> getLastServerName() {
+            return last == null ? Optional.empty() : Optional.of(last.getServerName());
+        }
+
+        public Optional<String> getServerName() {
+            return getPacket() == null ? Optional.empty() : Optional.of(packet.getServerName());
+        }
+
+        public Optional<String> getLastLobbyName() {
+            return last == null ? Optional.empty() : last.getLobbyName();
         }
 
         public Optional<String> getLobbyName() {
-            return packet.getLobbyName();
+            return getPacket() == null ? Optional.empty() : packet.getLobbyName();
+        }
+
+        public Optional<String> getLastMapName() {
+            return last == null ? Optional.empty() : last.getMap();
         }
 
         public Optional<String> getMapName() {
-            return packet.getMap();
+            return getPacket() == null ? Optional.empty() : packet.getMap();
+        }
+
+        public Optional<String> getLastMode() {
+            return last == null ? Optional.empty() : last.getMode();
         }
 
         public Optional<String> getMode() {
-            return packet.getMode();
+            return getPacket() == null ? Optional.empty() : packet.getMode();
+        }
+
+        public Optional<ServerType> getLastServerType() {
+            return last == null ? Optional.empty() : last.getServerType();
         }
 
         public Optional<ServerType> getServerType() {
-            return packet.getServerType();
+            return getPacket() == null ? Optional.empty() : packet.getServerType();
         }
 
-        public boolean isLobby() {
-            Optional<ServerType> type = getServerType();
-            return type.isPresent() && type.get() instanceof LobbyType;
+        public boolean wasInLobby() {
+            return getLastServerType().orElse(null) instanceof LobbyType;
         }
 
-        public boolean isGame() {
-            return !isLobby();
+        public boolean inLobby() {
+            return getServerType().orElse(null) instanceof LobbyType;
+        }
+
+        public boolean wasInGame() {
+            return !wasInLobby();
+        }
+
+        public boolean inGame() {
+            return !inLobby();
+        }
+
+        public Optional<GameType> getLastGameType() {
+            return last == null ? Optional.empty() : gameType(last.getServerType());
         }
 
         public Optional<GameType> getGameType() {
-            Optional<ServerType> type = getServerType();
+            return getPacket() == null ? Optional.empty() : gameType(packet.getServerType());
+        }
+
+        @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+        private Optional<GameType> gameType(Optional<ServerType> type) {
             if (!type.isPresent()) return Optional.empty();
             ServerType t = type.get();
             return t instanceof GameType ? Optional.of((GameType) t) : Optional.empty();

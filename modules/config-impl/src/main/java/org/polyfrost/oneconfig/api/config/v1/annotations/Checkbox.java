@@ -30,11 +30,11 @@ import org.polyfrost.oneconfig.api.config.v1.Visualizer;
 
 import java.lang.annotation.*;
 
-@Option(display = Visualizer.KeybindVisualizer.class)
+@Option(display = Visualizer.CheckboxVisualizer.class)
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 @Documented
-public @interface Keybind {
+public @interface Checkbox {
     String title();
 
     String description() default "";

@@ -32,10 +32,7 @@ import org.polyfrost.oneconfig.api.config.v1.Config;
 import org.polyfrost.oneconfig.api.config.v1.Properties;
 import org.polyfrost.oneconfig.api.config.v1.Property;
 import org.polyfrost.oneconfig.api.config.v1.Tree;
-import org.polyfrost.oneconfig.api.config.v1.annotations.Accordion;
-import org.polyfrost.oneconfig.api.config.v1.annotations.Button;
-import org.polyfrost.oneconfig.api.config.v1.annotations.DependsOn;
-import org.polyfrost.oneconfig.api.config.v1.annotations.Option;
+import org.polyfrost.oneconfig.api.config.v1.annotations.*;
 import org.polyfrost.oneconfig.utils.v1.MHUtils;
 
 import java.lang.annotation.Annotation;
@@ -65,7 +62,7 @@ public class OneConfigCollector extends ReflectiveCollector {
             for (String cond : conditions) {
                 Property<?> condition = tree.getProp(cond);
                 if (condition == null) throw new IllegalArgumentException("Property " + p.getID() + " is dependant on property " + cond + ", but that property does not exist");
-                if (condition.type == Boolean.class || condition.type == boolean.class) {
+                if (condition.type == boolean.class) {
                     p.addDisplayCondition(condition::getAs);
                 } else throw new IllegalArgumentException("Property " + p.getID() + " is dependant on property " + cond + ", but it is not a boolean property");
             }
@@ -76,6 +73,11 @@ public class OneConfigCollector extends ReflectiveCollector {
     @Override
     protected void handleField(@NotNull Field f, @NotNull Object src, @NotNull Tree builder) {
         for (Annotation a : f.getAnnotations()) {
+            if (a.annotationType() == Include.class) {
+                Property<?> p = Properties.field(null, null, f, src);
+                builder.put(p);
+                break;
+            }
             Option opt = a.annotationType().getAnnotation(Option.class);
             if (opt == null) continue;
             try {
@@ -132,6 +134,10 @@ public class OneConfigCollector extends ReflectiveCollector {
         DependsOn d = f.getDeclaredAnnotation(DependsOn.class);
         if (d != null) {
             property.addMetadata("conditions", d.value());
+        }
+        PreviousNames p = f.getDeclaredAnnotation(PreviousNames.class);
+        if (p != null) {
+            // todo
         }
     }
 

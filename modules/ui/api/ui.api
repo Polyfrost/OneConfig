@@ -98,10 +98,13 @@ public final class org/polyfrost/oneconfig/api/ui/v1/notifications/NotificationM
 public final class org/polyfrost/oneconfig/api/ui/v1/notifications/Notifications {
 	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/ui/v1/notifications/Notifications;
 	public final fun send (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun send (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Runnable;)V
 	public final fun send (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/polyui/renderer/data/PolyImage;)V
 	public final fun send (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/polyui/renderer/data/PolyImage;J)V
+	public final fun send (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/polyui/renderer/data/PolyImage;JLjava/lang/Runnable;)V
 	public final fun send (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/polyui/renderer/data/PolyImage;JLjava/util/function/Function;)V
 	public final fun send (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/polyui/renderer/data/PolyImage;JLjava/util/function/Function;Ljava/lang/Runnable;)V
+	public final fun send (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/polyui/renderer/data/PolyImage;Ljava/lang/Runnable;)V
 	public static synthetic fun send$default (Lorg/polyfrost/oneconfig/api/ui/v1/notifications/Notifications;Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/polyui/renderer/data/PolyImage;JLjava/util/function/Function;Ljava/lang/Runnable;ILjava/lang/Object;)V
 }
 

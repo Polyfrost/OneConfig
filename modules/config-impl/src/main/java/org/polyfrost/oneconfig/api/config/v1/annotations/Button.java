@@ -28,14 +28,12 @@ package org.polyfrost.oneconfig.api.config.v1.annotations;
 
 import org.polyfrost.oneconfig.api.config.v1.Visualizer;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.lang.annotation.*;
 
 @Option(display = Visualizer.ButtonVisualizer.class)
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.FIELD, ElementType.METHOD})
+@Documented
 public @interface Button {
     String title();
 

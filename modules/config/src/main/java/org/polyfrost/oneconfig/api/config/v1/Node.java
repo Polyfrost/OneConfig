@@ -144,6 +144,21 @@ public abstract class Node {
     }
 
     /**
+     * Return some metadata attached to this tree, or put def it is isn't present.
+     *
+     * @param key the key of the metadata
+     * @param def the default value to put if there currently is no metadata on this value
+     * @param <M> the type of the metadata
+     * @return the metadata, or null if it doesn't exist
+     */
+    @SuppressWarnings("unchecked")
+    public final @NotNull <M> M getOrPutMetadata(String key, M def) {
+        if (metadata == null || metadata.get(key) == null) addMetadata(key, def);
+        if (metadata == null) throw new IllegalArgumentException("invalid key for metadata " + key);
+        return (M) metadata.get(key);
+    }
+
+    /**
      * Consume some metadata attached to this tree, meaning it will be removed.
      *
      * @param key the key of the metadata

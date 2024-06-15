@@ -30,6 +30,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -60,6 +61,11 @@ public abstract class Config {
         getProperty(option).addDisplayCondition(condition);
     }
 
+    protected void addDependency(String option, String name, BooleanSupplier condition) {
+        Property<?> opt = getProperty(option).addDisplayCondition(condition);
+        opt.getOrPutMetadata("dependencyNames", new ArrayList<String>(3)).add(name);
+    }
+
     /**
      * Add a dependency on the given option, which will gray out or hide the option unless condition is true.
      *
@@ -68,8 +74,9 @@ public abstract class Config {
      */
     protected void addDependency(String option, String condition) {
         Property<?> cond = getProperty(condition);
-        if (cond.type != boolean.class && cond.type != Boolean.class) throw new IllegalArgumentException("Condition property must be boolean");
-        getProperty(option).addDisplayCondition(cond::getAs);
+        if (cond.type != boolean.class) throw new IllegalArgumentException("Condition property must be boolean");
+        Property<?> opt = getProperty(option).addDisplayCondition(cond::getAs);
+        opt.getOrPutMetadata("dependencyNames", new ArrayList<String>(3)).add(cond.getTitle());
     }
 
     /**
@@ -121,8 +128,13 @@ public abstract class Config {
         ConfigManager.active().save(tree);
     }
 
+    /**
+     * If you intend for your Config to be its own self-contained class, you may need to call this method in your mod constructor to ensure that
+     * this class is initialized by Java.
+     * @apiNote this method does literally nothing.
+     */
     public void preload() {
-
+        // <clinit>
     }
 
 

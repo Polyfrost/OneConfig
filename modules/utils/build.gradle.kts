@@ -26,5 +26,7 @@
 
 dependencies {
     compileOnly("org.polyfrost:universalcraft-1.8.9-forge:${libs.versions.universalcraft.get()}")
+    @Suppress("VulnerableLibrariesLocal") // reason: we need to use version this because it is what 1.8.9 uses
+    compileOnly("com.google.code.gson:gson:2.2.4")
     api(libs.hypixel.modapi)
 }

@@ -36,6 +36,7 @@ net.minecraft.client.KeyboardHandler net.minecraft.client.KeyboardListener
 
 net.minecraft.client.Minecraft destroy() shutdownMinecraftApplet()
 net.minecraft.client.Minecraft font fontRenderer
+net.minecraft.client.Minecraft getCurrentServer() getCurrentServerData()
 net.minecraft.client.Minecraft getSoundManager() getSoundHandler()
 net.minecraft.client.Minecraft getUser() getSession()
 net.minecraft.client.Minecraft getWindow() getMainWindow()
@@ -52,6 +53,9 @@ net.minecraft.client.Minecraft setScreen() displayGuiScreen()
 net.minecraft.client.MouseHandler net.minecraft.client.MouseHelper
 net.minecraft.client.MouseHandler xpos() getMouseX()
 net.minecraft.client.MouseHandler ypos() getMouseY()
+
+net.minecraft.client.multiplayer.ServerData ip serverIP
+net.minecraft.client.multiplayer.ServerData name serverName
 
 net.minecraft.client.Options net.minecraft.client.GameSettings
 net.minecraft.client.Options renderDebug showDebugInfo

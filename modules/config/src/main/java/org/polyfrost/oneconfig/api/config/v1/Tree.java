@@ -37,6 +37,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 /**
  * The Tree class represents a tree structure that contains properties and other trees as children.
@@ -70,9 +71,10 @@ public class Tree extends Node implements Serializable {
         }
     }
 
-    private static void _overwrite(Tree self, Tree in) {
+    private static void _overwrite(Tree self, Tree in, Function<String, String> keyMapper) {
         for (Map.Entry<String, Node> e : in.theMap.entrySet()) {
-            Node _this = self.get(e.getKey());
+            String key = keyMapper == null ? e.getKey() : keyMapper.apply(e.getKey());
+            Node _this = self.get(key);
             Node that = e.getValue();
             if (_this == null) {
                 // nop. means that the node has been removed.
@@ -81,7 +83,7 @@ public class Tree extends Node implements Serializable {
             if (_this instanceof Tree) {
                 if (that instanceof Tree) {
                     // if both are trees, recursively overwrite
-                    _overwrite((Tree) _this, (Tree) that);
+                    _overwrite((Tree) _this, (Tree) that, keyMapper);
                     _this.addMetadata(that.getMetadata());
                 }
                 // nop. do not attempt to overwrite a tree with a property
@@ -246,10 +248,19 @@ public class Tree extends Node implements Serializable {
         return true;
     }
 
+    /**
+     * Overwrite this tree with the supplied tree, using the keyMapper to map between key names from old to new if needed.
+     * @param with the tree to overwrite with
+     * @param keyMapper the key mapper function to use
+     */
+    public void overwrite(Tree with, @Nullable Function<String, String> keyMapper) {
+        _overwrite(this, with, keyMapper);
+    }
+
     @Override
     public void overwrite(@NotNull Node with) {
         if (!(with instanceof Tree)) throw new IllegalArgumentException("Cannot overwrite a tree with a non-tree node!");
-        _overwrite(this, (Tree) with);
+        _overwrite(this, (Tree) with, null);
     }
 
     /**

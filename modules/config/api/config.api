@@ -10,6 +10,7 @@ public abstract class org/polyfrost/oneconfig/api/config/v1/Node {
 	public fun getID ()Ljava/lang/String;
 	public final fun getMetadata ()Ljava/util/Map;
 	public final fun getMetadata (Ljava/lang/String;)Ljava/lang/Object;
+	public final fun getOrPutMetadata (Ljava/lang/String;Ljava/lang/Object;)Ljava/lang/Object;
 	public fun getTitle ()Ljava/lang/String;
 	public final fun hasMetadata ()Z
 	public final fun hashCode ()I
@@ -105,6 +106,7 @@ public class org/polyfrost/oneconfig/api/config/v1/Tree : org/polyfrost/oneconfi
 	public fun onAll (Ljava/util/function/BiConsumer;)V
 	public fun onAllProps (Ljava/util/function/BiConsumer;)V
 	public fun overwrite (Lorg/polyfrost/oneconfig/api/config/v1/Node;)V
+	public fun overwrite (Lorg/polyfrost/oneconfig/api/config/v1/Tree;Ljava/util/function/Function;)V
 	public fun put (Lorg/polyfrost/oneconfig/api/config/v1/Node;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	public fun put ([Lorg/polyfrost/oneconfig/api/config/v1/Node;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	public fun set (Ljava/lang/String;Lorg/polyfrost/oneconfig/api/config/v1/Node;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
