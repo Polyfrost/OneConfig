@@ -55,4 +55,16 @@ object Notifications {
     fun send(title: String, message: String, icon: PolyImage? = null, durationNanos: Long = 4.seconds, progressFunction: Function<Long, Float>? = null, action: Runnable? = null) {
         queue.addLast(create(title, message, icon, progressFunction, action))
     }
+
+    fun send(title: String, message: String, icon: PolyImage?, durationNanos: Long, action: Runnable?) {
+        send(title, message, icon, durationNanos, null, action)
+    }
+
+    fun send(title: String, message: String, icon: PolyImage?, action: Runnable?) {
+        send(title, message, icon, 4.seconds, null, action)
+    }
+
+    fun send(title: String, message: String, action: Runnable?) {
+        send(title, message, null, 4.seconds, null, action)
+    }
 }
