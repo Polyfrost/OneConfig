@@ -88,21 +88,19 @@ public class ConfigColorElement extends BasicOption {
         }
         if (OneConfigGui.INSTANCE.currentColorSelector != colorSelector) open = false;
         else if (open) {
-            try {
-                if (!OneConfigGui.INSTANCE.getColor().equals((OneColor) field.get(parent)))  {
-                    ((OneColor) field.get(parent)).setFromOneColor(OneConfigGui.INSTANCE.getColor());
-                    this.triggerListeners();
-                }
-            } catch (IllegalAccessException ignore) {
-            }
+            setColor(OneConfigGui.INSTANCE.getColor());
         }
         nanoVGHelper.setAlpha(vg, 1f);
     }
 
     protected void setColor(OneColor color) {
         try {
-            set(color);
-        } catch (IllegalAccessException ignored) {
+            Object colorField = field.get(parent);
+            if (!color.equals(colorField))  {
+                ((OneColor) colorField).setFromOneColor(color);
+                this.triggerListeners();
+            }
+        } catch (IllegalAccessException ignore) {
         }
     }
 
