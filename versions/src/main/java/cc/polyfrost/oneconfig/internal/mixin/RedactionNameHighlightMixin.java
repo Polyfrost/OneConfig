@@ -34,7 +34,7 @@ import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.ModifyConstant;
 
 @Pseudo
-@Mixin(targets = "net.wyvest.redaction.features.NameHighlight")
+@Mixin(targets = {"net.wyvest.redaction.features.NameHighlight", "org.polyfrost.redaction.features.NameHighlight"})
 public class RedactionNameHighlightMixin {
 
     @Dynamic("REDACTION")
