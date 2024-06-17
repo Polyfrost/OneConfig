@@ -92,6 +92,10 @@ public abstract class BasicOption {
     protected void set(Object object) throws IllegalAccessException {
         if (field == null) return;
         field.set(parent, object);
+        this.triggerListeners();
+    }
+
+    protected void triggerListeners() {
         for (Runnable listener : listeners) listener.run();
     }
 

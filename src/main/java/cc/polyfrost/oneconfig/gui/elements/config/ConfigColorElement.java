@@ -79,7 +79,7 @@ public class ConfigColorElement extends BasicOption {
         nanoVGHelper.drawRoundImage(vg, Images.ALPHA_GRID.filePath, x1 + 420, y + 4, 56, 24, 8f, getClass());
         nanoVGHelper.drawRoundedRect(vg, x1 + 420, y + 4, 56, 24, color.getRGB(), 8f);
         if (element.isClicked() && !open) {
-            OneColor finalColor = color;
+            OneColor finalColor = new OneColor(color.getRGB());
             new RenderTickDelay(() -> {
                 open = true;
                 colorSelector = new ColorSelector(finalColor, inputHandler.mouseX(), inputHandler.mouseY(), allowAlpha, inputHandler);
@@ -87,15 +87,20 @@ public class ConfigColorElement extends BasicOption {
             }, 1);
         }
         if (OneConfigGui.INSTANCE.currentColorSelector != colorSelector) open = false;
-        else if (open) color = (OneConfigGui.INSTANCE.getColor());
-        setColor(color);
+        else if (open) {
+            setColor(OneConfigGui.INSTANCE.getColor());
+        }
         nanoVGHelper.setAlpha(vg, 1f);
     }
 
     protected void setColor(OneColor color) {
         try {
-            set(color);
-        } catch (IllegalAccessException ignored) {
+            Object colorField = field.get(parent);
+            if (!color.equals(colorField))  {
+                ((OneColor) colorField).setFromOneColor(color);
+                this.triggerListeners();
+            }
+        } catch (IllegalAccessException ignore) {
         }
     }
 

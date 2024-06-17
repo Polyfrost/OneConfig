@@ -359,6 +359,7 @@ public abstract class cc/polyfrost/oneconfig/config/elements/BasicOption {
 	protected fun set (Ljava/lang/Object;)V
 	public fun setParent (Ljava/lang/Object;)V
 	protected fun shouldDrawDescription ()Z
+	protected fun triggerListeners ()V
 }
 
 public class cc/polyfrost/oneconfig/config/elements/OptionCategory {

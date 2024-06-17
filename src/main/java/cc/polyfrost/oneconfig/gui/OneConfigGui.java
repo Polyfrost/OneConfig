@@ -280,7 +280,7 @@ public class OneConfigGui extends OneUIScreen {
         handleHistoryMovement(backArrow.isClicked(), forwardArrow.isClicked());
 
         scissorHelper.scissor(vg, x + 224, y + 72, 1056, 728);
-        Scissor blockedClicks = inputHandler.blockInputArea(x + 224, y, 1056, 72);
+        Scissor blockedClicks = inputHandler.blockInputArea(x, y, 224, 728);
         if (prevPage != null && pageAnimation != null) {
             float pageProgress = pageAnimation.get(GuiUtils.getDeltaTime());
             if (!pageAnimation.isReversed()) {
