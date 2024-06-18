@@ -73,7 +73,7 @@ public class Mod implements Comparable<Mod> {
      * @param migrator Migrator class to port the old config
      */
     public Mod(String name, ModType modType, @Nullable String modIcon, Migrator migrator) {
-        this(name, modType, modIcon, -1, -1, null);
+        this(name, modType, modIcon, -1, -1, migrator);
     }
 
     /**
