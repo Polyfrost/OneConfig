@@ -35,6 +35,13 @@ public interface PlayerPlatform {
 
     String getPlayerName();
 
+    /**
+     * Return the server brand.
+     * @deprecated removed in 1.20. Returns the {@link #getCurrentServer()} {@link Server#ip} instead.
+     */
+    @Deprecated
+    String getServerBrand();
+
     @Nullable
     Server getCurrentServer();
 

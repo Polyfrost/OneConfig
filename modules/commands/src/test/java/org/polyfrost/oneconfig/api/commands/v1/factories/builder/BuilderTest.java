@@ -28,10 +28,10 @@ package org.polyfrost.oneconfig.api.commands.v1.factories.builder;
 
 import org.junit.jupiter.api.Test;
 import org.polyfrost.oneconfig.api.commands.v1.CommandTree;
-import org.polyfrost.oneconfig.api.commands.v1.arguments.ArgumentParser;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.polyfrost.oneconfig.api.commands.v1.factories.builder.BuilderUtils.*;
 import static org.polyfrost.oneconfig.api.commands.v1.factories.builder.CommandBuilder.Arg.*;
 import static org.polyfrost.oneconfig.api.commands.v1.factories.builder.CommandBuilder.command;
 import static org.polyfrost.oneconfig.api.commands.v1.factories.builder.CommandBuilder.runs;
@@ -39,34 +39,29 @@ import static org.polyfrost.oneconfig.api.commands.v1.factories.builder.CommandB
 public class BuilderTest {
     @Test
     void test() {
-        CommandBuilder b = command(ArgumentParser.defaultParsers, "test");
+        CommandBuilder b = command("test");
         b.then(
-                        runs("chicken").with(org.polyfrost.oneconfig.api.commands.v1.factories.builder.BuilderUtils.intArg(), org.polyfrost.oneconfig.api.commands.v1.factories.builder.BuilderUtils.intArg())
-                                .does(args -> {
-                                    int res = getInt(args[0]) + getInt(args[1]);
-                                    System.out.println(res);
-                                    return res;
-                                })
+                        runs("chicken").with(intArg(), intArg()).does(args -> {
+                            int res = getInt(args[0]) + getInt(args[1]);
+                            System.out.println(res);
+                            return res;
+                        })
                 ).then(
-                        runs("bob").with(org.polyfrost.oneconfig.api.commands.v1.factories.builder.BuilderUtils.shortArg())
-                                .does(args -> {
-                                    System.out.println(getShort(args[0]));
-                                })
+                        runs("bob").with(shortArg()).does(args -> {
+                            System.out.println(getShort(args[0]));
+                        })
                 ).subcommand("something")
                 .then(
-                        runs("a").with(org.polyfrost.oneconfig.api.commands.v1.factories.builder.BuilderUtils.stringArg())
-                                .does(args -> {
-                                    System.out.println(getString(args[0]));
-                                })
+                        runs("a").with(stringArg()).does(args -> {
+                            System.out.println(getString(args[0]));
+                        })
                 ).then(
-                        runs("a").with(org.polyfrost.oneconfig.api.commands.v1.factories.builder.BuilderUtils.stringArg(), org.polyfrost.oneconfig.api.commands.v1.factories.builder.BuilderUtils.stringArg())
-                                .does(args -> {
-                                    System.out.println(getString(args[0]) + getString(args[1]));
-                                    return 0;
-                                })
+                        runs("a").with(stringArg(), stringArg()).does(args -> {
+                            System.out.println(getString(args[0]) + getString(args[1]));
+                            return 0;
+                        })
                 ).then(
-                        runs("gar").with(org.polyfrost.oneconfig.api.commands.v1.factories.builder.BuilderUtils.booleanArg(), org.polyfrost.oneconfig.api.commands.v1.factories.builder.BuilderUtils.booleanArg(), org.polyfrost.oneconfig.api.commands.v1.factories.builder.BuilderUtils.booleanArg())
-                                .does(args -> args)
+                        runs("gar").with(booleanArg(), booleanArg(), booleanArg()).does(args -> args)
                 );
         CommandTree t = b.tree;
 

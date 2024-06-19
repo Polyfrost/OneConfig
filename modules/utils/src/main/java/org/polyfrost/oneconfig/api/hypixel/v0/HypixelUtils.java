@@ -43,21 +43,18 @@ import net.hypixel.modapi.packet.impl.serverbound.ServerboundPlayerInfoPacket;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.MustBeInvokedByOverriders;
 import org.jetbrains.annotations.Unmodifiable;
 import org.polyfrost.oneconfig.api.hypixel.v0.internal.HypixelApiInternals;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
-import org.polyfrost.oneconfig.api.platform.v1.PlayerPlatform;
 
-import java.util.Map;
-import java.util.Optional;
-import java.util.ServiceLoader;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * Hypixel API wrapper for OneConfig.
  * <br><br>
  * When this class is first referenced, it will set up the Hypixel API handlers for you. After that, all the methods for sending and receiving packets
- * are available directly from their classes, such as {@link HypixelModAPI#registerHandler(ClientboundPacketHandler)}.
+ * are available directly from their classes, such as {@link HypixelModAPI#registerHandler(Class, ClientboundPacketHandler)}.
  * <br><br>
  * This class is a simple wrapper around this functionality, providing a simple way to access the Hypixel API.
  *
@@ -76,10 +73,11 @@ public final class HypixelUtils {
     private HypixelUtils() {
     }
 
+    @SuppressWarnings("deprecation")
     public static boolean isHypixel() {
-        PlayerPlatform.Server server = Platform.player().getCurrentServer();
-        if (server == null) return false;
-        return server.ip.toLowerCase().contains("hypixel");
+        String brand = Platform.player().getServerBrand();
+        if (brand == null) return false;
+        return brand.toLowerCase().contains("hypixel");
     }
 
     public static PlayerInfo getPlayerInfo() {
@@ -94,8 +92,14 @@ public final class HypixelUtils {
         return INSTANCE.location == null ? INSTANCE.location = new Location() : INSTANCE.location;
     }
 
-    public static abstract class InfoBase<T extends VersionedPacket & ClientboundHypixelPacket> {
+    protected static abstract class InfoBase<T extends VersionedPacket & ClientboundHypixelPacket> {
         protected T packet;
+
+        protected InfoBase() {
+            LOGGER.info("Registering {} packet handler", getPacketClass());
+            HypixelModAPI.getInstance().registerHandler(getPacketClass(), this::onPacket);
+            update();
+        }
 
         @ApiStatus.Internal
         public abstract void update();
@@ -109,20 +113,17 @@ public final class HypixelUtils {
             if (packet == null) update();
             return packet;
         }
+
+        @MustBeInvokedByOverriders
+        protected void onPacket(T packet) {
+            this.packet = packet;
+        }
+
+        protected abstract Class<T> getPacketClass();
     }
 
 
     public static final class PartyInfo extends InfoBase<ClientboundPartyInfoPacket> {
-        private PartyInfo() {
-            LOGGER.info("Registering party info packet handler");
-            HypixelModAPI.getInstance().registerHandler(new ClientboundPacketHandler() {
-                @Override
-                public void onPartyInfoPacket(ClientboundPartyInfoPacket packet) {
-                    PartyInfo.this.packet = packet;
-                }
-            });
-            update();
-        }
 
         @Override
         public void update() {
@@ -138,23 +139,17 @@ public final class HypixelUtils {
         }
 
         @Unmodifiable
-        public Optional<Map<UUID, ClientboundPartyInfoPacket.PartyMember>> getMembers() {
-            return getPacket() == null ? Optional.empty() : Optional.of(packet.getMemberMap());
+        public Map<UUID, ClientboundPartyInfoPacket.PartyMember> getMembers() {
+            return getPacket() == null ? Collections.emptyMap() : packet.getMemberMap();
+        }
+
+        @Override
+        protected Class<ClientboundPartyInfoPacket> getPacketClass() {
+            return ClientboundPartyInfoPacket.class;
         }
     }
 
     public static final class PlayerInfo extends InfoBase<ClientboundPlayerInfoPacket> {
-        private PlayerInfo() {
-            LOGGER.info("Registering player info handler");
-            HypixelModAPI.getInstance().registerHandler(new ClientboundPacketHandler() {
-                @Override
-                public void onPlayerInfoPacket(ClientboundPlayerInfoPacket packet) {
-                    PlayerInfo.this.packet = packet;
-                }
-            });
-            update();
-        }
-
         @Override
         public void update() {
             HypixelModAPI.getInstance().sendPacket(new ServerboundPlayerInfoPacket());
@@ -175,27 +170,31 @@ public final class HypixelUtils {
         public Optional<String> getPrefix() {
             return getPacket() == null ? Optional.empty() : packet.getPrefix();
         }
+
+        @Override
+        protected Class<ClientboundPlayerInfoPacket> getPacketClass() {
+            return ClientboundPlayerInfoPacket.class;
+        }
     }
 
     public static final class Location extends InfoBase<ClientboundLocationPacket> {
         private ClientboundLocationPacket last;
+
         private Location() {
-            LOGGER.info("Registering location packet handler");
-            HypixelModAPI.getInstance().registerHandler(new ClientboundPacketHandler() {
-                @Override
-                public void onLocationEvent(ClientboundLocationPacket packet) {
-                    last = Location.this.packet;
-                    Location.this.packet = packet;
-                    // cannot access the EventManager from here, so we do it like this instead.
-                    internals.postLocationEvent();
-                }
-            });
+            super();
             HypixelModAPI.getInstance().subscribeToEventPacket(ClientboundLocationPacket.class);
         }
 
         @Override
         public void update() {
             // no-op as event based
+        }
+
+        @Override
+        protected void onPacket(ClientboundLocationPacket packet) {
+            last = this.packet;
+            super.onPacket(packet);
+            internals.postLocationEvent();
         }
 
         public Optional<String> getLastServerName() {
@@ -267,6 +266,11 @@ public final class HypixelUtils {
             if (!type.isPresent()) return Optional.empty();
             ServerType t = type.get();
             return t instanceof GameType ? Optional.of((GameType) t) : Optional.empty();
+        }
+
+        @Override
+        protected Class<ClientboundLocationPacket> getPacketClass() {
+            return ClientboundLocationPacket.class;
         }
     }
 }

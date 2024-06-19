@@ -60,12 +60,12 @@ public final class JsonUtils {
     }
 
     @Nullable
-    public static JsonElement parseFromURL(String url) {
+    public static JsonElement parseFromUrl(String url) {
         return parseOrNull(NetworkUtils.getString(url));
     }
 
     public static void parseFromUrl(String url, Consumer<@NotNull JsonElement> action) {
-        JsonElement res = parseFromURL(url);
+        JsonElement res = parseFromUrl(url);
         if (res != null) action.accept(res);
     }
 

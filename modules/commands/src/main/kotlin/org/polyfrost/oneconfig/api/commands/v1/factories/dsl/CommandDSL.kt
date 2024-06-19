@@ -23,6 +23,7 @@
  * to OneConfig, as published by Polyfrost. If not, see
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
+@file:Suppress("unused", "deprecation_error", "DEPRECATED_SINCE_KOTLIN_OUTSIDE_KOTLIN_SUBPACKAGE")
 
 package org.polyfrost.oneconfig.api.commands.v1.factories.dsl
 
@@ -41,7 +42,8 @@ import java.lang.reflect.Method
  * Uses some 'interesting' hacks to get the method handle of the function passed to the DSL. Unfortunately, at the moment, lambda parameters cannot be annotated,
  * so the [ParamData] class and [param] function are used to provide metadata for the parameters.
  */
-@Suppress("unused")
+@Deprecated("Currently not working due to K2 changing how it makes lambda functions.")
+@DeprecatedSinceKotlin(errorSince = "2.0")
 class CommandDSL @JvmOverloads constructor(private val parsers: Map<Class<*>, ArgumentParser<*>>, vararg name: String, description: String? = null) {
     internal val tree = CommandTree(name, description)
     var description: String?

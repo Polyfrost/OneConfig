@@ -85,10 +85,10 @@ public class OneConfig
     private void init() {
         BlurHandler.init();
         preload();
-        CommandBuilder b = CommandManager.builder("oneconfig", "ocfg", "ocfgv1").description("OneConfig main command");
+        CommandBuilder b = CommandBuilder.command("oneconfig", "ocfg", "ocfgv1").description("OneConfig main command");
         b.then(runs().does(OneConfigUI.INSTANCE::open).description("Opens the OneConfig GUI"));
         b.then(runs("hud").does(() -> Platform.screen().display(HudManager.INSTANCE.getWithEditor())).description("Opens the OneConfig HUD editor"));
-        CommandManager.registerCommand(b);
+        CommandManager.registerCommand(b.build());
         KeybindHelper.builder().mods(KeyModifiers.RSHIFT).does(OneConfigUI.INSTANCE::open).register();
         EventManager.INSTANCE.post(InitializationEvent.INSTANCE);
         LOGGER.info("OneConfig initialized!");

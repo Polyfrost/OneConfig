@@ -52,6 +52,19 @@ public class PlayerPlatformImpl implements PlayerPlatform {
     }
 
     @Override
+    public String getServerBrand() {
+        //#if MC<12000
+        net.minecraft.client.entity.EntityPlayerSP player = Minecraft.getMinecraft().thePlayer;
+        if (player == null) return null;
+        // NOTE: this is an MCP issue. This method is actually getServerBrand, but it's named getClientBrand in MCP for 1.8.9
+        return player.getClientBrand();
+        //#else
+        //$$ Server s = getCurrentServer();
+        //$$ return s == null ? null : s.ip;
+        //#endif
+    }
+
+    @Override
     public Server getCurrentServer() {
         ServerData d = Minecraft.getMinecraft().getCurrentServerData();
         if (d == null) return null;

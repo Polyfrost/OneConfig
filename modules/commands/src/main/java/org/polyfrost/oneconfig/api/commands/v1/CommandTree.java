@@ -133,9 +133,9 @@ public class CommandTree extends Node {
         commandsNoDupe.computeIfAbsent(executable.name(), k -> new ArrayList<>(1)).add(executable);
     }
 
-    public void init() {
+    public CommandTree init() {
         // todo optimize: replace arraylists with singleton lists where applicable?
-        if (init) return;
+        if (init) return this;
         init = true;
         List<Executable> executables = new ArrayList<>(5);
         for (Map.Entry<String, List<Node>> entry : commands.entrySet()) {
@@ -169,6 +169,7 @@ public class CommandTree extends Node {
             }
             executables.clear();
         }
+        return this;
     }
 
     @NotNull

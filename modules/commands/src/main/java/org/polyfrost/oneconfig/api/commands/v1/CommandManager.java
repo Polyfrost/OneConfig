@@ -34,16 +34,8 @@ import org.polyfrost.oneconfig.api.commands.v1.factories.CommandFactory;
 import org.polyfrost.oneconfig.api.commands.v1.factories.PlatformCommandFactory;
 import org.polyfrost.oneconfig.api.commands.v1.factories.annotated.AnnotationCommandFactory;
 import org.polyfrost.oneconfig.api.commands.v1.factories.annotated.Command;
-import org.polyfrost.oneconfig.api.commands.v1.factories.builder.BuilderFactory;
-import org.polyfrost.oneconfig.api.commands.v1.factories.builder.CommandBuilder;
-import org.polyfrost.oneconfig.api.commands.v1.factories.dsl.CommandDSL;
-import org.polyfrost.oneconfig.api.commands.v1.factories.dsl.DSLFactory;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.ServiceLoader;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Handles the registration of OneConfig commands.
@@ -77,17 +69,13 @@ public class CommandManager {
 
     private CommandManager() {
         parsers.putAll(ArgumentParser.defaultParsers);
-        registerFactory(new DSLFactory());
         registerFactory(new AnnotationCommandFactory());
-        registerFactory(new BuilderFactory());
     }
 
-    public static CommandDSL dsl(String... aliases) {
-        return new CommandDSL(INSTANCE.parsers, aliases);
-    }
-
-    public static CommandBuilder builder(String... aliases) {
-        return new CommandBuilder(INSTANCE.parsers, aliases);
+    public static boolean registerCommand(CommandTree tree) {
+        if (tree == null) return false;
+        platformCreate(tree);
+        return true;
     }
 
     public static boolean registerCommand(Object obj) {
@@ -132,14 +120,18 @@ public class CommandManager {
      */
     public CommandTree createTree(Object obj) {
         for (CommandFactory f : factories) {
-            CommandTree t = f.create(parsers, obj);
-            if (t != null) {
-                t.init();
-                if (platform != null) platform.createCommand(t);
-                else LOGGER.warn("didn't create command with platform as it is missing (check logs)");
-                return t;
-            }
+            CommandTree tree = f.create(parsers, obj);
+            if (tree == null) continue;
+            return platformCreate(tree);
         }
+        LOGGER.warn("no factory was able to process {} into a command tree, so it was ignored", obj.getClass());
         return null;
+    }
+
+    private static CommandTree platformCreate(CommandTree tree) {
+        tree.init();
+        if (platform != null) platform.createCommand(tree);
+        else LOGGER.warn("didn't create command with platform as it is missing (check logs)");
+        return tree;
     }
 }

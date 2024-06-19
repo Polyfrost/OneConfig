@@ -24,15 +24,12 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import org.polyfrost.oneconfig.api.commands.v1.arguments.ArgumentParser
-import org.polyfrost.oneconfig.api.commands.v1.factories.dsl.CommandDSL.Companion.command
-import org.polyfrost.oneconfig.api.commands.v1.factories.dsl.CommandDSL.Companion.param
 
 class DSLTest {
     @Test
     fun main() {
+        /*
         val tree = command(ArgumentParser.defaultParsers, "test") {
             command(
                 "sup", "hello", paramData = listOf(
@@ -66,5 +63,6 @@ class DSLTest {
         tree.execute("jeff", "chicken")
         assertEquals(3, tree.execute("jeff", "chicken", "1", "2"))
         assertEquals(3.0, tree.execute("jeff", "bob", "jeff", "1.5", "1.5"))
+        */
     }
 }

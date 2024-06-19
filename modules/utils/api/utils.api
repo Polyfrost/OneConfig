@@ -9,25 +9,17 @@ public final class org/polyfrost/oneconfig/api/hypixel/v0/HypixelUtils {
 	public static fun isHypixel ()Z
 }
 
-public abstract class org/polyfrost/oneconfig/api/hypixel/v0/HypixelUtils$InfoBase {
-	protected field packet Lnet/hypixel/modapi/packet/impl/VersionedPacket;
-	public fun <init> ()V
-	public fun getPacket ()Lnet/hypixel/modapi/packet/impl/VersionedPacket;
-	public final fun toString ()Ljava/lang/String;
-	public abstract fun update ()V
-}
-
-public final class org/polyfrost/oneconfig/api/hypixel/v0/HypixelUtils$Location : org/polyfrost/oneconfig/api/hypixel/v0/HypixelUtils$InfoBase {
+public final class org/polyfrost/oneconfig/api/hypixel/v0/HypixelUtils$Location {
 	public fun getGameType ()Ljava/util/Optional;
+	public fun getLastGameType ()Ljava/util/Optional;
+	public fun getLastLobbyName ()Ljava/util/Optional;
+	public fun getLastMapName ()Ljava/util/Optional;
+	public fun getLastMode ()Ljava/util/Optional;
+	public fun getLastServerName ()Ljava/util/Optional;
+	public fun getLastServerType ()Ljava/util/Optional;
 	public fun getLobbyName ()Ljava/util/Optional;
 	public fun getMapName ()Ljava/util/Optional;
 	public fun getMode ()Ljava/util/Optional;
-	public fun getPreviousGameType ()Ljava/util/Optional;
-	public fun getPreviousLobbyName ()Ljava/util/Optional;
-	public fun getPreviousMapName ()Ljava/util/Optional;
-	public fun getPreviousMode ()Ljava/util/Optional;
-	public fun getPreviousServerName ()Ljava/util/Optional;
-	public fun getPreviousServerType ()Ljava/util/Optional;
 	public fun getServerName ()Ljava/util/Optional;
 	public fun getServerType ()Ljava/util/Optional;
 	public fun inGame ()Z
@@ -37,14 +29,16 @@ public final class org/polyfrost/oneconfig/api/hypixel/v0/HypixelUtils$Location 
 	public fun wasInLobby ()Z
 }
 
-public final class org/polyfrost/oneconfig/api/hypixel/v0/HypixelUtils$PartyInfo : org/polyfrost/oneconfig/api/hypixel/v0/HypixelUtils$InfoBase {
-	public fun getMembers ()Ljava/util/Optional;
+public final class org/polyfrost/oneconfig/api/hypixel/v0/HypixelUtils$PartyInfo {
+	public fun <init> ()V
+	public fun getMembers ()Ljava/util/Map;
 	public fun getPartySize ()I
 	public fun isInParty ()Z
 	public fun update ()V
 }
 
-public final class org/polyfrost/oneconfig/api/hypixel/v0/HypixelUtils$PlayerInfo : org/polyfrost/oneconfig/api/hypixel/v0/HypixelUtils$InfoBase {
+public final class org/polyfrost/oneconfig/api/hypixel/v0/HypixelUtils$PlayerInfo {
+	public fun <init> ()V
 	public fun getMonthlyPackageRank ()Ljava/util/Optional;
 	public fun getPackageRank ()Ljava/util/Optional;
 	public fun getPrefix ()Ljava/util/Optional;
@@ -103,6 +97,7 @@ public abstract interface class org/polyfrost/oneconfig/api/platform/v1/PlayerPl
 	public abstract fun doesPlayerExist ()Z
 	public abstract fun getCurrentServer ()Lorg/polyfrost/oneconfig/api/platform/v1/PlayerPlatform$Server;
 	public abstract fun getPlayerName ()Ljava/lang/String;
+	public abstract fun getServerBrand ()Ljava/lang/String;
 	public abstract fun inMultiplayer ()Z
 }
 
@@ -145,20 +140,6 @@ public final class org/polyfrost/oneconfig/utils/v1/ArrayCastUtils {
 	public static fun unboxNumberArray ([Ljava/lang/Object;Ljava/lang/Class;)Ljava/lang/Object;
 }
 
-public final class org/polyfrost/oneconfig/utils/v1/ColorUtils {
-	public static fun getAlpha (I)I
-	public static fun getBlue (I)I
-	public static fun getColor (FFFF)I
-	public static fun getColor (III)I
-	public static fun getColor (IIII)I
-	public static fun getGreen (I)I
-	public static fun getRed (I)I
-	public static fun setAlpha (II)I
-	public static fun setBlue (II)I
-	public static fun setGreen (II)I
-	public static fun setRed (II)I
-}
-
 public final class org/polyfrost/oneconfig/utils/v1/Deprecator {
 	public static fun markDeprecated ()V
 }
@@ -175,7 +156,7 @@ public final class org/polyfrost/oneconfig/utils/v1/JsonUtils {
 	public static final field PARSER Lcom/google/gson/JsonParser;
 	public static fun parse (Ljava/lang/String;)Lcom/google/gson/JsonElement;
 	public static fun parse (Ljava/lang/String;Ljava/util/function/Consumer;)V
-	public static fun parseFromURL (Ljava/lang/String;)Lcom/google/gson/JsonElement;
+	public static fun parseFromUrl (Ljava/lang/String;)Lcom/google/gson/JsonElement;
 	public static fun parseFromUrl (Ljava/lang/String;Ljava/util/function/Consumer;)V
 	public static fun parseFromUrlAsync (Ljava/lang/String;Ljava/util/function/Consumer;)V
 	public static fun parseOrNull (Ljava/lang/String;)Lcom/google/gson/JsonElement;
@@ -276,40 +257,28 @@ public final class org/polyfrost/oneconfig/utils/v1/OneConfigUpdate {
 }
 
 public final class org/polyfrost/oneconfig/utils/v1/OneImage {
+	public final field height I
+	public final field image Ljava/awt/image/BufferedImage;
+	public final field width I
 	public fun <init> (II)V
 	public fun <init> (Ljava/awt/image/BufferedImage;)V
 	public fun <init> (Ljava/io/InputStream;)V
-	public fun <init> (Ljava/lang/String;)V
 	public fun <init> (Ljava/nio/file/Path;)V
 	public fun copyToClipboard ()V
-	public fun crop (IIII)V
+	public fun crop (IIII)Lorg/polyfrost/oneconfig/utils/v1/OneImage;
 	public fun dispose ()V
-	public fun drawCircle (IIII)V
-	public fun drawLine (IIIII)V
-	public fun drawLine (Ljava/awt/Stroke;IIII)V
-	public fun drawOval (IIIII)V
-	public fun drawPolygon (IILjava/awt/Polygon;I)V
-	public fun drawRect (IIIII)V
-	public fun drawRoundedRect (IIIIII)V
-	public fun drawString (Ljava/lang/String;IILjava/awt/Font;I)V
-	public fun drawTexturedRect (Ljava/awt/TexturePaint;IIII)V
-	public fun drawTriangle (Ljava/awt/Point;Ljava/awt/Point;Ljava/awt/Point;I)V
-	public fun flipHorizontal ()V
-	public fun flipVertical ()V
-	public fun getColorAtPos (II)V
+	public fun flipHorizontal ()Lorg/polyfrost/oneconfig/utils/v1/OneImage;
+	public fun flipVertical ()Lorg/polyfrost/oneconfig/utils/v1/OneImage;
+	public fun getColorAtPos (II)I
 	public fun getG2D ()Ljava/awt/Graphics2D;
-	public fun getHeight ()I
-	public fun getImage ()Ljava/awt/image/BufferedImage;
-	public fun getWidth ()I
 	public fun maskColor (Ljava/awt/Color;)V
 	public fun maskPaint (Ljava/awt/Paint;)V
-	public fun rotate (D)V
+	public fun rotate (D)Lorg/polyfrost/oneconfig/utils/v1/OneImage;
 	public fun save (Ljava/nio/file/Path;)V
-	public fun scale (DD)V
+	public fun scale (DD)Lorg/polyfrost/oneconfig/utils/v1/OneImage;
+	public fun scaleToSize (II)Lorg/polyfrost/oneconfig/utils/v1/OneImage;
 	public fun setBrightness (F)V
 	public fun setColorAtPos (III)V
-	public fun setSize (II)V
-	public fun translate (II)V
 	public fun uploadToImgur ()Ljava/lang/String;
 }
 
@@ -317,13 +286,6 @@ public final class org/polyfrost/oneconfig/utils/v1/SimpleProfiler {
 	public static fun pop (Ljava/lang/String;)F
 	public static fun pop (Ljava/lang/String;Lorg/apache/logging/log4j/Level;)F
 	public static fun push (Ljava/lang/String;)Z
-}
-
-public final class org/polyfrost/oneconfig/utils/v1/StringUtils {
-	public static final field ALPHANUMERIC Ljava/lang/String;
-	public static fun randomString ()Ljava/lang/String;
-	public static fun randomString (I)Ljava/lang/String;
-	public static fun randomString (Ljava/lang/String;I)Ljava/lang/String;
 }
 
 public class org/polyfrost/oneconfig/utils/v1/WrappingUtils {
@@ -334,17 +296,6 @@ public class org/polyfrost/oneconfig/utils/v1/WrappingUtils {
 	public static fun isSimpleClass (Ljava/lang/Class;)Z
 	public static fun isSimpleObject (Ljava/lang/Object;)Z
 	public static fun richCast (Ljava/lang/Object;Ljava/lang/Class;)Ljava/lang/Object;
-}
-
-public final class org/polyfrost/oneconfig/utils/v1/dsl/ColorsKt {
-	public static final fun getAlpha (I)I
-	public static final fun getBlue (I)I
-	public static final fun getGreen (I)I
-	public static final fun getRed (I)I
-	public static final fun setAlpha (II)I
-	public static final fun setBlue (II)I
-	public static final fun setGreen (II)I
-	public static final fun setRed (II)I
 }
 
 public final class org/polyfrost/oneconfig/utils/v1/dsl/IoKt {

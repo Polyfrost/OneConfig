@@ -26,16 +26,12 @@
 
 package org.polyfrost.oneconfig.api.commands.v1.factories.builder;
 
+import org.polyfrost.oneconfig.api.commands.v1.CommandManager;
 import org.polyfrost.oneconfig.api.commands.v1.CommandTree;
 import org.polyfrost.oneconfig.api.commands.v1.Executable;
 import org.polyfrost.oneconfig.api.commands.v1.arguments.ArgumentParser;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -64,6 +60,10 @@ public class CommandBuilder {
 
     public static ExeBuilder runs() {
         return new ExeBuilder("");
+    }
+
+    public static CommandBuilder command(String... aliases) {
+        return new CommandBuilder(CommandManager.INSTANCE.parsers, aliases);
     }
 
     public static CommandBuilder command(Map<Class<?>, ArgumentParser<?>> parsers, String... aliases) {
@@ -95,13 +95,21 @@ public class CommandBuilder {
         return this;
     }
 
+    public CommandTree build() {
+        return tree;
+    }
+
+    public boolean register() {
+        return CommandManager.registerCommand(build());
+    }
+
     public static final class ExeBuilder {
         Set<String> aliases = new HashSet<>();
         String description = null;
 
         Function<Object[], Object> function;
 
-        List<Arg> args = new ArrayList<>();
+        List<Arg> args = new ArrayList<>(5);
 
         boolean greedy = false;
 

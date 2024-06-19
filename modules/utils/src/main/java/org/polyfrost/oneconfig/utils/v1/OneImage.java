@@ -35,22 +35,13 @@ import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Base64;
-import java.util.Objects;
 
 /**
  * An Image wrapper class that is used by the OneConfig system.
@@ -59,42 +50,9 @@ import java.util.Objects;
 @ApiStatus.Experimental
 public final class OneImage {
     private static final Logger LOGGER = LogManager.getLogger("OneConfig/Images");
-    private final int width, height;
-    private BufferedImage image;
+    public final int width, height;
+    public final BufferedImage image;
     private Graphics2D graphics = null;
-
-    /**
-     * Create a new OneImage from the file. This can be as a resource location inside your JAR.
-     *
-     * @param filePath The path to the image file.
-     */
-    public OneImage(String filePath) throws IOException {
-        image = ImageIO.read(Objects.requireNonNull(OneImage.class.getResourceAsStream(filePath)));
-        width = image.getWidth();
-        height = image.getHeight();
-    }
-
-    /**
-     * Create a new OneImage from the file.
-     *
-     * @param is InputStream to the image file.
-     */
-    public OneImage(InputStream is) throws IOException {
-        image = ImageIO.read(is);
-        width = image.getWidth();
-        height = image.getHeight();
-    }
-
-    /**
-     * Create a new OneImage from the file.
-     *
-     * @param path path to the image file.
-     */
-    public OneImage(Path path) throws IOException {
-        image = ImageIO.read(new BufferedInputStream(Files.newInputStream(path)));
-        width = image.getWidth();
-        height = image.getHeight();
-    }
 
     /**
      * Create a new OneImage from the BufferedImage.
@@ -106,23 +64,28 @@ public final class OneImage {
     }
 
     /**
-     * Create a new blank image with the specified width and height.
+     * Create a new OneImage from the file.
+     *
+     * @param is InputStream to the image file.
      */
-    public OneImage(int width, int height) {
-        this.width = width;
-        this.height = height;
-        image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+    public OneImage(InputStream is) throws IOException {
+        this(ImageIO.read(is));
     }
 
     /**
-     * @return the image as a BufferedImage.
+     * Create a new OneImage from the file.
+     *
+     * @param path path to the image file.
      */
-    public BufferedImage getImage() {
-        return image;
+    public OneImage(Path path) throws IOException {
+        this(new BufferedInputStream(Files.newInputStream(path)));
     }
 
-    void setImage(BufferedImage img) {
-        image = img;
+    /**
+     * Create a new blank image with the specified width and height.
+     */
+    public OneImage(int width, int height) {
+        this(new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB));
     }
 
     /**
@@ -148,36 +111,22 @@ public final class OneImage {
     }
 
     /**
-     * @return the width of the image.
-     */
-    public int getWidth() {
-        return width;
-    }
-
-    /**
-     * @return the height of the image.
-     */
-    public int getHeight() {
-        return height;
-    }
-
-    /**
-     * Crop the image to the specified width and height.
+     * Copy and crop the image to the specified width and height.
      *
      * @param startX The x coordinate of the top-left corner of the crop.
      * @param startY The y coordinate of the top-left corner of the crop.
      * @param width  The width of the crop.
      * @param height The height of the crop.
      */
-    public void crop(int startX, int startY, int width, int height) {
-        image = image.getSubimage(startX, startY, width, height);
+    public OneImage crop(int startX, int startY, int width, int height) {
+        return new OneImage(image.getSubimage(startX, startY, width, height));
     }
 
     /**
      * Get the color of a pixel in the image.
      */
-    public void getColorAtPos(int x, int y) {
-        image.getRGB(x, y);
+    public int getColorAtPos(int x, int y) {
+        return image.getRGB(x, y);
     }
 
     /**
@@ -265,132 +214,49 @@ public final class OneImage {
         dispose();
     }
 
-    // LINE METHODS
-    public void drawLine(Stroke stroke, int sx, int sy, int ex, int ey) {
-        Graphics2D g2d = getG2D();
-        g2d.setStroke(stroke);
-        g2d.drawLine(sx, sy, ex, ey);
-        dispose();
-    }
-
-    public void drawLine(int sx, int sy, int ex, int ey, int width) {
-        drawLine(new BasicStroke(width), sx, sy, ex, ey);
-    }
-
-    // SHAPE METHODS
-    public void drawTexturedRect(TexturePaint paint, int x, int y, int width, int height) {
-        Graphics2D g2d = getG2D();
-        g2d.setPaint(paint);
-        g2d.fillRect(x, y, width, height);
-        dispose();
-    }
-
-    public void drawRect(int x, int y, int width, int height, int color) {
-        Graphics2D g2d = getG2D();
-        g2d.setColor(new Color(color, true));
-        g2d.drawRect(x, y, width, height);
-        dispose();
-    }
-
-    public void drawRoundedRect(int x, int y, int width, int height, int radius, int color) {
-        Graphics2D g2d = getG2D();
-        g2d.setColor(new Color(color, true));
-        g2d.fillRoundRect(x, y, width, height, radius, radius);
-        dispose();
-    }
-
-    public void drawPolygon(int x, int y, Polygon polygon, int color) {
-        Graphics2D g2d = getG2D();
-        g2d.setColor(new Color(color, true));
-        g2d.translate(x, y);
-        g2d.fillPolygon(polygon);
-        dispose();
-    }
-
-    public void drawOval(int x, int y, int width, int height, int color) {
-        Graphics2D g2d = getG2D();
-        g2d.setColor(new Color(color, true));
-        g2d.fillOval(x, y, width, height);
-        dispose();
-    }
-
-    public void drawTriangle(Point p1, Point p2, Point p3, int color) {
-        Graphics2D g2d = getG2D();
-        g2d.setColor(new Color(color, true));
-        g2d.fillPolygon(new int[]{p1.x, p2.x, p3.x}, new int[]{p1.y, p2.y, p3.y}, 3);
-        dispose();
-    }
-
-    public void drawCircle(int x, int y, int radius, int color) {
-        Graphics2D g2d = getG2D();
-        g2d.setColor(new Color(color, true));
-        g2d.fillRoundRect(x, y, radius, radius, radius, radius);
-        dispose();
-    }
-
-
-    // STRING METHODS
-    public void drawString(String text, int x, int y, Font font, int color) {
-        Graphics2D g2d = getG2D();
-        g2d.setColor(new Color(color, true));
-        g2d.setFont(font);
-        g2d.drawString(text, x, y);
-        dispose();
-    }
-
 
     // IMAGE METHODS
 
     /**
-     * Scale the image by the given factor (1.0 = no change).
+     * Return a new OneImage, with the image scaled by the given factor (1.0 = no change).
      */
-    public void scale(double sx, double sy) {
-        if (sx == 1.0 && sy == 1.0) return;
-        BufferedImage old = image;
-        image = new BufferedImage((int) (Math.abs(sx * image.getWidth())), (int) (Math.abs(image.getHeight() * sy)), BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g2d = getG2D();
-        g2d.drawImage(old, new AffineTransformOp(AffineTransform.getScaleInstance(sx, sy), AffineTransformOp.TYPE_BILINEAR), 0, 0);
-        dispose();
+    public OneImage scale(double sx, double sy) {
+        OneImage out = new OneImage((int) (width * sx), (int) (height * sy));
+        Graphics2D g2d = out.getG2D();
+        g2d.drawImage(image, new AffineTransformOp(AffineTransform.getScaleInstance(sx, sy), AffineTransformOp.TYPE_BILINEAR), 0, 0);
+        out.dispose();
+        return out;
     }
 
     /**
-     * Scale the image to the specified width and height.
+     * Return a copy of this OneImage with the image scaled to the specified width and height.
      */
-    public void setSize(int width, int height) {
-        if (width == this.width && height == this.height) return;
-        scale(width / (double) this.width, height / (double) this.height);
+    public OneImage scaleToSize(int width, int height) {
+        return scale(width / (double) this.width, height / (double) this.height);
     }
 
     /**
-     * Rotate the image by the given angle (in degrees).
+     * Return a copy of this OneImage with the image rotated by the specified number of degrees.
      */
-    public void rotate(double angle) {
-        if (angle == 0 || angle == 360) return;
-        Graphics2D g2d = getG2D();
-        g2d.drawImage(image, new AffineTransformOp(AffineTransform.getRotateInstance(Math.toRadians(angle)), AffineTransformOp.TYPE_BILINEAR), 0, 0);
-        dispose();
+    public OneImage rotate(double degrees) {
+        OneImage out = new OneImage(width, height);
+        Graphics2D g2d = out.getG2D();
+        g2d.drawImage(image, new AffineTransformOp(AffineTransform.getRotateInstance(Math.toRadians(degrees)), AffineTransformOp.TYPE_BILINEAR), 0, 0);
+        out.dispose();
+        return out;
     }
 
     /**
-     * Translate the image by the given amount.
+     * Return a copy of this OneImage flipped horizontally.
      */
-    public void translate(int moveX, int moveY) {
-        Graphics2D g2d = getG2D();
-        g2d.drawImage(image, new AffineTransformOp(AffineTransform.getTranslateInstance(moveX, moveY), AffineTransformOp.TYPE_BILINEAR), 0, 0);
-        dispose();
+    public OneImage flipHorizontal() {
+        return scale(-1, 1);
     }
 
     /**
-     * Flip the image horizontally.
+     * Return a copy of this OneImage flipped vertically.
      */
-    public void flipHorizontal() {
-        scale(-1, 1);
-    }
-
-    /**
-     * Flip the image vertically.
-     */
-    public void flipVertical() {
-        scale(1, -1);
+    public OneImage flipVertical() {
+        return scale(1, -1);
     }
 }
