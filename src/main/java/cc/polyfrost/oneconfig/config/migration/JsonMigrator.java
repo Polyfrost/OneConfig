@@ -90,7 +90,12 @@ public class JsonMigrator implements Migrator {
     public JsonMigrator(String filePath) {
         File file = new File(filePath);
         try {
-            object = new JsonParser().parse(new FileReader(file)).getAsJsonObject();
+            JsonElement element = new JsonParser().parse(new FileReader(file));
+            if (element.isJsonObject()) { // This should be removed when ported to TwoConfig
+                object = element.getAsJsonObject();
+            } else {
+                object = null;
+            }
         } catch (Exception e) {
             e.printStackTrace();
             object = null;
@@ -121,9 +126,13 @@ public class JsonMigrator implements Migrator {
     }
 
     protected void generateValues() {
-        if (object == null) return;
         values = new HashMap<>();
+        if (object == null) return;
+        if (!object.isJsonObject()) return; // This should be removed when ported to TwoConfig
         for (Map.Entry<String, JsonElement> master : object.entrySet()) {
+            if (!master.getValue().isJsonObject()) { // This should be removed when ported to TwoConfig
+                continue;
+            }
             loopThroughChildren(master.getKey(), master.getValue().getAsJsonObject());
         }
     }
