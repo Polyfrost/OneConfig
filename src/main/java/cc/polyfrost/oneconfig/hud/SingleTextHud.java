@@ -131,7 +131,7 @@ public abstract class SingleTextHud extends TextHud {
 
     @Override
     protected float getWidth(float scale, boolean example) {
-        if (lines == null) return 0f;
+        if (lines == null || lines.isEmpty()) return 0f;
         if (!brackets) return getLineWidth(lines.get(0), scale);
         return getLineWidth("[" + lines.get(0) + "]", scale);
     }
