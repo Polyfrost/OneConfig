@@ -33,6 +33,7 @@ import net.minecraft.launchwrapper.Launch;
 import net.minecraft.launchwrapper.LaunchClassLoader;
 import net.minecraftforge.fml.relauncher.CoreModManager;
 import org.spongepowered.asm.launch.MixinBootstrap;
+import org.spongepowered.asm.mixin.MixinEnvironment;
 import org.spongepowered.asm.mixin.Mixins;
 
 import java.io.File;
@@ -72,6 +73,8 @@ public class OneConfigTweaker implements ITweaker {
                 t.printStackTrace();
             }
         }
+
+        MixinEnvironment.getDefaultEnvironment().addTransformerExclusion("com.creativemd.itemphysic.ItemTransformer");
     }
 
     @SuppressWarnings("unchecked")
