@@ -23,6 +23,7 @@
  * to OneConfig, as published by Polyfrost. If not, see
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
+
 @file:Suppress("unused", "deprecation_error", "DEPRECATED_SINCE_KOTLIN_OUTSIDE_KOTLIN_SUBPACKAGE")
 
 package org.polyfrost.oneconfig.api.commands.v1.factories.dsl
