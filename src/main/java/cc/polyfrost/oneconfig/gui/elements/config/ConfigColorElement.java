@@ -99,7 +99,9 @@ public class ConfigColorElement extends BasicOption {
             Object colorField = field.get(parent);
             if (!(colorField instanceof OneColor)) return;
             if (!color.equals(colorField))  {
-                ((OneColor) colorField).setFromOneColor(color);
+                OneColor finalColor = ((OneColor) colorField);
+                finalColor.setFromOneColor(color);
+                finalColor.setChromaSpeed(color.getDataBit());
                 this.triggerListeners();
             }
         } catch (IllegalAccessException ignore) {
