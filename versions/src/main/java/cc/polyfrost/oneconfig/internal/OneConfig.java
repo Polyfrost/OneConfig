@@ -227,11 +227,12 @@ public class OneConfig {
                         ? null
                         : metadata.logoFile;
         if (modLogoFile != null && !isForgeContainer) {
-            if (!modLogoFile.startsWith("/") && !modLogoFile.startsWith("http://") && !modLogoFile.startsWith("https://")) {
-                modLogoFile = "/" + modLogoFile;
-            }
             if (!modLogoFile.startsWith("assets/")) {
                 modLogoFile = "/assets/" + modLogoFile;
+            }
+            //noinspection HttpUrlsUsage
+            if (!modLogoFile.startsWith("/") && !modLogoFile.startsWith("http://") && !modLogoFile.startsWith("https://")) {
+                modLogoFile = "/" + modLogoFile;
             }
 
             if (OneConfig.class.getResource(modLogoFile) == null) {
