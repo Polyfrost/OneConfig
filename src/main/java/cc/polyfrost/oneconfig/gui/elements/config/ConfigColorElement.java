@@ -95,7 +95,9 @@ public class ConfigColorElement extends BasicOption {
 
     protected void setColor(OneColor color) {
         try {
+            if (field == null) return;
             Object colorField = field.get(parent);
+            if (colorField == null || !(colorField instanceof OneColor)) return;
             if (!color.equals(colorField))  {
                 ((OneColor) colorField).setFromOneColor(color);
                 this.triggerListeners();
