@@ -79,7 +79,7 @@ public class ConfigColorElement extends BasicOption {
         nanoVGHelper.drawRoundImage(vg, Images.ALPHA_GRID.filePath, x1 + 420, y + 4, 56, 24, 8f, getClass());
         nanoVGHelper.drawRoundedRect(vg, x1 + 420, y + 4, 56, 24, color.getRGB(), 8f);
         if (element.isClicked() && !open) {
-            OneColor finalColor = new OneColor(color.getHue(), color.getSaturation(), color.getBrightness(), color.getAlpha(), color.getDataBit() * 1000);
+            OneColor finalColor = new OneColor(color.getHue(), color.getSaturation(), color.getBrightness(), color.getAlpha(), color.getDataBit() == -1 ? color.getDataBit() : color.getDataBit() * 1000);
             new RenderTickDelay(() -> {
                 open = true;
                 colorSelector = new ColorSelector(finalColor, inputHandler.mouseX(), inputHandler.mouseY(), allowAlpha, inputHandler);
