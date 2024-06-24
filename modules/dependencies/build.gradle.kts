@@ -12,14 +12,18 @@ allprojects {
 	base.archivesName = "deps"
 	configurations {
 		listOf(apiElements, runtimeElements).forEach {
-			it.get().outgoing.artifacts.removeIf { it.buildDependencies.getDependencies(null).contains(tasks["jar"]) }
+			it.get().outgoing.artifacts.removeIf { artifact ->
+				artifact.buildDependencies.getDependencies(null).contains(tasks["jar"])
+			}
 			it.get().outgoing.artifact(tasks["shadowJar"])
 		}
 	}
 
-	tasks.jar.get().enabled = false
-	tasks.javadocJar.get().enabled = false
-	tasks.sourcesJar.get().enabled = false
+	tasks {
+		val jar by getting { enabled = false }
+		val javadocJar by getting { enabled = false }
+		val sourcesJar by getting { enabled = false }
+	}
 }
 
 dependencies {

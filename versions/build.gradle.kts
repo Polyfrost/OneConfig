@@ -1,7 +1,6 @@
 @file:Suppress("UnstableApiUsage")
 // Shared build logic for all versions of OneConfig.
 
-import net.fabricmc.loom.task.RemapSourcesJarTask
 import org.polyfrost.gradle.util.noServerRunConfigs
 import java.text.SimpleDateFormat
 
@@ -9,23 +8,17 @@ plugins {
     alias(libs.plugins.kotlin)
     id(libs.plugins.pgt.main.get().pluginId)
     id(libs.plugins.pgt.default.get().pluginId)
-    id(libs.plugins.shadow.get().pluginId)
-    `java-library`
-    `maven-publish`
-    signing
+//    id(libs.plugins.shadow.get().pluginId)
 }
 
-java.withSourcesJar()
-
 val modId = properties["mod_id"] as String
-version = rootProject.version
-group = rootProject.group
-
 val tweakClass = "org.polyfrost.oneconfig.internal.legacy.OneConfigTweaker"
 
 base {
     archivesName = platform.toString()
 }
+
+java.withSourcesJar()
 
 loom {
     noServerRunConfigs()
@@ -50,23 +43,12 @@ loom {
     mixin.defaultRefmapName = "mixins.${modId}.refmap.json"
 }
 
-repositories {
-    mavenLocal()
-    mavenCentral()
-    maven("https://repo.polyfrost.org/releases")
-    maven("https://repo.hypixel.net/repository/Hypixel")
-}
-
-val shadeMod: Configuration by configurations.creating {
-    configurations.modApi.get().extendsFrom(this)
-}
-
 dependencies {
     compileOnly("gg.essential:vigilance-1.8.9-forge:295") {
         isTransitive = false
     }
 
-    shadeMod("org.polyfrost:universalcraft-$platform:${libs.versions.universalcraft.get()}")
+    implementation("org.polyfrost:universalcraft-$platform:${libs.versions.universalcraft.get()}")
 
     if (platform.isLegacyForge || platform.isLegacyFabric) {
         implementation(project(":modules:dependencies:legacy"))
@@ -127,6 +109,7 @@ tasks {
             }
         }
     }
+
     processResources {
         inputs.property("id", rootProject.properties["mod_id"].toString())
         inputs.property("name", rootProject.name)
@@ -154,86 +137,49 @@ tasks {
         }
     }
 
-    shadowJar {
-        configurations = listOf(shadeMod)
-        dependsOn(jar)
-    }
-
     remapJar {
-        dependsOn(shadowJar)
-        inputFile = shadowJar.get().archiveFile
         manifest {
-            if (platform.isForge) {
-                attributes(
+            val attributesMap = buildMap<String, Any> {
+                if (platform.isForge) {
                     if (platform.isLegacyForge) {
-                        mapOf(
+                        putAll(mapOf(
                             "ModSide" to "CLIENT",
                             "ForceLoadAsMod" to true,
                             "TweakOrder" to "0",
                             "MixinConfigs" to "mixins.$modId.json",
                             "TweakClass" to tweakClass
-                        )
+                        ))
                     } else {
-                        mapOf(
-                            "MixinConfigs" to "mixins.$modId.json",
-                            "Specification-Title" to modId,
-                            "Specification-Vendor" to "Polyfrost",
-                            "Specification-Version" to "1", // We are version 1 of ourselves, whatever the hell that means
-                            "Implementation-Title" to rootProject.name,
-                            "Implementation-Version" to project.version,
-                            "Implementation-Vendor" to "Polyfrost",
-                            "Implementation-Timestamp" to SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").format(`java.util`.Date())
-                        )
+                        put("MixinConfigs", "mixins.$modId.json")
                     }
-                )
+                }
+                putAll(mapOf(
+                    "Specification-Title" to modId,
+                    "Specification-Vendor" to "Polyfrost",
+                    "Specification-Version" to "1", // We are version 1 of ourselves, whatever the hell that means
+                    "Implementation-Title" to rootProject.name,
+                    "Implementation-Version" to project.version,
+                    "Implementation-Vendor" to "Polyfrost",
+                    "Implementation-Timestamp" to SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").format(`java.util`.Date())
+                ))
             }
+            attributes(attributesMap)
         }
     }
-
-    withType<RemapSourcesJarTask> {
-        enabled = false
-    }
-}
-
-signing {
-    sign(publishing.publications)
 }
 
 publishing {
     publications {
-        register<MavenPublication>("full") {
+        register<MavenPublication>("java") {
+            from(components["java"])
+
             groupId = group.toString()
             artifactId = base.archivesName.get()
 
-            artifact(tasks.remapJar)
-        }
-    }
-
-    repositories {
-        maven {
-            name = "releases"
-            url = uri("https://repo.polyfrost.org/releases")
-            credentials(PasswordCredentials::class)
-            authentication {
-                create<BasicAuthentication>("basic")
-            }
-        }
-        maven {
-            name = "snapshots"
-            url = uri("https://repo.polyfrost.org/snapshots")
-            credentials(PasswordCredentials::class)
-            authentication {
-                create<BasicAuthentication>("basic")
-            }
-        }
-        maven {
-            name = "private"
-            url = uri("https://repo.polyfrost.org/private")
-            credentials(PasswordCredentials::class)
-            authentication {
-                create<BasicAuthentication>("basic")
+            signing {
+                isRequired = project.properties["signing.keyId"] != null
+                sign(this@register)
             }
         }
     }
 }
-

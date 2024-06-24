@@ -1,3 +1,5 @@
+@file:Suppress("UnstableApiUsage")
+
 pluginManagement {
     repositories {
         gradlePluginPortal()
@@ -9,14 +11,21 @@ pluginManagement {
     }
 }
 
+dependencyResolutionManagement {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        maven("https://repo.polyfrost.org/releases")
+        maven("https://repo.hypixel.net/repository/Hypixel")
+    }
+}
+
 plugins {
-    id("org.gradle.toolchains.foojay-resolver-convention") version("0.8.0")
+    id("org.gradle.toolchains.foojay-resolver-convention") version("0.8.+")
 }
 
 val name: String by settings
-
 rootProject.name = name
-
 
 include(":modules")
 project(":modules").apply {
@@ -45,7 +54,6 @@ listOf(
 ).forEach { module ->
     include(":modules:$module")
 }
-
 
 // FOR ALL NEW VERSIONS MAKE SURE TO INCLUDE THEM IN preprocessor.gradle.kts !
 listOf(

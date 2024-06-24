@@ -2,22 +2,11 @@
 
 plugins {
     id(libs.plugins.kotlinx.api.validator.get().pluginId)
-    `java-library`
-    `maven-publish`
-    signing
     id(libs.plugins.shadow.get().pluginId)
 }
 
 subprojects {
     apply(plugin = "kotlin")
-    apply(plugin = "java-library")
-
-    repositories {
-        mavenLocal()
-        mavenCentral()
-        maven("https://repo.polyfrost.org/releases")
-        maven("https://repo.hypixel.net/repository/Hypixel")
-    }
 
     dependencies {
         implementation(rootProject.libs.annotations)
@@ -44,21 +33,12 @@ subprojects {
     }
 
     base.archivesName = name
-    version = rootProject.version
-    group = rootProject.group
 
     java {
         withSourcesJar()
         withJavadocJar()
-        toolchain {
-            languageVersion.set(JavaLanguageVersion.of(8))
-        }
     }
 }
-
-//signing {
-//    sign(publishing.publications)
-//}
 
 publishing {
     publications {
@@ -73,48 +53,31 @@ publishing {
             if (project.plugins.hasPlugin(libs.plugins.shadow.get().pluginId)) {
                 shadow {
                     component(create<MavenPublication>(projectName) {
-                        groupId = rootProject.group.toString()
+                        groupId = group.toString()
                         artifactId = project.base.archivesName.get()
                         version = rootProject.version.toString()
 
                         from(project.components["java"])
+
+                        signing {
+                            isRequired = project.properties["signing.keyId"] != null
+                            sign(this@create)
+                        }
                     })
                 }
             } else {
                 register<MavenPublication>(projectName) {
-                    groupId = rootProject.group.toString()
+                    groupId = group.toString()
                     artifactId = project.base.archivesName.get()
                     version = rootProject.version.toString()
 
                     from(project.components["java"])
-                }
-            }
-        }
-    }
 
-    repositories {
-        maven {
-            name = "releases"
-            url = uri("https://repo.polyfrost.org/releases")
-            credentials(PasswordCredentials::class)
-            authentication {
-                create<BasicAuthentication>("basic")
-            }
-        }
-        maven {
-            name = "snapshots"
-            url = uri("https://repo.polyfrost.org/snapshots")
-            credentials(PasswordCredentials::class)
-            authentication {
-                create<BasicAuthentication>("basic")
-            }
-        }
-        maven {
-            name = "private"
-            url = uri("https://repo.polyfrost.org/private")
-            credentials(PasswordCredentials::class)
-            authentication {
-                create<BasicAuthentication>("basic")
+                    signing {
+                        isRequired = project.properties["signing.keyId"] != null
+                        sign(this@register)
+                    }
+                }
             }
         }
     }
