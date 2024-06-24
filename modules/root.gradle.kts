@@ -2,10 +2,11 @@
 
 plugins {
     id(libs.plugins.kotlinx.api.validator.get().pluginId)
-    id(libs.plugins.shadow.get().pluginId)
+    `java-library`
 }
 
 subprojects {
+    apply(plugin = "java-library")
     apply(plugin = "kotlin")
 
     dependencies {
@@ -35,8 +36,11 @@ subprojects {
     base.archivesName = name
 
     java {
-        withSourcesJar()
         withJavadocJar()
+
+        toolchain {
+            languageVersion.set(JavaLanguageVersion.of(8))
+        }
     }
 }
 
@@ -50,33 +54,16 @@ publishing {
             } else {
                 project.name
             }
-            if (project.plugins.hasPlugin(libs.plugins.shadow.get().pluginId)) {
-                shadow {
-                    component(create<MavenPublication>(projectName) {
-                        groupId = group.toString()
-                        artifactId = project.base.archivesName.get()
-                        version = rootProject.version.toString()
+            register<MavenPublication>(projectName) {
+                from(project.components["java"])
 
-                        from(project.components["java"])
+                groupId = group.toString()
+                artifactId = project.base.archivesName.get()
+                version = rootProject.version.toString()
 
-                        signing {
-                            isRequired = project.properties["signing.keyId"] != null
-                            sign(this@create)
-                        }
-                    })
-                }
-            } else {
-                register<MavenPublication>(projectName) {
-                    groupId = group.toString()
-                    artifactId = project.base.archivesName.get()
-                    version = rootProject.version.toString()
-
-                    from(project.components["java"])
-
-                    signing {
-                        isRequired = project.properties["signing.keyId"] != null
-                        sign(this@register)
-                    }
+                signing {
+                    isRequired = project.properties["signing.keyId"] != null
+                    sign(this@register)
                 }
             }
         }

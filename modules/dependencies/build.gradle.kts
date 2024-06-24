@@ -1,45 +1,20 @@
-plugins {
-	id("com.github.johnrengelman.shadow")
-}
-
-val shade by configurations.creating {
-	configurations.api.get().extendsFrom(this)
-}
-
 allprojects {
-	apply(plugin = "com.github.johnrengelman.shadow")
+	group = "${rootProject.group}.${rootProject.name}.dependencies"
 
-	base.archivesName = "deps"
-	configurations {
-		listOf(apiElements, runtimeElements).forEach {
-			it.get().outgoing.artifacts.removeIf { artifact ->
-				artifact.buildDependencies.getDependencies(null).contains(tasks["jar"])
-			}
-			it.get().outgoing.artifact(tasks["shadowJar"])
+	with(tasks) {
+		arrayOf("jar", "javadocJar", "sourcesJar").forEach {
+			findByName(it)?.enabled = false
 		}
-	}
-
-	tasks {
-		val jar by getting { enabled = false }
-		val javadocJar by getting { enabled = false }
-		val sourcesJar by getting { enabled = false }
 	}
 }
 
 dependencies {
-	shade(libs.polyui)
+	api(libs.polyui)
 
-	shade(libs.bundles.kotlin)
-	shade(libs.bundles.kotlinx)
+	api(libs.bundles.kotlin)
+	api(libs.bundles.kotlinx)
 
-	shade(libs.hypixel.modapi)
+	api(libs.hypixel.modapi)
 
-	shade(libs.bundles.nightconfig)
-}
-
-tasks {
-	shadowJar {
-		archiveClassifier.set("")
-		configurations = listOf(shade)
-	}
+	api(libs.bundles.nightconfig)
 }

@@ -8,16 +8,13 @@ plugins {
     alias(libs.plugins.kotlin)
     id(libs.plugins.pgt.main.get().pluginId)
     id(libs.plugins.pgt.default.get().pluginId)
-//    id(libs.plugins.shadow.get().pluginId)
+    `java-library`
 }
 
 val modId = properties["mod_id"] as String
 val tweakClass = "org.polyfrost.oneconfig.internal.legacy.OneConfigTweaker"
 
-base {
-    archivesName = platform.toString()
-}
-
+base.archivesName = platform.toString()
 java.withSourcesJar()
 
 loom {
@@ -48,7 +45,7 @@ dependencies {
         isTransitive = false
     }
 
-    implementation("org.polyfrost:universalcraft-$platform:${libs.versions.universalcraft.get()}")
+    modImplementation("org.polyfrost:universalcraft-$platform:${libs.versions.universalcraft.get()}")
 
     if (platform.isLegacyForge || platform.isLegacyFabric) {
         implementation(project(":modules:dependencies:legacy"))
