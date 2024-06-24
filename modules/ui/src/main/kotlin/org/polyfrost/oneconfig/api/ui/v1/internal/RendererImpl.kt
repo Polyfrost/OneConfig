@@ -52,7 +52,6 @@ import org.polyfrost.polyui.utils.toDirectByteBuffer
 import org.polyfrost.polyui.utils.toDirectByteBufferNT
 import java.nio.ByteBuffer
 import java.util.IdentityHashMap
-import kotlin.math.min
 import org.polyfrost.polyui.color.PolyColor as Color
 
 object RendererImpl : Renderer {
@@ -66,7 +65,6 @@ object RendererImpl : Renderer {
     private val fonts = IdentityHashMap<Font, NVGFont>()
     private var defaultFont: NVGFont? = null
     private var defaultImage = 0
-    private var alphaCap = 1f
     private var vg: Long = 0L
     private var raster: Long = 0L
     private var drawing = false
@@ -120,13 +118,7 @@ object RendererImpl : Renderer {
         drawing = false
     }
 
-    override fun globalAlpha(alpha: Float) {
-        nvgGlobalAlpha(vg, min(alpha.coerceIn(0f, 1f), alphaCap))
-    }
-
-    override fun setAlphaCap(cap: Float) {
-        alphaCap = cap.coerceIn(0f, 1f)
-    }
+    override fun globalAlpha(alpha: Float) = nvgGlobalAlpha(vg, alpha)
 
     override fun translate(x: Float, y: Float) = nvgTranslate(vg, x, y)
 
@@ -458,7 +450,7 @@ object RendererImpl : Renderer {
 
     private fun getFont(font: Font): Int {
         if (font.loadSync) return getFontSync(font)
-        return fonts.getOrElse(font) {
+        return fonts.getOrPut(font) {
             font.loadAsync(errorHandler = errorHandler) { data ->
                 val it = data.toDirectByteBuffer()
                 queue.add { fonts[font] = NVGFont(nvgCreateFontMem(vg, font.name, it, false), it) }
@@ -478,7 +470,7 @@ object RendererImpl : Renderer {
         if (image.loadSync) return getImageSync(image, width, height)
         return when (image.type) {
             PolyImage.Type.Vector -> {
-                val (svg, map) = svgs.getOrElse(image) {
+                val (svg, map) = svgs.getOrPut(image) {
                     image.loadAsync(errorHandler) {
                         queue.add { svgLoad(image, it.toDirectByteBufferNT()) }
                     }
@@ -489,7 +481,7 @@ object RendererImpl : Renderer {
             }
 
             PolyImage.Type.Raster -> {
-                images.getOrElse(image) {
+                images.getOrPut(image) {
                     image.loadAsync(errorHandler) {
                         queue.add { images[image] = loadImage(image, it.toDirectByteBuffer()) }
                     }

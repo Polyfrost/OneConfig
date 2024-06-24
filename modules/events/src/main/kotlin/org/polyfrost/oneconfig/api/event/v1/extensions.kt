@@ -25,12 +25,13 @@
  */
 
 @file:JvmSynthetic
+@file:OptIn(ExperimentalTypeInference::class)
 
 package org.polyfrost.oneconfig.api.event.v1
 
 import org.polyfrost.oneconfig.api.event.v1.events.Event
 import org.polyfrost.oneconfig.api.event.v1.invoke.EventHandler
-
+import kotlin.experimental.ExperimentalTypeInference
 
 /**
  * Kotlin specific API for registering of event handlers. Intended usage:
@@ -41,10 +42,31 @@ import org.polyfrost.oneconfig.api.event.v1.invoke.EventHandler
  * }.register()
  * ```
  */
-@JvmSynthetic // asm: method is hidden from Java API as it cannot be used (reified)
+@OverloadResolutionByLambdaReturnType
+@JvmName("eventHandlerZ")
+@EventHandlerKt
+inline fun <reified E : Event> eventHandler(crossinline handler: (E) -> Boolean) = object : EventHandler<E>() {
+    override fun handle(event: E) = handler(event)
+
+    override fun getEventClass() = E::class.java
+}
+
+/**
+ * Kotlin specific API for registering of event handlers. Intended usage:
+ *
+ * ```
+ * eventHandler { event: KeyInputEvent ->
+ *     println("Key event: $event")
+ * }.register()
+ * ```
+ */
+@OverloadResolutionByLambdaReturnType
 @EventHandlerKt
 inline fun <reified E : Event> eventHandler(crossinline handler: (E) -> Unit) = object : EventHandler<E>() {
-    override fun handle(event: E) = handler(event)
+    override fun handle(event: E): Boolean {
+        handler(event)
+        return false
+    }
 
     override fun getEventClass() = E::class.java
 }

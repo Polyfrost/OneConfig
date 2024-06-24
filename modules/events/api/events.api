@@ -162,15 +162,17 @@ public abstract interface class org/polyfrost/oneconfig/api/event/v1/invoke/Even
 }
 
 public abstract class org/polyfrost/oneconfig/api/event/v1/invoke/EventHandler {
+	public static final field ERROR_THRESHOLD B
 	public fun <init> ()V
 	public final fun equals (Ljava/lang/Object;)Z
 	public fun equals (Lorg/polyfrost/oneconfig/api/event/v1/invoke/EventHandler;)Z
 	public abstract fun getEventClass ()Ljava/lang/Class;
-	public abstract fun handle (Lorg/polyfrost/oneconfig/api/event/v1/events/Event;)V
+	public abstract fun handle (Lorg/polyfrost/oneconfig/api/event/v1/events/Event;)Z
 	public final fun hashCode ()I
 	public static fun of (Ljava/lang/Class;Ljava/lang/Runnable;)Lorg/polyfrost/oneconfig/api/event/v1/invoke/EventHandler;
 	public static fun of (Ljava/lang/Class;Ljava/util/function/Consumer;)Lorg/polyfrost/oneconfig/api/event/v1/invoke/EventHandler;
 	public static fun of (Ljava/lang/reflect/Method;Ljava/lang/Object;)Lorg/polyfrost/oneconfig/api/event/v1/invoke/EventHandler;
+	public static fun ofRemoving (Ljava/lang/Class;Ljava/util/function/Predicate;)Lorg/polyfrost/oneconfig/api/event/v1/invoke/EventHandler;
 	public final fun onError ()Z
 	public final fun register ()Lorg/polyfrost/oneconfig/api/event/v1/invoke/EventHandler;
 }

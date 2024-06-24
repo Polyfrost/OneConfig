@@ -39,6 +39,7 @@ import java.lang.annotation.Annotation;
 import java.lang.invoke.MethodHandle;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.HashMap;
 
 import static org.polyfrost.oneconfig.api.config.v1.Node.strv;
 
@@ -71,19 +72,19 @@ public class OneConfigCollector extends ReflectiveCollector {
     }
 
     @Override
-    protected void handleField(@NotNull Field f, @NotNull Object src, @NotNull Tree builder) {
+    protected void handleField(@NotNull Field f, @NotNull Object src, @NotNull Tree tree) {
         for (Annotation a : f.getAnnotations()) {
             if (a.annotationType() == Include.class) {
                 Property<?> p = Properties.field(null, null, f, src);
-                builder.put(p);
+                tree.put(p);
                 break;
             }
             Option opt = a.annotationType().getAnnotation(Option.class);
             if (opt == null) continue;
             try {
                 Property<?> p = Properties.field(null, null, f, src);
-                handleMetadata(p, a, opt, f);
-                builder.put(p);
+                handleMetadata(tree, p, a, opt, f);
+                tree.put(p);
             } catch (Throwable e) {
                 throw new RuntimeException("Failed to create setter for field " + f.getName() + "; ensure it is not static final", e);
             }
@@ -128,16 +129,18 @@ public class OneConfigCollector extends ReflectiveCollector {
         }
     }
 
-    protected void handleMetadata(@NotNull Property<?> property, @NotNull Annotation a, Option opt, Field f) {
+    protected void handleMetadata(Tree tree, @NotNull Property<?> property, @NotNull Annotation a, Option opt, Field f) {
         property.addMetadata("visualizer", opt.display());
-        property.addMetadata(MHUtils.getAnnotationValues(a).getOrThrow());
+        property.addMetadata(MHUtils.getAnnotationValues(a).getOrNull());
         DependsOn d = f.getDeclaredAnnotation(DependsOn.class);
-        if (d != null) {
-            property.addMetadata("conditions", d.value());
-        }
+        if (d != null) property.addMetadata("conditions", d.value());
+
         PreviousNames p = f.getDeclaredAnnotation(PreviousNames.class);
         if (p != null) {
-            // todo
+            HashMap<String, String> map = tree.getOrPutMetadata("migrationMap", () -> new HashMap<>(8));
+            for (String s : p.value()) {
+                map.put(s, property.getID());
+            }
         }
     }
 

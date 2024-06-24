@@ -61,8 +61,8 @@ public final class BlurHandler {
     private float progress = 0;
 
     private BlurHandler() {
-        EventHandler.of(ScreenOpenEvent.class, e -> reloadBlur(e.getScreen())).register();
-        EventHandler.of(RenderEvent.End.class, e -> {
+        EventHandler.ofRemoving(ScreenOpenEvent.class, e -> reloadBlur(e.getScreen())).register();
+        EventHandler.of(RenderEvent.End.class, () -> {
             if (su == null) return;
             if (progress >= 5f) return;
             su.set(getBlurStrengthProgress());
@@ -82,14 +82,14 @@ public final class BlurHandler {
      * one of many conditions are met, such as no current other shader
      * is being used, we actually have the blur setting enabled
      */
-    private void reloadBlur(Object gui) {
+    private boolean reloadBlur(Object gui) {
         // Don't do anything if no world is loaded
         if (Minecraft.getMinecraft().theWorld == null) {
-            return;
+            return false;
         }
         if (gui == null) {
             tryStop();
-            return;
+            return false;
         }
 
         // If a shader is not already active and the UI is
@@ -104,9 +104,9 @@ public final class BlurHandler {
 
                 try {
                     ShaderGroup group = Minecraft.getMinecraft().entityRenderer.getShaderGroup();
-                    if (group == null) return;
+                    if (group == null) return false;
                     List<Shader> shaders = ((ShaderGroupAccessor) group).getListShaders();
-                    if (shaders == null) return;
+                    if (shaders == null) return false;
 
                     // Iterate through the list of shaders.
                     for (Shader shader : shaders) {
@@ -115,16 +115,21 @@ public final class BlurHandler {
                         if (su == null) continue;
                         this.su = su;
                     }
-                    if (su == null) throw new IllegalStateException("Failed to get ShaderUniform for blur on GUI " + gui.getClass().getName());
+                    if (su == null) {
+                        LOGGER.error("Failed to get ShaderUniform for blur on GUI {}. It has been disabled. Please report this!", gui.getClass().getName());
+                        return true;
+                    }
                     this.start = System.currentTimeMillis();
                     this.progress = 0;
                 } catch (Exception ex) {
-                    LOGGER.error("An error occurred while updating OneConfig's blur. Please report this!", ex);
+                    LOGGER.error("An error occurred while updating OneConfig's blur. It has been disabled. Please report this!", ex);
+                    return true;
                 }
             } else {
                 tryStop();
             }
         }
+        return false;
     }
 
     private void tryStop() {

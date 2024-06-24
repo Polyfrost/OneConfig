@@ -38,9 +38,6 @@ public interface LoaderPlatform {
     @Nullable
     ActiveMod toActiveMod(@Nullable Object in);
 
-    /**
-     * Note: the list may contain null elements
-     */
     @NotNull
     List<ActiveMod> getLoadedMods();
 

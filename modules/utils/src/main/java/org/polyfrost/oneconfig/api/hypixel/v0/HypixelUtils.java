@@ -35,7 +35,6 @@ import net.hypixel.data.type.ServerType;
 import net.hypixel.modapi.HypixelModAPI;
 import net.hypixel.modapi.handler.ClientboundPacketHandler;
 import net.hypixel.modapi.packet.ClientboundHypixelPacket;
-import net.hypixel.modapi.packet.impl.VersionedPacket;
 import net.hypixel.modapi.packet.impl.clientbound.ClientboundPartyInfoPacket;
 import net.hypixel.modapi.packet.impl.clientbound.ClientboundPlayerInfoPacket;
 import net.hypixel.modapi.packet.impl.clientbound.event.ClientboundLocationPacket;
@@ -92,11 +91,11 @@ public final class HypixelUtils {
         return INSTANCE.location == null ? INSTANCE.location = new Location() : INSTANCE.location;
     }
 
-    protected static abstract class InfoBase<T extends VersionedPacket & ClientboundHypixelPacket> {
+    protected static abstract class InfoBase<T extends ClientboundHypixelPacket> {
         protected T packet;
 
         protected InfoBase() {
-            LOGGER.info("Registering {} packet handler", getPacketClass());
+            LOGGER.info("Registering {} packet handler", getPacketClass().getSimpleName());
             HypixelModAPI.getInstance().registerHandler(getPacketClass(), this::onPacket);
             update();
         }

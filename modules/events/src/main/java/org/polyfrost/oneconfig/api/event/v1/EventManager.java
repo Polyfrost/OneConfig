@@ -34,15 +34,7 @@ import org.polyfrost.oneconfig.api.event.v1.invoke.EventHandler;
 import org.polyfrost.oneconfig.api.event.v1.invoke.impl.AnnotationEventMapper;
 
 import java.lang.reflect.Method;
-import java.util.ArrayDeque;
-import java.util.ConcurrentModificationException;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.WeakHashMap;
+import java.util.*;
 import java.util.function.Consumer;
 
 /**
@@ -181,24 +173,26 @@ public final class EventManager {
      *
      * @param event The event to post.
      */
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public <E extends Event> void post(E event) {
         if (event == null) return;
         Set<EventHandler<?>> set = handlers.get(event.getClass());
         if (set == null) return;
         Event.Cancellable evc = event instanceof Event.Cancellable ? (Event.Cancellable) event : null;
         try {
-            for (EventHandler<?> ev : set) {
+            Iterator<EventHandler<E>> iter = (Iterator) set.iterator();
+            while (iter.hasNext()) {
+                EventHandler<E> handler = iter.next();
                 if (evc != null && evc.cancelled) break;
                 try {
-                    ((EventHandler<E>) ev).handle(event);
-                } catch (EventException e) {
-                    throw e;
+                    if (handler.handle(event)) iter.remove();
+                } catch (EventException ex) {
+                    throw ex;
                 } catch (Throwable throwable) {
                     LOGGER.error("Failed to invoke event handler for {}", event.getClass().getName(), throwable);
-                    if(ev.onError()) {
-                        LOGGER.error("removing {} as it has failed too many times", ev);
-                        set.remove(ev);
+                    if (handler.onError()) {
+                        LOGGER.error("removing {} registered to {} as it has failed too many times ({})", handler, event.getClass().getName(), EventHandler.ERROR_THRESHOLD);
+                        iter.remove();
                     }
                 }
             }

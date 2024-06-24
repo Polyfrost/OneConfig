@@ -34,6 +34,7 @@ import org.polyfrost.oneconfig.utils.v1.MHUtils;
 
 import java.lang.reflect.Method;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 /**
  * Class which represents an event handler.
@@ -42,22 +43,23 @@ import java.util.function.Consumer;
  * @see #of(Class, Consumer)
  */
 public abstract class EventHandler<E extends Event> {
-    private static final int ERROR_THRESHOLD = 5;
-    private int errors = 0;
+    public static final byte ERROR_THRESHOLD = 10;
+    private byte errors = 0;
 
     /**
      * Create an event handler from a consumer, in a fabric-style way.
      *
      * @param cls     the event class
-     * @param handler the consumer
+     * @param handler the predicate for the event. Return true to remove the event handler.
      * @param <E>     the event type
      * @return the event handler
      */
-    public static <E extends Event> EventHandler<E> of(Class<E> cls, Consumer<E> handler) {
+    @kotlin.OverloadResolutionByLambdaReturnType
+    public static <E extends Event> EventHandler<E> ofRemoving(Class<E> cls, Predicate<E> handler) {
         return new EventHandler<E>() {
             @Override
-            public void handle(E event) {
-                handler.accept(event);
+            public boolean handle(E event) {
+                return handler.test(event);
             }
 
             @Override
@@ -67,11 +69,37 @@ public abstract class EventHandler<E extends Event> {
         };
     }
 
+    /**
+     * Create an event handler from a consumer, in a fabric-style way.
+     *
+     * @param cls     the event class
+     * @param handler the consumer
+     * @param <E>     the event type
+     * @return the event handler
+     */
+    @kotlin.OverloadResolutionByLambdaReturnType
+    public static <E extends Event> EventHandler<E> of(Class<E> cls, Consumer<E> handler) {
+        return new EventHandler<E>() {
+            @Override
+            public boolean handle(E event) {
+                handler.accept(event);
+                return false;
+            }
+
+            @Override
+            public Class<E> getEventClass() {
+                return cls;
+            }
+        };
+    }
+
+    @kotlin.OverloadResolutionByLambdaReturnType
     public static <E extends Event> EventHandler<E> of(Class<E> cls, Runnable handler) {
         return new EventHandler<E>() {
             @Override
-            public void handle(E event) {
+            public boolean handle(E event) {
                 handler.run();
+                return false;
             }
 
             @Override
@@ -96,24 +124,40 @@ public abstract class EventHandler<E extends Event> {
                 throw new EventException("Failed to register event handler: Method must have 1 parameter of type Event");
             }
             Class<Event> eventClass = (Class<Event>) m.getParameterTypes()[0];
-            Consumer<Event> f = MHUtils.getConsumerFunctionHandle(owner, m.getName(), eventClass).getOrThrow();
-            return new EventHandler<Event>() {
-                @Override
-                public void handle(Event event) {
-                    f.accept(event);
-                }
+            if (m.getReturnType() == boolean.class) {
+                Predicate<Event> f = MHUtils.getPredicateHandle(owner, m.getName(), eventClass).getOrThrow();
+                return new EventHandler<Event>() {
+                    @Override
+                    public boolean handle(Event event) {
+                        return f.test(event);
+                    }
 
-                @Override
-                public Class<Event> getEventClass() {
-                    return eventClass;
-                }
-            };
+                    @Override
+                    public Class<Event> getEventClass() {
+                        return eventClass;
+                    }
+                };
+            } else if (m.getReturnType() == void.class) {
+                Consumer<Event> f = MHUtils.getConsumerHandle(owner, m.getName(), eventClass).getOrThrow();
+                return new EventHandler<Event>() {
+                    @Override
+                    public boolean handle(Event event) {
+                        f.accept(event);
+                        return false;
+                    }
+
+                    @Override
+                    public Class<Event> getEventClass() {
+                        return eventClass;
+                    }
+                };
+            } else throw new IllegalArgumentException("Failed to register event handler: Method must return boolean or void");
         } catch (Throwable e) {
             throw new EventException("Failed to register event handler: signature should be public void method(Event event) {}", e);
         }
     }
 
-    public abstract void handle(E event);
+    public abstract boolean handle(E event);
 
     public abstract Class<E> getEventClass();
 

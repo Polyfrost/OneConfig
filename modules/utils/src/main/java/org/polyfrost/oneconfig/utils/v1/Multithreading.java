@@ -53,22 +53,12 @@ public final class Multithreading {
     }
 
     /**
-     * Runs the runnable asynchronously.
-     *
-     * @param runnable The runnable to run.
-     * @see Multithreading#submit(Runnable)
-     */
-    public static void runAsync(Runnable runnable) {
-        submit(runnable);
-    }
-
-    /**
      * Runs the provided runnables asynchronously.
      *
      * @param runnables The runnables to run.
-     * @see Multithreading#runAsync(Runnable)
+     * @see Multithreading#submit(Runnable)
      */
-    public static void runAsync(Runnable... runnables) {
+    public static void submit(Runnable... runnables) {
         for (Runnable runnable : runnables) {
             submit(runnable);
         }

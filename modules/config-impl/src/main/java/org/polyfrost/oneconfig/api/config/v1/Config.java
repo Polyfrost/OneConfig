@@ -63,7 +63,7 @@ public abstract class Config {
 
     protected void addDependency(String option, String name, BooleanSupplier condition) {
         Property<?> opt = getProperty(option).addDisplayCondition(condition);
-        opt.getOrPutMetadata("dependencyNames", new ArrayList<String>(3)).add(name);
+        opt.getOrPutMetadata("dependencyNames", () -> new ArrayList<String>(3)).add(name);
     }
 
     /**
@@ -76,7 +76,7 @@ public abstract class Config {
         Property<?> cond = getProperty(condition);
         if (cond.type != boolean.class) throw new IllegalArgumentException("Condition property must be boolean");
         Property<?> opt = getProperty(option).addDisplayCondition(cond::getAs);
-        opt.getOrPutMetadata("dependencyNames", new ArrayList<String>(3)).add(cond.getTitle());
+        opt.getOrPutMetadata("dependencyNames", () -> new ArrayList<String>(3)).add(cond.getTitle());
     }
 
     /**

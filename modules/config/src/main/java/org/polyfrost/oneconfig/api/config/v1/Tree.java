@@ -72,10 +72,10 @@ public class Tree extends Node implements Serializable {
     }
 
     private static void _overwrite(Tree self, Tree in, Function<String, String> keyMapper) {
-        for (Map.Entry<String, Node> e : in.theMap.entrySet()) {
-            String key = keyMapper == null ? e.getKey() : keyMapper.apply(e.getKey());
+        for (Map.Entry<String, Node> from : in.theMap.entrySet()) {
+            String key = keyMapper == null ? from.getKey() : keyMapper.apply(from.getKey());
             Node _this = self.get(key);
-            Node that = e.getValue();
+            Node that = from.getValue();
             if (_this == null) {
                 // nop. means that the node has been removed.
                 continue;
@@ -253,14 +253,19 @@ public class Tree extends Node implements Serializable {
      * @param with the tree to overwrite with
      * @param keyMapper the key mapper function to use
      */
-    public void overwrite(Tree with, @Nullable Function<String, String> keyMapper) {
+    public void overwrite(Tree with, @NotNull Function<String, String> keyMapper) {
         _overwrite(this, with, keyMapper);
     }
 
     @Override
     public void overwrite(@NotNull Node with) {
         if (!(with instanceof Tree)) throw new IllegalArgumentException("Cannot overwrite a tree with a non-tree node!");
-        _overwrite(this, (Tree) with, null);
+        Map<String, String> migrationMap = getMetadata("migrationMap");
+        if (migrationMap == null) {
+            _overwrite(this, (Tree) with, null);
+        } else {
+            _overwrite(this, (Tree) with, migrationMap::get);
+        }
     }
 
     /**

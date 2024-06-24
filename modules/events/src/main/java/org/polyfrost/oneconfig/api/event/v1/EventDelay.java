@@ -52,14 +52,15 @@ public final class EventDelay {
                 private int delay = polls;
 
                 @Override
-                public void handle(E event) {
+                public boolean handle(E event) {
                     // Delay expired
                     if (delay < 1) {
                         function.accept(event);
-                        EventManager.INSTANCE.unregister(this);
+                        return true;
                     } else {
                         delay--;
                     }
+                    return false;
                 }
 
                 @Override

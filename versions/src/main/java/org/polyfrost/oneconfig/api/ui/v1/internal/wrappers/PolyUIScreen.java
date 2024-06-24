@@ -110,6 +110,7 @@ public class PolyUIScreen extends UScreen implements BlurScreen {
             matrices.runReplacingGlobalState(polyUI::render);
             matrices.pop();
         } catch (Exception e) {
+            polyUI.getRenderer().endFrame();
             death(e);
         }
 

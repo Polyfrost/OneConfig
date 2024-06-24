@@ -28,6 +28,7 @@ package org.polyfrost.oneconfig.api.config.v1;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -67,14 +68,14 @@ public abstract class Node {
     }
 
     /**
-     * The ID of a tree
+     * The ID of this node.
      */
     public String getID() {
         return id;
     }
 
     /**
-     * Set the ID of this tree. the ID is used solely by the backend to identify it.
+     * Set the ID of this node. the ID is used solely by the backend to identify it.
      * It may only contain alphanumeric characters, and underscores.
      * <br>note that <b>this operation is permanent</b> and cannot be undone/changed!
      */
@@ -131,11 +132,12 @@ public abstract class Node {
     }
 
     /**
-     * Return some metadata attached to this tree.
+     * Return some metadata attached to this node.
      *
      * @param key the key of the metadata
      * @param <M> the type of the metadata
      * @return the metadata, or null if it doesn't exist
+     * @throws ClassCastException if the metadata is not of the expected type M
      */
     @SuppressWarnings("unchecked")
     public final @Nullable <M> M getMetadata(String key) {
@@ -144,7 +146,7 @@ public abstract class Node {
     }
 
     /**
-     * Return some metadata attached to this tree, or put def it is isn't present.
+     * Return some metadata attached to this node, or put def it is isn't present.
      *
      * @param key the key of the metadata
      * @param def the default value to put if there currently is no metadata on this value
@@ -152,14 +154,13 @@ public abstract class Node {
      * @return the metadata, or null if it doesn't exist
      */
     @SuppressWarnings("unchecked")
-    public final @NotNull <M> M getOrPutMetadata(String key, M def) {
-        if (metadata == null || metadata.get(key) == null) addMetadata(key, def);
-        if (metadata == null) throw new IllegalArgumentException("invalid key for metadata " + key);
-        return (M) metadata.get(key);
+    public final @NotNull <M> M getOrPutMetadata(String key, Supplier<M> def) {
+        if (metadata == null) metadata = new HashMap<>(4);
+        return (M) metadata.computeIfAbsent(key, k -> def.get());
     }
 
     /**
-     * Consume some metadata attached to this tree, meaning it will be removed.
+     * Consume some metadata attached to this node, meaning it will be removed.
      *
      * @param key the key of the metadata
      * @param <M> the type of the metadata

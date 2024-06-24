@@ -131,13 +131,13 @@ public class OneConfigTweaker implements ITweaker {
             Object platformManager = MHUtils.invokeStatic(MixinBootstrap, "getPlatform");
             try {
                 // Mixin 0.7
-                return MHUtils.getConsumerFunctionHandle(platformManager, "addContainer", URI.class).getOrThrow();
+                return MHUtils.getConsumerHandle(platformManager, "addContainer", URI.class).getOrThrow();
             } catch (Throwable ignored) {
                 // Mixin 0.8
                 Class<?> IContainerHandle = Class.forName("org.spongepowered.asm.launch.platform.container.IContainerHandle");
                 Class<?> ContainerHandleURI = Class.forName("org.spongepowered.asm.launch.platform.container.ContainerHandleURI");
                 // as we can't refer to IContainerHandle, we have to use unchecked casts here.
-                Consumer<Object> addWrappedContainer = (Consumer<Object>) MHUtils.getConsumerFunctionHandle(MixinPlatformManager, "addContainer", IContainerHandle).getOrThrow();
+                Consumer<Object> addWrappedContainer = (Consumer<Object>) MHUtils.getConsumerHandle(MixinPlatformManager, "addContainer", IContainerHandle).getOrThrow();
                 MethodHandle wrapper = MHUtils.getConstructorHandle(ContainerHandleURI, URI.class).getOrThrow();
                 return it -> addWrappedContainer.accept(MHUtils.invokeCatching(wrapper, it).getOrThrow());
             }

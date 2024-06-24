@@ -10,7 +10,7 @@ public abstract class org/polyfrost/oneconfig/api/config/v1/Node {
 	public fun getID ()Ljava/lang/String;
 	public final fun getMetadata ()Ljava/util/Map;
 	public final fun getMetadata (Ljava/lang/String;)Ljava/lang/Object;
-	public final fun getOrPutMetadata (Ljava/lang/String;Ljava/lang/Object;)Ljava/lang/Object;
+	public final fun getOrPutMetadata (Ljava/lang/String;Ljava/util/function/Supplier;)Ljava/lang/Object;
 	public fun getTitle ()Ljava/lang/String;
 	public final fun hasMetadata ()Z
 	public final fun hashCode ()I

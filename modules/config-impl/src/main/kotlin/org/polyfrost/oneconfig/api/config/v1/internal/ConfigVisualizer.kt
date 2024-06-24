@@ -174,7 +174,7 @@ open class ConfigVisualizer {
             }
         var open = false
         return Block(
-            wrap(Image("chevron-down.svg".image()).also { it.rotation = PI }, title, desc, icon).events {
+            wrap(Image("polyui/chevron-down.svg".image()).also { it.rotation = PI }, title, desc, icon).events {
                 self.color = PolyColor.TRANSPARENT
                 Event.Mouse.Companion.Clicked then {
                     open = !open

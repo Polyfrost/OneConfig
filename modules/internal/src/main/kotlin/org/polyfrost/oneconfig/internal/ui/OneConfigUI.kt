@@ -166,9 +166,7 @@ object OneConfigUI {
     fun openPage(page: Drawable, name: String) {
         val title = ui[1][0][0][2] as Text
         val translated = ui.polyUI.translator.translate(name)
-        if (title.text == translated.string) return
-        @Suppress("deprecation_error")
-        title._translated = translated
+        title.text = translated.string
         ui[1][1] = page
     }
 

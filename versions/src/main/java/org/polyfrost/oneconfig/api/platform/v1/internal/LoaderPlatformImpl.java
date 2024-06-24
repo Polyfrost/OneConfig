@@ -32,6 +32,7 @@ import org.polyfrost.oneconfig.api.platform.v1.LoaderPlatform;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 //#if FABRIC
 //$$ import net.fabricmc.loader.api.FabricLoader;
@@ -50,12 +51,10 @@ public class LoaderPlatformImpl implements LoaderPlatform {
     public boolean isModLoaded(String id) {
         //#if FABRIC
         //$$ return FabricLoader.getInstance().isModLoaded(id);
-        //#else
-        //#if MC>=11600
+        //#elseif MC>=11600
         //$$ return ModList.get().isLoaded(id);
         //#else
         return Loader.isModLoaded(id);
-        //#endif
         //#endif
     }
 
@@ -126,7 +125,7 @@ public class LoaderPlatformImpl implements LoaderPlatform {
                             //#else
                             //$$ FabricLoader.getInstance().getAllMods().stream().map
                             //#endif
-                                    (this::toActiveMod).collect(Collectors.toList());
+                                    (this::toActiveMod).filter(Objects::nonNull).collect(Collectors.toList());
         } catch (Exception e) {
             return Collections.emptyList();
         }

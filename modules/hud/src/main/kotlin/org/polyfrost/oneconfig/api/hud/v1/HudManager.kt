@@ -58,9 +58,7 @@ import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.unit.by
 import org.polyfrost.polyui.unit.seconds
 import org.polyfrost.polyui.utils.fastEach
-import org.polyfrost.polyui.utils.ref
 import org.polyfrost.polyui.utils.rgba
-import org.polyfrost.polyui.utils.toMutable
 import kotlin.math.PI
 
 object HudManager {
@@ -116,10 +114,7 @@ object HudManager {
             alignment = Align(main = Align.Main.SpaceBetween, pad = Vec2.ZERO),
             size = Vec2(468f, 32f),
         ),
-        Text("oneconfig.hudeditor.title", fontSize = 24f).setFont { medium }.onClick {
-            ColorPicker(rgba(32, 53, 41).toMutable().ref(), mutableListOf(), mutableListOf(), polyUI)
-            true
-        },
+        Text("oneconfig.hudeditor.title", fontSize = 24f).setFont { medium },
         hudsPage,
         Block(
             Image("assets/oneconfig/ico/right-arrow.svg").setAlpha(0.1f),
@@ -312,7 +307,7 @@ object HudManager {
                 renders = false
             }.add()
             // remove scale blob
-            polyUI.focus(null)
+            polyUI.inputManager.focus(null)
         } else {
             pg.alpha = 0f
             Fade(pg, 1f, false, Animations.EaseInOutQuad.create(0.2.seconds)).add()

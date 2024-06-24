@@ -29,6 +29,7 @@ package org.polyfrost.oneconfig.utils.v1;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nullable;
 import org.polyfrost.oneconfig.api.platform.v1.LoaderPlatform;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
 
@@ -39,11 +40,14 @@ import java.nio.file.Paths;
 
 public final class OneConfigUpdate {
     private static final Logger LOGGER = LogManager.getLogger("OneConfig/Updates");
-    public static final String ONECONFIG_REPO = "https://repo.polyfrost.org/";
+    public static final String POLYFROST_REPO = "https://repo.polyfrost.org/";
     public static final String GROUP = "org/polyfrost/oneconfig/";
     private static volatile OneConfigUpdate instance;
     private volatile boolean fin = false;
     private volatile boolean hasUpdate = false;
+    private final String currentVersion;
+    private String latestVersion;
+    public final boolean isSnapshots;
 
     public static OneConfigUpdate getInstance() {
         if (instance == null) instance = new OneConfigUpdate();
@@ -51,14 +55,22 @@ public final class OneConfigUpdate {
     }
 
     private OneConfigUpdate() {
-        Multithreading.runAsync(this::fetchUpdateStatus);
+        LoaderPlatform.ActiveMod self = Platform.loader().getLoadedMod("oneconfig");
+        if (self == null) {
+            currentVersion = null;
+            isSnapshots = false;
+        } else {
+            currentVersion = self.version.toLowerCase();
+            isSnapshots = self.version.contains("SNAPSHOT") || self.version.contains("beta") || self.version.contains("alpha");
+        }
+        Multithreading.submit(this::fetchUpdateStatus);
     }
 
     /**
      * Returns true if there is an update available, <b>blocking this thread until done.</b>
      */
     public boolean hasUpdate() {
-        if(!fin) {
+        if (!fin) {
             while (true) {
                 if (fin) break;
             }
@@ -74,22 +86,28 @@ public final class OneConfigUpdate {
         return fin;
     }
 
+    @Nullable
+    public String getCurrentVersion() {
+        return currentVersion;
+    }
+
+    @Nullable
+    public String getLatestVersion() {
+        return latestVersion;
+    }
+
     private synchronized void fetchUpdateStatus() {
-        LoaderPlatform.ActiveMod self = Platform.loader().getLoadedMod("oneconfig");
-        if (self == null) {
+        if (currentVersion == null) {
             LOGGER.warn("version check failed: failed to determine current version");
             return;
         }
-        String ver = self.version;
-        boolean snapshot = ver.contains("SNAPSHOT") || ver.contains("beta") || ver.contains("alpha");
-
         StringBuilder sb = new StringBuilder(96);
-        sb.append(ONECONFIG_REPO);
-        if (snapshot) sb.append("snapshot/");
+        sb.append(POLYFROST_REPO);
+        if (isSnapshots) sb.append("snapshots/");
         else sb.append("releases/");
         sb.append(GROUP).append(Platform.loader().getLoaderString());
         sb.append("/maven-metadata.xml");
-        try (InputStream stream = NetworkUtils.setupConnection(sb.toString(), NetworkUtils.DEF_AGENT, 2000, false)) {
+        try (InputStream stream = NetworkUtils.setupConnection(sb.toString())) {
             if (stream == null) {
                 LOGGER.warn("version check failed: failed to fetch metadata from {}", sb.toString());
                 return;
@@ -114,9 +132,10 @@ public final class OneConfigUpdate {
                 return;
             }
             // no bother doing any other checks to see if the version is more - latest will always be more, plus means we can downgrade server-side if needed
-            if (!latestVersion.toLowerCase().equals(ver)) {
+            this.latestVersion = latestVersion.toLowerCase();
+            if (!this.latestVersion.equals(currentVersion)) {
                 hasUpdate = true;
-                LOGGER.warn("OneConfig has an update available: {} -> {}", ver, latestVersion);
+                LOGGER.warn("OneConfig has an update available: {} -> {}", currentVersion, latestVersion);
             } else LOGGER.info("no update found");
         } catch (Exception e) {
             LOGGER.error("failed to check for updates! (unknown error)", e);

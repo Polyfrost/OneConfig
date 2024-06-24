@@ -37,6 +37,9 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Map;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -90,6 +93,25 @@ public class MHUtilsTest {
         } catch (Throwable e) {
             fail(e);
         }
+    }
+
+    @Test
+    void lmfao() {
+        Function<char[], String> valueOf = MHUtils.getFunctionHandle(String.class, "valueOf", String.class, char[].class).getOrThrow();
+        assertEquals("abc", valueOf.apply("abc".toCharArray()));
+        Consumer<Integer> consumes = MHUtils.getConsumerHandle(MHUtilsTest.class, "consumes", Integer.class).getOrThrow();
+        consumes.accept(231);
+        Predicate<String> isEmpty = MHUtils.getPredicateHandle(MHUtilsTest.class, "isEmpty", String.class).getOrThrow();
+        assertFalse(isEmpty.test("no"));
+        assertTrue(isEmpty.test(""));
+    }
+
+    static void consumes(Integer a) {
+        if(a != 231) fail();
+    }
+
+    static boolean isEmpty(String s) {
+        return s.isEmpty();
     }
 
     @Test

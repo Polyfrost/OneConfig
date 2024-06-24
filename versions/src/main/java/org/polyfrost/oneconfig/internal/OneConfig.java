@@ -38,10 +38,13 @@ import org.polyfrost.oneconfig.api.ui.v1.UIManager;
 import org.polyfrost.oneconfig.api.ui.v1.internal.BlurHandler;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindHelper;
 import org.polyfrost.oneconfig.internal.ui.OneConfigUI;
+import org.polyfrost.oneconfig.utils.v1.Multithreading;
+import org.polyfrost.oneconfig.utils.v1.OneConfigUpdate;
 import org.polyfrost.polyui.PolyUI;
 import org.polyfrost.polyui.component.Drawable;
 import org.polyfrost.polyui.input.KeyModifiers;
 import org.polyfrost.polyui.input.Translator;
+import org.polyfrost.universal.UChat;
 
 import static org.polyfrost.oneconfig.api.commands.v1.factories.builder.CommandBuilder.runs;
 
@@ -87,6 +90,7 @@ public class OneConfig
         preload();
         CommandBuilder b = CommandBuilder.command("oneconfig", "ocfg", "ocfgv1").description("OneConfig main command");
         b.then(runs().does(OneConfigUI.INSTANCE::open).description("Opens the OneConfig GUI"));
+        b.then(runs("updateCheck").does(() -> Multithreading.submit(() -> UChat.chat(OneConfigUpdate.getInstance().hasUpdate() ? "Update available!" : "No updates available"))).description("Check for updates"));
         b.then(runs("hud").does(() -> Platform.screen().display(HudManager.INSTANCE.getWithEditor())).description("Opens the OneConfig HUD editor"));
         CommandManager.registerCommand(b.build());
         KeybindHelper.builder().mods(KeyModifiers.RSHIFT).does(OneConfigUI.INSTANCE::open).register();

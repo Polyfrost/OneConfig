@@ -38,7 +38,6 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
-import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -131,8 +130,12 @@ public final class NetworkUtils {
         UDesktop.browse(URI.create(uri));
     }
 
+    public static InputStream setupConnection(String url) throws IOException {
+        return setupConnection(url, DEF_AGENT, 5000, false);
+    }
+
     public static InputStream setupConnection(String url, String userAgent, int timeout, boolean useCaches) throws IOException {
-        HttpURLConnection connection = ((HttpURLConnection) new URL(URLEncoder.encode(url, "UTF-8")).openConnection());
+        HttpURLConnection connection = ((HttpURLConnection) new URL(url).openConnection());
         connection.setRequestMethod("GET");
         connection.setUseCaches(useCaches);
         connection.addRequestProperty("User-Agent", userAgent);

@@ -33,10 +33,12 @@ import sun.misc.Unsafe
 import java.lang.invoke.LambdaMetafactory
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
+import java.lang.invoke.MethodType
 import java.lang.invoke.MethodType.methodType
 import java.lang.reflect.*
 import java.util.function.Consumer
 import java.util.function.Function
+import java.util.function.Predicate
 
 /**
  * A collection of (naughty) MethodHandle utilities.
@@ -309,6 +311,37 @@ object MHUtils {
         Result.failure(ReflectiveOperationException("Failed to get constructor handle for $ctor", e))
     }
 
+    /**
+     * create and return a LMF call-site to the given method, that **must conform to the interface [T]**.
+     * @param it the object on which the method is located - if it is static, pass a class instance here.
+     * @param methodName the name of the method to wrap
+     * @param interfaceFuncName the name of the interface function to wrap
+     * @param type the method type of the method (**AND INTERFACE FUNCTION**) to wrap
+     */
+    fun <T> lmf(it: Any, classOfT: Class<T>, methodName: String, interfaceFuncName: String, type: MethodType) = try {
+        val isStatic = it is Class<*>
+        val cls = if (isStatic) it as Class<*> else it.javaClass
+        val mh = if (isStatic) trustedLookup.findStatic(cls, methodName, type) else trustedLookup.findVirtual(cls, methodName, type)
+        val target = LambdaMetafactory.metafactory(
+            // asm: due to the fact we use the trusted lookup, the only visible classes are ones on the bootstrap class loader,
+            // as it is the lookup of java.lang.Object. therefore to access the object's class, we must make sure the lookup
+            // has the access to the classloader of the object to avoid NoDefErrors, unfortunately meaning we have to lookup.in(cls)
+            // fortunately we keep all privileges thanks to the short path of lookup.in(cls) so it still works
+            // https://stackoverflow.com/questions/60144712/noclassdeffounderror-for-my-own-class-when-creating-callsite-with-lambdametafact
+            trustedLookup.`in`(cls),
+            interfaceFuncName,
+            if (isStatic) methodType(classOfT) else methodType(classOfT, cls),
+            type.erase(),
+            mh,
+            type
+        ).target
+        Result.success((if (isStatic) target.invoke() else target.invoke(it)) as T)
+    } catch (e: Throwable) {
+        Result.failure(ReflectiveOperationException("Failed to get wrapped method handle for $methodName from $it", e))
+    }
+
+    inline fun <reified T> lmf(it: Any, methodName: String, interfaceFuncName: String, type: MethodType)= lmf(it, T::class.java, methodName, interfaceFuncName, type)
+
 
     // -- lambda -- //
     /**
@@ -318,30 +351,7 @@ object MHUtils {
      * @return a fast wrapped method handle, or null if it failed.
      */
     @JvmStatic
-    @Suppress("UNCHECKED_CAST")
-    fun <T> getConsumerFunctionHandle(it: Any, methodName: String, paramType: Class<T>) = try {
-        val isStatic = it is Class<*>
-        val cls = if (isStatic) it as Class<*> else it.javaClass
-        val mt = methodType(Void.TYPE, paramType)
-        val mh = if (isStatic) trustedLookup.findStatic(cls, methodName, mt) else trustedLookup.findVirtual(cls, methodName, mt)
-        val target = LambdaMetafactory.metafactory(
-            // asm: due to the fact we use the trusted lookup, the only visible classes are ones on the bootstrap class loader,
-            // as it is the lookup of java.lang.Object. therefore to access the object's class, we must make sure the lookup
-            // has the access to the classloader of the object to avoid NoDefErrors, unfortunately meaning we have to lookup.in(cls)
-            // fortunately we keep all privileges thanks to the short path of lookup.in(cls) so it still works
-            // https://stackoverflow.com/questions/60144712/noclassdeffounderror-for-my-own-class-when-creating-callsite-with-lambdametafact
-            trustedLookup.`in`(cls),
-            "accept",
-            methodType(Consumer::class.java, cls),
-            methodType(Void.TYPE, Any::class.java),
-            mh,
-            mt
-        ).target
-        Result.success((if (isStatic) target.invokeExact() else target.invoke(it)) as Consumer<T>)
-    } catch (e: Throwable) {
-        Result.failure(ReflectiveOperationException("Failed to get wrapped method handle for $methodName from $it", e))
-
-    }
+    fun <T> getConsumerHandle(it: Any, methodName: String, paramType: Class<T>) = lmf<Consumer<T>>(it, methodName, "accept", methodType(Void.TYPE, paramType))
 
 
     /**
@@ -351,25 +361,10 @@ object MHUtils {
      * @return a fast wrapped method handle, or null if it failed.
      */
     @JvmStatic
-    @Suppress("UNCHECKED_CAST")
-    fun <T, R> getFunctionHandle(it: Any, methodName: String, returnType: Class<R>, paramType: Class<T>) = try {
-        val isStatic = it is Class<*>
-        val cls = if (isStatic) it as Class<*> else it.javaClass
-        val mt = methodType(returnType, paramType)
-        val mh = if (isStatic) trustedLookup.findStatic(cls, methodName, mt) else trustedLookup.findVirtual(cls, methodName, mt)
-        val target = LambdaMetafactory.metafactory(
-            trustedLookup.`in`(cls),
-            "apply",
-            methodType(Function::class.java, cls),
-            methodType(Any::class.java, Any::class.java),
-            mh,
-            mt
-        ).target
-        Result.success((if (isStatic) target.invokeExact() else target.invoke(it)) as Function<T, R>)
-    } catch (e: Throwable) {
-        Result.failure(ReflectiveOperationException("Failed to get wrapped method handle for $methodName from $it", e))
-    }
+    fun <T, R> getFunctionHandle(it: Any, methodName: String, returnType: Class<R>, paramType: Class<T>) = lmf<Function<T, R>>(it, methodName, "apply", methodType(returnType, paramType))
 
+    @JvmStatic
+    fun <T> getPredicateHandle(it: Any, methodName: String, typeOfT: Class<T>) = lmf<Predicate<T>>(it, methodName, "test", methodType(Boolean::class.java, typeOfT))
 
 // --- direct access methods --- //
     /**

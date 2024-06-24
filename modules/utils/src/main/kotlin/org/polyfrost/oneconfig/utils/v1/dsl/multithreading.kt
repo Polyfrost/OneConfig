@@ -32,9 +32,9 @@ import java.util.concurrent.TimeUnit
 /**
  * Runs the given [block] asynchronously.
  *
- * @see Multithreading.runAsync
+ * @see Multithreading.submit
  */
-fun runAsync(block: () -> Unit) = Multithreading.runAsync(block)
+fun runAsync(block: () -> Unit) = Multithreading.submit(block)
 
 /**
  * Runs the given [block] asynchronously after the given [delay].

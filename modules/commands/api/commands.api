@@ -190,7 +190,7 @@ public class org/polyfrost/oneconfig/api/commands/v1/factories/builder/CommandBu
 	public static fun command (Ljava/util/Map;[Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/commands/v1/factories/builder/CommandBuilder;
 	public static fun command ([Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/commands/v1/factories/builder/CommandBuilder;
 	public fun description (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/commands/v1/factories/builder/CommandBuilder;
-	public fun register ()Lorg/polyfrost/oneconfig/api/commands/v1/CommandTree;
+	public fun register ()Z
 	public static fun runs ()Lorg/polyfrost/oneconfig/api/commands/v1/factories/builder/CommandBuilder$ExeBuilder;
 	public static fun runs ([Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/commands/v1/factories/builder/CommandBuilder$ExeBuilder;
 	public fun subcmd ([Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/commands/v1/factories/builder/CommandBuilder;

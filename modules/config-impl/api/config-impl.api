@@ -267,7 +267,7 @@ public class org/polyfrost/oneconfig/api/config/v1/collect/impl/OneConfigCollect
 	public fun collect (Ljava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	protected fun handleField (Ljava/lang/reflect/Field;Ljava/lang/Object;Lorg/polyfrost/oneconfig/api/config/v1/Tree;)V
 	protected fun handleInnerClass (Ljava/lang/Class;Ljava/lang/Object;ILorg/polyfrost/oneconfig/api/config/v1/Tree;)V
-	protected fun handleMetadata (Lorg/polyfrost/oneconfig/api/config/v1/Property;Ljava/lang/annotation/Annotation;Lorg/polyfrost/oneconfig/api/config/v1/annotations/Option;Ljava/lang/reflect/Field;)V
+	protected fun handleMetadata (Lorg/polyfrost/oneconfig/api/config/v1/Tree;Lorg/polyfrost/oneconfig/api/config/v1/Property;Ljava/lang/annotation/Annotation;Lorg/polyfrost/oneconfig/api/config/v1/annotations/Option;Ljava/lang/reflect/Field;)V
 	protected fun handleMethod (Ljava/lang/reflect/Method;Ljava/lang/Object;Lorg/polyfrost/oneconfig/api/config/v1/Tree;)V
 }
 

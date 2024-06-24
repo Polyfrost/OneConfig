@@ -175,7 +175,7 @@ public final class org/polyfrost/oneconfig/utils/v1/MHUtils {
 	public static final fun getAnnotationValues (Ljava/lang/annotation/Annotation;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
 	public static final fun getConstructorHandle (Ljava/lang/Class;[Ljava/lang/Class;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
 	public static final fun getConstructorHandle (Ljava/lang/reflect/Constructor;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
-	public static final fun getConsumerFunctionHandle (Ljava/lang/Object;Ljava/lang/String;Ljava/lang/Class;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
+	public static final fun getConsumerHandle (Ljava/lang/Object;Ljava/lang/String;Ljava/lang/Class;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
 	public static final fun getField (Ljava/lang/Object;Ljava/lang/String;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
 	public static final fun getFieldGetter (Ljava/lang/Class;Ljava/lang/String;Ljava/lang/Class;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
 	public static final fun getFieldGetter (Ljava/lang/String;Ljava/lang/Object;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
@@ -187,6 +187,7 @@ public final class org/polyfrost/oneconfig/utils/v1/MHUtils {
 	public static final fun getMethodHandle (Ljava/lang/Class;Ljava/lang/String;Ljava/lang/Class;[Ljava/lang/Class;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
 	public static final fun getMethodHandle (Ljava/lang/Object;Ljava/lang/String;Ljava/lang/Class;[Ljava/lang/Class;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
 	public static final fun getMethodHandle (Ljava/lang/reflect/Method;Ljava/lang/Object;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
+	public static final fun getPredicateHandle (Ljava/lang/Object;Ljava/lang/String;Ljava/lang/Class;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
 	public static final fun getStatic (Ljava/lang/Class;Ljava/lang/String;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
 	public static final fun getStaticFieldGetter (Ljava/lang/Class;Ljava/lang/String;Ljava/lang/Class;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
 	public static final fun getStaticFieldSetter (Ljava/lang/Class;Ljava/lang/String;Ljava/lang/Class;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
@@ -197,6 +198,7 @@ public final class org/polyfrost/oneconfig/utils/v1/MHUtils {
 	public static final fun invokeCatching (Ljava/lang/invoke/MethodHandle;[Ljava/lang/Object;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
 	public static final fun invokeExactCatching (Ljava/lang/invoke/MethodHandle;[Ljava/lang/Object;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
 	public static final fun invokeStatic (Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
+	public final fun lmf (Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;Ljava/lang/String;Ljava/lang/invoke/MethodType;)Lorg/polyfrost/oneconfig/utils/v1/MHUtils$Result;
 	public static final fun removeReflectionFilters ()Z
 	public static final fun setAccessible (Ljava/lang/reflect/AccessibleObject;)Ljava/lang/reflect/AccessibleObject;
 	public static final fun setField (Ljava/lang/Object;Ljava/lang/String;Ljava/lang/Object;)Z
@@ -230,10 +232,9 @@ public final class org/polyfrost/oneconfig/utils/v1/MHUtils$Result$Failure {
 public final class org/polyfrost/oneconfig/utils/v1/Multithreading {
 	public static fun getExecutor ()Ljava/util/concurrent/ExecutorService;
 	public static fun getScheduledExecutor ()Ljava/util/concurrent/ScheduledExecutorService;
-	public static fun runAsync (Ljava/lang/Runnable;)V
-	public static fun runAsync ([Ljava/lang/Runnable;)V
 	public static fun schedule (Ljava/lang/Runnable;JLjava/util/concurrent/TimeUnit;)V
 	public static fun submit (Ljava/lang/Runnable;)Ljava/util/concurrent/Future;
+	public static fun submit ([Ljava/lang/Runnable;)V
 	public static fun submitScheduled (Ljava/lang/Runnable;JLjava/util/concurrent/TimeUnit;)Ljava/util/concurrent/ScheduledFuture;
 }
 
@@ -244,13 +245,17 @@ public final class org/polyfrost/oneconfig/utils/v1/NetworkUtils {
 	public static fun downloadFile (Ljava/lang/String;Ljava/nio/file/Path;Ljava/lang/String;IZ)Z
 	public static fun getString (Ljava/lang/String;)Ljava/lang/String;
 	public static fun getString (Ljava/lang/String;Ljava/lang/String;IZ)Ljava/lang/String;
+	public static fun setupConnection (Ljava/lang/String;)Ljava/io/InputStream;
 	public static fun setupConnection (Ljava/lang/String;Ljava/lang/String;IZ)Ljava/io/InputStream;
 }
 
 public final class org/polyfrost/oneconfig/utils/v1/OneConfigUpdate {
 	public static final field GROUP Ljava/lang/String;
-	public static final field ONECONFIG_REPO Ljava/lang/String;
+	public static final field POLYFROST_REPO Ljava/lang/String;
+	public final field isSnapshots Z
+	public fun getCurrentVersion ()Ljava/lang/String;
 	public static fun getInstance ()Lorg/polyfrost/oneconfig/utils/v1/OneConfigUpdate;
+	public fun getLatestVersion ()Ljava/lang/String;
 	public fun hasChecked ()Z
 	public fun hasUpdate ()Z
 	public static fun makeUpdateMarker ()V
@@ -303,7 +308,7 @@ public final class org/polyfrost/oneconfig/utils/v1/dsl/IoKt {
 }
 
 public final class org/polyfrost/oneconfig/utils/v1/dsl/MultithreadingKt {
-	public static final fun runAsync (Lkotlin/jvm/functions/Function0;)V
+	public static final fun runAsync (Lkotlin/jvm/functions/Function0;)Ljava/util/concurrent/Future;
 	public static final fun schedule (JLjava/util/concurrent/TimeUnit;Lkotlin/jvm/functions/Function0;)V
 }
 
