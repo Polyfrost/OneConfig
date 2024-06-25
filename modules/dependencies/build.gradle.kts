@@ -1,8 +1,8 @@
-allprojects {
-    group = "${rootProject.group}.${rootProject.name}.dependencies"
+description = "Shared external libraries and dependencies"
 
+allprojects {
     with(tasks) {
-        arrayOf("jar", "javadocJar", "sourcesJar").forEach {
+        arrayOf("javadocJar", "sourcesJar").forEach {
             findByName(it)?.enabled = false
         }
     }
