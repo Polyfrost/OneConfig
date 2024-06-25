@@ -112,7 +112,11 @@ tasks {
         inputs.property("name", rootProject.name)
         inputs.property("java", 8)
         inputs.property("version", version)
-        inputs.property("mcVersionStr", if (platform.isFabric) platform.mcVersionStr.substringBeforeLast('.') + ".x" else platform.mcVersionStr)
+        inputs.property(
+            "mcVersionStr",
+            if (platform.isFabric) platform.mcVersionStr.substringBeforeLast('.') + ".x" else platform.mcVersionStr
+        )
+
         val id = inputs.properties["id"]
         val name = inputs.properties["name"]
         val version = inputs.properties["version"]
@@ -139,29 +143,41 @@ tasks {
             val attributesMap = buildMap<String, Any> {
                 if (platform.isForge) {
                     if (platform.isLegacyForge) {
-                        putAll(mapOf(
-                            "ModSide" to "CLIENT",
-                            "ForceLoadAsMod" to true,
-                            "TweakOrder" to "0",
-                            "MixinConfigs" to "mixins.$modId.json",
-                            "TweakClass" to tweakClass
-                        ))
+                        putAll(
+                            mapOf(
+                                "ModSide" to "CLIENT",
+                                "ForceLoadAsMod" to true,
+                                "TweakOrder" to "0",
+                                "MixinConfigs" to "mixins.$modId.json",
+                                "TweakClass" to tweakClass
+                            )
+                        )
                     } else {
                         put("MixinConfigs", "mixins.$modId.json")
                     }
                 }
-                putAll(mapOf(
-                    "Specification-Title" to modId,
-                    "Specification-Vendor" to "Polyfrost",
-                    "Specification-Version" to "1", // We are version 1 of ourselves, whatever the hell that means
-                    "Implementation-Title" to rootProject.name,
-                    "Implementation-Version" to project.version,
-                    "Implementation-Vendor" to "Polyfrost",
-                    "Implementation-Timestamp" to SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").format(`java.util`.Date())
-                ))
+                putAll(
+                    mapOf(
+                        "Specification-Title" to modId,
+                        "Specification-Vendor" to "Polyfrost",
+                        "Specification-Version" to "1", // We are version 1 of ourselves, whatever the hell that means
+                        "Implementation-Title" to rootProject.name,
+                        "Implementation-Version" to project.version,
+                        "Implementation-Vendor" to "Polyfrost",
+                        "Implementation-Timestamp" to SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").format(`java.util`.Date())
+                    )
+                )
             }
             attributes(attributesMap)
         }
+    }
+
+    afterEvaluate {
+        // No need for an ABI check on version-specific code,
+        // nobody should depend on a specific version anyway.
+        // This also fixes CI getting stuck while trying to verify non-existent .api files
+        val apiCheck by getting { enabled = false }
+        val apiDump by getting { enabled = false }
     }
 }
 

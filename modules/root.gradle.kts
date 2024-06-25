@@ -1,3 +1,5 @@
+@file:Suppress("UnstableApiUsage")
+
 // Shared build logic between all OneConfig modules to reduce boilerplate.
 
 plugins {
@@ -8,6 +10,7 @@ plugins {
 subprojects {
     apply(plugin = "java-library")
     apply(plugin = "kotlin")
+    apply(plugin = "jvm-test-suite")
 
     dependencies {
         implementation(rootProject.libs.annotations)
@@ -16,20 +19,44 @@ subprojects {
         testImplementation(platform(rootProject.libs.junit.bom))
     }
 
-    tasks {
-        test {
-            useJUnitPlatform()
-            // run tests with java 17 because it is better for compatability and makes the debugger work
-            // (especially for testing of reflection due to the tighter rules)
-            javaLauncher = this@subprojects.javaToolchains.launcherFor {
-                languageVersion = JavaLanguageVersion.of(17)
-            }
-        }
+    configure<TestingExtension> {
+        suites {
+            val test by sourceSets
+            val main by sourceSets
 
-        javadoc {
-            options {
-                (this as CoreJavadocOptions).addBooleanOption("Xdoclint:none", true)
+            fun createTestSuite(name: String, javaVersion: Int) {
+                val suite = register<JvmTestSuite>(name) {
+                    useJUnitJupiter()
+
+                    sources {
+                        java { srcDir("src/test/java") }
+                        resources { srcDir("src/test/resources") }
+                        compileClasspath += test.compileClasspath + main.output
+                        runtimeClasspath += test.runtimeClasspath + main.output
+                    }
+
+                    targets.all {
+                        testTask.configure {
+                            javaLauncher = this@subprojects.javaToolchains.launcherFor {
+                                languageVersion = JavaLanguageVersion.of(javaVersion)
+                            }
+                            outputs.upToDateWhen { false }
+                        }
+                    }
+                }
+                tasks.named("check") {
+                    dependsOn(suite)
+                }
             }
+//            createTestSuite("j8Tests", 8) // TODO(nextday): re-enable (pretty please)
+            createTestSuite("j17Tests", 17)
+            createTestSuite("j21Tests", 21)
+        }
+    }
+
+    tasks.javadoc {
+        options {
+            (this as CoreJavadocOptions).addBooleanOption("Xdoclint:none", true)
         }
     }
 
@@ -76,8 +103,8 @@ apiValidation {
     }
     ignoredPackages.add("org.polyfrost.oneconfig.api.hypixel.v0.internal")
     ignoredProjects.add("internal")
-	ignoredProjects.add("dependencies")
-	ignoredProjects.add("legacy")
-	ignoredProjects.add("modern")
+    ignoredProjects.add("dependencies")
+    ignoredProjects.add("legacy")
+    ignoredProjects.add("modern")
     ignoredProjects.add("bundled")
 }

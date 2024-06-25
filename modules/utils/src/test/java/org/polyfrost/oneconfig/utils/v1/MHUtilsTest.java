@@ -48,27 +48,23 @@ public class MHUtilsTest {
 
     @Test
     void works() {
-        try {
+        assertDoesNotThrow(() -> {
             assertEquals("abc", (String) STATIC_MH.invokeExact(new char[]{'a', 'b', 'c'}, 0, 3));
             assertEquals("hello", INSTANCE_MH.invoke("hello, world", 0, 5));
-        } catch (Throwable e) {
-            fail(e);
-        }
+        });
     }
 
     @Test
     void instantiateWorks() {
-        try {
+        assertDoesNotThrow(() -> {
             assertEquals("hi2", (String) CTOR.invokeExact(new char[]{'h', 'i', '2'}));
-        } catch (Throwable e) {
-            fail(e);
-        }
+        });
     }
 
     @Test
     @Deprecated(message = "test", replaceWith = @ReplaceWith(expression = "void test", imports = {"import"}), level = DeprecationLevel.HIDDEN)
     void annotationThingWorks() {
-        try {
+        assertDoesNotThrow(() -> {
             Deprecated d = this.getClass().getDeclaredMethod("annotationThingWorks").getAnnotation(Deprecated.class);
             Map<String, Object> m = MHUtils.getAnnotationValues(d).getOrThrow();
             assertEquals("test", m.get("message"));
@@ -76,25 +72,21 @@ public class MHUtilsTest {
             ReplaceWith r = (ReplaceWith) m.get("replaceWith");
             assertEquals("void test", r.expression());
             assertEquals("import", r.imports()[0]);
-        } catch (Throwable e) {
-            fail(e);
-        }
+        });
     }
 
     @Test
     void removingFiltersWorks() {
-        try {
+        assertDoesNotThrow(() -> {
             MHUtils.removeReflectionFilters();
             // this method will fail if the filters are still in place
             AccessibleObject.class.getDeclaredField("override");
-        } catch (Throwable e) {
-            fail(e);
-        }
+        });
     }
 
     @Test
     void unreflectWorks() {
-        try {
+        assertDoesNotThrow(() -> {
             Method m = String.class.getDeclaredMethod("substring", int.class, int.class);
             MethodHandle mh = MHUtils.getMethodHandle(m, "hello, world").getOrThrow();
             assertEquals(mh.invoke(0, 5), "hello");
@@ -111,9 +103,6 @@ public class MHUtilsTest {
             Constructor<String> ctor = String.class.getDeclaredConstructor(char[].class);
             MethodHandle ctorHandle = MHUtils.getConstructorHandle(ctor).getOrThrow();
             assertEquals(ctorHandle.invoke("abc1234".toCharArray()), "abc1234");
-
-        } catch (Throwable e) {
-            fail(e);
-        }
+        });
     }
 }

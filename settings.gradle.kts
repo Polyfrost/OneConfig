@@ -4,7 +4,7 @@ pluginManagement {
     repositories {
         gradlePluginPortal()
         mavenLocal()
-		mavenCentral()
+        mavenCentral()
         maven("https://repo.polyfrost.org/releases") {
             name = "Polyfrost Releases"
         }
@@ -21,7 +21,7 @@ dependencyResolutionManagement {
 }
 
 plugins {
-    id("org.gradle.toolchains.foojay-resolver-convention") version("0.8.+")
+    id("org.gradle.toolchains.foojay-resolver-convention") version ("0.8.+")
 }
 
 val name: String by settings
@@ -46,9 +46,9 @@ listOf(
     "events",
     "ui",
     "internal",
-	"dependencies",
-	"dependencies:legacy",
-	"dependencies:modern",
+    "dependencies",
+    "dependencies:legacy",
+    "dependencies:modern",
     "dependencies:bundled",
     "utils"
 ).forEach { module ->
