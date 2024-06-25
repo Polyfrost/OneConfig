@@ -68,6 +68,9 @@ jobs:
       - name: Build
         run: ./gradlew build
 
+      - name: Test publication
+        run: ./gradlew publishToMavenLocal
+
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:

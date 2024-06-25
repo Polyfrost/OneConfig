@@ -16,6 +16,9 @@ out
 # fleet
 .fleet
 
+# kotlin k2
+/.kotlin
+
 # gradle
 build
 .gradle
