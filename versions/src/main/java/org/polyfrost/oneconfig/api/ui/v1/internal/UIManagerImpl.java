@@ -46,7 +46,6 @@ import org.polyfrost.oneconfig.utils.v1.MHUtils;
 import org.polyfrost.polyui.PolyUI;
 import org.polyfrost.polyui.renderer.Renderer;
 import org.polyfrost.polyui.renderer.Window;
-import org.polyfrost.polyui.unit.Vec2;
 import org.polyfrost.polyui.utils.IOUtils;
 
 import java.io.IOException;
@@ -370,8 +369,8 @@ public class UIManagerImpl
     }
 
     @Override
-    public Object createPolyUIScreen(@NotNull PolyUI polyUI, Vec2 desiredResolution, boolean pauses, boolean blurs, Consumer<PolyUI> onClose) {
-        return new PolyUIScreen(polyUI, desiredResolution, pauses, blurs, onClose);
+    public Object createPolyUIScreen(@NotNull PolyUI polyUI, float desiredScreenWidth, float desiredScreenHeight, boolean pauses, boolean blurs, Consumer<PolyUI> onClose) {
+        return new PolyUIScreen(polyUI, desiredScreenWidth, desiredScreenHeight, pauses, blurs, onClose);
     }
 
     @Override

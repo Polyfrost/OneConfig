@@ -52,7 +52,7 @@ public class TestConfig_Test extends Config {
 //        UChat.chat("you pressed a bind");
 //        return true;
 //    });
-    @Slider(title = "Slide", min = 10f, max = 110f, icon = "paintbrush.svg", description = "I do sliding", category = "bob")
+    @Slider(title = "Slide", min = 10f, max = 110f, icon = "assets/oneconfig/ico/paintbrush.svg", description = "I do sliding", category = "bob")
     public static float p = 50f;
     @Text(title = "Text")
     public static String text = "Hello world!";

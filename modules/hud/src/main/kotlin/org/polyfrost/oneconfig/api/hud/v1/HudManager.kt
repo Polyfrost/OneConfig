@@ -96,63 +96,50 @@ object HudManager {
         private set
 
     val panel = Block(
+        Block(
+            Image("assets/oneconfig/ico/right-arrow.svg").setAlpha(0.1f),
+            size = Vec2(32f, 1048f),
+            alignment = alignC,
+        ).named("CloseArea").withStates().ignoreLayout().setPalette(
+            Colors.Palette(
+                TRANSPARENT,
+                PolyColor.Gradient(rgba(100, 100, 100, 0.4f), TRANSPARENT),
+                PolyColor.Gradient(rgba(100, 100, 100, 0.3f), TRANSPARENT),
+                TRANSPARENT,
+            )
+        ).events {
+            Event.Mouse.Entered then {
+                Fade(this[0], 1f, false, Animations.Default.create(0.08.seconds)).add()
+            }
+            Event.Mouse.Exited then {
+                Fade(this[0], 0.1f, false, Animations.Default.create(0.08.seconds)).add()
+            }
+            Event.Mouse.Companion.Clicked then {
+                toggle()
+            }
+        },
         Group(
             Image("assets/oneconfig/ico/left-arrow.svg").setDestructivePalette().withStates().onClick {
-                if (parent.parent[2] !== hudsPage) {
-                    parent.parent[2] = hudsPage
+                if (parent.parent[3] !== hudsPage) {
+                    parent.parent[3] = hudsPage
                 } else {
-                    Platform.screen().close()
+//                    Platform.screen().close()
                 }
             },
             Block(
                 Image("assets/oneconfig/ico/search.svg"),
-                TextInput(placeholder = "oneconfig.search.placeholder"),
+                TextInput(placeholder = "oneconfig.search.placeholder", visibleSize = Vec2(220f, 12f)),
                 size = Vec2(256f, 32f),
             ).withBoarder().withCursor(Cursor.Text).onClick {
                 polyUI.focus(this[1])
             },
-            alignment = Align(main = Align.Main.SpaceBetween, pad = Vec2.ZERO),
-            size = Vec2(468f, 32f),
+            alignment = Align(main = Align.Main.SpaceBetween, pad = Vec2(12f, 6f)),
+            size = Vec2(500f, 32f),
         ),
-        Text("oneconfig.hudeditor.title", fontSize = 24f).setFont { medium },
+        Text("oneconfig.hudeditor.title", fontSize = 24f).padded(16f, 0f).setFont { semiBold },
         hudsPage,
-        Block(
-            Image("assets/oneconfig/ico/right-arrow.svg").setAlpha(0.1f),
-            at = -.0001f by 0f,
-            size = Vec2(32f, 1048f),
-            alignment = alignC,
-        ).named("CloseArea").withStates().also {
-            it.palette = Colors.Palette(
-                TRANSPARENT,
-                PolyColor.Gradient(
-                    rgba(100, 100, 100, 0.4f), TRANSPARENT,
-                    type = PolyColor.Gradient.Type.LeftToRight,
-                ),
-                PolyColor.Gradient(
-                    rgba(100, 100, 100, 0.3f), TRANSPARENT,
-                    type = PolyColor.Gradient.Type.LeftToRight,
-                ),
-                TRANSPARENT,
-            )
-        }.events {
-            Event.Mouse.Entered then {
-                Fade(this[0], 1f, false, Animations.EaseInOutQuad.create(0.08.seconds)).add()
-            }
-            Event.Mouse.Exited then {
-                Fade(this[0], 0.1f, false, Animations.EaseInOutQuad.create(0.08.seconds)).add()
-            }
-            Event.Mouse.Companion.Clicked then {
-                // asm: makes close button easier to use
-                if (polyUI.mouseY < 40f) {
-                    false
-                } else {
-                    toggle()
-                    true
-                }
-            }
-        },
         size = Vec2(500f, 1048f),
-        alignment = Align(cross = Align.Cross.Start, pad = Vec2(24f, 17f)),
+        alignment = Align(cross = Align.Cross.Start, pad = Vec2(0f, 18f)),
     ).also {
         it.rawResize = true
         object : DrawableOp(it) {
@@ -212,7 +199,7 @@ object HudManager {
 
     fun getWithEditor(): Any {
         toggleHudPicker()
-        return UIManager.INSTANCE.createPolyUIScreen(polyUI, null, false, true) { editorClose() }
+        return UIManager.INSTANCE.createPolyUIScreen(polyUI, 0f, 0f, false, true) { editorClose() }
     }
 
     private fun editorClose() {
@@ -263,7 +250,8 @@ object HudManager {
         }
         hudProviders.forEach { (cls, h) ->
             if (used.contains(cls)) return@forEach
-            val default = h.defaultPosition() ?: return@forEach
+            val default = h.defaultPosition()
+            if (!default.isPositive) return@forEach
             val hud = h.make()
             val theHud = hud.build()
             theHud.x = default.x
@@ -275,20 +263,19 @@ object HudManager {
 
     fun openHudEditor(hud: Hud<out Drawable>) {
         if (!panelOpen) toggle()
-        panel[2] = createInspectionsScreen(hud)
+        panel[3] = createInspectionsScreen(hud)
     }
 
     fun toggle() {
         panelOpen = !panelOpen
         val pg = panel
-        val arrow = pg.children!!.last()[0] as Image
+        val arrow = pg[0][0] as Image
         if (!panelOpen) {
-            Move(pg, polyUI.size.x - 32f, pg.y, false, Animations.EaseInOutExpo.create(0.2.seconds)).add()
-            Fade(pg, 0.8f, false, Animations.EaseInOutExpo.create(0.2.seconds)).add()
+            Move(pg, polyUI.size.x - 32f, pg.y, false, Animations.Default.create(0.2.seconds)).add()
+            Fade(pg, 0.8f, false, Animations.Default.create(0.2.seconds)).add()
             arrow.rotation = PI
         } else {
-//            panel.y = polyUI.window!!.height / 2f - panel.height / 2f
-            Move(pg, polyUI.size.x - pg.width - 8f, pg.y, false, Animations.EaseInOutExpo.create(0.2.seconds)).add()
+            Move(pg, polyUI.size.x - pg.width - 8f, pg.y, false, Animations.Default.create(0.2.seconds)).add()
             arrow.rotation = 0.0
             pg.alpha = 1f
             pg.prioritize()
@@ -303,14 +290,14 @@ object HudManager {
         pg.prioritize()
         pg.renders = true
         if (panelExists) {
-            Fade(pg, 0f, false, Animations.EaseInOutQuad.create(0.2.seconds)) {
+            Fade(pg, 0f, false, Animations.Default.create(0.2.seconds)) {
                 renders = false
             }.add()
             // remove scale blob
             polyUI.inputManager.focus(null)
         } else {
             pg.alpha = 0f
-            Fade(pg, 1f, false, Animations.EaseInOutQuad.create(0.2.seconds)).add()
+            Fade(pg, 1f, false, Animations.Default.create(0.2.seconds)).add()
             pg.x = polyUI.size.x - 32f
             toggle()
         }

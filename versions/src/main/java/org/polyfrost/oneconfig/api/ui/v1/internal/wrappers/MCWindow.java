@@ -61,7 +61,7 @@ public class MCWindow extends Window {
     @NotNull
     @Override
     public Window open(@NotNull PolyUI polyUI) {
-        Platform.screen().display(new PolyUIScreen(polyUI, null, false, false, null));
+        Platform.screen().display(new PolyUIScreen(polyUI, 0f, 0f, false, false, null));
         return this;
     }
 
@@ -103,6 +103,10 @@ public class MCWindow extends Window {
         //$$         glfwSetCursor(handle, glfwCreateStandardCursor(GLFW_IBEAM_CURSOR));
         //$$ }
         //#endif
+    }
+
+    @Override
+    public void breakPause() {
     }
 
     @NotNull

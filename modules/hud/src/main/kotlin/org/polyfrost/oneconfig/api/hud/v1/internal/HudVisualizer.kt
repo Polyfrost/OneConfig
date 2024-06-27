@@ -34,18 +34,17 @@ import org.polyfrost.polyui.component.impl.Text
 import org.polyfrost.polyui.component.setFont
 import org.polyfrost.polyui.renderer.data.PolyImage
 import org.polyfrost.polyui.unit.Vec2
+import org.polyfrost.polyui.utils.mapToArray
 
 class HudVisualizer : ConfigVisualizer() {
 
-    override fun createHeaders(categories: Map<String, Drawable>): Drawable? {
-        return null
-    }
+    override fun createHeaders(categories: Map<String, Drawable>) = null
 
-    override fun flattenSubcategories(options: Map<String, Map<String, ArrayList<Drawable>>>): Map<String, Drawable> {
+    override fun flattenSubcategories(options: Map<String, Map<String, ArrayList<Triple<String, String?, Drawable>>>>): Map<String, Drawable> {
         return if (options.values.size == 1 && options.values.first().size == 1) {
             mapOf(
                 options.keys.first() to Group(
-                    *options.values.first().values.first().toTypedArray(),
+                    *options.values.first().values.first().mapToArray { it.third },
                     alignment = alignVNoPad,
                 )
             )
@@ -62,7 +61,7 @@ class HudVisualizer : ConfigVisualizer() {
             ),
             drawable,
             alignment = stdAlign,
-            size = Vec2(460f, 48f),
+            size = Vec2(480f, 48f),
         )
     }
 }

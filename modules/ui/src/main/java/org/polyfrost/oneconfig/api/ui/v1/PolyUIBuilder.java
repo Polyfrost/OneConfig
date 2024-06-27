@@ -37,7 +37,6 @@ import org.polyfrost.polyui.input.Translator;
 import org.polyfrost.polyui.property.Settings;
 import org.polyfrost.polyui.renderer.Renderer;
 import org.polyfrost.polyui.unit.Align;
-import org.polyfrost.polyui.unit.Vec2;
 
 import java.util.function.Consumer;
 
@@ -45,19 +44,20 @@ public final class PolyUIBuilder {
     private InputManager manager;
     private Renderer renderer;
     private Translator translator;
-    private Align alignment = new Align(Align.Main.Center, Align.Cross.Start, Align.Mode.Horizontal, Vec2.ZERO, 50);
+    private Align alignment = new Align(Align.Main.Start, Align.Cross.Start, Align.Mode.Horizontal, 0f, 0f);
     private Colors colors = new DarkTheme();
     private PolyColor backgroundColor;
-    private Vec2 desiredResolution;
+    private float desiredScreenWidth, desiredScreenHeight;
     private Consumer<PolyUI> onClose;
     private Settings settings;
-    private Vec2 size;
+    private float width, height;
     private boolean pauses, blurs;
 
     private PolyUIBuilder() {
         settings = new Settings();
         settings.enableInitCleanup(false);
         settings.enableForceSettingInitialSize(true);
+        settings.enableDebugMode(Platform.loader().isDevelopmentEnvironment());
     }
 
     public PolyUIBuilder input(InputManager manager) {
@@ -70,11 +70,11 @@ public final class PolyUIBuilder {
         return this;
     }
 
-	public PolyUIBuilder translatorDelegate(String translationDir) {
-		Translator translator = this.translator == null ? this.translator = new Translator(settings, "", null) : this.translator;
-		translator.addDelegate(translationDir);
-		return this;
-	}
+    public PolyUIBuilder translatorDelegate(String translationDir) {
+        Translator translator = this.translator == null ? this.translator = new Translator(settings, "", null) : this.translator;
+        translator.addDelegate(translationDir);
+        return this;
+    }
 
     public PolyUIBuilder align(Align alignment) {
         this.alignment = alignment;
@@ -111,8 +111,9 @@ public final class PolyUIBuilder {
         return this;
     }
 
-    public PolyUIBuilder size(Vec2 size) {
-        this.size = size;
+    public PolyUIBuilder size(float width, float height) {
+        this.width = width;
+        this.height = height;
         return this;
     }
 
@@ -126,13 +127,14 @@ public final class PolyUIBuilder {
         return this;
     }
 
-    public PolyUIBuilder atResolution(Vec2 desiredResolution) {
-        this.desiredResolution = desiredResolution;
+    public PolyUIBuilder atResolution(float desiredScreenWidth, float desiredScreenHeight) {
+        this.desiredScreenWidth = desiredScreenWidth;
+        this.desiredScreenHeight = desiredScreenHeight;
         return this;
     }
 
     public PolyUI make(Drawable... drawables) {
-        return new PolyUI(drawables, renderer == null ? UIManager.INSTANCE.getRenderer() : renderer, settings, manager, translator, backgroundColor, alignment, colors, size);
+        return new PolyUI(drawables, renderer == null ? UIManager.INSTANCE.getRenderer() : renderer, settings, manager, translator, backgroundColor, alignment, colors, width, height);
     }
 
     /**
@@ -140,7 +142,7 @@ public final class PolyUIBuilder {
      */
     public PolyUI makeAndOpen(Drawable... drawables) {
         PolyUI p = make(drawables);
-        Object screen = UIManager.INSTANCE.createPolyUIScreen(p, desiredResolution, pauses, blurs, onClose);
+        Object screen = UIManager.INSTANCE.createPolyUIScreen(p, desiredScreenWidth, desiredScreenHeight, pauses, blurs, onClose);
         p.setWindow(UIManager.INSTANCE.createWindow());
         Platform.screen().display(screen);
         return p;

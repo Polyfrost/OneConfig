@@ -26,32 +26,25 @@
 
 package org.polyfrost.oneconfig.internal.ui.pages
 
-import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.internal.ConfigVisualizer
-import org.polyfrost.oneconfig.api.ui.v1.notifications.Notification
+import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.internal.ui.OneConfigUI
-import org.polyfrost.polyui.PolyUI
-import org.polyfrost.polyui.animate.Animations
 import org.polyfrost.polyui.component.*
 import org.polyfrost.polyui.component.impl.Block
 import org.polyfrost.polyui.component.impl.Group
 import org.polyfrost.polyui.component.impl.Image
 import org.polyfrost.polyui.component.impl.Text
-import org.polyfrost.polyui.event.Event
-import org.polyfrost.polyui.operations.Fade
 import org.polyfrost.polyui.renderer.data.PolyImage
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.Vec2
-import org.polyfrost.polyui.unit.seconds
 import org.polyfrost.polyui.utils.image
 import org.polyfrost.polyui.utils.mapToArray
-import org.polyfrost.polyui.utils.radii
 import org.polyfrost.polyui.utils.translated
 
 private val heart = PolyImage("assets/oneconfig/ico/plus.svg")
 private val defaultModImage = "assets/oneconfig/ico/default_mod.svg".image()
-private val modBoxTopRad = radii(8f, 8f, 0f, 0f)
-private val modBoxBotRad = radii(0f, 0f, 8f, 8f)
+private val modBoxTopRad = floatArrayOf(8f, 8f, 0f, 0f)
+private val modBoxBotRad = floatArrayOf(0f, 0f, 8f, 8f)
 private val modBoxAlign = Align(cross = Align.Cross.Start, mode = Align.Mode.Vertical, pad = Vec2.ZERO)
 private val imageAlign = Align(main = Align.Main.Center, pad = Vec2.ZERO)
 private val barAlign = Align(pad = Vec2(14f, 6f), main = Align.Main.SpaceBetween)
@@ -88,7 +81,6 @@ fun ModsPage(trees: Collection<Tree>): Drawable {
                 OneConfigUI.openPage(ConfigVisualizer.INSTANCE.get(it), (this[1][0] as Text).text)
             }.namedId("ModCard")
         }.toTypedArray(),
-        size = Vec2(1130f, 0f),
         visibleSize = Vec2(1130f, 635f),
         alignment = Align(cross = Align.Cross.Start, pad = Vec2(18f, 18f)),
     ).namedId("ModsPage")
@@ -100,7 +92,7 @@ fun ThemesPage(): Drawable {
 
 fun FeedbackPage(): Drawable {
     return Group(
-        Image(PolyImage("assets/oneconfig/brand/polyfrost.png")).onInit { image.size.min(298f, 50f) },
+        Image(PolyImage("assets/oneconfig/brand/polyfrost.png")),
         Text("oneconfig.feedback.title", fontSize = 24f).setFont { medium },
         Text("oneconfig.feedback.credits", fontSize = 14f),
         Text("oneconfig.feedback.bugreport", fontSize = 24f).setFont { medium },
@@ -122,7 +114,7 @@ fun ChangelogPage(news: Collection<News>): Drawable {
         alignment = Align(cross = Align.Cross.Center, pad = Vec2(60f, 20f)),
         children = news.mapToArray {
             Group(
-                if (it.image != null) Image(it.image).onInit { image.size.max(325f, 111f) } else null,
+                if (it.image != null) Image(it.image) else null,
                 Group(
                     Text(it.title, fontSize = 16f).setFont { medium },
                     Text(it.summary, visibleSize = Vec2(612f, 166f)),
@@ -131,7 +123,7 @@ fun ChangelogPage(news: Collection<News>): Drawable {
                         Text("oneconfig.readmore").withStates().onClick { _ ->
                             val page =
                                 Group(
-                                    if (it.image != null) Image(it.image).onInit { image.size.max(325f, 111f) } else null,
+                                    if (it.image != null) Image(it.image) else null,
                                     Group(
                                         Text(it.title, fontSize = 24f).setFont { medium },
                                         Text("oneconfig.writtenby".translated(it.author)),
@@ -153,51 +145,4 @@ fun ChangelogPage(news: Collection<News>): Drawable {
             )
         },
     )
-}
-
-fun NotificationsPopup(polyUI: PolyUI, notifications: List<Notification>) {
-    val it = Block(
-        Text("oneconfig.notifications", fontSize = 16f).setFont { medium },
-        Group(
-            children = notifications.mapToArray {
-                Group(
-                    Group(
-                        Image(it.icon).onInit { image.size.resize(24f, 24f) },
-                        Group(
-                            Group(
-                                Text(it.title, fontSize = 14f).setFont { medium },
-                                Text(it.timeString).setPalette { text.secondary },
-                            ),
-                            Text(it.description).setPalette { text.secondary },
-                            alignment = Align(mode = Align.Mode.Vertical),
-                        ),
-                    ),
-                    *it.extras,
-                )
-            },
-        ),
-        Group(
-            Group(
-                Image("assets/oneconfig/ico/close.svg".image()),
-                Text("oneconfig.clearall"),
-            ),
-            Image("assets/oneconfig/ico/cog.svg".image()),
-        ),
-        focusable = true,
-        visibleSize = Vec2(368f, 500f),
-        size = Vec2(300f, 0f),
-    ).events {
-        Event.Focused.Lost then { _ ->
-            Fade(this, 0f, false, Animations.EaseInOutQuad.create(0.2.seconds)) {
-                parent.removeChild(this)
-            }.add()
-        }
-    }
-    it.setup(polyUI)
-    it.x = polyUI.mouseX - it.width / 2f
-    it.y = polyUI.mouseY + 10f
-    it.alpha = 0f
-    Fade(it, 1f, false, Animations.EaseInOutQuad.create(0.1.seconds)).add()
-    polyUI.master.addChild(it)
-    polyUI.focus(it)
 }

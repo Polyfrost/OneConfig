@@ -29,6 +29,7 @@
 package org.polyfrost.oneconfig.internal.ui
 
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
+import org.polyfrost.oneconfig.api.config.v1.internal.ConfigVisualizer
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.PolyUIBuilder
@@ -43,24 +44,28 @@ import org.polyfrost.polyui.operations.Move
 import org.polyfrost.polyui.operations.Recolor
 import org.polyfrost.polyui.renderer.data.Cursor
 import org.polyfrost.polyui.renderer.data.PolyImage
-import org.polyfrost.polyui.unit.*
+import org.polyfrost.polyui.unit.Align
+import org.polyfrost.polyui.unit.Vec2
+import org.polyfrost.polyui.unit.by
+import org.polyfrost.polyui.unit.seconds
 import org.polyfrost.polyui.utils.image
-import org.polyfrost.polyui.utils.radii
 import org.polyfrost.polyui.utils.rgba
-
 
 object OneConfigUI {
     private val playerHead = PolyImage(
-        "https://mc-heads.net/avatar/${Platform.player().playerName}/24",
+        "https://mc-heads.net/avatar/${Platform.player().playerName ?: "Steve"}/24",
         type = PolyImage.Type.Raster,
     ).also {
-        it.size = (24f by 24f).immutable()
+        it.size = (24f by 24f)
     }
+    private val searchNoneFound = Text("oneconfig.search.nonefound", fontSize = 16f)
+    private val search = Group(searchNoneFound, visibleSize = Vec2(1130f, 635f))
+
     lateinit var ui: Drawable
 
 
     fun open() {
-        val builder = PolyUIBuilder.builder().blurs().backgroundColor(rgba(21, 21, 21)).atResolution(1920f by 1080f).size(1400f by 700f)
+        val builder = PolyUIBuilder.builder().blurs().backgroundColor(rgba(21, 21, 21)).atResolution(1920f, 1080f).size(1400f, 700f)
         builder.translatorDelegate("assets/oneconfig")
         builder.onClose { _ ->
             for (t in ConfigManager.active().trees()) {
@@ -71,13 +76,12 @@ object OneConfigUI {
             Group(
                 Block(
                     size = Vec2(225f, 32f),
-                ).disable().afterParentInit(2) {
-                    enabled = true
-                    val modsBtn = parent[2]
+                ).ignoreLayout().afterParentInit {
+                    val modsBtn = parent[3]
                     Move(this, modsBtn.x, modsBtn.y, false).add()
                 },
                 Image("assets/oneconfig/brand/oneconfig.svg".image()).named("Logo"),
-                Text("oneconfig.sidebar.title.options", fontSize = 11f).setPalette { text.secondary },
+                Text("oneconfig.sidebar.title.options", fontSize = 11f).setPalette { text.secondary }.padded(0f, 24f, 0f, 0f),
                 SidebarButton(
                     "assets/oneconfig/ico/settings.svg".image(),
                     "oneconfig.mods",
@@ -85,14 +89,14 @@ object OneConfigUI {
                 SidebarButton(
                     "assets/oneconfig/ico/profiles.svg".image(),
                     "oneconfig.profiles",
-                ).addHoverInfo("this feature is experimental and is coming soon!"),
+                ).addHoverInfo(Text("this feature is experimental and is coming soon!")),
                 SidebarButton("assets/oneconfig/ico/keyboard.svg".image(), "oneconfig.keybinds"),
-                Text("oneconfig.sidebar.title.personal", fontSize = 11f).setPalette { text.secondary },
+                Text("oneconfig.sidebar.title.personal", fontSize = 11f).setPalette { text.secondary }.padded(0f, 12f, 0f, 0f),
                 SidebarButton("assets/oneconfig/ico/paintbrush.svg".image(), "oneconfig.themes", label("oneconfig.soon")).onClick {
                     openPage(ThemesPage(), "oneconfig.themes")
                 },
                 SidebarButton("assets/oneconfig/ico/cog.svg".image(), "oneconfig.preferences"),
-                Text("oneconfig.sidebar.title.extra", fontSize = 11f).setPalette { text.secondary },
+                Text("oneconfig.sidebar.title.extra", fontSize = 11f).setPalette { text.secondary }.padded(0f, 12f, 0f, 0f),
                 SidebarButton(
                     "assets/oneconfig/ico/refresh.svg".image(),
                     "oneconfig.changelog",
@@ -104,9 +108,9 @@ object OneConfigUI {
                 ).onClick { openPage(FeedbackPage(), "oneconfig.feedback") },
                 SidebarButton0("assets/oneconfig/ico/hud.svg".image(), "oneconfig.edithud").onClick {
                     Platform.screen().display(HudManager.getWithEditor())
-                },
+                }.padded(0f, 200f, 0f, 0f),
                 size = Vec2(273f, 700f),
-                alignment = Align(mode = Align.Mode.Vertical, pad = Vec2(12f, 16f)),
+                alignment = Align(mode = Align.Mode.Vertical, pad = Vec2(6f, 8f)),
             ).named("Sidebar"),
             Group(
                 Group(
@@ -124,10 +128,10 @@ object OneConfigUI {
                             Image(
                                 "assets/oneconfig/ico/bell.svg".image(),
                             ),
-                            Image(playerHead, radii = 6f.radii()).named("ProfileImage").withBoarder(
+                            Image(playerHead).radius(6f).named("ProfileImage").withBoarder(
                                 rgba(255, 255, 255, 0.14f),
                                 width = 1f,
-                            ).addHoverInfo(Platform.player().playerName.ifEmpty { "null" }),
+                            ).addHoverInfo(Text(Platform.player().playerName.ifEmpty { "Steve" })),
                             alignment = Align(pad = Vec2(16f, 8f)),
                         ),
                         Block(
@@ -135,13 +139,25 @@ object OneConfigUI {
                             TextInput(
                                 placeholder = "oneconfig.search.placeholder",
                                 visibleSize = Vec2(210f, 12f),
-                            ),
+                            ).onChange { text: String ->
+                                if (text.length > 2) {
+                                    search.children?.clear()
+                                    search.children?.addAll(ConfigVisualizer.INSTANCE.getMatching(text))
+                                    if (search.children?.size == 0) search.children?.add(searchNoneFound)
+                                    if (ui[1][1] !== search) openPage(search, "oneconfig.search")
+                                    search.recalculate()
+                                } else if(ui[1][1] === search) {
+                                    openPage(ModsPage(ConfigManager.active().trees()), "oneconfig.mods")
+                                }
+                                false
+                            },
                             size = Vec2(256f, 32f),
                             alignment = Align(pad = Vec2(10f, 8f)),
                         ).named("SearchField"),
                         Image(
                             "assets/oneconfig/ico/close.svg".image(),
-                        ).named("Close").onClick { Platform.screen().close() }.withStates().setDestructivePalette(),
+                        ).named("Close").onClick {
+                        }.withStates().setDestructivePalette(),
                         alignment = Align(pad = Vec2(24f, 8f)),
                     ),
                     size = Vec2(1130f, 64f),
@@ -149,17 +165,12 @@ object OneConfigUI {
                 ).named("Header"),
                 ModsPage(ConfigManager.active().trees()),
                 size = Vec2(1127f, 700f),
-                alignment = Align(pad = Vec2.ZERO),
-            )
+                alignment = Align(cross = Align.Cross.Start, pad = Vec2.ZERO),
+            ),
         ).also {
             ui = it.master
-            (ui as Block).radii.assign(8f)
-        }
-    }
-
-    private fun FloatArray.assign(value: Float) {
-        for (i in indices) {
-            this[i] = value
+            searchNoneFound.setup(it)
+            (ui as Block).radius(8f)
         }
     }
 
@@ -183,8 +194,8 @@ object OneConfigUI {
 
     fun SidebarButton(image: PolyImage, text: String, extra: Drawable? = null): Group {
         return SidebarButton0(image, text, extra).onClick { _ ->
-            val it = parent.parent[0]
-            Move(it, this.x, this.y, false, Animations.EaseOutQuad.create(0.15.seconds)).add()
+            val it = parent[0]
+            Move(it, this.x, this.y, false, Animations.Default.create(0.15.seconds)).add()
             false
         }
     }
@@ -198,21 +209,21 @@ object OneConfigUI {
             alignment = sidebarBtnAlign,
         ).namedId("SidebarButton").apply {
             on(Event.Mouse.Entered) {
-                Recolor(this[1], this[1].palette.hovered, Animations.EaseInOutQuad.create(0.08.seconds)).add()
+                Recolor(this[1], this[1].palette.hovered, Animations.Default.create(0.08.seconds)).add()
                 polyUI.cursor = Cursor.Clicker
                 false
             }
             on(Event.Mouse.Exited) {
-                Recolor(this[1], this[1].palette.normal, Animations.EaseInOutQuad.create(0.08.seconds)).add()
+                Recolor(this[1], this[1].palette.normal, Animations.Default.create(0.08.seconds)).add()
                 polyUI.cursor = Cursor.Pointer
                 false
             }
             on(Event.Mouse.Pressed) {
-                Recolor(this[1], this[1].palette.pressed, Animations.EaseInOutQuad.create(0.08.seconds)).add()
+                Recolor(this[1], this[1].palette.pressed, Animations.Default.create(0.08.seconds)).add()
                 false
             }
             on(Event.Mouse.Released) {
-                Recolor(this[1], this[1].palette.hovered, Animations.EaseInOutQuad.create(0.08.seconds)).add()
+                Recolor(this[1], this[1].palette.hovered, Animations.Default.create(0.08.seconds)).add()
                 false
             }
         }

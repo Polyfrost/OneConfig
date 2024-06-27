@@ -60,6 +60,10 @@ abstract class TextHud(
     }
 
     override fun initialize() {
+        if(isReal) {
+            updateWhenChanged("prefix")
+            updateWhenChanged("suffix")
+        }
         update()
     }
 
@@ -116,7 +120,7 @@ abstract class TextHud(
             if (isReal) {
                 addCallback("template") {
                     _formatter = null
-                    update()
+                    if(update()) get().parent.recalculate()
                 }
             }
         }
@@ -132,5 +136,7 @@ abstract class TextHud(
         }
 
         override fun getText(): String = LocalDateTime.now().format(formatter())
+
+        override fun clone() = super.clone().also { _formatter = null }
     }
 }

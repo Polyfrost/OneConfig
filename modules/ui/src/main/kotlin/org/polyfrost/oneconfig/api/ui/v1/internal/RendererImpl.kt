@@ -476,7 +476,7 @@ object RendererImpl : Renderer {
                     }
                     return defaultImage
                 }
-                if (image.invalid) image.size = Vec2.Immutable(svg.width(), svg.height())
+                if (!image.size.isPositive) image.size = Vec2(svg.width(), svg.height())
                 map.getOrPut(width.hashCode() * 31 + height.hashCode()) { svgResize(svg, width, height) }
             }
 
@@ -497,7 +497,7 @@ object RendererImpl : Renderer {
         return when (image.type) {
             PolyImage.Type.Vector -> {
                 val (svg, map) = svgs[image] ?: return svgLoad(image, image.load().toDirectByteBufferNT())
-                if (image.invalid) image.size = Vec2.Immutable(svg.width(), svg.height())
+                if (!image.size.isPositive) image.size = Vec2(svg.width(), svg.height())
                 map.getOrPut(width.hashCode() * 31 + height.hashCode()) { svgResize(svg, width, height) }
             }
 
@@ -511,7 +511,7 @@ object RendererImpl : Renderer {
 
     private fun svgLoad(image: PolyImage, data: ByteBuffer): Int {
         val svg = nsvgParse(data, PIXELS, 96f) ?: throw IllegalStateException("Failed to parse SVG: ${image.resourcePath}")
-        image.size = Vec2.Immutable(svg.width(), svg.height())
+        image.size = Vec2(svg.width(), svg.height())
         val map = HashMap<Int, Int>(2)
         val o = svgResize(svg, svg.width(), svg.height())
         map[image.size.hashCode()] = o
@@ -532,7 +532,7 @@ object RendererImpl : Renderer {
         val w = IntArray(1)
         val h = IntArray(1)
         val d = stbi_load_from_memory(data, w, h, IntArray(1), 4) ?: throw IllegalStateException("Failed to load image ${image.resourcePath}: ${stbi_failure_reason()}")
-        image.size = Vec2.Immutable(w[0].toFloat(), h[0].toFloat())
+        image.size = Vec2(w[0].toFloat(), h[0].toFloat())
         return nvgCreateImageRGBA(vg, w[0], h[0], 0, d)
     }
 

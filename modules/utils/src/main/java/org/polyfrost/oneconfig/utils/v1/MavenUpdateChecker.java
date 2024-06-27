@@ -28,42 +28,46 @@ package org.polyfrost.oneconfig.utils.v1;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.polyfrost.oneconfig.api.platform.v1.LoaderPlatform;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 
-public final class OneConfigUpdate {
+public final class MavenUpdateChecker {
     private static final Logger LOGGER = LogManager.getLogger("OneConfig/Updates");
-    public static final String POLYFROST_REPO = "https://repo.polyfrost.org/";
-    public static final String GROUP = "org/polyfrost/oneconfig/";
-    private static volatile OneConfigUpdate instance;
+    private static MavenUpdateChecker ocfg;
     private volatile boolean fin = false;
     private volatile boolean hasUpdate = false;
-    private final String currentVersion;
+    @NotNull
+    public final String repo, group, id;
+    @Nullable
+    public final String currentVersion;
     private String latestVersion;
-    public final boolean isSnapshots;
 
-    public static OneConfigUpdate getInstance() {
-        if (instance == null) instance = new OneConfigUpdate();
-        return instance;
+    public static MavenUpdateChecker oneconfig() {
+        if (ocfg == null) ocfg = new MavenUpdateChecker("https://repo.polyfrost.org/", "org.polyfrost.oneconfig", "oneconfig");
+        return ocfg;
     }
 
-    private OneConfigUpdate() {
-        LoaderPlatform.ActiveMod self = Platform.loader().getLoadedMod("oneconfig");
+    public MavenUpdateChecker(String repo, String group, String id) {
+        this.id = id;
+        this.repo = repo.endsWith("/") ? repo : repo + "/";
+        this.group = group.replace('.', '/');
+        LoaderPlatform.ActiveMod self = Platform.loader().getLoadedMod(id);
         if (self == null) {
+            LOGGER.error("couldn't determine current version of {}. is it a valid mod id?", id);
             currentVersion = null;
-            isSnapshots = false;
         } else {
             currentVersion = self.version.toLowerCase();
-            isSnapshots = self.version.contains("SNAPSHOT") || self.version.contains("beta") || self.version.contains("alpha");
         }
         Multithreading.submit(this::fetchUpdateStatus);
+    }
+
+    public boolean isSnapshots() {
+        return currentVersion != null && (currentVersion.contains("snapshot") || currentVersion.contains("beta") || currentVersion.contains("alpha"));
     }
 
     /**
@@ -87,29 +91,21 @@ public final class OneConfigUpdate {
     }
 
     @Nullable
-    public String getCurrentVersion() {
-        return currentVersion;
-    }
-
-    @Nullable
     public String getLatestVersion() {
         return latestVersion;
     }
 
     private synchronized void fetchUpdateStatus() {
-        if (currentVersion == null) {
-            LOGGER.warn("version check failed: failed to determine current version");
-            return;
-        }
+        if (currentVersion == null) return;
         StringBuilder sb = new StringBuilder(96);
-        sb.append(POLYFROST_REPO);
-        if (isSnapshots) sb.append("snapshots/");
+        sb.append(repo);
+        if (isSnapshots()) sb.append("snapshots/");
         else sb.append("releases/");
-        sb.append(GROUP).append(Platform.loader().getLoaderString());
+        sb.append(group).append('/').append(Platform.loader().getLoaderString());
         sb.append("/maven-metadata.xml");
         try (InputStream stream = NetworkUtils.setupConnection(sb.toString())) {
             if (stream == null) {
-                LOGGER.warn("version check failed: failed to fetch metadata from {}", sb.toString());
+                LOGGER.warn("version check for {} failed: failed to fetch metadata from {}", id, sb.toString());
                 return;
             }
             // totally not over-engineered method to help with performance...
@@ -128,17 +124,17 @@ public final class OneConfigUpdate {
                 break;
             }
             if (latestVersion == null) {
-                LOGGER.warn("version check failed: failed to find latest version in metadata");
+                LOGGER.warn("version check for {} failed: failed to find latest version from {}, possibly invalid metadata", sb.toString(), id);
                 return;
             }
             // no bother doing any other checks to see if the version is more - latest will always be more, plus means we can downgrade server-side if needed
             this.latestVersion = latestVersion.toLowerCase();
             if (!this.latestVersion.equals(currentVersion)) {
                 hasUpdate = true;
-                LOGGER.warn("OneConfig has an update available: {} -> {}", currentVersion, latestVersion);
-            } else LOGGER.info("no update found");
+                LOGGER.warn("{} has an update available: {} -> {}", id, currentVersion, latestVersion);
+            } else LOGGER.info("{} is up to date: {}", id, currentVersion);
         } catch (Exception e) {
-            LOGGER.error("failed to check for updates! (unknown error)", e);
+            LOGGER.error("failed to check {} for updates for {}! (unknown error)", sb.toString(), id, e);
         } finally {
             fin = true;
         }
@@ -149,17 +145,5 @@ public final class OneConfigUpdate {
         int read = is.read(bytes);
         if (read == -1) return null;
         return new String(bytes, 0, read);
-    }
-
-    /**
-     * creates a marker file to indicate to the loader that on next launch, the mod should be updated.
-     */
-    @ApiStatus.Internal
-    public static void makeUpdateMarker() {
-        try {
-            Files.createFile(Paths.get("oneconfig", "UPDATE"));
-        } catch (IOException e) {
-            LOGGER.error("failed to create update marker! maybe it already exists");
-        }
     }
 }

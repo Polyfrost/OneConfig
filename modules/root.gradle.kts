@@ -57,7 +57,7 @@ subprojects {
                     dependsOn(suite)
                 }
             }
-            //            createTestSuite("j8Tests", 8) // TODO(nextday): re-enable (pretty please)
+            createTestSuite("j8Tests", 8)
             createTestSuite("j17Tests", 17)
             createTestSuite("j21Tests", 21)
         }

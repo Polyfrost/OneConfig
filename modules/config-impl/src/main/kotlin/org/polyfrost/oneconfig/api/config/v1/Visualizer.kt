@@ -27,12 +27,15 @@
 package org.polyfrost.oneconfig.api.config.v1
 
 import org.polyfrost.oneconfig.api.config.v1.internal.ConfigVisualizer.Companion.strv
-import org.polyfrost.polyui.component.Drawable
+import org.polyfrost.polyui.color.PolyColor
+import org.polyfrost.polyui.component.*
 import org.polyfrost.polyui.component.impl.*
-import org.polyfrost.polyui.component.onChange
-import org.polyfrost.polyui.component.onClick
+import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.unit.Vec2
+import org.polyfrost.polyui.utils.image
 import org.polyfrost.polyui.utils.mapToArray
+import org.polyfrost.polyui.utils.mutable
+import org.polyfrost.polyui.utils.ref
 
 /**
  * Visualizers are procedures that take a property, and return a drawable that represents it.
@@ -53,7 +56,11 @@ fun interface Visualizer {
 
     class ColorVisualizer : Visualizer {
         override fun visualize(prop: Property<*>): Drawable {
-            return Block()
+            val p = prop.getAs<PolyColor>()
+            if (p !is PolyColor.Mutable) {
+                prop.setAsReferential(p.mutable())
+            }
+            return Block(color = prop.getAs(), size = Vec2(58f, 32f)).withBoarder(3f, color = { page.border20 }).onClick { ColorPicker(prop.getAs<PolyColor.Mutable>().ref(), null, null, polyUI); true }
         }
     }
 
@@ -64,7 +71,7 @@ fun interface Visualizer {
                 require(options.isEmpty()) { "Dropdowns should not have options when used with enums (offender=${prop.id})" }
                 val index = prop.type.enumConstants.indexOf(prop.get())
                 return Dropdown(
-                    padding = 24f,
+                    optPadding = 24f,
                     initial = index,
                     entries = prop.type.enumConstants.mapToArray {
                         it as Enum<*>
@@ -75,7 +82,7 @@ fun interface Visualizer {
                 require(prop.type == Int::class.java) { "Dropdowns can only be used with enums or integers (offender=${prop.id}, type=${prop.type})" }
                 require(options.size >= 2) { "Dropdowns must have at least two options (offender=${prop.id})" }
                 return Dropdown(
-                    padding = 24f,
+                    optPadding = 24f,
                     initial = prop.getAs(),
                     entries = options.mapToArray { null to it },
                 )
@@ -94,28 +101,22 @@ fun interface Visualizer {
 
     class NumberVisualizer : Visualizer {
         override fun visualize(prop: Property<*>): Drawable {
-//            val placeholder = prop.getMetadata<String>("placeholder") ?: "0"
-//            val unit = prop.getMetadata<String>("unit")
-            val min = prop.getMetadata<Float>("min") ?: 0f
+            val unit = prop.getMetadata<String>("unit")
+            val min = prop.getMetadata<Float>("min") ?: -10f
             val max = prop.getMetadata<Float>("max") ?: 100f
-            val notFloating = prop.type == Int::class.java || prop.type == Long::class.java
-            val s =
-                TextInput(
-                    visibleSize = Vec2(300f, 32f),
-                    text = prop.getAs<Number>().toString(),
-                ).onChange { text: String ->
-                    if (text.isEmpty()) return@onChange false
-                    try {
-                        val v = text.toFloat()
-                        if (v < min || v > max) throw NumberFormatException("Out of range")
-                        prop.setAs(if (notFloating) v.toInt() else v)
-                        false
-                    } catch (_: NumberFormatException) {
-                        // todo show error
-                        true
-                    }
-
+            val integral = prop.type == Int::class.java || prop.type == Long::class.java
+            val placeholder = prop.getMetadata<String>("placeholder") ?: if (integral) "${min.toInt()}-${max.toInt()}" else "$min-$max"
+            val s = BoxedTextInput(
+                placeholder = placeholder,
+                image = "assets/oneconfig/ico/text.svg".image(),
+                size = Vec2(200f, 32f),
+                initialValue = prop.getAs<Number>().toString(),
+                post = unit
+            ).apply {
+                (this[1][0] as TextInput).numeric(min, max, integral).on(Event.Change.Number) {
+                    prop.setAs(if (integral) it.amount.toInt() else it.amount.toFloat())
                 }
+            }
             return s
         }
     }
@@ -203,16 +204,16 @@ fun interface Visualizer {
 
     class TextVisualizer : Visualizer {
         override fun visualize(prop: Property<*>): Drawable {
-            val placeholder = prop.getMetadata("placeholder") ?: ""
-            val s =
-                TextInput(
-                    placeholder = placeholder,
-                    visibleSize = Vec2(200f, 12f),
-                    text = prop.getAs(),
-                ).onChange { text: String ->
-                    prop.setAs(text)
-                    false
-                }
+            val placeholder = prop.getMetadata("placeholder") ?: "polyui.textinput.placeholder"
+            val s = BoxedTextInput(
+                image = "assets/oneconfig/ico/text.svg".image(),
+                placeholder = placeholder,
+                size = Vec2(200f, 32f),
+                initialValue = prop.getAs(),
+            ).onChange { text: String ->
+                prop.setAs(text)
+                false
+            }
             return s
         }
     }

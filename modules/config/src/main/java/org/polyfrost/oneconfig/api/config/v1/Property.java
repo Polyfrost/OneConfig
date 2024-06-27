@@ -218,19 +218,20 @@ public abstract class Property<T> extends Node implements Serializable {
     /**
      * Set the value of this property. This will call all callbacks.
      * <br>
-     * The value (and callbacks) are only set/called if the value is different from the previous value (using {@link Object#equals(Object)}).
+     * The value (and callbacks) are only set/called if the value is different from the previous value (using {@link Objects#equals(Object)}).
      */
-    public void set(@Nullable T value) {
-        if (value != null && value.equals(this.get())) return;
-        if (callbacks != null) {
-            for (Consumer<T> c : callbacks) {
-                try {
-                    c.accept(value);
-                } catch (Throwable t) {
-                    LOGGER.error("failed to call callback {} on property {}", c, this.getID(), t);
-                }
-            }
-        }
+    public final void set(@Nullable T value) {
+        if (Objects.equals(this.get(), value)) return;
+        setReferential(value);
+    }
+
+    /**
+     * Set the value of this property. This will call all callbacks.
+     * <br>
+     * Unlike {@link #set(Object)}, <b>this will always set the value</b>, regardless of if it is the same as the previous value.
+     * Use this method with caution.
+     */
+    public void setReferential(@Nullable T value) {
         if (predicates != null) {
             for (Predicate<T> p : predicates) {
                 try {
@@ -244,6 +245,15 @@ public abstract class Property<T> extends Node implements Serializable {
             }
         }
         set0(value);
+        if (callbacks != null) {
+            for (Consumer<T> c : callbacks) {
+                try {
+                    c.accept(value);
+                } catch (Throwable t) {
+                    LOGGER.error("failed to call callback {} on property {}", c, this.getID(), t);
+                }
+            }
+        }
     }
 
     protected abstract void set0(@Nullable T value);
@@ -275,6 +285,17 @@ public abstract class Property<T> extends Node implements Serializable {
     @SuppressWarnings("unchecked")
     public final <V> void setAs(V value) {
         set((T) WrappingUtils.richCast(value, type));
+    }
+
+    /**
+     * Set the value of this property. This will call all callbacks.
+     * <br>
+     * Unlike {@link #setAs(Object)}, <b>this will always set the value</b>, regardless of if it is the same as the previous value.
+     * Use this method with caution.
+     */
+    @SuppressWarnings("unchecked")
+    public final <V> void setAsReferential(V value) {
+        setReferential((T) WrappingUtils.richCast(value, type));
     }
 
     /**
@@ -426,7 +447,7 @@ public abstract class Property<T> extends Node implements Serializable {
 
         @Override
         @Deprecated
-        public void set(@Nullable Void value) {
+        public void setReferential(@Nullable Void value) {
         }
 
         @Override

@@ -42,30 +42,44 @@ import org.polyfrost.polyui.operations.Rotate
 import org.polyfrost.polyui.renderer.data.PolyImage
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.Vec2
+import org.polyfrost.polyui.unit.by
 import org.polyfrost.polyui.unit.seconds
-import org.polyfrost.polyui.utils.fastEach
-import org.polyfrost.polyui.utils.image
-import org.polyfrost.polyui.utils.mapToArray
-import org.polyfrost.polyui.utils.rgba
+import org.polyfrost.polyui.utils.*
 import kotlin.math.PI
 
 open class ConfigVisualizer {
     private val LOGGER = LogManager.getLogger("OneConfig/Config")
-    protected val configCache = HashMap<Tree, Drawable>()
+    protected val cache = HashMap<Tree, Map<String, Map<String, ArrayList<Triple<String, String?, Drawable>>>>>()
     protected val optBg = rgba(39, 49, 55, 0.2f)
     protected val alignC = Align(cross = Align.Cross.Start)
     protected val alignCV = Align(cross = Align.Cross.Start, mode = Align.Mode.Vertical)
     protected val alignVNoPad = Align(cross = Align.Cross.Start, mode = Align.Mode.Vertical, pad = Vec2.ZERO)
     protected val stdAlign = Align(main = Align.Main.SpaceBetween, pad = Vec2(16f, 8f))
     protected val stdAccord = Align(main = Align.Main.SpaceBetween, pad = Vec2.ZERO)
-    protected val padVOnly = Align(pad = Vec2(0f, 12f))
-    protected val stdOpt = Align(cross = Align.Cross.Start, mode = Align.Mode.Vertical, pad = Vec2(6f, 6f))
+    protected val ic2text = Align(pad = Vec2(8f, 0f))
+    protected val stdOpt = Align(cross = Align.Cross.Start, mode = Align.Mode.Vertical, pad = Vec2(0f, 8f))
     protected val accordOpt = Align(cross = Align.Cross.Start, pad = Vec2(24f, 12f))
 
     /**
      * For information, see [create].
      */
-    fun get(config: Tree) = create(config) // configCache.getOrPut(config) { create(config) }
+    fun get(config: Tree) = create(config)
+
+    fun getMatching(str: String): List<Drawable> {
+        if (str.length < 2) return emptyList()
+        val out = ArrayList<Drawable>()
+        for ((tree, opts) in cache) {
+            for ((category, sub) in opts) {
+                for ((header, options) in sub) {
+                    for ((title, desc, drawable) in options) {
+                        if (title.contains(str, ignoreCase = true) || title.levenshteinDistance(str) <= 2) out.add(drawable)
+                        else if (desc != null && (desc.contains(str, ignoreCase = true) || desc.levenshteinDistance(str) <= 2)) out.add(drawable)
+                    }
+                }
+            }
+        }
+        return out
+    }
 
     /**
      * Turn the given config tree into a PolyUI representation.
@@ -85,17 +99,20 @@ open class ConfigVisualizer {
         config: Tree,
         initialPage: String = "General",
     ): Drawable {
-        val now = System.nanoTime()
-        val options = HashMap<String, HashMap<String, ArrayList<Drawable>>>(4)
+        val options = cache.getOrPut(config) {
+            val now = System.nanoTime()
+            val options = HashMap<String, HashMap<String, ArrayList<Triple<String, String?, Drawable>>>>(4)
 
-        // asm: step 1: sort the tree into a map of:
-        // categories
-        //   -> subcategories
-        //      -> list of options
-        for ((_, node) in config.map) {
-            processNode(node, options)
+            // asm: step 1: sort the tree into a map of:
+            // categories
+            //   -> subcategories
+            //      -> list of options
+            for ((_, node) in config.map) {
+                processNode(node, options)
+            }
+            LOGGER.info("creating config page ${config.title} took ${(System.nanoTime() - now) / 1_000_000f}ms")
+            options
         }
-        LOGGER.info("creating config page ${config.title} took ${(System.nanoTime() - now) / 1_000_000f}ms")
         return makeFinal(flattenSubcategories(options), initialPage)
     }
 
@@ -108,13 +125,13 @@ open class ConfigVisualizer {
         )
     }
 
-    protected open fun flattenSubcategories(options: Map<String, Map<String, ArrayList<Drawable>>>): Map<String, Drawable> {
+    protected open fun flattenSubcategories(options: Map<String, Map<String, ArrayList<Triple<String, String?, Drawable>>>>): Map<String, Drawable> {
         return options.mapValues { (_, subcategories) ->
             Group(
-                children = subcategories.mapToArray { (header, options) ->
+                children = subcategories.mapToArray { (header, opts) ->
                     Group(
                         Text(header, fontSize = 22f),
-                        *options.toTypedArray(),
+                        *opts.mapToArray { it.third },
                         alignment = alignCV,
                     )
                 },
@@ -123,7 +140,7 @@ open class ConfigVisualizer {
         }
     }
 
-    protected open /* suspend? */ fun processNode(node: Node, options: HashMap<String, HashMap<String, ArrayList<Drawable>>>) {
+    protected open /* suspend? */ fun processNode(node: Node, options: HashMap<String, HashMap<String, ArrayList<Triple<String, String?, Drawable>>>>) {
         val icon =
             when (val it = node.getMetadata<Any?>("icon")) {
                 null -> null
@@ -139,18 +156,19 @@ open class ConfigVisualizer {
         val list = options.getOrPut(category) { HashMap(4) }.getOrPut(subcategory) { ArrayList(8) }
         if (node is Property<*>) {
             val vis = node.getVisualizer() ?: return
-            list.add(wrap(vis.visualize(node), node.title, node.description, icon))
+            list.add(Triple(node.title, node.description, wrap(vis.visualize(node), node.title ?: return, node.description, icon)))
         } else {
             node as Tree
             if (node.map.isEmpty()) {
                 LOGGER.warn("sub-tree ${node.id} is empty; ignoring")
                 return
             }
-            list.add(makeAccordion(node, node.title, node.description, icon))
+            list.add(Triple(node.title, node.description, makeAccordion(node, node.title ?: return, node.description, icon)))
         }
     }
 
     protected open fun createHeaders(categories: Map<String, Drawable>): Drawable? {
+        if (categories.size <= 1) return null
         return Group(
             children = categories.mapToArray { (category, options) ->
                 Button(text = category).onClick {
@@ -166,21 +184,23 @@ open class ConfigVisualizer {
         desc: String?,
         icon: PolyImage?,
     ): Drawable {
+        val index = ArrayList<Pair<String, String?>>(tree.map.size)
         val options =
             tree.map.mapNotNull map@{ (_, node) ->
                 if (node !is Property<*>) return@map null
                 val vis = node.getVisualizer() ?: return@map null
-                wrapForAccordion(vis.visualize(node), node.title, node.description)
+                index.add(node.title to node.description)
+                wrapForAccordion(vis.visualize(node), node.title ?: return@map null, node.description)
             }
         var open = false
-        return Block(
+        val out = Block(
             wrap(Image("polyui/chevron-down.svg".image()).also { it.rotation = PI }, title, desc, icon).events {
                 self.color = PolyColor.TRANSPARENT
                 Event.Mouse.Companion.Clicked then {
                     open = !open
-                    Rotate(this[1], if (!open) PI else 0.0, false, Animations.EaseOutQuad.create(0.2.seconds)).add()
+                    Rotate(this[1], if (!open) PI else 0.0, false, Animations.Default.create(0.2.seconds)).add()
                     val value = parent[1].height
-                    val anim = Animations.EaseOutQuad.create(0.4.seconds)
+                    val anim = Animations.Default.create(0.4.seconds)
                     val operation = Resize(parent, width = 0f, height = if (open) -value else value, add = true, anim)
                     addOperation(
                         object : DrawableOp.Animatable<Drawable>(parent, anim, onFinish = {
@@ -209,6 +229,8 @@ open class ConfigVisualizer {
             color = optBg,
             alignment = alignVNoPad,
         ).namedId("AccordionHeader")
+        //index.fastEach { this.index[out] = it }
+        return out
     }
 
     protected open fun wrap(
@@ -218,19 +240,19 @@ open class ConfigVisualizer {
         icon: PolyImage?,
     ): Drawable = Block(
         Group(
-            if (icon != null) Image(icon) else null,
+            if (icon != null) Image(icon).onInit { ensureLargerThan(32f by 32f) } else null,
             Group(
                 Text(title, fontSize = 22f).setFont { medium },
-                if (desc != null) Text(desc, visibleSize = Vec2(500f, 0f)) else null,
+                if (desc != null) Text(desc, visibleSize = Vec2(500f, 0f)).secondary() else null,
                 alignment = stdOpt,
             ),
-            alignment = padVOnly,
+            alignment = ic2text,
         ),
         drawable,
         alignment = stdAlign,
-        size = Vec2(1078f, 64f),
+        size = Vec2(1078f, 0f),
         color = optBg,
-    )
+    ).minimumSize(Vec2(1078f, 64f))//.also { index[it] = title to desc }
 
     protected open fun wrapForAccordion(
         drawable: Drawable,
@@ -241,7 +263,7 @@ open class ConfigVisualizer {
         drawable,
         alignment = stdAccord,
         size = Vec2(503f, 32f),
-    ).addHoverInfo(desc)
+    ).apply { if (desc != null) addHoverInfo(Text(desc)) }
 
     fun Property<*>.getVisualizer(): Visualizer? {
         val vis = this.getMetadata<Class<*>>("visualizer") ?: return null

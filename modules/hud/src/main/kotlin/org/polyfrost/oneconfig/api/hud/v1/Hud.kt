@@ -126,8 +126,8 @@ abstract class Hud<T : Drawable> : Cloneable, Config("null", null, "null", null)
         when(drawable) {
             is Block -> {
                 tree["radii"] = ktProperty(drawable::radii)
-                tree["boarderColor"] = ktProperty(drawable::boarderColor)
-                tree["boarderWidth"] = ktProperty(drawable::boarderWidth)
+                tree["boarderColor"] = ktProperty(drawable::borderColor)
+                tree["boarderWidth"] = ktProperty(drawable::borderWidth)
             }
             is Text -> {
                 tree["font"] = ktProperty(drawable::_font)
@@ -150,8 +150,8 @@ abstract class Hud<T : Drawable> : Cloneable, Config("null", null, "null", null)
         while (folder.resolve(p).exists()) {
             p = "huds/${Random.Default.nextInt(0, 999)}-${id()}"
             when (i++) {
-                100 -> HudManager.LOGGER.warn("they all say that it gets better")
-                500 -> HudManager.LOGGER.warn("yeah they all say that it gets better;; it gets better the more you grow")
+                100 -> LOGGER.warn("they all say that it gets better")
+                500 -> LOGGER.warn("yeah they all say that it gets better;; it gets better the more you grow")
                 999 -> throw IllegalStateException("... but what if i dont?")
             }
         }
@@ -251,7 +251,7 @@ abstract class Hud<T : Drawable> : Cloneable, Config("null", null, "null", null)
      *
      * **this position, as will all HUD methods, should be for a position on a `1920x1080` screen.**
      */
-    open fun defaultPosition(): Vec2? = null
+    open fun defaultPosition(): Vec2 = Vec2.ZERO
 
     /**
      * Set a custom default background color for this HUD.

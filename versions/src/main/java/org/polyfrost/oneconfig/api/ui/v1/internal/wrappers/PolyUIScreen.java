@@ -35,8 +35,8 @@ import org.jetbrains.annotations.Nullable;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
 import org.polyfrost.oneconfig.api.ui.v1.screen.BlurScreen;
 import org.polyfrost.polyui.PolyUI;
+import org.polyfrost.polyui.component.Drawable;
 import org.polyfrost.polyui.renderer.data.Cursor;
-import org.polyfrost.polyui.unit.Vec2;
 import org.polyfrost.universal.UKeyboard;
 import org.polyfrost.universal.UMatrixStack;
 import org.polyfrost.universal.UScreen;
@@ -53,8 +53,7 @@ public class PolyUIScreen extends UScreen implements BlurScreen {
     @NotNull
     public final PolyUI polyUI;
 
-    @Nullable
-    public final Vec2 desiredResolution;
+    private final float desiredScreenWidth, desiredScreenHeight;
     private final boolean pauses, blurs;
     private final Consumer<PolyUI> close;
 
@@ -62,10 +61,11 @@ public class PolyUIScreen extends UScreen implements BlurScreen {
     private int mx, my;
     //#endif
 
-    public PolyUIScreen(@NotNull PolyUI polyUI, @Nullable Vec2 desiredResolution, boolean pauses, boolean blurs, Consumer<PolyUI> onClose) {
+    public PolyUIScreen(@NotNull PolyUI polyUI, float desiredScreenWidth, float desiredScreenHeight, boolean pauses, boolean blurs, Consumer<PolyUI> onClose) {
         super(true);
         this.polyUI = polyUI;
-        this.desiredResolution = desiredResolution;
+        this.desiredScreenWidth = desiredScreenWidth;
+        this.desiredScreenHeight = desiredScreenHeight;
         this.blurs = blurs;
         this.pauses = pauses;
         this.close = onClose;
@@ -76,13 +76,14 @@ public class PolyUIScreen extends UScreen implements BlurScreen {
         // asm: normally, a polyui instance is as big as its window and that is it.
         // however, inside minecraft, the actual content is smaller than the window size, so resizing it directly would just fuck it up.
         // so instead, the developer specifies a resolution that their UI was designed for, and we resize accordingly.
-        if (desiredResolution == null) return;
-        float sx = w / desiredResolution.getX();
-        float sy = h / desiredResolution.getY();
+        if (desiredScreenWidth == 0f || desiredScreenHeight == 0f) return;
+        float sx = w / desiredScreenWidth;
+        float sy = h / desiredScreenHeight;
         if (sx == 1f && sy == 1f) return;
-        Vec2 size = polyUI.getMaster().getSize();
+        float currentW = polyUI.getMaster().getWidth();
+        float currentH = polyUI.getMaster().getHeight();
         try {
-            polyUI.resize(size.getX() * sx, size.getY() * sy, force);
+            polyUI.resize(currentW * sx, currentH * sy, force);
         } catch (Exception e) {
             death(e);
         }
@@ -90,12 +91,12 @@ public class PolyUIScreen extends UScreen implements BlurScreen {
 
     @Override
     public void onDrawScreen(@NotNull UMatrixStack matrices, int mouseX, int mouseY, float delta) {
-        Vec2 size = polyUI.getMaster().getSize();
+        Drawable master = polyUI.getMaster();
         //noinspection DataFlowIssue
         float scale = polyUI.getWindow().getPixelRatio();
-        float ox = (Platform.screen().windowWidth() / 2f - size.getX() / 2f) * scale;
-        float oy = (Platform.screen().windowHeight() / 2f - size.getY() / 2f) * scale;
-        glViewport((int) ox, (int) oy, (int) (size.getX() * scale), (int) (size.getY() * scale));
+        float ox = (Platform.screen().windowWidth() / 2f - master.getWidth() / 2f) * scale;
+        float oy = (Platform.screen().windowHeight() / 2f - master.getHeight() / 2f) * scale;
+        glViewport((int) ox, (int) oy, (int) (master.getWidth() * scale), (int) (master.getHeight() * scale));
 
         //#if MC<11300
         if (mouseX != mx || mouseY != my) {
@@ -220,9 +221,9 @@ public class PolyUIScreen extends UScreen implements BlurScreen {
     //#endif
     @MustBeInvokedByOverriders
     public void mouseMoved(double mouseX, double mouseY) {
-        Vec2 size = polyUI.getMaster().getSize();
-        float ox = (float) Platform.screen().windowWidth() / 2f - size.getX() / 2f;
-        float oy = (float) Platform.screen().windowHeight() / 2f - size.getY() / 2f;
+        Drawable master = polyUI.getMaster();
+        float ox = (float) Platform.screen().windowWidth() / 2f - master.getWidth() / 2f;
+        float oy = (float) Platform.screen().windowHeight() / 2f - master.getHeight() / 2f;
 
         float mx, my;
         //#if MC>=11300

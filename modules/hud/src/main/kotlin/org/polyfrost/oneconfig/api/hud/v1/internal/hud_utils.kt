@@ -39,7 +39,6 @@ import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.unit.Point
 import org.polyfrost.polyui.unit.by
 import org.polyfrost.polyui.utils.fastEach
-import org.polyfrost.polyui.utils.radii
 
 private val LOGGER = LogManager.getLogger("OneConfig/HUD")
 
@@ -49,9 +48,8 @@ private val scaleBlob by lazy {
     var st = 1f
     val b = Block(
         size = 20f by 20f,
-        radii = 10f.radii(),
         focusable = true,
-    ).draggable(
+    ).radius(10f).draggable(
         onStart = {
             sx = polyUI.mouseX
             sy = polyUI.mouseY
@@ -172,10 +170,10 @@ fun Hud<out Drawable>.build(): Block {
                     HudManager.polyUI.unfocus()
                 },
                 Image("assets/oneconfig/ico/close.svg").setDestructivePalette().withStates(consume = true).onClick {
-                    HudManager.polyUI.master.removeChild(this@events.self)
+                    HudManager.polyUI.master.removeChild(this@events.self, recalculate = false)
                     HudManager.polyUI.removeExecutor(exe)
                     HudManager.polyUI.unfocus()
-                    if (HudManager.panel[2] !== HudManager.hudsPage) HudManager.panel[2] = HudManager.hudsPage
+                    if (HudManager.panel[3] !== HudManager.hudsPage) HudManager.panel[3] = HudManager.hudsPage
                 },
                 polyUI = HudManager.polyUI,
                 position = Point.Above,
@@ -190,9 +188,8 @@ fun Hud<out Drawable>.build(): Block {
 private fun Drawable.addDefaultBackground(color: PolyColor?) = Block(
     this,
     alignment = alignC,
-    radii = 6f.radii(),
     color = color,
-).withBoarder().namedId("HudBackground")
+).radius(6f).withBoarder().namedId("HudBackground")
 
 private fun Block.addScaler(): Block {
     this.on(Event.Mouse.Clicked) {

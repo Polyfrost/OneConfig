@@ -44,7 +44,8 @@ import org.polyfrost.polyui.unit.by
 import org.polyfrost.polyui.unit.seconds
 import org.polyfrost.polyui.utils.image
 import org.polyfrost.polyui.utils.mapToArray
-import org.polyfrost.polyui.utils.radii
+import org.polyfrost.polyui.utils.mutable
+import org.polyfrost.polyui.utils.ref
 import kotlin.math.PI
 import kotlin.math.atan2
 import kotlin.math.min
@@ -58,30 +59,28 @@ const val snapMargin = 12f
 fun HudsPage(huds: Collection<Hud<out Drawable>>): Drawable {
     return Group(
         Group(
-            HudButton("oneconfig.all"),
-            HudButton("oneconfig.pvp"),
+            HudButton("oneconfig.huds.all"),
+            HudButton("oneconfig.huds.pvp"),
             HudButton("oneconfig.huds.info"),
             HudButton("oneconfig.huds.player"),
-            alignment = Align(main = Align.Main.SpaceBetween),
+            alignment = Align(pad = Vec2(6f, 8f)),
+            visibleSize = Vec2(500f, 48f)
         ),
         if (huds.isNotEmpty()) {
             Group(
                 children = huds.mapToArray {
                     val preview = it.buildNew()
-                    val size = Vec2(if (preview.width > 200f) 452f else 215f, if (preview.height > 70f) 0f else 80f)
                     Block(
                         preview,
                         alignment = alignC,
-                        size = size,
-                    ).withBoarder().withStates()
+                    ).withBoarder().minimumSize(215f by 80f).withStates()
                 },
-                visibleSize = Vec2(452f, 800f),
+                visibleSize = Vec2(500f, 800f),
             )
         } else {
             Text("oneconfig.hudeditor.nothinghere", fontSize = 14f).secondary()
         },
-        visibleSize = Vec2(476f, 800f),
-        alignment = Align(cross = Align.Cross.Start, pad = Vec2.ZERO),
+        size = Vec2(500f, 0f),
     ).onInit {
         if (huds.isNotEmpty()) {
             polyUI.every(1.seconds) {
@@ -97,7 +96,7 @@ fun HudsPage(huds: Collection<Hud<out Drawable>>): Drawable {
 }
 
 private fun HudButton(text: String): Block {
-    return Button(text = text, fontSize = 14f, font = PolyUI.defaultFonts.medium, radii = 6f.radii(), padding = Vec2(12f, 8f)).withBoarder()
+    return Button(text = text, fontSize = 14f, font = PolyUI.defaultFonts.medium, padding = Vec2(12f, 8f)).radius(6f).withBoarder()
 }
 
 fun createInspectionsScreen(hud: Hud<out Drawable>): Drawable {
@@ -114,8 +113,8 @@ fun createInspectionsScreen(hud: Hud<out Drawable>): Drawable {
             false
         },
         createDesigner(hud),
-        visibleSize = Vec2(476f, 800f),
-        alignment = Align(cross = Align.Cross.Start, mode = Align.Mode.Vertical),
+        visibleSize = Vec2(500f, 800f),
+        alignment = Align(cross = Align.Cross.Start),
     )
 }
 
@@ -127,12 +126,7 @@ private fun createDesigner(hud: Hud<*>): Drawable {
     val isLegacy = hud is LegacyHud
     return Group(
         Text("oneconfig.hudeditor.general.title", fontSize = 16f).setFont { medium },
-        Group(
-            Text("oneconfig.hudeditor.padding.title").secondary(),
-            Image("assets/oneconfig/ico/info.svg".image()).withStates(showClicker = false).addHoverInfo("oneconfig.hudeditor.padding.info"),
-            size = Vec2(450f, 18f),
-            alignment = Align(main = Align.Main.SpaceBetween, pad = Vec2.ZERO),
-        ),
+        subheading("oneconfig.hudeditor.padding.title", "oneconfig.hudeditor.padding.info"),
         Group(
             interactiveAlignment(hud),
             Group(
@@ -142,27 +136,33 @@ private fun createDesigner(hud: Hud<*>): Drawable {
                     "oneconfig.align.end",
                     "oneconfig.align.spacebetween",
                     "oneconfig.align.spaceevenly",
-                ).titled("oneconfig.hudeditor.padding.mode.main"),
+                ).minimumSize(70f by 32f).titled("oneconfig.hudeditor.padding.mode.main"),
                 Dropdown(
                     "oneconfig.align.start", "oneconfig.align.center", "oneconfig.align.end",
-                    padding = 32f
-                ).titled("oneconfig.hudeditor.padding.mode.cross"),
-                BoxedTextInput("assets/oneconfig/ico/info.svg".image(), placeholder = "8px", size = Vec2(140f, 32f)).titled("oneconfig.hudeditor.padding.main"),
-                BoxedTextInput("assets/oneconfig/ico/info.svg".image(), placeholder = "6px", size = Vec2(140f, 32f)).titled("oneconfig.hudeditor.padding.cross"),
-                size = Vec2(375f, 0f),
-                alignment = Align(main = Align.Main.SpaceBetween, pad = Vec2.ZERO),
+                ).minimumSize(70f by 32f).titled("oneconfig.hudeditor.padding.mode.cross"),
+                BoxedTextInput("assets/oneconfig/ico/info.svg".image(), placeholder = "8", size = Vec2(72f, 0f), post = "px").titled("oneconfig.hudeditor.padding.main"),
+                BoxedTextInput("assets/oneconfig/ico/info.svg".image(), placeholder = "6", size = Vec2(72f, 0f), post = "px").titled("oneconfig.hudeditor.padding.cross"),
+                size = Vec2(328f, 0f),
             ),
         ),
-        Text("oneconfig.hudeditor.component.title"),
-        Group(
-            if (isLegacy) {
-                Text("oneconfig.hudeditor.cantedit.aslegacy")
+        *colorOptions(hud.get().parent),
+        Text("oneconfig.hudeditor.component.title", fontSize = 16f).padded(0f, 18f, 0f, 0f).setFont { medium },
+        if (isLegacy) {
+            Text("oneconfig.hudeditor.cantedit.aslegacy").secondary()
+        } else {
+            if ((hud.get().parent.children?.size ?: 0) > 1) {
+                Text("oneconfig.hudeditor.choosesomething").padded(3f, 3f).secondary()
             } else {
-                Text("oneconfig.hudeditor.choosesomething")
-            },
-        ),
-        alignment = Align(maxRowSize = 1, cross = Align.Cross.Start),
-        visibleSize = Vec2(500f, 800f),
+                when (hud.get()) {
+                    is Text -> textOptions(hud.get() as Text)
+                    is Block -> Group(*colorOptions(hud.get()))
+                    else -> Text("oneconfig.hudeditor.component.notimplemented").padded(3f, 3f).secondary()
+                }
+            }
+        },
+        alignment = Align(cross = Align.Cross.Start),
+        size = Vec2(480f, 0f),
+        visibleSize = Vec2(480f, 800f),
     )
 }
 
@@ -290,11 +290,12 @@ private fun interactiveAlignment(hud: Hud<out Drawable>): Drawable {
             onDrag = {
                 val dx = polyUI.mouseX - px
                 val dy = polyUI.mouseY - py
-                val bg = (hud.get().parent as? Block) ?: return@draggable
+                val bg = (hud.get().parent as Block)
+                val bgr = bg.radii ?: return@draggable
                 val m = (s2 + min(dx, dy) * 0.1f).coerceIn(0f, bg.height)
-                val display = (this[0][0] as Block).radii
+                val display = (this[0][0] as Block).radii ?: return@draggable
                 for (i in 0..3) {
-                    bg.radii[i] = m
+                    bgr[i] = m
                     display[i] = m
                 }
             },
@@ -306,17 +307,12 @@ private fun interactiveAlignment(hud: Hud<out Drawable>): Drawable {
 
 fun textOptions(text: Text): Drawable {
     return Group(
-        Group(
-            Text("oneconfig.hudeditor.text.title").secondary(),
-            Image("assets/oneconfig/ico/info.svg".image()).addHoverInfo("oneconfig.hudeditor.text.description"),
-            alignment = Align(main = Align.Main.SpaceBetween, pad = Vec2.ZERO),
-            size = Vec2(450f, 18f),
-        ),
+        subheading("oneconfig.hudeditor.text.title", "oneconfig.hudeditor.text.info"),
         Block(
             Text("oneconfig.hudeditor.text.example", fontSize = 16f),
-            size = Vec2(452f, 58f),
+            size = Vec2(476f, 58f),
             alignment = alignC,
-        ),
+        ).withBoarder(),
         Dropdown(
             "Poppins", "JetBrains Mono", "Minecraft"
         ).onChange { it: Int ->
@@ -331,7 +327,17 @@ fun textOptions(text: Text): Drawable {
             ex.parent.recalculate()
             false
         }.titled("oneconfig.hudeditor.text.font"),
-        BoxedTextInput("assets/oneconfig/ico/info.svg".image(), "12px", text.fontSize.toString()).titled("oneconfig.hudeditor.text.size"),
+        BoxedTextInput("assets/oneconfig/ico/info.svg".image(), placeholder = "1-100", initialValue = text.fontSize.toString(), size = Vec2(72f, 0f), post = "px")
+            .apply {
+                (this[1][0] as TextInput).numeric(1f, 100f).on(Event.Change.Number) { (it) ->
+                    text.fontSize = it.toFloat()
+                    text.parent.recalculate()
+                    val ex = (parent.parent.parent[1][0] as? Text) ?: return@on true
+                    ex.fontSize = text.fontSize
+                    ex.parent.recalculate()
+                    true
+                }
+            }.titled("oneconfig.hudeditor.text.size"),
         Radiobutton(
             "assets/oneconfig/ico/info.svg".image(),
             "assets/oneconfig/ico/info.svg".image(),
@@ -368,9 +374,37 @@ fun textOptions(text: Text): Drawable {
         ).onChange { it: Int ->
             false
         }.titled("oneconfig.hudeditor.text.effects"),
-        size = Vec2(375f, 0f),
+        *colorOptions(text),
+        size = Vec2(476f, 0f),
+        alignment = Align(pad = Vec2(0f, 8f))
     ).namedId("TextOptions")
 }
+
+fun colorOptions(drawable: Drawable) = arrayOf(
+    subheading("oneconfig.hudeditor.color.title", "oneconfig.hudeditor.color.info"),
+    Group(
+        Text("oneconfig.hudeditor.color.fill", fontSize = 14f),
+        Block(size = 48f by 24f, color = drawable.color.mutable().also { drawable.color = it }).withBoarder(3f).onClick {
+            ColorPicker(drawable.color.mutable().ref(), null, null, polyUI)
+            false
+        },
+        if (drawable is Block) Text("oneconfig.hudeditor.color.border", fontSize = 14f) else null,
+        if (drawable is Block) Block(size = 48f by 24f, color = drawable.borderColor?.mutable().also { drawable.borderColor = it }).withBoarder(3f).onClick {
+            val color = (drawable.borderColor ?: polyUI.colors.page.border20).mutable().also { drawable.borderColor = it }
+            ColorPicker(color.ref(), null, null, polyUI)
+            false
+        } else null,
+        size = Vec2(476f, 0f),
+        alignment = Align(main = Align.Main.SpaceBetween),
+    )
+)
+
+fun subheading(title: String, desc: String) = Group(
+    Text(title).secondary(),
+    Image("assets/oneconfig/ico/info.svg".image()).withStates(showClicker = false).addHoverInfo(Text(desc)),
+    size = Vec2(476f, 18f),
+    alignment = Align(main = Align.Main.SpaceBetween),
+)
 
 fun Drawable.titled(title: String): Drawable {
     return Group(

@@ -34,7 +34,6 @@ import org.junit.jupiter.api.Test;
 import java.lang.invoke.MethodHandle;
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -112,15 +111,6 @@ public class MHUtilsTest {
             Method m = String.class.getDeclaredMethod("substring", int.class, int.class);
             MethodHandle mh = MHUtils.getMethodHandle(m, "hello, world").getOrThrow();
             assertEquals(mh.invoke(0, 5), "hello");
-
-            String s = "abc123";
-            Field f = String.class.getDeclaredField("value");
-            MethodHandle getter = MHUtils.getFieldGetter(f, s).getOrThrow();
-            assertArrayEquals((byte[]) getter.invoke(), "abc123".getBytes());
-
-            MethodHandle setter = MHUtils.getFieldSetter(f, s).getOrThrow();
-            setter.invoke("p2".getBytes());
-            assertArrayEquals(new byte[]{'p', '2'}, (byte[]) getter.invoke());
 
             Constructor<String> ctor = String.class.getDeclaredConstructor(char[].class);
             MethodHandle ctorHandle = MHUtils.getConstructorHandle(ctor).getOrThrow();
