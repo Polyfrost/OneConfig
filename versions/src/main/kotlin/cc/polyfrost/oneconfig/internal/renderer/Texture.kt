@@ -34,7 +34,7 @@ import net.minecraft.client.resources.IResourceManager
 import net.minecraft.util.ResourceLocation
 
 class Texture(path: String) : AbstractTexture() {
-    private val location = ResourceLocation(path)
+    val location = ResourceLocation(path)
 
     init {
         mc.textureManager.loadTexture(location, this)
@@ -44,10 +44,6 @@ class Texture(path: String) : AbstractTexture() {
         val id = getGlTextureId()
         TextureUtil.allocateTexture(id, width, height)
         TextureUtil.uploadTexture(id, data, width, height)
-    }
-
-    fun bind() {
-        mc.textureManager.bindTexture(location)
     }
 
     override fun loadTexture(resourceManager: IResourceManager) {}

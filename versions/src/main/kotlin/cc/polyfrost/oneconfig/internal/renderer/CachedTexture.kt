@@ -43,7 +43,7 @@ class CachedTexture(path: String, private val isUnicode: Boolean) {
         val texture = runCatching {
             TextureUtil.readBufferedImage(mc.resourceManager.getResource(original).inputStream)
         }.getOrNull() ?: return
-        assert(texture.width != texture.height) { "bro why ur font not square" }
+        if (texture.width != texture.height) return
         var imageWidth = texture.width
         val glyphs = texture.getRGB(0, 0, imageWidth, imageWidth, null, 0, imageWidth)
         val scale = imageWidth < 256

@@ -31,25 +31,23 @@ import cc.polyfrost.oneconfig.internal.config.Preferences;
 import cc.polyfrost.oneconfig.internal.renderer.BorderedTextRenderer;
 import cc.polyfrost.oneconfig.renderer.TextRenderer;
 import net.minecraft.client.gui.FontRenderer;
+import net.minecraft.util.ResourceLocation;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyArg;
+import org.spongepowered.asm.mixin.injection.ModifyConstant;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(value = FontRenderer.class, priority = 2000)
+@Mixin(value = FontRenderer.class)
 public class FontRendererMixin {
-    @Shadow
-    protected int[] charWidth;
-
     @Shadow
     protected float posX;
 
     @Shadow
     protected float posY;
-
-    @Shadow
-    protected byte[] glyphWidth;
 
     @Inject(method = "drawString(Ljava/lang/String;FFIZ)I", at = @At(value = "HEAD"), cancellable = true)
     private void cachedShadow(String text, float x, float y, int color, boolean dropShadow, CallbackInfoReturnable<Integer> cir) {
@@ -58,18 +56,168 @@ public class FontRendererMixin {
         }
     }
 
-    @Inject(method = "renderDefaultChar", at = @At(value = "HEAD"), cancellable = true)
-    private void overrideDefault(int ch, boolean italic, CallbackInfoReturnable<Float> cir) {
-        Float f = BorderedTextRenderer.INSTANCE.renderDefaultChar(ch, italic, charWidth, posX, posY);
-        if (f == null) return;
-        cir.setReturnValue(f);
+    @ModifyConstant(method = "renderDefaultChar", constant = @Constant(floatValue = 128f))
+    private float asciiTextureSize(float constant) {
+        switch (BorderedTextRenderer.INSTANCE.getTextType()) {
+            case SHADOW:
+                return 144f;
+            case FULL:
+                return 160f;
+            default:
+                return constant;
+        }
     }
 
-    @Inject(method = "renderUnicodeChar", at = @At(value = "HEAD"), cancellable = true)
-    private void overrideUnicode(char ch, boolean italic, CallbackInfoReturnable<Float> cir) {
-        Float f = BorderedTextRenderer.INSTANCE.renderUnicodeChar(ch, italic, glyphWidth, posX, posY);
-        if (f == null) return;
-        cir.setReturnValue(f);
+    @Inject(method = "renderDefaultChar", at = @At("HEAD"))
+    private void asciiShift(int ch, boolean italic, CallbackInfoReturnable<Float> cir) {
+        if (BorderedTextRenderer.INSTANCE.getTextType() == TextRenderer.TextType.FULL) {
+            posX -= 1;
+            posY -= 1;
+        }
+    }
+
+    @Inject(method = "renderDefaultChar", at = @At("TAIL"))
+    private void asciiUnshift(CallbackInfoReturnable<Float> cir) {
+        if (BorderedTextRenderer.INSTANCE.getTextType() == TextRenderer.TextType.FULL) {
+            posX += 1;
+            posY += 1;
+        }
+    }
+
+    @ModifyConstant(method = "renderDefaultChar", constant = @Constant(intValue = 8))
+    private int asciiGlyphSize(int constant) {
+        switch (BorderedTextRenderer.INSTANCE.getTextType()) {
+            case SHADOW:
+                return 9;
+            case FULL:
+                return 10;
+            default:
+                return constant;
+        }
+    }
+
+    @ModifyConstant(method = "renderDefaultChar", constant = @Constant(floatValue = 0.01f))
+    private float asciiGlyphWidth(float constant) {
+        switch (BorderedTextRenderer.INSTANCE.getTextType()) {
+            case SHADOW:
+                return constant - 1.0f;
+            case FULL:
+                return constant - 4.0f;
+            default:
+                return constant;
+        }
+    }
+    @ModifyConstant(method = "renderDefaultChar", constant = @Constant(floatValue = 7.99f))
+    private float asciiPixelSize(float constant) {
+        switch (BorderedTextRenderer.INSTANCE.getTextType()) {
+            case SHADOW:
+                return 8.99f;
+            case FULL:
+                return 9.99f;
+            default:
+                return constant;
+        }
+    }
+
+    @ModifyArg(method = "renderDefaultChar", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/FontRenderer;bindTexture(Lnet/minecraft/util/ResourceLocation;)V"))
+    private ResourceLocation asciiTexture(ResourceLocation location) {
+        switch (BorderedTextRenderer.INSTANCE.getTextType()) {
+            case SHADOW:
+                return BorderedTextRenderer.INSTANCE.getAsciiTexture().getShadowed().getLocation();
+            case FULL:
+                return BorderedTextRenderer.INSTANCE.getAsciiTexture().getBordered().getLocation();
+            default:
+                return location;
+        }
+    }
+
+    @ModifyConstant(method = "renderUnicodeChar", constant = @Constant(floatValue = 256f))
+    private float unicodeTextureSize(float constant) {
+        switch (BorderedTextRenderer.INSTANCE.getTextType()) {
+            case SHADOW:
+                return 272f;
+            case FULL:
+                return 320f;
+            default:
+                return constant;
+        }
+    }
+
+    @ModifyConstant(method = "renderUnicodeChar", constant = {@Constant(intValue = 16, ordinal = 1), @Constant(intValue = 16, ordinal = 3)})
+    private int unicodeGlyphSize(int constant) {
+        switch (BorderedTextRenderer.INSTANCE.getTextType()) {
+            case SHADOW:
+                return 17;
+            case FULL:
+                return 20;
+            default:
+                return constant;
+        }
+    }
+
+    @ModifyConstant(method = "renderUnicodeChar", constant = @Constant(floatValue = 0.02f))
+    private float unicodeGlyphWidth(float constant) {
+        switch (BorderedTextRenderer.INSTANCE.getTextType()) {
+            case SHADOW:
+                return constant - 1.0f;
+            case FULL:
+                return constant - 4.0f;
+            default:
+                return constant;
+        }
+    }
+
+    @ModifyConstant(method = "renderUnicodeChar", constant = @Constant(floatValue = 15.98F))
+    private float unicodeGlyphHeight(float constant) {
+        switch (BorderedTextRenderer.INSTANCE.getTextType()) {
+            case SHADOW:
+                return 16.98f;
+            case FULL:
+                return 19.98f;
+            default:
+                return constant;
+        }
+    }
+
+    @ModifyConstant(method = "renderUnicodeChar", constant = @Constant(floatValue = 7.99f))
+    private float unicodePixelSize(float constant) {
+        switch (BorderedTextRenderer.INSTANCE.getTextType()) {
+            case SHADOW:
+                return 8.49f;
+            case FULL:
+                return 9.99f;
+            default:
+                return constant;
+        }
+    }
+
+    @Inject(method = "getUnicodePageLocation", at = @At("HEAD"), cancellable = true)
+    private void unicodeTexture(int page, CallbackInfoReturnable<ResourceLocation> cir) {
+        switch (BorderedTextRenderer.INSTANCE.getTextType()) {
+            case SHADOW:
+                cir.setReturnValue(BorderedTextRenderer.INSTANCE.getUnicodeTexture()[page].getShadowed().getLocation());
+                break;
+            case FULL:
+                cir.setReturnValue(BorderedTextRenderer.INSTANCE.getUnicodeTexture()[page].getBordered().getLocation());
+                break;
+        }
+    }
+
+
+    @Inject(method = "renderUnicodeChar", at = @At("HEAD"))
+    private void unicodeShift(char ch, boolean italic, CallbackInfoReturnable<Float> cir) {
+        if (BorderedTextRenderer.INSTANCE.getTextType() == TextRenderer.TextType.FULL) {
+            posX -= 1f;
+            posY -= 1f;
+        }
+    }
+
+    @Inject(method = "renderUnicodeChar", at = @At("TAIL"))
+    private void unicodeUnshift(CallbackInfoReturnable<Float> cir) {
+        if (BorderedTextRenderer.INSTANCE.getTextType() == TextRenderer.TextType.FULL) {
+            posX += 1f;
+            posY += 1f;
+        }
     }
 }
 //#endif
