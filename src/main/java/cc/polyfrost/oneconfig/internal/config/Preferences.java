@@ -70,6 +70,13 @@ public class Preferences extends InternalConfig {
     )
     public static float customScale = 1f;
 
+    @Switch(
+        name = "Optimized Font Renderer",
+        subcategory = "GUI Settings",
+        description = "May be incompatible with some mods"
+    )
+    public static boolean optimizedFontRenderer = true;
+
     @Dropdown(
             name = "Opening Behavior",
             category = "Behavior",

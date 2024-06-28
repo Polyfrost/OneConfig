@@ -135,7 +135,7 @@ public class OneConfig {
                 }
             }
 
-            cc.polyfrost.oneconfig.internal.renderer.CachedTextRenderer.INSTANCE.initialize();
+            cc.polyfrost.oneconfig.internal.renderer.BorderedTextRenderer.INSTANCE.initialize();
             //#else
             //$$ try {
             //$$     java.lang.reflect.Field mods = net.minecraftforge.fml.ModList.class.getDeclaredField("mods");

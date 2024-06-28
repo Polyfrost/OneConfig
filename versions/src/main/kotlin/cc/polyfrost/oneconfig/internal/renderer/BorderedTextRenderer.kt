@@ -27,19 +27,16 @@
 package cc.polyfrost.oneconfig.internal.renderer
 
 //#if FORGE==1 && MC<=11202
-import cc.polyfrost.oneconfig.libs.universal.UChat
 import cc.polyfrost.oneconfig.renderer.TextRenderer.TextType
 import cc.polyfrost.oneconfig.utils.dsl.mc
-import net.minecraft.client.gui.FontRenderer
 import net.minecraft.client.resources.IReloadableResourceManager
 import net.minecraft.client.resources.IResourceManager
-import net.minecraft.util.ResourceLocation
+import net.minecraft.client.resources.IResourceManagerReloadListener
 import org.lwjgl.opengl.GL11
 
-object CachedTextRenderer : FontRenderer(mc.gameSettings, ResourceLocation("textures/font/ascii.png"), mc.renderEngine, false) {
+object BorderedTextRenderer : IResourceManagerReloadListener {
     private val asciiTexture = CachedTexture()
     private val unicodeTexture = Array(256) { page -> CachedTexture(page) }
-
     private var textType = TextType.NONE
 
     fun initialize() {
@@ -47,7 +44,6 @@ object CachedTextRenderer : FontRenderer(mc.gameSettings, ResourceLocation("text
     }
 
     override fun onResourceManagerReload(resourceManager: IResourceManager) {
-        super.onResourceManagerReload(resourceManager)
         asciiTexture.load()
         for (texture in unicodeTexture) {
             texture.load()
@@ -55,23 +51,23 @@ object CachedTextRenderer : FontRenderer(mc.gameSettings, ResourceLocation("text
     }
 
     fun drawString(text: String, x: Float, y: Float, color: Int, textType: TextType): Float {
-        CachedTextRenderer.textType = textType
-        return drawString(text, x, y, color, false).toFloat()
+        BorderedTextRenderer.textType = textType
+        return mc.fontRendererObj.drawString(text, x, y, color, false).toFloat()
     }
 
-    override fun renderDefaultChar(ch: Int, italic: Boolean) = when (textType) {
-        TextType.NONE -> super.renderDefaultChar(ch, italic)
-        TextType.SHADOW -> renderDefaultCharShadowed(ch, italic)
-        TextType.FULL -> renderDefaultCharBordered(ch, italic)
+    fun renderDefaultChar(ch: Int, italic: Boolean, charWidth: IntArray, posX: Float, posY: Float) = when (textType) {
+        TextType.NONE -> null
+        TextType.SHADOW -> renderDefaultCharShadowed(ch, italic, charWidth, posX, posY)
+        TextType.FULL -> renderDefaultCharBordered(ch, italic, charWidth, posX, posY)
     }
 
-    override fun renderUnicodeChar(ch: Char, italic: Boolean) = when (textType) {
-        TextType.NONE -> super.renderUnicodeChar(ch, italic)
-        TextType.SHADOW -> renderUnicodeCharShadowed(ch, italic)
-        TextType.FULL -> renderUnicodeCharBordered(ch, italic)
+    fun renderUnicodeChar(ch: Char, italic: Boolean, glyphWidth: ByteArray, posX: Float, posY: Float) = when (textType) {
+        TextType.NONE -> null
+        TextType.SHADOW -> renderUnicodeCharShadowed(ch, italic, glyphWidth, posX, posY)
+        TextType.FULL -> renderUnicodeCharBordered(ch, italic, glyphWidth, posX, posY)
     }
 
-    private fun renderDefaultCharShadowed(ch: Int, italic: Boolean): Float {
+    private fun renderDefaultCharShadowed(ch: Int, italic: Boolean, charWidth: IntArray, posX: Float, posY: Float): Float {
         val width = charWidth[ch].toFloat()
         val widthShrunk = width - 0.01f
         val height = 9f - 0.01f
@@ -94,7 +90,7 @@ object CachedTextRenderer : FontRenderer(mc.gameSettings, ResourceLocation("text
         return width
     }
 
-    private fun renderUnicodeCharShadowed(char: Char, italic: Boolean): Float {
+    private fun renderUnicodeCharShadowed(char: Char, italic: Boolean, glyphWidth: ByteArray, posX: Float, posY: Float): Float {
         val ch = char.code
         val widthBits = glyphWidth[ch].toInt()
         if (widthBits == 0) return 0f
@@ -124,7 +120,7 @@ object CachedTextRenderer : FontRenderer(mc.gameSettings, ResourceLocation("text
         return (last4bits - first4bits) / 2.0f + 1.0f
     }
 
-    private fun renderDefaultCharBordered(ch: Int, italic: Boolean): Float {
+    private fun renderDefaultCharBordered(ch: Int, italic: Boolean, charWidth: IntArray, posX: Float, posY: Float): Float {
         val width = charWidth[ch]
 
         val column = ch and 0xF
@@ -152,7 +148,7 @@ object CachedTextRenderer : FontRenderer(mc.gameSettings, ResourceLocation("text
         return width.toFloat()
     }
 
-    private fun renderUnicodeCharBordered(char: Char, italic: Boolean): Float {
+    private fun renderUnicodeCharBordered(char: Char, italic: Boolean, glyphWidth: ByteArray, posX: Float, posY: Float): Float {
         val ch = char.code
         val widthBits = glyphWidth[ch].toInt()
         if (widthBits == 0) return 0f
