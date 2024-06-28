@@ -48,16 +48,10 @@ object CachedTextRenderer : FontRenderer(mc.gameSettings, ResourceLocation("text
 
     override fun onResourceManagerReload(resourceManager: IResourceManager) {
         super.onResourceManagerReload(resourceManager)
-        val start = System.currentTimeMillis()
-
         asciiTexture.load()
         for (texture in unicodeTexture) {
             texture.load()
         }
-
-        val duration = System.currentTimeMillis() - start
-
-        UChat.chat("full took $duration ms")
     }
 
     fun drawString(text: String, x: Float, y: Float, color: Int, textType: TextType): Float {
