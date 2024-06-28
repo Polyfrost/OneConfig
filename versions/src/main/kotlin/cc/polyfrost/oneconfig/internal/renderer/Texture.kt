@@ -24,41 +24,32 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.renderer;
+package cc.polyfrost.oneconfig.internal.renderer
 
-import cc.polyfrost.oneconfig.libs.universal.UGraphics;
-import cc.polyfrost.oneconfig.platform.Platform;
+//#if FORGE==1 && MC<=11202
+import cc.polyfrost.oneconfig.utils.dsl.mc
+import net.minecraft.client.renderer.texture.AbstractTexture
+import net.minecraft.client.renderer.texture.TextureUtil
+import net.minecraft.client.resources.IResourceManager
+import net.minecraft.util.ResourceLocation
 
-public class TextRenderer {
-    private static boolean drawingBorder = false;
+class Texture(path: String) : AbstractTexture() {
+    private val location = ResourceLocation(path)
 
-    public static int drawBorderedText(String text, float x, float y, int color, int opacity) {
-        drawingBorder = true;
-        int yes = (int) Platform.getGLPlatform().drawText(text, x, y, (color & 0xFFFFFF) | (opacity << 24), TextType.FULL);
-        drawingBorder = false;
-        return yes;
+    init {
+        mc.textureManager.loadTexture(location, this)
     }
 
-    public static float getStringWidth(String text) {
-        return Platform.getGLPlatform().getStringWidth(text);
+    fun load(data: IntArray, width: Int, height: Int) {
+        val id = getGlTextureId()
+        TextureUtil.allocateTexture(id, width, height)
+        TextureUtil.uploadTexture(id, data, width, height)
     }
 
-    public static void drawScaledString(String text, float x, float y, int color, TextType type, float scale) {
-        UGraphics.GL.pushMatrix();
-        UGraphics.GL.scale(scale, scale, 1);
-        Platform.getGLPlatform().drawText(text, x * (1 / scale), y * (1 / scale), color, type);
-        UGraphics.GL.popMatrix();
+    fun bind() {
+        mc.textureManager.bindTexture(location)
     }
 
-    public static boolean isDrawingTextBorder() {
-        return drawingBorder;
-    }
-
-    public enum TextType {
-        NONE, SHADOW, FULL;
-
-        public static TextType toType(int type) {
-            return values()[type];
-        }
-    }
+    override fun loadTexture(resourceManager: IResourceManager) {}
 }
+//#endif

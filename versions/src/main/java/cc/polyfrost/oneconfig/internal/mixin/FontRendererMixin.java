@@ -24,23 +24,25 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.platform;
+//#if FORGE==1 && MC<=11202
+package cc.polyfrost.oneconfig.internal.mixin;
 
-import cc.polyfrost.oneconfig.libs.universal.UMatrixStack;
+import cc.polyfrost.oneconfig.internal.renderer.CachedTextRenderer;
 import cc.polyfrost.oneconfig.renderer.TextRenderer;
+import net.minecraft.client.gui.FontRenderer;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-public interface GLPlatform {
-    void drawRect(float x, float y, float x2, float y2, int color);
+@Mixin(FontRenderer.class)
+public class FontRendererMixin {
 
-    void enableStencil();
-
-    default float drawText(String text, float x, float y, int color, boolean shadow) {
-        return drawText(null, text, x, y, color, shadow);
+    @Inject(method = "drawString(Ljava/lang/String;FFIZ)I", at = @At(value = "HEAD"), cancellable = true)
+    private void cachedShadow(String text, float x, float y, int color, boolean dropShadow, CallbackInfoReturnable<Integer> cir) {
+        if (dropShadow) {
+            cir.setReturnValue((int) CachedTextRenderer.INSTANCE.drawString(text, x, y, color, TextRenderer.TextType.SHADOW));
+        }
     }
-
-    float drawText(String text, float x, float y, int color, TextRenderer.TextType type);
-
-    float drawText(UMatrixStack matrixStack, String text, float x, float y, int color, boolean shadow);
-
-    int getStringWidth(String text);
 }
+//#endif
