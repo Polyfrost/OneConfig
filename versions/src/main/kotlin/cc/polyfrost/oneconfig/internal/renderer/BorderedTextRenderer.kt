@@ -52,9 +52,9 @@ object BorderedTextRenderer : IResourceManagerReloadListener {
 
     fun drawString(text: String, x: Float, y: Float, color: Int, textType: TextType): Float {
         BorderedTextRenderer.textType = textType
-        return mc.fontRendererObj.drawString(text, x, y, color, false).toFloat().also {
-            BorderedTextRenderer.textType = TextType.NONE
-        }
+        val i = mc.fontRendererObj.drawString(text, x, y, color, false)
+        BorderedTextRenderer.textType = TextType.NONE
+        return i.toFloat() + 1
     }
 
     fun renderDefaultChar(ch: Int, italic: Boolean, charWidth: IntArray, posX: Float, posY: Float) = when (textType) {
