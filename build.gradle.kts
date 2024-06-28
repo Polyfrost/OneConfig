@@ -103,8 +103,6 @@ dependencies {
     // for other mods and universalcraft
     shade(libs.bundles.kotlin)
 
-    shade("net.hypixel:mod-api:0.1.6")
-
     shade(libs.mixin) {
         isTransitive = false
     }
