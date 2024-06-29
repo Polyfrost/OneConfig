@@ -4,7 +4,7 @@ kotlinx-coroutines = "1.8.1"
 kotlinx-atomicfu = "0.24.0"
 kotlinx-abi = "0.14.0"
 
-pgt = "0.6.2"
+pgt = "0.6.3"
 shadow = "8.1.1"
 licenser = "2.0.1"
 

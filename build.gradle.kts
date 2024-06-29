@@ -15,7 +15,7 @@ group = properties["group"] as String
 
 subprojects {
     version = rootProject.version
-    group = "${rootProject.group}.${rootProject.name}"
+    group = "${rootProject.group}.${rootProject.properties["mod_id"] as String}"
 
     apply(plugin = rootProject.libs.plugins.licenser.get().pluginId)
     // Note for future devs: DON'T apply the java-library plugin to subprojects here.

@@ -26,6 +26,13 @@ plugins {
 
 val name: String by settings
 rootProject.name = name
+if (rootDir.name != name) {
+    logger.error("""
+        Root directory name (${rootDir.absolutePath}) does not match project name ($name)! 
+        This may cause issues with indexing and other tools (see https://youtrack.jetbrains.com/issue/IDEA-317606/Changing-only-the-case-of-the-Gradle-root-project-name-causes-exception-while-importing-project-java.lang.IllegalStateException#focus=Comments-27-7257761.0-0 and https://stackoverflow.com/questions/77878944/what-to-do-when-the-java-lang-illegalsateexception-module-entity-with-name ). 
+        If you are experiencing issues, please rename the root directory to match the project name, re-import the project, and invalidate caches if you are on IntelliJ.
+    """.trimIndent())
+}
 
 include(":modules")
 project(":modules").apply {
