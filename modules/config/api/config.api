@@ -78,9 +78,11 @@ public abstract class org/polyfrost/oneconfig/api/config/v1/Property : org/polyf
 	public final fun removeCallback (Ljava/util/function/Predicate;)V
 	public final fun removeDisplayCondition (Ljava/util/function/BooleanSupplier;)V
 	public fun revaluateDisplay ()V
-	public fun set (Ljava/lang/Object;)V
+	public final fun set (Ljava/lang/Object;)V
 	protected abstract fun set0 (Ljava/lang/Object;)V
 	public final fun setAs (Ljava/lang/Object;)V
+	public final fun setAsReferential (Ljava/lang/Object;)V
+	public fun setReferential (Ljava/lang/Object;)V
 	public final fun toString ()Ljava/lang/String;
 }
 

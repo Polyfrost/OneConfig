@@ -54,6 +54,8 @@ dependencies {
     }
     implementation(project(":modules:dependencies"))
     implementation(project(":modules:dependencies:bundled"))
+    compileOnly(project(":modules:internal"))
+    runtimeOnly(project(":modules:internal"))
 
     if (platform.isLegacyForge) {
         implementation(libs.mixin) {
