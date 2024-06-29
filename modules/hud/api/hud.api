@@ -6,7 +6,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public synthetic fun clone ()Ljava/lang/Object;
 	public fun clone ()Lorg/polyfrost/oneconfig/api/hud/v1/Hud;
 	protected abstract fun create ()Lorg/polyfrost/polyui/component/Drawable;
-	public fun defaultPosition ()Lorg/polyfrost/polyui/unit/Vec2;
+	public fun defaultPosition-2K4fKj8 ()J
 	public final fun equals (Ljava/lang/Object;)Z
 	public final fun get ()Lorg/polyfrost/polyui/component/Drawable;
 	public final fun getHidden ()Z
@@ -73,7 +73,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/LegacyHud : org/polyfro
 	protected final fun createLegacy ()Lorg/polyfrost/polyui/component/Drawable;
 	public abstract fun getHeight ()F
 	public abstract fun getWidth ()F
-	public abstract fun render (Lorg/polyfrost/universal/UMatrixStack;FF)V
+	public abstract fun render (Ljava/lang/Object;FF)V
 	public abstract fun setHeight (F)V
 	public abstract fun setWidth (F)V
 }
@@ -96,6 +96,8 @@ public final class org/polyfrost/oneconfig/api/hud/v1/TextHud$DateTime : org/pol
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
 	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun category ()Lorg/polyfrost/oneconfig/api/hud/v1/Hud$Category;
+	public synthetic fun clone ()Ljava/lang/Object;
+	public fun clone ()Lorg/polyfrost/oneconfig/api/hud/v1/Hud;
 	public final fun getTemplate ()Ljava/lang/String;
 	public fun id ()Ljava/lang/String;
 	public fun initialize ()V

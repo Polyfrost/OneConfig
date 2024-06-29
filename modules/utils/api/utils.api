@@ -229,6 +229,19 @@ public final class org/polyfrost/oneconfig/utils/v1/MHUtils$Result$Failure {
 	public final fun getT ()Ljava/lang/Throwable;
 }
 
+public final class org/polyfrost/oneconfig/utils/v1/MavenUpdateChecker {
+	public final field currentVersion Ljava/lang/String;
+	public final field group Ljava/lang/String;
+	public final field id Ljava/lang/String;
+	public final field repo Ljava/lang/String;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public fun getLatestVersion ()Ljava/lang/String;
+	public fun hasChecked ()Z
+	public fun hasUpdate ()Z
+	public fun isSnapshots ()Z
+	public static fun oneconfig ()Lorg/polyfrost/oneconfig/utils/v1/MavenUpdateChecker;
+}
+
 public final class org/polyfrost/oneconfig/utils/v1/Multithreading {
 	public static fun getExecutor ()Ljava/util/concurrent/ExecutorService;
 	public static fun getScheduledExecutor ()Ljava/util/concurrent/ScheduledExecutorService;
@@ -247,18 +260,6 @@ public final class org/polyfrost/oneconfig/utils/v1/NetworkUtils {
 	public static fun getString (Ljava/lang/String;Ljava/lang/String;IZ)Ljava/lang/String;
 	public static fun setupConnection (Ljava/lang/String;)Ljava/io/InputStream;
 	public static fun setupConnection (Ljava/lang/String;Ljava/lang/String;IZ)Ljava/io/InputStream;
-}
-
-public final class org/polyfrost/oneconfig/utils/v1/OneConfigUpdate {
-	public static final field GROUP Ljava/lang/String;
-	public static final field POLYFROST_REPO Ljava/lang/String;
-	public final field isSnapshots Z
-	public fun getCurrentVersion ()Ljava/lang/String;
-	public static fun getInstance ()Lorg/polyfrost/oneconfig/utils/v1/OneConfigUpdate;
-	public fun getLatestVersion ()Ljava/lang/String;
-	public fun hasChecked ()Z
-	public fun hasUpdate ()Z
-	public static fun makeUpdateMarker ()V
 }
 
 public final class org/polyfrost/oneconfig/utils/v1/OneImage {
