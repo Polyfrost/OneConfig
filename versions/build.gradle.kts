@@ -2,6 +2,7 @@
 // Shared build logic for all versions of OneConfig.
 
 import org.polyfrost.gradle.util.noServerRunConfigs
+import org.polyfrost.gradle.util.prebundle
 import java.text.SimpleDateFormat
 
 plugins {
@@ -53,7 +54,9 @@ dependencies {
     modApi("org.polyfrost:universalcraft-$platform:${libs.versions.universalcraft.get()}")
 
     if (platform.isLegacyForge || platform.isLegacyFabric) {
-        implementation(project(":modules:dependencies:legacy"))
+        val configuration = configurations.create("tempLwjglConfigurationLegacy")
+        implementation(configuration(project(":modules:dependencies:legacy")) {})
+        implementationNoPom(prebundle(configuration, "lwjgl-legacy.jar"))
     } else {
         implementation(project(":modules:dependencies:modern"))
     }
