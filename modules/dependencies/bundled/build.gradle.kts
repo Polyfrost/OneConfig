@@ -2,7 +2,7 @@ description = "Bundle of all of OneConfig's modules"
 
 dependencies {
     for (project in rootProject.project(":modules").subprojects) {
-        if ("dependencies" !in project.path) {
+        if ("dependencies" !in project.path && "internal" !in project.path) {
             api(project(project.path)) {
                 isTransitive = false
             }
