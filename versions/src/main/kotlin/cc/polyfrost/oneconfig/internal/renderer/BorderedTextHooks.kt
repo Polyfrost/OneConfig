@@ -24,23 +24,36 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.platform;
+package cc.polyfrost.oneconfig.internal.renderer
 
-import cc.polyfrost.oneconfig.libs.universal.UMatrixStack;
-import cc.polyfrost.oneconfig.renderer.TextRenderer;
+//#if FORGE==1 && MC<=11202
+import cc.polyfrost.oneconfig.renderer.TextRenderer.TextType
+import cc.polyfrost.oneconfig.utils.dsl.mc
+import net.minecraft.client.resources.IReloadableResourceManager
+import net.minecraft.client.resources.IResourceManager
+import net.minecraft.client.resources.IResourceManagerReloadListener
 
-public interface GLPlatform {
-    void drawRect(float x, float y, float x2, float y2, int color);
+object BorderedTextHooks : IResourceManagerReloadListener {
+    val asciiTexture = CachedTexture()
+    val unicodeTexture = Array(256) { page -> CachedTexture(page) }
+    var textType = TextType.NONE
 
-    void enableStencil();
-
-    default float drawText(String text, float x, float y, int color, boolean shadow) {
-        return drawText(null, text, x, y, color, shadow);
+    fun initialize() {
+        (mc.resourceManager as IReloadableResourceManager).registerReloadListener(this)
     }
 
-    float drawText(String text, float x, float y, int color, TextRenderer.TextType type);
+    override fun onResourceManagerReload(resourceManager: IResourceManager) {
+        asciiTexture.load()
+        for (texture in unicodeTexture) {
+            texture.load()
+        }
+    }
 
-    float drawText(UMatrixStack matrixStack, String text, float x, float y, int color, boolean shadow);
-
-    int getStringWidth(String text);
+    fun drawString(text: String, x: Float, y: Float, color: Int, type: TextType): Float {
+        textType = type
+        val i = mc.fontRendererObj.drawString(text, x, y, color, false)
+        textType = TextType.NONE
+        return i.toFloat() + 1
+    }
 }
+//#endif

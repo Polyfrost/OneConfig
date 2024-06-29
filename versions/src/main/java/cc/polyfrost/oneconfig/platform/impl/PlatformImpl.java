@@ -51,7 +51,7 @@ public class PlatformImpl implements Platform {
         //$$ return 11400;
         //#elseif MC>=11300
         //$$ return 11300;
-        //#elseif MC>=11200
+        //#elseif MC>=11202
         //$$ return 11200;
         //#elseif MC>=11100
         //$$ return 11100;
@@ -60,7 +60,7 @@ public class PlatformImpl implements Platform {
         //#elseif MC>=10900
         //$$ return 10900;
         //#else
-        return 10800;
+        return 10809;
         //#endif
     }
 
