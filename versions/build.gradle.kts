@@ -50,7 +50,7 @@ dependencies {
         isTransitive = false
     }
 
-    modImplementation("org.polyfrost:universalcraft-$platform:${libs.versions.universalcraft.get()}")
+    modApi("org.polyfrost:universalcraft-$platform:${libs.versions.universalcraft.get()}")
 
     if (platform.isLegacyForge || platform.isLegacyFabric) {
         implementation(project(":modules:dependencies:legacy"))
