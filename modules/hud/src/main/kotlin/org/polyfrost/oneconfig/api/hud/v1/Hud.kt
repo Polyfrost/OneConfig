@@ -251,6 +251,8 @@ abstract class Hud<T : Drawable> : Cloneable, Config("null", null, "null", null)
      *
      * **this position, as will all HUD methods, should be for a position on a `1920x1080` screen.**
      */
+    @Suppress("INAPPLICABLE_JVM_NAME")
+    @JvmName("defaultPosition")
     open fun defaultPosition(): Vec2 = Vec2.ZERO
 
     /**

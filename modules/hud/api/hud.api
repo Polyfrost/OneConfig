@@ -6,7 +6,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public synthetic fun clone ()Ljava/lang/Object;
 	public fun clone ()Lorg/polyfrost/oneconfig/api/hud/v1/Hud;
 	protected abstract fun create ()Lorg/polyfrost/polyui/component/Drawable;
-	public fun defaultPosition-2K4fKj8 ()J
+	public fun defaultPosition ()J
 	public final fun equals (Ljava/lang/Object;)Z
 	public final fun get ()Lorg/polyfrost/polyui/component/Drawable;
 	public final fun getHidden ()Z
