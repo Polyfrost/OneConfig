@@ -40,6 +40,11 @@ loom {
     mixin.defaultRefmapName = "mixins.${modId}.refmap.json"
 }
 
+val implementationNoPom: Configuration by configurations.creating {
+    configurations.named(JavaPlugin.COMPILE_CLASSPATH_CONFIGURATION_NAME) { extendsFrom(this@creating) }
+    configurations.named(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME) { extendsFrom(this@creating) }
+}
+
 dependencies {
     compileOnly("gg.essential:vigilance-1.8.9-forge:295") {
         isTransitive = false
@@ -54,8 +59,7 @@ dependencies {
     }
     implementation(project(":modules:dependencies"))
     implementation(project(":modules:dependencies:bundled"))
-    compileOnly(project(":modules:internal"))
-    runtimeOnly(project(":modules:internal"))
+    implementationNoPom(project(":modules:internal"))
 
     if (platform.isLegacyForge) {
         implementation(libs.mixin) {
