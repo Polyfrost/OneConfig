@@ -33,7 +33,7 @@ import net.minecraft.client.resources.IReloadableResourceManager
 import net.minecraft.client.resources.IResourceManager
 import net.minecraft.client.resources.IResourceManagerReloadListener
 
-object BorderedTextRenderer : IResourceManagerReloadListener {
+object BorderedTextHooks : IResourceManagerReloadListener {
     val asciiTexture = CachedTexture()
     val unicodeTexture = Array(256) { page -> CachedTexture(page) }
     var textType = TextType.NONE
@@ -49,10 +49,10 @@ object BorderedTextRenderer : IResourceManagerReloadListener {
         }
     }
 
-    fun drawString(text: String, x: Float, y: Float, color: Int, textType: TextType): Float {
-        BorderedTextRenderer.textType = textType
+    fun drawString(text: String, x: Float, y: Float, color: Int, type: TextType): Float {
+        textType = type
         val i = mc.fontRendererObj.drawString(text, x, y, color, false)
-        BorderedTextRenderer.textType = TextType.NONE
+        textType = TextType.NONE
         return i.toFloat() + 1
     }
 }

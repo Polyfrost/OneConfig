@@ -120,7 +120,7 @@ public class GLPlatformImpl implements GLPlatform {
                 return drawText(text, x, y, color, true);
             case FULL:
                 //#if FORGE==1 && MC<=11202
-                return cc.polyfrost.oneconfig.internal.renderer.BorderedTextRenderer.INSTANCE.drawString(text, x, y, color, type);
+                return cc.polyfrost.oneconfig.internal.renderer.BorderedTextHooks.INSTANCE.drawString(text, x, y, color, type);
                 //#else
                 //$$ return drawBorderedText(text, x, y, color, 255);
                 //#endif
