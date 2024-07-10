@@ -52,9 +52,9 @@ import java.util.Map;
 
 import static org.polyfrost.oneconfig.api.config.v1.Tree.tree;
 
-public class NightConfigSerializer implements org.polyfrost.oneconfig.api.config.v1.serialize.impl.FileSerializer<String> {
-    public static final org.polyfrost.oneconfig.api.config.v1.serialize.impl.FileSerializer<String> TOML = new NightConfigSerializer(new TomlWriter(), new TomlParser(), ".toml");       // 90 KB
-    public static final org.polyfrost.oneconfig.api.config.v1.serialize.impl.FileSerializer<String> JSON = new NightConfigSerializer(JsonFormat.fancyInstance().createWriter(), JsonFormat.fancyInstance().createParser(), ".json");  // 55KB
+public class NightConfigSerializer implements FileSerializer<String> {
+    public static final FileSerializer<String> TOML = new NightConfigSerializer(new TomlWriter(), new TomlParser(), ".toml");       // 90 KB
+    public static final FileSerializer<String> JSON = new NightConfigSerializer(JsonFormat.fancyInstance().createWriter(), JsonFormat.fancyInstance().createParser(), ".json");  // 55KB
     // public static final FileSerializer HOCON = new NightConfigSerializer(new HoconWriter(), new HoconParser(), ".hocon");        // 1.1MB
     private static final DumperOptions YAML_DUMPER_OPTIONS = new DumperOptions();
 
@@ -62,7 +62,7 @@ public class NightConfigSerializer implements org.polyfrost.oneconfig.api.config
         YAML_DUMPER_OPTIONS.setPrettyFlow(true);
     }
 
-    public static final org.polyfrost.oneconfig.api.config.v1.serialize.impl.FileSerializer<String> YAML = new NightConfigSerializer(new YamlWriter(YAML_DUMPER_OPTIONS), new YamlParser(YamlFormat.defaultInstance()), ".yaml", ".yml");       // 1.2MB
+    public static final FileSerializer<String> YAML = new NightConfigSerializer(new YamlWriter(YAML_DUMPER_OPTIONS), new YamlParser(YamlFormat.defaultInstance()), ".yaml", ".yml");       // 1.2MB
     public static final FileSerializer<?>[] ALL = {TOML, JSON, YAML};
 
     final ConfigWriter writer;

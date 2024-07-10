@@ -170,6 +170,10 @@ public final class ConfigManager {
         return backend.register(t);
     }
 
+    public boolean delete(String id) {
+        return backend.delete(id);
+    }
+
     @ApiStatus.Internal
     public Collection<Tree> gatherAll(String sub) {
         return backend.gatherAll(sub);
@@ -184,8 +188,7 @@ public final class ConfigManager {
     private ConfigManager withHook() {
         // two hooks that guarantee that we save lol
         // seems to improve the reliability of saving when the game crashes
-//        EventManager.register(JvmShutdownEvent.class, this::hook);
-//        EventManager.register(ShutdownEvent.class, this::hook);
+        Runtime.getRuntime().addShutdownHook(new Thread(this::onClose));
         return this;
     }
 
@@ -198,7 +201,7 @@ public final class ConfigManager {
         return this;
     }
 
-    private synchronized void hook() {
+    private synchronized void onClose() {
         if (shutdown) return;
         shutdown = true;
         LOGGER.info("shutdown requested; saving all configs in {}", backend.folder.getFileName());

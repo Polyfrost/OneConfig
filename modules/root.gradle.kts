@@ -81,8 +81,6 @@ subprojects {
 
     rootModuleProject.publishing {
         publications {
-            if (project.name == "internal") return@publications
-
             register<MavenPublication>("module" + project.name.capitalized()) {
                 from(components["java"])
 

@@ -30,6 +30,7 @@ public final class org/polyfrost/oneconfig/api/config/v1/ConfigManager {
 	public static fun active ()Lorg/polyfrost/oneconfig/api/config/v1/ConfigManager;
 	public static fun collect (Ljava/lang/Object;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	public static fun core ()Lorg/polyfrost/oneconfig/api/config/v1/ConfigManager;
+	public fun delete (Ljava/lang/String;)Z
 	public fun gatherAll (Ljava/lang/String;)Ljava/util/Collection;
 	public fun get (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	public fun getFolder ()Ljava/nio/file/Path;

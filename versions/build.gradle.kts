@@ -41,11 +41,6 @@ loom {
     mixin.defaultRefmapName = "mixins.${modId}.refmap.json"
 }
 
-val implementationNoPom: Configuration by configurations.creating {
-    configurations.named(JavaPlugin.COMPILE_CLASSPATH_CONFIGURATION_NAME) { extendsFrom(this@creating) }
-    configurations.named(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME) { extendsFrom(this@creating) }
-}
-
 dependencies {
     compileOnly("gg.essential:vigilance-1.8.9-forge:295") {
         isTransitive = false
@@ -55,14 +50,14 @@ dependencies {
 
     if (platform.isLegacyForge || platform.isLegacyFabric) {
         val configuration = configurations.create("tempLwjglConfigurationLegacy")
-        implementation(configuration(project(":modules:dependencies:legacy")) {})
-        implementationNoPom(prebundle(configuration, "lwjgl-legacy.jar"))
+        implementation(configuration(project(":modules:dependencies:legacy"))!!)
+        runtimeOnly(compileOnly(prebundle(configuration, "lwjgl-legacy.jar"))!!)
     } else {
         implementation(project(":modules:dependencies:modern"))
     }
     implementation(project(":modules:dependencies"))
     implementation(project(":modules:dependencies:bundled"))
-    implementationNoPom(project(":modules:internal")) {
+    implementation(project(":modules:internal")) {
         isTransitive = false
     }
 
