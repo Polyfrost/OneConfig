@@ -30,10 +30,13 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
 import org.polyfrost.oneconfig.api.config.v1.backend.impl.FileBackend;
 import org.polyfrost.oneconfig.api.config.v1.collect.PropertyCollector;
 import org.polyfrost.oneconfig.api.config.v1.collect.impl.OneConfigCollector;
+import org.polyfrost.oneconfig.api.config.v1.serialize.ObjectSerializer;
+import org.polyfrost.oneconfig.api.config.v1.serialize.adapter.impl.PolyColorAdapter;
 import org.polyfrost.oneconfig.api.config.v1.serialize.impl.FileSerializer;
 import org.polyfrost.oneconfig.api.config.v1.serialize.impl.NightConfigSerializer;
 
@@ -49,11 +52,12 @@ public final class ConfigManager {
     public static final Path PROFILES_DIR = Paths.get("profiles");
     private static final Logger LOGGER = LogManager.getLogger("OneConfig/Config");
     private static final List<PropertyCollector> collectors = new ArrayList<>(1);
-    private static final ConfigManager internal = new ConfigManager(Paths.get("oneconfig"), NightConfigSerializer.JSON);
+    private static final ConfigManager internal = new ConfigManager(Paths.get("oneconfig"), NightConfigSerializer.ALL);
     private static final ConfigManager core = new ConfigManager(Paths.get("config"), NightConfigSerializer.ALL);
     private static ConfigManager active;
 
     static {
+        ObjectSerializer.INSTANCE.registerTypeAdapter(new PolyColorAdapter());
         registerCollector(new OneConfigCollector());
     }
 
@@ -99,7 +103,7 @@ public final class ConfigManager {
             active = core().withWatcher().withHook();
         } else {
             LOGGER.info("opening profile {}", profile);
-            active = new ConfigManager(PROFILES_DIR.resolve(profile), NightConfigSerializer.ALL).withHook().withWatcher();
+            active = new ConfigManager(PROFILES_DIR.resolve(profile), core.backend.getSerializers().toArray(new FileSerializer[0])).withHook().withWatcher();
         }
     }
 
@@ -138,6 +142,10 @@ public final class ConfigManager {
         return backend.getTrees();
     }
 
+    public @Nullable Tree load(String id) {
+        return backend.load(id);
+    }
+
     public Tree get(String id) {
         return backend.get(id);
     }
@@ -152,10 +160,6 @@ public final class ConfigManager {
 
     public void saveAll() {
         backend.saveAll();
-    }
-
-    public boolean delete(String id) {
-        return backend.delete(id);
     }
 
     public Path getFolder() {
@@ -180,7 +184,8 @@ public final class ConfigManager {
     private ConfigManager withHook() {
         // two hooks that guarantee that we save lol
         // seems to improve the reliability of saving when the game crashes
-        Runtime.getRuntime().addShutdownHook(new Thread(this::onClose));
+//        EventManager.register(JvmShutdownEvent.class, this::hook);
+//        EventManager.register(ShutdownEvent.class, this::hook);
         return this;
     }
 
@@ -193,8 +198,7 @@ public final class ConfigManager {
         return this;
     }
 
-
-    private synchronized void onClose() {
+    private synchronized void hook() {
         if (shutdown) return;
         shutdown = true;
         LOGGER.info("shutdown requested; saving all configs in {}", backend.folder.getFileName());

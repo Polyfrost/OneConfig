@@ -62,7 +62,9 @@ dependencies {
     }
     implementation(project(":modules:dependencies"))
     implementation(project(":modules:dependencies:bundled"))
-    implementationNoPom(project(":modules:internal"))
+    implementationNoPom(project(":modules:internal")) {
+        isTransitive = false
+    }
 
     if (platform.isLegacyForge) {
         implementation(libs.mixin) {

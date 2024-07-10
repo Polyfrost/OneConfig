@@ -46,6 +46,7 @@ import org.polyfrost.polyui.utils.image
 import org.polyfrost.polyui.utils.mapToArray
 import org.polyfrost.polyui.utils.mutable
 import org.polyfrost.polyui.utils.ref
+import kotlin.experimental.or
 import kotlin.math.PI
 import kotlin.math.atan2
 import kotlin.math.min
@@ -56,7 +57,7 @@ const val angleSnapMargin = PI / 12.0
 const val minMargin = 4f
 const val snapMargin = 12f
 
-fun HudsPage(huds: Collection<Hud<out Drawable>>): Drawable {
+fun HudsPage(huds: Collection<Hud<*>>): Drawable {
     return Group(
         Group(
             HudButton("oneconfig.huds.all"),
@@ -73,7 +74,10 @@ fun HudsPage(huds: Collection<Hud<out Drawable>>): Drawable {
                     Block(
                         preview,
                         alignment = alignC,
-                    ).withBoarder().minimumSize(215f by 80f).withStates()
+                    ).withBoarder().minimumSize(215f by 80f).withStates().onInit {
+                        // #created-with-set-size = true
+                        layoutFlags = layoutFlags or 0b00000010
+                    }
                 },
                 visibleSize = Vec2(500f, 800f),
             )
@@ -92,14 +96,14 @@ fun HudsPage(huds: Collection<Hud<out Drawable>>): Drawable {
                 }
             }
         }
-    }.namedId("HudsPage")
+    }.named("HudsPage")
 }
 
 private fun HudButton(text: String): Block {
     return Button(text = text, fontSize = 14f, font = PolyUI.defaultFonts.medium, padding = Vec2(12f, 8f)).radius(6f).withBoarder()
 }
 
-fun createInspectionsScreen(hud: Hud<out Drawable>): Drawable {
+fun createInspectionsScreen(hud: Hud<*>): Drawable {
     return Group(
         Radiobutton(
             "assets/oneconfig/ico/paintbrush.svg".image() to "oneconfig.hudeditor.designer.title",
@@ -145,7 +149,7 @@ private fun createDesigner(hud: Hud<*>): Drawable {
                 size = Vec2(328f, 0f),
             ),
         ),
-        *colorOptions(hud.get().parent),
+        *colorOptions(hud.get().parent as Drawable),
         Text("oneconfig.hudeditor.component.title", fontSize = 16f).padded(0f, 18f, 0f, 0f).setFont { medium },
         if (isLegacy) {
             Text("oneconfig.hudeditor.cantedit.aslegacy").secondary()
@@ -166,7 +170,7 @@ private fun createDesigner(hud: Hud<*>): Drawable {
     )
 }
 
-private fun interactiveAlignment(hud: Hud<out Drawable>): Drawable {
+private fun interactiveAlignment(hud: Hud<*>): Drawable {
     var px = 0f
     var py = 0f
     var s0 = 0.0
@@ -197,7 +201,7 @@ private fun interactiveAlignment(hud: Hud<out Drawable>): Drawable {
                         }.withBoarder().draggable(
                             withX = false, withY = false,
                             onStart = {
-                                s0 = hud.get().parent.rotation
+                                s0 = (hud.get().parent as Drawable).rotation
                             },
                             onDrag = {
                                 var rot = s0 + (atan2(((y + height / 2f) - polyUI.mouseY).toDouble(), ((x + width / 2f) - polyUI.mouseX).toDouble()) - PI / 2.0)
@@ -213,10 +217,10 @@ private fun interactiveAlignment(hud: Hud<out Drawable>): Drawable {
                                     rot = -PI / 2.0
                                 }
                                 rotation = rot
-                                hud.get().parent.rotation = rot
+                                (hud.get().parent as Drawable).rotation = rot
                             },
                         ).apply {
-                            rotation = hud.get().parent.rotation
+                            rotation = (hud.get().parent as Drawable).rotation
                         }.events {
                             Event.Mouse.Companion.Pressed then {
                                 this[0].accept(it)
@@ -238,6 +242,7 @@ private fun interactiveAlignment(hud: Hud<out Drawable>): Drawable {
                         px = polyUI.mouseX
                         py = polyUI.mouseY
                         hud.get().parent.let {
+                            it as Drawable
                             s0 = it.skewX
                             s1 = it.skewY
                         }
@@ -259,6 +264,7 @@ private fun interactiveAlignment(hud: Hud<out Drawable>): Drawable {
                             it.skewY = sy
                         }
                         hud.get().parent.let {
+                            it as Drawable
                             it.skewX = sx
                             it.skewY = sy
                         }
@@ -294,7 +300,7 @@ private fun interactiveAlignment(hud: Hud<out Drawable>): Drawable {
                 val bgr = bg.radii ?: return@draggable
                 val m = (s2 + min(dx, dy) * 0.1f).coerceIn(0f, bg.height)
                 val display = (this[0][0] as Block).radii ?: return@draggable
-                for (i in 0..3) {
+                for (i in bgr.indices) {
                     bgr[i] = m
                     display[i] = m
                 }

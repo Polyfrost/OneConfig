@@ -61,7 +61,7 @@ fun ModsPage(trees: Collection<Tree>): Drawable {
     // todo add categories
     return Group(
         children = trees.mapNotNull {
-            if (it.getMetadata<Any?>("frontendIgnore") != null) return@mapNotNull null
+            if (it.getMetadata<Any?>("hidden") != null) return@mapNotNull null
             Group(
                 Block(
                     Image(it.getMetadata<String>("icon")?.image() ?: defaultModImage),
@@ -75,11 +75,11 @@ fun ModsPage(trees: Collection<Tree>): Drawable {
                     radii = modBoxBotRad,
                     alignment = barAlign,
                     size = Vec2(256f, 36f),
-                ).setPalette { brand.fg },
+                ).also { it.acceptsInput = true }.setPalette { brand.fg },
                 alignment = modBoxAlign,
             ).onClick { _ ->
                 OneConfigUI.openPage(ConfigVisualizer.INSTANCE.get(it), (this[1][0] as Text).text)
-            }.namedId("ModCard")
+            }.add3dEffect().namedId("ModCard")
         }.toTypedArray(),
         visibleSize = Vec2(1130f, 635f),
         alignment = Align(cross = Align.Cross.Start, pad = Vec2(18f, 18f)),

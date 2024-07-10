@@ -31,6 +31,8 @@ import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.component.*
 import org.polyfrost.polyui.component.impl.*
 import org.polyfrost.polyui.event.Event
+import org.polyfrost.polyui.input.KeyBinder
+import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.utils.image
 import org.polyfrost.polyui.utils.mapToArray
@@ -92,10 +94,36 @@ fun interface Visualizer {
 
     class KeybindVisualizer : Visualizer {
         override fun visualize(prop: Property<*>): Drawable {
-//            val bind: KeyBinder.Bind = prop.getAs()
             return Block(
-                size = Vec2(300f, 32f),
-            )
+                Image("assets/oneconfig/ico/keyboard.svg".image(), at = Vec2(7f, 7f)).ignoreLayout(),
+                Text(prop.getAs<KeyBinder.Bind>().keysToString()),
+                size = Vec2(230f, 32f),
+                alignment = Align(main = Align.Main.Center),
+            ).onInit {
+                polyUI.keyBinder?.add(prop.getAs())
+            }.withStates().onClick {
+                val bind = prop.getAs<KeyBinder.Bind>()
+                val image = this[0] as Image
+                val text = this[1] as Text
+                text.text = "oneconfig.recording"
+                image.color = polyUI.colors.state.danger.pressed
+                recalculate()
+                polyUI.keyBinder?.record(bind.durationNanos, callback = {
+                    if (it != null) {
+                        prop.setAs(it)
+                        polyUI.keyBinder?.remove(bind)
+                        polyUI.keyBinder?.add(it)
+                        text.text = it.keysToString()
+                    } else {
+                        shake()
+                        text.text = bind.keysToString()
+                    }
+                    image.color = polyUI.colors.text.primary.normal
+                    recalculate()
+                    needsRedraw = true
+                }, bind.action)
+                false
+            }
         }
     }
 

@@ -29,7 +29,6 @@ package org.polyfrost.oneconfig.api.config.v1.serialize;
 import org.jetbrains.annotations.NotNull;
 import org.polyfrost.oneconfig.api.config.v1.Tree;
 import org.polyfrost.oneconfig.api.config.v1.serialize.adapter.Adapter;
-import org.polyfrost.oneconfig.api.config.v1.util.ObjectSerializer;
 
 /**
  * A serializer is a class that is capable of turning a {@link Tree} into a specific type {@link T}, and vice versa.

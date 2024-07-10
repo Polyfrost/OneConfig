@@ -71,12 +71,12 @@ private val scaleBlob by lazy {
         // if(!polyUI.inputManager.hasFocused) polyUI.focus(this)
 //        }
         on(Event.Focused.Lost) {
-            renders = false
+            clipped = false
             cur = null
         }
     }.setPalette { brand.fg }
     HudManager.polyUI.master.addChild(b, recalculate = false)
-    b.renders = false
+    b.clipped = false
     b
 }
 
@@ -89,9 +89,12 @@ private var cur: Drawable? = null
  *
  * The returned element is draggable, and will be added to the screen when dropped.
  */
-fun Hud<out Drawable>.buildNew(): Block {
+fun Hud<*>.buildNew(): Block {
     var tx = 0f
     var ty = 0f
+    if (!multipleInstancesAllowed() && isReal) {
+        return makeAlreadyUsed()
+    }
     val o = get().addDefaultBackground(backgroundColor()).draggable(
         free = true,
         onStart = {
@@ -110,14 +113,22 @@ fun Hud<out Drawable>.buildNew(): Block {
                 return@draggable
             }
             val hud = this@buildNew.make().build()
+            val canMultiply = this@buildNew.multipleInstancesAllowed()
+            if (!canMultiply) {
+                val p = this.parent
+                p.removeChild(this, recalculate = false)
+                p.addChild(this@buildNew.makeAlreadyUsed())
+            }
 
             polyUI.master.addChild(hud, recalculate = false)
             hud.x = x
             hud.y = y
 
-            x = parent.x + tx
-            y = parent.y + ty
-            polyUI.inputManager.recalculate()
+            if (canMultiply) {
+                x = parent.x + tx
+                y = parent.y + ty
+                polyUI.inputManager.recalculate()
+            }
             if (HudManager.canAutoOpen()) {
                 HudManager.toggle()
             }
@@ -127,11 +138,15 @@ fun Hud<out Drawable>.buildNew(): Block {
     return o
 }
 
+fun Hud<*>.makeAlreadyUsed(): Block {
+    return Block(Text(title(), fontSize = 16f)).withStates().onClick { HudManager.openHudEditor(this@makeAlreadyUsed) }
+}
+
 /**
  * Build a HUD element, turning the given HUD into a final HUD element,
  * ready to be placed on the screen.
  */
-fun Hud<out Drawable>.build(): Block {
+fun Hud<*>.build(): Block {
     val freq = updateFrequency()
     if (freq == 0L) LOGGER.warn("update of HUD $this is 0, this is not recommended!")
     val exe = if (freq < 0L) {
@@ -173,7 +188,7 @@ fun Hud<out Drawable>.build(): Block {
                     HudManager.polyUI.master.removeChild(this@events.self, recalculate = false)
                     HudManager.polyUI.removeExecutor(exe)
                     HudManager.polyUI.unfocus()
-                    if (HudManager.panel[3] !== HudManager.hudsPage) HudManager.panel[3] = HudManager.hudsPage
+//                    if (HudManager.panel[3] !== HudManager.hudsPage) HudManager.panel[3] = HudManager.hudsPage
                 },
                 polyUI = HudManager.polyUI,
                 position = Point.Above,
@@ -194,7 +209,7 @@ private fun Drawable.addDefaultBackground(color: PolyColor?) = Block(
 private fun Block.addScaler(): Block {
     this.on(Event.Mouse.Clicked) {
         val sb = scaleBlob
-        sb.renders = true
+        sb.clipped = true
         sb.x = x + (width * scaleX) - (sb.width / 2f)
         sb.y = y + (height * scaleY) - (sb.height / 2f)
         cur = this
@@ -270,7 +285,7 @@ fun Drawable.snapHandler() {
     polyUI.master.children?.fastEach {
         if (it === this) return@fastEach
         if (it === HudManager.panel) return@fastEach
-        if (!it.renders) return@fastEach
+        if (!it.clipped) return@fastEach
 
         if (!hran) {
             hran = trySnapX(it.x + (it.width / 2f)) ||

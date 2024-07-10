@@ -26,7 +26,7 @@
 
 package org.polyfrost.oneconfig.api.config.v1.serialize.adapter;
 
-import org.polyfrost.oneconfig.api.config.v1.util.ObjectSerializer;
+import org.polyfrost.oneconfig.api.config.v1.serialize.ObjectSerializer;
 
 import java.util.List;
 import java.util.Map;
@@ -72,6 +72,12 @@ public abstract class Adapter<Type, Output> {
      * This is used internally to get what type adapter to use.
      */
     public abstract Class<Type> getTargetClass();
+
+    /**
+     * Due to Java type erasure, this method is used to get the type of the adapter. <br>
+     * This is used internally to get what type adapter to use.
+     */
+    public abstract Class<Output> getOutputClass();
 
     @Override
     public final boolean equals(Object obj) {

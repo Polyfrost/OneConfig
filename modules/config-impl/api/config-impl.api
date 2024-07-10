@@ -10,6 +10,7 @@ public abstract class org/polyfrost/oneconfig/api/config/v1/Config {
 	protected fun addDependency (Ljava/lang/String;Ljava/util/function/BooleanSupplier;)V
 	protected fun getProperty (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
 	public fun getTree ()Lorg/polyfrost/oneconfig/api/config/v1/Tree;
+	protected fun loadFrom (Ljava/lang/String;)V
 	protected fun makeTree (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	public fun preload ()V
 	public fun save ()V
@@ -29,11 +30,11 @@ public final class org/polyfrost/oneconfig/api/config/v1/ConfigManager {
 	public static fun active ()Lorg/polyfrost/oneconfig/api/config/v1/ConfigManager;
 	public static fun collect (Ljava/lang/Object;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	public static fun core ()Lorg/polyfrost/oneconfig/api/config/v1/ConfigManager;
-	public fun delete (Ljava/lang/String;)Z
 	public fun gatherAll (Ljava/lang/String;)Ljava/util/Collection;
 	public fun get (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	public fun getFolder ()Ljava/nio/file/Path;
 	public static fun internal ()Lorg/polyfrost/oneconfig/api/config/v1/ConfigManager;
+	public fun load (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	public static fun openProfile (Ljava/lang/String;)V
 	public fun register (Ljava/lang/Object;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	public fun register (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
@@ -254,6 +255,7 @@ public class org/polyfrost/oneconfig/api/config/v1/backend/impl/FileBackend : or
 	public fun gatherAll ()Ljava/util/Collection;
 	public fun gatherAll (Ljava/lang/String;)Ljava/util/Collection;
 	protected fun getSerializer (Ljava/nio/file/Path;)Lorg/polyfrost/oneconfig/api/config/v1/serialize/impl/FileSerializer;
+	public fun getSerializers ()Ljava/util/Collection;
 	public fun hasWatcher ()Z
 	protected fun load0 (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	protected static fun mkdirs (Ljava/nio/file/Path;)Ljava/nio/file/Path;
@@ -280,6 +282,16 @@ public abstract class org/polyfrost/oneconfig/api/config/v1/collect/impl/Reflect
 	protected abstract fun handleField (Ljava/lang/reflect/Field;Ljava/lang/Object;Lorg/polyfrost/oneconfig/api/config/v1/Tree;)V
 	protected abstract fun handleInnerClass (Ljava/lang/Class;Ljava/lang/Object;ILorg/polyfrost/oneconfig/api/config/v1/Tree;)V
 	protected abstract fun handleMethod (Ljava/lang/reflect/Method;Ljava/lang/Object;Lorg/polyfrost/oneconfig/api/config/v1/Tree;)V
+}
+
+public class org/polyfrost/oneconfig/api/config/v1/serialize/adapter/impl/PolyColorAdapter : org/polyfrost/oneconfig/api/config/v1/serialize/adapter/Adapter {
+	public fun <init> ()V
+	public synthetic fun deserialize (Ljava/lang/Object;)Ljava/lang/Object;
+	public fun deserialize ([I)Lorg/polyfrost/polyui/color/PolyColor;
+	public fun getOutputClass ()Ljava/lang/Class;
+	public fun getTargetClass ()Ljava/lang/Class;
+	public synthetic fun serialize (Ljava/lang/Object;)Ljava/lang/Object;
+	public fun serialize (Lorg/polyfrost/polyui/color/PolyColor;)[I
 }
 
 public abstract interface class org/polyfrost/oneconfig/api/config/v1/serialize/impl/FileSerializer : org/polyfrost/oneconfig/api/config/v1/serialize/Serializer {

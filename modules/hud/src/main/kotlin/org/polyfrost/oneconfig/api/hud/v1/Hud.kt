@@ -35,6 +35,7 @@ import org.polyfrost.oneconfig.api.config.v1.Properties.simple
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.hud.v1.HudManager.LOGGER
 import org.polyfrost.polyui.color.PolyColor
+import org.polyfrost.polyui.component.Component
 import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.component.impl.Block
 import org.polyfrost.polyui.component.impl.Text
@@ -95,15 +96,29 @@ abstract class Hud<T : Drawable> : Cloneable, Config("null", null, "null", null)
      */
     @ApiStatus.Internal
     fun make(with: Tree? = null): Hud<T> {
-        if (tree != null) throw IllegalArgumentException("HUD already exists -> can only clone from root HUD object")
-        val out = clone()
+        if (tree != null) throw IllegalArgumentException("HUD is already made, it cannot be made again")
+        val out = if (multipleInstancesAllowed()) clone() else this
         val id = with?.id ?: genRid()
         val tree = ConfigManager.collect(out, id)
         tree.title = out.title()
         tree.addMetadata("category", out.category())
-        tree.addMetadata("frontendIgnore", true)
+        tree.addMetadata("hidden", true)
         tree["x"] = ktProperty(out.hud::x)
         tree["y"] = ktProperty(out.hud::y)
+//        tree["x"] = functional(getter = {
+//            val self = out.hud
+//            self.x * if (self.initialized) (self.polyUI.iSize.x / self.polyUI.size.x) else 1f
+//        }, setter = {
+//            val self = out.hud
+//            self.x = it * if (self.initialized) (self.polyUI.size.x / self.polyUI.iSize.x) else 1f
+//        }, type = Float::class.java)
+//        tree["y"] = functional(getter = {
+//            val self = out.hud
+//            self.y * if (self.initialized) (self.polyUI.iSize.y / self.polyUI.size.y) else 1f
+//        }, setter = {
+//            val self = out.hud
+//            self.y = it * if (self.initialized) (self.polyUI.size.y / self.polyUI.iSize.y) else 1f
+//        }, type = Float::class.java)
         tree["hidden"] = ktProperty(out::hidden)
         inspect(out.hud, tree)
         out.addToSerialized(tree)
@@ -121,14 +136,15 @@ abstract class Hud<T : Drawable> : Cloneable, Config("null", null, "null", null)
         return out
     }
 
-    private fun inspect(drawable: Drawable, tree: Tree) {
-        tree["color"] = ktProperty(drawable::_color)
-        when(drawable) {
+    private fun inspect(drawable: Component, tree: Tree) {
+        if (drawable is Drawable) tree["color"] = ktProperty(drawable::_color)
+        when (drawable) {
             is Block -> {
                 tree["radii"] = ktProperty(drawable::radii)
                 tree["boarderColor"] = ktProperty(drawable::borderColor)
                 tree["boarderWidth"] = ktProperty(drawable::borderWidth)
             }
+
             is Text -> {
                 tree["font"] = ktProperty(drawable::_font)
                 tree["fontSize"] = ktProperty(drawable::uFontSize)
@@ -179,19 +195,19 @@ abstract class Hud<T : Drawable> : Cloneable, Config("null", null, "null", null)
      * If `true`, the HUD will not be rendered, and, if this is in a HUD group, it will resize accordingly.
      */
     var hidden: Boolean
-        get() = it?.enabled == false
+        get() = it?.isEnabled == false
         set(new) {
             val value = !new
             // useless null-safety checks, but I don't want to risk dumb errors
             val it = it ?: return
             val siblings = it.parent.children ?: return
-            if (value == it.enabled) return
+            if (value == it.isEnabled) return
 
-            it.enabled = value
+            it.isEnabled = value
             if (siblings.size == 1) {
-                it.parent.enabled = value
-            } else if (!value && siblings.fastAll { !it.enabled }) {
-                it.parent.enabled = false
+                it.parent.isEnabled = value
+            } else if (!value && siblings.fastAll { !it.clipped }) {
+                it.parent.isEnabled = false
             }
             it.parent.recalculate()
         }
@@ -263,6 +279,14 @@ abstract class Hud<T : Drawable> : Cloneable, Config("null", null, "null", null)
      * To remove the background, use [PolyColor.TRANSPARENT].
      */
     open fun backgroundColor(): PolyColor? = null
+
+    /**
+     * This function will disable the ability for it to be duplicated.
+     *
+     * Only one instance is ever created, [isReal] will always return `true`, constructors can be used, and [clone] will never be called.
+     */
+    @ApiStatus.Obsolete
+    open fun multipleInstancesAllowed() = true
 
     /**
      * This method will create a new instance of the HUD. It is key to the functionality of the HUD system.

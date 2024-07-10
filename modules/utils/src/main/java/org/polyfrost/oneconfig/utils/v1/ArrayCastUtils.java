@@ -49,8 +49,6 @@ public final class ArrayCastUtils {
             return f2f(array);
         } else if (type == double.class) {
             return d2d(array);
-        } else if (type == boolean.class) {
-            return b2b(array);
         } else {
             throw new IllegalArgumentException("Unsupported type: " + type);
         }
@@ -113,14 +111,6 @@ public final class ArrayCastUtils {
         return ret;
     }
 
-    public static float[] i2f(int[] arr) {
-        float[] ret = new float[arr.length];
-        for (int i = 0; i < arr.length; i++) {
-            ret[i] = arr[i];
-        }
-        return ret;
-    }
-
     public static double[] d2d(Object[] arr) {
         double[] ret = new double[arr.length];
         for (int i = 0; i < arr.length; i++) {
@@ -165,6 +155,38 @@ public final class ArrayCastUtils {
         char[] ret = new char[arr.length];
         for (int i = 0; i < arr.length; i++) {
             ret[i] = (char) arr[i];
+        }
+        return ret;
+    }
+
+    public static long[] i2l(int[] arr) {
+        long[] ret = new long[arr.length];
+        for (int i = 0; i < arr.length; i++) {
+            ret[i] = arr[i];
+        }
+        return ret;
+    }
+
+    public static long[] s2l(short[] arr) {
+        long[] ret = new long[arr.length];
+        for (int i = 0; i < arr.length; i++) {
+            ret[i] = arr[i];
+        }
+        return ret;
+    }
+
+    public static long[] b2l(byte[] arr) {
+        long[] ret = new long[arr.length];
+        for (int i = 0; i < arr.length; i++) {
+            ret[i] = arr[i];
+        }
+        return ret;
+    }
+
+    public static long[] c2l(char[] arr) {
+        long[] ret = new long[arr.length];
+        for (int i = 0; i < arr.length; i++) {
+            ret[i] = arr[i];
         }
         return ret;
     }

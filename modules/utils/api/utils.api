@@ -125,17 +125,20 @@ public abstract interface class org/polyfrost/oneconfig/api/platform/v1/ScreenPl
 public final class org/polyfrost/oneconfig/utils/v1/ArrayCastUtils {
 	public static fun b2b ([Ljava/lang/Object;)[B
 	public static fun b2i ([B)[I
+	public static fun b2l ([B)[J
 	public static fun c2c ([Ljava/lang/Object;)[C
 	public static fun c2i ([C)[I
+	public static fun c2l ([C)[J
 	public static fun d2d ([Ljava/lang/Object;)[D
 	public static fun d2f ([D)[F
 	public static fun f2d ([F)[D
 	public static fun f2f ([Ljava/lang/Object;)[F
-	public static fun i2f ([I)[F
 	public static fun i2i ([Ljava/lang/Object;)[I
+	public static fun i2l ([I)[J
 	public static fun l2i ([J)[I
 	public static fun l2l ([Ljava/lang/Object;)[J
 	public static fun s2i ([S)[I
+	public static fun s2l ([S)[J
 	public static fun s2s ([Ljava/lang/Object;)[S
 	public static fun unboxNumberArray ([Ljava/lang/Object;Ljava/lang/Class;)Ljava/lang/Object;
 }

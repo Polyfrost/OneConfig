@@ -48,4 +48,9 @@ public class ColorAdapter extends Adapter<Color, int[]> {
     public Class<Color> getTargetClass() {
         return Color.class;
     }
+
+    @Override
+    public Class<int[]> getOutputClass() {
+        return int[].class;
+    }
 }

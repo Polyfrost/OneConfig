@@ -24,14 +24,9 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.api.config.v1.util;
+package org.polyfrost.oneconfig.api.config.v1.serialize;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.polyfrost.oneconfig.api.config.v1.exceptions.SerializationException;
-import org.polyfrost.oneconfig.api.config.v1.serialize.adapter.Adapter;
-import org.polyfrost.oneconfig.api.config.v1.serialize.adapter.impl.ColorAdapter;
-import org.polyfrost.oneconfig.utils.v1.MHUtils;
+import static org.polyfrost.oneconfig.utils.v1.WrappingUtils.*;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
@@ -47,7 +42,13 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-import static org.polyfrost.oneconfig.utils.v1.WrappingUtils.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import org.polyfrost.oneconfig.api.config.v1.exceptions.SerializationException;
+import org.polyfrost.oneconfig.api.config.v1.serialize.adapter.Adapter;
+import org.polyfrost.oneconfig.api.config.v1.serialize.adapter.impl.ColorAdapter;
+import org.polyfrost.oneconfig.utils.v1.MHUtils;
 
 
 public class ObjectSerializer {
@@ -109,6 +110,17 @@ public class ObjectSerializer {
 
     public Object serialize(Object in, boolean useLists) {
         return serialize(in, useLists, false);
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T> Adapter<T, ?> getAdapter(Class<T> cls) {
+        Class<?> cl = cls;
+        Adapter<?, ?> ad = adapters.get(cl);
+        while(ad == null && cl.getSuperclass() != null) {
+            cl = cl.getSuperclass();
+            ad = adapters.get(cl);
+        }
+        return (Adapter<T, ?>) ad;
     }
 
     /**
@@ -176,7 +188,7 @@ public class ObjectSerializer {
         }
 
         // check 6: complex object, do we have an adapter available?
-        Adapter<Object, Object> ad = adapters.get(cls);
+        Adapter<Object, Object> ad = (Adapter<Object, Object>) getAdapter(cls);
         if (ad != null) {
             Object out = ad.serialize(in);
             if (out == null) throw new SerializationException("Failed to serialize " + in + ": adapter for it (" + cls.getName() + ") returned null");
@@ -266,6 +278,7 @@ public class ObjectSerializer {
                 // skip self references
                 if (o == value) continue;
                 if (o == null) continue;
+                if (o instanceof Number && ((Number) o).doubleValue() == 0.0) continue;
                 cfg.put(f.getName(), serialize(o, useLists, boxArrays));
             } catch (Throwable e) {
                 throw new SerializationException("Failed to serialize object " + value + ": no detail message (potential field access issue, try making " + f + " public?)", e);
@@ -282,7 +295,7 @@ public class ObjectSerializer {
      * @param in the map
      * @return the completed object
      */
-
+    @SuppressWarnings("unchecked")
     public Object deserialize(Map<String, Object> in) {
         if (in == null) return null;
         String clsName = (String) in.get("class");
@@ -297,13 +310,13 @@ public class ObjectSerializer {
         } catch (Exception e) {
             throw new SerializationException("Failed to deserialize object: Class " + clsName + " not found, potential classloading issue?", e);
         }
-        Adapter<Object, Object> ad = adapters.get(cls);
+        Adapter<Object, Object> ad = (Adapter<Object, Object>) getAdapter(cls);
         if (ad != null) {
             Object value = in.get("value");
             if (value == null) {
                 value = in;
             }
-            Object out = ad.deserialize(value);
+            Object out = ad.deserialize(richCast(value, ad.getOutputClass()));
             if (out == null) throw new SerializationException("Failed to deserialize " + value + ": adapter for it (" + cls + ") returned null");
             return out;
         }

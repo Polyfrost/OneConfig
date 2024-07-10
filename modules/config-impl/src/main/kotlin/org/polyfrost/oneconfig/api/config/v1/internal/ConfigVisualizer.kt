@@ -36,7 +36,7 @@ import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.component.*
 import org.polyfrost.polyui.component.impl.*
 import org.polyfrost.polyui.event.Event
-import org.polyfrost.polyui.operations.DrawableOp
+import org.polyfrost.polyui.operations.ComponentOp
 import org.polyfrost.polyui.operations.Resize
 import org.polyfrost.polyui.operations.Rotate
 import org.polyfrost.polyui.renderer.data.PolyImage
@@ -172,7 +172,7 @@ open class ConfigVisualizer {
         return Group(
             children = categories.mapToArray { (category, options) ->
                 Button(text = category).onClick {
-                    parent[0] = options
+                    parent.parent[1] = options
                 }
             },
         )
@@ -203,17 +203,17 @@ open class ConfigVisualizer {
                     val anim = Animations.Default.create(0.4.seconds)
                     val operation = Resize(parent, width = 0f, height = if (open) -value else value, add = true, anim)
                     addOperation(
-                        object : DrawableOp.Animatable<Drawable>(parent, anim, onFinish = {
-                            this[1].renders = !open
-                            this[1].enabled = !open
+                        object : ComponentOp.Animatable<Component>(parent, anim, onFinish = {
+                            this[1].clipped = !open
+                            this[1].isEnabled = !open
                         }) {
                             override fun apply(value: Float) {
                                 operation.apply()
                                 // asm: instruct parent (options list) to replace all its children so that they move with it closing
-                                self.parent.repositionChildren()
+                                self.parent.position()
                                 // asm: instruct all children of this accordion to update their visibility based on THIS, NOT its parent
                                 self[1].children!!.fastEach {
-                                    it.renders = it.intersects(self.x, self.y, self.width, self.height)
+                                    it.clipped = it.intersects(self.x, self.y, self.width, self.height)
                                 }
                             }
                         },

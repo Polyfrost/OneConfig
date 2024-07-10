@@ -27,7 +27,7 @@
 package org.polyfrost.oneconfig.api.config.v1;
 
 import org.junit.jupiter.api.Test;
-import org.polyfrost.oneconfig.api.config.v1.util.ObjectSerializer;
+import org.polyfrost.oneconfig.api.config.v1.serialize.ObjectSerializer;
 
 import java.awt.*;
 import java.util.Arrays;

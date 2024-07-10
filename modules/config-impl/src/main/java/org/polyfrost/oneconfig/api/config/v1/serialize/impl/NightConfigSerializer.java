@@ -43,7 +43,7 @@ import org.polyfrost.oneconfig.api.config.v1.Node;
 import org.polyfrost.oneconfig.api.config.v1.Properties;
 import org.polyfrost.oneconfig.api.config.v1.Property;
 import org.polyfrost.oneconfig.api.config.v1.Tree;
-import org.polyfrost.oneconfig.api.config.v1.util.ObjectSerializer;
+import org.polyfrost.oneconfig.api.config.v1.serialize.ObjectSerializer;
 import org.polyfrost.oneconfig.utils.v1.WrappingUtils;
 import org.yaml.snakeyaml.DumperOptions;
 
@@ -52,9 +52,9 @@ import java.util.Map;
 
 import static org.polyfrost.oneconfig.api.config.v1.Tree.tree;
 
-public class NightConfigSerializer implements FileSerializer<String> {
-    public static final FileSerializer<String> TOML = new NightConfigSerializer(new TomlWriter(), new TomlParser(), ".toml");       // 90 KB
-    public static final FileSerializer<String> JSON = new NightConfigSerializer(JsonFormat.fancyInstance().createWriter(), JsonFormat.fancyInstance().createParser(), ".json");  // 55KB
+public class NightConfigSerializer implements org.polyfrost.oneconfig.api.config.v1.serialize.impl.FileSerializer<String> {
+    public static final org.polyfrost.oneconfig.api.config.v1.serialize.impl.FileSerializer<String> TOML = new NightConfigSerializer(new TomlWriter(), new TomlParser(), ".toml");       // 90 KB
+    public static final org.polyfrost.oneconfig.api.config.v1.serialize.impl.FileSerializer<String> JSON = new NightConfigSerializer(JsonFormat.fancyInstance().createWriter(), JsonFormat.fancyInstance().createParser(), ".json");  // 55KB
     // public static final FileSerializer HOCON = new NightConfigSerializer(new HoconWriter(), new HoconParser(), ".hocon");        // 1.1MB
     private static final DumperOptions YAML_DUMPER_OPTIONS = new DumperOptions();
 
@@ -85,6 +85,7 @@ public class NightConfigSerializer implements FileSerializer<String> {
                 if (p.type == Void.class) continue;
                 Object o = p.get();
                 if (o == null) continue;
+                if (o instanceof Number && ((Number) o).doubleValue() == 0.0) continue;
                 if (!WrappingUtils.isSimpleObject(o) && ObjectSerializer.isSerializable(o)) {
                     Object out = ObjectSerializer.INSTANCE.serialize(o, true);
                     if (out instanceof Map) cfg.add(n.getID(), mapsToConfigs((Map<String, Object>) out));

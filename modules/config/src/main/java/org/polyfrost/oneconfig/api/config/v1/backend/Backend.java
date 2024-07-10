@@ -82,7 +82,7 @@ public abstract class Backend {
     protected abstract Tree load0(@NotNull String id) throws Exception;
 
     /**
-     * Load a tree with data stored in this backend.
+     * Load the tree with data stored in this backend.
      */
     public final boolean load(Tree tree) {
         if (tree.getID() == null) throw new IllegalArgumentException("tree must be master (have a valid ID)");
@@ -100,8 +100,28 @@ public abstract class Backend {
         return true;
     }
 
+    /**
+     * Load a tree with the given ID.
+     *
+     * @return the tree, or null if the tree could not be loaded or does not exist.
+     */
+    public final @Nullable Tree load(@NotNull String id) {
+        try {
+            return load0(id);
+        } catch (Exception e) {
+            LOGGER.error("error loading tree with ID {}!", id, e);
+            return null;
+        }
+    }
+
     protected abstract boolean save0(@NotNull Tree tree) throws Exception;
 
+    /**
+     * Save a tree with the given ID.
+     *
+     * @return true if the tree was saved successfully, false otherwise.
+     * @throws IllegalArgumentException if no tree with the given ID is registered.
+     */
     public final boolean save(String id) {
         if (id == null) throw new NullPointerException("id cannot be null");
         Tree tree = trees.get(id);
@@ -132,10 +152,19 @@ public abstract class Backend {
         }
     }
 
+    /**
+     * Save all trees registered to this backend.
+     */
     public final void saveAll() {
         saveAll(null);
     }
 
+    /**
+     * Save the provided tree to the backend. If it is not registered when this is called, it will be registered.
+     *
+     * @return true if the tree was saved successfully, false otherwise.
+     * @throws IllegalStateException if the tree has become synchronized with the backend.
+     */
     public final boolean save(Tree tree) {
         if (tree.getID() == null) throw new IllegalArgumentException("tree must be master (have a valid ID)");
         putSafe(tree);

@@ -109,13 +109,6 @@ object MHUtils {
         MethodHandles.lookup()
     }
 
-    /**
-     * # gav
-     */
-    private val gav: MethodHandle by lazy {
-        trustedLookup.unreflectGetter(Proxy.getInvocationHandler(Deprecated::class.java.getAnnotation(Target::class.java)).javaClass.getDeclaredField("memberValues"))
-    }
-
 
     // --- get --- //
     /**
@@ -335,7 +328,7 @@ object MHUtils {
             mh,
             type
         ).target
-        Result.success((if (isStatic) target.invoke() else target.invoke(it)) as T)
+        Result.success((if (isStatic) target.invoke() as T else target.invoke(it) as T))
     } catch (e: Throwable) {
         Result.failure(ReflectiveOperationException("Failed to get wrapped method handle for $methodName from $it", e))
     }
@@ -532,7 +525,11 @@ object MHUtils {
         }
     }
 
-// --- annotation --- //
+
+    private val gav: MethodHandle by lazy {
+        trustedLookup.unreflectGetter(Proxy.getInvocationHandler(Deprecated::class.java.getAnnotation(Target::class.java)).javaClass.getDeclaredField("memberValues"))
+    }
+
     /**
      * Return a map of all values attached to this annotation.
      *

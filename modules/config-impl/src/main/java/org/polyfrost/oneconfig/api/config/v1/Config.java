@@ -116,12 +116,23 @@ public abstract class Config {
         return tree;
     }
 
+    protected void loadFrom(String id) {
+        if (tree == null) throw notInitialized();
+        Tree in = ConfigManager.active().get(id);
+        if (in == null) return;
+        tree.overwrite(in);
+    }
+
 
     protected Property<?> getProperty(String option) {
-        if (tree == null) throw new IllegalStateException("not initialized. this should never happen in correct usage. please report to https://polyfrost.org/discord");
+        if (tree == null) throw notInitialized();
         Property<?> p = option.indexOf('.') >= 0 ? tree.getProp(option.split("\\.")) : tree.getProp(option);
         if (p == null) throw new IllegalArgumentException("Config does not contain property: " + option);
         return p;
+    }
+
+    private static IllegalStateException notInitialized() {
+        return new IllegalStateException("not initialized. this should never happen in correct usage. please report to https://polyfrost.org/discord");
     }
 
     public void save() {
@@ -131,6 +142,9 @@ public abstract class Config {
     /**
      * If you intend for your Config to be its own self-contained class, you may need to call this method in your mod constructor to ensure that
      * this class is initialized by Java.
+     * <br>
+     * If you don't call this method, your config might not appear in the UI. It will still function correctly, and after some code that loads it is called, it will appear.
+     *
      * @apiNote this method does literally nothing.
      */
     public void preload() {

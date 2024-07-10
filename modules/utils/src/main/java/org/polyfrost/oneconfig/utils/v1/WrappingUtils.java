@@ -144,21 +144,22 @@ public class WrappingUtils {
                 }
                 if (tType == int.class) {
                     // long, short, byte, char -> int
-                    if (cType == long.class) return (T) l2i((long[]) in);
+                    if (cType == long.class) return (T) l2i((long[]) in); // LOSSY //
                     if (cType == short.class) return (T) s2i((short[]) in);
                     if (cType == byte.class) return (T) b2i((byte[]) in);
                     if (cType == char.class) return (T) c2i((char[]) in);
-                } else if (tType == long.class) {
-                    // int, short -> long
-                    if (cType == int.class) return (T) l2i((long[]) in);
-                    if (cType == short.class) return (T) s2i((short[]) in);
                 } else if (tType == double.class) {
                     // float -> double
                     if (cType == float.class) return (T) f2d((float[]) in);
                 } else if (tType == float.class) {
-                    // double, int -> float
-                    if (cType == double.class) return (T) d2f((double[]) in);
-                    if (cType == int.class) return (T) i2f((int[]) in);
+                    // double -> float
+                    if (cType == double.class) return (T) d2f((double[]) in); // LOSSY //
+                } else if (tType == long.class) {
+                    // int, short, byte, char -> long
+                    if (cType == int.class) return (T) i2l((int[]) in);
+                    if (cType == short.class) return (T) s2l((short[]) in);
+                    if (cType == byte.class) return (T) b2l((byte[]) in);
+                    if (cType == char.class) return (T) c2l((char[]) in);
                 }
                 throw new ClassCastException("inconvertible array types: " + cType.getSimpleName() + " -> " + tType.getSimpleName());
             }

@@ -28,13 +28,12 @@ package org.polyfrost.oneconfig.api.config.v1.backend.impl;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.UnmodifiableView;
 import org.polyfrost.oneconfig.api.config.v1.Tree;
 import org.polyfrost.oneconfig.api.config.v1.backend.Backend;
 import org.polyfrost.oneconfig.api.config.v1.exceptions.SerializationException;
 import org.polyfrost.oneconfig.api.config.v1.serialize.impl.FileSerializer;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -66,23 +65,17 @@ public class FileBackend extends Backend {
     }
 
     protected static String read(Path p) {
-        try (BufferedReader r = Files.newBufferedReader(p.toAbsolutePath(), CHARSET)) {
-            StringBuilder buf = new StringBuilder((int) Files.size(p));
-            for (; ; ) {
-                String l = r.readLine();
-                if (l == null) break;
-                buf.append(l).append('\n');
-            }
-            return buf.toString();
+        try {
+            return new String(Files.readAllBytes(p), CHARSET);
         } catch (Exception e) {
             throw new SerializationException("Failed to read file", e);
         }
     }
 
     protected static void write(Path p, String s) {
-        mkdirs(p.getParent());
-        try (BufferedWriter w = Files.newBufferedWriter(p, CHARSET)) {
-            w.write(s);
+        try {
+            Files.createDirectories(p.getParent());
+            Files.write(p, s.getBytes(CHARSET));
         } catch (Exception e) {
             throw new SerializationException("Failed to write file", e);
         }
@@ -235,6 +228,11 @@ public class FileBackend extends Backend {
         }
         out.trimToSize();
         return out;
+    }
+
+    @UnmodifiableView
+    public Collection<FileSerializer<String>> getSerializers() {
+        return serializers.values();
     }
 
     public void addSerializer(FileSerializer<String> serializer) {

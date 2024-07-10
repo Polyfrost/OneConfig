@@ -48,7 +48,7 @@ import org.polyfrost.polyui.component.*
 import org.polyfrost.polyui.component.impl.*
 import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.input.Translator
-import org.polyfrost.polyui.operations.DrawableOp
+import org.polyfrost.polyui.operations.ComponentOp
 import org.polyfrost.polyui.operations.Fade
 import org.polyfrost.polyui.operations.Move
 import org.polyfrost.polyui.property.Settings
@@ -142,7 +142,7 @@ object HudManager {
         alignment = Align(cross = Align.Cross.Start, pad = Vec2(0f, 18f)),
     ).also {
         it.rawResize = true
-        object : DrawableOp(it) {
+        object : ComponentOp<Drawable>(it) {
             override fun apply() {
                 if (self.polyUI.mouseDown) {
                     if (slinex != -1f) self.renderer.line(slinex, 0f, slinex, self.polyUI.size.y, snapLineColor, 1f)
@@ -190,7 +190,7 @@ object HudManager {
             return@onClick false
         }
         it.resize(Platform.screen().windowWidth().toFloat(), Platform.screen().windowHeight().toFloat())
-        panel.renders = false
+        panel.clipped = false
     }
 
     init {
@@ -288,10 +288,10 @@ object HudManager {
             toggle()
         }
         pg.prioritize()
-        pg.renders = true
+        pg.clipped = true
         if (panelExists) {
             Fade(pg, 0f, false, Animations.Default.create(0.2.seconds)) {
-                renders = false
+                clipped = false
             }.add()
             // remove scale blob
             polyUI.inputManager.focus(null)

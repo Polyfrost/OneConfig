@@ -129,6 +129,7 @@ public abstract class org/polyfrost/oneconfig/api/config/v1/backend/Backend {
 	public fun exists (Ljava/lang/String;)Z
 	public final fun get (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	public final fun getTrees ()Ljava/util/Collection;
+	public final fun load (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	public final fun load (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)Z
 	protected abstract fun load0 (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	protected fun putSafe (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)V
@@ -150,6 +151,20 @@ public class org/polyfrost/oneconfig/api/config/v1/exceptions/SerializationExcep
 	public fun <init> (Ljava/lang/String;Ljava/lang/Throwable;)V
 }
 
+public class org/polyfrost/oneconfig/api/config/v1/serialize/ObjectSerializer {
+	public static final field FIELD_SKIP_MODIFIERS I
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/config/v1/serialize/ObjectSerializer;
+	public fun deserialize (Ljava/util/Map;)Ljava/lang/Object;
+	public static fun fieldStream (Ljava/lang/Object;)Ljava/util/stream/Stream;
+	public fun getAdapter (Ljava/lang/Class;)Lorg/polyfrost/oneconfig/api/config/v1/serialize/adapter/Adapter;
+	public static fun isSerializable (Ljava/lang/Object;)Z
+	public fun registerTypeAdapter (Lorg/polyfrost/oneconfig/api/config/v1/serialize/adapter/Adapter;)V
+	public fun registerTypeAdapter ([Lorg/polyfrost/oneconfig/api/config/v1/serialize/adapter/Adapter;)V
+	public fun serialize (Ljava/lang/Object;)Ljava/lang/Object;
+	public fun serialize (Ljava/lang/Object;Z)Ljava/lang/Object;
+	public fun serialize (Ljava/lang/Object;ZZ)Ljava/lang/Object;
+}
+
 public abstract interface class org/polyfrost/oneconfig/api/config/v1/serialize/Serializer {
 	public abstract fun deserialize (Ljava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	public abstract fun serialize (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)Ljava/lang/Object;
@@ -159,6 +174,7 @@ public abstract class org/polyfrost/oneconfig/api/config/v1/serialize/adapter/Ad
 	public fun <init> ()V
 	public abstract fun deserialize (Ljava/lang/Object;)Ljava/lang/Object;
 	public final fun equals (Ljava/lang/Object;)Z
+	public abstract fun getOutputClass ()Ljava/lang/Class;
 	public abstract fun getTargetClass ()Ljava/lang/Class;
 	public final fun hashCode ()I
 	public abstract fun serialize (Ljava/lang/Object;)Ljava/lang/Object;
@@ -168,21 +184,9 @@ public class org/polyfrost/oneconfig/api/config/v1/serialize/adapter/impl/ColorA
 	public fun <init> ()V
 	public synthetic fun deserialize (Ljava/lang/Object;)Ljava/lang/Object;
 	public fun deserialize ([I)Ljava/awt/Color;
+	public fun getOutputClass ()Ljava/lang/Class;
 	public fun getTargetClass ()Ljava/lang/Class;
 	public fun serialize (Ljava/awt/Color;)[I
 	public synthetic fun serialize (Ljava/lang/Object;)Ljava/lang/Object;
-}
-
-public class org/polyfrost/oneconfig/api/config/v1/util/ObjectSerializer {
-	public static final field FIELD_SKIP_MODIFIERS I
-	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/config/v1/util/ObjectSerializer;
-	public fun deserialize (Ljava/util/Map;)Ljava/lang/Object;
-	public static fun fieldStream (Ljava/lang/Object;)Ljava/util/stream/Stream;
-	public static fun isSerializable (Ljava/lang/Object;)Z
-	public fun registerTypeAdapter (Lorg/polyfrost/oneconfig/api/config/v1/serialize/adapter/Adapter;)V
-	public fun registerTypeAdapter ([Lorg/polyfrost/oneconfig/api/config/v1/serialize/adapter/Adapter;)V
-	public fun serialize (Ljava/lang/Object;)Ljava/lang/Object;
-	public fun serialize (Ljava/lang/Object;Z)Ljava/lang/Object;
-	public fun serialize (Ljava/lang/Object;ZZ)Ljava/lang/Object;
 }
 
