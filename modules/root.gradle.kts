@@ -7,6 +7,7 @@ import org.gradle.configurationcache.extensions.capitalized
 
 plugins {
     id(libs.plugins.kotlinx.api.validator.get().pluginId)
+    alias(libs.plugins.jetbrains.idea.ext)
 }
 
 val rootModuleProject = project

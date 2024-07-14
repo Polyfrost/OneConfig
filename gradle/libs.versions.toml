@@ -4,7 +4,7 @@ kotlinx-coroutines = "1.8.1"
 kotlinx-atomicfu = "0.24.0"
 kotlinx-abi = "0.14.0"
 
-pgt = "0.6.3"
+pgt = "0.6.5-temp1"
 shadow = "8.1.1"
 licenser = "2.0.1"
 
@@ -18,9 +18,11 @@ nightconfig = "3.6.6"
 lwjgl = "3.3.3"
 universalcraft = "296"
 mixin = "0.7.11-SNAPSHOT"
-hypixel-modapi = "0.5.0"
+hypixel-modapi = "1.0"
 
 junit-bom = "5.10.2"
+
+jetbrains-idea-ext = "1.1.8"
 
 [libraries]
 junit = { module = "org.junit.jupiter:junit-jupiter" }
@@ -73,3 +75,5 @@ pgt-defaults-java = { id = "org.polyfrost.defaults.java", version.ref = "pgt" }
 
 shadow = { id = "com.github.johnrengelman.shadow", version.ref = "shadow" }
 licenser = { id = "org.quiltmc.gradle.licenser", version.ref = "licenser" }
+
+jetbrains-idea-ext = { id = "org.jetbrains.gradle.plugin.idea-ext", version.ref = "jetbrains-idea-ext" }

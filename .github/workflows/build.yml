@@ -65,6 +65,9 @@ jobs:
           validate-wrappers: true
           cache-read-only: ${{ github.ref != 'refs/heads/master' && github.ref != 'refs/heads/v1' }}
 
+      - name: Sync project and build legacy jar
+        run: ./gradlew :modules:dependencies:legacy build
+
       - name: Build
         run: ./gradlew build
 
