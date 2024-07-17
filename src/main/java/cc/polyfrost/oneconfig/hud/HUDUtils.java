@@ -87,6 +87,8 @@ public class HUDUtils {
                 options.add(new ConfigCheckbox(fields.get("background"), hud, "Background", "If the background of the HUD is enabled.", category, subcategory, 1));
                 options.add(new ConfigCheckbox(fields.get("rounded"), hud, "Rounded corners", "If the background has rounded corners.", category, subcategory, 1));
                 options.get(options.size() - 1).addDependency("Background or Border", () -> ((BasicHud) hud).background || ((BasicHud) hud).border);
+                options.add(new ConfigCheckbox(fields.get("blurBackground"), hud, "Blurred", "If the background is blurred.", category, subcategory, 1));
+                options.get(options.size() - 1).addDependency("Background", () -> ((BasicHud) hud).background);
                 options.add(new ConfigCheckbox(fields.get("border"), hud, "Outline/border", "If the hud has an outline.", category, subcategory, 1));
                 options.add(new ConfigColorElement(fields.get("bgColor"), hud, "Background color:", "The color of the background.", category, subcategory, 1, true));
                 options.get(options.size() - 1).addDependency("Background", () -> ((BasicHud) hud).background);
@@ -94,6 +96,8 @@ public class HUDUtils {
                 options.get(options.size() - 1).addDependency("Border", () -> ((BasicHud) hud).border);
                 options.add(new ConfigSlider(fields.get("cornerRadius"), hud, "Corner radius:", "The corner radius of the background.", category, subcategory, 0, 10, 0, false));
                 options.get(options.size() - 1).addDependency("Rounded", () -> ((BasicHud) hud).rounded);
+                options.add(new ConfigSlider(fields.get("blurAmount"), hud, "Blur amount:", "The amount of background blur.", category, subcategory, 0.1f, 20f, 0, false));
+                options.get(options.size() - 1).addDependency("Blurred", () -> ((BasicHud) hud).blurBackground);
                 options.add(new ConfigSlider(fields.get("borderSize"), hud, "Border thickness:", "The thickness of the outline.", category, subcategory, 0, 10, 0, false));
                 options.get(options.size() - 1).addDependency("Border", () -> ((BasicHud) hud).border);
                 Field paddingX = fields.get("paddingX");
