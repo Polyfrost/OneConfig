@@ -43,19 +43,11 @@ abstract class ShaderProgram(
         glValidateProgram(program)
     }
 
-    protected val genesis = System.currentTimeMillis()
-    protected val resolution = Uniform2f("u_resolution")
-    protected val time = Uniform1f("u_time")
     open fun begin() {
         active = true
         glUseProgram(program)
     }
-    open fun applyUniforms(width: Float, height: Float) {
-        resolution.x = width
-        resolution.y = height
-
-        time.x = (System.currentTimeMillis() - genesis) / 1000f
-
+    open fun applyUniforms() {
         uniforms.forEach { it.apply() }
     }
     open fun end() {

@@ -102,14 +102,14 @@ class BlurProgram: ShaderProgram() {
         rectRadius.w = bottomLeftRadius * scale
 
         pass.x = 1f
-        applyUniforms(Display.getWidth().toFloat(), Display.getHeight().toFloat())
+        applyUniforms()
 
         blurBuffer.bindFramebuffer(true)
         mc.framebuffer.bindFramebufferTexture()
         renderFrameBufferTexture(blurBuffer)
 
         pass.x = 2f
-        applyUniforms(Display.getWidth().toFloat(), Display.getHeight().toFloat())
+        applyUniforms()
 
         mc.framebuffer.bindFramebuffer(true)
         blurBuffer.bindFramebufferTexture()
