@@ -47,7 +47,9 @@ dependencies {
         isTransitive = false
     }
 
-    modApi("org.polyfrost:universalcraft-$platform:${libs.versions.universalcraft.get()}")
+    modApi("org.polyfrost:universalcraft-$platform:${libs.versions.universalcraft.get()}") {
+        isTransitive = false
+    }
 
     if (platform.isLegacyForge || platform.isLegacyFabric) {
         val configuration = configurations.create("tempLwjglConfigurationLegacy")
@@ -207,14 +209,6 @@ tasks {
             }
             attributes(attributesMap)
         }
-    }
-
-    afterEvaluate {
-        // No need for an ABI check on version-specific code,
-        // nobody should depend on a specific version anyway.
-        // This also fixes CI getting stuck while trying to verify non-existent .api files
-        val apiCheck by getting { enabled = false }
-        val apiDump by getting { enabled = false }
     }
 }
 

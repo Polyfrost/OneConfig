@@ -4,7 +4,7 @@ kotlinx-coroutines = "1.8.1"
 kotlinx-atomicfu = "0.24.0"
 kotlinx-abi = "0.14.0"
 
-pgt = "0.6.5"
+pgt = "0.6.6"
 shadow = "8.1.1"
 licenser = "2.0.1"
 
@@ -16,7 +16,7 @@ annotations = "24.1.0"
 nightconfig = "3.6.6"
 
 lwjgl = "3.3.3"
-universalcraft = "296"
+universalcraft = "299"
 mixin = "0.7.11-SNAPSHOT"
 hypixel-modapi = "1.0"
 
