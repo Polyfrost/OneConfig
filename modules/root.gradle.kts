@@ -4,6 +4,7 @@
 
 plugins {
     id(libs.plugins.kotlinx.api.validator.get().pluginId)
+    alias(libs.plugins.jetbrains.idea.ext)
 }
 
 val rootModuleProject = project

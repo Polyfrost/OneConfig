@@ -63,6 +63,9 @@ jobs:
         run: echo '::set-output name=VERSION_NUMBER::$(( ${{ secrets.BUILD_OFFSET }} + ${{ github.run_number }}))'
         id: version
 
+      - name: Sync project and build legacy jar
+        run: ./gradlew :modules:dependencies:legacy build
+
       - name: Publish
         run: ./gradlew publishAllPublicationsToReleasesRepository -Pmod_minor_version=${{ steps.version.outputs.VERSION_NUMBER }} -PreleasesUsername=${{ secrets.MAVEN_NAME }} -PreleasesPassword=${{ secrets.MAVEN_TOKEN }} -DBUILDING_CI=true
 

@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlin) apply false
     alias(libs.plugins.pgt.defaults.repo) apply false
     alias(libs.plugins.licenser) apply false
+    alias(libs.plugins.jetbrains.idea.ext)
 }
 
 val major = project.properties["version_major"]
