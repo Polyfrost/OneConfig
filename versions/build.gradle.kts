@@ -135,14 +135,10 @@ tasks {
                             logger.info("Copied lwjgl-legacy.jar to $legacyLwjgl")
                         }
                     } else {
-                        repeat(6) {
-                            logger.error("LWJGL LEGACY JAR WAS NOT FOUND, BUILD WILL **NOT** WORK IN PRODUCTION!!!")
-                        }
+                        throw IllegalStateException("LWJGL LEGACY JAR WAS NOT FOUND, BUILD WILL **NOT** WORK!!! Please build the :dependencies:legacy project first.")
                     }
                 } else {
-                    repeat(6) {
-                        logger.error("LWJGL LEGACY JAR WAS NOT FOUND, BUILD WILL **NOT** WORK IN PRODUCTION!!!")
-                    }
+                    throw IllegalStateException("LWJGL LEGACY JAR WAS NOT FOUND, BUILD WILL **NOT** WORK!!! Please build the :dependencies:legacy project first.")
                 }
             }
         }

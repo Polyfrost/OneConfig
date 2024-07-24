@@ -85,7 +85,8 @@ object Notifications {
         pop()
     }
 
-    fun enqueue(type: Type, title: String = type.title, description: String, durationNanos: Long) = enqueueCustom(
+    @JvmOverloads
+    fun enqueue(type: Type, title: String = type.title, description: String, durationNanos: Long = 5.seconds) = enqueueCustom(
         Block(
             Image("polyui/chevron-down.svg".image(Vec2(32f, 32f))),
             Text(title, fontSize = 14f).setFont { medium },
