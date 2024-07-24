@@ -30,10 +30,16 @@ import java.lang.annotation.*;
 
 /**
  * Annotation used to specify previous names that this option was called before, so that when the user updates their mod, their config will be kept intact.
+ * Format: {"oldCategory.oldSubcategory.oldName1", "oldCategory.oldName2", ...}
+ * Just putting the old name will **NOT** work, you must specify the old category and subcategory (if applicable) as well.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 @Documented
 public @interface PreviousNames {
+    /**
+     * Format: {"oldCategory.oldSubcategory.oldName1", "oldCategory.oldName2", ...}
+     * Just putting the old name will **NOT** work, you must specify the old category and subcategory (if applicable) as well.
+     */
     String[] value();
 }
