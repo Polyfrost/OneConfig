@@ -1,7 +1,4 @@
-@file:Suppress("UnstableApiUsage")
-
-import org.gradle.configurationcache.extensions.capitalized
-
+@file:Suppress("UnstableApiUsage", "DEPRECATION")
 
 // Shared build logic between all OneConfig modules to reduce boilerplate.
 
@@ -81,7 +78,7 @@ subprojects {
 
     rootModuleProject.publishing {
         publications {
-            register<MavenPublication>("module" + project.name.capitalized()) {
+            register<MavenPublication>("module" + project.name.capitalize()) {
                 from(components["java"])
 
                 groupId = project.group.toString()

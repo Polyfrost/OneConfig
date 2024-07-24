@@ -89,12 +89,6 @@ class KeybindHelper {
     }
 
     @OverloadResolutionByLambdaReturnType
-    fun does(func: () -> Boolean): KeybindHelper {
-        this.func = func
-        return this
-    }
-
-    @OverloadResolutionByLambdaReturnType
     fun does(func: Runnable): KeybindHelper {
         this.func = { func.run(); true }
         return this

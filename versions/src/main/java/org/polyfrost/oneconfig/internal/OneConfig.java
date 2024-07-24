@@ -96,7 +96,7 @@ public class OneConfig
         b.then(runs("hud").does(() -> Platform.screen().display(HudManager.INSTANCE.getWithEditor())).description("Opens the OneConfig HUD editor"));
         CommandManager.registerCommand(b.build());
         KeybindHelper.builder().mods(KeyModifiers.RSHIFT).does(OneConfigUI.INSTANCE::open).register();
-        EventManager.INSTANCE.post(InitializationEvent.INSTANCE);
+        EventManager.register(InitializationEvent.class, e -> HudManager.INSTANCE.initialize());
         LOGGER.info("OneConfig initialized!");
     }
 

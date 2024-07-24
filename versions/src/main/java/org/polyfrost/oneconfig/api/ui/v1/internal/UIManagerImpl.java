@@ -78,6 +78,7 @@ public class UIManagerImpl
     private static final String LWJGL_FUNCTION_PROVIDER_ASM = LWJGL_FUNCTION_PROVIDER.replace('.', '/');
     private static final String JAR_NAME = "lwjgl-legacy.jar";
     private static final Path TEMP_DIR = Paths.get("oneconfig", "lwjgl").toAbsolutePath();
+    private PolyUI ui;
 
     static {
         registerAsParallelCapable();
@@ -376,5 +377,10 @@ public class UIManagerImpl
     @Override
     public Window createWindow() {
         return new MCWindow(Minecraft.getMinecraft());
+    }
+
+    @Override
+    public @NotNull PolyUI getDefaultInstance() {
+        return ui == null ? ui = createDefault() : ui;
     }
 }

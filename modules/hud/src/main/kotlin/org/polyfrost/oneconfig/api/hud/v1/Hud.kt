@@ -285,7 +285,6 @@ abstract class Hud<T : Drawable> : Cloneable, Config("null", null, "null", null)
      *
      * Only one instance is ever created, [isReal] will always return `true`, constructors can be used, and [clone] will never be called.
      */
-    @ApiStatus.Obsolete
     open fun multipleInstancesAllowed() = true
 
     /**

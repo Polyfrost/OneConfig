@@ -33,8 +33,8 @@ import org.polyfrost.oneconfig.api.event.v1.invoke.EventCollector;
 import org.polyfrost.oneconfig.api.event.v1.invoke.EventHandler;
 import org.polyfrost.oneconfig.api.event.v1.invoke.impl.AnnotationEventMapper;
 
-import java.lang.reflect.Method;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
 /**
@@ -48,7 +48,7 @@ public final class EventManager {
     private static final Logger LOGGER = LogManager.getLogger("OneConfig/Events");
     private final Deque<EventCollector> collectors = new ArrayDeque<>(2);
     private final Map<Object, List<EventHandler<?>>> cache = new WeakHashMap<>(5);
-    private final Map<Class<?>, Set<EventHandler<?>>> handlers = new HashMap<>();
+    private final Map<Class<? extends Event>, List<EventHandler<?>>> handlers = new HashMap<>(8);
 
 
     private EventManager() {
@@ -76,15 +76,6 @@ public final class EventManager {
     }
 
     /**
-     * Convenience method for registering an event handler. Equal to
-     * {@link EventManager#INSTANCE}{@code .register(}{@link EventHandler#of(Method, Object)}{@code )}
-     */
-    @SuppressWarnings("unchecked")
-    public static <E extends Event> EventHandler<E> register(Method m, Object owner) {
-        return (EventHandler<E>) EventHandler.of(m, owner).register();
-    }
-
-    /**
      * Registers an object to the event manager. If you wish to be able to remove/unregister you events, make sure you set removable to true.
      *
      * @param object The object to register.
@@ -101,7 +92,7 @@ public final class EventManager {
     public void register(Object object, boolean removable) {
         for (EventCollector m : collectors) {
             List<EventHandler<?>> h = m.collect(object);
-            if (h == null) continue;
+            if (h == null || h.isEmpty()) continue;
             if (removable) cache.put(object, h);
             for (EventHandler<?> handler : h) {
                 register(handler);
@@ -120,15 +111,19 @@ public final class EventManager {
      * Register an event handler.
      *
      * @param handler The handler to register.
-     * @return true if the handler was registered successfully; false if it was already registered.
      */
-    public boolean register(EventHandler<?> handler) {
-        Set<EventHandler<?>> set = handlers.computeIfAbsent(handler.getEventClass(), k -> new HashSet<>());
-        if (!set.add(handler)) {
-            LOGGER.warn("Attempted to register a handler twice!");
-            return false;
+    public void register(EventHandler<?> handler) {
+        List<EventHandler<?>> handles = handlers.computeIfAbsent(handler.getEventClass(), k -> new CopyOnWriteArrayList<>());
+        if (handles.isEmpty()) {
+            handles.add(handler);
+            return;
         }
-        return true;
+        int idx = Collections.binarySearch(handles, handler);
+        if (idx < 0) {
+            handles.add(-idx - 1, handler);
+        } else {
+            handles.add(idx, handler);
+        }
     }
 
     @SafeVarargs
@@ -139,7 +134,7 @@ public final class EventManager {
     }
 
     public boolean unregister(EventHandler<?> handler) {
-        Set<EventHandler<?>> set = handlers.get(handler.getEventClass());
+        Collection<EventHandler<?>> set = handlers.get(handler.getEventClass());
         if (set == null) return false;
         if (!set.remove(handler)) {
             LOGGER.warn("Attempted to unregister a handler that was not registered!");
@@ -153,7 +148,7 @@ public final class EventManager {
      * <br><b>This method only works if the object was registered with removable true!</b>
      */
     public boolean unregister(Object object) {
-        List<EventHandler<?>> h = cache.remove(object);
+        Collection<EventHandler<?>> h = cache.remove(object);
         if (h == null) return false;
         boolean state = true;
         for (EventHandler<?> handler : h) {
@@ -176,28 +171,22 @@ public final class EventManager {
     @SuppressWarnings({"unchecked", "rawtypes"})
     public <E extends Event> void post(E event) {
         if (event == null) return;
-        Set<EventHandler<?>> set = handlers.get(event.getClass());
-        if (set == null) return;
+        Collection<EventHandler<E>> handles = (Collection) handlers.get(event.getClass());
+        if (handles == null) return;
         Event.Cancellable evc = event instanceof Event.Cancellable ? (Event.Cancellable) event : null;
-        try {
-            Iterator<EventHandler<E>> iter = (Iterator) set.iterator();
-            while (iter.hasNext()) {
-                EventHandler<E> handler = iter.next();
-                if (evc != null && evc.cancelled) break;
-                try {
-                    if (handler.handle(event)) iter.remove();
-                } catch (EventException ex) {
-                    throw ex;
-                } catch (Throwable throwable) {
-                    LOGGER.error("Failed to invoke event handler for {}", event.getClass().getName(), throwable);
-                    if (handler.onError()) {
-                        LOGGER.error("removing {} registered to {} as it has failed too many times ({})", handler, event.getClass().getName(), EventHandler.ERROR_THRESHOLD);
-                        iter.remove();
-                    }
+        for (EventHandler<E> handler : handles) {
+            if (evc != null && evc.cancelled) return;
+            try {
+                if (handler.handle(event)) handles.remove(handler);
+            } catch (EventException ex) {
+                throw ex;
+            } catch (Throwable throwable) {
+                LOGGER.error("Failed to invoke event handler for {}", event.getClass().getName(), throwable);
+                if (handler.onError()) {
+                    LOGGER.error("removing {} registered to {} as it has failed too many times ({})", handler, event.getClass().getName(), EventHandler.ERROR_THRESHOLD);
+                    unregister(handler);
                 }
             }
-        } catch (ConcurrentModificationException ignored0) {
-            LOGGER.error("Handler modified event handlers when calling, failed to dispatch {}", event.getClass().getName());
         }
     }
 

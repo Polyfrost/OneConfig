@@ -155,7 +155,7 @@ public class org/polyfrost/oneconfig/api/config/v1/serialize/ObjectSerializer {
 	public static final field FIELD_SKIP_MODIFIERS I
 	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/config/v1/serialize/ObjectSerializer;
 	public fun deserialize (Ljava/util/Map;)Ljava/lang/Object;
-	public static fun fieldStream (Ljava/lang/Object;)Ljava/util/stream/Stream;
+	public static fun fieldStream (Ljava/lang/Class;)Ljava/util/stream/Stream;
 	public fun getAdapter (Ljava/lang/Class;)Lorg/polyfrost/oneconfig/api/config/v1/serialize/adapter/Adapter;
 	public static fun isSerializable (Ljava/lang/Object;)Z
 	public fun registerTypeAdapter (Lorg/polyfrost/oneconfig/api/config/v1/serialize/adapter/Adapter;)V

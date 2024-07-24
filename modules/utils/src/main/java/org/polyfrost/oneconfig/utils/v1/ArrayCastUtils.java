@@ -73,7 +73,9 @@ public final class ArrayCastUtils {
     public static int[] l2i(long[] arr) {
         int[] ret = new int[arr.length];
         for (int i = 0; i < arr.length; i++) {
-            ret[i] = (int) arr[i];
+            long val = arr[i];
+            if (val < Integer.MIN_VALUE || val > Integer.MAX_VALUE) throw new IllegalArgumentException("Value out of range for int: " + val);
+            ret[i] = (int) val;
         }
         return ret;
     }

@@ -29,9 +29,6 @@ package org.polyfrost.oneconfig.api.hud.v1
 import org.apache.logging.log4j.LogManager
 import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
-import org.polyfrost.oneconfig.api.event.v1.eventHandler
-import org.polyfrost.oneconfig.api.event.v1.events.HudRenderEvent
-import org.polyfrost.oneconfig.api.event.v1.events.ResizeEvent
 import org.polyfrost.oneconfig.api.hud.v1.internal.HudsPage
 import org.polyfrost.oneconfig.api.hud.v1.internal.alignC
 import org.polyfrost.oneconfig.api.hud.v1.internal.build
@@ -39,7 +36,6 @@ import org.polyfrost.oneconfig.api.hud.v1.internal.createInspectionsScreen
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.UIManager
 import org.polyfrost.oneconfig.utils.v1.MHUtils
-import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.animate.Animations
 import org.polyfrost.polyui.color.Colors
 import org.polyfrost.polyui.color.PolyColor
@@ -47,17 +43,13 @@ import org.polyfrost.polyui.color.PolyColor.Constants.TRANSPARENT
 import org.polyfrost.polyui.component.*
 import org.polyfrost.polyui.component.impl.*
 import org.polyfrost.polyui.event.Event
-import org.polyfrost.polyui.input.Translator
 import org.polyfrost.polyui.operations.ComponentOp
 import org.polyfrost.polyui.operations.Fade
 import org.polyfrost.polyui.operations.Move
-import org.polyfrost.polyui.property.Settings
 import org.polyfrost.polyui.renderer.data.Cursor
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.Vec2
-import org.polyfrost.polyui.unit.by
 import org.polyfrost.polyui.unit.seconds
-import org.polyfrost.polyui.utils.fastEach
 import org.polyfrost.polyui.utils.rgba
 import kotlin.math.PI
 
@@ -79,9 +71,12 @@ object HudManager {
      */
     @ApiStatus.Internal
     var sliney = -1f
+
+    @ApiStatus.Internal
     var panelOpen = false
         private set
 
+    @ApiStatus.Internal
     var panelExists = false
         private set
 
@@ -92,8 +87,7 @@ object HudManager {
         register(ImageHud("assets/oneconfig/ico/hud.svg"))
     }
 
-    var hudsPage = HudsPage(hudProviders.values)
-        private set
+    private val hudsPage = HudsPage(hudProviders.values)
 
     val panel = Block(
         Block(
@@ -123,7 +117,7 @@ object HudManager {
                 if (parent.parent[3] !== hudsPage) {
                     parent.parent[3] = hudsPage
                 } else {
-//                    Platform.screen().close()
+                    Platform.screen().close()
                 }
             },
             Block(
@@ -157,55 +151,9 @@ object HudManager {
         }.add()
     }
 
-    init {
-        eventHandler { (w, h): ResizeEvent ->
-            polyUI.resize(w.toFloat(), h.toFloat())
-        }.register()
-        eventHandler { (stack): HudRenderEvent ->
-            if (!panelExists) {
-                stack.push()
-                polyUI.render()
-                stack.pop()
-            }
-        }.register()
-    }
-
-    private val settings = Settings().apply {
-        cleanupAfterInit = false
-        debug = false
-    }
-
-    val polyUI: PolyUI = PolyUI(
-        panel,
-        renderer = UIManager.INSTANCE.renderer,
-        size = 1920f by 1080f,
-        translator = Translator(settings, "").also { it.addDelegate("assets/oneconfig/hud") },
-        settings = settings
-    ).also {
-        it.window = UIManager.INSTANCE.createWindow()
-        it.master.rawResize = true
-        it.master.onClick { (x, y) ->
-            val obj = polyUI.inputManager.rayCheckUnsafe(this, x, y) ?: return@onClick false
-            // use for inspections
-            return@onClick false
-        }
-        it.resize(Platform.screen().windowWidth().toFloat(), Platform.screen().windowHeight().toFloat())
-        panel.clipped = false
-    }
-
-    init {
-        initialize()
-    }
-
-    fun getWithEditor(): Any {
-        toggleHudPicker()
-        return UIManager.INSTANCE.createPolyUIScreen(polyUI, 0f, 0f, false, true) { editorClose() }
-    }
-
-    private fun editorClose() {
-        toggleHudPicker()
-        ConfigManager.active().saveAll()
-    }
+    @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
+    @kotlin.internal.InlineOnly
+    inline val polyUI get() = UIManager.INSTANCE.defaultInstance
 
 
     @JvmStatic
@@ -221,10 +169,16 @@ object HudManager {
     }
 
     @Suppress("UNCHECKED_CAST")
+    @ApiStatus.Internal
     fun initialize() {
-        polyUI.master.children?.fastEach {
-            if (it !== panel) polyUI.master.children?.remove(it)
-        }
+        polyUI.translator.addDelegate("assets/oneconfig/hud")
+        polyUI.master.addChild(panel, recalculate = false)
+        panel.clipped = false
+        // todo use for inspections
+//        it.master.onClick { (x, y) ->
+//            val obj = polyUI.inputManager.rayCheckUnsafe(this, x, y) ?: return@onClick false
+//            return@onClick false
+//        }
         val used = HashSet<Class<out Hud<out Drawable>>>(hudProviders.size)
         ConfigManager.active().gatherAll("huds").forEach { data ->
             try {
@@ -261,11 +215,24 @@ object HudManager {
         }
     }
 
+    @ApiStatus.Internal
+    fun getWithEditor(): Any {
+        toggleHudPicker()
+        return UIManager.INSTANCE.createPolyUIScreen(polyUI, 0f, 0f, false, true) { editorClose() }
+    }
+
+    @ApiStatus.Internal
     fun openHudEditor(hud: Hud<out Drawable>) {
         if (!panelOpen) toggle()
         panel[3] = createInspectionsScreen(hud)
     }
 
+    private fun editorClose() {
+        toggleHudPicker()
+        ConfigManager.active().saveAll()
+    }
+
+    @ApiStatus.Internal
     fun toggle() {
         panelOpen = !panelOpen
         val pg = panel
@@ -282,6 +249,7 @@ object HudManager {
         }
     }
 
+    @ApiStatus.Internal
     fun toggleHudPicker() {
         val pg = panel
         if (panelOpen) {
@@ -304,5 +272,5 @@ object HudManager {
         panelExists = !panelExists
     }
 
-    fun canAutoOpen(): Boolean = !polyUI.master.hasChildIn(polyUI.size.x - panel.width - 34f, 0f, panel.width, polyUI.size.y)
+    internal fun canAutoOpen(): Boolean = !polyUI.master.hasChildIn(polyUI.size.x - panel.width - 34f, 0f, panel.width, polyUI.size.y)
 }

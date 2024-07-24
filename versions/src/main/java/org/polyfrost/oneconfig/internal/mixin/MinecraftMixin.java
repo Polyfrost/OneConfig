@@ -29,13 +29,7 @@ package org.polyfrost.oneconfig.internal.mixin;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Timer;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
-import org.polyfrost.oneconfig.api.event.v1.events.FramebufferRenderEvent;
-import org.polyfrost.oneconfig.api.event.v1.events.KeyInputEvent;
-import org.polyfrost.oneconfig.api.event.v1.events.MouseInputEvent;
-import org.polyfrost.oneconfig.api.event.v1.events.RenderEvent;
-import org.polyfrost.oneconfig.api.event.v1.events.ResizeEvent;
-import org.polyfrost.oneconfig.api.event.v1.events.ShutdownEvent;
-import org.polyfrost.oneconfig.api.event.v1.events.TickEvent;
+import org.polyfrost.oneconfig.api.event.v1.events.*;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -65,6 +59,15 @@ public abstract class MinecraftMixin {
             "Lnet/minecraft/client/renderer/EntityRenderer;updateCameraAndRender(FJ)V";
             //#endif
     //@formatter:on
+
+    //#if MC>=11300
+    //$$ @Inject(method = "<init>", at = @At("RETURN"))
+    //#else
+    @Inject(method = "startGame", at = @At("RETURN"))
+    //#endif
+    private void ocfg$completedInit(CallbackInfo ci) {
+        EventManager.INSTANCE.post(InitializationEvent.INSTANCE);
+    }
 
     @Inject(method = "shutdownMinecraftApplet", at = @At("HEAD"))
     private void ocfg$shutdownCallback(CallbackInfo ci) {

@@ -19,9 +19,8 @@ public final class org/polyfrost/oneconfig/api/event/v1/EventManager {
 	public static fun register (Ljava/lang/Class;Ljava/util/function/Consumer;)Lorg/polyfrost/oneconfig/api/event/v1/invoke/EventHandler;
 	public fun register (Ljava/lang/Object;)V
 	public fun register (Ljava/lang/Object;Z)V
-	public static fun register (Ljava/lang/reflect/Method;Ljava/lang/Object;)Lorg/polyfrost/oneconfig/api/event/v1/invoke/EventHandler;
 	public static fun register (Lkotlin/reflect/KClass;Ljava/util/function/Consumer;)Lorg/polyfrost/oneconfig/api/event/v1/invoke/EventHandler;
-	public fun register (Lorg/polyfrost/oneconfig/api/event/v1/invoke/EventHandler;)Z
+	public fun register (Lorg/polyfrost/oneconfig/api/event/v1/invoke/EventHandler;)V
 	public final fun register ([Lorg/polyfrost/oneconfig/api/event/v1/invoke/EventHandler;)V
 	public fun registerCollector (Lorg/polyfrost/oneconfig/api/event/v1/invoke/EventCollector;)V
 	public fun unregister (Ljava/lang/Object;)Z
@@ -161,17 +160,19 @@ public abstract interface class org/polyfrost/oneconfig/api/event/v1/invoke/Even
 	public abstract fun collect (Ljava/lang/Object;)Ljava/util/List;
 }
 
-public abstract class org/polyfrost/oneconfig/api/event/v1/invoke/EventHandler {
+public abstract class org/polyfrost/oneconfig/api/event/v1/invoke/EventHandler : java/lang/Comparable {
 	public static final field ERROR_THRESHOLD B
 	public fun <init> ()V
+	public synthetic fun compareTo (Ljava/lang/Object;)I
+	public final fun compareTo (Lorg/polyfrost/oneconfig/api/event/v1/invoke/EventHandler;)I
 	public final fun equals (Ljava/lang/Object;)Z
 	public fun equals (Lorg/polyfrost/oneconfig/api/event/v1/invoke/EventHandler;)Z
 	public abstract fun getEventClass ()Ljava/lang/Class;
+	public fun getPriority ()I
 	public abstract fun handle (Lorg/polyfrost/oneconfig/api/event/v1/events/Event;)Z
 	public final fun hashCode ()I
 	public static fun of (Ljava/lang/Class;Ljava/lang/Runnable;)Lorg/polyfrost/oneconfig/api/event/v1/invoke/EventHandler;
 	public static fun of (Ljava/lang/Class;Ljava/util/function/Consumer;)Lorg/polyfrost/oneconfig/api/event/v1/invoke/EventHandler;
-	public static fun of (Ljava/lang/reflect/Method;Ljava/lang/Object;)Lorg/polyfrost/oneconfig/api/event/v1/invoke/EventHandler;
 	public static fun ofRemoving (Ljava/lang/Class;Ljava/util/function/Predicate;)Lorg/polyfrost/oneconfig/api/event/v1/invoke/EventHandler;
 	public final fun onError ()Z
 	public final fun register ()Lorg/polyfrost/oneconfig/api/event/v1/invoke/EventHandler;

@@ -45,6 +45,7 @@ public class UIManagerImpl implements UIManager {
     //$$     RendererImpl.INSTANCE.setGl3(true);
     //$$ }
     //#endif
+    private PolyUI ui;
 
     @Override
     public Renderer getRenderer() {
@@ -64,5 +65,10 @@ public class UIManagerImpl implements UIManager {
     @Override
     public Window createWindow() {
         return new MCWindow(Minecraft.getInstance());
+    }
+
+    @Override
+    public @NotNull PolyUI getDefaultInstance() {
+        return ui == null ? ui = createDefault() : ui;
     }
 }

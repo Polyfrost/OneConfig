@@ -26,29 +26,21 @@
 
 package org.polyfrost.oneconfig.api.config.v1.serialize;
 
-import static org.polyfrost.oneconfig.utils.v1.WrappingUtils.*;
-
-import java.lang.reflect.Array;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Stream;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import org.polyfrost.oneconfig.api.config.v1.exceptions.SerializationException;
 import org.polyfrost.oneconfig.api.config.v1.serialize.adapter.Adapter;
 import org.polyfrost.oneconfig.api.config.v1.serialize.adapter.impl.ColorAdapter;
 import org.polyfrost.oneconfig.utils.v1.MHUtils;
+
+import java.lang.reflect.Array;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Stream;
+
+import static org.polyfrost.oneconfig.utils.v1.WrappingUtils.*;
 
 
 public class ObjectSerializer {
@@ -79,10 +71,11 @@ public class ObjectSerializer {
     /**
      * Return a stream of all the fields in this object, including the fields of its superclasses.
      */
-    public static Stream<Field> fieldStream(Object o) {
-        Stream<Field> fields = Arrays.stream(o.getClass().getDeclaredFields());
-        Class<?> superClass = o.getClass().getSuperclass();
-        return superClass == null ? fields : Stream.concat(fields, Arrays.stream(superClass.getDeclaredFields()));
+    public static Stream<Field> fieldStream(Class<?> cls) {
+        Stream<Field> fields = Arrays.stream(cls.getDeclaredFields());
+        Class<?> superClass = cls.getSuperclass();
+        if (superClass == Object.class) return fields;
+        return superClass == null ? fields : Stream.concat(fields, fieldStream(superClass));
     }
 
     private static void stderrMap(Map<String, Object> map) {
@@ -116,7 +109,7 @@ public class ObjectSerializer {
     public <T> Adapter<T, ?> getAdapter(Class<T> cls) {
         Class<?> cl = cls;
         Adapter<?, ?> ad = adapters.get(cl);
-        while(ad == null && cl.getSuperclass() != null) {
+        while (ad == null && cl.getSuperclass() != null) {
             cl = cl.getSuperclass();
             ad = adapters.get(cl);
         }
@@ -337,7 +330,7 @@ public class ObjectSerializer {
         }
         // asm: it is much faster to iterate over every field and use map to get the potential serialized object
         // than the other way around.
-        fieldStream(o).filter(f -> (f.getModifiers() & FIELD_SKIP_MODIFIERS) == 0).forEach(f -> {
+        fieldStream(cls).filter(f -> (f.getModifiers() & FIELD_SKIP_MODIFIERS) == 0).forEach(f -> {
             Object value = in.get(f.getName());
             if (value == null) return;
             try {

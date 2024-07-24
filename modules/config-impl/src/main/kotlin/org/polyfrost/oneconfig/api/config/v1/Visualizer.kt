@@ -194,6 +194,7 @@ fun interface Visualizer {
                 Slider(
                     min = min,
                     max = max,
+                    length = 200f,
                     initialValue = prop.getAs<Number>().toFloat(),
                 ).onChange { amount: Int ->
                     prop.setAs(amount)
