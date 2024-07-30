@@ -158,9 +158,7 @@ public class FileBackend extends Backend {
         dodge = true;
     }
 
-    @Override
-    protected Tree load0(@NotNull String id) throws Exception {
-        Path p = folder.resolve(id);
+    public Tree load0(Path p, String id) throws Exception {
         if (!Files.exists(p)) return null;
         FileSerializer<String> serializer = getSerializer(p);
         if (serializer == null) {
@@ -174,6 +172,11 @@ public class FileBackend extends Backend {
             Files.move(p, folder.resolve(id + ".corrupted"), StandardCopyOption.REPLACE_EXISTING);
             return null;
         }
+    }
+
+    @Override
+    protected Tree load0(@NotNull String id) throws Exception {
+        return load0(folder.resolve(id), id);
     }
 
     @Override

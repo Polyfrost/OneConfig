@@ -41,7 +41,8 @@ public abstract class CrashReportMixin {
     @Inject(method = "<init>", at = @At("RETURN"))
     private void ocfg$checkApiIssues(String desc, Throwable cause, CallbackInfo ci) {
         if (cause instanceof LinkageError) {
-            if (cause.getMessage().contains("org.polyfrost.oneconfig")) {
+            String message = cause.getMessage();
+            if (message != null && message.contains("org.polyfrost.oneconfig")) {
                 ocfg$apiDeath(true);
                 return;
             }
@@ -57,7 +58,7 @@ public abstract class CrashReportMixin {
     }
 
     @Unique
-    private void ocfg$apiDeath(boolean certain) {
+    private static void ocfg$apiDeath(boolean certain) {
         if (!MavenUpdateChecker.oneconfig().hasUpdate()) return;
         TinyFD tinyfd = UIManager.INSTANCE.getTinyFD();
         String title = certain ? "OneConfig API Error" : "OneConfig API Error (Possibly)";

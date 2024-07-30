@@ -150,6 +150,11 @@ public final class ConfigManager {
         return backend.get(id);
     }
 
+    @ApiStatus.Internal
+    public Tree getNoRegister(Path p) throws Exception {
+        return backend.load0(p, p.getFileName().toString());
+    }
+
     public boolean save(String id) {
         return backend.save(id);
     }

@@ -186,6 +186,7 @@ fun Hud<*>.build(): Block {
                 },
                 Image("assets/oneconfig/ico/close.svg").setDestructivePalette().withStates(consume = true).onClick {
                     HudManager.polyUI.master.removeChild(this@events.self, recalculate = false)
+                    scaleBlob.clipped = false
                     HudManager.polyUI.removeExecutor(exe)
                     HudManager.polyUI.unfocus()
 //                    if (HudManager.panel[3] !== HudManager.hudsPage) HudManager.panel[3] = HudManager.hudsPage
@@ -285,6 +286,7 @@ fun Drawable.snapHandler() {
     polyUI.master.children?.fastEach {
         if (it === this) return@fastEach
         if (it === HudManager.panel) return@fastEach
+        if (it === scaleBlob) return@fastEach
         if (!it.clipped) return@fastEach
 
         if (!hran) {

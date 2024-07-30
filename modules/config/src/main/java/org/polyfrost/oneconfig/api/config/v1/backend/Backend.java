@@ -199,7 +199,7 @@ public abstract class Backend {
     }
 
     public final Tree get(String id) {
-        return trees.get(id);
+        return trees.computeIfAbsent(id, this::load);
     }
 
     @UnmodifiableView

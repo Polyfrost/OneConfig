@@ -119,7 +119,7 @@ open class ConfigVisualizer {
     protected open fun makeFinal(categories: Map<String, Drawable>, initialPage: String): Drawable {
         return Group(
             createHeaders(categories),
-            categories[initialPage] ?: throw IllegalArgumentException("Initial page $initialPage does not exist"),
+            categories[initialPage] ?: categories.values.first(),
             alignment = alignC,
             visibleSize = Vec2(1130f, 635f),
         )
