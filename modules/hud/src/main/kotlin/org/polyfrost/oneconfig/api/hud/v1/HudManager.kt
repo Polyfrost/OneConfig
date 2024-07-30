@@ -80,13 +80,6 @@ object HudManager {
     var panelExists = false
         private set
 
-    init {
-        register(TextHud.DateTime("Date:", "yyyy-MM-dd"))
-        register(TextHud.DateTime("Time:", "HH:mm:ss"))
-        register(TextHud.Impl("", "Text Hud", ""))
-        register(ImageHud("assets/oneconfig/ico/hud.svg"))
-    }
-
     private val hudsPage = HudsPage(hudProviders.values)
 
     val panel = Block(

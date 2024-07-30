@@ -27,18 +27,12 @@
 package org.polyfrost.oneconfig.api.hud.v1
 
 import org.polyfrost.polyui.component.impl.Text
-import org.polyfrost.polyui.unit.milliseconds
-import org.polyfrost.polyui.unit.minutes
-import org.polyfrost.polyui.unit.seconds
 import org.polyfrost.polyui.utils.dont
 import org.polyfrost.polyui.utils.translated
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 import org.polyfrost.oneconfig.api.config.v1.annotations.Text as TextAnnotation
 
 /**
  * Basic HUD element which displays text.
- * @see TextHud.DateTime
  */
 abstract class TextHud(
     @TextAnnotation(title = "Text Prefix")
@@ -72,71 +66,4 @@ abstract class TextHud(
      * **do not call this method yourself.**
      */
     protected abstract fun getText(): String
-
-
-    class Impl(prefix: String, @TextAnnotation(title = "Text") var it: String, suffix: String) : TextHud(prefix, suffix) {
-        override fun id() = "text_hud.yml"
-
-        override fun title() = "Text Hud"
-
-        override fun category() = Category.INFO
-
-        override fun getText() = it
-
-        override fun initialize() {
-            super.initialize()
-            if (isReal) {
-                updateWhenChanged("it")
-            }
-        }
-
-        override fun updateFrequency() = -1L
-    }
-
-    /**
-     * [TextHud] which displays the date/time information.
-     * @param template the template to use for the time. See [DateTimeFormatter] for an explanation of the different keywords.
-     */
-    class DateTime(
-        header: String,
-        @TextAnnotation(title = "Time template") var template: String,
-        suffix: String = ""
-    ) : TextHud(header, suffix) {
-        override fun id() = "date_time_hud.yml"
-
-        override fun title() = "Date/Time Hud"
-
-        override fun category() = Category.INFO
-
-        override fun updateFrequency(): Long {
-            return if ('S' in template) 100.milliseconds
-            else if ('s' in template) 1.seconds
-            else if ('m' in template) 1.minutes
-            else 5.minutes
-        }
-
-        override fun initialize() {
-            super.initialize()
-            if (isReal) {
-                addCallback("template") {
-                    _formatter = null
-                    if(update()) get().parent.recalculate()
-                }
-            }
-        }
-
-        private var _formatter: DateTimeFormatter? = null
-
-        private fun formatter(): DateTimeFormatter {
-            val formatter = _formatter
-            if (formatter != null) return formatter
-            val forMatHer = DateTimeFormatter.ofPattern(this.template)
-            this._formatter = forMatHer
-            return forMatHer
-        }
-
-        override fun getText(): String = LocalDateTime.now().format(formatter())
-
-        override fun clone() = super.clone().also { _formatter = null }
-    }
 }
