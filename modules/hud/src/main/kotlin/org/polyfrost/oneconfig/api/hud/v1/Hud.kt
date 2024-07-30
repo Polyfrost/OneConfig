@@ -314,9 +314,25 @@ abstract class Hud<T : Drawable> : Cloneable, Config("null", null, "null", null)
         return false
     }
 
-    enum class Category {
-        COMBAT,
-        INFO,
-        PLAYER
+    /**
+     * A category for the HUD, used for sorting in the UI.
+     * <br>
+     * IDs start at 1, as 0 is reserved for the default category ("All"). They are also subject to change at any time.
+     * </br>
+     */
+    class Category(val name: String, val id: Int) {
+        companion object {
+            @JvmStatic val COMBAT = Category("Combat", 1)
+            @JvmStatic val INFO = Category("Info", 2)
+            @JvmStatic val PLAYER = Category("Player", 3)
+        }
+
+        override fun toString(): String {
+            return name
+        }
+
+        override fun hashCode(): Int {
+            return id
+        }
     }
 }

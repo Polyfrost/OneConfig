@@ -168,11 +168,42 @@ public abstract class Config {
         // <clinit>
     }
 
+    /**
+     * A category for the config, used for sorting in the UI.
+     * <br>
+     * IDs start at 1, as 0 is reserved for the default category ("All"). They are also subject to change at any time.
+     * </br>
+     */
+    public static final class Category {
+        public static final Category COMBAT = new Category("Combat", 1);
+        public static final Category QOL = new Category("Quality of Life", 2);
+        public static final Category HYPIXEL = new Category("Hypixel", 3);
+        public static final Category OTHER = new Category("Other", 4);
 
-    public enum Category {
-        COMBAT,
-        QOL,
-        HYPIXEL,
-        OTHER
+        private final String name;
+        private final int id;
+
+        private Category(String name, int id) {
+            this.name = name;
+            this.id = id;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public int getId() {
+            return id;
+        }
+
+        @Override
+        public String toString() {
+            return name;
+        }
+
+        @Override
+        public int hashCode() {
+            return id;
+        }
     }
 }
