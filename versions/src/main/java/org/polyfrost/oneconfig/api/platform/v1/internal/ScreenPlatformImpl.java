@@ -37,7 +37,7 @@ import org.polyfrost.oneconfig.api.platform.v1.ScreenPlatform;
 public class ScreenPlatformImpl implements ScreenPlatform {
     //#if MC<11300
     private static final net.minecraft.client.gui.GuiButton btn = new net.minecraft.client.gui.GuiButton(-1, -1, -1, "");
-    //#elseif MC>=11900
+    //#elseif MC>=11904
     //#if FABRIC
     //$$ private static final net.minecraft.client.gui.widget.ButtonWidget btn = new net.minecraft.client.gui.widget.ButtonWidget.Builder(net.minecraft.text.Text.empty(), (b) -> {}).build();
     //#else

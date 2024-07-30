@@ -25,7 +25,7 @@
  */
 
 package org.polyfrost.oneconfig.internal.mixin;
-//#if MC<11904
+//#if MC<11900
 
 import com.mojang.datafixers.DataFixer;
 import com.mojang.datafixers.DataFixerBuilder;
