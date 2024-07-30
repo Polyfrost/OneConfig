@@ -29,7 +29,9 @@ package org.polyfrost.oneconfig.api.config.v1;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.polyfrost.oneconfig.api.config.v1.annotations.Include;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
@@ -37,6 +39,9 @@ import java.util.function.Predicate;
 
 public abstract class Config {
     protected Tree tree;
+
+    @Include
+    public boolean enabled = true;
 
     public Config(@NotNull String id, @Nullable String iconPath, @NotNull String title, @Nullable Category category) {
         // written this way so that trees can be lateinit
@@ -119,6 +124,18 @@ public abstract class Config {
     protected void loadFrom(String id) {
         if (tree == null) throw notInitialized();
         Tree in = ConfigManager.active().get(id);
+        if (in == null) return;
+        tree.overwrite(in);
+    }
+
+    protected void loadFrom(Path p) {
+        if (tree == null) throw notInitialized();
+        Tree in;
+        try {
+            in = ConfigManager.active().getNoRegister(p);
+        } catch (Exception e) {
+            return;
+        }
         if (in == null) return;
         tree.overwrite(in);
     }
