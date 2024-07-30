@@ -1,4 +1,5 @@
 public abstract class org/polyfrost/oneconfig/api/config/v1/Config {
+	public field enabled Z
 	protected field tree Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/config/v1/Config$Category;)V
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/config/v1/Config$Category;)V
@@ -11,18 +12,21 @@ public abstract class org/polyfrost/oneconfig/api/config/v1/Config {
 	protected fun getProperty (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
 	public fun getTree ()Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	protected fun loadFrom (Ljava/lang/String;)V
+	protected fun loadFrom (Ljava/nio/file/Path;)V
 	protected fun makeTree (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	public fun preload ()V
 	public fun save ()V
 }
 
-public final class org/polyfrost/oneconfig/api/config/v1/Config$Category : java/lang/Enum {
+public final class org/polyfrost/oneconfig/api/config/v1/Config$Category {
 	public static final field COMBAT Lorg/polyfrost/oneconfig/api/config/v1/Config$Category;
 	public static final field HYPIXEL Lorg/polyfrost/oneconfig/api/config/v1/Config$Category;
 	public static final field OTHER Lorg/polyfrost/oneconfig/api/config/v1/Config$Category;
 	public static final field QOL Lorg/polyfrost/oneconfig/api/config/v1/Config$Category;
-	public static fun valueOf (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Config$Category;
-	public static fun values ()[Lorg/polyfrost/oneconfig/api/config/v1/Config$Category;
+	public fun getId ()I
+	public fun getName ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
 }
 
 public final class org/polyfrost/oneconfig/api/config/v1/ConfigManager {
@@ -34,6 +38,7 @@ public final class org/polyfrost/oneconfig/api/config/v1/ConfigManager {
 	public fun gatherAll (Ljava/lang/String;)Ljava/util/Collection;
 	public fun get (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	public fun getFolder ()Ljava/nio/file/Path;
+	public fun getNoRegister (Ljava/nio/file/Path;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	public static fun internal ()Lorg/polyfrost/oneconfig/api/config/v1/ConfigManager;
 	public fun load (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	public static fun openProfile (Ljava/lang/String;)V
@@ -259,6 +264,7 @@ public class org/polyfrost/oneconfig/api/config/v1/backend/impl/FileBackend : or
 	public fun getSerializers ()Ljava/util/Collection;
 	public fun hasWatcher ()Z
 	protected fun load0 (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
+	public fun load0 (Ljava/nio/file/Path;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	protected static fun mkdirs (Ljava/nio/file/Path;)Ljava/nio/file/Path;
 	protected static fun read (Ljava/nio/file/Path;)Ljava/lang/String;
 	protected fun save0 (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)Z

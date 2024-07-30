@@ -26,13 +26,22 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	protected final fun updateWhenChanged (Ljava/lang/String;)V
 }
 
-public final class org/polyfrost/oneconfig/api/hud/v1/Hud$Category : java/lang/Enum {
-	public static final field COMBAT Lorg/polyfrost/oneconfig/api/hud/v1/Hud$Category;
-	public static final field INFO Lorg/polyfrost/oneconfig/api/hud/v1/Hud$Category;
-	public static final field PLAYER Lorg/polyfrost/oneconfig/api/hud/v1/Hud$Category;
-	public static fun getEntries ()Lkotlin/enums/EnumEntries;
-	public static fun valueOf (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/hud/v1/Hud$Category;
-	public static fun values ()[Lorg/polyfrost/oneconfig/api/hud/v1/Hud$Category;
+public final class org/polyfrost/oneconfig/api/hud/v1/Hud$Category {
+	public static final field Companion Lorg/polyfrost/oneconfig/api/hud/v1/Hud$Category$Companion;
+	public fun <init> (Ljava/lang/String;I)V
+	public static final fun getCOMBAT ()Lorg/polyfrost/oneconfig/api/hud/v1/Hud$Category;
+	public static final fun getINFO ()Lorg/polyfrost/oneconfig/api/hud/v1/Hud$Category;
+	public final fun getId ()I
+	public final fun getName ()Ljava/lang/String;
+	public static final fun getPLAYER ()Lorg/polyfrost/oneconfig/api/hud/v1/Hud$Category;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class org/polyfrost/oneconfig/api/hud/v1/Hud$Category$Companion {
+	public final fun getCOMBAT ()Lorg/polyfrost/oneconfig/api/hud/v1/Hud$Category;
+	public final fun getINFO ()Lorg/polyfrost/oneconfig/api/hud/v1/Hud$Category;
+	public final fun getPLAYER ()Lorg/polyfrost/oneconfig/api/hud/v1/Hud$Category;
 }
 
 public final class org/polyfrost/oneconfig/api/hud/v1/HudManager {
@@ -51,18 +60,6 @@ public final class org/polyfrost/oneconfig/api/hud/v1/HudManager {
 	public final fun setSliney (F)V
 	public final fun toggle ()V
 	public final fun toggleHudPicker ()V
-}
-
-public final class org/polyfrost/oneconfig/api/hud/v1/ImageHud : org/polyfrost/oneconfig/api/hud/v1/Hud {
-	public fun <init> (Ljava/lang/String;)V
-	public fun category ()Lorg/polyfrost/oneconfig/api/hud/v1/Hud$Category;
-	public synthetic fun create ()Lorg/polyfrost/polyui/component/Drawable;
-	public final fun getAddress ()Ljava/lang/String;
-	public fun id ()Ljava/lang/String;
-	public fun initialize ()V
-	public fun title ()Ljava/lang/String;
-	public fun update ()Z
-	public fun updateFrequency ()J
 }
 
 public abstract class org/polyfrost/oneconfig/api/hud/v1/LegacyHud : org/polyfrost/oneconfig/api/hud/v1/Hud {
@@ -88,30 +85,5 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/TextHud : org/polyfrost
 	public final fun setPrefix (Ljava/lang/String;)V
 	public final fun setSuffix (Ljava/lang/String;)V
 	public fun update ()Z
-}
-
-public final class org/polyfrost/oneconfig/api/hud/v1/TextHud$DateTime : org/polyfrost/oneconfig/api/hud/v1/TextHud {
-	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
-	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public fun category ()Lorg/polyfrost/oneconfig/api/hud/v1/Hud$Category;
-	public synthetic fun clone ()Ljava/lang/Object;
-	public fun clone ()Lorg/polyfrost/oneconfig/api/hud/v1/Hud;
-	public final fun getTemplate ()Ljava/lang/String;
-	public fun id ()Ljava/lang/String;
-	public fun initialize ()V
-	public final fun setTemplate (Ljava/lang/String;)V
-	public fun title ()Ljava/lang/String;
-	public fun updateFrequency ()J
-}
-
-public final class org/polyfrost/oneconfig/api/hud/v1/TextHud$Impl : org/polyfrost/oneconfig/api/hud/v1/TextHud {
-	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
-	public fun category ()Lorg/polyfrost/oneconfig/api/hud/v1/Hud$Category;
-	public final fun getIt ()Ljava/lang/String;
-	public fun id ()Ljava/lang/String;
-	public fun initialize ()V
-	public final fun setIt (Ljava/lang/String;)V
-	public fun title ()Ljava/lang/String;
-	public fun updateFrequency ()J
 }
 
