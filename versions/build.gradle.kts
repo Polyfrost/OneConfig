@@ -203,7 +203,8 @@ tasks {
                         "Implementation-Title" to rootProject.name,
                         "Implementation-Version" to project.version,
                         "Implementation-Vendor" to "Polyfrost",
-                        "Implementation-Timestamp" to SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").format(`java.util`.Date())
+                        "Implementation-Timestamp" to SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").format(`java.util`.Date()),
+                        "OneConfig-Main-Class" to "org.polyfrost.oneconfig.internal.bootstrap.Bootstrap"
                     )
                 )
             }
