@@ -79,7 +79,7 @@ fun ModsPage(trees: Collection<Tree>): Drawable {
                 alignment = modBoxAlign,
             ).onClick { _ ->
                 OneConfigUI.openPage(ConfigVisualizer.INSTANCE.get(it), (this[1][0] as Text).text)
-            }.add3dEffect().namedId("ModCard")
+            }.namedId("ModCard")
         }.toTypedArray(),
         visibleSize = Vec2(1130f, 635f),
         alignment = Align(cross = Align.Cross.Start, pad = Vec2(18f, 18f)),
