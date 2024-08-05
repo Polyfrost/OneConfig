@@ -54,7 +54,7 @@ abstract class TextHud(
     }
 
     override fun initialize() {
-        if(isReal) {
+        if (isReal) {
             updateWhenChanged("prefix")
             updateWhenChanged("suffix")
         }
