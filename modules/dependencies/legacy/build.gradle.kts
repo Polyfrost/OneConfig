@@ -6,7 +6,6 @@ plugins {
 }
 
 val lwjglVersion = libs.versions.lwjgl.get()
-version = lwjglVersion
 
 description = "Dependencies for legacy platforms (<1.12)"
 
@@ -27,6 +26,9 @@ dependencies {
 }
 
 val build = project.tasks.getByName("build")
+project.tasks.withType(Jar::class.java).configureEach {
+    archiveVersion.set(lwjglVersion)
+}
 val jar = project.tasks.withType(Jar::class.java).getByName("jar")
 
 rootProject.idea.project.settings {

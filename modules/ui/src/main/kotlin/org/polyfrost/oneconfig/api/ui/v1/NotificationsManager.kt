@@ -32,7 +32,7 @@ import org.polyfrost.polyui.notify.Notifications
 import org.polyfrost.polyui.unit.seconds
 
 
-object Notifications {
+object NotificationsManager {
     private val it = Notifications(UIManager.INSTANCE.defaultInstance, max = 5)
 
     fun enqueueCustom(vararg components: Component, progressFunc: Animation) {

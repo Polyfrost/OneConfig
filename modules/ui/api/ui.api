@@ -1,9 +1,9 @@
-public final class org/polyfrost/oneconfig/api/ui/v1/Notifications {
-	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/ui/v1/Notifications;
+public final class org/polyfrost/oneconfig/api/ui/v1/NotificationsManager {
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/ui/v1/NotificationsManager;
 	public final fun enqueue (Lorg/polyfrost/polyui/notify/Notifications$Type;Ljava/lang/String;)V
 	public final fun enqueue (Lorg/polyfrost/polyui/notify/Notifications$Type;Ljava/lang/String;Ljava/lang/String;)V
 	public final fun enqueue (Lorg/polyfrost/polyui/notify/Notifications$Type;Ljava/lang/String;Ljava/lang/String;J)V
-	public static synthetic fun enqueue$default (Lorg/polyfrost/oneconfig/api/ui/v1/Notifications;Lorg/polyfrost/polyui/notify/Notifications$Type;Ljava/lang/String;Ljava/lang/String;JILjava/lang/Object;)V
+	public static synthetic fun enqueue$default (Lorg/polyfrost/oneconfig/api/ui/v1/NotificationsManager;Lorg/polyfrost/polyui/notify/Notifications$Type;Ljava/lang/String;Ljava/lang/String;JILjava/lang/Object;)V
 	public final fun enqueueCustom ([Lorg/polyfrost/polyui/component/Component;Lorg/polyfrost/polyui/animate/Animation;)V
 }
 
