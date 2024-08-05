@@ -29,12 +29,11 @@ package org.polyfrost.oneconfig.api.ui.v1.keybind
 import org.polyfrost.oneconfig.api.event.v1.eventHandler
 import org.polyfrost.oneconfig.api.event.v1.events.KeyInputEvent
 import org.polyfrost.oneconfig.api.event.v1.events.TickEvent
-import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.polyfrost.polyui.Settings
 import org.polyfrost.polyui.event.InputManager
 import org.polyfrost.polyui.input.KeyBinder
 import org.polyfrost.polyui.input.KeyModifiers
 import org.polyfrost.polyui.input.Keys
-import org.polyfrost.polyui.Settings
 import org.polyfrost.universal.UKeyboard
 
 @Suppress("UnstableApiUsage")
@@ -53,10 +52,7 @@ object KeybindManager {
     init {
         eventHandler { (key, char, state): KeyInputEvent ->
             if (state == 2) return@eventHandler
-            // keybindings only work when in game (todo maybe change)?
-            if (Platform.screen().current<Any?>() == null) {
-                translateKey(inputManager, key, char, state == 1)
-            }
+            translateKey(inputManager, key, char, state == 1)
         }.register()
         eventHandler { _: TickEvent.End ->
             keyBinder.update(50_000L, inputManager.mods, true)

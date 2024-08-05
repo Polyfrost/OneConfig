@@ -26,10 +26,11 @@
 
 package org.polyfrost.utils.v1.dsl
 
-import org.polyfrost.universal.UMinecraft
+import net.minecraft.client.Minecraft
 
 /**
  * Gets the current [net.minecraft.client.Minecraft] instance.
  */
-val mc
-    get() = UMinecraft.getMinecraft()
+@Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
+@kotlin.internal.InlineOnly
+inline val mc: Minecraft get() = Minecraft.getMinecraft()

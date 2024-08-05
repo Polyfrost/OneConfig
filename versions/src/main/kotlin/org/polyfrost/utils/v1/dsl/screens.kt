@@ -27,6 +27,14 @@
 package org.polyfrost.utils.v1.dsl
 
 import net.minecraft.client.gui.GuiScreen
+import org.polyfrost.oneconfig.api.config.v1.Config
+import org.polyfrost.oneconfig.api.config.v1.Tree
+import org.polyfrost.oneconfig.api.config.v1.internal.ConfigVisualizer
 import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.polyfrost.oneconfig.internal.ui.OneConfigUI
 
 fun GuiScreen.openScreen(ticks: Int = 1) = Platform.screen().display(this, ticks)
+
+fun Tree.openUI() = Platform.screen().display(OneConfigUI.open(ConfigVisualizer.INSTANCE.get(this)))
+
+fun Config.openUI() = this.tree.openUI()

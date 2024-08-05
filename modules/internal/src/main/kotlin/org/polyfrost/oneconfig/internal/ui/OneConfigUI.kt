@@ -64,7 +64,8 @@ object OneConfigUI {
     lateinit var ui: Drawable
 
 
-    fun open() {
+    @JvmOverloads
+    fun open(initialScreen: Component = ModsPage(ConfigManager.active().trees())) {
         val builder = PolyUIBuilder.builder().blurs().backgroundColor(rgba(21, 21, 21)).atResolution(1920f, 1080f).size(1400f, 700f)
         builder.translatorDelegate("assets/oneconfig")
         builder.onClose { _ ->
@@ -163,7 +164,7 @@ object OneConfigUI {
                     size = Vec2(1130f, 64f),
                     alignment = Align(main = Align.Main.SpaceBetween),
                 ).named("Header"),
-                ModsPage(ConfigManager.active().trees()),
+                initialScreen,
                 size = Vec2(1127f, 700f),
                 alignment = Align(cross = Align.Cross.Start, pad = Vec2.ZERO),
             ),

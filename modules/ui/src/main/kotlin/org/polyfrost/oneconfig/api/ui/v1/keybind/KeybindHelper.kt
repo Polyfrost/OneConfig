@@ -49,7 +49,7 @@ class KeybindHelper {
 
     fun build(): KeyBinder.Bind {
         val func = func ?: throw IllegalStateException("Function must be set")
-        return if (inScreens) BindInScreen(
+        return if (!inScreens) BindNotInScreen(
             unmappedKeys.nullIfEmpty()?.toIntArray(),
             keys.nullIfEmpty()?.toTypedArray(),
             mouse.nullIfEmpty()?.toIntArray(),

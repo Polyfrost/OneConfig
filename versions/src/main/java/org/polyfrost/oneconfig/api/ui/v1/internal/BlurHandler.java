@@ -34,6 +34,7 @@ import net.minecraft.client.shader.ShaderUniform;
 import net.minecraft.util.ResourceLocation;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.RenderEvent;
 import org.polyfrost.oneconfig.api.event.v1.events.ScreenOpenEvent;
 import org.polyfrost.oneconfig.api.event.v1.invoke.EventHandler;
@@ -62,11 +63,11 @@ public final class BlurHandler {
 
     private BlurHandler() {
         EventHandler.ofRemoving(ScreenOpenEvent.class, e -> reloadBlur(e.getScreen())).register();
-        EventHandler.of(RenderEvent.End.class, () -> {
+        EventManager.register(RenderEvent.End.class, () -> {
             if (su == null) return;
             if (progress >= 5f) return;
             su.set(getBlurStrengthProgress());
-        }).register();
+        });
     }
 
     public static void init() {

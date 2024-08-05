@@ -29,9 +29,9 @@ package org.polyfrost.oneconfig.api.ui.v1;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.HudRenderEvent;
 import org.polyfrost.oneconfig.api.event.v1.events.ResizeEvent;
-import org.polyfrost.oneconfig.api.event.v1.invoke.EventHandler;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
 import org.polyfrost.polyui.PolyUI;
 import org.polyfrost.polyui.component.Component;
@@ -97,12 +97,12 @@ public interface UIManager {
         p.getMaster().setRawResize(true);
         p.setWindow(createWindow());
         p.resize(Platform.screen().windowWidth(), Platform.screen().windowHeight(), false);
-        EventHandler.of(HudRenderEvent.class, ev -> {
+        EventManager.register(HudRenderEvent.class, ev -> {
             ev.matrices.push();
             p.render();
             ev.matrices.pop();
-        }).register();
-        EventHandler.of(ResizeEvent.class, ev -> p.resize(ev.newWidth, ev.newHeight, false)).register();
+        });
+        EventManager.register(ResizeEvent.class, ev -> p.resize(ev.newWidth, ev.newHeight, false));
         return p;
     }
 }

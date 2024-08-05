@@ -54,7 +54,7 @@ public abstract interface class org/polyfrost/oneconfig/api/ui/v1/UIManager {
 	public abstract fun getTinyFD ()Lorg/polyfrost/oneconfig/api/ui/v1/TinyFD;
 }
 
-public final class org/polyfrost/oneconfig/api/ui/v1/keybind/BindInScreen : org/polyfrost/polyui/input/KeyBinder$Bind {
+public final class org/polyfrost/oneconfig/api/ui/v1/keybind/BindNotInScreen : org/polyfrost/polyui/input/KeyBinder$Bind {
 	public synthetic fun <init> ([I[Lorg/polyfrost/polyui/input/Keys;[IBJLkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public synthetic fun <init> ([I[Lorg/polyfrost/polyui/input/Keys;[IBJLkotlin/jvm/functions/Function1;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 }

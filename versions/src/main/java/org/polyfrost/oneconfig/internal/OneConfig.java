@@ -90,12 +90,12 @@ public class OneConfig
         BlurHandler.init();
         preload();
         CommandBuilder b = CommandBuilder.command("oneconfig", "ocfg", "ocfgv1").description("OneConfig main command");
-        b.then(runs().does(OneConfigUI.INSTANCE::open).description("Opens the OneConfig GUI"));
+        b.then(runs().does((Runnable) OneConfigUI.INSTANCE::open).description("Opens the OneConfig GUI"));
         b.then(runs("updateCheck").does(() -> Multithreading.submit(() -> UChat.chat(MavenUpdateChecker.oneconfig().hasUpdate() ? "Update available!" : "No updates available"))).description("Check for updates"));
         b.then(runs("locraw").does(() -> UChat.chat(HypixelUtils.getLocation()))).description("Get your current location on Hypixel");
         b.then(runs("hud").does(() -> Platform.screen().display(HudManager.INSTANCE.getWithEditor())).description("Opens the OneConfig HUD editor"));
         CommandManager.registerCommand(b.build());
-        KeybindHelper.builder().mods(KeyModifiers.RSHIFT).does(OneConfigUI.INSTANCE::open).register();
+        KeybindHelper.builder().mods(KeyModifiers.RSHIFT).does((Runnable) OneConfigUI.INSTANCE::open).register();
         EventManager.register(InitializationEvent.class, e -> HudManager.INSTANCE.initialize());
         LOGGER.info("OneConfig initialized!");
     }
