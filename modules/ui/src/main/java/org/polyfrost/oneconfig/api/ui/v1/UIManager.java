@@ -35,7 +35,7 @@ import org.polyfrost.oneconfig.api.event.v1.invoke.EventHandler;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
 import org.polyfrost.polyui.PolyUI;
 import org.polyfrost.polyui.component.Component;
-import org.polyfrost.polyui.property.Settings;
+import org.polyfrost.polyui.Settings;
 import org.polyfrost.polyui.renderer.Renderer;
 import org.polyfrost.polyui.renderer.Window;
 

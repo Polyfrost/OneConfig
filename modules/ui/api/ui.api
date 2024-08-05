@@ -1,20 +1,10 @@
 public final class org/polyfrost/oneconfig/api/ui/v1/Notifications {
 	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/ui/v1/Notifications;
-	public final fun enqueue (Lorg/polyfrost/oneconfig/api/ui/v1/Notifications$Type;Ljava/lang/String;)V
-	public final fun enqueue (Lorg/polyfrost/oneconfig/api/ui/v1/Notifications$Type;Ljava/lang/String;Ljava/lang/String;)V
-	public final fun enqueue (Lorg/polyfrost/oneconfig/api/ui/v1/Notifications$Type;Ljava/lang/String;Ljava/lang/String;J)V
-	public static synthetic fun enqueue$default (Lorg/polyfrost/oneconfig/api/ui/v1/Notifications;Lorg/polyfrost/oneconfig/api/ui/v1/Notifications$Type;Ljava/lang/String;Ljava/lang/String;JILjava/lang/Object;)V
+	public final fun enqueue (Lorg/polyfrost/polyui/notify/Notifications$Type;Ljava/lang/String;)V
+	public final fun enqueue (Lorg/polyfrost/polyui/notify/Notifications$Type;Ljava/lang/String;Ljava/lang/String;)V
+	public final fun enqueue (Lorg/polyfrost/polyui/notify/Notifications$Type;Ljava/lang/String;Ljava/lang/String;J)V
+	public static synthetic fun enqueue$default (Lorg/polyfrost/oneconfig/api/ui/v1/Notifications;Lorg/polyfrost/polyui/notify/Notifications$Type;Ljava/lang/String;Ljava/lang/String;JILjava/lang/Object;)V
 	public final fun enqueueCustom ([Lorg/polyfrost/polyui/component/Component;Lorg/polyfrost/polyui/animate/Animation;)V
-}
-
-public final class org/polyfrost/oneconfig/api/ui/v1/Notifications$Type : java/lang/Enum {
-	public static final field Error Lorg/polyfrost/oneconfig/api/ui/v1/Notifications$Type;
-	public static final field Info Lorg/polyfrost/oneconfig/api/ui/v1/Notifications$Type;
-	public static final field Warning Lorg/polyfrost/oneconfig/api/ui/v1/Notifications$Type;
-	public static fun getEntries ()Lkotlin/enums/EnumEntries;
-	public final fun getTitle ()Ljava/lang/String;
-	public static fun valueOf (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/ui/v1/Notifications$Type;
-	public static fun values ()[Lorg/polyfrost/oneconfig/api/ui/v1/Notifications$Type;
 }
 
 public final class org/polyfrost/oneconfig/api/ui/v1/PolyUIBuilder {
@@ -31,7 +21,7 @@ public final class org/polyfrost/oneconfig/api/ui/v1/PolyUIBuilder {
 	public fun onClose (Ljava/util/function/Consumer;)Lorg/polyfrost/oneconfig/api/ui/v1/PolyUIBuilder;
 	public fun pauses ()Lorg/polyfrost/oneconfig/api/ui/v1/PolyUIBuilder;
 	public fun renderer (Lorg/polyfrost/polyui/renderer/Renderer;)Lorg/polyfrost/oneconfig/api/ui/v1/PolyUIBuilder;
-	public fun settings (Lorg/polyfrost/polyui/property/Settings;)Lorg/polyfrost/oneconfig/api/ui/v1/PolyUIBuilder;
+	public fun settings (Lorg/polyfrost/polyui/Settings;)Lorg/polyfrost/oneconfig/api/ui/v1/PolyUIBuilder;
 	public fun size (FF)Lorg/polyfrost/oneconfig/api/ui/v1/PolyUIBuilder;
 	public fun translator (Lorg/polyfrost/polyui/input/Translator;)Lorg/polyfrost/oneconfig/api/ui/v1/PolyUIBuilder;
 	public fun translatorDelegate (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/ui/v1/PolyUIBuilder;
@@ -64,6 +54,11 @@ public abstract interface class org/polyfrost/oneconfig/api/ui/v1/UIManager {
 	public abstract fun getTinyFD ()Lorg/polyfrost/oneconfig/api/ui/v1/TinyFD;
 }
 
+public final class org/polyfrost/oneconfig/api/ui/v1/keybind/BindInScreen : org/polyfrost/polyui/input/KeyBinder$Bind {
+	public synthetic fun <init> ([I[Lorg/polyfrost/polyui/input/Keys;[IBJLkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> ([I[Lorg/polyfrost/polyui/input/Keys;[IBJLkotlin/jvm/functions/Function1;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+}
+
 public final class org/polyfrost/oneconfig/api/ui/v1/keybind/KeybindHelper {
 	public static final field Companion Lorg/polyfrost/oneconfig/api/ui/v1/keybind/KeybindHelper$Companion;
 	public fun <init> ()V
@@ -72,7 +67,11 @@ public final class org/polyfrost/oneconfig/api/ui/v1/keybind/KeybindHelper {
 	public final fun chars ([C)Lorg/polyfrost/oneconfig/api/ui/v1/keybind/KeybindHelper;
 	public final fun does (Ljava/lang/Runnable;)Lorg/polyfrost/oneconfig/api/ui/v1/keybind/KeybindHelper;
 	public final fun does (Ljava/util/function/BooleanSupplier;)Lorg/polyfrost/oneconfig/api/ui/v1/keybind/KeybindHelper;
+	public final fun does (Ljava/util/function/Predicate;)Lorg/polyfrost/oneconfig/api/ui/v1/keybind/KeybindHelper;
 	public final fun duration (J)Lorg/polyfrost/oneconfig/api/ui/v1/keybind/KeybindHelper;
+	public final fun inScreens ()Lorg/polyfrost/oneconfig/api/ui/v1/keybind/KeybindHelper;
+	public final fun inScreens (Z)Lorg/polyfrost/oneconfig/api/ui/v1/keybind/KeybindHelper;
+	public static synthetic fun inScreens$default (Lorg/polyfrost/oneconfig/api/ui/v1/keybind/KeybindHelper;ZILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/ui/v1/keybind/KeybindHelper;
 	public final fun keys ([I)Lorg/polyfrost/oneconfig/api/ui/v1/keybind/KeybindHelper;
 	public final fun keys ([Lorg/polyfrost/polyui/input/Keys;)Lorg/polyfrost/oneconfig/api/ui/v1/keybind/KeybindHelper;
 	public final fun mods (B)Lorg/polyfrost/oneconfig/api/ui/v1/keybind/KeybindHelper;

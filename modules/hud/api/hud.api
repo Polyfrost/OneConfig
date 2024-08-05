@@ -28,10 +28,10 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 
 public final class org/polyfrost/oneconfig/api/hud/v1/Hud$Category {
 	public static final field Companion Lorg/polyfrost/oneconfig/api/hud/v1/Hud$Category$Companion;
-	public fun <init> (Ljava/lang/String;I)V
+	public fun <init> (Ljava/lang/String;B)V
 	public static final fun getCOMBAT ()Lorg/polyfrost/oneconfig/api/hud/v1/Hud$Category;
 	public static final fun getINFO ()Lorg/polyfrost/oneconfig/api/hud/v1/Hud$Category;
-	public final fun getId ()I
+	public final fun getId ()B
 	public final fun getName ()Ljava/lang/String;
 	public static final fun getPLAYER ()Lorg/polyfrost/oneconfig/api/hud/v1/Hud$Category;
 	public fun hashCode ()I

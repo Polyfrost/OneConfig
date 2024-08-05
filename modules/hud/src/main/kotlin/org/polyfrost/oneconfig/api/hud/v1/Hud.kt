@@ -206,7 +206,7 @@ abstract class Hud<T : Drawable> : Cloneable, Config("null", null, "null", null)
             it.isEnabled = value
             if (siblings.size == 1) {
                 it.parent.isEnabled = value
-            } else if (!value && siblings.fastAll { !it.clipped }) {
+            } else if (!value && siblings.fastAll { !it.renders }) {
                 it.parent.isEnabled = false
             }
             it.parent.recalculate()
@@ -320,19 +320,15 @@ abstract class Hud<T : Drawable> : Cloneable, Config("null", null, "null", null)
      * IDs start at 1, as 0 is reserved for the default category ("All"). They are also subject to change at any time.
      * </br>
      */
-    class Category(val name: String, val id: Int) {
+    class Category(val name: String, val id: Byte) {
         companion object {
-            @JvmStatic val COMBAT = Category("Combat", 1)
-            @JvmStatic val INFO = Category("Info", 2)
-            @JvmStatic val PLAYER = Category("Player", 3)
+            @JvmStatic val COMBAT = Category("oneconfig.combat", 1)
+            @JvmStatic val INFO = Category("oneconfig.info", 2)
+            @JvmStatic val PLAYER = Category("oneconfig.player", 3)
         }
 
-        override fun toString(): String {
-            return name
-        }
+        override fun toString() = name
 
-        override fun hashCode(): Int {
-            return id
-        }
+        override fun hashCode() = id.toInt()
     }
 }

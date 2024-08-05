@@ -34,7 +34,7 @@ import org.polyfrost.polyui.color.PolyColor;
 import org.polyfrost.polyui.component.Drawable;
 import org.polyfrost.polyui.event.InputManager;
 import org.polyfrost.polyui.input.Translator;
-import org.polyfrost.polyui.property.Settings;
+import org.polyfrost.polyui.Settings;
 import org.polyfrost.polyui.renderer.Renderer;
 import org.polyfrost.polyui.unit.Align;
 

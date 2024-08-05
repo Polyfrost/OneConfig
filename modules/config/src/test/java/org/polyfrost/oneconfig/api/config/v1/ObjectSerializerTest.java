@@ -69,6 +69,12 @@ public class ObjectSerializerTest {
     }
 
     @Test
+    public void dontSerializeBullshit() {
+        assertNull(ObjectSerializer.INSTANCE.serialize((Runnable) () -> System.out.println("I'm a runnable!"), true, true));
+
+    }
+
+    @Test
     public void testSerializePrimitiveArrays() {
         int[] pArray = new int[]{1, 2, 3, 4, 5};
         Integer[] array = new Integer[]{1, 2, 3, 4, 5};

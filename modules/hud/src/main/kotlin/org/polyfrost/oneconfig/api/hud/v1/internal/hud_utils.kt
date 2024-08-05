@@ -49,34 +49,32 @@ private val scaleBlob by lazy {
     val b = Block(
         size = 20f by 20f,
         focusable = true,
-    ).radius(10f).draggable(
-        onStart = {
-            sx = polyUI.mouseX
-            sy = polyUI.mouseY
-            st = scaleX
-        },
-        onDrag = {
-            cur?.let {
-                val dx = polyUI.mouseX - sx
-                val dy = polyUI.mouseY - sy
-                val s = st + (((dx + dy) / (it.width + it.height))).coerceIn(0.5f, 3f)
-                it.scaleX = s
-                it.scaleY = s
-                x = it.x + (it.width * s) - (width / 2f)
-                y = it.y + (it.height * s) - (height / 2f)
-            }
-        },
-    ).apply {
+    ).radius(10f).draggable().onDragStart {
+        sx = polyUI.mouseX
+        sy = polyUI.mouseY
+        st = scaleX
+    }.onDragEnd {
+        cur?.let {
+            val dx = polyUI.mouseX - sx
+            val dy = polyUI.mouseY - sy
+            val s = st + (((dx + dy) / (it.width + it.height))).coerceIn(0.5f, 3f)
+            it.scaleX = s
+            it.scaleY = s
+            x = it.x + (it.width * s) - (width / 2f)
+            y = it.y + (it.height * s) - (height / 2f)
+        }
+        true
+    }.apply {
 //        addEventHandler(Event.Mouse.Pressed(0)) {
         // if(!polyUI.inputManager.hasFocused) polyUI.focus(this)
 //        }
         on(Event.Focused.Lost) {
-            clipped = false
+            renders = false
             cur = null
         }
     }.setPalette { brand.fg }
     HudManager.polyUI.master.addChild(b, recalculate = false)
-    b.clipped = false
+    b.renders = false
     b
 }
 
@@ -95,14 +93,13 @@ fun Hud<*>.buildNew(): Block {
     if (!multipleInstancesAllowed() && isReal) {
         return makeAlreadyUsed()
     }
-    val o = get().addDefaultBackground(backgroundColor()).draggable(
-        free = true,
-        onStart = {
+    val o = get().addDefaultBackground(backgroundColor()).draggable(free = true)
+        .onDragStart {
             tx = x - parent.x
             ty = y - parent.y
-        },
-        onDrag = { snapHandlerNew() },
-        onDrop = {
+        }
+        .onDrag { snapHandlerNew() }
+        .onDragEnd {
             if (HudManager.panelOpen) {
                 // asm: the hud manager is closed when it is dragged enough
                 // if it is still open, then don't add
@@ -110,7 +107,7 @@ fun Hud<*>.buildNew(): Block {
                 x = p.x + tx
                 y = p.y + ty
                 polyUI.inputManager.recalculate()
-                return@draggable
+                return@onDragEnd
             }
             val hud = this@buildNew.make().build()
             val canMultiply = this@buildNew.multipleInstancesAllowed()
@@ -132,8 +129,7 @@ fun Hud<*>.buildNew(): Block {
             if (HudManager.canAutoOpen()) {
                 HudManager.toggle()
             }
-        },
-    )
+        }
     initialize()
     return o
 }
@@ -159,12 +155,12 @@ fun Hud<*>.build(): Block {
         }
     }
 
-    val o = get().addDefaultBackground(backgroundColor()).addScaler().draggable(
-        onStart = {
+    val o = get().addDefaultBackground(backgroundColor()).addScaler().draggable()
+        .onDragStart {
             if (HudManager.panelOpen) HudManager.toggle()
-        },
-        onDrag = { snapHandler() },
-        onDrop = {
+        }
+        .onDrag { snapHandler() }
+        .onDragEnd {
             if (!intersects(minMargin, minMargin, polyUI.size.x - (minMargin * 2f), polyUI.size.y - (minMargin * 2f))) {
                 LOGGER.warn("cannot place HUD element out of bounds!")
                 x = polyUI.size.x / 2f - width / 2f
@@ -173,30 +169,29 @@ fun Hud<*>.build(): Block {
             if (HudManager.canAutoOpen()) {
                 if (!HudManager.panelOpen) HudManager.toggle()
             }
-        },
-    ).events {
-        Event.Mouse.Clicked(0, amountClicks = 2) then {
-            HudManager.openHudEditor(this@build)
         }
-        Event.Mouse.Clicked(1) then {
-            PopupMenu(
-                Text("oneconfig.edithud").withStates(consume = true).onClick {
-                    HudManager.openHudEditor(this@build)
-                    HudManager.polyUI.unfocus()
-                },
-                Image("assets/oneconfig/ico/close.svg").setDestructivePalette().withStates(consume = true).onClick {
-                    HudManager.polyUI.master.removeChild(this@events.self, recalculate = false)
-                    scaleBlob.clipped = false
-                    HudManager.polyUI.removeExecutor(exe)
-                    HudManager.polyUI.unfocus()
+        .events {
+            Event.Mouse.Clicked(0, amountClicks = 2) then {
+                HudManager.openHudEditor(this@build)
+            }
+            Event.Mouse.Clicked(1) then {
+                PopupMenu(
+                    Text("oneconfig.edithud").withStates(consume = true).onClick {
+                        HudManager.openHudEditor(this@build)
+                        HudManager.polyUI.unfocus()
+                    },
+                    Image("assets/oneconfig/ico/close.svg").setDestructivePalette().withStates(consume = true).onClick {
+                        HudManager.polyUI.master.removeChild(this@events.self, recalculate = false)
+                        HudManager.polyUI.removeExecutor(exe)
+                        HudManager.polyUI.unfocus()
 //                    if (HudManager.panel[3] !== HudManager.hudsPage) HudManager.panel[3] = HudManager.hudsPage
-                },
-                polyUI = HudManager.polyUI,
-                position = Point.Above,
-            )
-            true
+                    },
+                    polyUI = HudManager.polyUI,
+                    position = Point.Above,
+                )
+                true
+            }
         }
-    }
     initialize()
     return o
 }
@@ -210,7 +205,7 @@ private fun Drawable.addDefaultBackground(color: PolyColor?) = Block(
 private fun Block.addScaler(): Block {
     this.on(Event.Mouse.Clicked) {
         val sb = scaleBlob
-        sb.clipped = true
+        sb.renders = true
         sb.x = x + (width * scaleX) - (sb.width / 2f)
         sb.y = y + (height * scaleY) - (sb.height / 2f)
         cur = this
@@ -286,8 +281,7 @@ fun Drawable.snapHandler() {
     polyUI.master.children?.fastEach {
         if (it === this) return@fastEach
         if (it === HudManager.panel) return@fastEach
-        if (it === scaleBlob) return@fastEach
-        if (!it.clipped) return@fastEach
+        if (!it.renders) return@fastEach
 
         if (!hran) {
             hran = trySnapX(it.x + (it.width / 2f)) ||

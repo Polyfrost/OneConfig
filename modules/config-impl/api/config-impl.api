@@ -23,7 +23,7 @@ public final class org/polyfrost/oneconfig/api/config/v1/Config$Category {
 	public static final field HYPIXEL Lorg/polyfrost/oneconfig/api/config/v1/Config$Category;
 	public static final field OTHER Lorg/polyfrost/oneconfig/api/config/v1/Config$Category;
 	public static final field QOL Lorg/polyfrost/oneconfig/api/config/v1/Config$Category;
-	public fun getId ()I
+	public fun getId ()B
 	public fun getName ()Ljava/lang/String;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
@@ -101,6 +101,12 @@ public final class org/polyfrost/oneconfig/api/config/v1/Visualizer$ColorVisuali
 public final class org/polyfrost/oneconfig/api/config/v1/Visualizer$DropdownVisualizer : org/polyfrost/oneconfig/api/config/v1/Visualizer {
 	public fun <init> ()V
 	public fun visualize (Lorg/polyfrost/oneconfig/api/config/v1/Property;)Lorg/polyfrost/polyui/component/Drawable;
+}
+
+public final class org/polyfrost/oneconfig/api/config/v1/Visualizer$InfoVisualizer : org/polyfrost/oneconfig/api/config/v1/Visualizer {
+	public fun <init> ()V
+	public synthetic fun visualize (Lorg/polyfrost/oneconfig/api/config/v1/Property;)Lorg/polyfrost/polyui/component/Drawable;
+	public fun visualize (Lorg/polyfrost/oneconfig/api/config/v1/Property;)Lorg/polyfrost/polyui/component/impl/Group;
 }
 
 public final class org/polyfrost/oneconfig/api/config/v1/Visualizer$KeybindVisualizer : org/polyfrost/oneconfig/api/config/v1/Visualizer {
@@ -183,6 +189,15 @@ public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1
 }
 
 public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1/annotations/Include : java/lang/annotation/Annotation {
+}
+
+public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1/annotations/Info : java/lang/annotation/Annotation {
+	public abstract fun category ()Ljava/lang/String;
+	public abstract fun description ()Ljava/lang/String;
+	public abstract fun icon ()Ljava/lang/String;
+	public abstract fun subcategory ()Ljava/lang/String;
+	public abstract fun title ()Ljava/lang/String;
+	public abstract fun value ()Lorg/polyfrost/polyui/notify/Notifications$Type;
 }
 
 public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1/annotations/Keybind : java/lang/annotation/Annotation {

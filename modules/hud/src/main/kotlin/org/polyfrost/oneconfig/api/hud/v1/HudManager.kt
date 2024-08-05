@@ -43,7 +43,6 @@ import org.polyfrost.polyui.color.PolyColor.Constants.TRANSPARENT
 import org.polyfrost.polyui.component.*
 import org.polyfrost.polyui.component.impl.*
 import org.polyfrost.polyui.event.Event
-import org.polyfrost.polyui.operations.ComponentOp
 import org.polyfrost.polyui.operations.Fade
 import org.polyfrost.polyui.operations.Move
 import org.polyfrost.polyui.renderer.data.Cursor
@@ -127,21 +126,17 @@ object HudManager {
         hudsPage,
         size = Vec2(500f, 1048f),
         alignment = Align(cross = Align.Cross.Start, pad = Vec2(0f, 18f)),
-    ).also {
-        it.rawResize = true
-        object : ComponentOp<Drawable>(it) {
-            override fun apply() {
-                if (self.polyUI.mouseDown) {
-                    if (slinex != -1f) self.renderer.line(slinex, 0f, slinex, self.polyUI.size.y, snapLineColor, 1f)
-                    if (sliney != -1f) self.renderer.line(0f, sliney, self.polyUI.size.x, sliney, snapLineColor, 1f)
-                } else {
-                    slinex = -1f
-                    sliney = -1f
-                }
+    ).apply {
+        rawResize = true
+        addOperation {
+            if(polyUI.mouseDown) {
+                if(slinex != -1f) polyUI.renderer.line(slinex, 0f, slinex, polyUI.size.y, snapLineColor, 1f)
+                if(sliney != -1f) polyUI.renderer.line(0f, sliney, polyUI.size.x, sliney, snapLineColor, 1f)
+            } else {
+                slinex = -1f
+                sliney = -1f
             }
-
-            override fun unapply() = false
-        }.add()
+        }
     }
 
     @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
@@ -166,7 +161,7 @@ object HudManager {
     fun initialize() {
         polyUI.translator.addDelegate("assets/oneconfig/hud")
         polyUI.master.addChild(panel, recalculate = false)
-        panel.clipped = false
+        panel.renders = false
         // todo use for inspections
 //        it.master.onClick { (x, y) ->
 //            val obj = polyUI.inputManager.rayCheckUnsafe(this, x, y) ?: return@onClick false
@@ -249,10 +244,10 @@ object HudManager {
             toggle()
         }
         pg.prioritize()
-        pg.clipped = true
+        pg.renders = true
         if (panelExists) {
             Fade(pg, 0f, false, Animations.Default.create(0.2.seconds)) {
-                clipped = false
+                renders = false
             }.add()
             // remove scale blob
             polyUI.inputManager.focus(null)

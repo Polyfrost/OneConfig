@@ -198,12 +198,10 @@ private fun interactiveAlignment(hud: Hud<*>): Drawable {
                             alignment = alignC,
                         ).also {
                             it.radii = (hud.get().parent as Block).radii
-                        }.withBoarder().draggable(
-                            withX = false, withY = false,
-                            onStart = {
+                        }.withBoarder().draggable(withX = false, withY = false)
+                            .onDragStart {
                                 s0 = (hud.get().parent as Drawable).rotation
-                            },
-                            onDrag = {
+                            }.onDrag {
                                 var rot = s0 + (atan2(((y + height / 2f) - polyUI.mouseY).toDouble(), ((x + width / 2f) - polyUI.mouseX).toDouble()) - PI / 2.0)
                                 val low = rot - angleSnapMargin
                                 val help = rot + angleSnapMargin
@@ -218,27 +216,25 @@ private fun interactiveAlignment(hud: Hud<*>): Drawable {
                                 }
                                 rotation = rot
                                 (hud.get().parent as Drawable).rotation = rot
+                            }.apply {
+                                rotation = (hud.get().parent as Drawable).rotation
+                            }.events {
+                                Event.Mouse.Companion.Pressed then {
+                                    this[0].accept(it)
+                                }
+                                Event.Mouse.Companion.Released then {
+                                    this[0].accept(it)
+                                }
+                                Event.Mouse.Entered then {
+                                    this[0].accept(it)
+                                }
+                                Event.Mouse.Exited then {
+                                    this[0].accept(it)
+                                }
                             },
-                        ).apply {
-                            rotation = (hud.get().parent as Drawable).rotation
-                        }.events {
-                            Event.Mouse.Companion.Pressed then {
-                                this[0].accept(it)
-                            }
-                            Event.Mouse.Companion.Released then {
-                                this[0].accept(it)
-                            }
-                            Event.Mouse.Entered then {
-                                this[0].accept(it)
-                            }
-                            Event.Mouse.Exited then {
-                                this[0].accept(it)
-                            }
-                        },
                     )
-                ).draggable(
-                    withX = false, withY = false,
-                    onStart = {
+                ).draggable(withX = false, withY = false)
+                    .onDragStart {
                         px = polyUI.mouseX
                         py = polyUI.mouseY
                         hud.get().parent.let {
@@ -246,8 +242,7 @@ private fun interactiveAlignment(hud: Hud<*>): Drawable {
                             s0 = it.skewX
                             s1 = it.skewY
                         }
-                    },
-                    onDrag = {
+                    }.onDrag {
                         val dx = polyUI.mouseX - px
                         val dy = polyUI.mouseY - py
 
@@ -268,15 +263,14 @@ private fun interactiveAlignment(hud: Hud<*>): Drawable {
                             it.skewX = sx
                             it.skewY = sy
                         }
+                    }.withStates(true).setPalette {
+                        Colors.Palette(
+                            text.secondary.normal,
+                            brand.fg.normal,
+                            brand.fg.pressed,
+                            text.secondary.disabled,
+                        )
                     },
-                ).withStates(true).setPalette {
-                    Colors.Palette(
-                        text.secondary.normal,
-                        brand.fg.normal,
-                        brand.fg.pressed,
-                        text.secondary.disabled,
-                    )
-                },
             )
         ).setPalette {
             Colors.Palette(
@@ -285,27 +279,25 @@ private fun interactiveAlignment(hud: Hud<*>): Drawable {
                 brand.fg.disabled,
                 text.secondary.disabled,
             )
-        }.withStates().draggable(
-            withX = false, withY = false,
-            onStart = {
+        }.withStates().draggable(withX = false, withY = false)
+            .onDragStart {
                 px = polyUI.mouseX
                 py = polyUI.mouseY
                 val rads = (hud.get().parent as? Block)?.radii
                 s2 = rads?.get(0) ?: 0f
-            },
-            onDrag = {
+            }.onDrag {
                 val dx = polyUI.mouseX - px
                 val dy = polyUI.mouseY - py
                 val bg = (hud.get().parent as Block)
-                val bgr = bg.radii ?: return@draggable
+                val bgr = bg.radii ?: return@onDrag
                 val m = (s2 + min(dx, dy) * 0.1f).coerceIn(0f, bg.height)
-                val display = (this[0][0] as Block).radii ?: return@draggable
+                val display = (this[0][0] as Block).radii ?: return@onDrag
                 for (i in bgr.indices) {
+
                     bgr[i] = m
                     display[i] = m
                 }
             },
-        ),
         size = 125f by 125f,
         alignment = alignC,
     ).withBoarder()

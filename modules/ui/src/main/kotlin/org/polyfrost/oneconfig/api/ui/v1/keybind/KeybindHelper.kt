@@ -31,6 +31,7 @@ import org.polyfrost.polyui.input.KeyModifiers
 import org.polyfrost.polyui.input.Keys
 import org.polyfrost.polyui.input.Modifiers
 import java.util.function.BooleanSupplier
+import java.util.function.Predicate
 import kotlin.experimental.ExperimentalTypeInference
 
 /**
@@ -43,11 +44,17 @@ class KeybindHelper {
     private var mods: Modifiers = Modifiers(0)
     private var unmappedKeys = ArrayList<Int>(2)
     private var mouse = ArrayList<Int>(2)
-    private var func: (() -> Boolean)? = null
+    private var func: ((Boolean) -> Boolean)? = null
+    private var inScreens = false
 
     fun build(): KeyBinder.Bind {
         val func = func ?: throw IllegalStateException("Function must be set")
-        return KeyBinder.Bind(
+        return if (inScreens) BindInScreen(
+            unmappedKeys.nullIfEmpty()?.toIntArray(),
+            keys.nullIfEmpty()?.toTypedArray(),
+            mouse.nullIfEmpty()?.toIntArray(),
+            mods, duration, func
+        ) else KeyBinder.Bind(
             unmappedKeys.nullIfEmpty()?.toIntArray(),
             keys.nullIfEmpty()?.toTypedArray(),
             mouse.nullIfEmpty()?.toIntArray(),
@@ -59,6 +66,12 @@ class KeybindHelper {
 
     fun keys(vararg keys: Keys): KeybindHelper {
         this.keys.addAll(keys)
+        return this
+    }
+
+    @JvmOverloads
+    fun inScreens(state: Boolean = true): KeybindHelper {
+        this.inScreens = state
         return this
     }
 
@@ -97,6 +110,12 @@ class KeybindHelper {
     @OverloadResolutionByLambdaReturnType
     fun does(func: BooleanSupplier): KeybindHelper {
         this.func = { func.asBoolean }
+        return this
+    }
+
+    @OverloadResolutionByLambdaReturnType
+    fun does(func: Predicate<Boolean>): KeybindHelper {
+        this.func = { func.test(it) }
         return this
     }
 

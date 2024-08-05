@@ -175,24 +175,24 @@ public abstract class Config {
      * </br>
      */
     public static final class Category {
-        public static final Category COMBAT = new Category("Combat", 1);
-        public static final Category QOL = new Category("Quality of Life", 2);
-        public static final Category HYPIXEL = new Category("Hypixel", 3);
-        public static final Category OTHER = new Category("Other", 4);
+        public static final Category COMBAT = new Category("oneconfig.combat", 1);
+        public static final Category QOL = new Category("oneconfig.qol", 2);
+        public static final Category HYPIXEL = new Category("oneconfig.hypixel", 3);
+        public static final Category OTHER = new Category("oneconfig.other", 4);
 
         private final String name;
-        private final int id;
+        private final byte id;
 
         private Category(String name, int id) {
             this.name = name;
-            this.id = id;
+            this.id = (byte) id;
         }
 
         public String getName() {
             return name;
         }
 
-        public int getId() {
+        public byte getId() {
             return id;
         }
 

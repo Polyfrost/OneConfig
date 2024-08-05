@@ -24,23 +24,31 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.api.ui.v1
+package org.polyfrost.oneconfig.api.config.v1.annotations;
 
-import org.polyfrost.polyui.animate.Animation
-import org.polyfrost.polyui.component.Component
-import org.polyfrost.polyui.notify.Notifications
-import org.polyfrost.polyui.unit.seconds
+import org.polyfrost.oneconfig.api.config.v1.Visualizer;
+import org.polyfrost.polyui.notify.Notifications;
 
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-object Notifications {
-    private val it = Notifications(UIManager.INSTANCE.defaultInstance, max = 5)
+@Option(display = Visualizer.InfoVisualizer.class)
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.FIELD)
+public @interface Info {
+	Notifications.Type value() default Notifications.Type.Info;
 
-    fun enqueueCustom(vararg components: Component, progressFunc: Animation) {
-        it.enqueue(*components, progressFunc = progressFunc)
-    }
+	/** Title for the info block. Due to Java annotation limitations, if the value is unchanged, it will be replaced with the actual type name. */
+	String title() default "polyui.info";
 
-    @JvmOverloads
-    fun enqueue(type: Notifications.Type, title: String = type.title, description: String, durationNanos: Long = 5.seconds) {
-        it.enqueueStandard(type, title, description, durationNanos)
-    }
+	/** Icon for the info block. Due to Java annotation limitations, if the value is unchanged, it will be replaced with the actual type icon. */
+	String icon() default "polyui/info.svg";
+
+	String description();
+
+	String category() default "General";
+
+	String subcategory() default "General";
 }

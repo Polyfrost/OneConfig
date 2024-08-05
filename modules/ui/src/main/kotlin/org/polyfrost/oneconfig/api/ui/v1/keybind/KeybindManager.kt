@@ -34,7 +34,7 @@ import org.polyfrost.polyui.event.InputManager
 import org.polyfrost.polyui.input.KeyBinder
 import org.polyfrost.polyui.input.KeyModifiers
 import org.polyfrost.polyui.input.Keys
-import org.polyfrost.polyui.property.Settings
+import org.polyfrost.polyui.Settings
 import org.polyfrost.universal.UKeyboard
 
 @Suppress("UnstableApiUsage")
@@ -59,7 +59,7 @@ object KeybindManager {
             }
         }.register()
         eventHandler { _: TickEvent.End ->
-            keyBinder.update(50_000L, inputManager.mods)
+            keyBinder.update(50_000L, inputManager.mods, true)
         }.register()
 
         modsMap = hashMapOf(

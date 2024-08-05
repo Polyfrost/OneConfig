@@ -204,7 +204,7 @@ open class ConfigVisualizer {
                     val operation = Resize(parent, width = 0f, height = if (open) -value else value, add = true, anim)
                     addOperation(
                         object : ComponentOp.Animatable<Component>(parent, anim, onFinish = {
-                            this[1].clipped = !open
+                            this[1].renders = !open
                             this[1].isEnabled = !open
                         }) {
                             override fun apply(value: Float) {
@@ -213,7 +213,7 @@ open class ConfigVisualizer {
                                 self.parent.position()
                                 // asm: instruct all children of this accordion to update their visibility based on THIS, NOT its parent
                                 self[1].children!!.fastEach {
-                                    it.clipped = it.intersects(self.x, self.y, self.width, self.height)
+                                    it.renders = it.intersects(self.x, self.y, self.width, self.height)
                                 }
                             }
                         },
