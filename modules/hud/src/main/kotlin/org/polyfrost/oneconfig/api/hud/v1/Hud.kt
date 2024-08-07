@@ -253,14 +253,13 @@ abstract class Hud<T : Drawable> : Cloneable, Config("null", null, "null", null)
      * Return, in *nanoseconds*, how often the [update] method should be called.
      * Note that small values may be slightly inaccurate. See [PolyUI.every][org.polyfrost.polyui.PolyUI.every] documentation for more information.
      *
-     * PolyUI bundles time units for you, such as `0.8.`[seconds] or `50.milliseconds`.
+     * PolyUI bundles time units for you, such as `0.8.seconds` or `50.milliseconds`.
      *
      * Any negative number means [update] will never be called. A value of `0` means that [update] will be called every frame. This is not recommended.
      *
      * This method is called once when the HUD is added to the screen.
-     * @see seconds
      */
-    abstract fun updateFrequency(): Long
+    open fun updateFrequency(): Long = -1L
 
     /**
      * specify a position for this HUD to be placed at.

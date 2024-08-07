@@ -79,6 +79,12 @@ object HudManager {
     var panelExists = false
         private set
 
+    init {
+        register(TextHud.DateTime("Date:", "yyyy-MM-dd"))
+        register(TextHud.DateTime("Time:", "HH:mm:ss"))
+        register(TextHud.Simple("", "Text Hud", ""))
+    }
+
     private val hudsPage = HudsPage(hudProviders.values)
 
     val panel = Block(
@@ -191,7 +197,7 @@ object HudManager {
             }
         }
         hudProviders.forEach { (cls, h) ->
-            if (used.contains(cls)) return@forEach
+            if (cls in used) return@forEach
             val default = h.defaultPosition()
             if (!default.isPositive) return@forEach
             val hud = h.make()

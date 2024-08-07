@@ -22,7 +22,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun setHidden (Z)V
 	public abstract fun title ()Ljava/lang/String;
 	public abstract fun update ()Z
-	public abstract fun updateFrequency ()J
+	public fun updateFrequency ()J
 	protected final fun updateWhenChanged (Ljava/lang/String;)V
 }
 
@@ -85,5 +85,29 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/TextHud : org/polyfrost
 	public final fun setPrefix (Ljava/lang/String;)V
 	public final fun setSuffix (Ljava/lang/String;)V
 	public fun update ()Z
+}
+
+public final class org/polyfrost/oneconfig/api/hud/v1/TextHud$DateTime : org/polyfrost/oneconfig/api/hud/v1/TextHud {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun category ()Lorg/polyfrost/oneconfig/api/hud/v1/Hud$Category;
+	public synthetic fun clone ()Ljava/lang/Object;
+	public fun clone ()Lorg/polyfrost/oneconfig/api/hud/v1/Hud;
+	public final fun getTemplate ()Ljava/lang/String;
+	public fun id ()Ljava/lang/String;
+	public fun initialize ()V
+	public final fun setTemplate (Ljava/lang/String;)V
+	public fun title ()Ljava/lang/String;
+	public fun updateFrequency ()J
+}
+
+public final class org/polyfrost/oneconfig/api/hud/v1/TextHud$Simple : org/polyfrost/oneconfig/api/hud/v1/TextHud {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public fun category ()Lorg/polyfrost/oneconfig/api/hud/v1/Hud$Category;
+	public final fun getIt ()Ljava/lang/String;
+	public fun id ()Ljava/lang/String;
+	public fun initialize ()V
+	public final fun setIt (Ljava/lang/String;)V
+	public fun title ()Ljava/lang/String;
 }
 
