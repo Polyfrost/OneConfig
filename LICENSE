@@ -1,10 +1,10 @@
-Copyright (C) 2021-2023 Polyfrost and contributors.
+Copyright (C) 2021-2024 Polyfrost and contributors.
   <https://polyfrost.org> <https://github.com/Polyfrost>
 
   OneConfig is licensed under the terms of version 3 of the GNU Lesser 
 General Public License as published by the Free Software Foundation, AND 
 under the Additional Terms Applicable to OneConfig, as published by Polyfrost, 
-either version 1.0 of the Additional Terms, or (at your option) any later 
+either version 1.1 of the Additional Terms, or (at your option) any later 
 version.
 
   A copy of version 3 of the GNU Lesser General Public License is 
@@ -854,9 +854,9 @@ permanent authorization for you to choose that version for the
 Library.
 
               ADDITIONAL TERMS APPLICABLE TO ONECONFIG
-                      Version 1.0, 6 August 2022
+                      Version 1.1, 16 August 2024
 
- Copyright (C) 2022 Polyfrost 
+ Copyright (C) 2024 Polyfrost 
    <https://polyfrost.org> <https://github.com/Polyfrost>
 
  Everyone is permitted to copy and distribute verbatim copies
@@ -955,12 +955,12 @@ authorization from Polyfrost, in any Adaptation of the Library.
 
   5. Exceptions.
 
-  You may convey an Adapatation of the Library without being bound 
+  You may convey an Adaptation of the Library without being bound 
 by Section 3 of these Additional Terms if the Library is not used 
 for any commercial purpose, to gain commercial advantage and/or 
 for monetary compensation.
 
-  You may convey an Adapatation of the Library under the GNU GPL 
+  You may convey an Adaptation of the Library under the GNU GPL 
 without being bound by Section 3 of these Additional Terms.
 
   You may convey the Standard Version of the Library 
