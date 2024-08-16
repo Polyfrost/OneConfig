@@ -1,5 +1,7 @@
 ![OneConfig_banner_wide](https://user-images.githubusercontent.com/62163840/226811571-ffe7a524-c96a-4b6e-9ca9-d29439f5174f.png)
 
+# This README is wildly outdated for V1. We will be writing docs soon. For a quick and dirty migration guide, see https://docsv1.polyfrost.org/temporary-v0-greater-than-v1-migration-guide
+
 # OneConfig
 ![Dev Worflow Status](https://img.shields.io/github/actions/workflow/status/Polyfrost/OneConfig/release.yml?style=for-the-badge&color=1452cc&label=release)
 ![Dev Worflow Status](https://img.shields.io/github/actions/workflow/status/Polyfrost/OneConfig/build.yml?style=for-the-badge&color=1452cc&label=build)
