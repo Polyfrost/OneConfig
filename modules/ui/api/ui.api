@@ -1,30 +1,32 @@
 public final class org/polyfrost/oneconfig/api/ui/v1/NotificationsManager {
 	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/ui/v1/NotificationsManager;
-	public final fun enqueue (Lorg/polyfrost/polyui/notify/Notifications$Type;Ljava/lang/String;)V
-	public final fun enqueue (Lorg/polyfrost/polyui/notify/Notifications$Type;Ljava/lang/String;Ljava/lang/String;)V
-	public final fun enqueue (Lorg/polyfrost/polyui/notify/Notifications$Type;Ljava/lang/String;Ljava/lang/String;J)V
-	public static synthetic fun enqueue$default (Lorg/polyfrost/oneconfig/api/ui/v1/NotificationsManager;Lorg/polyfrost/polyui/notify/Notifications$Type;Ljava/lang/String;Ljava/lang/String;JILjava/lang/Object;)V
-	public final fun enqueueCustom ([Lorg/polyfrost/polyui/component/Component;Lorg/polyfrost/polyui/animate/Animation;)V
+	public final fun enqueue (Lorg/polyfrost/oneconfig/api/ui/v1/NotificationsManager$Type;Ljava/lang/String;J)Lorg/polyfrost/polyui/component/impl/Block;
+	public final fun enqueue (Lorg/polyfrost/oneconfig/api/ui/v1/NotificationsManager$Type;Ljava/lang/String;Ljava/lang/String;J)Lorg/polyfrost/polyui/component/impl/Block;
+	public static synthetic fun enqueue$default (Lorg/polyfrost/oneconfig/api/ui/v1/NotificationsManager;Lorg/polyfrost/oneconfig/api/ui/v1/NotificationsManager$Type;Ljava/lang/String;Ljava/lang/String;JILjava/lang/Object;)Lorg/polyfrost/polyui/component/impl/Block;
+	public final fun enqueueCustom ([Lorg/polyfrost/polyui/component/Component;Lorg/polyfrost/polyui/animate/Animation;)Lorg/polyfrost/polyui/component/impl/Block;
 }
 
-public final class org/polyfrost/oneconfig/api/ui/v1/PolyUIBuilder {
-	public fun align (Lorg/polyfrost/polyui/unit/Align;)Lorg/polyfrost/oneconfig/api/ui/v1/PolyUIBuilder;
-	public fun atResolution (FF)Lorg/polyfrost/oneconfig/api/ui/v1/PolyUIBuilder;
-	public fun backgroundColor (Lorg/polyfrost/polyui/color/PolyColor;)Lorg/polyfrost/oneconfig/api/ui/v1/PolyUIBuilder;
-	public fun blurs ()Lorg/polyfrost/oneconfig/api/ui/v1/PolyUIBuilder;
-	public static fun builder ()Lorg/polyfrost/oneconfig/api/ui/v1/PolyUIBuilder;
-	public fun colors (Lorg/polyfrost/polyui/color/Colors;)Lorg/polyfrost/oneconfig/api/ui/v1/PolyUIBuilder;
-	public fun input (Lorg/polyfrost/polyui/event/InputManager;)Lorg/polyfrost/oneconfig/api/ui/v1/PolyUIBuilder;
+public final class org/polyfrost/oneconfig/api/ui/v1/NotificationsManager$Type : java/lang/Enum {
+	public static final field Error Lorg/polyfrost/oneconfig/api/ui/v1/NotificationsManager$Type;
+	public static final field Info Lorg/polyfrost/oneconfig/api/ui/v1/NotificationsManager$Type;
+	public static final field Success Lorg/polyfrost/oneconfig/api/ui/v1/NotificationsManager$Type;
+	public static final field Warning Lorg/polyfrost/oneconfig/api/ui/v1/NotificationsManager$Type;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun getIcon ()Ljava/lang/String;
+	public final fun getTitle ()Ljava/lang/String;
+	public static fun valueOf (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/ui/v1/NotificationsManager$Type;
+	public static fun values ()[Lorg/polyfrost/oneconfig/api/ui/v1/NotificationsManager$Type;
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/OCPolyUIBuilder : org/polyfrost/polyui/utils/PolyUIBuilder {
+	public fun atResolution (FF)Lorg/polyfrost/oneconfig/api/ui/v1/OCPolyUIBuilder;
+	public fun blurs ()Lorg/polyfrost/oneconfig/api/ui/v1/OCPolyUIBuilder;
+	public static fun create ()Lorg/polyfrost/oneconfig/api/ui/v1/OCPolyUIBuilder;
 	public fun make ([Lorg/polyfrost/polyui/component/Drawable;)Lorg/polyfrost/polyui/PolyUI;
 	public fun makeAndOpen ([Lorg/polyfrost/polyui/component/Drawable;)Lorg/polyfrost/polyui/PolyUI;
-	public fun onClose (Ljava/lang/Runnable;)Lorg/polyfrost/oneconfig/api/ui/v1/PolyUIBuilder;
-	public fun onClose (Ljava/util/function/Consumer;)Lorg/polyfrost/oneconfig/api/ui/v1/PolyUIBuilder;
-	public fun pauses ()Lorg/polyfrost/oneconfig/api/ui/v1/PolyUIBuilder;
-	public fun renderer (Lorg/polyfrost/polyui/renderer/Renderer;)Lorg/polyfrost/oneconfig/api/ui/v1/PolyUIBuilder;
-	public fun settings (Lorg/polyfrost/polyui/Settings;)Lorg/polyfrost/oneconfig/api/ui/v1/PolyUIBuilder;
-	public fun size (FF)Lorg/polyfrost/oneconfig/api/ui/v1/PolyUIBuilder;
-	public fun translator (Lorg/polyfrost/polyui/input/Translator;)Lorg/polyfrost/oneconfig/api/ui/v1/PolyUIBuilder;
-	public fun translatorDelegate (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/ui/v1/PolyUIBuilder;
+	public fun onClose (Ljava/lang/Runnable;)Lorg/polyfrost/oneconfig/api/ui/v1/OCPolyUIBuilder;
+	public fun onClose (Ljava/util/function/Consumer;)Lorg/polyfrost/oneconfig/api/ui/v1/OCPolyUIBuilder;
+	public fun pauses ()Lorg/polyfrost/oneconfig/api/ui/v1/OCPolyUIBuilder;
 }
 
 public abstract interface class org/polyfrost/oneconfig/api/ui/v1/TinyFD {
@@ -87,11 +89,11 @@ public final class org/polyfrost/oneconfig/api/ui/v1/keybind/KeybindHelper$Compa
 public final class org/polyfrost/oneconfig/api/ui/v1/keybind/KeybindManager {
 	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/ui/v1/keybind/KeybindManager;
 	public static final fun builder ()Lorg/polyfrost/oneconfig/api/ui/v1/keybind/KeybindHelper;
-	public final fun getInputManager ()Lorg/polyfrost/polyui/event/InputManager;
+	public final fun getInputManager ()Lorg/polyfrost/polyui/input/InputManager;
 	public static final fun getKeysMap ()Ljava/util/Map;
 	public static final fun getModsMap ()Ljava/util/Map;
 	public static final fun registerKeybind (Lorg/polyfrost/polyui/input/KeyBinder$Bind;)Lorg/polyfrost/polyui/input/KeyBinder$Bind;
-	public static final fun translateKey (Lorg/polyfrost/polyui/event/InputManager;ICZ)V
+	public static final fun translateKey (Lorg/polyfrost/polyui/input/InputManager;ICZ)V
 }
 
 public abstract interface class org/polyfrost/oneconfig/api/ui/v1/screen/BlurScreen {

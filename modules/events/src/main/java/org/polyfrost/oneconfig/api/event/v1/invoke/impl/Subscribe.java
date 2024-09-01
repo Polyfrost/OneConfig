@@ -46,4 +46,9 @@ import java.util.function.Consumer;
 @Target(ElementType.METHOD)
 @ApiStatus.Obsolete
 public @interface Subscribe {
+    /**
+     * Priority for this event handler.
+     * @see EventHandler#getPriority()
+     */
+    int priority() default 0;
 }

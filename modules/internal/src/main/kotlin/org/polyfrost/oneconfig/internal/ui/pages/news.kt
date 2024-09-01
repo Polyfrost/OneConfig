@@ -26,7 +26,7 @@
 
 package org.polyfrost.oneconfig.internal.ui.pages
 
-import org.polyfrost.polyui.renderer.data.PolyImage
+import org.polyfrost.polyui.data.PolyImage
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId

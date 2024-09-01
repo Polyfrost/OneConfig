@@ -30,7 +30,8 @@ import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.hud.v1.Hud
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.polyui.color.PolyColor
-import org.polyfrost.polyui.component.*
+import org.polyfrost.polyui.component.Drawable
+import org.polyfrost.polyui.component.extensions.*
 import org.polyfrost.polyui.component.impl.Block
 import org.polyfrost.polyui.component.impl.Image
 import org.polyfrost.polyui.component.impl.PopupMenu

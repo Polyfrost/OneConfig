@@ -3,6 +3,7 @@ public abstract class org/polyfrost/oneconfig/api/config/v1/Config {
 	protected field tree Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/config/v1/Config$Category;)V
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/config/v1/Config$Category;)V
+	public final fun addAliases ([Ljava/lang/String;)V
 	protected fun addCallback (Ljava/lang/String;Ljava/lang/Runnable;)V
 	protected fun addCallback (Ljava/lang/String;Ljava/util/function/Consumer;)V
 	protected fun addCallback (Ljava/lang/String;Ljava/util/function/Predicate;)V
@@ -197,7 +198,6 @@ public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1
 	public abstract fun icon ()Ljava/lang/String;
 	public abstract fun subcategory ()Ljava/lang/String;
 	public abstract fun title ()Ljava/lang/String;
-	public abstract fun value ()Lorg/polyfrost/polyui/notify/Notifications$Type;
 }
 
 public abstract interface annotation class org/polyfrost/oneconfig/api/config/v1/annotations/Keybind : java/lang/annotation/Annotation {

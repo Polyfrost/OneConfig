@@ -40,16 +40,17 @@ import org.polyfrost.polyui.animate.Animations
 import org.polyfrost.polyui.color.Colors
 import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.color.PolyColor.Constants.TRANSPARENT
-import org.polyfrost.polyui.component.*
+import org.polyfrost.polyui.color.rgba
+import org.polyfrost.polyui.component.Drawable
+import org.polyfrost.polyui.component.extensions.*
 import org.polyfrost.polyui.component.impl.*
+import org.polyfrost.polyui.data.Cursor
 import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.operations.Fade
 import org.polyfrost.polyui.operations.Move
-import org.polyfrost.polyui.renderer.data.Cursor
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.unit.seconds
-import org.polyfrost.polyui.utils.rgba
 import kotlin.math.PI
 
 object HudManager {
@@ -135,9 +136,9 @@ object HudManager {
     ).apply {
         rawResize = true
         addOperation {
-            if(polyUI.mouseDown) {
-                if(slinex != -1f) polyUI.renderer.line(slinex, 0f, slinex, polyUI.size.y, snapLineColor, 1f)
-                if(sliney != -1f) polyUI.renderer.line(0f, sliney, polyUI.size.x, sliney, snapLineColor, 1f)
+            if (polyUI.mouseDown) {
+                if (slinex != -1f) polyUI.renderer.line(slinex, 0f, slinex, polyUI.size.y, snapLineColor, 1f)
+                if (sliney != -1f) polyUI.renderer.line(0f, sliney, polyUI.size.x, sliney, snapLineColor, 1f)
             } else {
                 slinex = -1f
                 sliney = -1f

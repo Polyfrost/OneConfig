@@ -28,7 +28,7 @@ package org.polyfrost.oneconfig.api.config.v1.serialize.adapter.impl;
 
 import org.polyfrost.oneconfig.api.config.v1.serialize.adapter.Adapter;
 import org.polyfrost.polyui.color.PolyColor;
-import org.polyfrost.polyui.utils.ColorUtils;
+import org.polyfrost.polyui.color.ColorUtils;
 
 public class PolyColorAdapter extends Adapter<PolyColor, int[]> {
 	@Override

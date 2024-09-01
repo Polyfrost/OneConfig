@@ -36,7 +36,7 @@ import org.polyfrost.oneconfig.api.platform.v1.Platform;
 import org.polyfrost.oneconfig.api.ui.v1.screen.BlurScreen;
 import org.polyfrost.polyui.PolyUI;
 import org.polyfrost.polyui.component.Drawable;
-import org.polyfrost.polyui.renderer.data.Cursor;
+import org.polyfrost.polyui.data.Cursor;
 import org.polyfrost.universal.UKeyboard;
 import org.polyfrost.universal.UMatrixStack;
 import org.polyfrost.universal.UScreen;

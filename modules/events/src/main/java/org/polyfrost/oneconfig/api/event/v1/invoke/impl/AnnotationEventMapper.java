@@ -44,14 +44,15 @@ public class AnnotationEventMapper implements EventCollector {
         Method[] methods = object.getClass().getDeclaredMethods();
         List<EventHandler<?>> list = new ArrayList<>(Math.min(10, methods.length));
         for (Method m : methods) {
-            if (!m.isAnnotationPresent(Subscribe.class)) continue;
-            list.add(create(m, object));
+            Subscribe ann = m.getAnnotation(Subscribe.class);
+            if(ann == null) continue;
+            list.add(create(m, object, ann.priority()));
         }
         return list;
     }
 
     @SuppressWarnings("unchecked")
-    private static EventHandler<?> create(Method m, Object owner) {
+    private static EventHandler<?> create(Method m, Object owner, int priority) {
         try {
             if (m.getParameterCount() != 1) {
                 throw new EventException("Failed to register event handler: Method must have 1 parameter of type Event");
@@ -69,6 +70,11 @@ public class AnnotationEventMapper implements EventCollector {
                     public Class<Event> getEventClass() {
                         return eventClass;
                     }
+
+                    @Override
+                    public int getPriority() {
+                        return priority;
+                    }
                 };
             } else if (m.getReturnType() == void.class) {
                 Consumer<Event> f = MHUtils.getConsumerHandle(owner, m.getName(), eventClass).getOrThrow();
@@ -82,6 +88,11 @@ public class AnnotationEventMapper implements EventCollector {
                     @Override
                     public Class<Event> getEventClass() {
                         return eventClass;
+                    }
+
+                    @Override
+                    public int getPriority() {
+                        return priority;
                     }
                 };
             } else throw new IllegalArgumentException("Failed to register event handler: Method must return boolean or void");

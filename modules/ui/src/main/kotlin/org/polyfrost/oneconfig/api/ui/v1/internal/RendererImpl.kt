@@ -42,9 +42,8 @@ import org.lwjgl.system.MemoryUtil
 import org.polyfrost.universal.UGraphics
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.renderer.Renderer
-import org.polyfrost.polyui.renderer.data.Font
-import org.polyfrost.polyui.renderer.data.Framebuffer
-import org.polyfrost.polyui.renderer.data.PolyImage
+import org.polyfrost.polyui.data.Font
+import org.polyfrost.polyui.data.PolyImage
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.utils.*
 import java.nio.ByteBuffer
@@ -144,9 +143,6 @@ object RendererImpl : Renderer {
 
     override fun popScissor() = nvgResetScissor(vg)
 
-    override fun drawFramebuffer(fbo: Framebuffer, x: Float, y: Float, width: Float, height: Float) {
-    }
-
     override fun text(
         font: Font,
         x: Float,
@@ -196,16 +192,6 @@ object RendererImpl : Renderer {
         nvgFillPaint(vg, nvgPaint)
         nvgFill(vg)
     }
-
-    override fun supportsFramebuffers() = false
-
-    override fun createFramebuffer(width: Float, height: Float) = throw NotImplementedError()
-
-    override fun bindFramebuffer(fbo: Framebuffer) = throw NotImplementedError()
-
-    override fun unbindFramebuffer() = throw NotImplementedError()
-
-    override fun delete(fbo: Framebuffer?) = throw NotImplementedError()
 
     override fun delete(font: Font?) {
         fonts.remove(font)

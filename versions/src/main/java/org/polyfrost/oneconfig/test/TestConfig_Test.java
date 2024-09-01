@@ -31,7 +31,7 @@ import org.polyfrost.oneconfig.api.config.v1.annotations.Number;
 import org.polyfrost.oneconfig.api.config.v1.annotations.*;
 import org.polyfrost.polyui.color.PolyColor;
 import org.polyfrost.polyui.unit.Align;
-import org.polyfrost.polyui.utils.ColorUtils;
+import org.polyfrost.polyui.color.ColorUtils;
 import org.polyfrost.universal.UChat;
 
 @SuppressWarnings("unused")

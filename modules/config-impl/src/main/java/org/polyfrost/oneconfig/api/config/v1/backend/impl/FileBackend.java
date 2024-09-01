@@ -43,7 +43,7 @@ import java.util.*;
 public class FileBackend extends Backend {
     private static final Charset CHARSET = StandardCharsets.UTF_8;
     public final Path folder;
-    private final Map<String, FileSerializer<String>> serializers = new HashMap<>(8);
+    private final Map<String, FileSerializer<String>> serializers = new HashMap<>(4);
     private boolean hasWatcher = false;
     private volatile boolean dodge = false;
 

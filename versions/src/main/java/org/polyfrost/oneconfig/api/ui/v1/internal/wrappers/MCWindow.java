@@ -34,7 +34,7 @@ import org.polyfrost.oneconfig.api.platform.v1.Platform;
 import org.polyfrost.oneconfig.utils.v1.IOUtils;
 import org.polyfrost.polyui.PolyUI;
 import org.polyfrost.polyui.renderer.Window;
-import org.polyfrost.polyui.renderer.data.Cursor;
+import org.polyfrost.polyui.data.Cursor;
 
 //#if MC>=11300
 //$$ import static org.lwjgl.glfw.GLFW.*;

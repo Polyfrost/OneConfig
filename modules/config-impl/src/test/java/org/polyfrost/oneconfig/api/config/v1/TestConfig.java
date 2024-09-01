@@ -38,7 +38,7 @@ import org.polyfrost.oneconfig.api.config.v1.annotations.Switch;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Text;
 import org.polyfrost.polyui.color.PolyColor;
 import org.polyfrost.polyui.unit.Align;
-import org.polyfrost.polyui.utils.ColorUtils;
+import org.polyfrost.polyui.color.ColorUtils;
 
 import java.util.Arrays;
 import java.util.List;

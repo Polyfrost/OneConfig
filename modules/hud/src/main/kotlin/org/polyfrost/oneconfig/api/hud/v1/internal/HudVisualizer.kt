@@ -31,8 +31,8 @@ import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.component.impl.Group
 import org.polyfrost.polyui.component.impl.Image
 import org.polyfrost.polyui.component.impl.Text
-import org.polyfrost.polyui.component.setFont
-import org.polyfrost.polyui.renderer.data.PolyImage
+import org.polyfrost.polyui.component.extensions.setFont
+import org.polyfrost.polyui.data.PolyImage
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.utils.mapToArray
 

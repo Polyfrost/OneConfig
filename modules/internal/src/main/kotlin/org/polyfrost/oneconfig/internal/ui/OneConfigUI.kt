@@ -32,24 +32,25 @@ import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.internal.ConfigVisualizer
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.platform.v1.Platform
-import org.polyfrost.oneconfig.api.ui.v1.PolyUIBuilder
+import org.polyfrost.oneconfig.api.ui.v1.OCPolyUIBuilder
 import org.polyfrost.oneconfig.internal.ui.pages.FeedbackPage
 import org.polyfrost.oneconfig.internal.ui.pages.ModsPage
 import org.polyfrost.oneconfig.internal.ui.pages.ThemesPage
 import org.polyfrost.polyui.animate.Animations
+import org.polyfrost.polyui.color.rgba
 import org.polyfrost.polyui.component.*
+import org.polyfrost.polyui.component.extensions.*
 import org.polyfrost.polyui.component.impl.*
 import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.operations.Move
 import org.polyfrost.polyui.operations.Recolor
-import org.polyfrost.polyui.renderer.data.Cursor
-import org.polyfrost.polyui.renderer.data.PolyImage
+import org.polyfrost.polyui.data.Cursor
+import org.polyfrost.polyui.data.PolyImage
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.unit.by
 import org.polyfrost.polyui.unit.seconds
 import org.polyfrost.polyui.utils.image
-import org.polyfrost.polyui.utils.rgba
 
 object OneConfigUI {
     private val playerHead = PolyImage(
@@ -66,7 +67,7 @@ object OneConfigUI {
 
     @JvmOverloads
     fun open(initialScreen: Component = ModsPage(ConfigManager.active().trees())) {
-        val builder = PolyUIBuilder.builder().blurs().backgroundColor(rgba(21, 21, 21)).atResolution(1920f, 1080f).size(1400f, 700f)
+        val builder = OCPolyUIBuilder.create().blurs().atResolution(1920f, 1080f).backgroundColor(rgba(21, 21, 21)).size(1400f, 700f) as OCPolyUIBuilder
         builder.translatorDelegate("assets/oneconfig")
         builder.onClose { _ ->
             for (t in ConfigManager.active().trees()) {

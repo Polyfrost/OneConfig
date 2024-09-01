@@ -184,5 +184,6 @@ public class org/polyfrost/oneconfig/api/event/v1/invoke/impl/AnnotationEventMap
 }
 
 public abstract interface annotation class org/polyfrost/oneconfig/api/event/v1/invoke/impl/Subscribe : java/lang/annotation/Annotation {
+	public abstract fun priority ()I
 }
 

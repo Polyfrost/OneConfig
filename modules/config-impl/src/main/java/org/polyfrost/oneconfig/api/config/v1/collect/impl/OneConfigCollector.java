@@ -73,16 +73,19 @@ public class OneConfigCollector extends ReflectiveCollector {
 
     @Override
     protected void handleField(@NotNull Field f, @NotNull Object src, @NotNull Tree tree) {
-        for (Annotation a : f.getAnnotations()) {
-            if (a.annotationType() == Include.class) {
+        for (Annotation a : f.getDeclaredAnnotations()) {
+            Class<? extends Annotation> type = a.annotationType();
+            if (type == Include.class) {
                 Property<?> p = Properties.field(null, null, f, src);
                 tree.put(p);
                 break;
             }
-            Option opt = a.annotationType().getAnnotation(Option.class);
+            Option opt = type.getDeclaredAnnotation(Option.class);
             if (opt == null) continue;
             try {
-                Property<?> p = Properties.field(null, null, f, src);
+                Property<?> p;
+                if (type == Button.class) p = Properties.dummy();
+                else p = Properties.field(null, null, f, src);
                 handleMetadata(tree, p, a, opt, f);
                 tree.put(p);
             } catch (Throwable e) {
@@ -107,7 +110,7 @@ public class OneConfigCollector extends ReflectiveCollector {
                 LOGGER.error("Failed to invoke method for button {}", methodString, e);
             }
         });
-        p.addMetadata("visualizer", b.annotationType().getAnnotation(Option.class).display());
+        p.addMetadata("visualizer", b.annotationType().getDeclaredAnnotation(Option.class).display());
         p.addMetadata("text", strv(b.text()));
         p.addMetadata("icon", strv(b.icon()));
         p.addMetadata("category", b.category());
@@ -137,8 +140,10 @@ public class OneConfigCollector extends ReflectiveCollector {
 
         PreviousNames p = f.getDeclaredAnnotation(PreviousNames.class);
         if (p != null) {
-            HashMap<String, String> map = tree.getOrPutMetadata("migrationMap", () -> new HashMap<>(8));
-            for (String s : p.value()) {
+            String[] names = p.value();
+            int len = names.length;
+            HashMap<String, String> map = tree.getOrPutMetadata("migrationMap", () -> new HashMap<>(len));
+            for (String s : names) {
                 map.put(s, property.getID());
             }
         }

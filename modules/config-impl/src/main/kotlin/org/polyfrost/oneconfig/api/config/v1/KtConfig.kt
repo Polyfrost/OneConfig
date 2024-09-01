@@ -27,8 +27,8 @@
 package org.polyfrost.oneconfig.api.config.v1
 
 import org.polyfrost.polyui.color.PolyColor
+import org.polyfrost.polyui.color.rgba
 import org.polyfrost.polyui.input.KeyBinder
-import org.polyfrost.polyui.utils.rgba
 import kotlin.properties.PropertyDelegateProvider
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty

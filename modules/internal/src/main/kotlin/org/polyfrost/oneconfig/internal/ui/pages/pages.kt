@@ -26,15 +26,16 @@
 
 package org.polyfrost.oneconfig.internal.ui.pages
 
-import org.polyfrost.oneconfig.api.config.v1.internal.ConfigVisualizer
 import org.polyfrost.oneconfig.api.config.v1.Tree
+import org.polyfrost.oneconfig.api.config.v1.internal.ConfigVisualizer
 import org.polyfrost.oneconfig.internal.ui.OneConfigUI
-import org.polyfrost.polyui.component.*
+import org.polyfrost.polyui.component.Drawable
+import org.polyfrost.polyui.component.extensions.*
 import org.polyfrost.polyui.component.impl.Block
 import org.polyfrost.polyui.component.impl.Group
 import org.polyfrost.polyui.component.impl.Image
 import org.polyfrost.polyui.component.impl.Text
-import org.polyfrost.polyui.renderer.data.PolyImage
+import org.polyfrost.polyui.data.PolyImage
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.utils.image

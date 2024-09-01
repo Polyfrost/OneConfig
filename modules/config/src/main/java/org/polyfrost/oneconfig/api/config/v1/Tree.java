@@ -28,7 +28,7 @@ package org.polyfrost.oneconfig.api.config.v1;
 
 import java.io.Serializable;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -53,9 +53,9 @@ public class Tree extends Node implements Serializable {
     public Tree(@Nullable String id, @Nullable String title, @Nullable String description, @Nullable Map<String, Node> items) {
         super(id, title, description);
         if (items != null) {
-            theMap = new HashMap<>(items.size());
+            theMap = new LinkedHashMap<>(items.size());
             theMap.putAll(items);
-        } else theMap = new HashMap<>();
+        } else theMap = new LinkedHashMap<>();
         map = Collections.unmodifiableMap(theMap);
     }
 
@@ -98,7 +98,7 @@ public class Tree extends Node implements Serializable {
             Node n = e.getValue();
             if (n instanceof Tree) {
                 Tree tt = (Tree) n;
-                Map<String, Object> sub = new HashMap<>(tt.theMap.size());
+                Map<String, Object> sub = new LinkedHashMap<>(tt.theMap.size());
                 _unpack(sub, tt);
                 out.put(e.getKey(), sub);
             } else {
@@ -272,7 +272,7 @@ public class Tree extends Node implements Serializable {
      * Unpack this tree into a map of objects, containing either more Maps or the values of the properties of this tree.
      */
     public Map<String, Object> unpack() {
-        Map<String, Object> out = new HashMap<>(theMap.size());
+        Map<String, Object> out = new LinkedHashMap<>(theMap.size());
         _unpack(out, this);
         return out;
     }

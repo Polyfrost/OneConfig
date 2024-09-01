@@ -28,16 +28,16 @@ package org.polyfrost.oneconfig.api.config.v1
 
 import org.polyfrost.oneconfig.api.config.v1.internal.ConfigVisualizer.Companion.strv
 import org.polyfrost.polyui.color.PolyColor
+import org.polyfrost.polyui.color.mutable
 import org.polyfrost.polyui.component.*
+import org.polyfrost.polyui.component.extensions.*
 import org.polyfrost.polyui.component.impl.*
 import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.input.KeyBinder
-import org.polyfrost.polyui.notify.Notifications
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.utils.image
 import org.polyfrost.polyui.utils.mapToArray
-import org.polyfrost.polyui.utils.mutable
 import org.polyfrost.polyui.utils.ref
 
 /**
@@ -130,35 +130,7 @@ fun interface Visualizer {
 
     class InfoVisualizer : Visualizer {
         override fun visualize(prop: Property<*>) = Group(size = Vec2.ONE).onInit {
-            val type = prop.getMetadata<Notifications.Type>("type") ?: Notifications.Type.Info
-            val title = prop.getMetadata<String>("title")?.strv() ?: Notifications.Type.Info.name
-            val icon = prop.getMetadata<String>("icon") ?: Notifications.Type.Info.icon
-            if (type != Notifications.Type.Info) {
-                if (title == Notifications.Type.Info.name) {
-                    (parent[0][1][0] as Text).text = type.name
-                }
-                if (icon == Notifications.Type.Info.icon) {
-                    (parent[0][0] as Image).image = type.icon.image()
-                }
-            }
-            val colors = polyUI.colors
-            when (type) {
-                Notifications.Type.Info -> {
-                    (parent[0][0] as Drawable).palette = colors.brand.fg
-                }
-
-                Notifications.Type.Warning -> {
-                    (parent[0][0] as Drawable).palette = colors.state.warning
-                }
-
-                Notifications.Type.Error -> {
-                    (parent[0][0] as Drawable).palette = colors.state.danger
-                }
-
-                Notifications.Type.Success -> {
-                    (parent[0][0] as Drawable).palette = colors.state.success
-                }
-            }
+            // todo
         }
     }
 

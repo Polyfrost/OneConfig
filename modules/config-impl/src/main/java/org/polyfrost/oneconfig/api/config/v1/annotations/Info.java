@@ -27,7 +27,6 @@
 package org.polyfrost.oneconfig.api.config.v1.annotations;
 
 import org.polyfrost.oneconfig.api.config.v1.Visualizer;
-import org.polyfrost.polyui.notify.Notifications;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -38,7 +37,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 public @interface Info {
-	Notifications.Type value() default Notifications.Type.Info;
+//	Notifications.Type value() default Notifications.Type.Info;
 
 	/** Title for the info block. Due to Java annotation limitations, if the value is unchanged, it will be replaced with the actual type name. */
 	String title() default "polyui.info";

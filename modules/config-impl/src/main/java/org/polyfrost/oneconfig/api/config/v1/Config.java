@@ -33,6 +33,7 @@ import org.polyfrost.oneconfig.api.config.v1.annotations.Include;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -55,6 +56,10 @@ public abstract class Config {
 
     public Config(@NotNull String id, @NotNull String title, @NotNull Category category) {
         this(id, null, title, category);
+    }
+
+    public final void addAliases(String... aliases) {
+        tree.getOrPutMetadata("aliases", () -> new ArrayList<String>(aliases.length)).addAll(Arrays.asList(aliases));
     }
 
     @ApiStatus.Internal

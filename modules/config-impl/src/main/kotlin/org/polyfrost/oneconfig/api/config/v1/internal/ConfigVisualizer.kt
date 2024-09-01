@@ -33,13 +33,15 @@ import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.Visualizer
 import org.polyfrost.polyui.animate.Animations
 import org.polyfrost.polyui.color.PolyColor
+import org.polyfrost.polyui.color.rgba
 import org.polyfrost.polyui.component.*
+import org.polyfrost.polyui.component.extensions.*
 import org.polyfrost.polyui.component.impl.*
+import org.polyfrost.polyui.data.PolyImage
 import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.operations.ComponentOp
 import org.polyfrost.polyui.operations.Resize
 import org.polyfrost.polyui.operations.Rotate
-import org.polyfrost.polyui.renderer.data.PolyImage
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.unit.by
@@ -120,7 +122,7 @@ open class ConfigVisualizer {
         return Group(
             createHeaders(categories),
             categories[initialPage] ?: categories.values.first(),
-            alignment = alignC,
+            alignment = Align(cross = Align.Cross.Start, maxRowSize = 1),
             visibleSize = Vec2(1130f, 635f),
         )
     }
