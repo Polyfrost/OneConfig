@@ -120,7 +120,7 @@ public class LocrawInfo implements Serializable {
          */
         @Deprecated
         DROPPER(""),
-        WOOL_WARS("WOOL_GAMES"), VAMPIREZ("VAMPIREZ"), PAINTBALL("PAINTBALL"), QUAKE("QUAKECRAFT"), WALLS("WALLS"), TURBO_KART_RACERS("GINGERBREAD"), ARENA("ARENA"), REPLAY("REPLAY");
+        WOOL_GAMES("WOOL_GAMES"), VAMPIREZ("VAMPIREZ"), PAINTBALL("PAINTBALL"), QUAKE("QUAKECRAFT"), WALLS("WALLS"), TURBO_KART_RACERS("GINGERBREAD"), ARENA("ARENA"), REPLAY("REPLAY");
 
         private final String serverName;
 

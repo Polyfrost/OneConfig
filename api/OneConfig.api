@@ -2093,7 +2093,7 @@ public final class cc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType : ja
 	public static final field VAMPIREZ Lcc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
 	public static final field WALLS Lcc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
 	public static final field WARLORDS Lcc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
-	public static final field WOOL_WARS Lcc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
+	public static final field WOOL_GAMES Lcc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
 	public static fun getFromLocraw (Ljava/lang/String;)Lcc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
 	public fun getServerName ()Ljava/lang/String;
 	public static fun valueOf (Ljava/lang/String;)Lcc/polyfrost/oneconfig/utils/hypixel/LocrawInfo$GameType;
