@@ -76,7 +76,7 @@ public class UIManagerImpl
     private static final String RENDERER_IMPL_PACKAGE = "org.polyfrost.oneconfig.api.ui.v1.internal.";
     private static final String LWJGL_FUNCTION_PROVIDER = "org.polyfrost.oneconfig.internal.legacy.Lwjgl2FunctionProvider";
     private static final String LWJGL_FUNCTION_PROVIDER_ASM = LWJGL_FUNCTION_PROVIDER.replace('.', '/');
-    private static final String JAR_NAME = "lwjgl-legacy.jar";
+    private static final String JAR_NAME = "legacy-@LWJGLVER@.jar";
     private static final Path TEMP_DIR = Paths.get("oneconfig", "lwjgl").toAbsolutePath();
     private PolyUI ui;
 

@@ -4,12 +4,12 @@
 import org.polyfrost.gradle.util.noServerRunConfigs
 import org.polyfrost.gradle.util.prebundle
 import java.text.SimpleDateFormat
-import java.util.zip.ZipFile
 
 plugins {
     alias(libs.plugins.kotlin)
     id(libs.plugins.pgt.main.get().pluginId)
     id(libs.plugins.pgt.default.get().pluginId)
+    alias(libs.plugins.blossom)
     `java-library`
 }
 
@@ -18,6 +18,10 @@ val tweakClass = "org.polyfrost.oneconfig.internal.legacy.OneConfigTweaker"
 
 base.archivesName = platform.toString()
 java.withSourcesJar()
+
+blossom {
+    replaceToken("@LWJGLVER@", libs.versions.lwjgl.get())
+}
 
 loom {
     noServerRunConfigs()
