@@ -15,7 +15,9 @@ version = "$major.$minor.$patch"
 group = properties["group"] as String
 
 subprojects {
-    version = rootProject.version
+    if (project.name != "legacy" || project.parent?.name != "dependencies") {
+        version = rootProject.version
+    }
     group = "${rootProject.group}.${rootProject.properties["mod_id"] as String}"
 
     apply(plugin = rootProject.libs.plugins.licenser.get().pluginId)
