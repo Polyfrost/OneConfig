@@ -51,7 +51,7 @@ jobs:
         run: ./gradlew publishAllPublicationsToReleasesRepository -Pmod_minor_version=${{ steps.version.outputs.VERSION_NUMBER }} -PreleasesUsername=${{ secrets.MAVEN_NAME }} -PreleasesPassword=${{ secrets.MAVEN_TOKEN }} -DBUILDING_CI=true --no-daemon
 
       - name: Upload Build Artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: oneconfig-artifacts
           path: versions/**/build/libs/
