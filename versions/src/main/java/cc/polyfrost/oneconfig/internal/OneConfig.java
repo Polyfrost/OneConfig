@@ -134,6 +134,8 @@ public class OneConfig {
                     LOGGER.error("Failed to handle Forge compatibility for {}", mod.getModId(), t);
                 }
             }
+
+            cc.polyfrost.oneconfig.internal.renderer.BorderedTextHooks.INSTANCE.initialize();
             //#else
             //$$ try {
             //$$     java.lang.reflect.Field mods = net.minecraftforge.fml.ModList.class.getDeclaredField("mods");

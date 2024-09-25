@@ -29,6 +29,7 @@ public class cc/polyfrost/oneconfig/platform/impl/GLPlatformImpl : cc/polyfrost/
 	public fun <init> ()V
 	public fun drawRect (FFFFI)V
 	public fun drawText (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;Ljava/lang/String;FFIZ)F
+	public fun drawText (Ljava/lang/String;FFILcc/polyfrost/oneconfig/renderer/TextRenderer$TextType;)F
 	public fun enableStencil ()V
 	public fun getStringWidth (Ljava/lang/String;)I
 }

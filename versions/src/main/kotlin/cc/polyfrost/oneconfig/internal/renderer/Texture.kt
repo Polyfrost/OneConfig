@@ -24,23 +24,28 @@
  * <https://polyfrost.cc/legal/oneconfig/additional-terms>
  */
 
-package cc.polyfrost.oneconfig.platform;
+package cc.polyfrost.oneconfig.internal.renderer
 
-import cc.polyfrost.oneconfig.libs.universal.UMatrixStack;
-import cc.polyfrost.oneconfig.renderer.TextRenderer;
+//#if FORGE==1 && MC<=11202
+import cc.polyfrost.oneconfig.utils.dsl.mc
+import net.minecraft.client.renderer.texture.AbstractTexture
+import net.minecraft.client.renderer.texture.TextureUtil
+import net.minecraft.client.resources.IResourceManager
+import net.minecraft.util.ResourceLocation
 
-public interface GLPlatform {
-    void drawRect(float x, float y, float x2, float y2, int color);
+class Texture(path: String) : AbstractTexture() {
+    val location = ResourceLocation(path)
 
-    void enableStencil();
-
-    default float drawText(String text, float x, float y, int color, boolean shadow) {
-        return drawText(null, text, x, y, color, shadow);
+    init {
+        mc.textureManager.loadTexture(location, this)
     }
 
-    float drawText(String text, float x, float y, int color, TextRenderer.TextType type);
+    fun load(data: IntArray, width: Int, height: Int) {
+        val id = getGlTextureId()
+        TextureUtil.allocateTexture(id, width, height)
+        TextureUtil.uploadTexture(id, data, width, height)
+    }
 
-    float drawText(UMatrixStack matrixStack, String text, float x, float y, int color, boolean shadow);
-
-    int getStringWidth(String text);
+    override fun loadTexture(resourceManager: IResourceManager) {}
 }
+//#endif
