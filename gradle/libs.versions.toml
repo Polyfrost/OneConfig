@@ -20,7 +20,7 @@ hypixel-modapi = "1.0"
 
 lwjgl = "3.3.3"
 universalcraft = "299"
-mixin = "0.7.11-SNAPSHOT"
+mixin = "0.8.4"
 
 # Testing
 junit-bom = "5.10.2"
