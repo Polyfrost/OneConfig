@@ -12,7 +12,7 @@
     "sources": "https://github.com/Polyfrost/OneConfig",
     "issues": "https://inv.wtf/polyfrost"
   },
-  "license": "LGPL-3.0 with the Additional Terms Applicable to OneConfig",
+  "license": "LGPL-3.0",
   "environment": "client",
   "mixins": [
     "mixins.oneconfig.json"
