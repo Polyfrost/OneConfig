@@ -14,12 +14,8 @@ subprojects {
     apply(plugin = "kotlin")
     apply(plugin = "jvm-test-suite")
 
-    if (project.parent?.name == "dependencies") {
+    if (project.parent?.name == "dependencies")
         this.group = "${project.group}.dependencies"
-        if (project.name == "legacy") { // also duplicated in the legacy buildscript
-            this.version = rootProject.libs.versions.lwjgl.get()
-        }
-    }
 
     dependencies {
         "implementation"(rootProject.libs.annotations)
@@ -88,7 +84,6 @@ subprojects {
 
                 groupId = project.group.toString()
                 artifactId = project.name
-                version = project.version.toString()
 
                 signing {
                     isRequired = project.properties["signing.keyId"] != null

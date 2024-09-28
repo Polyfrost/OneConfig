@@ -5,8 +5,7 @@ plugins {
     alias(libs.plugins.jetbrains.idea.ext)
 }
 
-val lwjglVersion = libs.versions.lwjgl.get() // also duplicated in root.gradle.kts
-version = lwjglVersion
+val lwjglVersion = libs.versions.lwjgl.get()
 
 description = "Dependencies for legacy platforms (<1.12)"
 
@@ -26,11 +25,10 @@ dependencies {
     }
 }
 
+val build = project.tasks.getByName("build")
 project.tasks.withType(Jar::class.java).configureEach {
     archiveVersion.set(lwjglVersion)
 }
-
-val build = project.tasks.getByName("build")
 val jar = project.tasks.withType(Jar::class.java).getByName("jar")
 
 rootProject.idea.project.settings {
