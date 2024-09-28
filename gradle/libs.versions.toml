@@ -9,7 +9,6 @@ pgt = "0.6.6"
 shadow = "8.1.1"
 licenser = "2.0.1"
 jetbrains-idea-ext = "1.1.8"
-blossom = "1.3.2"
 
 # Libraries
 polyui = "1.7.01"
@@ -80,4 +79,3 @@ shadow = { id = "com.github.johnrengelman.shadow", version.ref = "shadow" }
 licenser = { id = "org.quiltmc.gradle.licenser", version.ref = "licenser" }
 
 jetbrains-idea-ext = { id = "org.jetbrains.gradle.plugin.idea-ext", version.ref = "jetbrains-idea-ext" }
-blossom = { id = "net.kyori.blossom", version.ref = "blossom" }
