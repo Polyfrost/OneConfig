@@ -103,6 +103,47 @@ tasks {
                 exclude("mcmod.info")
             }
         }
+
+        // Removes the TestMod entrypoint from the generated JARs.
+        doLast {
+            val mainResources = layout.buildDirectory.get().asFile.resolve("resources")
+                .resolve("main")
+            val fabricModJson = mainResources.resolve("fabric.mod.json")
+            if (fabricModJson.exists()) {
+                val lines = fabricModJson.readLines().toMutableList()
+                lines.removeIf { it.contains("TestMod") }
+                fabricModJson.writeText(lines.joinToString("\n"))
+            }
+            if (platform.mcMinor <= 12) {
+                val legacyLwjgl = mainResources.resolve("lwjgl-legacy.jar")
+                val output = projectDir
+                    .resolve(".gradle")
+                    .resolve("prebundled-jars")
+                    .resolve("tempLwjglConfigurationLegacy.jar")
+
+                if (output.exists()) {
+                    // get the stuff in the jar, get lwjgl-legacy.jar, copy it to legacyLwjgl variable
+                    if (lwjglLegacyJarBytes == null) {
+                        ZipFile(output).use { zip ->
+                            val entry = zip.getEntry("lwjgl-legacy.jar")
+                            zip.getInputStream(entry).use { input ->
+                                lwjglLegacyJarBytes = input.readBytes()
+                            }
+                        }
+                    }
+                    if (lwjglLegacyJarBytes != null) {
+                        legacyLwjgl.outputStream().use { final ->
+                            final.write(lwjglLegacyJarBytes!!)
+                            logger.info("Copied lwjgl-legacy.jar to $legacyLwjgl")
+                        }
+                    } else {
+                        throw IllegalStateException("LWJGL LEGACY JAR WAS NOT FOUND, BUILD WILL **NOT** WORK!!! Please build the :dependencies:legacy project first.")
+                    }
+                } else {
+                    throw IllegalStateException("LWJGL LEGACY JAR WAS NOT FOUND, BUILD WILL **NOT** WORK!!! Please build the :dependencies:legacy project first.")
+                }
+            }
+        }
     }
 
     processResources {
@@ -134,56 +175,9 @@ tasks {
                 )
             )
         }
-        // Removes the TestMod entrypoint from the generated JARs.
-        doLast {
-            val mainResources = layout.buildDirectory.get().asFile.resolve("resources")
-                .resolve("main")
-            val fabricModJson = mainResources.resolve("fabric.mod.json")
-            if (fabricModJson.exists()) {
-                val lines = fabricModJson.readLines().toMutableList()
-                lines.removeIf { it.contains("TestMod") }
-                fabricModJson.writeText(lines.joinToString("\n"))
-            }
-            if (platform.mcMinor <= 12) {
-                val legacyLwjgl = mainResources.resolve("lwjgl-legacy.jar")
-                val output = projectDir
-                    .resolve(".gradle")
-                    .resolve("prebundled-jars")
-                    .resolve("tempLwjglConfigurationLegacy.jar")
-
-                if (output.exists()) {
-                    // get the stuff in the jar, get lwjgl-legacy.jar, copy it to legacyLwjgl variable
-                    if (lwjglLegacyJarBytes == null) {
-                        ZipFile(output).use { zip ->
-                            val entry = zip.getEntry("lwjgl-legacy.jar")
-                            zip.getInputStream(entry).use { input ->
-                                lwjglLegacyJarBytes = input.readBytes()
-                            }
-                        }
-                    }
-                    if (lwjglLegacyJarBytes != null && lwjglLegacyJarBytes!!.isNotEmpty()) {
-                        legacyLwjgl.outputStream().use { final ->
-                            final.write(lwjglLegacyJarBytes!!)
-                            logger.info("Copied lwjgl-legacy.jar to $legacyLwjgl")
-                        }
-                    } else {
-                        throw IllegalStateException("LWJGL LEGACY JAR WAS NOT FOUND, BUILD WILL **NOT** WORK!!! Please build the :dependencies:legacy project first.")
-                    }
-                } else {
-                    throw IllegalStateException("LWJGL LEGACY JAR WAS NOT FOUND, BUILD WILL **NOT** WORK!!! Please build the :dependencies:legacy project first.")
-                }
-            }
-        }
-    }
-
-    val generateLoaderStage1Info by creating(WriteProperties::class) {
-        destinationFile = file(File(layout.buildDirectory.get().asFile, "properties/stage1.properties"))
-        property("oneconfig-version", project.version.toString())
-        property("oneconfig-main-class", "org.polyfrost.oneconfig.internal.bootstrap.Bootstrap")
     }
 
     remapJar {
-        from(generateLoaderStage1Info)
         manifest {
             val attributesMap = buildMap<String, Any> {
                 if (platform.isForge) {
@@ -210,6 +204,7 @@ tasks {
                         "Implementation-Version" to project.version,
                         "Implementation-Vendor" to "Polyfrost",
                         "Implementation-Timestamp" to SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").format(`java.util`.Date()),
+                        "OneConfig-Main-Class" to "org.polyfrost.oneconfig.internal.bootstrap.Bootstrap"
                     )
                 )
             }
