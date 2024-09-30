@@ -68,7 +68,6 @@ dependencies {
         implementation(libs.mixin) {
             isTransitive = false
         }
-        implementation("org.ow2.asm:asm-debug-all:5.2")
         compileOnly("cc.polyfrost:oneconfig-${platform}:0.2.2-alpha216") {
             isTransitive = false
         }
