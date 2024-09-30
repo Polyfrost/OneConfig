@@ -105,4 +105,16 @@ public class GLPlatformImpl implements GLPlatform {
     public int getStringWidth(String text) {
         return UMinecraft.getFontRenderer().getStringWidth(text);
     }
+
+    @Override
+    public void drawBlurredRect(float x, float y, float width, float height, float blur, float TLRadius, float TRRadius, float BLRadius, float BRRadius) {
+        //#if FORGE==1 && MC<=11202
+        cc.polyfrost.oneconfig.internal.gui.impl.ShadersKt.getBlurProgram().render(x, y, width, height, TLRadius, TRRadius, BLRadius, BRRadius, blur);
+        //#endif
+    }
+
+    @Override
+    public void drawBlurredRect(float x, float y, float width, float height, float blur, float radius) {
+        drawBlurredRect(x, y, width, height, blur, radius, radius, radius, radius);
+    }
 }

@@ -29,6 +29,7 @@ package cc.polyfrost.oneconfig.internal.mixin;
 import cc.polyfrost.oneconfig.events.EventManager;
 import cc.polyfrost.oneconfig.events.event.*;
 import cc.polyfrost.oneconfig.internal.OneConfig;
+import cc.polyfrost.oneconfig.libs.universal.UMinecraft;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Timer;
 import org.objectweb.asm.Opcodes;
@@ -77,6 +78,11 @@ public class MinecraftMixin {
     private void onInit(CallbackInfo ci) {
         OneConfig.INSTANCE.init();
         EventManager.INSTANCE.post(new InitializationEvent());
+    }
+
+    @Inject(method = "updateFramebufferSize", at = @At("HEAD"))
+    private void updateSize(CallbackInfo ci) {
+        cc.polyfrost.oneconfig.internal.gui.impl.ShadersKt.getBlurProgram().getBlurBuffer().createBindFramebuffer(UMinecraft.getMinecraft().displayWidth, UMinecraft.getMinecraft().displayHeight);
     }
     //#endif
 

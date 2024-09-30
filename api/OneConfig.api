@@ -1083,6 +1083,8 @@ public class cc/polyfrost/oneconfig/gui/pages/SubModsPage : cc/polyfrost/oneconf
 public abstract class cc/polyfrost/oneconfig/hud/BasicHud : cc/polyfrost/oneconfig/hud/Hud {
 	protected field background Z
 	protected field bgColor Lcc/polyfrost/oneconfig/config/core/OneColor;
+	protected field blurAmount F
+	protected field blurBackground Z
 	protected field border Z
 	protected field borderColor Lcc/polyfrost/oneconfig/config/core/OneColor;
 	protected field borderSize F
@@ -1261,6 +1263,8 @@ public class cc/polyfrost/oneconfig/images/OneImage {
 }
 
 public abstract interface class cc/polyfrost/oneconfig/platform/GLPlatform {
+	public abstract fun drawBlurredRect (FFFFFF)V
+	public abstract fun drawBlurredRect (FFFFFFFFF)V
 	public abstract fun drawRect (FFFFI)V
 	public abstract fun drawText (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;Ljava/lang/String;FFIZ)F
 	public fun drawText (Ljava/lang/String;FFIZ)F

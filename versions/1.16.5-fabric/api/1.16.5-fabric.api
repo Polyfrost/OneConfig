@@ -27,6 +27,8 @@ public class cc/polyfrost/oneconfig/events/event/TimerUpdateEvent {
 
 public class cc/polyfrost/oneconfig/platform/impl/GLPlatformImpl : cc/polyfrost/oneconfig/platform/GLPlatform {
 	public fun <init> ()V
+	public fun drawBlurredRect (FFFFFF)V
+	public fun drawBlurredRect (FFFFFFFFF)V
 	public fun drawRect (FFFFI)V
 	public fun drawText (Lcc/polyfrost/oneconfig/libs/universal/UMatrixStack;Ljava/lang/String;FFIZ)F
 	public fun enableStencil ()V

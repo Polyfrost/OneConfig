@@ -40,4 +40,8 @@ public interface GLPlatform {
     float drawText(UMatrixStack matrixStack, String text, float x, float y, int color, boolean shadow);
 
     int getStringWidth(String text);
+
+    void drawBlurredRect(float x, float y, float width, float height, float blur, float TLRadius, float TRRadius, float BLRadius, float BRRadius);
+
+    void drawBlurredRect(float x, float y, float width, float height, float blur, float radius);
 }

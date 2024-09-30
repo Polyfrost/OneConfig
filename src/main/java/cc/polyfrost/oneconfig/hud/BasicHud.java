@@ -29,6 +29,7 @@ package cc.polyfrost.oneconfig.hud;
 import cc.polyfrost.oneconfig.config.annotations.Exclude;
 import cc.polyfrost.oneconfig.config.core.OneColor;
 import cc.polyfrost.oneconfig.libs.universal.UMatrixStack;
+import cc.polyfrost.oneconfig.platform.Platform;
 import cc.polyfrost.oneconfig.renderer.NanoVGHelper;
 
 
@@ -36,9 +37,11 @@ public abstract class BasicHud extends Hud {
     protected boolean background;
     protected boolean rounded;
     protected boolean border;
+    protected boolean blurBackground;
     protected OneColor bgColor;
     protected OneColor borderColor;
     protected float cornerRadius;
+    protected float blurAmount = 4f;
     protected float borderSize;
     protected float defaultPaddingX, paddingX;
     protected float defaultPaddingY, paddingY;
@@ -149,10 +152,12 @@ public abstract class BasicHud extends Hud {
         NanoVGHelper nanoVGHelper = NanoVGHelper.INSTANCE;
         nanoVGHelper.setupAndDraw(true, (vg) -> {
             if (rounded) {
+                if (blurBackground) Platform.getGLPlatform().drawBlurredRect(x, y, width, height, blurAmount, cornerRadius * scale);
                 nanoVGHelper.drawRoundedRect(vg, x, y, width, height, bgColor.getRGB(), cornerRadius * scale);
                 if (border)
                     nanoVGHelper.drawHollowRoundRect(vg, x - borderSize * scale, y - borderSize * scale, width + borderSize * scale, height + borderSize * scale, borderColor.getRGB(), cornerRadius * scale, borderSize * scale);
             } else {
+                if (blurBackground) Platform.getGLPlatform().drawBlurredRect(x, y, width, height, blurAmount, 0f);
                 nanoVGHelper.drawRect(vg, x, y, width, height, bgColor.getRGB());
                 if (border)
                     nanoVGHelper.drawHollowRoundRect(vg, x - borderSize * scale, y - borderSize * scale, width + borderSize * scale, height + borderSize * scale, borderColor.getRGB(), 0, borderSize * scale);
