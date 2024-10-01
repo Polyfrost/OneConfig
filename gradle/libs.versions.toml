@@ -11,7 +11,7 @@ licenser = "2.0.1"
 jetbrains-idea-ext = "1.1.8"
 
 # Libraries
-polyui = "1.7.01"
+polyui = "1.7.03"
 
 log4j-api = "2.0-beta9" # used because this is the version that 1.8.9 supports, so we have to compile against the same (annoying)
 annotations = "24.1.0"

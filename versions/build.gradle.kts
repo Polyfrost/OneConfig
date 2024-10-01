@@ -42,6 +42,10 @@ loom {
     mixin.defaultRefmapName = "mixins.${modId}.refmap.json"
 }
 
+repositories {
+    mavenLocal()
+}
+
 dependencies {
     compileOnly("gg.essential:vigilance-1.8.9-forge:295") {
         isTransitive = false

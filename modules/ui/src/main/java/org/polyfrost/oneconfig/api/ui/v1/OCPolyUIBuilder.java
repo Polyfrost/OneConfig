@@ -37,23 +37,12 @@ import java.util.function.Consumer;
 public final class OCPolyUIBuilder extends PolyUIBuilder {
     private float desiredScreenWidth, desiredScreenHeight;
     private Consumer<PolyUI> onClose;
-    private boolean pauses, blurs;
 
     private OCPolyUIBuilder() {
         Settings s = getSettings();
         s.enableInitCleanup(false);
         s.enableForceSettingInitialSize(true);
         s.enableDebugMode(Platform.loader().isDevelopmentEnvironment());
-    }
-
-    public OCPolyUIBuilder pauses() {
-        pauses = true;
-        return this;
-    }
-
-    public OCPolyUIBuilder blurs() {
-        blurs = true;
-        return this;
     }
 
     public OCPolyUIBuilder onClose(Consumer<PolyUI> onClose) {
@@ -82,7 +71,7 @@ public final class OCPolyUIBuilder extends PolyUIBuilder {
      */
     public PolyUI makeAndOpen(Drawable... drawables) {
         PolyUI p = make(drawables);
-        Object screen = UIManager.INSTANCE.createPolyUIScreen(p, desiredScreenWidth, desiredScreenHeight, pauses, blurs, onClose);
+        Object screen = UIManager.INSTANCE.createPolyUIScreen(p, desiredScreenWidth, desiredScreenHeight, getPauses(), getBlurs(), onClose);
         p.setWindow(UIManager.INSTANCE.createWindow());
         Platform.screen().display(screen);
         return p;

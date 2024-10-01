@@ -8,6 +8,10 @@ allprojects {
     }
 }
 
+repositories {
+    mavenLocal()
+}
+
 dependencies {
     api(libs.polyui)
 
