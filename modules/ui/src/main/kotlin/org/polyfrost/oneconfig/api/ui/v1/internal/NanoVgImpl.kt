@@ -9,7 +9,6 @@ import org.lwjgl.nanovg.NanoVGGL2
 import org.lwjgl.nanovg.NanoVGGL3
 import org.lwjgl.system.MemoryUtil
 import org.polyfrost.oneconfig.api.ui.v1.api.NanoVgApi
-import org.polyfrost.oneconfig.api.ui.v1.api.NanoVgApi.ParsedSvg
 import java.nio.ByteBuffer
 
 @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
@@ -19,11 +18,11 @@ class NanoVgImpl(
     private val isOpenGl3: JBoolean
 ) : NanoVgApi {
 
+
     private companion object {
 
-        private val PIXELS by lazy {
-            MemoryUtil.memAlloc(3).put(112).put(120).put(0).flip() as ByteBuffer
-        }
+        // ByteBuffer.of("px\u0000")
+        private val PIXELS: ByteBuffer = MemoryUtil.memAlloc(3).put(112).put(120).put(0).flip() as ByteBuffer
 
     }
 
@@ -63,24 +62,29 @@ class NanoVgImpl(
     }
 
     override fun maybeSetup() {
-        // First, initialize the NanoVG context
-        val handle = when (isOpenGl3.booleanValue()) {
-            true -> NanoVGGL3.nvgCreate(NanoVGGL3.NVG_ANTIALIAS)
-            false -> NanoVGGL2.nvgCreate(NanoVGGL2.NVG_ANTIALIAS)
+        if (handle == -1L) {
+            val handle = when (isOpenGl3.booleanValue()) {
+                true -> NanoVGGL3.nvgCreate(NanoVGGL3.NVG_ANTIALIAS)
+                false -> NanoVGGL2.nvgCreate(NanoVGGL2.NVG_ANTIALIAS)
+            }
+
+            if (handle == MemoryUtil.NULL) {
+                throw IllegalStateException("Failed to create NanoVG context")
+            }
+
+            this.handle = handle
+            println("Created NVG context: $handle")
         }
 
-        if (handle == MemoryUtil.NULL) {
-            throw IllegalStateException("Failed to create NanoVG context")
-        }
+        if (svgHandle == -1L) {
+            val svgHandle = NanoSVG.nsvgCreateRasterizer()
+            if (svgHandle == MemoryUtil.NULL) {
+                throw IllegalStateException("Failed to create NanoSVG context")
+            }
 
-        // Then, initialize the NanoSVG context
-        val svgHandle = NanoSVG.nsvgCreateRasterizer()
-        if (svgHandle == MemoryUtil.NULL) {
-            throw IllegalStateException("Failed to create NanoSVG context")
+            this.svgHandle = svgHandle
+            println("Created NSVG rasterizer: $svgHandle")
         }
-
-        this.handle = handle
-        this.svgHandle = svgHandle
     }
 
     override fun beginFrame(width: Float, height: Float, scale: Float) {
@@ -219,14 +223,17 @@ class NanoVgImpl(
     }
 
     override fun fontSize(size: Float) {
+//        println("> [$handle] Setting font size: $size")
         NanoVG.nvgFontSize(handle, size)
     }
 
     override fun fontFaceId(id: Int) {
+//        println("> [$handle] Setting font face ID: $id")
         NanoVG.nvgFontFaceId(handle, id)
     }
 
     override fun textAlign(align: Int) {
+//        println("> [$handle] Setting text align: $align")
         NanoVG.nvgTextAlign(handle, align)
     }
 
@@ -235,6 +242,7 @@ class NanoVgImpl(
     }
 
     override fun textBounds(x: Float, y: Float, text: String, bounds: FloatArray): Float {
+//        println("> [$handle] Getting text bounds for: $text")
         return NanoVG.nvgTextBounds(handle, x, y, text, bounds)
     }
 
@@ -298,12 +306,15 @@ class NanoVgImpl(
         return floatArrayOf(svg.width(), svg.height())
     }
 
-    override fun parseSvg(data: ByteBuffer): ParsedSvg {
+    override fun parseSvg(data: ByteBuffer): Triple<Long, Float, Float> {
+        println("> [$handle - $svgHandle] Parsing SVG data")
         val result = NanoSVG.nsvgParse(data, PIXELS, 96f) ?: throw IllegalStateException("Failed to parse SVG data")
-        return ParsedSvg(result.address(), result.width(), result.height())
+        println("> [$handle - $svgHandle] Parsed SVG data: ${result.address()} - ${result.width()}x${result.height()}")
+        return Triple(result.address(), result.width(), result.height())
     }
 
     override fun deleteSvg(address: Long) {
+        println("> [$handle - $svgHandle] Deleting SVG data: $address")
         NanoSVG.nsvgDelete(NSVGImage.create(address))
     }
 
@@ -317,6 +328,7 @@ class NanoVgImpl(
         stride: Int,
         data: ByteBuffer
     ) {
+        println("> [$handle - $svgHandle] Rasterizing SVG data: $x, $y, $w, $h, $scale, $stride")
         NanoSVG.nsvgRasterize(svgHandle, NSVGImage.create(address), x, y, scale, data, w, h, stride)
     }
 

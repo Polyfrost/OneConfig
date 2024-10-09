@@ -79,6 +79,7 @@ public class UIManagerImpl implements UIManager {
 
         IsolatedClassLoader classLoader = Lwjgl3Manager.getClassLoader();
 
+        classLoader.addLoadingException("kotlin.");
         classLoader.addLoadingException("org.polyfrost.oneconfig.api.ui.v1.api.");
 
         try {

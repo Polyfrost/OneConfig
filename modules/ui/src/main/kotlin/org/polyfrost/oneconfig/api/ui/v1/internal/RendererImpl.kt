@@ -40,6 +40,7 @@ import org.polyfrost.polyui.data.PolyImage
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.utils.*
 import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import java.util.IdentityHashMap
 import kotlin.math.abs
 import org.polyfrost.polyui.color.PolyColor as Color
@@ -94,13 +95,13 @@ class RendererImpl(
         }
 
     private var defaultFont: NvgFont? = null
-    private val fonts = IdentityHashMap<Font, NvgFont>()
+    private val fonts = mutableMapOf<Font, NvgFont>()
 
     private var defaultImageData: ByteArray? = null
     private var defaultImage = 0
 
-    private val images = HashMap<PolyImage, Int>()
-    private val svgs = HashMap<PolyImage, Pair<Long, Int2IntMap>>()
+    private val images = mutableMapOf<PolyImage, Int>()
+    private val svgs = mutableMapOf<PolyImage, Pair<Long, Int2IntMap>>()
 
     private val queue = ArrayList<() -> Unit>()
 
@@ -133,9 +134,9 @@ class RendererImpl(
 
         queue.fastRemoveIfReversed { it(); true }
         UGraphics.disableAlpha()
-        if(!isGl3) {
-            GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS)
-        }
+//        if(!isGl3) {
+//            GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS)
+//        }
 
         nanoVg.beginFrame(width, height, pixelRatio)
         isDrawing = true
@@ -145,9 +146,9 @@ class RendererImpl(
         if (!isDrawing) throw IllegalStateException("Not drawing")
 
         nanoVg.endFrame()
-        if(!isGl3) {
-            GL11.glPopAttrib()
-        }
+//        if(!isGl3) {
+//            GL11.glPopAttrib()
+//        }
 
         isDrawing = false
     }
@@ -188,7 +189,7 @@ class RendererImpl(
 
         nanoVg.beginPath()
         nanoVg.fontSize(fontSize)
-        nanoVg.fontFaceId(getFont(font).id)
+        nanoVg.fontFaceId(getOrPopulateFont(font).id)
         nanoVg.textAlign(nanoVg.constants().NVG_ALIGN_LEFT() or nanoVg.constants().NVG_ALIGN_TOP())
         populateFillOrColor(color, x, y, 0f, 0f)
         nanoVg.fillColor(color1Address)
@@ -207,22 +208,13 @@ class RendererImpl(
         bottomLeftRadius: Float,
         bottomRightRadius: Float,
     ) {
-        nanoVg.imagePattern(x, y, width, height, 0f, getImage(image, width, height), 1f, paintAddress)
+        nanoVg.imagePattern(x, y, width, height, 0f, getOrPopulateImage(image, width, height), 1f, paintAddress)
         if (colorMask != 0) {
             populateNvgColor(colorMask, nanoVg.getPaintColor(paintAddress))
         }
 
         nanoVg.beginPath()
-        nanoVg.roundedRectVarying(
-            x,
-            y,
-            width,
-            height,
-            topLeftRadius,
-            topRightRadius,
-            bottomRightRadius,
-            bottomLeftRadius,
-        )
+        nanoVg.roundedRectVarying(x, y, width, height, topLeftRadius, topRightRadius, bottomRightRadius, bottomLeftRadius)
         nanoVg.fillPaint(paintAddress)
         nanoVg.fill()
     }
@@ -249,7 +241,8 @@ class RendererImpl(
     }
 
     override fun initImage(image: PolyImage) {
-        getImage(image, 0f, 0f)
+        println("Init image: $image")
+        getOrPopulateImage(image, 0f, 0f)
     }
 
     override fun rect(
@@ -342,98 +335,172 @@ class RendererImpl(
         val text = text.let { if (it.endsWith(" ")) "$it " else it }
 
         val output = FloatArray(4)
-        nanoVg.fontFaceId(getFont(font).id)
+        val loadedFont = getOrPopulateFont(font)
+        nanoVg.fontFaceId(loadedFont.id)
         nanoVg.textAlign(nanoVg.constants().NVG_ALIGN_LEFT() or nanoVg.constants().NVG_ALIGN_TOP())
         nanoVg.fontSize(fontSize)
         nanoVg.textBounds(0f, 0f, text, output)
 
         val width = output[2] - output[0]
         val height = output[3] - output[1]
-        println("font: $font, text: \"$text\", fontSize: $fontSize, out: ${output.contentToString()}, width: $width, height: $height")
         return Vec2(width.coerceAtLeast(1f), height.coerceAtLeast(1f)) // Coercing to at least 1x1 for now because this is returning 0 sometimes for some reason and PolyUI crashes when an element has 0 width & height
     }
 
-    private fun getFont(font: Font): NvgFont {
-        if (font.loadSync) return getFontSync(font)
+    private fun getOrPopulateFont(font: Font): NvgFont {
+        if (font.loadSync) {
+            return getOrPopulateFontSynchronous(font)
+        }
+
         return fonts.getOrPut(font) {
             font.loadAsync(errorHandler = errorHandler) { data ->
-                val it = data.toDirectByteBuffer()
-                queue.add { fonts[font] = NvgFont(nanoVg.createFont(font.name, it), it) }
+                val buffer = ByteBuffer.allocateDirect(data.size).order(ByteOrder.nativeOrder()).put(data).flip() as ByteBuffer
+
+                queue.add {
+                    val id = nanoVg.createFont(
+                        font.name,
+                        buffer
+                    )
+
+                    NvgFont(id, buffer)
+                }
             }
 
             defaultFont!!
         }
     }
 
-    private fun getFontSync(font: Font): NvgFont {
+    private fun getOrPopulateFontSynchronous(font: Font): NvgFont {
         return fonts.getOrPut(font) {
-            val data = font.load { errorHandler(it); return@getOrPut defaultFont!! }.toDirectByteBuffer()
-            val id = nanoVg.createFont(font.name, data)
-            NvgFont(id, data)
+            val data = font.load { errorHandler(it); return@getOrPut defaultFont!! }
+            val buffer = ByteBuffer.allocateDirect(data.size).order(ByteOrder.nativeOrder()).put(data).flip() as ByteBuffer
+            val id = nanoVg.createFont(font.name, buffer)
+            NvgFont(id, buffer)
         }
     }
 
-    private fun getImage(image: PolyImage, width: Float, height: Float): Int {
-        if (image.loadSync) return getImageSync(image, width, height)
+    private fun getOrPopulateImage(image: PolyImage, width: Float, height: Float): Int {
+        if (image.width == 0f || image.height == 0f) {
+            delete(image)
+        }
+
+        if (image.loadSync) {
+            return getOrPopulateImageSynchronous(image, width, height)
+        }
+
         return when (image.type) {
-            PolyImage.Type.Vector -> {
-                val (svg, map) = svgs.getOrPut(image) {
-                    image.loadAsync(errorHandler) {
-                        queue.add { svgLoad(image, it.toDirectByteBufferNT()) }
+            PolyImage.Type.Raster -> {
+                images.getOrPut(image) {
+                    image.loadAsync(errorHandler) { data ->
+                        val buffer = ByteBuffer.allocateDirect(data.size).order(ByteOrder.nativeOrder()).put(data).flip() as ByteBuffer
+
+                        queue.add {
+                            val widthOutput = IntArray(1)
+                            val heightOutput = IntArray(1)
+                            val result = stb.loadFromMemory(buffer, widthOutput, heightOutput, IntArray(1), 4)
+                            image.size = Vec2(widthOutput[0].toFloat(), heightOutput[0].toFloat())
+                            nanoVg.createImage(image.width, image.height, result)
+                        }
                     }
                     return defaultImage
                 }
-                val svgSize = nanoVg.svgBounds(svg)
-                if (!image.size.isPositive) image.size = Vec2(svgSize[0], svgSize[1])
-                map.getOrPut(width.hashCode() * 31 + height.hashCode()) { svgResize(svg, width, height, width, height) }
             }
 
-            PolyImage.Type.Raster -> {
-                images.getOrPut(image) {
-                    image.loadAsync(errorHandler) {
-                        queue.add { images[image] = loadImage(image, it.toDirectByteBuffer()) }
-                    }
-                    defaultImage
-                }
-            }
-
-            else -> throw NoWhenBranchMatchedException("Please specify image type for $image")
-        }
-    }
-
-    private fun getImageSync(image: PolyImage, width: Float, height: Float): Int {
-        return when (image.type) {
             PolyImage.Type.Vector -> {
-                val (svg, map) = svgs[image] ?: return svgLoad(image, image.load { errorHandler(it); defaultImageData!! }.toDirectByteBufferNT())
-                if (!image.size.isPositive) {
-                    val svgSize = nanoVg.svgBounds(svg)
-                    image.size = Vec2(svgSize[0], svgSize[1])
+                val (svg, map) = svgs.getOrPut(image) {
+                    image.loadAsync(errorHandler) { data ->
+                        val buffer = ByteBuffer.allocateDirect(data.size + 1).order(ByteOrder.nativeOrder()).put(data).put(0).flip() as ByteBuffer
+
+                        queue.add {
+                            val (address, id) = loadSvg(image, buffer)
+                            val map = Int2IntMap(4)
+                            map[image.width.hashCode() * 31 + image.height.hashCode()] = id
+                            svgs[image] = address to map
+                        }
+                    }
+
+                    return defaultImage
                 }
 
-                map.getOrPut(width.hashCode() * 31 + height.hashCode()) { svgResize(svg, width, height, width, height) }
-            }
+                if (image.width == 0f || image.height == 0f) {
+                    val (svgWidth, svgHeight) = nanoVg.svgBounds(svg)
+                    image.size = Vec2(svgWidth, svgHeight)
+                }
 
-            PolyImage.Type.Raster -> {
-                images.getOrPut(image) { loadImage(image, image.load { errorHandler(it); defaultImageData!! }.toDirectByteBuffer()) }
+                map.getOrPut(width.hashCode() * 31 + height.hashCode()) {
+                    resizeSvg(svg, width, height, width, height)
+                }
             }
 
             else -> throw NoWhenBranchMatchedException("Please specify image type for $image")
         }
     }
 
-    private fun svgLoad(image: PolyImage, data: ByteBuffer): Int {
-        val svg = nanoVg.parseSvg(data)
-        image.size = Vec2(svg.width, svg.height)
+    private fun getOrPopulateImageSynchronous(image: PolyImage, width: Float, height: Float): Int {
+        if (image.width == 0f || image.height == 0f) {
+            delete(image)
+        }
+
+        return images.getOrPut(image) {
+            val bytes = image.load { errorHandler(it); return@load defaultImageData!! }
+
+            when (image.type) {
+                PolyImage.Type.Raster -> {
+                    val buffer = run {
+                        val buffer = ByteBuffer.allocateDirect(bytes.size)
+                            .order(ByteOrder.nativeOrder())
+                            .put(bytes)
+                            .flip() as ByteBuffer
+                        val widthOutput = IntArray(1)
+                        val heightOutput = IntArray(1)
+                        val result = stb.loadFromMemory(buffer, widthOutput, heightOutput, IntArray(1), 4)
+                        image.size = Vec2(widthOutput[0].toFloat(), heightOutput[0].toFloat())
+
+                        result
+                    }
+
+                    nanoVg.createImage(image.width, image.height, buffer)
+                }
+
+                PolyImage.Type.Vector -> {
+                    val (svgImage, map) = svgs.getOrPut(image) {
+                        val buffer = ByteBuffer.allocateDirect(bytes.size + 1) // +1 for null terminator
+                            .order(ByteOrder.nativeOrder())
+                            .put(bytes)
+                            .put(0) // null terminator
+                            .flip() as ByteBuffer
+                        val (_, id) = loadSvg(image, buffer)
+                        return id
+                    }
+
+                    if (image.width == 0f || image.height == 0f) {
+                        val (svgWidth, svgHeight) = nanoVg.svgBounds(svgImage)
+                        image.size = Vec2(svgWidth, svgHeight)
+                    }
+
+                    map.getOrPut(width.hashCode() * 31 + height.hashCode()) {
+                        resizeSvg(svgImage, width, height, width, height)
+                    }
+                }
+
+                else -> throw UnsupportedOperationException("Unsupported image type")
+            }
+        }
+    }
+
+    private fun loadSvg(image: PolyImage, data: ByteBuffer): Pair<Long, Int> {
+        val (address, svgWidth, svgHeight) = nanoVg.parseSvg(data)
+
+        image.size = Vec2(svgWidth, svgHeight)
 
         val map = Int2IntMap(4)
-        val id = svgResize(svg.handle, svg.width, svg.height, svg.width, svg.height)
-        map[image.size.hashCode()] = id
-        svgs[image] = svg.handle to map
+        val id = resizeSvg(address, svgWidth, svgHeight, svgWidth, svgHeight)
+        map[image.width.hashCode() * 31 + image.height.hashCode()] = id
+        svgs[image] = address to map
 
-        return id
+        return address to id
     }
 
-    private fun svgResize(handle: Long, svgWidth: Float, svgHeight: Float, width: Float, height: Float): Int {
+    private fun resizeSvg(address: Long, svgWidth: Float, svgHeight: Float, width: Float, height: Float): Int {
         val w = (width * 2f).toInt()
         val h = (height * 2f).toInt()
 
@@ -444,16 +511,8 @@ class RendererImpl(
             height / svgHeight
         }) * 2f
 
-        nanoVg.rasterizeSvg(handle, 0f, 0f, w, h, scale, w * 4, dest)
+        nanoVg.rasterizeSvg(address, 0f, 0f, w, h, scale, w * 4, dest)
         return nanoVg.createImage(w.toFloat(), h.toFloat(), dest)
-    }
-
-    private fun loadImage(image: PolyImage, data: ByteBuffer): Int {
-        val w = IntArray(1)
-        val h = IntArray(1)
-        val d = stb.loadFromMemory(data, w, h, IntArray(1), 4)
-        image.size = Vec2(w[0].toFloat(), h[0].toFloat())
-        return nanoVg.createImage(w[0].toFloat(), h[0].toFloat(), d)
     }
 
     private fun populateNvgColor(argb: Int, colorAddress: Long) {

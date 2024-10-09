@@ -1,5 +1,7 @@
 package org.polyfrost.oneconfig.api.ui.v1.api;
 
+import kotlin.Triple;
+
 import java.nio.ByteBuffer;
 
 public interface NanoVgApi {
@@ -13,19 +15,6 @@ public interface NanoVgApi {
         int NVG_ALIGN_TOP();
 
         int NVG_HOLE();
-
-    }
-
-    class ParsedSvg {
-
-        public final long handle;
-        public final float width, height;
-
-        public ParsedSvg(long handle, float width, float height) {
-            this.handle = handle;
-            this.width = width;
-            this.height = height;
-        }
 
     }
 
@@ -146,7 +135,7 @@ public interface NanoVgApi {
 
     float[] svgBounds(long address);
 
-    ParsedSvg parseSvg(ByteBuffer data);
+    Triple<Long, Float, Float> parseSvg(ByteBuffer data);
 
     void deleteSvg(long address);
 
