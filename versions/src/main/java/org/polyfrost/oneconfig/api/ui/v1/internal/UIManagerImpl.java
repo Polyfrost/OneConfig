@@ -39,6 +39,7 @@ import org.jetbrains.annotations.NotNull;
 import org.polyfrost.lwjgl.isolatedloader.Lwjgl3Manager;
 import org.polyfrost.lwjgl.isolatedloader.classloader.IsolatedClassLoader;
 import org.polyfrost.oneconfig.api.ClassHasOverwrites;
+import org.polyfrost.oneconfig.api.ui.v1.api.LwjglApi;
 import org.polyfrost.oneconfig.api.ui.v1.api.NanoVgApi;
 import org.polyfrost.oneconfig.api.ui.v1.api.StbApi;
 import org.polyfrost.oneconfig.api.ui.v1.api.TinyFdApi;
@@ -66,6 +67,7 @@ public class UIManagerImpl implements UIManager {
     private final Set<String> classLoaderInclude = new HashSet<>();
     private final Map<String, Class<?>> classCache = new HashMap<>();
 
+    private final LwjglApi lwjgl;
     private final NanoVgApi nanoVg;
     private final StbApi stb;
     private final TinyFdApi tinyFD;
@@ -77,9 +79,7 @@ public class UIManagerImpl implements UIManager {
 
         IsolatedClassLoader classLoader = Lwjgl3Manager.getClassLoader();
 
-        classLoader.addLoadingException("org.polyfrost.oneconfig.api.ui.v1.api.NanoVgApi");
-        classLoader.addLoadingException("org.polyfrost.oneconfig.api.ui.v1.api.StbApi");
-        classLoader.addLoadingException("org.polyfrost.oneconfig.api.ui.v1.api.TinyFdApi");
+        classLoader.addLoadingException("org.polyfrost.oneconfig.api.ui.v1.api.");
 
         try {
             boolean gl3 =
@@ -89,11 +89,12 @@ public class UIManagerImpl implements UIManager {
                 GLContext.getCapabilities().OpenGL30;
                 //#endif
 
+            lwjgl = Lwjgl3Manager.getIsolated(LwjglApi.class, LWJGL_IMPL_PACKAGE + "LwjglImpl");
             nanoVg = Lwjgl3Manager.getIsolated(NanoVgApi.class, LWJGL_IMPL_PACKAGE + "NanoVgImpl", gl3);
             stb = Lwjgl3Manager.getIsolated(StbApi.class, LWJGL_IMPL_PACKAGE + "StbImpl");
             tinyFD = Lwjgl3Manager.getIsolated(TinyFdApi.class, LWJGL_IMPL_PACKAGE + "TinyFdImpl");
 
-            renderer = (Renderer) Class.forName(LWJGL_IMPL_PACKAGE + "RendererImpl").getConstructor(NanoVgApi.class, StbApi.class).newInstance(nanoVg, stb);
+            renderer = new RendererImpl(gl3, lwjgl, nanoVg, stb);
         } catch (Exception e) {
             throw new RuntimeException("Failed to get valid rendering implementation", e);
         }

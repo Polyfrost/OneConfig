@@ -27,7 +27,8 @@
 package org.polyfrost.oneconfig.api.ui.v1.internal
 
 import org.apache.logging.log4j.LogManager
-import org.lwjgl.system.MemoryUtil
+import org.lwjgl.opengl.GL11
+import org.polyfrost.oneconfig.api.ui.v1.api.LwjglApi
 import org.polyfrost.oneconfig.api.ui.v1.api.NanoVgApi
 import org.polyfrost.oneconfig.api.ui.v1.api.StbApi
 import org.polyfrost.universal.UGraphics
@@ -40,9 +41,12 @@ import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.utils.*
 import java.nio.ByteBuffer
 import java.util.IdentityHashMap
+import kotlin.math.abs
 import org.polyfrost.polyui.color.PolyColor as Color
 
 class RendererImpl(
+    private val isGl3: Boolean,
+    private val lwjgl: LwjglApi,
     private val nanoVg: NanoVgApi,
     private val stb: StbApi
 ) : Renderer {
@@ -55,7 +59,7 @@ class RendererImpl(
     }
 
     @Suppress("unused")
-    internal class NvgFont(
+    internal data class NvgFont(
         val id: Int,
         val buffer: ByteBuffer
     )
@@ -129,9 +133,10 @@ class RendererImpl(
 
         queue.fastRemoveIfReversed { it(); true }
         UGraphics.disableAlpha()
-//        if(!gl3) {
-//            glPushAttrib(GL_ALL_ATTRIB_BITS)
-//        }
+        if(!isGl3) {
+            GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS)
+        }
+
         nanoVg.beginFrame(width, height, pixelRatio)
         isDrawing = true
     }
@@ -140,9 +145,10 @@ class RendererImpl(
         if (!isDrawing) throw IllegalStateException("Not drawing")
 
         nanoVg.endFrame()
-//        if(!gl3) {
-//            glPopAttrib()
-//        }
+        if(!isGl3) {
+            GL11.glPopAttrib()
+        }
+
         isDrawing = false
     }
 
@@ -182,7 +188,7 @@ class RendererImpl(
 
         nanoVg.beginPath()
         nanoVg.fontSize(fontSize)
-        nanoVg.fontFaceId(getFont(font))
+        nanoVg.fontFaceId(getFont(font).id)
         nanoVg.textAlign(nanoVg.constants().NVG_ALIGN_LEFT() or nanoVg.constants().NVG_ALIGN_TOP())
         populateFillOrColor(color, x, y, 0f, 0f)
         nanoVg.fillColor(color1Address)
@@ -333,37 +339,38 @@ class RendererImpl(
 
     @Suppress("NAME_SHADOWING")
     override fun textBounds(font: Font, text: String, fontSize: Float): Vec2 {
-        // nanovg trims single whitespace, so add an extra one (lol)
-        var text = text
-        if (text.endsWith(' ')) {
-            text += ' '
-        }
-        val out = FloatArray(4)
-        nanoVg.fontFaceId(getFont(font))
-        nanoVg.textAlign(nanoVg.constants().NVG_ALIGN_TOP() or nanoVg.constants().NVG_ALIGN_LEFT())
+        val text = text.let { if (it.endsWith(" ")) "$it " else it }
+
+        val output = FloatArray(4)
+        nanoVg.fontFaceId(getFont(font).id)
+        nanoVg.textAlign(nanoVg.constants().NVG_ALIGN_LEFT() or nanoVg.constants().NVG_ALIGN_TOP())
         nanoVg.fontSize(fontSize)
-        nanoVg.textBounds(0f, 0f, text, out)
-        val w = out[2] - out[0]
-        val h = out[3] - out[1]
-        return Vec2(w, h)
+        nanoVg.textBounds(0f, 0f, text, output)
+
+        val width = output[2] - output[0]
+        val height = output[3] - output[1]
+        println("font: $font, text: \"$text\", fontSize: $fontSize, out: ${output.contentToString()}, width: $width, height: $height")
+        return Vec2(width.coerceAtLeast(1f), height.coerceAtLeast(1f)) // Coercing to at least 1x1 for now because this is returning 0 sometimes for some reason and PolyUI crashes when an element has 0 width & height
     }
 
-    private fun getFont(font: Font): Int {
+    private fun getFont(font: Font): NvgFont {
         if (font.loadSync) return getFontSync(font)
         return fonts.getOrPut(font) {
             font.loadAsync(errorHandler = errorHandler) { data ->
                 val it = data.toDirectByteBuffer()
                 queue.add { fonts[font] = NvgFont(nanoVg.createFont(font.name, it), it) }
             }
+
             defaultFont!!
-        }.id
+        }
     }
 
-    private fun getFontSync(font: Font): Int {
+    private fun getFontSync(font: Font): NvgFont {
         return fonts.getOrPut(font) {
             val data = font.load { errorHandler(it); return@getOrPut defaultFont!! }.toDirectByteBuffer()
-            NvgFont(nanoVg.createFont(font.name, data), data)
-        }.id
+            val id = nanoVg.createFont(font.name, data)
+            NvgFont(id, data)
+        }
     }
 
     private fun getImage(image: PolyImage, width: Float, height: Float): Int {
@@ -398,8 +405,11 @@ class RendererImpl(
         return when (image.type) {
             PolyImage.Type.Vector -> {
                 val (svg, map) = svgs[image] ?: return svgLoad(image, image.load { errorHandler(it); defaultImageData!! }.toDirectByteBufferNT())
-                val svgSize = nanoVg.svgBounds(svg)
-                if (!image.size.isPositive) image.size = Vec2(svgSize[0], svgSize[1])
+                if (!image.size.isPositive) {
+                    val svgSize = nanoVg.svgBounds(svg)
+                    image.size = Vec2(svgSize[0], svgSize[1])
+                }
+
                 map.getOrPut(width.hashCode() * 31 + height.hashCode()) { svgResize(svg, width, height, width, height) }
             }
 
@@ -424,12 +434,18 @@ class RendererImpl(
     }
 
     private fun svgResize(handle: Long, svgWidth: Float, svgHeight: Float, width: Float, height: Float): Int {
-        val wi = (width * 2f).toInt()
-        val hi = (height * 2f).toInt()
-        val dst = MemoryUtil.memAlloc(wi * hi * 4)
-        val scale = cl1(width / svgWidth, height / svgHeight) * 2f
-        nanoVg.rasterizeSvg(handle, 0f, 0f, wi, hi, scale, wi * 4, dst)
-        return nanoVg.createImage(wi.toFloat(), hi.toFloat(), dst)
+        val w = (width * 2f).toInt()
+        val h = (height * 2f).toInt()
+
+        val dest = lwjgl.memAlloc(w * h * 4)
+        val scale = (if (abs((width / svgWidth) - 1f) <= abs((height / svgHeight) - 1f)) {
+            width / svgWidth
+        } else {
+            height / svgHeight
+        }) * 2f
+
+        nanoVg.rasterizeSvg(handle, 0f, 0f, w, h, scale, w * 4, dest)
+        return nanoVg.createImage(w.toFloat(), h.toFloat(), dest)
     }
 
     private fun loadImage(image: PolyImage, data: ByteBuffer): Int {

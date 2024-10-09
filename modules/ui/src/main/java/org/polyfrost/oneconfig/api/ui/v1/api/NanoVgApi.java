@@ -124,7 +124,7 @@ public interface NanoVgApi {
 
     void text(float x, float y, String text);
 
-    void textBounds(float x, float y, String text, float[] bounds);
+    float textBounds(float x, float y, String text, float[] bounds);
 
     int createImage(float width, float height, ByteBuffer buffer);
 

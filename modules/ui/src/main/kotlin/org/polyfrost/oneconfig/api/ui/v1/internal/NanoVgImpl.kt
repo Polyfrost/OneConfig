@@ -234,8 +234,8 @@ class NanoVgImpl(
         NanoVG.nvgText(handle, x, y, text)
     }
 
-    override fun textBounds(x: Float, y: Float, text: String, bounds: FloatArray) {
-        NanoVG.nvgTextBounds(handle, x, y, text, bounds)
+    override fun textBounds(x: Float, y: Float, text: String, bounds: FloatArray): Float {
+        return NanoVG.nvgTextBounds(handle, x, y, text, bounds)
     }
 
     override fun createImage(width: Float, height: Float, buffer: ByteBuffer): Int {
