@@ -16,6 +16,8 @@ public interface NanoVgApi {
 
         int NVG_HOLE();
 
+        int NVG_IMAGE_FLIPY();
+
     }
 
     NanoVgConstants constants();
@@ -115,7 +117,7 @@ public interface NanoVgApi {
 
     float textBounds(float x, float y, String text, float[] bounds);
 
-    int createImage(float width, float height, ByteBuffer buffer);
+    int createImage(float width, float height, ByteBuffer buffer, int flags);
 
     void scissor(float x, float y, float w, float h);
 
@@ -139,6 +141,6 @@ public interface NanoVgApi {
 
     void deleteSvg(long address);
 
-    void rasterizeSvg(long address, float x, float y, int w, int h, float scale, int stride, ByteBuffer data);
+    void rasterizeSvg(long address, float x, float y, float scale, ByteBuffer data, int w, int h, int stride);
 
 }

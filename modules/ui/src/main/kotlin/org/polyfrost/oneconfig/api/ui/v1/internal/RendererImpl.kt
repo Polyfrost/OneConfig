@@ -121,7 +121,7 @@ class RendererImpl(
         if (defaultImage == 0) {
             val iImage = PolyUI.defaultImage
             val iData = iImage.load()
-            val iHandle = nanoVg.createImage(iImage.width, iImage.height, iData.toDirectByteBuffer())
+            val iHandle = nanoVg.createImage(iImage.width, iImage.height, iData.toDirectByteBuffer(), 0)
             require(iHandle != 0) { "NanoVG failed to initialize default image" }
             defaultImageData = iData
             images[iImage] = iHandle
@@ -398,7 +398,7 @@ class RendererImpl(
                             val heightOutput = IntArray(1)
                             val result = stb.loadFromMemory(buffer, widthOutput, heightOutput, IntArray(1), 4)
                             image.size = Vec2(widthOutput[0].toFloat(), heightOutput[0].toFloat())
-                            nanoVg.createImage(image.width, image.height, result)
+                            nanoVg.createImage(image.width, image.height, result, 0)
                         }
                     }
                     return defaultImage
@@ -458,7 +458,7 @@ class RendererImpl(
                         result
                     }
 
-                    nanoVg.createImage(image.width, image.height, buffer)
+                    nanoVg.createImage(image.width, image.height, buffer, 0)
                 }
 
                 PolyImage.Type.Vector -> {
@@ -505,14 +505,10 @@ class RendererImpl(
         val h = (height * 2f).toInt()
 
         val dest = lwjgl.memAlloc(w * h * 4)
-        val scale = (if (abs((width / svgWidth) - 1f) <= abs((height / svgHeight) - 1f)) {
-            width / svgWidth
-        } else {
-            height / svgHeight
-        }) * 2f
+        val scale = cl1(width / svgWidth, height / svgHeight) * 2f
 
-        nanoVg.rasterizeSvg(address, 0f, 0f, w, h, scale, w * 4, dest)
-        return nanoVg.createImage(w.toFloat(), h.toFloat(), dest)
+        nanoVg.rasterizeSvg(address, 0f, 0f, scale, dest, w, h, w * 4)
+        return nanoVg.createImage(w.toFloat(), h.toFloat(), dest, 0)
     }
 
     private fun populateNvgColor(argb: Int, colorAddress: Long) {

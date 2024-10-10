@@ -44,6 +44,10 @@ class NanoVgImpl(
             return NanoVG.NVG_HOLE
         }
 
+        override fun NVG_IMAGE_FLIPY(): Int {
+            return NanoVG.NVG_IMAGE_FLIPY
+        }
+
     }
 
     private var handle: Long = -1
@@ -223,17 +227,14 @@ class NanoVgImpl(
     }
 
     override fun fontSize(size: Float) {
-//        println("> [$handle] Setting font size: $size")
         NanoVG.nvgFontSize(handle, size)
     }
 
     override fun fontFaceId(id: Int) {
-//        println("> [$handle] Setting font face ID: $id")
         NanoVG.nvgFontFaceId(handle, id)
     }
 
     override fun textAlign(align: Int) {
-//        println("> [$handle] Setting text align: $align")
         NanoVG.nvgTextAlign(handle, align)
     }
 
@@ -242,12 +243,11 @@ class NanoVgImpl(
     }
 
     override fun textBounds(x: Float, y: Float, text: String, bounds: FloatArray): Float {
-//        println("> [$handle] Getting text bounds for: $text")
         return NanoVG.nvgTextBounds(handle, x, y, text, bounds)
     }
 
-    override fun createImage(width: Float, height: Float, buffer: ByteBuffer): Int {
-        return NanoVG.nvgCreateImageRGBA(handle, width.toInt(), height.toInt(), NanoVG.NVG_IMAGE_FLIPY, buffer)
+    override fun createImage(width: Float, height: Float, buffer: ByteBuffer, flags: Int): Int {
+        return NanoVG.nvgCreateImageRGBA(handle, width.toInt(), height.toInt(), flags, buffer)
     }
 
     override fun scissor(x: Float, y: Float, w: Float, h: Float) {
@@ -307,14 +307,11 @@ class NanoVgImpl(
     }
 
     override fun parseSvg(data: ByteBuffer): Triple<Long, Float, Float> {
-        println("> [$handle - $svgHandle] Parsing SVG data")
         val result = NanoSVG.nsvgParse(data, PIXELS, 96f) ?: throw IllegalStateException("Failed to parse SVG data")
-        println("> [$handle - $svgHandle] Parsed SVG data: ${result.address()} - ${result.width()}x${result.height()}")
         return Triple(result.address(), result.width(), result.height())
     }
 
     override fun deleteSvg(address: Long) {
-        println("> [$handle - $svgHandle] Deleting SVG data: $address")
         NanoSVG.nsvgDelete(NSVGImage.create(address))
     }
 
@@ -322,13 +319,12 @@ class NanoVgImpl(
         address: Long,
         x: Float,
         y: Float,
+        scale: Float,
+        data: ByteBuffer,
         w: Int,
         h: Int,
-        scale: Float,
-        stride: Int,
-        data: ByteBuffer
+        stride: Int
     ) {
-        println("> [$handle - $svgHandle] Rasterizing SVG data: $x, $y, $w, $h, $scale, $stride")
         NanoSVG.nsvgRasterize(svgHandle, NSVGImage.create(address), x, y, scale, data, w, h, stride)
     }
 
