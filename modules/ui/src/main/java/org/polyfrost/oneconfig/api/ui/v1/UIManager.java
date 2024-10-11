@@ -33,6 +33,7 @@ import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.HudRenderEvent;
 import org.polyfrost.oneconfig.api.event.v1.events.ResizeEvent;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
+import org.polyfrost.oneconfig.api.ui.v1.api.TinyFdApi;
 import org.polyfrost.polyui.PolyUI;
 import org.polyfrost.polyui.component.Component;
 import org.polyfrost.polyui.Settings;
@@ -60,7 +61,7 @@ public interface UIManager {
      * Return the TinyFD implementation instance. This interface specifies operations for opening native
      * file dialogs, and showing notifications.
      */
-    TinyFD getTinyFD();
+    TinyFdApi getTinyFD();
 
     /**
      * Create a new window that is backed by this Minecraft instance. Returns accurate sizing and has cursor support on MC 1.13+.
