@@ -132,9 +132,9 @@ class RendererImpl(
 
         queue.fastRemoveIfReversed { it(); true }
         UGraphics.disableAlpha()
-//        if(!isGl3) {
-//            GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS)
-//        }
+        if (!isGl3) {
+            GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS)
+        }
 
         nanoVg.beginFrame(width, height, pixelRatio)
         isDrawing = true
@@ -144,9 +144,9 @@ class RendererImpl(
         if (!isDrawing) throw IllegalStateException("Not drawing")
 
         nanoVg.endFrame()
-//        if(!isGl3) {
-//            GL11.glPopAttrib()
-//        }
+        if (!isGl3) {
+            GL11.glPopAttrib()
+        }
 
         isDrawing = false
     }
@@ -239,7 +239,6 @@ class RendererImpl(
     }
 
     override fun initImage(image: PolyImage) {
-        println("Init image: $image")
         getOrPopulateImage(image, 0f, 0f)
     }
 
