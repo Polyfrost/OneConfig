@@ -41,8 +41,6 @@ import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.utils.*
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
-import java.util.IdentityHashMap
-import kotlin.math.abs
 import org.polyfrost.polyui.color.PolyColor as Color
 
 class RendererImpl(
