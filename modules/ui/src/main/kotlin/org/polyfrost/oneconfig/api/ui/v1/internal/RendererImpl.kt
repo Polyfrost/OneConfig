@@ -33,7 +33,6 @@ import org.polyfrost.oneconfig.api.ui.v1.api.NanoVgApi
 import org.polyfrost.oneconfig.api.ui.v1.api.StbApi
 import org.polyfrost.universal.UGraphics
 import org.polyfrost.polyui.PolyUI
-import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.data.Font
 import org.polyfrost.polyui.data.PolyImage
@@ -105,15 +104,23 @@ class RendererImpl(
 
     private val queue = ArrayList<() -> Unit>()
 
+    // ByteBuffer.of("px\u0000")
+    private val PIXELS: ByteBuffer = MemoryUtil.memAlloc(3).put(112).put(120).put(0).flip() as ByteBuffer
     private val errorHandler: (Throwable) -> Unit = { LOGGER.error("failed to load resource!", it) }
+    var gl3 = false
 
     override fun init() {
-        nanoVg.maybeSetup()
+        if (vg == 0L) {
+            vg = if(gl3) NanoVGGL3.nvgCreate(NVG_ANTIALIAS) else NanoVGGL2.nvgCreate(NVG_ANTIALIAS)
+        }
+        if (raster == 0L) raster = nsvgCreateRasterizer()
+        require(vg != 0L) { "Could not initialize NanoVG" }
+        require(raster != 0L) { "Could not initialize NanoSVG" }
 
         if (defaultFont == null) {
             val font = PolyUI.defaultFonts.regular
             val fdata = font.load().toDirectByteBuffer()
-            val fit = NvgFont(nanoVg.createFont(font.name, fdata), fdata)
+            val fit = NVGFont(nvgCreateFontMem(vg, font.name, fdata, false), fdata)
             this.defaultFont = fit
             fonts[font] = fit
         }
@@ -130,8 +137,7 @@ class RendererImpl(
     }
 
     override fun beginFrame(width: Float, height: Float, pixelRatio: Float) {
-        if (isDrawing) throw IllegalStateException("Already drawing")
-
+        if (drawing) throw IllegalStateException("Already drawing")
         queue.fastRemoveIfReversed { it(); true }
         UGraphics.disableAlpha()
 //        if(!isGl3) {
@@ -153,29 +159,29 @@ class RendererImpl(
         isDrawing = false
     }
 
-    override fun globalAlpha(alpha: Float) = nanoVg.globalAlpha(alpha)
+    override fun globalAlpha(alpha: Float) = nvgGlobalAlpha(vg, alpha)
 
-    override fun translate(x: Float, y: Float) = nanoVg.translate(x, y)
+    override fun translate(x: Float, y: Float) = nvgTranslate(vg, x, y)
 
-    override fun scale(sx: Float, sy: Float, px: Float, py: Float) = nanoVg.scale(sx, sy)
+    override fun scale(sx: Float, sy: Float, px: Float, py: Float) = nvgScale(vg, sx, sy)
 
-    override fun rotate(angleRadians: Double, px: Float, py: Float) = nanoVg.rotate(angleRadians.toFloat())
+    override fun rotate(angleRadians: Double, px: Float, py: Float) = nvgRotate(vg, angleRadians.toFloat())
 
-    override fun skewX(angleRadians: Double, px: Float, py: Float) = nanoVg.skewX(angleRadians.toFloat())
+    override fun skewX(angleRadians: Double, px: Float, py: Float) = nvgSkewX(vg, angleRadians.toFloat())
 
-    override fun skewY(angleRadians: Double, px: Float, py: Float) = nanoVg.skewY(angleRadians.toFloat())
+    override fun skewY(angleRadians: Double, px: Float, py: Float) = nvgSkewY(vg, angleRadians.toFloat())
 
     override fun transformsWithPoint() = false
 
-    override fun push() = nanoVg.save()
+    override fun push() = nvgSave(vg)
 
-    override fun pop() = nanoVg.restore()
+    override fun pop() = nvgRestore(vg)
 
-    override fun pushScissor(x: Float, y: Float, width: Float, height: Float) = nanoVg.scissor(x, y, width, height)
+    override fun pushScissor(x: Float, y: Float, width: Float, height: Float) = nvgScissor(vg, x, y, width, height)
 
-    override fun pushScissorIntersecting(x: Float, y: Float, width: Float, height: Float) = nanoVg.intersectScissor(x, y, width, height)
+    override fun pushScissorIntersecting(x: Float, y: Float, width: Float, height: Float) = nvgIntersectScissor(vg, x, y, width, height)
 
-    override fun popScissor() = nanoVg.resetScissor()
+    override fun popScissor() = nvgResetScissor(vg)
 
     override fun text(
         font: Font,
@@ -210,7 +216,7 @@ class RendererImpl(
     ) {
         nanoVg.imagePattern(x, y, width, height, 0f, getOrPopulateImage(image, width, height), 1f, paintAddress)
         if (colorMask != 0) {
-            populateNvgColor(colorMask, nanoVg.getPaintColor(paintAddress))
+            nvgARGB(colorMask, nvgPaint.innerColor())
         }
 
         nanoVg.beginPath()
@@ -226,15 +232,15 @@ class RendererImpl(
     override fun delete(image: PolyImage?) {
         images.remove(image).also {
             if (it != null) {
-                nanoVg.deleteImage(it)
+                nvgDeleteImage(vg, it)
                 return
             }
         }
         svgs.remove(image).also {
             if (it != null) {
-                nanoVg.deleteSvg(it.first)
+                nsvgDelete(it.first)
                 it.second.forEach { _, handle ->
-                    nanoVg.deleteImage(handle)
+                    nvgDeleteImage(vg, handle)
                 }
             }
         }
@@ -258,8 +264,9 @@ class RendererImpl(
     ) {
         if (color.transparent) return
         // note: nvg checks params and draws classic rect if 0, so we don't need to
-        nanoVg.beginPath()
-        nanoVg.roundedRectVarying(
+        nvgBeginPath(vg)
+        nvgRoundedRectVarying(
+            vg,
             x,
             y,
             width,
@@ -269,8 +276,12 @@ class RendererImpl(
             bottomRightRadius,
             bottomLeftRadius,
         )
-        populateFillOrColor(color, x, y, width, height)
-        nanoVg.fill()
+        if (color(color, x, y, width, height)) {
+            nvgFillPaint(vg, nvgPaint)
+        } else {
+            nvgFillColor(vg, nvgColor)
+        }
+        nvgFill(vg)
     }
 
     override fun hollowRect(
@@ -286,8 +297,9 @@ class RendererImpl(
         bottomRightRadius: Float,
     ) {
         if (color.transparent) return
-        nanoVg.beginPath()
-        nanoVg.roundedRectVarying(
+        nvgBeginPath(vg)
+        nvgRoundedRectVarying(
+            vg,
             x,
             y,
             width,
@@ -297,19 +309,27 @@ class RendererImpl(
             bottomRightRadius,
             bottomLeftRadius,
         )
-        nanoVg.strokeWidth(lineWidth)
-        populateStrokeColor(color, x, y, width, height)
-        nanoVg.stroke()
+        nvgStrokeWidth(vg, lineWidth)
+        if (color(color, x, y, width, height)) {
+            nvgStrokePaint(vg, nvgPaint)
+        } else {
+            nvgStrokeColor(vg, nvgColor)
+        }
+        nvgStroke(vg)
     }
 
     override fun line(x1: Float, y1: Float, x2: Float, y2: Float, color: Color, width: Float) {
         if (color.transparent) return
-        nanoVg.beginPath()
-        nanoVg.moveTo(x1, y1)
-        nanoVg.lineTo(x2, y2)
-        nanoVg.strokeWidth(width)
-        populateStrokeColor(color, x1, y1, x2, y2)
-        nanoVg.stroke()
+        nvgBeginPath(vg)
+        nvgMoveTo(vg, x1, y1)
+        nvgLineTo(vg, x2, y2)
+        nvgStrokeWidth(vg, width)
+        if (color(color, x1, y1, x2, y2)) {
+            nvgStrokePaint(vg, nvgPaint)
+        } else {
+            nvgStrokeColor(vg, nvgColor)
+        }
+        nvgStroke(vg)
     }
 
     override fun dropShadow(
@@ -321,13 +341,13 @@ class RendererImpl(
         spread: Float,
         radius: Float,
     ) {
-        nanoVg.boxGradient(paintAddress, x - spread, y - spread, width + spread * 2f, height + spread * 2f, radius + spread, blur, color1Address, color2Address)
-        nanoVg.beginPath()
-        nanoVg.roundedRect(x - spread, y - spread - blur, width + spread * 2f + blur * 2f, height + spread * 2f + blur * 2f, radius + spread)
-        nanoVg.roundedRect(x, y, width, height, radius)
-        nanoVg.pathWinding(nanoVg.constants().NVG_HOLE())
-        nanoVg.fillPaint(paintAddress)
-        nanoVg.fill()
+        nvgBoxGradient(vg, x - spread, y - spread, width + spread * 2f, height + spread * 2f, radius + spread, blur, nvgColor, nvgColor2, nvgPaint)
+        nvgBeginPath(vg)
+        nvgRoundedRect(vg, x - spread, y - spread - blur, width + spread * 2f + blur * 2f, height + spread * 2f + blur * 2f, radius + spread)
+        nvgRoundedRect(vg, x, y, width, height, radius)
+        nvgPathWinding(vg, NVG_HOLE)
+        nvgFillPaint(vg, nvgPaint)
+        nvgFill(vg)
     }
 
     @Suppress("NAME_SHADOWING")
@@ -619,4 +639,6 @@ class RendererImpl(
 
     // asm: renderer is persistent
     override fun cleanup() {}
+
+    private data class NVGFont(val id: Int, val data: ByteBuffer)
 }

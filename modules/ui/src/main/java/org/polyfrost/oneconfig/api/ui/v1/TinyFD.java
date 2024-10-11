@@ -24,7 +24,7 @@
  * <https://polyfrost.org/legal/oneconfig/additional-terms>
  */
 
-package org.polyfrost.oneconfig.api.ui.v1.api;
+package org.polyfrost.oneconfig.api.ui.v1;
 
 
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.file.Path;
 
 @SuppressWarnings("unused")
-public interface TinyFdApi {
+public interface TinyFD {
     String QUESTION_ICON = "question";
     String ERROR_ICON = "error";
     String WARNING_ICON = "warning";

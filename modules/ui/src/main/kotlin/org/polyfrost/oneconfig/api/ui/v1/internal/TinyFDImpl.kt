@@ -29,12 +29,12 @@ package org.polyfrost.oneconfig.api.ui.v1.internal
 import org.lwjgl.PointerBuffer
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.util.tinyfd.TinyFileDialogs.*
-import org.polyfrost.oneconfig.api.ui.v1.api.TinyFdApi
+import org.polyfrost.oneconfig.api.ui.v1.TinyFD
 import org.polyfrost.polyui.utils.mapToArray
 import java.nio.file.Path
 import java.nio.file.Paths
 
-class TinyFdImpl : TinyFdApi {
+class TinyFDImpl : TinyFD {
     override fun openSaveSelector(title: String?, defaultFilePath: String?, filterPatterns: Array<String>?, filterDescription: String?) =
         tinyfd_saveFileDialog(title ?: "Save", defaultFilePath, malloc(filterPatterns), filterDescription)?.toPath()
 
