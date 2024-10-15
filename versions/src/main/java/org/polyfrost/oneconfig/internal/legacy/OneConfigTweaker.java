@@ -244,6 +244,13 @@ public class OneConfigTweaker implements ITweaker {
 
     @Override
     public void acceptOptions(List<String> args, File gameDir, File assetsDir, String profile) {
+        boolean captureNext = false;
+        for (String arg : args) {
+            if (captureNext) {
+                Mixins.addConfiguration(arg);
+            }
+            captureNext = "--mixin".equals(arg);
+        }
     }
 
     @Override
