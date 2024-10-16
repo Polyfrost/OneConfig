@@ -124,14 +124,6 @@ val shadeOnly: Configuration by configurations.creating
 
 val shadeNoJar: Configuration by configurations.creating
 
-private enum class RepackedVersion(val string: String) {
-    LEGACY("legacy"), PRE119NOARM("pre-1.19-noarm"), PRE119ARM("pre-1.19-arm"), POST119("post-1.19");
-
-    override fun toString(): String {
-        return string
-    }
-}
-
 dependencies {
     compileOnly(libs.vigilance) {
         isTransitive = false
@@ -165,20 +157,12 @@ dependencies {
         }
     }
 
-    val repackedVersions = when (platform.mcVersion) {
-        in 10809..11202 -> listOf(RepackedVersion.LEGACY)
-        in 11203..11802 -> listOf(RepackedVersion.PRE119NOARM, RepackedVersion.PRE119ARM)
-        else -> listOf(RepackedVersion.POST119)
-    }
+    val configuration = configurations.create("tempLwjglConfiguration0")
 
-    repackedVersions.forEachIndexed { index, version ->
-        val configuration = configurations.create("tempLwjglConfiguration$index")
-
-        compileOnly(configuration("cc.polyfrost:lwjgl-$version:${libs.versions.lwjgl.get()}"){
-            isTransitive = false
-        })
-        shadeNoPom(implementationNoPom(prebundle(configuration, "lwjgl-$version.jar"))!!)
-    }
+    compileOnly(configuration("cc.polyfrost:lwjgl-lwjgl3-repacked:${libs.versions.lwjgl.get()}"){
+        isTransitive = false
+    })
+    shadeNoPom(implementationNoPom(prebundle(configuration, "lwjgl-legacy.jar"))!!)
 
     modRuntimeOnly("me.djtheredstoner:DevAuth-" +
             (if (platform.isForge) { if (platform.isLegacyForge) "forge-legacy" else "forge-latest" } else "fabric")
