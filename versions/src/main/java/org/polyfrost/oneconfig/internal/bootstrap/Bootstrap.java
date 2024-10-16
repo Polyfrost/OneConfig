@@ -26,7 +26,9 @@
 
 package org.polyfrost.oneconfig.internal.bootstrap;
 
+//#if FORGE && MODERN==0
 import net.minecraft.launchwrapper.Launch;
+//#endif
 
 import java.util.ArrayList;
 import java.util.List;
