@@ -26,10 +26,27 @@
 
 package org.polyfrost.oneconfig.internal.bootstrap;
 
+import net.minecraft.launchwrapper.Launch;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 public class Bootstrap {
-    public static void init() {
+    //#if FORGE && MODERN==0
+    private org.polyfrost.oneconfig.internal.legacy.OneConfigTweaker tweaker = new org.polyfrost.oneconfig.internal.legacy.OneConfigTweaker();
+    //#endif
+
+    public void init() {
         //#if FORGE && MODERN==0
-        new org.polyfrost.oneconfig.internal.legacy.OneConfigTweaker().injectIntoClassLoader(net.minecraft.launchwrapper.Launch.classLoader);
+        Map<String, String> launchArgs = ((Map<String, String>) Launch.blackboard.get("launchArgs"));
+        List<String> args = new ArrayList<>();
+        for (Map.Entry<String, String> entry : launchArgs.entrySet()) {
+            args.add(entry.getKey());
+            args.add(entry.getValue());
+        }
+        tweaker.acceptOptions(args, Launch.minecraftHome, Launch.assetsDir, launchArgs.get("--version"));
+        tweaker.injectIntoClassLoader(net.minecraft.launchwrapper.Launch.classLoader);
         //#endif
     }
 }
