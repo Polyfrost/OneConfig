@@ -17,6 +17,7 @@
     "OptifineConfigMixin",
     "RedactionNameHighlightMixin",
     "ShaderGroupAccessor",
+    "SkyClientUpdaterMixin",
     "VigilantMixin",
     "WorldClientMixin"
   ]
