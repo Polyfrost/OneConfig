@@ -10,6 +10,7 @@ allprojects {
 
 repositories {
     mavenLocal()
+    maven("https://repo.polyfrost.org/snapshots")
 }
 
 dependencies {
@@ -21,4 +22,6 @@ dependencies {
     api(libs.hypixel.modapi)
 
     api(libs.bundles.nightconfig)
+
+    api(libs.isolated.lwjgl3.loader)
 }

@@ -21,6 +21,7 @@ hypixel-modapi = "1.0"
 lwjgl = "3.3.3"
 universalcraft = "299"
 mixin = "0.7.11-SNAPSHOT"
+isolated-lwjgl3-loader = "0.1.1"
 
 # Testing
 junit-bom = "5.10.2"
@@ -31,6 +32,8 @@ junit = { module = "org.junit.jupiter:junit-jupiter" }
 junit-bom = { module = "org.junit:junit-bom", version.ref = "junit-bom" }
 
 mixin = { module = "org.spongepowered:mixin", version.ref = "mixin" }
+
+isolated-lwjgl3-loader = { module = "org.polyfrost:isolated-lwjgl3-loader", version.ref = "isolated-lwjgl3-loader" }
 
 hypixel-modapi = { module = "net.hypixel:mod-api", version.ref = "hypixel-modapi" }
 

@@ -33,11 +33,11 @@ subprojects {
         }
     }
 
-    configure<QuiltLicenserGradleExtension> {
-        rule("${rootProject.rootDir}/FILEHEADER")
-        include("**/*.kt")
-        include("**/*.java")
-    }
+//    configure<QuiltLicenserGradleExtension> {
+//        rule("${rootProject.rootDir}/FILEHEADER")
+//        include("**/*.kt")
+//        include("**/*.java")
+//    }
 
     configure<PublishingExtension> {
         repositories {

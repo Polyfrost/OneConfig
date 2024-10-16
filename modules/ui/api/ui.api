@@ -20,16 +20,95 @@ public final class org/polyfrost/oneconfig/api/ui/v1/NotificationsManager$Type :
 
 public final class org/polyfrost/oneconfig/api/ui/v1/OCPolyUIBuilder : org/polyfrost/polyui/utils/PolyUIBuilder {
 	public fun atResolution (FF)Lorg/polyfrost/oneconfig/api/ui/v1/OCPolyUIBuilder;
-	public fun blurs ()Lorg/polyfrost/oneconfig/api/ui/v1/OCPolyUIBuilder;
 	public static fun create ()Lorg/polyfrost/oneconfig/api/ui/v1/OCPolyUIBuilder;
 	public fun make ([Lorg/polyfrost/polyui/component/Drawable;)Lorg/polyfrost/polyui/PolyUI;
 	public fun makeAndOpen ([Lorg/polyfrost/polyui/component/Drawable;)Lorg/polyfrost/polyui/PolyUI;
 	public fun onClose (Ljava/lang/Runnable;)Lorg/polyfrost/oneconfig/api/ui/v1/OCPolyUIBuilder;
 	public fun onClose (Ljava/util/function/Consumer;)Lorg/polyfrost/oneconfig/api/ui/v1/OCPolyUIBuilder;
-	public fun pauses ()Lorg/polyfrost/oneconfig/api/ui/v1/OCPolyUIBuilder;
 }
 
-public abstract interface class org/polyfrost/oneconfig/api/ui/v1/TinyFD {
+public abstract interface class org/polyfrost/oneconfig/api/ui/v1/UIManager {
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/ui/v1/UIManager;
+	public fun createDefault ()Lorg/polyfrost/polyui/PolyUI;
+	public abstract fun createPolyUIScreen (Lorg/polyfrost/polyui/PolyUI;FFZZLjava/util/function/Consumer;)Ljava/lang/Object;
+	public abstract fun createWindow ()Lorg/polyfrost/polyui/renderer/Window;
+	public abstract fun getDefaultInstance ()Lorg/polyfrost/polyui/PolyUI;
+	public abstract fun getRenderer ()Lorg/polyfrost/polyui/renderer/Renderer;
+	public abstract fun getTinyFD ()Lorg/polyfrost/oneconfig/api/ui/v1/api/TinyFdApi;
+}
+
+public abstract interface class org/polyfrost/oneconfig/api/ui/v1/api/LwjglApi {
+	public abstract fun memAlloc (I)Ljava/nio/ByteBuffer;
+}
+
+public abstract interface class org/polyfrost/oneconfig/api/ui/v1/api/NanoVgApi {
+	public abstract fun beginFrame (FFF)V
+	public abstract fun beginPath ()V
+	public abstract fun boxGradient (JFFFFFFJJ)V
+	public abstract fun constants ()Lorg/polyfrost/oneconfig/api/ui/v1/api/NanoVgApi$NanoVgConstants;
+	public abstract fun createColor ()J
+	public abstract fun createFont (Ljava/lang/String;Ljava/nio/ByteBuffer;)I
+	public abstract fun createImage (FFLjava/nio/ByteBuffer;I)I
+	public abstract fun createPaint ()J
+	public abstract fun deleteImage (I)V
+	public abstract fun deleteSvg (J)V
+	public abstract fun endFrame ()V
+	public abstract fun fill ()V
+	public abstract fun fillColor (J)V
+	public abstract fun fillPaint (J)V
+	public abstract fun fontFaceId (I)V
+	public abstract fun fontSize (F)V
+	public abstract fun getPaintColor (J)J
+	public abstract fun globalAlpha (F)V
+	public abstract fun handle ()J
+	public abstract fun imagePattern (FFFFFIFJ)V
+	public abstract fun intersectScissor (FFFF)V
+	public abstract fun lineCap (I)V
+	public abstract fun lineJoin (I)V
+	public abstract fun lineTo (FF)V
+	public abstract fun linearGradient (JFFFFJJ)V
+	public abstract fun maybeSetup ()V
+	public abstract fun moveTo (FF)V
+	public abstract fun parseSvg (Ljava/nio/ByteBuffer;)Lkotlin/Triple;
+	public abstract fun pathWinding (I)V
+	public abstract fun radialGradient (JFFFFJJ)V
+	public abstract fun rasterizeSvg (JFFFLjava/nio/ByteBuffer;III)V
+	public abstract fun resetScissor ()V
+	public abstract fun restore ()V
+	public abstract fun rgba (JI)V
+	public abstract fun rotate (F)V
+	public abstract fun roundedRect (FFFFF)V
+	public abstract fun roundedRectVarying (FFFFFFFF)V
+	public abstract fun save ()V
+	public abstract fun scale (FF)V
+	public abstract fun scissor (FFFF)V
+	public abstract fun skewX (F)V
+	public abstract fun skewY (F)V
+	public abstract fun stroke ()V
+	public abstract fun strokeColor (J)V
+	public abstract fun strokePaint (J)V
+	public abstract fun strokeWidth (F)V
+	public abstract fun svgBounds (J)[F
+	public abstract fun svgHandle ()J
+	public abstract fun text (FFLjava/lang/String;)V
+	public abstract fun textAlign (I)V
+	public abstract fun textBounds (FFLjava/lang/String;[F)F
+	public abstract fun translate (FF)V
+}
+
+public abstract interface class org/polyfrost/oneconfig/api/ui/v1/api/NanoVgApi$NanoVgConstants {
+	public abstract fun NVG_ALIGN_LEFT ()I
+	public abstract fun NVG_ALIGN_TOP ()I
+	public abstract fun NVG_HOLE ()I
+	public abstract fun NVG_IMAGE_FLIPY ()I
+	public abstract fun NVG_ROUND ()I
+}
+
+public abstract interface class org/polyfrost/oneconfig/api/ui/v1/api/StbApi {
+	public abstract fun loadFromMemory (Ljava/nio/ByteBuffer;[I[I[II)Ljava/nio/ByteBuffer;
+}
+
+public abstract interface class org/polyfrost/oneconfig/api/ui/v1/api/TinyFdApi {
 	public static final field ERROR_ICON Ljava/lang/String;
 	public static final field INFO_ICON Ljava/lang/String;
 	public static final field OK_CANCEL_DIALOG Ljava/lang/String;
@@ -44,16 +123,6 @@ public abstract interface class org/polyfrost/oneconfig/api/ui/v1/TinyFD {
 	public abstract fun openSaveSelector (Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;Ljava/lang/String;)Ljava/nio/file/Path;
 	public abstract fun showMessageBox (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Z)Z
 	public abstract fun showNotification (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I
-}
-
-public abstract interface class org/polyfrost/oneconfig/api/ui/v1/UIManager {
-	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/ui/v1/UIManager;
-	public fun createDefault ()Lorg/polyfrost/polyui/PolyUI;
-	public abstract fun createPolyUIScreen (Lorg/polyfrost/polyui/PolyUI;FFZZLjava/util/function/Consumer;)Ljava/lang/Object;
-	public abstract fun createWindow ()Lorg/polyfrost/polyui/renderer/Window;
-	public abstract fun getDefaultInstance ()Lorg/polyfrost/polyui/PolyUI;
-	public abstract fun getRenderer ()Lorg/polyfrost/polyui/renderer/Renderer;
-	public abstract fun getTinyFD ()Lorg/polyfrost/oneconfig/api/ui/v1/TinyFD;
 }
 
 public final class org/polyfrost/oneconfig/api/ui/v1/keybind/BindNotInScreen : org/polyfrost/polyui/input/KeyBinder$Bind {

@@ -12,17 +12,17 @@ description = "Dependencies for legacy platforms (<1.12)"
 val natives = listOf("windows", "windows-arm64", "linux", "macos", "macos-arm64")
 
 dependencies {
-    for (dep in listOf("-nanovg", "-tinyfd", "-stb", "")) {
-        val lwjglDep = "org.lwjgl:lwjgl$dep:$lwjglVersion"
-        api(lwjglDep) {
-            isTransitive = false
-        }
-        for (native in natives) {
-            implementation("$lwjglDep:natives-$native") {
-                isTransitive = false
-            }
-        }
-    }
+//    for (dep in listOf("-nanovg", "-tinyfd", "-stb", "")) {
+//        val lwjglDep = "org.lwjgl:lwjgl$dep:$lwjglVersion"
+//        api(lwjglDep) {
+//            isTransitive = false
+//        }
+//        for (native in natives) {
+//            implementation("$lwjglDep:natives-$native") {
+//                isTransitive = false
+//            }
+//        }
+//    }
 }
 
 val build = project.tasks.getByName("build")
