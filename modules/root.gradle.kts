@@ -107,6 +107,5 @@ apiValidation {
     ignoredProjects.add("internal")
     ignoredProjects.add("dependencies")
     ignoredProjects.add("legacy")
-    ignoredProjects.add("modern")
     ignoredProjects.add("bundled")
 }

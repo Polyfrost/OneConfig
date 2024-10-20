@@ -55,7 +55,6 @@ listOf(
     "internal",
     "dependencies",
     "dependencies:legacy",
-    "dependencies:modern",
     "dependencies:bundled",
     "utils"
 ).forEach { module ->

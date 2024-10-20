@@ -1,20 +1,30 @@
 [versions]
 
 # Libraries
+# All
 kotlin = "2.0.20"
 kotlinx-coroutines = "1.8.1"
 kotlinx-atomicfu = "0.24.0"
-kotlinx-abi = "0.14.0"
+fabric-language-kotlin = "1.12.2+kotlin.2.0.20"
 polyui = "1.7.03"
 annotations = "24.1.0"
-nightconfig = "3.6.6"
 hypixel-modapi = "1.0"
-universalcraft = "299"
-mixin = "0.8.4+build.2"
+hypixel-data = "0.1.2" # Dep of hypixel-modapi
+
+# Not in risk of needing to be relaunched / bumped by JiJ
+nightconfig = "3.6.6"
 isolated-lwjgl3-loader = "0.1.1"
-lwjgl = "3.3.3" # Natives downloaded by the isolated-lwjgl3-loader
+deftu-filestream = "0.4.1" # dep of isolated-lwjgl3-loader
+
+# Per version
+universalcraft = "299"
+lwjgl = "3.3.3" # All downloaded by the isolated-lwjgl3-loader
+
+# Legacy only
+mixin = "0.8.4+build.2"
 
 # Gradle
+kotlinx-abi = "0.14.0"
 pgt = "0.6.6"
 shadow = "8.1.1"
 licenser = "2.0.1"
@@ -33,8 +43,10 @@ junit-bom = { module = "org.junit:junit-bom", version.ref = "junit-bom" }
 mixin = { module = "org.polyfrost:polymixin", version.ref = "mixin" }
 
 isolated-lwjgl3-loader = { module = "org.polyfrost:isolated-lwjgl3-loader", version.ref = "isolated-lwjgl3-loader" }
+deftu-filestream = { module = "dev.deftu:filestream", version.ref = "deftu-filestream" }
 
 hypixel-modapi = { module = "net.hypixel:mod-api", version.ref = "hypixel-modapi" }
+hypixel-data = { module = "net.hypixel:hypixel-data", version.ref = "hypixel-data" }
 
 polyui = { module = "org.polyfrost:polyui", version.ref = "polyui" }
 
@@ -58,6 +70,7 @@ kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref =
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib-jdk8", version.ref = "kotlin" }
 kotlinx-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm", version.ref = "kotlinx-coroutines" }
 kotlinx-atomicfu = { module = "org.jetbrains.kotlinx:atomicfu-jvm", version.ref = "kotlinx-atomicfu" }
+fabric-language-kotlin = { module = "net.fabricmc:fabric-language-kotlin", version.ref = "fabric-language-kotlin" }
 
 [bundles]
 kotlin = ["kotlin-reflect", "kotlin-stdlib"]

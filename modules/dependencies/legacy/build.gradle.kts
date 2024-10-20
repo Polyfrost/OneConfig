@@ -1,16 +1,17 @@
+import org.polyfrost.gradle.provideIncludedDependencies
+
 plugins {
-    alias(libs.plugins.jetbrains.idea.ext)
+    id("org.polyfrost.loom")
 }
 
-description = "Dependencies for legacy platforms (<1.12)"
-
-val natives = listOf("windows", "windows-arm64", "linux", "macos", "macos-arm64")
-
 dependencies {
-    for (dep in listOf("-nanovg", "-tinyfd", "-stb", "")) {
-        val lwjglDep = "org.lwjgl:lwjgl$dep:${libs.versions.lwjgl.get()}"
-        api(lwjglDep) {
-            isTransitive = false
+    minecraft("com.mojang:minecraft:1.16.5")
+    mappings("net.fabricmc:yarn:1.16.5+build.10:v2")
+
+    provideIncludedDependencies(null, "forge").forEach {
+        val dep = if (it.mod) modCompileOnly(it.dep) else compileOnly(it.dep)
+        if (dep != null) {
+            include(dep)
         }
     }
 }

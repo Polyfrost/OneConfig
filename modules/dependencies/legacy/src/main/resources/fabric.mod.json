@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "id": "oneconfig-deps",
+  "name": "OneConfig Dependencies",
+  "version": "${version}",
+  "description": "Fake Fabric mod JSON for Legacy Forge mods",
+  "authors": [
+    "Polyfrost"
+  ],
+  "contact": {
+    "homepage": "https://polyfrost.org",
+    "sources": "https://github.com/Polyfrost/OneConfig",
+    "issues": "https://inv.wtf/polyfrost"
+  },
+  "license": "LGPL-3.0",
+  "environment": "client",
+  "custom": {
+    "modmenu": {
+      "badges": [ "library" ]
+    }
+  }
+}

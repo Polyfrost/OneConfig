@@ -1,6 +1,8 @@
 @file:Suppress("UnstableApiUsage")
 // Shared build logic for all versions of OneConfig.
 
+import org.gradle.api.internal.artifacts.dependencies.DefaultExternalModuleDependency
+import org.polyfrost.gradle.provideIncludedDependencies
 import org.polyfrost.gradle.util.noServerRunConfigs
 import java.text.SimpleDateFormat
 
@@ -41,26 +43,32 @@ loom {
 }
 
 repositories {
-    mavenLocal()
     maven("https://repo.polyfrost.org/releases")
     maven("https://repo.polyfrost.org/snapshots")
 }
+
+val shadow by configurations.creating
 
 dependencies {
     compileOnly("gg.essential:vigilance-1.8.9-forge:295") {
         isTransitive = false
     }
 
-    modApi("org.polyfrost:universalcraft-$platform:${libs.versions.universalcraft.get()}") {
-        isTransitive = false
+    provideIncludedDependencies(Triple(platform.mcMajor, platform.mcMinor, platform.mcPatch), platform.loaderStr).forEach {
+        if (it.dep is String) {
+            shade(it.dep as String, it.mod)
+        } else {
+            shade(it.dep as ExternalModuleDependency, it.mod)
+        }
     }
 
-    if (platform.isLegacyForge || platform.isLegacyFabric) {
-        implementation(project(":modules:dependencies:legacy"))
-    } else {
-        implementation(project(":modules:dependencies:modern"))
+    for (dep in listOf("-nanovg").run { if (platform.mcVersion < 11300) this else this + listOf("-tinyfd", "-stb", "") }) {
+        val lwjglDep = "org.lwjgl:lwjgl$dep:${libs.versions.lwjgl.get()}"
+        compileOnlyApi(lwjglDep) {
+            isTransitive = false
+        }
     }
-    implementation(project(":modules:dependencies"))
+
     implementation(project(":modules:dependencies:bundled"))
     implementation(project(":modules:internal")) {
         isTransitive = false
@@ -83,6 +91,29 @@ dependencies {
                     } else "fabric")
                     + ":1.1.2"
         )
+    }
+}
+
+fun DependencyHandlerScope.shade(dependency: String, isMod: Boolean = false) {
+    val dep = project.dependencies.create(dependency) as ExternalModuleDependency
+    shade(dep, isMod)
+}
+
+fun DependencyHandlerScope.shade(dependency: Provider<MinimalExternalModuleDependency>, isMod: Boolean = false) {
+    shade(dependency.get(), isMod)
+}
+
+fun DependencyHandlerScope.shade(dependency: ExternalModuleDependency, isMod: Boolean = false) {
+    val dep = "${dependency.group}:${dependency.name}:${dependency.version}"
+    val configuration = if (isMod) modApi(dep) {
+        isTransitive = false
+    } else api(dep) {
+        isTransitive = false
+    }
+    if (platform.isFabric || platform.mcVersion >= 11900) {
+        include(configuration)
+    } else if (!platform.isLegacyForge) {
+        shadow(configuration)
     }
 }
 
@@ -116,7 +147,10 @@ tasks {
             }
         }
     }
-
+    remapJar {
+        from(shadow.files.map { zipTree(it) })
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    }
     processResources {
         inputs.property("id", rootProject.properties["mod_id"].toString())
         inputs.property("name", rootProject.name)
