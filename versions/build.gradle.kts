@@ -42,6 +42,7 @@ loom {
 
 repositories {
     mavenLocal()
+    maven("https://repo.polyfrost.org/releases")
     maven("https://repo.polyfrost.org/snapshots")
 }
 

@@ -7,8 +7,8 @@ on:
   workflow_dispatch:
   push:
     branches-ignore:
-      - master
-      - main
+      - develop-v0
+      - main-v0
     paths-ignore:
       - 'README.md'
       - '.github/**'
@@ -65,9 +65,6 @@ jobs:
           validate-wrappers: true
           cache-read-only: ${{ github.ref != 'refs/heads/master' && github.ref != 'refs/heads/v1' }}
 
-      - name: Sync project and build legacy jar
-        run: ./gradlew :modules:dependencies:legacy build
-
       - name: Build
         run: ./gradlew build
 
@@ -78,4 +75,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: oneconfig-artifacts
-          path: versions/**/build/libs/
+          path: | 
+            modules/**/build/libs/
+            versions/**/build/libs/

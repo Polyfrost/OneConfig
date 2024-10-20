@@ -17,6 +17,11 @@ subprojects {
     if (project.parent?.name == "dependencies")
         this.group = "${project.group}.dependencies"
 
+    repositories {
+        maven("https://repo.polyfrost.org/releases")
+        maven("https://repo.polyfrost.org/snapshots")
+    }
+
     dependencies {
         "implementation"(rootProject.libs.annotations)
         "compileOnly"(rootProject.libs.logging.api)
