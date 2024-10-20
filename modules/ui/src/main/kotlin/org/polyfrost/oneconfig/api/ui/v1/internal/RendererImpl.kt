@@ -27,63 +27,91 @@
 package org.polyfrost.oneconfig.api.ui.v1.internal
 
 import org.apache.logging.log4j.LogManager
-import org.lwjgl.nanovg.NSVGImage
-import org.lwjgl.nanovg.NVGColor
-import org.lwjgl.nanovg.NVGPaint
-import org.lwjgl.nanovg.NanoSVG.*
-import org.lwjgl.nanovg.NanoVG.*
-import org.lwjgl.nanovg.NanoVGGL2
-import org.lwjgl.nanovg.NanoVGGL2.NVG_ANTIALIAS
-import org.lwjgl.nanovg.NanoVGGL3
-import org.lwjgl.opengl.GL11.*
-import org.lwjgl.stb.STBImage.stbi_failure_reason
-import org.lwjgl.stb.STBImage.stbi_load_from_memory
-import org.lwjgl.system.MemoryUtil
+import org.lwjgl.opengl.GL11
+import org.polyfrost.oneconfig.api.ui.v1.api.LwjglApi
+import org.polyfrost.oneconfig.api.ui.v1.api.NanoVgApi
+import org.polyfrost.oneconfig.api.ui.v1.api.StbApi
 import org.polyfrost.universal.UGraphics
 import org.polyfrost.polyui.PolyUI
+import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.data.Font
 import org.polyfrost.polyui.data.PolyImage
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.utils.*
 import java.nio.ByteBuffer
-import java.util.IdentityHashMap
+import java.nio.ByteOrder
 import org.polyfrost.polyui.color.PolyColor as Color
 
-object RendererImpl : Renderer {
-    @JvmStatic
-    private val LOGGER = LogManager.getLogger("OneConfig/Renderer")
-    private val nvgPaint: NVGPaint = NVGPaint.malloc()
-    private val nvgColor: NVGColor = NVGColor.malloc()
-    private val nvgColor2: NVGColor = NVGColor.malloc()
-    private val images = HashMap<PolyImage, Int>()
-    private val svgs = HashMap<PolyImage, Pair<NSVGImage, Int2IntMap>>()
-    private val fonts = IdentityHashMap<Font, NVGFont>()
-    private var defaultFont: NVGFont? = null
+class RendererImpl(
+    private val isGl3: Boolean,
+    private val lwjgl: LwjglApi,
+    private val nanoVg: NanoVgApi,
+    private val stb: StbApi
+) : Renderer {
+
+    private companion object {
+
+        @JvmStatic
+        private val LOGGER = LogManager.getLogger("OneConfig/Renderer")
+
+    }
+
+    @Suppress("unused")
+    internal data class NvgFont(
+        val id: Int,
+        val buffer: ByteBuffer
+    )
+
+    private var isDrawing = false
+
+    private var paintAddress = -1L
+        get() {
+            if (field == -1L) {
+                field = nanoVg.createPaint()
+            }
+
+            return field
+        }
+
+    private var color1Address = -1L
+        get() {
+            if (field == -1L) {
+                field = nanoVg.createColor()
+            }
+
+            return field
+        }
+
+    private var color2Address = -1L
+        get() {
+            if (field == -1L) {
+                field = nanoVg.createColor()
+            }
+
+            return field
+        }
+
+    private var defaultFont: NvgFont? = null
+    private val fonts = mutableMapOf<Font, NvgFont>()
+
     private var defaultImageData: ByteArray? = null
     private var defaultImage = 0
-    private var vg: Long = 0L
-    private var raster: Long = 0L
-    private var drawing = false
+
+    private val images = mutableMapOf<PolyImage, Int>()
+    private val svgs = mutableMapOf<PolyImage, Pair<Long, Int2IntMap>>()
+
     private val queue = ArrayList<() -> Unit>()
 
-    // ByteBuffer.of("px\u0000")
-    private val PIXELS: ByteBuffer = MemoryUtil.memAlloc(3).put(112).put(120).put(0).flip() as ByteBuffer
     private val errorHandler: (Throwable) -> Unit = { LOGGER.error("failed to load resource!", it) }
-    var gl3 = false
 
     override fun init() {
-        if (vg == 0L) {
-            vg = if(gl3) NanoVGGL3.nvgCreate(NVG_ANTIALIAS) else NanoVGGL2.nvgCreate(NVG_ANTIALIAS)
-        }
-        if (raster == 0L) raster = nsvgCreateRasterizer()
-        require(vg != 0L) { "Could not initialize NanoVG" }
-        require(raster != 0L) { "Could not initialize NanoSVG" }
+        nanoVg.maybeSetup()
 
         if (defaultFont == null) {
             val font = PolyUI.defaultFonts.regular
             val fdata = font.load().toDirectByteBuffer()
-            val fit = NVGFont(nvgCreateFontMem(vg, font.name, fdata, false), fdata)
+            val fit = NvgFont(nanoVg.createFont(font.name, fdata), fdata)
             this.defaultFont = fit
             fonts[font] = fit
         }
@@ -91,7 +119,7 @@ object RendererImpl : Renderer {
         if (defaultImage == 0) {
             val iImage = PolyUI.defaultImage
             val iData = iImage.load()
-            val iHandle = nvgCreateImageRGBA(vg, iImage.width.toInt(), iImage.height.toInt(), 0, iData.toDirectByteBuffer())
+            val iHandle = nanoVg.createImage(iImage.width, iImage.height, iData.toDirectByteBuffer(), 0)
             require(iHandle != 0) { "NanoVG failed to initialize default image" }
             defaultImageData = iData
             images[iImage] = iHandle
@@ -100,48 +128,52 @@ object RendererImpl : Renderer {
     }
 
     override fun beginFrame(width: Float, height: Float, pixelRatio: Float) {
-        if (drawing) throw IllegalStateException("Already drawing")
+        if (isDrawing) throw IllegalStateException("Already drawing")
+
         queue.fastRemoveIfReversed { it(); true }
         UGraphics.disableAlpha()
-        if(!gl3) {
-            glPushAttrib(GL_ALL_ATTRIB_BITS)
+        if (!isGl3) {
+            GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS)
         }
-        nvgBeginFrame(vg, width, height, pixelRatio)
-        drawing = true
+
+        nanoVg.beginFrame(width, height, pixelRatio)
+        isDrawing = true
     }
 
     override fun endFrame() {
-        if (!drawing) throw IllegalStateException("Not drawing")
-        nvgEndFrame(vg)
-        if(!gl3) {
-            glPopAttrib()
+        if (!isDrawing) throw IllegalStateException("Not drawing")
+
+        nanoVg.endFrame()
+        if (!isGl3) {
+            GL11.glPopAttrib()
         }
-        drawing = false
+
+        isDrawing = false
     }
 
-    override fun globalAlpha(alpha: Float) = nvgGlobalAlpha(vg, alpha)
+    override fun globalAlpha(alpha: Float) = nanoVg.globalAlpha(alpha)
 
-    override fun translate(x: Float, y: Float) = nvgTranslate(vg, x, y)
+    override fun translate(x: Float, y: Float) = nanoVg.translate(x, y)
 
-    override fun scale(sx: Float, sy: Float, px: Float, py: Float) = nvgScale(vg, sx, sy)
+    override fun scale(sx: Float, sy: Float, px: Float, py: Float) = nanoVg.scale(sx, sy)
 
-    override fun rotate(angleRadians: Double, px: Float, py: Float) = nvgRotate(vg, angleRadians.toFloat())
+    override fun rotate(angleRadians: Double, px: Float, py: Float) = nanoVg.rotate(angleRadians.toFloat())
 
-    override fun skewX(angleRadians: Double, px: Float, py: Float) = nvgSkewX(vg, angleRadians.toFloat())
+    override fun skewX(angleRadians: Double, px: Float, py: Float) = nanoVg.skewX(angleRadians.toFloat())
 
-    override fun skewY(angleRadians: Double, px: Float, py: Float) = nvgSkewY(vg, angleRadians.toFloat())
+    override fun skewY(angleRadians: Double, px: Float, py: Float) = nanoVg.skewY(angleRadians.toFloat())
 
     override fun transformsWithPoint() = false
 
-    override fun push() = nvgSave(vg)
+    override fun push() = nanoVg.save()
 
-    override fun pop() = nvgRestore(vg)
+    override fun pop() = nanoVg.restore()
 
-    override fun pushScissor(x: Float, y: Float, width: Float, height: Float) = nvgScissor(vg, x, y, width, height)
+    override fun pushScissor(x: Float, y: Float, width: Float, height: Float) = nanoVg.scissor(x, y, width, height)
 
-    override fun pushScissorIntersecting(x: Float, y: Float, width: Float, height: Float) = nvgIntersectScissor(vg, x, y, width, height)
+    override fun pushScissorIntersecting(x: Float, y: Float, width: Float, height: Float) = nanoVg.intersectScissor(x, y, width, height)
 
-    override fun popScissor() = nvgResetScissor(vg)
+    override fun popScissor() = nanoVg.resetScissor()
 
     override fun text(
         font: Font,
@@ -152,13 +184,14 @@ object RendererImpl : Renderer {
         fontSize: Float,
     ) {
         if (color.transparent) return
-        nvgBeginPath(vg)
-        nvgFontSize(vg, fontSize)
-        nvgFontFaceId(vg, getFont(font))
-        nvgTextAlign(vg, NVG_ALIGN_LEFT or NVG_ALIGN_TOP)
-        color(color)
-        nvgFillColor(vg, nvgColor)
-        nvgText(vg, x, y, text)
+
+        nanoVg.beginPath()
+        nanoVg.fontSize(fontSize)
+        nanoVg.fontFaceId(getOrPopulateFont(font).id)
+        nanoVg.textAlign(nanoVg.constants().NVG_ALIGN_LEFT() or nanoVg.constants().NVG_ALIGN_TOP())
+        populateFillOrColor(color, x, y, 0f, 0f)
+        nanoVg.fillColor(color1Address)
+        nanoVg.text(x, y, text)
     }
 
     override fun image(
@@ -173,24 +206,15 @@ object RendererImpl : Renderer {
         bottomLeftRadius: Float,
         bottomRightRadius: Float,
     ) {
-        nvgImagePattern(vg, x, y, width, height, 0f, getImage(image, width, height), 1f, nvgPaint)
+        nanoVg.imagePattern(x, y, width, height, 0f, getOrPopulateImage(image, width, height), 1f, paintAddress)
         if (colorMask != 0) {
-            nvgARGB(colorMask, nvgPaint.innerColor())
+            populateNvgColor(colorMask, nanoVg.getPaintColor(paintAddress))
         }
-        nvgBeginPath(vg)
-        nvgRoundedRectVarying(
-            vg,
-            x,
-            y,
-            width,
-            height,
-            topLeftRadius,
-            topRightRadius,
-            bottomRightRadius,
-            bottomLeftRadius,
-        )
-        nvgFillPaint(vg, nvgPaint)
-        nvgFill(vg)
+
+        nanoVg.beginPath()
+        nanoVg.roundedRectVarying(x, y, width, height, topLeftRadius, topRightRadius, bottomRightRadius, bottomLeftRadius)
+        nanoVg.fillPaint(paintAddress)
+        nanoVg.fill()
     }
 
     override fun delete(font: Font?) {
@@ -200,22 +224,22 @@ object RendererImpl : Renderer {
     override fun delete(image: PolyImage?) {
         images.remove(image).also {
             if (it != null) {
-                nvgDeleteImage(vg, it)
+                nanoVg.deleteImage(it)
                 return
             }
         }
         svgs.remove(image).also {
             if (it != null) {
-                nsvgDelete(it.first)
+                nanoVg.deleteSvg(it.first)
                 it.second.forEach { _, handle ->
-                    nvgDeleteImage(vg, handle)
+                    nanoVg.deleteImage(handle)
                 }
             }
         }
     }
 
     override fun initImage(image: PolyImage) {
-        getImage(image, 0f, 0f)
+        getOrPopulateImage(image, 0f, 0f)
     }
 
     override fun rect(
@@ -231,9 +255,8 @@ object RendererImpl : Renderer {
     ) {
         if (color.transparent) return
         // note: nvg checks params and draws classic rect if 0, so we don't need to
-        nvgBeginPath(vg)
-        nvgRoundedRectVarying(
-            vg,
+        nanoVg.beginPath()
+        nanoVg.roundedRectVarying(
             x,
             y,
             width,
@@ -243,12 +266,8 @@ object RendererImpl : Renderer {
             bottomRightRadius,
             bottomLeftRadius,
         )
-        if (color(color, x, y, width, height)) {
-            nvgFillPaint(vg, nvgPaint)
-        } else {
-            nvgFillColor(vg, nvgColor)
-        }
-        nvgFill(vg)
+        populateFillOrColor(color, x, y, width, height)
+        nanoVg.fill()
     }
 
     override fun hollowRect(
@@ -264,9 +283,8 @@ object RendererImpl : Renderer {
         bottomRightRadius: Float,
     ) {
         if (color.transparent) return
-        nvgBeginPath(vg)
-        nvgRoundedRectVarying(
-            vg,
+        nanoVg.beginPath()
+        nanoVg.roundedRectVarying(
             x,
             y,
             width,
@@ -276,27 +294,19 @@ object RendererImpl : Renderer {
             bottomRightRadius,
             bottomLeftRadius,
         )
-        nvgStrokeWidth(vg, lineWidth)
-        if (color(color, x, y, width, height)) {
-            nvgStrokePaint(vg, nvgPaint)
-        } else {
-            nvgStrokeColor(vg, nvgColor)
-        }
-        nvgStroke(vg)
+        nanoVg.strokeWidth(lineWidth)
+        populateStrokeColor(color, x, y, width, height)
+        nanoVg.stroke()
     }
 
     override fun line(x1: Float, y1: Float, x2: Float, y2: Float, color: Color, width: Float) {
         if (color.transparent) return
-        nvgBeginPath(vg)
-        nvgMoveTo(vg, x1, y1)
-        nvgLineTo(vg, x2, y2)
-        nvgStrokeWidth(vg, width)
-        if (color(color, x1, y1, x2, y2)) {
-            nvgStrokePaint(vg, nvgPaint)
-        } else {
-            nvgStrokeColor(vg, nvgColor)
-        }
-        nvgStroke(vg)
+        nanoVg.beginPath()
+        nanoVg.moveTo(x1, y1)
+        nanoVg.lineTo(x2, y2)
+        nanoVg.strokeWidth(width)
+        populateStrokeColor(color, x1, y1, x2, y2)
+        nanoVg.stroke()
     }
 
     override fun dropShadow(
@@ -308,224 +318,302 @@ object RendererImpl : Renderer {
         spread: Float,
         radius: Float,
     ) {
-        nvgBoxGradient(vg, x - spread, y - spread, width + spread * 2f, height + spread * 2f, radius + spread, blur, nvgColor, nvgColor2, nvgPaint)
-        nvgBeginPath(vg)
-        nvgRoundedRect(vg, x - spread, y - spread - blur, width + spread * 2f + blur * 2f, height + spread * 2f + blur * 2f, radius + spread)
-        nvgRoundedRect(vg, x, y, width, height, radius)
-        nvgPathWinding(vg, NVG_HOLE)
-        nvgFillPaint(vg, nvgPaint)
-        nvgFill(vg)
+        nanoVg.boxGradient(paintAddress, x - spread, y - spread, width + spread * 2f, height + spread * 2f, radius + spread, blur, color1Address, color2Address)
+        nanoVg.beginPath()
+        nanoVg.roundedRect(x - spread, y - spread - blur, width + spread * 2f + blur * 2f, height + spread * 2f + blur * 2f, radius + spread)
+        nanoVg.roundedRect(x, y, width, height, radius)
+        nanoVg.pathWinding(nanoVg.constants().NVG_HOLE())
+        nanoVg.fillPaint(paintAddress)
+        nanoVg.fill()
     }
 
     @Suppress("NAME_SHADOWING")
     override fun textBounds(font: Font, text: String, fontSize: Float): Vec2 {
-        // nanovg trims single whitespace, so add an extra one (lol)
-        var text = text
-        if (text.endsWith(' ')) {
-            text += ' '
-        }
-        val out = FloatArray(4)
-        nvgFontFaceId(vg, getFont(font))
-        nvgTextAlign(vg, NVG_ALIGN_TOP or NVG_ALIGN_LEFT)
-        nvgFontSize(vg, fontSize)
-        nvgTextBounds(vg, 0f, 0f, text, out)
-        val w = out[2] - out[0]
-        val h = out[3] - out[1]
-        return Vec2(w, h)
+        val text = text.let { if (it.endsWith(" ")) "$it " else it }
+
+        val output = FloatArray(4)
+        val loadedFont = getOrPopulateFont(font)
+        nanoVg.fontFaceId(loadedFont.id)
+        nanoVg.textAlign(nanoVg.constants().NVG_ALIGN_LEFT() or nanoVg.constants().NVG_ALIGN_TOP())
+        nanoVg.fontSize(fontSize)
+        nanoVg.textBounds(0f, 0f, text, output)
+
+        val width = output[2] - output[0]
+        val height = output[3] - output[1]
+        return Vec2(width.coerceAtLeast(1f), height.coerceAtLeast(1f)) // Coercing to at least 1x1 for now because this is returning 0 sometimes for some reason and PolyUI crashes when an element has 0 width & height
     }
 
-    private fun color(color: Color) {
-        nvgARGB(color.argb, nvgColor)
+    private fun getOrPopulateFont(font: Font): NvgFont {
+        if (font.loadSync) {
+            return getOrPopulateFontSynchronous(font)
+        }
+
+        return fonts.getOrPut(font) {
+            font.loadAsync(errorHandler = errorHandler) { data ->
+                val buffer = ByteBuffer.allocateDirect(data.size).order(ByteOrder.nativeOrder()).put(data).flip() as ByteBuffer
+
+                queue.add {
+                    val id = nanoVg.createFont(
+                        font.name,
+                        buffer
+                    )
+
+                    NvgFont(id, buffer)
+                }
+            }
+
+            defaultFont!!
+        }
+    }
+
+    private fun getOrPopulateFontSynchronous(font: Font): NvgFont {
+        return fonts.getOrPut(font) {
+            val data = font.load { errorHandler(it); return@getOrPut defaultFont!! }
+            val buffer = ByteBuffer.allocateDirect(data.size).order(ByteOrder.nativeOrder()).put(data).flip() as ByteBuffer
+            val id = nanoVg.createFont(font.name, buffer)
+            NvgFont(id, buffer)
+        }
+    }
+
+    private fun getOrPopulateImage(image: PolyImage, width: Float, height: Float): Int {
+        if (image.width == 0f || image.height == 0f) {
+            delete(image)
+        }
+
+        if (image.loadSync) {
+            return getOrPopulateImageSynchronous(image, width, height)
+        }
+
+        return when (image.type) {
+            PolyImage.Type.Raster -> {
+                images.getOrPut(image) {
+                    image.loadAsync(errorHandler) { data ->
+                        val buffer = ByteBuffer.allocateDirect(data.size).order(ByteOrder.nativeOrder()).put(data).flip() as ByteBuffer
+
+                        queue.add {
+                            val widthOutput = IntArray(1)
+                            val heightOutput = IntArray(1)
+                            val result = stb.loadFromMemory(buffer, widthOutput, heightOutput, IntArray(1), 4)
+                            image.size = Vec2(widthOutput[0].toFloat(), heightOutput[0].toFloat())
+                            nanoVg.createImage(image.width, image.height, result, 0)
+                        }
+                    }
+                    return defaultImage
+                }
+            }
+
+            PolyImage.Type.Vector -> {
+                val (svg, map) = svgs.getOrPut(image) {
+                    image.loadAsync(errorHandler) { data ->
+                        val buffer = ByteBuffer.allocateDirect(data.size + 1).order(ByteOrder.nativeOrder()).put(data).put(0).flip() as ByteBuffer
+
+                        queue.add {
+                            val (address, id) = loadSvg(image, buffer)
+                            val map = Int2IntMap(4)
+                            map[image.width.hashCode() * 31 + image.height.hashCode()] = id
+                            svgs[image] = address to map
+                        }
+                    }
+
+                    return defaultImage
+                }
+
+                if (image.width == 0f || image.height == 0f) {
+                    val (svgWidth, svgHeight) = nanoVg.svgBounds(svg)
+                    image.size = Vec2(svgWidth, svgHeight)
+                }
+
+                map.getOrPut(width.hashCode() * 31 + height.hashCode()) {
+                    resizeSvg(svg, width, height, width, height)
+                }
+            }
+
+            else -> throw NoWhenBranchMatchedException("Please specify image type for $image")
+        }
+    }
+
+    private fun getOrPopulateImageSynchronous(image: PolyImage, width: Float, height: Float): Int {
+        if (image.width == 0f || image.height == 0f) {
+            delete(image)
+        }
+
+        return images.getOrPut(image) {
+            val bytes = image.load { errorHandler(it); return@load defaultImageData!! }
+
+            when (image.type) {
+                PolyImage.Type.Raster -> {
+                    val buffer = run {
+                        val buffer = ByteBuffer.allocateDirect(bytes.size)
+                            .order(ByteOrder.nativeOrder())
+                            .put(bytes)
+                            .flip() as ByteBuffer
+                        val widthOutput = IntArray(1)
+                        val heightOutput = IntArray(1)
+                        val result = stb.loadFromMemory(buffer, widthOutput, heightOutput, IntArray(1), 4)
+                        image.size = Vec2(widthOutput[0].toFloat(), heightOutput[0].toFloat())
+
+                        result
+                    }
+
+                    nanoVg.createImage(image.width, image.height, buffer, 0)
+                }
+
+                PolyImage.Type.Vector -> {
+                    val (svgImage, map) = svgs.getOrPut(image) {
+                        val buffer = ByteBuffer.allocateDirect(bytes.size + 1) // +1 for null terminator
+                            .order(ByteOrder.nativeOrder())
+                            .put(bytes)
+                            .put(0) // null terminator
+                            .flip() as ByteBuffer
+                        val (_, id) = loadSvg(image, buffer)
+                        return id
+                    }
+
+                    if (image.width == 0f || image.height == 0f) {
+                        val (svgWidth, svgHeight) = nanoVg.svgBounds(svgImage)
+                        image.size = Vec2(svgWidth, svgHeight)
+                    }
+
+                    map.getOrPut(width.hashCode() * 31 + height.hashCode()) {
+                        resizeSvg(svgImage, width, height, width, height)
+                    }
+                }
+
+                else -> throw UnsupportedOperationException("Unsupported image type")
+            }
+        }
+    }
+
+    private fun loadSvg(image: PolyImage, data: ByteBuffer): Pair<Long, Int> {
+        val (address, svgWidth, svgHeight) = nanoVg.parseSvg(data)
+
+        image.size = Vec2(svgWidth, svgHeight)
+
+        val map = Int2IntMap(4)
+        val id = resizeSvg(address, svgWidth, svgHeight, svgWidth, svgHeight)
+        map[image.width.hashCode() * 31 + image.height.hashCode()] = id
+        svgs[image] = address to map
+
+        return address to id
+    }
+
+    private fun resizeSvg(address: Long, svgWidth: Float, svgHeight: Float, width: Float, height: Float): Int {
+        val w = (width * 2f).toInt()
+        val h = (height * 2f).toInt()
+
+        val dest = lwjgl.memAlloc(w * h * 4)
+        val scale = cl1(width / svgWidth, height / svgHeight) * 2f
+
+        nanoVg.rasterizeSvg(address, 0f, 0f, scale, dest, w, h, w * 4)
+        return nanoVg.createImage(w.toFloat(), h.toFloat(), dest, 0)
+    }
+
+    private fun populateNvgColor(argb: Int, colorAddress: Long) {
+        nanoVg.rgba(colorAddress, argb)
+    }
+
+    private fun populateStaticColor(color: Color) {
+        populateNvgColor(color.argb, color1Address)
         if (color is Color.Gradient) {
-            nvgARGB(color.argb2, nvgColor2)
+            populateNvgColor(color.argb2, color2Address)
         }
     }
 
-    private fun nvgARGB(argb: Int, ptr: NVGColor) {
-        nvgRGBA(
-            (argb shr 16 and 0xFF).toByte(),
-            (argb shr 8 and 0xFF).toByte(),
-            (argb and 0xFF).toByte(),
-            (argb shr 24 and 0xFF).toByte(),
-            ptr
-        )
-
-    }
-
-    private fun color(
+    private fun populateColor(
         color: Color,
         x: Float,
         y: Float,
         width: Float,
         height: Float,
     ): Boolean {
-        color(color)
+        populateStaticColor(color)
         if (color !is Color.Gradient) return false
+
         when (color.type) {
-            is Color.Gradient.Type.TopToBottom -> nvgLinearGradient(
-                vg,
+            is Color.Gradient.Type.TopToBottom -> nanoVg.linearGradient(
+                paintAddress,
                 x,
                 y,
                 x,
                 y + height,
-                nvgColor,
-                nvgColor2,
-                nvgPaint,
+                color1Address,
+                color2Address
             )
 
-            is Color.Gradient.Type.TopLeftToBottomRight -> nvgLinearGradient(
-                vg,
+            is Color.Gradient.Type.TopLeftToBottomRight -> nanoVg.linearGradient(
+                paintAddress,
                 x,
                 y,
                 x + width,
                 y + height,
-                nvgColor,
-                nvgColor2,
-                nvgPaint,
+                color1Address,
+                color2Address
             )
 
-            is Color.Gradient.Type.LeftToRight -> nvgLinearGradient(
-                vg,
+            is Color.Gradient.Type.LeftToRight -> nanoVg.linearGradient(
+                paintAddress,
                 x,
                 y,
                 x + width,
                 y,
-                nvgColor,
-                nvgColor2,
-                nvgPaint,
+                color1Address,
+                color2Address
             )
 
-            is Color.Gradient.Type.BottomLeftToTopRight -> nvgLinearGradient(
-                vg,
+            is Color.Gradient.Type.BottomLeftToTopRight -> nanoVg.linearGradient(
+                paintAddress,
                 x,
                 y + height,
                 x + width,
                 y,
-                nvgColor,
-                nvgColor2,
-                nvgPaint,
+                color1Address,
+                color2Address
             )
 
             is Color.Gradient.Type.Radial -> {
                 val type = color.type as Color.Gradient.Type.Radial
-                nvgRadialGradient(
-                    vg,
+                nanoVg.radialGradient(
+                    paintAddress,
                     if (type.centerX == -1f) x + (width / 2f) else type.centerX,
                     if (type.centerY == -1f) y + (height / 2f) else type.centerY,
                     type.innerRadius,
                     type.outerRadius,
-                    nvgColor,
-                    nvgColor2,
-                    nvgPaint,
+                    color1Address,
+                    color2Address
                 )
             }
 
-            is Color.Gradient.Type.Box -> nvgBoxGradient(
-                vg,
+            is PolyColor.Gradient.Type.Box -> nanoVg.boxGradient(
+                paintAddress,
                 x,
                 y,
                 width,
                 height,
-                (color.type as Color.Gradient.Type.Box).radius,
-                (color.type as Color.Gradient.Type.Box).feather,
-                nvgColor,
-                nvgColor2,
-                nvgPaint,
+                (color.type as PolyColor.Gradient.Type.Box).radius,
+                (color.type as PolyColor.Gradient.Type.Box).feather,
+                color1Address,
+                color2Address
             )
         }
         return true
     }
 
-    private fun getFont(font: Font): Int {
-        if (font.loadSync) return getFontSync(font)
-        return fonts.getOrPut(font) {
-            font.loadAsync(errorHandler = errorHandler) { data ->
-                val it = data.toDirectByteBuffer()
-                queue.add { fonts[font] = NVGFont(nvgCreateFontMem(vg, font.name, it, false), it) }
-            }
-            defaultFont!!
-        }.id
-    }
-
-    private fun getFontSync(font: Font): Int {
-        return fonts.getOrPut(font) {
-            val data = font.load { errorHandler(it); return@getOrPut defaultFont!! }.toDirectByteBuffer()
-            NVGFont(nvgCreateFontMem(vg, font.name, data, false), data)
-        }.id
-    }
-
-    private fun getImage(image: PolyImage, width: Float, height: Float): Int {
-        if (image.loadSync) return getImageSync(image, width, height)
-        return when (image.type) {
-            PolyImage.Type.Vector -> {
-                val (svg, map) = svgs.getOrPut(image) {
-                    image.loadAsync(errorHandler) {
-                        queue.add { svgLoad(image, it.toDirectByteBufferNT()) }
-                    }
-                    return defaultImage
-                }
-                if (!image.size.isPositive) image.size = Vec2(svg.width(), svg.height())
-                map.getOrPut(width.hashCode() * 31 + height.hashCode()) { svgResize(svg, width, height) }
-            }
-
-            PolyImage.Type.Raster -> {
-                images.getOrPut(image) {
-                    image.loadAsync(errorHandler) {
-                        queue.add { images[image] = loadImage(image, it.toDirectByteBuffer()) }
-                    }
-                    defaultImage
-                }
-            }
-
-            else -> throw NoWhenBranchMatchedException("Please specify image type for $image")
+    private fun populateFillOrColor(color: Color, x: Float, y: Float, width: Float, height: Float) {
+        if (populateColor(color, x, y, width, height)) {
+            nanoVg.fillPaint(paintAddress)
+        } else {
+            nanoVg.fillColor(color1Address)
         }
     }
 
-    private fun getImageSync(image: PolyImage, width: Float, height: Float): Int {
-        return when (image.type) {
-            PolyImage.Type.Vector -> {
-                val (svg, map) = svgs[image] ?: return svgLoad(image, image.load { errorHandler(it); defaultImageData!! }.toDirectByteBufferNT())
-                if (!image.size.isPositive) image.size = Vec2(svg.width(), svg.height())
-                map.getOrPut(width.hashCode() * 31 + height.hashCode()) { svgResize(svg, width, height) }
-            }
-
-            PolyImage.Type.Raster -> {
-                images.getOrPut(image) { loadImage(image, image.load { errorHandler(it); defaultImageData!! }.toDirectByteBuffer()) }
-            }
-
-            else -> throw NoWhenBranchMatchedException("Please specify image type for $image")
+    private fun populateStrokeColor(color: Color, x: Float, y: Float, width: Float, height: Float) {
+        if (populateColor(color, x, y, width, height)) {
+            nanoVg.strokePaint(paintAddress)
+        } else {
+            nanoVg.strokeColor(color1Address)
         }
-    }
-
-    private fun svgLoad(image: PolyImage, data: ByteBuffer): Int {
-        val svg = nsvgParse(data, PIXELS, 96f) ?: throw IllegalStateException("Failed to parse SVG: ${image.resourcePath}")
-        image.size = Vec2(svg.width(), svg.height())
-        val map = Int2IntMap(4)
-        val o = svgResize(svg, svg.width(), svg.height())
-        map[image.size.hashCode()] = o
-        svgs[image] = svg to map
-        return o
-    }
-
-    private fun svgResize(svg: NSVGImage, width: Float, height: Float): Int {
-        val wi = (width * 2f).toInt()
-        val hi = (height * 2f).toInt()
-        val dst = MemoryUtil.memAlloc(wi * hi * 4)
-        val scale = cl1(width / svg.width(), height / svg.height()) * 2f
-        nsvgRasterize(raster, svg, 0f, 0f, scale, dst, wi, hi, wi * 4)
-        return nvgCreateImageRGBA(vg, wi, hi, 0, dst)
-    }
-
-    private fun loadImage(image: PolyImage, data: ByteBuffer): Int {
-        val w = IntArray(1)
-        val h = IntArray(1)
-        val d = stbi_load_from_memory(data, w, h, IntArray(1), 4) ?: throw IllegalStateException("Failed to load image ${image.resourcePath}: ${stbi_failure_reason()}")
-        image.size = Vec2(w[0].toFloat(), h[0].toFloat())
-        return nvgCreateImageRGBA(vg, w[0], h[0], 0, d)
     }
 
     // asm: renderer is persistent
     override fun cleanup() {}
-
-    private data class NVGFont(val id: Int, val data: ByteBuffer)
 }

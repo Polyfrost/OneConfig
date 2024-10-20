@@ -66,21 +66,22 @@ public class OneConfigTweaker implements ITweaker {
 
     public OneConfigTweaker() {
         final List<SourceFile> sourceFiles = getSourceFiles();
-        if (sourceFiles.isEmpty()) {
-            if (!Platform.loader().isDevelopmentEnvironment()) LOGGER.fatal("Not able to detect jar sources. mixin will NOT work!");
-            return;
+        if (!sourceFiles.isEmpty()) {
+            for (SourceFile sourceFile : sourceFiles) {
+                try {
+                    setupSourceFile(sourceFile);
+                } catch (Throwable t) {
+                    LOGGER.error("failed to setup mixin for {}", sourceFile.path.toString(), t);
+                }
+            }
+        } else if (!Platform.loader().isDevelopmentEnvironment()) {
+            LOGGER.fatal("Not able to detect jar sources. mixin will NOT work!");
         }
+
         try {
             injectMixinTweaker();
         } catch (Exception e) {
             LOGGER.error("failed to inject mixin tweaker", e);
-        }
-        for (SourceFile sourceFile : sourceFiles) {
-            try {
-                setupSourceFile(sourceFile);
-            } catch (Throwable t) {
-                LOGGER.error("failed to setup mixin for {}", sourceFile.path.toString(), t);
-            }
         }
     }
 
@@ -244,6 +245,13 @@ public class OneConfigTweaker implements ITweaker {
 
     @Override
     public void acceptOptions(List<String> args, File gameDir, File assetsDir, String profile) {
+        boolean captureNext = false;
+        for (String arg : args) {
+            if (captureNext) {
+                Mixins.addConfiguration(arg);
+            }
+            captureNext = "--mixin".equals(arg);
+        }
     }
 
     @Override
