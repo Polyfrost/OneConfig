@@ -30,9 +30,12 @@ import cc.polyfrost.oneconfig.libs.universal.UGraphics;
 import cc.polyfrost.oneconfig.libs.universal.UMatrixStack;
 import cc.polyfrost.oneconfig.libs.universal.UMinecraft;
 import cc.polyfrost.oneconfig.platform.GLPlatform;
+import cc.polyfrost.oneconfig.renderer.TextRenderer;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+
+import java.util.regex.Pattern;
 
 //#if FORGE==1
 import net.minecraft.client.shader.Framebuffer;
@@ -41,6 +44,25 @@ import net.minecraft.client.shader.Framebuffer;
 //#endif
 
 public class GLPlatformImpl implements GLPlatform {
+    private static final Pattern regex = Pattern.compile("(?i)\u00A7[0-9a-f]");
+
+    private int drawBorderedText(String text, float x, float y, int color, int opacity) {
+        String noColors = regex.matcher(text).replaceAll("\u00A7r");
+        int yes = 0;
+        if (opacity / 4 > 3) {
+            for (int xOff = -2; xOff <= 2; xOff++) {
+                for (int yOff = -2; yOff <= 2; yOff++) {
+                    if (xOff * xOff != yOff * yOff) {
+                        yes += drawText(
+                            noColors, (xOff / 2f) + x, (yOff / 2f) + y, (opacity / 4) << 24, false
+                        );
+                    }
+                }
+            }
+        }
+        yes += (int) drawText(text, x, y, color, false);
+        return yes;
+    }
 
     @Override
     public void drawRect(float x, float y, float x2, float y2, int color) {
@@ -88,6 +110,22 @@ public class GLPlatformImpl implements GLPlatform {
         if (!framebuffer.isStencilEnabled()) {
             framebuffer.enableStencil();
         }
+    }
+    @Override
+    public float drawText(String text, float x, float y, int color, TextRenderer.TextType type) {
+        switch (type) {
+            case NONE:
+                return drawText(text, x, y, color, false);
+            case SHADOW:
+                return drawText(text, x, y, color, true);
+            case FULL:
+                //#if FORGE==1 && MC<=11202
+                return cc.polyfrost.oneconfig.internal.renderer.BorderedTextHooks.INSTANCE.drawString(text, x, y, color, type);
+                //#else
+                //$$ return drawBorderedText(text, x, y, color, 255);
+                //#endif
+        }
+        return 0f;
     }
 
     @Override

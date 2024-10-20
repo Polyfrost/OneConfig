@@ -88,6 +88,7 @@ public class OneConfigMixinPlugin implements IMixinConfigPlugin {
             if (version == 10809 || version == 11202) {
                 // Patcher mixin
                 mixins.add("HudCachingMixin");
+                mixins.add("FontRendererMixin");
             }
             if (version >= 11600) {
                 mixins.add("ClientModLoaderMixin");
