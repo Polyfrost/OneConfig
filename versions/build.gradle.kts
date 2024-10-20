@@ -2,9 +2,7 @@
 // Shared build logic for all versions of OneConfig.
 
 import org.polyfrost.gradle.util.noServerRunConfigs
-import org.polyfrost.gradle.util.prebundle
 import java.text.SimpleDateFormat
-import java.util.zip.ZipFile
 
 plugins {
     alias(libs.plugins.kotlin)
@@ -57,9 +55,7 @@ dependencies {
     }
 
     if (platform.isLegacyForge || platform.isLegacyFabric) {
-        val configuration = configurations.create("tempLwjglConfigurationLegacy")
-        implementation(configuration(project(":modules:dependencies:legacy"))!!)
-        runtimeOnly(compileOnly(prebundle(configuration, "lwjgl-legacy.jar"))!!)
+        implementation(project(":modules:dependencies:legacy"))
     } else {
         implementation(project(":modules:dependencies:modern"))
     }
@@ -90,7 +86,6 @@ dependencies {
 }
 
 tasks {
-    var lwjglLegacyJarBytes: ByteArray? = null // this can be shared at least in each version
     withType(Jar::class) {
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
         exclude("META-INF/com.android.tools/**")
@@ -108,7 +103,6 @@ tasks {
                 exclude("mcmod.info")
             }
         }
-
         // Removes the TestMod entrypoint from the generated JARs.
         doLast {
             val mainResources = layout.buildDirectory.get().asFile.resolve("resources")
@@ -118,35 +112,6 @@ tasks {
                 val lines = fabricModJson.readLines().toMutableList()
                 lines.removeIf { it.contains("TestMod") }
                 fabricModJson.writeText(lines.joinToString("\n"))
-            }
-            if (platform.mcMinor <= 12) {
-                val legacyLwjgl = mainResources.resolve("lwjgl-legacy.jar")
-                val output = projectDir
-                    .resolve(".gradle")
-                    .resolve("prebundled-jars")
-                    .resolve("tempLwjglConfigurationLegacy.jar")
-
-                if (output.exists()) {
-                    // get the stuff in the jar, get lwjgl-legacy.jar, copy it to legacyLwjgl variable
-                    if (lwjglLegacyJarBytes == null) {
-                        ZipFile(output).use { zip ->
-                            val entry = zip.getEntry("lwjgl-legacy.jar")
-                            zip.getInputStream(entry).use { input ->
-                                lwjglLegacyJarBytes = input.readBytes()
-                            }
-                        }
-                    }
-                    if (lwjglLegacyJarBytes != null) {
-                        legacyLwjgl.outputStream().use { final ->
-                            final.write(lwjglLegacyJarBytes!!)
-                            logger.info("Copied lwjgl-legacy.jar to $legacyLwjgl")
-                        }
-                    } else {
-                        throw IllegalStateException("LWJGL LEGACY JAR WAS NOT FOUND, BUILD WILL **NOT** WORK!!! Please build the :dependencies:legacy project first.")
-                    }
-                } else {
-                    throw IllegalStateException("LWJGL LEGACY JAR WAS NOT FOUND, BUILD WILL **NOT** WORK!!! Please build the :dependencies:legacy project first.")
-                }
             }
         }
     }

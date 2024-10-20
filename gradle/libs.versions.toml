@@ -1,8 +1,18 @@
 [versions]
+
+# Libraries
 kotlin = "2.0.20"
 kotlinx-coroutines = "1.8.1"
 kotlinx-atomicfu = "0.24.0"
 kotlinx-abi = "0.14.0"
+polyui = "1.7.03"
+annotations = "24.1.0"
+nightconfig = "3.6.6"
+hypixel-modapi = "1.0"
+universalcraft = "299"
+mixin = "0.8.4+build.2"
+isolated-lwjgl3-loader = "0.1.1"
+lwjgl = "3.3.3" # Natives downloaded by the isolated-lwjgl3-loader
 
 # Gradle
 pgt = "0.6.6"
@@ -10,18 +20,7 @@ shadow = "8.1.1"
 licenser = "2.0.1"
 jetbrains-idea-ext = "1.1.8"
 
-# Libraries
-polyui = "1.7.03"
-
 log4j-api = "2.0-beta9" # used because this is the version that 1.8.9 supports, so we have to compile against the same (annoying)
-annotations = "24.1.0"
-nightconfig = "3.6.6"
-hypixel-modapi = "1.0"
-
-lwjgl = "3.3.3"
-universalcraft = "299"
-mixin = "0.7.11-SNAPSHOT"
-isolated-lwjgl3-loader = "0.1.1"
 
 # Testing
 junit-bom = "5.10.2"
@@ -31,7 +30,7 @@ log4j-impl = "2.23.1" # unvulnerable version
 junit = { module = "org.junit.jupiter:junit-jupiter" }
 junit-bom = { module = "org.junit:junit-bom", version.ref = "junit-bom" }
 
-mixin = { module = "org.spongepowered:mixin", version.ref = "mixin" }
+mixin = { module = "org.polyfrost:polymixin", version.ref = "mixin" }
 
 isolated-lwjgl3-loader = { module = "org.polyfrost:isolated-lwjgl3-loader", version.ref = "isolated-lwjgl3-loader" }
 
