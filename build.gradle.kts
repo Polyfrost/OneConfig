@@ -40,7 +40,8 @@ blossom {
 }
 
 repositories {
-    maven("https://repo.polyfrost.cc/releases")
+    maven("https://repo.polyfrost.org/releases")
+    maven("https://repo.polyfrost.org/snapshots")
 }
 
 val relocated = registerRelocationAttribute("relocate") {

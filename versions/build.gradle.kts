@@ -75,7 +75,8 @@ loom {
 }
 
 repositories {
-    maven("https://repo.polyfrost.cc/releases")
+    maven("https://repo.polyfrost.org/releases")
+    maven("https://repo.polyfrost.org/snapshots")
 }
 
 val relocatedCommonProject = registerRelocationAttribute("common-lwjgl") {
@@ -165,20 +166,11 @@ dependencies {
         }
     }
 
-    val repackedVersions = when (platform.mcVersion) {
-        in 10809..11202 -> listOf(RepackedVersion.LEGACY)
-        in 11203..11802 -> listOf(RepackedVersion.PRE119NOARM, RepackedVersion.PRE119ARM)
-        else -> listOf(RepackedVersion.POST119)
-    }
-
-    repackedVersions.forEachIndexed { index, version ->
-        val configuration = configurations.create("tempLwjglConfiguration$index")
-
-        compileOnly(configuration("cc.polyfrost:lwjgl-$version:${libs.versions.lwjgl.get()}"){
-            isTransitive = false
-        })
-        shadeNoPom(implementationNoPom(prebundle(configuration, "lwjgl-$version.jar"))!!)
-    }
+    val configuration = configurations.create("tempLwjglConfiguration0")
+    compileOnly(configuration("cc.polyfrost:lwjgl-legacy:${libs.versions.lwjgl.get()}") {
+        isTransitive = false
+    })
+    shadeNoPom(implementationNoPom(prebundle(configuration, "lwjgl-legacy.jar"))!!)
 
     modRuntimeOnly("me.djtheredstoner:DevAuth-" +
             (if (platform.isForge) { if (platform.isLegacyForge) "forge-legacy" else "forge-latest" } else "fabric")
