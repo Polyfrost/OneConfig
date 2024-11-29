@@ -185,11 +185,6 @@ public class Preferences extends InternalConfig {
             max = 100f
     )
     public static float trackerResponseDuration = 60;
-    
-    @Switch(
-            name = "Auto Update"
-    )
-    public static boolean autoUpdate = true;
 
     @Dropdown(
             name = "Release Channel",
@@ -224,10 +219,6 @@ public class Preferences extends InternalConfig {
         initialize();
         addListener("enableBlur", () -> BlurHandler.INSTANCE.reloadBlur(Platform.getGuiPlatform().getCurrentScreen()));
         registerKeyBind(oneConfigKeyBind, () -> new TickDelay(() -> Platform.getGuiPlatform().setCurrentScreen(OneConfigGui.create()), 1));
-        addListener("autoUpdate", () -> {
-            OneConfigConfig.autoUpdate = autoUpdate;
-            OneConfigConfig.getInstance().save();
-        });
         addListener("updateChannel", () -> {
             OneConfigConfig.updateChannel = updateChannel;
             OneConfigConfig.getInstance().save();
