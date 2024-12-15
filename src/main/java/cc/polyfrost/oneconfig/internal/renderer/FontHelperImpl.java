@@ -35,8 +35,6 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 
-import static org.lwjgl.nanovg.NanoVG.nvgCreateFontMem;
-
 public class FontHelperImpl implements FontHelper {
 
     /**
@@ -68,12 +66,13 @@ public class FontHelperImpl implements FontHelper {
         if (font.isLoaded()) return;
         int loaded = -1;
         try {
-            ByteBuffer buffer = IOUtils.resourceToByteBuffer(font.getFileName(), font.getClass());
-            loaded = nvgCreateFontMem(vg, font.getName(), buffer, 0);
-            font.setBuffer(buffer);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+			ByteBuffer buffer = IOUtils.resourceToByteBuffer(font.getFileName(), font.getClass());
+
+			font.setBuffer(buffer);
+			font.setLoaded(true);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
         if (loaded == -1) {
             throw new RuntimeException("Failed to initialize font " + font.getName());
         } else {
