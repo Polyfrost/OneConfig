@@ -75,4 +75,14 @@ public class ConfigCore {
         }
         return null;
     }
+
+    static {
+        Executors.newSingleThreadScheduledExecutor()
+                .scheduleAtFixedRate(
+                        ConfigCore::saveAll,
+                        0,
+                        60,
+                        TimeUnit.SECONDS
+                );
+    }
 }
