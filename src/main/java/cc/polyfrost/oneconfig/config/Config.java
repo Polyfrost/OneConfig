@@ -154,6 +154,12 @@ public class Config {
      * Save current config to file
      */
     public void save() {
+        if (this instanceof cc.polyfrost.oneconfig.config.elements.SubConfig) {
+            Mod mod = ConfigCore.getParentMod(this.mod);
+            if (mod == null) return;
+            mod.config.save();
+            return;
+        }
         logger.trace("Saving config for {}...", mod.name);
 
         Path profilePath = ConfigUtils.getProfileFile(configFile).toPath();
