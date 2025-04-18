@@ -22,7 +22,7 @@ copycat-image-awt = "0.1.1"
 # Per version
 textile = "0.13.0"
 omnicore = "0.27.0"
-lwjgl = "3.3.3" # All downloaded by the isolated-lwjgl3-loader
+lwjgl = "3.3.6" # All downloaded by the isolated-lwjgl3-loader
 
 # Legacy only
 mixin = "0.8.4+build.2"
