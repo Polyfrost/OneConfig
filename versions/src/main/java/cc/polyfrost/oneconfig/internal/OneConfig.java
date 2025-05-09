@@ -74,7 +74,7 @@ import java.util.Objects;
  */
 //#if FORGE==1
 //#if MC<=11202
-@net.minecraftforge.fml.common.Mod(modid = "@ID@", name = "@NAME@", version = "@VER@")
+@net.minecraftforge.fml.common.Mod(modid = "oneconfigv0", name = "@NAME@", version = "@VER@")
 //#else
 //$$ @net.minecraftforge.fml.common.Mod("@ID@")
 //#endif

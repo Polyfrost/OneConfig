@@ -1,6 +1,6 @@
 [
   {
-    "modid": "${id}",
+    "modid": "oneconfigv0",
     "name": "${name}",
     "description": "OneConfig",
     "version": "${version}",
