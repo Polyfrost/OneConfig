@@ -12,6 +12,7 @@
     "EntityPlayerSPMixin",
     "EntityRendererMixin",
     "GuiIngameForgeMixin",
+    "LoaderMixin",
     "MinecraftMixin",
     "NetworkManagerMixin",
     "OptifineConfigMixin",
