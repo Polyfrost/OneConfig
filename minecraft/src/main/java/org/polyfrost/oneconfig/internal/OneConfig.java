@@ -189,9 +189,6 @@ public class OneConfig
         CommandManager.register(literal("ocfg").redirect(node));
         CommandManager.register(literal("oneconfig").redirect(node));
         CommandManager.register(literal("oc").redirect(node));
-        CommandManager.register(literal("tcfg").redirect(node));
-        CommandManager.register(literal("twoconfig").redirect(node));
-        CommandManager.register(literal("tc").redirect(node));
     }
 
     private static void registerKeybinds() {
