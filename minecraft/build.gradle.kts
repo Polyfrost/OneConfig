@@ -2,6 +2,7 @@
 // Shared build logic for all versions of OneConfig.
 
 import dev.deftu.gradle.utils.GameSide
+import dev.deftu.gradle.utils.propertyBoolOr
 import dev.deftu.gradle.utils.version.MinecraftReleaseVersion
 import dev.deftu.gradle.utils.version.MinecraftVersions
 import org.polyfrost.gradle.provideIncludedDependencies
@@ -51,6 +52,7 @@ repositories {
     maven("https://repo.polyfrost.org/snapshots")
     maven("https://repo.hypixel.net/repository/Hypixel/")
     maven("https://maven.deftu.dev/releases")
+    maven("https://maven.notenoughupdates.org/releases")
 }
 
 if (mcData.isLegacyForge) { // Quick substitution for relaunch in dev env, so that mixinextras works properly (yay!)
@@ -72,12 +74,14 @@ if (mcData.isLegacyForge) { // Quick substitution for relaunch in dev env, so th
 }
 
 dependencies {
-    compileOnly("gg.essential:vigilance-1.8.9-forge:295") {
-        isTransitive = false
-    }
+    compileOnly("gg.essential:vigilance-1.8.9-forge:295") { isTransitive = false }
+    compileOnly("org.notenoughupdates.moulconfig:common:3.11.0") { isTransitive = false }
 
     val mcVersion = mcData.version as MinecraftReleaseVersion
-    provideIncludedDependencies(Triple(mcVersion.major, mcVersion.minor, mcVersion.patch), mcData.loader.friendlyString).forEach {
+    provideIncludedDependencies(
+        Triple(mcVersion.major, mcVersion.minor, mcVersion.patch),
+        mcData.loader.friendlyString
+    ).forEach {
         if (it.dep is String) {
             handleApiDep(it.dep as String, it.mod)
         } else {
@@ -87,7 +91,13 @@ dependencies {
 
     annotationProcessor(libs.mixin.extras)
 
-    for (dep in listOf("-nanovg").run { if (mcData.version < MinecraftVersions.VERSION_1_13) this else this + listOf("-tinyfd", "-stb", "") }) {
+    for (dep in listOf("-nanovg").run {
+        if (mcData.version < MinecraftVersions.VERSION_1_13) this else this + listOf(
+            "-tinyfd",
+            "-stb",
+            ""
+        )
+    }) {
         val lwjglDep = "org.lwjgl:lwjgl$dep:${libs.versions.lwjgl.get()}"
         compileOnlyApi(lwjglDep) {
             isTransitive = false
@@ -119,7 +129,45 @@ dependencies {
             modImplementation("net.legacyfabric.legacy-fabric-api:legacy-fabric-api:${mcData.dependencies.legacyFabric.legacyFabricApiVersion}")
         } else {
             // 1.16.5+
-            modImplementation("net.fabricmc.fabric-api:fabric-api:${mcData.dependencies.fabric.fabricApiVersion}")
+            if (mcVersion.minor == 21 && mcVersion.patch == 5) {
+                modImplementation("net.fabricmc.fabric-api:fabric-api:0.126.0+1.21.5")
+            } else
+                modImplementation("net.fabricmc.fabric-api:fabric-api:${mcData.dependencies.fabric.fabricApiVersion}")
+        }
+    }
+
+    if (propertyBoolOr("loom.appleSiliconFix", true) && mcData.version < MinecraftVersions.VERSION_1_13) {
+        if (
+            System.getProperty("os.arch") == "aarch64" &&
+            System.getProperty("os.name") == "Mac OS X"
+        ) {
+            logger.error("Setting up fix with Apple Silicon for Minecraft ${mcData.version}")
+
+            repositories {
+                maven("https://maven.legacyfabric.net/") {
+                    content {
+                        includeGroup("org.lwjgl.lwjgl")
+                    }
+                }
+            }
+
+            val lwjglVersion = "2.9.4+legacyfabric.8"
+
+            configurations.all {
+                resolutionStrategy {
+                    dependencySubstitution {
+                        all {
+                            if (requested is ModuleComponentSelector) {
+                                val module = (requested as ModuleComponentSelector)
+                                if (module.group == "org.lwjgl.lwjgl") {
+                                    logger.warn("Substituting ${module.group}:${module.module}:${module.version} with ${module.group}:${module.module}:$lwjglVersion")
+                                    useTarget(module.group + ":" + module.module + ":" + lwjglVersion)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }

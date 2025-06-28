@@ -65,6 +65,14 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
     public List<String> getMixins() {
         List<String> mixins = new ArrayList<>();
 
+
+        //#if MC==1.8.9||MC>=1.21.4
+        //$$mixins.add("compat.moulconfig.Accessor_MoulConfigProcessor");
+        //$$mixins.add("compat.moulconfig.Mixin_ConfigProcessorDriver");
+        //$$mixins.add("compat.moulconfig.Mixin_GuiOptionEditorSlider");
+        //$$mixins.add("compat.moulconfig.Accessor_GuiOptionEditorDropdown");
+        //#endif
+
         //#if FORGE
         mixins.add("events.Mixin_ChatReceiveEvent_Forge");
         //#if MC < 1.13

@@ -151,6 +151,18 @@ fun interface Visualizer {
         }
     }
 
+    class DraggableListVisualizer : Visualizer {
+        override fun visualize(prop: Property<*>) = Group(size = Vec2.ONE).onInit {
+            // todo
+        }
+    }
+
+    class MultiSelectDropdownVisualizer : Visualizer {
+        override fun visualize(prop: Property<*>) = Group(size = Vec2.ONE).onInit {
+            // todo
+        }
+    }
+
     class NumberVisualizer : Visualizer {
         override fun visualize(prop: Property<*>): Drawable {
             val unit = prop.getMetadata<String>("unit")
