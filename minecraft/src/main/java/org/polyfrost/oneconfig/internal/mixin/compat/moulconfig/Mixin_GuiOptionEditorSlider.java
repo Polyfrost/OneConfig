@@ -1,8 +1,7 @@
 package org.polyfrost.oneconfig.internal.mixin.compat.moulconfig;
 
-import io.github.notenoughupdates.moulconfig.gui.editors.GuiOptionEditorSlider;
 import io.github.notenoughupdates.moulconfig.processor.ProcessedOption;
-import org.polyfrost.oneconfig.utils.v1.internal.compat.GuiOptionEditorSliderAccessor;
+import org.polyfrost.oneconfig.internal.compat.GuiOptionEditorSliderAccessor;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.Unique;
@@ -11,7 +10,10 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Pseudo
-@Mixin(value = GuiOptionEditorSlider.class, remap = false)
+@Mixin(targets = {
+        "io.github.notenoughupdates.moulconfig.gui.editors.GuiOptionEditorSlider",
+        "at.hannibal2.skyhanni.deps.moulconfig.gui.editors.GuiOptionEditorSlider"
+}, remap = false)
 public class Mixin_GuiOptionEditorSlider implements GuiOptionEditorSliderAccessor {
     @Unique
     private float oneconfig$minValue;

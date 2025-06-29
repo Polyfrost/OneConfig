@@ -34,6 +34,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * The Tree class represents a tree structure that contains properties and other trees as children.
@@ -292,6 +293,7 @@ public class Tree extends Node implements Serializable {
         sb.append("Tree(id=").append(getID());
         if (getTitle() != null) sb.append(", title=").append(getTitle());
         if (description != null) sb.append(", description=").append(description);
+        sb.append(", theMap=").append(theMap.entrySet().stream().map(entry -> entry.getKey() + "=" + entry.getValue().toString()).collect(Collectors.joining(",","{","}")));
         sb.append(", size=").append(theMap.size()).append(')');
         return sb.toString();
     }

@@ -101,6 +101,10 @@ public abstract class Backend {
      * @return true if the tree was modified by the load operation, false otherwise.
      */
     public final boolean load(Tree tree) {
+        if (tree.getMetadata("custom_save") != null) {
+            putSafe(tree);
+            return true;
+        };
         if (tree.getID() == null) throw new IllegalArgumentException("tree must be master (have a valid ID)");
         Tree t;
         try {
@@ -143,6 +147,13 @@ public abstract class Backend {
         Tree tree = trees.get(id);
         if (tree == null) throw new IllegalArgumentException("no registered tree with ID " + id);
         try {
+            Object customSave = tree.getMetadata("custom_save");
+            if (customSave != null) {
+                if (customSave instanceof  Runnable) {
+                    ((Runnable) customSave).run();
+                }
+                return true;
+            }
             return save0(tree);
         } catch (Exception e) {
             LOGGER.error("error saving tree with ID {}!", id, e);
@@ -185,6 +196,13 @@ public abstract class Backend {
         if (tree.getID() == null) throw new IllegalArgumentException("tree must be master (have a valid ID)");
         putSafe(tree);
         try {
+            Object customSave = tree.getMetadata("custom_save");
+            if (customSave != null) {
+                if (customSave instanceof  Runnable) {
+                    ((Runnable) customSave).run();
+                }
+                return true;
+            }
             return save0(tree);
         } catch (Exception e) {
             LOGGER.error("error saving tree with ID {}!", tree.getID(), e);

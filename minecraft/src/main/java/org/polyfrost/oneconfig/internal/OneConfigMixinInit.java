@@ -73,6 +73,10 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         //$$mixins.add("compat.moulconfig.Accessor_GuiOptionEditorDropdown");
         //#endif
 
+        //#if MC>=1.19.2
+        //$$mixins.add("compat.rconfig.Mixin_Configurations");
+        //#endif
+
         //#if FORGE
         mixins.add("events.Mixin_ChatReceiveEvent_Forge");
         //#if MC < 1.13

@@ -1,4 +1,4 @@
-package org.polyfrost.oneconfig.utils.v1.internal.compat
+package org.polyfrost.oneconfig.internal.compat
 
 import io.github.notenoughupdates.moulconfig.ChromaColour
 import io.github.notenoughupdates.moulconfig.gui.editors.*

@@ -52,7 +52,12 @@ repositories {
     maven("https://repo.polyfrost.org/snapshots")
     maven("https://repo.hypixel.net/repository/Hypixel/")
     maven("https://maven.deftu.dev/releases")
-    maven("https://maven.notenoughupdates.org/releases")
+    maven("https://maven.notenoughupdates.org/releases") {
+        content { includeGroup("org.notenoughupdates.moulconfig") }
+    }
+    maven("https://maven.teamresourceful.com/repository/maven-releases") {
+        content { includeGroup("com.teamresourceful.resourcefulconfig") }
+    }
 }
 
 if (mcData.isLegacyForge) { // Quick substitution for relaunch in dev env, so that mixinextras works properly (yay!)
@@ -74,10 +79,53 @@ if (mcData.isLegacyForge) { // Quick substitution for relaunch in dev env, so th
 }
 
 dependencies {
-    compileOnly("gg.essential:vigilance-1.8.9-forge:295") { isTransitive = false }
-    compileOnly("org.notenoughupdates.moulconfig:common:3.11.0") { isTransitive = false }
+    data class CompatDependency(
+        val all: String? = null,
+        val forge: String? = all,
+        val fabric: String? = all,
+        val neoforge: String? = all,
+    )
+
+    fun DependencyHandlerScope.compileOnlyCompat(notation: String?) =
+        notation?.let { compileOnly(it) { isTransitive = false } }
+
+    fun DependencyHandlerScope.compileOnlyCompat(notation: CompatDependency?) {
+        when {
+            mcData.isNeoForge -> compileOnlyCompat(notation?.neoforge)
+            mcData.isForge -> compileOnlyCompat(notation?.forge)
+            mcData.isFabric -> compileOnlyCompat(notation?.fabric)
+        }
+    }
 
     val mcVersion = mcData.version as MinecraftReleaseVersion
+    val mcVersionString = listOf(mcVersion.major, mcVersion.minor, mcVersion.patch).joinToString(".")
+
+    compileOnlyCompat("gg.essential:vigilance-1.8.9-forge:295")
+    compileOnlyCompat("org.notenoughupdates.moulconfig:common:3.11.0")
+
+    fun rconfig(mcVersion: String, modVersion: String, mcVersionOverride: String = mcVersion) =
+        mcVersion to CompatDependency("com.teamresourceful.resourcefulconfig:resourcefulconfig-common-$mcVersionOverride:$modVersion")
+
+    val rconfig = mapOf(
+        rconfig("1.19.2", "1.0.20"),
+        rconfig("1.19.3", "1.1.4"),
+        rconfig("1.19.4", "1.2.0"),
+        rconfig("1.20.0", "2.1.0", "1.20"),
+        rconfig("1.20.1", "2.1.3"),
+        rconfig("1.20.2", "2.2.3"),
+        rconfig("1.20.4", "2.4.8"),
+        rconfig("1.20.5", "2.5.2"),
+        rconfig("1.20.6", "2.5.2", "1.20.5"),
+        rconfig("1.21.0", "3.0.11", "1.21"),
+        rconfig("1.21.1", "3.0.11", "1.21"),
+        rconfig("1.21.3", "3.3.4"),
+        rconfig("1.21.4", "3.4.3"),
+        rconfig("1.21.5", "3.5.9"),
+        rconfig("1.21.6", "3.6.2"),
+    )
+
+    compileOnlyCompat(rconfig[mcVersionString])
+
     provideIncludedDependencies(
         Triple(mcVersion.major, mcVersion.minor, mcVersion.patch),
         mcData.loader.friendlyString
@@ -136,6 +184,7 @@ dependencies {
         }
     }
 
+    modImplementation("dev.deftu:textile-$mcData:0.18.0")
     if (propertyBoolOr("loom.appleSiliconFix", true) && mcData.version < MinecraftVersions.VERSION_1_13) {
         if (
             System.getProperty("os.arch") == "aarch64" &&
