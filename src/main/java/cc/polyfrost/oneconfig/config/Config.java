@@ -89,7 +89,7 @@ public class Config {
             .create();
     public final transient Mod mod;
     public boolean enabled;
-    public final boolean canToggle;
+    public final transient boolean canToggle;
 
     private final transient Logger logger;
 
