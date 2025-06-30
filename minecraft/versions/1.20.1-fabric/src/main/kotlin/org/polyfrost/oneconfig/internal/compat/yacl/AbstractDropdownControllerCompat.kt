@@ -15,6 +15,9 @@ internal object AbstractDropdownControllerCompat : ExtraHandler<AbstractDropdown
         val values = controller.allowedValues
         builder.setter = { value -> (value as? Int)?.let { controller.setFromString(values[value]); controller.option().applyValue() } }
         builder.getter = { values.indexOf(controller.string).coerceAtMost(0) }
+        if (values.isEmpty()) {
+            return null
+        }
         builder["options"] = values.toTypedArray()
 
         return Visualizer.DropdownVisualizer::class

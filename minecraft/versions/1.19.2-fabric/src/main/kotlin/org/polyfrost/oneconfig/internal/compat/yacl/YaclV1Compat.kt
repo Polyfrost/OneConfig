@@ -66,7 +66,7 @@ object YaclV1Compat {
         val saveAll = { allOptions.forEach(Option<*>::applyValue) }
 
         root.title = text.stripped
-        root.id = UUID.randomUUID().toString()
+        root.id = root.title
         root.saveFunction = Runnable {
             saveAll()
             saveFunction.run()
@@ -83,26 +83,26 @@ object YaclV1Compat {
 
         tree.title = category.name().stripped
         tree.description = category.tooltip().stripped
-        tree.category = category.name().stripped
+        tree.subcategory = tree.title
+        tree.category = tree.title
 
         tree.id = UUID.randomUUID().toString()
 
-        category.groups().forEach { group -> parseGroup(group, tree) }
-
         parent.put(tree)
+        category.groups().forEach { group -> if (group.isRoot) parseGroup(group, tree, category.name().stripped) else parseGroup(group, parent, category.name().stripped) }
     }
 
-    private fun parseGroup(group: OptionGroup, parent: Tree) {
+    private fun parseGroup(group: OptionGroup, parent: Tree, category: String) {
         if (group.isRoot) {
             group.options().forEach { option -> parseOption(option as Option<Any>, parent) }
             return
         }
 
         val tree = Tree.tree()
-        tree.category = parent.category
+        tree.subcategory =  group.name().stripped
+        tree.category = category
         tree.title = group.name().stripped.takeUnless(String::isEmpty) ?: "General"
         tree.id = UUID.randomUUID().toString()
-        tree.subcategory = group.name().stripped
 
         group.options().forEach { option -> parseOption(option as Option<Any>, tree) }
 
@@ -117,13 +117,13 @@ object YaclV1Compat {
         val visualizer: KClass<out Visualizer>? = when (controller) {
             is TickBoxController, is BooleanController -> {
                 builder.setter = { value -> (value as? Boolean)?.let { controller.option().requestAndSubmitSet(value) } }
-                builder.getter = { controller.option().pendingValue() }
+                builder.getter = { controller.option().binding().value }
                 Visualizer.SwitchVisualizer::class
             }
 
             is StringController -> {
                 builder.setter = { value -> (value as? String)?.let { controller.setFromString(value); controller.option().applyValue() } }
-                builder.getter = { controller.option().pendingValue() }
+                builder.getter = { controller.option().binding().value }
                 Visualizer.TextVisualizer::class
             }
 
@@ -131,20 +131,20 @@ object YaclV1Compat {
                 builder.metadata["max"] = controller.max().toFloat()
                 builder.metadata["min"] = controller.min().toFloat()
                 builder.setter = { value -> (value as? Number)?.let { controller.setPendingValue(value.toDouble()); controller.option().applyValue() } }
-                builder.getter = { controller.pendingValue().toFloat() }
+                builder.getter = { (controller.option().binding().value as? Number)?.toFloat() ?: 0 }
                 Visualizer.SliderVisualizer::class
             }
 
             is ColorController -> { // todo alpha
                 builder.setter =
                     { value -> (value as? PolyColor)?.let { controller.option().requestAndSubmitSet(Color(value.argb)) } }
-                builder.getter = { controller.option().pendingValue().toPolyColor().mutable() }
+                builder.getter = { controller.option().binding().value.toPolyColor().mutable() }
                 Visualizer.ColorVisualizer::class
             }
 
             is EnumController -> {
                 builder.setter = { value -> (value as? Enum<*>)?.let { config.requestAndSubmitSet(value) } }
-                builder.getter = { controller.option().pendingValue() }
+                builder.getter = { controller.option().binding().value }
                 Visualizer.DropdownVisualizer::class
             }
 
@@ -164,7 +164,7 @@ object YaclV1Compat {
         parent.put(property)
     }
 
-    internal fun <T> Option<T>.requestAndSubmitSet(value: T) {
+    internal fun <T : Any> Option<T>.requestAndSubmitSet(value: T) {
         this.requestSet(value)
         this.applyValue()
     }
