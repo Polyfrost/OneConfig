@@ -55,7 +55,7 @@ private fun ModCard(
             size = Vec2(256f, 104f),
         ).withBoarder(1f) { page.border5 }.withStates(),
         Block(
-            Text(tree.description?.takeIf { source == TreeSource.COMPAT } ?: tree.title, fontSize = 16f).setFont { medium },
+            Text(tree.title, fontSize = 16f).setFont { medium },
             radii = modBoxBotRad,
             alignment = barAlign,
             size = Vec2(256f, 36f),
