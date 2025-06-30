@@ -29,6 +29,7 @@
 package org.polyfrost.oneconfig.internal.ui
 
 import dev.deftu.omnicore.client.OmniClientPlayer
+import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.internal.ConfigVisualizer
@@ -60,6 +61,10 @@ import org.polyfrost.polyui.unit.seconds
 import org.polyfrost.polyui.utils.image
 
 object OneConfigUI {
+    // Should only be used for native compat trees that require custom on click methods
+    @ApiStatus.Internal
+    val extraConfigTrees: MutableList<Tree> = mutableListOf()
+
     private val playerHead = PolyImage(
         "https://mc-heads.net/avatar/${OmniClientPlayer.name}/24",
         type = PolyImage.Type.Raster,
@@ -92,6 +97,10 @@ object OneConfigUI {
             val tree = Tree.tree(validItem.id)
             tree.title = validItem.name
             result.getOrPut(TreeSource.COMMAND, ::mutableSetOf).add(tree)
+        }
+
+        for (tree in extraConfigTrees) {
+            result.getOrPut(TreeSource.COMPAT, ::mutableSetOf).add(tree)
         }
 
         return result

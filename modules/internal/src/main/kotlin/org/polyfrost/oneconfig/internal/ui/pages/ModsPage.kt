@@ -15,7 +15,8 @@ import org.polyfrost.polyui.unit.Vec2
 
 internal enum class TreeSource {
     CONFIG, // Comes from OneConfig's config manager
-    COMMAND // Comes from another mod's command, which we assume opens it's config UI
+    COMMAND, // Comes from another mod's command, which we assume opens it's config UI
+    COMPAT, // Comes from the native compat layer, will open the mod config ui, known config libs get registered as config
 }
 
 internal fun ModsPage(trees: Map<TreeSource, Set<Tree>>): Drawable {
@@ -54,7 +55,7 @@ private fun ModCard(
             size = Vec2(256f, 104f),
         ).withBoarder(1f) { page.border5 }.withStates(),
         Block(
-            Text(tree.title, fontSize = 16f).setFont { medium },
+            Text(tree.description?.takeIf { source == TreeSource.COMPAT } ?: tree.title, fontSize = 16f).setFont { medium },
             radii = modBoxBotRad,
             alignment = barAlign,
             size = Vec2(256f, 36f),
@@ -64,6 +65,7 @@ private fun ModCard(
         when (source) {
             TreeSource.CONFIG -> OneConfigUI.openPage(ConfigVisualizer.INSTANCE.get(tree), tree.title)
             TreeSource.COMMAND -> Platform.compatibility().executeTreeAction(tree.id)
+            TreeSource.COMPAT -> tree.getMetadata<() -> Unit>("on_click")?.invoke() ?: Unit
         }
     }.onRightClick { _ ->
         if (source == TreeSource.CONFIG) {

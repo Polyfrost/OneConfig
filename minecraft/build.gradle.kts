@@ -64,6 +64,9 @@ repositories {
     maven("https://api.modrinth.com/maven") {
         content { includeGroup("maven.modrinth") } // for some reason yacl versions exist that aren't on the official repo???
     }
+    maven("https://maven.terraformersmc.com/") {
+        content { includeGroup("com.terraformersmc" )}
+    }
 }
 
 if (mcData.isLegacyForge) { // Quick substitution for relaunch in dev env, so that mixinextras works properly (yay!)
@@ -168,6 +171,26 @@ dependencies {
         yacl("1.21.6", "3.7.1"),
     )
     compileOnlyCompat(yacl[mcVersionString])
+
+    fun modMenu(mcVersion: String, version: String) = mcVersion to CompatDependency(fabric = "com.terraformersmc:modmenu:$version")
+
+    val modMenu = mapOf(
+        modMenu("1.16.5", "1.16.23"),
+        modMenu("1.17.1", "2.0.16"),
+        modMenu("1.18.2", "3.2.5"),
+        modMenu("1.18.2", "3.2.5"),
+        modMenu("1.19.2", "4.1.2"),
+        modMenu("1.19.4", "6.3.1"),
+        modMenu("1.20.1", "7.2.2"),
+        modMenu("1.20.4", "9.2.0"),
+        modMenu("1.20.6", "10.0.0"),
+        modMenu("1.21.1", "11.0.3"),
+        modMenu("1.21.2", "12.0.0"),
+        modMenu("1.21.3", "12.0.0"),
+        modMenu("1.21.4", "13.0.3"),
+        modMenu("1.21.5", "14.0.0-rc.2"),
+    )
+    compileOnlyCompat(modMenu[mcVersionString])
 
 
     provideIncludedDependencies(

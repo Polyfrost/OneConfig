@@ -79,6 +79,10 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         //$$mixins.add("compat.yacl.Mixin_YetAnotherConfigLib_Builder");
         //#endif
 
+        //#if MC>1.16.5
+        //$$mixins.add("compat.modmenu.ModMenuMixin");
+        //#endif
+
         //#if FORGE
         mixins.add("events.Mixin_ChatReceiveEvent_Forge");
         //#if MC < 1.13
