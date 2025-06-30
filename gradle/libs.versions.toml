@@ -106,7 +106,7 @@ dgt-base = { id = "dev.deftu.gradle.tools", version.ref = "dgt" }
 dgt-multiversion-platform = { id = "dev.deftu.gradle.multiversion", version.ref = "dgt" }
 dgt-multiversion-root = { id = "dev.deftu.gradle.multiversion-root", version.ref = "dgt" }
 dgt-java = { id = "dev.deftu.gradle.tools.java", version.ref = "dgt" }
-dgt-kotlin = { id = "dev.deftu.gradle.tools.kotlin", version = "dgt" }
+dgt-kotlin = { id = "dev.deftu.gradle.tools.kotlin", version.ref = "dgt" }
 dgt-resources = { id = "dev.deftu.gradle.tools.resources", version.ref = "dgt" }
 dgt-shadow = { id = "dev.deftu.gradle.tools.shadow", version.ref = "dgt" }
 dgt-publishing-maven = { id = "dev.deftu.gradle.tools.publishing.maven", version.ref = "dgt" }
