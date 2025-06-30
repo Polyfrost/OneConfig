@@ -2,6 +2,7 @@ package org.polyfrost.oneconfig.utils.v1.dsl
 
 import org.polyfrost.oneconfig.api.config.v1.Node
 import org.polyfrost.oneconfig.api.config.v1.Property
+import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.Visualizer
 import kotlin.reflect.KClass
 
@@ -29,3 +30,7 @@ internal var Node.index: Int?
 internal var Node.icon: String?
     get() = metadata?.get("icon") as? String
     set(value) = addMetadata("icon", value)
+
+internal var Tree.saveFunction: Runnable?
+    get() = metadata?.get("custom_save") as? Runnable
+    set(value) = addMetadata("custom_save", value)

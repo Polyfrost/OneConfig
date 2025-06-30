@@ -39,6 +39,7 @@ import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.utils.image
 import org.polyfrost.polyui.utils.mapToArray
 import org.polyfrost.polyui.utils.ref
+import kotlin.jvm.java
 
 /**
  * Visualizers are procedures that take a property, and return a drawable that represents it.
@@ -77,9 +78,9 @@ fun interface Visualizer {
     class DropdownVisualizer : Visualizer {
         override fun visualize(prop: Property<*>): Drawable {
             val options: Array<String> = prop.getMetadata("options") ?: emptyArray()
-            if (prop.type.isEnum) {
+            if (prop.type.isEnum || prop.type.superclass.isEnum) {
                 require(options.isEmpty()) { "Dropdowns should not have options when used with enums (offender=${prop.id})" }
-                val constants = prop.type.enumConstants
+                val constants = if (prop.type.isEnum) prop.type.enumConstants else prop.type.superclass.enumConstants
                 val index = constants.indexOf(prop.get())
                 val s = Dropdown(
                     optPadding = 24f,

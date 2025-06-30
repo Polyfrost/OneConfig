@@ -149,7 +149,7 @@ dependencies {
     val yacl = mapOf(
         yacl("1.19.0", "1.7.1", withoutLoader = true),
         yacl("1.19.1", "1.7.1", withoutLoader = true),
-        yacl("1.19.2", "1.7.1", withoutLoader = true),
+       "1.19.2" to CompatDependency("maven.modrinth:1eAoo2KR:gJ6ZmZ4Z", "maven.modrinth:1eAoo2KR:Jf2pciI1"),
         yacl("1.19.3", "2.2.0", withoutLoader = true),
         "1.19.4" to CompatDependency("maven.modrinth:1eAoo2KR:gJ6ZmZ4Z", "maven.modrinth:1eAoo2KR:Jf2pciI1"),
         yacl("1.20.0", "3.6.6", "1.20.1"),

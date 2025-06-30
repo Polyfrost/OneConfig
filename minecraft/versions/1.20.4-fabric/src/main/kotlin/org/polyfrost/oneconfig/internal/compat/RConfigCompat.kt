@@ -23,7 +23,7 @@ internal object RConfigCompat {
 
     @JvmStatic
     fun addConfig(config: ResourcefulConfig) =
-        CompatLoader.delay { parseConfig(config)?.let(ConfigManager.active()::register) }
+        CompatLoader.requireTranslations { parseConfig(config)?.let(ConfigManager.active()::register) }
 
     fun parseConfig(config: ResourcefulConfig): Tree? {
         val tree = Tree.tree()

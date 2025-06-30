@@ -75,6 +75,8 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
 
         //#if MC>=1.19.2
         //$$mixins.add("compat.rconfig.Mixin_Configurations");
+        //$$mixins.add("Mixin_MinecraftClientResourceStuff");
+        //$$mixins.add("compat.yacl.Mixin_YetAnotherConfigLib_Builder");
         //#endif
 
         //#if FORGE

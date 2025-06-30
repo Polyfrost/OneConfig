@@ -27,7 +27,7 @@ internal object RConfigCompat {
     fun enable() = Unit
 
     @JvmStatic
-    fun addConfig(config: ResourcefulConfig) = CompatLoader.delay { parseConfig(config)?.let(ConfigManager.active()::register) }
+    fun addConfig(config: ResourcefulConfig) = CompatLoader.requireTranslations { parseConfig(config)?.let(ConfigManager.active()::register) }
 
     fun parseConfig(config: ResourcefulConfig): Tree? {
         val tree = Tree.tree()
@@ -130,10 +130,7 @@ internal object RConfigCompat {
         } ?: return
 
         builder["visualizer"] = visualizer.java
-        val property = builder.build()
-        property.title = entry.options().title.toLocalizedString()
-        property.description = entry.options().comment.toLocalizedString()
-        tree.put(property)
+        tree.put(builder.build())
     }
 
     class RConfigPropertyBuilder internal constructor(option: ResourcefulConfigValueEntry) {
@@ -164,7 +161,7 @@ internal object RConfigCompat {
         fun build() = Properties.functional(
             getter,
             setter,
-            name = null,
+            name = name,
             description = description,
             id = UUID.randomUUID().toString()
         ).apply {

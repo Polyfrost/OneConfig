@@ -149,7 +149,7 @@ public abstract class Backend {
         try {
             Object customSave = tree.getMetadata("custom_save");
             if (customSave != null) {
-                if (customSave instanceof  Runnable) {
+                if (customSave instanceof Runnable) {
                     ((Runnable) customSave).run();
                 }
                 return true;
