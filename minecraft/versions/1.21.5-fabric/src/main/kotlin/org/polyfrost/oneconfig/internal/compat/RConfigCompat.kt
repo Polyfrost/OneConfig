@@ -13,13 +13,13 @@ import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Properties
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.Visualizer
-import org.polyfrost.oneconfig.internal.compat.MoulConfigCompat.parseCategory
+import org.polyfrost.oneconfig.utils.v1.dsl.*
 import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.color.argb
 import org.polyfrost.polyui.color.mutable
 import java.util.*
 import kotlin.reflect.KClass
-import org.polyfrost.oneconfig.utils.v1.dsl.*
+
 internal object RConfigCompat {
 
 
@@ -27,16 +27,24 @@ internal object RConfigCompat {
     fun enable() = Unit
 
     @JvmStatic
-    fun addConfig(config: ResourcefulConfig) = CompatLoader.requireTranslations { parseConfig(config)?.let(ConfigManager.active()::register) }
+    fun addConfig(config: ResourcefulConfig) =
+        CompatLoader.requireTranslations { parseConfig(config, null, null)?.let(ConfigManager.active()::register) }
 
-    fun parseConfig(config: ResourcefulConfig): Tree? {
+    private fun parseConfig(config: ResourcefulConfig, category: String?, root: Tree?): Tree? {
         val tree = Tree.tree()
         tree.id = config.id()
         tree.title = config.info().title().toLocalizedString()
         tree.description = config.info().description().toLocalizedString()
-        tree.category = config.info().title().toLocalizedString()
+        tree.category = category ?: config.info().title().toLocalizedString()
+        tree.subcategory = config.info().title().toLocalizedString()
 
-        config.categories().values.mapNotNull(::parseConfig).forEach(tree::put)
+        config.categories().values.mapNotNull {
+            parseConfig(
+                it,
+                category ?: it.info().title().toLocalizedString(),
+                root ?: tree
+            )
+        }.forEach((root ?: tree)::put)
 
         parseAny(config.elements(), tree)
 
@@ -46,7 +54,7 @@ internal object RConfigCompat {
         return tree
     }
 
-    fun parseButton(button: ResourcefulConfigButton, tree: Tree) {
+    private fun parseButton(button: ResourcefulConfigButton, tree: Tree) {
         val property = Properties.dummy(id = UUID.randomUUID().toString())
         property.title = button.title()?.takeUnless { it.isEmpty() }
             ?: "button" //todo find a better way of doing this, rconfig allows empty names
@@ -56,9 +64,9 @@ internal object RConfigCompat {
         tree.put(property)
     }
 
-    fun parseAny(list: Iterable<ResourcefulConfigElement>, tree: Tree) = list.forEach { parseAny(it, tree) }
+    private fun parseAny(list: Iterable<ResourcefulConfigElement>, tree: Tree) = list.forEach { parseAny(it, tree) }
 
-    fun parseAny(element: ResourcefulConfigElement, tree: Tree) = when (element) {
+    private fun parseAny(element: ResourcefulConfigElement, tree: Tree) = when (element) {
         is ResourcefulConfigButton -> parseButton(element, tree)
         is ResourcefulConfigObjectEntryElement -> parseCategory(element, tree)
         is ResourcefulConfigEntryElement -> buildAndAdd(element, tree)
@@ -66,7 +74,7 @@ internal object RConfigCompat {
         else -> null
     }
 
-    fun parseCategory(element: ResourcefulConfigObjectEntryElement, tree: Tree) {
+    private fun parseCategory(element: ResourcefulConfigObjectEntryElement, tree: Tree) {
         val entry = element.entry()
         val objectEntry = Tree.tree()
         objectEntry.title = entry.options().title.toLocalizedString()
@@ -81,7 +89,7 @@ internal object RConfigCompat {
 
     }
 
-    fun buildAndAdd(element: ResourcefulConfigEntryElement, tree: Tree) {
+    private fun buildAndAdd(element: ResourcefulConfigEntryElement, tree: Tree) {
         val entry = element.entry() as? ResourcefulConfigValueEntry ?: return
         val builder = RConfigPropertyBuilder(entry)
 
@@ -133,7 +141,7 @@ internal object RConfigCompat {
         tree.put(builder.build())
     }
 
-    class RConfigPropertyBuilder internal constructor(option: ResourcefulConfigValueEntry) {
+    private class RConfigPropertyBuilder internal constructor(option: ResourcefulConfigValueEntry) {
         val name: String? = option.options().title.toLocalizedString()
         val description: String? = option.options().comment.toLocalizedString()
 

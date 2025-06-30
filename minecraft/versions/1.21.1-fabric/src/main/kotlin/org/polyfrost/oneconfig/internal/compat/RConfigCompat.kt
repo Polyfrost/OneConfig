@@ -32,16 +32,17 @@ internal object RConfigCompat {
     }
 
     @JvmStatic
-    fun addConfig(config: ResourcefulConfig) = CompatLoader.requireTranslations { parseConfig(config)?.let(ConfigManager.active()::register) }
+    fun addConfig(config: ResourcefulConfig) = CompatLoader.requireTranslations { parseConfig(config, null, null)?.let(ConfigManager.active()::register) }
 
-    fun parseConfig(config: ResourcefulConfig): Tree? {
+    private fun parseConfig(config: ResourcefulConfig, category: String?, root: Tree?): Tree? {
         val tree = Tree.tree()
         tree.id = config.id()
         tree.title = config.info().title().toLocalizedString()
         tree.description = config.info().description().toLocalizedString()
-        tree.category = config.info().title().toLocalizedString()
+        tree.category = category ?: config.info().title().toLocalizedString()
+        tree.subcategory = config.info().title().toLocalizedString()
 
-        config.categories().values.mapNotNull(::parseConfig).forEach(tree::put)
+        config.categories().values.mapNotNull { parseConfig(it, category ?: it.info().title().toLocalizedString(), root ?: tree) }.forEach((root ?: tree)::put)
 
         parseAny(config.entries().values, tree)
         parseButtons(config.buttons(), tree)
@@ -52,7 +53,7 @@ internal object RConfigCompat {
         return tree
     }
 
-    fun parseButtons(buttons: List<ResourcefulConfigButton>, tree: Tree) {
+    private fun parseButtons(buttons: List<ResourcefulConfigButton>, tree: Tree) {
         buttons.forEach { button ->
             val property = Properties.dummy(id = UUID.randomUUID().toString())
             property.title = button.title()?.takeUnless { it.isEmpty() }
@@ -64,14 +65,14 @@ internal object RConfigCompat {
         }
     }
 
-    fun parseAny(list: Iterable<ResourcefulConfigEntry>, tree: Tree) = list.forEach {
+    private fun parseAny(list: Iterable<ResourcefulConfigEntry>, tree: Tree) = list.forEach {
         when (it) {
             is ResourcefulConfigObjectEntry -> parseCategory(it, tree)
             is ResourcefulConfigValueEntry -> buildAndAdd(it, tree)
         }
     }
 
-    fun parseCategory(entry: ResourcefulConfigObjectEntry, tree: Tree) {
+    private fun parseCategory(entry: ResourcefulConfigObjectEntry, tree: Tree) {
             val objectEntry = Tree.tree()
             objectEntry.title = entry.options().title.toLocalizedString()
             objectEntry.description = entry.options().comment.toLocalizedString()
@@ -84,7 +85,7 @@ internal object RConfigCompat {
             tree.put(objectEntry)
     }
 
-    fun buildAndAdd(entry: ResourcefulConfigValueEntry, tree: Tree) {
+    private fun buildAndAdd(entry: ResourcefulConfigValueEntry, tree: Tree) {
         val builder = RConfigPropertyBuilder(entry)
 
         if (entry.get().javaClass.isArray) return
@@ -135,7 +136,7 @@ internal object RConfigCompat {
         tree.put(builder.build())
     }
 
-    class RConfigPropertyBuilder internal constructor(option: ResourcefulConfigValueEntry) {
+    private class RConfigPropertyBuilder internal constructor(option: ResourcefulConfigValueEntry) {
         val name: String? = option.options().title.toLocalizedString()
         val description: String? = option.options().comment().toLocalizedString()
 
