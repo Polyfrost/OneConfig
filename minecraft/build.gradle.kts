@@ -42,7 +42,7 @@ toolkitLoomHelper {
         useTweaker("org.polyfrost.oneconfig.internal.legacy.OneConfigTweaker")
     }
 }
-// kurz afk :3
+
 java {
     withSourcesJar()
 }
