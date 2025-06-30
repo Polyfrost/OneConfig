@@ -78,7 +78,7 @@ fun interface Visualizer {
     class DropdownVisualizer : Visualizer {
         override fun visualize(prop: Property<*>): Drawable {
             val options: Array<String> = prop.getMetadata("options") ?: emptyArray()
-            if (prop.type.isEnum || prop.type.superclass.isEnum) {
+            if (prop.type.isEnum || prop.type.superclass?.isEnum == true) {
                 require(options.isEmpty()) { "Dropdowns should not have options when used with enums (offender=${prop.id})" }
                 val constants = if (prop.type.isEnum) prop.type.enumConstants else prop.type.superclass.enumConstants
                 val index = constants.indexOf(prop.get())
