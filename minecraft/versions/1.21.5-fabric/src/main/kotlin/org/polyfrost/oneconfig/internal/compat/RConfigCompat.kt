@@ -13,28 +13,28 @@ import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Properties
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.Visualizer
+import org.polyfrost.oneconfig.internal.compat.MoulConfigCompat.parseCategory
 import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.color.argb
 import org.polyfrost.polyui.color.mutable
 import java.util.*
 import kotlin.reflect.KClass
-
+import org.polyfrost.oneconfig.utils.v1.dsl.*
 internal object RConfigCompat {
 
 
     @JvmStatic
-    fun enable() {
-
-    }
+    fun enable() = Unit
 
     @JvmStatic
-    fun addConfig(config: ResourcefulConfig) = parseConfig(config)?.let(ConfigManager.active()::register)
+    fun addConfig(config: ResourcefulConfig) = CompatLoader.delay { parseConfig(config)?.let(ConfigManager.active()::register) }
 
     fun parseConfig(config: ResourcefulConfig): Tree? {
         val tree = Tree.tree()
         tree.id = config.id()
         tree.title = config.info().title().toLocalizedString()
         tree.description = config.info().description().toLocalizedString()
+        tree.category = config.info().title().toLocalizedString()
 
         config.categories().values.mapNotNull(::parseConfig).forEach(tree::put)
 
@@ -51,7 +51,7 @@ internal object RConfigCompat {
         property.title = button.title()?.takeUnless { it.isEmpty() }
             ?: "button" //todo find a better way of doing this, rconfig allows empty names
         property.description = button.description()
-        property.metadata?.put("visualizer", Visualizer.ButtonVisualizer::class.java)
+        property.visualizerKt = Visualizer.ButtonVisualizer::class
         property.metadata?.put("runnable", Runnable { button.invoke() })
         tree.put(property)
     }
@@ -72,11 +72,11 @@ internal object RConfigCompat {
         objectEntry.title = entry.options().title.toLocalizedString()
         objectEntry.description = entry.options().comment.toLocalizedString()
         objectEntry.id = UUID.randomUUID().toString()
-        objectEntry.addMetadata("category", entry.options().title.toLocalizedString())
-        objectEntry.addMetadata("subcategory", entry.options().title.toLocalizedString())
-        objectEntry.addMetadata("index", -1)
-        objectEntry.addMetadata("icon", "")
-        parseAny(entry.elements(), tree)
+        objectEntry.category = tree.category
+        objectEntry.subcategory = entry.options().title.toLocalizedString()
+        objectEntry.index = -1
+        objectEntry.icon = ""
+        parseAny(entry.elements(), objectEntry)
         tree.put(objectEntry)
 
     }
@@ -130,12 +130,15 @@ internal object RConfigCompat {
         } ?: return
 
         builder["visualizer"] = visualizer.java
-        tree.put(builder.build())
+        val property = builder.build()
+        property.title = entry.options().title.toLocalizedString()
+        property.description = entry.options().comment.toLocalizedString()
+        tree.put(property)
     }
 
     class RConfigPropertyBuilder internal constructor(option: ResourcefulConfigValueEntry) {
         val name: String? = option.options().title.toLocalizedString()
-        val description: String? = option.options().comment().toLocalizedString()
+        val description: String? = option.options().comment.toLocalizedString()
 
         var setter: (Any) -> Unit = { value ->
             when (option.type()) {
@@ -161,7 +164,7 @@ internal object RConfigCompat {
         fun build() = Properties.functional(
             getter,
             setter,
-            name = name,
+            name = null,
             description = description,
             id = UUID.randomUUID().toString()
         ).apply {

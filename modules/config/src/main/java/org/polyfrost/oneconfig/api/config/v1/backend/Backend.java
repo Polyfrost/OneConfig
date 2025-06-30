@@ -104,7 +104,7 @@ public abstract class Backend {
         if (tree.getMetadata("custom_save") != null) {
             putSafe(tree);
             return true;
-        };
+        }
         if (tree.getID() == null) throw new IllegalArgumentException("tree must be master (have a valid ID)");
         Tree t;
         try {

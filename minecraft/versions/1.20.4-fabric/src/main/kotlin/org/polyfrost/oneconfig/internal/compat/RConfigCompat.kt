@@ -6,11 +6,11 @@ import com.teamresourceful.resourcefulconfig.api.types.entries.ResourcefulConfig
 import com.teamresourceful.resourcefulconfig.api.types.entries.ResourcefulConfigObjectEntry
 import com.teamresourceful.resourcefulconfig.api.types.entries.ResourcefulConfigValueEntry
 import com.teamresourceful.resourcefulconfig.api.types.options.EntryType
-import jdk.internal.org.jline.utils.InfoCmp
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Properties
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.Visualizer
+import org.polyfrost.oneconfig.utils.v1.dsl.*
 import java.util.*
 import kotlin.reflect.KClass
 
@@ -22,13 +22,15 @@ internal object RConfigCompat {
     }
 
     @JvmStatic
-    fun addConfig(config: ResourcefulConfig) = parseConfig(config)?.let(ConfigManager.active()::register)
+    fun addConfig(config: ResourcefulConfig) =
+        CompatLoader.delay { parseConfig(config)?.let(ConfigManager.active()::register) }
 
     fun parseConfig(config: ResourcefulConfig): Tree? {
         val tree = Tree.tree()
         tree.id = config.id()
         tree.title = config.info().title().toLocalizedString()
         tree.description = config.info().description().toLocalizedString()
+        tree.category = config.info().title().toLocalizedString()
 
         config.categories().values.mapNotNull(::parseConfig).forEach(tree::put)
 
@@ -47,41 +49,38 @@ internal object RConfigCompat {
             property.title = button.title()?.takeUnless { it.isEmpty() }
                 ?: "button" //todo find a better way of doing this, rconfig allows empty names
             property.description = button.description()
-            property.metadata?.put("visualizer", Visualizer.ButtonVisualizer::class.java)
+            property.visualizerKt = Visualizer.ButtonVisualizer::class
             property.metadata?.put("runnable", Runnable { button.invoke() })
             tree.put(property)
         }
     }
 
-    fun parseAny(list: Iterable<ResourcefulConfigEntry>, tree: Tree) {
-        parseCategories(list.filterIsInstance<ResourcefulConfigObjectEntry>(), tree)
-        parseValues(list.filterIsInstance<ResourcefulConfigValueEntry>(), tree)
-    }
-
-    fun parseCategories(list: List<ResourcefulConfigObjectEntry>, tree: Tree) {
-        list.forEach { entry ->
-            val objectEntry = Tree.tree()
-            objectEntry.title = entry.options().title.toLocalizedString()
-            objectEntry.description = entry.options().comment.toLocalizedString()
-            objectEntry.id = UUID.randomUUID().toString()
-            objectEntry.addMetadata("category", entry.options().title.toLocalizedString())
-            objectEntry.addMetadata("subcategory", entry.options().title.toLocalizedString())
-            objectEntry.addMetadata("index", -1)
-            objectEntry.addMetadata("icon", "")
-            parseAny(entry.entries().values, tree)
-            tree.put(objectEntry)
+    fun parseAny(list: Iterable<ResourcefulConfigEntry>, tree: Tree) = list.forEach {
+        when (it) {
+            is ResourcefulConfigObjectEntry -> parseCategory(it, tree)
+            is ResourcefulConfigValueEntry -> buildAndAdd(it, tree)
         }
     }
 
-    fun parseValues(list: List<ResourcefulConfigValueEntry>, tree: Tree) {
-        list.forEach { buildAndAdd(it, tree) }
+    fun parseCategory(entry: ResourcefulConfigObjectEntry, tree: Tree) {
+        val objectEntry = Tree.tree()
+        objectEntry.title = entry.options().title.toLocalizedString()
+        objectEntry.description = entry.options().comment.toLocalizedString()
+        objectEntry.id = UUID.randomUUID().toString()
+        objectEntry.category = tree.category
+        objectEntry.subcategory = entry.options().title.toLocalizedString()
+        objectEntry.index = -1
+        objectEntry.icon = ""
+        parseAny(entry.entries().values, objectEntry)
+        tree.put(objectEntry)
     }
 
     fun buildAndAdd(entry: ResourcefulConfigValueEntry, tree: Tree) {
         val builder = RConfigPropertyBuilder(entry)
 
         if (entry.get().javaClass.isArray) return
-        val options = entry.options()
+        val options = entry.options() // todo draggable list and multiselects
+
         val visualizer: KClass<out Visualizer> = when (entry.type()) {
             EntryType.BYTE, EntryType.SHORT, EntryType.INTEGER, EntryType.LONG, EntryType.FLOAT, EntryType.DOUBLE -> {
                 if (entry.options().hasRange) {
@@ -130,7 +129,7 @@ internal object RConfigCompat {
                 EntryType.BOOLEAN -> option.boolean = value as Boolean
                 EntryType.STRING -> option.string = value as String
                 EntryType.ENUM -> option.enum = value as Enum<*>
-                EntryType.OBJECT -> null // cant happen, is handled by ObjectEntry
+                else -> null // unknown/handled differently
             }
         }
         var getter: () -> Any = option::get
@@ -147,6 +146,7 @@ internal object RConfigCompat {
             id = UUID.randomUUID().toString()
         ).apply {
             this@RConfigPropertyBuilder.metadata.entries.forEach { (key, value) -> addMetadata(key, value) }
+
         }
     }
 }

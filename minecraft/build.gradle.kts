@@ -42,7 +42,7 @@ toolkitLoomHelper {
         useTweaker("org.polyfrost.oneconfig.internal.legacy.OneConfigTweaker")
     }
 }
-
+// kurz afk :3
 java {
     withSourcesJar()
 }
@@ -57,6 +57,12 @@ repositories {
     }
     maven("https://maven.teamresourceful.com/repository/maven-releases") {
         content { includeGroup("com.teamresourceful.resourcefulconfig") }
+    }
+    maven("https://maven.isxander.dev/releases") {
+        content { includeGroup("dev.isxander") }
+    }
+    maven("https://api.modrinth.com/maven") {
+        content { includeGroup("maven.modrinth") } // for some reason yacl versions exist that aren't on the official repo???
     }
 }
 
@@ -87,7 +93,7 @@ dependencies {
     )
 
     fun DependencyHandlerScope.compileOnlyCompat(notation: String?) =
-        notation?.let { compileOnly(it) { isTransitive = false } }
+        notation?.let { modCompileOnly(it) { isTransitive = false } }
 
     fun DependencyHandlerScope.compileOnlyCompat(notation: CompatDependency?) {
         when {
@@ -125,6 +131,44 @@ dependencies {
     )
 
     compileOnlyCompat(rconfig[mcVersionString])
+
+    fun yacl(
+        mcVersion: String,
+        modVersion: String,
+        mcVersionOverride: String = mcVersion,
+        withoutLoader: Boolean = false,
+        noForge: Boolean = false
+    ) = mcVersion to if (withoutLoader)
+        CompatDependency("dev.isxander:yet-another-config-lib:$modVersion")
+    else CompatDependency(
+        fabric = "dev.isxander:yet-another-config-lib:$modVersion+$mcVersionOverride-fabric",
+        forge = "dev.isxander:yet-another-config-lib:$modVersion+$mcVersionOverride-forge".takeUnless { noForge },
+        neoforge = "dev.isxander:yet-another-config-lib:$modVersion+$mcVersionOverride-neoforge"
+    )
+
+    val yacl = mapOf(
+        yacl("1.19.0", "1.7.1", withoutLoader = true),
+        yacl("1.19.1", "1.7.1", withoutLoader = true),
+        yacl("1.19.2", "1.7.1", withoutLoader = true),
+        yacl("1.19.3", "2.2.0", withoutLoader = true),
+        "1.19.4" to CompatDependency("maven.modrinth:1eAoo2KR:gJ6ZmZ4Z", "maven.modrinth:1eAoo2KR:Jf2pciI1"),
+        yacl("1.20.0", "3.6.6", "1.20.1"),
+        yacl("1.20.1", "3.6.6", "1.20.1"),
+        yacl("1.20.2", "3.2.1"),
+        yacl("1.20.3", "3.3.2"),
+        yacl("1.20.4", "3.6.6", "1.20.4", noForge = true),
+        yacl("1.20.5", "3.6.6", "1.20.6"),
+        yacl("1.20.6", "3.6.6", "1.20.6"),
+        yacl("1.21.0", "3.7.1", "1.21.1"),
+        yacl("1.21.1", "3.7.1"),
+        yacl("1.21.2", "3.7.1", "1.21.3"),
+        yacl("1.21.3", "3.7.1"),
+        yacl("1.21.4", "3.7.1"),
+        yacl("1.21.5", "3.7.1"),
+        yacl("1.21.6", "3.7.1"),
+    )
+    compileOnlyCompat(yacl[mcVersionString])
+
 
     provideIncludedDependencies(
         Triple(mcVersion.major, mcVersion.minor, mcVersion.patch),
