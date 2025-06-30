@@ -281,7 +281,7 @@ object HudManager {
                     Image("assets/oneconfig/ico/right-arrow.svg").setAlpha(0.1f),
                     size = Vec2(32f, 1048f),
                     alignment = alignC,
-                ).named("CloseArea").withStates().ignoreLayout().setPalette(
+                ).named("CloseArea").withHoverStates().ignoreLayout().setPalette(
                     Colors.Palette(
                         TRANSPARENT,
                         PolyColor.Gradient(rgba(100, 100, 100, 0.4f), TRANSPARENT),
@@ -300,7 +300,7 @@ object HudManager {
                     }
                 },
                 Group(
-                    Image("assets/oneconfig/ico/left-arrow.svg").setDestructivePalette().withStates().onClick {
+                    Image("assets/oneconfig/ico/left-arrow.svg").setDestructivePalette().withHoverStates().onClick {
                         if (parent.parent[3] !== hudsPage) {
                             parent.parent[3] = hudsPage
                         } else {
@@ -311,7 +311,7 @@ object HudManager {
                         Image("assets/oneconfig/ico/search.svg"),
                         TextInput(placeholder = "oneconfig.search.placeholder", visibleSize = Vec2(220f, 12f)),
                         size = Vec2(256f, 32f),
-                    ).withBoarder().withCursor(Cursor.Text).onClick {
+                    ).withBorder().withCursor(Cursor.Text).onClick {
                         polyUI.focus(this[1])
                     },
                     alignment = Align(main = Align.Main.SpaceBetween, pad = Vec2(12f, 6f)),

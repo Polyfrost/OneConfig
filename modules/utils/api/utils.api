@@ -53,6 +53,7 @@ public abstract interface class org/polyfrost/oneconfig/api/platform/v1/Compatib
 
 public abstract interface class org/polyfrost/oneconfig/api/platform/v1/GLPlatform {
 	public abstract fun getFunctionAddress (Ljava/lang/String;)J
+	public abstract fun updateGameRenderStateAlongsideNanoVG ()V
 }
 
 public abstract interface class org/polyfrost/oneconfig/api/platform/v1/I18nPlatform {

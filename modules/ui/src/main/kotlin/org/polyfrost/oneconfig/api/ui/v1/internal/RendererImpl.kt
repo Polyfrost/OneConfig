@@ -108,6 +108,9 @@ class RendererImpl(
     private var prevState: OmniManagedRenderState? = null
     private var prevVao = -1
 
+    private val textBounds = FloatArray(4)
+    private val lineHeight = FloatArray(1)
+
     private val queue = ArrayList<() -> Unit>()
 
     private val errorHandler: (Throwable) -> Unit = { LOGGER.error("failed to load resource!", it) }
@@ -377,21 +380,19 @@ class RendererImpl(
 
     @Suppress("NAME_SHADOWING")
     override fun textBounds(font: Font, text: String, fontSize: Float): Vec2 {
-        val text = text.let { if (it.endsWith(" ")) "$it " else it }
+        val text = text.let { if (it.endsWith(' ')) "$it " else it }
 
         vg.fontFaceId(getOrPopulateFont(font).id)
         vg.fontSize(fontSize)
 
-        val bounds = FloatArray(4)
+        val bounds = textBounds
+        textBounds.fill(0f)
         vg.textAlign(vg.constants().NVG_ALIGN_LEFT() or vg.constants().NVG_ALIGN_TOP())
         vg.textBounds(0f, 0f, text, bounds)
-
         val width = bounds[2] - bounds[0]
 
-        val ascender = FloatArray(1)
-        val descender = FloatArray(1)
-        val lineHeight = FloatArray(1)
-        vg.textMetrics(ascender, descender, lineHeight)
+        lineHeight[0] = 0f
+        vg.textMetrics(null, null, lineHeight)
 
         val height = lineHeight[0]
         return Vec2(width.coerceAtLeast(1f), height.coerceAtLeast(1f)) // Coercing to at least 1x1 for now because this is returning 0 sometimes for some reason and PolyUI crashes when an element has 0 width & height

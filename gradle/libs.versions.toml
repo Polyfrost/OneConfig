@@ -5,8 +5,8 @@
 kotlin = "2.0.20"
 kotlinx-coroutines = "1.8.1"
 kotlinx-atomicfu = "0.27.0"
-fabric-language-kotlin = "1.13.2+kotlin.2.1.20"
-polyui = "1.8.1"
+fabric-language-kotlin = "1.12.2+kotlin.2.0.20"
+polyui = "1.8.2"
 annotations = "24.1.0"
 hypixel-modapi = "1.0.1"
 hypixel-data = "0.2.0" # Dep of hypixel-modapi
@@ -21,13 +21,14 @@ copycat-image-awt = "0.1.1"
 
 # Per version
 textile = "0.18.0"
-omnicore = "0.33.1"
+omnicore = "0.34.0"
 lwjgl = "3.3.3" # All downloaded by the isolated-lwjgl3-loader
 
 # Legacy only
 mixin = "0.8.4+build.6"
 mixin-extras = "0.4.1"
 asm = "5.2"
+brigadier = "1.0.18"
 
 # Gradle
 dgt = "2.32.2"
@@ -48,6 +49,8 @@ junit-bom = { module = "org.junit:junit-bom", version.ref = "junit-bom" }
 mixin = { module = "org.polyfrost:polymixin", version.ref = "mixin" }
 mixin-extras = { module = "io.github.llamalad7:mixinextras-common", version.ref = "mixin-extras" }
 asm = { module = "org.ow2.asm:asm-debug-all", version.ref = "asm" }
+
+brigadier = { module = "com.mojang:brigadier", version.ref = "brigadier" }
 
 isolated-lwjgl3-loader = { module = "org.polyfrost:isolated-lwjgl3-loader", version.ref = "isolated-lwjgl3-loader" }
 polyio = { module = "org.polyfrost:polyio", version.ref = "polyio" }

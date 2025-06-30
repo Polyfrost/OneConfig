@@ -65,7 +65,7 @@ fun interface Visualizer {
             if (p !is PolyColor.Mutable) {
                 prop.setAsReferential(p.mutable())
             }
-            val s = Block(color = prop.getAs(), size = Vec2(58f, 32f)).withBoarder(3f, color = { page.border20 })
+            val s = Block(color = prop.getAs(), size = Vec2(58f, 32f)).withBorder(3f, color = { page.border20 })
                 .onClick { ColorPicker(prop.getAs<PolyColor.Mutable>().ref(), null, null, polyUI); true }
             prop.addCallback {
                 s.color = it as PolyColor
@@ -120,7 +120,7 @@ fun interface Visualizer {
                 alignment = Align(main = Align.Main.Center),
             ).onInit {
                 polyUI.keyBinder?.add(prop.getAs())
-            }.withStates().onClick {
+            }.withHoverStates().onClick {
                 val bind = prop.getAs<KeyBinder.Bind>()
                 val image = this[0] as Image
                 val text = this[1] as Text

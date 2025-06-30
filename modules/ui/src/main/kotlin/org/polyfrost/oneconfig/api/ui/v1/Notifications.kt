@@ -53,7 +53,7 @@ object Notifications {
 
     @JvmStatic
     fun enqueueCustom(vararg components: Component, progressFunc: Animation): Block {
-        val out = Block(children = components, at = Vec2(polyUI.size.x + PADDING, 0f)).withBoarder().withStates()
+        val out = Block(children = components, at = Vec2(polyUI.size.x + PADDING, 0f)).withBorder().withHoverStates()
         var failedToFinishNormally = false
         out.afterInit {
             val HEIGHT = (height / 12f).coerceAtMost(8f)

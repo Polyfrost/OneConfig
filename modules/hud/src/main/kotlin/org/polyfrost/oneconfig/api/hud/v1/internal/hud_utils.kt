@@ -144,7 +144,7 @@ fun Hud<*>.buildNew(): Drawable {
 }
 
 fun Hud<*>.makeAlreadyUsed(): Block {
-    return Block(Text(title(), fontSize = 16f)).withStates().onClick { HudManager.openHudEditor(this@makeAlreadyUsed) }
+    return Block(Text(title(), fontSize = 16f)).withHoverStates().onClick { HudManager.openHudEditor(this@makeAlreadyUsed) }
 }
 
 /**
@@ -186,11 +186,11 @@ fun Hud<*>.build(): Drawable {
             }
             Event.Mouse.Clicked(1) then {
                 PopupMenu(
-                    Text("oneconfig.huds.edit").withStates(consume = true).onClick {
+                    Text("oneconfig.huds.edit").withHoverStates(consume = true).onClick {
                         HudManager.openHudEditor(this@build)
                         HudManager.polyUI.unfocus()
                     },
-                    Image("assets/oneconfig/ico/close.svg").setDestructivePalette().withStates(consume = true).onClick {
+                    Image("assets/oneconfig/ico/close.svg").setDestructivePalette().withHoverStates(consume = true).onClick {
                         HudManager.polyUI.master.removeChild(this@events.self, recalculate = false)
                         HudManager.polyUI.removeExecutor(exe)
                         HudManager.polyUI.unfocus()
@@ -210,7 +210,7 @@ private fun <T : Drawable> T.addDefaultBackground(add: Boolean, color: PolyColor
     this,
     alignment = alignC,
     color = color,
-).radius(6f).withBoarder().namedId("HudBackground")
+).radius(6f).withBorder().namedId("HudBackground")
 
 private fun Drawable.addScaler(): Drawable {
     this.on(Event.Mouse.Clicked) {

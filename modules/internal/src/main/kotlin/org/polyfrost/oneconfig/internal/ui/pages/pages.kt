@@ -75,7 +75,7 @@ fun ChangelogPage(news: Collection<News>): Drawable {
                     Text(it.summary, visibleSize = Vec2(612f, 166f)),
                     Group(
                         Text(it.dateString),
-                        Text("oneconfig.readmore").withStates().onClick { _ ->
+                        Text("oneconfig.readmore").withHoverStates().onClick { _ ->
                             val page =
                                 Group(
                                     if (it.image != null) Image(it.image) else null,

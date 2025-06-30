@@ -7,6 +7,7 @@ import dev.deftu.gradle.utils.version.MinecraftReleaseVersion
 import dev.deftu.gradle.utils.version.MinecraftVersions
 import org.polyfrost.gradle.provideIncludedDependencies
 import java.text.SimpleDateFormat
+import java.lang.Boolean as JBoolean
 
 plugins {
     java
@@ -45,6 +46,9 @@ toolkitLoomHelper {
 
 java {
     withSourcesJar()
+    registerFeature("oneConfigModules") {
+        usingSourceSet(sourceSets.create("oneConfigModules"))
+    }
 }
 
 repositories {
@@ -85,6 +89,12 @@ if (mcData.isLegacyForge) { // Quick substitution for relaunch in dev env, so th
             }
         }
     }
+}
+
+val includeInLoader = Attribute.of("org.polyfrost.oneconfig.loader.include", Boolean::class.javaObjectType)
+val jijInLoader = Attribute.of("org.polyfrost.oneconfig.loader.jij", Boolean::class.javaObjectType)
+val runtimeNoApi by configurations.creating {
+    extendsFrom(configurations.runtimeClasspath.get())
 }
 
 dependencies {
@@ -219,9 +229,24 @@ dependencies {
         }
     }
 
-    implementation(project(":modules:dependencies:bundled"))
-    implementation(project(":modules:internal")) {
-        isTransitive = false
+    for (project in rootProject.project(":modules").subprojects) {
+        if ("dependencies" !in project.path) {
+            "oneConfigModulesCompileOnlyApi"(runtimeOnly(compileOnly(project(project.path)) {
+                isTransitive = false
+                attributes {
+                    attribute(includeInLoader, JBoolean.TRUE)
+                }
+            })!!)
+        }
+    }
+    if (mcData.isLegacyForge) {
+        "oneConfigModulesCompileOnlyApi"(project(":modules:dependencies:legacy")) {
+            isTransitive = false
+            attributes {
+                attribute(includeInLoader, JBoolean.TRUE)
+                attribute(jijInLoader, JBoolean.TRUE)
+            }
+        }
     }
 
     if (mcData.isLegacyForge) {
@@ -230,14 +255,10 @@ dependencies {
         }
     }
 
-    if (mcData.isLegacyForge || mcData.isLegacyFabric) {
-        handleApiDep("com.mojang:brigadier:1.0.18")
-    }
-
     api("dev.deftu:enhancedeventbus:2.0.0") // TODO
 
     if (mcData.isFabric) {
-        modImplementation("net.fabricmc:fabric-language-kotlin:${mcData.dependencies.fabric.fabricLanguageKotlinVersion}")
+            modImplementation("net.fabricmc:fabric-language-kotlin:${mcData.dependencies.fabric.fabricLanguageKotlinVersion}")
 
         if (mcData.isLegacyFabric) {
             // 1.8.9 - 1.13
@@ -299,9 +320,12 @@ fun DependencyHandlerScope.handleApiDep(dependency: Provider<MinimalExternalModu
 
 fun DependencyHandlerScope.handleApiDep(dependency: ExternalModuleDependency, isMod: Boolean = false) {
     val dep = "${dependency.group}:${dependency.name}:${dependency.version}"
-    if (isMod) modApi(dep) {
+    if (isMod) "oneConfigModulesCompileOnlyApi"(modApi(dep) {
         isTransitive = false
-    } else api(dep) {
+        attributes {
+            attribute(includeInLoader, JBoolean.TRUE)
+        }
+    }) else api(dep) {
         isTransitive = false
     }
 }

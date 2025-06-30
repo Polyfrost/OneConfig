@@ -97,7 +97,7 @@ fun HudsPage(huds: Collection<Hud<*>>): Drawable {
                     val obj = Block(
                         preview,
                         alignment = alignC,
-                    ).withBoarder(2f) { page.border10 }.minimumSize(215f by 80f).withStates().onInit {
+                    ).withBorder(2f) { page.border10 }.minimumSize(215f by 80f).withHoverStates().onInit {
                         // #created-with-set-size = true
                         layoutFlags = layoutFlags or 0b00000010
                     }
@@ -125,7 +125,7 @@ fun HudsPage(huds: Collection<Hud<*>>): Drawable {
 }
 
 private fun HudButton(text: String): Block {
-    return Button(text = text, fontSize = 14f, font = PolyUI.defaultFonts.medium, padding = Vec2(12f, 8f)).radius(6f).withBoarder()
+    return Button(text = text, fontSize = 14f, font = PolyUI.defaultFonts.medium, padding = Vec2(12f, 8f)).radius(6f).withBorder()
 }
 
 fun createInspectionsScreen(hud: Hud<*>): Drawable {
@@ -237,7 +237,7 @@ private fun interactiveAlignment(hud: Hud<*>): Drawable {
                     alignment = alignC,
                     children = arrayOf(
                         Block(
-                            Image("assets/oneconfig/hud/align/alignment1.svg".image()).withStates(true).setPalette {
+                            Image("assets/oneconfig/hud/align/alignment1.svg".image()).withHoverStates(true).setPalette {
                                 Colors.Palette(
                                     text.primary.normal,
                                     brand.fg.normal,
@@ -249,7 +249,7 @@ private fun interactiveAlignment(hud: Hud<*>): Drawable {
                             alignment = alignC,
                         ).also {
                             if (bg != null) it.radii = bg.radii
-                        }.withBoarder().draggable(withX = false, withY = false)
+                        }.withBorder().draggable(withX = false, withY = false)
                             .onDragStart {
                                 s0 = receiver.rotation
                             }.onDrag {
@@ -312,7 +312,7 @@ private fun interactiveAlignment(hud: Hud<*>): Drawable {
                             it.skewX = sx
                             it.skewY = sy
                         }
-                    }.withStates(true).setPalette {
+                    }.withHoverStates(true).setPalette {
                         Colors.Palette(
                             text.secondary.normal,
                             brand.fg.normal,
@@ -328,7 +328,7 @@ private fun interactiveAlignment(hud: Hud<*>): Drawable {
                 brand.fg.disabled,
                 text.secondary.disabled,
             )
-        }.withStates().draggable(withX = false, withY = false)
+        }.withHoverStates().draggable(withX = false, withY = false)
             .onDragStart {
                 px = polyUI.mouseX
                 py = polyUI.mouseY
@@ -347,7 +347,7 @@ private fun interactiveAlignment(hud: Hud<*>): Drawable {
             },
         size = 125f by 125f,
         alignment = alignC,
-    ).withBoarder()
+    ).withBorder()
 }
 
 fun textOptions(text: Text): Drawable {
@@ -358,7 +358,7 @@ fun textOptions(text: Text): Drawable {
             Text("oneconfig.hudeditor.text.example", fontSize = 16f),
             size = Vec2(476f, 58f),
             alignment = alignC,
-        ).withBoarder(),
+        ).withBorder(),
         Dropdown(
             "Poppins", "JetBrains Mono", "Minecraft"
         ).onChange { it: Int ->
@@ -433,12 +433,12 @@ fun colorOptions(drawable: Drawable) = arrayOf(
     subheading("oneconfig.hudeditor.color.title", "oneconfig.hudeditor.color.info"),
     Group(
         Text("oneconfig.hudeditor.color.fill", fontSize = 14f),
-        Block(size = 48f by 24f, color = drawable.color.mutable().also { drawable.color = it }).withBoarder(3f).onClick {
+        Block(size = 48f by 24f, color = drawable.color.mutable().also { drawable.color = it }).withBorder(3f).onClick {
             ColorPicker(drawable.color.mutable().ref(), null, null, polyUI)
             false
         },
         if (drawable is Block) Text("oneconfig.hudeditor.color.border", fontSize = 14f) else null,
-        if (drawable is Block) Block(size = 48f by 24f, color = drawable.borderColor?.mutable().also { drawable.borderColor = it }).withBoarder(3f).onClick {
+        if (drawable is Block) Block(size = 48f by 24f, color = drawable.borderColor?.mutable().also { drawable.borderColor = it }).withBorder(3f).onClick {
             val color = (drawable.borderColor ?: polyUI.colors.page.border20).mutable().also { drawable.borderColor = it }
             ColorPicker(color.ref(), null, null, polyUI)
             false
@@ -450,7 +450,7 @@ fun colorOptions(drawable: Drawable) = arrayOf(
 
 fun subheading(title: String, desc: String) = Group(
     Text(title).secondary(),
-    Image("assets/oneconfig/ico/info.svg".image()).withStates(showClicker = false).addHoverInfo(Text(desc)),
+    Image("assets/oneconfig/ico/info.svg".image()).withHoverStates(showClicker = false).addHoverInfo(Text(desc)),
     size = Vec2(476f, 18f),
     alignment = Align(main = Align.Main.SpaceBetween),
 )

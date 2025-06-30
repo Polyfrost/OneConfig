@@ -53,7 +53,7 @@ private fun ModCard(
             radii = modBoxTopRad,
             alignment = imageAlign,
             size = Vec2(256f, 104f),
-        ).withBoarder(1f) { page.border5 }.withStates(),
+        ).withBorder(1f) { page.border5 }.withHoverStates(),
         Block(
             Text(tree.title, fontSize = 16f).setFont { medium },
             radii = modBoxBotRad,
@@ -69,7 +69,7 @@ private fun ModCard(
         }
     }.onRightClick { _ ->
         if (source == TreeSource.CONFIG) {
-            PopupMenu(Text("Restore Defaults").setDestructivePalette().withStates().onClick { _ ->
+            PopupMenu(Text("Restore Defaults").setDestructivePalette().withHoverStates().onClick { _ ->
                 val backup = ConfigManager.backup().get(tree.id)
                 if (backup == null) {
                     Notifications.enqueue(

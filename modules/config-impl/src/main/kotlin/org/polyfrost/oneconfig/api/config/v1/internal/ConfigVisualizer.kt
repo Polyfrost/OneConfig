@@ -29,6 +29,7 @@ package org.polyfrost.oneconfig.api.config.v1.internal
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.config.v1.*
 import org.polyfrost.oneconfig.api.config.v1.dsl.ConfigDSL.Companion.config
+import org.polyfrost.oneconfig.utils.v1.MHUtils.setAccessible
 import org.polyfrost.polyui.animate.Animations
 import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.color.rgba
@@ -95,7 +96,10 @@ open class ConfigVisualizer {
                 out.add(visualized)
             } else {
                 node.getMetadata<ArrayList<String>>("aliases")?.fastEach { alias ->
-                    if (alias.matchesSearch(it)) out.add(visualized)
+                    if (alias.matchesSearch(it)) {
+                        out.add(visualized)
+                        return@onAll
+                    }
                 }
             }
         }
@@ -224,8 +228,8 @@ open class ConfigVisualizer {
             Rotate(arrow, if (!open) PI else 0.0, false, anim).add()
             val content = parent[1]
             if (contentHeight == -1f) contentHeight = content.height
-            Resize(parent, width = 0f, height = if (open) -contentHeight else contentHeight, add = true, animation = anim).add()
-            Resize(content, width = 0f, height = if (open) -contentHeight else contentHeight, add = true, animation = anim).add()
+            Resize(parent, width = 0f, height = if (!open) -contentHeight else contentHeight, add = true, animation = anim).add()
+            Resize(content, width = 0f, height = if (!open) -contentHeight else contentHeight, add = true, animation = anim).add()
             // won't ever open properly unless it renders at least once (tee hee) :)
             if (!open) {
                 content.height = 1f
@@ -303,14 +307,14 @@ open class ConfigVisualizer {
     fun Property<*>.getVisualizer(): Visualizer? {
         val vis = this.getMetadata<Class<*>>("visualizer") ?: return null
         return visCache.getOrPut(vis) {
-            val it = vis.getDeclaredConstructor().newInstance() ?: throw IllegalStateException("Visualizer $vis could not be instantiated; ensure it has a public no-args constructor")
+            val it = vis.getDeclaredConstructor().setAccessible().newInstance() ?: throw IllegalStateException("Visualizer $vis could not be instantiated; ensure it has a public no-args constructor")
             it as? Visualizer ?: throw IllegalArgumentException("Visualizer $vis does not implement Visualizer")
         }
     }
 
     private fun Drawable.addResetMenu(root: Tree, prop: Property<*>) = this.events {
         Event.Mouse.Clicked(1) then {
-            PopupMenu(Text("Restore Default").setDestructivePalette().withStates().onClick {
+            PopupMenu(Text("Restore Default").setDestructivePalette().withHoverStates().onClick {
                 val backup = ConfigManager.backup().get(root.id)
                 if (backup == null) {
                     LOGGER.error("Failed to locate backup source for ${root.id}, the config needs to be deleted manually to create a backup source")

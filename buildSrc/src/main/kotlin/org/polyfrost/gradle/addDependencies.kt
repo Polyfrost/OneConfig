@@ -70,6 +70,9 @@ fun Project.provideIncludedDependencies(version: Triple<Int, Int, Int>?, loader:
         || (version != null && version.first == 1 && version.second <= 12 && loader == "forge")) {
         deps.add(libs.findLibrary("mixin").get().get()) // PolyMixin
     }
+    if (version != null && version.second <= 12) {
+        deps.add(libs.findLibrary("brigadier").get().get())
+    }
     if (version == null && loader != null) {
         deps.add(libs.findLibrary("asm").get().get())
     }

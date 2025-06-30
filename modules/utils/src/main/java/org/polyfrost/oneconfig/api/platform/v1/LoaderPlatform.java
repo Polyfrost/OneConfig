@@ -29,10 +29,8 @@ package org.polyfrost.oneconfig.api.platform.v1;
 import dev.deftu.omnicore.OmniCore;
 import dev.deftu.omnicore.common.OmniLoader;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
-import java.util.List;
 
 public interface LoaderPlatform {
 
@@ -43,22 +41,7 @@ public interface LoaderPlatform {
      * for example, if the loader is Forge and the minecraft version is 1.16.5, this will return "1.16.5-forge".
      */
     default String getLoaderString() {
-        char[] ver = OmniCore.getMinecraftVersion().toCharArray();
-        StringBuilder sb = new StringBuilder();
-        sb.append(ver[0]).append('.');
-        if(ver[1] == '0') {
-            sb.append(ver[2]);
-        } else {
-            sb.append(ver[1]).append(ver[2]);
-        }
-        sb.append('.');
-        if(ver[3] == '0') {
-            sb.append(ver[4]);
-        } else {
-            sb.append(ver[3]).append(ver[4]);
-        }
-        sb.append('-').append(OmniLoader.getLoaderType().name().toLowerCase());
-        return sb.toString();
+        return OmniCore.getMinecraftVersion() + '-' + OmniLoader.getLoaderType().name().toLowerCase();
     }
 
 }

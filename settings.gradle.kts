@@ -69,7 +69,6 @@ listOf(
     "dependencies",
     "dependencies:agnostic",
     "dependencies:legacy",
-    "dependencies:bundled",
     "utils"
 ).forEach { module ->
     include(":modules:$module")

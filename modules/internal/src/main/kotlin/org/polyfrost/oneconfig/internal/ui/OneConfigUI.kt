@@ -128,7 +128,7 @@ object OneConfigUI {
                 Block(
                     Block(
                         size = Vec2(225f, 32f),
-                    ).withBoarder(1f) { page.border5 }.ignoreLayout().afterParentInit(Int.MAX_VALUE) {
+                    ).withBorder(1f) { page.border5 }.ignoreLayout().afterParentInit(Int.MAX_VALUE) {
                         // move to mod button
                         this.at = parent[3].at
                     },
@@ -163,7 +163,7 @@ object OneConfigUI {
                     size = Vec2(273f, 700f),
                     alignment = Align(mode = Align.Mode.Vertical, pad = Vec2(6f, 8f)),
                     radii = floatArrayOf(16f, 0f, 16f, 0f)
-                ).setPalette { page.bg }.onInit { Recolor(this, palette.hovered).add() }.withBoarder { page.border5 }.named("Sidebar"),
+                ).setPalette { page.bg }.onInit { Recolor(this, palette.hovered).add() }.withBorder { page.border5 }.named("Sidebar"),
                 Group(
                     Group(
                         Group(
@@ -179,7 +179,7 @@ object OneConfigUI {
                             Group(
                                 Group(
                                     Image("assets/oneconfig/ico/bell.svg".image()),
-                                    Image(playerHead, size = Vec2(24f, 24f)).radius(6f).named("ProfileImage").withBoarder(
+                                    Image(playerHead, size = Vec2(24f, 24f)).radius(6f).named("ProfileImage").withBorder(
                                         rgba(255, 255, 255, 0.14f),
                                         width = 1f,
                                     ).addHoverInfo(Text(OmniClientPlayer.name.ifEmpty { "Steve" })),
@@ -205,13 +205,13 @@ object OneConfigUI {
                                     }.also { searchField = it },
                                     size = Vec2(256f, 32f),
                                     alignment = Align(pad = Vec2(10f, 8f)),
-                                ).withBoarder(1f) { page.border5 }.named("SearchField"),
+                                ).withBorder(1f) { page.border5 }.named("SearchField"),
                                 alignment = Align(pad = Vec2(16f, 4f))
                             ),
                             Image(
                                 "assets/oneconfig/ico/close.svg".image(),
                             ).named("Close").onClick {
-                            }.withStates().setDestructivePalette(),
+                            }.withHoverStates().setDestructivePalette(),
                             alignment = Align(pad = Vec2(24f, 4f)),
                         ),
                         size = Vec2(1130f, 64f),
@@ -235,6 +235,12 @@ object OneConfigUI {
             if (ui[1][1] != initialScreen) {
                 openPage(initialScreen, "oneconfig.mods")
             }
+        }
+    }
+
+    fun toggleDebug() {
+        if (::ui.isInitialized) {
+            ui.polyUI.settings.debug = !ui.polyUI.settings.debug
         }
     }
 

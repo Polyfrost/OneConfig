@@ -167,6 +167,13 @@ public class OneConfig
             return 1;
         });
 
+        b.then(literal("debug").executes(ctx -> {
+            OneConfigUI.INSTANCE.open();
+            OneConfigUI.INSTANCE.toggleDebug();
+            ctx.getSource().displayMessage("OK");
+            return 1;
+        }));
+
         b.then(literal("locraw").executes(ctx -> {
             ctx.getSource().displayMessage(HypixelUtils.getLocation().toString());
             return 1;

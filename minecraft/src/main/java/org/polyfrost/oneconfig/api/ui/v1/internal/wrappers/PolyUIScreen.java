@@ -175,9 +175,9 @@ public class PolyUIScreen extends OmniScreen implements BlurScreen {
 
     @Override
     @MustBeInvokedByOverriders
-    public boolean handleKeyRelease(int keyCode, int scancode, char typedChar, OmniKeyboard.KeyboardModifiers modifiers) {
+    public boolean handleKeyRelease(int keyCode, int scancode, OmniKeyboard.KeyboardModifiers modifiers) {
         try {
-            translateKey(polyUI.getInputManager(), keyCode, typedChar, false);
+            translateKey(polyUI.getInputManager(), keyCode, '\u0000', false);
         } catch (Exception e) {
             death(e);
         }
@@ -251,8 +251,9 @@ public class PolyUIScreen extends OmniScreen implements BlurScreen {
     @MustBeInvokedByOverriders
     public void mouseMoved(double mouseX, double mouseY) {
         Drawable master = polyUI.getMaster();
-        float ox = (float) Platform.screen().windowWidth() / 2f - master.getWidth() / 2f;
-        float oy = (float) Platform.screen().windowHeight() / 2f - master.getHeight() / 2f;
+        float scalingFactor = 1f / (float) OmniResolution.getScaleFactor();
+        float ox = ((float) Platform.screen().windowWidth() / 2f - master.getWidth() / 2f) * scalingFactor;
+        float oy = ((float) Platform.screen().windowHeight() / 2f - master.getHeight() / 2f) * scalingFactor;
 
         float mx, my;
         //#if MC >= 1.13
