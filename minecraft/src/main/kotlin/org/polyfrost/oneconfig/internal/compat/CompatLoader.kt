@@ -1,25 +1,67 @@
 package org.polyfrost.oneconfig.internal.compat
 
-import org.polyfrost.oneconfig.api.config.v1.Tree
+import dev.deftu.omnicore.common.OmniLoader
+import kotlinx.coroutines.NonCancellable.key
 import org.polyfrost.oneconfig.api.event.v1.EventManager
 import org.polyfrost.oneconfig.api.event.v1.events.Event
 import org.polyfrost.oneconfig.api.event.v1.events.ResourceFinishedLoading
 import org.polyfrost.oneconfig.internal.ui.OneConfigUI
+import java.net.URI
 
 object CompatLoader {
 
     private var bypassDelay = false
 
-    val extraCompatConfigs get() = OneConfigUI.extraConfigTrees
+    private val pathFactory: MutableMap<String, (String) -> String> = mutableMapOf()
 
-    private val list: MutableList<Pair<Int, () -> Unit>> = mutableListOf()
-    init {
-        register<ResourceFinishedLoading> {
-            list.sortedBy { (key) -> key }.forEach { (_, value) -> value() }
+    val nativeLoadedConfigs = mutableListOf<String>()
+
+    // list of packages that contain known configs/ignored paths
+    private val illegalPaths = listOf(
+        "com.terraformersmc.modmenu",
+        "com.teamresourceful.resourcefulconfig",
+        "com.teamresourceful.resourcefulconfigkt",
+        "dev.isxander.yacl3",
+        "org.polyfrost.oneconfig",
+        "java.lang",
+        "net.fabric",
+    )
+
+    fun markFirstModAsSkip() {
+        Thread.currentThread().stackTrace.firstOrNull {
+            illegalPaths.none { path -> it.className.startsWith(path) }
+        }?.let { element ->
+            pathFactory.entries.forEach { (key, uri) ->
+                val uri = uri(element.className.replace(".", "/") + ".class")
+                runCatching {
+                    URI.create(uri).toURL().openStream().use {} // throws if not able to open connection
+                    nativeLoadedConfigs.add(key)
+                }
+            }
         }
     }
 
-    fun requireTranslations(priority: Int = 0, init: () -> Unit) {
+    val extraCompatConfigs get() = OneConfigUI.extraConfigTrees
+
+    private val list: MutableList<Pair<Int, () -> Unit>> = mutableListOf()
+
+    init {
+        OmniLoader.loadedMods.forEach { mod ->
+            mod.file?.let {
+                pathFactory.put(mod.id, it.toUri().toString()::plus)
+            }
+        }
+
+        register<ResourceFinishedLoading> {
+            list.sortedBy { (key) -> key }.forEach { (_, value) ->
+                println(key)
+                value()
+            }
+        }
+    }
+
+    fun requireTranslations(priority: Int = 0, skip: Boolean = false, init: () -> Unit) {
+        if (!skip) markFirstModAsSkip()
         if (bypassDelay) {
             init()
             return
