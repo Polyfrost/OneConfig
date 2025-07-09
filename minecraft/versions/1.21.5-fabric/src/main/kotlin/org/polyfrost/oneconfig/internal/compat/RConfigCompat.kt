@@ -11,6 +11,7 @@ import com.teamresourceful.resourcefulconfig.api.types.options.EntryType
 import com.teamresourceful.resourcefulconfig.api.types.options.Option
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Properties
+import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.Visualizer
 import org.polyfrost.oneconfig.utils.v1.dsl.*
@@ -61,6 +62,7 @@ internal object RConfigCompat {
         property.description = button.description()
         property.visualizerKt = Visualizer.ButtonVisualizer::class
         property.metadata?.put("runnable", Runnable { button.invoke() })
+        property.addDisplayCondition { if (button.isHidden) Property.Display.HIDDEN else Property.Display.SHOWN }
         tree.put(property)
     }
 
@@ -75,6 +77,7 @@ internal object RConfigCompat {
     }
 
     private fun parseCategory(element: ResourcefulConfigObjectEntryElement, tree: Tree) {
+        if (element.isHidden) return
         val entry = element.entry()
         val objectEntry = Tree.tree()
         objectEntry.title = entry.options().title.toLocalizedString()
@@ -138,7 +141,9 @@ internal object RConfigCompat {
         } ?: return
 
         builder["visualizer"] = visualizer.java
-        tree.put(builder.build())
+        val build = builder.build()
+        build.addDisplayCondition { if (element.isHidden) Property.Display.HIDDEN else Property.Display.SHOWN }
+        tree.put(build)
     }
 
     private class RConfigPropertyBuilder internal constructor(option: ResourcefulConfigValueEntry) {
