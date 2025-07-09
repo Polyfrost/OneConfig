@@ -80,7 +80,7 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         //#endif
 
         //#if MC>1.16.5
-        //$$mixins.add("compat.modmenu.ModMenuMixin");
+        //$$mixins.add("compat.modmenu.Mixin_ModMenu");
         //#endif
 
         //#if FORGE

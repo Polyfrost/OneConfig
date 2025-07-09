@@ -12,7 +12,7 @@ object CompatLoader {
 
     private var bypassDelay = false
 
-    private val pathFactory: MutableMap<String, (String) -> String> = mutableMapOf()
+    private val pathFactory: MutableMap<OmniLoader.ModInfo, (String) -> String> = mutableMapOf()
 
     val nativeLoadedConfigs = mutableListOf<String>()
 
@@ -27,18 +27,23 @@ object CompatLoader {
         "net.fabric",
     )
 
-    fun markFirstModAsSkip() {
+    fun findFirstMod(): OmniLoader.ModInfo? {
         Thread.currentThread().stackTrace.firstOrNull {
             illegalPaths.none { path -> it.className.startsWith(path) }
         }?.let { element ->
             pathFactory.entries.forEach { (key, uri) ->
                 val uri = uri(element.className.replace(".", "/") + ".class")
                 runCatching {
-                    URI.create(uri).toURL().openStream().use {} // throws if not able to open connection
-                    nativeLoadedConfigs.add(key)
+                    URI.create(uri).toURL().openStream().use {} // throws if unable to open connection
+                    return key
                 }
             }
         }
+        return null
+    }
+
+    fun markFirstModAsSkip() {
+        findFirstMod()?.let { nativeLoadedConfigs.add(it.id)}
     }
 
     val extraCompatConfigs get() = OneConfigUI.extraConfigTrees
@@ -48,7 +53,7 @@ object CompatLoader {
     init {
         OmniLoader.loadedMods.forEach { mod ->
             mod.file?.let {
-                pathFactory.put(mod.id, it.toUri().toString()::plus)
+                pathFactory.put(mod, it.toUri().toString()::plus)
             }
         }
 
