@@ -29,8 +29,8 @@ package org.polyfrost.oneconfig.test;
 import dev.deftu.omnicore.client.OmniChat;
 import kotlin.Unit;
 import org.polyfrost.oneconfig.api.config.v1.Config;
-import org.polyfrost.oneconfig.api.config.v1.annotations.Number;
 import org.polyfrost.oneconfig.api.config.v1.annotations.*;
+import org.polyfrost.oneconfig.api.config.v1.annotations.Number;
 import org.polyfrost.oneconfig.api.ui.v1.Notifications;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OCKeybindHelper;
 import org.polyfrost.polyui.color.ColorUtils;
@@ -91,6 +91,9 @@ public class TestConfig_Test extends Config {
     public boolean added = false;
     @Color(title = "color", category = "bob")
     PolyColor color = ColorUtils.rgba(255, 0, 100, 1f);
+
+    @Slider(title = "we slide", description = "so real", min = 10f, max = 70f)
+    public float slide = 40f;
 
     @Keybind(title = "keybind")
     private KeyBinder.Bind bind = ((OCKeybindHelper) OCKeybindHelper.builder().mods(KeyModifiers.CONTROL).chars('g').does((a) -> {

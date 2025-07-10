@@ -30,6 +30,7 @@ import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.polyui.input.KeyBinder
 import org.polyfrost.polyui.input.Keys
 import org.polyfrost.polyui.input.Modifiers
+import org.polyfrost.polyui.utils.IntArraySet
 
 class BindNotInScreen(
     unmappedKeys: IntArray? = null, keys: Array<Keys>? = null,
@@ -38,7 +39,7 @@ class BindNotInScreen(
     durationNanos: Long = 0L,
     action: (Boolean) -> Boolean
 ) : KeyBinder.Bind(unmappedKeys, keys, mouse, mods, durationNanos, action) {
-    override fun test(c: ArrayList<Int>, k: ArrayList<Keys>, m: ArrayList<Int>, mods: Byte, deltaTimeNanos: Long, down: Boolean): Boolean {
+    override fun test(c: IntArraySet, k: ArrayList<Keys>, m: IntArraySet, mods: Byte, deltaTimeNanos: Long, down: Boolean): Boolean {
         return super.test(c, k, m, mods, deltaTimeNanos, down) && Platform.screen().current<Any?>() == null
     }
 }

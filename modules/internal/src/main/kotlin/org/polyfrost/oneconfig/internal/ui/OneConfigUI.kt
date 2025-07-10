@@ -70,7 +70,6 @@ object OneConfigUI {
         type = PolyImage.Type.Raster,
     )
     private val searchNoneFound = Text("oneconfig.search.nonefound", fontSize = 16f)
-    private val search = Group(searchNoneFound, visibleSize = Vec2(1130f, 635f))
 
     private lateinit var ui: Drawable
     private var window: Any? = null
@@ -112,7 +111,6 @@ object OneConfigUI {
             val builder = OCPolyUIBuilder.create()
                 .blurs()
                 .atResolution(1920f, 1080f)
-                .allowsDebug(false)
                 .backgroundColor {
                     colors.page.fg.normal
                 }.size(1400f, 700f) as OCPolyUIBuilder
@@ -147,7 +145,9 @@ object OneConfigUI {
                     SidebarButton("assets/oneconfig/ico/paintbrush.svg".image(), "oneconfig.themes", label("oneconfig.soon")).onClick {
                         openPage(ThemesPage(), "oneconfig.themes")
                     }.disable(),
-                    SidebarButton("assets/oneconfig/ico/cog.svg".image(), "oneconfig.preferences"),
+                    SidebarButton("assets/oneconfig/ico/cog.svg".image(), "oneconfig.preferences").onClick {
+                        openPage(ConfigVisualizer.INSTANCE.get(ConfigManager.active().get("oneconfig.json")), "oneconfig.preferences")
+                    },
                     Text("oneconfig.sidebar.title.extra", fontSize = 11f).setPalette { text.secondary }.padded(0f, 12f, 0f, 0f),
                     SidebarButton("assets/oneconfig/ico/refresh.svg".image(), "oneconfig.changelog"),
                     SidebarButton(
@@ -192,12 +192,12 @@ object OneConfigUI {
                                         visibleSize = Vec2(210f, 12f),
                                     ).onChange { text: String ->
                                         if (text.length > 2) {
-                                            search.children?.clear()
-                                            search.children?.addAll(ConfigVisualizer.INSTANCE.getMatching(text))
+                                            val scale = Vec2(polyUI.size.x / polyUI.iSize.x, polyUI.size.y / polyUI.iSize.y)
+                                            val search = Group(children = ConfigVisualizer.INSTANCE.getMatching(text).toTypedArray(), visibleSize = Vec2(1130f, 635f) * scale)
                                             if (search.children?.size == 0) search.children?.add(searchNoneFound)
-                                            if (ui[1][1] !== search) openPage(search, "oneconfig.search")
-                                            search.recalculate()
-                                        } else if (ui[1][1] === search) {
+                                            search.setup(polyUI)
+                                            openPage(search, "oneconfig.search")
+                                        } else {
                                             openPage(ModsPage(collectTrees()), "oneconfig.mods")
                                         }
 

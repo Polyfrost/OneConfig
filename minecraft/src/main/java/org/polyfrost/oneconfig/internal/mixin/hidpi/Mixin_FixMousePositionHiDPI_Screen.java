@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(GuiScreen.class)
-public class Mixin_FixDisplaySizeHiDPI_Screen {
+public abstract class Mixin_FixMousePositionHiDPI_Screen {
 
     @Redirect(method = "handleMouseInput", at = @At(value = "FIELD", target = "Lnet/minecraft/client/Minecraft;displayWidth:I", ordinal = 0))
     private int hiDpiFixMouseX(Minecraft mc) {

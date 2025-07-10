@@ -88,10 +88,6 @@ public class GLPlatformImpl implements GLPlatform {
         // Color mask
         new OmniManagedColorMask(true, true, true, true).activate();
 
-        // Active texture
-        OmniTextureManager.setActiveTexture(GL_TEXTURE0);
-        OmniTextureManager.bindTexture(0);
-
         //#if MC >= 1.17.1 && MC < 1.21.5
         //$$ net.minecraft.client.render.BufferRenderer.unbindAll();
         //#endif

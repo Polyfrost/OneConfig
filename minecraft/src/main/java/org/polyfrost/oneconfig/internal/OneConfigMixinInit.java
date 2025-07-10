@@ -40,11 +40,8 @@ import org.polyfrost.oneconfig.internal.generated.RelocatedMixins;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 
 public class OneConfigMixinInit implements IMixinConfigPlugin {
@@ -112,22 +109,10 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         //#endif
         //#else
         mixins.add("events.Mixin_KeyInputEvent_Screen");
-        boolean supportsHiDPI = !Objects.equals(System.getProperty("os.arch"), "aarch64");
-        if (!supportsHiDPI) {
-            try {
-                Class<?> clazz = Class.forName("org.lwjgl.Sys", false, OneConfigMixinInit.class.getClassLoader());
-                clazz.getDeclaredField("HAS_HIDPI_FIX");
-                supportsHiDPI = true;
-            } catch (ClassNotFoundException | NoSuchFieldException ignored) {
-
-            }
-        }
-        if (supportsHiDPI) {
-            mixins.add("hidpi.Mixin_EnableHiDPI");
-            mixins.add("hidpi.Mixin_FixDisplaySizeHiDPI");
-            mixins.add("hidpi.Mixin_FixDisplaySizeHiDPI_Screen");
-            mixins.add("hidpi.Mixin_FixMousePositionHiDPI");
-        }
+        mixins.add("hidpi.Mixin_EnableHiDPI");
+        mixins.add("hidpi.Mixin_FixDisplaySizeHiDPI");
+        mixins.add("hidpi.Mixin_FixMousePositionHiDPI_Screen");
+        mixins.add("hidpi.Mixin_FixMousePositionHiDPI");
         //#if MC <= 1.8.9
         mixins.add("Mixin_SoundHandlerAccessor");
         //#endif

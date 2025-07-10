@@ -77,7 +77,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/LegacyHud : org/polyfro
 	protected final fun createLegacy ()Lorg/polyfrost/polyui/component/Drawable;
 	public abstract fun getHeight ()F
 	public abstract fun getWidth ()F
-	public abstract fun render (Ldev/deftu/omnicore/client/render/OmniMatrixStack;FFFF)V
+	public abstract fun render (Ldev/deftu/omnicore/client/render/OmniMatrixStack;FFFFZ)V
 	public abstract fun setHeight (F)V
 	public abstract fun setWidth (F)V
 }

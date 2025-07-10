@@ -42,11 +42,14 @@ import org.polyfrost.oneconfig.api.config.v1.annotations.Text as TextAnnotation
  * @see TextHud.DateTime
  */
 abstract class TextHud(
+    id: String,
+    title: String,
+    category: Category,
     @TextAnnotation(title = "Text Prefix")
     var prefix: String,
     @TextAnnotation(title = "Text Suffix")
     var suffix: String = ""
-) : Hud<Text>() {
+) : Hud<Text>(id, title, category) {
     /**
      * [StringBuilder] instance that is used for constructing the HUD text.
      *
@@ -100,12 +103,7 @@ abstract class TextHud(
      * **This is an example implementation bundled with OneConfig. You should not use it yourself in code.**
      */
     @ApiStatus.Internal
-    class Simple(prefix: String, @TextAnnotation(title = "Text") var it: String, suffix: String) : TextHud(prefix, suffix) {
-        override fun id() = "text_hud.yml"
-
-        override fun title() = "Text Hud"
-
-        override fun category() = Category.INFO
+    class Simple(prefix: String, @TextAnnotation(title = "Text") var it: String, suffix: String) : TextHud("text_hud.yml", "Text Hud", Category.INFO, prefix, suffix) {
 
         override fun getText() = it
 
@@ -126,12 +124,7 @@ abstract class TextHud(
         header: String,
         @TextAnnotation(title = "Time template") var template: String,
         suffix: String = ""
-    ) : TextHud(header, suffix) {
-        override fun id() = "date_time_hud.yml"
-
-        override fun title() = "Date/Time Hud"
-
-        override fun category() = Category.INFO
+    ) : TextHud("date_time_hud.yml", "Date/Time Hud", Category.INFO, header, suffix) {
 
         override fun updateFrequency(): Long {
             return if ('S' in template) 100.milliseconds

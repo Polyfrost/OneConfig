@@ -59,7 +59,7 @@ public abstract class EventHandler<E extends Event> implements Comparable<EventH
      * @return the event handler
      */
     @kotlin.OverloadResolutionByLambdaReturnType
-    public static <E extends Event> EventHandler<E> ofRemoving(Class<E> cls, Predicate<E> handler) {
+    public static <E extends Event> EventHandler<E> ofRemoving(Class<E> cls, Predicate<? super E> handler) {
         return new EventHandler<E>() {
             @Override
             public boolean handle(E event) {
@@ -82,7 +82,7 @@ public abstract class EventHandler<E extends Event> implements Comparable<EventH
      * @return the event handler
      */
     @kotlin.OverloadResolutionByLambdaReturnType
-    public static <E extends Event> EventHandler<E> of(Class<E> cls, Consumer<E> handler) {
+    public static <E extends Event> EventHandler<E> of(Class<E> cls, Consumer<? super E> handler) {
         return new EventHandler<E>() {
             @Override
             public boolean handle(E event) {
@@ -138,6 +138,11 @@ public abstract class EventHandler<E extends Event> implements Comparable<EventH
      */
     public final EventHandler<E> register() {
         EventManager.INSTANCE.register(this);
+        return this;
+    }
+
+    public final EventHandler<E> unregister() {
+        EventManager.INSTANCE.unregister(this);
         return this;
     }
 

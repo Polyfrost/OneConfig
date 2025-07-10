@@ -27,6 +27,7 @@
 package org.polyfrost.oneconfig.api.ui.v1.keybind
 
 import dev.deftu.omnicore.client.OmniKeyboard
+import dev.deftu.omnicore.common.OmniLoader
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.event.v1.eventHandler
 import org.polyfrost.oneconfig.api.event.v1.events.KeyInputEvent
@@ -127,38 +128,42 @@ object KeybindManager {
     fun builder() = OCKeybindHelper()
 
     @JvmStatic
-    fun translateKey(inputManager: InputManager, key: Int, char: Char, state: Boolean) {
+    fun translateKey(inputManager: InputManager, key: Int, char: Char, down: Boolean) {
         // fix for modified characters not being sent in glfwCharCallback as glfwSetCharModsCallback is deprecated
         // for more info (see PolyUI/nanovg-impl/GLFWWindow)
-        val character = if (!char.isValid() && key < 255 && inputManager.mods > 1.toByte() && state) (key + 32).toChar() else char
+        if (!char.isValid() && key < 255 && inputManager.mods > 1.toByte() && down && OmniLoader.paddedMinecraftVersion > 11300) {
+            inputManager.keyTyped((key + 32).toChar())
+        }
         try {
-            if (character.isValid()) {
-                if (state) {
-                    inputManager.keyTyped(character)
-                    inputManager.keyDown(character.lowercaseChar().code)
-                } else inputManager.keyUp(character.lowercaseChar().code)
-                return
-            }
-
             val k = keysMap[key]
             if (k != null) {
-                if (state) inputManager.keyDown(k)
+                if (down) inputManager.keyDown(k)
                 else inputManager.keyUp(k)
                 return
             }
 
             val m = modsMap[key].toByte()
             if (m != 0.toByte()) {
-                if (state) inputManager.addModifier(m)
+                if (down) inputManager.addModifier(m)
                 else inputManager.removeModifier(m)
                 return
             }
 
-            val raw = if (inputManager.mods > 1) key + 48 else key
-            if (state) inputManager.keyDown(raw)
-            else inputManager.keyUp(raw)
+            if (char.isValid()) {
+                if (down) {
+                    if (key == 0) {
+                        inputManager.keyTyped(char)
+                        return
+                    }
+                    inputManager.keyDown(char.code)
+                }
+                else inputManager.keyUp(char.code)
+            } else {
+                if (down) inputManager.keyDown(key)
+                else inputManager.keyUp(key)
+            }
         } catch (t: Throwable) {
-            LOGGER.error("Failed to process input key=$key, char=$character, state=$state", t)
+            LOGGER.error("Failed to process input key=$key, char=$char, down=$down", t)
         }
     }
 

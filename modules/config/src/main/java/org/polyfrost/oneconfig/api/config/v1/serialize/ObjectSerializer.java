@@ -343,7 +343,8 @@ public class ObjectSerializer {
                     f.set(o, out);
                 }
             } catch (Throwable e) {
-                throw new SerializationException("Failed to deserialize " + cls.getName() + ": no detail message (potential field access issue?)", e);
+                String detail = e.getMessage() != null ? e.getMessage() : "no detail message (potential field access issue?)";
+                throw new SerializationException("Failed to deserialize " + cls.getName() + ": " + detail, e);
             }
         });
         return o;

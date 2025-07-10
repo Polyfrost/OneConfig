@@ -65,7 +65,19 @@ open class ConfigVisualizer {
      */
     fun get(config: Tree): Drawable {
         if (config.getOrPutMetadata("no_cache") { false }) return create(config)
-        return configs.getOrPut(config) { create(config) }
+        val it = configs[config]
+        if (it != null) {
+            // asm: might've been searched, so we need to reposition our option lists
+            val listToReposition = it.children?.last()
+            listToReposition?.children?.fastEach {
+                it.position()
+            }
+            return it
+        } else {
+            val configPage = create(config)
+            configs[config] = configPage
+            return configPage
+        }
     }
 
     /**
@@ -123,7 +135,7 @@ open class ConfigVisualizer {
      */
     protected open fun create(
         config: Tree,
-        initialPage: String = "General",
+        initialCategory: String = "General",
     ): Drawable {
         val now = System.nanoTime()
         val options = LinkedHashMap<String, HashMap<String, ArrayList<Drawable>>>(4)
@@ -133,16 +145,30 @@ open class ConfigVisualizer {
         //   -> subcategories
         //      -> list of options
         for ((_, node) in config.map) {
+            // first ignore empty tree nodes
+            if(node is Tree) {
+                if (node.map.isEmpty()) {
+                    LOGGER.warn("sub-tree ${node.id} is empty; ignoring")
+                    continue
+                }
+            } else {
+                node as Property<*>
+                if (node.getMetadata<Any?>("visualizer") == null) {
+                    // LOGGER.warn("Property ${node.id} does not have a visualizer; ignoring")
+                    continue
+                }
+            }
+
             processNode(config, node, options)
         }
         LOGGER.info("creating config page ${config.title} took ${(System.nanoTime() - now) / 1_000_000f}ms")
-        return makeFinal(flattenSubcategories(options), initialPage)
+        return makeFinal(flattenSubcategories(options), initialCategory).addRethemingListeners()
     }
 
-    protected open fun makeFinal(categories: Map<String, Drawable>, initialPage: String): Drawable {
+    protected open fun makeFinal(categories: Map<String, Drawable>, initialCategory: String): Drawable {
         return Group(
             createHeaders(categories),
-            categories[initialPage] ?: categories.values.first(),
+            categories[initialCategory] ?: categories.values.first(),
             alignment = Align(cross = Align.Cross.Start, maxRowSize = 1),
             visibleSize = Vec2(1130f, 635f),
         )
@@ -182,10 +208,6 @@ open class ConfigVisualizer {
             list.add(wrap(vis.visualize(node), node.title, node.description, icon).addHideHandler(node).addResetMenu(root, node).linkTo(node))
         } else {
             node as Tree
-            if (node.map.isEmpty()) {
-                LOGGER.warn("sub-tree ${node.id} is empty; ignoring")
-                return
-            }
             list.add(makeAccordion(root, node, node.title, node.description, icon).linkTo(node))
         }
     }
@@ -228,8 +250,8 @@ open class ConfigVisualizer {
             Rotate(arrow, if (!open) PI else 0.0, false, anim).add()
             val content = parent[1]
             if (contentHeight == -1f) contentHeight = content.height
-            Resize(parent, width = 0f, height = if (!open) -contentHeight else contentHeight, add = true, animation = anim).add()
-            Resize(content, width = 0f, height = if (!open) -contentHeight else contentHeight, add = true, animation = anim).add()
+            Resize(parent, width = 0f, height = if (open) -contentHeight else contentHeight, add = true, animation = anim).add()
+            Resize(content, width = 0f, height = if (open) -contentHeight else contentHeight, add = true, animation = anim).add()
             // won't ever open properly unless it renders at least once (tee hee) :)
             if (!open) {
                 content.height = 1f
@@ -246,7 +268,7 @@ open class ConfigVisualizer {
                     state = open
                 ).onToggle {
                     enabled?.setAs(it)
-                    if (open != !it) (parent.parent as Drawable).openInsn(null)
+                    if (open != it) (parent.parent as Drawable).openInsn(null)
                 },
                 Image("polyui/chevron-down.svg").also { it.rotation = PI }
             )
@@ -343,15 +365,11 @@ open class ConfigVisualizer {
                 if (!initialized) {
                     this.afterParentInit(Int.MAX_VALUE) {
                         layoutIgnored = true
-                        x = 1000000f
-                        y = 1000000f
                         parent.position()
                         renders = false
                     }
                 } else {
                     layoutIgnored = true
-                    x = 1000000f
-                    y = 1000000f
                     parent.position()
                     renders = false
                 }

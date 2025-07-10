@@ -159,7 +159,7 @@ public abstract class Property<T> extends Node implements Serializable {
      * @param callback the callback to add. The new value is passed to the callback. Return true if you wish to cancel the setting of the property.
      */
     @kotlin.OverloadResolutionByLambdaReturnType
-    public final Property<T> addCallback(@NotNull Predicate<@Nullable T> callback) {
+    public final Property<T> addCallback(@NotNull Predicate<T> callback) {
         if (callbacks == null) callbacks = new ArrayList<>(2);
         callbacks.add(callback);
         return this;
@@ -167,12 +167,12 @@ public abstract class Property<T> extends Node implements Serializable {
 
     @SafeVarargs
     @kotlin.OverloadResolutionByLambdaReturnType
-    public final Property<T> addCallback(@NotNull Predicate<@Nullable T>... callbacks) {
+    public final Property<T> addCallback(@NotNull Predicate<T>... callbacks) {
         return addCallback(Arrays.asList(callbacks));
     }
 
     @kotlin.OverloadResolutionByLambdaReturnType
-    public final Property<T> addCallback(@NotNull Collection<Predicate<@Nullable T>> callbacks) {
+    public final Property<T> addCallback(@NotNull Collection<Predicate<T>> callbacks) {
         if (this.callbacks == null) this.callbacks = new ArrayList<>(callbacks);
         else this.callbacks.addAll(callbacks);
         return this;

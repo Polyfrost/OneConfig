@@ -6,6 +6,7 @@ import dev.deftu.gradle.utils.propertyBoolOr
 import dev.deftu.gradle.utils.version.MinecraftReleaseVersion
 import dev.deftu.gradle.utils.version.MinecraftVersions
 import org.polyfrost.gradle.provideIncludedDependencies
+import org.polyfrost.gradle.provideFabricApiDependency
 import java.text.SimpleDateFormat
 import java.lang.Boolean as JBoolean
 
@@ -100,9 +101,6 @@ if (mcData.isLegacyForge) { // Quick substitution for relaunch in dev env, so th
 
 val includeInLoader = Attribute.of("org.polyfrost.oneconfig.loader.include", Boolean::class.javaObjectType)
 val jijInLoader = Attribute.of("org.polyfrost.oneconfig.loader.jij", Boolean::class.javaObjectType)
-val runtimeNoApi by configurations.creating {
-    extendsFrom(configurations.runtimeClasspath.get())
-}
 
 dependencies {
     data class CompatDependency(
@@ -124,6 +122,8 @@ dependencies {
     }
 
     val mcVersion = mcData.version as MinecraftReleaseVersion
+    val tripleVersion = Triple(mcVersion.major, mcVersion.minor, mcVersion.patch)
+    provideIncludedDependencies(tripleVersion, mcData.loader.friendlyString).forEach {
     val mcVersionString = listOf(mcVersion.major, mcVersion.minor, mcVersion.patch).joinToString(".")
 
     compileOnlyCompat("gg.essential:vigilance-1.8.9-forge:295")
@@ -221,6 +221,14 @@ dependencies {
         }
     }
 
+    if (mcData.isFabric) {
+        provideFabricApiDependency(tripleVersion).forEach {
+            include(modApi(if (it.dep is String) it.dep as String else "${(it.dep as ExternalModuleDependency).group}:${(it.dep as ExternalModuleDependency).name}:${(it.dep as ExternalModuleDependency).version}") {
+                isTransitive = false
+            })
+        }
+    }
+
     annotationProcessor(libs.mixin.extras)
 
     for (dep in listOf("-nanovg").run {
@@ -243,7 +251,7 @@ dependencies {
         if ("relocator" in project.path) {
             compileOnly(project(project.path))
         } else if ("dependencies" !in project.path) {
-            "oneConfigModulesCompileOnlyApi"(runtimeOnly(compileOnly(project(project.path)) {
+            "oneConfigModulesCompileOnlyApi"(localRuntime(compileOnly(project(project.path)) {
                 isTransitive = false
                 attributes {
                     attribute(includeInLoader, JBoolean.TRUE)
@@ -269,57 +277,6 @@ dependencies {
 
     compileOnly("com.github.hannibal002:SkyHanni:3.8.0")
     api("dev.deftu:enhancedeventbus:2.0.0") // TODO
-
-    if (mcData.isFabric) {
-            modImplementation("net.fabricmc:fabric-language-kotlin:${mcData.dependencies.fabric.fabricLanguageKotlinVersion}")
-
-        if (mcData.isLegacyFabric) {
-            // 1.8.9 - 1.13
-            modImplementation("net.legacyfabric.legacy-fabric-api:legacy-fabric-api:${mcData.dependencies.legacyFabric.legacyFabricApiVersion}")
-        } else {
-            // 1.16.5+
-            if (mcVersion.minor == 21 && mcVersion.patch == 5) {
-                modImplementation("net.fabricmc.fabric-api:fabric-api:0.126.0+1.21.5")
-            } else
-                modImplementation("net.fabricmc.fabric-api:fabric-api:${mcData.dependencies.fabric.fabricApiVersion}")
-        }
-    }
-
-    modImplementation("dev.deftu:textile-$mcData:0.18.0")
-    if (propertyBoolOr("loom.appleSiliconFix", true) && mcData.version < MinecraftVersions.VERSION_1_13) {
-        if (
-            System.getProperty("os.arch") == "aarch64" &&
-            System.getProperty("os.name") == "Mac OS X"
-        ) {
-            logger.error("Setting up fix with Apple Silicon for Minecraft ${mcData.version}")
-
-            repositories {
-                maven("https://maven.legacyfabric.net/") {
-                    content {
-                        includeGroup("org.lwjgl.lwjgl")
-                    }
-                }
-            }
-
-            val lwjglVersion = "2.9.4+legacyfabric.8"
-
-            configurations.all {
-                resolutionStrategy {
-                    dependencySubstitution {
-                        all {
-                            if (requested is ModuleComponentSelector) {
-                                val module = (requested as ModuleComponentSelector)
-                                if (module.group == "org.lwjgl.lwjgl") {
-                                    logger.warn("Substituting ${module.group}:${module.module}:${module.version} with ${module.group}:${module.module}:$lwjglVersion")
-                                    useTarget(module.group + ":" + module.module + ":" + lwjglVersion)
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
 }
 
 fun DependencyHandlerScope.handleApiDep(dependency: String, isMod: Boolean = false) {
@@ -368,6 +325,11 @@ tasks {
             attributes(attributesMap)
         }
     }
+    processResources {
+        if (mcData.version >= MinecraftVersions.VERSION_1_13) {
+            exclude("patched-lwjgl/**")
+        }
+    }
 }
 
 afterEvaluate {
@@ -380,6 +342,41 @@ afterEvaluate {
                 signing {
                     isRequired = project.properties["signing.keyId"] != null
                     sign(this@named)
+                }
+            }
+        }
+    }
+}
+
+if (mcData.version < MinecraftVersions.VERSION_1_13) {
+    if (
+        System.getProperty("os.arch") == "aarch64" &&
+        System.getProperty("os.name") == "Mac OS X"
+    ) {
+        logger.error("Setting up fix with Apple Silicon for Minecraft ${mcData.version}")
+
+        repositories {
+            maven("https://maven.legacyfabric.net/") {
+                content {
+                    includeGroup("org.lwjgl.lwjgl")
+                }
+            }
+        }
+
+        val lwjglVersion = "2.9.4+legacyfabric.8"
+
+        configurations.all {
+            resolutionStrategy {
+                dependencySubstitution {
+                    all {
+                        if (requested is ModuleComponentSelector) {
+                            val module = (requested as ModuleComponentSelector)
+                            if (module.group == "org.lwjgl.lwjgl") {
+                                logger.warn("Substituting ${module.group}:${module.module}:${module.version} with ${module.group}:${module.module}:$lwjglVersion")
+                                useTarget(module.group + ":" + module.module + ":" + lwjglVersion)
+                            }
+                        }
+                    }
                 }
             }
         }

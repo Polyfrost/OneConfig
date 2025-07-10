@@ -233,7 +233,7 @@ class NanoVgImpl(
         nvgText(handle, x, y, text)
     }
 
-    override fun textBounds(x: Float, y: Float, text: String, bounds: FloatArray): Float {
+    override fun textBounds(x: Float, y: Float, text: String, bounds: FloatArray?): Float {
         return nvgTextBounds(handle, x, y, text, bounds)
     }
 

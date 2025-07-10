@@ -21,6 +21,9 @@
   "entrypoints": {
     "client": [
       "org.polyfrost.oneconfig.internal.OneConfig"
+    ],
+    "preLaunch": [
+      "org.polyfrost.oneconfig.internal.OneConfigPreLaunch"
     ]
   },
   "depends": {

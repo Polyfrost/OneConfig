@@ -30,7 +30,7 @@ import dev.deftu.omnicore.client.OmniChat;
 import dev.deftu.omnicore.client.render.OmniMatrixStack;
 import dev.deftu.omnicore.client.render.OmniResolution;
 import dev.deftu.omnicore.client.render.framebuffer.ManagedFramebuffer;
-import dev.deftu.omnicore.client.render.state.DepthFunction;
+import dev.deftu.omnicore.client.render.state.OmniManagedBlendState;
 import dev.deftu.omnicore.client.render.state.OmniManagedDepthState;
 import dev.deftu.omnicore.client.render.texture.GpuTexture;
 import dev.deftu.textile.minecraft.MCSimpleTextHolder;
@@ -107,12 +107,12 @@ public interface UIManager {
     @ApiStatus.Internal
     default PolyUI createDefault() {
         try {
-            int width = Platform.screen().windowWidth();
-            int height = Platform.screen().windowHeight();
+            int width = Platform.screen().viewportWidth();
+            int height = Platform.screen().viewportHeight();
             ManagedFramebuffer framebuffer = new ManagedFramebuffer(width, height, GpuTexture.TextureFormat.RGBA8, GpuTexture.TextureFormat.DEPTH24_STENCIL8);
 
             Settings settings = new Settings();
-            settings.enableDebugMode(false);
+            settings.enableDebugMode(true);
             settings.enableInitCleanup(false);
 
             PolyUI polyUI = new PolyUI(new Component[0], getRenderer(), settings, 1920f, 1080f);
@@ -132,9 +132,10 @@ public interface UIManager {
                     return Unit.INSTANCE;
                 });
 
+                float ratio = Platform.screen().pixelRatio();
                 float scalingFactor = 1f / (float) OmniResolution.getScaleFactor();
-                float scaledWidth = master.getWidth() * scalingFactor;
-                float scaledHeight = master.getHeight() * scalingFactor;
+                float scaledWidth = master.getWidth() * scalingFactor * ratio;
+                float scaledHeight = master.getHeight() * scalingFactor * ratio;
                 framebuffer.drawColorTexture(
                         matrices,
                         0, 0,
@@ -142,12 +143,15 @@ public interface UIManager {
                         Color.WHITE.getRGB()
                 );
 
-                OmniManagedDepthState.enable(DepthFunction.LESS_OR_EQUAL);
+                OmniManagedBlendState.disableBlend();
+                OmniManagedDepthState.disableDepth();
             });
 
             EventManager.register(ResizeEvent.class, event -> {
-                framebuffer.resize(event.newWidth, event.newHeight);
+                float ratio = Platform.screen().pixelRatio();
+                framebuffer.resize((int) (event.newWidth * ratio), (int) (event.newHeight * ratio));
                 polyUI.resize(event.newWidth, event.newHeight, false);
+                polyUI.getWindow().setPixelRatio(ratio);
             });
 
             return polyUI;

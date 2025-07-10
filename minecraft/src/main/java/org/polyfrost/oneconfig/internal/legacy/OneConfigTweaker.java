@@ -33,10 +33,13 @@ import net.minecraft.launchwrapper.LaunchClassLoader;
 import net.minecraftforge.fml.relauncher.CoreModManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.polyfrost.oneconfig.internal.OneConfigMixinInit;
 import org.spongepowered.asm.launch.MixinBootstrap;
 import org.spongepowered.asm.mixin.Mixins;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URI;
@@ -44,10 +47,8 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.nio.file.StandardCopyOption;
+import java.util.*;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 
@@ -83,6 +84,31 @@ public class OneConfigTweaker implements ITweaker {
             injectMixinTweaker();
         } catch (Exception e) {
             LOGGER.error("failed to inject mixin tweaker", e);
+        }
+
+        // Duplicated code from OneConfigPreLaunch
+        if (System.getProperty("os.name").toLowerCase(Locale.ENGLISH).contains("mac")) {
+            try {
+                boolean supportsHiDPI = !Objects.equals(System.getProperty("os.arch"), "aarch64");
+                if (!supportsHiDPI) {
+                    try {
+                        Class<?> clazz = Class.forName("org.lwjgl.Sys", false, OneConfigMixinInit.class.getClassLoader());
+                        try {
+                            clazz.getDeclaredField("HAS_HIDPI_FIX");
+                            supportsHiDPI = true;
+                        } catch (NoSuchFieldException ignored) {
+                            // Field not found, continue with the default value
+                        }
+                    } catch (ClassNotFoundException ignored) {
+
+                    }
+                }
+                if (!supportsHiDPI) {
+                    injectLWJGLFix();
+                }
+            } catch (Exception e) {
+                LOGGER.error("Failed to inject LWJGL HiDPI fix, thing may look blurrier than usual...", e);
+            }
         }
     }
 
@@ -206,6 +232,26 @@ public class OneConfigTweaker implements ITweaker {
             }
         }
         return sourceFiles;
+    }
+
+    /**
+     * The unofficial fork of LWJGL2 by Minecraft Machina/ManyMC breaks HiDPI support on aarch64 macOS systems.
+     * This method injects a patched version of the LWJGL2 native library, which fixes the issue.
+     * @throws IOException
+     */
+    private void injectLWJGLFix() throws IOException {
+        LOGGER.warn("Injecting LWJGL HiDPI fix, this is only needed for aarch64 macOS systems that don't have updated natives!");
+        File tempDir = Files.createTempDirectory("oneconfig-patched-lwjgl2-natives").toFile();
+        tempDir.deleteOnExit();
+        Path tempFile = tempDir.toPath().resolve("liblwjgl.dylib");
+        Path tempFile2 = tempDir.toPath().resolve("liblwjgl-macos-aarch64.dylib");
+        try (InputStream is = OneConfigTweaker.class.getResourceAsStream("/patched-lwjgl/liblwjgl.dylib")) {
+            Files.copy(is, tempFile, StandardCopyOption.REPLACE_EXISTING);
+        }
+        try (InputStream is = OneConfigTweaker.class.getResourceAsStream("/patched-lwjgl/liblwjgl.dylib")) {
+            Files.copy(is, tempFile2, StandardCopyOption.REPLACE_EXISTING);
+        }
+        System.setProperty("org.lwjgl.librarypath", tempDir.getAbsolutePath());
     }
 
     /**

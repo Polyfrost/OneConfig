@@ -1,0 +1,6 @@
+The unofficial fork of LWJGL2 by Minecraft Machina/ManyMC breaks HiDPI support on aarch64 macOS systems.
+This method injects a patched version of the LWJGL2 native library, which fixes the issue.
+See: OneConfigTweaker
+
+The native here comes directly from the GitHub action for commit 684759f: https://github.com/TheKodeToad/lwjgl
+TODO: Update this to PrismLauncher's fork, when it is available.

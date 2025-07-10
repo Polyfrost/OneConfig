@@ -38,6 +38,7 @@ import kotlin.Unit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.polyfrost.oneconfig.api.commands.v1.CommandManager;
+import org.polyfrost.oneconfig.api.config.v1.ConfigManager;
 import org.polyfrost.oneconfig.api.config.v1.internal.ConfigVisualizer;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.InitializationEvent;
@@ -131,6 +132,7 @@ public class OneConfig
         preloadCopycat();
         preloadPolyUI();
 
+        new OneConfigConfig();
         registerCommands();
         registerKeybinds();
         registerEventHandlers();
@@ -218,6 +220,7 @@ public class OneConfig
 
     private static void registerEventHandlers() {
         EventManager.register(InitializationEvent.class, e -> HudManager.INSTANCE.initialize());
+        EventManager.register(InitializationEvent.class, e -> ConfigManager.initialize());
         //#if MC < 1.13
         // this is cringe but is better than the alternative of checking every frame in a mixin (that's how vanilla does it lol)
         AtomicBoolean active = new AtomicBoolean(false);

@@ -29,12 +29,10 @@ package org.polyfrost.oneconfig.api.hud.v1
 import org.apache.logging.log4j.LogManager
 import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
-import org.polyfrost.oneconfig.api.event.v1.events.HudEvent
-import org.polyfrost.oneconfig.api.event.v1.eventHandler
 import org.polyfrost.oneconfig.api.hud.v1.internal.HudsPage
 import org.polyfrost.oneconfig.api.hud.v1.internal.alignC
 import org.polyfrost.oneconfig.api.hud.v1.internal.build
-import org.polyfrost.oneconfig.api.hud.v1.internal.createInspectionsScreen
+import org.polyfrost.oneconfig.api.hud.v1.internal.HudSettingsPage
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.UIManager
 import org.polyfrost.oneconfig.utils.v1.MHUtils
@@ -133,6 +131,7 @@ object HudManager {
             LOGGER.info("Found a size to restore: $size")
             prevSize = polyUI.size
             polyUI.resize(size.x, size.y)
+            polyUI.window?.pixelRatio = Platform.screen().pixelRatio()
         } else {
             LOGGER.warn("Failed to read previous size from size.lock: HUD positions may be inaccurate. If this is first start, you may ignore this message.")
             prevSize = Vec2.ZERO
@@ -174,7 +173,10 @@ object HudManager {
             LOGGER.warn("Failed to load HUDs from ${failed.size} providers as they weren't found: (maybe the mods were removed?)")
             failed.forEach { (cls, amount) -> LOGGER.warn("  $cls: $amount HUDs") }
         }
-        if (prevSize.isPositive) polyUI.resize(prevSize.x, prevSize.y)
+        if (prevSize.isPositive) {
+            polyUI.resize(prevSize.x, prevSize.y)
+            polyUI.window?.pixelRatio = Platform.screen().pixelRatio()
+        }
         LOGGER.info("successfully loaded {} HUDs from {} providers (total {} registered providers)", i, used.size, hudProviders.size)
         hudProviders.forEach { (cls, h) ->
             if (cls in used) return@forEach
@@ -185,25 +187,8 @@ object HudManager {
             theHud.x = default.x
             theHud.y = default.y
             polyUI.master.addChild(theHud, recalculate = false)
-            LOGGER.info("Added HUD {} to {} (default)", hud.title(), default)
+            LOGGER.info("Added HUD {} to {} (default)", hud.title, default)
         }
-
-        // add callbacks todo
-        eventHandler { (opened): HudEvent.Tab ->
-//            for (hud in hudProviders.values) {
-//                if (opened) {
-//                    if (!hud.hidden && !hud.showInF3) hud.hidden = true
-//                } else {
-//                    if (hud.hidden && !hud.showInF3) hud.hidden = false
-//                }
-//            }
-        }
-//        eventHandler { (screen): ScreenOpenEvent ->
-//
-//        }
-//        eventHandler { (opened): HudEvent.Debug ->
-//
-//        }
 
         LOGGER.info("HUD load took {}ms", (System.nanoTime() - now) / 1_000_000.0)
     }
@@ -222,7 +207,7 @@ object HudManager {
     @ApiStatus.Internal
     fun openHudEditor(hud: Hud<*>) {
         if (!panelOpen) toggle()
-        panel[0][3] = createInspectionsScreen(hud)
+        panel[0][3] = HudSettingsPage(hud)
     }
 
     private fun editorClose() {
@@ -322,7 +307,6 @@ object HudManager {
                 size = Vec2(500f, 1048f),
                 alignment = Align(cross = Align.Cross.Start, pad = Vec2(0f, 18f)),
             ).apply {
-                rawResize = true
                 addOperation {
                     if (polyUI.mouseDown) {
                         if (slinex != -1f) polyUI.renderer.line(slinex, 0f, slinex, polyUI.size.y, snapLineColor, 1f)

@@ -34,6 +34,11 @@ import org.polyfrost.oneconfig.api.config.v1.Properties.ktProperty
 import org.polyfrost.oneconfig.api.config.v1.Properties.simple
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.annotations.Switch
+import org.polyfrost.oneconfig.api.config.v1.getProp
+import org.polyfrost.oneconfig.api.event.v1.eventHandler
+import org.polyfrost.oneconfig.api.event.v1.events.HudEvent
+import org.polyfrost.oneconfig.api.event.v1.events.ScreenOpenEvent
+import org.polyfrost.oneconfig.api.event.v1.invoke.EventHandler
 import org.polyfrost.oneconfig.api.hud.v1.HudManager.LOGGER
 import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.component.Component
@@ -43,6 +48,7 @@ import org.polyfrost.polyui.component.impl.Text
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.utils.fastAll
 import org.polyfrost.polyui.utils.fastEachIndexed
+import java.util.function.Consumer
 import kotlin.io.path.exists
 import kotlin.random.Random
 
@@ -52,8 +58,8 @@ import kotlin.random.Random
  * - You need to register your HUD with [HudManager.register] in order for it to be available to the user.
  * - **Your HUD's size and positioning, if you are manually specifying it, needs to be designed for a `1920x1080` screen**.
  * - The instance you pass to [HudManager.register] is the instance that is used for the HUD picker screen. When a HUD is added to the screen, a new instance is created using [clone].
- * - HUD config files are stored in `{profile}/huds/{rnd}-`[id], e.g. `huds/42-my_hud.toml`.
- * - For a hud instance, the following methods are called (in order) [create], [initialize], and then [periodically][updateFrequency] [update] if required.
+ * - HUD config files are stored in `{profile}/huds/{rnd}-`[getID], e.g. `huds/42-my_hud.toml`.
+ * - For a hud instance, the following methods are called (in order) [create], [init], and then [periodically][updateFrequency] [update] if required.
  * - Try not to do really long operations in [update]. The method is called on the render thread and so may cause lag. If you need to do a long operation, consider using an asynchronous task.
  * - The parent of your HUD is a [Block] which is controlled by the user. **You do not need to include a background in your HUD.**
  * - HUDs which are wider than 450px may have issues when displayed on the HUD picker screen, and HUDs this large are not recommended anyway as they may be very distracting.
@@ -64,8 +70,8 @@ import kotlin.random.Random
  * - The easiest way to ensure that your HUD works when placed multiple times is to just not use `static` fields, so you don't abuse them.
  */
 @Suppress("EqualsOrHashCode")
-abstract class Hud<T : Drawable> : Cloneable, Config("null", null, "null", null) {
-    @Switch(title = "Show in Tab")
+abstract class Hud<T : Drawable>(id: String, title: String, val category: Category) : Cloneable, Config(id, null, title, null) {
+    @Switch(title = "Show in F3")
     var showInF3 = true
 
     @Switch(title = "Show in Tab")
@@ -74,24 +80,8 @@ abstract class Hud<T : Drawable> : Cloneable, Config("null", null, "null", null)
     @Switch(title = "Show in GUIs")
     var showInScreens = true
 
-    // effectively lateinit because of how this works (great reason ik)
-    // tree is null unless this is saved
-    final override fun makeTree(id: String) = null
-
-    /**
-     * user facing title of this HUD. can be localized using translation key/values like in PolyUI.
-     */
-    abstract fun title(): String
-
-    /**
-     * return the ID base used for this HUD when creating instances. It should follow the same scheme as the id for a [Config] or [Tree].
-     *
-     * HUD config files are stored in `{profile}/huds/{rnd}-`[id], e.g. `huds/42-my_hud.toml`.
-     * the random number is omitted for the first instance.
-     */
-    open fun id(): String = title().replace(' ', '_').lowercase()
-
-    abstract fun category(): Category
+    // we don't need to use this as we initialize in our own way.
+    override fun addToInitQueue() {}
 
     /**
      * @return `true` if this property is a real HUD on the screen, and not the example instance.
@@ -110,8 +100,8 @@ abstract class Hud<T : Drawable> : Cloneable, Config("null", null, "null", null)
         val out = if (multipleInstancesAllowed()) clone() else this
         val id = with?.id ?: genRid()
         val tree = ConfigManager.collect(out, id)
-        tree.title = out.title()
-        tree.addMetadata("category", out.category())
+        tree.title = out.title
+        tree.addMetadata("category", out.category)
         tree.addMetadata("hidden", true)
         tree["x"] = ktProperty(out.hud::x)
         tree["y"] = ktProperty(out.hud::y)
@@ -119,11 +109,47 @@ abstract class Hud<T : Drawable> : Cloneable, Config("null", null, "null", null)
         inspect(out.hud, tree)
         out.addToSerialized(tree)
         tree["hudClass"] = simple(value = out::class.java.name)
-        if (with != null) tree.overwrite(with)
-        else LOGGER.info("generated new HUD config for ${out.title()} -> ${tree.id}")
+        if (with != null) {
+            tree.overwrite(with)
+            out.addHideHandlers(tree)
+        } else LOGGER.info("generated new HUD config for ${out.title} -> ${tree.id}")
         out.tree = tree
+
         ConfigManager.active().register(tree)
         return out
+    }
+
+    private fun addHideHandlers(tree: Tree) {
+        val hideHandler = Consumer<HudEvent> { (opened): HudEvent ->
+            hidden = opened
+        }
+        val hideF3Handler = EventHandler.of(HudEvent.Debug::class.java, hideHandler)
+        val hideTabHandler = EventHandler.of(HudEvent.Tab::class.java, hideHandler)
+        val hideScreenHandler = eventHandler { (screen): ScreenOpenEvent ->
+            hidden = screen != null
+            // asm: don't hide when we open the hud editor
+            // because otherwise you couldn't edit it (which sucks)
+            if (HudManager.panelExists) hidden = false
+        }
+        // asm: run initial
+        if (!showInF3) hideF3Handler.register()
+        if (!showInTab) hideTabHandler.register()
+        if (!showInScreens) hideScreenHandler.register()
+        tree.getProp<Boolean>("showInF3")?.addCallback {
+            if (!it) hideF3Handler.register()
+            else hideF3Handler?.unregister()
+            false
+        }
+        tree.getProp<Boolean>("showInTab")?.addCallback {
+            if (!it) hideTabHandler.register()
+            else hideTabHandler?.unregister()
+            false
+        }
+        tree.getProp<Boolean>("showInScreens")?.addCallback {
+            if (!it) hideScreenHandler.register()
+            else hideScreenHandler?.unregister()
+            false
+        }
     }
 
     private fun inspect(cmp: Component, tree: Tree) {
@@ -157,12 +183,12 @@ abstract class Hud<T : Drawable> : Cloneable, Config("null", null, "null", null)
 
     private fun genRid(): String {
         val folder = ConfigManager.active().folder
-        val init = "huds/${id()}"
+        val init = "huds/${id}"
         if (!folder.resolve(init).exists()) return init
-        var p = "huds/${Random.Default.nextInt(0, 100)}-${id()}"
+        var p = "huds/${Random.Default.nextInt(0, 100)}-${id}"
         var i = 0
         while (folder.resolve(p).exists()) {
-            p = "huds/${Random.Default.nextInt(0, 999)}-${id()}"
+            p = "huds/${Random.Default.nextInt(0, 999)}-${id}"
             when (i++) {
                 100 -> LOGGER.warn("they all say that it gets better")
                 500 -> LOGGER.warn("yeah they all say that it gets better;; it gets better the more you grow")
@@ -193,21 +219,22 @@ abstract class Hud<T : Drawable> : Cloneable, Config("null", null, "null", null)
      * If `true`, the HUD will not be rendered, and, if this is in a HUD group, it will resize accordingly.
      */
     var hidden: Boolean
-        get() = it?.isEnabled == false
+        get() = it?.renders == false
         set(new) {
             val value = !new
             // useless null-safety checks, but I don't want to risk dumb errors
             val it = it ?: return
-            if (value == it.isEnabled) return
-            it.isEnabled = value
+            //if (value == it.renders) return
+            it.renders = value
+            it.layoutIgnored = !value
 
             val bg = getBackground() ?: return
             val siblings = bg.children ?: return
 
             if (siblings.size == 1) {
-                bg.isEnabled = value
+                bg.renders = value
             } else if (!value && siblings.fastAll { !it.renders }) {
-                bg.isEnabled = false
+                bg.renders = false
             }
             bg.recalculate()
         }
@@ -237,7 +264,7 @@ abstract class Hud<T : Drawable> : Cloneable, Config("null", null, "null", null)
      */
     protected fun updateWhenChanged(optionName: String) {
         if (isReal) addCallback(optionName, this::updateAndRecalculate)
-        else LOGGER.warn("attempted to add callback to {}'s option '{}', but it is not real. no action has been taken.", title(), optionName)
+        else LOGGER.warn("attempted to add callback to {}'s option '{}', but it is not real. no action has been taken.", title, optionName)
     }
 
     protected fun updateAndRecalculate() {

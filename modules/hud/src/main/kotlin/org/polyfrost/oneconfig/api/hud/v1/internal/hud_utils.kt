@@ -144,7 +144,7 @@ fun Hud<*>.buildNew(): Drawable {
 }
 
 fun Hud<*>.makeAlreadyUsed(): Block {
-    return Block(Text(title(), fontSize = 16f)).withHoverStates().onClick { HudManager.openHudEditor(this@makeAlreadyUsed) }
+    return Block(Text(title, fontSize = 16f)).withHoverStates().onClick { HudManager.openHudEditor(this@makeAlreadyUsed) }
 }
 
 /**

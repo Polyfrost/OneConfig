@@ -34,13 +34,16 @@ import org.polyfrost.oneconfig.api.event.v1.EventDelay;
 import org.polyfrost.oneconfig.api.platform.v1.ScreenPlatform;
 
 public class ScreenPlatformImpl implements ScreenPlatform {
+    //#if MC > 1.13
+    //$$ private final float[] pixelScaleFactor = new float[1];
+    //#endif
 
     private OmniMatrixStack smuggled = new OmniMatrixStack();
 
     @Override
     public int viewportWidth() {
         //#if MC>=11502
-        //$$ return Minecraft.getInstance().getWindow().getScreenWidth();
+        //$$ return Minecraft.getInstance().getWindow().getWidth();
         //#else
         return Minecraft.getMinecraft().displayWidth;
         //#endif
@@ -49,7 +52,7 @@ public class ScreenPlatformImpl implements ScreenPlatform {
     @Override
     public int viewportHeight() {
         //#if MC>=11502
-        //$$ return Minecraft.getInstance().getWindow().getScreenHeight();
+        //$$ return Minecraft.getInstance().getWindow().getHeight();
         //#else
         return Minecraft.getMinecraft().displayHeight;
         //#endif
@@ -58,7 +61,7 @@ public class ScreenPlatformImpl implements ScreenPlatform {
     @Override
     public int windowWidth() {
         //#if MC>=11502
-        //$$ return Minecraft.getInstance().getWindow().getWidth();
+        //$$ return Minecraft.getInstance().getWindow().getScreenWidth();
         //#else
         return (int) (Minecraft.getMinecraft().displayWidth / org.lwjgl.opengl.Display.getPixelScaleFactor());
         //#endif
@@ -67,9 +70,20 @@ public class ScreenPlatformImpl implements ScreenPlatform {
     @Override
     public int windowHeight() {
         //#if MC>=11502
-        //$$ return Minecraft.getInstance().getWindow().getHeight();
+        //$$ return Minecraft.getInstance().getWindow().getScreenHeight();
         //#else
         return (int) (Minecraft.getMinecraft().displayHeight / org.lwjgl.opengl.Display.getPixelScaleFactor());
+        //#endif
+    }
+
+    @Override
+    public float pixelRatio() {
+        // asm: considerably more reliable than just doing viewport / window
+        //#if MC > 1.13
+        //$$ org.lwjgl.glfw.GLFW.glfwGetWindowContentScale(Minecraft.getInstance().getWindow().getWindow(), pixelScaleFactor, null);
+        //$$ return pixelScaleFactor[0];
+        //#else
+        return org.lwjgl.opengl.Display.getPixelScaleFactor();
         //#endif
     }
 

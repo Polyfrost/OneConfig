@@ -42,7 +42,7 @@ import kotlin.reflect.KProperty0
  */
 open class KtConfig(id: String, title: String, category: Category, icon: String? = null) : Config(id, icon, title, category) {
 
-    final override fun makeTree(id: String) = Tree.tree(id)
+    final override fun makeTree() = Tree.tree(id)
 
     /**
      * return the property with the given id by a kotlin property reference.

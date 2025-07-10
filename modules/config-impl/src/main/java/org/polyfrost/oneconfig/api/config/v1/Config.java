@@ -44,13 +44,42 @@ public abstract class Config {
 
     @Include
     public boolean enabled = true;
+    public final String id, title, iconPath;
+    public final Category category;
 
     /**
      * @param iconPath the path to your mod's icon file, must be located within your mod-specific assets folder as to avoid conflicts.
      */
     public Config(@NotNull String id, @Nullable String iconPath, @NotNull String title, @Nullable Category category) {
-        // written this way so that trees can be lateinit
-        if ((tree = makeTree(id)) != null) {
+        this.title = title;
+        this.id = id;
+        this.iconPath = iconPath;
+        this.category = category == null ? Category.OTHER : category;
+        addToInitQueue();
+    }
+
+    public Config(@NotNull String id, @NotNull String title, @NotNull Category category) {
+        this(id, null, title, category);
+    }
+
+    public final void addAliases(String... aliases) {
+        if (tree == null) throw notInitialized();
+        tree.getOrPutMetadata("aliases", () -> new ArrayList<String>(aliases.length)).addAll(Arrays.asList(aliases));
+    }
+
+    @ApiStatus.Internal
+    protected Tree makeTree() {
+        return ConfigManager.collect(this, id);
+    }
+
+    @ApiStatus.Internal
+    protected void addToInitQueue() {
+        ConfigManager.submitForInitialization(this);
+    }
+
+    @ApiStatus.Internal
+    protected void initializeConfig() {
+        if ((tree = makeTree()) != null) {
             tree.setTitle(title);
             if (iconPath != null) {
                 validateIconPath(iconPath);
@@ -63,25 +92,13 @@ public abstract class Config {
         }
     }
 
-    public Config(@NotNull String id, @NotNull String title, @NotNull Category category) {
-        this(id, null, title, category);
-    }
-
-    public final void addAliases(String... aliases) {
-        tree.getOrPutMetadata("aliases", () -> new ArrayList<String>(aliases.length)).addAll(Arrays.asList(aliases));
-    }
-
-    @ApiStatus.Internal
-    protected Tree makeTree(@NotNull String id) {
-        return ConfigManager.collect(this, id);
-    }
-
     protected void addDependency(String option, String name, Supplier<Property.Display> condition) {
         Property<?> opt = getProperty(option).addDisplayCondition(condition);
         if (name != null) opt.getOrPutMetadata("dependencyNames", () -> new ArrayList<String>(3)).add(name);
     }
 
     protected void restoreDefaults() {
+        if (tree == null) throw notInitialized();
         tree.overwrite(ConfigManager.backup().get(tree.getID()));
     }
 

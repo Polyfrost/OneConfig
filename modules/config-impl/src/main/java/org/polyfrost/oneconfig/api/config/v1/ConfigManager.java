@@ -43,9 +43,7 @@ import org.polyfrost.oneconfig.api.config.v1.serialize.impl.NightConfigSerialize
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 import static org.polyfrost.oneconfig.api.config.v1.Tree.tree;
 
@@ -57,6 +55,8 @@ public final class ConfigManager {
     private static final ConfigManager core = new ConfigManager(Paths.get("config"), NightConfigSerializer.ALL);
     private static final ConfigManager backup = new ConfigManager(Paths.get("oneconfig", "backup"), NightConfigSerializer.ALL);
     private static ConfigManager active;
+    private static boolean initialized = false;
+    private static final Queue<Config> pendingInitialization = new ArrayDeque<>();
 
     static {
         ObjectSerializer.INSTANCE.registerTypeAdapter(new PolyColorAdapter());
@@ -94,11 +94,32 @@ public final class ConfigManager {
      * Returns a reference to the active config manager, which is mounted to the current active profile.
      */
     public static synchronized ConfigManager active() {
-        if (active == null) initialize();
+        if (active == null) initProfiles();
         return active;
     }
 
-    private static synchronized void initialize() {
+    @ApiStatus.Internal
+    public static void initialize() {
+        LOGGER.info("initializing {} configs", pendingInitialization.size());
+        if (!initialized) initialized = true;
+        while (!pendingInitialization.isEmpty()) {
+            Config config = pendingInitialization.poll();
+            if (config != null) {
+                config.initializeConfig();
+            }
+        }
+    }
+
+    @ApiStatus.Internal
+    public static void submitForInitialization(Config config) {
+        if (initialized) {
+            config.initializeConfig();
+        } else {
+            pendingInitialization.add(config);
+        }
+    }
+
+    private static synchronized void initProfiles() {
         String activeProfile = internal().register(
                 tree("profiles.json").put(
                         Properties.simple("activeProfile", "Active Profile", "The profile which is currently open.", "")

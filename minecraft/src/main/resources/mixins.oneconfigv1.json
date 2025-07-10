@@ -1,5 +1,5 @@
 {
-  "compatibilityLevel": "JAVA_8",
+  "compatibilityLevel": "${java_version}",
   "minVersion": "0.8",
   "package": "org.polyfrost.oneconfig.internal.mixin",
   "plugin": "org.polyfrost.oneconfig.internal.OneConfigMixinInit",

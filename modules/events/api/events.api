@@ -279,6 +279,7 @@ public abstract class org/polyfrost/oneconfig/api/event/v1/invoke/EventHandler :
 	public static fun ofRemoving (Ljava/lang/Class;Ljava/util/function/Predicate;)Lorg/polyfrost/oneconfig/api/event/v1/invoke/EventHandler;
 	public final fun onError ()Z
 	public final fun register ()Lorg/polyfrost/oneconfig/api/event/v1/invoke/EventHandler;
+	public final fun unregister ()Lorg/polyfrost/oneconfig/api/event/v1/invoke/EventHandler;
 }
 
 public class org/polyfrost/oneconfig/api/event/v1/invoke/impl/AnnotationEventMapper : org/polyfrost/oneconfig/api/event/v1/invoke/EventCollector {

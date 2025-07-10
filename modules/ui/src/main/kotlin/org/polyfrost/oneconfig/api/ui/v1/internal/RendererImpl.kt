@@ -26,10 +26,12 @@
 
 package org.polyfrost.oneconfig.api.ui.v1.internal
 
-import dev.deftu.omnicore.client.render.state.*
+import dev.deftu.omnicore.client.render.OmniTextureManager
 import dev.deftu.omnicore.common.OmniLoader
 import org.apache.logging.log4j.LogManager
 import org.lwjgl.opengl.GL11
+import org.lwjgl.opengl.GL13
+import org.lwjgl.opengl.GL20
 import org.lwjgl.opengl.GL30
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.api.LwjglApi
@@ -105,10 +107,11 @@ class RendererImpl(
     private val images = mutableMapOf<PolyImage, Int>()
     private val svgs = mutableMapOf<PolyImage, Pair<NanoVgApi.SVG, Int2IntMap>>()
 
-    private var prevState: OmniManagedRenderState? = null
+    private var prevProgram = -1
+    private var prevTexture = -1
+    private var prevTextureBinding = -1
     private var prevVao = -1
 
-    private val textBounds = FloatArray(4)
     private val lineHeight = FloatArray(1)
 
     private val queue = ArrayList<() -> Unit>()
@@ -144,11 +147,11 @@ class RendererImpl(
     override fun beginFrame(width: Float, height: Float, pixelRatio: Float) {
         if (isDrawing) throw IllegalStateException("Already drawing")
 
-        prevState = OmniManagedRenderState.active()
         if (mcVersion >= 1_16_05) {
+            prevProgram = GL11.glGetInteger(GL20.GL_CURRENT_PROGRAM)
             prevVao = GL11.glGetInteger(GL30.GL_VERTEX_ARRAY_BINDING)
-            OmniManagedBlendState.enable(BlendEquation.active(), BlendFunction.DEFAULT)
-            OmniManagedDepthState.enable(DepthFunction.LESS_OR_EQUAL)
+            prevTexture = GL11.glGetInteger(GL13.GL_ACTIVE_TEXTURE)
+            prevTextureBinding = GL11.glGetInteger(GL11.GL_TEXTURE_BINDING_2D)
         }
 
         queue.fastRemoveIfReversed { it(); true }
@@ -156,10 +159,6 @@ class RendererImpl(
         if (mcVersion <= 1_12_02) {
             GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS)
         }
-
-//        if (!isGl3) {
-//            GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS)
-//        }
 
         GL11.glPixelStorei(GL11.GL_UNPACK_ALIGNMENT, 1)
         vg.beginFrame(width, height, pixelRatio)
@@ -170,23 +169,25 @@ class RendererImpl(
         if (!isDrawing) return
 
         vg.endFrame()
-//        if (!isGl3) {
-//            GL11.glPopAttrib()
-//        }
 
         if (mcVersion <= 1_12_02) {
             GL11.glPopAttrib()
         }
 
-        if (mcVersion >= 1_16_05 && isGl3 && prevVao != -1) {
-            GL30.glBindVertexArray(prevVao)
-        }
-
         Platform.gl().updateGameRenderStateAlongsideNanoVG()
-        prevState?.activate()
-        OmniManagedDepthState.enableDepth()
-        OmniManagedBlendState.enableBlend()
-        OmniManagedAlphaState.enableAlpha()
+
+        if (mcVersion >= 1_16_05) {
+            if (prevProgram != -1) {
+                GL20.glUseProgram(prevProgram)
+            }
+            if (prevTexture != -1) {
+                OmniTextureManager.setActiveTexture(prevTexture)
+                OmniTextureManager.bindTexture(prevTextureBinding)
+            }
+            if (prevVao != -1) {
+                GL30.glBindVertexArray(prevVao)
+            }
+        }
 
         isDrawing = false
     }
@@ -224,6 +225,7 @@ class RendererImpl(
         fontSize: Float,
     ) {
         if (color.transparent) return
+        // todo (nextday): what the fuck is going on here
 
         val fontId = getOrPopulateFont(font).id
         vg.fontFaceId(fontId)
@@ -238,7 +240,7 @@ class RendererImpl(
         val baselineY = y + (lineHeight[0] - ascender[0]) / 2f
 
         // Draw background fill if needed
-        val (width, height) = textBounds(font, text, fontSize)
+        val (width, _) = textBounds(font, text, fontSize)
         vg.beginPath()
         populateFillOrColor(color, x, y - lineHeight[0] / 2f, width, lineHeight[0])
 
@@ -380,22 +382,16 @@ class RendererImpl(
 
     @Suppress("NAME_SHADOWING")
     override fun textBounds(font: Font, text: String, fontSize: Float): Vec2 {
-        val text = text.let { if (it.endsWith(' ')) "$it " else it }
-
         vg.fontFaceId(getOrPopulateFont(font).id)
         vg.fontSize(fontSize)
 
-        val bounds = textBounds
-        textBounds.fill(0f)
         vg.textAlign(vg.constants().NVG_ALIGN_LEFT() or vg.constants().NVG_ALIGN_TOP())
-        vg.textBounds(0f, 0f, text, bounds)
-        val width = bounds[2] - bounds[0]
+        val width = vg.textBounds(0f, 0f, text, null)
 
-        lineHeight[0] = 0f
+        lineHeight[0] = fontSize.coerceAtLeast(1f)
         vg.textMetrics(null, null, lineHeight)
 
-        val height = lineHeight[0]
-        return Vec2(width.coerceAtLeast(1f), height.coerceAtLeast(1f)) // Coercing to at least 1x1 for now because this is returning 0 sometimes for some reason and PolyUI crashes when an element has 0 width & height
+        return Vec2(width.coerceAtLeast(1f), lineHeight[0]) // Coercing to at least 1 x fontSize for now because this is returning 0 sometimes for some reason and PolyUI crashes when an element has 0 width & height
     }
 
     private fun getOrPopulateFont(font: Font): NvgFont {
