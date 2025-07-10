@@ -8,7 +8,7 @@ internal object Locations {
         Moulconfig::class to Location(
             "io.github.notenoughupdates.moulconfig",
             TargetLocation("skyhanni", "at.hannibal2.skyhanni.deps.moulconfig"),
-            //TargetLocation("skyblocker","io.github.notenoughupdates.moulconfig"),
+            TargetLocation("dandelion","net.azureaaron.dandelion.deps.moulconfig"),
             //TargetLocation("firmament", "io.github.notenoughupdates.moulconfig")
         )
     )
