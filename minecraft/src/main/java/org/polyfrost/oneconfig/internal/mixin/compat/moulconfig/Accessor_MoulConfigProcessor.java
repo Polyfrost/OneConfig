@@ -1,15 +1,19 @@
 package org.polyfrost.oneconfig.internal.mixin.compat.moulconfig;
 
 import io.github.notenoughupdates.moulconfig.Config;
+import io.github.notenoughupdates.moulconfig.processor.MoulConfigProcessor;
+import org.polyfrost.oneconfig.relocator.annotations.Moulconfig;
+import org.polyfrost.oneconfig.relocator.annotations.RelocatedMixin;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
 @Pseudo
-@Mixin(targets = {
-        "io.github.notenoughupdates.moulconfig.processor.MoulConfigProcessor",
-        "at.hannibal2.skyhanni.deps.moulconfig.processor.MoulConfigProcessor"
-}, remap = false)
+@Moulconfig
+//#if MC==1.8.9||MC>=1.21.4
+@RelocatedMixin
+//#endif
+@Mixin(value = MoulConfigProcessor.class, remap = false)
 public interface Accessor_MoulConfigProcessor<T extends Config> {
 
     @Accessor("configBaseObject")

@@ -1,7 +1,10 @@
 package org.polyfrost.oneconfig.internal.mixin.compat.moulconfig;
 
+import io.github.notenoughupdates.moulconfig.gui.editors.GuiOptionEditorSlider;
 import io.github.notenoughupdates.moulconfig.processor.ProcessedOption;
 import org.polyfrost.oneconfig.internal.compat.GuiOptionEditorSliderAccessor;
+import org.polyfrost.oneconfig.relocator.annotations.Moulconfig;
+import org.polyfrost.oneconfig.relocator.annotations.RelocatedMixin;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.Unique;
@@ -10,11 +13,13 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Pseudo
-@Mixin(targets = {
-        "io.github.notenoughupdates.moulconfig.gui.editors.GuiOptionEditorSlider",
-        "at.hannibal2.skyhanni.deps.moulconfig.gui.editors.GuiOptionEditorSlider"
-}, remap = false)
+@Moulconfig
+//#if MC==1.8.9||MC>=1.21.4
+@RelocatedMixin
+//#endif
+@Mixin(value = GuiOptionEditorSlider.class, remap = false)
 public class Mixin_GuiOptionEditorSlider implements GuiOptionEditorSliderAccessor {
+
     @Unique
     private float oneconfig$minValue;
     @Unique
@@ -22,8 +27,11 @@ public class Mixin_GuiOptionEditorSlider implements GuiOptionEditorSliderAccesso
     @Unique
     private float oneconfig$minStep;
 
-    @Inject(method = "<init>", at = @At("TAIL"))
-    public void init(ProcessedOption option, float minValue, float maxValue, float minStep, CallbackInfo ci) {
+    @Inject(method = "<init>", at = @At("RETURN"))
+    public void meow(ProcessedOption option, float minValue, float maxValue, float minStep, CallbackInfo ci) {
+        this.oneconfig$minValue = minValue;
+        this.oneconfig$maxValue = maxValue;
+        this.oneconfig$minStep = minStep;
     }
 
     @Override

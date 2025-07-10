@@ -26,11 +26,17 @@
 
 package org.polyfrost.oneconfig.internal;
 
+import kotlin.Unit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.tree.AnnotationNode;
+//#if MC>=1.21
+//$$import org.spongepowered.asm.lib.tree.ClassNode;
+//#else
 import org.objectweb.asm.tree.ClassNode;
+//#endif
+import org.polyfrost.oneconfig.internal.generated.RelocatedMixins;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 
@@ -66,12 +72,10 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         List<String> mixins = new ArrayList<>();
 
 
-        //#if MC==1.8.9||MC>=1.21.4
-        //$$mixins.add("compat.moulconfig.Accessor_MoulConfigProcessor");
-        //$$mixins.add("compat.moulconfig.Mixin_ConfigProcessorDriver");
-        //$$mixins.add("compat.moulconfig.Mixin_GuiOptionEditorSlider");
-        //$$mixins.add("compat.moulconfig.Accessor_GuiOptionEditorDropdown");
-        //#endif
+        RelocatedMixins.INSTANCE.register(e -> {
+            mixins.add(e);
+            return Unit.INSTANCE;
+        });
 
         //#if MC>=1.19.2
         //$$mixins.add("compat.rconfig.Mixin_Configurations");

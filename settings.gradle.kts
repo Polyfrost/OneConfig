@@ -69,7 +69,8 @@ listOf(
     "dependencies",
     "dependencies:agnostic",
     "dependencies:legacy",
-    "utils"
+    "utils",
+    "relocator"
 ).forEach { module ->
     include(":modules:$module")
 }

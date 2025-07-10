@@ -6,25 +6,24 @@ import io.github.notenoughupdates.moulconfig.processor.MoulConfigProcessor
 import io.github.notenoughupdates.moulconfig.processor.ProcessedCategory
 import io.github.notenoughupdates.moulconfig.processor.ProcessedOption
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
-import org.polyfrost.oneconfig.api.config.v1.Properties
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.Visualizer
 import org.polyfrost.oneconfig.api.config.v1.Visualizer.*
 import org.polyfrost.oneconfig.internal.mixin.compat.moulconfig.Accessor_GuiOptionEditorDropdown
+import org.polyfrost.oneconfig.relocator.annotations.Moulconfig
+import org.polyfrost.oneconfig.utils.v1.dsl.category
+import org.polyfrost.oneconfig.utils.v1.dsl.noCache
+import org.polyfrost.oneconfig.utils.v1.dsl.saveFunction
+import org.polyfrost.oneconfig.utils.v1.dsl.subcategory
 import org.polyfrost.polyui.color.PolyColor
 import java.lang.reflect.Type
-import kotlin.jvm.java
+import java.util.*
 import kotlin.reflect.KClass
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.nanoseconds
 import io.github.notenoughupdates.moulconfig.Config as MoulConfig
 
-internal interface GuiOptionEditorSliderAccessor {
-    val `oneconfig$minValue`: Float
-    val `oneconfig$maxValue`: Float
-    val `oneconfig$minStep`: Float
-}
-
+@Moulconfig
 object MoulConfigCompat {
 
     @JvmStatic
@@ -34,15 +33,26 @@ object MoulConfigCompat {
 
     fun parseConfigTree(config: MoulConfig, children: Iterable<ProcessedCategory>): Tree = Tree.tree().apply {
         val map = mutableMapOf<String?, Tree>()
+        val mod = CompatLoader.findFirstMod()
+        this.id = mod?.id ?: config.toString()
+        this.saveFunction = Runnable { config.saveNow() }
+        this.noCache = true
+        this.title = mod?.name ?: ""
 
         children.forEach {
-            val tree = parseCategory(config, it) { parent -> map[parent] ?: this } ?: return@forEach
+            val tree = parseCategory(config, it, this) { parent -> map[parent] ?: this }
             map[it.identifier] = tree
         }
     }
 
-    fun parseCategory(config: MoulConfig, category: ProcessedCategory, parentResolver: (String?) -> Tree): Tree? {
+    fun parseCategory(config: MoulConfig, category: ProcessedCategory, root: Tree, parentResolver: (String?) -> Tree): Tree {
         val tree = Tree.tree()
+        val parent = parentResolver(category.parentCategoryId)
+        tree.id = UUID.randomUUID().toString()
+        tree.title = category.displayName
+        tree.category = parent.takeUnless { it === root }?.category ?: category.displayName
+        tree.subcategory = category.displayName
+
         val map = mutableMapOf<Int?, Tree>()
 
         category.options.forEach { category ->
@@ -50,13 +60,12 @@ object MoulConfigCompat {
             map[id] = node
         }
 
-        parentResolver(category.parentCategoryId).put(tree)
+        parent.put(tree)
         return tree
     }
 
     fun parseOption(config: MoulConfig, children: ProcessedOption, parentResolver: (Int?) -> Tree): (Pair<Int, Tree>)? {
         val property = MoulConfigPropertyBuilder(children)
-
 
         val editor = children.editor
 
@@ -66,7 +75,7 @@ object MoulConfigCompat {
             is GuiOptionEditorAccordion -> return children.accordionId to Tree.tree()
             is GuiOptionEditorBoolean -> SwitchVisualizer::class
             is GuiOptionEditorButton -> {
-                property.metadata["runnable"] = editor::onClick
+                property.metadata["runnable"] = Runnable { editor.onClick() }
                 ButtonVisualizer::class
             }
 
@@ -141,9 +150,6 @@ object MoulConfigCompat {
                 DropdownVisualizer::class
             }
 
-            is GuiOptionEditorInfoText -> {
-                InfoVisualizer::class // TODO
-            }
 
             is GuiOptionEditorSliderAccessor -> {
                 property.metadata["min"] = editor.`oneconfig$minValue`
@@ -169,28 +175,17 @@ object MoulConfigCompat {
                 SliderVisualizer::class
             }
 
-            is GuiOptionEditorText -> TextVisualizer::class
-            is GuiOptionEditorDraggableList -> DraggableListVisualizer::class
+            is GuiOptionEditorInfoText -> return null
+            is GuiOptionEditorText -> return null
+            is GuiOptionEditorDraggableList -> return null
             else -> return null // editor type either unsupported or unknown
         }
 
-        property.metadata["visualizer"] = visualizer
-        parentResolver(children.accordionId).put(property.build())
+        println("Prasing ${children.path}")
+        property.metadata["visualizer"] = visualizer.java
+        parentResolver(null).put(property.build())
         return null
     }
 
-    class MoulConfigPropertyBuilder internal constructor(option: ProcessedOption) {
-        val name: String? = option.name
-        val description: String? = option.description
-
-        var setter: (Any) -> Unit = option::set
-        var getter: () -> Any = option::get
-
-        val metadata: MutableMap<String, Any> = mutableMapOf()
-
-        fun build() = Properties.functional(getter, setter, name = null, description = description).apply {
-            this@MoulConfigPropertyBuilder.metadata.entries.forEach { (key, value) -> addMetadata(key, value) }
-        }
-    }
-
 }
+

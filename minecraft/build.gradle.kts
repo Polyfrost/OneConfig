@@ -12,6 +12,7 @@ import java.lang.Boolean as JBoolean
 plugins {
     java
     alias(libs.plugins.kotlin)
+    alias(libs.plugins.google.ksp)
     id(libs.plugins.dgt.multiversion.platform.get().pluginId)
     id(libs.plugins.dgt.base.get().pluginId)
     id(libs.plugins.dgt.resources.get().pluginId)
@@ -69,7 +70,13 @@ repositories {
         content { includeGroup("maven.modrinth") } // for some reason yacl versions exist that aren't on the official repo???
     }
     maven("https://maven.terraformersmc.com/") {
-        content { includeGroup("com.terraformersmc" )}
+        content { includeGroup("com.terraformersmc" ) }
+    }
+    maven("https://jitpack.io") {
+        content { includeGroupAndSubgroups("com.github") }
+    }
+    maven("https://maven.teamresourceful.com/repository/maven-public/") {
+        content { includeGroupAndSubgroups("me.owdding") }
     }
 }
 
@@ -229,8 +236,13 @@ dependencies {
         }
     }
 
+    ksp(rootProject.project(":modules:relocator"))
+    annotationProcessor(rootProject.project(":modules:relocator"))
+
     for (project in rootProject.project(":modules").subprojects) {
-        if ("dependencies" !in project.path) {
+        if ("relocator" in project.path) {
+            compileOnly(project(project.path))
+        } else if ("dependencies" !in project.path) {
             "oneConfigModulesCompileOnlyApi"(runtimeOnly(compileOnly(project(project.path)) {
                 isTransitive = false
                 attributes {
@@ -255,6 +267,7 @@ dependencies {
         }
     }
 
+    compileOnly("com.github.hannibal002:SkyHanni:3.8.0")
     api("dev.deftu:enhancedeventbus:2.0.0") // TODO
 
     if (mcData.isFabric) {

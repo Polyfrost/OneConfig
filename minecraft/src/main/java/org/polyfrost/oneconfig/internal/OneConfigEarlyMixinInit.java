@@ -1,7 +1,11 @@
 package org.polyfrost.oneconfig.internal;
 
 import com.llamalad7.mixinextras.MixinExtrasBootstrap;
+//#if MC>=1.21
+//$$import org.spongepowered.asm.lib.tree.ClassNode;
+//#else
 import org.objectweb.asm.tree.ClassNode;
+//#endif
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 

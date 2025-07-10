@@ -1,0 +1,28 @@
+package org.polyfrost.oneconfig.relocator
+
+import org.polyfrost.oneconfig.relocator.annotations.Moulconfig
+import kotlin.reflect.KClass
+
+internal object Locations {
+    val relocations = mapOf<KClass<out Annotation>, Location>(
+        Moulconfig::class to Location(
+            "io.github.notenoughupdates.moulconfig",
+            TargetLocation("skyhanni", "at.hannibal2.skyhanni.deps.moulconfig"),
+            //TargetLocation("skyblocker","io.github.notenoughupdates.moulconfig"),
+            //TargetLocation("firmament", "io.github.notenoughupdates.moulconfig")
+        )
+    )
+
+
+    data class Location(
+        val sourcePackage: String,
+        val targets: List<TargetLocation>,
+    ) {
+        constructor(sourcePackage: String, vararg targets: TargetLocation) : this(sourcePackage, targets.toList())
+    }
+
+    data class TargetLocation(
+        val modName: String,
+        val targetPackage: String,
+    )
+}

@@ -1,8 +1,11 @@
 package org.polyfrost.oneconfig.internal.mixin.compat.moulconfig;
 
+import io.github.notenoughupdates.moulconfig.processor.ConfigProcessorDriver;
 import io.github.notenoughupdates.moulconfig.processor.ConfigStructureReader;
 import io.github.notenoughupdates.moulconfig.processor.MoulConfigProcessor;
 import org.polyfrost.oneconfig.internal.compat.MoulConfigCompat;
+import org.polyfrost.oneconfig.relocator.annotations.Moulconfig;
+import org.polyfrost.oneconfig.relocator.annotations.RelocatedMixin;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
@@ -12,10 +15,11 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Pseudo
-@Mixin(targets = {
-        "io.github.notenoughupdates.moulconfig.processor.ConfigProcessorDriver",
-        "at.hannibal2.skyhanni.deps.moulconfig.processor.ConfigProcessorDriver"
-}, remap = false)
+@Moulconfig
+//#if MC==1.8.9||MC>=1.21.4
+@RelocatedMixin
+//#endif
+@Mixin(value = ConfigProcessorDriver.class, remap = false)
 public class Mixin_ConfigProcessorDriver {
 
     @Shadow

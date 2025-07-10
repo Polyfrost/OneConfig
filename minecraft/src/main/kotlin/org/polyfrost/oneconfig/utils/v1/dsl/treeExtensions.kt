@@ -34,3 +34,7 @@ internal var Node.icon: String?
 internal var Tree.saveFunction: Runnable?
     get() = metadata?.get("custom_save") as? Runnable
     set(value) = addMetadata("custom_save", value)
+
+internal var Tree.noCache: Boolean?
+    get() = metadata?.get("no_cache") as? Boolean
+    set(value) = addMetadata("no_cache", value)

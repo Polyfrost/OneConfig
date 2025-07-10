@@ -115,3 +115,5 @@ dgt-loom = { id = "dev.deftu.gradle.tools.minecraft.loom", version.ref = "dgt" }
 licenser = { id = "dev.yumi.gradle.licenser", version.ref = "licenser" }
 
 jetbrains-idea-ext = { id = "org.jetbrains.gradle.plugin.idea-ext", version.ref = "jetbrains-idea-ext" }
+
+google-ksp = { id = "com.google.devtools.ksp", version = "2.1.20-2.0.1" }
