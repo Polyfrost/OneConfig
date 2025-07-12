@@ -1,5 +1,9 @@
 public abstract class org/polyfrost/oneconfig/api/config/v1/Config {
+	public final field category Lorg/polyfrost/oneconfig/api/config/v1/Config$Category;
 	public field enabled Z
+	public final field iconPath Ljava/lang/String;
+	public final field id Ljava/lang/String;
+	public final field title Ljava/lang/String;
 	protected field tree Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/config/v1/Config$Category;)V
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/config/v1/Config$Category;)V
@@ -9,14 +13,16 @@ public abstract class org/polyfrost/oneconfig/api/config/v1/Config {
 	protected fun addDependency (Ljava/lang/String;Ljava/lang/String;)V
 	protected fun addDependency (Ljava/lang/String;Ljava/lang/String;Ljava/util/function/Supplier;)V
 	protected fun addDependency (Ljava/lang/String;Ljava/lang/String;Z)V
+	protected fun addToInitQueue ()V
 	protected fun getProperty (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
 	protected static fun getProperty (Lorg/polyfrost/oneconfig/api/config/v1/Tree;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
 	public fun getTree ()Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	protected fun hideIf (Ljava/lang/String;Ljava/lang/String;)V
 	protected fun hideIf (Ljava/lang/String;Ljava/util/function/BooleanSupplier;)V
+	protected fun initializeConfig ()V
 	protected fun loadFrom (Ljava/lang/String;)V
 	protected fun loadFrom (Ljava/nio/file/Path;)V
-	protected fun makeTree (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
+	protected fun makeTree ()Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	public fun preload ()V
 	protected fun restoreDefaults ()V
 	protected fun restoreProperty (Ljava/lang/String;)V
@@ -45,6 +51,7 @@ public final class org/polyfrost/oneconfig/api/config/v1/ConfigManager {
 	public fun get (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	public fun getFolder ()Ljava/nio/file/Path;
 	public fun getNoRegister (Ljava/nio/file/Path;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
+	public static fun initialize ()V
 	public static fun internal ()Lorg/polyfrost/oneconfig/api/config/v1/ConfigManager;
 	public fun load (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	public static fun openProfile (Ljava/lang/String;)V
@@ -54,6 +61,7 @@ public final class org/polyfrost/oneconfig/api/config/v1/ConfigManager {
 	public fun save (Ljava/lang/String;)Z
 	public fun save (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)Z
 	public fun saveAll ()V
+	public static fun submitForInitialization (Lorg/polyfrost/oneconfig/api/config/v1/Config;)V
 	public fun trees ()Ljava/util/Collection;
 }
 
@@ -70,7 +78,7 @@ public class org/polyfrost/oneconfig/api/config/v1/KtConfig : org/polyfrost/onec
 	public final fun hideIf (Lkotlin/reflect/KProperty;Lkotlin/reflect/KProperty0;)V
 	protected final synthetic fun keybind (Lorg/polyfrost/polyui/input/KeyBinder$Bind;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
 	public static synthetic fun keybind$default (Lorg/polyfrost/oneconfig/api/config/v1/KtConfig;Lorg/polyfrost/polyui/input/KeyBinder$Bind;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
-	protected final fun makeTree (Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
+	protected final fun makeTree ()Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	protected final synthetic fun radiobutton ([Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
 	public static synthetic fun radiobutton$default (Lorg/polyfrost/oneconfig/api/config/v1/KtConfig;[Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
 	protected final synthetic fun slider (FFFLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/KtConfig$Provider;
@@ -107,6 +115,12 @@ public final class org/polyfrost/oneconfig/api/config/v1/Visualizer$ColorVisuali
 	public fun visualize (Lorg/polyfrost/oneconfig/api/config/v1/Property;)Lorg/polyfrost/polyui/component/Drawable;
 }
 
+public final class org/polyfrost/oneconfig/api/config/v1/Visualizer$DraggableListVisualizer : org/polyfrost/oneconfig/api/config/v1/Visualizer {
+	public fun <init> ()V
+	public synthetic fun visualize (Lorg/polyfrost/oneconfig/api/config/v1/Property;)Lorg/polyfrost/polyui/component/Drawable;
+	public fun visualize (Lorg/polyfrost/oneconfig/api/config/v1/Property;)Lorg/polyfrost/polyui/component/impl/Group;
+}
+
 public final class org/polyfrost/oneconfig/api/config/v1/Visualizer$DropdownVisualizer : org/polyfrost/oneconfig/api/config/v1/Visualizer {
 	public fun <init> ()V
 	public fun visualize (Lorg/polyfrost/oneconfig/api/config/v1/Property;)Lorg/polyfrost/polyui/component/Drawable;
@@ -121,6 +135,12 @@ public final class org/polyfrost/oneconfig/api/config/v1/Visualizer$InfoVisualiz
 public final class org/polyfrost/oneconfig/api/config/v1/Visualizer$KeybindVisualizer : org/polyfrost/oneconfig/api/config/v1/Visualizer {
 	public fun <init> ()V
 	public fun visualize (Lorg/polyfrost/oneconfig/api/config/v1/Property;)Lorg/polyfrost/polyui/component/Drawable;
+}
+
+public final class org/polyfrost/oneconfig/api/config/v1/Visualizer$MultiSelectDropdownVisualizer : org/polyfrost/oneconfig/api/config/v1/Visualizer {
+	public fun <init> ()V
+	public synthetic fun visualize (Lorg/polyfrost/oneconfig/api/config/v1/Property;)Lorg/polyfrost/polyui/component/Drawable;
+	public fun visualize (Lorg/polyfrost/oneconfig/api/config/v1/Property;)Lorg/polyfrost/polyui/component/impl/Group;
 }
 
 public final class org/polyfrost/oneconfig/api/config/v1/Visualizer$NumberVisualizer : org/polyfrost/oneconfig/api/config/v1/Visualizer {

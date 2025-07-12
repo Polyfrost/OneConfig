@@ -14,7 +14,7 @@ public abstract class org/polyfrost/oneconfig/api/config/v1/Node {
 	public fun getTitle ()Ljava/lang/String;
 	public final fun hasMetadata ()Z
 	public final fun hashCode ()I
-	public abstract fun overwrite (Lorg/polyfrost/oneconfig/api/config/v1/Node;)V
+	public abstract fun overwrite (Lorg/polyfrost/oneconfig/api/config/v1/Node;Z)V
 	public final fun removeMetadata (Ljava/lang/String;)Z
 	public fun setID (Ljava/lang/String;)V
 	public fun setTitle (Ljava/lang/String;)V
@@ -70,7 +70,7 @@ public abstract class org/polyfrost/oneconfig/api/config/v1/Property : org/polyf
 	public final fun isArray ()Z
 	public final fun isPrimitive ()Z
 	public fun onDisplayChange (Ljava/util/function/Consumer;)V
-	public fun overwrite (Lorg/polyfrost/oneconfig/api/config/v1/Node;)V
+	public fun overwrite (Lorg/polyfrost/oneconfig/api/config/v1/Node;Z)V
 	public static fun recast (Lorg/polyfrost/oneconfig/api/config/v1/Property;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
 	public fun revaluateDisplay ()V
 	public final fun set (Ljava/lang/Object;)V
@@ -112,8 +112,8 @@ public class org/polyfrost/oneconfig/api/config/v1/Tree : org/polyfrost/oneconfi
 	public fun getProp ([Ljava/lang/String;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
 	public fun onAll (Ljava/util/function/BiConsumer;)V
 	public fun onAllProps (Ljava/util/function/BiConsumer;)V
-	public fun overwrite (Lorg/polyfrost/oneconfig/api/config/v1/Node;)V
-	public fun overwrite (Lorg/polyfrost/oneconfig/api/config/v1/Tree;Ljava/util/function/Function;)V
+	public fun overwrite (Lorg/polyfrost/oneconfig/api/config/v1/Node;Z)V
+	public fun overwrite (Lorg/polyfrost/oneconfig/api/config/v1/Tree;Ljava/util/function/Function;Z)V
 	public fun put (Lorg/polyfrost/oneconfig/api/config/v1/Node;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	public fun put ([Lorg/polyfrost/oneconfig/api/config/v1/Node;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	public fun set (Ljava/lang/String;Lorg/polyfrost/oneconfig/api/config/v1/Node;)Lorg/polyfrost/oneconfig/api/config/v1/Tree;

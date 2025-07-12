@@ -17,7 +17,7 @@ import kotlin.io.path.toPath
  *
  */
 @SupportedAnnotationTypes("org.polyfrost.oneconfig.relocator.annotations.*")
-class JApRelocator : AbstractProcessor() {
+internal class JApRelocator : AbstractProcessor() {
 
     override fun process(annotations: Set<TypeElement>, roundEnv: RoundEnvironment): Boolean {
         val test = this.processingEnv.filer.createSourceFile("test" + UUID.randomUUID().toString().replace("-", ""))

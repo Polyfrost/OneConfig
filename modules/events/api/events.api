@@ -202,6 +202,10 @@ public class org/polyfrost/oneconfig/api/event/v1/events/ResizeEvent : org/polyf
 	public fun component2 ()I
 }
 
+public class org/polyfrost/oneconfig/api/event/v1/events/ResourceFinishedLoading : org/polyfrost/oneconfig/api/event/v1/events/Event {
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/event/v1/events/ResourceFinishedLoading;
+}
+
 public class org/polyfrost/oneconfig/api/event/v1/events/ScreenOpenEvent : org/polyfrost/oneconfig/api/event/v1/events/Event$Cancellable {
 	public fun <init> (Ljava/lang/Object;)V
 	public fun component1 ()Ljava/lang/Object;

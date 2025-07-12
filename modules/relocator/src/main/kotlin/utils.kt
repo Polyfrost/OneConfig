@@ -5,19 +5,19 @@ import kotlin.io.path.exists
 import kotlin.io.path.nameWithoutExtension
 import kotlin.io.path.readText
 
-enum class SourceKind(val fileExtension: String) {
+internal enum class SourceKind(val fileExtension: String) {
     JAVA("java"),
     KOTLIN("kt"),
     ;
 }
 
-enum class SourceLocation(val path: String) {
+internal enum class SourceLocation(val path: String) {
     PRE_PROCESSED("build/preprocessed/main"),
     NORMAL("src/main"),
     ;
 }
 
-object SourceFileHelper {
+internal object SourceFileHelper {
     lateinit var dir: Path
     fun readSourceFile(kind: SourceKind, path: String) = SourceLocation.entries.map { dir.resolve(it.path) }
         .map { it.resolve(kind.name.lowercase()) }

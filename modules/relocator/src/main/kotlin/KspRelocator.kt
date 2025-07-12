@@ -17,13 +17,13 @@ import kotlin.io.path.Path
 import kotlin.io.path.extension
 import kotlin.io.path.readText
 
-const val mainMixinPath = "org.polyfrost.oneconfig.internal.mixin"
+internal const val mainMixinPath = "org.polyfrost.oneconfig.internal.mixin"
 
 
 /**
  * The relocator for kotlin source files.
  */
-class KspRelocator : SymbolProcessorProvider, SymbolProcessor {
+internal class KspRelocator : SymbolProcessorProvider, SymbolProcessor {
 
     var hasRun = false
     lateinit var logger: KSPLogger
