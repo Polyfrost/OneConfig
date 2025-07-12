@@ -9,12 +9,10 @@ import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.Visualizer
 import org.polyfrost.oneconfig.api.config.v1.Visualizer.*
+import org.polyfrost.oneconfig.internal.DynamicPolyImage
 import org.polyfrost.oneconfig.internal.mixin.compat.moulconfig.Accessor_GuiOptionEditorDropdown
 import org.polyfrost.oneconfig.relocator.annotations.Moulconfig
-import org.polyfrost.oneconfig.utils.v1.dsl.category
-import org.polyfrost.oneconfig.utils.v1.dsl.noCache
-import org.polyfrost.oneconfig.utils.v1.dsl.saveFunction
-import org.polyfrost.oneconfig.utils.v1.dsl.subcategory
+import org.polyfrost.oneconfig.utils.v1.dsl.*
 import org.polyfrost.polyui.color.PolyColor
 import java.lang.reflect.Type
 import java.util.*
@@ -28,6 +26,7 @@ object MoulConfigCompat {
 
     @JvmStatic
     fun parseMoulconfig(processor: MoulConfigProcessor<*>, config: MoulConfig) {
+        CompatLoader.markFirstModAsSkip()
         ConfigManager.active().register(parseConfigTree(config, processor.allCategories.values))
     }
 
@@ -38,6 +37,11 @@ object MoulConfigCompat {
         this.saveFunction = Runnable { config.saveNow() }
         this.noCache = true
         this.title = mod?.name ?: ""
+        mod?.let {
+            val path = it.iconPath ?: return@let
+            val stream = it.icon ?: return@let
+            this.icon = DynamicPolyImage(path, stream)
+        }
 
         children.forEach {
             val tree = parseCategory(config, it, this) { parent -> map[parent] ?: this }
@@ -45,7 +49,12 @@ object MoulConfigCompat {
         }
     }
 
-    fun parseCategory(config: MoulConfig, category: ProcessedCategory, root: Tree, parentResolver: (String?) -> Tree): Tree {
+    fun parseCategory(
+        config: MoulConfig,
+        category: ProcessedCategory,
+        root: Tree,
+        parentResolver: (String?) -> Tree,
+    ): Tree {
         val tree = Tree.tree()
         val parent = parentResolver(category.parentCategoryId)
         tree.id = UUID.randomUUID().toString()
@@ -178,10 +187,12 @@ object MoulConfigCompat {
             is GuiOptionEditorInfoText -> return null
             is GuiOptionEditorText -> return null
             is GuiOptionEditorDraggableList -> return null
-            else -> return null // editor type either unsupported or unknown
+            else -> {
+                println("Skipping ${children.path} - ${editor::class}")
+                return null // editor type either unsupported or unknown
+            }
         }
 
-        println("Prasing ${children.path}")
         property.metadata["visualizer"] = visualizer.java
         parentResolver(null).put(property.build())
         return null

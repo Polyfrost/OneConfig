@@ -79,6 +79,9 @@ repositories {
     maven("https://maven.teamresourceful.com/repository/maven-public/") {
         content { includeGroupAndSubgroups("me.owdding") }
     }
+    maven("https://maven.azureaaron.net/releases") {
+        content { includeGroup("net.azureaaron") }
+    }
 }
 
 if (mcData.isLegacyForge) { // Quick substitution for relaunch in dev env, so that mixinextras works properly (yay!)
@@ -297,7 +300,10 @@ dependencies {
         }
     }
 
-    compileOnly("com.github.hannibal002:SkyHanni:3.8.0")
+    compileOnly("com.github.hannibal002:SkyHanni:3.8.0") { isTransitive = false }
+    if ((mcData.version as MinecraftReleaseVersion).isNewerThan(MinecraftReleaseVersion.from("1.21.4"))) {
+        compileOnly("net.azureaaron:dandelion:1.0.0-alpha.3") { isTransitive = false }
+    }
     api("dev.deftu:enhancedeventbus:2.0.0") // TODO
 }
 

@@ -4,6 +4,7 @@ import org.polyfrost.oneconfig.api.config.v1.Node
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.Visualizer
+import org.polyfrost.polyui.data.PolyImage
 import kotlin.reflect.KClass
 
 @Suppress("UNCHECKED_CAST")
@@ -27,8 +28,8 @@ internal var Node.index: Int?
     get() = metadata?.get("index") as? Int
     set(value) = addMetadata("index", value)
 
-internal var Node.icon: String?
-    get() = metadata?.get("icon") as? String
+internal var Node.icon: PolyImage?
+    get() = metadata?.get("icon") as? PolyImage
     set(value) = addMetadata("icon", value)
 
 internal var Tree.saveFunction: Runnable?

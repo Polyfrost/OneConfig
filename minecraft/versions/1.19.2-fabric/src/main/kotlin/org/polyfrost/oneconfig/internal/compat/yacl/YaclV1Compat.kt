@@ -1,5 +1,6 @@
 package org.polyfrost.oneconfig.internal.compat.yacl
 
+import dev.deftu.omnicore.common.OmniLoader
 import dev.isxander.yacl3.api.ConfigCategory
 import dev.isxander.yacl3.api.Controller
 import dev.isxander.yacl3.api.Option
@@ -15,10 +16,11 @@ import net.minecraft.text.Text
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Properties
 import org.polyfrost.oneconfig.api.config.v1.Tree
-import org.polyfrost.oneconfig.api.config.v1.Tree.tree
 import org.polyfrost.oneconfig.api.config.v1.Visualizer
+import org.polyfrost.oneconfig.internal.DynamicPolyImage
 import org.polyfrost.oneconfig.internal.compat.CompatLoader
 import org.polyfrost.oneconfig.utils.v1.dsl.category
+import org.polyfrost.oneconfig.utils.v1.dsl.icon
 import org.polyfrost.oneconfig.utils.v1.dsl.saveFunction
 import org.polyfrost.oneconfig.utils.v1.dsl.subcategory
 import org.polyfrost.oneconfig.utils.v1.dsl.visualizerKt
@@ -46,27 +48,36 @@ object YaclV1Compat {
     }
 
     @JvmStatic
-    fun build(text: Text, categories: List<ConfigCategory>, saveFunction: Runnable) =
+    fun build(text: Text, categories: List<ConfigCategory>, saveFunction: Runnable) {
+        val mod = CompatLoader.findFirstMod()
         CompatLoader.requireTranslations {
             parseConfig(
                 text,
                 categories,
-                saveFunction
+                saveFunction,
+                mod
             )?.let(ConfigManager.active()::register)
         }
-
+    }
     private fun parseConfig(
         text: Text,
         categories: List<ConfigCategory>,
         saveFunction: Runnable,
+        mod: OmniLoader.ModInfo?,
     ): Tree? {
         val root = Tree.tree()
+
 
         val allOptions = categories.flatMap(ConfigCategory::groups).flatMap(OptionGroup::options)
         val saveAll = { allOptions.forEach(Option<*>::applyValue) }
 
         root.title = text.stripped
         root.id = root.title
+        mod?.let {
+            val path = it.iconPath ?: return@let
+            val stream = it.icon ?: return@let
+            root.icon = DynamicPolyImage(path, stream)
+        }
         root.saveFunction = Runnable {
             saveAll()
             saveFunction.run()

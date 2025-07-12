@@ -7,20 +7,17 @@ import com.teamresourceful.resourcefulconfig.api.types.entries.ResourcefulConfig
 import com.teamresourceful.resourcefulconfig.api.types.entries.ResourcefulConfigValueEntry
 import com.teamresourceful.resourcefulconfig.api.types.options.EntryType
 import com.teamresourceful.resourcefulconfig.api.types.options.Option
+import dev.deftu.omnicore.common.OmniLoader
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Properties
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.Visualizer
-import org.polyfrost.oneconfig.utils.v1.dsl.category
-import org.polyfrost.oneconfig.utils.v1.dsl.icon
-import org.polyfrost.oneconfig.utils.v1.dsl.index
-import org.polyfrost.oneconfig.utils.v1.dsl.subcategory
-import org.polyfrost.oneconfig.utils.v1.dsl.visualizerKt
+import org.polyfrost.oneconfig.internal.DynamicPolyImage
+import org.polyfrost.oneconfig.utils.v1.dsl.*
 import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.color.argb
 import org.polyfrost.polyui.color.mutable
 import java.util.*
-import kotlin.collections.forEach
 import kotlin.reflect.KClass
 
 internal object RConfigCompat {
@@ -32,17 +29,34 @@ internal object RConfigCompat {
     }
 
     @JvmStatic
-    fun addConfig(config: ResourcefulConfig) = CompatLoader.requireTranslations { parseConfig(config, null, null)?.let(ConfigManager.active()::register) }
+    fun addConfig(config: ResourcefulConfig) {
+        val mod = CompatLoader.findFirstMod()
+        CompatLoader.requireTranslations { parseConfig(config, null, null, mod)?.let(ConfigManager.active()::register) }
+    }
 
-    private fun parseConfig(config: ResourcefulConfig, category: String?, root: Tree?): Tree? {
+    private fun parseConfig(config: ResourcefulConfig, category: String?, root: Tree?, mod: OmniLoader.ModInfo?): Tree? {
         val tree = Tree.tree()
         tree.id = config.id()
         tree.title = config.info().title().toLocalizedString()
         tree.description = config.info().description().toLocalizedString()
         tree.category = category ?: config.info().title().toLocalizedString()
         tree.subcategory = config.info().title().toLocalizedString()
+        if (category == null) {
+            mod?.let {
+                val path = it.iconPath ?: return@let
+                val stream = it.icon ?: return@let
+                tree.icon = DynamicPolyImage(path, stream)
+            }
+        }
 
-        config.categories().values.mapNotNull { parseConfig(it, category ?: it.info().title().toLocalizedString(), root ?: tree) }.forEach((root ?: tree)::put)
+        config.categories().values.mapNotNull {
+            parseConfig(
+                it,
+                category ?: it.info().title().toLocalizedString(),
+                root ?: tree,
+                mod
+            )
+        }.forEach((root ?: tree)::put)
 
         parseAny(config.entries().values, tree)
         parseButtons(config.buttons(), tree)
@@ -73,16 +87,15 @@ internal object RConfigCompat {
     }
 
     private fun parseCategory(entry: ResourcefulConfigObjectEntry, tree: Tree) {
-            val objectEntry = Tree.tree()
-            objectEntry.title = entry.options().title.toLocalizedString()
-            objectEntry.description = entry.options().comment.toLocalizedString()
-            objectEntry.id = UUID.randomUUID().toString()
-            objectEntry.category = tree.category
-            objectEntry.subcategory = entry.options().title.toLocalizedString()
-            objectEntry.index = -1
-            objectEntry.icon = ""
-            parseAny(entry.entries().values, objectEntry)
-            tree.put(objectEntry)
+        val objectEntry = Tree.tree()
+        objectEntry.title = entry.options().title.toLocalizedString()
+        objectEntry.description = entry.options().comment.toLocalizedString()
+        objectEntry.id = UUID.randomUUID().toString()
+        objectEntry.category = tree.category
+        objectEntry.subcategory = entry.options().title.toLocalizedString()
+        objectEntry.index = -1
+        parseAny(entry.entries().values, objectEntry)
+        tree.put(objectEntry)
     }
 
     private fun buildAndAdd(entry: ResourcefulConfigValueEntry, tree: Tree) {

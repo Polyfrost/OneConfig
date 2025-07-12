@@ -30,7 +30,7 @@ object ModMenuCompat {
 
                 modMenuTree.title = mod.name
                 modMenuTree.description = "(Mod Menu Compat)"
-
+                //TODO icon, idfk how to set a native image as PolyImage :sob:
                 modMenuTree.addMetadata("on_click") {
                     OmniScreen.currentScreen = ModMenu.getConfigScreen(mod.id, OmniScreen.currentScreen)
                 }

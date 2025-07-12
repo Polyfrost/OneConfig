@@ -25,7 +25,8 @@ object CompatLoader {
         "org.polyfrost.oneconfig",
         "java.lang",
         "net.fabric",
-        "net.azureaaron.dandelion"
+        "net.azureaaron.dandelion",
+        "kotlin"
     )
 
     fun findFirstMod(): OmniLoader.ModInfo? {
