@@ -70,7 +70,7 @@ public abstract class Backend {
             // no point in merging if the tree is empty.
             if (in.map.isEmpty()) return new RegistrationResult(current, RegistrationResult.MERGED);
             LOGGER.info("performing tree merge between {} and {}", current.getTitle(), in.getTitle());
-            current.overwrite(in);
+            current.overwrite(in, false);
             // clear the old tree to prevent illegal usage.
             in.clear();
             save(current);
@@ -114,7 +114,7 @@ public abstract class Backend {
             return false;
         }
         if (t == null) return false;
-        tree.overwrite(t);
+        tree.overwrite(t, false);
 
         putSafe(tree);
         return true;

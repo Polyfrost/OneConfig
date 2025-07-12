@@ -180,7 +180,7 @@ public abstract class Property<T> extends Node implements Serializable {
 
     @Override
     @SuppressWarnings({"unchecked", "rawtypes"})
-    public void overwrite(Node with) {
+    public void overwrite(Node with, boolean preserveMissingOptions) {
         if (!(with instanceof Property)) throw new IllegalArgumentException("Cannot overwrite a property with a non-property");
         if (!Objects.equals(this.getID(), with.getID())) throw new IllegalArgumentException("ID should be the same for overwrite");
         Property<?> that = (Property<?>) with;

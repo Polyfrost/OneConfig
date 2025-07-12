@@ -30,6 +30,7 @@ import dev.deftu.omnicore.client.OmniChat;
 import dev.deftu.omnicore.client.render.OmniMatrixStack;
 import dev.deftu.omnicore.client.render.OmniResolution;
 import dev.deftu.omnicore.client.render.framebuffer.ManagedFramebuffer;
+import dev.deftu.omnicore.client.render.state.OmniManagedAlphaState;
 import dev.deftu.omnicore.client.render.state.OmniManagedBlendState;
 import dev.deftu.omnicore.client.render.state.OmniManagedDepthState;
 import dev.deftu.omnicore.client.render.texture.GpuTexture;
@@ -128,7 +129,9 @@ public interface UIManager {
                 framebuffer.clearColor(0f, 0f, 0f, 0f); // Clear to transparent black
                 framebuffer.clearDepthStencil(1.0, 0);
                 framebuffer.usingToRender((matrixStack, w, h) -> {
+                    OmniManagedAlphaState.disableAlpha();
                     matrices.runReplacingGlobalState(polyUI::render);
+                    OmniManagedAlphaState.enableAlpha();
                     return Unit.INSTANCE;
                 });
 

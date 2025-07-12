@@ -29,10 +29,10 @@ package org.polyfrost.oneconfig.api.hud.v1
 import org.apache.logging.log4j.LogManager
 import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
+import org.polyfrost.oneconfig.api.hud.v1.internal.HudSettingsPage
 import org.polyfrost.oneconfig.api.hud.v1.internal.HudsPage
 import org.polyfrost.oneconfig.api.hud.v1.internal.alignC
 import org.polyfrost.oneconfig.api.hud.v1.internal.build
-import org.polyfrost.oneconfig.api.hud.v1.internal.HudSettingsPage
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.UIManager
 import org.polyfrost.oneconfig.utils.v1.MHUtils
@@ -44,13 +44,13 @@ import org.polyfrost.polyui.color.rgba
 import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.component.extensions.*
 import org.polyfrost.polyui.component.impl.*
-import org.polyfrost.polyui.data.Cursor
 import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.operations.Fade
 import org.polyfrost.polyui.operations.Move
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.unit.seconds
+import org.polyfrost.polyui.utils.image
 import kotlin.io.path.exists
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
@@ -175,8 +175,8 @@ object HudManager {
         }
         if (prevSize.isPositive) {
             polyUI.resize(prevSize.x, prevSize.y)
-            polyUI.window?.pixelRatio = Platform.screen().pixelRatio()
         }
+        polyUI.window?.pixelRatio = Platform.screen().pixelRatio()
         LOGGER.info("successfully loaded {} HUDs from {} providers (total {} registered providers)", i, used.size, hudProviders.size)
         hudProviders.forEach { (cls, h) ->
             if (cls in used) return@forEach
@@ -292,21 +292,15 @@ object HudManager {
                             Platform.screen().close()
                         }
                     },
-                    Block(
-                        Image("assets/oneconfig/ico/search.svg"),
-                        TextInput(placeholder = "oneconfig.search.placeholder", visibleSize = Vec2(220f, 12f)),
-                        size = Vec2(256f, 32f),
-                    ).withBorder().withCursor(Cursor.Text).onClick {
-                        polyUI.focus(this[1])
-                    },
-                    alignment = Align(main = Align.Main.SpaceBetween, pad = Vec2(12f, 6f)),
+                    BoxedTextInput(placeholder = "oneconfig.search.placeholder", image = "assets/oneconfig/ico/search.svg".image(), size = Vec2(256f, 32f)),
+                    alignment = Align(main = Align.Main.SpaceBetween, pad = Vec2(24f, 0f)),
                     size = Vec2(500f, 32f),
                 ),
-                Text("oneconfig.hudeditor.title", fontSize = 24f).padded(16f, 0f).setFont { semiBold },
+                Text("oneconfig.hudeditor.title", fontSize = 24f).padded(24f, 0f).setFont { semiBold },
                 hudsPage,
                 size = Vec2(500f, 1048f),
-                alignment = Align(cross = Align.Cross.Start, pad = Vec2(0f, 18f)),
-            ).apply {
+                alignment = Align(cross = Align.Cross.Start, pad = Vec2(0f, 16f)),
+            ).setPalette { page.bg }.withBorder().apply {
                 addOperation {
                     if (polyUI.mouseDown) {
                         if (slinex != -1f) polyUI.renderer.line(slinex, 0f, slinex, polyUI.size.y, snapLineColor, 1f)

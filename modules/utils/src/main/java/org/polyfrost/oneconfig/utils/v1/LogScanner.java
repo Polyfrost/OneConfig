@@ -52,8 +52,6 @@ import dev.deftu.omnicore.common.OmniLoader;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
-import org.polyfrost.oneconfig.api.platform.v1.LoaderPlatform;
-import org.polyfrost.oneconfig.api.platform.v1.Platform;
 
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -62,12 +60,7 @@ import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.CodeSource;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -199,7 +192,7 @@ public final class LogScanner {
             if (uri.toString().endsWith(".class") && OmniLoader.isDevelopment()) {
                 LOGGER.error("The mod you are currently developing caused this issue, or another class file. Returning 'this'.");
                 LOGGER.error("Class: {}", clazz.getName());
-                return Collections.singleton(new OmniLoader.ModInfo("this", "this", "Unknown", null));
+                return Collections.singleton(new OmniLoader.ModInfo("this", "this", "Unknown", null, null));
             }
 
             return getModsAt(Paths.get(uri), modMap);

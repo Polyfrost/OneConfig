@@ -99,14 +99,14 @@ public abstract class Config {
 
     protected void restoreDefaults() {
         if (tree == null) throw notInitialized();
-        tree.overwrite(ConfigManager.backup().get(tree.getID()));
+        tree.overwrite(ConfigManager.backup().get(tree.getID()), false);
     }
 
     protected void restoreProperty(String option) {
         Property<?> prop = getProperty(option);
         // first operation will be slow as the tree will have to be loaded from the disc, but this is intended as to not waste memory
         // once one property is restored/restore all is used, the backup tree will be in memory and so will be fast to restore more
-        prop.overwrite(getProperty(ConfigManager.backup().get(tree.getID()), option));
+        prop.overwrite(getProperty(ConfigManager.backup().get(tree.getID()), option), false);
     }
 
     protected void addDependency(String option, String condition) {
@@ -166,7 +166,7 @@ public abstract class Config {
         if (tree == null) throw notInitialized();
         Tree in = ConfigManager.active().get(id);
         if (in == null) return;
-        tree.overwrite(in);
+        tree.overwrite(in, false);
     }
 
     protected void loadFrom(Path p) {
@@ -178,7 +178,7 @@ public abstract class Config {
             return;
         }
         if (in == null) return;
-        tree.overwrite(in);
+        tree.overwrite(in, false);
     }
 
 

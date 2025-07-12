@@ -34,6 +34,7 @@ import org.polyfrost.oneconfig.api.hud.v1.LegacyHud
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.color.Colors
 import org.polyfrost.polyui.color.mutable
+import org.polyfrost.polyui.color.rgba
 import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.component.extensions.*
 import org.polyfrost.polyui.component.impl.*
@@ -54,6 +55,8 @@ import kotlin.math.min
 
 val alignC = Align(main = Align.Main.Center, cross = Align.Cross.Center)
 val alignNoPad = Align(pad = Vec2.ZERO)
+val alignHudDefault = Align(main = Align.Main.Center, cross = Align.Cross.Center, pad = Vec2(8f, 8f))
+val BLACK_HALF = rgba(0, 0, 0, 0.5f)
 private val mcFont = FontFamily("Minecraft", "assets/oneconfig/fonts/minecraft")
 const val angleSnapMargin = PI / 12.0
 const val minMargin = 4f
@@ -71,25 +74,25 @@ fun HudsPage(huds: Collection<Hud<*>>): Drawable {
             },
             HudButton("oneconfig.huds.pvp").onClick {
                 parent[1] = Group(
-                    *hudMap.filterKeys { it == Hud.Category.COMBAT }.values.toTypedArray(),
+                    *hudMap.filterValuesByKey { it == Hud.Category.COMBAT }.toTypedArray(),
                     visibleSize = Vec2(500f, 800f),
                 )
             },
             HudButton("oneconfig.huds.info").onClick {
                 parent[1] = Group(
-                    *hudMap.filterKeys { it == Hud.Category.INFO }.values.toTypedArray(),
+                    *hudMap.filterValuesByKey { it == Hud.Category.INFO }.toTypedArray(),
                     visibleSize = Vec2(500f, 800f),
                 )
             },
             HudButton("oneconfig.huds.player").onClick {
                 parent[1] = Group(
-                    *hudMap.filterKeys { it == Hud.Category.PLAYER }.values.toTypedArray(),
+                    *hudMap.filterValuesByKey { it == Hud.Category.PLAYER }.toTypedArray(),
                     visibleSize = Vec2(500f, 800f),
                 )
             },
             alignment = Align(pad = Vec2(6f, 8f)),
-            size = Vec2(500f, 48f)
-        ),
+            size = Vec2(452f, 48f)
+        ).padded(18f, 0f).named("HudsPageFilterButtons"),
         if (huds.isNotEmpty()) {
             Group(
                 children = huds.mapToArray {
@@ -97,13 +100,14 @@ fun HudsPage(huds: Collection<Hud<*>>): Drawable {
                     val obj = Block(
                         preview,
                         alignment = alignC,
-                    ).withBorder(2f) { page.border10 }.minimumSize(215f by 80f).withHoverStates().onInit {
+                    ).withBorder().minimumSize(215f by 80f).withHoverStates().onInit {
                         // #created-with-set-size = true
                         layoutFlags = layoutFlags or 0b00000010
                     }
                     hudMap[it.category] = obj
                     obj
                 },
+                alignment = Align(pad = Vec2(22f, 22f)),
                 size = Vec2(500f, 0f),
                 visibleSize = Vec2(500f, 800f),
             )
@@ -111,18 +115,27 @@ fun HudsPage(huds: Collection<Hud<*>>): Drawable {
             Text("oneconfig.hudeditor.nothinghere", fontSize = 14f).secondary()
         },
         size = Vec2(500f, 0f),
+        alignment = Align(main = Align.Main.SpaceBetween, pad = Vec2.ZERO)
     ).onInit {
         if (huds.isNotEmpty()) {
             polyUI.every(1.seconds) {
                 if (!HudManager.panelExists) return@every
                 huds.forEach {
-                    if (it.update()) {
-                        it.getBackground()?.recalculate()
-                    }
+                    if (it.update()) it.getBackground()?.recalculate()
                 }
             }
         }
     }.named("HudsPage")
+}
+
+inline fun <K, reified V> Map<K, V>.filterValuesByKey(predicate: (K) -> Boolean): MutableList<V> {
+    val out = mutableListOf<V>()
+    for ((key, value) in this) {
+        if (predicate(key)) {
+            out.add(value)
+        }
+    }
+    return out
 }
 
 private fun HudButton(text: String): Block {
@@ -136,21 +149,14 @@ fun HudSettingsPage(hud: Hud<*>): Drawable {
             "assets/oneconfig/ico/paintbrush.svg".image() to "oneconfig.hudeditor.designer.title",
         ).onInit { color = polyUI.colors.component.bgDeselected }.onChange { index: Int ->
             if (index == 0) {
-                val p = parent
-                val config = HudVisualizer.get(hud.tree)
-                p[1] = config
-//                p.size = p.size.coerceAtLeast(Vec2(config.x + config.width - p.x, config.y + config.height - p.y))
+                parent[1] = HudVisualizer.get(hud.tree)
             } else {
-                val p = parent
-                val hudDesigner = makeHudDesigner(hud)
-                p[1] = hudDesigner
-//                p.size = p.size.coerceAtLeast(Vec2(hudDesigner.x + hudDesigner.width - p.x, hudDesigner.y + hudDesigner.height - p.y))
+                parent[1] = makeHudDesigner(hud)
             }
             false
         },
         HudVisualizer.get(hud.tree),
-//        visibleSize = Vec2(500f, 800f),
-        alignment = Align(cross = Align.Cross.Start),
+        alignment = Align(cross = Align.Cross.Start, mode = Align.Mode.Vertical, wrap = Align.Wrap.NEVER),
     ).namedId("HudSettingsPage")
 }
 
@@ -171,29 +177,31 @@ private fun makeHudDesigner(hud: Hud<*>): Drawable {
                     "oneconfig.align.end",
                     "oneconfig.align.spacebetween",
                     "oneconfig.align.spaceevenly",
+                    initial = receiver.alignment.main.ordinal
                 ).minimumSize(70f by 32f).titled("oneconfig.hudeditor.padding.mode.main").onChange { index: Int ->
                     val a = receiver.alignment
-                    receiver.alignment = Align(Align.Main.entries[index], a.cross, a.mode, a.pad, a.maxRowSize)
+                    receiver.alignment = Align(Align.Main.entries[index], a.cross, a.mode, a.pad, a.wrap)
                     false
                 },
                 Dropdown(
                     "oneconfig.align.start", "oneconfig.align.center", "oneconfig.align.end",
+                    initial = receiver.alignment.cross.ordinal
                 ).minimumSize(70f by 32f).titled("oneconfig.hudeditor.padding.mode.cross").onChange { index: Int ->
                     val a = receiver.alignment
-                    receiver.alignment = Align(a.main, Align.Cross.entries[index], a.mode, a.pad, a.maxRowSize)
+                    receiver.alignment = Align(a.main, Align.Cross.entries[index], a.mode, a.pad, a.wrap)
                     false
                 },
-                BoxedNumericInput("assets/oneconfig/ico/info.svg".image(), initialValue = receiver.alignment.pad.x, size = Vec2(72f, 0f), post = "px").also {
+                BoxedNumericInput("assets/oneconfig/ico/info.svg".image(), initialValue = receiver.alignment.pad.x, size = Vec2(72f, 0f), post = "px", arrows = false).also {
                     it[0].onChange { value: Float ->
                         val a = receiver.alignment
-                        receiver.alignment = Align(a.main, a.cross, a.mode, Vec2(value, a.pad.y), a.maxRowSize)
+                        receiver.alignment = Align(a.main, a.cross, a.mode, Vec2(value, a.pad.y), a.wrap)
                         false
                     }
                 }.titled("oneconfig.hudeditor.padding.main"),
-                BoxedNumericInput("assets/oneconfig/ico/info.svg".image(), initialValue = receiver.alignment.pad.y, size = Vec2(72f, 0f), post = "px").also {
+                BoxedNumericInput("assets/oneconfig/ico/info.svg".image(), initialValue = receiver.alignment.pad.y, size = Vec2(72f, 0f), post = "px", arrows = false).also {
                     it[0].onChange { value: Float ->
                         val a = receiver.alignment
-                        receiver.alignment = Align(a.main, a.cross, a.mode, Vec2(a.pad.x, value), a.maxRowSize)
+                        receiver.alignment = Align(a.main, a.cross, a.mode, Vec2(a.pad.x, value), a.wrap)
                         false
                     }
                 }.titled("oneconfig.hudeditor.padding.cross"),
@@ -375,7 +383,7 @@ fun textOptions(text: Text): Drawable {
             ex.parent.recalculate()
             false
         }.titled("oneconfig.hudeditor.text.font"),
-        BoxedNumericInput("assets/oneconfig/ico/info.svg".image(), initialValue = text.fontSize, min = 1f, size = Vec2(72f, 0f), post = "px").also {
+        BoxedNumericInput("assets/oneconfig/ico/info.svg".image(), initialValue = text.fontSize, min = 1f, size = Vec2(72f, 0f), post = "px", arrows = false).also {
             it[0].onChange { value: Float ->
                 text.fontSize = value
                 text._parent?.recalculate()

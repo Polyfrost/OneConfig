@@ -39,6 +39,7 @@ import org.polyfrost.polyui.component.impl.PopupMenu
 import org.polyfrost.polyui.component.impl.Text
 import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.unit.Point
+import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.unit.by
 import org.polyfrost.polyui.utils.fastEach
 import kotlin.math.sqrt
@@ -139,6 +140,8 @@ fun Hud<*>.buildNew(): Drawable {
                 HudManager.toggle()
             }
         }
+    val min = minimumSize()
+    if (min != Vec2.ZERO) o.minimumSize(min)
     initialize()
     return o
 }
@@ -158,9 +161,7 @@ fun Hud<*>.build(): Drawable {
         null
     } else {
         HudManager.polyUI.every(freq) {
-            if (update()) {
-                getBackground()?.recalculate()
-            }
+            if (update()) getBackground()?.recalculate()
         }
     }
 
@@ -202,15 +203,17 @@ fun Hud<*>.build(): Drawable {
                 true
             }
         }
+    val min = minimumSize()
+    if (min != Vec2.ZERO) o.minimumSize(min)
     initialize()
     return o
 }
 
 private fun <T : Drawable> T.addDefaultBackground(add: Boolean, color: PolyColor?) = if (!add) this else Block(
     this,
-    alignment = alignC,
-    color = color,
-).radius(6f).withBorder().namedId("HudBackground")
+    alignment = alignHudDefault,
+    color = color ?: BLACK_HALF,
+).radius(5f).namedId("HudBackground")
 
 private fun Drawable.addScaler(): Drawable {
     this.on(Event.Mouse.Clicked) {

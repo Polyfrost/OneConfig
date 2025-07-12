@@ -49,6 +49,8 @@ import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.utils.fastAll
 import org.polyfrost.polyui.utils.fastEachIndexed
 import java.util.function.Consumer
+import kotlin.experimental.and
+import kotlin.experimental.or
 import kotlin.io.path.exists
 import kotlin.random.Random
 
@@ -71,6 +73,9 @@ import kotlin.random.Random
  */
 @Suppress("EqualsOrHashCode")
 abstract class Hud<T : Drawable>(id: String, title: String, val category: Category) : Cloneable, Config(id, null, title, null) {
+    @Switch(title = "Static Width")
+    var staticWidth = false
+
     @Switch(title = "Show in F3")
     var showInF3 = true
 
@@ -105,19 +110,38 @@ abstract class Hud<T : Drawable>(id: String, title: String, val category: Catego
         tree.addMetadata("hidden", true)
         tree["x"] = ktProperty(out.hud::x)
         tree["y"] = ktProperty(out.hud::y)
-        tree["hidden"] = ktProperty(out::hidden)
         inspect(out.hud, tree)
         out.addToSerialized(tree)
         tree["hudClass"] = simple(value = out::class.java.name)
         if (with != null) {
-            tree.overwrite(with)
+            tree.overwrite(with, true)
             out.addHideHandlers(tree)
         } else LOGGER.info("generated new HUD config for ${out.title} -> ${tree.id}")
         out.tree = tree
+        out.addCallbacks(tree)
 
         ConfigManager.active().register(tree)
         return out
     }
+
+    private fun addCallbacks(tree: Tree) {
+        // initial
+        bgUseSetSize = staticWidth
+        tree.getProp<Boolean>("staticWidth")?.addCallback {
+            bgUseSetSize = it
+            false
+        }
+    }
+
+    @Suppress("UnstableApiUsage")
+    private var bgUseSetSize: Boolean
+        get() = (getBackground()?.createdWithSetSize ?: false)
+        set(value) {
+            getBackground()?.let {
+                if (value) it.layoutFlags = it.layoutFlags or 0b00000010
+                else it.layoutFlags = it.layoutFlags and 0b11111101.toByte()
+            }
+        }
 
     private fun addHideHandlers(tree: Tree) {
         val hideHandler = Consumer<HudEvent> { (opened): HudEvent ->
@@ -155,16 +179,9 @@ abstract class Hud<T : Drawable>(id: String, title: String, val category: Catego
     private fun inspect(cmp: Component, tree: Tree) {
         if (cmp is Drawable) {
             tree["color"] = ktProperty(cmp::_color)
-            tree["alpha"] = ktProperty(cmp::alpha)
-            tree["scaleX"] = ktProperty(cmp::scaleX)
-            tree["scaleY"] = ktProperty(cmp::scaleY)
-            tree["rotation"] = ktProperty(cmp::rotation)
-            tree["skewX"] = ktProperty(cmp::skewX)
-            tree["skewY"] = ktProperty(cmp::skewY)
         }
         when (cmp) {
             is Block -> {
-                tree["radii"] = ktProperty(cmp::radii)
                 tree["boarderColor"] = ktProperty(cmp::borderColor)
                 tree["boarderWidth"] = ktProperty(cmp::borderWidth)
             }
@@ -245,7 +262,7 @@ abstract class Hud<T : Drawable>(id: String, title: String, val category: Catego
      */
     fun get() = it ?: create().also { this.it = it }
 
-    fun getBackground() = if (hasBackground()) get()._parent as? Block else null
+    fun getBackground() = if (hasBackground()) it?._parent as? Block else null
 
     /**
      * Create a new instance of your HUD. This should be the complete unit of your hud, **excluding** a background.
@@ -257,7 +274,22 @@ abstract class Hud<T : Drawable>(id: String, title: String, val category: Catego
      *
      * this method will be called once, and once only.
      */
-    open fun initialize() {}
+    @MustBeInvokedByOverriders
+    open fun initialize() {
+        if (isReal) {
+            // asm: add all the background properties to the tree as well (we have to do it here because in make, the background is not be created yet)
+            val cmp = getBackground() ?: get()
+            tree["alignment"] = ktProperty( cmp::alignment)
+            tree["alpha"] = ktProperty(cmp::alpha)
+            tree["scaleX"] = ktProperty(cmp::scaleX)
+            tree["scaleY"] = ktProperty(cmp::scaleY)
+            tree["rotation"] = ktProperty(cmp::rotation)
+            tree["skewX"] = ktProperty(cmp::skewX)
+            tree["skewY"] = ktProperty(cmp::skewY)
+
+            if(cmp is Block) tree["radii"] = ktProperty(cmp::radii)
+        }
+    }
 
     /**
      * shorthand for [adding a callback][addCallback] on the given property that just calls [updateAndRecalculate].
@@ -321,6 +353,12 @@ abstract class Hud<T : Drawable>(id: String, title: String, val category: Catego
      * Only one instance is ever created, [isReal] will always return `true`, constructors can be used, and [clone] will never be called.
      */
     open fun multipleInstancesAllowed() = true
+
+
+    /**
+     * Specify a minimum size for this HUD.
+     */
+    open fun minimumSize(): Vec2 = Vec2.ZERO
 
     /**
      * This method will create a new instance of the HUD. It is key to the functionality of the HUD system.

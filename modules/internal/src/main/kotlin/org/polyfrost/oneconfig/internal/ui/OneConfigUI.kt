@@ -161,7 +161,7 @@ object OneConfigUI {
                         Platform.screen().display(HudManager.getWithEditor())
                     }.padded(0f, 200f, 0f, 0f),
                     size = Vec2(273f, 700f),
-                    alignment = Align(mode = Align.Mode.Vertical, pad = Vec2(6f, 8f)),
+                    alignment = Align(mode = Align.Mode.Vertical, pad = Vec2(6f, 8f), wrap = Align.Wrap.NEVER),
                     radii = floatArrayOf(16f, 0f, 16f, 0f)
                 ).setPalette { page.bg }.onInit { Recolor(this, palette.hovered).add() }.withBorder { page.border5 }.named("Sidebar"),
                 Group(
@@ -173,7 +173,7 @@ object OneConfigUI {
                                 "oneconfig.mods",
                                 fontSize = 24f,
                             ).setFont { semiBold }.named("Current"),
-                            alignment = Align(pad = Vec2(16f, 8f)),
+                            alignment = Align(pad = Vec2(16f, 8f), wrap = Align.Wrap.NEVER),
                         ).named("Controls"),
                         Group(
                             Group(

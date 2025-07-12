@@ -194,8 +194,9 @@ public abstract class Node {
      * </ul>
      *
      * @param with the node to overwrite this with
+     * @param preserveMissingOptions if true, any properties that are missing in THIS tree that are present in the input tree, will be added to this tree.
      */
-    public abstract void overwrite(Node with);
+    public abstract void overwrite(Node with, boolean preserveMissingOptions);
 
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     @VisibleForTesting

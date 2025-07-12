@@ -28,6 +28,7 @@ package org.polyfrost.oneconfig.api.hud.v1
 
 import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.polyui.component.impl.Text
+import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.unit.milliseconds
 import org.polyfrost.polyui.unit.minutes
 import org.polyfrost.polyui.unit.seconds
@@ -80,7 +81,10 @@ abstract class TextHud(
         return true
     }
 
+    override fun minimumSize() = Vec2(120f, 32f)
+
     override fun initialize() {
+        super.initialize()
         if (isReal) {
             updateWhenChanged("prefix")
             updateWhenChanged("suffix")

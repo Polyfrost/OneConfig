@@ -52,12 +52,12 @@ open class ConfigVisualizer {
     private val LOGGER = LogManager.getLogger("OneConfig/Config")
     protected val configs = HashMap<Tree, Drawable>()
     protected val optBg = rgba(39, 49, 55, 0.2f)
-    protected val alignCStart = Align(cross = Align.Cross.Start, maxRowSize = 1)
-    protected val alignCStartNoPad = Align(cross = Align.Cross.Start, maxRowSize = 1, pad = Vec2.ZERO)
+    protected val alignCStart = Align(cross = Align.Cross.Start, mode = Align.Mode.Vertical, wrap = Align.Wrap.NEVER)
+    protected val alignCStartNoPad = Align(cross = Align.Cross.Start, mode = Align.Mode.Vertical, wrap = Align.Wrap.NEVER, pad = Vec2.ZERO)
     protected val stdAlign = Align(main = Align.Main.SpaceBetween, pad = Vec2(16f, 8f))
     protected val stdAccord = Align(main = Align.Main.SpaceBetween, pad = Vec2.ZERO)
     protected val ic2text = Align(pad = Vec2(8f, 0f))
-    protected val stdOpt = Align(cross = Align.Cross.Start, pad = Vec2(0f, 8f), maxRowSize = 1)
+    protected val stdOpt = Align(cross = Align.Cross.Start, pad = Vec2(0f, 8f), mode = Align.Mode.Vertical, wrap = Align.Wrap.NEVER)
     protected val accordOpt = Align(cross = Align.Cross.Start, pad = Vec2(22f, 12f))
 
     /**
@@ -162,14 +162,14 @@ open class ConfigVisualizer {
             processNode(config, node, options)
         }
         LOGGER.info("creating config page ${config.title} took ${(System.nanoTime() - now) / 1_000_000f}ms")
-        return makeFinal(flattenSubcategories(options), initialCategory).addRethemingListeners()
+        return makeFinal(flattenSubcategories(options), initialCategory).addRethemingListeners().addRescalingListeners()
     }
 
     protected open fun makeFinal(categories: Map<String, Drawable>, initialCategory: String): Drawable {
         return Group(
             createHeaders(categories),
             categories[initialCategory] ?: categories.values.first(),
-            alignment = Align(cross = Align.Cross.Start, maxRowSize = 1),
+            alignment = Align(cross = Align.Cross.Start, mode = Align.Mode.Vertical, wrap = Align.Wrap.NEVER),
             visibleSize = Vec2(1130f, 635f),
         )
     }
@@ -343,7 +343,7 @@ open class ConfigVisualizer {
                     this@addResetMenu.shake()
                     return@onClick false
                 }
-                prop.overwrite(backup.get(Tree.evaluatePath(root, prop).split('.')))
+                prop.overwrite(backup.get(Tree.evaluatePath(root, prop).split('.')), false)
                 polyUI.unfocus()
                 false
             }, polyUI = polyUI)

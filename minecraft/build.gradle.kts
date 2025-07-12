@@ -102,6 +102,29 @@ if (mcData.isLegacyForge) { // Quick substitution for relaunch in dev env, so th
 val includeInLoader = Attribute.of("org.polyfrost.oneconfig.loader.include", Boolean::class.javaObjectType)
 val jijInLoader = Attribute.of("org.polyfrost.oneconfig.loader.jij", Boolean::class.javaObjectType)
 
+
+fun DependencyHandlerScope.handleApiDep(dependency: String, isMod: Boolean = false) {
+    val dep = project.dependencies.create(dependency) as ExternalModuleDependency
+    this.handleApiDep(dep, isMod)
+}
+
+fun DependencyHandlerScope.handleApiDep(dependency: Provider<MinimalExternalModuleDependency>, isMod: Boolean = false) {
+    handleApiDep(dependency.get(), isMod)
+}
+
+fun DependencyHandlerScope.handleApiDep(dependency: ExternalModuleDependency, isMod: Boolean = false) {
+    val dep = "${dependency.group}:${dependency.name}:${dependency.version}"
+    if (isMod) "oneConfigModulesCompileOnlyApi"(modApi(dep) {
+        isTransitive = false
+        attributes {
+            attribute(includeInLoader, JBoolean.TRUE)
+        }
+    }) else api(dep) {
+        isTransitive = false
+    }
+}
+
+
 dependencies {
     data class CompatDependency(
         val all: String? = null,
@@ -123,7 +146,6 @@ dependencies {
 
     val mcVersion = mcData.version as MinecraftReleaseVersion
     val tripleVersion = Triple(mcVersion.major, mcVersion.minor, mcVersion.patch)
-    provideIncludedDependencies(tripleVersion, mcData.loader.friendlyString).forEach {
     val mcVersionString = listOf(mcVersion.major, mcVersion.minor, mcVersion.patch).joinToString(".")
 
     compileOnlyCompat("gg.essential:vigilance-1.8.9-forge:295")
@@ -277,27 +299,6 @@ dependencies {
 
     compileOnly("com.github.hannibal002:SkyHanni:3.8.0")
     api("dev.deftu:enhancedeventbus:2.0.0") // TODO
-}
-
-fun DependencyHandlerScope.handleApiDep(dependency: String, isMod: Boolean = false) {
-    val dep = project.dependencies.create(dependency) as ExternalModuleDependency
-    handleApiDep(dep, isMod)
-}
-
-fun DependencyHandlerScope.handleApiDep(dependency: Provider<MinimalExternalModuleDependency>, isMod: Boolean = false) {
-    handleApiDep(dependency.get(), isMod)
-}
-
-fun DependencyHandlerScope.handleApiDep(dependency: ExternalModuleDependency, isMod: Boolean = false) {
-    val dep = "${dependency.group}:${dependency.name}:${dependency.version}"
-    if (isMod) "oneConfigModulesCompileOnlyApi"(modApi(dep) {
-        isTransitive = false
-        attributes {
-            attribute(includeInLoader, JBoolean.TRUE)
-        }
-    }) else api(dep) {
-        isTransitive = false
-    }
 }
 
 tasks {

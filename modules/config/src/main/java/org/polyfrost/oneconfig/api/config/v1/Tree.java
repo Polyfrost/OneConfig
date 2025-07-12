@@ -68,25 +68,29 @@ public class Tree extends Node implements Serializable {
         }
     }
 
-    private static void _overwrite(Tree self, Tree in, Function<String, String> keyMapper) {
+    private static void _overwrite(Tree self, Tree in, Function<String, String> keyMapper, boolean preserveMissingOptions) {
         for (Map.Entry<String, Node> from : in.theMap.entrySet()) {
             String key = keyMapper == null ? from.getKey() : keyMapper.apply(from.getKey());
             Node _this = self.get(key);
             Node that = from.getValue();
             if (_this == null) {
-                // nop. means that the node has been removed.
+                // asm: the node was removed in this case
+                // if we are preserving, we will add it onto ourselves, if not we will just ignore it
+                if (preserveMissingOptions) {
+                    self.put(that);
+                }
                 continue;
             }
             if (_this instanceof Tree) {
                 if (that instanceof Tree) {
                     // if both are trees, recursively overwrite
-                    _overwrite((Tree) _this, (Tree) that, keyMapper);
+                    _overwrite((Tree) _this, (Tree) that, keyMapper, preserveMissingOptions);
                     _this.addMetadata(that.getMetadata());
                 }
                 // nop. do not attempt to overwrite a tree with a property
                 else continue;
             }
-            _this.overwrite(that);
+            _this.overwrite(that, preserveMissingOptions);
         }
     }
 
@@ -144,6 +148,12 @@ public class Tree extends Node implements Serializable {
     }
 
     public Tree put(Node n) {
+        Node old = theMap.get(n.getID());
+        if (old == n) return this; // yeah, ok.
+        if (old != null) {
+//            LOGGER.warn("Replacing existing node with id {}: {} -> {}", n.getID(), old, n);
+            n.overwrite(old, false);
+        }
         theMap.put(n.getID(), n);
         return this;
     }
@@ -155,7 +165,7 @@ public class Tree extends Node implements Serializable {
             n.setID(null);
             n.setID(id);
         }
-        theMap.put(n.getID(), n);
+        put(n);
         return this;
     }
 
@@ -263,18 +273,18 @@ public class Tree extends Node implements Serializable {
      * @param with      the tree to overwrite with
      * @param keyMapper the key mapper function to use
      */
-    public void overwrite(Tree with, @NotNull Function<String, String> keyMapper) {
-        _overwrite(this, with, keyMapper);
+    public void overwrite(Tree with, @NotNull Function<String, String> keyMapper, boolean preserveMissingOptions) {
+        _overwrite(this, with, keyMapper, preserveMissingOptions);
     }
 
     @Override
-    public void overwrite(@NotNull Node with) {
+    public void overwrite(@NotNull Node with, boolean preserveMissingOptions) {
         if (!(with instanceof Tree)) throw new IllegalArgumentException("Cannot overwrite a tree with a non-tree node!");
         Map<String, String> migrationMap = getMetadata("migrationMap");
         if (migrationMap == null) {
-            _overwrite(this, (Tree) with, null);
+            _overwrite(this, (Tree) with, null, preserveMissingOptions);
         } else {
-            _overwrite(this, (Tree) with, migrationMap::get);
+            _overwrite(this, (Tree) with, migrationMap::get, preserveMissingOptions);
         }
     }
 
