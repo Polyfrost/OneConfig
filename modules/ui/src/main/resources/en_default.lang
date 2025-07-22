@@ -5,8 +5,9 @@ oneconfig.align=Align
 oneconfig.align.start=Start
 oneconfig.align.center=Center
 oneconfig.align.end=End
-oneconfig.align.spacebetween=Space Between
-oneconfig.align.spaceevenly=Space Evenly
+
+oneconfig.width=Width:
+oneconfig.height=Height:
 
 oneconfig.fweight.100=Thin
 oneconfig.fweight.200=Extra light

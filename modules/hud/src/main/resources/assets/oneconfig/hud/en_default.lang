@@ -14,10 +14,10 @@ oneconfig.hudeditor.cantedit.aslegacy=This HUD is running in legacy compatibilit
 
 oneconfig.hudeditor.padding.title=ALIGNMENT & PADDING
 oneconfig.hudeditor.padding.info=These settings control the distance between the edge of the background and the HUD, as well as its alignment.
-oneconfig.hudeditor.padding.mode.main=Main-axis alignment
-oneconfig.hudeditor.padding.mode.cross=Cross-axis alignment
-oneconfig.hudeditor.padding.main=Main-axis padding
-oneconfig.hudeditor.padding.cross=Cross-axis padding
+oneconfig.hudeditor.padding.between=Pad between
+oneconfig.hudeditor.padding.edges=Edge padding
+oneconfig.hudeditor.staticwidth=Static width
+oneconfig.hudeditor.corner.radius=Corner radius
 
 oneconfig.hudeditor.color.title=COLORS
 oneconfig.hudeditor.color.info=These settings control the color of the HUD element.

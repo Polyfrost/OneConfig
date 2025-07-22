@@ -38,6 +38,7 @@ import org.polyfrost.oneconfig.api.config.v1.collect.PropertyCollector;
 import org.polyfrost.oneconfig.api.config.v1.collect.impl.OneConfigCollector;
 import org.polyfrost.oneconfig.api.config.v1.serialize.ObjectSerializer;
 import org.polyfrost.oneconfig.api.config.v1.serialize.adapter.impl.PolyColorAdapter;
+import org.polyfrost.oneconfig.api.config.v1.serialize.adapter.impl.Vec4Adapter;
 import org.polyfrost.oneconfig.api.config.v1.serialize.impl.FileSerializer;
 import org.polyfrost.oneconfig.api.config.v1.serialize.impl.NightConfigSerializer;
 
@@ -60,6 +61,7 @@ public final class ConfigManager {
 
     static {
         ObjectSerializer.INSTANCE.registerTypeAdapter(new PolyColorAdapter());
+        ObjectSerializer.INSTANCE.registerTypeAdapter(new Vec4Adapter());
         registerCollector(new OneConfigCollector());
     }
 
@@ -105,7 +107,7 @@ public final class ConfigManager {
         while (!pendingInitialization.isEmpty()) {
             Config config = pendingInitialization.poll();
             if (config != null) {
-                config.initializeConfig();
+                config.initialize(true);
             }
         }
     }
@@ -113,10 +115,14 @@ public final class ConfigManager {
     @ApiStatus.Internal
     public static void submitForInitialization(Config config) {
         if (initialized) {
-            config.initializeConfig();
+            config.initialize(false);
         } else {
             pendingInitialization.add(config);
         }
+    }
+
+    static void removePendingInitialization(Config config) {
+        pendingInitialization.remove(config);
     }
 
     private static synchronized void initProfiles() {

@@ -83,8 +83,8 @@ abstract class TextHud(
 
     override fun minimumSize() = Vec2(120f, 32f)
 
-    override fun initialize() {
-        super.initialize()
+    override fun setup() {
+        super.setup()
         if (isReal) {
             updateWhenChanged("prefix")
             updateWhenChanged("suffix")
@@ -111,8 +111,8 @@ abstract class TextHud(
 
         override fun getText() = it
 
-        override fun initialize() {
-            super.initialize()
+        override fun setup() {
+            super.setup()
             if (isReal) updateWhenChanged("it")
         }
     }
@@ -137,8 +137,8 @@ abstract class TextHud(
             else 5.minutes
         }
 
-        override fun initialize() {
-            super.initialize()
+        override fun setup() {
+            super.setup()
             if (isReal) {
                 addCallback("template") {
                     _formatter = null

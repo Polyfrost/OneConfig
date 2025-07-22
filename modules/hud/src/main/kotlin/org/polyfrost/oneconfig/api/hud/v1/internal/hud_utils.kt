@@ -142,7 +142,7 @@ fun Hud<*>.buildNew(): Drawable {
         }
     val min = minimumSize()
     if (min != Vec2.ZERO) o.minimumSize(min)
-    initialize()
+    setup()
     return o
 }
 
@@ -205,7 +205,7 @@ fun Hud<*>.build(): Drawable {
         }
     val min = minimumSize()
     if (min != Vec2.ZERO) o.minimumSize(min)
-    initialize()
+    setup()
     return o
 }
 

@@ -34,9 +34,9 @@ import org.polyfrost.oneconfig.api.event.v1.EventDelay;
 import org.polyfrost.oneconfig.api.platform.v1.ScreenPlatform;
 
 public class ScreenPlatformImpl implements ScreenPlatform {
-    //#if MC > 1.13
-    //$$ private final float[] pixelScaleFactor = new float[1];
-    //#endif
+//    //#if MC > 1.13
+//    //$$ private final float[] pixelScaleFactor = new float[1];
+//    //#endif
 
     private OmniMatrixStack smuggled = new OmniMatrixStack();
 
@@ -76,16 +76,22 @@ public class ScreenPlatformImpl implements ScreenPlatform {
         //#endif
     }
 
-    @Override
-    public float pixelRatio() {
-        // asm: considerably more reliable than just doing viewport / window
-        //#if MC > 1.13
-        //$$ org.lwjgl.glfw.GLFW.glfwGetWindowContentScale(Minecraft.getInstance().getWindow().getWindow(), pixelScaleFactor, null);
-        //$$ return pixelScaleFactor[0];
-        //#else
-        return org.lwjgl.opengl.Display.getPixelScaleFactor();
-        //#endif
-    }
+    // todo: https://github.com/Polyfrost/OneConfig/issues/478
+    // this override was removed to avoid the system receiving incorrect/inaccurate pixel ratio values
+    // while the window was being resized (as it was calculated based on viewport / window size)
+    // so we use the (well what was assumed to be correct) values provided by GLFW on modern versions.
+    // however, this is not actually correct as shown by issue #478 (above), so we will remove this override for now.
+    // this may have been fixed in GLFW v3.4; but Minecraft is not using that version yet. see https://github.com/glfw/glfw/pull/2457.
+//    @Override
+//    public float pixelRatio() {
+//        // asm: considerably more reliable than just doing viewport / window
+//        //#if MC > 1.13
+//        //$$ org.lwjgl.glfw.GLFW.glfwGetWindowContentScale(Minecraft.getInstance().getWindow().getWindow(), pixelScaleFactor, null);
+//        //$$ return pixelScaleFactor[0];
+//        //#else
+//        return org.lwjgl.opengl.Display.getPixelScaleFactor();
+//        //#endif
+//    }
 
     @Override
     public void setSmuggledMatrixStack(OmniMatrixStack stack) {

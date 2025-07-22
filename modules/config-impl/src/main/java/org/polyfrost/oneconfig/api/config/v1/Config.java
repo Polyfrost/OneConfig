@@ -27,6 +27,7 @@
 package org.polyfrost.oneconfig.api.config.v1;
 
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.MustBeInvokedByOverriders;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Include;
@@ -63,8 +64,12 @@ public abstract class Config {
     }
 
     public final void addAliases(String... aliases) {
-        if (tree == null) throw notInitialized();
+        if (tree == null) initialize(false);
         tree.getOrPutMetadata("aliases", () -> new ArrayList<String>(aliases.length)).addAll(Arrays.asList(aliases));
+    }
+
+    public final void addAliases(String option, String... aliases) {
+        getProperty(option).getOrPutMetadata("aliases", () -> new ArrayList<String>(aliases.length)).addAll(Arrays.asList(aliases));
     }
 
     @ApiStatus.Internal
@@ -77,8 +82,14 @@ public abstract class Config {
         ConfigManager.submitForInitialization(this);
     }
 
-    @ApiStatus.Internal
-    protected void initializeConfig() {
+    /**
+     * Use this method to add any initialization logic to your config, for example {@link #hideIf(String, String)}, etc.
+     * <br>
+     * <b>make sure to call super!</b>
+     */
+    @MustBeInvokedByOverriders
+    protected void initialize(boolean byConfigManager) {
+        if (!byConfigManager) ConfigManager.removePendingInitialization(this);
         if ((tree = makeTree()) != null) {
             tree.setTitle(title);
             if (iconPath != null) {
@@ -98,15 +109,14 @@ public abstract class Config {
     }
 
     protected void restoreDefaults() {
-        if (tree == null) throw notInitialized();
+        if (tree == null) initialize(false);
         tree.overwrite(ConfigManager.backup().get(tree.getID()), false);
     }
 
     protected void restoreProperty(String option) {
-        Property<?> prop = getProperty(option);
         // first operation will be slow as the tree will have to be loaded from the disc, but this is intended as to not waste memory
         // once one property is restored/restore all is used, the backup tree will be in memory and so will be fast to restore more
-        prop.overwrite(getProperty(ConfigManager.backup().get(tree.getID()), option), false);
+        getProperty(option).overwrite(getProperty(ConfigManager.backup().get(tree.getID()), option), false);
     }
 
     protected void addDependency(String option, String condition) {
@@ -163,14 +173,14 @@ public abstract class Config {
     }
 
     protected void loadFrom(String id) {
-        if (tree == null) throw notInitialized();
+        if (tree == null) initialize(false);
         Tree in = ConfigManager.active().get(id);
         if (in == null) return;
         tree.overwrite(in, false);
     }
 
     protected void loadFrom(Path p) {
-        if (tree == null) throw notInitialized();
+        if (tree == null) initialize(false);
         Tree in;
         try {
             in = ConfigManager.active().getNoRegister(p);
@@ -183,7 +193,7 @@ public abstract class Config {
 
 
     protected Property<?> getProperty(String option) {
-        if (tree == null) throw notInitialized();
+        if (tree == null) initialize(false);
         return getProperty(tree, option);
     }
 
@@ -198,6 +208,7 @@ public abstract class Config {
     }
 
     public void save() {
+        if (tree == null) return; // not initialized, nothing to save
         ConfigManager.active().save(tree);
     }
 
@@ -206,11 +217,9 @@ public abstract class Config {
      * this class is initialized by Java.
      * <br>
      * If you don't call this method, your config might not appear in the UI. It will still function correctly, and after some code that loads it is called, it will appear.
-     *
-     * @apiNote this method does literally nothing.
      */
     public void preload() {
-        // <clinit>
+        initialize(false);
     }
 
     private static void validateIconPath(@NotNull String path) {

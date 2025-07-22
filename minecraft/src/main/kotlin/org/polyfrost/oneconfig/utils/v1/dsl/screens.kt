@@ -26,7 +26,10 @@
 
 package org.polyfrost.oneconfig.utils.v1.dsl
 
+import com.mojang.brigadier.builder.LiteralArgumentBuilder
+import dev.deftu.omnicore.client.OmniClientCommandSource
 import net.minecraft.client.gui.GuiScreen
+import org.polyfrost.oneconfig.api.commands.v1.CommandManager
 import org.polyfrost.oneconfig.api.config.v1.Config
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.internal.ConfigVisualizer
@@ -38,3 +41,9 @@ fun GuiScreen.openScreen(ticks: Int = 1) = Platform.screen().display(this, ticks
 fun Tree.openUI() = Platform.screen().display(OneConfigUI.open(ConfigVisualizer.INSTANCE.get(this)))
 
 fun Config.openUI() = this.tree.openUI()
+
+fun Config.addDefaultCommand(command: String = this.title.lowercase()): LiteralArgumentBuilder<OmniClientCommandSource> {
+    val node = CommandManager.literal(command)
+    CommandManager.register(node.executes { this.tree.openUI(); 1 })
+    return node
+}
