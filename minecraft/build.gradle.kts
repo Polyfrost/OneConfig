@@ -301,7 +301,7 @@ dependencies {
     }
 
     compileOnly("com.github.hannibal002:SkyHanni:3.8.0") { isTransitive = false }
-    if ((mcData.version as MinecraftReleaseVersion).isNewerThan(MinecraftReleaseVersion.from("1.21.4"))) {
+    if ((mcData.version as MinecraftReleaseVersion).isNewerThan(MinecraftVersions.VERSION_1_21_6)) {
         compileOnly("net.azureaaron:dandelion:1.0.0-alpha.3") { isTransitive = false }
     }
     api("dev.deftu:enhancedeventbus:2.0.0") // TODO

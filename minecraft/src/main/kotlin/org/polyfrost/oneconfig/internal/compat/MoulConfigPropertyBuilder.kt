@@ -2,10 +2,10 @@ package org.polyfrost.oneconfig.internal.compat
 
 import io.github.notenoughupdates.moulconfig.processor.ProcessedOption
 import org.polyfrost.oneconfig.api.config.v1.Properties
-import org.polyfrost.oneconfig.relocator.annotations.Moulconfig
+import org.polyfrost.oneconfig.relocator.annotations.MoulConfig
 import java.util.*
 
-@Moulconfig
+@MoulConfig
 class MoulConfigPropertyBuilder internal constructor(option: ProcessedOption) {
     val name: String? = option.name
     val description: String? = option.description

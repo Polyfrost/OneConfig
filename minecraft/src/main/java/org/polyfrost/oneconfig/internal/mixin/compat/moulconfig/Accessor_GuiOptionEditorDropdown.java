@@ -1,14 +1,14 @@
 package org.polyfrost.oneconfig.internal.mixin.compat.moulconfig;
 
 import io.github.notenoughupdates.moulconfig.gui.editors.GuiOptionEditorDropdown;
-import org.polyfrost.oneconfig.relocator.annotations.Moulconfig;
+import org.polyfrost.oneconfig.relocator.annotations.MoulConfig;
 import org.polyfrost.oneconfig.relocator.annotations.RelocatedMixin;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
 @Pseudo
-@Moulconfig
+@MoulConfig
 //#if MC==1.8.9||MC>=1.21.4
 @RelocatedMixin
 //#endif

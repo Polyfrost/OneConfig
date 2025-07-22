@@ -31,11 +31,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.tree.AnnotationNode;
-//#if MC>=1.21
-//$$import org.spongepowered.asm.lib.tree.ClassNode;
-//#else
 import org.objectweb.asm.tree.ClassNode;
-//#endif
 import org.polyfrost.oneconfig.internal.generated.RelocatedMixins;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
@@ -75,12 +71,15 @@ public class OneConfigMixinInit implements IMixinConfigPlugin {
         });
 
         //#if MC>=1.19.2
-        //$$mixins.add("compat.rconfig.Mixin_Configurations");
         //$$mixins.add("Mixin_MinecraftClientResourceStuff");
         //$$mixins.add("compat.yacl.Mixin_YetAnotherConfigLib_Builder");
         //#endif
 
-        //#if MC>1.16.5
+        //#if MC>=1.20.4
+        //$$mixins.add("compat.rconfig.Mixin_Configurations");
+        //#endif
+
+        //#if MC>1.16
         //$$mixins.add("compat.modmenu.Mixin_ModMenu");
         //#endif
 

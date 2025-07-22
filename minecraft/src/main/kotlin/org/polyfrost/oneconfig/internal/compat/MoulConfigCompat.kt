@@ -11,7 +11,7 @@ import org.polyfrost.oneconfig.api.config.v1.Visualizer
 import org.polyfrost.oneconfig.api.config.v1.Visualizer.*
 import org.polyfrost.oneconfig.internal.DynamicPolyImage
 import org.polyfrost.oneconfig.internal.mixin.compat.moulconfig.Accessor_GuiOptionEditorDropdown
-import org.polyfrost.oneconfig.relocator.annotations.Moulconfig
+import org.polyfrost.oneconfig.relocator.annotations.MoulConfig as Moulconfig
 import org.polyfrost.oneconfig.utils.v1.dsl.*
 import org.polyfrost.polyui.color.PolyColor
 import java.lang.reflect.Type
@@ -185,7 +185,7 @@ object MoulConfigCompat {
             }
 
             is GuiOptionEditorInfoText -> return null
-            is GuiOptionEditorText -> return null
+            is GuiOptionEditorText -> TextVisualizer::class
             is GuiOptionEditorDraggableList -> return null
             else -> {
                 println("Skipping ${children.path} - ${editor::class}")

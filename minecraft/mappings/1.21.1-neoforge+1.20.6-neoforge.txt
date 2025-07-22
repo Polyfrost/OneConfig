@@ -1,1 +1,3 @@
 net.minecraft.client.DeltaTracker net.minecraft.client.Timer
+
+org.spongepowered.asm.lib.tree.ClassNode org.objectweb.asm.tree.ClassNode
