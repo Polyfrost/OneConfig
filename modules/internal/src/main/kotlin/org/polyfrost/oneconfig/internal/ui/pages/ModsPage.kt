@@ -25,7 +25,7 @@ internal fun ModsPage(trees: Map<TreeSource, Set<Tree>>): Drawable {
             Text("oneconfig.mods.none", fontSize = 24f).setFont { medium },
             Text("oneconfig.mods.none.desc", fontSize = 14f),
             size = Vec2(1130f, 635f),
-            alignment = Align(main = Align.Main.Center, pad = Vec2(18f, 18f), mode = Align.Mode.Vertical, wrap = Align.Wrap.NEVER),
+            alignment = Align(main = Align.Content.Center, pad = Vec2(18f, 18f), mode = Align.Mode.Vertical, wrap = Align.Wrap.NEVER),
         ).namedId("EmptyModsPage")
     }
 
@@ -39,7 +39,7 @@ internal fun ModsPage(trees: Map<TreeSource, Set<Tree>>): Drawable {
             }
         }.toTypedArray(),
         visibleSize = Vec2(1130f, 635f),
-        alignment = Align(cross = Align.Cross.Start, pad = Vec2(18f, 18f)),
+        alignment = Align(line = Align.Line.Start, pad = Vec2(18f, 18f)),
     ).makeRearrangeableGrid().namedId("ModsPage")
 }
 

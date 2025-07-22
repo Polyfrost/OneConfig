@@ -117,7 +117,7 @@ fun interface Visualizer {
                 Image("assets/oneconfig/ico/keyboard.svg".image(), at = Vec2(7f, 7f)).ignoreLayout(),
                 Text(prop.getAs<KeyBinder.Bind>().keysToString()),
                 size = Vec2(230f, 32f),
-                alignment = Align(main = Align.Main.Center),
+                alignment = Align(main = Align.Content.Center),
             ).onInit {
                 polyUI.keyBinder?.add(prop.getAs())
             }.withHoverStates().onClick {

@@ -50,9 +50,9 @@ import org.polyfrost.polyui.utils.ref
 import kotlin.experimental.or
 import kotlin.math.PI
 
-val alignC = Align(main = Align.Main.Center, cross = Align.Cross.Center)
+val alignC = Align(main = Align.Content.Center, cross = Align.Content.Center)
 val alignNoPad = Align(pad = Vec2.ZERO)
-val alignHudDefault = Align(main = Align.Main.Center, cross = Align.Cross.Center, pad = Vec2(8f, 8f))
+val alignHudDefault = Align(main = Align.Content.Center, cross = Align.Content.Center, pad = Vec2(8f, 8f))
 val BLACK_HALF = rgba(0, 0, 0, 0.5f)
 private val mcFont = FontFamily("Minecraft", "assets/oneconfig/fonts/minecraft")
 const val angleSnapMargin = PI / 12.0
@@ -112,7 +112,7 @@ fun HudsPage(huds: Collection<Hud<*>>): Drawable {
             Text("oneconfig.hudeditor.nothinghere", fontSize = 14f).secondary()
         },
         size = Vec2(500f, 0f),
-        alignment = Align(main = Align.Main.SpaceBetween, pad = Vec2.ZERO)
+        alignment = Align(main = Align.Content.SpaceBetween, pad = Vec2.ZERO)
     ).onInit {
         if (huds.isNotEmpty()) {
             polyUI.every(1.seconds) {
@@ -153,7 +153,7 @@ fun HudSettingsPage(hud: Hud<*>): Drawable {
             false
         },
         HudVisualizer.get(hud.tree),
-        alignment = Align(cross = Align.Cross.Start, mode = Align.Mode.Vertical, wrap = Align.Wrap.NEVER),
+        alignment = Align(wrap = Align.Wrap.NEVER),
     ).namedId("HudSettingsPage")
 }
 
@@ -170,7 +170,7 @@ private fun makeHudDesigner(hud: Hud<*>): Drawable {
             Group(
                 DraggingNumericTextInput(icon = "assets/oneconfig/ico/align.svg".image(), suffix = "px", max = 30f, size = Vec2(120f, 32f)).also {
                     it[0].onChange { value: Float ->
-                        receiver.alignment = receiver.alignment.copy(pad = Vec2(value, value))
+                        receiver.alignment = receiver.alignment.copy(padBetween = Vec2(value, value))
                         receiver.recalculate()
                         false
                     }
@@ -196,14 +196,17 @@ private fun makeHudDesigner(hud: Hud<*>): Drawable {
                 DraggingNumericTextInput(icon = "assets/oneconfig/ico/align.svg".image(), suffix = "px", initialValue = receiver.padding.h, max = 30f, size = Vec2(68f, 32f)).onChange { value: Float ->
                     receiver.padding = receiver.padding.copy(h = value)
                 }.also { it[0].rotation = PI * 1.5 },
-                alignment = Align(main = Align.Main.SpaceBetween, wrap = Align.Wrap.NEVER),
+                alignment = Align(main = Align.Content.SpaceBetween, wrap = Align.Wrap.NEVER),
                 size = Vec2(308f, 32f)
             ).titled("oneconfig.hudeditor.padding.edges").padded(16f, 12f, 0f, 0f),
-            alignment = Align(cross = Align.Cross.Start, mode = Align.Mode.Vertical, wrap = Align.Wrap.NEVER, pad = Vec2.ZERO)
+            alignment = Align(line = Align.Line.Start, wrap = Align.Wrap.NEVER, pad = Vec2.ZERO)
         ),
         Group(
             Checkbox(size = 18f).onToggle {
                 hud.staticWidth = it
+                val siblings = parent.children!!
+                siblings[2].isEnabled = !it
+                siblings[3].isEnabled = !it
             },
             Text("oneconfig.hudeditor.staticwidth").padded(-2f, 0f, 12f, 0f),
             DraggingNumericTextInput(pre = "oneconfig.width", suffix = "px", initialValue = receiver.width, max = 1000f, size = Vec2(128f, 32f)),
@@ -225,7 +228,7 @@ private fun makeHudDesigner(hud: Hud<*>): Drawable {
                 }
             }
         },
-        alignment = Align(cross = Align.Cross.Start),
+        alignment = Align(cross = Align.Content.Start),
         size = Vec2(480f, 0f),
     )
 }
@@ -259,9 +262,9 @@ fun interactiveAlignment(recv: Drawable): Block {
                         theLittleBars.renders = true
                         needsRedraw = true
                         val mainAlign = when (it) {
-                            0, 3, 6 -> Align.Main.Start
-                            1, 4, 7 -> Align.Main.Center
-                            else -> Align.Main.End
+                            0, 3, 6 -> Align.Content.Start
+                            1, 4, 7 -> Align.Content.Center
+                            else -> Align.Content.End
                         }
                         theLittleBars.alignment = Align(main = mainAlign, pad = Vec2(2f, 2f))
                         val bars = theLittleBars.children ?: return@onHover
@@ -277,9 +280,9 @@ fun interactiveAlignment(recv: Drawable): Block {
                         needsRedraw = true
                         theLittleBars.renders = false
                         val mainAlign = when (it) {
-                            0, 3, 6 -> Align.Main.Start
-                            1, 4, 7 -> Align.Main.Center
-                            else -> Align.Main.End
+                            0, 3, 6 -> Align.Content.Start
+                            1, 4, 7 -> Align.Content.Center
+                            else -> Align.Content.End
                         }
                         theBlueLittleBars.alignment = Align(main = mainAlign, pad = Vec2(2f, 2f))
                         val bars = theBlueLittleBars.children ?: return@onClick
@@ -302,7 +305,7 @@ fun interactiveAlignment(recv: Drawable): Block {
             theLittleBars.renders = false
             needsRedraw = true
         }.also { theGrid = it },
-        alignment = Align(main = Align.Main.Center),
+        alignment = Align(main = Align.Content.Center),
         size = Vec2(125f, 125f)
     ).withBorder()
 
@@ -398,7 +401,7 @@ fun colorOptions(drawable: Drawable) = arrayOf(
             false
         } else null,
         size = Vec2(476f, 0f),
-        alignment = Align(main = Align.Main.SpaceBetween),
+        alignment = Align(main = Align.Content.SpaceBetween),
     )
 )
 
@@ -406,14 +409,14 @@ fun subheading(title: String, desc: String) = Group(
     Text(title).secondary(),
     Image("assets/oneconfig/ico/info.svg".image()).withHoverStates(showClicker = false).addHoverInfo(Text(desc)),
     size = Vec2(476f, 18f),
-    alignment = Align(main = Align.Main.SpaceBetween),
+    alignment = Align(main = Align.Content.SpaceBetween),
 )
 
 fun Drawable.titled(title: String, pad: Vec2 = Vec2(2f, 7f)): Drawable {
     return Group(
         Text(title, fontSize = 14f).secondary(),
         this,
-        alignment = Align(cross = Align.Cross.Start, mode = Align.Mode.Vertical, pad = pad),
+        alignment = Align(pad = pad),
     )
 }
 
@@ -431,27 +434,27 @@ fun <E> MutableList<E>.set(a: E, b: E, c: E): MutableList<E> {
 
 fun indexToAlign(index: Int, old: Align): Align {
     val main = when (index) {
-        0, 3, 6 -> Align.Main.Start
-        1, 4, 7 -> Align.Main.Center
-        else -> Align.Main.End
+        0, 3, 6 -> Align.Content.Start
+        1, 4, 7 -> Align.Content.Center
+        else -> Align.Content.End
     }
     val cross = when (index) {
-        0, 1, 2 -> Align.Cross.Start
-        3, 4, 5 -> Align.Cross.Center
-        else -> Align.Cross.End
+        0, 1, 2 -> Align.Content.Start
+        3, 4, 5 -> Align.Content.Center
+        else -> Align.Content.End
     }
-    return Align(main = main, cross = cross, mode = old.mode, pad = old.pad, wrap = old.wrap)
+    return Align(main = main, cross = cross, mode = old.mode, padBetween = old.padBetween, wrap = old.wrap)
 }
 
 fun alignToIndex(align: Align): Int {
     val row = when (align.cross) {
-        Align.Cross.Start -> 0
-        Align.Cross.Center -> 3
-        Align.Cross.End -> 6
+        Align.Content.Center -> 3
+        Align.Content.End -> 6
+        else -> 0
     }
     val col = when (align.main) {
-        Align.Main.Center -> 1
-        Align.Main.End -> 2
+        Align.Content.Center -> 1
+        Align.Content.End -> 2
         else -> 0
     }
     return row + col

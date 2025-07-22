@@ -27,11 +27,15 @@
 package org.polyfrost.oneconfig.api.hud.v1
 
 import org.jetbrains.annotations.ApiStatus
+import org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager
+import org.polyfrost.oneconfig.utils.v1.MHUtils
 import org.polyfrost.polyui.component.impl.Text
+import org.polyfrost.polyui.input.Keys
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.unit.milliseconds
 import org.polyfrost.polyui.unit.minutes
 import org.polyfrost.polyui.unit.seconds
+import org.polyfrost.polyui.utils.IntArraySet
 import org.polyfrost.polyui.utils.dont
 import org.polyfrost.polyui.utils.translated
 import java.time.LocalDateTime
@@ -161,5 +165,32 @@ abstract class TextHud(
         override fun getText(): String = LocalDateTime.now().format(formatter)
 
         override fun clone() = super.clone().also { _formatter = null }
+    }
+
+    class DownKeys() : TextHud("down_keys_hud.yml", "Down Keys Hud", Category.INFO, "") {
+        val binder = KeybindManager.inputManager.keyBinder!!
+        val downMouse = MHUtils.getField<IntArraySet>(binder, "downMouseButtons").getOrThrow()
+        val downUnmapped = MHUtils.getField<IntArraySet>(binder, "downUnmappedKeys").getOrThrow()
+        val downKeys = MHUtils.getField<ArrayList<Keys>>(binder, "downKeys").getOrThrow()
+
+        override fun getText(): String? {
+            sb.append("Mouse: ")
+            downMouse.toIntArray().also { for (i in it) sb.append(i).append(' ') }
+            sb.append("\nUnmapped: ")
+            downUnmapped.toIntArray().also {
+                for (i in it) {
+                    if (i in 0..255) sb.append(i.toChar())
+                    else sb.append(i)
+                    sb.append(' ')
+                }
+            }
+            sb.append("\nKeys: ")
+            downKeys.forEach { sb.append(it.name).append(' ') }
+            sb.append("\nMods: ")
+            sb.append(KeybindManager.inputManager.keyModifiers.prettyName)
+            return null
+        }
+
+        override fun updateFrequency() = 0L
     }
 }

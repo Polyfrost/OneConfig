@@ -90,6 +90,7 @@ public abstract class Config {
     @MustBeInvokedByOverriders
     protected void initialize(boolean byConfigManager) {
         if (!byConfigManager) ConfigManager.removePendingInitialization(this);
+        if (tree != null) throw new IllegalStateException("Config already initialized: " + id);
         if ((tree = makeTree()) != null) {
             tree.setTitle(title);
             if (iconPath != null) {
@@ -99,7 +100,7 @@ public abstract class Config {
 
             tree.addMetadata("category", category);
             ConfigManager.backup().backend.save0(tree);
-            ConfigManager.active().register(tree);
+            tree = ConfigManager.active().register(tree).get();
         }
     }
 

@@ -26,6 +26,7 @@
 
 package org.polyfrost.oneconfig.api.ui.v1.keybind
 
+import dev.deftu.omnicore.client.OmniChat
 import dev.deftu.omnicore.client.OmniKeyboard
 import dev.deftu.omnicore.common.OmniLoader
 import org.apache.logging.log4j.LogManager
@@ -115,7 +116,6 @@ object KeybindManager {
             OmniKeyboard.KEY_RIGHT to Keys.RIGHT,
             OmniKeyboard.KEY_DOWN to Keys.DOWN
         )
-
     }
 
     @JvmStatic
@@ -155,9 +155,9 @@ object KeybindManager {
                         inputManager.keyTyped(char)
                         return
                     }
-                    inputManager.keyDown(char.code)
+                    inputManager.keyDown(char.lowercaseChar().code)
                 }
-                else inputManager.keyUp(char.code)
+                else inputManager.keyUp(char.lowercaseChar().code)
             } else {
                 if (down) inputManager.keyDown(key)
                 else inputManager.keyUp(key)

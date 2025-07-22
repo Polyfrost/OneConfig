@@ -26,6 +26,7 @@
 
 package org.polyfrost.oneconfig.api.hud.v1
 
+import dev.deftu.omnicore.common.OmniLoader
 import org.apache.logging.log4j.LogManager
 import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
@@ -91,6 +92,7 @@ object HudManager {
         register(TextHud.DateTime("Date:", "yyyy-MM-dd"))
         register(TextHud.DateTime("Time:", "HH:mm:ss"))
         register(TextHud.Simple("", "Text Hud", ""))
+        if (OmniLoader.isDevelopment) register(TextHud.DownKeys())
     }
 
     @ApiStatus.Internal
@@ -293,13 +295,13 @@ object HudManager {
                         }
                     },
                     BoxedTextInput(placeholder = "oneconfig.search.placeholder", image = "assets/oneconfig/ico/search.svg".image(), size = Vec2(256f, 32f)),
-                    alignment = Align(main = Align.Main.SpaceBetween, pad = Vec2(24f, 0f)),
+                    alignment = Align(main = Align.Content.SpaceBetween, pad = Vec2(24f, 0f)),
                     size = Vec2(500f, 32f),
                 ),
                 Text("oneconfig.hudeditor.title", fontSize = 24f).padded(24f, 0f).setFont { semiBold },
                 hudsPage,
                 size = Vec2(500f, 1048f),
-                alignment = Align(cross = Align.Cross.Start, pad = Vec2(0f, 16f)),
+                alignment = Align(line = Align.Line.Start, pad = Vec2(0f, 16f)),
             ).setPalette { page.bg }.withBorder().apply {
                 addOperation {
                     if (polyUI.mouseDown) {

@@ -86,7 +86,7 @@ public class TestConfig_Test extends Config {
     @Switch(title = "Cow 5", description = "Something that is way too long and is going to be trimmed (I hope) because that is what its meant to do")
     public static boolean c5ow = false;
     @RadioButton(title = "radio", description = "send help")
-    public static Align.Main radio = Align.Main.Center;
+    public static Align.Content radio = Align.Content.Center;
     @Switch(title = "t")
     public boolean added = false;
     @Color(title = "color", category = "bob")
@@ -125,7 +125,7 @@ public class TestConfig_Test extends Config {
         public static boolean cbow = false;
 
         @RadioButton(title = "radio when me when me when me:", description = "send help")
-        public static Align.Cross radio2 = Align.Cross.Start;
+        public static Align.Line radio2 = Align.Line.Start;
 
         @Switch(title = "Cow", description = "Something that is way too long and is going to be trimmed (I hope) because that is what its meant to do")
         public static boolean cbo2w = false;

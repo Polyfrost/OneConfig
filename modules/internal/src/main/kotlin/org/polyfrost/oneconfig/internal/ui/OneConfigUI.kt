@@ -161,7 +161,7 @@ object OneConfigUI {
                         Platform.screen().display(HudManager.getWithEditor())
                     }.padded(0f, 200f, 0f, 0f),
                     size = Vec2(273f, 700f),
-                    alignment = Align(mode = Align.Mode.Vertical, pad = Vec2(6f, 8f), wrap = Align.Wrap.NEVER),
+                    alignment = Align(cross = Align.Content.Center, mode = Align.Mode.Vertical, pad = Vec2(6f, 8f), wrap = Align.Wrap.NEVER),
                     radii = floatArrayOf(16f, 0f, 16f, 0f)
                 ).setPalette { page.bg }.onInit { Recolor(this, palette.hovered).add() }.withBorder { page.border5 }.named("Sidebar"),
                 Group(
@@ -215,11 +215,11 @@ object OneConfigUI {
                             alignment = Align(pad = Vec2(24f, 4f)),
                         ),
                         size = Vec2(1130f, 64f),
-                        alignment = Align(main = Align.Main.SpaceBetween),
+                        alignment = Align(main = Align.Content.SpaceBetween),
                     ).named("Header"),
                     initialScreen,
                     size = Vec2(1127f, 700f),
-                    alignment = Align(cross = Align.Cross.Start, pad = Vec2.ZERO),
+                    alignment = Align(line = Align.Line.Start, pad = Vec2.ZERO),
                 ),
             )
             polyUI.keyBinder?.add(KeyBinder.Bind(char = 'F', mods = Modifiers(KeyModifiers.CONTROL)) {
@@ -253,7 +253,7 @@ object OneConfigUI {
 
     fun label(text: String) = Block(
         Text(text).setFont { bold },
-        alignment = Align(main = Align.Main.Center),
+        alignment = Align(main = Align.Content.Center),
         size = Vec2(54f, 18f),
     ).setPalette { brand.fg }
 

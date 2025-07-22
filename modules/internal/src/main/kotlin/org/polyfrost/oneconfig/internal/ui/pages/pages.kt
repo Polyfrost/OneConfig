@@ -26,18 +26,17 @@
 
 package org.polyfrost.oneconfig.internal.ui.pages
 
-import org.polyfrost.oneconfig.api.config.v1.ConfigManager
-import org.polyfrost.oneconfig.api.config.v1.Tree
-import org.polyfrost.oneconfig.api.config.v1.internal.ConfigVisualizer
-import org.polyfrost.oneconfig.api.ui.v1.Notifications
 import org.polyfrost.oneconfig.internal.ui.OneConfigUI
 import org.polyfrost.polyui.component.Drawable
-import org.polyfrost.polyui.component.extensions.*
-import org.polyfrost.polyui.component.impl.*
+import org.polyfrost.polyui.component.extensions.onClick
+import org.polyfrost.polyui.component.extensions.setFont
+import org.polyfrost.polyui.component.extensions.withHoverStates
+import org.polyfrost.polyui.component.impl.Group
+import org.polyfrost.polyui.component.impl.Image
+import org.polyfrost.polyui.component.impl.Text
 import org.polyfrost.polyui.data.PolyImage
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.Vec2
-import org.polyfrost.polyui.utils.image
 import org.polyfrost.polyui.utils.mapToArray
 import org.polyfrost.polyui.utils.translated
 
@@ -54,7 +53,7 @@ fun FeedbackPage(): Drawable {
         Text("oneconfig.feedback.joindiscord", fontSize = 14f),
         size = Vec2(1130f, 0f),
         visibleSize = Vec2(1130f, 635f),
-        alignment = Align(cross = Align.Cross.Start, mode = Align.Mode.Vertical, pad = Vec2(18f, 18f)),
+        alignment = Align(line = Align.Line.Start, mode = Align.Mode.Vertical, pad = Vec2(18f, 18f)),
     )
 }
 
@@ -66,7 +65,7 @@ fun ChangelogPage(news: Collection<News>): Drawable {
     return Group(
         size = Vec2(1130f, 0f),
         visibleSize = Vec2(1130f, 635f),
-        alignment = Align(cross = Align.Cross.Center, pad = Vec2(60f, 20f)),
+        alignment = Align(line = Align.Line.Center, pad = Vec2(60f, 20f)),
         children = news.mapToArray {
             Group(
                 if (it.image != null) Image(it.image) else null,
@@ -85,7 +84,7 @@ fun ChangelogPage(news: Collection<News>): Drawable {
                                         Text(it.dateString),
                                     ),
                                     Text(it.content, fontSize = 14f, visibleSize = Vec2(1100f, 0f)),
-                                    alignment = Align(cross = Align.Cross.Start),
+                                    alignment = Align(line = Align.Line.Start),
                                     size = Vec2(1130f, 0f),
                                     visibleSize = Vec2(1130f, 635f),
                                 )
@@ -93,7 +92,7 @@ fun ChangelogPage(news: Collection<News>): Drawable {
                             // todo switch
                         },
                         size = Vec2(612f, 12f),
-                        alignment = Align(main = Align.Main.SpaceBetween),
+                        alignment = Align(main = Align.Content.SpaceBetween),
                     ),
                     alignment = Align(mode = Align.Mode.Vertical),
                 ),
