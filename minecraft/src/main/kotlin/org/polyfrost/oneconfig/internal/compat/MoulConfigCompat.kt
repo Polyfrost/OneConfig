@@ -74,18 +74,18 @@ object MoulConfigCompat {
     }
 
     fun parseOption(config: MoulConfig, children: ProcessedOption, parentResolver: (Int?) -> Tree): (Pair<Int, Tree>)? {
-        val property = MoulConfigPropertyBuilder(children)
+        val property = MoulPropertyBuilder(children)
 
         val editor = children.editor
 
         // moulconfig uses a few deprecated things internally, to fully support it we need to carry those over.
         @Suppress("DEPRECATION")
-        val visualizer: KClass<out Visualizer> = when (editor) {
+        val visualizer: Class<out Visualizer> = when (editor) {
             is GuiOptionEditorAccordion -> return children.accordionId to Tree.tree()
-            is GuiOptionEditorBoolean -> SwitchVisualizer::class
+            is GuiOptionEditorBoolean -> SwitchVisualizer::class.java
             is GuiOptionEditorButton -> {
                 property.metadata["runnable"] = Runnable { editor.onClick() }
-                ButtonVisualizer::class
+                ButtonVisualizer::class.java
             }
 
             is GuiOptionEditorColour -> {
@@ -121,7 +121,7 @@ object MoulConfigCompat {
                         ChromaColour::class.java -> children.set(colour)
                     }
                 }
-                ColorVisualizer::class
+                ColorVisualizer::class.java
             }
 
             is Accessor_GuiOptionEditorDropdown -> {
@@ -156,7 +156,7 @@ object MoulConfigCompat {
 
                 property.metadata["options"] = editor.`oneconfig$values`()
 
-                DropdownVisualizer::class
+                DropdownVisualizer::class.java
             }
 
 
@@ -181,19 +181,19 @@ object MoulConfigCompat {
                     }
                 }
 
-                SliderVisualizer::class
+                SliderVisualizer::class.java
             }
 
             is GuiOptionEditorInfoText -> return null
-            is GuiOptionEditorText -> TextVisualizer::class
+            is GuiOptionEditorText -> TextVisualizer::class.java
             is GuiOptionEditorDraggableList -> return null
             else -> {
-                println("Skipping ${children.path} - ${editor::class}")
+                println("Skipping ${children.path} - ${editor::class.java}")
                 return null // editor type either unsupported or unknown
             }
         }
 
-        property.metadata["visualizer"] = visualizer.java
+        property.metadata["visualizer"] = visualizer
         parentResolver(null).put(property.build())
         return null
     }

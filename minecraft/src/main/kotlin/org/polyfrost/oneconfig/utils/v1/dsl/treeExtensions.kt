@@ -5,16 +5,11 @@ import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.Visualizer
 import org.polyfrost.polyui.data.PolyImage
-import kotlin.reflect.KClass
 
 @Suppress("UNCHECKED_CAST")
 internal var Property<*>.visualizer: Class<out Visualizer>?
     get() = metadata?.get("visualizer") as? Class<out Visualizer>
     set(value) = addMetadata("visualizer", value)
-
-internal var Property<*>.visualizerKt: KClass<out Visualizer>?
-    get() = null
-    set(value) { visualizer = value?.java }
 
 internal var Node.category: String?
     get() = metadata?.get("category") as? String

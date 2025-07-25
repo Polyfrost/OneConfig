@@ -6,7 +6,7 @@ import org.polyfrost.oneconfig.relocator.annotations.MoulConfig
 import java.util.*
 
 @MoulConfig
-class MoulConfigPropertyBuilder internal constructor(option: ProcessedOption) {
+class MoulPropertyBuilder internal constructor(option: ProcessedOption) {
     val name: String? = option.name
     val description: String? = option.description
 
@@ -22,6 +22,6 @@ class MoulConfigPropertyBuilder internal constructor(option: ProcessedOption) {
         name = null,
         description = description
     ).apply {
-        this@MoulConfigPropertyBuilder.metadata.entries.forEach { (key, value) -> addMetadata(key, value) }
+        this@MoulPropertyBuilder.metadata.entries.forEach { (key, value) -> addMetadata(key, value) }
     }
 }
