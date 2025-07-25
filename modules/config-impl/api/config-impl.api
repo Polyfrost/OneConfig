@@ -7,6 +7,7 @@ public abstract class org/polyfrost/oneconfig/api/config/v1/Config {
 	protected field tree Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/config/v1/Config$Category;)V
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/config/v1/Config$Category;)V
+	public final fun addAliases (Ljava/lang/String;[Ljava/lang/String;)V
 	public final fun addAliases ([Ljava/lang/String;)V
 	protected fun addCallback (Ljava/lang/String;Ljava/lang/Runnable;)V
 	protected fun addCallback (Ljava/lang/String;Ljava/util/function/Predicate;)V
@@ -19,7 +20,7 @@ public abstract class org/polyfrost/oneconfig/api/config/v1/Config {
 	public fun getTree ()Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	protected fun hideIf (Ljava/lang/String;Ljava/lang/String;)V
 	protected fun hideIf (Ljava/lang/String;Ljava/util/function/BooleanSupplier;)V
-	protected fun initializeConfig ()V
+	protected fun initialize (Z)V
 	protected fun loadFrom (Ljava/lang/String;)V
 	protected fun loadFrom (Ljava/nio/file/Path;)V
 	protected fun makeTree ()Lorg/polyfrost/oneconfig/api/config/v1/Tree;
@@ -427,6 +428,16 @@ public class org/polyfrost/oneconfig/api/config/v1/serialize/adapter/impl/PolyCo
 	public fun getTargetClass ()Ljava/lang/Class;
 	public synthetic fun serialize (Ljava/lang/Object;)Ljava/lang/Object;
 	public fun serialize (Lorg/polyfrost/polyui/color/PolyColor;)[I
+}
+
+public class org/polyfrost/oneconfig/api/config/v1/serialize/adapter/impl/Vec4Adapter : org/polyfrost/oneconfig/api/config/v1/serialize/adapter/Adapter {
+	public fun <init> ()V
+	public synthetic fun deserialize (Ljava/lang/Object;)Ljava/lang/Object;
+	public fun deserialize ([F)Lorg/polyfrost/polyui/unit/Vec4;
+	public fun getOutputClass ()Ljava/lang/Class;
+	public fun getTargetClass ()Ljava/lang/Class;
+	public synthetic fun serialize (Ljava/lang/Object;)Ljava/lang/Object;
+	public fun serialize (Lorg/polyfrost/polyui/unit/Vec4;)[F
 }
 
 public abstract interface class org/polyfrost/oneconfig/api/config/v1/serialize/impl/FileSerializer : org/polyfrost/oneconfig/api/config/v1/serialize/Serializer {

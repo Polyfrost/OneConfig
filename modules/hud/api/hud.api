@@ -1,5 +1,6 @@
 public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/oneconfig/api/config/v1/Config, java/lang/Cloneable {
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lorg/polyfrost/oneconfig/api/hud/v1/Hud$Category;)V
+	protected fun addCallbacks (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)V
 	protected fun addToInitQueue ()V
 	protected fun addToSerialized (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)V
 	public fun backgroundColor ()Lorg/polyfrost/polyui/color/PolyColor;
@@ -18,17 +19,17 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public final fun getShowInTab ()Z
 	public final fun getStaticWidth ()Z
 	public fun hasBackground ()Z
-	public fun initialize ()V
 	public final fun isReal ()Z
 	public final fun make (Lorg/polyfrost/oneconfig/api/config/v1/Tree;)Lorg/polyfrost/oneconfig/api/hud/v1/Hud;
 	public static synthetic fun make$default (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;Lorg/polyfrost/oneconfig/api/config/v1/Tree;ILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/hud/v1/Hud;
-	public fun minimumSize-2K4fKj8 ()J
+	public fun minimumSize ()J
 	public fun multipleInstancesAllowed ()Z
 	public final fun setHidden (Z)V
 	public final fun setShowInF3 (Z)V
 	public final fun setShowInScreens (Z)V
 	public final fun setShowInTab (Z)V
 	public final fun setStaticWidth (Z)V
+	public fun setup ()V
 	public abstract fun update ()Z
 	protected final fun updateAndRecalculate ()V
 	public fun updateFrequency ()J
@@ -65,6 +66,7 @@ public final class org/polyfrost/oneconfig/api/hud/v1/HudManager {
 	public final fun openHudEditor (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;)V
 	public static final fun register (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;)V
 	public static final fun register ([Lorg/polyfrost/oneconfig/api/hud/v1/Hud;)V
+	public final fun removeHud (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;Lorg/polyfrost/polyui/utils/Clock$Executor;)V
 	public final fun setSlinex (F)V
 	public final fun setSliney (F)V
 	public final fun toggle ()V
@@ -91,10 +93,11 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/TextHud : org/polyfrost
 	protected final fun getStringBuilder ()Ljava/lang/StringBuilder;
 	public final fun getSuffix ()Ljava/lang/String;
 	protected abstract fun getText ()Ljava/lang/String;
-	public fun initialize ()V
+	public synthetic fun minimumSize ()J
 	public fun minimumSize-2K4fKj8 ()J
 	public final fun setPrefix (Ljava/lang/String;)V
 	public final fun setSuffix (Ljava/lang/String;)V
+	public fun setup ()V
 	public fun update ()Z
 }
 
@@ -104,15 +107,24 @@ public final class org/polyfrost/oneconfig/api/hud/v1/TextHud$DateTime : org/pol
 	public synthetic fun clone ()Ljava/lang/Object;
 	public fun clone ()Lorg/polyfrost/oneconfig/api/hud/v1/Hud;
 	public final fun getTemplate ()Ljava/lang/String;
-	public fun initialize ()V
 	public final fun setTemplate (Ljava/lang/String;)V
+	public fun setup ()V
+	public fun updateFrequency ()J
+}
+
+public final class org/polyfrost/oneconfig/api/hud/v1/TextHud$DownKeys : org/polyfrost/oneconfig/api/hud/v1/TextHud {
+	public fun <init> ()V
+	public final fun getBinder ()Lorg/polyfrost/polyui/input/KeyBinder;
+	public final fun getDownKeys ()Ljava/util/ArrayList;
+	public final fun getDownMouse ()Lorg/polyfrost/polyui/utils/IntArraySet;
+	public final fun getDownUnmapped ()Lorg/polyfrost/polyui/utils/IntArraySet;
 	public fun updateFrequency ()J
 }
 
 public final class org/polyfrost/oneconfig/api/hud/v1/TextHud$Simple : org/polyfrost/oneconfig/api/hud/v1/TextHud {
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
 	public final fun getIt ()Ljava/lang/String;
-	public fun initialize ()V
 	public final fun setIt (Ljava/lang/String;)V
+	public fun setup ()V
 }
 
