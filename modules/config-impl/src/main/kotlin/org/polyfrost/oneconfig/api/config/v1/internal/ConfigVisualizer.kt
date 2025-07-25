@@ -34,6 +34,7 @@ import org.polyfrost.polyui.animate.Animations
 import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.color.rgba
 import org.polyfrost.polyui.component.Drawable
+import org.polyfrost.polyui.component.Scrollable
 import org.polyfrost.polyui.component.extensions.*
 import org.polyfrost.polyui.component.impl.*
 import org.polyfrost.polyui.data.PolyImage
@@ -41,6 +42,7 @@ import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.operations.Resize
 import org.polyfrost.polyui.operations.Rotate
 import org.polyfrost.polyui.unit.Align
+import org.polyfrost.polyui.unit.Point
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.unit.by
 import org.polyfrost.polyui.unit.seconds
@@ -52,9 +54,9 @@ open class ConfigVisualizer {
     private val LOGGER = LogManager.getLogger("OneConfig/Config")
     protected val configs = HashMap<Tree, Drawable>()
     protected val optBg = rgba(39, 49, 55, 0.2f)
-    protected val alignCStart = Align(line = Align.Line.Start, mode = Align.Mode.Vertical, wrap = Align.Wrap.NEVER)
+    protected val alignCStart = Align(line = Align.Line.Start, mode = Align.Mode.Vertical, wrap = Align.Wrap.NEVER, padBetween = Vec2(6f, 10f))
     protected val alignCStartNoPad = Align(line = Align.Line.Start, mode = Align.Mode.Vertical, wrap = Align.Wrap.NEVER, pad = Vec2.ZERO)
-    protected val stdAlign = Align(main = Align.Content.SpaceBetween, pad = Vec2(16f, 8f))
+    protected val stdAlign = Align(main = Align.Content.SpaceBetween, cross = Align.Content.Center, pad = Vec2(16f, 8f))
     protected val stdAccord = Align(main = Align.Content.SpaceBetween, pad = Vec2.ZERO)
     protected val ic2text = Align(pad = Vec2(8f, 0f))
     protected val stdOpt = Align(line = Align.Line.Start, pad = Vec2(0f, 8f), mode = Align.Mode.Vertical, wrap = Align.Wrap.NEVER)
@@ -179,7 +181,7 @@ open class ConfigVisualizer {
             Group(
                 children = subcategories.mapToArray { (header, opts) ->
                     Group(
-                        Text(header, fontSize = 22f),
+                        Text(header, fontSize = 22f).padded(0f, 0f, 0f, 2f),
                         *opts.toTypedArray(),
                         alignment = alignCStart,
                     )
@@ -218,6 +220,7 @@ open class ConfigVisualizer {
             children = categories.mapToArray { (category, options) ->
                 Button(text = category).onClick {
                     parent.parent[1] = options
+                    (parent.parent[1] as Scrollable).visibleSize = Vec2(1130f, 635f) // asm: reset size to default
                 }
             },
         )
@@ -313,7 +316,7 @@ open class ConfigVisualizer {
         alignment = stdAlign,
         size = Vec2(1078f, 0f),
         color = optBg,
-    ).minimumSize(Vec2(1078f, 64f))
+    ).minimumSize(Vec2(1078f, 64f)).radius(12f)
 
     protected open fun wrapForAccordion(
         drawable: Drawable,
@@ -336,7 +339,7 @@ open class ConfigVisualizer {
 
     private fun Drawable.addResetMenu(root: Tree, prop: Property<*>) = this.events {
         Event.Mouse.Clicked(1) then {
-            PopupMenu(Text("Restore Default").setDestructivePalette().withHoverStates().onClick {
+            PopupMenu(Group(Image("assets/oneconfig/ico/trash.svg"), Text("Restore Default")).setPalette { state.danger }.withHoverStates().onClick {
                 val backup = ConfigManager.backup().get(root.id)
                 if (backup == null) {
                     LOGGER.error("Failed to locate backup source for ${root.id}, the config needs to be deleted manually to create a backup source")
@@ -346,7 +349,7 @@ open class ConfigVisualizer {
                 prop.overwrite(backup.get(Tree.evaluatePath(root, prop).split('.')), false)
                 polyUI.unfocus()
                 false
-            }, polyUI = polyUI)
+            }, polyUI = polyUI, position = Point.Above)
             false
         }
     }

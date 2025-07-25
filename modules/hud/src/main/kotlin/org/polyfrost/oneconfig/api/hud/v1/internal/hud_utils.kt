@@ -38,6 +38,7 @@ import org.polyfrost.polyui.component.impl.Image
 import org.polyfrost.polyui.component.impl.PopupMenu
 import org.polyfrost.polyui.component.impl.Text
 import org.polyfrost.polyui.event.Event
+import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.Point
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.unit.by
@@ -46,7 +47,7 @@ import kotlin.math.sqrt
 
 private val LOGGER = LogManager.getLogger("OneConfig/HUD")
 
-private val scaleBlob by lazy {
+val scaleBlob by lazy {
     var sx = 0f
     var sy = 0f
     var st = 1f
@@ -56,9 +57,9 @@ private val scaleBlob by lazy {
     ).radius(10f).draggable().onDragStart {
         sx = polyUI.mouseX
         sy = polyUI.mouseY
-        st = cur?.scaleX ?: 1f
+        st = cur?.get()?.scaleX ?: 1f
     }.onDrag {
-        cur?.let {
+        cur?.get()?.let {
             val dx = polyUI.mouseX - sx
             val dy = polyUI.mouseY - sy
             val dst = sqrt(dx * dx + dy * dy)
@@ -71,23 +72,38 @@ private val scaleBlob by lazy {
             x = it.x + (it.width * s) - (width / 2f)
             y = it.y + (it.height * s) - (height / 2f)
         }
-    }.apply {
-//        addEventHandler(Event.Mouse.Pressed(0)) {
-        // if(!polyUI.inputManager.hasFocused) polyUI.focus(this)
-//        }
-        on(Event.Focused.Lost) {
-            cur = null
-        }
     }.setPalette { brand.fg }
     HudManager.polyUI.master.addChild(b, recalculate = false)
     b.renders = false
     b
 }
 
-private var cur: Drawable? = null
+val menu by lazy {
+    val b = Block(
+        Image("assets/oneconfig/ico/cog.svg").withHoverStates().onClick { HudManager.openHudEditor(cur ?: return@onClick) },
+        Image("assets/oneconfig/ico/trash.svg").withHoverStates().setPalette { state.danger }.onClick {
+            val cur = cur ?: return@onClick
+            HudManager.removeHud(cur, cur.tree.getMetadata("updateTicker"))
+        },
+        alignment = Align(pad = Vec2(10f, 8f))
+    ).withBorder(2f)
+    HudManager.polyUI.master.addChild(b, recalculate = false)
+    b.renders = false
+    b
+}
+
+private var cur: Hud<*>? = null
     set(value) {
+        value?.getBackground()?.let {
+            it.borderWidth = 1f
+            it.borderColor = it.polyUI.colors.brand.fg.normal
+        }
+        field?.getBackground()?.let {
+            it.borderWidth = 0f
+        }
         field = value
         scaleBlob.renders = value != null
+        menu.renders = value != null
     }
 
 /**
@@ -164,8 +180,9 @@ fun Hud<*>.build(): Drawable {
             if (update()) getBackground()?.recalculate()
         }
     }
+    tree.addMetadata("updateTicker", exe)
 
-    val o = get().addDefaultBackground(hasBackground(), backgroundColor()).addScaler().draggable()
+    val o = get().addDefaultBackground(hasBackground(), backgroundColor()).draggable()
         .onDragStart {
             if (HudManager.panelOpen) HudManager.toggle()
             cur = null
@@ -192,9 +209,8 @@ fun Hud<*>.build(): Drawable {
                         HudManager.polyUI.unfocus()
                     },
                     Image("assets/oneconfig/ico/close.svg").setDestructivePalette().withHoverStates(consume = true).onClick {
-                        HudManager.polyUI.master.removeChild(this@events.self, recalculate = false)
-                        HudManager.polyUI.removeExecutor(exe)
                         HudManager.polyUI.unfocus()
+                        HudManager.removeHud(this@build, exe)
 //                    if (HudManager.panel[3] !== HudManager.hudsPage) HudManager.panel[3] = HudManager.hudsPage
                     },
                     polyUI = HudManager.polyUI,
@@ -203,6 +219,7 @@ fun Hud<*>.build(): Drawable {
                 true
             }
         }
+    addMenuAndScaler()
     val min = minimumSize()
     if (min != Vec2.ZERO) o.minimumSize(min)
     setup()
@@ -215,18 +232,22 @@ private fun <T : Drawable> T.addDefaultBackground(add: Boolean, color: PolyColor
     color = color ?: BLACK_HALF,
 ).radius(5f).namedId("HudBackground")
 
-private fun Drawable.addScaler(): Drawable {
-    this.on(Event.Mouse.Clicked) {
+private fun Hud<*>.addMenuAndScaler() {
+    this.get().onClick {
         val sb = scaleBlob
         sb.renders = true
         val vs = visibleSize
         sb.x = x + vs.x - (sb.width / 2f)
         sb.y = y + vs.y - (sb.height / 2f)
-        cur = this
+        val menu = menu
+        if (!menu.initialized) menu.setup(polyUI)
+        menu.renders = true
+        menu.x = x + vs.x / 2f - (menu.width / 2f)
+        menu.y = y - menu.height - 6f
+        cur = this@addMenuAndScaler
         polyUI.focus(scaleBlob)
-        return@on false
+        return@onClick false
     }
-    return this
 }
 
 private fun Component.trySnapX(lx: Float, sw: Float): Boolean {
@@ -278,10 +299,14 @@ fun Drawable.snapHandler() {
     val vs = visibleSize
     val w = vs.x * scaleX
     val h = vs.y * scaleY
-    if (cur === this) {
+    if (cur?.get() === this) {
         scaleBlob.let {
             it.x = x + w - (it.width / 2f)
             it.y = y + h - (it.height / 2f)
+        }
+        menu.let {
+            it.x = x + (w / 2f) - (it.width / 2f)
+            it.y = y - it.height - 6f
         }
     }
     HudManager.slinex = -1f
@@ -304,7 +329,7 @@ fun Drawable.snapHandler() {
     // expensive!
     polyUI.master.children?.fastEach {
         if (it === this) return@fastEach
-        if (it === HudManager.panel || it === scaleBlob) return@fastEach
+        if (it === HudManager.panel || it === scaleBlob || it === menu) return@fastEach
         if (!it.renders) return@fastEach
         if (it !is Drawable) return@fastEach
         val ivs = it.visibleSize

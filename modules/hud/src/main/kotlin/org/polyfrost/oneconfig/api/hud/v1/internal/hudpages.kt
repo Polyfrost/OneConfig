@@ -49,6 +49,7 @@ import org.polyfrost.polyui.utils.mapToArray
 import org.polyfrost.polyui.utils.ref
 import kotlin.experimental.or
 import kotlin.math.PI
+import kotlin.math.roundToInt
 
 val alignC = Align(main = Align.Content.Center, cross = Align.Content.Center)
 val alignNoPad = Align(pad = Vec2.ZERO)
@@ -153,7 +154,7 @@ fun HudSettingsPage(hud: Hud<*>): Drawable {
             false
         },
         HudVisualizer.get(hud.tree),
-        alignment = Align(wrap = Align.Wrap.NEVER),
+        alignment = Align(wrap = Align.Wrap.NEVER, mode = Align.Mode.Vertical, line = Align.Line.Start),
     ).namedId("HudSettingsPage")
 }
 
@@ -167,22 +168,19 @@ private fun makeHudDesigner(hud: Hud<*>): Drawable {
         subheading("oneconfig.hudeditor.padding.title", "oneconfig.hudeditor.padding.info"),
         interactiveAlignment(receiver),
         Group(
-            Group(
-                DraggingNumericTextInput(icon = "assets/oneconfig/ico/align.svg".image(), suffix = "px", max = 30f, size = Vec2(120f, 32f)).also {
-                    it[0].onChange { value: Float ->
-                        receiver.alignment = receiver.alignment.copy(padBetween = Vec2(value, value))
-                        receiver.recalculate()
-                        false
-                    }
-                }.titled("oneconfig.hudeditor.padding.between", pad = Vec2(2f, 0f)),
-                DraggingNumericTextInput(icon = "assets/oneconfig/ico/maximise.svg".image(), suffix = "px", max = 10f, size = Vec2(120f, 32f)).also {
-                    it[0].onChange { value: Float ->
-                        (receiver as? Block)?.radius(value)
-                        false
-                    }
-                }.titled("oneconfig.hudeditor.corner.radius", pad = Vec2(2f, 0f)),
-                alignment = Align(pad = Vec2(16f, 0f))
-            ),
+            DraggingNumericTextInput(icon = "assets/oneconfig/ico/align.svg".image(), suffix = "px", max = 30f, size = Vec2(120f, 32f)).also {
+                it[0].onChange { value: Float ->
+                    receiver.alignment = receiver.alignment.copy(padBetween = Vec2(value, value))
+                    receiver.recalculate()
+                    false
+                }
+            }.titled("oneconfig.hudeditor.padding.between"),
+            DraggingNumericTextInput(icon = "assets/oneconfig/ico/maximise.svg".image(), suffix = "px", max = 10f, size = Vec2(120f, 32f)).also {
+                it[0].onChange { value: Float ->
+                    (receiver as? Block)?.radius(value)
+                    false
+                }
+            }.titled("oneconfig.hudeditor.corner.radius"),
             Group(
                 DraggingNumericTextInput(icon = "assets/oneconfig/ico/align.svg".image(), suffix = "px", initialValue = receiver.padding.x, max = 30f, size = Vec2(68f, 32f)).onChange { value: Float ->
                     receiver.padding = receiver.padding.copy(x = value)
@@ -196,10 +194,11 @@ private fun makeHudDesigner(hud: Hud<*>): Drawable {
                 DraggingNumericTextInput(icon = "assets/oneconfig/ico/align.svg".image(), suffix = "px", initialValue = receiver.padding.h, max = 30f, size = Vec2(68f, 32f)).onChange { value: Float ->
                     receiver.padding = receiver.padding.copy(h = value)
                 }.also { it[0].rotation = PI * 1.5 },
-                alignment = Align(main = Align.Content.SpaceBetween, wrap = Align.Wrap.NEVER),
+                alignment = Align(main = Align.Content.SpaceBetween, wrap = Align.Wrap.NEVER, padEdges = Vec2.ZERO),
                 size = Vec2(308f, 32f)
-            ).titled("oneconfig.hudeditor.padding.edges").padded(16f, 12f, 0f, 0f),
-            alignment = Align(line = Align.Line.Start, wrap = Align.Wrap.NEVER, pad = Vec2.ZERO)
+            ).titled("oneconfig.hudeditor.padding.edges"),//.padded(16f, 12f, 0f, 0f),
+            //alignment = Align(line = Align.Line.Start, wrap = Align.Wrap.NEVER, pad = Vec2.ZERO)
+            size = Vec2(320f, 126f),
         ),
         Group(
             Checkbox(size = 18f).onToggle {
@@ -208,10 +207,10 @@ private fun makeHudDesigner(hud: Hud<*>): Drawable {
                 siblings[2].isEnabled = !it
                 siblings[3].isEnabled = !it
             },
-            Text("oneconfig.hudeditor.staticwidth").padded(-2f, 0f, 12f, 0f),
-            DraggingNumericTextInput(pre = "oneconfig.width", suffix = "px", initialValue = receiver.width, max = 1000f, size = Vec2(128f, 32f)),
-            DraggingNumericTextInput(pre = "oneconfig.height", suffix = "px", initialValue = receiver.height, max = 1000f, size = Vec2(128f, 32f)),
-            alignment = Align(pad = Vec2(12f, 6f))
+            Text("oneconfig.hudeditor.staticwidth"),
+            DraggingNumericTextInput(pre = "oneconfig.width", suffix = "px", initialValue = receiver.width.roundToInt().toFloat(), max = 1000f, size = Vec2(128f, 32f)),
+            DraggingNumericTextInput(pre = "oneconfig.height", suffix = "px", initialValue = receiver.height.roundToInt().toFloat(), max = 1000f, size = Vec2(128f, 32f)),
+            alignment = Align(padBetween = Vec2(12f, 6f))
         ),
         *(if (bg != null) colorOptions(bg) else arrayOf()),
         Text("oneconfig.hudeditor.component.title", fontSize = 16f).padded(0f, 18f, 0f, 0f).setFont { medium },
@@ -228,7 +227,7 @@ private fun makeHudDesigner(hud: Hud<*>): Drawable {
                 }
             }
         },
-        alignment = Align(cross = Align.Content.Start),
+        //alignment = Align(cross = Align.Content.Start),
         size = Vec2(480f, 0f),
     )
 }
@@ -338,7 +337,7 @@ fun textOptions(text: Text): Drawable {
             ex.parent.recalculate()
             false
         }.titled("oneconfig.hudeditor.text.font"),
-        DraggingNumericTextInput("assets/oneconfig/ico/text-input.svg".image(), initialValue = text.fontSize, min = 1f, size = Vec2(72f, 0f), suffix = "px").also {
+        DraggingNumericTextInput("assets/oneconfig/ico/text-input.svg".image(), initialValue = text.fontSize.roundToInt().toFloat(), min = 1f, size = Vec2(72f, 0f), suffix = "px").also {
             it[0].onChange { value: Float ->
                 text.fontSize = value
                 text._parent?.recalculate()
@@ -382,7 +381,7 @@ fun textOptions(text: Text): Drawable {
         ).titled("oneconfig.hudeditor.text.effects"),
         *colorOptions(text),
         size = Vec2(476f, 0f),
-        alignment = Align(pad = Vec2(0f, 8f))
+        alignment = Align(padEdges = Vec2(0f, 8f), padBetween = Vec2(24f, 8f), main = Align.Content.SpaceBetween)
     ).namedId("TextOptions")
 }
 
@@ -416,7 +415,7 @@ fun Drawable.titled(title: String, pad: Vec2 = Vec2(2f, 7f)): Drawable {
     return Group(
         Text(title, fontSize = 14f).secondary(),
         this,
-        alignment = Align(pad = pad),
+        alignment = Align(wrap = Align.Wrap.NEVER, mode = Align.Mode.Vertical, line = Align.Line.Start, padEdges = Vec2.ZERO, padBetween = pad),
     )
 }
 

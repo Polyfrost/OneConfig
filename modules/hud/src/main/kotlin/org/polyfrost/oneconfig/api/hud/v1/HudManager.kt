@@ -30,10 +30,7 @@ import dev.deftu.omnicore.common.OmniLoader
 import org.apache.logging.log4j.LogManager
 import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
-import org.polyfrost.oneconfig.api.hud.v1.internal.HudSettingsPage
-import org.polyfrost.oneconfig.api.hud.v1.internal.HudsPage
-import org.polyfrost.oneconfig.api.hud.v1.internal.alignC
-import org.polyfrost.oneconfig.api.hud.v1.internal.build
+import org.polyfrost.oneconfig.api.hud.v1.internal.*
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.UIManager
 import org.polyfrost.oneconfig.utils.v1.MHUtils
@@ -44,18 +41,21 @@ import org.polyfrost.polyui.color.PolyColor.Constants.TRANSPARENT
 import org.polyfrost.polyui.color.rgba
 import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.component.extensions.*
-import org.polyfrost.polyui.component.impl.*
+import org.polyfrost.polyui.component.impl.Block
+import org.polyfrost.polyui.component.impl.Group
+import org.polyfrost.polyui.component.impl.Image
+import org.polyfrost.polyui.component.impl.Text
 import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.operations.Fade
 import org.polyfrost.polyui.operations.Move
 import org.polyfrost.polyui.unit.Align
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.unit.seconds
+import org.polyfrost.polyui.utils.Clock
 import org.polyfrost.polyui.utils.image
 import kotlin.io.path.exists
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
-import kotlin.math.PI
 
 object HudManager {
     internal val LOGGER = LogManager.getLogger("OneConfig/HUD")
@@ -114,6 +114,13 @@ object HudManager {
         for (hud in huds) {
             register(hud)
         }
+    }
+
+    fun removeHud(hud: Hud<*>, executorCallback: Clock.Executor?) {
+        require(hud.isReal) { "Tried to remove a non-real HUD" }
+        polyUI.master.removeChild(hud.getBackground() ?: hud.get(), recalculate = false)
+        polyUI.removeExecutor(executorCallback)
+        ConfigManager.active().delete(hud.tree.id)
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -221,15 +228,14 @@ object HudManager {
     @ApiStatus.Internal
     fun toggle() {
         panelOpen = !panelOpen
+        scaleBlob.renders = false
+        menu.renders = false
         val pg = panel
-        val arrow = pg[0][0][0] as Image
         if (!panelOpen) {
             Move(pg, polyUI.size.x - 32f, pg.y, false, Animations.Default.create(0.2.seconds)).add()
             Fade(pg, 0.8f, false, Animations.Default.create(0.2.seconds)).add()
-            arrow.rotation = PI
         } else {
             Move(pg, polyUI.size.x - pg.width - 8f, pg.y, false, Animations.Default.create(0.2.seconds)).add()
-            arrow.rotation = 0.0
             pg.alpha = 1f
             pg.prioritize()
         }
@@ -265,37 +271,43 @@ object HudManager {
         return Group(
             Block(
                 Block(
-                    Image("assets/oneconfig/ico/right-arrow.svg").setAlpha(0.1f),
                     size = Vec2(32f, 1048f),
                     alignment = alignC,
                 ).named("CloseArea").withHoverStates().ignoreLayout().setPalette(
                     Colors.Palette(
                         TRANSPARENT,
-                        PolyColor.Gradient(rgba(100, 100, 100, 0.4f), TRANSPARENT),
-                        PolyColor.Gradient(rgba(100, 100, 100, 0.3f), TRANSPARENT),
+                        PolyColor.Gradient(rgba(0, 0, 0, 0.7f), TRANSPARENT),
+                        PolyColor.Gradient(rgba(0, 0, 0, 0.8f), TRANSPARENT),
                         TRANSPARENT,
                     )
                 ).events {
                     Event.Mouse.Entered then {
-                        Fade(this[0], 1f, false, Animations.Default.create(0.08.seconds)).add()
+                        if (!panelOpen) toggle()
+                        else {
+                            val panel = panel
+                            Move(panel, polyUI.size.x - panel.width, panel.y, false, Animations.Default.create(0.2.seconds)).add()
+                        }
                     }
                     Event.Mouse.Exited then {
-                        Fade(this[0], 0.1f, false, Animations.Default.create(0.08.seconds)).add()
+                        val panel = panel
+                        if (panelOpen) {
+                            Move(panel, polyUI.size.x - panel.width - 8f, panel.y, false, Animations.Default.create(0.2.seconds)).add()
+                        }
                     }
                     Event.Mouse.Companion.Clicked then {
                         toggle()
                     }
                 },
                 Group(
-                    Image("assets/oneconfig/ico/left-arrow.svg").setDestructivePalette().withHoverStates().onClick {
+                    Image("assets/oneconfig/ico/left-arrow.svg".image(), size = Vec2(18f, 18f)).setDestructivePalette().withHoverStates().onClick {
                         if (parent.parent[3] !== hudsPage) {
                             parent.parent[3] = hudsPage
                         } else {
                             Platform.screen().close()
                         }
                     },
-                    BoxedTextInput(placeholder = "oneconfig.search.placeholder", image = "assets/oneconfig/ico/search.svg".image(), size = Vec2(256f, 32f)),
-                    alignment = Align(main = Align.Content.SpaceBetween, pad = Vec2(24f, 0f)),
+//                    BoxedTextInput(placeholder = "oneconfig.search.placeholder", image = "assets/oneconfig/ico/search.svg".image(), size = Vec2(256f, 32f)),
+                    alignment = Align(pad = Vec2(24f, 0f)),
                     size = Vec2(500f, 32f),
                 ),
                 Text("oneconfig.hudeditor.title", fontSize = 24f).padded(24f, 0f).setFont { semiBold },

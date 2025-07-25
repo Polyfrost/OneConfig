@@ -35,7 +35,6 @@ import org.polyfrost.oneconfig.api.config.v1.Properties.simple
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.annotations.Switch
 import org.polyfrost.oneconfig.api.config.v1.getProp
-import org.polyfrost.oneconfig.api.event.v1.eventHandler
 import org.polyfrost.oneconfig.api.event.v1.events.HudEvent
 import org.polyfrost.oneconfig.api.event.v1.events.ScreenOpenEvent
 import org.polyfrost.oneconfig.api.event.v1.invoke.EventHandler
@@ -152,7 +151,7 @@ abstract class Hud<T : Drawable>(id: String, title: String, val category: Catego
         }
         val hideF3Handler = EventHandler.of(HudEvent.Debug::class.java, hideHandler)
         val hideTabHandler = EventHandler.of(HudEvent.Tab::class.java, hideHandler)
-        val hideScreenHandler = eventHandler { (screen): ScreenOpenEvent ->
+        val hideScreenHandler = EventHandler.of(ScreenOpenEvent::class.java) { (screen): ScreenOpenEvent ->
             hidden = screen != null
             // asm: don't hide when we open the hud editor
             // because otherwise you couldn't edit it (which sucks)

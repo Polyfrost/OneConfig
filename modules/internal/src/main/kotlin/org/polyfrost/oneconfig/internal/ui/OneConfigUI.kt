@@ -41,6 +41,7 @@ import org.polyfrost.oneconfig.internal.ui.pages.ModsPage
 import org.polyfrost.oneconfig.internal.ui.pages.ThemesPage
 import org.polyfrost.oneconfig.internal.ui.pages.TreeSource
 import org.polyfrost.polyui.animate.Animations
+import org.polyfrost.polyui.animate.SetAnimation
 import org.polyfrost.polyui.color.rgba
 import org.polyfrost.polyui.component.Component
 import org.polyfrost.polyui.component.Drawable
@@ -130,8 +131,8 @@ object OneConfigUI {
                         // move to mod button
                         this.at = parent[3].at
                     },
-                    Image("assets/oneconfig/brand/oneconfig.svg".image()).named("Logo").padded(0f, 23f, 0f, 0f),
-                    Text("oneconfig.sidebar.title.options", fontSize = 11f).setPalette { text.secondary }.padded(0f, 32f, 0f, 0f),
+                    Image("assets/oneconfig/brand/oneconfig.svg".image()).named("Logo").padded(29f, 0f, 0f, 0f),
+                    Text("oneconfig.sidebar.title.options", fontSize = 11f).setPalette { text.secondary }.padded(0f, 24f, 0f, 0f),
                     SidebarButton(
                         "assets/oneconfig/ico/settings.svg".image(),
                         "oneconfig.mods",
@@ -159,9 +160,9 @@ object OneConfigUI {
                         label("oneconfig.beta")
                     ).onClick {
                         Platform.screen().display(HudManager.getWithEditor())
-                    }.padded(0f, 200f, 0f, 0f),
+                    }.padded(0f, 210f, 0f, 0f),
                     size = Vec2(273f, 700f),
-                    alignment = Align(cross = Align.Content.Center, mode = Align.Mode.Vertical, pad = Vec2(6f, 8f), wrap = Align.Wrap.NEVER),
+                    alignment = Align(cross = Align.Content.Start, mode = Align.Mode.Vertical, line = Align.Line.Start, padBetween = Vec2(6f, 8f), padEdges = Vec2(24f, 24f), wrap = Align.Wrap.NEVER),
                     radii = floatArrayOf(16f, 0f, 16f, 0f)
                 ).setPalette { page.bg }.onInit { Recolor(this, palette.hovered).add() }.withBorder { page.border5 }.named("Sidebar"),
                 Group(
@@ -180,7 +181,7 @@ object OneConfigUI {
                                 Group(
                                     Image("assets/oneconfig/ico/bell.svg".image()),
                                     Image(playerHead, size = Vec2(24f, 24f)).radius(6f).named("ProfileImage").withBorder(
-                                        rgba(255, 255, 255, 0.14f),
+                                        rgba(255, 255, 255, 0.2f),
                                         width = 1f,
                                     ).addHoverInfo(Text(OmniClientPlayer.name.ifEmpty { "Steve" })),
                                     alignment = Align(pad = Vec2(16f, 8f)),
@@ -211,6 +212,7 @@ object OneConfigUI {
                             Image(
                                 "assets/oneconfig/ico/close.svg".image(),
                             ).named("Close").onClick {
+                                Platform.screen().close()
                             }.withHoverStates().setDestructivePalette(),
                             alignment = Align(pad = Vec2(24f, 4f)),
                         ),
@@ -229,7 +231,11 @@ object OneConfigUI {
             ui = polyUI.master
             window = win
             searchNoneFound.setup(polyUI)
-            (ui as Block).radius(16f)
+            (ui as Block).let {
+                it.radius(16f)
+                it.borderWidth = 1f
+                it.borderColor = polyUI.colors.page.border10
+            }
         } else {
             Platform.screen().display(window)
             if (ui[1][1] != initialScreen) {
@@ -248,14 +254,15 @@ object OneConfigUI {
         val title = ui[1][0][0][2] as Text
         val translated = ui.polyUI.translator.translate(name)
         title.text = translated.string
-        ui[1][1] = page
+        val prev = ui[1][1]
+        ui[1].set(prev, page, SetAnimation.SlideLeft)
     }
 
     fun label(text: String) = Block(
         Text(text).setFont { bold },
         alignment = Align(main = Align.Content.Center),
         size = Vec2(54f, 18f),
-    ).setPalette { brand.fg }
+    ).setPalette { brand.fg }.radius(9f)
 
     fun invalidateCache() {
         window = null
