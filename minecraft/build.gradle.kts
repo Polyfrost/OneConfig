@@ -1,13 +1,15 @@
 @file:Suppress("UnstableApiUsage")
 // Shared build logic for all versions of OneConfig.
 
+import com.replaymod.gradle.preprocess.PreprocessTask
 import dev.deftu.gradle.utils.GameSide
-import dev.deftu.gradle.utils.propertyBoolOr
 import dev.deftu.gradle.utils.version.MinecraftReleaseVersion
 import dev.deftu.gradle.utils.version.MinecraftVersions
 import org.polyfrost.gradle.provideIncludedDependencies
 import org.polyfrost.gradle.provideFabricApiDependency
 import java.text.SimpleDateFormat
+import java.util.function.Predicate
+import kotlin.io.path.absolutePathString
 import java.lang.Boolean as JBoolean
 
 plugins {
@@ -20,6 +22,8 @@ plugins {
     id(libs.plugins.dgt.loom.get().pluginId)
     id(libs.plugins.dgt.publishing.maven.get().pluginId)
 }
+
+evaluationDependsOn(":modules")
 
 if (mcData.isForge) {
     loom.forge.mixinConfig("mixins.oneconfigv1.init.json")
@@ -127,6 +131,11 @@ fun DependencyHandlerScope.handleApiDep(dependency: ExternalModuleDependency, is
     }
 }
 
+preprocess {
+    val filter: Predicate<File> = Predicate { !it.toPath().absolutePathString().contains("build/generated/ksp") }
+    javaFilter = filter
+    kotlinFilter = filter
+}
 
 dependencies {
     data class CompatDependency(
@@ -349,6 +358,20 @@ afterEvaluate {
                 signing {
                     isRequired = project.properties["signing.keyId"] != null
                     sign(this@named)
+                }
+            }
+        }
+    }
+
+    tasks.withType<PreprocessTask>().configureEach {
+        println(this)
+        for (project in rootProject.project(":modules").subprojects) {
+            if ("dependencies" !in project.path) {
+                println(project.path)
+                project.tasks.forEach { println(it) }
+                project.tasks.findByPath("jar")?.let {
+                    println("$this > $it")
+                    this@configureEach.dependsOn(it)
                 }
             }
         }
