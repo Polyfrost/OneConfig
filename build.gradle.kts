@@ -1,7 +1,4 @@
 plugins {
-    id("dev.deftu.gradle.preprocess") version "0.13.0.1" apply false
-    id("dev.deftu.gradle.preprocess-root") version "0.13.0.1" apply false
-
     alias(libs.plugins.kotlin) apply(false)
     alias(libs.plugins.licenser) apply(false)
     alias(libs.plugins.jetbrains.idea.ext)

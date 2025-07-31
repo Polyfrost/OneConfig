@@ -31,7 +31,7 @@ asm = "5.2"
 brigadier = "1.0.18"
 
 # Gradle
-dgt = "2.47.0"
+dgt = "2.48.0"
 kotlinx-abi = "0.17.0"
 licenser = "2.1.1"
 jetbrains-idea-ext = "1.1.8"
