@@ -18,7 +18,6 @@ import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.color.argb
 import org.polyfrost.polyui.color.mutable
 import java.util.*
-import kotlin.reflect.KClass
 
 internal object RConfigCompat {
 
@@ -73,7 +72,7 @@ internal object RConfigCompat {
             property.title = button.title()?.takeUnless { it.isEmpty() }
                 ?: "button" //todo find a better way of doing this, rconfig allows empty names
             property.description = button.description()
-            property.visualizerKt = Visualizer.ButtonVisualizer::class
+            property.visualizer = Visualizer.ButtonVisualizer::class.java
             property.metadata?.put("runnable", Runnable { button.invoke() })
             tree.put(property)
         }
@@ -104,7 +103,7 @@ internal object RConfigCompat {
         if (entry.get().javaClass.isArray) return
         val options = entry.options() // todo draggable list and multiselects
 
-        val visualizer: KClass<out Visualizer> = when (entry.type()) {
+        val visualizer: Class<out Visualizer> = when (entry.type()) {
             EntryType.BYTE, EntryType.SHORT, EntryType.INTEGER, EntryType.LONG, EntryType.FLOAT, EntryType.DOUBLE -> {
                 if (entry.options().getOption(Option.RANGE) != null) {
                     builder["min"] = options.getOption(Option.RANGE).min.toFloat()
@@ -125,11 +124,11 @@ internal object RConfigCompat {
                         argb(entry.int).mutable()
                     }
 
-                    Visualizer.ColorVisualizer::class
+                    Visualizer.ColorVisualizer::class.java
                 } else if (entry.options().hasOption(Option.SLIDER)) {
-                    Visualizer.SliderVisualizer::class
+                    Visualizer.SliderVisualizer::class.java
                 } else {
-                    Visualizer.NumberVisualizer::class
+                    Visualizer.NumberVisualizer::class.java
                 }
             }
 
@@ -137,15 +136,15 @@ internal object RConfigCompat {
                 // TODO multiline :pensive:
                 builder["validate"] =
                     if (options.hasOption(Option.REGEX)) options.getOption(Option.REGEX).pattern() else null
-                Visualizer.TextVisualizer::class
+                Visualizer.TextVisualizer::class.java
             }
 
-            EntryType.BOOLEAN -> Visualizer.SwitchVisualizer::class
-            EntryType.ENUM -> Visualizer.DropdownVisualizer::class
+            EntryType.BOOLEAN -> Visualizer.SwitchVisualizer::class.java
+            EntryType.ENUM -> Visualizer.DropdownVisualizer::class.java
             else -> null
         } ?: return
 
-        builder["visualizer"] = visualizer.java
+        builder["visualizer"] = visualizer
         tree.put(builder.build())
     }
 

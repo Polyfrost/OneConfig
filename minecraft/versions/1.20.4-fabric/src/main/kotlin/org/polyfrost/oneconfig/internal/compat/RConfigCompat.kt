@@ -14,7 +14,6 @@ import org.polyfrost.oneconfig.api.config.v1.Visualizer
 import org.polyfrost.oneconfig.internal.DynamicPolyImage
 import org.polyfrost.oneconfig.utils.v1.dsl.*
 import java.util.*
-import kotlin.reflect.KClass
 
 internal object RConfigCompat {
 
@@ -68,7 +67,7 @@ internal object RConfigCompat {
             property.title = button.title()?.takeUnless { it.isEmpty() }
                 ?: "button" //todo find a better way of doing this, rconfig allows empty names
             property.description = button.description()
-            property.visualizerKt = Visualizer.ButtonVisualizer::class
+            property.visualizer = Visualizer.ButtonVisualizer::class.java
             property.metadata?.put("runnable", Runnable { button.invoke() })
             tree.put(property)
         }
@@ -99,7 +98,7 @@ internal object RConfigCompat {
         if (entry.get().javaClass.isArray) return
         val options = entry.options() // todo draggable list and multiselects
 
-        val visualizer: KClass<out Visualizer> = when (entry.type()) {
+        val visualizer: Class<out Visualizer> = when (entry.type()) {
             EntryType.BYTE, EntryType.SHORT, EntryType.INTEGER, EntryType.LONG, EntryType.FLOAT, EntryType.DOUBLE -> {
                 if (entry.options().hasRange) {
                     builder["min"] = options.min.toFloat()
@@ -110,24 +109,24 @@ internal object RConfigCompat {
                 }
 
                 if (entry.options().hasSlider) {
-                    Visualizer.SliderVisualizer::class
+                    Visualizer.SliderVisualizer::class.java
                 } else {
-                    Visualizer.NumberVisualizer::class
+                    Visualizer.NumberVisualizer::class.java
                 }
             }
 
             EntryType.STRING -> {
                 // TODO multiline :pensive:
                 builder["validate"] = if (options.hasRegex()) options.regex.pattern() else null
-                Visualizer.TextVisualizer::class
+                Visualizer.TextVisualizer::class.java
             }
 
-            EntryType.BOOLEAN -> Visualizer.SwitchVisualizer::class
-            EntryType.ENUM -> Visualizer.DropdownVisualizer::class
+            EntryType.BOOLEAN -> Visualizer.SwitchVisualizer::class.java
+            EntryType.ENUM -> Visualizer.DropdownVisualizer::class.java
             else -> null
         } ?: return
 
-        builder["visualizer"] = visualizer.java
+        builder["visualizer"] = visualizer
         tree.put(builder.build())
     }
 

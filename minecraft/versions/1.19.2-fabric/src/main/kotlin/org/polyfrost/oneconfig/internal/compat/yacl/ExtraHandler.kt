@@ -7,6 +7,6 @@ import kotlin.reflect.KClass
 internal interface ExtraHandler<T : Controller<*>> {
 
     fun canHandle(controller: Controller<*>): Boolean
-    fun handle(controller: Controller<*>, builder: YaclPropertyBuilder): KClass<out Visualizer>?
+    fun handle(controller: Controller<*>, builder: YaclPropertyBuilder): Class<out Visualizer>?
 
 }

@@ -69,7 +69,7 @@ internal object RConfigCompat {
         property.title = button.title()?.takeUnless { it.isEmpty() }
             ?: "button" //todo find a better way of doing this, rconfig allows empty names
         property.description = button.description()
-        property.visualizerKt = Visualizer.ButtonVisualizer::class
+        property.visualizer = Visualizer.ButtonVisualizer::class.java
         property.metadata?.put("runnable", Runnable { button.invoke() })
         property.addDisplayCondition { if (button.isHidden) Property.Display.HIDDEN else Property.Display.SHOWN }
         tree.put(property)

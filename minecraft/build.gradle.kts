@@ -364,11 +364,8 @@ afterEvaluate {
     }
 
     tasks.withType<PreprocessTask>().configureEach {
-        println(this)
         for (project in rootProject.project(":modules").subprojects) {
             if ("dependencies" !in project.path) {
-                println(project.path)
-                project.tasks.forEach { println(it) }
                 project.tasks.findByPath("jar")?.let {
                     println("$this > $it")
                     this@configureEach.dependsOn(it)
