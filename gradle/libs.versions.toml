@@ -34,7 +34,7 @@ brigadier = "1.0.18"
 dgt = "2.48.0"
 kotlinx-abi = "0.17.0"
 licenser = "2.1.1"
-jetbrains-idea-ext = "1.1.8"
+jetbrains-idea-ext = "1.2"
 
 log4j-api = "2.0-beta9" # used because this is the version that 1.8.9 supports, so we have to compile against the same (annoying)
 
