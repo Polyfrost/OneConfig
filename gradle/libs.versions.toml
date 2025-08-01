@@ -2,7 +2,7 @@
 
 # Libraries
 # All
-kotlin = "2.0.20"
+kotlin = "2.2.0"
 kotlinx-coroutines = "1.8.1"
 kotlinx-atomicfu = "0.27.0"
 fabric-language-kotlin = "1.13.2+kotlin.2.1.20"
