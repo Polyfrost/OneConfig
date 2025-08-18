@@ -32,7 +32,7 @@ brigadier = "1.0.18"
 
 # Gradle
 dgt = "2.50.0"
-kotlinx-abi = "0.17.0"
+kotlinx-abi = "0.18.1"
 licenser = "2.1.1"
 jetbrains-idea-ext = "1.2"
 
