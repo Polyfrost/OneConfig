@@ -28,7 +28,7 @@ lwjgl = "3.3.3" # All downloaded by the isolated-lwjgl3-loader
 mixin = "0.8.4+build.6"
 mixin-extras = "0.5.0"
 asm = "5.2"
-brigadier = "1.0.18"
+brigadier = "1.0.500"
 
 oneconfig-loader = "1.1.0-alpha.48"
 
