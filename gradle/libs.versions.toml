@@ -41,7 +41,7 @@ jetbrains-idea-ext = "1.3"
 log4j-api = "2.0-beta9" # used because this is the version that 1.8.9 supports, so we have to compile against the same (annoying)
 
 # Testing
-junit-bom = "5.10.2"
+junit-bom = "5.13.4"
 log4j-impl = "2.23.1" # unvulnerable version
 
 [libraries]
