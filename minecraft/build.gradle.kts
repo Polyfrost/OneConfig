@@ -176,7 +176,7 @@ dependencies {
     val tripleVersion = Triple(mcVersion.major, mcVersion.minor, mcVersion.patch)
     val mcVersionString = listOf(mcVersion.major, mcVersion.minor, mcVersion.patch).joinToString(".")
 
-    compileOnlyCompat("gg.essential:vigilance-1.8.9-forge:295")
+    compileOnlyCompat("gg.essential:vigilance-1.8.9-forge:299")
     compileOnlyCompat("org.notenoughupdates.moulconfig:common:3.11.0")
     skyhanniRelocatedConfiguration("org.notenoughupdates.moulconfig:common:3.11.0")
     compileOnly(prebundle(skyhanniRelocatedConfiguration))
