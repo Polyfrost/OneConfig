@@ -155,7 +155,7 @@ open class ConfigVisualizer {
             } else {
                 node as Property<*>
                 if (node.getMetadata<Any?>("visualizer") == null) {
-                    // LOGGER.warn("Property ${node.id} does not have a visualizer; ignoring")
+                    LOGGER.warn("Property ${node.id} does not have a visualizer; ignoring")
                     continue
                 }
             }
