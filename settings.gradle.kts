@@ -24,7 +24,7 @@ pluginManagement {
 
     plugins {
         kotlin("jvm") version("2.2.10")
-        id("dev.deftu.gradle.multiversion-root") version("2.50.0") // Update in libs.versions.toml too!!!
+        id("dev.deftu.gradle.multiversion-root") version("2.51.0") // Update in libs.versions.toml too!!!
     }
 }
 
@@ -34,12 +34,6 @@ dependencyResolutionManagement {
         mavenCentral()
         maven("https://repo.polyfrost.org/releases")
         maven("https://repo.hypixel.net/repository/Hypixel")
-    }
-}
-
-buildscript {
-    dependencies {
-        classpath("org.jetbrains.kotlin:kotlin-compiler-embeddable:2.2.10")
     }
 }
 
@@ -95,18 +89,6 @@ listOf(
     "1.16.5-forge",
     "1.16.5-fabric",
 
-    "1.17.1-forge",
-    "1.17.1-fabric",
-
-    "1.18.2-forge",
-    "1.18.2-fabric",
-
-    "1.19.2-forge",
-    "1.19.2-fabric",
-
-    "1.19.4-forge",
-    "1.19.4-fabric",
-
     "1.20.1-forge",
     "1.20.1-fabric",
 
@@ -114,17 +96,8 @@ listOf(
     "1.20.4-neoforge",
     "1.20.4-fabric",
 
-    "1.20.6-neoforge",
-    "1.20.6-fabric",
-
     "1.21.1-neoforge",
     "1.21.1-fabric",
-
-    "1.21.2-neoforge",
-    "1.21.2-fabric",
-
-    "1.21.3-neoforge",
-    "1.21.3-fabric",
 
     "1.21.4-neoforge",
     "1.21.4-fabric",
@@ -132,14 +105,8 @@ listOf(
     "1.21.5-neoforge",
     "1.21.5-fabric",
 
-    "1.21.6-neoforge",
-    "1.21.6-fabric",
-
-    "1.21.7-neoforge",
-    "1.21.7-fabric",
-
     "1.21.8-neoforge",
-    "1.21.8-fabric"
+    "1.21.8-fabric",
 ).forEach { version ->
     val proj = ":minecraft:$version"
     include(proj)
@@ -153,10 +120,10 @@ listOf(
             "1.16.5-forge",
             "1.16.5-fabric",
             "1.21.1-fabric",
-            "1.21.2-fabric",
-            "1.21.3-fabric",
             "1.21.4-fabric",
-            "1.21.5-fabric").contains(version)) {
+            "1.21.5-fabric",
+            "1.21.8-fabric"
+        ).contains(version)) {
         include(bootstrapProj)
         project(bootstrapProj).apply {
             projectDir = file("bootstrap/versions/$version")

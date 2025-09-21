@@ -24,7 +24,11 @@ public class Mixin_SoundPlayedEvent {
     //#endif
 
     @ModifyVariable(
+            //#if MC >= 1.21.8
+            //$$ method = "play",
+            //#else
             method = "playSound",
+            //#endif
             at = @At("HEAD"),
             argsOnly = true
     )

@@ -423,38 +423,3 @@ afterEvaluate {
 ksp {
     arg("relocator.mcVersion", mcData.version.toString())
 }
-
-if (mcData.version < MinecraftVersions.VERSION_1_13) {
-    if (
-        System.getProperty("os.arch") == "aarch64" &&
-        System.getProperty("os.name") == "Mac OS X"
-    ) {
-        logger.error("Setting up fix with Apple Silicon for Minecraft ${mcData.version}")
-
-        repositories {
-            maven("https://maven.legacyfabric.net/") {
-                content {
-                    includeGroup("org.lwjgl.lwjgl")
-                }
-            }
-        }
-
-        val lwjglVersion = "2.9.4+legacyfabric.8"
-
-        configurations.all {
-            resolutionStrategy {
-                dependencySubstitution {
-                    all {
-                        if (requested is ModuleComponentSelector) {
-                            val module = (requested as ModuleComponentSelector)
-                            if (module.group == "org.lwjgl.lwjgl") {
-                                logger.warn("Substituting ${module.group}:${module.module}:${module.version} with ${module.group}:${module.module}:$lwjglVersion")
-                                useTarget(module.group + ":" + module.module + ":" + lwjglVersion)
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}

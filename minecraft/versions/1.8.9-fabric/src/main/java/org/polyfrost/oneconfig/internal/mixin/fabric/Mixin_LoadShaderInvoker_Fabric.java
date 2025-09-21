@@ -34,7 +34,9 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 
 @Mixin(GameRenderer.class)
 public interface Mixin_LoadShaderInvoker_Fabric {
-    //#if MC > 1.19.2
+    //#if MC >= 1.21.4
+    //$$ @Invoker("setPostProcessor")
+    //#elseif MC > 1.19.2
     //$$ @Invoker("loadPostProcessor")
     //#else
     @Invoker

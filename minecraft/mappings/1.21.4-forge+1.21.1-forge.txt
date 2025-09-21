@@ -1,4 +1,2 @@
-net.minecraft.client.render.GameRenderer setPostProcessor() loadPostProcessor()
-
 net.minecraft.client.gl.ShaderProgram net.minecraft.client.gl.JsonEffectShaderProgram
 net.minecraft.client.gl.ShaderProgram getUniform() getUniformByName()

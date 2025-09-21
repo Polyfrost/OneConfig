@@ -17,19 +17,17 @@ preprocess {
     val forge11605 = createNode("bootstrap-1.16.5-forge", 1_16_05, "srg")
     val fabric11605 = createNode("bootstrap-1.16.5-fabric", 1_16_05, "yarn")
     val fabric12101 = createNode("bootstrap-1.21.1-fabric", 1_21_01, "yarn")
-    val fabric12102 = createNode("bootstrap-1.21.2-fabric", 1_21_02, "yarn")
-    val fabric12103 = createNode("bootstrap-1.21.3-fabric", 1_21_04, "yarn")
     val fabric12104 = createNode("bootstrap-1.21.4-fabric", 1_21_04, "yarn")
     val fabric12105 = createNode("bootstrap-1.21.5-fabric", 1_21_05, "yarn")
+    val fabric12108 = createNode("bootstrap-1.21.8-fabric", 1_21_08, "yarn")
 
     forge11202.link(forge10809)
     forge11605.link(forge11202)
     fabric11605.link(forge11605)
     fabric12101.link(fabric11605)
-    fabric12102.link(fabric12101)
-    fabric12103.link(fabric12102)
-    fabric12104.link(fabric12103)
+    fabric12104.link(fabric12101)
     fabric12105.link(fabric12104)
+    fabric12108.link(fabric12105)
 
     strictExtraMappings.set(true)
 }

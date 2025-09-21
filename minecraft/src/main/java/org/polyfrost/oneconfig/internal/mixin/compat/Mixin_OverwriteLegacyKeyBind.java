@@ -10,11 +10,11 @@ import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.injection.At;
 
 @Pseudo
-@Mixin(targets = "cc.polyfrost.oneconfig.internal.config.core.KeyBindHandler")
+@Mixin(targets = "cc.polyfrost.oneconfig.internal.config.core.KeyBindHandler", remap = false)
 public class Mixin_OverwriteLegacyKeyBind {
 
     @Dynamic
-    @WrapWithCondition(method = "onKeyPressed", at = @At(value = "INVOKE", target = "Lcc/polyfrost/oneconfig/config/core/OneKeyBind;run()V"))
+    @WrapWithCondition(method = "onKeyPressed", at = @At(value = "INVOKE", target = "Lcc/polyfrost/oneconfig/config/core/OneKeyBind;run()V"), remap = false)
     private static boolean onKeyPressed(OneKeyBind instance) {
         return !instance.getKeyBinds().contains(OmniKeyboard.KEY_RSHIFT);
     }

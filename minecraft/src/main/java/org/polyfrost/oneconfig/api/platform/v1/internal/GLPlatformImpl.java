@@ -89,7 +89,7 @@ public class GLPlatformImpl implements GLPlatform {
         new OmniManagedColorMask(true, true, true, true).activate();
 
         //#if MC >= 1.17.1 && MC < 1.21.5
-        //$$ net.minecraft.client.render.BufferRenderer.unbindAll();
+        //$$ net.minecraft.client.render.BufferRenderer.reset();
         //#endif
     }
 

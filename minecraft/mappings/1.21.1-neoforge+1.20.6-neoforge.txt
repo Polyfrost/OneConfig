@@ -1,1 +1,0 @@
-net.minecraft.client.DeltaTracker net.minecraft.client.Timer

@@ -30,7 +30,6 @@ import dev.deftu.omnicore.common.OmniIdentifier;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.shader.Shader;
 import net.minecraft.client.shader.ShaderGroup;
-import net.minecraft.client.shader.ShaderManager;
 import net.minecraft.client.shader.ShaderUniform;
 import net.minecraft.util.ResourceLocation;
 import org.apache.logging.log4j.LogManager;
@@ -46,7 +45,7 @@ import org.polyfrost.polyui.animate.Animation;
 import java.util.List;
 
 //#if MC >= 1.21.2
-//$$ import net.minecraft.client.render.DefaultFramebufferSet;
+//$$ import net.minecraft.client.renderer.LevelTargetBundle;
 //#endif
 
 /**
@@ -129,7 +128,7 @@ public final class BlurHandler {
 
                     // Iterate through the list of shaders.
                     for (Shader shader : shaders) {
-                        ShaderManager sm = shader.getShaderManager();
+                        net.minecraft.client.shader.ShaderManager sm = shader.getShaderManager();
                         ShaderUniform su = sm.getShaderUniform("Progress");
                         if (su == null) continue;
                         this.su = su;
@@ -158,7 +157,7 @@ public final class BlurHandler {
         if (sg == null) return;
         String name =
                 //#if MC >= 1.21.2
-                //$$ MinecraftClient.getInstance().gameRenderer.getPostProcessorId().toString();
+                //$$ Minecraft.getInstance().gameRenderer.currentPostEffect().toString();
                 //#else
                 sg.getShaderGroupName();
                 //#endif
@@ -170,7 +169,7 @@ public final class BlurHandler {
 
         su = null;
         //#if MC >= 1.21.2
-        //$$ MinecraftClient.getInstance().gameRenderer.clearPostProcessor();
+        //$$ Minecraft.getInstance().gameRenderer.clearPostEffect();
         //#else
         Minecraft.getMinecraft().entityRenderer.stopUseShader();
         //#endif
@@ -191,7 +190,7 @@ public final class BlurHandler {
         //#endif
         return Minecraft.getMinecraft()
                 //#if MC >= 1.21.2
-                //$$ .getShaderLoader().loadPostEffect(this.blurShader, DefaultFramebufferSet.MAIN_ONLY);
+                //$$ .getShaderManager().getPostChain(this.blurShader, LevelTargetBundle.MAIN_TARGETS);
                 //#else
                 .entityRenderer.getShaderGroup();
                 //#endif

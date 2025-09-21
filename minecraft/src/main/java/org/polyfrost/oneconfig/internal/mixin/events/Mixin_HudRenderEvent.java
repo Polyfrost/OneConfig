@@ -21,7 +21,7 @@ import net.minecraftforge.client.GuiIngameForge;
 //#endif
 
 //#if MC >= 1.21.1
-//$$ import net.minecraft.client.DeltaTracker;
+//$$ import net.minecraft.client.render.RenderTickCounter;
 //#endif
 
 import dev.deftu.omnicore.client.render.OmniGameRendering;
@@ -62,7 +62,7 @@ public class Mixin_HudRenderEvent {
             //$$ PoseStack ctx,
             //#endif
             //#if MC >= 1.21.1
-            //$$ DeltaTracker deltaTracker,
+            //$$ RenderTickCounter renderTickCounter,
             //#else
             float passedPartialTicks,
             //#endif

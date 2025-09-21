@@ -11,8 +11,8 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 //#if MC >= 1.21.2
-//$$ import net.minecraft.client.render.entity.state.LivingEntityRenderState;
-//$$ import net.minecraft.client.MinecraftClient;
+//$$ import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
+//$$ import net.minecraft.client.Minecraft;
 //#endif
 
 //#if MC >= 1.16.5
@@ -66,7 +66,7 @@ public class Mixin_RenderLivingEntityEvent<
             //$$ double x = entity.x;
             //$$ double y = entity.y;
             //$$ double z = entity.z;
-            //$$ float partialTicks = MinecraftClient.getInstance().getRenderTime();
+            //$$ float partialTicks = Minecraft.getInstance().getFrameTimeNs();
             //#elseif MC >= 1.16.5
             //$$ double x = entity.getX();
             //$$ double y = entity.getY();
@@ -117,7 +117,7 @@ public class Mixin_RenderLivingEntityEvent<
             //$$ double x = entity.x;
             //$$ double y = entity.y;
             //$$ double z = entity.z;
-            //$$ float partialTicks = MinecraftClient.getInstance().getRenderTime();
+            //$$ float partialTicks = Minecraft.getInstance().getFrameTimeNs();
             //#elseif MC >= 1.16.5
             //$$ double x = entity.getX();
             //$$ double y = entity.getY();
