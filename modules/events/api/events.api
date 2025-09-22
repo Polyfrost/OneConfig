@@ -82,10 +82,10 @@ public final class org/polyfrost/oneconfig/api/event/v1/events/HudEvent$Tab : or
 }
 
 public class org/polyfrost/oneconfig/api/event/v1/events/HudRenderEvent : org/polyfrost/oneconfig/api/event/v1/events/Event {
+	public final field ctx Ldev/deftu/omnicore/api/client/render/OmniRenderingContext;
 	public final field deltaTicks F
-	public final field matrices Ldev/deftu/omnicore/client/render/OmniMatrixStack;
-	public fun <init> (Ldev/deftu/omnicore/client/render/OmniMatrixStack;F)V
-	public fun component1 ()Ldev/deftu/omnicore/client/render/OmniMatrixStack;
+	public fun <init> (Ldev/deftu/omnicore/api/client/render/OmniRenderingContext;F)V
+	public fun component1 ()Ldev/deftu/omnicore/api/client/render/OmniRenderingContext;
 	public fun component2 ()F
 }
 
@@ -165,9 +165,9 @@ public final class org/polyfrost/oneconfig/api/event/v1/events/PlayerInteractEve
 }
 
 public class org/polyfrost/oneconfig/api/event/v1/events/PostWorldRenderEvent : org/polyfrost/oneconfig/api/event/v1/events/Event {
-	public fun <init> (Ldev/deftu/omnicore/client/render/OmniMatrixStack;F)V
+	public fun <init> (Ldev/deftu/omnicore/api/client/render/stack/OmniMatrixStack;F)V
 	public fun getPartialTicks ()F
-	public fun getStack ()Ldev/deftu/omnicore/client/render/OmniMatrixStack;
+	public fun getStack ()Ldev/deftu/omnicore/api/client/render/stack/OmniMatrixStack;
 }
 
 public abstract class org/polyfrost/oneconfig/api/event/v1/events/RenderEvent : org/polyfrost/oneconfig/api/event/v1/events/Event {

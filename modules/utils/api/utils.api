@@ -78,11 +78,8 @@ public abstract interface class org/polyfrost/oneconfig/api/platform/v1/ScreenPl
 	public abstract fun current ()Ljava/lang/Object;
 	public fun display (Ljava/lang/Object;)V
 	public abstract fun display (Ljava/lang/Object;I)V
-	public abstract fun getSmuggledDrawContext ()Ljava/lang/Object;
 	public fun pixelRatio ()F
-	public abstract fun renderLegacyHuds ()V
-	public abstract fun setSmuggledDrawContext (Ljava/lang/Object;)V
-	public abstract fun setSmuggledMatrixStack (Ldev/deftu/omnicore/client/render/OmniMatrixStack;)V
+	public abstract fun renderLegacyHuds (Ldev/deftu/omnicore/api/client/render/OmniRenderingContext;)V
 	public abstract fun viewportHeight ()I
 	public abstract fun viewportWidth ()I
 	public abstract fun windowHeight ()I

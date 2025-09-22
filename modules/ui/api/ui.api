@@ -41,7 +41,7 @@ public abstract interface class org/polyfrost/oneconfig/api/ui/v1/UIManager {
 	public abstract fun createPolyUIScreen (Lorg/polyfrost/polyui/PolyUI;FFZZLjava/util/function/Consumer;)Ljava/lang/Object;
 	public abstract fun createWindow ()Lorg/polyfrost/polyui/renderer/Window;
 	public abstract fun getDefaultInstance ()Lorg/polyfrost/polyui/PolyUI;
-	public abstract fun getRenderPipeline ()Ldev/deftu/omnicore/client/render/pipeline/OmniRenderPipeline;
+	public abstract fun getRenderPipeline ()Ldev/deftu/omnicore/api/client/render/pipeline/OmniRenderPipeline;
 	public abstract fun getRenderer ()Lorg/polyfrost/polyui/renderer/Renderer;
 	public abstract fun getTinyFD ()Lorg/polyfrost/oneconfig/api/ui/v1/api/TinyFdApi;
 }
