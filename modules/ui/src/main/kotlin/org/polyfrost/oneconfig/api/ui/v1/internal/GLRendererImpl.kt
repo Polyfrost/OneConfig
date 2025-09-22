@@ -29,7 +29,7 @@ import kotlin.math.tan
 object GLRendererImpl : Renderer {
     private val LOGGER = LogManager.getLogger("PolyUI/GLRenderer")
 
-    private const val MAX_UI_DEPTH = 8
+    private const val MAX_UI_DEPTH = 16
     private const val FONT_MAX_BITMAP_W = 1024
     private const val FONT_MAX_BITMAP_H = 512
     private const val ATLAS_SIZE = 2048
@@ -52,6 +52,7 @@ object GLRendererImpl : Renderer {
     private var instancedVbo = 0
     private var atlas = 0
     private var program = 0
+    private var vao = 0 // GL3+ only
     private var quadVbo = 0
     private var nSvgRaster = 0L
 
@@ -165,9 +166,9 @@ object GLRendererImpl : Renderer {
 
             // Proper antialiasing based on distance field
             float f = fwidth(d);
-            float alpha = 1.0 - smoothstep(-f, f, d);
+            float alpha = col.a * (1.0 - smoothstep(-f, f, d));
 
-            fragColor = vec4(col.rgb, col.a * alpha);
+            fragColor = vec4(col.rgb * alpha, alpha);
         }
     """.trimIndent()
 
@@ -282,7 +283,8 @@ object GLRendererImpl : Renderer {
 
         if (caps().OpenGL30) {
             // ...ok i guess this is needed
-            org.lwjgl.opengl.GL30C.glBindVertexArray(org.lwjgl.opengl.GL30C.glGenVertexArrays())
+            vao = org.lwjgl.opengl.GL30C.glGenVertexArrays()
+            org.lwjgl.opengl.GL30C.glBindVertexArray(vao)
         }
 
         program = linkProgram(compileShader(GL_VERTEX_SHADER, VERT), compileShader(GL_FRAGMENT_SHADER, FRAG))
@@ -290,7 +292,6 @@ object GLRendererImpl : Renderer {
         if (caps().OpenGL30) org.lwjgl.opengl.GL30C.glBindVertexArray(0)
 
         val prevBuf = glGetInteger(GL_ARRAY_BUFFER_BINDING)
-        val prevTex = glGetInteger(GL_TEXTURE_BINDING_2D)
         val quadData = floatArrayOf(
             0f, 0f,
             1f, 0f,
@@ -303,6 +304,7 @@ object GLRendererImpl : Renderer {
         instancedVbo = glGenBuffers()
         glBindBuffer(GL_ARRAY_BUFFER, instancedVbo)
         glBufferData(GL_ARRAY_BUFFER, MAX_BATCH * STRIDE * 4L, GL_STREAM_DRAW)
+        glBindBuffer(GL_ARRAY_BUFFER, prevBuf)
 
         uWindow = glGetUniformLocation(program, "uWindow")
         uTransform = glGetUniformLocation(program, "uTransform")
@@ -314,7 +316,7 @@ object GLRendererImpl : Renderer {
         iUVRect = glGetAttribLocation(program, "iUVRect")
         iThickness = glGetAttribLocation(program, "iThickness")
 
-
+        val prevTex = glGetInteger(GL_TEXTURE_BINDING_2D)
         atlas = glGenTextures()
         glBindTexture(GL_TEXTURE_2D, atlas)
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, ATLAS_SIZE, ATLAS_SIZE, 0, GL_RGBA, GL_UNSIGNED_BYTE, null as ByteBuffer?)
@@ -323,10 +325,11 @@ object GLRendererImpl : Renderer {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
         glBindTexture(GL_TEXTURE_2D, prevTex)
-        glBindBuffer(GL_ARRAY_BUFFER, prevBuf)
     }
 
     override fun beginFrame(width: Float, height: Float, pixelRatio: Float) {
+        curScissor = 0
+        alphaCap = 1f
         count = 0
         buffer.clear()
         val prevProg = glGetInteger(GL_CURRENT_PROGRAM)
@@ -334,6 +337,7 @@ object GLRendererImpl : Renderer {
         glUniform2f(uWindow, width, height)
         glUseProgram(prevProg)
         glDisable(GL_SCISSOR_TEST)
+        loadIdentity()
         viewportWidth = width * pixelRatio
         viewportHeight = height * pixelRatio
         this.pixelRatio = pixelRatio
@@ -351,12 +355,19 @@ object GLRendererImpl : Renderer {
         val prevProg = glGetInteger(GL_CURRENT_PROGRAM)
         val prevBuf = glGetInteger(GL_ARRAY_BUFFER_BINDING)
         glEnable(GL_BLEND)
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+        glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA)
+        glDisable(GL_DEPTH_TEST)
+        glDepthMask(false)
         glBindBuffer(GL_ARRAY_BUFFER, instancedVbo)
         // 'orphan' the buffer - give a hint to the driver that we don't need the old data so we don't stall waiting for it
         glBufferData(GL_ARRAY_BUFFER, MAX_BATCH * STRIDE * 4L, GL_STREAM_DRAW)
         glBufferSubData(GL_ARRAY_BUFFER, 0, buffer)
 
+        val prevVao: Int
+        if (caps().OpenGL30) {
+            prevVao = glGetInteger(org.lwjgl.opengl.GL30C.GL_VERTEX_ARRAY_BINDING)
+            org.lwjgl.opengl.GL30C.glBindVertexArray(vao)
+        } else prevVao = 0
         glUseProgram(program)
         glBindTexture(GL_TEXTURE_2D, curTex)
 
@@ -384,8 +395,9 @@ object GLRendererImpl : Renderer {
         buffer.clear()
         glDisable(GL_BLEND)
         glUseProgram(prevProg)
-        glBindBuffer(GL_ARRAY_BUFFER, prevBuf)
         glBindTexture(GL_TEXTURE_2D, prevTex)
+        glBindBuffer(GL_ARRAY_BUFFER, prevBuf)
+        if (caps().OpenGL30) org.lwjgl.opengl.GL30C.glBindVertexArray(prevVao)
     }
 
     private fun enableAttrib(loc: Int, size: Int, offset: Long): Long {
@@ -397,7 +409,6 @@ object GLRendererImpl : Renderer {
         return offset + size * 4L
     }
 
-    // Example rect wrapper for your Renderer interface
     override fun rect(
         x: Float, y: Float, width: Float, height: Float,
         color: Color,
@@ -413,8 +424,7 @@ object GLRendererImpl : Renderer {
         buffer.put(color.r / 255f).put(color.g / 255f).put(color.b / 255f).put(color.alpha.coerceAtMost(alphaCap))
         if (color is PolyColor.Gradient) {
             buffer.put(color.color2.r / 255f).put(color.color2.g / 255f).put(color.color2.b / 255f).put(color.color2.alpha.coerceAtMost(alphaCap))
-            val type = color.type
-            when (type) {
+            when (val type = color.type) {
                 is PolyColor.Gradient.Type.LeftToRight -> {
                     buffer.put(0f).put(height / 2f).put(width).put(height / 2f)
                     buffer.put(-2f)
@@ -465,7 +475,6 @@ object GLRendererImpl : Renderer {
         count += 1
     }
 
-    // image: supply texture ID and uv transform if needed
     override fun image(
         image: PolyImage, x: Float, y: Float, width: Float, height: Float,
         colorMask: Int, topLeftRadius: Float, topRightRadius: Float, bottomLeftRadius: Float, bottomRightRadius: Float
@@ -712,8 +721,12 @@ object GLRendererImpl : Renderer {
         val prevTex = glGetInteger(GL_TEXTURE_BINDING_2D)
         glBindTexture(GL_TEXTURE_2D, atlas)
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
+        glPixelStorei(GL_UNPACK_ROW_LENGTH, 0)
+        glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0)
+        glPixelStorei(GL_UNPACK_SKIP_ROWS, 0)
         glTexSubImage2D(GL_TEXTURE_2D, 0, slotX, slotY, w[0], h[0], GL_RGBA, GL_UNSIGNED_BYTE, d)
         glBindTexture(GL_TEXTURE_2D, prevTex)
+        if (image.type == PolyImage.Type.Raster) stbi_image_free(d)
 
         slotX += w[0]
         if (h[0] > atlasRowHeight) atlasRowHeight = h[0]
@@ -739,7 +752,6 @@ object GLRendererImpl : Renderer {
             val data = image.load().toDirectByteBuffer()
             val d = stbi_load_from_memory(data, w, h, IntArray(1), 4) ?: throw IllegalStateException("Failed to load image ${image.resourcePath}: ${stbi_failure_reason()}")
             if (!image.size.isPositive) PolyImage.setImageSize(image, Vec2(w[0].toFloat(), h[0].toFloat()))
-            stbi_image_free(d)
             return d
         }
     }
@@ -754,12 +766,12 @@ object GLRendererImpl : Renderer {
         }
     }
 
-    fun dumpAtlas(texId: Int = atlas) {
+    fun dumpTexture(texId: Int = atlas) {
         val buf = BufferUtils.createByteBuffer(ATLAS_SIZE * ATLAS_SIZE * 4)
         glBindTexture(GL_TEXTURE_2D, texId)
         glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, buf)
         glBindTexture(GL_TEXTURE_2D, 0)
-        org.lwjgl.stb.STBImageWrite.stbi_write_png("debug_atlas$texId.png", ATLAS_SIZE, ATLAS_SIZE, 4, buf, ATLAS_SIZE * 4)
+        org.lwjgl.stb.STBImageWrite.stbi_write_png("debug_texture$texId.png", ATLAS_SIZE, ATLAS_SIZE, 4, buf, ATLAS_SIZE * 4)
     }
 
     override fun cleanup() {
@@ -868,6 +880,9 @@ object GLRendererImpl : Renderer {
             val prevTex = glGetInteger(GL_TEXTURE_BINDING_2D)
             glBindTexture(GL_TEXTURE_2D, atlas)
             glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
+            glPixelStorei(GL_UNPACK_ROW_LENGTH, 0)
+            glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0)
+            glPixelStorei(GL_UNPACK_SKIP_ROWS, 0)
             // can't write to the alpha channel in GL3 core! lol hahaahahah
             glTexSubImage2D(GL_TEXTURE_2D, 0, sx, sy, FONT_MAX_BITMAP_W, FONT_MAX_BITMAP_H, GL_RED, GL_UNSIGNED_BYTE, bitMap)
             glBindTexture(GL_TEXTURE_2D, prevTex)
