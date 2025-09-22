@@ -1,6 +1,7 @@
 package org.polyfrost.oneconfig.internal.mixin.events;
 
-import dev.deftu.omnicore.common.OmniProfiler;
+import dev.deftu.omnicore.api.client.OmniClient;
+import dev.deftu.omnicore.api.client.OmniClientProfiler;
 import net.minecraft.client.renderer.entity.RendererLivingEntity;
 import net.minecraft.entity.EntityLivingBase;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
@@ -61,7 +62,7 @@ public class Mixin_RenderLivingEntityEvent<
             //#endif
             CallbackInfo ci
     ) {
-        OmniProfiler.withProfiler("oneconfig_renderlivingentity_event_pre", () -> {
+        OmniClientProfiler.withProfiler(OmniClient.get(), "oneconfig_renderlivingentity_event_pre", () -> {
             //#if MC >= 1.21.2
             //$$ double x = entity.x;
             //$$ double y = entity.y;
@@ -112,7 +113,7 @@ public class Mixin_RenderLivingEntityEvent<
             //#endif
             CallbackInfo ci
     ) {
-        OmniProfiler.withProfiler("oneconfig_renderlivingentity_event_post", () -> {
+        OmniClientProfiler.withProfiler(OmniClient.get(), "oneconfig_renderlivingentity_event_post", () -> {
             //#if MC >= 1.21.2
             //$$ double x = entity.x;
             //$$ double y = entity.y;

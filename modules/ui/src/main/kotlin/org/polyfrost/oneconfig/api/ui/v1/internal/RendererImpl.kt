@@ -26,8 +26,9 @@
 
 package org.polyfrost.oneconfig.api.ui.v1.internal
 
-import dev.deftu.omnicore.client.render.OmniTextureManager
-import dev.deftu.omnicore.common.OmniLoader
+import dev.deftu.omnicore.api.client.render.OmniTextureUnit
+import dev.deftu.omnicore.api.paddedMinecraftVersion
+import dev.deftu.omnicore.internal.client.textures.TextureInternals
 import org.apache.logging.log4j.LogManager
 import org.lwjgl.opengl.GL11
 import org.lwjgl.opengl.GL13
@@ -108,8 +109,8 @@ class RendererImpl(
     private val svgs = mutableMapOf<PolyImage, Pair<NanoVgApi.SVG, Int2IntMap>>()
 
     private var prevProgram = -1
-    private var prevTexture = -1
-    private var prevTextureBinding = -1
+    private var prevTextureUnit: OmniTextureUnit? = null
+    private var prevBoundTexture = -1
     private var prevVao = -1
 
     private val lineHeight = FloatArray(1)
@@ -120,7 +121,7 @@ class RendererImpl(
 
     override fun init() {
         if (mcVersion == -1) {
-            mcVersion = OmniLoader.paddedMinecraftVersion
+            mcVersion = paddedMinecraftVersion
         }
 
         vg.maybeSetup()
@@ -150,8 +151,8 @@ class RendererImpl(
         if (mcVersion >= 1_16_05) {
             prevProgram = GL11.glGetInteger(GL20.GL_CURRENT_PROGRAM)
             prevVao = GL11.glGetInteger(GL30.GL_VERTEX_ARRAY_BINDING)
-            prevTexture = GL11.glGetInteger(GL13.GL_ACTIVE_TEXTURE)
-            prevTextureBinding = GL11.glGetInteger(GL11.GL_TEXTURE_BINDING_2D)
+            prevTextureUnit = TextureInternals.activeUnit
+            prevBoundTexture = GL11.glGetInteger(GL11.GL_TEXTURE_BINDING_2D)
         }
 
         queue.fastRemoveIfReversed { it(); true }
@@ -180,9 +181,12 @@ class RendererImpl(
             if (prevProgram != -1) {
                 GL20.glUseProgram(prevProgram)
             }
-            if (prevTexture != -1) {
-                OmniTextureManager.setActiveTexture(prevTexture)
-                OmniTextureManager.bindTexture(prevTextureBinding)
+            if (prevTextureUnit != null) {
+                prevTextureUnit?.let {
+                    TextureInternals.activeUnit = it
+                }
+
+                TextureInternals.active = prevBoundTexture
             }
             if (prevVao != -1) {
                 GL30.glBindVertexArray(prevVao)

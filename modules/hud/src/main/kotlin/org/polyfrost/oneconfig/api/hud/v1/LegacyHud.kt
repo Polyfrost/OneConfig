@@ -26,8 +26,8 @@
 
 package org.polyfrost.oneconfig.api.hud.v1
 
-import dev.deftu.omnicore.client.render.OmniMatrixStack
-import dev.deftu.omnicore.client.render.OmniResolution
+import dev.deftu.omnicore.api.client.render.OmniRenderingContext
+import dev.deftu.omnicore.api.client.render.OmniResolution
 import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.polyui.component.Component
@@ -65,7 +65,7 @@ abstract class LegacyHud(id: String, title: String, category: Category) : Hud<Dr
      *
      * **Note:** This method is called every frame, so you should not perform any heavy calculations here.
      */
-    abstract fun renderLegacy(stack: OmniMatrixStack, x: Float, y: Float, scaleX: Float, scaleY: Float)
+    abstract fun renderLegacy(ctx: OmniRenderingContext, x: Float, y: Float, scaleX: Float, scaleY: Float)
 
     /**
      * Render extra things for your HUD using the PolyUI renderer.
@@ -108,9 +108,9 @@ abstract class LegacyHud(id: String, title: String, category: Category) : Hud<Dr
                 hud.height = value
             }
 
-        fun renderLegacy(stack: OmniMatrixStack) {
+        fun renderLegacy(ctx: OmniRenderingContext) {
             val scale = if (HudManager.useGuiScale) 1f else Platform.screen().pixelRatio() / OmniResolution.scaleFactor.toFloat()
-            hud.renderLegacy(stack, x * scale, y * scale, scaleX * scale, scaleY * scale)
+            hud.renderLegacy(ctx, x * scale, y * scale, scaleX * scale, scaleY * scale)
         }
 
         override fun render() {

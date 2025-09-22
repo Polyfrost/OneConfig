@@ -26,15 +26,19 @@
 
 package org.polyfrost.oneconfig.api.ui.v1.internal.wrappers;
 
-import dev.deftu.omnicore.client.OmniKeyboard;
-import dev.deftu.omnicore.client.OmniScreen;
-import dev.deftu.omnicore.client.render.OmniMatrixStack;
-import dev.deftu.omnicore.client.render.OmniResolution;
-import dev.deftu.omnicore.client.render.framebuffer.Framebuffer;
-import dev.deftu.omnicore.client.render.framebuffer.ManagedFramebuffer;
-import dev.deftu.omnicore.client.render.state.OmniManagedBlendState;
-import dev.deftu.omnicore.client.render.state.OmniManagedDepthState;
-import dev.deftu.omnicore.client.render.texture.GpuTexture;
+import dev.deftu.omnicore.api.client.framebuffer.ManagedFramebuffer;
+import dev.deftu.omnicore.api.client.framebuffer.OmniFramebuffer;
+import dev.deftu.omnicore.api.client.input.KeyboardModifiers;
+import dev.deftu.omnicore.api.client.input.OmniKey;
+import dev.deftu.omnicore.api.client.input.OmniKeys;
+import dev.deftu.omnicore.api.client.input.OmniMouseButton;
+import dev.deftu.omnicore.api.client.render.OmniRenderingContext;
+import dev.deftu.omnicore.api.client.render.OmniResolution;
+import dev.deftu.omnicore.api.client.screen.KeyPressEvent;
+import dev.deftu.omnicore.api.client.screen.OmniScreen;
+import dev.deftu.omnicore.api.client.textures.OmniTextureFormat;
+import dev.deftu.omnicore.api.color.OmniColors;
+import dev.deftu.textile.minecraft.MCSimpleTextHolder;
 import kotlin.Unit;
 import net.minecraft.client.Minecraft;
 import org.apache.logging.log4j.LogManager;
@@ -61,7 +65,7 @@ public class PolyUIScreen extends OmniScreen implements BlurScreen {
     @NotNull
     public final PolyUI polyUI;
 
-    private Framebuffer framebuffer;
+    private OmniFramebuffer framebuffer;
 
     private final float designedWidth, designedHeight, initialWidth, initialHeight;
     private final boolean pauses, blurs;
@@ -72,7 +76,7 @@ public class PolyUIScreen extends OmniScreen implements BlurScreen {
     //#endif
 
     public PolyUIScreen(@NotNull PolyUI polyUI, float designedWidth, float designedHeight, boolean pauses, boolean blurs, Consumer<PolyUI> onClose) {
-        super(true);
+        super(new MCSimpleTextHolder(""), true);
 
         this.polyUI = polyUI;
         this.designedWidth = designedWidth;
@@ -89,8 +93,8 @@ public class PolyUIScreen extends OmniScreen implements BlurScreen {
     }
 
     @Override
-    public void handleInitialize(int width, int height) {
-        super.handleInitialize(width, height);
+    public void onInitialize(int width, int height) {
+        super.onInitialize(width, height);
         float w = (float) Platform.screen().windowWidth();
         float h = (float) Platform.screen().windowHeight();
         adjustResolution(w, h, false);
@@ -98,14 +102,15 @@ public class PolyUIScreen extends OmniScreen implements BlurScreen {
 
     @Override
     @MustBeInvokedByOverriders
-    public final void handleResize(int width, int height) {
+    public final void onResize(int width, int height) {
         float w = (float) Platform.screen().windowWidth();
         float h = (float) Platform.screen().windowHeight();
         adjustResolution(w, h, false);
     }
 
     @Override
-    public void handleRender(@NotNull OmniMatrixStack matrices, int mouseX, int mouseY, float delta) {
+    @MustBeInvokedByOverriders
+    public void onRender(@NotNull OmniRenderingContext ctx, int mouseX, int mouseY, float delta) {
         //#if MC < 1.13
         if (mouseX != mx || mouseY != my) {
             mx = mouseX;
@@ -145,51 +150,59 @@ public class PolyUIScreen extends OmniScreen implements BlurScreen {
 
         framebuffer.drawColorTexture(
                 UIManager.INSTANCE.getRenderPipeline(),
-                matrices,
+                ctx.getMatrices(),
                 scaledX, scaledY,
                 scaledWidth, scaledHeight,
-                -1 // White
+                OmniColors.WHITE
         );
-
-        OmniManagedBlendState.disableBlend();
-        OmniManagedDepthState.disableDepth();
     }
 
     @Override
     @MustBeInvokedByOverriders
-    public boolean handleKeyPress(int keyCode, int scancode, char typedChar, OmniKeyboard.@NotNull KeyboardModifiers modifiers, OmniScreen.@NotNull KeyPressTrigger trigger) {
-        if (keyCode == OmniKeyboard.KEY_ESCAPE && shouldCloseOnEsc()) {
+    public boolean onKeyPress(@NotNull OmniKey key, int scanCode, char typedChar, @NotNull KeyboardModifiers modifiers, @NotNull KeyPressEvent event) {
+        if (key == OmniKeys.KEY_ESCAPE && shouldCloseOnEsc()) {
             Platform.screen().close();
-            return super.handleKeyPress(keyCode, scancode, typedChar, modifiers, trigger);
+            return super.onKeyPress(key, scanCode, typedChar, modifiers, event);
         }
 
-
         try {
-            translateKey(polyUI.getInputManager(), keyCode, typedChar, true);
+            translateKey(polyUI.getInputManager(), key.getCode(), typedChar, true);
         } catch (Exception e) {
             death(e);
         }
 
-        return super.handleKeyPress(keyCode, scancode, typedChar, modifiers, trigger);
+        return super.onKeyPress(key, scanCode, typedChar, modifiers, event);
     }
 
     @Override
     @MustBeInvokedByOverriders
-    public boolean handleKeyRelease(int keyCode, int scancode, OmniKeyboard.@NotNull KeyboardModifiers modifiers) {
+    public boolean onKeyRelease(@NotNull OmniKey key, int scanCode, @NotNull KeyboardModifiers modifiers) {
         try {
-            translateKey(polyUI.getInputManager(), keyCode, (char) 0, false);
+            translateKey(polyUI.getInputManager(), key.getCode(), (char) 0, false);
         } catch (Exception e) {
             death(e);
         }
 
-        return super.handleKeyRelease(keyCode, scancode, modifiers);
+        return super.onKeyRelease(key, scanCode, modifiers);
     }
 
     @Override
     @MustBeInvokedByOverriders
-    public boolean handleMouseClick(double mouseX, double mouseY, int mouseButton) {
+    public boolean onMouseClick(@NotNull OmniMouseButton button, double x, double y, @NotNull KeyboardModifiers modifiers) {
         try {
-            polyUI.getInputManager().mousePressed(mouseButton);
+            polyUI.getInputManager().mousePressed(button.getCode());
+        } catch (Exception e) {
+            death(e);
+        }
+
+        return super.onMouseClick(button, x, y, modifiers);
+    }
+
+    @Override
+    @MustBeInvokedByOverriders
+    public boolean onMouseRelease(@NotNull OmniMouseButton button, double mouseX, double mouseY, @NotNull KeyboardModifiers modifiers) {
+        try {
+            polyUI.getInputManager().mouseReleased(button.getCode());
         } catch (Exception e) {
             death(e);
         }
@@ -199,32 +212,20 @@ public class PolyUIScreen extends OmniScreen implements BlurScreen {
 
     @Override
     @MustBeInvokedByOverriders
-    public boolean handleMouseReleased(double mouseX, double mouseY, int mouseButton) {
+    public boolean onMouseScroll(double x, double y, double amount, double horizontalAmount) {
         try {
-            polyUI.getInputManager().mouseReleased(mouseButton);
-        } catch (Exception e) {
-            death(e);
-        }
-
-        return true;
-    }
-
-    @Override
-    @MustBeInvokedByOverriders
-    public boolean handleMouseScrolled(double delta) {
-        try {
-            float v = (float)
+            float clampedAmount = (float)
                     //#if MC < 1.13
-                    //$$ delta / 8f;
+                    //$$ amount / 8f;
                     //#else
-                    delta;
-            //#endif
-            polyUI.getInputManager().mouseScrolled(0f, v);
+                    amount;
+                    //#endif
+            polyUI.getInputManager().mouseScrolled((float) horizontalAmount, clampedAmount);
         } catch (Exception e) {
             death(e);
         }
 
-        return true;
+        return super.onMouseScroll(x, y, amount, horizontalAmount);
     }
 
     //#if MC >= 1.13
@@ -235,7 +236,7 @@ public class PolyUIScreen extends OmniScreen implements BlurScreen {
     }
 
     @Override
-    public boolean doesPauseGame() {
+    public boolean isPausingScreen() {
         return pauses;
     }
 
@@ -273,19 +274,19 @@ public class PolyUIScreen extends OmniScreen implements BlurScreen {
 
     @Override
     @MustBeInvokedByOverriders
-    public void handleClose() {
+    public void onScreenClose() {
         polyUI.getInputManager().unfocus();
         if (close != null) close.accept(polyUI);
         // noinspection DataFlowIssue
         this.polyUI.getWindow().setCursor(Cursor.Pointer);
-        super.handleClose();
+        super.onScreenClose();
     }
 
     protected final void adjustResolution(float w, float h, boolean force) {
         if (this.framebuffer == null) {
             int width = Platform.screen().viewportWidth();
             int height = Platform.screen().viewportHeight();
-            this.framebuffer = new ManagedFramebuffer(width, height, GpuTexture.TextureFormat.RGBA8, GpuTexture.TextureFormat.DEPTH24_STENCIL8);
+            this.framebuffer = new ManagedFramebuffer(width, height, OmniTextureFormat.RGBA8, OmniTextureFormat.DEPTH24_STENCIL8);
         }
 
         // asm: normally, a polyui instance is as big as its window and that is it.

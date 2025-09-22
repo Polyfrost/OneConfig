@@ -24,8 +24,8 @@ import net.minecraftforge.client.GuiIngameForge;
 //$$ import net.minecraft.client.render.RenderTickCounter;
 //#endif
 
-import dev.deftu.omnicore.client.render.OmniGameRendering;
-import dev.deftu.omnicore.client.render.OmniMatrixStack;
+import dev.deftu.omnicore.api.client.render.OmniRenderTicks;
+import dev.deftu.omnicore.api.client.render.OmniRenderingContext;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.HudRenderEvent;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
@@ -68,22 +68,14 @@ public class Mixin_HudRenderEvent {
             //#endif
             CallbackInfo ci
     ) {
-        OmniMatrixStack stack = OmniMatrixStack.vanilla(
+        OmniRenderingContext context = OmniRenderingContext.from(
                 //#if MC >= 1.16.5
                 //$$ ctx
                 //#endif
         );
 
-        //#if MC >= 1.20.1
-        //$$ Platform.screen().setSmuggledDrawContext(ctx);
-        //#elseif MC >= 1.16.5
-        //$$ Platform.screen().setSmuggledDrawContext(stack);
-        //#else
-        Platform.screen().setSmuggledDrawContext(stack);
-        //#endif
-
-        float partialTicks = OmniGameRendering.getTickDelta(false);
-        EventManager.INSTANCE.post(new HudRenderEvent(stack, partialTicks));
+        float partialTicks = OmniRenderTicks.get();
+        EventManager.INSTANCE.post(new HudRenderEvent(context, partialTicks));
     }
 
 }

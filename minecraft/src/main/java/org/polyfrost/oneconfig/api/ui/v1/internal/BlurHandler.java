@@ -26,7 +26,7 @@
 
 package org.polyfrost.oneconfig.api.ui.v1.internal;
 
-import dev.deftu.omnicore.common.OmniIdentifier;
+import dev.deftu.omnicore.api.OmniIdentifier;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.shader.Shader;
 import net.minecraft.client.shader.ShaderGroup;
@@ -61,7 +61,7 @@ import java.util.List;
 public final class BlurHandler {
     public static final BlurHandler INSTANCE = new BlurHandler();
     private static final Logger LOGGER = LogManager.getLogger("OneConfig/Blur");
-    private final ResourceLocation blurShader = OmniIdentifier.create("shaders/post/fade_in_blur.json");
+    private final ResourceLocation blurShader = OmniIdentifier.createOrThrow("shaders/post/fade_in_blur.json");
     private final Animation animation = Animation.Type.Default.create(2_000_000_000, 0f, 5f);
     private ShaderUniform su;
 

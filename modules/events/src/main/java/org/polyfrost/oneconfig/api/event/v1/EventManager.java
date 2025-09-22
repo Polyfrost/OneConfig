@@ -26,8 +26,9 @@
 
 package org.polyfrost.oneconfig.api.event.v1;
 
-import dev.deftu.omnicore.client.OmniChat;
-import dev.deftu.omnicore.common.OmniLoader;
+import dev.deftu.omnicore.api.client.chat.OmniClientChat;
+import dev.deftu.omnicore.api.loader.ModInfo;
+import dev.deftu.omnicore.api.loader.OmniLoader;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.polyfrost.oneconfig.api.event.v1.events.Event;
@@ -213,8 +214,8 @@ public final class EventManager {
                 }
                 if (handler.onError()) {
                     LOGGER.error("removing {} registered to {} as it has failed too many times ({})", handler, event.getClass().getName(), EventHandler.ERROR_THRESHOLD);
-                    String blamed = LogScanner.identifyFromStacktrace(throwable).stream().map(OmniLoader.ModInfo::getName).collect(Collectors.joining(", "));
-                    OmniChat.displayClientMessage("&cSomething internally in the mod(s) " + blamed + " has failed. Please report this to their developers and attach the log.");
+                    String blamed = LogScanner.identifyFromStacktrace(throwable).stream().map(ModInfo::getName).collect(Collectors.joining(", "));
+                    OmniClientChat.displayChatMessage("&cSomething internally in the mod(s) " + blamed + " has failed. Please report this to their developers and attach the log.");
                     unregister(handler);
                 }
             }

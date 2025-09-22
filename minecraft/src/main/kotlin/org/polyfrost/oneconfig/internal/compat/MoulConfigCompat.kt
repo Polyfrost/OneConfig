@@ -1,5 +1,7 @@
 package org.polyfrost.oneconfig.internal.compat
 
+import dev.deftu.omnicore.api.client.getIconResource
+import dev.deftu.omnicore.api.client.getIconResourcePath
 import io.github.notenoughupdates.moulconfig.ChromaColour
 import io.github.notenoughupdates.moulconfig.gui.editors.*
 import io.github.notenoughupdates.moulconfig.processor.MoulConfigProcessor
@@ -38,8 +40,8 @@ object MoulConfigCompat {
         this.noCache = true
         this.title = mod?.name ?: ""
         mod?.let {
-            val path = it.iconPath ?: return@let
-            val stream = it.icon ?: return@let
+            val path = it.getIconResourcePath(Int.MAX_VALUE) ?: return@let
+            val stream = it.getIconResource(Int.MAX_VALUE) ?: return@let
             this.icon = DynamicPolyImage(path, stream)
         }
 

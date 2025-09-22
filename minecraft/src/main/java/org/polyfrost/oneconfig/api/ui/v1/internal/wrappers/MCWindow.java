@@ -27,7 +27,7 @@
 package org.polyfrost.oneconfig.api.ui.v1.internal.wrappers;
 
 import dev.deftu.clipboard.Clipboard;
-import dev.deftu.omnicore.client.OmniClient;
+import dev.deftu.omnicore.api.client.input.OmniInputs;
 import net.minecraft.client.Minecraft;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -105,6 +105,6 @@ public class MCWindow extends Window {
     @NotNull
     @Override
     public String getKeyName(int keyCode, int scanCode) {
-        return OmniClient.getKeyDisplayName(keyCode, scanCode);
+        return OmniInputs.getDisplayName(keyCode, scanCode);
     }
 }

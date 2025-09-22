@@ -32,7 +32,7 @@ import cc.polyfrost.oneconfig.config.Config;
 import cc.polyfrost.oneconfig.config.data.Mod;
 import cc.polyfrost.oneconfig.config.elements.BasicOption;
 import cc.polyfrost.oneconfig.gui.elements.config.*;
-import dev.deftu.omnicore.common.OmniLoader;
+import dev.deftu.omnicore.api.loader.OmniLoader;
 import org.apache.logging.log4j.Logger;
 import org.polyfrost.oneconfig.api.config.v1.*;
 import org.polyfrost.oneconfig.internal.DynamicPolyImage;
@@ -77,7 +77,7 @@ public abstract class Mixin_LegacyOneConfigCarryover {
 
             String iconPath = mod.modIcon;
             if (iconPath != null) {
-                InputStream stream = OmniLoader.getResourceStream(OmniLoader.getActiveMod().getId(), iconPath);
+                InputStream stream = OmniLoader.getResourceOrNull(OmniLoader.getActiveMod().getId(), iconPath);
                 logger.debug("[V1] Found icon stream: {}", stream);
                 if (stream != null) {
                     t.addMetadata("icon", new DynamicPolyImage(iconPath, stream));

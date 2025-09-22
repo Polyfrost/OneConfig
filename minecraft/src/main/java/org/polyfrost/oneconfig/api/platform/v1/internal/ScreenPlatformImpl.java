@@ -26,7 +26,7 @@
 
 package org.polyfrost.oneconfig.api.platform.v1.internal;
 
-import dev.deftu.omnicore.client.render.OmniMatrixStack;
+import dev.deftu.omnicore.api.client.render.OmniRenderingContext;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
 import org.jetbrains.annotations.Nullable;
@@ -44,9 +44,6 @@ public class ScreenPlatformImpl implements ScreenPlatform {
 //    //#if MC > 1.13
 //    //$$ private final float[] pixelScaleFactor = new float[1];
 //    //#endif
-
-    private OmniMatrixStack smuggledMatrixStack = new OmniMatrixStack();
-    private Object smuggledDrawContext = null;
 
     @Override
     public int viewportWidth() {
@@ -84,7 +81,7 @@ public class ScreenPlatformImpl implements ScreenPlatform {
         //#endif
     }
 
-    public void renderLegacyHuds() {
+    public void renderLegacyHuds(OmniRenderingContext ctx) {
         PolyUI defaultInstance = UIManager.INSTANCE.getDefaultInstance();
         Drawable master = defaultInstance.getMaster();
         List<Component> children = master.getChildren();
@@ -92,7 +89,7 @@ public class ScreenPlatformImpl implements ScreenPlatform {
 
         for (Component child : children) {
             if (!(child instanceof LegacyHud.LegacyHudComponent)) continue;
-            ((LegacyHud.LegacyHudComponent) child).renderLegacy(smuggledMatrixStack);
+            ((LegacyHud.LegacyHudComponent) child).renderLegacy(ctx);
         }
     }
 
@@ -112,22 +109,6 @@ public class ScreenPlatformImpl implements ScreenPlatform {
 //        return org.lwjgl.opengl.Display.getPixelScaleFactor();
 //        //#endif
 //    }
-
-    @Override
-    public void setSmuggledMatrixStack(OmniMatrixStack stack) {
-        if (stack == null) return;
-        this.smuggledMatrixStack = stack;
-    }
-
-    @Override
-    public Object getSmuggledDrawContext() {
-        return smuggledDrawContext;
-    }
-
-    @Override
-    public void setSmuggledDrawContext(Object smuggledDrawContext) {
-        this.smuggledDrawContext = smuggledDrawContext;
-    }
 
     @Override
     public void display(@Nullable Object screen, int ticks) {

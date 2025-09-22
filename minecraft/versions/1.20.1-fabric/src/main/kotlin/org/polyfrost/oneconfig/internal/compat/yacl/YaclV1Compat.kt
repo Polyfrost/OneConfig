@@ -1,9 +1,11 @@
 package org.polyfrost.oneconfig.internal.compat.yacl
 
+import dev.deftu.omnicore.api.client.getIconResource
+import dev.deftu.omnicore.api.client.getIconResourcePath
 import net.minecraft.text.Text as Text // preprocessor moment, ping me (wyvest) if you want an explanation why this is needed
 
 //#if MC != 1.20.4 || FABRIC
-import dev.deftu.omnicore.common.OmniLoader
+import dev.deftu.omnicore.api.loader.ModInfo
 import dev.isxander.yacl3.api.ConfigCategory
 import dev.isxander.yacl3.api.Controller
 import dev.isxander.yacl3.api.Option
@@ -61,7 +63,7 @@ object YaclV1Compat {
         text: Text,
         categories: List<ConfigCategory>,
         saveFunction: Runnable,
-        mod: OmniLoader.ModInfo?,
+        mod: ModInfo?,
     ): Tree? {
         val root = Tree.tree()
 
@@ -72,8 +74,8 @@ object YaclV1Compat {
         root.title = text.stripped
         root.id = root.title
         mod?.let {
-            val path = it.iconPath ?: return@let
-            val stream = it.icon ?: return@let
+            val path = it.getIconResourcePath(Int.MAX_VALUE) ?: return@let
+            val stream = it.getIconResource(Int.MAX_VALUE) ?: return@let
             root.icon = DynamicPolyImage(path, stream)
         }
         root.saveFunction = Runnable {

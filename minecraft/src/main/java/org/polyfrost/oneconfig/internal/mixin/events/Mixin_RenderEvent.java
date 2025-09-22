@@ -1,6 +1,6 @@
 package org.polyfrost.oneconfig.internal.mixin.events;
 
-import dev.deftu.omnicore.client.render.OmniGameRendering;
+import dev.deftu.omnicore.api.client.render.OmniRenderTicks;
 import net.minecraft.client.Minecraft;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.RenderEvent;
@@ -28,14 +28,14 @@ public class Mixin_RenderEvent {
     @Inject(method = "runGameLoop", at = @At(value = "INVOKE", target = UPDATE_CAMERA_AND_RENDER))
     private void renderTickStartCallback(CallbackInfo ci) {
         RenderEvent e = RenderEvent.Pre.INSTANCE;
-        e.deltaTicks = OmniGameRendering.getTickDelta(false);
+        e.deltaTicks = OmniRenderTicks.get();
         EventManager.INSTANCE.post(e);
     }
 
     @Inject(method = "runGameLoop", at = @At(value = "INVOKE", target = UPDATE_CAMERA_AND_RENDER, shift = At.Shift.AFTER))
     private void renderTickEndCallback(CallbackInfo ci) {
         RenderEvent e = RenderEvent.Post.INSTANCE;
-        e.deltaTicks = OmniGameRendering.getTickDelta(false);
+        e.deltaTicks = OmniRenderTicks.get();
         EventManager.INSTANCE.post(e);
     }
 

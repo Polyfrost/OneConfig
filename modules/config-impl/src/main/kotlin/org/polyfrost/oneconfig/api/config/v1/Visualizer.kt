@@ -26,7 +26,7 @@
 
 package org.polyfrost.oneconfig.api.config.v1
 
-import dev.deftu.omnicore.client.OmniClient
+import dev.deftu.omnicore.api.client.input.OmniInputs
 import org.polyfrost.oneconfig.api.config.v1.internal.ConfigVisualizer.Companion.strv
 import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.color.asMutable
@@ -116,7 +116,7 @@ fun interface Visualizer {
     }
 
     class KeybindVisualizer : Visualizer {
-        private val KEY_MAPPER: ((Int) -> String) = { OmniClient.getKeyDisplayName(it) }
+        private val KEY_MAPPER: ((Int) -> String) = { OmniInputs.getDisplayName(it) }
 
         @Suppress("UnstableApiUsage")
         override fun visualize(prop: Property<*>): Drawable {

@@ -7,7 +7,9 @@ import com.teamresourceful.resourcefulconfig.api.types.entries.ResourcefulConfig
 import com.teamresourceful.resourcefulconfig.api.types.entries.ResourcefulConfigValueEntry
 import com.teamresourceful.resourcefulconfig.api.types.options.EntryType
 import com.teamresourceful.resourcefulconfig.api.types.options.Option
-import dev.deftu.omnicore.common.OmniLoader
+import dev.deftu.omnicore.api.client.getIconResource
+import dev.deftu.omnicore.api.client.getIconResourcePath
+import dev.deftu.omnicore.api.loader.ModInfo
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Properties
 import org.polyfrost.oneconfig.api.config.v1.Tree
@@ -33,7 +35,7 @@ internal object RConfigCompat {
         CompatLoader.requireTranslations { parseConfig(config, null, null, mod)?.let(ConfigManager.active()::register) }
     }
 
-    private fun parseConfig(config: ResourcefulConfig, category: String?, root: Tree?, mod: OmniLoader.ModInfo?): Tree? {
+    private fun parseConfig(config: ResourcefulConfig, category: String?, root: Tree?, mod: ModInfo?): Tree? {
         val tree = Tree.tree()
         tree.id = config.id()
         tree.title = config.info().title().toLocalizedString()
@@ -42,8 +44,8 @@ internal object RConfigCompat {
         tree.subcategory = config.info().title().toLocalizedString()
         if (category == null) {
             mod?.let {
-                val path = it.iconPath ?: return@let
-                val stream = it.icon ?: return@let
+                val path = it.getIconResourcePath(Int.MAX_VALUE) ?: return@let
+                val stream = it.getIconResource(Int.MAX_VALUE) ?: return@let
                 tree.icon = DynamicPolyImage(path, stream)
             }
         }

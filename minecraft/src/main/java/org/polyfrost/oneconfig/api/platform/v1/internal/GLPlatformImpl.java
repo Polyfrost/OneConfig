@@ -26,25 +26,11 @@
 
 package org.polyfrost.oneconfig.api.platform.v1.internal;
 
-import dev.deftu.omnicore.client.render.OmniRenderState;
-import dev.deftu.omnicore.client.render.OmniTextureManager;
-import dev.deftu.omnicore.client.render.state.OmniManagedBlendState;
-import dev.deftu.omnicore.client.render.state.OmniManagedColorMask;
-import dev.deftu.omnicore.client.render.state.OmniManagedDepthState;
-import dev.deftu.omnicore.client.render.state.OmniManagedScissorState;
-import org.lwjgl.opengl.GL11;
+import dev.deftu.omnicore.api.client.render.state.OmniRenderStates;
 import org.polyfrost.oneconfig.api.platform.v1.GLPlatform;
 import org.polyfrost.oneconfig.utils.v1.MHUtils;
-import static org.lwjgl.opengl.GL11.GL_ONE_MINUS_SRC_ALPHA;
-import static org.lwjgl.opengl.GL11.GL_SRC_ALPHA;
-import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
-
-//#if MC <= 1.12.2
-import net.minecraft.client.renderer.GlStateManager;
-//#endif
 
 public class GLPlatformImpl implements GLPlatform {
-
     //@formatter:off
     //#if MC <= 1.12.2
     private static final java.util.function.Function<String, Long> getProcAddress =
@@ -68,29 +54,13 @@ public class GLPlatformImpl implements GLPlatform {
      */
     @Override
     public void updateGameRenderStateAlongsideNanoVG() {
-        // Blending
-        OmniManagedBlendState.enableBlend();
-        OmniManagedBlendState.blendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-        // Depth
-        OmniManagedDepthState.disableDepth();
-
-        // Culling
-        //noinspection deprecation
-        OmniRenderState.enableCull();
-        //#if MC <= 1.8.9
-        GlStateManager.cullFace(GL11.GL_BACK);
-        //#endif
-
-        // Scissor
-        OmniManagedScissorState.disable();
-
-        // Color mask
-        new OmniManagedColorMask(true, true, true, true).activate();
+        OmniRenderStates.syncBlend();
+        OmniRenderStates.syncDepth();
+        OmniRenderStates.syncCull();
+        OmniRenderStates.syncColorMask();
 
         //#if MC >= 1.17.1 && MC < 1.21.5
         //$$ net.minecraft.client.render.BufferRenderer.reset();
         //#endif
     }
-
 }

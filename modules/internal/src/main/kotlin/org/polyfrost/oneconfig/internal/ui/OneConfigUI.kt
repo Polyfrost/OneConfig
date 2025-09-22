@@ -28,8 +28,8 @@
 
 package org.polyfrost.oneconfig.internal.ui
 
-import dev.deftu.omnicore.client.OmniClientPlayer
-import dev.deftu.omnicore.common.OmniLoader
+import dev.deftu.omnicore.api.loader.OmniLoader
+import dev.deftu.omnicore.api.client.player.playerName
 import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Tree
@@ -69,7 +69,7 @@ object OneConfigUI {
     val extraConfigTrees: MutableList<Tree> = mutableListOf()
 
     private val playerHead = PolyImage.of(
-        "https://mc-heads.net/avatar/${OmniClientPlayer.name}/24",
+        "https://mc-heads.net/avatar/${playerName}/24",
         type = PolyImage.Type.Raster,
     )
     private val searchNoneFound = Text("oneconfig.search.nonefound", fontSize = 16f)
@@ -201,7 +201,7 @@ object OneConfigUI {
                                     Image(playerHead, size = Vec2(24f, 24f)).radius(6f).named("ProfileImage").withBorder(
                                         rgba(255, 255, 255, 0.2f),
                                         width = 1f,
-                                    ).addHoverInfo(Text(OmniClientPlayer.name.ifEmpty { "Steve" })),
+                                    ).addHoverInfo(Text(playerName.ifEmpty { "Steve" })),
                                     alignment = Align(pad = Vec2(16f, 8f)),
                                 ),
                                 Block(

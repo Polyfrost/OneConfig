@@ -26,8 +26,8 @@
 
 package org.polyfrost.oneconfig.api.hud.v1
 
-import dev.deftu.omnicore.client.render.OmniResolution
-import dev.deftu.omnicore.common.OmniLoader
+import dev.deftu.omnicore.api.client.render.OmniResolution
+import dev.deftu.omnicore.api.loader.OmniLoader
 import org.apache.logging.log4j.LogManager
 import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager

@@ -1,6 +1,7 @@
 package org.polyfrost.oneconfig.internal.compat
 
-import dev.deftu.omnicore.common.OmniLoader
+import dev.deftu.omnicore.api.loader.ModInfo
+import dev.deftu.omnicore.api.loader.OmniLoader
 import org.polyfrost.oneconfig.api.event.v1.EventManager
 import org.polyfrost.oneconfig.api.event.v1.events.Event
 import org.polyfrost.oneconfig.api.event.v1.events.ResourceFinishedLoading
@@ -11,7 +12,7 @@ object CompatLoader {
 
     private var bypassDelay = false
 
-    private val pathFactory: MutableMap<OmniLoader.ModInfo, (String) -> String> = mutableMapOf()
+    private val pathFactory: MutableMap<ModInfo, (String) -> String> = mutableMapOf()
 
     val nativeLoadedConfigs = mutableListOf<String>()
 
@@ -28,7 +29,7 @@ object CompatLoader {
         "kotlin"
     )
 
-    fun findFirstMod(): OmniLoader.ModInfo? {
+    fun findFirstMod(): ModInfo? {
         Thread.currentThread().stackTrace.firstOrNull {
             illegalPaths.none { path -> it.className.startsWith(path) }
         }?.let { element ->
@@ -52,7 +53,7 @@ object CompatLoader {
     private val list: MutableList<Pair<Int, () -> Unit>> = mutableListOf()
 
     init {
-        OmniLoader.loadedMods.forEach { mod ->
+        OmniLoader.mods.forEach { mod ->
             mod.file?.let {
                 pathFactory[mod] = it.toUri().toString()::plus
             }

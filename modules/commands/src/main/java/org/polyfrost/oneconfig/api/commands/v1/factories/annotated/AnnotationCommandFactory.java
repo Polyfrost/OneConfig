@@ -30,7 +30,7 @@ import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.tree.LiteralCommandNode;
-import dev.deftu.omnicore.client.OmniClientCommandSource;
+import dev.deftu.omnicore.api.client.commands.OmniClientCommandSource;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
@@ -77,10 +77,7 @@ public class AnnotationCommandFactory implements CommandFactory {
         @SuppressWarnings("unchecked")
         LiteralCommandNode<OmniClientCommandSource>[] nodes = new LiteralCommandNode[Math.max(1, command.value().length + 1)];
 
-        builder.then(literal("help").executes((ctx) -> {
-            ctx.getSource().displayMessage(help.toString());
-            return 1;
-        }));
+        builder.then(literal("help").executes((ctx) -> ctx.getSource().replyChat(help.toString())));
 
         nodes[0] = builder.build();
         for (int i = 1; i < command.value().length; i++) {
@@ -194,9 +191,8 @@ public class AnnotationCommandFactory implements CommandFactory {
                         method.invoke(obj, args);
                         return 1;
                     } catch (Exception e) {
-                        ctx.getSource().displayError("An error occurred while executing this command!\nPlease report this to the developer: " + e.getMessage());
                         LOGGER.error("Failed to execute command!", e);
-                        return -1;
+                        return ctx.getSource().replyError(e);
                     }
                 });
 
@@ -217,9 +213,8 @@ public class AnnotationCommandFactory implements CommandFactory {
                             method.invoke(obj);
                             return 1;
                         } catch (Exception e) {
-                            ctx.getSource().displayError("An error occurred while executing this command!\nPlease report this to the developer: " + e.getMessage());
                             LOGGER.error("Failed to execute command!", e);
-                            return -1;
+                            return ctx.getSource().replyError(e);
                         }
                     });
                 } else {
@@ -238,9 +233,8 @@ public class AnnotationCommandFactory implements CommandFactory {
                             method.invoke(obj);
                             return 1;
                         } catch (Exception e) {
-                            ctx.getSource().displayError("An error occurred while executing this command!\nPlease report this to the developer: " + e.getMessage());
                             LOGGER.error("Failed to execute command!", e);
-                            return -1;
+                            return ctx.getSource().replyError(e);
                         }
                     });
 

@@ -26,14 +26,16 @@
 
 package org.polyfrost.oneconfig.internal;
 
+import com.mojang.brigadier.Command;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.tree.CommandNode;
 import dev.deftu.clipboard.Clipboard;
-import dev.deftu.omnicore.client.OmniChat;
-import dev.deftu.omnicore.client.OmniClient;
-import dev.deftu.omnicore.client.OmniClientCommands;
-import dev.deftu.omnicore.client.OmniScreen;
-import dev.deftu.omnicore.common.OmniLoader;
+import dev.deftu.omnicore.api.client.OmniClient;
+import dev.deftu.omnicore.api.client.chat.OmniClientChat;
+import dev.deftu.omnicore.api.client.screen.OmniScreens;
+import dev.deftu.omnicore.api.loader.ModInfo;
+import dev.deftu.omnicore.api.loader.OmniLoader;
+import dev.deftu.omnicore.internal.client.commands.ClientCommandInternals;
 import dev.deftu.textile.minecraft.MCSimpleTextHolder;
 import dev.deftu.textile.minecraft.MCTextFormat;
 import kotlin.Unit;
@@ -138,7 +140,7 @@ public class OneConfig
         //#endif
         
         long t1 = System.nanoTime();
-        OmniLoader.ModInfo self = OmniLoader.getModInfo("oneconfig");
+        ModInfo self = OmniLoader.findModOrNull("oneconfig");
         String v = self == null ? "LOCAL" : self.getVersion();
         LOGGER.info("Loading OneConfig v{}", v);
         BlurHandler.init();
@@ -157,7 +159,7 @@ public class OneConfig
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     private static void registerCommands() {
-        OmniClientCommands.initialize();
+        ClientCommandInternals.initialize();
         // //#if MC > 1.16
         // //#if MC > 1.19
         // // todo still broken on 1.20+
@@ -186,25 +188,22 @@ public class OneConfig
         b.then(literal("debug").executes(ctx -> {
             OneConfigUI.INSTANCE.open();
             OneConfigUI.INSTANCE.toggleDebug();
-            ctx.getSource().displayMessage("OK");
-            return 1;
+            return ctx.getSource().replyChat("OK");
         }));
 
         b.then(literal("locraw").executes(ctx -> {
-            ctx.getSource().displayMessage(HypixelUtils.getLocation().toString());
-            return 1;
+            return ctx.getSource().replyChat(HypixelUtils.getLocation().toString());
         }));
 
         b.then(literal("hud").executes(ctx -> {
             Platform.screen().display(HudManager.INSTANCE.getWithEditor());
-            return 1;
+            return Command.SINGLE_SUCCESS;
         }));
 
         b.then(literal("delete").executes(ctx -> {
             OneConfigUI.INSTANCE.invalidateCache();
             ConfigVisualizer.INSTANCE.clearCache();
-            ctx.getSource().displayMessage("Deleted OneConfig UI. Please make a report if you were having issues!");
-            return 1;
+            return ctx.getSource().replyChat("Deleted OneConfig UI. Please make a report if you were having issues!");
         }));
 
         CommandNode node = b.build();
@@ -220,13 +219,19 @@ public class OneConfig
         builder.mods(KeyModifiers.RSHIFT).does((s) -> {
             if (s) {
                 // asm: in non-dev prevent the UI from opening in the main menu
-                if (!OmniClient.hasWorld() && !OmniLoader.isDevelopment()) return Unit.INSTANCE;
+                if (OmniClient.getWorld() == null && !OmniLoader.isDevelopment()) {
+                    return Unit.INSTANCE;
+                }
+
                 // also prevent opening in chat
-                if (OmniScreen.getCurrentScreen() instanceof GuiChat) return Unit.INSTANCE;
+                if (OmniScreens.isInChatScreen()) {
+                    return Unit.INSTANCE;
+                }
+
                 try {
                     OneConfigUI.INSTANCE.open();
                 } catch (Throwable t) {
-                    OmniChat.displayClientMessage(new MCSimpleTextHolder("Failed to open OneConfig UI: " + t.getMessage() + ". Please report this!").withFormatting(MCTextFormat.RED));
+                    OmniClientChat.displayChatMessage(new MCSimpleTextHolder("Failed to open OneConfig UI: " + t.getMessage() + ". Please report this!").withFormatting(MCTextFormat.RED));
                     // propagate for proper error handling
                     throw t;
                 }

@@ -26,8 +26,7 @@
 
 package org.polyfrost.oneconfig.api.platform.v1;
 
-import dev.deftu.omnicore.client.render.OmniMatrixStack;
-import org.jetbrains.annotations.ApiStatus;
+import dev.deftu.omnicore.api.client.render.OmniRenderingContext;
 import org.jetbrains.annotations.Nullable;
 
 public interface ScreenPlatform {
@@ -40,28 +39,7 @@ public interface ScreenPlatform {
 
     int windowHeight();
 
-    /**
-     * <b>Do NOT call this method yourself. it is used for legacy HUD only.</b>
-     */
-    @ApiStatus.Internal
-    @ApiStatus.Obsolete
-    void setSmuggledMatrixStack(OmniMatrixStack stack);
-
-    /**
-     * <b>Do NOT call this method yourself. it is used for modern HUD only.</b>
-     */
-    @ApiStatus.Internal
-    @ApiStatus.Obsolete
-    void setSmuggledDrawContext(Object ctx);
-
-    /**
-     * <b>Do NOT call this method yourself. it is used for modern HUD only.</b>
-     */
-    @ApiStatus.Internal
-    @ApiStatus.Obsolete
-    Object getSmuggledDrawContext();
-
-    void renderLegacyHuds();
+    void renderLegacyHuds(OmniRenderingContext ctx);
 
     default float pixelRatio() {
         return (float) viewportWidth() / windowWidth();

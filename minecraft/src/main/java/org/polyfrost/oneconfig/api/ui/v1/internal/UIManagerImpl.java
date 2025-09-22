@@ -35,13 +35,13 @@ import org.polyfrost.lwjgl.isolatedloader.Lwjgl3Manager;
 import org.polyfrost.lwjgl.isolatedloader.classloader.IsolatedClassLoader;
 //#endif
 
-import dev.deftu.omnicore.common.OmniIdentifier;
-import dev.deftu.omnicore.client.render.pipeline.DrawModes;
-import dev.deftu.omnicore.client.render.pipeline.OmniRenderPipeline;
-import dev.deftu.omnicore.client.render.pipeline.OmniRenderPipelineBuilder;
-import dev.deftu.omnicore.client.render.pipeline.VertexFormats;
-import dev.deftu.omnicore.client.render.state.OmniManagedBlendState;
-import dev.deftu.omnicore.client.render.OmniRenderEnv;
+import dev.deftu.omnicore.api.OmniIdentifier;
+import dev.deftu.omnicore.api.client.render.DefaultVertexFormats;
+import dev.deftu.omnicore.api.client.render.DrawMode;
+import dev.deftu.omnicore.api.client.render.GlCapabilities;
+import dev.deftu.omnicore.api.client.render.pipeline.OmniRenderPipeline;
+import dev.deftu.omnicore.api.client.render.pipeline.OmniRenderPipelines;
+import dev.deftu.omnicore.api.client.render.state.OmniBlendState;
 import net.minecraft.client.Minecraft;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -112,7 +112,7 @@ public class UIManagerImpl implements UIManager {
         //#endif
 
         try {
-            boolean isGl3 = OmniRenderEnv.isGl3Available();
+            boolean isGl3 = GlCapabilities.isGl3Available();
 
             //#if MC >= 1.16.5
             //$$ lwjgl = new LwjglImpl();
@@ -161,14 +161,11 @@ public class UIManagerImpl implements UIManager {
 
     public OmniRenderPipeline getRenderPipeline() {
         if (pipeline == null) {
-            OmniRenderPipelineBuilder builder = OmniRenderPipeline.builderWithDefaultShader(
-                    OmniIdentifier.create("oneconfig", "uimanager"),
-                    VertexFormats.POSITION_TEXTURE_COLOR,
-                    DrawModes.QUADS
-            );
-
-            builder.blendState = OmniManagedBlendState.ALPHA;
-            this.pipeline = builder.build();
+            this.pipeline = OmniRenderPipelines.builderWithDefaultShader(
+                    OmniIdentifier.createOrThrow("oneconfig", "uimanager"),
+                    DefaultVertexFormats.POSITION_TEXTURE_COLOR,
+                    DrawMode.QUADS
+            ).setBlendState(OmniBlendState.ALPHA).build();
         }
 
         return pipeline;

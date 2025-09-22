@@ -26,14 +26,15 @@
 
 package org.polyfrost.oneconfig.api.ui.v1;
 
-import dev.deftu.omnicore.client.OmniChat;
-import dev.deftu.omnicore.client.render.ImmediateScreenRenderer;
-import dev.deftu.omnicore.client.render.OmniMatrixStack;
-import dev.deftu.omnicore.client.render.OmniResolution;
-import dev.deftu.omnicore.client.render.framebuffer.ManagedFramebuffer;
-import dev.deftu.omnicore.client.render.pipeline.OmniRenderPipeline;
-import dev.deftu.omnicore.client.render.state.OmniManagedColorMask;
-import dev.deftu.omnicore.client.render.texture.GpuTexture;
+import dev.deftu.omnicore.api.client.chat.OmniClientChat;
+import dev.deftu.omnicore.api.client.framebuffer.ManagedFramebuffer;
+import dev.deftu.omnicore.api.client.render.ImmediateScreenRenderer;
+import dev.deftu.omnicore.api.client.render.OmniRenderingContext;
+import dev.deftu.omnicore.api.client.render.OmniResolution;
+import dev.deftu.omnicore.api.client.render.pipeline.OmniRenderPipeline;
+import dev.deftu.omnicore.api.client.render.state.OmniColorMask;
+import dev.deftu.omnicore.api.client.textures.OmniTextureFormat;
+import dev.deftu.omnicore.api.color.OmniColors;
 import dev.deftu.textile.minecraft.MCSimpleTextHolder;
 import dev.deftu.textile.minecraft.MCTextFormat;
 import kotlin.Unit;
@@ -112,7 +113,7 @@ public interface UIManager {
         try {
             int width = Platform.screen().viewportWidth();
             int height = Platform.screen().viewportHeight();
-            ManagedFramebuffer framebuffer = new ManagedFramebuffer(width, height, GpuTexture.TextureFormat.RGBA8, GpuTexture.TextureFormat.DEPTH24_STENCIL8);
+            ManagedFramebuffer framebuffer = new ManagedFramebuffer(width, height, OmniTextureFormat.RGBA8, OmniTextureFormat.DEPTH24_STENCIL8);
 
             Settings settings = new Settings();
             settings.enableDebugMode(false);
@@ -125,21 +126,15 @@ public interface UIManager {
 
             Drawable master = polyUI.getMaster();
             EventManager.register(HudRenderEvent.class, event -> {
-                OmniMatrixStack matrices = event.matrices;
-                Platform.screen().setSmuggledMatrixStack(matrices);
+                OmniRenderingContext ctx = event.ctx;
 
-                Object smuggledDrawContext = Platform.screen().getSmuggledDrawContext();
-                if (smuggledDrawContext == null) {
-                    return;
-                }
-
-                new OmniManagedColorMask(true, true, true, true).activate();
+                OmniColorMask.DEFAULT.submit(false);
                 framebuffer.clearColor(0f, 0f, 0f, 0f); // Clear to transparent black
                 framebuffer.clearDepthStencil(1.0, 0);
                 framebuffer.usingToRender((matrixStack, w, h) -> {
-                    matrices.runReplacingGlobalState(() -> {
+                    ctx.getMatrices().runReplacingGlobalState(() -> {
                         polyUI.render();
-                        Platform.screen().renderLegacyHuds();
+                        Platform.screen().renderLegacyHuds(ctx);
                     });
 
                     return Unit.INSTANCE;
@@ -149,13 +144,13 @@ public interface UIManager {
                 float scalingFactor = 1f / (float) OmniResolution.getScaleFactor();
                 float scaledWidth = master.getWidth() * scalingFactor * ratio;
                 float scaledHeight = master.getHeight() * scalingFactor * ratio;
-                ImmediateScreenRenderer.render(smuggledDrawContext, (matrixStack) -> {
+                ImmediateScreenRenderer.render(ctx, () -> {
                     framebuffer.drawColorTexture(
                             getRenderPipeline(),
-                            matrixStack,
+                            ctx.getMatrices(),
                             0, 0,
                             scaledWidth, scaledHeight,
-                            -1
+                            OmniColors.WHITE
                     );
 
                     return Unit.INSTANCE;
@@ -172,7 +167,7 @@ public interface UIManager {
             return polyUI;
         } catch (Throwable t) {
             LogManager.getLogger("OneConfig/UI").error("Failed to load renderer!", t);
-            EventManager.register(WorldEvent.Load.class, () -> EventDelay.tick(20, () -> OmniChat.displayClientMessage(new MCSimpleTextHolder("Failed to load the renderer for OneConfig. This means the UI, HUD and Notifications will not work. Please report this to https://discord.gg/polyfrost and attach your log.").withFormatting(MCTextFormat.RED))));
+            EventManager.register(WorldEvent.Load.class, () -> EventDelay.tick(20, () -> OmniClientChat.displayChatMessage(new MCSimpleTextHolder("Failed to load the renderer for OneConfig. This means the UI, HUD and Notifications will not work. Please report this to https://discord.gg/polyfrost and attach your log.").withFormatting(MCTextFormat.RED))));
             return null;
         }
     }

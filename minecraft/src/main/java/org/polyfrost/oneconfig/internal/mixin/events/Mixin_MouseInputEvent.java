@@ -2,7 +2,7 @@ package org.polyfrost.oneconfig.internal.mixin.events;
 
 //#if MC >= 1.16.5
 //$$ import net.minecraft.client.MouseHandler;
-//$$ import dev.deftu.omnicore.client.OmniScreen;
+//$$ import dev.deftu.omnicore.api.client.screen.OmniScreens;
 //$$ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 //#else
 import net.minecraft.client.Minecraft;
@@ -80,7 +80,7 @@ public class Mixin_MouseInputEvent {
     //#if MC >= 1.16.5
     //$$ @Inject(method = "onMove", at = @At("HEAD"))
     //$$ private void mouseMoveCallback(long handle, double x, double y, CallbackInfo ci) {
-    //$$     if(OmniScreen.isInScreen()) MouseInputEvent.Moved.post((float) x, (float) y);
+    //$$     if(OmniScreens.isInScreen()) MouseInputEvent.Moved.post((float) x, (float) y);
     //$$ }
     //#endif
 

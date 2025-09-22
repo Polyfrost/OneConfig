@@ -26,7 +26,7 @@
 
 package org.polyfrost.oneconfig.utils.v1;
 
-import dev.deftu.omnicore.client.OmniDesktop;
+import dev.deftu.omnicore.api.client.OmniDesktop;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

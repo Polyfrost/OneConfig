@@ -27,7 +27,7 @@
 package org.polyfrost.oneconfig.api.commands.v1.factories;
 
 import com.mojang.brigadier.tree.LiteralCommandNode;
-import dev.deftu.omnicore.client.OmniClientCommandSource;
+import dev.deftu.omnicore.api.client.commands.OmniClientCommandSource;
 import org.jetbrains.annotations.NotNull;
 
 

@@ -26,8 +26,8 @@
 
 package org.polyfrost.oneconfig.test;
 
-import dev.deftu.omnicore.client.OmniChat;
-import dev.deftu.omnicore.client.OmniKeyboard;
+import dev.deftu.omnicore.api.client.chat.OmniClientChat;
+import dev.deftu.omnicore.api.client.input.OmniKeys;
 import kotlin.Unit;
 import org.polyfrost.oneconfig.api.config.v1.Config;
 import org.polyfrost.oneconfig.api.config.v1.annotations.*;
@@ -56,7 +56,7 @@ public class TestConfig_Test extends Config {
     public static int number = 50;
 
     @Keybind(title = "keybinding", description = "please send help")
-    PolyBind bind0 = OCKeybindHelper.builder().keys(OmniKeyboard.KEY_P).mods(KeyModifiers.PRIMARY).does((Consumer<Boolean>) (it) -> OmniChat.displayClientMessage(it ? "pressed keybind" : "released keybind")).register();
+    PolyBind bind0 = OCKeybindHelper.builder().keys(OmniKeys.KEY_P.getCode()).mods(KeyModifiers.PRIMARY).does((Consumer<Boolean>) (it) -> OmniClientChat.displayChatMessage(it ? "pressed keybind" : "released keybind")).register();
     @Slider(title = "Slide", min = 10f, max = 110f, icon = "assets/oneconfig/ico/paintbrush.svg", description = "I do sliding", category = "bob")
     public static float p = 50f;
     @Text(title = "Text")
@@ -96,7 +96,7 @@ public class TestConfig_Test extends Config {
     public float slide = 40f;
 
     @Keybind(title = "keybind")
-    private final PolyBind bind = OCKeybindHelper.builder().mods(KeyModifiers.PRIMARY).keys(OmniKeyboard.KEY_G).does((a) -> {
+    private final PolyBind bind = OCKeybindHelper.builder().mods(KeyModifiers.PRIMARY).keys(OmniKeys.KEY_G.getCode()).does((a) -> {
         Notifications.enqueue(Notifications.Type.Info, "state: " + a);
         return Unit.INSTANCE;
     }).register();
@@ -109,7 +109,7 @@ public class TestConfig_Test extends Config {
 
     @Button(title = "Test")
     private void button() {
-        OmniChat.displayClientMessage("button pressed");
+        OmniClientChat.displayChatMessage("button pressed");
     }
 
     @Accordion(title = "an accordion", description = "AAAAAAAAAAAAAAAAAAAAAAAAAAH", index = 4)

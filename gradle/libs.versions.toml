@@ -7,7 +7,7 @@ kotlinx-coroutines = "1.10.2"
 kotlinx-atomicfu = "0.29.0"
 fabric-language-kotlin = "1.13.5+kotlin.2.2.10"
 google-ksp = "2.2.10-2.0.2"
-polyui = "1.15.1"
+polyui = "1.15.1+beta2"
 annotations = "24.1.0"
 hypixel-modapi = "1.0.1"
 hypixel-data = "0.2.0" # Dep of hypixel-modapi
@@ -22,7 +22,7 @@ copycat-image-awt = "0.1.1"
 
 # Per version
 textile = "0.22.0"
-omnicore = "0.51.0"
+omnicore = "1.0.0-beta.4"
 lwjgl = "3.3.3" # All downloaded by the isolated-lwjgl3-loader
 
 # Legacy only

@@ -26,7 +26,7 @@
 
 package org.polyfrost.oneconfig.api.ui.v1;
 
-import dev.deftu.omnicore.common.OmniLoader;
+import dev.deftu.omnicore.api.loader.OmniLoader;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
 import org.polyfrost.oneconfig.api.platform.v1.ScreenPlatform;
 import org.polyfrost.polyui.PolyUI;

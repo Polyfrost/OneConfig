@@ -26,7 +26,7 @@
 
 package org.polyfrost.oneconfig.api.ui.v1.keybind
 
-import dev.deftu.omnicore.client.OmniKeyboard
+import dev.deftu.omnicore.api.client.input.OmniKeys
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.event.v1.eventHandler
 import org.polyfrost.oneconfig.api.event.v1.events.KeyInputEvent
@@ -89,14 +89,14 @@ object KeybindManager {
                 if (down) inputManager.keyTyped(char.code)
             }
             val mod = when (keyCode) {
-                OmniKeyboard.KEY_LSHIFT -> KeyModifiers.LSHIFT
-                OmniKeyboard.KEY_LCONTROL -> if (PolyUI.isOnMac) KeyModifiers.LMETA else KeyModifiers.LPRIMARY
-                OmniKeyboard.KEY_LMENU -> KeyModifiers.LSECONDARY
-                OmniKeyboard.KEY_LMETA -> if (PolyUI.isOnMac) KeyModifiers.LPRIMARY else KeyModifiers.LSECONDARY
-                OmniKeyboard.KEY_RSHIFT -> KeyModifiers.RSHIFT
-                OmniKeyboard.KEY_RCONTROL -> if (PolyUI.isOnMac) KeyModifiers.RMETA else KeyModifiers.RPRIMARY
-                OmniKeyboard.KEY_RMENU -> KeyModifiers.RSECONDARY
-                OmniKeyboard.KEY_RMETA -> if (PolyUI.isOnMac) KeyModifiers.RPRIMARY else KeyModifiers.RSECONDARY
+                OmniKeys.KEY_LEFT_SHIFT.code -> KeyModifiers.LSHIFT
+                OmniKeys.KEY_LEFT_CONTROL.code -> if (PolyUI.isOnMac) KeyModifiers.LMETA else KeyModifiers.LPRIMARY
+//                OmniKeys.KEY_LMENU -> KeyModifiers.LSECONDARY
+//                OmniKeys.KEY_LMETA -> if (PolyUI.isOnMac) KeyModifiers.LPRIMARY else KeyModifiers.LSECONDARY
+                OmniKeys.KEY_RIGHT_SHIFT.code -> KeyModifiers.RSHIFT
+                OmniKeys.KEY_RIGHT_CONTROL.code -> if (PolyUI.isOnMac) KeyModifiers.RMETA else KeyModifiers.RPRIMARY
+//                OmniKeys.KEY_RIGHT_MENU -> KeyModifiers.RSECONDARY
+//                OmniKeys.KEY_RIGHT_META -> if (PolyUI.isOnMac) KeyModifiers.RPRIMARY else KeyModifiers.RSECONDARY
                 else -> null
             }
 
@@ -111,44 +111,44 @@ object KeybindManager {
 
 
             val key = when (keyCode) {
-                OmniKeyboard.KEY_F1 -> Keys.F1
-                OmniKeyboard.KEY_F2 -> Keys.F2
-                OmniKeyboard.KEY_F3 -> Keys.F3
-                OmniKeyboard.KEY_F4 -> Keys.F4
-                OmniKeyboard.KEY_F5 -> Keys.F5
-                OmniKeyboard.KEY_F6 -> Keys.F6
-                OmniKeyboard.KEY_F7 -> Keys.F7
-                OmniKeyboard.KEY_F8 -> Keys.F8
-                OmniKeyboard.KEY_F9 -> Keys.F9
-                OmniKeyboard.KEY_F10 -> Keys.F10
-                OmniKeyboard.KEY_F11 -> Keys.F11
-                OmniKeyboard.KEY_F12 -> Keys.F12
+                OmniKeys.KEY_F1.code -> Keys.F1
+                OmniKeys.KEY_F2.code -> Keys.F2
+                OmniKeys.KEY_F3.code -> Keys.F3
+                OmniKeys.KEY_F4.code -> Keys.F4
+                OmniKeys.KEY_F5.code -> Keys.F5
+                OmniKeys.KEY_F6.code -> Keys.F6
+                OmniKeys.KEY_F7.code -> Keys.F7
+                OmniKeys.KEY_F8.code -> Keys.F8
+                OmniKeys.KEY_F9.code -> Keys.F9
+                OmniKeys.KEY_F10.code -> Keys.F10
+                OmniKeys.KEY_F11.code -> Keys.F11
+                OmniKeys.KEY_F12.code -> Keys.F12
 
-                OmniKeyboard.KEY_ESCAPE -> Keys.ESCAPE
+                OmniKeys.KEY_ESCAPE.code -> Keys.ESCAPE
 
-                OmniKeyboard.KEY_ENTER -> Keys.ENTER
-                OmniKeyboard.KEY_TAB -> Keys.TAB
-                OmniKeyboard.KEY_BACKSPACE -> Keys.BACKSPACE
-                OmniKeyboard.KEY_DELETE -> Keys.DELETE
-                OmniKeyboard.KEY_HOME -> Keys.HOME
-                OmniKeyboard.KEY_END -> Keys.END
+                OmniKeys.KEY_ENTER.code -> Keys.ENTER
+                OmniKeys.KEY_TAB.code -> Keys.TAB
+                OmniKeys.KEY_BACKSPACE.code -> Keys.BACKSPACE
+                OmniKeys.KEY_DELETE.code -> Keys.DELETE
+                OmniKeys.KEY_HOME.code -> Keys.HOME
+                OmniKeys.KEY_END.code -> Keys.END
 
-                OmniKeyboard.KEY_RIGHT -> Keys.RIGHT
-                OmniKeyboard.KEY_LEFT -> Keys.LEFT
-                OmniKeyboard.KEY_DOWN -> Keys.DOWN
-                OmniKeyboard.KEY_UP -> Keys.UP
+                OmniKeys.KEY_RIGHT.code -> Keys.RIGHT
+                OmniKeys.KEY_LEFT.code -> Keys.LEFT
+                OmniKeys.KEY_DOWN.code -> Keys.DOWN
+                OmniKeys.KEY_UP.code -> Keys.UP
 
-                OmniKeyboard.KEY_C -> Keys.C
-                OmniKeyboard.KEY_V -> Keys.V
-                OmniKeyboard.KEY_X -> Keys.X
-                OmniKeyboard.KEY_Z -> Keys.Z
-                OmniKeyboard.KEY_A -> Keys.A
-                OmniKeyboard.KEY_S -> Keys.S
-                OmniKeyboard.KEY_P -> Keys.P
-                OmniKeyboard.KEY_I -> Keys.I
-                OmniKeyboard.KEY_R -> Keys.R
-                OmniKeyboard.KEY_MINUS -> Keys.MINUS
-                OmniKeyboard.KEY_EQUALS -> Keys.EQUALS
+                OmniKeys.KEY_C.code -> Keys.C
+                OmniKeys.KEY_V.code -> Keys.V
+                OmniKeys.KEY_X.code -> Keys.X
+                OmniKeys.KEY_Z.code -> Keys.Z
+                OmniKeys.KEY_A.code -> Keys.A
+                OmniKeys.KEY_S.code -> Keys.S
+                OmniKeys.KEY_P.code -> Keys.P
+                OmniKeys.KEY_I.code -> Keys.I
+                OmniKeys.KEY_R.code -> Keys.R
+                OmniKeys.KEY_MINUS.code -> Keys.MINUS
+                OmniKeys.KEY_EQUAL.code -> Keys.EQUALS
 
                 else -> Keys.UNKNOWN
             }
