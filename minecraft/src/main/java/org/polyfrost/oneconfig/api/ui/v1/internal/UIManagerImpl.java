@@ -47,7 +47,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.polyfrost.oneconfig.api.ClassHasOverwrites;
-import org.polyfrost.oneconfig.api.ui.v1.api.LwjglApi;
+import org.polyfrost.oneconfig.api.ui.v1.api.NanoSvgApi;
 import org.polyfrost.oneconfig.api.ui.v1.api.NanoVgApi;
 import org.polyfrost.oneconfig.api.ui.v1.api.StbApi;
 import org.polyfrost.oneconfig.api.ui.v1.api.TinyFdApi;
@@ -76,8 +76,8 @@ public class UIManagerImpl implements UIManager {
     private final Set<String> classLoaderInclude = new HashSet<>();
     private final Map<String, Class<?>> classCache = new HashMap<>();
 
-    private final LwjglApi lwjgl;
     private final NanoVgApi nanoVg;
+    private final NanoSvgApi nanoSvg;
     private final StbApi stb;
     private final TinyFdApi tinyFD;
 
@@ -115,20 +115,19 @@ public class UIManagerImpl implements UIManager {
             boolean isGl3 = GlCapabilities.isGl3Available();
 
             //#if MC >= 1.16.5
-            //$$ lwjgl = new LwjglImpl();
             //$$ nanoVg = new NanoVgImpl(isGl3);
+            //$$ nanoSvg = new NanoSvgImpl();
             //$$ stb = new StbImpl();
             //$$ tinyFD = new TinyFdImpl();
             //#else
-            lwjgl = Lwjgl3Manager.getIsolated(LwjglApi.class, LWJGL_IMPL_PACKAGE + "LwjglImpl");
             nanoVg = Lwjgl3Manager.getIsolated(NanoVgApi.class, LWJGL_IMPL_PACKAGE + "NanoVgImpl", isGl3);
+            nanoSvg = Lwjgl3Manager.getIsolated(NanoSvgApi.class, LWJGL_IMPL_PACKAGE + "NanoSvgImpl");
             stb = Lwjgl3Manager.getIsolated(StbApi.class, LWJGL_IMPL_PACKAGE + "StbImpl");
             tinyFD = Lwjgl3Manager.getIsolated(TinyFdApi.class, LWJGL_IMPL_PACKAGE + "TinyFdImpl");
             //#endif
 
-            renderer = new RendererImpl(isGl3, lwjgl, nanoVg, stb);
-            // don't do this unless you have little will to live.
-//            renderer = GLRendererImpl.INSTANCE;
+//            renderer = new NVGRendererImpl(isGl3, nanoVg, nanoSvg, stb);
+             renderer = new GLRendererImpl(nanoSvg, stb);
         } catch (Exception e) {
             throw new RuntimeException("Failed to get valid rendering implementation", e);
         }

@@ -26,6 +26,7 @@
 
 package org.polyfrost.oneconfig.api.ui.v1.keybind
 
+import dev.deftu.omnicore.api.client.input.OmniKey
 import org.polyfrost.polyui.input.KeybindHelper
 import org.polyfrost.polyui.input.PolyBind
 import org.polyfrost.polyui.utils.nullIfEmpty
@@ -45,6 +46,13 @@ class OCKeybindHelper : KeybindHelper<OCKeybindHelper>() {
             mouse.nullIfEmpty()?.toIntArray(),
             mods, duration, func
         ) else super.build()
+    }
+
+    fun keys(vararg keys: OmniKey): OCKeybindHelper {
+        for (key in keys) {
+            this.unmappedKeys.add(key.code)
+        }
+        return this
     }
 
     fun inScreens(): OCKeybindHelper {

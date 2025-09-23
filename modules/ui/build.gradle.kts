@@ -29,6 +29,6 @@ dependencies {
     compileOnly(libs.bundles.lwjgl)
     testImplementation(libs.lwjgl.tinyfd)
     api(project(":modules:events"))
-    compileOnly("dev.deftu:omnicore-1.8.9-forge:${libs.versions.omnicore.get()}")
-    compileOnly("dev.deftu:textile-1.8.9-forge:${libs.versions.textile.get()}")
+    compileOnly("dev.deftu:omnicore-1.16.5-forge:${libs.versions.omnicore.get()}")
+    compileOnly("dev.deftu:textile-1.16.5-forge:${libs.versions.textile.get()}")
 }

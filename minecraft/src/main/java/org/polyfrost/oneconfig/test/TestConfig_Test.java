@@ -56,7 +56,7 @@ public class TestConfig_Test extends Config {
     public static int number = 50;
 
     @Keybind(title = "keybinding", description = "please send help")
-    PolyBind bind0 = OCKeybindHelper.builder().keys(OmniKeys.KEY_P.getCode()).mods(KeyModifiers.PRIMARY).does((Consumer<Boolean>) (it) -> OmniClientChat.displayChatMessage(it ? "pressed keybind" : "released keybind")).register();
+    PolyBind bind0 = OCKeybindHelper.builder().keys(OmniKeys.KEY_P).mods(KeyModifiers.PRIMARY).does((Consumer<Boolean>) (it) -> OmniClientChat.displayChatMessage(it ? "pressed keybind" : "released keybind")).register();
     @Slider(title = "Slide", min = 10f, max = 110f, icon = "assets/oneconfig/ico/paintbrush.svg", description = "I do sliding", category = "bob")
     public static float p = 50f;
     @Text(title = "Text")

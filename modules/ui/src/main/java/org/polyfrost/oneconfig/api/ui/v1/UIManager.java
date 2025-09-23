@@ -124,7 +124,6 @@ public interface UIManager {
             polyUI.setWindow(createWindow());
             polyUI.resize(Platform.screen().windowWidth(), Platform.screen().windowHeight(), false);
 
-            Drawable master = polyUI.getMaster();
             EventManager.register(HudRenderEvent.class, event -> {
                 OmniRenderingContext ctx = event.ctx;
 
@@ -140,6 +139,7 @@ public interface UIManager {
                     return Unit.INSTANCE;
                 });
 
+                Drawable master = polyUI.getMaster();
                 float ratio = Platform.screen().pixelRatio();
                 float scalingFactor = 1f / (float) OmniResolution.getScaleFactor();
                 float scaledWidth = master.getWidth() * scalingFactor * ratio;

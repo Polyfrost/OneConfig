@@ -22,10 +22,8 @@ public interface NanoVgApi {
 
     long handle();
 
-    long svgHandle();
-
     /**
-     * If this instance is not set up already, it will set up the instance (initializes it's NVG and NSVG context).
+     * If this instance is not set up already, it will set up the instance (initializes it's NVG context).
      *
      * @throws IllegalStateException if the instance failed to set up.
      * @author Deftu
@@ -134,22 +132,4 @@ public interface NanoVgApi {
     void boxGradient(long address, float x, float y, float w, float h, float r, float f, long startColor, long endColor);
 
     void deleteImage(int address);
-
-    SVG parseSvg(ByteBuffer data);
-
-    void deleteSvg(long address);
-
-    void rasterizeSvg(long address, float x, float y, float scale, ByteBuffer data, int w, int h, int stride);
-
-
-    final class SVG {
-        public final long address;
-        public final float width, height;
-
-        public SVG(long address, float width, float height) {
-            this.address = address;
-            this.width = width;
-            this.height = height;
-        }
-    }
 }

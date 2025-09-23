@@ -114,6 +114,9 @@ public final class EventManager {
      * @param removable weather this object's event handlers can be removed.
      */
     public void register(Object object, boolean removable) {
+        if (object instanceof Class) throw new IllegalArgumentException("Pass an instance of an object, not the class itself!");
+        if (object == null) throw new IllegalArgumentException("Object cannot be null!");
+        boolean registeredSomething = false;
         for (EventCollector m : collectors) {
             Iterable<EventHandler<?>> h = m.collect(object);
             if (h == null) continue;
@@ -122,7 +125,12 @@ public final class EventManager {
             if (removable) cache.put(object, h);
             while (iter.hasNext()) {
                 register(iter.next());
+                registeredSomething = true;
             }
+        }
+        if (!registeredSomething) {
+            throw new IllegalArgumentException("Didn't find any valid event handlers in " +
+                    object.getClass().getName() + "! Make sure you are passing an instance, and that you have a method annotated with @Subscribe or that your custom collector is registered before you call register.");
         }
     }
 

@@ -31,11 +31,10 @@ import dev.deftu.omnicore.api.paddedMinecraftVersion
 import dev.deftu.omnicore.internal.client.textures.TextureInternals
 import org.apache.logging.log4j.LogManager
 import org.lwjgl.opengl.GL11
-import org.lwjgl.opengl.GL13
 import org.lwjgl.opengl.GL20
 import org.lwjgl.opengl.GL30
 import org.polyfrost.oneconfig.api.platform.v1.Platform
-import org.polyfrost.oneconfig.api.ui.v1.api.LwjglApi
+import org.polyfrost.oneconfig.api.ui.v1.api.NanoSvgApi
 import org.polyfrost.oneconfig.api.ui.v1.api.NanoVgApi
 import org.polyfrost.oneconfig.api.ui.v1.api.StbApi
 import org.polyfrost.polyui.PolyUI
@@ -49,10 +48,10 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import org.polyfrost.polyui.color.PolyColor as Color
 
-class RendererImpl(
+class NVGRendererImpl(
     private val isGl3: Boolean,
-    private val lwjgl: LwjglApi,
     private val vg: NanoVgApi,
+    private val nsvg: NanoSvgApi,
     private val stb: StbApi
 ) : Renderer {
 
@@ -106,7 +105,7 @@ class RendererImpl(
     private var defaultImage = 0
 
     private val images = mutableMapOf<PolyImage, Int>()
-    private val svgs = mutableMapOf<PolyImage, Pair<NanoVgApi.SVG, Int2IntMap>>()
+    private val svgs = mutableMapOf<PolyImage, Pair<NanoSvgApi.SVG, Int2IntMap>>()
 
     private var prevProgram = -1
     private var prevTextureUnit: OmniTextureUnit? = null
@@ -287,7 +286,7 @@ class RendererImpl(
         }
         svgs.remove(image).also {
             if (it != null) {
-                vg.deleteSvg(it.first.address)
+                nsvg.delete(it.first.address)
                 it.second.forEach { _, handle ->
                     vg.deleteImage(handle)
                 }
@@ -477,13 +476,13 @@ class RendererImpl(
     private fun loadImage(image: PolyImage, data: ByteBuffer): Int {
         val w = IntArray(1)
         val h = IntArray(1)
-        val d = stb.loadFromMemory(data, w, h, IntArray(1), 4) ?: throw IllegalStateException("Failed to load image ${image.resourcePath}: ${stb.failureReason()}")
+        val d = stb.image_load_from_memory(data, w, h, IntArray(1), 4) ?: throw IllegalStateException("Failed to load image ${image.resourcePath}: ${stb.image_failure_reason()}")
         if (!image.size.isPositive) PolyImage.setImageSize(image, Vec2(w[0].toFloat(), h[0].toFloat()))
         return vg.createImage(w[0].toFloat(), h[0].toFloat(), d, 0)
     }
 
     private fun loadSvg(image: PolyImage, data: ByteBuffer): Int {
-        val svg = vg.parseSvg(data)
+        val svg = nsvg.parse(data)
         val map = Int2IntMap(4)
         if (!image.size.isPositive) PolyImage.setImageSize(image, Vec2(svg.width, svg.height).also {
             if(!it.isPositive) throw IllegalArgumentException("SVG ${image.resourcePath} has invalid size ($it), maybe it is missing/corrupted?")
@@ -494,12 +493,12 @@ class RendererImpl(
         return o
     }
 
-    private fun resizeSvg(svg: NanoVgApi.SVG, width: Float, height: Float): Int {
+    private fun resizeSvg(svg: NanoSvgApi.SVG, width: Float, height: Float): Int {
         val wi = ((if (width == 0f) svg.width else width) * 2f).toInt()
         val hi = ((if (height == 0f) svg.height else height) * 2f).toInt()
-        val dst = lwjgl.memAlloc(wi * hi * 4)
+        val dst = ByteBuffer.allocateDirect(wi * hi * 4)
         val scale = cl1(width / svg.width, height / svg.height) * 2f
-        vg.rasterizeSvg(svg.address, 0f, 0f, scale, dst, wi, hi, wi * 4)
+        nsvg.rasterize(svg.address, 0f, 0f, scale, dst, wi, hi, wi * 4)
         return vg.createImage(wi.toFloat(), hi.toFloat(), dst, 0)
     }
 

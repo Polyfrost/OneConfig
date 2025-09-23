@@ -1,9 +1,7 @@
 package org.polyfrost.oneconfig.api.ui.v1.internal
 
-import org.lwjgl.nanovg.NSVGImage
 import org.lwjgl.nanovg.NVGColor
 import org.lwjgl.nanovg.NVGPaint
-import org.lwjgl.nanovg.NanoSVG.*
 import org.lwjgl.nanovg.NanoVG.*
 import org.lwjgl.nanovg.NanoVGGL2
 import org.lwjgl.nanovg.NanoVGGL3
@@ -16,13 +14,6 @@ private typealias JBoolean = java.lang.Boolean
 class NanoVgImpl(
     private val isOpenGl3: JBoolean
 ) : NanoVgApi {
-
-    private companion object {
-
-        // ByteBuffer.of("px\u0000")
-        private val PIXELS = ByteBuffer.allocateDirect(3).put(112).put(120).put(0).flip() as ByteBuffer
-
-    }
 
     object ConstantsImpl : NanoVgApi.Constants {
 
@@ -39,13 +30,10 @@ class NanoVgImpl(
     }
 
     private var handle: Long = -1L
-    private var svgHandle: Long = -1L
 
     override fun constants() = ConstantsImpl
 
     override fun handle() = handle
-
-    override fun svgHandle() = svgHandle
 
     override fun maybeSetup() {
         if (handle == -1L) {
@@ -59,15 +47,6 @@ class NanoVgImpl(
             }
 
             this.handle = handle
-        }
-
-        if (svgHandle == -1L) {
-            val svgHandle = nsvgCreateRasterizer()
-            if (svgHandle == 0L /* NULL */) {
-                throw IllegalStateException("Failed to create NanoSVG context")
-            }
-
-            this.svgHandle = svgHandle
         }
     }
 
@@ -294,28 +273,6 @@ class NanoVgImpl(
 
     override fun deleteImage(address: Int) {
         nvgDeleteImage(handle, address)
-    }
-
-    override fun parseSvg(data: ByteBuffer): NanoVgApi.SVG {
-        val result = nsvgParse(data, PIXELS, 96f) ?: throw IllegalStateException("Failed to parse SVG data")
-        return NanoVgApi.SVG(result.address(), result.width(), result.height())
-    }
-
-    override fun deleteSvg(address: Long) {
-        nsvgDelete(NSVGImage.create(address))
-    }
-
-    override fun rasterizeSvg(
-        address: Long,
-        x: Float,
-        y: Float,
-        scale: Float,
-        data: ByteBuffer,
-        w: Int,
-        h: Int,
-        stride: Int
-    ) {
-        nsvgRasterize(svgHandle, NSVGImage.create(address), x, y, scale, data, w, h, stride)
     }
 
 }
