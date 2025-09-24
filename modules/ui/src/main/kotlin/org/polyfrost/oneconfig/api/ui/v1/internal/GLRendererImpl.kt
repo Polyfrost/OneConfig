@@ -559,7 +559,7 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         buffer.put((colorMask shr 16 and 0xFF) / 255f)
             .put((colorMask shr 8 and 0xFF) / 255f)
             .put((colorMask and 0xFF) / 255f)
-            .put(1f)
+            .put(((colorMask ushr 24 and 0xFF) / 255f).coerceAtMost(alphaCap))
         buffer.put(EMPTY_ROW) // color1 unused
         buffer.put(image.uv.x).put(image.uv.y).put(image.uv.w).put(image.uv.h)
         buffer.put(0f) // thickness = 0 for filled rect
