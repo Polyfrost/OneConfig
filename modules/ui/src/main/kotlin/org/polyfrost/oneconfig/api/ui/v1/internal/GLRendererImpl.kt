@@ -6,7 +6,7 @@ import org.lwjgl.BufferUtils
 import org.lwjgl.opengl.GL11.*
 import org.lwjgl.opengl.GL14.*
 import org.lwjgl.opengl.GL15.*
-import org.lwjgl.opengl.GL20.*
+import org.lwjgl.opengl.GL21.*
 import org.polyfrost.oneconfig.api.ui.v1.api.NanoSvgApi
 import org.polyfrost.oneconfig.api.ui.v1.api.StbApi
 import org.polyfrost.polyui.PolyUI
@@ -32,8 +32,8 @@ private const val MAX_UI_DEPTH = 16
 private const val FONT_MAX_BITMAP_W = 1024
 private const val FONT_MAX_BITMAP_H = 512
 private const val ATLAS_SIZE = 2048
-private const val FONT_RENDER_SIZE = 48f // 48f scales nicely to 16f, 12f, 32f, etc.
-private const val ATLAS_SVG_UPSCALE_FACTOR = 4f
+private const val FONT_RENDER_SIZE = 24f // 48f scales nicely to 16f, 12f, 32f, etc.
+private const val ATLAS_SVG_UPSCALE_FACTOR = 2f
 private const val STRIDE = 4 + 4 + 4 + 4 + 4 + 1 // bounds, radii, color0, color1, UV, thick
 private const val MAX_BATCH = 1024
 
@@ -48,6 +48,9 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
     private val scissorStack = IntArray(MAX_UI_DEPTH * 4)
     private val transformStack = ArrayList<FloatArray>(MAX_UI_DEPTH)
     private val fonts = HashMap<Font, FontAtlas>()
+
+    // lateinit
+    private var mipmapMode = 0
 
     // GL objects
     private var instancedVbo = 0
@@ -288,19 +291,44 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
     override fun init() {
         // check if instancing extension is available
         require(GlCapabilities.isGl21Available) { "At least OpenGL 2.1 is required" }
-        val extensions = glGetString(GL_EXTENSIONS) ?: ""
-        require(GlCapabilities.isGl33Available || extensions.contains("GL_ARB_instanced_arrays")) { "GL_ARB_instanced_arrays is not supported and is required" }
-        require(GlCapabilities.isGl31Available || extensions.contains("GL_ARB_draw_instanced")) { "GL_ARB_draw_instanced is not supported and is required" }
+        if (!GlCapabilities.isGl33Available) { // asm: skip check, both are core past 3.3
+            if (GlCapabilities.isGl3Available) {
+                // gl3 uses getStringi
+                var foundDrawInstanced = GlCapabilities.isGl31Available
+                var foundInstancedArrays = false
+                for (i in 0..<glGetInteger(org.lwjgl.opengl.GL30.GL_NUM_EXTENSIONS)) {
+                    val ext = org.lwjgl.opengl.GL30.glGetStringi(GL_EXTENSIONS, i) ?: continue
+                    when (ext) {
+                        "GL_ARB_draw_instanced" -> foundDrawInstanced = true
+                        "GL_ARB_instanced_arrays" -> foundInstancedArrays = true
+                    }
+                    if (foundDrawInstanced && foundInstancedArrays) break
+                }
+                require(foundDrawInstanced) { "GL_ARB_draw_instanced is not supported and is required" }
+                require(foundInstancedArrays) { "GL_ARB_instanced_arrays is not supported and is required" }
+            } else {
+                // gl2 check
+                val extensions = glGetString(GL_EXTENSIONS) ?: ""
+                require("GL_ARB_instanced_arrays" in extensions) { "GL_ARB_instanced_arrays is not supported and is required" }
+                require("GL_ARB_draw_instanced" in extensions) { "GL_ARB_draw_instanced is not supported and is required" }
+                if ("GL_EXT_framebuffer_object" in extensions) {
+                    LOGGER.info("Using mipmaps as extension GL_EXT_framebuffer_object is available")
+                    mipmapMode = 2
+                }
+            }
+        }
 
-        if (GlCapabilities.isGl33Available) {
+        if (GlCapabilities.isGl3Available) {
+            LOGGER.info("Using mipmaps and VAOs as OpenGL 3+ is available.")
+            mipmapMode = 1
             // ...ok I guess this is needed
-            vao = org.lwjgl.opengl.GL30C.glGenVertexArrays()
-            org.lwjgl.opengl.GL30C.glBindVertexArray(vao)
+            vao = org.lwjgl.opengl.GL30.glGenVertexArrays()
+            org.lwjgl.opengl.GL30.glBindVertexArray(vao)
         }
 
         program = linkProgram(compileShader(GL_VERTEX_SHADER, VERT), compileShader(GL_FRAGMENT_SHADER, FRAG))
 
-        if (GlCapabilities.isGl3Available) org.lwjgl.opengl.GL30C.glBindVertexArray(0)
+        if (GlCapabilities.isGl3Available) org.lwjgl.opengl.GL30.glBindVertexArray(0)
 
         val prevBuf = glGetInteger(GL_ARRAY_BUFFER_BINDING)
         val quadData = BufferUtils.createFloatBuffer(8).put(
@@ -343,7 +371,7 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
             GL_UNSIGNED_BYTE,
             null as ByteBuffer?
         )
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
@@ -379,7 +407,11 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         val prevProg = glGetInteger(GL_CURRENT_PROGRAM)
         val prevBuf = glGetInteger(GL_ARRAY_BUFFER_BINDING)
         val prevBlend = glGetBoolean(GL_BLEND)
+        val prevDepth = glGetBoolean(GL_DEPTH_TEST)
+        val prevCull = glGetBoolean(GL_CULL_FACE)
         glEnable(GL_BLEND)
+        glDisable(GL_CULL_FACE)
+        glDisable(GL_DEPTH_TEST)
         glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA)
         glBindBuffer(GL_ARRAY_BUFFER, instancedVbo)
         // 'orphan' the buffer - give a hint to the driver that we don't need the old data so we don't stall waiting for it
@@ -388,8 +420,8 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
 
         val prevVao: Int
         if (GlCapabilities.isGl3Available) {
-            prevVao = glGetInteger(org.lwjgl.opengl.GL30C.GL_VERTEX_ARRAY_BINDING)
-            org.lwjgl.opengl.GL30C.glBindVertexArray(vao)
+            prevVao = glGetInteger(org.lwjgl.opengl.GL30.GL_VERTEX_ARRAY_BINDING)
+            org.lwjgl.opengl.GL30.glBindVertexArray(vao)
         } else prevVao = 0
         glUseProgram(program)
         glBindTexture(GL_TEXTURE_2D, curTex)
@@ -411,23 +443,25 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         enableAttrib(iThickness, 1, offset)
 
         // Draw all instances
-        if (GlCapabilities.isGl31Available) org.lwjgl.opengl.GL31C.glDrawArraysInstanced(GL_TRIANGLE_FAN, 0, 4, count)
+        if (GlCapabilities.isGl31Available) org.lwjgl.opengl.GL31.glDrawArraysInstanced(GL_TRIANGLE_FAN, 0, 4, count)
         else org.lwjgl.opengl.ARBDrawInstanced.glDrawArraysInstancedARB(GL_TRIANGLE_FAN, 0, 4, count)
 
         count = 0
         buffer.clear()
         if (!prevBlend) glDisable(GL_BLEND)
+        if (prevDepth) glEnable(GL_DEPTH_TEST)
+        if (prevCull) glEnable(GL_CULL_FACE)
         glUseProgram(prevProg)
         glBindTexture(GL_TEXTURE_2D, prevTex)
         glBindBuffer(GL_ARRAY_BUFFER, prevBuf)
-        if (GlCapabilities.isGl3Available) org.lwjgl.opengl.GL30C.glBindVertexArray(prevVao)
+        if (GlCapabilities.isGl3Available) org.lwjgl.opengl.GL30.glBindVertexArray(prevVao)
     }
 
     private fun enableAttrib(loc: Int, size: Int, offset: Long): Long {
         glEnableVertexAttribArray(loc)
         glVertexAttribPointer(loc, size, GL_FLOAT, false, STRIDE * 4, offset)
         // I don't know why core disables the extension functions... but ok!
-        if (GlCapabilities.isGl33Available) org.lwjgl.opengl.GL33C.glVertexAttribDivisor(loc, 1)
+        if (GlCapabilities.isGl33Available) org.lwjgl.opengl.GL33.glVertexAttribDivisor(loc, 1)
         else org.lwjgl.opengl.ARBInstancedArrays.glVertexAttribDivisorARB(loc, 1)
         return offset + size * 4L
     }
@@ -773,6 +807,10 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0)
         glPixelStorei(GL_UNPACK_SKIP_ROWS, 0)
         glTexSubImage2D(GL_TEXTURE_2D, 0, slotX, slotY, w[0], h[0], GL_RGBA, GL_UNSIGNED_BYTE, d)
+        when (mipmapMode) {
+            1 -> org.lwjgl.opengl.GL30.glGenerateMipmap(GL_TEXTURE_2D)
+            2 -> org.lwjgl.opengl.EXTFramebufferObject.glGenerateMipmapEXT(GL_TEXTURE_2D)
+        }
         glBindTexture(GL_TEXTURE_2D, prevTex)
         if (image.type == PolyImage.Type.Raster) stb.image_free(d)
 
@@ -956,6 +994,10 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
                 bitMap
             )
             glBindTexture(GL_TEXTURE_2D, prevTex)
+            when (mipmapMode) {
+                1 -> org.lwjgl.opengl.GL30.glGenerateMipmap(GL_TEXTURE_2D)
+                2 -> org.lwjgl.opengl.EXTFramebufferObject.glGenerateMipmapEXT(GL_TEXTURE_2D)
+            }
             slotX += totalSizeX
             atlasRowHeight = maxOf(atlasRowHeight, totalSizeY)
         }
