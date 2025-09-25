@@ -21,8 +21,8 @@ copycat = "0.1.3"
 copycat-image-awt = "0.1.1"
 
 # Per version
-textile = "0.22.0"
-omnicore = "1.0.0-beta.6"
+textile = "0.25.0-beta.1"
+omnicore = "1.0.0-beta.7"
 lwjgl = "3.3.3" # All downloaded by the isolated-lwjgl3-loader
 
 # Legacy only
