@@ -6,7 +6,7 @@ import org.lwjgl.BufferUtils
 import org.lwjgl.opengl.GL11.*
 import org.lwjgl.opengl.GL14.*
 import org.lwjgl.opengl.GL15.*
-import org.lwjgl.opengl.GL21.*
+import org.lwjgl.opengl.GL20.*
 import org.polyfrost.oneconfig.api.ui.v1.api.NanoSvgApi
 import org.polyfrost.oneconfig.api.ui.v1.api.StbApi
 import org.polyfrost.polyui.PolyUI
