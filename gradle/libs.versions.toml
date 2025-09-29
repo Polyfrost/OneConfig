@@ -14,7 +14,7 @@ hypixel-data = "0.2.0" # Dep of hypixel-modapi
 
 # Not in risk of needing to be relaunched / bumped by JiJ
 snakeyaml = "1.31"
-nightconfig = "3.6.6"
+nightconfig = "3.8.3"
 isolated-lwjgl3-loader = "0.2.6"
 polyio = "0.1.0"
 copycat = "0.1.3"
