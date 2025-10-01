@@ -67,7 +67,7 @@ public final class org/polyfrost/oneconfig/api/hud/v1/HudManager {
 	public final fun getSlinex ()F
 	public final fun getSliney ()F
 	public final fun getUseGuiScale ()Z
-	public final fun getWithEditor ()Ljava/lang/Object;
+	public final fun getWithEditor ()Ldev/deftu/omnicore/api/client/screen/OmniScreen;
 	public final fun initialize ()V
 	public static final fun isEditing ()Z
 	public final fun isPanelOpen ()Z

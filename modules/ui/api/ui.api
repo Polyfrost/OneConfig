@@ -38,7 +38,7 @@ public final class org/polyfrost/oneconfig/api/ui/v1/OCPolyUIBuilder : org/polyf
 public abstract interface class org/polyfrost/oneconfig/api/ui/v1/UIManager {
 	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/ui/v1/UIManager;
 	public fun createDefault ()Lorg/polyfrost/polyui/PolyUI;
-	public abstract fun createPolyUIScreen (Lorg/polyfrost/polyui/PolyUI;FFZZLjava/util/function/Consumer;)Ljava/lang/Object;
+	public abstract fun createPolyUIScreen (Lorg/polyfrost/polyui/PolyUI;FFZZLjava/util/function/Consumer;)Ldev/deftu/omnicore/api/client/screen/OmniScreen;
 	public abstract fun createWindow ()Lorg/polyfrost/polyui/renderer/Window;
 	public abstract fun getDefaultInstance ()Lorg/polyfrost/polyui/PolyUI;
 	public abstract fun getRenderPipeline ()Ldev/deftu/omnicore/api/client/render/pipeline/OmniRenderPipeline;
@@ -46,8 +46,17 @@ public abstract interface class org/polyfrost/oneconfig/api/ui/v1/UIManager {
 	public abstract fun getTinyFD ()Lorg/polyfrost/oneconfig/api/ui/v1/api/TinyFdApi;
 }
 
-public abstract interface class org/polyfrost/oneconfig/api/ui/v1/api/LwjglApi {
-	public abstract fun memAlloc (I)Ljava/nio/ByteBuffer;
+public abstract interface class org/polyfrost/oneconfig/api/ui/v1/api/NanoSvgApi {
+	public abstract fun delete (J)V
+	public abstract fun parse (Ljava/nio/ByteBuffer;)Lorg/polyfrost/oneconfig/api/ui/v1/api/NanoSvgApi$SVG;
+	public abstract fun rasterize (JFFFLjava/nio/ByteBuffer;III)V
+}
+
+public final class org/polyfrost/oneconfig/api/ui/v1/api/NanoSvgApi$SVG {
+	public final field address J
+	public final field height F
+	public final field width F
+	public fun <init> (JFF)V
 }
 
 public abstract interface class org/polyfrost/oneconfig/api/ui/v1/api/NanoVgApi {
@@ -60,7 +69,6 @@ public abstract interface class org/polyfrost/oneconfig/api/ui/v1/api/NanoVgApi 
 	public abstract fun createImage (FFLjava/nio/ByteBuffer;I)I
 	public abstract fun createPaint ()J
 	public abstract fun deleteImage (I)V
-	public abstract fun deleteSvg (J)V
 	public abstract fun endFrame ()V
 	public abstract fun fill ()V
 	public abstract fun fillColor (J)V
@@ -78,10 +86,8 @@ public abstract interface class org/polyfrost/oneconfig/api/ui/v1/api/NanoVgApi 
 	public abstract fun linearGradient (JFFFFJJ)V
 	public abstract fun maybeSetup ()V
 	public abstract fun moveTo (FF)V
-	public abstract fun parseSvg (Ljava/nio/ByteBuffer;)Lorg/polyfrost/oneconfig/api/ui/v1/api/NanoVgApi$SVG;
 	public abstract fun pathWinding (I)V
 	public abstract fun radialGradient (JFFFFJJ)V
-	public abstract fun rasterizeSvg (JFFFLjava/nio/ByteBuffer;III)V
 	public abstract fun resetScissor ()V
 	public abstract fun restore ()V
 	public abstract fun rgba (JI)V
@@ -97,7 +103,6 @@ public abstract interface class org/polyfrost/oneconfig/api/ui/v1/api/NanoVgApi 
 	public abstract fun strokeColor (J)V
 	public abstract fun strokePaint (J)V
 	public abstract fun strokeWidth (F)V
-	public abstract fun svgHandle ()J
 	public abstract fun text (FFLjava/lang/String;)V
 	public abstract fun textAlign (I)V
 	public abstract fun textBounds (FFLjava/lang/String;[F)F
@@ -113,16 +118,34 @@ public abstract interface class org/polyfrost/oneconfig/api/ui/v1/api/NanoVgApi$
 	public abstract fun NVG_ROUND ()I
 }
 
-public final class org/polyfrost/oneconfig/api/ui/v1/api/NanoVgApi$SVG {
-	public final field address J
-	public final field height F
-	public final field width F
-	public fun <init> (JFF)V
-}
-
 public abstract interface class org/polyfrost/oneconfig/api/ui/v1/api/StbApi {
-	public abstract fun failureReason ()Ljava/lang/String;
-	public abstract fun loadFromMemory (Ljava/nio/ByteBuffer;[I[I[II)Ljava/nio/ByteBuffer;
+	public abstract fun createFontInfo ()J
+	public abstract fun createPackContext ()J
+	public abstract fun createPackRange ()J
+	public abstract fun createPackedCharArray (I)J
+	public abstract fun font_GetFontVMetrics (J[I[I[I)V
+	public abstract fun font_GetPackedGlyph (JI)J
+	public abstract fun font_PackBegin (JLjava/nio/ByteBuffer;IIIIJ)Z
+	public abstract fun font_PackEnd (J)V
+	public abstract fun font_PackFontRange (JLjava/nio/ByteBuffer;IFIIJ)Z
+	public abstract fun font_RangeSetChardata (JJ)V
+	public abstract fun font_RangeSetFirstUnicodeCodepointInRange (JI)V
+	public abstract fun font_RangeSetFontSize (JF)V
+	public abstract fun font_RangeSetNumChars (JI)V
+	public abstract fun font_ScaleForMappingEmToPixels (JF)F
+	public abstract fun free (J)V
+	public abstract fun glyph_x0 (J)S
+	public abstract fun glyph_x1 (J)S
+	public abstract fun glyph_xadvance (J)F
+	public abstract fun glyph_xoff (J)F
+	public abstract fun glyph_y0 (J)S
+	public abstract fun glyph_y1 (J)S
+	public abstract fun glyph_yoff (J)F
+	public abstract fun image_failure_reason ()Ljava/lang/String;
+	public abstract fun image_free (Ljava/nio/ByteBuffer;)V
+	public abstract fun image_load_from_memory (Ljava/nio/ByteBuffer;[I[I[II)Ljava/nio/ByteBuffer;
+	public abstract fun image_write_png (Ljava/lang/String;IIILjava/nio/ByteBuffer;I)V
+	public abstract fun initFont (JLjava/nio/ByteBuffer;)Z
 }
 
 public abstract interface class org/polyfrost/oneconfig/api/ui/v1/api/TinyFdApi {
@@ -161,6 +184,7 @@ public final class org/polyfrost/oneconfig/api/ui/v1/keybind/OCKeybindHelper : o
 	public fun build ()Lorg/polyfrost/polyui/input/PolyBind;
 	public static final fun builder ()Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OCKeybindHelper;
 	public final fun inScreens ()Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OCKeybindHelper;
+	public final fun keys ([Ldev/deftu/omnicore/api/client/input/OmniKey;)Lorg/polyfrost/oneconfig/api/ui/v1/keybind/OCKeybindHelper;
 	public final fun register ()Lorg/polyfrost/polyui/input/PolyBind;
 	public final fun register (Lorg/polyfrost/polyui/input/PolyBind;)Lorg/polyfrost/polyui/input/PolyBind;
 }
