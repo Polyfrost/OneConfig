@@ -42,6 +42,7 @@ import dev.deftu.omnicore.api.client.render.GlCapabilities;
 import dev.deftu.omnicore.api.client.render.pipeline.OmniRenderPipeline;
 import dev.deftu.omnicore.api.client.render.pipeline.OmniRenderPipelines;
 import dev.deftu.omnicore.api.client.render.state.OmniBlendState;
+import dev.deftu.omnicore.api.client.screen.OmniScreen;
 import net.minecraft.client.Minecraft;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -144,7 +145,7 @@ public class UIManagerImpl implements UIManager {
     }
 
     @Override
-    public Object createPolyUIScreen(@NotNull PolyUI polyUI, float designedWidth, float designedHeight, boolean pauses, boolean blurs, Consumer<PolyUI> onClose) {
+    public OmniScreen createPolyUIScreen(@NotNull PolyUI polyUI, float designedWidth, float designedHeight, boolean pauses, boolean blurs, Consumer<PolyUI> onClose) {
         return new PolyUIScreen(polyUI, designedWidth, designedHeight, pauses, blurs, onClose);
     }
 

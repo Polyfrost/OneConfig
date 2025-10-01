@@ -1,4 +1,8 @@
 package org.polyfrost.oneconfig.internal.compat
+
+// remove the below check once modmenu updates to support 1.21.9
+//#if MC < 1.21.9
+
 //#if FABRIC
 import com.terraformersmc.modmenu.ModMenu
 import com.terraformersmc.modmenu.util.mod.Mod
@@ -40,4 +44,5 @@ object ModMenuCompat {
     }
 
 }
+//#endif
 //#endif

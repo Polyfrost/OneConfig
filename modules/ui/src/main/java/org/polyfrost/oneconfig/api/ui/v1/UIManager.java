@@ -33,6 +33,7 @@ import dev.deftu.omnicore.api.client.render.OmniRenderingContext;
 import dev.deftu.omnicore.api.client.render.OmniResolution;
 import dev.deftu.omnicore.api.client.render.pipeline.OmniRenderPipeline;
 import dev.deftu.omnicore.api.client.render.state.OmniColorMask;
+import dev.deftu.omnicore.api.client.screen.OmniScreen;
 import dev.deftu.omnicore.api.client.textures.OmniTextureFormat;
 import dev.deftu.omnicore.api.color.OmniColors;
 import dev.deftu.textile.minecraft.MCSimpleTextHolder;
@@ -95,7 +96,7 @@ public interface UIManager {
      * @param onClose       callback to run when the screen is closed
      * @return a Minecraft screen object. Will be a GuiScreen or Screen depending on the Minecraft version.
      */
-    Object createPolyUIScreen(@NotNull PolyUI polyUI, float designedWidth, float designedHeight, boolean pauses, boolean blurs, @Nullable Consumer<PolyUI> onClose);
+    OmniScreen createPolyUIScreen(@NotNull PolyUI polyUI, float designedWidth, float designedHeight, boolean pauses, boolean blurs, @Nullable Consumer<PolyUI> onClose);
 
     /**
      * return a PolyUI instance that is mounted to the entire screen. It is used internally for displaying and managing HUD components and notifications.

@@ -27,11 +27,12 @@
 package org.polyfrost.oneconfig.internal;
 
 import com.mojang.brigadier.Command;
-import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import com.mojang.brigadier.tree.CommandNode;
+import com.mojang.brigadier.tree.LiteralCommandNode;
 import dev.deftu.clipboard.Clipboard;
 import dev.deftu.omnicore.api.client.OmniClient;
 import dev.deftu.omnicore.api.client.chat.OmniClientChat;
+import dev.deftu.omnicore.api.client.commands.OmniClientCommandSource;
+import dev.deftu.omnicore.api.client.commands.OmniClientCommands;
 import dev.deftu.omnicore.api.client.screen.OmniScreens;
 import dev.deftu.omnicore.api.loader.ModInfo;
 import dev.deftu.omnicore.api.loader.OmniLoader;
@@ -39,10 +40,8 @@ import dev.deftu.omnicore.internal.client.commands.ClientCommandInternals;
 import dev.deftu.textile.minecraft.MCSimpleTextHolder;
 import dev.deftu.textile.minecraft.MCTextFormat;
 import kotlin.Unit;
-import net.minecraft.client.gui.GuiChat;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.polyfrost.oneconfig.api.commands.v1.CommandManager;
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager;
 import org.polyfrost.oneconfig.api.config.v1.internal.ConfigVisualizer;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
@@ -71,8 +70,6 @@ import org.polyfrost.polyui.input.Translator;
 //#endif
 
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import static org.polyfrost.oneconfig.api.commands.v1.CommandManager.literal;
 
 /**
  * The main class of OneConfig.
@@ -179,38 +176,33 @@ public class OneConfig
         // //$$ }
         // //#endif
 
-        LiteralArgumentBuilder b = literal("oneconfig");
-        b.executes(cmd -> {
-            OneConfigUI.INSTANCE.open();
-            return 1;
-        });
+        Command<OmniClientCommandSource> executor = (ctx) -> ctx.getSource().openScreen(OneConfigUI.INSTANCE.create());
 
-        b.then(literal("debug").executes(ctx -> {
-            OneConfigUI.INSTANCE.open();
-            OneConfigUI.INSTANCE.toggleDebug();
-            return ctx.getSource().replyChat("OK");
-        }));
-
-        b.then(literal("locraw").executes(ctx -> {
-            return ctx.getSource().replyChat(HypixelUtils.getLocation().toString());
-        }));
-
-        b.then(literal("hud").executes(ctx -> {
-            Platform.screen().display(HudManager.INSTANCE.getWithEditor());
-            return Command.SINGLE_SUCCESS;
-        }));
-
-        b.then(literal("delete").executes(ctx -> {
-            OneConfigUI.INSTANCE.invalidateCache();
-            ConfigVisualizer.INSTANCE.clearCache();
-            return ctx.getSource().replyChat("Deleted OneConfig UI. Please make a report if you were having issues!");
-        }));
-
-        CommandNode node = b.build();
-        CommandManager.register(b);
-        CommandManager.register(literal("ocfg").redirect(node));
-        CommandManager.register(literal("oneconfig").redirect(node));
-        CommandManager.register(literal("oc").redirect(node));
+        LiteralCommandNode<OmniClientCommandSource> node = OmniClientCommands.literal("oneconfig")
+                .executes(executor)
+                .then(OmniClientCommands.literal("delete")
+                        .executes((ctx) -> {
+                            OneConfigUI.INSTANCE.invalidateCache();
+                            ConfigVisualizer.INSTANCE.clearCache();
+                            return ctx.getSource().replyChat("Deleted OneConfig UI. Please make a report if you were having issues!");
+                        })
+                )
+                .then(OmniClientCommands.literal("hud")
+                        .executes((ctx) -> ctx.getSource().openScreen(HudManager.INSTANCE.getWithEditor()))
+                )
+                .then(OmniClientCommands.literal("locraw")
+                        .executes((ctx) -> ctx.getSource().replyChat(HypixelUtils.getLocation().toString()))
+                )
+                .then(OmniClientCommands.literal("debug")
+                        .executes((ctx) -> {
+                            OneConfigUI.INSTANCE.create();
+                            OneConfigUI.INSTANCE.toggleDebug();
+                            return ctx.getSource().replyChat("OK");
+                        })
+                )
+                .build();
+        OmniClientCommands.register(node);
+        OmniClientCommands.register(OmniClientCommands.literal("ocfg").executes(executor).redirect(node));
     }
 
     private static void registerKeybinds() {
@@ -229,7 +221,7 @@ public class OneConfig
                 }
 
                 try {
-                    OneConfigUI.INSTANCE.open();
+                    Platform.screen().display(OneConfigUI.INSTANCE.create());
                 } catch (Throwable t) {
                     OmniClientChat.displayChatMessage(new MCSimpleTextHolder("Failed to open OneConfig UI: " + t.getMessage() + ". Please report this!").withFormatting(MCTextFormat.RED));
                     // propagate for proper error handling

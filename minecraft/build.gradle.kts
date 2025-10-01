@@ -203,6 +203,7 @@ dependencies {
         rconfig("1.21.6", "3.6.2"),
         rconfig("1.21.7", "3.7.2"),
         rconfig("1.21.8", "3.7.2", "1.21.7"),
+        rconfig("1.21.9", "3.9.0")
     )
 
     compileOnlyCompat(rconfig[mcVersionString])
@@ -243,6 +244,7 @@ dependencies {
         yacl("1.21.6", "3.7.1"),
         yacl("1.21.7", "3.7.1", "1.21.6"),
         yacl("1.21.8", "3.7.1", "1.21.6"),
+        yacl("1.21.9", "3.8.0", "1.21.6")
     )
     compileOnlyCompat(yacl[mcVersionString])
 

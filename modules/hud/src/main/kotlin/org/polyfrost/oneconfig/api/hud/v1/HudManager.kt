@@ -27,6 +27,7 @@
 package org.polyfrost.oneconfig.api.hud.v1
 
 import dev.deftu.omnicore.api.client.render.OmniResolution
+import dev.deftu.omnicore.api.client.screen.OmniScreen
 import dev.deftu.omnicore.api.loader.OmniLoader
 import org.apache.logging.log4j.LogManager
 import org.jetbrains.annotations.ApiStatus
@@ -320,7 +321,7 @@ object HudManager {
     }
 
     @ApiStatus.Internal
-    fun getWithEditor(): Any {
+    fun getWithEditor(): OmniScreen {
         if (!::panel.isInitialized) {
             panel = makePanel()
             polyUI.master.addChild(panel, recalculate = false)

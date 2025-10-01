@@ -30,6 +30,7 @@ package org.polyfrost.oneconfig.internal.ui
 
 import dev.deftu.omnicore.api.loader.OmniLoader
 import dev.deftu.omnicore.api.client.player.playerName
+import dev.deftu.omnicore.api.client.screen.OmniScreen
 import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Tree
@@ -75,7 +76,7 @@ object OneConfigUI {
     private val searchNoneFound = Text("oneconfig.search.nonefound", fontSize = 16f)
 
     private lateinit var ui: Drawable
-    private var window: Any? = null
+    private var window: OmniScreen? = null
     private val previous = ArrayList<Component>(5)
     private var current: Component? = null
     private val next = ArrayList<Component>(5)
@@ -114,7 +115,7 @@ object OneConfigUI {
     }
 
     @JvmOverloads
-    fun open(initialScreen: Component? = null) {
+    fun create(initialScreen: Component? = null): OmniScreen {
         if (window == null) {
             val builder = OCPolyUIBuilder.create()
                 .blurs()
@@ -269,9 +270,10 @@ object OneConfigUI {
                 it.borderColor = polyUI.colors.page.border10
             }
         } else {
-            Platform.screen().display(window)
             openPage(initialScreen, SetAnimation.None)
         }
+
+        return window!!
     }
 
     fun toggleDebug() {

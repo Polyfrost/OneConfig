@@ -26,6 +26,7 @@
 
 package org.polyfrost.oneconfig.api.ui.v1;
 
+import dev.deftu.omnicore.api.client.screen.OmniScreen;
 import dev.deftu.omnicore.api.loader.OmniLoader;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
 import org.polyfrost.oneconfig.api.platform.v1.ScreenPlatform;
@@ -112,9 +113,9 @@ public final class OCPolyUIBuilder extends PolyUIBuilder {
      * <br>
      * Also returns a reference to the window object. use {@link Platform#screen()} and {@link ScreenPlatform#display(Object)} to display it.
      */
-    public kotlin.Pair<PolyUI, Object> makeAndOpenWithRef(Drawable... drawables) {
+    public kotlin.Pair<PolyUI, OmniScreen> makeAndOpenWithRef(Drawable... drawables) {
         PolyUI p = make(drawables);
-        Object screen = UIManager.INSTANCE.createPolyUIScreen(p, designedWidth, designedHeight, pauses, blurs, onClose);
+        OmniScreen screen = UIManager.INSTANCE.createPolyUIScreen(p, designedWidth, designedHeight, pauses, blurs, onClose);
         p.setWindow(UIManager.INSTANCE.createWindow());
         Platform.screen().display(screen);
         return new kotlin.Pair<>(p, screen);

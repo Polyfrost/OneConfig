@@ -1,5 +1,8 @@
 package org.polyfrost.oneconfig.internal.mixin.compat.modmenu;
 
+// remove the below check once modmenu updates to support 1.21.9
+//#if MC < 1.21.9
+
 //#if FABRIC
 import com.terraformersmc.modmenu.ModMenu;
 import org.polyfrost.oneconfig.internal.compat.ModMenuCompat;
@@ -19,4 +22,5 @@ public class Mixin_ModMenu {
     }
 
 }
+//#endif
 //#endif

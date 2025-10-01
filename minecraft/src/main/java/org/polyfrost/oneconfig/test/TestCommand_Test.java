@@ -49,8 +49,15 @@ public class TestCommand_Test {
 
     @Handler
     private void playerTest(GameProfile profile) {
-        OmniClientChat.displayChatMessage("Player test: " + profile.getName());
-        OmniClientChat.displayChatMessage(profile.getId().toString());
+        //#if MC >= 1.21.9
+        //$$ String name = profile.name();
+        //$$ String id = profile.id().toString();
+        //#else
+        String name = profile.getName();
+        String id = profile.getId().toString();
+        //#endif
+        OmniClientChat.displayChatMessage("Player test: " + name);
+        OmniClientChat.displayChatMessage(id);
     }
 
     @Command(value = {"subcommand", "s"})
