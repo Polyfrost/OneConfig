@@ -11,6 +11,11 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+//#if MC >= 1.21.9
+//$$ import net.minecraft.client.render.command.OrderedRenderCommandQueue;
+//$$ import net.minecraft.client.render.state.CameraRenderState;
+//#endif
+
 //#if MC >= 1.21.2
 //$$ import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 //$$ import net.minecraft.client.Minecraft;
@@ -55,7 +60,11 @@ public class Mixin_RenderLivingEntityEvent<
             float entityYaw,
             float partialTicks,
             //#endif
-            //#if MC >= 1.16.5
+            //#if MC >= 1.21.9
+            //$$ MatrixStack matrixStack,
+            //$$ OrderedRenderCommandQueue renderQueue,
+            //$$ CameraRenderState cameraState,
+            //#elseif MC >= 1.16.5
             //$$ PoseStack matrixStack,
             //$$ MultiBufferSource buffer,
             //$$ int packedLight,
@@ -82,7 +91,9 @@ public class Mixin_RenderLivingEntityEvent<
     }
 
     @Inject(
-            //#if MC >= 1.21.2
+            //#if MC >= 1.21.9
+            //$$ method = "render(Lnet/minecraft/client/render/entity/state/LivingEntityRenderState;Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/command/OrderedRenderCommandQueue;Lnet/minecraft/client/render/state/CameraRenderState;)V",
+            //#elseif MC >= 1.21.2
             //$$ method = "render(Lnet/minecraft/client/render/entity/state/LivingEntityRenderState;Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;I)V",
             //#elseif MC >= 1.16.5
             //$$ method = "render(Lnet/minecraft/world/entity/LivingEntity;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V",
@@ -106,7 +117,11 @@ public class Mixin_RenderLivingEntityEvent<
             float entityYaw,
             float partialTicks,
             //#endif
-            //#if MC >= 1.16.5
+            //#if MC >= 1.21.9
+            //$$ MatrixStack matrixStack,
+            //$$ OrderedRenderCommandQueue renderQueue,
+            //$$ CameraRenderState cameraState,
+            //#elseif MC >= 1.16.5
             //$$ PoseStack matrixStack,
             //$$ MultiBufferSource buffer,
             //$$ int packedLight,

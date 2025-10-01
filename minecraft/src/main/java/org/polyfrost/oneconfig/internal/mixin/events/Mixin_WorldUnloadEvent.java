@@ -50,7 +50,7 @@ public class Mixin_WorldUnloadEvent {
             //#endif
             , at = @At("HEAD"))
     private void onWorldUnloadCallback(WorldClient world,
-                                       //#if MC < 1.16 || MC >= 1.20
+                                       //#if MC < 1.16 || MC >= 1.20 && MC < 1.21.9
                                        @Coerce Object ignored,
                                        //#endif
                                        CallbackInfo ci) {
