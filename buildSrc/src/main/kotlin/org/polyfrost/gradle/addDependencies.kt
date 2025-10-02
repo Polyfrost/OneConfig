@@ -221,6 +221,12 @@ fun Project.provideIncludedDependencies(version: Triple<Int, Int, Int>?, loader:
     }
     if (version == null && loader != null) {
         deps.add(libs.findLibrary("asm").get().get())
+        val lwjglVersion = libs.findVersion("legacy-lwjgl").get()
+        deps.add("org.lwjgl.lwjgl:lwjgl:$lwjglVersion")
+        deps.add("org.lwjgl.lwjgl:lwjgl-platform:$lwjglVersion:natives-windows")
+        deps.add("org.lwjgl.lwjgl:lwjgl-platform:$lwjglVersion:natives-linux")
+        deps.add("org.lwjgl.lwjgl:lwjgl-platform:$lwjglVersion:natives-osx")
+        deps.add("org.lwjgl.lwjgl:lwjgl_util:$lwjglVersion")
     }
     deps.add(libs.findLibrary("mixin-extras").get().get())
     val actualDeps = mutableListOf<OCDependency>()
