@@ -370,6 +370,11 @@ tasks {
             attributes(attributesMap)
         }
     }
+    processResources {
+        if (mcData.version >= MinecraftVersions.VERSION_1_13) {
+            exclude("patched-lwjgl/**")
+        }
+    }
 }
 
 afterEvaluate {
