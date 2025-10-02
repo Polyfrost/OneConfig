@@ -34,7 +34,7 @@ brigadier = "1.0.18"
 oneconfig-loader = "1.1.0-alpha.48"
 
 # Gradle
-dgt = "2.57.0"
+dgt = "2.58.0"
 kotlinx-abi = "0.18.1"
 licenser = "2.1.1"
 jetbrains-idea-ext = "1.3"
