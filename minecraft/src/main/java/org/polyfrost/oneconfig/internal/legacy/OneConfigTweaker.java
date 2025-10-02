@@ -91,17 +91,17 @@ public class OneConfigTweaker implements ITweaker {
             try {
                 boolean supportsHiDPI = !Objects.equals(System.getProperty("os.arch"), "aarch64");
                 if (!supportsHiDPI) {
-                    try {
-                        Class<?> clazz = Class.forName("org.lwjgl.Sys", false, OneConfigMixinInit.class.getClassLoader());
-                        try {
-                            clazz.getDeclaredField("HAS_HIDPI_FIX");
-                            supportsHiDPI = true;
-                        } catch (NoSuchFieldException ignored) {
-                            // Field not found, continue with the default value
-                        }
-                    } catch (ClassNotFoundException ignored) {
-
-                    }
+                    //try {
+                    //    Class<?> clazz = Class.forName("org.lwjgl.Sys", false, OneConfigMixinInit.class.getClassLoader());
+                    //    try {
+                    //        clazz.getDeclaredField("HAS_HIDPI_FIX");
+                    //        supportsHiDPI = true;
+                    //    } catch (NoSuchFieldException ignored) {
+                    //        // Field not found, continue with the default value
+                    //    }
+                    //} catch (ClassNotFoundException ignored) {
+                    //
+                    //}
                 }
                 if (!supportsHiDPI) {
                     injectLWJGLFix();
