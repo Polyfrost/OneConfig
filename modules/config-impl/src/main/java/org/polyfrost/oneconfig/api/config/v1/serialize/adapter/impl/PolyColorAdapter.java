@@ -38,7 +38,7 @@ public class PolyColorAdapter extends Adapter<PolyColor, int[]> {
 
 	@Override
 	public PolyColor deserialize(int[] in) {
-		return ColorUtils.rgba(in[0], in[1], in[2], in[3]);
+		return ColorUtils.rgba(in[0], in[1], in[2], in[3] / 255f);
 	}
 
 	@Override
