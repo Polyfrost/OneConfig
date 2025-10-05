@@ -27,10 +27,8 @@
 package org.polyfrost.oneconfig.api.platform.v1;
 
 public interface I18nPlatform {
-
     /**
      * Return the given component with all formatting codes removed.
      */
     String getUnformattedText(Object component);
-
 }

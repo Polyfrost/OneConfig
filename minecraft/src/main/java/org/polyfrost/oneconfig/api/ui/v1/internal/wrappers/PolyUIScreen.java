@@ -33,7 +33,7 @@ import dev.deftu.omnicore.api.client.input.OmniMouseButton;
 import dev.deftu.omnicore.api.client.render.OmniRenderingContext;
 import dev.deftu.omnicore.api.client.screen.KeyPressEvent;
 import dev.deftu.omnicore.api.client.screen.OmniScreen;
-import dev.deftu.textile.minecraft.MCSimpleTextHolder;
+import dev.deftu.textile.Text;
 import net.minecraft.client.Minecraft;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -57,7 +57,6 @@ import static org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager.translate
 
 @SuppressWarnings("unused")
 public class PolyUIScreen extends OmniScreen implements BlurScreen {
-
     private static final Logger LOGGER = LogManager.getLogger("OneConfig/PolyUIScreen");
 
     @NotNull
@@ -79,7 +78,7 @@ public class PolyUIScreen extends OmniScreen implements BlurScreen {
     //#endif
 
     public PolyUIScreen(@NotNull PolyUI polyUI, float designedWidth, float designedHeight, boolean pauses, boolean blurs, Consumer<PolyUI> onClose) {
-        super(new MCSimpleTextHolder(""), true);
+        super(Text.empty(), true);
 
         this.polyUI = polyUI;
         this.designedWidth = designedWidth;

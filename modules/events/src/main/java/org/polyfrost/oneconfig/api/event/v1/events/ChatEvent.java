@@ -26,13 +26,11 @@
 
 package org.polyfrost.oneconfig.api.event.v1.events;
 
-import dev.deftu.textile.TextHolder;
+import dev.deftu.textile.Text;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
 
 public abstract class ChatEvent extends Event.Cancellable {
-
     public static final class Send extends ChatEvent {
-
         public final String message;
 
         public Send(String message) {
@@ -42,14 +40,12 @@ public abstract class ChatEvent extends Event.Cancellable {
         public String component1() {
             return message;
         }
-
     }
 
     public static final class Receive extends ChatEvent {
+        private Text message;
 
-        private TextHolder message;
-
-        public Receive(TextHolder message) {
+        public Receive(Text message) {
             this.message = message;
         }
 
@@ -57,17 +53,16 @@ public abstract class ChatEvent extends Event.Cancellable {
             return Platform.i18n().getUnformattedText(message);
         }
 
-        public TextHolder getMessage() {
+        public Text getMessage() {
             return message;
         }
 
-        public void setMessage(TextHolder message) {
+        public void setMessage(Text message) {
             this.message = message;
         }
 
-        public TextHolder component1() {
+        public Text component1() {
             return message;
         }
-
     }
 }

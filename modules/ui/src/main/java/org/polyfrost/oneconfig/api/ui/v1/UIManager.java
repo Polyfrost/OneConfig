@@ -36,8 +36,9 @@ import dev.deftu.omnicore.api.client.render.state.OmniColorMask;
 import dev.deftu.omnicore.api.client.screen.OmniScreen;
 import dev.deftu.omnicore.api.client.textures.OmniTextureFormat;
 import dev.deftu.omnicore.api.color.OmniColors;
-import dev.deftu.textile.minecraft.MCSimpleTextHolder;
-import dev.deftu.textile.minecraft.MCTextFormat;
+import dev.deftu.textile.Text;
+import dev.deftu.textile.minecraft.MCTextStyle;
+import dev.deftu.textile.minecraft.TextColors;
 import kotlin.Unit;
 import org.apache.logging.log4j.LogManager;
 import org.jetbrains.annotations.ApiStatus;
@@ -168,7 +169,14 @@ public interface UIManager {
             return polyUI;
         } catch (Throwable t) {
             LogManager.getLogger("OneConfig/UI").error("Failed to load renderer!", t);
-            EventManager.register(WorldEvent.Load.class, () -> EventDelay.tick(20, () -> OmniClientChat.displayChatMessage(new MCSimpleTextHolder("Failed to load the renderer for OneConfig. This means the UI, HUD and Notifications will not work. Please report this to https://discord.gg/polyfrost and attach your log.").withFormatting(MCTextFormat.RED))));
+            EventManager.register(WorldEvent.Load.class, () -> EventDelay.tick(20, () -> {
+                OmniClientChat.displayChatMessage(Text.literal("Failed to load the renderer for OneConfig. This means the UI, HUD and Notifications will not work. Please report this to https://discord.gg/polyfrost and attach your log.")
+                        .setStyle(new MCTextStyle()
+                                .setColor(TextColors.RED)
+                                .build()
+                        )
+                );
+            }));
             return null;
         }
     }

@@ -37,8 +37,9 @@ import dev.deftu.omnicore.api.client.screen.OmniScreens;
 import dev.deftu.omnicore.api.loader.ModInfo;
 import dev.deftu.omnicore.api.loader.OmniLoader;
 import dev.deftu.omnicore.internal.client.commands.ClientCommandInternals;
-import dev.deftu.textile.minecraft.MCSimpleTextHolder;
-import dev.deftu.textile.minecraft.MCTextFormat;
+import dev.deftu.textile.Text;
+import dev.deftu.textile.minecraft.MCTextStyle;
+import dev.deftu.textile.minecraft.TextColors;
 import kotlin.Unit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -223,7 +224,13 @@ public class OneConfig
                 try {
                     Platform.screen().display(OneConfigUI.INSTANCE.create());
                 } catch (Throwable t) {
-                    OmniClientChat.displayChatMessage(new MCSimpleTextHolder("Failed to open OneConfig UI: " + t.getMessage() + ". Please report this!").withFormatting(MCTextFormat.RED));
+                    OmniClientChat.displayChatMessage(Text.literal("Failed to open OneConfig UI: " + t.getMessage() + ". Please report this!")
+                            .setStyle(
+                                    new MCTextStyle()
+                                            .setColor(TextColors.RED)
+                                            .build()
+                            )
+                    );
                     // propagate for proper error handling
                     throw t;
                 }
