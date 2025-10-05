@@ -224,13 +224,7 @@ public class OneConfig
                 try {
                     Platform.screen().display(OneConfigUI.INSTANCE.create());
                 } catch (Throwable t) {
-                    OmniClientChat.displayChatMessage(Text.literal("Failed to open OneConfig UI: " + t.getMessage() + ". Please report this!")
-                            .setStyle(
-                                    new MCTextStyle()
-                                            .setColor(TextColors.RED)
-                                            .build()
-                            )
-                    );
+                    OmniClientChat.displayChatMessage(Text.literal("Failed to open OneConfig UI: " + t.getMessage() + ". Please report this!").setStyle(MCTextStyle.color(TextColors.RED)));
                     // propagate for proper error handling
                     throw t;
                 }

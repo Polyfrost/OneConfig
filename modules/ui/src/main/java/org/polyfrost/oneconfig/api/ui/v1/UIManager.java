@@ -170,13 +170,9 @@ public interface UIManager {
         } catch (Throwable t) {
             LogManager.getLogger("OneConfig/UI").error("Failed to load renderer!", t);
             EventManager.register(WorldEvent.Load.class, () -> EventDelay.tick(20, () -> {
-                OmniClientChat.displayChatMessage(Text.literal("Failed to load the renderer for OneConfig. This means the UI, HUD and Notifications will not work. Please report this to https://discord.gg/polyfrost and attach your log.")
-                        .setStyle(new MCTextStyle()
-                                .setColor(TextColors.RED)
-                                .build()
-                        )
-                );
+                OmniClientChat.displayChatMessage(Text.literal("Failed to load the renderer for OneConfig. This means the UI, HUD and Notifications will not work. Please report this to https://discord.gg/polyfrost and attach your log.").setStyle(MCTextStyle.color(TextColors.RED)));
             }));
+
             return null;
         }
     }
