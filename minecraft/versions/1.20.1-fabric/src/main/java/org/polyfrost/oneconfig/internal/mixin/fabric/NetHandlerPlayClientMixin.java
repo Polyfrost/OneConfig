@@ -26,7 +26,7 @@
 
 package org.polyfrost.oneconfig.internal.mixin.fabric;
 
-import dev.deftu.textile.minecraft.MCTextHolder;
+import dev.deftu.textile.minecraft.MCText;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.network.packet.s2c.play.ChatMessageS2CPacket;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
@@ -59,7 +59,7 @@ public class NetHandlerPlayClientMixin {
 
     @Inject(method = "onChatMessage", at = @At("HEAD"), cancellable = true)
     private void chatReceiveCallback(ChatMessageS2CPacket packet, CallbackInfo ci) {
-        ChatEvent.Receive ev = new ChatEvent.Receive(MCTextHolder.convertFromVanilla(packet.comp_1103()));
+        ChatEvent.Receive ev = new ChatEvent.Receive(MCText.wrap(packet.comp_1103()));
         EventManager.INSTANCE.post(ev);
         if (ev.cancelled) {
             ci.cancel();

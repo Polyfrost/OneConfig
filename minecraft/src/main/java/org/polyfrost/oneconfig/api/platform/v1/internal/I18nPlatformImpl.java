@@ -28,16 +28,15 @@ package org.polyfrost.oneconfig.api.platform.v1.internal;
 
 import dev.deftu.textile.Text;
 import net.minecraft.util.EnumChatFormatting;
-import net.minecraft.util.IChatComponent;
 import org.polyfrost.oneconfig.api.platform.v1.I18nPlatform;
 
 public class I18nPlatformImpl implements I18nPlatform {
     @Override
     public String getUnformattedText(Object component) {
         String s;
-        if (component instanceof IChatComponent) {
+        if (component instanceof net.minecraft.util.IChatComponent) {
             //noinspection StringOperationCanBeSimplified
-            s = ((IChatComponent) component).getUnformattedText().toString();
+            s = ((net.minecraft.util.IChatComponent) component).getUnformattedText().toString();
         } else if (component instanceof Text) {
             s = ((Text) component).collapseToString();
         } else {
