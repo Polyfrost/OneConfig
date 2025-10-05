@@ -34,11 +34,11 @@ public abstract class org/polyfrost/oneconfig/api/event/v1/events/ChatEvent : or
 }
 
 public final class org/polyfrost/oneconfig/api/event/v1/events/ChatEvent$Receive : org/polyfrost/oneconfig/api/event/v1/events/ChatEvent {
-	public fun <init> (Ldev/deftu/textile/TextHolder;)V
-	public fun component1 ()Ldev/deftu/textile/TextHolder;
+	public fun <init> (Ldev/deftu/textile/Text;)V
+	public fun component1 ()Ldev/deftu/textile/Text;
 	public fun getFullyUnformattedMessage ()Ljava/lang/String;
-	public fun getMessage ()Ldev/deftu/textile/TextHolder;
-	public fun setMessage (Ldev/deftu/textile/TextHolder;)V
+	public fun getMessage ()Ldev/deftu/textile/Text;
+	public fun setMessage (Ldev/deftu/textile/Text;)V
 }
 
 public final class org/polyfrost/oneconfig/api/event/v1/events/ChatEvent$Send : org/polyfrost/oneconfig/api/event/v1/events/ChatEvent {
