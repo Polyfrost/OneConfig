@@ -27,7 +27,7 @@
 //#if FORGE
 package org.polyfrost.oneconfig.internal.mixin.events;
 
-import dev.deftu.textile.minecraft.MCTextHolder;
+import dev.deftu.textile.minecraft.MCText;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.fml.common.eventhandler.Event;
 import net.minecraftforge.fml.common.eventhandler.EventBus;
@@ -58,21 +58,21 @@ public abstract class Mixin_ChatReceiveEvent_Forge {
             System.out.println("Chat message received:\n" + ComponentHelper.prettyPrint(event.message));
         }
 
-        ChatEvent.Receive ev = new ChatEvent.Receive(MCTextHolder.convertFromVanilla(event.message));
+        ChatEvent.Receive ev = new ChatEvent.Receive(MCText.wrap(event.message));
         //#else
         //#if MC < 1.19
         //$$ if (event.getType() != net.minecraft.util.text.ChatType.CHAT) {
         //$$     return;
         //$$ }
         //#endif
-        //$$ ChatEvent.Receive ev = new ChatEvent.Receive(MCTextHolder.convertFromVanilla(event.getMessage()));
+        //$$ ChatEvent.Receive ev = new ChatEvent.Receive(MCText.wrap(event.getMessage()));
         //#endif
 
         EventManager.INSTANCE.post(ev);
         //#if MC == 1.8.9
-        event.message = MCTextHolder.convertToVanilla(ev.getMessage());
+        event.message = MCText.convert(ev.getMessage());
         //#else
-        //$$ event.setMessage(MCTextHolder.convertToVanilla(ev.getMessage()));
+        //$$ event.setMessage(MCText.convert(ev.getMessage()));
         //#endif
         if (ev.cancelled) {
             event.setCanceled(true);
