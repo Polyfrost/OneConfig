@@ -428,6 +428,7 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
             org.lwjgl.opengl.GL30.glBindVertexArray(vao)
         } else prevVao = 0
         glUseProgram(program)
+        glActiveTexture(GL_TEXTURE0)
         glBindTexture(GL_TEXTURE_2D, curTex)
 
         // Quad attrib
