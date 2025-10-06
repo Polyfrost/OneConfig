@@ -1,6 +1,7 @@
 package org.polyfrost.oneconfig.api.ui.v1.internal
 
 import dev.deftu.omnicore.api.client.render.GlCapabilities
+import dev.deftu.omnicore.internal.client.render.shader.ShaderInternals
 import org.apache.logging.log4j.LogManager
 import org.lwjgl.BufferUtils
 import org.lwjgl.opengl.GL11.*
@@ -284,8 +285,7 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
 
     @Suppress("SameParameterValue")
     private fun glUniformMatrix3fv(location: Int, transpose: Boolean, buf: FloatBuffer) {
-        // todo hi deftu
-//        ShaderInternals.uniformMatrix3(location, transpose, buf)
+        ShaderInternals.uniformMatrix3(location, transpose, buf)
     }
 
     override fun init() {
