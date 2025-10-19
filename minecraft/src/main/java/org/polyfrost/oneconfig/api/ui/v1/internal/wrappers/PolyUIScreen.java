@@ -209,13 +209,14 @@ public class PolyUIScreen extends OmniScreen implements BlurScreen {
     @MustBeInvokedByOverriders
     public boolean onMouseScroll(double x, double y, double amount, double horizontalAmount) {
         try {
+            // we scroll by 15 pixels per notch, so we'll convert the scroll amount accordingly
             float clampedAmount = (float)
-                    //#if MC < 1.13
-                    //$$ amount / 8f;
+                    //#if MC >= 1.16.5
+                    //$$ amount * 15f; // amount = 1 up and -1 down
                     //#else
-                    amount;
+                    amount / 8f; // amount = 120 up and -120 down
                     //#endif
-            polyUI.getInputManager().mouseScrolled((float) horizontalAmount, clampedAmount);
+            polyUI.getInputManager().mouseScrolled((float) horizontalAmount, -clampedAmount);
         } catch (Exception e) {
             death(e);
         }
