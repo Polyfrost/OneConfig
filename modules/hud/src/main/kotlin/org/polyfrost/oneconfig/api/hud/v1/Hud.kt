@@ -367,13 +367,14 @@ abstract class Hud<T : Drawable>(id: String, title: String, val category: Catego
      */
     open fun multipleInstancesAllowed() = true
 
-
     /**
      * Specify a minimum size for this HUD.
      */
     @Suppress("INAPPLICABLE_JVM_NAME")
     @JvmName("minimumSize")
     open fun minimumSize(): Vec2 = Vec2.ZERO
+
+    open fun remove() {  }
 
     /**
      * This method will create a new instance of the HUD. It is key to the functionality of the HUD system.
