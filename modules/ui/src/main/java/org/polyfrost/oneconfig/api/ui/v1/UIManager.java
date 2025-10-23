@@ -47,6 +47,7 @@ import org.jetbrains.annotations.Nullable;
 import org.polyfrost.oneconfig.api.event.v1.EventDelay;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.HudRenderEvent;
+import org.polyfrost.oneconfig.api.event.v1.events.RenderEvent;
 import org.polyfrost.oneconfig.api.event.v1.events.ResizeEvent;
 import org.polyfrost.oneconfig.api.event.v1.events.WorldEvent;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
@@ -58,7 +59,6 @@ import org.polyfrost.polyui.component.Drawable;
 import org.polyfrost.polyui.renderer.Renderer;
 import org.polyfrost.polyui.renderer.Window;
 
-import java.awt.*;
 import java.util.ServiceLoader;
 import java.util.function.Consumer;
 
@@ -126,9 +126,7 @@ public interface UIManager {
             polyUI.setWindow(createWindow());
             polyUI.resize(Platform.screen().windowWidth(), Platform.screen().windowHeight(), false);
 
-            EventManager.register(HudRenderEvent.class, event -> {
-                OmniRenderingContext ctx = event.ctx;
-
+            Consumer<OmniRenderingContext> renderer = (ctx) -> {
                 OmniColorMask.DEFAULT.submit(false);
                 framebuffer.clearColor(0f, 0f, 0f, 0f); // Clear to transparent black
                 framebuffer.clearDepthStencil(1.0, 0);
@@ -157,6 +155,10 @@ public interface UIManager {
 
                     return Unit.INSTANCE;
                 });
+            };
+
+            EventManager.register(RenderEvent.class, event -> {
+                renderer.accept(event.ctx);
             });
 
             EventManager.register(ResizeEvent.class, event -> {

@@ -26,6 +26,8 @@
 
 package org.polyfrost.oneconfig.api.event.v1.events;
 
+import dev.deftu.omnicore.api.client.render.OmniRenderingContext;
+
 /**
  * Called when a game tick is started / ended.
  */
@@ -36,8 +38,14 @@ public abstract class RenderEvent implements Event {
      */
     public float deltaTicks;
 
+    public OmniRenderingContext ctx;
+
     public float component1() {
         return deltaTicks;
+    }
+
+    public OmniRenderingContext component2() {
+        return ctx;
     }
 
     public static class Pre extends RenderEvent {

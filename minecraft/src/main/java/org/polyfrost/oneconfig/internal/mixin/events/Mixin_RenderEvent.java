@@ -1,6 +1,8 @@
 package org.polyfrost.oneconfig.internal.mixin.events;
 
 import dev.deftu.omnicore.api.client.render.OmniRenderTicks;
+import dev.deftu.omnicore.api.client.render.OmniRenderingContext;
+import dev.deftu.omnicore.api.client.render.stack.OmniMatrixStacks;
 import net.minecraft.client.Minecraft;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.RenderEvent;
@@ -29,6 +31,13 @@ public class Mixin_RenderEvent {
     private void renderTickStartCallback(CallbackInfo ci) {
         RenderEvent e = RenderEvent.Pre.INSTANCE;
         e.deltaTicks = OmniRenderTicks.get();
+        e.ctx = new OmniRenderingContext(
+                //#if MC >= 1.20.1
+                //$$ null,
+                //#endif
+                OmniMatrixStacks.create()
+        );
+
         EventManager.INSTANCE.post(e);
     }
 
@@ -36,6 +45,13 @@ public class Mixin_RenderEvent {
     private void renderTickEndCallback(CallbackInfo ci) {
         RenderEvent e = RenderEvent.Post.INSTANCE;
         e.deltaTicks = OmniRenderTicks.get();
+        e.ctx = new OmniRenderingContext(
+                //#if MC >= 1.20.1
+                //$$ null,
+                //#endif
+                OmniMatrixStacks.create()
+        );
+
         EventManager.INSTANCE.post(e);
     }
 
