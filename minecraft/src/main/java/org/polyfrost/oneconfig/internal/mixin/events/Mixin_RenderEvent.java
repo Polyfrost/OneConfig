@@ -18,10 +18,10 @@ public class Mixin_RenderEvent {
     //@formatter:off
     @Unique
     private static final String UPDATE_CAMERA_AND_RENDER =
-            //#if MC >= 1.16
+            //#if MC >= 1.21.1
+            //$$ "Lnet/minecraft/client/render/GameRenderer;render(Lnet/minecraft/client/render/RenderTickCounter;Z)V";
+            //#elseif MC >= 1.16.5
             //$$ "Lnet/minecraft/client/renderer/GameRenderer;render(FJZ)V";
-            //#elseif MC >= 1.13
-            //$$ "Lnet/minecraft/client/renderer/GameRenderer;updateCameraAndRender(FJZ)V";
             //#else
             "Lnet/minecraft/client/renderer/EntityRenderer;updateCameraAndRender(FJ)V";
             //#endif

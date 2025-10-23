@@ -157,7 +157,7 @@ public interface UIManager {
                 });
             };
 
-            EventManager.register(RenderEvent.class, event -> {
+            EventManager.register(RenderEvent.Post.class, event -> {
                 renderer.accept(event.ctx);
             });
 
