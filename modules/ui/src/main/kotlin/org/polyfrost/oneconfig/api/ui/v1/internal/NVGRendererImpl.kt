@@ -30,6 +30,7 @@ import dev.deftu.omnicore.api.client.render.OmniTextureUnit
 import dev.deftu.omnicore.api.paddedMinecraftVersion
 import dev.deftu.omnicore.internal.client.textures.TextureInternals
 import org.apache.logging.log4j.LogManager
+import org.lwjgl.nanovg.NanoVG
 import org.lwjgl.opengl.GL11
 import org.lwjgl.opengl.GL20
 import org.lwjgl.opengl.GL30
@@ -37,6 +38,7 @@ import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.api.NanoSvgApi
 import org.polyfrost.oneconfig.api.ui.v1.api.NanoVgApi
 import org.polyfrost.oneconfig.api.ui.v1.api.StbApi
+import org.polyfrost.oneconfig.api.ui.v1.image.NVGImageFlags
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.color.PolyColor
 import org.polyfrost.polyui.data.Font
@@ -437,8 +439,10 @@ class NVGRendererImpl(
                     image.loadAsync(errorHandler) {
                         queue.add { loadSvg(image, it.toDirectByteBufferNT()) }
                     }
+
                     return defaultImage
                 }
+
                 map.getOrPut(width.hashCode() * 31 + height.hashCode()) { resizeSvg(svg, width, height) }
             }
 
@@ -447,6 +451,7 @@ class NVGRendererImpl(
                     image.loadAsync(errorHandler) {
                         queue.add { images[image] = loadImage(image, it.toDirectByteBuffer()) }
                     }
+
                     defaultImage
                 }
             }
@@ -478,7 +483,7 @@ class NVGRendererImpl(
         val h = IntArray(1)
         val d = stb.image_load_from_memory(data, w, h, IntArray(1), 4) ?: throw IllegalStateException("Failed to load image ${image.resourcePath}: ${stb.image_failure_reason()}")
         if (!image.size.isPositive) PolyImage.setImageSize(image, Vec2(w[0].toFloat(), h[0].toFloat()))
-        return vg.createImage(w[0].toFloat(), h[0].toFloat(), d, 0)
+        return vg.createImage(w[0].toFloat(), h[0].toFloat(), d, image[NVGImageFlags.KEY] ?: NVGImageFlags.NONE)
     }
 
     private fun loadSvg(image: PolyImage, data: ByteBuffer): Int {
@@ -487,6 +492,7 @@ class NVGRendererImpl(
         if (!image.size.isPositive) PolyImage.setImageSize(image, Vec2(svg.width, svg.height).also {
             if(!it.isPositive) throw IllegalArgumentException("SVG ${image.resourcePath} has invalid size ($it), maybe it is missing/corrupted?")
         })
+
         val o = resizeSvg(svg, svg.width, svg.height)
         map[image.size.hashCode()] = o
         svgs[image] = svg to map

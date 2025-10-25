@@ -209,7 +209,7 @@ object HudManager {
         require(hud.isReal) { "Tried to remove a non-real HUD - use unregister() for this case. You might also be calling this method too early!" }
         polyUI.master.removeChild(hud.getBackground() ?: hud.get(), recalculate = false)
         polyUI.removeExecutor(hud.tree.getMetadata("updateTicker"))
-        
+
         try {
             hud.remove() // allow HUD to clean up resources
         } catch (_: Throwable) {
