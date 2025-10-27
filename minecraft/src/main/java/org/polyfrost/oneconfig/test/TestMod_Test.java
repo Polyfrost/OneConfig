@@ -29,30 +29,13 @@ package org.polyfrost.oneconfig.test;
 import org.polyfrost.oneconfig.api.commands.v1.CommandManager;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.InitializationEvent;
-import org.polyfrost.oneconfig.api.event.v1.invoke.impl.Subscribe;
 
-//#if MC<=11202 && FORGE
-@net.minecraftforge.fml.common.Mod(modid = "oneconfig-test-mod", name = "Test Mod", version = "0")
-//#endif
-public class TestMod_Test
-//#if FABRIC
-//$$ implements net.fabricmc.api.ClientModInitializer
-//#endif
-{
-    public TestMod_Test() {
-        EventManager.INSTANCE.register(this);
-    }
-
-    //#if FABRIC
-    //$$ @Override
-    //$$ public void onInitializeClient()
-    //#else
-    @Subscribe
-    private void init(InitializationEvent e)
-    //#endif
-    {
-        System.err.println("TestMod::init");
-        CommandManager.register(new TestCommand_Test());
-        new TestConfig_Test();
+public final class TestMod_Test {
+    public static void initialize() {
+        EventManager.register(InitializationEvent.class, () -> {
+            System.err.println("TestMod::init");
+            CommandManager.register(new TestCommand_Test());
+            TestConfig_Test.getInstance(); // lazy load
+        });
     }
 }

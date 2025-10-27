@@ -56,6 +56,7 @@ import org.polyfrost.oneconfig.api.ui.v1.UIManager;
 import org.polyfrost.oneconfig.api.ui.v1.internal.BlurHandler;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OCKeybindHelper;
 import org.polyfrost.oneconfig.internal.ui.OneConfigUI;
+import org.polyfrost.oneconfig.test.TestMod_Test;
 import org.polyfrost.polyui.PolyUI;
 import org.polyfrost.polyui.component.Drawable;
 import org.polyfrost.polyui.input.KeyModifiers;
@@ -128,14 +129,13 @@ public class OneConfig
         //$$ RenderDoc.init();
         //#endif
 
-        //#if FABRIC
-        //$$ try {
-        //$$     Class.forName("org.polyfrost.oneconfig.test.TestMod_Test", false, getClass().getClassLoader());
-        //$$     Class<?> test = Class.forName("org.polyfrost.oneconfig.test.TestMod_Test");
-        //$$     org.polyfrost.oneconfig.utils.v1.MHUtils.getMethodHandle(test, "onInitializeClient", void.class).getOrThrow().invoke(test.getConstructor().newInstance());
-        //$$ } catch (Throwable ignored) {
-        //$$ }
-        //#endif
+        if (Boolean.getBoolean("oneconfig.test")) {
+            try {
+                TestMod_Test.initialize();
+            } catch (Throwable ignored) {
+                ignored.printStackTrace();
+            }
+        }
         
         long t1 = System.nanoTime();
         ModInfo self = OmniLoader.findModOrNull("oneconfig");

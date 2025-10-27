@@ -44,6 +44,7 @@ import java.util.function.Consumer;
 
 @SuppressWarnings("unused")
 public class TestConfig_Test extends Config {
+    private static TestConfig_Test INSTANCE;
 
     @Switch(
             title = "Chicken",
@@ -110,6 +111,14 @@ public class TestConfig_Test extends Config {
     @Button(title = "Test")
     private void button() {
         OmniClientChat.displayChatMessage("button pressed");
+    }
+
+    public static TestConfig_Test getInstance() {
+        if (INSTANCE == null) {
+            INSTANCE = new TestConfig_Test();
+        }
+
+        return INSTANCE;
     }
 
     @Accordion(title = "an accordion", description = "AAAAAAAAAAAAAAAAAAAAAAAAAAH", index = 4)

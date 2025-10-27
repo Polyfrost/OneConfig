@@ -31,7 +31,7 @@ import dev.deftu.omnicore.api.client.chat.OmniClientChat;
 import org.polyfrost.oneconfig.api.commands.v1.factories.annotated.Command;
 import org.polyfrost.oneconfig.api.commands.v1.factories.annotated.Handler;
 
-@Command(value = {"test", "t"})
+@Command(value = {"testmod", "tmod"})
 public class TestCommand_Test {
 
     @Handler
