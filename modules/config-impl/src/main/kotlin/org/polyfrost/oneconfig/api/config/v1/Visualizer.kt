@@ -250,6 +250,12 @@ fun interface Visualizer {
             val stepAmount = prop.getMetadata<Float>("step") ?: 0f
             val nsteps = if (stepAmount > 0f) ((max - min) / stepAmount).roundToInt() else 0
             var dodge = false
+            val value = prop.getAs<Number>().toFloat()
+            if (value.isNaN() || value.isInfinite()) {
+                println("Warning: Slider property ${prop.id} has invalid value $value, resetting to $min")
+            }
+
+            val initialValue = value.coerceIn(min, max)
             // todo stepped
             val s =
                 Slider(
@@ -257,7 +263,7 @@ fun interface Visualizer {
                     max = max,
                     length = 200f,
                     steps = nsteps,
-                    initialValue = prop.getAs<Number>().toFloat().coerceAtLeast(min),
+                    initialValue = initialValue,
                     integral = prop.type == Int::class.java || prop.type == Long::class.java,
                 ).onChange { amount: Float ->
                     dodge = true
