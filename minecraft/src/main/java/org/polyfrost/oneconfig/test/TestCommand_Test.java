@@ -30,6 +30,7 @@ import com.mojang.authlib.GameProfile;
 import dev.deftu.omnicore.api.client.chat.OmniClientChat;
 import org.polyfrost.oneconfig.api.commands.v1.factories.annotated.Command;
 import org.polyfrost.oneconfig.api.commands.v1.factories.annotated.Handler;
+import org.polyfrost.oneconfig.utils.v1.dsl.ScreensKt;
 
 @Command(value = {"testmod", "tmod"})
 public class TestCommand_Test {
@@ -45,6 +46,16 @@ public class TestCommand_Test {
             builder.append(thing).append(' ');
         }
         OmniClientChat.displayChatMessage(builder.toString().trim());
+    }
+
+    @Handler
+    private void configDefault() {
+        ScreensKt.openUI(TestConfig_Test.getInstance());
+    }
+
+    @Handler
+    private void configOverride(String category) {
+        ScreensKt.openUI(TestConfig_Test.getInstance(), category);
     }
 
     @Handler

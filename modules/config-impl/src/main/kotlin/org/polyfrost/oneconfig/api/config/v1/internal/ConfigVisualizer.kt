@@ -51,7 +51,7 @@ import kotlin.math.PI
 
 open class ConfigVisualizer {
     private val LOGGER = LogManager.getLogger("OneConfig/Config")
-    protected val configs = HashMap<Tree, Drawable>()
+    protected val configs = HashMap<Pair<String, Tree>, Drawable>()
     protected val optBg = rgba(39, 49, 55, 0.2f)
     protected val alignCStart = Align(line = Align.Line.Start, mode = Align.Mode.Vertical, wrap = Align.Wrap.NEVER, padBetween = Vec2(6f, 10f))
     protected val alignCStartNoPad = Align(line = Align.Line.Start, mode = Align.Mode.Vertical, wrap = Align.Wrap.NEVER, pad = Vec2.ZERO)
@@ -64,19 +64,31 @@ open class ConfigVisualizer {
     /**
      * For information, see [create].
      */
-    fun get(config: Tree): Drawable {
-        if (config.getMetadata<Boolean?>("no_cache") == true) return create(config)
-        val it = configs[config]
+    @JvmOverloads
+    fun get(
+        config: Tree,
+        initialCategory: String = DEFAULT_CATEGORY,
+    ): Drawable {
+        if (config.getMetadata<Boolean?>("no_cache") == true) {
+            return create(config, initialCategory)
+        }
+
+        val it = configs[initialCategory to config]
         if (it != null) {
             // asm: might've been searched, so we need to reposition our option lists
-            val listToReposition = it.children?.last()
-            listToReposition?.children?.fastEach {
-                it.position()
+            try {
+                val listToReposition = it.children?.last()
+                listToReposition?.children?.fastEach {
+                    it.position()
+                }
+            } catch (e: Exception) {
+                LOGGER.error("Failed to reposition config screen for config ${config.id}", e)
             }
+
             return it
         } else {
-            val configPage = create(config)
-            configs[config] = configPage
+            val configPage = create(config, initialCategory)
+            configs[initialCategory to config] = configPage
             return configPage
         }
     }
@@ -94,9 +106,10 @@ open class ConfigVisualizer {
         val it = str.trim()
         if (it.length < 2) return EMPTY
         val out = ArrayList<Drawable>()
-        for (config in configs.keys) {
+        for ((_, config) in configs.keys) {
             getMatching(it, config, out)
         }
+
         return out
     }
 
@@ -132,13 +145,13 @@ open class ConfigVisualizer {
      *
      * This method uses the following metadata:
      * - `"icon"`: optional. specifies the icon shown only on full-size options. ignored on accordion properties. must be either a valid [PolyImage] or a `String path` to an image. **Fails** if this is invalid.
-     * - `"category"`: optional. specifies the category of the option. defaults to "General".
-     * - `"subcategory"`: optional. specifies the subcategory of option. defaults to "General".
+     * - `"category"`: optional. specifies the category of the option. defaults to [DEFAULT_CATEGORY].
+     * - `"subcategory"`: optional. specifies the subcategory of option. defaults to [DEFAULT_CATEGORY].
      * - `"visualizer"`: required for `Property`. specifies the method to convert a Property to a PolyUI component. must be a class that implements [Visualizer]. **Fails** if this is invalid.
      */
     protected open fun create(
         config: Tree,
-        initialCategory: String = "General",
+        initialCategory: String = DEFAULT_CATEGORY,
     ): Drawable {
         val now = System.nanoTime()
         val options = LinkedHashMap<String, HashMap<String, ArrayList<Drawable>>>(4)
@@ -169,6 +182,7 @@ open class ConfigVisualizer {
     }
 
     protected open fun makeFinal(categories: Map<String, Drawable>, initialCategory: String): Drawable {
+        println("Categories: ${categories.keys.joinToString(", ")}")
         return Group(
             createHeaders(categories),
             categories[initialCategory] ?: categories.values.first(),
@@ -202,8 +216,8 @@ open class ConfigVisualizer {
                     "Property ${node.id} has invalid icon type ${it::class.java.name} (provided by ${node.id}) - must be a PolyImage or String path",
                 )
             }
-        val category = node.getMetadata<String>("category")?.strv() ?: "General"
-        val subcategory = node.getMetadata<String>("subcategory")?.strv() ?: "General"
+        val category = node.getMetadata<String>("category")?.strv() ?: DEFAULT_CATEGORY
+        val subcategory = node.getMetadata<String>("subcategory")?.strv() ?: DEFAULT_SUBCATEGORY
 
         val list = options.getOrPut(category) { LinkedHashMap(4) }.getOrPut(subcategory) { ArrayList(8) }
         if (node is Property<*>) {
@@ -403,6 +417,9 @@ open class ConfigVisualizer {
     }
 
     companion object {
+        const val DEFAULT_CATEGORY = "General"
+        const val DEFAULT_SUBCATEGORY = "General"
+
         @JvmField
         val INSTANCE = ConfigVisualizer()
         protected val visCache = HashMap<Class<*>, Visualizer>()

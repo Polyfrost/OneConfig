@@ -42,11 +42,19 @@ fun GuiScreen.openScreen(ticks: Int = 1) = Platform.screen().display(this, ticks
 
 fun Tree.createScreen() = OneConfigUI.create(ConfigVisualizer.INSTANCE.get(this))
 
+fun Tree.createScreen(initialCategory: String) = OneConfigUI.create(ConfigVisualizer.INSTANCE.get(this, initialCategory))
+
 fun Tree.openUI() = Platform.screen().display(createScreen())
+
+fun Tree.openUI(initialCategory: String) = Platform.screen().display(createScreen(initialCategory))
 
 fun Config.createScreen() = this.tree.createScreen()
 
+fun Config.createScreen(initialCategory: String) = this.tree.createScreen(initialCategory)
+
 fun Config.openUI() = this.tree.openUI()
+
+fun Config.openUI(initialCategory: String) = this.tree.openUI(initialCategory)
 
 fun Config.addDefaultCommand(command: String = this.title.lowercase()): LiteralArgumentBuilder<OmniClientCommandSource> {
     return OmniClientCommands.literal(command).executes { ctx ->
