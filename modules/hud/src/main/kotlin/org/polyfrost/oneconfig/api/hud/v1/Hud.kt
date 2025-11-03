@@ -313,6 +313,10 @@ abstract class Hud<T : Drawable>(id: String, title: String, val category: Catego
     }
 
     protected fun updateAndRecalculate() {
+        if (it == null) {
+            LOGGER.warn("attempted to updateAndRecalculate on {} but it doesn't exist yet (method called to early, or have you checked isReal?) - it will be ignored. if you need this to run, call get() first.", id)
+            return
+        }
         if (update()) getBackground()?.recalculate(false)
     }
 

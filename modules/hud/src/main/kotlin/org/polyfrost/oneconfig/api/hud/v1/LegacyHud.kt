@@ -53,6 +53,10 @@ abstract class LegacyHud(id: String, title: String, category: Category) : Hud<Dr
     abstract var width: Float
     abstract var height: Float
 
+    init {
+        get()
+    }
+
     /**
      * Support for complex hybrid legacy HUDs with PolyUI children is currently experimental. Please report any issues you find.
      */
