@@ -44,6 +44,8 @@ import java.lang.reflect.Method;
  */
 public class KotlinLanguageAdapter implements ILanguageAdapter {
 
+    public static final String ADAPTER = "org.polyfrost.oneconfig.utils.v1.forge.KotlinLanguageAdapter";
+
     private static Object getObjectInstance(Class<?> objectClass) {
         try {
             Object instance = kotlin.jvm.JvmClassMappingKt.getKotlinClass(objectClass).getObjectInstance();
