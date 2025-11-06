@@ -1,6 +1,6 @@
 package org.polyfrost.oneconfig.api.hypixel.v1.internal;
 
-import dev.deftu.omnicore.api.OmniIdentifier;
+import dev.deftu.omnicore.api.OmniResourceLocation;
 import dev.deftu.omnicore.api.network.PacketPayload;
 import dev.deftu.omnicore.api.network.codec.StreamCodec;
 import net.hypixel.modapi.packet.HypixelPacket;
@@ -14,7 +14,7 @@ public class ServerboundHypixelPayload implements PacketPayload {
     private final HypixelPacket packet;
 
     public ServerboundHypixelPayload(HypixelPacket packet) {
-        this.id = OmniIdentifier.createOrThrow(packet.getIdentifier());
+        this.id = OmniResourceLocation.createOrThrow(packet.getIdentifier());
         this.packet = packet;
     }
 

@@ -14,7 +14,7 @@ public class Mixin_KeyInputEvent {
     //#if MC <= 1.8.9
     @Inject(method = "runTick", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/settings/KeyBinding;setKeyBindState(IZ)V", ordinal = 1))
     //#else
-    //$$ @Inject(method = "tickKeyboard", at = @At(value = "FIELD", target = "Lnet/minecraft/client/MinecraftClient;f3CTime:J", opcode = org.objectweb.asm.Opcodes.PUTFIELD))
+    //$$ @Inject(method = "runTickKeyboard", at = @At(value = "FIELD", target = "Lnet/minecraft/client/Minecraft;debugCrashKeyPressTime:J", opcode = org.objectweb.asm.Opcodes.PUTFIELD))
     //#endif
     private void keyCallback(CallbackInfo ci) {
         int state = 0;

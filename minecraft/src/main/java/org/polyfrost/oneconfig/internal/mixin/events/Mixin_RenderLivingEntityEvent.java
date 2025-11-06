@@ -12,8 +12,8 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 //#if MC >= 1.21.9
-//$$ import net.minecraft.client.render.command.OrderedRenderCommandQueue;
-//$$ import net.minecraft.client.render.state.CameraRenderState;
+//$$ import net.minecraft.client.renderer.SubmitNodeCollector;
+//$$ import net.minecraft.client.renderer.state.CameraRenderState;
 //#endif
 
 //#if MC >= 1.21.2
@@ -33,10 +33,11 @@ public class Mixin_RenderLivingEntityEvent<
         //$$ , S extends LivingEntityRenderState
         //#endif
 > {
-
     @Inject(
-            //#if MC >= 1.21.2
-            //$$ method = "render(Lnet/minecraft/client/render/entity/state/LivingEntityRenderState;Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;I)V",
+            //#if MC >= 1.21.9
+            //$$ method = "submit(Lnet/minecraft/client/renderer/entity/state/LivingEntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/CameraRenderState;)V",
+            //#elseif MC >= 1.21.2
+            //$$ method = "render(Lnet/minecraft/client/renderer/entity/state/LivingEntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V",
             //#elseif MC >= 1.16.5
             //$$ method = "render(Lnet/minecraft/world/entity/LivingEntity;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V",
             //#else
@@ -61,8 +62,8 @@ public class Mixin_RenderLivingEntityEvent<
             float partialTicks,
             //#endif
             //#if MC >= 1.21.9
-            //$$ MatrixStack matrixStack,
-            //$$ OrderedRenderCommandQueue renderQueue,
+            //$$ PoseStack matrixStack,
+            //$$ SubmitNodeCollector renderQueue,
             //$$ CameraRenderState cameraState,
             //#elseif MC >= 1.16.5
             //$$ PoseStack matrixStack,
@@ -92,9 +93,9 @@ public class Mixin_RenderLivingEntityEvent<
 
     @Inject(
             //#if MC >= 1.21.9
-            //$$ method = "render(Lnet/minecraft/client/render/entity/state/LivingEntityRenderState;Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/command/OrderedRenderCommandQueue;Lnet/minecraft/client/render/state/CameraRenderState;)V",
+            //$$ method = "submit(Lnet/minecraft/client/renderer/entity/state/LivingEntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/CameraRenderState;)V",
             //#elseif MC >= 1.21.2
-            //$$ method = "render(Lnet/minecraft/client/render/entity/state/LivingEntityRenderState;Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;I)V",
+            //$$ method = "render(Lnet/minecraft/client/renderer/entity/state/LivingEntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V",
             //#elseif MC >= 1.16.5
             //$$ method = "render(Lnet/minecraft/world/entity/LivingEntity;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V",
             //#else
@@ -118,8 +119,8 @@ public class Mixin_RenderLivingEntityEvent<
             float partialTicks,
             //#endif
             //#if MC >= 1.21.9
-            //$$ MatrixStack matrixStack,
-            //$$ OrderedRenderCommandQueue renderQueue,
+            //$$ PoseStack matrixStack,
+            //$$ SubmitNodeCollector renderQueue,
             //$$ CameraRenderState cameraState,
             //#elseif MC >= 1.16.5
             //$$ PoseStack matrixStack,
@@ -144,5 +145,4 @@ public class Mixin_RenderLivingEntityEvent<
             // Can't cancel when the method has already returned lol
         });
     }
-
 }

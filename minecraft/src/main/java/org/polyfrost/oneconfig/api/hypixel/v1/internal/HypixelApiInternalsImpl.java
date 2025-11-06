@@ -26,7 +26,7 @@
 
 package org.polyfrost.oneconfig.api.hypixel.v1.internal;
 
-import dev.deftu.omnicore.api.OmniIdentifier;
+import dev.deftu.omnicore.api.OmniResourceLocation;
 import dev.deftu.omnicore.api.client.network.OmniClientNetworking;
 import dev.deftu.omnicore.api.loader.OmniLoader;
 import dev.deftu.omnicore.api.network.codec.StreamCodec;
@@ -60,7 +60,7 @@ public final class HypixelApiInternalsImpl implements HypixelApiInternals {
         LOGGER.info("Registering Hypixel API packet handlers");
         PacketRegistry registry = HypixelModAPI.getInstance().getRegistry();
         for (String string : registry.getClientboundIdentifiers()) {
-            ResourceLocation identifier = OmniIdentifier.createOrNull(string);
+            ResourceLocation identifier = OmniResourceLocation.createOrNull(string);
             if (identifier == null) {
                 LOGGER.warn("Skipping registration of malformed Hypixel API packet identifier: {}", string);
                 continue;

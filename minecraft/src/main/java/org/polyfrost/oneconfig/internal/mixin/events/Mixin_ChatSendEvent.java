@@ -38,16 +38,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(EntityPlayerSP.class)
 public abstract class Mixin_ChatSendEvent {
-
-    @Unique
-    private ChatEvent.Send ocfg$chatEvent;
+    @Unique private ChatEvent.Send ocfg$chatEvent;
 
     @Inject(
             //#if MC >= 1.21.2
-            //$$ method = "sendMessage",
-            //#elseif FABRIC && MC >= 1.19.2
-            //$$ method = "sendMessage(Lnet/minecraft/text/Text;)V",
-            //#elseif FORGE && MC >= 1.19.2
+            //$$ method = "displayClientMessage",
+            //#elseif MC >= 1.19.2
             //$$ method = "sendSystemMessage",
             //#else
             method = "sendChatMessage",
@@ -59,11 +55,7 @@ public abstract class Mixin_ChatSendEvent {
             //#if MC < 1.19
             String message,
             //#else
-            //#if FABRIC
-            //$$ net.minecraft.text.Text text,
-            //#else
             //$$ net.minecraft.network.chat.Component text,
-            //#endif
             //#endif
             //#if MC >= 1.21.2
             //$$ boolean toHud,
@@ -94,10 +86,8 @@ public abstract class Mixin_ChatSendEvent {
 
     @ModifyVariable(
             //#if MC >= 1.21.2
-            //$$ method = "sendMessage",
-            //#elseif FABRIC && MC >= 1.19.2
-            //$$ method = "sendMessage(Lnet/minecraft/text/Text;)V",
-            //#elseif FORGE && MC >= 1.19.2
+            //$$ method = "displayClientMessage",
+            //#elseif MC >= 1.19.2
             //$$ method = "sendSystemMessage",
             //#else
             method = "sendChatMessage",
@@ -109,5 +99,4 @@ public abstract class Mixin_ChatSendEvent {
     public String modifyMessage(String message) {
         return ocfg$chatEvent.message;
     }
-
 }

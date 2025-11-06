@@ -27,20 +27,13 @@
 //#if FABRIC
 package org.polyfrost.oneconfig.internal.mixin.fabric;
 
-import net.minecraft.client.render.GameRenderer;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.renderer.EntityRenderer;
+import net.minecraft.util.ResourceLocation;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Invoker;
 
-@Mixin(GameRenderer.class)
+@Mixin(EntityRenderer.class)
 public interface Mixin_LoadShaderInvoker_Fabric {
-    //#if MC >= 1.21.4
-    //$$ @Invoker("setPostProcessor")
-    //#elseif MC > 1.19.2
-    //$$ @Invoker("loadPostProcessor")
-    //#else
-    @Invoker
-    //#endif
-    void invokeLoadShader(Identifier identifier);
+    @Invoker void invokeLoadShader(ResourceLocation location);
 }
 //#endif

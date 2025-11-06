@@ -165,15 +165,17 @@ public final class org/polyfrost/oneconfig/api/event/v1/events/PlayerInteractEve
 }
 
 public class org/polyfrost/oneconfig/api/event/v1/events/PostWorldRenderEvent : org/polyfrost/oneconfig/api/event/v1/events/Event {
-	public fun <init> (Ldev/deftu/omnicore/api/client/render/stack/OmniMatrixStack;F)V
+	public fun <init> (Ldev/deftu/omnicore/api/client/render/stack/OmniPoseStack;F)V
 	public fun getPartialTicks ()F
-	public fun getStack ()Ldev/deftu/omnicore/api/client/render/stack/OmniMatrixStack;
+	public fun getStack ()Ldev/deftu/omnicore/api/client/render/stack/OmniPoseStack;
 }
 
 public abstract class org/polyfrost/oneconfig/api/event/v1/events/RenderEvent : org/polyfrost/oneconfig/api/event/v1/events/Event {
+	public field ctx Ldev/deftu/omnicore/api/client/render/OmniRenderingContext;
 	public field deltaTicks F
 	public fun <init> ()V
 	public fun component1 ()F
+	public fun component2 ()Ldev/deftu/omnicore/api/client/render/OmniRenderingContext;
 }
 
 public class org/polyfrost/oneconfig/api/event/v1/events/RenderEvent$Post : org/polyfrost/oneconfig/api/event/v1/events/RenderEvent {

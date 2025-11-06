@@ -35,7 +35,7 @@ import org.polyfrost.lwjgl.isolatedloader.Lwjgl3Manager;
 import org.polyfrost.lwjgl.isolatedloader.classloader.IsolatedClassLoader;
 //#endif
 
-import dev.deftu.omnicore.api.OmniIdentifier;
+import dev.deftu.omnicore.api.OmniResourceLocation;
 import dev.deftu.omnicore.api.client.render.DefaultVertexFormats;
 import dev.deftu.omnicore.api.client.render.DrawMode;
 import dev.deftu.omnicore.api.client.render.GlCapabilities;
@@ -162,7 +162,7 @@ public class UIManagerImpl implements UIManager {
     public OmniRenderPipeline getRenderPipeline() {
         if (pipeline == null) {
             this.pipeline = OmniRenderPipelines.builderWithDefaultShader(
-                    OmniIdentifier.createOrThrow("oneconfig", "uimanager"),
+                    OmniResourceLocation.createOrThrow("oneconfig", "uimanager"),
                     DefaultVertexFormats.POSITION_TEXTURE_COLOR,
                     DrawMode.QUADS
             ).setBlendState(OmniBlendState.ALPHA).build();

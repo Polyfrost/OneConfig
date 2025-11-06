@@ -1,68 +1,61 @@
 package org.polyfrost.oneconfig.internal.mixin.events;
 
-//#if FORGE && MC <= 1.12.2
-import net.minecraftforge.client.GuiIngameForge;
-//#else
-//#if FORGE-LIKE
-//$$ import net.minecraft.client.gui.Gui;
-//#else
-//$$ import net.minecraft.client.gui.hud.InGameHud;
-//#endif
-//$$
-//#if MC >= 1.20
-//#if FORGE-LIKE
-//$$ import net.minecraft.client.gui.GuiGraphics;
-//#else
-//$$ import net.minecraft.client.gui.DrawContext;
-//#endif
-//#elseif MC >= 1.13
-//$$ import com.mojang.blaze3d.vertex.PoseStack;
-//#endif
+//#if MC >= 1.21.1
+//$$ import net.minecraft.client.DeltaTracker;
 //#endif
 
-//#if MC >= 1.21.1
-//$$ import net.minecraft.client.render.RenderTickCounter;
+//#if MC >= 1.20.1
+//$$ import net.minecraft.client.gui.GuiGraphics;
+//#elseif MC >= 1.16.5
+//$$ import com.mojang.blaze3d.vertex.PoseStack;
+//#endif
+
+//#if MC >= 1.16.5
+//$$ import net.minecraft.client.gui.Gui;
+//#else
+//#if FORGE
+import net.minecraftforge.client.GuiIngameForge;
+//#else
+//$$ import net.minecraft.client.gui.GuiIngame;
+//#endif
 //#endif
 
 import dev.deftu.omnicore.api.client.render.OmniRenderTicks;
 import dev.deftu.omnicore.api.client.render.OmniRenderingContext;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.HudRenderEvent;
-import org.polyfrost.oneconfig.api.platform.v1.Platform;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-//#if FORGE && MC <= 1.12.2
-@Mixin(GuiIngameForge.class)
-//#elseif FORGE-LIKE
+//#if MC >= 1.16.5
 //$$ @Mixin(Gui.class)
 //#else
-//$$ @Mixin(InGameHud.class)
+//#if FORGE
+@Mixin(GuiIngameForge.class)
+//#else
+//$$ @Mixin(GuiIngame.class)
+//#endif
 //#endif
 public class Mixin_HudRenderEvent {
 
     @Inject(
-            //#if FORGE && MC <= 1.12.2
-            method = "renderGameOverlay",
-            //#else
+            //#if MC >= 1.16.5
             //$$ method = "render",
+            //#else
+            method = "renderGameOverlay",
             //#endif
             at = @At("TAIL")
     )
     private void renderHudCallback(
-            //#if MC >= 1.20
-            //#if FORGE-LIKE
+            //#if MC >= 1.20.1
             //$$ GuiGraphics ctx,
-            //#else
-            //$$ DrawContext ctx,
-            //#endif
-            //#elseif MC >= 1.13
+            //#elseif MC >= 1.16.5
             //$$ PoseStack ctx,
             //#endif
             //#if MC >= 1.21.1
-            //$$ RenderTickCounter renderTickCounter,
+            //$$ DeltaTracker deltaTracker,
             //#else
             float passedPartialTicks,
             //#endif

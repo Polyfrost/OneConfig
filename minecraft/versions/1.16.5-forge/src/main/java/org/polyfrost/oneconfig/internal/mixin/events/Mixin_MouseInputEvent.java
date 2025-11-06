@@ -37,7 +37,7 @@ public class Mixin_MouseInputEvent {
         EventManager.INSTANCE.post(new MouseInputEvent(button, action));
     }
     //#else
-    //$$ @ModifyVariable(method = "onMouseButton", at = @At("STORE"), ordinal = 0)
+    //$$ @ModifyVariable(method = "onPress", at = @At("STORE"), ordinal = 0)
     //$$ private int mouseCallback(int button, long handle, int b, int action, int mods) {
     //$$     EventManager.INSTANCE.post(new MouseInputEvent(button, action));
     //$$     return button;

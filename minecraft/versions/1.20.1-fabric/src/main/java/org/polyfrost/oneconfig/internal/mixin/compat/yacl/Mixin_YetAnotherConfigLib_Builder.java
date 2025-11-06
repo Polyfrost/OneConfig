@@ -1,4 +1,5 @@
 package org.polyfrost.oneconfig.internal.mixin.compat.yacl;
+
 //#if MC != 1.20.4 || FABRIC
 import dev.isxander.yacl3.api.ConfigCategory;
 import dev.isxander.yacl3.api.YetAnotherConfigLib;
@@ -17,23 +18,13 @@ import java.util.List;
 @Pseudo
 @Mixin(value = YetAnotherConfigLibImpl.BuilderImpl.class, remap = false)
 public class Mixin_YetAnotherConfigLib_Builder {
-
-    @Shadow private
-    //#if FABRIC
-    net.minecraft.text.Text
-    //#else
-    //$$ net.minecraft.network.chat.Component
-    //#endif
-    title;
-
+    @Shadow private net.minecraft.network.chat.Component title;
     @Shadow @Final private List<ConfigCategory> categories;
-
     @Shadow private Runnable saveFunction;
 
     @Inject(method = "build", at = @At("TAIL"))
     public void build(CallbackInfoReturnable<YetAnotherConfigLib> cir) {
         YaclV1Compat.build(title, categories, saveFunction);
     }
-
 }
 //#endif

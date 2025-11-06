@@ -60,7 +60,7 @@ public class GLPlatformImpl implements GLPlatform {
         OmniRenderStates.syncColorMask();
 
         //#if MC >= 1.17.1 && MC < 1.21.5
-        //$$ net.minecraft.client.render.BufferRenderer.reset();
+        //$$ com.mojang.blaze3d.vertex.BufferUploader.reset();
         //#endif
     }
 }

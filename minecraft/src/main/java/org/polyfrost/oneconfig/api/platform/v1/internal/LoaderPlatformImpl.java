@@ -42,8 +42,10 @@ import net.minecraft.launchwrapper.Launch;
 //#endif
 
 public class LoaderPlatformImpl implements LoaderPlatform {
-
     @Override
+    //#if FABRIC
+    //$$ @SuppressWarnings("deprecation")
+    //#endif
     public void addToClasspath(@NotNull Path path) {
         //#if FORGE-LIKE
         //#if MC > 1.12.2

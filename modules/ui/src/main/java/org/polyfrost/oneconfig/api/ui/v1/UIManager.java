@@ -131,7 +131,7 @@ public interface UIManager {
                 framebuffer.clearColor(0f, 0f, 0f, 0f); // Clear to transparent black
                 framebuffer.clearDepthStencil(1.0, 0);
                 framebuffer.usingToRender((matrixStack, w, h) -> {
-                    ctx.getMatrices().runReplacingGlobalState(() -> {
+                    ctx.getPose().runReplacingGlobalState(() -> {
                         polyUI.render();
                         Platform.screen().renderLegacyHuds(ctx);
                     });
@@ -147,7 +147,7 @@ public interface UIManager {
                 ImmediateScreenRenderer.render(ctx, () -> {
                     framebuffer.drawColorTexture(
                             getRenderPipeline(),
-                            ctx.getMatrices(),
+                            ctx.getPose(),
                             0, 0,
                             scaledWidth, scaledHeight,
                             OmniColors.WHITE

@@ -28,7 +28,7 @@ public class ComponentHelper {
 
         //#if MC >= 1.19.2
         //$$ StringBuilder textBuilder = new StringBuilder();
-        //$$ component.getContent().visit((content) -> {
+        //$$ component.getContents().visit((content) -> {
         //$$     textBuilder.append(content);
         //$$     return java.util.Optional.empty();
         //$$ });

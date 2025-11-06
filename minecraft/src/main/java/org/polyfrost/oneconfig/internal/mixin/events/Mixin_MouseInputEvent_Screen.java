@@ -13,8 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(GuiScreen.class)
 public class Mixin_MouseInputEvent_Screen {
-    @Unique
-    private int ocfg$mouseX, ocfg$mouseY;
+    @Unique private int ocfg$mouseX, ocfg$mouseY;
 
     @Inject(
             method = "handleInput",
@@ -23,7 +22,7 @@ public class Mixin_MouseInputEvent_Screen {
                     //#if FORGE
                     target = "Lnet/minecraftforge/fml/common/eventhandler/EventBus;post(Lnet/minecraftforge/fml/common/eventhandler/Event;)Z", ordinal = 0, remap = false
                     //#else
-                    //$$ target = "Lnet/minecraft/client/gui/screen/Screen;handleMouse()V"
+                    //$$ target = "Lnet/minecraft/client/gui/GuiScreen;handleMouseInput()V"
                     //#endif
             )
     )
@@ -39,6 +38,5 @@ public class Mixin_MouseInputEvent_Screen {
         ocfg$mouseX = mouseX;
         ocfg$mouseY = mouseY;
     }
-
 }
 //#endif

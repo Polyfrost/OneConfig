@@ -26,7 +26,7 @@
 
 package org.polyfrost.oneconfig.api.ui.v1.internal;
 
-import dev.deftu.omnicore.api.OmniIdentifier;
+import dev.deftu.omnicore.api.OmniResourceLocation;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.shader.Shader;
 import net.minecraft.client.shader.ShaderGroup;
@@ -48,6 +48,10 @@ import java.util.List;
 //$$ import net.minecraft.client.renderer.LevelTargetBundle;
 //#endif
 
+//#if FABRIC && MC < 1.21.2
+//$$ import org.polyfrost.oneconfig.internal.mixin.fabric.Mixin_LoadShaderInvoker_Fabric;
+//#endif
+
 /**
  * An adapted and optimized implementation of the BlurMC mod by tterrag1098, later modified by boomboompower.
  * <p>
@@ -61,7 +65,7 @@ import java.util.List;
 public final class BlurHandler {
     public static final BlurHandler INSTANCE = new BlurHandler();
     private static final Logger LOGGER = LogManager.getLogger("OneConfig/Blur");
-    private final ResourceLocation blurShader = OmniIdentifier.createOrThrow("shaders/post/fade_in_blur.json");
+    private final ResourceLocation blurShader = OmniResourceLocation.createOrThrow("shaders/post/fade_in_blur.json");
     private final Animation animation = Animation.Type.Default.create(2_000_000_000, 0f, 5f);
     private ShaderUniform su;
 
@@ -111,7 +115,12 @@ public final class BlurHandler {
                 //#endif
 
                 //#if FABRIC
-                //$$ ((org.polyfrost.oneconfig.internal.mixin.fabric.Mixin_LoadShaderInvoker_Fabric) MinecraftClient.getInstance().gameRenderer).invokeLoadShader(this.blurShader);
+                //#if MC >= 1.16.5
+                //$$ Mixin_LoadShaderInvoker_Fabric accessor = (Mixin_LoadShaderInvoker_Fabric) Minecraft.getInstance().gameRenderer;
+                //#else
+                //$$ Mixin_LoadShaderInvoker_Fabric accessor = (Mixin_LoadShaderInvoker_Fabric) Minecraft.getMinecraft().entityRenderer;
+                //#endif
+                //$$ accessor.invokeLoadShader(this.blurShader);
                 //#else
                 //#if MC >= 1.21.2
                 //$$ Minecraft.getInstance().gameRenderer.setPostEffect(this.blurShader);

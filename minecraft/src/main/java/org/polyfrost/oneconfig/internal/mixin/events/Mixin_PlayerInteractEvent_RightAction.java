@@ -13,7 +13,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(Minecraft.class)
 public class Mixin_PlayerInteractEvent_RightAction {
-
     @Shadow public MovingObjectPosition objectMouseOver;
     @Shadow public EntityPlayerSP thePlayer;
 
@@ -23,7 +22,7 @@ public class Mixin_PlayerInteractEvent_RightAction {
                     value = "INVOKE",
                     //#if MC >= 1.16.5
                     //#if FABRIC
-                    //$$ target = "Lnet/minecraft/client/network/ClientPlayerEntity;getStackInHand(Lnet/minecraft/util/Hand;)Lnet/minecraft/item/ItemStack;"
+                    //$$ target = "Lnet/minecraft/client/player/LocalPlayer;getItemInHand(Lnet/minecraft/world/InteractionHand;)Lnet/minecraft/world/item/ItemStack;"
                     //#else
                     //#if MC >= 1.19.4
                     //$$ target = "Lnet/minecraftforge/client/ForgeHooksClient;onClickInput(ILnet/minecraft/client/KeyMapping;Lnet/minecraft/world/InteractionHand;)Lnet/minecraftforge/client/event/InputEvent$InteractionKeyMappingTriggered;",
@@ -37,11 +36,7 @@ public class Mixin_PlayerInteractEvent_RightAction {
                     //$$ remap = false
                     //#endif
                     //#elseif MC >= 1.12.2
-                    //#if FORGE
                     //$$ target = "Lnet/minecraft/client/entity/EntityPlayerSP;getHeldItem(Lnet/minecraft/util/EnumHand;)Lnet/minecraft/item/ItemStack;"
-                    //#else
-                    //$$ target = "Lnet/minecraft/entity/player/ClientPlayerEntity;getStackInHand(Lnet/minecraft/util/Hand;)Lnet/minecraft/item/ItemStack;"
-                    //#endif
                     //#else
                     target = "Lnet/minecraft/entity/player/InventoryPlayer;getCurrentItem()Lnet/minecraft/item/ItemStack;"
                     //#endif
@@ -74,5 +69,4 @@ public class Mixin_PlayerInteractEvent_RightAction {
             ci.cancel();
         }
     }
-
 }

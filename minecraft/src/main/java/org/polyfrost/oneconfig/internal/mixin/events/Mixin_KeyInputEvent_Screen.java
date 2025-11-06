@@ -12,7 +12,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(GuiScreen.class)
 public class Mixin_KeyInputEvent_Screen {
-
     @Inject(
             method = "handleInput",
             at = @At(
@@ -20,7 +19,7 @@ public class Mixin_KeyInputEvent_Screen {
                     //#if FORGE
                     target = "Lnet/minecraftforge/fml/common/eventhandler/EventBus;post(Lnet/minecraftforge/fml/common/eventhandler/Event;)Z", ordinal = 2, remap = false
                     //#else
-                    //$$ target = "Lnet/minecraft/client/gui/screen/Screen;handleKeyboard()V"
+                    //$$ target = "Lnet/minecraft/client/gui/GuiScreen;handleKeyboardInput()V"
                     //#endif
             )
     )
@@ -35,6 +34,5 @@ public class Mixin_KeyInputEvent_Screen {
         }
         EventManager.INSTANCE.post(new KeyInputEvent(Keyboard.getEventKey(), Keyboard.getEventCharacter(), state));
     }
-
 }
 //#endif

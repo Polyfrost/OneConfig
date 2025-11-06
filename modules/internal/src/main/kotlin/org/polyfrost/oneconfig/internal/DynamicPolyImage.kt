@@ -8,9 +8,7 @@ class DynamicPolyImage @JvmOverloads constructor(
     private val stream: InputStream,
     type: Type = getTypeFromFilename(resourcePath),
 ) : PolyImage(resourcePath, type) {
-
     override fun stream(): InputStream {
         return stream
     }
-
 }

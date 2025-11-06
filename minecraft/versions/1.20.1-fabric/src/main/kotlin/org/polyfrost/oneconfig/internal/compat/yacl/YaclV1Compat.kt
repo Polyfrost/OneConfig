@@ -2,7 +2,7 @@ package org.polyfrost.oneconfig.internal.compat.yacl
 
 import dev.deftu.omnicore.api.client.getIconResource
 import dev.deftu.omnicore.api.client.getIconResourcePath
-import net.minecraft.text.Text as Text // preprocessor moment, ping me (wyvest) if you want an explanation why this is needed
+import net.minecraft.network.chat.Component as Text // preprocessor moment, ping me (wyvest) if you want an explanation why this is needed
 
 //#if MC != 1.20.4 || FABRIC
 import dev.deftu.omnicore.api.loader.ModInfo

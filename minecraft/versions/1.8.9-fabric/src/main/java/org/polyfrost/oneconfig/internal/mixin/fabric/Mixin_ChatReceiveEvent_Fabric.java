@@ -27,9 +27,9 @@
 package org.polyfrost.oneconfig.internal.mixin.fabric;
 
 import dev.deftu.textile.minecraft.MCText;
-import net.minecraft.client.network.ClientPlayNetworkHandler;
-import net.minecraft.network.packet.s2c.play.ChatMessageS2CPacket;
-import net.minecraft.text.Text;
+import net.minecraft.client.network.NetHandlerPlayClient;
+import net.minecraft.network.play.server.S02PacketChat;
+import net.minecraft.util.IChatComponent;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.ChatEvent;
 import org.polyfrost.oneconfig.internal.utils.ComponentHelper;
@@ -40,40 +40,40 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(value = ClientPlayNetworkHandler.class, priority = Integer.MAX_VALUE)
+@Mixin(value = NetHandlerPlayClient.class, priority = Integer.MAX_VALUE)
 public abstract class Mixin_ChatReceiveEvent_Fabric {
 
     //@formatter:off
     @Unique
     private static final String ONECONFIG$METHOD_TARGET =
             //#if MC<=10809
-            "Lnet/minecraft/client/gui/hud/ChatHud;addMessage(Lnet/minecraft/text/Text;)V";
+            "Lnet/minecraft/client/gui/GuiNewChat;printChatMessage(Lnet/minecraft/util/IChatComponent;)V";
             //#else
-            //$$ "Lnet/minecraft/client/gui/hud/InGameHud;method_14471(Lnet/minecraft/util/ChatMessageType;Lnet/minecraft/text/Text;)V";
+            //$$ "Lnet/minecraft/client/gui/GuiIngame;addChatMessage(Lnet/minecraft/util/text/ChatType;Lnet/minecraft/util/text/ITextComponent;)V";
             //#endif
     //@formatter:on
 
     @Unique
     private ChatEvent.Receive ocfg$chatEvent = null;
 
-    @Inject(method = "onChatMessage", at = @At(value = "INVOKE", target = ONECONFIG$METHOD_TARGET), cancellable = true)
-    private void chatCallback(ChatMessageS2CPacket packet, CallbackInfo ci) {
+    @Inject(method = "handleChat", at = @At(value = "INVOKE", target = ONECONFIG$METHOD_TARGET), cancellable = true)
+    private void chatCallback(S02PacketChat packet, CallbackInfo ci) {
         if (ocfg$chatEvent != null && ocfg$chatEvent.cancelled) {
             ci.cancel();
         }
     }
 
-    @Redirect(method = "onChatMessage", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/packet/s2c/play/ChatMessageS2CPacket;getMessage()Lnet/minecraft/text/Text;"))
-    private Text modifyMessage(ChatMessageS2CPacket packet) {
+    @Redirect(method = "handleChat", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/play/server/S02PacketChat;getChatComponent()Lnet/minecraft/util/IChatComponent;"))
+    private IChatComponent modifyMessage(S02PacketChat packet) {
         //@formatter:off
         if (
             //#if MC <= 1.8.9
             packet.getType() == 0
             //#else
-            //$$ !packet.isNonChat()
+            //$$ !packet.isSystem()
             //#endif
         ) {
-            Text component = packet.getMessage();
+            IChatComponent component = packet.getChatComponent();
             if (Boolean.getBoolean("oneconfig.debug.chat")) {
                 System.out.println("Chat message received:\n" + ComponentHelper.prettyPrint(component));
             }
@@ -82,7 +82,8 @@ public abstract class Mixin_ChatReceiveEvent_Fabric {
             EventManager.INSTANCE.post(ocfg$chatEvent);
             return MCText.convert(ocfg$chatEvent.getMessage());
         }
+
         //@formatter:on
-        return packet.getMessage();
+        return packet.getChatComponent();
     }
 }

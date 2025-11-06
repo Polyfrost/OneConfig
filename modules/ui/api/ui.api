@@ -165,6 +165,17 @@ public abstract interface class org/polyfrost/oneconfig/api/ui/v1/api/TinyFdApi 
 	public abstract fun showNotification (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I
 }
 
+public final class org/polyfrost/oneconfig/api/ui/v1/image/NVGImageFlags {
+	public static final field FLIP_Y I
+	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/ui/v1/image/NVGImageFlags;
+	public static final field KEY Lorg/polyfrost/polyui/data/image/FlagKey;
+	public static final field NEAREST I
+	public static final field NONE I
+	public static final field PREMULTIPLIED I
+	public static final field REPEAT_X I
+	public static final field REPEAT_Y I
+}
+
 public final class org/polyfrost/oneconfig/api/ui/v1/keybind/BindNotInScreen : org/polyfrost/polyui/input/PolyBind {
 	public synthetic fun <init> ([I[Lorg/polyfrost/polyui/input/Keys;[IBJLkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public synthetic fun <init> ([I[Lorg/polyfrost/polyui/input/Keys;[IBJLkotlin/jvm/functions/Function1;Lkotlin/jvm/internal/DefaultConstructorMarker;)V

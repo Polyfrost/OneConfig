@@ -4,13 +4,12 @@ import com.sun.jna.Library;
 import com.sun.jna.Native;
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.PointerByReference;
-import net.minecraft.util.Util;
+import net.minecraft.Util;
 import org.lwjgl.system.linux.DynamicLinkLoader;
 
 import java.util.Map;
 
 public final class RenderDoc {
-
     private static final int VERSION = 1_06_00; // 1.6.0
     private static boolean loaded = false;
 
@@ -22,12 +21,12 @@ public final class RenderDoc {
         var apiPointer = new PointerByReference();
         RenderdocLibrary.RenderdocApi apiInstance;
 
-        var os = Util.getOperatingSystem();
+        var os = Util.getPlatform();
 
-        if (os == Util.OperatingSystem.WINDOWS || os == Util.OperatingSystem.LINUX) {
+        if (os == Util.OS.WINDOWS || os == Util.OS.LINUX) {
             try {
                 RenderdocLibrary renderdocLibrary;
-                if (os == Util.OperatingSystem.WINDOWS) {
+                if (os == Util.OS.WINDOWS) {
                     var path = System.getProperty("renderdoc.path");
                     if (path == null || path.isEmpty()) {
                         System.out.println("RenderDoc path not set, please set the 'renderdoc.path' system property to the path of the RenderDoc DLL.");
@@ -60,5 +59,4 @@ public final class RenderDoc {
             } catch (UnsatisfiedLinkError ignored) {}
         }
     }
-
 }

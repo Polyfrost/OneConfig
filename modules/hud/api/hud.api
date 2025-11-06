@@ -26,6 +26,7 @@ public abstract class org/polyfrost/oneconfig/api/hud/v1/Hud : org/polyfrost/one
 	public static synthetic fun make$default (Lorg/polyfrost/oneconfig/api/hud/v1/Hud;Lorg/polyfrost/oneconfig/api/config/v1/Tree;ILjava/lang/Object;)Lorg/polyfrost/oneconfig/api/hud/v1/Hud;
 	public fun minimumSize ()J
 	public fun multipleInstancesAllowed ()Z
+	public fun remove ()V
 	public final fun setHidden (Z)V
 	public final fun setShowInF3 (Z)V
 	public final fun setShowInScreens (Z)V

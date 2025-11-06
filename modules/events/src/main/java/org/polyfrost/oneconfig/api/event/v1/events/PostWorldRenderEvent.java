@@ -1,17 +1,17 @@
 package org.polyfrost.oneconfig.api.event.v1.events;
 
-import dev.deftu.omnicore.api.client.render.stack.OmniMatrixStack;
+import dev.deftu.omnicore.api.client.render.stack.OmniPoseStack;
 
 public class PostWorldRenderEvent implements Event {
-    private final OmniMatrixStack stack;
+    private final OmniPoseStack stack;
     private final float partialTicks;
 
-    public PostWorldRenderEvent(OmniMatrixStack stack, float partialTicks) {
+    public PostWorldRenderEvent(OmniPoseStack stack, float partialTicks) {
         this.stack = stack;
         this.partialTicks = partialTicks;
     }
 
-    public OmniMatrixStack getStack() {
+    public OmniPoseStack getStack() {
         return stack;
     }
 

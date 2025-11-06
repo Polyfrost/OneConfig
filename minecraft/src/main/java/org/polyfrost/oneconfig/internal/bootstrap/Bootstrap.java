@@ -39,6 +39,7 @@ public class Bootstrap {
     private org.polyfrost.oneconfig.internal.legacy.OneConfigTweaker tweaker = new org.polyfrost.oneconfig.internal.legacy.OneConfigTweaker();
     //#endif
 
+    @SuppressWarnings("unchecked")
     public void init() {
         //#if FORGE && MC <= 1.12.2
         Map<String, String> launchArgs = ((Map<String, String>) Launch.blackboard.get("launchArgs"));
