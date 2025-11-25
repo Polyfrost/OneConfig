@@ -145,7 +145,6 @@ public interface UIManager {
                 float scaledWidth = master.getWidth() * scalingFactor * ratio;
                 float scaledHeight = master.getHeight() * scalingFactor * ratio;
                 ImmediateScreenRenderer.render(ctx, () -> {
-                    System.out.println("Drawing framebuffer texture at " + scaledWidth + "x" + scaledHeight);
                     framebuffer.drawColorTexture(
                             getRenderPipeline(),
                             ctx.pose(),
