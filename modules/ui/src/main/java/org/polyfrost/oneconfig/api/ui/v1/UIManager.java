@@ -131,7 +131,7 @@ public interface UIManager {
                 framebuffer.clearColor(0f, 0f, 0f, 0f); // Clear to transparent black
                 framebuffer.clearDepthStencil(1.0, 0);
                 framebuffer.usingToRender((matrixStack, w, h) -> {
-                    ctx.getPose().runReplacingGlobalState(() -> {
+                    ctx.pose().runReplacingGlobalState(() -> {
                         polyUI.render();
                         Platform.screen().renderLegacyHuds(ctx);
                     });
@@ -145,9 +145,10 @@ public interface UIManager {
                 float scaledWidth = master.getWidth() * scalingFactor * ratio;
                 float scaledHeight = master.getHeight() * scalingFactor * ratio;
                 ImmediateScreenRenderer.render(ctx, () -> {
+                    System.out.println("Drawing framebuffer texture at " + scaledWidth + "x" + scaledHeight);
                     framebuffer.drawColorTexture(
                             getRenderPipeline(),
-                            ctx.getPose(),
+                            ctx.pose(),
                             0, 0,
                             scaledWidth, scaledHeight,
                             OmniColors.WHITE
