@@ -126,10 +126,6 @@ public class PolyUIScreen extends OmniScreen implements BlurScreen {
         }
 
         try {
-            // asm: we need to bind the main framebuffer on 1.21.5+ because for some reason mc unbinds it right before... whatever
-            //#if MC >= 1.21.5
-            //$$ kotlin.jvm.functions.Function0<kotlin.Unit> unbind = dev.deftu.omnicore.api.client.framebuffer.OmniFramebuffers.getMain().bind();
-            //#endif
             ((Buffer) VIEWPORT).clear();
             //#if MC >= 1.13
             //$$ glGetIntegerv(GL_VIEWPORT, VIEWPORT);
@@ -143,9 +139,6 @@ public class PolyUIScreen extends OmniScreen implements BlurScreen {
             glViewport(x, y, w, h);
             polyUI.render();
             glViewport(VIEWPORT.get(), VIEWPORT.get(), VIEWPORT.get(), VIEWPORT.get());
-            //#if MC >= 1.21.5
-            //$$ unbind.invoke();
-            //#endif
         } catch (Exception e) {
             polyUI.getRenderer().endFrame();
             death(e);

@@ -407,10 +407,6 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         val prevProg = glGetInteger(GL_CURRENT_PROGRAM)
         val prevBuf = glGetInteger(GL_ARRAY_BUFFER_BINDING)
         val prevBlend = glGetBoolean(GL_BLEND)
-        val prevBlendSrcRgb = glGetInteger(GL_BLEND_SRC_RGB)
-        val prevBlendDstRgb = glGetInteger(GL_BLEND_DST_RGB)
-        val prevBlendSrcAlpha = glGetInteger(GL_BLEND_SRC_ALPHA)
-        val prevBlendDstAlpha = glGetInteger(GL_BLEND_DST_ALPHA)
         val prevDepth = glGetBoolean(GL_DEPTH_TEST)
         val prevCull = glGetBoolean(GL_CULL_FACE)
         glEnable(GL_BLEND)
@@ -454,7 +450,6 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         count = 0
         buffer.clear()
         if (!prevBlend) glDisable(GL_BLEND)
-        glBlendFuncSeparate(prevBlendSrcRgb, prevBlendDstRgb, prevBlendSrcAlpha, prevBlendDstAlpha)
         if (prevDepth) glEnable(GL_DEPTH_TEST)
         if (prevCull) glEnable(GL_CULL_FACE)
         glUseProgram(prevProg)
