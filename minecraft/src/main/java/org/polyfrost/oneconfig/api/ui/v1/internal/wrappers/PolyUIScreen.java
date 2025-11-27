@@ -26,20 +26,25 @@
 
 package org.polyfrost.oneconfig.api.ui.v1.internal.wrappers;
 
+import dev.deftu.omnicore.api.client.framebuffer.ManagedFramebuffer;
+import dev.deftu.omnicore.api.client.framebuffer.OmniFramebuffer;
 import dev.deftu.omnicore.api.client.input.KeyboardModifiers;
 import dev.deftu.omnicore.api.client.input.OmniKey;
 import dev.deftu.omnicore.api.client.input.OmniKeys;
 import dev.deftu.omnicore.api.client.input.OmniMouseButton;
 import dev.deftu.omnicore.api.client.render.OmniRenderingContext;
+import dev.deftu.omnicore.api.client.render.OmniResolution;
 import dev.deftu.omnicore.api.client.screen.KeyPressEvent;
 import dev.deftu.omnicore.api.client.screen.OmniScreen;
 import dev.deftu.textile.Text;
+import dev.deftu.omnicore.api.client.textures.OmniTextureFormat;
+import dev.deftu.omnicore.api.color.OmniColors;
+import kotlin.Unit;
 import net.minecraft.client.Minecraft;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.MustBeInvokedByOverriders;
 import org.jetbrains.annotations.NotNull;
-import org.lwjgl.BufferUtils;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
 import org.polyfrost.oneconfig.api.ui.v1.Notifications;
 import org.polyfrost.oneconfig.api.ui.v1.UIManager;
@@ -48,11 +53,8 @@ import org.polyfrost.polyui.PolyUI;
 import org.polyfrost.polyui.component.Drawable;
 import org.polyfrost.polyui.data.Cursor;
 
-import java.nio.Buffer;
-import java.nio.IntBuffer;
 import java.util.function.Consumer;
 
-import static org.lwjgl.opengl.GL11.*;
 import static org.polyfrost.oneconfig.api.ui.v1.keybind.KeybindManager.translateKey;
 
 @SuppressWarnings("unused")
@@ -62,16 +64,11 @@ public class PolyUIScreen extends OmniScreen implements BlurScreen {
     @NotNull
     public final PolyUI polyUI;
 
+    private OmniFramebuffer framebuffer;
+
     private final float designedWidth, designedHeight, initialWidth, initialHeight;
     private final boolean pauses, blurs;
     private final Consumer<PolyUI> close;
-    private final IntBuffer VIEWPORT = BufferUtils.createIntBuffer(
-            //#if MC >= 1.13
-            //$$ 4
-            //#else
-            16
-            //#endif
-    );
 
     //#if MC < 1.13
     private int mx, my;
@@ -121,28 +118,42 @@ public class PolyUIScreen extends OmniScreen implements BlurScreen {
         }
 
         //#endif
-        if (polyUI == UIManager.INSTANCE.getDefaultInstance()) {
+        if (framebuffer == null || polyUI == UIManager.INSTANCE.getDefaultInstance()) {
             return;
         }
 
+        Drawable master = polyUI.getMaster();
+
         try {
-            ((Buffer) VIEWPORT).clear();
-            //#if MC >= 1.13
-            //$$ glGetIntegerv(GL_VIEWPORT, VIEWPORT);
-            //#else
-            glGetInteger(GL_VIEWPORT, VIEWPORT);
-            //#endif
-            int w = (int) polyUI.getMaster().getWidth();
-            int h = (int) polyUI.getMaster().getHeight();
-            int x = Platform.screen().windowWidth() / 2 - w / 2;
-            int y = Platform.screen().windowHeight() / 2 - h / 2;
-            glViewport(x, y, w, h);
-            polyUI.render();
-            glViewport(VIEWPORT.get(), VIEWPORT.get(), VIEWPORT.get(), VIEWPORT.get());
+            framebuffer.clearColor(0f, 0f, 0f, 0f); // Clear to transparent black
+            if (framebuffer instanceof ManagedFramebuffer) {
+                ((ManagedFramebuffer) framebuffer).clearDepthStencil(1.0, 0);
+            }
+
+            framebuffer.usingToRender((matrixStack, w, h) -> {
+                matrixStack.runReplacingGlobalState(polyUI::render);
+                return Unit.INSTANCE;
+            });
         } catch (Exception e) {
             polyUI.getRenderer().endFrame();
             death(e);
         }
+
+        float ratio = Platform.screen().pixelRatio();
+        float scalingFactor = 1f / (float) OmniResolution.getScaleFactor();
+
+        float scaledX = (Platform.screen().viewportWidth() / 2f - master.getWidth() * ratio / 2f) * scalingFactor;
+        float scaledY = (Platform.screen().viewportHeight() / 2f - master.getHeight() * ratio / 2f) * scalingFactor;
+        float scaledWidth = master.getWidth() * scalingFactor * ratio;
+        float scaledHeight = master.getHeight() * scalingFactor * ratio;
+
+        framebuffer.drawColorTexture(
+                UIManager.INSTANCE.getRenderPipeline(),
+                ctx.pose(),
+                scaledX, scaledY,
+                scaledWidth, scaledHeight,
+                OmniColors.WHITE
+        );
     }
 
     @Override
@@ -272,6 +283,11 @@ public class PolyUIScreen extends OmniScreen implements BlurScreen {
     }
 
     protected final void adjustResolution(float w, float h, boolean force) {
+        if (this.framebuffer == null) {
+            int width = Platform.screen().viewportWidth();
+            int height = Platform.screen().viewportHeight();
+            this.framebuffer = new ManagedFramebuffer(width, height, OmniTextureFormat.RGBA8, OmniTextureFormat.DEPTH24_STENCIL8);
+        }
 
         // asm: normally, a polyui instance is as big as its window and that is it.
         // however, inside minecraft, the actual content is smaller than the window size, so resizing it directly would just fuck it up.
@@ -291,6 +307,7 @@ public class PolyUIScreen extends OmniScreen implements BlurScreen {
             // framebuffer should you know probably be the correct larger size because.. well yeah of course it does
             // didn't anyone think of that?
             polyUI.resize(initialWidth * sx, initialHeight * sy, force);
+            framebuffer.resize((int) (polyUI.getMaster().getWidth() * ratio), (int) (polyUI.getMaster().getHeight() * ratio));
             polyUI.getWindow().setPixelRatio(ratio);
         } catch (Exception e) {
             death(e);
