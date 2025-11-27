@@ -28,6 +28,7 @@ lwjgl = "3.3.3" # All downloaded by the isolated-lwjgl3-loader
 # Legacy only
 mixin = "0.8.4+build.6"
 mixin-extras = "0.5.0"
+mixin-squared = "0.3.7-beta.1"
 asm = "5.2"
 brigadier = "1.0.18"
 
@@ -51,6 +52,7 @@ junit-bom = { module = "org.junit:junit-bom", version.ref = "junit-bom" }
 
 mixin = { module = "org.polyfrost:polymixin", version.ref = "mixin" }
 mixin-extras = { module = "io.github.llamalad7:mixinextras-common", version.ref = "mixin-extras" }
+mixin-squared = { module = "com.github.bawnorton.mixinsquared:mixinsquared-common", version.ref = "mixin-squared" }
 asm = { module = "org.ow2.asm:asm-debug-all", version.ref = "asm" }
 
 brigadier = { module = "com.mojang:brigadier", version.ref = "brigadier" }

@@ -230,6 +230,7 @@ fun Project.provideIncludedDependencies(version: Triple<Int, Int, Int>?, loader:
         deps.add(libs.findLibrary("asm").get().get())
     }
     deps.add(libs.findLibrary("mixin-extras").get().get())
+    deps.add(libs.findLibrary("mixin-squared").get().get())
     val actualDeps = mutableListOf<OCDependency>()
     for (dep in deps) {
         actualDeps.add(OCDependency(dep))

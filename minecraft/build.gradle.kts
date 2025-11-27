@@ -93,6 +93,9 @@ repositories {
     maven("https://maven.azureaaron.net/releases") {
         content { includeGroup("net.azureaaron") }
     }
+    maven("https://maven.bawnorton.com/releases") {
+        content { includeGroup("com.github.bawnorton.mixinsquared") }
+    }
 }
 
 if (mcData.isLegacyForge) { // Quick substitution for relaunch in dev env, so that mixinextras works properly (yay!)
@@ -297,6 +300,7 @@ dependencies {
     }
 
     annotationProcessor(libs.mixin.extras)
+    annotationProcessor(libs.mixin.squared)
 
     for (dep in listOf("-nanovg").run {
         if (mcData.version < MinecraftVersions.VERSION_1_13) this else this + listOf(

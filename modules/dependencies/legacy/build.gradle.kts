@@ -4,6 +4,12 @@ plugins {
     id("gg.essential.loom")
 }
 
+repositories {
+    maven("https://maven.bawnorton.com/releases") {
+        content { includeGroup("com.github.bawnorton.mixinsquared") }
+    }
+}
+
 dependencies {
     minecraft("com.mojang:minecraft:1.16.5")
     mappings("net.fabricmc:yarn:1.16.5+build.10:v2")

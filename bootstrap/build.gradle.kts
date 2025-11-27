@@ -32,6 +32,9 @@ repositories {
     maven("https://jitpack.io") {
         content { includeGroupAndSubgroups("com.github") }
     }
+    maven("https://maven.bawnorton.com/releases") {
+        content { includeGroup("com.github.bawnorton.mixinsquared") }
+    }
 }
 
 dependencies {
