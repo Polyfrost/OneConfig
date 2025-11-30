@@ -597,7 +597,7 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
             if (count >= MAX_BATCH) {
                 flush()
             }
-            val glyph = fAtlas.get(c)
+            val glyph = fAtlas.get(c) ?: continue
             buffer.put(penX + glyph.xOff * scaleFactor).put(penY + glyph.yOff * scaleFactor)
                 .put(glyph.width * scaleFactor).put(glyph.height * scaleFactor)
             buffer.put(EMPTY_ROW) // zero radii
@@ -1006,7 +1006,8 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
 //            var height = 0f
             val scaleFactor = fontSize / this.renderedSize
             for (c in text) {
-                width += get(c).xAdvance * scaleFactor
+                val g = get(c) ?: continue
+                width += g.xAdvance * scaleFactor
 //                height = maxOf(height, g.height + g.offsetY)
             }
             return Vec2.of(width, fontSize)
@@ -1014,7 +1015,7 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
 
         @Suppress("DEPRECATION")
         @kotlin.internal.InlineOnly
-        inline fun get(char: Char) = glyphs[(char.toInt() - 32) /* .coerceIn(0, glyphs.size - 1) */]
+        inline fun get(char: Char) = if (char.toInt() in 32..32+95) glyphs[(char.toInt() - 32)] else null
     }
 
     @kotlin.internal.InlineOnly

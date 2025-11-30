@@ -136,10 +136,11 @@ public class PolyUIScreen extends OmniScreen implements BlurScreen {
             //#else
             glGetInteger(GL_VIEWPORT, VIEWPORT);
             //#endif
-            int w = (int) polyUI.getMaster().getWidth();
-            int h = (int) polyUI.getMaster().getHeight();
-            int x = Platform.screen().windowWidth() / 2 - w / 2;
-            int y = Platform.screen().windowHeight() / 2 - h / 2;
+            float factor = Platform.screen().pixelRatio();
+            int w = (int) (polyUI.getMaster().getWidth() * factor);
+            int h = (int) (polyUI.getMaster().getHeight() * factor);
+            int x = Platform.screen().viewportWidth() / 2 - w / 2;
+            int y = Platform.screen().viewportHeight() / 2 - h / 2;
             glViewport(x, y, w, h);
             polyUI.render();
             glViewport(VIEWPORT.get(), VIEWPORT.get(), VIEWPORT.get(), VIEWPORT.get());

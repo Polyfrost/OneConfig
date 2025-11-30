@@ -33,7 +33,6 @@ import org.polyfrost.polyui.color.asMutable
 import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.component.extensions.*
 import org.polyfrost.polyui.component.impl.*
-import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.event.State
 import org.polyfrost.polyui.input.PolyBind
 import org.polyfrost.polyui.unit.Align
@@ -41,14 +40,79 @@ import org.polyfrost.polyui.unit.Align.Wrap
 import org.polyfrost.polyui.unit.Vec2
 import org.polyfrost.polyui.utils.image
 import org.polyfrost.polyui.utils.mapToArray
+import org.polyfrost.polyui.utils.setNumber
+import org.polyfrost.polyui.utils.toString
+import java.lang.ref.WeakReference
 import java.util.function.Predicate
 import kotlin.math.roundToInt
 
 /**
  * Visualizers are procedures that take a property, and return a drawable that represents it.
  */
+@Suppress("UNCHECKED_CAST")
 fun interface Visualizer {
     fun visualize(prop: Property<*>): Drawable
+
+    fun <T> Property<T>.toState(): State<T> {
+        val state = State<T>(getAs())
+        var dodge = false
+
+        val stateRef = WeakReference(state)
+        var callback: Predicate<T>? = null
+        callback = Predicate<T> {
+            if (!dodge) {
+                dodge = true
+                val ret = stateRef.get()?.set(it) ?: run {
+                    removeCallback(callback!!)
+                    false
+                }
+                dodge = false
+                ret
+            } else false
+        }
+        addCallback(callback)
+
+        state.weaklyListen(this) {
+            if (!dodge) {
+                dodge = true
+                setAs(it)
+                dodge = false
+            }
+        }
+        return state
+    }
+
+    fun Property<Enum<*>>.toEnumState(): State<Int> {
+        val state = State(get()?.ordinal ?: 0)
+        var dodge = false
+
+        val stateRef = WeakReference(state)
+        var callback: Predicate<Enum<*>>? = null
+        callback = Predicate<Enum<*>> {
+            if (!dodge) {
+                val st = stateRef.get()
+                if (st == null) {
+                    removeCallback(callback!!)
+                    false
+                } else {
+                    dodge = true
+                    val ret = st.set(it.ordinal)
+                    dodge = false
+                    ret
+                }
+            } else false
+        }
+        addCallback(callback)
+
+        state.weaklyListen(this) {
+            if (!dodge) {
+                dodge = true
+                setAs(this.type.enumConstants[it] as Enum<*>)
+                dodge = false
+            }
+        }
+        return state
+    }
 
     class ButtonVisualizer : Visualizer {
         override fun visualize(prop: Property<*>): Drawable {
@@ -68,49 +132,39 @@ fun interface Visualizer {
             if (p !is PolyColor.Mutable) {
                 prop.setAsReferential(p.asMutable())
             }
-            val state = State(prop.getAs<PolyColor.Mutable>())
+            prop as Property<PolyColor.Mutable>
+            val state = prop.toState()
             val out = Block(color = state.value, size = Vec2(58f, 32f)).withBorder(3f, color = { page.border20 })
             out.onClick { ColorPicker(state, polyUI, attachedDrawable = out); true }
-            prop.addCallback {
-                state.value = (it as PolyColor).asMutable()
-                false
-            }
             return out
         }
     }
 
     class DropdownVisualizer : Visualizer {
         override fun visualize(prop: Property<*>): Drawable {
-            val options: Array<String> = prop.getMetadata("options") ?: emptyArray()
-            if (prop.type.isEnum || prop.type.superclass?.isEnum == true) {
-                require(options.isEmpty()) { "Dropdowns should not have options when used with enums (offender=${prop.id})" }
+            val options = prop.getMetadata<Array<String>>("options")
+            return if (prop.type.isEnum || prop.type.superclass?.isEnum == true) {
+                require(options.isNullOrEmpty()) { "Dropdowns should not have options when used with enums (offender=${prop.id})" }
                 val constants = if (prop.type.isEnum) prop.type.enumConstants else prop.type.superclass.enumConstants
-                val index = constants.indexOf(prop.get())
-                val s = Dropdown(
+                prop as Property<Enum<*>>
+                Dropdown(
                     optPadding = 24f,
-                    initial = index,
+                    state = prop.toEnumState(),
                     entries = constants.mapToArray {
                         it as Enum<*>
                         null to (it::class.java.fields[0].get(it) as? String ?: it.name)
                     },
-                ).onChange { i: Int ->
-                    prop.setAs(constants[i])
-                    false
-                }
-                // todo setback not supported currently on dropdowns
-                return s
+                )
             } else {
                 require(prop.type == Int::class.java) { "Dropdowns can only be used with enums or integers (offender=${prop.id}, type=${prop.type})" }
+                require(options != null) { "Dropdown integer properties must have options specified in their metadata (offender=${prop.id})" }
                 require(options.size >= 2) { "Dropdowns must have at least two options (offender=${prop.id})" }
-                val s = Dropdown(
+                prop as Property<Int>
+                Dropdown(
                     optPadding = 24f,
-                    initial = prop.getAs(),
+                    state = prop.toState(),
                     entries = options.mapToArray { null to it },
-                ).onChange { i: Int ->
-                    prop.setAs(i)
-                    false
-                }
-                return s
+                )
             }
         }
     }
@@ -169,76 +223,48 @@ fun interface Visualizer {
             val unit = prop.getMetadata<String>("unit")
             val min = prop.getMetadata<Float>("min") ?: 0f
             val max = prop.getMetadata<Float>("max") ?: 100f
-            val integral = prop.type == Int::class.java || prop.type == Long::class.java
-            val placeholder = prop.getMetadata<String>("placeholder") ?: if (integral) "${min.toInt()}-${max.toInt()}" else "$min-$max"
-            var dodge = false
+            val placeholder = prop.getMetadata<String>("placeholder") ?: "${min.toString(dps = 2)}-${max.toString(dps = 2)}"
+            prop as Property<out Number>
+            val state = prop.toState()
             val s = BoxedTextInput(
                 placeholder = placeholder,
                 image = "assets/oneconfig/ico/text.svg".image(),
                 size = Vec2(200f, 32f),
-                initialValue = prop.getAs<Number>().toString(),
+                value = state,
                 post = unit
-            ).apply {
-                (this[1][0] as TextInput).numeric(min, max, integral).on(Event.Change.Number) {
-                    dodge = true
-                    prop.setAs(if (integral) it.amount.toInt() else it.amount.toFloat())
-                }
-            }
-            prop.addCallback {
-                if (!dodge) (s[1][0] as TextInput).text = it.toString()
-                dodge = false
-                false
-            }
+            )
+            s.getTextFromBoxedTextInput().numeric(min, max, state)
             return s
         }
     }
 
     class RadioVisualizer : Visualizer {
         override fun visualize(prop: Property<*>): Drawable {
-            val options: Array<String> = prop.getMetadata("options") ?: emptyArray()
-            var dodge = false
+            val options: Array<String>? = prop.getMetadata("options")
             if (prop.type.isEnum) {
                 val values = prop.type.enumConstants
                 var field = prop.type::class.java.fields.firstOrNull()
                 if (field?.type == String::class.java) field = null
-                require(options.isEmpty()) { "Radio button ${prop.id} cannot have options when used with enums" }
-                val r =
-                    Radiobutton(
+                require(options.isNullOrEmpty()) { "Radio button ${prop.id} cannot have options when used with enums" }
+                prop as Property<Enum<*>>
+                return Radiobutton(
                         entries = values.mapToArray {
                             it as Enum<*>
                             null to (field?.get(it) as? String ?: it.name)
                         },
-                        initial = values.indexOf(prop.get()),
+                        state = prop.toEnumState(),
                         optionLateralPadding = 20f,
-                    ).onChange { amount: Int ->
-                        dodge = true
-                        prop.setAs(values[amount])
-                        false
-                    }
-                prop.addCallback {
-                    if (!dodge) r.setRadiobuttonEntry(values.indexOf(it as Enum<*>))
-                    dodge = false
-                    false
-                }
-                return r
+                    )
             } else {
                 require(prop.type == Int::class.java) { "Radio buttons ${prop.id} can only be used with enum or integer types (type=${prop.type}" }
+                require(options != null) { "Radio button ${prop.id} integer properties must have options specified in their metadata" }
                 require(options.size >= 2) { "Radio button ${prop.id} must have at least two options" }
-                val r = Radiobutton(
+                prop as Property<Int>
+                return Radiobutton(
                     entries = options.mapToArray { null to it },
-                    initial = prop.getAs(),
+                    state = prop.toState(),
                     optionLateralPadding = 20f,
-                ).onChange { amount: Int ->
-                    dodge = true
-                    prop.setAs(amount)
-                    false
-                }
-                prop.addCallback {
-                    if (!dodge) r.setRadiobuttonEntry(it as Int)
-                    dodge = false
-                    false
-                }
-                return r
+                )
             }
         }
     }
@@ -249,75 +275,44 @@ fun interface Visualizer {
             val max = prop.getMetadata<Float>("max") ?: 100f
             val stepAmount = prop.getMetadata<Float>("step") ?: 0f
             val nsteps = if (stepAmount > 0f) ((max - min) / stepAmount).roundToInt() else 0
-            var dodge = false
-            val value = prop.getAs<Number>().toFloat()
-            if (value.isNaN() || value.isInfinite()) {
-                println("Warning: Slider property ${prop.id} has invalid value $value, resetting to $min")
-            }
+            prop as Property<out Number>
+            val state = prop.toState()
 
-            val initialValue = value.coerceIn(min, max)
-            // todo stepped
-            val s =
-                Slider(
+            val f = state.value.toFloat()
+            if (f.isNaN() || f.isInfinite()) {
+                println("Warning: Slider property ${prop.id} has invalid value $f, resetting to $min")
+                state.setNumber(min)
+            } else state.setNumber(f.coerceIn(min, max))
+
+            return Slider(
                     min = min,
                     max = max,
                     length = 200f,
                     steps = nsteps,
-                    initialValue = initialValue,
-                    integral = prop.type == Int::class.java || prop.type == Long::class.java,
-                ).onChange { amount: Float ->
-                    dodge = true
-                    if (prop.type == Int::class.java) prop.setAs(amount.toInt()) else prop.setAs(amount)
-                    false
-                }
-            prop.addCallback {
-                if (!dodge) s.setSliderValue((it as Number).toFloat(), min, max, false)
-                dodge = false
-                false
-            }
-            return s
+                    state = state
+                )
         }
     }
 
     class SwitchVisualizer : Visualizer {
         override fun visualize(prop: Property<*>): Drawable {
-            val state = prop.getAs<Boolean>()
-            var dodge = false
+            prop as Property<Boolean>
             val s = Switch(
                 lateralStretch = 2f,
                 size = 21f,
-                state = state,
-            ).onChange { new: Boolean ->
-                dodge = true
-                prop.setAs(new)
-                false
-            }
-            prop.addCallback {
-                if (!dodge) s.toggle(it as Boolean)
-                dodge = false
-                false
-            }
+                state = prop.toState(),
+            )
             return s
         }
     }
 
     class CheckboxVisualizer : Visualizer {
         override fun visualize(prop: Property<*>): Drawable {
-            val state = prop.getAs<Boolean>()
-            var dodge = false
+            prop as Property<Boolean>
             val s = Checkbox(
                 size = 24f,
-                state = state,
-            ).onChange { new: Boolean ->
-                dodge = true
-                prop.setAs(new)
-                false
-            }
-            prop.addCallback {
-                if (!dodge) s.toggle(it as Boolean)
-                dodge = false
-                false
-            }
+                state = prop.toState(),
+            )
             return s
         }
     }
@@ -328,31 +323,23 @@ fun interface Visualizer {
             val regexString = prop.getMetadata<String?>("regex")
             val regex = regexString?.let { Regex(it) }
             val validate = prop.getMetadata<Predicate<String>>("validate")
-            var dodge = false
+            prop as Property<String>
+            val state = prop.toState()
             val s = BoxedTextInput(
                 image = "assets/oneconfig/ico/text.svg".image(),
                 placeholder = placeholder,
                 //size = Vec2(200f, 32f),
-                initialValue = prop.getAs(),
-            ).onChange { text: String ->
+                value =  state,
+            ).onChange(state) { text: String ->
                 if (validate != null && !validate.test(text)) {
-                    shake()
-                    return@onChange true
+                    shake(); return@onChange true
                 }
                 if (regex != null && !regex.matches(text)) {
-                    shake()
-                    return@onChange true
+                    shake(); return@onChange true
                 }
-                dodge = true
-                prop.setAs(text)
                 false
             }
             if (regexString != null) s.addHoverInfo(Text("Must match regex: $regexString"))
-            prop.addCallback {
-                if (!dodge) (s[1][0] as TextInput).text = it as String
-                dodge = false
-                false
-            }
             return s
         }
     }

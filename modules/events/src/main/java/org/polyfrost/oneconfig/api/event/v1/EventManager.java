@@ -218,7 +218,7 @@ public final class EventManager {
                 //noinspection StringConcatenationArgumentToLogCall
                 LOGGER.error("Failed to invoke event handler for " + event.getClass().getName(), throwable);
                 if (OmniLoader.isDevelopment()) {
-                    throw new EventException("Event handler " + handler.getEventClass().getName() + " for " + handler.getEventClass().getName() + " failed", throwable);
+                    throw new EventException("Event handler " + handler.getClass().getName() + " for " + handler.getEventClass().getName() + " failed", throwable);
                 }
                 if (handler.onError()) {
                     LOGGER.error("removing {} registered to {} as it has failed too many times ({})", handler, event.getClass().getName(), EventHandler.ERROR_THRESHOLD);

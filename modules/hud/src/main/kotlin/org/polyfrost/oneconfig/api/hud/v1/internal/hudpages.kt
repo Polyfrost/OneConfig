@@ -49,7 +49,6 @@ import org.polyfrost.polyui.unit.seconds
 import org.polyfrost.polyui.utils.image
 import kotlin.experimental.or
 import kotlin.math.PI
-import kotlin.math.roundToInt
 
 val alignC = Align(main = Align.Content.Center, cross = Align.Content.Center, line = Align.Line.Center)
 val alignNoPad = Align(pad = Vec2.ZERO)
@@ -141,11 +140,13 @@ private fun HudButton(text: String): Block {
 }
 
 fun HudSettingsPage(hud: Hud<*>): Drawable {
+    val state = State(0)
     return Group(
         Radiobutton(
             "assets/oneconfig/ico/cog.svg".image() to "oneconfig.hudeditor.settings.title",
             "assets/oneconfig/ico/paintbrush.svg".image() to "oneconfig.hudeditor.designer.title",
-        ).onInit { color = polyUI.colors.component.bgDeselected }.onChange { index: Int ->
+            state = state
+        ).onInit { color = polyUI.colors.component.bgDeselected }.onChange(state) { index: Int ->
             if (index == 0) {
                 parent[1] = HudVisualizer.get(hud.tree)
             } else {
@@ -163,37 +164,53 @@ private fun makeHudDesigner(hud: Hud<*>): Drawable {
     val theHud = hud.get()
     val bg = hud.getBackground()
     val receiver = bg ?: theHud
+
+    val padState = State(receiver.alignment.padBetween.x).listen {
+        receiver.alignment = receiver.alignment.copy(padBetween = Vec2(it, it))
+        receiver.recalculate(false)
+        false
+    }
+    val radiusState = State((receiver as? Block)?.radii?.getOrNull(0) ?: 0f).listen {
+        (receiver as? Block)?.radius(it)
+        receiver.recalculate(false)
+        false
+    }
+
+    val xPadState = State(receiver.padding.x).listen {
+        receiver.padding = receiver.padding.copy(x = it)
+        receiver.recalculate(false)
+        false
+    }
+    val yPadState = State(receiver.padding.y).listen {
+        receiver.padding = receiver.padding.copy(y = it)
+        receiver.recalculate(false)
+        false
+    }
+    val wPadState = State(receiver.padding.w).listen {
+        receiver.padding = receiver.padding.copy(w = it)
+        receiver.recalculate(false)
+        false
+    }
+    val hPadState = State(receiver.padding.h).listen {
+        receiver.padding = receiver.padding.copy(h = it)
+        receiver.recalculate(false)
+        false
+    }
+
+    val staticWidth = State(false)
+
     return Group(
         Text("oneconfig.hudeditor.general.title", fontSize = 16f).setFont { medium },
         subheading("oneconfig.hudeditor.padding.title", "oneconfig.hudeditor.padding.info"),
         interactiveAlignment(receiver),
         Group(
-            DraggingNumericTextInput(icon = "assets/oneconfig/ico/align.svg".image(), suffix = "px", max = 30f, size = Vec2(120f, 32f)).also {
-                it[0].onChange { value: Float ->
-                    receiver.alignment = receiver.alignment.copy(padBetween = Vec2(value, value))
-                    receiver.recalculate(false)
-                    false
-                }
-            }.titled("oneconfig.hudeditor.padding.between"),
-            DraggingNumericTextInput(icon = "assets/oneconfig/ico/maximise.svg".image(), suffix = "px", max = 10f, size = Vec2(120f, 32f)).also {
-                it[0].onChange { value: Float ->
-                    (receiver as? Block)?.radius(value)
-                    false
-                }
-            }.titled("oneconfig.hudeditor.corner.radius"),
+            DraggingNumericTextInput(icon = "assets/oneconfig/ico/align.svg".image(), suffix = "px", max = 30f, size = Vec2(120f, 32f), state = padState).titled("oneconfig.hudeditor.padding.between"),
+            DraggingNumericTextInput(icon = "assets/oneconfig/ico/maximise.svg".image(), suffix = "px", max = 10f, size = Vec2(120f, 32f), state = radiusState).titled("oneconfig.hudeditor.corner.radius"),
             Group(
-                DraggingNumericTextInput(icon = "assets/oneconfig/ico/align.svg".image(), suffix = "px", initialValue = receiver.padding.x, max = 30f, size = Vec2(68f, 32f)).onChange { value: Float ->
-                    receiver.padding = receiver.padding.copy(x = value)
-                },
-                DraggingNumericTextInput(icon = "assets/oneconfig/ico/align.svg".image(), suffix = "px", initialValue = receiver.padding.y, max = 30f, size = Vec2(68f, 32f)).onChange { value: Float ->
-                    receiver.padding = receiver.padding.copy(y = value)
-                }.also { it[0].rotation = PI / 2 },
-                DraggingNumericTextInput(icon = "assets/oneconfig/ico/align.svg".image(), suffix = "px", initialValue = receiver.padding.w, max = 30f, size = Vec2(68f, 32f)).onChange { value: Float ->
-                    receiver.padding = receiver.padding.copy(w = value)
-                }.also { it[0].rotation = PI },
-                DraggingNumericTextInput(icon = "assets/oneconfig/ico/align.svg".image(), suffix = "px", initialValue = receiver.padding.h, max = 30f, size = Vec2(68f, 32f)).onChange { value: Float ->
-                    receiver.padding = receiver.padding.copy(h = value)
-                }.also { it[0].rotation = PI * 1.5 },
+                DraggingNumericTextInput(icon = "assets/oneconfig/ico/align.svg".image(), suffix = "px", state = xPadState, max = 30f, size = Vec2(68f, 32f)),
+                DraggingNumericTextInput(icon = "assets/oneconfig/ico/align.svg".image(), suffix = "px", state = yPadState, max = 30f, size = Vec2(68f, 32f)).also { it[0].rotation = PI / 2 },
+                DraggingNumericTextInput(icon = "assets/oneconfig/ico/align.svg".image(), suffix = "px", state = wPadState, max = 30f, size = Vec2(68f, 32f)).also { it[0].rotation = PI },
+                DraggingNumericTextInput(icon = "assets/oneconfig/ico/align.svg".image(), suffix = "px", state = hPadState, max = 30f, size = Vec2(68f, 32f)).also { it[0].rotation = PI * 1.5 },
                 alignment = Align(main = Align.Content.SpaceBetween, wrap = Align.Wrap.NEVER, padEdges = Vec2.ZERO),
                 size = Vec2(308f, 32f)
             ).titled("oneconfig.hudeditor.padding.edges"),//.padded(16f, 12f, 0f, 0f),
@@ -201,15 +218,15 @@ private fun makeHudDesigner(hud: Hud<*>): Drawable {
             size = Vec2(320f, 126f),
         ),
         Group(
-            Checkbox(size = 18f).onToggle {
+            Checkbox(size = 18f, state = staticWidth).onChange(staticWidth) {
                 hud.staticWidth = it
                 val siblings = siblings
                 siblings[2].isEnabled = !it
                 siblings[3].isEnabled = !it
             },
             Text("oneconfig.hudeditor.staticwidth"),
-            DraggingNumericTextInput(pre = "oneconfig.width", suffix = "px", initialValue = receiver.width.roundToInt().toFloat(), max = 1000f, size = Vec2(128f, 32f)),
-            DraggingNumericTextInput(pre = "oneconfig.height", suffix = "px", initialValue = receiver.height.roundToInt().toFloat(), max = 1000f, size = Vec2(128f, 32f)),
+            DraggingNumericTextInput(pre = "oneconfig.width", suffix = "px", state = State.of(receiver::width), max = 1000f, size = Vec2(128f, 32f)),
+            DraggingNumericTextInput(pre = "oneconfig.height", suffix = "px", state = State.of(receiver::height), max = 1000f, size = Vec2(128f, 32f)),
             alignment = Align(padBetween = Vec2(12f, 6f))
         ),
         *(if (bg != null) colorOptions(bg) else arrayOf()),
@@ -316,68 +333,81 @@ fun interactiveAlignment(recv: Drawable): Block {
 
 fun textOptions(text: Text): Drawable {
     var prevWeight: Font.Weight = Font.Weight.Regular
+    var example: Text? = null
+
+    val fontState = State(0).listen {
+        text.font = when (it) {
+            1 -> PolyUI.monospaceFont
+            2 -> mcFont.get(text.fontWeight, text.italic)
+            else -> text.polyUI.fonts.get(text.fontWeight, text.italic)
+        }
+        text._parent?.recalculate(false)
+        example?.run {
+            font = text.font
+            parent.recalculate()
+        }
+        false
+    }
+    val fontSize = State(text.fontSize).listen {
+        text.fontSize = it
+        text._parent?.recalculate(false)
+        example?.run {
+            fontSize = text.fontSize
+            parent.recalculate()
+        }
+        false
+    }
+
+    val fontWeight = State(text.fontWeight.value / 100 - 1).listen {
+        text.fontWeight = Font.byWeight((it + 1) * 100)
+        text._parent?.recalculate(false)
+        example?.run {
+            fontWeight = text.fontWeight
+            parent.recalculate()
+        }
+        false
+    }
+
+    val boldState = State(text.fontWeight.value > 500).listen {
+        if (it) {
+            prevWeight = text.fontWeight
+            text.fontWeight = when (text.fontWeight) {
+                Font.Weight.Thin, Font.Weight.ExtraLight, Font.Weight.Light -> Font.Weight.SemiBold
+                Font.Weight.Regular -> Font.Weight.Bold
+                Font.Weight.Medium -> Font.Weight.ExtraBold
+                else -> text.fontWeight
+            }
+        } else {
+            text.fontWeight = prevWeight
+        }
+        false
+    }
+
     return Group(
         subheading("oneconfig.hudeditor.text.title", "oneconfig.hudeditor.text.info"),
         Block(
-            Text("oneconfig.hudeditor.text.example", fontSize = 16f),
+            Text("oneconfig.hudeditor.text.example", fontSize = 16f).also { example = it },
             size = Vec2(476f, 58f),
             alignment = alignC,
         ).withBorder(),
         Dropdown(
-            "Poppins", "JetBrains Mono", "Minecraft"
-        ).onChange { it: Int ->
-            text.font = when (it) {
-                1 -> PolyUI.monospaceFont
-                2 -> mcFont.get(text.fontWeight, text.italic)
-                else -> polyUI.fonts.get(text.fontWeight, text.italic)
-            }
-            text._parent?.recalculate(false)
-            val ex = (parent.parent[1][0] as? Text) ?: return@onChange false
-            ex.font = text.font
-            ex.parent.recalculate()
-            false
-        }.titled("oneconfig.hudeditor.text.font"),
-        DraggingNumericTextInput("assets/oneconfig/ico/text-input.svg".image(), initialValue = text.fontSize.roundToInt().toFloat(), min = 1f, size = Vec2(72f, 0f), suffix = "px").also {
-            it[0].onChange { value: Float ->
-                text.fontSize = value
-                text._parent?.recalculate(false)
-                val ex = (parent.parent.parent[1][0] as? Text) ?: return@onChange false
-                ex.fontSize = text.fontSize
-                ex.parent.recalculate()
-                false
-            }
-        }.titled("oneconfig.hudeditor.text.size"),
+            "Poppins", "JetBrains Mono", "Minecraft",
+            state = fontState
+        ).titled("oneconfig.hudeditor.text.font"),
+        DraggingNumericTextInput("assets/oneconfig/ico/text-input.svg".image(), state = fontSize, min = 1f, size = Vec2(72f, 0f), suffix = "px").titled("oneconfig.hudeditor.text.size"),
         Dropdown(
             "oneconfig.fweight.100",
             "oneconfig.fweight.200",
             "oneconfig.fweight.300",
             "oneconfig.fweight.400",
             "oneconfig.fweight.500",
-        ).onChange { it: Int ->
-            text.fontWeight = Font.byWeight((it + 1) * 100)
-            text._parent?.recalculate(false)
-            val ex = (parent.parent[1][0] as? Text) ?: return@onChange false
-            ex.fontWeight = text.fontWeight
-            ex.parent.recalculate()
-            false
-        }.titled("oneconfig.hudeditor.text.weight"),
+            state = fontWeight,
+        ).titled("oneconfig.hudeditor.text.weight"),
         Group(
-            Block(Image("assets/oneconfig/ico/bold.svg"), alignment = alignNoPad).radius(2f).toggleable(text.fontWeight.value > 500).onToggle {
-                if (it) {
-                    prevWeight = text.fontWeight
-                    text.fontWeight = when (text.fontWeight) {
-                        Font.Weight.Thin, Font.Weight.ExtraLight, Font.Weight.Light -> Font.Weight.SemiBold
-                        Font.Weight.Regular -> Font.Weight.Bold
-                        Font.Weight.Medium -> Font.Weight.ExtraBold
-                        else -> text.fontWeight
-                    }
-                } else {
-                    text.fontWeight = prevWeight
-                }
-            },
-            Block(Image("assets/oneconfig/ico/italic.svg"), alignment = alignNoPad).radius(2f).toggleable(text.italic).onToggle { text.italic = it },
-            Block(Image("assets/oneconfig/ico/underline.svg"), alignment = alignNoPad).radius(2f).toggleable(text.underline).onToggle { text.underline = it },
-            Block(Image("assets/oneconfig/ico/strikethrough.svg"), alignment = alignNoPad).radius(2f).toggleable(text.strikethrough).onToggle { text.strikethrough = it },
+            Block(Image("assets/oneconfig/ico/bold.svg"), alignment = alignNoPad).radius(2f).toggleable(boldState),
+            Block(Image("assets/oneconfig/ico/italic.svg"), alignment = alignNoPad).radius(2f).toggleable(State.of(text::italic)),
+            Block(Image("assets/oneconfig/ico/underline.svg"), alignment = alignNoPad).radius(2f).toggleable(State.of(text::underline)),
+            Block(Image("assets/oneconfig/ico/strikethrough.svg"), alignment = alignNoPad).radius(2f).toggleable(State.of(text::strikethrough)),
         ).titled("oneconfig.hudeditor.text.effects"),
         *colorOptions(text),
         size = Vec2(476f, 0f),
