@@ -41,7 +41,7 @@ private const val MAX_BATCH = 1024
 private val EMPTY_ROW = floatArrayOf(0f, 0f, 0f, 0f)
 private val NO_UV = floatArrayOf(-1f, -1f, 1f, 1f)
 
-@Suppress("UnstableApiUsage")
+@Suppress("UnstableApiUsage", "INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
 class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Renderer {
 
     private val buffer = BufferUtils.createFloatBuffer(MAX_BATCH * STRIDE)
@@ -428,6 +428,12 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
             org.lwjgl.opengl.GL30.glBindVertexArray(vao)
         } else prevVao = 0
         glUseProgram(program)
+
+        if (popFlushNeeded) {
+            glUniformMatrix3fv(uTransform, false, transformBuffer)
+            popFlushNeeded = false
+        }
+
         glActiveTexture(GL_TEXTURE0)
         glBindTexture(GL_TEXTURE_2D, curTex)
 
@@ -591,7 +597,7 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
             if (count >= MAX_BATCH) {
                 flush()
             }
-            val glyph = fAtlas.glyphs[c] ?: continue
+            val glyph = fAtlas.get(c)
             buffer.put(penX + glyph.xOff * scaleFactor).put(penY + glyph.yOff * scaleFactor)
                 .put(glyph.width * scaleFactor).put(glyph.height * scaleFactor)
             buffer.put(EMPTY_ROW) // zero radii
@@ -696,23 +702,12 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
     }
 
     override fun pop() {
-        val prevProg = glGetInteger(GL_CURRENT_PROGRAM)
-        if (popFlushNeeded) {
-            glUseProgram(program)
-            transformBuffer.clear()
-            transformBuffer.put(transform).flip()
-            glUniformMatrix3fv(uTransform, false, transformBuffer)
-            glUseProgram(prevProg)
-            flush()
-            popFlushNeeded = false
-        }
         if (transform.isIdentity()) return
+        flush()
         if (transformStack.isEmpty()) {
             loadIdentity()
         } else transform = transformStack.removeLast()
-        glUseProgram(program)
-        glUniformMatrix3fv(uTransform, false, transformBuffer)
-        glUseProgram(prevProg)
+        popFlushNeeded = true
     }
 
     override fun translate(x: Float, y: Float) {
@@ -890,7 +885,7 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
     }
 
     private inner class FontAtlas(data: ByteBuffer, val renderedSize: Float) {
-        val glyphs = HashMap<Char, Glyph>()
+        private val glyphs: Array<FloatArray>
         val ascent: Float
         val descent: Float
         val lineGap: Float
@@ -957,15 +952,14 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
             val sy = slotY
 
 
-            for (i in 0..<95) {
-                val c = (i + 32).toChar()
-                val g = stb.font_GetPackedGlyph(packed, i)
+            glyphs = Array(95) {
+                val g = stb.font_GetPackedGlyph(packed, it)
                 val x0 = stb.glyph_x0(g)
                 val y0 = stb.glyph_y0(g)
                 val x1 = stb.glyph_x1(g)
                 val y1 = stb.glyph_y1(g)
 
-                val glyph = Glyph(
+                floatArrayOf(
                     (sx + x0) / ATLAS_SIZE.toFloat(),
                     (sy + y0) / ATLAS_SIZE.toFloat(),
                     (x1 - x0) / ATLAS_SIZE.toFloat(),
@@ -976,7 +970,6 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
                     (y1 - y0).toFloat(),
                     stb.glyph_xadvance(g)
                 )
-                glyphs[c] = glyph
             }
             stb.free(packed)
             stb.free(range)
@@ -1013,50 +1006,41 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
 //            var height = 0f
             val scaleFactor = fontSize / this.renderedSize
             for (c in text) {
-                val g = glyphs[c] ?: continue
-                width += g.xAdvance * scaleFactor
+                width += get(c).xAdvance * scaleFactor
 //                height = maxOf(height, g.height + g.offsetY)
             }
             return Vec2.of(width, fontSize)
         }
+
+        @Suppress("DEPRECATION")
+        @kotlin.internal.InlineOnly
+        inline fun get(char: Char) = glyphs[(char.toInt() - 32) /* .coerceIn(0, glyphs.size - 1) */]
     }
 
-    @JvmInline
-    @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
-    private value class Glyph(val data: FloatArray) {
-        @kotlin.internal.InlineOnly
-        inline val u get() = data[0]
+    @kotlin.internal.InlineOnly
+    inline val FloatArray.u get() = this[0]
 
-        @kotlin.internal.InlineOnly
-        inline val v get() = data[1]
+    @kotlin.internal.InlineOnly
+    inline val FloatArray.v get() = this[1]
 
-        @kotlin.internal.InlineOnly
-        inline val uw get() = data[2]
+    @kotlin.internal.InlineOnly
+    inline val FloatArray.uw get() = this[2]
 
-        @kotlin.internal.InlineOnly
-        inline val vh get() = data[3]
+    @kotlin.internal.InlineOnly
+    inline val FloatArray.vh get() = this[3]
 
-        @kotlin.internal.InlineOnly
-        inline val xOff get() = data[4]
+    @kotlin.internal.InlineOnly
+    inline val FloatArray.xOff get() = this[4]
 
-        @kotlin.internal.InlineOnly
-        inline val yOff get() = data[5]
+    @kotlin.internal.InlineOnly
+    inline val FloatArray.yOff get() = this[5]
 
-        @kotlin.internal.InlineOnly
-        inline val width get() = data[6]
+    @kotlin.internal.InlineOnly
+    inline val FloatArray.width get() = this[6]
 
-        @kotlin.internal.InlineOnly
-        inline val height get() = data[7]
+    @kotlin.internal.InlineOnly
+    inline val FloatArray.height get() = this[7]
 
-        @kotlin.internal.InlineOnly
-        inline val xAdvance get() = data[8]
-
-        constructor(
-            uvX: Float, uvY: Float, uvW: Float, uvH: Float,
-            offsetX: Float, offsetY: Float,
-            width: Float, height: Float,
-            advanceX: Float
-        ) : this(floatArrayOf(uvX, uvY, uvW, uvH, offsetX, offsetY, width, height, advanceX))
-
-    }
+    @kotlin.internal.InlineOnly
+    inline val FloatArray.xAdvance get() = this[8]
 }
