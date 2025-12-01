@@ -53,6 +53,7 @@ import org.polyfrost.oneconfig.api.hud.v1.HudManager;
 import org.polyfrost.oneconfig.api.hypixel.v1.HypixelUtils;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
 import org.polyfrost.oneconfig.api.ui.v1.UIManager;
+import org.polyfrost.oneconfig.api.ui.v1.api.RendererExt;
 import org.polyfrost.oneconfig.api.ui.v1.internal.BlurHandler;
 import org.polyfrost.oneconfig.api.ui.v1.keybind.OCKeybindHelper;
 import org.polyfrost.oneconfig.internal.ui.OneConfigUI;
@@ -132,8 +133,8 @@ public class OneConfig
         if (Boolean.getBoolean("oneconfig.test")) {
             try {
                 TestMod_Test.initialize();
-            } catch (Throwable ignored) {
-                ignored.printStackTrace();
+            } catch (Throwable e) {
+                e.printStackTrace();
             }
         }
         
@@ -155,7 +156,7 @@ public class OneConfig
         LOGGER.info("OneConfig initialization took {}ms", (System.nanoTime() - t1) / 1_000_000.0);
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({"unchecked", "rawtypes", "UnstableApiUsage"})
     private static void registerCommands() {
         ClientCommandInternals.initialize();
         // //#if MC > 1.16
@@ -201,7 +202,16 @@ public class OneConfig
                             return ctx.getSource().replyChat("OK");
                         })
                 )
-                .build();
+                .then(OmniClientCommands.literal("dumpAtlas")
+                        .executes((ctx) -> {
+                            RendererExt ext = UIManager.INSTANCE.getRendererExt();
+                            if (ext == null) {
+                                return ctx.getSource().replyChat("RendererExt is not available on this platform.");
+                            }
+                            ext.dumpAtlas();
+                            return ctx.getSource().replyChat("OK");
+                        })
+                ).build();
         OmniClientCommands.register(node);
         OmniClientCommands.register(OmniClientCommands.literal("ocfg").executes(executor).redirect(node));
     }

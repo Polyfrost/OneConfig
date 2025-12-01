@@ -9,6 +9,7 @@ import org.lwjgl.opengl.GL14.*
 import org.lwjgl.opengl.GL15.*
 import org.lwjgl.opengl.GL20.*
 import org.polyfrost.oneconfig.api.ui.v1.api.NanoSvgApi
+import org.polyfrost.oneconfig.api.ui.v1.api.RendererExt
 import org.polyfrost.oneconfig.api.ui.v1.api.StbApi
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.color.Color
@@ -42,10 +43,9 @@ private val EMPTY_ROW = floatArrayOf(0f, 0f, 0f, 0f)
 private val NO_UV = floatArrayOf(-1f, -1f, 1f, 1f)
 
 @Suppress("UnstableApiUsage", "INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
-class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Renderer {
+class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Renderer, RendererExt {
 
     private val buffer = BufferUtils.createFloatBuffer(MAX_BATCH * STRIDE)
-    private val transformBuffer = BufferUtils.createFloatBuffer(9)
     private val scissorStack = IntArray(MAX_UI_DEPTH * 4)
     private val transformStack = ArrayList<FloatArray>(MAX_UI_DEPTH)
     private val fonts = HashMap<Font, FontAtlas>()
@@ -81,11 +81,6 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         0f, 1f, 0f,
         0f, 0f, 1f
     )
-        set(value) {
-            field = value
-            transformBuffer.clear()
-            transformBuffer.put(value).flip()
-        }
     private var viewportWidth = 0f
     private var viewportHeight = 0f
     private var pixelRatio = 1f
@@ -284,8 +279,8 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
 
 
     @Suppress("SameParameterValue")
-    private fun glUniformMatrix3fv(location: Int, transpose: Boolean, buf: FloatBuffer) {
-        ShaderInternals.uniformMatrix3(location, transpose, buf)
+    private fun glUniformMatrix3fv(location: Int, transpose: Boolean, array: FloatArray) {
+        ShaderInternals.uniformMatrix3(location, transpose, array)
     }
 
     override fun init() {
@@ -387,7 +382,7 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         val prevProg = glGetInteger(GL_CURRENT_PROGRAM)
         glUseProgram(program)
         glUniform2f(uWindow, width, height)
-        glUniformMatrix3fv(uTransform, false, transformBuffer)
+        glUniformMatrix3fv(uTransform, false, transform)
         glUseProgram(prevProg)
         glDisable(GL_SCISSOR_TEST)
         viewportWidth = width * pixelRatio
@@ -430,7 +425,7 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         glUseProgram(program)
 
         if (popFlushNeeded) {
-            glUniformMatrix3fv(uTransform, false, transformBuffer)
+            glUniformMatrix3fv(uTransform, false, transform)
             popFlushNeeded = false
         }
 
@@ -851,19 +846,25 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         }
     }
 
+    private var i = 0
     fun dumpTexture(texId: Int = atlas) {
         val buf = BufferUtils.createByteBuffer(ATLAS_SIZE * ATLAS_SIZE * 4)
         glBindTexture(GL_TEXTURE_2D, texId)
         glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, buf)
         glBindTexture(GL_TEXTURE_2D, 0)
         stb.image_write_png(
-            "debug_texture$texId.png",
+            "debug_texture$texId($i).png",
             ATLAS_SIZE,
             ATLAS_SIZE,
             4,
             buf,
             ATLAS_SIZE * 4
         )
+        i++
+    }
+
+    override fun dumpAtlas() {
+        dumpTexture(atlas)
     }
 
     override fun cleanup() {
@@ -891,8 +892,9 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         val lineGap: Float
 
         init {
-            val fontInfo = stb.createFontInfo()
-            if (!stb.initFont(fontInfo, data)) {
+            val stb = stb
+            val fontInfo = stb.font_CreateFontInfo()
+            if (!stb.font_InitFont(fontInfo, data)) {
                 throw IllegalStateException("Failed to initialize font")
             }
             val scale = stb.font_ScaleForMappingEmToPixels(fontInfo, renderedSize)
@@ -906,15 +908,15 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
             descent = des[0] * scale
             lineGap = gap[0] * scale
 
-            val range = stb.createPackRange()
+            val range = stb.font_CreatePackRange()
             stb.font_RangeSetFontSize(range, renderedSize)
             stb.font_RangeSetFirstUnicodeCodepointInRange(range, 32)
             stb.font_RangeSetNumChars(range, 95)
-            val packed = stb.createPackedCharArray(95)
+            val packed = stb.font_CreatePackedCharArray(95)
             stb.font_RangeSetChardata(range, packed)
 
             val bitMap = BufferUtils.createByteBuffer(FONT_MAX_BITMAP_W * FONT_MAX_BITMAP_H)
-            val pack = stb.createPackContext()
+            val pack = stb.font_CreatePackContext()
             if (!stb.font_PackBegin(pack, bitMap, FONT_MAX_BITMAP_W, FONT_MAX_BITMAP_H, 0, 1, 0L)) {
                 throw IllegalStateException("Failed to initialize font packer")
             }
@@ -973,6 +975,8 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
             }
             stb.free(packed)
             stb.free(range)
+
+//            dumpAtlas()
 
             val prevTex = glGetInteger(GL_TEXTURE_BINDING_2D)
             glBindTexture(GL_TEXTURE_2D, atlas)

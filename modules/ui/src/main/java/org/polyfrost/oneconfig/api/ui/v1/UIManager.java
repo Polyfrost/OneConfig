@@ -47,10 +47,10 @@ import org.jetbrains.annotations.Nullable;
 import org.polyfrost.oneconfig.api.event.v1.EventDelay;
 import org.polyfrost.oneconfig.api.event.v1.EventManager;
 import org.polyfrost.oneconfig.api.event.v1.events.HudRenderEvent;
-import org.polyfrost.oneconfig.api.event.v1.events.RenderEvent;
 import org.polyfrost.oneconfig.api.event.v1.events.ResizeEvent;
 import org.polyfrost.oneconfig.api.event.v1.events.WorldEvent;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
+import org.polyfrost.oneconfig.api.ui.v1.api.RendererExt;
 import org.polyfrost.oneconfig.api.ui.v1.api.TinyFdApi;
 import org.polyfrost.polyui.PolyUI;
 import org.polyfrost.polyui.Settings;
@@ -75,6 +75,12 @@ public interface UIManager {
      * Return the renderer instance. This interface specifies operations for rendering UI components. See PolyUI for more information.
      */
     Renderer getRenderer();
+
+    /**
+     * Return the renderer extension instance. This interface specifies additional (debug) operations for the renderer.
+     */
+    @Nullable
+    RendererExt getRendererExt();
 
     /**
      * Return the TinyFD implementation instance. This interface specifies operations for opening native
@@ -157,9 +163,8 @@ public interface UIManager {
                 });
             };
 
-            EventManager.register(RenderEvent.Post.class, event -> {
-                renderer.accept(event.ctx);
-            });
+            // todo temporary reversion: on RenderEvent it just renders nothing (see #592, #579)
+            EventManager.register(HudRenderEvent.class, event -> renderer.accept(event.ctx));
 
             EventManager.register(ResizeEvent.class, event -> {
                 float ratio = Platform.screen().pixelRatio();

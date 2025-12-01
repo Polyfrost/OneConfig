@@ -27,15 +27,15 @@ class StbImpl : StbApi {
         STBImageWrite.stbi_write_png(filename, w, h, comp, data, strideInBytes)
     }
 
-    override fun createFontInfo() = STBTTFontinfo.malloc().address()
+    override fun font_CreateFontInfo() = STBTTFontinfo.malloc().address()
 
-    override fun createPackRange() = STBTTPackRange.malloc().address()
+    override fun font_CreatePackRange() = STBTTPackRange.malloc().address()
 
-    override fun createPackedCharArray(capacity: Int) = STBTTPackedchar.malloc(capacity).address()
+    override fun font_CreatePackedCharArray(capacity: Int) = STBTTPackedchar.malloc(capacity).address()
 
-    override fun createPackContext() = STBTTPackContext.malloc().address()
+    override fun font_CreatePackContext() = STBTTPackContext.malloc().address()
 
-    override fun initFont(info: Long, data: ByteBuffer) = nstbtt_InitFont(info, MemoryUtil.memAddress(data), 0) != 0
+    override fun font_InitFont(info: Long, data: ByteBuffer) = nstbtt_InitFont(info, MemoryUtil.memAddress(data), 0) != 0
 
     override fun font_ScaleForMappingEmToPixels(info: Long, pixels: Float) =
         nstbtt_ScaleForMappingEmToPixels(info, pixels)

@@ -47,11 +47,9 @@ import net.minecraft.client.Minecraft;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.polyfrost.oneconfig.api.ClassHasOverwrites;
-import org.polyfrost.oneconfig.api.ui.v1.api.NanoSvgApi;
-import org.polyfrost.oneconfig.api.ui.v1.api.NanoVgApi;
-import org.polyfrost.oneconfig.api.ui.v1.api.StbApi;
-import org.polyfrost.oneconfig.api.ui.v1.api.TinyFdApi;
+import org.polyfrost.oneconfig.api.ui.v1.api.*;
 import org.polyfrost.oneconfig.api.ui.v1.UIManager;
 import org.polyfrost.oneconfig.api.ui.v1.internal.wrappers.MCWindow;
 import org.polyfrost.oneconfig.api.ui.v1.internal.wrappers.PolyUIScreen;
@@ -132,6 +130,11 @@ public class UIManagerImpl implements UIManager {
         } catch (Exception e) {
             throw new RuntimeException("Failed to get valid rendering implementation", e);
         }
+    }
+
+    @Override
+    public @Nullable RendererExt getRendererExt() {
+        return (renderer instanceof RendererExt ? (RendererExt) renderer : null);
     }
 
     @Override

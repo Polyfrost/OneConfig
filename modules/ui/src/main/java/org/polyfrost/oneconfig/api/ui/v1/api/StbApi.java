@@ -12,15 +12,15 @@ public interface StbApi {
 
     void image_write_png(String filename, int w, int h, int comp, ByteBuffer data, int strideInBytes);
 
-    long createFontInfo();
+    long font_CreateFontInfo();
 
-    long createPackRange();
+    long font_CreatePackRange();
 
-    long createPackedCharArray(int capacity);
+    long font_CreatePackedCharArray(int capacity);
 
-    long createPackContext();
+    long font_CreatePackContext();
 
-    boolean initFont(long info, ByteBuffer data);
+    boolean font_InitFont(long info, ByteBuffer data);
 
     float font_ScaleForMappingEmToPixels(long info, float pixels);
 
