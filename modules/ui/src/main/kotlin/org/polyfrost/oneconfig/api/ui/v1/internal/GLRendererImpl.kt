@@ -86,6 +86,7 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
     private var pixelRatio = 1f
     private var alphaCap = 1f
     private var popFlushNeeded = false
+    private val init get() = program != 0
 
     private var slotX = 0
     private var slotY = 0
@@ -284,6 +285,7 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
     }
 
     override fun init() {
+        if (init) return
         // check if instancing extension is available
         require(GlCapabilities.isGl21Available) { "At least OpenGL 2.1 is required" }
         if (!GlCapabilities.isGl33Available) { // asm: skip check, both are core past 3.3
@@ -398,6 +400,7 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
     private fun flush() {
         if (count == 0) return
         buffer.flip()
+        val prevActive = glGetInteger(GL_ACTIVE_TEXTURE)
         val prevTex = glGetInteger(GL_TEXTURE_BINDING_2D)
         val prevProg = glGetInteger(GL_CURRENT_PROGRAM)
         val prevBuf = glGetInteger(GL_ARRAY_BUFFER_BINDING)
@@ -459,6 +462,7 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         if (prevDepth) glEnable(GL_DEPTH_TEST)
         if (prevCull) glEnable(GL_CULL_FACE)
         glUseProgram(prevProg)
+        glActiveTexture(prevActive)
         glBindTexture(GL_TEXTURE_2D, prevTex)
         glBindBuffer(GL_ARRAY_BUFFER, prevBuf)
         if (GlCapabilities.isGl3Available) org.lwjgl.opengl.GL30.glBindVertexArray(prevVao)
@@ -598,7 +602,7 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
             buffer.put(EMPTY_ROW) // zero radii
             buffer.put(r).put(g).put(b).put(a)
             buffer.put(EMPTY_ROW) // color1 unused
-            buffer.put(glyph.u).put(glyph.v).put(glyph.uw).put(glyph.vh)
+            buffer.put(glyph, 0, 4)
             buffer.put(-1f) // thickness = -1 for text
             penX += glyph.xAdvance * scaleFactor
             count += 1
@@ -796,18 +800,23 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
             h[0] / ATLAS_SIZE.toFloat()
         )
 
-        val prevTex = glGetInteger(GL_TEXTURE_BINDING_2D)
-        glBindTexture(GL_TEXTURE_2D, atlas)
-        glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
-        glPixelStorei(GL_UNPACK_ROW_LENGTH, 0)
-        glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0)
-        glPixelStorei(GL_UNPACK_SKIP_ROWS, 0)
-        glTexSubImage2D(GL_TEXTURE_2D, 0, slotX, slotY, w[0], h[0], GL_RGBA, GL_UNSIGNED_BYTE, d)
-        when (mipmapMode) {
-            1 -> org.lwjgl.opengl.GL30.glGenerateMipmap(GL_TEXTURE_2D)
-            2 -> org.lwjgl.opengl.EXTFramebufferObject.glGenerateMipmapEXT(GL_TEXTURE_2D)
+        synchronized(this) {
+            val prevActive = glGetInteger(GL_ACTIVE_TEXTURE)
+            val prevTex = glGetInteger(GL_TEXTURE_BINDING_2D)
+            glActiveTexture(GL_TEXTURE0)
+            glBindTexture(GL_TEXTURE_2D, atlas)
+            glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
+            glPixelStorei(GL_UNPACK_ROW_LENGTH, 0)
+            glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0)
+            glPixelStorei(GL_UNPACK_SKIP_ROWS, 0)
+            glTexSubImage2D(GL_TEXTURE_2D, 0, slotX, slotY, w[0], h[0], GL_RGBA, GL_UNSIGNED_BYTE, d)
+            when (mipmapMode) {
+                1 -> org.lwjgl.opengl.GL30.glGenerateMipmap(GL_TEXTURE_2D)
+                2 -> org.lwjgl.opengl.EXTFramebufferObject.glGenerateMipmapEXT(GL_TEXTURE_2D)
+            }
+            glBindTexture(GL_TEXTURE_2D, prevTex)
+            glActiveTexture(prevActive)
         }
-        glBindTexture(GL_TEXTURE_2D, prevTex)
         if (image.type == PolyImage.Type.Raster) stb.image_free(d)
 
         slotX += w[0]
@@ -976,30 +985,33 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
             stb.free(packed)
             stb.free(range)
 
-//            dumpAtlas()
-
-            val prevTex = glGetInteger(GL_TEXTURE_BINDING_2D)
-            glBindTexture(GL_TEXTURE_2D, atlas)
-            glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
-            glPixelStorei(GL_UNPACK_ROW_LENGTH, 0)
-            glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0)
-            glPixelStorei(GL_UNPACK_SKIP_ROWS, 0)
-            // can't write to the alpha channel in GL3 core! lol haha
-            glTexSubImage2D(
-                GL_TEXTURE_2D,
-                0,
-                sx,
-                sy,
-                FONT_MAX_BITMAP_W,
-                FONT_MAX_BITMAP_H,
-                GL_RED,
-                GL_UNSIGNED_BYTE,
-                bitMap
-            )
-            glBindTexture(GL_TEXTURE_2D, prevTex)
-            when (mipmapMode) {
-                1 -> org.lwjgl.opengl.GL30.glGenerateMipmap(GL_TEXTURE_2D)
-                2 -> org.lwjgl.opengl.EXTFramebufferObject.glGenerateMipmapEXT(GL_TEXTURE_2D)
+            synchronized(this@GLRendererImpl) {
+                val prevActive = glGetInteger(GL_ACTIVE_TEXTURE)
+                val prevTex = glGetInteger(GL_TEXTURE_BINDING_2D)
+                glActiveTexture(GL_TEXTURE0)
+                glBindTexture(GL_TEXTURE_2D, atlas)
+                glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
+                glPixelStorei(GL_UNPACK_ROW_LENGTH, 0)
+                glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0)
+                glPixelStorei(GL_UNPACK_SKIP_ROWS, 0)
+                // can't write to the alpha channel in GL3 core! lol haha
+                glTexSubImage2D(
+                    GL_TEXTURE_2D,
+                    0,
+                    sx,
+                    sy,
+                    FONT_MAX_BITMAP_W,
+                    FONT_MAX_BITMAP_H,
+                    GL_RED,
+                    GL_UNSIGNED_BYTE,
+                    bitMap
+                )
+                when (mipmapMode) {
+                    1 -> org.lwjgl.opengl.GL30.glGenerateMipmap(GL_TEXTURE_2D)
+                    2 -> org.lwjgl.opengl.EXTFramebufferObject.glGenerateMipmapEXT(GL_TEXTURE_2D)
+                }
+                glBindTexture(GL_TEXTURE_2D, prevTex)
+                glActiveTexture(prevActive)
             }
             slotX += totalSizeX
             atlasRowHeight = maxOf(atlasRowHeight, totalSizeY)
