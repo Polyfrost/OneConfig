@@ -26,17 +26,28 @@
 
 package org.polyfrost.oneconfig.api.config.v1;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import java.io.File;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 public class MainTest {
     @org.junit.jupiter.api.Test
     void test() {
+        File configFile = new File("config/test_mod.json");
+        assertTrue(!configFile.exists() || configFile.delete());
         TestConfig config = new TestConfig();
         config.initialize(true);
         Tree t = config.tree;
         assertEquals(t, ConfigManager.active().get(t.getID()));
         assertNotNull(t.get("chicken").getMetadata("visualizer"));
+        assertNull(t.get("reserved:overwritten"));
+        System.err.println(t);
+        assertTrue(TestConfig.chicken);
+        assertFalse(TestConfig.cow5);
+        config.loadFrom(new File(new File(new File(".").getParentFile(), "config-to-migrate-for-test"), "test_migration_mod.json").toPath());
+        assertNotNull(t.get("reserved:overwritten"));
+        assertFalse(TestConfig.chicken);
+        assertTrue(TestConfig.cow5);
         System.err.println(t);
     }
 }
