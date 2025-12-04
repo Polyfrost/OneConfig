@@ -7,6 +7,7 @@ import dev.deftu.omnicore.internal.client.render.shader.ShaderInternals
 import org.apache.logging.log4j.LogManager
 import org.lwjgl.BufferUtils
 import org.lwjgl.opengl.GL11.*
+import org.lwjgl.opengl.GL13
 import org.lwjgl.opengl.GL14.*
 import org.lwjgl.opengl.GL15.*
 import org.lwjgl.opengl.GL20.*
@@ -24,6 +25,7 @@ import org.polyfrost.polyui.unit.Vec4
 import org.polyfrost.polyui.utils.toDirectByteBuffer
 import org.polyfrost.polyui.utils.toDirectByteBufferNT
 import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import java.nio.FloatBuffer
 import kotlin.math.cos
 import kotlin.math.roundToInt
@@ -309,7 +311,9 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
 
     @Suppress("SameParameterValue")
     private fun glUniformMatrix3fv(location: Int, transpose: Boolean, array: FloatArray) {
-        ShaderInternals.uniformMatrix3(location, transpose, array)
+        val buffer = ByteBuffer.allocateDirect(array.size * 4).order(ByteOrder.nativeOrder()).asFloatBuffer().put(array)
+        buffer.flip()
+        ShaderInternals.uniformMatrix3(location, transpose, buffer)
     }
 
     override fun init() {
@@ -461,7 +465,8 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
             popFlushNeeded = false
         }
 
-        glActiveTexture(GL_TEXTURE0)
+        @Suppress("RemoveRedundantQualifierName")
+        GL13.glActiveTexture(GL_TEXTURE0)
         glBindTexture(GL_TEXTURE_2D, curTex)
 
         // Quad attrib
@@ -491,7 +496,8 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         if (prevDepth) glEnable(GL_DEPTH_TEST)
         if (prevCull) glEnable(GL_CULL_FACE)
         glUseProgram(prevProg)
-        glActiveTexture(prevActive)
+        @Suppress("RemoveRedundantQualifierName")
+        GL13.glActiveTexture(prevActive)
         glBindTexture(GL_TEXTURE_2D, prevTex)
         glBindBuffer(GL_ARRAY_BUFFER, prevBuf)
         if (GlCapabilities.isGl3Available) org.lwjgl.opengl.GL30.glBindVertexArray(prevVao)
@@ -819,7 +825,8 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
 
         val prevActive = glGetInteger(GL_ACTIVE_TEXTURE)
         val prevTex = glGetInteger(GL_TEXTURE_BINDING_2D)
-        glActiveTexture(GL_TEXTURE0)
+        @Suppress("RemoveRedundantQualifierName")
+        GL13.glActiveTexture(GL_TEXTURE0)
         glBindTexture(GL_TEXTURE_2D, atlas)
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
         glPixelStorei(GL_UNPACK_ROW_LENGTH, 0)
@@ -831,7 +838,8 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
             2 -> org.lwjgl.opengl.EXTFramebufferObject.glGenerateMipmapEXT(GL_TEXTURE_2D)
         }
         glBindTexture(GL_TEXTURE_2D, prevTex)
-        glActiveTexture(prevActive)
+        @Suppress("RemoveRedundantQualifierName")
+        GL13.glActiveTexture(prevActive)
 
         if (image.type == PolyImage.Type.Raster) stb.image_free(d)
 
@@ -1002,7 +1010,8 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
 
             val prevActive = glGetInteger(GL_ACTIVE_TEXTURE)
             val prevTex = glGetInteger(GL_TEXTURE_BINDING_2D)
-            glActiveTexture(GL_TEXTURE0)
+            @Suppress("RemoveRedundantQualifierName")
+            GL13.glActiveTexture(GL_TEXTURE0)
             glBindTexture(GL_TEXTURE_2D, atlas)
             glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
             glPixelStorei(GL_UNPACK_ROW_LENGTH, 0)
@@ -1025,7 +1034,8 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
                 2 -> org.lwjgl.opengl.EXTFramebufferObject.glGenerateMipmapEXT(GL_TEXTURE_2D)
             }
             glBindTexture(GL_TEXTURE_2D, prevTex)
-            glActiveTexture(prevActive)
+            @Suppress("RemoveRedundantQualifierName")
+            GL13.glActiveTexture(prevActive)
 
             slotX += totalSizeX + 1
             atlasRowHeight = maxOf(atlasRowHeight, totalSizeY + 1)
