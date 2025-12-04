@@ -85,7 +85,7 @@ public class PolyUIScreen extends OmniScreen implements BlurScreen {
         this.designedHeight = designedHeight;
         this.initialWidth = polyUI.getMaster().getWidth();
         this.initialHeight = polyUI.getMaster().getHeight();
-        this.blurs = blurs;
+        this.blurs = false; //todo fix blur
         this.pauses = pauses;
         this.close = onClose;
         //#if MC <= 1.12.2
@@ -239,7 +239,7 @@ public class PolyUIScreen extends OmniScreen implements BlurScreen {
 
     @Override
     public boolean hasBackgroundBlur() {
-        return blurs;
+        return false;
     }
 
 
