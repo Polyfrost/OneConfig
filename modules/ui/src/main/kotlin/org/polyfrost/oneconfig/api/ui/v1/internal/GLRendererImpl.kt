@@ -7,7 +7,7 @@ import dev.deftu.omnicore.internal.client.render.shader.ShaderInternals
 import org.apache.logging.log4j.LogManager
 import org.lwjgl.BufferUtils
 import org.lwjgl.opengl.GL11.*
-import org.lwjgl.opengl.GL13
+import org.lwjgl.opengl.GL13.*
 import org.lwjgl.opengl.GL14.*
 import org.lwjgl.opengl.GL15.*
 import org.lwjgl.opengl.GL20.*
@@ -25,7 +25,6 @@ import org.polyfrost.polyui.unit.Vec4
 import org.polyfrost.polyui.utils.toDirectByteBuffer
 import org.polyfrost.polyui.utils.toDirectByteBufferNT
 import java.nio.ByteBuffer
-import java.nio.ByteOrder
 import java.nio.FloatBuffer
 import kotlin.math.cos
 import kotlin.math.roundToInt
@@ -35,10 +34,9 @@ import kotlin.math.tan
 private val LOGGER = LogManager.getLogger("PolyUI/GLRenderer")
 
 private const val MAX_UI_DEPTH = 16
-private const val FONT_MAX_BITMAP_W = 1024
+private const val FONT_MAX_BITMAP_W = 1536
 private const val FONT_MAX_BITMAP_H = 512
 private const val ATLAS_SIZE = 2048
-private const val FONT_RENDER_SIZE = 24f // 48f scales nicely to 16f, 12f, 32f, etc.
 private const val ATLAS_SVG_UPSCALE_FACTOR = 2f
 private const val STRIDE = 4 + 4 + 4 + 4 + 4 + 1 // bounds, radii, color0, color1, UV, thick
 private const val MAX_BATCH = 1024
@@ -73,7 +71,8 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
     private val buffer = BufferUtils.createFloatBuffer(MAX_BATCH * STRIDE)
     private val scissorStack = IntArray(MAX_UI_DEPTH * 4)
     private val transformStack = Array(MAX_UI_DEPTH) { FloatArray(9) }
-    private val fonts = HashMap<Font, FontAtlas>()
+    private val transformBuffer = BufferUtils.createFloatBuffer(9)
+    private val fonts = HashMap<Int, FontAtlas>()
     private val init get() = program != 0
 
     // lateinit
@@ -103,11 +102,7 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
     private var curTex = 0
     private var transformDepth = 0
     private var curScissor = 0
-    private var transform = floatArrayOf(
-        1f, 0f, 0f,
-        0f, 1f, 0f,
-        0f, 0f, 1f
-    )
+    private var transform = IDENTITY.copyOf()
     private var viewportWidth = 0f
     private var viewportHeight = 0f
     private var pixelRatio = 1f
@@ -311,9 +306,10 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
 
     @Suppress("SameParameterValue")
     private fun glUniformMatrix3fv(location: Int, transpose: Boolean, array: FloatArray) {
-        val buffer = ByteBuffer.allocateDirect(array.size * 4).order(ByteOrder.nativeOrder()).asFloatBuffer().put(array)
-        buffer.flip()
-        ShaderInternals.uniformMatrix3(location, transpose, buffer)
+        val buf = transformBuffer
+        buf.clear()
+        buf.put(array).flip()
+        ShaderInternals.uniformMatrix3(location, transpose, buf)
     }
 
     override fun init() {
@@ -465,8 +461,7 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
             popFlushNeeded = false
         }
 
-        @Suppress("RemoveRedundantQualifierName")
-        GL13.glActiveTexture(GL_TEXTURE0)
+        glActiveTexture(GL_TEXTURE0)
         glBindTexture(GL_TEXTURE_2D, curTex)
 
         // Quad attrib
@@ -496,8 +491,7 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         if (prevDepth) glEnable(GL_DEPTH_TEST)
         if (prevCull) glEnable(GL_CULL_FACE)
         glUseProgram(prevProg)
-        @Suppress("RemoveRedundantQualifierName")
-        GL13.glActiveTexture(prevActive)
+        glActiveTexture(prevActive)
         glBindTexture(GL_TEXTURE_2D, prevTex)
         glBindBuffer(GL_ARRAY_BUFFER, prevBuf)
         if (GlCapabilities.isGl3Available) org.lwjgl.opengl.GL30.glBindVertexArray(prevVao)
@@ -613,7 +607,7 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
     }
 
     override fun text(font: Font, x: Float, y: Float, text: String, color: Color, fontSize: Float) {
-        val fAtlas = getFontAtlas(font)
+        val fAtlas = getFontAtlas(font, fontSize)
         if (count >= MAX_BATCH) flush()
         if (count > 0 && curTex != atlas) flush()
         curTex = atlas
@@ -645,7 +639,7 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
     }
 
     override fun textBounds(font: Font, text: String, fontSize: Float): Vec2 {
-        return getFontAtlas(font).measure(text, fontSize)
+        return getFontAtlas(font, fontSize).measure(text, fontSize)
     }
 
     override fun line(x1: Float, y1: Float, x2: Float, y2: Float, color: Color, width: Float) {
@@ -825,8 +819,7 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
 
         val prevActive = glGetInteger(GL_ACTIVE_TEXTURE)
         val prevTex = glGetInteger(GL_TEXTURE_BINDING_2D)
-        @Suppress("RemoveRedundantQualifierName")
-        GL13.glActiveTexture(GL_TEXTURE0)
+        glActiveTexture(GL_TEXTURE0)
         glBindTexture(GL_TEXTURE_2D, atlas)
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
         glPixelStorei(GL_UNPACK_ROW_LENGTH, 0)
@@ -838,8 +831,7 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
             2 -> org.lwjgl.opengl.EXTFramebufferObject.glGenerateMipmapEXT(GL_TEXTURE_2D)
         }
         glBindTexture(GL_TEXTURE_2D, prevTex)
-        @Suppress("RemoveRedundantQualifierName")
-        GL13.glActiveTexture(prevActive)
+        glActiveTexture(prevActive)
 
         if (image.type == PolyImage.Type.Raster) stb.image_free(d)
 
@@ -868,25 +860,29 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         }
     }
 
-    private fun getFontAtlas(font: Font): FontAtlas {
-        return fonts.getOrPut(font) {
+    private fun getFontAtlas(font: Font, fontSize: Float): FontAtlas {
+        val renderSize = when(fontSize) {
+            in 0f..36f -> 24f
+            else -> 48f
+        }
+        return fonts.getOrPut(font.resourcePath.hashCode() + renderSize.toInt()) {
             val data = font.load {
                 LOGGER.error("Failed to load font: $font", it)
-                return@getOrPut fonts[PolyUI.defaultFonts.regular]
+                return@getOrPut fonts[PolyUI.defaultFonts.regular.resourcePath.hashCode() + renderSize.toInt()]
                     ?: throw IllegalStateException("Default font couldn't be loaded")
             }.toDirectByteBuffer()
-            FontAtlas(data, FONT_RENDER_SIZE)
+            FontAtlas(data, renderSize)
         }
     }
 
     private var i = 0
-    fun dumpTexture(texId: Int = atlas) {
+    override fun dumpAtlas() {
         val buf = BufferUtils.createByteBuffer(ATLAS_SIZE * ATLAS_SIZE * 4)
-        glBindTexture(GL_TEXTURE_2D, texId)
+        glBindTexture(GL_TEXTURE_2D, atlas)
         glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, buf)
         glBindTexture(GL_TEXTURE_2D, 0)
         stb.image_write_png(
-            "debug_texture$texId($i).png",
+            "debug_atlas$i.png",
             ATLAS_SIZE,
             ATLAS_SIZE,
             4,
@@ -894,10 +890,6 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
             ATLAS_SIZE * 4
         )
         i++
-    }
-
-    override fun dumpAtlas() {
-        dumpTexture(atlas)
     }
 
     override fun cleanup() {
@@ -1010,8 +1002,7 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
 
             val prevActive = glGetInteger(GL_ACTIVE_TEXTURE)
             val prevTex = glGetInteger(GL_TEXTURE_BINDING_2D)
-            @Suppress("RemoveRedundantQualifierName")
-            GL13.glActiveTexture(GL_TEXTURE0)
+            glActiveTexture(GL_TEXTURE0)
             glBindTexture(GL_TEXTURE_2D, atlas)
             glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
             glPixelStorei(GL_UNPACK_ROW_LENGTH, 0)
@@ -1034,8 +1025,7 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
                 2 -> org.lwjgl.opengl.EXTFramebufferObject.glGenerateMipmapEXT(GL_TEXTURE_2D)
             }
             glBindTexture(GL_TEXTURE_2D, prevTex)
-            @Suppress("RemoveRedundantQualifierName")
-            GL13.glActiveTexture(prevActive)
+            glActiveTexture(prevActive)
 
             slotX += totalSizeX + 1
             atlasRowHeight = maxOf(atlasRowHeight, totalSizeY + 1)
