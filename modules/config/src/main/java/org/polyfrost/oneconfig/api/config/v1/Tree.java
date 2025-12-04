@@ -154,7 +154,7 @@ public class Tree extends Node implements Serializable {
         if (old == n) return this; // yeah, ok.
         if (old != null) {
 //            LOGGER.warn("Replacing existing node with id {}: {} -> {}", n.getID(), old, n);
-            n.overwrite(old, false, false);
+            n.overwrite(old, false);
         }
         theMap.put(n.getID(), n);
         return this;
