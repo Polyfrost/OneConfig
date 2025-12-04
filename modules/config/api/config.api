@@ -72,12 +72,13 @@ public abstract class org/polyfrost/oneconfig/api/config/v1/Property : org/polyf
 	public fun onDisplayChange (Ljava/util/function/Consumer;)V
 	public fun overwrite (Lorg/polyfrost/oneconfig/api/config/v1/Node;Z)V
 	public static fun recast (Lorg/polyfrost/oneconfig/api/config/v1/Property;)Lorg/polyfrost/oneconfig/api/config/v1/Property;
+	public final fun removeCallback (Ljava/util/function/Predicate;)Z
 	public fun revaluateDisplay ()V
-	public final fun set (Ljava/lang/Object;)V
+	public final fun set (Ljava/lang/Object;)Z
 	protected abstract fun set0 (Ljava/lang/Object;)V
-	public final fun setAs (Ljava/lang/Object;)V
-	public final fun setAsReferential (Ljava/lang/Object;)V
-	public fun setReferential (Ljava/lang/Object;)V
+	public final fun setAs (Ljava/lang/Object;)Z
+	public final fun setAsReferential (Ljava/lang/Object;)Z
+	public fun setReferential (Ljava/lang/Object;)Z
 	public final fun toString ()Ljava/lang/String;
 }
 

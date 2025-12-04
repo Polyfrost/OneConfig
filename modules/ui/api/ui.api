@@ -43,6 +43,7 @@ public abstract interface class org/polyfrost/oneconfig/api/ui/v1/UIManager {
 	public abstract fun getDefaultInstance ()Lorg/polyfrost/polyui/PolyUI;
 	public abstract fun getRenderPipeline ()Ldev/deftu/omnicore/api/client/render/pipeline/OmniRenderPipeline;
 	public abstract fun getRenderer ()Lorg/polyfrost/polyui/renderer/Renderer;
+	public abstract fun getRendererExt ()Lorg/polyfrost/oneconfig/api/ui/v1/api/RendererExt;
 	public abstract fun getTinyFD ()Lorg/polyfrost/oneconfig/api/ui/v1/api/TinyFdApi;
 }
 
@@ -118,13 +119,18 @@ public abstract interface class org/polyfrost/oneconfig/api/ui/v1/api/NanoVgApi$
 	public abstract fun NVG_ROUND ()I
 }
 
+public abstract interface class org/polyfrost/oneconfig/api/ui/v1/api/RendererExt {
+	public abstract fun dumpAtlas ()V
+}
+
 public abstract interface class org/polyfrost/oneconfig/api/ui/v1/api/StbApi {
-	public abstract fun createFontInfo ()J
-	public abstract fun createPackContext ()J
-	public abstract fun createPackRange ()J
-	public abstract fun createPackedCharArray (I)J
+	public abstract fun font_CreateFontInfo ()J
+	public abstract fun font_CreatePackContext ()J
+	public abstract fun font_CreatePackRange ()J
+	public abstract fun font_CreatePackedCharArray (I)J
 	public abstract fun font_GetFontVMetrics (J[I[I[I)V
 	public abstract fun font_GetPackedGlyph (JI)J
+	public abstract fun font_InitFont (JLjava/nio/ByteBuffer;)Z
 	public abstract fun font_PackBegin (JLjava/nio/ByteBuffer;IIIIJ)Z
 	public abstract fun font_PackEnd (J)V
 	public abstract fun font_PackFontRange (JLjava/nio/ByteBuffer;IFIIJ)Z
@@ -145,7 +151,6 @@ public abstract interface class org/polyfrost/oneconfig/api/ui/v1/api/StbApi {
 	public abstract fun image_free (Ljava/nio/ByteBuffer;)V
 	public abstract fun image_load_from_memory (Ljava/nio/ByteBuffer;[I[I[II)Ljava/nio/ByteBuffer;
 	public abstract fun image_write_png (Ljava/lang/String;IIILjava/nio/ByteBuffer;I)V
-	public abstract fun initFont (JLjava/nio/ByteBuffer;)Z
 }
 
 public abstract interface class org/polyfrost/oneconfig/api/ui/v1/api/TinyFdApi {
