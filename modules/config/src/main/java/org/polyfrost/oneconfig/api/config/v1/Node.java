@@ -187,6 +187,10 @@ public abstract class Node {
         return metadata != null;
     }
 
+    public void overwrite(Node with, boolean preserveMissingOptions) {
+        overwrite(with, preserveMissingOptions, false);
+    }
+
     /**
      * Overwrite all data in this node with the data from another node.
      * <br><ul>
@@ -198,7 +202,7 @@ public abstract class Node {
      * @param with the node to overwrite this with
      * @param preserveMissingOptions if true, any properties that are missing in THIS tree that are present in the input tree, will be added to this tree.
      */
-    public abstract void overwrite(Node with, boolean preserveMissingOptions);
+    public abstract void overwrite(Node with, boolean preserveMissingOptions, boolean markOverwritten);
 
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     @VisibleForTesting

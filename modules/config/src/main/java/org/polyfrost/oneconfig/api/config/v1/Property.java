@@ -181,15 +181,19 @@ public abstract class Property<T> extends Node implements Serializable {
 
     @Override
     @SuppressWarnings({"unchecked", "rawtypes"})
-    public void overwrite(Node with, boolean preserveMissingOptions) {
+    public void overwrite(Node with, boolean preserveMissingOptions, boolean markOverwritten) {
         if (!(with instanceof Property)) throw new IllegalArgumentException("Cannot overwrite a property with a non-property");
         if (!Objects.equals(this.getID(), with.getID())) throw new IllegalArgumentException("ID should be the same for overwrite");
+        if (markOverwritten && Objects.equals(getMetadata("overwritten"), true)) return;
         Property<?> that = (Property<?>) with;
         this.addMetadata(that.getMetadata());
         Object in = that.get();
         if (in != null) this.setAsReferential(in);
         if (that.conditions != null) this.addDisplayCondition(that.conditions);
         if (that.callbacks != null) addCallback((Collection) that.callbacks);
+        if (markOverwritten) {
+            addMetadata("overwritten", true);
+        }
     }
 
     /**

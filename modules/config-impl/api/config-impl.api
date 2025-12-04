@@ -25,7 +25,6 @@ public abstract class org/polyfrost/oneconfig/api/config/v1/Config {
 	protected fun initialize (Z)V
 	protected fun loadFrom (Ljava/lang/String;)V
 	protected fun loadFrom (Ljava/nio/file/Path;)V
-	protected fun loadFromAndDelete (Ljava/nio/file/Path;)V
 	protected fun makeTree ()Lorg/polyfrost/oneconfig/api/config/v1/Tree;
 	public fun preload ()V
 	protected fun restoreDefaults ()V
