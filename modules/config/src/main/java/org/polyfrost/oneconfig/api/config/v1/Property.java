@@ -181,15 +181,29 @@ public abstract class Property<T> extends Node implements Serializable {
 
     @Override
     @SuppressWarnings({"unchecked", "rawtypes"})
-    public void overwrite(Node with, boolean preserveMissingOptions) {
+    public void overwrite(Node with, boolean preserveMissingOptions, boolean skipOverwritten, @Nullable Tree root) {
         if (!(with instanceof Property)) throw new IllegalArgumentException("Cannot overwrite a property with a non-property");
         if (!Objects.equals(this.getID(), with.getID())) throw new IllegalArgumentException("ID should be the same for overwrite");
+        if (skipOverwritten && root == null) {
+            throw new IllegalArgumentException("Cannot mark overwritten without a root tree!");
+        }
+        Node overwritten = null;
+        if (root != null) {
+            overwritten = root.get("reserved:overwritten");
+        }
+        if (skipOverwritten && overwritten instanceof Tree && !Objects.equals(((Tree) overwritten).get(with.getID()), null)) {
+            return;
+        }
         Property<?> that = (Property<?>) with;
         this.addMetadata(that.getMetadata());
         Object in = that.get();
         if (in != null) this.setAsReferential(in);
         if (that.conditions != null) this.addDisplayCondition(that.conditions);
         if (that.callbacks != null) addCallback((Collection) that.callbacks);
+        if (root != null) {
+            overwritten = root.getOrPutChild("reserved:overwritten");
+            ((Tree) overwritten).put(new Tree(that.getID(), null, null, null));
+        }
     }
 
     /**
