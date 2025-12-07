@@ -87,16 +87,17 @@ object KeybindManager {
         try {
             if (char.isValid() && inputManager.mods <= 2) { // asm: only allow no mod or shift mod for char input
                 if (down) inputManager.keyTyped(char.code)
+                return
             }
             val mod = when (keyCode) {
                 OmniKeys.KEY_LEFT_SHIFT.code -> KeyModifiers.LSHIFT
                 OmniKeys.KEY_LEFT_CONTROL.code -> if (PolyUI.isOnMac) KeyModifiers.LMETA else KeyModifiers.LPRIMARY
-//                OmniKeys.KEY_LMENU -> KeyModifiers.LSECONDARY
-//                OmniKeys.KEY_LMETA -> if (PolyUI.isOnMac) KeyModifiers.LPRIMARY else KeyModifiers.LSECONDARY
+                OmniKeys.KEY_LEFT_ALT.code -> KeyModifiers.LSECONDARY
+                OmniKeys.KEY_LEFT_SUPER.code -> if (PolyUI.isOnMac) KeyModifiers.LPRIMARY else KeyModifiers.LSECONDARY
                 OmniKeys.KEY_RIGHT_SHIFT.code -> KeyModifiers.RSHIFT
                 OmniKeys.KEY_RIGHT_CONTROL.code -> if (PolyUI.isOnMac) KeyModifiers.RMETA else KeyModifiers.RPRIMARY
-//                OmniKeys.KEY_RIGHT_MENU -> KeyModifiers.RSECONDARY
-//                OmniKeys.KEY_RIGHT_META -> if (PolyUI.isOnMac) KeyModifiers.RPRIMARY else KeyModifiers.RSECONDARY
+                OmniKeys.KEY_RIGHT_ALT.code -> KeyModifiers.RSECONDARY
+                OmniKeys.KEY_RIGHT_SUPER.code -> if (PolyUI.isOnMac) KeyModifiers.RPRIMARY else KeyModifiers.RSECONDARY
                 else -> null
             }
 
