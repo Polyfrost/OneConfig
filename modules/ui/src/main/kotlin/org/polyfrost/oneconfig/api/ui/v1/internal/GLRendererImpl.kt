@@ -29,6 +29,7 @@ import java.nio.FloatBuffer
 import kotlin.math.cos
 import kotlin.math.roundToInt
 import kotlin.math.sin
+import kotlin.math.sqrt
 import kotlin.math.tan
 
 private val LOGGER = LogManager.getLogger("PolyUI/GLRenderer")
@@ -101,7 +102,7 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
     private var count = 0
     private var curTex = 0
     private var transformDepth = 0
-    private var curScissor = 0
+    private var scissorDepth = 0
     private var transform = IDENTITY.copyOf()
     private var viewportWidth = 0f
     private var viewportHeight = 0f
@@ -109,10 +110,9 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
     private var alphaCap = 1f
     private var popFlushNeeded = false
 
+    // atlas data
     private var slotX = 0
     private var slotY = 0
-
-    /** current max height of the currently active row in the atlas. */
     private var atlasRowHeight = 0
 
     private val FRAG = """
@@ -149,24 +149,24 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
             float rRight = mix(r.z, r.y, py); // bottom-right / top-right
             float radius = mix(rLeft, rRight, px);
 
-            vec2 q = abs(p) - (b - vec2(radius));
+            vec2 q = abs(p) - (b - radius);
             return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - radius;
         }
 
         float hollowRoundedBoxSDF(vec2 p, vec2 b, vec4 r, float thickness) {
-            float outer = roundedBoxSDF(p, b + vec2(0.2), r);
-            float inner = roundedBoxSDF(p, b - vec2(thickness), max(r - vec4(thickness), 0.0)); 
+            float outer = roundedBoxSDF(p, b + 0.2, r + 0.2);
+            float inner = roundedBoxSDF(p, b - thickness, max(r - thickness, 0.0)); 
             return max(outer, -inner);
         }
 
         float roundBoxSDF(vec2 p, vec2 halfSize, float radius) {
-            vec2 q = abs(p) - (halfSize - vec2(radius));
+            vec2 q = abs(p) - (halfSize - radius);
             return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - radius;
         }
 
         void main() {
-            vec2 center = vRect.xy + 0.5 * vRect.zw;
             vec2 halfSize = 0.5 * vRect.zw;
+            vec2 center = vRect.xy + halfSize;
             vec2 p = vPos - center;
 
             float d = (vThickness > 0.0) ? hollowRoundedBoxSDF(p, halfSize, vRadii, vThickness) : roundedBoxSDF(p, halfSize, vRadii);
@@ -192,6 +192,10 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
                 float dist = roundBoxSDF(p, halfSize, vUV.x);
                 float t = clamp((dist + vUV.y * 0.5) / vUV.y, 0.0, 1.0);
                 col = mix(vColor0, vColor1, t);
+            }
+            else if (vThickness == -5.0) { // drop shadow, vUV.x as spread and vUV.y as blur
+                float dShadow = roundBoxSDF(p, halfSize + vUV.x, vRadii.x);
+                col = vec4(vColor0.rgb, vColor0.a * (1.0 - smoothstep(-vUV.y, vUV.y, dShadow)));
             }
 
             // Proper antialiasing based on distance field
@@ -404,11 +408,12 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
     }
 
     override fun beginFrame(width: Float, height: Float, pixelRatio: Float) {
-        curScissor = 0
+        scissorDepth = 0
         alphaCap = 1f
         count = 0
         buffer.clear()
         transform.set(IDENTITY)
+        popFlushNeeded = false
         transformDepth = 0
         val prevProg = glGetInteger(GL_CURRENT_PROGRAM)
         glUseProgram(program)
@@ -608,6 +613,8 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
 
     override fun text(font: Font, x: Float, y: Float, text: String, color: Color, fontSize: Float) {
         val fAtlas = getFontAtlas(font, fontSize)
+        val s = transformScale()
+        val fAtlasForRendering = if (s == 1f) fAtlas else getFontAtlas(font, fontSize * s)
         if (count >= MAX_BATCH) flush()
         if (count > 0 && curTex != atlas) flush()
         curTex = atlas
@@ -631,7 +638,7 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
             buffer.put(EMPTY_ROW) // zero radii
             buffer.put(r).put(g).put(b).put(a)
             buffer.put(EMPTY_ROW) // color1 unused
-            buffer.put(glyph, 0, 4)
+            buffer.put(if (s == 1f) glyph else fAtlasForRendering.get(c), 0, 4)
             buffer.put(-1f) // thickness = -1 for text
             penX += glyph.xAdvance * scaleFactor
             count += 1
@@ -656,7 +663,14 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         spread: Float,
         radius: Float
     ) {
-        // rect(x, y, width, height, )
+        if (count >= MAX_BATCH) flush()
+        buffer.put(x).put(y).put(width).put(height)
+        buffer.put(EMPTY_ROW) // zero radii
+        buffer.put(0f).put(0f).put(0f).put(alphaCap) // black, alpha to alphaCap
+        buffer.put(EMPTY_ROW) // color1 unused
+        buffer.put(spread).put(blur).put(0f).put(0f)
+        buffer.put(-5f) // thickness = -5 for drop shadow
+        count += 1
     }
 
     override fun pushScissor(x: Float, y: Float, width: Float, height: Float) {
@@ -665,24 +679,24 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         val ny = (viewportHeight - (y + height) * pixelRatio).roundToInt()
         val nw = (width * pixelRatio).roundToInt()
         val nh = (height * pixelRatio).roundToInt()
-        scissorStack[curScissor++] = nx
-        scissorStack[curScissor++] = ny
-        scissorStack[curScissor++] = nw
-        scissorStack[curScissor++] = nh
+        scissorStack[scissorDepth++] = nx
+        scissorStack[scissorDepth++] = ny
+        scissorStack[scissorDepth++] = nw
+        scissorStack[scissorDepth++] = nh
         glEnable(GL_SCISSOR_TEST)
         glScissor(nx, ny, nw, nh)
     }
 
     override fun pushScissorIntersecting(x: Float, y: Float, width: Float, height: Float) {
-        if (curScissor < 4) {
+        if (scissorDepth < 4) {
             pushScissor(x, y, width, height)
             return
         }
         flush()
-        val px = scissorStack[curScissor - 4]
-        val py = scissorStack[curScissor - 3]
-        val pw = scissorStack[curScissor - 2]
-        val ph = scissorStack[curScissor - 1]
+        val px = scissorStack[scissorDepth - 4]
+        val py = scissorStack[scissorDepth - 3]
+        val pw = scissorStack[scissorDepth - 2]
+        val ph = scissorStack[scissorDepth - 1]
         val nx = (x * pixelRatio).roundToInt()
         val ny = (viewportHeight - (y + height) * pixelRatio).roundToInt()
 
@@ -691,10 +705,10 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         val iw = maxOf(0, minOf(nx + (width * pixelRatio).roundToInt(), px + pw) - ix)
         val ih = maxOf(0, minOf(ny + (height * pixelRatio).roundToInt(), py + ph) - iy)
 
-        scissorStack[curScissor++] = ix
-        scissorStack[curScissor++] = iy
-        scissorStack[curScissor++] = iw
-        scissorStack[curScissor++] = ih
+        scissorStack[scissorDepth++] = ix
+        scissorStack[scissorDepth++] = iy
+        scissorStack[scissorDepth++] = iw
+        scissorStack[scissorDepth++] = ih
 
         glEnable(GL_SCISSOR_TEST)
         glScissor(ix, iy, iw, ih)
@@ -702,16 +716,16 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
 
     override fun popScissor() {
         flush()
-        if (curScissor <= 4) {
-            curScissor = 0
+        if (scissorDepth <= 4) {
+            scissorDepth = 0
             glDisable(GL_SCISSOR_TEST)
             return
         }
-        curScissor -= 4
-        val x = scissorStack[curScissor - 4]
-        val y = scissorStack[curScissor - 3]
-        val width = scissorStack[curScissor - 2]
-        val height = scissorStack[curScissor - 1]
+        scissorDepth -= 4
+        val x = scissorStack[scissorDepth - 4]
+        val y = scissorStack[scissorDepth - 3]
+        val width = scissorStack[scissorDepth - 2]
+        val height = scissorStack[scissorDepth - 1]
         glEnable(GL_SCISSOR_TEST)
         glScissor(x, y, width, height)
     }
@@ -738,6 +752,12 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
             transform.setThenClear(transformStack[--transformDepth])
         }
         popFlushNeeded = true
+    }
+
+    private fun transformScale(): Float {
+        val sx = sqrt(transform[0] * transform[0] + transform[3] * transform[3])
+        val sy = sqrt(transform[1] * transform[1] + transform[4] * transform[4])
+        return (sx + sy) * 0.5f
     }
 
     override fun translate(x: Float, y: Float) {
