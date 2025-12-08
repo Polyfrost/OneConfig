@@ -27,6 +27,7 @@
 package org.polyfrost.oneconfig.api.platform.v1;
 
 import dev.deftu.omnicore.api.client.render.OmniRenderingContext;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface ScreenPlatform {
@@ -38,6 +39,16 @@ public interface ScreenPlatform {
     int windowWidth();
 
     int windowHeight();
+
+    /**
+     * Return the result of glGetInteger(GL_VIEWPORT).
+     * If in is supplied, it will be set to the result and returned. If not, a new array will be created.
+     */
+    int @NotNull [] glViewport(int @Nullable [] in);
+
+    default int @NotNull [] glViewport() {
+        return glViewport(null);
+    }
 
     void renderLegacyHuds(OmniRenderingContext ctx);
 

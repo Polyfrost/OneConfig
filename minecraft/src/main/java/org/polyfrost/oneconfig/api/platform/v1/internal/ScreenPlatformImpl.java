@@ -29,7 +29,9 @@ package org.polyfrost.oneconfig.api.platform.v1.internal;
 import dev.deftu.omnicore.api.client.render.OmniRenderingContext;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.lwjgl.BufferUtils;
 import org.polyfrost.oneconfig.api.event.v1.EventDelay;
 import org.polyfrost.oneconfig.api.hud.v1.LegacyHud;
 import org.polyfrost.oneconfig.api.platform.v1.ScreenPlatform;
@@ -38,12 +40,22 @@ import org.polyfrost.polyui.PolyUI;
 import org.polyfrost.polyui.component.Component;
 import org.polyfrost.polyui.component.Drawable;
 
+import java.nio.Buffer;
+import java.nio.IntBuffer;
 import java.util.List;
 
 public class ScreenPlatformImpl implements ScreenPlatform {
 //    //#if MC > 1.13
 //    //$$ private final float[] pixelScaleFactor = new float[1];
 //    //#endif
+
+    private final IntBuffer VIEWPORT = BufferUtils.createIntBuffer(
+            //#if MC >= 1.13
+            //$$ 4
+            //#else
+            16
+            //#endif
+    );
 
     @Override
     public int viewportWidth() {
@@ -79,6 +91,19 @@ public class ScreenPlatformImpl implements ScreenPlatform {
         //#else
         return (int) (Minecraft.getMinecraft().displayHeight / org.lwjgl.opengl.Display.getPixelScaleFactor());
         //#endif
+    }
+
+    @Override
+    public int @NotNull [] glViewport(int @Nullable [] in) {
+        ((Buffer) VIEWPORT).clear();
+        //#if MC >= 1.13
+        //$$ org.lwjgl.opengl.GL11.glGetIntegerv(org.lwjgl.opengl.GL11.GL_VIEWPORT, VIEWPORT);
+        //#else
+        org.lwjgl.opengl.GL11.glGetInteger(org.lwjgl.opengl.GL11.GL_VIEWPORT, VIEWPORT);
+        //#endif
+        int[] out = in != null ? in : new int[4];
+        VIEWPORT.get(out, 0, 4);
+        return out;
     }
 
     public void renderLegacyHuds(OmniRenderingContext ctx) {

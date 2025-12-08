@@ -39,7 +39,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.MustBeInvokedByOverriders;
 import org.jetbrains.annotations.NotNull;
-import org.lwjgl.BufferUtils;
 import org.polyfrost.oneconfig.api.platform.v1.Platform;
 import org.polyfrost.oneconfig.api.ui.v1.Notifications;
 import org.polyfrost.oneconfig.api.ui.v1.UIManager;
@@ -48,8 +47,6 @@ import org.polyfrost.polyui.PolyUI;
 import org.polyfrost.polyui.component.Drawable;
 import org.polyfrost.polyui.data.Cursor;
 
-import java.nio.Buffer;
-import java.nio.IntBuffer;
 import java.util.function.Consumer;
 
 import static org.lwjgl.opengl.GL11.*;
@@ -65,13 +62,7 @@ public class PolyUIScreen extends OmniScreen implements BlurScreen {
     private final float designedWidth, designedHeight, initialWidth, initialHeight;
     private final boolean pauses, blurs;
     private final Consumer<PolyUI> close;
-    private final IntBuffer VIEWPORT = BufferUtils.createIntBuffer(
-            //#if MC >= 1.13
-            //$$ 4
-            //#else
-            16
-            //#endif
-    );
+    private final int[] viewport = new int[4];
 
     //#if MC < 1.13
     private int mx, my;
@@ -130,12 +121,7 @@ public class PolyUIScreen extends OmniScreen implements BlurScreen {
             //#if MC >= 1.21.5
             //$$ kotlin.jvm.functions.Function0<kotlin.Unit> unbind = dev.deftu.omnicore.api.client.framebuffer.OmniFramebuffers.getMain().bind();
             //#endif
-            ((Buffer) VIEWPORT).clear();
-            //#if MC >= 1.13
-            //$$ glGetIntegerv(GL_VIEWPORT, VIEWPORT);
-            //#else
-            glGetInteger(GL_VIEWPORT, VIEWPORT);
-            //#endif
+            Platform.screen().glViewport(viewport);
             float factor = Platform.screen().pixelRatio();
             int w = (int) (polyUI.getMaster().getWidth() * factor);
             int h = (int) (polyUI.getMaster().getHeight() * factor);
@@ -143,7 +129,7 @@ public class PolyUIScreen extends OmniScreen implements BlurScreen {
             int y = Platform.screen().viewportHeight() / 2 - h / 2;
             glViewport(x, y, w, h);
             polyUI.render();
-            glViewport(VIEWPORT.get(), VIEWPORT.get(), VIEWPORT.get(), VIEWPORT.get());
+            glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
             //#if MC >= 1.21.5
             //$$ unbind.invoke();
             //#endif

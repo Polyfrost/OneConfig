@@ -11,6 +11,7 @@ import org.lwjgl.opengl.GL13.*
 import org.lwjgl.opengl.GL14.*
 import org.lwjgl.opengl.GL15.*
 import org.lwjgl.opengl.GL20.*
+import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.api.NanoSvgApi
 import org.polyfrost.oneconfig.api.ui.v1.api.RendererExt
 import org.polyfrost.oneconfig.api.ui.v1.api.StbApi
@@ -99,12 +100,11 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
 
 
     // Current batch state
+    private val viewport = IntArray(4)
     private var count = 0
     private var transformDepth = 0
     private var scissorDepth = 0
     private var transform = IDENTITY.copyOf()
-    private var viewportWidth = 0f
-    private var viewportHeight = 0f
     private var pixelRatio = 1f
     private var alphaCap = 1f
     private var popFlushNeeded = false
@@ -420,8 +420,7 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         glUniformMatrix3fv(uTransform, false, transform)
         glUseProgram(prevProg)
         glDisable(GL_SCISSOR_TEST)
-        viewportWidth = width * pixelRatio
-        viewportHeight = height * pixelRatio
+        Platform.screen().glViewport(viewport)
         this.pixelRatio = pixelRatio
     }
 
@@ -671,7 +670,7 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
     override fun pushScissor(x: Float, y: Float, width: Float, height: Float) {
         flush()
         val nx = (x * pixelRatio).roundToInt()
-        val ny = (viewportHeight - (y + height) * pixelRatio).roundToInt()
+        val ny = (viewport[3] - (y + height) * pixelRatio).roundToInt()
         val nw = (width * pixelRatio).roundToInt()
         val nh = (height * pixelRatio).roundToInt()
         scissorStack[scissorDepth++] = nx
@@ -679,7 +678,7 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         scissorStack[scissorDepth++] = nw
         scissorStack[scissorDepth++] = nh
         glEnable(GL_SCISSOR_TEST)
-        glScissor(nx, ny, nw, nh)
+        glScissor(nx + viewport[0], ny + viewport[1], nw, nh)
     }
 
     override fun pushScissorIntersecting(x: Float, y: Float, width: Float, height: Float) {
@@ -693,7 +692,7 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         val pw = scissorStack[scissorDepth - 2]
         val ph = scissorStack[scissorDepth - 1]
         val nx = (x * pixelRatio).roundToInt()
-        val ny = (viewportHeight - (y + height) * pixelRatio).roundToInt()
+        val ny = (viewport[3] - (y + height) * pixelRatio).roundToInt()
 
         val ix = maxOf(nx, px)
         val iy = maxOf(ny, py)
@@ -706,7 +705,7 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         scissorStack[scissorDepth++] = ih
 
         glEnable(GL_SCISSOR_TEST)
-        glScissor(ix, iy, iw, ih)
+        glScissor(ix + viewport[0], iy + viewport[1], iw, ih)
     }
 
     override fun popScissor() {
@@ -717,12 +716,12 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
             return
         }
         scissorDepth -= 4
-        val x = scissorStack[scissorDepth - 4]
-        val y = scissorStack[scissorDepth - 3]
-        val width = scissorStack[scissorDepth - 2]
-        val height = scissorStack[scissorDepth - 1]
+        val nx = scissorStack[scissorDepth - 4]
+        val ny = scissorStack[scissorDepth - 3]
+        val nw = scissorStack[scissorDepth - 2]
+        val nh = scissorStack[scissorDepth - 1]
         glEnable(GL_SCISSOR_TEST)
-        glScissor(x, y, width, height)
+        glScissor(nx + viewport[0], ny + viewport[1], nw, nh)
     }
 
     override fun globalAlpha(alpha: Float) {
@@ -883,7 +882,7 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         return fonts.getOrPut(font.resourcePath.hashCode() + renderSize.toInt()) {
             val data = font.load {
                 LOGGER.error("Failed to load font: $font", it)
-                return@getOrPut fonts[PolyUI.defaultFonts.regular.resourcePath.hashCode() + renderSize.toInt()]
+                return@getOrPut fonts[PolyUI.defaultFonts.regular.resourcePath.hashCode() + 12f.toInt()]
                     ?: throw IllegalStateException("Default font couldn't be loaded")
             }.toDirectByteBuffer()
             FontAtlas(data, renderSize)
