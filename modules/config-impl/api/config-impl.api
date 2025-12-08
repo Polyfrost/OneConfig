@@ -474,6 +474,16 @@ public final class org/polyfrost/oneconfig/api/config/v1/dsl/Tree_extensionsKt {
 	public static final fun setVisualizer (Lorg/polyfrost/oneconfig/api/config/v1/Property;Ljava/lang/Class;)V
 }
 
+public class org/polyfrost/oneconfig/api/config/v1/serialize/adapter/impl/FontAdapter : org/polyfrost/oneconfig/api/config/v1/serialize/adapter/Adapter {
+	public fun <init> ()V
+	public synthetic fun deserialize (Ljava/lang/Object;)Ljava/lang/Object;
+	public fun deserialize (Ljava/lang/String;)Lorg/polyfrost/polyui/data/Font;
+	public fun getOutputClass ()Ljava/lang/Class;
+	public fun getTargetClass ()Ljava/lang/Class;
+	public synthetic fun serialize (Ljava/lang/Object;)Ljava/lang/Object;
+	public fun serialize (Lorg/polyfrost/polyui/data/Font;)Ljava/lang/String;
+}
+
 public class org/polyfrost/oneconfig/api/config/v1/serialize/adapter/impl/PolyColorAdapter : org/polyfrost/oneconfig/api/config/v1/serialize/adapter/Adapter {
 	public fun <init> ()V
 	public synthetic fun deserialize (Ljava/lang/Object;)Ljava/lang/Object;
