@@ -100,7 +100,6 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
 
     // Current batch state
     private var count = 0
-    private var curTex = 0
     private var transformDepth = 0
     private var scissorDepth = 0
     private var transform = IDENTITY.copyOf()
@@ -145,9 +144,9 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
             float py = step(0.0, p.y);
 
             // Select radius per quadrant
-            float rLeft  = mix(r.w, r.x, py); // bottom-left / top-left
-            float rRight = mix(r.z, r.y, py); // bottom-right / top-right
-            float radius = mix(rLeft, rRight, px);
+            float rLeft  = mix(r.x, r.w, py); // top-left / bottom-left
+            float rRight = mix(r.y, r.z, py); // top-right / bottom-right
+            float radius = mix(rLeft, rRight, px); // left vs right
 
             vec2 q = abs(p) - (b - radius);
             return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - radius;
@@ -467,7 +466,7 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         }
 
         glActiveTexture(GL_TEXTURE0)
-        glBindTexture(GL_TEXTURE_2D, curTex)
+        glBindTexture(GL_TEXTURE_2D, atlas)
 
         // Quad attrib
         glBindBuffer(GL_ARRAY_BUFFER, quadVbo)
@@ -596,8 +595,6 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         colorMask: Int, topLeftRadius: Float, topRightRadius: Float, bottomLeftRadius: Float, bottomRightRadius: Float
     ) {
         if (count >= MAX_BATCH) flush()
-        if (count > 0 && curTex != atlas) flush()
-        curTex = atlas
 
         buffer.put(x).put(y).put(width).put(height)
         buffer.put(topLeftRadius).put(topRightRadius).put(bottomRightRadius).put(bottomLeftRadius)
@@ -616,8 +613,6 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         val s = transformScale()
         val fAtlasForRendering = if (s == 1f) fAtlas else getFontAtlas(font, fontSize * s)
         if (count >= MAX_BATCH) flush()
-        if (count > 0 && curTex != atlas) flush()
-        curTex = atlas
 
         var penX = x
         val scaleFactor = fontSize / fAtlas.renderedSize
@@ -918,8 +913,8 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         if (quadVbo != 0) glDeleteBuffers(quadVbo)
         if (instancedVbo != 0) glDeleteBuffers(instancedVbo)
         if (atlas != 0) glDeleteTextures(atlas)
+        if (vao != 0) org.lwjgl.opengl.GL30C.glDeleteVertexArrays(vao)
         fonts.clear()
-        buffer.clear()
     }
 
     override fun delete(font: Font?) {}

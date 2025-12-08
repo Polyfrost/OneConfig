@@ -37,6 +37,7 @@ import org.polyfrost.oneconfig.api.config.v1.backend.impl.FileBackend;
 import org.polyfrost.oneconfig.api.config.v1.collect.PropertyCollector;
 import org.polyfrost.oneconfig.api.config.v1.collect.impl.OneConfigCollector;
 import org.polyfrost.oneconfig.api.config.v1.serialize.ObjectSerializer;
+import org.polyfrost.oneconfig.api.config.v1.serialize.adapter.impl.FontAdapter;
 import org.polyfrost.oneconfig.api.config.v1.serialize.adapter.impl.PolyColorAdapter;
 import org.polyfrost.oneconfig.api.config.v1.serialize.adapter.impl.Vec4Adapter;
 import org.polyfrost.oneconfig.api.config.v1.serialize.impl.FileSerializer;
@@ -64,6 +65,7 @@ public final class ConfigManager {
 
     static {
         ObjectSerializer.INSTANCE.registerTypeAdapter(new PolyColorAdapter());
+        ObjectSerializer.INSTANCE.registerTypeAdapter(new FontAdapter());
         ObjectSerializer.INSTANCE.registerTypeAdapter(new Vec4Adapter());
         registerCollector(new OneConfigCollector());
     }

@@ -269,7 +269,6 @@ open class ConfigVisualizer {
         var contentHeight = -1f
         // asm: signature as it prevents re-wrapping of function
         val openInsn: Drawable.(Any?) -> Unit = {
-            open.value = !open.value
             val arrow = if (enabled != null) this[1][1] else this[1]
             val anim = Animations.Default.create(0.6.seconds)
             Rotate(arrow, if (!open.value) PI else 0.0, false, anim).add()
@@ -292,13 +291,13 @@ open class ConfigVisualizer {
                     size = 21f,
                     state = open
                 ).onChange(open) {
-                    enabled?.setAs(it)
+                    enabled?.set(it)
                     if (open.value != it) (parent.parent as Drawable).openInsn(null)
                 },
                 Image("polyui/chevron-down.svg").also { it.rotation = PI }
             )
             // lmao
-            open.value = !open.value
+            //open.value = !open.value
             @Suppress("UNCHECKED_CAST") // reason: #already-type-checked
             enabled = e as Property<Boolean>
         } else {

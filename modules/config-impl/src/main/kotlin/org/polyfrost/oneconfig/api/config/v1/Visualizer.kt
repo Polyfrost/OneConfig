@@ -230,7 +230,7 @@ fun interface Visualizer {
                 placeholder = placeholder,
                 image = "assets/oneconfig/ico/text.svg".image(),
                 size = Vec2(200f, 32f),
-                value = state,
+                value = state.value.toFloat().toString(dps = 2),
                 post = unit
             )
             s.getTextFromBoxedTextInput().numeric(min, max, state)
