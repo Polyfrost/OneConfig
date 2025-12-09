@@ -37,13 +37,16 @@ public final class org/polyfrost/oneconfig/api/ui/v1/OCPolyUIBuilder : org/polyf
 
 public abstract interface class org/polyfrost/oneconfig/api/ui/v1/UIManager {
 	public static final field INSTANCE Lorg/polyfrost/oneconfig/api/ui/v1/UIManager;
+	public abstract fun __setRenderingContext (Ldev/deftu/omnicore/api/client/render/OmniRenderingContext;)V
 	public fun createDefault ()Lorg/polyfrost/polyui/PolyUI;
 	public abstract fun createPolyUIScreen (Lorg/polyfrost/polyui/PolyUI;FFZZLjava/util/function/Consumer;)Ldev/deftu/omnicore/api/client/screen/OmniScreen;
 	public abstract fun createWindow ()Lorg/polyfrost/polyui/renderer/Window;
 	public abstract fun getDefaultInstance ()Lorg/polyfrost/polyui/PolyUI;
+	public abstract fun getMCFont ()Lorg/polyfrost/polyui/data/Font;
 	public abstract fun getRenderPipeline ()Ldev/deftu/omnicore/api/client/render/pipeline/OmniRenderPipeline;
 	public abstract fun getRenderer ()Lorg/polyfrost/polyui/renderer/Renderer;
 	public abstract fun getRendererExt ()Lorg/polyfrost/oneconfig/api/ui/v1/api/RendererExt;
+	public abstract fun getRenderingContext ()Ldev/deftu/omnicore/api/client/render/OmniRenderingContext;
 	public abstract fun getTinyFD ()Lorg/polyfrost/oneconfig/api/ui/v1/api/TinyFdApi;
 }
 

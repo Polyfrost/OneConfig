@@ -31,6 +31,7 @@ package org.polyfrost.oneconfig.api.hud.v1.internal
 import org.polyfrost.oneconfig.api.hud.v1.Hud
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.hud.v1.LegacyHud
+import org.polyfrost.oneconfig.api.ui.v1.UIManager
 import org.polyfrost.polyui.PolyUI
 import org.polyfrost.polyui.color.asMutable
 import org.polyfrost.polyui.color.rgba
@@ -39,7 +40,6 @@ import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.component.extensions.*
 import org.polyfrost.polyui.component.impl.*
 import org.polyfrost.polyui.data.Font
-import org.polyfrost.polyui.data.FontFamily
 import org.polyfrost.polyui.event.Event
 import org.polyfrost.polyui.event.State
 import org.polyfrost.polyui.unit.Align
@@ -54,7 +54,6 @@ val alignC = Align(main = Align.Content.Center, cross = Align.Content.Center, li
 val alignNoPad = Align(pad = Vec2.ZERO)
 val alignHudDefault = Align(main = Align.Content.Center, cross = Align.Content.Center, pad = Vec2(8f, 8f))
 val BLACK_HALF = rgba(0, 0, 0, 0.5f)
-private val mcFont = FontFamily("Minecraft", "assets/oneconfig/fonts/minecraft/", FontFamily.Type.OpenType)
 
 // const val angleSnapMargin = PI / 12.0
 const val minMargin = 4f
@@ -338,7 +337,7 @@ fun textOptions(text: Text): Drawable {
     val fontState = State(0).listen {
         text.font = when (it) {
             1 -> PolyUI.monospaceFont
-            2 -> mcFont.get(text.fontWeight, text.italic)
+            2 -> UIManager.INSTANCE.mcFont
             else -> text.polyUI.fonts.get(text.fontWeight, text.italic)
         }
         text._parent?.recalculate(false)

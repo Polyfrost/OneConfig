@@ -30,6 +30,7 @@ import dev.deftu.omnicore.api.client.render.OmniRenderingContext
 import dev.deftu.omnicore.api.client.render.OmniResolution
 import org.jetbrains.annotations.ApiStatus
 import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.polyfrost.oneconfig.api.ui.v1.UIManager
 import org.polyfrost.polyui.component.Component
 import org.polyfrost.polyui.component.Drawable
 import org.polyfrost.polyui.renderer.Renderer
@@ -38,7 +39,7 @@ import org.polyfrost.polyui.unit.AlignDefault
 import org.polyfrost.polyui.unit.Vec2
 
 /**
- * [Hud] implementation that uses the old rendering system, with a standard [render] method.
+ * [Hud] implementation that uses the old rendering system.
  *
  * **You must** ensure that the [width] and [height] properties accurately reflect the size of the HUD.
  * Note that they are only queried when the HUD is first created, and when the [update] method returns `true`.
@@ -69,18 +70,7 @@ abstract class LegacyHud(id: String, title: String, category: Category) : Hud<Dr
      *
      * **Note:** This method is called every frame, so you should not perform any heavy calculations here.
      */
-    abstract fun renderLegacy(ctx: OmniRenderingContext, x: Float, y: Float, scaleX: Float, scaleY: Float)
-
-    /**
-     * Render extra things for your HUD using the PolyUI renderer.
-     *
-     * **This is called inside a PolyUI rendering context,** so you can use PolyUI components and methods here, but you **CANNOT** use
-     * Minecraft rendering methods as they will not work correctly, cause visual glitches, or even crash.
-     *
-     * Due to differences in Minecraft versions, you *may not* experience issues, **but they will happen on some versions**.
-     * So don't. Use [renderLegacy] for that.
-     */
-    open fun render(renderer: Renderer, drawable: Drawable) {}
+    abstract fun renderLegacy(renderer: Renderer, ctx: OmniRenderingContext, x: Float, y: Float, scaleX: Float, scaleY: Float, drawable: Drawable)
 
     @ApiStatus.Experimental
     protected fun createLegacy(
@@ -112,13 +102,9 @@ abstract class LegacyHud(id: String, title: String, category: Category) : Hud<Dr
                 hud.height = value
             }
 
-        fun renderLegacy(ctx: OmniRenderingContext) {
-            val scale = if (HudManager.useGuiScale) 1f else Platform.screen().pixelRatio() / OmniResolution.scaleFactor.toFloat()
-            hud.renderLegacy(ctx, x * scale, y * scale, scaleX * scale, scaleY * scale)
-        }
-
         override fun render() {
-            hud.render(polyUI.renderer, this)
+            val scale = if (HudManager.useGuiScale) 1f else Platform.screen().pixelRatio() / OmniResolution.scaleFactor.toFloat()
+            hud.renderLegacy(polyUI.renderer, UIManager.INSTANCE.renderingContext, x * scale, y * scale, scaleX * scale, scaleY * scale, this)
         }
     }
 }

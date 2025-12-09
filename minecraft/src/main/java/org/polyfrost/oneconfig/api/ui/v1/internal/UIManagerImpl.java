@@ -41,6 +41,7 @@ import dev.deftu.omnicore.api.client.render.DrawMode;
 import dev.deftu.omnicore.api.client.render.GlCapabilities;
 import dev.deftu.omnicore.api.client.render.pipeline.OmniRenderPipeline;
 import dev.deftu.omnicore.api.client.render.pipeline.OmniRenderPipelines;
+import dev.deftu.omnicore.api.client.render.OmniRenderingContext;
 import dev.deftu.omnicore.api.client.render.state.OmniBlendState;
 import dev.deftu.omnicore.api.client.screen.OmniScreen;
 import net.minecraft.client.Minecraft;
@@ -54,6 +55,7 @@ import org.polyfrost.oneconfig.api.ui.v1.UIManager;
 import org.polyfrost.oneconfig.api.ui.v1.internal.wrappers.MCWindow;
 import org.polyfrost.oneconfig.api.ui.v1.internal.wrappers.PolyUIScreen;
 import org.polyfrost.polyui.PolyUI;
+import org.polyfrost.polyui.data.Font;
 import org.polyfrost.polyui.renderer.Renderer;
 import org.polyfrost.polyui.renderer.Window;
 
@@ -67,15 +69,18 @@ public class UIManagerImpl implements UIManager {
     private static final String LWJGL_API_PACKAGE = "org.polyfrost.oneconfig.api.ui.v1.api.";
     private static final String LWJGL_IMPL_PACKAGE = "org.polyfrost.oneconfig.api.ui.v1.internal.";
 
+    private static final Font MC_FONT = Font.of("minecraft/assets/fonts/nowhere", null, false, Font.Weight.Regular);
+
     private static final Logger LOGGER = LogManager.getLogger("OneConfig/LWJGL");
 
     private PolyUI ui;
     private OmniRenderPipeline pipeline;
+    private OmniRenderingContext ctx;
 
     private final Set<String> classLoaderInclude = new HashSet<>();
     private final Map<String, Class<?>> classCache = new HashMap<>();
 
-    private final NanoVgApi nanoVg;
+//    private final NanoVgApi nanoVg;
     private final NanoSvgApi nanoSvg;
     private final StbApi stb;
     private final TinyFdApi tinyFD;
@@ -114,12 +119,12 @@ public class UIManagerImpl implements UIManager {
             boolean isGl3 = GlCapabilities.isGl3Available();
 
             //#if MC >= 1.16.5
-            //$$ nanoVg = new NanoVgImpl(isGl3);
+//            //$$ nanoVg = new NanoVgImpl(isGl3);
             //$$ nanoSvg = new NanoSvgImpl();
             //$$ stb = new StbImpl();
             //$$ tinyFD = new TinyFdImpl();
             //#else
-            nanoVg = Lwjgl3Manager.getIsolated(NanoVgApi.class, LWJGL_IMPL_PACKAGE + "NanoVgImpl", isGl3);
+//            nanoVg = Lwjgl3Manager.getIsolated(NanoVgApi.class, LWJGL_IMPL_PACKAGE + "NanoVgImpl", isGl3);
             nanoSvg = Lwjgl3Manager.getIsolated(NanoSvgApi.class, LWJGL_IMPL_PACKAGE + "NanoSvgImpl");
             stb = Lwjgl3Manager.getIsolated(StbApi.class, LWJGL_IMPL_PACKAGE + "StbImpl");
             tinyFD = Lwjgl3Manager.getIsolated(TinyFdApi.class, LWJGL_IMPL_PACKAGE + "TinyFdImpl");
@@ -172,5 +177,20 @@ public class UIManagerImpl implements UIManager {
         }
 
         return pipeline;
+    }
+
+    @Override
+    public void __setRenderingContext(OmniRenderingContext renderingContext) {
+        ctx = renderingContext;
+    }
+
+    @Override
+    public OmniRenderingContext getRenderingContext() {
+        return ctx;
+    }
+
+    @Override
+    public Font getMCFont() {
+        return MC_FONT;
     }
 }

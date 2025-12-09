@@ -27,8 +27,16 @@
 package org.polyfrost.oneconfig.api.platform.v1.internal;
 
 import dev.deftu.omnicore.api.client.render.state.OmniRenderStates;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.lwjgl.BufferUtils;
 import org.polyfrost.oneconfig.api.platform.v1.GLPlatform;
 import org.polyfrost.oneconfig.utils.v1.MHUtils;
+
+import java.nio.Buffer;
+import java.nio.IntBuffer;
+
+import static org.lwjgl.opengl.GL11.*;
 
 public class GLPlatformImpl implements GLPlatform {
     //@formatter:off
@@ -37,6 +45,14 @@ public class GLPlatformImpl implements GLPlatform {
             MHUtils.getFunctionHandle(org.lwjgl.opengl.GLContext.class, "getFunctionAddress", long.class, String.class)
                     .logIfErr().getOrElse(v -> 0L);
     //#endif
+
+    private final IntBuffer VIEWPORT = BufferUtils.createIntBuffer(
+            //#if MC >= 1.13
+            //$$ 4
+            //#else
+            16
+            //#endif
+    );
 
     @Override
     public long getFunctionAddress(String addr) {
@@ -53,7 +69,7 @@ public class GLPlatformImpl implements GLPlatform {
      * to match what NanoVG leaves dropped into the OpenGL context.
      */
     @Override
-    public void updateGameRenderStateAlongsideNanoVG() {
+    public void syncOpenGLContext() {
         OmniRenderStates.syncBlend();
         OmniRenderStates.syncDepth();
         OmniRenderStates.syncCull();
@@ -62,5 +78,18 @@ public class GLPlatformImpl implements GLPlatform {
         //#if MC >= 1.17.1 && MC < 1.21.5
         //$$ com.mojang.blaze3d.vertex.BufferUploader.reset();
         //#endif
+    }
+
+    @Override
+    public int @NotNull [] glViewport(int @Nullable [] in) {
+        ((Buffer) VIEWPORT).clear();
+        //#if MC >= 1.13
+        //$$ glGetIntegerv(GL_VIEWPORT, VIEWPORT);
+        //#else
+        glGetInteger(GL_VIEWPORT, VIEWPORT);
+        //#endif
+        int[] out = in != null ? in : new int[4];
+        VIEWPORT.get(out, 0, 4);
+        return out;
     }
 }

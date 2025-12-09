@@ -30,7 +30,6 @@ import dev.deftu.omnicore.api.client.render.OmniTextureUnit
 import dev.deftu.omnicore.api.paddedMinecraftVersion
 import dev.deftu.omnicore.internal.client.textures.TextureInternals
 import org.apache.logging.log4j.LogManager
-import org.lwjgl.nanovg.NanoVG
 import org.lwjgl.opengl.GL11
 import org.lwjgl.opengl.GL20
 import org.lwjgl.opengl.GL30
@@ -176,7 +175,7 @@ class NVGRendererImpl(
             GL11.glPopAttrib()
         }
 
-        Platform.gl().updateGameRenderStateAlongsideNanoVG()
+        Platform.gl().syncOpenGLContext()
 
         if (mcVersion >= 1_16_05) {
             if (prevProgram != -1) {

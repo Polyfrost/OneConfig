@@ -121,7 +121,7 @@ public class PolyUIScreen extends OmniScreen implements BlurScreen {
             //#if MC >= 1.21.5
             //$$ kotlin.jvm.functions.Function0<kotlin.Unit> unbind = dev.deftu.omnicore.api.client.framebuffer.OmniFramebuffers.getMain().bind();
             //#endif
-            Platform.screen().glViewport(viewport);
+            Platform.gl().glViewport(viewport);
             float factor = Platform.screen().pixelRatio();
             int w = (int) (polyUI.getMaster().getWidth() * factor);
             int h = (int) (polyUI.getMaster().getHeight() * factor);

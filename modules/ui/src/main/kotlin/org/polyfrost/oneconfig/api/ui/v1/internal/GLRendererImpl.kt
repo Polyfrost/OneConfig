@@ -3,6 +3,8 @@
 package org.polyfrost.oneconfig.api.ui.v1.internal
 
 import dev.deftu.omnicore.api.client.render.GlCapabilities
+import dev.deftu.omnicore.api.client.render.OmniTextRenderer
+import dev.deftu.omnicore.api.color.OmniColor
 import dev.deftu.omnicore.internal.client.render.shader.ShaderInternals
 import org.apache.logging.log4j.LogManager
 import org.lwjgl.BufferUtils
@@ -12,6 +14,7 @@ import org.lwjgl.opengl.GL14.*
 import org.lwjgl.opengl.GL15.*
 import org.lwjgl.opengl.GL20.*
 import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.polyfrost.oneconfig.api.ui.v1.UIManager
 import org.polyfrost.oneconfig.api.ui.v1.api.NanoSvgApi
 import org.polyfrost.oneconfig.api.ui.v1.api.RendererExt
 import org.polyfrost.oneconfig.api.ui.v1.api.StbApi
@@ -420,7 +423,7 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         glUniformMatrix3fv(uTransform, false, transform)
         glUseProgram(prevProg)
         glDisable(GL_SCISSOR_TEST)
-        Platform.screen().glViewport(viewport)
+        Platform.gl().glViewport(viewport)
         this.pixelRatio = pixelRatio
     }
 
@@ -608,6 +611,15 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
     }
 
     override fun text(font: Font, x: Float, y: Float, text: String, color: Color, fontSize: Float) {
+        if (font === UIManager.INSTANCE.mcFont) {
+            val ctx = UIManager.INSTANCE.renderingContext
+            // todo hi deftu https://github.com/Deftu/OmniCore/issues/57
+//            ctx.pose.push(OmniMatrix3f(transform))
+            // asm: can be optimized by https://github.com/Deftu/OmniCore/issues/58
+            OmniTextRenderer.render(ctx.pose, text, x, y, OmniColor.argb(color.argb), false)
+//            ctx.pose.pop()
+            return
+        }
         val fAtlas = getFontAtlas(font, fontSize)
         val s = transformScale()
         val fAtlasForRendering = if (s == 1f) fAtlas else getFontAtlas(font, fontSize * s)
@@ -640,7 +652,9 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
     }
 
     override fun textBounds(font: Font, text: String, fontSize: Float): Vec2 {
-        return getFontAtlas(font, fontSize).measure(text, fontSize)
+        return if (font === UIManager.INSTANCE.mcFont) {
+            Vec2(OmniTextRenderer.width(text).toFloat(), OmniTextRenderer.lineHeight.toFloat())
+        } else getFontAtlas(font, fontSize).measure(text, fontSize)
     }
 
     override fun line(x1: Float, y1: Float, x2: Float, y2: Float, color: Color, width: Float) {

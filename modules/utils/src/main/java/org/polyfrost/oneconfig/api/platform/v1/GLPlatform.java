@@ -26,6 +26,9 @@
 
 package org.polyfrost.oneconfig.api.platform.v1;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 public interface GLPlatform {
 
     /**
@@ -36,6 +39,16 @@ public interface GLPlatform {
      */
     long getFunctionAddress(String addr);
 
-    void updateGameRenderStateAlongsideNanoVG();
+    void syncOpenGLContext();
+
+    /**
+     * Return the result of glGetInteger(GL_VIEWPORT).
+     * If in is supplied, it will be set to the result and returned. If not, a new array will be created.
+     */
+    int @NotNull [] glViewport(int @Nullable [] in);
+
+    default int @NotNull [] glViewport() {
+        return glViewport(null);
+    }
 
 }
