@@ -33,7 +33,6 @@ import org.jetbrains.annotations.Nullable;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Include;
 import org.polyfrost.polyui.data.PolyImage;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -200,7 +199,7 @@ public abstract class Config {
         if (tree == null) initialize(false);
         Tree in = ConfigManager.active().get(id);
         if (in == null) return;
-        tree.overwrite(in, false);
+        tree.overwrite(in, false, true, tree);
     }
 
     protected void loadFrom(Path p) {
@@ -212,18 +211,8 @@ public abstract class Config {
             return;
         }
         if (in == null) return;
-        tree.overwrite(in, false);
+        tree.overwrite(in, false, true, tree);
     }
-
-    protected void loadFromAndDelete(Path p) {
-        try {
-            loadFrom(p);
-            Files.deleteIfExists(p);
-        } catch (Exception e) {
-            ConfigManager.LOGGER.error("An unknown error occurred", e);
-        }
-    }
-
 
     protected Property<?> getProperty(String option) {
         if (tree == null) initialize(false);
