@@ -32,6 +32,7 @@ import java.io.Serializable;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -68,7 +69,11 @@ public class Tree extends Node implements Serializable {
         }
     }
 
-    private static void _overwrite(Tree self, Tree in, Function<String, String> keyMapper, boolean preserveMissingOptions) {
+    private static void _overwrite(Tree self, Tree in, Function<String, String> keyMapper, boolean preserveMissingOptions, boolean skipOverwritten, @Nullable Tree root) {
+        Node overwritten = null;
+        if (root != null) {
+            overwritten = root.get("reserved:overwritten");
+        }
         for (Map.Entry<String, Node> from : in.theMap.entrySet()) {
             String key = keyMapper == null ? from.getKey() : keyMapper.apply(from.getKey());
             Node _this = self.get(key);
@@ -82,15 +87,23 @@ public class Tree extends Node implements Serializable {
                 continue;
             }
             if (_this instanceof Tree) {
+                if (skipOverwritten && overwritten instanceof Tree && !Objects.equals(((Tree) overwritten).get(that.getID()), null)) {
+                    // this node was previously overwritten, skip
+                    continue;
+                }
                 if (that instanceof Tree) {
                     // if both are trees, recursively overwrite
-                    _overwrite((Tree) _this, (Tree) that, keyMapper, preserveMissingOptions);
+                    _overwrite((Tree) _this, (Tree) that, keyMapper, preserveMissingOptions, skipOverwritten, root);
                     _this.addMetadata(that.getMetadata());
+                    if (root != null) {
+                        overwritten = root.getOrPutChild("reserved:overwritten");
+                        ((Tree) overwritten).put(new Tree(that.getID(), null, null, null));
+                    }
                 }
                 // nop. do not attempt to overwrite a tree with a property
                 else continue;
             }
-            _this.overwrite(that, preserveMissingOptions);
+            _this.overwrite(that, preserveMissingOptions, skipOverwritten, root);
         }
     }
 
@@ -273,18 +286,21 @@ public class Tree extends Node implements Serializable {
      * @param with      the tree to overwrite with
      * @param keyMapper the key mapper function to use
      */
-    public void overwrite(Tree with, @NotNull Function<String, String> keyMapper, boolean preserveMissingOptions) {
-        _overwrite(this, with, keyMapper, preserveMissingOptions);
+    public void overwrite(Tree with, @NotNull Function<String, String> keyMapper, boolean preserveMissingOptions, boolean skipOverwritten, @Nullable Tree root) {
+        _overwrite(this, with, keyMapper, preserveMissingOptions, skipOverwritten, root);
     }
 
     @Override
-    public void overwrite(@NotNull Node with, boolean preserveMissingOptions) {
+    public void overwrite(@NotNull Node with, boolean preserveMissingOptions, boolean skipOverwritten, @Nullable Tree root) {
         if (!(with instanceof Tree)) throw new IllegalArgumentException("Cannot overwrite a tree with a non-tree node!");
+        if (skipOverwritten && root == null) {
+            throw new IllegalArgumentException("Cannot mark overwritten without a root tree!");
+        }
         Map<String, String> migrationMap = getMetadata("migrationMap");
         if (migrationMap == null) {
-            _overwrite(this, (Tree) with, null, preserveMissingOptions);
+            _overwrite(this, (Tree) with, null, preserveMissingOptions, skipOverwritten, root);
         } else {
-            _overwrite(this, (Tree) with, migrationMap::get, preserveMissingOptions);
+            _overwrite(this, (Tree) with, migrationMap::get, preserveMissingOptions, skipOverwritten, root);
         }
     }
 

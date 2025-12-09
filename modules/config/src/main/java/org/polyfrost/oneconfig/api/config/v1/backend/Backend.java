@@ -35,10 +35,7 @@ import org.jetbrains.annotations.UnmodifiableView;
 import org.polyfrost.oneconfig.api.config.v1.Node;
 import org.polyfrost.oneconfig.api.config.v1.Tree;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * A backend is a storage system for ConfigTrees.
@@ -114,6 +111,9 @@ public abstract class Backend {
             return false;
         }
         if (t == null) return false;
+        if (t.get("reserved:overwritten") != null) {
+            tree.put(Objects.requireNonNull(t.get("reserved:overwritten")));
+        }
         tree.overwrite(t, false);
 
         putSafe(tree);
