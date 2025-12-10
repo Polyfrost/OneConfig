@@ -4,7 +4,9 @@ package org.polyfrost.oneconfig.api.ui.v1.internal
 
 import dev.deftu.omnicore.api.client.render.GlCapabilities
 import dev.deftu.omnicore.api.client.render.OmniTextRenderer
+import dev.deftu.omnicore.api.client.render.stack.OmniPoseStack
 import dev.deftu.omnicore.api.color.OmniColor
+import dev.deftu.omnicore.api.math.OmniMatrix3f
 import dev.deftu.omnicore.internal.client.render.shader.ShaderInternals
 import org.apache.logging.log4j.LogManager
 import org.lwjgl.BufferUtils
@@ -30,11 +32,7 @@ import org.polyfrost.polyui.utils.toDirectByteBuffer
 import org.polyfrost.polyui.utils.toDirectByteBufferNT
 import java.nio.ByteBuffer
 import java.nio.FloatBuffer
-import kotlin.math.cos
-import kotlin.math.roundToInt
-import kotlin.math.sin
-import kotlin.math.sqrt
-import kotlin.math.tan
+import kotlin.math.*
 
 private val LOGGER = LogManager.getLogger("PolyUI/GLRenderer")
 
@@ -43,7 +41,7 @@ private const val FONT_MAX_BITMAP_W = 1536
 private const val FONT_MAX_BITMAP_H = 512
 private const val ATLAS_SIZE = 2048
 private const val ATLAS_SVG_UPSCALE_FACTOR = 2f
-private const val STRIDE = 4 + 4 + 4 + 4 + 4 + 1 // bounds, radii, color0, color1, UV, thick
+private const val STRIDE = 4 + 4 + 1 + 1 + 4 + 1 // bounds, radii, color0, color1, UV, thick
 private const val MAX_BATCH = 1024
 
 private val EMPTY_ROW = floatArrayOf(0f, 0f, 0f, 0f)
@@ -109,7 +107,7 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
     private var scissorDepth = 0
     private var transform = IDENTITY.copyOf()
     private var pixelRatio = 1f
-    private var alphaCap = 1f
+    private var alphaCap = 255
     private var popFlushNeeded = false
 
     // atlas data
@@ -210,19 +208,22 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
 
     private val VERT = """
         #version $$$ // replaced by compileShader
+        #extension GL_EXT_gpu_shader4 : enable
         #if __VERSION__ >= 130
             #define ATTRIBUTE in
             #define VARYING out
+            #define U_INT uint
         #else
             #define ATTRIBUTE attribute
             #define VARYING varying
+            #define U_INT unsigned int
         #endif
 
         ATTRIBUTE vec2 aLocal;
         ATTRIBUTE vec4 iRect;
         ATTRIBUTE vec4 iRadii;
-        ATTRIBUTE vec4 iColor0;
-        ATTRIBUTE vec4 iColor1;
+        ATTRIBUTE U_INT iColor0;
+        ATTRIBUTE U_INT iColor1;
         ATTRIBUTE vec4 iUVRect;
         ATTRIBUTE float iThickness;
 
@@ -241,6 +242,15 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         VARYING vec2 vUV;
         VARYING vec2 vUV2;
         VARYING float vThickness;
+        
+        vec4 unpackColor(U_INT c) {
+            float a = float((c >> 24) & 0xFFu) / 255.0;
+            float r = float((c >> 16) & 0xFFu) / 255.0;
+            float g = float((c >>  8) & 0xFFu) / 255.0;
+            float b = float((c      ) & 0xFFu) / 255.0;
+
+            return vec4(r, g, b, a);
+        }
 
         void main() {
             // Position inside rect
@@ -257,8 +267,8 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
             vPos    = pos;
             vRect   = iRect;
             vRadii  = iRadii;
-            vColor0 = iColor0;
-            vColor1 = iColor1;
+            vColor0 = unpackColor(iColor0);
+            vColor1 = unpackColor(iColor1);
             vUV     = uv;
             // pass through for gradients.
             vUV2    = iUVRect.zw;
@@ -318,6 +328,14 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         ShaderInternals.uniformMatrix3(location, transpose, buf)
     }
 
+    @kotlin.internal.InlineOnly
+    private inline fun Int.capAlpha(): Int {
+        val a = (this ushr 24) and 0xFF
+        val capped = if (a > alphaCap) alphaCap else a
+        return (capped shl 24) or (this and 0x00FFFFFF)
+    }
+
+
     override fun init() {
         if (init) return
         // check if instancing extension is available
@@ -340,26 +358,25 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
             } else {
                 // gl2 check
                 val extensions = glGetString(GL_EXTENSIONS) ?: ""
+                require("GL_EXT_gpu_shader4" in extensions) { "GL_EXT_gpu_shader4 is not supported and is required" }
                 require("GL_ARB_instanced_arrays" in extensions) { "GL_ARB_instanced_arrays is not supported and is required" }
                 require("GL_ARB_draw_instanced" in extensions) { "GL_ARB_draw_instanced is not supported and is required" }
-                if ("GL_EXT_framebuffer_object" in extensions) {
-                    LOGGER.info("Using mipmaps as extension GL_EXT_framebuffer_object is available")
-                    mipmapMode = 2
-                }
+//                if ("GL_EXT_framebuffer_object" in extensions) {
+//                    LOGGER.info("Using mipmaps as extension GL_EXT_framebuffer_object is available")
+//                    mipmapMode = 2
+//                }
             }
         }
 
         if (GlCapabilities.isGl3Available) {
-            LOGGER.info("Using mipmaps and VAOs as OpenGL 3+ is available.")
-            mipmapMode = 1
+//            LOGGER.info("Using mipmaps and VAOs as OpenGL 3+ is available.")
+//            mipmapMode = 1
             // ...ok I guess this is needed
             vao = org.lwjgl.opengl.GL30.glGenVertexArrays()
             org.lwjgl.opengl.GL30.glBindVertexArray(vao)
         }
 
         program = linkProgram(compileShader(GL_VERTEX_SHADER, VERT), compileShader(GL_FRAGMENT_SHADER, FRAG))
-
-        if (GlCapabilities.isGl3Available) org.lwjgl.opengl.GL30.glBindVertexArray(0)
 
         val prevBuf = glGetInteger(GL_ARRAY_BUFFER_BINDING)
         val quadData = BufferUtils.createFloatBuffer(8).put(
@@ -376,7 +393,6 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         instancedVbo = glGenBuffers()
         glBindBuffer(GL_ARRAY_BUFFER, instancedVbo)
         glBufferData(GL_ARRAY_BUFFER, MAX_BATCH * STRIDE * 4L, GL_STREAM_DRAW)
-        glBindBuffer(GL_ARRAY_BUFFER, prevBuf)
 
         uWindow = glGetUniformLocation(program, "uWindow")
         uTransform = glGetUniformLocation(program, "uTransform")
@@ -387,6 +403,21 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         iColor1 = glGetAttribLocation(program, "iColor1")
         iUVRect = glGetAttribLocation(program, "iUVRect")
         iThickness = glGetAttribLocation(program, "iThickness")
+
+        if (GlCapabilities.isGl3Available) {
+            var offset = 0L
+            offset = enableAttrib(iRect, 4, offset)
+            offset = enableAttrib(iRadii, 4, offset)
+            offset = enableAttrib(iColor0, 1, offset, GL_UNSIGNED_INT)
+            offset = enableAttrib(iColor1, 1, offset, GL_UNSIGNED_INT)
+            offset = enableAttrib(iUVRect, 4, offset)
+            enableAttrib(iThickness, 1, offset)
+
+            glBindBuffer(GL_ARRAY_BUFFER, quadVbo)
+            glEnableVertexAttribArray(aLocal)
+            glVertexAttribPointer(aLocal, 2, GL_FLOAT, false, 0, 0L)
+            org.lwjgl.opengl.GL30C.glBindVertexArray(0)
+        }
 
         val prevTex = glGetInteger(GL_TEXTURE_BINDING_2D)
         atlas = glGenTextures()
@@ -402,16 +433,17 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
             GL_UNSIGNED_BYTE,
             null as ByteBuffer?
         )
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, if (mipmapMode == 0) GL_LINEAR else GL_LINEAR_MIPMAP_LINEAR)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
         glBindTexture(GL_TEXTURE_2D, prevTex)
+        glBindBuffer(GL_ARRAY_BUFFER, prevBuf)
     }
 
     override fun beginFrame(width: Float, height: Float, pixelRatio: Float) {
         scissorDepth = 0
-        alphaCap = 1f
+        alphaCap = 255
         count = 0
         buffer.clear()
         transform.set(IDENTITY)
@@ -470,21 +502,24 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         glActiveTexture(GL_TEXTURE0)
         glBindTexture(GL_TEXTURE_2D, atlas)
 
-        // Quad attrib
-        glBindBuffer(GL_ARRAY_BUFFER, quadVbo)
-        glEnableVertexAttribArray(aLocal)
-        glVertexAttribPointer(aLocal, 2, GL_FLOAT, false, 0, 0L)
+        // asm: on VAO the state is stored, so we only need to set it up once
+        if (!GlCapabilities.isGl3Available) {
+            // Quad attrib
+            glBindBuffer(GL_ARRAY_BUFFER, quadVbo)
+            glEnableVertexAttribArray(aLocal)
+            glVertexAttribPointer(aLocal, 2, GL_FLOAT, false, 0, 0L)
 
-        // Instance attribs
-        glBindBuffer(GL_ARRAY_BUFFER, instancedVbo)
+            // Instance attribs
+            glBindBuffer(GL_ARRAY_BUFFER, instancedVbo)
 
-        var offset = 0L
-        offset = enableAttrib(iRect, 4, offset)
-        offset = enableAttrib(iRadii, 4, offset)
-        offset = enableAttrib(iColor0, 4, offset)
-        offset = enableAttrib(iColor1, 4, offset)
-        offset = enableAttrib(iUVRect, 4, offset)
-        enableAttrib(iThickness, 1, offset)
+            var offset = 0L
+            offset = enableAttrib(iRect, 4, offset)
+            offset = enableAttrib(iRadii, 4, offset)
+            offset = enableAttrib(iColor0, 1, offset, GL_UNSIGNED_INT)
+            offset = enableAttrib(iColor1, 1, offset, GL_UNSIGNED_INT)
+            offset = enableAttrib(iUVRect, 4, offset)
+            enableAttrib(iThickness, 1, offset)
+        }
 
         // Draw all instances
         if (GlCapabilities.isGl31Available) org.lwjgl.opengl.GL31.glDrawArraysInstanced(GL_TRIANGLE_FAN, 0, 4, count)
@@ -503,9 +538,9 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         if (GlCapabilities.isGl3Available) org.lwjgl.opengl.GL30.glBindVertexArray(prevVao)
     }
 
-    private fun enableAttrib(loc: Int, size: Int, offset: Long): Long {
+    private fun enableAttrib(loc: Int, size: Int, offset: Long, type: Int = GL_FLOAT): Long {
         glEnableVertexAttribArray(loc)
-        glVertexAttribPointer(loc, size, GL_FLOAT, false, STRIDE * 4, offset)
+        glVertexAttribPointer(loc, size, type, false, STRIDE * 4, offset)
         // I don't know why core disables the extension functions... but ok!
         if (GlCapabilities.isGl33Available) org.lwjgl.opengl.GL33.glVertexAttribDivisor(loc, 1)
         else org.lwjgl.opengl.ARBInstancedArrays.glVertexAttribDivisorARB(loc, 1)
@@ -524,10 +559,9 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         if (count >= MAX_BATCH) flush()
         buffer.put(x).put(y).put(width).put(height)
         buffer.put(topLeftRadius).put(topRightRadius).put(bottomRightRadius).put(bottomLeftRadius)
-        buffer.put(color.r / 255f).put(color.g / 255f).put(color.b / 255f).put(color.alpha.coerceAtMost(alphaCap))
+        buffer.put(java.lang.Float.intBitsToFloat(color.argb.capAlpha()))
         if (color is PolyColor.Gradient) {
-            buffer.put(color.color2.r / 255f).put(color.color2.g / 255f).put(color.color2.b / 255f)
-                .put(color.color2.alpha.coerceAtMost(alphaCap))
+            buffer.put(java.lang.Float.intBitsToFloat(color.color2.argb.capAlpha()))
             when (val type = color.type) {
                 is PolyColor.Gradient.Type.LeftToRight -> {
                     buffer.put(0f).put(height / 2f).put(width).put(height / 2f)
@@ -562,7 +596,7 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
                 }
             }
         } else {
-            buffer.put(EMPTY_ROW) // color1 unused
+            buffer.put(0f) // color1 unused
             buffer.put(NO_UV) // -1f UVs to indicate no texture
             buffer.put(0f)
         }
@@ -585,8 +619,8 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         if (count >= MAX_BATCH) flush()
         buffer.put(x).put(y).put(width).put(height)
         buffer.put(topLeftRadius).put(topRightRadius).put(bottomRightRadius).put(bottomLeftRadius)
-        buffer.put(color.r / 255f).put(color.g / 255f).put(color.b / 255f).put(color.alpha.coerceAtMost(alphaCap))
-        buffer.put(EMPTY_ROW) // color1 unused
+        buffer.put(java.lang.Float.intBitsToFloat(color.argb.capAlpha()))
+        buffer.put(0f) // color1 unused
         buffer.put(NO_UV) // -1f UVs to indicate no texture
         buffer.put(lineWidth)
         count += 1
@@ -600,11 +634,8 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
 
         buffer.put(x).put(y).put(width).put(height)
         buffer.put(topLeftRadius).put(topRightRadius).put(bottomRightRadius).put(bottomLeftRadius)
-        buffer.put((colorMask shr 16 and 0xFF) / 255f)
-            .put((colorMask shr 8 and 0xFF) / 255f)
-            .put((colorMask and 0xFF) / 255f)
-            .put(((colorMask ushr 24 and 0xFF) / 255f).coerceAtMost(alphaCap))
-        buffer.put(EMPTY_ROW) // color1 unused
+        buffer.put(java.lang.Float.intBitsToFloat(colorMask.capAlpha()))
+        buffer.put(0f) // color1 unused
         buffer.put(image.uv.x).put(image.uv.y).put(image.uv.w).put(image.uv.h)
         buffer.put(0f) // thickness = 0 for filled rect
         count += 1
@@ -614,10 +645,10 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         if (font === UIManager.INSTANCE.mcFont) {
             val ctx = UIManager.INSTANCE.renderingContext
             // todo hi deftu https://github.com/Deftu/OmniCore/issues/57
-//            ctx.pose.push(OmniMatrix3f(transform))
+            ctx.pose.push(OmniPoseStack.Entry(ctx.pose.current.positionMatrix, OmniMatrix3f.from(transform)))
             // asm: can be optimized by https://github.com/Deftu/OmniCore/issues/58
             OmniTextRenderer.render(ctx.pose, text, x, y, OmniColor.argb(color.argb), false)
-//            ctx.pose.pop()
+            ctx.pose.pop()
             return
         }
         val fAtlas = getFontAtlas(font, fontSize)
@@ -628,10 +659,7 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         var penX = x
         val scaleFactor = fontSize / fAtlas.renderedSize
         val penY = y + (fAtlas.ascent + fAtlas.descent) * scaleFactor
-        val r = (color.r / 255f)
-        val g = (color.g / 255f)
-        val b = (color.b / 255f)
-        val a = (color.alpha.coerceAtMost(alphaCap))
+        val col = java.lang.Float.intBitsToFloat(color.argb.capAlpha())
         val buffer = buffer
 
         for (c in text) {
@@ -642,8 +670,8 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
             buffer.put(penX + glyph.xOff * scaleFactor).put(penY + glyph.yOff * scaleFactor)
                 .put(glyph.width * scaleFactor).put(glyph.height * scaleFactor)
             buffer.put(EMPTY_ROW) // zero radii
-            buffer.put(r).put(g).put(b).put(a)
-            buffer.put(EMPTY_ROW) // color1 unused
+            buffer.put(col)
+            buffer.put(0f) // color1 unused
             buffer.put(if (s == 1f) glyph else fAtlasForRendering.get(c), 0, 4)
             buffer.put(-1f) // thickness = -1 for text
             penX += glyph.xAdvance * scaleFactor
@@ -674,8 +702,8 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         if (count >= MAX_BATCH) flush()
         buffer.put(x).put(y).put(width).put(height)
         buffer.put(EMPTY_ROW) // zero radii
-        buffer.put(0f).put(0f).put(0f).put(alphaCap) // black, alpha to alphaCap
-        buffer.put(EMPTY_ROW) // color1 unused
+        buffer.put(java.lang.Float.intBitsToFloat(alphaCap shl 24)) // black, alpha to alphaCap
+        buffer.put(0f) // color1 unused
         buffer.put(spread).put(blur).put(0f).put(0f)
         buffer.put(-5f) // thickness = -5 for drop shadow
         count += 1
@@ -739,7 +767,7 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
     }
 
     override fun globalAlpha(alpha: Float) {
-        alphaCap = alpha
+        alphaCap = (alpha * 255f).toInt()
     }
 
     override fun resetGlobalAlpha() = globalAlpha(1f)
@@ -763,8 +791,16 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
     }
 
     private fun transformScale(): Float {
-        val sx = sqrt(transform[0] * transform[0] + transform[3] * transform[3])
-        val sy = sqrt(transform[1] * transform[1] + transform[4] * transform[4])
+        val a = transform[0]
+        val c = transform[1]
+        val b = transform[3]
+        val d = transform[4]
+        // Fast-path: identity (no rotation, no scale, no shear)
+        if (a == 1f && d == 1f && c == 0f && b == 0f) {
+            return 1f
+        }
+        val sx = sqrt(a * a + b * b)
+        val sy = sqrt(c * c + d * d)
         return (sx + sy) * 0.5f
     }
 
@@ -889,7 +925,7 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
     }
 
     private fun getFontAtlas(font: Font, fontSize: Float): FontAtlas {
-        val renderSize = when(fontSize) {
+        val renderSize = when (fontSize) {
             in 0f..36f -> 24f
             else -> 48f
         }
