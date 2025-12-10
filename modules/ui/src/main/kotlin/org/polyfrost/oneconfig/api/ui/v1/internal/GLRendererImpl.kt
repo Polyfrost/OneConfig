@@ -3,10 +3,11 @@
 package org.polyfrost.oneconfig.api.ui.v1.internal
 
 import dev.deftu.omnicore.api.client.render.GlCapabilities
+import dev.deftu.omnicore.api.client.render.OmniResolution
 import dev.deftu.omnicore.api.client.render.OmniTextRenderer
 import dev.deftu.omnicore.api.client.render.stack.OmniPoseStack
 import dev.deftu.omnicore.api.color.OmniColor
-import dev.deftu.omnicore.api.math.OmniMatrix3f
+import dev.deftu.omnicore.api.math.OmniMatrix4f
 import dev.deftu.omnicore.internal.client.render.shader.ShaderInternals
 import org.apache.logging.log4j.LogManager
 import org.lwjgl.BufferUtils
@@ -641,11 +642,21 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         count += 1
     }
 
+    private fun FloatArray.getScaledMat4(): OmniMatrix4f {
+        // asm: scale to MC instance coordinates and mutate to a 4x4 matrix
+        val sf = pixelRatio / OmniResolution.scaleFactor.toFloat()
+        return OmniMatrix4f.from(floatArrayOf(
+            this[0] * sf, this[1] * sf, 0f, 0f,
+            this[3] * sf, this[4] * sf, 0f, 0f,
+            0f, 0f, 1f, 0f,
+            this[6] * sf, this[7] * sf, 0f, 1f
+        ))
+    }
+
     override fun text(font: Font, x: Float, y: Float, text: String, color: Color, fontSize: Float) {
         if (font === UIManager.INSTANCE.mcFont) {
             val ctx = UIManager.INSTANCE.renderingContext
-            // todo hi deftu https://github.com/Deftu/OmniCore/issues/57
-            ctx.pose.push(OmniPoseStack.Entry(ctx.pose.current.positionMatrix, OmniMatrix3f.from(transform)))
+            ctx.pose.push(OmniPoseStack.Entry(transform.getScaledMat4(), ctx.pose.current.normalMatrix))
             // asm: can be optimized by https://github.com/Deftu/OmniCore/issues/58
             OmniTextRenderer.render(ctx.pose, text, x, y, OmniColor.argb(color.argb), false)
             ctx.pose.pop()
