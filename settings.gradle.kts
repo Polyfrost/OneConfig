@@ -24,7 +24,7 @@ pluginManagement {
 
     plugins {
         kotlin("jvm") version("2.2.10")
-        id("dev.deftu.gradle.multiversion-root") version("2.68.0") // Update in libs.versions.toml too!!!
+        id("dev.deftu.gradle.multiversion-root") version("2.69.0") // Update in libs.versions.toml too!!!
     }
 }
 
@@ -110,6 +110,9 @@ listOf(
 
     "1.21.10-neoforge",
     "1.21.10-fabric",
+
+    "1.21.11-neoforge",
+    "1.21.11-fabric",
 ).forEach { version ->
     val proj = ":minecraft:$version"
     include(proj)
@@ -125,7 +128,9 @@ listOf(
             "1.21.1-fabric",
             "1.21.4-fabric",
             "1.21.5-fabric",
-            "1.21.8-fabric"
+            "1.21.8-fabric",
+//            "1.21.10-fabric",
+//            "1.21.11-fabric",
         ).contains(version)) {
         include(bootstrapProj)
         project(bootstrapProj).apply {

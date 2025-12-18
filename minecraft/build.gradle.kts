@@ -39,7 +39,9 @@ if (mcData.isForge) {
 toolkitLoomHelper {
     disableRunConfigs(GameSide.SERVER)
 
-    useDevAuth("+")
+    if (mcData.version < MinecraftVersions.VERSION_1_21_11) {
+        useDevAuth("+")
+    }
 
     useProperty("mixin.debug.export", "true", GameSide.CLIENT)
     useProperty("debugBytecode", "true", GameSide.CLIENT)
@@ -207,7 +209,8 @@ dependencies {
         rconfig("1.21.7", "3.7.2"),
         rconfig("1.21.8", "3.7.2", "1.21.7"),
         rconfig("1.21.9", "3.9.1"),
-        rconfig("1.21.10", "3.9.1", "1.21.9")
+        rconfig("1.21.10", "3.9.1", "1.21.9"),
+        rconfig("1.21.11", "3.9.1", "1.21.9"),
     )
 
     compileOnlyCompat(rconfig[mcVersionString])
@@ -249,7 +252,8 @@ dependencies {
         yacl("1.21.7", "3.7.1", "1.21.6"),
         yacl("1.21.8", "3.7.1", "1.21.6"),
         yacl("1.21.9", "3.8.0", "1.21.6"),
-        yacl("1.21.10", "3.8.0", "1.21.9")
+        yacl("1.21.10", "3.8.0", "1.21.9"),
+        yacl("1.21.11", "3.8.0", "1.21.9"),
     )
     compileOnlyCompat(yacl[mcVersionString])
 
@@ -274,6 +278,7 @@ dependencies {
         modMenu("1.21.7", "15.0.0-beta.3"),
         modMenu("1.21.8", "15.0.0-beta.3"),
         modMenu("1.21.10", "16.0.0-rc.1"),
+        modMenu("1.21.11", "17.0.0-alpha.1"),
     )
     compileOnlyCompat(modMenu[mcVersionString])
 
