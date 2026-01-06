@@ -3,20 +3,35 @@ package org.polyfrost.oneconfig.internal.compat
 import dev.deftu.omnicore.api.client.getIconResource
 import dev.deftu.omnicore.api.client.getIconResourcePath
 import io.github.notenoughupdates.moulconfig.ChromaColour
-import io.github.notenoughupdates.moulconfig.gui.editors.*
+import io.github.notenoughupdates.moulconfig.gui.editors.GuiOptionEditorAccordion
+import io.github.notenoughupdates.moulconfig.gui.editors.GuiOptionEditorBoolean
+import io.github.notenoughupdates.moulconfig.gui.editors.GuiOptionEditorButton
+import io.github.notenoughupdates.moulconfig.gui.editors.GuiOptionEditorColour
+import io.github.notenoughupdates.moulconfig.gui.editors.GuiOptionEditorDraggableList
+import io.github.notenoughupdates.moulconfig.gui.editors.GuiOptionEditorInfoText
+import io.github.notenoughupdates.moulconfig.gui.editors.GuiOptionEditorText
 import io.github.notenoughupdates.moulconfig.processor.MoulConfigProcessor
 import io.github.notenoughupdates.moulconfig.processor.ProcessedCategory
 import io.github.notenoughupdates.moulconfig.processor.ProcessedOption
 import org.polyfrost.oneconfig.api.config.v1.ConfigManager
 import org.polyfrost.oneconfig.api.config.v1.Tree
 import org.polyfrost.oneconfig.api.config.v1.Visualizer
-import org.polyfrost.oneconfig.api.config.v1.Visualizer.*
-import org.polyfrost.oneconfig.api.config.v1.dsl.*
+import org.polyfrost.oneconfig.api.config.v1.Visualizer.ButtonVisualizer
+import org.polyfrost.oneconfig.api.config.v1.Visualizer.ColorVisualizer
+import org.polyfrost.oneconfig.api.config.v1.Visualizer.DropdownVisualizer
+import org.polyfrost.oneconfig.api.config.v1.Visualizer.SliderVisualizer
+import org.polyfrost.oneconfig.api.config.v1.Visualizer.SwitchVisualizer
+import org.polyfrost.oneconfig.api.config.v1.Visualizer.TextVisualizer
+import org.polyfrost.oneconfig.api.config.v1.dsl.category
+import org.polyfrost.oneconfig.api.config.v1.dsl.icon
+import org.polyfrost.oneconfig.api.config.v1.dsl.noCache
+import org.polyfrost.oneconfig.api.config.v1.dsl.saveFunction
+import org.polyfrost.oneconfig.api.config.v1.dsl.subcategory
 import org.polyfrost.oneconfig.internal.DynamicPolyImage
-import org.polyfrost.oneconfig.internal.mixin.compat.moulconfig.Accessor_GuiOptionEditorDropdown
+import org.polyfrost.oneconfig.internal.utils.MoulConfigGuiOptionEditorDropdownAccessor
 import org.polyfrost.polyui.color.PolyColor
 import java.lang.reflect.Type
-import java.util.UUID
+import java.util.*
 import kotlin.reflect.KClass
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.nanoseconds
@@ -24,12 +39,16 @@ import io.github.notenoughupdates.moulconfig.Config as MoulConfig
 import org.polyfrost.oneconfig.relocator.annotations.MoulConfig as Moulconfig
 
 @Moulconfig
-object MoulConfigCompat {
+data object MoulConfigCompat {
 
     @JvmStatic
     fun parseMoulconfig(processor: MoulConfigProcessor<*>, config: MoulConfig) {
-        CompatLoader.markFirstModAsSkip()
-        ConfigManager.active().register(parseConfigTree(config, processor.allCategories.values))
+        runCatching {
+            CompatLoader.markFirstModAsSkip()
+            ConfigManager.active().register(parseConfigTree(config, processor.allCategories.values))
+        }.onFailure {
+            println("Failed to load moulconfig compat for $this due to $it")
+        }
     }
 
     fun parseConfigTree(config: MoulConfig, children: Iterable<ProcessedCategory>): Tree = Tree.tree().apply {
@@ -126,10 +145,9 @@ object MoulConfigCompat {
                 ColorVisualizer::class.java
             }
 
-            is Accessor_GuiOptionEditorDropdown -> {
+            is MoulConfigGuiOptionEditorDropdownAccessor -> {
                 fun getIndex(): Int {
-                    val selectedObject: Any? = children.get()
-                    if (selectedObject == null) return -1
+                    val selectedObject: Any = children.get() ?: return -1
 
                     return if (editor.`oneconfig$useOrdinal`()) {
                         selectedObject as Int

@@ -4,6 +4,7 @@ import io.github.notenoughupdates.moulconfig.processor.ConfigProcessorDriver;
 import io.github.notenoughupdates.moulconfig.processor.ConfigStructureReader;
 import io.github.notenoughupdates.moulconfig.processor.MoulConfigProcessor;
 import org.polyfrost.oneconfig.internal.compat.MoulConfigCompat;
+import org.polyfrost.oneconfig.internal.utils.MoulConfigProcessorAccessor;
 import org.polyfrost.oneconfig.relocator.annotations.MoulConfig;
 import org.polyfrost.oneconfig.relocator.annotations.RelocatedMixin;
 import org.spongepowered.asm.mixin.Final;
@@ -28,10 +29,10 @@ public class Mixin_ConfigProcessorDriver {
 
     @Inject(at = @At("TAIL"), method = "processConfig")
     public void processorEndConfig(CallbackInfo ci) {
-        if (reader instanceof MoulConfigProcessor<?> && reader instanceof Accessor_MoulConfigProcessor) {
+        if (reader instanceof MoulConfigProcessor<?> && reader instanceof MoulConfigProcessorAccessor) {
             MoulConfigCompat.parseMoulconfig(
                     (MoulConfigProcessor<?>) reader,
-                    ((Accessor_MoulConfigProcessor<?>) reader).oneconfig$getConfig());
+                    ((MoulConfigProcessorAccessor<?>) reader).oneconfig$getConfig());
         }
     }
 }
