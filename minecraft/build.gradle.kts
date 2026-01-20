@@ -186,7 +186,7 @@ dependencies {
         else -> error("no")
     }
 
-    val mcVersionString = mcData.version.patchless
+    val mcVersionString = mcData.version.toString()
 
     compileOnlyCompat("gg.essential:vigilance-1.8.9-forge:299")
     compileOnlyCompat("org.notenoughupdates.moulconfig:common:3.11.0")
