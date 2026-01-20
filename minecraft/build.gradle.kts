@@ -6,8 +6,10 @@ import com.replaymod.gradle.preprocess.PreprocessTask
 import com.replaymod.gradle.preprocess.ProjectGraphNode
 import com.replaymod.gradle.preprocess.RootPreprocessExtension
 import dev.deftu.gradle.utils.GameSide
+import dev.deftu.gradle.utils.version.MinecraftDropVersion
 import dev.deftu.gradle.utils.version.MinecraftReleaseVersion
 import dev.deftu.gradle.utils.version.MinecraftVersions
+import dev.deftu.gradle.utils.version.patchless
 import gg.essential.gradle.util.RelocationTransform.Companion.registerRelocationAttribute
 import gg.essential.gradle.util.prebundle
 import org.gradle.kotlin.dsl.invoke
@@ -177,9 +179,14 @@ dependencies {
         }
     }
 
-    val mcVersion = mcData.version as MinecraftReleaseVersion
-    val tripleVersion = Triple(mcVersion.major, mcVersion.minor, mcVersion.patch)
-    val mcVersionString = listOf(mcVersion.major, mcVersion.minor, mcVersion.patch).joinToString(".")
+    val mcVersion = mcData.version
+    val tripleVersion = when (mcVersion) {
+        is MinecraftDropVersion -> Triple(mcVersion.year, mcVersion.drop, mcVersion.patch)
+        is MinecraftReleaseVersion -> Triple(mcVersion.major, mcVersion.minor, mcVersion.patch)
+        else -> error("no")
+    }
+
+    val mcVersionString = mcData.version.patchless
 
     compileOnlyCompat("gg.essential:vigilance-1.8.9-forge:299")
     compileOnlyCompat("org.notenoughupdates.moulconfig:common:3.11.0")
@@ -284,8 +291,9 @@ dependencies {
 
 
     provideIncludedDependencies(
-        Triple(mcVersion.major, mcVersion.minor, mcVersion.patch),
-        mcData.loader.friendlyString
+        tripleVersion,
+        mcData.loader.friendlyString,
+        mcVersion.toString()
     ).forEach {
         if (it.dep is String) {
             @Suppress("USELESS_CAST")
