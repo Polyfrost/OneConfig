@@ -129,7 +129,7 @@ fun DependencyHandlerScope.handleApiDep(dependency: String, isMod: Boolean = fal
 
 fun DependencyHandlerScope.handleApiDep(dependency: ExternalModuleDependency, isMod: Boolean = false) {
     val dep = "${dependency.group}:${dependency.name}:${dependency.version}"
-    if (isMod) "oneConfigModulesCompileOnlyApi"(modApi(dep) {
+    if (isMod) "oneConfigModulesCompileOnlyApi"(maybeModApi(dep) {
         isTransitive = false
         attributes {
             attribute(includeInLoader, JBoolean.TRUE)
@@ -167,7 +167,7 @@ dependencies {
     )
 
     fun DependencyHandlerScope.compileOnlyCompat(notation: String?) =
-        notation?.let { modCompileOnly(it) { isTransitive = false } }
+        notation?.let { maybeModCompileOnly(it) { isTransitive = false } }
 
     fun DependencyHandlerScope.compileOnlyCompat(notation: CompatDependency?) {
         when {
@@ -298,7 +298,7 @@ dependencies {
     if (mcData.isFabric) {
         provideFabricApiDependency(tripleVersion).forEach {
             @Suppress("USELESS_CAST")
-            modApi(if (it.dep is String) it.dep as String else "${(it.dep as ExternalModuleDependency).group}:${(it.dep as ExternalModuleDependency).name}:${(it.dep as ExternalModuleDependency).version}") {
+            maybeModApi(if (it.dep is String) it.dep as String else "${(it.dep as ExternalModuleDependency).group}:${(it.dep as ExternalModuleDependency).name}:${(it.dep as ExternalModuleDependency).version}") {
                 isTransitive = false
             }
         }
@@ -351,41 +351,53 @@ dependencies {
         }
     }
 
-    if ((mcData.version as MinecraftReleaseVersion).isNewerThan(MinecraftVersions.VERSION_1_21_4)) {
+    if (mcData.version > MinecraftVersions.VERSION_1_21_4) {
         compileOnly("net.azureaaron:dandelion:1.0.0-alpha.3") { isTransitive = false }
     }
     api("dev.deftu:enhancedeventbus:2.0.0") // TODO
 }
 
 tasks {
+    val manifestFunc = { manifest: Manifest ->
+        val attributesMap = buildMap<String, Any> {
+            putAll(
+                mapOf(
+                    "Specification-Title" to modData.id,
+                    "Specification-Vendor" to "Polyfrost",
+                    "Specification-Version" to "1", // We are version 1 of ourselves, whatever the hell that means
+                    "Implementation-Title" to rootProject.name,
+                    "Implementation-Version" to project.version,
+                    "Implementation-Vendor" to "Polyfrost",
+                    "Implementation-Timestamp" to SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").format(Date()),
+                    "OneConfig-Main-Class" to "org.polyfrost.oneconfig.internal.bootstrap.Bootstrap",
+                    "MixinConfigs" to "mixins.oneconfigv1.init.json,mixins.oneconfigv1.json",)
+            )
+        }
+        manifest.attributes(attributesMap)
+        Unit
+    }
+
     withType(Jar::class) {
         exclude("**/**_Test.**")
         exclude("**/**_Test$**.**")
     }
-    remapJar {
-        manifest {
-            val attributesMap = buildMap<String, Any> {
-                putAll(
-                    mapOf(
-                        "Specification-Title" to modData.id,
-                        "Specification-Vendor" to "Polyfrost",
-                        "Specification-Version" to "1", // We are version 1 of ourselves, whatever the hell that means
-                        "Implementation-Title" to rootProject.name,
-                        "Implementation-Version" to project.version,
-                        "Implementation-Vendor" to "Polyfrost",
-                        "Implementation-Timestamp" to SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").format(Date()),
-                        "OneConfig-Main-Class" to "org.polyfrost.oneconfig.internal.bootstrap.Bootstrap",
-                        "MixinConfigs" to "mixins.oneconfigv1.init.json,mixins.oneconfigv1.json",
-                    )
-                )
-            }
-            attributes(attributesMap)
+    if (mcData.version.isDrop) {
+        jar {
+            manifest(manifestFunc)
+        }
+    } else {
+        named<org.gradle.jvm.tasks.Jar>("remapJar") {
+            manifest(manifestFunc)
         }
     }
     processResources {
         if (mcData.version >= MinecraftVersions.VERSION_1_13) {
             exclude("patched-lwjgl/**")
         }
+    }
+
+    fun Manifest.applyManifest() {
+
     }
 }
 

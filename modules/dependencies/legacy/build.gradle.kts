@@ -1,7 +1,7 @@
 import org.polyfrost.gradle.provideIncludedDependencies
 
 plugins {
-    id("dev.deftu.gradle.loom")
+    id("gg.essential.loom")
 }
 
 repositories {
