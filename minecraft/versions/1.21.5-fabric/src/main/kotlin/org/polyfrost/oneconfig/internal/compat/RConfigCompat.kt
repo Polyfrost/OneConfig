@@ -1,5 +1,6 @@
 package org.polyfrost.oneconfig.internal.compat
 
+//#if MC < 26.1
 import com.teamresourceful.resourcefulconfig.api.types.ResourcefulConfig
 import com.teamresourceful.resourcefulconfig.api.types.ResourcefulConfigButton
 import com.teamresourceful.resourcefulconfig.api.types.ResourcefulConfigElement
@@ -192,3 +193,4 @@ internal object RConfigCompat {
     }
 
 }
+//#endif
