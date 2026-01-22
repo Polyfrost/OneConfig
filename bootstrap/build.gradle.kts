@@ -6,8 +6,6 @@ import dev.deftu.gradle.utils.version.MinecraftReleaseVersion
 import org.polyfrost.gradle.provideFabricApiDependency
 import org.polyfrost.gradle.provideIncludedDependencies
 
-println("[${mcData.version::class.java}] ${mcData.version}")
-
 plugins {
     java
     alias(libs.plugins.kotlin)

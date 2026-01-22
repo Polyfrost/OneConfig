@@ -9,7 +9,6 @@ import dev.deftu.gradle.utils.GameSide
 import dev.deftu.gradle.utils.version.MinecraftDropVersion
 import dev.deftu.gradle.utils.version.MinecraftReleaseVersion
 import dev.deftu.gradle.utils.version.MinecraftVersions
-import dev.deftu.gradle.utils.version.patchless
 import gg.essential.gradle.util.RelocationTransform.Companion.registerRelocationAttribute
 import gg.essential.gradle.util.prebundle
 import org.gradle.kotlin.dsl.invoke
@@ -402,10 +401,6 @@ tasks {
         if (mcData.version >= MinecraftVersions.VERSION_1_13) {
             exclude("patched-lwjgl/**")
         }
-    }
-
-    fun Manifest.applyManifest() {
-
     }
 }
 
