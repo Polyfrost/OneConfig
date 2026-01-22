@@ -5,7 +5,7 @@
 kotlin = "2.2.10"
 kotlinx-coroutines = "1.10.2"
 kotlinx-atomicfu = "0.29.0"
-fabric-language-kotlin = "1.13.5+kotlin.2.2.10"
+fabric-language-kotlin = "1.13.7+"
 google-ksp = "2.2.10-2.0.2"
 polyui = "1.15.2"
 annotations = "24.1.0"
