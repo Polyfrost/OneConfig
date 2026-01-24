@@ -4,6 +4,7 @@ import dev.deftu.omnicore.api.client.getIconResource
 import dev.deftu.omnicore.api.client.getIconResourcePath
 import net.minecraft.network.chat.Component as Text // preprocessor moment, ping me (wyvest) if you want an explanation why this is needed
 
+//#if MC < 26.1
 //#if MC != 1.20.4 || FABRIC
 import dev.deftu.omnicore.api.loader.ModInfo
 import dev.isxander.yacl3.api.ConfigCategory
@@ -207,4 +208,5 @@ internal class YaclPropertyBuilder internal constructor(option: Option<*>) {
         this@YaclPropertyBuilder.metadata.entries.forEach { (key, value) -> addMetadata(key, value) }
     }
 }
+//#endif
 //#endif

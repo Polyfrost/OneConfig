@@ -1,5 +1,6 @@
 package org.polyfrost.oneconfig.internal.mixin.compat.yacl;
 
+//#if MC < 26.1
 //#if MC != 1.20.4 || FABRIC
 import dev.isxander.yacl3.api.ConfigCategory;
 import dev.isxander.yacl3.api.YetAnotherConfigLib;
@@ -27,4 +28,5 @@ public class Mixin_YetAnotherConfigLib_Builder {
         YaclV1Compat.build(title, categories, saveFunction);
     }
 }
+//#endif
 //#endif

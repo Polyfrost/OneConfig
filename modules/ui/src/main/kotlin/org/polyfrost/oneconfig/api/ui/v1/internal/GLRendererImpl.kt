@@ -16,6 +16,7 @@ import org.lwjgl.opengl.GL13.*
 import org.lwjgl.opengl.GL14.*
 import org.lwjgl.opengl.GL15.*
 import org.lwjgl.opengl.GL20.*
+import org.lwjgl.opengl.GL33.glBindSampler
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.UIManager
 import org.polyfrost.oneconfig.api.ui.v1.api.NanoSvgApi
@@ -409,8 +410,8 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
             var offset = 0L
             offset = enableAttrib(iRect, 4, offset)
             offset = enableAttrib(iRadii, 4, offset)
-            offset = enableAttrib(iColor0, 1, offset, GL_UNSIGNED_INT)
-            offset = enableAttrib(iColor1, 1, offset, GL_UNSIGNED_INT)
+            offset = enableAttribui(iColor0, 1, offset)
+            offset = enableAttribui(iColor1, 1, offset)
             offset = enableAttrib(iUVRect, 4, offset)
             enableAttrib(iThickness, 1, offset)
 
@@ -502,6 +503,7 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
 
         glActiveTexture(GL_TEXTURE0)
         glBindTexture(GL_TEXTURE_2D, atlas)
+        glBindSampler(0, 0)
 
         // asm: on VAO the state is stored, so we only need to set it up once
         if (!GlCapabilities.isGl3Available) {
@@ -516,8 +518,8 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
             var offset = 0L
             offset = enableAttrib(iRect, 4, offset)
             offset = enableAttrib(iRadii, 4, offset)
-            offset = enableAttrib(iColor0, 1, offset, GL_UNSIGNED_INT)
-            offset = enableAttrib(iColor1, 1, offset, GL_UNSIGNED_INT)
+            offset = enableAttribui(iColor0, 1, offset)
+            offset = enableAttribui(iColor1, 1, offset)
             offset = enableAttrib(iUVRect, 4, offset)
             enableAttrib(iThickness, 1, offset)
         }
@@ -539,10 +541,19 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         if (GlCapabilities.isGl3Available) org.lwjgl.opengl.GL30.glBindVertexArray(prevVao)
     }
 
-    private fun enableAttrib(loc: Int, size: Int, offset: Long, type: Int = GL_FLOAT): Long {
+    private fun enableAttrib(loc: Int, size: Int, offset: Long): Long {
         glEnableVertexAttribArray(loc)
-        glVertexAttribPointer(loc, size, type, false, STRIDE * 4, offset)
+        glVertexAttribPointer(loc, size, GL_FLOAT, false, STRIDE * 4, offset)
         // I don't know why core disables the extension functions... but ok!
+        if (GlCapabilities.isGl33Available) org.lwjgl.opengl.GL33.glVertexAttribDivisor(loc, 1)
+        else org.lwjgl.opengl.ARBInstancedArrays.glVertexAttribDivisorARB(loc, 1)
+        return offset + size * 4L
+    }
+
+    private fun enableAttribui(loc: Int, size: Int, offset: Long): Long {
+        glEnableVertexAttribArray(loc)
+        if (GlCapabilities.isGl3Available) org.lwjgl.opengl.GL30.glVertexAttribIPointer(loc, size, GL_UNSIGNED_INT, STRIDE * 4, offset)
+        else org.lwjgl.opengl.EXTGPUShader4.glVertexAttribIPointerEXT(loc, size, GL_UNSIGNED_INT, STRIDE * 4, offset)
         if (GlCapabilities.isGl33Available) org.lwjgl.opengl.GL33.glVertexAttribDivisor(loc, 1)
         else org.lwjgl.opengl.ARBInstancedArrays.glVertexAttribDivisorARB(loc, 1)
         return offset + size * 4L
