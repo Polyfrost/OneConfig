@@ -16,6 +16,7 @@ import org.lwjgl.opengl.GL13.*
 import org.lwjgl.opengl.GL14.*
 import org.lwjgl.opengl.GL15.*
 import org.lwjgl.opengl.GL20.*
+import org.lwjgl.opengl.GL33.glBindSampler
 import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.UIManager
 import org.polyfrost.oneconfig.api.ui.v1.api.NanoSvgApi
@@ -502,6 +503,7 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
 
         glActiveTexture(GL_TEXTURE0)
         glBindTexture(GL_TEXTURE_2D, atlas)
+        glBindSampler(0, 0)
 
         // asm: on VAO the state is stored, so we only need to set it up once
         if (!GlCapabilities.isGl3Available) {

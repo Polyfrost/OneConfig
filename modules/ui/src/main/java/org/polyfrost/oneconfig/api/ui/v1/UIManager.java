@@ -59,6 +59,7 @@ import org.polyfrost.polyui.component.Drawable;
 import org.polyfrost.polyui.data.Font;
 import org.polyfrost.polyui.renderer.Renderer;
 import org.polyfrost.polyui.renderer.Window;
+import org.polyfrost.polyui.unit.Vec2;
 
 import java.util.ServiceLoader;
 import java.util.function.Consumer;
@@ -190,7 +191,12 @@ public interface UIManager {
             EventManager.register(ResizeEvent.class, event -> {
                 float ratio = Platform.screen().pixelRatio();
                 polyUI.resize(event.newWidth, event.newHeight, false);
-                framebuffer.resize((int) (polyUI.getMaster().getWidth() * ratio), (int) (polyUI.getMaster().getHeight() * ratio));
+
+                long visibleSize = polyUI.getVisibleSize();
+                int polyUiWidth = (int) Vec2.getX(visibleSize);
+                int polyUiHeight = (int) Vec2.getY(visibleSize);
+                System.out.println("Resizing to: " + polyUiWidth + "x" + polyUiHeight + " with ratio " + ratio);
+                framebuffer.resize(polyUiWidth, polyUiHeight);
                 polyUI.getWindow().setPixelRatio(ratio);
             });
 
