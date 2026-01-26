@@ -119,7 +119,11 @@ listOf(
     val proj = ":minecraft:$version"
     include(proj)
     project(proj).apply {
-        projectDir = file("minecraft/versions/$version")
+        projectDir = file("minecraft/versions/$version").also {
+            if (!it.exists() && !it.mkdirs()) {
+                throw IllegalStateException("Could not create project directory: ${it.absolutePath}")
+            }
+        }
         buildFileName = "../../build.gradle.kts"
     }
     val bootstrapProj = ":bootstrap:bootstrap-$version"
@@ -137,7 +141,11 @@ listOf(
         ).contains(version)) {
         include(bootstrapProj)
         project(bootstrapProj).apply {
-            projectDir = file("bootstrap/versions/$version")
+            projectDir = file("bootstrap/versions/$version").also {
+                if (!it.exists() && !it.mkdirs()) {
+                    throw IllegalStateException("Could not create project directory: ${it.absolutePath}")
+                }
+            }
             buildFileName = "../../build.gradle.kts"
         }
     }
