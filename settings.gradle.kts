@@ -137,7 +137,7 @@ listOf(
             "1.21.8-fabric",
             "1.21.10-fabric",
             "1.21.11-fabric",
-            "26.1-fabric"
+//            "26.1-fabric"
         ).contains(version)) {
         include(bootstrapProj)
         project(bootstrapProj).apply {
