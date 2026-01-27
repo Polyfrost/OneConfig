@@ -30,6 +30,7 @@ import dev.deftu.omnicore.api.client.input.OmniKeys
 import org.apache.logging.log4j.LogManager
 import org.polyfrost.oneconfig.api.event.v1.eventHandler
 import org.polyfrost.oneconfig.api.event.v1.events.KeyInputEvent
+import org.polyfrost.oneconfig.api.event.v1.events.MouseInputEvent
 import org.polyfrost.oneconfig.api.event.v1.events.ScreenOpenEvent
 import org.polyfrost.oneconfig.api.event.v1.events.TickEvent
 import org.polyfrost.oneconfig.api.event.v1.events.WindowFocusEvent
@@ -54,6 +55,12 @@ object KeybindManager {
             if (state == 2) return@eventHandler
             translateKey(inputManager, key, char, state == 1)
         }
+
+        eventHandler { (btn, state): MouseInputEvent ->
+            if (state == 1) inputManager.mousePressed(btn)
+            else inputManager.mouseReleased(btn)
+        }
+
         eventHandler { _: TickEvent.End ->
             keyBinder.update(50_000L, inputManager.mods, true)
         }
