@@ -363,10 +363,10 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
                 require("GL_EXT_gpu_shader4" in extensions) { "GL_EXT_gpu_shader4 is not supported and is required" }
                 require("GL_ARB_instanced_arrays" in extensions) { "GL_ARB_instanced_arrays is not supported and is required" }
                 require("GL_ARB_draw_instanced" in extensions) { "GL_ARB_draw_instanced is not supported and is required" }
-                if ("GL_EXT_framebuffer_object" in extensions) {
-                    LOGGER.info("Using mipmaps as extension GL_EXT_framebuffer_object is available")
-                    mipmapMode = 2
-                }
+//                if ("GL_EXT_framebuffer_object" in extensions) {
+//                    LOGGER.info("Using mipmaps as extension GL_EXT_framebuffer_object is available")
+//                    mipmapMode = 2
+//                }
             }
         }
 
@@ -948,7 +948,7 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
 
     private fun getFontAtlas(font: Font, fontSize: Float): FontAtlas {
         val renderSize = when (fontSize) {
-            in 0f..16f -> 6f
+            in 0f..16f -> 12f
             in 0f..36f -> 24f
             else -> 48f
         }
