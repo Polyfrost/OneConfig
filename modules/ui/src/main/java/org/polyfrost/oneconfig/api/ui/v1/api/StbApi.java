@@ -22,9 +22,17 @@ public interface StbApi {
 
     boolean font_InitFont(long info, ByteBuffer data);
 
+    int font_FindGlyphIndex(long info, int codepoint);
+
     float font_ScaleForMappingEmToPixels(long info, float pixels);
 
     void font_GetFontVMetrics(long info, int[] ascent, int[] descent, int[] lineGap);
+
+    void font_GetGlyphHMetrics(long info, int glyphIndex, int[] advanceWidth, int[] leftSideBearing);
+
+    long font_GetGlyphBitmap(long info, float scaleX, float scaleY, int glyphIndex, int[] w, int[] h, int[] x_off, int[] y_off);
+
+    long font_GetGlyphSDF(long info, float scale, int glyphIndex, int padding, byte onEdgeValue, float pixelDistScale, int[] w, int[] h, int[] x_off, int[] y_off);
 
     boolean font_PackBegin(long packCtx, ByteBuffer pixels, int width, int height, int strideInBytes, int padding, long allocCtx);
 

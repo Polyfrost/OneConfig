@@ -37,6 +37,8 @@ class StbImpl : StbApi {
 
     override fun font_InitFont(info: Long, data: ByteBuffer) = nstbtt_InitFont(info, MemoryUtil.memAddress(data), 0) != 0
 
+    override fun font_FindGlyphIndex(info: Long, codepoint: Int) = nstbtt_FindGlyphIndex(info, codepoint)
+
     override fun font_ScaleForMappingEmToPixels(info: Long, pixels: Float) =
         nstbtt_ScaleForMappingEmToPixels(info, pixels)
 
@@ -47,6 +49,18 @@ class StbImpl : StbApi {
         lineGap: IntArray
     ) {
         nstbtt_GetFontVMetrics(info, ascent, descent, lineGap)
+    }
+
+    override fun font_GetGlyphHMetrics(info: Long, glyphIndex: Int, advanceWidth: IntArray?, leftSideBearing: IntArray?) {
+        nstbtt_GetGlyphHMetrics(info, glyphIndex, advanceWidth, leftSideBearing)
+    }
+
+    override fun font_GetGlyphBitmap(info: Long, scaleX: Float, scaleY: Float, glyphIndex: Int, w: IntArray?, h: IntArray?, x_off: IntArray?, y_off: IntArray?): Long {
+        return nstbtt_GetGlyphBitmap(info, scaleX, scaleY, glyphIndex, w, h, x_off, y_off)
+    }
+
+    override fun font_GetGlyphSDF(info: Long, scale: Float, glyphIndex: Int, padding: Int, onEdgeValue: Byte, pixelDistScale: Float, w: IntArray?, h: IntArray?, x_off: IntArray?, y_off: IntArray?): Long {
+        return nstbtt_GetGlyphSDF(info, scale, glyphIndex, padding, onEdgeValue, pixelDistScale, w, h, x_off, y_off)
     }
 
     override fun font_PackBegin(

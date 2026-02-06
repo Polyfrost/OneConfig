@@ -5,8 +5,6 @@ package org.polyfrost.oneconfig.api.ui.v1.internal
 import dev.deftu.omnicore.api.client.render.GlCapabilities
 import dev.deftu.omnicore.api.client.render.OmniResolution
 import dev.deftu.omnicore.api.client.render.OmniTextRenderer
-import dev.deftu.omnicore.api.client.render.stack.OmniPoseStack
-import dev.deftu.omnicore.api.color.OmniColor
 import dev.deftu.omnicore.api.math.OmniMatrix4f
 import dev.deftu.omnicore.internal.client.render.shader.ShaderInternals
 import org.apache.logging.log4j.LogManager
@@ -16,8 +14,7 @@ import org.lwjgl.opengl.GL13.*
 import org.lwjgl.opengl.GL14.*
 import org.lwjgl.opengl.GL15.*
 import org.lwjgl.opengl.GL20.*
-import org.lwjgl.opengl.GL33.glBindSampler
-import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.lwjgl.system.MemoryUtil
 import org.polyfrost.oneconfig.api.ui.v1.UIManager
 import org.polyfrost.oneconfig.api.ui.v1.api.NanoSvgApi
 import org.polyfrost.oneconfig.api.ui.v1.api.RendererExt
@@ -29,7 +26,7 @@ import org.polyfrost.polyui.data.Font
 import org.polyfrost.polyui.data.PolyImage
 import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.unit.Vec2
-import org.polyfrost.polyui.unit.Vec4
+import org.polyfrost.polyui.utils.roundTo
 import org.polyfrost.polyui.utils.toDirectByteBuffer
 import org.polyfrost.polyui.utils.toDirectByteBufferNT
 import java.nio.ByteBuffer
@@ -39,14 +36,13 @@ import kotlin.math.*
 private val LOGGER = LogManager.getLogger("PolyUI/GLRenderer")
 
 private const val MAX_UI_DEPTH = 16
-private const val FONT_MAX_BITMAP_W = 1536
-private const val FONT_MAX_BITMAP_H = 512
 private const val ATLAS_SIZE = 2048
 private const val ATLAS_SVG_UPSCALE_FACTOR = 2f
-private const val STRIDE = 4 + 4 + 1 + 1 + 4 + 1 // bounds, radii, color0, color1, UV, thick
-private const val MAX_BATCH = 1024
+private const val STRIDE = 4 + 4 + 1 + 1 + 4 + 1 + 4 // bounds, radii, color0, color1, UV, thick, clip
+private const val MAX_BATCH = 2048
+private const val FONT_SCALE_MAX_FIDELITY = 0.25f
+private const val FONT_RENDERED_SIZE = 64f
 
-private val EMPTY_ROW = floatArrayOf(0f, 0f, 0f, 0f)
 private val NO_UV = floatArrayOf(-1f, -1f, 1f, 1f)
 private val IDENTITY = floatArrayOf(
     1f, 0f, 0f,
@@ -74,18 +70,15 @@ private inline fun FloatArray.setThenClear(other: FloatArray) {
 class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Renderer, RendererExt {
 
     private val buffer = BufferUtils.createFloatBuffer(MAX_BATCH * STRIDE)
-    private val scissorStack = IntArray(MAX_UI_DEPTH * 4)
+    private val scissorStack = FloatArray(MAX_UI_DEPTH * 4)
     private val transformStack = Array(MAX_UI_DEPTH) { FloatArray(9) }
     private val transformBuffer = BufferUtils.createFloatBuffer(9)
-    private val fonts = HashMap<Int, FontAtlas>()
+    private val fonts = HashMap<String, FontAtlas>()
     private val init get() = program != 0
-
-    // lateinit
-    private var mipmapMode = 0
+    private lateinit var atlas: GLAtlasManager
 
     // GL objects
     private var instancedVbo = 0
-    private var atlas = 0
     private var program = 0
     private var vao = 0 // GL3+ only
     private var quadVbo = 0
@@ -100,10 +93,12 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
     private var iColor1 = 0
     private var iUVRect = 0
     private var iThickness = 0
+    private var iClipRect = 0
 
 
     // Current batch state
-    private val viewport = IntArray(4)
+    private var width = 0f
+    private var height = 0f
     private var count = 0
     private var transformDepth = 0
     private var scissorDepth = 0
@@ -111,11 +106,6 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
     private var pixelRatio = 1f
     private var alphaCap = 255
     private var popFlushNeeded = false
-
-    // atlas data
-    private var slotX = 0
-    private var slotY = 0
-    private var atlasRowHeight = 0
 
     private val FRAG = """
         #version $$$ // replaced by compileShader
@@ -131,11 +121,13 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
 
         uniform sampler2D uTex;
 
-        VARYING vec2 vUV;
-        VARYING vec2 vUV2;      // used for gradients
-        VARYING vec2 vPos;      // pixel coords in rect space
-        VARYING vec4 vRect;     // rect x, y, w, h
-        VARYING vec4 vRadii;    // per-corner radii
+        VARYING vec2 vUV;        // UV sampler position
+        VARYING vec2 vUV2;       // used for gradients
+        VARYING vec2 vHalfSize;  // half the rectangle size
+        VARYING vec2 vP;         // rect x, y
+        VARYING vec2 vScreenPos; // screen position of the rectangle
+        VARYING vec4 vClipRect;  // clipping rectangle
+        VARYING vec4 vRadii;     // per-corner radii
         VARYING vec4 vColor0;    // RGBA
         VARYING vec4 vColor1;    // RGBA (for gradients)
         VARYING float vThickness; // -1 for text, -2 for linear gradient, -3 for radial, -4 for box,  >0 for hollow rect
@@ -156,7 +148,7 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         }
 
         float hollowRoundedBoxSDF(vec2 p, vec2 b, vec4 r, float thickness) {
-            float outer = roundedBoxSDF(p, b + 0.2, r + 0.2);
+            float outer = roundedBoxSDF(p, b + 0.3, r + 0.3);
             float inner = roundedBoxSDF(p, b - thickness, max(r - thickness, 0.0)); 
             return max(outer, -inner);
         }
@@ -165,44 +157,67 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
             vec2 q = abs(p) - (halfSize - radius);
             return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - radius;
         }
+        
+        float boxSDF(vec2 p, vec2 halfSize) {
+            vec2 q = abs(p) - halfSize;
+            return max(q.x, q.y);
+        }
+        
+        float hollowBoxSDF(vec2 p, vec2 halfSize, float thickness) {
+            float outer = boxSDF(p, halfSize + 0.3);
+            float inner = boxSDF(p, halfSize - thickness); 
+            return max(outer, -inner);
+        }
 
         void main() {
-            vec2 halfSize = 0.5 * vRect.zw;
-            vec2 center = vRect.xy + halfSize;
-            vec2 p = vPos - center;
+            float clip =
+                step(vClipRect.x, vScreenPos.x) *
+                step(vClipRect.y, vScreenPos.y) *
+                step(vScreenPos.x, vClipRect.z) *
+                step(vScreenPos.y, vClipRect.w);
+            // if (clip == 0.0) discard;
 
-            float d = (vThickness > 0.0) ? hollowRoundedBoxSDF(p, halfSize, vRadii, vThickness) : roundedBoxSDF(p, halfSize, vRadii);
+            float d;
+            if (vRadii.y == -1.0) {
+                d = (vThickness > 0.0) ? hollowBoxSDF(vP, vHalfSize, vThickness) : boxSDF(vP, vHalfSize);
+            } else {
+                d = (vThickness > 0.0) ? hollowRoundedBoxSDF(vP, vHalfSize, vRadii, vThickness) : roundedBoxSDF(vP, vHalfSize, vRadii);
+            }
 
             vec4 col = vColor0;
             if (vUV.x >= 0.0 && vThickness >= -1.0) {     // textured if UV.x >= 0
                 vec4 texColor = TEXTURE(uTex, vUV);
                 // text check: use red channel as alpha
-                col = (vThickness == -1.0) ? vec4(col.rgb, col.a * texColor.r) : col * texColor;
+                if (vThickness == -1.0) {
+                    float w = fwidth(texColor.r);
+                    // bias increases as glyph gets smaller
+                    float bias = 0.5 - min(w * 0.6, 0.08);
+                    col.a *= smoothstep(bias - w, bias + w, texColor.r);
+                } else col = col * texColor;
             }
             else if (vThickness == -2.0) { // linear gradient, vUV as start and vUV2 as end
                 vec2 dir = vUV2 - vUV;
-                float len = length(dir);
-                float t = clamp(dot((p + halfSize) - vUV, dir / len) / len, 0.0, 1.0);
+                float invLen2 = 1.0 / dot(dir, dir);
+                float t = clamp(dot((vP + vHalfSize) - vUV, dir) * invLen2, 0.0, 1.0);
                 col = mix(vColor0, vColor1, t);
             }
             else if (vThickness == -3.0) { // radial gradient, vUV as center and vUV2.x as radius
-                float dist = length(p + halfSize - vUV);
+                float dist = length(vP + vHalfSize - vUV);
                 float t = clamp((dist - vUV2.x) / (vUV2.y - vUV2.x), 0.0, 1.0);
                 col = mix(vColor0, vColor1, t);
             }
             else if (vThickness == -4.0) { // box gradient, vUV.x as radius and vUV.y as feather
-                float dist = roundBoxSDF(p, halfSize, vUV.x);
+                float dist = roundBoxSDF(vP, vHalfSize, vUV.x);
                 float t = clamp((dist + vUV.y * 0.5) / vUV.y, 0.0, 1.0);
                 col = mix(vColor0, vColor1, t);
             }
             else if (vThickness == -5.0) { // drop shadow, vUV.x as spread and vUV.y as blur
-                float dShadow = roundBoxSDF(p, halfSize + vUV.x, vRadii.x);
+                float dShadow = roundBoxSDF(vP, vHalfSize + vUV.x, vRadii.x);
                 col = vec4(vColor0.rgb, vColor0.a * (1.0 - smoothstep(-vUV.y, vUV.y, dShadow)));
             }
 
             // Proper antialiasing based on distance field
-            float f = fwidth(d);
-            float alpha = col.a * (1.0 - smoothstep(-f, f, d));
+            float alpha = col.a * clip * clamp(0.5 - d, 0.0, 1.0);
 
             fragColor = vec4(col.rgb * alpha, alpha);
         }
@@ -228,6 +243,7 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         ATTRIBUTE U_INT iColor1;
         ATTRIBUTE vec4 iUVRect;
         ATTRIBUTE float iThickness;
+        ATTRIBUTE vec4 iClipRect;
 
         uniform mat3 uTransform = mat3(
             1.0, 0.0, 0.0,
@@ -236,8 +252,10 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         );
         uniform vec2 uWindow;
 
-        VARYING vec2 vPos;
-        VARYING vec4 vRect;
+        VARYING vec2 vP;
+        VARYING vec2 vHalfSize;
+        VARYING vec2 vScreenPos;
+        VARYING vec4 vClipRect;
         VARYING vec4 vRadii;
         VARYING vec4 vColor0;
         VARYING vec4 vColor1;
@@ -266,14 +284,15 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
 
             gl_Position = vec4(ndc, 0.0, 1.0);
 
-            vPos    = pos;
-            vRect   = iRect;
-            vRadii  = iRadii;
-            vColor0 = unpackColor(iColor0);
-            vColor1 = unpackColor(iColor1);
-            vUV     = uv;
-            // pass through for gradients.
-            vUV2    = iUVRect.zw;
+            vHalfSize  = iRect.zw * 0.5;
+            vP         = pos - iRect.xy - vHalfSize; 
+            vScreenPos = transformed.xy;
+            vClipRect  = iClipRect;
+            vRadii     = iRadii;
+            vColor0    = unpackColor(iColor0);
+            vColor1    = unpackColor(iColor1);
+            vUV        = uv;
+            vUV2       = iUVRect.zw;   // pass through for gradients.
             vThickness = iThickness;
         }
     """.trimIndent()
@@ -413,7 +432,8 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
             offset = enableAttribui(iColor0, 1, offset)
             offset = enableAttribui(iColor1, 1, offset)
             offset = enableAttrib(iUVRect, 4, offset)
-            enableAttrib(iThickness, 1, offset)
+            offset = enableAttrib(iThickness, 1, offset)
+            enableAttrib(iClipRect, 4, offset)
 
             glBindBuffer(GL_ARRAY_BUFFER, quadVbo)
             glEnableVertexAttribArray(aLocal)
@@ -422,28 +442,14 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         }
 
         val prevTex = glGetInteger(GL_TEXTURE_BINDING_2D)
-        atlas = glGenTextures()
-        glBindTexture(GL_TEXTURE_2D, atlas)
-        glTexImage2D(
-            GL_TEXTURE_2D,
-            0,
-            GL_RGBA,
-            ATLAS_SIZE,
-            ATLAS_SIZE,
-            0,
-            GL_RGBA,
-            GL_UNSIGNED_BYTE,
-            null as ByteBuffer?
-        )
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, if (mipmapMode == 0) GL_LINEAR else GL_LINEAR_MIPMAP_LINEAR)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
+        atlas = GLAtlasManager(ATLAS_SIZE, ATLAS_SIZE)
         glBindTexture(GL_TEXTURE_2D, prevTex)
         glBindBuffer(GL_ARRAY_BUFFER, prevBuf)
     }
 
     override fun beginFrame(width: Float, height: Float, pixelRatio: Float) {
+        this.width = width
+        this.height = height
         scissorDepth = 0
         alphaCap = 255
         count = 0
@@ -457,7 +463,6 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         glUniformMatrix3fv(uTransform, false, transform)
         glUseProgram(prevProg)
         glDisable(GL_SCISSOR_TEST)
-        Platform.gl().glViewport(viewport)
         this.pixelRatio = pixelRatio
     }
 
@@ -502,8 +507,8 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         }
 
         glActiveTexture(GL_TEXTURE0)
-        glBindTexture(GL_TEXTURE_2D, atlas)
-        glBindSampler(0, 0)
+        atlas.bind()
+        if (GlCapabilities.isGl33Available) org.lwjgl.opengl.GL33.glBindSampler(0, 0)
 
         // asm: on VAO the state is stored, so we only need to set it up once
         if (!GlCapabilities.isGl3Available) {
@@ -569,6 +574,7 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
     ) {
         val buffer = buffer
         if (count >= MAX_BATCH) flush()
+        val topRightRadius = if (topLeftRadius == 0f && topLeftRadius == topRightRadius && topLeftRadius == bottomLeftRadius && topLeftRadius == bottomRightRadius) -1f else topRightRadius
         buffer.put(x).put(y).put(width).put(height)
         buffer.put(topLeftRadius).put(topRightRadius).put(bottomRightRadius).put(bottomLeftRadius)
         buffer.put(java.lang.Float.intBitsToFloat(color.argb.capAlpha()))
@@ -612,7 +618,7 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
             buffer.put(NO_UV) // -1f UVs to indicate no texture
             buffer.put(0f)
         }
-
+        buffer.put(scissorStack, (scissorDepth - 4).coerceAtLeast(0), 4)
         count += 1
     }
 
@@ -629,12 +635,14 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         bottomRightRadius: Float
     ) {
         if (count >= MAX_BATCH) flush()
+        val topRightRadius = if (topLeftRadius == 0f && topLeftRadius == topRightRadius && topLeftRadius == bottomLeftRadius && topLeftRadius == bottomRightRadius) -1f else topRightRadius
         buffer.put(x).put(y).put(width).put(height)
         buffer.put(topLeftRadius).put(topRightRadius).put(bottomRightRadius).put(bottomLeftRadius)
         buffer.put(java.lang.Float.intBitsToFloat(color.argb.capAlpha()))
         buffer.put(0f) // color1 unused
         buffer.put(NO_UV) // -1f UVs to indicate no texture
         buffer.put(lineWidth)
+        buffer.put(scissorStack, (scissorDepth - 4).coerceAtLeast(0), 4)
         count += 1
     }
 
@@ -644,12 +652,14 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
     ) {
         if (count >= MAX_BATCH) flush()
 
+        val topRightRadius = if (topLeftRadius == 0f && topLeftRadius == topRightRadius && topLeftRadius == bottomLeftRadius && topLeftRadius == bottomRightRadius) -1f else topRightRadius
         buffer.put(x).put(y).put(width).put(height)
         buffer.put(topLeftRadius).put(topRightRadius).put(bottomRightRadius).put(bottomLeftRadius)
         buffer.put(java.lang.Float.intBitsToFloat(colorMask.capAlpha()))
         buffer.put(0f) // color1 unused
         buffer.put(image.uv.x).put(image.uv.y).put(image.uv.w).put(image.uv.h)
         buffer.put(0f) // thickness = 0 for filled rect
+        buffer.put(scissorStack, (scissorDepth - 4).coerceAtLeast(0), 4)
         count += 1
     }
 
@@ -666,36 +676,37 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
 
     override fun text(font: Font, x: Float, y: Float, text: String, color: Color, fontSize: Float) {
         if (font === UIManager.INSTANCE.mcFont) {
-            val ctx = UIManager.INSTANCE.renderingContext
-            ctx.pose.push(OmniPoseStack.Entry(transform.getScaledMat4(), ctx.pose.current.normalMatrix))
-            // asm: can be optimized by https://github.com/Deftu/OmniCore/issues/58
-            OmniTextRenderer.render(ctx.pose, text, x, y, OmniColor.argb(color.argb), false)
-            ctx.pose.pop()
+            // todo broken on 1.21.10(+)
+//            val ctx = UIManager.INSTANCE.renderingContext
+//            ctx.pose.push(OmniPoseStack.Entry(transform.getScaledMat4(), ctx.pose.current.normalMatrix))
+//             asm: can be optimized by https://github.com/Deftu/OmniCore/issues/58
+//            OmniTextRenderer.render(ctx.pose, text, x, y, OmniColor.argb(color.argb), false)
+//            ctx.pose.pop()
             return
         }
-        val fAtlas = getFontAtlas(font, fontSize)
         val s = transformScale()
-        val fAtlasForRendering = if (s == 1f) fAtlas else getFontAtlas(font, fontSize * s)
+        val fAtlas = getFontAtlas(font)
         if (count >= MAX_BATCH) flush()
 
-        var penX = x
-        val scaleFactor = fontSize / fAtlas.renderedSize
-        val penY = (y + (fAtlas.ascent + fAtlas.descent) * scaleFactor) + 2f
+        var penX = floor(x + 0.5f)
+        val scaleFactor = (fontSize.roundTo(FONT_SCALE_MAX_FIDELITY) / FONT_RENDERED_SIZE) * s
+        val penY = (y + (fAtlas.ascent + fAtlas.descent) * scaleFactor) + (fontSize / 6f)
         val col = java.lang.Float.intBitsToFloat(color.argb.capAlpha())
         val buffer = buffer
 
-        for (c in text) {
-            if (count >= MAX_BATCH) {
-                flush()
-            }
-            val glyph = fAtlas.get(c)
+        text.forEachCodepoint {
+            if (count >= MAX_BATCH) flush()
+            val glyph = fAtlas.get(it)
+            // opt: early exit when we are out of the scissored region
+            if (scissorDepth > 3 && penX > scissorStack[scissorDepth - 2]) return
             buffer.put(penX + glyph.xOff * scaleFactor).put(penY + glyph.yOff * scaleFactor)
                 .put(glyph.width * scaleFactor).put(glyph.height * scaleFactor)
-            buffer.put(EMPTY_ROW) // zero radii
+            buffer.put(0f).put(-1f).put(0f).put(0f) // zero radii (-1 optimization)
             buffer.put(col)
             buffer.put(0f) // color1 unused
-            buffer.put(if (s == 1f) glyph else fAtlasForRendering.get(c), 0, 4)
+            buffer.put(glyph, 0, 4) // UVs
             buffer.put(-1f) // thickness = -1 for text
+            buffer.put(scissorStack, (scissorDepth - 4).coerceAtLeast(0), 4)
             penX += glyph.xAdvance * scaleFactor
             count += 1
         }
@@ -704,7 +715,7 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
     override fun textBounds(font: Font, text: String, fontSize: Float): Vec2 {
         return if (font === UIManager.INSTANCE.mcFont) {
             Vec2(OmniTextRenderer.width(text).toFloat(), OmniTextRenderer.lineHeight.toFloat())
-        } else getFontAtlas(font, fontSize).measure(text, fontSize)
+        } else getFontAtlas(font).measure(text, fontSize)
     }
 
     override fun line(x1: Float, y1: Float, x2: Float, y2: Float, color: Color, width: Float) {
@@ -723,26 +734,20 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
     ) {
         if (count >= MAX_BATCH) flush()
         buffer.put(x).put(y).put(width).put(height)
-        buffer.put(EMPTY_ROW) // zero radii
+        buffer.put(0f).put(-1f).put(0f).put(0f) // zero radii
         buffer.put(java.lang.Float.intBitsToFloat(alphaCap shl 24)) // black, alpha to alphaCap
         buffer.put(0f) // color1 unused
         buffer.put(spread).put(blur).put(0f).put(0f)
         buffer.put(-5f) // thickness = -5 for drop shadow
+        buffer.put(scissorStack, (scissorDepth - 4).coerceAtLeast(0), 4)
         count += 1
     }
 
     override fun pushScissor(x: Float, y: Float, width: Float, height: Float) {
-        flush()
-        val nx = (x * pixelRatio).roundToInt()
-        val ny = (viewport[3] - (y + height) * pixelRatio).roundToInt()
-        val nw = (width * pixelRatio).roundToInt()
-        val nh = (height * pixelRatio).roundToInt()
-        scissorStack[scissorDepth++] = nx
-        scissorStack[scissorDepth++] = ny
-        scissorStack[scissorDepth++] = nw
-        scissorStack[scissorDepth++] = nh
-        glEnable(GL_SCISSOR_TEST)
-        glScissor(nx + viewport[0], ny + viewport[1], nw, nh)
+        scissorStack[scissorDepth++] = x
+        scissorStack[scissorDepth++] = y
+        scissorStack[scissorDepth++] = x + width
+        scissorStack[scissorDepth++] = y + height
     }
 
     override fun pushScissorIntersecting(x: Float, y: Float, width: Float, height: Float) {
@@ -750,49 +755,38 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
             pushScissor(x, y, width, height)
             return
         }
-        flush()
         val px = scissorStack[scissorDepth - 4]
         val py = scissorStack[scissorDepth - 3]
-        val pw = scissorStack[scissorDepth - 2]
-        val ph = scissorStack[scissorDepth - 1]
-        val nx = (x * pixelRatio).roundToInt()
-        val ny = (viewport[3] - (y + height) * pixelRatio).roundToInt()
+        val pl = scissorStack[scissorDepth - 2]
+        val pr = scissorStack[scissorDepth - 1]
 
-        val ix = maxOf(nx, px)
-        val iy = maxOf(ny, py)
-        val iw = maxOf(0, minOf(nx + (width * pixelRatio).roundToInt(), px + pw) - ix)
-        val ih = maxOf(0, minOf(ny + (height * pixelRatio).roundToInt(), py + ph) - iy)
+        val ix = maxOf(x, px)
+        val iy = maxOf(y, py)
+        val il = minOf(x + width, pl)
+        val ir = minOf(y + height, pr)
 
         scissorStack[scissorDepth++] = ix
         scissorStack[scissorDepth++] = iy
-        scissorStack[scissorDepth++] = iw
-        scissorStack[scissorDepth++] = ih
-
-        glEnable(GL_SCISSOR_TEST)
-        glScissor(ix + viewport[0], iy + viewport[1], iw, ih)
+        scissorStack[scissorDepth++] = il
+        scissorStack[scissorDepth++] = ir
     }
 
     override fun popScissor() {
-        flush()
         if (scissorDepth <= 4) {
             scissorDepth = 0
-            glDisable(GL_SCISSOR_TEST)
+            pushScissor(0f, 0f, width, height)
             return
         }
         scissorDepth -= 4
-        val nx = scissorStack[scissorDepth - 4]
-        val ny = scissorStack[scissorDepth - 3]
-        val nw = scissorStack[scissorDepth - 2]
-        val nh = scissorStack[scissorDepth - 1]
-        glEnable(GL_SCISSOR_TEST)
-        glScissor(nx + viewport[0], ny + viewport[1], nw, nh)
     }
 
     override fun globalAlpha(alpha: Float) {
         alphaCap = (alpha * 255f).toInt()
     }
 
-    override fun resetGlobalAlpha() = globalAlpha(1f)
+    override fun resetGlobalAlpha() {
+        alphaCap = 255
+    }
 
     override fun transformsWithPoint() = false
 
@@ -886,43 +880,9 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         val h = IntArray(1)
         val d = initImage(image, w, h)
 
-        if (slotX + w[0] >= ATLAS_SIZE) {
-            slotX = 0
-            slotY += atlasRowHeight
-            atlasRowHeight = 0
-            if (slotY + h[0] >= ATLAS_SIZE) {
-                throw IllegalStateException("Texture atlas full!")
-            }
-        }
-
         // Store UV rect for this image
-        image.uv = Vec4.of(
-            slotX / ATLAS_SIZE.toFloat(),
-            slotY / ATLAS_SIZE.toFloat(),
-            w[0] / ATLAS_SIZE.toFloat(),
-            h[0] / ATLAS_SIZE.toFloat()
-        )
-
-        val prevActive = glGetInteger(GL_ACTIVE_TEXTURE)
-        val prevTex = glGetInteger(GL_TEXTURE_BINDING_2D)
-        glActiveTexture(GL_TEXTURE0)
-        glBindTexture(GL_TEXTURE_2D, atlas)
-        glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
-        glPixelStorei(GL_UNPACK_ROW_LENGTH, 0)
-        glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0)
-        glPixelStorei(GL_UNPACK_SKIP_ROWS, 0)
-        glTexSubImage2D(GL_TEXTURE_2D, 0, slotX, slotY, w[0], h[0], GL_RGBA, GL_UNSIGNED_BYTE, d)
-        when (mipmapMode) {
-            1 -> org.lwjgl.opengl.GL30.glGenerateMipmap(GL_TEXTURE_2D)
-            2 -> org.lwjgl.opengl.EXTFramebufferObject.glGenerateMipmapEXT(GL_TEXTURE_2D)
-        }
-        glBindTexture(GL_TEXTURE_2D, prevTex)
-        glActiveTexture(prevActive)
-
+        image.uv = atlas.insert(w[0], h[0], d)
         if (image.type == PolyImage.Type.Raster) stb.image_free(d)
-
-        slotX += w[0] + 1
-        if (h[0] + 1 > atlasRowHeight) atlasRowHeight = h[0] + 1
         image.reportInit()
     }
 
@@ -946,26 +906,21 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         }
     }
 
-    private fun getFontAtlas(font: Font, fontSize: Float): FontAtlas {
-        val renderSize = when (fontSize) {
-            in 0f..16f -> 12f
-            in 0f..36f -> 24f
-            else -> 48f
-        }
-        return fonts.getOrPut(font.resourcePath.hashCode() + renderSize.toInt()) {
+    private fun getFontAtlas(font: Font): FontAtlas {
+        return fonts.getOrPut(font.resourcePath) {
             val data = font.load {
                 LOGGER.error("Failed to load font: $font", it)
-                return@getOrPut fonts[PolyUI.defaultFonts.regular.resourcePath.hashCode() + 12f.toInt()]
+                return@getOrPut fonts[PolyUI.defaultFonts.regular.resourcePath]
                     ?: throw IllegalStateException("Default font couldn't be loaded")
             }.toDirectByteBuffer()
-            FontAtlas(data, renderSize)
+            FontAtlas(data)
         }
     }
 
     private var i = 0
     override fun dumpAtlas() {
         val buf = BufferUtils.createByteBuffer(ATLAS_SIZE * ATLAS_SIZE * 4)
-        glBindTexture(GL_TEXTURE_2D, atlas)
+        atlas.bind()
         glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, buf)
         glBindTexture(GL_TEXTURE_2D, 0)
         stb.image_write_png(
@@ -984,7 +939,8 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         if (program != 0) glDeleteProgram(program)
         if (quadVbo != 0) glDeleteBuffers(quadVbo)
         if (instancedVbo != 0) glDeleteBuffers(instancedVbo)
-        if (atlas != 0) glDeleteTextures(atlas)
+        atlas.cleanup()
+        fonts.values.forEach(FontAtlas::cleanup)
         if (vao != 0) org.lwjgl.opengl.GL30C.glDeleteVertexArrays(vao)
         fonts.clear()
     }
@@ -996,143 +952,77 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         cleanup()
     }
 
-    private inner class FontAtlas(data: ByteBuffer, val renderedSize: Float) {
-        private val glyphs: Array<FloatArray>
+    private inner class FontAtlas(private val data: ByteBuffer) {
+        private val glyphs = HashMap<Int, FloatArray>()
         val ascent: Float
         val descent: Float
         val lineGap: Float
+        private val fontInfo = stb.font_CreateFontInfo()
+        val scale: Float
 
         init {
             val stb = stb
-            val fontInfo = stb.font_CreateFontInfo()
             if (!stb.font_InitFont(fontInfo, data)) {
                 throw IllegalStateException("Failed to initialize font")
             }
-            val scale = stb.font_ScaleForMappingEmToPixels(fontInfo, renderedSize)
+            scale = stb.font_ScaleForMappingEmToPixels(fontInfo, FONT_RENDERED_SIZE)
             val asc = IntArray(1)
             val des = IntArray(1)
             val gap = IntArray(1)
             stb.font_GetFontVMetrics(fontInfo, asc, des, gap)
-            stb.free(fontInfo)
-            val pixelHeight = (asc[0] - des[0]) * scale
             ascent = asc[0] * scale
             descent = des[0] * scale
             lineGap = gap[0] * scale
+        }
 
-            val range = stb.font_CreatePackRange()
-            stb.font_RangeSetFontSize(range, renderedSize)
-            stb.font_RangeSetFirstUnicodeCodepointInRange(range, 32)
-            stb.font_RangeSetNumChars(range, 95)
-            val packed = stb.font_CreatePackedCharArray(95)
-            stb.font_RangeSetChardata(range, packed)
+        private fun makeGlyph(codepoint: Int): FloatArray {
+            val w = IntArray(1)
+            val h = IntArray(1)
+            val xoff = IntArray(1)
+            val yoff = IntArray(1)
+            val xAdvance = IntArray(1)
 
-            val bitMap = BufferUtils.createByteBuffer(FONT_MAX_BITMAP_W * FONT_MAX_BITMAP_H)
-            val pack = stb.font_CreatePackContext()
-            if (!stb.font_PackBegin(pack, bitMap, FONT_MAX_BITMAP_W, FONT_MAX_BITMAP_H, 0, 1, 0L)) {
-                throw IllegalStateException("Failed to initialize font packer")
-            }
+            val idx = stb.font_FindGlyphIndex(fontInfo, codepoint)
+//            if (idx == 0) {
+//                val o = getFontAtlas(Font.of("polyui/fonts/NotoEmoji-Regular.ttf"), 12f).get(codepoint)
+//                glyphs[codepoint] = o
+//                return o
+//            }
 
-            if (!stb.font_PackFontRange(pack, data, 0, pixelHeight, 32, 95, packed)) {
-                throw IllegalStateException("Failed to pack font range")
-            }
-            stb.font_PackEnd(pack)
-            stb.free(pack)
+            stb.font_GetGlyphHMetrics(fontInfo, idx, xAdvance, null)
+            var sdf = stb.font_GetGlyphSDF(fontInfo, scale, idx, 4, 128.toByte(), 64f, w, h, xoff, yoff)
+            if (sdf == 0L) sdf = stb.font_GetGlyphBitmap(fontInfo, scale, scale, idx, w, h, xoff, yoff)
+            if (sdf == 0L) sdf = MemoryUtil.memAddress(BufferUtils.createByteBuffer(w[0] * h[0] * 4))
 
-            var minX = Short.MAX_VALUE
-            var minY = Short.MAX_VALUE
-            var maxX = Short.MIN_VALUE
-            var maxY = Short.MIN_VALUE
-            for (i in 0..<95) {
-                val g = stb.font_GetPackedGlyph(packed, i)
-                val x0 = stb.glyph_x0(g)
-                val y0 = stb.glyph_y0(g)
-                val x1 = stb.glyph_x1(g)
-                val y1 = stb.glyph_y1(g)
-                if (x0 < minX) minX = x0
-                if (y0 < minY) minY = y0
-                if (x1 > maxX) maxX = x1
-                if (y1 > maxY) maxY = y1
-            }
-            val totalSizeX = maxX - minX
-            val totalSizeY = maxY - minY
-
-            if (slotX + totalSizeX > ATLAS_SIZE) {
-                slotX = 0
-                slotY += atlasRowHeight
-                atlasRowHeight = 0
-            }
-            val sx = slotX
-            val sy = slotY
-
-
-            glyphs = Array(95) {
-                val g = stb.font_GetPackedGlyph(packed, it)
-                val x0 = stb.glyph_x0(g)
-                val y0 = stb.glyph_y0(g)
-                val x1 = stb.glyph_x1(g)
-                val y1 = stb.glyph_y1(g)
-
-                floatArrayOf(
-                    (sx + x0) / ATLAS_SIZE.toFloat(),
-                    (sy + y0) / ATLAS_SIZE.toFloat(),
-                    (x1 - x0) / ATLAS_SIZE.toFloat(),
-                    (y1 - y0) / ATLAS_SIZE.toFloat(),
-                    stb.glyph_xoff(g),
-                    stb.glyph_yoff(g),
-                    (x1 - x0).toFloat(),
-                    (y1 - y0).toFloat(),
-                    stb.glyph_xadvance(g)
-                )
-            }
-            stb.free(packed)
-            stb.free(range)
-
-            val prevActive = glGetInteger(GL_ACTIVE_TEXTURE)
-            val prevTex = glGetInteger(GL_TEXTURE_BINDING_2D)
-            glActiveTexture(GL_TEXTURE0)
-            glBindTexture(GL_TEXTURE_2D, atlas)
-            glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
-            glPixelStorei(GL_UNPACK_ROW_LENGTH, 0)
-            glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0)
-            glPixelStorei(GL_UNPACK_SKIP_ROWS, 0)
-            // can't write to the alpha channel in GL3 core! lol haha
-            glTexSubImage2D(
-                GL_TEXTURE_2D,
-                0,
-                sx,
-                sy,
-                FONT_MAX_BITMAP_W,
-                FONT_MAX_BITMAP_H,
-                GL_RED,
-                GL_UNSIGNED_BYTE,
-                bitMap
+            val (u, v, uw, uh) = atlas.insert(w[0], h[0], sdf, GL_RED)
+            return floatArrayOf(
+                u, v, uw, uh,
+                xoff[0].toFloat(),
+                yoff[0].toFloat(),
+                w[0].toFloat(),
+                h[0].toFloat(),
+                xAdvance[0].toFloat() * scale
             )
-            when (mipmapMode) {
-                1 -> org.lwjgl.opengl.GL30.glGenerateMipmap(GL_TEXTURE_2D)
-                2 -> org.lwjgl.opengl.EXTFramebufferObject.glGenerateMipmapEXT(GL_TEXTURE_2D)
-            }
-            glBindTexture(GL_TEXTURE_2D, prevTex)
-            glActiveTexture(prevActive)
-
-            slotX += totalSizeX + 1
-            atlasRowHeight = maxOf(atlasRowHeight, totalSizeY + 1)
         }
 
         fun measure(text: String, fontSize: Float): Vec2 {
             var width = 0f
 //            var height = 0f
-            val scaleFactor = fontSize / this.renderedSize
-            for (c in text) {
-                val g = get(c)
-                width += g.xAdvance * scaleFactor
-//                height = maxOf(height, g.height + g.offsetY)
+            val scaleFactor = fontSize.roundTo(FONT_SCALE_MAX_FIDELITY) / FONT_RENDERED_SIZE
+            text.forEachCodepoint {
+                width += get(it).xAdvance * scaleFactor
             }
             return Vec2.of(width, fontSize)
         }
 
         @Suppress("DEPRECATION")
         @kotlin.internal.InlineOnly
-        inline fun get(char: Char) = if (char.toInt() in 32..32 + 95) glyphs[(char.toInt() - 32)] else glyphs['?'.toInt()]
+        inline fun get(codepoint: Int) = glyphs.getOrPut(codepoint) { makeGlyph(codepoint) }
+
+        fun cleanup() {
+            stb.free(fontInfo)
+            glyphs.clear()
+        }
     }
 
     @kotlin.internal.InlineOnly

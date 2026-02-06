@@ -192,11 +192,11 @@ public interface UIManager {
                 float ratio = Platform.screen().pixelRatio();
                 polyUI.resize(event.newWidth, event.newHeight, false);
 
-                long visibleSize = polyUI.getVisibleSize();
-                int polyUiWidth = (int) Vec2.getX(visibleSize);
-                int polyUiHeight = (int) Vec2.getY(visibleSize);
+                long size = polyUI.getSize();
+                int polyUiWidth = (int) Vec2.getX(size);
+                int polyUiHeight = (int) Vec2.getY(size);
                 System.out.println("Resizing to: " + polyUiWidth + "x" + polyUiHeight + " with ratio " + ratio);
-                framebuffer.resize(polyUiWidth, polyUiHeight);
+                framebuffer.resize((int) (polyUiWidth * ratio), (int) (polyUiHeight * ratio));
                 polyUI.getWindow().setPixelRatio(ratio);
             });
 
