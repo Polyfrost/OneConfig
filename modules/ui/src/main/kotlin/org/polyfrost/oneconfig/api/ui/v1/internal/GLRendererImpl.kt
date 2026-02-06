@@ -438,7 +438,7 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
             glBindBuffer(GL_ARRAY_BUFFER, quadVbo)
             glEnableVertexAttribArray(aLocal)
             glVertexAttribPointer(aLocal, 2, GL_FLOAT, false, 0, 0L)
-            org.lwjgl.opengl.GL30C.glBindVertexArray(0)
+            org.lwjgl.opengl.GL30.glBindVertexArray(0)
         }
 
         val prevTex = glGetInteger(GL_TEXTURE_BINDING_2D)
