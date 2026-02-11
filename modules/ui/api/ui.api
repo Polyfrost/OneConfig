@@ -131,7 +131,11 @@ public abstract interface class org/polyfrost/oneconfig/api/ui/v1/api/StbApi {
 	public abstract fun font_CreatePackContext ()J
 	public abstract fun font_CreatePackRange ()J
 	public abstract fun font_CreatePackedCharArray (I)J
+	public abstract fun font_FindGlyphIndex (JI)I
 	public abstract fun font_GetFontVMetrics (J[I[I[I)V
+	public abstract fun font_GetGlyphBitmap (JFFI[I[I[I[I)J
+	public abstract fun font_GetGlyphHMetrics (JI[I[I)V
+	public abstract fun font_GetGlyphSDF (JFIIBF[I[I[I[I)J
 	public abstract fun font_GetPackedGlyph (JI)J
 	public abstract fun font_InitFont (JLjava/nio/ByteBuffer;)Z
 	public abstract fun font_PackBegin (JLjava/nio/ByteBuffer;IIIIJ)Z

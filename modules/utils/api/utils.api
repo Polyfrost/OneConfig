@@ -55,6 +55,7 @@ public abstract interface class org/polyfrost/oneconfig/api/platform/v1/GLPlatfo
 	public abstract fun getFunctionAddress (Ljava/lang/String;)J
 	public fun glViewport ()[I
 	public abstract fun glViewport ([I)[I
+	public abstract fun memAddress (Ljava/nio/ByteBuffer;)J
 	public abstract fun syncOpenGLContext ()V
 }
 
