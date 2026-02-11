@@ -26,6 +26,7 @@ import org.polyfrost.polyui.data.Font
 import org.polyfrost.polyui.data.PolyImage
 import org.polyfrost.polyui.renderer.Renderer
 import org.polyfrost.polyui.unit.Vec2
+import org.polyfrost.polyui.utils.forEachCodepoint
 import org.polyfrost.polyui.utils.roundTo
 import org.polyfrost.polyui.utils.toDirectByteBuffer
 import org.polyfrost.polyui.utils.toDirectByteBufferNT
@@ -110,47 +111,43 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
     private val FRAG = """
         #version $$$ // replaced by compileShader
         #if __VERSION__ >= 130
-            #define VARYING in
+            #define IN in
             #define TEXTURE texture
             out vec4 fragColor;
         #else
-            #define VARYING varying
+            #define IN varying
             #define TEXTURE texture2D
             #define fragColor gl_FragColor
         #endif
 
         uniform sampler2D uTex;
 
-        VARYING vec2 vUV;        // UV sampler position
-        VARYING vec2 vUV2;       // used for gradients
-        VARYING vec2 vHalfSize;  // half the rectangle size
-        VARYING vec2 vP;         // rect x, y
-        VARYING vec2 vScreenPos; // screen position of the rectangle
-        VARYING vec4 vClipRect;  // clipping rectangle
-        VARYING vec4 vRadii;     // per-corner radii
-        VARYING vec4 vColor0;    // RGBA
-        VARYING vec4 vColor1;    // RGBA (for gradients)
-        VARYING float vThickness; // -1 for text, -2 for linear gradient, -3 for radial, -4 for box,  >0 for hollow rect
+        IN vec4 vUV;         // UV sampler position
+        IN vec4 vP_HalfSize; // rect x, y, 0.5x wh
+        IN vec2 vScreenPos;  // screen position of the rectangle
+        IN vec4 vClipRect;   // clipping rectangle
+        IN vec4 vRadii;      // per-corner radii
+        IN vec4 vColor0;     // RGBA
+        IN vec4 vColor1;     // RGBA (for gradients)
+        IN float vThickness; // -1 for text, -2 for linear gradient, -3 for radial, -4 for box,  >0 for hollow rect
 
         // Signed distance function for rounded box
         float roundedBoxSDF(vec2 p, vec2 b, vec4 r) {
-            // px = 1.0 if p.x > 0, else 0.0
-            float px = step(0.0, p.x);
-            float py = step(0.0, p.y);
-
-            // Select radius per quadrant
-            float rLeft  = mix(r.x, r.w, py); // top-left / bottom-left
-            float rRight = mix(r.y, r.z, py); // top-right / bottom-right
-            float radius = mix(rLeft, rRight, px); // left vs right
+            vec2 s = step(0.0, p);
+            float radius =
+                mix(
+                    mix(r.x, r.y, s.x),
+                    mix(r.w, r.z, s.x),
+                    s.y
+                );
 
             vec2 q = abs(p) - (b - radius);
             return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - radius;
         }
 
         float hollowRoundedBoxSDF(vec2 p, vec2 b, vec4 r, float thickness) {
-            float outer = roundedBoxSDF(p, b + 0.3, r + 0.3);
-            float inner = roundedBoxSDF(p, b - thickness, max(r - thickness, 0.0)); 
-            return max(outer, -inner);
+            float d = roundedBoxSDF(p, b, r);
+            return abs(d) - thickness;
         }
 
         float roundBoxSDF(vec2 p, vec2 halfSize, float radius) {
@@ -164,9 +161,8 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         }
         
         float hollowBoxSDF(vec2 p, vec2 halfSize, float thickness) {
-            float outer = boxSDF(p, halfSize + 0.3);
-            float inner = boxSDF(p, halfSize - thickness); 
-            return max(outer, -inner);
+            float d = boxSDF(p, halfSize); 
+            return abs(d) - thickness;
         }
 
         void main() {
@@ -175,49 +171,48 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
                 step(vClipRect.y, vScreenPos.y) *
                 step(vScreenPos.x, vClipRect.z) *
                 step(vScreenPos.y, vClipRect.w);
-            // if (clip == 0.0) discard;
-
-            float d;
-            if (vRadii.y == -1.0) {
-                d = (vThickness > 0.0) ? hollowBoxSDF(vP, vHalfSize, vThickness) : boxSDF(vP, vHalfSize);
-            } else {
-                d = (vThickness > 0.0) ? hollowRoundedBoxSDF(vP, vHalfSize, vRadii, vThickness) : roundedBoxSDF(vP, vHalfSize, vRadii);
-            }
+//            if (clip == 0.0) discard;
 
             vec4 col = vColor0;
-            if (vUV.x >= 0.0 && vThickness >= -1.0) {     // textured if UV.x >= 0
-                vec4 texColor = TEXTURE(uTex, vUV);
-                // text check: use red channel as alpha
-                if (vThickness == -1.0) {
-                    float w = fwidth(texColor.r);
+            float d;
+            if (vThickness <= 0.0) {
+                if (vThickness == -1.0) { // text
+                    float sdf = TEXTURE(uTex, vUV.xy).r;
+                    float w = fwidth(sdf);
                     // bias increases as glyph gets smaller
                     float bias = 0.5 - min(w * 0.6, 0.08);
-                    col.a *= smoothstep(bias - w, bias + w, texColor.r);
-                } else col = col * texColor;
-            }
-            else if (vThickness == -2.0) { // linear gradient, vUV as start and vUV2 as end
-                vec2 dir = vUV2 - vUV;
-                float invLen2 = 1.0 / dot(dir, dir);
-                float t = clamp(dot((vP + vHalfSize) - vUV, dir) * invLen2, 0.0, 1.0);
-                col = mix(vColor0, vColor1, t);
-            }
-            else if (vThickness == -3.0) { // radial gradient, vUV as center and vUV2.x as radius
-                float dist = length(vP + vHalfSize - vUV);
-                float t = clamp((dist - vUV2.x) / (vUV2.y - vUV2.x), 0.0, 1.0);
-                col = mix(vColor0, vColor1, t);
-            }
-            else if (vThickness == -4.0) { // box gradient, vUV.x as radius and vUV.y as feather
-                float dist = roundBoxSDF(vP, vHalfSize, vUV.x);
-                float t = clamp((dist + vUV.y * 0.5) / vUV.y, 0.0, 1.0);
-                col = mix(vColor0, vColor1, t);
-            }
-            else if (vThickness == -5.0) { // drop shadow, vUV.x as spread and vUV.y as blur
-                float dShadow = roundBoxSDF(vP, vHalfSize + vUV.x, vRadii.x);
-                col = vec4(vColor0.rgb, vColor0.a * (1.0 - smoothstep(-vUV.y, vUV.y, dShadow)));
+                    col.a *= smoothstep(bias - w, bias + w, sdf);
+                }
+                else if (vThickness == -2.0) { // image
+                    col = col * TEXTURE(uTex, vUV.xy);
+                } 
+                else if (vThickness == -3.0) { // linear gradient, vUV.xy as start and vUV.zw as end
+                    vec2 dir = vUV.zw - vUV.xy;
+                    float invLen2 = 1.0 / dot(dir, dir);
+                    float t = clamp(dot((vP_HalfSize.xy + vP_HalfSize.zw) - vUV.xy, dir) * invLen2, 0.0, 1.0);
+                    col = mix(vColor0, vColor1, t);
+                }
+                else if (vThickness == -4.0) { // radial gradient, vUV as center and vUV.w as radius
+                    float dist = length(vP_HalfSize.xy + vP_HalfSize.zw - vUV.xy);
+                    float t = clamp((dist - vUV.w) / (vUV.w - vUV.z), 0.0, 1.0);
+                    col = mix(vColor0, vColor1, t);
+                }
+                else if (vThickness == -5.0) { // box gradient, vUV.x as radius and vUV.y as feather
+                    float dist = roundBoxSDF(vP_HalfSize.xy, vP_HalfSize.zw, vUV.x);
+                    float t = clamp((dist + vUV.y * 0.5) / vUV.y, 0.0, 1.0);
+                    col = mix(vColor0, vColor1, t);
+                }
+                else if (vThickness == -6.0) { // drop shadow, vUV.x as spread and vUV.y as blur
+                    float dShadow = roundBoxSDF(vP_HalfSize.xy, vP_HalfSize.zw + vUV.x, vRadii.x);
+                    col.a *= (1.0 - smoothstep(-vUV.y, vUV.y, dShadow));
+                }
+                d = (vRadii.y == -1.0) ? boxSDF(vP_HalfSize.xy, vP_HalfSize.zw) : roundedBoxSDF(vP_HalfSize.xy, vP_HalfSize.zw, vRadii);
+            } else {
+                d = (vRadii.y == -1.0) ? hollowBoxSDF(vP_HalfSize.xy, vP_HalfSize.zw, vThickness) : hollowRoundedBoxSDF(vP_HalfSize.xy, vP_HalfSize.zw, vRadii, vThickness);
             }
 
             // Proper antialiasing based on distance field
-            float alpha = col.a * clip * clamp(0.5 - d, 0.0, 1.0);
+            float alpha = col.a * clamp(0.5 - d, 0.0, 1.0);
 
             fragColor = vec4(col.rgb * alpha, alpha);
         }
@@ -228,11 +223,11 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         #extension GL_EXT_gpu_shader4 : enable
         #if __VERSION__ >= 130
             #define ATTRIBUTE in
-            #define VARYING out
+            #define OUT out
             #define U_INT uint
         #else
             #define ATTRIBUTE attribute
-            #define VARYING varying
+            #define OUT varying
             #define U_INT unsigned int
         #endif
 
@@ -252,16 +247,14 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         );
         uniform vec2 uWindow;
 
-        VARYING vec2 vP;
-        VARYING vec2 vHalfSize;
-        VARYING vec2 vScreenPos;
-        VARYING vec4 vClipRect;
-        VARYING vec4 vRadii;
-        VARYING vec4 vColor0;
-        VARYING vec4 vColor1;
-        VARYING vec2 vUV;
-        VARYING vec2 vUV2;
-        VARYING float vThickness;
+        OUT vec4 vP_HalfSize;
+        OUT vec2 vScreenPos;
+        OUT vec4 vClipRect;
+        OUT vec4 vRadii;
+        OUT vec4 vColor0;
+        OUT vec4 vColor1;
+        OUT vec4 vUV;
+        OUT float vThickness;
         
         vec4 unpackColor(U_INT c) {
             float a = float((c >> 24) & 0xFFu) / 255.0;
@@ -274,26 +267,25 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
 
         void main() {
             // Position inside rect
-            vec2 pos = iRect.xy + aLocal * iRect.zw;
-            vec2 uv  = (iThickness > -2.0) ? iUVRect.xy + aLocal * iUVRect.zw : iUVRect.xy; // for gradients, just pass through the first two param to frag
+            vec2 pos = aLocal * iRect.zw;
+            vec2 uv  = (iThickness > -3.0) ? iUVRect.xy + aLocal * iUVRect.zw : iUVRect.xy; // for gradients, just pass through the first two param to frag
+            vec2 halfSize = iRect.zw * 0.5;
 
-            vec3 transformed = uTransform * vec3(pos, 1.0);
+            vec3 transformed = uTransform * vec3(pos + iRect.xy, 1.0);
 
             vec2 ndc = (transformed.xy / uWindow) * 2.0 - 1.0;
             ndc.y = -ndc.y;
 
             gl_Position = vec4(ndc, 0.0, 1.0);
 
-            vHalfSize  = iRect.zw * 0.5;
-            vP         = pos - iRect.xy - vHalfSize; 
-            vScreenPos = transformed.xy;
-            vClipRect  = iClipRect;
-            vRadii     = iRadii;
-            vColor0    = unpackColor(iColor0);
-            vColor1    = unpackColor(iColor1);
-            vUV        = uv;
-            vUV2       = iUVRect.zw;   // pass through for gradients.
-            vThickness = iThickness;
+            vP_HalfSize = vec4(pos - halfSize, halfSize); 
+            vScreenPos  = transformed.xy;
+            vClipRect   = iClipRect;
+            vRadii      = iRadii;
+            vColor0     = unpackColor(iColor0);
+            vColor1     = unpackColor(iColor1);
+            vUV         = vec4(uv, iUVRect.zw);
+            vThickness  = iThickness;
         }
     """.trimIndent()
 
@@ -424,8 +416,9 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         iColor1 = glGetAttribLocation(program, "iColor1")
         iUVRect = glGetAttribLocation(program, "iUVRect")
         iThickness = glGetAttribLocation(program, "iThickness")
+        iClipRect = glGetAttribLocation(program, "iClipRect")
 
-        if (GlCapabilities.isGl3Available) {
+        if (vao != 0) {
             var offset = 0L
             offset = enableAttrib(iRect, 4, offset)
             offset = enableAttrib(iRadii, 4, offset)
@@ -495,7 +488,7 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         glBufferSubData(GL_ARRAY_BUFFER, 0, buffer)
 
         val prevVao: Int
-        if (GlCapabilities.isGl3Available) {
+        if (vao != 0) {
             prevVao = glGetInteger(org.lwjgl.opengl.GL30.GL_VERTEX_ARRAY_BINDING)
             org.lwjgl.opengl.GL30.glBindVertexArray(vao)
         } else prevVao = 0
@@ -511,7 +504,7 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         if (GlCapabilities.isGl33Available) org.lwjgl.opengl.GL33.glBindSampler(0, 0)
 
         // asm: on VAO the state is stored, so we only need to set it up once
-        if (!GlCapabilities.isGl3Available) {
+        if (vao == 0) {
             // Quad attrib
             glBindBuffer(GL_ARRAY_BUFFER, quadVbo)
             glEnableVertexAttribArray(aLocal)
@@ -526,7 +519,8 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
             offset = enableAttribui(iColor0, 1, offset)
             offset = enableAttribui(iColor1, 1, offset)
             offset = enableAttrib(iUVRect, 4, offset)
-            enableAttrib(iThickness, 1, offset)
+            offset = enableAttrib(iThickness, 1, offset)
+            enableAttrib(iClipRect, 4, offset)
         }
 
         // Draw all instances
@@ -543,7 +537,7 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         glActiveTexture(prevActive)
         glBindTexture(GL_TEXTURE_2D, prevTex)
         glBindBuffer(GL_ARRAY_BUFFER, prevBuf)
-        if (GlCapabilities.isGl3Available) org.lwjgl.opengl.GL30.glBindVertexArray(prevVao)
+        if (vao != 0) org.lwjgl.opengl.GL30.glBindVertexArray(prevVao)
     }
 
     private fun enableAttrib(loc: Int, size: Int, offset: Long): Long {
@@ -583,40 +577,40 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
             when (val type = color.type) {
                 is PolyColor.Gradient.Type.LeftToRight -> {
                     buffer.put(0f).put(height / 2f).put(width).put(height / 2f)
-                    buffer.put(-2f)
+                    buffer.put(-3f)
                 }
 
                 is PolyColor.Gradient.Type.TopToBottom -> {
                     buffer.put(width / 2f).put(0f).put(width / 2f).put(height)
-                    buffer.put(-2f)
+                    buffer.put(-3f)
                 }
 
                 is PolyColor.Gradient.Type.BottomLeftToTopRight -> {
                     buffer.put(0f).put(height).put(width).put(0f)
-                    buffer.put(-2f)
+                    buffer.put(-3f)
                 }
 
                 is PolyColor.Gradient.Type.TopLeftToBottomRight -> {
                     buffer.put(0f).put(0f).put(width).put(height)
-                    buffer.put(-2f)
+                    buffer.put(-3f)
                 }
 
                 is PolyColor.Gradient.Type.Radial -> {
                     buffer.put(if (type.centerX == -1f) width / 2f else type.centerX)
                         .put(if (type.centerY == -1f) height / 2f else type.centerY).put(type.innerRadius)
                         .put(type.outerRadius)
-                    buffer.put(-3f)
+                    buffer.put(-4f)
                 }
 
                 is PolyColor.Gradient.Type.Box -> {
                     buffer.put(type.radius).put(type.feather).put(0f).put(0f)
-                    buffer.put(-4f)
+                    buffer.put(-5f)
                 }
             }
         } else {
             buffer.put(0f) // color1 unused
             buffer.put(NO_UV) // -1f UVs to indicate no texture
-            buffer.put(0f)
+            buffer.put(0f)  // standard filled rect
         }
         buffer.put(scissorStack, (scissorDepth - 4).coerceAtLeast(0), 4)
         count += 1
@@ -658,7 +652,7 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         buffer.put(java.lang.Float.intBitsToFloat(colorMask.capAlpha()))
         buffer.put(0f) // color1 unused
         buffer.put(image.uv.x).put(image.uv.y).put(image.uv.w).put(image.uv.h)
-        buffer.put(0f) // thickness = 0 for filled rect
+        buffer.put(-2f) // thickness = -2 for textured rect
         buffer.put(scissorStack, (scissorDepth - 4).coerceAtLeast(0), 4)
         count += 1
     }
@@ -719,8 +713,8 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
     }
 
     override fun line(x1: Float, y1: Float, x2: Float, y2: Float, color: Color, width: Float) {
-        if (y1 == y2) rect(x1, y1, x2 - x1, width, color, 0f, 0f, 0f, 0f)
-        else rect(x1, y1, width, y2 - y1, color, 0f, 0f, 0f, 0f)
+        if (y1 == y2) rect(x1, y1, x2 - x1, width, color, 0f, -1f, 0f, 0f)
+        else rect(x1, y1, width, y2 - y1, color, 0f, -1f, 0f, 0f)
     }
 
     override fun dropShadow(
@@ -738,7 +732,7 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         buffer.put(java.lang.Float.intBitsToFloat(alphaCap shl 24)) // black, alpha to alphaCap
         buffer.put(0f) // color1 unused
         buffer.put(spread).put(blur).put(0f).put(0f)
-        buffer.put(-5f) // thickness = -5 for drop shadow
+        buffer.put(-6f) // thickness = -6 for drop shadow
         buffer.put(scissorStack, (scissorDepth - 4).coerceAtLeast(0), 4)
         count += 1
     }
@@ -774,7 +768,7 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
     override fun popScissor() {
         if (scissorDepth <= 4) {
             scissorDepth = 0
-            pushScissor(0f, 0f, width, height)
+            pushScissor(0f, 0f, 1_000_000_000f, 1_000_000_000f)
             return
         }
         scissorDepth -= 4
