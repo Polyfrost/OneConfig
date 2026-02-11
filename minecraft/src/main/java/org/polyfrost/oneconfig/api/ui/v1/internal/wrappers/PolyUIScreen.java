@@ -96,9 +96,8 @@ public class PolyUIScreen extends OmniScreen implements BlurScreen {
     @Override
     @MustBeInvokedByOverriders
     public final void onResize(int width, int height) {
-        float w = (float) Platform.screen().windowWidth();
-        float h = (float) Platform.screen().windowHeight();
-        adjustResolution(w, h, false);
+        float scale = Platform.screen().mcToScreenScale();
+        adjustResolution(width * scale, height * scale, false);
     }
 
     @Override

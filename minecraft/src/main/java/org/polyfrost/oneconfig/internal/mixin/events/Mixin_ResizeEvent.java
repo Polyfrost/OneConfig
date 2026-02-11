@@ -16,7 +16,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class Mixin_ResizeEvent {
 
     //#if MC <= 1.13
-    @Inject(method = "resize", at = @At("HEAD"))
+    @Inject(method = "resize", at = @At("TAIL"))
     private void resizeCallback(int width, int height, CallbackInfo ci) {
         EventManager.INSTANCE.post(new ResizeEvent(width, height));
     }
@@ -24,7 +24,7 @@ public abstract class Mixin_ResizeEvent {
     //$$ @Shadow
     //$$ public abstract com.mojang.blaze3d.platform.Window getWindow();
     //$$
-    //$$ @Inject(method = "resizeDisplay", at = @At("HEAD"))
+    //$$ @Inject(method = "resizeDisplay", at = @At("TAIL"))
     //$$ private void resizeCallback(CallbackInfo ci) {
     //$$     int[] w = new int[1];
     //$$     int[] h = new int[1];

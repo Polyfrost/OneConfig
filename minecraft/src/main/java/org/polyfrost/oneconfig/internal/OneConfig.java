@@ -27,6 +27,7 @@
 package org.polyfrost.oneconfig.internal;
 
 import com.mojang.brigadier.Command;
+import com.mojang.brigadier.arguments.FloatArgumentType;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 import dev.deftu.clipboard.Clipboard;
 import dev.deftu.omnicore.api.client.OmniClient;
@@ -199,6 +200,11 @@ public class OneConfig
                         .executes((ctx) -> {
                             OneConfigUI.INSTANCE.create();
                             OneConfigUI.INSTANCE.toggleDebug();
+                            return ctx.getSource().replyChat("OK");
+                        })
+                ).then(OmniClientCommands.literal("pixelRatio").then(OmniClientCommands.argument("ratio", FloatArgumentType.floatArg(0.1f, 10f)))
+                        .executes((ctx) -> {
+                            UIManager.INSTANCE.getDefaultInstance().getWindow().setPixelRatio(ctx.getArgument("ratio", float.class));
                             return ctx.getSource().replyChat("OK");
                         })
                 )

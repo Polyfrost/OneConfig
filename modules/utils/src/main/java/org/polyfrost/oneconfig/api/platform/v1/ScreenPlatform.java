@@ -26,6 +26,7 @@
 
 package org.polyfrost.oneconfig.api.platform.v1;
 
+import dev.deftu.omnicore.api.client.render.OmniResolution;
 import org.jetbrains.annotations.Nullable;
 
 public interface ScreenPlatform {
@@ -40,6 +41,28 @@ public interface ScreenPlatform {
 
     default float pixelRatio() {
         return (float) viewportWidth() / windowWidth();
+    }
+
+    /**
+     * Return a scaling factor from the Minecraft scaled coordinate system to standard <b>window coordinates</b>.
+     * <br>
+     * These window/screen coordinates are used by mouse and input, as well as resizing.
+     * See the inverse, {@link #screenToMcScale()}.
+     * @implNote same as {@link OmniResolution#getScaleFactor()} / {@link #pixelRatio()}
+     */
+    default float mcToScreenScale() {
+        return (float) OmniResolution.getScaleFactor() / pixelRatio();
+    }
+
+    /**
+     * Return a scaling factor from the standard window coordinates to Minecraft scaled coordinate space.
+     * <br>
+     * These coordinates can be used in Minecraft rendering methods so they render at the correct place.
+     * See the inverse, {@link #mcToScreenScale()}.
+     * @implNote same as {@code 1f / }{@link  #mcToScreenScale()}
+     */
+    default float screenToMcScale() {
+        return pixelRatio() / (float) OmniResolution.getScaleFactor();
     }
 
     void display(@Nullable Object screen, int ticks);
