@@ -34,6 +34,7 @@ import org.polyfrost.oneconfig.api.platform.v1.GLPlatform;
 import org.polyfrost.oneconfig.utils.v1.MHUtils;
 
 import java.nio.Buffer;
+import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 
 import static org.lwjgl.opengl.GL11.*;
@@ -63,6 +64,16 @@ public class GLPlatformImpl implements GLPlatform {
         //#endif
     }
     //@formatter:on
+
+
+    @Override
+    public long memAddress(ByteBuffer buf) {
+        //#if MC <= 1.12.2
+        return org.lwjgl.MemoryUtil.getAddress(buf);
+        //#else
+        //$$ return org.lwjgl.system.MemoryUtil.memAddress(buf);
+        //#endif
+    }
 
     /**
      * This method is called to update the game's internally tracked OpenGL state

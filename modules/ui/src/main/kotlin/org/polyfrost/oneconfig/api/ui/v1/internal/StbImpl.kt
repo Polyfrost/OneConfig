@@ -4,6 +4,7 @@ import org.lwjgl.stb.*
 import org.lwjgl.stb.STBImage.*
 import org.lwjgl.stb.STBTruetype.*
 import org.lwjgl.system.MemoryUtil
+import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.api.StbApi
 import java.nio.ByteBuffer
 
@@ -35,7 +36,7 @@ class StbImpl : StbApi {
 
     override fun font_CreatePackContext() = STBTTPackContext.malloc().address()
 
-    override fun font_InitFont(info: Long, data: ByteBuffer) = nstbtt_InitFont(info, MemoryUtil.memAddress(data), 0) != 0
+    override fun font_InitFont(info: Long, data: ByteBuffer) = nstbtt_InitFont(info, Platform.gl().memAddress(data), 0) != 0
 
     override fun font_FindGlyphIndex(info: Long, codepoint: Int) = nstbtt_FindGlyphIndex(info, codepoint)
 
@@ -73,7 +74,7 @@ class StbImpl : StbApi {
         allocCtx: Long
     ) = nstbtt_PackBegin(
         packCtx,
-        MemoryUtil.memAddress(pixels),
+        Platform.gl().memAddress(pixels),
         width,
         height,
         strideInBytes,
@@ -91,7 +92,7 @@ class StbImpl : StbApi {
         packedCharArray: Long
     ) = nstbtt_PackFontRange(
         packCtx,
-        MemoryUtil.memAddress(fontData),
+        Platform.gl().memAddress(fontData),
         fontIndex,
         fontSize,
         firstUnicodeCodepointInRange,

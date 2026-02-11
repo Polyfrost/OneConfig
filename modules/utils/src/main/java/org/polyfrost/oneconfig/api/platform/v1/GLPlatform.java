@@ -29,6 +29,8 @@ package org.polyfrost.oneconfig.api.platform.v1;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.ByteBuffer;
+
 public interface GLPlatform {
 
     /**
@@ -38,6 +40,12 @@ public interface GLPlatform {
      * @implNote delegates to package-private {@code GLContext.getFunctionAddress(addr)} on legacy and {@code GLFW.getProcAddress(addr)} on modern.
      */
     long getFunctionAddress(String addr);
+
+    /**
+     * Return the memory address of the given buffer.
+     * @implNote delegates to the {@code MemoryUtil.memAddress(ByteBuffer)} method.
+     */
+    long memAddress(ByteBuffer buf);
 
     void syncOpenGLContext();
 

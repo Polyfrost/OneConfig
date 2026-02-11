@@ -145,7 +145,7 @@ class NVGRendererImpl(
         }
     }
 
-    override fun beginFrame(width: Float, height: Float, pixelRatio: Float) {
+    override fun beginFrame(width: Float, height: Float, pixelRatio: Float, viewport: FloatArray?) {
         if (isDrawing) throw IllegalStateException("Already drawing")
 
         if (mcVersion >= 1_16_05) {

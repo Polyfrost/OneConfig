@@ -3,7 +3,7 @@ package org.polyfrost.oneconfig.api.ui.v1.internal
 import org.lwjgl.opengl.GL11.*
 import org.lwjgl.opengl.GL12.*
 import org.lwjgl.opengl.GL13.*
-import org.lwjgl.system.MemoryUtil
+import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.polyui.unit.Vec4
 import java.nio.ByteBuffer
 
@@ -55,7 +55,7 @@ class GLAtlasManager(val atlasWidth: Int, val atlasHeight: Int) {
         height: Int,
         pixels: ByteBuffer,
         format: Int = GL_RGBA
-    ): Vec4 = insert(width, height, MemoryUtil.memAddress(pixels), format)
+    ): Vec4 = insert(width, height, Platform.gl().memAddress(pixels), format)
 
     /**
      * Insert a given texture, a ByteBuffer of [GL_UNSIGNED_BYTE] pixels, of dimensions [width] and [height] into this atlas.

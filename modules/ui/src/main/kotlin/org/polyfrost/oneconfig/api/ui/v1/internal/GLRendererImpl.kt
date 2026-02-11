@@ -14,7 +14,7 @@ import org.lwjgl.opengl.GL13.*
 import org.lwjgl.opengl.GL14.*
 import org.lwjgl.opengl.GL15.*
 import org.lwjgl.opengl.GL20.*
-import org.lwjgl.system.MemoryUtil
+import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.oneconfig.api.ui.v1.UIManager
 import org.polyfrost.oneconfig.api.ui.v1.api.NanoSvgApi
 import org.polyfrost.oneconfig.api.ui.v1.api.RendererExt
@@ -98,8 +98,7 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
 
 
     // Current batch state
-    private var width = 0f
-    private var height = 0f
+    private var viewport = FloatArray(4)
     private var count = 0
     private var transformDepth = 0
     private var scissorDepth = 0
@@ -124,7 +123,6 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
 
         IN vec4 vUV;         // UV sampler position
         IN vec4 vP_HalfSize; // rect x, y, 0.5x wh
-        IN vec2 vScreenPos;  // screen position of the rectangle
         IN vec4 vClipRect;   // clipping rectangle
         IN vec4 vRadii;      // per-corner radii
         IN vec4 vColor0;     // RGBA
@@ -166,11 +164,11 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         }
 
         void main() {
-            float clip =
-                step(vClipRect.x, vScreenPos.x) *
-                step(vClipRect.y, vScreenPos.y) *
-                step(vScreenPos.x, vClipRect.z) *
-                step(vScreenPos.y, vClipRect.w);
+//            float clip =
+//                step(vClipRect.x, gl_FragCoord.x) *
+//                step(vClipRect.y, gl_FragCoord.y) *
+//                step(gl_FragCoord.x, vClipRect.z) *
+//                step(gl_FragCoord.y, vClipRect.w);
 //            if (clip == 0.0) discard;
 
             vec4 col = vColor0;
@@ -248,7 +246,6 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         uniform vec2 uWindow;
 
         OUT vec4 vP_HalfSize;
-        OUT vec2 vScreenPos;
         OUT vec4 vClipRect;
         OUT vec4 vRadii;
         OUT vec4 vColor0;
@@ -279,7 +276,6 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
             gl_Position = vec4(ndc, 0.0, 1.0);
 
             vP_HalfSize = vec4(pos - halfSize, halfSize); 
-            vScreenPos  = transformed.xy;
             vClipRect   = iClipRect;
             vRadii      = iRadii;
             vColor0     = unpackColor(iColor0);
@@ -440,9 +436,12 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         glBindBuffer(GL_ARRAY_BUFFER, prevBuf)
     }
 
-    override fun beginFrame(width: Float, height: Float, pixelRatio: Float) {
-        this.width = width
-        this.height = height
+    override fun beginFrame(width: Float, height: Float, pixelRatio: Float, viewport: FloatArray?) {
+        this.viewport = viewport ?: run {
+            this.viewport[2] = width
+            this.viewport[3] = height
+            this.viewport
+        }
         scissorDepth = 0
         alphaCap = 255
         count = 0
@@ -738,10 +737,11 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
     }
 
     override fun pushScissor(x: Float, y: Float, width: Float, height: Float) {
-        scissorStack[scissorDepth++] = x
-        scissorStack[scissorDepth++] = y
-        scissorStack[scissorDepth++] = x + width
-        scissorStack[scissorDepth++] = y + height
+        val ny = ((viewport[3] + viewport[1]) - (y + height) * pixelRatio)
+        scissorStack[scissorDepth++] = x * pixelRatio
+        scissorStack[scissorDepth++] = ny
+        scissorStack[scissorDepth++] = (x + width) * pixelRatio
+        scissorStack[scissorDepth++] = ny + height * pixelRatio
     }
 
     override fun pushScissorIntersecting(x: Float, y: Float, width: Float, height: Float) {
@@ -753,11 +753,12 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         val py = scissorStack[scissorDepth - 3]
         val pl = scissorStack[scissorDepth - 2]
         val pr = scissorStack[scissorDepth - 1]
+        val ny = ((viewport[3] + viewport[1]) - (y + height) * pixelRatio)
 
-        val ix = maxOf(x, px)
-        val iy = maxOf(y, py)
-        val il = minOf(x + width, pl)
-        val ir = minOf(y + height, pr)
+        val ix = maxOf(x * pixelRatio, px)
+        val iy = maxOf(ny, py)
+        val il = minOf((x + width) * pixelRatio, pl)
+        val ir = minOf(ny + height * pixelRatio, pr)
 
         scissorStack[scissorDepth++] = ix
         scissorStack[scissorDepth++] = iy
@@ -768,7 +769,7 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
     override fun popScissor() {
         if (scissorDepth <= 4) {
             scissorDepth = 0
-            pushScissor(0f, 0f, 1_000_000_000f, 1_000_000_000f)
+            pushScissor(0f, 0f, 1_000_000f, 1_000_000f)
             return
         }
         scissorDepth -= 4
@@ -955,7 +956,6 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         val scale: Float
 
         init {
-            val stb = stb
             if (!stb.font_InitFont(fontInfo, data)) {
                 throw IllegalStateException("Failed to initialize font")
             }
@@ -986,7 +986,7 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
             stb.font_GetGlyphHMetrics(fontInfo, idx, xAdvance, null)
             var sdf = stb.font_GetGlyphSDF(fontInfo, scale, idx, 4, 128.toByte(), 64f, w, h, xoff, yoff)
             if (sdf == 0L) sdf = stb.font_GetGlyphBitmap(fontInfo, scale, scale, idx, w, h, xoff, yoff)
-            if (sdf == 0L) sdf = MemoryUtil.memAddress(BufferUtils.createByteBuffer(w[0] * h[0] * 4))
+            if (sdf == 0L) sdf = Platform.gl().memAddress(BufferUtils.createByteBuffer(w[0] * h[0] * 4))
 
             val (u, v, uw, uh) = atlas.insert(w[0], h[0], sdf, GL_RED)
             return floatArrayOf(

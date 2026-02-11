@@ -128,6 +128,11 @@ public class PolyUIScreen extends OmniScreen implements BlurScreen {
             int x = Platform.screen().viewportWidth() / 2 - w / 2;
             int y = Platform.screen().viewportHeight() / 2 - h / 2;
             glViewport(x, y, w, h);
+            float[] v = polyUI.getWindow().getViewport();
+            v[0] = (float) x;
+            v[1] = (float) y;
+            v[2] = (float) w;
+            v[3] = (float) h;
             polyUI.render();
             glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
             //#if MC >= 1.21.5
@@ -236,8 +241,8 @@ public class PolyUIScreen extends OmniScreen implements BlurScreen {
     public void mouseMoved(double mouseX, double mouseY) {
         Drawable master = polyUI.getMaster();
         // guys it's not that deep
-        float ox = Platform.screen().windowWidth() / 2f - master.getWidth() / 2f;
-        float oy = Platform.screen().windowHeight() / 2f - master.getHeight() / 2f;
+        float ox = Platform.screen().windowWidth() / 2f - master.getVisibleWidth() / 2f;
+        float oy = Platform.screen().windowHeight() / 2f - master.getVisibleHeight() / 2f;
 
         float mx, my;
         //#if MC >= 1.13
