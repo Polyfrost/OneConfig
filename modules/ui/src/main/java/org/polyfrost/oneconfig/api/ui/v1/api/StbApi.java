@@ -12,7 +12,7 @@ public interface StbApi {
 
     void image_write_png(String filename, int w, int h, int comp, ByteBuffer data, int strideInBytes);
 
-    long font_CreateFontInfo();
+    StbFontInfo font_CreateFontInfo();
 
     long font_CreatePackRange();
 
@@ -20,19 +20,19 @@ public interface StbApi {
 
     long font_CreatePackContext();
 
-    boolean font_InitFont(long info, ByteBuffer data);
+    boolean font_InitFont(StbFontInfo info, ByteBuffer data);
 
-    int font_FindGlyphIndex(long info, int codepoint);
+    int font_FindGlyphIndex(StbFontInfo info, int codepoint);
 
-    float font_ScaleForMappingEmToPixels(long info, float pixels);
+    float font_ScaleForMappingEmToPixels(StbFontInfo info, float pixels);
 
-    void font_GetFontVMetrics(long info, int[] ascent, int[] descent, int[] lineGap);
+    void font_GetFontVMetrics(StbFontInfo info, int[] ascent, int[] descent, int[] lineGap);
 
-    void font_GetGlyphHMetrics(long info, int glyphIndex, int[] advanceWidth, int[] leftSideBearing);
+    void font_GetGlyphHMetrics(StbFontInfo info, int glyphIndex, int[] advanceWidth, int[] leftSideBearing);
 
-    long font_GetGlyphBitmap(long info, float scaleX, float scaleY, int glyphIndex, int[] w, int[] h, int[] x_off, int[] y_off);
+    ByteBuffer font_GetGlyphBitmap(StbFontInfo info, float scaleX, float scaleY, int glyphIndex, int[] w, int[] h, int[] x_off, int[] y_off);
 
-    long font_GetGlyphSDF(long info, float scale, int glyphIndex, int padding, byte onEdgeValue, float pixelDistScale, int[] w, int[] h, int[] x_off, int[] y_off);
+    ByteBuffer font_GetGlyphSDF(StbFontInfo info, float scale, int glyphIndex, int padding, byte onEdgeValue, float pixelDistScale, int[] w, int[] h, int[] x_off, int[] y_off);
 
     boolean font_PackBegin(long packCtx, ByteBuffer pixels, int width, int height, int strideInBytes, int padding, long allocCtx);
 
@@ -47,8 +47,6 @@ public interface StbApi {
     void font_RangeSetNumChars(long range, int numCharsInRange);
 
     void font_RangeSetChardata(long range, long packedCharArray);
-
-    void free(long struct);
 
     long font_GetPackedGlyph(long packedCharArray, int index);
 
@@ -65,5 +63,10 @@ public interface StbApi {
     float glyph_xoff(long glyph);
 
     float glyph_yoff(long glyph);
+
+    interface StbFontInfo {
+        long address();
+        void free();
+    }
 
 }

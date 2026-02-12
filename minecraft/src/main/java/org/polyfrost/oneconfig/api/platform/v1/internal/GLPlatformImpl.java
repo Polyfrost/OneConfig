@@ -75,6 +75,15 @@ public class GLPlatformImpl implements GLPlatform {
         //#endif
     }
 
+    @Override
+    public void glVertexAttribIPointer(int index, int size, int type, int stride, long pointer) {
+        //#if MC <= 1.12.2
+        org.lwjgl.opengl.EXTGpuShader4.glVertexAttribIPointerEXT(index, size, type, stride, pointer);
+        //#else
+        //$$ org.lwjgl.opengl.GL30.glVertexAttribIPointer(index, size, type, stride, pointer);
+        //#endif
+    }
+
     /**
      * This method is called to update the game's internally tracked OpenGL state
      * to match what NanoVG leaves dropped into the OpenGL context.

@@ -3,7 +3,6 @@ package org.polyfrost.oneconfig.api.ui.v1.internal
 import org.lwjgl.opengl.GL11.*
 import org.lwjgl.opengl.GL12.*
 import org.lwjgl.opengl.GL13.*
-import org.polyfrost.oneconfig.api.platform.v1.Platform
 import org.polyfrost.polyui.unit.Vec4
 import java.nio.ByteBuffer
 
@@ -55,20 +54,6 @@ class GLAtlasManager(val atlasWidth: Int, val atlasHeight: Int) {
         height: Int,
         pixels: ByteBuffer,
         format: Int = GL_RGBA
-    ): Vec4 = insert(width, height, Platform.gl().memAddress(pixels), format)
-
-    /**
-     * Insert a given texture, a ByteBuffer of [GL_UNSIGNED_BYTE] pixels, of dimensions [width] and [height] into this atlas.
-     *
-     * Specify the format of your data with the [format] parameter.
-     *
-     * @return A normalised UVWH Vec4 object referring to the dimensions and position of the texture inserted into the atlas.
-     */
-    fun insert(
-        width: Int,
-        height: Int,
-        pixels: Long,
-        format: Int = GL_RGBA
     ): Vec4 {
         val pos = findPosition(width, height)
             ?: throw IllegalStateException("Texture atlas full")
@@ -83,7 +68,7 @@ class GLAtlasManager(val atlasWidth: Int, val atlasHeight: Int) {
         glPixelStorei(GL_UNPACK_ROW_LENGTH, 0)
         glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0)
         glPixelStorei(GL_UNPACK_SKIP_ROWS, 0)
-        nglTexSubImage2D(GL_TEXTURE_2D, 0,
+        glTexSubImage2D(GL_TEXTURE_2D, 0,
             pos.x, pos.y, width, height,
             format, GL_UNSIGNED_BYTE,
             pixels

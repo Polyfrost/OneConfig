@@ -47,6 +47,17 @@ public interface GLPlatform {
      */
     long memAddress(ByteBuffer buf);
 
+    /**
+     * This method will try and run glVertexAttribIPointer on the current OpenGL context.
+     * <br> If the context is OpenGL3+, it will run the core API method.
+     * <br> If not, it will run the method using the EXT_gpu_shader4 extension.
+     * <br> If this is missing, this will blow up.
+     *
+     * @implNote This method exists solely to fix the issue that in LWJGL2, the extension has a different class name
+     * to that in LWJGL3. thanks, guys.
+     */
+    void glVertexAttribIPointer(int index, int size, int type, int stride, long pointer);
+
     void syncOpenGLContext();
 
     /**

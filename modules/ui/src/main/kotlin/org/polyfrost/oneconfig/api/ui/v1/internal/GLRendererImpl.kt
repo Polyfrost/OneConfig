@@ -454,13 +454,11 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         glUniform2f(uWindow, width, height)
         glUniformMatrix3fv(uTransform, false, transform)
         glUseProgram(prevProg)
-        glDisable(GL_SCISSOR_TEST)
         this.pixelRatio = pixelRatio
     }
 
     override fun endFrame() {
         flush()
-        glDisable(GL_SCISSOR_TEST)
     }
 
     private fun flush() {
@@ -477,7 +475,9 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         val prevBlendDstAlpha = glGetInteger(GL_BLEND_DST_ALPHA)
         val prevDepth = glGetBoolean(GL_DEPTH_TEST)
         val prevCull = glGetBoolean(GL_CULL_FACE)
+        val prevScissor = glGetBoolean(GL_SCISSOR_TEST)
         glEnable(GL_BLEND)
+        glDisable(GL_SCISSOR_TEST)
         glDisable(GL_CULL_FACE)
         glDisable(GL_DEPTH_TEST)
         glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA)
@@ -532,6 +532,7 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         glBlendFuncSeparate(prevBlendSrcRgb, prevBlendDstRgb, prevBlendSrcAlpha, prevBlendDstAlpha)
         if (prevDepth) glEnable(GL_DEPTH_TEST)
         if (prevCull) glEnable(GL_CULL_FACE)
+        if (prevScissor) glEnable(GL_SCISSOR_TEST)
         glUseProgram(prevProg)
         glActiveTexture(prevActive)
         glBindTexture(GL_TEXTURE_2D, prevTex)
@@ -550,8 +551,7 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
 
     private fun enableAttribui(loc: Int, size: Int, offset: Long): Long {
         glEnableVertexAttribArray(loc)
-        if (GlCapabilities.isGl3Available) org.lwjgl.opengl.GL30.glVertexAttribIPointer(loc, size, GL_UNSIGNED_INT, STRIDE * 4, offset)
-        else org.lwjgl.opengl.EXTGPUShader4.glVertexAttribIPointerEXT(loc, size, GL_UNSIGNED_INT, STRIDE * 4, offset)
+        Platform.gl().glVertexAttribIPointer(loc, size, GL_UNSIGNED_INT, STRIDE * 4, offset)
         if (GlCapabilities.isGl33Available) org.lwjgl.opengl.GL33.glVertexAttribDivisor(loc, 1)
         else org.lwjgl.opengl.ARBInstancedArrays.glVertexAttribDivisorARB(loc, 1)
         return offset + size * 4L
@@ -659,12 +659,14 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
     private fun FloatArray.getScaledMat4(): OmniMatrix4f {
         // asm: scale to MC instance coordinates and mutate to a 4x4 matrix
         val sf = pixelRatio / OmniResolution.scaleFactor.toFloat()
-        return OmniMatrix4f.from(floatArrayOf(
-            this[0] * sf, this[1] * sf, 0f, 0f,
-            this[3] * sf, this[4] * sf, 0f, 0f,
-            0f, 0f, 1f, 0f,
-            this[6] * sf, this[7] * sf, 0f, 1f
-        ))
+        return OmniMatrix4f.from(
+            floatArrayOf(
+                this[0] * sf, this[1] * sf, 0f, 0f,
+                this[3] * sf, this[4] * sf, 0f, 0f,
+                0f, 0f, 1f, 0f,
+                this[6] * sf, this[7] * sf, 0f, 1f
+            )
+        )
     }
 
     override fun text(font: Font, x: Float, y: Float, text: String, color: Color, fontSize: Float) {
@@ -692,6 +694,10 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
             val glyph = fAtlas.get(it)
             // opt: early exit when we are out of the scissored region
             if (scissorDepth > 3 && penX > scissorStack[scissorDepth - 2]) return
+            if (it == 32) { // space
+                penX += glyph.xAdvance * scaleFactor
+                return@forEachCodepoint
+            }
             buffer.put(penX + glyph.xOff * scaleFactor).put(penY + glyph.yOff * scaleFactor)
                 .put(glyph.width * scaleFactor).put(glyph.height * scaleFactor)
             buffer.put(0f).put(-1f).put(0f).put(0f) // zero radii (-1 optimization)
@@ -984,9 +990,9 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
 //            }
 
             stb.font_GetGlyphHMetrics(fontInfo, idx, xAdvance, null)
-            var sdf = stb.font_GetGlyphSDF(fontInfo, scale, idx, 4, 128.toByte(), 64f, w, h, xoff, yoff)
-            if (sdf == 0L) sdf = stb.font_GetGlyphBitmap(fontInfo, scale, scale, idx, w, h, xoff, yoff)
-            if (sdf == 0L) sdf = Platform.gl().memAddress(BufferUtils.createByteBuffer(w[0] * h[0] * 4))
+            val sdf = stb.font_GetGlyphSDF(fontInfo, scale, idx, 4, 128.toByte(), 64f, w, h, xoff, yoff)
+                ?: stb.font_GetGlyphBitmap(fontInfo, scale, scale, idx, w, h, xoff, yoff)
+                ?: BufferUtils.createByteBuffer(w[0] * h[0] * 4)
 
             val (u, v, uw, uh) = atlas.insert(w[0], h[0], sdf, GL_RED)
             return floatArrayOf(
@@ -1014,7 +1020,7 @@ class GLRendererImpl(private val nsvg: NanoSvgApi, private val stb: StbApi) : Re
         inline fun get(codepoint: Int) = glyphs.getOrPut(codepoint) { makeGlyph(codepoint) }
 
         fun cleanup() {
-            stb.free(fontInfo)
+            fontInfo.free()
             glyphs.clear()
         }
     }
